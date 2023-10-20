@@ -26,12 +26,21 @@ export class Astra {
     };
   }
 
-  public createCollection = async (collectionName: string) => {
+  public createCollection = async (createCollectionOpts: {
+    collectionName: string
+    options?: {
+      vector: {
+        size: number;
+        function: string;
+      }
+    }
+  }) => {
     const response = await axios.post(
       `${this.apiBase}/${this.namespace}`,
       {
         createCollection: {
-          name: collectionName,
+          name: createCollectionOpts?.collectionName,
+          options: createCollectionOpts?.options,
         },
       },
       this.requestOptions,

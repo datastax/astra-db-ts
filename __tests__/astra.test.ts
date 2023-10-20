@@ -14,7 +14,24 @@ describe("Astra", () => {
         namespace: "test"
       });
 
-      const results = await astra.createCollection("blah");
+      const results = await astra.createCollection({collectionName: "blah"});
+      expect(results.status.ok).to.equal(1);
+    });
+
+    test("should create vector collection", async () => {
+      const astra = new Astra({
+        token: ASTRA_DB_TOKEN,
+        databaseId: ASTRA_DB_ID,
+        databaseRegion: "us-east1",
+        namespace: "test"
+      });
+
+      const results = await astra.createCollection({collectionName: "blah", options: {
+        vector: {
+          size: 2,
+          function: 'cosine'
+        }
+        }});
       expect(results.status.ok).to.equal(1);
     });
 
