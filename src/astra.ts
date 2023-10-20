@@ -15,6 +15,10 @@ export interface SortClause {
 
 }
 
+export interface UpdateClause {
+
+}
+
 export interface JsonNode {
 
 }
@@ -180,4 +184,176 @@ export class Astra {
     );
     return response?.data;
   };
+
+  public findOne = async (
+    namespace: string,
+    collection: string,
+    filter?: FilterClause,
+    sort?: SortClause,
+  ) => {
+    const response = await axios.post(
+      `${this.apiBase}/${namespace}/${collection}`,
+      {
+        findOne: {
+          filter,
+          sort,
+        },
+      },
+      this.requestOptions,
+    );
+    return response?.data;
+  }
+  public findOneAndDelete = async (
+    namespace: string,
+    collection: string,
+    filter?: FilterClause,
+    sort?: SortClause,
+    options?: Options1
+  ) => {
+    const response = await axios.post(
+      `${this.apiBase}/${namespace}/${collection}`,
+      {
+        findOneAndDelete: {
+          filter,
+          sort,
+          options
+        },
+      },
+      this.requestOptions,
+    );
+    return response?.data;
+  }
+  public findOneAndReplace = async (
+    namespace: string,
+    collection: string,
+    filter?: FilterClause,
+    replacement?: JsonNode,
+    sort?: SortClause,
+    options?: Options1
+  ) => {
+    const response = await axios.post(
+      `${this.apiBase}/${namespace}/${collection}`,
+      {
+        findOneAndReplace: {
+          filter,
+          replacement,
+          sort,
+          options
+        },
+      },
+      this.requestOptions,
+    );
+    return response?.data;
+  }
+  public findOneAndUpdate = async (
+    namespace: string,
+    collection: string,
+    filter?: FilterClause,
+    update?: UpdateClause,
+    sort?: SortClause,
+    options?: {
+      upsert?: boolean;
+    }
+  ) => {
+    const response = await axios.post(
+      `${this.apiBase}/${namespace}/${collection}`,
+      {
+        findOneAndUpdate: {
+          filter,
+          update,
+          sort,
+          options
+        },
+      },
+      this.requestOptions,
+    );
+    return response?.data;
+  }
+  public insertOne = async (
+    namespace: string,
+    collection: string,
+    document: any,
+    options?: {
+      ordered?: boolean;
+    }
+  ) => {
+    const response = await axios.post(
+      `${this.apiBase}/${namespace}/${collection}`,
+      {
+        insertOne: {
+          document,
+          options
+        },
+      },
+      this.requestOptions,
+    );
+    return response?.data;
+  }
+  public insertMany = async (
+    namespace: string,
+    collection: string,
+    documents: any,
+    options?: {
+      ordered?: boolean;
+    }
+  ) => {
+    const response = await axios.post(
+      `${this.apiBase}/${namespace}/${collection}`,
+      {
+        insertMany: {
+          documents,
+          options
+        },
+      },
+      this.requestOptions,
+    );
+    return response?.data;
+  }
+  public updateMany = async (
+    namespace: string,
+    collection: string,
+    update: UpdateClause,
+    filter?: FilterClause,
+    options?: {
+      upsert?: boolean;
+    }
+
+  ) => {
+    const response = await axios.post(
+      `${this.apiBase}/${namespace}/${collection}`,
+      {
+        updateMany: {
+          update,
+          filter,
+          options
+        },
+      },
+      this.requestOptions,
+    );
+    return response?.data;
+  }
+  public updateOne = async (
+    namespace: string,
+    collection: string,
+    update: UpdateClause,
+    filter?: FilterClause,
+    sort?: SortClause,
+    options?: {
+      upsert?: boolean;
+    }
+  ) => {
+    const response = await axios.post(
+      `${this.apiBase}/${namespace}/${collection}`,
+      {
+        updateOne: {
+          update,
+          filter,
+          sort,
+          options
+        },
+      },
+      this.requestOptions,
+    );
+    return response?.data;
+  }
 }
