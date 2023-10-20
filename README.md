@@ -1,9 +1,6 @@
-# Astra TS
+# @datastax/astra-ts-client
 
 Astra TS is a TypeScript library for interacting with the [Astra](https://astra.datastax.com/) API.
-
-
-
 
 ## Initializing the client
 
