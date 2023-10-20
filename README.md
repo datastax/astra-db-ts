@@ -22,7 +22,7 @@ const astra = new Astra({
   databaseRegion: 'REPLACE_ME'
 });
 
-await astra.createCollection('test')
+await astra.createCollection({collectionName: 'test'});
 
 ```
 
