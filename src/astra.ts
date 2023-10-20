@@ -7,6 +7,22 @@ export interface AstraClientConfig {
   keyspace?: string;
 }
 
+export interface FilterClause {
+
+}
+
+export interface SortClause {
+
+}
+
+export interface JsonNode {
+
+}
+
+export interface Options1 {
+
+}
+
 export class Astra {
   private config: AstraClientConfig;
   private apiBase: string;
@@ -88,6 +104,76 @@ export class Astra {
       {
         deleteCollection: {
           name,
+        },
+      },
+      this.requestOptions,
+    );
+    return response?.data;
+  };
+
+  public countDocuments = async (
+    namespace: string,
+    collection: string,
+    filter?: FilterClause
+  ) => {
+    const response = await axios.post(
+      `${this.apiBase}/${namespace}/${collection}`,
+      {
+        countDocuments: {
+          filter,
+        },
+      },
+      this.requestOptions,
+    );
+    return response?.data;
+  };
+
+  public deleteOne = async (
+    namespace: string,
+    collection: string,
+    filter?: FilterClause,
+    sort?: SortClause
+  ) => {
+    const response = await axios.post(
+      `${this.apiBase}/${namespace}/${collection}`,
+      {
+        deleteOne: {
+          filter,
+          sort,
+        },
+      },
+      this.requestOptions,
+    );
+    return response?.data;
+  };
+
+  public deleteMany = async (
+    namespace: string,
+    collection: string,
+    filter?: FilterClause,
+  ) => {
+    const response = await axios.post(
+      `${this.apiBase}/${namespace}/${collection}`,
+      {
+        deleteMany: {
+          filter,
+        },
+      },
+      this.requestOptions,
+    );
+    return response?.data;
+  };
+
+  public find = async (
+    namespace: string,
+    collection: string,
+    filter?: FilterClause,
+  ) => {
+    const response = await axios.post(
+      `${this.apiBase}/${namespace}/${collection}`,
+      {
+        find: {
+          filter,
         },
       },
       this.requestOptions,
