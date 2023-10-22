@@ -11,10 +11,10 @@ describe("Astra", () => {
         token: ASTRA_DB_TOKEN,
         databaseId: ASTRA_DB_ID,
         databaseRegion: "us-east1",
-        namespace: "test"
+        namespace: "test",
       });
 
-      const results = await astra.createCollection({collectionName: "blah"});
+      const results = await astra.createCollection({ collectionName: "blah" });
       expect(results.status.ok).to.equal(1);
     });
 
@@ -23,15 +23,18 @@ describe("Astra", () => {
         token: ASTRA_DB_TOKEN,
         databaseId: ASTRA_DB_ID,
         databaseRegion: "us-east1",
-        namespace: "test"
+        namespace: "test",
       });
 
-      const results = await astra.createCollection({collectionName: "blah", options: {
-        vector: {
-          size: 2,
-          function: 'cosine'
-        }
-        }});
+      const results = await astra.createCollection({
+        collectionName: "blah",
+        options: {
+          vector: {
+            size: 2,
+            function: "cosine",
+          },
+        },
+      });
       expect(results.status.ok).to.equal(1);
     });
 
@@ -40,11 +43,11 @@ describe("Astra", () => {
         token: ASTRA_DB_TOKEN,
         databaseId: ASTRA_DB_ID,
         databaseRegion: "us-east1",
-        namespace: "test"
+        namespace: "test",
       });
 
       const results = await astra.findCollections();
-      expect(results.status.collections[0]).to.equal('blah');
+      expect(results.status.collections[0]).to.equal("blah");
     });
 
     test("should delete collection that doesn't exist", async () => {
@@ -52,7 +55,7 @@ describe("Astra", () => {
         token: ASTRA_DB_TOKEN,
         databaseId: ASTRA_DB_ID,
         databaseRegion: "us-east1",
-        namespace: "test"
+        namespace: "test",
       });
 
       const collection = await astra.deleteCollection("bah");

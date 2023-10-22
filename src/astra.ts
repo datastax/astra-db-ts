@@ -1,6 +1,5 @@
-import axios, {AxiosRequestConfig} from "axios";
-import {Collection} from "./collection";
-
+import axios, { AxiosRequestConfig } from "axios";
+import { Collection } from "./collection";
 
 export interface AstraClientConfig {
   token: string;
@@ -27,13 +26,13 @@ export class Astra {
   }
 
   public createCollection = async (createCollectionOpts: {
-    collectionName: string
+    collectionName: string;
     options?: {
       vector: {
         size: number;
         function: string;
-      }
-    }
+      };
+    };
   }) => {
     const response = await axios.post(
       `${this.apiBase}/${this.namespace}`,
@@ -78,7 +77,7 @@ export class Astra {
       apiConfig: {
         base: this.apiBase,
         requestOptions: this.requestOptions,
-      }
+      },
     });
-  }
+  };
 }
