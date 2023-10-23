@@ -1,12 +1,13 @@
 {
   "name": "@datastax/astra-ts-client",
   "version": "0.0.1",
-  "main": "dist/index.js",
+  "main": "dist/astra.js",
   "contributors": [
     "Alex Leventer (https://github.com/alexleventer)"
   ],
   "license": "Apache-2.0",
   "scripts": {
+    "build": "tsc",
     "lint": "eslint . --ext .ts --fix"
   },
   "dependencies": {
