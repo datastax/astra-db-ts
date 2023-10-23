@@ -79,7 +79,6 @@ describe("Collections", () => {
           },
         },
       });
-      console.log(updateResults);
       await astra.deleteCollection({ name: collectionName });
     });
     test("should delete one", async () => {
