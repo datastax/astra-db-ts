@@ -58,7 +58,7 @@ describe("Astra", () => {
         namespace: "test",
       });
 
-      const collection = await astra.deleteCollection({name: "bah"});
+      const collection = await astra.deleteCollection({ name: "bah" });
       expect(collection.status.ok).to.equal(1);
     });
   });

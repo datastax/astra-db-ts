@@ -12,6 +12,7 @@ import InsertOneCommand = Components.Schemas.InsertOneCommand;
 import InsertManyCommand = Components.Schemas.InsertManyCommand;
 import UpdateManyCommand = Components.Schemas.UpdateManyCommand;
 import UpdateOneCommand = Components.Schemas.UpdateOneCommand;
+import CommandResult = Components.Schemas.CommandResult;
 
 export interface AstraCollectionArgs {
   collectionName: string;
@@ -36,7 +37,9 @@ export class Collection {
     this.apiConfig = args.apiConfig;
   }
 
-  public countDocuments = async (opts?: CountDocumentsCommands) => {
+  public countDocuments = async (
+    opts?: CountDocumentsCommands,
+  ): Promise<CommandResult> => {
     const response = await axios.post(
       `${this.apiConfig.base}/${this.namespace}/${this.collectionName}`,
       {
@@ -50,7 +53,7 @@ export class Collection {
     return response?.data;
   };
 
-  public deleteOne = async (opts: DeleteOneCommand) => {
+  public deleteOne = async (opts: DeleteOneCommand): Promise<CommandResult> => {
     const response = await axios.post(
       `${this.apiConfig.base}/${this.namespace}/${this.collectionName}`,
       {
@@ -65,7 +68,9 @@ export class Collection {
     return response?.data;
   };
 
-  public deleteMany = async (opts?: DeleteManyCommand) => {
+  public deleteMany = async (
+    opts?: DeleteManyCommand,
+  ): Promise<CommandResult> => {
     const response = await axios.post(
       `${this.apiConfig.base}/${this.namespace}/${this.collectionName}`,
       {
@@ -79,7 +84,7 @@ export class Collection {
     return response?.data;
   };
 
-  public find = async (opts?: FindCommand) => {
+  public find = async (opts?: FindCommand): Promise<CommandResult> => {
     const response = await axios.post(
       `${this.apiConfig.base}/${this.namespace}/${this.collectionName}`,
       {
@@ -95,7 +100,7 @@ export class Collection {
     return response?.data;
   };
 
-  public findOne = async (opts?: FindOneCommand) => {
+  public findOne = async (opts?: FindOneCommand): Promise<CommandResult> => {
     const response = await axios.post(
       `${this.apiConfig.base}/${this.namespace}/${this.collectionName}`,
       {
@@ -110,7 +115,9 @@ export class Collection {
     );
     return response?.data;
   };
-  public findOneAndDelete = async (opts: FindOneAndDeleteCommand) => {
+  public findOneAndDelete = async (
+    opts: FindOneAndDeleteCommand,
+  ): Promise<CommandResult> => {
     const response = await axios.post(
       `${this.apiConfig.base}/${this.namespace}/${this.collectionName}`,
       {
@@ -124,7 +131,9 @@ export class Collection {
     );
     return response?.data;
   };
-  public findOneAndReplace = async (opts: FindOneAndReplaceCommand) => {
+  public findOneAndReplace = async (
+    opts: FindOneAndReplaceCommand,
+  ): Promise<CommandResult> => {
     const response = await axios.post(
       `${this.apiConfig.base}/${this.namespace}/${this.collectionName}`,
       {
@@ -140,7 +149,9 @@ export class Collection {
     );
     return response?.data;
   };
-  public findOneAndUpdate = async (opts: FindOneAndUpdateCommand) => {
+  public findOneAndUpdate = async (
+    opts: FindOneAndUpdateCommand,
+  ): Promise<CommandResult> => {
     const response = await axios.post(
       `${this.apiConfig.base}/${this.namespace}/${this.collectionName}`,
       {
@@ -156,7 +167,7 @@ export class Collection {
     );
     return response?.data;
   };
-  public insertOne = async (opts: InsertOneCommand) => {
+  public insertOne = async (opts: InsertOneCommand): Promise<CommandResult> => {
     const response = await axios.post(
       `${this.apiConfig.base}/${this.namespace}/${this.collectionName}`,
       {
@@ -169,7 +180,9 @@ export class Collection {
     );
     return response?.data;
   };
-  public insertMany = async (opts: InsertManyCommand) => {
+  public insertMany = async (
+    opts: InsertManyCommand,
+  ): Promise<CommandResult> => {
     const response = await axios.post(
       `${this.apiConfig.base}/${this.namespace}/${this.collectionName}`,
       {
@@ -182,7 +195,9 @@ export class Collection {
     );
     return response?.data;
   };
-  public updateMany = async (opts: UpdateManyCommand) => {
+  public updateMany = async (
+    opts: UpdateManyCommand,
+  ): Promise<CommandResult> => {
     const response = await axios.post(
       `${this.apiConfig.base}/${this.namespace}/${this.collectionName}`,
       {
@@ -196,7 +211,7 @@ export class Collection {
     );
     return response?.data;
   };
-  public updateOne = async (opts: UpdateOneCommand) => {
+  public updateOne = async (opts: UpdateOneCommand): Promise<CommandResult> => {
     const response = await axios.post(
       `${this.apiConfig.base}/${this.namespace}/${this.collectionName}`,
       {

@@ -3,6 +3,7 @@ import { Collection } from "./collection";
 import { Components } from "../astra";
 import CreateCollectionCommand = Components.Schemas.CreateCollectionCommand;
 import DeleteCollectionCommand = Components.Schemas.DeleteCollectionCommand;
+import CommandResult = Components.Schemas.CommandResult;
 
 export interface AstraClientConfig {
   token: string;
@@ -28,7 +29,9 @@ export class Astra {
     };
   }
 
-  public createCollection = async (args: CreateCollectionCommand) => {
+  public createCollection = async (
+    args: CreateCollectionCommand,
+  ): Promise<CommandResult> => {
     const response = await axios.post(
       `${this.apiBase}/${this.namespace}`,
       {
@@ -41,7 +44,7 @@ export class Astra {
     );
     return response?.data;
   };
-  public findCollections = async () => {
+  public findCollections = async (): Promise<CommandResult> => {
     const response = await axios.post(
       `${this.apiBase}/${this.namespace}`,
       {
@@ -52,7 +55,9 @@ export class Astra {
     return response?.data;
   };
 
-  public deleteCollection = async (args: DeleteCollectionCommand) => {
+  public deleteCollection = async (
+    args: DeleteCollectionCommand,
+  ): Promise<CommandResult> => {
     const response = await axios.post(
       `${this.apiBase}/${this.namespace}`,
       {
