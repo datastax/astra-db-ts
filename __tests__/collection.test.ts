@@ -82,7 +82,7 @@ describe("Collections", () => {
       console.log(updateResults);
       await astra.deleteCollection({ name: collectionName });
     });
-    test('should delete one', async () => {
+    test("should delete one", async () => {
       const collectionName = `test${epoch}`;
       await astra.createCollection({ name: collectionName });
       const insertResults = await astra.collection(collectionName).insertOne({
@@ -91,12 +91,14 @@ describe("Collections", () => {
           age: 1,
         },
       });
-      const countResults = await astra.collection(collectionName).countDocuments();
+      const countResults = await astra
+        .collection(collectionName)
+        .countDocuments();
       expect(countResults.status.count).to.equal(1);
       const deleteResults = await astra.collection(collectionName).deleteOne({
         filter: {
           age: 1,
-        }
+        },
       });
       expect(countResults.status.count).to.equal(0);
       await astra.deleteCollection({ name: collectionName });
