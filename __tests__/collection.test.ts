@@ -60,7 +60,7 @@ describe("Collections", () => {
       expect(insertResults.status.insertedIds).length.to.have.length(2);
       await astra.deleteCollection({ name: collectionName });
     });
-    test.skip("should update one", async () => {
+    test("should update one", async () => {
       const collectionName = `test${epoch}`;
       await astra.createCollection({ name: collectionName });
       const insertResults = await astra.collection(collectionName).insertOne({
@@ -82,7 +82,7 @@ describe("Collections", () => {
       console.log(updateResults);
       await astra.deleteCollection({ name: collectionName });
     });
-    test.only('should delete one', async () => {
+    test('should delete one', async () => {
       const collectionName = `test${epoch}`;
       await astra.createCollection({ name: collectionName });
       const insertResults = await astra.collection(collectionName).insertOne({
