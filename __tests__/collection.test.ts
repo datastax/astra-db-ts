@@ -14,7 +14,7 @@ describe.only("Collections", () => {
         namespace: "test",
       });
 
-      const results = await astra.createCollection({collectionName: "test"});
+      const results = await astra.createCollection({ collectionName: "test" });
       const countResults = await astra
         .collection("test")
         .countDocuments("test");

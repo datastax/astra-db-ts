@@ -1,5 +1,8 @@
 import axios, { AxiosRequestConfig } from "axios";
 import { Collection } from "./collection";
+import { Components } from "../astra";
+import CreateCollectionCommand = Components.Schemas.CreateCollectionCommand;
+import DeleteCollectionCommand = Components.Schemas.DeleteCollectionCommand;
 
 export interface AstraClientConfig {
   token: string;
@@ -25,21 +28,13 @@ export class Astra {
     };
   }
 
-  public createCollection = async (createCollectionOpts: {
-    collectionName: string;
-    options?: {
-      vector: {
-        size: number;
-        function: string;
-      };
-    };
-  }) => {
+  public createCollection = async (args: CreateCollectionCommand) => {
     const response = await axios.post(
       `${this.apiBase}/${this.namespace}`,
       {
         createCollection: {
-          name: createCollectionOpts?.collectionName,
-          options: createCollectionOpts?.options,
+          name: args?.name,
+          options: args?.options,
         },
       },
       this.requestOptions,
@@ -57,12 +52,13 @@ export class Astra {
     return response?.data;
   };
 
-  public deleteCollection = async (collectionName: string) => {
+  public deleteCollection = async (args: DeleteCollectionCommand) => {
     const response = await axios.post(
       `${this.apiBase}/${this.namespace}`,
       {
         deleteCollection: {
-          name: collectionName,
+          name: args?.name,
+          options: args?.options,
         },
       },
       this.requestOptions,
