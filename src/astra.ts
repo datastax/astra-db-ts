@@ -25,6 +25,7 @@ export class Astra {
     this.requestOptions = {
       headers: {
         "X-Cassandra-Token": this.config.token,
+        "user-agent": "astra-ts-client/0.0.1",
       },
     };
   }

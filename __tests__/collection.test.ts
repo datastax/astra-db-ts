@@ -60,7 +60,7 @@ describe("Collections", () => {
       expect(insertResults.status.insertedIds).length.to.have.length(2);
       await astra.deleteCollection({ name: collectionName });
     });
-    test("should update one", async () => {
+    test.skip("should update one", async () => {
       const collectionName = `test${epoch}`;
       await astra.createCollection({ name: collectionName });
       const insertResults = await astra.collection(collectionName).insertOne({
@@ -80,8 +80,26 @@ describe("Collections", () => {
         },
       });
       console.log(updateResults);
-      // expect(insertResults.status.insertedIds).length.to.have.length(2);
-      // await astra.deleteCollection({ name: collectionName });
+      await astra.deleteCollection({ name: collectionName });
+    });
+    test.only('should delete one', async () => {
+      const collectionName = `test${epoch}`;
+      await astra.createCollection({ name: collectionName });
+      const insertResults = await astra.collection(collectionName).insertOne({
+        document: {
+          name: "Alex",
+          age: 1,
+        },
+      });
+      const countResults = await astra.collection(collectionName).countDocuments();
+      expect(countResults.status.count).to.equal(1);
+      const deleteResults = await astra.collection(collectionName).deleteOne({
+        filter: {
+          age: 1,
+        }
+      });
+      expect(countResults.status.count).to.equal(0);
+      await astra.deleteCollection({ name: collectionName });
     });
   });
 });

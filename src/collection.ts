@@ -24,8 +24,8 @@ export interface AstraCollectionArgs {
 }
 
 export class Collection {
-  private collectionName: string;
-  private namespace: string;
+  private readonly collectionName: string;
+  private readonly namespace: string;
   private apiConfig: {
     base: string;
     requestOptions: any;
