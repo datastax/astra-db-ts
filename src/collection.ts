@@ -36,13 +36,13 @@ export class Collection {
     this.apiConfig = args.apiConfig;
   }
 
-  public countDocuments = async (opts: CountDocumentsCommands) => {
+  public countDocuments = async (opts?: CountDocumentsCommands) => {
     const response = await axios.post(
       `${this.apiConfig.base}/${this.namespace}/${this.collectionName}`,
       {
         countDocuments: {
-          filter: opts.filter,
-          options: opts.options,
+          filter: opts?.filter,
+          options: opts?.options,
         },
       },
       this.apiConfig.requestOptions,

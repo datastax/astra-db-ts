@@ -14,7 +14,7 @@ describe("Astra", () => {
         namespace: "test",
       });
 
-      const results = await astra.createCollection({ collectionName: "blah" });
+      const results = await astra.createCollection({ name: "blah" });
       expect(results.status.ok).to.equal(1);
     });
 
@@ -27,7 +27,7 @@ describe("Astra", () => {
       });
 
       const results = await astra.createCollection({
-        collectionName: "blah",
+        name: "blahs",
         options: {
           vector: {
             size: 2,
@@ -58,7 +58,7 @@ describe("Astra", () => {
         namespace: "test",
       });
 
-      const collection = await astra.deleteCollection("bah");
+      const collection = await astra.deleteCollection({name: "bah"});
       expect(collection.status.ok).to.equal(1);
     });
   });

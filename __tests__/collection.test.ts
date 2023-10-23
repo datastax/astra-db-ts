@@ -4,7 +4,7 @@ import { expect } from "chai";
 
 const { ASTRA_DB_TOKEN, ASTRA_DB_ID } = process.env;
 
-describe.only("Collections", () => {
+describe("Collections", () => {
   describe("Namespaces", () => {
     test("should create collection", async () => {
       const astra = new Astra({
@@ -14,10 +14,10 @@ describe.only("Collections", () => {
         namespace: "test",
       });
 
-      const results = await astra.createCollection({ collectionName: "test" });
+      const results = await astra.createCollection({ name: "test" });
       const countResults = await astra
         .collection("test")
-        .countDocuments("test");
+        .countDocuments();
       expect(countResults.status.count).to.be.greaterThan(0);
     });
   });
