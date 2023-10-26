@@ -15,7 +15,6 @@
 import {FindCursor} from './cursor';
 import {HTTPClient} from '@/src/client';
 import {executeOperation, setDefaultIdForUpsert} from './utils';
-import {InsertManyResult} from 'mongoose';
 import {
     DeleteOneOptions,
     FindOneAndDeleteOptions,
@@ -139,7 +138,7 @@ export class Collection {
     }
 
     async insertMany(documents: Record<string, any>[], options?: InsertManyOptions) {
-        return executeOperation(async (): Promise<InsertManyResult<any>> => {
+        return executeOperation(async (): Promise<any> => {
             const command = {
                 insertMany: {
                     documents,
@@ -194,7 +193,7 @@ export class Collection {
             setDefaultIdForUpsert(command.updateMany);
             const updateManyResp = await this.httpClient.executeCommand(command, updateManyInternalOptionsKeys);
             if (updateManyResp.status.moreData) {
-                throw new StargateMongooseError(`More than ${updateManyResp.status.modifiedCount} records found for update by the server`, command);
+                throw new AstraTsClientError(`More than ${updateManyResp.status.modifiedCount} records found for update by the server`, command);
             }
             const resp = {
                 modifiedCount: updateManyResp.status.modifiedCount,
@@ -236,7 +235,7 @@ export class Collection {
             };
             const deleteManyResp = await this.httpClient.executeCommand(command, null);
             if (deleteManyResp.status.moreData) {
-                throw new StargateMongooseError(`More records found to be deleted even after deleting ${deleteManyResp.status.deletedCount} records`, command);
+                throw new AstraTsClientError(`More records found to be deleted even after deleting ${deleteManyResp.status.deletedCount} records`, command);
             }
             return {
                 acknowledged: true,
@@ -367,7 +366,7 @@ export class Collection {
     }
 }
 
-export class StargateMongooseError extends Error {
+export class AstraTsClientError extends Error {
     command: Record<string, any>;
     constructor(message: any, command: Record<string, any>) {
         const commandName = Object.keys(command)[0] || 'unknown';

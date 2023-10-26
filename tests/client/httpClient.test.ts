@@ -15,7 +15,7 @@
 import assert from 'assert';
 import { HTTPClient } from '@/src/client/httpClient';
 
-describe('StargateMongoose - client.HTTPClient', () => {
+describe('Astra TS Client - client.HTTPClient', () => {
     describe('HTTPClient Operations', () => {
         it('should not initialize in a web browser', () => {
             let error: any;

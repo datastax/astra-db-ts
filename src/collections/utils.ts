@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Types } from 'mongoose';
 import url from 'url';
 import { logger } from '@/src/logger';
 import axios from 'axios';
@@ -225,7 +224,7 @@ export function setDefaultIdForUpsert(command: Record<string, any>, replace?: bo
         if (command.replacement != null && '_id' in command.replacement) {
             return;
         }
-        command.replacement._id = new Types.ObjectId();
+        command.replacement._id = String()
     } else {
         if (command.update != null && _updateHasKey(command.update, '_id')) {
             return;
@@ -237,7 +236,7 @@ export function setDefaultIdForUpsert(command: Record<string, any>, replace?: bo
             command.update.$setOnInsert = {};
         }
         if (!('_id' in command.update.$setOnInsert)) {
-            command.update.$setOnInsert._id = new Types.ObjectId();
+            command.update.$setOnInsert._id = String()
         }
     }
 }

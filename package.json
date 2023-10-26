@@ -1,7 +1,7 @@
 {
   "name": "@datastax/astra-ts-client",
   "version": "0.0.1",
-  "description": "Stargate's NodeJS Mongoose compatability client",
+  "description": "Astra DB Vector client",
   "contributors": [
     "CRW (http://barnyrubble.tumblr.com/)",
     "Valeri Karpov (https://github.com/vkarpov15)",
@@ -15,7 +15,6 @@
     "model",
     "schema",
     "database",
-    "odm",
     "data",
     "datastore",
     "query",
@@ -24,7 +23,7 @@
     "db",
     "jsonapi"
   ],
-  "homepage": "https://github.com/stargate/stargate-mongoose",
+  "homepage": "https://github.com/datastax/astra-ts-client",
   "license": "Apache-2.0",
   "main": "dist/index.js",
   "mocha": {
@@ -47,7 +46,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/stargate/stargate-mongoose.git"
+    "url": "git+https://github.com/datastax/astra-ts-client.git"
   },
   "scripts": {
     "lint": "eslint .",
@@ -60,7 +59,7 @@
     "update-version-file": "node -p \"'export const LIB_NAME = ' + JSON.stringify(require('./package.json').name) + ';'\" > src/version.ts && node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" >> src/version.ts"
   },
   "bugs": {
-    "url": "https://github.com/stargate/stargate-mongoose/issues"
+    "url": "https://github.com/datastax/astra-ts-client/issues"
   },
   "devDependencies": {
     "@babel/cli": "^7.17.10",
@@ -80,7 +79,6 @@
     "eslint": "8.47.0",
     "jsdoc-babel": "^0.5.0",
     "jsdoc-to-markdown": "^7.1.1",
-    "mongoose": "^7.5.0",
     "nyc": "^15.1.0",
     "sinon": "15.2.0",
     "ts-mocha": "^10.0.0",
@@ -92,9 +90,6 @@
   "dependencies": {
     "axios": "^1.4.0",
     "winston": "^3.7.2"
-  },
-  "peerDependencies": {
-    "mongoose": "^7.5.0"
   },
   "engines": {
     "node": ">=14.0.0"
