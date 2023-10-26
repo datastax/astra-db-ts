@@ -17,6 +17,7 @@ import {createAstraUri, createNamespace, parseUri} from './utils';
 import { HTTPClient } from '@/src/client';
 import { logger } from '@/src/logger';
 import {Collection} from "./collection";
+import {CreateCollectionOptions} from "./options";
 
 export interface ClientOptions {
   applicationToken?: string;
@@ -82,6 +83,14 @@ export class Client {
 
     async collection(name: string) {
         return new Collection(this.httpClient, name);
+    }
+
+    async createCollection(collectionName: string, options?: CreateCollectionOptions) {
+        return await this.db().createCollection(collectionName, options);
+    }
+
+    async dropCollection(collectionName: string,) {
+        return await this.db().dropCollection(collectionName);
     }
 
     /**
