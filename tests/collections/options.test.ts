@@ -63,7 +63,7 @@ describe('Options tests', async () => {
             astraMongoose.set('autoCreate', true);
             astraMongoose.set('autoIndex', false);
             Product = astraMongoose.model('Product', productSchema);
-            // @ts-ignore - these are config options supported by stargate-mongoose but not mongoose
+            // @ts-ignore - these are config options supported by @datastax/astra-ts-client but not mongoose
             await astraMongoose.connect(dbUri, { isAstra: true, logSkippedOptions: true });
             await Promise.all(Object.values(astraMongoose.connection.models).map(Model => Model.init()));
         } else{
@@ -79,7 +79,7 @@ describe('Options tests', async () => {
                 authUrl: process.env.STARGATE_AUTH_URL,
                 logSkippedOptions: true
             };
-            // @ts-ignore - these are config options supported by stargate-mongoose but not mongoose
+            // @ts-ignore - these are config options supported by @datastax/astra-ts-client but not mongoose
             await jsonAPIMongoose.connect(dbUri, options);
             await Promise.all(Object.values(jsonAPIMongoose.connection.models).map(Model => Model.init()));
         }
@@ -98,7 +98,7 @@ describe('Options tests', async () => {
         it('should cleanup insertManyOptions', async () => {
             // @ts-ignore
             const products: Product[] = [new Product({ name: 'Product 2', price: 10, isCertified: true }), new Product({ name: 'Product 1', price: 10, isCertified: false})];
-            //rawResult options should be cleaned up by stargate-mongoose, but 'ordered' should be preserved
+            //rawResult options should be cleaned up by @datastax/astra-ts-client, but 'ordered' should be preserved
             const insertManyResp = await Product.insertMany(products, { ordered: true, rawResult: false });
             assert.strictEqual(insertManyResp.length, 2);
             assert.strictEqual(insertManyResp[0].name, 'Product 2');
@@ -125,7 +125,7 @@ describe('Options tests', async () => {
             assert.strictEqual(insertManyResp[0].name, 'Product 2');
             assert.strictEqual(insertManyResp[1].name, 'Product 1');
             assert.strictEqual(insertManyResp[2].name, 'Product 3');
-            //rawResult options should be cleaned up by stargate-mongoose, but 'upsert' should be preserved
+            //rawResult options should be cleaned up by @datastax/astra-ts-client, but 'upsert' should be preserved
             const updateOneResp = await Product.updateOne({ name: 'Product 4' },
                 { $set : { isCertified : true }, $inc: { price: 5 } },
                 { upsert: true, rawResult: false, sort: { name : 1 } }
@@ -149,7 +149,7 @@ describe('Options tests', async () => {
             assert.strictEqual(insertManyResp[0].name, 'Product 2');
             assert.strictEqual(insertManyResp[1].name, 'Product 1');
             assert.strictEqual(insertManyResp[2].name, 'Product 3');
-            //rawResult options should be cleaned up by stargate-mongoose, but 'upsert' should be preserved
+            //rawResult options should be cleaned up by @datastax/astra-ts-client, but 'upsert' should be preserved
             const updateManyResp = await Product.updateMany({ category: 'cat1' },
                 { $set : { isCertified : true }, $inc: { price: 5 } },
                 { upsert: true, rawResult: false, sort: { name : 1 } }
@@ -171,7 +171,7 @@ describe('Options tests', async () => {
             // @ts-ignore
             const product1 = new Product({ name: 'Product 1', price: 10, isCertified: true });
             await product1.save();
-            //runValidations is not a flag supported by JSON API, so it should be removed by stargate-mongoose
+            //runValidations is not a flag supported by JSON API, so it should be removed by @datastax/astra-ts-client
             await Product.deleteOne({ name: 'Product 1' }, { runValidations: true });
             const product1Deleted = await Product.findOne({ name: 'Product 1' });
             assert.strictEqual(product1Deleted, null);
@@ -194,7 +194,7 @@ describe('Options tests', async () => {
             }
             await Product.insertMany(products, { ordered: true, rawResult: false });
             //find 30 products with rawResult option
-            //rawResult must be removed and the limit must be preserved by stargate-mongoose
+            //rawResult must be removed and the limit must be preserved by @datastax/astra-ts-client
             const findResp = await Product.find({ }, {}, { rawResult: false, limit : 30 });
             assert.strictEqual(findResp.length, 30);
         });

@@ -16,7 +16,6 @@ import { Db } from './db';
 import { createNamespace, parseUri } from './utils';
 import { HTTPClient } from '@/src/client';
 import { logger } from '@/src/logger';
-import {OperationNotSupportedError} from '@/src/driver';
 
 export interface ClientOptions {
   applicationToken?: string;
@@ -127,7 +126,7 @@ export class Client {
     }
 
     startSession() {
-        throw new OperationNotSupportedError('startSession() Not Implemented');
+        throw new Error('startSession() Not Implemented');
     }
 
 }

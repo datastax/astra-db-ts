@@ -1,6 +1,6 @@
 {
-  "name": "stargate-mongoose",
-  "version": "0.2.0-ALPHA-8",
+  "name": "@datastax/astra-ts-client",
+  "version": "0.0.1",
   "description": "Stargate's NodeJS Mongoose compatability client",
   "contributors": [
     "CRW (http://barnyrubble.tumblr.com/)",

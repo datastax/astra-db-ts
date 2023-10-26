@@ -13,6 +13,3 @@
 // limitations under the License.
 
 declare module '@astrajs/client';
-declare module 'mongoose/lib/collection';
-declare module 'mongoose/lib/connection';
-declare module 'mongoose/lib/connectionstate';

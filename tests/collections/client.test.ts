@@ -20,7 +20,7 @@ import { AUTH_API_PATH } from '@/src/client/httpClient';
 
 const localBaseUrl = 'http://localhost:8181';
 
-describe('StargateMongoose clients test', () => {
+describe('Client test', () => {
     const baseUrl = 'https://db_id-region-1.apps.astra.datastax.com';
     let appClient: Client | null;
     let clientURI: string;

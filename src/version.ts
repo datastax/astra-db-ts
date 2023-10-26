@@ -1,2 +1,2 @@
-export const LIB_NAME = 'stargate-mongoose';
-export const LIB_VERSION = '0.2.0-ALPHA-8';
+export const LIB_NAME = "@datastax/astra-ts-client";
+export const LIB_VERSION = "0.0.1";

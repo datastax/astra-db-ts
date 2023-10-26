@@ -18,7 +18,7 @@ import { Collection } from '@/src/collections/collection';
 import { Client } from '@/src/collections/client';
 import { testClient, testClientName, sampleUsersList, createSampleDocWithMultiLevel, createSampleDocWithMultiLevelWithId, TEST_COLLECTION_NAME } from '@/tests/fixtures';
 
-describe(`StargateMongoose - ${testClientName} Connection - collections.collection`, async () => {
+describe(`AstraTsClient - ${testClientName} Connection - collections.collection`, async () => {
     const isAstra: boolean = testClientName === 'astra';
     let astraClient: Client | null;
     let db: Db;

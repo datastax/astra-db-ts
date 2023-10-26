@@ -19,7 +19,7 @@ import { Collection } from '@/src/collections/collection';
 import { Client } from '@/src/collections/client';
 import { testClient, sampleUsersList, TEST_COLLECTION_NAME } from '@/tests/fixtures';
 
-describe(`StargateMongoose - ${testClient} Connection - collections.cursor`, async () => {
+describe(`Astra TS Client - ${testClient} Connection - collections.cursor`, async () => {
     let astraClient: Client | null;
     let db: Db;
     let collection: Collection;

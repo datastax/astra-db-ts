@@ -20,7 +20,7 @@ import { testClient, TEST_COLLECTION_NAME } from '@/tests/fixtures';
 import { randAlphaNumeric } from '@ngneat/falso';
 import {HTTPClient} from '@/src/client';
 
-describe('StargateMongoose - collections.Db', async () => {
+describe('Astra TS Client - collections.Db', async () => {
     let astraClient: Client | null;
     let dbUri: string;
     let isAstra: boolean;
