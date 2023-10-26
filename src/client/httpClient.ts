@@ -248,7 +248,7 @@ export const handleIfErrorResponse = (response: any, data: Record<string, any>) 
 };
 
 function serializeCommand(data: Record<string, any>, pretty?: boolean): string {
-    return EJSON.stringify(data, (key, value) => handleValues(key, value), pretty ? '  ' : '');
+    return EJSON.stringify(data, (key: any, value: any) => handleValues(key, value), pretty ? '  ' : '');
 }
 
 function deserialize(data: Record<string, any>): Record<string, any> {
