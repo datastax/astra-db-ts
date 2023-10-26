@@ -61,7 +61,7 @@ export class Client {
     /**
    * Setup a connection to the Astra/Stargate JSON API
    * @param uri an Stargate JSON API uri (Eg. http://localhost:8181/v1/testks1) where testks1 is the name of the keyspace/Namespace which should always be the last part of the URL
-   * @returns MongoClient
+   * @returns Client
    */
     static async connect(uri: string, options?: ClientOptions | null): Promise<Client> {
         const parsedUri = parseUri(uri);
@@ -94,8 +94,8 @@ export class Client {
     }
 
     /**
-   * Connect the MongoClient instance to JSON API (create Namespace automatically when the 'createNamespaceOnConnect' flag is set to true)
-   * @returns a MongoClient instance
+   * Connect the Client instance to JSON API (create Namespace automatically when the 'createNamespaceOnConnect' flag is set to true)
+   * @returns a Client instance
    */
     async connect(): Promise<Client> {
         if (this.createNamespaceOnConnect && this.keyspaceName) {

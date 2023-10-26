@@ -14,5 +14,3 @@
 
 export { Collection }  from './collections';
 export { AstraDB } from './collections/client';
-// export * as client from './client';
-// export * as logger from './logger';
