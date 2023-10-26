@@ -25,7 +25,7 @@
   ],
   "homepage": "https://github.com/datastax/astra-ts-client",
   "license": "Apache-2.0",
-  "main": "dist/src/index.js",
+  "main": "dist/index.js",
   "mocha": {
     "timeout": 30000,
     "require": [

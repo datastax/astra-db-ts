@@ -13,9 +13,10 @@
 // limitations under the License.
 
 import { Db } from './db';
-import { createNamespace, parseUri } from './utils';
+import {createAstraUri, createNamespace, parseUri} from './utils';
 import { HTTPClient } from '@/src/client';
 import { logger } from '@/src/logger';
+import {Collection} from "./collection";
 
 export interface ClientOptions {
   applicationToken?: string;
@@ -79,6 +80,10 @@ export class Client {
         return client;
     }
 
+    async collection(name: string) {
+        return new Collection(this.httpClient, name);
+    }
+
     /**
    * Connect the MongoClient instance to JSON API (create Namespace automatically when the 'createNamespaceOnConnect' flag is set to true)
    * @returns a MongoClient instance
@@ -129,4 +134,12 @@ export class Client {
         throw new Error('startSession() Not Implemented');
     }
 
+}
+
+export class AstraDB extends Client {
+    constructor(token: string, dbId: string, region: string, keyspace?: string) {
+        const keyspaceName = keyspace || "default_keyspace"
+        const endpoint = createAstraUri(dbId, region, keyspaceName)
+        super(endpoint, keyspaceName, {isAstra: true, applicationToken: token});
+    }
 }

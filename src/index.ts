@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * as collections from './collections';
-export * as client from './client';
-export * as logger from './logger';
+export { Collection }  from './collections';
+export { AstraDB } from './collections/client';
+// export * as client from './client';
+// export * as logger from './logger';
 
-import { createStargateUri, createAstraUri } from './collections';
-export { createStargateUri, createAstraUri };
+// import { createStargateUri, createAstraUri } from './collections';
+// export { createStargateUri, createAstraUri };

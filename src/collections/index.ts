@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { Client } from './client';
+export { Client, AstraDB } from './client';
 export { Collection } from './collection';
 
 export {
@@ -26,8 +26,5 @@ export {
     UpdateOneOptions,
     DeleteOneOptions
 } from './options';
-
-// alias for MongoClient shimming
-export { Client as MongoClient } from './client';
 
 export { createAstraUri, createStargateUri } from './utils';
