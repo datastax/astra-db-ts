@@ -134,7 +134,7 @@ export class HTTPClient {
     async _request(requestInfo: AxiosRequestConfig): Promise<APIResponse> {
         try {
             if (this.applicationToken === '') {
-                logger.debug('@datastax/astra-ts-client/rest: getting token');
+                logger.debug('@datastax/astra-db-ts/rest: getting token');
                 try {
                     this.applicationToken = await getStargateAccessToken(this.authUrl, this.username, this.password);
                 } catch (authError: any) {
@@ -167,7 +167,7 @@ export class HTTPClient {
                 }
             });           
             if (response.status === 401 || (response.data?.errors?.length > 0 && response.data.errors[0]?.message === 'UNAUTHENTICATED: Invalid token')) {
-                logger.debug('@datastax/astra-ts-client/rest: reconnecting');
+                logger.debug('@datastax/astra-db-ts/rest: reconnecting');
                 try {
                     this.applicationToken = await getStargateAccessToken(this.authUrl, this.username, this.password);
                 } catch (authError: any) {

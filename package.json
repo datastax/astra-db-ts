@@ -1,7 +1,7 @@
 {
-  "name": "@datastax/astra-ts-client",
+  "name": "@datastax/astra-db-ts",
   "version": "0.0.1",
-  "description": "Astra DB Vector client",
+  "description": "Astra DB TS Client",
   "contributors": [
     "CRW (http://barnyrubble.tumblr.com/)",
     "Valeri Karpov (https://github.com/vkarpov15)",
@@ -46,7 +46,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/datastax/astra-ts-client.git"
+    "url": "git+https://github.com/datastax/astra-db-ts.git"
   },
   "scripts": {
     "lint": "eslint .",

@@ -1,9 +1,9 @@
-# @datastax/astra-ts-client
+# @datastax/astra-db-ts
 
 ## Getting Started
 
 ```typescript
-import { AstraDB } from "@datastax/astra-ts-client";
+import { AstraDB } from "@datastax/astra-db-ts";
 const astraDb = new AstraDB(TOKEN, DATABASE_ID, REGION);
 const collection = await astraDb.collection("events");
 const results = await collection.countDocuments();
