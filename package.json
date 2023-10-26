@@ -23,7 +23,7 @@
     "db",
     "jsonapi"
   ],
-  "homepage": "https://github.com/datastax/astra-ts-client",
+  "homepage": "https://github.com/datastax/astra-db-ts",
   "license": "Apache-2.0",
   "main": "dist/index.js",
   "mocha": {
