@@ -29,7 +29,7 @@ export class Db {
         this.rootHttpClient = httpClient;
         // use a clone of the underlying http client to support multiple db's from a single connection
         this.httpClient = new HTTPClient({
-            baseUrl: httpClient.baseUrl + `/${name}`,
+            baseUrl: httpClient.baseUrl,
             username: httpClient.username,
             password: httpClient.password,
             authUrl: httpClient.authUrl,
