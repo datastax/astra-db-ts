@@ -1,6 +1,6 @@
 {
   "name": "@datastax/astra-db-ts",
-  "version": "0.0.21",
+  "version": "0.0.22",
   "description": "Astra DB TS Client",
   "contributors": [
     "CRW (http://barnyrubble.tumblr.com/)",
@@ -91,6 +91,9 @@
     "axios": "^1.4.0",
     "bson": "^6.2.0",
     "winston": "^3.7.2"
+  },
+  "browser": {
+    "crypto": false
   },
   "engines": {
     "node": ">=14.0.0"
