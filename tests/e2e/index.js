@@ -1,1 +1,1 @@
-require('@datastax/astra-ts-client');
+require("@datastax/astra-ts-client");

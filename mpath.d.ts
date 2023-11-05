@@ -1,1 +1,1 @@
-declare module 'mpath';
+declare module "mpath";

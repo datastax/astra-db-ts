@@ -12,111 +12,122 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { HTTPClient } from '@/src/client';
-import { CreateCollectionOptions, createCollectionOptionsKeys } from './options';
-import { Collection } from './collection';
-import { executeOperation, createNamespace, dropNamespace } from './utils';
+import { HTTPClient } from "@/src/client";
+import {
+  CreateCollectionOptions,
+  createCollectionOptionsKeys,
+} from "./options";
+import { Collection } from "./collection";
+import { executeOperation, createNamespace, dropNamespace } from "./utils";
 
 export class Db {
-    rootHttpClient: HTTPClient;
-    httpClient: HTTPClient;
-    name: string;
+  rootHttpClient: HTTPClient;
+  httpClient: HTTPClient;
+  name: string;
 
-    constructor(httpClient: HTTPClient, name: string) {
-        if (!name) {
-            throw new Error('Db: name is required');
-        }
-        this.rootHttpClient = httpClient;
-        // use a clone of the underlying http client to support multiple db's from a single connection
-        this.httpClient = new HTTPClient({
-            baseUrl: httpClient.baseUrl,
-            username: httpClient.username,
-            password: httpClient.password,
-            authUrl: httpClient.authUrl,
-            applicationToken: httpClient.applicationToken,
-            authHeaderName: httpClient.authHeaderName,
-            isAstra: httpClient.isAstra,
-            logSkippedOptions: httpClient.logSkippedOptions,
-        });
-        this.name = name;
+  constructor(httpClient: HTTPClient, name: string) {
+    if (!name) {
+      throw new Error("Db: name is required");
     }
+    this.rootHttpClient = httpClient;
+    // use a clone of the underlying http client to support multiple db's from a single connection
+    this.httpClient = new HTTPClient({
+      baseUrl: httpClient.baseUrl,
+      username: httpClient.username,
+      password: httpClient.password,
+      authUrl: httpClient.authUrl,
+      applicationToken: httpClient.applicationToken,
+      authHeaderName: httpClient.authHeaderName,
+      isAstra: httpClient.isAstra,
+      logSkippedOptions: httpClient.logSkippedOptions,
+    });
+    this.name = name;
+  }
 
-    /**
+  /**
    *
    * @param collectionName
    * @returns Collection
    */
-    collection(collectionName: string): Collection {
-        if (!collectionName) {
-            throw new Error('Db: collection name is required');
-        }
-        return new Collection(this.httpClient, collectionName);
+  collection(collectionName: string): Collection {
+    if (!collectionName) {
+      throw new Error("Db: collection name is required");
     }
+    return new Collection(this.httpClient, collectionName);
+  }
 
-    /**
+  /**
    *
    * @param collectionName
    * @param options
    * @returns Promise
    */
-    async createCollection(collectionName: string, options?: CreateCollectionOptions) {
-        return executeOperation(async () => {
+  async createCollection(
+    collectionName: string,
+    options?: CreateCollectionOptions,
+  ) {
+    return executeOperation(async () => {
       type CreateCollectionCommand = {
         createCollection: {
-          name: string,
-          options?: CreateCollectionOptions
-        }
+          name: string;
+          options?: CreateCollectionOptions;
+        };
       };
       const command: CreateCollectionCommand = {
-          createCollection: {
-              name: collectionName
-          }
+        createCollection: {
+          name: collectionName,
+        },
       };
       if (options != null) {
-          command.createCollection.options = options;
+        command.createCollection.options = options;
       }
-      return await this.httpClient.executeCommand(command, createCollectionOptionsKeys);
-        });
-    }
+      return await this.httpClient.executeCommand(
+        command,
+        createCollectionOptionsKeys,
+      );
+    });
+  }
 
-    /**
+  /**
    *
    * @param collectionName
    * @returns APIResponse
    */
-    async dropCollection(collectionName: string) {
-        const command = {
-            deleteCollection: {
-                name: collectionName
-            }
-        };
-        return await this.httpClient.executeCommand(command, null);
-    }
+  async dropCollection(collectionName: string) {
+    const command = {
+      deleteCollection: {
+        name: collectionName,
+      },
+    };
+    return await this.httpClient.executeCommand(command, null);
+  }
 
-    /**
+  /**
    *
    * @returns Promise
    */
-    async dropDatabase() {
-        if (this.rootHttpClient.isAstra) {
-            throw new StargateAstraError('Cannot drop database in Astra. Please use the Astra UI to drop the database.');
-        }
-        return await dropNamespace(this.rootHttpClient, this.name);
+  async dropDatabase() {
+    if (this.rootHttpClient.isAstra) {
+      throw new StargateAstraError(
+        "Cannot drop database in Astra. Please use the Astra UI to drop the database.",
+      );
     }
+    return await dropNamespace(this.rootHttpClient, this.name);
+  }
 
-    /**
+  /**
    *
    * @returns Promise
    */
-    async createDatabase() {
-        return await createNamespace(this.rootHttpClient, this.name);
-    }
+  async createDatabase() {
+    return await createNamespace(this.rootHttpClient, this.name);
+  }
 }
 
 export class StargateAstraError extends Error {
-    message: string;
-    constructor(message: string) {
-        super(message);
-        this.message = message;
-    }
+  message: string;
+  constructor(message: string) {
+    super(message);
+    this.message = message;
+  }
 }

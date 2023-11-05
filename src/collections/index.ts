@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { Client, AstraDB } from './client';
-export { Collection } from './collection';
+export { Client, AstraDB } from "./client";
+export { Collection } from "./collection";
 
 export {
-    FindOneAndDeleteOptions,
-    FindOneAndReplaceOptions,
-    FindOneAndUpdateOptions,
-    FindOneOptions,
-    FindOptions,
-    InsertManyOptions,
-    UpdateManyOptions,
-    UpdateOneOptions,
-    DeleteOneOptions
-} from './options';
+  FindOneAndDeleteOptions,
+  FindOneAndReplaceOptions,
+  FindOneAndUpdateOptions,
+  FindOneOptions,
+  FindOptions,
+  InsertManyOptions,
+  UpdateManyOptions,
+  UpdateOneOptions,
+  DeleteOneOptions,
+} from "./options";
 
-export { createAstraUri, createStargateUri } from './utils';
+export { createAstraUri, createStargateUri } from "./utils";

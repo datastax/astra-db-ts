@@ -92,9 +92,6 @@
     "bson": "^6.2.0",
     "winston": "^3.7.2"
   },
-  "browser": {
-    "crypto": false
-  },
   "engines": {
     "node": ">=14.0.0"
   }

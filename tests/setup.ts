@@ -13,13 +13,13 @@
 // limitations under the License.
 
 // setup envars
-import dotenv from 'dotenv';
+import dotenv from "dotenv";
 
 dotenv.config();
 
-import { logger, setLevel } from '@/src/logger';
+import { logger, setLevel } from "@/src/logger";
 if (process.env.D) {
-    setLevel('http');
+  setLevel("http");
 } else {
-    logger.silent = true;
+  logger.silent = true;
 }

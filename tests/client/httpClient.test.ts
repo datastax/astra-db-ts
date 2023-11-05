@@ -12,47 +12,47 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import assert from 'assert';
-import { HTTPClient } from '@/src/client/httpClient';
+import assert from "assert";
+import { HTTPClient } from "@/src/client/httpClient";
 
-describe('Astra TS Client - client.HTTPClient', () => {
-    describe('HTTPClient Operations', () => {
-        it('should not initialize in a web browser', () => {
-            let error: any;
-            try {
-                // @ts-ignore
-                global.window = true;
-                // @ts-ignore
-                const client = new HTTPClient();
-                assert.ok(client);
-            } catch (e) {
-                error = e;
-            }
-            assert.ok(error);
-            // @ts-ignore
-            delete global.window;
-        });
-        it('should not initialize without an application token', () => {
-            let error: any;
-            try {
-                // @ts-ignore
-                const client = new HTTPClient({});
-                assert.ok(client);
-            } catch (e) {
-                error = e;
-            }
-            assert.ok(error);
-        });
-        it('should not initialize without a baseUrl or both database settings', () => {
-            let error: any;
-            try {
-                // @ts-ignore
-                const client = new HTTPClient({});
-                assert.ok(client);
-            } catch (e) {
-                error = e;
-            }
-            assert.ok(error);
-        });
+describe("Astra TS Client - client.HTTPClient", () => {
+  describe("HTTPClient Operations", () => {
+    it("should not initialize in a web browser", () => {
+      let error: any;
+      try {
+        // @ts-ignore
+        global.window = true;
+        // @ts-ignore
+        const client = new HTTPClient();
+        assert.ok(client);
+      } catch (e) {
+        error = e;
+      }
+      assert.ok(error);
+      // @ts-ignore
+      delete global.window;
     });
+    it("should not initialize without an application token", () => {
+      let error: any;
+      try {
+        // @ts-ignore
+        const client = new HTTPClient({});
+        assert.ok(client);
+      } catch (e) {
+        error = e;
+      }
+      assert.ok(error);
+    });
+    it("should not initialize without a baseUrl or both database settings", () => {
+      let error: any;
+      try {
+        // @ts-ignore
+        const client = new HTTPClient({});
+        assert.ok(client);
+      } catch (e) {
+        error = e;
+      }
+      assert.ok(error);
+    });
+  });
 });

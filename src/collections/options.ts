@@ -12,118 +12,123 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type SortOption = Record<string, 1 | -1> | { $vector: { $meta: Array<number> } } | { $vector: Array<number> };
+export type SortOption =
+  | Record<string, 1 | -1>
+  | { $vector: { $meta: Array<number> } }
+  | { $vector: Array<number> };
 
-export type ProjectionOption = Record<string, 1 | 0 | true | false | { $slice: number }>;
+export type ProjectionOption = Record<
+  string,
+  1 | 0 | true | false | { $slice: number }
+>;
 
 export interface DeleteOneOptions {
-    sort?: Record<string, 1 | -1>;
+  sort?: Record<string, 1 | -1>;
 }
 
 export interface FindOptions {
-    limit?: number;
-    skip?: number;
-    sort?: SortOption;
-    projection?: ProjectionOption;
-    includeSimilarity?: boolean;
+  limit?: number;
+  skip?: number;
+  sort?: SortOption;
+  projection?: ProjectionOption;
+  includeSimilarity?: boolean;
 }
 
 class _FindOptionsInternal {
-    limit?: number = undefined;
-    skip?: number = undefined;
-    pagingState?: string = undefined;
-    includeSimilarity?: boolean = undefined;
+  limit?: number = undefined;
+  skip?: number = undefined;
+  pagingState?: string = undefined;
+  includeSimilarity?: boolean = undefined;
 }
 
-export interface FindOptionsInternal extends _FindOptionsInternal {}
+export type FindOptionsInternal = _FindOptionsInternal;
 
 export const findInternalOptionsKeys: Set<string> = new Set(
-    Object.keys(new _FindOptionsInternal)
+  Object.keys(new _FindOptionsInternal()),
 );
 
 export interface FindOneOptions {
-    sort?: Record<string, 1 | -1>;
-    projection?: ProjectionOption;
-    includeSimilarity?: boolean;
+  sort?: Record<string, 1 | -1>;
+  projection?: ProjectionOption;
+  includeSimilarity?: boolean;
 }
 
 class _FindOneOptionsInternal {
-    includeSimilarity?: boolean = undefined;
+  includeSimilarity?: boolean = undefined;
 }
 
 export const findOneInternalOptionsKeys: Set<string> = new Set(
-    Object.keys(new _FindOneOptionsInternal)
+  Object.keys(new _FindOneOptionsInternal()),
 );
 
 export interface FindOneAndDeleteOptions {
-    sort?: SortOption;
+  sort?: SortOption;
 }
-
 
 class _FindOneAndReplaceOptions {
-    upsert?: boolean = undefined;
-    returnDocument?: 'before' | 'after' = undefined;
-    sort?: SortOption;
+  upsert?: boolean = undefined;
+  returnDocument?: "before" | "after" = undefined;
+  sort?: SortOption;
 }
 
-export interface FindOneAndReplaceOptions extends _FindOneAndReplaceOptions {}
+export type FindOneAndReplaceOptions = _FindOneAndReplaceOptions;
 
 export const findOneAndReplaceInternalOptionsKeys: Set<string> = new Set(
-    Object.keys(new _FindOneAndReplaceOptions)
+  Object.keys(new _FindOneAndReplaceOptions()),
 );
 
 class _FindOneAndUpdateOptions {
-    upsert?: boolean = undefined;
-    returnDocument?: 'before' | 'after' = undefined;
-    sort?: SortOption;
+  upsert?: boolean = undefined;
+  returnDocument?: "before" | "after" = undefined;
+  sort?: SortOption;
 }
 
-export interface FindOneAndUpdateOptions extends _FindOneAndUpdateOptions {}
+export type FindOneAndUpdateOptions = _FindOneAndUpdateOptions;
 
 export const findOneAndUpdateInternalOptionsKeys: Set<string> = new Set(
-    Object.keys(new _FindOneAndUpdateOptions)
+  Object.keys(new _FindOneAndUpdateOptions()),
 );
 
 class _InsertManyOptions {
-    ordered?: boolean = undefined;
+  ordered?: boolean = undefined;
 }
 
-export interface InsertManyOptions extends _InsertManyOptions {}
+export type InsertManyOptions = _InsertManyOptions;
 
 export const insertManyInternalOptionsKeys: Set<string> = new Set(
-    Object.keys(new _InsertManyOptions)
+  Object.keys(new _InsertManyOptions()),
 );
 
 class _UpdateManyOptions {
-    upsert?: boolean = undefined;
+  upsert?: boolean = undefined;
 }
 
-export interface UpdateManyOptions extends _UpdateManyOptions {}
+export type UpdateManyOptions = _UpdateManyOptions;
 
 export const updateManyInternalOptionsKeys: Set<string> = new Set(
-    Object.keys(new _UpdateManyOptions)
+  Object.keys(new _UpdateManyOptions()),
 );
 
 class _UpdateOneOptions {
-    upsert?: boolean = undefined;
-    sort?: SortOption;
+  upsert?: boolean = undefined;
+  sort?: SortOption;
 }
 
-export interface UpdateOneOptions extends _UpdateOneOptions {}
+export type UpdateOneOptions = _UpdateOneOptions;
 
 export const updateOneInternalOptionsKeys: Set<string> = new Set(
-    Object.keys(new _UpdateOneOptions)
+  Object.keys(new _UpdateOneOptions()),
 );
 
 class _CreateCollectionOptions {
-    vector?: {
-        size: number,
-        function?: 'cosine' | 'euclidean' | 'dot_product'
-    } = undefined;
+  vector?: {
+    size: number;
+    function?: "cosine" | "euclidean" | "dot_product";
+  } = undefined;
 }
 
-export interface CreateCollectionOptions extends _CreateCollectionOptions {}
+export type CreateCollectionOptions = _CreateCollectionOptions;
 
 export const createCollectionOptionsKeys: Set<string> = new Set(
-    Object.keys(new _CreateCollectionOptions)
+  Object.keys(new _CreateCollectionOptions()),
 );
