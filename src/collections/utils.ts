@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import url from "url";
-import { logger } from "@/src/logger";
+import {logger} from "@/src/logger";
 import axios from "axios";
-import { HTTPClient, handleIfErrorResponse } from "@/src/client/httpClient";
+import {handleIfErrorResponse, HTTPClient} from "@/src/client/httpClient";
 
 interface ParsedUri {
   baseUrl: string;
@@ -64,6 +64,15 @@ function getBaseAPIPath(pathFromUrl?: string | null) {
   return baseApiPath === "/"
     ? ""
     : baseApiPath.substring(1, baseApiPath.length - 1);
+}
+
+// Get the keyspace name from the path
+export function getKeyspaceName(pathFromUrl?: string | null) {
+  if (!pathFromUrl) {
+    return "";
+  }
+  const pathElements = pathFromUrl.split("/");
+  return pathElements[pathElements.length - 1];
 }
 
 /**
@@ -269,3 +278,4 @@ function _updateHasKey(update: Record<string, any>, key: string) {
   }
   return false;
 }
+

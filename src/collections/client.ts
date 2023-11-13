@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { Db } from "./db";
-import { createAstraUri, createNamespace, parseUri } from "./utils";
+import {createAstraUri, createNamespace, getKeyspaceName, parseUri} from "./utils";
 import { HTTPClient } from "@/src/client";
 import { logger } from "@/src/logger";
 import { Collection } from "./collection";
@@ -155,9 +155,16 @@ export class Client {
 }
 
 export class AstraDB extends Client {
-  constructor(token: string, dbId: string, region: string, keyspace?: string) {
-    const keyspaceName = keyspace || "default_keyspace";
-    const endpoint = createAstraUri(dbId, region, keyspaceName);
-    super(endpoint, keyspaceName, { isAstra: true, applicationToken: token });
+  constructor(...args: any[]) {
+    // token: string, path: string
+    if (args.length === 2) {
+      const keyspaceName = getKeyspaceName(args[1]);
+      super(args[1], keyspaceName, { isAstra: true, applicationToken: args[0] });
+    } else {
+      // token: string, dbId: string, region: string, keyspace?: string
+      const keyspaceName = args[3] || "default_keyspace";
+      const endpoint = createAstraUri(args[1], args[2], keyspaceName);
+      super(endpoint, keyspaceName, { isAstra: true, applicationToken: args[0] });
+    }
   }
 }
