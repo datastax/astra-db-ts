@@ -25,7 +25,7 @@ import { getStargateAccessToken } from "../collections/utils";
 import { EJSON } from "bson";
 
 const REQUESTED_WITH = LIB_NAME + "/" + LIB_VERSION;
-const DEFAULT_AUTH_HEADER = "X-Cassandra-Token";
+const DEFAULT_AUTH_HEADER = "token";
 const DEFAULT_METHOD = "get";
 const DEFAULT_TIMEOUT = 30000;
 export const AUTH_API_PATH = "/v1/auth";
