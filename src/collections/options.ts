@@ -122,8 +122,8 @@ export const updateOneInternalOptionsKeys: Set<string> = new Set(
 
 class _CreateCollectionOptions {
   vector?: {
-    size: number;
-    function?: "cosine" | "euclidean" | "dot_product";
+    dimensions: number;
+    metric?: "cosine" | "euclidean" | "dot_product";
   } = undefined;
 }
 
