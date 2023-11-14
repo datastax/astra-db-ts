@@ -158,8 +158,10 @@ export class AstraDB extends Client {
   constructor(...args: any[]) {
     // token: string, path: string
     if (args.length === 2) {
-      const keyspaceName = getKeyspaceName(args[1]);
-      super(args[1], keyspaceName, { isAstra: true, applicationToken: args[0] });
+      let endpoint = args[1];
+      endpoint += "/api/json/v1";
+      endpoint += "/default_keyspace";
+      super(endpoint, "default_keyspace", { isAstra: true, applicationToken: args[0] });
     } else {
       // token: string, dbId: string, region: string, keyspace?: string
       const keyspaceName = args[3] || "default_keyspace";
