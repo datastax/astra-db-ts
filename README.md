@@ -7,15 +7,40 @@
 ```typescript
 import { AstraDB } from "@datastax/astra-db-ts";
 
-const { TOKEN, DATABASE_ID, REGION, COLLECTION_NAME, ENDPOINT } = process.env;
+async function main() {
 
-const astraDb = new AstraDB(TOKEN, DATABASE_ID, REGION);
-// or...
-// const astraDb = new AstraDB(TOKEN, ENDPOINT);
+  const ASTRA_DB_API_ENDPOINT = process.env['ASTRA_DB_API_ENDPOINT'];
+  const ASTRA_DB_APPLICATION_TOKEN = process.env['ASTRA_DB_APPLICATION_TOKEN'];
 
-// Create a collection
-const collection = await astraDb.collection(COLLECTION_NAME);
+  const db = new AstraDB(ASTRA_DB_APPLICATION_TOKEN, ASTRA_DB_API_ENDPOINT);
 
-// Return the number of documents in the collection
-const results = await collection.countDocuments();
+  // Create a vector collection
+  await db.createCollection("vector_5_collection", { vector: { dimension: 5, metric: "cosine" } });
+  const collection = await db.collection("vector_5_collection");
+
+  const documents = [
+    {
+      "_id": "1",
+      "text": "ChatGPT integrated sneakers that talk to you",
+      "$vector": [0.1, 0.15, 0.3, 0.12, 0.05],
+    },
+    {
+      "_id": "2",
+      "text": "An AI quilt to help you sleep forever",
+      "$vector": [0.45, 0.09, 0.01, 0.2, 0.11],
+    },
+    {
+      "_id": "3",
+      "text": "Vision Vector Frame - A deep learning display that controls your mood",
+      "$vector": [0.1, 0.05, 0.08, 0.3, 0.6],
+    }
+  ];
+  await collection.insertMany(documents);
+
+  // Return the number of documents in the collection
+  const results = await collection.countDocuments();
+  console.log(results);
+}
+
+main().catch(console.error);
 ```
