@@ -1,6 +1,6 @@
 {
   "name": "@datastax/astra-db-ts",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Astra DB TS Client",
   "contributors": [
     "CRW (http://barnyrubble.tumblr.com/)",
