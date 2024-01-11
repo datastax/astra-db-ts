@@ -44,3 +44,7 @@ async function main() {
 
 main().catch(console.error);
 ```
+
+## Usage
+
+Refer to the API [reference documentation](https://docs.datastax.com/en/astra/astra-db-vector/clients/typescript.html) for more information and usage examples. 
