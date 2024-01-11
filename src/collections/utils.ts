@@ -77,8 +77,7 @@ export function getKeyspaceName(pathFromUrl?: string | null) {
 
 /**
  * Create an Astra connection URI while connecting to Astra JSON API
- * @param databaseId the database id of the Astra database
- * @param region the region of the Astra database
+ * @param apiEndPoint the API EndPoint of the Astra database
  * @param keyspace the keyspace to connect to
  * @param applicationToken an Astra application token
  * @param baseApiPath baseAPI path defaults to /api/json/v1
@@ -87,17 +86,14 @@ export function getKeyspaceName(pathFromUrl?: string | null) {
  * @returns URL as string
  */
 export function createAstraUri(
-  databaseId: string,
-  region: string,
+  apiEndPoint: string,
   keyspace: string,
   applicationToken?: string,
   baseApiPath?: string,
   logLevel?: string,
   authHeaderName?: string,
 ) {
-  const uri = new url.URL(
-    `https://${databaseId}-${region}.apps.astra.datastax.com`,
-  );
+  const uri = new url.URL(apiEndPoint);
   let contextPath = "";
   contextPath += baseApiPath ? `/${baseApiPath}` : "/api/json/v1";
   contextPath += `/${keyspace}`;

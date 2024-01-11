@@ -154,19 +154,13 @@ export class Client {
   }
 }
 
+const DEFAULT_KEYSPACE = "default_keyspace";
+
 export class AstraDB extends Client {
   constructor(...args: any[]) {
-    // token: string, path: string
-    if (args.length === 2) {
-      let endpoint = args[1];
-      endpoint += "/api/json/v1";
-      endpoint += "/default_keyspace";
-      super(endpoint, "default_keyspace", { isAstra: true, applicationToken: args[0] });
-    } else {
-      // token: string, dbId: string, region: string, keyspace?: string
-      const keyspaceName = args[3] || "default_keyspace";
-      const endpoint = createAstraUri(args[1], args[2], keyspaceName);
-      super(endpoint, keyspaceName, { isAstra: true, applicationToken: args[0] });
-    }
+    // token: string, API EndPoint: string, keyspace?: string
+    const keyspaceName = args[2] || DEFAULT_KEYSPACE;
+    const endpoint = createAstraUri(args[1], keyspaceName);
+    super(endpoint, keyspaceName, { isAstra: true, applicationToken: args[0] });
   }
 }

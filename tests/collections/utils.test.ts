@@ -14,62 +14,55 @@
 
 import assert from "assert";
 import { createAstraUri } from "@/src/collections/utils";
+import {AstraDB, Client} from "@/src/collections";
 
 describe("Utils test", () => {
+  it("ClientBaseUriTest", () => {
+    const apiEndPoint = "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com";
+    const astraDb = new AstraDB("myToken",apiEndPoint,"testks1");
+    assert.strictEqual(
+        astraDb.httpClient.baseUrl,
+        "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1",
+    );
+  });
+  it("ClientBaseUriTestDefaultKeyspace", () => {
+    const apiEndPoint = "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com";
+    const astraDb = new AstraDB("myToken",apiEndPoint);
+    assert.strictEqual(
+        astraDb.httpClient.baseUrl,
+        "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/default_keyspace",
+    );
+  });
   it("createProdAstraUri", () => {
-    const dbIdUUID = "ddd5843c-3dea-11ee-be56-0242ac120002";
-    const uri: string = createAstraUri(dbIdUUID, "us-east1", "testks1");
+    const apiEndPoint = "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com";
+    const uri: string = createAstraUri( apiEndPoint, "testks1");
     assert.strictEqual(
       uri,
-      "https://" +
-        dbIdUUID +
-        "-us-east1.apps.astra.datastax.com/api/json/v1/testks1",
+      "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1",
     );
   });
   it("createProdAstraUriWithToken", () => {
-    const dbIdUUID = "ddd5843c-3dea-11ee-be56-0242ac120002";
-    const uri: string = createAstraUri(
-      dbIdUUID,
-      "us-east1",
-      "testks1",
-      "myToken",
-    );
+    const apiEndPoint = "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com";
+    const uri: string = createAstraUri( apiEndPoint, "testks1", "myToken");
     assert.strictEqual(
-      uri,
-      "https://" +
-        dbIdUUID +
-        "-us-east1.apps.astra.datastax.com/api/json/v1/testks1?applicationToken=myToken",
+        uri,
+        "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1?applicationToken=myToken",
     );
   });
   it("createProdAstraUriWithTokenAndProdEnum", () => {
-    const dbIdUUID = "ddd5843c-3dea-11ee-be56-0242ac120002";
-    const uri: string = createAstraUri(
-      dbIdUUID,
-      "us-east1",
-      "testks1",
-      "myToken",
-    );
-    assert.strictEqual(
-      uri,
-      "https://" +
-        dbIdUUID +
-        "-us-east1.apps.astra.datastax.com/api/json/v1/testks1?applicationToken=myToken",
-    );
-  });
+      const apiEndPoint = "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com";
+      const uri: string = createAstraUri( apiEndPoint, "testks1", "myToken");
+      assert.strictEqual(
+          uri,
+          "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1?applicationToken=myToken",
+      );
+    });
   it("createProdAstraUriWithTokenAndProdEnumWithBaseAPIPath", () => {
-    const dbIdUUID = "ddd5843c-3dea-11ee-be56-0242ac120002";
-    const uri: string = createAstraUri(
-      dbIdUUID,
-      "us-east1",
-      "testks1",
-      "myToken",
-      "apis",
-    );
+    const apiEndPoint = "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com";
+    const uri: string = createAstraUri( apiEndPoint, "testks1", "myToken","apis");
     assert.strictEqual(
-      uri,
-      "https://" +
-        dbIdUUID +
-        "-us-east1.apps.astra.datastax.com/apis/testks1?applicationToken=myToken",
+        uri,
+        "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/apis/testks1?applicationToken=myToken",
     );
   });
 });
