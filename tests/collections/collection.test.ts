@@ -30,6 +30,7 @@ describe(`AstraTsClient - ${testClientName} Connection - collections.collection`
   let astraClient: Client | null;
   let db: Db;
   let collection: Collection;
+
   before(async function () {
     if (testClient == null) {
       return this.skip();
@@ -108,11 +109,9 @@ describe(`AstraTsClient - ${testClientName} Connection - collections.collection`
         );
       }
     });
-    it("Should fail if the number of levels in the doc is > 8", async () => {
+    it("Should fail if the number of levels in the doc is > 16", async () => {
       const docToInsert = {
-        l1: {
-          l2: { l3: { l4: { l5: { l6: { l7: { l8: { l9: "l9value" } } } } } } },
-        },
+        l1: { l2: { l3: { l4: { l5: { l6: { l7: { l8: { l9: { l10: { l11: { l12: { l13: { l14: { l15: { l16: { l17: "l97value" } } } } } } } } } } } } } } } },
       };
       let error: any;
       try {
@@ -123,11 +122,11 @@ describe(`AstraTsClient - ${testClientName} Connection - collections.collection`
       assert.ok(error);
       assert.strictEqual(
         error.errors[0].message,
-        "Document size limitation violated: document depth exceeds maximum allowed (8)",
+        "Document size limitation violated: document depth exceeds maximum allowed (16)",
       );
     });
-    it("Should fail if the field length is > 48", async () => {
-      const fieldName = "a".repeat(49);
+    it("Should fail if the field length is > 100", async () => {
+      const fieldName = "a".repeat(101);
       const docToInsert = { [fieldName]: "value" };
       let error: any;
       try {
@@ -138,11 +137,11 @@ describe(`AstraTsClient - ${testClientName} Connection - collections.collection`
       assert.ok(error);
       assert.strictEqual(
         error.errors[0].message,
-        "Document size limitation violated: Property name length (49) exceeds maximum allowed (48)",
+        "Document size limitation violated: property name length (101) exceeds maximum allowed (100) (name 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')"
       );
     });
-    it("Should fail if the string field value is > 16000", async () => {
-      const _string16klength = new Array(16001).fill("a").join("");
+    it("Should fail if the string field value is > 8000", async () => {
+      const _string16klength = new Array(8001).fill("a").join("");
       const docToInsert = { username: _string16klength };
       let error: any;
       try {
@@ -153,11 +152,11 @@ describe(`AstraTsClient - ${testClientName} Connection - collections.collection`
       assert.ok(error);
       assert.strictEqual(
         error.errors[0].message,
-        "Document size limitation violated: String value length (16001) exceeds maximum allowed (16000)",
+        "Document size limitation violated: indexed String value length (8001 bytes) exceeds maximum allowed (8000 bytes)",
       );
     });
-    it("Should fail if an array field size is > 100", async () => {
-      const docToInsert = { tags: new Array(101).fill("tag") };
+    it("Should fail if an array field size is > 1000", async () => {
+      const docToInsert = { tags: new Array(1001).fill("tag") };
       let error: any;
       try {
         await collection.insertOne(docToInsert);
@@ -167,12 +166,12 @@ describe(`AstraTsClient - ${testClientName} Connection - collections.collection`
       assert.ok(error);
       assert.strictEqual(
         error.errors[0].message,
-        "Document size limitation violated: number of elements an Array has (101) exceeds maximum allowed (100)",
+        "Document size limitation violated: number of elements an indexable Array ('tags') has (1001) exceeds maximum allowed (1000)",
       );
     });
-    it("Should fail if a doc contains more than 64 properties", async () => {
+    it("Should fail if a doc contains more than 2000 properties", async () => {
       const docToInsert: any = { _id: "123" };
-      for (let i = 1; i <= 64; i++) {
+      for (let i = 1; i <= 1000; i++) {
         docToInsert[`prop${i}`] = `prop${i}value`;
       }
       let error: any;
@@ -184,7 +183,7 @@ describe(`AstraTsClient - ${testClientName} Connection - collections.collection`
       assert.ok(error);
       assert.strictEqual(
         error.errors[0].message,
-        "Document size limitation violated: number of properties an Object has (65) exceeds maximum allowed (64)",
+        "Document size limitation violated: number of properties an indexable Object ('null') has (1001) exceeds maximum allowed (1000)",
       );
     });
   });

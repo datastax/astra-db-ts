@@ -16,6 +16,7 @@ import url from "url";
 import {logger} from "@/src/logger";
 import axios from "axios";
 import {handleIfErrorResponse, HTTPClient} from "@/src/client/httpClient";
+import { ObjectId } from 'bson';
 
 interface ParsedUri {
   baseUrl: string;
@@ -231,7 +232,7 @@ export function setDefaultIdForUpsert(
   command: Record<string, any>,
   replace?: boolean,
 ) {
-  if (command.filter == null || command.options == null) {
+  if (!command.filter || !command.options) {
     return;
   }
   if (!command.options.upsert) {
@@ -245,20 +246,22 @@ export function setDefaultIdForUpsert(
     if (command.replacement != null && "_id" in command.replacement) {
       return;
     }
-    command.replacement._id = String();
-  } else {
-    if (command.update != null && _updateHasKey(command.update, "_id")) {
-      return;
-    }
-    if (command.update == null) {
-      command.update = {};
-    }
-    if (command.update.$setOnInsert == null) {
-      command.update.$setOnInsert = {};
-    }
-    if (!("_id" in command.update.$setOnInsert)) {
-      command.update.$setOnInsert._id = String();
-    }
+
+    command.replacement ??= {};
+    command.replacement._id = new ObjectId();
+
+    return;
+  }
+
+  if (command.update != null && _updateHasKey(command.update, "_id")) {
+    return;
+  }
+
+  command.update ??= {};
+  command.update.$setOnInsert ??= {};
+
+  if (!("_id" in command.update.$setOnInsert)) {
+    command.update.$setOnInsert._id = new ObjectId();
   }
 }
 

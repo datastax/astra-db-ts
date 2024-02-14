@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FindCursor } from "./cursor";
-import { HTTPClient } from "@/src/client";
-import { executeOperation, setDefaultIdForUpsert } from "./utils";
+import { FindCursor } from './cursor';
+import { HTTPClient } from '@/src/client';
+import { executeOperation, setDefaultIdForUpsert } from './utils';
 import {
   DeleteOneOptions,
   FindOneAndDeleteOptions,
@@ -22,17 +22,17 @@ import {
   FindOneAndReplaceOptions,
   findOneAndUpdateInternalOptionsKeys,
   FindOneAndUpdateOptions,
+  findOneInternalOptionsKeys,
   FindOneOptions,
+  FindOptions,
   insertManyInternalOptionsKeys,
   InsertManyOptions,
+  SortOption,
   updateManyInternalOptionsKeys,
   UpdateManyOptions,
   updateOneInternalOptionsKeys,
   UpdateOneOptions,
-  FindOptions,
-  SortOption,
-  findOneInternalOptionsKeys,
-} from "./options";
+} from './options';
 
 export interface JSONAPIUpdateResult {
   matchedCount: number;
@@ -105,7 +105,7 @@ export class Collection {
 
   constructor(httpClient: HTTPClient, name: string) {
     if (!name) {
-      throw new Error("Collection name is required");
+      throw new Error('Collection name is required');
     }
     // use a clone of the underlying http client to support multiple collections from a single db
     this.httpClient = new HTTPClient({
@@ -264,10 +264,7 @@ export class Collection {
         null,
       );
       if (deleteManyResp.status.moreData) {
-        throw new AstraTsClientError(
-          `More records found to be deleted even after deleting ${deleteManyResp.status.deletedCount} records`,
-          command,
-        );
+        throw new AstraTsClientError(`More records found to be deleted even after deleting ${deleteManyResp.status.deletedCount} records`, command,);
       }
       return {
         acknowledged: true,
@@ -349,7 +346,7 @@ export class Collection {
   }
 
   async distinct(_key: any, _filter: any, _options?: any) {
-    throw new Error("Not Implemented");
+    throw new Error('Not Implemented');
   }
 
   async countDocuments(filter?: Record<string, any>): Promise<number> {
@@ -364,10 +361,7 @@ export class Collection {
     });
   }
 
-  async findOneAndDelete(
-    filter: Record<string, any>,
-    options?: FindOneAndDeleteOptions,
-  ): Promise<JSONAPIModifyResult> {
+  async findOneAndDelete(filter: Record<string, any>, options?: FindOneAndDeleteOptions,): Promise<JSONAPIModifyResult> {
     const command: FindOneAndDeleteCommand = {
       findOneAndDelete: {
         filter,
@@ -391,11 +385,7 @@ export class Collection {
     return this.countDocuments(filter);
   }
 
-  async findOneAndUpdate(
-    filter: Record<string, any>,
-    update: Record<string, any>,
-    options?: FindOneAndUpdateOptions,
-  ): Promise<JSONAPIModifyResult> {
+  async findOneAndUpdate(filter: Record<string, any>, update: Record<string, any>, options?: FindOneAndUpdateOptions): Promise<JSONAPIModifyResult> {
     return executeOperation(async (): Promise<JSONAPIModifyResult> => {
       const command: FindOneAndUpdateCommand = {
         findOneAndUpdate: {
@@ -423,11 +413,10 @@ export class Collection {
 
 export class AstraTsClientError extends Error {
   command: Record<string, any>;
+
   constructor(message: any, command: Record<string, any>) {
-    const commandName = Object.keys(command)[0] || "unknown";
-    super(
-      `Command "${commandName}" failed with the following error: ${message}`,
-    );
+    const commandName = Object.keys(command)[0] || 'unknown';
+    super(`Command "${commandName}" failed with the following error: ${message}`);
     this.command = command;
   }
 }

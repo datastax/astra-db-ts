@@ -15,7 +15,7 @@
 import assert from "assert";
 import { Client, ClientOptions } from "@/src/collections/client";
 
-export const TEST_COLLECTION_NAME = "collection1";
+export const TEST_COLLECTION_NAME = "default_keyspace";
 
 export const getJSONAPIClient = async () => {
   if (!process.env.JSON_API_URI) {
@@ -23,6 +23,7 @@ export const getJSONAPIClient = async () => {
   }
   const options: ClientOptions = {
     authHeaderName: process.env.AUTH_HEADER_NAME,
+    applicationToken: process.env.APPLICATION_TOKEN,
   };
   if (
     process.env.STARGATE_AUTH_URL &&
@@ -33,7 +34,7 @@ export const getJSONAPIClient = async () => {
     options.username = process.env.STARGATE_USERNAME;
     options.password = process.env.STARGATE_PASSWORD;
   }
-  //options.logLevel = 'debug';
+  options.logLevel = 'debug';
   return await Client.connect(process.env.JSON_API_URI, options);
 };
 
@@ -43,6 +44,7 @@ export const getAstraClient = async () => {
   }
   const options: ClientOptions = {
     authHeaderName: process.env.AUTH_HEADER_NAME,
+    applicationToken: process.env.APPLICATION_TOKEN,
   };
   if (
     process.env.STARGATE_AUTH_URL &&

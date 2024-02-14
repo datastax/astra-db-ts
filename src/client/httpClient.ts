@@ -75,12 +75,7 @@ const axiosAgent = axios.create({
 const requestInterceptor = (config: InternalAxiosRequestConfig) => {
   const { method, url } = config;
   if (logger.isLevelEnabled("http")) {
-    logger.http(
-      `--- request ${method?.toUpperCase()} ${url} ${serializeCommand(
-        config.data,
-        true,
-      )}`,
-    );
+    logger.http(`--- request ${method?.toUpperCase()} ${url} ${serializeCommand(config.data, true,)}`,);
   }
   config.data = serializeCommand(config.data);
   return config;
@@ -88,13 +83,7 @@ const requestInterceptor = (config: InternalAxiosRequestConfig) => {
 
 const responseInterceptor = (response: AxiosResponse) => {
   if (logger.isLevelEnabled("http")) {
-    logger.http(
-      `--- response ${
-        response.status
-      } ${response.config.method?.toUpperCase()} ${
-        response.config.url
-      } ${JSON.stringify(response.data, null, 2)}`,
-    );
+    logger.http(`--- response ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url} ${JSON.stringify(response.data, null, 2)}`,);
   }
   return response;
 };
@@ -143,6 +132,7 @@ export class HTTPClient {
     if (options.baseApiPath) {
       this.baseUrl = this.baseUrl + "/" + options.baseApiPath;
     }
+    // console.log(this.baseUrl)
     this.authHeaderName = options.authHeaderName || DEFAULT_AUTH_HEADER;
     this.isAstra = options.isAstra || false;
     this.logSkippedOptions = options.logSkippedOptions || false;
@@ -179,8 +169,19 @@ export class HTTPClient {
           ],
         };
       }
+      // console.log('requesting with', requestInfo.url, {
+      //   url: requestInfo.url + '/default_keyspace',
+      //   data: requestInfo.data,
+      //   params: requestInfo.params,
+      //   method: requestInfo.method || DEFAULT_METHOD,
+      //   timeout: requestInfo.timeout || DEFAULT_TIMEOUT,
+      //   headers: {
+      //     [this.authHeaderName]: this.applicationToken,
+      //   },
+      // });
+
       const response = await axiosAgent({
-        url: requestInfo.url,
+        url: requestInfo.url + '/default_keyspace',
         data: requestInfo.data,
         params: requestInfo.params,
         method: requestInfo.method || DEFAULT_METHOD,
@@ -276,14 +277,8 @@ export class StargateServerError extends Error {
   status: any;
   constructor(response: any, command: Record<string, any>) {
     const commandName = Object.keys(command)[0] || "unknown";
-    const status = response.status
-      ? `, Status : ${JSON.stringify(response.status)}`
-      : "";
-    super(
-      `Command "${commandName}" failed with the following errors: ${JSON.stringify(
-        response.errors,
-      )}${status}`,
-    );
+    const status = response.status ? `, Status : ${JSON.stringify(response.status)}` : '';
+    super(`Command "${commandName}" failed with the following errors: ${JSON.stringify(response.errors,)}${status}`);
     this.errors = response.errors;
     this.command = command;
     this.status = response.status;
@@ -295,6 +290,7 @@ export const handleIfErrorResponse = (
   data: Record<string, any>,
 ) => {
   if (response.errors && response.errors.length > 0) {
+    console.log('handling error response', response, data);
     throw new StargateServerError(response, data);
   }
 };
