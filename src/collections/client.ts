@@ -12,48 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Db } from "./db";
-import {createAstraUri, createNamespace, getKeyspaceName, parseUri} from "./utils";
-import { HTTPClient } from "@/src/client";
-import { logger } from "@/src/logger";
-import { Collection } from "./collection";
-import { CreateCollectionOptions } from "./options";
+import { Db } from './db';
+import { createAstraUri, parseUri } from './utils';
+import { HTTPClient } from '@/src/client';
+import { Collection } from './collection';
+import { CreateCollectionOptions } from './options';
 
 export interface ClientOptions {
-  applicationToken?: string;
+  applicationToken: string;
   baseApiPath?: string;
   logLevel?: string;
-  authHeaderName?: string;
-  createNamespaceOnConnect?: boolean;
-  username?: string;
-  password?: string;
-  authUrl?: string;
-  isAstra?: boolean;
   logSkippedOptions?: boolean;
 }
 
 export class Client {
   httpClient: HTTPClient;
   keyspaceName?: string;
-  createNamespaceOnConnect?: boolean;
 
   constructor(baseUrl: string, keyspaceName: string, options: ClientOptions) {
     this.keyspaceName = keyspaceName;
-    this.createNamespaceOnConnect = options?.createNamespaceOnConnect ?? true;
-    //If the client is connecting to Astra, we don't want to create the namespace
-    if (options?.isAstra) {
-      this.createNamespaceOnConnect = false;
-    }
+
     this.httpClient = new HTTPClient({
       baseApiPath: options.baseApiPath,
       baseUrl: baseUrl,
       applicationToken: options.applicationToken,
       logLevel: options.logLevel,
-      authHeaderName: options.authHeaderName,
-      username: options.username,
-      password: options.password,
-      authUrl: options.authUrl,
-      isAstra: options.isAstra,
       logSkippedOptions: options.logSkippedOptions,
     });
   }
@@ -61,6 +44,7 @@ export class Client {
   /**
    * Setup a connection to the Astra/Stargate JSON API
    * @param uri an Stargate JSON API uri (Eg. http://localhost:8181/v1/testks1) where testks1 is the name of the keyspace/Namespace which should always be the last part of the URL
+   * @param options
    * @returns Client
    */
   static async connect(
@@ -68,7 +52,8 @@ export class Client {
     options?: ClientOptions | null,
   ): Promise<Client> {
     const parsedUri = parseUri(uri);
-    const client = new Client(parsedUri.baseUrl, parsedUri.keyspaceName, {
+
+    return new Client(parsedUri.baseUrl, parsedUri.keyspaceName, {
       applicationToken: options?.applicationToken
         ? options?.applicationToken
         : parsedUri.applicationToken,
@@ -76,16 +61,8 @@ export class Client {
         ? options?.baseApiPath
         : parsedUri.baseApiPath,
       logLevel: options?.logLevel,
-      authHeaderName: options?.authHeaderName,
-      createNamespaceOnConnect: options?.createNamespaceOnConnect,
-      username: options?.username,
-      password: options?.password,
-      authUrl: options?.authUrl,
-      isAstra: options?.isAstra,
       logSkippedOptions: options?.logSkippedOptions,
     });
-    await client.connect();
-    return client;
   }
 
   async collection(name: string) {
@@ -101,20 +78,6 @@ export class Client {
 
   async dropCollection(collectionName: string) {
     return await this.db().dropCollection(collectionName);
-  }
-
-  /**
-   * Connect the Client instance to JSON API (create Namespace automatically when the 'createNamespaceOnConnect' flag is set to true)
-   * @returns a Client instance
-   */
-  async connect(): Promise<Client> {
-    if (this.createNamespaceOnConnect && this.keyspaceName) {
-      logger.debug("Creating Namespace " + this.keyspaceName);
-      await createNamespace(this.httpClient, this.keyspaceName);
-    } else {
-      logger.debug("Not creating Namespace on connection!");
-    }
-    return this;
   }
 
   /**
@@ -161,6 +124,6 @@ export class AstraDB extends Client {
     // token: string, API EndPoint: string, keyspace?: string
     const keyspaceName = args[2] || DEFAULT_KEYSPACE;
     const endpoint = createAstraUri(args[1], keyspaceName);
-    super(endpoint, keyspaceName, { isAstra: true, applicationToken: args[0] });
+    super(endpoint, keyspaceName, { applicationToken: args[0] });
   }
 }

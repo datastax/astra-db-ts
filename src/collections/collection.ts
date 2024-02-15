@@ -99,9 +99,8 @@ export type UpdateOneCommand = {
 };
 
 export class Collection {
-  httpClient: any;
+  httpClient: HTTPClient;
   name: string;
-  collectionName: string;
 
   constructor(httpClient: HTTPClient, name: string) {
     if (!name) {
@@ -109,17 +108,12 @@ export class Collection {
     }
     // use a clone of the underlying http client to support multiple collections from a single db
     this.httpClient = new HTTPClient({
-      baseUrl: httpClient.baseUrl + `/${name}`,
-      username: httpClient.username,
-      password: httpClient.password,
-      authUrl: httpClient.authUrl,
+      baseUrl: httpClient.baseUrl,
       applicationToken: httpClient.applicationToken,
-      authHeaderName: httpClient.authHeaderName,
-      isAstra: httpClient.isAstra,
       logSkippedOptions: httpClient.logSkippedOptions,
+      collectionName: name,
     });
     this.name = name;
-    this.collectionName = name;
   }
 
   async insertOne(document: Record<string, any>) {
@@ -129,7 +123,9 @@ export class Collection {
           document,
         },
       };
+
       const resp = await this.httpClient.executeCommand(command, null);
+
       return {
         acknowledged: true,
         insertedId: resp.status.insertedIds[0],
@@ -148,10 +144,12 @@ export class Collection {
           options,
         },
       };
+
       const resp = await this.httpClient.executeCommand(
         command,
         insertManyInternalOptionsKeys,
       );
+
       return {
         acknowledged: true,
         insertedCount: resp.status.insertedIds?.length || 0,
@@ -173,23 +171,29 @@ export class Collection {
           options,
         },
       };
+
       if (options?.sort != null) {
         command.updateOne.sort = options?.sort;
       }
+
       setDefaultIdForUpsert(command.updateOne);
+
       const updateOneResp = await this.httpClient.executeCommand(
         command,
         updateOneInternalOptionsKeys,
       );
+
       const resp = {
         modifiedCount: updateOneResp.status.modifiedCount,
         matchedCount: updateOneResp.status.matchedCount,
         acknowledged: true,
       } as JSONAPIUpdateResult;
+
       if (updateOneResp.status.upsertedId) {
         resp.upsertedId = updateOneResp.status.upsertedId;
         resp.upsertedCount = 1;
       }
+
       return resp;
     });
   }
@@ -207,44 +211,50 @@ export class Collection {
           options,
         },
       };
+
       setDefaultIdForUpsert(command.updateMany);
+
       const updateManyResp = await this.httpClient.executeCommand(
         command,
         updateManyInternalOptionsKeys,
       );
+
       if (updateManyResp.status.moreData) {
         throw new AstraTsClientError(
           `More than ${updateManyResp.status.modifiedCount} records found for update by the server`,
           command,
         );
       }
+
       const resp = {
         modifiedCount: updateManyResp.status.modifiedCount,
         matchedCount: updateManyResp.status.matchedCount,
         acknowledged: true,
       } as JSONAPIUpdateResult;
+
       if (updateManyResp.status.upsertedId) {
         resp.upsertedId = updateManyResp.status.upsertedId;
         resp.upsertedCount = 1;
       }
+
       return resp;
     });
   }
 
-  async deleteOne(
-    filter: Record<string, any>,
-    options?: DeleteOneOptions,
-  ): Promise<JSONAPIDeleteResult> {
+  async deleteOne(filter: Record<string, any>, options?: DeleteOneOptions): Promise<JSONAPIDeleteResult> {
     return executeOperation(async (): Promise<JSONAPIDeleteResult> => {
       const command: DeleteOneCommand = {
         deleteOne: {
           filter,
         },
       };
+
       if (options?.sort) {
         command.deleteOne.sort = options.sort;
       }
+
       const deleteOneResp = await this.httpClient.executeCommand(command, null);
+
       return {
         acknowledged: true,
         deletedCount: deleteOneResp.status.deletedCount,
@@ -259,13 +269,16 @@ export class Collection {
           filter,
         },
       };
+
       const deleteManyResp = await this.httpClient.executeCommand(
         command,
         null,
       );
+
       if (deleteManyResp.status.moreData) {
         throw new AstraTsClientError(`More records found to be deleted even after deleting ${deleteManyResp.status.deletedCount} records`, command,);
       }
+
       return {
         acknowledged: true,
         deletedCount: deleteManyResp.status.deletedCount,
@@ -277,10 +290,7 @@ export class Collection {
     return new FindCursor(this, filter, options);
   }
 
-  async findOne(
-    filter: Record<string, any>,
-    options?: FindOneOptions,
-  ): Promise<Record<string, any> | null> {
+  async findOne(filter: Record<string, any>, options?: FindOneOptions): Promise<Record<string, any> | null> {
     return executeOperation(async (): Promise<Record<string, any> | null> => {
       const command: FindOneCommand = {
         findOne: {
@@ -320,6 +330,7 @@ export class Collection {
           sort?: SortOption;
         };
       };
+
       const command: FindOneAndReplaceCommand = {
         findOneAndReplace: {
           filter,
@@ -327,17 +338,19 @@ export class Collection {
           options,
         },
       };
+
       setDefaultIdForUpsert(command.findOneAndReplace, true);
+
       if (options?.sort) {
         command.findOneAndReplace.sort = options.sort;
-        if (options.sort != null) {
-          delete options.sort;
-        }
+        delete options.sort;
       }
+
       const resp = await this.httpClient.executeCommand(
         command,
         findOneAndReplaceInternalOptionsKeys,
       );
+
       return {
         value: resp.data?.document,
         ok: 1,
@@ -356,7 +369,9 @@ export class Collection {
           filter,
         },
       };
+
       const resp = await this.httpClient.executeCommand(command, null);
+
       return resp.status.count;
     });
   }
@@ -367,6 +382,7 @@ export class Collection {
         filter,
       },
     };
+
     if (options?.sort) {
       command.findOneAndDelete.sort = options.sort;
     }

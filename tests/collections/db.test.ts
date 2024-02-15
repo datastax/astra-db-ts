@@ -12,18 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import assert from "assert";
-import { Db } from "@/src/collections/db";
-import { Client } from "@/src/collections/client";
-import { parseUri, createNamespace } from "@/src/collections/utils";
-import { testClient, TEST_COLLECTION_NAME } from "@/tests/fixtures";
-import { randAlphaNumeric } from "@ngneat/falso";
-import { HTTPClient } from "@/src/client";
+import assert from 'assert';
+import { Db } from '@/src/collections/db';
+import { Client } from '@/src/collections/client';
+import { parseUri } from '@/src/collections/utils';
+import { TEST_COLLECTION_NAME, testClient } from '@/tests/fixtures';
+import { randAlphaNumeric } from '@ngneat/falso';
+import { HTTPClient } from '@/src/client';
 
 describe("Astra TS Client - collections.Db", async () => {
   let astraClient: Client | null;
   let dbUri: string;
-  let isAstra: boolean;
   let httpClient: HTTPClient;
   before(async function () {
     if (testClient == null) {
@@ -34,7 +33,6 @@ describe("Astra TS Client - collections.Db", async () => {
       return this.skip();
     }
     dbUri = testClient.uri;
-    isAstra = testClient.isAstra;
     httpClient = astraClient.httpClient;
   });
   afterEach(async () => {
@@ -51,7 +49,7 @@ describe("Astra TS Client - collections.Db", async () => {
     it("should not initialize a Db without a name", () => {
       let error: any;
       try {
-        // @ts-ignore - intentionally passing undefined for testing purposes
+        // @ts-expect-error - intentionally passing undefined for testing purposes
         const db = new Db(httpClient);
         assert.ok(db);
       } catch (e) {
@@ -71,7 +69,7 @@ describe("Astra TS Client - collections.Db", async () => {
       let error: any;
       try {
         const db = new Db(httpClient, "test-db");
-        // @ts-ignore - intentionally passing undefined for testing purposes
+        // @ts-expect-error - intentionally passing undefined for testing purposes
         const collection = db.collection();
         assert.ok(collection);
       } catch (e) {
@@ -100,53 +98,12 @@ describe("Astra TS Client - collections.Db", async () => {
     });
   });
 
-  describe("dropDatabase", function (this: Mocha.Suite) {
-    const suite = this;
-    after(async () => {
-      if (isAstra) {
-        return;
-      }
-      const keyspaceName = parseUri(dbUri).keyspaceName;
-      await createNamespace(httpClient, keyspaceName);
-    });
-    it("should drop the underlying database (AKA namespace)", async () => {
-      if (isAstra) {
-        suite.ctx.skip();
-      }
-      const keyspaceName = parseUri(dbUri).keyspaceName;
-      const db = new Db(httpClient, keyspaceName);
-      const suffix = randAlphaNumeric({ length: 4 }).join("");
-      await db.createCollection(`test_db_collection_${suffix}`);
-      const res = await db.dropDatabase();
-      assert.strictEqual(res.status?.ok, 1);
-
-      try {
-        await db.createCollection(`test_db_collection_${suffix}`);
-        assert.ok(false);
-      } catch (err: any) {
-        assert.strictEqual(err.errors.length, 1);
-        assert.strictEqual(
-          err.errors[0].message,
-          "INVALID_ARGUMENT: Keyspace '" + keyspaceName + "' doesn't exist",
-        );
-      }
-    });
-  });
-
   describe("createDatabase", function (this: Mocha.Suite) {
     const suite = this;
-    after(async () => {
-      if (isAstra) {
-        return;
-      }
-      const keyspaceName = parseUri(dbUri).keyspaceName;
-      await createNamespace(httpClient, keyspaceName);
-    });
 
     it("should create the underlying database (AKA namespace)", async () => {
-      if (isAstra) {
-        suite.ctx.skip();
-      }
+      suite.ctx.skip();
+
       const keyspaceName = parseUri(dbUri).keyspaceName;
       const db = new Db(httpClient, keyspaceName);
       const suffix = randAlphaNumeric({ length: 4 }).join("");

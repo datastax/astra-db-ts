@@ -12,23 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import http from "http";
-import axios, {
-  AxiosRequestConfig,
-  AxiosResponse,
-  InternalAxiosRequestConfig,
-} from "axios";
-import { logger, setLevel } from "@/src/logger";
-import { inspect } from "util";
-import { LIB_NAME, LIB_VERSION } from "../version";
-import { getStargateAccessToken } from "../collections/utils";
-import { EJSON } from "bson";
+import http from 'http';
+import axios, { AxiosRequestConfig, } from 'axios';
+import { logger, setLevel } from '@/src/logger';
+import { inspect } from 'util';
+import { LIB_NAME, LIB_VERSION } from '../version';
+import { EJSON } from 'bson';
 
 const REQUESTED_WITH = LIB_NAME + "/" + LIB_VERSION;
 const DEFAULT_AUTH_HEADER = "Token";
 const DEFAULT_METHOD = "get";
 const DEFAULT_TIMEOUT = 30000;
-export const AUTH_API_PATH = "/v1/auth";
+
 const HTTP_METHODS = {
   get: "GET",
   post: "POST",
@@ -38,17 +33,12 @@ const HTTP_METHODS = {
 };
 
 interface APIClientOptions {
-  //applicationToken is optional, since adding username and password eventually will be an alternate option for this.
-  applicationToken?: string;
+  applicationToken: string;
+  baseUrl: string;
   baseApiPath?: string;
-  baseUrl?: string;
-  authHeaderName?: string;
   logLevel?: string;
-  username?: string;
-  password?: string;
-  authUrl?: string;
-  isAstra?: boolean;
   logSkippedOptions?: boolean;
+  collectionName?: string;
 }
 
 export interface APIResponse {
@@ -71,95 +61,59 @@ const axiosAgent = axios.create({
   timeout: DEFAULT_TIMEOUT,
 });
 
-// InternalAxiosRequestConfig because of https://github.com/axios/axios/issues/5494#issuecomment-1402663237
-const requestInterceptor = (config: InternalAxiosRequestConfig) => {
+axiosAgent.interceptors.request.use((config) => {
   const { method, url } = config;
+
   if (logger.isLevelEnabled("http")) {
     logger.http(`--- request ${method?.toUpperCase()} ${url} ${serializeCommand(config.data, true,)}`,);
   }
+
   config.data = serializeCommand(config.data);
   return config;
-};
+});
 
-const responseInterceptor = (response: AxiosResponse) => {
+axiosAgent.interceptors.response.use((response) => {
   if (logger.isLevelEnabled("http")) {
     logger.http(`--- response ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url} ${JSON.stringify(response.data, null, 2)}`,);
   }
   return response;
-};
-
-axiosAgent.interceptors.request.use(requestInterceptor);
-axiosAgent.interceptors.response.use(responseInterceptor);
+});
 
 export class HTTPClient {
   baseUrl: string;
   applicationToken: string;
-  authHeaderName: string;
-  username: string;
-  password: string;
-  authUrl: string;
-  isAstra: boolean;
   logSkippedOptions: boolean;
+  collectionName?: string;
 
   constructor(options: APIClientOptions) {
-    // do not support usage in browsers
     if (typeof window !== "undefined") {
       throw new Error("not for use in a web browser");
     }
-    // set the baseURL to Astra, if the user provides a JSON API URL, use that instead.
-    if (options.baseUrl) {
-      this.baseUrl = options.baseUrl;
-    } else {
+
+    if (!options.baseUrl) {
       throw new Error("baseUrl required for initialization");
     }
-    this.username = options.username || "";
-    this.password = options.password || "";
-    this.authUrl = options.authUrl || this.baseUrl + AUTH_API_PATH;
-    if (options.applicationToken) {
-      this.applicationToken = options.applicationToken;
-    } else {
-      if (this.username === "" || this.password === "") {
-        throw new Error(
-          "applicationToken/auth info required for initialization",
-        );
-      }
-      this.applicationToken = ""; //We will set this by accessing the auth url when the first request is received
+
+    if (!options.applicationToken) {
+      throw new Error("applicationToken required for initialization");
     }
+
+    this.baseUrl = options.baseUrl;
+    this.collectionName = options.collectionName;
+    this.applicationToken = options.applicationToken;
+    this.logSkippedOptions = options.logSkippedOptions || false;
 
     if (options.logLevel) {
       setLevel(options.logLevel);
     }
+
     if (options.baseApiPath) {
-      this.baseUrl = this.baseUrl + "/" + options.baseApiPath;
+      this.baseUrl += "/" + options.baseApiPath;
     }
-    // console.log(this.baseUrl)
-    this.authHeaderName = options.authHeaderName || DEFAULT_AUTH_HEADER;
-    this.isAstra = options.isAstra || false;
-    this.logSkippedOptions = options.logSkippedOptions || false;
   }
 
   async _request(requestInfo: AxiosRequestConfig): Promise<APIResponse> {
     try {
-      if (this.applicationToken === "") {
-        logger.debug("@datastax/astra-db-ts/rest: getting token");
-        try {
-          this.applicationToken = await getStargateAccessToken(
-            this.authUrl,
-            this.username,
-            this.password,
-          );
-        } catch (authError: any) {
-          return {
-            errors: [
-              {
-                message: authError.message
-                  ? authError.message
-                  : "Authentication failed, please retry!",
-              },
-            ],
-          };
-        }
-      }
       if (!this.applicationToken) {
         return {
           errors: [
@@ -169,25 +123,17 @@ export class HTTPClient {
           ],
         };
       }
-      // console.log('requesting with', requestInfo.url, {
-      //   url: requestInfo.url + '/default_keyspace',
-      //   data: requestInfo.data,
-      //   params: requestInfo.params,
-      //   method: requestInfo.method || DEFAULT_METHOD,
-      //   timeout: requestInfo.timeout || DEFAULT_TIMEOUT,
-      //   headers: {
-      //     [this.authHeaderName]: this.applicationToken,
-      //   },
-      // });
+
+      const url = requestInfo.url + '/default_keyspace' + (this.collectionName ? `/${this.collectionName}` : "");
 
       const response = await axiosAgent({
-        url: requestInfo.url + '/default_keyspace',
+        url: url,
         data: requestInfo.data,
         params: requestInfo.params,
         method: requestInfo.method || DEFAULT_METHOD,
         timeout: requestInfo.timeout || DEFAULT_TIMEOUT,
         headers: {
-          [this.authHeaderName]: this.applicationToken,
+          [DEFAULT_AUTH_HEADER]: this.applicationToken,
         },
       });
       if (
@@ -195,25 +141,13 @@ export class HTTPClient {
         (response.data?.errors?.length > 0 &&
           response.data.errors[0]?.message === "UNAUTHENTICATED: Invalid token")
       ) {
-        logger.debug("@datastax/astra-db-ts/rest: reconnecting");
-        try {
-          this.applicationToken = await getStargateAccessToken(
-            this.authUrl,
-            this.username,
-            this.password,
-          );
-        } catch (authError: any) {
-          return {
-            errors: [
-              {
-                message: authError.message
-                  ? authError.message
-                  : "Authentication failed, please retry!",
-              },
-            ],
-          };
-        }
-        return this._request(requestInfo);
+        return {
+          errors: [
+            {
+              message: "Authentication failed, is your token valid?",
+            },
+          ],
+        };
       }
       if (response.status === 200) {
         return {
@@ -255,17 +189,20 @@ export class HTTPClient {
     optionsToRetain: Set<string> | null,
   ) {
     const commandName = Object.keys(data)[0];
+
     cleanupOptions(
       commandName,
       data[commandName],
       optionsToRetain,
       this.logSkippedOptions,
     );
+
     const response = await this._request({
       url: this.baseUrl,
       method: HTTP_METHODS.post,
       data,
     });
+
     handleIfErrorResponse(response, data);
     return response;
   }
@@ -275,6 +212,7 @@ export class StargateServerError extends Error {
   errors: any[];
   command: Record<string, any>;
   status: any;
+
   constructor(response: any, command: Record<string, any>) {
     const commandName = Object.keys(command)[0] || "unknown";
     const status = response.status ? `, Status : ${JSON.stringify(response.status)}` : '';
@@ -285,20 +223,20 @@ export class StargateServerError extends Error {
   }
 }
 
-export const handleIfErrorResponse = (
+export function handleIfErrorResponse (
   response: any,
   data: Record<string, any>,
-) => {
+) {
   if (response.errors && response.errors.length > 0) {
     console.log('handling error response', response, data);
     throw new StargateServerError(response, data);
   }
-};
+}
 
 function serializeCommand(data: Record<string, any>, pretty?: boolean): string {
   return EJSON.stringify(
     data,
-    (key: any, value: any) => handleValues(key, value),
+    (_: unknown, value: any) => handleValues(value),
     pretty ? "  " : "",
   );
 }
@@ -307,7 +245,7 @@ function deserialize(data: Record<string, any>): Record<string, any> {
   return data != null ? EJSON.deserialize(data) : data;
 }
 
-function handleValues(key: any, value: any): any {
+function handleValues(value: any): any {
   if (value != null && typeof value === "bigint") {
     //BigInt handling
     return Number(value);

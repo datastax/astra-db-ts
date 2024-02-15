@@ -23,7 +23,7 @@ import {
   TEST_COLLECTION_NAME,
 } from "@/tests/fixtures";
 
-describe(`Astra TS Client - ${testClient} Connection - collections.cursor`, async () => {
+describe(`Astra TS Client - astra Connection - collections.cursor`, async () => {
   let astraClient: Client | null;
   let db: Db;
   let collection: Collection;

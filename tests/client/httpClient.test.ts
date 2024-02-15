@@ -20,17 +20,15 @@ describe("Astra TS Client - client.HTTPClient", () => {
     it("should not initialize in a web browser", () => {
       let error: any;
       try {
-        // @ts-ignore
-        global.window = true;
-        // @ts-ignore
+        // @ts-expect-error - <Insert reason here please>
+        window = true;
+        // @ts-expect-error - <Insert reason here please>
         const client = new HTTPClient();
         assert.ok(client);
       } catch (e) {
         error = e;
       }
       assert.ok(error);
-      // @ts-ignore
-      delete global.window;
     });
     it("should not initialize without an application token", () => {
       let error: any;

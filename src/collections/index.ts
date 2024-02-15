@@ -27,4 +27,4 @@ export {
   DeleteOneOptions,
 } from "./options";
 
-export { createAstraUri, createStargateUri } from "./utils";
+export { createAstraUri } from "./utils";

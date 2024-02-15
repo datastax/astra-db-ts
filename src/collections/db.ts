@@ -12,13 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { HTTPClient } from "@/src/client";
-import {
-  CreateCollectionOptions,
-  createCollectionOptionsKeys,
-} from "./options";
-import { Collection } from "./collection";
-import { executeOperation, createNamespace, dropNamespace } from "./utils";
+import { HTTPClient } from '@/src/client';
+import { CreateCollectionOptions, createCollectionOptionsKeys, } from './options';
+import { Collection } from './collection';
+import { createNamespace, executeOperation } from './utils';
 
 export class Db {
   rootHttpClient: HTTPClient;
@@ -33,12 +30,7 @@ export class Db {
     // use a clone of the underlying http client to support multiple db's from a single connection
     this.httpClient = new HTTPClient({
       baseUrl: httpClient.baseUrl,
-      username: httpClient.username,
-      password: httpClient.password,
-      authUrl: httpClient.authUrl,
       applicationToken: httpClient.applicationToken,
-      authHeaderName: httpClient.authHeaderName,
-      isAstra: httpClient.isAstra,
       logSkippedOptions: httpClient.logSkippedOptions,
     });
     this.name = name;
@@ -73,14 +65,17 @@ export class Db {
           options?: CreateCollectionOptions;
         };
       };
+
       const command: CreateCollectionCommand = {
         createCollection: {
           name: collectionName,
         },
       };
+
       if (options != null) {
         command.createCollection.options = options;
       }
+
       return await this.httpClient.executeCommand(
         command,
         createCollectionOptionsKeys,
@@ -107,10 +102,7 @@ export class Db {
    * @returns Promise
    */
   async dropDatabase() {
-    if (this.rootHttpClient.isAstra) {
-      throw new StargateAstraError("Cannot drop database in Astra. Please use the Astra UI to drop the database.",);
-    }
-    return await dropNamespace(this.rootHttpClient, this.name);
+    throw new StargateAstraError("Cannot drop database in Astra. Please use the Astra UI to drop the database.",);
   }
 
   /**
@@ -124,6 +116,7 @@ export class Db {
 
 export class StargateAstraError extends Error {
   message: string;
+
   constructor(message: string) {
     super(message);
     this.message = message;

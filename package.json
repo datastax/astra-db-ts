@@ -5,7 +5,8 @@
   "contributors": [
     "Valeri Karpov (https://github.com/vkarpov15)",
     "Aaron Morton (https://github.com/amorton)",
-    "Kathiresan Selvaraj (https://github.com/kathirsvn)"
+    "Kathiresan Selvaraj (https://github.com/kathirsvn)",
+    "Kavin Gupta (https://github.com/toptobes)"
   ],
   "keywords": [
     "cassandra",
@@ -49,9 +50,7 @@
   },
   "scripts": {
     "lint": "eslint .",
-    "test": "env TEST_DOC_DB=jsonapi ts-mocha --paths -p tsconfig.json tests/**/*.test.ts",
-    "test-astra": "env TEST_DOC_DB=astra nyc ts-mocha --paths -p tsconfig.json tests/**/*.test.ts",
-    "test-jsonapi": "env TEST_DOC_DB=jsonapi nyc ts-mocha --paths -p tsconfig.json tests/**/*.test.ts",
+    "test": "env TEST_DOC_DB=astra nyc ts-mocha --paths -p tsconfig.json tests/**/*.test.ts",
     "preinstall": "npm run update-version-file",
     "build": "npm run update-version-file && tsc --project tsconfig.build.json && tscpaths -p tsconfig.build.json -s ./src -o ./dist",
     "build:docs": "jsdoc2md -t APIReference.hbs --files src/**/*.ts --configure ./jsdoc2md.json > APIReference.md",

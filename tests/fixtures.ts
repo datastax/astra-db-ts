@@ -12,58 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import assert from "assert";
-import { Client, ClientOptions } from "@/src/collections/client";
+import { Client } from '@/src/collections/client';
 
-export const TEST_COLLECTION_NAME = "default_keyspace";
+export const TEST_COLLECTION_NAME = 'test_coll';
 
-export const getJSONAPIClient = async () => {
-  if (!process.env.JSON_API_URI) {
+const getAstraClient = async () => {
+  if (!process.env.ASTRA_URI || !process.env.APPLICATION_TOKEN) {
     return null;
   }
-  const options: ClientOptions = {
-    authHeaderName: process.env.AUTH_HEADER_NAME,
-    applicationToken: process.env.APPLICATION_TOKEN,
-  };
-  if (
-    process.env.STARGATE_AUTH_URL &&
-    process.env.STARGATE_USERNAME &&
-    process.env.STARGATE_PASSWORD
-  ) {
-    options.authUrl = process.env.STARGATE_AUTH_URL;
-    options.username = process.env.STARGATE_USERNAME;
-    options.password = process.env.STARGATE_PASSWORD;
-  }
-  options.logLevel = 'debug';
-  return await Client.connect(process.env.JSON_API_URI, options);
-};
 
-export const getAstraClient = async () => {
-  if (!process.env.ASTRA_URI) {
-    return null;
-  }
-  const options: ClientOptions = {
-    authHeaderName: process.env.AUTH_HEADER_NAME,
+  return await Client.connect(process.env.ASTRA_URI, {
     applicationToken: process.env.APPLICATION_TOKEN,
-  };
-  if (
-    process.env.STARGATE_AUTH_URL &&
-    process.env.STARGATE_USERNAME &&
-    process.env.STARGATE_PASSWORD
-  ) {
-    options.authUrl = process.env.STARGATE_AUTH_URL;
-    options.username = process.env.STARGATE_USERNAME;
-    options.password = process.env.STARGATE_PASSWORD;
-  }
-  //options.logLevel = 'debug';
-  options.isAstra = true;
-  return await Client.connect(process.env.ASTRA_URI, options);
+  });
 };
-
-export const createSampleDoc = () => ({
-  _id: "doc1",
-  username: "aaron",
-});
 
 export type Employee = {
   _id?: string;
@@ -82,15 +43,15 @@ export type Employee = {
 };
 
 const sampleMultiLevelDoc: Employee = {
-  username: "aaron",
+  username: 'aaron',
   human: true,
   age: 47,
   password: null,
   address: {
     number: 86,
-    street: "monkey street",
+    street: 'monkey street',
     suburb: null,
-    city: "big banana",
+    city: 'big banana',
     is_office: false,
   },
 };
@@ -108,33 +69,33 @@ export const createSampleDocWithMultiLevel = () =>
 
 export const createSampleDoc2WithMultiLevel = () =>
   ({
-    username: "jimr",
+    username: 'jimr',
     human: true,
     age: 52,
-    password: "gasxaq==",
+    password: 'gasxaq==',
     address: {
       number: 45,
-      street: "main street",
+      street: 'main street',
       suburb: null,
-      city: "nyc",
+      city: 'nyc',
       is_office: true,
-      country: "usa",
+      country: 'usa',
     },
   }) as Employee;
 
 export const createSampleDoc3WithMultiLevel = () =>
   ({
-    username: "saml",
+    username: 'saml',
     human: false,
     age: 25,
-    password: "jhkasfka==",
+    password: 'jhkasfka==',
     address: {
       number: 123,
-      street: "church street",
+      street: 'church street',
       suburb: null,
-      city: "la",
+      city: 'la',
       is_office: true,
-      country: "usa",
+      country: 'usa',
     },
   }) as Employee;
 
@@ -144,30 +105,10 @@ export const sampleUsersList = Array.of(
   createSampleDoc3WithMultiLevel(),
 ) as Employee[];
 
-export const getSampleDocs = (numUsers: number) =>
-  Array.from({ length: numUsers }, createSampleDoc);
-
-export const sleep = async (ms = 100) =>
-  new Promise((resolve) => setTimeout(resolve, ms));
-
-export const testClientName = process.env.TEST_DOC_DB;
-assert.ok(testClientName === "astra" || testClientName === "jsonapi");
-
 export const testClient =
-  process.env.TEST_DOC_DB === "astra"
-    ? process.env.ASTRA_URI
-      ? {
-          client: getAstraClient(),
-          isAstra: true,
-          uri: process.env.ASTRA_URI,
-        }
-      : null
-    : process.env.TEST_DOC_DB === "jsonapi"
-    ? process.env.JSON_API_URI
-      ? {
-          client: getJSONAPIClient(),
-          isAstra: false,
-          uri: process.env.JSON_API_URI,
-        }
-      : null
-    : null;
+  process.env.ASTRA_URI
+    ? {
+      client: getAstraClient(),
+      uri: process.env.ASTRA_URI,
+    }
+    : null

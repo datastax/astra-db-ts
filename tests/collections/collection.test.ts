@@ -18,15 +18,13 @@ import { Collection } from "@/src/collections/collection";
 import { Client } from "@/src/collections/client";
 import {
   testClient,
-  testClientName,
   sampleUsersList,
   createSampleDocWithMultiLevel,
   createSampleDocWithMultiLevelWithId,
   TEST_COLLECTION_NAME,
 } from "@/tests/fixtures";
 
-describe(`AstraTsClient - ${testClientName} Connection - collections.collection`, async () => {
-  const isAstra: boolean = testClientName === "astra";
+describe(`AstraTsClient - astra Connection - collections.collection`, async () => {
   let astraClient: Client | null;
   let db: Db;
   let collection: Collection;
@@ -96,18 +94,10 @@ describe(`AstraTsClient - ${testClientName} Connection - collections.collection`
         error = e;
       }
       assert.ok(error);
-      if (isAstra) {
-        //In Astra, it returns a 413 error prior to reaching the JSON API
-        assert.strictEqual(
-          error.errors[0].message,
-          "Request failed with status code 413",
-        );
-      } else {
-        assert.strictEqual(
-          error.errors[0].message,
-          "Document size limitation violated: document size (1048636 chars) exceeds maximum allowed (1000000)",
-        );
-      }
+      assert.strictEqual(
+        error.errors[0].message,
+        "Request failed with status code 413",
+      );
     });
     it("Should fail if the number of levels in the doc is > 16", async () => {
       const docToInsert = {
@@ -578,9 +568,9 @@ describe(`AstraTsClient - ${testClientName} Connection - collections.collection`
       const insertDocResp = await collection.insertOne(doc);
       //read that back with projection
       const idToCheck = insertDocResp.insertedId;
-      const findCursor = await collection.find(
+      const findCursor = collection.find(
         { _id: idToCheck },
-        { projection: { username: 1, "address.city": true } },
+        { projection: { username: 1, 'address.city': true } }
       );
       const resDoc = await findCursor.next();
       assert.ok(resDoc);
@@ -595,7 +585,7 @@ describe(`AstraTsClient - ${testClientName} Connection - collections.collection`
       const insertDocResp = await collection.insertOne(doc);
       //read that back with projection
       const idToCheck = insertDocResp.insertedId;
-      const findCursor = await collection.find(
+      const findCursor = collection.find(
         { _id: idToCheck },
         { projection: { username: 1, "address.city": true, _id: 0 } },
       );
@@ -2568,13 +2558,13 @@ describe(`AstraTsClient - ${testClientName} Connection - collections.collection`
         { username: "aaa", answer: 42 },
       ]);
 
-      let count = await collection.count();
+      let count = await collection.countDocuments();
       assert.strictEqual(count, 3);
 
-      count = await collection.count({ username: "a" });
+      count = await collection.countDocuments({ username: "a" });
       assert.strictEqual(count, 1);
 
-      count = await collection.count({ answer: 42 });
+      count = await collection.countDocuments({ answer: 42 });
       assert.strictEqual(count, 2);
     });
     it("supports findOneAndDelete()", async () => {
