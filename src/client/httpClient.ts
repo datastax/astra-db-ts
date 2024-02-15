@@ -20,8 +20,8 @@ import { LIB_NAME, LIB_VERSION } from '../version';
 import { EJSON } from 'bson';
 
 const REQUESTED_WITH = LIB_NAME + "/" + LIB_VERSION;
-const DEFAULT_AUTH_HEADER = "Token";
-const DEFAULT_METHOD = "get";
+const DEFAULT_AUTH_HEADER = process.env['ASTRA_AUTH_HEADER'] || "Token";
+const DEFAULT_METHOD = "GET";
 const DEFAULT_TIMEOUT = 30000;
 
 const HTTP_METHODS = {
