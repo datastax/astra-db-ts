@@ -24,17 +24,22 @@ describe("Astra TS Client - collections.Db", async () => {
   let astraClient: Client | null;
   let dbUri: string;
   let httpClient: HTTPClient;
+
   before(async function () {
     if (testClient == null) {
       return this.skip();
     }
-    astraClient = await testClient.client;
+
+    astraClient = await testClient.new();
+
     if (astraClient === null) {
       return this.skip();
     }
+
     dbUri = testClient.uri;
     httpClient = astraClient.httpClient;
   });
+
   afterEach(async () => {
     const db = astraClient?.db();
     // run drop collection async to save time
@@ -46,6 +51,7 @@ describe("Astra TS Client - collections.Db", async () => {
       const db = new Db(httpClient, "test-db");
       assert.ok(db);
     });
+
     it("should not initialize a Db without a name", () => {
       let error: any;
       try {
@@ -65,6 +71,7 @@ describe("Astra TS Client - collections.Db", async () => {
       const collection = db.collection("test-collection");
       assert.ok(collection);
     });
+
     it("should not initialize a Collection without a name", () => {
       let error: any;
       try {
@@ -77,6 +84,7 @@ describe("Astra TS Client - collections.Db", async () => {
       }
       assert.ok(error);
     });
+
     it("should create a Collection", async () => {
       const collectionName = TEST_COLLECTION_NAME;
       const db = new Db(httpClient, parseUri(dbUri).keyspaceName);

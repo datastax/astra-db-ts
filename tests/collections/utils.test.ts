@@ -25,6 +25,7 @@ describe("Utils test", () => {
         "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1",
     );
   });
+
   it("ClientBaseUriTestDefaultKeyspace", () => {
     const apiEndPoint = "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com";
     const astraDb = new AstraDB("myToken",apiEndPoint);
@@ -33,6 +34,7 @@ describe("Utils test", () => {
         "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/default_keyspace",
     );
   });
+
   it("createProdAstraUri", () => {
     const apiEndPoint = "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com";
     const uri: string = createAstraUri( apiEndPoint, "testks1");
@@ -41,6 +43,7 @@ describe("Utils test", () => {
       "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1",
     );
   });
+
   it("createProdAstraUriWithToken", () => {
     const apiEndPoint = "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com";
     const uri: string = createAstraUri( apiEndPoint, "testks1", "myToken");
@@ -49,6 +52,7 @@ describe("Utils test", () => {
         "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1?applicationToken=myToken",
     );
   });
+
   it("createProdAstraUriWithTokenAndProdEnum", () => {
       const apiEndPoint = "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com";
       const uri: string = createAstraUri( apiEndPoint, "testks1", "myToken");
@@ -57,6 +61,7 @@ describe("Utils test", () => {
           "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1?applicationToken=myToken",
       );
     });
+
   it("createProdAstraUriWithTokenAndProdEnumWithBaseAPIPath", () => {
     const apiEndPoint = "https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com";
     const uri: string = createAstraUri( apiEndPoint, "testks1", "myToken","apis");

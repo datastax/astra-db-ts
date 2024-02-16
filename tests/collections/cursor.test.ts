@@ -27,19 +27,23 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
   let astraClient: Client | null;
   let db: Db;
   let collection: Collection;
+
   const sampleUsers = sampleUsersList;
+
   before(async function () {
     if (testClient == null) {
       return this.skip();
     }
-    astraClient = await testClient.client;
+
+    astraClient = await testClient.new();
+
     if (astraClient === null) {
       return this.skip();
     }
+
     db = astraClient.db();
-    const collectionName: string = TEST_COLLECTION_NAME;
-    await db.createCollection(collectionName);
-    collection = db.collection(collectionName);
+    await db.createCollection(TEST_COLLECTION_NAME);
+    collection = db.collection(TEST_COLLECTION_NAME);
     await collection?.deleteMany({});
   });
 
@@ -73,12 +77,14 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
       const res = await cursor.toArray();
       assert.strictEqual(res.length, 1);
     });
+
     it("should get next document with next()", async () => {
       await collection.insertMany(sampleUsers);
       const cursor = new FindCursor(collection, {});
       const doc = await cursor.next();
       assert.ok(doc);
     });
+
     it("should execute a limited query", async () => {
       await collection.insertMany(sampleUsers);
       const cursor = new FindCursor(collection, {}, { limit: 3 });
@@ -86,6 +92,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
       assert.strictEqual(res.length, 3);
       assert.strictEqual(cursor.page.length, 3);
     });
+
     it("should treat limit 0 as no limit", async () => {
       await collection.insertMany(sampleUsers);
       const cursor = new FindCursor(collection, {}, { limit: 0 });
@@ -93,6 +100,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
       assert.strictEqual(res.length, 3);
       assert.strictEqual(cursor.page.length, 3);
     });
+
     it("should handle negative limit", async () => {
       await collection.insertMany(sampleUsers);
       const cursor = new FindCursor(collection, {}, { limit: -2 });
@@ -101,6 +109,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
         /limit should be greater than `0`/,
       );
     });
+
     it("should execute a limited query with limit set less than default page size", async () => {
       const docList = Array.from({ length: 20 }, () => ({ username: "id" }));
       docList.forEach((doc, index) => {
@@ -120,6 +129,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
       }
       assert.strictEqual(countWithLimitSet, 5);
     });
+
     it("should execute a limited query with limit set equal to default page size", async () => {
       const docList = Array.from({ length: 20 }, () => ({ username: "id" }));
       docList.forEach((doc, index) => {
@@ -151,6 +161,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
       }
       assert.strictEqual(countWithLimitSet, 20);
     });
+
     it("should execute a limited query with limit set greater than available", async () => {
       const docList = Array.from({ length: 20 }, () => ({ username: "id" }));
       docList.forEach((doc, index) => {
@@ -170,12 +181,14 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
       }
       assert.strictEqual(countWithLimitSet, 20);
     });
+
     it("should execute an all query", async () => {
       await collection.insertMany(sampleUsers);
       const cursor = new FindCursor(collection, {});
       const res = await cursor.toArray();
       assert.strictEqual(res.length, sampleUsers.length);
     });
+
     it("should not execute twice", async () => {
       await collection.insertMany(sampleUsers);
       const cursor = new FindCursor(collection, {});
@@ -190,6 +203,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
       const count2 = await cursor.count();
       assert.strictEqual(count2, sampleUsers.length);
     });
+
     it("should iterate over all documents", async () => {
       await collection.insertMany(sampleUsers);
       const cursor = new FindCursor(collection, {});
@@ -199,14 +213,16 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
       });
       assert.strictEqual(docCount, sampleUsers.length);
     });
+
     it("should iterate over all documents with a forEach()", async () => {
       await collection.insertMany(sampleUsers);
       const cursor = new FindCursor(collection, {});
       let docCount = 0;
-      await cursor.forEach(async () => {
+      let b = await cursor.forEach(async () => {
         await Promise.resolve();
         docCount++;
       });
+      console.log(b)
       assert.strictEqual(docCount, sampleUsers.length);
     });
   });

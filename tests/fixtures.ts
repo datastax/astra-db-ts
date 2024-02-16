@@ -16,7 +16,7 @@ import { Client } from '@/src/collections/client';
 
 export const TEST_COLLECTION_NAME = 'test_coll';
 
-const getAstraClient = async () => {
+const makeAstraClient = async () => {
   if (!process.env.ASTRA_URI || !process.env.APPLICATION_TOKEN) {
     return null;
   }
@@ -50,22 +50,20 @@ const sampleMultiLevelDoc: Employee = {
   address: {
     number: 86,
     street: 'monkey street',
-    suburb: null,
+    suburb: 'not null',
     city: 'big banana',
     is_office: false,
   },
 };
 
-export const createSampleDocWithMultiLevelWithId = (docId: string) => {
-  const sampleMultiLevelDocWithId = JSON.parse(
-    JSON.stringify(sampleMultiLevelDoc),
-  ) as Employee; //parse and stringigy is to clone and modify only the new object
-  sampleMultiLevelDocWithId._id = docId;
-  return sampleMultiLevelDocWithId;
-};
+export const createSampleDocWithMultiLevelWithId = (docId: string) =>
+  ({
+    ...sampleMultiLevelDoc,
+    _id: docId,
+  }) as Employee;
 
 export const createSampleDocWithMultiLevel = () =>
-  sampleMultiLevelDoc as Employee;
+  sampleMultiLevelDoc;
 
 export const createSampleDoc2WithMultiLevel = () =>
   ({
@@ -99,16 +97,16 @@ export const createSampleDoc3WithMultiLevel = () =>
     },
   }) as Employee;
 
-export const sampleUsersList = Array.of(
+export const sampleUsersList = [
   createSampleDocWithMultiLevel(),
   createSampleDoc2WithMultiLevel(),
   createSampleDoc3WithMultiLevel(),
-) as Employee[];
+];
 
 export const testClient =
   process.env.ASTRA_URI
     ? {
-      client: getAstraClient(),
+      new: makeAstraClient,
       uri: process.env.ASTRA_URI,
     }
     : null

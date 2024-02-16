@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import http from 'http';
+import http2 from 'http2';
 import axios, { AxiosRequestConfig, } from 'axios';
 import { logger, setLevel } from '@/src/logger';
 import { inspect } from 'util';
@@ -32,12 +33,14 @@ const HTTP_METHODS = {
   delete: "DELETE",
 };
 
-interface APIClientOptions {
+interface HTTPClientOptions {
   applicationToken: string;
   baseUrl: string;
   baseApiPath?: string;
   logLevel?: string;
   logSkippedOptions?: boolean;
+  useHttp2?: boolean;
+  keyspaceName?: string;
   collectionName?: string;
 }
 
@@ -80,12 +83,15 @@ axiosAgent.interceptors.response.use((response) => {
 });
 
 export class HTTPClient {
+  origin: string;
   baseUrl: string;
   applicationToken: string;
   logSkippedOptions: boolean;
+  http2Session?: http2.ClientHttp2Session;
+  keyspaceName?: string;
   collectionName?: string;
 
-  constructor(options: APIClientOptions) {
+  constructor(options: HTTPClientOptions) {
     if (typeof window !== "undefined") {
       throw new Error("not for use in a web browser");
     }
@@ -99,9 +105,21 @@ export class HTTPClient {
     }
 
     this.baseUrl = options.baseUrl;
-    this.collectionName = options.collectionName;
     this.applicationToken = options.applicationToken;
     this.logSkippedOptions = options.logSkippedOptions || false;
+    this.collectionName = options.collectionName;
+    this.keyspaceName = options.keyspaceName || 'default_keyspace';
+    this.origin = new URL(this.baseUrl).origin;
+
+    if (options.useHttp2 ?? true) {
+      this.http2Session = http2.connect(this.origin);
+
+      // Without these handlers, any errors will end up as uncaught exceptions,
+      // even if they are handled in `_request()`.
+      // More info: https://github.com/nodejs/node/issues/16345
+      this.http2Session.on('error', () => {});
+      this.http2Session.on('socketError', () => {});
+    }
 
     if (options.logLevel) {
       setLevel(options.logLevel);
@@ -112,7 +130,42 @@ export class HTTPClient {
     }
   }
 
-  async _request(requestInfo: AxiosRequestConfig): Promise<APIResponse> {
+  async executeCommand(
+    data: Record<string, any>,
+    optionsToRetain?: Set<string>,
+  ) {
+    const commandName = Object.keys(data)[0];
+
+    cleanupOptions(
+      commandName,
+      data[commandName],
+      optionsToRetain,
+      this.logSkippedOptions,
+    );
+
+    const response = await this.request({
+      url: this.baseUrl,
+      method: HTTP_METHODS.post,
+      data,
+    });
+
+    handleIfErrorResponse(response, data);
+    return response;
+  }
+
+  closeHTTP2Session() {
+    this.http2Session?.close();
+  }
+
+  isClosed() {
+    return this.http2Session?.closed;
+  }
+
+  cloneShallow(): HTTPClient {
+    return Object.assign(Object.create(Object.getPrototypeOf(this)), this);
+  }
+
+  async request(requestInfo: AxiosRequestConfig): Promise<APIResponse> {
     try {
       if (!this.applicationToken) {
         return {
@@ -124,23 +177,38 @@ export class HTTPClient {
         };
       }
 
-      const url = requestInfo.url + '/default_keyspace' + (this.collectionName ? `/${this.collectionName}` : "");
+      if (!requestInfo.url) {
+        return {
+          errors: [
+            {
+              message: "URL not specified",
+            },
+          ],
+        };
+      }
 
-      const response = await axiosAgent({
-        url: url,
-        data: requestInfo.data,
-        params: requestInfo.params,
-        method: requestInfo.method || DEFAULT_METHOD,
-        timeout: requestInfo.timeout || DEFAULT_TIMEOUT,
-        headers: {
-          [DEFAULT_AUTH_HEADER]: this.applicationToken,
-        },
-      });
-      if (
-        response.status === 401 ||
-        (response.data?.errors?.length > 0 &&
-          response.data.errors[0]?.message === "UNAUTHENTICATED: Invalid token")
-      ) {
+      const keyspacePath = this.keyspaceName ? `/${this.keyspaceName}` : '';
+      const collectionPath = this.collectionName ? `/${this.collectionName}` : '';
+      const url = requestInfo.url + keyspacePath + collectionPath;
+
+      const response = (this.http2Session)
+        ? await this._makeHTTP2Request(
+          url.replace(this.origin, ''),
+          this.applicationToken,
+          requestInfo.data
+        )
+        : await axiosAgent({
+          url: url,
+          data: requestInfo.data,
+          params: requestInfo.params,
+          method: requestInfo.method || DEFAULT_METHOD,
+          timeout: requestInfo.timeout || DEFAULT_TIMEOUT,
+          headers: {
+            [DEFAULT_AUTH_HEADER]: this.applicationToken
+          }
+        });
+
+      if (response.status === 401 || (response.data?.errors?.length > 0 && response.data.errors[0]?.message === "UNAUTHENTICATED: Invalid token")) {
         return {
           errors: [
             {
@@ -149,11 +217,12 @@ export class HTTPClient {
           ],
         };
       }
+
       if (response.status === 200) {
         return {
-          status: response.data.status,
-          data: deserialize(response.data.data),
-          errors: response.data.errors,
+          status: response.data?.status,
+          data: deserialize(response.data?.data),
+          errors: response.data?.errors,
         };
       } else {
         logger.error(requestInfo.url + ": " + response.status);
@@ -184,31 +253,59 @@ export class HTTPClient {
     }
   }
 
-  async executeCommand(
-    data: Record<string, any>,
-    optionsToRetain: Set<string> | null,
-  ) {
-    const commandName = Object.keys(data)[0];
+  _makeHTTP2Request(
+    path: string,
+    token: string,
+    body: Record<string, any>
+  ): Promise<{ status: number, data: Record<string, any> }> {
+    return new Promise((resolve, reject) => {
+      // Should never happen, but good to have a readable error just in case
+      if (!this.http2Session) {
+        throw new Error('Cannot make http2 request without session');
+      }
 
-    cleanupOptions(
-      commandName,
-      data[commandName],
-      optionsToRetain,
-      this.logSkippedOptions,
-    );
+      if (this.http2Session.closed) {
+        throw new Error('Cannot make http2 request when client is closed');
+      }
 
-    const response = await this._request({
-      url: this.baseUrl,
-      method: HTTP_METHODS.post,
-      data,
+      const req = this.http2Session.request({
+        ':path': path,
+        ':method': 'POST',
+        token
+      });
+      req.write(serializeCommand(body), 'utf8');
+      req.end();
+
+      let status = 0;
+      req.on('response', (data: http2.IncomingHttpStatusHeader) => {
+        status = data[':status'] ?? 0;
+      });
+
+      req.on('error', (error: Error) => {
+        reject(error);
+      });
+
+      req.setEncoding('utf8');
+      let responseBody = '';
+      req.on('data', (chunk: string) => {
+        responseBody += chunk;
+      });
+      req.on('end', () => {
+        let data = {};
+        try {
+          data = JSON.parse(responseBody);
+          resolve({ status, data });
+        } catch (error) {
+          console.log('responseBody', responseBody);
+          reject(new Error('Unable to parse response as JSON, got: "' + data + '"'));
+          return;
+        }
+      });
     });
-
-    handleIfErrorResponse(response, data);
-    return response;
   }
 }
 
-export class StargateServerError extends Error {
+export class AstraServerError extends Error {
   errors: any[];
   command: Record<string, any>;
   status: any;
@@ -223,13 +320,9 @@ export class StargateServerError extends Error {
   }
 }
 
-export function handleIfErrorResponse (
-  response: any,
-  data: Record<string, any>,
-) {
+export function handleIfErrorResponse(response: any, data: Record<string, any>,) {
   if (response.errors && response.errors.length > 0) {
-    console.log('handling error response', response, data);
-    throw new StargateServerError(response, data);
+    throw new AstraServerError(response, data);
   }
 }
 
@@ -241,8 +334,8 @@ function serializeCommand(data: Record<string, any>, pretty?: boolean): string {
   );
 }
 
-function deserialize(data: Record<string, any>): Record<string, any> {
-  return data != null ? EJSON.deserialize(data) : data;
+function deserialize(data?: Record<string, any> | null): Record<string, any> {
+  return data ? EJSON.deserialize(data) : data;
 }
 
 function handleValues(value: any): any {
@@ -278,12 +371,12 @@ function handleValues(value: any): any {
 function cleanupOptions(
   commandName: string,
   command: Record<string, any>,
-  optionsToRetain: Set<string> | null,
+  optionsToRetain: Set<string> | undefined,
   logSkippedOptions: boolean,
 ) {
   if (command.options) {
     Object.keys(command.options!).forEach((key) => {
-      if (optionsToRetain === null || !optionsToRetain.has(key)) {
+      if (!optionsToRetain || !optionsToRetain.has(key)) {
         if (logSkippedOptions) {
           logger.warn(`'${commandName}' does not support option '${key}'`);
         }

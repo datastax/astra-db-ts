@@ -23,9 +23,10 @@ export interface ClientOptions {
   baseApiPath?: string;
   logLevel?: string;
   logSkippedOptions?: boolean;
+  useHttp2?: boolean;
 }
 
-export class Client {
+export class Client implements Disposable {
   httpClient: HTTPClient;
   keyspaceName?: string;
 
@@ -38,6 +39,8 @@ export class Client {
       applicationToken: options.applicationToken,
       logLevel: options.logLevel,
       logSkippedOptions: options.logSkippedOptions,
+      useHttp2: options.useHttp2,
+      keyspaceName: keyspaceName,
     });
   }
 
@@ -109,7 +112,12 @@ export class Client {
    * @returns Client
    */
   close() {
+    this.httpClient.closeHTTP2Session();
     return this;
+  }
+
+  [Symbol.dispose]() {
+    this.close();
   }
 
   startSession() {

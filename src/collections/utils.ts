@@ -15,7 +15,6 @@
 import url from 'url';
 import { logger } from '@/src/logger';
 import { handleIfErrorResponse, HTTPClient } from '@/src/client/httpClient';
-import { ObjectId } from 'bson';
 
 interface ParsedUri {
   baseUrl: string;
@@ -135,7 +134,7 @@ export async function createNamespace(httpClient: HTTPClient, name: string) {
   };
 
   parseUri(httpClient.baseUrl);
-  const response = await httpClient._request({
+  const response = await httpClient.request({
     url: httpClient.baseUrl,
     method: "POST",
     data,
@@ -152,7 +151,7 @@ export async function dropNamespace(httpClient: HTTPClient, name: string) {
     },
   };
 
-  const response = await httpClient._request({
+  const response = await httpClient.request({
     url: httpClient.baseUrl,
     method: "POST",
     data,
@@ -180,7 +179,7 @@ export function setDefaultIdForUpsert(
     }
 
     command.replacement ??= {};
-    command.replacement._id = new ObjectId().toString();
+    command.replacement._id = genObjectId();
 
     return;
   }
@@ -193,8 +192,17 @@ export function setDefaultIdForUpsert(
   command.update.$setOnInsert ??= {};
 
   if (!("_id" in command.update.$setOnInsert)) {
-    command.update.$setOnInsert._id = new ObjectId().toString();
+    command.update.$setOnInsert._id = genObjectId();
   }
+}
+
+// https://gist.github.com/solenoid/1372386
+function genObjectId() {
+  const timestamp = (new Date().getTime() / 1000 | 0).toString(16);
+
+  return timestamp + 'xxxxxxxxxxxxxxxx'.replace(/[x]/g, function() {
+    return (Math.random() * 16 | 0).toString(16);
+  }).toLowerCase();
 }
 
 function _updateHasKey(update: Record<string, any>, key: string) {

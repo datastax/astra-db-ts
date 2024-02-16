@@ -106,13 +106,10 @@ export class Collection {
     if (!name) {
       throw new Error('Collection name is required');
     }
-    // use a clone of the underlying http client to support multiple collections from a single db
-    this.httpClient = new HTTPClient({
-      baseUrl: httpClient.baseUrl,
-      applicationToken: httpClient.applicationToken,
-      logSkippedOptions: httpClient.logSkippedOptions,
-      collectionName: name,
-    });
+
+    this.httpClient = httpClient.cloneShallow();
+    this.httpClient.collectionName = name;
+
     this.name = name;
   }
 
@@ -124,7 +121,7 @@ export class Collection {
         },
       };
 
-      const resp = await this.httpClient.executeCommand(command, null);
+      const resp = await this.httpClient.executeCommand(command);
 
       return {
         acknowledged: true,
@@ -220,7 +217,7 @@ export class Collection {
       );
 
       if (updateManyResp.status.moreData) {
-        throw new AstraTsClientError(
+        throw new AstraClientError(
           `More than ${updateManyResp.status.modifiedCount} records found for update by the server`,
           command,
         );
@@ -253,7 +250,7 @@ export class Collection {
         command.deleteOne.sort = options.sort;
       }
 
-      const deleteOneResp = await this.httpClient.executeCommand(command, null);
+      const deleteOneResp = await this.httpClient.executeCommand(command);
 
       return {
         acknowledged: true,
@@ -270,13 +267,10 @@ export class Collection {
         },
       };
 
-      const deleteManyResp = await this.httpClient.executeCommand(
-        command,
-        null,
-      );
+      const deleteManyResp = await this.httpClient.executeCommand(command);
 
       if (deleteManyResp.status.moreData) {
-        throw new AstraTsClientError(`More records found to be deleted even after deleting ${deleteManyResp.status.deletedCount} records`, command,);
+        throw new AstraClientError(`More records found to be deleted even after deleting ${deleteManyResp.status.deletedCount} records`, command,);
       }
 
       return {
@@ -370,7 +364,7 @@ export class Collection {
         },
       };
 
-      const resp = await this.httpClient.executeCommand(command, null);
+      const resp = await this.httpClient.executeCommand(command);
 
       return resp.status.count;
     });
@@ -387,7 +381,7 @@ export class Collection {
       command.findOneAndDelete.sort = options.sort;
     }
 
-    const resp = await this.httpClient.executeCommand(command, null);
+    const resp = await this.httpClient.executeCommand(command);
     return {
       value: resp.data?.document,
       ok: 1,
@@ -427,7 +421,7 @@ export class Collection {
   }
 }
 
-export class AstraTsClientError extends Error {
+export class AstraClientError extends Error {
   command: Record<string, any>;
 
   constructor(message: any, command: Record<string, any>) {

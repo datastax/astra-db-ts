@@ -83,11 +83,10 @@
     "ts-node": "^10.8.1",
     "tsconfig-paths": "^4.0.0",
     "tscpaths": "^0.0.9",
-    "typescript": "^4.7.2"
+    "typescript": "^5.3.3"
   },
   "dependencies": {
     "axios": "^1.6.7",
-    "bson": "^6.2.0",
     "winston": "^3.7.2"
   },
   "engines": {

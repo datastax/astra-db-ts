@@ -21,16 +21,21 @@ const localBaseUrl = "http://localhost:8181";
 
 describe("Client test", () => {
   const baseUrl = "https://db_id-region-1.apps.astra.datastax.com";
+
   let appClient: Client | null;
   let clientURI: string;
+
   before(async function () {
     if (testClient == null) {
       return this.skip();
     }
-    appClient = await testClient.client;
+
+    appClient = await testClient.new();
+
     if (appClient == null) {
       return this.skip();
     }
+
     clientURI = testClient.uri;
   });
 
@@ -38,6 +43,7 @@ describe("Client test", () => {
     it("should initialize a Client connection with a uri using connect", async () => {
       assert.ok(appClient);
     });
+
     it("should not a Client connection with an invalid uri", async () => {
       let error: any;
       try {
@@ -48,17 +54,19 @@ describe("Client test", () => {
       }
       assert.ok(error);
     });
+
     it("should have unique httpClients for each db", async () => {
       const dbFromUri = appClient?.db();
       const parsedUri = parseUri(clientURI);
-      assert.strictEqual(dbFromUri?.name, parsedUri.keyspaceName);
+      assert.strictEqual(dbFromUri?.keyspaceName, parsedUri.keyspaceName);
       const newDb = appClient?.db("test-db");
-      assert.strictEqual(newDb?.name, "test-db");
+      assert.strictEqual(newDb?.keyspaceName, "test-db");
     });
+
     it("should initialize a Client connection with a uri using connect with overrides", async () => {
       const AUTH_TOKEN_TO_CHECK = "123";
       const BASE_API_PATH_TO_CHECK = "baseAPIPath1";
-      const client = await Client.connect(clientURI, {
+      using client = await Client.connect(clientURI, {
         applicationToken: AUTH_TOKEN_TO_CHECK,
         baseApiPath: BASE_API_PATH_TO_CHECK,
       });
@@ -76,16 +84,13 @@ describe("Client test", () => {
       const db = client.db();
       assert.ok(db);
     });
+
     it("should parse baseApiPath from URL when possible", async () => {
       const AUTH_TOKEN_TO_CHECK = "123";
       const KEYSPACE_TO_CHECK = "testks1";
       const BASE_API_PATH_TO_CHECK = "baseAPIPath1";
-      const client = await Client.connect(
-        parseUri(clientURI).baseUrl +
-          "/" +
-          BASE_API_PATH_TO_CHECK +
-          "/" +
-          KEYSPACE_TO_CHECK,
+      using client = await Client.connect(
+        parseUri(clientURI).baseUrl + "/" + BASE_API_PATH_TO_CHECK + "/" + KEYSPACE_TO_CHECK,
         {
           applicationToken: AUTH_TOKEN_TO_CHECK,
         },
@@ -104,34 +109,26 @@ describe("Client test", () => {
       const db = client.db();
       assert.ok(db);
     });
+
     it("should parse baseApiPath from URL when possible (multiple path elements)", async () => {
       const AUTH_TOKEN_TO_CHECK = "123";
       const KEYSPACE_TO_CHECK = "testks1";
       const BASE_API_PATH_TO_CHECK = "apis/baseAPIPath1";
-      const client = await Client.connect(
-        parseUri(clientURI).baseUrl +
-          "/" +
-          BASE_API_PATH_TO_CHECK +
-          "/" +
-          KEYSPACE_TO_CHECK,
+      using client = await Client.connect(
+        parseUri(clientURI).baseUrl + "/" + BASE_API_PATH_TO_CHECK + "/" + KEYSPACE_TO_CHECK,
         {
           applicationToken: AUTH_TOKEN_TO_CHECK,
         },
       );
       assert.ok(client);
       assert.ok(client.httpClient);
-      assert.strictEqual(
-        client.httpClient.applicationToken,
-        AUTH_TOKEN_TO_CHECK,
-      );
+      assert.strictEqual(client.httpClient.applicationToken, AUTH_TOKEN_TO_CHECK);
       assert.strictEqual(client.keyspaceName, KEYSPACE_TO_CHECK);
-      assert.strictEqual(
-        client.httpClient.baseUrl,
-        parseUri(clientURI).baseUrl + "/" + BASE_API_PATH_TO_CHECK,
-      );
+      assert.strictEqual(client.httpClient.baseUrl, parseUri(clientURI).baseUrl + "/" + BASE_API_PATH_TO_CHECK);
       const db = client.db();
       assert.ok(db);
     });
+
     it("should handle when the keyspace name is present in the baseApiPath also", async () => {
       //only the last occurrence of the keyspace name in the url path must be treated as keyspace
       //other parts of it should be simply be treated as baseApiPath
@@ -139,22 +136,15 @@ describe("Client test", () => {
       const KEYSPACE_TO_CHECK = "testks1";
       const BASE_API_PATH_TO_CHECK = "baseAPIPath1";
       const baseUrl = localBaseUrl;
-      const client = await Client.connect(
-        baseUrl +
-          "/testks1/" +
-          BASE_API_PATH_TO_CHECK +
-          "/" +
-          KEYSPACE_TO_CHECK,
+      using client = await Client.connect(
+        baseUrl + "/testks1/" + BASE_API_PATH_TO_CHECK + "/" + KEYSPACE_TO_CHECK,
         {
           applicationToken: AUTH_TOKEN_TO_CHECK,
         },
       );
       assert.ok(client);
       assert.ok(client.httpClient);
-      assert.strictEqual(
-        client.httpClient.applicationToken,
-        AUTH_TOKEN_TO_CHECK,
-      );
+      assert.strictEqual(client.httpClient.applicationToken, AUTH_TOKEN_TO_CHECK);
       assert.strictEqual(client.keyspaceName, KEYSPACE_TO_CHECK);
       assert.strictEqual(
         client.httpClient.baseUrl,
@@ -163,12 +153,13 @@ describe("Client test", () => {
       const db = client.db();
       assert.ok(db);
     });
+
     it("should honor the baseApiPath from options when provided", async () => {
       const AUTH_TOKEN_TO_CHECK = "123";
       const KEYSPACE_TO_CHECK = "testks1";
       const BASE_API_PATH_TO_CHECK = "baseAPIPath1";
       const baseUrl = localBaseUrl;
-      const client = await Client.connect(
+      using client = await Client.connect(
         baseUrl + "/" + BASE_API_PATH_TO_CHECK + "/" + KEYSPACE_TO_CHECK,
         {
           applicationToken: AUTH_TOKEN_TO_CHECK,
@@ -177,39 +168,37 @@ describe("Client test", () => {
       );
       assert.ok(client);
       assert.ok(client.httpClient);
-      assert.strictEqual(
-        client.httpClient.applicationToken,
-        AUTH_TOKEN_TO_CHECK,
-      );
+      assert.strictEqual(client.httpClient.applicationToken, AUTH_TOKEN_TO_CHECK);
       assert.strictEqual(client.keyspaceName, KEYSPACE_TO_CHECK);
       assert.strictEqual(client.httpClient.baseUrl, baseUrl + "/baseAPIPath2");
       const db = client.db();
       assert.ok(db);
     });
+
     it("should handle empty baseApiPath", async () => {
       const AUTH_TOKEN_TO_CHECK = "123";
       const KEYSPACE_TO_CHECK = "testks1";
 
-      const client = await Client.connect(baseUrl + "/" + KEYSPACE_TO_CHECK, {
+      using client = await Client.connect(baseUrl + "/" + KEYSPACE_TO_CHECK, {
         applicationToken: AUTH_TOKEN_TO_CHECK,
       });
+
       assert.ok(client);
       assert.ok(client.httpClient);
-      assert.strictEqual(
-        client.httpClient.applicationToken,
-        AUTH_TOKEN_TO_CHECK,
-      );
+      assert.strictEqual(client.httpClient.applicationToken, AUTH_TOKEN_TO_CHECK);
       assert.strictEqual(client.keyspaceName, KEYSPACE_TO_CHECK);
       assert.strictEqual(client.httpClient.baseUrl, baseUrl);
       const db = client.db();
       assert.ok(db);
     });
+
     it("should initialize a Client connection with a uri using the constructor", () => {
-      const client = new Client(baseUrl, "keyspace1", {
+      using client = new Client(baseUrl, "keyspace1", {
         applicationToken: "123",
       });
       assert.ok(client);
     });
+
     it("should not initialize a Client connection with a uri using the constructor with no options", () => {
       let error: any;
       try {
@@ -221,42 +210,70 @@ describe("Client test", () => {
       }
       assert.ok(error);
     });
+
     it("should initialize a Client connection with a uri using the constructor and a keyspace", () => {
-      const client = new Client(baseUrl, "keyspace1", {
+      using client = new Client(baseUrl, "keyspace1", {
         applicationToken: "123",
       });
       assert.ok(client.keyspaceName);
     });
+
     it("should initialize a Client connection with a uri using the constructor and a blank keyspace", () => {
-      const client = new Client(baseUrl, "", {
+      using client = new Client(baseUrl, "", {
         applicationToken: "123",
       });
       assert.strictEqual(client.keyspaceName, "");
     });
+
     it("should connect after setting up the client with a constructor", async () => {
-      const client = new Client(baseUrl, "keyspace1", {
+      using client = new Client(baseUrl, "keyspace1", {
         applicationToken: "123",
       });
       assert.ok(client);
       assert.ok(client.httpClient);
     });
+
     it("should set the auth header name as set in the options", async () => {
-      const client = new Client(baseUrl, "keyspace1", {
+      using client = new Client(baseUrl, "keyspace1", {
         applicationToken: "123",
       });
       assert.ok(client);
     });
+
+    it('automatically disconnects when out of scope w/ ERM', async () => {
+      let client: Client;
+      {
+        using _client = new Client(baseUrl, 'keyspace1', {
+          applicationToken: '123'
+        });
+        assert.ok(_client);
+        client = _client;
+      }
+      let error: any;
+      try {
+        await client.db('test')!.collection('test')!.findOne({
+          url: '/test'
+        });
+        assert.ok(false);
+      } catch (e) {
+        error = e;
+      }
+      assert.ok(error);
+      assert.ok(error.message.includes('Cannot make http2 request when client is closed'), error.message);
+    });
   });
+
   describe("Client Db operations", () => {
     it("should return a db after setting up the client with a constructor", async () => {
-      const client = new Client(baseUrl, "keyspace1", {
+      using client = new Client(baseUrl, "keyspace1", {
         applicationToken: "123",
       });
       const db = client.db("keyspace1");
       assert.ok(db);
     });
+
     it("should not return a db if no name is provided", async () => {
-      const client = new Client(baseUrl, "keyspace1", {
+      using client = new Client(baseUrl, "keyspace1", {
         applicationToken: "123",
       });
       let error: any;
@@ -268,12 +285,43 @@ describe("Client test", () => {
       }
       assert.ok(error);
     });
+
+    it('close() should close HTTP client', async () => {
+      const client = new Client(baseUrl, 'keyspace1', {
+        applicationToken: '123',
+        useHttp2: true
+      });
+
+      assert.ok(!client.httpClient.isClosed());
+
+      client.close();
+      assert.ok(client.httpClient.isClosed());
+
+      client.close();
+      assert.ok(client.httpClient.isClosed());
+
+      let error: any;
+      try {
+        console.log('client.httpClient.closed', client.httpClient.isClosed())
+        await client.db('test')!.collection('test')!.findOne({
+          url: '/test'
+        });
+        assert.ok(false);
+      } catch (e) {
+        error = e;
+      }
+
+      assert.ok(error);
+      assert.ok(error.message.includes('Cannot make http2 request when client is closed'), error.message);
+    });
   });
+
   describe("Client noops", () => {
     it("should handle noop: setMaxListeners", async () => {
       const maxListeners = appClient?.setMaxListeners(1);
       assert.strictEqual(maxListeners, 1);
     });
+
     it("should handle noop: close", async () => {
       const closedClient = appClient?.close();
       assert.ok(closedClient);

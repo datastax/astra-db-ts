@@ -17,23 +17,26 @@ import { CreateCollectionOptions, createCollectionOptionsKeys, } from './options
 import { Collection } from './collection';
 import { createNamespace, executeOperation } from './utils';
 
+interface CreateCollectionCommand {
+  createCollection: {
+    name: string,
+    options?: CreateCollectionOptions,
+  },
+}
+
 export class Db {
-  rootHttpClient: HTTPClient;
   httpClient: HTTPClient;
-  name: string;
+  keyspaceName: string;
 
   constructor(httpClient: HTTPClient, name: string) {
     if (!name) {
       throw new Error("Db: name is required");
     }
-    this.rootHttpClient = httpClient;
-    // use a clone of the underlying http client to support multiple db's from a single connection
-    this.httpClient = new HTTPClient({
-      baseUrl: httpClient.baseUrl,
-      applicationToken: httpClient.applicationToken,
-      logSkippedOptions: httpClient.logSkippedOptions,
-    });
-    this.name = name;
+
+    this.httpClient = httpClient.cloneShallow();
+    this.httpClient.keyspaceName = name;
+
+    this.keyspaceName = name;
   }
 
   /**
@@ -59,20 +62,13 @@ export class Db {
     options?: CreateCollectionOptions,
   ) {
     return executeOperation(async () => {
-      type CreateCollectionCommand = {
-        createCollection: {
-          name: string;
-          options?: CreateCollectionOptions;
-        };
-      };
-
       const command: CreateCollectionCommand = {
         createCollection: {
           name: collectionName,
         },
       };
 
-      if (options != null) {
+      if (options) {
         command.createCollection.options = options;
       }
 
@@ -94,7 +90,8 @@ export class Db {
         name: collectionName,
       },
     };
-    return await this.httpClient.executeCommand(command, null);
+
+    return await this.httpClient.executeCommand(command);
   }
 
   /**
@@ -102,7 +99,7 @@ export class Db {
    * @returns Promise
    */
   async dropDatabase() {
-    throw new StargateAstraError("Cannot drop database in Astra. Please use the Astra UI to drop the database.",);
+    throw new Error("Cannot drop database in Astra. Please use the Astra UI to drop the database.",);
   }
 
   /**
@@ -110,15 +107,11 @@ export class Db {
    * @returns Promise
    */
   async createDatabase() {
-    return await createNamespace(this.rootHttpClient, this.name);
+    return await createNamespace(this.httpClient, this.keyspaceName);
   }
-}
 
-export class StargateAstraError extends Error {
-  message: string;
-
-  constructor(message: string) {
-    super(message);
-    this.message = message;
+  // For backwards compatibility
+  get name() {
+    return this.keyspaceName;
   }
 }

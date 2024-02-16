@@ -14,7 +14,12 @@
     "paths": {
       "@/src/*": ["./src/*"],
       "@/tests/*": ["./tests/*"]
-    }
+    },
+    "lib": [
+      "es2020",
+      "esnext.disposable",
+      "dom",
+    ]
   },
   "include": ["tests/**/*", "src/**/*"]
 }
