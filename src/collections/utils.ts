@@ -15,6 +15,7 @@
 import url from 'url';
 import { logger } from '@/src/logger';
 import { handleIfErrorResponse, HTTPClient } from '@/src/client/httpClient';
+import { ObjectId } from 'bson';
 
 interface ParsedUri {
   baseUrl: string;
@@ -196,13 +197,8 @@ export function setDefaultIdForUpsert(
   }
 }
 
-// https://gist.github.com/solenoid/1372386
 function genObjectId() {
-  const timestamp = (new Date().getTime() / 1000 | 0).toString(16);
-
-  return timestamp + 'xxxxxxxxxxxxxxxx'.replace(/[x]/g, function() {
-    return (Math.random() * 16 | 0).toString(16);
-  }).toLowerCase();
+  return new ObjectId().toString();
 }
 
 function _updateHasKey(update: Record<string, any>, key: string) {
