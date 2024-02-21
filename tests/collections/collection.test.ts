@@ -65,7 +65,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       let error: any;
       let collection: Collection | null = null;
       try {
-        // @ts-ignore: Testing invalid input
+        // @ts-expect-error - Intentionally passing no name
         collection = new Collection(db.httpClient);
         assert.ok(collection);
       } catch (e) {
@@ -1732,7 +1732,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       //update the 5th doc using updateOne API with upsert true and $setOnInsert field with a new field and value
       const updateOneResp = await collection.updateOne({ '_id': 'id5' }, {
         '$set': { 'country': 'India' },
-        '$setOnInsert': { 'pincode': 620020 }
+        '$setOnInsert': { 'pincode': 620020 },
       }, { 'upsert': true });
       assert.strictEqual(updateOneResp.matchedCount, 1);
       assert.strictEqual(updateOneResp.modifiedCount, 1);
@@ -2620,7 +2620,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
           'upsert': true
         }
       );
-      // @ts-ignore
       assert.ok(value!._id!.match(/^[a-f\d]{24}$/i), value!._id);
     });
 

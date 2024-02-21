@@ -53,7 +53,7 @@ import {
 import { Filter } from '@/src/collections/operations/filter';
 import { UpdateFilter } from '@/src/collections/operations/update-filter';
 
-export type AnyDict = Record<string, any>;
+export type AnyDict = Record<any, any>;
 
 export class Collection<Schema extends AnyDict = AnyDict> {
   httpClient: HTTPClient;
@@ -266,7 +266,7 @@ export class Collection<Schema extends AnyDict = AnyDict> {
   }
 
   // noinspection JSUnusedGlobalSymbols
-  async distinct(_key: any, _filter: any, _options?: any): Promise<TypeErr<'distinct not implemented'>> {
+  async distinct(): Promise<TypeErr<'distinct not implemented'>> {
     throw new Error('Not Implemented');
   }
 

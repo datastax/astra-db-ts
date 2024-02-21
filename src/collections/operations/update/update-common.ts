@@ -31,38 +31,3 @@ interface NoUpsertUpdateOptions {
 export type InternalUpdateResult<N> =
   | (GuaranteedUpdateOptions<N> & UpsertedUpdateOptions)
   | (GuaranteedUpdateOptions<N> & NoUpsertUpdateOptions)
-
-// interface Schema {
-//   num: number,
-//   obj: {
-//     str: string,
-//     obj: {
-//       num: number,
-//       any: AnyDict,
-//     },
-//   },
-//   arr: string[],
-// }
-//
-// const a: UpdateFilter<Schema> = {
-//   $set: {
-//     num: 3,
-//     'obj.str': 'str',
-//   },
-//   $unset: {
-//     'obj.obj.any.abc': '',
-//   },
-//   $inc: {
-//     num: 1,
-//     'obj.obj.any.abc': 3,
-//     'obj.obj.num': 3,
-//   },
-//   $push: {
-//     arr: 'str',
-//     'obj.obj.any.abc': 3,
-//   },
-//   $pop: {
-//     'obj.obj.any.abc': 3,
-//     arr: 1,
-//   },
-// }

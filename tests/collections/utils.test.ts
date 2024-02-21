@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import assert from "assert";
-import { createAstraUri } from "@/src/collections/utils";
-import {AstraDB, Client} from "@/src/collections";
+import assert from 'assert';
+import { createAstraUri } from '@/src/collections/utils';
+import { AstraDB } from '@/src/collections';
 
 describe("Utils test", () => {
   it("ClientBaseUriTest", () => {

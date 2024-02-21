@@ -20,9 +20,9 @@ describe("Astra TS Client - client.HTTPClient", () => {
     it("should not initialize in a web browser", () => {
       let error: any;
       try {
-        // @ts-expect-error - <Insert reason here please>
+        // @ts-expect-error - Testing in browser environment
         window = true;
-        // @ts-expect-error - <Insert reason here please>
+        // @ts-expect-error - Testing in browser environment
         const client = new HTTPClient();
         assert.ok(client);
       } catch (e) {
@@ -33,7 +33,7 @@ describe("Astra TS Client - client.HTTPClient", () => {
     it("should not initialize without an application token", () => {
       let error: any;
       try {
-        // @ts-ignore
+        // @ts-expect-error - Testing without required args
         const client = new HTTPClient({});
         assert.ok(client);
       } catch (e) {
@@ -44,7 +44,7 @@ describe("Astra TS Client - client.HTTPClient", () => {
     it("should not initialize without a baseUrl or both database settings", () => {
       let error: any;
       try {
-        // @ts-ignore
+        // @ts-expect-error - Testing without required args
         const client = new HTTPClient({});
         assert.ok(client);
       } catch (e) {

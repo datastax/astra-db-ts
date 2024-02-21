@@ -202,7 +202,7 @@ describe("Client test", () => {
     it("should not initialize a Client connection with a uri using the constructor with no options", () => {
       let error: any;
       try {
-        // @ts-ignore intentionally passing no options
+        // @ts-expect-error - Intentionally passing no options
         const client = new Client(baseUrl, "keyspace1");
         assert.ok(client);
       } catch (e) {

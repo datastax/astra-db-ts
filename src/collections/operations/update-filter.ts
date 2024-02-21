@@ -13,35 +13,45 @@
 // limitations under the License.
 
 import { AnyDict } from '@/src/collections/collection';
-import { DotNotation } from '@/src/collections/operations/dot-notation';
+import { ToDotNotation } from '@/src/collections/operations/dot-notation';
 
-export interface UpdateFilter<Schema extends AnyDict, InNotation = DotNotation<Schema>> {
+export interface UpdateFilter<Schema extends AnyDict, InNotation = ToDotNotation<Schema>> {
   $set?: Partial<InNotation>,
   $setOnInsert?: Partial<InNotation>,
-  $unset?: {
-    [K in keyof InNotation]?: ''
-  },
+  $unset?: Unset<InNotation>,
   $inc?: NumberUpdate<InNotation>,
   $push?: ArrayUpdate<InNotation>,
-  $pop?: {
-    [K in keyof ArrayUpdate<InNotation>]?: number
-  },
-  $rename?: {
-    [K in keyof InNotation]?: string
-  },
-  $currentDate?: {
-    [K in keyof InNotation as Date extends InNotation[K] ? K : never]?: true
-  },
+  $pop?: Pop<InNotation>,
+  $rename?: Rename<InNotation>,
+  $currentDate?: CurrentDate<InNotation>,
   $min?: NumberUpdate<InNotation>,
   $max?: NumberUpdate<InNotation>,
   $mul?: NumberUpdate<InNotation>,
   $addToSet?: ArrayUpdate<InNotation>,
 }
 
+type Unset<Schema> = {
+  [K in keyof Schema]?: ''
+}
+
+type Pop<Schema> = {
+  [K in keyof ArrayUpdate<Schema>]?: number
+}
+
+type Rename<Schema> = {
+  [K in keyof Schema]?: string
+}
+
+type IsNumber<T> = number extends T ? true : bigint extends T ? true : false
+
 type NumberUpdate<Schema> = {
-  [K in keyof Schema as number extends Schema[K] ? K : never]?: number
+  [K in keyof Schema as IsNumber<Schema[K]> extends true ? K : never]?: number
 }
 
 type ArrayUpdate<Schema> = {
-  [K in keyof Schema as any[] extends Schema[K] ? K : never]?: Schema[K] extends (infer E)[] ? E : never
+  [K in keyof Schema as any[] extends Schema[K] ? K : never]?: Schema[K] extends (infer E)[] ? E : unknown
+}
+
+type CurrentDate<Schema> = {
+  [K in keyof Schema as Date extends Schema[K] ? K : never]?: true
 }

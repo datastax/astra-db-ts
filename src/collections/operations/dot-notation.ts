@@ -14,13 +14,13 @@
 
 import { AnyDict } from '@/src/collections/collection';
 
-export type DotNotation<Schema extends AnyDict> = Merge<_ToDotNotation<Required<Schema>, ''>>
+export type ToDotNotation<Schema extends AnyDict> = Merge<_ToDotNotation<Required<Schema>, ''>>
 
 type _ToDotNotation<Elem extends AnyDict, Prefix extends string> = {
   [Key in keyof Elem]:
     AnyDict extends Elem
       ? (
-        | (Prefix extends '' ? never : { [Path in CropTrailingDot<Prefix>]: AnyDict })
+        | (Prefix extends '' ? never : { [Path in CropTrailingDot<Prefix>]: Elem })
         | { [Path in `${Prefix}${string}`]: any }
         ) :
     Elem[Key] extends any[]
@@ -44,11 +44,6 @@ type Merge<Ts> = Expand<UnionToIntersection<Ts>>
 
 type UnionToIntersection<U> = (U extends any ? (arg: U) => any : never) extends ((arg: infer I) => void) ? I : never
 
-// If it works like, this, I can just remove it
-type Expand<T> = T
-
-// type Expand<T> = T extends object
-//   ? T extends infer O
-//     ? { [K in keyof O]: O[K] }
-//     : never
-//   : T;
+type Expand<T> = T extends infer O
+  ? { [K in keyof O]: O[K] }
+  : never

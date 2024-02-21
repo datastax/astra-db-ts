@@ -105,40 +105,4 @@ describe("Astra TS Client - collections.Db", async () => {
       assert.strictEqual(res.errors, undefined);
     });
   });
-
-  describe("createDatabase", function (this: Mocha.Suite) {
-    const suite = this;
-
-    it("should create the underlying database (AKA namespace)", async () => {
-      suite.ctx.skip();
-
-      const keyspaceName = parseUri(dbUri).keyspaceName;
-      const db = new Db(httpClient, keyspaceName);
-      const suffix = randAlphaNumeric({ length: 4 }).join("");
-
-      await db.dropDatabase().catch((err) => {
-        if (err.errors[0].exceptionClass === "NotFoundException") {
-          return;
-        }
-
-        throw err;
-      });
-
-      try {
-        await db.createCollection(`test_db_collection_${suffix}`);
-        assert.ok(false);
-      } catch (err: any) {
-        assert.strictEqual(err.errors.length, 1);
-        assert.strictEqual(
-          err.errors[0].message,
-          "INVALID_ARGUMENT: Keyspace '" + keyspaceName + "' doesn't exist",
-        );
-      }
-
-      const res = await db.createDatabase();
-      assert.strictEqual(res.status?.ok, 1);
-
-      await db.createCollection(`test_db_collection_${suffix}`);
-    });
-  });
 });

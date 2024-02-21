@@ -218,7 +218,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
       await collection.insertMany(sampleUsers);
       const cursor = new FindCursor(collection, {});
       let docCount = 0;
-      let b = await cursor.forEach(async () => {
+      const b = await cursor.forEach(async () => {
         await Promise.resolve();
         docCount++;
       });

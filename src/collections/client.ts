@@ -120,6 +120,7 @@ export class Client implements Disposable {
     this.close();
   }
 
+  // noinspection JSUnusedGlobalSymbols
   startSession(): TypeErr<'startSession() Not Implemented'> {
     throw new Error('startSession() Not Implemented');
   }

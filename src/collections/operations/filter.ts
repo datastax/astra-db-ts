@@ -13,10 +13,10 @@
 // limitations under the License.
 
 import { AnyDict } from '@/src/collections/collection';
-import { DotNotation } from '@/src/collections/operations/dot-notation';
+import { ToDotNotation } from '@/src/collections/operations/dot-notation';
 
 export type Filter<Schema extends AnyDict> = {
-  [K in keyof DotNotation<Schema>]?: FilterType<DotNotation<Schema>[K]>
+  [K in keyof ToDotNotation<Schema>]?: FilterType<ToDotNotation<Schema>[K]>
 } & {
   $and?: Filter<Schema>[],
   $or?: Filter<Schema>[],
@@ -31,9 +31,9 @@ type FilterOps<Elem> = {
   $nin?: Elem[],
   $exists?: boolean,
 } & (
-  number extends Elem ? NumFilterOps : {}
+  number extends Elem ? NumFilterOps : Record<string, never>
 ) & (
-  any[] extends Elem ? ArrayFilterOps<Elem> : {}
+  any[] extends Elem ? ArrayFilterOps<Elem> : Record<string, never>
 )
 
 interface NumFilterOps {
