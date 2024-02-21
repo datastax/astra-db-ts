@@ -13,10 +13,10 @@
 // limitations under the License.
 
 import { Db } from './db';
-import { createAstraUri, parseUri } from './utils';
+import { createAstraUri, parseUri, TypeErr } from './utils';
 import { HTTPClient } from '@/src/client';
 import { Collection } from './collection';
-import { CreateCollectionOptions } from './options';
+import { CreateCollectionOptions } from '@/src/collections/operations/collections/create-collection';
 
 export interface ClientOptions {
   applicationToken: string;
@@ -32,6 +32,10 @@ export class Client implements Disposable {
 
   constructor(baseUrl: string, keyspaceName: string, options: ClientOptions) {
     this.keyspaceName = keyspaceName;
+
+    if (!options.applicationToken) {
+      throw new Error('Application Token is required');
+    }
 
     this.httpClient = new HTTPClient({
       baseApiPath: options.baseApiPath,
@@ -57,12 +61,8 @@ export class Client implements Disposable {
     const parsedUri = parseUri(uri);
 
     return new Client(parsedUri.baseUrl, parsedUri.keyspaceName, {
-      applicationToken: options?.applicationToken
-        ? options?.applicationToken
-        : parsedUri.applicationToken,
-      baseApiPath: options?.baseApiPath
-        ? options?.baseApiPath
-        : parsedUri.baseApiPath,
+      applicationToken: options?.applicationToken || parsedUri.applicationToken,
+      baseApiPath: options?.baseApiPath || parsedUri.baseApiPath,
       logLevel: options?.logLevel,
       logSkippedOptions: options?.logSkippedOptions,
     });
@@ -120,12 +120,12 @@ export class Client implements Disposable {
     this.close();
   }
 
-  startSession() {
-    throw new Error("startSession() Not Implemented");
+  startSession(): TypeErr<'startSession() Not Implemented'> {
+    throw new Error('startSession() Not Implemented');
   }
 }
 
-const DEFAULT_KEYSPACE = "default_keyspace";
+const DEFAULT_KEYSPACE = 'default_keyspace';
 
 export class AstraDB extends Client {
   constructor(...args: any[]) {

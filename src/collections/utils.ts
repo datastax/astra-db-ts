@@ -17,6 +17,9 @@ import { logger } from '@/src/logger';
 import { handleIfErrorResponse, HTTPClient } from '@/src/client/httpClient';
 import { ObjectId } from 'bson';
 
+declare const __unique_sym: unique symbol
+export type TypeErr<S> = { [__unique_sym]: S }
+
 interface ParsedUri {
   baseUrl: string;
   baseApiPath: string;
@@ -114,17 +117,13 @@ export function createAstraUri(
   return uri.toString();
 }
 
-export const executeOperation = async (operation: () => Promise<unknown>) => {
-  let res: any = {};
-
+export const executeOperation = async <T>(operation: () => Promise<T>): Promise<T> => {
   try {
-    res = await operation();
+    return await operation();
   } catch (e: any) {
     logger.error(e?.stack || e?.message);
     throw e;
   }
-
-  return res;
 };
 
 export async function createNamespace(httpClient: HTTPClient, name: string) {
@@ -185,7 +184,7 @@ export function setDefaultIdForUpsert(
     return;
   }
 
-  if (command.update != null && _updateHasKey(command.update, "_id")) {
+  if (command.update != null && updateHasKey(command.update, "_id")) {
     return;
   }
 
@@ -197,11 +196,11 @@ export function setDefaultIdForUpsert(
   }
 }
 
-function genObjectId() {
+function genObjectId(): string {
   return new ObjectId().toString();
 }
 
-function _updateHasKey(update: Record<string, any>, key: string) {
+function updateHasKey(update: Record<string, any>, key: string): boolean {
   for (const operator of Object.keys(update)) {
     if (
       update[operator] != null &&
@@ -212,4 +211,18 @@ function _updateHasKey(update: Record<string, any>, key: string) {
     }
   }
   return false;
+}
+
+export function withoutFields<T extends Record<string, any> | undefined>(obj: T, ...fields: string[]): T {
+  if (!obj) {
+    return obj;
+  }
+
+  const newObj = { ...obj };
+
+  for (const field of fields) {
+    delete newObj[field];
+  }
+
+  return newObj;
 }

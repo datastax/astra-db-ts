@@ -45,14 +45,14 @@ interface HTTPClientOptions {
 }
 
 export interface APIResponse {
-  status?: any;
-  data?: any;
-  errors?: any;
+  status?: Record<string, any>;
+  errors?: any[];
+  data?: Record<string, any>;
 }
 
 const axiosAgent = axios.create({
   headers: {
-    Accepts: "application/json",
+    "Accepts": "application/json",
     "Content-Type": "application/json",
     "User-Agent": `${REQUESTED_WITH} ${axios.defaults.headers.common["User-Agent"]}`,
     "X-Requested-With": REQUESTED_WITH,
@@ -130,10 +130,7 @@ export class HTTPClient {
     }
   }
 
-  async executeCommand(
-    data: Record<string, any>,
-    optionsToRetain?: Set<string>,
-  ) {
+  async executeCommand(data: Record<string, object>, optionsToRetain?: Set<string>,) {
     const commandName = Object.keys(data)[0];
 
     cleanupOptions(
@@ -168,23 +165,11 @@ export class HTTPClient {
   async request(requestInfo: AxiosRequestConfig): Promise<APIResponse> {
     try {
       if (!this.applicationToken) {
-        return {
-          errors: [
-            {
-              message: "Unable to get token for the credentials provided",
-            },
-          ],
-        };
+        return this._mkError("Unable to get token for the credentials provided");
       }
 
       if (!requestInfo.url) {
-        return {
-          errors: [
-            {
-              message: "URL not specified",
-            },
-          ],
-        };
+        return this._mkError("URL not specified");
       }
 
       const keyspacePath = this.keyspaceName ? `/${this.keyspaceName}` : '';
@@ -193,29 +178,23 @@ export class HTTPClient {
 
       const response = (this.http2Session)
         ? await this._makeHTTP2Request(
-          url.replace(this.origin, ''),
-          this.applicationToken,
-          requestInfo.data
-        )
+            url.replace(this.origin, ''),
+            this.applicationToken,
+            requestInfo.data
+          )
         : await axiosAgent({
-          url: url,
-          data: requestInfo.data,
-          params: requestInfo.params,
-          method: requestInfo.method || DEFAULT_METHOD,
-          timeout: requestInfo.timeout || DEFAULT_TIMEOUT,
-          headers: {
-            [DEFAULT_AUTH_HEADER]: this.applicationToken
-          }
-        });
+            url: url,
+            data: requestInfo.data,
+            params: requestInfo.params,
+            method: requestInfo.method || DEFAULT_METHOD,
+            timeout: requestInfo.timeout || DEFAULT_TIMEOUT,
+            headers: {
+              [DEFAULT_AUTH_HEADER]: this.applicationToken
+            }
+          });
 
       if (response.status === 401 || (response.data?.errors?.length > 0 && response.data.errors[0]?.message === "UNAUTHENTICATED: Invalid token")) {
-        return {
-          errors: [
-            {
-              message: "Authentication failed, is your token valid?",
-            },
-          ],
-        };
+        return this._mkError("Authentication failed; is your token valid?");
       }
 
       if (response.status === 200) {
@@ -227,33 +206,21 @@ export class HTTPClient {
       } else {
         logger.error(requestInfo.url + ": " + response.status);
         logger.error("Data: " + inspect(requestInfo.data));
-        return {
-          errors: [
-            {
-              message: "Server response received : " + response.status + "!",
-            },
-          ],
-        };
+        return this._mkError("Server response received : " + response.status + "!");
       }
     } catch (e: any) {
       logger.error(requestInfo.url + ": " + e.message);
       logger.error("Data: " + inspect(requestInfo.data));
+
       if (e?.response?.data) {
         logger.error("Response Data: " + inspect(e.response.data));
       }
-      return {
-        errors: [
-          {
-            message: e.message
-              ? e.message
-              : "Server call failed, please retry!",
-          },
-        ],
-      };
+
+      return this._mkError(e.message ? e.message : 'Server call failed, please retry!');
     }
   }
 
-  _makeHTTP2Request(
+  private _makeHTTP2Request(
     path: string,
     token: string,
     body: Record<string, any>
@@ -302,6 +269,10 @@ export class HTTPClient {
         }
       });
     });
+  }
+
+  private _mkError(message: string): APIResponse {
+    return { errors: [{ message }] }
   }
 }
 
@@ -374,14 +345,16 @@ function cleanupOptions(
   optionsToRetain: Set<string> | undefined,
   logSkippedOptions: boolean,
 ) {
-  if (command.options) {
-    Object.keys(command.options!).forEach((key) => {
-      if (!optionsToRetain || !optionsToRetain.has(key)) {
-        if (logSkippedOptions) {
-          logger.warn(`'${commandName}' does not support option '${key}'`);
-        }
-        delete command.options[key];
-      }
-    });
+  if (!command.options) {
+    return;
   }
+
+  Object.keys(command.options!).forEach((key) => {
+    if (!optionsToRetain || !optionsToRetain.has(key)) {
+      if (logSkippedOptions) {
+        logger.warn(`'${commandName}' does not support option '${key}'`);
+      }
+      delete command.options[key];
+    }
+  });
 }

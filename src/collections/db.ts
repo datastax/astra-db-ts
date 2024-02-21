@@ -13,16 +13,10 @@
 // limitations under the License.
 
 import { HTTPClient } from '@/src/client';
-import { CreateCollectionOptions, createCollectionOptionsKeys, } from './options';
 import { Collection } from './collection';
-import { createNamespace, executeOperation } from './utils';
-
-interface CreateCollectionCommand {
-  createCollection: {
-    name: string,
-    options?: CreateCollectionOptions,
-  },
-}
+import { createNamespace, executeOperation, TypeErr } from './utils';
+import { CreateCollectionOptions, createCollectionOptionsKeys } from '@/src/collections/operations/collections/create-collection';
+import { APIResponse } from '@/src/client/httpClient';
 
 export class Db {
   httpClient: HTTPClient;
@@ -35,7 +29,6 @@ export class Db {
 
     this.httpClient = httpClient.cloneShallow();
     this.httpClient.keyspaceName = name;
-
     this.keyspaceName = name;
   }
 
@@ -57,12 +50,9 @@ export class Db {
    * @param options
    * @returns Promise
    */
-  async createCollection(
-    collectionName: string,
-    options?: CreateCollectionOptions,
-  ) {
+  async createCollection(collectionName: string, options?: CreateCollectionOptions): Promise<APIResponse> {
     return executeOperation(async () => {
-      const command: CreateCollectionCommand = {
+      const command: any = {
         createCollection: {
           name: collectionName,
         },
@@ -72,19 +62,16 @@ export class Db {
         command.createCollection.options = options;
       }
 
-      return await this.httpClient.executeCommand(
-        command,
-        createCollectionOptionsKeys,
-      );
+      return await this.httpClient.executeCommand(command, createCollectionOptionsKeys);
     });
   }
 
   /**
    *
    * @param collectionName
-   * @returns APIResponse
+   * @returns Promise
    */
-  async dropCollection(collectionName: string) {
+  async dropCollection(collectionName: string): Promise<APIResponse> {
     const command = {
       deleteCollection: {
         name: collectionName,
@@ -98,19 +85,19 @@ export class Db {
    *
    * @returns Promise
    */
-  async dropDatabase() {
-    throw new Error("Cannot drop database in Astra. Please use the Astra UI to drop the database.",);
+  async dropDatabase(): Promise<TypeErr<'Cannot drop database in Astra. Please use the Astra UI to drop the database.'>> {
+    throw new Error('Cannot drop database in Astra. Please use the Astra UI to drop the database.');
   }
 
   /**
    *
    * @returns Promise
    */
-  async createDatabase() {
+  async createDatabase(): Promise<APIResponse> {
     return await createNamespace(this.httpClient, this.keyspaceName);
   }
 
-  // For backwards compatibility
+  // For backwards compatibility reasons
   get name() {
     return this.keyspaceName;
   }

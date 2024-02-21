@@ -14,91 +14,48 @@
 
 import { FindCursor } from './cursor';
 import { HTTPClient } from '@/src/client';
-import { executeOperation, setDefaultIdForUpsert } from './utils';
+import { executeOperation, setDefaultIdForUpsert, TypeErr, withoutFields } from './utils';
+import { InsertOneCommand, InsertOneResult } from '@/src/collections/operations/insert/insert-one';
 import {
-  DeleteOneOptions,
-  FindOneAndDeleteOptions,
-  findOneAndReplaceInternalOptionsKeys,
-  FindOneAndReplaceOptions,
-  findOneAndUpdateInternalOptionsKeys,
-  FindOneAndUpdateOptions,
-  findOneInternalOptionsKeys,
-  FindOneOptions,
-  FindOptions,
-  insertManyInternalOptionsKeys,
+  InsertManyCommand,
+  insertManyOptionKeys,
   InsertManyOptions,
-  SortOption,
-  updateManyInternalOptionsKeys,
-  UpdateManyOptions,
-  updateOneInternalOptionsKeys,
+  InsertManyResult
+} from '@/src/collections/operations/insert/insert-many';
+import {
+  UpdateOneCommand,
+  updateOneOptionKeys,
   UpdateOneOptions,
-} from './options';
+  UpdateOneResult,
+} from '@/src/collections/operations/update/update-one';
+import {
+  UpdateManyCommand,
+  updateManyOptionKeys,
+  UpdateManyOptions,
+  UpdateManyResult
+} from '@/src/collections/operations/update/update-many';
+import { DeleteOneCommand, DeleteOneOptions, DeleteOneResult } from '@/src/collections/operations/delete/delete-one';
+import { DeleteManyCommand, DeleteManyResult } from '@/src/collections/operations/delete/delete-many';
+import { FindOptions } from '@/src/collections/operations/find/find';
+import { FindOneAndResult } from '@/src/collections/operations/find/find-common';
+import { FindOneCommand, FindOneOptions, findOneOptionsKeys } from '@/src/collections/operations/find/find-one';
+import { FindOneAndDeleteCommand, FindOneAndDeleteOptions } from '@/src/collections/operations/find/find-one-delete';
+import {
+  FindOneAndUpdateCommand,
+  FindOneAndUpdateOptions,
+  findOneAndUpdateOptionsKeys
+} from '@/src/collections/operations/find/find-one-update';
+import {
+  FindOneAndReplaceCommand,
+  FindOneAndReplaceOptions,
+  findOneAndReplaceOptionsKeys
+} from '@/src/collections/operations/find/find-one-replace';
+import { Filter } from '@/src/collections/operations/filter';
+import { UpdateFilter } from '@/src/collections/operations/update-filter';
 
-export interface JSONAPIUpdateResult {
-  matchedCount: number;
-  modifiedCount: number;
-  acknowledged: boolean;
-  upsertedId?: any;
-  upsertedCount?: number;
-}
+export type AnyDict = Record<string, any>;
 
-export interface JSONAPIDeleteResult {
-  acknowledged: boolean;
-  deletedCount: number;
-}
-
-export interface JSONAPIInsertOneResult {
-  acknowledged: boolean;
-  insertedId: any;
-}
-
-export interface JSONAPIModifyResult {
-  ok: number;
-  value: Record<string, any> | null;
-}
-
-export type FindOneAndUpdateCommand = {
-  findOneAndUpdate: {
-    filter?: Record<string, any>;
-    update?: Record<string, any>;
-    options?: FindOneAndUpdateOptions;
-    sort?: SortOption;
-  };
-};
-
-export type FindOneAndDeleteCommand = {
-  findOneAndDelete: {
-    filter?: Record<string, any>;
-    sort?: SortOption;
-  };
-};
-
-export type FindOneCommand = {
-  findOne: {
-    filter?: Record<string, any>;
-    options?: FindOneOptions;
-    sort?: SortOption;
-    projection?: Record<string, any>;
-  };
-};
-
-export type DeleteOneCommand = {
-  deleteOne: {
-    filter?: Record<string, any>;
-    sort?: SortOption;
-  };
-};
-
-export type UpdateOneCommand = {
-  updateOne: {
-    filter?: Record<string, any>;
-    sort?: SortOption;
-    update?: Record<string, any>;
-    options?: UpdateOneOptions;
-  };
-};
-
-export class Collection {
+export class Collection<Schema extends AnyDict = AnyDict> {
   httpClient: HTTPClient;
   name: string;
 
@@ -109,99 +66,80 @@ export class Collection {
 
     this.httpClient = httpClient.cloneShallow();
     this.httpClient.collectionName = name;
-
     this.name = name;
   }
 
-  async insertOne(document: Record<string, any>) {
-    return executeOperation(async (): Promise<JSONAPIInsertOneResult> => {
-      const command = {
-        insertOne: {
-          document,
-        },
-      };
+  async insertOne(document: Schema): Promise<InsertOneResult> {
+    return executeOperation(async () => {
+      const command: InsertOneCommand = {
+        insertOne: { document },
+      }
 
       const resp = await this.httpClient.executeCommand(command);
 
       return {
         acknowledged: true,
-        insertedId: resp.status.insertedIds[0],
+        insertedId: resp.status?.insertedIds[0],
       };
     });
   }
 
-  async insertMany(
-    documents: Record<string, any>[],
-    options?: InsertManyOptions,
-  ) {
-    return executeOperation(async (): Promise<any> => {
-      const command = {
+  async insertMany(documents: Schema[], options?: InsertManyOptions): Promise<InsertManyResult> {
+    return executeOperation(async () => {
+      const command: InsertManyCommand = {
         insertMany: {
           documents,
           options,
         },
       };
 
-      const resp = await this.httpClient.executeCommand(
-        command,
-        insertManyInternalOptionsKeys,
-      );
+      const resp = await this.httpClient.executeCommand(command, insertManyOptionKeys);
 
       return {
         acknowledged: true,
-        insertedCount: resp.status.insertedIds?.length || 0,
-        insertedIds: resp.status.insertedIds,
+        insertedCount: resp.status?.insertedIds?.length || 0,
+        insertedIds: resp.status?.insertedIds,
       };
     });
   }
 
-  async updateOne(
-    filter: Record<string, any>,
-    update: Record<string, any>,
-    options?: UpdateOneOptions,
-  ) {
-    return executeOperation(async (): Promise<JSONAPIUpdateResult> => {
+  async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions): Promise<UpdateOneResult> {
+    return executeOperation(async () => {
       const command: UpdateOneCommand = {
         updateOne: {
           filter,
           update,
-          options,
+          options: withoutFields(options, 'sort'),
         },
       };
 
-      if (options?.sort != null) {
-        command.updateOne.sort = options?.sort;
+      if (options?.sort) {
+        command.updateOne.sort = options.sort;
       }
 
       setDefaultIdForUpsert(command.updateOne);
 
-      const updateOneResp = await this.httpClient.executeCommand(
-        command,
-        updateOneInternalOptionsKeys,
-      );
+      const resp = await this.httpClient.executeCommand(command, updateOneOptionKeys);
 
-      const resp = {
-        modifiedCount: updateOneResp.status.modifiedCount,
-        matchedCount: updateOneResp.status.matchedCount,
+      const commonResult = {
+        modifiedCount: resp.status?.modifiedCount,
+        matchedCount: resp.status?.matchedCount,
         acknowledged: true,
-      } as JSONAPIUpdateResult;
+      } as const;
 
-      if (updateOneResp.status.upsertedId) {
-        resp.upsertedId = updateOneResp.status.upsertedId;
-        resp.upsertedCount = 1;
-      }
-
-      return resp;
+      return (resp.status?.upsertedId)
+        ? {
+          ...commonResult,
+          upsertedId: resp.status?.upsertedId,
+          upsertedCount: 1,
+        }
+        : commonResult;
     });
   }
 
-  async updateMany(
-    filter: Record<string, any>,
-    update: Record<string, any>,
-    options?: UpdateManyOptions,
-  ) {
-    return executeOperation(async (): Promise<JSONAPIUpdateResult> => {
-      const command = {
+  async updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateManyOptions): Promise<UpdateManyResult> {
+    return executeOperation(async () => {
+      const command: UpdateManyCommand = {
         updateMany: {
           filter,
           update,
@@ -211,39 +149,35 @@ export class Collection {
 
       setDefaultIdForUpsert(command.updateMany);
 
-      const updateManyResp = await this.httpClient.executeCommand(
-        command,
-        updateManyInternalOptionsKeys,
-      );
+      const updateManyResp = await this.httpClient.executeCommand(command, updateManyOptionKeys);
 
-      if (updateManyResp.status.moreData) {
+      if (updateManyResp.status?.moreData) {
         throw new AstraClientError(
-          `More than ${updateManyResp.status.modifiedCount} records found for update by the server`,
+          `More than ${updateManyResp.status?.modifiedCount} records found for update by the server`,
           command,
         );
       }
 
-      const resp = {
-        modifiedCount: updateManyResp.status.modifiedCount,
-        matchedCount: updateManyResp.status.matchedCount,
+      const commonResult = {
+        modifiedCount: updateManyResp.status?.modifiedCount,
+        matchedCount: updateManyResp.status?.matchedCount,
         acknowledged: true,
-      } as JSONAPIUpdateResult;
+      } as const;
 
-      if (updateManyResp.status.upsertedId) {
-        resp.upsertedId = updateManyResp.status.upsertedId;
-        resp.upsertedCount = 1;
-      }
-
-      return resp;
+      return (updateManyResp.status?.upsertedId)
+        ? {
+          ...commonResult,
+          upsertedId: updateManyResp.status?.upsertedId,
+          upsertedCount: 1,
+        }
+        : commonResult;
     });
   }
 
-  async deleteOne(filter: Record<string, any>, options?: DeleteOneOptions): Promise<JSONAPIDeleteResult> {
-    return executeOperation(async (): Promise<JSONAPIDeleteResult> => {
+  async deleteOne(filter: Filter<Schema>, options?: DeleteOneOptions): Promise<DeleteOneResult> {
+    return executeOperation(async () => {
       const command: DeleteOneCommand = {
-        deleteOne: {
-          filter,
-        },
+        deleteOne: { filter },
       };
 
       if (options?.sort) {
@@ -254,42 +188,40 @@ export class Collection {
 
       return {
         acknowledged: true,
-        deletedCount: deleteOneResp.status.deletedCount,
+        deletedCount: deleteOneResp.status?.deletedCount,
       };
     });
   }
 
-  async deleteMany(filter: Record<string, any>): Promise<JSONAPIDeleteResult> {
-    return executeOperation(async (): Promise<JSONAPIDeleteResult> => {
-      const command = {
-        deleteMany: {
-          filter,
-        },
+  async deleteMany(filter: Filter<Schema>): Promise<DeleteManyResult> {
+    return executeOperation(async () => {
+      const command: DeleteManyCommand = {
+        deleteMany: { filter },
       };
 
       const deleteManyResp = await this.httpClient.executeCommand(command);
 
-      if (deleteManyResp.status.moreData) {
-        throw new AstraClientError(`More records found to be deleted even after deleting ${deleteManyResp.status.deletedCount} records`, command,);
+      if (deleteManyResp.status?.moreData) {
+        throw new AstraClientError(`More records found to be deleted even after deleting ${deleteManyResp.status?.deletedCount} records`, command);
       }
 
       return {
         acknowledged: true,
-        deletedCount: deleteManyResp.status.deletedCount,
+        deletedCount: deleteManyResp.status?.deletedCount,
       };
     });
   }
 
-  find(filter: Record<string, any>, options?: FindOptions): FindCursor {
+  find(filter: Filter<Schema>, options?: FindOptions): FindCursor<Schema> {
     return new FindCursor(this, filter, options);
   }
 
-  async findOne(filter: Record<string, any>, options?: FindOneOptions): Promise<Record<string, any> | null> {
-    return executeOperation(async (): Promise<Record<string, any> | null> => {
+  async findOne(filter: Filter<Schema>, options?: FindOneOptions): Promise<Schema | null> {
+    return executeOperation(async () => {
       const command: FindOneCommand = {
         findOne: {
           filter,
-          options,
+          options: withoutFields(options, 'sort', 'projection'),
         },
       };
 
@@ -302,29 +234,13 @@ export class Collection {
         command.findOne.projection = options.projection;
       }
 
-      const resp = await this.httpClient.executeCommand(
-        command,
-        findOneInternalOptionsKeys,
-      );
-      return resp.data.document;
+      const resp = await this.httpClient.executeCommand(command, findOneOptionsKeys);
+      return resp.data?.document;
     });
   }
 
-  async findOneAndReplace(
-    filter: Record<string, any>,
-    replacement: Record<string, any>,
-    options?: FindOneAndReplaceOptions,
-  ): Promise<JSONAPIModifyResult> {
-    return executeOperation(async (): Promise<JSONAPIModifyResult> => {
-      type FindOneAndReplaceCommand = {
-        findOneAndReplace: {
-          filter?: Record<string, any>;
-          replacement?: Record<string, any>;
-          options?: FindOneAndReplaceOptions;
-          sort?: SortOption;
-        };
-      };
-
+  async findOneAndReplace(filter: Filter<Schema>, replacement: Schema, options?: FindOneAndReplaceOptions): Promise<FindOneAndResult<Schema>> {
+    return executeOperation(async () => {
       const command: FindOneAndReplaceCommand = {
         findOneAndReplace: {
           filter,
@@ -340,10 +256,7 @@ export class Collection {
         delete options.sort;
       }
 
-      const resp = await this.httpClient.executeCommand(
-        command,
-        findOneAndReplaceInternalOptionsKeys,
-      );
+      const resp = await this.httpClient.executeCommand(command, findOneAndReplaceOptionsKeys);
 
       return {
         value: resp.data?.document,
@@ -352,29 +265,26 @@ export class Collection {
     });
   }
 
-  async distinct(_key: any, _filter: any, _options?: any) {
+  // noinspection JSUnusedGlobalSymbols
+  async distinct(_key: any, _filter: any, _options?: any): Promise<TypeErr<'distinct not implemented'>> {
     throw new Error('Not Implemented');
   }
 
   async countDocuments(filter?: Record<string, any>): Promise<number> {
     return executeOperation(async (): Promise<number> => {
       const command = {
-        countDocuments: {
-          filter,
-        },
+        countDocuments: { filter },
       };
 
       const resp = await this.httpClient.executeCommand(command);
 
-      return resp.status.count;
+      return resp.status?.count;
     });
   }
 
-  async findOneAndDelete(filter: Record<string, any>, options?: FindOneAndDeleteOptions,): Promise<JSONAPIModifyResult> {
+  async findOneAndDelete(filter: Filter<Schema>, options?: FindOneAndDeleteOptions,): Promise<FindOneAndResult<Schema>> {
     const command: FindOneAndDeleteCommand = {
-      findOneAndDelete: {
-        filter,
-      },
+      findOneAndDelete: { filter },
     };
 
     if (options?.sort) {
@@ -382,21 +292,15 @@ export class Collection {
     }
 
     const resp = await this.httpClient.executeCommand(command);
+
     return {
       value: resp.data?.document,
       ok: 1,
     };
   }
 
-  /**
-   * @deprecated
-   */
-  async count(filter?: Record<string, any>) {
-    return this.countDocuments(filter);
-  }
-
-  async findOneAndUpdate(filter: Record<string, any>, update: Record<string, any>, options?: FindOneAndUpdateOptions): Promise<JSONAPIModifyResult> {
-    return executeOperation(async (): Promise<JSONAPIModifyResult> => {
+  async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: FindOneAndUpdateOptions): Promise<FindOneAndResult<Schema>> {
+    return executeOperation(async () => {
       const command: FindOneAndUpdateCommand = {
         findOneAndUpdate: {
           filter,
@@ -404,15 +308,16 @@ export class Collection {
           options,
         },
       };
+
       setDefaultIdForUpsert(command.findOneAndUpdate);
+
       if (options?.sort) {
         command.findOneAndUpdate.sort = options.sort;
         delete options.sort;
       }
-      const resp = await this.httpClient.executeCommand(
-        command,
-        findOneAndUpdateInternalOptionsKeys,
-      );
+
+      const resp = await this.httpClient.executeCommand(command, findOneAndUpdateOptionsKeys);
+
       return {
         value: resp.data?.document,
         ok: 1,

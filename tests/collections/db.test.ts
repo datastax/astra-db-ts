@@ -90,10 +90,10 @@ describe("Astra TS Client - collections.Db", async () => {
       const db = new Db(httpClient, parseUri(dbUri).keyspaceName);
       const res = await db.createCollection(collectionName);
       assert.ok(res);
-      assert.strictEqual(res.status.ok, 1);
+      assert.strictEqual(res.status?.ok, 1);
       const res2 = await db.createCollection(collectionName);
       assert.ok(res2);
-      assert.strictEqual(res2.status.ok, 1);
+      assert.strictEqual(res2.status?.ok, 1);
     });
 
     it("should drop a Collection", async () => {

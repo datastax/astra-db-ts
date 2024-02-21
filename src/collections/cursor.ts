@@ -12,32 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection } from "./collection";
-import { executeOperation } from "./utils";
-import {
-  findInternalOptionsKeys,
-  FindOptions,
-  FindOptionsInternal,
-} from "./options";
+import { Collection, AnyDict } from './collection';
+import { executeOperation, TypeErr } from './utils';
+import { FindOptions, internalFindOptionsKeys, InternalFindOptions } from '@/src/collections/operations/find/find';
+import { Filter } from '@/src/collections/operations/filter';
 
-export class FindCursor {
-  collection: Collection;
-  filter: Record<string, any>;
+type CursorStatus = 'uninitialized' | 'initialized' | 'executing' | 'executed';
+
+export class FindCursor<Schema extends AnyDict = AnyDict> {
+  collection: Collection<Schema>;
+  filter: Filter<Schema>;
   options: FindOptions;
-  documents: Record<string, any>[] = [];
-  status = "uninitialized";
+  documents: Schema[] = [];
+  status: CursorStatus = 'uninitialized';
   nextPageState?: string;
   limit: number;
 
-  page: Record<string, any>[] = [];
-  pageIndex: number;
-  exhausted: boolean;
+  page: Schema[] = [];
+  exhausted = false;
+  pageIndex = 0;
 
-  constructor(
-    collection: Collection,
-    filter: Record<string, any>,
-    options?: FindOptions,
-  ) {
+  constructor(collection: Collection<Schema>, filter: Filter<Schema>, options?: FindOptions) {
     this.collection = collection;
     this.filter = filter;
     this.options = options ?? {};
@@ -48,61 +43,57 @@ export class FindCursor {
       (this.options.limit == null || this.options.limit > 20);
     if (isOverPageSizeLimit) {
       throw new Error(
-        "Cannot set sort option without limit <= 20, JSON API can currently only return 20 documents with sort",
+        'Cannot set sort option without limit <= 20, JSON API can currently only return 20 documents with sort',
       );
     }
 
     this.limit = options?.limit || Infinity;
-    this.status = "initialized";
-    this.exhausted = false;
-
-    // Current position in batch
-    this.pageIndex = 0;
-  }
-
-  /**
-   *
-   * @returns void
-   */
-  private async getAll() {
-    if (this.status === "executed" || this.status === "executing") {
-      return;
-    }
-
-    for (let doc = await this.next(); doc != null; doc = await this.next()) {
-      this.documents.push(doc);
-    }
-
-    return this.documents;
+    this.status = 'initialized';
   }
 
   /**
    *
    * @returns Record<string, any>[]
    */
-  async toArray(): Promise<any[]> {
-    await this.getAll();
-    return this.documents;
+  async toArray(): Promise<Schema[]> {
+    return executeOperation(async () => {
+      await this._getAll();
+      return this.documents;
+    });
+  }
+
+  /**
+   *
+   * @returns void
+   */
+  private async _getAll(): Promise<void> {
+    if (this.status === 'executed' || this.status === 'executing') {
+      return;
+    }
+
+    for (let doc = await this.next(); doc != null; doc = await this.next()) {
+      this.documents.push(doc);
+    }
   }
 
   /**
    * @returns Promise
    */
-  async next(): Promise<any> {
+  async next(): Promise<Schema | null> {
     return executeOperation(async () => {
       if (this.pageIndex < this.page.length) {
         return this.page[this.pageIndex++];
       }
 
       if (this.exhausted) {
-        this.status = "executed";
+        this.status = 'executed';
       }
 
-      if (this.status === "executed") {
+      if (this.status === 'executed') {
         return null;
       }
 
-      this.status = "executing";
+      this.status = 'executing';
 
       await this._getMore();
 
@@ -110,11 +101,11 @@ export class FindCursor {
     });
   }
 
-  async _getMore() {
+  private async _getMore(): Promise<void> {
     const command: {
       find: {
         filter?: Record<string, any>;
-        options?: FindOptionsInternal;
+        options?: InternalFindOptions;
         sort?: Record<string, any>;
         projection?: Record<string, any>;
       };
@@ -126,7 +117,7 @@ export class FindCursor {
     if (this.options && this.options.sort) {
       command.find.sort = this.options.sort;
     }
-    const options: FindOptionsInternal = {};
+    const options: InternalFindOptions = {};
     if (this.limit != Infinity) {
       options.limit = this.limit;
     }
@@ -150,14 +141,14 @@ export class FindCursor {
     }
     const resp = await this.collection.httpClient.executeCommand(
       command,
-      findInternalOptionsKeys,
+      internalFindOptionsKeys,
     );
-    this.nextPageState = resp.data.nextPageState;
+    this.nextPageState = resp.data!.nextPageState;
     if (this.nextPageState == null) {
       this.exhausted = true;
     }
-    this.page = Object.keys(resp.data.documents).map(
-      (i) => resp.data.documents[i],
+    this.page = Object.keys(resp.data!.documents).map(
+      (i) => resp.data!.documents[i],
     );
     this.pageIndex = 0;
   }
@@ -166,7 +157,7 @@ export class FindCursor {
    *
    * @param iterator
    */
-  async forEach(iterator: any) {
+  async forEach(iterator: any): Promise<void> {
     return executeOperation(async () => {
       for (let doc = await this.next(); doc != null; doc = await this.next()) {
         iterator(doc);
@@ -178,19 +169,14 @@ export class FindCursor {
    *
    * @returns Promise<number>
    */
-  async count() {
-    return executeOperation(async () => {
-      await this.getAll();
-      return this.documents.length;
-    });
+  async count(): Promise<number> {
+    return this.toArray().then((docs) => docs.length);
   }
-
-  // NOOPS and unimplemented
 
   /**
    *
    */
-  stream() {
-    throw new Error("Streaming cursors are not supported");
+  stream(): TypeErr<'Streaming cursors are not supported'> {
+    throw new Error('Streaming cursors are not supported');
   }
 }

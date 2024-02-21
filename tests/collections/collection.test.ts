@@ -1358,7 +1358,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
           'upsert': true
         }
       );
-      assert.ok(updateOneResp.upsertedId.match(/^[a-f\d]{24}$/i), updateOneResp.upsertedId);
+      assert.ok(updateOneResp.upsertedId?.match(/^[a-f\d]{24}$/i), updateOneResp.upsertedId);
     });
 
     it('should not overwrite user-specified _id in $setOnInsert', async () => {
@@ -2345,7 +2345,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
           'upsert': true
         }
       );
-      assert.ok(upsertedId.match(/^[a-f\d]{24}$/i), upsertedId);
+      assert.ok(upsertedId?.match(/^[a-f\d]{24}$/i), upsertedId);
     });
   });
 
