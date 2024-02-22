@@ -12,23 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, AnyDict } from './collection';
+import { Collection, SomeDoc } from './collection';
 import { executeOperation, TypeErr } from './utils';
 import { FindOptions, internalFindOptionsKeys, InternalFindOptions } from '@/src/collections/operations/find/find';
 import { Filter } from '@/src/collections/operations/filter';
+import { WithId } from '@/src/collections/operations/with-id';
 
 type CursorStatus = 'uninitialized' | 'initialized' | 'executing' | 'executed';
 
-export class FindCursor<Schema extends AnyDict = AnyDict> {
+export class FindCursor<Schema extends SomeDoc = SomeDoc> {
   collection: Collection<Schema>;
   filter: Filter<Schema>;
   options: FindOptions;
-  documents: Schema[] = [];
+  documents: WithId<Schema>[] = [];
   status: CursorStatus = 'uninitialized';
   nextPageState?: string;
   limit: number;
 
-  page: Schema[] = [];
+  page: WithId<Schema>[] = [];
   exhausted = false;
   pageIndex = 0;
 
@@ -55,7 +56,7 @@ export class FindCursor<Schema extends AnyDict = AnyDict> {
    *
    * @returns Record<string, any>[]
    */
-  async toArray(): Promise<Schema[]> {
+  async toArray(): Promise<WithId<Schema>[]> {
     return executeOperation(async () => {
       await this._getAll();
       return this.documents;
@@ -79,7 +80,7 @@ export class FindCursor<Schema extends AnyDict = AnyDict> {
   /**
    * @returns Promise
    */
-  async next(): Promise<Schema | null> {
+  async next(): Promise<WithId<Schema> | null> {
     return executeOperation(async () => {
       if (this.pageIndex < this.page.length) {
         return this.page[this.pageIndex++];

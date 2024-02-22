@@ -12,23 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { InternalUpdateResult } from '@/src/collections/operations/update/update-common';
-import { SortOption } from '@/src/collections';
+export type WithId<T> = Omit<T, '_id'> & { _id: string }
 
-export interface UpdateOneCommand {
-  updateOne: {
-    filter: Record<string, any>;
-    update: Record<string, any>;
-    options?: Omit<UpdateOneOptions, 'sort'>;
-    sort?: SortOption;
-  }
-}
-
-export interface UpdateOneOptions {
-  upsert?: boolean;
-  sort?: SortOption;
-}
-
-export const updateOneOptionKeys = new Set(['upsert', 'sort']);
-
-export type UpdateOneResult = InternalUpdateResult<0 | 1>
+export type IsNum<T> = number extends T ? true : bigint extends T ? true : false

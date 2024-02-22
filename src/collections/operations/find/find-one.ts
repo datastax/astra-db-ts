@@ -14,19 +14,19 @@
 
 import { ProjectionOption, SortOption } from '@/src/collections/operations/find/find-common';
 
-export interface FindOneCommand {
+export interface FindOneCommand<Schema> {
   findOne: {
     filter: Record<string, any>;
-    options?: FindOneOptions;
+    options?: FindOneOptions<Schema>;
     sort?: SortOption;
-    projection?: Record<string, any>;
+    projection?: ProjectionOption<Schema>;
   };
 }
 
-export interface FindOneOptions {
+export interface FindOneOptions<Schema> {
   sort?: Record<string, 1 | -1>;
-  projection?: ProjectionOption;
+  projection?: ProjectionOption<Schema>;
   includeSimilarity?: boolean;
 }
 
-export const findOneOptionsKeys = new Set(['includeSimilarity']);
+export const findOneOptionsKeys = new Set(['includeSimilarity', 'sort', 'projection']);

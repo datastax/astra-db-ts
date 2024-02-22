@@ -20,13 +20,13 @@ interface BaseFindOptions {
   includeSimilarity?: boolean;
 }
 
-export interface FindOptions extends BaseFindOptions {
+export interface FindOptions<Schema> extends BaseFindOptions {
   sort?: SortOption;
-  projection?: ProjectionOption;
+  projection?: ProjectionOption<Schema>;
 }
 
 export interface InternalFindOptions extends BaseFindOptions {
   pagingState?: string;
 }
 
-export const internalFindOptionsKeys = new Set<keyof InternalFindOptions>(['limit', 'skip', 'pagingState', 'includeSimilarity']);
+export const internalFindOptionsKeys = new Set(['limit', 'skip', 'pagingState', 'includeSimilarity']);

@@ -26,6 +26,6 @@ export interface UpdateManyOptions {
   upsert?: boolean;
 }
 
-export const updateManyOptionKeys = new Set<keyof UpdateManyOptions>(['upsert']);
+export const updateManyOptionKeys = new Set(['upsert']);
 
 export type UpdateManyResult = InternalUpdateResult<number>

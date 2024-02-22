@@ -12,46 +12,58 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AnyDict } from '@/src/collections/collection';
+import { SomeDoc } from '@/src/collections/collection';
 import { ToDotNotation } from '@/src/collections/operations/dot-notation';
+import { IsNum } from '@/src/collections/operations/with-id';
+import { TypeErr } from '@/src/collections/utils';
 
-export interface UpdateFilter<Schema extends AnyDict, InNotation = ToDotNotation<Schema>> {
+export interface UpdateFilter<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> {
   $set?: Partial<InNotation>,
   $setOnInsert?: Partial<InNotation>,
   $unset?: Unset<InNotation>,
   $inc?: NumberUpdate<InNotation>,
-  $push?: ArrayUpdate<InNotation>,
+  $push?: Push<InNotation>,
   $pop?: Pop<InNotation>,
   $rename?: Rename<InNotation>,
   $currentDate?: CurrentDate<InNotation>,
   $min?: NumberUpdate<InNotation>,
   $max?: NumberUpdate<InNotation>,
   $mul?: NumberUpdate<InNotation>,
-  $addToSet?: ArrayUpdate<InNotation>,
+  $addToSet?: Push<InNotation>,
 }
 
 type Unset<Schema> = {
   [K in keyof Schema]?: ''
 }
 
-type Pop<Schema> = {
+type Pop<Schema> = ContainsArr<Schema> extends true ? {
   [K in keyof ArrayUpdate<Schema>]?: number
-}
+} : TypeErr<'Can not pop on a schema with no arrays'>
+
+type Push<Schema> = ContainsArr<Schema> extends true ? {
+  [K in keyof ArrayUpdate<Schema>]?: (
+    | ArrayUpdate<Schema>[K]
+    | { $each: ArrayUpdate<Schema>[K][], $position?: number }
+  )
+} : TypeErr<'Can not perform array operation on a schema with no arrays'>
 
 type Rename<Schema> = {
   [K in keyof Schema]?: string
 }
 
-type IsNumber<T> = number extends T ? true : bigint extends T ? true : false
-
-type NumberUpdate<Schema> = {
-  [K in keyof Schema as IsNumber<Schema[K]> extends true ? K : never]?: number
-}
+type NumberUpdate<Schema> = ContainsNum<Schema> extends true ? {
+  [K in keyof Schema as IsNum<Schema[K]> extends true ? K : never]?: number | bigint
+} : TypeErr<'Can not perform a number operation on a schema with no numbers'>;
 
 type ArrayUpdate<Schema> = {
-  [K in keyof Schema as any[] extends Schema[K] ? K : never]?: Schema[K] extends (infer E)[] ? E : unknown
-}
+  [K in keyof Schema as any[] extends Schema[K] ? K : never]?: PickArrayTypes<Schema[K]>
+};
 
-type CurrentDate<Schema> = {
-  [K in keyof Schema as Date extends Schema[K] ? K : never]?: true
-}
+type CurrentDate<Schema> =  {
+  [K in keyof Schema as Schema[K] extends Date ? K : never]?: boolean
+};
+
+type ContainsArr<Schema> = any[] extends Schema[keyof Schema] ? true : false;
+type ContainsNum<Schema> = IsNum<Schema[keyof Schema]>;
+
+type PickArrayTypes<Schema> = Extract<Schema, any[]> extends (infer E)[] ? E : unknown

@@ -1,7 +1,21 @@
+// Copyright DataStax, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { UpdateFilter } from '@/src/collections';
-import { BasicSchema, Equal, Expect, Schema } from '@/tests/typing/prelude';
+import { BasicSchema, ConvolutedSchema1, ConvolutedSchema2, Equal, Expect, Schema } from '@/tests/typing/prelude';
 
 type test1 = Expect<Equal<UpdateFilter<BasicSchema>, {
   $set?: {
@@ -29,15 +43,15 @@ type test1 = Expect<Equal<UpdateFilter<BasicSchema>, {
     obj: '',
   }>,
   $inc?: Partial<{
-    num: number,
-    [k: `any.${string}`]: number,
-    any: number,
+    num: number | bigint,
+    [k: `any.${string}`]: number | bigint,
+    any: number | bigint,
   }>,
   $push?: Partial<{
     [k: `any.${string}`]: unknown,
     any: unknown,
   }>,
-  $pop?:  Partial<{
+  $pop?: Partial<{
     [k: `any.${string}`]: number,
     any: number,
   }>,
@@ -51,19 +65,19 @@ type test1 = Expect<Equal<UpdateFilter<BasicSchema>, {
   }>,
   $currentDate?: Partial<NonNullable<unknown>>,
   $min?: Partial<{
-    num: number,
-    [k: `any.${string}`]: number,
-    any: number,
+    num: number | bigint,
+    [k: `any.${string}`]: number | bigint,
+    any: number | bigint,
   }>,
   $max?: Partial<{
-    num: number,
-    [k: `any.${string}`]: number,
-    any: number,
+    num: number | bigint,
+    [k: `any.${string}`]: number | bigint,
+    any: number | bigint,
   }>,
   $mul?: Partial<{
-    num: number,
-    [k: `any.${string}`]: number,
-    any: number,
+    num: number | bigint,
+    [k: `any.${string}`]: number | bigint,
+    any: number | bigint,
   }>,
   $addToSet?: Partial<{
     [k: `any.${string}`]: unknown,
@@ -71,42 +85,277 @@ type test1 = Expect<Equal<UpdateFilter<BasicSchema>, {
   }>,
 }>>
 
-const test2: UpdateFilter<Schema> = {
+const test2: UpdateFilter<BasicSchema> = {
   $set: {
-    num1: 3,
-    'obj.obj.any': {
-      num: 3,
-    },
-    'obj.obj.any.gma.t.50': 3,
+    num: 1,
+    str: '1',
+    any: 1,
+    'any.a': 1,
+    'obj.str': '1',
+    obj: { str: '1' },
   },
   $setOnInsert: {
-    num1: 3,
+    num: 1,
+    str: '1',
+    any: 1,
+    'any.a': 1,
+    'obj.str': '1',
+    obj: { str: '1' },
   },
   $unset: {
-    num2: '',
+    num: '',
+    str: '',
+    any: '',
+    'any.a': '',
+    'obj.str': '',
+    obj: '',
   },
   $inc: {
-    num1: 3,
+    num: 1,
+    'any.a': 1,
+    any: 1,
   },
   $push: {
-    arr: 'hi',
+    'any.a': 1,
+    any: 1,
   },
   $pop: {
-    arr: 1,
+    'any.a': 1,
+    any: 1,
   },
   $rename: {
-    arr: 'arr2',
+    num: '1',
+    str: '1',
+    any: '1',
+    'any.a': '1',
+    'obj.str': '1',
+    obj: '1',
+  },
+  $currentDate: {
+    any: true,
   },
   $min: {
-    'obj.obj.num': 3,
+    num: 1,
+    'any.a': 1,
+    any: 1,
   },
   $max: {
-    'obj.obj.any.cars2': 3,
+    num: 1,
+    'any.a': 1,
+    any: 1,
   },
   $mul: {
-    num1: 3,
+    num: 1,
+    'any.a': 1,
+    any: 1,
   },
   $addToSet: {
-    arr: 'hi',
+    'any.a': 1,
+    any: 1,
+  },
+}
+
+const test3: UpdateFilter<Schema> = {
+  $set: {
+    // @ts-expect-error - Invalid type
+    num1: 'a',
+    arr: [
+      // @ts-expect-error - Invalid type
+      1,
+      '1'
+    ],
+    // @ts-expect-error - Invalid type
+    'obj.str2': 2,
+    // @ts-expect-error - Invalid type
+    obj: {},
+    'obj.obj': {
+      // @ts-expect-error - Invalid type
+      num: '1',
+      any: { a: 1 }
+    },
+  },
+  $unset: {
+    // @ts-expect-error - Invalid type
+    num1: 1,
+    // @ts-expect-error - Invalid type
+    num2: '1',
+    // @ts-expect-error - Invalid type
+    'obj.obj.any.xyz': 3,
+  },
+  $inc: {
+    // @ts-expect-error - Invalid type
+    num1: [123],
+    // @ts-expect-error - Invalid type
+    'obj.obj.any.xyz': '2',
+  },
+  $push: {
+    // @ts-expect-error - Invalid type
+    arr: [123, '123'],
+  },
+  $pop: {
+    // @ts-expect-error - Invalid type
+    arr: '123',
+    // @ts-expect-error - Invalid type
+    'obj.obj.any.xyz': 123n,
+  },
+  $rename: {
+    // @ts-expect-error - Invalid type
+    num1: 1,
+    // @ts-expect-error - Invalid type
+    'obj.obj.any.xyz': 1,
+  },
+  $currentDate: {
+    // @ts-expect-error - Invalid type
+    'obj.obj.any.xyz': new Date(),
+  },
+}
+
+const test4: UpdateFilter<Schema> = {
+  $set: {
+    // @ts-expect-error - Invalid path
+    'obj.obj.xyz': '',
+  },
+  $unset: {
+    // @ts-expect-error - Invalid path
+    'obj.obj.xyz': '',
+  },
+  $inc: {
+    // @ts-expect-error - Invalid path
+    'obj.obj.any': 1,
+  },
+  $push: {
+    // @ts-expect-error - Invalid path
+    num1: 1,
+  },
+  $pop: {
+    // @ts-expect-error - Invalid path
+    'obj.obj.xyz': 1,
+  },
+  $rename: {
+    // @ts-expect-error - Invalid path
+    'obj.obj.xyz': '1',
+  },
+  $currentDate: {
+    // @ts-expect-error - Invalid path
+    'obj.obj.any': true,
+  },
+}
+
+const test5: UpdateFilter<ConvolutedSchema1> = {
+  $set: {
+    numOrBigInt: 1,
+    numOrString: 1,
+  },
+  $setOnInsert: {
+    numOrBigInt: 1n,
+    numOrString: '',
+  },
+  $unset: {
+    numOrBigInt: '',
+    numOrString: '',
+  },
+  $inc: {
+    numOrBigInt: +1,
+    numOrString: -1,
+  },
+  $rename: {
+    numOrBigInt: 'new_name',
+    numOrString: 'new_name',
+  },
+}
+
+const test6: UpdateFilter<ConvolutedSchema1> = {
+  $set: {
+    numOrBigInt: 1,
+    numOrString: 1,
+  },
+  $setOnInsert: {
+    numOrBigInt: 1n,
+    numOrString: '',
+  },
+  $unset: {
+    numOrBigInt: '',
+    numOrString: '',
+  },
+  $inc: {
+    numOrBigInt: +1,
+    numOrString: -1,
+  },
+  $rename: {
+    numOrBigInt: 'new_name',
+    numOrString: 'new_name',
+  },
+}
+
+const test7: UpdateFilter<ConvolutedSchema1> = {
+  $set: {
+    // @ts-expect-error - Invalid type
+    numOrBigInt: '',
+    // @ts-expect-error - Invalid type
+    numOrString: 1n,
+  },
+  $setOnInsert: {
+    // @ts-expect-error - Invalid path
+    intOrBigNum: 1n,
+  },
+  $unset: {
+    // @ts-expect-error - Invalid type
+    numOrBigInt: 3,
+  },
+  $inc: {
+    // @ts-expect-error - Invalid type
+    numOrString: '',
+  },
+}
+
+const test8: UpdateFilter<ConvolutedSchema2> = {
+  $set: {
+    numOrArray: 1,
+  },
+  $setOnInsert: {
+    numOrArray: [''],
+  },
+  $unset: {
+    numOrArray: '',
+  },
+  $inc: {
+    numOrArray: 1,
+  },
+  $push: {
+    numOrArray: { $each: [''], $position: 1 },
+  },
+  $rename: {
+    numOrArray: 'new_name',
+  },
+  $min: {
+    numOrArray: 1,
+  },
+  $max: {
+    numOrArray: 1,
+  },
+}
+
+const test9: UpdateFilter<ConvolutedSchema2> = {
+  $set: {
+    numOrArray: [
+      // @ts-expect-error - Invalid type
+      1
+    ],
+  },
+  $inc: {
+    // @ts-expect-error - Invalid type
+    numOrArray: [1],
+  },
+  $push: {
+    numOrArray: {
+      $each: [
+        // @ts-expect-error - Invalid type
+        1
+      ],
+    },
+  },
+  $min: {
+    // @ts-expect-error - Invalid type
+    numOrArray: [''],
   },
 }

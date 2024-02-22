@@ -12,19 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AnyDict } from '@/src/collections/collection';
+import { SomeDoc } from '@/src/collections/collection';
 
 export type SortOption =
   | Record<string, 1 | -1>
-  | { $vector: { $meta: Array<number> } }
-  | { $vector: Array<number> };
+  | { $vector: { $meta: number[] } }
+  | { $vector: number[] };
 
-export type ProjectionOption = Record<
-  string,
-  1 | 0 | true | false | { $slice: number }
->;
+export type ProjectionOption<Schema> = Record<keyof Schema, 1 | 0 | true | false | { $slice: number }>;
 
-export interface FindOneAndResult<Schema extends AnyDict> {
+export interface FindOneAndResult<Schema extends SomeDoc> {
   value: Schema | null;
   ok: number;
 }

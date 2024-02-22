@@ -29,4 +29,4 @@ export interface FindOneAndReplaceOptions {
   sort?: SortOption;
 }
 
-export const findOneAndReplaceOptionsKeys = new Set<keyof FindOneAndReplaceOptions>(['upsert', 'returnDocument', 'sort']);
+export const findOneAndReplaceOptionsKeys = new Set(['upsert', 'returnDocument', 'sort']);

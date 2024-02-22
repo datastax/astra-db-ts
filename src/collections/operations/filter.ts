@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AnyDict } from '@/src/collections/collection';
+import { SomeDoc } from '@/src/collections/collection';
 import { ToDotNotation } from '@/src/collections/operations/dot-notation';
+import { IsNum } from '@/src/collections/operations/with-id';
 
-export type Filter<Schema extends AnyDict> = {
-  [K in keyof ToDotNotation<Schema>]?: FilterType<ToDotNotation<Schema>[K]>
+export type Filter<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = {
+  [K in keyof InNotation]?: FilterType<InNotation[K]>
 } & {
   $and?: Filter<Schema>[],
   $or?: Filter<Schema>[],
@@ -28,12 +29,14 @@ type FilterOps<Elem> = {
   $eq?: Elem,
   $ne?: Elem,
   $in?: Elem[],
-  $nin?: Elem[],
+  $nin?: Elem[] /* I can't *not* see this as 'Nine-Inch Nails'... */,
   $exists?: boolean,
 } & (
-  number extends Elem ? NumFilterOps : Record<string, never>
+  // eslint-disable-next-line @typescript-eslint/ban-types -- Intersection w/ {} is a "noop" here
+  IsNum<Elem> extends true ? NumFilterOps : {}
 ) & (
-  any[] extends Elem ? ArrayFilterOps<Elem> : Record<string, never>
+  // eslint-disable-next-line @typescript-eslint/ban-types -- Intersection w/ {} is a "noop" here
+  any[] extends Elem ? ArrayFilterOps<Elem> : {}
 )
 
 interface NumFilterOps {

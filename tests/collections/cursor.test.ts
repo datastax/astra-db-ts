@@ -218,11 +218,10 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
       await collection.insertMany(sampleUsers);
       const cursor = new FindCursor(collection, {});
       let docCount = 0;
-      const b = await cursor.forEach(async () => {
+      await cursor.forEach(async () => {
         await Promise.resolve();
         docCount++;
       });
-      console.log(b)
       assert.strictEqual(docCount, sampleUsers.length);
     });
   });

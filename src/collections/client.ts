@@ -15,7 +15,7 @@
 import { Db } from './db';
 import { createAstraUri, parseUri, TypeErr } from './utils';
 import { HTTPClient } from '@/src/client';
-import { Collection } from './collection';
+import { SomeDoc, Collection } from './collection';
 import { CreateCollectionOptions } from '@/src/collections/operations/collections/create-collection';
 
 export interface ClientOptions {
@@ -68,14 +68,11 @@ export class Client implements Disposable {
     });
   }
 
-  async collection(name: string) {
-    return new Collection(this.httpClient, name);
+  async collection<Schema extends SomeDoc = SomeDoc>(name: string) {
+    return new Collection<Schema>(this.httpClient, name);
   }
 
-  async createCollection(
-    collectionName: string,
-    options?: CreateCollectionOptions,
-  ) {
+  async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>) {
     return await this.db().createCollection(collectionName, options);
   }
 

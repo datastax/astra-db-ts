@@ -12,13 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export interface CreateCollectionOptions {
+import { SomeDoc } from '@/src/collections/collection';
+import { ToDotNotation } from '@/src/collections/operations/dot-notation';
+
+export interface CreateCollectionOptions<Schema extends SomeDoc> {
   vector?: CollectionVectorOptions;
+  indexing?: CollectionIndexingOptions<Schema>;
 }
 
-export interface CollectionVectorOptions {
+interface CollectionVectorOptions {
   dimension: number;
   metric?: 'cosine' | 'euclidean' | 'dot_product';
 }
 
-export const createCollectionOptionsKeys = new Set<keyof CreateCollectionOptions>(['vector']);
+type CollectionIndexingOptions<Schema extends SomeDoc> =
+  | { allow: (keyof ToDotNotation<Schema>)[] | ['*'] }
+  | { deny:  (keyof ToDotNotation<Schema>)[] | ['*'] }
+
+export const createCollectionOptionsKeys = new Set(['vector', 'indexing']);

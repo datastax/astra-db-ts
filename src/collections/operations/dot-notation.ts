@@ -12,20 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AnyDict } from '@/src/collections/collection';
+import { SomeDoc } from '@/src/collections/collection';
 
-export type ToDotNotation<Schema extends AnyDict> = Merge<_ToDotNotation<Required<Schema>, ''>>
+export type ToDotNotation<Schema extends SomeDoc> = Merge<_ToDotNotation<Required<Schema>, ''>>
 
-type _ToDotNotation<Elem extends AnyDict, Prefix extends string> = {
+type _ToDotNotation<Elem extends SomeDoc, Prefix extends string> = {
   [Key in keyof Elem]:
-    AnyDict extends Elem
+    SomeDoc extends Elem
       ? (
         | (Prefix extends '' ? never : { [Path in CropTrailingDot<Prefix>]: Elem })
         | { [Path in `${Prefix}${string}`]: any }
         ) :
     Elem[Key] extends any[]
       ? { [Path in `${Prefix}${Key & string}`]: Elem[Key] } :
-    Elem[Key] extends AnyDict
+    Elem[Key] extends Date
+      ? { [Path in `${Prefix}${Key & string}`]: Date | { $date: number } } :
+    Elem[Key] extends SomeDoc
       ? (
         | { [Path in `${Prefix}${Key & string}`]: Elem[Key] }
         | _ToDotNotation<Elem[Key], `${Prefix}${Key & string}.`>

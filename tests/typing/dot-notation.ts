@@ -1,8 +1,22 @@
+// Copyright DataStax, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { BasicSchema, Equal, Expect, Schema } from '@/tests/typing/prelude';
+import { BasicSchema, ConvolutedSchema1, Equal, Expect, Schema } from '@/tests/typing/prelude';
 import { ToDotNotation } from '@/src/collections/operations/dot-notation';
-import { AnyDict } from '@/src/collections/collection';
+import { SomeDoc } from '@/src/collections/collection';
 
 type test1 = Expect<Equal<ToDotNotation<BasicSchema>, {
   num: number,
@@ -16,12 +30,12 @@ type test1 = Expect<Equal<ToDotNotation<BasicSchema>, {
 type test2 = Expect<Equal<ToDotNotation<Schema>, {
   num1: number,
   num2: number,
-  obj: { str1: string, str2: string, obj: { num: number, any: AnyDict } },
+  obj: { str1: string, str2: string, obj: { num: number, any: SomeDoc } },
   'obj.str1': string,
   'obj.str2': string,
-  'obj.obj': { num: number, any: AnyDict },
+  'obj.obj': { num: number, any: SomeDoc },
   'obj.obj.num': number,
-  'obj.obj.any': AnyDict,
+  'obj.obj.any': SomeDoc,
   [k: `obj.obj.any.${string}`]: any,
   arr: string[],
 }>>
@@ -71,4 +85,21 @@ const test6: Partial<ToDotNotation<Schema>> = {
   'obj.str1': '1',
   // @ts-expect-error - Invalid path
   'obj.rammstein': 'Angst',
+}
+
+const test7: Partial<ToDotNotation<ConvolutedSchema1>> = {
+  numOrBigInt: 1n,
+  numOrString: '',
+}
+
+const test8: Partial<ToDotNotation<ConvolutedSchema1>> = {
+  numOrBigInt: 1,
+  numOrString: 1,
+}
+
+const test9: Partial<ToDotNotation<ConvolutedSchema1>> = {
+  // @ts-expect-error - Invalid type
+  numOrBigInt: '',
+  // @ts-expect-error - Invalid type
+  numOrString: 1n,
 }

@@ -52,10 +52,11 @@ import {
 } from '@/src/collections/operations/find/find-one-replace';
 import { Filter } from '@/src/collections/operations/filter';
 import { UpdateFilter } from '@/src/collections/operations/update-filter';
+import { WithId } from '@/src/collections/operations/with-id';
 
-export type AnyDict = Record<any, any>;
+export type SomeDoc = Record<any, any> & { _id?: string };
 
-export class Collection<Schema extends AnyDict = AnyDict> {
+export class Collection<Schema extends SomeDoc = SomeDoc> {
   httpClient: HTTPClient;
   name: string;
 
@@ -212,13 +213,13 @@ export class Collection<Schema extends AnyDict = AnyDict> {
     });
   }
 
-  find(filter: Filter<Schema>, options?: FindOptions): FindCursor<Schema> {
+  find(filter: Filter<Schema>, options?: FindOptions<Schema>): FindCursor<Schema> {
     return new FindCursor(this, filter, options);
   }
 
-  async findOne(filter: Filter<Schema>, options?: FindOneOptions): Promise<Schema | null> {
+  async findOne(filter: Filter<Schema>, options?: FindOneOptions<Schema>): Promise<WithId<Schema> | null> {
     return executeOperation(async () => {
-      const command: FindOneCommand = {
+      const command: FindOneCommand<Schema> = {
         findOne: {
           filter,
           options: withoutFields(options, 'sort', 'projection'),
@@ -232,6 +233,7 @@ export class Collection<Schema extends AnyDict = AnyDict> {
 
       if (options?.projection && Object.keys(options.projection).length > 0) {
         command.findOne.projection = options.projection;
+        delete options.projection;
       }
 
       const resp = await this.httpClient.executeCommand(command, findOneOptionsKeys);

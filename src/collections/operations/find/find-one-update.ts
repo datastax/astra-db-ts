@@ -29,4 +29,4 @@ export interface FindOneAndUpdateOptions {
   sort?: SortOption;
 }
 
-export const findOneAndUpdateOptionsKeys = new Set<keyof FindOneAndUpdateOptions>(['upsert', 'returnDocument', 'sort']);
+export const findOneAndUpdateOptionsKeys = new Set(['upsert', 'returnDocument', 'sort']);

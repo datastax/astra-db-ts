@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { HTTPClient } from '@/src/client';
-import { Collection } from './collection';
+import { SomeDoc, Collection } from './collection';
 import { createNamespace, executeOperation, TypeErr } from './utils';
 import { CreateCollectionOptions, createCollectionOptionsKeys } from '@/src/collections/operations/collections/create-collection';
 import { APIResponse } from '@/src/client/httpClient';
@@ -37,11 +37,11 @@ export class Db {
    * @param collectionName
    * @returns Collection
    */
-  collection(collectionName: string): Collection {
+  collection<Schema extends SomeDoc = SomeDoc>(collectionName: string): Collection {
     if (!collectionName) {
       throw new Error("Db: collection name is required");
     }
-    return new Collection(this.httpClient, collectionName);
+    return new Collection<Schema>(this.httpClient, collectionName);
   }
 
   /**
@@ -50,7 +50,7 @@ export class Db {
    * @param options
    * @returns Promise
    */
-  async createCollection(collectionName: string, options?: CreateCollectionOptions): Promise<APIResponse> {
+  async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<APIResponse> {
     return executeOperation(async () => {
       const command: any = {
         createCollection: {
