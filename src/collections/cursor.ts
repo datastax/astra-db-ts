@@ -23,7 +23,7 @@ type CursorStatus = 'uninitialized' | 'initialized' | 'executing' | 'executed';
 export class FindCursor<Schema extends SomeDoc = SomeDoc> {
   collection: Collection<Schema>;
   filter: Filter<Schema>;
-  options: FindOptions;
+  options: FindOptions<Schema>;
   documents: WithId<Schema>[] = [];
   status: CursorStatus = 'uninitialized';
   nextPageState?: string;
@@ -33,7 +33,7 @@ export class FindCursor<Schema extends SomeDoc = SomeDoc> {
   exhausted = false;
   pageIndex = 0;
 
-  constructor(collection: Collection<Schema>, filter: Filter<Schema>, options?: FindOptions) {
+  constructor(collection: Collection<Schema>, filter: Filter<Schema>, options?: FindOptions<Schema>) {
     this.collection = collection;
     this.filter = filter;
     this.options = options ?? {};

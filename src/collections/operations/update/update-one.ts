@@ -19,14 +19,14 @@ export interface UpdateOneCommand {
   updateOne: {
     filter: Record<string, any>;
     update: Record<string, any>;
-    options?: Omit<UpdateOneOptions, 'sort'>;
-    sort?: SortOption;
+    options?: UpdateOneOptions<any>;
+    sort?: SortOption<any>;
   }
 }
 
-export interface UpdateOneOptions {
+export interface UpdateOneOptions<Schema> {
   upsert?: boolean;
-  sort?: SortOption;
+  sort?: SortOption<Schema>;
 }
 
 export const updateOneOptionKeys = new Set(['upsert', 'sort']);

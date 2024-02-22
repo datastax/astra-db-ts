@@ -104,7 +104,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     });
   }
 
-  async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions): Promise<UpdateOneResult> {
+  async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions<Schema>): Promise<UpdateOneResult> {
     return executeOperation(async () => {
       const command: UpdateOneCommand = {
         updateOne: {
@@ -219,7 +219,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
   async findOne(filter: Filter<Schema>, options?: FindOneOptions<Schema>): Promise<WithId<Schema> | null> {
     return executeOperation(async () => {
-      const command: FindOneCommand<Schema> = {
+      const command: FindOneCommand = {
         findOne: {
           filter,
           options: withoutFields(options, 'sort', 'projection'),
@@ -241,7 +241,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     });
   }
 
-  async findOneAndReplace(filter: Filter<Schema>, replacement: Schema, options?: FindOneAndReplaceOptions): Promise<FindOneAndResult<Schema>> {
+  async findOneAndReplace(filter: Filter<Schema>, replacement: Schema, options?: FindOneAndReplaceOptions<Schema>): Promise<FindOneAndResult<Schema>> {
     return executeOperation(async () => {
       const command: FindOneAndReplaceCommand = {
         findOneAndReplace: {
@@ -284,7 +284,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     });
   }
 
-  async findOneAndDelete(filter: Filter<Schema>, options?: FindOneAndDeleteOptions,): Promise<FindOneAndResult<Schema>> {
+  async findOneAndDelete(filter: Filter<Schema>, options?: FindOneAndDeleteOptions<Schema>): Promise<FindOneAndResult<Schema>> {
     const command: FindOneAndDeleteCommand = {
       findOneAndDelete: { filter },
     };
@@ -301,7 +301,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     };
   }
 
-  async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: FindOneAndUpdateOptions): Promise<FindOneAndResult<Schema>> {
+  async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: FindOneAndUpdateOptions<Schema>): Promise<FindOneAndResult<Schema>> {
     return executeOperation(async () => {
       const command: FindOneAndUpdateCommand = {
         findOneAndUpdate: {

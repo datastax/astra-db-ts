@@ -14,12 +14,12 @@
 
 import { ProjectionOption, SortOption } from '@/src/collections/operations/find/find-common';
 
-export interface FindOneCommand<Schema> {
+export interface FindOneCommand {
   findOne: {
     filter: Record<string, any>;
-    options?: FindOneOptions<Schema>;
-    sort?: SortOption;
-    projection?: ProjectionOption<Schema>;
+    options?: FindOneOptions<any>;
+    sort?: SortOption<any>;
+    projection?: ProjectionOption<any>;
   };
 }
 

@@ -14,8 +14,8 @@
 
 import { SomeDoc } from '@/src/collections/collection';
 
-export type SortOption =
-  | Record<string, 1 | -1>
+export type SortOption<Schema> =
+  | Record<keyof Schema, 1 | -1>
   | { $vector: { $meta: number[] } }
   | { $vector: number[] };
 

@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@datastax/astra-ts-client": "file:../../@datastax/astra-db-ts.tgz"
+  }
+}

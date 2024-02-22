@@ -21,7 +21,7 @@ interface BaseFindOptions {
 }
 
 export interface FindOptions<Schema> extends BaseFindOptions {
-  sort?: SortOption;
+  sort?: SortOption<Schema>;
   projection?: ProjectionOption<Schema>;
 }
 

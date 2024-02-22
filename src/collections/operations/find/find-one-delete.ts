@@ -17,10 +17,10 @@ import { SortOption } from '@/src/collections/operations/find/find-common';
 export interface FindOneAndDeleteCommand {
   findOneAndDelete: {
     filter?: Record<string, any>;
-    sort?: SortOption;
+    sort?: SortOption<any>;
   };
 }
 
-export interface FindOneAndDeleteOptions {
-  sort?: SortOption;
+export interface FindOneAndDeleteOptions<Schema> {
+  sort?: SortOption<Schema>;
 }

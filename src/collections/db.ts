@@ -37,7 +37,7 @@ export class Db {
    * @param collectionName
    * @returns Collection
    */
-  collection<Schema extends SomeDoc = SomeDoc>(collectionName: string): Collection {
+  collection<Schema extends SomeDoc = SomeDoc>(collectionName: string): Collection<Schema> {
     if (!collectionName) {
       throw new Error("Db: collection name is required");
     }

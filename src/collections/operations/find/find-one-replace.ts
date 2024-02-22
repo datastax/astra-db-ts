@@ -18,15 +18,15 @@ export interface FindOneAndReplaceCommand {
   findOneAndReplace: {
     filter: Record<string, any>;
     replacement: Record<string, any>;
-    options?: FindOneAndReplaceOptions;
-    sort?: SortOption;
+    options?: FindOneAndReplaceOptions<any>;
+    sort?: SortOption<any>;
   };
 }
 
-export interface FindOneAndReplaceOptions {
+export interface FindOneAndReplaceOptions<Schema> {
   upsert?: boolean;
   returnDocument?: "before" | "after";
-  sort?: SortOption;
+  sort?: SortOption<Schema>;
 }
 
 export const findOneAndReplaceOptionsKeys = new Set(['upsert', 'returnDocument', 'sort']);

@@ -18,7 +18,7 @@ import { SortOption } from '@/src/collections';
 export interface DeleteOneCommand {
   deleteOne: {
     filter: Record<string, any>;
-    sort?: SortOption;
+    sort?: SortOption<any>;
   };
 }
 
