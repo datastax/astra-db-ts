@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/collections/collection';
 import { ToDotNotation } from '@/src/collections/operations/dot-notation';
 import { IsNum } from '@/src/collections/operations/utils';
 import { TypeErr } from '@/src/collections/utils';
+import { SomeDoc } from '@/src/collections/document';
 
 export interface UpdateFilter<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> {
   $set?: Partial<InNotation>,

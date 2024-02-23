@@ -13,18 +13,18 @@
 // limitations under the License.
 
 import { InternalUpdateResult } from '@/src/collections/operations/update/update-common';
-import { SortOption } from '@/src/collections';
+import { SomeDoc, SortOption } from '@/src/collections';
 
 export interface UpdateOneCommand {
   updateOne: {
-    filter: Record<string, any>;
+    filter: Record<string, unknown>;
     update: Record<string, any>;
     options?: UpdateOneOptions<any>;
     sort?: SortOption<any>;
   }
 }
 
-export interface UpdateOneOptions<Schema> {
+export interface UpdateOneOptions<Schema extends SomeDoc> {
   upsert?: boolean;
   sort?: SortOption<Schema>;
 }

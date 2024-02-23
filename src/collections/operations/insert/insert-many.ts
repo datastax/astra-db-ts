@@ -23,6 +23,10 @@ export interface InsertManyOptions {
   ordered?: boolean;
 }
 
+export interface InsertManyBulkOptions {
+  ordered?: boolean;
+}
+
 export const insertManyOptionKeys = new Set(['ordered']);
 
 export interface InsertManyResult {

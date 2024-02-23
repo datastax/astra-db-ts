@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/collections/collection';
+import { SomeDoc } from '@/src/collections/document';
+import { ToDotNotation } from '@/src/collections/operations/dot-notation';
 
-export type SortOption<Schema> =
-  | Record<keyof Schema, 1 | -1>
+export type SortOption<Schema extends SomeDoc> =
+  | { [K in keyof ToDotNotation<Schema>]?: 1 | -1 }
   | { $vector: { $meta: number[] } }
   | { $vector: number[] }
   | { $vectorize: string };
 
-export type ProjectionOption<Schema> = {
-  [K in keyof Schema]?: 1 | 0 | true | false | { $slice: number };
+export type ProjectionOption<Schema extends SomeDoc> = {
+  [K in keyof ToDotNotation<Schema>]?: 1 | 0 | true | false | { $slice: number };
 };
-
 
 export interface FindOneAndResult<Schema extends SomeDoc> {
   value: Schema | null;

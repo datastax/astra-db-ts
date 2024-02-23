@@ -13,10 +13,11 @@
 // limitations under the License.
 
 import { HTTPClient } from '@/src/client';
-import { SomeDoc, Collection } from './collection';
+import { Collection } from './collection';
 import { createNamespace, executeOperation, TypeErr } from './utils';
 import { CreateCollectionOptions, createCollectionOptionsKeys } from '@/src/collections/operations/collections/create-collection';
 import { APIResponse } from '@/src/client/httpClient';
+import { SomeDoc } from '@/src/collections/document';
 
 export class Db {
   httpClient: HTTPClient;
@@ -32,11 +33,6 @@ export class Db {
     this.keyspaceName = name;
   }
 
-  /**
-   *
-   * @param collectionName
-   * @returns Collection
-   */
   collection<Schema extends SomeDoc = SomeDoc>(collectionName: string): Collection<Schema> {
     if (!collectionName) {
       throw new Error("Db: collection name is required");
@@ -44,12 +40,6 @@ export class Db {
     return new Collection<Schema>(this.httpClient, collectionName);
   }
 
-  /**
-   *
-   * @param collectionName
-   * @param options
-   * @returns Promise
-   */
   async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>> {
     return executeOperation(async () => {
       const command: any = {
@@ -62,45 +52,49 @@ export class Db {
         command.createCollection.options = options;
       }
 
-      await this.httpClient.executeCommand(command, createCollectionOptionsKeys);
+      const resp = await this.httpClient.executeCommand(command, createCollectionOptionsKeys);
+
+      if (resp.errors) {
+        throw new DBError(resp.errors, resp.status, 'Error creating collection');
+      }
 
       return this.collection(collectionName);
     });
   }
 
-  /**
-   *
-   * @param collectionName
-   * @returns Promise
-   */
-  async dropCollection(collectionName: string): Promise<APIResponse> {
+  async dropCollection(collectionName: string): Promise<boolean> {
     const command = {
       deleteCollection: {
         name: collectionName,
       },
     };
 
-    return await this.httpClient.executeCommand(command);
+    const resp = await this.httpClient.executeCommand(command);
+
+    if (resp.errors) {
+      throw new DBError(resp.errors, resp.status, 'Error dropping collection');
+    }
+
+    return resp.status?.ok === 1 && !resp.errors;
   }
 
-  /**
-   *
-   * @returns Promise
-   */
-  async dropDatabase(): Promise<TypeErr<'Cannot drop database in Astra. Please use the Astra UI to drop the database.'>> {
-    throw new Error('Cannot drop database in Astra. Please use the Astra UI to drop the database.');
-  }
-
-  /**
-   *
-   * @returns Promise
-   */
   async createDatabase(): Promise<APIResponse> {
     return await createNamespace(this.httpClient, this.keyspaceName);
+  }
+
+  async dropDatabase(): Promise<TypeErr<'Cannot drop database in Astra. Please use the Astra UI to drop the database.'>> {
+    throw new Error('Cannot drop database in Astra. Please use the Astra UI to drop the database.');
   }
 
   // For backwards compatibility reasons
   get name() {
     return this.keyspaceName;
+  }
+}
+
+class DBError extends Error {
+  constructor(public errors: any[], public status: any, message: string) {
+    super(message);
+    this.name = "DBError";
   }
 }

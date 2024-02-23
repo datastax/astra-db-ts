@@ -12,10 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, SomeDoc } from './collection';
+import { Collection } from './collection';
 import { executeOperation, TypeErr } from './utils';
-import { InternalFindOptions, internalFindOptionsKeys } from '@/src/collections/operations/find/find';
+import {
+  InternalFindOptions,
+  internalFindOptionsKeys,
+  InternalGetMoreCommand
+} from '@/src/collections/operations/find/find';
 import { Filter } from '@/src/collections/operations/filter';
+import { SomeDoc } from '@/src/collections/document';
 
 type CursorStatus = 'uninitialized' | 'initialized' | 'executing' | 'executed';
 
@@ -88,14 +93,7 @@ export class FindCursor<Schema extends SomeDoc> {
   }
 
   private async _getMore(): Promise<void> {
-    const command: {
-      find: {
-        filter?: Record<string, any>;
-        options?: InternalFindOptions;
-        sort?: Record<string, any>;
-        projection?: Record<string, any>;
-      };
-    } = {
+    const command: InternalGetMoreCommand = {
       find: {
         filter: this.filter,
       },

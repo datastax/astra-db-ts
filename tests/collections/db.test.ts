@@ -100,8 +100,7 @@ describe("Astra TS Client - collections.Db", async () => {
       const suffix = randAlphaNumeric({ length: 4 }).join("");
       await db.createCollection(`test_db_collection_${suffix}`);
       const res = await db.dropCollection(`test_db_collection_${suffix}`);
-      assert.strictEqual(res.status?.ok, 1);
-      assert.strictEqual(res.errors, undefined);
+      assert.strictEqual(res, true);
     });
   });
 });

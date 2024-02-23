@@ -16,7 +16,7 @@ import { InternalUpdateResult } from '@/src/collections/operations/update/update
 
 export interface UpdateManyCommand {
   updateMany: {
-    filter: Record<string, any>;
+    filter: Record<string, unknown>;
     update: Record<string, any>;
     options?: UpdateManyOptions;
   }

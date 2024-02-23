@@ -52,9 +52,8 @@ import {
 } from '@/src/collections/operations/find/find-one-replace';
 import { Filter } from '@/src/collections/operations/filter';
 import { UpdateFilter } from '@/src/collections/operations/update-filter';
-import { FoundDoc, MaybeId } from '@/src/collections/operations/utils';
-
-export type SomeDoc = Record<any, any>;
+import { FoundDoc, MaybeId, WithId } from '@/src/collections/operations/utils';
+import { SomeDoc } from '@/src/collections/document';
 
 export class Collection<Schema extends SomeDoc = SomeDoc> {
   httpClient: HTTPClient;
@@ -70,7 +69,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     this.name = name;
   }
 
-  async insertOne(document: Schema): Promise<InsertOneResult> {
+  async insertOne(document: WithId<Schema>): Promise<InsertOneResult> {
     return executeOperation(async () => {
       const command: InsertOneCommand = {
         insertOne: { document },
@@ -85,7 +84,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     });
   }
 
-  async insertMany(documents: Schema[], options?: InsertManyOptions): Promise<InsertManyResult> {
+  async insertMany(documents: WithId<Schema>[], options?: InsertManyOptions): Promise<InsertManyResult> {
     return executeOperation(async () => {
       const command: InsertManyCommand = {
         insertMany: {
@@ -103,6 +102,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       };
     });
   }
+
+  // async insertManyBulk(documents: Schema[], options?: InsertManyBulkOptions): Promise<InsertManyResult> {
+  //
+  // }
 
   async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions<Schema>): Promise<UpdateOneResult> {
     return executeOperation(async () => {
@@ -213,11 +216,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     });
   }
 
-  find<GetSim extends boolean>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursor<FoundDoc<Schema, GetSim>> {
+  find<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursor<FoundDoc<Schema, GetSim>> {
     return new FindCursor(this as any as Collection<FoundDoc<Schema, GetSim>>, filter, options);
   }
 
-  async findOne<GetSim extends boolean>(filter: Filter<Schema>, options?: FindOneOptions<Schema, GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
+  async findOne<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<Schema, GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
     return executeOperation(async () => {
       const command: FindOneCommand = {
         findOne: {

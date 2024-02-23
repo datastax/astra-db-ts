@@ -5,7 +5,11 @@
 ## Getting Started
 
 ```typescript
-import { AstraDB } from "@datastax/astra-db-ts";
+import { AstraDB, VectorDoc } from "@datastax/astra-db-ts";
+
+interface Idea extends VectorDoc {
+  idea: string;
+}
 
 async function main() {
   const ASTRA_DB_API_ENDPOINT = process.env['ASTRA_DB_API_ENDPOINT'];
@@ -14,23 +18,22 @@ async function main() {
   const db = new AstraDB(ASTRA_DB_APPLICATION_TOKEN, ASTRA_DB_API_ENDPOINT);
 
   // Create a vector collection
-  await db.createCollection("vector_5_collection", { vector: { dimension: 5, metric: "cosine" } });
-  const collection = await db.collection("vector_5_collection");
-  
+  const collection = await db.createCollection<Idea>("vector_5_collection", { vector: { dimension: 5, metric: "cosine" } });
+
   const documents = [
     {
       "_id": "1",
-      "text": "ChatGPT integrated sneakers that talk to you",
+      "idea": "ChatGPT integrated sneakers that talk to you",
       "$vector": [0.1, 0.15, 0.3, 0.12, 0.05],
     },
     {
       "_id": "2",
-      "text": "An AI quilt to help you sleep forever",
+      "idea": "An AI quilt to help you sleep forever",
       "$vector": [0.45, 0.09, 0.01, 0.2, 0.11],
     },
     {
       "_id": "3",
-      "text": "Vision Vector Frame - A deep learning display that controls your mood",
+      "idea": "Vision Vector Frame - A deep learning display that controls your mood",
       "$vector": [0.1, 0.05, 0.08, 0.3, 0.6],
     }
   ];

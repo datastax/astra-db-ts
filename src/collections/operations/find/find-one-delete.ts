@@ -13,14 +13,15 @@
 // limitations under the License.
 
 import { SortOption } from '@/src/collections/operations/find/find-common';
+import { SomeDoc } from '@/src/collections';
 
 export interface FindOneAndDeleteCommand {
   findOneAndDelete: {
-    filter?: Record<string, any>;
+    filter?: Record<string, unknown>;
     sort?: SortOption<any>;
   };
 }
 
-export interface FindOneAndDeleteOptions<Schema> {
+export interface FindOneAndDeleteOptions<Schema extends SomeDoc> {
   sort?: SortOption<Schema>;
 }

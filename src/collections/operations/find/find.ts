@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { ProjectionOption, SortOption } from '@/src/collections/operations/find/find-common';
+import { SomeDoc } from '@/src/collections';
 
 interface BaseFindOptions<GetSim extends boolean> {
   limit?: number;
@@ -20,13 +21,22 @@ interface BaseFindOptions<GetSim extends boolean> {
   includeSimilarity?: GetSim;
 }
 
-export interface FindOptions<Schema, GetSim extends boolean> extends BaseFindOptions<GetSim> {
+export interface FindOptions<Schema extends SomeDoc, GetSim extends boolean> extends BaseFindOptions<GetSim> {
   sort?: SortOption<Schema>;
   projection?: ProjectionOption<Schema>;
 }
 
 export interface InternalFindOptions extends BaseFindOptions<boolean> {
   pagingState?: string;
+}
+
+export interface InternalGetMoreCommand {
+  find: {
+    filter?: Record<string, unknown>;
+    options?: InternalFindOptions;
+    sort?: Record<string, unknown>;
+    projection?: Record<string, unknown>;
+  }
 }
 
 export const internalFindOptionsKeys = new Set(['limit', 'skip', 'pagingState', 'includeSimilarity']);

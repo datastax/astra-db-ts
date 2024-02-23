@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/collections/collection';
 import { ToDotNotation } from '@/src/collections/operations/dot-notation';
 import { IsNum } from '@/src/collections/operations/utils';
+import { SomeDoc } from '@/src/collections/document';
 
 export type Filter<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = {
   [K in keyof InNotation]?: FilterType<InNotation[K]>
 } & {
   $and?: Filter<Schema>[],
   $or?: Filter<Schema>[],
+  $not?: Filter<Schema>,
 }
 
 type FilterType<Elem> = Elem | FilterOps<Elem>;

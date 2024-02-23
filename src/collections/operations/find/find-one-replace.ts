@@ -13,17 +13,18 @@
 // limitations under the License.
 
 import { SortOption } from '@/src/collections/operations/find/find-common';
+import { SomeDoc } from '@/src/collections';
 
 export interface FindOneAndReplaceCommand {
   findOneAndReplace: {
-    filter: Record<string, any>;
-    replacement: Record<string, any>;
+    filter: Record<string, unknown>;
+    replacement: Record<string, unknown>;
     options?: FindOneAndReplaceOptions<any>;
     sort?: SortOption<any>;
   };
 }
 
-export interface FindOneAndReplaceOptions<Schema> {
+export interface FindOneAndReplaceOptions<Schema extends SomeDoc> {
   upsert?: boolean;
   returnDocument?: "before" | "after";
   sort?: SortOption<Schema>;

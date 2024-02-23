@@ -29,5 +29,6 @@ export { FindOneAndUpdateOptions } from '@/src/collections/operations/find/find-
 export { FindOneAndReplaceOptions } from '@/src/collections/operations/find/find-one-replace';
 export { UpdateFilter } from '@/src/collections/operations/update-filter';
 export { Filter } from '@/src/collections/operations/filter';
+export { VectorDoc, SomeDoc } from '@/src/collections/document';
 
 export { createAstraUri } from './utils';

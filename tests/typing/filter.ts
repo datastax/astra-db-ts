@@ -47,6 +47,7 @@ type test1 = Expect<Equal<Filter<SuperBasicSchema>, {
 } & {
   $and?: Filter<SuperBasicSchema>[],
   $or?: Filter<SuperBasicSchema>[],
+  $not?: Filter<SuperBasicSchema>,
 }>>;
 
 const test2: Filter<Schema> = {

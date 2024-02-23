@@ -12,5 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { Collection } from "./collections";
+export { Collection, VectorDoc } from "./collections";
 export { AstraDB } from "./collections/client";

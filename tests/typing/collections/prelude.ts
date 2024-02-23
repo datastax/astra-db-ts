@@ -1,5 +1,5 @@
 import { Collection } from '@/src/collections';
-import { SomeDoc } from '@/src/collections/collection';
+import { SomeDoc } from '@/src/collections/document';
 import { Db } from '@/src/collections/db';
 
 export interface TestSchema {

@@ -16,7 +16,7 @@ import { InternalDeleteResult } from '@/src/collections/operations/delete/delete
 
 export interface DeleteManyCommand {
   deleteMany: {
-    filter: Record<string, any>;
+    filter: Record<string, unknown>;
   }
 }
 

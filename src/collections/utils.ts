@@ -17,8 +17,8 @@ import { logger } from '@/src/logger';
 import { handleIfErrorResponse, HTTPClient } from '@/src/client/httpClient';
 import { ObjectId } from 'bson';
 
-declare const __unique_sym: unique symbol
-export type TypeErr<S> = S & { [__unique_sym]: S }
+declare const __error: unique symbol;
+export type TypeErr<S> = unknown & { [__error]: S };
 
 interface ParsedUri {
   baseUrl: string;

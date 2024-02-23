@@ -12,20 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/collections/collection';
 import { ToDotNotation } from '@/src/collections/operations/dot-notation';
+import { SomeDoc } from '@/src/collections/document';
 
 export interface CreateCollectionOptions<Schema extends SomeDoc> {
-  vector?: CollectionVectorOptions;
-  indexing?: CollectionIndexingOptions<Schema>;
+  vector?: VectorOptions;
+  vectorize?: VectorizeOptions;
+  indexing?: IndexingOptions<Schema>;
 }
 
-interface CollectionVectorOptions {
+interface VectorOptions {
   dimension: number;
   metric?: 'cosine' | 'euclidean' | 'dot_product';
 }
 
-type CollectionIndexingOptions<Schema extends SomeDoc> =
+interface VectorizeOptions {
+  service: 'openai' | 'vertexai' | 'huggingface';
+  options?: Record<string, unknown>;
+}
+
+type IndexingOptions<Schema extends SomeDoc> =
   | { allow: (keyof ToDotNotation<Schema>)[] | ['*'], deny?:  never }
   | { deny:  (keyof ToDotNotation<Schema>)[] | ['*'], allow?: never }
 

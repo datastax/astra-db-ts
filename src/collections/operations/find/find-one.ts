@@ -13,18 +13,19 @@
 // limitations under the License.
 
 import { ProjectionOption, SortOption } from '@/src/collections/operations/find/find-common';
+import { SomeDoc } from '@/src/collections';
 
 export interface FindOneCommand {
   findOne: {
-    filter: Record<string, any>;
-    options?: FindOneOptions<any, any>;
+    filter: Record<string, unknown>;
+    options?: FindOneOptions<any, boolean>;
     sort?: SortOption<any>;
     projection?: ProjectionOption<any>;
   };
 }
 
-export interface FindOneOptions<Schema, GetSim extends boolean> {
-  sort?: Record<string, 1 | -1>;
+export interface FindOneOptions<Schema extends SomeDoc, GetSim extends boolean> {
+  sort?: SortOption<Schema>;
   projection?: ProjectionOption<Schema>;
   includeSimilarity?: GetSim;
 }

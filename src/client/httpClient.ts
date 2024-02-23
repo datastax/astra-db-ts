@@ -231,7 +231,7 @@ export class HTTPClient {
   private _makeHTTP2Request(
     path: string,
     token: string,
-    body: Record<string, any>,
+    body: Record<string, unknown>,
     timeout: number,
   ): Promise<{ status: number, data: Record<string, any> }> {
     return new Promise((resolve, reject) => {

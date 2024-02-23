@@ -14,8 +14,11 @@
 
 export type IsNum<T> = number extends T ? true : bigint extends T ? true : false
 
-type WithId<T> = Omit<T, '_id'> & { _id: string }
-type WithSim<T, GetSim extends boolean> = GetSim extends true ? Omit<T, '$similarity'> & { $similarity: number } : T
+export type WithId<T> = Omit<T, '_id'> & { _id: string }
+
+type WithSim<T, GetSim extends boolean> = GetSim extends true
+  ? Omit<T, '$similarity'> & { $similarity: number[]  }
+  : Omit<T, '$similarity'> & { $similarity: undefined }
 
 export type FoundDoc<Doc, GetSim extends boolean> = WithSim<WithId<Doc>, GetSim>
 
