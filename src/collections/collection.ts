@@ -52,9 +52,9 @@ import {
 } from '@/src/collections/operations/find/find-one-replace';
 import { Filter } from '@/src/collections/operations/filter';
 import { UpdateFilter } from '@/src/collections/operations/update-filter';
-import { WithId } from '@/src/collections/operations/with-id';
+import { FoundDoc, MaybeId } from '@/src/collections/operations/utils';
 
-export type SomeDoc = Record<any, any> & { _id?: string };
+export type SomeDoc = Record<any, any>;
 
 export class Collection<Schema extends SomeDoc = SomeDoc> {
   httpClient: HTTPClient;
@@ -213,11 +213,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     });
   }
 
-  find(filter: Filter<Schema>, options?: FindOptions<Schema>): FindCursor<Schema> {
-    return new FindCursor(this, filter, options);
+  find<GetSim extends boolean>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursor<FoundDoc<Schema, GetSim>> {
+    return new FindCursor(this as any as Collection<FoundDoc<Schema, GetSim>>, filter, options);
   }
 
-  async findOne(filter: Filter<Schema>, options?: FindOneOptions<Schema>): Promise<WithId<Schema> | null> {
+  async findOne<GetSim extends boolean>(filter: Filter<Schema>, options?: FindOneOptions<Schema, GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
     return executeOperation(async () => {
       const command: FindOneCommand = {
         findOne: {
@@ -241,7 +241,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     });
   }
 
-  async findOneAndReplace(filter: Filter<Schema>, replacement: Schema, options?: FindOneAndReplaceOptions<Schema>): Promise<FindOneAndResult<Schema>> {
+  async findOneAndReplace(filter: Filter<Schema>, replacement: MaybeId<Schema>, options?: FindOneAndReplaceOptions<Schema>): Promise<FindOneAndResult<Schema>> {
     return executeOperation(async () => {
       const command: FindOneAndReplaceCommand = {
         findOneAndReplace: {
@@ -272,7 +272,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     throw new Error('Not Implemented');
   }
 
-  async countDocuments(filter?: Record<string, any>): Promise<number> {
+  async countDocuments(filter?: Filter<Schema>): Promise<number> {
     return executeOperation(async (): Promise<number> => {
       const command = {
         countDocuments: { filter },

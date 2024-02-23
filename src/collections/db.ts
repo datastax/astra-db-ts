@@ -50,7 +50,7 @@ export class Db {
    * @param options
    * @returns Promise
    */
-  async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<APIResponse> {
+  async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>> {
     return executeOperation(async () => {
       const command: any = {
         createCollection: {
@@ -62,7 +62,9 @@ export class Db {
         command.createCollection.options = options;
       }
 
-      return await this.httpClient.executeCommand(command, createCollectionOptionsKeys);
+      await this.httpClient.executeCommand(command, createCollectionOptionsKeys);
+
+      return this.collection(collectionName);
     });
   }
 

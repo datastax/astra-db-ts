@@ -28,4 +28,4 @@ export interface UpdateManyOptions {
 
 export const updateManyOptionKeys = new Set(['upsert']);
 
-export type UpdateManyResult = InternalUpdateResult<number>
+export type UpdateManyResult = InternalUpdateResult<number>;

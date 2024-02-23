@@ -14,59 +14,47 @@
 
 import { Collection, SomeDoc } from './collection';
 import { executeOperation, TypeErr } from './utils';
-import { FindOptions, internalFindOptionsKeys, InternalFindOptions } from '@/src/collections/operations/find/find';
+import { InternalFindOptions, internalFindOptionsKeys } from '@/src/collections/operations/find/find';
 import { Filter } from '@/src/collections/operations/filter';
-import { WithId } from '@/src/collections/operations/with-id';
 
 type CursorStatus = 'uninitialized' | 'initialized' | 'executing' | 'executed';
 
-export class FindCursor<Schema extends SomeDoc = SomeDoc> {
+export class FindCursor<Schema extends SomeDoc> {
   collection: Collection<Schema>;
   filter: Filter<Schema>;
-  options: FindOptions<Schema>;
-  documents: WithId<Schema>[] = [];
+  options: Record<string, any>;
+  documents: Schema[] = [];
   status: CursorStatus = 'uninitialized';
   nextPageState?: string;
   limit: number;
 
-  page: WithId<Schema>[] = [];
+  page: Schema[] = [];
   exhausted = false;
   pageIndex = 0;
 
-  constructor(collection: Collection<Schema>, filter: Filter<Schema>, options?: FindOptions<Schema>) {
+  constructor(collection: Collection<Schema>, filter: Filter<Schema>, options?: Record<string, any>) {
     this.collection = collection;
     this.filter = filter;
     this.options = options ?? {};
 
-    const isOverPageSizeLimit =
-      this.options.sort &&
-      this.options.sort.$vector == null &&
-      (this.options.limit == null || this.options.limit > 20);
-    if (isOverPageSizeLimit) {
-      throw new Error(
-        'Cannot set sort option without limit <= 20, JSON API can currently only return 20 documents with sort',
-      );
+    const isNonVectorSort = this.options.sort && !('$vector' in this.options.sort || '$vectorize' in this.options.sort);
+    const isOverPageSizeLimit = !this.options.limit || this.options.limit > 20;
+
+    if (isNonVectorSort && isOverPageSizeLimit) {
+      throw new Error('Cannot set non-vector sort option without limit <= 20, JSON API can currently only return 20 documents with sort');
     }
 
     this.limit = options?.limit || Infinity;
     this.status = 'initialized';
   }
 
-  /**
-   *
-   * @returns Record<string, any>[]
-   */
-  async toArray(): Promise<WithId<Schema>[]> {
+  async toArray(): Promise<Schema[]> {
     return executeOperation(async () => {
       await this._getAll();
       return this.documents;
     });
   }
 
-  /**
-   *
-   * @returns void
-   */
   private async _getAll(): Promise<void> {
     if (this.status === 'executed' || this.status === 'executing') {
       return;
@@ -77,10 +65,7 @@ export class FindCursor<Schema extends SomeDoc = SomeDoc> {
     }
   }
 
-  /**
-   * @returns Promise
-   */
-  async next(): Promise<WithId<Schema> | null> {
+  async next(): Promise<Schema | null> {
     return executeOperation(async () => {
       if (this.pageIndex < this.page.length) {
         return this.page[this.pageIndex++];
@@ -154,10 +139,6 @@ export class FindCursor<Schema extends SomeDoc = SomeDoc> {
     this.pageIndex = 0;
   }
 
-  /**
-   *
-   * @param iterator
-   */
   async forEach(iterator: any): Promise<void> {
     return executeOperation(async () => {
       for (let doc = await this.next(); doc != null; doc = await this.next()) {
@@ -166,17 +147,10 @@ export class FindCursor<Schema extends SomeDoc = SomeDoc> {
     });
   }
 
-  /**
-   *
-   * @returns Promise<number>
-   */
   async count(): Promise<number> {
     return this.toArray().then((docs) => docs.length);
   }
 
-  /**
-   *
-   */
   stream(): TypeErr<'Streaming cursors are not supported'> {
     throw new Error('Streaming cursors are not supported');
   }

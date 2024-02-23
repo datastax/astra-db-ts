@@ -26,7 +26,7 @@ interface CollectionVectorOptions {
 }
 
 type CollectionIndexingOptions<Schema extends SomeDoc> =
-  | { allow: (keyof ToDotNotation<Schema>)[] | ['*'] }
-  | { deny:  (keyof ToDotNotation<Schema>)[] | ['*'] }
+  | { allow: (keyof ToDotNotation<Schema>)[] | ['*'], deny?:  never }
+  | { deny:  (keyof ToDotNotation<Schema>)[] | ['*'], allow?: never }
 
 export const createCollectionOptionsKeys = new Set(['vector', 'indexing']);

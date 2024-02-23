@@ -17,16 +17,16 @@ import { ProjectionOption, SortOption } from '@/src/collections/operations/find/
 export interface FindOneCommand {
   findOne: {
     filter: Record<string, any>;
-    options?: FindOneOptions<any>;
+    options?: FindOneOptions<any, any>;
     sort?: SortOption<any>;
     projection?: ProjectionOption<any>;
   };
 }
 
-export interface FindOneOptions<Schema> {
+export interface FindOneOptions<Schema, GetSim extends boolean> {
   sort?: Record<string, 1 | -1>;
   projection?: ProjectionOption<Schema>;
-  includeSimilarity?: boolean;
+  includeSimilarity?: GetSim;
 }
 
 export const findOneOptionsKeys = new Set(['includeSimilarity', 'sort', 'projection']);

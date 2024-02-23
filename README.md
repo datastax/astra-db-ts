@@ -8,7 +8,6 @@
 import { AstraDB } from "@datastax/astra-db-ts";
 
 async function main() {
-
   const ASTRA_DB_API_ENDPOINT = process.env['ASTRA_DB_API_ENDPOINT'];
   const ASTRA_DB_APPLICATION_TOKEN = process.env['ASTRA_DB_APPLICATION_TOKEN'];
 
@@ -17,7 +16,7 @@ async function main() {
   // Create a vector collection
   await db.createCollection("vector_5_collection", { vector: { dimension: 5, metric: "cosine" } });
   const collection = await db.collection("vector_5_collection");
-
+  
   const documents = [
     {
       "_id": "1",

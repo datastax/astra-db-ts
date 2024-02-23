@@ -302,7 +302,6 @@ describe("Client test", () => {
 
       let error: any;
       try {
-        console.log('client.httpClient.closed', client.httpClient.isClosed())
         await client.db('test')!.collection('test')!.findOne({
           url: '/test'
         });

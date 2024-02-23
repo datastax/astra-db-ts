@@ -90,6 +90,7 @@ export class HTTPClient {
   http2Session?: http2.ClientHttp2Session;
   keyspaceName?: string;
   collectionName?: string;
+  http2SessionClosed: boolean = false;
 
   constructor(options: HTTPClientOptions) {
     if (typeof window !== "undefined") {
@@ -112,13 +113,7 @@ export class HTTPClient {
     this.origin = new URL(this.baseUrl).origin;
 
     if (options.useHttp2 ?? true) {
-      this.http2Session = http2.connect(this.origin);
-
-      // Without these handlers, any errors will end up as uncaught exceptions,
-      // even if they are handled in `_request()`.
-      // More info: https://github.com/nodejs/node/issues/16345
-      this.http2Session.on('error', () => {});
-      this.http2Session.on('socketError', () => {});
+      this.http2Session = this._createHTTP2Session();
     }
 
     if (options.logLevel) {
@@ -152,10 +147,11 @@ export class HTTPClient {
 
   closeHTTP2Session() {
     this.http2Session?.close();
+    this.http2SessionClosed = true;
   }
 
   isClosed() {
-    return this.http2Session?.closed;
+    return this.http2Session && this.http2SessionClosed;
   }
 
   cloneShallow(): HTTPClient {
@@ -180,7 +176,8 @@ export class HTTPClient {
         ? await this._makeHTTP2Request(
             url.replace(this.origin, ''),
             this.applicationToken,
-            requestInfo.data
+            requestInfo.data,
+            requestInfo.timeout || DEFAULT_TIMEOUT
           )
         : await axiosAgent({
             url: url,
@@ -220,10 +217,22 @@ export class HTTPClient {
     }
   }
 
+  private _createHTTP2Session() {
+    const session = http2.connect(this.origin);
+
+    // Without these handlers, any errors will end up as uncaught exceptions,
+    // even if they are handled in `_request()`.
+    // More info: https://github.com/nodejs/node/issues/16345
+    session.on('error', () => {});
+    session.on('socketError', () => {});
+    return session;
+  }
+
   private _makeHTTP2Request(
     path: string,
     token: string,
-    body: Record<string, any>
+    body: Record<string, any>,
+    timeout: number,
   ): Promise<{ status: number, data: Record<string, any> }> {
     return new Promise((resolve, reject) => {
       // Should never happen, but good to have a readable error just in case
@@ -231,9 +240,17 @@ export class HTTPClient {
         throw new Error('Cannot make http2 request without session');
       }
 
-      if (this.http2Session.closed) {
+      if (this.http2SessionClosed) {
         throw new Error('Cannot make http2 request when client is closed');
       }
+
+      // Recreate session if session was closed except via an explicit `close()`
+      // call. This happens when nginx sends a GOAWAY packet after 1000 requests.
+      if (this.http2Session.closed) {
+        this.http2Session = this._createHTTP2Session();
+      }
+
+      const timer = setTimeout(() => reject(new AstraServerError('Request timed out', body)), timeout);
 
       const req = this.http2Session.request({
         ':path': path,
@@ -244,26 +261,31 @@ export class HTTPClient {
       req.end();
 
       let status = 0;
-      req.on('response', (data: http2.IncomingHttpStatusHeader) => {
+      req.on('response', (data) => {
+        clearTimeout(timer);
         status = data[':status'] ?? 0;
       });
 
       req.on('error', (error: Error) => {
+        clearTimeout(timer);
         reject(error);
       });
 
       req.setEncoding('utf8');
+
       let responseBody = '';
       req.on('data', (chunk: string) => {
         responseBody += chunk;
       });
+
       req.on('end', () => {
+        clearTimeout(timer);
+
         try {
           const data = JSON.parse(responseBody);
           resolve({ status, data });
         } catch (error) {
           reject(new Error('Unable to parse response as JSON, got: "' + responseBody + '"'));
-          return;
         }
       });
     });

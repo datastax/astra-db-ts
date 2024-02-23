@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type WithId<T> = Omit<T, '_id'> & { _id: string }
-
 export type IsNum<T> = number extends T ? true : bigint extends T ? true : false
+
+type WithId<T> = Omit<T, '_id'> & { _id: string }
+type WithSim<T, GetSim extends boolean> = GetSim extends true ? Omit<T, '$similarity'> & { $similarity: number } : T
+
+export type FoundDoc<Doc, GetSim extends boolean> = WithSim<WithId<Doc>, GetSim>
+
+export type MaybeId<Doc> = Omit<Doc, '_id'> & { _id?: string }

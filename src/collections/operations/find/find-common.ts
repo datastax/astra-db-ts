@@ -17,9 +17,13 @@ import { SomeDoc } from '@/src/collections/collection';
 export type SortOption<Schema> =
   | Record<keyof Schema, 1 | -1>
   | { $vector: { $meta: number[] } }
-  | { $vector: number[] };
+  | { $vector: number[] }
+  | { $vectorize: string };
 
-export type ProjectionOption<Schema> = Record<keyof Schema, 1 | 0 | true | false | { $slice: number }>;
+export type ProjectionOption<Schema> = {
+  [K in keyof Schema]?: 1 | 0 | true | false | { $slice: number };
+};
+
 
 export interface FindOneAndResult<Schema extends SomeDoc> {
   value: Schema | null;

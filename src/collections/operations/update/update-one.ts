@@ -31,4 +31,4 @@ export interface UpdateOneOptions<Schema> {
 
 export const updateOneOptionKeys = new Set(['upsert', 'sort']);
 
-export type UpdateOneResult = InternalUpdateResult<0 | 1>
+export type UpdateOneResult = InternalUpdateResult<0 | 1>;

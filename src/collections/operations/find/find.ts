@@ -14,18 +14,18 @@
 
 import { ProjectionOption, SortOption } from '@/src/collections/operations/find/find-common';
 
-interface BaseFindOptions {
+interface BaseFindOptions<GetSim extends boolean> {
   limit?: number;
   skip?: number;
-  includeSimilarity?: boolean;
+  includeSimilarity?: GetSim;
 }
 
-export interface FindOptions<Schema> extends BaseFindOptions {
+export interface FindOptions<Schema, GetSim extends boolean> extends BaseFindOptions<GetSim> {
   sort?: SortOption<Schema>;
   projection?: ProjectionOption<Schema>;
 }
 
-export interface InternalFindOptions extends BaseFindOptions {
+export interface InternalFindOptions extends BaseFindOptions<boolean> {
   pagingState?: string;
 }
 

@@ -14,7 +14,7 @@
 
 import { SomeDoc } from '@/src/collections/collection';
 import { ToDotNotation } from '@/src/collections/operations/dot-notation';
-import { IsNum } from '@/src/collections/operations/with-id';
+import { IsNum } from '@/src/collections/operations/utils';
 
 export type Filter<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = {
   [K in keyof InNotation]?: FilterType<InNotation[K]>

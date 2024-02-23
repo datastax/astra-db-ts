@@ -42,7 +42,6 @@ describe("Astra TS Client - collections.Db", async () => {
 
   afterEach(async () => {
     const db = astraClient?.db();
-    // run drop collection async to save time
     await db?.dropCollection(TEST_COLLECTION_NAME);
   });
 
@@ -90,10 +89,10 @@ describe("Astra TS Client - collections.Db", async () => {
       const db = new Db(httpClient, parseUri(dbUri).keyspaceName);
       const res = await db.createCollection(collectionName);
       assert.ok(res);
-      assert.strictEqual(res.status?.ok, 1);
+      assert.strictEqual(res.name, collectionName);
       const res2 = await db.createCollection(collectionName);
       assert.ok(res2);
-      assert.strictEqual(res2.status?.ok, 1);
+      assert.strictEqual(res2.name, collectionName);
     });
 
     it("should drop a Collection", async () => {

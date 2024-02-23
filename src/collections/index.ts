@@ -22,7 +22,7 @@ export { UpdateManyOptions, UpdateManyResult } from '@/src/collections/operation
 export { DeleteOneOptions, DeleteOneResult } from '@/src/collections/operations/delete/delete-one';
 export { DeleteManyResult } from '@/src/collections/operations/delete/delete-many';
 export { FindOptions } from '@/src/collections/operations/find/find';
-export { SortOption } from '@/src/collections/operations/find/find-common';
+export { SortOption, ProjectionOption } from '@/src/collections/operations/find/find-common';
 export { FindOneOptions } from '@/src/collections/operations/find/find-one';
 export { FindOneAndDeleteOptions } from '@/src/collections/operations/find/find-one-delete';
 export { FindOneAndUpdateOptions } from '@/src/collections/operations/find/find-one-update';
