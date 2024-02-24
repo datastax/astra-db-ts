@@ -13,47 +13,47 @@
 // limitations under the License.
 
 import { FindCursor } from './cursor';
-import { HTTPClient } from '@/src/client';
+import { HTTPClient } from '@/src/api';
 import { executeOperation, setDefaultIdForUpsert, TypeErr, withoutFields } from './utils';
-import { InsertOneCommand, InsertOneResult } from '@/src/collections/operations/insert/insert-one';
+import { InsertOneCommand, InsertOneResult } from '@/src/client/operations/insert/insert-one';
 import {
   InsertManyCommand,
   insertManyOptionKeys,
   InsertManyOptions,
   InsertManyResult
-} from '@/src/collections/operations/insert/insert-many';
+} from '@/src/client/operations/insert/insert-many';
 import {
   UpdateOneCommand,
   updateOneOptionKeys,
   UpdateOneOptions,
   UpdateOneResult,
-} from '@/src/collections/operations/update/update-one';
+} from '@/src/client/operations/update/update-one';
 import {
   UpdateManyCommand,
   updateManyOptionKeys,
   UpdateManyOptions,
   UpdateManyResult
-} from '@/src/collections/operations/update/update-many';
-import { DeleteOneCommand, DeleteOneOptions, DeleteOneResult } from '@/src/collections/operations/delete/delete-one';
-import { DeleteManyCommand, DeleteManyResult } from '@/src/collections/operations/delete/delete-many';
-import { FindOptions } from '@/src/collections/operations/find/find';
-import { FindOneAndResult } from '@/src/collections/operations/find/find-common';
-import { FindOneCommand, FindOneOptions, findOneOptionsKeys } from '@/src/collections/operations/find/find-one';
-import { FindOneAndDeleteCommand, FindOneAndDeleteOptions } from '@/src/collections/operations/find/find-one-delete';
+} from '@/src/client/operations/update/update-many';
+import { DeleteOneCommand, DeleteOneOptions, DeleteOneResult } from '@/src/client/operations/delete/delete-one';
+import { DeleteManyCommand, DeleteManyResult } from '@/src/client/operations/delete/delete-many';
+import { FindOptions } from '@/src/client/operations/find/find';
+import { FindOneAndResult } from '@/src/client/operations/find/find-common';
+import { FindOneCommand, FindOneOptions, findOneOptionsKeys } from '@/src/client/operations/find/find-one';
+import { FindOneAndDeleteCommand, FindOneAndDeleteOptions } from '@/src/client/operations/find/find-one-delete';
 import {
   FindOneAndUpdateCommand,
   FindOneAndUpdateOptions,
   findOneAndUpdateOptionsKeys
-} from '@/src/collections/operations/find/find-one-update';
+} from '@/src/client/operations/find/find-one-update';
 import {
   FindOneAndReplaceCommand,
   FindOneAndReplaceOptions,
   findOneAndReplaceOptionsKeys
-} from '@/src/collections/operations/find/find-one-replace';
-import { Filter } from '@/src/collections/operations/filter';
-import { UpdateFilter } from '@/src/collections/operations/update-filter';
-import { FoundDoc, MaybeId, WithId } from '@/src/collections/operations/utils';
-import { SomeDoc } from '@/src/collections/document';
+} from '@/src/client/operations/find/find-one-replace';
+import { Filter } from '@/src/client/operations/filter';
+import { UpdateFilter } from '@/src/client/operations/update-filter';
+import { FoundDoc, MaybeId } from '@/src/client/operations/utils';
+import { SomeDoc } from '@/src/client/document';
 
 export class Collection<Schema extends SomeDoc = SomeDoc> {
   httpClient: HTTPClient;
@@ -65,11 +65,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     }
 
     this.httpClient = httpClient.cloneShallow();
-    this.httpClient.collectionName = name;
+    this.httpClient.collection = name;
     this.name = name;
   }
 
-  async insertOne(document: WithId<Schema>): Promise<InsertOneResult> {
+  async insertOne(document: Schema): Promise<InsertOneResult> {
     return executeOperation(async () => {
       const command: InsertOneCommand = {
         insertOne: { document },
@@ -84,7 +84,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     });
   }
 
-  async insertMany(documents: WithId<Schema>[], options?: InsertManyOptions): Promise<InsertManyResult> {
+  async insertMany(documents: Schema[], options?: InsertManyOptions): Promise<InsertManyResult> {
     return executeOperation(async () => {
       const command: InsertManyCommand = {
         insertMany: {

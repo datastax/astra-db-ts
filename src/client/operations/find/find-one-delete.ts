@@ -12,20 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/collections/document';
-import { ToDotNotation } from '@/src/collections/operations/dot-notation';
+import { SortOption } from '@/src/client/operations/find/find-common';
+import { SomeDoc } from '@/src/client';
 
-export type SortOption<Schema extends SomeDoc> =
-  | { [K in keyof ToDotNotation<Schema>]?: 1 | -1 }
-  | { $vector: { $meta: number[] } }
-  | { $vector: number[] }
-  | { $vectorize: string };
+export interface FindOneAndDeleteCommand {
+  findOneAndDelete: {
+    filter?: Record<string, unknown>;
+    sort?: SortOption<any>;
+  };
+}
 
-export type ProjectionOption<Schema extends SomeDoc> = {
-  [K in keyof ToDotNotation<Schema>]?: 1 | 0 | true | false | { $slice: number };
-};
-
-export interface FindOneAndResult<Schema extends SomeDoc> {
-  value: Schema | null;
-  ok: number;
+export interface FindOneAndDeleteOptions<Schema extends SomeDoc> {
+  sort?: SortOption<Schema>;
 }

@@ -13,12 +13,12 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { Db } from '@/src/collections/db';
-import { Client } from '@/src/collections/client';
-import { parseUri } from '@/src/collections/utils';
+import { Db } from '@/src/client/db';
+import { Client } from '@/src/client/client';
+import { parseUri } from '@/src/client/utils';
 import { TEST_COLLECTION_NAME, testClient } from '@/tests/fixtures';
 import { randAlphaNumeric } from '@ngneat/falso';
-import { HTTPClient } from '@/src/client';
+import { HTTPClient } from '@/src/api';
 
 describe("Astra TS Client - collections.Db", async () => {
   let astraClient: Client | null;

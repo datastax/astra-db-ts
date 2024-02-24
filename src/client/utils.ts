@@ -14,8 +14,9 @@
 
 import url from 'url';
 import { logger } from '@/src/logger';
-import { handleIfErrorResponse, HTTPClient } from '@/src/client/httpClient';
+import { handleIfErrorResponse, HTTPClient } from '@/src/api/http-client';
 import { ObjectId } from 'bson';
+import { HTTP_METHODS } from '@/src/api/types';
 
 declare const __error: unique symbol;
 export type TypeErr<S> = unknown & { [__error]: S };
@@ -136,7 +137,7 @@ export async function createNamespace(httpClient: HTTPClient, name: string) {
   parseUri(httpClient.baseUrl);
   const response = await httpClient.request({
     url: httpClient.baseUrl,
-    method: "POST",
+    method: HTTP_METHODS.post,
     data,
   });
 
@@ -153,7 +154,7 @@ export async function dropNamespace(httpClient: HTTPClient, name: string) {
 
   const response = await httpClient.request({
     url: httpClient.baseUrl,
-    method: "POST",
+    method: HTTP_METHODS.post,
     data,
   });
 

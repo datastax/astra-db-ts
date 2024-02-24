@@ -14,17 +14,13 @@
 
 import { Db } from './db';
 import { createAstraUri, parseUri, TypeErr } from './utils';
-import { HTTPClient } from '@/src/client';
-import { SomeDoc, Collection } from './collection';
-import { CreateCollectionOptions } from '@/src/collections/operations/collections/create-collection';
+import { HTTPClient } from '@/src/api';
+import { Collection } from './collection';
+import { CreateCollectionOptions } from '@/src/client/operations/collections/create-collection';
+import { SomeDoc } from '@/src/client/document';
+import { HTTPClientOptions } from '@/src/api/types';
 
-export interface ClientOptions {
-  applicationToken: string;
-  baseApiPath?: string;
-  logLevel?: string;
-  logSkippedOptions?: boolean;
-  useHttp2?: boolean;
-}
+export type ClientOptions = HTTPClientOptions;
 
 export class Client implements Disposable {
   httpClient: HTTPClient;
@@ -80,11 +76,6 @@ export class Client implements Disposable {
     return await this.db().dropCollection(collectionName);
   }
 
-  /**
-   * Use a JSON API keyspace
-   * @param dbName the JSON API keyspace to connect to
-   * @returns Db
-   */
   db(dbName?: string) {
     if (dbName) {
       return new Db(this.httpClient, dbName);
@@ -95,21 +86,12 @@ export class Client implements Disposable {
     throw new Error("Database name must be provided");
   }
 
-  /**
-   *
-   * @param maxListeners
-   * @returns number
-   */
   setMaxListeners(maxListeners: number) {
     return maxListeners;
   }
 
-  /**
-   *
-   * @returns Client
-   */
   close() {
-    this.httpClient.closeHTTP2Session();
+    this.httpClient.close();
     return this;
   }
 

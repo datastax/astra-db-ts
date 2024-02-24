@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import assert from "assert";
-import { HTTPClient } from "@/src/client/httpClient";
+import { HTTPClient } from "@/src/api/http-client";
 
 describe("Astra TS Client - client.HTTPClient", () => {
   describe("HTTPClient Operations", () => {

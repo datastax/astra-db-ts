@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ProjectionOption, SortOption } from '@/src/collections/operations/find/find-common';
-import { SomeDoc } from '@/src/collections';
+import { ProjectionOption, SortOption } from '@/src/client/operations/find/find-common';
+import { SomeDoc } from '@/src/client';
 
 interface BaseFindOptions<GetSim extends boolean> {
   limit?: number;

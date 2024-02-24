@@ -12,16 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SortOption } from '@/src/collections/operations/find/find-common';
-import { SomeDoc } from '@/src/collections';
+import { LIB_NAME, LIB_VERSION } from '@/src/version';
+import { HTTP_METHODS } from '@/src/api/types';
 
-export interface FindOneAndDeleteCommand {
-  findOneAndDelete: {
-    filter?: Record<string, unknown>;
-    sort?: SortOption<any>;
-  };
-}
-
-export interface FindOneAndDeleteOptions<Schema extends SomeDoc> {
-  sort?: SortOption<Schema>;
-}
+export const REQUESTED_WITH = LIB_NAME + "/" + LIB_VERSION;
+export const DEFAULT_AUTH_HEADER = process.env['ASTRA_AUTH_HEADER'] || "Token";
+export const DEFAULT_METHOD = HTTP_METHODS.get;
+export const DEFAULT_TIMEOUT = 30000;

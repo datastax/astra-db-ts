@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { Db } from '@/src/collections/db';
-import { Collection } from '@/src/collections/collection';
-import { Client } from '@/src/collections/client';
+import { Db } from '@/src/client/db';
+import { Collection } from '@/src/client/collection';
+import { Client } from '@/src/client/client';
 import {
   createSampleDoc2WithMultiLevel,
   createSampleDoc3WithMultiLevel,

@@ -18,9 +18,9 @@ import {
   InternalFindOptions,
   internalFindOptionsKeys,
   InternalGetMoreCommand
-} from '@/src/collections/operations/find/find';
-import { Filter } from '@/src/collections/operations/filter';
-import { SomeDoc } from '@/src/collections/document';
+} from '@/src/client/operations/find/find';
+import { Filter } from '@/src/client/operations/filter';
+import { SomeDoc } from '@/src/client/document';
 
 type CursorStatus = 'uninitialized' | 'initialized' | 'executing' | 'executed';
 

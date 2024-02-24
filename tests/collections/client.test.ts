@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { Client } from '@/src/collections/client';
+import { Client } from '@/src/client/client';
 import { testClient } from '@/tests/fixtures';
-import { parseUri } from '@/src/collections/utils';
+import { parseUri } from '@/src/client/utils';
 
 const localBaseUrl = "http://localhost:8181";
 
@@ -58,9 +58,9 @@ describe("Client test", () => {
     it("should have unique httpClients for each db", async () => {
       const dbFromUri = appClient?.db();
       const parsedUri = parseUri(clientURI);
-      assert.strictEqual(dbFromUri?.keyspaceName, parsedUri.keyspaceName);
+      assert.strictEqual(dbFromUri?.keyspace, parsedUri.keyspaceName);
       const newDb = appClient?.db("test-db");
-      assert.strictEqual(newDb?.keyspaceName, "test-db");
+      assert.strictEqual(newDb?.keyspace, "test-db");
     });
 
     it("should initialize a Client connection with a uri using connect with overrides", async () => {
@@ -244,7 +244,8 @@ describe("Client test", () => {
       let client: Client;
       {
         using _client = new Client(baseUrl, 'keyspace1', {
-          applicationToken: '123'
+          applicationToken: '123',
+          useHttp2: true,
         });
         assert.ok(_client);
         client = _client;

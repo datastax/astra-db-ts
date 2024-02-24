@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ToDotNotation } from '@/src/collections/operations/dot-notation';
-import { IsNum } from '@/src/collections/operations/utils';
-import { SomeDoc } from '@/src/collections/document';
+import { ToDotNotation } from '@/src/client/operations/dot-notation';
+import { IsNum } from '@/src/client/operations/utils';
+import { SomeDoc } from '@/src/client/document';
 
 export type Filter<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = {
   [K in keyof InNotation]?: FilterType<InNotation[K]>

@@ -12,20 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { InternalUpdateResult } from '@/src/collections/operations/update/update-common';
+export type SomeDoc = Record<string, any>;
 
-export interface UpdateManyCommand {
-  updateMany: {
-    filter: Record<string, unknown>;
-    update: Record<string, any>;
-    options?: UpdateManyOptions;
-  }
+export interface VectorDoc {
+  $vector?: number[],
+  $vectorize?: string,
 }
-
-export interface UpdateManyOptions {
-  upsert?: boolean;
-}
-
-export const updateManyOptionKeys = new Set(['upsert']);
-
-export type UpdateManyResult = InternalUpdateResult<number>;

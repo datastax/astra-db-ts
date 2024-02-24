@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { HTTPClient } from '@/src/client';
+import { HTTPClient } from '@/src/api';
 import { Collection } from './collection';
 import { createNamespace, executeOperation, TypeErr } from './utils';
-import { CreateCollectionOptions, createCollectionOptionsKeys } from '@/src/collections/operations/collections/create-collection';
-import { APIResponse } from '@/src/client/httpClient';
-import { SomeDoc } from '@/src/collections/document';
+import { CreateCollectionOptions, createCollectionOptionsKeys } from '@/src/client/operations/collections/create-collection';
+import { SomeDoc } from '@/src/client/document';
+import { APIResponse } from '@/src/api/types';
 
 export class Db {
   httpClient: HTTPClient;
-  keyspaceName: string;
+  keyspace: string;
 
   constructor(httpClient: HTTPClient, name: string) {
     if (!name) {
@@ -29,8 +29,8 @@ export class Db {
     }
 
     this.httpClient = httpClient.cloneShallow();
-    this.httpClient.keyspaceName = name;
-    this.keyspaceName = name;
+    this.httpClient.keyspace = name;
+    this.keyspace = name;
   }
 
   collection<Schema extends SomeDoc = SomeDoc>(collectionName: string): Collection<Schema> {
@@ -79,16 +79,11 @@ export class Db {
   }
 
   async createDatabase(): Promise<APIResponse> {
-    return await createNamespace(this.httpClient, this.keyspaceName);
+    return await createNamespace(this.httpClient, this.keyspace);
   }
 
   async dropDatabase(): Promise<TypeErr<'Cannot drop database in Astra. Please use the Astra UI to drop the database.'>> {
     throw new Error('Cannot drop database in Astra. Please use the Astra UI to drop the database.');
-  }
-
-  // For backwards compatibility reasons
-  get name() {
-    return this.keyspaceName;
   }
 }
 

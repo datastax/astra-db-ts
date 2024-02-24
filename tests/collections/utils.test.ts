@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { createAstraUri } from '@/src/collections/utils';
-import { AstraDB } from '@/src/collections';
+import { createAstraUri } from '@/src/client/utils';
+import { AstraDB } from '@/src/client';
 
 describe("Utils test", () => {
   it("ClientBaseUriTest", () => {

@@ -13,10 +13,10 @@
 // limitations under the License.
 
 import assert from "assert";
-import { Db } from "@/src/collections/db";
-import { FindCursor } from "@/src/collections/cursor";
-import { Collection } from "@/src/collections/collection";
-import { Client } from "@/src/collections/client";
+import { Db } from "@/src/client/db";
+import { FindCursor } from "@/src/client/cursor";
+import { Collection } from "@/src/client/collection";
+import { Client } from "@/src/client/client";
 import {
   testClient,
   sampleUsersList,

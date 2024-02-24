@@ -12,22 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SortOption } from '@/src/collections/operations/find/find-common';
-import { SomeDoc } from '@/src/collections';
+import { InternalDeleteResult } from '@/src/client/operations/delete/delete-common';
+import { SortOption } from '@/src/client';
 
-export interface FindOneAndReplaceCommand {
-  findOneAndReplace: {
+export interface DeleteOneCommand {
+  deleteOne: {
     filter: Record<string, unknown>;
-    replacement: Record<string, unknown>;
-    options?: FindOneAndReplaceOptions<any>;
     sort?: SortOption<any>;
   };
 }
 
-export interface FindOneAndReplaceOptions<Schema extends SomeDoc> {
-  upsert?: boolean;
-  returnDocument?: "before" | "after";
-  sort?: SortOption<Schema>;
+export interface DeleteOneOptions {
+  sort?: Record<string, 1 | -1>;
 }
 
-export const findOneAndReplaceOptionsKeys = new Set(['upsert', 'returnDocument', 'sort']);
+export type DeleteOneResult = InternalDeleteResult<0 | 1>;

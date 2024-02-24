@@ -12,22 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ProjectionOption, SortOption } from '@/src/collections/operations/find/find-common';
-import { SomeDoc } from '@/src/collections';
+import { InternalUpdateResult } from '@/src/client/operations/update/update-common';
 
-export interface FindOneCommand {
-  findOne: {
+export interface UpdateManyCommand {
+  updateMany: {
     filter: Record<string, unknown>;
-    options?: FindOneOptions<any, boolean>;
-    sort?: SortOption<any>;
-    projection?: ProjectionOption<any>;
-  };
+    update: Record<string, any>;
+    options?: UpdateManyOptions;
+  }
 }
 
-export interface FindOneOptions<Schema extends SomeDoc, GetSim extends boolean> {
-  sort?: SortOption<Schema>;
-  projection?: ProjectionOption<Schema>;
-  includeSimilarity?: GetSim;
+export interface UpdateManyOptions {
+  upsert?: boolean;
 }
 
-export const findOneOptionsKeys = new Set(['includeSimilarity', 'sort', 'projection']);
+export const updateManyOptionKeys = new Set(['upsert']);
+
+export type UpdateManyResult = InternalUpdateResult<number>;

@@ -1,6 +1,6 @@
 
 # Contents
-1. [Build & Run tests locally](#build--test)
+1. [Build & run tests locally](#build--test)
 2. [Build API Reference Documentation](#build-api-reference-documentation)
 3. [Contributing](CONTRIBUTING.md)
 4. [Creating a release](#publishing-to-npm-registry)
@@ -8,28 +8,18 @@
 ## Build & Test
 
 Prerequisites:
-- [Docker](https://docker.com/) / [JSON API](https://github.com/stargate/jsonapi)
+- `npm`
+- A clean Astra instance for testing
 
 ### Build
 ```shell
-npm install 
+npm i
 npm run build
 ```
 
 ### Test
-- Start Docker
-- Start JSON API
-```shell
-bin/start_json_api.sh
-```
-- Copy the `.env.example` file and create a new `.env` file that should have all the connection details as shown below.
+- Copy the `.env.example` file and create a new `.env` file following the example template.
 
-```env
-JSON_API_URI=http://localhost:8181/v1/testks1
-STARGATE_AUTH_URL=http://localhost:8081/v1/auth
-STARGATE_USERNAME=cassandra
-STARGATE_PASSWORD=cassandra
-```
 - Run the tests
 ```shell
 npm run test
@@ -44,7 +34,6 @@ You should try to run `npm run lint` before committing to minimize risk of regre
 ## Update Stargate and JSON API versions
 
 Stargate and the JSON API versions are maintained in the file `api-compatibility.versions`. Update the versions accordingly, submit a PR and make sure that the GitHub Actions that verify the new versions run fine.
-
 
 ## Build API Reference Documentation
 
