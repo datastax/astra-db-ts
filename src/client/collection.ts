@@ -14,7 +14,7 @@
 
 import { FindCursor } from './cursor';
 import { HTTPClient } from '@/src/api';
-import { executeOperation, setDefaultIdForUpsert, TypeErr, withoutFields } from './utils';
+import { withErrorLogging, setDefaultIdForUpsert, TypeErr, withoutFields } from './utils';
 import { InsertOneCommand, InsertOneResult } from '@/src/client/operations/insert/insert-one';
 import {
   InsertManyCommand,
@@ -70,7 +70,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   async insertOne(document: Schema): Promise<InsertOneResult> {
-    return executeOperation(async () => {
+    return withErrorLogging(async () => {
       const command: InsertOneCommand = {
         insertOne: { document },
       }
@@ -85,7 +85,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   async insertMany(documents: Schema[], options?: InsertManyOptions): Promise<InsertManyResult> {
-    return executeOperation(async () => {
+    return withErrorLogging(async () => {
       const command: InsertManyCommand = {
         insertMany: {
           documents,
@@ -108,7 +108,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   // }
 
   async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions<Schema>): Promise<UpdateOneResult> {
-    return executeOperation(async () => {
+    return withErrorLogging(async () => {
       const command: UpdateOneCommand = {
         updateOne: {
           filter,
@@ -142,7 +142,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   async updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateManyOptions): Promise<UpdateManyResult> {
-    return executeOperation(async () => {
+    return withErrorLogging(async () => {
       const command: UpdateManyCommand = {
         updateMany: {
           filter,
@@ -179,7 +179,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   async deleteOne(filter: Filter<Schema>, options?: DeleteOneOptions): Promise<DeleteOneResult> {
-    return executeOperation(async () => {
+    return withErrorLogging(async () => {
       const command: DeleteOneCommand = {
         deleteOne: { filter },
       };
@@ -198,7 +198,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   async deleteMany(filter: Filter<Schema>): Promise<DeleteManyResult> {
-    return executeOperation(async () => {
+    return withErrorLogging(async () => {
       const command: DeleteManyCommand = {
         deleteMany: { filter },
       };
@@ -221,7 +221,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   async findOne<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<Schema, GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
-    return executeOperation(async () => {
+    return withErrorLogging(async () => {
       const command: FindOneCommand = {
         findOne: {
           filter,
@@ -245,7 +245,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   async findOneAndReplace(filter: Filter<Schema>, replacement: MaybeId<Schema>, options?: FindOneAndReplaceOptions<Schema>): Promise<FindOneAndResult<Schema>> {
-    return executeOperation(async () => {
+    return withErrorLogging(async () => {
       const command: FindOneAndReplaceCommand = {
         findOneAndReplace: {
           filter,
@@ -276,7 +276,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   async countDocuments(filter?: Filter<Schema>): Promise<number> {
-    return executeOperation(async (): Promise<number> => {
+    return withErrorLogging(async (): Promise<number> => {
       const command = {
         countDocuments: { filter },
       };
@@ -305,7 +305,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: FindOneAndUpdateOptions<Schema>): Promise<FindOneAndResult<Schema>> {
-    return executeOperation(async () => {
+    return withErrorLogging(async () => {
       const command: FindOneAndUpdateCommand = {
         findOneAndUpdate: {
           filter,

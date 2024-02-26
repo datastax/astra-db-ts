@@ -118,7 +118,7 @@ export function createAstraUri(
   return uri.toString();
 }
 
-export const executeOperation = async <T>(operation: () => Promise<T>): Promise<T> => {
+export const withErrorLogging = async <T>(operation: () => Promise<T>): Promise<T> => {
   try {
     return await operation();
   } catch (e: any) {
@@ -129,9 +129,7 @@ export const executeOperation = async <T>(operation: () => Promise<T>): Promise<
 
 export async function createNamespace(httpClient: HTTPClient, name: string) {
   const data = {
-    createNamespace: {
-      name,
-    },
+    createNamespace: { name },
   };
 
   parseUri(httpClient.baseUrl);
@@ -148,9 +146,7 @@ export async function createNamespace(httpClient: HTTPClient, name: string) {
 
 export async function dropNamespace(httpClient: HTTPClient, name: string) {
   const data = {
-    dropNamespace: {
-      name,
-    },
+    dropNamespace: { name },
   };
 
   const response = await httpClient.request({
@@ -173,7 +169,7 @@ export function setDefaultIdForUpsert(command: Record<string, any>, replace?: bo
   }
 
   if (replace) {
-    if (command.replacement != null && "_id" in command.replacement) {
+    if (command.replacement && "_id" in command.replacement) {
       return;
     }
 
@@ -183,7 +179,7 @@ export function setDefaultIdForUpsert(command: Record<string, any>, replace?: bo
     return;
   }
 
-  if (command.update != null && updateHasKey(command.update, "_id")) {
+  if (command.update && fieldHasKey(command.update, "_id")) {
     return;
   }
 
@@ -199,17 +195,12 @@ function genObjectId(): string {
   return new ObjectId().toString();
 }
 
-function updateHasKey(update: Record<string, any>, key: string): boolean {
-  for (const operator of Object.keys(update)) {
-    if (
-      update[operator] != null &&
-      typeof update[operator] === "object" &&
-      key in update[operator]
-    ) {
-      return true;
-    }
-  }
-  return false;
+function fieldHasKey(update: Record<string, any>, key: string): boolean {
+  return Object.keys(update).some((operator) => (
+    update[operator] &&
+    typeof update[operator] === 'object' &&
+    key in update[operator]
+  ));
 }
 
 export function withoutFields<T extends Record<string, any> | undefined>(obj: T, ...fields: string[]): T {

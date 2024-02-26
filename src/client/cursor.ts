@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { Collection } from './collection';
-import { executeOperation, TypeErr } from './utils';
+import { withErrorLogging, TypeErr } from './utils';
 import {
   InternalFindOptions,
   internalFindOptionsKeys,
@@ -54,7 +54,7 @@ export class FindCursor<Schema extends SomeDoc> {
   }
 
   async toArray(): Promise<Schema[]> {
-    return executeOperation(async () => {
+    return withErrorLogging(async () => {
       await this._getAll();
       return this.documents;
     });
@@ -71,7 +71,7 @@ export class FindCursor<Schema extends SomeDoc> {
   }
 
   async next(): Promise<Schema | null> {
-    return executeOperation(async () => {
+    return withErrorLogging(async () => {
       if (this.pageIndex < this.page.length) {
         return this.page[this.pageIndex++];
       }
@@ -138,7 +138,7 @@ export class FindCursor<Schema extends SomeDoc> {
   }
 
   async forEach(iterator: any): Promise<void> {
-    return executeOperation(async () => {
+    return withErrorLogging(async () => {
       for (let doc = await this.next(); doc != null; doc = await this.next()) {
         iterator(doc);
       }

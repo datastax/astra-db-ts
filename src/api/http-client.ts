@@ -23,8 +23,8 @@ import {
   HTTPRequestStrategy,
   InternalHTTPClientOptions
 } from '@/src/api/types';
-import { HTTP1Strategy } from '@/src/api/http1-strategy';
-import { HTTP2Strategy } from '@/src/api/http2-strategy';
+import { Http1 } from '@/src/api/http1';
+import { HTTP2Strategy } from '@/src/api/http2';
 
 export class HTTPClient {
   baseUrl: string;
@@ -50,14 +50,14 @@ export class HTTPClient {
 
     this.baseUrl = options.baseUrl;
     this.applicationToken = options.applicationToken;
-    this.logSkippedOptions = options.logSkippedOptions || false;
+    this.logSkippedOptions = options.logSkippedOptions ?? false;
     this.collection = options.collectionName;
     this.keyspace = options.keyspaceName || 'default_keyspace';
     this.usingHttp2 = options.useHttp2 ?? true;
 
     this.requestStrategy = (this.usingHttp2)
       ? new HTTP2Strategy(this.baseUrl)
-      : new HTTP1Strategy;
+      : new Http1;
 
     if (options.logLevel) {
       setLevel(options.logLevel);
@@ -167,10 +167,11 @@ export class AstraServerError extends Error {
     this.errors = response.errors;
     this.command = command;
     this.status = response.status;
+    this.name = "AstraServerError";
   }
 }
 
-export function handleIfErrorResponse(response: any, data: Record<string, any>,) {
+export function handleIfErrorResponse(response: any, data: Record<string, any>) {
   if (response.errors && response.errors.length > 0) {
     throw new AstraServerError(response, data);
   }

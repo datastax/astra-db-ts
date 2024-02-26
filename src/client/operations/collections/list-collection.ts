@@ -15,12 +15,22 @@
 import { CreateCollectionOptions } from '@/src/client/operations/collections/create-collection';
 import { SomeDoc } from '@/src/client';
 
+export interface ListCollectionsCommand {
+  findCollections: {
+    options: {
+      explain: boolean,
+    }
+  }
+}
+
 // Is 'nameOnly' instead of 'explain' to be more Mongo-esque. May change in the future.
 export interface ListCollectionsOptions<NameOnly extends boolean> {
   nameOnly?: NameOnly,
 }
 
-export type CollectionInfo<NameOnly extends boolean> = NameOnly extends false ? FullCollectionInfo : Pick<FullCollectionInfo, 'name'>;
+export type CollectionInfo<NameOnly extends boolean> = NameOnly extends true
+  ? Pick<FullCollectionInfo, 'name'>
+  : FullCollectionInfo;
 
 interface FullCollectionInfo {
   name: string,

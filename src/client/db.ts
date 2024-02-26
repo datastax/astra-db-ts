@@ -14,14 +14,15 @@
 
 import { APIResponse, HTTPClient } from '@/src/api';
 import { Collection } from './collection';
-import { createNamespace, executeOperation, TypeErr } from './utils';
+import { createNamespace, withErrorLogging, TypeErr } from './utils';
 import {
+  CreateCollectionCommand,
   CreateCollectionOptions,
   createCollectionOptionsKeys
 } from '@/src/client/operations/collections/create-collection';
 import { SomeDoc } from '@/src/client/document';
 import {
-  CollectionInfo,
+  CollectionInfo, ListCollectionsCommand,
   listCollectionOptionsKeys,
   ListCollectionsOptions
 } from '@/src/client/operations/collections/list-collection';
@@ -48,8 +49,8 @@ export class Db {
   }
 
   async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>> {
-    return executeOperation(async () => {
-      const command: any = {
+    return withErrorLogging(async () => {
+      const command: CreateCollectionCommand = {
         createCollection: {
           name: collectionName,
         },
@@ -86,8 +87,8 @@ export class Db {
   }
 
   async listCollections<NameOnly extends boolean = false>(options?: ListCollectionsOptions<NameOnly>): Promise<CollectionInfo<NameOnly>[]> {
-    return executeOperation(async () => {
-      const command = {
+    return withErrorLogging(async () => {
+      const command: ListCollectionsCommand = {
         findCollections: {
           options: {
             explain: options?.nameOnly === false,

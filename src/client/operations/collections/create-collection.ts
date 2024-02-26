@@ -15,6 +15,13 @@
 import { ToDotNotation } from '@/src/client/operations/dot-notation';
 import { SomeDoc } from '@/src/client/document';
 
+export interface CreateCollectionCommand {
+  createCollection: {
+    name: string;
+    options?: Record<string, any>;
+  };
+}
+
 export interface CreateCollectionOptions<Schema extends SomeDoc> {
   vector?: VectorOptions;
   vectorize?: VectorizeOptions;
