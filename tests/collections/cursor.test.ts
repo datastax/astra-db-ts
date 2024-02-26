@@ -42,6 +42,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
     }
 
     db = astraClient.db();
+    await db.dropCollection(TEST_COLLECTION_NAME);
     collection = await db.createCollection(TEST_COLLECTION_NAME);
   });
 

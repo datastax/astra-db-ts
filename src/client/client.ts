@@ -14,20 +14,19 @@
 
 import { Db } from './db';
 import { createAstraUri, parseUri, TypeErr } from './utils';
-import { HTTPClient } from '@/src/api';
+import { HTTPClient, HTTPClientOptions } from '@/src/api';
 import { Collection } from './collection';
 import { CreateCollectionOptions } from '@/src/client/operations/collections/create-collection';
 import { SomeDoc } from '@/src/client/document';
-import { HTTPClientOptions } from '@/src/api/types';
 
 export type ClientOptions = HTTPClientOptions;
 
 export class Client implements Disposable {
   httpClient: HTTPClient;
-  keyspaceName?: string;
+  keyspace?: string;
 
   constructor(baseUrl: string, keyspaceName: string, options: ClientOptions) {
-    this.keyspaceName = keyspaceName;
+    this.keyspace = keyspaceName;
 
     if (!options.applicationToken) {
       throw new Error('Application Token is required');
@@ -80,8 +79,8 @@ export class Client implements Disposable {
     if (dbName) {
       return new Db(this.httpClient, dbName);
     }
-    if (this.keyspaceName) {
-      return new Db(this.httpClient, this.keyspaceName);
+    if (this.keyspace) {
+      return new Db(this.httpClient, this.keyspace);
     }
     throw new Error("Database name must be provided");
   }

@@ -13,3 +13,4 @@
 // limitations under the License.
 
 export { HTTPClient } from "./http-client";
+export { HTTPClientOptions, APIResponse, HTTP_METHODS } from "./types";

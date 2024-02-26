@@ -68,6 +68,18 @@ export class HTTPClient {
     }
   }
 
+  close() {
+    this.requestStrategy.close?.();
+  }
+
+  isClosed(): boolean | undefined {
+    return this.requestStrategy.closed;
+  }
+
+  cloneShallow(): HTTPClient {
+    return Object.assign(Object.create(Object.getPrototypeOf(this)), this);
+  }
+
   async executeCommand(data: Record<string, any>, optionsToRetain?: Set<string>) {
     const commandName = Object.keys(data)[0];
 
@@ -86,18 +98,6 @@ export class HTTPClient {
 
     handleIfErrorResponse(response, data);
     return response;
-  }
-
-  close() {
-    this.requestStrategy.close?.();
-  }
-
-  isClosed() {
-    return this.requestStrategy.closed;
-  }
-
-  cloneShallow(): HTTPClient {
-    return Object.assign(Object.create(Object.getPrototypeOf(this)), this);
   }
 
   async request(requestInfo: HTTPRequestInfo): Promise<APIResponse> {

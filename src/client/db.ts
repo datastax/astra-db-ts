@@ -12,12 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { HTTPClient } from '@/src/api';
+import { APIResponse, HTTPClient } from '@/src/api';
 import { Collection } from './collection';
 import { createNamespace, executeOperation, TypeErr } from './utils';
-import { CreateCollectionOptions, createCollectionOptionsKeys } from '@/src/client/operations/collections/create-collection';
+import {
+  CreateCollectionOptions,
+  createCollectionOptionsKeys
+} from '@/src/client/operations/collections/create-collection';
 import { SomeDoc } from '@/src/client/document';
-import { APIResponse } from '@/src/api/types';
+import {
+  CollectionInfo,
+  listCollectionOptionsKeys,
+  ListCollectionsOptions
+} from '@/src/client/operations/collections/list-collection';
 
 export class Db {
   httpClient: HTTPClient;
@@ -76,6 +83,28 @@ export class Db {
     }
 
     return resp.status?.ok === 1 && !resp.errors;
+  }
+
+  async listCollections<NameOnly extends boolean = false>(options?: ListCollectionsOptions<NameOnly>): Promise<CollectionInfo<NameOnly>> {
+    return executeOperation(async () => {
+      const command = {
+        findCollections: {
+          options: {
+            explain: options?.nameOnly === false,
+          }
+        },
+      }
+
+      const resp = await this.httpClient.executeCommand(command, listCollectionOptionsKeys);
+
+      if (resp.errors || !resp.status) {
+        throw new DBError(resp.errors ?? [], resp.status, 'Error listing collections');
+      }
+
+      return (options?.nameOnly === false)
+        ? resp.status.collections.map((name: string) => ({ name }))
+        : resp.status.collections;
+    });
   }
 
   async createDatabase(): Promise<APIResponse> {
