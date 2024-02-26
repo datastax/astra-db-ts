@@ -85,7 +85,7 @@ export class Db {
     return resp.status?.ok === 1 && !resp.errors;
   }
 
-  async listCollections<NameOnly extends boolean = false>(options?: ListCollectionsOptions<NameOnly>): Promise<CollectionInfo<NameOnly>> {
+  async listCollections<NameOnly extends boolean = false>(options?: ListCollectionsOptions<NameOnly>): Promise<CollectionInfo<NameOnly>[]> {
     return executeOperation(async () => {
       const command = {
         findCollections: {
@@ -101,7 +101,7 @@ export class Db {
         throw new DBError(resp.errors ?? [], resp.status, 'Error listing collections');
       }
 
-      return (options?.nameOnly === false)
+      return (options?.nameOnly !== false)
         ? resp.status.collections.map((name: string) => ({ name }))
         : resp.status.collections;
     });
