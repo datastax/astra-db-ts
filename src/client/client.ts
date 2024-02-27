@@ -13,19 +13,17 @@
 // limitations under the License.
 
 import { Db } from './db';
-import { createAstraUri, parseUri, TypeErr } from './utils';
+import { parseUri, TypeErr } from './utils';
 import { HTTPClient, HTTPClientOptions } from '@/src/api';
 import { Collection } from './collection';
 import { CreateCollectionOptions } from '@/src/client/operations/collections/create-collection';
 import { SomeDoc } from '@/src/client/document';
 
-export type ClientOptions = HTTPClientOptions;
-
 export class Client implements Disposable {
   httpClient: HTTPClient;
   keyspace?: string;
 
-  constructor(baseUrl: string, keyspaceName: string, options: ClientOptions) {
+  constructor(baseUrl: string, keyspaceName: string, options: HTTPClientOptions) {
     this.keyspace = keyspaceName;
 
     if (!options.applicationToken) {
@@ -51,7 +49,7 @@ export class Client implements Disposable {
    */
   static async connect(
     uri: string,
-    options?: ClientOptions | null,
+    options?: HTTPClientOptions | null,
   ): Promise<Client> {
     const parsedUri = parseUri(uri);
 
@@ -101,16 +99,5 @@ export class Client implements Disposable {
   // noinspection JSUnusedGlobalSymbols
   startSession(): TypeErr<'startSession() Not Implemented'> {
     throw new Error('startSession() Not Implemented');
-  }
-}
-
-const DEFAULT_KEYSPACE = 'default_keyspace';
-
-export class AstraDB extends Client {
-  constructor(...args: any[]) {
-    // token: string, API EndPoint: string, keyspace?: string
-    const keyspaceName = args[2] || DEFAULT_KEYSPACE;
-    const endpoint = createAstraUri(args[1], keyspaceName);
-    super(endpoint, keyspaceName, { applicationToken: args[0] });
   }
 }

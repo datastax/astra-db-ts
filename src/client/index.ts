@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { Client, AstraDB } from './client';
+export { Client } from './client';
 export { Collection } from './collection';
 
 export { InsertOneResult } from '@/src/client/operations/insert/insert-one';
@@ -32,3 +32,4 @@ export { Filter } from '@/src/client/operations/filter';
 export { VectorDoc, SomeDoc } from '@/src/client/document';
 
 export { createAstraUri } from './utils';
+export { AstraDB } from '@/src/client/astra';

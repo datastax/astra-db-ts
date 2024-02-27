@@ -15,7 +15,7 @@
 import { logger, setLevel } from '@/src/logger';
 import { inspect } from 'util';
 import { EJSON } from 'bson';
-import { DEFAULT_METHOD, DEFAULT_TIMEOUT } from '@/src/api/constants';
+import { DEFAULT_KEYSPACE, DEFAULT_METHOD, DEFAULT_TIMEOUT } from '@/src/api/constants';
 import {
   APIResponse,
   HTTP_METHODS,
@@ -52,7 +52,7 @@ export class HTTPClient {
     this.applicationToken = options.applicationToken;
     this.logSkippedOptions = options.logSkippedOptions ?? false;
     this.collection = options.collectionName;
-    this.keyspace = options.keyspaceName || 'default_keyspace';
+    this.keyspace = options.keyspaceName || DEFAULT_KEYSPACE;
     this.usingHttp2 = options.useHttp2 ?? true;
 
     this.requestStrategy = (this.usingHttp2)

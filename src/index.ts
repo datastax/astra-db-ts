@@ -13,4 +13,5 @@
 // limitations under the License.
 
 export { Collection, VectorDoc } from "./client";
-export { AstraDB } from "./client/client";
+
+export { AstraDB } from '@/src/client';

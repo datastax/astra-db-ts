@@ -12,5 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { HTTPClient } from "./http-client";
-export { HTTPClientOptions, APIResponse, HTTP_METHODS } from "./types";
+export { HTTPClient } from './http-client';
+export { HTTPClientOptions, APIResponse, HTTP_METHODS } from './types';
+export { DEFAULT_KEYSPACE } from './constants';
