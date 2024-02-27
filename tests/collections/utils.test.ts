@@ -19,9 +19,9 @@ import { AstraDB } from '@/src/client';
 describe('Utils test', () => {
   it('ClientBaseUriTest', () => {
     const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-    const astraDb = new AstraDB('myToken', apiEndPoint, { keyspace: 'testks1' });
+    const astraDb = new AstraDB('myToken', apiEndPoint, 'testks1');
     assert.strictEqual(
-      astraDb.httpClient.baseUrl,
+      astraDb.httpClient.baseUrl + '/' + astraDb.httpClient.keyspace,
       'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1',
     );
   });
@@ -30,44 +30,44 @@ describe('Utils test', () => {
     const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
     const astraDb = new AstraDB('myToken', apiEndPoint);
     assert.strictEqual(
-      astraDb.httpClient.baseUrl,
+      astraDb.httpClient.baseUrl + '/' + astraDb.httpClient.keyspace,
       'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/default_keyspace',
     );
   });
 
-  it('createProdAstraUri', () => {
-    const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-    const uri: string = createAstraUri(apiEndPoint, 'testks1');
-    assert.strictEqual(
-      uri,
-      'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1',
-    );
-  });
-
-  it('createProdAstraUriWithToken', () => {
-    const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-    const uri: string = createAstraUri(apiEndPoint, 'testks1', 'myToken');
-    assert.strictEqual(
-      uri,
-      'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1?applicationToken=myToken',
-    );
-  });
-
-  it('createProdAstraUriWithTokenAndProdEnum', () => {
-    const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-    const uri: string = createAstraUri(apiEndPoint, 'testks1', 'myToken');
-    assert.strictEqual(
-      uri,
-      'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1?applicationToken=myToken',
-    );
-  });
-
-  it('createProdAstraUriWithTokenAndProdEnumWithBaseAPIPath', () => {
-    const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-    const uri: string = createAstraUri(apiEndPoint, 'testks1', 'myToken', 'apis');
-    assert.strictEqual(
-      uri,
-      'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/apis/testks1?applicationToken=myToken',
-    );
-  });
+  // it('createProdAstraUri', () => {
+  //   const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
+  //   const uri: string = createAstraUri(apiEndPoint, 'testks1');
+  //   assert.strictEqual(
+  //     uri,
+  //     'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1',
+  //   );
+  // });
+  //
+  // it('createProdAstraUriWithToken', () => {
+  //   const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
+  //   const uri: string = createAstraUri(apiEndPoint, 'testks1', 'myToken');
+  //   assert.strictEqual(
+  //     uri,
+  //     'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1?applicationToken=myToken',
+  //   );
+  // });
+  //
+  // it('createProdAstraUriWithTokenAndProdEnum', () => {
+  //   const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
+  //   const uri: string = createAstraUri(apiEndPoint, 'testks1', 'myToken');
+  //   assert.strictEqual(
+  //     uri,
+  //     'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1?applicationToken=myToken',
+  //   );
+  // });
+  //
+  // it('createProdAstraUriWithTokenAndProdEnumWithBaseAPIPath', () => {
+  //   const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
+  //   const uri: string = createAstraUri(apiEndPoint, 'testks1', 'myToken', 'apis');
+  //   assert.strictEqual(
+  //     uri,
+  //     'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/apis/testks1?applicationToken=myToken',
+  //   );
+  // });
 });

@@ -22,7 +22,7 @@ import {
   HTTPRequestStrategy,
   InternalHTTPClientOptions
 } from '@/src/api/types';
-import { Http1 } from '@/src/api/http1';
+import { HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
 
 export class HTTPClient {
@@ -56,14 +56,14 @@ export class HTTPClient {
 
     this.requestStrategy = (this.usingHttp2)
       ? new HTTP2Strategy(this.baseUrl)
-      : new Http1;
+      : new HTTP1Strategy;
 
     if (options.logLevel) {
       setLevel(options.logLevel);
     }
 
     if (options.baseApiPath) {
-      this.baseUrl += "/" + options.baseApiPath;
+      this.baseUrl += '/' + options.baseApiPath;
     }
   }
 

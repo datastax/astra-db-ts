@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { HTTP_METHODS } from '@/src/api/constants';
+import { HTTP_METHODS } from '@/src/api';
 
 export interface HTTPClientOptions {
   applicationToken: string;

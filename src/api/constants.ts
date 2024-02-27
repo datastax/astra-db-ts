@@ -15,12 +15,13 @@
 import { LIB_NAME, LIB_VERSION } from '@/src/version';
 
 export const REQUESTED_WITH = LIB_NAME + "/" + LIB_VERSION;
-export const DEFAULT_AUTH_HEADER = process.env['ASTRA_AUTH_HEADER'] || "Token";
-export const DEFAULT_METHOD = HTTP_METHODS.get;
-export const DEFAULT_TIMEOUT = 30000;
-export const DEFAULT_KEYSPACE = 'default_keyspace';
 
 export const enum HTTP_METHODS {
   get = 'GET',
   post = 'POST',
 }
+
+export const DEFAULT_KEYSPACE = 'default_keyspace';
+export const DEFAULT_METHOD = HTTP_METHODS.get;
+export const DEFAULT_AUTH_HEADER = process.env['ASTRA_AUTH_HEADER'] || "Token";
+export const DEFAULT_TIMEOUT = 30000;

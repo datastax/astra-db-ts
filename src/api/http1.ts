@@ -51,7 +51,7 @@ axiosAgent.interceptors.response.use((response) => {
   return response;
 });
 
-export class Http1 implements HTTPRequestStrategy {
+export class HTTP1Strategy implements HTTPRequestStrategy {
   async request(info: InternalHTTPRequestInfo): Promise<InternalAPIResponse> {
     return await axiosAgent({
       url: info.url,
