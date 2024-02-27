@@ -30,7 +30,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NY'
       }
     },
-    'purchase_date': { '$date': 1690391491 },
+    'purchase_date': new Date(1690391491),
     'seller': {
       'name': 'Tammy S.',
       'location': 'Staten Island NYC'
@@ -61,7 +61,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NY'
       }
     },
-    'purchase_date': { '$date': 1690564291 },
+    'purchase_date': new Date(1690564291),
     'seller': {
       'name': 'Jasmine S.',
       'location': 'Brooklyn NYC'
@@ -85,7 +85,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NY'
       }
     },
-    'purchase_date': { '$date': 1690909891 },
+    'purchase_date': new Date(1690909891),
     'seller': {
       'name': 'Jon B.',
       'location': 'Manhattan NYC'
@@ -116,7 +116,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NJ'
       }
     },
-    'purchase_date': { '$date': 1690996291 },
+    'purchase_date': new Date(1690996291),
     'seller': {
       'name': 'Jim A.',
       'location': 'Jersey City NJ'
@@ -146,7 +146,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NY'
       }
     },
-    'purchase_date': { '$date': 1691860291 },
+    'purchase_date': new Date(1691860291),
     'seller': {
       'name': 'Jim A.',
       'location': 'Jersey City NJ'
@@ -175,7 +175,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NY'
       }
     },
-    'purchase_date': { '$date': 1692119491 },
+    'purchase_date': new Date(1692119491),
     'seller': {
       'name': 'Jasmine S.',
       'location': 'Brooklyn NYC'
@@ -203,7 +203,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NJ'
       }
     },
-    'purchase_date': { '$date': 1693329091 },
+    'purchase_date': new Date(1693329091),
     'seller': {
       'name': 'Tammy S.',
       'location': 'Staten Island NYC'
@@ -232,7 +232,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NY'
       }
     },
-    'purchase_date': { '$date': 1693588291 },
+    'purchase_date': new Date(1693588291),
     'seller': {
       'name': 'Jasmine S.',
       'location': 'Brooklyn NYC'
@@ -261,7 +261,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NJ'
       }
     },
-    'purchase_date': { '$date': 1694797891 },
+    'purchase_date': new Date(1694797891),
     'seller': {
       'name': 'Jim A.',
       'location': 'Jersey City NJ'
@@ -289,7 +289,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NJ'
       }
     },
-    'purchase_date': { '$date': 1695921091 },
+    'purchase_date': new Date(1695921091),
     'seller': {
       'name': 'Jim A.',
       'location': 'Jersey City NJ'
@@ -318,7 +318,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NY'
       }
     },
-    'purchase_date': { '$date': 1696180291 },
+    'purchase_date': new Date(1696180291),
     'seller': {
       'name': 'Tammy S.',
       'location': 'Staten Island NYC'
@@ -347,7 +347,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NY'
       }
     },
-    'purchase_date': { '$date': 1697389891 },
+    'purchase_date': new Date(1697389891),
     'seller': {
       'name': 'Jon B.',
       'location': 'Manhattan NYC'
@@ -376,7 +376,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NY'
       }
     },
-    'purchase_date': { '$date': 1698513091 },
+    'purchase_date': new Date(1698513091),
     'seller': {
       'name': 'Jasmine S.',
       'location': 'Brooklyn NYC'
@@ -404,7 +404,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NJ'
       }
     },
-    'purchase_date': { '$date': 1701191491 },
+    'purchase_date': new Date(1701191491),
     'seller': {
       'name': 'Jim A.',
       'location': 'Jersey City NJ'
@@ -431,7 +431,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NY'
       }
     },
-    'purchase_date': { '$date': 1701450691 },
+    'purchase_date': new Date(1701450691),
     'seller': {
       'name': 'Tammy S.',
       'location': 'Staten Island NYC'
@@ -460,7 +460,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NJ'
       }
     },
-    'purchase_date': { '$date': 1702660291 },
+    'purchase_date': new Date(1702660291),
     'seller': {
       'name': 'Jim A.',
       'location': 'Jersey City NJ'
@@ -489,7 +489,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NY'
       }
     },
-    'purchase_date': { '$date': 1703092291 },
+    'purchase_date': new Date(1703092291),
     'seller': {
       'name': 'Jon B.',
       'location': 'Manhattan NYC'
@@ -518,7 +518,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'CT'
       }
     },
-    'purchase_date': { '$date': 1704215491 },
+    'purchase_date': new Date(1704215491),
     'seller': {
       'name': 'Jasmine S.',
       'location': 'Brooklyn NYC'
@@ -547,7 +547,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NJ'
       }
     },
-    'purchase_date': { '$date': 1705338691 },
+    'purchase_date': new Date(1705338691),
     'seller': {
       'name': 'Jim A.',
       'location': 'Jersey City NJ'
@@ -576,7 +576,7 @@ void dummyCollection<TestSchema>().insertMany([
         'state': 'NY'
       }
     },
-    'purchase_date': { '$date': 1706202691 },
+    'purchase_date': new Date(1706202691),
     'seller': {
       'name': 'Jon B.',
       'location': 'Manhattan NYC'

@@ -16,8 +16,8 @@ import { ToDotNotation } from '@/src/client/operations/dot-notation';
 import { IsNum } from '@/src/client/operations/utils';
 import { SomeDoc } from '@/src/client/document';
 
-export type Filter<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = {
-  [K in keyof InNotation]?: FilterType<InNotation[K]>
+export type Filter<Schema extends SomeDoc> = {
+  [K in keyof ToDotNotation<Schema>]?: FilterType<ToDotNotation<Schema>[K]>
 } & {
   $and?: Filter<Schema>[],
   $or?: Filter<Schema>[],

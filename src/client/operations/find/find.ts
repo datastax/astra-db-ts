@@ -15,19 +15,19 @@
 import { ProjectionOption, SortOption } from '@/src/client/operations/find/find-common';
 import { SomeDoc } from '@/src/client';
 
-interface BaseFindOptions<GetSim extends boolean> {
+export interface FindOptions<Schema extends SomeDoc, GetSim extends boolean> {
+  sort?: SortOption<Schema>;
+  projection?: ProjectionOption<Schema>;
   limit?: number;
   skip?: number;
   includeSimilarity?: GetSim;
 }
 
-export interface FindOptions<Schema extends SomeDoc, GetSim extends boolean> extends BaseFindOptions<GetSim> {
-  sort?: SortOption<Schema>;
-  projection?: ProjectionOption<Schema>;
-}
-
-export interface InternalFindOptions extends BaseFindOptions<boolean> {
+export interface InternalFindOptions {
   pagingState?: string;
+  limit?: number;
+  skip?: number;
+  includeSimilarity?: boolean;
 }
 
 export interface InternalGetMoreCommand {

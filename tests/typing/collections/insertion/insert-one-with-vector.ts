@@ -29,7 +29,7 @@ void dummyCollection<TestSchema>().insertOne({
       'state': 'NY'
     }
   },
-  'purchase_date': { '$date': 1690045891 },
+  'purchase_date': new Date(1690045891),
   'seller': {
     'name': 'Jon B.',
     'location': 'Manhattan NYC'

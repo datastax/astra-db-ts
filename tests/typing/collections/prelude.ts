@@ -31,7 +31,7 @@ export interface TestSchema {
       state: string;
     };
   };
-  purchase_date: { $date: number };
+  purchase_date: Date;
   seller: {
     name: string;
     location: string;
