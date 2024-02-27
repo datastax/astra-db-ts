@@ -18,6 +18,7 @@ import { HTTPClient, HTTPClientOptions } from '@/src/api';
 import { Collection } from './collection';
 import { CreateCollectionOptions } from '@/src/client/operations/collections/create-collection';
 import { SomeDoc } from '@/src/client/document';
+import { CollectionInfo } from '@/src/client/operations/collections/list-collection';
 
 export class Client implements Disposable {
   httpClient: HTTPClient;
@@ -31,13 +32,9 @@ export class Client implements Disposable {
     }
 
     this.httpClient = new HTTPClient({
-      baseApiPath: options.baseApiPath,
       baseUrl: baseUrl,
-      applicationToken: options.applicationToken,
-      logLevel: options.logLevel,
-      logSkippedOptions: options.logSkippedOptions,
-      useHttp2: options.useHttp2,
       keyspaceName: keyspaceName,
+      ...options,
     });
   }
 
@@ -47,10 +44,7 @@ export class Client implements Disposable {
    * @param options
    * @returns Client
    */
-  static async connect(
-    uri: string,
-    options?: HTTPClientOptions | null,
-  ): Promise<Client> {
+  static async connect(uri: string, options?: HTTPClientOptions): Promise<Client> {
     const parsedUri = parseUri(uri);
 
     return new Client(parsedUri.baseUrl, parsedUri.keyspaceName, {
@@ -65,12 +59,16 @@ export class Client implements Disposable {
     return new Collection<Schema>(this.httpClient, name);
   }
 
-  async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>) {
+  async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>> {
     return await this.db().createCollection(collectionName, options);
   }
 
-  async dropCollection(collectionName: string) {
+  async dropCollection(collectionName: string): Promise<boolean> {
     return await this.db().dropCollection(collectionName);
+  }
+
+  async listCollections<NameOnly extends boolean = false>(): Promise<CollectionInfo<NameOnly>[]> {
+    return await this.db().listCollections<NameOnly>();
   }
 
   db(dbName?: string) {
@@ -83,6 +81,7 @@ export class Client implements Disposable {
     throw new Error("Database name must be provided");
   }
 
+  // ????
   setMaxListeners(maxListeners: number) {
     return maxListeners;
   }
@@ -97,7 +96,7 @@ export class Client implements Disposable {
   }
 
   // noinspection JSUnusedGlobalSymbols
-  startSession(): TypeErr<'startSession() Not Implemented'> {
-    throw new Error('startSession() Not Implemented');
+  startSession(): TypeErr<'startSession() not implemented'> {
+    throw new Error('startSession() not implemented');
   }
 }

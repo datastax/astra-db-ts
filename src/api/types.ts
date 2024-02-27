@@ -12,10 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export const enum HTTP_METHODS {
-  get = "GET",
-  post = "POST",
-}
+import { HTTP_METHODS } from '@/src/api/constants';
 
 export interface HTTPClientOptions {
   applicationToken: string;

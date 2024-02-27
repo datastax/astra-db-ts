@@ -15,10 +15,9 @@
 import { logger, setLevel } from '@/src/logger';
 import { inspect } from 'util';
 import { EJSON } from 'bson';
-import { DEFAULT_KEYSPACE, DEFAULT_METHOD, DEFAULT_TIMEOUT } from '@/src/api/constants';
+import { DEFAULT_KEYSPACE, DEFAULT_METHOD, DEFAULT_TIMEOUT, HTTP_METHODS } from '@/src/api/constants';
 import {
   APIResponse,
-  HTTP_METHODS,
   HTTPRequestInfo,
   HTTPRequestStrategy,
   InternalHTTPClientOptions
