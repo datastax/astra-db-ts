@@ -12,21 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection } from './collection';
 import { TypeErr } from './utils';
 import {
   InternalFindOptions,
   internalFindOptionsKeys,
   InternalGetMoreCommand
 } from '@/src/client/operations/find/find';
-import { Filter } from '@/src/client/operations/filter';
-import { SomeDoc } from '@/src/client/document';
+import { HTTPClient } from '@/src/api';
 
 type CursorStatus = 'uninitialized' | 'initialized' | 'executing' | 'executed';
 
-export class FindCursor<Schema extends SomeDoc> {
-  collection: Collection<Schema>;
-  filter: Filter<Schema>;
+export class FindCursor<Schema> {
+  httpClient: HTTPClient;
+  filter: Record<string, any>;
   options: Record<string, any>;
   documents: Schema[] = [];
   status: CursorStatus = 'uninitialized';
@@ -37,10 +35,10 @@ export class FindCursor<Schema extends SomeDoc> {
   exhausted = false;
   pageIndex = 0;
 
-  constructor(collection: Collection<Schema>, filter: Filter<Schema>, options?: Record<string, any>) {
-    this.collection = collection;
+  constructor(httpClient: HTTPClient, filter: Record<string, any>, options?: Record<string, any>) {
     this.filter = filter;
     this.options = options ?? {};
+    this.httpClient = httpClient;
 
     const isNonVectorSort = this.options.sort && !('$vector' in this.options.sort || '$vectorize' in this.options.sort);
     const isOverPageSizeLimit = !this.options.limit || this.options.limit > 20;
@@ -119,7 +117,7 @@ export class FindCursor<Schema extends SomeDoc> {
     if (Object.keys(options).length > 0) {
       command.find.options = options;
     }
-    const resp = await this.collection._httpClient.executeCommand(
+    const resp = await this.httpClient.executeCommand(
       command,
       internalFindOptionsKeys,
     );

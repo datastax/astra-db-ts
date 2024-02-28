@@ -309,7 +309,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   find<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursor<FoundDoc<Schema, GetSim>> {
-    return new FindCursor(this as any as Collection<FoundDoc<Schema, GetSim>>, filter, options);
+    return new FindCursor(this._httpClient, filter, options) as any;
   }
 
   async findOne<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<Schema, GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {

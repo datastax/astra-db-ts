@@ -57,7 +57,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
   describe("Cursor initialization", () => {
     it("should initialize a Cursor", async () => {
       await collection.insertMany(sampleUsers);
-      const cursor = new FindCursor<any>(collection, {
+      const cursor = new FindCursor<any>(collection._httpClient, {
         username: sampleUsers[0].username,
       });
       assert.strictEqual(cursor.status, "initialized");
@@ -68,7 +68,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
   describe("Cursor operations", () => {
     it("should execute a query", async () => {
       await collection.insertMany(sampleUsers);
-      const cursor = new FindCursor<any>(collection, {
+      const cursor = new FindCursor<any>(collection._httpClient, {
         username: sampleUsers[0].username,
       });
       const res = await cursor.toArray();
@@ -77,14 +77,14 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
 
     it("should get next document with next()", async () => {
       await collection.insertMany(sampleUsers);
-      const cursor = new FindCursor<any>(collection, {});
+      const cursor = new FindCursor<any>(collection._httpClient, {});
       const doc = await cursor.next();
       assert.ok(doc);
     });
 
     it("should execute a limited query", async () => {
       await collection.insertMany(sampleUsers);
-      const cursor = new FindCursor<any>(collection, {}, { limit: 3 });
+      const cursor = new FindCursor<any>(collection._httpClient, {}, { limit: 3 });
       const res = await cursor.toArray();
       assert.strictEqual(res.length, 3);
       assert.strictEqual(cursor.page.length, 3);
@@ -92,7 +92,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
 
     it("should treat limit 0 as no limit", async () => {
       await collection.insertMany(sampleUsers);
-      const cursor = new FindCursor<any>(collection, {}, { limit: 0 });
+      const cursor = new FindCursor<any>(collection._httpClient, {}, { limit: 0 });
       const res = await cursor.toArray();
       assert.strictEqual(res.length, 3);
       assert.strictEqual(cursor.page.length, 3);
@@ -100,7 +100,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
 
     it("should handle negative limit", async () => {
       await collection.insertMany(sampleUsers);
-      const cursor = new FindCursor<any>(collection, {}, { limit: -2 });
+      const cursor = new FindCursor<any>(collection._httpClient, {}, { limit: -2 });
       await assert.rejects(
         cursor.toArray(),
         /limit should be greater than `0`/,
@@ -115,7 +115,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
       const insertManyResp = await collection.insertMany(docList);
       assert.ok(insertManyResp);
       assert.strictEqual(insertManyResp.insertedCount, 20);
-      const cursorWithLimitSet = new FindCursor<any>(collection, {}, { limit: 5 });
+      const cursorWithLimitSet = new FindCursor<any>(collection._httpClient, {}, { limit: 5 });
       let countWithLimitSet = 0;
       for (
         let doc = await cursorWithLimitSet.next();
@@ -147,7 +147,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
       assert.strictEqual(resNextSet.insertedCount, docListNextSet.length);
       assert.strictEqual(resNextSet.acknowledged, true);
       //test limit and page size
-      const cursorWithLimitSet = new FindCursor<any>(collection, {}, { limit: 20 });
+      const cursorWithLimitSet = new FindCursor<any>(collection._httpClient, {}, { limit: 20 });
       let countWithLimitSet = 0;
       for (
         let doc = await cursorWithLimitSet.next();
@@ -167,7 +167,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
       const insertManyResp = await collection.insertMany(docList);
       assert.ok(insertManyResp);
       assert.strictEqual(insertManyResp.insertedCount, 20);
-      const cursorWithLimitSet = new FindCursor<any>(collection, {}, { limit: 150 });
+      const cursorWithLimitSet = new FindCursor<any>(collection._httpClient, {}, { limit: 150 });
       let countWithLimitSet = 0;
       for (
         let doc = await cursorWithLimitSet.next();
@@ -181,14 +181,14 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
 
     it("should execute an all query", async () => {
       await collection.insertMany(sampleUsers);
-      const cursor = new FindCursor<any>(collection, {});
+      const cursor = new FindCursor<any>(collection._httpClient, {});
       const res = await cursor.toArray();
       assert.strictEqual(res.length, sampleUsers.length);
     });
 
     it("should not execute twice", async () => {
       await collection.insertMany(sampleUsers);
-      const cursor = new FindCursor<any>(collection, {});
+      const cursor = new FindCursor<any>(collection._httpClient, {});
       assert.strictEqual(cursor.status, "initialized");
       await cursor.toArray();
       assert.strictEqual(cursor.status, "executed");
@@ -203,7 +203,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
 
     it("should iterate over all documents", async () => {
       await collection.insertMany(sampleUsers);
-      const cursor = new FindCursor<any>(collection, {});
+      const cursor = new FindCursor<any>(collection._httpClient, {});
       let docCount = 0;
       await cursor.forEach(() => {
         docCount++;
@@ -213,7 +213,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
 
     it("should iterate over all documents with a forEach()", async () => {
       await collection.insertMany(sampleUsers);
-      const cursor = new FindCursor<any>(collection, {});
+      const cursor = new FindCursor<any>(collection._httpClient, {});
       let docCount = 0;
       await cursor.forEach(async () => {
         await Promise.resolve();
@@ -226,7 +226,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
   describe("Cursor noops", () => {
     it("should handle noop: stream", async () => {
       await collection.insertMany(sampleUsers);
-      const cursor = new FindCursor<any>(collection, {
+      const cursor = new FindCursor<any>(collection._httpClient, {
         username: sampleUsers[0].username,
       });
       let error: any;
