@@ -37,7 +37,7 @@ export type ProjectionOption<Schema extends SomeDoc> = {
   [K in keyof ToDotNotation<Schema>]?: 1 | 0 | true | false | { $slice: number };
 };
 
-export interface FindOneAndResult<Schema extends SomeDoc> {
+export interface FindOneAndModifyResult<Schema extends SomeDoc> {
   value: Schema | null;
   ok: number;
 }

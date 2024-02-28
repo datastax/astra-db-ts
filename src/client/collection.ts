@@ -37,7 +37,7 @@ import {
 import { DeleteOneCommand, DeleteOneOptions, DeleteOneResult } from '@/src/client/operations/delete/delete-one';
 import { DeleteManyCommand, DeleteManyResult } from '@/src/client/operations/delete/delete-many';
 import { FindOptions } from '@/src/client/operations/find/find';
-import { FindOneAndResult } from '@/src/client/operations/find/find-common';
+import { FindOneAndModifyResult } from '@/src/client/operations/find/find-common';
 import { FindOneCommand, FindOneOptions, findOneOptionsKeys } from '@/src/client/operations/find/find-one';
 import { FindOneAndDeleteCommand, FindOneAndDeleteOptions } from '@/src/client/operations/find/find-one-delete';
 import {
@@ -59,19 +59,36 @@ import {
   InsertManyBulkOptions,
   InsertManyBulkResult
 } from '@/src/client/operations/insert/insert-many-bulk';
+import { CollectionOptions } from '@/src/client/operations/collections/create-collection';
+import { Db } from '@/src/client/db';
 
 export class Collection<Schema extends SomeDoc = SomeDoc> {
-  httpClient: HTTPClient;
-  name: string;
+  collectionName: string;
+  _httpClient: HTTPClient;
+  _db: Db
 
-  constructor(httpClient: HTTPClient, name: string) {
+  constructor(db: Db, name: string) {
     if (!name) {
-      throw new Error('Collection name is required');
+      throw new Error("collection name is required");
     }
 
-    this.httpClient = httpClient.cloneShallow();
-    this.httpClient.collection = name;
-    this.name = name;
+    this._httpClient = db.httpClient.cloneShallow();
+    this._httpClient.collection = name;
+
+    this.collectionName = name;
+    this._db = db;
+  }
+
+  get namespace(): string {
+    return this._db.namespace;
+  }
+
+  get readConcern (): { level: 'majority' } {
+    return { level: 'majority' };
+  }
+
+  get writeConcern (): { level: 'majority' } {
+    return { level: 'majority' };
   }
 
   async insertOne(document: Schema): Promise<InsertOneResult> {
@@ -82,7 +99,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         insertOne: { document },
       }
 
-      const resp = await this.httpClient.executeCommand(command);
+      const resp = await this._httpClient.executeCommand(command);
 
       return {
         acknowledged: true,
@@ -102,7 +119,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         },
       };
 
-      const resp = await this.httpClient.executeCommand(command, insertManyOptionKeys);
+      const resp = await this._httpClient.executeCommand(command, insertManyOptionKeys);
 
       return {
         acknowledged: true,
@@ -116,7 +133,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     const chunkSize = (options?.chunkSize ?? 20);
     const parallel = (options?.ordered) ? 1 : (options?.parallel ?? 4);
 
-    // @ts-expect-error - Sanity check
+    // @ts-expect-error - Sanity check for JS users or bad people who disobey the TS transpiler
     if (options?.ordered && options?.parallel && options?.parallel !== 1) {
       throw new Error('Parallel insert with ordered option is not supported');
     }
@@ -149,7 +166,14 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
           const result = await this.insertMany(slice);
           results.push(result);
         } catch (e: any) {
-          const insertedIDs = new Set(e.status?.insertedIds ?? []);
+          const insertedIDs = e.status?.insertedIds ?? [];
+          const insertedIDSet = new Set(insertedIDs);
+
+          results.push({
+            acknowledged: true,
+            insertedCount: insertedIDs.length,
+            insertedIds: insertedIDs,
+          });
 
           const upperBound = (options?.ordered)
             ? documents.length
@@ -158,9 +182,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
           for (let j = i; j < upperBound; j += 1) {
             const doc = documents[j];
 
-            if (insertedIDs.has(doc._id)) {
-              insertedIDs.delete(doc._id);
-              results.push({ insertedCount: 1, insertedIds: [doc._id], acknowledged: true });
+            if (insertedIDSet.has(doc._id)) {
+              insertedIDSet.delete(doc._id);
             } else {
               failedInserts.push({ document: doc, error: e });
             }
@@ -204,7 +227,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
       setDefaultIdForUpsert(command.updateOne);
 
-      const resp = await this.httpClient.executeCommand(command, updateOneOptionKeys);
+      const resp = await this._httpClient.executeCommand(command, updateOneOptionKeys);
 
       const commonResult = {
         modifiedCount: resp.status?.modifiedCount,
@@ -234,7 +257,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
       setDefaultIdForUpsert(command.updateMany);
 
-      const updateManyResp = await this.httpClient.executeCommand(command, updateManyOptionKeys);
+      const updateManyResp = await this._httpClient.executeCommand(command, updateManyOptionKeys);
 
       if (updateManyResp.status?.moreData) {
         throw new AstraClientError(
@@ -269,7 +292,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         command.deleteOne.sort = options.sort;
       }
 
-      const deleteOneResp = await this.httpClient.executeCommand(command);
+      const deleteOneResp = await this._httpClient.executeCommand(command);
 
       return {
         acknowledged: true,
@@ -284,7 +307,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         deleteMany: { filter },
       };
 
-      const deleteManyResp = await this.httpClient.executeCommand(command);
+      const deleteManyResp = await this._httpClient.executeCommand(command);
 
       if (deleteManyResp.status?.moreData) {
         throw new AstraClientError(`More records found to be deleted even after deleting ${deleteManyResp.status?.deletedCount} records`, command);
@@ -320,12 +343,12 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         delete options.projection;
       }
 
-      const resp = await this.httpClient.executeCommand(command, findOneOptionsKeys);
+      const resp = await this._httpClient.executeCommand(command, findOneOptionsKeys);
       return resp.data?.document;
     });
   }
 
-  async findOneAndReplace(filter: Filter<Schema>, replacement: MaybeId<Schema>, options?: FindOneAndReplaceOptions<Schema>): Promise<FindOneAndResult<Schema>> {
+  async findOneAndReplace(filter: Filter<Schema>, replacement: MaybeId<Schema>, options?: FindOneAndReplaceOptions<Schema>): Promise<FindOneAndModifyResult<Schema>> {
     return withErrorLogging(async () => {
       const command: FindOneAndReplaceCommand = {
         findOneAndReplace: {
@@ -342,7 +365,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         delete options.sort;
       }
 
-      const resp = await this.httpClient.executeCommand(command, findOneAndReplaceOptionsKeys);
+      const resp = await this._httpClient.executeCommand(command, findOneAndReplaceOptionsKeys);
 
       return {
         value: resp.data?.document,
@@ -356,19 +379,26 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     throw new Error('Not Implemented');
   }
 
+  /**
+   * @deprecated Use {@link countDocuments} instead
+   */
+  async count(filter?: Filter<Schema>): Promise<number> {
+    return this.countDocuments(filter);
+  }
+
   async countDocuments(filter?: Filter<Schema>): Promise<number> {
     return withErrorLogging(async (): Promise<number> => {
       const command = {
         countDocuments: { filter },
       };
 
-      const resp = await this.httpClient.executeCommand(command);
+      const resp = await this._httpClient.executeCommand(command);
 
       return resp.status?.count;
     });
   }
 
-  async findOneAndDelete(filter: Filter<Schema>, options?: FindOneAndDeleteOptions<Schema>): Promise<FindOneAndResult<Schema>> {
+  async findOneAndDelete(filter: Filter<Schema>, options?: FindOneAndDeleteOptions<Schema>): Promise<FindOneAndModifyResult<Schema>> {
     const command: FindOneAndDeleteCommand = {
       findOneAndDelete: { filter },
     };
@@ -377,7 +407,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       command.findOneAndDelete.sort = options.sort;
     }
 
-    const resp = await this.httpClient.executeCommand(command);
+    const resp = await this._httpClient.executeCommand(command);
 
     return {
       value: resp.data?.document,
@@ -385,7 +415,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     };
   }
 
-  async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: FindOneAndUpdateOptions<Schema>): Promise<FindOneAndResult<Schema>> {
+  async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: FindOneAndUpdateOptions<Schema>): Promise<FindOneAndModifyResult<Schema>> {
     return withErrorLogging(async () => {
       const command: FindOneAndUpdateCommand = {
         findOneAndUpdate: {
@@ -402,7 +432,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         delete options.sort;
       }
 
-      const resp = await this.httpClient.executeCommand(command, findOneAndUpdateOptionsKeys);
+      const resp = await this._httpClient.executeCommand(command, findOneAndUpdateOptionsKeys);
 
       return {
         value: resp.data?.document,
@@ -411,11 +441,27 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     });
   }
 
+  async options(): Promise<CollectionOptions<SomeDoc>> {
+    const results = await this._db.listCollections({ nameOnly: false });
+
+    const collection = results.find((c) => c.name === this.collectionName);
+
+    if (!collection) {
+      throw new Error(`Collection ${this.collectionName} not found`);
+    }
+
+    return collection.options ?? {};
+  }
+
+  async drop(): Promise<boolean> {
+    return await this._db.dropCollection(this.collectionName);
+  }
+
   /**
-   * @deprecated Use {@link name} instead
+   * @deprecated Use {@link collectionName} instead
    */
-  get collectionName(): string {
-    return this.name;
+  get name(): string {
+    return this.collectionName;
   }
 }
 

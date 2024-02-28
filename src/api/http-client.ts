@@ -13,15 +13,9 @@
 // limitations under the License.
 
 import { logger, setLevel } from '@/src/logger';
-import { inspect } from 'util';
 import { EJSON } from 'bson';
 import { DEFAULT_KEYSPACE, DEFAULT_METHOD, DEFAULT_TIMEOUT, HTTP_METHODS } from '@/src/api/constants';
-import {
-  APIResponse,
-  HTTPRequestInfo,
-  HTTPRequestStrategy,
-  InternalHTTPClientOptions
-} from '@/src/api/types';
+import { APIResponse, HTTPRequestInfo, HTTPRequestStrategy, InternalHTTPClientOptions } from '@/src/api/types';
 import { HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
 
@@ -134,15 +128,15 @@ export class HTTPClient {
         };
       } else {
         logger.error(requestInfo.url + ": " + response.status);
-        logger.error("Data: " + inspect(requestInfo.data));
+        logger.error("Data: " + JSON.stringify(requestInfo.data));
         return this._mkError("Server response received : " + response.status + "!");
       }
     } catch (e: any) {
       logger.error(requestInfo.url + ": " + e.message);
-      logger.error("Data: " + inspect(requestInfo.data));
+      logger.error("Data: " + JSON.stringify(requestInfo.data));
 
       if (e?.response?.data) {
-        logger.error("Response Data: " + inspect(e.response.data));
+        logger.error("Response Data: " + JSON.stringify(e.response.data));
       }
 
       return this._mkError(e.message ? e.message : 'Server call failed, please retry!');

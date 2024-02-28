@@ -76,7 +76,7 @@ describe("Client test", () => {
         client.httpClient.applicationToken,
         AUTH_TOKEN_TO_CHECK,
       );
-      assert.strictEqual(client.keyspace, parseUri(clientURI).keyspaceName);
+      assert.strictEqual(client.namespace, parseUri(clientURI).keyspaceName);
       assert.strictEqual(
         client.httpClient.baseUrl,
         parseUri(clientURI).baseUrl + "/" + BASE_API_PATH_TO_CHECK,
@@ -101,7 +101,7 @@ describe("Client test", () => {
         client.httpClient.applicationToken,
         AUTH_TOKEN_TO_CHECK,
       );
-      assert.strictEqual(client.keyspace, KEYSPACE_TO_CHECK);
+      assert.strictEqual(client.namespace, KEYSPACE_TO_CHECK);
       assert.strictEqual(
         client.httpClient.baseUrl,
         parseUri(clientURI).baseUrl + "/" + BASE_API_PATH_TO_CHECK,
@@ -123,7 +123,7 @@ describe("Client test", () => {
       assert.ok(client);
       assert.ok(client.httpClient);
       assert.strictEqual(client.httpClient.applicationToken, AUTH_TOKEN_TO_CHECK);
-      assert.strictEqual(client.keyspace, KEYSPACE_TO_CHECK);
+      assert.strictEqual(client.namespace, KEYSPACE_TO_CHECK);
       assert.strictEqual(client.httpClient.baseUrl, parseUri(clientURI).baseUrl + "/" + BASE_API_PATH_TO_CHECK);
       const db = client.db();
       assert.ok(db);
@@ -145,7 +145,7 @@ describe("Client test", () => {
       assert.ok(client);
       assert.ok(client.httpClient);
       assert.strictEqual(client.httpClient.applicationToken, AUTH_TOKEN_TO_CHECK);
-      assert.strictEqual(client.keyspace, KEYSPACE_TO_CHECK);
+      assert.strictEqual(client.namespace, KEYSPACE_TO_CHECK);
       assert.strictEqual(
         client.httpClient.baseUrl,
         baseUrl + "/testks1/" + BASE_API_PATH_TO_CHECK,
@@ -169,7 +169,7 @@ describe("Client test", () => {
       assert.ok(client);
       assert.ok(client.httpClient);
       assert.strictEqual(client.httpClient.applicationToken, AUTH_TOKEN_TO_CHECK);
-      assert.strictEqual(client.keyspace, KEYSPACE_TO_CHECK);
+      assert.strictEqual(client.namespace, KEYSPACE_TO_CHECK);
       assert.strictEqual(client.httpClient.baseUrl, baseUrl + "/baseAPIPath2");
       const db = client.db();
       assert.ok(db);
@@ -186,7 +186,7 @@ describe("Client test", () => {
       assert.ok(client);
       assert.ok(client.httpClient);
       assert.strictEqual(client.httpClient.applicationToken, AUTH_TOKEN_TO_CHECK);
-      assert.strictEqual(client.keyspace, KEYSPACE_TO_CHECK);
+      assert.strictEqual(client.namespace, KEYSPACE_TO_CHECK);
       assert.strictEqual(client.httpClient.baseUrl, baseUrl);
       const db = client.db();
       assert.ok(db);
@@ -215,14 +215,7 @@ describe("Client test", () => {
       using client = new Client(baseUrl, "keyspace1", {
         applicationToken: "123",
       });
-      assert.ok(client.keyspace);
-    });
-
-    it("should initialize a Client connection with a uri using the constructor and a blank keyspace", () => {
-      using client = new Client(baseUrl, "", {
-        applicationToken: "123",
-      });
-      assert.strictEqual(client.keyspace, "");
+      assert.ok(client.namespace);
     });
 
     it("should connect after setting up the client with a constructor", async () => {

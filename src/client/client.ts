@@ -14,18 +14,19 @@
 
 import { Db } from './db';
 import { parseUri, TypeErr } from './utils';
-import { HTTPClient, HTTPClientOptions } from '@/src/api';
+import { DEFAULT_KEYSPACE, HTTPClient, HTTPClientOptions } from '@/src/api';
 import { Collection } from './collection';
-import { CreateCollectionOptions } from '@/src/client/operations/collections/create-collection';
+import { CollectionOptions } from '@/src/client/operations/collections/create-collection';
 import { SomeDoc } from '@/src/client/document';
 import { CollectionInfo } from '@/src/client/operations/collections/list-collection';
 
 export class Client implements Disposable {
   httpClient: HTTPClient;
-  keyspace?: string;
+  namespace: string;
+  _db: Db;
 
-  constructor(baseUrl: string, keyspaceName: string, options: HTTPClientOptions) {
-    this.keyspace = keyspaceName;
+  constructor(baseUrl: string, namespace: string, options: HTTPClientOptions) {
+    this.namespace = namespace;
 
     if (!options.applicationToken) {
       throw new Error('Application Token is required');
@@ -33,9 +34,11 @@ export class Client implements Disposable {
 
     this.httpClient = new HTTPClient({
       baseUrl: baseUrl,
-      keyspaceName: keyspaceName,
+      keyspaceName: namespace,
       ...options,
     });
+
+    this._db = new Db(this.httpClient, namespace);
   }
 
   /**
@@ -56,10 +59,10 @@ export class Client implements Disposable {
   }
 
   async collection<Schema extends SomeDoc = SomeDoc>(name: string) {
-    return new Collection<Schema>(this.httpClient, name);
+    return new Collection<Schema>(this._db, name);
   }
 
-  async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>> {
+  async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CollectionOptions<Schema>): Promise<Collection<Schema>> {
     return await this.db().createCollection(collectionName, options);
   }
 
@@ -75,8 +78,8 @@ export class Client implements Disposable {
     if (dbName) {
       return new Db(this.httpClient, dbName);
     }
-    if (this.keyspace) {
-      return new Db(this.httpClient, this.keyspace);
+    if (this._db) {
+      return this._db;
     }
     throw new Error("Database name must be provided");
   }
@@ -93,6 +96,13 @@ export class Client implements Disposable {
 
   [Symbol.dispose]() {
     this.close();
+  }
+
+  /**
+   * @deprecated use {@link namespace} instead
+   */
+  get keyspaceName() {
+    return this.namespace;
   }
 
   // noinspection JSUnusedGlobalSymbols

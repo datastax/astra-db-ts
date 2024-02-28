@@ -25,6 +25,7 @@ import {
   TEST_COLLECTION_NAME,
   testClient
 } from '@/tests/fixtures';
+import { randAlphaNumeric } from '@ngneat/falso';
 
 describe(`AstraTsClient - astra Connection - collections.collection`, async () => {
   let astraClient: Client | null;
@@ -57,7 +58,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
 
   describe('Collection initialization', () => {
     it('should initialize a Collection', () => {
-      const collection = new Collection(db.httpClient, 'new_collection');
+      const collection = new Collection(db, 'new_collection');
       assert.ok(collection);
     });
 
@@ -66,12 +67,35 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       let collection: Collection | null = null;
       try {
         // @ts-expect-error - Intentionally passing no name
-        collection = new Collection(db.httpClient);
+        collection = new Collection(db);
         assert.ok(collection);
       } catch (e) {
         error = e;
       }
       assert.ok(error);
+    });
+  });
+
+  describe('collection accessors', () => {
+    it('returns the namespace', () => {
+      assert.strictEqual(collection.namespace, db.namespace);
+    });
+
+    it('returns the name', () => {
+      assert.strictEqual(collection.collectionName, TEST_COLLECTION_NAME);
+    });
+
+    it('returns supports name as an alias for collectionName', () => {
+      // noinspection JSDeprecatedSymbols
+      assert.strictEqual(collection.name, TEST_COLLECTION_NAME);
+    });
+
+    it('returns the readConcern', () => {
+      assert.strictEqual(collection.readConcern.level, 'majority');
+    });
+
+    it('returns the writeConcern', () => {
+      assert.strictEqual(collection.writeConcern.level, 'majority');
     });
   });
 
@@ -279,10 +303,9 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
   });
 
   describe('insertManyBulk tests', () => {
-    it('should insert many documents', async () => {
+    it('should insert many documents with no id', async () => {
       const docList = Array.from({ length: 150 }, (_, i) => ({ username: `user${i}` }));
       const res = await collection.insertManyBulk(docList);
-      console.log(res);
       assert.strictEqual(res.insertedCount, docList.length);
       assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
@@ -291,7 +314,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
 
     it('should insert many documents with ids', async () => {
-      const docList = Array.from({ length: 25 }, (_, i) => ({ _id: `id${i}`, username: `user${i}` }));
+      const docList = Array.from({ length: 50 }, (_, i) => ({ _id: `id${i}`, username: `user${i}` }));
       const res = await collection.insertManyBulk(docList);
       assert.strictEqual(res.insertedCount, docList.length);
       assert.strictEqual(res.acknowledged, true);
@@ -312,7 +335,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     it('should handle failed insert batches', async () => {
       const docList = Array.from({ length: 24 }, (_, i) => ({ _id: `id${Math.min(i+1, 15)}`, username: `user${i}` }));
       const res = await collection.insertManyBulk(docList, { parallel: 4 });
-      console.log(res)
       assert.strictEqual(res.insertedCount, 15);
       assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 15);
@@ -2716,13 +2738,16 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         { username: 'aaa', answer: 42 }
       ]);
 
-      let count = await collection.countDocuments();
+      // noinspection JSDeprecatedSymbols
+      let count = await collection.count();
       assert.strictEqual(count, 3);
 
-      count = await collection.countDocuments({ username: 'a' });
+      // noinspection JSDeprecatedSymbols
+      count = await collection.count({ username: 'a' });
       assert.strictEqual(count, 1);
 
-      count = await collection.countDocuments({ answer: 42 });
+      // noinspection JSDeprecatedSymbols
+      count = await collection.count({ answer: 42 });
       assert.strictEqual(count, 2);
     });
 
@@ -2838,6 +2863,31 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     it('should return 0 when no documents are in the collection', async () => {
       const count = await collection.countDocuments({});
       assert.strictEqual(count, 0);
+    });
+  });
+
+  describe('admin operations', () => {
+    it('drops itself', async () => {
+      const suffix = randAlphaNumeric({ length: 4 }).join("");
+      const coll = await db.createCollection(`test_db_collection_${suffix}`);
+      const res = await coll.drop();
+      assert.strictEqual(res, true);
+    });
+
+    it('lists its own options', async () => {
+      const suffix = randAlphaNumeric({ length: 4 }).join("");
+      const coll = await db.createCollection(`test_db_collection_${suffix}`, { vector: { dimension: 123, metric: 'cosine' } });
+      const res = await coll.options();
+      assert.deepStrictEqual(res, { vector: { dimension: 123, metric: 'cosine' } });
+      await db.dropCollection(`test_db_collection_${suffix}`)
+    });
+
+    it('lists its own empty options', async () => {
+      const suffix = randAlphaNumeric({ length: 4 }).join("");
+      const coll = await db.createCollection(`test_db_collection_${suffix}`);
+      const res = await coll.options();
+      assert.deepStrictEqual(res, {});
+      await db.dropCollection(`test_db_collection_${suffix}`)
     });
   });
 });

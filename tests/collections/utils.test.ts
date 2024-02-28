@@ -13,61 +13,78 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { createAstraUri } from '@/src/client/utils';
 import { AstraDB } from '@/src/client';
 
 describe('Utils test', () => {
-  it('ClientBaseUriTest', () => {
-    const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-    const astraDb = new AstraDB('myToken', apiEndPoint, 'testks1');
-    assert.strictEqual(
-      astraDb.httpClient.baseUrl + '/' + astraDb.httpClient.keyspace,
-      'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1',
-    );
-  });
-
-  it('ClientBaseUriTestDefaultKeyspace', () => {
+  it('initialized w/ default keyspace', () => {
     const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
     const astraDb = new AstraDB('myToken', apiEndPoint);
     assert.strictEqual(
       astraDb.httpClient.baseUrl + '/' + astraDb.httpClient.keyspace,
       'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/default_keyspace',
     );
+    assert.strictEqual(astraDb.httpClient.applicationToken, 'myToken');
+    assert.strictEqual(astraDb.httpClient.usingHttp2, true);
   });
 
-  // it('createProdAstraUri', () => {
-  //   const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-  //   const uri: string = createAstraUri(apiEndPoint, 'testks1');
-  //   assert.strictEqual(
-  //     uri,
-  //     'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1',
-  //   );
-  // });
-  //
-  // it('createProdAstraUriWithToken', () => {
-  //   const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-  //   const uri: string = createAstraUri(apiEndPoint, 'testks1', 'myToken');
-  //   assert.strictEqual(
-  //     uri,
-  //     'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1?applicationToken=myToken',
-  //   );
-  // });
-  //
-  // it('createProdAstraUriWithTokenAndProdEnum', () => {
-  //   const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-  //   const uri: string = createAstraUri(apiEndPoint, 'testks1', 'myToken');
-  //   assert.strictEqual(
-  //     uri,
-  //     'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1?applicationToken=myToken',
-  //   );
-  // });
-  //
-  // it('createProdAstraUriWithTokenAndProdEnumWithBaseAPIPath', () => {
-  //   const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-  //   const uri: string = createAstraUri(apiEndPoint, 'testks1', 'myToken', 'apis');
-  //   assert.strictEqual(
-  //     uri,
-  //     'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/apis/testks1?applicationToken=myToken',
-  //   );
-  // });
+  it('adds a keyspace properly', () => {
+    const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
+    const astraDb = new AstraDB('myToken', apiEndPoint, 'testks1');
+    assert.strictEqual(
+      astraDb.httpClient.baseUrl + '/' + astraDb.httpClient.keyspace,
+      'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1',
+    );
+    assert.strictEqual(astraDb.httpClient.applicationToken, 'myToken');
+    assert.strictEqual(astraDb.httpClient.usingHttp2, true);
+  });
+
+  it('handles forcing http1.1', () => {
+    const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
+    const astraDb = new AstraDB('myToken', apiEndPoint, {
+      useHttp2: false,
+    });
+    assert.strictEqual(astraDb.httpClient.applicationToken, 'myToken');
+    assert.strictEqual(
+      astraDb.httpClient.baseUrl + '/' + astraDb.httpClient.keyspace,
+      'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/default_keyspace',
+    );
+    assert.strictEqual(astraDb.httpClient.usingHttp2, false);
+  });
+
+  it('handles different base api path', () => {
+    const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
+    const astraDb = new AstraDB('myToken', apiEndPoint, 'ks', {
+      baseApiPath: 'some/random/path',
+    });
+    assert.strictEqual(astraDb.httpClient.applicationToken, 'myToken');
+    assert.strictEqual(
+      astraDb.httpClient.baseUrl + '/' + astraDb.httpClient.keyspace,
+      'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/some/random/path/ks',
+    );
+    assert.strictEqual(astraDb.httpClient.usingHttp2, true);
+  });
+
+  it('throws error on empty keyspace', () => {
+    let error = false;
+    try {
+      new AstraDB('myToken', 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com', '', {
+        baseApiPath: 'some/random/path',
+      });
+    } catch (e) {
+      error = true;
+    }
+    assert.strictEqual(error, true);
+  });
+
+  it('throws error on bad keyspace', () => {
+    let error = false;
+    try {
+      new AstraDB('myToken', 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com', '23][ep3[2xr3][2r', {
+        baseApiPath: 'some/random/path',
+      });
+    } catch (e) {
+      error = true;
+    }
+    assert.strictEqual(error, true);
+  });
 });

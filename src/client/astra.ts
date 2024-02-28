@@ -14,6 +14,10 @@ export class AstraDB extends Client {
       ? keyspaceOrOptions
       : DEFAULT_KEYSPACE;
 
+    if (!keyspace.match(/^[a-zA-Z0-9_]{1,48}$/)) {
+      throw new Error('Invalid keyspace format; either pass a valid keyspace name, or don\t pass it at all to use the default keyspace');
+    }
+
     const options = (typeof keyspaceOrOptions === 'string')
       ? maybeOptions
       : keyspaceOrOptions;

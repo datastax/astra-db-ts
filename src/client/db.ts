@@ -17,7 +17,7 @@ import { Collection } from './collection';
 import { createNamespace, withErrorLogging, TypeErr } from './utils';
 import {
   CreateCollectionCommand,
-  CreateCollectionOptions,
+  CollectionOptions,
   createCollectionOptionsKeys
 } from '@/src/client/operations/collections/create-collection';
 import { SomeDoc } from '@/src/client/document';
@@ -41,14 +41,11 @@ export class Db {
     this.namespace = name;
   }
 
-  collection<Schema extends SomeDoc = SomeDoc>(collectionName: string): Collection<Schema> {
-    if (!collectionName) {
-      throw new Error("Db: collection name is required");
-    }
-    return new Collection<Schema>(this.httpClient, collectionName);
+  collection<Schema extends SomeDoc = SomeDoc>(name: string): Collection<Schema> {
+    return new Collection<Schema>(this, name);
   }
 
-  async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>> {
+  async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CollectionOptions<Schema>): Promise<Collection<Schema>> {
     return withErrorLogging(async () => {
       const command: CreateCollectionCommand = {
         createCollection: {

@@ -22,7 +22,7 @@ export interface CreateCollectionCommand {
   };
 }
 
-export interface CreateCollectionOptions<Schema extends SomeDoc> {
+export interface CollectionOptions<Schema extends SomeDoc> {
   vector?: VectorOptions;
   vectorize?: VectorizeOptions;
   indexing?: IndexingOptions<Schema>;

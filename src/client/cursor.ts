@@ -123,7 +123,7 @@ export class FindCursor<Schema extends SomeDoc> {
     if (Object.keys(options).length > 0) {
       command.find.options = options;
     }
-    const resp = await this.collection.httpClient.executeCommand(
+    const resp = await this.collection._httpClient.executeCommand(
       command,
       internalFindOptionsKeys,
     );

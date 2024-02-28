@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CreateCollectionOptions } from '@/src/client/operations/collections/create-collection';
+import { CollectionOptions } from '@/src/client/operations/collections/create-collection';
 import { SomeDoc } from '@/src/client';
 
 export interface ListCollectionsCommand {
@@ -34,7 +34,7 @@ export type CollectionInfo<NameOnly extends boolean> = NameOnly extends true
 
 interface FullCollectionInfo {
   name: string,
-  options: CreateCollectionOptions<SomeDoc>,
+  options: CollectionOptions<SomeDoc>,
 }
 
 export const listCollectionOptionsKeys = new Set(['explain']);
