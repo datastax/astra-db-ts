@@ -21,6 +21,18 @@ export type SortOption<Schema extends SomeDoc> =
   | { $vector: number[] }
   | { $vectorize: string };
 
+/**
+ * The projection option for find operations.
+ *
+ * @example
+ * ```typescript
+ * const projection: ProjectionOption<SomeDoc> = {
+ *   _id: 1,
+ *   name: 1,
+ *   "address.state": 1,
+ * }
+ * ```
+ */
 export type ProjectionOption<Schema extends SomeDoc> = {
   [K in keyof ToDotNotation<Schema>]?: 1 | 0 | true | false | { $slice: number };
 };

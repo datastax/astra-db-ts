@@ -7,6 +7,9 @@ module.exports = {
   plugins: ['@typescript-eslint'],
   root: true,
   rules: {
+    // We are *way* past this point lmao
     '@typescript-eslint/no-explicit-any': 'off',
+    // Only way I can do spaces in ts-doc
+    'no-irregular-whitespace': 'off',
   },
 };

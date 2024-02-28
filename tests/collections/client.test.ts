@@ -58,9 +58,9 @@ describe("Client test", () => {
     it("should have unique httpClients for each db", async () => {
       const dbFromUri = appClient?.db();
       const parsedUri = parseUri(clientURI);
-      assert.strictEqual(dbFromUri?.keyspace, parsedUri.keyspaceName);
+      assert.strictEqual(dbFromUri?.namespace, parsedUri.keyspaceName);
       const newDb = appClient?.db("test-db");
-      assert.strictEqual(newDb?.keyspace, "test-db");
+      assert.strictEqual(newDb?.namespace, "test-db");
     });
 
     it("should initialize a Client connection with a uri using connect with overrides", async () => {

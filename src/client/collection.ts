@@ -410,6 +410,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       };
     });
   }
+
+  /**
+   * @deprecated Use {@link name} instead
+   */
+  get collectionName(): string {
+    return this.name;
+  }
 }
 
 export class AstraClientError extends Error {

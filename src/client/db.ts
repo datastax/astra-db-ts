@@ -29,7 +29,7 @@ import {
 
 export class Db {
   httpClient: HTTPClient;
-  keyspace: string;
+  namespace: string;
 
   constructor(httpClient: HTTPClient, name: string) {
     if (!name) {
@@ -38,7 +38,7 @@ export class Db {
 
     this.httpClient = httpClient.cloneShallow();
     this.httpClient.keyspace = name;
-    this.keyspace = name;
+    this.namespace = name;
   }
 
   collection<Schema extends SomeDoc = SomeDoc>(collectionName: string): Collection<Schema> {
@@ -109,11 +109,18 @@ export class Db {
   }
 
   async createDatabase(): Promise<APIResponse> {
-    return await createNamespace(this.httpClient, this.keyspace);
+    return await createNamespace(this.httpClient, this.namespace);
   }
 
   async dropDatabase(): Promise<TypeErr<'Cannot drop database in Astra. Please use the Astra UI to drop the database.'>> {
     throw new Error('Cannot drop database in Astra. Please use the Astra UI to drop the database.');
+  }
+
+  /**
+   * @deprecated Use {@link namespace} instead.
+   */
+  get name(): string {
+    return this.namespace;
   }
 }
 
