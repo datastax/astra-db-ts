@@ -14,7 +14,7 @@
 
 import { APIResponse, HTTPClient } from '@/src/api';
 import { Collection } from './collection';
-import { createNamespace, withErrorLogging, TypeErr } from './utils';
+import { createNamespace, TypeErr } from './utils';
 import {
   CreateCollectionCommand,
   CollectionOptions,
@@ -46,25 +46,23 @@ export class Db {
   }
 
   async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CollectionOptions<Schema>): Promise<Collection<Schema>> {
-    return withErrorLogging(async () => {
-      const command: CreateCollectionCommand = {
-        createCollection: {
-          name: collectionName,
-        },
-      };
+    const command: CreateCollectionCommand = {
+      createCollection: {
+        name: collectionName,
+      },
+    };
 
-      if (options) {
-        command.createCollection.options = options;
-      }
+    if (options) {
+      command.createCollection.options = options;
+    }
 
-      const resp = await this.httpClient.executeCommand(command, createCollectionOptionsKeys);
+    const resp = await this.httpClient.executeCommand(command, createCollectionOptionsKeys);
 
-      if (resp.errors) {
-        throw new DBError(resp.errors, resp.status, 'Error creating collection');
-      }
+    if (resp.errors) {
+      throw new DBError(resp.errors, resp.status, 'Error creating collection');
+    }
 
-      return this.collection(collectionName);
-    });
+    return this.collection(collectionName);
   }
 
   async dropCollection(collectionName: string): Promise<boolean> {
@@ -84,25 +82,23 @@ export class Db {
   }
 
   async listCollections<NameOnly extends boolean = false>(options?: ListCollectionsOptions<NameOnly>): Promise<CollectionInfo<NameOnly>[]> {
-    return withErrorLogging(async () => {
-      const command: ListCollectionsCommand = {
-        findCollections: {
-          options: {
-            explain: options?.nameOnly === false,
-          }
-        },
-      }
+    const command: ListCollectionsCommand = {
+      findCollections: {
+        options: {
+          explain: options?.nameOnly === false,
+        }
+      },
+    }
 
-      const resp = await this.httpClient.executeCommand(command, listCollectionOptionsKeys);
+    const resp = await this.httpClient.executeCommand(command, listCollectionOptionsKeys);
 
-      if (resp.errors || !resp.status) {
-        throw new DBError(resp.errors ?? [], resp.status, 'Error listing collections');
-      }
+    if (resp.errors || !resp.status) {
+      throw new DBError(resp.errors ?? [], resp.status, 'Error listing collections');
+    }
 
-      return (options?.nameOnly !== false)
-        ? resp.status.collections.map((name: string) => ({ name }))
-        : resp.status.collections;
-    });
+    return (options?.nameOnly !== false)
+      ? resp.status.collections.map((name: string) => ({ name }))
+      : resp.status.collections;
   }
 
   async createDatabase(): Promise<APIResponse> {

@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import url from 'url';
-import { logger } from '@/src/logger';
 import { handleIfErrorResponse, HTTPClient } from '@/src/api/http-client';
 import { ObjectId } from 'bson';
 import { HTTP_METHODS } from '@/src/api';
@@ -117,15 +116,6 @@ export function createAstraUri(
 
   return uri.toString();
 }
-
-export const withErrorLogging = async <T>(operation: () => Promise<T>): Promise<T> => {
-  try {
-    return await operation();
-  } catch (e: any) {
-    logger.error(e?.stack || e?.message);
-    throw e;
-  }
-};
 
 export async function createNamespace(httpClient: HTTPClient, name: string) {
   const data = {

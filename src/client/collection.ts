@@ -14,7 +14,7 @@
 
 import { FindCursor } from './cursor';
 import { HTTPClient } from '@/src/api';
-import { setDefaultIdForInsert, setDefaultIdForUpsert, TypeErr, withErrorLogging, withoutFields } from './utils';
+import { setDefaultIdForInsert, setDefaultIdForUpsert, TypeErr, withoutFields } from './utils';
 import { InsertOneCommand, InsertOneResult } from '@/src/client/operations/insert/insert-one';
 import {
   InsertManyCommand,
@@ -92,41 +92,37 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   async insertOne(document: Schema): Promise<InsertOneResult> {
-    return withErrorLogging(async () => {
-      setDefaultIdForInsert(document);
+    setDefaultIdForInsert(document);
 
-      const command: InsertOneCommand = {
-        insertOne: { document },
-      }
+    const command: InsertOneCommand = {
+      insertOne: { document },
+    }
 
-      const resp = await this._httpClient.executeCommand(command);
+    const resp = await this._httpClient.executeCommand(command);
 
-      return {
-        acknowledged: true,
-        insertedId: resp.status?.insertedIds[0],
-      };
-    });
+    return {
+      acknowledged: true,
+      insertedId: resp.status?.insertedIds[0],
+    };
   }
 
   async insertMany(documents: Schema[], options?: InsertManyOptions): Promise<InsertManyResult> {
-    return withErrorLogging(async () => {
-      documents.forEach(setDefaultIdForInsert);
+    documents.forEach(setDefaultIdForInsert);
 
-      const command: InsertManyCommand = {
-        insertMany: {
-          documents,
-          options,
-        },
-      };
+    const command: InsertManyCommand = {
+      insertMany: {
+        documents,
+        options,
+      },
+    };
 
-      const resp = await this._httpClient.executeCommand(command, insertManyOptionKeys);
+    const resp = await this._httpClient.executeCommand(command, insertManyOptionKeys);
 
-      return {
-        acknowledged: true,
-        insertedCount: resp.status?.insertedIds?.length || 0,
-        insertedIds: resp.status?.insertedIds,
-      };
-    });
+    return {
+      acknowledged: true,
+      insertedCount: resp.status?.insertedIds?.length || 0,
+      insertedIds: resp.status?.insertedIds,
+    };
   }
 
   async insertManyBulk(documents: Schema[], options?: InsertManyBulkOptions): Promise<InsertManyBulkResult<Schema>> {
@@ -212,112 +208,104 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions<Schema>): Promise<UpdateOneResult> {
-    return withErrorLogging(async () => {
-      const command: UpdateOneCommand = {
-        updateOne: {
-          filter,
-          update,
-          options: withoutFields(options, 'sort'),
-        },
-      };
+    const command: UpdateOneCommand = {
+      updateOne: {
+        filter,
+        update,
+        options: withoutFields(options, 'sort'),
+      },
+    };
 
-      if (options?.sort) {
-        command.updateOne.sort = options.sort;
+    if (options?.sort) {
+      command.updateOne.sort = options.sort;
+    }
+
+    setDefaultIdForUpsert(command.updateOne);
+
+    const resp = await this._httpClient.executeCommand(command, updateOneOptionKeys);
+
+    const commonResult = {
+      modifiedCount: resp.status?.modifiedCount,
+      matchedCount: resp.status?.matchedCount,
+      acknowledged: true,
+    } as const;
+
+    return (resp.status?.upsertedId)
+      ? {
+        ...commonResult,
+        upsertedId: resp.status?.upsertedId,
+        upsertedCount: 1,
       }
-
-      setDefaultIdForUpsert(command.updateOne);
-
-      const resp = await this._httpClient.executeCommand(command, updateOneOptionKeys);
-
-      const commonResult = {
-        modifiedCount: resp.status?.modifiedCount,
-        matchedCount: resp.status?.matchedCount,
-        acknowledged: true,
-      } as const;
-
-      return (resp.status?.upsertedId)
-        ? {
-          ...commonResult,
-          upsertedId: resp.status?.upsertedId,
-          upsertedCount: 1,
-        }
-        : commonResult;
-    });
+      : commonResult;
   }
 
   async updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateManyOptions): Promise<UpdateManyResult> {
-    return withErrorLogging(async () => {
-      const command: UpdateManyCommand = {
-        updateMany: {
-          filter,
-          update,
-          options,
-        },
-      };
+    const command: UpdateManyCommand = {
+      updateMany: {
+        filter,
+        update,
+        options,
+      },
+    };
 
-      setDefaultIdForUpsert(command.updateMany);
+    setDefaultIdForUpsert(command.updateMany);
 
-      const updateManyResp = await this._httpClient.executeCommand(command, updateManyOptionKeys);
+    const updateManyResp = await this._httpClient.executeCommand(command, updateManyOptionKeys);
 
-      if (updateManyResp.status?.moreData) {
-        throw new AstraClientError(
-          `More than ${updateManyResp.status?.modifiedCount} records found for update by the server`,
-          command,
-        );
+    if (updateManyResp.status?.moreData) {
+      throw new AstraClientError(
+        `More than ${updateManyResp.status?.modifiedCount} records found for update by the server`,
+        command,
+      );
+    }
+
+    const commonResult = {
+      modifiedCount: updateManyResp.status?.modifiedCount,
+      matchedCount: updateManyResp.status?.matchedCount,
+      acknowledged: true,
+    } as const;
+
+    return (updateManyResp.status?.upsertedId)
+      ? {
+        ...commonResult,
+        upsertedId: updateManyResp.status?.upsertedId,
+        upsertedCount: 1,
       }
-
-      const commonResult = {
-        modifiedCount: updateManyResp.status?.modifiedCount,
-        matchedCount: updateManyResp.status?.matchedCount,
-        acknowledged: true,
-      } as const;
-
-      return (updateManyResp.status?.upsertedId)
-        ? {
-          ...commonResult,
-          upsertedId: updateManyResp.status?.upsertedId,
-          upsertedCount: 1,
-        }
-        : commonResult;
-    });
+      : commonResult;
   }
 
   async deleteOne(filter: Filter<Schema>, options?: DeleteOneOptions): Promise<DeleteOneResult> {
-    return withErrorLogging(async () => {
-      const command: DeleteOneCommand = {
-        deleteOne: { filter },
-      };
+    const command: DeleteOneCommand = {
+      deleteOne: { filter },
+    };
 
-      if (options?.sort) {
-        command.deleteOne.sort = options.sort;
-      }
+    if (options?.sort) {
+      command.deleteOne.sort = options.sort;
+    }
 
-      const deleteOneResp = await this._httpClient.executeCommand(command);
+    const deleteOneResp = await this._httpClient.executeCommand(command);
 
-      return {
-        acknowledged: true,
-        deletedCount: deleteOneResp.status?.deletedCount,
-      };
-    });
+    return {
+      acknowledged: true,
+      deletedCount: deleteOneResp.status?.deletedCount,
+    };
   }
 
   async deleteMany(filter: Filter<Schema>): Promise<DeleteManyResult> {
-    return withErrorLogging(async () => {
-      const command: DeleteManyCommand = {
-        deleteMany: { filter },
-      };
+    const command: DeleteManyCommand = {
+      deleteMany: { filter },
+    };
 
-      const deleteManyResp = await this._httpClient.executeCommand(command);
+    const deleteManyResp = await this._httpClient.executeCommand(command);
 
-      if (deleteManyResp.status?.moreData) {
-        throw new AstraClientError(`More records found to be deleted even after deleting ${deleteManyResp.status?.deletedCount} records`, command);
-      }
+    if (deleteManyResp.status?.moreData) {
+      throw new AstraClientError(`More records found to be deleted even after deleting ${deleteManyResp.status?.deletedCount} records`, command);
+    }
 
-      return {
-        acknowledged: true,
-        deletedCount: deleteManyResp.status?.deletedCount,
-      };
-    });
+    return {
+      acknowledged: true,
+      deletedCount: deleteManyResp.status?.deletedCount,
+    };
   }
 
   find<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursor<FoundDoc<Schema, GetSim>> {
@@ -325,53 +313,49 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   async findOne<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<Schema, GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
-    return withErrorLogging(async () => {
-      const command: FindOneCommand = {
-        findOne: {
-          filter,
-          options: withoutFields(options, 'sort', 'projection'),
-        },
-      };
+    const command: FindOneCommand = {
+      findOne: {
+        filter,
+        options: withoutFields(options, 'sort', 'projection'),
+      },
+    };
 
-      if (options?.sort) {
-        command.findOne.sort = options.sort;
-        delete options.sort;
-      }
+    if (options?.sort) {
+      command.findOne.sort = options.sort;
+      delete options.sort;
+    }
 
-      if (options?.projection && Object.keys(options.projection).length > 0) {
-        command.findOne.projection = options.projection;
-        delete options.projection;
-      }
+    if (options?.projection && Object.keys(options.projection).length > 0) {
+      command.findOne.projection = options.projection;
+      delete options.projection;
+    }
 
-      const resp = await this._httpClient.executeCommand(command, findOneOptionsKeys);
-      return resp.data?.document;
-    });
+    const resp = await this._httpClient.executeCommand(command, findOneOptionsKeys);
+    return resp.data?.document;
   }
 
   async findOneAndReplace(filter: Filter<Schema>, replacement: MaybeId<Schema>, options?: FindOneAndReplaceOptions<Schema>): Promise<FindOneAndModifyResult<Schema>> {
-    return withErrorLogging(async () => {
-      const command: FindOneAndReplaceCommand = {
-        findOneAndReplace: {
-          filter,
-          replacement,
-          options,
-        },
-      };
+    const command: FindOneAndReplaceCommand = {
+      findOneAndReplace: {
+        filter,
+        replacement,
+        options,
+      },
+    };
 
-      setDefaultIdForUpsert(command.findOneAndReplace, true);
+    setDefaultIdForUpsert(command.findOneAndReplace, true);
 
-      if (options?.sort) {
-        command.findOneAndReplace.sort = options.sort;
-        delete options.sort;
-      }
+    if (options?.sort) {
+      command.findOneAndReplace.sort = options.sort;
+      delete options.sort;
+    }
 
-      const resp = await this._httpClient.executeCommand(command, findOneAndReplaceOptionsKeys);
+    const resp = await this._httpClient.executeCommand(command, findOneAndReplaceOptionsKeys);
 
-      return {
-        value: resp.data?.document,
-        ok: 1,
-      };
-    });
+    return {
+      value: resp.data?.document,
+      ok: 1,
+    };
   }
 
   // noinspection JSUnusedGlobalSymbols
@@ -387,15 +371,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   async countDocuments(filter?: Filter<Schema>): Promise<number> {
-    return withErrorLogging(async (): Promise<number> => {
-      const command = {
-        countDocuments: { filter },
-      };
+    const command = {
+      countDocuments: { filter },
+    };
 
-      const resp = await this._httpClient.executeCommand(command);
+    const resp = await this._httpClient.executeCommand(command);
 
-      return resp.status?.count;
-    });
+    return resp.status?.count;
   }
 
   async findOneAndDelete(filter: Filter<Schema>, options?: FindOneAndDeleteOptions<Schema>): Promise<FindOneAndModifyResult<Schema>> {
@@ -416,29 +398,27 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: FindOneAndUpdateOptions<Schema>): Promise<FindOneAndModifyResult<Schema>> {
-    return withErrorLogging(async () => {
-      const command: FindOneAndUpdateCommand = {
-        findOneAndUpdate: {
-          filter,
-          update,
-          options,
-        },
-      };
+    const command: FindOneAndUpdateCommand = {
+      findOneAndUpdate: {
+        filter,
+        update,
+        options,
+      },
+    };
 
-      setDefaultIdForUpsert(command.findOneAndUpdate);
+    setDefaultIdForUpsert(command.findOneAndUpdate);
 
-      if (options?.sort) {
-        command.findOneAndUpdate.sort = options.sort;
-        delete options.sort;
-      }
+    if (options?.sort) {
+      command.findOneAndUpdate.sort = options.sort;
+      delete options.sort;
+    }
 
-      const resp = await this._httpClient.executeCommand(command, findOneAndUpdateOptionsKeys);
+    const resp = await this._httpClient.executeCommand(command, findOneAndUpdateOptionsKeys);
 
-      return {
-        value: resp.data?.document,
-        ok: 1,
-      };
-    });
+    return {
+      value: resp.data?.document,
+      ok: 1,
+    };
   }
 
   async options(): Promise<CollectionOptions<SomeDoc>> {

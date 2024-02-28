@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { Collection } from './collection';
-import { withErrorLogging, TypeErr } from './utils';
+import { TypeErr } from './utils';
 import {
   InternalFindOptions,
   internalFindOptionsKeys,
@@ -54,10 +54,8 @@ export class FindCursor<Schema extends SomeDoc> {
   }
 
   async toArray(): Promise<Schema[]> {
-    return withErrorLogging(async () => {
-      await this._getAll();
-      return this.documents;
-    });
+    await this._getAll();
+    return this.documents;
   }
 
   private async _getAll(): Promise<void> {
@@ -71,25 +69,23 @@ export class FindCursor<Schema extends SomeDoc> {
   }
 
   async next(): Promise<Schema | null> {
-    return withErrorLogging(async () => {
-      if (this.pageIndex < this.page.length) {
-        return this.page[this.pageIndex++];
-      }
+    if (this.pageIndex < this.page.length) {
+      return this.page[this.pageIndex++];
+    }
 
-      if (this.exhausted) {
-        this.status = 'executed';
-      }
+    if (this.exhausted) {
+      this.status = 'executed';
+    }
 
-      if (this.status === 'executed') {
-        return null;
-      }
+    if (this.status === 'executed') {
+      return null;
+    }
 
-      this.status = 'executing';
+    this.status = 'executing';
 
-      await this._getMore();
+    await this._getMore();
 
-      return this.page[this.pageIndex++] || null;
-    });
+    return this.page[this.pageIndex++] || null;
   }
 
   private async _getMore(): Promise<void> {
@@ -138,11 +134,9 @@ export class FindCursor<Schema extends SomeDoc> {
   }
 
   async forEach(iterator: any): Promise<void> {
-    return withErrorLogging(async () => {
-      for (let doc = await this.next(); doc != null; doc = await this.next()) {
-        iterator(doc);
-      }
-    });
+    for (let doc = await this.next(); doc != null; doc = await this.next()) {
+      iterator(doc);
+    }
   }
 
   async count(): Promise<number> {

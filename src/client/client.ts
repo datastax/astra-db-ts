@@ -14,7 +14,7 @@
 
 import { Db } from './db';
 import { parseUri, TypeErr } from './utils';
-import { DEFAULT_KEYSPACE, HTTPClient, HTTPClientOptions } from '@/src/api';
+import { HTTPClient, HTTPClientOptions } from '@/src/api';
 import { Collection } from './collection';
 import { CollectionOptions } from '@/src/client/operations/collections/create-collection';
 import { SomeDoc } from '@/src/client/document';
