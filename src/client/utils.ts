@@ -159,6 +159,10 @@ export async function dropNamespace(httpClient: HTTPClient, name: string) {
   return response;
 }
 
+export function setDefaultIdForInsert(document: Record<string, any>) {
+  document._id ??= genObjectId();
+}
+
 export function setDefaultIdForUpsert(command: Record<string, any>, replace?: boolean) {
   if (!command.filter || "_id" in command.filter) {
     return;

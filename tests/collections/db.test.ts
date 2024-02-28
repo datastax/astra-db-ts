@@ -102,33 +102,35 @@ describe("Astra TS Client - collections.Db", async () => {
       const res = await db.dropCollection(`test_db_collection_${suffix}`);
       assert.strictEqual(res, true);
     });
+  });
+
+  describe('Db listCollections', () => {
+    const name = 'test_db_collection_' + randAlphaNumeric({ length: 4 }).join('');
+    let db: Db;
+
+    before(async function () {
+      db = new Db(httpClient, parseUri(dbUri).keyspaceName);
+      await db.createCollection(name, { vector: { dimension: 5 } });
+    });
+
+    after(async function () {
+      await db.dropCollection(name);
+    });
 
     it('should return a list of just names of collections with nameOnly not set', async () => {
-      const db = new Db(httpClient, parseUri(dbUri).keyspaceName);
-      const name = 'test_db_collection_' + randAlphaNumeric({ length: 4 }).join("");
-      await db.createCollection(name, { vector: { dimension: 5 } });
       const res = await db.listCollections();
       assert.ok(res?.some((collection) => collection.name === name && !collection.options));
-      await db.dropCollection(name)
     });
 
     it('should return a list of just names of collections with nameOnly set to true', async () => {
-      const db = new Db(httpClient, parseUri(dbUri).keyspaceName);
-      const name = 'test_db_collection_' + randAlphaNumeric({ length: 4 }).join("");
-      await db.createCollection(name, { vector: { dimension: 5 } });
       const res = await db.listCollections({ nameOnly: true });
       // @ts-expect-error - nameOnly is set to true, so options should not be present
       assert.ok(res.some((collection) => collection.name === name && !collection.options));
-      await db.dropCollection(name)
     });
 
     it('should return a list of collection infos with nameOnly set to false', async () => {
-      const db = new Db(httpClient, parseUri(dbUri).keyspaceName);
-      const name = 'test_db_collection_' + randAlphaNumeric({ length: 4 }).join("");
-      await db.createCollection(name, { vector: { dimension: 5 } });
       const res = await db.listCollections({ nameOnly: false });
       assert.ok(res.some((collection) => collection.name === name && collection.options));
-      await db.dropCollection(name)
     });
   });
 });

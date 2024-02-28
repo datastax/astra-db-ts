@@ -278,6 +278,59 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
   });
 
+  describe('insertManyBulk tests', () => {
+    it('should insert many documents', async () => {
+      const docList = Array.from({ length: 150 }, (_, i) => ({ username: `user${i}` }));
+      const res = await collection.insertManyBulk(docList);
+      console.log(res);
+      assert.strictEqual(res.insertedCount, docList.length);
+      assert.strictEqual(res.acknowledged, true);
+      assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
+      assert.strictEqual(res.failedCount, 0);
+      assert.strictEqual(res.failedInserts.length, 0);
+    });
+
+    it('should insert many documents with ids', async () => {
+      const docList = Array.from({ length: 25 }, (_, i) => ({ _id: `id${i}`, username: `user${i}` }));
+      const res = await collection.insertManyBulk(docList);
+      assert.strictEqual(res.insertedCount, docList.length);
+      assert.strictEqual(res.acknowledged, true);
+      assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
+      assert.strictEqual(res.failedCount, 0);
+      assert.strictEqual(res.failedInserts.length, 0);
+    });
+
+    it('should insert a single doc', async () => {
+      const res = await collection.insertManyBulk([createSampleDocWithMultiLevel()]);
+      assert.strictEqual(res.insertedCount, 1);
+      assert.strictEqual(res.acknowledged, true);
+      assert.strictEqual(Object.keys(res.insertedIds).length, 1);
+      assert.strictEqual(res.failedCount, 0);
+      assert.strictEqual(res.failedInserts.length, 0);
+    });
+
+    it('should handle failed insert batches', async () => {
+      const docList = Array.from({ length: 24 }, (_, i) => ({ _id: `id${Math.min(i+1, 15)}`, username: `user${i}` }));
+      const res = await collection.insertManyBulk(docList, { parallel: 4 });
+      console.log(res)
+      assert.strictEqual(res.insertedCount, 15);
+      assert.strictEqual(res.acknowledged, true);
+      assert.strictEqual(Object.keys(res.insertedIds).length, 15);
+      assert.strictEqual(res.failedCount, 9);
+      assert.strictEqual(res.failedInserts.length, 9);
+    });
+
+    it('should handle ordered insert fails', async () => {
+      const docList = Array.from({ length: 25 }, (_, i) => ({ _id: `id${Math.min(i, 4)}`, username: `user${i}` }));
+      const res = await collection.insertManyBulk(docList, { ordered: true, chunkSize: 20 });
+      assert.strictEqual(res.insertedCount, 5);
+      assert.strictEqual(res.acknowledged, true);
+      assert.strictEqual(Object.keys(res.insertedIds).length, 5);
+      assert.strictEqual(res.failedCount, 20);
+      assert.strictEqual(res.failedInserts.length, 20);
+    });
+  });
+
   describe('findOne, findMany & filter tests', () => {
     it('should find & findOne document', async () => {
       const insertDocResp = await collection.insertOne(createSampleDocWithMultiLevel());

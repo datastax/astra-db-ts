@@ -14,7 +14,7 @@
 
 import { FindCursor } from './cursor';
 import { HTTPClient } from '@/src/api';
-import { withErrorLogging, setDefaultIdForUpsert, TypeErr, withoutFields } from './utils';
+import { setDefaultIdForInsert, setDefaultIdForUpsert, TypeErr, withErrorLogging, withoutFields } from './utils';
 import { InsertOneCommand, InsertOneResult } from '@/src/client/operations/insert/insert-one';
 import {
   InsertManyCommand,
@@ -54,6 +54,11 @@ import { Filter } from '@/src/client/operations/filter';
 import { UpdateFilter } from '@/src/client/operations/update-filter';
 import { FoundDoc, MaybeId } from '@/src/client/operations/utils';
 import { SomeDoc } from '@/src/client/document';
+import {
+  FailedInsert,
+  InsertManyBulkOptions,
+  InsertManyBulkResult
+} from '@/src/client/operations/insert/insert-many-bulk';
 
 export class Collection<Schema extends SomeDoc = SomeDoc> {
   httpClient: HTTPClient;
@@ -71,6 +76,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
   async insertOne(document: Schema): Promise<InsertOneResult> {
     return withErrorLogging(async () => {
+      setDefaultIdForInsert(document);
+
       const command: InsertOneCommand = {
         insertOne: { document },
       }
@@ -86,6 +93,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
   async insertMany(documents: Schema[], options?: InsertManyOptions): Promise<InsertManyResult> {
     return withErrorLogging(async () => {
+      documents.forEach(setDefaultIdForInsert);
+
       const command: InsertManyCommand = {
         insertMany: {
           documents,
@@ -103,9 +112,81 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     });
   }
 
-  // async insertManyBulk(documents: Schema[], options?: InsertManyBulkOptions): Promise<InsertManyResult> {
-  //
-  // }
+  async insertManyBulk(documents: Schema[], options?: InsertManyBulkOptions): Promise<InsertManyBulkResult<Schema>> {
+    const chunkSize = (options?.chunkSize ?? 20);
+    const parallel = (options?.ordered) ? 1 : (options?.parallel ?? 4);
+
+    // @ts-expect-error - Sanity check
+    if (options?.ordered && options?.parallel && options?.parallel !== 1) {
+      throw new Error('Parallel insert with ordered option is not supported');
+    }
+
+    if (chunkSize < 1 || chunkSize > 20) {
+      throw new Error('Chunk size must be between 1 and 20, inclusive');
+    }
+
+    if (parallel < 1) {
+      throw new Error('Parallel must be greater than 0');
+    }
+
+    const results: InsertManyResult[] = [];
+    const failedInserts: FailedInsert<Schema>[] = [];
+
+    const workerChunkSize = Math.ceil(documents.length / parallel);
+
+    const processQueue = async (i: number) => {
+      const startIdx = i * workerChunkSize;
+      const endIdx = (i + 1) * workerChunkSize;
+
+      for (let i = startIdx; i < endIdx; i += chunkSize) {
+        const slice = documents.slice(i, Math.min(i + chunkSize, endIdx));
+
+        if (slice.length === 0) {
+          break;
+        }
+
+        try {
+          const result = await this.insertMany(slice);
+          results.push(result);
+        } catch (e: any) {
+          const insertedIDs = new Set(e.status?.insertedIds ?? []);
+
+          const upperBound = (options?.ordered)
+            ? documents.length
+            : Math.min(i + chunkSize, endIdx);
+
+          for (let j = i; j < upperBound; j += 1) {
+            const doc = documents[j];
+
+            if (insertedIDs.has(doc._id)) {
+              insertedIDs.delete(doc._id);
+              results.push({ insertedCount: 1, insertedIds: [doc._id], acknowledged: true });
+            } else {
+              failedInserts.push({ document: doc, error: e });
+            }
+          }
+
+          if (options?.ordered) {
+            break;
+          }
+        }
+      }
+    };
+
+    const workers = Array.from({ length: parallel }, (_, i) => {
+      return processQueue(i);
+    });
+
+    await Promise.all(workers);
+
+    return {
+      acknowledged: true,
+      insertedCount: results.reduce((acc, r) => acc + r.insertedCount, 0),
+      insertedIds: results.reduce((acc, r) => acc.concat(r.insertedIds), [] as string[]),
+      failedCount: failedInserts.length,
+      failedInserts,
+    };
+  }
 
   async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions<Schema>): Promise<UpdateOneResult> {
     return withErrorLogging(async () => {
