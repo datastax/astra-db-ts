@@ -12,22 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SortOption } from '@/src/client/operations/find/find-common';
+import { SortOption } from '@/src/client/types/find/find-common';
 import { SomeDoc } from '@/src/client';
 
-export interface FindOneAndReplaceCommand {
-  findOneAndReplace: {
-    filter: Record<string, unknown>;
-    replacement: Record<string, unknown>;
-    options?: FindOneAndReplaceOptions<any>;
+export interface FindOneAndUpdateCommand {
+  findOneAndUpdate: {
+    filter?: Record<string, unknown>;
+    update?: Record<string, any>;
+    options?: FindOneAndUpdateOptions<any>;
     sort?: SortOption<any>;
   };
 }
 
-export interface FindOneAndReplaceOptions<Schema extends SomeDoc> {
+export interface FindOneAndUpdateOptions<Schema extends SomeDoc> {
   upsert?: boolean;
   returnDocument?: "before" | "after";
   sort?: SortOption<Schema>;
 }
 
-export const findOneAndReplaceOptionsKeys = new Set(['upsert', 'returnDocument', 'sort']);
+export const findOneAndUpdateOptionsKeys = new Set(['upsert', 'returnDocument', 'sort']);

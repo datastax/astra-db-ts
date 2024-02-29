@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ToDotNotation } from '@/src/client/operations/dot-notation';
-import { IsNum } from '@/src/client/operations/utils';
+import { ToDotNotation } from '@/src/client/types/dot-notation';
+import { IsNum } from '@/src/client/types/utils';
 import { TypeErr } from '@/src/client/utils';
 import { SomeDoc } from '@/src/client/document';
 

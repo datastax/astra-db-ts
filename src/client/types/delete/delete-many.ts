@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { InternalDeleteResult } from '@/src/client/operations/delete/delete-common';
+import { InternalDeleteResult } from '@/src/client/types/delete/delete-common';
 
 export interface DeleteManyCommand {
   deleteMany: {

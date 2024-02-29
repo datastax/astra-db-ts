@@ -18,6 +18,23 @@ import { ObjectId } from 'bson';
 import { HTTP_METHODS } from '@/src/api';
 
 declare const __error: unique symbol;
+
+/**
+ * Represents some type-level error which forces immediate attention rather than failing @ runtime.
+ * 
+ * More inflexable type than `never`, and gives contextual error messages.
+ * 
+ * @example
+ * ```
+ * function unsupported(): TypeErr<'Unsupported operation'> {
+ *   throw new Error('Unsupported operation');
+ * }
+ * 
+ * // Doesn't compile with error:
+ * // Type '{ [__error]: "Unsupported operation"; }' is not assignable to type 'string'"
+ * const result: string = unsupported();
+ * ```
+ */
 export type TypeErr<S> = unknown & { [__error]: S };
 
 interface ParsedUri {

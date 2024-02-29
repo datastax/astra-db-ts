@@ -15,51 +15,51 @@
 import { FindCursor } from './cursor';
 import { HTTPClient } from '@/src/api';
 import { setDefaultIdForInsert, setDefaultIdForUpsert, TypeErr, withoutFields } from './utils';
-import { InsertOneCommand, InsertOneResult } from '@/src/client/operations/insert/insert-one';
+import { InsertOneCommand, InsertOneResult } from '@/src/client/types/insert/insert-one';
 import {
   InsertManyCommand,
   insertManyOptionKeys,
   InsertManyOptions,
   InsertManyResult
-} from '@/src/client/operations/insert/insert-many';
+} from '@/src/client/types/insert/insert-many';
 import {
   UpdateOneCommand,
   updateOneOptionKeys,
   UpdateOneOptions,
   UpdateOneResult,
-} from '@/src/client/operations/update/update-one';
+} from '@/src/client/types/update/update-one';
 import {
   UpdateManyCommand,
   updateManyOptionKeys,
   UpdateManyOptions,
   UpdateManyResult
-} from '@/src/client/operations/update/update-many';
-import { DeleteOneCommand, DeleteOneOptions, DeleteOneResult } from '@/src/client/operations/delete/delete-one';
-import { DeleteManyCommand, DeleteManyResult } from '@/src/client/operations/delete/delete-many';
-import { FindOptions } from '@/src/client/operations/find/find';
-import { FindOneAndModifyResult } from '@/src/client/operations/find/find-common';
-import { FindOneCommand, FindOneOptions, findOneOptionsKeys } from '@/src/client/operations/find/find-one';
-import { FindOneAndDeleteCommand, FindOneAndDeleteOptions } from '@/src/client/operations/find/find-one-delete';
+} from '@/src/client/types/update/update-many';
+import { DeleteOneCommand, DeleteOneOptions, DeleteOneResult } from '@/src/client/types/delete/delete-one';
+import { DeleteManyCommand, DeleteManyResult } from '@/src/client/types/delete/delete-many';
+import { FindOptions } from '@/src/client/types/find/find';
+import { FindOneAndModifyResult } from '@/src/client/types/find/find-common';
+import { FindOneCommand, FindOneOptions, findOneOptionsKeys } from '@/src/client/types/find/find-one';
+import { FindOneAndDeleteCommand, FindOneAndDeleteOptions } from '@/src/client/types/find/find-one-delete';
 import {
   FindOneAndUpdateCommand,
   FindOneAndUpdateOptions,
   findOneAndUpdateOptionsKeys
-} from '@/src/client/operations/find/find-one-update';
+} from '@/src/client/types/find/find-one-update';
 import {
   FindOneAndReplaceCommand,
   FindOneAndReplaceOptions,
   findOneAndReplaceOptionsKeys
-} from '@/src/client/operations/find/find-one-replace';
-import { Filter } from '@/src/client/operations/filter';
-import { UpdateFilter } from '@/src/client/operations/update-filter';
-import { FoundDoc, MaybeId } from '@/src/client/operations/utils';
+} from '@/src/client/types/find/find-one-replace';
+import { Filter } from '@/src/client/types/filter';
+import { UpdateFilter } from '@/src/client/types/update-filter';
+import { FoundDoc, MaybeId } from '@/src/client/types/utils';
 import { SomeDoc } from '@/src/client/document';
 import {
   FailedInsert,
   InsertManyBulkOptions,
   InsertManyBulkResult
-} from '@/src/client/operations/insert/insert-many-bulk';
-import { CollectionOptions } from '@/src/client/operations/collections/create-collection';
+} from '@/src/client/types/insert/insert-many-bulk';
+import { CollectionOptions } from '@/src/client/types/collections/create-collection';
 import { Db } from '@/src/client/db';
 
 export class Collection<Schema extends SomeDoc = SomeDoc> {

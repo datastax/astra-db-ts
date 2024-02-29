@@ -12,8 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/**
+ * Represents *some document*. It's not a base type, but rather more of a
+ * bottom type which can represent any legal document, to give more dynamic
+ * typing flexability at the cost of enhanced typechecking/autocomplete.
+ */
 export type SomeDoc = Record<string, any>;
 
+/**
+ * Base type for a document that wishes to leverage vector capabilities
+ * 
+ * @example
+ * ```
+ * export interface Idea extends VectorDoc {
+ *   idea: string,
+ * }
+ * 
+ * db.collection<Idea>('ideas').insertOne({
+ *   idea: 'Upside down doors',
+ *   $vector: [.23, .05, .95, .83, .42],
+ * });
+ * ```
+ */
 export interface VectorDoc {
   $vector?: number[],
   $vectorize?: string,

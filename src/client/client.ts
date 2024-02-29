@@ -16,9 +16,9 @@ import { Db } from './db';
 import { parseUri, TypeErr } from './utils';
 import { HTTPClient, HTTPClientOptions } from '@/src/api';
 import { Collection } from './collection';
-import { CollectionOptions } from '@/src/client/operations/collections/create-collection';
+import { CollectionOptions } from '@/src/client/types/collections/create-collection';
 import { SomeDoc } from '@/src/client/document';
-import { CollectionInfo } from '@/src/client/operations/collections/list-collection';
+import { CollectionInfo } from '@/src/client/types/collections/list-collection';
 
 export class Client implements Disposable {
   httpClient: HTTPClient;

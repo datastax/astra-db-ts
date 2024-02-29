@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ToDotNotation } from '@/src/client/operations/dot-notation';
+import { ToDotNotation } from '@/src/client/types/dot-notation';
 import { SomeDoc } from '@/src/client/document';
 
 export interface CreateCollectionCommand {

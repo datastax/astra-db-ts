@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CollectionOptions } from '@/src/client/operations/collections/create-collection';
+import { CollectionOptions } from '@/src/client/types/collections/create-collection';
 import { SomeDoc } from '@/src/client';
 
 export interface ListCollectionsCommand {

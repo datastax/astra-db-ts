@@ -19,13 +19,13 @@ import {
   CreateCollectionCommand,
   CollectionOptions,
   createCollectionOptionsKeys
-} from '@/src/client/operations/collections/create-collection';
+} from '@/src/client/types/collections/create-collection';
 import { SomeDoc } from '@/src/client/document';
 import {
   CollectionInfo, ListCollectionsCommand,
   listCollectionOptionsKeys,
   ListCollectionsOptions
-} from '@/src/client/operations/collections/list-collection';
+} from '@/src/client/types/collections/list-collection';
 
 export class Db {
   httpClient: HTTPClient;

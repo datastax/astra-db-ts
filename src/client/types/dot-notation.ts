@@ -14,6 +14,30 @@
 
 import { SomeDoc } from '@/src/client/document';
 
+/**
+ * Converts some {@link Schema} into a type representing its dot notation (object paths).
+ * 
+ * @example
+ * ```
+ * interface BasicSchema {
+ *   num: number,
+ *   arr: string[],
+ *   obj: {
+ *     nested: string,
+ *     someDoc: SomeDoc,
+ *   }
+ * }
+ * 
+ * interface BasicSchemaInDotNotation {
+ *   'num': number,
+ *   'arr': string[],
+ *   'obj': { nested: string, someDoc: SomeDoc }
+ *   'obj.nested': string,
+ *   'obj.someDoc': SomeDoc,
+ *   [`obj.someDoc.${string}`]: any,
+ * }
+ * ```
+ */
 export type ToDotNotation<Schema extends SomeDoc> = Merge<_ToDotNotation<Required<Schema>, ''>>
 
 type _ToDotNotation<Elem extends SomeDoc, Prefix extends string> = {

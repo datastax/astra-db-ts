@@ -12,18 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { InternalDeleteResult } from '@/src/client/operations/delete/delete-common';
-import { SortOption } from '@/src/client';
+import { InternalUpdateResult } from '@/src/client/types/update/update-common';
+import { SomeDoc, SortOption } from '@/src/client';
 
-export interface DeleteOneCommand {
-  deleteOne: {
+export interface UpdateOneCommand {
+  updateOne: {
     filter: Record<string, unknown>;
+    update: Record<string, any>;
+    options?: UpdateOneOptions<any>;
     sort?: SortOption<any>;
-  };
+  }
 }
 
-export interface DeleteOneOptions {
-  sort?: Record<string, 1 | -1>;
+export interface UpdateOneOptions<Schema extends SomeDoc> {
+  upsert?: boolean;
+  sort?: SortOption<Schema>;
 }
 
-export type DeleteOneResult = InternalDeleteResult<0 | 1>;
+export const updateOneOptionKeys = new Set(['upsert', 'sort']);
+
+export type UpdateOneResult = InternalUpdateResult<0 | 1>;

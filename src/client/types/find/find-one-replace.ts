@@ -12,23 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { InternalUpdateResult } from '@/src/client/operations/update/update-common';
-import { SomeDoc, SortOption } from '@/src/client';
+import { SortOption } from '@/src/client/types/find/find-common';
+import { SomeDoc } from '@/src/client';
 
-export interface UpdateOneCommand {
-  updateOne: {
+export interface FindOneAndReplaceCommand {
+  findOneAndReplace: {
     filter: Record<string, unknown>;
-    update: Record<string, any>;
-    options?: UpdateOneOptions<any>;
+    replacement: Record<string, unknown>;
+    options?: FindOneAndReplaceOptions<any>;
     sort?: SortOption<any>;
-  }
+  };
 }
 
-export interface UpdateOneOptions<Schema extends SomeDoc> {
+export interface FindOneAndReplaceOptions<Schema extends SomeDoc> {
   upsert?: boolean;
+  returnDocument?: "before" | "after";
   sort?: SortOption<Schema>;
 }
 
-export const updateOneOptionKeys = new Set(['upsert', 'sort']);
-
-export type UpdateOneResult = InternalUpdateResult<0 | 1>;
+export const findOneAndReplaceOptionsKeys = new Set(['upsert', 'returnDocument', 'sort']);

@@ -17,7 +17,7 @@ import {
   InternalFindOptions,
   internalFindOptionsKeys,
   InternalGetMoreCommand
-} from '@/src/client/operations/find/find';
+} from '@/src/client/types/find/find';
 import { HTTPClient } from '@/src/api';
 
 type CursorStatus = 'uninitialized' | 'initialized' | 'executing' | 'executed';
