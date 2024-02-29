@@ -19,6 +19,7 @@ import { SomeDoc } from '@/src/client/document';
 export type Filter<Schema extends SomeDoc> = {
   [K in keyof ToDotNotation<Schema>]?: FilterType<ToDotNotation<Schema>[K]>
 } & {
+  _id?: FilterType<string>,
   $and?: Filter<Schema>[],
   $or?: Filter<Schema>[],
   $not?: Filter<Schema>,

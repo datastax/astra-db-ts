@@ -2587,6 +2587,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         await collection.deleteMany(filter);
       } catch (e: any) {
         exception = e;
+        console.log(e)
       }
       assert.ok(exception);
       assert.strictEqual(exception.message, 'Command "deleteMany" failed with the following error: More records found to be deleted even after deleting 20 records');
@@ -2865,6 +2866,133 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.strictEqual(count, 0);
     });
   });
+
+  // describe('upsertOne tests', () => {
+  //   it('should upsert a nonexistent document with ID', async () => {
+  //     const doc = createSampleDocWithMultiLevelWithId('123');
+  //     const res = await collection.upsertOne(doc);
+  //     assert.ok(res);
+  //     assert.strictEqual(res.acknowledged, true);
+  //     assert.ok(res.insertedId, doc._id);
+  //     assert.strictEqual(res.replaced, false);
+  //     // const found = await collection.findOne({ _id: doc._id });
+  //     // assert.deepStrictEqual(found, doc);
+  //   });
+  //
+  //   it('should upsert a nonexistent document without ID', async () => {
+  //     const doc = createSampleDocWithMultiLevel();
+  //     const res = await collection.upsertOne(doc);
+  //     assert.ok(res);
+  //     assert.strictEqual(res.acknowledged, true);
+  //     assert.ok(res.insertedId);
+  //     assert.strictEqual(res.replaced, false);
+  //     // const found = await collection.findOne({ _id: doc._id });
+  //     // assert.deepStrictEqual(found, doc);
+  //   });
+  //
+  //   it('should upsert an existing document with ID', async () => {
+  //     const doc1 = { _id: '123', username: 'abc' };
+  //     const doc2 = { _id: '123', username: 'def' };
+  //     await collection.insertOne(doc1);
+  //     const upsert = await collection.upsertOne(doc2);
+  //     assert.ok(upsert);
+  //     assert.strictEqual(upsert.acknowledged, true);
+  //     assert.strictEqual(upsert.insertedId, doc1._id);
+  //     assert.strictEqual(upsert.replaced, true);
+  //     // const found = await collection.findOne({ _id: doc1._id });
+  //     // assert.deepStrictEqual(found, doc2);
+  //   });
+  //
+  //   it('should upsert a nonexistent document with ID V2', async () => {
+  //     const doc = createSampleDocWithMultiLevelWithId('123');
+  //     const res = await collection.upsertOneV2(doc);
+  //     assert.ok(res);
+  //     assert.strictEqual(res.acknowledged, true);
+  //     assert.ok(res.insertedId, doc._id);
+  //     assert.strictEqual(res.replaced, false);
+  //     // const found = await collection.findOne({ _id: doc._id });
+  //     // assert.deepStrictEqual(found, doc);
+  //   });
+  //
+  //   it('should upsert a nonexistent document without ID V2', async () => {
+  //     const doc = createSampleDocWithMultiLevel();
+  //     const res = await collection.upsertOneV2(doc);
+  //     assert.ok(res);
+  //     assert.strictEqual(res.acknowledged, true);
+  //     assert.ok(res.insertedId);
+  //     assert.strictEqual(res.replaced, false);
+  //     // const found = await collection.findOne({ _id: doc._id });
+  //     // assert.deepStrictEqual(found, doc);
+  //   });
+  //
+  //   it('should upsert an existing document with ID V2', async () => {
+  //     const doc1 = { _id: '123', username: 'abc' };
+  //     const doc2 = { _id: '123', username: 'def' };
+  //     await collection.insertOne(doc1);
+  //     const upsert = await collection.upsertOneV2(doc2);
+  //     assert.ok(upsert);
+  //     assert.strictEqual(upsert.acknowledged, true);
+  //     assert.strictEqual(upsert.insertedId, doc1._id);
+  //     assert.strictEqual(upsert.replaced, true);
+  //     // const found = await collection.findOne({ _id: doc._id });
+  //     // assert.deepStrictEqual(found, doc);
+  //   });
+  // });
+  //
+  // describe('upsertMany tests', () => {
+  //   it('should insert many documents with no id', async () => {
+  //     const docList = Array.from({ length: 150 }, (_, i) => ({ username: `user${i}` }));
+  //     const res = await collection.upsertMany(docList);
+  //     assert.strictEqual(res.insertedCount, docList.length);
+  //     assert.strictEqual(res.acknowledged, true);
+  //     assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
+  //     assert.strictEqual(res.failedCount, 0);
+  //     assert.strictEqual(res.failedUpserts.length, 0);
+  //   });
+  //
+  //   it('should insert many documents with ids', async () => {
+  //     const docList = Array.from({ length: 50 }, (_, i) => ({ _id: `id${i}`, username: `user${i}` }));
+  //     const res = await collection.upsertMany(docList);
+  //     assert.strictEqual(res.insertedCount, docList.length);
+  //     assert.strictEqual(res.acknowledged, true);
+  //     assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
+  //     assert.strictEqual(res.failedCount, 0);
+  //     assert.strictEqual(res.failedUpserts.length, 0);
+  //   });
+  //
+  //   it('should insert a single doc', async () => {
+  //     const res = await collection.upsertMany([createSampleDocWithMultiLevel()]);
+  //     assert.strictEqual(res.insertedCount, 1);
+  //     assert.strictEqual(res.acknowledged, true);
+  //     assert.strictEqual(Object.keys(res.insertedIds).length, 1);
+  //     assert.strictEqual(res.failedCount, 0);
+  //     assert.strictEqual(res.failedUpserts.length, 0);
+  //   });
+  //
+  //   it('should insert a single doc with no failures when none have unique IDs', async () => {
+  //     const docList = Array.from({ length: 50 }, (_, i) => ({ _id: `id`, username: `user${i}` }));
+  //     const res = await collection.upsertMany(docList);
+  //     assert.strictEqual(res.insertedCount, 1);
+  //     assert.strictEqual(res.acknowledged, true);
+  //     assert.strictEqual(Object.keys(res.insertedIds).length, 1);
+  //     assert.strictEqual(res.failedCount, 0);
+  //     assert.strictEqual(res.failedUpserts.length, 0);
+  //   });
+  //
+  //   it('should upsert many documents', async () => {
+  //     const docs1 = Array.from({ length: 50 }, (_, i) => ({ _id: `id${i}`, username: `old-user${i}` }));
+  //     await collection.insertManyBulk(docs1);
+  //     const docs2 = Array.from({ length: 50 }, (_, i) => ({ _id: `id${i}`, username: `new-user${i}` }));
+  //     const res = await collection.upsertMany(docs2);
+  //     assert.strictEqual(res.insertedCount, 0);
+  //     assert.strictEqual(res.modifiedCount, docs2.length);
+  //     assert.strictEqual(res.acknowledged, true);
+  //     assert.strictEqual(Object.keys(res.insertedIds).length, 0);
+  //     assert.strictEqual(Object.keys(res.modifiedIds).length, docs2.length);
+  //     assert.strictEqual(res.failedCount, 0);
+  //     assert.strictEqual(res.failedUpserts.length, 0);
+  //   });
+  // });
 
   describe('admin operations', () => {
     it('drops itself', async () => {

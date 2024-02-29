@@ -149,7 +149,7 @@ export async function dropNamespace(httpClient: HTTPClient, name: string) {
   return response;
 }
 
-export function setDefaultIdForInsert(document: Record<string, any>) {
+export function setDefaultIdForInsert<T extends { _id?: string }>(document: T): asserts document is T & { _id: string } {
   document._id ??= genObjectId();
 }
 
@@ -209,4 +209,20 @@ export function withoutFields<T extends Record<string, any> | undefined>(obj: T,
   }
 
   return newObj;
+}
+
+export function nubByReverse<T, K extends keyof T>(arr: T[], prop: K): T[] {
+  const record: T[] = [];
+  const seen = {} as Record<T[K] & string, boolean>;
+
+  for (let i = arr.length - 1; i >= 0; i--) {
+    const item = arr[i];
+    const val = item[prop] as T[K] & string;
+
+    if (val === undefined || !seen[val]) {
+      seen[val] = true;
+      record.push(item);
+    }
+  }
+  return record;
 }

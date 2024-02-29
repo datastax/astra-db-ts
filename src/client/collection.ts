@@ -152,7 +152,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       const endIdx = (i + 1) * workerChunkSize;
 
       for (let i = startIdx; i < endIdx; i += chunkSize) {
-        const slice = documents.slice(i, Math.min(i + chunkSize, endIdx));
+        const slice = documents.slice(i, Math.min(i + chunkSize, endIdx, documents.length));
 
         if (slice.length === 0) {
           break;
@@ -173,15 +173,15 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
           const upperBound = (options?.ordered)
             ? documents.length
-            : Math.min(i + chunkSize, endIdx);
+            : Math.min(i + chunkSize, endIdx, documents.length);
 
-          for (let j = i; j < upperBound; j += 1) {
+          for (let j = i; j < upperBound; j++) {
             const doc = documents[j];
 
             if (insertedIDSet.has(doc._id)) {
               insertedIDSet.delete(doc._id);
             } else {
-              failedInserts.push({ document: doc, error: e });
+              failedInserts.push({ document: doc, errors: e.errors });
             }
           }
 
@@ -206,6 +206,97 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       failedInserts,
     };
   }
+
+  // async upsertOne(document: Schema): Promise<UpsertOneResult> {
+  //   try {
+  //     return {
+  //       ...await this.insertOne(document),
+  //       replaced: false,
+  //     };
+  //   } catch (e: any) {
+  //     if (e.errors.length !== 1 || e.errors[0]?.errorCode !== 'DOCUMENT_ALREADY_EXISTS') {
+  //       throw e;
+  //     }
+  //
+  //     const resp = await this.findOneAndReplace({ _id: document._id }, document, { upsert: true });
+  //
+  //     return {
+  //       acknowledged: true,
+  //       insertedId: resp.value!._id,
+  //       replaced: true,
+  //     };
+  //   }
+  // }
+  //
+  // async upsertOneV2(document: Schema): Promise<UpsertOneResult> {
+  //   setDefaultIdForInsert(document);
+  //
+  //   const command: FindOneAndReplaceCommand = {
+  //     findOneAndReplace: {
+  //       filter: { _id: document._id },
+  //       options: { upsert: true },
+  //       replacement: document,
+  //     },
+  //   };
+  //
+  //   const resp = await this._httpClient.executeCommand(command, findOneAndReplaceOptionsKeys);
+  //
+  //   return {
+  //     acknowledged: true,
+  //     insertedId: resp.data?.document?._id ?? resp.status?.upsertedId,
+  //     replaced: !resp.status?.upsertedId
+  //   };
+  // }
+  //
+  // async upsertMany(documents: Schema[], options?: UpsertManyOptions): Promise<UpsertManyResult<Schema>> {
+  //   const unique = nubByReverse(documents, '_id');
+  //
+  //   const resp = await this.insertManyBulk(unique, {
+  //     chunkSize: options?.insertionChunkSize,
+  //     parallel: options?.insertionParallel,
+  //   });
+  //
+  //   const duplicated = resp.failedInserts.filter((f) => {
+  //     return f.errors?.some((e: any) => e.errorCode === 'DOCUMENT_ALREADY_EXISTS');
+  //   });
+  //
+  //   const workerChunkSize = Math.ceil(duplicated.length / (options?.upsertParallel ?? 8));
+  //
+  //   const upserted: UpsertOneResult[] = [];
+  //   const failedUpserts: FailedInsert<Schema>[] = [];
+  //
+  //   const processQueue = async (i: number) => {
+  //     const startIdx = i * workerChunkSize;
+  //     const endIdx = (i + 1) * workerChunkSize;
+  //
+  //     for (let i = startIdx; i < Math.min(endIdx, documents.length); i ++) {
+  //       const dup = duplicated[i];
+  //
+  //       try {
+  //         const result = await this.upsertOneV2(dup.document);
+  //         upserted.push(result);
+  //       } catch (e: any) {
+  //         failedUpserts.push({ document: dup.document, errors: e.errors });
+  //       }
+  //     }
+  //   };
+  //
+  //   const workers = Array.from({ length: options?.upsertParallel ?? 8 }, (_, i) => {
+  //     return processQueue(i);
+  //   });
+  //
+  //   await Promise.all(workers);
+  //
+  //   return {
+  //     acknowledged: true,
+  //     insertedCount: resp.insertedCount,
+  //     insertedIds: resp.insertedIds,
+  //     modifiedIds: upserted.map((r) => r.insertedId),
+  //     modifiedCount: upserted.length,
+  //     failedCount: failedUpserts.length,
+  //     failedUpserts: failedUpserts,
+  //   };
+  // }
 
   async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions<Schema>): Promise<UpdateOneResult> {
     const command: UpdateOneCommand = {

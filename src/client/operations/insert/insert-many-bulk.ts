@@ -18,5 +18,5 @@ export interface InsertManyBulkResult<Schema> extends InsertManyResult {
 
 export interface FailedInsert<Schema> {
   document: Schema;
-  error?: any;
+  errors?: any[];
 }
