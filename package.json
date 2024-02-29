@@ -34,8 +34,7 @@
   },
   "directories": {
     "lib": "src",
-    "test": "tests",
-    "bin": "bin"
+    "test": "tests"
   },
   "files": [
     "src",
