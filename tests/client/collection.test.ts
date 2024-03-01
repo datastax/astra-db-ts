@@ -58,7 +58,8 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
 
   describe('Collection initialization', () => {
     it('should initialize a Collection', () => {
-      const collection = new Collection(db, 'new_collection');
+      // @ts-expect-error - Private member access for testing
+      const collection = new Collection(db, db._httpClient, 'new_collection');
       assert.ok(collection);
     });
 
@@ -67,7 +68,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       let collection: Collection | null = null;
       try {
         // @ts-expect-error - Intentionally passing no name
-        collection = new Collection(db);
+        collection = new Collection();
         assert.ok(collection);
       } catch (e) {
         error = e;
@@ -2587,7 +2588,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         await collection.deleteMany(filter);
       } catch (e: any) {
         exception = e;
-        console.log(e)
       }
       assert.ok(exception);
       assert.strictEqual(exception.message, 'Command "deleteMany" failed with the following error: More records found to be deleted even after deleting 20 records');

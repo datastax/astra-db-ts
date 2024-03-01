@@ -45,6 +45,13 @@ type test1 = Expect<Equal<Filter<SuperBasicSchema>, {
     $exists?: boolean,
   },
 } & {
+  _id?: string | {
+    $eq?: string,
+    $ne?: string,
+    $in?: string[],
+    $nin?: string[],
+    $exists?: boolean,
+  },
   $and?: Filter<SuperBasicSchema>[],
   $or?: Filter<SuperBasicSchema>[],
   $not?: Filter<SuperBasicSchema>,

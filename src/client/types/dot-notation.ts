@@ -20,21 +20,21 @@ import { SomeDoc } from '@/src/client/document';
  * @example
  * ```
  * interface BasicSchema {
- *   num: number,
- *   arr: string[],
- *   obj: {
- *     nested: string,
- *     someDoc: SomeDoc,
- *   }
+ *   num: number,
+ *   arr: string[],
+ *   obj: {
+ *     nested: string,
+ *     someDoc: SomeDoc,
+ *   }
  * }
  * 
  * interface BasicSchemaInDotNotation {
- *   'num': number,
- *   'arr': string[],
- *   'obj': { nested: string, someDoc: SomeDoc }
- *   'obj.nested': string,
- *   'obj.someDoc': SomeDoc,
- *   [`obj.someDoc.${string}`]: any,
+ *   'num': number,
+ *   'arr': string[],
+ *   'obj': { nested: string, someDoc: SomeDoc }
+ *   'obj.nested': string,
+ *   'obj.someDoc': SomeDoc,
+ *   [`obj.someDoc.${string}`]: any,
  * }
  * ```
  */

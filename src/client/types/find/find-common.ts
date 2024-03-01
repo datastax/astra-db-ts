@@ -26,6 +26,7 @@ export type SortOption<Schema extends SomeDoc> =
  * 
  * Can use `1`/`0`, or `true`/`false`
  *
+ * @example
  * ```typescript
  * // Include _id, name, and address.state
  * const projection1: ProjectionOption<SomeDoc> = {
@@ -36,12 +37,12 @@ export type SortOption<Schema extends SomeDoc> =
  * 
  * // Exclude the $vector
  * const projection2: ProjectionOption<SomeDoc> = {
- *   $vector: 0,
+ *   $vector: 0,
  * }
  * 
  * // Return array indices 2, 3, 4, and 5
  * const projection3: ProjectionOption<SomeDoc> = {
- *   test_scores: { $slice: [2, 4] },
+ *   test_scores: { $slice: [2, 4] },
  * }
  * ```
  */

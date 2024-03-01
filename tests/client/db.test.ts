@@ -37,7 +37,7 @@ describe("Astra TS Client - collections.Db", async () => {
     }
 
     dbUri = testClient.uri;
-    httpClient = astraClient.httpClient;
+    httpClient = astraClient._httpClient;
   });
 
   afterEach(async () => {

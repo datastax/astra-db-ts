@@ -63,20 +63,24 @@ import { CollectionOptions } from '@/src/client/types/collections/create-collect
 import { Db } from '@/src/client/db';
 
 export class Collection<Schema extends SomeDoc = SomeDoc> {
-  collectionName: string;
-  _httpClient: HTTPClient;
-  _db: Db
+  private readonly _collectionName: string;
+  private readonly _httpClient: HTTPClient;
+  private readonly _db: Db
 
-  constructor(db: Db, name: string) {
+  constructor(db: Db, httpClient: HTTPClient, name: string) {
     if (!name) {
       throw new Error("collection name is required");
     }
 
-    this._httpClient = db.httpClient.cloneShallow();
+    this._httpClient = httpClient.cloneShallow();
     this._httpClient.collection = name;
 
-    this.collectionName = name;
+    this._collectionName = name;
     this._db = db;
+  }
+
+  get collectionName(): string {
+    return this._collectionName;
   }
 
   get namespace(): string {
@@ -365,7 +369,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       : commonResult;
   }
 
-  async deleteOne(filter: Filter<Schema>, options?: DeleteOneOptions): Promise<DeleteOneResult> {
+  async deleteOne(filter: Filter<Schema> = {}, options?: DeleteOneOptions): Promise<DeleteOneResult> {
     const command: DeleteOneCommand = {
       deleteOne: { filter },
     };
@@ -382,7 +386,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     };
   }
 
-  async deleteMany(filter: Filter<Schema>): Promise<DeleteManyResult> {
+  async deleteMany(filter: Filter<Schema> = {}): Promise<DeleteManyResult> {
     const command: DeleteManyCommand = {
       deleteMany: { filter },
     };
@@ -515,24 +519,24 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   async options(): Promise<CollectionOptions<SomeDoc>> {
     const results = await this._db.listCollections({ nameOnly: false });
 
-    const collection = results.find((c) => c.name === this.collectionName);
+    const collection = results.find((c) => c.name === this._collectionName);
 
     if (!collection) {
-      throw new Error(`Collection ${this.collectionName} not found`);
+      throw new Error(`Collection ${this._collectionName} not found`);
     }
 
     return collection.options ?? {};
   }
 
   async drop(): Promise<boolean> {
-    return await this._db.dropCollection(this.collectionName);
+    return await this._db.dropCollection(this._collectionName);
   }
 
   /**
-   * @deprecated Use {@link collectionName} instead
+   * @deprecated Use {@link _collectionName} instead
    */
   get name(): string {
-    return this.collectionName;
+    return this._collectionName;
   }
 }
 

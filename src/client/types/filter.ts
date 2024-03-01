@@ -25,15 +25,15 @@ import { SomeDoc } from '@/src/client/document';
  * @example
  * ```
  * interface BasicSchema {
- *   arr: string[],
- *   num: number,
+ *   arr: string[],
+ *   num: number,
  * }
  * 
  * db.collection<BasicSchema>('coll_name').findOne({
- *   $and: [
- *     { _id: { $in: ['abc', 'def'] } },
- *     { $not: { arr: { $size: 0 } } }
- *   ]
+ *   $and: [
+ *     { _id: { $in: ['abc', 'def'] } },
+ *     { $not: { arr: { $size: 0 } } }
+ *   ]
  * });
  * ```
  */

@@ -28,21 +28,25 @@ import {
 } from '@/src/client/types/collections/list-collection';
 
 export class Db {
-  httpClient: HTTPClient;
-  namespace: string;
+  private readonly _httpClient: HTTPClient;
+  private readonly _namespace: string;
 
   constructor(httpClient: HTTPClient, name: string) {
     if (!name) {
       throw new Error("Db: name is required");
     }
 
-    this.httpClient = httpClient.cloneShallow();
-    this.httpClient.keyspace = name;
-    this.namespace = name;
+    this._httpClient = httpClient.cloneShallow();
+    this._httpClient.keyspace = name;
+    this._namespace = name;
+  }
+
+  get namespace(): string {
+    return this._namespace;
   }
 
   collection<Schema extends SomeDoc = SomeDoc>(name: string): Collection<Schema> {
-    return new Collection<Schema>(this, name);
+    return new Collection<Schema>(this, this._httpClient, name);
   }
 
   async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CollectionOptions<Schema>): Promise<Collection<Schema>> {
@@ -56,7 +60,7 @@ export class Db {
       command.createCollection.options = options;
     }
 
-    const resp = await this.httpClient.executeCommand(command, createCollectionOptionsKeys);
+    const resp = await this._httpClient.executeCommand(command, createCollectionOptionsKeys);
 
     if (resp.errors) {
       throw new DBError(resp.errors, resp.status, 'Error creating collection');
@@ -72,7 +76,7 @@ export class Db {
       },
     };
 
-    const resp = await this.httpClient.executeCommand(command);
+    const resp = await this._httpClient.executeCommand(command);
 
     if (resp.errors) {
       throw new DBError(resp.errors, resp.status, 'Error dropping collection');
@@ -90,7 +94,7 @@ export class Db {
       },
     }
 
-    const resp = await this.httpClient.executeCommand(command, listCollectionOptionsKeys);
+    const resp = await this._httpClient.executeCommand(command, listCollectionOptionsKeys);
 
     if (resp.errors || !resp.status) {
       throw new DBError(resp.errors ?? [], resp.status, 'Error listing collections');
@@ -102,7 +106,7 @@ export class Db {
   }
 
   async createDatabase(): Promise<APIResponse> {
-    return await createNamespace(this.httpClient, this.namespace);
+    return await createNamespace(this._httpClient, this._namespace);
   }
 
   async dropDatabase(): Promise<TypeErr<'Cannot drop database in Astra. Please use the Astra UI to drop the database.'>> {
@@ -110,10 +114,10 @@ export class Db {
   }
 
   /**
-   * @deprecated Use {@link namespace} instead.
+   * @deprecated Use {@link _namespace} instead.
    */
   get name(): string {
-    return this.namespace;
+    return this._namespace;
   }
 }
 

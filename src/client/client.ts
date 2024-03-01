@@ -21,24 +21,28 @@ import { SomeDoc } from '@/src/client/document';
 import { CollectionInfo } from '@/src/client/types/collections/list-collection';
 
 export class Client implements Disposable {
-  httpClient: HTTPClient;
-  namespace: string;
-  _db: Db;
+  readonly _httpClient: HTTPClient;
+  private readonly _namespace: string;
+  private readonly _db: Db;
 
   constructor(baseUrl: string, namespace: string, options: HTTPClientOptions) {
-    this.namespace = namespace;
+    this._namespace = namespace;
 
     if (!options.applicationToken) {
       throw new Error('Application Token is required');
     }
 
-    this.httpClient = new HTTPClient({
+    this._httpClient = new HTTPClient({
       baseUrl: baseUrl,
       keyspaceName: namespace,
       ...options,
     });
 
-    this._db = new Db(this.httpClient, namespace);
+    this._db = new Db(this._httpClient, namespace);
+  }
+
+  get namespace() {
+    return this._namespace;
   }
 
   /**
@@ -59,7 +63,7 @@ export class Client implements Disposable {
   }
 
   async collection<Schema extends SomeDoc = SomeDoc>(name: string) {
-    return new Collection<Schema>(this._db, name);
+    return this.db().collection<Schema>(name);
   }
 
   async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CollectionOptions<Schema>): Promise<Collection<Schema>> {
@@ -76,7 +80,7 @@ export class Client implements Disposable {
 
   db(dbName?: string) {
     if (dbName) {
-      return new Db(this.httpClient, dbName);
+      return new Db(this._httpClient, dbName);
     }
     if (this._db) {
       return this._db;
@@ -90,7 +94,7 @@ export class Client implements Disposable {
   }
 
   close() {
-    this.httpClient.close();
+    this._httpClient.close();
     return this;
   }
 
@@ -102,7 +106,7 @@ export class Client implements Disposable {
    * @deprecated use {@link namespace} instead
    */
   get keyspaceName() {
-    return this.namespace;
+    return this._namespace;
   }
 
   // noinspection JSUnusedGlobalSymbols
