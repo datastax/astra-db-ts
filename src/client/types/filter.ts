@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { ToDotNotation } from '@/src/client/types/dot-notation';
-import { IsNum } from '@/src/client/types/utils';
+import { IsDate, IsNum } from '@/src/client/types/utils';
 import { SomeDoc } from '@/src/client/document';
 
 /**
@@ -62,7 +62,10 @@ type FilterOps<Elem> = {
   $exists?: boolean,
 } & (
   // eslint-disable-next-line @typescript-eslint/ban-types -- Intersection w/ {} is a "noop" here
-  IsNum<Elem> extends true ? NumFilterOps : {}
+  IsNum<Elem> extends false ? {} : NumFilterOps
+) & (
+  // eslint-disable-next-line @typescript-eslint/ban-types -- Intersection w/ {} is a "noop" here
+  IsDate<Elem> extends false ? {} : DateFilterOps
 ) & (
   // eslint-disable-next-line @typescript-eslint/ban-types -- Intersection w/ {} is a "noop" here
   any[] extends Elem ? ArrayFilterOps<Elem> : {}
@@ -72,10 +75,20 @@ type FilterOps<Elem> = {
  * Represents filter operations exclusive to number (or dynamically typed) fields
  */
 interface NumFilterOps {
-  $lt?: number,
-  $lte?: number,
-  $gt?: number,
-  $gte?: number,
+  $lt?: number | bigint,
+  $lte?: number | bigint,
+  $gt?: number | bigint,
+  $gte?: number | bigint,
+}
+
+/**
+ * Represents filter operations exclusive to Dates (or dynamically typed) fields
+ */
+interface DateFilterOps {
+  $lt?: Date | { $date: number },
+  $lte?: Date | { $date: number },
+  $gt?: Date | { $date: number },
+  $gte?: Date | { $date: number },
 }
 
 /**

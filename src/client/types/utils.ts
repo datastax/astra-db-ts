@@ -23,6 +23,16 @@
 export type IsNum<T> = number extends T ? true : bigint extends T ? true : false
 
 /**
+ * Checks if a type can possibly be a date
+ *
+ * @example
+ * ```
+ * IsDate<string | Date> === boolean
+ * ```
+ */
+export type IsDate<T> = T extends Date ? true : false
+
+/**
  * Forces the given type to include an `_id`
  */
 export type WithId<T> = Omit<T, '_id'> & { _id: string }

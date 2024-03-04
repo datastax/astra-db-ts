@@ -47,7 +47,9 @@ export type SortOption<Schema extends SomeDoc> =
  * ```
  */
 export type ProjectionOption<Schema extends SomeDoc> = {
-  [K in keyof ToDotNotation<Schema>]?: 1 | 0 | true | false | Slice;
+  [K in keyof ToDotNotation<Schema>]?: any[] extends ToDotNotation<Schema>[K]
+    ? 1 | 0 | true | false | Slice
+    : 1 | 0 | true | false;
 };
 
 /**

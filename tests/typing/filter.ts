@@ -25,10 +25,10 @@ type test1 = Expect<Equal<Filter<SuperBasicSchema>, {
     $nin?: number[],
     $exists?: boolean,
   } & {
-    $lt?: number,
-    $lte?: number,
-    $gt?: number,
-    $gte?: number,
+    $lt?: number | bigint,
+    $lte?: number | bigint,
+    $gt?: number | bigint,
+    $gte?: number | bigint,
   },
   obj?: { str: string } | {
     $eq?: { str: string },

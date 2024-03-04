@@ -37,8 +37,10 @@ void dummyCollection<TestSchema>().findOne({
   $and: [
     { 'customer.age': { $gt: 18 } },
     { 'customer.age': { $lt: 50 } },
-    { $not: { 'customer.name': { $in: ['John'] } } }
-  ]
+    { $not: { 'customer.name': { $in: ['John'] } } },
+    { 'purchase_date': { $date: 123 } },
+  ],
+  'purchase_date': { $gte: { $date: 123 } },
 }, {
   sort: {
     'customer.address.address_line': 1,
@@ -50,10 +52,42 @@ void dummyCollection<TestSchema>().findOne({
   }
 });
 
+void dummyCollection<TestSchema>().findOne({
+  'customer.credit_score': {
+    // @ts-expect-error - Can't use $date with non-date fields
+    $date: 700,
+  },
+});
+
 void dummyCollection<TestSchema>().findOne({}, {
   sort: {
     $vector: [1, 2, 3],
     // @ts-expect-error - Can't sort by vector and other fields at the same time
     'customer.address.address_line': 1,
   },
+});
+
+void dummyCollection<TestSchema>().findOne({}, {
+  sort: {
+    $vector: [1, 2, 3],
+    // @ts-expect-error - Can't sort by vector and vectorize at the same time
+    $vectorize: 1,
+  },
+});
+
+void dummyCollection<TestSchema>().findOne({}, {
+  projection: {
+    // Technically not valid, but it's just for type testing
+    $vector: {
+      $slice: [
+        1,
+        // @ts-expect-error - Must be a number
+        '2',
+      ]
+    },
+    // @ts-expect-error - Can't use $slice with non-array fields
+    'customer.address.city': { $slice: 1 },
+    // Can use $slice with `any` fields
+    'items': { $slice: 1 },
+  }
 });
