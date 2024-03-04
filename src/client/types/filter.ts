@@ -32,7 +32,7 @@ import { SomeDoc } from '@/src/client/document';
  * db.collection<BasicSchema>('coll_name').findOne({
  *   $and: [
  *     { _id: { $in: ['abc', 'def'] } },
- *     { $not: { arr: { $size: 0 } } }
+ *     { $not: { arr: { $size: 0 } } },
  *   ]
  * });
  * ```
@@ -58,7 +58,7 @@ type FilterOps<Elem> = {
   $eq?: Elem,
   $ne?: Elem,
   $in?: Elem[],
-  $nin?: Elem[] /* I can't unsee this as 'Nine-Inch Nails'... */,
+  $nin?: Elem[] /* I can't un-see this as 'Nine-Inch Nails'... */,
   $exists?: boolean,
 } & (
   // eslint-disable-next-line @typescript-eslint/ban-types -- Intersection w/ {} is a "noop" here

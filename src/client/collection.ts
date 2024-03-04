@@ -54,11 +54,7 @@ import { Filter } from '@/src/client/types/filter';
 import { UpdateFilter } from '@/src/client/types/update-filter';
 import { FoundDoc, MaybeId } from '@/src/client/types/utils';
 import { SomeDoc } from '@/src/client/document';
-import {
-  FailedInsert,
-  InsertManyBulkOptions,
-  InsertManyBulkResult
-} from '@/src/client/types/insert/insert-many-bulk';
+import { FailedInsert, InsertManyBulkOptions, InsertManyBulkResult } from '@/src/client/types/insert/insert-many-bulk';
 import { CollectionOptions } from '@/src/client/types/collections/create-collection';
 import { Db } from '@/src/client/db';
 
@@ -400,6 +396,25 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     return {
       acknowledged: true,
       deletedCount: deleteManyResp.status?.deletedCount,
+    };
+  }
+
+  async deleteManyBulk(filter: Filter<Schema> = {}): Promise<DeleteManyResult> {
+    const command: DeleteManyCommand = {
+      deleteMany: { filter },
+    };
+
+    let resp;
+    let numDeleted = 0;
+
+    while (!resp || resp.status?.moreData) {
+      resp = await this._httpClient.executeCommand(command);
+      numDeleted += resp.status?.deletedCount ?? 0;
+    }
+
+    return {
+      acknowledged: true,
+      deletedCount: numDeleted,
     };
   }
 

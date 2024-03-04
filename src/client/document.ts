@@ -15,7 +15,9 @@
 /**
  * Represents *some document*. It's not a base type, but rather more of a
  * bottom type which can represent any legal document, to give more dynamic
- * typing flexability at the cost of enhanced typechecking/autocomplete.
+ * typing flexibility at the cost of enhanced typechecking/autocomplete.
+ *
+ * {@link Collection Collections} will default to this if no specific type is provided.
  */
 export type SomeDoc = Record<string, any>;
 
@@ -25,12 +27,12 @@ export type SomeDoc = Record<string, any>;
  * @example
  * ```
  * export interface Idea extends VectorDoc {
- *   idea: string,
+ *   idea: string,
  * }
  * 
  * db.collection<Idea>('ideas').insertOne({
- *   idea: 'Upside down doors',
- *   $vector: [.23, .05, .95, .83, .42],
+ *   idea: 'Upside down doors',
+ *   $vector: [.23, .05, .95, .83, .42],
  * });
  * ```
  */

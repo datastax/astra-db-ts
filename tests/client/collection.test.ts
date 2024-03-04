@@ -2815,6 +2815,32 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
   });
 
+  describe('deleteManyBulk tests', () => {
+    it('should deleteManyBulk when match is <= 20', async () => {
+      const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
+      docList.forEach((doc, index) => {
+        doc.username = doc.username + (index + 1);
+      });
+      const res = await collection.insertMany(docList);
+      assert.strictEqual(res.insertedCount, 20);
+      const deleteManyResp = await collection.deleteManyBulk({ 'city': 'trichy' });
+      assert.strictEqual(deleteManyResp.deletedCount, 20);
+      assert.strictEqual(deleteManyResp.acknowledged, true);
+    });
+
+    it('should deleteManyBulk when match is > 20', async () => {
+      const docList = Array.from({ length: 100 }, () => ({ 'username': 'id', 'city': 'trichy' }));
+      docList.forEach((doc, index) => {
+        doc.username = doc.username + (index + 1);
+      });
+      const res = await collection.insertManyBulk(docList);
+      assert.strictEqual(res.insertedCount, 100);
+      const deleteManyResp = await collection.deleteManyBulk({ 'city': 'trichy' });
+      assert.strictEqual(deleteManyResp.deletedCount, 100);
+      assert.strictEqual(deleteManyResp.acknowledged, true);
+    });
+  });
+
   describe('countDocuments tests', () => {
     it('should return count of documents with non id filter', async () => {
       const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));

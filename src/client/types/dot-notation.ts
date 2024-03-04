@@ -38,7 +38,7 @@ import { SomeDoc } from '@/src/client/document';
  * }
  * ```
  */
-export type ToDotNotation<Schema extends SomeDoc> = Merge<_ToDotNotation<Required<Schema>, ''>>
+export type ToDotNotation<Schema extends SomeDoc> = Merge<_ToDotNotation<Required<Schema>, ''>>;
 
 type _ToDotNotation<Elem extends SomeDoc, Prefix extends string> = {
   [Key in keyof Elem]:
@@ -59,17 +59,17 @@ type _ToDotNotation<Elem extends SomeDoc, Prefix extends string> = {
       : { [Path in `${Prefix}${Key & string}`]: Elem[Key] }
 }[keyof Elem] extends infer Value
   ? Value
-  : never
+  : never;
 
 type CropTrailingDot<Str extends string> =
   Str extends `${infer T}.`
     ? T
     : Str;
 
-type Merge<Ts> = Expand<UnionToIntersection<Ts>>
+type Merge<Ts> = Expand<UnionToIntersection<Ts>>;
 
-type UnionToIntersection<U> = (U extends any ? (arg: U) => any : never) extends ((arg: infer I) => void) ? I : never
+type UnionToIntersection<U> = (U extends any ? (arg: U) => any : never) extends ((arg: infer I) => void) ? I : never;
 
 type Expand<T> = T extends infer O
   ? { [K in keyof O]: O[K] }
-  : never
+  : never;
