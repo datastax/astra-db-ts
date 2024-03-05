@@ -14,7 +14,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { UpdateFilter } from '@/src/client';
+import { SomeDoc, UpdateFilter } from '@/src/client';
 import { BasicSchema, ConvolutedSchema1, ConvolutedSchema2, Equal, Expect, Schema } from '@/tests/typing/prelude';
 
 type test1 = Expect<Equal<UpdateFilter<BasicSchema>, {
@@ -210,7 +210,56 @@ const test3: UpdateFilter<Schema> = {
   },
 }
 
-const test4: UpdateFilter<Schema> = {
+const test4: UpdateFilter<SomeDoc> = {
+  $set: {
+    num1: 'a',
+    arr: [
+      1,
+      '1'
+    ],
+    'obj.str2': 2,
+    obj: {},
+    'obj.obj': {
+      num: '1',
+      any: { a: 1 }
+    },
+  },
+  $unset: {
+    // @ts-expect-error - Invalid type
+    num1: 1,
+    // @ts-expect-error - Invalid type
+    num2: '1',
+    // @ts-expect-error - Invalid type
+    'obj.obj.any.xyz': 3,
+  },
+  $inc: {
+    // @ts-expect-error - Invalid type
+    num1: [123],
+    // @ts-expect-error - Invalid type
+    'obj.obj.any.xyz': '2',
+  },
+  $push: {
+    arr: [123, '123'],
+  },
+  $pop: {
+    // @ts-expect-error - Invalid type
+    arr: '123',
+    // @ts-expect-error - Invalid type
+    'obj.obj.any.xyz': 123n,
+  },
+  $rename: {
+    // @ts-expect-error - Invalid type
+    num1: 1,
+    // @ts-expect-error - Invalid type
+    'obj.obj.any.xyz': 1,
+  },
+  $currentDate: {
+    // @ts-expect-error - Invalid type
+    'obj.obj.any.xyz': new Date(),
+  },
+}
+
+const test5: UpdateFilter<Schema> = {
   $set: {
     // @ts-expect-error - Invalid path
     'obj.obj.xyz': '',
@@ -241,53 +290,77 @@ const test4: UpdateFilter<Schema> = {
   },
 }
 
-const test5: UpdateFilter<ConvolutedSchema1> = {
+const test6: UpdateFilter<SomeDoc> = {
   $set: {
-    numOrBigInt: 1,
-    numOrString: 1,
-  },
-  $setOnInsert: {
-    numOrBigInt: 1n,
-    numOrString: '',
+    'obj.obj.xyz': '',
   },
   $unset: {
-    numOrBigInt: '',
-    numOrString: '',
+    'obj.obj.xyz': '',
   },
   $inc: {
-    numOrBigInt: +1,
-    numOrString: -1,
+    'obj.obj.any': 1,
+  },
+  $push: {
+    num1: 1,
+  },
+  $pop: {
+    'obj.obj.xyz': 1,
   },
   $rename: {
-    numOrBigInt: 'new_name',
-    numOrString: 'new_name',
+    'obj.obj.xyz': '1',
   },
-}
-
-const test6: UpdateFilter<ConvolutedSchema1> = {
-  $set: {
-    numOrBigInt: 1,
-    numOrString: 1,
-  },
-  $setOnInsert: {
-    numOrBigInt: 1n,
-    numOrString: '',
-  },
-  $unset: {
-    numOrBigInt: '',
-    numOrString: '',
-  },
-  $inc: {
-    numOrBigInt: +1,
-    numOrString: -1,
-  },
-  $rename: {
-    numOrBigInt: 'new_name',
-    numOrString: 'new_name',
+  $currentDate: {
+    'obj.obj.any': true,
   },
 }
 
 const test7: UpdateFilter<ConvolutedSchema1> = {
+  $set: {
+    numOrBigInt: 1,
+    numOrString: 1,
+  },
+  $setOnInsert: {
+    numOrBigInt: 1n,
+    numOrString: '',
+  },
+  $unset: {
+    numOrBigInt: '',
+    numOrString: '',
+  },
+  $inc: {
+    numOrBigInt: +1,
+    numOrString: -1,
+  },
+  $rename: {
+    numOrBigInt: 'new_name',
+    numOrString: 'new_name',
+  },
+}
+
+const test8: UpdateFilter<ConvolutedSchema1> = {
+  $set: {
+    numOrBigInt: 1,
+    numOrString: 1,
+  },
+  $setOnInsert: {
+    numOrBigInt: 1n,
+    numOrString: '',
+  },
+  $unset: {
+    numOrBigInt: '',
+    numOrString: '',
+  },
+  $inc: {
+    numOrBigInt: +1,
+    numOrString: -1,
+  },
+  $rename: {
+    numOrBigInt: 'new_name',
+    numOrString: 'new_name',
+  },
+}
+
+const test9: UpdateFilter<ConvolutedSchema1> = {
   $set: {
     // @ts-expect-error - Invalid type
     numOrBigInt: '',
@@ -308,7 +381,25 @@ const test7: UpdateFilter<ConvolutedSchema1> = {
   },
 }
 
-const test8: UpdateFilter<ConvolutedSchema2> = {
+const test10: UpdateFilter<SomeDoc> = {
+  $set: {
+    numOrBigInt: '',
+    numOrString: 1n,
+  },
+  $setOnInsert: {
+    intOrBigNum: 1n,
+  },
+  $unset: {
+    // @ts-expect-error - Invalid type
+    numOrBigInt: 3,
+  },
+  $inc: {
+    // @ts-expect-error - Invalid type
+    numOrString: '',
+  },
+}
+
+const test11: UpdateFilter<ConvolutedSchema2> = {
   $set: {
     numOrArray: 1,
   },
@@ -335,7 +426,7 @@ const test8: UpdateFilter<ConvolutedSchema2> = {
   },
 }
 
-const test9: UpdateFilter<ConvolutedSchema2> = {
+const test12: UpdateFilter<ConvolutedSchema2> = {
   $set: {
     numOrArray: [
       // @ts-expect-error - Invalid type
@@ -352,6 +443,25 @@ const test9: UpdateFilter<ConvolutedSchema2> = {
         // @ts-expect-error - Invalid type
         1
       ],
+    },
+  },
+  $min: {
+    // @ts-expect-error - Invalid type
+    numOrArray: [''],
+  },
+}
+
+const test13: UpdateFilter<SomeDoc> = {
+  $set: {
+    numOrArray: [1],
+  },
+  $inc: {
+    // @ts-expect-error - Invalid type
+    numOrArray: [1],
+  },
+  $push: {
+    numOrArray: {
+      $each: [1],
     },
   },
   $min: {

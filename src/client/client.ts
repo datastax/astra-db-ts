@@ -21,7 +21,7 @@ import { SomeDoc } from '@/src/client/document';
 import { CollectionInfo } from '@/src/client/types/collections/list-collection';
 
 export class Client implements Disposable {
-  readonly _httpClient: HTTPClient;
+  private readonly _httpClient: HTTPClient;
   private readonly _namespace: string;
   private readonly _db: Db;
 

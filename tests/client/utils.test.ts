@@ -14,28 +14,29 @@
 
 import assert from 'assert';
 import { AstraDB } from '@/src/client';
+import { useHttpClient } from '@/tests/fixtures';
 
 describe('Utils test', () => {
   it('initialized w/ default keyspace', () => {
     const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
     const astraDb = new AstraDB('myToken', apiEndPoint);
     assert.strictEqual(
-      astraDb._httpClient.baseUrl + '/' + astraDb._httpClient.keyspace,
+      useHttpClient(astraDb).baseUrl + '/' + useHttpClient(astraDb).keyspace,
       'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/default_keyspace',
     );
-    assert.strictEqual(astraDb._httpClient.applicationToken, 'myToken');
-    assert.strictEqual(astraDb._httpClient.usingHttp2, true);
+    assert.strictEqual(useHttpClient(astraDb).applicationToken, 'myToken');
+    assert.strictEqual(useHttpClient(astraDb).usingHttp2, true);
   });
 
   it('adds a keyspace properly', () => {
     const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
     const astraDb = new AstraDB('myToken', apiEndPoint, 'testks1');
     assert.strictEqual(
-      astraDb._httpClient.baseUrl + '/' + astraDb._httpClient.keyspace,
+      useHttpClient(astraDb).baseUrl + '/' + useHttpClient(astraDb).keyspace,
       'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1',
     );
-    assert.strictEqual(astraDb._httpClient.applicationToken, 'myToken');
-    assert.strictEqual(astraDb._httpClient.usingHttp2, true);
+    assert.strictEqual(useHttpClient(astraDb).applicationToken, 'myToken');
+    assert.strictEqual(useHttpClient(astraDb).usingHttp2, true);
   });
 
   it('handles forcing http1.1', () => {
@@ -43,12 +44,12 @@ describe('Utils test', () => {
     const astraDb = new AstraDB('myToken', apiEndPoint, {
       useHttp2: false,
     });
-    assert.strictEqual(astraDb._httpClient.applicationToken, 'myToken');
+    assert.strictEqual(useHttpClient(astraDb).applicationToken, 'myToken');
     assert.strictEqual(
-      astraDb._httpClient.baseUrl + '/' + astraDb._httpClient.keyspace,
+      useHttpClient(astraDb).baseUrl + '/' + useHttpClient(astraDb).keyspace,
       'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/default_keyspace',
     );
-    assert.strictEqual(astraDb._httpClient.usingHttp2, false);
+    assert.strictEqual(useHttpClient(astraDb).usingHttp2, false);
   });
 
   it('handles different base api path', () => {
@@ -56,12 +57,12 @@ describe('Utils test', () => {
     const astraDb = new AstraDB('myToken', apiEndPoint, 'ks', {
       baseApiPath: 'some/random/path',
     });
-    assert.strictEqual(astraDb._httpClient.applicationToken, 'myToken');
+    assert.strictEqual(useHttpClient(astraDb).applicationToken, 'myToken');
     assert.strictEqual(
-      astraDb._httpClient.baseUrl + '/' + astraDb._httpClient.keyspace,
+      useHttpClient(astraDb).baseUrl + '/' + useHttpClient(astraDb).keyspace,
       'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/some/random/path/ks',
     );
-    assert.strictEqual(astraDb._httpClient.usingHttp2, true);
+    assert.strictEqual(useHttpClient(astraDb).usingHttp2, true);
   });
 
   it('throws error on empty keyspace', () => {

@@ -27,6 +27,16 @@ import {
   ListCollectionsOptions
 } from '@/src/client/types/collections/list-collection';
 
+/**
+ * Represents an interface to some Astra database instance.
+ *
+ * **Shouldn't be instantiated directly, use {@link Client.db} to obtain an instance of this class.**
+ *
+ * @example
+ * ```typescript
+ * const db = client.db("my-db");
+ * ```
+ */
 export class Db {
   private readonly _httpClient: HTTPClient;
   private readonly _namespace: string;
@@ -41,14 +51,72 @@ export class Db {
     this._namespace = name;
   }
 
+  /**
+   * @return The namespace (aka keyspace) of the database.
+   */
   get namespace(): string {
     return this._namespace;
   }
 
+  /**
+   * Establishes a reference to a collection in the database. This method does not perform any I/O.
+   *
+   * **NB. This method does not validate the existence of the collection—it simply creates a reference.**
+   *
+   * **Unlike the MongoDB driver, this method does not create a collection if it doesn't exist.**
+   *
+   * Typed as `Collection<SomeDoc>` by default, but you can specify a schema type to get a typed collection.
+   *
+   * @example
+   * ```typescript
+   * interface User {
+   *   name: string,
+   *   age?: number,
+   * }
+   *
+   * const users = db.collection<User>("users");
+   * users.insertOne({ name: "John" });
+   * ```
+   *
+   * @param name The name of the collection.
+   *
+   * @return A reference to the collection.
+   *
+   * @see Collection
+   * @see SomeDoc
+   */
   collection<Schema extends SomeDoc = SomeDoc>(name: string): Collection<Schema> {
     return new Collection<Schema>(this, this._httpClient, name);
   }
 
+  /**
+   * Creates a new collection in the database.
+   *
+   * **NB. You are limited to 5 collections per database in Astra, so be wary when using this command.**
+   *
+   * Typed as `Collection<SomeDoc>` by default, but you can specify a schema type to get a typed collection.
+   *
+   * @example
+   * ```typescript
+   * interface User {
+   *   name: string,
+   *   age?: number,
+   * }
+   *
+   * const users = await db.createCollection<User>("users");
+   * users.insertOne({ name: "John" });
+   * ```
+   *
+   * @param collectionName The name of the collection to create.
+   * @param options Options for the collection.
+   *
+   * @return A promised reference to the newly created collection.
+   *
+   * @throws {DBError} If the operation fails.
+   *
+   * @see Collection
+   * @see SomeDoc
+   */
   async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CollectionOptions<Schema>): Promise<Collection<Schema>> {
     const command: CreateCollectionCommand = {
       createCollection: {
@@ -69,6 +137,15 @@ export class Db {
     return this.collection(collectionName);
   }
 
+  /**
+   * Drops a collection from the database.
+   *
+   * @param collectionName The name of the collection to drop.
+   *
+   * @return A promise that resolves to `true` if the collection was dropped successfully.
+   *
+   * @throws {DBError} If the operation fails.
+   */
   async dropCollection(collectionName: string): Promise<boolean> {
     const command = {
       deleteCollection: {
@@ -85,6 +162,27 @@ export class Db {
     return resp.status?.ok === 1 && !resp.errors;
   }
 
+  /**
+   * Lists the collections in the database.
+   *
+   * Set `nameOnly` to `true` to only return the names of the collections.
+   *
+   * Otherwise, the method returns an array of objects with the collection names and their associated {@link CollectionOptions}.
+   *
+   * @example
+   * ```typescript
+   * const collections = await db.listCollections({ nameOnly: true });
+   * console.log(collections); // [{ name: "users" }, { name: "posts" }]
+   * ```
+   *
+   * @param options Options for the operation.
+   *
+   * @return A promise that resolves to an array of collection info.
+   *
+   * @throws {DBError} If the operation fails.
+   *
+   * @see CollectionOptions
+   */
   async listCollections<NameOnly extends boolean = false>(options?: ListCollectionsOptions<NameOnly>): Promise<CollectionInfo<NameOnly>[]> {
     const command: ListCollectionsCommand = {
       findCollections: {

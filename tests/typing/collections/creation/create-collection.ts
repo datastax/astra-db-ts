@@ -62,12 +62,12 @@ void dummyDB().createCollection<TestSchema>('ASTRA_DB_COLLECTION', {
 });
 
 void dummyDB().createCollection<TestSchema>('ASTRA_DB_COLLECTION', {
-  vectorize: {
-    service: 'openai',
-    options: {
-      anyRandomField: { yes: 'unkown for now' },
-    },
-    // @ts-expect-error - No invalid fields
-    anyRandomField: 'no',
-  }
+  // @ts-expect-error - Need to specify vector metric options
+  vector: {
+    dimension: 5,
+    service: {
+      provider: 'openai',
+      anyRandomField: { yes: 'unknown for now' },
+    }
+  },
 });

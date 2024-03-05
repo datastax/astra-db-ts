@@ -15,6 +15,7 @@
 import { SortOption } from '@/src/client/types/find/find-common';
 import { SomeDoc } from '@/src/client';
 
+// Internal
 export interface FindOneAndDeleteCommand {
   findOneAndDelete: {
     filter?: Record<string, unknown>;
@@ -22,6 +23,19 @@ export interface FindOneAndDeleteCommand {
   };
 }
 
+/**
+ * Represents the options for the `findOneAndDelete` command.
+ *
+ * @field sort - The sort order to pick which document to delete if the filter selects multiple documents.
+ */
 export interface FindOneAndDeleteOptions<Schema extends SomeDoc> {
+  /**
+   * The order in which to apply the update if the filter selects multiple documents.
+   *
+   * If multiple documents match the filter, only one will be updated.
+   *
+   * Defaults to `null`, where the order is not guaranteed.
+   * @default null
+   */
   sort?: SortOption<Schema>;
 }

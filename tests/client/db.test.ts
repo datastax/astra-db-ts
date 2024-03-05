@@ -16,7 +16,7 @@ import assert from 'assert';
 import { Db } from '@/src/client/db';
 import { Client } from '@/src/client/client';
 import { parseUri } from '@/src/client/utils';
-import { TEST_COLLECTION_NAME, testClient } from '@/tests/fixtures';
+import { TEST_COLLECTION_NAME, testClient, useHttpClient } from '@/tests/fixtures';
 import { randAlphaNumeric } from '@ngneat/falso';
 import { HTTPClient } from '@/src/api';
 
@@ -37,7 +37,7 @@ describe("Astra TS Client - collections.Db", async () => {
     }
 
     dbUri = testClient.uri;
-    httpClient = astraClient._httpClient;
+    httpClient = useHttpClient(astraClient);
   });
 
   afterEach(async () => {
@@ -110,7 +110,7 @@ describe("Astra TS Client - collections.Db", async () => {
 
     before(async function () {
       db = new Db(httpClient, parseUri(dbUri).keyspaceName);
-      await db.createCollection(name, { vector: { dimension: 5 } });
+      await db.createCollection(name, { vector: { dimension: 5, metric: 'cosine' } });
     });
 
     after(async function () {
@@ -130,7 +130,7 @@ describe("Astra TS Client - collections.Db", async () => {
 
     it('should return a list of collection infos with nameOnly set to false', async () => {
       const res = await db.listCollections({ nameOnly: false });
-      assert.ok(res.some((collection) => collection.name === name && collection.options));
+      assert.ok(res.some((collection) => collection.name === name && collection.options.vector?.dimension === 5));
     });
   });
 });

@@ -15,6 +15,7 @@
 import { ToDotNotation } from '@/src/client/types/dot-notation';
 import { SomeDoc } from '@/src/client/document';
 
+// Internal
 export interface CreateCollectionCommand {
   createCollection: {
     name: string;
@@ -22,24 +23,60 @@ export interface CreateCollectionCommand {
   };
 }
 
+/**
+ * Represents the options for the createCollection command.
+ *
+ * @field vector - Options related to vector search.
+ * @field indexing - Options related to indexing.
+ */
 export interface CollectionOptions<Schema extends SomeDoc> {
+  /**
+   * Options related to vector search.
+   */
   vector?: VectorOptions;
-  vectorize?: VectorizeOptions;
+  /**
+   * Options related to indexing.
+   */
   indexing?: IndexingOptions<Schema>;
 }
 
-interface VectorOptions {
+/**
+ * Represents the options for the vector search.
+ *
+ * @field dimension - The dimension of the vectors.
+ * @field metric - The similarity metric to use for the vector search.
+ * @field service - Options related to the vectorization pipeline, to specify an embedding service.
+ */
+export interface VectorOptions {
+  /**
+   * The dimension of the vectors stored in the collection.
+   */
   dimension: number;
-  metric?: 'cosine' | 'euclidean' | 'dot_product';
+  /**
+   * The similarity metric to use for the vector search.
+   *
+   * See [intro to vector databases](https://docs.datastax.com/en/astra/astra-db-vector/get-started/concepts.html#metrics) for more details.
+   */
+  metric: 'cosine' | 'euclidean' | 'dot_product';
+  /**
+   * Options related to the vectorization pipeline, to specify an embedding service. WIP.
+   */
+  service?: Record<string, unknown>;
 }
 
-interface VectorizeOptions {
-  service: 'openai' | 'vertexai' | 'huggingface';
-  options?: Record<string, unknown>;
-}
-
-type IndexingOptions<Schema extends SomeDoc> =
+/**
+ * Represents the options for the indexing.
+ *
+ * **Only one of `allow` or `deny` can be specified.**
+ *
+ * See [indexing](https://docs.datastax.com/en/astra/astra-db-vector/api-reference/data-api-commands.html#advanced-feature-indexing-clause-on-createcollection) for more details.
+ *
+ * @field allow - The fields to index.
+ * @field deny - The fields to not index.
+ */
+export type IndexingOptions<Schema extends SomeDoc> =
   | { allow: (keyof ToDotNotation<Schema>)[] | ['*'], deny?:  never }
   | { deny:  (keyof ToDotNotation<Schema>)[] | ['*'], allow?: never }
 
+// Internal
 export const createCollectionOptionsKeys = new Set(['vector', 'indexing']);

@@ -24,12 +24,12 @@ dummyCollection<TestSchema>().findOne({}, {}).then((_a) => {
 
 dummyCollection<TestSchema>().findOne({}, { includeSimilarity: true }).then((_a) => {
   const a = _a!;
-  type b = Expect<Equal<number[], typeof a['$similarity']>>
+  type b = Expect<Equal<number, typeof a['$similarity']>>
 });
 
 dummyCollection<TestSchema>().findOne({}, { includeSimilarity: !!Math.random() }).then((_a) => {
   const a = _a!;
-  type b = Expect<Equal<undefined | number[], typeof a['$similarity']>>
+  type b = Expect<Equal<undefined | number, typeof a['$similarity']>>
 });
 
 void dummyCollection<TestSchema>().findOne({
@@ -41,6 +41,7 @@ void dummyCollection<TestSchema>().findOne({
     { 'purchase_date': { $date: 123 } },
   ],
   'purchase_date': { $gte: { $date: 123 } },
+  'items': { $gte: { $date: 123 } },
 }, {
   sort: {
     'customer.address.address_line': 1,
@@ -49,6 +50,7 @@ void dummyCollection<TestSchema>().findOne({
     'customer.name': 1,
     'customer.age': true,
     'customer.credit_score': 0,
+    'items': { $slice: 1 },
   }
 });
 
@@ -56,6 +58,17 @@ void dummyCollection<TestSchema>().findOne({
   'customer.credit_score': {
     // @ts-expect-error - Can't use $date with non-date fields
     $date: 700,
+  },
+  'customer.name': {
+    // @ts-expect-error - Type mismatch
+    $eq: 18,
+  },
+  'customer.age': {
+    $in: [
+      102,
+      // @ts-expect-error - Type mismatch
+      '1',
+    ],
   },
 });
 
@@ -87,7 +100,5 @@ void dummyCollection<TestSchema>().findOne({}, {
     },
     // @ts-expect-error - Can't use $slice with non-array fields
     'customer.address.city': { $slice: 1 },
-    // Can use $slice with `any` fields
-    'items': { $slice: 1 },
   }
 });

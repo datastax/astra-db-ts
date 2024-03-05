@@ -41,7 +41,7 @@ export type WithId<T> = Omit<T, '_id'> & { _id: string }
  * Includes a `$similarity` field if the typeparam `GetSim` is `true`
  */
 type WithSim<T, GetSim extends boolean> = GetSim extends true
-  ? Omit<T, '$similarity'> & { $similarity: number[]  }
+  ? Omit<T, '$similarity'> & { $similarity: number  }
   : Omit<T, '$similarity'> & { $similarity: undefined }
 
 /**
@@ -50,6 +50,6 @@ type WithSim<T, GetSim extends boolean> = GetSim extends true
 export type FoundDoc<Doc, GetSim extends boolean> = WithSim<WithId<Doc>, GetSim>
 
 /**
- * Represents a doc that doesn't necessarily need an `_id`
+ * Represents a doc that doesn't have an `_id`
  */
-export type MaybeId<Doc> = Omit<Doc, '_id'> & { _id?: string }
+export type NoId<Doc> = Omit<Doc, '_id'>

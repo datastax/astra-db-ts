@@ -15,6 +15,27 @@
 import { SomeDoc } from '@/src/client/document';
 import { ToDotNotation } from '@/src/client/types/dot-notation';
 
+/**
+ * Specifies the sort criteria for selecting documents.
+ *
+ * Can use `1`/`-1` for ascending/descending, or `$vector`/`$vectorize` for sorting by vector distance.
+ *
+ * **NB. The order of the fields in the sort option is significant—fields are sorted in the order they are listed.**
+ *
+ * @example
+ * ```typescript
+ * // Sort by name in ascending order, then by age in descending order
+ * const sort1: SortOption<SomeDoc> = {
+ *   name: 1,
+ *   age: -1,
+ * }
+ *
+ * // Sort by vector distance
+ * const sort2: SortOption<SomeDoc> = {
+ *   $vector: [0.23, 0.38, 0.27, 0.91, 0.21],
+ * }
+ * ```
+ */
 export type SortOption<Schema extends SomeDoc> =
   | { [K in keyof ToDotNotation<Schema>]?: 1 | -1 }
   | { $vector: { $meta: number[] } }
@@ -76,8 +97,17 @@ interface Slice {
 
 /**
  * Represents the result of a `findOneAnd*` operation (e.g. `findOneAndUpdate`)
+ *
+ * @field value - The document that was found and modified.
+ * @field ok - If the operation was acknowledged.
  */
 export interface FindOneAndModifyResult<Schema extends SomeDoc> {
+  /**
+   * The document that was found and modified, or `null` if nothing matched.
+   */
   value: Schema | null;
+  /**
+   * If the operation was ok.
+   */
   ok: number;
 }

@@ -14,7 +14,7 @@
 
 import assert from 'assert';
 import { Client } from '@/src/client/client';
-import { testClient } from '@/tests/fixtures';
+import { testClient, useHttpClient } from '@/tests/fixtures';
 import { parseUri } from '@/src/client/utils';
 
 const localBaseUrl = "http://localhost:8181";
@@ -71,14 +71,14 @@ describe("Client test", () => {
         baseApiPath: BASE_API_PATH_TO_CHECK,
       });
       assert.ok(client);
-      assert.ok(client._httpClient);
+      assert.ok(useHttpClient(client));
       assert.strictEqual(
-        client._httpClient.applicationToken,
+        useHttpClient(client).applicationToken,
         AUTH_TOKEN_TO_CHECK,
       );
       assert.strictEqual(client.namespace, parseUri(clientURI).keyspaceName);
       assert.strictEqual(
-        client._httpClient.baseUrl,
+        useHttpClient(client).baseUrl,
         parseUri(clientURI).baseUrl + "/" + BASE_API_PATH_TO_CHECK,
       );
       const db = client.db();
@@ -96,14 +96,14 @@ describe("Client test", () => {
         },
       );
       assert.ok(client);
-      assert.ok(client._httpClient);
+      assert.ok(useHttpClient(client));
       assert.strictEqual(
-        client._httpClient.applicationToken,
+        useHttpClient(client).applicationToken,
         AUTH_TOKEN_TO_CHECK,
       );
       assert.strictEqual(client.namespace, KEYSPACE_TO_CHECK);
       assert.strictEqual(
-        client._httpClient.baseUrl,
+        useHttpClient(client).baseUrl,
         parseUri(clientURI).baseUrl + "/" + BASE_API_PATH_TO_CHECK,
       );
       const db = client.db();
@@ -121,10 +121,10 @@ describe("Client test", () => {
         },
       );
       assert.ok(client);
-      assert.ok(client._httpClient);
-      assert.strictEqual(client._httpClient.applicationToken, AUTH_TOKEN_TO_CHECK);
+      assert.ok(useHttpClient(client));
+      assert.strictEqual(useHttpClient(client).applicationToken, AUTH_TOKEN_TO_CHECK);
       assert.strictEqual(client.namespace, KEYSPACE_TO_CHECK);
-      assert.strictEqual(client._httpClient.baseUrl, parseUri(clientURI).baseUrl + "/" + BASE_API_PATH_TO_CHECK);
+      assert.strictEqual(useHttpClient(client).baseUrl, parseUri(clientURI).baseUrl + "/" + BASE_API_PATH_TO_CHECK);
       const db = client.db();
       assert.ok(db);
     });
@@ -143,11 +143,11 @@ describe("Client test", () => {
         },
       );
       assert.ok(client);
-      assert.ok(client._httpClient);
-      assert.strictEqual(client._httpClient.applicationToken, AUTH_TOKEN_TO_CHECK);
+      assert.ok(useHttpClient(client));
+      assert.strictEqual(useHttpClient(client).applicationToken, AUTH_TOKEN_TO_CHECK);
       assert.strictEqual(client.namespace, KEYSPACE_TO_CHECK);
       assert.strictEqual(
-        client._httpClient.baseUrl,
+        useHttpClient(client).baseUrl,
         baseUrl + "/testks1/" + BASE_API_PATH_TO_CHECK,
       );
       const db = client.db();
@@ -167,10 +167,10 @@ describe("Client test", () => {
         },
       );
       assert.ok(client);
-      assert.ok(client._httpClient);
-      assert.strictEqual(client._httpClient.applicationToken, AUTH_TOKEN_TO_CHECK);
+      assert.ok(useHttpClient(client));
+      assert.strictEqual(useHttpClient(client).applicationToken, AUTH_TOKEN_TO_CHECK);
       assert.strictEqual(client.namespace, KEYSPACE_TO_CHECK);
-      assert.strictEqual(client._httpClient.baseUrl, baseUrl + "/baseAPIPath2");
+      assert.strictEqual(useHttpClient(client).baseUrl, baseUrl + "/baseAPIPath2");
       const db = client.db();
       assert.ok(db);
     });
@@ -184,10 +184,10 @@ describe("Client test", () => {
       });
 
       assert.ok(client);
-      assert.ok(client._httpClient);
-      assert.strictEqual(client._httpClient.applicationToken, AUTH_TOKEN_TO_CHECK);
+      assert.ok(useHttpClient(client));
+      assert.strictEqual(useHttpClient(client).applicationToken, AUTH_TOKEN_TO_CHECK);
       assert.strictEqual(client.namespace, KEYSPACE_TO_CHECK);
-      assert.strictEqual(client._httpClient.baseUrl, baseUrl);
+      assert.strictEqual(useHttpClient(client).baseUrl, baseUrl);
       const db = client.db();
       assert.ok(db);
     });
@@ -223,7 +223,7 @@ describe("Client test", () => {
         applicationToken: "123",
       });
       assert.ok(client);
-      assert.ok(client._httpClient);
+      assert.ok(useHttpClient(client));
     });
 
     it("should set the auth header name as set in the options", async () => {
@@ -286,13 +286,13 @@ describe("Client test", () => {
         useHttp2: true
       });
 
-      assert.ok(!client._httpClient.isClosed());
+      assert.ok(!useHttpClient(client).isClosed());
 
       client.close();
-      assert.ok(client._httpClient.isClosed());
+      assert.ok(useHttpClient(client).isClosed());
 
       client.close();
-      assert.ok(client._httpClient.isClosed());
+      assert.ok(useHttpClient(client).isClosed());
 
       let error: any;
       try {

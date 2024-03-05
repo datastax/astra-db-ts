@@ -15,6 +15,7 @@
 import { SortOption } from '@/src/client/types/find/find-common';
 import { SomeDoc } from '@/src/client';
 
+// Internal
 export interface FindOneAndReplaceCommand {
   findOneAndReplace: {
     filter: Record<string, unknown>;
@@ -24,10 +25,41 @@ export interface FindOneAndReplaceCommand {
   };
 }
 
+/**
+ * Represents the options for the `findOneAndReplace` command.
+ *
+ * @field returnDocument - Specifies whether to return the original or updated document.
+ * @field upsert - If true, perform an insert if no documents match the filter.
+ * @field sort - The sort order to pick which document to replace if the filter selects multiple documents.
+ */
 export interface FindOneAndReplaceOptions<Schema extends SomeDoc> {
+  /**
+   * Specifies whether to return the document before or after the update.
+   *
+   * Set to `before` to return the document before the update to see the original state of the document.
+   *
+   * Set to `after` to return the document after the update to see the updated state of the document immediately.
+   */
+  returnDocument: 'before' | 'after';
+  /**
+   * If true, perform an insert if no documents match the filter.
+   *
+   * If false, do not insert if no documents match the filter.
+   *
+   * Defaults to false.
+   * @default false
+   */
   upsert?: boolean;
-  returnDocument?: "before" | "after";
+  /**
+   * The order in which to apply the update if the filter selects multiple documents.
+   *
+   * If multiple documents match the filter, only one will be updated.
+   *
+   * Defaults to `null`, where the order is not guaranteed.
+   * @default null
+   */
   sort?: SortOption<Schema>;
 }
 
+// Internal
 export const findOneAndReplaceOptionsKeys = new Set(['upsert', 'returnDocument', 'sort']);

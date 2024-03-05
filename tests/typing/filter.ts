@@ -15,7 +15,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { ConvolutedSchema2, Equal, Expect, Schema, SuperBasicSchema } from '@/tests/typing/prelude';
-import { Filter } from '@/src/client';
+import { Filter, SomeDoc } from '@/src/client';
 
 type test1 = Expect<Equal<Filter<SuperBasicSchema>, {
   num?: number | {
@@ -120,12 +120,28 @@ const test3: Filter<Schema> = {
   ]
 }
 
-const test4: Filter<Schema> = {
+const test4: Filter<SomeDoc> = {
+  num1: '1',
+  num2: { $in: [1, 2, '3'] },
+  'obj.obj.num': '3',
+  $and: [
+    { num1: { $eq: 1n } },
+    { num2: { $in: [1, 2, '3'] } },
+    {
+      $or: [
+        { 'obj.obj.num': { $size: 3 } },
+        { 'obj.obj.num': { $and: [] } },
+      ]
+    }
+  ]
+}
+
+const test5: Filter<Schema> = {
   // @ts-expect-error - Invalid path
   'obj.obj.xyz': null!
 }
 
-const test5: Filter<ConvolutedSchema2> = {
+const test6: Filter<ConvolutedSchema2> = {
   $or: [
     { numOrArray: { $in: [['1'], 2] } },
     { numOrArray: { $gte: 3 } },
