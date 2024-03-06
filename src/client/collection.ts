@@ -57,6 +57,7 @@ import { SomeDoc } from '@/src/client/document';
 import { FailedInsert, InsertManyBulkOptions, InsertManyBulkResult } from '@/src/client/types/insert/insert-many-bulk';
 import { CollectionOptions } from '@/src/client/types/collections/create-collection';
 import { Db } from '@/src/client/db';
+import { FindCursorV2 } from '@/src/client/cursor-v2';
 
 /**
  * Represents the interface to a collection in the database.
@@ -108,14 +109,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    */
   get namespace(): string {
     return this._db.namespace;
-  }
-
-  get readConcern (): { level: 'majority' } {
-    return { level: 'majority' };
-  }
-
-  get writeConcern (): { level: 'majority' } {
-    return { level: 'majority' };
   }
 
   /**
@@ -184,19 +177,18 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       insertedCount: resp.status?.insertedIds?.length || 0,
       insertedIds: resp.status?.insertedIds,
     };
+
+    // return this.insertManyBulk(documents, {
+    //   ordered: options?.ordered,
+    //   parallel: 1,
+    // });
   }
 
   async insertManyBulk(documents: Schema[], options?: InsertManyBulkOptions): Promise<InsertManyBulkResult<Schema>> {
-    const chunkSize = (options?.chunkSize ?? 20);
     const parallel = (options?.ordered) ? 1 : (options?.parallel ?? 4);
 
-    // @ts-expect-error - Sanity check for JS users or bad people who disobey the TS transpiler
     if (options?.ordered && options?.parallel && options?.parallel !== 1) {
       throw new Error('Parallel insert with ordered option is not supported');
-    }
-
-    if (chunkSize < 1 || chunkSize > 20) {
-      throw new Error('Chunk size must be between 1 and 20, inclusive');
     }
 
     if (parallel < 1) {
@@ -206,22 +198,38 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     const results: InsertManyResult[] = [];
     const failedInserts: FailedInsert<Schema>[] = [];
 
-    const workerChunkSize = Math.ceil(documents.length / parallel);
+    let masterIndex = 0;
 
-    const processQueue = async (i: number) => {
-      const startIdx = i * workerChunkSize;
-      const endIdx = (i + 1) * workerChunkSize;
+    const processQueue = async () => {
+      while (masterIndex < documents.length) {
+        const localI = masterIndex;
+        const endIdx = Math.min(localI + 20, documents.length);
+        masterIndex += 20;
 
-      for (let i = startIdx; i < endIdx; i += chunkSize) {
-        const slice = documents.slice(i, Math.min(i + chunkSize, endIdx, documents.length));
-
-        if (slice.length === 0) {
+        if (localI >= endIdx) {
           break;
         }
 
+        const slice = documents.slice(localI, endIdx);
+
         try {
-          const result = await this.insertMany(slice);
-          results.push(result);
+          // const result = await this.insertMany(slice);
+          slice.forEach(setDefaultIdForInsert);
+
+          const command: InsertManyCommand = {
+            insertMany: {
+              documents: slice,
+              options,
+            },
+          };
+
+          const resp = await this._httpClient.executeCommand(command, insertManyOptionKeys);
+
+          results.push({
+            acknowledged: true,
+            insertedCount: resp.status?.insertedIds?.length || 0,
+            insertedIds: resp.status?.insertedIds,
+          });
         } catch (e: any) {
           const insertedIDs = e.status?.insertedIds ?? [];
           const insertedIDSet = new Set(insertedIDs);
@@ -234,9 +242,9 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
           const upperBound = (options?.ordered)
             ? documents.length
-            : Math.min(i + chunkSize, endIdx, documents.length);
+            : endIdx;
 
-          for (let j = i; j < upperBound; j++) {
+          for (let j = localI; j < upperBound; j++) {
             const doc = documents[j];
 
             if (insertedIDSet.has(doc._id)) {
@@ -253,9 +261,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       }
     };
 
-    const workers = Array.from({ length: parallel }, (_, i) => {
-      return processQueue(i);
-    });
+    const workers = Array.from({ length: parallel }, processQueue);
 
     await Promise.all(workers);
 
@@ -555,6 +561,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
   find<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursor<FoundDoc<Schema, GetSim>> {
     return new FindCursor(this._httpClient, filter, options) as any;
+  }
+
+  findV2<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursorV2<FoundDoc<Schema, GetSim>> {
+    return new FindCursorV2(this._db, this._httpClient, filter, options) as any;
   }
 
   /**

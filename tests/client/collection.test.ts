@@ -90,14 +90,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       // noinspection JSDeprecatedSymbols
       assert.strictEqual(collection.name, TEST_COLLECTION_NAME);
     });
-
-    it('returns the readConcern', () => {
-      assert.strictEqual(collection.readConcern.level, 'majority');
-    });
-
-    it('returns the writeConcern', () => {
-      assert.strictEqual(collection.writeConcern.level, 'majority');
-    });
   });
 
   describe('insertOne tests', () => {
@@ -345,7 +337,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
 
     it('should handle ordered insert fails', async () => {
       const docList = Array.from({ length: 25 }, (_, i) => ({ _id: `id${Math.min(i, 4)}`, username: `user${i}` }));
-      const res = await collection.insertManyBulk(docList, { ordered: true, chunkSize: 20 });
+      const res = await collection.insertManyBulk(docList, { ordered: true });
       assert.strictEqual(res.insertedCount, 5);
       assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 5);

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ProjectionOption, SortOption } from '@/src/client/types/find/find-common';
 import { SomeDoc } from '@/src/client';
+import { ProjectionOption, SortOption } from '@/src/client/types/common';
 
 export interface FindOptions<Schema extends SomeDoc, GetSim extends boolean> {
   sort?: SortOption<Schema>;
@@ -21,6 +21,7 @@ export interface FindOptions<Schema extends SomeDoc, GetSim extends boolean> {
   limit?: number;
   skip?: number;
   includeSimilarity?: GetSim;
+  batchSize?: number;
 }
 
 export interface InternalFindOptions {

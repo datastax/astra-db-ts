@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ProjectionOption, SortOption } from '@/src/client/types/find/find-common';
 import { SomeDoc } from '@/src/client';
+import { ProjectionOption, SortOption } from '@/src/client/types/common';
 
 // Internal
 export interface FindOneCommand {

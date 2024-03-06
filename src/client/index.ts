@@ -22,7 +22,6 @@ export { UpdateManyOptions, UpdateManyResult } from '@/src/client/types/update/u
 export { DeleteOneOptions, DeleteOneResult } from '@/src/client/types/delete/delete-one';
 export { DeleteManyResult } from '@/src/client/types/delete/delete-many';
 export { FindOptions } from '@/src/client/types/find/find';
-export { SortOption, ProjectionOption } from '@/src/client/types/find/find-common';
 export { FindOneOptions } from '@/src/client/types/find/find-one';
 export { FindOneAndDeleteOptions } from '@/src/client/types/find/find-one-delete';
 export { FindOneAndUpdateOptions } from '@/src/client/types/find/find-one-update';
@@ -33,3 +32,5 @@ export { VectorDoc, SomeDoc } from '@/src/client/document';
 
 export { createAstraUri } from './utils';
 export { AstraDB } from '@/src/client/astra';
+export { ProjectionOption } from '@/src/client/types/common';
+export { SortOption } from '@/src/client/types/common';
