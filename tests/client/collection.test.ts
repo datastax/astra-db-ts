@@ -2421,7 +2421,10 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     it('should findOneAndUpdate', async () => {
       const res = await collection.insertOne(createSampleDocWithMultiLevel());
       const docId = res.insertedId;
-      const findOneAndUpdateResp = await collection.findOneAndUpdate({ '_id': docId },
+      const findOneAndUpdateResp = await collection.findOneAndUpdate(
+        {
+          '_id': docId
+        },
         {
           '$set': {
             'username': 'aaronm'
@@ -2431,8 +2434,9 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
           }
         },
         {
-          'returnDocument': 'after'
-        }
+          returnDocument: 'after',
+          includeResultMetadata: true,
+        },
       );
       assert.strictEqual(findOneAndUpdateResp.ok, 1);
       assert.strictEqual(findOneAndUpdateResp.value!._id, docId);
@@ -2446,7 +2450,10 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const docId = res.insertedId;
       const cityBefore = docToInsert.address?.city;
       const usernameBefore = docToInsert.username;
-      const findOneAndUpdateResp = await collection.findOneAndUpdate({ '_id': docId },
+      const findOneAndUpdateResp = await collection.findOneAndUpdate(
+        {
+          '_id': docId,
+        },
         {
           '$set': {
             'username': 'aaronm'
@@ -2456,7 +2463,8 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
           }
         },
         {
-          'returnDocument': 'before'
+          returnDocument: 'before',
+          includeResultMetadata: true,
         }
       );
       assert.strictEqual(findOneAndUpdateResp.ok, 1);
@@ -2468,7 +2476,10 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     it('should findOneAndUpdate with upsert true', async () => {
       await collection.insertOne(createSampleDocWithMultiLevel());
       const newDocId = '123';
-      const findOneAndUpdateResp = await collection.findOneAndUpdate({ '_id': newDocId },
+      const findOneAndUpdateResp = await collection.findOneAndUpdate(
+        {
+          '_id': newDocId,
+        },
         {
           '$set': {
             'username': 'aaronm'
@@ -2478,8 +2489,9 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
           }
         },
         {
-          'returnDocument': 'after',
-          'upsert': true
+          includeResultMetadata: true,
+          returnDocument: 'after',
+          upsert: true,
         }
       );
       assert.strictEqual(findOneAndUpdateResp.ok, 1);
@@ -2491,7 +2503,10 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     it('should findOneAndUpdate with upsert true and returnDocument before', async () => {
       await collection.insertOne(createSampleDocWithMultiLevel());
       const newDocId = '123';
-      const findOneAndUpdateResp = await collection.findOneAndUpdate({ '_id': newDocId },
+      const findOneAndUpdateResp = await collection.findOneAndUpdate(
+        {
+          '_id': newDocId,
+        },
         {
           '$set': {
             'username': 'aaronm'
@@ -2501,8 +2516,9 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
           }
         },
         {
-          'returnDocument': 'before',
-          'upsert': true
+          includeResultMetadata: true,
+          returnDocument: 'before',
+          upsert: true
         }
       );
       assert.strictEqual(findOneAndUpdateResp.ok, 1);
@@ -2519,8 +2535,9 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
           }
         },
         {
-          'returnDocument': 'after',
-          'upsert': true
+          includeResultMetadata: true,
+          returnDocument: 'after',
+          upsert: true
         }
       );
       assert.ok(value!._id!.toString().match(/^[a-f\d]{24}$/i), value!._id!.toString());
@@ -2638,14 +2655,14 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       let res = await collection.findOneAndUpdate(
         {},
         { $set: { username: 'aaa' } },
-        { sort: { username: 1 }, returnDocument: 'before' }
+        { sort: { username: 1 }, returnDocument: 'before', includeResultMetadata: true }
       );
       assert.strictEqual(res.value!.username, 'a');
 
       res = await collection.findOneAndUpdate(
         {},
         { $set: { username: 'ccc' } },
-        { sort: { username: -1 }, returnDocument: 'before' }
+        { sort: { username: -1 }, returnDocument: 'before', includeResultMetadata: true }
       );
       assert.deepStrictEqual(res.value!.username, 'c');
     });
@@ -2661,14 +2678,14 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       let res = await collection.findOneAndReplace(
         {},
         { username: 'aaa' },
-        { sort: { username: 1 }, returnDocument: 'before' }
+        { sort: { username: 1 }, returnDocument: 'before', includeResultMetadata: true }
       );
       assert.strictEqual(res.value!.username, 'a');
 
       res = await collection.findOneAndReplace(
         {},
         { username: 'ccc' },
-        { sort: { username: -1 }, returnDocument: 'before' }
+        { sort: { username: -1 }, returnDocument: 'before', includeResultMetadata: true }
       );
       assert.deepStrictEqual(res.value!.username, 'c');
 
@@ -2684,8 +2701,9 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
           'username': 'aaronm'
         },
         {
-          'returnDocument': 'after',
-          'upsert': true
+          returnDocument: 'after',
+          upsert: true,
+          includeResultMetadata: true,
         }
       );
       assert.ok(value!._id!.match(/^[a-f\d]{24}$/i), value!._id);
@@ -2700,7 +2718,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const res = await collection.findOneAndUpdate(
         {},
         { $set: { username: 'a' } },
-        { sort: { username: 1 }, returnDocument: 'before' }
+        { sort: { username: 1 }, returnDocument: 'before', includeResultMetadata: true }
       );
       assert.strictEqual(res.value!.username, 'a');
     });
@@ -2752,10 +2770,10 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         { username: 'c' }
       ]);
 
-      let res = await collection.findOneAndDelete({ username: 'a' });
+      let res = await collection.findOneAndDelete({ username: 'a' }, { includeResultMetadata: true });
       assert.strictEqual(res.value!.username, 'a');
 
-      res = await collection.findOneAndDelete({}, { sort: { username: -1 } });
+      res = await collection.findOneAndDelete({}, { sort: { username: -1 }, includeResultMetadata: true });
       assert.strictEqual(res.value!.username, 'c');
     });
 

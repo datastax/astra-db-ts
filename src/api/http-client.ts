@@ -77,12 +77,9 @@ export class HTTPClient {
   async executeCommand(data: Record<string, any>, options?: BaseOptions, optionsToRetain?: Set<string>) {
     const commandName = Object.keys(data)[0];
 
-    cleanupOptions(
-      commandName,
-      data[commandName],
-      optionsToRetain,
-      this.logSkippedOptions,
-    );
+    if (data[commandName].options) {
+      data[commandName].options = cleanupOptions(data, commandName, optionsToRetain, this.logSkippedOptions);
+    }
 
     const response = await this.request({
       url: this.baseUrl,
@@ -211,22 +208,23 @@ function handleValues(value: any): any {
   return value;
 }
 
-function cleanupOptions(
-  commandName: string,
-  command: Record<string, any>,
-  optionsToRetain: Set<string> | undefined,
-  logSkippedOptions: boolean,
-) {
+function cleanupOptions(data: Record<string, any>, commandName: string, optionsToRetain: Set<string> | undefined, logSkippedOptions: boolean) {
+  const command = data[commandName];
+
   if (!command.options) {
-    return;
+    return undefined;
   }
 
-  Object.keys(command.options!).forEach((key) => {
+  const options = { ...command.options };
+
+  Object.keys(options).forEach((key) => {
     if (!optionsToRetain || !optionsToRetain.has(key)) {
       if (logSkippedOptions) {
         logger.warn(`'${commandName}' does not support option '${key}'`);
       }
-      delete command.options[key];
+      delete options[key];
     }
   });
+
+  return options;
 }

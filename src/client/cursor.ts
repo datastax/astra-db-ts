@@ -40,12 +40,12 @@ export class FindCursor<Schema> {
     this.options = options ?? {};
     this.httpClient = httpClient;
 
-    // const isNonVectorSort = this.options.sort && !('$vector' in this.options.sort || '$vectorize' in this.options.sort);
-    // const isOverPageSizeLimit = !this.options.limit || this.options.limit > 20;
-    //
-    // if (isNonVectorSort && isOverPageSizeLimit) {
-    //   throw new Error('Cannot set non-vector sort option without limit <= 20, JSON API can currently only return 20 documents with sort');
-    // }
+    const isNonVectorSort = this.options.sort && !('$vector' in this.options.sort || '$vectorize' in this.options.sort);
+    const isOverPageSizeLimit = !this.options.limit || this.options.limit > 20;
+
+    if (isNonVectorSort && isOverPageSizeLimit) {
+      throw new Error('Cannot set non-vector sort option without limit <= 20, JSON API can currently only return 20 documents with sort');
+    }
 
     this.limit = options?.limit || Infinity;
     this.status = 'initialized';
@@ -119,6 +119,7 @@ export class FindCursor<Schema> {
     }
     const resp = await this.httpClient.executeCommand(
       command,
+      {},
       internalFindOptionsKeys,
     );
     this.nextPageState = resp.data!.nextPageState;

@@ -535,6 +535,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param options - The options for the operation.
    */
   async findOne<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<Schema, GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
+    options = { ...options };
+
     const command: FindOneCommand = {
       findOne: {
         filter,
@@ -601,6 +603,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   ): Promise<WithId<Schema> | null>
 
   async findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options: FindOneAndReplaceOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+    options = { ...options };
+
     const command: FindOneAndReplaceCommand = {
       findOneAndReplace: {
         filter,
@@ -754,6 +758,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   ): Promise<WithId<Schema> | null>
 
   async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options: FindOneAndUpdateOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+    options = { ...options };
+
     const command: FindOneAndUpdateCommand = {
       findOneAndUpdate: {
         filter,
