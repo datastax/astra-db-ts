@@ -40,7 +40,7 @@ export interface FindOneAndReplaceOptions<Schema extends SomeDoc> {
    *
    * Set to `after` to return the document after the update to see the updated state of the document immediately.
    */
-  returnDocument: 'before' | 'after';
+  returnDocument: 'before' | 'after',
   /**
    * If true, perform an insert if no documents match the filter.
    *
@@ -49,7 +49,7 @@ export interface FindOneAndReplaceOptions<Schema extends SomeDoc> {
    * Defaults to false.
    * @default false
    */
-  upsert?: boolean;
+  upsert?: boolean,
   /**
    * The order in which to apply the update if the filter selects multiple documents.
    *
@@ -58,7 +58,8 @@ export interface FindOneAndReplaceOptions<Schema extends SomeDoc> {
    * Defaults to `null`, where the order is not guaranteed.
    * @default null
    */
-  sort?: SortOption<Schema>;
+  sort?: SortOption<Schema>,
+  includeResultMetadata?: boolean,
 }
 
 /** @internal */

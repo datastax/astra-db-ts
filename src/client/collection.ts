@@ -37,7 +37,7 @@ import {
 import { DeleteOneCommand, DeleteOneOptions, DeleteOneResult } from '@/src/client/types/delete/delete-one';
 import { DeleteManyCommand, DeleteManyResult } from '@/src/client/types/delete/delete-many';
 import { FindOptions } from '@/src/client/types/find/find';
-import { FindOneAndModifyResult } from '@/src/client/types/find/find-common';
+import { ModifyResult } from '@/src/client/types/find/find-common';
 import { FindOneCommand, FindOneOptions, findOneOptionsKeys } from '@/src/client/types/find/find-one';
 import { FindOneAndDeleteCommand, FindOneAndDeleteOptions } from '@/src/client/types/find/find-one-delete';
 import {
@@ -52,7 +52,7 @@ import {
 } from '@/src/client/types/find/find-one-replace';
 import { Filter } from '@/src/client/types/filter';
 import { UpdateFilter } from '@/src/client/types/update-filter';
-import { FoundDoc, NoId } from '@/src/client/types/utils';
+import { FoundDoc, NoId, WithId } from '@/src/client/types/utils';
 import { SomeDoc } from '@/src/client/document';
 import { FailedInsert, InsertManyBulkOptions, InsertManyBulkResult } from '@/src/client/types/insert/insert-many-bulk';
 import { CollectionOptions } from '@/src/client/types/collections/create-collection';
@@ -279,97 +279,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     };
   }
 
-  // async upsertOne(document: Schema): Promise<UpsertOneResult> {
-  //   try {
-  //     return {
-  //       ...await this.insertOne(document),
-  //       replaced: false,
-  //     };
-  //   } catch (e: any) {
-  //     if (e.errors.length !== 1 || e.errors[0]?.errorCode !== 'DOCUMENT_ALREADY_EXISTS') {
-  //       throw e;
-  //     }
-  //
-  //     const resp = await this.findOneAndReplace({ _id: document._id }, document, { upsert: true });
-  //
-  //     return {
-  //       acknowledged: true,
-  //       insertedId: resp.value!._id,
-  //       replaced: true,
-  //     };
-  //   }
-  // }
-  //
-  // async upsertOneV2(document: Schema): Promise<UpsertOneResult> {
-  //   setDefaultIdForInsert(document);
-  //
-  //   const command: FindOneAndReplaceCommand = {
-  //     findOneAndReplace: {
-  //       filter: { _id: document._id },
-  //       options: { upsert: true },
-  //       replacement: document,
-  //     },
-  //   };
-  //
-  //   const resp = await this._httpClient.executeCommand(command, findOneAndReplaceOptionsKeys);
-  //
-  //   return {
-  //     acknowledged: true,
-  //     insertedId: resp.data?.document?._id ?? resp.status?.upsertedId,
-  //     replaced: !resp.status?.upsertedId
-  //   };
-  // }
-  //
-  // async upsertMany(documents: Schema[], options?: UpsertManyOptions): Promise<UpsertManyResult<Schema>> {
-  //   const unique = nubByReverse(documents, '_id');
-  //
-  //   const resp = await this.insertManyBulk(unique, {
-  //     chunkSize: options?.insertionChunkSize,
-  //     parallel: options?.insertionParallel,
-  //   });
-  //
-  //   const duplicated = resp.failedInserts.filter((f) => {
-  //     return f.errors?.some((e: any) => e.errorCode === 'DOCUMENT_ALREADY_EXISTS');
-  //   });
-  //
-  //   const workerChunkSize = Math.ceil(duplicated.length / (options?.upsertParallel ?? 8));
-  //
-  //   const upserted: UpsertOneResult[] = [];
-  //   const failedUpserts: FailedInsert<Schema>[] = [];
-  //
-  //   const processQueue = async (i: number) => {
-  //     const startIdx = i * workerChunkSize;
-  //     const endIdx = (i + 1) * workerChunkSize;
-  //
-  //     for (let i = startIdx; i < Math.min(endIdx, documents.length); i ++) {
-  //       const dup = duplicated[i];
-  //
-  //       try {
-  //         const result = await this.upsertOneV2(dup.document);
-  //         upserted.push(result);
-  //       } catch (e: any) {
-  //         failedUpserts.push({ document: dup.document, errors: e.errors });
-  //       }
-  //     }
-  //   };
-  //
-  //   const workers = Array.from({ length: options?.upsertParallel ?? 8 }, (_, i) => {
-  //     return processQueue(i);
-  //   });
-  //
-  //   await Promise.all(workers);
-  //
-  //   return {
-  //     acknowledged: true,
-  //     insertedCount: resp.insertedCount,
-  //     insertedIds: resp.insertedIds,
-  //     modifiedIds: upserted.map((r) => r.insertedId),
-  //     modifiedCount: upserted.length,
-  //     failedCount: failedUpserts.length,
-  //     failedUpserts: failedUpserts,
-  //   };
-  // }
-
   /**
    * Updates a single document in the collection.
    *
@@ -580,7 +489,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     for await (const doc of cursor) {
       let value = doc as any;
-      console.log(doc);
+
       for (let i = 0, n = path.length; i < n; i++) {
         value = value[path[i]];
       }
@@ -671,7 +580,25 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param replacement - The replacement document, which contains no `_id` field.
    * @param options - The options for the operation.
    */
-  async findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options: FindOneAndReplaceOptions<Schema>): Promise<FindOneAndModifyResult<Schema>> {
+  async findOneAndReplace(
+    filter: Filter<Schema>,
+    replacement: NoId<Schema>,
+    options: FindOneAndReplaceOptions<Schema> & { includeResultMetadata: true },
+  ): Promise<ModifyResult<Schema>>
+
+  async findOneAndReplace(
+    filter: Filter<Schema>,
+    replacement: NoId<Schema>,
+    options: FindOneAndReplaceOptions<Schema> & { includeResultMetadata: false },
+  ): Promise<WithId<Schema> | null>
+
+  async findOneAndReplace(
+    filter: Filter<Schema>,
+    replacement: NoId<Schema>,
+    options: FindOneAndReplaceOptions<Schema>,
+  ): Promise<WithId<Schema> | null>
+
+  async findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options: FindOneAndReplaceOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
     const command: FindOneAndReplaceCommand = {
       findOneAndReplace: {
         filter,
@@ -689,10 +616,12 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     const resp = await this._httpClient.executeCommand(command, findOneAndReplaceOptionsKeys);
 
-    return {
-      value: resp.data?.document,
-      ok: 1,
-    };
+    return (options.includeResultMetadata)
+      ? {
+        value: resp.data?.document,
+        ok: 1,
+      }
+      : resp.data?.document;
   }
 
   /**
@@ -743,7 +672,22 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param filter - A filter to select the document to find.
    * @param options - The options for the operation.
    */
-  async findOneAndDelete(filter: Filter<Schema>, options?: FindOneAndDeleteOptions<Schema>): Promise<FindOneAndModifyResult<Schema>> {
+  async findOneAndDelete(
+    filter: Filter<Schema>,
+    options?: FindOneAndDeleteOptions<Schema> & { includeResultMetadata: true },
+  ): Promise<ModifyResult<Schema>>
+
+  async findOneAndDelete(
+    filter: Filter<Schema>,
+    options?: FindOneAndDeleteOptions<Schema> & { includeResultMetadata: false },
+  ): Promise<WithId<Schema> | null>
+
+  async findOneAndDelete(
+    filter: Filter<Schema>,
+    options?: FindOneAndDeleteOptions<Schema>,
+  ): Promise<WithId<Schema> | null>
+
+  async findOneAndDelete(filter: Filter<Schema>, options?: FindOneAndDeleteOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
     const command: FindOneAndDeleteCommand = {
       findOneAndDelete: { filter },
     };
@@ -754,10 +698,12 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     const resp = await this._httpClient.executeCommand(command);
 
-    return {
-      value: resp.data?.document,
-      ok: 1,
-    };
+    return (options?.includeResultMetadata)
+      ? {
+        value: resp.data?.document,
+        ok: 1,
+      }
+      : resp.data?.document;
   }
 
   /**
@@ -786,7 +732,25 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param update - The update to apply to the selected document.
    * @param options - The options for the operation.
    */
-  async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options: FindOneAndUpdateOptions<Schema>): Promise<FindOneAndModifyResult<Schema>> {
+  async findOneAndUpdate(
+    filter: Filter<Schema>,
+    update: UpdateFilter<Schema>,
+    options: FindOneAndUpdateOptions<Schema> & { includeResultMetadata: true },
+  ): Promise<ModifyResult<Schema>>
+
+  async findOneAndUpdate(
+    filter: Filter<Schema>,
+    update: UpdateFilter<Schema>,
+    options: FindOneAndUpdateOptions<Schema> & { includeResultMetadata: false },
+  ): Promise<WithId<Schema> | null>
+
+  async findOneAndUpdate(
+    filter: Filter<Schema>,
+    update: UpdateFilter<Schema>,
+    options: FindOneAndUpdateOptions<Schema>,
+  ): Promise<WithId<Schema> | null>
+
+  async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options: FindOneAndUpdateOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
     const command: FindOneAndUpdateCommand = {
       findOneAndUpdate: {
         filter,
@@ -804,10 +768,12 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     const resp = await this._httpClient.executeCommand(command, findOneAndUpdateOptionsKeys);
 
-    return {
-      value: resp.data?.document,
-      ok: 1,
-    };
+    return (options.includeResultMetadata)
+      ? {
+        value: resp.data?.document,
+        ok: 1,
+      }
+      : resp.data?.document;
   }
 
   /**

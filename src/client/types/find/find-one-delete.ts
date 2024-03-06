@@ -37,5 +37,6 @@ export interface FindOneAndDeleteOptions<Schema extends SomeDoc> {
    * Defaults to `null`, where the order is not guaranteed.
    * @default null
    */
-  sort?: SortOption<Schema>;
+  sort?: SortOption<Schema>,
+  includeResultMetadata?: boolean,
 }
