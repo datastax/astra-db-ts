@@ -14,6 +14,7 @@
 
 import { InternalUpdateResult } from '@/src/client/types/update/update-common';
 import { SomeDoc, SortOption } from '@/src/client';
+import { BaseOptions } from '@/src/client/types/common';
 
 /** @internal */
 export interface UpdateOneCommand {
@@ -31,7 +32,7 @@ export interface UpdateOneCommand {
  * @field upsert - If true, perform an insert if no documents match the filter.
  * @field sort - The sort order to pick which document to update if the filter selects multiple documents.
  */
-export interface UpdateOneOptions<Schema extends SomeDoc> {
+export interface UpdateOneOptions<Schema extends SomeDoc> extends BaseOptions {
   /**
    * If true, perform an insert if no documents match the filter.
    *

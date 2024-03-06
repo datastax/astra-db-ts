@@ -53,3 +53,10 @@ export type FoundDoc<Doc, GetSim extends boolean> = WithSim<WithId<Doc>, GetSim>
  * Represents a doc that doesn't have an `_id`
  */
 export type NoId<Doc> = Omit<Doc, '_id'>
+
+/**
+ * Represents a flattened version of the given type. Only goes one level deep.
+ */
+export type Flatten<Type> = Type extends (infer Item)[]
+  ? Item
+  : Type

@@ -14,6 +14,7 @@
 
 import { InternalDeleteResult } from '@/src/client/types/delete/delete-common';
 import { SomeDoc, SortOption } from '@/src/client';
+import { BaseOptions } from '@/src/client/types/common';
 
 /** @internal */
 export interface DeleteOneCommand {
@@ -28,7 +29,7 @@ export interface DeleteOneCommand {
  *
  * @field sort - The sort order to pick which document to delete if the filter selects multiple documents.
  */
-export interface DeleteOneOptions<Schema extends SomeDoc> {
+export interface DeleteOneOptions<Schema extends SomeDoc> extends BaseOptions {
   /**
    * The order in which to apply the update if the filter selects multiple documents.
    *

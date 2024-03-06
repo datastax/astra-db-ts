@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { SomeDoc } from '@/src/client';
-import { SortOption } from '@/src/client/types/common';
+import { BaseOptions, SortOption } from '@/src/client/types/common';
 
 /** @internal */
 export interface FindOneAndUpdateCommand {
@@ -32,7 +32,7 @@ export interface FindOneAndUpdateCommand {
  * @field upsert - If true, perform an insert if no documents match the filter.
  * @field sort - The sort order to pick which document to update if the filter selects multiple documents.
  */
-export interface FindOneAndUpdateOptions<Schema extends SomeDoc> {
+export interface FindOneAndUpdateOptions<Schema extends SomeDoc> extends BaseOptions {
   /**
    * Specifies whether to return the document before or after the update.
    *

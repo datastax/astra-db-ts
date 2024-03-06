@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { SomeDoc } from '@/src/client';
-import { SortOption } from '@/src/client/types/common';
+import { BaseOptions, SortOption } from '@/src/client/types/common';
 
 /** @internal */
 export interface FindOneAndDeleteCommand {
@@ -28,7 +28,7 @@ export interface FindOneAndDeleteCommand {
  *
  * @field sort - The sort order to pick which document to delete if the filter selects multiple documents.
  */
-export interface FindOneAndDeleteOptions<Schema extends SomeDoc> {
+export interface FindOneAndDeleteOptions<Schema extends SomeDoc> extends BaseOptions {
   /**
    * The order in which to apply the update if the filter selects multiple documents.
    *

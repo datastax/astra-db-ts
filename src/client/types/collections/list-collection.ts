@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CollectionOptions } from '@/src/client/types/collections/create-collection';
 import { SomeDoc } from '@/src/client';
+import { CollectionOptions } from '@/src/client/types/collections/collection-options';
+import { BaseOptions } from '@/src/client/types/common';
 
 /** @internal */
 export interface ListCollectionsCommand {
@@ -30,7 +31,7 @@ export interface ListCollectionsCommand {
  *
  * @field nameOnly - If true, only the name of the collection is returned. If false, the full collection info is returned. Defaults to false.
  */
-export interface ListCollectionsOptions<NameOnly extends boolean> {
+export interface ListCollectionsOptions<NameOnly extends boolean> extends BaseOptions {
   /**
    * If true, only the name of the collection is returned.
    *

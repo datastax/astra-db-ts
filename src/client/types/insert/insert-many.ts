@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { BaseOptions } from '@/src/client/types/common';
+
 /** @internal */
 export interface InsertManyCommand {
   insertMany: {
@@ -25,7 +27,7 @@ export interface InsertManyCommand {
  *
  * @field ordered - If true, when an insert fails, return without performing the remaining inserts.
  */
-export interface InsertManyOptions {
+export interface InsertManyOptions extends BaseOptions {
   /**
    * If true, when an insert fails, return without performing the remaining inserts.
    *

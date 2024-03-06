@@ -16,8 +16,7 @@ import { APIResponse, HTTPClient } from '@/src/api';
 import { Collection } from './collection';
 import { createNamespace, TypeErr } from './utils';
 import {
-  CreateCollectionCommand,
-  CollectionOptions,
+  CreateCollectionCommand, CreateCollectionOptions,
   createCollectionOptionsKeys
 } from '@/src/client/types/collections/create-collection';
 import { SomeDoc } from '@/src/client/document';
@@ -26,6 +25,7 @@ import {
   listCollectionOptionsKeys,
   ListCollectionsOptions
 } from '@/src/client/types/collections/list-collection';
+import { BaseOptions } from '@/src/client/types/common';
 
 /**
  * Represents an interface to some Astra database instance.
@@ -117,7 +117,7 @@ export class Db {
    * @see Collection
    * @see SomeDoc
    */
-  async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CollectionOptions<Schema>): Promise<Collection<Schema>> {
+  async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>> {
     const command: CreateCollectionCommand = {
       createCollection: {
         name: collectionName,
@@ -128,7 +128,7 @@ export class Db {
       command.createCollection.options = options;
     }
 
-    const resp = await this._httpClient.executeCommand(command, createCollectionOptionsKeys);
+    const resp = await this._httpClient.executeCommand(command, options, createCollectionOptionsKeys);
 
     if (resp.errors) {
       throw new DBError(resp.errors, resp.status, 'Error creating collection');
@@ -142,18 +142,20 @@ export class Db {
    *
    * @param collectionName The name of the collection to drop.
    *
+   * @param options Options for the operation.
+   *
    * @return A promise that resolves to `true` if the collection was dropped successfully.
    *
    * @throws {DBError} If the operation fails.
    */
-  async dropCollection(collectionName: string): Promise<boolean> {
+  async dropCollection(collectionName: string, options?: BaseOptions): Promise<boolean> {
     const command = {
       deleteCollection: {
         name: collectionName,
       },
     };
 
-    const resp = await this._httpClient.executeCommand(command);
+    const resp = await this._httpClient.executeCommand(command, options);
 
     if (resp.errors) {
       throw new DBError(resp.errors, resp.status, 'Error dropping collection');
@@ -192,7 +194,7 @@ export class Db {
       },
     }
 
-    const resp = await this._httpClient.executeCommand(command, listCollectionOptionsKeys);
+    const resp = await this._httpClient.executeCommand(command, options, listCollectionOptionsKeys);
 
     if (resp.errors || !resp.status) {
       throw new DBError(resp.errors ?? [], resp.status, 'Error listing collections');

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { InternalUpdateResult } from '@/src/client/types/update/update-common';
+import { BaseOptions } from '@/src/client/types/common';
 
 /** @internal */
 export interface UpdateManyCommand {
@@ -28,7 +29,7 @@ export interface UpdateManyCommand {
  *
  * @field upsert - If true, perform an insert if no documents match the filter.
  */
-export interface UpdateManyOptions {
+export interface UpdateManyOptions extends BaseOptions {
   /**
    * If true, perform an insert if no documents match the filter.
    *

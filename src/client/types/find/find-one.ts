@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { SomeDoc } from '@/src/client';
-import { ProjectionOption, SortOption } from '@/src/client/types/common';
+import { BaseOptions, ProjectionOption, SortOption } from '@/src/client/types/common';
 
 /** @internal */
 export interface FindOneCommand {
@@ -32,7 +32,7 @@ export interface FindOneCommand {
  * @field sort - The sort order to pick which document to return if the filter selects multiple documents.
  * @field projection - Specifies which fields should be included/excluded in the returned documents.
  */
-export interface FindOneOptions<Schema extends SomeDoc, GetSim extends boolean> {
+export interface FindOneOptions<Schema extends SomeDoc, GetSim extends boolean> extends BaseOptions {
   /**
    * The order in which to apply the update if the filter selects multiple documents.
    *

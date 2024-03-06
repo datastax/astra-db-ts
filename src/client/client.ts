@@ -16,9 +16,9 @@ import { Db } from './db';
 import { parseUri, TypeErr } from './utils';
 import { HTTPClient, HTTPClientOptions } from '@/src/api';
 import { Collection } from './collection';
-import { CollectionOptions } from '@/src/client/types/collections/create-collection';
 import { SomeDoc } from '@/src/client/document';
 import { CollectionInfo } from '@/src/client/types/collections/list-collection';
+import { CreateCollectionOptions } from '@/src/client/types/collections/create-collection';
 
 export class Client implements Disposable {
   private readonly _httpClient: HTTPClient;
@@ -66,7 +66,7 @@ export class Client implements Disposable {
     return this.db().collection<Schema>(name);
   }
 
-  async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CollectionOptions<Schema>): Promise<Collection<Schema>> {
+  async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>> {
     return await this.db().createCollection(collectionName, options);
   }
 

@@ -18,6 +18,7 @@ import { DEFAULT_KEYSPACE, DEFAULT_METHOD, DEFAULT_TIMEOUT, HTTP_METHODS } from 
 import { APIResponse, HTTPRequestInfo, HTTPRequestStrategy, InternalHTTPClientOptions } from '@/src/api/types';
 import { HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
+import { BaseOptions } from '@/src/client/types/common';
 
 export class HTTPClient {
   baseUrl: string;
@@ -73,7 +74,7 @@ export class HTTPClient {
     return Object.assign(Object.create(Object.getPrototypeOf(this)), this);
   }
 
-  async executeCommand(data: Record<string, any>, optionsToRetain?: Set<string>) {
+  async executeCommand(data: Record<string, any>, options?: BaseOptions, optionsToRetain?: Set<string>) {
     const commandName = Object.keys(data)[0];
 
     cleanupOptions(
@@ -86,6 +87,7 @@ export class HTTPClient {
     const response = await this.request({
       url: this.baseUrl,
       method: HTTP_METHODS.post,
+      timeout: options?.maxTimeMS ?? DEFAULT_TIMEOUT,
       data,
     });
 
