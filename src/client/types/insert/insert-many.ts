@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Internal
+/** @internal */
 export interface InsertManyCommand {
   insertMany: {
     documents: object[];
@@ -37,7 +37,7 @@ export interface InsertManyOptions {
   ordered?: boolean;
 }
 
-// Internal
+/** @internal */
 export const insertManyOptionKeys = new Set(['ordered']);
 
 /**

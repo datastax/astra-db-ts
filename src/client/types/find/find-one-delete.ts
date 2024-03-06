@@ -15,7 +15,7 @@
 import { SomeDoc } from '@/src/client';
 import { SortOption } from '@/src/client/types/common';
 
-// Internal
+/** @internal */
 export interface FindOneAndDeleteCommand {
   findOneAndDelete: {
     filter?: Record<string, unknown>;

@@ -15,7 +15,7 @@
 import { SomeDoc } from '@/src/client';
 import { ProjectionOption, SortOption } from '@/src/client/types/common';
 
-// Internal
+/** @internal */
 export interface FindOneCommand {
   findOne: {
     filter: Record<string, unknown>;
@@ -70,5 +70,5 @@ export interface FindOneOptions<Schema extends SomeDoc, GetSim extends boolean> 
   includeSimilarity?: GetSim;
 }
 
-// Internal
+/** @internal */
 export const findOneOptionsKeys = new Set(['includeSimilarity', 'sort', 'projection']);

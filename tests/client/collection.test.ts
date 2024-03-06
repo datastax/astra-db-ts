@@ -3012,6 +3012,32 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
   //   });
   // });
 
+  describe('distinct tests', () => {
+    it('distinct', async () => {
+      await collection.insertMany([
+        { username: { full: 'a' }, car: [1] },
+        { username: { full: 'b' }, car: [2, 3] },
+        { username: { full: 'a' }, car: [2], bus: 'no' }
+      ]);
+
+      // const distinct1 = await collection.distinct('car');
+      // assert.ok(distinct1.includes(1));
+      // assert.ok(distinct1.includes(2));
+      // assert.ok(distinct1.includes(3));
+      //
+      // const distinct2 = await collection.distinct('username.full');
+      // assert.ok(distinct2.includes('a'));
+      // assert.ok(distinct2.includes('b'));
+      //
+      // const distinct3 = await collection.distinct('username');
+      // assert.ok(distinct3.map(v => v.full).includes('a'));
+      // assert.ok(distinct3.map(v => v.full).includes('b'));
+
+      const distinct4 = await collection.distinct('bus');
+      assert.deepStrictEqual(distinct4, ['no']);
+    });
+  });
+
   describe('admin operations', () => {
     it('drops itself', async () => {
       const suffix = randAlphaNumeric({ length: 4 }).join("");

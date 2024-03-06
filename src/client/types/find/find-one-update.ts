@@ -15,7 +15,7 @@
 import { SomeDoc } from '@/src/client';
 import { SortOption } from '@/src/client/types/common';
 
-// Internal
+/** @internal */
 export interface FindOneAndUpdateCommand {
   findOneAndUpdate: {
     filter?: Record<string, unknown>;
@@ -61,5 +61,5 @@ export interface FindOneAndUpdateOptions<Schema extends SomeDoc> {
   sort?: SortOption<Schema>;
 }
 
-// Internal
+/** @internal */
 export const findOneAndUpdateOptionsKeys = new Set(['upsert', 'returnDocument', 'sort']);

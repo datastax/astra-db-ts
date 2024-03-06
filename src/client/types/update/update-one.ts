@@ -15,7 +15,7 @@
 import { InternalUpdateResult } from '@/src/client/types/update/update-common';
 import { SomeDoc, SortOption } from '@/src/client';
 
-// Internal
+/** @internal */
 export interface UpdateOneCommand {
   updateOne: {
     filter: Record<string, unknown>;
@@ -52,7 +52,7 @@ export interface UpdateOneOptions<Schema extends SomeDoc> {
   sort?: SortOption<Schema>,
 }
 
-// Internal
+/** @internal */
 export const updateOneOptionKeys = new Set(['upsert', 'sort']);
 
 /**

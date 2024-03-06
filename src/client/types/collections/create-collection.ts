@@ -15,7 +15,7 @@
 import { ToDotNotation } from '@/src/client/types/dot-notation';
 import { SomeDoc } from '@/src/client/document';
 
-// Internal
+/** @internal */
 export interface CreateCollectionCommand {
   createCollection: {
     name: string;
@@ -78,5 +78,5 @@ export type IndexingOptions<Schema extends SomeDoc> =
   | { allow: (keyof ToDotNotation<Schema>)[] | ['*'], deny?:  never }
   | { deny:  (keyof ToDotNotation<Schema>)[] | ['*'], allow?: never }
 
-// Internal
+/** @internal */
 export const createCollectionOptionsKeys = new Set(['vector', 'indexing']);

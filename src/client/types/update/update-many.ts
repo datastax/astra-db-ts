@@ -14,7 +14,7 @@
 
 import { InternalUpdateResult } from '@/src/client/types/update/update-common';
 
-// Internal
+/** @internal */
 export interface UpdateManyCommand {
   updateMany: {
     filter: Record<string, unknown>;
@@ -40,7 +40,7 @@ export interface UpdateManyOptions {
   upsert?: boolean;
 }
 
-// Internal
+/** @internal */
 export const updateManyOptionKeys = new Set(['upsert']);
 
 /**

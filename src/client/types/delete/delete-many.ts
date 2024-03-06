@@ -14,7 +14,7 @@
 
 import { InternalDeleteResult } from '@/src/client/types/delete/delete-common';
 
-// Internal
+/** @internal */
 export interface DeleteManyCommand {
   deleteMany: {
     filter: Record<string, unknown>;

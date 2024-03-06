@@ -15,7 +15,7 @@
 import { CollectionOptions } from '@/src/client/types/collections/create-collection';
 import { SomeDoc } from '@/src/client';
 
-// Internal
+/** @internal */
 export interface ListCollectionsCommand {
   findCollections: {
     options: {
@@ -89,5 +89,5 @@ interface FullCollectionInfo {
   options: CollectionOptions<SomeDoc>,
 }
 
-// Internal
+/** @internal */
 export const listCollectionOptionsKeys = new Set(['explain']);

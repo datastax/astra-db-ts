@@ -14,7 +14,7 @@
 
 import { FindCursor } from './cursor';
 import { HTTPClient } from '@/src/api';
-import { setDefaultIdForInsert, setDefaultIdForUpsert, TypeErr, withoutFields } from './utils';
+import { setDefaultIdForInsert, setDefaultIdForUpsert, withoutFields } from './utils';
 import { InsertOneCommand, InsertOneResult } from '@/src/client/types/insert/insert-one';
 import {
   InsertManyCommand,
@@ -58,6 +58,11 @@ import { FailedInsert, InsertManyBulkOptions, InsertManyBulkResult } from '@/src
 import { CollectionOptions } from '@/src/client/types/collections/create-collection';
 import { Db } from '@/src/client/db';
 import { FindCursorV2 } from '@/src/client/cursor-v2';
+import { ToDotNotation } from '@/src/client/types/dot-notation';
+
+type Flatten<Type> = Type extends ReadonlyArray<infer Item>
+  ? Item
+  : Type
 
 /**
  * Represents the interface to a collection in the database.
@@ -564,7 +569,34 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   findV2<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursorV2<FoundDoc<Schema, GetSim>> {
-    return new FindCursorV2(this._db, this._httpClient, filter, options) as any;
+    return new FindCursorV2(this.namespace, this._httpClient, filter, options) as any;
+  }
+
+  async distinct<Key extends keyof ToDotNotation<FoundDoc<Schema, GetSim>> & string, GetSim extends boolean = false>(key: Key, filter: Filter<Schema> = {}, _?: FindOptions<Schema, GetSim>): Promise<Flatten<ToDotNotation<FoundDoc<Schema, GetSim>>[Key]>[]> {
+    const cursor = this.findV2<GetSim>(filter, { projection: { _id: 0, [key]: 1 } });
+
+    const seen = new Set<unknown>();
+    const path = key.split('.');
+
+    for await (const doc of cursor) {
+      let value = doc as any;
+      console.log(doc);
+      for (let i = 0, n = path.length; i < n; i++) {
+        value = value[path[i]];
+      }
+
+      if (value !== undefined) {
+        if (Array.isArray(value)) {
+          for (let i = 0, n = value.length; i < n; i++) {
+            seen.add(value[i]);
+          }
+        } else {
+          seen.add(value);
+        }
+      }
+    }
+
+    return Array.from(seen) as any;
   }
 
   /**
@@ -661,11 +693,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       value: resp.data?.document,
       ok: 1,
     };
-  }
-
-  // noinspection JSUnusedGlobalSymbols
-  async distinct(): Promise<TypeErr<'distinct not implemented'>> {
-    throw new Error('Not Implemented');
   }
 
   /**

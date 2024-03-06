@@ -15,7 +15,7 @@
 import { InternalDeleteResult } from '@/src/client/types/delete/delete-common';
 import { SomeDoc, SortOption } from '@/src/client';
 
-// Internal
+/** @internal */
 export interface DeleteOneCommand {
   deleteOne: {
     filter: Record<string, unknown>;
