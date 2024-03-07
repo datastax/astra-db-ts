@@ -126,7 +126,7 @@ export class FindCursorV2<T> {
    */
   limit(limit: number): FindCursorV2<T> {
     this._assertUninitialized();
-    this._options.limit = limit;
+    this._options.limit = limit || Infinity;
     return this;
   }
 
@@ -426,20 +426,8 @@ export class FindCursorV2<T> {
 
     const options: InternalFindOptions = {};
 
-    const limit = this._options.limit ?? Infinity;
-    const batchSize = this._options.batchSize ?? 1000;
-
-    const queryLimit = (limit && limit > 0 && this._numReturned + batchSize > limit)
-      ? limit - this._numReturned
-      : batchSize;
-
-    if (queryLimit <= 0) {
-      this._nextPageState = null;
-      return;
-    }
-
-    if (queryLimit !== Infinity) {
-      options.limit = queryLimit;
+    if (this._options.limit !== Infinity) {
+      options.limit = this._options.limit;
     }
     if (this._nextPageState) {
       options.pagingState = this._nextPageState;
