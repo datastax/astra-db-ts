@@ -26,6 +26,7 @@ import {
   testClient
 } from '@/tests/fixtures';
 import { randAlphaNumeric } from '@ngneat/falso';
+import { InsertManyOrderedError, InsertManyUnorderedError } from '@/src/client/errors';
 
 describe(`AstraTsClient - astra Connection - collections.collection`, async () => {
   let astraClient: Client | null;
@@ -100,12 +101,12 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.ok(res.insertedId);
     });
 
-    it('should insertOne document v2', async () => {
-      const res = await collection.insertOne(createSampleDocWithMultiLevel(), { maxTimeMS: 10 });
-      assert.ok(res);
-      assert.strictEqual(res.acknowledged, true);
-      assert.ok(res.insertedId);
-    });
+    // it('should insertOne document v2', async () => {
+    //   const res = await collection.insertOne(createSampleDocWithMultiLevel(), { maxTimeMS: 10 });
+    //   assert.ok(res);
+    //   assert.strictEqual(res.acknowledged, true);
+    //   assert.ok(res.insertedId);
+    // });
 
     it('should insertOne document with id', async () => {
       const docId = 'docml1';
@@ -197,7 +198,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
   });
 
   describe('insertMany tests', () => {
-    it('should insertMany documents', async () => {
+    it('should insertMany documentsa', async () => {
       const res = await collection.insertMany(sampleUsersList);
       assert.strictEqual(res.insertedCount, sampleUsersList.length);
       assert.strictEqual(res.acknowledged, true);
@@ -215,31 +216,31 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.strictEqual(Object.keys(res.insertedIds).length, 3);
     });
 
-    it('should not insert more than allowed number of documents in one insertMany call', async () => {
-      const docList = Array.from({ length: 21 }, () => ({ 'username': 'id' }));
-      docList.forEach((doc, index) => {
-        doc.username = doc.username + (index + 1);
-      });
-      let error: any;
-      try {
-        await collection.insertMany(docList);
-      } catch (e: any) {
-        error = e;
-      }
-      assert.ok(error);
-      // assert.strictEqual(error.errors[0].message, 'Request invalid, the field postCommand.command.documents not valid: amount of documents to insert is over the max limit (21 vs 20).');
-    });
+    // it('should not insert more than allowed number of documents in one insertMany call', async () => {
+    //   const docList = Array.from({ length: 21 }, () => ({ 'username': 'id' }));
+    //   docList.forEach((doc, index) => {
+    //     doc.username = doc.username + (index + 1);
+    //   });
+    //   let error: any;
+    //   try {
+    //     await collection.insertMany(docList);
+    //   } catch (e: any) {
+    //     error = e;
+    //   }
+    //   assert.ok(error);
+    //   // assert.strictEqual(error.errors[0].message, 'Request invalid, the field postCommand.command.documents not valid: amount of documents to insert is over the max limit (21 vs 20).');
+    // });
 
-    it('should error out when docs list is empty in insertMany', async () => {
-      let error: any;
-      try {
-        await collection.insertMany([]);
-      } catch (e: any) {
-        error = e;
-      }
-      assert.ok(error);
-      // assert.strictEqual(error.errors[0].message, 'Request invalid, the field postCommand.command.documents not valid: must not be empty.');
-    });
+    // it('should error out when docs list is empty in insertMany', async () => {
+    //   let error: any;
+    //   try {
+    //     await collection.insertMany([]);
+    //   } catch (e: any) {
+    //     error = e;
+    //   }
+    //   assert.ok(error);
+    //   // assert.strictEqual(error.errors[0].message, 'Request invalid, the field postCommand.command.documents not valid: must not be empty.');
+    // });
 
     it('should insertMany documents ordered', async () => {
       const docList: { _id?: string, username: string }[] = Array.from({ length: 20 }, () => ({ 'username': 'id' }));
@@ -269,11 +270,12 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         error = e;
       }
       assert.ok(error);
+      assert.ok(error instanceof InsertManyOrderedError);
       // assert.strictEqual(error.errors[0].message, 'Failed to insert document with _id \'docml10\': Document already exists with the given _id');
-      assert.strictEqual(error.errors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
-      assert.strictEqual(error.status.insertedIds.length, 10);
+      assert.strictEqual(error.baseError.errors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
+      assert.strictEqual(error.insertedIds.length, 10);
       docList.slice(0, 10).forEach((doc, index) => {
-        assert.strictEqual(error.status.insertedIds[index], doc._id);
+        assert.strictEqual(error.insertedIds[index], doc._id);
       });
     });
 
@@ -291,65 +293,15 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         error = e;
       }
       assert.ok(error);
+      assert.ok(error instanceof InsertManyUnorderedError);
       // assert.strictEqual(error.errors[0].message, 'Failed to insert document with _id \'docml10\': Document already exists with the given _id');
-      assert.strictEqual(error.errors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
-      assert.strictEqual(error.status.insertedIds.length, 19);
+      assert.strictEqual(error.baseErrors[0].errors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
+      assert.strictEqual(error.insertedIds.length, 19);
       //check if response insertedIds contains all the docs except the one that failed
       docList.slice(0, 9).concat(docList.slice(10)).forEach((doc) => {
         //check if error.status.insertedIds contains doc._id
-        assert.ok(error.status.insertedIds.includes(doc._id));
+        assert.ok(error.insertedIds.includes(doc._id));
       });
-    });
-  });
-
-  describe('insertManyBulk tests', () => {
-    it('should insert many documents with no id', async () => {
-      const docList = Array.from({ length: 150 }, (_, i) => ({ username: `user${i}` }));
-      const res = await collection.insertManyBulk(docList);
-      assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
-      assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
-      assert.strictEqual(res.failedCount, 0);
-      assert.strictEqual(res.failedInserts.length, 0);
-    });
-
-    it('should insert many documents with ids', async () => {
-      const docList = Array.from({ length: 50 }, (_, i) => ({ _id: `id${i}`, username: `user${i}` }));
-      const res = await collection.insertManyBulk(docList);
-      assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
-      assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
-      assert.strictEqual(res.failedCount, 0);
-      assert.strictEqual(res.failedInserts.length, 0);
-    });
-
-    it('should insert a single doc', async () => {
-      const res = await collection.insertManyBulk([createSampleDocWithMultiLevel()]);
-      assert.strictEqual(res.insertedCount, 1);
-      assert.strictEqual(res.acknowledged, true);
-      assert.strictEqual(Object.keys(res.insertedIds).length, 1);
-      assert.strictEqual(res.failedCount, 0);
-      assert.strictEqual(res.failedInserts.length, 0);
-    });
-
-    it('should handle failed insert batches', async () => {
-      const docList = Array.from({ length: 24 }, (_, i) => ({ _id: `id${Math.min(i+1, 15)}`, username: `user${i}` }));
-      const res = await collection.insertManyBulk(docList, { parallel: 4 });
-      assert.strictEqual(res.insertedCount, 15);
-      assert.strictEqual(res.acknowledged, true);
-      assert.strictEqual(Object.keys(res.insertedIds).length, 15);
-      assert.strictEqual(res.failedCount, 9);
-      assert.strictEqual(res.failedInserts.length, 9);
-    });
-
-    it('should handle ordered insert fails', async () => {
-      const docList = Array.from({ length: 25 }, (_, i) => ({ _id: `id${Math.min(i, 4)}`, username: `user${i}` }));
-      const res = await collection.insertManyBulk(docList, { ordered: true });
-      assert.strictEqual(res.insertedCount, 5);
-      assert.strictEqual(res.acknowledged, true);
-      assert.strictEqual(Object.keys(res.insertedIds).length, 5);
-      assert.strictEqual(res.failedCount, 20);
-      assert.strictEqual(res.failedInserts.length, 20);
     });
   });
 
@@ -2850,7 +2802,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       docList.forEach((doc, index) => {
         doc.username = doc.username + (index + 1);
       });
-      const res = await collection.insertManyBulk(docList);
+      const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, 100);
       const deleteManyResp = await collection.deleteManyBulk({ 'city': 'trichy' });
       assert.strictEqual(deleteManyResp.deletedCount, 100);

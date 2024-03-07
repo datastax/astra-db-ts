@@ -121,7 +121,7 @@ export class HTTPClient {
       } else {
         logger.error(requestInfo.url + ": " + response.status);
         logger.error("Data: " + JSON.stringify(requestInfo.command));
-        return this._mkError("Server response received : " + response.status + "!");
+        return this._mkError();
       }
     } catch (e: any) {
       logger.error(requestInfo.url + ": " + e.message);
@@ -131,12 +131,15 @@ export class HTTPClient {
         logger.error("Response Data: " + JSON.stringify(e.response.data));
       }
 
-      return this._mkError(e.message ? e.message : 'Server call failed, please retry!');
+      // return this._mkError(e.message ? e.message : 'Server call failed, please retry!');
+      throw e;
     }
   }
 
-  private _mkError(message: string): APIResponse {
-    return { errors: [{ message }] };
+  private _mkError(message?: string): APIResponse {
+    return (message)
+      ? { errors: [{ message }] }
+      : {};
   }
 }
 

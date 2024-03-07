@@ -54,14 +54,13 @@ import { Filter } from '@/src/client/types/filter';
 import { UpdateFilter } from '@/src/client/types/update-filter';
 import { Flatten, FoundDoc, NoId, WithId } from '@/src/client/types/utils';
 import { SomeDoc } from '@/src/client/document';
-import { FailedInsert, InsertManyBulkOptions, InsertManyBulkResult } from '@/src/client/types/insert/insert-many-bulk';
 import { Db } from '@/src/client/db';
 import { FindCursorV2 } from '@/src/client/cursor-v2';
 import { ToDotNotation } from '@/src/client/types/dot-notation';
 
 import { CollectionOptions } from '@/src/client/types/collections/collection-options';
 import { BaseOptions } from '@/src/client/types/common';
-import { DataAPIError, InsertManyOrderedError } from '@/src/client/errors';
+import { DataAPIError, InsertManyOrderedError, InsertManyUnorderedError } from '@/src/client/errors';
 
 /**
  * Represents the interface to a collection in the database.
@@ -167,123 +166,22 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param options - The options for the operation.
    */
   async insertMany(documents: Schema[], options?: InsertManyOptions): Promise<InsertManyResult> {
-    if (options?.ordered) {
-      return insertManyOrdered(this._httpClient, documents, 20);
-    }
-
-    documents.forEach(setDefaultIdForInsert);
-
-    const command: InsertManyCommand = {
-      insertMany: {
-        documents,
-        options,
-      },
-    };
-
-    const resp = await this._httpClient.executeCommand(command, options, insertManyOptionKeys);
-
-    return {
-      acknowledged: true,
-      insertedCount: resp.status?.insertedIds?.length || 0,
-      insertedIds: resp.status?.insertedIds,
-    };
-
-    // return this.insertManyBulk(documents, {
-    //   ordered: options?.ordered,
-    //   parallel: 1,
-    // });
-  }
-
-  async insertManyBulk(documents: Schema[], options?: InsertManyBulkOptions): Promise<InsertManyBulkResult<Schema>> {
-    const parallel = (options?.ordered) ? 1 : (options?.parallel ?? 4);
-
-    if (options?.ordered && options?.parallel && options?.parallel !== 1) {
-      throw new Error('Parallel insert with ordered option is not supported');
-    }
-
-    if (parallel < 1) {
-      throw new Error('Parallel must be greater than 0');
-    }
+    const parallel  = options?.parallel  ?? 4;
+    const chunkSize = options?.chunkSize ?? 20;
 
     for (let i = 0, n = documents.length; i < n; i++) {
       setDefaultIdForInsert(documents[i]);
     }
 
-    const results: InsertManyResult[] = [];
-    const failedInserts: FailedInsert<Schema>[] = [];
-
-    let masterIndex = 0;
-
-    const processQueue = async () => {
-      while (masterIndex < documents.length) {
-        const localI = masterIndex;
-        const endIdx = Math.min(localI + 20, documents.length);
-        masterIndex += 20;
-
-        if (localI >= endIdx) {
-          break;
-        }
-
-        const slice = documents.slice(localI, endIdx);
-
-        try {
-          // const result = await this.insertMany(slice);
-          const command: InsertManyCommand = {
-            insertMany: {
-              documents: slice,
-              options,
-            },
-          };
-
-          const resp = await this._httpClient.executeCommand(command, {}, insertManyOptionKeys);
-
-          results.push({
-            acknowledged: true,
-            insertedCount: resp.status?.insertedIds?.length || 0,
-            insertedIds: resp.status?.insertedIds,
-          });
-        } catch (e: any) {
-          const insertedIDs = e.status?.insertedIds ?? [];
-          const insertedIDSet = new Set(insertedIDs);
-
-          results.push({
-            acknowledged: true,
-            insertedCount: insertedIDs.length,
-            insertedIds: insertedIDs,
-          });
-
-          const upperBound = (options?.ordered)
-            ? documents.length
-            : endIdx;
-
-          for (let j = localI; j < upperBound; j++) {
-            const doc = documents[j];
-
-            if (insertedIDSet.has(doc._id)) {
-              insertedIDSet.delete(doc._id);
-            } else {
-              failedInserts.push({ document: doc, errors: e.errors });
-            }
-          }
-
-          if (options?.ordered) {
-            break;
-          }
-        }
-      }
-    }
-
-    const workers = Array.from({ length: parallel }, processQueue);
-
-    await Promise.all(workers);
+    const insertedIds = (options?.ordered)
+      ? await insertManyOrdered(this._httpClient, documents, chunkSize)
+      : await insertManyUnordered(this._httpClient, documents, parallel, chunkSize);
 
     return {
       acknowledged: true,
-      insertedCount: results.reduce((acc, r) => acc + r.insertedCount, 0),
-      insertedIds: results.reduce((acc, r) => acc.concat(r.insertedIds), [] as string[]),
-      failedCount: failedInserts.length,
-      failedInserts,
-    };
+      insertedCount: insertedIds.length,
+      insertedIds: insertedIds,
+    }
   }
 
   /**
@@ -838,11 +736,11 @@ export class AstraClientError extends Error {
   }
 }
 
-const insertManyOrdered = async (httpClient: HTTPClient, documents: unknown[], chunkSize: number): Promise<InsertManyResult> => {
+const insertManyOrdered = async (httpClient: HTTPClient, documents: unknown[], chunkSize: number): Promise<string[]> => {
   const insertedIds: string[] = [];
 
   for (let i = 0, n = documents.length; i < n; i += chunkSize) {
-    const slice = documents.splice(0, chunkSize);
+    const slice = documents.slice(i, i + chunkSize);
 
     try {
       const inserted = await insertMany(httpClient, slice, true);
@@ -852,38 +750,66 @@ const insertManyOrdered = async (httpClient: HTTPClient, documents: unknown[], c
         throw e;
       }
 
-      const justInsertedIds = e.status?.insertedIds ?? [];
-      insertedIds.push(...justInsertedIds);
-
-      const failed = dropWhileEq(slice, justInsertedIds.pop());
-      failed.push(...documents);
-
-      throw new InsertManyOrderedError(e, insertedIds, failed);
+      insertedIds.push(...e.status?.insertedIds ?? []);
+      throw new InsertManyOrderedError(e, insertedIds);
     }
   }
 
-  return {
-    acknowledged: true,
-    insertedCount: insertedIds.length,
-    insertedIds,
-  };
+  return insertedIds;
 }
 
-export function dropWhileEq<T>(arr: T[], target: T): T[] {
-  const result = [];
-  let insert = false;
+const insertManyUnordered = async (httpClient: HTTPClient, documents: unknown[], parallel: number, chunkSize: number): Promise<string[]> => {
+  const insertedIds: string[] = [];
+  let masterIndex = 0;
 
-  for (let i = 0, n = arr.length; i < n; i++) {
-    if (!insert && arr[i] !== target) {
-      insert = true;
-    }
+  const failErrors: DataAPIError[] = [];
+  const failedIds: string[] = [];
 
-    if (insert) {
-      result.push(arr[i]);
+  const workers = Array.from({ length: parallel }, async () => {
+    while (masterIndex < documents.length) {
+      const localI = masterIndex;
+      const endIdx = Math.min(localI + chunkSize, documents.length);
+      masterIndex += chunkSize;
+
+      if (localI >= endIdx) {
+        break;
+      }
+
+      const slice = documents.slice(localI, endIdx);
+
+      try {
+        const inserted = await insertMany(httpClient, slice, false);
+        insertedIds.push(...inserted);
+      } catch (e) {
+        if (!(e instanceof DataAPIError)) {
+          throw e;
+        }
+
+        const justInserted = e.status?.insertedIds ?? [];
+        const justInsertedSet = new Set(justInserted);
+
+        insertedIds.push(...justInserted);
+        failErrors.push(e);
+
+        for (let i = 0, n = slice.length; i < n; i++) {
+          const doc = slice[i] as { _id: string };
+
+          if (!justInsertedSet.has(doc._id)) {
+            failedIds.push(doc._id);
+          } else {
+            justInsertedSet.delete(doc._id);
+          }
+        }
+      }
     }
+  });
+  await Promise.all(workers);
+
+  if (failErrors.length > 0) {
+    throw new InsertManyUnorderedError(failErrors, insertedIds, failedIds);
   }
 
-  return result;
+  return insertedIds;
 }
 
 const insertMany = async (httpClient: HTTPClient, documents: unknown[], ordered?: boolean): Promise<string[]> => {

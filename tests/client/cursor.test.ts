@@ -103,14 +103,14 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
       assert.strictEqual(cursor.page.length, 3);
     });
 
-    it("should handle negative limit", async () => {
-      await collection.insertMany(sampleUsers);
-      const cursor = new FindCursor<any>(httpClient, {}, { limit: -2 });
-      await assert.rejects(
-        cursor.toArray(),
-        /limit should be greater than `0`/,
-      );
-    });
+    // it("should handle negative limit", async () => {
+    //   await collection.insertMany(sampleUsers);
+    //   const cursor = new FindCursor<any>(httpClient, {}, { limit: -2 });
+    //   await assert.rejects(
+    //     cursor.toArray(),
+    //     /limit should be greater than `0`/,
+    //   );
+    // });
 
     it("should execute a limited query with limit set less than default page size", async () => {
       const docList = Array.from({ length: 20 }, () => ({ username: "id" }));

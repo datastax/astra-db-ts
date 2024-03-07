@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { BaseOptions } from '@/src/client/types/common';
-
 /** @internal */
 export interface InsertManyCommand {
   insertMany: {
@@ -22,22 +20,16 @@ export interface InsertManyCommand {
   }
 }
 
-/**
- * Represents the options for the insertMany command.
- *
- * @field ordered - If true, when an insert fails, return without performing the remaining inserts.
- */
-export interface InsertManyOptions extends BaseOptions {
-  /**
-   * If true, when an insert fails, return without performing the remaining inserts.
-   *
-   * If false, when an insert fails, continue with the remaining inserts if there are any.
-   *
-   * Defaults to true.
-   * @default true
-   */
-  ordered?: boolean;
-}
+export type InsertManyOptions =
+  ({
+    parallel?: number,
+    ordered?: never,
+    chunkSize?: number,
+  } | {
+    ordered?: boolean,
+    parallel?: 1,
+    chunkSize?: number,
+  })
 
 /** @internal */
 export const insertManyOptionKeys = new Set(['ordered']);

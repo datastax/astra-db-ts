@@ -15,17 +15,16 @@
 import { APIResponse } from '@/src/api';
 
 export class DataAPIError extends Error implements APIResponse {
-  errors?: any[];
+  errors: any[];
   status?: Record<string, any>;
   data?: Record<string, any>;
   command: Record<string, any>;
 
   constructor(response: APIResponse, command: Record<string, any>) {
     const commandName = Object.keys(command)[0] || "unknown";
-    const status = response.status ? `, status: ${JSON.stringify(response.status)}` : '';
-    super(`Command "${commandName}" failed with the following errors: ${JSON.stringify(response.errors)}${status}`);
+    super(`Command "${commandName}" failed${errorString(response.errors ?? [])}${statusString(response.status)}`);
 
-    this.errors = response.errors;
+    this.errors = response.errors ?? [];
     this.status = response.status;
     this.data = response.data;
     this.command = command;
@@ -42,11 +41,46 @@ export class DataAPITimeout extends Error {
 
 export class InsertManyOrderedError extends Error {
   constructor(
-    readonly baseError: Error,
-    readonly insertedIDs: string[],
-    readonly failedInserts: { _id: unknown }[],
+    readonly baseError: DataAPIError,
+    readonly insertedIds: string[],
   ) {
-    super(baseError.message);
+    super(`Insert many ordered partially failed${errorString(baseError.errors ?? [])}${statusString(baseError.status)}`);
     this.name = "InsertManyOrderedError";
   }
+}
+
+export class InsertManyUnorderedError extends Error {
+  constructor(
+    readonly baseErrors: DataAPIError[],
+    readonly insertedIds: string[],
+    readonly failedIds: string[],
+  ) {
+    super(`Insert many unordered partially failed with some errors${statusStrings(baseErrors.map(e => e.status))}`);
+    this.name = "InsertManyUnorderedError";
+  }
+}
+
+const MAX_ERRORS_DISPLAYED = 5;
+
+const errorString = (errors: any[]) => {
+  const moreErrors = errors.length - MAX_ERRORS_DISPLAYED;
+  errors = errors.slice(0, MAX_ERRORS_DISPLAYED);
+
+  return (errors.length > 0)
+    // ? `, with errors: ${errors.map(e => JSON.stringify(e)).join(", ")}`
+    // : '';
+    ? `, with errors: ${errors.map(e => JSON.stringify(e)).join(", ")}${moreErrors > 0 ? `and ${moreErrors} more errors` : ''}`
+    : '';
+}
+
+const statusString = (status?: Record<string, any>) => {
+  return (status)
+    ? `, with status: ${JSON.stringify(status)}`
+    : '';
+}
+
+const statusStrings = (statuses: (Record<string, any> | undefined)[]) => {
+  return (statuses.length > 0)
+    ? `, with statuses: ${statuses.filter(s => s).map(status => JSON.stringify(status)).join(", ")}`
+    : '';
 }
