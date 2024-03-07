@@ -15,21 +15,55 @@
 /** @internal */
 export interface InsertManyCommand {
   insertMany: {
-    documents: unknown[];
-    options?: InsertManyOptions;
+    documents: unknown[],
+    options?: {
+      ordered?: boolean,
+    },
   }
 }
 
+/**
+ * Options for insertMany.
+ *
+ * The parameters depend on the `ordered` option. If `ordered` is `true`, the `parallel` option is not allowed.
+ */
 export type InsertManyOptions =
-  ({
-    parallel?: number,
-    ordered?: never,
-    chunkSize?: number,
-  } | {
-    ordered?: boolean,
-    parallel?: 1,
-    chunkSize?: number,
-  })
+  | InsertManyUnorderedOptions
+  | InsertManyOrderedOptions;
+
+/**
+ * Options for insertMany when `ordered` is `true`.
+ */
+export interface InsertManyOrderedOptions {
+  /**
+   * If `true`, the documents are inserted in the order provided. If an error occurs, the operation stops and the
+   * remaining documents are not inserted.
+   */
+  ordered: true,
+  /**
+   * The number of documents to upload per request
+   */
+  chunkSize?: number,
+}
+
+/**
+ * Options for insertMany when `ordered` is `false`.
+ */
+export interface InsertManyUnorderedOptions {
+  /**
+   * If `false`, the documents are inserted in an arbitrary order. If an error occurs, the operation does not stop
+   * and the remaining documents are inserted. This allows the operation to be parallelized for better performance.
+   */
+  ordered?: false,
+  /**
+   * The number of concurrent requests to use
+   */
+  parallel?: number,
+  /**
+   * The number of documents to upload per request
+   */
+  chunkSize?: number,
+}
 
 /** @internal */
 export const insertManyOptionKeys = new Set(['ordered']);

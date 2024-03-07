@@ -39,23 +39,60 @@ export class DataAPITimeout extends Error {
   }
 }
 
+/**
+ * Error thrown on ordered `insertMany`s when a Data-API-related error occurs.
+ *
+ * Not thrown for other errors, such as `5xx`s or network errors.
+ */
 export class InsertManyOrderedError extends Error {
-  constructor(
-    readonly baseError: DataAPIError,
-    readonly insertedIds: string[],
-  ) {
+  /**
+   * The base {@link DataAPIError} that caused the error.
+   */
+  baseError: DataAPIError;
+
+  /**
+   * The IDs of the documents that were successfully inserted. Given that the operation is ordered, the failed
+   * documents & IDs are those that come after the last successful one.
+   */
+  insertedIds: string[];
+
+  constructor(baseError: DataAPIError, insertedIds: string[]) {
     super(`Insert many ordered partially failed${errorString(baseError.errors ?? [])}${statusString(baseError.status)}`);
+    this.baseError = baseError;
+    this.insertedIds = insertedIds;
     this.name = "InsertManyOrderedError";
   }
 }
 
+/**
+ * Error thrown on unordered `insertMany`s when a Data-API-related error occurs.
+ *
+ * Not thrown for other errors, such as `5xx`s or network errors.
+ *
+ * Thrown after every document has been attempted to be inserted, regardless of success or failure (unlike `5xx`s and
+ * similar, which are thrown immediately).
+ */
 export class InsertManyUnorderedError extends Error {
-  constructor(
-    readonly baseErrors: DataAPIError[],
-    readonly insertedIds: string[],
-    readonly failedIds: string[],
-  ) {
+  /**
+   * The aggregate of all {@link DataAPIError}s that caused the error.
+   */
+  baseErrors: DataAPIError[];
+
+  /**
+   * The IDs of the documents that were successfully inserted.
+   */
+  insertedIds: string[];
+
+  /**
+   * The IDs of the documents that failed to be inserted.
+   */
+  failedIds: string[];
+
+  constructor(baseErrors: DataAPIError[], insertedIds: string[], failedIds: string[]) {
     super(`Insert many unordered partially failed with some errors${statusStrings(baseErrors.map(e => e.status))}`);
+    this.baseErrors = baseErrors;
+    this.insertedIds = insertedIds;
+    this.failedIds = failedIds;
     this.name = "InsertManyUnorderedError";
   }
 }

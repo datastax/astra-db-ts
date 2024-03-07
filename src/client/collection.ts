@@ -122,7 +122,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   /**
    * Inserts a single document into the collection.
    *
-   * If the document does not contain an `_id` field, an ObjectId will be generated on the client and assigned to the
+   * If the document does not contain an `_id` field, an ObjectId string will be generated on the client and assigned to the
    * document. This generation will mutate the document.
    *
    * @example
@@ -151,7 +151,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Inserts **up to twenty** documents into the collection.
+   * Inserts many documents into the collection.
+   *
+   * **NB. This function paginates the insertion of documents in chunks to avoid running into insertion limits. This
+   * means multiple requests will be made to the server, and the operation may not be atomic.**
    *
    * If any document does not contain an `_id` field, an ObjectId will be generated on the client and assigned to the
    * document. This generation will mutate the document.
@@ -159,19 +162,58 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * You can set the `ordered` option to `true` to stop the operation after the first error, otherwise all documents
    * may be parallelized and processed in arbitrary order.
    *
+   * If an insertion error occurs, the operation will throw either an `InsertManyOrderedError` or `InsertManyUnorderedError`
+   * depending on the value of the `ordered` option.
+   *
+   * *If the operation is not due to an insertion error, e.g. a `5xx` error or network error, the operation will throw the
+   * underlying error.*
+   *
+   * *In case of an unordered request, if the error was a simple insertion error, a `InsertManyUnorderedError` will be
+   * thrown after every document has been attempted to be inserted. If it was a `5xx` or similar, the error will be thrown
+   * immediately.*
+   *
+   * You can set the `parallel` option to control how many network requests are made in parallel on unordered
+   * insertions. Defaults to `8`.
+   *
+   * You can set the `chunkSize` option to control how many documents are inserted in each network request. Defaults to `20`,
+   * the Data API limit. If you have large documents, you may find it beneficial to reduce this number and increase concurrency.
+   *
    * @example
    * ```typescript
-   * await collection.insertMany([
-   *   { _id: '1', name: 'John Doe' },
-   *   { name: 'Jane Doe' }, // _id will be generated
-   * ]);
+   * try {
+   *   await collection.insertMany([
+   *     { _id: '1', name: 'John Doe' },
+   *     { name: 'Jane Doe' }, // _id will be generated
+   *   ]);
+   * } catch (e) {
+   *   if (e instanceof InsertManyUnorderedError) {
+   *     console.log(e.insertedIds);
+   *     console.log(e.failedIds);
+   *   }
+   * }
+   * ```
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   await collection.insertMany([
+   *     { _id: '1', name: 'John Doe' },
+   *     { name: 'Jane Doe' }, // _id will be generated
+   *   ], { ordered: true });
+   * } catch (e) {
+   *   if (e instanceof InsertManyOrderedError) {
+   *     console.log(e.insertedIds);
+   *   }
+   * }
    * ```
    *
    * @param documents - The documents to insert.
    * @param options - The options for the operation.
+   *
+   * @throws InsertManyOrderedError - If the `ordered` option is `true` and the operation fails.
+   * @throws InsertManyUnorderedError - If the `ordered` option is `false` and the operation fails.
    */
   async insertMany(documents: Schema[], options?: InsertManyOptions): Promise<InsertManyResult> {
-    const parallel  = options?.parallel  ?? 4;
     const chunkSize = options?.chunkSize ?? 20;
 
     for (let i = 0, n = documents.length; i < n; i++) {
@@ -180,7 +222,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     const insertedIds = (options?.ordered)
       ? await insertManyOrdered(this._httpClient, documents, chunkSize)
-      : await insertManyUnordered(this._httpClient, documents, parallel, chunkSize);
+      : await insertManyUnordered(this._httpClient, documents, options?.parallel ?? 8, chunkSize);
 
     return {
       acknowledged: true,
@@ -818,7 +860,7 @@ const insertManyUnordered = async (httpClient: HTTPClient, documents: unknown[],
   return insertedIds;
 }
 
-const insertMany = async (httpClient: HTTPClient, documents: unknown[], ordered?: boolean): Promise<string[]> => {
+const insertMany = async (httpClient: HTTPClient, documents: unknown[], ordered: boolean): Promise<string[]> => {
   const command: InsertManyCommand = {
     insertMany: {
       documents,
