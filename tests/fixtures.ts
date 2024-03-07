@@ -16,13 +16,14 @@ import { Client } from '@/src/client/client';
 
 export const TEST_COLLECTION_NAME = 'test_coll';
 
-const makeAstraClient = async () => {
+const makeAstraClient = async (useHttp2: boolean = true) => {
   if (!process.env.ASTRA_URI || !process.env.APPLICATION_TOKEN) {
     return null;
   }
 
   return await Client.connect(process.env.ASTRA_URI, {
     applicationToken: process.env.APPLICATION_TOKEN,
+    useHttp2: useHttp2,
   });
 };
 

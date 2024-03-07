@@ -19,7 +19,7 @@ import { APIResponse, HTTPRequestInfo, HTTPRequestStrategy, InternalHTTPClientOp
 import { HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
 import { BaseOptions } from '@/src/client/types/common';
-import { DataAPIError } from '@/src/client/errors';
+import { DataAPIError, DataAPITimeout } from '@/src/client/errors';
 
 export class HTTPClient {
   baseUrl: string;
@@ -132,6 +132,7 @@ export class HTTPClient {
       }
 
       // return this._mkError(e.message ? e.message : 'Server call failed, please retry!');
+
       throw e;
     }
   }

@@ -26,7 +26,7 @@ import {
   testClient
 } from '@/tests/fixtures';
 import { randAlphaNumeric } from '@ngneat/falso';
-import { InsertManyOrderedError, InsertManyUnorderedError } from '@/src/client/errors';
+import { DataAPITimeout, InsertManyOrderedError, InsertManyUnorderedError } from '@/src/client/errors';
 
 describe(`AstraTsClient - astra Connection - collections.collection`, async () => {
   let astraClient: Client | null;
@@ -93,6 +93,30 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
   });
 
+  describe('timeout tests', () => {
+    it('times out on http2', async () => {
+      const client = await testClient!.new(true);
+
+      try {
+        await client!.db().collection(TEST_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });
+      } catch (e: any) {
+        assert.ok(e instanceof DataAPITimeout);
+        assert.strictEqual(e.message, 'Command timed out after 10ms');
+      }
+    });
+
+    it('times out on http1', async () => {
+      const client = await testClient!.new(false);
+
+      try {
+        await client!.db().collection(TEST_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });
+      } catch (e: any) {
+        assert.ok(e instanceof DataAPITimeout);
+        assert.strictEqual(e.message, 'Command timed out after 10ms');
+      }
+    });
+  });
+
   describe('insertOne tests', () => {
     it('should insertOne document', async () => {
       const res = await collection.insertOne(createSampleDocWithMultiLevel());
@@ -100,13 +124,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.strictEqual(res.acknowledged, true);
       assert.ok(res.insertedId);
     });
-
-    // it('should insertOne document v2', async () => {
-    //   const res = await collection.insertOne(createSampleDocWithMultiLevel(), { maxTimeMS: 10 });
-    //   assert.ok(res);
-    //   assert.strictEqual(res.acknowledged, true);
-    //   assert.ok(res.insertedId);
-    // });
 
     it('should insertOne document with id', async () => {
       const docId = 'docml1';

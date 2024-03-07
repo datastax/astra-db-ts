@@ -14,10 +14,11 @@
 
 import { HTTPRequestStrategy, InternalAPIResponse, InternalHTTPRequestInfo } from '@/src/api/types';
 import axios from 'axios';
-import { DEFAULT_AUTH_HEADER, DEFAULT_METHOD, DEFAULT_TIMEOUT, REQUESTED_WITH } from '@/src/api/constants';
+import { DEFAULT_AUTH_HEADER, DEFAULT_TIMEOUT, REQUESTED_WITH } from '@/src/api/constants';
 import http from 'http';
 import { logger } from '@/src/logger';
 import { serializeCommand } from '@/src/api/http-client';
+import { DataAPITimeout } from '@/src/client/errors';
 
 const axiosAgent = axios.create({
   headers: {
@@ -53,15 +54,22 @@ axiosAgent.interceptors.response.use((response) => {
 
 export class HTTP1Strategy implements HTTPRequestStrategy {
   async request(info: InternalHTTPRequestInfo): Promise<InternalAPIResponse> {
-    return await axiosAgent({
-      url: info.url,
-      data: info.command,
-      params: info.params,
-      method: info.method || DEFAULT_METHOD,
-      timeout: info.timeout || DEFAULT_TIMEOUT,
-      headers: {
-        [DEFAULT_AUTH_HEADER]: info.token,
+    try {
+      return await axiosAgent({
+        url: info.url,
+        data: info.command,
+        params: info.params,
+        method: info.method,
+        timeout: info.timeout,
+        headers: {
+          [DEFAULT_AUTH_HEADER]: info.token,
+        }
+      });
+    } catch (e: any) {
+      if (e.code === 'ECONNABORTED') {
+        throw new DataAPITimeout(info.command, info.timeout);
       }
-    });
+      throw e;
+    }
   }
 }

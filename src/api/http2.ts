@@ -39,7 +39,7 @@ export class HTTP2Strategy implements HTTPRequestStrategy {
         this.session = this._reviveSession();
       }
 
-      const timer = setTimeout(() => reject(new DataAPITimeout(info.command)), info.timeout);
+      const timer = setTimeout(() => reject(new DataAPITimeout(info.command, info.timeout)), info.timeout);
 
       const path = info.url.replace(this.origin, '');
       const params = info.params ? `?${new URLSearchParams(info.params).toString()}` : '';

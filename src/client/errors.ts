@@ -33,8 +33,8 @@ export class DataAPIError extends Error implements APIResponse {
 }
 
 export class DataAPITimeout extends Error {
-  constructor(readonly command: Record<string, any>) {
-    super("Command timed out");
+  constructor(readonly command: Record<string, any>, readonly timeout: number) {
+    super(`Command timed out after ${timeout}ms`);
     this.name = "DataAPITimeout";
   }
 }
@@ -67,8 +67,6 @@ const errorString = (errors: any[]) => {
   errors = errors.slice(0, MAX_ERRORS_DISPLAYED);
 
   return (errors.length > 0)
-    // ? `, with errors: ${errors.map(e => JSON.stringify(e)).join(", ")}`
-    // : '';
     ? `, with errors: ${errors.map(e => JSON.stringify(e)).join(", ")}${moreErrors > 0 ? `and ${moreErrors} more errors` : ''}`
     : '';
 }

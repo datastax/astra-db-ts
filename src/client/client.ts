@@ -59,6 +59,7 @@ export class Client implements Disposable {
       baseApiPath: options?.baseApiPath || parsedUri.baseApiPath,
       logLevel: options?.logLevel,
       logSkippedOptions: options?.logSkippedOptions,
+      useHttp2: options?.useHttp2,
     });
   }
 
