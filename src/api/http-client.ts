@@ -14,12 +14,12 @@
 
 import { logger, setLevel } from '@/src/logger';
 import { EJSON } from 'bson';
-import { DEFAULT_KEYSPACE, DEFAULT_METHOD, DEFAULT_TIMEOUT, HTTP_METHODS } from '@/src/api/constants';
+import { DEFAULT_METHOD, DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, HTTP_METHODS } from '@/src/api/constants';
 import { APIResponse, HTTPRequestInfo, HTTPRequestStrategy, InternalHTTPClientOptions } from '@/src/api/types';
 import { HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
 import { BaseOptions } from '@/src/client/types/common';
-import { DataAPIError, DataAPITimeout } from '@/src/client/errors';
+import { DataAPIError } from '@/src/client/errors';
 
 export class HTTPClient {
   baseUrl: string;
@@ -47,7 +47,7 @@ export class HTTPClient {
     this.applicationToken = options.applicationToken;
     this.logSkippedOptions = options.logSkippedOptions ?? false;
     this.collection = options.collectionName;
-    this.keyspace = options.keyspaceName || DEFAULT_KEYSPACE;
+    this.keyspace = options.keyspaceName || DEFAULT_NAMESPACE;
     this.usingHttp2 = options.useHttp2 ?? true;
 
     this.requestStrategy = (this.usingHttp2)

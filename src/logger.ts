@@ -23,13 +23,16 @@ const developmentFormat = format.combine(
   format.splat(),
   format.simple(),
 );
+
 const consoleTransport = new winston.transports.Console();
+
 export const logger = winston.createLogger({
-  level: process.env.NODE_ENV === "production" ? "error" : "info",
-  format:
-    process.env.NODE_ENV === "production"
-      ? productionFormat
-      : developmentFormat,
+  level: (process.env.NODE_ENV === "production")
+    ? "error"
+    : "info",
+  format: (process.env.NODE_ENV === "production")
+    ? productionFormat
+    : developmentFormat,
   transports: [consoleTransport],
 });
 

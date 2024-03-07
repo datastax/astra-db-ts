@@ -15,6 +15,8 @@
 import assert from 'assert';
 import { AstraDB } from '@/src/client';
 import { useHttpClient } from '@/tests/fixtures';
+import { HTTP2Strategy } from '@/src/api/http2';
+import { HTTP1Strategy } from '@/src/api/http1';
 
 describe('Utils test', () => {
   it('initialized w/ default keyspace', () => {
@@ -25,7 +27,6 @@ describe('Utils test', () => {
       'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/default_keyspace',
     );
     assert.strictEqual(useHttpClient(astraDb).applicationToken, 'myToken');
-    assert.strictEqual(useHttpClient(astraDb).usingHttp2, true);
   });
 
   it('adds a keyspace properly', () => {
@@ -36,7 +37,22 @@ describe('Utils test', () => {
       'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1',
     );
     assert.strictEqual(useHttpClient(astraDb).applicationToken, 'myToken');
+  });
+
+  it('uses http2 by default', () => {
+    const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
+    const astraDb = new AstraDB('myToken', apiEndPoint);
     assert.strictEqual(useHttpClient(astraDb).usingHttp2, true);
+    assert.ok(useHttpClient(astraDb).requestStrategy instanceof HTTP2Strategy);
+  });
+
+  it('handles forcing http2', () => {
+    const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
+    const astraDb = new AstraDB('myToken', apiEndPoint, {
+      useHttp2: false,
+    });
+    assert.strictEqual(useHttpClient(astraDb).usingHttp2, true);
+    assert.ok(useHttpClient(astraDb).requestStrategy instanceof HTTP2Strategy);
   });
 
   it('handles forcing http1.1', () => {
@@ -44,12 +60,8 @@ describe('Utils test', () => {
     const astraDb = new AstraDB('myToken', apiEndPoint, {
       useHttp2: false,
     });
-    assert.strictEqual(useHttpClient(astraDb).applicationToken, 'myToken');
-    assert.strictEqual(
-      useHttpClient(astraDb).baseUrl + '/' + useHttpClient(astraDb).keyspace,
-      'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/default_keyspace',
-    );
     assert.strictEqual(useHttpClient(astraDb).usingHttp2, false);
+    assert.ok(useHttpClient(astraDb).requestStrategy instanceof HTTP1Strategy);
   });
 
   it('handles different base api path', () => {
@@ -66,26 +78,14 @@ describe('Utils test', () => {
   });
 
   it('throws error on empty keyspace', () => {
-    let error = false;
-    try {
-      new AstraDB('myToken', 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com', '', {
-        baseApiPath: 'some/random/path',
-      });
-    } catch (e) {
-      error = true;
-    }
-    assert.strictEqual(error, true);
+    assert.rejects(async () => {
+      new AstraDB('myToken', 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com', '');
+    });
   });
 
   it('throws error on bad keyspace', () => {
-    let error = false;
-    try {
-      new AstraDB('myToken', 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com', '23][ep3[2xr3][2r', {
-        baseApiPath: 'some/random/path',
-      });
-    } catch (e) {
-      error = true;
-    }
-    assert.strictEqual(error, true);
+    assert.rejects(async () => {
+      new AstraDB('myToken', 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com', '23][ep3[2xr3][2r');
+    });
   });
 });

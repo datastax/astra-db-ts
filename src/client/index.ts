@@ -30,7 +30,6 @@ export { UpdateFilter } from '@/src/client/types/update-filter';
 export { Filter } from '@/src/client/types/filter';
 export { VectorDoc, SomeDoc } from '@/src/client/document';
 
-export { createAstraUri } from './utils';
 export { AstraDB } from '@/src/client/astra';
 export { ProjectionOption } from '@/src/client/types/common';
 export { SortOption } from '@/src/client/types/common';

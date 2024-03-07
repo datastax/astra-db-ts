@@ -21,7 +21,7 @@ export const enum HTTP_METHODS {
   post = 'POST',
 }
 
-export const DEFAULT_KEYSPACE = 'default_keyspace';
+export const DEFAULT_NAMESPACE = 'default_keyspace';
 export const DEFAULT_METHOD = HTTP_METHODS.get;
 export const DEFAULT_AUTH_HEADER = process.env['ASTRA_AUTH_HEADER'] || "Token";
 export const DEFAULT_TIMEOUT = 30000;

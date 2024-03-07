@@ -99,41 +99,6 @@ export function getKeyspaceName(pathFromUrl?: string | null) {
   return pathElements[pathElements.length - 1];
 }
 
-/**
- * Create an Astra connection URI while connecting to Astra JSON API
- * @param apiEndPoint the API EndPoint of the Astra database
- * @param keyspace the keyspace to connect to
- * @param applicationToken an Astra application token
- * @param baseApiPath baseAPI path defaults to /api/json/v1
- * @param logLevel an winston log level (error: 0, warn: 1, info: 2, http: 3, verbose: 4, debug: 5, silly: 6)
- * @returns URL as string
- */
-export function createAstraUri(
-  apiEndPoint: string,
-  keyspace: string,
-  applicationToken?: string,
-  baseApiPath?: string,
-  logLevel?: string,
-) {
-  const uri = new url.URL(apiEndPoint);
-
-  let contextPath = "";
-  contextPath += baseApiPath ? `/${baseApiPath}` : "/api/json/v1";
-  contextPath += `/${keyspace}`;
-
-  uri.pathname = contextPath;
-
-  if (applicationToken) {
-    uri.searchParams.append("applicationToken", applicationToken);
-  }
-
-  if (logLevel) {
-    uri.searchParams.append("logLevel", logLevel);
-  }
-
-  return uri.toString();
-}
-
 export async function createNamespace(httpClient: HTTPClient, name: string) {
   const data = {
     createNamespace: { name },
