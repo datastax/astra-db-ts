@@ -60,6 +60,13 @@ export class InsertManyUnorderedError extends Error {
   }
 }
 
+export class TooManyDocsToCountError extends Error {
+  constructor(readonly limit: number) {
+    super(`Too many documents to count (provided limit is ${limit})`);
+    this.name = "TooManyDocsToCountError";
+  }
+}
+
 const MAX_ERRORS_DISPLAYED = 5;
 
 const errorString = (errors: any[]) => {

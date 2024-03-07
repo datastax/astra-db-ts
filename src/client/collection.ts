@@ -60,7 +60,12 @@ import { ToDotNotation } from '@/src/client/types/dot-notation';
 
 import { CollectionOptions } from '@/src/client/types/collections/collection-options';
 import { BaseOptions } from '@/src/client/types/common';
-import { DataAPIError, InsertManyOrderedError, InsertManyUnorderedError } from '@/src/client/errors';
+import {
+  DataAPIError,
+  InsertManyOrderedError,
+  InsertManyUnorderedError,
+  TooManyDocsToCountError
+} from '@/src/client/errors';
 
 /**
  * Represents the interface to a collection in the database.
@@ -536,13 +541,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * @deprecated Use {@link countDocuments} instead
-   */
-  async count(filter?: Filter<Schema>, options?: BaseOptions): Promise<number> {
-    return this.countDocuments(filter, options);
-  }
-
-  /**
    * Counts the number of documents in the collection.
    *
    * @example
@@ -557,14 +555,29 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * ```
    *
    * @param filter - A filter to select the documents to count. If not provided, all documents will be counted.
+   * @param limit - The maximum number of documents to count.
    * @param options - The options for the operation.
+   *
+   * @throws TooManyDocsToCountError - If the number of documents counted exceeds the provided limit.
    */
-  async countDocuments(filter?: Filter<Schema>, options?: BaseOptions): Promise<number> {
+  async countDocuments(filter: Filter<Schema>, limit: number, options?: BaseOptions): Promise<number> {
     const command = {
       countDocuments: { filter },
     };
 
+    if (!limit) {
+      throw new Error('options.limit is required');
+    }
+
     const resp = await this._httpClient.executeCommand(command, options);
+
+    if (resp.status?.count > limit) {
+      throw new TooManyDocsToCountError(limit);
+    }
+
+    if (resp.status?.moreData) {
+      throw new TooManyDocsToCountError(1000);
+    }
 
     return resp.status?.count;
   }
@@ -716,13 +729,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    */
   async drop(options?: BaseOptions): Promise<boolean> {
     return await this._db.dropCollection(this._collectionName, options);
-  }
-
-  /**
-   * @deprecated Use {@link collectionName} instead
-   */
-  get name(): string {
-    return this._collectionName;
   }
 }
 

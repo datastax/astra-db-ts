@@ -26,7 +26,12 @@ import {
   testClient
 } from '@/tests/fixtures';
 import { randAlphaNumeric } from '@ngneat/falso';
-import { DataAPITimeout, InsertManyOrderedError, InsertManyUnorderedError } from '@/src/client/errors';
+import {
+  DataAPITimeout,
+  InsertManyOrderedError,
+  InsertManyUnorderedError,
+  TooManyDocsToCountError
+} from '@/src/client/errors';
 
 describe(`AstraTsClient - astra Connection - collections.collection`, async () => {
   let astraClient: Client | null;
@@ -85,11 +90,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
 
     it('returns the name', () => {
       assert.strictEqual(collection.collectionName, TEST_COLLECTION_NAME);
-    });
-
-    it('returns supports name as an alias for collectionName', () => {
-      // noinspection JSDeprecatedSymbols
-      assert.strictEqual(collection.name, TEST_COLLECTION_NAME);
     });
   });
 
@@ -2707,34 +2707,13 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         { username: 'aaa', answer: 42 }
       ]);
 
-      let count = await collection.countDocuments();
+      let count = await collection.countDocuments({}, 1000);
       assert.strictEqual(count, 3);
 
-      count = await collection.countDocuments({ username: 'a' });
+      count = await collection.countDocuments({ username: 'a' }, 1000);
       assert.strictEqual(count, 1);
 
-      count = await collection.countDocuments({ answer: 42 });
-      assert.strictEqual(count, 2);
-    });
-
-    it('supports count() as alias for countDocuments()', async () => {
-      await collection.deleteMany({});
-      await collection.insertMany([
-        { username: 'a' },
-        { username: 'aa', answer: 42 },
-        { username: 'aaa', answer: 42 }
-      ]);
-
-      // noinspection JSDeprecatedSymbols
-      let count = await collection.count();
-      assert.strictEqual(count, 3);
-
-      // noinspection JSDeprecatedSymbols
-      count = await collection.count({ username: 'a' });
-      assert.strictEqual(count, 1);
-
-      // noinspection JSDeprecatedSymbols
-      count = await collection.count({ answer: 42 });
+      count = await collection.countDocuments({ answer: 42 }, 1000);
       assert.strictEqual(count, 2);
     });
 
@@ -2835,7 +2814,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, 20);
-      const count = await collection.countDocuments({ 'city': 'trichy' });
+      const count = await collection.countDocuments({ 'city': 'trichy' }, 1000);
       assert.strictEqual(count, 20);
     });
 
@@ -2846,7 +2825,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, 20);
-      const count = await collection.countDocuments({});
+      const count = await collection.countDocuments({}, 1000);
       assert.strictEqual(count, 20);
     });
 
@@ -2867,144 +2846,43 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.strictEqual(resNextSet.acknowledged, true);
       assert.strictEqual(Object.keys(resNextSet.insertedIds).length, docListNextSet.length);
       //verify counts
-      assert.strictEqual(await collection.countDocuments({ city: 'nyc' }), 20);
-      assert.strictEqual(await collection.countDocuments({ city: 'trichy' }), 20);
-      assert.strictEqual(await collection.countDocuments({ city: 'chennai' }), 0);
-      assert.strictEqual(await collection.countDocuments({}), 40);
+      assert.strictEqual(await collection.countDocuments({ city: 'nyc' }, 1000), 20);
+      assert.strictEqual(await collection.countDocuments({ city: 'trichy' }, 1000), 20);
+      assert.strictEqual(await collection.countDocuments({ city: 'chennai' }, 1000), 0);
+      assert.strictEqual(await collection.countDocuments({}, 1000), 40);
     });
 
     it('should return 0 when no documents are in the collection', async () => {
-      const count = await collection.countDocuments({});
+      const count = await collection.countDocuments({}, 1000);
       assert.strictEqual(count, 0);
     });
-  });
 
-  // describe('upsertOne tests', () => {
-  //   it('should upsert a nonexistent document with ID', async () => {
-  //     const doc = createSampleDocWithMultiLevelWithId('123');
-  //     const res = await collection.upsertOne(doc);
-  //     assert.ok(res);
-  //     assert.strictEqual(res.acknowledged, true);
-  //     assert.ok(res.insertedId, doc._id);
-  //     assert.strictEqual(res.replaced, false);
-  //     // const found = await collection.findOne({ _id: doc._id });
-  //     // assert.deepStrictEqual(found, doc);
-  //   });
-  //
-  //   it('should upsert a nonexistent document without ID', async () => {
-  //     const doc = createSampleDocWithMultiLevel();
-  //     const res = await collection.upsertOne(doc);
-  //     assert.ok(res);
-  //     assert.strictEqual(res.acknowledged, true);
-  //     assert.ok(res.insertedId);
-  //     assert.strictEqual(res.replaced, false);
-  //     // const found = await collection.findOne({ _id: doc._id });
-  //     // assert.deepStrictEqual(found, doc);
-  //   });
-  //
-  //   it('should upsert an existing document with ID', async () => {
-  //     const doc1 = { _id: '123', username: 'abc' };
-  //     const doc2 = { _id: '123', username: 'def' };
-  //     await collection.insertOne(doc1);
-  //     const upsert = await collection.upsertOne(doc2);
-  //     assert.ok(upsert);
-  //     assert.strictEqual(upsert.acknowledged, true);
-  //     assert.strictEqual(upsert.insertedId, doc1._id);
-  //     assert.strictEqual(upsert.replaced, true);
-  //     // const found = await collection.findOne({ _id: doc1._id });
-  //     // assert.deepStrictEqual(found, doc2);
-  //   });
-  //
-  //   it('should upsert a nonexistent document with ID V2', async () => {
-  //     const doc = createSampleDocWithMultiLevelWithId('123');
-  //     const res = await collection.upsertOneV2(doc);
-  //     assert.ok(res);
-  //     assert.strictEqual(res.acknowledged, true);
-  //     assert.ok(res.insertedId, doc._id);
-  //     assert.strictEqual(res.replaced, false);
-  //     // const found = await collection.findOne({ _id: doc._id });
-  //     // assert.deepStrictEqual(found, doc);
-  //   });
-  //
-  //   it('should upsert a nonexistent document without ID V2', async () => {
-  //     const doc = createSampleDocWithMultiLevel();
-  //     const res = await collection.upsertOneV2(doc);
-  //     assert.ok(res);
-  //     assert.strictEqual(res.acknowledged, true);
-  //     assert.ok(res.insertedId);
-  //     assert.strictEqual(res.replaced, false);
-  //     // const found = await collection.findOne({ _id: doc._id });
-  //     // assert.deepStrictEqual(found, doc);
-  //   });
-  //
-  //   it('should upsert an existing document with ID V2', async () => {
-  //     const doc1 = { _id: '123', username: 'abc' };
-  //     const doc2 = { _id: '123', username: 'def' };
-  //     await collection.insertOne(doc1);
-  //     const upsert = await collection.upsertOneV2(doc2);
-  //     assert.ok(upsert);
-  //     assert.strictEqual(upsert.acknowledged, true);
-  //     assert.strictEqual(upsert.insertedId, doc1._id);
-  //     assert.strictEqual(upsert.replaced, true);
-  //     // const found = await collection.findOne({ _id: doc._id });
-  //     // assert.deepStrictEqual(found, doc);
-  //   });
-  // });
-  //
-  // describe('upsertMany tests', () => {
-  //   it('should insert many documents with no id', async () => {
-  //     const docList = Array.from({ length: 150 }, (_, i) => ({ username: `user${i}` }));
-  //     const res = await collection.upsertMany(docList);
-  //     assert.strictEqual(res.insertedCount, docList.length);
-  //     assert.strictEqual(res.acknowledged, true);
-  //     assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
-  //     assert.strictEqual(res.failedCount, 0);
-  //     assert.strictEqual(res.failedUpserts.length, 0);
-  //   });
-  //
-  //   it('should insert many documents with ids', async () => {
-  //     const docList = Array.from({ length: 50 }, (_, i) => ({ _id: `id${i}`, username: `user${i}` }));
-  //     const res = await collection.upsertMany(docList);
-  //     assert.strictEqual(res.insertedCount, docList.length);
-  //     assert.strictEqual(res.acknowledged, true);
-  //     assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
-  //     assert.strictEqual(res.failedCount, 0);
-  //     assert.strictEqual(res.failedUpserts.length, 0);
-  //   });
-  //
-  //   it('should insert a single doc', async () => {
-  //     const res = await collection.upsertMany([createSampleDocWithMultiLevel()]);
-  //     assert.strictEqual(res.insertedCount, 1);
-  //     assert.strictEqual(res.acknowledged, true);
-  //     assert.strictEqual(Object.keys(res.insertedIds).length, 1);
-  //     assert.strictEqual(res.failedCount, 0);
-  //     assert.strictEqual(res.failedUpserts.length, 0);
-  //   });
-  //
-  //   it('should insert a single doc with no failures when none have unique IDs', async () => {
-  //     const docList = Array.from({ length: 50 }, (_, i) => ({ _id: `id`, username: `user${i}` }));
-  //     const res = await collection.upsertMany(docList);
-  //     assert.strictEqual(res.insertedCount, 1);
-  //     assert.strictEqual(res.acknowledged, true);
-  //     assert.strictEqual(Object.keys(res.insertedIds).length, 1);
-  //     assert.strictEqual(res.failedCount, 0);
-  //     assert.strictEqual(res.failedUpserts.length, 0);
-  //   });
-  //
-  //   it('should upsert many documents', async () => {
-  //     const docs1 = Array.from({ length: 50 }, (_, i) => ({ _id: `id${i}`, username: `old-user${i}` }));
-  //     await collection.insertManyBulk(docs1);
-  //     const docs2 = Array.from({ length: 50 }, (_, i) => ({ _id: `id${i}`, username: `new-user${i}` }));
-  //     const res = await collection.upsertMany(docs2);
-  //     assert.strictEqual(res.insertedCount, 0);
-  //     assert.strictEqual(res.modifiedCount, docs2.length);
-  //     assert.strictEqual(res.acknowledged, true);
-  //     assert.strictEqual(Object.keys(res.insertedIds).length, 0);
-  //     assert.strictEqual(Object.keys(res.modifiedIds).length, docs2.length);
-  //     assert.strictEqual(res.failedCount, 0);
-  //     assert.strictEqual(res.failedUpserts.length, 0);
-  //   });
-  // });
+    it('should throw an error when # docs over limit', async () => {
+      const docList = Array.from({ length: 2 }, () => ({}));
+      await collection.insertMany(docList);
+
+      try {
+        await collection.countDocuments({}, 1);
+        assert.ok(false);
+      } catch (e) {
+        assert.ok(e instanceof TooManyDocsToCountError);
+        assert.strictEqual(e.limit, 1);
+      }
+    });
+
+    it('should throw an error when moreData is returned', async () => {
+      const docList = Array.from({ length: 1001 }, () => ({}));
+      await collection.insertMany(docList);
+
+      try {
+        await collection.countDocuments({}, 2000);
+        assert.ok(false);
+      } catch (e) {
+        assert.ok(e instanceof TooManyDocsToCountError);
+        assert.strictEqual(e.limit, 1000);
+      }
+    });
+  });
 
   describe('distinct tests', () => {
     it('distinct', async () => {
@@ -3014,18 +2892,18 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         { username: { full: 'a' }, car: [2], bus: 'no' }
       ]);
 
-      // const distinct1 = await collection.distinct('car');
-      // assert.ok(distinct1.includes(1));
-      // assert.ok(distinct1.includes(2));
-      // assert.ok(distinct1.includes(3));
-      //
-      // const distinct2 = await collection.distinct('username.full');
-      // assert.ok(distinct2.includes('a'));
-      // assert.ok(distinct2.includes('b'));
-      //
-      // const distinct3 = await collection.distinct('username');
-      // assert.ok(distinct3.map(v => v.full).includes('a'));
-      // assert.ok(distinct3.map(v => v.full).includes('b'));
+      const distinct1 = await collection.distinct('car');
+      assert.ok(distinct1.includes(1));
+      assert.ok(distinct1.includes(2));
+      assert.ok(distinct1.includes(3));
+
+      const distinct2 = await collection.distinct('username.full');
+      assert.ok(distinct2.includes('a'));
+      assert.ok(distinct2.includes('b'));
+
+      const distinct3 = await collection.distinct('username');
+      assert.ok(distinct3.map(v => v.full).includes('a'));
+      assert.ok(distinct3.map(v => v.full).includes('b'));
 
       const distinct4 = await collection.distinct('bus');
       assert.deepStrictEqual(distinct4, ['no']);
