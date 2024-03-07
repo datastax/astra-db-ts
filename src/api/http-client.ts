@@ -19,6 +19,7 @@ import { APIResponse, HTTPRequestInfo, HTTPRequestStrategy, InternalHTTPClientOp
 import { HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
 import { BaseOptions } from '@/src/client/types/common';
+import { DataAPIError } from '@/src/client/errors';
 
 export class HTTPClient {
   baseUrl: string;
@@ -85,7 +86,7 @@ export class HTTPClient {
       url: this.baseUrl,
       method: HTTP_METHODS.post,
       timeout: options?.maxTimeMS ?? DEFAULT_TIMEOUT,
-      data,
+      command: data,
     });
 
     handleIfErrorResponse(response, data);
@@ -94,14 +95,6 @@ export class HTTPClient {
 
   async request(requestInfo: HTTPRequestInfo): Promise<APIResponse> {
     try {
-      if (!this.applicationToken) {
-        return this._mkError("Unable to get token for the credentials provided");
-      }
-
-      if (!requestInfo.url) {
-        return this._mkError("URL not specified");
-      }
-
       const keyspacePath = this.keyspace ? `/${this.keyspace}` : '';
       const collectionPath = this.collection ? `/${this.collection}` : '';
       const url = requestInfo.url + keyspacePath + collectionPath;
@@ -109,7 +102,7 @@ export class HTTPClient {
       const response = await this.requestStrategy.request({
         url: url,
         token: this.applicationToken,
-        data: requestInfo.data,
+        command: requestInfo.command,
         timeout: requestInfo.timeout || DEFAULT_TIMEOUT,
         method: requestInfo.method || DEFAULT_METHOD,
         params: requestInfo.params ?? {},
@@ -127,12 +120,12 @@ export class HTTPClient {
         };
       } else {
         logger.error(requestInfo.url + ": " + response.status);
-        logger.error("Data: " + JSON.stringify(requestInfo.data));
+        logger.error("Data: " + JSON.stringify(requestInfo.command));
         return this._mkError("Server response received : " + response.status + "!");
       }
     } catch (e: any) {
       logger.error(requestInfo.url + ": " + e.message);
-      logger.error("Data: " + JSON.stringify(requestInfo.data));
+      logger.error("Data: " + JSON.stringify(requestInfo.command));
 
       if (e?.response?.data) {
         logger.error("Response Data: " + JSON.stringify(e.response.data));
@@ -147,25 +140,9 @@ export class HTTPClient {
   }
 }
 
-export class AstraServerError extends Error {
-  errors: any[];
-  command: Record<string, any>;
-  status: any;
-
-  constructor(response: any, command: Record<string, any> = {}) {
-    const commandName = Object.keys(command)[0] || "unknown";
-    const status = response.status ? `, Status : ${JSON.stringify(response.status)}` : '';
-    super(`Command "${commandName}" failed with the following errors: ${JSON.stringify(response.errors,)}${status}`);
-    this.errors = response.errors;
-    this.command = command;
-    this.status = response.status;
-    this.name = "AstraServerError";
-  }
-}
-
 export function handleIfErrorResponse(response: any, data: Record<string, any>) {
   if (response.errors && response.errors.length > 0) {
-    throw new AstraServerError(response, data);
+    throw new DataAPIError(response, data);
   }
 }
 

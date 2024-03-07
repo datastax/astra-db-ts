@@ -61,6 +61,7 @@ import { ToDotNotation } from '@/src/client/types/dot-notation';
 
 import { CollectionOptions } from '@/src/client/types/collections/collection-options';
 import { BaseOptions } from '@/src/client/types/common';
+import { DataAPIError, InsertManyOrderedError } from '@/src/client/errors';
 
 /**
  * Represents the interface to a collection in the database.
@@ -90,7 +91,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
   constructor(db: Db, httpClient: HTTPClient, name: string) {
     if (!name) {
-      throw new Error("collection name is required");
+      throw new Error('collection name is required');
     }
 
     this._httpClient = httpClient.cloneShallow();
@@ -166,6 +167,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param options - The options for the operation.
    */
   async insertMany(documents: Schema[], options?: InsertManyOptions): Promise<InsertManyResult> {
+    if (options?.ordered) {
+      return insertManyOrdered(this._httpClient, documents, 20);
+    }
+
     documents.forEach(setDefaultIdForInsert);
 
     const command: InsertManyCommand = {
@@ -200,6 +205,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       throw new Error('Parallel must be greater than 0');
     }
 
+    for (let i = 0, n = documents.length; i < n; i++) {
+      setDefaultIdForInsert(documents[i]);
+    }
+
     const results: InsertManyResult[] = [];
     const failedInserts: FailedInsert<Schema>[] = [];
 
@@ -219,8 +228,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
         try {
           // const result = await this.insertMany(slice);
-          slice.forEach(setDefaultIdForInsert);
-
           const command: InsertManyCommand = {
             insertMany: {
               documents: slice,
@@ -264,7 +271,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
           }
         }
       }
-    };
+    }
 
     const workers = Array.from({ length: parallel }, processQueue);
 
@@ -829,4 +836,64 @@ export class AstraClientError extends Error {
     super(`Command "${commandName}" failed with the following error: ${message}`);
     this.command = command;
   }
+}
+
+const insertManyOrdered = async (httpClient: HTTPClient, documents: unknown[], chunkSize: number): Promise<InsertManyResult> => {
+  const insertedIds: string[] = [];
+
+  for (let i = 0, n = documents.length; i < n; i += chunkSize) {
+    const slice = documents.splice(0, chunkSize);
+
+    try {
+      const inserted = await insertMany(httpClient, slice, true);
+      insertedIds.push(...inserted);
+    } catch (e) {
+      if (!(e instanceof DataAPIError)) {
+        throw e;
+      }
+
+      const justInsertedIds = e.status?.insertedIds ?? [];
+      insertedIds.push(...justInsertedIds);
+
+      const failed = dropWhileEq(slice, justInsertedIds.pop());
+      failed.push(...documents);
+
+      throw new InsertManyOrderedError(e, insertedIds, failed);
+    }
+  }
+
+  return {
+    acknowledged: true,
+    insertedCount: insertedIds.length,
+    insertedIds,
+  };
+}
+
+export function dropWhileEq<T>(arr: T[], target: T): T[] {
+  const result = [];
+  let insert = false;
+
+  for (let i = 0, n = arr.length; i < n; i++) {
+    if (!insert && arr[i] !== target) {
+      insert = true;
+    }
+
+    if (insert) {
+      result.push(arr[i]);
+    }
+  }
+
+  return result;
+}
+
+const insertMany = async (httpClient: HTTPClient, documents: unknown[], ordered?: boolean): Promise<string[]> => {
+  const command: InsertManyCommand = {
+    insertMany: {
+      documents,
+      options: { ordered },
+    }
+  }
+
+  const resp = await httpClient.executeCommand(command, {}, insertManyOptionKeys);
+  return resp.status?.insertedIds ?? [];
 }

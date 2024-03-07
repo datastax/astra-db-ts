@@ -14,7 +14,8 @@
 
 import * as http2 from 'http2';
 import { HTTPRequestStrategy, InternalAPIResponse, InternalHTTPRequestInfo } from '@/src/api/types';
-import { AstraServerError, serializeCommand } from '@/src/api/http-client';
+import { serializeCommand } from '@/src/api/http-client';
+import { DataAPITimeout } from '@/src/client/errors';
 
 export class HTTP2Strategy implements HTTPRequestStrategy {
   origin: string;
@@ -38,7 +39,7 @@ export class HTTP2Strategy implements HTTPRequestStrategy {
         this.session = this._reviveSession();
       }
 
-      const timer = setTimeout(() => reject(new AstraServerError('Request timed out', info.data)), info.timeout);
+      const timer = setTimeout(() => reject(new DataAPITimeout(info.command)), info.timeout);
 
       const path = info.url.replace(this.origin, '');
       const params = info.params ? `?${new URLSearchParams(info.params).toString()}` : '';
@@ -49,8 +50,8 @@ export class HTTP2Strategy implements HTTPRequestStrategy {
         token: info.token,
       });
 
-      if (info.data) {
-        req.write(serializeCommand(info.data), 'utf8');
+      if (info.command) {
+        req.write(serializeCommand(info.command), 'utf8');
       }
       req.end();
 

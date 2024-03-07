@@ -17,7 +17,7 @@ import { BaseOptions } from '@/src/client/types/common';
 /** @internal */
 export interface InsertManyCommand {
   insertMany: {
-    documents: object[];
+    documents: unknown[];
     options?: InsertManyOptions;
   }
 }

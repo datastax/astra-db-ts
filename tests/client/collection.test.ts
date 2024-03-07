@@ -100,6 +100,13 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.ok(res.insertedId);
     });
 
+    it('should insertOne document v2', async () => {
+      const res = await collection.insertOne(createSampleDocWithMultiLevel(), { maxTimeMS: 10 });
+      assert.ok(res);
+      assert.strictEqual(res.acknowledged, true);
+      assert.ok(res.insertedId);
+    });
+
     it('should insertOne document with id', async () => {
       const docId = 'docml1';
       const docToInsert = createSampleDocWithMultiLevelWithId(docId);

@@ -144,7 +144,7 @@ export async function createNamespace(httpClient: HTTPClient, name: string) {
   const response = await httpClient.request({
     url: httpClient.baseUrl,
     method: HTTP_METHODS.post,
-    data,
+    command: data,
   });
 
   handleIfErrorResponse(response, data);
@@ -159,7 +159,7 @@ export async function dropNamespace(httpClient: HTTPClient, name: string) {
   const response = await httpClient.request({
     url: httpClient.baseUrl,
     method: HTTP_METHODS.post,
-    data,
+    command: data,
   });
 
   handleIfErrorResponse(response, data);

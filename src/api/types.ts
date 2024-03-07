@@ -41,7 +41,7 @@ export interface InternalAPIResponse {
 
 export interface HTTPRequestInfo {
   url: string,
-  data?: Record<string, unknown>,
+  command: Record<string, unknown>,
   params?: Record<string, string>,
   method?: HTTP_METHODS,
   timeout?: number,

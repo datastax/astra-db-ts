@@ -55,7 +55,7 @@ export class HTTP1Strategy implements HTTPRequestStrategy {
   async request(info: InternalHTTPRequestInfo): Promise<InternalAPIResponse> {
     return await axiosAgent({
       url: info.url,
-      data: info.data,
+      data: info.command,
       params: info.params,
       method: info.method || DEFAULT_METHOD,
       timeout: info.timeout || DEFAULT_TIMEOUT,

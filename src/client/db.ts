@@ -112,8 +112,6 @@ export class Db {
    *
    * @return A promised reference to the newly created collection.
    *
-   * @throws {DBError} If the operation fails.
-   *
    * @see Collection
    * @see SomeDoc
    */
@@ -128,11 +126,7 @@ export class Db {
       command.createCollection.options = options;
     }
 
-    const resp = await this._httpClient.executeCommand(command, options, createCollectionOptionsKeys);
-
-    if (resp.errors) {
-      throw new DBError(resp.errors, resp.status, 'Error creating collection');
-    }
+    await this._httpClient.executeCommand(command, options, createCollectionOptionsKeys);
 
     return this.collection(collectionName);
   }
@@ -145,8 +139,6 @@ export class Db {
    * @param options Options for the operation.
    *
    * @return A promise that resolves to `true` if the collection was dropped successfully.
-   *
-   * @throws {DBError} If the operation fails.
    */
   async dropCollection(collectionName: string, options?: BaseOptions): Promise<boolean> {
     const command = {
@@ -156,10 +148,6 @@ export class Db {
     };
 
     const resp = await this._httpClient.executeCommand(command, options);
-
-    if (resp.errors) {
-      throw new DBError(resp.errors, resp.status, 'Error dropping collection');
-    }
 
     return resp.status?.ok === 1 && !resp.errors;
   }
@@ -181,8 +169,6 @@ export class Db {
    *
    * @return A promise that resolves to an array of collection info.
    *
-   * @throws {DBError} If the operation fails.
-   *
    * @see CollectionOptions
    */
   async listCollections<NameOnly extends boolean = false>(options?: ListCollectionsOptions<NameOnly>): Promise<CollectionInfo<NameOnly>[]> {
@@ -196,13 +182,9 @@ export class Db {
 
     const resp = await this._httpClient.executeCommand(command, options, listCollectionOptionsKeys);
 
-    if (resp.errors || !resp.status) {
-      throw new DBError(resp.errors ?? [], resp.status, 'Error listing collections');
-    }
-
     return (options?.nameOnly !== false)
-      ? resp.status.collections.map((name: string) => ({ name }))
-      : resp.status.collections;
+      ? resp.status!.collections.map((name: string) => ({ name }))
+      : resp.status!.collections;
   }
 
   async createDatabase(): Promise<APIResponse> {
@@ -218,12 +200,5 @@ export class Db {
    */
   get name(): string {
     return this._namespace;
-  }
-}
-
-class DBError extends Error {
-  constructor(public errors: any[], public status: any, message: string) {
-    super(message);
-    this.name = "DBError";
   }
 }

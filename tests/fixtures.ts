@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { Client } from '@/src/client/client';
-import { HTTPClient } from '@/src/api';
 
 export const TEST_COLLECTION_NAME = 'test_coll';
 
