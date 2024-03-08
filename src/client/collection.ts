@@ -563,13 +563,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   async findOneAndReplace(
     filter: Filter<Schema>,
     replacement: NoId<Schema>,
-    options: FindOneAndReplaceOptions<Schema> & { includeResultMetadata: false },
-  ): Promise<WithId<Schema> | null>
-
-  async findOneAndReplace(
-    filter: Filter<Schema>,
-    replacement: NoId<Schema>,
-    options: FindOneAndReplaceOptions<Schema>,
+    options: FindOneAndReplaceOptions<Schema> & { includeResultMetadata?: false },
   ): Promise<WithId<Schema> | null>
 
   async findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options: FindOneAndReplaceOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
@@ -671,12 +665,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
   async findOneAndDelete(
     filter: Filter<Schema>,
-    options?: FindOneAndDeleteOptions<Schema> & { includeResultMetadata: false },
-  ): Promise<WithId<Schema> | null>
-
-  async findOneAndDelete(
-    filter: Filter<Schema>,
-    options?: FindOneAndDeleteOptions<Schema>,
+    options?: FindOneAndDeleteOptions<Schema> & { includeResultMetadata?: false },
   ): Promise<WithId<Schema> | null>
 
   async findOneAndDelete(filter: Filter<Schema>, options?: FindOneAndDeleteOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
@@ -733,13 +722,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   async findOneAndUpdate(
     filter: Filter<Schema>,
     update: UpdateFilter<Schema>,
-    options: FindOneAndUpdateOptions<Schema> & { includeResultMetadata: false },
-  ): Promise<WithId<Schema> | null>
-
-  async findOneAndUpdate(
-    filter: Filter<Schema>,
-    update: UpdateFilter<Schema>,
-    options: FindOneAndUpdateOptions<Schema>,
+    options: FindOneAndUpdateOptions<Schema> & { includeResultMetadata?: false },
   ): Promise<WithId<Schema> | null>
 
   async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options: FindOneAndUpdateOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {

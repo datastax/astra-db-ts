@@ -2494,6 +2494,28 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       );
       assert.ok(value!._id!.toString().match(/^[a-f\d]{24}$/i), value!._id!.toString());
     });
+
+    it('should not return metadata when includeResultMetadata is false', async () => {
+      await collection.insertOne({ username: 'a' });
+      const res = await collection.findOneAndUpdate(
+        { username: 'a' },
+        { $set: { username: 'b' } },
+        { returnDocument: 'after', includeResultMetadata: false }
+      );
+
+      assert.deepStrictEqual(res, { _id: res?._id, username: 'b' });
+    });
+
+    it('should not return metadata by default', async () => {
+      await collection.insertOne({ username: 'a' });
+      const res = await collection.findOneAndUpdate(
+        { username: 'a' },
+        { $set: { username: 'b' } },
+        { returnDocument: 'after' }
+      );
+
+      assert.deepStrictEqual(res, { _id: res?._id, username: 'b' });
+    });
   });
 
   describe('deleteOne tests', () => {
@@ -2655,6 +2677,28 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         }
       );
       assert.ok(value!._id!.match(/^[a-f\d]{24}$/i), value!._id);
+    });
+
+    it('findOneAndReplace should not return metadata when includeResultMetadata is false', async () => {
+      await collection.insertOne({ username: 'a' });
+
+      const res = await collection.findOneAndReplace(
+        { username: 'a' },
+        { username: 'b' },
+        { returnDocument: 'after', includeResultMetadata: false }
+      );
+      assert.strictEqual(res?.username, 'b');
+    });
+
+    it('findOneAndReplace should not return metadata by default', async () => {
+      await collection.insertOne({ username: 'a' });
+
+      const res = await collection.findOneAndReplace(
+        { username: 'a' },
+        { username: 'b' },
+        { returnDocument: 'after' }
+      );
+      assert.strictEqual(res?.username, 'b');
     });
 
     it('should findOneAndUpdate without any updates to apply', async () => {
