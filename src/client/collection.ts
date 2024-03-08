@@ -428,6 +428,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param filter - A filter to select the documents to delete.
    */
   async deleteMany(filter: Filter<Schema> = {}): Promise<DeleteManyResult> {
+    if (Object.keys(filter).length === 0) {
+      throw new Error('Can\'t pass an empty filter to deleteMany, use deleteAll instead if you really want to delete everything');
+    }
+
     const command: DeleteManyCommand = {
       deleteMany: { filter },
     };
@@ -442,6 +446,18 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     return {
       deletedCount: numDeleted,
+    };
+  }
+
+  async deleteAll(): Promise<DeleteManyResult> {
+    const command: DeleteManyCommand = {
+      deleteMany: { filter: {} },
+    };
+
+    const resp = await this._httpClient.executeCommand(command);
+
+    return {
+      deletedCount: resp.status?.deletedCount ?? 0,
     };
   }
 

@@ -55,7 +55,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
   });
 
   beforeEach(async function() {
-    await collection.deleteMany({});
+    await collection.deleteAll();
   });
 
   after(async function() {
@@ -1350,7 +1350,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
 
     it('should make _id an ObjectId when upserting with no _id', async () => {
-      await collection.deleteMany({});
+      await collection.deleteAll();
       const replaceOneResp = await collection.replaceOne(
         {},
         {
@@ -1432,7 +1432,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
 
     it('should make _id an ObjectId when upserting with no _id', async () => {
-      await collection.deleteMany({});
+      await collection.deleteAll();
       const updateOneResp = await collection.updateOne(
         {},
         {
@@ -1448,7 +1448,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
 
     it('should not overwrite user-specified _id in $setOnInsert', async () => {
-      await collection.deleteMany({});
+      await collection.deleteAll();
       const updateOneResp = await collection.updateOne(
         {},
         {
@@ -2353,7 +2353,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
 
     it('should make _id an ObjectId when upserting with no _id', async () => {
-      await collection.deleteMany({});
+      await collection.deleteAll();
       const { upsertedId } = await collection.updateMany(
         {},
         {
@@ -2478,7 +2478,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
 
     it('should make _id an ObjectId when upserting with no _id', async () => {
-      await collection.deleteMany({});
+      await collection.deleteAll();
       const { value } = await collection.findOneAndUpdate(
         {},
         {
@@ -2545,36 +2545,23 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.strictEqual(deleteManyResp.deletedCount, 20);
     });
 
-    // it('should throw an error when deleteMany finds more than 20 records', async () => {
-    //   const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
-    //   docList.forEach((doc, index) => {
-    //     doc.username = doc.username + (index + 1);
-    //   });
-    //   const res = await collection.insertMany(docList);
-    //   assert.strictEqual(res.insertedCount, 20);
-    //   //insert next 20
-    //   const docListNextSet = Array.from({ length: 20 }, () => ({ username: 'id', city: 'trichy' }));
-    //   docListNextSet.forEach((doc, index) => {
-    //     doc.username = doc.username + (index + 21);
-    //   });
-    //   const resNextSet = await collection.insertMany(docListNextSet);
-    //   assert.strictEqual(resNextSet.insertedCount, docListNextSet.length);
-    //   assert.strictEqual(Object.keys(resNextSet.insertedIds).length, docListNextSet.length);
-    //   //test for deleteMany errors
-    //   let exception: any;
-    //   const filter = { 'city': 'trichy' };
-    //   try {
-    //     await collection.deleteMany(filter);
-    //   } catch (e: any) {
-    //     exception = e;
-    //   }
-    //   assert.ok(exception);
-    //   assert.strictEqual(exception.message, 'Command "deleteMany" failed with the following error: More records found to be deleted even after deleting 20 records');
-    //   assert.deepStrictEqual(exception.command.deleteMany.filter, filter);
-    // });
+    it('should deleteMany when match is >= 20', async () => {
+      const docList = Array.from({ length: 101 }, () => ({ 'username': 'id', 'city': 'trichy' }));
+      const res = await collection.insertMany(docList);
+      assert.strictEqual(res.insertedCount, 101);
+      const deleteManyResp = await collection.deleteMany({ 'city': 'trichy' });
+      assert.strictEqual(deleteManyResp.deletedCount, 101);
+    });
+
+    it('should throw an error when deleting with an empty filter', async () => {
+      await assert.rejects(
+        async () => collection.deleteMany({}),
+        /Can't pass an empty filter to deleteMany, use deleteAll instead if you really want to delete everything/
+      );
+    });
 
     it('should find with sort', async () => {
-      await collection.deleteMany({});
+      await collection.deleteAll();
       await collection.insertMany([
         { username: 'a' },
         { username: 'c' },
@@ -2589,7 +2576,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
 
     it('throws if using cursor with sort', async () => {
-      await collection.deleteMany({});
+      await collection.deleteAll();
       for (let i = 0; i < 20; ++i) {
         await collection.insertMany(Array(20).fill(0).map((_, i) => ({ num: i })));
       }
@@ -2600,7 +2587,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
 
     it('should findOne with sort', async () => {
-      await collection.deleteMany({});
+      await collection.deleteAll();
       await collection.insertMany([
         { username: 'a' },
         { username: 'c' },
@@ -2615,7 +2602,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
 
     it('should findOneAndUpdate with sort', async () => {
-      await collection.deleteMany({});
+      await collection.deleteAll();
       await collection.insertMany([
         { username: 'a' },
         { username: 'c' },
@@ -2638,7 +2625,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
 
     it('should findOneAndReplace with sort', async () => {
-      await collection.deleteMany({});
+      await collection.deleteAll();
       await collection.insertMany([
         { username: 'a', answer: 42 },
         { username: 'c', answer: 42 },
@@ -2664,7 +2651,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
 
     it('findOneAndReplace should make _id an ObjectId when upserting with no _id', async () => {
-      await collection.deleteMany({});
+      await collection.deleteAll();
       const { value } = await collection.findOneAndReplace(
         {},
         {
@@ -2702,7 +2689,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
 
     it('should findOneAndUpdate without any updates to apply', async () => {
-      await collection.deleteMany({});
+      await collection.deleteAll();
       await collection.insertMany([
         { username: 'a' }
       ]);
@@ -2716,7 +2703,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
 
     it('should countDocuments()', async () => {
-      await collection.deleteMany({});
+      await collection.deleteAll();
       await collection.insertMany([
         { username: 'a' },
         { username: 'aa', answer: 42 },
@@ -2734,7 +2721,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
 
     it('supports findOneAndDelete()', async () => {
-      await collection.deleteMany({});
+      await collection.deleteAll();
       await collection.insertMany([
         { username: 'a' },
         { username: 'b' },
@@ -2749,7 +2736,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
 
     it('stores BigInts as numbers', async () => {
-      await collection.deleteMany({});
+      await collection.deleteAll();
       await collection.insertOne({
         _id: 'bigint-test',
         answer: 42n
@@ -2760,7 +2747,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
 
     it('should deleteOne with sort', async () => {
-      await collection.deleteMany({});
+      await collection.deleteAll();
       await collection.insertMany([
         { username: 'a' },
         { username: 'c' },
@@ -2778,7 +2765,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
 
     it.skip('should updateOne with sort', async () => {
       // jsonapi currently doesn't support updateOne with sort
-      await collection.deleteMany({});
+      await collection.deleteAll();
       await collection.insertMany([
         { username: 'a' },
         { username: 'c' },
@@ -2793,6 +2780,18 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
 
       const docs = await collection.find({}, { sort: { username: 1 } }).toArray();
       assert.deepStrictEqual(docs.map(doc => doc.username), ['aa', 'b', 'c']);
+    });
+  });
+
+  describe('deleteAll tests', () => {
+    it('should deleteAll', async () => {
+      const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
+      const res = await collection.insertMany(docList);
+      assert.strictEqual(res.insertedCount, 20);
+      const deleteAllResp = await collection.deleteAll();
+      assert.strictEqual(deleteAllResp.deletedCount, 20);
+      const numDocs = await collection.countDocuments({}, 1000);
+      assert.strictEqual(numDocs, 0);
     });
   });
 

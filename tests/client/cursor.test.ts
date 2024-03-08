@@ -52,7 +52,7 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
   });
 
   beforeEach(async function() {
-    await collection.deleteMany({});
+    await collection.deleteAll();
   });
 
   after(async function() {
