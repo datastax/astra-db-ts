@@ -633,11 +633,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     const resp = await this._httpClient.executeCommand(command, options);
 
     if (resp.status?.count > limit) {
-      throw new TooManyDocsToCountError(limit);
+      throw new TooManyDocsToCountError(limit, false);
     }
 
     if (resp.status?.moreData) {
-      throw new TooManyDocsToCountError(1000);
+      throw new TooManyDocsToCountError(1000, true);
     }
 
     return resp.status?.count;

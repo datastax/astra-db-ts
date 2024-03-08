@@ -98,8 +98,12 @@ export class InsertManyUnorderedError extends Error {
 }
 
 export class TooManyDocsToCountError extends Error {
-  constructor(readonly limit: number) {
-    super(`Too many documents to count (provided limit is ${limit})`);
+  constructor(readonly limit: number, readonly hitServerLimit: boolean) {
+    const message = (hitServerLimit)
+      ? `Too many documents to count (server limit of ${limit} reached)`
+      : `Too many documents to count (provided limit is ${limit})`;
+    super(message);
+
     this.name = "TooManyDocsToCountError";
   }
 }
@@ -122,7 +126,10 @@ const statusString = (status?: Record<string, any>) => {
 }
 
 const statusStrings = (statuses: (Record<string, any> | undefined)[]) => {
+  const moreStatuses = statuses.length - MAX_ERRORS_DISPLAYED;
+  statuses = statuses.slice(0, MAX_ERRORS_DISPLAYED);
+
   return (statuses.length > 0)
-    ? `, with statuses: ${statuses.filter(s => s).map(status => JSON.stringify(status)).join(", ")}`
+    ? `, with statuses: ${statuses.map(s => JSON.stringify(s)).join(", ")}${moreStatuses > 0 ? `and ${moreStatuses} more statuses` : ''}`
     : '';
 }
