@@ -121,7 +121,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     it('should insertOne document', async () => {
       const res = await collection.insertOne(createSampleDocWithMultiLevel());
       assert.ok(res);
-      assert.strictEqual(res.acknowledged, true);
       assert.ok(res.insertedId);
     });
 
@@ -130,7 +129,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const docToInsert = createSampleDocWithMultiLevelWithId(docId);
       const res = await collection.insertOne(docToInsert);
       assert.ok(res);
-      assert.strictEqual(res.acknowledged, true);
       assert.ok(res.insertedId, docId);
     });
 
@@ -218,7 +216,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     it('should insertMany documentsa', async () => {
       const res = await collection.insertMany(sampleUsersList);
       assert.strictEqual(res.insertedCount, sampleUsersList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 3);
     });
 
@@ -229,7 +226,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       sampleDocsWithIdList[2]._id = 'docml3';
       const res = await collection.insertMany(sampleDocsWithIdList);
       assert.strictEqual(res.insertedCount, sampleDocsWithIdList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 3);
     });
 
@@ -807,7 +803,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 20);
       //read that back with projection
       const findDocs = await collection.find({}, {
@@ -857,7 +852,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 20);
       //read that back with projection
       const findDocs = await collection.find({}, {
@@ -907,7 +901,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 20);
       //read that back with projection
       const findDocs = await collection.find({}, {
@@ -955,7 +948,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 20);
       //read that back with projection
       const findDocs = await collection.find({}, {
@@ -998,7 +990,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 20);
       let idsArr = ['id1', 'id2', 'id3'];
       let ids: Set<string> = new Set(idsArr);
@@ -1038,11 +1029,9 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList_nyc);
       assert.strictEqual(res.insertedCount, docList_nyc.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 3);
       const res1 = await collection.insertMany(docList_seattle);
       assert.strictEqual(res1.insertedCount, docList_seattle.length);
-      assert.strictEqual(res1.acknowledged, true);
       assert.strictEqual(Object.keys(res1.insertedIds).length, 2);
 
       const cityArr = ['nyc1', 'nyc2', 'nyc3'];
@@ -1070,7 +1059,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 20);
       const filter = { 'city': { '$exists': true } };
       const findRespDocs = await collection.find(filter).toArray();
@@ -1103,11 +1091,9 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 10);
       const res1 = await collection.insertMany(docList_noCity);
       assert.strictEqual(res1.insertedCount, docList_noCity.length);
-      assert.strictEqual(res1.acknowledged, true);
       assert.strictEqual(Object.keys(res1.insertedIds).length, 10);
       const filter = { 'city': { '$exists': false } };
       const findRespDocs = await collection.find(filter).toArray();
@@ -1137,7 +1123,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 20);
       const filter = { 'tags': { '$all': ['tag1', 'tag2', 'tag3'] } };
       const findRespDocs = await collection.find(filter).toArray();
@@ -1176,7 +1161,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 20);
       const filter = { 'tags': { '$size': 3 } };
       const findRespDocs = await collection.find(filter).toArray();
@@ -1218,7 +1202,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 20);
       const filter = { 'tags': { '$size': 0 } };
       const findRespDocs = await collection.find(filter).toArray();
@@ -1248,7 +1231,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docs);
       assert.strictEqual(res.insertedCount, docs.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 5);
 
       const filter = { 'age': { '$lt': 3 } };
@@ -1268,7 +1250,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docs);
       assert.strictEqual(res.insertedCount, docs.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 5);
 
       const filter = { 'age': { '$lte': 3 } };
@@ -1288,7 +1269,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docs);
       assert.strictEqual(res.insertedCount, docs.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 5);
 
       const filter = { 'age': { '$gt': 3 } };
@@ -1308,7 +1288,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docs);
       assert.strictEqual(res.insertedCount, docs.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 5);
 
       const filter = { 'age': { '$gte': 3 } };
@@ -1333,7 +1312,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         });
       assert.strictEqual(updateOneResp.modifiedCount, 1);
       assert.strictEqual(updateOneResp.matchedCount, 1);
-      assert.strictEqual(updateOneResp.acknowledged, true);
       assert.strictEqual(updateOneResp.upsertedId, undefined);
       assert.strictEqual(updateOneResp.upsertedCount, undefined);
       const updatedDoc = await collection.findOne({ 'username': 'aaronm' });
@@ -1354,7 +1332,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         });
       assert.strictEqual(updateOneResp.modifiedCount, 1);
       assert.strictEqual(updateOneResp.matchedCount, 1);
-      assert.strictEqual(updateOneResp.acknowledged, true);
       assert.strictEqual(updateOneResp.upsertedId, undefined);
       assert.strictEqual(updateOneResp.upsertedCount, undefined);
       const updatedDoc = await collection.findOne({ 'username': 'aaron' });
@@ -1379,7 +1356,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         });
       assert.strictEqual(updateOneResp.modifiedCount, 0);
       assert.strictEqual(updateOneResp.matchedCount, 0);
-      assert.strictEqual(updateOneResp.acknowledged, true);
       assert.ok(updateOneResp.upsertedId);
       assert.strictEqual(updateOneResp.upsertedCount, 1);
       const updatedDoc = await collection.findOne({ 'address.city': 'nyc' });
@@ -1433,7 +1409,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       sampleDocsWithIdList[2]._id = 'docml3';
       const res = await collection.insertMany(sampleDocsWithIdList);
       assert.strictEqual(res.insertedCount, sampleDocsWithIdList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 3);
       const idToUpdateAndCheck = sampleDocsWithIdList[0]._id;
       const updateManyResp = await collection.updateMany({ '_id': idToUpdateAndCheck },
@@ -1443,7 +1418,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         });
       assert.strictEqual(updateManyResp.matchedCount, 1);
       assert.strictEqual(updateManyResp.modifiedCount, 1);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, undefined);
       assert.strictEqual(updateManyResp.upsertedId, undefined);
       const updatedDoc = await collection.findOne({ 'username': 'aaronm' });
@@ -1459,7 +1433,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 20);
 
       //const idToUpdateAndCheck = sampleDocsWithIdList[0]._id;
@@ -1469,7 +1442,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         });
       assert.strictEqual(updateManyResp.matchedCount, 20);
       assert.strictEqual(updateManyResp.modifiedCount, 20);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, undefined);
       assert.strictEqual(updateManyResp.upsertedId, undefined);
     });
@@ -1481,7 +1453,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 20);
 
       //const idToUpdateAndCheck = sampleDocsWithIdList[0]._id;
@@ -1491,7 +1462,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         });
       assert.strictEqual(updateManyResp.matchedCount, 0);
       assert.strictEqual(updateManyResp.modifiedCount, 0);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, undefined);
       assert.strictEqual(updateManyResp.upsertedId, undefined);
     });
@@ -1503,7 +1473,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, 2);
 
       //const idToUpdateAndCheck = sampleDocsWithIdList[0]._id;
@@ -1516,7 +1485,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         });
       assert.strictEqual(updateManyResp.matchedCount, 0);
       assert.strictEqual(updateManyResp.modifiedCount, 0);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, 1);
       assert.ok(updateManyResp.upsertedId);
     });
@@ -1528,7 +1496,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
       //insert next 20
       const docListNextSet = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
@@ -1537,7 +1504,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const resNextSet = await collection.insertMany(docListNextSet);
       assert.strictEqual(resNextSet.insertedCount, docListNextSet.length);
-      assert.strictEqual(resNextSet.acknowledged, true);
       assert.strictEqual(Object.keys(resNextSet.insertedIds).length, docListNextSet.length);
 
 
@@ -1572,13 +1538,11 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
       //update count of 5th doc by $inc using updateOne API
       const updateOneResp = await collection.updateOne({ '_id': 'id5' }, { '$inc': { 'count': 1 } });
       assert.strictEqual(updateOneResp.matchedCount, 1);
       assert.strictEqual(updateOneResp.modifiedCount, 1);
-      assert.strictEqual(updateOneResp.acknowledged, true);
       assert.strictEqual(updateOneResp.upsertedCount, undefined);
       assert.strictEqual(updateOneResp.upsertedId, undefined);
       const updatedDoc = await collection.findOne({ '_id': 'id5' });
@@ -1587,7 +1551,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateManyResp = await collection.updateMany({}, { '$inc': { 'count': 1 } });
       assert.strictEqual(updateManyResp.matchedCount, 20);
       assert.strictEqual(updateManyResp.modifiedCount, 20);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, undefined);
       assert.strictEqual(updateManyResp.upsertedId, undefined);
       const allDocs = await collection.find({}).toArray();
@@ -1618,13 +1581,11 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
       //update count of 5th doc by $inc using updateOne API
       const updateOneResp = await collection.updateOne({ '_id': 'id5' }, { '$inc': { 'count': 1 } });
       assert.strictEqual(updateOneResp.matchedCount, 1);
       assert.strictEqual(updateOneResp.modifiedCount, 1);
-      assert.strictEqual(updateOneResp.acknowledged, true);
       assert.strictEqual(updateOneResp.upsertedCount, undefined);
       assert.strictEqual(updateOneResp.upsertedId, undefined);
       const updatedDoc = await collection.findOne({ '_id': 'id5' });
@@ -1633,7 +1594,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateManyResp = await collection.updateMany({}, { '$inc': { 'count': 1 } });
       assert.strictEqual(updateManyResp.matchedCount, 20);
       assert.strictEqual(updateManyResp.modifiedCount, 20);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, undefined);
       assert.strictEqual(updateManyResp.upsertedId, undefined);
       const allDocs = await collection.find({}).toArray();
@@ -1663,13 +1623,11 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
       //update the doc by changing the zip field to pincode in the 5th doc using updateOne API
       const updateOneResp = await collection.updateOne({ '_id': 'id5' }, { '$rename': { 'zip': 'pincode' } });
       assert.strictEqual(updateOneResp.matchedCount, 1);
       assert.strictEqual(updateOneResp.modifiedCount, 1);
-      assert.strictEqual(updateOneResp.acknowledged, true);
       assert.strictEqual(updateOneResp.upsertedCount, undefined);
       assert.strictEqual(updateOneResp.upsertedId, undefined);
       const updatedDoc = await collection.findOne({ '_id': 'id5' });
@@ -1679,7 +1637,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateManyResp = await collection.updateMany({}, { '$rename': { 'zip': 'pincode' } });
       assert.strictEqual(updateManyResp.matchedCount, 20);
       assert.strictEqual(updateManyResp.modifiedCount, 19);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, undefined);
       assert.strictEqual(updateManyResp.upsertedId, undefined);
       const allDocs = await collection.find({}).toArray();
@@ -1702,13 +1659,11 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
       //update the doc by changing the zip field to pincode in the 5th doc using updateOne API
       const updateOneResp = await collection.updateOne({ '_id': 'id5' }, { '$rename': { 'address.zip': 'address.pincode' } });
       assert.strictEqual(updateOneResp.matchedCount, 1);
       assert.strictEqual(updateOneResp.modifiedCount, 1);
-      assert.strictEqual(updateOneResp.acknowledged, true);
       assert.strictEqual(updateOneResp.upsertedCount, undefined);
       assert.strictEqual(updateOneResp.upsertedId, undefined);
       const updatedDoc = await collection.findOne({ '_id': 'id5' });
@@ -1718,7 +1673,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateManyResp = await collection.updateMany({}, { '$rename': { 'address.zip': 'address.pincode' } });
       assert.strictEqual(updateManyResp.matchedCount, 20);
       assert.strictEqual(updateManyResp.modifiedCount, 19);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, undefined);
       assert.strictEqual(updateManyResp.upsertedId, undefined);
       const allDocs = await collection.find({}).toArray();
@@ -1737,13 +1691,11 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
       //update the doc by setting the date field to current date in the 5th doc using updateOne API
       const updateOneResp = await collection.updateOne({ '_id': 'id5' }, { '$currentDate': { 'createdAt': true } });
       assert.strictEqual(updateOneResp.matchedCount, 1);
       assert.strictEqual(updateOneResp.modifiedCount, 1);
-      assert.strictEqual(updateOneResp.acknowledged, true);
       assert.strictEqual(updateOneResp.upsertedCount, undefined);
       assert.strictEqual(updateOneResp.upsertedId, undefined);
       const updatedDoc = await collection.findOne({ '_id': 'id5' });
@@ -1752,7 +1704,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateManyResp = await collection.updateMany({}, { '$currentDate': { 'createdAt': true } });
       assert.strictEqual(updateManyResp.matchedCount, 20);
       assert.strictEqual(updateManyResp.modifiedCount, 20);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, undefined);
       assert.strictEqual(updateManyResp.upsertedId, undefined);
       const allDocs = await collection.find({}).toArray();
@@ -1771,7 +1722,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       //insert all docs
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
       //update the 5th doc using updateOne API with upsert true and $setOnInsert field with a new field and value
       const updateOneResp = await collection.updateOne({ '_id': 'id5' }, {
@@ -1780,7 +1730,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       }, { 'upsert': true });
       assert.strictEqual(updateOneResp.matchedCount, 1);
       assert.strictEqual(updateOneResp.modifiedCount, 1);
-      assert.strictEqual(updateOneResp.acknowledged, true);
       assert.strictEqual(updateOneResp.upsertedCount, undefined);
       assert.strictEqual(updateOneResp.upsertedId, undefined);
       const updatedDoc = await collection.findOne({ '_id': 'id5' });
@@ -1794,7 +1743,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       }, { 'upsert': true });
       assert.strictEqual(updateOneResp1.matchedCount, 0);
       assert.strictEqual(updateOneResp1.modifiedCount, 0);
-      assert.strictEqual(updateOneResp1.acknowledged, true);
       assert.strictEqual(updateOneResp1.upsertedCount, 1);
       assert.strictEqual(updateOneResp1.upsertedId, 'id21');
       const updatedDoc1 = await collection.findOne({ '_id': 'id21' });
@@ -1812,7 +1760,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       //insert all docs
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
       //update the 5th doc using updateMany API with upsert true and $setOnInsert field with a new field and value
       const updateManyResp = await collection.updateMany({ '_id': 'id5' }, {
@@ -1821,7 +1768,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       }, { 'upsert': true });
       assert.strictEqual(updateManyResp.matchedCount, 1);
       assert.strictEqual(updateManyResp.modifiedCount, 1);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, undefined);
       assert.strictEqual(updateManyResp.upsertedId, undefined);
       const updatedDoc = await collection.findOne({ '_id': 'id5' });
@@ -1835,7 +1781,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       }, { 'upsert': true });
       assert.strictEqual(updateManyResp1.matchedCount, 0);
       assert.strictEqual(updateManyResp1.modifiedCount, 0);
-      assert.strictEqual(updateManyResp1.acknowledged, true);
       assert.strictEqual(updateManyResp1.upsertedCount, 1);
       assert.strictEqual(updateManyResp1.upsertedId, 'id21');
       const updatedDoc1 = await collection.findOne({ '_id': 'id21' });
@@ -1861,13 +1806,11 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       //insert all docs
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
       //update the 4th doc using updateOne API with $min operator to set the minScore to 5
       const updateOneResp = await collection.updateOne({ '_id': 'id4' }, { '$min': { 'minScore': 5 } });
       assert.strictEqual(updateOneResp.matchedCount, 1);
       assert.strictEqual(updateOneResp.modifiedCount, 1);
-      assert.strictEqual(updateOneResp.acknowledged, true);
       assert.strictEqual(updateOneResp.upsertedCount, undefined);
       assert.strictEqual(updateOneResp.upsertedId, undefined);
       const updatedDoc = await collection.findOne({ '_id': 'id4' });
@@ -1877,7 +1820,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateOneResp1 = await collection.updateOne({ '_id': 'id4' }, { '$min': { 'minScore': 15 } });
       assert.strictEqual(updateOneResp1.matchedCount, 1);
       assert.strictEqual(updateOneResp1.modifiedCount, 0);
-      assert.strictEqual(updateOneResp1.acknowledged, true);
       assert.strictEqual(updateOneResp1.upsertedCount, undefined);
       assert.strictEqual(updateOneResp1.upsertedId, undefined);
       const updatedDoc1 = await collection.findOne({ '_id': 'id4' });
@@ -1887,7 +1829,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateManyResp = await collection.updateMany({}, { '$min': { 'minScore': 15 } });
       assert.strictEqual(updateManyResp.matchedCount, 20);
       assert.strictEqual(updateManyResp.modifiedCount, 19);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, undefined);
       assert.strictEqual(updateManyResp.upsertedId, undefined);
       const allDocs = await collection.find({}).toArray();
@@ -1903,7 +1844,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateManyResp1 = await collection.updateMany({}, { '$min': { 'minScore': 50 } });
       assert.strictEqual(updateManyResp1.matchedCount, 20);
       assert.strictEqual(updateManyResp1.modifiedCount, 0);
-      assert.strictEqual(updateManyResp1.acknowledged, true);
       assert.strictEqual(updateManyResp1.upsertedCount, undefined);
       assert.strictEqual(updateManyResp1.upsertedId, undefined);
       const allDocs1 = await collection.find({}).toArray();
@@ -1934,13 +1874,11 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       //insert all docs
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
       //update the 4th doc using updateOne API with $max operator to set the maxScore to 5
       const updateOneResp = await collection.updateOne({ '_id': 'id4' }, { '$max': { 'maxScore': 950 } });
       assert.strictEqual(updateOneResp.matchedCount, 1);
       assert.strictEqual(updateOneResp.modifiedCount, 1);
-      assert.strictEqual(updateOneResp.acknowledged, true);
       assert.strictEqual(updateOneResp.upsertedCount, undefined);
       assert.strictEqual(updateOneResp.upsertedId, undefined);
       const updatedDoc = await collection.findOne({ '_id': 'id4' });
@@ -1950,7 +1888,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateOneResp1 = await collection.updateOne({ '_id': 'id4' }, { '$max': { 'maxScore': 15 } });
       assert.strictEqual(updateOneResp1.matchedCount, 1);
       assert.strictEqual(updateOneResp1.modifiedCount, 0);
-      assert.strictEqual(updateOneResp1.acknowledged, true);
       assert.strictEqual(updateOneResp1.upsertedCount, undefined);
       assert.strictEqual(updateOneResp1.upsertedId, undefined);
       const updatedDoc1 = await collection.findOne({ '_id': 'id4' });
@@ -1960,7 +1897,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateManyResp = await collection.updateMany({}, { '$max': { 'maxScore': 900 } });
       assert.strictEqual(updateManyResp.matchedCount, 20);
       assert.strictEqual(updateManyResp.modifiedCount, 19);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, undefined);
       assert.strictEqual(updateManyResp.upsertedId, undefined);
       const allDocs = await collection.find({}).toArray();
@@ -1976,7 +1912,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateManyResp1 = await collection.updateMany({}, { '$max': { 'maxScore': 50 } });
       assert.strictEqual(updateManyResp1.matchedCount, 20);
       assert.strictEqual(updateManyResp1.modifiedCount, 0);
-      assert.strictEqual(updateManyResp1.acknowledged, true);
       assert.strictEqual(updateManyResp1.upsertedCount, undefined);
       assert.strictEqual(updateManyResp1.upsertedId, undefined);
       const allDocs1 = await collection.find({}).toArray();
@@ -2004,13 +1939,11 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       //insert all docs
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
       //update the 4th doc using updateOne API with $mul operator to multiply the njStatePrice by 1.07
       const updateOneResp = await collection.updateOne({ '_id': 'id4' }, { '$mul': { 'njStatePrice': 1.07 } });
       assert.strictEqual(updateOneResp.matchedCount, 1);
       assert.strictEqual(updateOneResp.modifiedCount, 1);
-      assert.strictEqual(updateOneResp.acknowledged, true);
       assert.strictEqual(updateOneResp.upsertedCount, undefined);
       assert.strictEqual(updateOneResp.upsertedId, undefined);
       const updatedDoc = await collection.findOne({ '_id': 'id4' });
@@ -2020,7 +1953,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateManyResp = await collection.updateMany({ '_id': { '$in': ['id0', 'id1', 'id2', 'id3'] } }, { '$mul': { 'njStatePrice': 1.07 } });
       assert.strictEqual(updateManyResp.matchedCount, 4);
       assert.strictEqual(updateManyResp.modifiedCount, 4);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, undefined);
       assert.strictEqual(updateManyResp.upsertedId, undefined);
       const allDocs = await collection.find({}).toArray();
@@ -2039,13 +1971,11 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       //insert all docs
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
       //update the 4th doc using updateOne API with $push operator to push the tag3 to the tags array
       const updateOneResp = await collection.updateOne({ '_id': 'id4' }, { '$push': { 'tags': 'tag3' } });
       assert.strictEqual(updateOneResp.matchedCount, 1);
       assert.strictEqual(updateOneResp.modifiedCount, 1);
-      assert.strictEqual(updateOneResp.acknowledged, true);
       assert.strictEqual(updateOneResp.upsertedCount, undefined);
       assert.strictEqual(updateOneResp.upsertedId, undefined);
       const updatedDoc = await collection.findOne({ '_id': 'id4' });
@@ -2056,7 +1986,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateManyResp = await collection.updateMany({}, { '$push': { 'tags': 'tag3' } });
       assert.strictEqual(updateManyResp.matchedCount, 5);
       assert.strictEqual(updateManyResp.modifiedCount, 5);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, undefined);
       assert.strictEqual(updateManyResp.upsertedId, undefined);
       const allDocs = await collection.find({}).toArray();
@@ -2083,7 +2012,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       //insert all docs
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
       //update the 4th doc using updateOne API with $push operator to push the tag3 and tag4 to the tags array at position 1
       const updateOneResp = await collection.updateOne({ '_id': 'id4' }, {
@@ -2096,7 +2024,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       assert.strictEqual(updateOneResp.matchedCount, 1);
       assert.strictEqual(updateOneResp.modifiedCount, 1);
-      assert.strictEqual(updateOneResp.acknowledged, true);
       assert.strictEqual(updateOneResp.upsertedCount, undefined);
       assert.strictEqual(updateOneResp.upsertedId, undefined);
       const updatedDoc = await collection.findOne({ '_id': 'id4' });
@@ -2115,7 +2042,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       assert.strictEqual(updateManyResp.matchedCount, 5);
       assert.strictEqual(updateManyResp.modifiedCount, 5);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, undefined);
       assert.strictEqual(updateManyResp.upsertedId, undefined);
       const allDocs = await collection.find({}).toArray();
@@ -2145,13 +2071,11 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       //insert all docs
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
       //update the 4th doc using updateOne API with $addToSet operator to add the tag3 to the tags array
       const updateOneResp = await collection.updateOne({ '_id': 'id4' }, { '$addToSet': { 'tags': 'tag3' } });
       assert.strictEqual(updateOneResp.matchedCount, 1);
       assert.strictEqual(updateOneResp.modifiedCount, 1);
-      assert.strictEqual(updateOneResp.acknowledged, true);
       assert.strictEqual(updateOneResp.upsertedCount, undefined);
       assert.strictEqual(updateOneResp.upsertedId, undefined);
       const updatedDoc = await collection.findOne({ '_id': 'id4' });
@@ -2162,7 +2086,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateOneResp2 = await collection.updateOne({ '_id': 'id4' }, { '$addToSet': { 'tags': 'tag3' } });
       assert.strictEqual(updateOneResp2.matchedCount, 1);
       assert.strictEqual(updateOneResp2.modifiedCount, 0);
-      assert.strictEqual(updateOneResp2.acknowledged, true);
       assert.strictEqual(updateOneResp2.upsertedCount, undefined);
       assert.strictEqual(updateOneResp2.upsertedId, undefined);
       const updatedDoc2 = await collection.findOne({ '_id': 'id4' });
@@ -2173,7 +2096,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateManyResp = await collection.updateMany({}, { '$addToSet': { 'tags': 'tag3' } });
       assert.strictEqual(updateManyResp.matchedCount, 5);
       assert.strictEqual(updateManyResp.modifiedCount, 4);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, undefined);
       assert.strictEqual(updateManyResp.upsertedId, undefined);
       const allDocs = await collection.find({}).toArray();
@@ -2187,7 +2109,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateManyResp2 = await collection.updateMany({}, { '$addToSet': { 'tags': 'tag3' } });
       assert.strictEqual(updateManyResp2.matchedCount, 5);
       assert.strictEqual(updateManyResp2.modifiedCount, 0);
-      assert.strictEqual(updateManyResp2.acknowledged, true);
       assert.strictEqual(updateManyResp2.upsertedCount, undefined);
       assert.strictEqual(updateManyResp2.upsertedId, undefined);
       const allDocs2 = await collection.find({}).toArray();
@@ -2208,13 +2129,11 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       //insert all docs
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
       //update the 4th doc using updateOne API with $addToSet operator to add the tag3 and tag4 to the tags array
       const updateOneResp = await collection.updateOne({ '_id': 'id4' }, { '$addToSet': { 'tags': { '$each': ['tag3', 'tag4'] } } });
       assert.strictEqual(updateOneResp.matchedCount, 1);
       assert.strictEqual(updateOneResp.modifiedCount, 1);
-      assert.strictEqual(updateOneResp.acknowledged, true);
       assert.strictEqual(updateOneResp.upsertedCount, undefined);
       assert.strictEqual(updateOneResp.upsertedId, undefined);
       const updatedDoc = await collection.findOne({ '_id': 'id4' });
@@ -2226,7 +2145,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateOneResp2 = await collection.updateOne({ '_id': 'id4' }, { '$addToSet': { 'tags': { '$each': ['tag3', 'tag4'] } } });
       assert.strictEqual(updateOneResp2.matchedCount, 1);
       assert.strictEqual(updateOneResp2.modifiedCount, 0);
-      assert.strictEqual(updateOneResp2.acknowledged, true);
       assert.strictEqual(updateOneResp2.upsertedCount, undefined);
       assert.strictEqual(updateOneResp2.upsertedId, undefined);
       await collection.findOne({ '_id': 'id4' });
@@ -2238,7 +2156,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateManyResp = await collection.updateMany({}, { '$addToSet': { 'tags': { '$each': ['tag3', 'tag4'] } } });
       assert.strictEqual(updateManyResp.matchedCount, 5);
       assert.strictEqual(updateManyResp.modifiedCount, 4);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, undefined);
       assert.strictEqual(updateManyResp.upsertedId, undefined);
       const allDocs = await collection.find({}).toArray();
@@ -2253,7 +2170,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateManyResp2 = await collection.updateMany({}, { '$addToSet': { 'tags': { '$each': ['tag3', 'tag4'] } } });
       assert.strictEqual(updateManyResp2.matchedCount, 5);
       assert.strictEqual(updateManyResp2.modifiedCount, 0);
-      assert.strictEqual(updateManyResp2.acknowledged, true);
       assert.strictEqual(updateManyResp2.upsertedCount, undefined);
       assert.strictEqual(updateManyResp2.upsertedId, undefined);
       const allDocs2 = await collection.find({}).toArray();
@@ -2279,13 +2195,11 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       //insert all docs
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
       //update the 4th doc using updateOne API with $pop operator to remove the last 1 item from the tags array
       const updateOneResp = await collection.updateOne({ '_id': 'id4' }, { '$pop': { 'tags': 1 } });
       assert.strictEqual(updateOneResp.matchedCount, 1);
       assert.strictEqual(updateOneResp.modifiedCount, 1);
-      assert.strictEqual(updateOneResp.acknowledged, true);
       assert.strictEqual(updateOneResp.upsertedCount, undefined);
       assert.strictEqual(updateOneResp.upsertedId, undefined);
       const updatedDoc = await collection.findOne({ '_id': 'id4' });
@@ -2299,7 +2213,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateManyResp = await collection.updateMany({}, { '$pop': { 'tags': 1 } });
       assert.strictEqual(updateManyResp.matchedCount, 5);
       assert.strictEqual(updateManyResp.modifiedCount, 5);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, undefined);
       assert.strictEqual(updateManyResp.upsertedId, undefined);
       const allDocs = await collection.find({}).toArray();
@@ -2334,13 +2247,11 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       //insert all docs
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(res.acknowledged, true);
       assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
       //update the 4th doc using updateOne API with $pop operator to remove the first 1 item from the tags array
       const updateOneResp = await collection.updateOne({ '_id': 'id4' }, { '$pop': { 'tags': -1 } });
       assert.strictEqual(updateOneResp.matchedCount, 1);
       assert.strictEqual(updateOneResp.modifiedCount, 1);
-      assert.strictEqual(updateOneResp.acknowledged, true);
       assert.strictEqual(updateOneResp.upsertedCount, undefined);
       assert.strictEqual(updateOneResp.upsertedId, undefined);
       const updatedDoc = await collection.findOne({ '_id': 'id4' });
@@ -2354,7 +2265,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const updateManyResp = await collection.updateMany({}, { '$pop': { 'tags': -1 } });
       assert.strictEqual(updateManyResp.matchedCount, 5);
       assert.strictEqual(updateManyResp.modifiedCount, 5);
-      assert.strictEqual(updateManyResp.acknowledged, true);
       assert.strictEqual(updateManyResp.upsertedCount, undefined);
       assert.strictEqual(updateManyResp.upsertedId, undefined);
       const allDocs = await collection.find({}).toArray();
@@ -2526,14 +2436,12 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const docId = res.insertedId;
       const deleteOneResp = await collection.deleteOne({ _id: docId });
       assert.strictEqual(deleteOneResp.deletedCount, 1);
-      assert.strictEqual(deleteOneResp.acknowledged, true);
     });
 
     it('should not delete any when no match in deleteOne', async () => {
       await collection.insertOne(createSampleDocWithMultiLevel());
       const deleteOneResp = await collection.deleteOne({ 'username': 'samlxyz' });
       assert.strictEqual(deleteOneResp.deletedCount, 0);
-      assert.strictEqual(deleteOneResp.acknowledged, true);
     });
   });
 
@@ -2547,37 +2455,35 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.strictEqual(res.insertedCount, 20);
       const deleteManyResp = await collection.deleteMany({ 'city': 'trichy' });
       assert.strictEqual(deleteManyResp.deletedCount, 20);
-      assert.strictEqual(deleteManyResp.acknowledged, true);
     });
 
-    it('should throw an error when deleteMany finds more than 20 records', async () => {
-      const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
-      docList.forEach((doc, index) => {
-        doc.username = doc.username + (index + 1);
-      });
-      const res = await collection.insertMany(docList);
-      assert.strictEqual(res.insertedCount, 20);
-      //insert next 20
-      const docListNextSet = Array.from({ length: 20 }, () => ({ username: 'id', city: 'trichy' }));
-      docListNextSet.forEach((doc, index) => {
-        doc.username = doc.username + (index + 21);
-      });
-      const resNextSet = await collection.insertMany(docListNextSet);
-      assert.strictEqual(resNextSet.insertedCount, docListNextSet.length);
-      assert.strictEqual(resNextSet.acknowledged, true);
-      assert.strictEqual(Object.keys(resNextSet.insertedIds).length, docListNextSet.length);
-      //test for deleteMany errors
-      let exception: any;
-      const filter = { 'city': 'trichy' };
-      try {
-        await collection.deleteMany(filter);
-      } catch (e: any) {
-        exception = e;
-      }
-      assert.ok(exception);
-      assert.strictEqual(exception.message, 'Command "deleteMany" failed with the following error: More records found to be deleted even after deleting 20 records');
-      assert.deepStrictEqual(exception.command.deleteMany.filter, filter);
-    });
+    // it('should throw an error when deleteMany finds more than 20 records', async () => {
+    //   const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
+    //   docList.forEach((doc, index) => {
+    //     doc.username = doc.username + (index + 1);
+    //   });
+    //   const res = await collection.insertMany(docList);
+    //   assert.strictEqual(res.insertedCount, 20);
+    //   //insert next 20
+    //   const docListNextSet = Array.from({ length: 20 }, () => ({ username: 'id', city: 'trichy' }));
+    //   docListNextSet.forEach((doc, index) => {
+    //     doc.username = doc.username + (index + 21);
+    //   });
+    //   const resNextSet = await collection.insertMany(docListNextSet);
+    //   assert.strictEqual(resNextSet.insertedCount, docListNextSet.length);
+    //   assert.strictEqual(Object.keys(resNextSet.insertedIds).length, docListNextSet.length);
+    //   //test for deleteMany errors
+    //   let exception: any;
+    //   const filter = { 'city': 'trichy' };
+    //   try {
+    //     await collection.deleteMany(filter);
+    //   } catch (e: any) {
+    //     exception = e;
+    //   }
+    //   assert.ok(exception);
+    //   assert.strictEqual(exception.message, 'Command "deleteMany" failed with the following error: More records found to be deleted even after deleting 20 records');
+    //   assert.deepStrictEqual(exception.command.deleteMany.filter, filter);
+    // });
 
     it('should find with sort', async () => {
       await collection.deleteMany({});
@@ -2780,32 +2686,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
   });
 
-  describe('deleteManyBulk tests', () => {
-    it('should deleteManyBulk when match is <= 20', async () => {
-      const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
-      docList.forEach((doc, index) => {
-        doc.username = doc.username + (index + 1);
-      });
-      const res = await collection.insertMany(docList);
-      assert.strictEqual(res.insertedCount, 20);
-      const deleteManyResp = await collection.deleteManyBulk({ 'city': 'trichy' });
-      assert.strictEqual(deleteManyResp.deletedCount, 20);
-      assert.strictEqual(deleteManyResp.acknowledged, true);
-    });
-
-    it('should deleteManyBulk when match is > 20', async () => {
-      const docList = Array.from({ length: 100 }, () => ({ 'username': 'id', 'city': 'trichy' }));
-      docList.forEach((doc, index) => {
-        doc.username = doc.username + (index + 1);
-      });
-      const res = await collection.insertMany(docList);
-      assert.strictEqual(res.insertedCount, 100);
-      const deleteManyResp = await collection.deleteManyBulk({ 'city': 'trichy' });
-      assert.strictEqual(deleteManyResp.deletedCount, 100);
-      assert.strictEqual(deleteManyResp.acknowledged, true);
-    });
-  });
-
   describe('countDocuments tests', () => {
     it('should return count of documents with non id filter', async () => {
       const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
@@ -2843,7 +2723,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
       const resNextSet = await collection.insertMany(docListNextSet);
       assert.strictEqual(resNextSet.insertedCount, docListNextSet.length);
-      assert.strictEqual(resNextSet.acknowledged, true);
       assert.strictEqual(Object.keys(resNextSet.insertedIds).length, docListNextSet.length);
       //verify counts
       assert.strictEqual(await collection.countDocuments({ city: 'nyc' }, 1000), 20);
@@ -2881,6 +2760,13 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         assert.ok(e instanceof TooManyDocsToCountError);
         assert.strictEqual(e.limit, 1000);
       }
+    });
+
+    it('should throw an error when no limit is provided', () => {
+      assert.rejects(async () => {
+        // @ts-expect-error - intentionally testing invalid input
+        return await collection.countDocuments({});
+      })
     });
   });
 

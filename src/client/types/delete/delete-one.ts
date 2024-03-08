@@ -44,7 +44,6 @@ export interface DeleteOneOptions<Schema extends SomeDoc> extends BaseOptions {
 /**
  * Represents the result of a delete command.
  *
- * @field acknowledged - If the operation was acknowledged.
  * @field deletedCount - The number of deleted documents. Can be either 0 or 1.
  */
 export type DeleteOneResult = InternalDeleteResult<0 | 1>;

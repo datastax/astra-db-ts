@@ -15,15 +15,12 @@
 /**
  * Represents the set of fields that are guaranteed to be present in the result of an update operation.
  *
- * @field acknowledged - True if the operation was acknowledged.
  * @field matchedCount - The number of documents that matched the filter.
  * @field modifiedCount - The number of documents that were actually modified.
  */
 interface GuaranteedUpdateOptions<N extends number> {
   /**
-   * True if the operation was acknowledged.
    */
-  acknowledged: true,
   /**
    * The number of documents that matched the filter.
    */
@@ -87,7 +84,6 @@ interface NoUpsertUpdateOptions {
  * }
  * ```
  *
- * @field acknowledged - True if the operation was acknowledged.
  * @field matchedCount - The number of documents that matched the filter.
  * @field modifiedCount - The number of documents that were actually modified.
  * @field upsertedCount - The number of documents that were upserted.

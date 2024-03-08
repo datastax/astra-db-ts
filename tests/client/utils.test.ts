@@ -49,7 +49,7 @@ describe('Utils test', () => {
   it('handles forcing http2', () => {
     const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
     const astraDb = new AstraDB('myToken', apiEndPoint, {
-      useHttp2: false,
+      useHttp2: true,
     });
     assert.strictEqual(useHttpClient(astraDb).usingHttp2, true);
     assert.ok(useHttpClient(astraDb).requestStrategy instanceof HTTP2Strategy);

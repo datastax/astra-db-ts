@@ -150,7 +150,6 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
       });
       const resNextSet = await collection.insertMany(docListNextSet);
       assert.strictEqual(resNextSet.insertedCount, docListNextSet.length);
-      assert.strictEqual(resNextSet.acknowledged, true);
       //test limit and page size
       const cursorWithLimitSet = new FindCursor<any>(httpClient, {}, { limit: 20 });
       let countWithLimitSet = 0;

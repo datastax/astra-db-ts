@@ -57,7 +57,6 @@ import { SomeDoc } from '@/src/client/document';
 import { Db } from '@/src/client/db';
 import { FindCursorV2 } from '@/src/client/cursor-v2';
 import { ToDotNotation } from '@/src/client/types/dot-notation';
-
 import { CollectionOptions } from '@/src/client/types/collections/collection-options';
 import { BaseOptions } from '@/src/client/types/common';
 import {
@@ -145,7 +144,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     const resp = await this._httpClient.executeCommand(command, options);
 
     return {
-      acknowledged: true,
       insertedId: resp.status?.insertedIds[0],
     };
   }
@@ -225,7 +223,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       : await insertManyUnordered(this._httpClient, documents, options?.parallel ?? 8, chunkSize);
 
     return {
-      acknowledged: true,
       insertedCount: insertedIds.length,
       insertedIds: insertedIds,
     }
@@ -268,7 +265,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     const commonResult = {
       modifiedCount: resp.status?.modifiedCount,
       matchedCount: resp.status?.matchedCount,
-      acknowledged: true,
     } as const;
 
     return (resp.status?.upsertedId)
@@ -329,7 +325,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     const commonResult = {
       modifiedCount: updateManyResp.status?.modifiedCount,
       matchedCount: updateManyResp.status?.matchedCount,
-      acknowledged: true,
     } as const;
 
     return (updateManyResp.status?.upsertedId)
@@ -367,15 +362,15 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     const deleteOneResp = await this._httpClient.executeCommand(command, options);
 
     return {
-      acknowledged: true,
       deletedCount: deleteOneResp.status?.deletedCount,
     };
   }
 
   /**
-   * Deletes **up to twenty** documents from the collection.
+   * Deletes many documents from the collection.
    *
-   * Will throw a {@link AstraClientError} to indicate if more documents are found to delete.
+   * **NB. This function paginates the deletion of documents in chunks to avoid running into insertion limits. This
+   * means multiple requests will be made to the server, and the operation may not be atomic.**
    *
    * @example
    * ```typescript
@@ -388,27 +383,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * ```
    *
    * @param filter - A filter to select the documents to delete.
-   *
-   * @param options - The options for the operation.
    */
-  async deleteMany(filter: Filter<Schema> = {}, options?: BaseOptions): Promise<DeleteManyResult> {
-    const command: DeleteManyCommand = {
-      deleteMany: { filter },
-    };
-
-    const deleteManyResp = await this._httpClient.executeCommand(command, options);
-
-    if (deleteManyResp.status?.moreData) {
-      throw new AstraClientError(`More records found to be deleted even after deleting ${deleteManyResp.status?.deletedCount} records`, command);
-    }
-
-    return {
-      acknowledged: true,
-      deletedCount: deleteManyResp.status?.deletedCount,
-    };
-  }
-
-  async deleteManyBulk(filter: Filter<Schema> = {}): Promise<DeleteManyResult> {
+  async deleteMany(filter: Filter<Schema> = {}): Promise<DeleteManyResult> {
     const command: DeleteManyCommand = {
       deleteMany: { filter },
     };
@@ -422,7 +398,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     }
 
     return {
-      acknowledged: true,
       deletedCount: numDeleted,
     };
   }
@@ -583,7 +558,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Counts the number of documents in the collection.
+   * Counts the number of documents in the collection, optionally with a filter.
+   *
+   * Takes in a `limit` option which dictates the maximum number of documents that may be present before a
+   * {@link TooManyDocsToCountError} is thrown. If the limit is higher than the highest limit accepted by the
+   * Data API, a {@link TooManyDocsToCountError} will be thrown anyway (i.e. `1000`).
    *
    * @example
    * ```typescript
@@ -592,8 +571,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *   { name: 'Jane Doe' },
    * ]);
    *
-   * const count = await collection.countDocuments({ name: 'John Doe' });
+   * const count = await collection.countDocuments({ name: 'John Doe' }, 1000);
    * console.log(count); // 1
+   *
+   * // Will throw a TooManyDocsToCountError as it counts 1, but the limit is 0
+   * const count = await collection.countDocuments({ name: 'John Doe' }, 0);
    * ```
    *
    * @param filter - A filter to select the documents to count. If not provided, all documents will be counted.

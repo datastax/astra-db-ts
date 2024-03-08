@@ -62,7 +62,6 @@ export const updateManyOptionKeys = new Set(['upsert']);
  * }
  * ```
  *
- * @field acknowledged - True if the operation was acknowledged.
  * @field matchedCount - The number of documents that matched the filter.
  * @field modifiedCount - The number of documents that were actually modified.
  * @field upsertedCount - The number of documents that were upserted.

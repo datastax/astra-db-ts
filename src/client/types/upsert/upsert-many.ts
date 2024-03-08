@@ -5,7 +5,6 @@ export interface UpsertManyOptions {
 }
 
 export interface UpsertManyResult<Schema> {
-  acknowledged: true;
   insertedIds: string[];
   insertedCount: number;
   modifiedIds: string[];
