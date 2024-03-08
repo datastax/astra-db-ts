@@ -75,21 +75,21 @@ export class HTTPClient {
     return Object.assign(Object.create(Object.getPrototypeOf(this)), this);
   }
 
-  async executeCommand(data: Record<string, any>, options?: BaseOptions, optionsToRetain?: Set<string>) {
-    const commandName = Object.keys(data)[0];
+  async executeCommand(command: Record<string, any>, options?: BaseOptions, optionsToRetain?: Set<string>) {
+    const commandName = Object.keys(command)[0];
 
-    if (data[commandName].options) {
-      data[commandName].options = cleanupOptions(data, commandName, optionsToRetain, this.logSkippedOptions);
+    if (command[commandName].options && optionsToRetain) {
+      command[commandName].options = cleanupOptions(command, commandName, optionsToRetain, this.logSkippedOptions);
     }
 
     const response = await this.request({
       url: this.baseUrl,
       method: HTTP_METHODS.post,
       timeout: options?.maxTimeMS ?? DEFAULT_TIMEOUT,
-      command: data,
+      command: command,
     });
 
-    handleIfErrorResponse(response, data);
+    handleIfErrorResponse(response, command);
     return response;
   }
 
@@ -189,7 +189,7 @@ function handleValues(value: any): any {
   return value;
 }
 
-function cleanupOptions(data: Record<string, any>, commandName: string, optionsToRetain: Set<string> | undefined, logSkippedOptions: boolean) {
+function cleanupOptions(data: Record<string, any>, commandName: string, optionsToRetain: Set<string>, logSkippedOptions: boolean) {
   const command = data[commandName];
 
   if (!command.options) {
@@ -199,7 +199,7 @@ function cleanupOptions(data: Record<string, any>, commandName: string, optionsT
   const options = { ...command.options };
 
   Object.keys(options).forEach((key) => {
-    if (!optionsToRetain || !optionsToRetain.has(key)) {
+    if (!optionsToRetain.has(key)) {
       if (logSkippedOptions) {
         logger.warn(`'${commandName}' does not support option '${key}'`);
       }

@@ -71,4 +71,4 @@ export interface FindOneOptions<Schema extends SomeDoc, GetSim extends boolean> 
 }
 
 /** @internal */
-export const findOneOptionsKeys = new Set(['includeSimilarity', 'sort', 'projection']);
+export const findOneOptionsKeys = new Set(['includeSimilarity']);
