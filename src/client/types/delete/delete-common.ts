@@ -19,8 +19,6 @@
  */
 export interface InternalDeleteResult<N extends number> {
   /**
-   */
-  /**
    * The number of deleted documents.
    */
   deletedCount: N;

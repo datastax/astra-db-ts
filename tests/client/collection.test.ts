@@ -1298,6 +1298,72 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
   });
 
+  describe('replaceOne tests', () => {
+    it('should replaceOne document by id', async () => {
+      const doc = createSampleDocWithMultiLevel();
+      const insertDocResp = await collection.insertOne(doc);
+      const idToCheck = insertDocResp.insertedId;
+      const newDoc = createSampleDoc2WithMultiLevel();
+      const replaceOneResp = await collection.replaceOne({ '_id': idToCheck }, newDoc);
+      assert.strictEqual(replaceOneResp.modifiedCount, 1);
+      assert.strictEqual(replaceOneResp.matchedCount, 1);
+      assert.strictEqual(replaceOneResp.upsertedId, undefined);
+      assert.strictEqual(replaceOneResp.upsertedCount, undefined);
+      const replacedDoc = await collection.findOne({ 'username': 'jimr' });
+      assert.ok(replacedDoc!._id);
+      assert.strictEqual(replacedDoc!._id, idToCheck);
+      assert.strictEqual(replacedDoc!.username, 'jimr');
+      assert.strictEqual(replacedDoc!.address.city, 'nyc');
+    });
+
+    it('should replaceOne document by col', async () => {
+      const doc = createSampleDocWithMultiLevel();
+      const insertDocResp = await collection.insertOne(doc);
+      const idToCheck = insertDocResp.insertedId;
+      const newDoc = createSampleDoc2WithMultiLevel();
+      const replaceOneResp = await collection.replaceOne({ 'address.city': 'big banana' }, newDoc);
+      assert.strictEqual(replaceOneResp.modifiedCount, 1);
+      assert.strictEqual(replaceOneResp.matchedCount, 1);
+      assert.strictEqual(replaceOneResp.upsertedId, undefined);
+      assert.strictEqual(replaceOneResp.upsertedCount, undefined);
+      const replacedDoc = await collection.findOne({ 'username': 'jimr' });
+      assert.ok(replacedDoc!._id);
+      assert.strictEqual(replacedDoc!._id, idToCheck);
+      assert.strictEqual(replacedDoc!.username, 'jimr');
+      assert.strictEqual(replacedDoc!.address.city, 'nyc');
+    });
+
+    it('should upsert a doc with upsert flag true in replaceOne call', async () => {
+      const doc = createSampleDocWithMultiLevel();
+      const insertDocResp = await collection.insertOne(doc);
+      const idToCheck = insertDocResp.insertedId;
+      const newDoc = createSampleDoc2WithMultiLevel();
+      const replaceOneResp = await collection.replaceOne({ 'address.city': 'nyc' }, newDoc, { 'upsert': true });
+      assert.strictEqual(replaceOneResp.modifiedCount, 0);
+      assert.strictEqual(replaceOneResp.matchedCount, 0);
+      assert.ok(replaceOneResp.upsertedId);
+      assert.strictEqual(replaceOneResp.upsertedCount, 1);
+      const replacedDoc = await collection.findOne({ 'address.city': 'nyc' });
+      assert.ok(replacedDoc!._id);
+      assert.notStrictEqual(replacedDoc!._id, idToCheck);
+      assert.strictEqual(replacedDoc!.address.city, 'nyc');
+    });
+
+    it('should make _id an ObjectId when upserting with no _id', async () => {
+      await collection.deleteMany({});
+      const replaceOneResp = await collection.replaceOne(
+        {},
+        {
+          'username': 'aaronm'
+        },
+        {
+          'upsert': true
+        }
+      );
+      assert.ok(replaceOneResp.upsertedId?.match(/^[a-f\d]{24}$/i), replaceOneResp.upsertedId);
+    });
+  });
+
   describe('updateOne tests', () => {
     it('should updateOne document by id', async () => {
       //insert a new doc

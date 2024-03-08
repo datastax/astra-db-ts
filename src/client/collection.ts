@@ -65,6 +65,7 @@ import {
   InsertManyUnorderedError,
   TooManyDocsToCountError
 } from '@/src/client/errors';
+import { ReplaceOneOptions, ReplaceOneResult } from '@/src/client/types/update/replace-one';
 
 /**
  * Represents the interface to a collection in the database.
@@ -331,6 +332,48 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       ? {
         ...commonResult,
         upsertedId: updateManyResp.status?.upsertedId,
+        upsertedCount: 1,
+      }
+      : commonResult;
+  }
+
+  /**
+   * Replaces a single document in the collection.
+   *
+   * You can upsert a document by setting the `upsert` option to `true`.
+   *
+   * @example
+   * ```typescript
+   * await collection.insertOne({ _id: '1', name: 'John Doe' });
+   * await collection.replaceOne({ _id: '1' }, { name: 'Jane Doe' });
+   * ```
+   *
+   * @param filter - A filter to select the document to replace.
+   * @param replacement - The replacement document, which contains no `_id` field.
+   * @param options - The options for the operation.
+   */
+  async replaceOne(filter: Filter<Schema>, replacement: NoId<Schema>, options?: ReplaceOneOptions): Promise<ReplaceOneResult> {
+    const command: FindOneAndReplaceCommand = {
+      findOneAndReplace: {
+        filter,
+        replacement,
+        options: { ...options, returnDocument: 'before' },
+      },
+    };
+
+    setDefaultIdForUpsert(command.findOneAndReplace, true);
+
+    const resp = await this._httpClient.executeCommand(command, options, findOneAndReplaceOptionsKeys);
+
+    const commonResult = {
+      modifiedCount: resp.status?.modifiedCount,
+      matchedCount: resp.status?.matchedCount,
+    } as const;
+
+    return (resp.status?.upsertedId)
+      ? {
+        ...commonResult,
+        upsertedId: resp.status?.upsertedId,
         upsertedCount: 1,
       }
       : commonResult;
