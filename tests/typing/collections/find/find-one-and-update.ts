@@ -13,7 +13,6 @@ void dummyCollection<TestSchema>().findOneAndUpdate({
   'amount': 65,
 }, {
   $set: {
-    $vectorize: '123',
     items: Symbol('123'),
     'customer.phone': '123-456-7890',
   },

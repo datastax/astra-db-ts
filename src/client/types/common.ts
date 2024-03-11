@@ -18,7 +18,7 @@ import { ToDotNotation } from '@/src/client/types/dot-notation';
 /**
  * Specifies the sort criteria for selecting documents.
  *
- * Can use `1`/`-1` for ascending/descending, or `$vector`/`$vectorize` for sorting by vector distance.
+ * Can use `1`/`-1` for ascending/descending, or `$vector` for sorting by vector distance.
  *
  * **NB. The order of the fields in the sort option is significant—fields are sorted in the order they are listed.**
  *
@@ -39,8 +39,7 @@ import { ToDotNotation } from '@/src/client/types/dot-notation';
 export type SortOption<Schema extends SomeDoc> =
   | { [K in keyof ToDotNotation<Schema>]?: 1 | -1 }
   | { $vector: { $meta: number[] } }
-  | { $vector: number[] }
-  | { $vectorize: string };
+  | { $vector: number[] };
 
 /**
  * Specifies which fields should be included/excluded in the returned documents.

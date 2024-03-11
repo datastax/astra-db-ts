@@ -80,13 +80,6 @@ void dummyCollection<TestSchema>().findOne({}, {
   },
 });
 
-void dummyCollection<TestSchema>().findOne({}, {
-  sort: {
-    $vector: [1, 2, 3],
-    // @ts-expect-error - Can't sort by vector and vectorize at the same time
-    $vectorize: 1,
-  },
-});
 
 void dummyCollection<TestSchema>().findOne({}, {
   projection: {

@@ -45,10 +45,6 @@ export interface VectorOptions {
    * See [intro to vector databases](https://docs.datastax.com/en/astra/astra-db-vector/get-started/concepts.html#metrics) for more details.
    */
   metric: 'cosine' | 'euclidean' | 'dot_product';
-  /**
-   * Options related to the vectorization pipeline, to specify an embedding service. WIP.
-   */
-  service?: Record<string, unknown>;
 }
 
 /**

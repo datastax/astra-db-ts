@@ -41,8 +41,4 @@ export interface VectorDoc {
    * A raw vector
    */
   $vector?: number[],
-  /**
-   * A string to be vectorized if the collection is configured with an embedding service
-   */
-  $vectorize?: string,
 }

@@ -40,7 +40,7 @@ export class FindCursor<Schema> {
     this.options = options ?? {};
     this.httpClient = httpClient;
 
-    const isNonVectorSort = this.options.sort && !('$vector' in this.options.sort || '$vectorize' in this.options.sort);
+    const isNonVectorSort = this.options.sort && !('$vector' in this.options.sort);
     const isOverPageSizeLimit = !this.options.limit || this.options.limit > 20;
 
     if (isNonVectorSort && isOverPageSizeLimit) {
