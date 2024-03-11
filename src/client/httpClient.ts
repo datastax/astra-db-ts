@@ -24,7 +24,18 @@ import { LIB_NAME, LIB_VERSION } from "../version";
 import { getStargateAccessToken } from "../collections/utils";
 import { EJSON } from "bson";
 
-const REQUESTED_WITH = LIB_NAME + "/" + LIB_VERSION;
+const RAGSTACK_REQUESTED_WITH = (() => {
+  try {
+    const lib = require("ragstack-ai");
+    if (lib.LIB_NAME === undefined || lib.LIB_VERSION === undefined) {
+      return "";
+    }
+    return " " + lib.LIB_NAME + "/" + lib.LIB_VERSION;
+  } catch (e) {
+    return "";
+  }
+})();
+const REQUESTED_WITH = `${LIB_NAME}/${LIB_VERSION}${RAGSTACK_REQUESTED_WITH}`;
 const DEFAULT_AUTH_HEADER = "Token";
 const DEFAULT_METHOD = "get";
 const DEFAULT_TIMEOUT = 30000;
