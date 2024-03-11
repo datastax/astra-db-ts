@@ -66,6 +66,7 @@ import {
   TooManyDocsToCountError
 } from '@/src/client/errors';
 import { ReplaceOneOptions, ReplaceOneResult } from '@/src/client/types/update/replace-one';
+import { AnyBulkWriteOperation, BulkWriteOptions, BulkWriteResult, } from '@/src/client/types/misc/bulk-write';
 
 /**
  * Represents the interface to a collection in the database.
@@ -449,16 +450,12 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     };
   }
 
-  async deleteAll(): Promise<DeleteManyResult> {
+  async deleteAll(): Promise<void> {
     const command: DeleteManyCommand = {
       deleteMany: { filter: {} },
     };
 
-    const resp = await this._httpClient.executeCommand(command);
-
-    return {
-      deletedCount: resp.status?.deletedCount ?? 0,
-    };
+    await this._httpClient.executeCommand(command);
   }
 
   find<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursor<FoundDoc<Schema, GetSim>> {
@@ -769,6 +766,14 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       : resp.data?.document;
   }
 
+  async bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult> {
+    const commands = operations.map(buildBulkWriteCommands);
+
+    return  (options?.ordered)
+      ? await bulkWriteOrdered(this._httpClient, commands)
+      : await bulkWriteUnordered(this._httpClient, commands);
+  }
+
   /**
    * @return The options that the collection was created with (i.e. the `vector` and `indexing` operations).
    */
@@ -807,6 +812,8 @@ export class AstraClientError extends Error {
     this.command = command;
   }
 }
+
+// -- Insert Many ------------------------------------------------------------------------------------------
 
 const insertManyOrdered = async (httpClient: HTTPClient, documents: unknown[], chunkSize: number): Promise<string[]> => {
   const insertedIds: string[] = [];
@@ -894,4 +901,64 @@ const insertMany = async (httpClient: HTTPClient, documents: unknown[], ordered:
 
   const resp = await httpClient.executeCommand(command, {}, insertManyOptionKeys);
   return resp.status?.insertedIds ?? [];
+}
+
+// -- Bulk Write ------------------------------------------------------------------------------------------
+
+const bulkWriteOrdered = async (httpClient: HTTPClient, operations: Record<string, any>[]): Promise<BulkWriteResult> => {
+  const results = new BulkWriteResult();
+
+  for (let i = 0, n = operations.length; i < n; i++) {
+    const operation = operations[i];
+
+    try {
+      const resp = await httpClient.executeCommand(operation, {});
+      addToBulkWriteResult(results, resp.status!, i);
+    } catch (e) {
+      if (!(e instanceof DataAPIError)) {
+        throw e;
+      }
+
+      throw new AstraClientError(e, operation);
+    }
+  }
+
+  return results;
+}
+
+const bulkWriteUnordered = async (_httpClient: HTTPClient, _operations: Record<string, any>[]): Promise<BulkWriteResult> => {
+  throw new Error('Not implemented');
+}
+
+const buildBulkWriteCommands = (operations: Record<string, any>): Record<string, any> => {
+  const commandName = Object.keys(operations)[0];
+  switch (commandName) {
+    case 'insertOne': return { insertOne: { document: operations.insertOne.document } };
+    case 'updateOne': return { updateOne: { filter: operations.updateOne.filter, update: operations.updateOne.update, options: operations.updateOne.options } };
+    case 'replaceOne': return { findOneAndReplace: { filter: operations.replaceOne.filter, replacement: operations.replaceOne.replacement, options: operations.replaceOne.options } };
+    case 'deleteOne': return { deleteOne: { filter: operations.deleteOne.filter } };
+    case 'updateMany': return { updateMany: { filter: operations.updateMany.filter, update: operations.updateMany.update, options: operations.updateMany.options } };
+    case 'deleteMany': return { deleteMany: { filter: operations.deleteMany.filter } };
+    default: throw new Error(`Unknown bulk write operation: ${commandName}`);
+  }
+}
+
+type Mutable<T> = {
+  -readonly [P in keyof T]: T[P];
+}
+
+const addToBulkWriteResult = (result: BulkWriteResult, resp: Record<string, any>, i: number) => {
+  const asMutable = result as Mutable<BulkWriteResult>;
+
+  asMutable.insertedCount += resp.insertedCount ?? 0;
+  asMutable.modifiedCount += resp.modifiedCount ?? 0;
+  asMutable.deletedCount += resp.deletedCount ?? 0;
+  asMutable.matchedCount += resp.matchedCount ?? 0;
+
+  if (resp.upsertedId) {
+    asMutable.upsertedCount++;
+    asMutable.upsertedIds[i] = resp.upsertedId;
+  }
+
+  asMutable.getRawResponse().push(resp);
 }

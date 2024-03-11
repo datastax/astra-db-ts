@@ -2788,8 +2788,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, 20);
-      const deleteAllResp = await collection.deleteAll();
-      assert.strictEqual(deleteAllResp.deletedCount, 20);
+      await collection.deleteAll();
       const numDocs = await collection.countDocuments({}, 1000);
       assert.strictEqual(numDocs, 0);
     });

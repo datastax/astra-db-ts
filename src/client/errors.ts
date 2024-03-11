@@ -108,6 +108,13 @@ export class TooManyDocsToCountError extends Error {
   }
 }
 
+export class CursorAlreadyInitializedError extends Error {
+  constructor(message: string = 'Cursor is already initialized') {
+    super(message);
+    this.name = 'CursorAlreadyInitializedError';
+  }
+}
+
 const MAX_ERRORS_DISPLAYED = 5;
 
 const errorString = (errors: any[]) => {

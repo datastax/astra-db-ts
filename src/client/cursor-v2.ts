@@ -22,6 +22,7 @@ import {
 import { SomeDoc } from '@/src/client/document';
 import { Filter } from '@/src/client/types/filter';
 import { ProjectionOption, SortOption } from '@/src/client/types/common';
+import { CursorAlreadyInitializedError } from '@/src/client/errors';
 
 /** @internal */
 const enum CursorStatus {
@@ -33,17 +34,16 @@ const enum CursorStatus {
 /**
  * Worth adding a second data type parameter to this class, so that we can type mapped cursors properly, or no??
  */
-export class FindCursorV2<T> {
+export class FindCursorV2<T, TRaw extends SomeDoc = SomeDoc> {
   private readonly _namespace: string;
   private readonly _httpClient: HTTPClient;
   private readonly _options: FindOptions<SomeDoc, boolean>;
   private _filter: Filter<SomeDoc>;
   private _mapping?: (doc: unknown) => T;
 
-  private _buffer: T[] = [];
+  private _buffer: TRaw[] = [];
   private _nextPageState?: string | null;
   private _state = CursorStatus.Uninitialized;
-  private _numReturned = 0;
 
   constructor(namespace: string, httpClient: HTTPClient, filter: Filter<SomeDoc>, options?: FindOptions<SomeDoc, boolean>) {
     this._namespace = namespace;
@@ -87,7 +87,7 @@ export class FindCursorV2<T> {
    *
    * @return The cursor.
    */
-  filter(filter: Filter<SomeDoc>): FindCursorV2<T> {
+  filter(filter: Filter<SomeDoc>): FindCursorV2<T, TRaw> {
     this._assertUninitialized();
     this._filter = filter;
     return this;
@@ -107,7 +107,7 @@ export class FindCursorV2<T> {
    *
    * @return The cursor.
    */
-  sort(sort: SortOption<SomeDoc>): FindCursorV2<T> {
+  sort(sort: SortOption<SomeDoc>): FindCursorV2<T, TRaw> {
     this._assertUninitialized();
     this._options.sort = sort;
     return this;
@@ -124,7 +124,7 @@ export class FindCursorV2<T> {
    *
    * @return The cursor.
    */
-  limit(limit: number): FindCursorV2<T> {
+  limit(limit: number): FindCursorV2<T, TRaw> {
     this._assertUninitialized();
     this._options.limit = limit || Infinity;
     return this;
@@ -141,7 +141,7 @@ export class FindCursorV2<T> {
    *
    * @return The cursor.
    */
-  skip(skip: number): FindCursorV2<T> {
+  skip(skip: number): FindCursorV2<T, TRaw> {
     this._assertUninitialized();
     this._options.skip = skip;
     return this;
@@ -161,10 +161,27 @@ export class FindCursorV2<T> {
    *
    * @return The cursor.
    */
-  project<R>(projection: ProjectionOption<SomeDoc>): FindCursorV2<R> {
+  project<R extends SomeDoc>(projection: ProjectionOption<SomeDoc>): FindCursorV2<R, R> {
     this._assertUninitialized();
     this._options.projection = projection;
     return this as any;
+  }
+
+  /**
+   * Sets whether similarity scores should be included in the cursor's results.
+   *
+   * The cursor MUST be uninitialized when calling this method.
+   *
+   * **NB. This method mutates the cursor.**
+   *
+   * @param includeSimilarity - Whether similarity scores should be included.
+   *
+   * @return The cursor.
+   */
+  includeSimilarity(includeSimilarity: boolean = true): FindCursorV2<T, TRaw> {
+    this._assertUninitialized();
+    this._options.includeSimilarity = includeSimilarity;
+    return this;
   }
 
   /**
@@ -181,11 +198,12 @@ export class FindCursorV2<T> {
    *
    * @return The cursor.
    */
-  map<R>(mapping: (doc: T) => R): FindCursorV2<R> {
+  map<R>(mapping: (doc: T) => R): FindCursorV2<R, TRaw> {
     this._assertUninitialized();
 
     if (this._mapping) {
-      this._mapping = (doc: unknown) => mapping(this._mapping!(doc)) as any;
+      const oldMapping = this._mapping;
+      this._mapping = (doc: unknown) => mapping(oldMapping(doc)) as any;
     } else {
       this._mapping = mapping as any;
     }
@@ -204,7 +222,7 @@ export class FindCursorV2<T> {
    *
    * @return The cursor.
    */
-  batchSize(batchSize: number): FindCursorV2<T> {
+  batchSize(batchSize: number): FindCursorV2<T, TRaw> {
     this._assertUninitialized();
     this._options.batchSize = batchSize;
     return this;
@@ -212,12 +230,12 @@ export class FindCursorV2<T> {
 
   /**
    * Returns a new, uninitialized cursor with the same filter and options set on this cursor. No state is shared between
-   * the two cursors; only the configuration. Mapping functions are not cloned.
+   * the two cursors; only the configuration. Unlike Mongo, mappings functions *are* cloned.
    *
    * @return A behavioral clone of this cursor.
    */
-  clone(): FindCursorV2<T> {
-    return new FindCursorV2(this._namespace, this._httpClient, this._filter, this._options);
+  clone(): FindCursorV2<TRaw, TRaw> {
+    return new FindCursorV2<TRaw, TRaw>(this._namespace, this._httpClient, this._filter, this._options);
   }
 
   /**
@@ -226,7 +244,7 @@ export class FindCursorV2<T> {
    * documents??? No clue if it's a bug or if I'm just misunderstanding something, but I can't find anything
    * about this method online beyond basic documentation.
    */
-  readBufferedDocuments(max?: number): T[] {
+  readBufferedDocuments(max?: number): TRaw[] {
     const toRead = Math.min(max ?? this._buffer.length, this._buffer.length);
     return this._buffer.splice(0, toRead);
   }
@@ -254,20 +272,7 @@ export class FindCursorV2<T> {
    * @return The next document, or `null` if there are no more documents.
    */
   async next(): Promise<T | null> {
-    return this._next(false, true);
-  }
-
-  /**
-   * Attempts to fetch the next document from the cursor. Returns `null` if there are no more documents to fetch.
-   *
-   * Will also return `null` if the buffer is exhausted.
-   *
-   * If the cursor is uninitialized, it will be initialized. If the cursor is closed, this method will return `null`.
-   *
-   * @return The next document, or `null` if there are no more documents.
-   */
-  async tryNext(): Promise<T | null> {
-    return this._next(false, false);
+    return this._next(false);
   }
 
   /**
@@ -282,7 +287,7 @@ export class FindCursorV2<T> {
       return true;
     }
 
-    const doc = await this._next(true, true);
+    const doc = await this._next(true);
 
     if (doc !== null) {
       this._buffer.push(doc);
@@ -345,29 +350,10 @@ export class FindCursorV2<T> {
    */
   async toArray(): Promise<T[]> {
     const docs: T[] = [];
-
     for await (const doc of this) {
       docs.push(doc);
     }
     return docs;
-  }
-
-  /**
-   * Returns the number of documents matching the cursor. This method will iterate over the entire cursor to count the
-   * documents.
-   *
-   * If the cursor is uninitialized, it will be initialized. If the cursor is closed, this method will return 0.
-   *
-   * @return The number of documents matching the cursor.
-   *
-   * @deprecated - Use {@link Collection.countDocuments} instead.
-   */
-  async count(): Promise<number> {
-    let count = 0;
-    for await (const _ of this) {
-      count++;
-    }
-    return count;
   }
 
   /**
@@ -379,11 +365,13 @@ export class FindCursorV2<T> {
 
   private _assertUninitialized(): void {
     if (this._state !== CursorStatus.Uninitialized) {
-      throw new Error('Cursor has already been initialized');
+      throw new CursorAlreadyInitializedError();
     }
   }
 
-  private async _next(raw: boolean, block: boolean): Promise<T | null> {
+  private async _next(raw: true): Promise<TRaw | null>
+  private async _next(raw: false): Promise<T | null>
+  private async _next(raw: boolean): Promise<T | TRaw | null> {
     if (this._state === CursorStatus.Closed) {
       return null;
     }
@@ -411,10 +399,6 @@ export class FindCursorV2<T> {
       } catch (err) {
         await this.close();
         throw err;
-      }
-
-      if (this._buffer.length === 0 && !block) {
-        return null;
       }
     } while (this._buffer.length !== 0);
 
@@ -456,7 +440,6 @@ export class FindCursorV2<T> {
     const resp = await this._httpClient.executeCommand(command, {}, internalFindOptionsKeys);
 
     this._nextPageState = resp.data!.nextPageState || null;
-    this._buffer = resp.data!.documents as T[];
-    this._numReturned += this._buffer.length;
+    this._buffer = resp.data!.documents as TRaw[];
   }
 }
