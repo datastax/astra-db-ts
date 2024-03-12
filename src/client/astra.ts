@@ -50,6 +50,17 @@ export interface AstraDBOptions {
   /**
    * The caller information to send with requests, of the form `[name, version?]`, or an array of such.
    *
+   * The caller information is used to identify the client making requests to the server.
+   *
+   * It will be sent in the headers of the request as such:
+   * ```
+   * User-Agent: ...<name>/<version> astra-db-ts/<version>
+   * ```
+   *
+   * If no caller information is provided, the client will simply be identified as `astra-db-ts/<version>`.
+   *
+   * **NB. If providing an array of callers, they should be ordered from most important to least important.**
+   *
    * @example
    * ```typescript
    * using client1 = new AstraDB(..., {
@@ -60,15 +71,6 @@ export interface AstraDBOptions {
    *   caller: [['my-app', '1.0.0'], ['my-other-app']],
    * });
    * ```
-   *
-   * The caller information is used to identify the client making requests to the server.
-   *
-   * It will be sent in the headers of the request as such:
-   * ```
-   * User-Agent: astra-db-ts/<version> ...<name>/<version>
-   * ```
-   *
-   * If no caller information is provided, the client will simply be identified as `astra-db-ts/<version>`.
    */
   caller?: Callers,
 }

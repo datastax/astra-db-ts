@@ -234,5 +234,5 @@ function buildUserAgent(client: string, caller?: Callers): string {
     return c[1] ? `${c[0]}/${c[1]}` : c[0];
   }).join(' ');
 
-  return `${client} ${callerString}`.trim();
+  return `${callerString} ${client}`.trim();
 }

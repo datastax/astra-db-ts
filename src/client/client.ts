@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { Db } from './db';
-import { parseUri, TypeErr } from './utils';
+import { parseUri } from './utils';
 import { HTTPClient, HTTPClientOptions } from '@/src/api';
 import { Collection } from './collection';
 import { SomeDoc } from '@/src/client/document';
@@ -89,11 +89,6 @@ export class Client implements Disposable {
     throw new Error("Database name must be provided");
   }
 
-  // ????
-  setMaxListeners(maxListeners: number) {
-    return maxListeners;
-  }
-
   close() {
     this._httpClient.close();
     return this;
@@ -101,17 +96,5 @@ export class Client implements Disposable {
 
   [Symbol.dispose]() {
     this.close();
-  }
-
-  /**
-   * @deprecated use {@link namespace} instead
-   */
-  get keyspaceName() {
-    return this._namespace;
-  }
-
-  // noinspection JSUnusedGlobalSymbols
-  startSession(): TypeErr<'startSession() not implemented'> {
-    throw new Error('startSession() not implemented');
   }
 }
