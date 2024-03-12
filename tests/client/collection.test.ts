@@ -1360,6 +1360,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
           'upsert': true
         }
       );
+      assert.ok(typeof replaceOneResp.upsertedId === 'string', 'replaceOneResp.upsertedId is not string');
       assert.ok(replaceOneResp.upsertedId?.match(/^[a-f\d]{24}$/i), replaceOneResp.upsertedId);
     });
   });
@@ -1453,6 +1454,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
           'upsert': true
         }
       );
+      assert.ok(typeof updateOneResp.upsertedId === 'string', 'updateOneResp.upsertedId is not string');
       assert.ok(updateOneResp.upsertedId?.match(/^[a-f\d]{24}$/i), updateOneResp.upsertedId);
     });
 
@@ -2394,6 +2396,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
           'upsert': true
         }
       );
+      assert.ok(typeof upsertedId === 'string', 'upsertedId is not string');
       assert.ok(upsertedId?.match(/^[a-f\d]{24}$/i), upsertedId);
     });
   });
@@ -2692,6 +2695,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
           includeResultMetadata: true,
         }
       );
+      assert.ok(typeof value!._id === 'string', 'value!._id is not string');
       assert.ok(value!._id!.match(/^[a-f\d]{24}$/i), value!._id);
     });
 

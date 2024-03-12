@@ -14,6 +14,7 @@
 // noinspection DuplicatedCode
 
 import { Filter, SomeDoc, UpdateFilter } from '@/src/client';
+import { SomeId } from '@/src/client/types/common';
 
 export interface BulkWriteOptions {
   ordered?: boolean;
@@ -26,7 +27,7 @@ export class BulkWriteResult {
     readonly matchedCount: number = 0,
     readonly modifiedCount: number = 0,
     readonly upsertedCount: number = 0,
-    readonly upsertedIds: Record<number, string> = {},
+    readonly upsertedIds: Record<number, SomeId> = {},
     private readonly _raw: object[] = [],
   ) {}
 

@@ -15,6 +15,8 @@
 import { SomeDoc } from '@/src/client';
 import { ToDotNotation } from '@/src/client/types/dot-notation';
 
+export type SomeId = string | number | bigint | boolean | Date;
+
 /**
  * Specifies the sort criteria for selecting documents.
  *
@@ -67,7 +69,7 @@ export type SortOption<Schema extends SomeDoc> =
  * ```
  */
 export type ProjectionOption<Schema extends SomeDoc> = {
-  [K in keyof ToDotNotation<Schema> | '_id']?: any[] extends (ToDotNotation<Schema> & { _id: string })[K]
+  [K in keyof ToDotNotation<Schema> | '_id']?: any[] extends (ToDotNotation<Schema> & { _id: any })[K]
     ? 1 | 0 | true | false | Slice
     : 1 | 0 | true | false;
 };

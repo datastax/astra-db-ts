@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { APIResponse } from '@/src/api';
+import { SomeId } from '@/src/client/types/common';
 
 export class DataAPIError extends Error implements APIResponse {
   errors: any[];
@@ -54,9 +55,9 @@ export class InsertManyOrderedError extends Error {
    * The IDs of the documents that were successfully inserted. Given that the operation is ordered, the failed
    * documents & IDs are those that come after the last successful one.
    */
-  insertedIds: string[];
+  insertedIds: SomeId[];
 
-  constructor(baseError: DataAPIError, insertedIds: string[]) {
+  constructor(baseError: DataAPIError, insertedIds: SomeId[]) {
     super(`Insert many ordered partially failed${errorString(baseError.errors ?? [])}${statusString(baseError.status)}`);
     this.baseError = baseError;
     this.insertedIds = insertedIds;
@@ -81,14 +82,14 @@ export class InsertManyUnorderedError extends Error {
   /**
    * The IDs of the documents that were successfully inserted.
    */
-  insertedIds: string[];
+  insertedIds: SomeId[];
 
   /**
    * The IDs of the documents that failed to be inserted.
    */
-  failedIds: string[];
+  failedIds: SomeId[];
 
-  constructor(baseErrors: DataAPIError[], insertedIds: string[], failedIds: string[]) {
+  constructor(baseErrors: DataAPIError[], insertedIds: SomeId[], failedIds: SomeId[]) {
     super(`Insert many unordered partially failed with some errors${statusStrings(baseErrors.map(e => e.status))}`);
     this.baseErrors = baseErrors;
     this.insertedIds = insertedIds;

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { ToDotNotation } from '@/src/client/types/dot-notation';
-import { IsDate, IsNum } from '@/src/client/types/utils';
+import { IdOf, IsDate, IsNum } from '@/src/client/types/utils';
 import { SomeDoc } from '@/src/client/document';
 
 /**
@@ -40,7 +40,7 @@ import { SomeDoc } from '@/src/client/document';
 export type Filter<Schema extends SomeDoc> = {
   [K in keyof ToDotNotation<Schema>]?: FilterExpr<ToDotNotation<Schema>[K]>
 } & {
-  _id?: FilterExpr<string>,
+  _id?: FilterExpr<IdOf<Schema>>,
   $and?: Filter<Schema>[],
   $or?: Filter<Schema>[],
   $not?: Filter<Schema>,

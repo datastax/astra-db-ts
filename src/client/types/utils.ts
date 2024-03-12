@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { SomeId } from '@/src/client/types/common';
+import { Schema } from '@/tests/typing/prelude';
+import { SomeDoc } from '@/src/client';
+
 /**
  * Checks if a type can possibly be some number
  * 
@@ -35,7 +39,7 @@ export type IsDate<T> = T extends Date ? true : false
 /**
  * Forces the given type to include an `_id`
  */
-export type WithId<T> = Omit<T, '_id'> & { _id: string }
+export type WithId<T> = Omit<T, '_id'> & { _id: IdOf<Schema> }
 
 /**
  * Includes a `$similarity` field if the typeparam `GetSim` is `true`
@@ -60,3 +64,14 @@ export type NoId<Doc> = Omit<Doc, '_id'>
 export type Flatten<Type> = Type extends (infer Item)[]
   ? Item
   : Type
+
+export type IdOf<TSchema> =
+  TSchema extends { _id: infer Id; }
+    ? Id extends SomeId
+      ? Id
+      : never :
+  TSchema extends { _id?: infer Id; }
+    ? unknown extends Id
+      ? SomeId
+      : Id
+    : SomeId

@@ -16,6 +16,7 @@
 
 import { ConvolutedSchema2, Equal, Expect, Schema, SuperBasicSchema } from '@/tests/typing/prelude';
 import { Filter, SomeDoc } from '@/src/client';
+import { SomeId } from '@/src/client/types/common';
 
 type test1 = Expect<Equal<Filter<SuperBasicSchema>, {
   num?: number | {
@@ -45,12 +46,22 @@ type test1 = Expect<Equal<Filter<SuperBasicSchema>, {
     $exists?: boolean,
   },
 } & {
-  _id?: string | {
-    $eq?: string,
-    $ne?: string,
-    $in?: string[],
-    $nin?: string[],
+  _id?: SomeId | {
+    $eq?: SomeId,
+    $ne?: SomeId,
+    $in?: SomeId[],
+    $nin?: SomeId[],
     $exists?: boolean,
+  } & {
+    $lt?: number | bigint,
+    $lte?: number | bigint,
+    $gt?: number | bigint,
+    $gte?: number | bigint,
+  } & {
+    $lt?: Date | { $date: number },
+    $lte?: Date | { $date: number },
+    $gt?: Date | { $date: number },
+    $gte?: Date | { $date: number },
   },
   $and?: Filter<SuperBasicSchema>[],
   $or?: Filter<SuperBasicSchema>[],

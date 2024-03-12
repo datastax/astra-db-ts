@@ -16,6 +16,7 @@ import url from 'url';
 import { handleIfErrorResponse, HTTPClient } from '@/src/api/http-client';
 import { ObjectId } from 'bson';
 import { HTTP_METHODS } from '@/src/api';
+import { SomeId } from '@/src/client/types/common';
 
 declare const __error: unique symbol;
 
@@ -131,7 +132,7 @@ export async function dropNamespace(httpClient: HTTPClient, name: string) {
   return response;
 }
 
-export function setDefaultIdForInsert<T extends { _id?: string }>(document: T): asserts document is T & { _id: string } {
+export function setDefaultIdForInsert<T extends { _id?: SomeId }>(document: T): asserts document is T & { _id: SomeId } {
   document._id ??= genObjectId();
 }
 

@@ -47,13 +47,13 @@ import {
 } from '@/src/client/types/find/find-one-replace';
 import { Filter } from '@/src/client/types/filter';
 import { UpdateFilter } from '@/src/client/types/update-filter';
-import { Flatten, FoundDoc, NoId, WithId } from '@/src/client/types/utils';
+import { Flatten, FoundDoc, IdOf, NoId, WithId } from '@/src/client/types/utils';
 import { SomeDoc } from '@/src/client/document';
 import { Db } from '@/src/client/db';
 import { FindCursorV2 } from '@/src/client/cursor-v2';
 import { ToDotNotation } from '@/src/client/types/dot-notation';
 import { CollectionOptions } from '@/src/client/types/collections/collection-options';
-import { BaseOptions } from '@/src/client/types/common';
+import { BaseOptions, SomeId } from '@/src/client/types/common';
 import {
   DataAPIError,
   InsertManyOrderedError,
@@ -136,7 +136,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @return InsertOneResult
    */
-  async insertOne(document: Schema, options?: BaseOptions): Promise<InsertOneResult> {
+  async insertOne(document: Schema, options?: BaseOptions): Promise<InsertOneResult<Schema>> {
     setDefaultIdForInsert(document);
 
     const command: InsertOneCommand = {
@@ -217,7 +217,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @return InsertManyResult
    */
-  async insertMany(documents: Schema[], options?: InsertManyOptions): Promise<InsertManyResult> {
+  async insertMany(documents: Schema[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>> {
     const chunkSize = options?.chunkSize ?? 20;
 
     for (let i = 0, n = documents.length; i < n; i++) {
@@ -225,8 +225,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     }
 
     const insertedIds = (options?.ordered)
-      ? await insertManyOrdered(this._httpClient, documents, chunkSize)
-      : await insertManyUnordered(this._httpClient, documents, options?.parallel ?? 8, chunkSize);
+      ? await insertManyOrdered<Schema>(this._httpClient, documents, chunkSize)
+      : await insertManyUnordered<Schema>(this._httpClient, documents, options?.parallel ?? 8, chunkSize);
 
     return {
       insertedCount: insertedIds.length,
@@ -891,14 +891,14 @@ export class AstraClientError extends Error {
 
 // -- Insert Many ------------------------------------------------------------------------------------------
 
-const insertManyOrdered = async (httpClient: HTTPClient, documents: unknown[], chunkSize: number): Promise<string[]> => {
-  const insertedIds: string[] = [];
+const insertManyOrdered = async <Schema>(httpClient: HTTPClient, documents: unknown[], chunkSize: number): Promise<IdOf<Schema>[]> => {
+  const insertedIds: IdOf<Schema>[] = [];
 
   for (let i = 0, n = documents.length; i < n; i += chunkSize) {
     const slice = documents.slice(i, i + chunkSize);
 
     try {
-      const inserted = await insertMany(httpClient, slice, true);
+      const inserted = await insertMany<Schema>(httpClient, slice, true);
       insertedIds.push(...inserted);
     } catch (e) {
       if (!(e instanceof DataAPIError)) {
@@ -906,19 +906,19 @@ const insertManyOrdered = async (httpClient: HTTPClient, documents: unknown[], c
       }
 
       insertedIds.push(...e.status?.insertedIds ?? []);
-      throw new InsertManyOrderedError(e, insertedIds);
+      throw new InsertManyOrderedError(e, insertedIds as SomeId[]);
     }
   }
 
   return insertedIds;
 }
 
-const insertManyUnordered = async (httpClient: HTTPClient, documents: unknown[], parallel: number, chunkSize: number): Promise<string[]> => {
-  const insertedIds: string[] = [];
+const insertManyUnordered = async <Schema>(httpClient: HTTPClient, documents: unknown[], parallel: number, chunkSize: number): Promise<IdOf<Schema>[]> => {
+  const insertedIds: IdOf<Schema>[] = [];
   let masterIndex = 0;
 
   const failErrors: DataAPIError[] = [];
-  const failedIds: string[] = [];
+  const failedIds: SomeId[] = [];
 
   const workers = Array.from({ length: parallel }, async () => {
     while (masterIndex < documents.length) {
@@ -933,7 +933,7 @@ const insertManyUnordered = async (httpClient: HTTPClient, documents: unknown[],
       const slice = documents.slice(localI, endIdx);
 
       try {
-        const inserted = await insertMany(httpClient, slice, false);
+        const inserted = await insertMany<Schema>(httpClient, slice, false);
         insertedIds.push(...inserted);
       } catch (e) {
         if (!(e instanceof DataAPIError)) {
@@ -947,7 +947,7 @@ const insertManyUnordered = async (httpClient: HTTPClient, documents: unknown[],
         failErrors.push(e);
 
         for (let i = 0, n = slice.length; i < n; i++) {
-          const doc = slice[i] as { _id: string };
+          const doc = slice[i] as { _id: SomeId };
 
           if (!justInsertedSet.has(doc._id)) {
             failedIds.push(doc._id);
@@ -961,13 +961,13 @@ const insertManyUnordered = async (httpClient: HTTPClient, documents: unknown[],
   await Promise.all(workers);
 
   if (failErrors.length > 0) {
-    throw new InsertManyUnorderedError(failErrors, insertedIds, failedIds);
+    throw new InsertManyUnorderedError(failErrors, insertedIds as SomeId[], failedIds);
   }
 
   return insertedIds;
 }
 
-const insertMany = async (httpClient: HTTPClient, documents: unknown[], ordered: boolean): Promise<string[]> => {
+const insertMany = async <Schema>(httpClient: HTTPClient, documents: unknown[], ordered: boolean): Promise<IdOf<Schema>[]> => {
   const command: InsertManyCommand = {
     insertMany: {
       documents,
