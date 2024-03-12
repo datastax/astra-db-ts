@@ -702,7 +702,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     }
 
     if (resp.status?.moreData) {
-      throw new TooManyDocsToCountError(1000, true);
+      throw new TooManyDocsToCountError(resp.status.count, true);
     }
 
     return resp.status?.count;
