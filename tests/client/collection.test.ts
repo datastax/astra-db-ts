@@ -2810,8 +2810,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.deepStrictEqual(docs.map(doc => doc.username), ['b', 'c']);
     });
 
-    it.skip('should updateOne with sort', async () => {
-      // jsonapi currently doesn't support updateOne with sort
+    it('should updateOne with sort', async () => {
       await collection.deleteAll();
       await collection.insertMany([
         { username: 'a' },
@@ -2825,7 +2824,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         { sort: { username: 1 } }
       );
 
-      const docs = await collection.find({}, { sort: { username: 1 } }).toArray();
+      const docs = await collection.find({}, { sort: { username: 1 }, limit: 20 }).toArray();
       assert.deepStrictEqual(docs.map(doc => doc.username), ['aa', 'b', 'c']);
     });
   });
