@@ -16,6 +16,7 @@ import * as http2 from 'http2';
 import { HTTPRequestStrategy, InternalAPIResponse, InternalHTTPRequestInfo } from '@/src/api/types';
 import { serializeCommand } from '@/src/api/http-client';
 import { DataAPITimeout } from '@/src/client/errors';
+import { REQUESTED_WITH } from '@/src/api/constants';
 
 export class HTTP2Strategy implements HTTPRequestStrategy {
   origin: string;
@@ -48,6 +49,7 @@ export class HTTP2Strategy implements HTTPRequestStrategy {
         ':path': path + params,
         ':method': info.method,
         token: info.token,
+        'User-Agent': info.userAgent,
       });
 
       if (info.command) {

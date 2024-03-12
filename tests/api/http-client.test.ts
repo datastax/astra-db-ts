@@ -14,6 +14,7 @@
 
 import assert from "assert";
 import { HTTPClient } from "@/src/api/http-client";
+import { REQUESTED_WITH } from '@/src/api/constants';
 
 describe("Astra TS Client - client.HTTPClient", () => {
   describe("HTTPClient Operations", () => {
@@ -51,6 +52,37 @@ describe("Astra TS Client - client.HTTPClient", () => {
         error = e;
       }
       assert.ok(error);
+    });
+  });
+
+  describe('Caller tests', () => {
+    it('Should use REQUESTED_WITH as the default user agent', () => {
+      const client = new HTTPClient({
+        applicationToken: 'token',
+        baseUrl: 'http://localhost:8080',
+      });
+
+      assert.equal(client.userAgent, REQUESTED_WITH);
+    });
+
+    it('Should use the provided user agent', () => {
+      const client = new HTTPClient({
+        applicationToken: 'token',
+        baseUrl: 'http://localhost:8080',
+        caller: ['my-app', '1.0.0']
+      });
+
+      assert.equal(client.userAgent, `${REQUESTED_WITH} my-app/1.0.0`);
+    });
+
+    it('Should use the provided user agents', () => {
+      const client = new HTTPClient({
+        applicationToken: 'token',
+        baseUrl: 'http://localhost:8080',
+        caller: [['my-app', '1.0.0'], ['my-other-app']]
+      });
+
+      assert.equal(client.userAgent, `${REQUESTED_WITH} my-app/1.0.0 my-other-app`);
     });
   });
 });

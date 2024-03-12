@@ -14,12 +14,16 @@
 
 import { HTTP_METHODS } from '@/src/api';
 
+export type Caller = [name: string, version?: string];
+export type Callers = Caller | Caller[];
+
 export interface HTTPClientOptions {
   applicationToken: string;
   baseApiPath?: string;
   logLevel?: string;
   logSkippedOptions?: boolean;
   useHttp2?: boolean;
+  caller?: Callers;
 }
 
 export interface InternalHTTPClientOptions extends HTTPClientOptions {
@@ -51,6 +55,7 @@ export interface InternalHTTPRequestInfo extends HTTPRequestInfo {
   token: string,
   method: HTTP_METHODS,
   timeout: number,
+  userAgent: string,
 }
 
 export interface HTTPRequestStrategy {

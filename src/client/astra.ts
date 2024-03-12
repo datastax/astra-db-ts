@@ -1,6 +1,7 @@
 import { withoutFields } from '@/src/client/utils';
 import { Client } from '@/src/client/client';
 import { DEFAULT_NAMESPACE } from '@/src/api';
+import { Callers } from '@/src/api/types';
 
 /**
  * The options for the AstraDB client
@@ -46,6 +47,30 @@ export interface AstraDBOptions {
    * @default true
    */
   useHttp2?: boolean,
+  /**
+   * The caller information to send with requests, of the form `[name, version?]`, or an array of such.
+   *
+   * @example
+   * ```typescript
+   * using client1 = new AstraDB(..., {
+   *   caller: ['my-app', '1.0.0'],
+   * });
+   *
+   * using client2 = new AstraDB(..., {
+   *   caller: [['my-app', '1.0.0'], ['my-other-app']],
+   * });
+   * ```
+   *
+   * The caller information is used to identify the client making requests to the server.
+   *
+   * It will be sent in the headers of the request as such:
+   * ```
+   * User-Agent: astra-db-ts/<version> ...<name>/<version>
+   * ```
+   *
+   * If no caller information is provided, the client will simply be identified as `astra-db-ts/<version>`.
+   */
+  caller?: Callers,
 }
 
 /**

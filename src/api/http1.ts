@@ -24,8 +24,6 @@ const axiosAgent = axios.create({
   headers: {
     "Accepts": "application/json",
     "Content-Type": "application/json",
-    "User-Agent": `${REQUESTED_WITH} ${axios.defaults.headers.common["User-Agent"]}`,
-    "X-Requested-With": REQUESTED_WITH,
   },
   // keepAlive pools and reuses TCP connections
   httpAgent: new http.Agent({
@@ -63,6 +61,8 @@ export class HTTP1Strategy implements HTTPRequestStrategy {
         timeout: info.timeout,
         headers: {
           [DEFAULT_AUTH_HEADER]: info.token,
+          "User-Agent": info.userAgent,
+          "X-Requested-With": info.userAgent,
         },
       });
     } catch (e: any) {

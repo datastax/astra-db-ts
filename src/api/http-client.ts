@@ -14,8 +14,15 @@
 
 import { logger, setLevel } from '@/src/logger';
 import { EJSON } from 'bson';
-import { DEFAULT_METHOD, DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, HTTP_METHODS } from '@/src/api/constants';
-import { APIResponse, HTTPRequestInfo, HTTPRequestStrategy, InternalHTTPClientOptions } from '@/src/api/types';
+import { DEFAULT_METHOD, DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, HTTP_METHODS, REQUESTED_WITH } from '@/src/api/constants';
+import {
+  APIResponse,
+  Caller,
+  Callers,
+  HTTPRequestInfo,
+  HTTPRequestStrategy,
+  InternalHTTPClientOptions
+} from '@/src/api/types';
 import { HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
 import { BaseOptions } from '@/src/client/types/common';
@@ -29,6 +36,7 @@ export class HTTPClient {
   collection?: string;
   requestStrategy: HTTPRequestStrategy;
   usingHttp2: boolean;
+  userAgent: string;
 
   constructor(options: InternalHTTPClientOptions) {
     if (typeof window !== "undefined") {
@@ -61,6 +69,8 @@ export class HTTPClient {
     if (options.baseApiPath) {
       this.baseUrl += '/' + options.baseApiPath;
     }
+
+    this.userAgent = buildUserAgent(REQUESTED_WITH, options.caller);
   }
 
   close() {
@@ -106,6 +116,7 @@ export class HTTPClient {
         timeout: requestInfo.timeout || DEFAULT_TIMEOUT,
         method: requestInfo.method || DEFAULT_METHOD,
         params: requestInfo.params ?? {},
+        userAgent: this.userAgent,
       });
 
       if (response.status === 401 || (response.data?.errors?.length > 0 && response.data?.errors[0]?.message === "UNAUTHENTICATED: Invalid token")) {
@@ -208,4 +219,20 @@ function cleanupOptions(data: Record<string, any>, commandName: string, optionsT
   });
 
   return options;
+}
+
+function buildUserAgent(client: string, caller?: Callers): string {
+  const callers = (
+    (!caller)
+      ? [] :
+    Array.isArray(caller[0])
+      ? caller
+      : [caller]
+  ) as Caller[];
+
+  const callerString = callers.map((c) => {
+    return c[1] ? `${c[0]}/${c[1]}` : c[0];
+  }).join(' ');
+
+  return `${client} ${callerString}`.trim();
 }
