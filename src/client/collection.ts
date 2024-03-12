@@ -28,12 +28,7 @@ import {
   UpdateOneOptions,
   UpdateOneResult,
 } from '@/src/client/types/update/update-one';
-import {
-  UpdateManyCommand,
-  updateManyOptionKeys,
-  UpdateManyOptions,
-  UpdateManyResult
-} from '@/src/client/types/update/update-many';
+import { UpdateManyCommand, UpdateManyOptions, UpdateManyResult } from '@/src/client/types/update/update-many';
 import { DeleteOneCommand, DeleteOneOptions, DeleteOneResult } from '@/src/client/types/delete/delete-one';
 import { DeleteManyCommand, DeleteManyResult } from '@/src/client/types/delete/delete-many';
 import { FindOptions } from '@/src/client/types/find/find';
@@ -121,10 +116,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Inserts a single document into the collection.
+   * Inserts a single document into the collection atomically.
    *
    * If the document does not contain an `_id` field, an ObjectId string will be generated on the client and assigned to the
    * document. This generation will mutate the document.
+   *
+   * If an `_id` is provided which corresponds to a document that already exists in the collection, an error is raised,
+   * and the insertion fails.
    *
    * @example
    * ```typescript
@@ -135,6 +133,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param document - The document to insert.
    *
    * @param options - The options for the operation.
+   *
+   * @return InsertOneResult
    */
   async insertOne(document: Schema, options?: BaseOptions): Promise<InsertOneResult> {
     setDefaultIdForInsert(document);
@@ -156,11 +156,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * **NB. This function paginates the insertion of documents in chunks to avoid running into insertion limits. This
    * means multiple requests will be made to the server, and the operation may not be atomic.**
    *
-   * If any document does not contain an `_id` field, an ObjectId will be generated on the client and assigned to the
-   * document. This generation will mutate the document.
+   * If any document does not contain an `_id` field, an ObjectId string will be generated on the client and assigned to
+   * the document. This generation will mutate the document.
    *
    * You can set the `ordered` option to `true` to stop the operation after the first error, otherwise all documents
-   * may be parallelized and processed in arbitrary order.
+   * may be parallelized and processed in arbitrary order, improving, perhaps vastly, performance.
    *
    * If an insertion error occurs, the operation will throw either an `InsertManyOrderedError` or `InsertManyUnorderedError`
    * depending on the value of the `ordered` option.
@@ -203,6 +203,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * } catch (e) {
    *   if (e instanceof InsertManyOrderedError) {
    *     console.log(e.insertedIds);
+   *     // Failed IDs will just be all the IDs after the
+   *     // last successfully inserted ID
    *   }
    * }
    * ```
@@ -212,6 +214,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @throws InsertManyOrderedError - If the `ordered` option is `true` and the operation fails.
    * @throws InsertManyUnorderedError - If the `ordered` option is `false` and the operation fails.
+   *
+   * @return InsertManyResult
    */
   async insertMany(documents: Schema[], options?: InsertManyOptions): Promise<InsertManyResult> {
     const chunkSize = options?.chunkSize ?? 20;
@@ -246,6 +250,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param filter - A filter to select the document to update.
    * @param update - The update to apply to the selected document.
    * @param options - The options for the operation.
+   *
+   * @return UpdateOneResult
    */
   async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions<Schema>): Promise<UpdateOneResult> {
     const command: UpdateOneCommand = {
@@ -279,11 +285,14 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Updates **up to twenty** documents in the collection.
+   * Updates many documents in the collection.
    *
-   * Will throw a {@link AstraClientError} to indicate if more documents are found to update.
+   * **NB. This function paginates the deletion of documents in chunks to avoid running into insertion limits. This
+   * means multiple requests will be made to the server, and the operation may not be atomic.**
    *
    * You can upsert documents by setting the `upsert` option to `true`.
+   *
+   * You can also specify a sort option to determine which documents to update if multiple documents match the filter.
    *
    * @example
    * ```typescript
@@ -300,11 +309,20 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * });
    * ```
    *
+   * @remarks
+   * This operation is not atomic. Depending on the amount of matching documents, it can keep running (in a blocking
+   * way) for a macroscopic time. In that case, new documents that are meanwhile inserted
+   * (e.g. from another process/application) may be updated during the execution of this method call.
+   *
    * @param filter - A filter to select the documents to update.
    * @param update - The update to apply to the selected documents.
    * @param options - The options for the operation.
+   *
+   * @return UpdateManyResult
    */
   async updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateManyOptions): Promise<UpdateManyResult> {
+    options = { ...options };
+
     const command: UpdateManyCommand = {
       updateMany: {
         filter,
@@ -315,24 +333,24 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     setDefaultIdForUpsert(command.updateMany);
 
-    const updateManyResp = await this._httpClient.executeCommand(command, options, updateManyOptionKeys);
+    const commonResult = {
+      modifiedCount: 0,
+      matchedCount: 0,
+    };
 
-    if (updateManyResp.status?.moreData) {
-      throw new AstraClientError(
-        `More than ${updateManyResp.status?.modifiedCount} records found for update by the server`,
-        command,
-      );
+    let resp;
+
+    while (!resp || resp.status?.nextPageState) {
+      resp = await this._httpClient.executeCommand(command);
+      command.updateMany.options.pagingState = resp.status?.nextPageState ;
+      commonResult.modifiedCount += resp.status?.modifiedCount ?? 0;
+      commonResult.matchedCount += resp.status?.matchedCount ?? 0;
     }
 
-    const commonResult = {
-      modifiedCount: updateManyResp.status?.modifiedCount,
-      matchedCount: updateManyResp.status?.matchedCount,
-    } as const;
-
-    return (updateManyResp.status?.upsertedId)
+    return (resp.status?.upsertedId)
       ? {
         ...commonResult,
-        upsertedId: updateManyResp.status?.upsertedId,
+        upsertedId: resp.status?.upsertedId,
         upsertedCount: 1,
       }
       : commonResult;
@@ -352,13 +370,18 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param filter - A filter to select the document to replace.
    * @param replacement - The replacement document, which contains no `_id` field.
    * @param options - The options for the operation.
+   *
+   * @return ReplaceOneResult
    */
   async replaceOne(filter: Filter<Schema>, replacement: NoId<Schema>, options?: ReplaceOneOptions): Promise<ReplaceOneResult> {
     const command: FindOneAndReplaceCommand = {
       findOneAndReplace: {
         filter,
         replacement,
-        options: { ...options, returnDocument: 'before' },
+        options: {
+          returnDocument: 'before',
+          upsert: options?.upsert,
+        },
       },
     };
 
@@ -393,6 +416,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @param filter - A filter to select the document to delete.
    * @param options - The options for the operation.
+   *
+   * @return DeleteOneResult
    */
   async deleteOne(filter: Filter<Schema> = {}, options?: DeleteOneOptions<Schema>): Promise<DeleteOneResult> {
     const command: DeleteOneCommand = {
@@ -426,7 +451,14 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * await collection.deleteMany({ name: 'John Doe' });
    * ```
    *
+   * @remarks
+   * This operation is not atomic. Depending on the amount of matching documents, it can keep running (in a blocking
+   * way) for a macroscopic time. In that case, new documents that are meanwhile inserted
+   * (e.g. from another process/application) will be deleted during the execution of this method call.
+   *
    * @param filter - A filter to select the documents to delete.
+   *
+   * @return DeleteManyResult
    */
   async deleteMany(filter: Filter<Schema> = {}): Promise<DeleteManyResult> {
     if (Object.keys(filter).length === 0) {
@@ -514,8 +546,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * console.log(doc?.$similarity);
    * ```
    *
+   * @remarks
+   * If you really need `limit` or `skip`, prefer using the {@link find} method instead.
+   *
    * @param filter - A filter to select the document to find.
    * @param options - The options for the operation.
+   *
+   * @return The found document, or `null` if no document was found.
    */
   async findOne<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<Schema, GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
     options = { ...options };
@@ -529,12 +566,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     if (options?.sort) {
       command.findOne.sort = options.sort;
-      delete options.sort;
     }
 
     if (options?.projection && Object.keys(options.projection).length > 0) {
       command.findOne.projection = options.projection;
-      delete options.projection;
     }
 
     const resp = await this._httpClient.executeCommand(command, options, findOneOptionsKeys);
@@ -542,12 +577,14 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Finds a single document in the collection and replaces it.
+   * Atomically finds a single document in the collection and replaces it.
    *
    * Set `returnDocument` to `'after'` to return the document as it is after the replacement, or `'before'` to return the
    * document as it was before the replacement.
    *
    * You can specify a `sort` option to determine which document to find if multiple documents match the filter.
+   *
+   * You can also set `projection` to determine which fields to include in the returned document.
    *
    * You can also set `upsert` to `true` to insert a new document if no document matches the filter.
    *
@@ -566,6 +603,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param filter - A filter to select the document to find.
    * @param replacement - The replacement document, which contains no `_id` field.
    * @param options - The options for the operation.
+   *
+   * @return ModifyResult
    */
   async findOneAndReplace(
     filter: Filter<Schema>,
@@ -586,7 +625,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       findOneAndReplace: {
         filter,
         replacement,
-        options,
+        options: {
+          returnDocument: options.returnDocument,
+          upsert: options.upsert,
+        },
       },
     };
 
@@ -594,7 +636,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     if (options?.sort) {
       command.findOneAndReplace.sort = options.sort;
-      delete options.sort;
+    }
+
+    if (options?.projection && Object.keys(options.projection).length > 0) {
+      command.findOneAndReplace.projection = options.projection;
     }
 
     const resp = await this._httpClient.executeCommand(command, options, findOneAndReplaceOptionsKeys);
@@ -628,25 +673,32 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * const count = await collection.countDocuments({ name: 'John Doe' }, 0);
    * ```
    *
+   * @remarks
+   * Count operations are expensive: for this reason, the best practice is to provide a reasonable `upperBound`
+   * according to the caller expectations. Moreover, indiscriminate usage of count operations for sizeable amounts
+   * of documents (i.e. in the thousands and more) is discouraged in favor of alternative application-specific
+   * solutions. Keep in mind that the Data API has a hard upper limit on the amount of documents it will count,
+   * and that an exception will be thrown by this method if this limit is encountered.
+   *
    * @param filter - A filter to select the documents to count. If not provided, all documents will be counted.
-   * @param limit - The maximum number of documents to count.
+   * @param upperBound - The maximum number of documents to count.
    * @param options - The options for the operation.
    *
    * @throws TooManyDocsToCountError - If the number of documents counted exceeds the provided limit.
    */
-  async countDocuments(filter: Filter<Schema>, limit: number, options?: BaseOptions): Promise<number> {
+  async countDocuments(filter: Filter<Schema>, upperBound: number, options?: BaseOptions): Promise<number> {
     const command = {
       countDocuments: { filter },
     };
 
-    if (!limit) {
+    if (!upperBound) {
       throw new Error('options.limit is required');
     }
 
     const resp = await this._httpClient.executeCommand(command, options);
 
-    if (resp.status?.count > limit) {
-      throw new TooManyDocsToCountError(limit, false);
+    if (resp.status?.count > upperBound) {
+      throw new TooManyDocsToCountError(upperBound, false);
     }
 
     if (resp.status?.moreData) {
@@ -657,9 +709,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Finds a single document in the collection and deletes it.
+   * Atomically finds a single document in the collection and deletes it.
    *
    * You can specify a `sort` option to determine which document to find if multiple documents match the filter.
+   *
+   * You can also set `projection` to determine which fields to include in the returned document.
    *
    * @example
    * ```typescript
@@ -670,6 +724,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @param filter - A filter to select the document to find.
    * @param options - The options for the operation.
+   *
+   * @return
+   *  if `includeResultMetadata` is `true`, a `ModifyResult` object with the deleted document and the `ok` status.
+   *  Otherwise, the deleted document, or `null` if no document was found.
    */
   async findOneAndDelete(
     filter: Filter<Schema>,
@@ -688,6 +746,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     if (options?.sort) {
       command.findOneAndDelete.sort = options.sort;
+    }
+
+    if (options?.projection && Object.keys(options.projection).length > 0) {
+      command.findOneAndDelete.projection = options.projection;
     }
 
     const resp = await this._httpClient.executeCommand(command, options);
@@ -739,13 +801,14 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   ): Promise<WithId<Schema> | null>
 
   async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options: FindOneAndUpdateOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
-    options = { ...options };
-
     const command: FindOneAndUpdateCommand = {
       findOneAndUpdate: {
         filter,
         update,
-        options,
+        options: {
+          returnDocument: options.returnDocument,
+          upsert: options.upsert,
+        },
       },
     };
 
@@ -753,7 +816,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     if (options?.sort) {
       command.findOneAndUpdate.sort = options.sort;
-      delete options.sort;
+    }
+
+    if (options?.projection && Object.keys(options.projection).length > 0) {
+      command.findOneAndUpdate.projection = options.projection;
     }
 
     const resp = await this._httpClient.executeCommand(command, options, findOneAndUpdateOptionsKeys);
@@ -775,6 +841,12 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
+   * Get the collection options, i.e. its configuration as read from the database.
+   *
+   *  The method issues a request to the Data API each time is invoked,
+   *         without caching mechanisms: this ensures up-to-date information
+   *         for usages such as real-time collection validation by the application.
+   *
    * @return The options that the collection was created with (i.e. the `vector` and `indexing` operations).
    */
   async options(): Promise<CollectionOptions<SomeDoc>> {
@@ -790,13 +862,17 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Drops the collection from the database.
+   * Drops the collection from the database, including all the documents it contains.
    *
    * @example
    * ```typescript
    * const collection = await db.createCollection('my_collection');
    * await collection.drop();
    * ```
+   *
+   * @param options - The options for the operation.
+   *
+   * @return `true` if the collection was dropped okay.
    */
   async drop(options?: BaseOptions): Promise<boolean> {
     return await this._db.dropCollection(this._collectionName, options);
@@ -943,12 +1019,12 @@ const buildBulkWriteCommands = (operations: Record<string, any>): Record<string,
   }
 }
 
-type Mutable<T> = {
-  -readonly [P in keyof T]: T[P];
+type MutableBulkWriteResult = {
+  -readonly [K in keyof BulkWriteResult]: BulkWriteResult[K];
 }
 
 const addToBulkWriteResult = (result: BulkWriteResult, resp: Record<string, any>, i: number) => {
-  const asMutable = result as Mutable<BulkWriteResult>;
+  const asMutable = result as MutableBulkWriteResult;
 
   asMutable.insertedCount += resp.insertedCount ?? 0;
   asMutable.modifiedCount += resp.modifiedCount ?? 0;

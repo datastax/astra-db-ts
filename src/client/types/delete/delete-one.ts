@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { InternalDeleteResult } from '@/src/client/types/delete/delete-common';
 import { SomeDoc, SortOption } from '@/src/client';
 import { BaseOptions } from '@/src/client/types/common';
 
@@ -46,4 +45,9 @@ export interface DeleteOneOptions<Schema extends SomeDoc> extends BaseOptions {
  *
  * @field deletedCount - The number of deleted documents. Can be either 0 or 1.
  */
-export type DeleteOneResult = InternalDeleteResult<0 | 1>;
+export interface DeleteOneResult {
+  /**
+   * The number of deleted documents.
+   */
+  deletedCount: 0 | 1;
+}

@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { InternalDeleteResult } from '@/src/client/types/delete/delete-common';
-
 /** @internal */
 export interface DeleteManyCommand {
   deleteMany: {
@@ -26,4 +24,9 @@ export interface DeleteManyCommand {
  *
  * @field deletedCount - The number of deleted documents. Can be any non-negative integer.
  */
-export type DeleteManyResult = InternalDeleteResult<number>;
+export interface DeleteManyResult {
+  /**
+   * The number of deleted documents.
+   */
+  deletedCount: number;
+}

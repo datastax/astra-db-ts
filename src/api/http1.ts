@@ -63,7 +63,7 @@ export class HTTP1Strategy implements HTTPRequestStrategy {
         timeout: info.timeout,
         headers: {
           [DEFAULT_AUTH_HEADER]: info.token,
-        }
+        },
       });
     } catch (e: any) {
       if (e.code === 'ECONNABORTED') {

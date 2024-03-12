@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { APIResponse, HTTPClient } from '@/src/api';
+import { HTTPClient } from '@/src/api';
 import { Collection } from './collection';
-import { createNamespace, TypeErr } from './utils';
 import {
-  CreateCollectionCommand, CreateCollectionOptions,
+  CreateCollectionCommand,
+  CreateCollectionOptions,
   createCollectionOptionsKeys
 } from '@/src/client/types/collections/create-collection';
 import { SomeDoc } from '@/src/client/document';
 import {
-  CollectionInfo, ListCollectionsCommand,
+  CollectionInfo,
   listCollectionOptionsKeys,
+  ListCollectionsCommand,
   ListCollectionsOptions
 } from '@/src/client/types/collections/list-collection';
 import { BaseOptions } from '@/src/client/types/common';
@@ -65,6 +66,8 @@ export class Db {
    *
    * **Unlike the MongoDB driver, this method does not create a collection if it doesn't exist.**
    *
+   * Use {@link createCollection} to create a new collection.
+   *
    * Typed as `Collection<SomeDoc>` by default, but you can specify a schema type to get a typed collection.
    *
    * @example
@@ -90,9 +93,12 @@ export class Db {
   }
 
   /**
-   * Creates a new collection in the database.
+   * Creates a new collection in the database, and establishes a reference to it.
    *
    * **NB. You are limited to 5 collections per database in Astra, so be wary when using this command.**
+   *
+   * This is a blocking command which performs actual I/O unlike {@link collection}, which simply creates an
+   * unvalidated reference to a collection.
    *
    * Typed as `Collection<SomeDoc>` by default, but you can specify a schema type to get a typed collection.
    *
@@ -134,17 +140,15 @@ export class Db {
   /**
    * Drops a collection from the database.
    *
-   * @param collectionName The name of the collection to drop.
+   * @param name The name of the collection to drop.
    *
    * @param options Options for the operation.
    *
    * @return A promise that resolves to `true` if the collection was dropped successfully.
    */
-  async dropCollection(collectionName: string, options?: BaseOptions): Promise<boolean> {
+  async dropCollection(name: string, options?: BaseOptions): Promise<boolean> {
     const command = {
-      deleteCollection: {
-        name: collectionName,
-      },
+      deleteCollection: { name },
     };
 
     const resp = await this._httpClient.executeCommand(command, options);
@@ -185,20 +189,5 @@ export class Db {
     return (options?.nameOnly !== false)
       ? resp.status!.collections.map((name: string) => ({ name }))
       : resp.status!.collections;
-  }
-
-  async createDatabase(): Promise<APIResponse> {
-    return await createNamespace(this._httpClient, this._namespace);
-  }
-
-  async dropDatabase(): Promise<TypeErr<'Cannot drop database in Astra. Please use the Astra UI to drop the database.'>> {
-    throw new Error('Cannot drop database in Astra. Please use the Astra UI to drop the database.');
-  }
-
-  /**
-   * @deprecated Use {@link _namespace} instead.
-   */
-  get name(): string {
-    return this._namespace;
   }
 }

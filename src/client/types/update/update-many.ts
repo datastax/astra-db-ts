@@ -13,14 +13,15 @@
 // limitations under the License.
 
 import { InternalUpdateResult } from '@/src/client/types/update/update-common';
-import { BaseOptions } from '@/src/client/types/common';
 
 /** @internal */
 export interface UpdateManyCommand {
   updateMany: {
     filter: Record<string, unknown>;
     update: Record<string, any>;
-    options?: UpdateManyOptions;
+    options: UpdateManyOptions & {
+      pagingState?: string;
+    };
   }
 }
 
@@ -29,7 +30,7 @@ export interface UpdateManyCommand {
  *
  * @field upsert - If true, perform an insert if no documents match the filter.
  */
-export interface UpdateManyOptions extends BaseOptions {
+export interface UpdateManyOptions {
   /**
    * If true, perform an insert if no documents match the filter.
    *
@@ -42,7 +43,7 @@ export interface UpdateManyOptions extends BaseOptions {
 }
 
 /** @internal */
-export const updateManyOptionKeys = new Set(['upsert']);
+export const updateManyOptionKeys = new Set(['upsert', 'pagingState']);
 
 /**
  * Represents the result of an updateMany operation.

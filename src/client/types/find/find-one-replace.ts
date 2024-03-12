@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/client';
+import { ProjectionOption, SomeDoc } from '@/src/client';
 import { BaseOptions, SortOption } from '@/src/client/types/common';
 
 /** @internal */
@@ -20,8 +20,12 @@ export interface FindOneAndReplaceCommand {
   findOneAndReplace: {
     filter: Record<string, unknown>;
     replacement: Record<string, unknown>;
-    options?: FindOneAndReplaceOptions<any>;
+    options?: {
+      returnDocument: 'before' | 'after',
+      upsert?: boolean,
+    };
     sort?: SortOption<any>;
+    projection?: ProjectionOption<any>;
   };
 }
 
@@ -59,8 +63,22 @@ export interface FindOneAndReplaceOptions<Schema extends SomeDoc> extends BaseOp
    * @default null
    */
   sort?: SortOption<Schema>,
+  /**
+   * Specifies which fields should be included/excluded in the returned documents.
+   *
+   * If not specified, all fields are included.
+   */
+  projection?: ProjectionOption<Schema>,
+  /**
+   * When true, returns alongside the document, an `ok` field with a value of 1 if the command executed successfully.
+   *
+   * Otherwise, returns the document result directly.
+   *
+   * Defaults to false.
+   * @default false
+   */
   includeResultMetadata?: boolean,
 }
 
 /** @internal */
-export const findOneAndReplaceOptionsKeys = new Set(['upsert', 'returnDocument', 'sort']);
+export const findOneAndReplaceOptionsKeys = new Set(['upsert', 'returnDocument', 'sort', 'projection']);

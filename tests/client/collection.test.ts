@@ -1407,6 +1407,15 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.strictEqual(updatedDoc!.address.state, 'new state');
     });
 
+    it('should updateOne document by col with sort', async () => {
+      const docs = [{ age: 2, user: 'a' }, { age: 0, user: 'a' }, { age: 1, user: 'a' }];
+      await collection.insertMany(docs);
+      const updateOneResp = await collection.updateOne({ user: 'a' }, { $set: { age: 10 } }, { sort: { age: 1 } });
+      assert.strictEqual(updateOneResp.modifiedCount, 1);
+      const updatedDoc = await collection.find({}, { sort: { age: -1 }, limit: 20 }).toArray();
+      assert.strictEqual(updatedDoc[0].age, 10);
+    });
+
     it('should upsert a doc with upsert flag true in updateOne call', async () => {
       //insert a new doc
       const doc = createSampleDocWithMultiLevel();
@@ -1512,6 +1521,26 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.strictEqual(updateManyResp.upsertedId, undefined);
     });
 
+    it('should update when updateMany is invoked with updates for records > 20', async () => {
+      const docList = Array.from({ length: 101 }, () => ({ username: 'id', city: 'nyc' }));
+      docList.forEach((doc, index) => {
+        doc.username = doc.username + (index + 1);
+      });
+      const res = await collection.insertMany(docList);
+      assert.strictEqual(res.insertedCount, docList.length);
+      assert.strictEqual(Object.keys(res.insertedIds).length, 101);
+
+      //const idToUpdateAndCheck = sampleDocsWithIdList[0]._id;
+      const updateManyResp = await collection.updateMany({ 'city': 'nyc' },
+        {
+          '$set': { 'state': 'ny' }
+        });
+      assert.strictEqual(updateManyResp.matchedCount, 101);
+      assert.strictEqual(updateManyResp.modifiedCount, 101);
+      assert.strictEqual(updateManyResp.upsertedCount, undefined);
+      assert.strictEqual(updateManyResp.upsertedId, undefined);
+    });
+
     it('should upsert with upsert flag set to false/not set when not found', async () => {
       const docList = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
       docList.forEach((doc, index) => {
@@ -1555,40 +1584,40 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.ok(updateManyResp.upsertedId);
     });
 
-    it('should fail when moreData returned by updateMany as true', async () => {
-      const docList = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
-      docList.forEach((doc, index) => {
-        doc.username = doc.username + (index + 1);
-      });
-      const res = await collection.insertMany(docList);
-      assert.strictEqual(res.insertedCount, docList.length);
-      assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
-      //insert next 20
-      const docListNextSet = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
-      docListNextSet.forEach((doc, index) => {
-        doc.username = doc.username + (index + 21);
-      });
-      const resNextSet = await collection.insertMany(docListNextSet);
-      assert.strictEqual(resNextSet.insertedCount, docListNextSet.length);
-      assert.strictEqual(Object.keys(resNextSet.insertedIds).length, docListNextSet.length);
-
-
-      //const idToUpdateAndCheck = sampleDocsWithIdList[0]._id;
-      const filter = { 'city': 'nyc' };
-      const update = {
-        '$set': { 'state': 'ny' }
-      };
-      let error;
-      try {
-        await collection.updateMany(filter, update);
-      } catch (e: any) {
-        error = e;
-      }
-      assert.ok(error);
-      assert.strictEqual(error.message, 'Command "updateMany" failed with the following error: More than 20 records found for update by the server');
-      assert.deepStrictEqual(error.command.updateMany.filter, filter);
-      assert.deepStrictEqual(error.command.updateMany.update, update);
-    });
+    // it('should fail when moreData returned by updateMany as true', async () => {
+    //   const docList = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
+    //   docList.forEach((doc, index) => {
+    //     doc.username = doc.username + (index + 1);
+    //   });
+    //   const res = await collection.insertMany(docList);
+    //   assert.strictEqual(res.insertedCount, docList.length);
+    //   assert.strictEqual(Object.keys(res.insertedIds).length, docList.length);
+    //   //insert next 20
+    //   const docListNextSet = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
+    //   docListNextSet.forEach((doc, index) => {
+    //     doc.username = doc.username + (index + 21);
+    //   });
+    //   const resNextSet = await collection.insertMany(docListNextSet);
+    //   assert.strictEqual(resNextSet.insertedCount, docListNextSet.length);
+    //   assert.strictEqual(Object.keys(resNextSet.insertedIds).length, docListNextSet.length);
+    //
+    //
+    //   //const idToUpdateAndCheck = sampleDocsWithIdList[0]._id;
+    //   const filter = { 'city': 'nyc' };
+    //   const update = {
+    //     '$set': { 'state': 'ny' }
+    //   };
+    //   let error;
+    //   try {
+    //     await collection.updateMany(filter, update);
+    //   } catch (e: any) {
+    //     error = e;
+    //   }
+    //   assert.ok(error);
+    //   assert.strictEqual(error.message, 'Command "updateMany" failed with the following error: More than 20 records found for update by the server');
+    //   assert.deepStrictEqual(error.command.updateMany.filter, filter);
+    //   assert.deepStrictEqual(error.command.updateMany.update, update);
+    // });
 
     it('should increment number when $inc is used', async () => {
       const docList = Array.from({ length: 20 }, () => ({
@@ -2545,7 +2574,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.strictEqual(deleteManyResp.deletedCount, 20);
     });
 
-    it('should deleteMany when match is >= 20', async () => {
+    it('should deleteMany when match is > 20', async () => {
       const docList = Array.from({ length: 101 }, () => ({ 'username': 'id', 'city': 'trichy' }));
       const res = await collection.insertMany(docList);
       assert.strictEqual(res.insertedCount, 101);
@@ -2689,7 +2718,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
 
     it('should findOneAndUpdate without any updates to apply', async () => {
-      await collection.deleteAll();
       await collection.insertMany([
         { username: 'a' }
       ]);
@@ -2702,8 +2730,23 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.strictEqual(res.value!.username, 'a');
     });
 
+    it('should findOneAndUpdate with a projection', async () => {
+      await collection.insertMany([
+        { username: 'a', answer: 42 },
+        { username: 'aa', answer: 42 },
+        { username: 'aaa', answer: 42 }
+      ]);
+
+      const res = await collection.findOneAndUpdate(
+        { username: 'a' },
+        { $set: { username: 'b' } },
+        { projection: { username: 1 }, returnDocument: 'after', includeResultMetadata: true }
+      );
+      assert.strictEqual(res.value!.username, 'b');
+      assert.strictEqual(res.value!.answer, undefined);
+    });
+
     it('should countDocuments()', async () => {
-      await collection.deleteAll();
       await collection.insertMany([
         { username: 'a' },
         { username: 'aa', answer: 42 },
