@@ -14,11 +14,10 @@
 
 import { logger, setLevel } from '@/src/logger';
 import { EJSON } from 'bson';
-import { DEFAULT_METHOD, DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, HTTP_METHODS, REQUESTED_WITH } from '@/src/api/constants';
+import { DEFAULT_METHOD, DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, HTTP_METHODS, CLIENT_USER_AGENT } from '@/src/api/constants';
 import {
   APIResponse,
   Caller,
-  Callers,
   HTTPRequestInfo,
   HTTPRequestStrategy,
   InternalHTTPClientOptions
@@ -70,7 +69,7 @@ export class HTTPClient {
       this.baseUrl += '/' + options.baseApiPath;
     }
 
-    this.userAgent = buildUserAgent(REQUESTED_WITH, options.caller);
+    this.userAgent = buildUserAgent(CLIENT_USER_AGENT, options.caller);
   }
 
   close() {
@@ -221,7 +220,7 @@ function cleanupOptions(data: Record<string, any>, commandName: string, optionsT
   return options;
 }
 
-function buildUserAgent(client: string, caller?: Callers): string {
+function buildUserAgent(client: string, caller?: Caller | Caller[]): string {
   const callers = (
     (!caller)
       ? [] :

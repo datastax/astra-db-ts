@@ -14,7 +14,7 @@
 
 import { LIB_NAME, LIB_VERSION } from '@/src/version';
 
-export const REQUESTED_WITH = LIB_NAME + "/" + LIB_VERSION;
+export const CLIENT_USER_AGENT = LIB_NAME + "/" + LIB_VERSION;
 
 export const enum HTTP_METHODS {
   get = 'GET',

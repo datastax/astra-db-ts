@@ -15,7 +15,6 @@
 import { HTTP_METHODS } from '@/src/api';
 
 export type Caller = [name: string, version?: string];
-export type Callers = Caller | Caller[];
 
 export interface HTTPClientOptions {
   applicationToken: string;
@@ -23,7 +22,7 @@ export interface HTTPClientOptions {
   logLevel?: string;
   logSkippedOptions?: boolean;
   useHttp2?: boolean;
-  caller?: Callers;
+  caller?: Caller | Caller[];
 }
 
 export interface InternalHTTPClientOptions extends HTTPClientOptions {

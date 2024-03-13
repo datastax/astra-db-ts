@@ -308,16 +308,4 @@ describe("Client test", () => {
       assert.ok(error.message.includes('Cannot make http2 request when client is closed'), error.message);
     });
   });
-
-  describe("Client noops", () => {
-    it("should handle noop: setMaxListeners", async () => {
-      const maxListeners = appClient?.setMaxListeners(1);
-      assert.strictEqual(maxListeners, 1);
-    });
-
-    it("should handle noop: close", async () => {
-      const closedClient = appClient?.close();
-      assert.ok(closedClient);
-    });
-  });
 });

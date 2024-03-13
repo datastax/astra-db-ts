@@ -1,7 +1,7 @@
 import { withoutFields } from '@/src/client/utils';
 import { Client } from '@/src/client/client';
 import { DEFAULT_NAMESPACE } from '@/src/api';
-import { Callers } from '@/src/api/types';
+import { Caller } from '@/src/api/types';
 
 /**
  * The options for the AstraDB client
@@ -72,7 +72,7 @@ export interface AstraDBOptions {
    * });
    * ```
    */
-  caller?: Callers,
+  caller?: Caller | Caller[],
 }
 
 /**

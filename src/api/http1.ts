@@ -14,7 +14,7 @@
 
 import { HTTPRequestStrategy, InternalAPIResponse, InternalHTTPRequestInfo } from '@/src/api/types';
 import axios from 'axios';
-import { DEFAULT_AUTH_HEADER, DEFAULT_TIMEOUT, REQUESTED_WITH } from '@/src/api/constants';
+import { DEFAULT_AUTH_HEADER, DEFAULT_TIMEOUT, CLIENT_USER_AGENT } from '@/src/api/constants';
 import http from 'http';
 import { logger } from '@/src/logger';
 import { serializeCommand } from '@/src/api/http-client';

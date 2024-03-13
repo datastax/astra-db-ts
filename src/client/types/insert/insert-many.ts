@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { IdOf } from '@/src/client/types/utils';
-import { Schema } from '@/tests/typing/prelude';
 
 /** @internal */
 export interface InsertManyCommand {

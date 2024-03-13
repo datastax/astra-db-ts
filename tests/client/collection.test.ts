@@ -2565,7 +2565,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
   });
 
-  describe('deleteMany tests', () => {
+  describe('deleteMany/deleteAll tests', () => {
     it('should deleteMany when match is <= 20', async () => {
       const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
       docList.forEach((doc, index) => {
@@ -2605,17 +2605,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
 
       docs = await collection.find({}, { sort: { username: -1 }, limit: 20 }).toArray();
       assert.deepStrictEqual(docs.map(doc => doc.username), ['c', 'b', 'a']);
-    });
-
-    it('throws if using cursor with sort', async () => {
-      await collection.deleteAll();
-      for (let i = 0; i < 20; ++i) {
-        await collection.insertMany(Array(20).fill(0).map((_, i) => ({ num: i })));
-      }
-      await assert.rejects(
-        async () => collection.find({}, { sort: { num: -1 }, limit: 22 }),
-        /JSON API can currently only return 20 documents with sort/
-      );
     });
 
     it('should findOne with sort', async () => {

@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FindCursor } from './cursor';
 import { HTTPClient } from '@/src/api';
 import { setDefaultIdForInsert, setDefaultIdForUpsert, withoutFields } from './utils';
 import { InsertOneCommand, InsertOneResult } from '@/src/client/types/insert/insert-one';
@@ -50,7 +49,7 @@ import { UpdateFilter } from '@/src/client/types/update-filter';
 import { Flatten, FoundDoc, IdOf, NoId, WithId } from '@/src/client/types/utils';
 import { SomeDoc } from '@/src/client/document';
 import { Db } from '@/src/client/db';
-import { FindCursorV2 } from '@/src/client/cursor-v2';
+import { FindCursor } from '@/src/client/cursor';
 import { ToDotNotation } from '@/src/client/types/dot-notation';
 import { CollectionOptions } from '@/src/client/types/collections/collection-options';
 import { BaseOptions, SomeId } from '@/src/client/types/common';
@@ -491,11 +490,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   find<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursor<FoundDoc<Schema, GetSim>> {
-    return new FindCursor(this._httpClient, filter, options) as any;
+    return new FindCursor(this.namespace, this._httpClient, filter, options) as any;
   }
 
-  findV2<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursorV2<FoundDoc<Schema, GetSim>> {
-    return new FindCursorV2(this.namespace, this._httpClient, filter, options) as any;
+  findV2<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursor<FoundDoc<Schema, GetSim>> {
+    return new FindCursor(this.namespace, this._httpClient, filter, options) as any;
   }
 
   async distinct<Key extends keyof ToDotNotation<FoundDoc<Schema, GetSim>> & string, GetSim extends boolean = false>(key: Key, filter: Filter<Schema> = {}, _?: FindOptions<Schema, GetSim>): Promise<Flatten<ToDotNotation<FoundDoc<Schema, GetSim>>[Key]>[]> {

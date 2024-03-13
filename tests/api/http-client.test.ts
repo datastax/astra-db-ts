@@ -14,7 +14,7 @@
 
 import assert from "assert";
 import { HTTPClient } from "@/src/api/http-client";
-import { REQUESTED_WITH } from '@/src/api/constants';
+import { CLIENT_USER_AGENT } from '@/src/api/constants';
 
 describe("Astra TS Client - client.HTTPClient", () => {
   describe("HTTPClient Operations", () => {
@@ -62,7 +62,7 @@ describe("Astra TS Client - client.HTTPClient", () => {
         baseUrl: 'http://localhost:8080',
       });
 
-      assert.equal(client.userAgent, REQUESTED_WITH);
+      assert.equal(client.userAgent, CLIENT_USER_AGENT);
     });
 
     it('Should use the provided user agent', () => {
@@ -72,7 +72,7 @@ describe("Astra TS Client - client.HTTPClient", () => {
         caller: ['my-app', '1.0.0']
       });
 
-      assert.equal(client.userAgent, `${REQUESTED_WITH} my-app/1.0.0`);
+      assert.equal(client.userAgent, `my-app/1.0.0 ${CLIENT_USER_AGENT}`);
     });
 
     it('Should use the provided user agents', () => {
@@ -82,7 +82,7 @@ describe("Astra TS Client - client.HTTPClient", () => {
         caller: [['my-app', '1.0.0'], ['my-other-app']]
       });
 
-      assert.equal(client.userAgent, `${REQUESTED_WITH} my-app/1.0.0 my-other-app`);
+      assert.equal(client.userAgent, `my-app/1.0.0 my-other-app ${CLIENT_USER_AGENT}`);
     });
   });
 });
