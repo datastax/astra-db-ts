@@ -48,6 +48,7 @@ export interface HTTPRequestInfo {
   params?: Record<string, string>,
   method?: HTTP_METHODS,
   timeout?: number,
+  collection?: string,
 }
 
 export interface InternalHTTPRequestInfo extends HTTPRequestInfo {

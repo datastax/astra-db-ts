@@ -20,7 +20,7 @@ import { TEST_COLLECTION_NAME, testClient, useHttpClient } from '@/tests/fixture
 import { randAlphaNumeric } from '@ngneat/falso';
 import { HTTPClient } from '@/src/api';
 
-describe("Astra TS Client - collections.Db", async () => {
+describe('Astra TS Client - collections.Db', async () => {
   let astraClient: Client | null;
   let dbUri: string;
   let httpClient: HTTPClient;
@@ -45,13 +45,13 @@ describe("Astra TS Client - collections.Db", async () => {
     await db?.dropCollection(TEST_COLLECTION_NAME);
   });
 
-  describe("Db initialization", () => {
-    it("should initialize a Db", () => {
-      const db = new Db(httpClient, "test-db");
+  describe('Db initialization', () => {
+    it('should initialize a Db', () => {
+      const db = new Db(httpClient, 'test-db');
       assert.ok(db);
     });
 
-    it("should not initialize a Db without a name", () => {
+    it('should not initialize a Db without a name', () => {
       let error: any;
       try {
         // @ts-expect-error - intentionally passing undefined for testing purposes
@@ -64,17 +64,17 @@ describe("Astra TS Client - collections.Db", async () => {
     });
   });
 
-  describe("Db collection operations", () => {
-    it("should initialize a Collection", () => {
-      const db = new Db(httpClient, "test-db");
-      const collection = db.collection("test-collection");
+  describe('Db collection operations', () => {
+    it('should initialize a Collection', () => {
+      const db = new Db(httpClient, 'test-db');
+      const collection = db.collection('test-collection');
       assert.ok(collection);
     });
 
-    it("should not initialize a Collection without a name", () => {
+    it('should not initialize a Collection without a name', () => {
       let error: any;
       try {
-        const db = new Db(httpClient, "test-db");
+        const db = new Db(httpClient, 'test-db');
         // @ts-expect-error - intentionally passing undefined for testing purposes
         const collection = db.collection();
         assert.ok(collection);
@@ -84,7 +84,7 @@ describe("Astra TS Client - collections.Db", async () => {
       assert.ok(error);
     });
 
-    it("should create a Collection", async () => {
+    it('should create a Collection', async () => {
       const collectionName = TEST_COLLECTION_NAME;
       const db = new Db(httpClient, parseUri(dbUri).keyspaceName);
       const res = await db.createCollection(collectionName);
@@ -95,9 +95,9 @@ describe("Astra TS Client - collections.Db", async () => {
       assert.strictEqual(res2.collectionName, collectionName);
     });
 
-    it("should drop a Collection", async () => {
+    it('should drop a Collection', async () => {
       const db = new Db(httpClient, parseUri(dbUri).keyspaceName);
-      const suffix = randAlphaNumeric({ length: 4 }).join("");
+      const suffix = randAlphaNumeric({ length: 4 }).join('');
       await db.createCollection(`test_db_collection_${suffix}`);
       const res = await db.dropCollection(`test_db_collection_${suffix}`);
       assert.strictEqual(res, true);
@@ -131,6 +131,19 @@ describe("Astra TS Client - collections.Db", async () => {
     it('should return a list of collection infos with nameOnly set to false', async () => {
       const res = await db.listCollections({ nameOnly: false });
       assert.ok(res.some((collection) => collection.name === name && collection.options.vector?.dimension === 5));
+    });
+  });
+
+  describe('Db command', () => {
+    it('should execute a db-level command', async () => {
+      const resp = await astraClient!.db().command({ findCollections: {} });
+      assert.deepStrictEqual(resp, { status: { collections: [] }, data: undefined, errors: undefined });
+    });
+
+    it('should execute a collection-level command', async () => {
+      await astraClient!.db().createCollection(TEST_COLLECTION_NAME);
+      const resp = await astraClient!.db().command({ findOne: {} }, TEST_COLLECTION_NAME);
+      assert.deepStrictEqual(resp, { status: undefined, data: { document: null }, errors: undefined });
     });
   });
 });

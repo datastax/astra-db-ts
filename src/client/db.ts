@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { HTTPClient } from '@/src/api';
+import { APIResponse, HTTPClient } from '@/src/api';
 import { Collection } from './collection';
 import {
   CreateCollectionCommand,
@@ -189,5 +189,31 @@ export class Db {
     return (options?.nameOnly !== false)
       ? resp.status!.collections.map((name: string) => ({ name }))
       : resp.status!.collections;
+  }
+
+  /**
+   * Send a POST request to the Data API for this database with an arbitrary, caller-provided payload.
+   *
+   * You can specify a collection to target with the `collection` parameter, thereby allowing you to perform
+   * arbitrary collection-level operations as well.
+   *
+   * If no collection is specified, the command will be executed at the database level.
+   *
+   * @example
+   * ```typescript
+   * const colls = await db.command({ findCollections: {} });
+   * console.log(colls); // { status: { collections: [] } }
+   *
+   * const users = await db.command({ findOne: {} }, "users");
+   * console.log(users); // { data: { document: null } }
+   * ```
+   *
+   * @param command The command to send to the Data API.
+   * @param collection The optional name of the collection to target.
+   *
+   * @return A promise that resolves to the raw response from the Data API.
+   */
+  async command(command: Record<string, any>, collection?: string): Promise<APIResponse> {
+    return await this._httpClient.executeCommand(command, { collection: collection });
   }
 }

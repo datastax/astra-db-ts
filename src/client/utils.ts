@@ -13,9 +13,7 @@
 // limitations under the License.
 
 import url from 'url';
-import { handleIfErrorResponse, HTTPClient } from '@/src/api/http-client';
 import { ObjectId } from 'bson';
-import { HTTP_METHODS } from '@/src/api';
 import { SomeId } from '@/src/client/types/common';
 
 declare const __error: unique symbol;
@@ -89,47 +87,6 @@ function getBaseAPIPath(pathFromUrl?: string | null) {
   return baseApiPath === "/"
     ? ""
     : baseApiPath.substring(1, baseApiPath.length - 1);
-}
-
-// Get the keyspace name from the path
-export function getKeyspaceName(pathFromUrl?: string | null) {
-  if (!pathFromUrl) {
-    return "";
-  }
-  const pathElements = pathFromUrl.split("/");
-  return pathElements[pathElements.length - 1];
-}
-
-export async function createNamespace(httpClient: HTTPClient, name: string) {
-  const data = {
-    createNamespace: { name },
-  };
-
-  parseUri(httpClient.baseUrl);
-
-  const response = await httpClient.request({
-    url: httpClient.baseUrl,
-    method: HTTP_METHODS.post,
-    command: data,
-  });
-
-  handleIfErrorResponse(response, data);
-  return response;
-}
-
-export async function dropNamespace(httpClient: HTTPClient, name: string) {
-  const data = {
-    dropNamespace: { name },
-  };
-
-  const response = await httpClient.request({
-    url: httpClient.baseUrl,
-    method: HTTP_METHODS.post,
-    command: data,
-  });
-
-  handleIfErrorResponse(response, data);
-  return response;
 }
 
 export function setDefaultIdForInsert<T extends { _id?: SomeId }>(document: T): asserts document is T & { _id: SomeId } {

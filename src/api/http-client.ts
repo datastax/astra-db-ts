@@ -84,17 +84,18 @@ export class HTTPClient {
     return Object.assign(Object.create(Object.getPrototypeOf(this)), this);
   }
 
-  async executeCommand(command: Record<string, any>, options?: BaseOptions, optionsToRetain?: Set<string>) {
+  async executeCommand(command: Record<string, any>, options?: BaseOptions & { collection?: string }, optionsToRetain?: Set<string>) {
     const commandName = Object.keys(command)[0];
 
     if (command[commandName].options && optionsToRetain) {
       command[commandName].options = cleanupOptions(command, commandName, optionsToRetain, this.logSkippedOptions);
     }
 
-    const response = await this.request({
+    const response = await this._request({
       url: this.baseUrl,
       method: HTTP_METHODS.post,
       timeout: options?.maxTimeMS ?? DEFAULT_TIMEOUT,
+      collection: options?.collection,
       command: command,
     });
 
@@ -102,19 +103,21 @@ export class HTTPClient {
     return response;
   }
 
-  async request(requestInfo: HTTPRequestInfo): Promise<APIResponse> {
+  private async _request(info: HTTPRequestInfo): Promise<APIResponse> {
     try {
+      info.collection ||= this.collection;
+
       const keyspacePath = this.keyspace ? `/${this.keyspace}` : '';
-      const collectionPath = this.collection ? `/${this.collection}` : '';
-      const url = requestInfo.url + keyspacePath + collectionPath;
+      const collectionPath = info.collection ? `/${info.collection}` : '';
+      const url = info.url + keyspacePath + collectionPath;
 
       const response = await this.requestStrategy.request({
         url: url,
         token: this.applicationToken,
-        command: requestInfo.command,
-        timeout: requestInfo.timeout || DEFAULT_TIMEOUT,
-        method: requestInfo.method || DEFAULT_METHOD,
-        params: requestInfo.params ?? {},
+        command: info.command,
+        timeout: info.timeout || DEFAULT_TIMEOUT,
+        method: info.method || DEFAULT_METHOD,
+        params: info.params ?? {},
         userAgent: this.userAgent,
       });
 
@@ -129,13 +132,13 @@ export class HTTPClient {
           errors: response.data?.errors,
         };
       } else {
-        logger.error(requestInfo.url + ": " + response.status);
-        logger.error("Data: " + JSON.stringify(requestInfo.command));
+        logger.error(info.url + ": " + response.status);
+        logger.error("Data: " + JSON.stringify(info.command));
         return this._mkError();
       }
     } catch (e: any) {
-      logger.error(requestInfo.url + ": " + e.message);
-      logger.error("Data: " + JSON.stringify(requestInfo.command));
+      logger.error(info.url + ": " + e.message);
+      logger.error("Data: " + JSON.stringify(info.command));
 
       if (e?.response?.data) {
         logger.error("Response Data: " + JSON.stringify(e.response.data));

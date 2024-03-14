@@ -14,7 +14,7 @@
 
 import { Db } from './db';
 import { parseUri } from './utils';
-import { HTTPClient, HTTPClientOptions } from '@/src/api';
+import { APIResponse, HTTPClient, HTTPClientOptions } from '@/src/api';
 import { Collection } from './collection';
 import { SomeDoc } from '@/src/client/document';
 import { CollectionInfo } from '@/src/client/types/collections/list-collection';
@@ -77,6 +77,10 @@ export class Client implements Disposable {
 
   async listCollections<NameOnly extends boolean = false>(): Promise<CollectionInfo<NameOnly>[]> {
     return await this.db().listCollections<NameOnly>();
+  }
+
+  async command(command: Record<string, any>, collection?: string): Promise<APIResponse> {
+    return await this.db().command(command, collection);
   }
 
   db(dbName?: string) {

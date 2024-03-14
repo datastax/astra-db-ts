@@ -61,6 +61,10 @@ export class BulkWriteResult {
   getRawResponse(): object[] {
     return this._raw;
   }
+
+  getUpsertedIdAt(index: number): SomeId {
+    return this.upsertedIds[index];
+  }
 }
 
 export type AnyBulkWriteOperation<TSchema extends SomeDoc> = {
