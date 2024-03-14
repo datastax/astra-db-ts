@@ -52,15 +52,19 @@ import { Db } from '@/src/client/db';
 import { FindCursor } from '@/src/client/cursor';
 import { ToDotNotation } from '@/src/client/types/dot-notation';
 import { CollectionOptions } from '@/src/client/types/collections/collection-options';
-import { BaseOptions, SomeId } from '@/src/client/types/common';
-import {
-  DataAPIError,
-  InsertManyOrderedError,
-  InsertManyUnorderedError,
-  TooManyDocsToCountError
-} from '@/src/client/errors';
+import { BaseOptions } from '@/src/client/types/common';
 import { ReplaceOneOptions, ReplaceOneResult } from '@/src/client/types/update/replace-one';
 import { AnyBulkWriteOperation, BulkWriteOptions, BulkWriteResult, } from '@/src/client/types/misc/bulk-write';
+import {
+  BulkWriteError,
+  DataAPIResponseError,
+  DeleteManyError,
+  InsertManyError,
+  mkRespErrorFromResponse,
+  mkRespErrorFromResponses,
+  TooManyDocsToCountError,
+  UpdateManyError
+} from '@/src/client/errors';
 
 /**
  * Represents the interface to a collection in the database.
@@ -211,8 +215,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param documents - The documents to insert.
    * @param options - The options for the operation.
    *
-   * @throws InsertManyOrderedError - If the `ordered` option is `true` and the operation fails.
-   * @throws InsertManyUnorderedError - If the `ordered` option is `false` and the operation fails.
+   * @throws InsertManyError - If the operation fails
    *
    * @return InsertManyResult
    */
@@ -339,11 +342,23 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     let resp;
 
-    while (!resp || resp.status?.nextPageState) {
-      resp = await this._httpClient.executeCommand(command);
-      command.updateMany.options.pagingState = resp.status?.nextPageState ;
-      commonResult.modifiedCount += resp.status?.modifiedCount ?? 0;
-      commonResult.matchedCount += resp.status?.matchedCount ?? 0;
+    try {
+      while (!resp || resp.status?.nextPageState) {
+        resp = await this._httpClient.executeCommand(command);
+        command.updateMany.options.pagingState = resp.status?.nextPageState ;
+        commonResult.modifiedCount += resp.status?.modifiedCount ?? 0;
+        commonResult.matchedCount += resp.status?.matchedCount ?? 0;
+      }
+    } catch (e) {
+      if (!(e instanceof DataAPIResponseError)) {
+        throw e;
+      }
+      const desc = e.detailedErrorDescriptors[0];
+
+      commonResult.modifiedCount += desc.raw?.status?.modifiedCount ?? 0;
+      commonResult.matchedCount += desc.raw?.status?.matchedCount ?? 0;
+
+      throw mkRespErrorFromResponse(UpdateManyError, command, desc.raw, commonResult);
     }
 
     return (resp.status?.upsertedId)
@@ -440,6 +455,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * **NB. This function paginates the deletion of documents in chunks to avoid running into insertion limits. This
    * means multiple requests will be made to the server, and the operation may not be atomic.**
    *
+   * If an empty filter is passed, an error will be thrown, asking you to use {@link deleteAll} instead for your safety.
+   *
    * @example
    * ```typescript
    * await collection.insertMany([
@@ -458,6 +475,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param filter - A filter to select the documents to delete.
    *
    * @return DeleteManyResult
+   *
+   * @throws Error - If an empty filter is passed.
    */
   async deleteMany(filter: Filter<Schema> = {}): Promise<DeleteManyResult> {
     if (Object.keys(filter).length === 0) {
@@ -471,9 +490,17 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     let resp;
     let numDeleted = 0;
 
-    while (!resp || resp.status?.moreData) {
-      resp = await this._httpClient.executeCommand(command);
-      numDeleted += resp.status?.deletedCount ?? 0;
+    try {
+      while (!resp || resp.status?.moreData) {
+        resp = await this._httpClient.executeCommand(command);
+        numDeleted += resp.status?.deletedCount ?? 0;
+      }
+    } catch (e) {
+      if (!(e instanceof DataAPIResponseError)) {
+        throw e;
+      }
+      const desc = e.detailedErrorDescriptors[0];
+      throw mkRespErrorFromResponse(DeleteManyError, command, desc.raw, { deletedCount: numDeleted + (desc.raw?.status?.deletedCount ?? 0) })
     }
 
     return {
@@ -481,6 +508,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     };
   }
 
+
+  /**
+   * Deletes all documents from the collection. **Use with caution.**
+   *
+   * Unlike {@link deleteMany}, this method is atomic and will delete all documents in the collection in one go,
+   * without making multiple network requests to the server.
+   */
   async deleteAll(): Promise<void> {
     const command: DeleteManyCommand = {
       deleteMany: { filter: {} },
@@ -489,16 +523,28 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     await this._httpClient.executeCommand(command);
   }
 
-  find<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursor<FoundDoc<Schema, GetSim>> {
-    return new FindCursor(this.namespace, this._httpClient, filter, options) as any;
-  }
-
-  findV2<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursor<FoundDoc<Schema, GetSim>> {
+  /**
+   * Find documents on the collection, optionally matching the provided filter.
+   *
+   * Also accepts `sort`, `limit`, `skip`, `includeSimilarity`, and `projection` options.
+   *
+   * The method returns a {@link FindCursor} that can then be iterated over.
+   *
+   * **NB. If a *non-vector-sort* `sort` option is provided, the iteration of all documents may not be atomic—it will
+   * iterate over cursors in an approximate way, exhibiting occasional skipped or duplicate documents, with real-time
+   * collection mutations being displayed**
+   *
+   * @param filter - A filter to select the documents to find. If not provided, all documents will be returned.
+   * @param options - The options for the operation.
+   *
+   * @return FindCursor
+   */
+  find<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursor<FoundDoc<Schema, GetSim>, FoundDoc<Schema, GetSim>> {
     return new FindCursor(this.namespace, this._httpClient, filter, options) as any;
   }
 
   async distinct<Key extends keyof ToDotNotation<FoundDoc<Schema, GetSim>> & string, GetSim extends boolean = false>(key: Key, filter: Filter<Schema> = {}, _?: FindOptions<Schema, GetSim>): Promise<Flatten<ToDotNotation<FoundDoc<Schema, GetSim>>[Key]>[]> {
-    const cursor = this.findV2<GetSim>(filter, { projection: { _id: 0, [key]: 1 } });
+    const cursor = this.find<GetSim>(filter, { projection: { _id: 0, [key]: 1 } });
 
     const seen = new Set<unknown>();
     const path = key.split('.');
@@ -834,9 +880,9 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   async bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult> {
     const commands = operations.map(buildBulkWriteCommands);
 
-    return  (options?.ordered)
+    return (options?.ordered)
       ? await bulkWriteOrdered(this._httpClient, commands)
-      : await bulkWriteUnordered(this._httpClient, commands);
+      : await bulkWriteUnordered(this._httpClient, commands, options?.parallel ?? 8);
   }
 
   /**
@@ -900,12 +946,13 @@ const insertManyOrdered = async <Schema>(httpClient: HTTPClient, documents: unkn
       const inserted = await insertMany<Schema>(httpClient, slice, true);
       insertedIds.push(...inserted);
     } catch (e) {
-      if (!(e instanceof DataAPIError)) {
+      if (!(e instanceof DataAPIResponseError)) {
         throw e;
       }
+      const desc = e.detailedErrorDescriptors[0];
 
-      insertedIds.push(...e.status?.insertedIds ?? []);
-      throw new InsertManyOrderedError(e, insertedIds as SomeId[]);
+      insertedIds.push(...desc.raw.status?.insertedIds ?? []);
+      throw mkRespErrorFromResponse(InsertManyError<Schema>, desc.command, desc.raw, { insertedIds: insertedIds, insertedCount: insertedIds.length })
     }
   }
 
@@ -916,8 +963,8 @@ const insertManyUnordered = async <Schema>(httpClient: HTTPClient, documents: un
   const insertedIds: IdOf<Schema>[] = [];
   let masterIndex = 0;
 
-  const failErrors: DataAPIError[] = [];
-  const failedIds: SomeId[] = [];
+  const failCommands = [] as Record<string, any>[];
+  const failRaw = [] as Record<string, any>[];
 
   const workers = Array.from({ length: parallel }, async () => {
     while (masterIndex < documents.length) {
@@ -935,32 +982,23 @@ const insertManyUnordered = async <Schema>(httpClient: HTTPClient, documents: un
         const inserted = await insertMany<Schema>(httpClient, slice, false);
         insertedIds.push(...inserted);
       } catch (e) {
-        if (!(e instanceof DataAPIError)) {
+        if (!(e instanceof DataAPIResponseError)) {
           throw e;
         }
+        const desc = e.detailedErrorDescriptors[0];
 
-        const justInserted = e.status?.insertedIds ?? [];
-        const justInsertedSet = new Set(justInserted);
-
+        const justInserted = desc.raw.status?.insertedIds ?? [];
         insertedIds.push(...justInserted);
-        failErrors.push(e);
 
-        for (let i = 0, n = slice.length; i < n; i++) {
-          const doc = slice[i] as { _id: SomeId };
-
-          if (!justInsertedSet.has(doc._id)) {
-            failedIds.push(doc._id);
-          } else {
-            justInsertedSet.delete(doc._id);
-          }
-        }
+        failCommands.push(desc.command);
+        failRaw.push(desc.raw);
       }
     }
   });
   await Promise.all(workers);
 
-  if (failErrors.length > 0) {
-    throw new InsertManyUnorderedError(failErrors, insertedIds as SomeId[], failedIds);
+  if (failCommands.length > 0) {
+    throw mkRespErrorFromResponses(InsertManyError<Schema>, failCommands, failRaw, { insertedIds: insertedIds, insertedCount: insertedIds.length });
   }
 
   return insertedIds;
@@ -982,37 +1020,82 @@ const insertMany = async <Schema>(httpClient: HTTPClient, documents: unknown[], 
 
 const bulkWriteOrdered = async (httpClient: HTTPClient, operations: Record<string, any>[]): Promise<BulkWriteResult> => {
   const results = new BulkWriteResult();
+  let i = 0;
 
-  for (let i = 0, n = operations.length; i < n; i++) {
-    const operation = operations[i];
-
-    try {
-      const resp = await httpClient.executeCommand(operation, {});
+  try {
+    for (let n = operations.length; i < n; i++) {
+      const resp = await httpClient.executeCommand(operations[i], {});
       addToBulkWriteResult(results, resp.status!, i);
-    } catch (e) {
-      if (!(e instanceof DataAPIError)) {
-        throw e;
-      }
-
-      throw new AstraClientError(e, operation);
     }
+  } catch (e) {
+    if (!(e instanceof DataAPIResponseError)) {
+      throw e;
+    }
+    const desc = e.detailedErrorDescriptors[0];
+
+    if (desc.raw.status) {
+      addToBulkWriteResult(results, desc.raw.status, i)
+    }
+
+    throw mkRespErrorFromResponse(BulkWriteError, desc.command, desc.raw, results);
   }
 
   return results;
 }
 
-const bulkWriteUnordered = async (_httpClient: HTTPClient, _operations: Record<string, any>[]): Promise<BulkWriteResult> => {
-  throw new Error('Not implemented');
+const bulkWriteUnordered = async (httpClient: HTTPClient, operations: Record<string, any>[], parallel: number): Promise<BulkWriteResult> => {
+  const results = new BulkWriteResult();
+  let masterIndex = 0;
+
+  const failCommands = [] as Record<string, any>[];
+  const failRaw = [] as Record<string, any>[];
+
+  const workers = Array.from({ length: parallel }, async () => {
+    while (masterIndex < operations.length) {
+      const localI = masterIndex;
+      masterIndex++;
+
+      if (localI >= operations.length) {
+        break;
+      }
+
+      const command = operations[localI];
+
+      try {
+        const resp = await httpClient.executeCommand(command, {});
+        addToBulkWriteResult(results, resp.status!, localI);
+      } catch (e) {
+        if (!(e instanceof DataAPIResponseError)) {
+          throw e;
+        }
+        const desc = e.detailedErrorDescriptors[0];
+
+        if (desc.raw.status) {
+          addToBulkWriteResult(results, desc.raw.status, localI);
+        }
+
+        failCommands.push(desc.command);
+        failRaw.push(desc.raw);
+      }
+    }
+  });
+  await Promise.all(workers);
+
+  if (failCommands.length > 0) {
+    throw mkRespErrorFromResponses(BulkWriteError, failCommands, failRaw, results);
+  }
+
+  return results;
 }
 
 const buildBulkWriteCommands = (operations: Record<string, any>): Record<string, any> => {
   const commandName = Object.keys(operations)[0];
   switch (commandName) {
     case 'insertOne': return { insertOne: { document: operations.insertOne.document } };
-    case 'updateOne': return { updateOne: { filter: operations.updateOne.filter, update: operations.updateOne.update, options: operations.updateOne.options } };
-    case 'replaceOne': return { findOneAndReplace: { filter: operations.replaceOne.filter, replacement: operations.replaceOne.replacement, options: operations.replaceOne.options } };
+    case 'updateOne': return { updateOne: { filter: operations.updateOne.filter, update: operations.updateOne.update, options: { upsert: operations.updateOne.upsert ?? false } } };
+    case 'updateMany': return { updateMany: { filter: operations.updateMany.filter, update: operations.updateMany.update, options: { upsert: operations.updateMany.upsert ?? false } } };
+    case 'replaceOne': return { findOneAndReplace: { filter: operations.replaceOne.filter, replacement: operations.replaceOne.replacement, options: { upsert: operations.replaceOne.upsert ?? false } } };
     case 'deleteOne': return { deleteOne: { filter: operations.deleteOne.filter } };
-    case 'updateMany': return { updateMany: { filter: operations.updateMany.filter, update: operations.updateMany.update, options: operations.updateMany.options } };
     case 'deleteMany': return { deleteMany: { filter: operations.deleteMany.filter } };
     default: throw new Error(`Unknown bulk write operation: ${commandName}`);
   }
@@ -1025,10 +1108,10 @@ type MutableBulkWriteResult = {
 const addToBulkWriteResult = (result: BulkWriteResult, resp: Record<string, any>, i: number) => {
   const asMutable = result as MutableBulkWriteResult;
 
-  asMutable.insertedCount += resp.insertedCount ?? 0;
+  asMutable.insertedCount += resp.insertedIds?.length ?? 0;
   asMutable.modifiedCount += resp.modifiedCount ?? 0;
-  asMutable.deletedCount += resp.deletedCount ?? 0;
   asMutable.matchedCount += resp.matchedCount ?? 0;
+  asMutable.deletedCount += resp.deletedCount ?? 0;
 
   if (resp.upsertedId) {
     asMutable.upsertedCount++;

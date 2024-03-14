@@ -25,7 +25,7 @@ import {
 import { HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
 import { BaseOptions } from '@/src/client/types/common';
-import { DataAPIError } from '@/src/client/errors';
+import { DataAPIResponseError, mkRespErrorFromResponse } from '@/src/client/errors';
 
 export class HTTPClient {
   baseUrl: string;
@@ -154,9 +154,9 @@ export class HTTPClient {
   }
 }
 
-export function handleIfErrorResponse(response: any, data: Record<string, any>) {
+export function handleIfErrorResponse(response: any, command: Record<string, any>) {
   if (response.errors && response.errors.length > 0) {
-    throw new DataAPIError(response, data);
+    throw mkRespErrorFromResponse(DataAPIResponseError, command, response);
   }
 }
 

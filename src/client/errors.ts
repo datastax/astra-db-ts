@@ -1,143 +1,118 @@
-// Copyright DataStax, Inc.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+import { InsertManyResult } from '@/src/client/types/insert/insert-many';
+import { DeleteManyResult } from '@/src/client/types/delete/delete-many';
+import { UpdateManyResult } from '@/src/client/types/update/update-many';
+import { BulkWriteResult } from '@/src/client/types/misc/bulk-write';
 
-import { APIResponse } from '@/src/api';
-import { SomeId } from '@/src/client/types/common';
-
-export class DataAPIError extends Error implements APIResponse {
-  errors: any[];
-  status?: Record<string, any>;
-  data?: Record<string, any>;
-  command: Record<string, any>;
-
-  constructor(response: APIResponse, command: Record<string, any>) {
-    const commandName = Object.keys(command)[0] || "unknown";
-    super(`Command "${commandName}" failed${errorString(response.errors ?? [])}${statusString(response.status)}`);
-
-    this.errors = response.errors ?? [];
-    this.status = response.status;
-    this.data = response.data;
-    this.command = command;
-    this.name = "DataAPIError";
-  }
+export interface DataAPIErrorDescriptor {
+  readonly errorCode?: string,
+  readonly message?: string,
+  readonly attributes?: Record<string, any>,
 }
 
-export class DataAPITimeout extends Error {
+export interface DataAPIDetailedErrorDescriptor {
+  readonly errorDescriptors: DataAPIErrorDescriptor[],
+  readonly command: Record<string, any>,
+  readonly raw: Record<string, any>,
+}
+
+export abstract class DataAPIError extends Error {}
+
+export class DataAPITimeout extends DataAPIError {
   constructor(readonly command: Record<string, any>, readonly timeout: number) {
     super(`Command timed out after ${timeout}ms`);
     this.name = "DataAPITimeout";
   }
 }
 
-/**
- * Error thrown on ordered `insertMany`s when a Data-API-related error occurs.
- *
- * Not thrown for other errors, such as `5xx`s or network errors.
- */
-export class InsertManyOrderedError extends Error {
-  /**
-   * The base {@link DataAPIError} that caused the error.
-   */
-  baseError: DataAPIError;
+export class TooManyDocsToCountError extends DataAPIError {
+  name = 'TooManyDocsToCountError'
 
-  /**
-   * The IDs of the documents that were successfully inserted. Given that the operation is ordered, the failed
-   * documents & IDs are those that come after the last successful one.
-   */
-  insertedIds: SomeId[];
-
-  constructor(baseError: DataAPIError, insertedIds: SomeId[]) {
-    super(`Insert many ordered partially failed${errorString(baseError.errors ?? [])}${statusString(baseError.status)}`);
-    this.baseError = baseError;
-    this.insertedIds = insertedIds;
-    this.name = "InsertManyOrderedError";
-  }
-}
-
-/**
- * Error thrown on unordered `insertMany`s when a Data-API-related error occurs.
- *
- * Not thrown for other errors, such as `5xx`s or network errors.
- *
- * Thrown after every document has been attempted to be inserted, regardless of success or failure (unlike `5xx`s and
- * similar, which are thrown immediately).
- */
-export class InsertManyUnorderedError extends Error {
-  /**
-   * The aggregate of all {@link DataAPIError}s that caused the error.
-   */
-  baseErrors: DataAPIError[];
-
-  /**
-   * The IDs of the documents that were successfully inserted.
-   */
-  insertedIds: SomeId[];
-
-  /**
-   * The IDs of the documents that failed to be inserted.
-   */
-  failedIds: SomeId[];
-
-  constructor(baseErrors: DataAPIError[], insertedIds: SomeId[], failedIds: SomeId[]) {
-    super(`Insert many unordered partially failed with some errors${statusStrings(baseErrors.map(e => e.status))}`);
-    this.baseErrors = baseErrors;
-    this.insertedIds = insertedIds;
-    this.failedIds = failedIds;
-    this.name = "InsertManyUnorderedError";
-  }
-}
-
-export class TooManyDocsToCountError extends Error {
   constructor(readonly limit: number, readonly hitServerLimit: boolean) {
     const message = (hitServerLimit)
       ? `Too many documents to count (server limit of ${limit} reached)`
       : `Too many documents to count (provided limit is ${limit})`;
     super(message);
-
-    this.name = "TooManyDocsToCountError";
   }
 }
 
-export class CursorAlreadyInitializedError extends Error {
-  constructor(message: string = 'Cursor is already initialized') {
+export class CursorAlreadyInitializedError extends DataAPIError {
+  constructor(message: string) {
     super(message);
     this.name = 'CursorAlreadyInitializedError';
   }
 }
 
-const MAX_ERRORS_DISPLAYED = 5;
+export class DataAPIResponseError extends DataAPIError {
+  name = 'DataAPIResponseError'
 
-const errorString = (errors: any[]) => {
-  const moreErrors = errors.length - MAX_ERRORS_DISPLAYED;
-  errors = errors.slice(0, MAX_ERRORS_DISPLAYED);
-
-  return (errors.length > 0)
-    ? `, with errors: ${errors.map(e => JSON.stringify(e)).join(", ")}${moreErrors > 0 ? `and ${moreErrors} more errors` : ''}`
-    : '';
+  constructor(
+    public readonly message: string,
+    public readonly errorDescriptors: DataAPIErrorDescriptor[],
+    public readonly detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[],
+  ) { super(message) }
 }
 
-const statusString = (status?: Record<string, any>) => {
-  return (status)
-    ? `, with status: ${JSON.stringify(status)}`
-    : '';
+export abstract class CumulativeDataAPIError extends DataAPIResponseError {
+  public readonly partialResult!: unknown;
 }
 
-const statusStrings = (statuses: (Record<string, any> | undefined)[]) => {
-  const moreStatuses = statuses.length - MAX_ERRORS_DISPLAYED;
-  statuses = statuses.slice(0, MAX_ERRORS_DISPLAYED);
+export class InsertManyError<Schema> extends CumulativeDataAPIError {
+  name = 'InsertManyError';
+  public readonly partialResult!: InsertManyResult<Schema>;
+}
 
-  return (statuses.length > 0)
-    ? `, with statuses: ${statuses.map(s => JSON.stringify(s)).join(", ")}${moreStatuses > 0 ? `and ${moreStatuses} more statuses` : ''}`
-    : '';
+export class DeleteManyError extends CumulativeDataAPIError {
+  name = 'DeleteManyError';
+  public readonly partialResult!: DeleteManyResult;
+}
+
+export class UpdateManyError extends CumulativeDataAPIError {
+  name = 'UpdateManyError';
+  public readonly partialResult!: UpdateManyResult;
+}
+
+export class BulkWriteError extends CumulativeDataAPIError {
+  name = 'BulkWriteError';
+  public readonly partialResult!: BulkWriteResult;
+}
+
+/** @internal */
+type InferPartialResult<T> = T extends { readonly partialResult: infer P } ? P : never;
+
+/** @internal */
+export const mkRespErrorFromResponse = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, command: Record<string, any>, raw: Record<string, any>, partialResult?: InferPartialResult<E>) => {
+  return mkRespErrorFromResponses(err, [command], [raw], partialResult);
+}
+
+/** @internal */
+export const mkRespErrorFromResponses = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, commands: Record<string, any>[], raw: Record<string, any>[], partialResult?: InferPartialResult<E>) => {
+  const detailedDescriptors = [] as DataAPIDetailedErrorDescriptor[];
+
+  for (let i = 0, n = commands.length; i < n; i++) {
+    const command = commands[i], response = raw[i];
+
+    if (response.errors) {
+      const descriptors = response.errors.map((error: any) => {
+        const attributes = { ...error };
+        delete attributes.message;
+        delete attributes.errorCode;
+        return { errorCode: error.errorCode, message: error.message, attributes };
+      }) as DataAPIErrorDescriptor[];
+
+      const detailedDescriptor = { errorDescriptors: descriptors, command, raw: response };
+      detailedDescriptors.push(detailedDescriptor);
+    }
+  }
+
+  const errorDescriptors = detailedDescriptors.flatMap(d => d.errorDescriptors);
+
+  const message = errorDescriptors[0]?.message || 'Something unexpected occurred';
+
+  const instance = new err(message, errorDescriptors, detailedDescriptors) ;
+
+  if (partialResult) {
+    // @ts-expect-error - If the lord wants a partialResult, the lord will get a partialResult.
+    instance.partialResult = partialResult;
+  }
+  return instance;
 }

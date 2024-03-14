@@ -13,12 +13,10 @@
 // limitations under the License.
 
 import { SomeId } from '@/src/client/types/common';
-import { Schema } from '@/tests/typing/prelude';
-import { SomeDoc } from '@/src/client';
 
 /**
  * Checks if a type can possibly be some number
- * 
+ *
  * @example
  * ```
  * IsNum<string | number> === true
@@ -39,14 +37,14 @@ export type IsDate<T> = T extends Date ? true : false
 /**
  * Forces the given type to include an `_id`
  */
-export type WithId<T> = Omit<T, '_id'> & { _id: IdOf<Schema> }
+export type WithId<T> = NoId<T> & { _id: IdOf<T> }
 
 /**
  * Includes a `$similarity` field if the typeparam `GetSim` is `true`
  */
 type WithSim<T, GetSim extends boolean> = GetSim extends true
-  ? Omit<T, '$similarity'> & { $similarity: number  }
-  : Omit<T, '$similarity'> & { $similarity: undefined }
+  ? Omit<T, '$similarity'> & { $similarity: number }
+  : Omit<T, '$similarity'> & { $similarity?: never }
 
 /**
  * Shorthand type for `WithSim` & `WithId`
@@ -65,12 +63,13 @@ export type Flatten<Type> = Type extends (infer Item)[]
   ? Item
   : Type
 
+/**
+ * Extracts the `_id` type from a given schema, or defaults to `SomeId` if uninferable
+ */
 export type IdOf<TSchema> =
-  TSchema extends { _id: infer Id; }
-    ? Id extends SomeId
-      ? Id
-      : never :
-  TSchema extends { _id?: infer Id; }
+  TSchema extends { _id: infer Id }
+    ? Id :
+  TSchema extends { _id?: infer Id }
     ? unknown extends Id
       ? SomeId
       : Id

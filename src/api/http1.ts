@@ -14,7 +14,7 @@
 
 import { HTTPRequestStrategy, InternalAPIResponse, InternalHTTPRequestInfo } from '@/src/api/types';
 import axios from 'axios';
-import { DEFAULT_AUTH_HEADER, DEFAULT_TIMEOUT, CLIENT_USER_AGENT } from '@/src/api/constants';
+import { DEFAULT_AUTH_HEADER, DEFAULT_TIMEOUT } from '@/src/api/constants';
 import http from 'http';
 import { logger } from '@/src/logger';
 import { serializeCommand } from '@/src/api/http-client';
@@ -22,8 +22,8 @@ import { DataAPITimeout } from '@/src/client/errors';
 
 const axiosAgent = axios.create({
   headers: {
-    "Accepts": "application/json",
-    "Content-Type": "application/json",
+    'Accepts': 'application/json',
+    'Content-Type': 'application/json',
   },
   // keepAlive pools and reuses TCP connections
   httpAgent: new http.Agent({
@@ -35,7 +35,7 @@ const axiosAgent = axios.create({
 axiosAgent.interceptors.request.use((config) => {
   const { method, url } = config;
 
-  if (logger.isLevelEnabled("http")) {
+  if (logger.isLevelEnabled('http')) {
     logger.http(`--- request ${method?.toUpperCase()} ${url} ${serializeCommand(config.data, true,)}`,);
   }
 
@@ -44,7 +44,7 @@ axiosAgent.interceptors.request.use((config) => {
 });
 
 axiosAgent.interceptors.response.use((response) => {
-  if (logger.isLevelEnabled("http")) {
+  if (logger.isLevelEnabled('http')) {
     logger.http(`--- response ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url} ${JSON.stringify(response.data, null, 2)}`,);
   }
   return response;
@@ -61,8 +61,7 @@ export class HTTP1Strategy implements HTTPRequestStrategy {
         timeout: info.timeout,
         headers: {
           [DEFAULT_AUTH_HEADER]: info.token,
-          "User-Agent": info.userAgent,
-          "X-Requested-With": info.userAgent,
+          'User-Agent': info.userAgent,
         },
       });
     } catch (e: any) {

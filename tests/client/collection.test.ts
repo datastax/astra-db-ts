@@ -26,12 +26,8 @@ import {
   testClient
 } from '@/tests/fixtures';
 import { randAlphaNumeric } from '@ngneat/falso';
-import {
-  DataAPITimeout,
-  InsertManyOrderedError,
-  InsertManyUnorderedError,
-  TooManyDocsToCountError
-} from '@/src/client/errors';
+import { BulkWriteError, DataAPITimeout, InsertManyError, TooManyDocsToCountError } from '@/src/client/errors';
+import { SomeId } from '@/src/client/types/common';
 
 describe(`AstraTsClient - astra Connection - collections.collection`, async () => {
   let astraClient: Client | null;
@@ -283,12 +279,11 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         error = e;
       }
       assert.ok(error);
-      assert.ok(error instanceof InsertManyOrderedError);
-      // assert.strictEqual(error.errors[0].message, 'Failed to insert document with _id \'docml10\': Document already exists with the given _id');
-      assert.strictEqual(error.baseError.errors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
-      assert.strictEqual(error.insertedIds.length, 10);
+      assert.ok(error instanceof InsertManyError);
+      assert.strictEqual(error.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
+      assert.strictEqual(error.partialResult.insertedCount, 10);
       docList.slice(0, 10).forEach((doc, index) => {
-        assert.strictEqual(error.insertedIds[index], doc._id);
+        assert.strictEqual((error as InsertManyError<SomeId>).partialResult.insertedIds[index], doc._id);
       });
     });
 
@@ -306,14 +301,11 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         error = e;
       }
       assert.ok(error);
-      assert.ok(error instanceof InsertManyUnorderedError);
-      // assert.strictEqual(error.errors[0].message, 'Failed to insert document with _id \'docml10\': Document already exists with the given _id');
-      assert.strictEqual(error.baseErrors[0].errors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
-      assert.strictEqual(error.insertedIds.length, 19);
-      //check if response insertedIds contains all the docs except the one that failed
+      assert.ok(error instanceof InsertManyError);
+      assert.strictEqual(error.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
+      assert.strictEqual(error.partialResult.insertedCount, 19);
       docList.slice(0, 9).concat(docList.slice(10)).forEach((doc) => {
-        //check if error.status.insertedIds contains doc._id
-        assert.ok(error.insertedIds.includes(doc._id));
+        assert.ok((error as InsertManyError<SomeId>).partialResult.insertedIds.includes(doc._id!));
       });
     });
   });
@@ -2889,6 +2881,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       } catch (e) {
         assert.ok(e instanceof TooManyDocsToCountError);
         assert.strictEqual(e.limit, 1);
+        assert.strictEqual(e.hitServerLimit, false);
       }
     });
 
@@ -2902,6 +2895,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       } catch (e) {
         assert.ok(e instanceof TooManyDocsToCountError);
         assert.strictEqual(e.limit, 1000);
+        assert.strictEqual(e.hitServerLimit, true);
       }
     });
 
@@ -2910,6 +2904,133 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
         // @ts-expect-error - intentionally testing invalid input
         return await collection.countDocuments({});
       })
+    });
+  });
+
+  describe('bulkWrite tests', () => {
+    it('bulkWrites ordered', async () => {
+      const res = await collection.bulkWrite([
+        { insertOne: { document: { name: 'John' } } },
+        { replaceOne: { filter: { name: 'John' }, replacement: { name: 'Jane' } } },
+        { replaceOne: { filter: { name: 'John' }, replacement: { name: 'Dave' }, upsert: true } },
+        { deleteOne: { filter: { name: 'Jane' } } },
+        { updateOne: { filter: { name: 'Tim' }, update: { $set: { name: 'Sam' } } } },
+        { updateOne: { filter: { name: 'Tim' }, update: { $set: { name: 'John' } }, upsert: true } },
+        { updateMany: { filter: { name: 'John' }, update: { $set: { name: 'Jane' } } } },
+        { insertOne: { document: { name: 'Jane' } } },
+        { deleteMany: { filter: { name: 'Jane' } } },
+      ], { ordered: true });
+
+      assert.strictEqual(res.insertedCount, 2);
+      assert.strictEqual(res.matchedCount, 2);
+      assert.strictEqual(res.modifiedCount, 2);
+      assert.strictEqual(res.deletedCount, 3);
+      assert.strictEqual(res.upsertedCount, 2);
+      assert.ok(res.upsertedIds[2]);
+      assert.ok(res.upsertedIds[5]);
+      assert.ok(!res.upsertedIds[0] && !res.upsertedIds[1] && !res.upsertedIds[3] && !res.upsertedIds[4] && !res.upsertedIds[6]);
+      assert.strictEqual(res.getRawResponse().length, 9);
+
+      const found = await collection.find({}).toArray();
+      assert.strictEqual(found.length, 1);
+      assert.strictEqual(found[0].name, 'Dave');
+      assert.ok(found[0]._id);
+    });
+
+    it('bulkWrites unordered', async () => {
+      const res = await collection.bulkWrite([
+        { insertOne: { document: { name: 'John'} } },
+        { updateOne: { filter: { name: 'Tim' }, update: { $set: { name: 'Jim' } }, upsert: true } },
+        { deleteOne: { filter: { name: 'Jane' } } },
+      ]);
+
+      assert.strictEqual(res.insertedCount, 1);
+      assert.strictEqual(res.matchedCount, 0);
+      assert.strictEqual(res.modifiedCount, 0);
+      assert.strictEqual(res.deletedCount, 0);
+      assert.strictEqual(res.upsertedCount, 1);
+      assert.ok(res.upsertedIds[1]);
+      assert.ok(!res.upsertedIds[0] && !res.upsertedIds[2]);
+      assert.strictEqual(res.getRawResponse().length, 3);
+
+      const found = (await collection.find({}).toArray()).sort((a, b) => a.name.localeCompare(b.name));
+      assert.strictEqual(found.length, 2);
+      assert.strictEqual(found[0].name, 'Jim');
+      assert.strictEqual(found[1].name, 'John');
+      assert.ok(found[0]._id);
+      assert.ok(found[1]._id);
+    });
+
+    it('fails gracefully on 2XX exceptions when ordered', async () => {
+      try {
+        await collection.bulkWrite([
+          { insertOne: { document: { _id: 'a' } } },
+          { insertOne: { document: { _id: 'b' } } },
+          { insertOne: { document: { _id: 'c' } } },
+          { insertOne: { document: { _id: 'a' } } },
+          { insertOne: { document: { _id: 'a' } } },
+          { insertOne: { document: { _id: 'd' } } },
+          { insertOne: { document: { _id: 'e' } } },
+        ], { ordered: true });
+        assert.ok(false);
+      } catch (e) {
+        assert.ok(e instanceof BulkWriteError);
+
+        assert.strictEqual(e.detailedErrorDescriptors.length, 1);
+        assert.strictEqual(e.errorDescriptors.length, 1);
+        assert.strictEqual(e.message, e.errorDescriptors[0].message);
+
+        assert.strictEqual(e.partialResult.insertedCount, 3);
+        assert.strictEqual(e.partialResult.getRawResponse().length, 4);
+        assert.strictEqual(e.partialResult.deletedCount, 0);
+        assert.strictEqual(e.partialResult.modifiedCount, 0);
+        assert.strictEqual(e.partialResult.matchedCount, 0);
+        assert.strictEqual(e.partialResult.upsertedCount, 0);
+        assert.deepStrictEqual(e.partialResult.upsertedIds, {});
+
+        const found = (await collection.find({}).toArray()).sort((a, b) => a._id.localeCompare(b._id));
+        assert.strictEqual(found.length, 3);
+        assert.strictEqual(found[0]._id, 'a');
+        assert.strictEqual(found[1]._id, 'b');
+        assert.strictEqual(found[2]._id, 'c');
+      }
+    });
+
+    it('fails gracefully on 2XX exceptions when unordered', async () => {
+      try {
+        await collection.bulkWrite([
+          { insertOne: { document: { _id: 'a' } } },
+          { insertOne: { document: { _id: 'b' } } },
+          { insertOne: { document: { _id: 'c' } } },
+          { insertOne: { document: { _id: 'a' } } },
+          { insertOne: { document: { _id: 'a' } } },
+          { insertOne: { document: { _id: 'd' } } },
+          { insertOne: { document: { _id: 'e' } } },
+        ]);
+        assert.ok(false);
+      } catch (e) {
+        assert.ok(e instanceof BulkWriteError);
+
+        assert.strictEqual(e.detailedErrorDescriptors.length, 2);
+        assert.strictEqual(e.errorDescriptors.length, 2);
+        assert.strictEqual(e.message, e.errorDescriptors[0].message);
+
+        assert.strictEqual(e.partialResult.insertedCount, 5);
+        assert.strictEqual(e.partialResult.getRawResponse().length, 7);
+        assert.strictEqual(e.partialResult.deletedCount, 0);
+        assert.strictEqual(e.partialResult.modifiedCount, 0);
+        assert.strictEqual(e.partialResult.matchedCount, 0);
+        assert.strictEqual(e.partialResult.upsertedCount, 0);
+        assert.deepStrictEqual(e.partialResult.upsertedIds, {});
+
+        const found = (await collection.find({}).toArray()).sort((a, b) => a._id.localeCompare(b._id));
+        assert.strictEqual(found.length, 5);
+        assert.strictEqual(found[0]._id, 'a');
+        assert.strictEqual(found[1]._id, 'b');
+        assert.strictEqual(found[2]._id, 'c');
+        assert.strictEqual(found[3]._id, 'd');
+        assert.strictEqual(found[4]._id, 'e');
+      }
     });
   });
 

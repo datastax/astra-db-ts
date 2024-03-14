@@ -78,7 +78,6 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
       const cursor = new FindCursor<any>('test_keyspace', httpClient, { _id: '1' }, {
         limit: 10,
         skip: 5,
-        batchSize: 100,
         sort: { _id: 1 },
         projection: { _id: 0 },
         includeSimilarity: true,
@@ -86,7 +85,6 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
       const options = cursor['_options'];
       assert.strictEqual(options.limit, 10, 'Cursor has bad limit');
       assert.strictEqual(options.skip, 5, 'Cursor has bad skip');
-      assert.strictEqual(options.batchSize, 100, 'Cursor has bad batchSize');
       assert.deepStrictEqual(options.sort, { _id: 1 }, 'Cursor has bad sort');
       assert.deepStrictEqual(options.projection, { _id: 0 }, 'Cursor has bad projection');
       assert.strictEqual(options.includeSimilarity, true, 'Cursor has bad includeSimilarity');
@@ -142,18 +140,6 @@ describe(`Astra TS Client - astra Connection - collections.cursor`, async () => 
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       await cursor.close();
       assert.throws(() => cursor.skip(5), CursorAlreadyInitializedError);
-    });
-
-    it('Should set new batchSize', async () => {
-      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
-      cursor.batchSize(50).batchSize(100);
-      assert.strictEqual(cursor['_options'].batchSize, 100, 'Cursor did not set new batchSize');
-    });
-
-    it('Should fail setting batchSize if cursor is not uninitialized', async () => {
-      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
-      await cursor.close();
-      assert.throws(() => cursor.batchSize(100), CursorAlreadyInitializedError);
     });
 
     it('Should set new projection', async () => {

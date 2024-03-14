@@ -16,9 +16,36 @@
 import { Filter, SomeDoc, UpdateFilter } from '@/src/client';
 import { SomeId } from '@/src/client/types/common';
 
-export interface BulkWriteOptions {
-  ordered?: boolean;
+export type BulkWriteOptions =
+  | BulkWriteOrderedOptions
+  | BulkWriteUnorderedOptions;
+
+/**
+ * Options for insertMany when `ordered` is `true`.
+ */
+export interface BulkWriteOrderedOptions {
+  /**
+   * If `true`, the operations are executed in the order provided. If an error occurs, the operation stops and the
+   * remaining operations are not executed.
+   */
+  ordered: true,
 }
+
+/**
+ * Options for insertMany when `ordered` is `false`.
+ */
+export interface BulkWriteUnorderedOptions {
+  /**
+   * If `false`, the operations are inserted in an arbitrary order. If an error occurs, the operation stops but the
+   * remaining operations are still executed. This allows the operations to be parallelized for better performance.
+   */
+  ordered?: false,
+  /**
+   * The number of concurrent requests to use
+   */
+  parallel?: number,
+}
+
 
 export class BulkWriteResult {
   constructor(

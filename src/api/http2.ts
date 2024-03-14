@@ -16,7 +16,6 @@ import * as http2 from 'http2';
 import { HTTPRequestStrategy, InternalAPIResponse, InternalHTTPRequestInfo } from '@/src/api/types';
 import { serializeCommand } from '@/src/api/http-client';
 import { DataAPITimeout } from '@/src/client/errors';
-import { CLIENT_USER_AGENT } from '@/src/api/constants';
 
 export class HTTP2Strategy implements HTTPRequestStrategy {
   origin: string;

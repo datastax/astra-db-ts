@@ -32,7 +32,46 @@ const enum CursorStatus {
 }
 
 /**
- * Worth adding a second data type parameter to this class, so that we can type mapped cursors properly, or no??
+ * Lazily iterates over the document results of a query.
+ *
+ * **Shouldn't be directly instantiated, but rather created via {@link Collection.find}**.
+ *
+ * Typed as `FindCursor<T, TRaw>` where `T` is the type of the mapped documents and `TRaw` is the type of the raw
+ * documents before any mapping. If no mapping function is provided, `T` and `TRaw` will be the same type. Mapping
+ * is done using the {@link map} method.
+ *
+ * @example
+ * ```typescript
+ * interface Person {
+ *   firstName: string;
+ *   lastName: string;
+ *   age: number;
+ * }
+ *
+ * const collection = db.collection<Person>('people');
+ * let cursor = collection.find().filter({ firstName: 'John' });
+ *
+ * // Lazily iterate all documents matching the filter
+ * for await (const doc of cursor) {
+ *   console.log(doc);
+ * }
+ *
+ * // Rewind the cursor to be able to iterate again
+ * cursor.rewind();
+ *
+ * // Get all documents matching the filter as an array
+ * const docs = await cursor.toArray();
+ *
+ * cursor.rewind();
+ *
+ * // Set options & map as needed
+ * cursor: Cursor<string> = cursor
+ *   .project<Omit<Person, 'age'>>({ firstName: 1, lastName: 1 })
+ *   .map(doc => doc.firstName + ' ' + doc.lastName);
+ *
+ * // Get next document from cursor
+ * const doc = await cursor.next();
+ * ```
  */
 export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   private readonly _namespace: string;
@@ -87,7 +126,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @return The cursor.
    */
-  filter(filter: Filter<SomeDoc>): FindCursor<T, TRaw> {
+  filter(filter: Filter<TRaw>): FindCursor<T, TRaw> {
     this._assertUninitialized();
     this._filter = filter;
     return this;
@@ -107,7 +146,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @return The cursor.
    */
-  sort(sort: SortOption<SomeDoc>): FindCursor<T, TRaw> {
+  sort(sort: SortOption<TRaw>): FindCursor<T, TRaw> {
     this._assertUninitialized();
     this._options.sort = sort;
     return this;
@@ -148,20 +187,38 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Sets the projection for the cursor, overwriting any previous projection. Note that this projection is weakly typed.
-   * Prefer to pass in a projection through the constructor instead, if strongly typed projections are desired.
+   * Sets the projection for the cursor, overwriting any previous projection.
+   *
+   * *Note that this projection is weakly typed. Prefer to pass in a projection through the constructor instead,
+   * if strongly typed projections are desired.*
    *
    * The cursor MUST be uninitialized when calling this method.
    *
-   * **NB. This method mutates the cursor.**
-   *
    * **NB. This method acts on the original documents, before any mapping**
+   *
+   * **NB. This method mutates the cursor**
+   *
+   * @example
+   * ```typescript
+   * const cursor = collection.find({ name: 'John' });
+   *
+   * // T & TRaw are inferred to be Partial<Schema>
+   * const rawProjected = cursor.project({ _id: 0, name: 1 });
+   *
+   * // T & TRaw are { name: string }
+   * const projected = cursor.project<{ name: string }>({ _id: 0, name: 1 });
+   *
+   * // You can also chain instead of using intermediate variables
+   * const fluentlyProjected = collection
+   *   .find({ name: 'John' })
+   *   .project({ _id: 0, name: 1 });
+   * ```
    *
    * @param projection - Specifies which fields should be included/excluded in the returned documents.
    *
    * @return The cursor.
    */
-  project<R extends SomeDoc>(projection: ProjectionOption<SomeDoc>): FindCursor<R, R> {
+  project<R extends SomeDoc = Partial<TRaw>>(projection: ProjectionOption<TRaw>): FindCursor<R, R> {
     this._assertUninitialized();
     this._options.projection = projection;
     return this as any;
@@ -212,25 +269,15 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Sets the batch size for the cursor's buffer.
-   *
-   * The cursor MUST be uninitialized when calling this method.
-   *
-   * **NB. This method mutates the cursor.**
-   *
-   * @param batchSize - The batch size for this cursor.
-   *
-   * @return The cursor.
-   */
-  batchSize(batchSize: number): FindCursor<T, TRaw> {
-    this._assertUninitialized();
-    this._options.batchSize = batchSize;
-    return this;
-  }
-
-  /**
    * Returns a new, uninitialized cursor with the same filter and options set on this cursor. No state is shared between
-   * the two cursors; only the configuration. Unlike Mongo, mappings functions *are* cloned.
+   * the two cursors; only the configuration.
+   *
+   * Like mongo, mapping functions are *not* cloned.
+   *
+   * @example
+   * ```typescript
+   * const cursor = collection.find({ name: 'John' });
+   * ```
    *
    * @return A behavioral clone of this cursor.
    */
@@ -239,10 +286,13 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * I'm so blimming confused. I've been looking at MongoDB's code for this method and for some reason it's typed
-   * as returning a `T[]` while in reality it appears to return an array of the original documents, not the mapped
-   * documents??? No clue if it's a bug or if I'm just misunderstanding something, but I can't find anything
-   * about this method online beyond basic documentation.
+   * Pulls up to `max` documents from the buffer, or all documents if `max` is not provided.
+   *
+   * **Note that this actually consumes the buffer; it doesn't just peek at it.**
+   *
+   * @param max - The maximum number of documents to read from the buffer. If not provided, all documents will be read.
+   *
+   * @return The documents read from the buffer.
    */
   readBufferedDocuments(max?: number): TRaw[] {
     const toRead = Math.min(max ?? this._buffer.length, this._buffer.length);
@@ -365,7 +415,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
 
   private _assertUninitialized(): void {
     if (this._state !== CursorStatus.Uninitialized) {
-      throw new CursorAlreadyInitializedError();
+      throw new CursorAlreadyInitializedError('Cursor is already initialized/in use; cannot perform options modification. Rewind or clone the cursor.');
     }
   }
 
