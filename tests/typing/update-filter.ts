@@ -16,6 +16,7 @@
 
 import { SomeDoc, UpdateFilter } from '@/src/client';
 import { BasicSchema, ConvolutedSchema1, ConvolutedSchema2, Equal, Expect, Schema } from '@/tests/typing/prelude';
+import { ToDotNotation } from '@/src/client/types/dot-notation';
 
 type test1 = Expect<Equal<UpdateFilter<BasicSchema>, {
   $set?: {

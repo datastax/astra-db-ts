@@ -48,7 +48,7 @@ import { SomeDoc } from '@/src/client/document';
  * @field $mul - Multiply the value of a field in the document.
  * @field $addToSet - Add an element to an array field in the document if it does not already exist.
  */
-export interface UpdateFilter<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> {
+export interface UpdateFilter<Schema extends SomeDoc = SomeDoc, InNotation = ToDotNotation<Schema>> {
   /**
    * Set the value of a field in the document.
    *

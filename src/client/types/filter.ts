@@ -20,7 +20,7 @@ import { SomeDoc } from '@/src/client/document';
  * Represents some filter operation for a given document schema.
  * 
  * Disclaimer: It's strongly typed if a strict schema is passed in, but if
- * {@link SomeDoc} is used, operators (like `$and`) are no longer typechecked
+ * {@link SomeDoc} is used, operators are no longer properly type-checked.
  * 
  * @example
  * ```
@@ -37,7 +37,7 @@ import { SomeDoc } from '@/src/client/document';
  * });
  * ```
  */
-export type Filter<Schema extends SomeDoc> = {
+export type Filter<Schema extends SomeDoc = SomeDoc> = {
   [K in keyof ToDotNotation<Schema>]?: FilterExpr<ToDotNotation<Schema>[K]>
 } & {
   _id?: FilterExpr<IdOf<Schema>>,

@@ -39,6 +39,12 @@ export interface TestSchema extends VectorDoc {
   amount: number;
   status: string;
   preferred_customer?: boolean;
+  arr: { age: number }[];
+}
+
+export interface DynamicSchema extends SomeDoc {
+  _id: string;
+  name: string;
 }
 
 export function dummyDB(): Db {

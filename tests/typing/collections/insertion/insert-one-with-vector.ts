@@ -43,5 +43,6 @@ void dummyCollection<TestSchema>().insertOne({
   ],
   'amount': 47601,
   'status': 'active',
-  'preferred_customer': true
+  'preferred_customer': true,
+  'arr': [],
 });

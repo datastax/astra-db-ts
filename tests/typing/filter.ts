@@ -159,3 +159,16 @@ const test6: Filter<ConvolutedSchema2> = {
     { numOrArray: { $size: 3 } },
   ]
 }
+
+const test7: Filter<any> = {
+  $and: [
+    { $or: [] },
+    { $not: { $and: [ { 'some_random_key': Symbol.for('123') } ] } },
+  ],
+  '123123123': 123123,
+}
+
+const test8: Filter<any> = {
+  // @ts-expect-error - Invalid type
+  $and: 3,
+}

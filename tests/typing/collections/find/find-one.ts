@@ -14,7 +14,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { dummyCollection, TestSchema } from '@/tests/typing/collections/prelude';
+import { dummyCollection, DynamicSchema, TestSchema } from '@/tests/typing/collections/prelude';
 import { Equal, Expect } from '@/tests/typing/prelude';
 
 dummyCollection<TestSchema>().findOne({}, {}).then((_a) => {
@@ -42,6 +42,7 @@ void dummyCollection<TestSchema>().findOne({
   ],
   'purchase_date': { $gte: { $date: 123 } },
   'items': { $gte: { $date: 123 } },
+  'arr.0': { age: 3 },
 }, {
   sort: {
     'customer.address.address_line': 1,
@@ -70,6 +71,8 @@ void dummyCollection<TestSchema>().findOne({
       '1',
     ],
   },
+  // @ts-expect-error - Type mismatch
+  'arr.0': ['123'],
 });
 
 void dummyCollection<TestSchema>().findOne({}, {
@@ -94,4 +97,9 @@ void dummyCollection<TestSchema>().findOne({}, {
     // @ts-expect-error - Can't use $slice with non-array fields
     'customer.address.city': { $slice: 1 },
   }
+});
+
+void dummyCollection<DynamicSchema>().findOne({
+  // @ts-expect-error - Type mismatch
+  _id: 23,
 });

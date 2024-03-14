@@ -65,9 +65,5 @@ void dummyDB().createCollection<TestSchema>('ASTRA_DB_COLLECTION', {
   // @ts-expect-error - Need to specify vector metric options
   vector: {
     dimension: 5,
-    service: {
-      provider: 'openai',
-      anyRandomField: { yes: 'unknown for now' },
-    }
   },
 });

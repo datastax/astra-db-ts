@@ -16,7 +16,13 @@ import { SomeDoc } from '@/src/client/document';
 
 /**
  * Converts some {@link Schema} into a type representing its dot notation (object paths).
- * 
+ *
+ * If a value is any or SomeDoc, it'll be allowed to be any old object.
+ *
+ * *Note that this does NOT support indexing into arrays beyond the initial array index itself. Meaning,
+ * `arr.0` is supported, but `arr.0.property` is not. Use a more flexible type (such as `any` or `SomeDoc`)
+ * to support that.*
+ *
  * @example
  * ```
  * interface BasicSchema {
@@ -31,6 +37,7 @@ import { SomeDoc } from '@/src/client/document';
  * interface BasicSchemaInDotNotation {
  *   'num': number,
  *   'arr': string[],
+ *   [`arr.${number}`]: string,
  *   'obj': { nested: string, someDoc: SomeDoc }
  *   'obj.nested': string,
  *   'obj.someDoc': SomeDoc,
@@ -47,8 +54,16 @@ type _ToDotNotation<Elem extends SomeDoc, Prefix extends string> = {
         | (Prefix extends '' ? never : { [Path in CropTrailingDot<Prefix>]: Elem })
         | { [Path in `${Prefix}${string}`]: any }
         ) :
+    true extends false & Elem[Key]
+      ? (
+        | { [Path in `${Prefix}${Key & string}`]: Elem[Key] }
+        | { [Path in `${Prefix}${Key & string}.${string}`]: Elem[Key] }
+        ) :
     Elem[Key] extends any[]
-      ? { [Path in `${Prefix}${Key & string}`]: Elem[Key] } :
+      ? (
+        | { [Path in `${Prefix}${Key & string}`]: Elem[Key] }
+        | { [Path in `${Prefix}${Key & string}.${number}`]: Elem[Key][number] }
+        ) :
     Elem[Key] extends Date
       ? { [Path in `${Prefix}${Key & string}`]: Date | { $date: number } } :
     Elem[Key] extends SomeDoc
