@@ -15,35 +15,30 @@
 import assert from 'assert';
 import { AstraDB } from '@/src/client';
 import { useHttpClient } from '@/tests/fixtures';
-import { HTTP2Strategy } from '@/src/api/http2';
-import { HTTP1Strategy } from '@/src/api/http1';
 
 describe('Utils test', () => {
   it('initialized w/ default keyspace', () => {
     const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
     const astraDb = new AstraDB('myToken', apiEndPoint);
     assert.strictEqual(
-      useHttpClient(astraDb).baseUrl + '/' + useHttpClient(astraDb).keyspace,
+      useHttpClient(astraDb).baseUrl + '/' + useHttpClient(astraDb).namespace,
       'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/default_keyspace',
     );
-    assert.strictEqual(useHttpClient(astraDb).applicationToken, 'myToken');
   });
 
   it('adds a keyspace properly', () => {
     const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
     const astraDb = new AstraDB('myToken', apiEndPoint, 'testks1');
     assert.strictEqual(
-      useHttpClient(astraDb).baseUrl + '/' + useHttpClient(astraDb).keyspace,
+      useHttpClient(astraDb).baseUrl + '/' + useHttpClient(astraDb).namespace,
       'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1',
     );
-    assert.strictEqual(useHttpClient(astraDb).applicationToken, 'myToken');
   });
 
   it('uses http2 by default', () => {
     const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
     const astraDb = new AstraDB('myToken', apiEndPoint);
     assert.strictEqual(useHttpClient(astraDb).usingHttp2, true);
-    assert.ok(useHttpClient(astraDb).requestStrategy instanceof HTTP2Strategy);
   });
 
   it('handles forcing http2', () => {
@@ -52,7 +47,6 @@ describe('Utils test', () => {
       useHttp2: true,
     });
     assert.strictEqual(useHttpClient(astraDb).usingHttp2, true);
-    assert.ok(useHttpClient(astraDb).requestStrategy instanceof HTTP2Strategy);
   });
 
   it('handles forcing http1.1', () => {
@@ -61,7 +55,6 @@ describe('Utils test', () => {
       useHttp2: false,
     });
     assert.strictEqual(useHttpClient(astraDb).usingHttp2, false);
-    assert.ok(useHttpClient(astraDb).requestStrategy instanceof HTTP1Strategy);
   });
 
   it('handles different base api path', () => {
@@ -69,9 +62,8 @@ describe('Utils test', () => {
     const astraDb = new AstraDB('myToken', apiEndPoint, 'ks', {
       baseApiPath: 'some/random/path',
     });
-    assert.strictEqual(useHttpClient(astraDb).applicationToken, 'myToken');
     assert.strictEqual(
-      useHttpClient(astraDb).baseUrl + '/' + useHttpClient(astraDb).keyspace,
+      useHttpClient(astraDb).baseUrl + '/' + useHttpClient(astraDb).namespace,
       'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/some/random/path/ks',
     );
     assert.strictEqual(useHttpClient(astraDb).usingHttp2, true);

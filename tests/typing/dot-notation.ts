@@ -38,6 +38,7 @@ type test2 = Expect<Equal<ToDotNotation<Schema>, {
   'obj.obj.any': SomeDoc,
   [k: `obj.obj.any.${string}`]: any,
   arr: string[],
+  [k: `arr.${number}`]: string,
 }>>
 
 // @ts-expect-no-error - Valid properties & types

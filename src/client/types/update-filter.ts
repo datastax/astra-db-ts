@@ -13,9 +13,24 @@
 // limitations under the License.
 
 import { ToDotNotation } from '@/src/client/types/dot-notation';
-import { IsNum } from '@/src/client/types/utils';
+import { IsDate, IsNum } from '@/src/client/types/utils';
 import { TypeErr } from '@/src/client/utils';
 import { SomeDoc } from '@/src/client/document';
+
+export interface UpdateFilter<Schema extends SomeDoc> {
+  $set?: Partial<Schema> & SomeDoc,
+  $setOnInsert?: Partial<Schema> & SomeDoc,
+  $min?: Partial<Schema> & SomeDoc,
+  $max?: Partial<Schema> & SomeDoc,
+  $mul?: NumberUpdate<Schema> & SomeDoc,
+  $unset?: Record<string, ''>,
+  $inc?: NumberUpdate<Schema> & SomeDoc,
+  $push?: ArrayUpdate<Schema> & SomeDoc,
+  $pop?: ArrayUpdate<Schema> & SomeDoc,
+  $rename?: Record<string, string>,
+  $currentDate?: CurrentDate<Schema> & SomeDoc,
+  $addToSet?: ArrayUpdate<Schema> & SomeDoc,
+}
 
 /**
  * Represents the update filter to specify how to update a document.
@@ -48,7 +63,7 @@ import { SomeDoc } from '@/src/client/document';
  * @field $mul - Multiply the value of a field in the document.
  * @field $addToSet - Add an element to an array field in the document if it does not already exist.
  */
-export interface UpdateFilter<Schema extends SomeDoc = SomeDoc, InNotation = ToDotNotation<Schema>> {
+export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> {
   /**
    * Set the value of a field in the document.
    *
@@ -165,7 +180,7 @@ export interface UpdateFilter<Schema extends SomeDoc = SomeDoc, InNotation = ToD
    * }
    * ```
    */
-  $min?: NumberUpdate<InNotation>,
+  $min?: NumberUpdate<InNotation> | DateUpdate<InNotation>,
   /**
    * Only update the field if the specified value is greater than the existing value.
    *
@@ -178,7 +193,7 @@ export interface UpdateFilter<Schema extends SomeDoc = SomeDoc, InNotation = ToD
    * }
    * ```
    */
-  $max?: NumberUpdate<InNotation>,
+  $max?: NumberUpdate<InNotation> | DateUpdate<InNotation>,
   /**
    * Multiply the value of a field in the document.
    *
@@ -230,15 +245,20 @@ type NumberUpdate<Schema> = ContainsNum<Schema> extends true ? {
   [K in keyof Schema as IsNum<Schema[K]> extends true ? K : never]?: number | bigint
 } : TypeErr<'Can not perform a number operation on a schema with no numbers'>;
 
+type DateUpdate<Schema> = ContainsDate<Schema> extends true ? {
+  [K in keyof Schema as ContainsDate<Schema[K]> extends true ? K : never]?: Date | { $date: number }
+} : TypeErr<'Can not perform a date operation on a schema with no dates'>;
+
 type ArrayUpdate<Schema> = {
   [K in keyof Schema as any[] extends Schema[K] ? K : never]?: PickArrayTypes<Schema[K]>
 };
 
 type CurrentDate<Schema> =  {
-  [K in keyof Schema as Schema[K] extends Date ? K : never]?: boolean
+  [K in keyof Schema as Schema[K] extends Date | { $date: number } ? K : never]?: boolean
 };
 
 type ContainsArr<Schema> = any[] extends Schema[keyof Schema] ? true : false;
 type ContainsNum<Schema> = IsNum<Schema[keyof Schema]>;
+type ContainsDate<Schema> = IsDate<Schema[keyof Schema]>;
 
 type PickArrayTypes<Schema> = Extract<Schema, any[]> extends (infer E)[] ? E : unknown

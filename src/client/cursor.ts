@@ -116,11 +116,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * Sets the filter for the cursor, overwriting any previous filter. Note that this filter is weakly typed. Prefer
    * to pass in a filter through the constructor instead, if strongly typed filters are desired.
    *
-   * The cursor MUST be uninitialized when calling this method.
-   *
-   * **NB. This method mutates the cursor.**
-   *
    * **NB. This method acts on the original documents, before any mapping**
+   *
+   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
    *
    * @param filter - A filter to select which documents to return.
    *
@@ -136,11 +134,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * Sets the sort criteria for prioritizing documents. Note that this sort is weakly typed. Prefer to pass in a sort
    * through the constructor instead, if strongly typed sorts are desired.
    *
-   * The cursor MUST be uninitialized when calling this method.
-   *
-   * **NB. This method mutates the cursor.**
-   *
    * **NB. This method acts on the original documents, before any mapping**
+   *
+   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
    *
    * @param sort - The sort order to prioritize which documents are returned.
    *
@@ -155,9 +151,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * Sets the maximum number of documents to return.
    *
-   * The cursor MUST be uninitialized when calling this method.
-   *
-   * **NB. This method mutates the cursor.**
+   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
    *
    * @param limit - The limit for this cursor.
    *
@@ -172,9 +166,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * Sets the number of documents to skip before returning.
    *
-   * The cursor MUST be uninitialized when calling this method.
-   *
-   * **NB. This method mutates the cursor.**
+   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
    *
    * @param skip - The skip for the cursor query.
    *
@@ -189,36 +181,40 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * Sets the projection for the cursor, overwriting any previous projection.
    *
-   * *Note that this projection is weakly typed. Prefer to pass in a projection through the constructor instead,
-   * if strongly typed projections are desired.*
-   *
-   * The cursor MUST be uninitialized when calling this method.
-   *
    * **NB. This method acts on the original documents, before any mapping**
    *
-   * **NB. This method mutates the cursor**
+   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   *
+   * **To properly type this method, you should provide a type argument for `T` to specify the shape of the projected
+   * documents, *with mapping applied*.**
    *
    * @example
    * ```typescript
    * const cursor = collection.find({ name: 'John' });
    *
-   * // T & TRaw are inferred to be Partial<Schema>
+   * // T is `any` because the type is not specified
    * const rawProjected = cursor.project({ _id: 0, name: 1 });
    *
-   * // T & TRaw are { name: string }
+   * // T is { name: string }
    * const projected = cursor.project<{ name: string }>({ _id: 0, name: 1 });
    *
    * // You can also chain instead of using intermediate variables
    * const fluentlyProjected = collection
    *   .find({ name: 'John' })
-   *   .project({ _id: 0, name: 1 });
+   *   .project<{ name: string }>({ _id: 0, name: 1 });
+   *
+   * // It's important to keep mapping in mind
+   * const mapProjected = collection
+   *   .find({ name: 'John' })
+   *   .map(doc => doc.name);
+   *   .project<string>({ _id: 0, name: 1 });
    * ```
    *
    * @param projection - Specifies which fields should be included/excluded in the returned documents.
    *
    * @return The cursor.
    */
-  project<R extends SomeDoc = Partial<TRaw>>(projection: ProjectionOption<TRaw>): FindCursor<R, R> {
+  project<R = any>(projection: ProjectionOption<TRaw>): FindCursor<R, TRaw> {
     this._assertUninitialized();
     this._options.projection = projection;
     return this as any;
@@ -227,9 +223,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * Sets whether similarity scores should be included in the cursor's results.
    *
-   * The cursor MUST be uninitialized when calling this method.
-   *
-   * **NB. This method mutates the cursor.**
+   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
    *
    * @param includeSimilarity - Whether similarity scores should be included.
    *
@@ -245,11 +239,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * Map all documents using the provided mapping function. Previous mapping functions will be composed with the new
    * mapping function (new ∘ old).
    *
-   * The cursor MUST be uninitialized when calling this method.
-   *
-   * **NB. This method mutates the cursor.**
-   *
    * **NB. Unlike Mongo, it is okay to map a cursor to `null`.**
+   *
+   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
    *
    * @param mapping - The mapping function to apply to all documents.
    *
@@ -347,6 +339,23 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     return false;
   }
 
+  /**
+   * An async iterator that lazily iterates over all documents in the cursor.
+   *
+   * **Note that there'll only be partial results if the cursor has been previously iterated over. You may use {@link rewind}
+   * to reset the cursor.**
+   *
+   * If the cursor is uninitialized, it will be initialized. If the cursor is closed, this method will return immediately.
+   *
+   * It will close the cursor when iteration is complete, even if it was broken early.
+   *
+   * @example
+   * ```typescript
+   * for await (const doc of cursor) {
+   *   console.log(doc);
+   * }
+   * ```
+   */
   async *[Symbol.asyncIterator](): AsyncGenerator<T, void, void> {
     try {
       while (true) {
@@ -372,6 +381,8 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * to reset the cursor.
    *
    * If the cursor is uninitialized, it will be initialized. If the cursor is closed, this method will return immediately.
+   *
+   * It will close the cursor when iteration is complete, even if it was stopped early.
    *
    * @param consumer - The consumer to call for each document.
    *

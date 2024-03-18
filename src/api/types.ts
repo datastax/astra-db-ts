@@ -29,6 +29,13 @@ export interface InternalHTTPClientOptions extends HTTPClientOptions {
   baseUrl: string;
   keyspaceName?: string;
   collectionName?: string;
+  requestStrategy?: HTTPRequestStrategy;
+  userAgent?: string;
+}
+
+export interface HTTPClientCloneOptions {
+  collection?: string;
+  namespace?: string;
 }
 
 export interface APIResponse {

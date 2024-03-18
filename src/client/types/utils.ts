@@ -32,7 +32,9 @@ export type IsNum<T> = number extends T ? true : bigint extends T ? true : false
  * IsDate<string | Date> === boolean
  * ```
  */
-export type IsDate<T> = T extends Date ? true : false
+export type IsDate<T> = IsAny<T> extends true ? true : T extends Date | { $date: number } ? true : false
+
+export type IsAny<T> = true extends false & T ? true : false
 
 /**
  * Forces the given type to include an `_id`

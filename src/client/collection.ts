@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { HTTPClient } from '@/src/api';
-import { setDefaultIdForInsert, setDefaultIdForUpsert, withoutFields } from './utils';
+import { setDefaultIdForInsert, setDefaultIdForUpsert, takeWhile } from './utils';
 import { InsertOneCommand, InsertOneResult } from '@/src/client/types/insert/insert-one';
 import {
   InsertManyCommand,
@@ -65,6 +65,7 @@ import {
   TooManyDocsToCountError,
   UpdateManyError
 } from '@/src/client/errors';
+import objectHash from 'object-hash';
 
 /**
  * Represents the interface to a collection in the database.
@@ -97,9 +98,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       throw new Error('collection name is required');
     }
 
-    this._httpClient = httpClient.cloneShallow();
-    this._httpClient.collection = name;
-
+    this._httpClient = httpClient.withOptions({ collection: name });
     this._collectionName = name;
     this._db = db;
   }
@@ -165,14 +164,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * You can set the `ordered` option to `true` to stop the operation after the first error, otherwise all documents
    * may be parallelized and processed in arbitrary order, improving, perhaps vastly, performance.
    *
-   * If an insertion error occurs, the operation will throw either an `InsertManyOrderedError` or `InsertManyUnorderedError`
-   * depending on the value of the `ordered` option.
+   * If an insertion error occurs, the operation will throw an {@link InsertManyError} containing the partial result.
    *
-   * *If the operation is not due to an insertion error, e.g. a `5xx` error or network error, the operation will throw the
+   * *If the exception is not due to an insertion error, e.g. a `5xx` error or network error, the operation will throw the
    * underlying error.*
    *
-   * *In case of an unordered request, if the error was a simple insertion error, a `InsertManyUnorderedError` will be
-   * thrown after every document has been attempted to be inserted. If it was a `5xx` or similar, the error will be thrown
+   * *In case of an unordered request, if the error was a simple insertion error, a `InsertManyError` will be thrown
+   * after every document has been attempted to be inserted. If it was a `5xx` or similar, the error will be thrown
    * immediately.*
    *
    * You can set the `parallel` option to control how many network requests are made in parallel on unordered
@@ -187,27 +185,15 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *   await collection.insertMany([
    *     { _id: '1', name: 'John Doe' },
    *     { name: 'Jane Doe' }, // _id will be generated
-   *   ]);
-   * } catch (e) {
-   *   if (e instanceof InsertManyUnorderedError) {
-   *     console.log(e.insertedIds);
-   *     console.log(e.failedIds);
-   *   }
-   * }
-   * ```
+   *   ], { ordered: true });
    *
-   * @example
-   * ```typescript
-   * try {
    *   await collection.insertMany([
    *     { _id: '1', name: 'John Doe' },
    *     { name: 'Jane Doe' }, // _id will be generated
-   *   ], { ordered: true });
+   *   ]);
    * } catch (e) {
-   *   if (e instanceof InsertManyOrderedError) {
+   *   if (e instanceof InsertManyError) {
    *     console.log(e.insertedIds);
-   *     // Failed IDs will just be all the IDs after the
-   *     // last successfully inserted ID
    *   }
    * }
    * ```
@@ -215,9 +201,9 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param documents - The documents to insert.
    * @param options - The options for the operation.
    *
-   * @throws InsertManyError - If the operation fails
-   *
    * @return InsertManyResult
+   *
+   * @throws InsertManyError - If the operation fails
    */
   async insertMany(documents: Schema[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>> {
     const chunkSize = options?.chunkSize ?? 20;
@@ -260,7 +246,9 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       updateOne: {
         filter,
         update,
-        options: withoutFields(options, 'sort'),
+        options: {
+          upsert: options?.upsert,
+        },
       },
     };
 
@@ -323,13 +311,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @return UpdateManyResult
    */
   async updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateManyOptions): Promise<UpdateManyResult> {
-    options = { ...options };
-
     const command: UpdateManyCommand = {
       updateMany: {
         filter,
         update,
-        options,
+        options: {
+          upsert: options?.upsert,
+        },
       },
     };
 
@@ -355,10 +343,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       }
       const desc = e.detailedErrorDescriptors[0];
 
-      commonResult.modifiedCount += desc.raw?.status?.modifiedCount ?? 0;
-      commonResult.matchedCount += desc.raw?.status?.matchedCount ?? 0;
+      commonResult.modifiedCount += desc.rawResponse?.status?.modifiedCount ?? 0;
+      commonResult.matchedCount += desc.rawResponse?.status?.matchedCount ?? 0;
 
-      throw mkRespErrorFromResponse(UpdateManyError, command, desc.raw, commonResult);
+      throw mkRespErrorFromResponse(UpdateManyError, command, desc.rawResponse, commonResult);
     }
 
     return (resp.status?.upsertedId)
@@ -500,7 +488,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         throw e;
       }
       const desc = e.detailedErrorDescriptors[0];
-      throw mkRespErrorFromResponse(DeleteManyError, command, desc.raw, { deletedCount: numDeleted + (desc.raw?.status?.deletedCount ?? 0) })
+      throw mkRespErrorFromResponse(DeleteManyError, command, desc.rawResponse, { deletedCount: numDeleted + (desc.rawResponse?.status?.deletedCount ?? 0) })
     }
 
     return {
@@ -543,31 +531,38 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     return new FindCursor(this.namespace, this._httpClient, filter, options) as any;
   }
 
-  async distinct<Key extends keyof ToDotNotation<FoundDoc<Schema, GetSim>> & string, GetSim extends boolean = false>(key: Key, filter: Filter<Schema> = {}, _?: FindOptions<Schema, GetSim>): Promise<Flatten<ToDotNotation<FoundDoc<Schema, GetSim>>[Key]>[]> {
-    const cursor = this.find<GetSim>(filter, { projection: { _id: 0, [key]: 1 } });
+  async distinct<Key extends string, GetSim extends boolean = false>(key: Key, filter: Filter<Schema> = {}, _?: FindOptions<Schema, GetSim>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema, GetSim>>)[Key]>[]> {
+    assertPathSafe4Distinct(key);
+
+    const projection = pullSafeProjection4Distinct(key);
+    const cursor = this.find<GetSim>(filter, { projection: { _id: 0, [projection]: 1 } });
 
     const seen = new Set<unknown>();
-    const path = key.split('.');
+    const ret = [];
+
+    const extract = mkDistinctPathExtractor(key);
 
     for await (const doc of cursor) {
-      let value = doc as any;
+      const values = extract(doc);
 
-      for (let i = 0, n = path.length; i < n; i++) {
-        value = value[path[i]];
-      }
+      for (let i = 0, n = values.length; i < n; i++) {
+        if (typeof values[i] === 'object') {
+          const hash = objectHash(values[i]);
 
-      if (value !== undefined) {
-        if (Array.isArray(value)) {
-          for (let i = 0, n = value.length; i < n; i++) {
-            seen.add(value[i]);
+          if (!seen.has(hash)) {
+            seen.add(hash);
+            ret.push(values[i]);
           }
         } else {
-          seen.add(value);
+          if (!seen.has(values[i])) {
+            seen.add(values[i]);
+            ret.push(values[i]);
+          }
         }
       }
     }
 
-    return Array.from(seen) as any;
+    return ret;
   }
 
   /**
@@ -582,10 +577,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @example
    * ```typescript
-   * const doc = await collection.findOne({
-   *   $vector: [.12, .52, .32]
-   * }, {
-   *   includeSimilarity: true
+   * const doc = await collection.findOne({}, {
+   *   sort: {
+   *     $vector: [.12, .52, .32],
+   *   },
+   *   includeSimilarity: true,
    * });
    *
    * console.log(doc?.$similarity);
@@ -600,12 +596,12 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @return The found document, or `null` if no document was found.
    */
   async findOne<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<Schema, GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
-    options = { ...options };
-
     const command: FindOneCommand = {
       findOne: {
         filter,
-        options: withoutFields(options, 'sort', 'projection'),
+        options: {
+          includeSimilarity: options?.includeSimilarity,
+        }
       },
     };
 
@@ -664,8 +660,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   ): Promise<WithId<Schema> | null>
 
   async findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options: FindOneAndReplaceOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
-    options = { ...options };
-
     const command: FindOneAndReplaceCommand = {
       findOneAndReplace: {
         filter,
@@ -877,6 +871,57 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       : resp.data?.document;
   }
 
+  /**
+   * Execute arbitrary operations sequentially/concurrently on the collection, such as insertions, updates, replaces,
+   * & deletions, **non-atomically**
+   *
+   * Each operation is treated as a separate, unrelated request to the server; it is not performed in a transaction.
+   *
+   * You can set the `ordered` option to `true` to stop the operations after the first error, otherwise all operations
+   * may be parallelized and processed in arbitrary order, improving, perhaps vastly, performance.
+   *
+   * *Note that the bulkWrite being ordered has nothing to do with if the operations themselves are ordered or not.*
+   *
+   * If an operational error occurs, the operation will throw a {@link BulkWriteError} containing the partial result.
+   *
+   * *If the exception is not due to a soft `2XX` error, e.g. a `5xx` error or network error, the operation will throw
+   * the underlying error.*
+   *
+   * *In case of an unordered request, if the error was a simple operational error, a `BulkWriteError` will be thrown
+   * after every operation has been attempted. If it was a `5xx` or similar, the error will be thrown immediately.*
+   *
+   * You can set the `parallel` option to control how many network requests are made in parallel on unordered
+   * insertions. Defaults to `8`.
+   *
+   * @example
+   * ```typescript
+   * try {
+   *   // Insert a document, then delete it
+   *   await collection.bulkWrite([
+   *     { insertOne: { document: { _id: '1', name: 'John Doe' } } },
+   *     { deleteOne: { filter: { name: 'John Doe' } } },
+   *   ]);
+   *
+   *   // Insert and delete operations, will cause a data race
+   *   await collection.bulkWrite([
+   *     { insertOne: { document: { _id: '1', name: 'John Doe' } } },
+   *     { deleteOne: { filter: { name: 'John Doe' } } },
+   *   ]);
+   * } catch (e) {
+   *   if (e instanceof BulkWriteError) {
+   *     console.log(e.insertedCount);
+   *     console.log(e.deletedCount);
+   *   }
+   * }
+   * ```
+   *
+   * @param operations
+   * @param options
+   *
+   * @return BulkWriteResult
+   *
+   * @throws BulkWriteError - If the operation fails
+   */
   async bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult> {
     const commands = operations.map(buildBulkWriteCommands);
 
@@ -924,16 +969,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 }
 
-export class AstraClientError extends Error {
-  command: Record<string, any>;
-
-  constructor(message: any, command: Record<string, any>) {
-    const commandName = Object.keys(command)[0] || 'unknown';
-    super(`Command "${commandName}" failed with the following error: ${message}`);
-    this.command = command;
-  }
-}
-
 // -- Insert Many ------------------------------------------------------------------------------------------
 
 const insertManyOrdered = async <Schema>(httpClient: HTTPClient, documents: unknown[], chunkSize: number): Promise<IdOf<Schema>[]> => {
@@ -951,8 +986,8 @@ const insertManyOrdered = async <Schema>(httpClient: HTTPClient, documents: unkn
       }
       const desc = e.detailedErrorDescriptors[0];
 
-      insertedIds.push(...desc.raw.status?.insertedIds ?? []);
-      throw mkRespErrorFromResponse(InsertManyError<Schema>, desc.command, desc.raw, { insertedIds: insertedIds, insertedCount: insertedIds.length })
+      insertedIds.push(...desc.rawResponse.status?.insertedIds ?? []);
+      throw mkRespErrorFromResponse(InsertManyError, desc.command, desc.rawResponse, { insertedIds: insertedIds, insertedCount: insertedIds.length })
     }
   }
 
@@ -987,18 +1022,18 @@ const insertManyUnordered = async <Schema>(httpClient: HTTPClient, documents: un
         }
         const desc = e.detailedErrorDescriptors[0];
 
-        const justInserted = desc.raw.status?.insertedIds ?? [];
+        const justInserted = desc.rawResponse.status?.insertedIds ?? [];
         insertedIds.push(...justInserted);
 
         failCommands.push(desc.command);
-        failRaw.push(desc.raw);
+        failRaw.push(desc.rawResponse);
       }
     }
   });
   await Promise.all(workers);
 
   if (failCommands.length > 0) {
-    throw mkRespErrorFromResponses(InsertManyError<Schema>, failCommands, failRaw, { insertedIds: insertedIds, insertedCount: insertedIds.length });
+    throw mkRespErrorFromResponses(InsertManyError, failCommands, failRaw, { insertedIds: insertedIds, insertedCount: insertedIds.length });
   }
 
   return insertedIds;
@@ -1033,11 +1068,11 @@ const bulkWriteOrdered = async (httpClient: HTTPClient, operations: Record<strin
     }
     const desc = e.detailedErrorDescriptors[0];
 
-    if (desc.raw.status) {
-      addToBulkWriteResult(results, desc.raw.status, i)
+    if (desc.rawResponse.status) {
+      addToBulkWriteResult(results, desc.rawResponse.status, i)
     }
 
-    throw mkRespErrorFromResponse(BulkWriteError, desc.command, desc.raw, results);
+    throw mkRespErrorFromResponse(BulkWriteError, desc.command, desc.rawResponse, results);
   }
 
   return results;
@@ -1070,12 +1105,12 @@ const bulkWriteUnordered = async (httpClient: HTTPClient, operations: Record<str
         }
         const desc = e.detailedErrorDescriptors[0];
 
-        if (desc.raw.status) {
-          addToBulkWriteResult(results, desc.raw.status, localI);
+        if (desc.rawResponse.status) {
+          addToBulkWriteResult(results, desc.rawResponse.status, localI);
         }
 
         failCommands.push(desc.command);
-        failRaw.push(desc.raw);
+        failRaw.push(desc.rawResponse);
       }
     }
   });
@@ -1119,4 +1154,62 @@ const addToBulkWriteResult = (result: BulkWriteResult, resp: Record<string, any>
   }
 
   asMutable.getRawResponse().push(resp);
+}
+
+// -- Distinct --------------------------------------------------------------------------------------------
+
+const assertPathSafe4Distinct = (path: string): void => {
+  const split = path.split('.');
+
+  if (split.length === 0) {
+    throw new Error('Path cannot be empty');
+  }
+
+  if (split.some(p => !p)) {
+    throw new Error('Path cannot contain empty segments');
+  }
+}
+
+const pullSafeProjection4Distinct = (path: string): string => {
+  return takeWhile(path.split('.'), p => isNaN(p as any)).join('.');
+}
+
+const mkDistinctPathExtractor = (path: string): (doc: SomeDoc) => any[] => {
+  const values = [] as any[];
+
+  const extract = (path: string[], index: number, value: any) => {
+    if (!value) {
+      return;
+    }
+
+    if (index === path.length) {
+      if (Array.isArray(value)) {
+        values.push(...value);
+      } else {
+        values.push(value);
+      }
+      return;
+    }
+
+    const prop = path[index];
+
+    if (Array.isArray(value)) {
+      const asInt = parseInt(prop, 10);
+
+      if (isNaN(asInt)) {
+        for (let i = 0, n = value.length; i < n; i++) {
+          extract(path, index, value[i]);
+        }
+      } else if (asInt < value.length) {
+        extract(path, index + 1, value[asInt]);
+      }
+    } else if (value && typeof value === 'object') {
+      extract(path, index + 1, value[prop]);
+    }
+  }
+
+  return (doc: SomeDoc) => {
+    extract(path.split('.'), 0, doc);
+    return values;
+  };
 }

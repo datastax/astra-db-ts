@@ -47,8 +47,7 @@ export class Db {
       throw new Error("Db: name is required");
     }
 
-    this._httpClient = httpClient.cloneShallow();
-    this._httpClient.keyspace = name;
+    this._httpClient = httpClient.withOptions({ namespace: name });
     this._namespace = name;
   }
 

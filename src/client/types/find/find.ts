@@ -54,10 +54,11 @@ export interface FindOptions<Schema extends SomeDoc, GetSim extends boolean> {
    *
    * @example
    * ```typescript
-   * const doc = await collection.findOne({
-   *   $vector: [.12, .52, .32]
-   * }, {
-   *   includeSimilarity: true
+   * const doc = await collection.findOne({}, {
+   *   sort: {
+   *     $vector: [.12, .52, .32],
+   *   },
+   *   includeSimilarity: true,
    * });
    *
    * console.log(doc?.$similarity);

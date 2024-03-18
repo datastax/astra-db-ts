@@ -16,6 +16,9 @@
 
 import { dummyCollection, DynamicSchema, TestSchema } from '@/tests/typing/collections/prelude';
 import { Equal, Expect } from '@/tests/typing/prelude';
+import { Filter } from '@/src/client';
+import { StrictFilter } from '@/src/client/types/filter';
+import { Test } from 'mocha';
 
 dummyCollection<TestSchema>().findOne({}, {}).then((_a) => {
   const a = _a!;
@@ -43,6 +46,7 @@ void dummyCollection<TestSchema>().findOne({
   'purchase_date': { $gte: { $date: 123 } },
   'items': { $gte: { $date: 123 } },
   'arr.0': { age: 3 },
+  'arr.0.age': 3,
 }, {
   sort: {
     'customer.address.address_line': 1,
@@ -53,6 +57,45 @@ void dummyCollection<TestSchema>().findOne({
     'customer.credit_score': 0,
     'items': { $slice: 1 },
   }
+});
+
+void dummyCollection<TestSchema>().findOne({
+  'customer.credit_score': { $gt: 700 },
+  $and: [
+    { 'customer.age': { $gt: 18 } },
+    { 'customer.age': { $lt: 50 } },
+    { $not: { 'customer.name': { $in: ['John'] } } },
+    { 'purchase_date': { $date: 123 } },
+  ],
+  'purchase_date': { $gte: { $date: 123 } },
+  'items': { $gte: { $date: 123 } },
+  'arr.0': { age: 3 },
+} satisfies StrictFilter<TestSchema>, {
+  sort: {
+    'customer.address.address_line': 1,
+  },
+  projection: {
+    'customer.name': 1,
+    'customer.age': true,
+    'customer.credit_score': 0,
+    'items': { $slice: 1 },
+  }
+});
+
+void dummyCollection<TestSchema>().findOne({
+  'customer.credit_score': {
+    $date: 700,
+  },
+  'customer.name': {
+    $eq: 18,
+  },
+  'customer.age': {
+    $in: [
+      102,
+      '1',
+    ],
+  },
+  'arr.0': ['123'],
 });
 
 void dummyCollection<TestSchema>().findOne({
@@ -73,7 +116,7 @@ void dummyCollection<TestSchema>().findOne({
   },
   // @ts-expect-error - Type mismatch
   'arr.0': ['123'],
-});
+} satisfies StrictFilter<TestSchema>);
 
 void dummyCollection<TestSchema>().findOne({}, {
   sort: {

@@ -39,7 +39,7 @@ export interface TestSchema extends VectorDoc {
   amount: number;
   status: string;
   preferred_customer?: boolean;
-  arr: { age: number }[];
+  arr?: { age: number }[];
 }
 
 export interface DynamicSchema extends SomeDoc {

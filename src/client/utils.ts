@@ -150,3 +150,13 @@ export function withoutFields<T extends Record<string, any> | undefined>(obj: T,
 
   return newObj;
 }
+
+export function takeWhile<T>(arr: T[], pred: (x: T) => boolean): T[] {
+  const result: T[] = [];
+
+  for (let i = 0, n = arr.length; i < n && pred(arr[i]); i++) {
+    result.push(arr[i]);
+  }
+
+  return result;
+}

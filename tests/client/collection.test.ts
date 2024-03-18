@@ -27,7 +27,6 @@ import {
 } from '@/tests/fixtures';
 import { randAlphaNumeric } from '@ngneat/falso';
 import { BulkWriteError, DataAPITimeout, InsertManyError, TooManyDocsToCountError } from '@/src/client/errors';
-import { SomeId } from '@/src/client/types/common';
 
 describe(`AstraTsClient - astra Connection - collections.collection`, async () => {
   let astraClient: Client | null;
@@ -283,7 +282,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.strictEqual(error.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
       assert.strictEqual(error.partialResult.insertedCount, 10);
       docList.slice(0, 10).forEach((doc, index) => {
-        assert.strictEqual((error as InsertManyError<SomeId>).partialResult.insertedIds[index], doc._id);
+        assert.strictEqual((error as InsertManyError).partialResult.insertedIds[index], doc._id);
       });
     });
 
@@ -305,7 +304,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.strictEqual(error.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
       assert.strictEqual(error.partialResult.insertedCount, 19);
       docList.slice(0, 9).concat(docList.slice(10)).forEach((doc) => {
-        assert.ok((error as InsertManyError<SomeId>).partialResult.insertedIds.includes(doc._id!));
+        assert.ok((error as InsertManyError).partialResult.insertedIds.includes(doc._id!));
       });
     });
   });
@@ -2676,8 +2675,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
           includeResultMetadata: true,
         }
       );
-      assert.ok(typeof value!._id === 'string', 'value!._id is not string');
-      assert.ok(value!._id!.match(/^[a-f\d]{24}$/i), value!._id);
+      assert.ok((value!._id as string)!.match(/^[a-f\d]{24}$/i), value!._id as string);
     });
 
     it('findOneAndReplace should not return metadata when includeResultMetadata is false', async () => {
@@ -3035,29 +3033,115 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
   });
 
   describe('distinct tests', () => {
-    it('distinct', async () => {
+    it('rejects invalid paths', async () => {
+      await assert.rejects(async () => {
+        await collection.distinct('');
+      });
+
+      await assert.rejects(async () => {
+        await collection.distinct('a.1..b');
+      });
+
+      await assert.rejects(async () => {
+        await collection.distinct('a.1..b');
+      });
+
+      await assert.rejects(async () => {
+        await collection.distinct('a..b.c');
+      });
+
+      await assert.rejects(async () => {
+        await collection.distinct('a.b..c');
+      });
+    });
+
+    it('can distinct on top-level elem', async () => {
       await collection.insertMany([
         { username: { full: 'a' }, car: [1] },
         { username: { full: 'b' }, car: [2, 3] },
         { username: { full: 'a' }, car: [2], bus: 'no' }
       ]);
 
-      const distinct1 = await collection.distinct('car');
-      assert.ok(distinct1.includes(1));
-      assert.ok(distinct1.includes(2));
-      assert.ok(distinct1.includes(3));
-
-      const distinct2 = await collection.distinct('username.full');
-      assert.ok(distinct2.includes('a'));
-      assert.ok(distinct2.includes('b'));
-
-      const distinct3 = await collection.distinct('username');
-      assert.ok(distinct3.map(v => v.full).includes('a'));
-      assert.ok(distinct3.map(v => v.full).includes('b'));
-
-      const distinct4 = await collection.distinct('bus');
-      assert.deepStrictEqual(distinct4, ['no']);
+      const distinct = await collection.distinct('username');
+      assert.strictEqual(distinct.length, 2);
+      assert.ok(distinct.some(v => v.full === 'a'));
+      assert.ok(distinct.some(v => v.full === 'b'));
     });
+
+    it('can distinct on nested elem', async () => {
+      await collection.insertMany([
+        { username: { full: 'a' }, car: [1] },
+        { username: { full: 'b' }, car: [2, 3] },
+        { username: { full: 'a' }, car: [2], bus: 'no' }
+      ]);
+
+      const distinct = await collection.distinct('username.full');
+      assert.strictEqual(distinct.length, 2);
+      assert.ok(distinct.includes('a'));
+      assert.ok(distinct.includes('b'));
+    });
+
+    it('can distinct on potentially missing field', async () => {
+      await collection.insertMany([
+        { username: { full: 'a' }, car: [1] },
+        { username: { full: 'b' }, car: [2, 3] },
+        { username: { full: 'a' }, car: [2], bus: 'no' }
+      ]);
+
+      const distinct = await collection.distinct('bus');
+      assert.deepStrictEqual(distinct, ['no']);
+    });
+
+    it('can distinct on array', async () => {
+      await collection.insertMany([
+        { username: { full: 'a' }, car: [1] },
+        { username: { full: 'b' }, car: [2, 3] },
+        { username: { full: 'a' }, car: [2], bus: 'no' }
+      ]);
+
+      const distinct = await collection.distinct('car');
+      assert.strictEqual(distinct.length, 3);
+      assert.ok(distinct.includes(1));
+      assert.ok(distinct.includes(2));
+      assert.ok(distinct.includes(3));
+    });
+
+    it('can distinct in array', async () => {
+      await collection.insertMany([
+        { car: [{ nums: 1 }] },
+        { car: [{ nums: 2 }, { nums: 3 }] },
+        { car: [{ nums: 2, str: 'hi!!' }] }
+      ]);
+
+      const distinct1 = await collection.distinct('car.0');
+      assert.strictEqual(distinct1.length, 3);
+      assert.ok(distinct1.some(c => c.nums === 1));
+      assert.ok(distinct1.some(c => c.nums === 2 && !c.str));
+      assert.ok(distinct1.some(c => c.nums === 2 && c.str === 'hi!!'));
+
+      const distinct2 = await collection.distinct('car.0.nums');
+      assert.strictEqual(distinct2.length, 2);
+      assert.ok(distinct2.includes(1));
+      assert.ok(distinct2.includes(2));
+    });
+
+    it('does the weird ambiguous number path thing correctly', async () => {
+      await collection.insertOne({
+        x: [{ y: 'Y', 0: 'ZERO' }],
+      });
+
+      const distinct1 = await collection.distinct('x.y');
+      assert.deepStrictEqual(distinct1, ['Y']);
+
+      const distinct2 = await collection.distinct('x.0');
+      assert.deepStrictEqual(distinct2, [{ y: 'Y', 0: 'ZERO' }]);
+
+      const distinct3 = await collection.distinct('x.0.y');
+      assert.deepStrictEqual(distinct3, ['Y']);
+
+      const distinct4 = await collection.distinct('x.0.0');
+      assert.deepStrictEqual(distinct4, ['ZERO']);
+    })
   });
 
   describe('admin operations', () => {

@@ -21,8 +21,10 @@ export interface UpdateOneCommand {
   updateOne: {
     filter: Record<string, unknown>;
     update: Record<string, any>;
-    options?: UpdateOneOptions<any>;
     sort?: SortOption<any>;
+    options: {
+      upsert?: boolean;
+    };
   }
 }
 

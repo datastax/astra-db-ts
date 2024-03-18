@@ -72,10 +72,6 @@ describe("Client test", () => {
       });
       assert.ok(client);
       assert.ok(useHttpClient(client));
-      assert.strictEqual(
-        useHttpClient(client).applicationToken,
-        AUTH_TOKEN_TO_CHECK,
-      );
       assert.strictEqual(client.namespace, parseUri(clientURI).keyspaceName);
       assert.strictEqual(
         useHttpClient(client).baseUrl,
@@ -97,10 +93,6 @@ describe("Client test", () => {
       );
       assert.ok(client);
       assert.ok(useHttpClient(client));
-      assert.strictEqual(
-        useHttpClient(client).applicationToken,
-        AUTH_TOKEN_TO_CHECK,
-      );
       assert.strictEqual(client.namespace, KEYSPACE_TO_CHECK);
       assert.strictEqual(
         useHttpClient(client).baseUrl,
@@ -122,7 +114,6 @@ describe("Client test", () => {
       );
       assert.ok(client);
       assert.ok(useHttpClient(client));
-      assert.strictEqual(useHttpClient(client).applicationToken, AUTH_TOKEN_TO_CHECK);
       assert.strictEqual(client.namespace, KEYSPACE_TO_CHECK);
       assert.strictEqual(useHttpClient(client).baseUrl, parseUri(clientURI).baseUrl + "/" + BASE_API_PATH_TO_CHECK);
       const db = client.db();
@@ -144,7 +135,6 @@ describe("Client test", () => {
       );
       assert.ok(client);
       assert.ok(useHttpClient(client));
-      assert.strictEqual(useHttpClient(client).applicationToken, AUTH_TOKEN_TO_CHECK);
       assert.strictEqual(client.namespace, KEYSPACE_TO_CHECK);
       assert.strictEqual(
         useHttpClient(client).baseUrl,
@@ -168,7 +158,6 @@ describe("Client test", () => {
       );
       assert.ok(client);
       assert.ok(useHttpClient(client));
-      assert.strictEqual(useHttpClient(client).applicationToken, AUTH_TOKEN_TO_CHECK);
       assert.strictEqual(client.namespace, KEYSPACE_TO_CHECK);
       assert.strictEqual(useHttpClient(client).baseUrl, baseUrl + "/baseAPIPath2");
       const db = client.db();
@@ -185,7 +174,6 @@ describe("Client test", () => {
 
       assert.ok(client);
       assert.ok(useHttpClient(client));
-      assert.strictEqual(useHttpClient(client).applicationToken, AUTH_TOKEN_TO_CHECK);
       assert.strictEqual(client.namespace, KEYSPACE_TO_CHECK);
       assert.strictEqual(useHttpClient(client).baseUrl, baseUrl);
       const db = client.db();

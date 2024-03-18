@@ -26,8 +26,8 @@ export { FindOneOptions } from '@/src/client/types/find/find-one';
 export { FindOneAndDeleteOptions } from '@/src/client/types/find/find-one-delete';
 export { FindOneAndUpdateOptions } from '@/src/client/types/find/find-one-update';
 export { FindOneAndReplaceOptions } from '@/src/client/types/find/find-one-replace';
-export { UpdateFilter } from '@/src/client/types/update-filter';
-export { Filter } from '@/src/client/types/filter';
+export { UpdateFilter, StrictUpdateFilter } from '@/src/client/types/update-filter';
+export { Filter, StrictFilter } from '@/src/client/types/filter';
 export { VectorDoc, SomeDoc } from '@/src/client/document';
 
 export { AstraDB } from '@/src/client/astra';

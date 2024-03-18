@@ -46,8 +46,9 @@ describe(`Astra TS Client - astra Connection - collections.errors`, () => {
       assert.strictEqual(err.message, raws[0].errors[0].message);
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
-        { command: commands[0], raw: raws[0], errorDescriptors: [descriptions[0]] },
+        { command: commands[0], rawResponse: raws[0], errorDescriptors: [descriptions[0]] },
       ]);
+      assert.strictEqual(err.name, 'DataAPIResponseError');
     });
 
     it('should properly construct a multi-response DataAPIResponseError', () => {
@@ -55,9 +56,10 @@ describe(`Astra TS Client - astra Connection - collections.errors`, () => {
       assert.strictEqual(err.message, raws[0].errors[0].message);
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0], descriptions[1]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
-        { command: commands[0], raw: raws[0], errorDescriptors: [descriptions[0]] },
-        { command: commands[1], raw: raws[1], errorDescriptors: [descriptions[1]] },
+        { command: commands[0], rawResponse: raws[0], errorDescriptors: [descriptions[0]] },
+        { command: commands[1], rawResponse: raws[1], errorDescriptors: [descriptions[1]] },
       ]);
+      assert.strictEqual(err.name, 'DataAPIResponseError');
     });
   });
 
@@ -65,24 +67,26 @@ describe(`Astra TS Client - astra Connection - collections.errors`, () => {
     const partialResult: InsertManyResult<SomeId> = { insertedIds: ['1', '2'], insertedCount: 2 };
 
     it('should properly construct a single-response InsertManyError', () => {
-      const err = mkRespErrorFromResponse(InsertManyError<SomeId>, commands[0], raws[0], partialResult);
+      const err = mkRespErrorFromResponse(InsertManyError, commands[0], raws[0], partialResult);
       assert.strictEqual(err.message, raws[0].errors[0].message);
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
-        { command: commands[0], raw: raws[0], errorDescriptors: [descriptions[0]] },
+        { command: commands[0], rawResponse: raws[0], errorDescriptors: [descriptions[0]] },
       ]);
       assert.strictEqual(err.partialResult, partialResult);
+      assert.strictEqual(err.name, 'InsertManyError');
     });
 
     it('should properly construct a multi-response InsertManyError', () => {
-      const err = mkRespErrorFromResponses(InsertManyError<SomeId>, commands, raws, partialResult);
+      const err = mkRespErrorFromResponses(InsertManyError, commands, raws, partialResult);
       assert.strictEqual(err.message, raws[0].errors[0].message);
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0], descriptions[1]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
-        { command: commands[0], raw: raws[0], errorDescriptors: [descriptions[0]] },
-        { command: commands[1], raw: raws[1], errorDescriptors: [descriptions[1]] },
+        { command: commands[0], rawResponse: raws[0], errorDescriptors: [descriptions[0]] },
+        { command: commands[1], rawResponse: raws[1], errorDescriptors: [descriptions[1]] },
       ]);
       assert.strictEqual(err.partialResult, partialResult);
+      assert.strictEqual(err.name, 'InsertManyError');
     });
   });
 
@@ -94,9 +98,10 @@ describe(`Astra TS Client - astra Connection - collections.errors`, () => {
       assert.strictEqual(err.message, raws[0].errors[0].message);
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
-        { command: commands[0], raw: raws[0], errorDescriptors: [descriptions[0]] },
+        { command: commands[0], rawResponse: raws[0], errorDescriptors: [descriptions[0]] },
       ]);
       assert.strictEqual(err.partialResult, partialResult);
+      assert.strictEqual(err.name, 'DeleteManyError');
     });
 
     it('should properly construct a multi-response DeleteManyError', () => {
@@ -104,10 +109,11 @@ describe(`Astra TS Client - astra Connection - collections.errors`, () => {
       assert.strictEqual(err.message, raws[0].errors[0].message);
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0], descriptions[1]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
-        { command: commands[0], raw: raws[0], errorDescriptors: [descriptions[0]] },
-        { command: commands[1], raw: raws[1], errorDescriptors: [descriptions[1]] },
+        { command: commands[0], rawResponse: raws[0], errorDescriptors: [descriptions[0]] },
+        { command: commands[1], rawResponse: raws[1], errorDescriptors: [descriptions[1]] },
       ]);
       assert.strictEqual(err.partialResult, partialResult);
+      assert.strictEqual(err.name, 'DeleteManyError');
     });
   });
 
@@ -119,9 +125,10 @@ describe(`Astra TS Client - astra Connection - collections.errors`, () => {
       assert.strictEqual(err.message, raws[0].errors[0].message);
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
-        { command: commands[0], raw: raws[0], errorDescriptors: [descriptions[0]] },
+        { command: commands[0], rawResponse: raws[0], errorDescriptors: [descriptions[0]] },
       ]);
       assert.strictEqual(err.partialResult, partialResult);
+      assert.strictEqual(err.name, 'UpdateManyError');
     });
 
     it('should properly construct a multi-response UpdateManyError', () => {
@@ -129,10 +136,11 @@ describe(`Astra TS Client - astra Connection - collections.errors`, () => {
       assert.strictEqual(err.message, raws[0].errors[0].message);
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0], descriptions[1]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
-        { command: commands[0], raw: raws[0], errorDescriptors: [descriptions[0]] },
-        { command: commands[1], raw: raws[1], errorDescriptors: [descriptions[1]] },
+        { command: commands[0], rawResponse: raws[0], errorDescriptors: [descriptions[0]] },
+        { command: commands[1], rawResponse: raws[1], errorDescriptors: [descriptions[1]] },
       ]);
       assert.strictEqual(err.partialResult, partialResult);
+      assert.strictEqual(err.name, 'UpdateManyError');
     });
   });
 });

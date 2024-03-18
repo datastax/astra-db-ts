@@ -14,11 +14,11 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { SomeDoc, UpdateFilter } from '@/src/client';
+import { SomeDoc, StrictUpdateFilter } from '@/src/client';
 import { BasicSchema, ConvolutedSchema1, ConvolutedSchema2, Equal, Expect, Schema } from '@/tests/typing/prelude';
 import { ToDotNotation } from '@/src/client/types/dot-notation';
 
-type test1 = Expect<Equal<UpdateFilter<BasicSchema>, {
+type test1 = Expect<Equal<StrictUpdateFilter<BasicSchema>, {
   $set?: {
     num?: number,
     str?: string,
@@ -69,11 +69,17 @@ type test1 = Expect<Equal<UpdateFilter<BasicSchema>, {
     num: number | bigint,
     [k: `any.${string}`]: number | bigint,
     any: number | bigint,
+  } | {
+    [k: `any.${string}`]: Date | { $date: number },
+    any: Date | { $date: number },
   }>,
   $max?: Partial<{
     num: number | bigint,
     [k: `any.${string}`]: number | bigint,
     any: number | bigint,
+  } | {
+    [k: `any.${string}`]: Date | { $date: number },
+    any: Date | { $date: number },
   }>,
   $mul?: Partial<{
     num: number | bigint,
@@ -86,7 +92,7 @@ type test1 = Expect<Equal<UpdateFilter<BasicSchema>, {
   }>,
 }>>
 
-const test2: UpdateFilter<BasicSchema> = {
+const test2: StrictUpdateFilter<BasicSchema> = {
   $set: {
     num: 1,
     str: '1',
@@ -156,7 +162,7 @@ const test2: UpdateFilter<BasicSchema> = {
   },
 }
 
-const test3: UpdateFilter<Schema> = {
+const test3: StrictUpdateFilter<Schema> = {
   $set: {
     // @ts-expect-error - Invalid type
     num1: 'a',
@@ -211,7 +217,7 @@ const test3: UpdateFilter<Schema> = {
   },
 }
 
-const test4: UpdateFilter<SomeDoc> = {
+const test4: StrictUpdateFilter<SomeDoc> = {
   $set: {
     num1: 'a',
     arr: [
@@ -260,7 +266,7 @@ const test4: UpdateFilter<SomeDoc> = {
   },
 }
 
-const test5: UpdateFilter<Schema> = {
+const test5: StrictUpdateFilter<Schema> = {
   $set: {
     // @ts-expect-error - Invalid path
     'obj.obj.xyz': '',
@@ -291,7 +297,7 @@ const test5: UpdateFilter<Schema> = {
   },
 }
 
-const test6: UpdateFilter<SomeDoc> = {
+const test6: StrictUpdateFilter<SomeDoc> = {
   $set: {
     'obj.obj.xyz': '',
   },
@@ -315,7 +321,7 @@ const test6: UpdateFilter<SomeDoc> = {
   },
 }
 
-const test7: UpdateFilter<ConvolutedSchema1> = {
+const test7: StrictUpdateFilter<ConvolutedSchema1> = {
   $set: {
     numOrBigInt: 1,
     numOrString: 1,
@@ -338,7 +344,7 @@ const test7: UpdateFilter<ConvolutedSchema1> = {
   },
 }
 
-const test8: UpdateFilter<ConvolutedSchema1> = {
+const test8: StrictUpdateFilter<ConvolutedSchema1> = {
   $set: {
     numOrBigInt: 1,
     numOrString: 1,
@@ -361,7 +367,7 @@ const test8: UpdateFilter<ConvolutedSchema1> = {
   },
 }
 
-const test9: UpdateFilter<ConvolutedSchema1> = {
+const test9: StrictUpdateFilter<ConvolutedSchema1> = {
   $set: {
     // @ts-expect-error - Invalid type
     numOrBigInt: '',
@@ -382,7 +388,7 @@ const test9: UpdateFilter<ConvolutedSchema1> = {
   },
 }
 
-const test10: UpdateFilter<SomeDoc> = {
+const test10: StrictUpdateFilter<SomeDoc> = {
   $set: {
     numOrBigInt: '',
     numOrString: 1n,
@@ -400,7 +406,7 @@ const test10: UpdateFilter<SomeDoc> = {
   },
 }
 
-const test11: UpdateFilter<ConvolutedSchema2> = {
+const test11: StrictUpdateFilter<ConvolutedSchema2> = {
   $set: {
     numOrArray: 1,
   },
@@ -427,7 +433,7 @@ const test11: UpdateFilter<ConvolutedSchema2> = {
   },
 }
 
-const test12: UpdateFilter<ConvolutedSchema2> = {
+const test12: StrictUpdateFilter<ConvolutedSchema2> = {
   $set: {
     numOrArray: [
       // @ts-expect-error - Invalid type
@@ -452,7 +458,7 @@ const test12: UpdateFilter<ConvolutedSchema2> = {
   },
 }
 
-const test13: UpdateFilter<SomeDoc> = {
+const test13: StrictUpdateFilter<SomeDoc> = {
   $set: {
     numOrArray: [1],
   },

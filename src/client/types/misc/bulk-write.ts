@@ -58,7 +58,7 @@ export class BulkWriteResult {
     private readonly _raw: object[] = [],
   ) {}
 
-  getRawResponse(): object[] {
+  getRawResponse(): Record<string, any>[] {
     return this._raw;
   }
 

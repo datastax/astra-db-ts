@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { ToDotNotation } from '@/src/client/types/dot-notation';
-import { IdOf, IsDate, IsNum } from '@/src/client/types/utils';
+import { IdOf, IsDate, IsNum, NoId } from '@/src/client/types/utils';
 import { SomeDoc } from '@/src/client/document';
 
 /**
@@ -37,13 +37,24 @@ import { SomeDoc } from '@/src/client/document';
  * });
  * ```
  */
-export type Filter<Schema extends SomeDoc = SomeDoc> = {
-  [K in keyof ToDotNotation<Schema>]?: FilterExpr<ToDotNotation<Schema>[K]>
+export type Filter<Schema extends SomeDoc> = {
+  [K in keyof NoId<Schema>]?: FilterExpr<NoId<Schema>[K]>
 } & {
   _id?: FilterExpr<IdOf<Schema>>,
   $and?: Filter<Schema>[],
   $or?: Filter<Schema>[],
   $not?: Filter<Schema>,
+} & {
+  [key: string]: any,
+}
+
+export type StrictFilter<Schema extends SomeDoc> = {
+  [K in keyof ToDotNotation<NoId<Schema>>]?: FilterExpr<ToDotNotation<NoId<Schema>>[K]>
+} & {
+  _id?: FilterExpr<IdOf<Schema>>,
+  $and?: StrictFilter<Schema>[],
+  $or?: StrictFilter<Schema>[],
+  $not?: StrictFilter<Schema>,
 }
 
 /**
@@ -89,6 +100,7 @@ interface DateFilterOps {
   $lte?: Date | { $date: number },
   $gt?: Date | { $date: number },
   $gte?: Date | { $date: number },
+  $date?: number,
 }
 
 /**

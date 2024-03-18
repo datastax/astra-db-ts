@@ -15,10 +15,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { ConvolutedSchema2, Equal, Expect, Schema, SuperBasicSchema } from '@/tests/typing/prelude';
-import { Filter, SomeDoc } from '@/src/client';
+import { StrictFilter, SomeDoc } from '@/src/client';
 import { SomeId } from '@/src/client/types/common';
 
-type test1 = Expect<Equal<Filter<SuperBasicSchema>, {
+type test1 = Expect<Equal<StrictFilter<SuperBasicSchema>, {
   num?: number | {
     $eq?: number,
     $ne?: number,
@@ -62,13 +62,14 @@ type test1 = Expect<Equal<Filter<SuperBasicSchema>, {
     $lte?: Date | { $date: number },
     $gt?: Date | { $date: number },
     $gte?: Date | { $date: number },
+    $date?: number,
   },
-  $and?: Filter<SuperBasicSchema>[],
-  $or?: Filter<SuperBasicSchema>[],
-  $not?: Filter<SuperBasicSchema>,
+  $and?: StrictFilter<SuperBasicSchema>[],
+  $or?: StrictFilter<SuperBasicSchema>[],
+  $not?: StrictFilter<SuperBasicSchema>,
 }>>;
 
-const test2: Filter<Schema> = {
+const test2: StrictFilter<Schema> = {
   num1: 1,
   num2: { $in: [1, 2, 3] },
   'obj.obj.num': 3,
@@ -85,7 +86,7 @@ const test2: Filter<Schema> = {
   ],
 }
 
-const test3: Filter<Schema> = {
+const test3: StrictFilter<Schema> = {
   // @ts-expect-error - Invalid type
   num1: '1',
   num2: {
@@ -131,7 +132,7 @@ const test3: Filter<Schema> = {
   ]
 }
 
-const test4: Filter<SomeDoc> = {
+const test4: StrictFilter<SomeDoc> = {
   num1: '1',
   num2: { $in: [1, 2, '3'] },
   'obj.obj.num': '3',
@@ -147,12 +148,12 @@ const test4: Filter<SomeDoc> = {
   ]
 }
 
-const test5: Filter<Schema> = {
+const test5: StrictFilter<Schema> = {
   // @ts-expect-error - Invalid path
   'obj.obj.xyz': null!
 }
 
-const test6: Filter<ConvolutedSchema2> = {
+const test6: StrictFilter<ConvolutedSchema2> = {
   $or: [
     { numOrArray: { $in: [['1'], 2] } },
     { numOrArray: { $gte: 3 } },
@@ -160,7 +161,7 @@ const test6: Filter<ConvolutedSchema2> = {
   ]
 }
 
-const test7: Filter<any> = {
+const test7: StrictFilter<any> = {
   $and: [
     { $or: [] },
     { $not: { $and: [ { 'some_random_key': Symbol.for('123') } ] } },
@@ -168,7 +169,7 @@ const test7: Filter<any> = {
   '123123123': 123123,
 }
 
-const test8: Filter<any> = {
+const test8: StrictFilter<any> = {
   // @ts-expect-error - Invalid type
   $and: 3,
 }

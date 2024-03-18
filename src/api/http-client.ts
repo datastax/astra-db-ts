@@ -17,7 +17,7 @@ import { EJSON } from 'bson';
 import { DEFAULT_METHOD, DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, HTTP_METHODS, CLIENT_USER_AGENT } from '@/src/api/constants';
 import {
   APIResponse,
-  Caller,
+  Caller, HTTPClientCloneOptions,
   HTTPRequestInfo,
   HTTPRequestStrategy,
   InternalHTTPClientOptions
@@ -28,14 +28,14 @@ import { BaseOptions } from '@/src/client/types/common';
 import { DataAPIResponseError, mkRespErrorFromResponse } from '@/src/client/errors';
 
 export class HTTPClient {
-  baseUrl: string;
-  applicationToken: string;
-  logSkippedOptions: boolean;
-  keyspace?: string;
+  readonly baseUrl: string;
+  readonly requestStrategy: HTTPRequestStrategy;
+  readonly logSkippedOptions: boolean;
+  readonly usingHttp2: boolean;
+  readonly userAgent: string;
+  readonly #applicationToken: string;
   collection?: string;
-  requestStrategy: HTTPRequestStrategy;
-  usingHttp2: boolean;
-  userAgent: string;
+  namespace?: string;
 
   constructor(options: InternalHTTPClientOptions) {
     if (typeof window !== "undefined") {
@@ -50,16 +50,19 @@ export class HTTPClient {
       throw new Error("applicationToken required for initialization");
     }
 
+    this.#applicationToken = options.applicationToken;
     this.baseUrl = options.baseUrl;
-    this.applicationToken = options.applicationToken;
     this.logSkippedOptions = options.logSkippedOptions ?? false;
     this.collection = options.collectionName;
-    this.keyspace = options.keyspaceName || DEFAULT_NAMESPACE;
+    this.namespace = options.keyspaceName || DEFAULT_NAMESPACE;
     this.usingHttp2 = options.useHttp2 ?? true;
 
-    this.requestStrategy = (this.usingHttp2)
-      ? new HTTP2Strategy(this.baseUrl)
-      : new HTTP1Strategy;
+    this.requestStrategy =
+      (options.requestStrategy)
+        ? options.requestStrategy :
+      (this.usingHttp2)
+        ? new HTTP2Strategy(this.baseUrl)
+        : new HTTP1Strategy;
 
     if (options.logLevel) {
       setLevel(options.logLevel);
@@ -69,7 +72,10 @@ export class HTTPClient {
       this.baseUrl += '/' + options.baseApiPath;
     }
 
-    this.userAgent = buildUserAgent(CLIENT_USER_AGENT, options.caller);
+    this.userAgent = options.userAgent ?? buildUserAgent(CLIENT_USER_AGENT, options.caller);
+
+    this._request = this._request.bind(this);
+    this.withOptions = this.withOptions.bind(this);
   }
 
   close() {
@@ -80,8 +86,17 @@ export class HTTPClient {
     return this.requestStrategy.closed;
   }
 
-  cloneShallow(): HTTPClient {
-    return Object.assign(Object.create(Object.getPrototypeOf(this)), this);
+  withOptions(options?: HTTPClientCloneOptions): HTTPClient {
+    return new HTTPClient({
+      applicationToken: this.#applicationToken,
+      baseUrl: this.baseUrl,
+      collectionName: options?.collection ?? this.collection,
+      keyspaceName: options?.namespace ?? this.namespace,
+      useHttp2: this.usingHttp2,
+      logSkippedOptions: this.logSkippedOptions,
+      requestStrategy: this.requestStrategy,
+      userAgent: this.userAgent,
+    });
   }
 
   async executeCommand(command: Record<string, any>, options?: BaseOptions & { collection?: string }, optionsToRetain?: Set<string>) {
@@ -107,13 +122,13 @@ export class HTTPClient {
     try {
       info.collection ||= this.collection;
 
-      const keyspacePath = this.keyspace ? `/${this.keyspace}` : '';
+      const keyspacePath = this.namespace ? `/${this.namespace}` : '';
       const collectionPath = info.collection ? `/${info.collection}` : '';
       const url = info.url + keyspacePath + collectionPath;
 
       const response = await this.requestStrategy.request({
         url: url,
-        token: this.applicationToken,
+        token: this.#applicationToken,
         command: info.command,
         timeout: info.timeout || DEFAULT_TIMEOUT,
         method: info.method || DEFAULT_METHOD,
@@ -143,8 +158,6 @@ export class HTTPClient {
       if (e?.response?.data) {
         logger.error("Response Data: " + JSON.stringify(e.response.data));
       }
-
-      // return this._mkError(e.message ? e.message : 'Server call failed, please retry!');
 
       throw e;
     }
