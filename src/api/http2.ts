@@ -14,7 +14,6 @@
 
 import * as http2 from 'http2';
 import { HTTPRequestStrategy, InternalAPIResponse, InternalHTTPRequestInfo } from '@/src/api/types';
-import { serializeCommand } from '@/src/api/http-client';
 import { DataAPITimeout } from '@/src/client/errors';
 
 export class HTTP2Strategy implements HTTPRequestStrategy {
@@ -39,7 +38,7 @@ export class HTTP2Strategy implements HTTPRequestStrategy {
         this.session = this._reviveSession();
       }
 
-      const timer = setTimeout(() => reject(new DataAPITimeout(info.command, info.timeout)), info.timeout);
+      const timer = setTimeout(() => reject(new DataAPITimeout(info.data, info.timeout)), info.timeout);
 
       const path = info.url.replace(this.origin, '');
       const params = info.params ? `?${new URLSearchParams(info.params).toString()}` : '';
@@ -51,8 +50,8 @@ export class HTTP2Strategy implements HTTPRequestStrategy {
         'User-Agent': info.userAgent,
       });
 
-      if (info.command) {
-        req.write(serializeCommand(info.command), 'utf8');
+      if (info.data) {
+        req.write(info.serializer(info.data), 'utf8');
       }
       req.end();
 

@@ -39,7 +39,6 @@ axiosAgent.interceptors.request.use((config) => {
     logger.http(`--- request ${method?.toUpperCase()} ${url} ${serializeCommand(config.data, true,)}`,);
   }
 
-  config.data = serializeCommand(config.data);
   return config;
 });
 
@@ -55,7 +54,7 @@ export class HTTP1Strategy implements HTTPRequestStrategy {
     try {
       return await axiosAgent({
         url: info.url,
-        data: info.command,
+        data: info.serializer(info.data),
         params: info.params,
         method: info.method,
         timeout: info.timeout,
@@ -66,7 +65,7 @@ export class HTTP1Strategy implements HTTPRequestStrategy {
       });
     } catch (e: any) {
       if (e.code === 'ECONNABORTED') {
-        throw new DataAPITimeout(info.command, info.timeout);
+        throw new DataAPITimeout(info.data, info.timeout);
       }
       throw e;
     }

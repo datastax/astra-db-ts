@@ -34,8 +34,8 @@ export interface InternalHTTPClientOptions extends HTTPClientOptions {
 }
 
 export interface HTTPClientCloneOptions {
-  collection?: string;
-  namespace?: string;
+  baseUrl?: string;
+  baseApiPath?: string;
 }
 
 export interface APIResponse {
@@ -51,11 +51,12 @@ export interface InternalAPIResponse {
 
 export interface HTTPRequestInfo {
   url: string,
-  command: Record<string, unknown>,
+  data: Record<string, any>,
   params?: Record<string, string>,
   method?: HTTP_METHODS,
   timeout?: number,
   collection?: string,
+  serializer: (data: Record<string, any>) => unknown,
 }
 
 export interface InternalHTTPRequestInfo extends HTTPRequestInfo {

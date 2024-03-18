@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { HTTPClient } from '@/src/api';
 import { setDefaultIdForInsert, setDefaultIdForUpsert, takeWhile } from './utils';
 import { InsertOneCommand, InsertOneResult } from '@/src/client/types/insert/insert-one';
 import {
@@ -46,7 +45,7 @@ import {
 } from '@/src/client/types/find/find-one-replace';
 import { Filter } from '@/src/client/types/filter';
 import { UpdateFilter } from '@/src/client/types/update-filter';
-import { Flatten, FoundDoc, IdOf, NoId, WithId } from '@/src/client/types/utils';
+import { Flatten, FoundDoc, IdOf, Mutable, NoId, WithId } from '@/src/client/types/utils';
 import { SomeDoc } from '@/src/client/document';
 import { Db } from '@/src/client/db';
 import { FindCursor } from '@/src/client/cursor';
@@ -66,6 +65,8 @@ import {
   UpdateManyError
 } from '@/src/client/errors';
 import objectHash from 'object-hash';
+import { DataApiHttpClient } from '@/src/api/data-api-http-client';
+import { HTTPClient } from '@/src/api';
 
 /**
  * Represents the interface to a collection in the database.
@@ -90,15 +91,15 @@ import objectHash from 'object-hash';
  */
 export class Collection<Schema extends SomeDoc = SomeDoc> {
   private readonly _collectionName: string;
-  private readonly _httpClient: HTTPClient;
+  private readonly _httpClient: DataApiHttpClient;
   private readonly _db: Db
 
-  constructor(db: Db, httpClient: HTTPClient, name: string) {
+  constructor(db: Db, httpClient: DataApiHttpClient, name: string) {
     if (!name) {
       throw new Error('collection name is required');
     }
 
-    this._httpClient = httpClient.withOptions({ collection: name });
+    this._httpClient = HTTPClient.clone(httpClient, c => c.collection = name);
     this._collectionName = name;
     this._db = db;
   }
@@ -971,7 +972,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
 // -- Insert Many ------------------------------------------------------------------------------------------
 
-const insertManyOrdered = async <Schema>(httpClient: HTTPClient, documents: unknown[], chunkSize: number): Promise<IdOf<Schema>[]> => {
+const insertManyOrdered = async <Schema>(httpClient: DataApiHttpClient, documents: unknown[], chunkSize: number): Promise<IdOf<Schema>[]> => {
   const insertedIds: IdOf<Schema>[] = [];
 
   for (let i = 0, n = documents.length; i < n; i += chunkSize) {
@@ -994,7 +995,7 @@ const insertManyOrdered = async <Schema>(httpClient: HTTPClient, documents: unkn
   return insertedIds;
 }
 
-const insertManyUnordered = async <Schema>(httpClient: HTTPClient, documents: unknown[], parallel: number, chunkSize: number): Promise<IdOf<Schema>[]> => {
+const insertManyUnordered = async <Schema>(httpClient: DataApiHttpClient, documents: unknown[], parallel: number, chunkSize: number): Promise<IdOf<Schema>[]> => {
   const insertedIds: IdOf<Schema>[] = [];
   let masterIndex = 0;
 
@@ -1039,7 +1040,7 @@ const insertManyUnordered = async <Schema>(httpClient: HTTPClient, documents: un
   return insertedIds;
 }
 
-const insertMany = async <Schema>(httpClient: HTTPClient, documents: unknown[], ordered: boolean): Promise<IdOf<Schema>[]> => {
+const insertMany = async <Schema>(httpClient: DataApiHttpClient, documents: unknown[], ordered: boolean): Promise<IdOf<Schema>[]> => {
   const command: InsertManyCommand = {
     insertMany: {
       documents,
@@ -1053,7 +1054,7 @@ const insertMany = async <Schema>(httpClient: HTTPClient, documents: unknown[], 
 
 // -- Bulk Write ------------------------------------------------------------------------------------------
 
-const bulkWriteOrdered = async (httpClient: HTTPClient, operations: Record<string, any>[]): Promise<BulkWriteResult> => {
+const bulkWriteOrdered = async (httpClient: DataApiHttpClient, operations: Record<string, any>[]): Promise<BulkWriteResult> => {
   const results = new BulkWriteResult();
   let i = 0;
 
@@ -1078,7 +1079,7 @@ const bulkWriteOrdered = async (httpClient: HTTPClient, operations: Record<strin
   return results;
 }
 
-const bulkWriteUnordered = async (httpClient: HTTPClient, operations: Record<string, any>[], parallel: number): Promise<BulkWriteResult> => {
+const bulkWriteUnordered = async (httpClient: DataApiHttpClient, operations: Record<string, any>[], parallel: number): Promise<BulkWriteResult> => {
   const results = new BulkWriteResult();
   let masterIndex = 0;
 
@@ -1136,12 +1137,8 @@ const buildBulkWriteCommands = (operations: Record<string, any>): Record<string,
   }
 }
 
-type MutableBulkWriteResult = {
-  -readonly [K in keyof BulkWriteResult]: BulkWriteResult[K];
-}
-
 const addToBulkWriteResult = (result: BulkWriteResult, resp: Record<string, any>, i: number) => {
-  const asMutable = result as MutableBulkWriteResult;
+  const asMutable = result as Mutable<BulkWriteResult>;
 
   asMutable.insertedCount += resp.insertedIds?.length ?? 0;
   asMutable.modifiedCount += resp.modifiedCount ?? 0;

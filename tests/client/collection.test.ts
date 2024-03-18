@@ -3141,7 +3141,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
 
       const distinct4 = await collection.distinct('x.0.0');
       assert.deepStrictEqual(distinct4, ['ZERO']);
-    })
+    });
   });
 
   describe('admin operations', () => {

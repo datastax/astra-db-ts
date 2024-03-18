@@ -17,15 +17,15 @@ import { Client, Collection } from '@/src/client';
 import { Db } from '@/src/client/db';
 import { TEST_COLLECTION_NAME, testClient } from '@/tests/fixtures';
 import assert from 'assert';
-import { HTTPClient } from '@/src/api';
 import { FindCursor } from '@/src/client/cursor';
 import { CursorAlreadyInitializedError } from '@/src/client/errors';
+import { DataApiHttpClient } from '@/src/api/data-api-http-client';
 
 describe(`Astra TS Client - astra Connection - collections.cursor`, async () => {
   let astraClient: Client | null;
   let db: Db;
   let collection: Collection;
-  let httpClient: HTTPClient;
+  let httpClient: DataApiHttpClient;
 
   const add1 = (a: number) => a + 1;
   const mul2 = (a: number) => a * 2;

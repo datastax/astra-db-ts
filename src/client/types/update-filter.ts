@@ -20,15 +20,15 @@ import { SomeDoc } from '@/src/client/document';
 export interface UpdateFilter<Schema extends SomeDoc> {
   $set?: Partial<Schema> & SomeDoc,
   $setOnInsert?: Partial<Schema> & SomeDoc,
-  $min?: Partial<Schema> & SomeDoc,
-  $max?: Partial<Schema> & SomeDoc,
-  $mul?: NumberUpdate<Schema> & SomeDoc,
+  $min?: (NumberUpdate<Schema> | DateUpdate<Schema>) & Record<string, number | bigint | Date | { $date: number }>,
+  $max?: (NumberUpdate<Schema> | DateUpdate<Schema>) & Record<string, number | bigint | Date | { $date: number }>,
+  $mul?: StrictNumberUpdate<Schema> & Record<string, number>,
   $unset?: Record<string, ''>,
-  $inc?: NumberUpdate<Schema> & SomeDoc,
-  $push?: ArrayUpdate<Schema> & SomeDoc,
-  $pop?: ArrayUpdate<Schema> & SomeDoc,
+  $inc?: NumberUpdate<Schema> & Record<string, number>,
+  $push?: Push<Schema> & SomeDoc,
+  $pop?: Pop<Schema> & Record<string, number>,
   $rename?: Record<string, string>,
-  $currentDate?: CurrentDate<Schema> & SomeDoc,
+  $currentDate?: CurrentDate<Schema> & Record<string, boolean>,
   $addToSet?: ArrayUpdate<Schema> & SomeDoc,
 }
 
@@ -115,7 +115,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $inc?: NumberUpdate<InNotation>,
+  $inc?: StrictNumberUpdate<InNotation>,
   /**
    * Add an element to an array field in the document.
    *
@@ -128,7 +128,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $push?: Push<InNotation>,
+  $push?: StrictPush<InNotation>,
   /**
    * Remove an element from an array field in the document.
    *
@@ -141,7 +141,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $pop?: Pop<InNotation>,
+  $pop?: StrictPop<InNotation>,
   /**
    * Rename a field in the document.
    *
@@ -180,7 +180,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $min?: NumberUpdate<InNotation> | DateUpdate<InNotation>,
+  $min?: StrictNumberUpdate<InNotation> | StrictDateUpdate<InNotation>,
   /**
    * Only update the field if the specified value is greater than the existing value.
    *
@@ -193,7 +193,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $max?: NumberUpdate<InNotation> | DateUpdate<InNotation>,
+  $max?: StrictNumberUpdate<InNotation> | StrictDateUpdate<InNotation>,
   /**
    * Multiply the value of a field in the document.
    *
@@ -206,7 +206,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $mul?: NumberUpdate<InNotation>,
+  $mul?: StrictNumberUpdate<InNotation>,
   /**
    * Add an element to an array field in the document if it does not already exist.
    *
@@ -219,18 +219,29 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $addToSet?: Push<InNotation>,
+  $addToSet?: StrictPush<InNotation>,
 }
 
 type Unset<Schema> = {
   [K in keyof Schema]?: ''
 }
 
-type Pop<Schema> = ContainsArr<Schema> extends true ? {
+type Pop<Schema> ={
+  [K in keyof ArrayUpdate<Schema>]?: number
+}
+
+type StrictPop<Schema> = ContainsArr<Schema> extends true ? {
   [K in keyof ArrayUpdate<Schema>]?: number
 } : TypeErr<'Can not pop on a schema with no arrays'>
 
-type Push<Schema> = ContainsArr<Schema> extends true ? {
+type Push<Schema> = {
+  [K in keyof ArrayUpdate<Schema>]?: (
+    | ArrayUpdate<Schema>[K]
+    | { $each: ArrayUpdate<Schema>[K][], $position?: number }
+  )
+}
+
+type StrictPush<Schema> = ContainsArr<Schema> extends true ? {
   [K in keyof ArrayUpdate<Schema>]?: (
     | ArrayUpdate<Schema>[K]
     | { $each: ArrayUpdate<Schema>[K][], $position?: number }
@@ -241,11 +252,19 @@ type Rename<Schema> = {
   [K in keyof Schema]?: string
 }
 
-type NumberUpdate<Schema> = ContainsNum<Schema> extends true ? {
+type NumberUpdate<Schema> = {
+  [K in keyof Schema as IsNum<Schema[K]> extends true ? K : never]?: number | bigint
+}
+
+type StrictNumberUpdate<Schema> = ContainsNum<Schema> extends true ? {
   [K in keyof Schema as IsNum<Schema[K]> extends true ? K : never]?: number | bigint
 } : TypeErr<'Can not perform a number operation on a schema with no numbers'>;
 
-type DateUpdate<Schema> = ContainsDate<Schema> extends true ? {
+type DateUpdate<Schema> = {
+  [K in keyof Schema as ContainsDate<Schema[K]> extends true ? K : never]?: Date | { $date: number }
+};
+
+type StrictDateUpdate<Schema> = ContainsDate<Schema> extends true ? {
   [K in keyof Schema as ContainsDate<Schema[K]> extends true ? K : never]?: Date | { $date: number }
 } : TypeErr<'Can not perform a date operation on a schema with no dates'>;
 

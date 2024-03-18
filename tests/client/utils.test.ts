@@ -21,8 +21,8 @@ describe('Utils test', () => {
     const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
     const astraDb = new AstraDB('myToken', apiEndPoint);
     assert.strictEqual(
-      useHttpClient(astraDb).baseUrl + '/' + useHttpClient(astraDb).namespace,
-      'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/default_keyspace',
+      useHttpClient(astraDb).baseUrl,
+      'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1',
     );
   });
 
@@ -30,8 +30,8 @@ describe('Utils test', () => {
     const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
     const astraDb = new AstraDB('myToken', apiEndPoint, 'testks1');
     assert.strictEqual(
-      useHttpClient(astraDb).baseUrl + '/' + useHttpClient(astraDb).namespace,
-      'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1/testks1',
+      useHttpClient(astraDb).baseUrl,
+      'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1',
     );
   });
 
@@ -63,8 +63,8 @@ describe('Utils test', () => {
       baseApiPath: 'some/random/path',
     });
     assert.strictEqual(
-      useHttpClient(astraDb).baseUrl + '/' + useHttpClient(astraDb).namespace,
-      'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/some/random/path/ks',
+      useHttpClient(astraDb).baseUrl,
+      'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/some/random/path',
     );
     assert.strictEqual(useHttpClient(astraDb).usingHttp2, true);
   });

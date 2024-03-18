@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { HTTPClient } from '@/src/api';
 import {
   FindOptions,
   InternalFindOptions,
@@ -23,6 +22,7 @@ import { SomeDoc } from '@/src/client/document';
 import { Filter } from '@/src/client/types/filter';
 import { ProjectionOption, SortOption } from '@/src/client/types/common';
 import { CursorAlreadyInitializedError } from '@/src/client/errors';
+import { DataApiHttpClient } from '@/src/api/data-api-http-client';
 
 /** @internal */
 const enum CursorStatus {
@@ -75,7 +75,7 @@ const enum CursorStatus {
  */
 export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   private readonly _namespace: string;
-  private readonly _httpClient: HTTPClient;
+  private readonly _httpClient: DataApiHttpClient;
   private readonly _options: FindOptions<SomeDoc, boolean>;
   private _filter: Filter<SomeDoc>;
   private _mapping?: (doc: unknown) => T;
@@ -84,7 +84,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   private _nextPageState?: string | null;
   private _state = CursorStatus.Uninitialized;
 
-  constructor(namespace: string, httpClient: HTTPClient, filter: Filter<SomeDoc>, options?: FindOptions<SomeDoc, boolean>) {
+  constructor(namespace: string, httpClient: DataApiHttpClient, filter: Filter<SomeDoc>, options?: FindOptions<SomeDoc, boolean>) {
     this._namespace = namespace;
     this._httpClient = httpClient;
     this._filter = filter;

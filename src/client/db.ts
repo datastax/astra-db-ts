@@ -27,6 +27,7 @@ import {
   ListCollectionsOptions
 } from '@/src/client/types/collections/list-collection';
 import { BaseOptions } from '@/src/client/types/common';
+import { DataApiHttpClient } from '@/src/api/data-api-http-client';
 
 /**
  * Represents an interface to some Astra database instance.
@@ -39,15 +40,15 @@ import { BaseOptions } from '@/src/client/types/common';
  * ```
  */
 export class Db {
-  private readonly _httpClient: HTTPClient;
+  private readonly _httpClient: DataApiHttpClient;
   private readonly _namespace: string;
 
-  constructor(httpClient: HTTPClient, name: string) {
+  constructor(httpClient: DataApiHttpClient, name: string) {
     if (!name) {
       throw new Error("Db: name is required");
     }
 
-    this._httpClient = httpClient.withOptions({ namespace: name });
+    this._httpClient = HTTPClient.clone(httpClient, c => c.namespace = name);
     this._namespace = name;
   }
 

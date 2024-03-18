@@ -12,20 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { logger, setLevel } from '@/src/logger';
+import { setLevel } from '@/src/logger';
 import { EJSON } from 'bson';
-import { DEFAULT_METHOD, DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, HTTP_METHODS, CLIENT_USER_AGENT } from '@/src/api/constants';
+import { CLIENT_USER_AGENT, DEFAULT_METHOD, DEFAULT_TIMEOUT } from '@/src/api/constants';
 import {
-  APIResponse,
-  Caller, HTTPClientCloneOptions,
+  Caller,
   HTTPRequestInfo,
   HTTPRequestStrategy,
+  InternalAPIResponse,
   InternalHTTPClientOptions
 } from '@/src/api/types';
 import { HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
-import { BaseOptions } from '@/src/client/types/common';
-import { DataAPIResponseError, mkRespErrorFromResponse } from '@/src/client/errors';
+import { Mutable } from '@/src/client/types/utils';
+
+const applicationTokenKey = Symbol('applicationToken');
 
 export class HTTPClient {
   readonly baseUrl: string;
@@ -33,9 +34,7 @@ export class HTTPClient {
   readonly logSkippedOptions: boolean;
   readonly usingHttp2: boolean;
   readonly userAgent: string;
-  readonly #applicationToken: string;
-  collection?: string;
-  namespace?: string;
+  private [applicationTokenKey]!: string;
 
   constructor(options: InternalHTTPClientOptions) {
     if (typeof window !== "undefined") {
@@ -50,19 +49,23 @@ export class HTTPClient {
       throw new Error("applicationToken required for initialization");
     }
 
-    this.#applicationToken = options.applicationToken;
+    Object.defineProperty(this, applicationTokenKey, {
+      value: options.applicationToken,
+      enumerable: false, // Not included in Object.keys() or for...in loops
+      writable: true, // Allow modifications
+      configurable: false // Prevent redefinition
+    });
+
     this.baseUrl = options.baseUrl;
     this.logSkippedOptions = options.logSkippedOptions ?? false;
-    this.collection = options.collectionName;
-    this.namespace = options.keyspaceName || DEFAULT_NAMESPACE;
     this.usingHttp2 = options.useHttp2 ?? true;
 
     this.requestStrategy =
       (options.requestStrategy)
         ? options.requestStrategy :
-      (this.usingHttp2)
-        ? new HTTP2Strategy(this.baseUrl)
-        : new HTTP1Strategy;
+        (this.usingHttp2)
+          ? new HTTP2Strategy(this.baseUrl)
+          : new HTTP1Strategy;
 
     if (options.logLevel) {
       setLevel(options.logLevel);
@@ -73,9 +76,6 @@ export class HTTPClient {
     }
 
     this.userAgent = options.userAgent ?? buildUserAgent(CLIENT_USER_AGENT, options.caller);
-
-    this._request = this._request.bind(this);
-    this.withOptions = this.withOptions.bind(this);
   }
 
   close() {
@@ -86,106 +86,33 @@ export class HTTPClient {
     return this.requestStrategy.closed;
   }
 
-  withOptions(options?: HTTPClientCloneOptions): HTTPClient {
-    return new HTTPClient({
-      applicationToken: this.#applicationToken,
-      baseUrl: this.baseUrl,
-      collectionName: options?.collection ?? this.collection,
-      keyspaceName: options?.namespace ?? this.namespace,
-      useHttp2: this.usingHttp2,
-      logSkippedOptions: this.logSkippedOptions,
-      requestStrategy: this.requestStrategy,
+  static clone<C extends HTTPClient>(client: C, initialize: (client: Mutable<C>) => void): C {
+    const clone = Object.create(Object.getPrototypeOf(client), Object.getOwnPropertyDescriptors(client)) as C;
+    clone._copyToken(client);
+    initialize(clone);
+    return clone;
+  }
+
+  protected async _request (info: HTTPRequestInfo): Promise<InternalAPIResponse> {
+    return await this.requestStrategy.request({
+      url: info.url,
+      data: info.data,
+      timeout: info.timeout || DEFAULT_TIMEOUT,
+      method: info.method || DEFAULT_METHOD,
+      params: info.params ?? {},
+      token: this[applicationTokenKey],
       userAgent: this.userAgent,
+      serializer: info.serializer,
     });
   }
 
-  async executeCommand(command: Record<string, any>, options?: BaseOptions & { collection?: string }, optionsToRetain?: Set<string>) {
-    const commandName = Object.keys(command)[0];
-
-    if (command[commandName].options && optionsToRetain) {
-      command[commandName].options = cleanupOptions(command, commandName, optionsToRetain, this.logSkippedOptions);
-    }
-
-    const response = await this._request({
-      url: this.baseUrl,
-      method: HTTP_METHODS.post,
-      timeout: options?.maxTimeMS ?? DEFAULT_TIMEOUT,
-      collection: options?.collection,
-      command: command,
-    });
-
-    handleIfErrorResponse(response, command);
-    return response;
-  }
-
-  private async _request(info: HTTPRequestInfo): Promise<APIResponse> {
-    try {
-      info.collection ||= this.collection;
-
-      const keyspacePath = this.namespace ? `/${this.namespace}` : '';
-      const collectionPath = info.collection ? `/${info.collection}` : '';
-      const url = info.url + keyspacePath + collectionPath;
-
-      const response = await this.requestStrategy.request({
-        url: url,
-        token: this.#applicationToken,
-        command: info.command,
-        timeout: info.timeout || DEFAULT_TIMEOUT,
-        method: info.method || DEFAULT_METHOD,
-        params: info.params ?? {},
-        userAgent: this.userAgent,
-      });
-
-      if (response.status === 401 || (response.data?.errors?.length > 0 && response.data?.errors[0]?.message === "UNAUTHENTICATED: Invalid token")) {
-        return this._mkError("Authentication failed; is your token valid?");
-      }
-
-      if (response.status === 200) {
-        return {
-          status: response.data?.status,
-          data: deserialize(response.data?.data),
-          errors: response.data?.errors,
-        };
-      } else {
-        logger.error(info.url + ": " + response.status);
-        logger.error("Data: " + JSON.stringify(info.command));
-        return this._mkError();
-      }
-    } catch (e: any) {
-      logger.error(info.url + ": " + e.message);
-      logger.error("Data: " + JSON.stringify(info.command));
-
-      if (e?.response?.data) {
-        logger.error("Response Data: " + JSON.stringify(e.response.data));
-      }
-
-      throw e;
-    }
-  }
-
-  private _mkError(message?: string): APIResponse {
-    return (message)
-      ? { errors: [{ message }] }
-      : {};
-  }
-}
-
-export function handleIfErrorResponse(response: any, command: Record<string, any>) {
-  if (response.errors && response.errors.length > 0) {
-    throw mkRespErrorFromResponse(DataAPIResponseError, command, response);
+  private _copyToken(other: HTTPClient) {
+    this[applicationTokenKey] = other[applicationTokenKey];
   }
 }
 
 export function serializeCommand(data: Record<string, any>, pretty?: boolean): string {
-  return EJSON.stringify(
-    data,
-    (_: unknown, value: any) => handleValues(value),
-    pretty ? "  " : "",
-  );
-}
-
-function deserialize(data?: Record<string, any> | null): Record<string, any> {
-  return data ? EJSON.deserialize(data) : data;
+  return EJSON.stringify(data, (_: unknown, value: any) => handleValues(value), pretty ? "  " : "");
 }
 
 function handleValues(value: any): any {
@@ -215,34 +142,13 @@ function handleValues(value: any): any {
   return value;
 }
 
-function cleanupOptions(data: Record<string, any>, commandName: string, optionsToRetain: Set<string>, logSkippedOptions: boolean) {
-  const command = data[commandName];
-
-  if (!command.options) {
-    return undefined;
-  }
-
-  const options = { ...command.options };
-
-  Object.keys(options).forEach((key) => {
-    if (!optionsToRetain.has(key)) {
-      if (logSkippedOptions) {
-        logger.warn(`'${commandName}' does not support option '${key}'`);
-      }
-      delete options[key];
-    }
-  });
-
-  return options;
-}
-
 function buildUserAgent(client: string, caller?: Caller | Caller[]): string {
   const callers = (
     (!caller)
       ? [] :
-    Array.isArray(caller[0])
-      ? caller
-      : [caller]
+      Array.isArray(caller[0])
+        ? caller
+        : [caller]
   ) as Caller[];
 
   const callerString = callers.map((c) => {

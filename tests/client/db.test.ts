@@ -18,12 +18,12 @@ import { Client } from '@/src/client/client';
 import { parseUri } from '@/src/client/utils';
 import { TEST_COLLECTION_NAME, testClient, useHttpClient } from '@/tests/fixtures';
 import { randAlphaNumeric } from '@ngneat/falso';
-import { HTTPClient } from '@/src/api';
+import { DataApiHttpClient } from '@/src/api/data-api-http-client';
 
 describe('Astra TS Client - collections.Db', async () => {
   let astraClient: Client | null;
   let dbUri: string;
-  let httpClient: HTTPClient;
+  let httpClient: DataApiHttpClient;
 
   before(async function () {
     if (testClient == null) {

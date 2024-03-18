@@ -14,14 +14,15 @@
 
 import { Db } from './db';
 import { parseUri } from './utils';
-import { APIResponse, HTTPClient, HTTPClientOptions } from '@/src/api';
+import { APIResponse, HTTPClientOptions } from '@/src/api';
 import { Collection } from './collection';
 import { SomeDoc } from '@/src/client/document';
 import { CollectionInfo } from '@/src/client/types/collections/list-collection';
 import { CreateCollectionOptions } from '@/src/client/types/collections/create-collection';
+import { DataApiHttpClient } from '@/src/api/data-api-http-client';
 
 export class Client implements Disposable {
-  private readonly _httpClient: HTTPClient;
+  private readonly _httpClient: DataApiHttpClient;
   private readonly _namespace: string;
   private readonly _db: Db;
 
@@ -32,7 +33,7 @@ export class Client implements Disposable {
       throw new Error('Application Token is required');
     }
 
-    this._httpClient = new HTTPClient({
+    this._httpClient = new DataApiHttpClient({
       baseUrl: baseUrl,
       keyspaceName: namespace,
       ...options,
