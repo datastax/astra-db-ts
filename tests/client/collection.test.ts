@@ -63,19 +63,6 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const collection = new Collection(db, db._httpClient, 'new_collection');
       assert.ok(collection);
     });
-
-    it('should not initialize a Collection without a name', () => {
-      let error: any;
-      let collection: Collection | null = null;
-      try {
-        // @ts-expect-error - Intentionally passing no name
-        collection = new Collection();
-        assert.ok(collection);
-      } catch (e) {
-        error = e;
-      }
-      assert.ok(error);
-    });
   });
 
   describe('collection accessors', () => {

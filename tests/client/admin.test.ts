@@ -11,19 +11,30 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// noinspection DuplicatedCode
 
-import { LIB_NAME, LIB_VERSION } from '@/src/version';
+import { Client } from '@/src/client';
+import { Db } from '@/src/client/db';
+import { testClient } from '@/tests/fixtures';
+import { Admin } from '@/src/client/admin';
 
-export const CLIENT_USER_AGENT = LIB_NAME + '/' + LIB_VERSION;
+describe('Admin test', () => {
+  let astraClient: Client | null;
+  let db: Db;
+  let _admin: Admin;
 
-export const enum HTTP_METHODS {
-  get = 'GET',
-  post = 'POST',
-}
+  before(async function() {
+    if (testClient == null) {
+      return this.skip();
+    }
 
-export const DEFAULT_NAMESPACE = 'default_keyspace';
-export const DEFAULT_METHOD = HTTP_METHODS.get;
-export const DEFAULT_TIMEOUT = 30000;
+    astraClient = await testClient.new();
 
-export const DEFAULT_DATA_API_AUTH_HEADER = 'Token';
-export const DEFAULT_DEVOPS_API_AUTH_HEADER = 'Authorization';
+    if (astraClient === null) {
+      return this.skip();
+    }
+
+    db = astraClient.db();
+    _admin = db.admin();
+  });
+});

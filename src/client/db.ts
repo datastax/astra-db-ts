@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { APIResponse, HTTPClient } from '@/src/api';
+import { APIResponse, HttpClient } from '@/src/api';
 import { Collection } from './collection';
 import {
   CreateCollectionCommand,
@@ -28,6 +28,7 @@ import {
 } from '@/src/client/types/collections/list-collection';
 import { BaseOptions } from '@/src/client/types/common';
 import { DataApiHttpClient } from '@/src/api/data-api-http-client';
+import { Admin } from '@/src/client/admin';
 
 /**
  * Represents an interface to some Astra database instance.
@@ -43,12 +44,8 @@ export class Db {
   private readonly _httpClient: DataApiHttpClient;
   private readonly _namespace: string;
 
-  constructor(httpClient: DataApiHttpClient, name: string) {
-    if (!name) {
-      throw new Error("Db: name is required");
-    }
-
-    this._httpClient = HTTPClient.clone(httpClient, c => c.namespace = name);
+  constructor(httpClient: HttpClient, name: string) {
+    this._httpClient = httpClient.cloneInto(DataApiHttpClient, c => c.namespace = name);
     this._namespace = name;
   }
 
@@ -57,6 +54,10 @@ export class Db {
    */
   get namespace(): string {
     return this._namespace;
+  }
+
+  admin(): Admin {
+    return new Admin(this._httpClient);
   }
 
   /**

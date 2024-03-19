@@ -66,7 +66,6 @@ import {
 } from '@/src/client/errors';
 import objectHash from 'object-hash';
 import { DataApiHttpClient } from '@/src/api/data-api-http-client';
-import { HTTPClient } from '@/src/api';
 
 /**
  * Represents the interface to a collection in the database.
@@ -95,11 +94,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   private readonly _db: Db
 
   constructor(db: Db, httpClient: DataApiHttpClient, name: string) {
-    if (!name) {
-      throw new Error('collection name is required');
-    }
-
-    this._httpClient = HTTPClient.clone(httpClient, c => c.collection = name);
+    this._httpClient = httpClient.cloneInto(DataApiHttpClient, c => c.collection = name);
     this._collectionName = name;
     this._db = db;
   }

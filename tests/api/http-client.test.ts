@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import assert from "assert";
-import { HTTPClient } from "@/src/api/http-client";
+import { HttpClient } from "@/src/api/http-client";
 import { CLIENT_USER_AGENT } from '@/src/api/constants';
 
 describe("Astra TS Client - client.HTTPClient", () => {
@@ -24,7 +24,7 @@ describe("Astra TS Client - client.HTTPClient", () => {
         // @ts-expect-error - Testing in browser environment
         window = true;
         // @ts-expect-error - Testing in browser environment
-        const client = new HTTPClient();
+        const client = new HttpClient();
         assert.ok(client);
       } catch (e) {
         error = e;
@@ -35,7 +35,7 @@ describe("Astra TS Client - client.HTTPClient", () => {
       let error: any;
       try {
         // @ts-expect-error - Testing without required args
-        const client = new HTTPClient({});
+        const client = new HttpClient({});
         assert.ok(client);
       } catch (e) {
         error = e;
@@ -46,7 +46,7 @@ describe("Astra TS Client - client.HTTPClient", () => {
       let error: any;
       try {
         // @ts-expect-error - Testing without required args
-        const client = new HTTPClient({});
+        const client = new HttpClient({});
         assert.ok(client);
       } catch (e) {
         error = e;
@@ -57,7 +57,7 @@ describe("Astra TS Client - client.HTTPClient", () => {
 
   describe('Caller tests', () => {
     it('Should use REQUESTED_WITH as the default user agent', () => {
-      const client = new HTTPClient({
+      const client = new HttpClient({
         applicationToken: 'token',
         baseUrl: 'http://localhost:8080',
       });
@@ -66,7 +66,7 @@ describe("Astra TS Client - client.HTTPClient", () => {
     });
 
     it('Should use the provided user agent', () => {
-      const client = new HTTPClient({
+      const client = new HttpClient({
         applicationToken: 'token',
         baseUrl: 'http://localhost:8080',
         caller: ['my-app', '1.0.0']
@@ -76,7 +76,7 @@ describe("Astra TS Client - client.HTTPClient", () => {
     });
 
     it('Should use the provided user agents', () => {
-      const client = new HTTPClient({
+      const client = new HttpClient({
         applicationToken: 'token',
         baseUrl: 'http://localhost:8080',
         caller: [['my-app', '1.0.0'], ['my-other-app']]

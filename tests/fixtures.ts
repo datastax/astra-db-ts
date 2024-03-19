@@ -111,8 +111,3 @@ export const testClient =
       uri: process.env.ASTRA_URI,
     }
     : null
-
-// For testing purposes only
-export const useHttpClient = (client: Client) => {
-  return client['_httpClient'];
-}

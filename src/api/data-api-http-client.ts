@@ -1,7 +1,7 @@
-import { HTTPClient, serializeCommand } from '@/src/api/http-client';
+import { HttpClient, serializeCommand } from '@/src/api/http-client';
 import { BaseOptions } from '@/src/client/types/common';
 import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, HTTP_METHODS } from '@/src/api/constants';
-import { DataAPIResponseError, mkRespErrorFromResponse } from '@/src/client/errors';
+import { DataAPIResponseError, DataAPITimeout, mkRespErrorFromResponse } from '@/src/client/errors';
 import { logger } from '@/src/logger';
 import { APIResponse } from '@/src/api/types';
 import { EJSON } from 'bson';
@@ -13,7 +13,7 @@ interface DataApiRequestInfo {
   command: Record<string, any>;
 }
 
-export class DataApiHttpClient extends HTTPClient {
+export class DataApiHttpClient extends HttpClient {
   collection?: string;
   namespace?: string;
 
@@ -26,7 +26,7 @@ export class DataApiHttpClient extends HTTPClient {
 
     const response = await this._requestDataApi({
       url: this.baseUrl,
-      timeout: options?.maxTimeMS ?? DEFAULT_TIMEOUT,
+      timeout: options?.maxTimeMS,
       collection: options?.collection,
       command: command,
     });
@@ -45,10 +45,10 @@ export class DataApiHttpClient extends HTTPClient {
 
       const response = await this._request({
         url: url,
-        data: info.command,
-        timeout: info.timeout || DEFAULT_TIMEOUT,
+        data: serializeCommand(info.command),
+        timeout: info.timeout,
         method: HTTP_METHODS.post,
-        serializer: serializeCommand,
+        timeoutError: new DataAPITimeout(info.command, info.timeout || DEFAULT_TIMEOUT),
       });
 
       if (response.status === 401 || (response.data?.errors?.length > 0 && response.data?.errors[0]?.message === "UNAUTHENTICATED: Invalid token")) {

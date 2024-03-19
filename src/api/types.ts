@@ -27,8 +27,6 @@ export interface HTTPClientOptions {
 
 export interface InternalHTTPClientOptions extends HTTPClientOptions {
   baseUrl: string;
-  keyspaceName?: string;
-  collectionName?: string;
   requestStrategy?: HTTPRequestStrategy;
   userAgent?: string;
 }
@@ -46,17 +44,17 @@ export interface APIResponse {
 
 export interface InternalAPIResponse {
   data?: Record<string, any>,
+  headers: Record<string, string>,
   status: number,
 }
 
 export interface HTTPRequestInfo {
   url: string,
-  data: Record<string, any>,
+  data?: unknown,
   params?: Record<string, string>,
   method?: HTTP_METHODS,
   timeout?: number,
-  collection?: string,
-  serializer: (data: Record<string, any>) => unknown,
+  timeoutError: Error,
 }
 
 export interface InternalHTTPRequestInfo extends HTTPRequestInfo {

@@ -14,7 +14,6 @@
 
 import * as http2 from 'http2';
 import { HTTPRequestStrategy, InternalAPIResponse, InternalHTTPRequestInfo } from '@/src/api/types';
-import { DataAPITimeout } from '@/src/client/errors';
 
 export class HTTP2Strategy implements HTTPRequestStrategy {
   origin: string;
@@ -38,7 +37,7 @@ export class HTTP2Strategy implements HTTPRequestStrategy {
         this.session = this._reviveSession();
       }
 
-      const timer = setTimeout(() => reject(new DataAPITimeout(info.data, info.timeout)), info.timeout);
+      const timer = setTimeout(() => reject(info.timeoutError), info.timeout);
 
       const path = info.url.replace(this.origin, '');
       const params = info.params ? `?${new URLSearchParams(info.params).toString()}` : '';
@@ -51,14 +50,16 @@ export class HTTP2Strategy implements HTTPRequestStrategy {
       });
 
       if (info.data) {
-        req.write(info.serializer(info.data), 'utf8');
+        req.write(info.data, 'utf8');
       }
       req.end();
 
       let status = 0;
+      let headers = {};
       req.on('response', (data) => {
         clearTimeout(timer);
         status = data[':status'] ?? 0;
+        headers = data;
       });
 
       req.on('error', (error: Error) => {
@@ -78,7 +79,7 @@ export class HTTP2Strategy implements HTTPRequestStrategy {
 
         try {
           const data = JSON.parse(responseBody);
-          resolve({ status, data });
+          resolve({ data, status, headers });
         } catch (error) {
           reject(new Error('Unable to parse response as JSON, got: "' + responseBody + '"'));
         }

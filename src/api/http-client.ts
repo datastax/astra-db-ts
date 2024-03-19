@@ -22,17 +22,16 @@ import {
   InternalAPIResponse,
   InternalHTTPClientOptions
 } from '@/src/api/types';
-import { HTTP1Strategy } from '@/src/api/http1';
+import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
 import { Mutable } from '@/src/client/types/utils';
 
 const applicationTokenKey = Symbol('applicationToken');
 
-export class HTTPClient {
+export class HttpClient {
   readonly baseUrl: string;
   readonly requestStrategy: HTTPRequestStrategy;
   readonly logSkippedOptions: boolean;
-  readonly usingHttp2: boolean;
   readonly userAgent: string;
   private [applicationTokenKey]!: string;
 
@@ -51,21 +50,19 @@ export class HTTPClient {
 
     Object.defineProperty(this, applicationTokenKey, {
       value: options.applicationToken,
-      enumerable: false, // Not included in Object.keys() or for...in loops
-      writable: true, // Allow modifications
-      configurable: false // Prevent redefinition
+      enumerable: false,
+      writable: true,
     });
 
     this.baseUrl = options.baseUrl;
     this.logSkippedOptions = options.logSkippedOptions ?? false;
-    this.usingHttp2 = options.useHttp2 ?? true;
 
     this.requestStrategy =
       (options.requestStrategy)
         ? options.requestStrategy :
-        (this.usingHttp2)
-          ? new HTTP2Strategy(this.baseUrl)
-          : new HTTP1Strategy;
+      (options.useHttp2 !== false)
+        ? new HTTP2Strategy(this.baseUrl)
+        : new HTTP1Strategy(HTTP1AuthHeaderFactories.DataApi);
 
     if (options.logLevel) {
       setLevel(options.logLevel);
@@ -86,14 +83,23 @@ export class HTTPClient {
     return this.requestStrategy.closed;
   }
 
-  static clone<C extends HTTPClient>(client: C, initialize: (client: Mutable<C>) => void): C {
-    const clone = Object.create(Object.getPrototypeOf(client), Object.getOwnPropertyDescriptors(client)) as C;
-    clone._copyToken(client);
+  isUsingHttp2(): boolean {
+    return this.requestStrategy instanceof HTTP2Strategy;
+  }
+
+  cloneInto<C extends HttpClient>(cons: new (opts: InternalHTTPClientOptions) => C, initialize: (client: Mutable<C>) => void): C {
+    const clone = new cons({
+      baseUrl: this.baseUrl,
+      applicationToken: this[applicationTokenKey],
+      logSkippedOptions: this.logSkippedOptions,
+      requestStrategy: this.requestStrategy,
+      userAgent: this.userAgent,
+    });
     initialize(clone);
     return clone;
   }
 
-  protected async _request (info: HTTPRequestInfo): Promise<InternalAPIResponse> {
+  protected async _request(info: HTTPRequestInfo): Promise<InternalAPIResponse> {
     return await this.requestStrategy.request({
       url: info.url,
       data: info.data,
@@ -102,12 +108,8 @@ export class HTTPClient {
       params: info.params ?? {},
       token: this[applicationTokenKey],
       userAgent: this.userAgent,
-      serializer: info.serializer,
+      timeoutError: info.timeoutError,
     });
-  }
-
-  private _copyToken(other: HTTPClient) {
-    this[applicationTokenKey] = other[applicationTokenKey];
   }
 }
 
@@ -146,9 +148,9 @@ function buildUserAgent(client: string, caller?: Caller | Caller[]): string {
   const callers = (
     (!caller)
       ? [] :
-      Array.isArray(caller[0])
-        ? caller
-        : [caller]
+    Array.isArray(caller[0])
+      ? caller
+      : [caller]
   ) as Caller[];
 
   const callerString = callers.map((c) => {

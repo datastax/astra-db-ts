@@ -3,6 +3,7 @@ import { DeleteManyResult } from '@/src/client/types/delete/delete-many';
 import { UpdateManyResult } from '@/src/client/types/update/update-many';
 import { BulkWriteResult } from '@/src/client/types/misc/bulk-write';
 import { APIResponse } from '@/src/api';
+import { AxiosError } from 'axios';
 
 /**
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a
@@ -111,7 +112,28 @@ export abstract class DataAPIError extends Error {}
 export class DataAPITimeout extends DataAPIError {
   constructor(readonly command: Record<string, any>, readonly timeout: number) {
     super(`Command timed out after ${timeout}ms`);
-    this.name = "DataAPITimeout";
+    this.name = 'DataAPITimeout';
+  }
+}
+
+export class DevopsAPITimeout extends DataAPIError {
+  constructor(readonly url: string, readonly timeout: number) {
+    super(`Command timed out after ${timeout}ms`);
+    this.name = 'DevopsAPITimeout';
+  }
+}
+
+export class DevopsApiError extends Error {
+  readonly errors: Record<string, any>[];
+  readonly raw: AxiosError;
+  readonly status: number;
+
+  constructor(error: AxiosError) {
+    super(error.message);
+    this.errors = (<any>error.response)?.data.errors;
+    this.status = (<any>error.response)?.status;
+    this.raw = error
+    this.name = 'DevopsApiError';
   }
 }
 

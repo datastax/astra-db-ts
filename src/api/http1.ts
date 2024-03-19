@@ -14,16 +14,14 @@
 
 import { HTTPRequestStrategy, InternalAPIResponse, InternalHTTPRequestInfo } from '@/src/api/types';
 import axios from 'axios';
-import { DEFAULT_AUTH_HEADER, DEFAULT_TIMEOUT } from '@/src/api/constants';
+import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DEVOPS_API_AUTH_HEADER, DEFAULT_TIMEOUT } from '@/src/api/constants';
 import http from 'http';
 import { logger } from '@/src/logger';
 import { serializeCommand } from '@/src/api/http-client';
-import { DataAPITimeout } from '@/src/client/errors';
 
 const axiosAgent = axios.create({
   headers: {
     'Accepts': 'application/json',
-    'Content-Type': 'application/json',
   },
   // keepAlive pools and reuses TCP connections
   httpAgent: new http.Agent({
@@ -49,23 +47,38 @@ axiosAgent.interceptors.response.use((response) => {
   return response;
 });
 
+export const HTTP1AuthHeaderFactories = {
+  DataApi(token: string) {
+    return { [DEFAULT_DATA_API_AUTH_HEADER]: token };
+  },
+  DevopsApi(token: string) {
+    return { [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` };
+  },
+}
+
 export class HTTP1Strategy implements HTTPRequestStrategy {
+  readonly authHeaderFactory: (token: string) => Record<string, string>;
+
+  constructor(authHeaderFactory: (token: string) => Record<string, string>) {
+    this.authHeaderFactory = authHeaderFactory;
+  }
+
   async request(info: InternalHTTPRequestInfo): Promise<InternalAPIResponse> {
     try {
       return await axiosAgent({
         url: info.url,
-        data: info.serializer(info.data),
+        data: info.data,
         params: info.params,
         method: info.method,
         timeout: info.timeout,
         headers: {
-          [DEFAULT_AUTH_HEADER]: info.token,
+          ...this.authHeaderFactory(info.token),
           'User-Agent': info.userAgent,
         },
       });
     } catch (e: any) {
       if (e.code === 'ECONNABORTED') {
-        throw new DataAPITimeout(info.data, info.timeout);
+        throw info.timeoutError;
       }
       throw e;
     }

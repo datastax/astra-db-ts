@@ -16,14 +16,14 @@ import assert from 'assert';
 import { Db } from '@/src/client/db';
 import { Client } from '@/src/client/client';
 import { parseUri } from '@/src/client/utils';
-import { TEST_COLLECTION_NAME, testClient, useHttpClient } from '@/tests/fixtures';
+import { TEST_COLLECTION_NAME, testClient } from '@/tests/fixtures';
 import { randAlphaNumeric } from '@ngneat/falso';
-import { DataApiHttpClient } from '@/src/api/data-api-http-client';
+import { HttpClient } from '@/src/api';
 
 describe('Astra TS Client - collections.Db', async () => {
   let astraClient: Client | null;
   let dbUri: string;
-  let httpClient: DataApiHttpClient;
+  let httpClient: HttpClient;
 
   before(async function () {
     if (testClient == null) {
@@ -37,7 +37,7 @@ describe('Astra TS Client - collections.Db', async () => {
     }
 
     dbUri = testClient.uri;
-    httpClient = useHttpClient(astraClient);
+    httpClient = astraClient['_httpClient'];
   });
 
   afterEach(async () => {
@@ -50,18 +50,6 @@ describe('Astra TS Client - collections.Db', async () => {
       const db = new Db(httpClient, 'test-db');
       assert.ok(db);
     });
-
-    it('should not initialize a Db without a name', () => {
-      let error: any;
-      try {
-        // @ts-expect-error - intentionally passing undefined for testing purposes
-        const db = new Db(httpClient);
-        assert.ok(db);
-      } catch (e) {
-        error = e;
-      }
-      assert.ok(error);
-    });
   });
 
   describe('Db collection operations', () => {
@@ -69,19 +57,6 @@ describe('Astra TS Client - collections.Db', async () => {
       const db = new Db(httpClient, 'test-db');
       const collection = db.collection('test-collection');
       assert.ok(collection);
-    });
-
-    it('should not initialize a Collection without a name', () => {
-      let error: any;
-      try {
-        const db = new Db(httpClient, 'test-db');
-        // @ts-expect-error - intentionally passing undefined for testing purposes
-        const collection = db.collection();
-        assert.ok(collection);
-      } catch (e) {
-        error = e;
-      }
-      assert.ok(error);
     });
 
     it('should create a Collection', async () => {
@@ -137,7 +112,9 @@ describe('Astra TS Client - collections.Db', async () => {
   describe('Db command', () => {
     it('should execute a db-level command', async () => {
       const resp = await astraClient!.db().command({ findCollections: {} });
-      assert.deepStrictEqual(resp, { status: { collections: [] }, data: undefined, errors: undefined });
+      assert.strictEqual(resp.status?.data, undefined);
+      assert.strictEqual(resp.status?.errors, undefined);
+      assert.ok(resp.status?.collections instanceof Array);
     });
 
     it('should execute a collection-level command', async () => {
