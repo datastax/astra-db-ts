@@ -19,10 +19,10 @@ import {
   CreateDatabaseOptions,
   DatabaseConfig
 } from '@/src/client/types';
-import { AstraDB, DevopsApiResponseError, DevopsUnexpectedStateError, replaceAstraUrlIdAndRegion } from '@/src/client';
-import { AxiosError } from 'axios';
+import { AstraDB, DevopsUnexpectedStateError, replaceAstraUrlIdAndRegion } from '@/src/client';
 import { FullDatabaseInfo } from '@/src/client/types/admin/database-info';
 import { ListDatabasesOptions } from '@/src/client/types/admin/list-databases';
+import { ObjectId } from 'bson';
 
 export class Admin {
   private readonly _rootHttpClient: HttpClient;
@@ -39,41 +39,26 @@ export class Admin {
   }
 
   async info(): Promise<FullDatabaseInfo> {
-    try {
-      const resp = await this._httpClient.request({
-        method: HTTP_METHODS.get,
-        path: `/databases/${this._id}`,
-      });
-
-      return resp.data;
-    } catch (e) {
-      if (!(e instanceof AxiosError)) {
-        throw e;
-      }
-      throw new DevopsApiResponseError(e);
-    }
+    new ObjectId()
+    const resp = await this._httpClient.request({
+      method: HTTP_METHODS.Get,
+      path: `/databases/${this._id}`,
+    });
+    return resp.data;
   }
 
   async listDatabases(options?: ListDatabasesOptions): Promise<FullDatabaseInfo[]> {
-    try {
-      const resp = await this._httpClient.request({
-        method: HTTP_METHODS.get,
-        path: `/databases`,
-        params: {
-          include: options?.include,
-          provider: options?.provider,
-          limit: options?.limit,
-          starting_after: options?.skip,
-        },
-      });
-
-      return resp.data;
-    } catch (e) {
-      if (!(e instanceof AxiosError)) {
-        throw e;
-      }
-      throw new DevopsApiResponseError(e);
-    }
+    const resp = await this._httpClient.request({
+      method: HTTP_METHODS.Get,
+      path: `/databases`,
+      params: {
+        include: options?.include,
+        provider: options?.provider,
+        limit: options?.limit,
+        starting_after: options?.skip,
+      },
+    });
+    return resp.data;
   }
 
   async createDatabase(config: DatabaseConfig, options?: CreateDatabaseAsyncOptions): Promise<string>
@@ -81,88 +66,59 @@ export class Admin {
   async createDatabase(config: DatabaseConfig, options?: CreateDatabaseBlockingOptions): Promise<AstraDB>
 
   async createDatabase(config: DatabaseConfig, options?: CreateDatabaseOptions): Promise<string | AstraDB> {
-    try {
+    const resp = await this._httpClient.request({
+      method: HTTP_METHODS.Post,
+      path: '/databases',
+      data: config,
+    });
+
+    const id = resp.headers.location;
+
+    if (options?.blocking === false) {
+      return id;
+    }
+
+    for (;;) {
       const resp = await this._httpClient.request({
-        method: HTTP_METHODS.post,
-        path: '/databases',
-        data: config,
+        method: HTTP_METHODS.Get,
+        path: `/databases/${id}`,
       });
 
-      const id = resp.headers.location;
-
-      if (options?.blocking === false) {
-        return id;
+      if (resp.data?.status === 'ACTIVE') {
+        break;
       }
 
-      for (;;) {
-        const resp = await this._httpClient.request({
-          method: HTTP_METHODS.get,
-          path: `/databases/${id}`,
-        });
-
-        if (resp.data?.status === 'ACTIVE') {
-          break;
-        }
-
-        if (resp.data?.status !== 'INITIALIZING') {
-          // noinspection ExceptionCaughtLocallyJS
-          throw new DevopsUnexpectedStateError(`Created database is not in state 'ACTIVE' or 'INITIALIZING'`, resp)
-        }
-
-        await new Promise<void>((resolve) => {
-          setTimeout(resolve, options?.pollInterval ?? 2000);
-        });
+      if (resp.data?.status !== 'INITIALIZING') {
+        throw new DevopsUnexpectedStateError(`Created database is not in state 'ACTIVE' or 'INITIALIZING'`, resp)
       }
 
-      const newURL = replaceAstraUrlIdAndRegion(this._rootHttpClient.baseUrl, id, config.region);
-      return new AstraDB(null, newURL, config.keyspace || DEFAULT_NAMESPACE, this._rootHttpClient);
-    } catch (e) {
-      if (!(e instanceof AxiosError)) {
-        throw e;
-      }
-      throw new DevopsApiResponseError(e);
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, options?.pollInterval ?? 2000);
+      });
     }
+
+    const newURL = replaceAstraUrlIdAndRegion(this._rootHttpClient.baseUrl, id, config.region);
+    return new AstraDB(null, newURL, config.keyspace || DEFAULT_NAMESPACE, this._rootHttpClient);
   }
 
   async dropDatabase(): Promise<void> {
-    try {
-      await this._httpClient.request({
-        method: HTTP_METHODS.post,
-        path: `/databases/${this._id}/terminate`,
-      });
-    } catch (e) {
-      if (!(e instanceof AxiosError)) {
-        throw e;
-      }
-      throw new DevopsApiResponseError(e);
-    }
+    await this._httpClient.request({
+      method: HTTP_METHODS.Post,
+      path: `/databases/${this._id}/terminate`,
+    });
   }
 
   async createNamespace(namespace: string): Promise<void> {
-    try {
-      await this._httpClient.request({
-        method: HTTP_METHODS.post,
-        path: `/databases/${this._id}/keyspaces/${namespace}`,
-      });
-    } catch (e) {
-      if (!(e instanceof AxiosError)) {
-        throw e;
-      }
-      throw new DevopsApiResponseError(e);
-    }
+    await this._httpClient.request({
+      method: HTTP_METHODS.Post,
+      path: `/databases/${this._id}/keyspaces/${namespace}`,
+    });
   }
 
   async dropNamespace(namespace: string): Promise<void> {
-    try {
-      await this._httpClient.request({
-        method: HTTP_METHODS.delete,
-        path: `/databases/${this._id}/keyspaces/${namespace}`,
-      });
-    } catch (e) {
-      if (!(e instanceof AxiosError)) {
-        throw e;
-      }
-      throw new DevopsApiResponseError(e);
-    }
+    await this._httpClient.request({
+      method: HTTP_METHODS.Delete,
+      path: `/databases/${this._id}/keyspaces/${namespace}`,
+    });
   }
 }

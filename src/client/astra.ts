@@ -144,7 +144,7 @@ export class AstraDB extends Client {
       ? namespaceOrOptions
       : DEFAULT_NAMESPACE;
 
-    if (!namespace.match(/^[a-zA-Z0-9_]{1,48}$/)) {
+    if (!namespace.match(/^[a-zA-Z0-9_]{1,222}$/)) {
       throw new Error('Invalid namespace format; either pass a valid namespace name, or don\'t pass one at all to use the default namespace');
     }
 

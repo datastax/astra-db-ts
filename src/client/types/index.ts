@@ -14,6 +14,8 @@
 
 export * from './admin/admin-common';
 export * from './admin/create-database';
+export * from './admin/database-info';
+export * from './admin/list-databases';
 export * from './collections/collections-common';
 export * from './collections/collection-options';
 export * from './collections/create-collection';

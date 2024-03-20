@@ -56,13 +56,11 @@ export const HTTP1AuthHeaderFactories = {
 }
 
 export class HTTP1Strategy implements HTTPRequestStrategy {
-  readonly authHeaderFactory: (token: string) => Record<string, string>;
+  constructor(
+    private readonly _authHeaderFactory: (token: string) => Record<string, string>,
+  ) {}
 
-  constructor(authHeaderFactory: (token: string) => Record<string, string>) {
-    this.authHeaderFactory = authHeaderFactory;
-  }
-
-  async request(info: InternalHTTPRequestInfo): Promise<InternalAPIResponse> {
+  public async request(info: InternalHTTPRequestInfo): Promise<InternalAPIResponse> {
     try {
       return await axiosAgent({
         url: info.url,
@@ -71,7 +69,7 @@ export class HTTP1Strategy implements HTTPRequestStrategy {
         method: info.method,
         timeout: info.timeout,
         headers: {
-          ...this.authHeaderFactory(info.token),
+          ...this._authHeaderFactory(info.token),
           'User-Agent': info.userAgent,
         },
       });

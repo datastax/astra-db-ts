@@ -15,14 +15,14 @@
 
 import {
   DataAPIResponseError,
-  InsertManyError,
   DeleteManyError,
+  InsertManyError,
   mkRespErrorFromResponse,
-  mkRespErrorFromResponses, UpdateManyError
-} from '@/src/client/errors';
+  mkRespErrorFromResponses,
+  UpdateManyError
+} from '@/src/client';
 import assert from 'assert';
-import { DeleteManyResult, InsertManyResult, UpdateManyResult } from '@/src/client/index';
-import { SomeId } from '@/src/client/types/common';
+import { DeleteManyResult, InsertManyResult, SomeId, UpdateManyResult } from '@/src/client/types';
 
 describe(`Astra TS Client - astra Connection - collections.errors`, () => {
   const commands = [

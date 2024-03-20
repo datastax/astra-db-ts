@@ -14,9 +14,9 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { ConvolutedSchema2, Equal, Expect, Schema, SuperBasicSchema } from '@/tests/typing/prelude';
-import { StrictFilter, SomeDoc } from '@/src/client/index';
-import { SomeId } from '@/src/client/types/common';
+import type { SomeDoc } from '@/src/client';
+import type { SomeId, StrictFilter } from '@/src/client/types';
+import type { ConvolutedSchema2, Equal, Expect, Schema, SuperBasicSchema } from '@/tests/typing/prelude';
 
 type test1 = Expect<Equal<StrictFilter<SuperBasicSchema>, {
   num?: number | {
@@ -164,7 +164,7 @@ const test6: StrictFilter<ConvolutedSchema2> = {
 const test7: StrictFilter<any> = {
   $and: [
     { $or: [] },
-    { $not: { $and: [ { 'some_random_key': Symbol.for('123') } ] } },
+    { $not: { $and: [{ 'some_random_key': Symbol.for('123') }] } },
   ],
   '123123123': 123123,
 }

@@ -16,16 +16,16 @@ import * as http2 from 'http2';
 import { HTTPRequestStrategy, InternalAPIResponse, InternalHTTPRequestInfo } from '@/src/api/types';
 
 export class HTTP2Strategy implements HTTPRequestStrategy {
-  origin: string;
-  closed: boolean = false;
-  session: http2.ClientHttp2Session;
+  public origin: string;
+  public closed: boolean = false;
+  public session: http2.ClientHttp2Session;
 
   constructor(baseURL: string) {
     this.origin = new URL(baseURL).origin;
     this.session = this._reviveSession();
   }
 
-  async request(info: InternalHTTPRequestInfo): Promise<InternalAPIResponse> {
+  public async request(info: InternalHTTPRequestInfo): Promise<InternalAPIResponse> {
     return new Promise((resolve, reject) => {
       if (this.closed) {
         throw new Error('Cannot make http2 request when client is closed');
@@ -87,7 +87,7 @@ export class HTTP2Strategy implements HTTPRequestStrategy {
     });
   }
 
-  close() {
+  public close() {
     this.session.close();
     this.closed = true;
   }

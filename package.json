@@ -32,7 +32,7 @@
       "tests/setup.ts"
     ]
   },
-  "madge":  {
+  "madge": {
     "detectiveOptions": {
       "ts": {
         "skipTypeImports": true
@@ -98,6 +98,7 @@
     "axios": "^1.6.7",
     "bson": "^6.3.0",
     "object-hash": "^3.0.0",
+    "uuidv7": "^0.6.3",
     "winston": "^3.7.2"
   },
   "engines": {

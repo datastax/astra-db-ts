@@ -14,8 +14,8 @@
 
 import { HttpClient } from '@/src/api/http-client';
 import { DEFAULT_TIMEOUT, HTTP_METHODS } from '@/src/api/constants';
-import { DevopsAPITimeout } from '@/src/client/errors';
-import { AxiosResponse } from 'axios';
+import { DevopsApiResponseError, DevopsAPITimeout } from '@/src/client/errors';
+import { AxiosError, AxiosResponse } from 'axios';
 import { InternalHTTPClientOptions } from '@/src/api/types';
 import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
 
@@ -33,16 +33,23 @@ export class DevopsApiHttpClient extends HttpClient {
     this.requestStrategy = new HTTP1Strategy(HTTP1AuthHeaderFactories.DevopsApi);
   }
 
-  async request(info: DevopsApiRequestInfo): Promise<AxiosResponse> {
-    const url = this.baseUrl + info.path;
+  public async request(info: DevopsApiRequestInfo): Promise<AxiosResponse> {
+    try {
+      const url = this.baseUrl + info.path;
 
-    return await this._request({
-      url: url,
-      method: info.method,
-      timeout: info.timeout || DEFAULT_TIMEOUT,
-      timeoutError: new DevopsAPITimeout(url, info.timeout || DEFAULT_TIMEOUT),
-      params: info.params,
-      data: info.data,
-    }) as any;
+      return await this._request({
+        url: url,
+        method: info.method,
+        timeout: info.timeout || DEFAULT_TIMEOUT,
+        timeoutError: new DevopsAPITimeout(url, info.timeout || DEFAULT_TIMEOUT),
+        params: info.params,
+        data: info.data,
+      }) as any;
+    } catch (e) {
+      if (!(e instanceof AxiosError)) {
+        throw e;
+      }
+      throw new DevopsApiResponseError(e);
+    }
   }
 }

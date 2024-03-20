@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { AstraDB } from '@/src/client/index';
+import { AstraDB } from '@/src/client';
 
 describe('AstraDB test', () => {
   it('initialized w/ default keyspace', () => {

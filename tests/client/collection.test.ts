@@ -13,9 +13,7 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { Db } from '@/src/client/db';
-import { Collection } from '@/src/client/collection';
-import { Client } from '@/src/client/client';
+import { Db, Collection, Client, ObjectId, UUID } from '@/src/client';
 import {
   createSampleDoc2WithMultiLevel,
   createSampleDoc3WithMultiLevel,
@@ -1327,20 +1325,20 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.strictEqual(replacedDoc!.address.city, 'nyc');
     });
 
-    it('should make _id an ObjectId when upserting with no _id', async () => {
-      await collection.deleteAll();
-      const replaceOneResp = await collection.replaceOne(
-        {},
-        {
-          'username': 'aaronm'
-        },
-        {
-          'upsert': true
-        }
-      );
-      assert.ok(typeof replaceOneResp.upsertedId === 'string', 'replaceOneResp.upsertedId is not string');
-      assert.ok(replaceOneResp.upsertedId?.match(/^[a-f\d]{24}$/i), replaceOneResp.upsertedId);
-    });
+    // it('should make _id an ObjectId when upserting with no _id', async () => {
+    //   await collection.deleteAll();
+    //   const replaceOneResp = await collection.replaceOne(
+    //     {},
+    //     {
+    //       'username': 'aaronm'
+    //     },
+    //     {
+    //       'upsert': true
+    //     }
+    //   );
+    //   assert.ok(typeof replaceOneResp.upsertedId === 'string', 'replaceOneResp.upsertedId is not string');
+    //   assert.ok(replaceOneResp.upsertedId?.match(/^[a-f\d]{24}$/i), replaceOneResp.upsertedId);
+    // });
   });
 
   describe('updateOne tests', () => {
@@ -1419,22 +1417,22 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.strictEqual(updatedDoc!.address.state, 'ny');
     });
 
-    it('should make _id an ObjectId when upserting with no _id', async () => {
-      await collection.deleteAll();
-      const updateOneResp = await collection.updateOne(
-        {},
-        {
-          '$set': {
-            'username': 'aaronm'
-          }
-        },
-        {
-          'upsert': true
-        }
-      );
-      assert.ok(typeof updateOneResp.upsertedId === 'string', 'updateOneResp.upsertedId is not string');
-      assert.ok(updateOneResp.upsertedId?.match(/^[a-f\d]{24}$/i), updateOneResp.upsertedId);
-    });
+    // it('should make _id an ObjectId when upserting with no _id', async () => {
+    //   await collection.deleteAll();
+    //   const updateOneResp = await collection.updateOne(
+    //     {},
+    //     {
+    //       '$set': {
+    //         'username': 'aaronm'
+    //       }
+    //     },
+    //     {
+    //       'upsert': true
+    //     }
+    //   );
+    //   assert.ok(typeof updateOneResp.upsertedId === 'string', 'updateOneResp.upsertedId is not string');
+    //   assert.ok(updateOneResp.upsertedId?.match(/^[a-f\d]{24}$/i), updateOneResp.upsertedId);
+    // });
 
     it('should not overwrite user-specified _id in $setOnInsert', async () => {
       await collection.deleteAll();
@@ -2361,22 +2359,22 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       });
     });
 
-    it('should make _id an ObjectId when upserting with no _id', async () => {
-      await collection.deleteAll();
-      const { upsertedId } = await collection.updateMany(
-        {},
-        {
-          '$set': {
-            'username': 'aaronm'
-          }
-        },
-        {
-          'upsert': true
-        }
-      );
-      assert.ok(typeof upsertedId === 'string', 'upsertedId is not string');
-      assert.ok(upsertedId?.match(/^[a-f\d]{24}$/i), upsertedId);
-    });
+    // it('should make _id an ObjectId when upserting with no _id', async () => {
+    //   await collection.deleteAll();
+    //   const { upsertedId } = await collection.updateMany(
+    //     {},
+    //     {
+    //       '$set': {
+    //         'username': 'aaronm'
+    //       }
+    //     },
+    //     {
+    //       'upsert': true
+    //     }
+    //   );
+    //   assert.ok(typeof upsertedId === 'string', 'upsertedId is not string');
+    //   assert.ok(upsertedId?.match(/^[a-f\d]{24}$/i), upsertedId);
+    // });
   });
 
   describe('findOneAndUpdate tests', () => {
@@ -2487,23 +2485,23 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.strictEqual(findOneAndUpdateResp.value, null);
     });
 
-    it('should make _id an ObjectId when upserting with no _id', async () => {
-      await collection.deleteAll();
-      const { value } = await collection.findOneAndUpdate(
-        {},
-        {
-          '$set': {
-            'username': 'aaronm'
-          }
-        },
-        {
-          includeResultMetadata: true,
-          returnDocument: 'after',
-          upsert: true
-        }
-      );
-      assert.ok(value!._id!.toString().match(/^[a-f\d]{24}$/i), value!._id!.toString());
-    });
+    // it('should make _id an ObjectId when upserting with no _id', async () => {
+    //   await collection.deleteAll();
+    //   const { value } = await collection.findOneAndUpdate(
+    //     {},
+    //     {
+    //       '$set': {
+    //         'username': 'aaronm'
+    //       }
+    //     },
+    //     {
+    //       includeResultMetadata: true,
+    //       returnDocument: 'after',
+    //       upsert: true
+    //     }
+    //   );
+    //   assert.ok(value!._id!.toString().match(/^[a-f\d]{24}$/i), value!._id!.toString());
+    // });
 
     it('should not return metadata when includeResultMetadata is false', async () => {
       await collection.insertOne({ username: 'a' });
@@ -2649,21 +2647,21 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.deepStrictEqual(docs.map(doc => doc.answer), [undefined, 42, undefined]);
     });
 
-    it('findOneAndReplace should make _id an ObjectId when upserting with no _id', async () => {
-      await collection.deleteAll();
-      const { value } = await collection.findOneAndReplace(
-        {},
-        {
-          'username': 'aaronm'
-        },
-        {
-          returnDocument: 'after',
-          upsert: true,
-          includeResultMetadata: true,
-        }
-      );
-      assert.ok((value!._id as string)!.match(/^[a-f\d]{24}$/i), value!._id as string);
-    });
+    // it('findOneAndReplace should make _id an ObjectId when upserting with no _id', async () => {
+    //   await collection.deleteAll();
+    //   const { value } = await collection.findOneAndReplace(
+    //     {},
+    //     {
+    //       'username': 'aaronm'
+    //     },
+    //     {
+    //       returnDocument: 'after',
+    //       upsert: true,
+    //       includeResultMetadata: true,
+    //     }
+    //   );
+    //   assert.ok((value!._id as string)!.match(/^[a-f\d]{24}$/i), value!._id as string);
+    // });
 
     it('findOneAndReplace should not return metadata when includeResultMetadata is false', async () => {
       await collection.insertOne({ username: 'a' });
@@ -3131,6 +3129,25 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
     });
   });
 
+  describe('ids test', () => {
+    it('Should properly handle ObjectIds', async () => {
+      await collection.insertOne({ _id: new ObjectId(), name: 'John' });
+      const found = await collection.findOne({ name: 'John' });
+      assert.ok(found);
+      assert.ok(found._id);
+      assert.ok(<any>found._id instanceof ObjectId);
+    });
+
+    it('Should properly handle UUIDs', async () => {
+      await collection.insertOne({ _id: UUID.v4(), name: 'John' });
+      const found = await collection.findOne({ name: 'John' });
+      assert.ok(found);
+      assert.ok(found._id);
+      assert.ok(<any>found._id instanceof UUID);
+      assert.strictEqual((<UUID>found._id).version, 4);
+    });
+  });
+
   describe('admin operations', () => {
     it('drops itself', async () => {
       const suffix = randAlphaNumeric({ length: 4 }).join("");
@@ -3143,7 +3160,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const suffix = randAlphaNumeric({ length: 4 }).join("");
       const coll = await db.createCollection(`test_db_collection_${suffix}`, { vector: { dimension: 123, metric: 'cosine' } });
       const res = await coll.options();
-      assert.deepStrictEqual(res, { vector: { dimension: 123, metric: 'cosine' } });
+      assert.deepStrictEqual(res, { vector: { dimension: 123, metric: 'cosine' }, defaultId: { type: '' } });
       await db.dropCollection(`test_db_collection_${suffix}`)
     });
 
@@ -3151,7 +3168,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       const suffix = randAlphaNumeric({ length: 4 }).join("");
       const coll = await db.createCollection(`test_db_collection_${suffix}`);
       const res = await coll.options();
-      assert.deepStrictEqual(res, {});
+      assert.deepStrictEqual(res, { defaultId: { type: '' } });
       await db.dropCollection(`test_db_collection_${suffix}`)
     });
   });

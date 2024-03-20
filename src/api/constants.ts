@@ -17,13 +17,13 @@ import { LIB_NAME, LIB_VERSION } from '@/src/version';
 export const CLIENT_USER_AGENT = LIB_NAME + '/' + LIB_VERSION;
 
 export const enum HTTP_METHODS {
-  get = 'GET',
-  post = 'POST',
-  delete = 'DELETE',
+  Get = 'GET',
+  Post = 'POST',
+  Delete = 'DELETE',
 }
 
 export const DEFAULT_NAMESPACE = 'default_keyspace';
-export const DEFAULT_METHOD = HTTP_METHODS.get;
+export const DEFAULT_METHOD = HTTP_METHODS.Get;
 export const DEFAULT_TIMEOUT = 30000;
 
 export const DEFAULT_DATA_API_AUTH_HEADER = 'Token';

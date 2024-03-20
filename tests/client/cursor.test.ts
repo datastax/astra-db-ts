@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Client, Collection, FindCursor, Db } from '@/src/client/index';
+import { Client, Collection, Db, FindCursor } from '@/src/client/index';
 import { TEST_COLLECTION_NAME, testClient } from '@/tests/fixtures';
 import assert from 'assert';
 import { CursorAlreadyInitializedError } from '@/src/client/errors';

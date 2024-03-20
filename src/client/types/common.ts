@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeDoc } from '@/src/client';
+import { ObjectId, SomeDoc, UUID } from '@/src/client';
 import type { ToDotNotation } from '@/src/client/types';
 
-export type SomeId = string | number | bigint | boolean | Date;
+export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId;
 
 /**
  * Specifies the sort criteria for selecting documents.

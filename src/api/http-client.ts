@@ -28,10 +28,10 @@ import { Mutable } from '@/src/client/types/utils';
 export const applicationTokenKey = Symbol('applicationToken');
 
 export class HttpClient {
-  readonly baseUrl: string;
-  readonly logSkippedOptions: boolean;
-  readonly userAgent: string;
-  requestStrategy: HTTPRequestStrategy;
+  public readonly baseUrl: string;
+  public readonly logSkippedOptions: boolean;
+  public readonly userAgent: string;
+  public requestStrategy: HTTPRequestStrategy;
   private [applicationTokenKey]!: string;
 
   constructor(options: InternalHTTPClientOptions) {
@@ -74,20 +74,20 @@ export class HttpClient {
     this.userAgent = options.userAgent ?? buildUserAgent(CLIENT_USER_AGENT, options.caller);
   }
 
-  close() {
+  public close() {
     this.requestStrategy.close?.();
   }
 
-  isClosed(): boolean | undefined {
+  public isClosed(): boolean | undefined {
     return this.requestStrategy.closed;
   }
 
-  isUsingHttp2(): boolean {
+  public isUsingHttp2(): boolean {
     return this.requestStrategy instanceof HTTP2Strategy;
   }
 
-  cloneInto<C extends HttpClient>(cons: new (opts: InternalHTTPClientOptions) => C, initialize: (client: Mutable<C>) => void): C {
-    const clone = new cons({
+  public cloneInto<C extends HttpClient>(cls: new (opts: InternalHTTPClientOptions) => C, initialize: (client: Mutable<C>) => void): C {
+    const clone = new cls({
       baseUrl: this.baseUrl,
       applicationToken: this[applicationTokenKey],
       logSkippedOptions: this.logSkippedOptions,

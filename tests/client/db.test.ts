@@ -16,8 +16,8 @@
 import assert from 'assert';
 import { TEST_COLLECTION_NAME, testClient } from '@/tests/fixtures';
 import { randAlphaNumeric } from '@ngneat/falso';
-import { Client, Db } from '@/src/client/index';
-import { HttpClient } from '@/src/api/index';
+import { Client, Db } from '@/src/client';
+import { HttpClient } from '@/src/api';
 import { parseUri } from '@/src/client/utils';
 
 describe('Astra TS Client - collections.Db', async () => {

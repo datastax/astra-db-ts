@@ -14,7 +14,7 @@
 
 import { setDefaultIdForInsert, setDefaultIdForUpsert, takeWhile } from './utils';
 import { FindCursor } from '@/src/client/cursor';
-import type { Db, SomeDoc } from '@/src/client';
+import { Db, replaceRawId, SomeDoc } from '@/src/client';
 import {
   BulkWriteError,
   DataAPIResponseError,
@@ -145,7 +145,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @return InsertOneResult
    */
   async insertOne(document: Schema, options?: BaseOptions): Promise<InsertOneResult<Schema>> {
-    setDefaultIdForInsert(document);
+    // setDefaultIdForInsert(document);
 
     const command: InsertOneCommand = {
       insertOne: { document },
@@ -154,7 +154,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     const resp = await this._httpClient.executeCommand(command, options);
 
     return {
-      insertedId: resp.status?.insertedIds[0],
+      insertedId: replaceRawId(resp.status?.insertedIds[0]),
     };
   }
 
@@ -214,9 +214,9 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   async insertMany(documents: Schema[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>> {
     const chunkSize = options?.chunkSize ?? 20;
 
-    for (let i = 0, n = documents.length; i < n; i++) {
-      setDefaultIdForInsert(documents[i]);
-    }
+    // for (let i = 0, n = documents.length; i < n; i++) {
+    //   setDefaultIdForInsert(documents[i]);
+    // }
 
     const insertedIds = (options?.ordered)
       ? await insertManyOrdered<Schema>(this._httpClient, documents, chunkSize)
@@ -224,7 +224,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     return {
       insertedCount: insertedIds.length,
-      insertedIds: insertedIds,
+      insertedIds: insertedIds.map(replaceRawId),
     }
   }
 
@@ -262,7 +262,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       command.updateOne.sort = options.sort;
     }
 
-    setDefaultIdForUpsert(command.updateOne);
+    // setDefaultIdForUpsert(command.updateOne);
 
     const resp = await this._httpClient.executeCommand(command, options, updateOneOptionKeys);
 
@@ -274,7 +274,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     return (resp.status?.upsertedId)
       ? {
         ...commonResult,
-        upsertedId: resp.status?.upsertedId,
+        upsertedId: replaceRawId(resp.status?.upsertedId),
         upsertedCount: 1,
       }
       : commonResult;
@@ -327,7 +327,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       },
     };
 
-    setDefaultIdForUpsert(command.updateMany);
+    // setDefaultIdForUpsert(command.updateMany);
 
     const commonResult = {
       modifiedCount: 0,
@@ -358,7 +358,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     return (resp.status?.upsertedId)
       ? {
         ...commonResult,
-        upsertedId: resp.status?.upsertedId,
+        upsertedId: replaceRawId(resp.status?.upsertedId),
         upsertedCount: 1,
       }
       : commonResult;
@@ -393,7 +393,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       },
     };
 
-    setDefaultIdForUpsert(command.findOneAndReplace, true);
+    // setDefaultIdForUpsert(command.findOneAndReplace, true);
 
     const resp = await this._httpClient.executeCommand(command, options, findOneAndReplaceOptionsKeys);
 
@@ -405,7 +405,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     return (resp.status?.upsertedId)
       ? {
         ...commonResult,
-        upsertedId: resp.status?.upsertedId,
+        upsertedId: replaceRawId(resp.status?.upsertedId),
         upsertedCount: 1,
       }
       : commonResult;
@@ -620,7 +620,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     }
 
     const resp = await this._httpClient.executeCommand(command, options, findOneOptionsKeys);
-    return resp.data?.document;
+    return replaceRawId(resp.data?.document);
   }
 
   /**
@@ -677,7 +677,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       },
     };
 
-    setDefaultIdForUpsert(command.findOneAndReplace, true);
+    // setDefaultIdForUpsert(command.findOneAndReplace, true);
 
     if (options?.sort) {
       command.findOneAndReplace.sort = options.sort;
@@ -688,13 +688,14 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     }
 
     const resp = await this._httpClient.executeCommand(command, options, findOneAndReplaceOptionsKeys);
+    const document = replaceRawId(resp.data?.document);
 
     return (options.includeResultMetadata)
       ? {
-        value: resp.data?.document,
+        value: document,
         ok: 1,
       }
-      : resp.data?.document;
+      : document;
   }
 
   /**
@@ -798,13 +799,14 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     }
 
     const resp = await this._httpClient.executeCommand(command, options);
+    const document = replaceRawId(resp.data?.document);
 
     return (options?.includeResultMetadata)
       ? {
-        value: resp.data?.document,
+        value: document,
         ok: 1,
       }
-      : resp.data?.document;
+      : document;
   }
 
   /**
@@ -857,7 +859,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       },
     };
 
-    setDefaultIdForUpsert(command.findOneAndUpdate);
+    // setDefaultIdForUpsert(command.findOneAndUpdate);
 
     if (options?.sort) {
       command.findOneAndUpdate.sort = options.sort;
@@ -868,13 +870,14 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     }
 
     const resp = await this._httpClient.executeCommand(command, options, findOneAndUpdateOptionsKeys);
+    const document = replaceRawId(resp.data?.document);
 
     return (options.includeResultMetadata)
       ? {
-        value: resp.data?.document,
+        value: document,
         ok: 1,
       }
-      : resp.data?.document;
+      : document;
   }
 
   /**
@@ -1152,7 +1155,7 @@ const addToBulkWriteResult = (result: BulkWriteResult, resp: Record<string, any>
 
   if (resp.upsertedId) {
     asMutable.upsertedCount++;
-    asMutable.upsertedIds[i] = resp.upsertedId;
+    asMutable.upsertedIds[i] = replaceRawId(resp.upsertedId);
   }
 
   asMutable.getRawResponse().push(resp);

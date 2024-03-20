@@ -14,9 +14,8 @@
 
 import { BaseOptions } from '@/src/client/types';
 import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, HTTP_METHODS, HttpClient, RawDataApiResponse } from '@/src/api';
-import { DataAPIResponseError, DataAPITimeout, mkRespErrorFromResponse } from '@/src/client';
+import { DataAPIResponseError, DataAPITimeout, mkRespErrorFromResponse, ObjectId, UUID } from '@/src/client';
 import { logger } from '@/src/logger';
-import { EJSON } from 'bson';
 
 interface DataApiRequestInfo {
   url: string;
@@ -26,10 +25,10 @@ interface DataApiRequestInfo {
 }
 
 export class DataApiHttpClient extends HttpClient {
-  collection?: string;
-  namespace?: string;
+  public collection?: string;
+  public namespace?: string;
 
-  async executeCommand(command: Record<string, any>, options?: BaseOptions & { collection?: string }, optionsToRetain?: Set<string>) {
+  public async executeCommand(command: Record<string, any>, options?: BaseOptions & { collection?: string }, optionsToRetain?: Set<string>) {
     const commandName = Object.keys(command)[0];
 
     if (command[commandName].options && optionsToRetain) {
@@ -54,12 +53,12 @@ export class DataApiHttpClient extends HttpClient {
       const keyspacePath = `/${this.namespace ?? DEFAULT_NAMESPACE}`;
       const collectionPath = info.collection ? `/${info.collection}` : '';
       const url = info.url + keyspacePath + collectionPath;
-
+      // console.log(serializeCommand(info.command))
       const response = await this._request({
         url: url,
         data: serializeCommand(info.command),
         timeout: info.timeout,
-        method: HTTP_METHODS.post,
+        method: HTTP_METHODS.Post,
         timeoutError: new DataAPITimeout(info.command, info.timeout || DEFAULT_TIMEOUT),
       });
 
@@ -119,38 +118,39 @@ function cleanupOptions(data: Record<string, any>, commandName: string, optionsT
 }
 
 function serializeCommand(data: Record<string, any>, pretty?: boolean): string {
-  return EJSON.stringify(data, (_: unknown, value: any) => handleValues(value), pretty ? '  ' : '');
+  // return EJSON.stringify(data, (_: unknown, value: any) => handleValues(value), pretty ? '  ' : '');
+  return JSON.stringify(data, (_: unknown, value: any) => handleValues(value), pretty ? '  ' : '');
 }
 
 function handleValues(value: any): any {
-  if (value && typeof value === "bigint") {
-    // BigInt handling
+  if (value === undefined || value === null) {
+    return value;
+  }
+
+  if (typeof value === "bigint") {
     return Number(value);
-  } else if (value && typeof value === "object") {
-    // ObjectId to strings
-    if (value.$oid) {
-      return value.$oid;
-    } else if (value.$numberDecimal) {
-      // Decimal128 handling
-      return Number(value.$numberDecimal);
-    } else if (value.$binary?.subType === "03" || value.$binary?.subType === "04") {
-      // UUID handling. Subtype 03 or 04 is UUID. Refer spec : https://bsonspec.org/spec.html
-      return Buffer.from(value.$binary.base64, "base64")
-        .toString("hex")
-        .replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, "$1-$2-$3-$4-$5");
+  } else if (typeof value === "object") {
+    if (value.$date) {
+      value.$date = 'new Date(value.$date).valueOf()';
     }
-    // Date handling
-    else if (value.$date) {
-      // Use numbers instead of strings for dates
-      value.$date = new Date(value.$date).valueOf();
+
+    if (value._id instanceof ObjectId) {
+      value._id = { $objectId: value._id.toString() };
+    } else if (value._id instanceof UUID) {
+      value._id = { $uuid: value._id.toString() };
     }
   }
-  // all other values
+
   return value;
 }
 
 function deserialize(data?: Record<string, any> | null): Record<string, any> {
-  return data ? EJSON.deserialize(data) : data;
+  if (!data) {
+    return {};
+  }
+
+  // const deserialized = EJSON.deserialize(data);
+  return data;
 }
 
 export function handleIfErrorResponse(response: any, command: Record<string, any>) {
