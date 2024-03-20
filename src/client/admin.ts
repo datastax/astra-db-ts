@@ -21,6 +21,8 @@ import {
 } from '@/src/client/types';
 import { AstraDB, DevopsApiResponseError, DevopsUnexpectedStateError, replaceAstraUrlIdAndRegion } from '@/src/client';
 import { AxiosError } from 'axios';
+import { FullDatabaseInfo } from '@/src/client/types/admin/database-info';
+import { ListDatabasesOptions } from '@/src/client/types/admin/list-databases';
 
 export class Admin {
   private readonly _rootHttpClient: HttpClient;
@@ -34,6 +36,44 @@ export class Admin {
       c.baseUrl = 'https://api.astra.datastax.com/v2';
     });
     this._id = id;
+  }
+
+  async info(): Promise<FullDatabaseInfo> {
+    try {
+      const resp = await this._httpClient.request({
+        method: HTTP_METHODS.get,
+        path: `/databases/${this._id}`,
+      });
+
+      return resp.data;
+    } catch (e) {
+      if (!(e instanceof AxiosError)) {
+        throw e;
+      }
+      throw new DevopsApiResponseError(e);
+    }
+  }
+
+  async listDatabases(options?: ListDatabasesOptions): Promise<FullDatabaseInfo[]> {
+    try {
+      const resp = await this._httpClient.request({
+        method: HTTP_METHODS.get,
+        path: `/databases`,
+        params: {
+          include: options?.include,
+          provider: options?.provider,
+          limit: options?.limit,
+          starting_after: options?.skip,
+        },
+      });
+
+      return resp.data;
+    } catch (e) {
+      if (!(e instanceof AxiosError)) {
+        throw e;
+      }
+      throw new DevopsApiResponseError(e);
+    }
   }
 
   async createDatabase(config: DatabaseConfig, options?: CreateDatabaseAsyncOptions): Promise<string>
@@ -75,7 +115,7 @@ export class Admin {
       }
 
       const newURL = replaceAstraUrlIdAndRegion(this._rootHttpClient.baseUrl, id, config.region);
-      return new AstraDB(null, newURL, config.namespace || DEFAULT_NAMESPACE, this._rootHttpClient);
+      return new AstraDB(null, newURL, config.keyspace || DEFAULT_NAMESPACE, this._rootHttpClient);
     } catch (e) {
       if (!(e instanceof AxiosError)) {
         throw e;

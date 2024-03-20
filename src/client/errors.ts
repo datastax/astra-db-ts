@@ -123,10 +123,15 @@ export class DevopsAPITimeout extends DataAPIError {
   }
 }
 
+export interface DevopsAPIErrorDescriptor {
+  ID?: number,
+  message: string,
+}
+
 export abstract class DevopsApiError extends Error {}
 
 export class DevopsApiResponseError extends DevopsApiError {
-  readonly errors: Record<string, any>[];
+  readonly errors: DevopsAPIErrorDescriptor[];
   readonly rootError: AxiosError;
   readonly status: number;
 

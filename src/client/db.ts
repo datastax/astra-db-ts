@@ -26,6 +26,7 @@ import {
   ListCollectionsCommand,
   ListCollectionsOptions
 } from '@/src/client/types';
+import { DatabaseInfo } from '@/src/client/types/admin/database-info';
 
 /**
  * Represents an interface to some Astra database instance.
@@ -41,6 +42,7 @@ export class Db {
   private readonly _httpClient: DataApiHttpClient;
   private readonly _namespace: string;
   private readonly _id?: string;
+  private _admin?: Admin;
 
   constructor(httpClient: HttpClient, name: string) {
     this._httpClient = httpClient.cloneInto(DataApiHttpClient, c => c.namespace = name);
@@ -66,7 +68,14 @@ export class Db {
     if (!this._id) {
       throw new Error('Admin operations are only supported on Astra databases');
     }
-    return new Admin(this._httpClient, this._id);
+    if (!this._admin) {
+      this._admin = new Admin(this._httpClient, this._id);
+    }
+    return this._admin;
+  }
+
+  async info(): Promise<DatabaseInfo> {
+    return await this.admin().info().then(i => i.info);
   }
 
   /**
