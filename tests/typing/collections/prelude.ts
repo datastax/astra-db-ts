@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, VectorDoc } from '@/src/client';
+import { Collection, VectorDoc } from '@/src/client/index';
 import { SomeDoc } from '@/src/client/document';
 import { Db } from '@/src/client/db';
 

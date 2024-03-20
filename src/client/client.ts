@@ -12,33 +12,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Db } from './db';
-import { parseUri } from './utils';
-import { APIResponse, HttpClient, HTTPClientOptions } from '@/src/api';
-import { Collection } from './collection';
-import { SomeDoc } from '@/src/client/document';
-import { CollectionInfo } from '@/src/client/types/collections/list-collection';
-import { CreateCollectionOptions } from '@/src/client/types/collections/create-collection';
-import { DataApiHttpClient } from '@/src/api/data-api-http-client';
+import { DataApiHttpClient, HTTP2Strategy, HttpClient, HTTPClientOptions, RawDataApiResponse } from '@/src/api';
+import { CollectionInfo, CreateCollectionOptions } from '@/src/client/types';
+import type { Collection, SomeDoc } from '@/src/client';
+import { Db, parseUri } from '@/src/client';
 
 export class Client implements Disposable {
   private readonly _httpClient: HttpClient;
   private readonly _namespace: string;
   private readonly _db: Db;
 
-  constructor(baseUrl: string, namespace: string, options: HTTPClientOptions) {
+  constructor(baseUrl: string, namespace: string, optionsOrClient: HTTPClientOptions | HttpClient) {
     this._namespace = namespace;
 
-    if (!options.applicationToken) {
-      throw new Error('Application Token is required');
+    if (optionsOrClient instanceof HttpClient) {
+      this._httpClient = optionsOrClient.cloneInto(HttpClient, (c) => {
+        c.baseUrl = baseUrl;
+        c.requestStrategy = (c.requestStrategy instanceof HTTP2Strategy)
+          ? new HTTP2Strategy(baseUrl)
+          : c.requestStrategy;
+      });
+    } else {
+      if (!optionsOrClient.applicationToken) {
+        throw new Error('Application Token is required');
+      }
+
+      this._httpClient = new DataApiHttpClient({
+        baseUrl: baseUrl,
+        ...optionsOrClient,
+      });
     }
 
-    this._httpClient = new DataApiHttpClient({
-      baseUrl: baseUrl,
-      ...options,
-    });
-
-    this._db = new Db(this._httpClient, namespace);
+    this._db = new Db(this._httpClient, this._namespace);
   }
 
   get namespace() {
@@ -79,7 +84,7 @@ export class Client implements Disposable {
     return await this.db().listCollections<NameOnly>();
   }
 
-  async command(command: Record<string, any>, collection?: string): Promise<APIResponse> {
+  async command(command: Record<string, any>, collection?: string): Promise<RawDataApiResponse> {
     return await this.db().command(command, collection);
   }
 

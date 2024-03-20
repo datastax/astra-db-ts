@@ -13,8 +13,8 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Filter, SomeDoc, UpdateFilter } from '@/src/client';
-import { SomeId } from '@/src/client/types/common';
+import type { SomeDoc } from '@/src/client';
+import type { Filter, SomeId, UpdateFilter } from '@/src/client/types';
 
 export type BulkWriteOptions =
   | BulkWriteOrderedOptions

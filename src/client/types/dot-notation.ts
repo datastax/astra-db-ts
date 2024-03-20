@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/client/document';
+import type { SomeDoc } from '@/src/client';
 
 /**
  * Converts some {@link Schema} into a type representing its dot notation (object paths).

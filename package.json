@@ -32,6 +32,13 @@
       "tests/setup.ts"
     ]
   },
+  "madge":  {
+    "detectiveOptions": {
+      "ts": {
+        "skipTypeImports": true
+      }
+    }
+  },
   "directories": {
     "lib": "src",
     "test": "tests"
@@ -53,7 +60,8 @@
     "preinstall": "npm run update-version-file",
     "build": "npm run update-version-file && tsc --project tsconfig.build.json && tscpaths -p tsconfig.build.json -s ./src -o ./dist",
     "build:docs": "jsdoc2md -t APIReference.hbs --files src/**/*.ts --configure ./jsdoc2md.json > APIReference.md",
-    "update-version-file": "node -p \"'export const LIB_NAME = ' + JSON.stringify('astra-db-ts') + ';'\" > src/version.ts && node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" >> src/version.ts"
+    "update-version-file": "node -p \"'export const LIB_NAME = ' + JSON.stringify('astra-db-ts') + ';'\" > src/version.ts && node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" >> src/version.ts",
+    "circular-deps": "madge --circular --extensions ts --ts-config tsconfig.json src/ tests/"
   },
   "bugs": {
     "url": "https://github.com/datastax/astra-ts-client/issues"
@@ -77,6 +85,7 @@
     "eslint": "^8.56.0",
     "jsdoc-babel": "^0.5.0",
     "jsdoc-to-markdown": "^7.1.1",
+    "madge": "^6.1.0",
     "nyc": "^15.1.0",
     "sinon": "15.2.0",
     "ts-mocha": "^10.0.0",

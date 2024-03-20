@@ -21,7 +21,7 @@ import {
   mkRespErrorFromResponses, UpdateManyError
 } from '@/src/client/errors';
 import assert from 'assert';
-import { DeleteManyResult, InsertManyResult, UpdateManyResult } from '@/src/client';
+import { DeleteManyResult, InsertManyResult, UpdateManyResult } from '@/src/client/index';
 import { SomeId } from '@/src/client/types/common';
 
 describe(`Astra TS Client - astra Connection - collections.errors`, () => {

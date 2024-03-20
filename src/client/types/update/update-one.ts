@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { InternalUpdateResult } from '@/src/client/types/update/update-common';
-import { SomeDoc, SortOption } from '@/src/client';
-import { BaseOptions } from '@/src/client/types/common';
+import type { SomeDoc } from '@/src/client';
+import type { BaseOptions, InternalUpdateResult, SortOption } from '@/src/client/types';
 
 /** @internal */
 export interface UpdateOneCommand {

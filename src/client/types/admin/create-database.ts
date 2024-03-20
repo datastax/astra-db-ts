@@ -1,6 +1,6 @@
-import { DatabaseCloudProvider, DatabaseTier } from '@/src/client/types/admin/admin-common';
+import type { DatabaseCloudProvider, DatabaseTier } from '@/src/client/types';
 
-export interface CreateDatabaseOptions {
+export interface DatabaseConfig {
   name: string,
   namespace?: string,
   cloudProvider?: DatabaseCloudProvider,
@@ -10,4 +10,17 @@ export interface CreateDatabaseOptions {
   user: string,
   password: string,
   dbType?: 'vector',
+}
+
+export type CreateDatabaseOptions =
+  | CreateDatabaseBlockingOptions
+  | CreateDatabaseAsyncOptions
+
+export interface CreateDatabaseBlockingOptions {
+  blocking?: true,
+  pollInterval?: number,
+}
+
+export interface CreateDatabaseAsyncOptions {
+  blocking: false,
 }

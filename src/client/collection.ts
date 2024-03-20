@@ -13,47 +13,8 @@
 // limitations under the License.
 
 import { setDefaultIdForInsert, setDefaultIdForUpsert, takeWhile } from './utils';
-import { InsertOneCommand, InsertOneResult } from '@/src/client/types/insert/insert-one';
-import {
-  InsertManyCommand,
-  insertManyOptionKeys,
-  InsertManyOptions,
-  InsertManyResult
-} from '@/src/client/types/insert/insert-many';
-import {
-  UpdateOneCommand,
-  updateOneOptionKeys,
-  UpdateOneOptions,
-  UpdateOneResult,
-} from '@/src/client/types/update/update-one';
-import { UpdateManyCommand, UpdateManyOptions, UpdateManyResult } from '@/src/client/types/update/update-many';
-import { DeleteOneCommand, DeleteOneOptions, DeleteOneResult } from '@/src/client/types/delete/delete-one';
-import { DeleteManyCommand, DeleteManyResult } from '@/src/client/types/delete/delete-many';
-import { FindOptions } from '@/src/client/types/find/find';
-import { ModifyResult } from '@/src/client/types/find/find-common';
-import { FindOneCommand, FindOneOptions, findOneOptionsKeys } from '@/src/client/types/find/find-one';
-import { FindOneAndDeleteCommand, FindOneAndDeleteOptions } from '@/src/client/types/find/find-one-delete';
-import {
-  FindOneAndUpdateCommand,
-  FindOneAndUpdateOptions,
-  findOneAndUpdateOptionsKeys
-} from '@/src/client/types/find/find-one-update';
-import {
-  FindOneAndReplaceCommand,
-  FindOneAndReplaceOptions,
-  findOneAndReplaceOptionsKeys
-} from '@/src/client/types/find/find-one-replace';
-import { Filter } from '@/src/client/types/filter';
-import { UpdateFilter } from '@/src/client/types/update-filter';
-import { Flatten, FoundDoc, IdOf, Mutable, NoId, WithId } from '@/src/client/types/utils';
-import { SomeDoc } from '@/src/client/document';
-import { Db } from '@/src/client/db';
 import { FindCursor } from '@/src/client/cursor';
-import { ToDotNotation } from '@/src/client/types/dot-notation';
-import { CollectionOptions } from '@/src/client/types/collections/collection-options';
-import { BaseOptions } from '@/src/client/types/common';
-import { ReplaceOneOptions, ReplaceOneResult } from '@/src/client/types/update/replace-one';
-import { AnyBulkWriteOperation, BulkWriteOptions, BulkWriteResult, } from '@/src/client/types/misc/bulk-write';
+import type { Db, SomeDoc } from '@/src/client';
 import {
   BulkWriteError,
   DataAPIResponseError,
@@ -65,7 +26,56 @@ import {
   UpdateManyError
 } from '@/src/client/errors';
 import objectHash from 'object-hash';
-import { DataApiHttpClient } from '@/src/api/data-api-http-client';
+import { DataApiHttpClient } from '@/src/api';
+import {
+  AnyBulkWriteOperation,
+  BaseOptions,
+  BulkWriteOptions,
+  BulkWriteResult,
+  CollectionOptions,
+  DeleteManyCommand,
+  DeleteManyResult,
+  DeleteOneCommand,
+  DeleteOneOptions,
+  DeleteOneResult,
+  Filter,
+  FindOneAndDeleteCommand,
+  FindOneAndDeleteOptions,
+  FindOneAndReplaceCommand,
+  FindOneAndReplaceOptions,
+  findOneAndReplaceOptionsKeys,
+  FindOneAndUpdateCommand,
+  FindOneAndUpdateOptions,
+  findOneAndUpdateOptionsKeys,
+  FindOneCommand,
+  FindOneOptions,
+  findOneOptionsKeys,
+  FindOptions,
+  Flatten,
+  FoundDoc,
+  IdOf,
+  InsertManyCommand,
+  insertManyOptionKeys,
+  InsertManyOptions,
+  InsertManyResult,
+  InsertOneCommand,
+  InsertOneResult,
+  ModifyResult,
+  Mutable,
+  NoId,
+  ReplaceOneOptions,
+  ReplaceOneResult,
+  ToDotNotation,
+  UpdateFilter,
+  UpdateManyCommand,
+  UpdateManyOptions,
+  UpdateManyResult,
+  UpdateOneCommand,
+  updateOneOptionKeys,
+  UpdateOneOptions,
+  UpdateOneResult,
+  WithId
+} from '@/src/client/types';
 
 /**
  * Represents the interface to a collection in the database.

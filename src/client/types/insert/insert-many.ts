@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { IdOf } from '@/src/client/types/utils';
+import type { IdOf } from '@/src/client/types';
 
 /** @internal */
 export interface InsertManyCommand {

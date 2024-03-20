@@ -12,10 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ToDotNotation } from '@/src/client/types/dot-notation';
-import { IsDate, IsNum } from '@/src/client/types/utils';
-import { TypeErr } from '@/src/client/utils';
-import { SomeDoc } from '@/src/client/document';
+import type { SomeDoc, TypeErr } from '@/src/client';
+import type { IsDate, IsNum, ToDotNotation } from '@/src/client/types';
 
 export interface UpdateFilter<Schema extends SomeDoc> {
   $set?: Partial<Schema> & SomeDoc,
@@ -29,7 +27,7 @@ export interface UpdateFilter<Schema extends SomeDoc> {
   $pop?: Pop<Schema> & Record<string, number>,
   $rename?: Record<string, string>,
   $currentDate?: CurrentDate<Schema> & Record<string, boolean>,
-  $addToSet?: ArrayUpdate<Schema> & SomeDoc,
+  $addToSet?: Push<Schema> & SomeDoc,
 }
 
 /**

@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ToDotNotation } from '@/src/client/types/dot-notation';
-import { IdOf, IsDate, IsNum, NoId } from '@/src/client/types/utils';
-import { SomeDoc } from '@/src/client/document';
+import type { SomeDoc } from '@/src/client';
+import type { IdOf, IsDate, IsNum, NoId, ToDotNotation } from '@/src/client/types';
 
 /**
  * Represents some filter operation for a given document schema.

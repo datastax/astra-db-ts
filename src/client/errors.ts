@@ -1,9 +1,9 @@
-import { InsertManyResult } from '@/src/client/types/insert/insert-many';
-import { DeleteManyResult } from '@/src/client/types/delete/delete-many';
-import { UpdateManyResult } from '@/src/client/types/update/update-many';
-import { BulkWriteResult } from '@/src/client/types/misc/bulk-write';
-import { APIResponse } from '@/src/api';
-import { AxiosError } from 'axios';
+import type { InsertManyResult } from '@/src/client/types/insert/insert-many';
+import type { DeleteManyResult } from '@/src/client/types/delete/delete-many';
+import type { UpdateManyResult } from '@/src/client/types/update/update-many';
+import type { BulkWriteResult } from '@/src/client/types/misc/bulk-write';
+import type { RawDataApiResponse } from '@/src/api';
+import type { AxiosError, AxiosResponse } from 'axios';
 
 /**
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a
@@ -94,7 +94,7 @@ export interface DataAPIDetailedErrorDescriptor {
    * }
    * ```
    */
-  readonly rawResponse: APIResponse,
+  readonly rawResponse: RawDataApiResponse,
 }
 
 /**
@@ -123,17 +123,31 @@ export class DevopsAPITimeout extends DataAPIError {
   }
 }
 
-export class DevopsApiError extends Error {
+export abstract class DevopsApiError extends Error {}
+
+export class DevopsApiResponseError extends DevopsApiError {
   readonly errors: Record<string, any>[];
-  readonly raw: AxiosError;
+  readonly rootError: AxiosError;
   readonly status: number;
 
   constructor(error: AxiosError) {
     super(error.message);
     this.errors = (<any>error.response)?.data.errors;
     this.status = (<any>error.response)?.status;
-    this.raw = error
+    this.rootError = error
     this.name = 'DevopsApiError';
+  }
+}
+
+export class DevopsUnexpectedStateError extends DevopsApiError {
+  readonly status?: number;
+  readonly rawResponse?: AxiosResponse;
+
+  constructor(message: string, raw?: AxiosResponse) {
+    super(message);
+    this.rawResponse = raw;
+    this.status = raw?.status;
+    this.name = 'DevopsUnexpectedStateError';
   }
 }
 
@@ -342,12 +356,12 @@ export class BulkWriteError extends CumulativeDataAPIError {
 type InferPartialResult<T> = T extends { readonly partialResult: infer P } ? P : never;
 
 /** @internal */
-export const mkRespErrorFromResponse = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, command: Record<string, any>, raw: APIResponse, partialResult?: InferPartialResult<E>) => {
+export const mkRespErrorFromResponse = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, command: Record<string, any>, raw: RawDataApiResponse, partialResult?: InferPartialResult<E>) => {
   return mkRespErrorFromResponses(err, [command], [raw], partialResult);
 }
 
 /** @internal */
-export const mkRespErrorFromResponses = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, commands: Record<string, any>[], raw: APIResponse[], partialResult?: InferPartialResult<E>) => {
+export const mkRespErrorFromResponses = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, commands: Record<string, any>[], raw: RawDataApiResponse[], partialResult?: InferPartialResult<E>) => {
   const detailedDescriptors = [] as DataAPIDetailedErrorDescriptor[];
 
   for (let i = 0, n = commands.length; i < n; i++) {

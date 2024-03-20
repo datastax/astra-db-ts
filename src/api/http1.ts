@@ -17,7 +17,6 @@ import axios from 'axios';
 import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DEVOPS_API_AUTH_HEADER, DEFAULT_TIMEOUT } from '@/src/api/constants';
 import http from 'http';
 import { logger } from '@/src/logger';
-import { serializeCommand } from '@/src/api/http-client';
 
 const axiosAgent = axios.create({
   headers: {
@@ -34,7 +33,7 @@ axiosAgent.interceptors.request.use((config) => {
   const { method, url } = config;
 
   if (logger.isLevelEnabled('http')) {
-    logger.http(`--- request ${method?.toUpperCase()} ${url} ${serializeCommand(config.data, true,)}`,);
+    logger.http(`--- request ${method?.toUpperCase()} ${url} ${config.data}`,);
   }
 
   return config;

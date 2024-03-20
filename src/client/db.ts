@@ -12,23 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { APIResponse, HttpClient } from '@/src/api';
-import { Collection } from './collection';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used in docs
+import { Admin, Client, Collection, extractDbIdFromUrl, SomeDoc } from '@/src/client';
+import type { HttpClient, RawDataApiResponse } from '@/src/api';
+import { DataApiHttpClient } from '@/src/api';
 import {
+  BaseOptions,
+  CollectionInfo,
   CreateCollectionCommand,
   CreateCollectionOptions,
-  createCollectionOptionsKeys
-} from '@/src/client/types/collections/create-collection';
-import { SomeDoc } from '@/src/client/document';
-import {
-  CollectionInfo,
+  createCollectionOptionsKeys,
   listCollectionOptionsKeys,
   ListCollectionsCommand,
   ListCollectionsOptions
-} from '@/src/client/types/collections/list-collection';
-import { BaseOptions } from '@/src/client/types/common';
-import { DataApiHttpClient } from '@/src/api/data-api-http-client';
-import { Admin } from '@/src/client/admin';
+} from '@/src/client/types';
 
 /**
  * Represents an interface to some Astra database instance.
@@ -43,10 +40,12 @@ import { Admin } from '@/src/client/admin';
 export class Db {
   private readonly _httpClient: DataApiHttpClient;
   private readonly _namespace: string;
+  private readonly _id?: string;
 
   constructor(httpClient: HttpClient, name: string) {
     this._httpClient = httpClient.cloneInto(DataApiHttpClient, c => c.namespace = name);
     this._namespace = name;
+    this._id = extractDbIdFromUrl(httpClient.baseUrl);
   }
 
   /**
@@ -56,8 +55,18 @@ export class Db {
     return this._namespace;
   }
 
+  /**
+   * @return The ID of the database if it was successfully parsed from the given API endpoint.
+   */
+  get id(): string | undefined {
+    return this._id;
+  }
+
   admin(): Admin {
-    return new Admin(this._httpClient);
+    if (!this._id) {
+      throw new Error('Admin operations are only supported on Astra databases');
+    }
+    return new Admin(this._httpClient, this._id);
   }
 
   /**
@@ -214,7 +223,7 @@ export class Db {
    *
    * @return A promise that resolves to the raw response from the Data API.
    */
-  async command(command: Record<string, any>, collection?: string): Promise<APIResponse> {
+  async command(command: Record<string, any>, collection?: string): Promise<RawDataApiResponse> {
     return await this._httpClient.executeCommand(command, { collection: collection });
   }
 }

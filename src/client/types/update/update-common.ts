@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeId } from '@/src/client/types/common';
+import type { SomeId } from '@/src/client/types';
 
 /**
  * Represents the set of fields that are guaranteed to be present in the result of an update operation.
@@ -21,8 +21,6 @@ import { SomeId } from '@/src/client/types/common';
  * @field modifiedCount - The number of documents that were actually modified.
  */
 interface GuaranteedUpdateOptions<N extends number> {
-  /**
-   */
   /**
    * The number of documents that matched the filter.
    */

@@ -13,11 +13,9 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Client, Collection } from '@/src/client';
-import { Db } from '@/src/client/db';
+import { Client, Collection, FindCursor, Db } from '@/src/client/index';
 import { TEST_COLLECTION_NAME, testClient } from '@/tests/fixtures';
 import assert from 'assert';
-import { FindCursor } from '@/src/client/cursor';
 import { CursorAlreadyInitializedError } from '@/src/client/errors';
 import { DataApiHttpClient } from '@/src/api/data-api-http-client';
 

@@ -13,70 +13,40 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { AstraDB } from '@/src/client';
+import { extractDbIdFromUrl, replaceAstraUrlIdAndRegion } from '@/src/client/utils';
 
 describe('Utils test', () => {
-  it('initialized w/ default keyspace', () => {
-    const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-    const astraDb = new AstraDB('myToken', apiEndPoint);
-    assert.strictEqual(
-      astraDb['_httpClient'].baseUrl,
-      'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1',
-    );
-  });
+  describe('extractDbIdFromUri tests', () => {
+    it('should extract the db id from the uri', () => {
+      const endpoint1 = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
+      const id1 = extractDbIdFromUrl(endpoint1);
+      assert.strictEqual(id1, 'a5cf1913-b80b-4f44-ab9f-a8b1c98469d0', 'Could not parse id from prod url');
 
-  it('adds a keyspace properly', () => {
-    const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-    const astraDb = new AstraDB('myToken', apiEndPoint, 'testks1');
-    assert.strictEqual(
-      astraDb['_httpClient'].baseUrl,
-      'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/api/json/v1',
-    );
-  });
-
-  it('uses http2 by default', () => {
-    const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-    const astraDb = new AstraDB('myToken', apiEndPoint);
-    assert.strictEqual(astraDb['_httpClient'].isUsingHttp2(), true);
-  });
-
-  it('handles forcing http2', () => {
-    const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-    const astraDb = new AstraDB('myToken', apiEndPoint, {
-      useHttp2: true,
+      const endpoint2 = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra-dev.datastax.com';
+      const id2 = extractDbIdFromUrl(endpoint2);
+      assert.strictEqual(id2, 'a5cf1913-b80b-4f44-ab9f-a8b1c98469d0', 'Could not parse id from dev url');
     });
-    assert.strictEqual(astraDb['_httpClient'].isUsingHttp2(), true);
-  });
 
-  it('handles forcing http1.1', () => {
-    const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-    const astraDb = new AstraDB('myToken', apiEndPoint, {
-      useHttp2: false,
-    });
-    assert.strictEqual(astraDb['_httpClient'].isUsingHttp2(), false);
-  });
+    it('returned undefined on invalid url', () => {
+      const endpoint1 = 'https://localhost:3000';
+      const id1 = extractDbIdFromUrl(endpoint1);
+      assert.strictEqual(id1, undefined, 'Parsed invalid localhost URL');
 
-  it('handles different base api path', () => {
-    const apiEndPoint = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
-    const astraDb = new AstraDB('myToken', apiEndPoint, 'ks', {
-      baseApiPath: 'some/random/path',
-    });
-    assert.strictEqual(
-      astraDb['_httpClient'].baseUrl,
-      'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com/some/random/path',
-    );
-    assert.strictEqual(astraDb['_httpClient'].isUsingHttp2(), true);
-  });
-
-  it('throws error on empty keyspace', () => {
-    assert.rejects(async () => {
-      new AstraDB('myToken', 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com', '');
+      const endpoint2 = 'https://z5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
+      const id2 = extractDbIdFromUrl(endpoint2);
+      assert.strictEqual(id2, undefined, 'Parsed invalid id from prod url');
     });
   });
 
-  it('throws error on bad keyspace', () => {
-    assert.rejects(async () => {
-      new AstraDB('myToken', 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com', '23][ep3[2xr3][2r');
+  describe('replaceAstraUrlIdAndRegion tests', () => {
+    it('should replace the db id and region in the uri', () => {
+      const endpoint1 = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';
+      const newEndpoint1 = replaceAstraUrlIdAndRegion(endpoint1, 'new-id', 'new-region');
+      assert.strictEqual(newEndpoint1, 'https://new-id-new-region.apps.astra.datastax.com', 'Could not replace id and region in prod url');
+
+      const endpoint2 = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra-dev.datastax.com';
+      const newEndpoint2 = replaceAstraUrlIdAndRegion(endpoint2, 'new-id', 'new-region');
+      assert.strictEqual(newEndpoint2, 'https://new-id-new-region.apps.astra-dev.datastax.com', 'Could not replace id and region in dev url');
     });
   });
 });

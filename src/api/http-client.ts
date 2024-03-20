@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { setLevel } from '@/src/logger';
-import { EJSON } from 'bson';
 import { CLIENT_USER_AGENT, DEFAULT_METHOD, DEFAULT_TIMEOUT } from '@/src/api/constants';
 import {
   Caller,
@@ -26,13 +25,13 @@ import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
 import { Mutable } from '@/src/client/types/utils';
 
-const applicationTokenKey = Symbol('applicationToken');
+export const applicationTokenKey = Symbol('applicationToken');
 
 export class HttpClient {
   readonly baseUrl: string;
-  readonly requestStrategy: HTTPRequestStrategy;
   readonly logSkippedOptions: boolean;
   readonly userAgent: string;
+  requestStrategy: HTTPRequestStrategy;
   private [applicationTokenKey]!: string;
 
   constructor(options: InternalHTTPClientOptions) {
@@ -111,37 +110,6 @@ export class HttpClient {
       timeoutError: info.timeoutError,
     });
   }
-}
-
-export function serializeCommand(data: Record<string, any>, pretty?: boolean): string {
-  return EJSON.stringify(data, (_: unknown, value: any) => handleValues(value), pretty ? "  " : "");
-}
-
-function handleValues(value: any): any {
-  if (value && typeof value === "bigint") {
-    // BigInt handling
-    return Number(value);
-  } else if (value && typeof value === "object") {
-    // ObjectId to strings
-    if (value.$oid) {
-      return value.$oid;
-    } else if (value.$numberDecimal) {
-      // Decimal128 handling
-      return Number(value.$numberDecimal);
-    } else if (value.$binary?.subType === "03" || value.$binary?.subType === "04") {
-      // UUID handling. Subtype 03 or 04 is UUID. Refer spec : https://bsonspec.org/spec.html
-      return Buffer.from(value.$binary.base64, "base64")
-        .toString("hex")
-        .replace(/(.{8})(.{4})(.{4})(.{4})(.{12})/, "$1-$2-$3-$4-$5");
-    }
-    // Date handling
-    else if (value.$date) {
-      // Use numbers instead of strings for dates
-      value.$date = new Date(value.$date).valueOf();
-    }
-  }
-  // all other values
-  return value;
 }
 
 function buildUserAgent(client: string, caller?: Caller | Caller[]): string {

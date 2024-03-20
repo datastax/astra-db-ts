@@ -1,5 +1,5 @@
 import { dummyCollection, TestSchema } from '@/tests/typing/collections/prelude';
-import { StrictUpdateFilter } from '@/src/client';
+import { StrictUpdateFilter } from '@/src/client/index';
 
 void dummyCollection<TestSchema>().findOneAndUpdate({
   $vector: [0.25, 0.045, 0.38, 0.31, 0.67],

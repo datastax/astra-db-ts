@@ -11,14 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// noinspection DuplicatedCode
 
 import assert from 'assert';
-import { Db } from '@/src/client/db';
-import { Client } from '@/src/client/client';
-import { parseUri } from '@/src/client/utils';
 import { TEST_COLLECTION_NAME, testClient } from '@/tests/fixtures';
 import { randAlphaNumeric } from '@ngneat/falso';
-import { HttpClient } from '@/src/api';
+import { Client, Db } from '@/src/client/index';
+import { HttpClient } from '@/src/api/index';
+import { parseUri } from '@/src/client/utils';
 
 describe('Astra TS Client - collections.Db', async () => {
   let astraClient: Client | null;

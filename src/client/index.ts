@@ -12,24 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { Client } from './client';
-export { Collection } from './collection';
-
-export { InsertOneResult } from '@/src/client/types/insert/insert-one';
-export { InsertManyOptions, InsertManyResult } from '@/src/client/types/insert/insert-many';
-export { UpdateOneOptions, UpdateOneResult, } from '@/src/client/types/update/update-one';
-export { UpdateManyOptions, UpdateManyResult } from '@/src/client/types/update/update-many';
-export { DeleteOneOptions, DeleteOneResult } from '@/src/client/types/delete/delete-one';
-export { DeleteManyResult } from '@/src/client/types/delete/delete-many';
-export { FindOptions } from '@/src/client/types/find/find';
-export { FindOneOptions } from '@/src/client/types/find/find-one';
-export { FindOneAndDeleteOptions } from '@/src/client/types/find/find-one-delete';
-export { FindOneAndUpdateOptions } from '@/src/client/types/find/find-one-update';
-export { FindOneAndReplaceOptions } from '@/src/client/types/find/find-one-replace';
-export { UpdateFilter, StrictUpdateFilter } from '@/src/client/types/update-filter';
-export { Filter, StrictFilter } from '@/src/client/types/filter';
-export { VectorDoc, SomeDoc } from '@/src/client/document';
-
-export { AstraDB } from '@/src/client/astra';
-export { ProjectionOption } from '@/src/client/types/common';
-export { SortOption } from '@/src/client/types/common';
+export * from './astra';
+export * from './admin';
+export * from './client';
+export * from './collection';
+export * from './cursor';
+export * from './db';
+export * from './errors';
+export * from './utils';
+export * from './document';

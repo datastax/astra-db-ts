@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeId } from '@/src/client/types/common';
+import type { SomeId } from '@/src/client/types';
 
 /**
  * Checks if a type can possibly be some number

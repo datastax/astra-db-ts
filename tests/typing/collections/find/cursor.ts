@@ -18,7 +18,7 @@ import { dummyCollection, TestSchema } from '@/tests/typing/collections/prelude'
 import { Equal, Expect } from '@/tests/typing/prelude';
 import { FindCursor } from '@/src/client/cursor';
 import { IdOf } from '@/src/client/types/utils';
-import { StrictFilter } from '@/src/client';
+import { StrictFilter } from '@/src/client/index';
 
 type GetTOfCursor<Cursor> = Cursor extends FindCursor<infer T> ? T : undefined;
 type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw : undefined;

@@ -14,7 +14,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { SomeDoc, StrictUpdateFilter } from '@/src/client';
+import { SomeDoc, StrictUpdateFilter } from '@/src/client/index';
 import { BasicSchema, ConvolutedSchema1, ConvolutedSchema2, Equal, Expect, Schema } from '@/tests/typing/prelude';
 import { ToDotNotation } from '@/src/client/types/dot-notation';
 

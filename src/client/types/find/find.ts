@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/client';
-import { ProjectionOption, SortOption } from '@/src/client/types/common';
+import type { SomeDoc } from '@/src/client';
+import type { ProjectionOption, SortOption } from '@/src/client/types';
 
 /**
  * Options for the `find` method

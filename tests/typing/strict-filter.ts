@@ -15,7 +15,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { ConvolutedSchema2, Equal, Expect, Schema, SuperBasicSchema } from '@/tests/typing/prelude';
-import { StrictFilter, SomeDoc } from '@/src/client';
+import { StrictFilter, SomeDoc } from '@/src/client/index';
 import { SomeId } from '@/src/client/types/common';
 
 type test1 = Expect<Equal<StrictFilter<SuperBasicSchema>, {

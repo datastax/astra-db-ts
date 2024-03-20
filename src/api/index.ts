@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { HttpClient } from './http-client';
-export { HTTPClientOptions, APIResponse } from './types';
-export { DEFAULT_NAMESPACE, HTTP_METHODS } from './constants';
+export * from './http1';
+export * from './http2';
+export * from './http-client';
+export * from './data-api-http-client';
+export * from './devops-api-http-client';
+export * from './types';
+export * from './constants';

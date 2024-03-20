@@ -16,7 +16,7 @@
 
 import { dummyCollection, DynamicSchema, TestSchema } from '@/tests/typing/collections/prelude';
 import { Equal, Expect } from '@/tests/typing/prelude';
-import { Filter } from '@/src/client';
+import { Filter } from '@/src/client/index';
 import { StrictFilter } from '@/src/client/types/filter';
 import { Test } from 'mocha';
 

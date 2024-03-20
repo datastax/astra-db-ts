@@ -13,10 +13,8 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Client } from '@/src/client';
-import { Db } from '@/src/client/db';
 import { testClient } from '@/tests/fixtures';
-import { Admin } from '@/src/client/admin';
+import { Admin, Client, Db } from '@/src/client';
 
 describe('Admin test', () => {
   let astraClient: Client | null;

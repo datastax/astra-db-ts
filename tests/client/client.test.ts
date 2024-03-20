@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { Client } from '@/src/client/client';
+import { Client } from '@/src/client';
 import { testClient } from '@/tests/fixtures';
 import { parseUri } from '@/src/client/utils';
 

@@ -15,7 +15,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { ConvolutedSchema2, Schema } from '@/tests/typing/prelude';
-import { Filter, SomeDoc } from '@/src/client';
+import { Filter, SomeDoc } from '@/src/client/index';
 
 const test2: Filter<Schema> = {
   num1: 1,

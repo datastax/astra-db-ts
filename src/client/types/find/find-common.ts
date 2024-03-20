@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/client/document';
-import { WithId } from '@/src/client/types/utils';
+import type { SomeDoc } from '@/src/client';
+import type { WithId } from '@/src/client/types';
 
 /**
  * Represents the result of a `findOneAnd*` operation (e.g. `findOneAndUpdate`)

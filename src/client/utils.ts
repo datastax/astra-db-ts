@@ -14,7 +14,7 @@
 
 import url from 'url';
 import { ObjectId } from 'bson';
-import { SomeId } from '@/src/client/types/common';
+import { SomeId } from '@/src/client/types';
 
 declare const __error: unique symbol;
 
@@ -159,4 +159,16 @@ export function takeWhile<T>(arr: T[], pred: (x: T) => boolean): T[] {
   }
 
   return result;
+}
+
+export function extractDbIdFromUrl(uri: string): string | undefined {
+  return new URL(uri).hostname.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}/)?.[0];
+}
+
+export function replaceAstraUrlIdAndRegion(uri: string, id: string, region: string): string {
+  const url = new URL(uri);
+  const parts = url.hostname.split('.');
+  parts[0] = id + '-' + region;
+  url.hostname = parts.join('.');
+  return url.toString().slice(0, -1);
 }

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ProjectionOption, SomeDoc } from '@/src/client';
-import { BaseOptions, SortOption } from '@/src/client/types/common';
+import type { SomeDoc } from '@/src/client';
+import type { BaseOptions, ProjectionOption, SortOption } from '@/src/client/types';
 
 /** @internal */
 export interface FindOneAndDeleteCommand {

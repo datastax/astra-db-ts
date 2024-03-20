@@ -13,8 +13,7 @@
 // limitations under the License.
 
 import { SomeDoc } from '@/src/client';
-import { CollectionOptions } from '@/src/client/types/collections/collection-options';
-import { BaseOptions } from '@/src/client/types/common';
+import { BaseOptions, CollectionOptions } from '@/src/client/types';
 
 /** @internal */
 export interface ListCollectionsCommand {
@@ -25,7 +24,6 @@ export interface ListCollectionsCommand {
   }
 }
 
-// Is 'nameOnly' instead of 'explain' to be more Mongo-esque. May change in the future.
 /**
  * Options for listing collections.
  *

@@ -1,6 +1,20 @@
+// Copyright DataStax, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import { withoutFields } from '@/src/client/utils';
 import { Client } from '@/src/client/client';
-import { DEFAULT_NAMESPACE } from '@/src/api';
+import { DEFAULT_NAMESPACE, HttpClient } from '@/src/api';
 import { Caller } from '@/src/api/types';
 
 /**
@@ -115,7 +129,17 @@ export class AstraDB extends Client {
    */
   constructor(token: string, endpoint: string, namespace?: string, options?: AstraDBOptions)
 
-  constructor(token: string, endpoint: string, namespaceOrOptions?: AstraDBOptions | string, maybeOptions?: AstraDBOptions) {
+  /**
+   * @internal
+   */
+  constructor(token: null, baseURL: string, namespace: string, client: HttpClient)
+
+  constructor(token: string | null, endpoint: string, namespaceOrOptions?: string | AstraDBOptions, optionsOrClient?: AstraDBOptions | HttpClient) {
+    if (optionsOrClient instanceof HttpClient) {
+      super(endpoint, namespaceOrOptions as string, optionsOrClient);
+      return;
+    }
+
     const namespace = (typeof namespaceOrOptions === 'string')
       ? namespaceOrOptions
       : DEFAULT_NAMESPACE;
@@ -125,13 +149,13 @@ export class AstraDB extends Client {
     }
 
     const options = (typeof namespaceOrOptions === 'string')
-      ? maybeOptions
+      ? optionsOrClient
       : namespaceOrOptions;
 
-    super(endpoint, namespace, {
+    super(endpoint!, namespace, {
       ...withoutFields(options, 'namespace'),
       baseApiPath: options?.baseApiPath ?? 'api/json/v1',
-      applicationToken: token,
+      applicationToken: token!,
     });
   }
 }

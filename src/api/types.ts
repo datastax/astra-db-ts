@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { HTTP_METHODS } from '@/src/api';
+import type { HTTP_METHODS } from '@/src/api/index';
 
 export type Caller = [name: string, version?: string];
 
@@ -36,7 +36,7 @@ export interface HTTPClientCloneOptions {
   baseApiPath?: string;
 }
 
-export interface APIResponse {
+export interface RawDataApiResponse {
   status?: Record<string, any>;
   errors?: any[];
   data?: Record<string, any>;

@@ -13,16 +13,16 @@
 // limitations under the License.
 
 import {
+  Filter,
   FindOptions,
   InternalFindOptions,
   internalFindOptionsKeys,
-  InternalGetMoreCommand
-} from '@/src/client/types/find/find';
-import { SomeDoc } from '@/src/client/document';
-import { Filter } from '@/src/client/types/filter';
-import { ProjectionOption, SortOption } from '@/src/client/types/common';
-import { CursorAlreadyInitializedError } from '@/src/client/errors';
-import { DataApiHttpClient } from '@/src/api/data-api-http-client';
+  InternalGetMoreCommand,
+  ProjectionOption,
+  SortOption
+} from '@/src/client/types';
+import { CursorAlreadyInitializedError, SomeDoc } from '@/src/client';
+import { DataApiHttpClient } from '@/src/api';
 
 /** @internal */
 const enum CursorStatus {

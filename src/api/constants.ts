@@ -19,6 +19,7 @@ export const CLIENT_USER_AGENT = LIB_NAME + '/' + LIB_VERSION;
 export const enum HTTP_METHODS {
   get = 'GET',
   post = 'POST',
+  delete = 'DELETE',
 }
 
 export const DEFAULT_NAMESPACE = 'default_keyspace';
