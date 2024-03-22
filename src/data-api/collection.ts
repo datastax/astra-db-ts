@@ -58,7 +58,7 @@ import {
   insertManyOptionKeys,
   InsertManyOptions,
   InsertManyResult,
-  InsertOneCommand,
+  InsertOneCommand, InsertOneOptions,
   InsertOneResult,
   ModifyResult,
   Mutable,
@@ -144,11 +144,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @return InsertOneResult
    */
-  async insertOne(document: Schema, options?: BaseOptions): Promise<InsertOneResult<Schema>> {
-    // setDefaultIdForInsert(document);
-
+  async insertOne(document: Schema, options?: InsertOneOptions): Promise<InsertOneResult<Schema>> {
     const command: InsertOneCommand = {
       insertOne: { document },
+    }
+
+    if (options?.vector) {
+      (<any>command.insertOne.document).$vector = options.vector;
     }
 
     const resp = await this._httpClient.executeCommand(command, options);
@@ -214,9 +216,15 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   async insertMany(documents: Schema[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>> {
     const chunkSize = options?.chunkSize ?? 20;
 
-    // for (let i = 0, n = documents.length; i < n; i++) {
-    //   setDefaultIdForInsert(documents[i]);
-    // }
+    if (options?.vectors) {
+      if (options.vectors.length !== documents.length) {
+        throw new Error('The number of vectors must match the number of documents');
+      }
+
+      for (let i = 0, n = documents.length; i < n; i++) {
+        (<any>documents[i]).$vector = options.vectors[i];
+      }
+    }
 
     const insertedIds = (options?.ordered)
       ? await insertManyOrdered<Schema>(this._httpClient, documents, chunkSize)
@@ -248,6 +256,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @return UpdateOneResult
    */
   async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions<Schema>): Promise<UpdateOneResult> {
+    if (options?.vector) {
+      if (options.sort) {
+        throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object')
+      }
+      options = { ...options, sort: { $vector: options.vector } };
+    }
+
     const command: UpdateOneCommand = {
       updateOne: {
         filter,
@@ -261,8 +276,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     if (options?.sort) {
       command.updateOne.sort = options.sort;
     }
-
-    // setDefaultIdForUpsert(command.updateOne);
 
     const resp = await this._httpClient.executeCommand(command, options, updateOneOptionKeys);
 
@@ -326,8 +339,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         },
       },
     };
-
-    // setDefaultIdForUpsert(command.updateMany);
 
     const commonResult = {
       modifiedCount: 0,
@@ -393,8 +404,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       },
     };
 
-    // setDefaultIdForUpsert(command.findOneAndReplace, true);
-
     const resp = await this._httpClient.executeCommand(command, options, findOneAndReplaceOptionsKeys);
 
     const commonResult = {
@@ -428,6 +437,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @return DeleteOneResult
    */
   async deleteOne(filter: Filter<Schema> = {}, options?: DeleteOneOptions<Schema>): Promise<DeleteOneResult> {
+    if (options?.vector) {
+      if (options.sort) {
+        throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object')
+      }
+      options = { ...options, sort: { $vector: options.vector } };
+    }
+
     const command: DeleteOneCommand = {
       deleteOne: { filter },
     };
@@ -534,6 +550,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @return FindCursor
    */
   find<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursor<FoundDoc<Schema, GetSim>, FoundDoc<Schema, GetSim>> {
+    if (options?.vector) {
+      if (options.sort) {
+        throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object')
+      }
+      options = { ...options, sort: { $vector: options.vector } };
+    }
+
     return new FindCursor(this.namespace, this._httpClient, filter, options) as any;
   }
 
@@ -602,6 +625,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @return The found document, or `null` if no document was found.
    */
   async findOne<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<Schema, GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
+    if (options?.vector) {
+      if (options.sort) {
+        throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object')
+      }
+      options = { ...options, sort: { $vector: options.vector } };
+    }
+
     const command: FindOneCommand = {
       findOne: {
         filter,
@@ -666,6 +696,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   ): Promise<WithId<Schema> | null>
 
   async findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options: FindOneAndReplaceOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+    if (options?.vector) {
+      if (options.sort) {
+        throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object')
+      }
+      options = { ...options, sort: { $vector: options.vector } };
+    }
+
     const command: FindOneAndReplaceCommand = {
       findOneAndReplace: {
         filter,
@@ -676,8 +713,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         },
       },
     };
-
-    // setDefaultIdForUpsert(command.findOneAndReplace, true);
 
     if (options?.sort) {
       command.findOneAndReplace.sort = options.sort;
@@ -786,6 +821,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   ): Promise<WithId<Schema> | null>
 
   async findOneAndDelete(filter: Filter<Schema>, options?: FindOneAndDeleteOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+    if (options?.vector) {
+      if (options.sort) {
+        throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object')
+      }
+      options = { ...options, sort: { $vector: options.vector } };
+    }
+
     const command: FindOneAndDeleteCommand = {
       findOneAndDelete: { filter },
     };
@@ -848,6 +890,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   ): Promise<WithId<Schema> | null>
 
   async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options: FindOneAndUpdateOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+    if (options?.vector) {
+      if (options.sort) {
+        throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object')
+      }
+      options = { ...options, sort: { $vector: options.vector } };
+    }
+
     const command: FindOneAndUpdateCommand = {
       findOneAndUpdate: {
         filter,
@@ -858,8 +907,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         },
       },
     };
-
-    // setDefaultIdForUpsert(command.findOneAndUpdate);
 
     if (options?.sort) {
       command.findOneAndUpdate.sort = options.sort;

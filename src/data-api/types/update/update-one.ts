@@ -52,6 +52,7 @@ export interface UpdateOneOptions<Schema extends SomeDoc> extends BaseOptions {
    * @default null
    */
   sort?: SortOption<Schema>,
+  vector?: number[],
 }
 
 /** @internal */

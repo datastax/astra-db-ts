@@ -37,7 +37,8 @@ export interface DeleteOneOptions<Schema extends SomeDoc> extends BaseOptions {
    * Defaults to `null`, where the order is not guaranteed.
    * @default null
    */
-  sort?: SortOption<Schema>;
+  sort?: SortOption<Schema>,
+  vector?: number[],
 }
 
 /**
@@ -49,5 +50,5 @@ export interface DeleteOneResult {
   /**
    * The number of deleted documents.
    */
-  deletedCount: 0 | 1;
+  deletedCount: 0 | 1,
 }

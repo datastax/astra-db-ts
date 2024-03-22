@@ -39,6 +39,7 @@ export interface FindOneAndDeleteOptions<Schema extends SomeDoc> extends BaseOpt
    * @default null
    */
   sort?: SortOption<Schema>,
+  vector?: number[],
   /**
    * Specifies which fields should be included/excluded in the returned documents.
    *

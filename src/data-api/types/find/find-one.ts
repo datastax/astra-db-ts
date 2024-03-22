@@ -43,13 +43,14 @@ export interface FindOneOptions<Schema extends SomeDoc, GetSim extends boolean> 
    * Defaults to `null`, where the order is not guaranteed.
    * @default null
    */
-  sort?: SortOption<Schema>;
+  sort?: SortOption<Schema>,
+  vector?: number[],
   /**
    * Specifies which fields should be included/excluded in the returned documents.
    *
    * If not specified, all fields are included.
    */
-  projection?: ProjectionOption<Schema>;
+  projection?: ProjectionOption<Schema>,
   /**
    * If true, include the similarity score in the result via the `$similarity` field.
    *
@@ -70,7 +71,7 @@ export interface FindOneOptions<Schema extends SomeDoc, GetSim extends boolean> 
    * console.log(doc?.$similarity);
    * ```
    */
-  includeSimilarity?: GetSim;
+  includeSimilarity?: GetSim,
 }
 
 /** @internal */

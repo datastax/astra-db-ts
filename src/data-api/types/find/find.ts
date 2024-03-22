@@ -28,6 +28,7 @@ export interface FindOptions<Schema extends SomeDoc, GetSim extends boolean> {
    * @default null
    */
   sort?: SortOption<Schema>,
+  vector?: number[],
   /**
    * Specifies which fields should be included/excluded in the returned documents.
    *
