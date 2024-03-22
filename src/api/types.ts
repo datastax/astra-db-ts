@@ -31,11 +31,6 @@ export interface InternalHTTPClientOptions extends HTTPClientOptions {
   userAgent?: string;
 }
 
-export interface HTTPClientCloneOptions {
-  baseUrl?: string;
-  baseApiPath?: string;
-}
-
 export interface RawDataApiResponse {
   status?: Record<string, any>;
   errors?: any[];
@@ -54,7 +49,7 @@ export interface HTTPRequestInfo {
   params?: Record<string, string>,
   method?: HTTP_METHODS,
   timeout?: number,
-  timeoutError: Error,
+  timeoutError: () => Error,
 }
 
 export interface InternalHTTPRequestInfo extends HTTPRequestInfo {

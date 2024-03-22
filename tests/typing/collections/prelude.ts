@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, VectorDoc } from '@/src/client/index';
-import { SomeDoc } from '@/src/client/document';
-import { Db } from '@/src/client/db';
+import { Collection, VectorDoc } from '@/src/data-api';
+import { SomeDoc } from '@/src/data-api/document';
+import { Db } from '@/src/data-api/db';
 
 export interface TestSchema extends VectorDoc {
   _id: string;

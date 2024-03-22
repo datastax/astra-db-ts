@@ -3,10 +3,10 @@
   "version": "0.1.4",
   "description": "Astra DB TS Client",
   "contributors": [
+    "Kavin Gupta (https://github.com/toptobes)",
     "Valeri Karpov (https://github.com/vkarpov15)",
     "Aaron Morton (https://github.com/amorton)",
-    "Kathiresan Selvaraj (https://github.com/kathirsvn)",
-    "Kavin Gupta (https://github.com/toptobes)"
+    "Kathiresan Selvaraj (https://github.com/kathirsvn)"
   ],
   "keywords": [
     "cassandra",
@@ -56,7 +56,10 @@
   },
   "scripts": {
     "lint": "eslint .",
-    "test": "nyc ts-mocha --paths -p tsconfig.json tests/**/*.test.ts",
+    "test": "ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts tests/integration/**/*.test.ts",
+    "test:integration": "ts-mocha --paths -p tsconfig.json tests/integration/**/*.test.ts",
+    "test:unit": "ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts",
+    "test:coverage": "nyc npm run test",
     "preinstall": "npm run update-version-file",
     "build": "npm run update-version-file && tsc --project tsconfig.build.json && tscpaths -p tsconfig.build.json -s ./src -o ./dist",
     "build:docs": "jsdoc2md -t APIReference.hbs --files src/**/*.ts --configure ./jsdoc2md.json > APIReference.md",

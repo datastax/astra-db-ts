@@ -11,14 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// noinspection DuplicatedCode
 
-export * from './astra';
-export * from './admin';
-export * from './client';
-export * from './collection';
-export * from './cursor';
-export * from './db';
-export * from './errors';
-export * from './utils';
-export * from './document';
-export * from './ids';
+export * from './data-api-client';

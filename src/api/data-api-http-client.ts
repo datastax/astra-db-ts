@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { BaseOptions } from '@/src/client/types';
+import { BaseOptions } from '@/src/data-api/types';
 import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, HTTP_METHODS, HttpClient, RawDataApiResponse } from '@/src/api';
-import { DataAPIResponseError, DataAPITimeout, mkRespErrorFromResponse, ObjectId, UUID } from '@/src/client';
+import { DataAPIResponseError, DataAPITimeout, mkRespErrorFromResponse, ObjectId, UUID } from '@/src/data-api';
 import { logger } from '@/src/logger';
 
 interface DataApiRequestInfo {
@@ -53,13 +53,13 @@ export class DataApiHttpClient extends HttpClient {
       const keyspacePath = `/${this.namespace ?? DEFAULT_NAMESPACE}`;
       const collectionPath = info.collection ? `/${info.collection}` : '';
       const url = info.url + keyspacePath + collectionPath;
-      // console.log(serializeCommand(info.command))
+
       const response = await this._request({
         url: url,
         data: serializeCommand(info.command),
         timeout: info.timeout,
         method: HTTP_METHODS.Post,
-        timeoutError: new DataAPITimeout(info.command, info.timeout || DEFAULT_TIMEOUT),
+        timeoutError: () => new DataAPITimeout(info.command, info.timeout || DEFAULT_TIMEOUT),
       });
 
       if (response.status === 401 || (response.data?.errors?.length > 0 && response.data?.errors[0]?.message === "UNAUTHENTICATED: Invalid token")) {

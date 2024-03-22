@@ -16,9 +16,7 @@
 
 import { dummyCollection, DynamicSchema, TestSchema } from '@/tests/typing/collections/prelude';
 import { Equal, Expect } from '@/tests/typing/prelude';
-import { Filter } from '@/src/client/index';
-import { StrictFilter } from '@/src/client/types/filter';
-import { Test } from 'mocha';
+import { StrictFilter } from '@/src/data-api/types/filter';
 
 dummyCollection<TestSchema>().findOne({}, {}).then((_a) => {
   const a = _a!;

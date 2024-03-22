@@ -75,7 +75,7 @@ export class HTTP1Strategy implements HTTPRequestStrategy {
       });
     } catch (e: any) {
       if (e.code === 'ECONNABORTED') {
-        throw info.timeoutError;
+        throw info.timeoutError();
       }
       throw e;
     }

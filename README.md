@@ -15,11 +15,14 @@ async function main() {
   const ASTRA_DB_API_ENDPOINT = process.env['ASTRA_DB_API_ENDPOINT'];
   const ASTRA_DB_APPLICATION_TOKEN = process.env['ASTRA_DB_APPLICATION_TOKEN'];
 
-  const db = new AstraDB(ASTRA_DB_APPLICATION_TOKEN, ASTRA_DB_API_ENDPOINT);
-
+  // Connect to the db
+  const client = new DataApiClient(ASTRA_DB_APPLICATION_TOKEN);
+  const db = client.db(ASTRA_DB_API_ENDPOINT);
+  
   // Create a vector collection
   const collection = await db.createCollection<Idea>("vector_5_collection", { vector: { dimension: 5, metric: "cosine" } });
 
+  // Insert documents into the collection
   const documents = [
     {
       "_id": "1",

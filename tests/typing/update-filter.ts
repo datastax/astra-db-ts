@@ -14,8 +14,8 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import type { SomeDoc } from '@/src/client';
-import type { UpdateFilter } from '@/src/client/types';
+import type { SomeDoc } from '@/src/data-api';
+import type { UpdateFilter } from '@/src/data-api/types';
 import type { BasicSchema, ConvolutedSchema1, ConvolutedSchema2, Schema } from '@/tests/typing/prelude';
 
 const test2: UpdateFilter<BasicSchema> = {

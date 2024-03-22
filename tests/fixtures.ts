@@ -13,20 +13,16 @@
 // limitations under the License.
 
 // Changing this line of code took 6 long hours of my life.
-// import { Client } from '@/src/client/client';
-import { Client } from '@/src/client';
+// import { Client } from '@/src/__client/client';
+import { Db } from '@/src/data-api';
+import { DataApiClient } from '@/src/client';
 
 export const TEST_COLLECTION_NAME = 'test_coll';
 
-const makeAstraClient = async (useHttp2: boolean = true) => {
-  if (!process.env.ASTRA_URI || !process.env.APPLICATION_TOKEN) {
-    return null;
-  }
-
-  return await Client.connect(process.env.ASTRA_URI, {
-    applicationToken: process.env.APPLICATION_TOKEN,
-    useHttp2: useHttp2,
-  });
+const makeAstraClient = (useHttp2: boolean = true): [DataApiClient, Db] => {
+  const client = new DataApiClient(process.env.APPLICATION_TOKEN!, { useHttp2 });
+  const db = client.db(process.env.ASTRA_URI!);
+  return [client, db];
 };
 
 export type Employee = {
@@ -107,7 +103,7 @@ export const sampleUsersList = [
 ];
 
 export const testClient =
-  process.env.ASTRA_URI
+  (process.env.ASTRA_URI && process.env.APPLICATION_TOKEN)
     ? {
       new: makeAstraClient,
       uri: process.env.ASTRA_URI,

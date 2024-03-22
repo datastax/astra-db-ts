@@ -23,7 +23,7 @@ import {
 } from '@/src/api/types';
 import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
-import { Mutable } from '@/src/client/types/utils';
+import { Mutable } from '@/src/data-api/types/utils';
 
 export const applicationTokenKey = Symbol('applicationToken');
 
@@ -96,6 +96,10 @@ export class HttpClient {
     });
     initialize(clone);
     return clone;
+  }
+
+  public unsafeGetToken(): string {
+    return this[applicationTokenKey];
   }
 
   protected async _request(info: HTTPRequestInfo): Promise<InternalAPIResponse> {

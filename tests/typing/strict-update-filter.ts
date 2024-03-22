@@ -14,8 +14,8 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import type { SomeDoc } from '@/src/client';
-import type { StrictUpdateFilter } from '@/src/client/types';
+import type { SomeDoc } from '@/src/data-api';
+import type { StrictUpdateFilter } from '@/src/data-api/types';
 import type { BasicSchema, ConvolutedSchema1, ConvolutedSchema2, Equal, Expect, Schema } from '@/tests/typing/prelude';
 
 type test1 = Expect<Equal<StrictUpdateFilter<BasicSchema>, {
