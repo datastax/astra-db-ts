@@ -5,7 +5,7 @@ import {
   DatabaseConfig,
   FullDatabaseInfo,
   ListDatabasesOptions
-} from '@/src/data-api/types';
+} from '@/src/devops/types';
 import { Db, mkDb } from '@/src/data-api';
 import { DevopsApiHttpClient, HTTP_METHODS } from '@/src/api';
 import { AdminSpawnOptions, DataApiClientOptions, DbSpawnOptions } from '@/src/client/data-api-client';

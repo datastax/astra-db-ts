@@ -1,4 +1,4 @@
-import { FullDatabaseInfo } from '@/src/data-api/types';
+import { FullDatabaseInfo } from '@/src/devops/types';
 import { DevopsApiHttpClient, HTTP_METHODS, HttpClient } from '@/src/api';
 import { ObjectId } from 'bson';
 import { Db } from '@/src/data-api';

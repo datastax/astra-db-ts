@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DatabaseCloudProvider, DatabaseTier } from '@/src/data-api/types';
+import type { DatabaseCloudProvider, DatabaseTier } from '@/src/devops/types';
 
 /**
  * Represents the options for creating a database.

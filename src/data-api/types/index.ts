@@ -12,10 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from '@/src/devops/types/admin/admin-common';
-export * from '@/src/devops/types/admin/create-database';
-export * from '@/src/devops/types/admin/database-info';
-export * from '@/src/devops/types/admin/list-databases';
 export * from './collections/collections-common';
 export * from './collections/collection-options';
 export * from './collections/create-collection';

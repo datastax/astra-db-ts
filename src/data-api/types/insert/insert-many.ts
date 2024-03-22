@@ -46,7 +46,7 @@ export interface InsertManyOrderedOptions {
    * The number of documents to upload per request
    */
   chunkSize?: number,
-  vectors: number[][],
+  vectors?: number[][],
 }
 
 /**
@@ -66,7 +66,7 @@ export interface InsertManyUnorderedOptions {
    * The number of documents to upload per request
    */
   chunkSize?: number,
-  vectors: number[][],
+  vectors?: number[][],
 }
 
 /** @internal */
