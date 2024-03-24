@@ -28,3 +28,6 @@ export const DEFAULT_TIMEOUT = 30000;
 
 export const DEFAULT_DATA_API_AUTH_HEADER = 'Token';
 export const DEFAULT_DEVOPS_API_AUTH_HEADER = 'Authorization';
+
+export const DEFAULT_DEVOPS_API_ENDPOINT = 'https://api.astra.datastax.com/v2';
+export const DEFAULT_DATA_API_PATH = 'api/json/v1';

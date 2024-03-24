@@ -1,19 +1,25 @@
 import { FullDatabaseInfo } from '@/src/devops/types';
-import { DevopsApiHttpClient, HTTP_METHODS, HttpClient } from '@/src/api';
+import { DEFAULT_DEVOPS_API_ENDPOINT, DevopsApiHttpClient, HTTP_METHODS, HttpClient } from '@/src/api';
 import { ObjectId } from 'bson';
 import { Db } from '@/src/data-api';
+import { AdminSpawnOptions, RootClientOptsWithToken } from '@/src/client';
 
 export class AstraDbAdmin {
   private readonly _httpClient: DevopsApiHttpClient;
   private readonly _id: string;
   private readonly _db: Db;
 
-  constructor(_db: Db, httpClient: HttpClient) {
+  constructor(_db: Db, httpClient: HttpClient, options: AdminSpawnOptions) {
     this._httpClient = httpClient.cloneInto(DevopsApiHttpClient, (c) => {
-      c.baseUrl = 'https://api.astra.datastax.com/v2';
+      c.baseUrl = options.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINT;
     });
+
     this._id = _db.id!;
     this._db = _db;
+
+    if (options.adminToken) {
+      this._httpClient.setToken(options.adminToken);
+    }
   }
 
   db(): Db {
@@ -49,4 +55,11 @@ export class AstraDbAdmin {
       path: `/databases/${this._id}`,
     });
   }
+}
+
+export function mkDbAdmin(db: Db, httpClient: HttpClient, rootOpts: RootClientOptsWithToken, options?: AdminSpawnOptions): AstraDbAdmin {
+  return new AstraDbAdmin(db, httpClient, {
+    ...rootOpts.devopsOptions,
+    ...options,
+  });
 }

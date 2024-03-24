@@ -21,6 +21,7 @@ interface DataApiRequestInfo {
   url: string;
   timeout?: number;
   collection?: string;
+  namespace?: string;
   command: Record<string, any>;
 }
 
@@ -28,7 +29,7 @@ export class DataApiHttpClient extends HttpClient {
   public collection?: string;
   public namespace?: string;
 
-  public async executeCommand(command: Record<string, any>, options?: BaseOptions & { collection?: string }, optionsToRetain?: Set<string>) {
+  public async executeCommand(command: Record<string, any>, options?: BaseOptions & { collection?: string, namespace?: string }, optionsToRetain?: Set<string>) {
     const commandName = Object.keys(command)[0];
 
     if (command[commandName].options && optionsToRetain) {
@@ -39,6 +40,7 @@ export class DataApiHttpClient extends HttpClient {
       url: this.baseUrl,
       timeout: options?.maxTimeMS,
       collection: options?.collection,
+      namespace: options?.namespace,
       command: command,
     });
 
@@ -49,8 +51,9 @@ export class DataApiHttpClient extends HttpClient {
   protected async _requestDataApi(info: DataApiRequestInfo): Promise<RawDataApiResponse> {
     try {
       info.collection ||= this.collection;
+      info.namespace ||= this.namespace || DEFAULT_NAMESPACE;
 
-      const keyspacePath = `/${this.namespace ?? DEFAULT_NAMESPACE}`;
+      const keyspacePath = `/${info.namespace}`;
       const collectionPath = info.collection ? `/${info.collection}` : '';
       const url = info.url + keyspacePath + collectionPath;
 
@@ -118,7 +121,6 @@ function cleanupOptions(data: Record<string, any>, commandName: string, optionsT
 }
 
 function serializeCommand(data: Record<string, any>, pretty?: boolean): string {
-  // return EJSON.stringify(data, (_: unknown, value: any) => handleValues(value), pretty ? '  ' : '');
   return JSON.stringify(data, (_: unknown, value: any) => handleValues(value), pretty ? '  ' : '');
 }
 
@@ -149,7 +151,6 @@ function deserialize(data?: Record<string, any> | null): Record<string, any> {
     return {};
   }
 
-  // const deserialized = EJSON.deserialize(data);
   return data;
 }
 

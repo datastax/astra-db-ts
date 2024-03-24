@@ -16,6 +16,7 @@
 import { DataApiClient } from '@/src/client';
 import * as process from 'process';
 import assert from 'assert';
+import { DEFAULT_DATA_API_PATH } from '@/src/api';
 
 describe('unit.client.data-api-client', () => {
   const endpoint = process.env.ASTRA_URI!;
@@ -28,14 +29,14 @@ describe('unit.client.data-api-client', () => {
     it('should allow db construction from endpoint', () => {
       const db = new DataApiClient('dummy-token').db(endpoint);
       assert.ok(db);
-      assert.strictEqual(db['_httpClient'].baseUrl, `${endpoint}/api/json/v1`);
+      assert.strictEqual(db['_httpClient'].baseUrl, `${endpoint}/${DEFAULT_DATA_API_PATH}`);
       assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'dummy-token');
     });
 
     it('should allow db construction from id + region', () => {
       const db = new DataApiClient('dummy-token').db(id, region);
       assert.ok(db);
-      assert.strictEqual(db['_httpClient'].baseUrl, `${endpoint}/api/json/v1`);
+      assert.strictEqual(db['_httpClient'].baseUrl, `${endpoint}/${DEFAULT_DATA_API_PATH}`);
       assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'dummy-token');
     });
 

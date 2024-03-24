@@ -19,11 +19,11 @@ import { BaseOptions, CollectionOptions } from '@/src/data-api/types';
 export interface CreateCollectionCommand {
   createCollection: {
     name: string;
-    options?: Record<string, any>;
+    options: CollectionOptions<SomeDoc>;
   };
 }
 
 export interface CreateCollectionOptions<Schema extends SomeDoc> extends BaseOptions, CollectionOptions<Schema> {}
 
 /** @internal */
-export const createCollectionOptionsKeys = new Set(['vector', 'indexing']);
+export const createCollectionOptionsKeys = new Set(['vector', 'indexing', 'defaultId']);

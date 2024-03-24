@@ -21,7 +21,7 @@ import {
   ProjectionOption,
   SortOption
 } from '@/src/data-api/types';
-import { CursorAlreadyInitializedError, SomeDoc } from '@/src/data-api';
+import { CursorAlreadyInitializedError, replaceRawId, SomeDoc } from '@/src/data-api';
 import { DataApiHttpClient } from '@/src/api';
 
 /** @internal */
@@ -502,5 +502,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
 
     this._nextPageState = resp.data!.nextPageState || null;
     this._buffer = resp.data!.documents as TRaw[];
+
+    this._buffer.forEach(replaceRawId);
   }
 }

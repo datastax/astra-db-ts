@@ -48,3 +48,7 @@ export interface VectorOptions {
 export type IndexingOptions<Schema extends SomeDoc> =
   | { allow: (keyof ToDotNotation<Schema>)[] | ['*'], deny?: never }
   | { deny: (keyof ToDotNotation<Schema>)[] | ['*'], allow?: never }
+
+export interface DefaultIdOptions {
+  type: 'uuid' | 'uuidv6' | 'uuidv7' | 'objectId';
+}

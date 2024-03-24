@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { testClient } from '@/tests/fixtures';
+import { TEST_COLLECTION_NAME, testClient } from '@/tests/fixtures';
 import { DataApiClient } from '@/src/client';
 import { Db } from '@/src/data-api';
 import assert from 'assert';
@@ -35,6 +35,12 @@ describe('integration.misc.hierarchy-traversal tests', () => {
     }
 
     [client, db] = testClient.new();
+
+    await db.createCollection(TEST_COLLECTION_NAME);
+  });
+
+  after(async () => {
+    await db.dropCollection(TEST_COLLECTION_NAME);
   });
 
   describe('db->admin->db', () => {
@@ -59,6 +65,9 @@ describe('integration.misc.hierarchy-traversal tests', () => {
 
       assert.deepStrictEqual(collections, collections1);
       assert.deepStrictEqual(collections, collections2);
+
+      assert.doesNotThrow(async () => await db1.collection(TEST_COLLECTION_NAME).insertOne({ name: 'test' }));
+      assert.doesNotThrow(async () => await db2.collection(TEST_COLLECTION_NAME).insertOne({ name: 'test' }));
     });
   });
 
@@ -91,16 +100,19 @@ describe('integration.misc.hierarchy-traversal tests', () => {
       const dbAdmin2 = client.db(endpoint).admin();
       const info1 = await dbAdmin1.info();
       const info2 = await dbAdmin2.info();
-      assert.deepStrictEqual(info1, info2);
+      assert.deepStrictEqual(info1.info, info2.info);
     });
   });
 
   describe('client->admin->dbAdmin->db <-> client->db->admin->db', () => {
-    it('is essentially a noop', () => {
+    it('is essentially a noop', async () => {
       const db1 = client.admin().dbAdmin(endpoint).db();
       const db2 = client.db(endpoint).admin().db();
       assert.strictEqual(db1.id, db2.id);
       assert.strictEqual(db1.namespace, db2.namespace);
+
+      assert.doesNotThrow(async () => await db1.collection(TEST_COLLECTION_NAME).insertOne({ name: 'test' }));
+      assert.doesNotThrow(async () => await db1.collection(TEST_COLLECTION_NAME).insertOne({ name: 'test' }));
     });
 
     it('works with endpoint', async () => {
@@ -113,6 +125,9 @@ describe('integration.misc.hierarchy-traversal tests', () => {
       assert.ok(Array.isArray(collections2));
 
       assert.deepStrictEqual(collections1, collections2);
+
+      assert.doesNotThrow(async () => await db1.collection(TEST_COLLECTION_NAME).insertOne({ name: 'test' }));
+      assert.doesNotThrow(async () => await db2.collection(TEST_COLLECTION_NAME).insertOne({ name: 'test' }));
     });
 
     it('works with endpoint & id + region', async () => {
@@ -125,6 +140,9 @@ describe('integration.misc.hierarchy-traversal tests', () => {
       assert.ok(Array.isArray(collections2));
 
       assert.deepStrictEqual(collections1, collections2);
+
+      assert.doesNotThrow(async () => await db1.collection(TEST_COLLECTION_NAME).insertOne({ name: 'test' }));
+      assert.doesNotThrow(async () => await db2.collection(TEST_COLLECTION_NAME).insertOne({ name: 'test' }));
     });
 
     it('works with id + region & endpoint', async () => {

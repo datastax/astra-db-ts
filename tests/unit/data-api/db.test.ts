@@ -15,112 +15,116 @@
 import assert from 'assert';
 import { Db, mkDb } from '@/src/data-api';
 import process from 'process';
+import { DEFAULT_DATA_API_PATH } from '@/src/api';
+import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
 
 describe('unit.data-api.db tests', () => {
+  const mkOptions = (data?: DbSpawnOptions, devops?: AdminSpawnOptions) => {
+    return { dataApiOptions: { token: 'old', ...data }, devopsOptions: { adminToken: 'old-admin', ...devops } };
+  }
+
   describe('constructor tests', () => {
     it('should allow db construction from endpoint', () => {
-      const db = new Db('https://id-region.apps.astra.datastax.com', { token: 'dummy' });
+      const db = new Db('https://id-region.apps.astra.datastax.com', mkOptions());
       assert.ok(db);
-      assert.strictEqual(db['_httpClient'].baseUrl, 'https://id-region.apps.astra.datastax.com/api/json/v1');
-      assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'dummy');
-    });
-
-    it('should allow db construction from id + region', () => {
-      const db = new Db('id', 'region', { token: 'dummy' });
-      assert.ok(db);
-      assert.strictEqual(db['_httpClient'].baseUrl, 'https://id-region.apps.astra.datastax.com/api/json/v1');
-      assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'dummy');
+      assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATH}`);
+      assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'old');
     });
   });
 
   describe('mkDb tests', () => {
     it('should allow db construction from endpoint, using default options', () => {
-      const db = mkDb('original', {}, 'https://id-region.apps.astra.datastax.com');
+      const db = mkDb(mkOptions(), 'https://id-region.apps.astra.datastax.com');
       assert.ok(db);
-      assert.strictEqual(db['_httpClient'].baseUrl, 'https://id-region.apps.astra.datastax.com/api/json/v1');
-      assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'original');
+      assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATH}`);
+      assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'old');
     });
 
     it('should allow db construction from id + region, using default options', () => {
-      const db = mkDb('original', {}, 'id', 'region');
+      const db = mkDb(mkOptions(), 'id', 'region');
       assert.ok(db);
-      assert.strictEqual(db['_httpClient'].baseUrl, 'https://id-region.apps.astra.datastax.com/api/json/v1');
-      assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'original');
+      assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATH}`);
+      assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'old');
     });
 
     it('should allow db construction from endpoint, overwriting options', () => {
-      const db = mkDb('original', { dataApiPath: 'old' }, 'https://id-region.apps.astra.datastax.com', { dataApiPath: 'new', token: 'new' });
+      const db = mkDb(mkOptions({ dataApiPath: 'old' }), 'https://id-region.apps.astra.datastax.com', { dataApiPath: 'new', token: 'new' });
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, 'https://id-region.apps.astra.datastax.com/new');
       assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'new');
     });
 
     it('should allow db construction from id + region, overwriting options', () => {
-      const db = mkDb('original', { dataApiPath: 'old' }, 'id', 'region', { dataApiPath: 'new', token: 'new' });
+      const db = mkDb(mkOptions({ dataApiPath: 'old' }), 'id', 'region', { dataApiPath: 'new', token: 'new' });
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, 'https://id-region.apps.astra.datastax.com/new');
       assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'new');
     });
 
     it('is initialized with default namespace', () => {
-      const db = mkDb('dummy-token', {}, process.env.ASTRA_URI!);
+      const db = mkDb(mkOptions(), process.env.ASTRA_URI!);
       assert.strictEqual(db.namespace, 'default_keyspace');
     });
 
+    it('uses custon namespace when provided', () => {
+      const db = mkDb(mkOptions({ namespace: 'new_namespace' }), process.env.ASTRA_URI!);
+      assert.strictEqual(db.namespace, 'new_namespace');
+    });
+
     it('overrides namespace in db when provided', () => {
-      const db = mkDb('dummy-token', {}, process.env.ASTRA_URI!, { namespace: 'new_namespace' });
+      const db = mkDb(mkOptions(), process.env.ASTRA_URI!, { namespace: 'new_namespace' });
       assert.strictEqual(db.namespace, 'new_namespace');
     });
 
     it('throws error on empty namespace', () => {
       assert.throws(() => {
-        mkDb('dummy-token', {}, process.env.ASTRA_URI!, { namespace: '' });
+        mkDb(mkOptions(), process.env.ASTRA_URI!, { namespace: '' });
       });
     });
 
     it('throws error on invalid namespace', () => {
       assert.throws(() => {
-        mkDb('dummy-token', {}, process.env.ASTRA_URI!, { namespace: 'bad namespace' });
+        mkDb(mkOptions(), process.env.ASTRA_URI!, { namespace: 'bad namespace' });
       });
     });
 
     it('uses http2 by default', () => {
-      const db = mkDb('dummy-token', {}, process.env.ASTRA_URI!);
+      const db = mkDb(mkOptions(), process.env.ASTRA_URI!);
       assert.ok(db['_httpClient'].isUsingHttp2());
     });
 
     it('uses http2 when forced', () => {
-      const db = mkDb('dummy-token', {}, process.env.ASTRA_URI!, { useHttp2: true });
+      const db = mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: true });
       assert.ok(db['_httpClient'].isUsingHttp2());
     });
 
     it('uses http1.1 when forced', () => {
-      const db = mkDb('dummy-token', {}, process.env.ASTRA_URI!, { useHttp2: false });
+      const db = mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: false });
       assert.ok(!db['_httpClient'].isUsingHttp2());
     });
 
     it('uses http1.1 if overridden', () => {
-      const db = mkDb('dummy-token', { useHttp2: true }, process.env.ASTRA_URI!, { useHttp2: false });
+      const db = mkDb(mkOptions({ useHttp2: true }), process.env.ASTRA_URI!, { useHttp2: false });
       assert.ok(!db['_httpClient'].isUsingHttp2());
     });
 
     it('uses http2 if overridden', () => {
-      const db = mkDb('dummy-token', { useHttp2: false }, process.env.ASTRA_URI!, { useHttp2: true });
+      const db = mkDb(mkOptions({ useHttp2: false }), process.env.ASTRA_URI!, { useHttp2: true });
       assert.ok(db['_httpClient'].isUsingHttp2());
     });
 
     it('handles different dataApiPath', () => {
-      const db = mkDb('dummy-token', { dataApiPath: 'api/json/v2' }, process.env.ASTRA_URI!);
+      const db = mkDb(mkOptions({ dataApiPath: 'api/json/v2' }), process.env.ASTRA_URI!);
       assert.strictEqual(db['_httpClient'].baseUrl, `${process.env.ASTRA_URI}/api/json/v2`);
     });
 
     it('handles different dataApiPath when overridden', () => {
-      const db = mkDb('dummy-token', { dataApiPath: 'api/json/v2' }, process.env.ASTRA_URI!, { dataApiPath: 'api/json/v3' });
+      const db = mkDb(mkOptions({ dataApiPath: 'api/json/v2' }), process.env.ASTRA_URI!, { dataApiPath: 'api/json/v3' });
       assert.strictEqual(db['_httpClient'].baseUrl, `${process.env.ASTRA_URI}/api/json/v3`);
     });
 
     it('overrides token in db when provided', () => {
-      const db = mkDb('old', {}, process.env.ASTRA_URI!, { token: 'new' });
+      const db = mkDb(mkOptions(), process.env.ASTRA_URI!, { token: 'new' });
       assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'new');
     });
   });

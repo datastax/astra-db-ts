@@ -16,7 +16,7 @@ import assert from "assert";
 import { HttpClient } from "@/src/api/http-client";
 import { CLIENT_USER_AGENT } from '@/src/api/constants';
 
-describe("Astra TS Client - client.HTTPClient", () => {
+describe("unit.api.http-client", () => {
   describe("HTTPClient Operations", () => {
     it("should not initialize in a web browser", () => {
       let error: any;
@@ -56,7 +56,7 @@ describe("Astra TS Client - client.HTTPClient", () => {
   });
 
   describe('Caller tests', () => {
-    it('Should use REQUESTED_WITH as the default user agent', () => {
+    it('should use REQUESTED_WITH as the default user agent', () => {
       const client = new HttpClient({
         applicationToken: 'token',
         baseUrl: 'http://localhost:8080',
@@ -65,7 +65,7 @@ describe("Astra TS Client - client.HTTPClient", () => {
       assert.equal(client.userAgent, CLIENT_USER_AGENT);
     });
 
-    it('Should use the provided user agent', () => {
+    it('should use the provided user agent', () => {
       const client = new HttpClient({
         applicationToken: 'token',
         baseUrl: 'http://localhost:8080',
@@ -75,7 +75,7 @@ describe("Astra TS Client - client.HTTPClient", () => {
       assert.equal(client.userAgent, `my-app/1.0.0 ${CLIENT_USER_AGENT}`);
     });
 
-    it('Should use the provided user agents', () => {
+    it('should use the provided user agents', () => {
       const client = new HttpClient({
         applicationToken: 'token',
         baseUrl: 'http://localhost:8080',

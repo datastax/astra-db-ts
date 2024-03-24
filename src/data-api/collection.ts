@@ -100,12 +100,18 @@ import {
  */
 export class Collection<Schema extends SomeDoc = SomeDoc> {
   private readonly _collectionName: string;
+  private readonly _namespace: string;
   private readonly _httpClient: DataApiHttpClient;
   private readonly _db: Db
 
-  constructor(db: Db, httpClient: DataApiHttpClient, name: string) {
-    this._httpClient = httpClient.cloneInto(DataApiHttpClient, c => c.collection = name);
+  constructor(db: Db, httpClient: DataApiHttpClient, name: string, namespace: string | undefined) {
     this._collectionName = name;
+    this._namespace = namespace ?? db.namespace;
+
+    this._httpClient = httpClient.cloneInto(DataApiHttpClient, c => {
+      c.collection = this._collectionName;
+      c.namespace = this._namespace;
+    });
     this._db = db;
   }
 
@@ -120,7 +126,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @return The namespace (aka keyspace) of the parent database.
    */
   get namespace(): string {
-    return this._db.namespace;
+    return this._namespace;
   }
 
   /**
@@ -230,9 +236,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       ? await insertManyOrdered<Schema>(this._httpClient, documents, chunkSize)
       : await insertManyUnordered<Schema>(this._httpClient, documents, options?.parallel ?? 8, chunkSize);
 
+    insertedIds.forEach(replaceRawId);
+
     return {
       insertedCount: insertedIds.length,
-      insertedIds: insertedIds.map(replaceRawId),
+      insertedIds: insertedIds,
     }
   }
 

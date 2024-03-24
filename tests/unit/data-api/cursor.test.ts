@@ -57,97 +57,97 @@ describe('unit.data-api.cursor tests', async () => {
   });
 
   describe('Cursor building', () => {
-    it('Should set new filter', async () => {
+    it('should set new filter', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       cursor.filter({ _id: '0' }).filter({ _id: '1' });
       assert.deepStrictEqual(cursor['_filter'], { _id: '1' }, 'Cursor did not set new filter');
     });
 
-    it('Should fail setting filter if cursor is not uninitialized', async () => {
+    it('should fail setting filter if cursor is not uninitialized', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       await cursor.close();
       assert.throws(() => cursor.filter({ _id: '1' }), CursorAlreadyInitializedError);
     });
 
-    it('Should set new sort', async () => {
+    it('should set new sort', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       cursor.sort({ _id: -1 }).sort({ _id: 1 });
       assert.deepStrictEqual(cursor['_options'].sort, { _id: 1 }, 'Cursor did not set new sort');
     });
 
-    it('Should fail setting sort if cursor is not uninitialized', async () => {
+    it('should fail setting sort if cursor is not uninitialized', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       await cursor.close();
       assert.throws(() => cursor.sort({ _id: 1 }), CursorAlreadyInitializedError);
     });
 
-    it('Should set new limit', async () => {
+    it('should set new limit', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       cursor.limit(5).limit(10);
       assert.strictEqual(cursor['_options'].limit, 10, 'Cursor did not set new limit');
     });
 
-    it('Should fail setting limit if cursor is not uninitialized', async () => {
+    it('should fail setting limit if cursor is not uninitialized', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       await cursor.close();
       assert.throws(() => cursor.limit(10), CursorAlreadyInitializedError);
     });
 
-    it('Should set new skip', async () => {
+    it('should set new skip', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       cursor.skip(3).skip(5);
       assert.strictEqual(cursor['_options'].skip, 5, 'Cursor did not set new skip');
     });
 
-    it('Should fail setting skip if cursor is not uninitialized', async () => {
+    it('should fail setting skip if cursor is not uninitialized', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       await cursor.close();
       assert.throws(() => cursor.skip(5), CursorAlreadyInitializedError);
     });
 
-    it('Should set new projection', async () => {
+    it('should set new projection', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       cursor.project({ _id: 1 }).project({ _id: 0 });
       assert.deepStrictEqual(cursor['_options'].projection, { _id: 0 }, 'Cursor did not set new projection');
     });
 
-    it('Should fail setting projection if cursor is not uninitialized', async () => {
+    it('should fail setting projection if cursor is not uninitialized', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       await cursor.close();
       assert.throws(() => cursor.project({ _id: 0 }), CursorAlreadyInitializedError);
     });
 
-    it('Should set new includeSimilarity', async () => {
+    it('should set new includeSimilarity', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       cursor.includeSimilarity(true);
       assert.strictEqual(cursor['_options'].includeSimilarity, true, 'Cursor did not set new includeSimilarity');
     });
 
-    it('Should set new includeSimilarity to true by default', async () => {
+    it('should set new includeSimilarity to true by default', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       cursor.includeSimilarity();
       assert.strictEqual(cursor['_options'].includeSimilarity, true, 'Cursor did not set new includeSimilarity');
     });
 
-    it('Should fail setting includeSimilarity if cursor is not uninitialized', async () => {
+    it('should fail setting includeSimilarity if cursor is not uninitialized', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       await cursor.close();
       assert.throws(() => cursor.includeSimilarity(true), CursorAlreadyInitializedError);
     });
 
-    it('Should set new mapping', async () => {
+    it('should set new mapping', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       cursor.map(add1);
       assert.strictEqual(cursor['_mapping'], add1, 'Cursor did not set new mapping');
     });
 
-    it('Should chain new mapping', async () => {
+    it('should chain new mapping', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       cursor.map(add1).map(mul2);
       assert.strictEqual(cursor['_mapping']!(3), mul2(add1(3)), 'Cursor did not chain new mapping');
     });
 
-    it('Should fail setting mapping if cursor is not uninitialized', async () => {
+    it('should fail setting mapping if cursor is not uninitialized', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       await cursor.close();
       assert.throws(() => cursor.map(add1), CursorAlreadyInitializedError);

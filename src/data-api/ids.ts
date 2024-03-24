@@ -6,8 +6,8 @@ const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9
 export class UUID {
   public readonly version: number;
 
-  constructor(private readonly _uuid: string, validate = true) {
-    if (validate) {
+  constructor(private readonly _uuid: string, validate?: boolean) {
+    if (validate !== false) {
       if (typeof <unknown>this._uuid !== 'string') {
         throw new Error('UUID must be a string');
       }

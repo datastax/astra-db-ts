@@ -15,7 +15,7 @@
 import { HttpClient } from '@/src/api/http-client';
 import { DEFAULT_TIMEOUT, HTTP_METHODS } from '@/src/api/constants';
 import { AxiosError, AxiosResponse } from 'axios';
-import { InternalHTTPClientOptions } from '@/src/api/types';
+import { HTTPClientOptions } from '@/src/api/types';
 import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
 import { DevopsApiResponseError, DevopsAPITimeout } from '@/src/devops/errors';
 
@@ -28,7 +28,7 @@ interface DevopsApiRequestInfo {
 }
 
 export class DevopsApiHttpClient extends HttpClient {
-  constructor(props: InternalHTTPClientOptions) {
+  constructor(props: HTTPClientOptions) {
     super(props);
     this.requestStrategy = new HTTP1Strategy(HTTP1AuthHeaderFactories.DevopsApi);
   }

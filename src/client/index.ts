@@ -14,3 +14,4 @@
 // noinspection DuplicatedCode
 
 export * from './data-api-client';
+export * from './types';

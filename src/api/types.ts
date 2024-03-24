@@ -17,18 +17,15 @@ import type { HTTP_METHODS } from '@/src/api/index';
 export type Caller = [name: string, version?: string];
 
 export interface HTTPClientOptions {
-  applicationToken: string;
-  baseApiPath?: string;
-  logLevel?: string;
-  logSkippedOptions?: boolean;
-  useHttp2?: boolean;
-  caller?: Caller | Caller[];
-}
-
-export interface InternalHTTPClientOptions extends HTTPClientOptions {
   baseUrl: string;
+  caller?: Caller | Caller[];
+  logLevel?: string;
+  baseApiPath?: string;
+  applicationToken: string;
+  useHttp2?: boolean;
   requestStrategy?: HTTPRequestStrategy;
   userAgent?: string;
+  logSkippedOptions?: boolean;
 }
 
 export interface RawDataApiResponse {
@@ -37,7 +34,7 @@ export interface RawDataApiResponse {
   data?: Record<string, any>;
 }
 
-export interface InternalAPIResponse {
+export interface GuaranteedAPIResponse {
   data?: Record<string, any>,
   headers: Record<string, string>,
   status: number,
@@ -60,7 +57,7 @@ export interface InternalHTTPRequestInfo extends HTTPRequestInfo {
 }
 
 export interface HTTPRequestStrategy {
-  request: (params: InternalHTTPRequestInfo) => Promise<InternalAPIResponse>;
+  request: (params: InternalHTTPRequestInfo) => Promise<GuaranteedAPIResponse>;
   close?: () => void;
   closed?: boolean;
 }

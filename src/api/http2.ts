@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import * as http2 from 'http2';
-import { HTTPRequestStrategy, InternalAPIResponse, InternalHTTPRequestInfo } from '@/src/api/types';
+import { HTTPRequestStrategy, GuaranteedAPIResponse, InternalHTTPRequestInfo } from '@/src/api/types';
 
 export class HTTP2Strategy implements HTTPRequestStrategy {
   public origin: string;
@@ -25,7 +25,7 @@ export class HTTP2Strategy implements HTTPRequestStrategy {
     this.session = this._reviveSession();
   }
 
-  public async request(info: InternalHTTPRequestInfo): Promise<InternalAPIResponse> {
+  public async request(info: InternalHTTPRequestInfo): Promise<GuaranteedAPIResponse> {
     return new Promise((resolve, reject) => {
       if (this.closed) {
         throw new Error('Cannot make http2 request when client is closed');

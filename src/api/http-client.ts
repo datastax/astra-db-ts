@@ -18,8 +18,8 @@ import {
   Caller,
   HTTPRequestInfo,
   HTTPRequestStrategy,
-  InternalAPIResponse,
-  InternalHTTPClientOptions
+  GuaranteedAPIResponse,
+  HTTPClientOptions
 } from '@/src/api/types';
 import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
@@ -34,7 +34,7 @@ export class HttpClient {
   public requestStrategy: HTTPRequestStrategy;
   private [applicationTokenKey]!: string;
 
-  constructor(options: InternalHTTPClientOptions) {
+  constructor(options: HTTPClientOptions) {
     if (typeof window !== "undefined") {
       throw new Error("not for use in a web browser");
     }
@@ -86,7 +86,7 @@ export class HttpClient {
     return this.requestStrategy instanceof HTTP2Strategy;
   }
 
-  public cloneInto<C extends HttpClient>(cls: new (opts: InternalHTTPClientOptions) => C, initialize: (client: Mutable<C>) => void): C {
+  public cloneInto<C extends HttpClient>(cls: new (opts: HTTPClientOptions) => C, initialize: (client: Mutable<C>) => void): C {
     const clone = new cls({
       baseUrl: this.baseUrl,
       applicationToken: this[applicationTokenKey],
@@ -98,11 +98,15 @@ export class HttpClient {
     return clone;
   }
 
+  public setToken(token: string): void {
+    this[applicationTokenKey] = token;
+  }
+
   public unsafeGetToken(): string {
     return this[applicationTokenKey];
   }
 
-  protected async _request(info: HTTPRequestInfo): Promise<InternalAPIResponse> {
+  protected async _request(info: HTTPRequestInfo): Promise<GuaranteedAPIResponse> {
     return await this.requestStrategy.request({
       url: info.url,
       data: info.data,

@@ -13,14 +13,18 @@
 // limitations under the License.
 
 // Changing this line of code took 6 long hours of my life.
-// import { Client } from '@/src/__client/client';
+// - import { Client } from '@/src/client/client';
+// + import { Client } from '@/src/client';
+// And now it's not even bloody needed anymore.
+
 import { Db } from '@/src/data-api';
 import { DataApiClient } from '@/src/client';
 
 export const TEST_COLLECTION_NAME = 'test_coll';
+export const OTHER_NAMESPACE = 'other_keyspace';
 
 const makeAstraClient = (useHttp2: boolean = true): [DataApiClient, Db] => {
-  const client = new DataApiClient(process.env.APPLICATION_TOKEN!, { useHttp2 });
+  const client = new DataApiClient(process.env.APPLICATION_TOKEN!, { dataApiOptions: { useHttp2 } });
   const db = client.db(process.env.ASTRA_URI!);
   return [client, db];
 };

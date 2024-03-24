@@ -26,7 +26,7 @@ import {
 import { randAlphaNumeric } from '@ngneat/falso';
 import { BulkWriteError, DataAPITimeout, InsertManyError, TooManyDocsToCountError } from '@/src/data-api/errors';
 
-describe(`AstraTsClient - astra Connection - collections.collection`, async () => {
+describe(`integration.data-api.collection`, () => {
   let db: Db;
   let collection: Collection;
 
@@ -35,7 +35,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       return this.skip();
     }
 
-    [,db] = testClient.new();
+    [, db] = testClient.new();
 
     await db.dropCollection(TEST_COLLECTION_NAME);
     collection = await db.createCollection(TEST_COLLECTION_NAME);
@@ -106,7 +106,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.ok(res.insertedId, docId);
     });
 
-    it('Should fail insert of doc over size 1 MB', async () => {
+    it('should fail insert of doc over size 1 MB', async () => {
       const jsonDocGt1MB = new Array(1024 * 1024).fill('a').join('');
       const docToInsert = { username: jsonDocGt1MB };
       let error: any;
@@ -3124,7 +3124,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
   });
 
   describe('ids test', () => {
-    it('Should properly handle ObjectIds', async () => {
+    it('should properly handle ObjectIds', async () => {
       await collection.insertOne({ _id: new ObjectId(), name: 'John' });
       const found = await collection.findOne({ name: 'John' });
       assert.ok(found);
@@ -3132,7 +3132,7 @@ describe(`AstraTsClient - astra Connection - collections.collection`, async () =
       assert.ok(<any>found._id instanceof ObjectId);
     });
 
-    it('Should properly handle UUIDs', async () => {
+    it('should properly handle UUIDs', async () => {
       await collection.insertOne({ _id: UUID.v4(), name: 'John' });
       const found = await collection.findOne({ name: 'John' });
       assert.ok(found);

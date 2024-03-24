@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/data-api';
-import type { IndexingOptions, VectorOptions } from '@/src/data-api/types';
+import type { DefaultIdOptions, IndexingOptions, VectorOptions } from '@/src/data-api/types';
 
 /**
  * Represents the options for the createCollection command.
@@ -30,4 +30,5 @@ export interface CollectionOptions<Schema extends SomeDoc> {
    * Options related to indexing.
    */
   indexing?: IndexingOptions<Schema>;
+  defaultId?: DefaultIdOptions;
 }

@@ -18,147 +18,147 @@ import { UUID, ObjectId, replaceRawId } from '@/src/data-api';
 import { BSONError } from 'bson';
 
 describe('unit.data-api.ids tests', () => {
-  describe('UUID tests', () => {
-    it('Should properly construct a UUID', () => {
+  describe('UUID', () => {
+    it('should properly construct a UUID', () => {
       const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');
       assert.strictEqual(uuid.toString(), '123e4567-e89b-12d3-a456-426614174000');
     });
 
-    it('Should error on invalid UUID', () => {
+    it('should error on invalid UUID', () => {
       assert.throws(() => new UUID('123e4567-e89b-12d3-a456-42661417400'));
     });
 
-    it('Should error on invalid type', () => {
+    it('should error on invalid type', () => {
       assert.throws(() => new UUID({} as any));
     });
 
-    it('Should allow force construction on invalid UUID', () => {
+    it('should allow force construction on invalid UUID', () => {
       assert.ok(new UUID('123e4567-e89b-12d3-a456-42661417400', false));
     });
 
-    it('Should allow force construction on invalid type', () => {
+    it('should allow force construction on invalid type', () => {
       assert.ok(new UUID({} as any, false));
     });
 
-    it('Should properly construct a UUIDv4', () => {
+    it('should properly construct a UUIDv4', () => {
       const uuid = UUID.v4();
       assert.strictEqual(uuid.version, 4);
     });
 
-    it('Should properly construct a UUIDv7', () => {
+    it('should properly construct a UUIDv7', () => {
       const uuid = UUID.v7();
       assert.strictEqual(uuid.version, 7);
     });
 
-    it('Should properly parse a UUIDv4', () => {
+    it('should properly parse a UUIDv4', () => {
       const uuid = UUID.v4();
       const parsed = new UUID(uuid.toString());
       assert.strictEqual(parsed.toString(), uuid.toString());
       assert.strictEqual(parsed.version, 4);
     });
 
-    it('Should properly parse a UUIDv7', () => {
+    it('should properly parse a UUIDv7', () => {
       const uuid = UUID.v7();
       const parsed = new UUID(uuid.toString());
       assert.strictEqual(parsed.toString(), uuid.toString());
       assert.strictEqual(parsed.version, 7);
     });
 
-    it('Should get creation date from UUIDv7', () => {
+    it('should get creation date from UUIDv7', () => {
       const uuid = UUID.v7();
       const date = uuid.getTimestamp();
       assert(date instanceof Date);
     });
 
-    it('Should not get creation date from UUIDv4', () => {
+    it('should not get creation date from UUIDv4', () => {
       const uuid = UUID.v4();
       const date = uuid.getTimestamp();
       assert.strictEqual(date, undefined);
     });
 
-    it('Should inspect properly', () => {
+    it('should inspect properly', () => {
       const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');
       assert.strictEqual(uuid.inspect(), 'UUID("123e4567-e89b-12d3-a456-426614174000")');
     });
   });
 
-  describe('ObjectId tests', () => {
-    it('Should properly construct an ObjectId', () => {
+  describe('ObjectId', () => {
+    it('should properly construct an ObjectId', () => {
       const objectId = new ObjectId('507f191e810c19729de860ea');
       assert.strictEqual(objectId.toString(), '507f191e810c19729de860ea');
     });
 
-    it('Should error on invalid ObjectId', () => {
+    it('should error on invalid ObjectId', () => {
       assert.throws(() => new ObjectId('507f191e810c19729de860e'));
     });
 
-    it('Should error on invalid type', () => {
+    it('should error on invalid type', () => {
       assert.throws(() => new ObjectId({} as any));
     });
 
-    it('Should "allow" force construction on invalid ObjectId', () => {
+    it('should "allow" force construction on invalid ObjectId', () => {
       assert.throws(() => new ObjectId('507f191e810c19729de860e', false), BSONError);
     });
 
-    it('Should "allow" force construction on invalid type', () => {
+    it('should "allow" force construction on invalid type', () => {
       assert.throws(() => new ObjectId({} as any, false), BSONError);
     });
 
-    it('Should properly parse an ObjectId', () => {
+    it('should properly parse an ObjectId', () => {
       const objectId = new ObjectId('507f191e810c19729de860ea');
       const parsed = new ObjectId(objectId.toString());
       assert.strictEqual(parsed.toString(), objectId.toString());
     });
 
-    it('Should get creation date from ObjectId', () => {
+    it('should get creation date from ObjectId', () => {
       const objectId = new ObjectId('507f191e810c19729de860ea');
       const date = objectId.getTimestamp();
       assert(<any>date instanceof Date);
     });
 
-    it('Should inspect properly', () => {
+    it('should inspect properly', () => {
       const objectId = new ObjectId('507f191e810c19729de860ea');
       assert.strictEqual(objectId.inspect(), 'ObjectId("507f191e810c19729de860ea")');
     });
   });
 
-  describe('replaceRawId tests', () => {
-    it('Should return null for null', () => {
+  describe('replaceRawId', () => {
+    it('should return null for null', () => {
       assert.strictEqual(replaceRawId(null), null);
     });
 
-    it('Should return same id if not special id', () => {
+    it('should return same id if not special id', () => {
       assert.strictEqual(replaceRawId('some_id'), 'some_id');
     });
 
-    it('Should return UUID if $uuid', () => {
+    it('should return UUID if $uuid', () => {
       const id = { $uuid: '123e4567-e89b-12d3-a456-426614174000' };
       const replaced = replaceRawId(id);
       assert(replaced instanceof UUID);
       assert.strictEqual(replaced.toString(), '123e4567-e89b-12d3-a456-426614174000');
     });
 
-    it('Should return ObjectId if $objectId', () => {
+    it('should return ObjectId if $objectId', () => {
       const id = { $objectId: '507f191e810c19729de860ea' };
       const replaced = replaceRawId(id);
       assert(replaced instanceof ObjectId);
       assert.strictEqual(replaced.toString(), '507f191e810c19729de860ea');
     });
 
-    it('Should return same id if not special id _id', () => {
+    it('should return same id if not special id _id', () => {
       const id = { _id: 'some_id' };
       const replaced = replaceRawId(id);
       assert.strictEqual(replaced._id, 'some_id');
     });
 
-    it('Should return UUID if $uuid _id', () => {
+    it('should return UUID if $uuid _id', () => {
       const id = { _id: { $uuid: '123e4567-e89b-12d3-a456-426614174000' } };
       const replaced = replaceRawId(id);
       assert(replaced._id instanceof UUID);
       assert.strictEqual(replaced._id.toString(), '123e4567-e89b-12d3-a456-426614174000');
     });
 
-    it('Should return ObjectId if $objectId _id', () => {
+    it('should return ObjectId if $objectId _id', () => {
       const id = { _id: { $objectId: '507f191e810c19729de860ea' } };
       const replaced = replaceRawId(id);
       assert(replaced._id instanceof ObjectId);

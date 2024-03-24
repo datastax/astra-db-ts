@@ -7,22 +7,28 @@ import {
   ListDatabasesOptions
 } from '@/src/devops/types';
 import { Db, mkDb } from '@/src/data-api';
-import { DevopsApiHttpClient, HTTP_METHODS } from '@/src/api';
-import { AdminSpawnOptions, DataApiClientOptions, DbSpawnOptions } from '@/src/client/data-api-client';
+import { DEFAULT_DEVOPS_API_ENDPOINT, DevopsApiHttpClient, HTTP_METHODS } from '@/src/api';
 import { DevopsUnexpectedStateError } from '@/src/devops/errors';
 import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
+import { AdminSpawnOptions, DbSpawnOptions, RootClientOptsWithToken } from '@/src/client/types';
+
+type AdminOptions = RootClientOptsWithToken & { devopsOptions: { adminToken: string } };
 
 export class AstraAdmin {
   private readonly _httpClient: DevopsApiHttpClient;
-  private readonly _defaultOpts: DataApiClientOptions;
+  private readonly _defaultOpts: RootClientOptsWithToken;
 
-  constructor(options: AdminSpawnOptions & { token: string }, _defaultOpts: DataApiClientOptions | undefined) {
+  constructor(options: AdminOptions) {
+    const adminOpts = options.devopsOptions ?? {};
+
+    this._defaultOpts = options;
+
     this._httpClient = new DevopsApiHttpClient({
-      ...options,
-      baseUrl: options.endpoint || 'https://api.astra.datastax.com/v2',
-      applicationToken: options.token,
+      baseUrl: adminOpts.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINT,
+      applicationToken: adminOpts.adminToken,
+      caller: options.caller,
+      logLevel: options.logLevel,
     });
-    this._defaultOpts = _defaultOpts || {};
   }
 
   db(endpoint: string, options?: DbSpawnOptions): Db;
@@ -30,7 +36,7 @@ export class AstraAdmin {
   db(id: string, region: string, options?: DbSpawnOptions): Db;
 
   db(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): Db {
-    return mkDb(this._httpClient.unsafeGetToken(), this._defaultOpts, endpointOrId, regionOrOptions, maybeOptions);
+    return mkDb(this._defaultOpts, endpointOrId, regionOrOptions, maybeOptions);
   }
 
   dbAdmin(endpoint: string, options?: DbSpawnOptions): AstraDbAdmin;
@@ -38,7 +44,8 @@ export class AstraAdmin {
   dbAdmin(id: string, region: string, options?: DbSpawnOptions): AstraDbAdmin;
 
   dbAdmin(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): AstraDbAdmin {
-    return mkDb(this._httpClient.unsafeGetToken(), this._defaultOpts, endpointOrId, regionOrOptions, maybeOptions).admin();
+    // @ts-expect-error - calls internal representation of method
+    return this.db(endpointOrId, regionOrOptions, maybeOptions).admin(this._defaultOpts.devopsOptions);
   }
 
   public async listDatabases(options?: ListDatabasesOptions): Promise<FullDatabaseInfo[]> {
@@ -91,7 +98,7 @@ export class AstraAdmin {
       });
     }
 
-    return mkDb(this._httpClient.unsafeGetToken(), this._defaultOpts, id, config.region);
+    return mkDb(this._defaultOpts, id, config.region);
   }
 
   async dropDatabase(_db: Db | string): Promise<void> {
@@ -104,11 +111,12 @@ export class AstraAdmin {
   }
 }
 
-export function mkAdmin(token: string, defaultOpts: DataApiClientOptions | undefined, options?: AdminSpawnOptions): AstraAdmin {
+export function mkAdmin(rootOpts: RootClientOptsWithToken, options?: AdminSpawnOptions): AstraAdmin {
   return new AstraAdmin({
-    ...defaultOpts,
-    ...options,
-    token: options?.token || token,
-    endpoint: options?.endpoint || defaultOpts?.devopsEndpoint,
-  }, defaultOpts);
+    ...rootOpts,
+    devopsOptions: {
+      ...rootOpts?.devopsOptions,
+      ...options,
+    },
+  });
 }

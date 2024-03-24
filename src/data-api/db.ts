@@ -14,7 +14,7 @@
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Used in docs
 import { Collection, extractDbIdFromUrl, SomeDoc } from '@/src/data-api';
-import { DataApiHttpClient, DEFAULT_NAMESPACE, RawDataApiResponse } from '@/src/api';
+import { DataApiHttpClient, DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE, RawDataApiResponse } from '@/src/api';
 import {
   BaseOptions,
   CollectionInfo,
@@ -26,8 +26,14 @@ import {
   ListCollectionsOptions
 } from '@/src/data-api/types';
 import { DatabaseInfo } from '@/src/devops/types/admin/database-info';
-import { DataApiClientOptions, DbSpawnOptions } from '@/src/client/data-api-client';
-import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
+import { AstraDbAdmin, mkDbAdmin } from '@/src/devops/astra-db-admin';
+import { AdminSpawnOptions, RootClientOptsWithToken, DbSpawnOptions } from '@/src/client';
+
+type DbOptions = RootClientOptsWithToken & { dataApiOptions: { token: string } };
+
+interface WithNamespace {
+  namespace?: string
+}
 
 /**
  * Represents an interface to some Astra database instance.
@@ -41,24 +47,15 @@ import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
  */
 export class Db {
   private readonly _httpClient: DataApiHttpClient;
+  private readonly _defaultOpts: RootClientOptsWithToken;
   private readonly _namespace: string;
   private readonly _id?: string;
-  private _admin?: AstraDbAdmin;
 
-  constructor(endpoint: string, options: DbSpawnOptions & { token: string });
+  constructor(endpoint: string, options: DbOptions) {
+    const dbOpts = options.dataApiOptions ?? {};
 
-  constructor(id: string, region: string, options: DbSpawnOptions & { token: string });
-
-  constructor(endpointOrId: string, regionOrOptions: string | DbSpawnOptions & { token: string }, maybeOptions?: DbSpawnOptions & { token: string }) {
-    const endpoint = (typeof regionOrOptions === 'string')
-      ? 'https://' + endpointOrId + '-' + regionOrOptions + '.apps.astra.datastax.com'
-      : endpointOrId;
-
-    const options = (typeof regionOrOptions === 'string')
-      ? maybeOptions!
-      : regionOrOptions;
-
-    this._namespace = options.namespace ?? DEFAULT_NAMESPACE;
+    this._namespace = dbOpts.namespace ?? DEFAULT_NAMESPACE;
+    this._defaultOpts = options;
 
     if (!this._namespace.match(/^[a-zA-Z0-9_]{1,222}$/)) {
       throw new Error('Invalid namespace format; either pass a valid namespace name, or don\'t pass one at all to use the default namespace');
@@ -66,9 +63,12 @@ export class Db {
 
     this._httpClient = new DataApiHttpClient({
       baseUrl: endpoint,
-      applicationToken: options.token,
-      baseApiPath: options?.dataApiPath || 'api/json/v1',
-      ...options,
+      applicationToken: dbOpts.token,
+      baseApiPath: dbOpts?.dataApiPath || DEFAULT_DATA_API_PATH,
+      caller: options.caller,
+      logLevel: options.logLevel,
+      logSkippedOptions: dbOpts.logSkippedOptions,
+      useHttp2: dbOpts.useHttp2,
     });
 
     this._httpClient.namespace = this._namespace;
@@ -89,14 +89,11 @@ export class Db {
     return this._id;
   }
 
-  admin(): AstraDbAdmin {
+  admin(options?: AdminSpawnOptions): AstraDbAdmin {
     if (!this._id) {
       throw new Error('Admin operations are only supported on Astra databases');
     }
-    if (!this._admin) {
-      this._admin = new AstraDbAdmin(this, this._httpClient);
-    }
-    return this._admin;
+    return mkDbAdmin(this, this._httpClient, this._defaultOpts, options);
   }
 
   async info(): Promise<DatabaseInfo> {
@@ -126,14 +123,15 @@ export class Db {
    * ```
    *
    * @param name The name of the collection.
+   * @param options Options for the connection.
    *
    * @return A reference to the collection.
    *
    * @see Collection
    * @see SomeDoc
    */
-  collection<Schema extends SomeDoc = SomeDoc>(name: string): Collection<Schema> {
-    return new Collection<Schema>(this, this._httpClient, name);
+  collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: WithNamespace): Collection<Schema> {
+    return new Collection<Schema>(this, this._httpClient, name, options?.namespace);
   }
 
   /**
@@ -165,20 +163,21 @@ export class Db {
    * @see Collection
    * @see SomeDoc
    */
-  async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>> {
+  async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema> & WithNamespace): Promise<Collection<Schema>> {
     const command: CreateCollectionCommand = {
       createCollection: {
         name: collectionName,
+        options: {
+          defaultId: options?.defaultId,
+          indexing: options?.indexing as any,
+          vector: options?.vector,
+        }
       },
     };
 
-    if (options) {
-      command.createCollection.options = options;
-    }
-
     await this._httpClient.executeCommand(command, options, createCollectionOptionsKeys);
 
-    return this.collection(collectionName);
+    return this.collection(collectionName, options);
   }
 
   /**
@@ -190,7 +189,7 @@ export class Db {
    *
    * @return A promise that resolves to `true` if the collection was dropped successfully.
    */
-  async dropCollection(name: string, options?: BaseOptions): Promise<boolean> {
+  async dropCollection(name: string, options?: BaseOptions & WithNamespace): Promise<boolean> {
     const command = {
       deleteCollection: { name },
     };
@@ -219,7 +218,7 @@ export class Db {
    *
    * @see CollectionOptions
    */
-  async listCollections<NameOnly extends boolean = false>(options?: ListCollectionsOptions<NameOnly>): Promise<CollectionInfo<NameOnly>[]> {
+  async listCollections<NameOnly extends boolean = true>(options?: ListCollectionsOptions<NameOnly> & WithNamespace): Promise<CollectionInfo<NameOnly>[]> {
     const command: ListCollectionsCommand = {
       findCollections: {
         options: {
@@ -253,32 +252,32 @@ export class Db {
    * ```
    *
    * @param command The command to send to the Data API.
-   * @param collection The optional name of the collection to target.
+   * @param options Options for the operation.
    *
    * @return A promise that resolves to the raw response from the Data API.
    */
-  async command(command: Record<string, any>, collection?: string): Promise<RawDataApiResponse> {
-    return await this._httpClient.executeCommand(command, { collection: collection });
+  async command(command: Record<string, any>, options?: WithNamespace & { collection?: string }): Promise<RawDataApiResponse> {
+    return await this._httpClient.executeCommand(command, options);
   }
 }
 
 /**
  * @internal
  */
-export function mkDb(token: string, defaultOpts: DataApiClientOptions | undefined, endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions) {
-  const _options = (typeof regionOrOptions === 'string')
+export function mkDb(rootOpts: RootClientOptsWithToken, endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions) {
+  const options = (typeof regionOrOptions === 'string')
     ? maybeOptions!
     : regionOrOptions;
 
-  const options = {
-    ...defaultOpts,
-    ..._options,
-    token: _options?.token || token,
-  };
+  const endpoint = (typeof regionOrOptions === 'string')
+    ? 'https://' + endpointOrId + '-' + regionOrOptions + '.apps.astra.datastax.com'
+    : endpointOrId;
 
-  if (typeof regionOrOptions === 'string') {
-    return new Db(endpointOrId, regionOrOptions, options);
-  } else {
-    return new Db(endpointOrId, options);
-  }
+  return new Db(endpoint, {
+    ...rootOpts,
+    dataApiOptions: {
+      ...rootOpts?.dataApiOptions,
+      ...options,
+    },
+  });
 }

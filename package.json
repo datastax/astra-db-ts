@@ -60,6 +60,7 @@
     "test:integration": "ts-mocha --paths -p tsconfig.json tests/integration/**/*.test.ts",
     "test:unit": "ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts",
     "test:coverage": "nyc npm run test",
+    "test:types": "tsc --noEmit --skipLibCheck",
     "preinstall": "npm run update-version-file",
     "build": "npm run update-version-file && tsc --project tsconfig.build.json && tscpaths -p tsconfig.build.json -s ./src -o ./dist",
     "build:docs": "jsdoc2md -t APIReference.hbs --files src/**/*.ts --configure ./jsdoc2md.json > APIReference.md",

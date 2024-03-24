@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { HTTPRequestStrategy, InternalAPIResponse, InternalHTTPRequestInfo } from '@/src/api/types';
+import { HTTPRequestStrategy, GuaranteedAPIResponse, InternalHTTPRequestInfo } from '@/src/api/types';
 import axios from 'axios';
 import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DEVOPS_API_AUTH_HEADER, DEFAULT_TIMEOUT } from '@/src/api/constants';
 import http from 'http';
@@ -60,7 +60,7 @@ export class HTTP1Strategy implements HTTPRequestStrategy {
     private readonly _authHeaderFactory: (token: string) => Record<string, string>,
   ) {}
 
-  public async request(info: InternalHTTPRequestInfo): Promise<InternalAPIResponse> {
+  public async request(info: InternalHTTPRequestInfo): Promise<GuaranteedAPIResponse> {
     try {
       return await axiosAgent({
         url: info.url,
