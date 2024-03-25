@@ -36,7 +36,7 @@ export interface FindOneAndDeleteOptions<Schema extends SomeDoc> extends BaseOpt
    * If multiple documents match the filter, only one will be updated.
    *
    * Defaults to `null`, where the order is not guaranteed.
-   * @default null
+   * @defaultValue null
    */
   sort?: SortOption<Schema>,
   vector?: number[],
@@ -52,7 +52,7 @@ export interface FindOneAndDeleteOptions<Schema extends SomeDoc> extends BaseOpt
    * Otherwise, returns the document result directly.
    *
    * Defaults to false.
-   * @default false
+   * @defaultValue false
    */
   includeResultMetadata?: boolean,
 }

@@ -40,7 +40,7 @@ export interface UpdateOneOptions<Schema extends SomeDoc> extends BaseOptions {
    * If false, do not insert if no documents match the filter.
    *
    * Defaults to false.
-   * @default false
+   * @defaultValue false
    */
   upsert?: boolean,
   /**
@@ -49,7 +49,7 @@ export interface UpdateOneOptions<Schema extends SomeDoc> extends BaseOptions {
    * If multiple documents match the filter, only one will be updated.
    *
    * Defaults to `null`, where the order is not guaranteed.
-   * @default null
+   * @defaultValue null
    */
   sort?: SortOption<Schema>,
   vector?: number[],

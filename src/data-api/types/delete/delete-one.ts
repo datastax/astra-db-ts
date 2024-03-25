@@ -35,7 +35,7 @@ export interface DeleteOneOptions<Schema extends SomeDoc> extends BaseOptions {
    * If multiple documents match the filter, only one will be updated.
    *
    * Defaults to `null`, where the order is not guaranteed.
-   * @default null
+   * @defaultValue null
    */
   sort?: SortOption<Schema>,
   vector?: number[],

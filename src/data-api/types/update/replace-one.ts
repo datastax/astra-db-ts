@@ -27,7 +27,7 @@ export interface ReplaceOneOptions extends BaseOptions {
    * If false, do not insert if no documents match the filter.
    *
    * Defaults to false.
-   * @default false
+   * @defaultValue false
    */
   upsert?: boolean,
 }

@@ -20,15 +20,19 @@ import type { DefaultIdOptions, IndexingOptions, VectorOptions } from '@/src/dat
  *
  * @field vector - Options related to vector search.
  * @field indexing - Options related to indexing.
+ * @field defaultId - Options related to the default ID.
  */
 export interface CollectionOptions<Schema extends SomeDoc> {
   /**
    * Options related to vector search.
    */
-  vector?: VectorOptions;
+  vector?: VectorOptions,
   /**
    * Options related to indexing.
    */
-  indexing?: IndexingOptions<Schema>;
-  defaultId?: DefaultIdOptions;
+  indexing?: IndexingOptions<Schema>,
+  /**
+   * Options related to the default ID.
+   */
+  defaultId?: DefaultIdOptions,
 }

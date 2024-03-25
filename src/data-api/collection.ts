@@ -148,7 +148,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @param document - The document to insert.
    *
-   * @param options - The options for the operation.
+   * @param options - The Options for this operation.
    *
    * @return InsertOneResult
    */
@@ -215,7 +215,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * ```
    *
    * @param documents - The documents to insert.
-   * @param options - The options for the operation.
+   * @param options - The Options for this operation.
    *
    * @return InsertManyResult
    *
@@ -261,7 +261,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @param filter - A filter to select the document to update.
    * @param update - The update to apply to the selected document.
-   * @param options - The options for the operation.
+   * @param options - The Options for this operation.
    *
    * @return UpdateOneResult
    */
@@ -335,7 +335,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @param filter - A filter to select the documents to update.
    * @param update - The update to apply to the selected documents.
-   * @param options - The options for the operation.
+   * @param options - The Options for this operation.
    *
    * @return UpdateManyResult
    */
@@ -398,7 +398,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @param filter - A filter to select the document to replace.
    * @param replacement - The replacement document, which contains no `_id` field.
-   * @param options - The options for the operation.
+   * @param options - The Options for this operation.
    *
    * @return ReplaceOneResult
    */
@@ -442,7 +442,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * ```
    *
    * @param filter - A filter to select the document to delete.
-   * @param options - The options for the operation.
+   * @param options - The Options for this operation.
    *
    * @return DeleteOneResult
    */
@@ -555,7 +555,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * collection mutations being displayed**
    *
    * @param filter - A filter to select the documents to find. If not provided, all documents will be returned.
-   * @param options - The options for the operation.
+   * @param options - The Options for this operation.
    *
    * @return FindCursor
    */
@@ -630,7 +630,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * If you really need `limit` or `skip`, prefer using the {@link find} method instead.
    *
    * @param filter - A filter to select the document to find.
-   * @param options - The options for the operation.
+   * @param options - The Options for this operation.
    *
    * @return The found document, or `null` if no document was found.
    */
@@ -689,7 +689,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @param filter - A filter to select the document to find.
    * @param replacement - The replacement document, which contains no `_id` field.
-   * @param options - The options for the operation.
+   * @param options - The Options for this operation.
    *
    * @return ModifyResult
    */
@@ -773,7 +773,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @param filter - A filter to select the documents to count. If not provided, all documents will be counted.
    * @param upperBound - The maximum number of documents to count.
-   * @param options - The options for the operation.
+   * @param options - The Options for this operation.
    *
    * @throws TooManyDocsToCountError - If the number of documents counted exceeds the provided limit.
    */
@@ -814,7 +814,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * ```
    *
    * @param filter - A filter to select the document to find.
-   * @param options - The options for the operation.
+   * @param options - The Options for this operation.
    *
    * @return
    *  if `includeResultMetadata` is `true`, a `ModifyResult` object with the deleted document and the `ok` status.
@@ -885,7 +885,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @param filter - A filter to select the document to find.
    * @param update - The update to apply to the selected document.
-   * @param options - The options for the operation.
+   * @param options - The Options for this operation.
    */
   async findOneAndUpdate(
     filter: Filter<Schema>,
@@ -1026,7 +1026,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * await collection.drop();
    * ```
    *
-   * @param options - The options for the operation.
+   * @param options - The Options for this operation.
    *
    * @return `true` if the collection was dropped okay.
    */

@@ -25,7 +25,7 @@ export interface FindOptions<Schema extends SomeDoc, GetSim extends boolean> {
    * **NB. Using sort loses pagination; you're limited to a single page of results.**
    *
    * Defaults to `null`, where the order is not guaranteed.
-   * @default null
+   * @defaultValue null
    */
   sort?: SortOption<Schema>,
   vector?: number[],
@@ -51,7 +51,7 @@ export interface FindOptions<Schema extends SomeDoc, GetSim extends boolean> {
    * If false, do not include the similarity score in the result.
    *
    * Defaults to false.
-   * @default false
+   * @defaultValue false
    *
    * @example
    * ```typescript

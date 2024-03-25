@@ -36,7 +36,7 @@ export interface ListDatabasesOptions {
    *
    * Should be between 1 and 100.
    *
-   * @default 25
+   * @defaultValue 25
    */
   limit?: number,
   /**

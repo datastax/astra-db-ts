@@ -10,7 +10,7 @@ export interface RootClientOptions {
    *
    * Defaults to `process.env.NODE_ENV === 'production' ? 'error' : 'info'`.
    *
-   * @default process.env.NODE_ENV === 'production' ? 'error' : 'info'
+   * @defaultValue process.env.NODE_ENV === 'production' ? 'error' : 'info'
    */
   logLevel?: string,
   /**
@@ -88,7 +88,7 @@ export interface DbSpawnOptions {
    * const coll3 = db1.collection('my_collection', { namespace: 'other_keyspace' });
    * ```
    *
-   * @default 'default_keyspace'
+   * @defaultValue 'default_keyspace'
    */
   namespace?: string,
   /**
@@ -119,7 +119,7 @@ export interface DbSpawnOptions {
    * Defaults to `true` if never provided. However, if it was provided when creating the {@link DataApiClient}, it will
    * default to that value instead.
    *
-   * @default true
+   * @defaultValue true
    */
   useHttp2?: boolean,
   /**
@@ -135,7 +135,7 @@ export interface DbSpawnOptions {
    * await findOne({}, { unknownOption: 'value' });
    * ```
    *
-   * @default false
+   * @defaultValue false
    */
   logSkippedOptions?: boolean,
   /**
@@ -145,7 +145,7 @@ export interface DbSpawnOptions {
    * Defaults to `'api/json/v1'` if never provided. However, if it was provided when creating the {@link DataApiClient},
    * it will default to that value instead.
    *
-   * @default 'api/json/v1'
+   * @defaultValue 'api/json/v1'
    */
   dataApiPath?: string,
 }

@@ -51,7 +51,7 @@ export interface FindOneAndUpdateOptions<Schema extends SomeDoc> extends BaseOpt
    * If false, do not insert if no documents match the filter.
    *
    * Defaults to false.
-   * @default false
+   * @defaultValue false
    */
   upsert?: boolean,
   /**
@@ -60,7 +60,7 @@ export interface FindOneAndUpdateOptions<Schema extends SomeDoc> extends BaseOpt
    * If multiple documents match the filter, only one will be updated.
    *
    * Defaults to `null`, where the order is not guaranteed.
-   * @default null
+   * @defaultValue null
    */
   sort?: SortOption<Schema>,
   vector?: number[],
@@ -76,7 +76,7 @@ export interface FindOneAndUpdateOptions<Schema extends SomeDoc> extends BaseOpt
    * Otherwise, returns the document result directly.
    *
    * Defaults to false.
-   * @default false
+   * @defaultValue false
    */
   includeResultMetadata?: boolean,
 }

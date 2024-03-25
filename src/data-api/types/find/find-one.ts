@@ -41,7 +41,7 @@ export interface FindOneOptions<Schema extends SomeDoc, GetSim extends boolean> 
    * If multiple documents match the filter, only one will be updated.
    *
    * Defaults to `null`, where the order is not guaranteed.
-   * @default null
+   * @defaultValue null
    */
   sort?: SortOption<Schema>,
   vector?: number[],
@@ -57,7 +57,7 @@ export interface FindOneOptions<Schema extends SomeDoc, GetSim extends boolean> 
    * If false, do not include the similarity score in the result.
    *
    * Defaults to false.
-   * @default false
+   * @defaultValue false
    *
    * @example
    * ```typescript

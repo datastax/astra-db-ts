@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/data-api';
+import { SomeDoc, WithNamespace } from '@/src/data-api';
 import { BaseOptions, CollectionOptions } from '@/src/data-api/types';
 
 /** @internal */
@@ -27,15 +27,19 @@ export interface ListCollectionsCommand {
 /**
  * Options for listing collections.
  *
- * @field nameOnly - If true, only the name of the collection is returned. If false, the full collection info is returned. Defaults to false.
+ * @field nameOnly - If true, only the name of the collection is returned. If false, the full collection info is returned. Defaults to true.
+ * @field namespace - Overrides the namespace to list collections from. If not provided, the default namespace is used.
+ * @field maxTimeMs - The maximum amount of time to allow the operation to run.
+ *
+ * @see Db.listCollections
  */
-export interface ListCollectionsOptions<NameOnly extends boolean> extends BaseOptions {
+export interface ListCollectionsOptions extends BaseOptions, WithNamespace {
   /**
    * If true, only the name of the collection is returned.
    *
    * If false, the full collection info is returned.
    *
-   * Defaults to false.
+   * Defaults to true.
    *
    * @example
    * ```typescript
@@ -46,44 +50,42 @@ export interface ListCollectionsOptions<NameOnly extends boolean> extends BaseOp
    * console.log(info); // [{ name: 'my-coll', options: { ... } }]
    * ```
    *
-   * @default false
+   * @defaultValue true
    */
-  nameOnly?: NameOnly,
+  nameOnly?: boolean,
 }
 
 /**
- * Result of listing collections depending on if `nameOnly` is true or false.
+ * The name of a collection, used when `nameOnly` is true or undefined in {@link ListCollectionsOptions}.
  *
- * If `nameOnly` is true, an array of collection names is returned.
+ * @field name - The name of the collection.
  *
- * If `nameOnly` is false, an array of collection info is returned.
- *
- * @example
- * ```typescript
- * const names = await db.listCollections({ nameOnly: true });
- * console.log(names); // [{ name: 'my-coll' }]
- *
- * const info = await db.listCollections();
- * console.log(info); // [{ name: 'my-coll', options: { ... } }]
- * ```
+ * @see ListCollectionsOptions
+ * @see Db.listCollections
  */
-export type CollectionInfo<NameOnly extends boolean> = NameOnly extends true
-  ? Pick<FullCollectionInfo, 'name'>
-  : FullCollectionInfo;
+export interface CollectionName {
+  /**
+   * The name of the collection.
+   */
+  name: string,
+}
 
 /**
- * Information about a collection.
+ * Information about a collection, used when `nameOnly` is false in {@link ListCollectionsOptions}.
  *
  * @field name - The name of the collection.
  * @field options - The creation options for the collection.
+ *
+ * @see ListCollectionsOptions
+ * @see Db.listCollections
  */
-interface FullCollectionInfo {
+export interface FullCollectionInfo {
   /**
    * The name of the collection.
    */
   name: string,
   /**
-   * The creation options for the collection (i.e. the `vector` and `indexing` fields).
+   * The creation options for the collection (i.e. the `vector`, `indexing`, and `defaultId` fields).
    */
   options: CollectionOptions<SomeDoc>,
 }

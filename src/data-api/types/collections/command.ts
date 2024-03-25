@@ -11,13 +11,20 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// noinspection DuplicatedCode
 
-export * from './collection';
-export * from './cursor';
-export * from './document';
-export * from './db';
-export * from './errors';
-export * from './ids';
-export * from './utils';
-export { WithNamespace } from '@/src/data-api/types';
+import { WithNamespace } from '@/src/data-api';
+
+/**
+ * Options for executing some arbitrary command.
+ *
+ * @field collection - The collection to run the command on. If not provided, the command is run on the database.
+ * @field namespace - Overrides the namespace to run the command in. If not provided, the default namespace is used.
+ *
+ * @see Db.command
+ */
+export interface RunCommandOptions extends WithNamespace {
+  /**
+   * The collection to run the command on. If not provided, the command is run on the database.
+   */
+  collection?: string
+}
