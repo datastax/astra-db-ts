@@ -63,7 +63,7 @@
     "test:types": "tsc --noEmit --skipLibCheck",
     "preinstall": "npm run update-version-file",
     "build": "npm run update-version-file && tsc --project tsconfig.build.json && tscpaths -p tsconfig.build.json -s ./src -o ./dist",
-    "build:docs": "jsdoc2md -t APIReference.hbs --files src/**/*.ts --configure ./jsdoc2md.json > APIReference.md",
+    "build:docs": "jsdoc2md -t assets/templates/APIReference.hbs --files src/**/*.ts --configure ./jsdoc2md.json > APIReference.md",
     "update-version-file": "node -p \"'export const LIB_NAME = ' + JSON.stringify('astra-db-ts') + ';'\" > src/version.ts && node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" >> src/version.ts",
     "circular-deps": "madge --circular --extensions ts --ts-config tsconfig.json src/ tests/"
   },

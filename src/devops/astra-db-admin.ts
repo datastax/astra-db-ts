@@ -1,6 +1,5 @@
 import { FullDatabaseInfo } from '@/src/devops/types';
 import { DEFAULT_DEVOPS_API_ENDPOINT, DevopsApiHttpClient, HTTP_METHODS, HttpClient } from '@/src/api';
-import { ObjectId } from 'bson';
 import { Db } from '@/src/data-api';
 import { AdminSpawnOptions, RootClientOptsWithToken } from '@/src/client';
 
@@ -27,12 +26,15 @@ export class AstraDbAdmin {
   }
 
   async info(): Promise<FullDatabaseInfo> {
-    new ObjectId()
     const resp = await this._httpClient.request({
       method: HTTP_METHODS.Get,
       path: `/databases/${this._id}`,
     });
     return resp.data;
+  }
+
+  async listNamespaces(): Promise<string[]> {
+    return this.info().then(i => [i.info.keyspace!, ...i.info.additionalKeyspaces ?? []].filter(Boolean))
   }
 
   async createNamespace(namespace: string): Promise<void> {

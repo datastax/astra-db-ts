@@ -41,6 +41,8 @@ export type IsAny<T> = true extends false & T ? true : false
  */
 export type WithId<T> = NoId<T> & { _id: IdOf<T> }
 
+export type MaybeId<T> = NoId<T> & { _id?: IdOf<T> }
+
 /**
  * Includes a `$similarity` field if the typeparam `GetSim` is `true`
  */

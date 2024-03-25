@@ -5,19 +5,31 @@ const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9
 
 export class UUID {
   public readonly version: number;
+  private readonly _uuid: string;
 
-  constructor(private readonly _uuid: string, validate?: boolean) {
+  constructor(uuid: string, validate?: boolean) {
     if (validate !== false) {
-      if (typeof <unknown>this._uuid !== 'string') {
+      if (typeof <unknown>uuid !== 'string') {
         throw new Error('UUID must be a string');
       }
 
-      if (this._uuid.length !== 36 || !uuidRegex.test(this._uuid)) {
+      if (uuid.length !== 36 || !uuidRegex.test(uuid)) {
         throw new Error('UUID must be a 36-character hex string');
       }
     }
 
+    this._uuid = uuid.toLowerCase();
     this.version = parseInt(this._uuid[14], 16);
+  }
+
+  public equals(other: unknown): boolean {
+    if (typeof other === 'string') {
+      return this._uuid === other;
+    }
+    if (other instanceof UUID) {
+      return this._uuid === other._uuid;
+    }
+    return false;
   }
 
   public getTimestamp(): Date | undefined {
@@ -58,6 +70,10 @@ export class ObjectId {
     }
 
     this._objectId = new MongoObjectId(id);
+  }
+
+  public equals(other: unknown): boolean {
+    return this._objectId.equals((other && typeof other === 'object' && '_objectId' in other ? other._objectId : other) as any);
   }
 
   public getTimestamp(): Date {

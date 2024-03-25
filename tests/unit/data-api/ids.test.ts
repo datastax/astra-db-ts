@@ -33,11 +33,11 @@ describe('unit.data-api.ids tests', () => {
     });
 
     it('should allow force construction on invalid UUID', () => {
-      assert.ok(new UUID('123e4567-e89b-12d3-a456-42661417400', false));
+      assert.ok(new UUID('abc', false));
     });
 
     it('should allow force construction on invalid type', () => {
-      assert.ok(new UUID({} as any, false));
+      assert.throws(() => new UUID({} as any, false), TypeError);
     });
 
     it('should properly construct a UUIDv4', () => {
@@ -80,6 +80,28 @@ describe('unit.data-api.ids tests', () => {
       const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');
       assert.strictEqual(uuid.inspect(), 'UUID("123e4567-e89b-12d3-a456-426614174000")');
     });
+
+    it('should equal a similar UUID', () => {
+      const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');
+      const other = new UUID('123E4567-E89B-12D3-A456-426614174000');
+      assert.ok(uuid.equals(other));
+    });
+
+    it('should not equal a different UUID', () => {
+      const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');
+      const other = new UUID('123e4567-e89b-12d3-a456-426614174001');
+      assert.ok(!uuid.equals(other));
+    });
+
+    it('should equal a string representation', () => {
+      const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');
+      assert.ok(uuid.equals('123e4567-e89b-12d3-a456-426614174000'));
+    });
+
+    it('should not equal an invalid type', () => {
+      const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');
+      assert(!uuid.equals({}));
+    });
   });
 
   describe('ObjectId', () => {
@@ -119,6 +141,28 @@ describe('unit.data-api.ids tests', () => {
     it('should inspect properly', () => {
       const objectId = new ObjectId('507f191e810c19729de860ea');
       assert.strictEqual(objectId.inspect(), 'ObjectId("507f191e810c19729de860ea")');
+    });
+
+    it('should equal a similar ObjectId', () => {
+      const objectId = new ObjectId('507f191e810c19729de860ea');
+      const other = new ObjectId('507F191E810C19729DE860EA');
+      assert.ok(objectId.equals(other));
+    });
+
+    it('should not equal a different ObjectId', () => {
+      const objectId = new ObjectId('507f191e810c19729de860ea');
+      const other = new ObjectId('507f191e810c19729de860eb');
+      assert.ok(!objectId.equals(other));
+    });
+
+    it('should equal a string representation', () => {
+      const objectId = new ObjectId('507f191e810c19729de860ea');
+      assert.ok(objectId.equals('507f191e810c19729de860ea'));
+    });
+
+    it('should not equal an invalid type', () => {
+      const objectId = new ObjectId('507f191e810c19729de860ea');
+      assert(!objectId.equals({}));
     });
   });
 

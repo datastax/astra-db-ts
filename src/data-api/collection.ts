@@ -59,7 +59,7 @@ import {
   InsertManyOptions,
   InsertManyResult,
   InsertOneCommand, InsertOneOptions,
-  InsertOneResult,
+  InsertOneResult, MaybeId,
   ModifyResult,
   Mutable,
   NoId,
@@ -150,7 +150,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @return InsertOneResult
    */
-  async insertOne(document: Schema, options?: InsertOneOptions): Promise<InsertOneResult<Schema>> {
+  async insertOne(document: MaybeId<Schema>, options?: InsertOneOptions): Promise<InsertOneResult<Schema>> {
     const command: InsertOneCommand = {
       insertOne: { document },
     }
@@ -219,7 +219,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @throws InsertManyError - If the operation fails
    */
-  async insertMany(documents: Schema[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>> {
+  async insertMany(documents: MaybeId<Schema>[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>> {
     const chunkSize = options?.chunkSize ?? 20;
 
     if (options?.vectors) {

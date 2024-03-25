@@ -1,7 +1,5 @@
 /* eslint-env node */
 module.exports = {
-  // Ignoring ced's stuff for now
-  ignorePatterns: ["tests/examples"],
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint'],
