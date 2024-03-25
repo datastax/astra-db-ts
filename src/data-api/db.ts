@@ -46,57 +46,58 @@ interface WithNamespace {
  * ```
  */
 export class Db {
-  private readonly _httpClient: DataApiHttpClient;
-  private readonly _defaultOpts: RootClientOptsWithToken;
-  private readonly _namespace: string;
-  private readonly _id?: string;
+  private readonly _httpClient!: DataApiHttpClient;
+  private readonly _defaultOpts!: RootClientOptsWithToken;
+
+  public readonly namespace!: string;
+  public readonly id?: string;
 
   constructor(endpoint: string, options: DbOptions) {
     const dbOpts = options.dataApiOptions ?? {};
 
-    this._namespace = dbOpts.namespace ?? DEFAULT_NAMESPACE;
-    this._defaultOpts = options;
+    Object.defineProperty(this, 'namespace', {
+      value: dbOpts.namespace ?? DEFAULT_NAMESPACE,
+      writable: false,
+    });
 
-    if (!this._namespace.match(/^[a-zA-Z0-9_]{1,222}$/)) {
+    Object.defineProperty(this, '_defaultOpts', {
+      value: options,
+      enumerable: false,
+    });
+
+    if (!this.namespace.match(/^[a-zA-Z0-9_]{1,222}$/)) {
       throw new Error('Invalid namespace format; either pass a valid namespace name, or don\'t pass one at all to use the default namespace');
     }
 
-    this._httpClient = new DataApiHttpClient({
-      baseUrl: endpoint,
-      applicationToken: dbOpts.token,
-      baseApiPath: dbOpts?.dataApiPath || DEFAULT_DATA_API_PATH,
-      caller: options.caller,
-      logLevel: options.logLevel,
-      logSkippedOptions: dbOpts.logSkippedOptions,
-      useHttp2: dbOpts.useHttp2,
+    Object.defineProperty(this, '_httpClient', {
+      value: new DataApiHttpClient({
+        baseUrl: endpoint,
+        applicationToken: dbOpts.token,
+        baseApiPath: dbOpts?.dataApiPath || DEFAULT_DATA_API_PATH,
+        caller: options.caller,
+        logLevel: options.logLevel,
+        logSkippedOptions: dbOpts.logSkippedOptions,
+        useHttp2: dbOpts.useHttp2,
+      }),
+      enumerable: false,
     });
 
-    this._httpClient.namespace = this._namespace;
-    this._id = extractDbIdFromUrl(endpoint);
+    this._httpClient.namespace = this.namespace;
+
+    Object.defineProperty(this, 'id', {
+      value: extractDbIdFromUrl(endpoint),
+      writable: false,
+    });
   }
 
-  /**
-   * @return The namespace (aka keyspace) of the database.
-   */
-  get namespace(): string {
-    return this._namespace;
-  }
-
-  /**
-   * @return The ID of the database if it was successfully parsed from the given API endpoint.
-   */
-  get id(): string | undefined {
-    return this._id;
-  }
-
-  admin(options?: AdminSpawnOptions): AstraDbAdmin {
-    if (!this._id) {
+  public admin(options?: AdminSpawnOptions): AstraDbAdmin {
+    if (!this.id) {
       throw new Error('Admin operations are only supported on Astra databases');
     }
     return mkDbAdmin(this, this._httpClient, this._defaultOpts, options);
   }
 
-  async info(): Promise<DatabaseInfo> {
+  public async info(): Promise<DatabaseInfo> {
     return await this.admin().info().then(i => i.info);
   }
 
@@ -130,7 +131,7 @@ export class Db {
    * @see Collection
    * @see SomeDoc
    */
-  collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: WithNamespace): Collection<Schema> {
+  public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: WithNamespace): Collection<Schema> {
     return new Collection<Schema>(this, this._httpClient, name, options?.namespace);
   }
 
@@ -163,7 +164,7 @@ export class Db {
    * @see Collection
    * @see SomeDoc
    */
-  async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema> & WithNamespace): Promise<Collection<Schema>> {
+  public async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema> & WithNamespace): Promise<Collection<Schema>> {
     const command: CreateCollectionCommand = {
       createCollection: {
         name: collectionName,
@@ -189,7 +190,7 @@ export class Db {
    *
    * @return A promise that resolves to `true` if the collection was dropped successfully.
    */
-  async dropCollection(name: string, options?: BaseOptions & WithNamespace): Promise<boolean> {
+  public async dropCollection(name: string, options?: BaseOptions & WithNamespace): Promise<boolean> {
     const command = {
       deleteCollection: { name },
     };
@@ -218,7 +219,7 @@ export class Db {
    *
    * @see CollectionOptions
    */
-  async listCollections<NameOnly extends boolean = true>(options?: ListCollectionsOptions<NameOnly> & WithNamespace): Promise<CollectionInfo<NameOnly>[]> {
+  public async listCollections<NameOnly extends boolean = true>(options?: ListCollectionsOptions<NameOnly> & WithNamespace): Promise<CollectionInfo<NameOnly>[]> {
     const command: ListCollectionsCommand = {
       findCollections: {
         options: {
@@ -256,7 +257,7 @@ export class Db {
    *
    * @return A promise that resolves to the raw response from the Data API.
    */
-  async command(command: Record<string, any>, options?: WithNamespace & { collection?: string }): Promise<RawDataApiResponse> {
+  public async command(command: Record<string, any>, options?: WithNamespace & { collection?: string }): Promise<RawDataApiResponse> {
     return await this._httpClient.executeCommand(command, options);
   }
 }

@@ -99,35 +99,37 @@ import {
  * @see VectorDoc
  */
 export class Collection<Schema extends SomeDoc = SomeDoc> {
-  private readonly _collectionName: string;
-  private readonly _namespace: string;
-  private readonly _httpClient: DataApiHttpClient;
-  private readonly _db: Db
+  private readonly _httpClient!: DataApiHttpClient;
+  private readonly _db!: Db
+
+  public readonly collectionName!: string;
+  public readonly namespace!: string;
 
   constructor(db: Db, httpClient: DataApiHttpClient, name: string, namespace: string | undefined) {
-    this._collectionName = name;
-    this._namespace = namespace ?? db.namespace;
-
-    this._httpClient = httpClient.cloneInto(DataApiHttpClient, c => {
-      c.collection = this._collectionName;
-      c.namespace = this._namespace;
+    Object.defineProperty(this, 'collectionName', {
+      value: name,
+      writable: false,
     });
-    this._db = db;
+
+    Object.defineProperty(this, 'namespace', {
+      value: namespace ?? db.namespace,
+      writable: false,
+    });
+
+    Object.defineProperty(this, '_httpClient', {
+      value: httpClient.cloneInto(DataApiHttpClient, c => {
+        c.collection = this.collectionName;
+        c.namespace = this.namespace;
+      }),
+      enumerable: false,
+    });
+
+    Object.defineProperty(this, '_db', {
+      value: db,
+      enumerable: false,
+    });
   }
 
-  /**
-   * @return The name of the collection.
-   */
-  get collectionName(): string {
-    return this._collectionName;
-  }
-
-  /**
-   * @return The namespace (aka keyspace) of the parent database.
-   */
-  get namespace(): string {
-    return this._namespace;
-  }
 
   /**
    * Inserts a single document into the collection atomically.
@@ -1006,10 +1008,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   async options(): Promise<CollectionOptions<SomeDoc>> {
     const results = await this._db.listCollections({ nameOnly: false });
 
-    const collection = results.find((c) => c.name === this._collectionName);
+    const collection = results.find((c) => c.name === this.collectionName);
 
     if (!collection) {
-      throw new Error(`Collection ${this._collectionName} not found`);
+      throw new Error(`Collection ${this.collectionName} not found`);
     }
 
     return collection.options ?? {};
@@ -1029,7 +1031,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @return `true` if the collection was dropped okay.
    */
   async drop(options?: BaseOptions): Promise<boolean> {
-    return await this._db.dropCollection(this._collectionName, options);
+    return await this._db.dropCollection(this.collectionName, options);
   }
 }
 

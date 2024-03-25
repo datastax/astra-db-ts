@@ -15,19 +15,25 @@ import { AdminSpawnOptions, DbSpawnOptions, RootClientOptsWithToken } from '@/sr
 type AdminOptions = RootClientOptsWithToken & { devopsOptions: { adminToken: string } };
 
 export class AstraAdmin {
-  private readonly _httpClient: DevopsApiHttpClient;
-  private readonly _defaultOpts: RootClientOptsWithToken;
+  private readonly _httpClient!: DevopsApiHttpClient;
+  private readonly _defaultOpts!: RootClientOptsWithToken;
 
   constructor(options: AdminOptions) {
     const adminOpts = options.devopsOptions ?? {};
 
-    this._defaultOpts = options;
+    Object.defineProperty(this, '_defaultOpts', {
+      value: options,
+      enumerable: false,
+    });
 
-    this._httpClient = new DevopsApiHttpClient({
-      baseUrl: adminOpts.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINT,
-      applicationToken: adminOpts.adminToken,
-      caller: options.caller,
-      logLevel: options.logLevel,
+    Object.defineProperty(this, '_httpClient', {
+      value: new DevopsApiHttpClient({
+        baseUrl: adminOpts.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINT,
+        applicationToken: adminOpts.adminToken,
+        caller: options.caller,
+        logLevel: options.logLevel,
+      }),
+      enumerable: false,
     });
   }
 

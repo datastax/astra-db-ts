@@ -20,16 +20,6 @@ import process from 'process';
 import assert from 'assert';
 import { DEFAULT_NAMESPACE } from '@/src/api';
 
-interface Idea extends VectorDoc {
-  idea: string,
-}
-
-interface Person {
-  _id: ObjectId | UUID,
-  name: string,
-  friendId?: ObjectId | UUID,
-}
-
 describe('integration.misc.quickstart tests', () => {
   let db: Db;
 
@@ -51,6 +41,10 @@ describe('integration.misc.quickstart tests', () => {
     });
 
     it('works', async () => {
+      interface Idea extends VectorDoc {
+        idea: string,
+      }
+
       const client = new DataApiClient(process.env.APPLICATION_TOKEN!);
       const db = client.db(process.env.ASTRA_URI!);
 
@@ -124,6 +118,12 @@ describe('integration.misc.quickstart tests', () => {
     });
 
     it('works', async () => {
+      interface Person {
+        _id: ObjectId | UUID,
+        name: string,
+        friendId?: string,
+      }
+
       const client = new DataApiClient(process.env.APPLICATION_TOKEN!);
       const db = client.db(process.env.ASTRA_URI!);
 
@@ -135,16 +135,16 @@ describe('integration.misc.quickstart tests', () => {
 
       const friendId = UUID.v4();
 
-      await collection.insertOne({ name: 'Alice', friendId });
+      await collection.insertOne({ name: 'Alice', _id: friendId });
 
       await collection.updateOne(
         { name: 'Jane' },
-        { $set: { friendId } },
+        { $set: { friendId: friendId.toString() } },
       );
 
-      const alice = await collection.findOne({ name: 'Alice' });
-      assert.strictEqual(alice?.name, 'Alice');
-      assert.ok(friendId.equals(alice?.friendId));
+      const jane = await collection.findOne({ name: 'Jane' });
+      assert.strictEqual(jane?.name, 'Jane');
+      assert.ok(friendId.equals(jane?.friendId));
     });
   });
 });

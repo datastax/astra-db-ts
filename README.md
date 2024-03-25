@@ -27,60 +27,58 @@ const client = new DataApiClient('AstraCS:...');
 const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
 
 (async () => {
-  {
-    // Creates collection, or gets if it already exists with same options
-    const collection = await db.createCollection<Idea>('vector_5_collection', {
-      vector: {
-        dimension: 5,
-        metric: 'cosine'
-      }
-    });
+  // Creates collection, or gets it if it already exists with same options
+  const collection = await db.createCollection<Idea>('vector_5_collection', {
+    vector: {
+      dimension: 5,
+      metric: 'cosine'
+    },
+  });
 
-    // Insert many ideas into the collection
-    const ideas = [
-      {
-        idea: 'An AI quilt to help you sleep forever',
-        $vector: [0.1, 0.15, 0.3, 0.12, 0.05],
-      },
-      {
-        _id: new UUID('e7f1f3a0-7e3d-11eb-9439-0242ac130002'),
-        idea: 'Vision Vector Frame—A deep learning display that controls your mood',
-        $vector: [0.1, 0.05, 0.08, 0.3, 0.6],
-      },
-      {
-        idea: 'A smartwatch that tells you what to eat based on your mood',
-        $vector: [0.2, 0.3, 0.1, 0.4, 0.15],
-      },
-    ];
-    await collection.insertMany(ideas);
+  // Insert many ideas into the collection
+  const ideas = [
+    {
+      idea: 'An AI quilt to help you sleep forever',
+      $vector: [0.1, 0.15, 0.3, 0.12, 0.05],
+    },
+    {
+      _id: new UUID('e7f1f3a0-7e3d-11eb-9439-0242ac130002'),
+      idea: 'Vision Vector Frame—A deep learning display that controls your mood',
+      $vector: [0.1, 0.05, 0.08, 0.3, 0.6],
+    },
+    {
+      idea: 'A smartwatch that tells you what to eat based on your mood',
+      $vector: [0.2, 0.3, 0.1, 0.4, 0.15],
+    },
+  ];
+  await collection.insertMany(ideas);
 
-    // Insert a specific idea into the collection
-    const sneakersIdea = {
-      _id: new ObjectId('507f191e810c19729de860ea'),
-      idea: 'ChatGPT-integrated sneakers that talk to you',
-      $vector: [0.45, 0.09, 0.01, 0.2, 0.11],
-    }
-    await collection.insertOne(sneakersIdea);
+  // Insert a specific idea into the collection
+  const sneakersIdea = {
+    _id: new ObjectId('507f191e810c19729de860ea'),
+    idea: 'ChatGPT-integrated sneakers that talk to you',
+    $vector: [0.45, 0.09, 0.01, 0.2, 0.11],
+  }
+  await collection.insertOne(sneakersIdea);
 
-    // Actually, let's change that idea
-    await collection.updateOne(
-      { _id: sneakersIdea._id },
-      { $set: { idea: 'Gemini-integrated sneakers that talk to you' } },
-    );
+  // Actually, let's change that idea
+  await collection.updateOne(
+    { _id: sneakersIdea._id },
+    { $set: { idea: 'Gemini-integrated sneakers that talk to you' } },
+  );
 
-    // Get similar results as desired
-    const cursor = collection.find({}, {
-      vector: [0.1, 0.15, 0.3, 0.12, 0.05],
-      includeSimilarity: true,
-      limit: 2,
-    });
+  // Get similar results as desired
+  const cursor = collection.find({}, {
+    vector: [0.1, 0.15, 0.3, 0.12, 0.05],
+    includeSimilarity: true,
+    limit: 2,
+  });
 
-    for await (const doc of cursor) {
-      // Prints the following:
-      // - An AI quilt to help you sleep forever: 1
-      // - A smartwatch that tells you what to eat based on your mood: 0.85490346
-      console.log(`${doc.idea}: ${doc.$similarity}`);
-    }
+  for await (const doc of cursor) {
+    // Prints the following:
+    // - An AI quilt to help you sleep forever: 1
+    // - A smartwatch that tells you what to eat based on your mood: 0.85490346
+    console.log(`${doc.idea}: ${doc.$similarity}`);
   }
 })();
 ```
@@ -124,12 +122,12 @@ const admin = client.admin();
 astra-db-ts exports an `ObjectId` and `UUID` class for working with these types in the database. Here's an example:
 
 ```typescript
-import { ObjectId, UUID } from '@datastax/astra-db-ts';
+import { DataApiClient, ObjectId, UUID } from '@datastax/astra-db-ts';
 
 interface Person {
   _id: ObjectId | UUID,
   name: string,
-  friendId?: ObjectId | UUID,
+  friendId?: string,
 }
 
 const client = new DataApiClient('AstraCS:...');
@@ -147,18 +145,18 @@ const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
   
   // Let's give Jane a friend with a UUIDv4 
   const friendId = UUID.v4();
-  
-  await collection.insertOne({ name: 'Alice', friendId });
+
+  await collection.insertOne({ name: 'Alice', _id: friendId });
   
   await collection.updateOne(
     { name: 'Jane' },
-    { $set: { friendId } },
+    { $set: { friendId: friendId.toString() } },
   );
   
-  // And let's get Alice as a document
-  // (Prints "Alice", the generated UUIDv4, and true)
-  const alice = await collection.findOne({ name: 'Alice' });
-  console.log(alice?.name, alice?._id, fieldId.equals(alice?.friendId));
+  // And let's get Jane as a document
+  // (Prints "Jane", the generated UUIDv4, and true)
+  const jane = await collection.findOne({ name: 'Jane' });
+  console.log(jane?.name, jane?.friendId, friendId.equals(jane?.friendId));
 })();
 ```
 

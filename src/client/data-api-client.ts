@@ -3,10 +3,10 @@ import { AstraAdmin, mkAdmin } from '@/src/devops/astra-admin';
 import { AdminSpawnOptions, DbSpawnOptions, RootClientOptions, RootClientOptsWithToken } from '@/src/client/types';
 
 export class DataApiClient {
-  private readonly _options: RootClientOptsWithToken;
+  readonly #options: RootClientOptsWithToken;
 
   constructor(token: string, options?: RootClientOptions) {
-    this._options = {
+    this.#options = {
       ...options,
       dataApiOptions: {
         token: token,
@@ -24,10 +24,10 @@ export class DataApiClient {
   db(id: string, region: string, options?: DbSpawnOptions): Db;
 
   db(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): Db {
-    return mkDb(this._options, endpointOrId, regionOrOptions, maybeOptions);
+    return mkDb(this.#options, endpointOrId, regionOrOptions, maybeOptions);
   }
 
   admin(options?: AdminSpawnOptions): AstraAdmin {
-    return mkAdmin(this._options, options);
+    return mkAdmin(this.#options, options);
   }
 }
