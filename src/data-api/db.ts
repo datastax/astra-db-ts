@@ -107,7 +107,9 @@ export class Db {
   public readonly namespace!: string;
 
   /**
-   * Internal
+   * Use {@link DataApiClient.db} to obtain an instance of this class.
+   *
+   * @internal
    */
   constructor(endpoint: string, options: DbOptions) {
     const dbOpts = options.dataApiOptions ?? {};

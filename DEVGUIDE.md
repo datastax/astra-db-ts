@@ -6,7 +6,7 @@
 ## Running the tests
 Prerequisites:
 - A JS package manager (npm, bun, etc.)
-- An Astra instance with two keyspaces—`default_keyspace` and `other_keyspace`
+- A clean Astra instance with two keyspaces—`default_keyspace` and `other_keyspace`
 - Copy the `.env.example` file and create a new `.env` file following the example template
 
 ```shell

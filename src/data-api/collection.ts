@@ -102,9 +102,21 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   private readonly _httpClient!: DataApiHttpClient;
   private readonly _db!: Db
 
+  /**
+   * The name of the collection.
+   */
   public readonly collectionName!: string;
+
+  /**
+   * The namespace (aka keyspace) that the collection lives in.
+   */
   public readonly namespace!: string;
 
+  /**
+   * Use {@link Db.collection} to obtain an instance of this class.
+   *
+   * @internal
+   */
   constructor(db: Db, httpClient: DataApiHttpClient, name: string, namespace: string | undefined) {
     Object.defineProperty(this, 'collectionName', {
       value: name,
@@ -130,12 +142,12 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     });
   }
 
-
   /**
    * Inserts a single document into the collection atomically.
    *
-   * If the document does not contain an `_id` field, an ObjectId string will be generated on the client and assigned to the
-   * document. This generation will mutate the document.
+   * If the document does not contain an `_id` field, the server will generate an id for the document. The type of the
+   * id may be specified in {@link CollectionOptions.defaultId} @ creation, otherwise it'll just be a UUID string. This
+   * generation will not mutate the documents.
    *
    * If an `_id` is provided which corresponds to a document that already exists in the collection, an error is raised,
    * and the insertion fails.
