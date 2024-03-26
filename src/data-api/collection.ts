@@ -696,14 +696,46 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * The method returns a {@link FindCursor} that can then be iterated over.
    *
-   * **NB. If a *non-vector-sort* `sort` option is provided, the iteration of all documents may not be atomic—it will
+   * **NB. If a *non-vector-sort* `sort` option is provided, the iteration of all documents may not be atomic**—it will
    * iterate over cursors in an approximate way, exhibiting occasional skipped or duplicate documents, with real-time
-   * collection mutations being displayed**
+   * collection insertions/mutations being displayed.
+   *
+   * See {@link FindOptions} for complete information about the options available for this operation.
+   *
+   * @example
+   * ```typescript
+   *
+   * ```
+   *
+   * @remarks
+   * Some combinations of arguments impose an implicit upper bound on the number of documents that are returned by the
+   * Data API. Namely:
+   *
+   * (a) Vector ANN searches cannot return more than a number of documents
+   * that at the time of writing is set to 1000 items.
+   *
+   * (b) When using a sort criterion of the ascending/descending type,
+   * the Data API will return a smaller number of documents, set to 20
+   * at the time of writing, and stop there. The returned documents are
+   * the top results across the whole collection according to the requested
+   * criterion.
+   *
+   * --
+   *
+   * When not specifying sorting criteria at all (by vector or otherwise),
+   * the cursor can scroll through an arbitrary number of documents as
+   * the Data API and the client periodically exchange new chunks of documents.
+   * It should be noted that the behavior of the cursor in the case documents
+   * have been added/removed after the `find` was started depends on database
+   * internals and it is not guaranteed, nor excluded, that such "real-time"
+   * changes in the data would be picked up by the cursor.
    *
    * @param filter - A filter to select the documents to find. If not provided, all documents will be returned.
    * @param options - The options for this operation.
    *
-   * @return FindCursor
+   * @return A FindCursor which can be iterated over.
+   *
+   * @see StrictFilter
    */
   find<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursor<FoundDoc<Schema, GetSim>, FoundDoc<Schema, GetSim>> {
     if (options?.vector) {
@@ -716,7 +748,30 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     return new FindCursor(this.namespace, this._httpClient, filter, options) as any;
   }
 
-  async distinct<Key extends string, GetSim extends boolean = false>(key: Key, filter: Filter<Schema> = {}, _?: FindOptions<Schema, GetSim>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema, GetSim>>)[Key]>[]> {
+  /**
+   * Return a list of the unique values of `key` across the documents in the collection that match the provided filter.
+   *
+   * **NB. This is a *client-side* operation**—this effectively browses all matching documents (albeit with a
+   * projection) using the logic of the {@link Collection.find find} method, and collects the unique value for the
+   * given `key` manually. As such, there may be performance, latency and ultimately billing implications if the
+   * amount of matching documents is large.
+   *
+   * @example
+   * ```typescript
+   * ```
+   *
+   * @remarks
+   * For details on the behaviour of "distinct" in conjunction with real-time changes in the collection contents, see
+   * the remarks on the `find` command.
+   *
+   * @param key - The dot-notation key to pick which values to retrieve unique
+   * @param filter - A filter to select the documents to find. If not provided, all documents will be matched.
+   *
+   * @return A list of all the unique values selected by the given `key`
+   *
+   * @see StrictFilter
+   */
+  async distinct<Key extends string, GetSim extends boolean = false>(key: Key, filter: Filter<Schema> = {}): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema, GetSim>>)[Key]>[]> {
     assertPathSafe4Distinct(key);
 
     const projection = pullSafeProjection4Distinct(key);
@@ -751,14 +806,16 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Finds a single document in the collection.
+   * Finds a single document in the collection, if it exists.
    *
    * You can specify a `sort` option to determine which document to find if multiple documents match the filter.
    *
    * You can also specify a `projection` option to determine which fields to include in the returned document.
    *
-   * If sorting by `$vector`, you can set the `includeSimilarity` option to `true` to include the similarity score in the
-   * returned document as `$similarity: number`.
+   * If performing a vector search, you can set the `includeSimilarity` option to `true` to include the similarity score
+   * in the returned document as `$similarity: number`.
+   *
+   * See {@link FindOneOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
@@ -779,6 +836,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param options - The options for this operation.
    *
    * @return The found document, or `null` if no document was found.
+   *
+   * @see StrictFilter
    */
   async findOne<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<Schema, GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
     if (options?.vector) {
@@ -812,6 +871,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   /**
    * Atomically finds a single document in the collection and replaces it.
    *
+   * If `upsert` is set to true, it will insert the replacement regardless of if no match is found.
+   *
    * Set `returnDocument` to `'after'` to return the document as it is after the replacement, or `'before'` to return the
    * document as it was before the replacement.
    *
@@ -819,14 +880,58 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * You can also set `projection` to determine which fields to include in the returned document.
    *
-   * You can also set `upsert` to `true` to insert a new document if no document matches the filter.
+   * If you just want the document, either omit `includeResultMetadata`, or set it to `false`.
+   *
+   * See {@link FindOneAndReplaceOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
    * const doc = await collection.findOneAndReplace(
    *   { _id: '1' },
    *   { _id: '1', name: 'John Doe' },
-   *   { returnDocument: 'after' }
+   *   { returnDocument: 'after', includeResultMetadata: true },
+   * );
+   *
+   * // Prints { _id: '1', name: 'John Doe' }
+   * console.log(doc.value);
+   * ```
+   *
+   * @param filter - A filter to select the document to find.
+   * @param replacement - The replacement document, which contains no `_id` field.
+   * @param options - The options for this operation.
+   *
+   * @return The result of the operation
+   *
+   * @see StrictFilter
+   */
+  async findOneAndReplace(
+    filter: Filter<Schema>,
+    replacement: NoId<Schema>,
+    options: FindOneAndReplaceOptions<Schema> & { includeResultMetadata: true },
+  ): Promise<ModifyResult<Schema>>
+
+  /**
+   * Atomically finds a single document in the collection and replaces it.
+   *
+   * If `upsert` is set to true, it will insert the replacement regardless of if no match is found.
+   *
+   * Set `returnDocument` to `'after'` to return the document as it is after the replacement, or `'before'` to return the
+   * document as it was before the replacement.
+   *
+   * You can specify a `sort` option to determine which document to find if multiple documents match the filter.
+   *
+   * You can also set `projection` to determine which fields to include in the returned document.
+   *
+   * If you want the ok status along with the document, set `includeResultMetadata` to `true`.
+   *
+   * See {@link FindOneAndReplaceOptions} for complete information about the options available for this operation.
+   *
+   * @example
+   * ```typescript
+   * const doc = await collection.findOneAndReplace(
+   *   { _id: '1' },
+   *   { _id: '1', name: 'John Doe' },
+   *   { returnDocument: 'after' },
    * );
    *
    * // Prints { _id: '1', name: 'John Doe' }
@@ -837,14 +942,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param replacement - The replacement document, which contains no `_id` field.
    * @param options - The options for this operation.
    *
-   * @return ModifyResult
+   * @return The document before/after the update, depending on the type of `returnDocument`
+   *
+   * @see StrictFilter
    */
-  async findOneAndReplace(
-    filter: Filter<Schema>,
-    replacement: NoId<Schema>,
-    options: FindOneAndReplaceOptions<Schema> & { includeResultMetadata: true },
-  ): Promise<ModifyResult<Schema>>
-
   async findOneAndReplace(
     filter: Filter<Schema>,
     replacement: NoId<Schema>,
@@ -920,6 +1021,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param filter - A filter to select the documents to count. If not provided, all documents will be counted.
    * @param upperBound - The maximum number of documents to count.
    * @param options - The options for this operation.
+   *
+   * @return The number of counted documents, if below the provided limit
    *
    * @throws TooManyDocsToCountError - If the number of documents counted exceeds the provided limit.
    */
@@ -1183,6 +1286,9 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
 // -- Insert Many ------------------------------------------------------------------------------------------
 
+/**
+ * @internal
+ */
 const insertManyOrdered = async <Schema>(httpClient: DataApiHttpClient, documents: unknown[], chunkSize: number): Promise<IdOf<Schema>[]> => {
   const insertedIds: IdOf<Schema>[] = [];
 
@@ -1206,6 +1312,9 @@ const insertManyOrdered = async <Schema>(httpClient: DataApiHttpClient, document
   return insertedIds;
 }
 
+/**
+ * @internal
+ */
 const insertManyUnordered = async <Schema>(httpClient: DataApiHttpClient, documents: unknown[], concurrency: number, chunkSize: number): Promise<IdOf<Schema>[]> => {
   const insertedIds: IdOf<Schema>[] = [];
   let masterIndex = 0;
@@ -1251,6 +1360,9 @@ const insertManyUnordered = async <Schema>(httpClient: DataApiHttpClient, docume
   return insertedIds;
 }
 
+/**
+ * @internal
+ */
 const insertMany = async <Schema>(httpClient: DataApiHttpClient, documents: unknown[], ordered: boolean): Promise<IdOf<Schema>[]> => {
   const command: InsertManyCommand = {
     insertMany: {
@@ -1265,6 +1377,9 @@ const insertMany = async <Schema>(httpClient: DataApiHttpClient, documents: unkn
 
 // -- Bulk Write ------------------------------------------------------------------------------------------
 
+/**
+ * @internal
+ */
 const bulkWriteOrdered = async (httpClient: DataApiHttpClient, operations: Record<string, any>[]): Promise<BulkWriteResult> => {
   const results = new BulkWriteResult();
   let i = 0;
@@ -1290,6 +1405,9 @@ const bulkWriteOrdered = async (httpClient: DataApiHttpClient, operations: Recor
   return results;
 }
 
+/**
+ * @internal
+ */
 const bulkWriteUnordered = async (httpClient: DataApiHttpClient, operations: Record<string, any>[], parallel: number): Promise<BulkWriteResult> => {
   const results = new BulkWriteResult();
   let masterIndex = 0;
@@ -1335,6 +1453,9 @@ const bulkWriteUnordered = async (httpClient: DataApiHttpClient, operations: Rec
   return results;
 }
 
+/**
+ * @internal
+ */
 const buildBulkWriteCommands = (operations: Record<string, any>): Record<string, any> => {
   const commandName = Object.keys(operations)[0];
   switch (commandName) {
@@ -1348,6 +1469,9 @@ const buildBulkWriteCommands = (operations: Record<string, any>): Record<string,
   }
 }
 
+/**
+ * @internal
+ */
 const addToBulkWriteResult = (result: BulkWriteResult, resp: Record<string, any>, i: number) => {
   const asMutable = result as Mutable<BulkWriteResult>;
 
@@ -1366,6 +1490,9 @@ const addToBulkWriteResult = (result: BulkWriteResult, resp: Record<string, any>
 
 // -- Distinct --------------------------------------------------------------------------------------------
 
+/**
+ * @internal
+ */
 const assertPathSafe4Distinct = (path: string): void => {
   const split = path.split('.');
 
@@ -1378,10 +1505,16 @@ const assertPathSafe4Distinct = (path: string): void => {
   }
 }
 
+/**
+ * @internal
+ */
 const pullSafeProjection4Distinct = (path: string): string => {
   return takeWhile(path.split('.'), p => isNaN(p as any)).join('.');
 }
 
+/**
+ * @internal
+ */
 const mkDistinctPathExtractor = (path: string): (doc: SomeDoc) => any[] => {
   const values = [] as any[];
 

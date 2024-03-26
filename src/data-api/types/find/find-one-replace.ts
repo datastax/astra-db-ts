@@ -35,6 +35,8 @@ export interface FindOneAndReplaceCommand {
  * @field returnDocument - Specifies whether to return the original or updated document.
  * @field upsert - If true, perform an insert if no documents match the filter.
  * @field sort - The sort order to pick which document to replace if the filter selects multiple documents.
+ *
+ * @see Collection.findOneAndReplace
  */
 export interface FindOneAndReplaceOptions<Schema extends SomeDoc> extends BaseOptions {
   /**
@@ -51,6 +53,7 @@ export interface FindOneAndReplaceOptions<Schema extends SomeDoc> extends BaseOp
    * If false, do not insert if no documents match the filter.
    *
    * Defaults to false.
+   *
    * @defaultValue false
    */
   upsert?: boolean,
@@ -60,9 +63,20 @@ export interface FindOneAndReplaceOptions<Schema extends SomeDoc> extends BaseOp
    * If multiple documents match the filter, only one will be updated.
    *
    * Defaults to `null`, where the order is not guaranteed.
+   *
    * @defaultValue null
    */
   sort?: SortOption<Schema>,
+  /**
+   * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
+   * to find the closest matching document.
+   *
+   * This is purely for the user's convenience and intuitiveness—it is equivalent to setting the `$vector` field in the
+   * sort field itself. The two are interchangeable, but mutually exclusive.
+   *
+   * If the sort field is already set, an error will be thrown. If you really need to use both, you can set the $vector
+   * field in the sort object directly.
+   */
   vector?: number[],
   /**
    * Specifies which fields should be included/excluded in the returned documents.
@@ -76,6 +90,7 @@ export interface FindOneAndReplaceOptions<Schema extends SomeDoc> extends BaseOp
    * Otherwise, returns the document result directly.
    *
    * Defaults to false.
+   *
    * @defaultValue false
    */
   includeResultMetadata?: boolean,

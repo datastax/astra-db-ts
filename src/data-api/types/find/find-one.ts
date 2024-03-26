@@ -30,9 +30,10 @@ export interface FindOneCommand {
 /**
  * Represents the options for the `findOne` command.
  *
- * @field includeSimilarity - If true, include the similarity score in the result via the `$similarity` field.
+ * @field vector - An optional vector to use for the appropriate dimensionality to perform an ANN vector search on the collection.
  * @field sort - The sort order to pick which document to return if the filter selects multiple documents.
  * @field projection - Specifies which fields should be included/excluded in the returned documents.
+ * @field includeSimilarity - If true, include the similarity score in the result via the `$similarity` field.
  */
 export interface FindOneOptions<Schema extends SomeDoc, GetSim extends boolean> extends BaseOptions {
   /**
@@ -44,6 +45,16 @@ export interface FindOneOptions<Schema extends SomeDoc, GetSim extends boolean> 
    * @defaultValue null
    */
   sort?: SortOption<Schema>,
+  /**
+   * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
+   * to find the closest matching document.
+   *
+   * This is purely for the user's convenience and intuitiveness—it is equivalent to setting the `$vector` field in the
+   * sort field itself. The two are interchangeable, but mutually exclusive.
+   *
+   * If the sort field is already set, an error will be thrown. If you really need to use both, you can set the $vector
+   * field in the sort object directly.
+   */
   vector?: number[],
   /**
    * Specifies which fields should be included/excluded in the returned documents.

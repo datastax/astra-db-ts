@@ -16,18 +16,38 @@ import type { SomeDoc } from '@/src/data-api';
 import type { ProjectionOption, SortOption } from '@/src/data-api/types';
 
 /**
- * Options for the `find` method
+ * Options for the `find` method.
+ *
+ * @field sort - The sort order to pick which document to return if the filter selects multiple documents.
+ * @field vector - An optional vector to use for the appropriate dimensionality to perform an ANN vector search on the collection.
+ * @field projection - Specifies which fields should be included/excluded in the returned documents.
+ * @field limit - Max number of documents to return in the lifetime of the cursor.
+ * @field skip - Number of documents to skip if using a sort.
+ * @field includeSimilarity - If true, include the similarity score in the result via the `$similarity` field.
+ *
+ * @see Collection.find
  */
 export interface FindOptions<Schema extends SomeDoc, GetSim extends boolean> {
   /**
    * The order in which to apply the update if the filter selects multiple documents.
    *
-   * **NB. Using sort loses pagination; you're limited to a single page of results.**
+   * If multiple documents match the filter, only one will be updated.
    *
    * Defaults to `null`, where the order is not guaranteed.
+   *
    * @defaultValue null
    */
   sort?: SortOption<Schema>,
+  /**
+   * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
+   * to find the closest matching document.
+   *
+   * This is purely for the user's convenience and intuitiveness—it is equivalent to setting the `$vector` field in the
+   * sort field itself. The two are interchangeable, but mutually exclusive.
+   *
+   * If the sort field is already set, an error will be thrown. If you really need to use both, you can set the $vector
+   * field in the sort object directly.
+   */
   vector?: number[],
   /**
    * Specifies which fields should be included/excluded in the returned documents.
@@ -51,6 +71,7 @@ export interface FindOptions<Schema extends SomeDoc, GetSim extends boolean> {
    * If false, do not include the similarity score in the result.
    *
    * Defaults to false.
+   *
    * @defaultValue false
    *
    * @example

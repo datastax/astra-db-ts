@@ -147,4 +147,12 @@ describe('integration.misc.quickstart tests', () => {
       assert.ok(friendId.equals(jane?.friendId));
     });
   });
+
+  describe('portal-quickstart', () => {
+    it('works', async () => {
+      const client = new DataApiClient(process.env.APPLICATION_TOKEN!);
+      const db = client.db(process.env.ASTRA_URI!, { namespace: OTHER_NAMESPACE });
+      assert.ok(Array.isArray(await db.listCollections()));
+    });
+  });
 });
