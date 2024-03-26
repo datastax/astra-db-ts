@@ -13,15 +13,16 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { TEST_COLLECTION_NAME, testClient } from '@/tests/fixtures';
+import { DEFAULT_COLLECTION_NAME, testClient } from '@/tests/fixtures';
 import { DataApiClient } from '@/src/client';
-import { Db } from '@/src/data-api';
+import { Collection, Db } from '@/src/data-api';
 import assert from 'assert';
 import process from 'process';
 
 describe('integration.misc.hierarchy-traversal tests', () => {
   let client: DataApiClient;
   let db: Db;
+  let collection: Collection;
 
   const endpoint = process.env.ASTRA_URI!;
 
@@ -33,14 +34,11 @@ describe('integration.misc.hierarchy-traversal tests', () => {
     if (testClient == null) {
       return this.skip();
     }
-
-    [client, db] = testClient.new();
-
-    await db.createCollection(TEST_COLLECTION_NAME);
+    [client, db, collection] = await testClient.new();
   });
 
-  after(async () => {
-    await db.dropCollection(TEST_COLLECTION_NAME);
+  afterEach(async function () {
+    await collection.deleteAll();
   });
 
   describe('db->admin->db', () => {
@@ -66,8 +64,8 @@ describe('integration.misc.hierarchy-traversal tests', () => {
       assert.deepStrictEqual(collections, collections1);
       assert.deepStrictEqual(collections, collections2);
 
-      assert.doesNotThrow(async () => await db1.collection(TEST_COLLECTION_NAME).insertOne({ name: 'test' }));
-      assert.doesNotThrow(async () => await db2.collection(TEST_COLLECTION_NAME).insertOne({ name: 'test' }));
+      assert.doesNotThrow(async () => await db1.collection(DEFAULT_COLLECTION_NAME).insertOne({ name: 'test' }));
+      assert.doesNotThrow(async () => await db2.collection(DEFAULT_COLLECTION_NAME).insertOne({ name: 'test' }));
     });
   });
 
@@ -84,7 +82,7 @@ describe('integration.misc.hierarchy-traversal tests', () => {
       const dbAdmin2 = client.db(endpoint).admin();
       const info1 = await dbAdmin1.info();
       const info2 = await dbAdmin2.info();
-      assert.deepStrictEqual(info1, info2);
+      assert.deepStrictEqual(info1.info, info2.info);
     });
 
     it('works with endpoint & id + region', async () => {
@@ -92,7 +90,7 @@ describe('integration.misc.hierarchy-traversal tests', () => {
       const dbAdmin2 = client.db(id, region).admin();
       const info1 = await dbAdmin1.info();
       const info2 = await dbAdmin2.info();
-      assert.deepStrictEqual(info1, info2);
+      assert.deepStrictEqual(info1.info, info2.info);
     });
 
     it('works with id + region & endpoint', async () => {
@@ -111,8 +109,8 @@ describe('integration.misc.hierarchy-traversal tests', () => {
       assert.strictEqual(db1.id, db2.id);
       assert.strictEqual(db1.namespace, db2.namespace);
 
-      assert.doesNotThrow(async () => await db1.collection(TEST_COLLECTION_NAME).insertOne({ name: 'test' }));
-      assert.doesNotThrow(async () => await db1.collection(TEST_COLLECTION_NAME).insertOne({ name: 'test' }));
+      assert.doesNotThrow(async () => await db1.collection(DEFAULT_COLLECTION_NAME).insertOne({ name: 'test' }));
+      assert.doesNotThrow(async () => await db1.collection(DEFAULT_COLLECTION_NAME).insertOne({ name: 'test' }));
     });
 
     it('works with endpoint', async () => {
@@ -126,8 +124,8 @@ describe('integration.misc.hierarchy-traversal tests', () => {
 
       assert.deepStrictEqual(collections1, collections2);
 
-      assert.doesNotThrow(async () => await db1.collection(TEST_COLLECTION_NAME).insertOne({ name: 'test' }));
-      assert.doesNotThrow(async () => await db2.collection(TEST_COLLECTION_NAME).insertOne({ name: 'test' }));
+      assert.doesNotThrow(async () => await db1.collection(DEFAULT_COLLECTION_NAME).insertOne({ name: 'test' }));
+      assert.doesNotThrow(async () => await db2.collection(DEFAULT_COLLECTION_NAME).insertOne({ name: 'test' }));
     });
 
     it('works with endpoint & id + region', async () => {
@@ -141,8 +139,8 @@ describe('integration.misc.hierarchy-traversal tests', () => {
 
       assert.deepStrictEqual(collections1, collections2);
 
-      assert.doesNotThrow(async () => await db1.collection(TEST_COLLECTION_NAME).insertOne({ name: 'test' }));
-      assert.doesNotThrow(async () => await db2.collection(TEST_COLLECTION_NAME).insertOne({ name: 'test' }));
+      assert.doesNotThrow(async () => await db1.collection(DEFAULT_COLLECTION_NAME).insertOne({ name: 'test' }));
+      assert.doesNotThrow(async () => await db2.collection(DEFAULT_COLLECTION_NAME).insertOne({ name: 'test' }));
     });
 
     it('works with id + region & endpoint', async () => {

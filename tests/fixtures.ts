@@ -17,16 +17,19 @@
 // + import { Client } from '@/src/client';
 // And now it's not even bloody needed anymore.
 
-import { Db } from '@/src/data-api';
+import { Collection, Db } from '@/src/data-api';
 import { DataApiClient } from '@/src/client';
 
-export const TEST_COLLECTION_NAME = 'test_coll';
+export const DEFAULT_COLLECTION_NAME = 'test_coll';
+export const EPHEMERAL_COLLECTION_NAME = 'temp_coll';
 export const OTHER_NAMESPACE = 'other_keyspace';
 
-const makeAstraClient = (useHttp2: boolean = true): [DataApiClient, Db] => {
+const makeAstraClient = async (useHttp2: boolean = true): Promise<[DataApiClient, Db, Collection]> => {
   const client = new DataApiClient(process.env.APPLICATION_TOKEN!, { dataApiOptions: { useHttp2 } });
   const db = client.db(process.env.ASTRA_URI!);
-  return [client, db];
+  const coll = await db.createCollection(DEFAULT_COLLECTION_NAME);
+  await coll.deleteAll();
+  return [client, db, coll];
 };
 
 export type Employee = {
@@ -110,6 +113,5 @@ export const testClient =
   (process.env.ASTRA_URI && process.env.APPLICATION_TOKEN)
     ? {
       new: makeAstraClient,
-      uri: process.env.ASTRA_URI,
     }
     : null

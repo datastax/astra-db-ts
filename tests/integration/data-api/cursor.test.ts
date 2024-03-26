@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import { Collection, CursorAlreadyInitializedError, Db, FindCursor } from '@/src/data-api';
-import { TEST_COLLECTION_NAME, testClient } from '@/tests/fixtures';
+import { DEFAULT_COLLECTION_NAME, testClient } from '@/tests/fixtures';
 import { DataApiHttpClient } from '@/src/api';
 import assert from 'assert';
 
@@ -36,19 +36,12 @@ describe(`integration.data-api.cursor`, async () => {
       return this.skip();
     }
 
-    [, db] = testClient.new();
-
-    await db.dropCollection(TEST_COLLECTION_NAME);
-    collection = await db.createCollection(TEST_COLLECTION_NAME);
+    [, db, collection] = await testClient.new();
     httpClient = collection['_httpClient'];
   });
 
   beforeEach(async function () {
     await collection.deleteAll();
-  });
-
-  after(async function () {
-    await db.dropCollection(TEST_COLLECTION_NAME);
   });
 
   describe('Cursor initialization', () => {

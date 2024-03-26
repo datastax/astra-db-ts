@@ -125,20 +125,30 @@ function serializeCommand(data: Record<string, any>, pretty?: boolean): string {
 }
 
 function handleValues(value: any): any {
-  if (value === undefined || value === null) {
-    return value;
-  }
-
   if (typeof value === "bigint") {
     return Number(value);
-  } else if (typeof value === "object") {
+  }
+
+  if (value && typeof value === "object") {
+    let valueCopied = false;
+
     if (value.$date) {
-      value.$date = 'new Date(value.$date).valueOf()';
+      if (!valueCopied) {
+        value = { ...value };
+        valueCopied = true;
+      }
+      value.$date = new Date(value.$date).valueOf();
     }
 
     if (value._id instanceof ObjectId) {
+      if (!valueCopied) {
+        value = { ...value };
+      }
       value._id = { $objectId: value._id.toString() };
     } else if (value._id instanceof UUID) {
+      if (!valueCopied) {
+        value = { ...value };
+      }
       value._id = { $uuid: value._id.toString() };
     }
   }

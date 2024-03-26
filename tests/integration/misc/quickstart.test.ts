@@ -32,7 +32,7 @@ describe('integration.misc.quickstart tests', () => {
     if (testClient == null) {
       return this.skip();
     }
-    [, db] = testClient.new();
+    [, db] = await testClient.new();
   });
 
   describe('quickstart', () => {

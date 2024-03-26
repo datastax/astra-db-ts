@@ -1,0 +1,93 @@
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import { Collection, DataAPIResponseError, UUID, ObjectId } from '@/src/data-api';
+import { testClient } from '@/tests/fixtures';
+import assert from 'assert';
+
+describe('integration.data-api.collection.insert-one', () => {
+  let collection: Collection;
+
+  before(async function () {
+    if (testClient == null) {
+      return this.skip();
+    }
+    [, , collection] = await testClient.new();
+  });
+
+  afterEach(async () => {
+    await collection.deleteAll();
+  });
+
+  it('should insertOne document', async () => {
+    const res = await collection.insertOne({ name: 'Lzzy' });
+    assert.ok(res);
+    assert.ok(typeof res.insertedId as any === 'string');
+    assert.doesNotThrow(() => new UUID(<any>res.insertedId));
+  });
+
+  it('should insertOne document with id', async () => {
+    const res = await collection.insertOne({ name: 'Lzzy', _id: '123' });
+    assert.ok(res);
+    assert.ok(res.insertedId, '123');
+  });
+
+  it('should insertOne document with a UUID', async () => {
+    const id = UUID.v7();
+    const res = await collection.insertOne({ _id: id });
+    assert.ok(res);
+    assert.ok(res.insertedId, id.toString());
+  });
+
+  it('should insertOne document with an ObjectId', async () => {
+    const id = new ObjectId();
+    const res = await collection.insertOne({ _id: id });
+    assert.ok(res);
+    assert.ok(res.insertedId, id.toString());
+  });
+
+  it('should fail insert of doc over size 1 MB', async () => {
+    const bigDoc = new Array(1024 * 1024).fill('a').join('');
+    const docToInsert = { username: bigDoc };
+    await assert.rejects(() => collection.insertOne(docToInsert), Error);
+  });
+
+  it('should fail if the number of levels in the doc is > 16', async () => {
+    const docToInsert = {
+      l1: { l2: { l3: { l4: { l5: { l6: { l7: { l8: { l9: { l10: { l11: { l12: { l13: { l14: { l15: { l16: { l17: 'l17value' } } } } } } } } } } } } } } } },
+    };
+    await assert.rejects(() => collection.insertOne(docToInsert), DataAPIResponseError);
+  });
+
+  it('should fail if the field length is > 1000', async () => {
+    const fieldName = 'a'.repeat(1001);
+    const docToInsert = { [fieldName]: 'value' };
+    await assert.rejects(() => collection.insertOne(docToInsert), DataAPIResponseError);
+  });
+
+  it('should fail if the string field value is > 8000', async () => {
+    const longValue = new Array(8001).fill('a').join('');
+    const docToInsert = { username: longValue };
+    await assert.rejects(() => collection.insertOne(docToInsert), DataAPIResponseError);
+  });
+
+  it('should fail if an array field size is > 1000', async () => {
+    const docToInsert = { tags: new Array(1001).fill('tag') };
+    await assert.rejects(() => collection.insertOne(docToInsert), DataAPIResponseError);
+  });
+
+  it('should fail if a doc contains more than 1000 properties', async () => {
+    const docToInsert: any = { _id: '123' };
+    for (let i = 1; i <= 1000; i++) {
+      docToInsert[`prop${i}`] = `prop${i}value`;
+    }
+    await assert.rejects(() => collection.insertOne(docToInsert), DataAPIResponseError);
+  });
+});

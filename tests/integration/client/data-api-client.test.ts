@@ -13,29 +13,11 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { TEST_COLLECTION_NAME, testClient } from '@/tests/fixtures';
-import { Db } from '@/src/data-api';
 import { DataApiClient } from '@/src/client';
 import * as process from 'process';
 import assert from 'assert';
 
 describe('integration.client.data-api-client', async () => {
-  let db: Db;
-
-  before(async function () {
-    if (testClient == null) {
-      return this.skip();
-    }
-
-    [, db] = testClient.new();
-
-    await db.dropCollection(TEST_COLLECTION_NAME);
-  });
-
-  afterEach(async function () {
-    await db.dropCollection(TEST_COLLECTION_NAME);
-  });
-
   describe('db tests', () => {
     it('properly connects to a db by endpoint', async () => {
       const db = new DataApiClient(process.env.APPLICATION_TOKEN!).db(process.env.ASTRA_URI!);

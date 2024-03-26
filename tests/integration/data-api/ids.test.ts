@@ -15,45 +15,39 @@
 
 import assert from 'assert';
 import { Collection, Db, ObjectId, UUID } from '@/src/data-api';
-import { TEST_COLLECTION_NAME, testClient } from '@/tests/fixtures';
+import { DEFAULT_COLLECTION_NAME, EPHEMERAL_COLLECTION_NAME, testClient } from '@/tests/fixtures';
 
-describe.skip('integration.data-api.ids tests', () => {
+describe('integration.data-api.ids tests', () => {
   let db: Db;
 
   before(async function() {
     if (testClient == null) {
       return this.skip();
     }
-
-    [,db] = testClient.new();
-
-    await db.dropCollection(TEST_COLLECTION_NAME);
+    [, db] = await testClient.new();
   });
 
   describe('default', () => {
     let collection: Collection;
 
     before(async function () {
-      collection = await db.createCollection(TEST_COLLECTION_NAME);
+      collection = await db.createCollection(DEFAULT_COLLECTION_NAME);
     });
 
     afterEach(async function () {
       await collection.deleteAll();
     });
 
-    after(async function () {
-      await db.dropCollection(TEST_COLLECTION_NAME);
-    });
-
     it('is set in listCollections', async () => {
       const collections = await db.listCollections({ nameOnly: false });
-      const collection = collections.find(c => c.name === TEST_COLLECTION_NAME);
+      const collection = collections.find(c => c.name === DEFAULT_COLLECTION_NAME);
       assert.ok(collection);
       assert.deepStrictEqual(collection.options, {});
     });
 
     it('sets it as the default id', async () => {
-      console.log(await collection.insertOne({ name: 'test' }));
+      const inserted = await collection.insertOne({ name: 'test' });
+      assert.ok(typeof <any>inserted.insertedId === 'string');
       const [found] = await collection.find({ name: 'test' }).toArray();
       const id = found._id;
       assert.ok(typeof <any>id === 'string');
@@ -63,9 +57,10 @@ describe.skip('integration.data-api.ids tests', () => {
 
   describe('uuid', () => {
     let collection: Collection;
+    const name = `${EPHEMERAL_COLLECTION_NAME}_uuid`;
 
     before(async function () {
-      collection = await db.createCollection(TEST_COLLECTION_NAME, { defaultId: { type: 'uuid' } });
+      collection = await db.createCollection(name, { defaultId: { type: 'uuid' } });
     });
 
     afterEach(async function () {
@@ -73,18 +68,19 @@ describe.skip('integration.data-api.ids tests', () => {
     });
 
     after(async function () {
-      await db.dropCollection(TEST_COLLECTION_NAME);
+      await db.dropCollection(name);
     });
 
     it('is set in listCollections', async () => {
       const collections = await db.listCollections({ nameOnly: false });
-      const collection = collections.find(c => c.name === TEST_COLLECTION_NAME);
+      const collection = collections.find(c => c.name === name);
       assert.ok(collection);
       assert.deepStrictEqual(collection.options, { defaultId: { type: 'uuid' } });
     });
 
     it('sets it as the default id', async () => {
-      console.log(await collection.insertOne({ name: 'test' }));
+      const inserted = await collection.insertOne({ name: 'test' });
+      assert.ok(typeof <any>inserted.insertedId === 'string');
       const [found] = await collection.find({ name: 'test' }).toArray();
       const id = found._id;
       assert.ok(<any>id instanceof UUID);
@@ -94,9 +90,10 @@ describe.skip('integration.data-api.ids tests', () => {
 
   describe('uuidv6', () => {
     let collection: Collection;
+    const name = `${EPHEMERAL_COLLECTION_NAME}_uuid_v6`;
 
     before(async function () {
-      collection = await db.createCollection(TEST_COLLECTION_NAME, { defaultId: { type: 'uuidv6' } });
+      collection = await db.createCollection(name, { defaultId: { type: 'uuidv6' } });
     });
 
     afterEach(async function () {
@@ -104,18 +101,19 @@ describe.skip('integration.data-api.ids tests', () => {
     });
 
     after(async function () {
-      await db.dropCollection(TEST_COLLECTION_NAME);
+      await db.dropCollection(name);
     });
 
     it('is set in listCollections', async () => {
       const collections = await db.listCollections({ nameOnly: false });
-      const collection = collections.find(c => c.name === TEST_COLLECTION_NAME);
+      const collection = collections.find(c => c.name === name);
       assert.ok(collection);
       assert.deepStrictEqual(collection.options, { defaultId: { type: 'uuidv6' } });
     });
 
     it('sets it as the default id', async () => {
-      console.log(await collection.insertOne({ name: 'test' }));
+      const inserted = await collection.insertOne({ name: 'test' });
+      assert.ok(typeof <any>inserted.insertedId === 'string');
       const [found] = await collection.find({ name: 'test' }).toArray();
       const id = found._id;
       assert.ok(<any>id instanceof UUID);
@@ -125,9 +123,10 @@ describe.skip('integration.data-api.ids tests', () => {
 
   describe('uuidv7', () => {
     let collection: Collection;
+    const name = `${EPHEMERAL_COLLECTION_NAME}_uuid_v7`;
 
     before(async function () {
-      collection = await db.createCollection(TEST_COLLECTION_NAME, { defaultId: { type: 'uuidv7' } });
+      collection = await db.createCollection(name, { defaultId: { type: 'uuidv7' } });
     });
 
     afterEach(async function () {
@@ -135,19 +134,19 @@ describe.skip('integration.data-api.ids tests', () => {
     });
 
     after(async function () {
-      await db.dropCollection(TEST_COLLECTION_NAME);
+      await db.dropCollection(name);
     });
 
     it('is set in listCollections', async () => {
       const collections = await db.listCollections({ nameOnly: false });
-      console.log(collections)
-      const collection = collections.find(c => c.name === TEST_COLLECTION_NAME);
+      const collection = collections.find(c => c.name === name);
       assert.ok(collection);
       assert.deepStrictEqual(collection.options, { defaultId: { type: 'uuidv7' } });
     });
 
     it('sets it as the default id', async () => {
-      console.log(await collection.insertOne({ name: 'test' }));
+      const inserted = await collection.insertOne({ name: 'test' });
+      assert.ok(typeof <any>inserted.insertedId === 'string');
       const [found] = await collection.find({ name: 'test' }).toArray();
       const id = found._id;
       assert.ok(<any>id instanceof UUID);
@@ -157,9 +156,10 @@ describe.skip('integration.data-api.ids tests', () => {
 
   describe('objectId', () => {
     let collection: Collection;
+    const name = `${EPHEMERAL_COLLECTION_NAME}_objectId`;
 
     before(async function () {
-      collection = await db.createCollection(TEST_COLLECTION_NAME, { defaultId: { type: 'objectId' } });
+      collection = await db.createCollection(name, { defaultId: { type: 'objectId' } });
     });
 
     afterEach(async function () {
@@ -167,18 +167,19 @@ describe.skip('integration.data-api.ids tests', () => {
     });
 
     after(async function () {
-      await db.dropCollection(TEST_COLLECTION_NAME);
+      await db.dropCollection(name);
     });
 
     it('is set in listCollections', async () => {
       const collections = await db.listCollections({ nameOnly: false });
-      const collection = collections.find(c => c.name === TEST_COLLECTION_NAME);
+      const collection = collections.find(c => c.name === name);
       assert.ok(collection);
       assert.deepStrictEqual(collection.options, { defaultId: { type: 'objectId' } });
     });
 
     it('sets it as the default id', async () => {
-      console.log(await collection.insertOne({ name: 'test' }));
+      const inserted = await collection.insertOne({ name: 'test' });
+      assert.ok(typeof <any>inserted.insertedId === 'string');
       const [found] = await collection.find({ name: 'test' }).toArray();
       const id = found._id;
       assert.ok(<any>id instanceof ObjectId);

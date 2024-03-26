@@ -21,6 +21,7 @@ import { logger } from '@/src/logger';
 const axiosAgent = axios.create({
   headers: {
     'Accepts': 'application/json',
+    'Content-Type': 'application/json',
   },
   // keepAlive pools and reuses TCP connections
   httpAgent: new http.Agent({

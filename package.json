@@ -56,8 +56,8 @@
   },
   "scripts": {
     "lint": "eslint .",
-    "test": "ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts tests/integration/**/*.test.ts",
-    "test:integration": "ts-mocha --paths -p tsconfig.json tests/integration/**/*.test.ts",
+    "test": "ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts tests/integration/**/*.test.ts tests/integration/**/**/*.test.ts",
+    "test:integration": "ts-mocha --paths -p tsconfig.json tests/integration/**/**/*.test.ts",
     "test:unit": "ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts",
     "test:coverage": "nyc npm run test",
     "test:types": "tsc --noEmit --skipLibCheck",
