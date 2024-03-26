@@ -25,7 +25,10 @@
   ],
   "homepage": "https://github.com/datastax/astra-db-ts",
   "license": "Apache-2.0",
-  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js"
+  },
+  "types": "dist/index.d.ts",
   "mocha": {
     "timeout": 30000,
     "require": [
@@ -62,7 +65,7 @@
     "test:coverage": "nyc npm run test",
     "test:types": "tsc --noEmit --skipLibCheck",
     "preinstall": "npm run update-version-file",
-    "build": "npm run update-version-file && tsc --project tsconfig.build.json && tscpaths -p tsconfig.build.json -s ./src -o ./dist",
+    "build": "rm -rf ./dist && npm run update-version-file && tsc --project tsconfig.build.json && tscpaths -p tsconfig.build.json -s ./src -o ./dist",
     "build:docs": "jsdoc2md -t assets/templates/APIReference.hbs --files src/**/*.ts --configure ./jsdoc2md.json > APIReference.md",
     "update-version-file": "node -p \"'export const LIB_NAME = ' + JSON.stringify('astra-db-ts') + ';'\" > src/version.ts && node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" >> src/version.ts",
     "circular-deps": "madge --circular --extensions ts --ts-config tsconfig.json src/ tests/"
@@ -105,6 +108,7 @@
     "uuidv7": "^0.6.3",
     "winston": "^3.7.2"
   },
+  "type": "module",
   "engines": {
     "node": ">=14.0.0"
   }

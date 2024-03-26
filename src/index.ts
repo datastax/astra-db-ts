@@ -13,3 +13,5 @@
 // limitations under the License.
 
 export * from '@/src/data-api';
+export * from '@/src/client';
+export * from '@/src/devops';

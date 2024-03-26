@@ -262,7 +262,7 @@ export abstract class CumulativeDataAPIError extends DataAPIResponseError {
  */
 export class InsertManyError extends CumulativeDataAPIError {
   name = 'InsertManyError';
-  public readonly partialResult!: InsertManyResult<any>;
+  declare public readonly partialResult: InsertManyResult<any>;
 }
 
 /**
@@ -278,7 +278,7 @@ export class InsertManyError extends CumulativeDataAPIError {
  */
 export class DeleteManyError extends CumulativeDataAPIError {
   name = 'DeleteManyError';
-  public readonly partialResult!: DeleteManyResult;
+  declare public readonly partialResult: DeleteManyResult;
 }
 
 /**
@@ -294,7 +294,7 @@ export class DeleteManyError extends CumulativeDataAPIError {
  */
 export class UpdateManyError extends CumulativeDataAPIError {
   name = 'UpdateManyError';
-  public readonly partialResult!: UpdateManyResult;
+  declare public readonly partialResult: UpdateManyResult;
 }
 
 /**
@@ -313,7 +313,7 @@ export class UpdateManyError extends CumulativeDataAPIError {
  */
 export class BulkWriteError extends CumulativeDataAPIError {
   name = 'BulkWriteError';
-  public readonly partialResult!: BulkWriteResult;
+  declare public readonly partialResult: BulkWriteResult;
 }
 
 /** @internal */
