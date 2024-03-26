@@ -37,6 +37,7 @@ export interface UpdateManyOptions {
    * If false, do not insert if no documents match the filter.
    *
    * Defaults to false.
+   *
    * @defaultValue false
    */
   upsert?: boolean;

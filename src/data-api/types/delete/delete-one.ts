@@ -27,6 +27,9 @@ export interface DeleteOneCommand {
  * Represents the options for the deleteOne command.
  *
  * @field sort - The sort order to pick which document to delete if the filter selects multiple documents.
+ * @field vector - An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection.
+ *
+ * @see Collection.deleteOne
  */
 export interface DeleteOneOptions<Schema extends SomeDoc> extends BaseOptions {
   /**
@@ -38,6 +41,16 @@ export interface DeleteOneOptions<Schema extends SomeDoc> extends BaseOptions {
    * @defaultValue null
    */
   sort?: SortOption<Schema>,
+  /**
+   * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
+   * to find the closest matching document.
+   *
+   * This is purely for the user's convenience and intuitiveness—it is equivalent to setting the `$vector` field in the
+   * sort field itself. The two are interchangeable, but mutually exclusive.
+   *
+   * If the sort field is already set, an error will be thrown. If you really need to use both, you can set the $vector
+   * field in the sort object directly.
+   */
   vector?: number[],
 }
 
@@ -45,6 +58,8 @@ export interface DeleteOneOptions<Schema extends SomeDoc> extends BaseOptions {
  * Represents the result of a delete command.
  *
  * @field deletedCount - The number of deleted documents. Can be either 0 or 1.
+ *
+ * @see Collection.deleteOne
  */
 export interface DeleteOneResult {
   /**

@@ -32,6 +32,9 @@ export interface UpdateOneCommand {
  *
  * @field upsert - If true, perform an insert if no documents match the filter.
  * @field sort - The sort order to pick which document to update if the filter selects multiple documents.
+ * @field vector - An optional vector to use for the appropriate dimensionality to perform an ANN vector search on the collection.
+ *
+ * @see Collection.updateOne
  */
 export interface UpdateOneOptions<Schema extends SomeDoc> extends BaseOptions {
   /**
@@ -40,6 +43,7 @@ export interface UpdateOneOptions<Schema extends SomeDoc> extends BaseOptions {
    * If false, do not insert if no documents match the filter.
    *
    * Defaults to false.
+   *
    * @defaultValue false
    */
   upsert?: boolean,
@@ -49,9 +53,20 @@ export interface UpdateOneOptions<Schema extends SomeDoc> extends BaseOptions {
    * If multiple documents match the filter, only one will be updated.
    *
    * Defaults to `null`, where the order is not guaranteed.
+   *
    * @defaultValue null
    */
   sort?: SortOption<Schema>,
+  /**
+   * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
+   * to find the closest matching document.
+   *
+   * This is purely for the user's convenience and intuitiveness—it is equivalent to setting the `$vector` field in the
+   * sort field itself. The two are interchangeable, but mutually exclusive.
+   *
+   * If the sort field is already set, an error will be thrown. If you really need to use both, you can set the $vector
+   * field in the sort object directly.
+   */
   vector?: number[],
 }
 
@@ -80,5 +95,7 @@ export const updateOneOptionKeys = new Set(['upsert', 'sort']);
  * @field modifiedCount - The number of documents that were actually modified.
  * @field upsertedCount - The number of documents that were upserted.
  * @field upsertedId - The identifier of the upserted document if `upsertedCount > 0`.
+ *
+ * @see Collection.updateOne
  */
 export type UpdateOneResult = InternalUpdateResult<0 | 1>;
