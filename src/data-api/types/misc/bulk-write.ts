@@ -16,12 +16,23 @@
 import type { SomeDoc } from '@/src/data-api';
 import type { Filter, SomeId, UpdateFilter } from '@/src/data-api/types';
 
+/**
+ * Options for bulkWrite.
+ *
+ * The parameters depend on the `ordered` option. If `ordered` is `true`, the `parallel` option is not allowed.
+ *
+ * @see Collection.bulkWrite
+ */
 export type BulkWriteOptions =
   | BulkWriteOrderedOptions
   | BulkWriteUnorderedOptions;
 
 /**
  * Options for insertMany when `ordered` is `true`.
+ *
+ * @field ordered - If `true`, the operations are executed in the order provided.
+ *
+ * @see Collection.bulkWrite
  */
 export interface BulkWriteOrderedOptions {
   /**
@@ -33,6 +44,11 @@ export interface BulkWriteOrderedOptions {
 
 /**
  * Options for insertMany when `ordered` is `false`.
+ *
+ * @field ordered - If `false` or unset, the documents are inserted in an arbitrary, parallelized order.
+ * @field parallel - The number of concurrent requests to use.
+ *
+ * @see Collection.bulkWrite
  */
 export interface BulkWriteUnorderedOptions {
   /**
@@ -43,9 +59,8 @@ export interface BulkWriteUnorderedOptions {
   /**
    * The number of concurrent requests to use
    */
-  parallel?: number,
+  concurrency?: number,
 }
-
 
 export class BulkWriteResult {
   constructor(

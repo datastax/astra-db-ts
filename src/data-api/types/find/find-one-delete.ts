@@ -28,6 +28,11 @@ export interface FindOneAndDeleteCommand {
  * Represents the options for the `findOneAndDelete` command.
  *
  * @field sort - The sort order to pick which document to delete if the filter selects multiple documents.
+ * @field vector - An optional vector to use for the appropriate dimensionality to perform an ANN vector search on the collection.
+ * @field projection - Specifies which fields should be included/excluded in the returned documents.
+ * @field includeResultMetadata - When true, returns alongside the document, an `ok` field with a value of 1 if the command executed successfully.
+ *
+ * @see Collection.findOneAndDelete
  */
 export interface FindOneAndDeleteOptions<Schema extends SomeDoc> extends BaseOptions {
   /**
@@ -39,6 +44,16 @@ export interface FindOneAndDeleteOptions<Schema extends SomeDoc> extends BaseOpt
    * @defaultValue null
    */
   sort?: SortOption<Schema>,
+  /**
+   * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
+   * to find the closest matching document.
+   *
+   * This is purely for the user's convenience and intuitiveness—it is equivalent to setting the `$vector` field in the
+   * sort field itself. The two are interchangeable, but mutually exclusive.
+   *
+   * If the sort field is already set, an error will be thrown. If you really need to use both, you can set the $vector
+   * field in the sort object directly.
+   */
   vector?: number[],
   /**
    * Specifies which fields should be included/excluded in the returned documents.

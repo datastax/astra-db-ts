@@ -35,6 +35,9 @@ export interface FindOneAndReplaceCommand {
  * @field returnDocument - Specifies whether to return the original or updated document.
  * @field upsert - If true, perform an insert if no documents match the filter.
  * @field sort - The sort order to pick which document to replace if the filter selects multiple documents.
+ * @field vector - An optional vector to use for the appropriate dimensionality to perform an ANN vector search on the collection.
+ * @field projection - Specifies which fields should be included/excluded in the returned documents.
+ * @field includeResultMetadata - When true, returns alongside the document, an `ok` field with a value of 1 if the command executed successfully.
  *
  * @see Collection.findOneAndReplace
  */

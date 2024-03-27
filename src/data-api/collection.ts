@@ -704,7 +704,41 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @example
    * ```typescript
+   * await collection.insertMany([
+   *   { name: 'John Doe' },
+   *   { name: 'Jane Doe' },
+   *   { name: 'Dane Joe' },
+   * ], {
+   *   vectors: [
+   *     [.12, .52, .32],
+   *     [.32, .52, .12],
+   *     [.52, .32, .12],
+   *   ],
+   * });
    *
+   * // Find by name
+   * const cursor1 = collection.find({ name: 'John Doe' });
+   *
+   * // Returns ['John Doe']
+   * console.log(await cursor1.toArray());
+   *
+   * // Match all docs, sorting by name
+   * const cursor2 = collection.find({}, {
+   *   sort: { name: 1 },
+   * });
+   *
+   * // Returns 'Dane Joe', 'Jane Doe', 'John Doe'
+   * for await (const doc of cursor2) {
+   *   console.log(doc);
+   * }
+   *
+   * // Find by vector
+   * const cursor3 = collection.find({}, {
+   *   vector: [.12, .52, .32],
+   * });
+   *
+   * // Returns 'John Doe'
+   * console.log(await cursor3.next());
    * ```
    *
    * @remarks
@@ -752,17 +786,52 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * Return a list of the unique values of `key` across the documents in the collection that match the provided filter.
    *
    * **NB. This is a *client-side* operation**—this effectively browses all matching documents (albeit with a
-   * projection) using the logic of the {@link Collection.find find} method, and collects the unique value for the
+   * projection) using the logic of the {@link Collection.find} method, and collects the unique value for the
    * given `key` manually. As such, there may be performance, latency and ultimately billing implications if the
    * amount of matching documents is large.
    *
-   * @example
-   * ```typescript
-   * ```
+   * The key may use dot-notation to access nested fields, such as `'field'`, `'field.subfield'`, `'field.3'`,
+   * `'field.3.subfield'`, etc. If lists are encountered and no numeric index is specified, all items in the list are
+   * pulled.
    *
-   * @remarks
+   * **Note that on complex extractions, the return type may be not as expected.** In that case, it's on the user to
+   * cast the return type to the correct one.
+   *
+   * Distinct works with arbitrary objects as well, by creating a deterministic hash of the object and comparing it
+   * with the hashes of the objects already seen. This, unsurprisingly, may not be great for performance if you have
+   * a lot of records that match, so it's recommended to use distinct on simple values whenever performance or number
+   * of records is a concern.
+   *
    * For details on the behaviour of "distinct" in conjunction with real-time changes in the collection contents, see
    * the remarks on the `find` command.
+   *
+   * @example
+   * ```typescript
+   * await collection.insertMany([
+   *   { letter: { value: 'a' }, car: [1] },
+   *   { letter: { value: 'b' }, car: [2, 3] },
+   *   { letter: { value: 'a' }, car: [2], bus: 'no' },
+   * ]);
+   *
+   * // ['a', 'b']
+   * const distinct = await collection.distinct('letter.value');
+   *
+   * await collection.insertOne({
+   *   x: [{ y: 'Y', 0: 'ZERO' }],
+   * });
+   *
+   * // ['Y']
+   * await collection.distinct('x.y');
+   *
+   * // [{ y: 'Y', 0: 'ZERO' }]
+   * await collection.distinct('x.0');
+   *
+   * // ['Y']
+   * await collection.distinct('x.0.y');
+   *
+   * // ['ZERO']
+   * await collection.distinct('x.0.0');
+   * ```
    *
    * @param key - The dot-notation key to pick which values to retrieve unique
    * @param filter - A filter to select the documents to find. If not provided, all documents will be matched.
@@ -819,14 +888,22 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @example
    * ```typescript
-   * const doc = await collection.findOne({}, {
+   * const doc1 = await collection.findOne({
+   *   name: 'John Doe',
+   * });
+   *
+   * // Will be undefined
+   * console.log(doc1?.$similarity);
+   *
+   * const doc2 = await collection.findOne({}, {
    *   sort: {
    *     $vector: [.12, .52, .32],
    *   },
    *   includeSimilarity: true,
    * });
    *
-   * console.log(doc?.$similarity);
+   * // Will be a number
+   * console.log(doc2?.$similarity);
    * ```
    *
    * @remarks
@@ -886,14 +963,19 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @example
    * ```typescript
-   * const doc = await collection.findOneAndReplace(
+   * await collection.insertOne({ _id: '1', band: 'ZZ Top' });
+   *
+   * const result = await collection.findOneAndReplace(
    *   { _id: '1' },
-   *   { _id: '1', name: 'John Doe' },
+   *   { name: 'John Doe' },
    *   { returnDocument: 'after', includeResultMetadata: true },
    * );
    *
    * // Prints { _id: '1', name: 'John Doe' }
-   * console.log(doc.value);
+   * console.log(result.value);
+   *
+   * // Prints 1
+   * console.log(result.ok);
    * ```
    *
    * @param filter - A filter to select the document to find.
@@ -928,10 +1010,12 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @example
    * ```typescript
+   * await collection.insertOne({ _id: '1', band: 'ZZ Top' });
+   *
    * const doc = await collection.findOneAndReplace(
    *   { _id: '1' },
-   *   { _id: '1', name: 'John Doe' },
-   *   { returnDocument: 'after' },
+   *   { name: 'John Doe' },
+   *   { returnDocument: 'after', includeResultMetadata: true },
    * );
    *
    * // Prints { _id: '1', name: 'John Doe' }
@@ -942,7 +1026,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param replacement - The replacement document, which contains no `_id` field.
    * @param options - The options for this operation.
    *
-   * @return The document before/after the update, depending on the type of `returnDocument`
+   * @return The document before/after replacement, depending on the type of `returnDocument`
    *
    * @see StrictFilter
    */
@@ -1025,6 +1109,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @return The number of counted documents, if below the provided limit
    *
    * @throws TooManyDocsToCountError - If the number of documents counted exceeds the provided limit.
+   *
+   * @see StrictFilter
    */
   async countDocuments(filter: Filter<Schema>, upperBound: number, options?: BaseOptions): Promise<number> {
     const command = {
@@ -1037,12 +1123,12 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     const resp = await this._httpClient.executeCommand(command, options);
 
-    if (resp.status?.count > upperBound) {
-      throw new TooManyDocsToCountError(upperBound, false);
-    }
-
     if (resp.status?.moreData) {
       throw new TooManyDocsToCountError(resp.status.count, true);
+    }
+
+    if (resp.status?.count > upperBound) {
+      throw new TooManyDocsToCountError(upperBound, false);
     }
 
     return resp.status?.count;
@@ -1055,25 +1141,65 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * You can also set `projection` to determine which fields to include in the returned document.
    *
+   * If you just want the document, either omit `includeResultMetadata`, or set it to `false`.
+   *
+   * See {@link FindOneAndDeleteOptions} for complete information about the options available for this operation.
+   *
    * @example
    * ```typescript
    * await collection.insertOne({ _id: '1', name: 'John Doe' });
-   * const doc = await collection.findOneAndDelete({ _id: '1' });
-   * console.log(doc); // The deleted document
+   *
+   * const result = await collection.findOneAndDelete(
+   *   { _id: '1' },
+   *   { includeResultMetadata: true, }
+   * );
+   *
+   * // Prints { _id: '1', name: 'John Doe' }
+   * console.log(result.value);
+   *
+   * // Prints 1
+   * console.log(result.ok);
    * ```
    *
    * @param filter - A filter to select the document to find.
    * @param options - The options for this operation.
    *
-   * @return
-   *  if `includeResultMetadata` is `true`, a `ModifyResult` object with the deleted document and the `ok` status.
-   *  Otherwise, the deleted document, or `null` if no document was found.
+   * @return The result of the operation
+   *
+   * @see StrictFilter
    */
   async findOneAndDelete(
     filter: Filter<Schema>,
     options?: FindOneAndDeleteOptions<Schema> & { includeResultMetadata: true },
   ): Promise<ModifyResult<Schema>>
 
+  /**
+   * Atomically finds a single document in the collection and deletes it.
+   *
+   * You can specify a `sort` option to determine which document to find if multiple documents match the filter.
+   *
+   * You can also set `projection` to determine which fields to include in the returned document.
+   *
+   * If you want the ok status along with the document, set `includeResultMetadata` to `true`.
+   *
+   * See {@link FindOneAndDeleteOptions} for complete information about the options available for this operation.
+   *
+   * @example
+   * ```typescript
+   * await collection.insertOne({ _id: '1', name: 'John Doe' });
+   * const doc = await collection.findOneAndDelete({ _id: '1' });
+   *
+   * // Prints { _id: '1', name: 'John Doe' }
+   * console.log(doc);
+   * ```
+   *
+   * @param filter - A filter to select the document to find.
+   * @param options - The options for this operation.
+   *
+   * @return The deleted document, or `null` if no document was found.
+   *
+   * @see StrictFilter
+   */
   async findOneAndDelete(
     filter: Filter<Schema>,
     options?: FindOneAndDeleteOptions<Schema> & { includeResultMetadata?: false },
@@ -1111,7 +1237,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Finds a single document in the collection and updates it.
+   * Atomically finds a single document in the collection and updates it.
    *
    * Set `returnDocument` to `'after'` to return the document as it is after the update, or `'before'` to return the
    * document as it was before the update.
@@ -1120,12 +1246,61 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * You can also set `upsert` to `true` to insert a new document if no document matches the filter.
    *
+   * If you just want the document, either omit `includeResultMetadata`, or set it to `false`.
+   *
+   * See {@link FindOneAndUpdateOptions} for complete information about the options available for this operation.
+   *
+   * @example
+   * ```typescript
+   * const result = await collection.findOneAndUpdate(
+   *   { _id: '1' },
+   *   { $set: { name: 'Jane Doe' } },
+   *   { returnDocument: 'after', includeResultMetadata: true }
+   * );
+   *
+   * // Prints { _id: '1', name: 'Jane Doe' }
+   * console.log(result.value);
+   *
+   * // Prints 1
+   * console.log(result.ok);
+   * ```
+   *
+   * @param filter - A filter to select the document to find.
+   * @param update - The update to apply to the selected document.
+   * @param options - The options for this operation.
+   *
+   * @return The result of the operation
+   *
+   * @see StrictFilter
+   * @see StrictUpdateFilter
+   */
+  async findOneAndUpdate(
+    filter: Filter<Schema>,
+    update: UpdateFilter<Schema>,
+    options: FindOneAndUpdateOptions<Schema> & { includeResultMetadata: true },
+  ): Promise<ModifyResult<Schema>>
+
+
+  /**
+   * Atomically finds a single document in the collection and updates it.
+   *
+   * Set `returnDocument` to `'after'` to return the document as it is after the update, or `'before'` to return the
+   * document as it was before the update.
+   *
+   * You can specify a `sort` option to determine which document to find if multiple documents match the filter.
+   *
+   * You can also set `upsert` to `true` to insert a new document if no document matches the filter.
+   *
+   * If you want the ok status along with the document, set `includeResultMetadata` to `true`.
+   *
+   * See {@link FindOneAndUpdateOptions} for complete information about the options available for this operation.
+   *
    * @example
    * ```typescript
    * const doc = await collection.findOneAndUpdate(
    *   { _id: '1' },
    *   { $set: { name: 'Jane Doe' } },
-   *   { returnDocument: 'after' }
+   *   { returnDocument: 'after'}
    * );
    *
    * // Prints { _id: '1', name: 'Jane Doe' }
@@ -1135,13 +1310,12 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param filter - A filter to select the document to find.
    * @param update - The update to apply to the selected document.
    * @param options - The options for this operation.
+   *
+   * @return The document before/after the update, depending on the type of `returnDocument`
+   *
+   * @see StrictFilter
+   * @see StrictUpdateFilter
    */
-  async findOneAndUpdate(
-    filter: Filter<Schema>,
-    update: UpdateFilter<Schema>,
-    options: FindOneAndUpdateOptions<Schema> & { includeResultMetadata: true },
-  ): Promise<ModifyResult<Schema>>
-
   async findOneAndUpdate(
     filter: Filter<Schema>,
     update: UpdateFilter<Schema>,
@@ -1230,10 +1404,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * }
    * ```
    *
-   * @param operations
-   * @param options
+   * @param operations - The operations to perform.
+   * @param options - The options for this operation.
    *
-   * @return BulkWriteResult
+   * @return The aggregated result of the operations.
    *
    * @throws BulkWriteError - If the operation fails
    */
@@ -1242,15 +1416,20 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     return (options?.ordered)
       ? await bulkWriteOrdered(this._httpClient, commands)
-      : await bulkWriteUnordered(this._httpClient, commands, options?.parallel ?? 8);
+      : await bulkWriteUnordered(this._httpClient, commands, options?.concurrency ?? 8);
   }
 
   /**
    * Get the collection options, i.e. its configuration as read from the database.
    *
-   *  The method issues a request to the Data API each time is invoked,
-   *         without caching mechanisms: this ensures up-to-date information
-   *         for usages such as real-time collection validation by the application.
+   * The method issues a request to the Data API each time it is invoked, without caching mechanisms;
+   * this ensures up-to-date information for usages such as real-time collection validation by the application.
+   *
+   * @example
+   * ```typescript
+   * const options = await collection.info();
+   * console.log(options.vector);
+   * ```
    *
    * @return The options that the collection was created with (i.e. the `vector` and `indexing` operations).
    */
@@ -1269,6 +1448,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   /**
    * Drops the collection from the database, including all the documents it contains.
    *
+   * Once the collection is dropped, this object is still technically "usable", but any further operations on it
+   * will fail at the Data API level; thus, it's the user's responsibility to make sure that the collection object
+   * is no longer used.
+   *
    * @example
    * ```typescript
    * const collection = await db.createCollection('my_collection');
@@ -1278,6 +1461,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param options - The options for this operation.
    *
    * @return `true` if the collection was dropped okay.
+   *
+   * @remarks Use with caution. Wear your safety goggles. Don't say I didn't warn you.
    */
   async drop(options?: BaseOptions): Promise<boolean> {
     return await this._db.dropCollection(this.collectionName, options);
@@ -1408,14 +1593,14 @@ const bulkWriteOrdered = async (httpClient: DataApiHttpClient, operations: Recor
 /**
  * @internal
  */
-const bulkWriteUnordered = async (httpClient: DataApiHttpClient, operations: Record<string, any>[], parallel: number): Promise<BulkWriteResult> => {
+const bulkWriteUnordered = async (httpClient: DataApiHttpClient, operations: Record<string, any>[], concurrency: number): Promise<BulkWriteResult> => {
   const results = new BulkWriteResult();
   let masterIndex = 0;
 
   const failCommands = [] as Record<string, any>[];
   const failRaw = [] as Record<string, any>[];
 
-  const workers = Array.from({ length: parallel }, async () => {
+  const workers = Array.from({ length: concurrency }, async () => {
     while (masterIndex < operations.length) {
       const localI = masterIndex;
       masterIndex++;

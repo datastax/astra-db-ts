@@ -79,6 +79,9 @@ export type IdOf<TSchema> =
       : Id
     : SomeId
 
+/**
+ * Makes all fields in a type mutable
+ */
 export type Mutable<T> = {
   -readonly [P in keyof T]: T[P];
 };

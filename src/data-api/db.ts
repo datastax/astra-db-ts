@@ -197,7 +197,8 @@ export class Db {
    *
    * For the full, complete, information, see {@link AstraDbAdmin.info}.
    *
-   * Not cached, so it will always fetch the latest information.
+   * The method issues a request to the DevOps API each time it is invoked, without caching mechanisms;
+   * this ensures up-to-date information for usages such as real-time collection validation by the application.
    *
    * Only available for Astra databases.
    *
@@ -343,6 +344,8 @@ export class Db {
    * @param options Options for this operation.
    *
    * @return A promise that resolves to `true` if the collection was dropped successfully.
+   *
+   * @remarks Use with caution. Have steel-toe boots on. Don't say I didn't warn you.
    */
   public async dropCollection(name: string, options?: BaseOptions & WithNamespace): Promise<boolean> {
     const command = {
