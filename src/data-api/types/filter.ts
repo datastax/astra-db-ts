@@ -17,17 +17,18 @@ import type { IdOf, IsDate, IsNum, NoId, ToDotNotation } from '@/src/data-api/ty
 
 /**
  * Represents some filter operation for a given document schema.
- * 
- * Disclaimer: It's strongly typed if a strict schema is passed in, but if
- * {@link SomeDoc} is used, operators are no longer properly type-checked.
- * 
+ *
+ * **If you want stricter type-checking, see {@link StrictFilter}.**
+ *
+ * This is a more relaxed version of {@link StrictFilter} that doesn't type-check nested fields.
+ *
  * @example
  * ```
  * interface BasicSchema {
  *   arr: string[],
  *   num: number,
  * }
- * 
+ *
  * db.collection<BasicSchema>('coll_name').findOne({
  *   $and: [
  *     { _id: { $in: ['abc', 'def'] } },
@@ -47,6 +48,30 @@ export type Filter<Schema extends SomeDoc> = {
   [key: string]: any,
 }
 
+/**
+ * Represents some filter operation for a given document schema.
+ *
+ * **If you want relaxed type-checking, see {@link Filter}.**
+ *
+ * This is a stricter version of {@link Filter} that type-checks nested fields.
+ *
+ * You can use it anywhere by using the `satisfies` keyword, or by creating a temporary const with the StrictFilter type.
+ *
+ * @example
+ * ```
+ * interface BasicSchema {
+ *   arr: string[],
+ *   num: number,
+ * }
+ *
+ * db.collection<BasicSchema>('coll_name').findOne({
+ *   $and: [
+ *     { _id: { $in: ['abc', 'def'] } },
+ *     { $not: { arr: { $size: 0 } } },
+ *   ]
+ * } satisfies StrictFilter<BasicSchema>);
+ * ```
+ */
 export type StrictFilter<Schema extends SomeDoc> = {
   [K in keyof ToDotNotation<NoId<Schema>>]?: FilterExpr<ToDotNotation<NoId<Schema>>[K]>
 } & {

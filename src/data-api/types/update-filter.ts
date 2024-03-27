@@ -15,6 +15,41 @@
 import type { SomeDoc, TypeErr } from '@/src/data-api';
 import type { IsDate, IsNum, ToDotNotation } from '@/src/data-api/types';
 
+/**
+ * Represents the update filter to specify how to update a document.
+ *
+ * **If you want stricter type-checking, see {@link StrictUpdateFilter}.**
+ *
+ * This is a more relaxed version of {@link StrictUpdateFilter} that doesn't type-check nested fields.
+ *
+ * @example
+ * ```typescript
+ * const updateFilter: UpdateFilter<SomeDoc> = {
+ *   $set: {
+ *     'customer.name': 'Jim B.'
+ *   },
+ *   $unset: {
+ *     'customer.phone': ''
+ *   },
+ *   $inc: {
+ *     'customer.age': 1
+ *   },
+ * }
+ * ```
+ *
+ * @field $set - Set the value of a field in the document.
+ * @field $setOnInsert - Set the value of a field in the document if an upsert is performed.
+ * @field $unset - Remove the field from the document.
+ * @field $inc - Increment the value of a field in the document.
+ * @field $push - Add an element to an array field in the document.
+ * @field $pop - Remove an element from an array field in the document.
+ * @field $rename - Rename a field in the document.
+ * @field $currentDate - Set the value of a field to the current date.
+ * @field $min - Only update the field if the specified value is less than the existing value.
+ * @field $max - Only update the field if the specified value is greater than the existing value.
+ * @field $mul - Multiply the value of a field in the document.
+ * @field $addToSet - Add an element to an array field in the document if it does not already exist.
+ */
 export interface UpdateFilter<Schema extends SomeDoc> {
   $set?: Partial<Schema> & SomeDoc,
   $setOnInsert?: Partial<Schema> & SomeDoc,
@@ -33,6 +68,12 @@ export interface UpdateFilter<Schema extends SomeDoc> {
 /**
  * Represents the update filter to specify how to update a document.
  *
+ * **If you want relaxed type-checking, see {@link UpdateFilter}.**
+ *
+ * This is a stricter version of {@link UpdateFilter} that type-checks nested fields.
+ *
+ * You can use it anywhere by using the `satisfies` keyword, or by creating a temporary const with the StrictUpdateFilter type.
+ *
  * @example
  * ```typescript
  * const updateFilter: UpdateFilter<SomeDoc> = {
@@ -45,7 +86,7 @@ export interface UpdateFilter<Schema extends SomeDoc> {
  *   $inc: {
  *     'customer.age': 1
  *   },
- * }
+ * } satisfies StrictUpdateFilter<SomeDoc>
  * ```
  *
  * @field $set - Set the value of a field in the document.
