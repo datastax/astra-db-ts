@@ -24,7 +24,7 @@ import {
 import assert from 'assert';
 import { DeleteManyResult, InsertManyResult, SomeId, UpdateManyResult } from '@/src/data-api/types';
 
-describe('unit.data-api.cursor tests', () => {
+describe('unit.data-api.errors', () => {
   const commands = [
     { insertOne: { document: { name: 'John' } } },
     { insertOne: { document: { name: 'Jane' } } },

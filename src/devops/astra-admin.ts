@@ -15,16 +15,14 @@ import { AdminSpawnOptions, DbSpawnOptions, RootClientOptsWithToken } from '@/sr
 type AdminOptions = RootClientOptsWithToken & { devopsOptions: { adminToken: string } };
 
 export class AstraAdmin {
+  readonly #defaultOpts!: RootClientOptsWithToken;
+
   private readonly _httpClient!: DevopsApiHttpClient;
-  private readonly _defaultOpts!: RootClientOptsWithToken;
 
   constructor(options: AdminOptions) {
     const adminOpts = options.devopsOptions ?? {};
 
-    Object.defineProperty(this, '_defaultOpts', {
-      value: options,
-      enumerable: false,
-    });
+    this.#defaultOpts = options;
 
     Object.defineProperty(this, '_httpClient', {
       value: new DevopsApiHttpClient({
@@ -42,7 +40,7 @@ export class AstraAdmin {
   db(id: string, region: string, options?: DbSpawnOptions): Db;
 
   db(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): Db {
-    return mkDb(this._defaultOpts, endpointOrId, regionOrOptions, maybeOptions);
+    return mkDb(this.#defaultOpts, endpointOrId, regionOrOptions, maybeOptions);
   }
 
   dbAdmin(endpoint: string, options?: DbSpawnOptions): AstraDbAdmin;
@@ -51,7 +49,7 @@ export class AstraAdmin {
 
   dbAdmin(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): AstraDbAdmin {
     // @ts-expect-error - calls internal representation of method
-    return this.db(endpointOrId, regionOrOptions, maybeOptions).admin(this._defaultOpts.devopsOptions);
+    return this.db(endpointOrId, regionOrOptions, maybeOptions).admin(this.#defaultOpts.devopsOptions);
   }
 
   public async listDatabases(options?: ListDatabasesOptions): Promise<FullDatabaseInfo[]> {
@@ -104,7 +102,7 @@ export class AstraAdmin {
       });
     }
 
-    return mkDb(this._defaultOpts, id, config.region);
+    return mkDb(this.#defaultOpts, id, config.region);
   }
 
   async dropDatabase(_db: Db | string): Promise<void> {

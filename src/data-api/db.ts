@@ -69,8 +69,9 @@ type DbOptions = RootClientOptsWithToken & { dataApiOptions: { token: string } }
  * @see AstraAdmin.db
  */
 export class Db {
+  readonly #defaultOpts!: RootClientOptsWithToken;
+
   private readonly _httpClient!: DataApiHttpClient;
-  private readonly _defaultOpts!: RootClientOptsWithToken;
   private readonly _id?: string;
 
   /**
@@ -119,10 +120,7 @@ export class Db {
       writable: false,
     });
 
-    Object.defineProperty(this, '_defaultOpts', {
-      value: options,
-      enumerable: false,
-    });
+    this.#defaultOpts = options;
 
     if (!this.namespace.match(/^[a-zA-Z0-9_]{1,222}$/)) {
       throw new Error('Invalid namespace format; either pass a valid namespace name, or don\'t pass one at all to use the default namespace');
@@ -189,7 +187,7 @@ export class Db {
     if (!this._id) {
       throw new Error('Admin operations are only supported on Astra databases');
     }
-    return mkDbAdmin(this, this._httpClient, this._defaultOpts, options);
+    return mkDbAdmin(this, this._httpClient, this.#defaultOpts, options);
   }
 
   /**

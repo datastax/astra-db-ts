@@ -13,13 +13,12 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, CursorAlreadyInitializedError, Db, FindCursor } from '@/src/data-api';
-import { DEFAULT_COLLECTION_NAME, testClient } from '@/tests/fixtures';
+import { Collection, CursorAlreadyInitializedError, FindCursor } from '@/src/data-api';
+import { testClient } from '@/tests/fixtures';
 import { DataApiHttpClient } from '@/src/api';
 import assert from 'assert';
 
 describe(`integration.data-api.cursor`, async () => {
-  let db: Db;
   let collection: Collection;
   let httpClient: DataApiHttpClient;
 
@@ -36,7 +35,7 @@ describe(`integration.data-api.cursor`, async () => {
       return this.skip();
     }
 
-    [, db, collection] = await testClient.new();
+    [, , collection] = await testClient.new();
     httpClient = collection['_httpClient'];
   });
 

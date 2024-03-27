@@ -32,7 +32,8 @@ export class HttpClient {
   public readonly logSkippedOptions: boolean;
   public readonly userAgent: string;
   public requestStrategy: HTTPRequestStrategy;
-  private [applicationTokenKey]!: string;
+  // private [applicationTokenKey]!: string;
+  #applicationToken: string;
 
   constructor(options: HTTPClientOptions) {
     if (typeof window !== "undefined") {
@@ -47,11 +48,12 @@ export class HttpClient {
       throw new Error("applicationToken required for initialization");
     }
 
-    Object.defineProperty(this, applicationTokenKey, {
-      value: options.applicationToken,
-      enumerable: false,
-      writable: true,
-    });
+    // Object.defineProperty(this, applicationTokenKey, {
+    //   value: options.applicationToken,
+    //   enumerable: false,
+    //   writable: true,
+    // });
+    this.#applicationToken = options.applicationToken;
 
     this.baseUrl = options.baseUrl;
     this.logSkippedOptions = options.logSkippedOptions ?? false;
@@ -89,7 +91,7 @@ export class HttpClient {
   public cloneInto<C extends HttpClient>(cls: new (opts: HTTPClientOptions) => C, initialize: (client: Mutable<C>) => void): C {
     const clone = new cls({
       baseUrl: this.baseUrl,
-      applicationToken: this[applicationTokenKey],
+      applicationToken: this.#applicationToken,
       logSkippedOptions: this.logSkippedOptions,
       requestStrategy: this.requestStrategy,
       userAgent: this.userAgent,
@@ -99,11 +101,11 @@ export class HttpClient {
   }
 
   public setToken(token: string): void {
-    this[applicationTokenKey] = token;
+    this.#applicationToken = token;
   }
 
   public unsafeGetToken(): string {
-    return this[applicationTokenKey];
+    return this.#applicationToken;
   }
 
   protected async _request(info: HTTPRequestInfo): Promise<GuaranteedAPIResponse> {
@@ -113,7 +115,7 @@ export class HttpClient {
       timeout: info.timeout || DEFAULT_TIMEOUT,
       method: info.method || DEFAULT_METHOD,
       params: info.params ?? {},
-      token: this[applicationTokenKey],
+      token: this.#applicationToken,
       userAgent: this.userAgent,
       timeoutError: info.timeoutError,
     });

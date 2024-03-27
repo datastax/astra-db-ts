@@ -214,6 +214,7 @@ export class DataAPIResponseError extends DataAPIError {
 
   constructor(message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) {
     super(message);
+    this.message = message;
     this.errorDescriptors = errorDescriptors;
     this.detailedErrorDescriptors = detailedErrorDescriptors;
     this.name = 'DataAPIResponseError';
