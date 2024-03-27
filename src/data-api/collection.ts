@@ -779,7 +779,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       options = { ...options, sort: { $vector: options.vector } };
     }
 
-    return new FindCursor(this.namespace, this._httpClient, filter, options) as any;
+    return new FindCursor(this.namespace, this._httpClient, filter as any, options) as any;
   }
 
   /**

@@ -126,7 +126,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    */
   filter(filter: Filter<TRaw>): FindCursor<T, TRaw> {
     this._assertUninitialized();
-    this._filter = filter;
+    this._filter = filter as any;
     return this;
   }
 

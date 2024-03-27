@@ -186,9 +186,6 @@ export interface AdminSpawnOptions {
   endpointUrl?: string,
 }
 
-/**
- * @internal
- */
 export interface RootClientOptsWithToken {
   logLevel?: string,
   caller?: Caller | Caller[],
