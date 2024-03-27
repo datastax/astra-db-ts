@@ -89,6 +89,9 @@ export class ObjectId {
   }
 }
 
+/**
+ * @internal
+ */
 export function replaceRawId(obj: any): any {
   if (!obj) {
     return obj;

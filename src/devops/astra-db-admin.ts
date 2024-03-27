@@ -63,6 +63,9 @@ export class AstraDbAdmin {
   }
 }
 
+/**
+ * @internal
+ */
 export function mkDbAdmin(db: Db, httpClient: HttpClient, rootOpts: RootClientOptsWithToken, options?: AdminSpawnOptions): AstraDbAdmin {
   return new AstraDbAdmin(db, httpClient, {
     ...rootOpts.devopsOptions,

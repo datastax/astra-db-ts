@@ -115,6 +115,9 @@ export class AstraAdmin {
   }
 }
 
+/**
+ * @internal
+ */
 export function mkAdmin(rootOpts: RootClientOptsWithToken, options?: AdminSpawnOptions): AstraAdmin {
   return new AstraAdmin({
     ...rootOpts,
