@@ -52,7 +52,7 @@ describe('integration.data-api.collection.insert-many', () => {
     const res = await collection.insertMany(docs);
     assert.strictEqual(res.insertedCount, docs.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, docs.length);
-    assert.deepStrictEqual(res.insertedIds.sort(), docs.map((doc) => doc._id.toString()));
+    assert.deepStrictEqual(res.insertedIds.sort(), docs.map((doc) => ({ $uuid: doc._id.toString() })));
   });
 
   it('should insertMany documents with ObjectIds', async () => {
@@ -60,7 +60,7 @@ describe('integration.data-api.collection.insert-many', () => {
     const res = await collection.insertMany(docs);
     assert.strictEqual(res.insertedCount, docs.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, docs.length);
-    assert.deepStrictEqual(res.insertedIds.sort(), docs.map((doc) => doc._id.toString()));
+    assert.deepStrictEqual(res.insertedIds.sort(), docs.map((doc) => ({ $objectId: doc._id.toString() })));
   });
 
   it('should insertMany documents with a mix of ids', async () => {

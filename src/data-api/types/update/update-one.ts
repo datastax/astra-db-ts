@@ -68,6 +68,10 @@ export interface UpdateOneOptions<Schema extends SomeDoc> extends BaseOptions {
    * field in the sort object directly.
    */
   vector?: number[],
+  /**
+   * @alpha
+   */
+  vectorize?: string,
 }
 
 /** @internal */

@@ -50,6 +50,10 @@ export interface FindOptions<Schema extends SomeDoc, GetSim extends boolean> {
    */
   vector?: number[],
   /**
+   * @alpha
+   */
+  vectorize?: string,
+  /**
    * Specifies which fields should be included/excluded in the returned documents.
    *
    * If not specified, all fields are included.

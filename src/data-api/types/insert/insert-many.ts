@@ -75,6 +75,10 @@ export interface InsertManyOrderedOptions {
    * up to the user to ensure that both fields are not set at once.
    */
   vectors?: (number[] | null | undefined)[],
+  /**
+   * @alpha
+   */
+  vectorize?: (string | null | undefined)[],
 }
 
 /**
@@ -122,6 +126,10 @@ export interface InsertManyUnorderedOptions {
    * up to the user to ensure that both fields are not set at once.
    */
   vectors?: (number[] | null | undefined)[],
+  /**
+   * @alpha
+   */
+  vectorize?: (string | null | undefined)[],
 }
 
 /** @internal */

@@ -41,7 +41,8 @@ export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId
 export type SortOption<Schema extends SomeDoc> =
   | { [K in keyof ToDotNotation<Schema>]?: 1 | -1 }
   | { $vector: { $meta: number[] } }
-  | { $vector: number[] };
+  | { $vector: number[] }
+  | { $vectorize: string };
 
 /**
  * Specifies which fields should be included/excluded in the returned documents.

@@ -42,6 +42,10 @@ export interface InsertOneOptions extends BaseOptions {
    * up to the user to ensure that both fields are not set at once.
    */
   vector?: number[],
+  /**
+   * @alpha
+   */
+  vectorize?: string,
 }
 
 /**

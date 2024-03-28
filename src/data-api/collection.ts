@@ -181,6 +181,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       command.insertOne.document = { ...command.insertOne.document, $vector: options.vector };
     }
 
+    if (options?.vectorize) {
+      command.insertOne.document = { ...command.insertOne.document, $vectorize: options.vectorize };
+    }
+
     const resp = await this._httpClient.executeCommand(command, options);
 
     return {
@@ -276,6 +280,18 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       }
     }
 
+    if (options?.vectorize) {
+      if (options.vectorize.length !== documents.length) {
+        throw new Error('The number of vectors must match the number of documents');
+      }
+
+      for (let i = 0, n = documents.length; i < n; i++) {
+        if (options.vectorize[i]) {
+          documents[i] = { ...documents[i], $vectorize: options.vectorize[i] };
+        }
+      }
+    }
+
     const insertedIds = (options?.ordered)
       ? await insertManyOrdered<Schema>(this._httpClient, documents, chunkSize)
       : await insertManyUnordered<Schema>(this._httpClient, documents, options?.concurrency ?? 8, chunkSize);
@@ -333,12 +349,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictUpdateFilter
    */
   async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions<Schema>): Promise<UpdateOneResult> {
-    if (options?.vector) {
-      if (options.sort) {
-        throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object')
-      }
-      options = { ...options, sort: { $vector: options.vector } };
-    }
+    options = coalesceVectorSpecialsIntoSort(options);
 
     const command: UpdateOneCommand = {
       updateOne: {
@@ -519,12 +530,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    */
   async replaceOne(filter: Filter<Schema>, replacement: NoId<Schema>, options?: ReplaceOneOptions<Schema>): Promise<ReplaceOneResult> {
-    if (options?.vector) {
-      if (options.sort) {
-        throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object')
-      }
-      options = { ...options, sort: { $vector: options.vector } };
-    }
+    options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneAndReplaceCommand = {
       findOneAndReplace: {
@@ -589,12 +595,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    */
   async deleteOne(filter: Filter<Schema> = {}, options?: DeleteOneOptions<Schema>): Promise<DeleteOneResult> {
-    if (options?.vector) {
-      if (options.sort) {
-        throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object')
-      }
-      options = { ...options, sort: { $vector: options.vector } };
-    }
+    options = coalesceVectorSpecialsIntoSort(options);
 
     const command: DeleteOneCommand = {
       deleteOne: { filter },
@@ -772,14 +773,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    */
   find<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursor<FoundDoc<Schema, GetSim>, FoundDoc<Schema, GetSim>> {
-    if (options?.vector) {
-      if (options.sort) {
-        throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object')
-      }
-      options = { ...options, sort: { $vector: options.vector } };
-    }
-
-    return new FindCursor(this.namespace, this._httpClient, filter as any, options) as any;
+    return new FindCursor(this.namespace, this._httpClient, filter as any, coalesceVectorSpecialsIntoSort(options)) as any;
   }
 
   /**
@@ -917,12 +911,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    */
   async findOne<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<Schema, GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
-    if (options?.vector) {
-      if (options.sort) {
-        throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object')
-      }
-      options = { ...options, sort: { $vector: options.vector } };
-    }
+    options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneCommand = {
       findOne: {
@@ -1037,12 +1026,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   ): Promise<WithId<Schema> | null>
 
   async findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options: FindOneAndReplaceOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
-    if (options?.vector) {
-      if (options.sort) {
-        throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object')
-      }
-      options = { ...options, sort: { $vector: options.vector } };
-    }
+    options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneAndReplaceCommand = {
       findOneAndReplace: {
@@ -1206,12 +1190,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   ): Promise<WithId<Schema> | null>
 
   async findOneAndDelete(filter: Filter<Schema>, options?: FindOneAndDeleteOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
-    if (options?.vector) {
-      if (options.sort) {
-        throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object')
-      }
-      options = { ...options, sort: { $vector: options.vector } };
-    }
+    options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneAndDeleteCommand = {
       findOneAndDelete: { filter },
@@ -1280,7 +1259,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     options: FindOneAndUpdateOptions<Schema> & { includeResultMetadata: true },
   ): Promise<ModifyResult<Schema>>
 
-
   /**
    * Atomically finds a single document in the collection and updates it.
    *
@@ -1323,12 +1301,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   ): Promise<WithId<Schema> | null>
 
   async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options: FindOneAndUpdateOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
-    if (options?.vector) {
-      if (options.sort) {
-        throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object')
-      }
-      options = { ...options, sort: { $vector: options.vector } };
-    }
+    options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneAndUpdateCommand = {
       findOneAndUpdate: {
@@ -1467,6 +1440,38 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   async drop(options?: BaseOptions): Promise<boolean> {
     return await this._db.dropCollection(this.collectionName, options);
   }
+}
+
+// -- Utils-------------------------------------------------------------------------------------------------
+
+/**
+ * @internal
+ */
+interface OptionsWithSort {
+  sort?: Record<string, any>;
+  vector?: number[];
+  vectorize?: string;
+}
+
+/**
+ * @internal
+ */
+const coalesceVectorSpecialsIntoSort = <T extends OptionsWithSort | undefined>(options: T): T => {
+  if (options?.vector) {
+    if (options.sort) {
+      throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object')
+    }
+    return { ...options, sort: { $vector: options.vector } };
+  }
+
+  if (options?.vectorize) {
+    if (options.sort) {
+      throw new Error('Can\'t use both `sort` and `vectorize` options at once; if you need both, include a $vectorize key in the sort object')
+    }
+    return { ...options, sort: { $vectorize: options.vectorize } };
+  }
+
+  return options;
 }
 
 // -- Insert Many ------------------------------------------------------------------------------------------
