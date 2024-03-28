@@ -20,4 +20,4 @@ export * from './db';
 export * from './errors';
 export * from './ids';
 export * from './utils';
-export { WithNamespace } from '@/src/data-api/types';
+export * from './types';

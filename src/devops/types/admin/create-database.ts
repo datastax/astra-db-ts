@@ -36,15 +36,15 @@ export interface DatabaseConfig {
   region: string,
 }
 
-export type CreateDatabaseOptions =
-  | CreateDatabaseBlockingOptions
-  | CreateDatabaseAsyncOptions
+export type AdminBlockingOptions =
+  | PollBlockingOptions
+  | NoBlockingOptions
 
-export interface CreateDatabaseBlockingOptions {
+export interface PollBlockingOptions {
   blocking?: true,
   pollInterval?: number,
 }
 
-export interface CreateDatabaseAsyncOptions {
+export interface NoBlockingOptions {
   blocking: false,
 }

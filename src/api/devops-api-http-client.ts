@@ -18,7 +18,7 @@ import { AxiosError, AxiosResponse } from 'axios';
 import { HTTPClientOptions } from '@/src/api/types';
 import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
 import { DevopsApiResponseError, DevopsAPITimeout, DevopsUnexpectedStateError } from '@/src/devops/errors';
-import { CreateDatabaseOptions } from '@/src/devops/types';
+import { AdminBlockingOptions } from '@/src/devops/types';
 
 interface DevopsApiRequestInfo {
   path: string,
@@ -54,7 +54,7 @@ export class DevopsApiHttpClient extends HttpClient {
     }
   }
 
-  public async awaitStatus(idRef: { id: string }, target: string, legalStates: string[], options: CreateDatabaseOptions | undefined, defaultPollInterval: number): Promise<void> {
+  public async awaitStatus(idRef: { id: string }, target: string, legalStates: string[], options: AdminBlockingOptions | undefined, defaultPollInterval: number): Promise<void> {
     if (options?.blocking === false) {
       return;
     }

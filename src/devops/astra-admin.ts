@@ -1,4 +1,4 @@
-import { CreateDatabaseOptions, DatabaseConfig, FullDatabaseInfo, ListDatabasesOptions } from '@/src/devops/types';
+import { AdminBlockingOptions, DatabaseConfig, FullDatabaseInfo, ListDatabasesOptions } from '@/src/devops/types';
 import { Db, mkDb } from '@/src/data-api';
 import { DEFAULT_DEVOPS_API_ENDPOINT, DevopsApiHttpClient, HTTP_METHODS } from '@/src/api';
 import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
@@ -58,7 +58,7 @@ export class AstraAdmin {
     return resp.data;
   }
 
-  public async createDatabase(config: DatabaseConfig, options?: CreateDatabaseOptions): Promise<AstraDbAdmin> {
+  public async createDatabase(config: DatabaseConfig, options?: AdminBlockingOptions): Promise<AstraDbAdmin> {
     const resp = await this._httpClient.request({
       method: HTTP_METHODS.Post,
       path: '/databases',
@@ -77,7 +77,7 @@ export class AstraAdmin {
     return admin;
   }
 
-  async dropDatabase(_db: Db | string, options?: CreateDatabaseOptions): Promise<void> {
+  async dropDatabase(_db: Db | string, options?: AdminBlockingOptions): Promise<void> {
     const id = typeof _db === 'string' ? _db : _db.id;
 
     await this._httpClient.request({

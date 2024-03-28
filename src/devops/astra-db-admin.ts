@@ -1,4 +1,4 @@
-import { CreateDatabaseOptions, FullDatabaseInfo } from '@/src/devops/types';
+import { AdminBlockingOptions, FullDatabaseInfo } from '@/src/devops/types';
 import { DEFAULT_DEVOPS_API_ENDPOINT, DevopsApiHttpClient, HTTP_METHODS, HttpClient } from '@/src/api';
 import { Db } from '@/src/data-api';
 import { AdminSpawnOptions, RootClientOptsWithToken } from '@/src/client';
@@ -42,7 +42,7 @@ export class AstraDbAdmin {
     return this.info().then(i => [i.info.keyspace!, ...i.info.additionalKeyspaces ?? []].filter(Boolean))
   }
 
-  async createNamespace(namespace: string, options?: CreateDatabaseOptions): Promise<void> {
+  async createNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void> {
     await this._httpClient.request({
       method: HTTP_METHODS.Post,
       path: `/databases/${this._db.id}/keyspaces/${namespace}`,
@@ -50,7 +50,7 @@ export class AstraDbAdmin {
     await this._httpClient.awaitStatus(this._db, 'ACTIVE', ['MAINTENANCE'], options, 1000);
   }
 
-  async dropNamespace(namespace: string, options?: CreateDatabaseOptions): Promise<void> {
+  async dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void> {
     await this._httpClient.request({
       method: HTTP_METHODS.Delete,
       path: `/databases/${this._db.id}/keyspaces/${namespace}`,
@@ -58,7 +58,7 @@ export class AstraDbAdmin {
     await this._httpClient.awaitStatus(this._db, 'ACTIVE', ['MAINTENANCE'], options, 1000);
   }
 
-  async drop(options?: CreateDatabaseOptions): Promise<void> {
+  async drop(options?: AdminBlockingOptions): Promise<void> {
     await this._httpClient.request({
       method: HTTP_METHODS.Post,
       path: `/databases/${this._db.id}/terminate`,

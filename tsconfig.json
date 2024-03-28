@@ -5,7 +5,6 @@
     "moduleResolution": "node",
     "declaration": true,
     "sourceMap": true,
-    "declarationMap": true,
     "noEmitOnError": true,
     "baseUrl": "./",
     "outDir": "./dist",
