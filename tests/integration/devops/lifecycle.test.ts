@@ -37,11 +37,13 @@ describe('integration.devops.lifecycle', async () => {
     try {
       const admin = client.admin();
 
-      const db = await admin.createDatabase({
+      const dbAdmin = await admin.createDatabase({
         name: 'astra-test-db',
         cloudProvider: 'gcp',
         region: 'us-east1',
       });
+      const db = dbAdmin.db();
+
       assert.ok(db.id, 'Database ID is missing');
       assert.strictEqual(db.namespace, 'default_keyspace', 'Database namespace is incorrect');
 
@@ -64,8 +66,6 @@ describe('integration.devops.lifecycle', async () => {
 
       const dbs1 = await admin.listDatabases();
       assert.ok(dbs1.find(db => db.info.name === 'astra-test-db'), 'Database \'astra-test-db\' is missing');
-
-      const dbAdmin = db.admin();
 
       const namespaces = await dbAdmin.listNamespaces();
       assert.deepStrictEqual(namespaces, ['default_keyspace'], 'Namespaces are incorrect');

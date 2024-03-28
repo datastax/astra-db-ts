@@ -47,29 +47,7 @@ export class AstraDbAdmin {
       method: HTTP_METHODS.Post,
       path: `/databases/${this._db.id}/keyspaces/${namespace}`,
     });
-
-    if (options?.blocking === false) {
-      return;
-    }
-
-    for (;;) {
-      const resp = await this._httpClient.request({
-        method: HTTP_METHODS.Get,
-        path: `/databases/${this._db.id}`,
-      });
-
-      if (resp.data?.status === 'ACTIVE') {
-        break;
-      }
-
-      if (resp.data?.status !== 'MAINTENANCE') {
-        throw new DevopsUnexpectedStateError(`Created database is not in state 'MAINTENANCE' after creating a keyspace`, resp)
-      }
-
-      await new Promise<void>((resolve) => {
-        setTimeout(resolve, options?.pollInterval ?? 10000);
-      });
-    }
+    await this._httpClient.awaitStatus(this._db, 'ACTIVE', ['MAINTENANCE'], options, 1000);
   }
 
   async dropNamespace(namespace: string, options?: CreateDatabaseOptions): Promise<void> {
@@ -77,29 +55,7 @@ export class AstraDbAdmin {
       method: HTTP_METHODS.Delete,
       path: `/databases/${this._db.id}/keyspaces/${namespace}`,
     });
-
-    if (options?.blocking === false) {
-      return;
-    }
-
-    for (;;) {
-      const resp = await this._httpClient.request({
-        method: HTTP_METHODS.Get,
-        path: `/databases/${this._db.id}`,
-      });
-
-      if (resp.data?.status === 'ACTIVE') {
-        break;
-      }
-
-      if (resp.data?.status !== 'MAINTENANCE') {
-        throw new DevopsUnexpectedStateError(`Created database is not in state 'MAINTENANCE' after creating a keyspace`, resp)
-      }
-
-      await new Promise<void>((resolve) => {
-        setTimeout(resolve, options?.pollInterval ?? 10000);
-      });
-    }
+    await this._httpClient.awaitStatus(this._db, 'ACTIVE', ['MAINTENANCE'], options, 1000);
   }
 
   async drop(options?: CreateDatabaseOptions): Promise<void> {
@@ -107,29 +63,7 @@ export class AstraDbAdmin {
       method: HTTP_METHODS.Post,
       path: `/databases/${this._db.id}/terminate`,
     });
-
-    if (options?.blocking === false) {
-      return;
-    }
-
-    for (;;) {
-      const resp = await this._httpClient.request({
-        method: HTTP_METHODS.Get,
-        path: `/databases/${this._db.id}`,
-      });
-
-      if (resp.data?.status === 'TERMINATED') {
-        break;
-      }
-
-      if (resp.data?.status !== 'TERMINATING') {
-        throw new DevopsUnexpectedStateError(`Database is not in state 'TERMINATING' after termination`, resp)
-      }
-
-      await new Promise<void>((resolve) => {
-        setTimeout(resolve, options?.pollInterval ?? 10000);
-      });
-    }
+    await this._httpClient.awaitStatus(this._db, 'TERMINATED', ['TERMINATING'], options, 10000);
   }
 }
 

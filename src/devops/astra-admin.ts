@@ -1,14 +1,6 @@
-import {
-  CreateDatabaseAsyncOptions,
-  CreateDatabaseBlockingOptions,
-  CreateDatabaseOptions,
-  DatabaseConfig,
-  FullDatabaseInfo,
-  ListDatabasesOptions
-} from '@/src/devops/types';
+import { CreateDatabaseOptions, DatabaseConfig, FullDatabaseInfo, ListDatabasesOptions } from '@/src/devops/types';
 import { Db, mkDb } from '@/src/data-api';
 import { DEFAULT_DEVOPS_API_ENDPOINT, DevopsApiHttpClient, HTTP_METHODS } from '@/src/api';
-import { DevopsUnexpectedStateError } from '@/src/devops/errors';
 import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
 import { AdminSpawnOptions, DbSpawnOptions, RootClientOptsWithToken } from '@/src/client/types';
 
@@ -66,11 +58,7 @@ export class AstraAdmin {
     return resp.data;
   }
 
-  public async createDatabase(config: DatabaseConfig, options: CreateDatabaseAsyncOptions): Promise<string>
-
-  public async createDatabase(config: DatabaseConfig, options?: CreateDatabaseBlockingOptions): Promise<Db>
-
-  public async createDatabase(config: DatabaseConfig, options?: CreateDatabaseOptions): Promise<string | Db> {
+  public async createDatabase(config: DatabaseConfig, options?: CreateDatabaseOptions): Promise<AstraDbAdmin> {
     const resp = await this._httpClient.request({
       method: HTTP_METHODS.Post,
       path: '/databases',
@@ -82,41 +70,21 @@ export class AstraAdmin {
       },
     });
 
-    const id = resp.headers.location;
+    const db = mkDb(this.#defaultOpts, resp.headers.location, config.region, { namespace: resp.data.info.keyspace });
+    const admin = db.admin(this.#defaultOpts.devopsOptions);
 
-    if (options?.blocking === false) {
-      return id;
-    }
-
-    for (;;) {
-      const resp = await this._httpClient.request({
-        method: HTTP_METHODS.Get,
-        path: `/databases/${id}`,
-      });
-
-      if (resp.data?.status === 'ACTIVE') {
-        break;
-      }
-
-      if (resp.data?.status !== 'INITIALIZING' && resp.data?.status !== 'PENDING') {
-        throw new DevopsUnexpectedStateError(`Created database is not in state 'ACTIVE', 'INITIALIZING' or 'PENDING' after creation`, resp)
-      }
-
-      await new Promise<void>((resolve) => {
-        setTimeout(resolve, options?.pollInterval ?? 10000);
-      });
-    }
-
-    return mkDb(this.#defaultOpts, id, config.region);
+    await this._httpClient.awaitStatus(db, 'ACTIVE', ['INITIALIZING', 'PENDING'], options, 10000);
+    return admin;
   }
 
-  async dropDatabase(_db: Db | string): Promise<void> {
+  async dropDatabase(_db: Db | string, options?: CreateDatabaseOptions): Promise<void> {
     const id = typeof _db === 'string' ? _db : _db.id;
 
     await this._httpClient.request({
       method: HTTP_METHODS.Post,
       path: `/databases/${id}/terminate`,
     });
+    await this._httpClient.awaitStatus({ id }, 'TERMINATED', ['TERMINATING'], options, 10000);
   }
 }
 

@@ -17,7 +17,8 @@ import { DEFAULT_TIMEOUT, HTTP_METHODS } from '@/src/api/constants';
 import { AxiosError, AxiosResponse } from 'axios';
 import { HTTPClientOptions } from '@/src/api/types';
 import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
-import { DevopsApiResponseError, DevopsAPITimeout } from '@/src/devops/errors';
+import { DevopsApiResponseError, DevopsAPITimeout, DevopsUnexpectedStateError } from '@/src/devops/errors';
+import { CreateDatabaseOptions } from '@/src/devops/types';
 
 interface DevopsApiRequestInfo {
   path: string,
@@ -50,6 +51,31 @@ export class DevopsApiHttpClient extends HttpClient {
         throw e;
       }
       throw new DevopsApiResponseError(e);
+    }
+  }
+
+  public async awaitStatus(idRef: { id: string }, target: string, legalStates: string[], options: CreateDatabaseOptions | undefined, defaultPollInterval: number): Promise<void> {
+    if (options?.blocking === false) {
+      return;
+    }
+
+    for (;;) {
+      const resp = await this.request({
+        method: HTTP_METHODS.Get,
+        path: `/databases/${idRef.id}`,
+      });
+
+      if (resp.data?.status === target) {
+        break;
+      }
+
+      if (!legalStates.includes(resp.data?.status)) {
+        throw new DevopsUnexpectedStateError(`Created database is not in any legal state [${[target, ...legalStates].join(',')}]`, resp)
+      }
+
+      await new Promise<void>((resolve) => {
+        setTimeout(resolve, options?.pollInterval || defaultPollInterval);
+      });
     }
   }
 }
