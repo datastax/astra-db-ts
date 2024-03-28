@@ -14,13 +14,13 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { EPHEMERAL_COLLECTION_NAME, OTHER_NAMESPACE, testClient } from '@/tests/fixtures';
+import { DEFAULT_COLLECTION_NAME, EPHEMERAL_COLLECTION_NAME, OTHER_NAMESPACE, testClient } from '@/tests/fixtures';
 import { DataAPIResponseError, Db } from '@/src/data-api';
 import { DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE } from '@/src/api';
 import { DataApiClient } from '@/src/client';
 import process from 'process';
 
-describe('integration.data-api.db tests', async () => {
+describe('integration.data-api.db', async () => {
   let db: Db;
 
   before(async function () {
@@ -34,7 +34,7 @@ describe('integration.data-api.db tests', async () => {
     await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
   });
 
-  describe('createCollection + dropCollection', () => {
+  describe('[long] createCollection + dropCollection', () => {
     afterEach(async function () {
       await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
       await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
@@ -140,18 +140,10 @@ describe('integration.data-api.db tests', async () => {
     });
   });
 
-  describe('listCollections1', () => {
-    before(async function () {
-      await db.createCollection(EPHEMERAL_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' } });
-    });
-
-    after(async function () {
-      await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
-    });
-
+  describe('listCollections', () => {
     it('should return a list of just names of collections with nameOnly not set', async () => {
       const res = await db.listCollections();
-      const found = res.find((collection) => collection.name === EPHEMERAL_COLLECTION_NAME);
+      const found = res.find((collection) => collection.name === DEFAULT_COLLECTION_NAME);
       assert.ok(found);
       // @ts-expect-error - nameOnly is unset, so options should not be present
       assert.strictEqual(found.options, undefined);
@@ -159,7 +151,7 @@ describe('integration.data-api.db tests', async () => {
 
     it('should return a list of just names of collections with nameOnly set to true', async () => {
       const res = await db.listCollections({ nameOnly: true });
-      const found = res.find((collection) => collection.name === EPHEMERAL_COLLECTION_NAME);
+      const found = res.find((collection) => collection.name === DEFAULT_COLLECTION_NAME);
       assert.ok(found);
       // @ts-expect-error - nameOnly is set to true, so options should not be present
       assert.strictEqual(found.options, undefined);
@@ -167,7 +159,7 @@ describe('integration.data-api.db tests', async () => {
 
     it('should return a list of collection infos with nameOnly set to false', async () => {
       const res = await db.listCollections({ nameOnly: false });
-      const found = res.find((collection) => collection.name === EPHEMERAL_COLLECTION_NAME);
+      const found = res.find((collection) => collection.name === DEFAULT_COLLECTION_NAME);
       assert.ok(found);
       assert.strictEqual(found.options?.vector?.dimension, 5);
       assert.strictEqual(found.options?.vector?.metric, 'cosine');
@@ -200,13 +192,13 @@ describe('integration.data-api.db tests', async () => {
     });
 
     it('should execute a collection-level command', async () => {
-      const collection = await db.createCollection(EPHEMERAL_COLLECTION_NAME);
+      const collection = db.collection(DEFAULT_COLLECTION_NAME);
       await collection.insertOne({ _id: 1 });
-      const resp = await db.command({ findOne: {} }, { collection: EPHEMERAL_COLLECTION_NAME });
+      const resp = await db.command({ findOne: {} }, { collection: DEFAULT_COLLECTION_NAME });
       assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: 1 } }, errors: undefined });
     });
 
-    it('should execute a collection-level command in different namespace', async () => {
+    it('[long] should execute a collection-level command in different namespace', async () => {
       const collection = await db.createCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
       await collection.insertOne({ _id: 1 });
       const resp = await db.command({ findOne: {} }, { collection: EPHEMERAL_COLLECTION_NAME, namespace: OTHER_NAMESPACE });

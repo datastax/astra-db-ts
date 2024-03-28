@@ -8,24 +8,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, Db } from '@/src/data-api';
+import { Db } from '@/src/data-api';
 import { EPHEMERAL_COLLECTION_NAME, testClient } from '@/tests/fixtures';
 import assert from 'assert';
 
 describe('integration.data-api.collection.drop', () => {
   let db: Db;
-  let collection: Collection;
 
   before(async function () {
     if (testClient == null) {
       return this.skip();
     }
     [, db] = await testClient.new();
-
-    collection = await db.createCollection(EPHEMERAL_COLLECTION_NAME);
   });
 
-  it('drops itself', async () => {
+  it('[long] drops itself', async () => {
+    const collection = await db.createCollection(EPHEMERAL_COLLECTION_NAME);
+
     const res = await collection.drop();
     assert.strictEqual(res, true);
 

@@ -26,6 +26,13 @@ npm run test:coverage
 npm run test:types
 ```
 
+I heavily recommend filtering out the tag `[long]` when you're just doing some smoke-ish testing.
+```shell
+npm run test -- -f [long] -i
+```
+
+If you're adding a test, that isn't absolutely essential, that takes over ~2-3 seconds to run, please add the `[long]` tag to it.
+
 ### Linting
 Run `npm run lint` to run ESLint.
 ESLint will point out any formatting and code quality issues it finds.

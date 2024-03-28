@@ -66,7 +66,7 @@ export class AstraAdmin {
     return resp.data;
   }
 
-  public async createDatabase(config: DatabaseConfig, options?: CreateDatabaseAsyncOptions): Promise<string>
+  public async createDatabase(config: DatabaseConfig, options: CreateDatabaseAsyncOptions): Promise<string>
 
   public async createDatabase(config: DatabaseConfig, options?: CreateDatabaseBlockingOptions): Promise<Db>
 
@@ -74,7 +74,12 @@ export class AstraAdmin {
     const resp = await this._httpClient.request({
       method: HTTP_METHODS.Post,
       path: '/databases',
-      data: config,
+      data: {
+        capacityUnits: 1,
+        tier: 'serverless',
+        dbType: 'vector',
+        ...config,
+      },
     });
 
     const id = resp.headers.location;
@@ -93,12 +98,12 @@ export class AstraAdmin {
         break;
       }
 
-      if (resp.data?.status !== 'INITIALIZING') {
-        throw new DevopsUnexpectedStateError(`Created database is not in state 'ACTIVE' or 'INITIALIZING'`, resp)
+      if (resp.data?.status !== 'INITIALIZING' && resp.data?.status !== 'PENDING') {
+        throw new DevopsUnexpectedStateError(`Created database is not in state 'ACTIVE', 'INITIALIZING' or 'PENDING' after creation`, resp)
       }
 
       await new Promise<void>((resolve) => {
-        setTimeout(resolve, options?.pollInterval ?? 2000);
+        setTimeout(resolve, options?.pollInterval ?? 10000);
       });
     }
 

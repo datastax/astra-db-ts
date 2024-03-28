@@ -24,11 +24,19 @@ export const DEFAULT_COLLECTION_NAME = 'test_coll';
 export const EPHEMERAL_COLLECTION_NAME = 'temp_coll';
 export const OTHER_NAMESPACE = 'other_keyspace';
 
+let collCreated = false;
+
 const makeAstraClient = async (useHttp2: boolean = true): Promise<[DataApiClient, Db, Collection]> => {
   const client = new DataApiClient(process.env.APPLICATION_TOKEN!, { dataApiOptions: { useHttp2 } });
   const db = client.db(process.env.ASTRA_URI!);
-  const coll = await db.createCollection(DEFAULT_COLLECTION_NAME);
+
+  const coll = (!collCreated)
+    ? await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' } })
+    : db.collection(DEFAULT_COLLECTION_NAME);
+
+  collCreated = true;
   await coll.deleteAll();
+
   return [client, db, coll];
 };
 

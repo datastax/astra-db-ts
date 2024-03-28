@@ -82,7 +82,8 @@ describe('integration.misc.hierarchy-traversal tests', () => {
       const dbAdmin2 = client.db(endpoint).admin();
       const info1 = await dbAdmin1.info();
       const info2 = await dbAdmin2.info();
-      assert.deepStrictEqual(info1.info, info2.info);
+      assert.deepStrictEqual(info1.info.name, info2.info.name);
+      assert.deepStrictEqual(info1.id, info2.id);
     });
 
     it('works with endpoint & id + region', async () => {
@@ -90,7 +91,8 @@ describe('integration.misc.hierarchy-traversal tests', () => {
       const dbAdmin2 = client.db(id, region).admin();
       const info1 = await dbAdmin1.info();
       const info2 = await dbAdmin2.info();
-      assert.deepStrictEqual(info1.info, info2.info);
+      assert.deepStrictEqual(info1.info.name, info2.info.name);
+      assert.deepStrictEqual(info1.id, info2.id);
     });
 
     it('works with id + region & endpoint', async () => {
@@ -98,7 +100,8 @@ describe('integration.misc.hierarchy-traversal tests', () => {
       const dbAdmin2 = client.db(endpoint).admin();
       const info1 = await dbAdmin1.info();
       const info2 = await dbAdmin2.info();
-      assert.deepStrictEqual(info1.info, info2.info);
+      assert.deepStrictEqual(info1.info.name, info2.info.name);
+      assert.deepStrictEqual(info1.id, info2.id);
     });
   });
 

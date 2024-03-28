@@ -35,7 +35,7 @@ describe('integration.misc.quickstart tests', () => {
     [, db] = await testClient.new();
   });
 
-  describe('quickstart', () => {
+  describe('[long] quickstart', () => {
     after(async function () {
       await db.dropCollection('vector_5_collection');
     });
@@ -112,7 +112,7 @@ describe('integration.misc.quickstart tests', () => {
     });
   });
 
-  describe('ids-quickstart', () => {
+  describe('[long] ids-quickstart', () => {
     after(async function () {
       await db.dropCollection('my_collection');
     });

@@ -17,7 +17,7 @@ import assert from 'assert';
 import { Collection, Db, ObjectId, UUID } from '@/src/data-api';
 import { DEFAULT_COLLECTION_NAME, EPHEMERAL_COLLECTION_NAME, testClient } from '@/tests/fixtures';
 
-describe('integration.data-api.ids tests', () => {
+describe('integration.data-api.ids', () => {
   let db: Db;
 
   before(async function() {
@@ -31,7 +31,7 @@ describe('integration.data-api.ids tests', () => {
     let collection: Collection;
 
     before(async function () {
-      collection = await db.createCollection(DEFAULT_COLLECTION_NAME);
+      collection = db.collection(DEFAULT_COLLECTION_NAME);
     });
 
     afterEach(async function () {
@@ -42,7 +42,7 @@ describe('integration.data-api.ids tests', () => {
       const collections = await db.listCollections({ nameOnly: false });
       const collection = collections.find(c => c.name === DEFAULT_COLLECTION_NAME);
       assert.ok(collection);
-      assert.deepStrictEqual(collection.options, {});
+      assert.strictEqual(collection.options.defaultId, undefined);
     });
 
     it('sets it as the default id', async () => {
@@ -55,7 +55,7 @@ describe('integration.data-api.ids tests', () => {
     });
   });
 
-  describe('uuid', () => {
+  describe('[long] uuid', () => {
     let collection: Collection;
     const name = `${EPHEMERAL_COLLECTION_NAME}_uuid`;
 
@@ -88,7 +88,7 @@ describe('integration.data-api.ids tests', () => {
     });
   });
 
-  describe('uuidv6', () => {
+  describe('[long] uuidv6', () => {
     let collection: Collection;
     const name = `${EPHEMERAL_COLLECTION_NAME}_uuid_v6`;
 
@@ -121,7 +121,7 @@ describe('integration.data-api.ids tests', () => {
     });
   });
 
-  describe('uuidv7', () => {
+  describe('[long] uuidv7', () => {
     let collection: Collection;
     const name = `${EPHEMERAL_COLLECTION_NAME}_uuid_v7`;
 
@@ -154,7 +154,7 @@ describe('integration.data-api.ids tests', () => {
     });
   });
 
-  describe('objectId', () => {
+  describe('[long] objectId', () => {
     let collection: Collection;
     const name = `${EPHEMERAL_COLLECTION_NAME}_objectId`;
 
