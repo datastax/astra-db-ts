@@ -56,7 +56,6 @@ export class AstraAdmin {
         baseUrl: adminOpts.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINT,
         applicationToken: adminOpts.adminToken,
         caller: options.caller,
-        logLevel: options.logLevel,
       }),
       enumerable: false,
     });
@@ -256,7 +255,8 @@ export class AstraAdmin {
   /**
    * Creates a new database with the given configuration.
    *
-   * **NB. this is a long-running operation. See {@link AdminBlockingOptions} about such blocking operations.**
+   * **NB. this is a long-running operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * default polling interval is 10 seconds. Expect it to take roughly 2 min to complete.
    *
    * Note that **the `name` field is non-unique** and thus creating a database, even with the same options, is **not
    * idempotent**.
@@ -329,7 +329,8 @@ export class AstraAdmin {
   /**
    * Terminates a database by ID or by a given {@link Db} instance.
    *
-   * **NB. this is a long-running operation. See {@link AdminBlockingOptions} about such blocking operations.**
+   * **NB. this is a long-running operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * default polling interval is 10 seconds. Expect it to take roughly 6-7 min to complete.
    *
    * The database info will still be accessible by ID, or by using the {@link listDatabases} method with the filter
    * set to `'ALL'` or `'TERMINATED'`. However, all of its data will very much be lost.
@@ -345,6 +346,8 @@ export class AstraAdmin {
    *
    * @param db - The database to drop, either by ID or by instance.
    * @param options - The options for the blocking behavior of the operation.
+   *
+   * @returns A promise that resolves when the operation completes.
    *
    * @remarks Use with caution. Wear a harness. Don't say I didn't warn you.
    */

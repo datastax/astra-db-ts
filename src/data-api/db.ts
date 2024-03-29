@@ -132,7 +132,6 @@ export class Db implements Disposable {
         applicationToken: dbOpts.token,
         baseApiPath: dbOpts?.dataApiPath || DEFAULT_DATA_API_PATH,
         caller: options.caller,
-        logLevel: options.logLevel,
         logSkippedOptions: dbOpts.logSkippedOptions,
         useHttp2: dbOpts.useHttp2,
       }),
@@ -191,7 +190,7 @@ export class Db implements Disposable {
   }
 
   /**
-   * Fetches information about the database, such as the database name, ID, region, and other metadata.
+   * Fetches information about the database, such as the database name, region, and other metadata.
    *
    * For the full, complete, information, see {@link AstraDbAdmin.info}.
    *
@@ -481,7 +480,7 @@ export class Db implements Disposable {
    *
    * Meant for usage with the `using` clause in ERM (Explicit Resource Management).
    */
-  [Symbol.dispose]() {
+  public [Symbol.dispose]() {
     this.close();
   }
 }

@@ -16,10 +16,12 @@ import type { HTTP_METHODS } from '@/src/api/index';
 
 export type Caller = [name: string, version?: string];
 
+/**
+ * @internal
+ */
 export interface HTTPClientOptions {
   baseUrl: string;
   caller?: Caller | Caller[];
-  logLevel?: string;
   baseApiPath?: string;
   applicationToken: string;
   useHttp2?: boolean;
@@ -34,21 +36,30 @@ export interface RawDataApiResponse {
   data?: Record<string, any>;
 }
 
+/**
+ * @internal
+ */
 export interface GuaranteedAPIResponse {
   data?: Record<string, any>,
   headers: Record<string, string>,
   status: number,
 }
 
+/**
+ * @internal
+ */
 export interface HTTPRequestInfo {
   url: string,
   data?: unknown,
   params?: Record<string, string>,
-  method?: HTTP_METHODS,
+  method: HTTP_METHODS,
   timeout?: number,
   timeoutError: () => Error,
 }
 
+/**
+ * @internal
+ */
 export interface InternalHTTPRequestInfo extends HTTPRequestInfo {
   token: string,
   method: HTTP_METHODS,
@@ -56,6 +67,9 @@ export interface InternalHTTPRequestInfo extends HTTPRequestInfo {
   userAgent: string,
 }
 
+/**
+ * @internal
+ */
 export interface HTTPRequestStrategy {
   request: (params: InternalHTTPRequestInfo) => Promise<GuaranteedAPIResponse>;
   close?: () => void;

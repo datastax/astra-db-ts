@@ -14,20 +14,46 @@
 
 import { LIB_NAME, LIB_VERSION } from '@/src/version';
 
+/**
+ * @internal
+ */
 export const CLIENT_USER_AGENT = LIB_NAME + '/' + LIB_VERSION;
 
+/**
+ * @internal
+ */
 export const enum HTTP_METHODS {
   Get = 'GET',
   Post = 'POST',
   Delete = 'DELETE',
 }
 
+/**
+ * @internal
+ */
 export const DEFAULT_NAMESPACE = 'default_keyspace';
-export const DEFAULT_METHOD = HTTP_METHODS.Get;
+
+/**
+ * @internal
+ */
 export const DEFAULT_TIMEOUT = 30000;
 
+/**
+ * @internal
+ */
 export const DEFAULT_DATA_API_AUTH_HEADER = 'Token';
+
+/**
+ * @internal
+ */
 export const DEFAULT_DEVOPS_API_AUTH_HEADER = 'Authorization';
 
+/**
+ * @internal
+ */
 export const DEFAULT_DEVOPS_API_ENDPOINT = 'https://api.astra.datastax.com/v2';
+
+/**
+ * @internal
+ */
 export const DEFAULT_DATA_API_PATH = 'api/json/v1';

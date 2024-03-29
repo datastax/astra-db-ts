@@ -1,6 +1,7 @@
 import { Db, mkDb } from '@/src/data-api/db';
 import { AstraAdmin, mkAdmin } from '@/src/devops/astra-admin';
 import { AdminSpawnOptions, DbSpawnOptions, RootClientOptions, RootClientOptsWithToken } from '@/src/client/types';
+import { setLevel } from '@/src/logger';
 
 /**
  * The main entrypoint into working with the Data API. It sits at the top of the
@@ -49,6 +50,10 @@ export class DataApiClient {
         ...options?.adminOptions,
       },
     };
+
+    if (options?.logLevel) {
+      setLevel(options.logLevel);
+    }
   }
 
   /**

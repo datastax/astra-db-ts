@@ -12,14 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { setLevel } from '@/src/logger';
-import { CLIENT_USER_AGENT, DEFAULT_METHOD, DEFAULT_TIMEOUT } from '@/src/api/constants';
+import { CLIENT_USER_AGENT, DEFAULT_TIMEOUT } from '@/src/api/constants';
 import {
   Caller,
-  HTTPRequestInfo,
-  HTTPRequestStrategy,
   GuaranteedAPIResponse,
-  HTTPClientOptions
+  HTTPClientOptions,
+  HTTPRequestInfo,
+  HTTPRequestStrategy
 } from '@/src/api/types';
 import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
@@ -56,10 +55,6 @@ export class HttpClient {
       (options.useHttp2 !== false)
         ? new HTTP2Strategy(this.baseUrl)
         : new HTTP1Strategy(HTTP1AuthHeaderFactories.DataApi);
-
-    if (options.logLevel) {
-      setLevel(options.logLevel);
-    }
 
     if (options.baseApiPath) {
       this.baseUrl += '/' + options.baseApiPath;
@@ -105,7 +100,7 @@ export class HttpClient {
       url: info.url,
       data: info.data,
       timeout: info.timeout || DEFAULT_TIMEOUT,
-      method: info.method || DEFAULT_METHOD,
+      method: info.method,
       params: info.params ?? {},
       token: this.#applicationToken,
       userAgent: this.userAgent,

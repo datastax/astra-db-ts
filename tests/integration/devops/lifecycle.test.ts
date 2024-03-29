@@ -28,7 +28,7 @@ describe('integration.devops.lifecycle', async () => {
     const dbs = await client.admin().listDatabases();
 
     if (dbs.some(db => db.info.name === 'astra-test-db')) {
-      // throw new Error('Database \'astra-test-db\' already exists, drop it to proceed w/ lifecycle test');
+      throw new Error('Database \'astra-test-db\' already exists, drop it to proceed w/ lifecycle test');
     }
   });
 
