@@ -20,7 +20,6 @@
 import { Collection, Db } from '@/src/data-api';
 import { DataApiClient } from '@/src/client';
 import { Context } from 'mocha';
-import { all } from 'axios';
 
 export const DEFAULT_COLLECTION_NAME = 'test_coll';
 export const EPHEMERAL_COLLECTION_NAME = 'temp_coll';
@@ -33,7 +32,7 @@ export const initTestObjects = async (ctx: Context, useHttp2: boolean = true): P
     ctx.skip();
   }
 
-  const client = new DataApiClient(process.env.APPLICATION_TOKEN!, { dataApiOptions: { useHttp2 } });
+  const client = new DataApiClient(process.env.APPLICATION_TOKEN!, { dbOptions: { useHttp2 } });
   const db = client.db(process.env.ASTRA_URI!);
 
   const coll = (!collCreated)

@@ -12,7 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DatabaseCloudProvider, DatabaseStatus } from '@/src/devops/types';
+import { DatabaseCloudProvider, DatabaseStatus, } from '@/src/devops/types';
+
+export type DatabaseStatusFilter = DatabaseStatus | 'ALL' | 'NONTERMINATED';
+
+export type DatabaseCloudProviderFilter = DatabaseCloudProvider | 'ALL';
 
 /**
  * Represents the options for listing databases.
@@ -26,11 +30,11 @@ export interface ListDatabasesOptions {
   /**
    * Allows filtering so that databases in listed states are returned.
    */
-  include?: DatabaseStatus,
+  include?: DatabaseStatusFilter,
   /**
    * Allows filtering so that databases from a given provider are returned.
    */
-  provider?: DatabaseCloudProvider,
+  provider?: DatabaseCloudProviderFilter,
   /**
    * Optional parameter for pagination purposes. Specify the number of items for one page of data.
    *

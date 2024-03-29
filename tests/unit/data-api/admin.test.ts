@@ -19,7 +19,7 @@ import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
 
 describe('unit.data-api.admin tests', () => {
   const mkOptions = (data?: DbSpawnOptions, devops?: AdminSpawnOptions) => {
-    return { dataApiOptions: { token: 'old', ...data }, devopsOptions: { adminToken: 'old-admin', ...devops } };
+    return { dbOptions: { token: 'old', ...data }, adminOptions: { adminToken: 'old-admin', ...devops } };
   }
 
   describe('constructor tests', () => {

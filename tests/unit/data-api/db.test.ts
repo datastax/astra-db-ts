@@ -18,9 +18,9 @@ import process from 'process';
 import { DEFAULT_DATA_API_PATH } from '@/src/api';
 import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
 
-describe('unit.data-api.db tests', () => {
+describe('unit.data-api.db', () => {
   const mkOptions = (data?: DbSpawnOptions, devops?: AdminSpawnOptions) => {
-    return { dataApiOptions: { token: 'old', ...data }, devopsOptions: { adminToken: 'old-admin', ...devops } };
+    return { dbOptions: { token: 'old', ...data }, adminOptions: { adminToken: 'old-admin', ...devops } };
   }
 
   describe('constructor tests', () => {
@@ -90,27 +90,27 @@ describe('unit.data-api.db tests', () => {
 
     it('uses http2 by default', () => {
       const db = mkDb(mkOptions(), process.env.ASTRA_URI!);
-      assert.ok(db['_httpClient'].isUsingHttp2());
+      assert.ok(db.httpStrategy() === 'http2');
     });
 
     it('uses http2 when forced', () => {
       const db = mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: true });
-      assert.ok(db['_httpClient'].isUsingHttp2());
+      assert.ok(db.httpStrategy() === 'http2');
     });
 
     it('uses http1.1 when forced', () => {
       const db = mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: false });
-      assert.ok(!db['_httpClient'].isUsingHttp2());
+      assert.ok(db.httpStrategy() === 'http1');
     });
 
     it('uses http1.1 if overridden', () => {
       const db = mkDb(mkOptions({ useHttp2: true }), process.env.ASTRA_URI!, { useHttp2: false });
-      assert.ok(!db['_httpClient'].isUsingHttp2());
+      assert.ok(db.httpStrategy() === 'http1');
     });
 
     it('uses http2 if overridden', () => {
       const db = mkDb(mkOptions({ useHttp2: false }), process.env.ASTRA_URI!, { useHttp2: true });
-      assert.ok(db['_httpClient'].isUsingHttp2());
+      assert.ok(db.httpStrategy() === 'http2');
     });
 
     it('handles different dataApiPath', () => {
@@ -126,6 +126,50 @@ describe('unit.data-api.db tests', () => {
     it('overrides token in db when provided', () => {
       const db = mkDb(mkOptions(), process.env.ASTRA_URI!, { token: 'new' });
       assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'new');
+    });
+  });
+
+  describe('http-related tests', () => {
+    it('returns the correct http strategy when using http2', () => {
+      const db = mkDb(mkOptions(), process.env.ASTRA_URI!);
+      assert.strictEqual(db.httpStrategy(), 'http2');
+    });
+
+    it('returns the correct http strategy when using http1.1', () => {
+      const db = mkDb(mkOptions({ useHttp2: false }), process.env.ASTRA_URI!);
+      assert.strictEqual(db.httpStrategy(), 'http1');
+    });
+
+    it('close + isClosed works when on http2', () => {
+      const db = mkDb(mkOptions(), process.env.ASTRA_URI!);
+      assert.strictEqual(db.isClosed(), false);
+      db.close();
+      assert.strictEqual(db.isClosed(), true);
+    });
+
+    it('close + isClosed is apathetic on http1.1', () => {
+      const db = mkDb(mkOptions({ useHttp2: false }), process.env.ASTRA_URI!);
+      assert.strictEqual(db.isClosed(), undefined);
+      db.close();
+      assert.strictEqual(db.isClosed(), undefined);
+    });
+
+    it('does proper erm handling on http2', () => {
+      const db = mkDb(mkOptions(), process.env.ASTRA_URI!);
+      assert.strictEqual(db.isClosed(), false);
+      {
+        using _db = db;
+      }
+      assert.strictEqual(db.isClosed(), true);
+    });
+
+    it('does proper apathetic erm handling on http1.1', () => {
+      const db = mkDb(mkOptions({ useHttp2: false }), process.env.ASTRA_URI!);
+      assert.strictEqual(db.isClosed(), undefined);
+      {
+        using _db = db;
+      }
+      assert.strictEqual(db.isClosed(), undefined);
     });
   });
 });

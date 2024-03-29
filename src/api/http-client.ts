@@ -25,14 +25,11 @@ import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
 import { Mutable } from '@/src/data-api/types/utils';
 
-export const applicationTokenKey = Symbol('applicationToken');
-
 export class HttpClient {
   public readonly baseUrl: string;
   public readonly logSkippedOptions: boolean;
   public readonly userAgent: string;
   public requestStrategy: HTTPRequestStrategy;
-  // private [applicationTokenKey]!: string;
   #applicationToken: string;
 
   constructor(options: HTTPClientOptions) {
@@ -48,11 +45,6 @@ export class HttpClient {
       throw new Error("applicationToken required for initialization");
     }
 
-    // Object.defineProperty(this, applicationTokenKey, {
-    //   value: options.applicationToken,
-    //   enumerable: false,
-    //   writable: true,
-    // });
     this.#applicationToken = options.applicationToken;
 
     this.baseUrl = options.baseUrl;

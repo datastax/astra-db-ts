@@ -34,7 +34,7 @@ import { RunCommandOptions } from '@/src/data-api/types/collections/command';
 /**
  * @internal
  */
-type DbOptions = RootClientOptsWithToken & { dataApiOptions: { token: string } };
+type DbOptions = RootClientOptsWithToken & { dbOptions: { token: string } };
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -68,7 +68,7 @@ type DbOptions = RootClientOptsWithToken & { dataApiOptions: { token: string } }
  * @see DataApiClient.db
  * @see AstraAdmin.db
  */
-export class Db {
+export class Db implements Disposable {
   readonly #defaultOpts!: RootClientOptsWithToken;
 
   private readonly _httpClient!: DataApiHttpClient;
@@ -85,7 +85,7 @@ export class Db {
    *
    * // Overrides the default namespace for all future db spawns
    * const client2 = new DataApiClient('AstraCS:...', {
-   *   dataApiOptions: { namespace: 'my_namespace' }
+   *   dbOptions: { namespace: 'my_namespace' }
    * });
    *
    * // Created with 'default_keyspace' as the default namespace
@@ -113,7 +113,7 @@ export class Db {
    * @internal
    */
   constructor(endpoint: string, options: DbOptions) {
-    const dbOpts = options.dataApiOptions ?? {};
+    const dbOpts = options.dbOptions ?? {};
 
     Object.defineProperty(this, 'namespace', {
       value: dbOpts.namespace ?? DEFAULT_NAMESPACE,
@@ -150,7 +150,7 @@ export class Db {
   /**
    * The ID of the database, if it's an Astra database. If it's a non-Astra database, this will throw an error.
    *
-   * @throws An error if the database is not an Astra database.
+   * @throws Error - if the database is not an Astra database.
    */
   get id(): string {
     if (!this._id) {
@@ -181,7 +181,7 @@ export class Db {
    *
    * @returns A new {@link AstraDbAdmin} instance for this database instance.
    *
-   * @throws An error if the database is not an Astra database.
+   * @throws Error - if the database is not an Astra database.
    */
   public admin(options?: AdminSpawnOptions): AstraDbAdmin {
     if (!this._id) {
@@ -208,7 +208,7 @@ export class Db {
    *
    * @returns A promise that resolves to the database information.
    *
-   * @throws An error if the database is not an Astra database.
+   * @throws Error - if the database is not an Astra database.
    */
   public async info(): Promise<DatabaseInfo> {
     return await this.admin().info().then(i => i.info);
@@ -441,6 +441,49 @@ export class Db {
   public async command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataApiResponse> {
     return await this._httpClient.executeCommand(command, options);
   }
+
+  /**
+   * @returns whether the client is using HTTP/2 for requests.
+   */
+  public httpStrategy(): 'http1' | 'http2' {
+    return this._httpClient.isUsingHttp2()
+      ? 'http2'
+      : 'http1';
+  }
+
+  /**
+   * Returns if the underlying HTTP/2 session was explicitly closed by the {@link close} method (or through ERM with
+   * the `using` clause).
+   *
+   * If the client's using HTTP/1, this method will return `undefined`.
+   *
+   * @returns whether the client was explicitly closed if using HTTP/2.
+   */
+  public isClosed(): boolean | undefined {
+    return this._httpClient.isClosed();
+  }
+
+  /**
+   * Closes the underlying HTTP/2 session, if the client is using HTTP/2. Closing the session will prevent any further
+   * requests from being made from this Db instance.
+   *
+   * This method is idempotent. If the client is using HTTP/1, this method will do nothing.
+   */
+  public close() {
+    this._httpClient.close();
+  }
+
+  /**
+   * Closes the underlying HTTP/2 session, if the client is using HTTP/2. Closing the session will prevent any further
+   * requests from being made from this Db instance.
+   *
+   * This method is idempotent. If the client is using HTTP/1, this method will do nothing.
+   *
+   * Meant for usage with the `using` clause in ERM (Explicit Resource Management).
+   */
+  [Symbol.dispose]() {
+    this.close();
+  }
 }
 
 /**
@@ -457,8 +500,8 @@ export function mkDb(rootOpts: RootClientOptsWithToken, endpointOrId: string, re
 
   return new Db(endpoint, {
     ...rootOpts,
-    dataApiOptions: {
-      ...rootOpts?.dataApiOptions,
+    dbOptions: {
+      ...rootOpts?.dbOptions,
       ...options,
     },
   });

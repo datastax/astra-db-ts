@@ -16,13 +16,14 @@ import * as http2 from 'http2';
 import { HTTPRequestStrategy, GuaranteedAPIResponse, InternalHTTPRequestInfo } from '@/src/api/types';
 
 export class HTTP2Strategy implements HTTPRequestStrategy {
-  public origin: string;
+  #session: http2.ClientHttp2Session;
+
   public closed: boolean = false;
-  public session: http2.ClientHttp2Session;
+  public origin: string;
 
   constructor(baseURL: string) {
     this.origin = new URL(baseURL).origin;
-    this.session = this._reviveSession();
+    this.#session = this._reviveSession();
   }
 
   public async request(info: InternalHTTPRequestInfo): Promise<GuaranteedAPIResponse> {
@@ -33,8 +34,8 @@ export class HTTP2Strategy implements HTTPRequestStrategy {
 
       // Recreate session if session was closed except via an explicit `close()`
       // call. This happens when nginx sends a GOAWAY packet after 1000 requests.
-      if (this.session.closed) {
-        this.session = this._reviveSession();
+      if (this.#session.closed) {
+        this.#session = this._reviveSession();
       }
 
       const timer = setTimeout(() => reject(info.timeoutError()), info.timeout);
@@ -42,7 +43,7 @@ export class HTTP2Strategy implements HTTPRequestStrategy {
       const path = info.url.replace(this.origin, '');
       const params = info.params ? `?${new URLSearchParams(info.params).toString()}` : '';
 
-      const req = this.session.request({
+      const req = this.#session.request({
         ':path': path + params,
         ':method': info.method,
         token: info.token,
@@ -88,13 +89,13 @@ export class HTTP2Strategy implements HTTPRequestStrategy {
   }
 
   public close() {
-    this.session.close();
+    this.#session.close();
     this.closed = true;
   }
 
   private _reviveSession() {
-    if (this.session && !this.session.closed) {
-      return this.session;
+    if (this.#session && !this.#session.closed) {
+      return this.#session;
     }
 
     const session = http2.connect(this.origin);

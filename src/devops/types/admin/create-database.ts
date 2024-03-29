@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DatabaseCloudProvider } from '@/src/devops/types';
+import { AdminBlockingOptions, DatabaseCloudProvider } from '@/src/devops/types';
+import { DbSpawnOptions } from '@/src/client';
 
 /**
  * Represents the options for creating a database.
@@ -40,15 +41,6 @@ export interface DatabaseConfig {
   namespace?: string,
 }
 
-export type AdminBlockingOptions =
-  | PollBlockingOptions
-  | NoBlockingOptions
-
-export interface PollBlockingOptions {
-  blocking?: true,
-  pollInterval?: number,
-}
-
-export interface NoBlockingOptions {
-  blocking: false,
+export type CreateDatabaseOptions = AdminBlockingOptions & {
+  dbOptions?: DbSpawnOptions,
 }

@@ -131,7 +131,7 @@ describe('integration.data-api.db', async () => {
     });
 
     it('should work even when instantiated weirdly', async () => {
-      const db = new DataApiClient(process.env.APPLICATION_TOKEN!, { dataApiOptions: { namespace: '123123123', dataApiPath: 'King, by Eluveitie' } })
+      const db = new DataApiClient(process.env.APPLICATION_TOKEN!, { dbOptions: { namespace: '123123123', dataApiPath: 'King, by Eluveitie' } })
         .admin({ adminToken: 'dummy-token' })
         .dbAdmin(process.env.ASTRA_URI!, { dataApiPath: DEFAULT_DATA_API_PATH, namespace: DEFAULT_NAMESPACE })
         .db()

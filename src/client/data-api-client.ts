@@ -40,13 +40,13 @@ export class DataApiClient {
   constructor(token: string, options?: RootClientOptions) {
     this.#options = {
       ...options,
-      dataApiOptions: {
+      dbOptions: {
         token: token,
-        ...options?.dataApiOptions,
+        ...options?.dbOptions,
       },
-      devopsOptions: {
+      adminOptions: {
         adminToken: token,
-        ...options?.devopsOptions,
+        ...options?.adminOptions,
       },
     };
   }
@@ -54,16 +54,14 @@ export class DataApiClient {
   /**
    * Spawns a new {@link Db} instance using a direct endpoint and given options.
    *
+   * **NB. This method does not validate the existence of the database—it simply creates a reference.**
+   *
    * This endpoint should include the protocol and the hostname, but not the path. It's typically in the form of
    * `https://<db_id>-<region>.apps.astra.datastax.com`, but it can be used with DSE or any other Data-API-compatible
    * endpoint.
    *
    * The given options will override any default options set when creating the {@link DataApiClient} through
    * a deep merge (i.e. unset properties in the options object will just default to the default options).
-   *
-   * Note that this does not perform any IO or validation on if the endpoint is valid or not. It's up to the user to
-   * ensure that the endpoint is correct. If you want to create an actual database, see {@link AstraAdmin.createDatabase}
-   * instead.
    *
    * @example
    * ```typescript
@@ -75,6 +73,11 @@ export class DataApiClient {
    * });
    * ```
    *
+   * @remarks
+   * Note that this does not perform any IO or validation on if the endpoint is valid or not. It's up to the user to
+   * ensure that the endpoint is correct. If you want to create an actual database, see {@link AstraAdmin.createDatabase}
+   * instead.
+   *
    * @param endpoint - The direct endpoint to use.
    * @param options - Any options to override the default options set when creating the {@link DataApiClient}.
    *
@@ -85,15 +88,13 @@ export class DataApiClient {
   /**
    * Spawns a new {@link Db} instance using a direct endpoint and given options.
    *
+   * **NB. This method does not validate the existence of the database—it simply creates a reference.**
+   *
    * This overload is purely for user convenience, but it **only supports using Astra as the underlying database**. For
    * DSE or any other Data-API-compatible endpoint, use the other overload instead.
    *
    * The given options will override any default options set when creating the {@link DataApiClient} through
    * a deep merge (i.e. unset properties in the options object will just default to the default options).
-   *
-   * Note that this does not perform any IO or validation on if the endpoint is valid or not. It's up to the user to
-   * ensure that the endpoint is correct. If you want to create an actual database, see {@link AstraAdmin.createDatabase}
-   * instead.
    *
    * @example
    * ```typescript
@@ -104,6 +105,11 @@ export class DataApiClient {
    *   useHttp2: false,
    * });
    * ```
+   *
+   * @remarks
+   * Note that this does not perform any IO or validation on if the endpoint is valid or not. It's up to the user to
+   * ensure that the endpoint is correct. If you want to create an actual database, see {@link AstraAdmin.createDatabase}
+   * instead.
    *
    * @param id - The database ID to use.
    * @param region - The region to use.

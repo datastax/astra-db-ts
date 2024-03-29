@@ -44,11 +44,11 @@ export interface RootClientOptions {
   /**
    * The default options when spawning a {@link Db} instance.
    */
-  dataApiOptions?: DbSpawnOptions,
+  dbOptions?: DbSpawnOptions,
   /**
    * The default options when spawning an {@link AstraAdmin} instance.
    */
-  devopsOptions?: AdminSpawnOptions,
+  adminOptions?: AdminSpawnOptions,
 }
 
 /**
@@ -189,6 +189,6 @@ export interface AdminSpawnOptions {
 export interface RootClientOptsWithToken {
   logLevel?: string,
   caller?: Caller | Caller[],
-  dataApiOptions: DbSpawnOptions & { token: string },
-  devopsOptions: AdminSpawnOptions & { adminToken: string },
+  dbOptions: DbSpawnOptions & { token: string },
+  adminOptions: AdminSpawnOptions & { adminToken: string },
 }

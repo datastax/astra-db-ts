@@ -38,7 +38,7 @@ describe('integration.devops.lifecycle', async () => {
 
       const dbAdmin = await admin.createDatabase({
         name: 'astra-test-db',
-        cloudProvider: 'gcp',
+        cloudProvider: 'GCP',
         region: 'us-east1',
       });
       const db = dbAdmin.db();
@@ -98,16 +98,20 @@ describe('integration.devops.lifecycle', async () => {
 
       const dbAdmin = await admin.createDatabase({
         name: 'astra-test-db',
-        cloudProvider: 'gcp',
+        cloudProvider: 'GCP',
         region: 'us-east1',
         namespace: 'my_namespace',
       }, {
         blocking: false,
+        dbOptions: {
+          useHttp2: false,
+        }
       });
       const db = dbAdmin.db();
 
       assert.ok(db.id, 'Database ID is missing');
       assert.strictEqual(db.namespace, 'my_namespace', 'Database namespace is incorrect');
+      assert.strictEqual(db.httpStrategy() === 'http2', false, 'Database HTTP/2 usage is incorrect');
 
       const fullDbInfo1 = await dbAdmin.info();
       assert.ok(['PENDING', 'INITIALIZING'].includes(fullDbInfo1.status), 'Database status is incorrect');
