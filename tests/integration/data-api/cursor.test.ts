@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import { Collection, CursorAlreadyInitializedError, FindCursor } from '@/src/data-api';
-import { testClient } from '@/tests/fixtures';
+import { initTestObjects } from '@/tests/fixtures';
 import { DataApiHttpClient } from '@/src/api';
 import assert from 'assert';
 
@@ -31,11 +31,8 @@ describe(`integration.data-api.cursor`, async () => {
   const ageToString = (doc: { age: number }) => ({ age: `${doc.age}` });
 
   before(async function () {
-    if (testClient == null) {
-      return this.skip();
-    }
 
-    [, , collection] = await testClient.new();
+    [, , collection] = await initTestObjects(this);
     httpClient = collection['_httpClient'];
   });
 

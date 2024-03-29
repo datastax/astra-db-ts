@@ -10,17 +10,14 @@
 // noinspection DuplicatedCode
 
 import { Collection, InsertManyError, ObjectId, UUID } from '@/src/data-api';
-import { testClient } from '@/tests/fixtures';
+import { assertTestsEnabled, initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
 
 describe('integration.data-api.collection.insert-many', () => {
   let collection: Collection;
 
   before(async function () {
-    if (testClient == null) {
-      return this.skip();
-    }
-    [, , collection] = await testClient.new();
+    [, , collection] = await initTestObjects(this);
   });
 
   afterEach(async () => {
@@ -52,7 +49,7 @@ describe('integration.data-api.collection.insert-many', () => {
     const res = await collection.insertMany(docs);
     assert.strictEqual(res.insertedCount, docs.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, docs.length);
-    assert.deepStrictEqual(res.insertedIds.sort(), docs.map((doc) => ({ $uuid: doc._id.toString() })));
+    assert.deepStrictEqual(res.insertedIds.map((id) => (<any>id).$uuid).sort(), docs.map(doc => doc._id.toString()).sort());
   });
 
   it('should insertMany documents with ObjectIds', async () => {
@@ -60,7 +57,7 @@ describe('integration.data-api.collection.insert-many', () => {
     const res = await collection.insertMany(docs);
     assert.strictEqual(res.insertedCount, docs.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, docs.length);
-    assert.deepStrictEqual(res.insertedIds.sort(), docs.map((doc) => ({ $objectId: doc._id.toString() })));
+    assert.deepStrictEqual(res.insertedIds.map((id) => (<any>id).$objectId).sort(), docs.map(doc => doc._id.toString()).sort());
   });
 
   it('should insertMany documents with a mix of ids', async () => {
@@ -68,6 +65,74 @@ describe('integration.data-api.collection.insert-many', () => {
     const res = await collection.insertMany(docs);
     assert.strictEqual(res.insertedCount, docs.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, docs.length);
+  });
+
+  it('should insertOne with vectors', async () => {
+    const res = await collection.insertMany([
+      { name: 'Arch Enemy' },
+      { name: 'Equilibrium' },
+      { name: 'AC/DC' },
+    ], {
+      vectors: [
+        [1, 1, 1, 1, 1],
+        undefined,
+        [1, 1, 1, 1, 1],
+      ],
+    });
+    assert.ok(res);
+
+    const archEnemy = await collection.findOne({ name: 'Arch Enemy' });
+    assert.deepStrictEqual(archEnemy?.$vector, [1, 1, 1, 1, 1]);
+
+    const equilibrium = await collection.findOne({ name: 'Equilibrium' });
+    assert.strictEqual(equilibrium?.$vector, undefined);
+  });
+
+  it('should error out when inserting with mis-matched vectors', async () => {
+    await assert.rejects(async () => {
+      await collection.insertMany([
+        { name: 'Arch Enemy' },
+        { name: 'Equilibrium' },
+        { name: 'AC/DC' },
+      ], {
+        vectors: [
+          [1, 1, 1, 1, 1],
+          undefined,
+          [1, 1, 1, 1, 1],
+          [1, 1, 1, 1, 1],
+        ],
+      });
+    }, Error);
+  });
+
+  it('should error out when inserting with mis-matched vectorize', async () => {
+    await assert.rejects(async () => {
+      await collection.insertMany([
+        { name: 'Arch Enemy' },
+        { name: 'Equilibrium' },
+        { name: 'AC/DC' },
+      ], {
+        vectorize: [
+          'Arch Enemy is a Swedish melodic death metal band, originally a supergroup from Halmstad, formed in 1995.',
+          'Equilibrium is a German symphonic metal band',
+          undefined,
+          'Green Day is an American rock band formed in 1986 by lead vocalist and guitarist Billie Joe Armstrong and bassist Mike Dirnt'
+        ],
+      });
+    }, Error);
+  });
+
+  it('should fail when inserting with both vector and vectorize', async () => {
+    await assert.rejects(async () => {
+      await collection.insertMany([
+        { name: 'Arch Enemy' },
+        { name: 'Equilibrium' },
+        { name: 'AC/DC' },
+      ], {
+        vectors: [[1, 1, 1, 1, 1],],
+        vectorize: ['Hello there.',],
+      });
+    }, Error);
   });
 
   it('should insertMany documents ordered', async () => {
@@ -113,5 +178,27 @@ describe('integration.data-api.collection.insert-many', () => {
     docs.slice(0, 9).concat(docs.slice(10)).forEach((doc) => {
       assert.ok((error as InsertManyError).partialResult.insertedIds.includes(doc._id!));
     });
+  });
+
+  it('[dev] should insertMany with vectorize', async function () {
+    assertTestsEnabled(this, 'DEV');
+    const res = await collection.insertMany([
+      { name: 'Arch Enemy' },
+      { name: 'Equilibrium' },
+      { name: 'AC/DC' },
+    ], {
+      vectorize: [
+        'Arch Enemy is a Swedish melodic death metal band, originally a supergroup from Halmstad, formed in 1995.',
+        'Equilibrium is a German symphonic metal band',
+        'AC/DC are an Australian rock band formed in Sydney in 1973 by Scottish-born brothers Malcolm and Angus Young',
+      ],
+    });
+    assert.ok(res);
+    const archEnemy = await collection.findOne({ name: 'Arch Enemy' });
+    assert.strictEqual(archEnemy?.$vectorize, 'Arch Enemy is a Swedish melodic death metal band, originally a supergroup from Halmstad, formed in 1995.');
+    const equilibrium = await collection.findOne({ name: 'Equilibrium' });
+    assert.strictEqual(equilibrium?.$vectorize, 'Equilibrium is a German symphonic metal band');
+    const acdc = await collection.findOne({ name: 'AC/DC' });
+    assert.strictEqual(acdc?.$vectorize, 'AC/DC are an Australian rock band formed in Sydney in 1973 by Scottish-born brothers Malcolm and Angus Young');
   });
 });

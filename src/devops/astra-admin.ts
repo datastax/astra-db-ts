@@ -1,6 +1,6 @@
 import { AdminBlockingOptions, DatabaseConfig, FullDatabaseInfo, ListDatabasesOptions } from '@/src/devops/types';
 import { Db, mkDb } from '@/src/data-api';
-import { DEFAULT_DEVOPS_API_ENDPOINT, DevopsApiHttpClient, HTTP_METHODS } from '@/src/api';
+import { DEFAULT_DEVOPS_API_ENDPOINT, DEFAULT_NAMESPACE, DevopsApiHttpClient, HTTP_METHODS } from '@/src/api';
 import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
 import { AdminSpawnOptions, DbSpawnOptions, RootClientOptsWithToken } from '@/src/client/types';
 
@@ -59,26 +59,29 @@ export class AstraAdmin {
   }
 
   public async createDatabase(config: DatabaseConfig, options?: AdminBlockingOptions): Promise<AstraDbAdmin> {
+    const definition = {
+      capacityUnits: 1,
+      tier: 'serverless',
+      dbType: 'vector',
+      keyspace: config.namespace || DEFAULT_NAMESPACE,
+      ...config,
+    }
+
     const resp = await this._httpClient.request({
       method: HTTP_METHODS.Post,
       path: '/databases',
-      data: {
-        capacityUnits: 1,
-        tier: 'serverless',
-        dbType: 'vector',
-        ...config,
-      },
+      data: definition,
     });
 
-    const db = mkDb(this.#defaultOpts, resp.headers.location, config.region, { namespace: resp.data.info.keyspace });
+    const db = mkDb(this.#defaultOpts, resp.headers.location, definition.region, { namespace: definition.keyspace });
     const admin = db.admin(this.#defaultOpts.devopsOptions);
 
     await this._httpClient.awaitStatus(db, 'ACTIVE', ['INITIALIZING', 'PENDING'], options, 10000);
     return admin;
   }
 
-  async dropDatabase(_db: Db | string, options?: AdminBlockingOptions): Promise<void> {
-    const id = typeof _db === 'string' ? _db : _db.id;
+  async dropDatabase(db: Db | string, options?: AdminBlockingOptions): Promise<void> {
+    const id = typeof db === 'string' ? db : db.id;
 
     await this._httpClient.request({
       method: HTTP_METHODS.Post,

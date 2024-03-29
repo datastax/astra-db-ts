@@ -9,7 +9,7 @@
 // limitations under the License.
 
 import { Db } from '@/src/data-api';
-import { DEFAULT_COLLECTION_NAME, testClient } from '@/tests/fixtures';
+import { assertTestsEnabled, DEFAULT_COLLECTION_NAME, initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
 import { randAlphaNumeric } from '@ngneat/falso';
 
@@ -17,19 +17,17 @@ describe('integration.data-api.collection.options', () => {
   let db: Db;
 
   before(async function () {
-    if (testClient == null) {
-      return this.skip();
-    }
-    [, db] = await testClient.new();
+    [, db] = await initTestObjects(this);
   });
 
   it('lists its own options', async () => {
-    const coll = db.collection(DEFAULT_COLLECTION_NAME)
+    const coll = db.collection(DEFAULT_COLLECTION_NAME);
     const res = await coll.options();
     assert.deepStrictEqual(res, { vector: { dimension: 5, metric: 'cosine' } });
   });
 
-  it('[long] lists its own empty options', async () => {
+  it('[long] lists its own empty options', async function () {
+    assertTestsEnabled(this, 'LONG');
     const suffix = randAlphaNumeric({ length: 4 }).join("");
     const coll = await db.createCollection(`test_db_collection_${suffix}`);
     const res = await coll.options();

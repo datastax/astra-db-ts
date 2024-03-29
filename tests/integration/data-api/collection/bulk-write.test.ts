@@ -9,17 +9,14 @@
 // limitations under the License.
 
 import { BulkWriteError, Collection } from '@/src/data-api';
-import { testClient } from '@/tests/fixtures';
+import { initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
 
 describe('integration.data-api.collection.bulk-write', () => {
   let collection: Collection;
 
   before(async function () {
-    if (testClient == null) {
-      return this.skip();
-    }
-    [, , collection] = await testClient.new();
+    [, , collection] = await initTestObjects(this);
   });
 
   afterEach(async () => {

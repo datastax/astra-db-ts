@@ -14,7 +14,13 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DEFAULT_COLLECTION_NAME, EPHEMERAL_COLLECTION_NAME, OTHER_NAMESPACE, testClient } from '@/tests/fixtures';
+import {
+  assertTestsEnabled,
+  DEFAULT_COLLECTION_NAME,
+  EPHEMERAL_COLLECTION_NAME,
+  initTestObjects,
+  OTHER_NAMESPACE
+} from '@/tests/fixtures';
 import { DataAPIResponseError, Db } from '@/src/data-api';
 import { DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE } from '@/src/api';
 import { DataApiClient } from '@/src/client';
@@ -24,17 +30,16 @@ describe('integration.data-api.db', async () => {
   let db: Db;
 
   before(async function () {
-    if (testClient == null) {
-      return this.skip();
-    }
-
-    [, db] = await testClient.new();
-
+    [, db] = await initTestObjects(this);
     await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
     await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
   });
 
   describe('[long] createCollection + dropCollection', () => {
+    before(async function () {
+      assertTestsEnabled(this, 'LONG');
+    });
+
     afterEach(async function () {
       await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
       await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
@@ -198,7 +203,8 @@ describe('integration.data-api.db', async () => {
       assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: 1 } }, errors: undefined });
     });
 
-    it('[long] should execute a collection-level command in different namespace', async () => {
+    it('[long] should execute a collection-level command in different namespace', async function () {
+      assertTestsEnabled(this, 'LONG');
       const collection = await db.createCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
       await collection.insertOne({ _id: 1 });
       const resp = await db.command({ findOne: {} }, { collection: EPHEMERAL_COLLECTION_NAME, namespace: OTHER_NAMESPACE });

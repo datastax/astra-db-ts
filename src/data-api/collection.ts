@@ -177,6 +177,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       insertOne: { document },
     }
 
+    if (options?.vector && options?.vectorize) {
+      throw new Error('Cannot set both vector and vectorize options');
+    }
+
     if (options?.vector) {
       command.insertOne.document = { ...command.insertOne.document, $vector: options.vector };
     }
@@ -267,6 +271,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    */
   async insertMany(documents: MaybeId<Schema>[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>> {
     const chunkSize = options?.chunkSize ?? 20;
+
+    if (options?.vectors && options?.vectorize) {
+      throw new Error('Cannot set both vectors and vectorize options');
+    }
 
     if (options?.vectors) {
       if (options.vectors.length !== documents.length) {

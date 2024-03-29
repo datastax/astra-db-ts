@@ -34,6 +34,10 @@ export interface DatabaseConfig {
    * The cloud region where the database is located.
    */
   region: string,
+  /**
+   * The default namespace to use for the database.
+   */
+  namespace?: string,
 }
 
 export type AdminBlockingOptions =

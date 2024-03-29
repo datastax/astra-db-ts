@@ -26,7 +26,7 @@ export interface ListDatabasesOptions {
   /**
    * Allows filtering so that databases in listed states are returned.
    */
-  include?: Lowercase<DatabaseStatus>,
+  include?: DatabaseStatus,
   /**
    * Allows filtering so that databases from a given provider are returned.
    */
@@ -35,6 +35,8 @@ export interface ListDatabasesOptions {
    * Optional parameter for pagination purposes. Specify the number of items for one page of data.
    *
    * Should be between 1 and 100.
+   *
+   * Defaults to 25.
    *
    * @defaultValue 25
    */

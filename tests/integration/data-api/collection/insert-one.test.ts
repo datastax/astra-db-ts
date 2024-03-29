@@ -8,18 +8,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, DataAPIResponseError, UUID, ObjectId } from '@/src/data-api';
-import { testClient } from '@/tests/fixtures';
+import { Collection, DataAPIResponseError, ObjectId, UUID } from '@/src/data-api';
+import { assertTestsEnabled, initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
 
 describe('integration.data-api.collection.insert-one', () => {
   let collection: Collection;
 
   before(async function () {
-    if (testClient == null) {
-      return this.skip();
-    }
-    [, , collection] = await testClient.new();
+    [, , collection] = await initTestObjects(this);
   });
 
   afterEach(async () => {
@@ -51,6 +48,17 @@ describe('integration.data-api.collection.insert-one', () => {
     const res = await collection.insertOne({ _id: id });
     assert.ok(res);
     assert.ok(res.insertedId, id.toString());
+  });
+
+  it('should insertOne with vector', async () => {
+    const res = await collection.insertOne({ name: 'Arch Enemy' }, { vector: [1, 1, 1, 1, 1] });
+    assert.ok(res);
+    const found = await collection.findOne({ name: 'Arch Enemy' });
+    assert.deepStrictEqual(found?.$vector, [1, 1, 1, 1, 1]);
+  });
+
+  it('should fail when inserting with both vector and vectorize', async () => {
+    await assert.rejects(() => collection.insertOne({ name: 'Arch Enemy' }, { vector: [1, 1, 1, 1, 1], vectorize: 'Arch Enemy' }), Error);
   });
 
   it('should fail insert of doc over size 1 MB', async () => {
@@ -89,5 +97,13 @@ describe('integration.data-api.collection.insert-one', () => {
       docToInsert[`prop${i}`] = `prop${i}value`;
     }
     await assert.rejects(() => collection.insertOne(docToInsert), DataAPIResponseError);
+  });
+
+  it('[dev] should insertOne with vectorize', async function () {
+    assertTestsEnabled(this, 'DEV');
+    const res = await collection.insertOne({ name: 'Arch Enemy' }, { vectorize: 'Arch Enemy is a Swedish melodic death metal band, originally a supergroup from Halmstad, formed in 1995.' });
+    assert.ok(res);
+    const found = await collection.findOne({ name: 'Arch Enemy' });
+    assert.deepStrictEqual(found?.$vectorize, 'Arch Enemy is a Swedish melodic death metal band, originally a supergroup from Halmstad, formed in 1995.');
   });
 });

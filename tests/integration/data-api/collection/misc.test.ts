@@ -9,7 +9,7 @@
 // limitations under the License.
 
 import { Collection, DataAPITimeout, Db } from '@/src/data-api';
-import { DEFAULT_COLLECTION_NAME, testClient } from '@/tests/fixtures';
+import { DEFAULT_COLLECTION_NAME, initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
 import { DEFAULT_NAMESPACE } from '@/src/api';
 
@@ -18,10 +18,7 @@ describe('integration.data-api.collection.misc', () => {
   let collection: Collection;
 
   before(async function () {
-    if (testClient == null) {
-      return this.skip();
-    }
-    [, db, collection] = await testClient.new();
+    [, db, collection] = await initTestObjects(this);
   });
 
   describe('initialization', () => {
@@ -42,8 +39,8 @@ describe('integration.data-api.collection.misc', () => {
   });
 
   describe('timeout', () => {
-    it('times out on http2', async () => {
-      const [, newDb] = await testClient!.new(true);
+    it('times out on http2', async function () {
+      const [, newDb] = await initTestObjects(this, true);
 
       try {
         await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });
@@ -53,8 +50,8 @@ describe('integration.data-api.collection.misc', () => {
       }
     });
 
-    it('times out on http1', async () => {
-      const [, newDb] = await testClient!.new(false);
+    it('times out on http1', async function () {
+      const [, newDb] = await initTestObjects(this, false);
 
       try {
         await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });

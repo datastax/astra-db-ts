@@ -9,17 +9,14 @@
 // limitations under the License.
 
 import { Collection } from '@/src/data-api';
-import { sampleUsersList, testClient } from '@/tests/fixtures';
+import { initTestObjects, sampleUsersList } from '@/tests/fixtures';
 import assert from 'assert';
 
 describe('integration.data-api.collection.update-many', () => {
   let collection: Collection;
 
   before(async function () {
-    if (testClient == null) {
-      return this.skip();
-    }
-    [, , collection] = await testClient.new();
+    [, , collection] = await initTestObjects(this);
   });
 
   afterEach(async () => {

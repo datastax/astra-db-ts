@@ -26,12 +26,44 @@ npm run test:coverage
 npm run test:types
 ```
 
-I heavily recommend filtering out the tag `[long]` when you're just doing some smoke-ish testing.
+### Running tagged tests
+Tests can be given certain tags to allow for more granular control over which tests are run. These tags currently include:
+- `[long]`/`'LONG'`: Longer running tests that take more than a few seconds to run
+- `[admin]`/`'ADMIN'`: Tests that require admin permissions to run
+- `[dev]`/`'DEV'`: Tests that require the dev environment to run
+
+To enable these tags, you can set the corresponding environment variables to some values. The env variables are in the
+`env.example` file, but they're repeated here for convenience:
+- `ASTRA_RUN_DEV_TESTS`
+- `ASTRA_RUN_LONG_TESTS`
+- `ASTRA_RUN_ADMIN_TESTS`
+
+Or you can run the tests by doing something like
 ```shell
-npm run test -- -f [long] -i
+env ASTRA_RUN_LONG_TESTS=1 npm run test
 ```
 
-If you're adding a test, that isn't absolutely essential, that takes over ~2-3 seconds to run, please add the `[long]` tag to it.
+### Adding your own tagged tests
+To enforce the tags, use the `assertTestsEnabled` function from `test/fixtures.ts`, which will skip the function if the
+given tag is not enabled. 
+
+It's also encouraged to add the corresponding tag to the test name, so that it's clear why the test is being skipped.
+
+For example:
+```typescript
+describe('[long] createCollection + dropCollection', () => {
+  // Note that it's important to use an actual function here, not an arrow function
+  before(async function () {
+    assertTestsEnabled(this, 'LONG');
+  });
+
+  // ...
+});
+```
+
+If a new tag really, really, needs to be added, it can be done by adding a new environment variable of the proper
+format, and updating the `assertTestsEnabled` function. However, this should be done sparingly, as it can make the
+test suite harder to manage.
 
 ### Linting
 Run `npm run lint` to run ESLint.

@@ -9,17 +9,14 @@
 // limitations under the License.
 
 import { Collection } from '@/src/data-api';
-import { createSampleDocWithMultiLevel, testClient } from '@/tests/fixtures';
+import { createSampleDocWithMultiLevel, initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
 
 describe('integration.data-api.collection.find-one-and-update', () => {
   let collection: Collection;
 
   before(async function () {
-    if (testClient == null) {
-      return this.skip();
-    }
-    [, , collection] = await testClient.new();
+    [, , collection] = await initTestObjects(this);
   });
 
   afterEach(async () => {

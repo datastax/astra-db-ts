@@ -19,6 +19,8 @@
 
 import { Collection, Db } from '@/src/data-api';
 import { DataApiClient } from '@/src/client';
+import { Context } from 'mocha';
+import { all } from 'axios';
 
 export const DEFAULT_COLLECTION_NAME = 'test_coll';
 export const EPHEMERAL_COLLECTION_NAME = 'temp_coll';
@@ -26,7 +28,11 @@ export const OTHER_NAMESPACE = 'other_keyspace';
 
 let collCreated = false;
 
-const makeAstraClient = async (useHttp2: boolean = true): Promise<[DataApiClient, Db, Collection]> => {
+export const initTestObjects = async (ctx: Context, useHttp2: boolean = true): Promise<[DataApiClient, Db, Collection]> => {
+  if (!process.env.ASTRA_URI || !process.env.APPLICATION_TOKEN) {
+    ctx.skip();
+  }
+
   const client = new DataApiClient(process.env.APPLICATION_TOKEN!, { dataApiOptions: { useHttp2 } });
   const db = client.db(process.env.ASTRA_URI!);
 
@@ -70,12 +76,6 @@ const sampleMultiLevelDoc: Employee = {
   },
 };
 
-export const createSampleDocWithMultiLevelWithId = (docId: string) =>
-  ({
-    ...sampleMultiLevelDoc,
-    _id: docId,
-  }) as Employee;
-
 export const createSampleDocWithMultiLevel = () =>
   sampleMultiLevelDoc;
 
@@ -117,9 +117,8 @@ export const sampleUsersList = [
   createSampleDoc3WithMultiLevel(),
 ];
 
-export const testClient =
-  (process.env.ASTRA_URI && process.env.APPLICATION_TOKEN)
-    ? {
-      new: makeAstraClient,
-    }
-    : null
+export const assertTestsEnabled = (ctx: Context, ...filters: ('DEV' | 'LONG' | 'ADMIN')[]) => {
+  if (!filters.every(filter => process.env[`ASTRA_RUN_${filter}_TESTS`])) {
+    ctx.skip();
+  }
+}

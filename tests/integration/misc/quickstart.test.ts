@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { OTHER_NAMESPACE, testClient } from '@/tests/fixtures';
+import { assertTestsEnabled, initTestObjects, OTHER_NAMESPACE } from '@/tests/fixtures';
 import { DataApiClient } from '@/src/client';
 import { Db, ObjectId, UUID, VectorDoc } from '@/src/data-api';
 import process from 'process';
@@ -29,13 +29,14 @@ describe('integration.misc.quickstart tests', () => {
   const region = idAndRegion.slice(5).join('-');
 
   before(async function () {
-    if (testClient == null) {
-      return this.skip();
-    }
-    [, db] = await testClient.new();
+    [, db] = await initTestObjects(this);
   });
 
   describe('[long] quickstart', () => {
+    before(async function () {
+      assertTestsEnabled(this, 'LONG');
+    });
+
     after(async function () {
       await db.dropCollection('vector_5_collection');
     });
@@ -113,6 +114,10 @@ describe('integration.misc.quickstart tests', () => {
   });
 
   describe('[long] ids-quickstart', () => {
+    before(async function () {
+      assertTestsEnabled(this, 'LONG');
+    });
+
     after(async function () {
       await db.dropCollection('my_collection');
     });

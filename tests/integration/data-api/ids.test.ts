@@ -15,16 +15,18 @@
 
 import assert from 'assert';
 import { Collection, Db, ObjectId, UUID } from '@/src/data-api';
-import { DEFAULT_COLLECTION_NAME, EPHEMERAL_COLLECTION_NAME, testClient } from '@/tests/fixtures';
+import {
+  assertTestsEnabled,
+  DEFAULT_COLLECTION_NAME,
+  EPHEMERAL_COLLECTION_NAME,
+  initTestObjects
+} from '@/tests/fixtures';
 
 describe('integration.data-api.ids', () => {
   let db: Db;
 
   before(async function() {
-    if (testClient == null) {
-      return this.skip();
-    }
-    [, db] = await testClient.new();
+    [, db] = await initTestObjects(this);
   });
 
   describe('default', () => {
@@ -48,8 +50,8 @@ describe('integration.data-api.ids', () => {
     it('sets it as the default id', async () => {
       const inserted = await collection.insertOne({ name: 'test' });
       assert.ok(typeof <any>inserted.insertedId === 'string');
-      const [found] = await collection.find({ name: 'test' }).toArray();
-      const id = found._id;
+      const found = await collection.findOne({ name: 'test' });
+      const id = found?._id;
       assert.ok(typeof <any>id === 'string');
       assert.doesNotThrow(() => new UUID(id));
     });
@@ -60,6 +62,7 @@ describe('integration.data-api.ids', () => {
     const name = `${EPHEMERAL_COLLECTION_NAME}_uuid`;
 
     before(async function () {
+      assertTestsEnabled(this, 'LONG');
       collection = await db.createCollection(name, { defaultId: { type: 'uuid' } });
     });
 
@@ -80,11 +83,13 @@ describe('integration.data-api.ids', () => {
 
     it('sets it as the default id', async () => {
       const inserted = await collection.insertOne({ name: 'test' });
-      assert.ok(typeof <any>inserted.insertedId === 'string');
-      const [found] = await collection.find({ name: 'test' }).toArray();
-      const id = found._id;
+      assert.ok(<any>inserted.insertedId instanceof UUID);
+      const found = await collection.findOne({ name: 'test' });
+      const id = found?._id;
       assert.ok(<any>id instanceof UUID);
       assert.strictEqual(id.version, 4);
+      assert.ok(id.toString(), inserted.insertedId.toString());
+      assert.ok(id.equals(inserted.insertedId));
     });
   });
 
@@ -93,6 +98,7 @@ describe('integration.data-api.ids', () => {
     const name = `${EPHEMERAL_COLLECTION_NAME}_uuid_v6`;
 
     before(async function () {
+      assertTestsEnabled(this, 'LONG');
       collection = await db.createCollection(name, { defaultId: { type: 'uuidv6' } });
     });
 
@@ -113,11 +119,13 @@ describe('integration.data-api.ids', () => {
 
     it('sets it as the default id', async () => {
       const inserted = await collection.insertOne({ name: 'test' });
-      assert.ok(typeof <any>inserted.insertedId === 'string');
-      const [found] = await collection.find({ name: 'test' }).toArray();
-      const id = found._id;
+      assert.ok(<any>inserted.insertedId instanceof UUID);
+      const found = await collection.findOne({ name: 'test' });
+      const id = found?._id;
       assert.ok(<any>id instanceof UUID);
       assert.strictEqual(id.version, 6);
+      assert.ok(id.toString(), inserted.insertedId.toString());
+      assert.ok(id.equals(inserted.insertedId));
     });
   });
 
@@ -126,6 +134,7 @@ describe('integration.data-api.ids', () => {
     const name = `${EPHEMERAL_COLLECTION_NAME}_uuid_v7`;
 
     before(async function () {
+      assertTestsEnabled(this, 'LONG');
       collection = await db.createCollection(name, { defaultId: { type: 'uuidv7' } });
     });
 
@@ -146,11 +155,13 @@ describe('integration.data-api.ids', () => {
 
     it('sets it as the default id', async () => {
       const inserted = await collection.insertOne({ name: 'test' });
-      assert.ok(typeof <any>inserted.insertedId === 'string');
-      const [found] = await collection.find({ name: 'test' }).toArray();
-      const id = found._id;
+      assert.ok(<any>inserted.insertedId instanceof UUID);
+      const found = await collection.findOne({ name: 'test' });
+      const id = found?._id;
       assert.ok(<any>id instanceof UUID);
       assert.strictEqual(id.version, 7);
+      assert.ok(id.toString(), inserted.insertedId.toString());
+      assert.ok(id.equals(inserted.insertedId));
     });
   });
 
@@ -159,6 +170,7 @@ describe('integration.data-api.ids', () => {
     const name = `${EPHEMERAL_COLLECTION_NAME}_objectId`;
 
     before(async function () {
+      assertTestsEnabled(this, 'LONG');
       collection = await db.createCollection(name, { defaultId: { type: 'objectId' } });
     });
 
@@ -179,10 +191,12 @@ describe('integration.data-api.ids', () => {
 
     it('sets it as the default id', async () => {
       const inserted = await collection.insertOne({ name: 'test' });
-      assert.ok(typeof <any>inserted.insertedId === 'string');
-      const [found] = await collection.find({ name: 'test' }).toArray();
-      const id = found._id;
+      assert.ok(<any>inserted.insertedId instanceof ObjectId);
+      const found = await collection.findOne({ name: 'test' });
+      const id = found?._id;
       assert.ok(<any>id instanceof ObjectId);
+      assert.ok(id.toString(), inserted.insertedId.toString());
+      assert.ok(id.equals(inserted.insertedId));
     });
   });
 });

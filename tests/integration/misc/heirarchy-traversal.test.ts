@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEFAULT_COLLECTION_NAME, testClient } from '@/tests/fixtures';
+import { DEFAULT_COLLECTION_NAME, initTestObjects } from '@/tests/fixtures';
 import { DataApiClient } from '@/src/client';
 import { Collection, Db } from '@/src/data-api';
 import assert from 'assert';
@@ -31,10 +31,7 @@ describe('integration.misc.hierarchy-traversal tests', () => {
   const region = idAndRegion.slice(5).join('-');
 
   before(async function () {
-    if (testClient == null) {
-      return this.skip();
-    }
-    [client, db, collection] = await testClient.new();
+    [client, db, collection] = await initTestObjects(this);
   });
 
   afterEach(async function () {
