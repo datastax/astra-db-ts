@@ -55,6 +55,7 @@ export interface HTTPRequestInfo {
   method: HTTP_METHODS,
   timeout?: number,
   timeoutError: () => Error,
+  reviver?: (key: string, value: any) => any,
 }
 
 /**

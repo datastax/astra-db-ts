@@ -34,4 +34,9 @@ describe('integration.data-api.collection.options', () => {
     assert.deepStrictEqual(res, {});
     await db.dropCollection(`test_db_collection_${suffix}`)
   });
+
+  it('throws an error when collection not found', async () => {
+    const coll = db.collection('nonexistent_collection');
+    await assert.rejects(coll.options(), /Collection 'nonexistent_collection' not found/);
+  });
 });

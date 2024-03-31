@@ -7,6 +7,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// noinspection DuplicatedCode
 
 import { Collection, TooManyDocsToCountError } from '@/src/data-api';
 import { initTestObjects } from '@/tests/fixtures';
@@ -19,8 +20,25 @@ describe('integration.data-api.collection.count-documents', () => {
     [, , collection] = await initTestObjects(this);
   });
 
-  afterEach(async () => {
+  beforeEach(async () => {
     await collection.deleteAll();
+  });
+
+  it('works', async () => {
+    await collection.insertMany([
+      { username: 'a' },
+      { username: 'aa', answer: 42 },
+      { username: 'aaa', answer: 42 }
+    ]);
+
+    let count = await collection.countDocuments({}, 1000);
+    assert.strictEqual(count, 3);
+
+    count = await collection.countDocuments({ username: 'a' }, 1000);
+    assert.strictEqual(count, 1);
+
+    count = await collection.countDocuments({ answer: 42 }, 1000);
+    assert.strictEqual(count, 2);
   });
 
   it('should return count of documents with non id filter', async () => {
@@ -78,7 +96,7 @@ describe('integration.data-api.collection.count-documents', () => {
 
     try {
       await collection.countDocuments({}, 1);
-      assert.ok(false);
+      assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof TooManyDocsToCountError);
       assert.strictEqual(e.limit, 1);
@@ -92,7 +110,7 @@ describe('integration.data-api.collection.count-documents', () => {
 
     try {
       await collection.countDocuments({}, 2000);
-      assert.ok(false);
+      assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof TooManyDocsToCountError);
       assert.strictEqual(e.limit, 1000);

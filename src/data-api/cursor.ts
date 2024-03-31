@@ -19,9 +19,9 @@ import {
   internalFindOptionsKeys,
   InternalGetMoreCommand,
   ProjectionOption,
-  SortOption
+  SortOption,
 } from '@/src/data-api/types';
-import { CursorAlreadyInitializedError, replaceRawId, SomeDoc } from '@/src/data-api';
+import { CursorAlreadyInitializedError, SomeDoc } from '@/src/data-api';
 import { DataApiHttpClient } from '@/src/api';
 
 /** @internal */
@@ -116,7 +116,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * Sets the filter for the cursor, overwriting any previous filter. Note that this filter is weakly typed. Prefer
    * to pass in a filter through the constructor instead, if strongly typed filters are desired.
    *
-   * **NB. This method acts on the original documents, before any mapping**
+   * **NB. This method acts on the original documents, before any mapping.**
    *
    * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
    *
@@ -134,7 +134,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * Sets the sort criteria for prioritizing documents. Note that this sort is weakly typed. Prefer to pass in a sort
    * through the constructor instead, if strongly typed sorts are desired.
    *
-   * **NB. This method acts on the original documents, before any mapping**
+   * **NB. This method acts on the original documents, before any mapping.**
    *
    * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
    *
@@ -150,6 +150,8 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
 
   /**
    * Sets the maximum number of documents to return.
+   *
+   * If `limit == 0`, there will be no limit on the number of documents returned.
    *
    * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
    *
@@ -181,7 +183,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * Sets the projection for the cursor, overwriting any previous projection.
    *
-   * **NB. This method acts on the original documents, before any mapping**
+   * **NB. This method acts on the original documents, before any mapping.**
    *
    * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
    *
@@ -297,9 +299,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * resultant data was already fetched by this cursor.
    */
   rewind(): void {
-    if (this._state === CursorStatus.Uninitialized) {
-      return;
-    }
+    // if (this._state === CursorStatus.Uninitialized) {
+    //   return;
+    // }
 
     this._buffer.length = 0;
     this._nextPageState = undefined;
@@ -502,7 +504,5 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
 
     this._nextPageState = resp.data!.nextPageState || null;
     this._buffer = resp.data!.documents as TRaw[];
-
-    this._buffer.forEach(replaceRawId);
   }
 }

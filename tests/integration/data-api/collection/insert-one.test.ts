@@ -7,6 +7,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// noinspection DuplicatedCode
 
 import { Collection, DataAPIResponseError, ObjectId, UUID } from '@/src/data-api';
 import { assertTestsEnabled, initTestObjects } from '@/tests/fixtures';
@@ -19,7 +20,7 @@ describe('integration.data-api.collection.insert-one', () => {
     [, , collection] = await initTestObjects(this);
   });
 
-  afterEach(async () => {
+  beforeEach(async () => {
     await collection.deleteAll();
   });
 
@@ -40,14 +41,32 @@ describe('integration.data-api.collection.insert-one', () => {
     const id = UUID.v7();
     const res = await collection.insertOne({ _id: id });
     assert.ok(res);
-    assert.ok(res.insertedId, id.toString());
+    assert.strictEqual(res.insertedId.toString(), id.toString());
   });
 
   it('should insertOne document with an ObjectId', async () => {
     const id = new ObjectId();
     const res = await collection.insertOne({ _id: id });
     assert.ok(res);
-    assert.ok(res.insertedId, id.toString());
+    assert.strictEqual(res.insertedId.toString(), id.toString());
+  });
+
+  it('should insertOne document with a non-_id UUID', async () => {
+    const id = new ObjectId();
+    const res = await collection.insertOne({ foreignId: id });
+    assert.ok(res.insertedId);
+    const found = await collection.findOne({ foreignId: id });
+    assert.ok(found);
+    assert.strictEqual(found?.foreignId.toString(), id.toString());
+  });
+
+  it('should insertOne document with a non-_id ObjectId', async () => {
+    const id = new ObjectId();
+    const res = await collection.insertOne({ foreignId: id });
+    assert.ok(res.insertedId);
+    const found = await collection.findOne({ foreignId: id });
+    assert.ok(found);
+    assert.strictEqual(found?.foreignId.toString(), id.toString());
   });
 
   it('should insertOne with vector', async () => {
@@ -55,6 +74,25 @@ describe('integration.data-api.collection.insert-one', () => {
     assert.ok(res);
     const found = await collection.findOne({ name: 'Arch Enemy' });
     assert.deepStrictEqual(found?.$vector, [1, 1, 1, 1, 1]);
+  });
+
+  it('should insertOne with $date', async () => {
+    const timestamp = new Date();
+    const res = await collection.insertOne({ name: 'Hot Fuzz', date: { $date: timestamp } });
+    assert.ok(res);
+    const found = await collection.findOne({ name: 'Hot Fuzz' });
+    assert.ok(found?.date instanceof Date);
+    assert.strictEqual(found?.date.toISOString(), timestamp.toISOString());
+  });
+
+  it('should store bigint as number', async () => {
+    await collection.insertOne({
+      _id: 'bigint-test',
+      answer: 42n
+    });
+
+    const res = await collection.findOne({ _id: 'bigint-test' });
+    assert.strictEqual(res!.answer, 42);
   });
 
   it('should fail when inserting with both vector and vectorize', async () => {

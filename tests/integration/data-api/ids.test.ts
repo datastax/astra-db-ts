@@ -36,7 +36,7 @@ describe('integration.data-api.ids', () => {
       collection = db.collection(DEFAULT_COLLECTION_NAME);
     });
 
-    afterEach(async function () {
+    beforeEach(async function () {
       await collection.deleteAll();
     });
 
@@ -66,7 +66,7 @@ describe('integration.data-api.ids', () => {
       collection = await db.createCollection(name, { defaultId: { type: 'uuid' } });
     });
 
-    afterEach(async function () {
+    beforeEach(async function () {
       await collection.deleteAll();
     });
 
@@ -102,7 +102,7 @@ describe('integration.data-api.ids', () => {
       collection = await db.createCollection(name, { defaultId: { type: 'uuidv6' } });
     });
 
-    afterEach(async function () {
+    beforeEach(async function () {
       await collection.deleteAll();
     });
 
@@ -138,7 +138,7 @@ describe('integration.data-api.ids', () => {
       collection = await db.createCollection(name, { defaultId: { type: 'uuidv7' } });
     });
 
-    afterEach(async function () {
+    beforeEach(async function () {
       await collection.deleteAll();
     });
 
@@ -174,7 +174,7 @@ describe('integration.data-api.ids', () => {
       collection = await db.createCollection(name, { defaultId: { type: 'objectId' } });
     });
 
-    afterEach(async function () {
+    beforeEach(async function () {
       await collection.deleteAll();
     });
 

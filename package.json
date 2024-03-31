@@ -62,13 +62,11 @@
     "test": "ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts tests/integration/**/*.test.ts tests/integration/**/**/*.test.ts",
     "test:integration": "ts-mocha --paths -p tsconfig.json tests/integration/**/**/*.test.ts",
     "test:unit": "ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts",
-    "test:coverage": "nyc npm run test",
+    "test:coverage": "nyc npm run test -- -b",
     "test:types": "tsc --noEmit --skipLibCheck",
     "preinstall": "npm run update-version-file",
     "build": "rm -rf ./dist && npm run update-version-file && tsc --project tsconfig.build.json && tscpaths -p tsconfig.build.json -s ./src -o ./dist",
-    "build:docs": "jsdoc2md -t assets/templates/APIReference.hbs --files src/**/*.ts --configure ./jsdoc2md.json > APIReference.md",
-    "update-version-file": "node -p \"'export const LIB_NAME = ' + JSON.stringify('astra-db-ts') + ';'\" > src/version.ts && node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" >> src/version.ts",
-    "circular-deps": "madge --circular --extensions ts --ts-config tsconfig.json src/ tests/"
+    "update-version-file": "node -p \"'export const LIB_NAME = ' + JSON.stringify('astra-db-ts') + ';'\" > src/version.ts && node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" >> src/version.ts"
   },
   "bugs": {
     "url": "https://github.com/datastax/astra-ts-client/issues"
@@ -91,13 +89,8 @@
     "dotenv": "^16.0.1",
     "eslint": "^8.56.0",
     "jsdoc-babel": "^0.5.0",
-    "jsdoc-to-markdown": "^7.1.1",
-    "madge": "^6.1.0",
     "nyc": "^15.1.0",
-    "sinon": "15.2.0",
     "ts-mocha": "^10.0.0",
-    "ts-node": "^10.8.1",
-    "tsconfig-paths": "^4.0.0",
     "tscpaths": "^0.0.9",
     "typescript": "^5.3.3"
   },

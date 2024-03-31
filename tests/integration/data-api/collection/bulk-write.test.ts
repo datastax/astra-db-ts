@@ -7,9 +7,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// noinspection DuplicatedCode
 
-import { BulkWriteError, Collection } from '@/src/data-api';
-import { initTestObjects } from '@/tests/fixtures';
+import { BulkWriteError, Collection, DataAPIError } from '@/src/data-api';
+import { initCollectionWithFailingClient, initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
 
 describe('integration.data-api.collection.bulk-write', () => {
@@ -19,10 +20,9 @@ describe('integration.data-api.collection.bulk-write', () => {
     [, , collection] = await initTestObjects(this);
   });
 
-  afterEach(async () => {
+  beforeEach(async () => {
     await collection.deleteAll();
   });
-
 
   it('bulkWrites ordered', async () => {
     const res = await collection.bulkWrite([
@@ -45,6 +45,10 @@ describe('integration.data-api.collection.bulk-write', () => {
     assert.ok(res.upsertedIds[2]);
     assert.ok(res.upsertedIds[5]);
     assert.ok(!res.upsertedIds[0] && !res.upsertedIds[1] && !res.upsertedIds[3] && !res.upsertedIds[4] && !res.upsertedIds[6]);
+    assert.strictEqual(res.getUpsertedIdAt(2), res.upsertedIds[2]);
+    assert.strictEqual(res.getUpsertedIdAt(5), res.upsertedIds[5]);
+    assert.strictEqual(res.getUpsertedIdAt(0), res.upsertedIds[0]);
+    assert.strictEqual(res.getUpsertedIdAt(1), res.upsertedIds[1]);
     assert.strictEqual(res.getRawResponse().length, 9);
 
     const found = await collection.find({}).toArray();
@@ -67,6 +71,9 @@ describe('integration.data-api.collection.bulk-write', () => {
     assert.strictEqual(res.upsertedCount, 1);
     assert.ok(res.upsertedIds[1]);
     assert.ok(!res.upsertedIds[0] && !res.upsertedIds[2]);
+    assert.strictEqual(res.getUpsertedIdAt(0), res.upsertedIds[0]);
+    assert.strictEqual(res.getUpsertedIdAt(1), res.upsertedIds[1]);
+    assert.strictEqual(res.getUpsertedIdAt(2), res.upsertedIds[2]);
     assert.strictEqual(res.getRawResponse().length, 3);
 
     const found = (await collection.find({}).toArray()).sort((a, b) => a.name.localeCompare(b.name));
@@ -88,13 +95,14 @@ describe('integration.data-api.collection.bulk-write', () => {
         { insertOne: { document: { _id: 'd' } } },
         { insertOne: { document: { _id: 'e' } } },
       ], { ordered: true });
-      assert.ok(false);
+      assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof BulkWriteError);
 
       assert.strictEqual(e.detailedErrorDescriptors.length, 1);
       assert.strictEqual(e.errorDescriptors.length, 1);
       assert.strictEqual(e.message, e.errorDescriptors[0].message);
+      assert.deepStrictEqual(e.errorDescriptors[0].attributes, {});
 
       assert.strictEqual(e.partialResult.insertedCount, 3);
       assert.strictEqual(e.partialResult.getRawResponse().length, 4);
@@ -123,13 +131,14 @@ describe('integration.data-api.collection.bulk-write', () => {
         { insertOne: { document: { _id: 'd' } } },
         { insertOne: { document: { _id: 'e' } } },
       ]);
-      assert.ok(false);
+      assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof BulkWriteError);
 
       assert.strictEqual(e.detailedErrorDescriptors.length, 2);
       assert.strictEqual(e.errorDescriptors.length, 2);
       assert.strictEqual(e.message, e.errorDescriptors[0].message);
+      assert.deepStrictEqual(e.errorDescriptors[0].attributes, {});
 
       assert.strictEqual(e.partialResult.insertedCount, 5);
       assert.strictEqual(e.partialResult.getRawResponse().length, 7);
@@ -146,6 +155,44 @@ describe('integration.data-api.collection.bulk-write', () => {
       assert.strictEqual(found[2]._id, 'c');
       assert.strictEqual(found[3]._id, 'd');
       assert.strictEqual(found[4]._id, 'e');
+    }
+  });
+
+  it('fail gracefully on unknown operation', async () => {
+    try {
+      await collection.bulkWrite([
+        { insertOne: { document: { _id: 'a' } } },
+        // @ts-expect-error - testing unknown operation
+        { unknownOperation: { document: { _id: 'b' } } },
+      ]);
+      assert.fail('Expected an error');
+    } catch (e) {
+      assert.ok(e instanceof Error);
+      assert.strictEqual(e.message, 'Unknown bulk write operation: unknownOperation');
+    }
+  });
+
+  it('fails fast on hard errors ordered', async function () {
+    const collection = await initCollectionWithFailingClient(this);
+    try {
+      await collection.bulkWrite([{ insertOne: { document: { _id: 'a' } } }], { ordered: true });
+      assert.fail('Expected an error');
+    } catch (e) {
+      assert.ok(e instanceof Error);
+      assert.ok(!(e instanceof DataAPIError));
+      assert.strictEqual(e.message, 'test');
+    }
+  });
+
+  it('fails fast on hard errors unordered', async function () {
+    const collection = await initCollectionWithFailingClient(this);
+    try {
+      await collection.bulkWrite([{ insertOne: { document: { _id: 'a' } } }], { ordered: false });
+      assert.fail('Expected an error');
+    } catch (e) {
+      assert.ok(e instanceof Error);
+      assert.ok(!(e instanceof DataAPIError));
+      assert.strictEqual(e.message, 'test');
     }
   });
 });

@@ -19,14 +19,17 @@ describe('integration.data-api.collection.distinct', () => {
     [, , collection] = await initTestObjects(this);
   });
 
-  afterEach(async () => {
+  beforeEach(async () => {
     await collection.deleteAll();
   });
-
 
   it('rejects invalid paths', async () => {
     await assert.rejects(async () => {
       await collection.distinct('');
+    });
+
+    await assert.rejects(async () => {
+      await collection.distinct('.');
     });
 
     await assert.rejects(async () => {

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { HTTPRequestStrategy, GuaranteedAPIResponse, InternalHTTPRequestInfo } from '@/src/api/types';
+import { GuaranteedAPIResponse, HTTPRequestStrategy, InternalHTTPRequestInfo } from '@/src/api/types';
 import axios from 'axios';
 import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DEVOPS_API_AUTH_HEADER, DEFAULT_TIMEOUT } from '@/src/api/constants';
 import http from 'http';
@@ -73,6 +73,10 @@ export class HTTP1Strategy implements HTTPRequestStrategy {
           ...this._authHeaderFactory(info.token),
           'User-Agent': info.userAgent,
         },
+        transformResponse(data) {
+          return data && JSON.parse(data, info.reviver);
+        },
+        responseType: 'json',
       });
     } catch (e: any) {
       if (e.code === 'ECONNABORTED') {

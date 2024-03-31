@@ -17,7 +17,7 @@ import assert from 'assert';
 import { FindCursor, CursorAlreadyInitializedError } from '@/src/data-api';
 import { DataApiHttpClient } from '@/src/api';
 
-describe('unit.data-api.cursor tests', async () => {
+describe('unit.data-api.cursor', async () => {
   let httpClient: DataApiHttpClient;
 
   const add1 = (a: number) => a + 1;

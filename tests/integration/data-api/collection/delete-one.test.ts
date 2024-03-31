@@ -19,7 +19,7 @@ describe('integration.data-api.collection.delete-one', () => {
     [, , collection] = await initTestObjects(this);
   });
 
-  afterEach(async () => {
+  beforeEach(async () => {
     await collection.deleteAll();
   });
 
@@ -34,5 +34,21 @@ describe('integration.data-api.collection.delete-one', () => {
     await collection.insertOne(createSampleDocWithMultiLevel());
     const deleteOneResp = await collection.deleteOne({ 'username': 'samlxyz' });
     assert.strictEqual(deleteOneResp.deletedCount, 0);
+  });
+
+  it('should deleteOne with sort', async () => {
+    await collection.insertMany([
+      { username: 'a' },
+      { username: 'c' },
+      { username: 'b' }
+    ]);
+
+    await collection.deleteOne(
+      {},
+      { sort: { username: 1 } }
+    );
+
+    const docs = await collection.find({}, { sort: { username: 1 }, limit: 20 }).toArray();
+    assert.deepStrictEqual(docs.map(doc => doc.username), ['b', 'c']);
   });
 });

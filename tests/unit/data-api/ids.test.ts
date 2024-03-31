@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { UUID, ObjectId, replaceRawId } from '@/src/data-api';
+import { ObjectId, UUID } from '@/src/data-api';
 import { BSONError } from 'bson';
 
 describe('unit.data-api.ids tests', () => {
@@ -166,54 +166,54 @@ describe('unit.data-api.ids tests', () => {
     });
   });
 
-  describe('replaceRawId', () => {
-    it('should return null for null', () => {
-      assert.strictEqual(replaceRawId(null), null);
-    });
-
-    it('should return same id if not special id', () => {
-      assert.strictEqual(replaceRawId('some_id'), 'some_id');
-    });
-
-    it('should return UUID if $uuid', () => {
-      const id = { $uuid: '123e4567-e89b-12d3-a456-426614174000' };
-      const replaced = replaceRawId(id);
-      assert(replaced instanceof UUID);
-      assert.strictEqual(replaced.toString(), '123e4567-e89b-12d3-a456-426614174000');
-    });
-
-    it('should return ObjectId if $objectId', () => {
-      const id = { $objectId: '507f191e810c19729de860ea' };
-      const replaced = replaceRawId(id);
-      assert(replaced instanceof ObjectId);
-      assert.strictEqual(replaced.toString(), '507f191e810c19729de860ea');
-    });
-
-    it('should return same id if not special id _id', () => {
-      const id = { _id: 'some_id' };
-      const replaced = replaceRawId(id);
-      assert.strictEqual(replaced._id, 'some_id');
-    });
-
-    it('should return UUID if $uuid _id', () => {
-      const id = { _id: { $uuid: '123e4567-e89b-12d3-a456-426614174000' } };
-      const replaced = replaceRawId(id);
-      assert(replaced._id instanceof UUID);
-      assert.strictEqual(replaced._id.toString(), '123e4567-e89b-12d3-a456-426614174000');
-    });
-
-    it('should return ObjectId if $objectId _id', () => {
-      const id = { _id: { $objectId: '507f191e810c19729de860ea' } };
-      const replaced = replaceRawId(id);
-      assert(replaced._id instanceof ObjectId);
-      assert.strictEqual(replaced._id.toString(), '507f191e810c19729de860ea');
-    });
-
-    it('Mutates the original object if on _id', () => {
-      const id = { _id: { $uuid: '123e4567-e89b-12d3-a456-426614174000' } };
-      replaceRawId(id);
-      assert(<any>id._id instanceof UUID);
-      assert.strictEqual(id._id.toString(), '123e4567-e89b-12d3-a456-426614174000');
-    });
-  });
+  // describe('replaceRawId', () => {
+  //   it('should return null for null', () => {
+  //     assert.strictEqual(replaceRawId(null), null);
+  //   });
+  //
+  //   it('should return same id if not special id', () => {
+  //     assert.strictEqual(replaceRawId('some_id'), 'some_id');
+  //   });
+  //
+  //   it('should return UUID if $uuid', () => {
+  //     const id = { $uuid: '123e4567-e89b-12d3-a456-426614174000' };
+  //     const replaced = replaceRawId(id);
+  //     assert(replaced instanceof UUID);
+  //     assert.strictEqual(replaced.toString(), '123e4567-e89b-12d3-a456-426614174000');
+  //   });
+  //
+  //   it('should return ObjectId if $objectId', () => {
+  //     const id = { $objectId: '507f191e810c19729de860ea' };
+  //     const replaced = replaceRawId(id);
+  //     assert(replaced instanceof ObjectId);
+  //     assert.strictEqual(replaced.toString(), '507f191e810c19729de860ea');
+  //   });
+  //
+  //   it('should return same id if not special id _id', () => {
+  //     const id = { _id: 'some_id' };
+  //     const replaced = replaceRawId(id);
+  //     assert.strictEqual(replaced._id, 'some_id');
+  //   });
+  //
+  //   it('should return UUID if $uuid _id', () => {
+  //     const id = { _id: { $uuid: '123e4567-e89b-12d3-a456-426614174000' } };
+  //     const replaced = replaceRawId(id);
+  //     assert(replaced._id instanceof UUID);
+  //     assert.strictEqual(replaced._id.toString(), '123e4567-e89b-12d3-a456-426614174000');
+  //   });
+  //
+  //   it('should return ObjectId if $objectId _id', () => {
+  //     const id = { _id: { $objectId: '507f191e810c19729de860ea' } };
+  //     const replaced = replaceRawId(id);
+  //     assert(replaced._id instanceof ObjectId);
+  //     assert.strictEqual(replaced._id.toString(), '507f191e810c19729de860ea');
+  //   });
+  //
+  //   it('Mutates the original object if on _id', () => {
+  //     const id = { _id: { $uuid: '123e4567-e89b-12d3-a456-426614174000' } };
+  //     replaceRawId(id);
+  //     assert(<any>id._id instanceof UUID);
+  //     assert.strictEqual(id._id.toString(), '123e4567-e89b-12d3-a456-426614174000');
+  //   });
+  // });
 });

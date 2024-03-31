@@ -45,6 +45,12 @@ export const initTestObjects = async (ctx: Context, useHttp2: boolean = true): P
   return [client, db, coll];
 };
 
+export const initCollectionWithFailingClient = async (ctx: Context) => {
+  const [, , collection] = await initTestObjects(ctx);
+  (<any>collection['_httpClient']) = { executeCommand: async () => { throw new Error('test'); } };
+  return collection;
+}
+
 export type Employee = {
   _id?: string;
   username?: string;
@@ -61,22 +67,20 @@ export type Employee = {
   };
 };
 
-const sampleMultiLevelDoc: Employee = {
-  username: 'aaron',
-  human: true,
-  age: 47,
-  password: null,
-  address: {
-    number: 86,
-    street: 'monkey street',
-    suburb: 'not null',
-    city: 'big banana',
-    is_office: false,
-  },
-};
-
 export const createSampleDocWithMultiLevel = () =>
-  sampleMultiLevelDoc;
+  ({
+    username: 'aaron',
+    human: true,
+    age: 47,
+    password: null,
+    address: {
+      number: 86,
+      street: 'monkey street',
+      suburb: 'not null',
+      city: 'big banana',
+      is_office: false,
+    },
+  }) as Employee;
 
 export const createSampleDoc2WithMultiLevel = () =>
   ({

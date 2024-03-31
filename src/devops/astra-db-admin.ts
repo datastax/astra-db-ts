@@ -53,7 +53,7 @@ export class AstraDbAdmin extends DbAdmin {
     });
 
     if (options.adminToken) {
-      this._httpClient.setToken(options.adminToken);
+      this._httpClient.applicationToken = options.adminToken;
     }
   }
 

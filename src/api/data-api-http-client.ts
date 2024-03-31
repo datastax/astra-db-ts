@@ -32,8 +32,12 @@ export class DataApiHttpClient extends HttpClient {
   public async executeCommand(command: Record<string, any>, options?: BaseOptions & { collection?: string, namespace?: string }, optionsToRetain?: Set<string>) {
     const commandName = Object.keys(command)[0];
 
-    if (command[commandName].options && optionsToRetain) {
-      command[commandName].options = cleanupOptions(command, commandName, optionsToRetain, this.logSkippedOptions);
+    if (optionsToRetain) {
+      const [options, dirty] = cleanupOptions(command, commandName, optionsToRetain, this.logSkippedOptions);
+
+      if (dirty) {
+        command = { [commandName]: { ...command[commandName], options } };
+      }
     }
 
     const response = await this._requestDataApi({
@@ -59,26 +63,29 @@ export class DataApiHttpClient extends HttpClient {
 
       const response = await this._request({
         url: url,
-        data: serializeCommand(info.command),
+        data: JSON.stringify(info.command, replacer),
         timeout: info.timeout,
         method: HTTP_METHODS.Post,
-        timeoutError: () => new DataAPITimeout(info.command, info.timeout || DEFAULT_TIMEOUT),
+        timeoutError() {
+          return new DataAPITimeout(info.command, info.timeout || DEFAULT_TIMEOUT);
+        },
+        reviver: reviver,
       });
 
-      if (response.status === 401 || (response.data?.errors?.length > 0 && response.data?.errors[0]?.message === "UNAUTHENTICATED: Invalid token")) {
-        return this._mkError("Authentication failed; is your token valid?");
+      if (response.status === 401 || (response.data?.errors?.length > 0 && response.data?.errors[0]?.message === 'UNAUTHENTICATED: Invalid token')) {
+        return this._mkError('Authentication failed; is your token valid?');
       }
 
       if (response.status === 200) {
         return {
           status: response.data?.status,
-          data: deserialize(response.data?.data),
+          data: response.data?.data,
           errors: response.data?.errors,
         };
       } else {
         logger.error(info.url + ": " + response.status);
         logger.error("Data: " + JSON.stringify(info.command));
-        return this._mkError();
+        return this._mkError(`Some non-200 status code was returned. Check the logs for more information. ${response.status}, ${JSON.stringify(response.data)}`);
       }
     } catch (e: any) {
       logger.error(info.url + ": " + e.message);
@@ -92,10 +99,8 @@ export class DataApiHttpClient extends HttpClient {
     }
   }
 
-  private _mkError(message?: string): RawDataApiResponse {
-    return (message)
-      ? { errors: [{ message }] }
-      : {};
+  private _mkError(message: string): RawDataApiResponse {
+    return { errors: [{ message }] };
   }
 }
 
@@ -103,10 +108,11 @@ function cleanupOptions(data: Record<string, any>, commandName: string, optionsT
   const command = data[commandName];
 
   if (!command.options) {
-    return undefined;
+    return [undefined, false];
   }
 
   const options = { ...command.options };
+  let dirty = false;
 
   Object.keys(options).forEach((key) => {
     if (!optionsToRetain.has(key)) {
@@ -114,54 +120,53 @@ function cleanupOptions(data: Record<string, any>, commandName: string, optionsT
         logger.warn(`'${commandName}' does not support option '${key}'`);
       }
       delete options[key];
+      dirty = true;
     }
   });
 
-  return options;
+  return [options, dirty];
 }
 
-function serializeCommand(data: Record<string, any>, pretty?: boolean): string {
-  return JSON.stringify(data, (_: unknown, value: any) => handleValues(value), pretty ? '  ' : '');
-}
-
-function handleValues(value: any): any {
-  if (typeof value === "bigint") {
+export function replacer(this: any, key: string, value: any): any {
+  if (typeof value === 'bigint') {
     return Number(value);
   }
 
-  if (value && typeof value === "object") {
-    let valueCopied = false;
-
-    if (value.$date) {
-      if (!valueCopied) {
-        value = { ...value };
-        valueCopied = true;
-      }
-      value.$date = new Date(value.$date).valueOf();
+  if (typeof this[key] === 'object') {
+    if (value instanceof ObjectId) {
+      return { $objectId: value.toString() };
     }
 
-    if (value._id instanceof ObjectId) {
-      if (!valueCopied) {
-        value = { ...value };
-      }
-      value._id = { $objectId: value._id.toString() };
-    } else if (value._id instanceof UUID) {
-      if (!valueCopied) {
-        value = { ...value };
-      }
-      value._id = { $uuid: value._id.toString() };
+    if (value instanceof UUID) {
+      return { $uuid: value.toString() };
+    }
+
+    if (key === '$date') {
+      return new Date(value).valueOf();
+    }
+
+    if (this[key] instanceof Date) {
+      return { $date: this[key].valueOf() };
     }
   }
 
   return value;
 }
 
-function deserialize(data?: Record<string, any> | null): Record<string, any> {
-  if (!data) {
-    return {};
+export function reviver(_: string, value: any): any {
+  if (!value) {
+    return value;
   }
-
-  return data;
+  if (value.$date) {
+    return new Date(value.$date);
+  }
+  if (value.$objectId) {
+    return new ObjectId(value.$objectId);
+  }
+  if (value.$uuid) {
+    return new UUID(value.$uuid);
+  }
+  return value;
 }
 
 export function handleIfErrorResponse(response: any, command: Record<string, any>) {

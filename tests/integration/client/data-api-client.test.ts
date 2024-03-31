@@ -17,7 +17,7 @@ import { DataApiClient } from '@/src/client';
 import * as process from 'process';
 import assert from 'assert';
 
-describe('integration.client.data-api-client', async () => {
+describe('integration.client.data-api-client', () => {
   describe('db tests', () => {
     it('properly connects to a db by endpoint', async () => {
       const db = new DataApiClient(process.env.APPLICATION_TOKEN!).db(process.env.ASTRA_URI!);

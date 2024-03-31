@@ -17,6 +17,7 @@ import { DataApiClient } from '@/src/client';
 import * as process from 'process';
 import assert from 'assert';
 import { DEFAULT_DATA_API_PATH } from '@/src/api';
+import { logger } from '@/src/logger';
 
 describe('unit.client.data-api-client', () => {
   const endpoint = process.env.ASTRA_URI!;
@@ -24,6 +25,31 @@ describe('unit.client.data-api-client', () => {
   const idAndRegion = endpoint.split('.')[0].split('https://')[1].split('-');
   const id = idAndRegion.slice(0, 5).join('-');
   const region = idAndRegion.slice(5).join('-');
+
+  describe('constructor tests', () => {
+    it('should allow construction with just a token', () => {
+      const client = new DataApiClient('dummy-token');
+      assert.ok(client);
+    });
+
+    it('should throw if no token is passed', () => {
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => new DataApiClient());
+    });
+
+    it('should throw if a non-string token is passed', () => {
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => new DataApiClient(3));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => new DataApiClient({ logLevel: 'warn' }));
+    });
+
+    it('should set logLevel if passed', () => {
+      const client = new DataApiClient('dummy-token', { logLevel: 'silly' });
+      assert.ok(client);
+      assert.strictEqual(logger.transports[0].level, 'silly');
+    });
+  });
 
   describe('db tests', () => {
     it('should allow db construction from endpoint', () => {

@@ -87,7 +87,7 @@ export class HttpClient {
     return clone;
   }
 
-  public setToken(token: string): void {
+  public set applicationToken(token: string) {
     this.#applicationToken = token;
   }
 
@@ -105,6 +105,7 @@ export class HttpClient {
       token: this.#applicationToken,
       userAgent: this.userAgent,
       timeoutError: info.timeoutError,
+      reviver: info.reviver,
     });
   }
 }

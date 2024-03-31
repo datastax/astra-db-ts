@@ -14,7 +14,7 @@
 
 import { takeWhile } from './utils';
 import { FindCursor } from '@/src/data-api/cursor';
-import { Db, replaceRawId, SomeDoc } from '@/src/data-api';
+import { Db, SomeDoc } from '@/src/data-api';
 import {
   BulkWriteError,
   DataAPIResponseError,
@@ -23,7 +23,7 @@ import {
   mkRespErrorFromResponse,
   mkRespErrorFromResponses,
   TooManyDocsToCountError,
-  UpdateManyError
+  UpdateManyError,
 } from '@/src/data-api/errors';
 import objectHash from 'object-hash';
 import { DataApiHttpClient } from '@/src/api';
@@ -58,8 +58,10 @@ import {
   insertManyOptionKeys,
   InsertManyOptions,
   InsertManyResult,
-  InsertOneCommand, InsertOneOptions,
-  InsertOneResult, MaybeId,
+  InsertOneCommand,
+  InsertOneOptions,
+  InsertOneResult,
+  MaybeId,
   ModifyResult,
   Mutable,
   NoId,
@@ -74,7 +76,7 @@ import {
   updateOneOptionKeys,
   UpdateOneOptions,
   UpdateOneResult,
-  WithId
+  WithId,
 } from '@/src/data-api/types';
 
 /**
@@ -192,7 +194,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     const resp = await this._httpClient.executeCommand(command, options);
 
     return {
-      insertedId: replaceRawId(resp.status?.insertedIds[0]),
+      insertedId: resp.status?.insertedIds[0],
     };
   }
 
@@ -304,8 +306,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       ? await insertManyOrdered<Schema>(this._httpClient, documents, chunkSize)
       : await insertManyUnordered<Schema>(this._httpClient, documents, options?.concurrency ?? 8, chunkSize);
 
-    insertedIds.forEach(replaceRawId);
-
     return {
       insertedCount: insertedIds.length,
       insertedIds: insertedIds,
@@ -383,7 +383,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     return (resp.status?.upsertedId)
       ? {
         ...commonResult,
-        upsertedId: replaceRawId(resp.status?.upsertedId),
+        upsertedId: resp.status?.upsertedId,
         upsertedCount: 1,
       }
       : commonResult;
@@ -481,7 +481,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     return (resp.status?.upsertedId)
       ? {
         ...commonResult,
-        upsertedId: replaceRawId(resp.status?.upsertedId),
+        upsertedId: resp.status?.upsertedId,
         upsertedCount: 1,
       }
       : commonResult;
@@ -548,7 +548,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
           returnDocument: 'before',
           upsert: options?.upsert,
         },
-        // projection: { _id: 0 },
       },
     };
 
@@ -566,7 +565,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     return (resp.status?.upsertedId)
       ? {
         ...commonResult,
-        upsertedId: replaceRawId(resp.status?.upsertedId),
+        upsertedId: resp.status?.upsertedId,
         upsertedCount: 1,
       }
       : commonResult;
@@ -939,7 +938,67 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     }
 
     const resp = await this._httpClient.executeCommand(command, options, findOneOptionsKeys);
-    return replaceRawId(resp.data?.document);
+    return resp.data?.document;
+  }
+
+  /**
+   * Counts the number of documents in the collection, optionally with a filter.
+   *
+   * Takes in a `limit` option which dictates the maximum number of documents that may be present before a
+   * {@link TooManyDocsToCountError} is thrown. If the limit is higher than the highest limit accepted by the
+   * Data API, a {@link TooManyDocsToCountError} will be thrown anyway (i.e. `1000`).
+   *
+   * @example
+   * ```typescript
+   * await collection.insertMany([
+   *   { _id: '1', name: 'John Doe' },
+   *   { name: 'Jane Doe' },
+   * ]);
+   *
+   * const count = await collection.countDocuments({ name: 'John Doe' }, 1000);
+   * console.log(count); // 1
+   *
+   * // Will throw a TooManyDocsToCountError as it counts 1, but the limit is 0
+   * const count = await collection.countDocuments({ name: 'John Doe' }, 0);
+   * ```
+   *
+   * @remarks
+   * Count operations are expensive: for this reason, the best practice is to provide a reasonable `upperBound`
+   * according to the caller expectations. Moreover, indiscriminate usage of count operations for sizeable amounts
+   * of documents (i.e. in the thousands and more) is discouraged in favor of alternative application-specific
+   * solutions. Keep in mind that the Data API has a hard upper limit on the amount of documents it will count,
+   * and that an exception will be thrown by this method if this limit is encountered.
+   *
+   * @param filter - A filter to select the documents to count. If not provided, all documents will be counted.
+   * @param upperBound - The maximum number of documents to count.
+   * @param options - The options for this operation.
+   *
+   * @return The number of counted documents, if below the provided limit
+   *
+   * @throws TooManyDocsToCountError - If the number of documents counted exceeds the provided limit.
+   *
+   * @see StrictFilter
+   */
+  async countDocuments(filter: Filter<Schema>, upperBound: number, options?: BaseOptions): Promise<number> {
+    const command = {
+      countDocuments: { filter },
+    };
+
+    if (!upperBound) {
+      throw new Error('options.limit is required');
+    }
+
+    const resp = await this._httpClient.executeCommand(command, options);
+
+    if (resp.status?.moreData) {
+      throw new TooManyDocsToCountError(resp.status.count, true);
+    }
+
+    if (resp.status?.count > upperBound) {
+      throw new TooManyDocsToCountError(upperBound, false);
+    }
+
+    return resp.status?.count;
   }
 
   /**
@@ -1056,7 +1115,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     }
 
     const resp = await this._httpClient.executeCommand(command, options, findOneAndReplaceOptionsKeys);
-    const document = replaceRawId(resp.data?.document);
+    const document = resp.data?.document;
 
     return (options.includeResultMetadata)
       ? {
@@ -1064,66 +1123,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         ok: 1,
       }
       : document;
-  }
-
-  /**
-   * Counts the number of documents in the collection, optionally with a filter.
-   *
-   * Takes in a `limit` option which dictates the maximum number of documents that may be present before a
-   * {@link TooManyDocsToCountError} is thrown. If the limit is higher than the highest limit accepted by the
-   * Data API, a {@link TooManyDocsToCountError} will be thrown anyway (i.e. `1000`).
-   *
-   * @example
-   * ```typescript
-   * await collection.insertMany([
-   *   { _id: '1', name: 'John Doe' },
-   *   { name: 'Jane Doe' },
-   * ]);
-   *
-   * const count = await collection.countDocuments({ name: 'John Doe' }, 1000);
-   * console.log(count); // 1
-   *
-   * // Will throw a TooManyDocsToCountError as it counts 1, but the limit is 0
-   * const count = await collection.countDocuments({ name: 'John Doe' }, 0);
-   * ```
-   *
-   * @remarks
-   * Count operations are expensive: for this reason, the best practice is to provide a reasonable `upperBound`
-   * according to the caller expectations. Moreover, indiscriminate usage of count operations for sizeable amounts
-   * of documents (i.e. in the thousands and more) is discouraged in favor of alternative application-specific
-   * solutions. Keep in mind that the Data API has a hard upper limit on the amount of documents it will count,
-   * and that an exception will be thrown by this method if this limit is encountered.
-   *
-   * @param filter - A filter to select the documents to count. If not provided, all documents will be counted.
-   * @param upperBound - The maximum number of documents to count.
-   * @param options - The options for this operation.
-   *
-   * @return The number of counted documents, if below the provided limit
-   *
-   * @throws TooManyDocsToCountError - If the number of documents counted exceeds the provided limit.
-   *
-   * @see StrictFilter
-   */
-  async countDocuments(filter: Filter<Schema>, upperBound: number, options?: BaseOptions): Promise<number> {
-    const command = {
-      countDocuments: { filter },
-    };
-
-    if (!upperBound) {
-      throw new Error('options.limit is required');
-    }
-
-    const resp = await this._httpClient.executeCommand(command, options);
-
-    if (resp.status?.moreData) {
-      throw new TooManyDocsToCountError(resp.status.count, true);
-    }
-
-    if (resp.status?.count > upperBound) {
-      throw new TooManyDocsToCountError(upperBound, false);
-    }
-
-    return resp.status?.count;
   }
 
   /**
@@ -1162,7 +1161,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    */
   async findOneAndDelete(
     filter: Filter<Schema>,
-    options?: FindOneAndDeleteOptions<Schema> & { includeResultMetadata: true },
+    options: FindOneAndDeleteOptions<Schema> & { includeResultMetadata: true },
   ): Promise<ModifyResult<Schema>>
 
   /**
@@ -1213,7 +1212,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     }
 
     const resp = await this._httpClient.executeCommand(command, options);
-    const document = replaceRawId(resp.data?.document);
+    const document = resp.data?.document;
 
     return (options?.includeResultMetadata)
       ? {
@@ -1331,7 +1330,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     }
 
     const resp = await this._httpClient.executeCommand(command, options, findOneAndUpdateOptionsKeys);
-    const document = replaceRawId(resp.data?.document);
+    const document = resp.data?.document;
 
     return (options.includeResultMetadata)
       ? {
@@ -1420,7 +1419,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     const collection = results.find((c) => c.name === this.collectionName);
 
     if (!collection) {
-      throw new Error(`Collection ${this.collectionName} not found`);
+      throw new Error(`Collection '${this.collectionName}' not found`);
     }
 
     return collection.options ?? {};
@@ -1465,6 +1464,10 @@ interface OptionsWithSort {
  * @internal
  */
 const coalesceVectorSpecialsIntoSort = <T extends OptionsWithSort | undefined>(options: T): T => {
+  if (options?.vector && options?.vectorize) {
+    throw new Error('Cannot set both vectors and vectorize options');
+  }
+
   if (options?.vector) {
     if (options.sort) {
       throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object')
@@ -1618,10 +1621,6 @@ const bulkWriteUnordered = async (httpClient: DataApiHttpClient, operations: Rec
       const localI = masterIndex;
       masterIndex++;
 
-      if (localI >= operations.length) {
-        break;
-      }
-
       const command = operations[localI];
 
       try {
@@ -1680,7 +1679,7 @@ const addToBulkWriteResult = (result: BulkWriteResult, resp: Record<string, any>
 
   if (resp.upsertedId) {
     asMutable.upsertedCount++;
-    asMutable.upsertedIds[i] = replaceRawId(resp.upsertedId);
+    asMutable.upsertedIds[i] = resp.upsertedId;
   }
 
   asMutable.getRawResponse().push(resp);
@@ -1693,10 +1692,6 @@ const addToBulkWriteResult = (result: BulkWriteResult, resp: Record<string, any>
  */
 const assertPathSafe4Distinct = (path: string): void => {
   const split = path.split('.');
-
-  if (split.length === 0) {
-    throw new Error('Path cannot be empty');
-  }
 
   if (split.some(p => !p)) {
     throw new Error('Path cannot contain empty segments');

@@ -16,6 +16,7 @@
 import { assertTestsEnabled, initTestObjects } from '@/tests/fixtures';
 import { DataApiClient } from '@/src/client';
 import assert from 'assert';
+import { DevopsApiResponseError } from '@/src/devops';
 
 describe('integration.devops.lifecycle', async () => {
   let client: DataApiClient;
@@ -25,78 +26,18 @@ describe('integration.devops.lifecycle', async () => {
 
     [client] = await initTestObjects(this);
 
-    const dbs = await client.admin().listDatabases();
-
-    if (dbs.some(db => db.info.name === 'astra-test-db')) {
-      throw new Error('Database \'astra-test-db\' already exists, drop it to proceed w/ lifecycle test');
-    }
+    // const dbs = await client.admin().listDatabases();
+    //
+    // if (dbs.some(db => db.info.name === 'astra-test-db')) {
+    //   throw new Error('Database \'astra-test-db\' already exists, drop it to proceed w/ lifecycle test');
+    // }
   });
 
-  it('[admin] [long] works blocking', async () => {
+  it('[admin] works', async () => {
     try {
       const admin = client.admin();
 
-      const dbAdmin = await admin.createDatabase({
-        name: 'astra-test-db',
-        cloudProvider: 'GCP',
-        region: 'us-east1',
-      });
-      const db = dbAdmin.db();
-
-      assert.ok(db.id, 'Database ID is missing');
-      assert.strictEqual(db.namespace, 'default_keyspace', 'Database namespace is incorrect');
-
-      const dbInfo = await db.info();
-      assert.strictEqual(dbInfo.name, 'astra-test-db', 'Database info name is incorrect');
-      assert.strictEqual(dbInfo.cloudProvider, 'GCP', 'Database info cloud provider is incorrect');
-      assert.strictEqual(dbInfo.region, 'us-east1', 'Database info region is incorrect');
-      assert.strictEqual(dbInfo.keyspace, 'default_keyspace', 'Database info keyspace is incorrect');
-
-      const collections1 = await db.listCollections();
-      assert.deepStrictEqual(collections1, [], 'Collections are not empty')
-
-      const collection = await db.createCollection('test_collection');
-      assert.ok(collection, 'Collection is missing');
-      assert.strictEqual(collection.collectionName, 'test_collection', 'Collection name is incorrect');
-      assert.deepStrictEqual(await collection.options(), {}, 'Collection options are not empty');
-
-      const collections2 = await db.listCollections();
-      assert.deepStrictEqual(collections2, [{ name: 'test_collection' }], 'Collections are incorrect');
-
-      const dbs1 = await admin.listDatabases();
-      assert.ok(dbs1.find(db => db.info.name === 'astra-test-db'), 'Database \'astra-test-db\' is missing');
-
-      const dbs2 = await admin.listDatabases({ include: 'ACTIVE' });
-      assert.ok(dbs2.find(db => db.info.name === 'astra-test-db'), 'Database \'astra-test-db\' is missing from ACTIVE');
-
-      const namespaces = await dbAdmin.listNamespaces();
-      assert.deepStrictEqual(namespaces, ['default_keyspace'], 'Namespaces are incorrect');
-
-      await dbAdmin.createNamespace('other_namespace');
-
-      const namespaces2 = await dbAdmin.listNamespaces();
-      assert.deepStrictEqual(namespaces2, ['default_keyspace', 'other_namespace'], 'Namespaces are incorrect');
-
-      await dbAdmin.dropNamespace('other_namespace');
-
-      const namespaces3 = await dbAdmin.listNamespaces();
-      assert.deepStrictEqual(namespaces3, ['default_keyspace'], 'Namespaces are incorrect');
-
-      await dbAdmin.drop();
-
-      const dbs3 = await admin.listDatabases();
-      assert.ok(!dbs3.find(db => db.info.name === 'astra-test-db'), 'Database \'astra-test-db\' still exists');
-    } catch (e) {
-      console.error(e);
-      assert.fail('An error occurred during the lifecycle test');
-    }
-  }).timeout(0);
-
-  it('[admin] [long] works non-blocking', async () => {
-    try {
-      const admin = client.admin();
-
-      const dbAdmin = await admin.createDatabase({
+      const asyncDbAdmin = await admin.createDatabase({
         name: 'astra-test-db',
         cloudProvider: 'GCP',
         region: 'us-east1',
@@ -107,81 +48,150 @@ describe('integration.devops.lifecycle', async () => {
           useHttp2: false,
         }
       });
-      const db = dbAdmin.db();
+      const asyncDb = asyncDbAdmin.db();
 
-      assert.ok(db.id, 'Database ID is missing');
-      assert.strictEqual(db.namespace, 'my_namespace', 'Database namespace is incorrect');
-      assert.strictEqual(db.httpStrategy() === 'http2', false, 'Database HTTP/2 usage is incorrect');
+      {
+        assert.ok(asyncDb.id);
+        assert.ok(asyncDbAdmin.id);
+        assert.strictEqual(asyncDb.namespace, 'my_namespace');
+        assert.strictEqual(asyncDb.httpStrategy() === 'http2', false);
+      }
 
-      const fullDbInfo1 = await dbAdmin.info();
-      assert.ok(['PENDING', 'INITIALIZING'].includes(fullDbInfo1.status), 'Database status is incorrect');
-      assert.strictEqual(fullDbInfo1.info.name, 'astra-test-db', 'Database info name is incorrect');
-      assert.strictEqual(fullDbInfo1.info.cloudProvider, 'GCP', 'Database info cloud provider is incorrect');
-      assert.strictEqual(fullDbInfo1.info.region, 'us-east1', 'Database info region is incorrect');
-      assert.strictEqual(fullDbInfo1.info.keyspace, 'my_namespace', 'Database info keyspace is incorrect');
+      {
+        const dbInfo = await asyncDbAdmin.info();
+        assert.ok(['PENDING', 'INITIALIZING'].includes(dbInfo.status));
+        assert.strictEqual(dbInfo.info.name, 'astra-test-db');
+        assert.strictEqual(dbInfo.info.cloudProvider, 'GCP');
+        assert.strictEqual(dbInfo.info.region, 'us-east1');
+        assert.strictEqual(dbInfo.info.keyspace, 'my_namespace');
+      }
 
-      await dbAdmin['_httpClient'].awaitStatus(db, 'ACTIVE', ['INITIALIZING', 'PENDING'], {}, 10000);
+      const syncDbAdmin = await admin.createDatabase({
+        name: 'astra-test-db',
+        cloudProvider: 'GCP',
+        region: 'us-east1',
+      });
+      const syncDb = syncDbAdmin.db();
 
-      const fullDbInfo2 = await dbAdmin.info();
-      assert.strictEqual(fullDbInfo2.status, 'ACTIVE', 'Database status is incorrect');
-      assert.strictEqual(fullDbInfo2.info.name, 'astra-test-db', 'Database info name is incorrect');
-      assert.strictEqual(fullDbInfo2.info.cloudProvider, 'GCP', 'Database info cloud provider is incorrect');
-      assert.strictEqual(fullDbInfo2.info.region, 'us-east1', 'Database info region is incorrect');
-      assert.strictEqual(fullDbInfo2.info.keyspace, 'my_namespace', 'Database info keyspace is incorrect');
+      {
+        assert.ok(syncDb.id);
+        assert.ok(syncDbAdmin.id);
+        assert.strictEqual(syncDb.namespace, 'default_keyspace');
+        assert.strictEqual(syncDb.httpStrategy() === 'http1', false);
+      }
 
-      const collections1 = await db.listCollections();
-      assert.deepStrictEqual(collections1, [], 'Collections are not empty')
+      {
+        const dbInfo = await syncDb.info();
+        assert.strictEqual(dbInfo.name, 'astra-test-db');
+        assert.strictEqual(dbInfo.cloudProvider, 'GCP');
+        assert.strictEqual(dbInfo.region, 'us-east1');
+        assert.strictEqual(dbInfo.keyspace, 'default_keyspace');
+      }
 
-      const collection = await db.createCollection('test_collection');
-      assert.ok(collection, 'Collection is missing');
-      assert.strictEqual(collection.collectionName, 'test_collection', 'Collection name is incorrect');
-      assert.deepStrictEqual(await collection.options(), {}, 'Collection options are not empty');
+      {
+        await asyncDbAdmin['_httpClient'].awaitStatus(asyncDb, 'ACTIVE', ['INITIALIZING', 'PENDING'], {}, 10000);
+      }
 
-      const collections2 = await db.listCollections();
-      assert.deepStrictEqual(collections2, [{ name: 'test_collection' }], 'Collections are incorrect');
+      for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
+        const dbInfo = await dbAdmin.info();
+        assert.strictEqual(dbInfo.status, 'ACTIVE');
+        assert.strictEqual(dbInfo.info.name, 'astra-test-db');
+        assert.strictEqual(dbInfo.info.cloudProvider, 'GCP');
+        assert.strictEqual(dbInfo.info.region, 'us-east1');
+        assert.strictEqual(dbInfo.info.keyspace, db.namespace);
 
-      const dbs1 = await admin.listDatabases();
-      assert.ok(dbs1.find(db => db.info.name === 'astra-test-db'), 'Database \'astra-test-db\' is missing');
+        const collections1 = await db.listCollections();
+        assert.deepStrictEqual(collections1, [], `in ${dbType}`)
 
-      const dbs2 = await admin.listDatabases({ include: 'ACTIVE' });
-      assert.ok(dbs2.find(db => db.info.name === 'astra-test-db'), 'Database \'astra-test-db\' is missing from ACTIVE');
+        const collection = await db.createCollection('test_collection');
+        assert.ok(collection, `in ${dbType}`);
+        assert.strictEqual(collection.collectionName, 'test_collection', `in ${dbType}`);
+        assert.deepStrictEqual(await collection.options(), {}, `in ${dbType}`);
 
-      const namespaces = await dbAdmin.listNamespaces();
-      assert.deepStrictEqual(namespaces, ['my_namespace'], 'Namespaces are incorrect');
+        const collections2 = await db.listCollections();
+        assert.deepStrictEqual(collections2, [{ name: 'test_collection' }], `in ${dbType}`);
 
-      await dbAdmin.createNamespace('other_namespace', { blocking: false });
+        const dbs1 = await admin.listDatabases();
+        assert.ok(dbs1.find(db => db.id === dbAdmin.id), `in ${dbType}`);
 
-      const fullDbInfo3 = await dbAdmin.info();
-      assert.strictEqual(fullDbInfo3.status, 'MAINTENANCE', 'Database status is incorrect');
-      assert.strictEqual(fullDbInfo3.info.keyspace, 'my_namespace', 'Database info keyspace is incorrect');
-      assert.strictEqual(fullDbInfo3.info.additionalKeyspaces, undefined, 'Database info keyspace is incorrect');
+        const dbs2 = await admin.listDatabases({ include: 'ACTIVE' });
+        assert.ok(dbs2.find(db => db.id === dbAdmin.id), `in ${dbType}`);
 
-      await dbAdmin['_httpClient'].awaitStatus(db, 'ACTIVE', ['MAINTENANCE'], {}, 1000);
+        const namespaces = await dbAdmin.listNamespaces();
+        assert.deepStrictEqual(namespaces, [db.namespace], `in ${dbType}`);
+      }
 
-      const namespaces2 = await dbAdmin.listNamespaces();
-      assert.deepStrictEqual(namespaces2, ['my_namespace', 'other_namespace'], 'Namespaces are incorrect');
+      {
+        await asyncDbAdmin.createNamespace('other_namespace', { blocking: false });
 
-      await dbAdmin.dropNamespace('other_namespace', { blocking: false });
+        const fullDbInfo3 = await asyncDbAdmin.info();
+        assert.strictEqual(fullDbInfo3.status, 'MAINTENANCE');
+        assert.strictEqual(fullDbInfo3.info.keyspace, 'my_namespace');
+        assert.strictEqual(fullDbInfo3.info.additionalKeyspaces, undefined);
+      }
 
-      const fullDbInfo4 = await dbAdmin.info();
-      assert.strictEqual(fullDbInfo4.status, 'MAINTENANCE', 'Database status is incorrect');
-      assert.strictEqual(fullDbInfo4.info.keyspace, 'my_namespace', 'Database info keyspace is incorrect');
-      assert.deepStrictEqual(fullDbInfo4.info.additionalKeyspaces, ['other_namespace'], 'Database info keyspace is incorrect');
+      {
+        await syncDbAdmin.createNamespace('other_namespace');
+        await asyncDbAdmin['_httpClient'].awaitStatus(asyncDb, 'ACTIVE', ['MAINTENANCE'], {}, 1000);
+      }
 
-      await dbAdmin['_httpClient'].awaitStatus(db, 'ACTIVE', ['MAINTENANCE'], {}, 1000);
+      for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
+        const namespaces2 = await dbAdmin.listNamespaces();
+        assert.deepStrictEqual(namespaces2, [db.namespace, 'other_namespace'], `in ${dbType}`);
+      }
 
-      const fullDbInfo5 = await dbAdmin.info();
-      assert.strictEqual(fullDbInfo5.status, 'ACTIVE', 'Database status is incorrect');
-      assert.strictEqual(fullDbInfo5.info.keyspace, 'my_namespace', 'Database info keyspace is incorrect');
-      assert.strictEqual(fullDbInfo5.info.additionalKeyspaces, undefined, 'Database info keyspace is incorrect');
+      {
+        await asyncDbAdmin.dropNamespace('other_namespace', { blocking: false });
 
-      const namespaces3 = await dbAdmin.listNamespaces();
-      assert.deepStrictEqual(namespaces3, ['my_namespace'], 'Namespaces are incorrect');
+        const fullDbInfo4 = await asyncDbAdmin.info();
+        assert.strictEqual(fullDbInfo4.status, 'MAINTENANCE');
+        assert.strictEqual(fullDbInfo4.info.keyspace, 'my_namespace');
+        assert.deepStrictEqual(fullDbInfo4.info.additionalKeyspaces, ['other_namespace']);
+      }
 
-      await admin.dropDatabase(db);
+      {
+        await syncDbAdmin.dropNamespace('other_namespace', { blocking: true });
+        await asyncDbAdmin['_httpClient'].awaitStatus(asyncDb, 'ACTIVE', ['MAINTENANCE'], {}, 1000);
+      }
 
-      const dbs3 = await admin.listDatabases();
-      assert.ok(!dbs3.find(db => db.info.name === 'astra-test-db'), 'Database \'astra-test-db\' still exists');
+      for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
+        const dbInfo = await dbAdmin.info();
+        assert.strictEqual(dbInfo.status, 'ACTIVE');
+        assert.strictEqual(dbInfo.info.keyspace, db.namespace);
+        assert.strictEqual(dbInfo.info.additionalKeyspaces, undefined);
+
+        const namespaces3 = await dbAdmin.listNamespaces();
+        assert.deepStrictEqual(namespaces3, [db.namespace], `in ${dbType}`);
+      }
+
+      {
+        await asyncDbAdmin.drop({ blocking: false });
+        const dbInfo = await asyncDbAdmin.info();
+        assert.strictEqual(dbInfo.status, 'TERMINATING');
+      }
+
+      {
+        await admin.dropDatabase(syncDb);
+        await asyncDbAdmin['_httpClient'].awaitStatus(asyncDbAdmin, 'TERMINATED', ['TERMINATING'], {}, 10000);
+      }
+
+      for (const [dbAdmin, dbType] of [[syncDbAdmin, 'sync'], [asyncDbAdmin, 'async']] as const) {
+        const dbs3 = await admin.listDatabases();
+        assert.ok(!dbs3.find(db => db.id === dbAdmin.id), `in ${dbType}`);
+      }
+
+      {
+        await assert.rejects(async () => await admin.dropDatabase(syncDb.id), DevopsApiResponseError);
+        await assert.rejects(async () => await admin.dropDatabase(syncDb.id, { blocking: false }), DevopsApiResponseError);
+        await assert.rejects(async () => await admin.dropDatabase(syncDb), DevopsApiResponseError);
+        await assert.rejects(async () => await admin.dropDatabase(syncDb, { blocking: false }), DevopsApiResponseError);
+        await assert.rejects(async () => await syncDbAdmin.drop(), DevopsApiResponseError);
+        await assert.rejects(async () => await syncDbAdmin.drop({ blocking: false }), DevopsApiResponseError);
+      }
+
+      // Either this stops occasionally 500s in the following tests,
+      // or I'm having a severe case of the Placebo effect
+      await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (e) {
       console.error(e);
       assert.fail('An error occurred during the lifecycle test');

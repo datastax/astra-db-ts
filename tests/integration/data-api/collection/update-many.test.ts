@@ -7,9 +7,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// noinspection DuplicatedCode
 
-import { Collection } from '@/src/data-api';
-import { initTestObjects, sampleUsersList } from '@/tests/fixtures';
+import { BulkWriteError, Collection, DataAPIError, UpdateManyError } from '@/src/data-api';
+import { initCollectionWithFailingClient, initTestObjects, sampleUsersList } from '@/tests/fixtures';
 import assert from 'assert';
 
 describe('integration.data-api.collection.update-many', () => {
@@ -19,7 +20,7 @@ describe('integration.data-api.collection.update-many', () => {
     [, , collection] = await initTestObjects(this);
   });
 
-  afterEach(async () => {
+  beforeEach(async () => {
     await collection.deleteAll();
   });
 
@@ -925,5 +926,33 @@ describe('integration.data-api.collection.update-many', () => {
         assert.strictEqual(doc.tags[3], 'tag5');
       }
     });
+  });
+
+  it('fails gracefully on 2XX exceptions', async () => {
+    try {
+      // @ts-expect-error - testing invalid input
+      await collection.updateMany({}, { $invalidOperator: 1 })
+      assert.fail('Expected error');
+    } catch (e) {
+      assert.ok(e instanceof UpdateManyError);
+      assert.strictEqual(e.errorDescriptors[0].errorCode, 'UNSUPPORTED_UPDATE_OPERATION');
+      assert.strictEqual(e.detailedErrorDescriptors[0].errorDescriptors[0].errorCode, 'UNSUPPORTED_UPDATE_OPERATION');
+      assert.strictEqual(e.errorDescriptors.length, 1);
+      assert.strictEqual(e.detailedErrorDescriptors.length, 1);
+      assert.deepStrictEqual(e.partialResult, { modifiedCount: 0, matchedCount: 0 });
+      assert.deepStrictEqual(e.errorDescriptors[0].attributes, {});
+    }
+  });
+
+  it('fails fast on hard errors', async function () {
+    const collection = await initCollectionWithFailingClient(this);
+    try {
+      await collection.updateMany({}, {});
+      assert.fail('Expected an error');
+    } catch (e) {
+      assert.ok(e instanceof Error);
+      assert.ok(!(e instanceof DataAPIError));
+      assert.strictEqual(e.message, 'test');
+    }
   });
 });

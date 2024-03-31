@@ -27,14 +27,12 @@ describe('unit.data-api.admin tests', () => {
       const admin = new AstraAdmin(mkOptions());
       assert.ok(admin);
       assert.strictEqual(admin['_httpClient'].baseUrl, DEFAULT_DEVOPS_API_ENDPOINT);
-      assert.strictEqual(admin['_httpClient'].unsafeGetToken(), 'old-admin');
     });
 
     it('should properly construct an AstraAdmin object with a custom base URL', () => {
       const admin = new AstraAdmin(mkOptions({}, { endpointUrl: 'https://api.astra.datastax.com/v1' }));
       assert.ok(admin);
       assert.strictEqual(admin['_httpClient'].baseUrl, 'https://api.astra.datastax.com/v1');
-      assert.strictEqual(admin['_httpClient'].unsafeGetToken(), 'old-admin');
     });
   });
 
@@ -43,14 +41,12 @@ describe('unit.data-api.admin tests', () => {
       const admin = mkAdmin(mkOptions({}, { endpointUrl: 'https://api.astra.datastax.com/v1' }), {});
       assert.ok(admin);
       assert.strictEqual(admin['_httpClient'].baseUrl, 'https://api.astra.datastax.com/v1');
-      assert.strictEqual(admin['_httpClient'].unsafeGetToken(), 'old-admin');
     });
 
     it('should allow admin construction, overwriting options', () => {
       const admin = mkAdmin(mkOptions({}, { endpointUrl: 'https://api.astra.datastax.com/old' }), { adminToken: 'new-admin', endpointUrl: 'https://api.astra.datastax.com/new' });
       assert.ok(admin);
       assert.strictEqual(admin['_httpClient'].baseUrl, 'https://api.astra.datastax.com/new');
-      assert.strictEqual(admin['_httpClient'].unsafeGetToken(), 'new-admin');
     });
   });
 });

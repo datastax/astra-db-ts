@@ -34,7 +34,7 @@ describe('integration.misc.hierarchy-traversal tests', () => {
     [client, db, collection] = await initTestObjects(this);
   });
 
-  afterEach(async function () {
+  beforeEach(async function () {
     await collection.deleteAll();
   });
 

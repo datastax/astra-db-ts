@@ -9,10 +9,10 @@
 // limitations under the License.
 
 import { Collection } from '@/src/data-api';
-import { createSampleDocWithMultiLevel, initTestObjects } from '@/tests/fixtures';
+import { createSampleDoc2WithMultiLevel, createSampleDocWithMultiLevel, initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
 
-describe('integration.data-api.collection.find-one-and-update', () => {
+describe('integration.data-api.collection.find-one-and-replace', () => {
   let collection: Collection;
 
   before(async function () {
@@ -23,21 +23,14 @@ describe('integration.data-api.collection.find-one-and-update', () => {
     await collection.deleteAll();
   });
 
-  it('should findOneAndUpdate', async () => {
+  it('should findOneAndReplace', async () => {
     const res = await collection.insertOne(createSampleDocWithMultiLevel());
     const docId = res.insertedId;
-    const resp = await collection.findOneAndUpdate(
+    const resp = await collection.findOneAndReplace(
       {
         '_id': docId,
       },
-      {
-        '$set': {
-          'username': 'aaronm',
-        },
-        '$unset': {
-          'address.city': '',
-        },
-      },
+      createSampleDoc2WithMultiLevel(),
       {
         returnDocument: 'after',
         includeResultMetadata: true,
@@ -45,28 +38,22 @@ describe('integration.data-api.collection.find-one-and-update', () => {
     );
     assert.strictEqual(resp.ok, 1);
     assert.strictEqual(resp.value!._id, docId);
-    assert.strictEqual(resp.value!.username, 'aaronm');
-    assert.strictEqual(resp.value!.address.city, undefined);
+    assert.strictEqual(resp.value!.username, 'jimr');
+    assert.strictEqual(resp.value!.address.city, 'nyc');
+    assert.strictEqual(resp.value!.address.country, 'usa');
   });
 
-  it('should findOneAndUpdate with returnDocument before', async () => {
+  it('should findOneAndReplace with returnDocument before', async () => {
     const docToInsert = createSampleDocWithMultiLevel();
     const res = await collection.insertOne(docToInsert);
     const docId = res.insertedId;
     const cityBefore = docToInsert.address?.city;
     const usernameBefore = docToInsert.username;
-    const resp = await collection.findOneAndUpdate(
+    const resp = await collection.findOneAndReplace(
       {
         '_id': docId,
       },
-      {
-        '$set': {
-          'username': 'aaronm',
-        },
-        '$unset': {
-          'address.city': '',
-        },
-      },
+      createSampleDoc2WithMultiLevel(),
       {
         returnDocument: 'before',
         includeResultMetadata: true,
@@ -76,23 +63,17 @@ describe('integration.data-api.collection.find-one-and-update', () => {
     assert.strictEqual(resp.value!._id, docId);
     assert.strictEqual(resp.value!.username, usernameBefore);
     assert.strictEqual(resp.value!.address.city, cityBefore);
+    assert.strictEqual(resp.value!.address.country, undefined);
   });
 
-  it('should findOneAndUpdate with upsert true', async () => {
+  it('should findOneAndReplace with upsert true', async () => {
     await collection.insertOne(createSampleDocWithMultiLevel());
     const newDocId = '123';
-    const resp = await collection.findOneAndUpdate(
+    const resp = await collection.findOneAndReplace(
       {
         '_id': newDocId,
       },
-      {
-        '$set': {
-          'username': 'aaronm',
-        },
-        '$unset': {
-          'address.city': '',
-        },
-      },
+      createSampleDoc2WithMultiLevel(),
       {
         includeResultMetadata: true,
         returnDocument: 'after',
@@ -101,25 +82,19 @@ describe('integration.data-api.collection.find-one-and-update', () => {
     );
     assert.strictEqual(resp.ok, 1);
     assert.strictEqual(resp.value!._id, newDocId);
-    assert.strictEqual(resp.value!.username, 'aaronm');
-    assert.strictEqual(resp.value!.address, undefined);
+    assert.strictEqual(resp.value!.username, 'jimr');
+    assert.strictEqual(resp.value!.address.city, 'nyc');
+    assert.strictEqual(resp.value!.address.country, 'usa');
   });
 
-  it('should findOneAndUpdate with upsert true and returnDocument before', async () => {
+  it('should findOneAndReplace with upsert true and returnDocument before', async () => {
     await collection.insertOne(createSampleDocWithMultiLevel());
     const newDocId = '123';
-    const resp = await collection.findOneAndUpdate(
+    const resp = await collection.findOneAndReplace(
       {
         '_id': newDocId,
       },
-      {
-        '$set': {
-          'username': 'aaronm',
-        },
-        '$unset': {
-          'address.city': '',
-        },
-      },
+      createSampleDoc2WithMultiLevel(),
       {
         includeResultMetadata: true,
         returnDocument: 'before',
@@ -130,53 +105,52 @@ describe('integration.data-api.collection.find-one-and-update', () => {
     assert.strictEqual(resp.value, null);
   });
 
-  it('should findOneAndUpdate without any updates to apply', async () => {
+  it('should findOneAndReplace with an empty doc', async () => {
     await collection.insertMany([
       { username: 'a' },
     ]);
 
-    const res = await collection.findOneAndUpdate(
+    const res = await collection.findOneAndReplace(
+      { username: 'a' },
       {},
-      { $set: { username: 'a' } },
-      { sort: { username: 1 }, returnDocument: 'before', includeResultMetadata: true },
+      { sort: { username: 1 }, returnDocument: 'after', includeResultMetadata: true },
     );
-    assert.strictEqual(res.value!.username, 'a');
+    assert.deepStrictEqual(res.value, { _id: res.value?._id });
   });
 
-  it('should findOneAndUpdate with a projection', async () => {
+  it('should findOneAndReplace with a projection', async () => {
     await collection.insertMany([
       { username: 'a', answer: 42 },
       { username: 'aa', answer: 42 },
       { username: 'aaa', answer: 42 },
     ]);
 
-    const res = await collection.findOneAndUpdate(
+    const res = await collection.findOneAndReplace(
       { username: 'a' },
-      { $set: { username: 'b' } },
+      { username: 'b' },
       { projection: { username: 1 }, returnDocument: 'after', includeResultMetadata: true },
     );
     assert.strictEqual(res.value!.username, 'b');
     assert.strictEqual(res.value!.answer, undefined);
   });
 
-  it('should findOneAndUpdate with sort', async () => {
-    await collection.deleteAll();
+  it('should findOneAndReplace with sort', async () => {
     await collection.insertMany([
       { username: 'a' },
       { username: 'c' },
       { username: 'b' },
     ]);
 
-    let res = await collection.findOneAndUpdate(
+    let res = await collection.findOneAndReplace(
       {},
-      { $set: { username: 'aaa' } },
+      { username: 'aaa' },
       { sort: { username: 1 }, returnDocument: 'before', includeResultMetadata: true },
     );
     assert.strictEqual(res.value!.username, 'a');
 
-    res = await collection.findOneAndUpdate(
+    res = await collection.findOneAndReplace(
       {},
-      { $set: { username: 'ccc' } },
+      { username: 'ccc' },
       { sort: { username: -1 }, returnDocument: 'before', includeResultMetadata: true },
     );
     assert.deepStrictEqual(res.value!.username, 'c');
@@ -184,51 +158,51 @@ describe('integration.data-api.collection.find-one-and-update', () => {
 
   it('should not return metadata when includeResultMetadata is false', async () => {
     await collection.insertOne({ username: 'a' });
-    const res = await collection.findOneAndUpdate(
+
+    const res = await collection.findOneAndReplace(
       { username: 'a' },
-      { $set: { username: 'b' } },
+      { username: 'b' },
       { returnDocument: 'after', includeResultMetadata: false },
     );
-
-    assert.deepStrictEqual(res, { _id: res?._id, username: 'b' });
+    assert.strictEqual(res?.username, 'b');
   });
 
   it('should not return metadata by default', async () => {
     await collection.insertOne({ username: 'a' });
-    const res = await collection.findOneAndUpdate(
+    const res = await collection.findOneAndReplace(
       { username: 'a' },
-      { $set: { username: 'b' } },
+      { username: 'b' },
       { returnDocument: 'after' },
     );
 
-    assert.deepStrictEqual(res, { _id: res?._id, username: 'b' });
+    assert.strictEqual(res?.username, 'b');
   });
 
-  it('should findOneAndUpdate with $vector sort', async () => {
+  it('should findOneAndReplace with $vector sort', async () => {
     await collection.insertMany([
       { username: 'a', $vector: [1.0, 1.0, 1.0, 1.0, 1.0] },
       { username: 'c', $vector: [-.1, -.1, -.1, -.1, -.1] },
       { username: 'b', $vector: [-.1, -.1, -.1, -.1, -.1] },
     ]);
 
-    const res = await collection.findOneAndUpdate(
+    const res = await collection.findOneAndReplace(
       {},
-      { $set: { username: 'aaa' } },
+      { username: 'aaa' },
       { sort: { $vector: [1, 1, 1, 1, 1] }, returnDocument: 'before', includeResultMetadata: true },
     );
     assert.strictEqual(res.value!.username, 'a');
   });
 
-  it('should findOneAndUpdate with vector sort in option', async () => {
+  it('should findOneAndReplace with vector sort in option', async () => {
     await collection.insertMany([
       { username: 'a', $vector: [1.0, 1.0, 1.0, 1.0, 1.0] },
       { username: 'c', $vector: [-.1, -.1, -.1, -.1, -.1] },
       { username: 'b', $vector: [-.1, -.1, -.1, -.1, -.1] },
     ]);
 
-    const res = await collection.findOneAndUpdate(
+    const res = await collection.findOneAndReplace(
       {},
-      { $set: { username: 'aaa' } },
+      { username: 'aaa' },
       { vector: [1, 1, 1, 1, 1], returnDocument: 'before', includeResultMetadata: true },
     );
     assert.strictEqual(res.value!.username, 'a');
@@ -236,19 +210,19 @@ describe('integration.data-api.collection.find-one-and-update', () => {
 
   it('should error when both sort and vector are provided', async () => {
     await assert.rejects(async () => {
-      await collection.findOneAndUpdate({}, {}, { returnDocument: 'after', sort: { username: 1 }, vector: [1, 1, 1, 1, 1] });
+      await collection.findOneAndReplace({}, {}, { returnDocument: 'after', sort: { username: 1 }, vector: [1, 1, 1, 1, 1] });
     }, /Can't use both `sort` and `vector` options at once; if you need both, include a \$vector key in the sort object/)
   });
 
   it('should error when both sort and vectorize are provided', async () => {
     await assert.rejects(async () => {
-      await collection.findOneAndUpdate({}, {}, { returnDocument: 'after', sort: { username: 1 }, vectorize: 'American Idiot is a good song' });
+      await collection.findOneAndReplace({}, {}, { returnDocument: 'after', sort: { username: 1 }, vectorize: 'American Idiot is a good song' });
     }, /Can't use both `sort` and `vectorize` options at once; if you need both, include a \$vectorize key in the sort object/)
   });
 
   it('should error when both vector and vectorize are provided', async () => {
     await assert.rejects(async () => {
-      await collection.findOneAndUpdate({}, {}, { returnDocument: 'after', vector: [1, 1, 1, 1, 1], vectorize: 'American Idiot is a good song' });
+      await collection.findOneAndReplace({}, {}, { returnDocument: 'after', vector: [1, 1, 1, 1, 1], vectorize: 'American Idiot is a good song' });
     }, /Cannot set both vectors and vectorize options/)
   });
 });

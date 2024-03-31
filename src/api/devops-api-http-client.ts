@@ -17,7 +17,7 @@ import { DEFAULT_TIMEOUT, HTTP_METHODS } from '@/src/api/constants';
 import { AxiosError, AxiosResponse } from 'axios';
 import { HTTPClientOptions } from '@/src/api/types';
 import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
-import { DevopsApiResponseError, DevopsAPITimeout, DevopsUnexpectedStateError } from '@/src/devops/errors';
+import { DevopsApiResponseError, DevopsApiTimeout, DevopsUnexpectedStateError } from '@/src/devops/errors';
 import { AdminBlockingOptions } from '@/src/devops/types';
 
 interface DevopsApiRequestInfo {
@@ -42,7 +42,7 @@ export class DevopsApiHttpClient extends HttpClient {
         url: url,
         method: info.method,
         timeout: info.timeout || DEFAULT_TIMEOUT,
-        timeoutError: () => new DevopsAPITimeout(url, info.timeout || DEFAULT_TIMEOUT),
+        timeoutError: () => new DevopsApiTimeout(url, info.timeout || DEFAULT_TIMEOUT),
         params: info.params,
         data: info.data,
       }) as any;

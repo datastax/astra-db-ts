@@ -113,7 +113,7 @@ export class Db implements Disposable {
    * @internal
    */
   constructor(endpoint: string, options: DbOptions) {
-    const dbOpts = options.dbOptions ?? {};
+    const dbOpts = options.dbOptions;
 
     Object.defineProperty(this, 'namespace', {
       value: dbOpts.namespace ?? DEFAULT_NAMESPACE,

@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import assert from "assert";
-import { HttpClient } from "@/src/api/http-client";
+import assert from 'assert';
+import { HttpClient } from '@/src/api/http-client';
 import { CLIENT_USER_AGENT } from '@/src/api/constants';
 
-describe("unit.api.http-client", () => {
-  describe("HTTPClient Operations", () => {
-    it("should not initialize in a web browser", () => {
+describe('unit.api.http-client', () => {
+  describe('HTTPClient Operations', () => {
+    it('should not initialize in a web browser', () => {
       let error: any;
       try {
         // @ts-expect-error - Testing in browser environment
@@ -31,7 +31,20 @@ describe("unit.api.http-client", () => {
       }
       assert.ok(error);
     });
-    it("should not initialize without an application token", () => {
+
+    it('should not initialize without an application token', () => {
+      let error: any;
+      try {
+        // @ts-expect-error - Testing without required args
+        const client = new HttpClient({ baseUrl: 'https://localhost:3000' });
+        assert.ok(client);
+      } catch (e) {
+        error = e;
+      }
+      assert.ok(error);
+    });
+
+    it('should not initialize without a baseUrl or both database settings', () => {
       let error: any;
       try {
         // @ts-expect-error - Testing without required args
@@ -42,9 +55,12 @@ describe("unit.api.http-client", () => {
       }
       assert.ok(error);
     });
-    it("should not initialize without a baseUrl or both database settings", () => {
+
+    it('should not initialize if window is set', () => {
       let error: any;
       try {
+        // @ts-expect-error - Testing in browser environment
+        window = true;
         // @ts-expect-error - Testing without required args
         const client = new HttpClient({});
         assert.ok(client);

@@ -15,6 +15,14 @@
 import { SomeDoc } from '@/src/data-api';
 import { ToDotNotation } from '@/src/data-api/types/dot-notation';
 
+/**
+ * Represents the options for the vector search.
+ *
+ * **If not specified, the collection will not support vector search.**
+ *
+ * @field dimension - The dimension of the vectors.
+ * @field metric - The similarity metric to use for the vector search.
+ */
 export type VectorOptions =
   | ManualVectorOptions
   | VectorizeOptions;
@@ -39,15 +47,24 @@ export interface ManualVectorOptions {
    * See [intro to vector databases](https://docs.datastax.com/en/astra/astra-db-vector/get-started/concepts.html#metrics) for more details.
    */
   metric: 'cosine' | 'euclidean' | 'dot_product',
+  /**
+   * @alpha
+   */
   service?: never,
 }
 
+/**
+ * @alpha
+ */
 export interface VectorizeOptions {
   service: VectorizeServiceOptions,
   dimension?: never,
   metric?: never,
 }
 
+/**
+ * @alpha
+ */
 export interface VectorizeServiceOptions {
   provider: string,
   modelName: string,
@@ -105,25 +122,33 @@ export interface DefaultIdOptions {
    *
    * @example
    * ```typescript
-   * const collection1 = await db.createCollection('my-collection');
+   * const collection = await db.createCollection('my-collection');
    *
    * // { name: 'Jessica', _id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' }
-   * await collection1.insertOne({ name: 'Jessica' });
+   * await collection.insertOne({ name: 'Jessica' });
+   *```
    *
-   * const collection2 = await db.createCollection('my-collection', {
+   * @example
+   * ```typescript
+   * const collection = await db.createCollection('my-collection', {
    *   defaultId: { type: 'uuidv6' },
    * });
    *
    * // { name: 'Allman', _id: UUID('6f752f1a-6b6d-6f3e-8e1e-2e167e3b5f3d') }
-   * await collection2.insertOne({ name: 'Allman' });
+   * await collection.insertOne({ name: 'Allman' });
+   * ```
    *
-   * const collection3 = await db.createCollection('my-collection', {
+   * @example
+   * ```typescript
+   * const collection = await db.createCollection('my-collection', {
    *   defaultId: { type: 'objectId' },
    * });
    *
    * // { name: 'Brothers', _id: ObjectId('507f1f77bcf86cd799439011') }
-   * await collection3.insertOne({ name: 'Brothers' });
+   * await collection.insertOne({ name: 'Brothers' });
    * ```
+   *
+   * @remarks Make sure you're keeping this all in mind if you're specifically typing your _id field.
    */
   type: 'uuid' | 'uuidv6' | 'uuidv7' | 'objectId';
 }

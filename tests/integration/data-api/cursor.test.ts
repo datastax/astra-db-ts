@@ -13,17 +13,16 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, CursorAlreadyInitializedError, FindCursor } from '@/src/data-api';
+import { Collection, CursorAlreadyInitializedError, DataAPIResponseError, FindCursor } from '@/src/data-api';
 import { initTestObjects } from '@/tests/fixtures';
 import { DataApiHttpClient } from '@/src/api';
 import assert from 'assert';
 
-describe(`integration.data-api.cursor`, async () => {
+describe('integration.data-api.cursor', async () => {
   let collection: Collection;
   let httpClient: DataApiHttpClient;
 
   const add1 = (a: number) => a + 1;
-  const mul2 = (a: number) => a * 2;
 
   const sortById = (a: any, b: any) => parseInt(a._id) - parseInt(b._id);
   const sortByAge = (a: any, b: any) => a.age - b.age;
@@ -31,7 +30,6 @@ describe(`integration.data-api.cursor`, async () => {
   const ageToString = (doc: { age: number }) => ({ age: `${doc.age}` });
 
   before(async function () {
-
     [, , collection] = await initTestObjects(this);
     httpClient = collection['_httpClient'];
   });
@@ -70,104 +68,6 @@ describe(`integration.data-api.cursor`, async () => {
       assert.strictEqual(options.includeSimilarity, true, 'Cursor has bad includeSimilarity');
       assert.deepStrictEqual(cursor['_filter'], { _id: '1' }, 'Cursor has bad filter');
       assert.strictEqual(cursor['_mapping'], undefined, 'Cursor has bad _mapping');
-    });
-  });
-
-  describe('Cursor building', () => {
-    it('should set new filter', async () => {
-      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
-      cursor.filter({ _id: '0' }).filter({ _id: '1' });
-      assert.deepStrictEqual(cursor['_filter'], { _id: '1' }, 'Cursor did not set new filter');
-    });
-
-    it('should fail setting filter if cursor is not uninitialized', async () => {
-      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
-      await cursor.close();
-      assert.throws(() => cursor.filter({ _id: '1' }), CursorAlreadyInitializedError);
-    });
-
-    it('should set new sort', async () => {
-      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
-      cursor.sort({ _id: -1 }).sort({ _id: 1 });
-      assert.deepStrictEqual(cursor['_options'].sort, { _id: 1 }, 'Cursor did not set new sort');
-    });
-
-    it('should fail setting sort if cursor is not uninitialized', async () => {
-      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
-      await cursor.close();
-      assert.throws(() => cursor.sort({ _id: 1 }), CursorAlreadyInitializedError);
-    });
-
-    it('should set new limit', async () => {
-      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
-      cursor.limit(5).limit(10);
-      assert.strictEqual(cursor['_options'].limit, 10, 'Cursor did not set new limit');
-    });
-
-    it('should fail setting limit if cursor is not uninitialized', async () => {
-      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
-      await cursor.close();
-      assert.throws(() => cursor.limit(10), CursorAlreadyInitializedError);
-    });
-
-    it('should set new skip', async () => {
-      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
-      cursor.skip(3).skip(5);
-      assert.strictEqual(cursor['_options'].skip, 5, 'Cursor did not set new skip');
-    });
-
-    it('should fail setting skip if cursor is not uninitialized', async () => {
-      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
-      await cursor.close();
-      assert.throws(() => cursor.skip(5), CursorAlreadyInitializedError);
-    });
-
-    it('should set new projection', async () => {
-      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
-      cursor.project({ _id: 1 }).project({ _id: 0 });
-      assert.deepStrictEqual(cursor['_options'].projection, { _id: 0 }, 'Cursor did not set new projection');
-    });
-
-    it('should fail setting projection if cursor is not uninitialized', async () => {
-      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
-      await cursor.close();
-      assert.throws(() => cursor.project({ _id: 0 }), CursorAlreadyInitializedError);
-    });
-
-    it('should set new includeSimilarity', async () => {
-      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
-      cursor.includeSimilarity(true);
-      assert.strictEqual(cursor['_options'].includeSimilarity, true, 'Cursor did not set new includeSimilarity');
-    });
-
-    it('should set new includeSimilarity to true by default', async () => {
-      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
-      cursor.includeSimilarity();
-      assert.strictEqual(cursor['_options'].includeSimilarity, true, 'Cursor did not set new includeSimilarity');
-    });
-
-    it('should fail setting includeSimilarity if cursor is not uninitialized', async () => {
-      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
-      await cursor.close();
-      assert.throws(() => cursor.includeSimilarity(true), CursorAlreadyInitializedError);
-    });
-
-    it('should set new mapping', async () => {
-      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
-      cursor.map(add1);
-      assert.strictEqual(cursor['_mapping'], add1, 'Cursor did not set new mapping');
-    });
-
-    it('should chain new mapping', async () => {
-      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
-      cursor.map(add1).map(mul2);
-      assert.strictEqual(cursor['_mapping']!(3), mul2(add1(3)), 'Cursor did not chain new mapping');
-    });
-
-    it('should fail setting mapping if cursor is not uninitialized', async () => {
-      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
-      await cursor.close();
-      assert.throws(() => cursor.map(add1), CursorAlreadyInitializedError);
     });
   });
 
@@ -642,6 +542,14 @@ describe(`integration.data-api.cursor`, async () => {
       assert.strictEqual(res.length, 50, 'Cursor did not limit documents');
     });
 
+    it('should have no limit if limit is set to 0', async () => {
+      const docs = Array.from({ length: 100 }, (_, i) => ({ _id: `${i}` }));
+      await collection.insertMany(docs);
+      const cursor = new FindCursor<any>('test_keyspace', httpClient, {}).limit(0);
+      const res = await cursor.toArray();
+      assert.strictEqual(res.length, 100, 'Cursor limited documents');
+    });
+
     it('should skip documents', async () => {
       const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
       await collection.insertMany(docs);
@@ -702,4 +610,32 @@ describe(`integration.data-api.cursor`, async () => {
       assert.deepStrictEqual(res, [{ age: '0' }, { age: '1' }, { age: '2' }], 'Cursor did not project documents');
     });
   });
+
+  describe('mapping tests', () => {
+    it('should map documents', async () => {
+      const docs = [{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }];
+      await collection.insertMany(docs);
+      const cursor = new FindCursor<any>('test_keyspace', httpClient, {}).map(ageToString);
+      const res = await cursor.toArray();
+      assert.deepStrictEqual(res, [{ age: '0' }, { age: '1' }, { age: '2' }], 'Cursor did not map documents');
+    });
+
+    it('should close cursor and rethrow error if mapping function throws', async () => {
+      const docs = [{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }];
+      await collection.insertMany(docs);
+      const cursor = new FindCursor<any>('test_keyspace', httpClient, {}).map(() => { throw new Error('Mapping error') });
+      await assert.rejects(async () => await cursor.toArray(), { message: 'Mapping error' });
+      assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
+    });
+  });
+
+  describe('misc', () => {
+    it('should close cursor and rethrow error if getting documents throws', async () => {
+      const docs = [{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }];
+      await collection.insertMany(docs);
+      const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
+      cursor['_filter'] = 3 as any;
+      await assert.rejects(async () => await cursor.toArray(), DataAPIResponseError);
+    });
+  })
 });

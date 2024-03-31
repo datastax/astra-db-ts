@@ -9,8 +9,8 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, InsertManyError, ObjectId, UUID } from '@/src/data-api';
-import { assertTestsEnabled, initTestObjects } from '@/tests/fixtures';
+import { Collection, DataAPIError, InsertManyError, ObjectId, UUID } from '@/src/data-api';
+import { assertTestsEnabled, initCollectionWithFailingClient, initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
 
 describe('integration.data-api.collection.insert-many', () => {
@@ -20,7 +20,7 @@ describe('integration.data-api.collection.insert-many', () => {
     [, , collection] = await initTestObjects(this);
   });
 
-  afterEach(async () => {
+  beforeEach(async () => {
     await collection.deleteAll();
   });
 
@@ -49,7 +49,7 @@ describe('integration.data-api.collection.insert-many', () => {
     const res = await collection.insertMany(docs);
     assert.strictEqual(res.insertedCount, docs.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, docs.length);
-    assert.deepStrictEqual(res.insertedIds.map((id) => (<any>id).$uuid).sort(), docs.map(doc => doc._id.toString()).sort());
+    assert.deepStrictEqual(res.insertedIds.map((id) => (<UUID>id).toString()).sort(), docs.map(doc => doc._id.toString()).sort());
   });
 
   it('should insertMany documents with ObjectIds', async () => {
@@ -57,7 +57,7 @@ describe('integration.data-api.collection.insert-many', () => {
     const res = await collection.insertMany(docs);
     assert.strictEqual(res.insertedCount, docs.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, docs.length);
-    assert.deepStrictEqual(res.insertedIds.map((id) => (<any>id).$objectId).sort(), docs.map(doc => doc._id.toString()).sort());
+    assert.deepStrictEqual(res.insertedIds.map((id) => (<ObjectId>id).toString()).sort(), docs.map(doc => doc._id.toString()).sort());
   });
 
   it('should insertMany documents with a mix of ids', async () => {
@@ -178,6 +178,30 @@ describe('integration.data-api.collection.insert-many', () => {
     docs.slice(0, 9).concat(docs.slice(10)).forEach((doc) => {
       assert.ok((error as InsertManyError).partialResult.insertedIds.includes(doc._id!));
     });
+  });
+
+  it('fails fast on hard errors ordered', async function () {
+    const collection = await initCollectionWithFailingClient(this);
+    try {
+      await collection.insertMany([{ name: 'Ignea' }], { ordered: true });
+      assert.fail('Expected an error');
+    } catch (e) {
+      assert.ok(e instanceof Error);
+      assert.ok(!(e instanceof DataAPIError));
+      assert.strictEqual(e.message, 'test');
+    }
+  });
+
+  it('fails fast on hard errors unordered', async function () {
+    const collection = await initCollectionWithFailingClient(this);
+    try {
+      await collection.insertMany([{ name: 'Ignea' }], { ordered: false });
+      assert.fail('Expected an error');
+    } catch (e) {
+      assert.ok(e instanceof Error);
+      assert.ok(!(e instanceof DataAPIError));
+      assert.strictEqual(e.message, 'test');
+    }
   });
 
   it('[dev] should insertMany with vectorize', async function () {

@@ -27,10 +27,9 @@ describe('integration.data-api.collection.finds', () => {
     [, , collection] = await initTestObjects(this);
   });
 
-  afterEach(async () => {
+  beforeEach(async () => {
     await collection.deleteAll();
   });
-
 
   it('should find & findOne document', async () => {
     const insertDocResp = await collection.insertOne(createSampleDocWithMultiLevel());
@@ -42,6 +41,52 @@ describe('integration.data-api.collection.finds', () => {
     const findResDocs = await collection.find(filter).toArray();
     assert.strictEqual(findResDocs.length, 1);
     assert.strictEqual(findResDocs[0]._id, idToCheck);
+  });
+
+  it('should find & findOne document with projection', async () => {
+    const insertDocResp = await collection.insertOne(createSampleDocWithMultiLevel());
+    const idToCheck = insertDocResp.insertedId;
+    const filter = { '_id': idToCheck };
+    const resDoc = await collection.findOne(filter, { projection: { username: 1 } });
+    assert.ok(resDoc);
+    assert.strictEqual(resDoc._id, idToCheck);
+    assert.strictEqual(resDoc.username, 'aaron');
+    assert.strictEqual(resDoc.age, undefined);
+    const findResDocs = await collection.find(filter, { projection: { username: 1 } }).toArray();
+    assert.strictEqual(findResDocs.length, 1);
+    assert.strictEqual(findResDocs[0]._id, idToCheck);
+    assert.strictEqual(findResDocs[0].username, 'aaron');
+    assert.strictEqual(findResDocs[0].age, undefined);
+  });
+
+  it('should find with sort', async () => {
+    await collection.deleteAll();
+    await collection.insertMany([
+      { username: 'a' },
+      { username: 'c' },
+      { username: 'b' }
+    ]);
+
+    let docs = await collection.find({}, { sort: { username: 1 }, limit: 20 }).toArray();
+    assert.deepStrictEqual(docs.map(doc => doc.username), ['a', 'b', 'c']);
+
+    docs = await collection.find({}, { sort: { username: -1 }, limit: 20 }).toArray();
+    assert.deepStrictEqual(docs.map(doc => doc.username), ['c', 'b', 'a']);
+  });
+
+  it('should findOne with sort', async () => {
+    await collection.deleteAll();
+    await collection.insertMany([
+      { username: 'a' },
+      { username: 'c' },
+      { username: 'b' }
+    ]);
+
+    let doc = await collection.findOne({}, { sort: { username: 1 } });
+    assert.strictEqual(doc!.username, 'a');
+
+    doc = await collection.findOne({}, { sort: { username: -1 } });
+    assert.deepStrictEqual(doc!.username, 'c');
   });
 
   it('should find & findOne eq document', async () => {

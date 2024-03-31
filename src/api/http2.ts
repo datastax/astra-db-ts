@@ -79,7 +79,7 @@ export class HTTP2Strategy implements HTTPRequestStrategy {
         clearTimeout(timer);
 
         try {
-          const data = JSON.parse(responseBody);
+          const data = JSON.parse(responseBody, info.reviver);
           resolve({ data, status, headers });
         } catch (error) {
           reject(new Error('Unable to parse response as JSON, got: "' + responseBody + '"'));

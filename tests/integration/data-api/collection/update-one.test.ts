@@ -19,7 +19,7 @@ describe('integration.data-api.collection.update-one', () => {
     [, , collection] = await initTestObjects(this);
   });
 
-  afterEach(async () => {
+  beforeEach(async () => {
     await collection.deleteAll();
   });
 
@@ -63,6 +63,23 @@ describe('integration.data-api.collection.update-one', () => {
     assert.strictEqual(updatedDoc!.username, 'aaron');
     assert.strictEqual(updatedDoc!.address.city, 'big banana');
     assert.strictEqual(updatedDoc!.address.state, 'new state');
+  });
+
+  it('should updateOne with sort', async () => {
+    await collection.insertMany([
+      { username: 'a' },
+      { username: 'c' },
+      { username: 'b' }
+    ]);
+
+    await collection.updateOne(
+      {},
+      { $set: { username: 'aa' } },
+      { sort: { username: 1 } }
+    );
+
+    const docs = await collection.find({}, { sort: { username: 1 }, limit: 20 }).toArray();
+    assert.deepStrictEqual(docs.map(doc => doc.username), ['aa', 'b', 'c']);
   });
 
   it('should updateOne document by col with sort', async () => {

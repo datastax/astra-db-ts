@@ -242,29 +242,6 @@ export class ObjectId {
 /**
  * @internal
  */
-export function replaceRawId(obj: any): any {
-  if (!obj) {
-    return obj;
-  }
-
-  if (obj.$uuid) {
-    return new UUID(obj.$uuid, false);
-  }
-
-  if (obj.$objectId) {
-    return new ObjectId(obj.$objectId, false);
-  }
-
-  if (obj._id && typeof obj._id === 'object') {
-    obj._id = replaceRawId(obj._id);
-  }
-
-  return obj;
-}
-
-/**
- * @internal
- */
 const timestampFromUUID = (uuid: UUID): Date | undefined => {
   if (uuid.version !== 7) {
     return undefined;

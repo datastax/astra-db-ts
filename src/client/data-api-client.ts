@@ -39,6 +39,10 @@ export class DataApiClient {
    * @param options - The default options to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    */
   constructor(token: string, options?: RootClientOptions) {
+    if (!token || typeof token as any !== 'string') {
+      throw new Error('A (string) token is required to use the Data API');
+    }
+
     this.#options = {
       ...options,
       dbOptions: {

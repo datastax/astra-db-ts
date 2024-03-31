@@ -19,7 +19,7 @@ describe('integration.data-api.collection.delete-all', () => {
     [, , collection] = await initTestObjects(this);
   });
 
-  afterEach(async () => {
+  beforeEach(async () => {
     await collection.deleteAll();
   });
 

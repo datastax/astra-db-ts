@@ -172,4 +172,35 @@ describe('unit.data-api.db', () => {
       assert.strictEqual(db.isClosed(), undefined);
     });
   });
+
+  describe('id tests', () => {
+    it('should return the id from the endpoint', () => {
+      const db = mkDb(mkOptions(), 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb', 'us-east1');
+      assert.strictEqual(db.id, 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb');
+    });
+
+    it('should throw error if attempting to get ID for non-astra db', () => {
+      const db = mkDb(mkOptions(), 'https://localhost:3000');
+      assert.throws(() => { const _id = db.id });
+    });
+  });
+
+  describe('admin tests', () => {
+    it('should return the admin if on astra db', () => {
+      const db = mkDb(mkOptions(), 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb', 'us-east1');
+      assert.strictEqual(db.admin().id, 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb');
+    });
+
+    it('should throw error if attempting to get admin for non-astra db', () => {
+      const db = mkDb(mkOptions(), 'https://localhost:3000');
+      assert.throws(() => { const _admin = db.admin() });
+    });
+
+    it('should override auth token', () => {
+      const db = mkDb(mkOptions({ token: 'old' }), 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb', 'us-east1');
+      const admin = db.admin({ adminToken: 'new' });
+      assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'old');
+      assert.strictEqual(admin['_httpClient'].unsafeGetToken(), 'new');
+    });
+  });
 });
