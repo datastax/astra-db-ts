@@ -14,7 +14,6 @@
 
 import { CLIENT_USER_AGENT, DEFAULT_TIMEOUT } from '@/src/api/constants';
 import {
-  Caller,
   GuaranteedAPIResponse,
   HTTPClientOptions,
   HTTPRequestInfo,
@@ -23,6 +22,7 @@ import {
 import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
 import { Mutable } from '@/src/data-api/types/utils';
+import { Caller } from '@/src/client';
 
 export class HttpClient {
   public readonly baseUrl: string;

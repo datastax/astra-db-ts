@@ -13,8 +13,7 @@
 // limitations under the License.
 
 import type { HTTP_METHODS } from '@/src/api/index';
-
-export type Caller = [name: string, version?: string];
+import { Caller } from '@/src/client';
 
 /**
  * @internal
