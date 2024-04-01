@@ -26,7 +26,6 @@ import { Caller } from '@/src/client';
 
 export class HttpClient {
   public readonly baseUrl: string;
-  public readonly logSkippedOptions: boolean;
   public readonly userAgent: string;
   public requestStrategy: HTTPRequestStrategy;
   #applicationToken: string;
@@ -47,7 +46,6 @@ export class HttpClient {
     this.#applicationToken = options.applicationToken;
 
     this.baseUrl = options.baseUrl;
-    this.logSkippedOptions = options.logSkippedOptions ?? false;
 
     this.requestStrategy =
       (options.requestStrategy)
@@ -79,7 +77,6 @@ export class HttpClient {
     const clone = new cls({
       baseUrl: this.baseUrl,
       applicationToken: this.#applicationToken,
-      logSkippedOptions: this.logSkippedOptions,
       requestStrategy: this.requestStrategy,
       userAgent: this.userAgent,
     });

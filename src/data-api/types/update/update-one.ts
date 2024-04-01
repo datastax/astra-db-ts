@@ -74,9 +74,6 @@ export interface UpdateOneOptions<Schema extends SomeDoc> extends BaseOptions {
   vectorize?: string,
 }
 
-/** @internal */
-export const updateOneOptionKeys = new Set(['upsert', 'sort']);
-
 /**
  * Represents the result of an updateOne operation.
  *

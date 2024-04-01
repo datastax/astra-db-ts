@@ -133,6 +133,3 @@ export interface FindOneAndReplaceOptions<Schema extends SomeDoc> extends BaseOp
    */
   includeResultMetadata?: boolean,
 }
-
-/** @internal */
-export const findOneAndReplaceOptionsKeys = new Set(['upsert', 'returnDocument', 'sort', 'projection']);

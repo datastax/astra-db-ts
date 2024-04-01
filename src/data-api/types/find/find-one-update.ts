@@ -130,6 +130,3 @@ export interface FindOneAndUpdateOptions<Schema extends SomeDoc> extends BaseOpt
    */
   includeResultMetadata?: boolean,
 }
-
-/** @internal */
-export const findOneAndUpdateOptionsKeys = new Set(['upsert', 'returnDocument']);

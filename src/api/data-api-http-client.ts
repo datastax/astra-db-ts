@@ -29,17 +29,7 @@ export class DataApiHttpClient extends HttpClient {
   public collection?: string;
   public namespace?: string;
 
-  public async executeCommand(command: Record<string, any>, options?: BaseOptions & { collection?: string, namespace?: string }, optionsToRetain?: Set<string>) {
-    const commandName = Object.keys(command)[0];
-
-    if (optionsToRetain) {
-      const [options, dirty] = cleanupOptions(command, commandName, optionsToRetain, this.logSkippedOptions);
-
-      if (dirty) {
-        command = { [commandName]: { ...command[commandName], options } };
-      }
-    }
-
+  public async executeCommand(command: Record<string, any>, options?: BaseOptions & { collection?: string, namespace?: string }) {
     const response = await this._requestDataApi({
       url: this.baseUrl,
       timeout: options?.maxTimeMS,
@@ -102,29 +92,6 @@ export class DataApiHttpClient extends HttpClient {
   private _mkError(message: string): RawDataApiResponse {
     return { errors: [{ message }] };
   }
-}
-
-function cleanupOptions(data: Record<string, any>, commandName: string, optionsToRetain: Set<string>, logSkippedOptions: boolean) {
-  const command = data[commandName];
-
-  if (!command.options) {
-    return [undefined, false];
-  }
-
-  const options = { ...command.options };
-  let dirty = false;
-
-  Object.keys(options).forEach((key) => {
-    if (!optionsToRetain.has(key)) {
-      if (logSkippedOptions) {
-        logger.warn(`'${commandName}' does not support option '${key}'`);
-      }
-      delete options[key];
-      dirty = true;
-    }
-  });
-
-  return [options, dirty];
 }
 
 export function replacer(this: any, key: string, value: any): any {

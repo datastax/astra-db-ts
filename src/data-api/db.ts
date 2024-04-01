@@ -19,12 +19,10 @@ import {
   CollectionName,
   CreateCollectionCommand,
   CreateCollectionOptions,
-  createCollectionOptionsKeys,
   FullCollectionInfo,
-  listCollectionOptionsKeys,
   ListCollectionsCommand,
   ListCollectionsOptions,
-  WithNamespace
+  WithNamespace,
 } from '@/src/data-api/types';
 import { DatabaseInfo } from '@/src/devops/types/admin/database-info';
 import { AstraDbAdmin, mkDbAdmin } from '@/src/devops/astra-db-admin';
@@ -132,7 +130,6 @@ export class Db implements Disposable {
         applicationToken: dbOpts.token,
         baseApiPath: dbOpts?.dataApiPath || DEFAULT_DATA_API_PATH,
         caller: options.caller,
-        logSkippedOptions: dbOpts.logSkippedOptions,
         useHttp2: dbOpts.useHttp2,
       }),
       enumerable: false,
@@ -313,7 +310,7 @@ export class Db implements Disposable {
       },
     };
 
-    await this._httpClient.executeCommand(command, options, createCollectionOptionsKeys);
+    await this._httpClient.executeCommand(command, options);
 
     return this.collection(collectionName, options);
   }
@@ -405,7 +402,7 @@ export class Db implements Disposable {
       },
     }
 
-    const resp = await this._httpClient.executeCommand(command, options, listCollectionOptionsKeys);
+    const resp = await this._httpClient.executeCommand(command, options);
 
     return (options?.nameOnly !== false)
       ? resp.status!.collections.map((name: string) => ({ name }))

@@ -26,7 +26,6 @@ export interface HTTPClientOptions {
   useHttp2?: boolean;
   requestStrategy?: HTTPRequestStrategy;
   userAgent?: string;
-  logSkippedOptions?: boolean;
 }
 
 export interface RawDataApiResponse {

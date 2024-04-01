@@ -154,22 +154,6 @@ export interface DbSpawnOptions {
    */
   useHttp2?: boolean,
   /**
-   * Whether to log skipped options (logs as 'warn')
-   *
-   * Logs when a command is executed with options that are not supported by the client
-   *
-   * Defaults to `false`.
-   *
-   * @example
-   * ```typescript
-   * // Logs a warning 'findOne' does not support option 'unknownOption'
-   * await findOne({}, { unknownOption: 'value' });
-   * ```
-   *
-   * @defaultValue false
-   */
-  logSkippedOptions?: boolean,
-  /**
    * The path to the Data API, which is going to be `api/json/v1` for all Astra instances. However, it may vary
    * if you're using a different Data API-compatible endpoint.
    *

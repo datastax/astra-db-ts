@@ -141,6 +141,3 @@ export interface InternalGetMoreCommand {
     projection?: Record<string, unknown>;
   }
 }
-
-/** @internal */
-export const internalFindOptionsKeys = new Set(['limit', 'skip', 'pagingState', 'includeSimilarity']);

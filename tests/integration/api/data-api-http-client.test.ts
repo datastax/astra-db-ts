@@ -88,41 +88,6 @@ describe('integration.api.data-api-http-client', () => {
       }
     });
 
-    it('should not mutate original command when cleaning up skipped options', async () => {
-      const clonedClient = httpClient.cloneInto(DataApiHttpClient, (c) => {
-        c.logSkippedOptions = true;
-      });
-
-      const command = {
-        insertOne: {
-          document: { name: 'John' },
-          options: { skip: 1 },
-        }
-      };
-
-      const commandClone = structuredClone(command);
-      await clonedClient.executeCommand(command, { collection: DEFAULT_COLLECTION_NAME }, new Set());
-
-      assert.deepStrictEqual(command, commandClone);
-    });
-
-    it('should not mutate original command when "cleaning up" non-existent options', async () => {
-      const clonedClient = httpClient.cloneInto(DataApiHttpClient, (c) => {
-        c.logSkippedOptions = true;
-      });
-
-      const command = {
-        insertOne: {
-          document: { name: 'John' },
-        }
-      };
-
-      const commandClone = structuredClone(command);
-      await clonedClient.executeCommand(command, { collection: DEFAULT_COLLECTION_NAME }, new Set());
-
-      assert.deepStrictEqual(command, commandClone);
-    });
-
     it('should timeout properly', async () => {
       await assert.rejects(async () => {
         await httpClient.executeCommand({

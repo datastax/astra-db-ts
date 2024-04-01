@@ -89,6 +89,3 @@ export interface FullCollectionInfo {
    */
   options: CollectionOptions<SomeDoc>,
 }
-
-/** @internal */
-export const listCollectionOptionsKeys = new Set(['explain']);

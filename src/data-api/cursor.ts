@@ -16,7 +16,6 @@ import {
   Filter,
   FindOptions,
   InternalFindOptions,
-  internalFindOptionsKeys,
   InternalGetMoreCommand,
   ProjectionOption,
   SortOption,
@@ -500,7 +499,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
       command.find.options = options;
     }
 
-    const resp = await this._httpClient.executeCommand(command, {}, internalFindOptionsKeys);
+    const resp = await this._httpClient.executeCommand(command, {});
 
     this._nextPageState = resp.data!.nextPageState || null;
     this._buffer = resp.data!.documents as TRaw[];

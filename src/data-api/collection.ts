@@ -43,19 +43,15 @@ import {
   FindOneAndDeleteOptions,
   FindOneAndReplaceCommand,
   FindOneAndReplaceOptions,
-  findOneAndReplaceOptionsKeys,
   FindOneAndUpdateCommand,
   FindOneAndUpdateOptions,
-  findOneAndUpdateOptionsKeys,
   FindOneCommand,
   FindOneOptions,
-  findOneOptionsKeys,
   FindOptions,
   Flatten,
   FoundDoc,
   IdOf,
   InsertManyCommand,
-  insertManyOptionKeys,
   InsertManyOptions,
   InsertManyResult,
   InsertOneCommand,
@@ -73,7 +69,6 @@ import {
   UpdateManyOptions,
   UpdateManyResult,
   UpdateOneCommand,
-  updateOneOptionKeys,
   UpdateOneOptions,
   UpdateOneResult,
   WithId,
@@ -373,7 +368,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       command.updateOne.sort = options.sort;
     }
 
-    const resp = await this._httpClient.executeCommand(command, options, updateOneOptionKeys);
+    const resp = await this._httpClient.executeCommand(command, options);
 
     const commonResult = {
       modifiedCount: resp.status?.modifiedCount,
@@ -555,7 +550,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       command.findOneAndReplace.sort = options.sort;
     }
 
-    const resp = await this._httpClient.executeCommand(command, options, findOneAndReplaceOptionsKeys);
+    const resp = await this._httpClient.executeCommand(command, options);
 
     const commonResult = {
       modifiedCount: resp.status?.modifiedCount,
@@ -937,7 +932,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       command.findOne.projection = options.projection;
     }
 
-    const resp = await this._httpClient.executeCommand(command, options, findOneOptionsKeys);
+    const resp = await this._httpClient.executeCommand(command, options);
     return resp.data?.document;
   }
 
@@ -1114,7 +1109,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       command.findOneAndReplace.projection = options.projection;
     }
 
-    const resp = await this._httpClient.executeCommand(command, options, findOneAndReplaceOptionsKeys);
+    const resp = await this._httpClient.executeCommand(command, options);
     const document = resp.data?.document;
 
     return (options.includeResultMetadata)
@@ -1329,7 +1324,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       command.findOneAndUpdate.projection = options.projection;
     }
 
-    const resp = await this._httpClient.executeCommand(command, options, findOneAndUpdateOptionsKeys);
+    const resp = await this._httpClient.executeCommand(command, options);
     const document = resp.data?.document;
 
     return (options.includeResultMetadata)
@@ -1572,7 +1567,7 @@ const insertMany = async <Schema>(httpClient: DataApiHttpClient, documents: unkn
     }
   }
 
-  const resp = await httpClient.executeCommand(command, {}, insertManyOptionKeys);
+  const resp = await httpClient.executeCommand(command, {});
   return resp.status?.insertedIds ?? [];
 }
 

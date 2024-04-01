@@ -35,6 +35,3 @@ export interface CreateCollectionCommand {
  * @see Db.createCollection
  */
 export interface CreateCollectionOptions<Schema extends SomeDoc> extends BaseOptions, CollectionOptions<Schema>, WithNamespace {}
-
-/** @internal */
-export const createCollectionOptionsKeys = new Set(['vector', 'indexing', 'defaultId']);

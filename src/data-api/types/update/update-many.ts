@@ -43,9 +43,6 @@ export interface UpdateManyOptions {
   upsert?: boolean;
 }
 
-/** @internal */
-export const updateManyOptionKeys = new Set(['upsert', 'pagingState']);
-
 /**
  * Represents the result of an updateMany operation.
  *

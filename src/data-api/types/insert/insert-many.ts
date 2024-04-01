@@ -132,9 +132,6 @@ export interface InsertManyUnorderedOptions {
   vectorize?: (string | null | undefined)[],
 }
 
-/** @internal */
-export const insertManyOptionKeys = new Set(['ordered']);
-
 /**
  * Represents the result of an insertMany command.
  *
