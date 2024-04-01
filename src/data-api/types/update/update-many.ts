@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import type { InternalUpdateResult } from '@/src/data-api/types';
+import { WithTimeout } from '@/src/common/types';
 
 /** @internal */
 export interface UpdateManyCommand {
@@ -30,7 +31,7 @@ export interface UpdateManyCommand {
  *
  * @field upsert - If true, perform an insert if no documents match the filter.
  */
-export interface UpdateManyOptions {
+export interface UpdateManyOptions extends WithTimeout {
   /**
    * If true, perform an insert if no documents match the filter.
    *

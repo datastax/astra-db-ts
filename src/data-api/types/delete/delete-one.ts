@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/data-api';
-import type { BaseOptions, SortOption } from '@/src/data-api/types';
+import type { SortOption } from '@/src/data-api/types';
+import { WithTimeout } from '@/src/common/types';
 
 /** @internal */
 export interface DeleteOneCommand {
@@ -31,7 +32,7 @@ export interface DeleteOneCommand {
  *
  * @see Collection.deleteOne
  */
-export interface DeleteOneOptions<Schema extends SomeDoc> extends BaseOptions {
+export interface DeleteOneOptions<Schema extends SomeDoc> extends WithTimeout {
   /**
    * The order in which to apply the update if the filter selects multiple documents.
    *

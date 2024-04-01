@@ -68,7 +68,7 @@ export class HTTP1Strategy implements HTTPRequestStrategy {
         data: info.data,
         params: info.params,
         method: info.method,
-        timeout: info.timeout,
+        timeout: info.timeoutManager.msRemaining,
         headers: {
           ...this._authHeaderFactory(info.token),
           'User-Agent': info.userAgent,
@@ -80,7 +80,7 @@ export class HTTP1Strategy implements HTTPRequestStrategy {
       });
     } catch (e: any) {
       if (e.code === 'ECONNABORTED') {
-        throw info.timeoutError();
+        throw info.timeoutManager.mkTimeoutError(info);
       }
       throw e;
     }

@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { BaseOptions, ProjectionOption, SortOption } from '@/src/data-api/types';
+import type { ProjectionOption, SortOption } from '@/src/data-api/types';
 import { SomeDoc } from '@/src/data-api';
+import { WithTimeout } from '@/src/common/types';
 
 /** @internal */
 export interface FindOneAndDeleteCommand {
@@ -34,7 +35,7 @@ export interface FindOneAndDeleteCommand {
  *
  * @see Collection.findOneAndDelete
  */
-export interface FindOneAndDeleteOptions<Schema extends SomeDoc> extends BaseOptions {
+export interface FindOneAndDeleteOptions<Schema extends SomeDoc> extends WithTimeout {
   /**
    * The order in which to apply the update if the filter selects multiple documents.
    *

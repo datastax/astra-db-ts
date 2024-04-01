@@ -36,7 +36,7 @@ describe('integration.api.data-api-http-client', () => {
     it('should execute a db-level command', async () => {
       const resp = await httpClient.executeCommand({
         findCollections: {},
-      });
+      }, {});
       assert.strictEqual(resp.status?.collections.length, 1);
     });
 
@@ -64,7 +64,7 @@ describe('integration.api.data-api-http-client', () => {
       });
 
       try {
-        await clonedClient.executeCommand({ findCollections: {} });
+        await clonedClient.executeCommand({ findCollections: {} }, {});
         assert.fail('Expected error');
       } catch (e) {
         assert.ok(e instanceof DataAPIResponseError);
@@ -80,7 +80,7 @@ describe('integration.api.data-api-http-client', () => {
 
       try {
         localClient.close();
-        await localClient.executeCommand({ findCollections: function () {} });
+        await localClient.executeCommand({ findCollections: function () {} }, {});
         assert.fail('Expected error');
       } catch (e) {
         assert.ok(e instanceof Error);

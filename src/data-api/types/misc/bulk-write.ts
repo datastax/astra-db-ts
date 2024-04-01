@@ -15,6 +15,7 @@
 
 import type { SomeDoc } from '@/src/data-api';
 import type { Filter, SomeId, UpdateFilter } from '@/src/data-api/types';
+import { WithTimeout } from '@/src/common/types';
 
 /**
  * Options for bulkWrite.
@@ -34,7 +35,7 @@ export type BulkWriteOptions =
  *
  * @see Collection.bulkWrite
  */
-export interface BulkWriteOrderedOptions {
+export interface BulkWriteOrderedOptions extends WithTimeout {
   /**
    * If `true`, the operations are executed in the order provided. If an error occurs, the operation stops and the
    * remaining operations are not executed.
@@ -50,7 +51,7 @@ export interface BulkWriteOrderedOptions {
  *
  * @see Collection.bulkWrite
  */
-export interface BulkWriteUnorderedOptions {
+export interface BulkWriteUnorderedOptions extends WithTimeout {
   /**
    * If `false`, the operations are inserted in an arbitrary order. If an error occurs, the operation stops but the
    * remaining operations are still executed. This allows the operations to be parallelized for better performance.

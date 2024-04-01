@@ -19,13 +19,27 @@ import { HTTPClientOptions } from '@/src/api/types';
 import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
 import { DevopsApiResponseError, DevopsApiTimeout, DevopsUnexpectedStateError } from '@/src/devops/errors';
 import { AdminBlockingOptions } from '@/src/devops/types';
+import {
+  MkTimeoutError,
+  MultiCallTimeoutManager,
+  SingleCallTimeoutManager,
+  TimeoutManager,
+  TimeoutOptions,
+} from '@/src/api/timeout-managers';
 
 interface DevopsApiRequestInfo {
   path: string,
-  timeout?: number,
   method: HTTP_METHODS,
   data?: Record<string, any>,
   params?: Record<string, any>,
+}
+
+interface LongRunningRequestInfo {
+  id: string | ((resp: AxiosResponse) => string),
+  target: string,
+  legalStates: string[],
+  defaultPollInterval: number,
+  options: AdminBlockingOptions | undefined,
 }
 
 export class DevopsApiHttpClient extends HttpClient {
@@ -34,17 +48,21 @@ export class DevopsApiHttpClient extends HttpClient {
     this.requestStrategy = new HTTP1Strategy(HTTP1AuthHeaderFactories.DevopsApi);
   }
 
-  public async request(info: DevopsApiRequestInfo): Promise<AxiosResponse> {
+  public multiCallTimeoutManager(timeoutMs: number | undefined) {
+    return mkTimeoutManager(MultiCallTimeoutManager, timeoutMs);
+  }
+
+  public async request(info: DevopsApiRequestInfo, options: TimeoutOptions | undefined): Promise<AxiosResponse> {
     try {
+      const timeoutManager = options?.timeoutManager ?? mkTimeoutManager(SingleCallTimeoutManager, options?.maxTimeMS);
       const url = this.baseUrl + info.path;
 
       return await this._request({
         url: url,
         method: info.method,
-        timeout: info.timeout || DEFAULT_TIMEOUT,
-        timeoutError: () => new DevopsApiTimeout(url, info.timeout || DEFAULT_TIMEOUT),
         params: info.params,
         data: info.data,
+        timeoutManager,
       }) as any;
     } catch (e) {
       if (!(e instanceof AxiosError)) {
@@ -54,7 +72,19 @@ export class DevopsApiHttpClient extends HttpClient {
     }
   }
 
-  public async awaitStatus(idRef: { id: string }, target: string, legalStates: string[], options: AdminBlockingOptions | undefined, defaultPollInterval: number): Promise<void> {
+  public async requestLongRunning(req: DevopsApiRequestInfo, info: LongRunningRequestInfo): Promise<AxiosResponse> {
+    const timeoutManager = this.multiCallTimeoutManager(info.options?.maxTimeMS);
+    const resp = await this.request(req, { timeoutManager });
+
+    const id = (typeof info.id === 'function')
+      ? info.id(resp)
+      : info.id;
+
+    await this._awaitStatus(id, 'ACTIVE', ['MAINTENANCE'], info.options, info.defaultPollInterval, timeoutManager);
+    return resp;
+  }
+
+  private async _awaitStatus(id: string, target: string, legalStates: string[], options: AdminBlockingOptions | undefined, defaultPollInterval: number, timeoutManager: TimeoutManager): Promise<void> {
     if (options?.blocking === false) {
       return;
     }
@@ -62,7 +92,9 @@ export class DevopsApiHttpClient extends HttpClient {
     for (;;) {
       const resp = await this.request({
         method: HTTP_METHODS.Get,
-        path: `/databases/${idRef.id}`,
+        path: `/databases/${id}`,
+      }, {
+        timeoutManager: timeoutManager,
       });
 
       if (resp.data?.status === target) {
@@ -78,4 +110,13 @@ export class DevopsApiHttpClient extends HttpClient {
       });
     }
   }
+}
+
+const mkTimeoutManager = (constructor: new (maxMs: number, mkTimeoutError: MkTimeoutError) => TimeoutManager, maxMs: number | undefined) => {
+  const timeout = maxMs ?? DEFAULT_TIMEOUT;
+  return new constructor(timeout, mkTimeoutErrorMaker(timeout));
+}
+
+const mkTimeoutErrorMaker = (timeout: number): MkTimeoutError => {
+  return (info) => new DevopsApiTimeout(info.url, timeout);
 }

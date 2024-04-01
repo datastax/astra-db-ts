@@ -168,7 +168,7 @@ describe('integration.data-api.collection.bulk-write', () => {
       assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof Error);
-      assert.strictEqual(e.message, 'Unknown bulk write operation: unknownOperation');
+      assert.strictEqual(e.message, `Unknown bulk write operation: ${JSON.stringify({ unknownOperation: { document: { _id: 'b' } } })}`);
     }
   });
 

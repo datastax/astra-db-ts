@@ -14,6 +14,7 @@
 
 import type { HTTP_METHODS } from '@/src/api/index';
 import { Caller } from '@/src/client';
+import { TimeoutManager } from '@/src/api/timeout-managers';
 
 /**
  * @internal
@@ -51,9 +52,8 @@ export interface HTTPRequestInfo {
   data?: unknown,
   params?: Record<string, string>,
   method: HTTP_METHODS,
-  timeout?: number,
-  timeoutError: () => Error,
   reviver?: (key: string, value: any) => any,
+  timeoutManager: TimeoutManager,
 }
 
 /**
@@ -62,7 +62,6 @@ export interface HTTPRequestInfo {
 export interface InternalHTTPRequestInfo extends HTTPRequestInfo {
   token: string,
   method: HTTP_METHODS,
-  timeout: number,
   userAgent: string,
 }
 

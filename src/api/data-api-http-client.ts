@@ -12,27 +12,43 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { BaseOptions } from '@/src/data-api/types';
 import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, HTTP_METHODS, HttpClient, RawDataApiResponse } from '@/src/api';
 import { DataAPIResponseError, DataAPITimeout, mkRespErrorFromResponse, ObjectId, UUID } from '@/src/data-api';
 import { logger } from '@/src/logger';
+import {
+  MkTimeoutError,
+  MultiCallTimeoutManager,
+  SingleCallTimeoutManager,
+  TimeoutManager, TimeoutOptions,
+} from '@/src/api/timeout-managers';
 
 interface DataApiRequestInfo {
   url: string;
-  timeout?: number;
   collection?: string;
   namespace?: string;
   command: Record<string, any>;
+  timeoutManager: TimeoutManager;
+}
+
+type ExecuteCommandOptions = TimeoutOptions & {
+  collection?: string;
+  namespace?: string;
 }
 
 export class DataApiHttpClient extends HttpClient {
   public collection?: string;
   public namespace?: string;
 
-  public async executeCommand(command: Record<string, any>, options?: BaseOptions & { collection?: string, namespace?: string }) {
+  public multiCallTimeoutManager(timeoutMs: number | undefined) {
+    return mkTimeoutManager(MultiCallTimeoutManager, timeoutMs);
+  }
+
+  public async executeCommand(command: Record<string, any>, options: ExecuteCommandOptions | undefined) {
+    const timeoutManager = options?.timeoutManager ?? mkTimeoutManager(SingleCallTimeoutManager, options?.maxTimeMS);
+
     const response = await this._requestDataApi({
       url: this.baseUrl,
-      timeout: options?.maxTimeMS,
+      timeoutManager: timeoutManager,
       collection: options?.collection,
       namespace: options?.namespace,
       command: command,
@@ -54,16 +70,13 @@ export class DataApiHttpClient extends HttpClient {
       const response = await this._request({
         url: url,
         data: JSON.stringify(info.command, replacer),
-        timeout: info.timeout,
+        timeoutManager: info.timeoutManager,
         method: HTTP_METHODS.Post,
-        timeoutError() {
-          return new DataAPITimeout(info.command, info.timeout || DEFAULT_TIMEOUT);
-        },
         reviver: reviver,
       });
 
       if (response.status === 401 || (response.data?.errors?.length > 0 && response.data?.errors[0]?.message === 'UNAUTHENTICATED: Invalid token')) {
-        return this._mkError('Authentication failed; is your token valid?');
+        return mkFauxErroredResponse('Authentication failed; is your token valid?');
       }
 
       if (response.status === 200) {
@@ -75,7 +88,7 @@ export class DataApiHttpClient extends HttpClient {
       } else {
         logger.error(info.url + ": " + response.status);
         logger.error("Data: " + JSON.stringify(info.command));
-        return this._mkError(`Some non-200 status code was returned. Check the logs for more information. ${response.status}, ${JSON.stringify(response.data)}`);
+        return mkFauxErroredResponse(`Some non-200 status code was returned. Check the logs for more information. ${response.status}, ${JSON.stringify(response.data)}`);
       }
     } catch (e: any) {
       logger.error(info.url + ": " + e.message);
@@ -88,10 +101,19 @@ export class DataApiHttpClient extends HttpClient {
       throw e;
     }
   }
+}
 
-  private _mkError(message: string): RawDataApiResponse {
-    return { errors: [{ message }] };
-  }
+const mkTimeoutManager = (constructor: new (maxMs: number, mkTimeoutError: MkTimeoutError) => TimeoutManager, maxMs: number | undefined) => {
+  const timeout = maxMs ?? DEFAULT_TIMEOUT;
+  return new constructor(timeout, mkTimeoutErrorMaker(timeout));
+}
+
+const mkTimeoutErrorMaker = (timeout: number): MkTimeoutError => {
+  return (info) => new DataAPITimeout(info.data!, timeout)
+}
+
+const mkFauxErroredResponse = (message: string): RawDataApiResponse => {
+  return { errors: [{ message }] };
 }
 
 export function replacer(this: any, key: string, value: any): any {

@@ -17,7 +17,7 @@ import { AstraAdmin, mkAdmin } from '@/src/devops';
 import { DEFAULT_DEVOPS_API_ENDPOINT } from '@/src/api';
 import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
 
-describe('unit.data-api.admin tests', () => {
+describe('unit.data-api.admin', () => {
   const mkOptions = (data?: DbSpawnOptions, devops?: AdminSpawnOptions) => {
     return { dbOptions: { token: 'old', ...data }, adminOptions: { adminToken: 'old-admin', ...devops } };
   }

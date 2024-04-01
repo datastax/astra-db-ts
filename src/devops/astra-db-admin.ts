@@ -3,6 +3,7 @@ import { DEFAULT_DEVOPS_API_ENDPOINT, DevopsApiHttpClient, HTTP_METHODS, HttpCli
 import { Db } from '@/src/data-api';
 import { AdminSpawnOptions, RootClientOptsWithToken } from '@/src/client';
 import { DbAdmin } from '@/src/devops/db-admin';
+import { WithTimeout } from '@/src/common/types';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -103,11 +104,11 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves to the complete database information.
    */
-  public async info(): Promise<FullDatabaseInfo> {
+  public async info(options?: WithTimeout): Promise<FullDatabaseInfo> {
     const resp = await this._httpClient.request({
       method: HTTP_METHODS.Get,
       path: `/databases/${this._db.id}`,
-    });
+    }, options);
     return resp.data;
   }
 
@@ -127,15 +128,15 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves to an array of namespace names.
    */
-  public override async listNamespaces(): Promise<string[]> {
-    return this.info().then(i => [i.info.keyspace!, ...i.info.additionalKeyspaces ?? []].filter(Boolean))
+  public override async listNamespaces(options?: WithTimeout): Promise<string[]> {
+    return this.info(options).then(i => [i.info.keyspace!, ...i.info.additionalKeyspaces ?? []].filter(Boolean))
   }
 
   /**
    * Creates a new, additional, namespace (aka keyspace) for this database.
    *
    * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
-   * default polling interval is 2 seconds. Expect it to take roughly 8-10 seconds to complete.
+   * default polling interval is 1 second. Expect it to take roughly 8-10 seconds to complete.
    *
    * @example
    * ```typescript
@@ -162,18 +163,23 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns A promise that resolves when the operation completes.
    */
   public override async createNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void> {
-    await this._httpClient.request({
+    await this._httpClient.requestLongRunning({
       method: HTTP_METHODS.Post,
       path: `/databases/${this._db.id}/keyspaces/${namespace}`,
+    }, {
+      id: this._db.id,
+      target: 'ACTIVE',
+      legalStates: ['MAINTENANCE'],
+      defaultPollInterval: 1000,
+      options,
     });
-    await this._httpClient.awaitStatus(this._db, 'ACTIVE', ['MAINTENANCE'], options, 1000);
   }
 
   /**
    * Drops a namespace (aka keyspace) from this database.
    *
    * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
-   * default polling interval is 2 seconds. Expect it to take roughly 8-10 seconds to complete.
+   * default polling interval is 1 second. Expect it to take roughly 8-10 seconds to complete.
    *
    * @example
    * ```typescript
@@ -201,11 +207,16 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns A promise that resolves when the operation completes.
    */
   public override async dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void> {
-    await this._httpClient.request({
+    await this._httpClient.requestLongRunning({
       method: HTTP_METHODS.Delete,
       path: `/databases/${this._db.id}/keyspaces/${namespace}`,
+    }, {
+      id: this._db.id,
+      target: 'ACTIVE',
+      legalStates: ['MAINTENANCE'],
+      defaultPollInterval: 1000,
+      options,
     });
-    await this._httpClient.awaitStatus(this._db, 'ACTIVE', ['MAINTENANCE'], options, 1000);
   }
 
   /**
@@ -230,11 +241,16 @@ export class AstraDbAdmin extends DbAdmin {
    * @remarks Use with caution. Use a surge protector. Don't say I didn't warn you.
    */
   public async drop(options?: AdminBlockingOptions): Promise<void> {
-    await this._httpClient.request({
-      method: HTTP_METHODS.Post,
-      path: `/databases/${this._db.id}/terminate`,
+    await this._httpClient.requestLongRunning({
+      method: HTTP_METHODS.Delete,
+      path: `/databases/${this._db.id}`,
+    }, {
+      id: this._db.id,
+      target: 'DELETED',
+      legalStates: ['TERMINATED'],
+      defaultPollInterval: 10000,
+      options,
     });
-    await this._httpClient.awaitStatus(this._db, 'TERMINATED', ['TERMINATING'], options, 10000);
   }
 }
 

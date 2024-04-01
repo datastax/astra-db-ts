@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import { SomeDoc, WithNamespace } from '@/src/data-api';
-import { BaseOptions, CollectionOptions } from '@/src/data-api/types';
+import { CollectionOptions } from '@/src/data-api/types';
+import { WithTimeout } from '@/src/common/types';
 
 /** @internal */
 export interface CreateCollectionCommand {
@@ -34,4 +35,4 @@ export interface CreateCollectionCommand {
  *
  * @see Db.createCollection
  */
-export interface CreateCollectionOptions<Schema extends SomeDoc> extends BaseOptions, CollectionOptions<Schema>, WithNamespace {}
+export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, WithNamespace {}

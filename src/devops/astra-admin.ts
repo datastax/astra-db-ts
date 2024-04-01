@@ -3,7 +3,7 @@ import {
   CreateDatabaseOptions,
   DatabaseConfig,
   FullDatabaseInfo,
-  ListDatabasesOptions
+  ListDatabasesOptions,
 } from '@/src/devops/types';
 import { Db, mkDb } from '@/src/data-api';
 import { DEFAULT_DEVOPS_API_ENDPOINT, DEFAULT_NAMESPACE, DevopsApiHttpClient, HTTP_METHODS } from '@/src/api';
@@ -248,7 +248,7 @@ export class AstraAdmin {
         limit: options?.limit,
         starting_after: options?.skip,
       },
-    });
+    }, options);
     return resp.data;
   }
 
@@ -313,17 +313,20 @@ export class AstraAdmin {
       ...config,
     }
 
-    const resp = await this._httpClient.request({
+    const resp = await this._httpClient.requestLongRunning({
       method: HTTP_METHODS.Post,
       path: '/databases',
       data: definition,
+    }, {
+      id: (resp) => resp.headers.location,
+      target: 'ACTIVE',
+      legalStates: ['INITIALIZING', 'PENDING'],
+      defaultPollInterval: 10000,
+      options,
     });
 
     const db = mkDb(this.#defaultOpts, resp.headers.location, definition.region, { ...options?.dbOptions, namespace: definition.keyspace });
-    const admin = db.admin(this.#defaultOpts.adminOptions);
-
-    await this._httpClient.awaitStatus(db, 'ACTIVE', ['INITIALIZING', 'PENDING'], options, 10000);
-    return admin;
+    return db.admin(this.#defaultOpts.adminOptions);
   }
 
   /**
@@ -354,11 +357,16 @@ export class AstraAdmin {
   async dropDatabase(db: Db | string, options?: AdminBlockingOptions): Promise<void> {
     const id = typeof db === 'string' ? db : db.id;
 
-    await this._httpClient.request({
+    await this._httpClient.requestLongRunning({
       method: HTTP_METHODS.Post,
       path: `/databases/${id}/terminate`,
+    }, {
+      id: id,
+      target: 'TERMINATED',
+      legalStates: ['TERMINATING'],
+      defaultPollInterval: 10000,
+      options,
     });
-    await this._httpClient.awaitStatus({ id }, 'TERMINATED', ['TERMINATING'], options, 10000);
   }
 }
 

@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/data-api';
-import type { BaseOptions, ProjectionOption, SortOption } from '@/src/data-api/types';
+import type { ProjectionOption, SortOption } from '@/src/data-api/types';
+import { WithTimeout } from '@/src/common/types';
 
 /** @internal */
 export interface FindOneAndUpdateCommand {
@@ -41,7 +42,7 @@ export interface FindOneAndUpdateCommand {
  *
  * @see Collection.findOneAndUpdate
  */
-export interface FindOneAndUpdateOptions<Schema extends SomeDoc> extends BaseOptions {
+export interface FindOneAndUpdateOptions<Schema extends SomeDoc> extends WithTimeout {
   /**
    * Specifies whether to return the document before or after the update.
    *

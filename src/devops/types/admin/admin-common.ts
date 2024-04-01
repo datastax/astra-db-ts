@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+
+import { WithTimeout } from '@/src/common/types';
+
 export type DatabaseCloudProvider = 'AWS' | 'GCP' | 'AZURE';
 
 export type DatabaseTier = 'developer' | 'A5' | 'A10' | 'A20' | 'A40' | 'C10' | 'C20' | 'C40' | 'D10' | 'D20' | 'D40' | 'serverless';
@@ -76,7 +79,7 @@ export type AdminBlockingOptions =
  *
  * @see AdminBlockingOptions
  */
-export interface PollBlockingOptions {
+export interface PollBlockingOptions extends WithTimeout {
   /**
    * True or omitted to block until the operation is complete.
    */
@@ -96,7 +99,7 @@ export interface PollBlockingOptions {
  *
  * @see AdminBlockingOptions
  */
-export interface NoBlockingOptions {
+export interface NoBlockingOptions extends WithTimeout {
   /**
    * False to not block until the operation is complete.
    */

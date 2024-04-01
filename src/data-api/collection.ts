@@ -29,7 +29,6 @@ import objectHash from 'object-hash';
 import { DataApiHttpClient } from '@/src/api';
 import {
   AnyBulkWriteOperation,
-  BaseOptions,
   BulkWriteOptions,
   BulkWriteResult,
   CollectionOptions,
@@ -73,6 +72,8 @@ import {
   UpdateOneResult,
   WithId,
 } from '@/src/data-api/types';
+import { TimeoutManager } from '@/src/api/timeout-managers';
+import { WithTimeout } from '@/src/common/types';
 
 /**
  * Represents the interface to a collection in the database.
@@ -297,9 +298,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       }
     }
 
+    const timeoutManager = this._httpClient.multiCallTimeoutManager(options?.maxTimeMS);
+
     const insertedIds = (options?.ordered)
-      ? await insertManyOrdered<Schema>(this._httpClient, documents, chunkSize)
-      : await insertManyUnordered<Schema>(this._httpClient, documents, options?.concurrency ?? 8, chunkSize);
+      ? await insertManyOrdered<Schema>(this._httpClient, documents, chunkSize, timeoutManager)
+      : await insertManyUnordered<Schema>(this._httpClient, documents, options?.concurrency ?? 8, chunkSize, timeoutManager);
 
     return {
       insertedCount: insertedIds.length,
@@ -447,6 +450,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       },
     };
 
+    const timeoutManager = this._httpClient.multiCallTimeoutManager(options?.maxTimeMS);
+
     const commonResult = {
       modifiedCount: 0,
       matchedCount: 0,
@@ -456,7 +461,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     try {
       while (!resp || resp.status?.nextPageState) {
-        resp = await this._httpClient.executeCommand(command);
+        resp = await this._httpClient.executeCommand(command, { timeoutManager });
         command.updateMany.options.pagingState = resp.status?.nextPageState ;
         commonResult.modifiedCount += resp.status?.modifiedCount ?? 0;
         commonResult.matchedCount += resp.status?.matchedCount ?? 0;
@@ -639,6 +644,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * easily be predicted whether a given newly-inserted document will be picked up by the deleteMany command or not.
    *
    * @param filter - A filter to select the documents to delete.
+   * @param options - The options for this operation.
    *
    * @return The aggregated result of the operation.
    *
@@ -646,7 +652,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  async deleteMany(filter: Filter<Schema> = {}): Promise<DeleteManyResult> {
+  async deleteMany(filter: Filter<Schema> = {}, options?: WithTimeout): Promise<DeleteManyResult> {
     if (Object.keys(filter).length === 0) {
       throw new Error('Can\'t pass an empty filter to deleteMany, use deleteAll instead if you really want to delete everything');
     }
@@ -655,12 +661,14 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       deleteMany: { filter },
     };
 
+    const timeoutManager = this._httpClient.multiCallTimeoutManager(options?.maxTimeMS);
+
     let resp;
     let numDeleted = 0;
 
     try {
       while (!resp || resp.status?.moreData) {
-        resp = await this._httpClient.executeCommand(command);
+        resp = await this._httpClient.executeCommand(command, { timeoutManager });
         numDeleted += resp.status?.deletedCount ?? 0;
       }
     } catch (e) {
@@ -683,13 +691,17 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * without making multiple network requests to the server.
    *
    * @remarks Use with caution. Wear a helmet. Don't say I didn't warn you.
+   *
+   * @param options - The options for this operation.
+   *
+   * @returns A promise that resolves when the operation is complete.
    */
-  async deleteAll(): Promise<void> {
+  async deleteAll(options?: WithTimeout): Promise<void> {
     const command: DeleteManyCommand = {
       deleteMany: { filter: {} },
     };
 
-    await this._httpClient.executeCommand(command);
+    await this._httpClient.executeCommand(command, options);
   }
 
   /**
@@ -974,7 +986,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  async countDocuments(filter: Filter<Schema>, upperBound: number, options?: BaseOptions): Promise<number> {
+  async countDocuments(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number> {
     const command = {
       countDocuments: { filter },
     };
@@ -1387,11 +1399,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @throws BulkWriteError - If the operation fails
    */
   async bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult> {
-    const commands = operations.map(buildBulkWriteCommands);
+    const timeoutManager = this._httpClient.multiCallTimeoutManager(options?.maxTimeMS)
 
     return (options?.ordered)
-      ? await bulkWriteOrdered(this._httpClient, commands)
-      : await bulkWriteUnordered(this._httpClient, commands, options?.concurrency ?? 8);
+      ? await bulkWriteOrdered(this._httpClient, operations, timeoutManager)
+      : await bulkWriteUnordered(this._httpClient, operations, options?.concurrency ?? 8, timeoutManager);
   }
 
   /**
@@ -1439,7 +1451,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @remarks Use with caution. Wear your safety goggles. Don't say I didn't warn you.
    */
-  async drop(options?: BaseOptions): Promise<boolean> {
+  async drop(options?: WithTimeout): Promise<boolean> {
     return await this._db.dropCollection(this.collectionName, options);
   }
 }
@@ -1485,14 +1497,14 @@ const coalesceVectorSpecialsIntoSort = <T extends OptionsWithSort | undefined>(o
 /**
  * @internal
  */
-const insertManyOrdered = async <Schema>(httpClient: DataApiHttpClient, documents: unknown[], chunkSize: number): Promise<IdOf<Schema>[]> => {
+const insertManyOrdered = async <Schema>(httpClient: DataApiHttpClient, documents: unknown[], chunkSize: number, timeoutManager: TimeoutManager): Promise<IdOf<Schema>[]> => {
   const insertedIds: IdOf<Schema>[] = [];
 
   for (let i = 0, n = documents.length; i < n; i += chunkSize) {
     const slice = documents.slice(i, i + chunkSize);
 
     try {
-      const inserted = await insertMany<Schema>(httpClient, slice, true);
+      const inserted = await insertMany<Schema>(httpClient, slice, true, timeoutManager);
       insertedIds.push(...inserted);
     } catch (e) {
       if (!(e instanceof DataAPIResponseError)) {
@@ -1511,7 +1523,7 @@ const insertManyOrdered = async <Schema>(httpClient: DataApiHttpClient, document
 /**
  * @internal
  */
-const insertManyUnordered = async <Schema>(httpClient: DataApiHttpClient, documents: unknown[], concurrency: number, chunkSize: number): Promise<IdOf<Schema>[]> => {
+const insertManyUnordered = async <Schema>(httpClient: DataApiHttpClient, documents: unknown[], concurrency: number, chunkSize: number, timeoutManager: TimeoutManager): Promise<IdOf<Schema>[]> => {
   const insertedIds: IdOf<Schema>[] = [];
   let masterIndex = 0;
 
@@ -1531,7 +1543,7 @@ const insertManyUnordered = async <Schema>(httpClient: DataApiHttpClient, docume
       const slice = documents.slice(localI, endIdx);
 
       try {
-        const inserted = await insertMany<Schema>(httpClient, slice, false);
+        const inserted = await insertMany<Schema>(httpClient, slice, false, timeoutManager);
         insertedIds.push(...inserted);
       } catch (e) {
         if (!(e instanceof DataAPIResponseError)) {
@@ -1559,7 +1571,7 @@ const insertManyUnordered = async <Schema>(httpClient: DataApiHttpClient, docume
 /**
  * @internal
  */
-const insertMany = async <Schema>(httpClient: DataApiHttpClient, documents: unknown[], ordered: boolean): Promise<IdOf<Schema>[]> => {
+const insertMany = async <Schema>(httpClient: DataApiHttpClient, documents: unknown[], ordered: boolean, timeoutManager: TimeoutManager): Promise<IdOf<Schema>[]> => {
   const command: InsertManyCommand = {
     insertMany: {
       documents,
@@ -1567,7 +1579,7 @@ const insertMany = async <Schema>(httpClient: DataApiHttpClient, documents: unkn
     }
   }
 
-  const resp = await httpClient.executeCommand(command, {});
+  const resp = await httpClient.executeCommand(command, { timeoutManager });
   return resp.status?.insertedIds ?? [];
 }
 
@@ -1576,14 +1588,13 @@ const insertMany = async <Schema>(httpClient: DataApiHttpClient, documents: unkn
 /**
  * @internal
  */
-const bulkWriteOrdered = async (httpClient: DataApiHttpClient, operations: Record<string, any>[]): Promise<BulkWriteResult> => {
+const bulkWriteOrdered = async (httpClient: DataApiHttpClient, operations: AnyBulkWriteOperation<SomeDoc>[], timeoutManager: TimeoutManager): Promise<BulkWriteResult> => {
   const results = new BulkWriteResult();
   let i = 0;
 
   try {
     for (let n = operations.length; i < n; i++) {
-      const resp = await httpClient.executeCommand(operations[i], {});
-      addToBulkWriteResult(results, resp.status!, i);
+      await bulkWrite(httpClient, operations[i], results, i, timeoutManager);
     }
   } catch (e) {
     if (!(e instanceof DataAPIResponseError)) {
@@ -1604,7 +1615,7 @@ const bulkWriteOrdered = async (httpClient: DataApiHttpClient, operations: Recor
 /**
  * @internal
  */
-const bulkWriteUnordered = async (httpClient: DataApiHttpClient, operations: Record<string, any>[], concurrency: number): Promise<BulkWriteResult> => {
+const bulkWriteUnordered = async (httpClient: DataApiHttpClient, operations: AnyBulkWriteOperation<SomeDoc>[], concurrency: number, timeoutManager: TimeoutManager): Promise<BulkWriteResult> => {
   const results = new BulkWriteResult();
   let masterIndex = 0;
 
@@ -1616,11 +1627,8 @@ const bulkWriteUnordered = async (httpClient: DataApiHttpClient, operations: Rec
       const localI = masterIndex;
       masterIndex++;
 
-      const command = operations[localI];
-
       try {
-        const resp = await httpClient.executeCommand(command, {});
-        addToBulkWriteResult(results, resp.status!, localI);
+        await bulkWrite(httpClient, operations[localI], results, localI, timeoutManager);
       } catch (e) {
         if (!(e instanceof DataAPIResponseError)) {
           throw e;
@@ -1645,19 +1653,31 @@ const bulkWriteUnordered = async (httpClient: DataApiHttpClient, operations: Rec
   return results;
 }
 
+const bulkWrite = async (httpClient: DataApiHttpClient, operation: AnyBulkWriteOperation<SomeDoc>, results: BulkWriteResult, i: number, timeoutManager: TimeoutManager): Promise<void> => {
+  const command = buildBulkWriteCommand(operation);
+  const resp = await httpClient.executeCommand(command, { timeoutManager });
+  addToBulkWriteResult(results, resp.status!, i);
+}
+
 /**
  * @internal
  */
-const buildBulkWriteCommands = (operations: Record<string, any>): Record<string, any> => {
-  const commandName = Object.keys(operations)[0];
-  switch (commandName) {
-    case 'insertOne': return { insertOne: { document: operations.insertOne.document } };
-    case 'updateOne': return { updateOne: { filter: operations.updateOne.filter, update: operations.updateOne.update, options: { upsert: operations.updateOne.upsert ?? false } } };
-    case 'updateMany': return { updateMany: { filter: operations.updateMany.filter, update: operations.updateMany.update, options: { upsert: operations.updateMany.upsert ?? false } } };
-    case 'replaceOne': return { findOneAndReplace: { filter: operations.replaceOne.filter, replacement: operations.replaceOne.replacement, options: { upsert: operations.replaceOne.upsert ?? false } } };
-    case 'deleteOne': return { deleteOne: { filter: operations.deleteOne.filter } };
-    case 'deleteMany': return { deleteMany: { filter: operations.deleteMany.filter } };
-    default: throw new Error(`Unknown bulk write operation: ${commandName}`);
+const buildBulkWriteCommand = (operation: AnyBulkWriteOperation<SomeDoc>): Record<string, any> => {
+  switch (true) {
+    case 'insertOne' in operation:
+      return { insertOne: { document: operation.insertOne.document } };
+    case 'updateOne' in operation:
+      return { updateOne: { filter: operation.updateOne.filter, update: operation.updateOne.update, options: { upsert: operation.updateOne.upsert ?? false } } };
+    case 'updateMany' in operation:
+      return { updateMany: { filter: operation.updateMany.filter, update: operation.updateMany.update, options: { upsert: operation.updateMany.upsert ?? false } } };
+    case 'replaceOne' in operation:
+      return { findOneAndReplace: { filter: operation.replaceOne.filter, replacement: operation.replaceOne.replacement, options: { upsert: operation.replaceOne.upsert ?? false } } };
+    case 'deleteOne' in operation:
+      return { deleteOne: { filter: operation.deleteOne.filter } };
+    case 'deleteMany' in operation:
+      return { deleteMany: { filter: operation.deleteMany.filter } };
+    default:
+      throw new Error(`Unknown bulk write operation: ${JSON.stringify(operation)}`);
   }
 }
 

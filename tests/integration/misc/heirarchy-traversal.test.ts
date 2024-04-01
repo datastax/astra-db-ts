@@ -19,7 +19,7 @@ import { Collection, Db } from '@/src/data-api';
 import assert from 'assert';
 import process from 'process';
 
-describe('integration.misc.hierarchy-traversal tests', () => {
+describe('integration.misc.hierarchy-traversal', () => {
   let client: DataApiClient;
   let db: Db;
   let collection: Collection;

@@ -14,6 +14,8 @@
 
 import { DatabaseCloudProvider, DatabaseStatus, } from '@/src/devops/types';
 
+import { WithTimeout } from '@/src/common/types';
+
 export type DatabaseStatusFilter = DatabaseStatus | 'ALL' | 'NONTERMINATED';
 
 export type DatabaseCloudProviderFilter = DatabaseCloudProvider | 'ALL';
@@ -26,7 +28,7 @@ export type DatabaseCloudProviderFilter = DatabaseCloudProvider | 'ALL';
  * @field limit - Specify the number of items for one page of data.
  * @field skip - Starting value for retrieving a specific page of results.
  */
-export interface ListDatabasesOptions {
+export interface ListDatabasesOptions extends WithTimeout {
   /**
    * Allows filtering so that databases in listed states are returned.
    */

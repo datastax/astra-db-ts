@@ -15,7 +15,6 @@
 import { Collection, extractDbIdFromUrl, SomeDoc } from '@/src/data-api';
 import { DataApiHttpClient, DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE, RawDataApiResponse } from '@/src/api';
 import {
-  BaseOptions,
   CollectionName,
   CreateCollectionCommand,
   CreateCollectionOptions,
@@ -28,6 +27,7 @@ import { DatabaseInfo } from '@/src/devops/types/admin/database-info';
 import { AstraDbAdmin, mkDbAdmin } from '@/src/devops/astra-db-admin';
 import { AdminSpawnOptions, DbSpawnOptions, RootClientOptsWithToken } from '@/src/client';
 import { RunCommandOptions } from '@/src/data-api/types/collections/command';
+import { WithTimeout } from '@/src/common/types';
 
 /**
  * @internal
@@ -341,7 +341,7 @@ export class Db implements Disposable {
    *
    * @remarks Use with caution. Have steel-toe boots on. Don't say I didn't warn you.
    */
-  public async dropCollection(name: string, options?: BaseOptions & WithNamespace): Promise<boolean> {
+  public async dropCollection(name: string, options?: WithTimeout & WithNamespace): Promise<boolean> {
     const command = {
       deleteCollection: { name },
     };

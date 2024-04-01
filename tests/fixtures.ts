@@ -47,7 +47,7 @@ export const initTestObjects = async (ctx: Context, useHttp2: boolean = true): P
 
 export const initCollectionWithFailingClient = async (ctx: Context) => {
   const [, , collection] = await initTestObjects(ctx);
-  (<any>collection['_httpClient']) = { executeCommand: async () => { throw new Error('test'); } };
+  (<any>collection['_httpClient']).executeCommand = async () => { throw new Error('test') };
   return collection;
 }
 

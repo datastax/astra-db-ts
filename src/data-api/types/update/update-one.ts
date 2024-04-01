@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/data-api';
-import type { BaseOptions, InternalUpdateResult, SortOption } from '@/src/data-api/types';
+import type { InternalUpdateResult, SortOption } from '@/src/data-api/types';
+import { WithTimeout } from '@/src/common/types';
 
 /** @internal */
 export interface UpdateOneCommand {
@@ -36,7 +37,7 @@ export interface UpdateOneCommand {
  *
  * @see Collection.updateOne
  */
-export interface UpdateOneOptions<Schema extends SomeDoc> extends BaseOptions {
+export interface UpdateOneOptions<Schema extends SomeDoc> extends WithTimeout {
   /**
    * If true, perform an insert if no documents match the filter.
    *

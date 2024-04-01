@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/data-api';
-import type { BaseOptions, ProjectionOption, SortOption } from '@/src/data-api/types';
+import type { ProjectionOption, SortOption } from '@/src/data-api/types';
+import { WithTimeout } from '@/src/common/types';
 
 /** @internal */
 export interface FindOneCommand {
@@ -35,7 +36,7 @@ export interface FindOneCommand {
  * @field projection - Specifies which fields should be included/excluded in the returned documents.
  * @field includeSimilarity - If true, include the similarity score in the result via the `$similarity` field.
  */
-export interface FindOneOptions<Schema extends SomeDoc, GetSim extends boolean> extends BaseOptions {
+export interface FindOneOptions<Schema extends SomeDoc, GetSim extends boolean> extends WithTimeout {
   /**
    * The order in which to apply the update if the filter selects multiple documents.
    *

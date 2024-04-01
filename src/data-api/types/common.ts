@@ -96,7 +96,3 @@ export type ProjectionOption<Schema extends SomeDoc> = {
 interface Slice {
   $slice: number | [number, number];
 }
-
-export interface BaseOptions {
-  maxTimeMS?: number;
-}

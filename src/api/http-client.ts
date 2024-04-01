@@ -12,13 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CLIENT_USER_AGENT, DEFAULT_TIMEOUT } from '@/src/api/constants';
-import {
-  GuaranteedAPIResponse,
-  HTTPClientOptions,
-  HTTPRequestInfo,
-  HTTPRequestStrategy
-} from '@/src/api/types';
+import { CLIENT_USER_AGENT } from '@/src/api/constants';
+import { GuaranteedAPIResponse, HTTPClientOptions, HTTPRequestInfo, HTTPRequestStrategy } from '@/src/api/types';
 import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
 import { Mutable } from '@/src/data-api/types/utils';
@@ -96,12 +91,11 @@ export class HttpClient {
     return await this.requestStrategy.request({
       url: info.url,
       data: info.data,
-      timeout: info.timeout || DEFAULT_TIMEOUT,
       method: info.method,
       params: info.params ?? {},
       token: this.#applicationToken,
       userAgent: this.userAgent,
-      timeoutError: info.timeoutError,
+      timeoutManager: info.timeoutManager,
       reviver: info.reviver,
     });
   }

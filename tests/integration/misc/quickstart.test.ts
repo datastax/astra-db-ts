@@ -20,7 +20,7 @@ import process from 'process';
 import assert from 'assert';
 import { DEFAULT_NAMESPACE } from '@/src/api';
 
-describe('integration.misc.quickstart tests', () => {
+describe('integration.misc.quickstart', () => {
   let db: Db;
 
   const endpoint = process.env.ASTRA_URI!;

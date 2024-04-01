@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import type { IdOf } from '@/src/data-api/types';
+import { WithTimeout } from '@/src/common/types';
 
 /** @internal */
 export interface InsertManyCommand {
@@ -44,7 +45,7 @@ export type InsertManyOptions =
  *
  * @see Collection.insertMany
  */
-export interface InsertManyOrderedOptions {
+export interface InsertManyOrderedOptions extends WithTimeout {
   /**
    * If `true`, the documents are inserted in the order provided. If an error occurs, the operation stops and the
    * remaining documents are not inserted.
@@ -91,7 +92,7 @@ export interface InsertManyOrderedOptions {
  *
  * @see Collection.insertMany
  */
-export interface InsertManyUnorderedOptions {
+export interface InsertManyUnorderedOptions extends WithTimeout {
   /**
    * If `false`, the documents are inserted in an arbitrary order. If an error occurs, the operation does not stop
    * and the remaining documents are inserted. This allows the operation to be parallelized for better performance.

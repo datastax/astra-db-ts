@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { IdOf, BaseOptions } from '@/src/data-api/types';
+import type { IdOf } from '@/src/data-api/types';
+import { WithTimeout } from '@/src/common/types';
 
 /** @internal */
 export interface InsertOneCommand {
@@ -28,7 +29,7 @@ export interface InsertOneCommand {
  *
  * @see Collection.insertOne
  */
-export interface InsertOneOptions extends BaseOptions {
+export interface InsertOneOptions extends WithTimeout {
   /**
    * An optional vector to use for the document, if using a vector-enabled collection.
    *

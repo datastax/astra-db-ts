@@ -32,8 +32,7 @@ describe('integration.api.devops-http-client', () => {
         await httpClient.request({
           method: HTTP_METHODS.Get,
           path: '/databases',
-          timeout: 1,
-        });
+        }, { maxTimeMS: 1 });
       }, DevopsApiTimeout);
     });
   });

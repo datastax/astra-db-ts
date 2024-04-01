@@ -17,7 +17,7 @@ import assert from 'assert';
 import { ObjectId, UUID } from '@/src/data-api';
 import { BSONError } from 'bson';
 
-describe('unit.data-api.ids tests', () => {
+describe('unit.data-api.ids', () => {
   describe('UUID', () => {
     it('should properly construct a UUID', () => {
       const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');

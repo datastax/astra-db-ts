@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { BaseOptions, InternalUpdateResult, SortOption } from '@/src/data-api/types';
+import type { InternalUpdateResult, SortOption } from '@/src/data-api/types';
 import { SomeDoc } from '@/src/data-api';
+import { WithTimeout } from '@/src/common/types';
 
 /**
  * Represents the options for the `replaceOne` command.
@@ -24,7 +25,7 @@ import { SomeDoc } from '@/src/data-api';
  *
  * @see Collection.replaceOne
  */
-export interface ReplaceOneOptions<Schema extends SomeDoc> extends BaseOptions {
+export interface ReplaceOneOptions<Schema extends SomeDoc> extends WithTimeout {
   /**
    * If true, perform an insert if no documents match the filter.
    *
