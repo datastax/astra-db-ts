@@ -19,6 +19,9 @@ import { HTTP2Strategy } from '@/src/api/http2';
 import { Mutable } from '@/src/data-api/types/utils';
 import { Caller } from '@/src/client';
 
+/**
+ * @internal
+ */
 export class HttpClient {
   public readonly baseUrl: string;
   public readonly userAgent: string;

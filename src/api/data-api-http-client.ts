@@ -34,6 +34,9 @@ type ExecuteCommandOptions = TimeoutOptions & {
   namespace?: string;
 }
 
+/**
+ * @internal
+ */
 export class DataApiHttpClient extends HttpClient {
   public collection?: string;
   public namespace?: string;
@@ -115,6 +118,9 @@ const mkFauxErroredResponse = (message: string): RawDataApiResponse => {
   return { errors: [{ message }] };
 }
 
+/**
+ * @internal
+ */
 export function replacer(this: any, key: string, value: any): any {
   if (typeof value === 'bigint') {
     return Number(value);
@@ -141,6 +147,9 @@ export function replacer(this: any, key: string, value: any): any {
   return value;
 }
 
+/**
+ * @internal
+ */
 export function reviver(_: string, value: any): any {
   if (!value) {
     return value;
@@ -157,6 +166,9 @@ export function reviver(_: string, value: any): any {
   return value;
 }
 
+/**
+ * @internal
+ */
 export function handleIfErrorResponse(response: any, command: Record<string, any>) {
   if (response.errors && response.errors.length > 0) {
     throw mkRespErrorFromResponse(DataAPIResponseError, command, response);

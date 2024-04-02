@@ -39,6 +39,9 @@ interface LongRunningRequestInfo {
   options: AdminBlockingOptions | undefined,
 }
 
+/**
+ * @internal
+ */
 export class DevopsApiHttpClient extends HttpClient {
   constructor(props: HTTPClientOptions) {
     super(props);

@@ -47,6 +47,9 @@ axiosAgent.interceptors.response.use((response) => {
   return response;
 });
 
+/**
+ * @internal
+ */
 export const HTTP1AuthHeaderFactories = {
   DataApi(token: string) {
     return { [DEFAULT_DATA_API_AUTH_HEADER]: token };
@@ -56,6 +59,9 @@ export const HTTP1AuthHeaderFactories = {
   },
 }
 
+/**
+ * @internal
+ */
 export class HTTP1Strategy implements HTTPRequestStrategy {
   constructor(
     private readonly _authHeaderFactory: (token: string) => Record<string, string>,

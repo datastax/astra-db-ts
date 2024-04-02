@@ -44,9 +44,9 @@ export type TimeoutOptions = {
 export type MkTimeoutError = (ctx: InternalHTTPRequestInfo) => Error;
 
 /**
- * A more complex timeout manager that tracks the remaining time for multiple calls, starting from the first call.
- * This is useful for scenarios where multiple calls are made in sequence, and the timeout should be shared among them,
- * e.g. {@link Collection.insertMany}.
+ * Tracks the remaining time before a timeout occurs. Can be used for both single and multi-call timeout management.
+ *
+ * The first call to `msRemaining` will start the timer.
  *
  * @internal
  */

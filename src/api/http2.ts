@@ -15,6 +15,9 @@
 import * as http2 from 'http2';
 import { HTTPRequestStrategy, GuaranteedAPIResponse, InternalHTTPRequestInfo } from '@/src/api/types';
 
+/**
+ * @internal
+ */
 export class HTTP2Strategy implements HTTPRequestStrategy {
   #session: http2.ClientHttp2Session;
 
