@@ -1,5 +1,5 @@
 import { AdminBlockingOptions, FullDatabaseInfo } from '@/src/devops/types';
-import { DEFAULT_DEVOPS_API_ENDPOINT, DevopsApiHttpClient, HTTP_METHODS, HttpClient } from '@/src/api';
+import { DEFAULT_DEVOPS_API_ENDPOINT, DevopsApiHttpClient, HttpClient, HttpMethods } from '@/src/api';
 import { Db } from '@/src/data-api';
 import { AdminSpawnOptions, RootClientOptsWithToken } from '@/src/client';
 import { DbAdmin } from '@/src/devops/db-admin';
@@ -106,7 +106,7 @@ export class AstraDbAdmin extends DbAdmin {
    */
   public async info(options?: WithTimeout): Promise<FullDatabaseInfo> {
     const resp = await this._httpClient.request({
-      method: HTTP_METHODS.Get,
+      method: HttpMethods.Get,
       path: `/databases/${this._db.id}`,
     }, options);
     return resp.data;
@@ -164,7 +164,7 @@ export class AstraDbAdmin extends DbAdmin {
    */
   public override async createNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void> {
     await this._httpClient.requestLongRunning({
-      method: HTTP_METHODS.Post,
+      method: HttpMethods.Post,
       path: `/databases/${this._db.id}/keyspaces/${namespace}`,
     }, {
       id: this._db.id,
@@ -208,7 +208,7 @@ export class AstraDbAdmin extends DbAdmin {
    */
   public override async dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void> {
     await this._httpClient.requestLongRunning({
-      method: HTTP_METHODS.Delete,
+      method: HttpMethods.Delete,
       path: `/databases/${this._db.id}/keyspaces/${namespace}`,
     }, {
       id: this._db.id,
@@ -242,7 +242,7 @@ export class AstraDbAdmin extends DbAdmin {
    */
   public async drop(options?: AdminBlockingOptions): Promise<void> {
     await this._httpClient.requestLongRunning({
-      method: HTTP_METHODS.Post,
+      method: HttpMethods.Post,
       path: `/databases/${this._db.id}/terminate`,
     }, {
       id: this._db.id,

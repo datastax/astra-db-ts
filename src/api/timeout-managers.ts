@@ -14,6 +14,13 @@
 
 import { InternalHTTPRequestInfo } from '@/src/api/types';
 
+/**
+ * Internal representation of timeout options, allowing a shorthand for a single call timeout manager via
+ * `maxTimeMS`, with an explicit {@link TimeoutManager} being allowed to be passed if necessary, generally
+ * for multi-call timeout management.
+ *
+ * @internal
+ */
 export type TimeoutOptions = {
   maxTimeMS?: number,
   timeoutManager?: never,
@@ -22,13 +29,48 @@ export type TimeoutOptions = {
   maxTimeMS?: never,
 }
 
+/**
+ * Represents a function that creates a timeout error for a given request context.
+ *
+ * @example
+ * ```typescript
+ * const mkTimeoutError: MkTimeoutError = (info) => {
+ *   return new DevopsApiTimeout(info.url, timeout);
+ * }
+ * ```
+ *
+ * @internal
+ */
 export type MkTimeoutError = (ctx: InternalHTTPRequestInfo) => Error;
 
+/**
+ * Represents a timeout manager, which is responsible for tracking the remaining time before a timeout occurs.
+ *
+ * See {@link SingleCallTimeoutManager} and {@link MultiCallTimeoutManager} for concrete implementations.
+ *
+ * @internal
+ */
 export interface TimeoutManager {
+  /**
+   * The remaining time before a timeout occurs, in milliseconds. May return `Infinity`, which
+   * the underlying http request strategies should interpret as no timeout.
+   *
+   * However, the implementing TimeoutManager classes should accept `0` to also indicate no timeout,
+   * just translating it to `Infinity` for the purposes of the `msRemaining` getter, so it's easier to
+   * reason about.
+   */
   msRemaining: number,
+  /**
+   * A function that creates a timeout error for the given request context ({@link InternalHTTPRequestInfo}).
+   */
   mkTimeoutError: MkTimeoutError,
 }
 
+/**
+ * A basic timeout manager that only holds a fixed timeout value, intended for, of course, single-request operations.
+ *
+ * @internal
+ */
 export class SingleCallTimeoutManager implements TimeoutManager {
   public readonly msRemaining: number;
 
@@ -37,6 +79,13 @@ export class SingleCallTimeoutManager implements TimeoutManager {
   }
 }
 
+/**
+ * A more complex timeout manager that tracks the remaining time for multiple calls, starting from the first call.
+ * This is useful for scenarios where multiple calls are made in sequence, and the timeout should be shared among them,
+ * e.g. {@link Collection.insertMany}.
+ *
+ * @internal
+ */
 export class MultiCallTimeoutManager implements TimeoutManager {
   private _deadline!: number;
   private _started: boolean;

@@ -13,9 +13,8 @@
 // limitations under the License.
 
 import { HttpClient } from '@/src/api/http-client';
-import { HTTP_METHODS } from '@/src/api/constants';
 import { AxiosError, AxiosResponse } from 'axios';
-import { HTTPClientOptions } from '@/src/api/types';
+import { HTTPClientOptions, HttpMethodStrings } from '@/src/api/types';
 import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
 import { DevopsApiResponseError, DevopsApiTimeout, DevopsUnexpectedStateError } from '@/src/devops/errors';
 import { AdminBlockingOptions, PollBlockingOptions } from '@/src/devops/types';
@@ -26,10 +25,11 @@ import {
   TimeoutManager,
   TimeoutOptions,
 } from '@/src/api/timeout-managers';
+import { HttpMethods } from '@/src/api/constants';
 
 interface DevopsApiRequestInfo {
   path: string,
-  method: HTTP_METHODS,
+  method: HttpMethodStrings,
   data?: Record<string, any>,
   params?: Record<string, any>,
 }
@@ -86,7 +86,7 @@ export class DevopsApiHttpClient extends HttpClient {
   private async _awaitStatus(id: string, target: string, legalStates: string[], options: PollBlockingOptions | undefined, defaultPollInterval: number, timeoutManager: TimeoutManager): Promise<void> {
     for (;;) {
       const resp = await this.request({
-        method: HTTP_METHODS.Get,
+        method: HttpMethods.Get,
         path: `/databases/${id}`,
       }, {
         timeoutManager: timeoutManager,

@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, HTTP_METHODS, HttpClient, RawDataApiResponse } from '@/src/api';
+import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, HttpClient, HttpMethods, RawDataApiResponse } from '@/src/api';
 import { DataAPIResponseError, DataAPITimeout, mkRespErrorFromResponse, ObjectId, UUID } from '@/src/data-api';
 import { logger } from '@/src/logger';
 import {
   MkTimeoutError,
   MultiCallTimeoutManager,
   SingleCallTimeoutManager,
-  TimeoutManager, TimeoutOptions,
+  TimeoutManager,
+  TimeoutOptions,
 } from '@/src/api/timeout-managers';
 
 interface DataApiRequestInfo {
@@ -71,7 +72,7 @@ export class DataApiHttpClient extends HttpClient {
         url: url,
         data: JSON.stringify(info.command, replacer),
         timeoutManager: info.timeoutManager,
-        method: HTTP_METHODS.Post,
+        method: HttpMethods.Post,
         reviver: reviver,
       });
 
@@ -109,7 +110,7 @@ const mkTimeoutManager = (constructor: new (maxMs: number, mkTimeoutError: MkTim
 }
 
 const mkTimeoutErrorMaker = (timeout: number): MkTimeoutError => {
-  return (info) => new DataAPITimeout(info.data!, timeout)
+  return (info) => new DataAPITimeout(info.data!, timeout);
 }
 
 const mkFauxErroredResponse = (message: string): RawDataApiResponse => {

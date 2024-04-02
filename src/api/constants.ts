@@ -22,11 +22,11 @@ export const CLIENT_USER_AGENT = LIB_NAME + '/' + LIB_VERSION;
 /**
  * @internal
  */
-export const enum HTTP_METHODS {
-  Get = 'GET',
-  Post = 'POST',
-  Delete = 'DELETE',
-}
+export const HttpMethods = {
+  Get: 'GET',
+  Post: 'POST',
+  Delete: 'DELETE',
+} as const;
 
 /**
  * @internal

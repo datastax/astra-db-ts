@@ -12,6 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/**
+ * Represents options related to timeouts. Note that this means "the max time the client will wait for a response
+ * from the server"—**an operation timing out does not necessarily mean the operation failed on the server**.
+ *
+ * On paginated operations, the timeout applies across all network requests. For example, if you set a timeout of 5
+ * seconds and the operation requires 3 network requests, each request must complete in less than 5 seconds total.
+ */
 export interface WithTimeout {
+  /**
+   * The maximum time to wait for a response from the server, in milliseconds.
+   */
   maxTimeMS?: number;
 }

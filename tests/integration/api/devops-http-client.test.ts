@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import { initTestObjects } from '@/tests/fixtures';
-import { DevopsApiHttpClient, HTTP_METHODS } from '@/src/api';
+import { DevopsApiHttpClient, HttpMethods } from '@/src/api';
 import assert from 'assert';
 import { DevopsApiTimeout } from '@/src/devops';
 
@@ -30,7 +30,7 @@ describe('integration.api.devops-http-client', () => {
     it('should timeout properly', async () => {
       await assert.rejects(async () => {
         await httpClient.request({
-          method: HTTP_METHODS.Get,
+          method: HttpMethods.Get,
           path: '/databases',
         }, { maxTimeMS: 1 });
       }, DevopsApiTimeout);

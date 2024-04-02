@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { HTTP_METHODS } from '@/src/api/index';
 import { Caller } from '@/src/client';
 import { TimeoutManager } from '@/src/api/timeout-managers';
+import { HttpMethods } from '@/src/api/constants';
 
 /**
  * @internal
@@ -47,11 +47,16 @@ export interface GuaranteedAPIResponse {
 /**
  * @internal
  */
+export type HttpMethodStrings = typeof HttpMethods[keyof typeof HttpMethods];
+
+/**
+ * @internal
+ */
 export interface HTTPRequestInfo {
   url: string,
   data?: unknown,
   params?: Record<string, string>,
-  method: HTTP_METHODS,
+  method: HttpMethodStrings,
   reviver?: (key: string, value: any) => any,
   timeoutManager: TimeoutManager,
 }
@@ -61,7 +66,7 @@ export interface HTTPRequestInfo {
  */
 export interface InternalHTTPRequestInfo extends HTTPRequestInfo {
   token: string,
-  method: HTTP_METHODS,
+  method: HttpMethodStrings,
   userAgent: string,
 }
 

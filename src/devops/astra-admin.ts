@@ -6,7 +6,7 @@ import {
   ListDatabasesOptions,
 } from '@/src/devops/types';
 import { Db, mkDb } from '@/src/data-api';
-import { DEFAULT_DEVOPS_API_ENDPOINT, DEFAULT_NAMESPACE, DevopsApiHttpClient, HTTP_METHODS } from '@/src/api';
+import { DEFAULT_DEVOPS_API_ENDPOINT, DEFAULT_NAMESPACE, DevopsApiHttpClient, HttpMethods } from '@/src/api';
 import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
 import { AdminSpawnOptions, DbSpawnOptions, RootClientOptsWithToken } from '@/src/client/types';
 
@@ -240,7 +240,7 @@ export class AstraAdmin {
    */
   public async listDatabases(options?: ListDatabasesOptions): Promise<FullDatabaseInfo[]> {
     const resp = await this._httpClient.request({
-      method: HTTP_METHODS.Get,
+      method: HttpMethods.Get,
       path: `/databases`,
       params: {
         include: options?.include,
@@ -314,7 +314,7 @@ export class AstraAdmin {
     }
 
     const resp = await this._httpClient.requestLongRunning({
-      method: HTTP_METHODS.Post,
+      method: HttpMethods.Post,
       path: '/databases',
       data: definition,
     }, {
@@ -358,7 +358,7 @@ export class AstraAdmin {
     const id = typeof db === 'string' ? db : db.id;
 
     await this._httpClient.requestLongRunning({
-      method: HTTP_METHODS.Post,
+      method: HttpMethods.Post,
       path: `/databases/${id}/terminate`,
     }, {
       id: id,

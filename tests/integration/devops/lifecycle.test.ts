@@ -18,7 +18,7 @@ import { DataApiClient } from '@/src/client';
 import assert from 'assert';
 import { DevopsApiResponseError } from '@/src/devops';
 import { SingleCallTimeoutManager } from '@/src/api/timeout-managers';
-import { DEFAULT_TIMEOUT } from '@/src/api';
+import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT } from '@/src/api';
 
 describe('integration.devops.lifecycle', async () => {
   let client: DataApiClient;
@@ -90,7 +90,7 @@ describe('integration.devops.lifecycle', async () => {
       {
         assert.ok(syncDb.id);
         assert.ok(syncDbAdmin.id);
-        assert.strictEqual(syncDb.namespace, 'default_keyspace');
+        assert.strictEqual(syncDb.namespace, DEFAULT_NAMESPACE);
         assert.strictEqual(syncDb.httpStrategy() === 'http1', false);
       }
 
@@ -99,7 +99,7 @@ describe('integration.devops.lifecycle', async () => {
         assert.strictEqual(dbInfo.name, 'astra-test-db');
         assert.strictEqual(dbInfo.cloudProvider, 'GCP');
         assert.strictEqual(dbInfo.region, 'us-east1');
-        assert.strictEqual(dbInfo.keyspace, 'default_keyspace');
+        assert.strictEqual(dbInfo.keyspace, DEFAULT_NAMESPACE);
       }
 
       {

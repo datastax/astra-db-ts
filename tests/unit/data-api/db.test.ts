@@ -15,7 +15,7 @@
 import assert from 'assert';
 import { Db, mkDb } from '@/src/data-api';
 import process from 'process';
-import { DEFAULT_DATA_API_PATH } from '@/src/api';
+import { DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE } from '@/src/api';
 import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
 
 describe('unit.data-api.db', () => {
@@ -63,7 +63,7 @@ describe('unit.data-api.db', () => {
 
     it('is initialized with default namespace', () => {
       const db = mkDb(mkOptions(), process.env.ASTRA_URI!);
-      assert.strictEqual(db.namespace, 'default_keyspace');
+      assert.strictEqual(db.namespace, DEFAULT_NAMESPACE);
     });
 
     it('uses custon namespace when provided', () => {

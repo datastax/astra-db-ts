@@ -170,7 +170,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @return The result of the operation.
    */
-  async insertOne(document: MaybeId<Schema>, options?: InsertOneOptions): Promise<InsertOneResult<Schema>> {
+  public async insertOne(document: MaybeId<Schema>, options?: InsertOneOptions): Promise<InsertOneResult<Schema>> {
     const command: InsertOneCommand = {
       insertOne: { document },
     }
@@ -207,20 +207,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * You may set the `ordered` option to `true` to stop the operation after the first error; otherwise all documents
    * may be parallelized and processed in arbitrary order, improving, perhaps vastly, performance.
    *
-   * If an insertion error occurs, the operation will throw an {@link InsertManyError} containing the partial result.
-   *
-   * *If the exception is not due to an insertion error, e.g. a `5xx` error or network error, the operation will throw the
-   * underlying error.*
-   *
-   * *In case of an unordered request, if the error was a simple insertion error, a `InsertManyError` will be thrown
-   * after every document has been attempted to be inserted. If it was a `5xx` or similar, the error will be thrown
-   * immediately.*
-   *
    * You can set the `concurrency` option to control how many network requests are made in parallel on unordered
    * insertions. Defaults to `8`.
    *
-   * You can set the `chunkSize` option to control how many documents are inserted in each network request. Defaults to `20`,
-   * the Data API limit.
+   * If a 2XX insertion error occurs, the operation will throw an {@link InsertManyError} containing the partial result.
    *
    * See {@link InsertManyOptions} for complete information about the options available for this operation.
    *
@@ -260,6 +250,15 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * from another concurrent process/application may be inserted during the execution of this method call, and if there
    * are duplicate keys, it's not easy to predict which application will win the race.
    *
+   * --
+   *
+   * *If a thrown exception is not due to an insertion error, e.g. a `5xx` error or network error, the operation will throw the
+   * underlying error.*
+   *
+   * *In case of an unordered request, if the error was a simple insertion error, a `InsertManyError` will be thrown
+   * after every document has been attempted to be inserted. If it was a `5xx` or similar, the error will be thrown
+   * immediately.*
+   *
    * @param documents - The documents to insert.
    * @param options - The options for this operation.
    *
@@ -267,7 +266,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @throws InsertManyError - If the operation fails.
    */
-  async insertMany(documents: MaybeId<Schema>[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>> {
+  public async insertMany(documents: MaybeId<Schema>[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>> {
     const chunkSize = options?.chunkSize ?? 20;
 
     if (options?.vectors && options?.vectorize) {
@@ -354,7 +353,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    * @see StrictUpdateFilter
    */
-  async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions<Schema>): Promise<UpdateOneResult> {
+  public async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions<Schema>): Promise<UpdateOneResult> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: UpdateOneCommand = {
@@ -439,7 +438,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    * @see StrictUpdateFilter
    */
-  async updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateManyOptions): Promise<UpdateManyResult> {
+  public async updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateManyOptions): Promise<UpdateManyResult> {
     const command: UpdateManyCommand = {
       updateMany: {
         filter,
@@ -537,7 +536,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  async replaceOne(filter: Filter<Schema>, replacement: NoId<Schema>, options?: ReplaceOneOptions<Schema>): Promise<ReplaceOneResult> {
+  public async replaceOne(filter: Filter<Schema>, replacement: NoId<Schema>, options?: ReplaceOneOptions<Schema>): Promise<ReplaceOneResult> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneAndReplaceCommand = {
@@ -601,7 +600,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  async deleteOne(filter: Filter<Schema> = {}, options?: DeleteOneOptions<Schema>): Promise<DeleteOneResult> {
+  public async deleteOne(filter: Filter<Schema> = {}, options?: DeleteOneOptions<Schema>): Promise<DeleteOneResult> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: DeleteOneCommand = {
@@ -652,7 +651,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  async deleteMany(filter: Filter<Schema> = {}, options?: WithTimeout): Promise<DeleteManyResult> {
+  public async deleteMany(filter: Filter<Schema> = {}, options?: WithTimeout): Promise<DeleteManyResult> {
     if (Object.keys(filter).length === 0) {
       throw new Error('Can\'t pass an empty filter to deleteMany, use deleteAll instead if you really want to delete everything');
     }
@@ -696,7 +695,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns A promise that resolves when the operation is complete.
    */
-  async deleteAll(options?: WithTimeout): Promise<void> {
+  public async deleteAll(options?: WithTimeout): Promise<void> {
     const command: DeleteManyCommand = {
       deleteMany: { filter: {} },
     };
@@ -848,7 +847,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  async distinct<Key extends string, GetSim extends boolean = false>(key: Key, filter: Filter<Schema> = {}): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema, GetSim>>)[Key]>[]> {
+  public async distinct<Key extends string, GetSim extends boolean = false>(key: Key, filter: Filter<Schema> = {}): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema, GetSim>>)[Key]>[]> {
     assertPathSafe4Distinct(key);
 
     const projection = pullSafeProjection4Distinct(key);
@@ -924,7 +923,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  async findOne<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<Schema, GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
+  public async findOne<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<Schema, GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneCommand = {
@@ -986,7 +985,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  async countDocuments(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number> {
+  public async countDocuments(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number> {
     const command = {
       countDocuments: { filter },
     };
@@ -1049,7 +1048,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  async findOneAndReplace(
+  public async findOneAndReplace(
     filter: Filter<Schema>,
     replacement: NoId<Schema>,
     options: FindOneAndReplaceOptions<Schema> & { includeResultMetadata: true },
@@ -1093,13 +1092,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  async findOneAndReplace(
+  public async findOneAndReplace(
     filter: Filter<Schema>,
     replacement: NoId<Schema>,
     options: FindOneAndReplaceOptions<Schema> & { includeResultMetadata?: false },
   ): Promise<WithId<Schema> | null>
 
-  async findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options: FindOneAndReplaceOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options: FindOneAndReplaceOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneAndReplaceCommand = {
@@ -1166,7 +1165,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  async findOneAndDelete(
+  public async findOneAndDelete(
     filter: Filter<Schema>,
     options: FindOneAndDeleteOptions<Schema> & { includeResultMetadata: true },
   ): Promise<ModifyResult<Schema>>
@@ -1198,12 +1197,12 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  async findOneAndDelete(
+  public async findOneAndDelete(
     filter: Filter<Schema>,
     options?: FindOneAndDeleteOptions<Schema> & { includeResultMetadata?: false },
   ): Promise<WithId<Schema> | null>
 
-  async findOneAndDelete(filter: Filter<Schema>, options?: FindOneAndDeleteOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndDelete(filter: Filter<Schema>, options?: FindOneAndDeleteOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneAndDeleteCommand = {
@@ -1267,7 +1266,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    * @see StrictUpdateFilter
    */
-  async findOneAndUpdate(
+  public async findOneAndUpdate(
     filter: Filter<Schema>,
     update: UpdateFilter<Schema>,
     options: FindOneAndUpdateOptions<Schema> & { includeResultMetadata: true },
@@ -1308,13 +1307,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    * @see StrictUpdateFilter
    */
-  async findOneAndUpdate(
+  public async findOneAndUpdate(
     filter: Filter<Schema>,
     update: UpdateFilter<Schema>,
     options: FindOneAndUpdateOptions<Schema> & { includeResultMetadata?: false },
   ): Promise<WithId<Schema> | null>
 
-  async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options: FindOneAndUpdateOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options: FindOneAndUpdateOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneAndUpdateCommand = {
@@ -1398,7 +1397,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @throws BulkWriteError - If the operation fails
    */
-  async bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult> {
+  public async bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult> {
     const timeoutManager = this._httpClient.multiCallTimeoutManager(options?.maxTimeMS)
 
     return (options?.ordered)
@@ -1422,7 +1421,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @return The options that the collection was created with (i.e. the `vector` and `indexing` operations).
    */
-  async options(options?: WithTimeout): Promise<CollectionOptions<SomeDoc>> {
+  public async options(options?: WithTimeout): Promise<CollectionOptions<SomeDoc>> {
     const results = await this._db.listCollections({ nameOnly: false, maxTimeMS: options?.maxTimeMS });
 
     const collection = results.find((c) => c.name === this.collectionName);
@@ -1453,7 +1452,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @remarks Use with caution. Wear your safety goggles. Don't say I didn't warn you.
    */
-  async drop(options?: WithTimeout): Promise<boolean> {
+  public async drop(options?: WithTimeout): Promise<boolean> {
     return await this._db.dropCollection(this.collectionName, options);
   }
 }
