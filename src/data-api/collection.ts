@@ -1418,10 +1418,12 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * console.log(options.vector);
    * ```
    *
+   * @param options - The options for this operation.
+   *
    * @return The options that the collection was created with (i.e. the `vector` and `indexing` operations).
    */
-  async options(): Promise<CollectionOptions<SomeDoc>> {
-    const results = await this._db.listCollections({ nameOnly: false });
+  async options(options?: WithTimeout): Promise<CollectionOptions<SomeDoc>> {
+    const results = await this._db.listCollections({ nameOnly: false, maxTimeMS: options?.maxTimeMS });
 
     const collection = results.find((c) => c.name === this.collectionName);
 

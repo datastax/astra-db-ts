@@ -28,6 +28,7 @@ import { AstraDbAdmin, mkDbAdmin } from '@/src/devops/astra-db-admin';
 import { AdminSpawnOptions, DbSpawnOptions, RootClientOptsWithToken } from '@/src/client';
 import { RunCommandOptions } from '@/src/data-api/types/collections/command';
 import { WithTimeout } from '@/src/common/types';
+import { DropCollectionOptions } from '@/src/data-api/types/collections/drop-collection';
 
 /**
  * @internal
@@ -206,8 +207,8 @@ export class Db implements Disposable {
    *
    * @throws Error - if the database is not an Astra database.
    */
-  public async info(): Promise<DatabaseInfo> {
-    return await this.admin().info().then(i => i.info);
+  public async info(options?: WithTimeout): Promise<DatabaseInfo> {
+    return await this.admin().info(options).then(i => i.info);
   }
 
   /**
@@ -341,7 +342,7 @@ export class Db implements Disposable {
    *
    * @remarks Use with caution. Have steel-toe boots on. Don't say I didn't warn you.
    */
-  public async dropCollection(name: string, options?: WithTimeout & WithNamespace): Promise<boolean> {
+  public async dropCollection(name: string, options?: DropCollectionOptions): Promise<boolean> {
     const command = {
       deleteCollection: { name },
     };

@@ -16,6 +16,7 @@ export * from './collections/collections-common';
 export * from './collections/collection-options';
 export * from './collections/create-collection';
 export * from './collections/list-collection';
+export * from './collections/drop-collection';
 export * from './collections/command';
 export * from './delete/delete-many';
 export * from './delete/delete-one';

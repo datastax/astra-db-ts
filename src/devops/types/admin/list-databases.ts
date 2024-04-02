@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { DatabaseCloudProvider, DatabaseStatus, } from '@/src/devops/types';
-
 import { WithTimeout } from '@/src/common/types';
 
 export type DatabaseStatusFilter = DatabaseStatus | 'ALL' | 'NONTERMINATED';

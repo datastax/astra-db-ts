@@ -13,19 +13,14 @@
 // limitations under the License.
 
 import { WithNamespace } from '@/src/data-api';
-import { WithTimeout } from '@/src/common';
+import { WithTimeout } from '@/src/common/types';
 
 /**
- * Options for executing some arbitrary command.
+ * Options for dropping a collection.
  *
- * @field collection - The collection to run the command on. If not provided, the command is run on the database.
- * @field namespace - Overrides the namespace to run the command in. If not provided, the default namespace is used.
+ * @field namespace - Overrides the namespace for the collection.
+ * @field maxTimeMS - The maximum time to allow the operation to run.
  *
- * @see Db.command
+ * @see Db.dropCollection
  */
-export interface RunCommandOptions extends WithNamespace, WithTimeout {
-  /**
-   * The collection to run the command on. If not provided, the command is run on the database.
-   */
-  collection?: string
-}
+export interface DropCollectionOptions extends WithTimeout, WithNamespace {}
