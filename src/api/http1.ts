@@ -68,7 +68,9 @@ export class HTTP1Strategy implements HTTPRequestStrategy {
         data: info.data,
         params: info.params,
         method: info.method,
-        timeout: info.timeoutManager.msRemaining,
+        timeout: (isFinite(info.timeoutManager.msRemaining))
+          ? info.timeoutManager.msRemaining
+          : 0,
         headers: {
           ...this._authHeaderFactory(info.token),
           'User-Agent': info.userAgent,

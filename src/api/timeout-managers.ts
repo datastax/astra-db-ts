@@ -30,7 +30,11 @@ export interface TimeoutManager {
 }
 
 export class SingleCallTimeoutManager implements TimeoutManager {
-  constructor(readonly msRemaining: number, readonly mkTimeoutError: MkTimeoutError) {}
+  public readonly msRemaining: number;
+
+  constructor(maxMs: number, readonly mkTimeoutError: MkTimeoutError) {
+    this.msRemaining = maxMs || Infinity;
+  }
 }
 
 export class MultiCallTimeoutManager implements TimeoutManager {
@@ -38,7 +42,7 @@ export class MultiCallTimeoutManager implements TimeoutManager {
   private _started: boolean;
 
   constructor(maxMs: number, readonly mkTimeoutError: MkTimeoutError) {
-    this._deadline = maxMs;
+    this._deadline = maxMs || Infinity;
     this._started = false;
   }
 

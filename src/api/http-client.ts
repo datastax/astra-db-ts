@@ -88,7 +88,7 @@ export class HttpClient {
   }
 
   protected async _request(info: HTTPRequestInfo): Promise<GuaranteedAPIResponse> {
-    return await this.requestStrategy.request({
+    const fullInfo = {
       url: info.url,
       data: info.data,
       method: info.method,
@@ -97,7 +97,12 @@ export class HttpClient {
       userAgent: this.userAgent,
       timeoutManager: info.timeoutManager,
       reviver: info.reviver,
-    });
+    };
+
+    if (info.timeoutManager.msRemaining <= 0) {
+      throw info.timeoutManager.mkTimeoutError(fullInfo);
+    }
+    return await this.requestStrategy.request(fullInfo);
   }
 }
 

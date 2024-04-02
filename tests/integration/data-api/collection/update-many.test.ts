@@ -9,7 +9,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { BulkWriteError, Collection, DataAPIError, UpdateManyError } from '@/src/data-api';
+import { Collection, DataAPIError, UpdateManyError } from '@/src/data-api';
 import { initCollectionWithFailingClient, initTestObjects, sampleUsersList } from '@/tests/fixtures';
 import assert from 'assert';
 

@@ -17,6 +17,8 @@ import { assertTestsEnabled, initTestObjects } from '@/tests/fixtures';
 import { DataApiClient } from '@/src/client';
 import assert from 'assert';
 import { DevopsApiResponseError } from '@/src/devops';
+import { SingleCallTimeoutManager } from '@/src/api/timeout-managers';
+import { DEFAULT_TIMEOUT } from '@/src/api';
 
 describe('integration.devops.lifecycle', async () => {
   let client: DataApiClient;
@@ -89,7 +91,7 @@ describe('integration.devops.lifecycle', async () => {
       }
 
       {
-        await asyncDbAdmin['_httpClient'].awaitStatus(asyncDb, 'ACTIVE', ['INITIALIZING', 'PENDING'], {}, 10000);
+        await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, 'ACTIVE', ['INITIALIZING', 'PENDING'], {}, 10000, new SingleCallTimeoutManager(DEFAULT_TIMEOUT, () => new Error('Timeout')));
       }
 
       for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -132,7 +134,7 @@ describe('integration.devops.lifecycle', async () => {
 
       {
         await syncDbAdmin.createNamespace('other_namespace');
-        await asyncDbAdmin['_httpClient'].awaitStatus(asyncDb, 'ACTIVE', ['MAINTENANCE'], {}, 1000);
+        await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, 'ACTIVE', ['MAINTENANCE'], {}, 1000, new SingleCallTimeoutManager(DEFAULT_TIMEOUT, () => new Error('Timeout')));
       }
 
       for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -151,7 +153,7 @@ describe('integration.devops.lifecycle', async () => {
 
       {
         await syncDbAdmin.dropNamespace('other_namespace', { blocking: true });
-        await asyncDbAdmin['_httpClient'].awaitStatus(asyncDb, 'ACTIVE', ['MAINTENANCE'], {}, 1000);
+        await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, 'ACTIVE', ['MAINTENANCE'], {}, 1000, new SingleCallTimeoutManager(DEFAULT_TIMEOUT, () => new Error('Timeout')));
       }
 
       for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -172,7 +174,7 @@ describe('integration.devops.lifecycle', async () => {
 
       {
         await admin.dropDatabase(syncDb);
-        await asyncDbAdmin['_httpClient'].awaitStatus(asyncDbAdmin, 'TERMINATED', ['TERMINATING'], {}, 10000);
+        await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, 'TERMINATED', ['TERMINATING'], {}, 10000, new SingleCallTimeoutManager(DEFAULT_TIMEOUT, () => new Error('Timeout')));
       }
 
       for (const [dbAdmin, dbType] of [[syncDbAdmin, 'sync'], [asyncDbAdmin, 'async']] as const) {

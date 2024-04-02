@@ -18,7 +18,7 @@ import { AxiosError, AxiosResponse } from 'axios';
 import { HTTPClientOptions } from '@/src/api/types';
 import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
 import { DevopsApiResponseError, DevopsApiTimeout, DevopsUnexpectedStateError } from '@/src/devops/errors';
-import { AdminBlockingOptions } from '@/src/devops/types';
+import { AdminBlockingOptions, PollBlockingOptions } from '@/src/devops/types';
 import {
   MkTimeoutError,
   MultiCallTimeoutManager,
@@ -80,15 +80,14 @@ export class DevopsApiHttpClient extends HttpClient {
       ? info.id(resp)
       : info.id;
 
-    await this._awaitStatus(id, 'ACTIVE', ['MAINTENANCE'], info.options, info.defaultPollInterval, timeoutManager);
+    if (info?.options?.blocking !== false) {
+      await this._awaitStatus(id, info.target, info.legalStates, info.options, info.defaultPollInterval, timeoutManager);
+    }
+
     return resp;
   }
 
-  private async _awaitStatus(id: string, target: string, legalStates: string[], options: AdminBlockingOptions | undefined, defaultPollInterval: number, timeoutManager: TimeoutManager): Promise<void> {
-    if (options?.blocking === false) {
-      return;
-    }
-
+  private async _awaitStatus(id: string, target: string, legalStates: string[], options: PollBlockingOptions | undefined, defaultPollInterval: number, timeoutManager: TimeoutManager): Promise<void> {
     for (;;) {
       const resp = await this.request({
         method: HTTP_METHODS.Get,
@@ -113,7 +112,7 @@ export class DevopsApiHttpClient extends HttpClient {
 }
 
 const mkTimeoutManager = (constructor: new (maxMs: number, mkTimeoutError: MkTimeoutError) => TimeoutManager, maxMs: number | undefined) => {
-  const timeout = maxMs ?? DEFAULT_TIMEOUT;
+  const timeout = maxMs ?? 0;
   return new constructor(timeout, mkTimeoutErrorMaker(timeout));
 }
 

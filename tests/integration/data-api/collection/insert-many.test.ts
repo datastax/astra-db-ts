@@ -9,7 +9,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, DataAPIError, InsertManyError, ObjectId, UUID } from '@/src/data-api';
+import { Collection, DataAPIError, DataAPITimeout, InsertManyError, ObjectId, UUID } from '@/src/data-api';
 import { assertTestsEnabled, initCollectionWithFailingClient, initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
 
@@ -202,6 +202,25 @@ describe('integration.data-api.collection.insert-many', () => {
       assert.ok(!(e instanceof DataAPIError));
       assert.strictEqual(e.message, 'test');
     }
+  });
+
+  it('times out properly', async () => {
+    try {
+      const docs = Array.from({ length: 1000 }, (_, i) => ({ _id: i }));
+      await collection.insertMany(docs, { ordered: true, maxTimeMS: 500, chunkSize: 10 });
+      assert.fail('Expected an error');
+    } catch (e) {
+      assert.ok(e instanceof DataAPITimeout);
+      assert.strictEqual(e.timeout, 500);
+      const found = await collection.find({}).toArray();
+      assert.ok(found.length > 0);
+      assert.ok(found.length < 1000);
+    }
+  });
+
+  it('does not time out if maxTimeMS is high', async () => {
+    const docs = Array.from({ length: 100 }, (_, i) => ({ _id: i }));
+    await collection.insertMany(docs, { ordered: true, maxTimeMS: 500000, chunkSize: 10 });
   });
 
   it('[dev] should insertMany with vectorize', async function () {

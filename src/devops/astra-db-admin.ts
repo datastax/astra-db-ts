@@ -242,12 +242,12 @@ export class AstraDbAdmin extends DbAdmin {
    */
   public async drop(options?: AdminBlockingOptions): Promise<void> {
     await this._httpClient.requestLongRunning({
-      method: HTTP_METHODS.Delete,
-      path: `/databases/${this._db.id}`,
+      method: HTTP_METHODS.Post,
+      path: `/databases/${this._db.id}/terminate`,
     }, {
       id: this._db.id,
-      target: 'DELETED',
-      legalStates: ['TERMINATED'],
+      target: 'TERMINATED',
+      legalStates: ['TERMINATING'],
       defaultPollInterval: 10000,
       options,
     });
