@@ -297,7 +297,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       }
     }
 
-    const timeoutManager = this._httpClient.multiCallTimeoutManager(options?.maxTimeMS);
+    const timeoutManager = this._httpClient.timeoutManager(options?.maxTimeMS);
 
     const insertedIds = (options?.ordered)
       ? await insertManyOrdered<Schema>(this._httpClient, documents, chunkSize, timeoutManager)
@@ -449,7 +449,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       },
     };
 
-    const timeoutManager = this._httpClient.multiCallTimeoutManager(options?.maxTimeMS);
+    const timeoutManager = this._httpClient.timeoutManager(options?.maxTimeMS);
 
     const commonResult = {
       modifiedCount: 0,
@@ -660,7 +660,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       deleteMany: { filter },
     };
 
-    const timeoutManager = this._httpClient.multiCallTimeoutManager(options?.maxTimeMS);
+    const timeoutManager = this._httpClient.timeoutManager(options?.maxTimeMS);
 
     let resp;
     let numDeleted = 0;
@@ -1398,7 +1398,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @throws BulkWriteError - If the operation fails
    */
   public async bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult> {
-    const timeoutManager = this._httpClient.multiCallTimeoutManager(options?.maxTimeMS)
+    const timeoutManager = this._httpClient.timeoutManager(options?.maxTimeMS)
 
     return (options?.ordered)
       ? await bulkWriteOrdered(this._httpClient, operations, timeoutManager)

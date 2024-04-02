@@ -17,8 +17,6 @@ import { DataAPIResponseError, DataAPITimeout, mkRespErrorFromResponse, ObjectId
 import { logger } from '@/src/logger';
 import {
   MkTimeoutError,
-  MultiCallTimeoutManager,
-  SingleCallTimeoutManager,
   TimeoutManager,
   TimeoutOptions,
 } from '@/src/api/timeout-managers';
@@ -40,12 +38,12 @@ export class DataApiHttpClient extends HttpClient {
   public collection?: string;
   public namespace?: string;
 
-  public multiCallTimeoutManager(timeoutMs: number | undefined) {
-    return mkTimeoutManager(MultiCallTimeoutManager, timeoutMs);
+  public timeoutManager(timeoutMs: number | undefined) {
+    return mkTimeoutManager(timeoutMs);
   }
 
   public async executeCommand(command: Record<string, any>, options: ExecuteCommandOptions | undefined) {
-    const timeoutManager = options?.timeoutManager ?? mkTimeoutManager(SingleCallTimeoutManager, options?.maxTimeMS);
+    const timeoutManager = options?.timeoutManager ?? mkTimeoutManager(options?.maxTimeMS);
 
     const response = await this._requestDataApi({
       url: this.baseUrl,
@@ -104,9 +102,9 @@ export class DataApiHttpClient extends HttpClient {
   }
 }
 
-const mkTimeoutManager = (constructor: new (maxMs: number, mkTimeoutError: MkTimeoutError) => TimeoutManager, maxMs: number | undefined) => {
+const mkTimeoutManager = (maxMs: number | undefined) => {
   const timeout = maxMs ?? DEFAULT_TIMEOUT;
-  return new constructor(timeout, mkTimeoutErrorMaker(timeout));
+  return new TimeoutManager(timeout, mkTimeoutErrorMaker(timeout));
 }
 
 const mkTimeoutErrorMaker = (timeout: number): MkTimeoutError => {

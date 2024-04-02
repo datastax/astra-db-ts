@@ -13,25 +13,18 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { initTestObjects } from '@/tests/fixtures';
-import { DevopsApiHttpClient, HttpMethods } from '@/src/api';
 import assert from 'assert';
-import { DevopsApiTimeout } from '@/src/devops';
+import { TimeoutManager } from '@/src/api/timeout-managers';
 
-describe('integration.api.devops-http-client', () => {
-  let httpClient: DevopsApiHttpClient;
-
-  before(async function () {
-    const [, db] = await initTestObjects(this);
-    httpClient = db.admin()['_httpClient'];
-  });
-
-  it('should timeout properly', async () => {
-    await assert.rejects(async () => {
-      await httpClient.request({
-        method: HttpMethods.Get,
-        path: '/databases',
-      }, { maxTimeMS: 1 });
-    }, DevopsApiTimeout);
+describe('unit.api.timeout-manager', () => {
+  it('works', async () => {
+    const timeoutManager = new TimeoutManager(1000, () => new Error('timeout'));
+    assert.strictEqual(timeoutManager.msRemaining, 1000);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    assert.ok(timeoutManager.msRemaining < 500);
+    assert.ok(timeoutManager.msRemaining > 490);
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    assert.ok(timeoutManager.msRemaining < 0);
+    assert.ok(timeoutManager.msRemaining > -20);
   });
 });

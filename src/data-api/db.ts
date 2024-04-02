@@ -311,7 +311,7 @@ export class Db implements Disposable {
       },
     };
 
-    const timeoutManager = this._httpClient.multiCallTimeoutManager(options?.maxTimeMS);
+    const timeoutManager = this._httpClient.timeoutManager(options?.maxTimeMS);
     const namespace = options?.namespace ?? this.namespace;
 
     if (options?.checkExists !== false) {

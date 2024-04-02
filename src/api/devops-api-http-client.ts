@@ -19,10 +19,7 @@ import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
 import { DevopsApiResponseError, DevopsApiTimeout, DevopsUnexpectedStateError } from '@/src/devops/errors';
 import { AdminBlockingOptions, PollBlockingOptions } from '@/src/devops/types';
 import {
-  MkTimeoutError,
-  MultiCallTimeoutManager,
-  SingleCallTimeoutManager,
-  TimeoutManager,
+  MkTimeoutError, TimeoutManager,
   TimeoutOptions,
 } from '@/src/api/timeout-managers';
 import { HttpMethods } from '@/src/api/constants';
@@ -50,7 +47,7 @@ export class DevopsApiHttpClient extends HttpClient {
 
   public async request(info: DevopsApiRequestInfo, options: TimeoutOptions | undefined): Promise<AxiosResponse> {
     try {
-      const timeoutManager = options?.timeoutManager ?? mkTimeoutManager(SingleCallTimeoutManager, options?.maxTimeMS);
+      const timeoutManager = options?.timeoutManager ?? mkTimeoutManager(options?.maxTimeMS);
       const url = this.baseUrl + info.path;
 
       return await this._request({
@@ -69,7 +66,7 @@ export class DevopsApiHttpClient extends HttpClient {
   }
 
   public async requestLongRunning(req: DevopsApiRequestInfo, info: LongRunningRequestInfo): Promise<AxiosResponse> {
-    const timeoutManager = mkTimeoutManager(MultiCallTimeoutManager, info.options?.maxTimeMS);
+    const timeoutManager = mkTimeoutManager(info.options?.maxTimeMS);
     const resp = await this.request(req, { timeoutManager });
 
     const id = (typeof info.id === 'function')
@@ -107,9 +104,9 @@ export class DevopsApiHttpClient extends HttpClient {
   }
 }
 
-const mkTimeoutManager = (constructor: new (maxMs: number, mkTimeoutError: MkTimeoutError) => TimeoutManager, maxMs: number | undefined) => {
+const mkTimeoutManager = (maxMs: number | undefined) => {
   const timeout = maxMs ?? 0;
-  return new constructor(timeout, mkTimeoutErrorMaker(timeout));
+  return new TimeoutManager(timeout, mkTimeoutErrorMaker(timeout));
 }
 
 const mkTimeoutErrorMaker = (timeout: number): MkTimeoutError => {

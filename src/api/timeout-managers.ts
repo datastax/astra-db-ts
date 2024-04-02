@@ -44,49 +44,13 @@ export type TimeoutOptions = {
 export type MkTimeoutError = (ctx: InternalHTTPRequestInfo) => Error;
 
 /**
- * Represents a timeout manager, which is responsible for tracking the remaining time before a timeout occurs.
- *
- * See {@link SingleCallTimeoutManager} and {@link MultiCallTimeoutManager} for concrete implementations.
- *
- * @internal
- */
-export interface TimeoutManager {
-  /**
-   * The remaining time before a timeout occurs, in milliseconds. May return `Infinity`, which
-   * the underlying http request strategies should interpret as no timeout.
-   *
-   * However, the implementing TimeoutManager classes should accept `0` to also indicate no timeout,
-   * just translating it to `Infinity` for the purposes of the `msRemaining` getter, so it's easier to
-   * reason about.
-   */
-  msRemaining: number,
-  /**
-   * A function that creates a timeout error for the given request context ({@link InternalHTTPRequestInfo}).
-   */
-  mkTimeoutError: MkTimeoutError,
-}
-
-/**
- * A basic timeout manager that only holds a fixed timeout value, intended for, of course, single-request operations.
- *
- * @internal
- */
-export class SingleCallTimeoutManager implements TimeoutManager {
-  public readonly msRemaining: number;
-
-  constructor(maxMs: number, readonly mkTimeoutError: MkTimeoutError) {
-    this.msRemaining = maxMs || Infinity;
-  }
-}
-
-/**
  * A more complex timeout manager that tracks the remaining time for multiple calls, starting from the first call.
  * This is useful for scenarios where multiple calls are made in sequence, and the timeout should be shared among them,
  * e.g. {@link Collection.insertMany}.
  *
  * @internal
  */
-export class MultiCallTimeoutManager implements TimeoutManager {
+export class TimeoutManager {
   private _deadline!: number;
   private _started: boolean;
 
@@ -98,7 +62,9 @@ export class MultiCallTimeoutManager implements TimeoutManager {
   get msRemaining() {
     if (!this._started) {
       this._started = true;
-      this._deadline = Date.now() + this._deadline;
+      const maxMs = this._deadline;
+      this._deadline = Date.now() + maxMs;
+      return maxMs
     }
     return this._deadline - Date.now();
   }
