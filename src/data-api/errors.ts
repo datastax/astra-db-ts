@@ -188,6 +188,13 @@ export class CursorAlreadyInitializedError extends DataAPIError {
   }
 }
 
+export class CollectionAlreadyExistsError extends DataAPIError {
+  constructor(readonly namespace: string, readonly collectionName: string) {
+    super(`Collection '${namespace}.${collectionName}' already exists`);
+    this.name = 'CollectionAlreadyExistsError';
+  }
+}
+
 /**
  * An error representing the *complete* errors for an operation. This is a cohesive error that represents all the
  * errors that occurred during a single operation, and should not be thought of as *always* 1:1 with the number of

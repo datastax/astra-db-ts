@@ -35,6 +35,18 @@ describe('integration.devops.lifecycle', async () => {
     // }
   });
 
+  it('sdfsadfsda', async () => {
+    const admin = client.admin();
+
+    const resp = await admin.createDatabase({
+      name: 'astra-test-db',
+      cloudProvider: 'GCP',
+      region: 'us-east1',
+    });
+
+    console.log(resp.id);
+  });
+
   it('[admin] works', async () => {
     try {
       const admin = client.admin();

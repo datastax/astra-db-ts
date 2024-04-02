@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, extractDbIdFromUrl, SomeDoc } from '@/src/data-api';
+import { Collection, CollectionAlreadyExistsError, extractDbIdFromUrl, SomeDoc } from '@/src/data-api';
 import { DataApiHttpClient, DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE, RawDataApiResponse } from '@/src/api';
 import {
   CollectionName,
@@ -311,8 +311,18 @@ export class Db implements Disposable {
       },
     };
 
-    await this._httpClient.executeCommand(command, options);
+    const timeoutManager = this._httpClient.multiCallTimeoutManager(options?.maxTimeMS);
+    const namespace = options?.namespace ?? this.namespace;
 
+    if (options?.checkExists !== false) {
+      const collections = await this.listCollections({ namespace, maxTimeMS: timeoutManager.msRemaining });
+
+      if (collections.some(c => c.name === collectionName)) {
+        throw new CollectionAlreadyExistsError(options?.namespace ?? this.namespace, collectionName);
+      }
+    }
+
+    await this._httpClient.executeCommand(command, { namespace, timeoutManager });
     return this.collection(collectionName, options);
   }
 

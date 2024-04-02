@@ -92,7 +92,7 @@ export class DataApiClient {
    *
    * @returns A new {@link Db} instance.
    */
-  db(endpoint: string, options?: DbSpawnOptions): Db;
+  public db(endpoint: string, options?: DbSpawnOptions): Db;
 
   /**
    * Spawns a new {@link Db} instance using a direct endpoint and given options.
@@ -126,9 +126,9 @@ export class DataApiClient {
    *
    * @returns A new {@link Db} instance.
    */
-  db(id: string, region: string, options?: DbSpawnOptions): Db;
+  public db(id: string, region: string, options?: DbSpawnOptions): Db;
 
-  db(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): Db {
+  public db(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): Db {
     return mkDb(this.#options, endpointOrId, regionOrOptions, maybeOptions);
   }
 
@@ -154,7 +154,7 @@ export class DataApiClient {
    *
    * @returns A new {@link AstraAdmin} instance.
    */
-  admin(options?: AdminSpawnOptions): AstraAdmin {
+  public admin(options?: AdminSpawnOptions): AstraAdmin {
     return mkAdmin(this.#options, options);
   }
 }

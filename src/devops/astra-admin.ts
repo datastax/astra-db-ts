@@ -93,7 +93,7 @@ export class AstraAdmin {
    *
    * @returns A new {@link Db} instance.
    */
-  db(endpoint: string, options?: DbSpawnOptions): Db;
+  public db(endpoint: string, options?: DbSpawnOptions): Db;
 
   /**
    * Spawns a new {@link Db} instance using a direct endpoint and given options.
@@ -127,9 +127,9 @@ export class AstraAdmin {
    *
    * @returns A new {@link Db} instance.
    */
-  db(id: string, region: string, options?: DbSpawnOptions): Db;
+  public db(id: string, region: string, options?: DbSpawnOptions): Db;
 
-  db(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): Db {
+  public db(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): Db {
     return mkDb(this.#defaultOpts, endpointOrId, regionOrOptions, maybeOptions);
   }
 
@@ -168,7 +168,7 @@ export class AstraAdmin {
    *
    * @returns A new {@link Db} instance.
    */
-  dbAdmin(endpoint: string, options?: DbSpawnOptions): AstraDbAdmin;
+  public dbAdmin(endpoint: string, options?: DbSpawnOptions): AstraDbAdmin;
 
   /**
    * Spawns a new {@link Db} instance using a direct endpoint and given options.
@@ -205,9 +205,9 @@ export class AstraAdmin {
    *
    * @returns A new {@link Db} instance.
    */
-  dbAdmin(id: string, region: string, options?: DbSpawnOptions): AstraDbAdmin;
+  public dbAdmin(id: string, region: string, options?: DbSpawnOptions): AstraDbAdmin;
 
-  dbAdmin(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): AstraDbAdmin {
+  public dbAdmin(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): AstraDbAdmin {
     // @ts-expect-error - calls internal representation of method
     return this.db(endpointOrId, regionOrOptions, maybeOptions).admin(this.#defaultOpts.adminOptions);
   }

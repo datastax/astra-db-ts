@@ -36,7 +36,7 @@ export const initTestObjects = async (ctx: Context, useHttp2: boolean = true): P
   const db = client.db(process.env.ASTRA_URI!);
 
   const coll = (!collCreated)
-    ? await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' } })
+    ? await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false })
     : db.collection(DEFAULT_COLLECTION_NAME);
 
   collCreated = true;

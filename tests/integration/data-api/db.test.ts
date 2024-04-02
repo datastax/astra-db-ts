@@ -21,7 +21,7 @@ import {
   initTestObjects,
   OTHER_NAMESPACE
 } from '@/tests/fixtures';
-import { DataAPIResponseError, Db } from '@/src/data-api';
+import { CollectionAlreadyExistsError, DataAPIResponseError, Db } from '@/src/data-api';
 import { DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE } from '@/src/api';
 import { DataApiClient } from '@/src/client';
 import process from 'process';
@@ -59,33 +59,45 @@ describe('integration.data-api.db', async () => {
       assert.strictEqual(res.namespace, OTHER_NAMESPACE);
     });
 
-    it('should create collection idempotently', async () => {
+    it('should throw CollectionAlreadyExistsError if collection already exists', async () => {
+      await db.createCollection(EPHEMERAL_COLLECTION_NAME);
+      try {
+        await db.createCollection(EPHEMERAL_COLLECTION_NAME);
+        assert.fail('Expected an error');
+      } catch (e) {
+        assert.ok(e instanceof CollectionAlreadyExistsError);
+        assert.strictEqual(e.collectionName, EPHEMERAL_COLLECTION_NAME);
+        assert.strictEqual(e.namespace, DEFAULT_NAMESPACE);
+      }
+    });
+
+    it('should create collection idempotently if checkExists is false', async () => {
       const res = await db.createCollection(EPHEMERAL_COLLECTION_NAME);
       assert.ok(res);
       assert.strictEqual(res.collectionName, EPHEMERAL_COLLECTION_NAME);
-      const res2 = await db.createCollection(EPHEMERAL_COLLECTION_NAME);
+      const res2 = await db.createCollection(EPHEMERAL_COLLECTION_NAME, { checkExists: false });
       assert.ok(res2);
       assert.strictEqual(res2.collectionName, EPHEMERAL_COLLECTION_NAME);
     });
 
-    it('should create collection with same options idempotently', async () => {
+    it('should create collection with same options idempotently if checkExists is false', async () => {
       const res = await db.createCollection(EPHEMERAL_COLLECTION_NAME, { indexing: { deny: ['*'] } });
       assert.ok(res);
       assert.strictEqual(res.collectionName, EPHEMERAL_COLLECTION_NAME);
       assert.strictEqual(res.namespace, DEFAULT_NAMESPACE);
-      const res2 = await db.createCollection(EPHEMERAL_COLLECTION_NAME, { indexing: { deny: ['*'] } });
+      const res2 = await db.createCollection(EPHEMERAL_COLLECTION_NAME, { indexing: { deny: ['*'] }, checkExists: false });
       assert.ok(res2);
       assert.strictEqual(res2.collectionName, EPHEMERAL_COLLECTION_NAME);
       assert.strictEqual(res2.namespace, DEFAULT_NAMESPACE);
     });
 
-    it('should fail creating collection with different options', async () => {
+    it('should fail creating collection with different options even if checkExists is false', async () => {
       const res = await db.createCollection(EPHEMERAL_COLLECTION_NAME, { indexing: { deny: ['*'] } });
       assert.ok(res);
       assert.strictEqual(res.collectionName, EPHEMERAL_COLLECTION_NAME);
       assert.strictEqual(res.namespace, DEFAULT_NAMESPACE);
       try {
-        await db.createCollection(EPHEMERAL_COLLECTION_NAME, { indexing: { allow: ['*'] } });
+        await db.createCollection(EPHEMERAL_COLLECTION_NAME, { indexing: { allow: ['*'] }, checkExists: false });
         assert.fail('Expected an error');
       } catch (e) {
         assert.ok(e instanceof DataAPIResponseError);

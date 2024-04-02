@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { HttpClient } from '@/src/api/http-client';
-import { DEFAULT_TIMEOUT, HTTP_METHODS } from '@/src/api/constants';
+import { HTTP_METHODS } from '@/src/api/constants';
 import { AxiosError, AxiosResponse } from 'axios';
 import { HTTPClientOptions } from '@/src/api/types';
 import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
@@ -48,10 +48,6 @@ export class DevopsApiHttpClient extends HttpClient {
     this.requestStrategy = new HTTP1Strategy(HTTP1AuthHeaderFactories.DevopsApi);
   }
 
-  public multiCallTimeoutManager(timeoutMs: number | undefined) {
-    return mkTimeoutManager(MultiCallTimeoutManager, timeoutMs);
-  }
-
   public async request(info: DevopsApiRequestInfo, options: TimeoutOptions | undefined): Promise<AxiosResponse> {
     try {
       const timeoutManager = options?.timeoutManager ?? mkTimeoutManager(SingleCallTimeoutManager, options?.maxTimeMS);
@@ -73,7 +69,7 @@ export class DevopsApiHttpClient extends HttpClient {
   }
 
   public async requestLongRunning(req: DevopsApiRequestInfo, info: LongRunningRequestInfo): Promise<AxiosResponse> {
-    const timeoutManager = this.multiCallTimeoutManager(info.options?.maxTimeMS);
+    const timeoutManager = mkTimeoutManager(MultiCallTimeoutManager, info.options?.maxTimeMS);
     const resp = await this.request(req, { timeoutManager });
 
     const id = (typeof info.id === 'function')

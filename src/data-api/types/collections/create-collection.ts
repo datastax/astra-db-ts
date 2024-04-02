@@ -32,7 +32,15 @@ export interface CreateCollectionCommand {
  * @field defaultId - The default ID for the collection.
  * @field namespace - Overrides the namespace for the collection.
  * @field maxTimeMS - The maximum time to allow the operation to run.
+ * @field checkExists - Whether to check if the collection exists before creating it.
  *
  * @see Db.createCollection
  */
-export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, WithNamespace {}
+export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, WithNamespace {
+  /**
+   * If `true`, runs an additional existence check before creating the collection, failing if the collection with the
+   * same name already exists, raising an error. Otherwise, the creation is always attempted, and the command's will
+   * succeed even if the collection with the given name already exists, as long as the options are the exact same.
+   */
+  checkExists?: boolean;
+}
