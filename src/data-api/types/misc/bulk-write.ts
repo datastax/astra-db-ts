@@ -13,8 +13,8 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import type { SomeDoc } from '@/src/data-api';
-import type { Filter, SomeId, UpdateFilter } from '@/src/data-api/types';
+import type { IdOf, SomeDoc } from '@/src/data-api';
+import type { Filter, UpdateFilter } from '@/src/data-api/types';
 import { WithTimeout } from '@/src/common/types';
 
 /**
@@ -63,14 +63,14 @@ export interface BulkWriteUnorderedOptions extends WithTimeout {
   concurrency?: number,
 }
 
-export class BulkWriteResult {
+export class BulkWriteResult<Schema extends SomeDoc> {
   constructor(
     readonly deletedCount: number = 0,
     readonly insertedCount: number = 0,
     readonly matchedCount: number = 0,
     readonly modifiedCount: number = 0,
     readonly upsertedCount: number = 0,
-    readonly upsertedIds: Record<number, SomeId> = {},
+    readonly upsertedIds: Record<number, IdOf<Schema>> = {},
     private readonly _raw: object[] = [],
   ) {}
 
@@ -78,7 +78,7 @@ export class BulkWriteResult {
     return this._raw;
   }
 
-  getUpsertedIdAt(index: number): SomeId {
+  getUpsertedIdAt(index: number): IdOf<Schema> {
     return this.upsertedIds[index];
   }
 }

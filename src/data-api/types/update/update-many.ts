@@ -14,6 +14,7 @@
 
 import type { InternalUpdateResult } from '@/src/data-api/types';
 import { WithTimeout } from '@/src/common/types';
+import { SomeDoc } from '@/src/data-api';
 
 /** @internal */
 export interface UpdateManyCommand {
@@ -67,4 +68,4 @@ export interface UpdateManyOptions extends WithTimeout {
  * @field upsertedCount - The number of documents that were upserted.
  * @field upsertedId - The identifier of the upserted document if `upsertedCount > 0`.
  */
-export type UpdateManyResult = InternalUpdateResult<number>;
+export type UpdateManyResult<Schema extends SomeDoc> = InternalUpdateResult<Schema, number>;

@@ -13,15 +13,15 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/data-api';
-import type { ProjectionOption, SortOption } from '@/src/data-api/types';
+import type { StrictProjection, StrictSort } from '@/src/data-api/types';
 import { WithTimeout } from '@/src/common/types';
 
 /** @internal */
 export interface FindOneCommand {
   findOne: {
     filter: Record<string, unknown>;
-    sort?: SortOption<any>;
-    projection?: ProjectionOption<any>;
+    sort?: StrictSort<any>;
+    projection?: StrictProjection<any>;
     options?: {
       includeSimilarity?: boolean;
     };
@@ -45,7 +45,7 @@ export interface FindOneOptions<Schema extends SomeDoc, GetSim extends boolean> 
    * Defaults to `null`, where the order is not guaranteed.
    * @defaultValue null
    */
-  sort?: SortOption<Schema>,
+  sort?: StrictSort<Schema>,
   /**
    * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
    * to find the closest matching document.
@@ -97,7 +97,7 @@ export interface FindOneOptions<Schema extends SomeDoc, GetSim extends boolean> 
    * console.log(doc.age);
    * ```
    */
-  projection?: ProjectionOption<Schema>,
+  projection?: StrictProjection<Schema>,
   /**
    * If true, include the similarity score in the result via the `$similarity` field.
    *

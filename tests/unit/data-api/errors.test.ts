@@ -18,8 +18,8 @@ import {
   DeleteManyError,
   InsertManyError,
   mkRespErrorFromResponse,
-  mkRespErrorFromResponses,
-  UpdateManyError
+  mkRespErrorFromResponses, SomeDoc,
+  UpdateManyError,
 } from '@/src/data-api';
 import assert from 'assert';
 import { DeleteManyResult, InsertManyResult, SomeId, UpdateManyResult } from '@/src/data-api/types';
@@ -118,7 +118,7 @@ describe('unit.data-api.errors', () => {
   });
 
   describe('UpdateManyError construction', () => {
-    const partialResult: UpdateManyResult = { matchedCount: 2, modifiedCount: 2 };
+    const partialResult: UpdateManyResult<SomeDoc> = { matchedCount: 2, modifiedCount: 2, upsertedCount: 0 };
 
     it('should properly construct a single-response UpdateManyError', () => {
       const err = mkRespErrorFromResponse(UpdateManyError, commands[0], raws[0], partialResult);

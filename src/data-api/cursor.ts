@@ -17,8 +17,8 @@ import {
   FindOptions,
   InternalFindOptions,
   InternalGetMoreCommand,
-  ProjectionOption,
-  SortOption,
+  StrictProjection,
+  StrictSort,
 } from '@/src/data-api/types';
 import { CursorAlreadyInitializedError, SomeDoc } from '@/src/data-api';
 import { DataApiHttpClient } from '@/src/api';
@@ -141,7 +141,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @return The cursor.
    */
-  sort(sort: SortOption<TRaw>): FindCursor<T, TRaw> {
+  sort(sort: StrictSort<TRaw>): FindCursor<T, TRaw> {
     this._assertUninitialized();
     this._options.sort = sort;
     return this;
@@ -215,7 +215,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @return The cursor.
    */
-  project<R = any>(projection: ProjectionOption<TRaw>): FindCursor<R, TRaw> {
+  project<R = any, RRaw extends SomeDoc = SomeDoc>(projection: StrictProjection<TRaw>): FindCursor<R, RRaw> {
     this._assertUninitialized();
     this._options.projection = projection;
     return this as any;

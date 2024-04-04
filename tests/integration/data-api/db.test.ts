@@ -158,24 +158,23 @@ describe('integration.data-api.db', async () => {
   });
 
   describe('listCollections', () => {
-    it('should return a list of just names of collections with nameOnly not set', async () => {
-      const res = await db.listCollections();
-      const found = res.find((collection) => collection.name === DEFAULT_COLLECTION_NAME);
-      assert.ok(found);
-      // @ts-expect-error - nameOnly is unset, so options should not be present
-      assert.strictEqual(found.options, undefined);
-    });
-
     it('should return a list of just names of collections with nameOnly set to true', async () => {
       const res = await db.listCollections({ nameOnly: true });
-      const found = res.find((collection) => collection.name === DEFAULT_COLLECTION_NAME);
+      console.log(res)
+      const found = res.find((collection) => collection === DEFAULT_COLLECTION_NAME);
       assert.ok(found);
-      // @ts-expect-error - nameOnly is set to true, so options should not be present
-      assert.strictEqual(found.options, undefined);
     });
 
     it('should return a list of collection infos with nameOnly set to false', async () => {
       const res = await db.listCollections({ nameOnly: false });
+      const found = res.find((collection) => collection.name === DEFAULT_COLLECTION_NAME);
+      assert.ok(found);
+      assert.strictEqual(found.options?.vector?.dimension, 5);
+      assert.strictEqual(found.options?.vector?.metric, 'cosine');
+    });
+
+    it('should return a list of collection infos with nameOnly not set', async () => {
+      const res = await db.listCollections();
       const found = res.find((collection) => collection.name === DEFAULT_COLLECTION_NAME);
       assert.ok(found);
       assert.strictEqual(found.options?.vector?.dimension, 5);

@@ -41,7 +41,7 @@ describe('integration.data-api.ids', () => {
     });
 
     it('is set in listCollections', async () => {
-      const collections = await db.listCollections({ nameOnly: false });
+      const collections = await db.listCollections();
       const collection = collections.find(c => c.name === DEFAULT_COLLECTION_NAME);
       assert.ok(collection);
       assert.strictEqual(collection.options.defaultId, undefined);
@@ -75,7 +75,7 @@ describe('integration.data-api.ids', () => {
     });
 
     it('is set in listCollections', async () => {
-      const collections = await db.listCollections({ nameOnly: false });
+      const collections = await db.listCollections();
       const collection = collections.find(c => c.name === name);
       assert.ok(collection);
       assert.deepStrictEqual(collection.options, { defaultId: { type: 'uuid' } });
@@ -111,7 +111,7 @@ describe('integration.data-api.ids', () => {
     });
 
     it('is set in listCollections', async () => {
-      const collections = await db.listCollections({ nameOnly: false });
+      const collections = await db.listCollections();
       const collection = collections.find(c => c.name === name);
       assert.ok(collection);
       assert.deepStrictEqual(collection.options, { defaultId: { type: 'uuidv6' } });
@@ -147,7 +147,7 @@ describe('integration.data-api.ids', () => {
     });
 
     it('is set in listCollections', async () => {
-      const collections = await db.listCollections({ nameOnly: false });
+      const collections = await db.listCollections();
       const collection = collections.find(c => c.name === name);
       assert.ok(collection);
       assert.deepStrictEqual(collection.options, { defaultId: { type: 'uuidv7' } });
@@ -183,7 +183,7 @@ describe('integration.data-api.ids', () => {
     });
 
     it('is set in listCollections', async () => {
-      const collections = await db.listCollections({ nameOnly: false });
+      const collections = await db.listCollections();
       const collection = collections.find(c => c.name === name);
       assert.ok(collection);
       assert.deepStrictEqual(collection.options, { defaultId: { type: 'objectId' } });

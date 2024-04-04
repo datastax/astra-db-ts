@@ -40,7 +40,7 @@ describe('integration.data-api.collection.update-many', () => {
       });
     assert.strictEqual(updateManyResp.matchedCount, 1);
     assert.strictEqual(updateManyResp.modifiedCount, 1);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
     const updatedDoc = await collection.findOne({ 'username': 'aaronm' });
     assert.strictEqual(updatedDoc!._id, idToUpdateAndCheck);
@@ -64,7 +64,7 @@ describe('integration.data-api.collection.update-many', () => {
       });
     assert.strictEqual(updateManyResp.matchedCount, 20);
     assert.strictEqual(updateManyResp.modifiedCount, 20);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
   });
 
@@ -84,7 +84,7 @@ describe('integration.data-api.collection.update-many', () => {
       });
     assert.strictEqual(updateManyResp.matchedCount, 101);
     assert.strictEqual(updateManyResp.modifiedCount, 101);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
   });
 
@@ -104,7 +104,7 @@ describe('integration.data-api.collection.update-many', () => {
       });
     assert.strictEqual(updateManyResp.matchedCount, 0);
     assert.strictEqual(updateManyResp.modifiedCount, 0);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
   });
 
@@ -185,7 +185,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateOneResp = await collection.updateOne({ '_id': 'id5' }, { '$inc': { 'count': 1 } });
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.modifiedCount, 1);
-    assert.strictEqual(updateOneResp.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp.upsertedCount, 0);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     const updatedDoc = await collection.findOne({ '_id': 'id5' });
     assert.strictEqual(updatedDoc!.count, 6);
@@ -193,7 +193,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateManyResp = await collection.updateMany({}, { '$inc': { 'count': 1 } });
     assert.strictEqual(updateManyResp.matchedCount, 20);
     assert.strictEqual(updateManyResp.modifiedCount, 20);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
     const allDocs = await collection.find({}).toArray();
     assert.strictEqual(allDocs.length, 20);
@@ -228,7 +228,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateOneResp = await collection.updateOne({ '_id': 'id5' }, { '$inc': { 'count': 1 } });
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.modifiedCount, 1);
-    assert.strictEqual(updateOneResp.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp.upsertedCount, 0);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     const updatedDoc = await collection.findOne({ '_id': 'id5' });
     assert.strictEqual(updatedDoc!.count, 6.5);
@@ -236,7 +236,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateManyResp = await collection.updateMany({}, { '$inc': { 'count': 1 } });
     assert.strictEqual(updateManyResp.matchedCount, 20);
     assert.strictEqual(updateManyResp.modifiedCount, 20);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
     const allDocs = await collection.find({}).toArray();
     assert.strictEqual(allDocs.length, 20);
@@ -270,7 +270,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateOneResp = await collection.updateOne({ '_id': 'id5' }, { '$rename': { 'zip': 'pincode' } });
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.modifiedCount, 1);
-    assert.strictEqual(updateOneResp.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp.upsertedCount, 0);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     const updatedDoc = await collection.findOne({ '_id': 'id5' });
     assert.strictEqual(updatedDoc!.pincode, 620020);
@@ -279,7 +279,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateManyResp = await collection.updateMany({}, { '$rename': { 'zip': 'pincode' } });
     assert.strictEqual(updateManyResp.matchedCount, 20);
     assert.strictEqual(updateManyResp.modifiedCount, 19);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
     const allDocs = await collection.find({}).toArray();
     assert.strictEqual(allDocs.length, 20);
@@ -306,7 +306,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateOneResp = await collection.updateOne({ '_id': 'id5' }, { '$rename': { 'address.zip': 'address.pincode' } });
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.modifiedCount, 1);
-    assert.strictEqual(updateOneResp.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp.upsertedCount, 0);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     const updatedDoc = await collection.findOne({ '_id': 'id5' });
     assert.strictEqual(updatedDoc!.address.pincode, 620020);
@@ -315,7 +315,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateManyResp = await collection.updateMany({}, { '$rename': { 'address.zip': 'address.pincode' } });
     assert.strictEqual(updateManyResp.matchedCount, 20);
     assert.strictEqual(updateManyResp.modifiedCount, 19);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
     const allDocs = await collection.find({}).toArray();
     assert.strictEqual(allDocs.length, 20);
@@ -338,7 +338,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateOneResp = await collection.updateOne({ '_id': 'id5' }, { '$currentDate': { 'createdAt': true } });
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.modifiedCount, 1);
-    assert.strictEqual(updateOneResp.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp.upsertedCount, 0);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     const updatedDoc = await collection.findOne({ '_id': 'id5' });
     assert.ok(updatedDoc!.createdAt);
@@ -346,7 +346,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateManyResp = await collection.updateMany({}, { '$currentDate': { 'createdAt': true } });
     assert.strictEqual(updateManyResp.matchedCount, 20);
     assert.strictEqual(updateManyResp.modifiedCount, 20);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
     const allDocs = await collection.find({}).toArray();
     assert.strictEqual(allDocs.length, 20);
@@ -372,7 +372,7 @@ describe('integration.data-api.collection.update-many', () => {
     }, { 'upsert': true });
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.modifiedCount, 1);
-    assert.strictEqual(updateOneResp.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp.upsertedCount, 0);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     const updatedDoc = await collection.findOne({ '_id': 'id5' });
     //assert that the pincode field is not set in the 5th doc because the fields under $setOnInsert are set only when the doc is inserted
@@ -410,7 +410,7 @@ describe('integration.data-api.collection.update-many', () => {
     }, { 'upsert': true });
     assert.strictEqual(updateManyResp.matchedCount, 1);
     assert.strictEqual(updateManyResp.modifiedCount, 1);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
     const updatedDoc = await collection.findOne({ '_id': 'id5' });
     //assert that the pincode field is not set in the 5th doc because the fields under $setOnInsert are set only when the doc is inserted
@@ -453,7 +453,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateOneResp = await collection.updateOne({ '_id': 'id4' }, { '$min': { 'minScore': 5 } });
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.modifiedCount, 1);
-    assert.strictEqual(updateOneResp.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp.upsertedCount, 0);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     const updatedDoc = await collection.findOne({ '_id': 'id4' });
     //assert that the minScore field is set to 5 in the 4th doc because the $min operator sets the field value to new value when the new value is less than existing value
@@ -462,7 +462,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateOneResp1 = await collection.updateOne({ '_id': 'id4' }, { '$min': { 'minScore': 15 } });
     assert.strictEqual(updateOneResp1.matchedCount, 1);
     assert.strictEqual(updateOneResp1.modifiedCount, 0);
-    assert.strictEqual(updateOneResp1.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp1.upsertedCount, 0);
     assert.strictEqual(updateOneResp1.upsertedId, undefined);
     const updatedDoc1 = await collection.findOne({ '_id': 'id4' });
     //assert that the minScore field is not set to 15 in the 5th doc because the $min operator does not set the field value to new value when the new value is greater than existing value
@@ -471,7 +471,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateManyResp = await collection.updateMany({}, { '$min': { 'minScore': 15 } });
     assert.strictEqual(updateManyResp.matchedCount, 20);
     assert.strictEqual(updateManyResp.modifiedCount, 19);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
     const allDocs = await collection.find({}).toArray();
     //assert that the minScore field is set to 15 in all docs because the $min operator sets the field value to new value when the new value is less than existing value
@@ -486,7 +486,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateManyResp1 = await collection.updateMany({}, { '$min': { 'minScore': 50 } });
     assert.strictEqual(updateManyResp1.matchedCount, 20);
     assert.strictEqual(updateManyResp1.modifiedCount, 0);
-    assert.strictEqual(updateManyResp1.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp1.upsertedCount, 0);
     assert.strictEqual(updateManyResp1.upsertedId, undefined);
     const allDocs1 = await collection.find({}).toArray();
     //assert that the minScore field is not set to 50 in all docs because the $min operator does not set the field value to new value when the new value is greater than existing value
@@ -521,7 +521,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateOneResp = await collection.updateOne({ '_id': 'id4' }, { '$max': { 'maxScore': 950 } });
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.modifiedCount, 1);
-    assert.strictEqual(updateOneResp.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp.upsertedCount, 0);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     const updatedDoc = await collection.findOne({ '_id': 'id4' });
     //assert that the maxScore field is set to 950 in the 4th doc because the $max operator sets the field value to new value when the new value is greater than existing value
@@ -530,7 +530,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateOneResp1 = await collection.updateOne({ '_id': 'id4' }, { '$max': { 'maxScore': 15 } });
     assert.strictEqual(updateOneResp1.matchedCount, 1);
     assert.strictEqual(updateOneResp1.modifiedCount, 0);
-    assert.strictEqual(updateOneResp1.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp1.upsertedCount, 0);
     assert.strictEqual(updateOneResp1.upsertedId, undefined);
     const updatedDoc1 = await collection.findOne({ '_id': 'id4' });
     //assert that the maxScore field is not set to 15 in the 5th doc because the $max operator does not set the field value to new value when the new value is lesser than existing value
@@ -539,7 +539,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateManyResp = await collection.updateMany({}, { '$max': { 'maxScore': 900 } });
     assert.strictEqual(updateManyResp.matchedCount, 20);
     assert.strictEqual(updateManyResp.modifiedCount, 19);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
     const allDocs = await collection.find({}).toArray();
     //assert that the maxScore field is set to 900 in all docs because the $max operator sets the field value to new value when the new value is greater than existing value
@@ -554,7 +554,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateManyResp1 = await collection.updateMany({}, { '$max': { 'maxScore': 50 } });
     assert.strictEqual(updateManyResp1.matchedCount, 20);
     assert.strictEqual(updateManyResp1.modifiedCount, 0);
-    assert.strictEqual(updateManyResp1.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp1.upsertedCount, 0);
     assert.strictEqual(updateManyResp1.upsertedId, undefined);
     const allDocs1 = await collection.find({}).toArray();
     //assert that the maxScore field is not set to 50 in all docs because the $max operator does not set the field value to new value when the new value is less than existing value
@@ -586,7 +586,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateOneResp = await collection.updateOne({ '_id': 'id4' }, { '$mul': { 'njStatePrice': 1.07 } });
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.modifiedCount, 1);
-    assert.strictEqual(updateOneResp.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp.upsertedCount, 0);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     const updatedDoc = await collection.findOne({ '_id': 'id4' });
     //assert that the njStatePrice field is multiplied by 1.07 in the 4th doc because the $mul operator multiplies the field value by new value
@@ -595,7 +595,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateManyResp = await collection.updateMany({ '_id': { '$in': ['id0', 'id1', 'id2', 'id3'] } }, { '$mul': { 'njStatePrice': 1.07 } });
     assert.strictEqual(updateManyResp.matchedCount, 4);
     assert.strictEqual(updateManyResp.modifiedCount, 4);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
     const allDocs = await collection.find({}).toArray();
     //assert that the njStatePrice field is multiplied by 1.07 in all docs because the $mul operator multiplies the field value by new value
@@ -618,7 +618,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateOneResp = await collection.updateOne({ '_id': 'id4' }, { '$push': { 'tags': 'tag3' } });
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.modifiedCount, 1);
-    assert.strictEqual(updateOneResp.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp.upsertedCount, 0);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     const updatedDoc = await collection.findOne({ '_id': 'id4' });
     //assert that the tag3 is pushed to the tags array in the 4th doc because the $push operator pushes the item to the array
@@ -628,7 +628,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateManyResp = await collection.updateMany({}, { '$push': { 'tags': 'tag3' } });
     assert.strictEqual(updateManyResp.matchedCount, 5);
     assert.strictEqual(updateManyResp.modifiedCount, 5);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
     const allDocs = await collection.find({}).toArray();
     assert.strictEqual(allDocs.length, 5);
@@ -666,7 +666,7 @@ describe('integration.data-api.collection.update-many', () => {
     });
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.modifiedCount, 1);
-    assert.strictEqual(updateOneResp.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp.upsertedCount, 0);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     const updatedDoc = await collection.findOne({ '_id': 'id4' });
     //assert that the tag3 and tag4 are pushed to the tags array in the 4th doc at position 1 because the $push operator pushes the item to the array
@@ -684,7 +684,7 @@ describe('integration.data-api.collection.update-many', () => {
     });
     assert.strictEqual(updateManyResp.matchedCount, 5);
     assert.strictEqual(updateManyResp.modifiedCount, 5);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
     const allDocs = await collection.find({}).toArray();
     assert.strictEqual(allDocs.length, 5);
@@ -718,7 +718,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateOneResp = await collection.updateOne({ '_id': 'id4' }, { '$addToSet': { 'tags': 'tag3' } });
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.modifiedCount, 1);
-    assert.strictEqual(updateOneResp.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp.upsertedCount, 0);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     const updatedDoc = await collection.findOne({ '_id': 'id4' });
     //assert that the tag3 is added to the tags array in the 4th doc because the $addToSet operator adds the item to the array
@@ -728,7 +728,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateOneResp2 = await collection.updateOne({ '_id': 'id4' }, { '$addToSet': { 'tags': 'tag3' } });
     assert.strictEqual(updateOneResp2.matchedCount, 1);
     assert.strictEqual(updateOneResp2.modifiedCount, 0);
-    assert.strictEqual(updateOneResp2.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp2.upsertedCount, 0);
     assert.strictEqual(updateOneResp2.upsertedId, undefined);
     const updatedDoc2 = await collection.findOne({ '_id': 'id4' });
     //assert that the tag3 is not added to the tags array in the 4th doc because the $addToSet operator does not add the item to the array if it already exists
@@ -738,7 +738,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateManyResp = await collection.updateMany({}, { '$addToSet': { 'tags': 'tag3' } });
     assert.strictEqual(updateManyResp.matchedCount, 5);
     assert.strictEqual(updateManyResp.modifiedCount, 4);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
     const allDocs = await collection.find({}).toArray();
     assert.strictEqual(allDocs.length, 5);
@@ -751,7 +751,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateManyResp2 = await collection.updateMany({}, { '$addToSet': { 'tags': 'tag3' } });
     assert.strictEqual(updateManyResp2.matchedCount, 5);
     assert.strictEqual(updateManyResp2.modifiedCount, 0);
-    assert.strictEqual(updateManyResp2.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp2.upsertedCount, 0);
     assert.strictEqual(updateManyResp2.upsertedId, undefined);
     const allDocs2 = await collection.find({}).toArray();
     assert.strictEqual(allDocs2.length, 5);
@@ -776,7 +776,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateOneResp = await collection.updateOne({ '_id': 'id4' }, { '$addToSet': { 'tags': { '$each': ['tag3', 'tag4'] } } });
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.modifiedCount, 1);
-    assert.strictEqual(updateOneResp.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp.upsertedCount, 0);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     const updatedDoc = await collection.findOne({ '_id': 'id4' });
     //assert that the tag3 and tag4 added to the tags array in the 4th doc because the $addToSet operator adds the item to the array
@@ -787,7 +787,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateOneResp2 = await collection.updateOne({ '_id': 'id4' }, { '$addToSet': { 'tags': { '$each': ['tag3', 'tag4'] } } });
     assert.strictEqual(updateOneResp2.matchedCount, 1);
     assert.strictEqual(updateOneResp2.modifiedCount, 0);
-    assert.strictEqual(updateOneResp2.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp2.upsertedCount, 0);
     assert.strictEqual(updateOneResp2.upsertedId, undefined);
     await collection.findOne({ '_id': 'id4' });
     //assert that the tag3 and tag4 are not added to the tags array in the 4th doc because the $addToSet operator does not add the item to the array if it already exists
@@ -798,7 +798,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateManyResp = await collection.updateMany({}, { '$addToSet': { 'tags': { '$each': ['tag3', 'tag4'] } } });
     assert.strictEqual(updateManyResp.matchedCount, 5);
     assert.strictEqual(updateManyResp.modifiedCount, 4);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
     const allDocs = await collection.find({}).toArray();
     assert.strictEqual(allDocs.length, 5);
@@ -812,7 +812,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateManyResp2 = await collection.updateMany({}, { '$addToSet': { 'tags': { '$each': ['tag3', 'tag4'] } } });
     assert.strictEqual(updateManyResp2.matchedCount, 5);
     assert.strictEqual(updateManyResp2.modifiedCount, 0);
-    assert.strictEqual(updateManyResp2.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp2.upsertedCount, 0);
     assert.strictEqual(updateManyResp2.upsertedId, undefined);
     const allDocs2 = await collection.find({}).toArray();
     assert.strictEqual(allDocs2.length, 5);
@@ -842,7 +842,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateOneResp = await collection.updateOne({ '_id': 'id4' }, { '$pop': { 'tags': 1 } });
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.modifiedCount, 1);
-    assert.strictEqual(updateOneResp.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp.upsertedCount, 0);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     const updatedDoc = await collection.findOne({ '_id': 'id4' });
     //assert that the last 2 items are removed from the tags array in the 4th doc because the $pop operator removes the items from the array
@@ -855,7 +855,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateManyResp = await collection.updateMany({}, { '$pop': { 'tags': 1 } });
     assert.strictEqual(updateManyResp.matchedCount, 5);
     assert.strictEqual(updateManyResp.modifiedCount, 5);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
     const allDocs = await collection.find({}).toArray();
     assert.strictEqual(allDocs.length, 5);
@@ -894,7 +894,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateOneResp = await collection.updateOne({ '_id': 'id4' }, { '$pop': { 'tags': -1 } });
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.modifiedCount, 1);
-    assert.strictEqual(updateOneResp.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp.upsertedCount, 0);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     const updatedDoc = await collection.findOne({ '_id': 'id4' });
     //assert that the last 2 items are removed from the tags array in the 4th doc because the $pop operator removes the items from the array
@@ -907,7 +907,7 @@ describe('integration.data-api.collection.update-many', () => {
     const updateManyResp = await collection.updateMany({}, { '$pop': { 'tags': -1 } });
     assert.strictEqual(updateManyResp.matchedCount, 5);
     assert.strictEqual(updateManyResp.modifiedCount, 5);
-    assert.strictEqual(updateManyResp.upsertedCount, undefined);
+    assert.strictEqual(updateManyResp.upsertedCount, 0);
     assert.strictEqual(updateManyResp.upsertedId, undefined);
     const allDocs = await collection.find({}).toArray();
     assert.strictEqual(allDocs.length, 5);
@@ -939,7 +939,7 @@ describe('integration.data-api.collection.update-many', () => {
       assert.strictEqual(e.detailedErrorDescriptors[0].errorDescriptors[0].errorCode, 'UNSUPPORTED_UPDATE_OPERATION');
       assert.strictEqual(e.errorDescriptors.length, 1);
       assert.strictEqual(e.detailedErrorDescriptors.length, 1);
-      assert.deepStrictEqual(e.partialResult, { modifiedCount: 0, matchedCount: 0 });
+      assert.deepStrictEqual(e.partialResult, { modifiedCount: 0, matchedCount: 0, upsertedCount: 0 });
       assert.deepStrictEqual(e.errorDescriptors[0].attributes, {});
     }
   });

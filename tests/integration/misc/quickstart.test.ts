@@ -95,7 +95,11 @@ describe('integration.misc.quickstart', () => {
     });
   });
 
-  describe('admin-quickstart', () => {
+  describe('[prod] admin-quickstart', () => {
+    before(async function () {
+      assertTestsEnabled(this, 'PROD');
+    });
+
     it('works', async () => {
       const client = new DataApiClient(process.env.APPLICATION_TOKEN!);
       const admin = client.admin();

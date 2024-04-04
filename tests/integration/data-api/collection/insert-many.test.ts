@@ -223,8 +223,8 @@ describe('integration.data-api.collection.insert-many', () => {
     await collection.insertMany(docs, { ordered: true, maxTimeMS: 500000, chunkSize: 10 });
   });
 
-  it('[dev] should insertMany with vectorize', async function () {
-    assertTestsEnabled(this, 'DEV');
+  it('[vectorize] should insertMany with vectorize', async function () {
+    assertTestsEnabled(this, 'VECTORIZE');
     const res = await collection.insertMany([
       { name: 'Arch Enemy' },
       { name: 'Equilibrium' },

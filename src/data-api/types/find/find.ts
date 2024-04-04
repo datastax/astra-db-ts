@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/data-api';
-import type { ProjectionOption, SortOption } from '@/src/data-api/types';
+import type { StrictProjection, StrictSort } from '@/src/data-api/types';
 
 /**
  * Options for the `find` method.
@@ -37,7 +37,7 @@ export interface FindOptions<Schema extends SomeDoc, GetSim extends boolean> {
    *
    * @defaultValue null
    */
-  sort?: SortOption<Schema>,
+  sort?: StrictSort<Schema>,
   /**
    * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
    * to find the closest matching document.
@@ -89,7 +89,7 @@ export interface FindOptions<Schema extends SomeDoc, GetSim extends boolean> {
    * console.log(doc.age);
    * ```
    */
-  projection?: ProjectionOption<Schema>,
+  projection?: StrictProjection<Schema>,
   /**
    * Max number of documents to return. Applies over the whole result set, not per page. I.e. if the
    * result set has 1000 documents and `limit` is 100, only the first 100 documents will be returned,

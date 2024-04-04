@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { ProjectionOption, SortOption } from '@/src/data-api/types';
+import type { StrictProjection, StrictSort } from '@/src/data-api/types';
 import { SomeDoc } from '@/src/data-api';
 import { WithTimeout } from '@/src/common/types';
 
@@ -20,8 +20,8 @@ import { WithTimeout } from '@/src/common/types';
 export interface FindOneAndDeleteCommand {
   findOneAndDelete: {
     filter?: Record<string, unknown>;
-    sort?: SortOption<any>;
-    projection?: ProjectionOption<any>;
+    sort?: StrictSort<any>;
+    projection?: StrictProjection<any>;
   };
 }
 
@@ -44,7 +44,7 @@ export interface FindOneAndDeleteOptions<Schema extends SomeDoc> extends WithTim
    * Defaults to `null`, where the order is not guaranteed.
    * @defaultValue null
    */
-  sort?: SortOption<Schema>,
+  sort?: StrictSort<Schema>,
   /**
    * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
    * to find the closest matching document.
@@ -96,7 +96,7 @@ export interface FindOneAndDeleteOptions<Schema extends SomeDoc> extends WithTim
    * console.log(doc.age);
    * ```
    */
-  projection?: ProjectionOption<Schema>,
+  projection?: StrictProjection<Schema>,
   /**
    * When true, returns alongside the document, an `ok` field with a value of 1 if the command executed successfully.
    *

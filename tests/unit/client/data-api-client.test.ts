@@ -62,7 +62,7 @@ describe('unit.client.data-api-client', () => {
     it('should allow db construction from id + region', () => {
       const db = new DataApiClient('dummy-token').db(id, region);
       assert.ok(db);
-      assert.strictEqual(db['_httpClient'].baseUrl, `${endpoint}/${DEFAULT_DATA_API_PATH}`);
+      assert.strictEqual(db['_httpClient'].baseUrl, `https://${id}-${region}.apps.astra.datastax.com/${DEFAULT_DATA_API_PATH}`);
       assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'dummy-token');
     });
 

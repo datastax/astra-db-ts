@@ -120,8 +120,24 @@ export const sampleUsersList = [
   createSampleDoc3WithMultiLevel(),
 ];
 
-export const assertTestsEnabled = (ctx: Context, ...filters: ('DEV' | 'LONG' | 'ADMIN')[]) => {
-  if (!filters.every(filter => process.env[`ASTRA_RUN_${filter}_TESTS`])) {
+export const assertTestsEnabled = (ctx: Context, ...filters: ('VECTORIZE' | 'LONG' | 'ADMIN' | 'DEV' | 'PROD')[]) => {
+  if (filters.includes('VECTORIZE') && !process.env.ASTRA_RUN_VECTORIZE_TESTS) {
+    ctx.skip();
+  }
+
+  if (filters.includes('LONG') && !process.env.ASTRA_RUN_LONG_TESTS) {
+    ctx.skip();
+  }
+
+  if (filters.includes('ADMIN') && !process.env.ASTRA_RUN_ADMIN_TESTS) {
+    ctx.skip();
+  }
+
+  if (filters.includes('DEV') && !(process.env.ASTRA_URI as string).includes('apps.astra-dev.datastax.com')) {
+    ctx.skip();
+  }
+
+  if (filters.includes('PROD') && !(process.env.ASTRA_URI as string).includes('apps.astra.datastax.com')) {
     ctx.skip();
   }
 }

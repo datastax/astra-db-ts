@@ -24,7 +24,7 @@ describe('integration.devops.lifecycle', async () => {
   let client: DataApiClient;
 
   before(async function () {
-    assertTestsEnabled(this, 'ADMIN', 'LONG');
+    assertTestsEnabled(this, 'ADMIN', 'LONG', 'PROD');
 
     [client] = await initTestObjects(this);
 

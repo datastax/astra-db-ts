@@ -353,7 +353,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    * @see StrictUpdateFilter
    */
-  public async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions<Schema>): Promise<UpdateOneResult> {
+  public async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions<Schema>): Promise<UpdateOneResult<Schema>> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: UpdateOneCommand = {
@@ -383,7 +383,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         upsertedId: resp.status?.upsertedId,
         upsertedCount: 1,
       }
-      : commonResult;
+      : {
+        ...commonResult,
+        upsertedCount: 0,
+      };
   }
 
   /**
@@ -438,7 +441,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    * @see StrictUpdateFilter
    */
-  public async updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateManyOptions): Promise<UpdateManyResult> {
+  public async updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateManyOptions): Promise<UpdateManyResult<SomeDoc>> {
     const command: UpdateManyCommand = {
       updateMany: {
         filter,
@@ -454,6 +457,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     const commonResult = {
       modifiedCount: 0,
       matchedCount: 0,
+      upsertedCount: <const>0,
     };
 
     let resp;
@@ -473,6 +477,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
       commonResult.modifiedCount += desc.rawResponse?.status?.modifiedCount ?? 0;
       commonResult.matchedCount += desc.rawResponse?.status?.matchedCount ?? 0;
+      commonResult.upsertedCount = desc.rawResponse?.status?.upsertedCount ?? 0;
 
       throw mkRespErrorFromResponse(UpdateManyError, command, desc.rawResponse, commonResult);
     }
@@ -536,7 +541,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  public async replaceOne(filter: Filter<Schema>, replacement: NoId<Schema>, options?: ReplaceOneOptions<Schema>): Promise<ReplaceOneResult> {
+  public async replaceOne(filter: Filter<Schema>, replacement: NoId<Schema>, options?: ReplaceOneOptions<Schema>): Promise<ReplaceOneResult<Schema>> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneAndReplaceCommand = {
@@ -567,7 +572,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         upsertedId: resp.status?.upsertedId,
         upsertedCount: 1,
       }
-      : commonResult;
+      : {
+        ...commonResult,
+        upsertedCount: 0,
+      };
   }
 
   /**
@@ -1397,7 +1405,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @throws BulkWriteError - If the operation fails
    */
-  public async bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult> {
+  public async bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult<Schema>> {
     const timeoutManager = this._httpClient.timeoutManager(options?.maxTimeMS)
 
     return (options?.ordered)
@@ -1589,7 +1597,7 @@ const insertMany = async <Schema>(httpClient: DataApiHttpClient, documents: unkn
 /**
  * @internal
  */
-const bulkWriteOrdered = async (httpClient: DataApiHttpClient, operations: AnyBulkWriteOperation<SomeDoc>[], timeoutManager: TimeoutManager): Promise<BulkWriteResult> => {
+const bulkWriteOrdered = async (httpClient: DataApiHttpClient, operations: AnyBulkWriteOperation<SomeDoc>[], timeoutManager: TimeoutManager): Promise<BulkWriteResult<SomeDoc>> => {
   const results = new BulkWriteResult();
   let i = 0;
 
@@ -1616,7 +1624,7 @@ const bulkWriteOrdered = async (httpClient: DataApiHttpClient, operations: AnyBu
 /**
  * @internal
  */
-const bulkWriteUnordered = async (httpClient: DataApiHttpClient, operations: AnyBulkWriteOperation<SomeDoc>[], concurrency: number, timeoutManager: TimeoutManager): Promise<BulkWriteResult> => {
+const bulkWriteUnordered = async (httpClient: DataApiHttpClient, operations: AnyBulkWriteOperation<SomeDoc>[], concurrency: number, timeoutManager: TimeoutManager): Promise<BulkWriteResult<SomeDoc>> => {
   const results = new BulkWriteResult();
   let masterIndex = 0;
 
@@ -1654,7 +1662,7 @@ const bulkWriteUnordered = async (httpClient: DataApiHttpClient, operations: Any
   return results;
 }
 
-const bulkWrite = async (httpClient: DataApiHttpClient, operation: AnyBulkWriteOperation<SomeDoc>, results: BulkWriteResult, i: number, timeoutManager: TimeoutManager): Promise<void> => {
+const bulkWrite = async (httpClient: DataApiHttpClient, operation: AnyBulkWriteOperation<SomeDoc>, results: BulkWriteResult<SomeDoc>, i: number, timeoutManager: TimeoutManager): Promise<void> => {
   const command = buildBulkWriteCommand(operation);
   const resp = await httpClient.executeCommand(command, { timeoutManager });
   addToBulkWriteResult(results, resp.status!, i);
@@ -1685,8 +1693,8 @@ const buildBulkWriteCommand = (operation: AnyBulkWriteOperation<SomeDoc>): Recor
 /**
  * @internal
  */
-const addToBulkWriteResult = (result: BulkWriteResult, resp: Record<string, any>, i: number) => {
-  const asMutable = result as Mutable<BulkWriteResult>;
+const addToBulkWriteResult = (result: BulkWriteResult<SomeDoc>, resp: Record<string, any>, i: number) => {
+  const asMutable = result as Mutable<BulkWriteResult<SomeDoc>>;
 
   asMutable.insertedCount += resp.insertedIds?.length ?? 0;
   asMutable.modifiedCount += resp.modifiedCount ?? 0;

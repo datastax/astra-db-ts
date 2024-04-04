@@ -50,7 +50,7 @@ describe('integration.data-api.collection.delete-many', () => {
     );
   });
 
-  it('fails gracefully on 2XX exceptionsaa', async () => {
+  it('fails gracefully on 2XX exceptions', async () => {
     try {
       await collection.deleteMany({ $invalidOperator: 1 })
       assert.fail('Expected error');

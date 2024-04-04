@@ -57,21 +57,6 @@ export interface ListCollectionsOptions extends WithTimeout, WithNamespace {
 }
 
 /**
- * The name of a collection, used when `nameOnly` is true or undefined in {@link ListCollectionsOptions}.
- *
- * @field name - The name of the collection.
- *
- * @see ListCollectionsOptions
- * @see Db.listCollections
- */
-export interface CollectionName {
-  /**
-   * The name of the collection.
-   */
-  name: string,
-}
-
-/**
  * Information about a collection, used when `nameOnly` is false in {@link ListCollectionsOptions}.
  *
  * @field name - The name of the collection.

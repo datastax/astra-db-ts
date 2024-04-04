@@ -127,14 +127,6 @@ export function replacer(this: any, key: string, value: any): any {
   }
 
   if (typeof this[key] === 'object') {
-    if (value instanceof ObjectId) {
-      return { $objectId: value.toString() };
-    }
-
-    if (value instanceof UUID) {
-      return { $uuid: value.toString() };
-    }
-
     if (key === '$date') {
       return new Date(value).valueOf();
     }

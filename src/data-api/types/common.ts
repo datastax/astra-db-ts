@@ -17,6 +17,14 @@ import type { ToDotNotation } from '@/src/data-api/types';
 
 export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId;
 
+export type Sort =
+  | Record<string, 1 | -1>
+  | { $vector: { $meta: number[] } }
+  | { $vector: number[] }
+  | { $vectorize: string };
+
+export type Projection = Record<string, 1 | 0 | true | false | Slice>;
+
 /**
  * Specifies the sort criteria for selecting documents.
  *
@@ -27,18 +35,18 @@ export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId
  * @example
  * ```typescript
  * // Sort by name in ascending order, then by age in descending order
- * const sort1: SortOption<SomeDoc> = {
+ * const sort1: StrictSort<SomeDoc> = {
  *   name: 1,
  *   age: -1,
  * }
  *
  * // Sort by vector distance
- * const sort2: SortOption<SomeDoc> = {
+ * const sort2: StrictSort<SomeDoc> = {
  *   $vector: [0.23, 0.38, 0.27, 0.91, 0.21],
  * }
  * ```
  */
-export type SortOption<Schema extends SomeDoc> =
+export type StrictSort<Schema extends SomeDoc> =
   | { [K in keyof ToDotNotation<Schema>]?: 1 | -1 }
   | { $vector: { $meta: number[] } }
   | { $vector: number[] }
@@ -52,24 +60,24 @@ export type SortOption<Schema extends SomeDoc> =
  * @example
  * ```typescript
  * // Include _id, name, and address.state
- * const projection1: ProjectionOption<SomeDoc> = {
+ * const projection1: StrictProjection<SomeDoc> = {
  *   _id: 1,
  *   name: 1,
  *   'address.state': 1,
  * }
  *
  * // Exclude the $vector
- * const projection2: ProjectionOption<SomeDoc> = {
+ * const projection2: StrictProjection<SomeDoc> = {
  *   $vector: 0,
  * }
  *
  * // Return array indices 2, 3, 4, and 5
- * const projection3: ProjectionOption<SomeDoc> = {
+ * const projection3: StrictProjection<SomeDoc> = {
  *   test_scores: { $slice: [2, 4] },
  * }
  * ```
  */
-export type ProjectionOption<Schema extends SomeDoc> = {
+export type StrictProjection<Schema extends SomeDoc> = {
   [K in keyof ToDotNotation<Schema> | '_id']?: any[] extends (ToDotNotation<Schema> & { _id: any })[K]
     ? 1 | 0 | true | false | Slice
     : 1 | 0 | true | false;

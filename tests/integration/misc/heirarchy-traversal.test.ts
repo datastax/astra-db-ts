@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEFAULT_COLLECTION_NAME, initTestObjects } from '@/tests/fixtures';
+import { assertTestsEnabled, DEFAULT_COLLECTION_NAME, initTestObjects } from '@/tests/fixtures';
 import { DataApiClient } from '@/src/client';
 import { Collection, Db } from '@/src/data-api';
 import assert from 'assert';
@@ -66,7 +66,11 @@ describe('integration.misc.hierarchy-traversal', () => {
     });
   });
 
-  describe('client->admin->dbAdmin <-> client->db->admin', () => {
+  describe('[prod] client->admin->dbAdmin <-> client->db->admin', () => {
+    before(async function () {
+      assertTestsEnabled(this, 'PROD')
+    });
+
     it('is essentially a noop', () => {
       const dbAdmin1 = client.admin().dbAdmin(endpoint);
       const dbAdmin2 = client.db(endpoint).admin();
@@ -102,7 +106,11 @@ describe('integration.misc.hierarchy-traversal', () => {
     });
   });
 
-  describe('client->admin->dbAdmin->db <-> client->db->admin->db', () => {
+  describe('[prod] client->admin->dbAdmin->db <-> client->db->admin->db', () => {
+    before(async function () {
+      assertTestsEnabled(this, 'PROD')
+    });
+
     it('is essentially a noop', async () => {
       const db1 = client.admin().dbAdmin(endpoint).db();
       const db2 = client.db(endpoint).admin().db();

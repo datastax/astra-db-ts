@@ -15,7 +15,6 @@
 import { Collection, CollectionAlreadyExistsError, extractDbIdFromUrl, SomeDoc } from '@/src/data-api';
 import { DataApiHttpClient, DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE, RawDataApiResponse } from '@/src/api';
 import {
-  CollectionName,
   CreateCollectionCommand,
   CreateCollectionOptions,
   FullCollectionInfo,
@@ -381,7 +380,7 @@ export class Db implements Disposable {
    *
    * @see CollectionOptions
    */
-  public async listCollections(options?: ListCollectionsOptions & { nameOnly?: true }): Promise<CollectionName[]>
+  public async listCollections(options: ListCollectionsOptions & { nameOnly: true }): Promise<string[]>
 
   /**
    * Lists the collections in the database.
@@ -402,22 +401,19 @@ export class Db implements Disposable {
    *
    * @see CollectionOptions
    */
-  public async listCollections(options?: ListCollectionsOptions & { nameOnly: false }): Promise<FullCollectionInfo[]>
+  public async listCollections(options?: ListCollectionsOptions & { nameOnly?: false }): Promise<FullCollectionInfo[]>
 
-  public async listCollections(options?: ListCollectionsOptions): Promise<CollectionName[] | FullCollectionInfo[]> {
+  public async listCollections(options?: ListCollectionsOptions): Promise<string[] | FullCollectionInfo[]> {
     const command: ListCollectionsCommand = {
       findCollections: {
         options: {
-          explain: options?.nameOnly === false,
+          explain: options?.nameOnly !== true,
         }
       },
     }
 
     const resp = await this._httpClient.executeCommand(command, options);
-
-    return (options?.nameOnly !== false)
-      ? resp.status!.collections.map((name: string) => ({ name }))
-      : resp.status!.collections;
+    return resp.status!.collections;
   }
 
   /**

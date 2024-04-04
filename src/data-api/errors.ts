@@ -17,6 +17,7 @@ import type { DeleteManyResult } from '@/src/data-api/types/delete/delete-many';
 import type { UpdateManyResult } from '@/src/data-api/types/update/update-many';
 import type { BulkWriteResult } from '@/src/data-api/types/misc/bulk-write';
 import type { RawDataApiResponse } from '@/src/api';
+import { SomeDoc } from '@/src/data-api/document';
 
 /**
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a
@@ -316,7 +317,7 @@ export class DeleteManyError extends CumulativeDataAPIError {
  */
 export class UpdateManyError extends CumulativeDataAPIError {
   name = 'UpdateManyError';
-  declare public readonly partialResult: UpdateManyResult;
+  declare public readonly partialResult: UpdateManyResult<SomeDoc>;
 }
 
 /**
@@ -335,7 +336,7 @@ export class UpdateManyError extends CumulativeDataAPIError {
  */
 export class BulkWriteError extends CumulativeDataAPIError {
   name = 'BulkWriteError';
-  declare public readonly partialResult: BulkWriteResult;
+  declare public readonly partialResult: BulkWriteResult<SomeDoc>;
 }
 
 /** @internal */

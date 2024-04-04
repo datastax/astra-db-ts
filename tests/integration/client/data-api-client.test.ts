@@ -16,6 +16,7 @@
 import { DataApiClient } from '@/src/client';
 import * as process from 'process';
 import assert from 'assert';
+import { assertTestsEnabled } from '@/tests/fixtures';
 
 describe('integration.client.data-api-client', () => {
   describe('db tests', () => {
@@ -25,7 +26,8 @@ describe('integration.client.data-api-client', () => {
       assert.ok(Array.isArray(collections));
     });
 
-    it('properly connects to a db by id and region', async () => {
+    it('[prod] properly connects to a db by id and region', async function () {
+      assertTestsEnabled(this, 'PROD');
       const idAndRegion = process.env.ASTRA_URI!.split('.')[0].split('https://')[1].split('-');
       const id = idAndRegion.slice(0, 5).join('-');
       const region = idAndRegion.slice(5).join('-');

@@ -134,6 +134,14 @@ export class UUID {
   public inspect(): string {
     return `UUID("${this.toString()}")`;
   }
+
+  // noinspection JSUnusedGlobalSymbols
+  /**
+   * @internal
+   */
+  public toJSON() {
+    return { $uuid: this.toString() };
+  }
 }
 
 const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
@@ -236,6 +244,14 @@ export class ObjectId {
    */
   public inspect(): string {
     return `ObjectId("${this.toString()}")`;
+  }
+
+  // noinspection JSUnusedGlobalSymbols
+  /**
+   * @internal
+   */
+  public toJSON() {
+    return { $objectId: this.toString() };
   }
 }
 

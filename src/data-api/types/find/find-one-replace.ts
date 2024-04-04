@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/data-api';
-import type { ProjectionOption, SortOption } from '@/src/data-api/types';
+import type { StrictProjection, StrictSort } from '@/src/data-api/types';
 import { WithTimeout } from '@/src/common/types';
 
 /** @internal */
@@ -25,8 +25,8 @@ export interface FindOneAndReplaceCommand {
       returnDocument: 'before' | 'after',
       upsert?: boolean,
     };
-    sort?: SortOption<any>;
-    projection?: ProjectionOption<any>;
+    sort?: StrictSort<any>;
+    projection?: StrictProjection<any>;
   };
 }
 
@@ -70,7 +70,7 @@ export interface FindOneAndReplaceOptions<Schema extends SomeDoc> extends WithTi
    *
    * @defaultValue null
    */
-  sort?: SortOption<Schema>,
+  sort?: StrictSort<Schema>,
   /**
    * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
    * to find the closest matching document.
@@ -122,7 +122,7 @@ export interface FindOneAndReplaceOptions<Schema extends SomeDoc> extends WithTi
    * console.log(doc.age);
    * ```
    */
-  projection?: ProjectionOption<Schema>,
+  projection?: StrictProjection<Schema>,
   /**
    * When true, returns alongside the document, an `ok` field with a value of 1 if the command executed successfully.
    *

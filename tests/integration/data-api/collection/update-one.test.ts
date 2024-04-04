@@ -37,7 +37,7 @@ describe('integration.data-api.collection.update-one', () => {
     assert.strictEqual(updateOneResp.modifiedCount, 1);
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
-    assert.strictEqual(updateOneResp.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp.upsertedCount, 0);
     const updatedDoc = await collection.findOne({ 'username': 'aaronm' });
     assert.strictEqual(updatedDoc!._id, idToCheck);
     assert.strictEqual(updatedDoc!.username, 'aaronm');
@@ -57,7 +57,7 @@ describe('integration.data-api.collection.update-one', () => {
     assert.strictEqual(updateOneResp.modifiedCount, 1);
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
-    assert.strictEqual(updateOneResp.upsertedCount, undefined);
+    assert.strictEqual(updateOneResp.upsertedCount, 0);
     const updatedDoc = await collection.findOne({ 'username': 'aaron' });
     assert.strictEqual(updatedDoc!._id, idToCheck);
     assert.strictEqual(updatedDoc!.username, 'aaron');

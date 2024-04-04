@@ -16,7 +16,7 @@
 
 import { dummyCollection, TestSchema } from '@/tests/typing/collections/prelude';
 import { Equal, Expect } from '@/tests/typing/prelude';
-import { FindCursor } from '@/src/data-api';
+import { FindCursor, SomeDoc } from '@/src/data-api';
 import { IdOf, StrictFilter } from '@/src/data-api/types';
 
 type GetTOfCursor<Cursor> = Cursor extends FindCursor<infer T> ? T : undefined;
@@ -85,7 +85,7 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
 
   const rawProjected = cursor.project({ _id: 0, amount: 1 });
 
-  type rawProjected_T_and_TRaw_are_expected = Expect<Equal<typeof rawProjected, FindCursor<any, TestSchema & { $similarity?: never }>>>;
+  type rawProjected_T_and_TRaw_are_expected = Expect<Equal<typeof rawProjected, FindCursor<any>>>;
 
   rawProjected.next().then((doc) => {
     type doc_type_is_expected = Expect<Equal<any | null, typeof doc>>;
@@ -100,7 +100,4 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
   });
 
   cursor.filter({ amount: { $gt: 5 } } satisfies StrictFilter<GetTRawOfCursor<typeof projected>>);
-
-  // @ts-expect-error - am0unt is not a valid field
-  cursor.filter({ am0unt: { $gt: 5 } } satisfies StrictFilter<GetTRawOfCursor<typeof projected>>);
 }
