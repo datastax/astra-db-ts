@@ -12,15 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeDoc } from '@/src/data-api';
-import type { StrictSort } from '@/src/data-api/types';
+import type { Sort } from '@/src/data-api/types';
 import { WithTimeout } from '@/src/common/types';
 
 /** @internal */
 export interface DeleteOneCommand {
   deleteOne: {
     filter: Record<string, unknown>;
-    sort?: StrictSort<any>;
+    sort?: Sort;
   };
 }
 
@@ -32,7 +31,7 @@ export interface DeleteOneCommand {
  *
  * @see Collection.deleteOne
  */
-export interface DeleteOneOptions<Schema extends SomeDoc> extends WithTimeout {
+export interface DeleteOneOptions extends WithTimeout {
   /**
    * The order in which to apply the update if the filter selects multiple documents.
    *
@@ -41,7 +40,7 @@ export interface DeleteOneOptions<Schema extends SomeDoc> extends WithTimeout {
    * Defaults to `null`, where the order is not guaranteed.
    * @defaultValue null
    */
-  sort?: StrictSort<Schema>,
+  sort?: Sort,
   /**
    * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
    * to find the closest matching document.

@@ -16,9 +16,9 @@
 import process from 'process';
 import { DataApiClient } from '@/src/client';
 import { DEFAULT_NAMESPACE } from '@/src/api';
-import { assertTestsEnabled, DEFAULT_COLLECTION_NAME, initTestObjects } from '@/tests/fixtures';
+import { DEFAULT_COLLECTION_NAME, initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
-import { Collection, UUID, ObjectId, Db } from '@/src/data-api';
+import { Collection, ObjectId, UUID } from '@/src/data-api';
 
 describe('integration.misc.code-samples', () => {
   const token = process.env.APPLICATION_TOKEN!;
@@ -297,27 +297,16 @@ describe('integration.misc.code-samples', () => {
     });
   });
 
-  describe('[vectorize] vectorize', () => {
-    let _db: Db;
-
-    before(async function () {
-      assertTestsEnabled(this, 'VECTORIZE');
-      [, _db] = await initTestObjects(this);
-    });
-
-    it('works for collection creation', async () => {
-      // const collection1 = await db.createCollection('vectorized_1', {
-      //   vector: {
-      //     dimension: 1024,
-      //     service: {
-      //
-      //     }
-      //   },
-      // });
-      //
-      // const collection2 = await db.createCollection('vectorized_1', {
-      //
-      // });
-    });
-  });
+  // describe('[vectorize] vectorize', () => {
+  //   let db: Db;
+  //
+  //   before(async function () {
+  //     assertTestsEnabled(this, 'VECTORIZE');
+  //     [, db] = await initTestObjects(this);
+  //   });
+  //
+  //   it('works for collection creation', async () => {
+  //
+  //   });
+  // });
 });

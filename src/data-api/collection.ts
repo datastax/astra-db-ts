@@ -269,10 +269,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   public async insertMany(documents: MaybeId<Schema>[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>> {
     const chunkSize = options?.chunkSize ?? 20;
 
-    if (options?.vectors && options?.vectorize) {
-      throw new Error('Cannot set both vectors and vectorize options');
-    }
-
     if (options?.vectors) {
       if (options.vectors.length !== documents.length) {
         throw new Error('The number of vectors must match the number of documents');
@@ -292,6 +288,9 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
       for (let i = 0, n = documents.length; i < n; i++) {
         if (options.vectorize[i]) {
+          if (documents[i].$vector) {
+            throw new Error('Vector and vectorize options cannot overlap');
+          }
           documents[i] = { ...documents[i], $vectorize: options.vectorize[i] };
         }
       }
@@ -353,7 +352,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    * @see StrictUpdateFilter
    */
-  public async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions<Schema>): Promise<UpdateOneResult<Schema>> {
+  public async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions): Promise<UpdateOneResult<Schema>> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: UpdateOneCommand = {
@@ -541,7 +540,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  public async replaceOne(filter: Filter<Schema>, replacement: NoId<Schema>, options?: ReplaceOneOptions<Schema>): Promise<ReplaceOneResult<Schema>> {
+  public async replaceOne(filter: Filter<Schema>, replacement: NoId<Schema>, options?: ReplaceOneOptions): Promise<ReplaceOneResult<Schema>> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneAndReplaceCommand = {
@@ -608,7 +607,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  public async deleteOne(filter: Filter<Schema> = {}, options?: DeleteOneOptions<Schema>): Promise<DeleteOneResult> {
+  public async deleteOne(filter: Filter<Schema> = {}, options?: DeleteOneOptions): Promise<DeleteOneResult> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: DeleteOneCommand = {
@@ -783,7 +782,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * the Data API and the client periodically exchange new chunks of documents.
    * It should be noted that the behavior of the cursor in the case documents
    * have been added/removed after the `find` was started depends on database
-   * internals and it is not guaranteed, nor excluded, that such "real-time"
+   * internals, and it is not guaranteed, nor excluded, that such "real-time"
    * changes in the data would be picked up by the cursor.
    *
    * @param filter - A filter to select the documents to find. If not provided, all documents will be returned.
@@ -793,7 +792,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  find<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<Schema, GetSim>): FindCursor<FoundDoc<Schema, GetSim>, FoundDoc<Schema, GetSim>> {
+  find<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<GetSim>): FindCursor<FoundDoc<Schema, GetSim>, FoundDoc<Schema, GetSim>> {
     return new FindCursor(this.namespace, this._httpClient, filter as any, coalesceVectorSpecialsIntoSort(options)) as any;
   }
 
@@ -931,7 +930,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  public async findOne<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<Schema, GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
+  public async findOne<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneCommand = {
@@ -1059,7 +1058,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   public async findOneAndReplace(
     filter: Filter<Schema>,
     replacement: NoId<Schema>,
-    options: FindOneAndReplaceOptions<Schema> & { includeResultMetadata: true },
+    options: FindOneAndReplaceOptions & { includeResultMetadata: true },
   ): Promise<ModifyResult<Schema>>
 
   /**
@@ -1103,10 +1102,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   public async findOneAndReplace(
     filter: Filter<Schema>,
     replacement: NoId<Schema>,
-    options: FindOneAndReplaceOptions<Schema> & { includeResultMetadata?: false },
+    options: FindOneAndReplaceOptions & { includeResultMetadata?: false },
   ): Promise<WithId<Schema> | null>
 
-  public async findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options: FindOneAndReplaceOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options: FindOneAndReplaceOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneAndReplaceCommand = {
@@ -1175,7 +1174,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    */
   public async findOneAndDelete(
     filter: Filter<Schema>,
-    options: FindOneAndDeleteOptions<Schema> & { includeResultMetadata: true },
+    options: FindOneAndDeleteOptions & { includeResultMetadata: true },
   ): Promise<ModifyResult<Schema>>
 
   /**
@@ -1207,10 +1206,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    */
   public async findOneAndDelete(
     filter: Filter<Schema>,
-    options?: FindOneAndDeleteOptions<Schema> & { includeResultMetadata?: false },
+    options?: FindOneAndDeleteOptions & { includeResultMetadata?: false },
   ): Promise<WithId<Schema> | null>
 
-  public async findOneAndDelete(filter: Filter<Schema>, options?: FindOneAndDeleteOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndDelete(filter: Filter<Schema>, options?: FindOneAndDeleteOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneAndDeleteCommand = {
@@ -1277,7 +1276,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   public async findOneAndUpdate(
     filter: Filter<Schema>,
     update: UpdateFilter<Schema>,
-    options: FindOneAndUpdateOptions<Schema> & { includeResultMetadata: true },
+    options: FindOneAndUpdateOptions & { includeResultMetadata: true },
   ): Promise<ModifyResult<Schema>>
 
   /**
@@ -1318,10 +1317,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   public async findOneAndUpdate(
     filter: Filter<Schema>,
     update: UpdateFilter<Schema>,
-    options: FindOneAndUpdateOptions<Schema> & { includeResultMetadata?: false },
+    options: FindOneAndUpdateOptions & { includeResultMetadata?: false },
   ): Promise<WithId<Schema> | null>
 
-  public async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options: FindOneAndUpdateOptions<Schema>): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options: FindOneAndUpdateOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneAndUpdateCommand = {

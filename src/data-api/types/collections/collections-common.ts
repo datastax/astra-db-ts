@@ -23,43 +23,21 @@ import { ToDotNotation } from '@/src/data-api/types/dot-notation';
  * @field dimension - The dimension of the vectors.
  * @field metric - The similarity metric to use for the vector search.
  */
-export type VectorOptions =
-  | ManualVectorOptions
-  | VectorizeOptions;
-
-/**
- * Represents the options for the vector search.
- *
- * **If not specified, the collection will not support vector search.**
- *
- * @field dimension - The dimension of the vectors.
- * @field metric - The similarity metric to use for the vector search.
- * @field service - Options related to the vectorization pipeline, to specify an embedding service.
- */
-export interface ManualVectorOptions {
+export interface VectorOptions {
   /**
    * The dimension of the vectors stored in the collection.
    */
-  dimension: number,
+  dimension?: number,
   /**
    * The similarity metric to use for the vector search.
    *
    * See [intro to vector databases](https://docs.datastax.com/en/astra/astra-db-vector/get-started/concepts.html#metrics) for more details.
    */
-  metric: 'cosine' | 'euclidean' | 'dot_product',
+  metric?: 'cosine' | 'euclidean' | 'dot_product',
   /**
    * @alpha
    */
-  service?: never,
-}
-
-/**
- * @alpha
- */
-export interface VectorizeOptions {
-  service: VectorizeServiceOptions,
-  dimension?: never,
-  metric?: never,
+  service?: VectorizeServiceOptions,
 }
 
 /**

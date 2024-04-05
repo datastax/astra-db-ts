@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { InternalUpdateResult, StrictSort } from '@/src/data-api/types';
+import type { InternalUpdateResult, Sort } from '@/src/data-api/types';
 import { SomeDoc } from '@/src/data-api';
 import { WithTimeout } from '@/src/common/types';
 
@@ -25,7 +25,7 @@ import { WithTimeout } from '@/src/common/types';
  *
  * @see Collection.replaceOne
  */
-export interface ReplaceOneOptions<Schema extends SomeDoc> extends WithTimeout {
+export interface ReplaceOneOptions extends WithTimeout {
   /**
    * If true, perform an insert if no documents match the filter.
    *
@@ -45,7 +45,7 @@ export interface ReplaceOneOptions<Schema extends SomeDoc> extends WithTimeout {
    *
    * @defaultValue null
    */
-  sort?: StrictSort<Schema>,
+  sort?: Sort,
   /**
    * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
    * to find the closest matching document.

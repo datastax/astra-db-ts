@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { IdOf, SomeId } from '@/src/data-api/types';
+import type { IdOf } from '@/src/data-api/types';
 import { SomeDoc } from '@/src/data-api';
 
 /**

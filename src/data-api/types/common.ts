@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ObjectId, SomeDoc, UUID } from '@/src/data-api';
+import { ObjectId, SomeDoc, UUID, WithId } from '@/src/data-api';
 import type { ToDotNotation } from '@/src/data-api/types';
 
 export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId;
@@ -35,19 +35,19 @@ export type Projection = Record<string, 1 | 0 | true | false | Slice>;
  * @example
  * ```typescript
  * // Sort by name in ascending order, then by age in descending order
- * const sort1: StrictSort<SomeDoc> = {
+ * const sort1: Sort<SomeDoc> = {
  *   name: 1,
  *   age: -1,
  * }
  *
  * // Sort by vector distance
- * const sort2: StrictSort<SomeDoc> = {
+ * const sort2: Sort<SomeDoc> = {
  *   $vector: [0.23, 0.38, 0.27, 0.91, 0.21],
  * }
  * ```
  */
 export type StrictSort<Schema extends SomeDoc> =
-  | { [K in keyof ToDotNotation<Schema>]?: 1 | -1 }
+  | { [K in keyof ToDotNotation<WithId<Schema>>]?: 1 | -1 }
   | { $vector: { $meta: number[] } }
   | { $vector: number[] }
   | { $vectorize: string };
@@ -60,25 +60,25 @@ export type StrictSort<Schema extends SomeDoc> =
  * @example
  * ```typescript
  * // Include _id, name, and address.state
- * const projection1: StrictProjection<SomeDoc> = {
+ * const projection1: Projection<SomeDoc> = {
  *   _id: 1,
  *   name: 1,
  *   'address.state': 1,
  * }
  *
  * // Exclude the $vector
- * const projection2: StrictProjection<SomeDoc> = {
+ * const projection2: Projection<SomeDoc> = {
  *   $vector: 0,
  * }
  *
  * // Return array indices 2, 3, 4, and 5
- * const projection3: StrictProjection<SomeDoc> = {
+ * const projection3: Projection<SomeDoc> = {
  *   test_scores: { $slice: [2, 4] },
  * }
  * ```
  */
 export type StrictProjection<Schema extends SomeDoc> = {
-  [K in keyof ToDotNotation<Schema> | '_id']?: any[] extends (ToDotNotation<Schema> & { _id: any })[K]
+  [K in keyof ToDotNotation<WithId<Schema>>]?: any[] extends (ToDotNotation<WithId<Schema>>)[K]
     ? 1 | 0 | true | false | Slice
     : 1 | 0 | true | false;
 };

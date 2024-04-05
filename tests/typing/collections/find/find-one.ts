@@ -17,6 +17,7 @@
 import { dummyCollection, DynamicSchema, TestSchema } from '@/tests/typing/collections/prelude';
 import { Equal, Expect } from '@/tests/typing/prelude';
 import { StrictFilter } from '@/src/data-api/types/filter';
+import { StrictProjection } from '@/src/data-api';
 
 dummyCollection<TestSchema>().findOne({}, {}).then((_a) => {
   const a = _a!;
@@ -119,11 +120,9 @@ void dummyCollection<TestSchema>().findOne({
 void dummyCollection<TestSchema>().findOne({}, {
   sort: {
     $vector: [1, 2, 3],
-    // @ts-expect-error - Can't sort by vector and other fields at the same time
     'customer.address.address_line': 1,
   },
 });
-
 
 void dummyCollection<TestSchema>().findOne({}, {
   projection: {
@@ -135,9 +134,15 @@ void dummyCollection<TestSchema>().findOne({}, {
         '2',
       ]
     },
+  },
+});
+
+
+void dummyCollection<TestSchema>().findOne({}, {
+  projection: {
     // @ts-expect-error - Can't use $slice with non-array fields
     'customer.address.city': { $slice: 1 },
-  }
+  } satisfies StrictProjection<TestSchema>,
 });
 
 void dummyCollection<DynamicSchema>().findOne({

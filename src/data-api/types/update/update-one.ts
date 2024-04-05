@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/data-api';
-import type { InternalUpdateResult, StrictSort } from '@/src/data-api/types';
+import type { InternalUpdateResult, Sort } from '@/src/data-api/types';
 import { WithTimeout } from '@/src/common/types';
 
 /** @internal */
@@ -21,7 +21,7 @@ export interface UpdateOneCommand {
   updateOne: {
     filter: Record<string, unknown>;
     update: Record<string, any>;
-    sort?: StrictSort<any>;
+    sort?: Sort;
     options: {
       upsert?: boolean;
     };
@@ -37,7 +37,7 @@ export interface UpdateOneCommand {
  *
  * @see Collection.updateOne
  */
-export interface UpdateOneOptions<Schema extends SomeDoc> extends WithTimeout {
+export interface UpdateOneOptions extends WithTimeout {
   /**
    * If true, perform an insert if no documents match the filter.
    *
@@ -57,7 +57,7 @@ export interface UpdateOneOptions<Schema extends SomeDoc> extends WithTimeout {
    *
    * @defaultValue null
    */
-  sort?: StrictSort<Schema>,
+  sort?: Sort,
   /**
    * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
    * to find the closest matching document.

@@ -17,8 +17,8 @@ import {
   FindOptions,
   InternalFindOptions,
   InternalGetMoreCommand,
-  StrictProjection,
-  StrictSort,
+  Projection,
+  Sort,
 } from '@/src/data-api/types';
 import { CursorAlreadyInitializedError, SomeDoc } from '@/src/data-api';
 import { DataApiHttpClient } from '@/src/api';
@@ -75,7 +75,7 @@ const enum CursorStatus {
 export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   private readonly _namespace: string;
   private readonly _httpClient: DataApiHttpClient;
-  private readonly _options: FindOptions<SomeDoc, boolean>;
+  private readonly _options: FindOptions<boolean>;
   private _filter: Filter<SomeDoc>;
   private _mapping?: (doc: unknown) => T;
 
@@ -83,7 +83,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   private _nextPageState?: string | null;
   private _state = CursorStatus.Uninitialized;
 
-  constructor(namespace: string, httpClient: DataApiHttpClient, filter: Filter<SomeDoc>, options?: FindOptions<SomeDoc, boolean>) {
+  constructor(namespace: string, httpClient: DataApiHttpClient, filter: Filter<SomeDoc>, options?: FindOptions<boolean>) {
     this._namespace = namespace;
     this._httpClient = httpClient;
     this._filter = filter;
@@ -141,7 +141,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @return The cursor.
    */
-  sort(sort: StrictSort<TRaw>): FindCursor<T, TRaw> {
+  sort(sort: Sort): FindCursor<T, TRaw> {
     this._assertUninitialized();
     this._options.sort = sort;
     return this;
@@ -215,7 +215,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @return The cursor.
    */
-  project<R = any, RRaw extends SomeDoc = SomeDoc>(projection: StrictProjection<TRaw>): FindCursor<R, RRaw> {
+  project<R = any, RRaw extends SomeDoc = SomeDoc>(projection: Projection): FindCursor<R, RRaw> {
     this._assertUninitialized();
     this._options.projection = projection;
     return this as any;
