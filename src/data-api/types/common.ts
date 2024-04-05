@@ -17,12 +17,61 @@ import type { ToDotNotation } from '@/src/data-api/types';
 
 export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId;
 
+/**
+ * Specifies the sort criteria for selecting documents.
+ *
+ * **If you want stricter type-checking and full auto-complete, see {@link StrictSort}.**
+ *
+ * Can use `1`/`-1` for ascending/descending, or `$vector` for sorting by vector distance.
+ *
+ * **NB. The order of the fields in the sort option is significant—fields are sorted in the order they are listed.**
+ *
+ * @example
+ * ```typescript
+ * // Sort by name in ascending order, then by age in descending order
+ * const sort1: Sort = {
+ *   name: 1,
+ *   age: -1,
+ * }
+ *
+ * // Sort by vector distance
+ * const sort2: Sort = {
+ *   $vector: [0.23, 0.38, 0.27, 0.91, 0.21],
+ * }
+ * ```
+ */
 export type Sort =
   | Record<string, 1 | -1>
-  | { $vector: { $meta: number[] } }
   | { $vector: number[] }
   | { $vectorize: string };
 
+/**
+ * Specifies which fields should be included/excluded in the returned documents.
+ *
+ * **If you want stricter type-checking and full auto-complete, see {@link StrictProjection}.**
+ *
+ * Can use `1`/`0`, or `true`/`false`
+ *
+ * @example
+ * ```typescript
+ * // Include _id, name, and address.state
+ * const projection1: Projection = {
+ *   _id: 0,
+ *   name: 1,
+ *   'address.state': 1,
+ * }
+ *
+ * // Exclude the $vector
+ * const projection2: Projection = {
+ *   $vector: 0,
+ * }
+ *
+ * // Return array indices 2, 3, 4, and 5
+ * const projection3: Projection = {
+ *   test_scores: { $slice: [2, 4] },
+ * }
+ * ```
+ */
 export type Projection = Record<string, 1 | 0 | true | false | Slice>;
 
 /**
@@ -35,20 +84,23 @@ export type Projection = Record<string, 1 | 0 | true | false | Slice>;
  * @example
  * ```typescript
  * // Sort by name in ascending order, then by age in descending order
- * const sort1: Sort<SomeDoc> = {
- *   name: 1,
- *   age: -1,
- * }
+ * await collection.findOne({}, {
+ *   sort: {
+ *     name: 1,
+ *     age: -1,
+ *   } satisfies StrictSort<SomeDoc>,
+ * });
  *
  * // Sort by vector distance
- * const sort2: Sort<SomeDoc> = {
- *   $vector: [0.23, 0.38, 0.27, 0.91, 0.21],
- * }
+ * await collection.findOne({}, {
+ *   sort: {
+ *     $vector: [0.23, 0.38, 0.27, 0.91, 0.21],
+ *   } satisfies StrictSort<SomeDoc>,
+ * });
  * ```
  */
 export type StrictSort<Schema extends SomeDoc> =
   | { [K in keyof ToDotNotation<WithId<Schema>>]?: 1 | -1 }
-  | { $vector: { $meta: number[] } }
   | { $vector: number[] }
   | { $vectorize: string };
 
@@ -59,22 +111,25 @@ export type StrictSort<Schema extends SomeDoc> =
  *
  * @example
  * ```typescript
- * // Include _id, name, and address.state
- * const projection1: Projection<SomeDoc> = {
- *   _id: 1,
- *   name: 1,
- *   'address.state': 1,
- * }
+ * await collection.findOne({}, {
+ *   projection: {
+ *     _id: 0,
+ *     name: 1,
+ *     'address.state': 1,
+ *   } satisfies StrictProjection<SomeDoc>,
+ * });
  *
- * // Exclude the $vector
- * const projection2: Projection<SomeDoc> = {
- *   $vector: 0,
- * }
+ * await collection.findOne({}, {
+ *   projection: {
+ *     $vector: 0,
+ *   } satisfies StrictProjection<SomeDoc>,
+ * });
  *
- * // Return array indices 2, 3, 4, and 5
- * const projection3: Projection<SomeDoc> = {
- *   test_scores: { $slice: [2, 4] },
- * }
+ * await collection.findOne({}, {
+ *   projection: {
+ *     test_scores: { $slice: [2, 4] },
+ *   } satisfies StrictProjection<SomeDoc>,
+ * });
  * ```
  */
 export type StrictProjection<Schema extends SomeDoc> = {

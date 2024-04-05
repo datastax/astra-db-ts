@@ -18,7 +18,7 @@ import type { IsDate, IsNum, ToDotNotation } from '@/src/data-api/types';
 /**
  * Represents the update filter to specify how to update a document.
  *
- * **If you want stricter type-checking, see {@link StrictUpdateFilter}.**
+ * **If you want stricter type-checking and full auto-complete, see {@link StrictUpdateFilter}.**
  *
  * This is a more relaxed version of {@link StrictUpdateFilter} that doesn't type-check nested fields.
  *
@@ -51,17 +51,161 @@ import type { IsDate, IsNum, ToDotNotation } from '@/src/data-api/types';
  * @field $addToSet - Add an element to an array field in the document if it does not already exist.
  */
 export interface UpdateFilter<Schema extends SomeDoc> {
+  /**
+   * Set the value of a field in the document.
+   *
+   * @example
+   * ```typescript
+   * const updateFilter: UpdateFilter<SomeDoc> = {
+   *   $set: {
+   *     'customer.name': 'Jim B.'
+   *   }
+   * }
+   * ```
+   */
   $set?: Partial<Schema> & SomeDoc,
+  /**
+   * Set the value of a field in the document if an upsert is performed.
+   *
+   * @example
+   * ```typescript
+   * const updateFilter: UpdateFilter<SomeDoc> = {
+   *   $setOnInsert: {
+   *     'customer.name': 'Jim B.'
+   *   }
+   * }
+   * ```
+   */
   $setOnInsert?: Partial<Schema> & SomeDoc,
-  $min?: (NumberUpdate<Schema> | DateUpdate<Schema>) & Record<string, number | bigint | Date | { $date: number }>,
-  $max?: (NumberUpdate<Schema> | DateUpdate<Schema>) & Record<string, number | bigint | Date | { $date: number }>,
-  $mul?: StrictNumberUpdate<Schema> & Record<string, number>,
+  /**
+   * Remove the field from the document.
+   *
+   * @example
+   * ```typescript
+   * const updateFilter: UpdateFilter<SomeDoc> = {
+   *   $unset: {
+   *     'customer.phone': ''
+   *   }
+   * }
+   * ```
+   */
   $unset?: Record<string, ''>,
+  /**
+   * Increment the value of a field in the document if it's potentially a `number`.
+   *
+   * @example
+   * ```typescript
+   * const updateFilter: UpdateFilter<SomeDoc> = {
+   *   $inc: {
+   *     'customer.age': 1
+   *   }
+   * }
+   * ```
+   */
   $inc?: NumberUpdate<Schema> & Record<string, number>,
+  /**
+   * Add an element to an array field in the document.
+   *
+   * @example
+   * ```typescript
+   * const updateFilter: UpdateFilter<SomeDoc> = {
+   *   $push: {
+   *     'items': 'Extended warranty - 5 years'
+   *   }
+   * }
+   * ```
+   */
   $push?: Push<Schema> & SomeDoc,
+  /**
+   * Remove an element from an array field in the document.
+   *
+   * @example
+   * ```typescript
+   * const updateFilter: UpdateFilter<SomeDoc> = {
+   *   $pop: {
+   *     'items': -1
+   *   }
+   * }
+   * ```
+   */
   $pop?: Pop<Schema> & Record<string, number>,
+  /**
+   * Rename a field in the document.
+   *
+   * @example
+   * ```typescript
+   * const updateFilter: UpdateFilter<SomeDoc> = {
+   *   $rename: {
+   *     'customer.name': 'client.name'
+   *   }
+   * }
+   * ```
+   */
   $rename?: Record<string, string>,
+  /**
+   * Set the value of a field to the current date.
+   *
+   * @example
+   * ```typescript
+   * const updateFilter: UpdateFilter<SomeDoc> = {
+   *   $currentDate: {
+   *     'purchase_date': true
+   *   }
+   * }
+   * ```
+   */
   $currentDate?: CurrentDate<Schema> & Record<string, boolean>,
+  /**
+   * Only update the field if the specified value is less than the existing value.
+   *
+   * @example
+   * ```typescript
+   * const updateFilter: UpdateFilter<SomeDoc> = {
+   *   $min: {
+   *     'customer.age': 18
+   *   }
+   * }
+   * ```
+   */
+  $min?: (NumberUpdate<Schema> | DateUpdate<Schema>) & Record<string, number | bigint | Date | { $date: number }>,
+  /**
+   * Only update the field if the specified value is greater than the existing value.
+   *
+   * @example
+   * ```typescript
+   * const updateFilter: UpdateFilter<SomeDoc> = {
+   *   $max: {
+   *     'customer.age': 65
+   *   }
+   * }
+   * ```
+   */
+  $max?: (NumberUpdate<Schema> | DateUpdate<Schema>) & Record<string, number | bigint | Date | { $date: number }>,
+  /**
+   * Multiply the value of a field in the document.
+   *
+   * @example
+   * ```typescript
+   * const updateFilter: UpdateFilter<SomeDoc> = {
+   *   $mul: {
+   *     'customer.age': 1.1
+   *   }
+   * }
+   * ```
+   */
+  $mul?: StrictNumberUpdate<Schema> & Record<string, number>,
+  /**
+   * Add an element to an array field in the document if it does not already exist.
+   *
+   * @example
+   * ```typescript
+   * const updateFilter: UpdateFilter<SomeDoc> = {
+   *   $addToSet: {
+   *     'items': 'Extended warranty - 5 years'
+   *   }
+   * }
+   * ```
+   */
   $addToSet?: Push<Schema> & SomeDoc,
 }
 

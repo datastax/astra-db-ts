@@ -18,7 +18,7 @@ import type { IdOf, IsDate, IsNum, NoId, ToDotNotation } from '@/src/data-api/ty
 /**
  * Represents some filter operation for a given document schema.
  *
- * **If you want stricter type-checking, see {@link StrictFilter}.**
+ * **If you want stricter type-checking and full auto-complete, see {@link StrictFilter}.**
  *
  * This is a more relaxed version of {@link StrictFilter} that doesn't type-check nested fields.
  *
