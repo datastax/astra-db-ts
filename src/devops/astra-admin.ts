@@ -8,9 +8,9 @@ import {
 import { Db, mkDb } from '@/src/data-api';
 import { DEFAULT_DEVOPS_API_ENDPOINT, DEFAULT_NAMESPACE, DevopsApiHttpClient, HttpMethods } from '@/src/api';
 import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
-import { AdminSpawnOptions, DbSpawnOptions, RootClientOptsWithToken } from '@/src/client/types';
+import { AdminSpawnOptions, DbSpawnOptions, InternalRootClientOpts } from '@/src/client/types';
 
-type AdminOptions = RootClientOptsWithToken & { adminOptions: { adminToken: string } };
+type AdminOptions = InternalRootClientOpts & { adminOptions: { adminToken: string } };
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -37,7 +37,7 @@ type AdminOptions = RootClientOptsWithToken & { adminOptions: { adminToken: stri
  * @see AstraDbAdmin
  */
 export class AstraAdmin {
-  readonly #defaultOpts!: RootClientOptsWithToken;
+  readonly #defaultOpts!: InternalRootClientOpts;
 
   private readonly _httpClient!: DevopsApiHttpClient;
 
@@ -56,6 +56,8 @@ export class AstraAdmin {
         baseUrl: adminOpts.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINT,
         applicationToken: adminOpts.adminToken,
         caller: options.caller,
+        monitorCommands: adminOpts.monitorCommands,
+        emitter: options.emitter,
       }),
       enumerable: false,
     });
@@ -285,7 +287,7 @@ export class AstraAdmin {
    *   namespace: 'my_namespace',
    * }, {
    *   blocking: false,
-   *   dbOptions: {
+   *   dataApiOptions: {
    *     useHttp2: false,
    *     token: '<weaker-token>',
    *   },
@@ -325,7 +327,7 @@ export class AstraAdmin {
       options,
     });
 
-    const db = mkDb(this.#defaultOpts, resp.headers.location, definition.region, { ...options?.dbOptions, namespace: definition.keyspace });
+    const db = mkDb(this.#defaultOpts, resp.headers.location, definition.region, { ...options?.dataApiOptions, namespace: definition.keyspace });
     return db.admin(this.#defaultOpts.adminOptions);
   }
 
@@ -373,7 +375,7 @@ export class AstraAdmin {
 /**
  * @internal
  */
-export function mkAdmin(rootOpts: RootClientOptsWithToken, options?: AdminSpawnOptions): AstraAdmin {
+export function mkAdmin(rootOpts: InternalRootClientOpts, options?: AdminSpawnOptions): AstraAdmin {
   return new AstraAdmin({
     ...rootOpts,
     adminOptions: {

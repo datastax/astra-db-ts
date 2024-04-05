@@ -18,6 +18,7 @@ export * from './cursor';
 export * from './document';
 export * from './db';
 export * from './errors';
+export * from './events';
 export * from './ids';
 export * from './utils';
 export * from './types';

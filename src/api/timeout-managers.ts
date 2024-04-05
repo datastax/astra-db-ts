@@ -54,17 +54,18 @@ export class TimeoutManager {
   private _deadline!: number;
   private _started: boolean;
 
-  constructor(maxMs: number, readonly mkTimeoutError: MkTimeoutError) {
-    this._deadline = maxMs || Infinity;
+  public readonly ms: number;
+
+  constructor(ms: number, readonly mkTimeoutError: MkTimeoutError) {
+    this.ms = ms || Infinity;
     this._started = false;
   }
 
   get msRemaining() {
     if (!this._started) {
       this._started = true;
-      const maxMs = this._deadline;
-      this._deadline = Date.now() + maxMs;
-      return maxMs
+      this._deadline = Date.now() + this.ms;
+      return this.ms
     }
     return this._deadline - Date.now();
   }

@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { DataApiClientEvents } from '@/src/client/data-api-client';
+import TypedEmitter from 'typed-emitter';
+
 /**
  * The caller information to send with requests, of the form `[name, version?]`, or an array of such.
  *
@@ -35,14 +38,6 @@ export type Caller = [name: string, version?: string];
  * when spawning a new instance of their respective classes.
  */
 export interface RootClientOptions {
-  /**
-   * A winston log level (`'error', 'warn', 'info', 'http', 'verbose', 'debug', 'silly'`).
-   *
-   * Defaults to `process.env.NODE_ENV === 'production' ? 'error' : 'info'`.
-   *
-   * @defaultValue process.env.NODE_ENV === 'production' ? 'error' : 'info'
-   */
-  logLevel?: string,
   /**
    * The caller information to send with requests, of the form `[name, version?]`, or an array of such.
    *
@@ -75,7 +70,7 @@ export interface RootClientOptions {
   /**
    * The default options when spawning a {@link Db} instance.
    */
-  dbOptions?: DbSpawnOptions,
+  dataApiOptions?: DbSpawnOptions,
   /**
    * The default options when spawning an {@link AstraAdmin} instance.
    */
@@ -163,6 +158,7 @@ export interface DbSpawnOptions {
    * @defaultValue 'api/json/v1'
    */
   dataApiPath?: string,
+  monitorCommands?: boolean,
 }
 
 /**
@@ -199,11 +195,18 @@ export interface AdminSpawnOptions {
    * ```
    */
   endpointUrl?: string,
+  monitorCommands?: boolean,
 }
 
-export interface RootClientOptsWithToken {
-  logLevel?: string,
+export interface InternalRootClientOpts {
   caller?: Caller | Caller[],
-  dbOptions: DbSpawnOptions & { token: string },
-  adminOptions: AdminSpawnOptions & { adminToken: string },
+  emitter: TypedEmitter<DataApiClientEvents>,
+  dataApiOptions: DbSpawnOptions & {
+    token: string,
+    monitorCommands: boolean,
+  },
+  adminOptions: AdminSpawnOptions & {
+    adminToken: string,
+    monitorCommands: boolean,
+  },
 }

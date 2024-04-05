@@ -24,15 +24,10 @@ import {
 } from '@/src/data-api/types';
 import { DatabaseInfo } from '@/src/devops/types/admin/database-info';
 import { AstraDbAdmin, mkDbAdmin } from '@/src/devops/astra-db-admin';
-import { AdminSpawnOptions, DbSpawnOptions, RootClientOptsWithToken } from '@/src/client';
+import { AdminSpawnOptions, DbSpawnOptions, InternalRootClientOpts } from '@/src/client';
 import { RunCommandOptions } from '@/src/data-api/types/collections/command';
 import { WithTimeout } from '@/src/common/types';
 import { DropCollectionOptions } from '@/src/data-api/types/collections/drop-collection';
-
-/**
- * @internal
- */
-type DbOptions = RootClientOptsWithToken & { dbOptions: { token: string } };
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -67,7 +62,7 @@ type DbOptions = RootClientOptsWithToken & { dbOptions: { token: string } };
  * @see AstraAdmin.db
  */
 export class Db implements Disposable {
-  readonly #defaultOpts!: RootClientOptsWithToken;
+  readonly #defaultOpts!: InternalRootClientOpts;
 
   private readonly _httpClient!: DataApiHttpClient;
   private readonly _id?: string;
@@ -83,7 +78,7 @@ export class Db implements Disposable {
    *
    * // Overrides the default namespace for all future db spawns
    * const client2 = new DataApiClient('AstraCS:...', {
-   *   dbOptions: { namespace: 'my_namespace' }
+   *   dataApiOptions: { namespace: 'my_namespace' }
    * });
    *
    * // Created with 'default_keyspace' as the default namespace
@@ -110,8 +105,8 @@ export class Db implements Disposable {
    *
    * @internal
    */
-  constructor(endpoint: string, options: DbOptions) {
-    const dbOpts = options.dbOptions;
+  constructor(endpoint: string, options: InternalRootClientOpts) {
+    const dbOpts = options.dataApiOptions;
 
     Object.defineProperty(this, 'namespace', {
       value: dbOpts.namespace ?? DEFAULT_NAMESPACE,
@@ -131,6 +126,8 @@ export class Db implements Disposable {
         baseApiPath: dbOpts?.dataApiPath || DEFAULT_DATA_API_PATH,
         caller: options.caller,
         useHttp2: dbOpts.useHttp2,
+        emitter: options.emitter,
+        monitorCommands: dbOpts.monitorCommands,
       }),
       enumerable: false,
     });
@@ -306,7 +303,7 @@ export class Db implements Disposable {
           defaultId: options?.defaultId,
           indexing: options?.indexing as any,
           vector: options?.vector,
-        }
+        },
       },
     };
 
@@ -408,7 +405,7 @@ export class Db implements Disposable {
       findCollections: {
         options: {
           explain: options?.nameOnly !== true,
-        }
+        },
       },
     }
 
@@ -492,7 +489,7 @@ export class Db implements Disposable {
 /**
  * @internal
  */
-export function mkDb(rootOpts: RootClientOptsWithToken, endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions) {
+export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions) {
   const options = (typeof regionOrOptions === 'string')
     ? maybeOptions!
     : regionOrOptions;
@@ -503,8 +500,8 @@ export function mkDb(rootOpts: RootClientOptsWithToken, endpointOrId: string, re
 
   return new Db(endpoint, {
     ...rootOpts,
-    dbOptions: {
-      ...rootOpts?.dbOptions,
+    dataApiOptions: {
+      ...rootOpts?.dataApiOptions,
       ...options,
     },
   });

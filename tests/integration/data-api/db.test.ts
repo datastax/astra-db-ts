@@ -143,7 +143,7 @@ describe('integration.data-api.db', async () => {
     });
 
     it('should work even when instantiated weirdly', async () => {
-      const db = new DataApiClient(process.env.APPLICATION_TOKEN!, { dbOptions: { namespace: '123123123', dataApiPath: 'King, by Eluveitie' } })
+      const db = new DataApiClient(process.env.APPLICATION_TOKEN!, { dataApiOptions: { namespace: '123123123', dataApiPath: 'King, by Eluveitie' } })
         .admin({ adminToken: 'dummy-token' })
         .dbAdmin(process.env.ASTRA_URI!, { dataApiPath: DEFAULT_DATA_API_PATH, namespace: DEFAULT_NAMESPACE })
         .db()
@@ -160,7 +160,6 @@ describe('integration.data-api.db', async () => {
   describe('listCollections', () => {
     it('should return a list of just names of collections with nameOnly set to true', async () => {
       const res = await db.listCollections({ nameOnly: true });
-      console.log(res)
       const found = res.find((collection) => collection === DEFAULT_COLLECTION_NAME);
       assert.ok(found);
     });
@@ -183,7 +182,7 @@ describe('integration.data-api.db', async () => {
 
     it('should not list collections in another namespace', async () => {
       const res = await db.listCollections({ namespace: OTHER_NAMESPACE });
-      assert.strictEqual(res.length, 0);
+      assert.strictEqual(res.length, 1);
     });
   });
 

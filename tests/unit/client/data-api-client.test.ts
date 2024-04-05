@@ -17,7 +17,6 @@ import { DataApiClient } from '@/src/client';
 import * as process from 'process';
 import assert from 'assert';
 import { DEFAULT_DATA_API_PATH } from '@/src/api';
-import { logger } from '@/src/logger';
 
 describe('unit.client.data-api-client', () => {
   const endpoint = process.env.ASTRA_URI!;
@@ -42,12 +41,6 @@ describe('unit.client.data-api-client', () => {
       assert.throws(() => new DataApiClient(3));
       // @ts-expect-error - testing invalid input
       assert.throws(() => new DataApiClient({ logLevel: 'warn' }));
-    });
-
-    it('should set logLevel if passed', () => {
-      const client = new DataApiClient('dummy-token', { logLevel: 'silly' });
-      assert.ok(client);
-      assert.strictEqual(logger.transports[0].level, 'silly');
     });
   });
 

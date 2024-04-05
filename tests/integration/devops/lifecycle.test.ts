@@ -17,7 +17,7 @@ import { assertTestsEnabled, initTestObjects } from '@/tests/fixtures';
 import { DataApiClient } from '@/src/client';
 import assert from 'assert';
 import { DevopsApiResponseError } from '@/src/devops';
-import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT } from '@/src/api';
+import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, HttpMethods } from '@/src/api';
 import { TimeoutManager } from '@/src/api/timeout-managers';
 
 describe('integration.devops.lifecycle', async () => {
@@ -30,7 +30,7 @@ describe('integration.devops.lifecycle', async () => {
 
     const dbs = await client.admin().listDatabases();
 
-    if (dbs.some(db => db.info.name === 'astra-test-db')) {
+    if (dbs.some(db => db.info.name === 'astra-test-db' && db.status !== 'TERMINATING')) {
       throw new Error('Database \'astra-test-db\' already exists, drop it to proceed w/ lifecycle test');
     }
   });
@@ -46,9 +46,9 @@ describe('integration.devops.lifecycle', async () => {
         namespace: 'my_namespace',
       }, {
         blocking: false,
-        dbOptions: {
+        dataApiOptions: {
           useHttp2: false,
-        }
+        },
       });
       const asyncDb = asyncDbAdmin.db();
 
@@ -68,12 +68,54 @@ describe('integration.devops.lifecycle', async () => {
         assert.strictEqual(dbInfo.info.keyspace, 'my_namespace');
       }
 
-      const syncDbAdmin = await admin.createDatabase({
+      const monitoringAdmin = client.admin({ monitorCommands: true });
+      let commandStartedEvent = false;
+      let commandPollingEvent = false;
+      let commandSucceededEvent = false;
+
+      {
+        client.on('adminCommandStarted', (event) => {
+          commandStartedEvent = true;
+          assert.strictEqual(event.path, '/databases');
+          assert.strictEqual(event.method, HttpMethods.Post);
+          assert.strictEqual(event.longRunning, true);
+          assert.strictEqual(event.params, undefined);
+          assert.strictEqual(event.timeout, Infinity);
+        });
+
+        client.on('adminCommandPolling', (event) => {
+          commandPollingEvent = true;
+          assert.strictEqual(event.path, '/databases');
+          assert.strictEqual(event.method, HttpMethods.Post);
+          assert.strictEqual(event.longRunning, true)
+          assert.strictEqual(event.params, undefined);
+          assert.strictEqual(event.interval, 10000);
+          assert.ok(event.elapsed > 0);
+        });
+
+        client.on('adminCommandSucceeded', (event) => {
+          commandSucceededEvent = true;
+          assert.strictEqual(event.path, '/databases');
+          assert.strictEqual(event.method, HttpMethods.Post);
+          assert.strictEqual(event.longRunning, true);
+          assert.strictEqual(event.params, undefined);
+          assert.ok(event.duration > 60000);
+        });
+      }
+
+      const syncDbAdmin = await monitoringAdmin.createDatabase({
         name: 'astra-test-db',
         cloudProvider: 'GCP',
         region: 'us-east1',
       });
       const syncDb = syncDbAdmin.db();
+
+      {
+        client.removeAllListeners();
+        assert.ok(commandStartedEvent);
+        assert.ok(commandPollingEvent);
+        assert.ok(commandSucceededEvent);
+      }
 
       {
         assert.ok(syncDb.id);
@@ -91,7 +133,13 @@ describe('integration.devops.lifecycle', async () => {
       }
 
       {
-        await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, 'ACTIVE', ['INITIALIZING', 'PENDING'], {}, 10000, new TimeoutManager(DEFAULT_TIMEOUT, () => new Error('Timeout')));
+        await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, null!, {
+          target: 'ACTIVE',
+          legalStates: ['PENDING', 'INITIALIZING'],
+          defaultPollInterval: 10000,
+          id: null!,
+          options: undefined,
+        }, new TimeoutManager(DEFAULT_TIMEOUT, () => new Error('Timeout')), 0);
       }
 
       for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -102,7 +150,7 @@ describe('integration.devops.lifecycle', async () => {
         assert.strictEqual(dbInfo.info.region, 'us-east1');
         assert.strictEqual(dbInfo.info.keyspace, db.namespace);
 
-        const collections1 = await db.listCollections();
+        const collections1 = await db.listCollections({ nameOnly: true });
         assert.deepStrictEqual(collections1, [], `in ${dbType}`)
 
         const collection = await db.createCollection('test_collection');
@@ -110,8 +158,8 @@ describe('integration.devops.lifecycle', async () => {
         assert.strictEqual(collection.collectionName, 'test_collection', `in ${dbType}`);
         assert.deepStrictEqual(await collection.options(), {}, `in ${dbType}`);
 
-        const collections2 = await db.listCollections();
-        assert.deepStrictEqual(collections2, [{ name: 'test_collection' }], `in ${dbType}`);
+        const collections2 = await db.listCollections({ nameOnly: true });
+        assert.deepStrictEqual(collections2, ['test_collection'], `in ${dbType}`);
 
         const dbs1 = await admin.listDatabases();
         assert.ok(dbs1.find(db => db.id === dbAdmin.id), `in ${dbType}`);
@@ -134,7 +182,13 @@ describe('integration.devops.lifecycle', async () => {
 
       {
         await syncDbAdmin.createNamespace('other_namespace');
-        await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, 'ACTIVE', ['MAINTENANCE'], {}, 1000, new TimeoutManager(DEFAULT_TIMEOUT, () => new Error('Timeout')));
+        await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, null!, {
+          target: 'ACTIVE',
+          legalStates: ['MAINTENANCE'],
+          defaultPollInterval: 1000,
+          id: null!,
+          options: undefined,
+        }, new TimeoutManager(DEFAULT_TIMEOUT, () => new Error('Timeout')), 0);
       }
 
       for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -153,7 +207,13 @@ describe('integration.devops.lifecycle', async () => {
 
       {
         await syncDbAdmin.dropNamespace('other_namespace', { blocking: true });
-        await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, 'ACTIVE', ['MAINTENANCE'], {}, 1000, new TimeoutManager(DEFAULT_TIMEOUT, () => new Error('Timeout')));
+        await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, null!, {
+          target: 'ACTIVE',
+          legalStates: ['MAINTENANCE'],
+          defaultPollInterval: 1000,
+          id: null!,
+          options: undefined,
+        }, new TimeoutManager(DEFAULT_TIMEOUT, () => new Error('Timeout')), 0);
       }
 
       for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -174,7 +234,13 @@ describe('integration.devops.lifecycle', async () => {
 
       {
         await admin.dropDatabase(syncDb);
-        await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, 'TERMINATED', ['TERMINATING'], {}, 10000, new TimeoutManager(DEFAULT_TIMEOUT, () => new Error('Timeout')));
+        await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, null!, {
+          target: 'TERMINATED',
+          legalStates: ['TERMINATING'],
+          defaultPollInterval: 10000,
+          id: null!,
+          options: undefined,
+        }, new TimeoutManager(DEFAULT_TIMEOUT, () => new Error('Timeout')), 0);
       }
 
       for (const [dbAdmin, dbType] of [[syncDbAdmin, 'sync'], [asyncDbAdmin, 'async']] as const) {

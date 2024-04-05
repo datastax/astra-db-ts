@@ -16,7 +16,6 @@ import { GuaranteedAPIResponse, HTTPRequestStrategy, InternalHTTPRequestInfo } f
 import axios from 'axios';
 import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DEVOPS_API_AUTH_HEADER, DEFAULT_TIMEOUT } from '@/src/api/constants';
 import http from 'http';
-import { logger } from '@/src/logger';
 
 const axiosAgent = axios.create({
   headers: {
@@ -28,23 +27,6 @@ const axiosAgent = axios.create({
     keepAlive: true,
   }),
   timeout: DEFAULT_TIMEOUT,
-});
-
-axiosAgent.interceptors.request.use((config) => {
-  const { method, url } = config;
-
-  if (logger.isLevelEnabled('http')) {
-    logger.http(`--- request ${method?.toUpperCase()} ${url} ${config.data}`,);
-  }
-
-  return config;
-});
-
-axiosAgent.interceptors.response.use((response) => {
-  if (logger.isLevelEnabled('http')) {
-    logger.http(`--- response ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url} ${JSON.stringify(response.data, null, 2)}`,);
-  }
-  return response;
 });
 
 /**

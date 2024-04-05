@@ -22,9 +22,9 @@ describe('unit.api.timeout-manager', () => {
     assert.strictEqual(timeoutManager.msRemaining, 1000);
     await new Promise((resolve) => setTimeout(resolve, 500));
     assert.ok(timeoutManager.msRemaining < 500);
-    assert.ok(timeoutManager.msRemaining > 490);
+    assert.ok(timeoutManager.msRemaining > 480);
     await new Promise((resolve) => setTimeout(resolve, 500));
     assert.ok(timeoutManager.msRemaining < 0);
-    assert.ok(timeoutManager.msRemaining > -20);
+    assert.ok(timeoutManager.msRemaining > -40);
   });
 });

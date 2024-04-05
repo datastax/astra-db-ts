@@ -15,5 +15,7 @@
 
 export * from './astra-admin';
 export * from './astra-db-admin';
+export * from './db-admin';
 export * from './errors';
+export * from './events';
 export * from './types';

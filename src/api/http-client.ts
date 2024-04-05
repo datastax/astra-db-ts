@@ -17,7 +17,8 @@ import { GuaranteedAPIResponse, HTTPClientOptions, HTTPRequestInfo, HTTPRequestS
 import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
 import { Mutable } from '@/src/data-api/types/utils';
-import { Caller } from '@/src/client';
+import { Caller, DataApiClientEvents } from '@/src/client';
+import TypedEmitter from 'typed-emitter';
 
 /**
  * @internal
@@ -26,24 +27,15 @@ export class HttpClient {
   public readonly baseUrl: string;
   public readonly userAgent: string;
   public requestStrategy: HTTPRequestStrategy;
+  public emitter: TypedEmitter<DataApiClientEvents>;
+  public monitorCommands: boolean;
   #applicationToken: string;
 
   constructor(options: HTTPClientOptions) {
-    if (typeof window !== "undefined") {
-      throw new Error("not for use in a web browser");
-    }
-
-    if (!options.baseUrl) {
-      throw new Error("baseUrl required for initialization");
-    }
-
-    if (!options.applicationToken) {
-      throw new Error("applicationToken required for initialization");
-    }
-
     this.#applicationToken = options.applicationToken;
-
     this.baseUrl = options.baseUrl;
+    this.emitter = options.emitter;
+    this.monitorCommands = options.monitorCommands;
 
     this.requestStrategy =
       (options.requestStrategy)
@@ -77,6 +69,8 @@ export class HttpClient {
       applicationToken: this.#applicationToken,
       requestStrategy: this.requestStrategy,
       userAgent: this.userAgent,
+      emitter: this.emitter,
+      monitorCommands: this.monitorCommands,
     });
     initialize(clone);
     return clone;
@@ -107,6 +101,11 @@ export class HttpClient {
     }
     return await this.requestStrategy.request(fullInfo);
   }
+}
+
+export function hrTimeMs(): number {
+  const hrtime = process.hrtime();
+  return Math.floor(hrtime[0] * 1000 + hrtime[1] / 1000000);
 }
 
 function buildUserAgent(client: string, caller?: Caller | Caller[]): string {

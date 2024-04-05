@@ -11,17 +11,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// noinspection ExceptionCaughtLocallyJS
 
-import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, HttpClient, HttpMethods, RawDataApiResponse } from '@/src/api';
+import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, hrTimeMs, HttpClient, HttpMethods, RawDataApiResponse } from '@/src/api';
 import { DataAPIResponseError, DataAPITimeout, mkRespErrorFromResponse, ObjectId, UUID } from '@/src/data-api';
-import { logger } from '@/src/logger';
-import {
-  MkTimeoutError,
-  TimeoutManager,
-  TimeoutOptions,
-} from '@/src/api/timeout-managers';
+import { MkTimeoutError, TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
+import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
 
-interface DataApiRequestInfo {
+/**
+ * @internal
+ */
+export interface DataApiRequestInfo {
   url: string;
   collection?: string;
   namespace?: string;
@@ -48,29 +48,33 @@ export class DataApiHttpClient extends HttpClient {
   public async executeCommand(command: Record<string, any>, options: ExecuteCommandOptions | undefined) {
     const timeoutManager = options?.timeoutManager ?? mkTimeoutManager(options?.maxTimeMS);
 
-    const response = await this._requestDataApi({
+    return await this._requestDataApi({
       url: this.baseUrl,
       timeoutManager: timeoutManager,
       collection: options?.collection,
       namespace: options?.namespace,
       command: command,
     });
-
-    handleIfErrorResponse(response, command);
-    return response;
   }
 
-  protected async _requestDataApi(info: DataApiRequestInfo): Promise<RawDataApiResponse> {
+  private async _requestDataApi(info: DataApiRequestInfo): Promise<RawDataApiResponse> {
+    let started = 0;
+
     try {
       info.collection ||= this.collection;
       info.namespace ||= this.namespace || DEFAULT_NAMESPACE;
 
       const keyspacePath = `/${info.namespace}`;
       const collectionPath = info.collection ? `/${info.collection}` : '';
-      const url = info.url + keyspacePath + collectionPath;
+      info.url += keyspacePath + collectionPath;
+
+      if (this.monitorCommands) {
+        started = hrTimeMs();
+        this.emitter.emit('commandStarted', new CommandStartedEvent(info));
+      }
 
       const response = await this._request({
-        url: url,
+        url: info.url,
         data: JSON.stringify(info.command, replacer),
         timeoutManager: info.timeoutManager,
         method: HttpMethods.Post,
@@ -78,28 +82,34 @@ export class DataApiHttpClient extends HttpClient {
       });
 
       if (response.status === 401 || (response.data?.errors?.length > 0 && response.data?.errors[0]?.message === 'UNAUTHENTICATED: Invalid token')) {
-        return mkFauxErroredResponse('Authentication failed; is your token valid?');
+        const fauxResponse = mkFauxErroredResponse('Authentication failed; is your token valid?');
+        throw mkRespErrorFromResponse(DataAPIResponseError, info.command, fauxResponse);
       }
 
       if (response.status === 200) {
-        return {
+        if (response.data?.errors && response.data?.errors.length > 0) {
+          throw mkRespErrorFromResponse(DataAPIResponseError, info.command, response.data);
+        }
+
+        const respData = {
           status: response.data?.status,
           data: response.data?.data,
           errors: response.data?.errors,
-        };
+        }
+
+        if (this.monitorCommands) {
+          this.emitter.emit('commandSucceeded', new CommandSucceededEvent(info, respData, started));
+        }
+
+        return respData;
       } else {
-        logger.error(info.url + ": " + response.status);
-        logger.error("Data: " + JSON.stringify(info.command));
-        return mkFauxErroredResponse(`Some non-200 status code was returned. Check the logs for more information. ${response.status}, ${JSON.stringify(response.data)}`);
+        const fauxResponse = mkFauxErroredResponse(`Some non-200 status code was returned. Check the logs for more information. ${response.status}, ${JSON.stringify(response.data)}`);
+        throw mkRespErrorFromResponse(DataAPIResponseError, info.command, fauxResponse);
       }
     } catch (e: any) {
-      logger.error(info.url + ": " + e.message);
-      logger.error("Data: " + JSON.stringify(info.command));
-
-      if (e?.response?.data) {
-        logger.error("Response Data: " + JSON.stringify(e.response.data));
+      if (this.monitorCommands) {
+        this.emitter.emit('commandFailed', new CommandFailedEvent(info, e, started));
       }
-
       throw e;
     }
   }
@@ -111,7 +121,7 @@ const mkTimeoutManager = (maxMs: number | undefined) => {
 }
 
 const mkTimeoutErrorMaker = (timeout: number): MkTimeoutError => {
-  return (info) => new DataAPITimeout(info.data!, timeout);
+  return () => new DataAPITimeout(timeout);
 }
 
 const mkFauxErroredResponse = (message: string): RawDataApiResponse => {
@@ -156,13 +166,4 @@ export function reviver(_: string, value: any): any {
     return new UUID(value.$uuid);
   }
   return value;
-}
-
-/**
- * @internal
- */
-export function handleIfErrorResponse(response: any, command: Record<string, any>) {
-  if (response.errors && response.errors.length > 0) {
-    throw mkRespErrorFromResponse(DataAPIResponseError, command, response);
-  }
 }

@@ -1,7 +1,28 @@
+// Copyright DataStax, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import { Db, mkDb } from '@/src/data-api/db';
 import { AstraAdmin, mkAdmin } from '@/src/devops/astra-admin';
-import { AdminSpawnOptions, DbSpawnOptions, RootClientOptions, RootClientOptsWithToken } from '@/src/client/types';
-import { setLevel } from '@/src/logger';
+import { AdminSpawnOptions, DbSpawnOptions, InternalRootClientOpts, RootClientOptions } from '@/src/client/types';
+import TypedEmitter from 'typed-emitter';
+import EventEmitter from 'events';
+import { DataApiCommandEvents } from '@/src/data-api/events';
+import { AdminCommandEvents } from '@/src/devops';
+
+export type DataApiClientEvents =
+  & DataApiCommandEvents
+  & AdminCommandEvents
 
 /**
  * The main entrypoint into working with the Data API. It sits at the top of the
@@ -29,8 +50,8 @@ import { setLevel } from '@/src/logger';
  * console.log(await admin1.listDatabases());
  * ```
  */
-export class DataApiClient {
-  readonly #options: RootClientOptsWithToken;
+export class DataApiClient extends (EventEmitter as new () => TypedEmitter<DataApiClientEvents>) {
+  readonly #options: InternalRootClientOpts;
 
   /**
    * Constructs a new instance of the {@link DataApiClient}.
@@ -39,25 +60,26 @@ export class DataApiClient {
    * @param options - The default options to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    */
   constructor(token: string, options?: RootClientOptions) {
+    super();
+
     if (!token || typeof token as any !== 'string') {
-      throw new Error('A (string) token is required to use the Data API');
+      throw new Error('A valid token is required to use the DataApiClient');
     }
 
     this.#options = {
       ...options,
-      dbOptions: {
+      dataApiOptions: {
+        monitorCommands: false,
         token: token,
-        ...options?.dbOptions,
+        ...options?.dataApiOptions,
       },
       adminOptions: {
+        monitorCommands: false,
         adminToken: token,
         ...options?.adminOptions,
       },
+      emitter: this,
     };
-
-    if (options?.logLevel) {
-      setLevel(options.logLevel);
-    }
   }
 
   /**

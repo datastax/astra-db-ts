@@ -124,7 +124,7 @@ export interface DataAPIDetailedErrorDescriptor {
 export abstract class DataAPIError extends Error {}
 
 export class DataAPITimeout extends DataAPIError {
-  constructor(readonly command: Record<string, any>, readonly timeout: number) {
+  constructor(readonly timeout: number) {
     super(`Command timed out after ${timeout}ms`);
     this.name = 'DataAPITimeout';
   }

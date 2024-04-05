@@ -1,7 +1,7 @@
 import { AdminBlockingOptions, FullDatabaseInfo } from '@/src/devops/types';
 import { DEFAULT_DEVOPS_API_ENDPOINT, DevopsApiHttpClient, HttpClient, HttpMethods } from '@/src/api';
 import { Db } from '@/src/data-api';
-import { AdminSpawnOptions, RootClientOptsWithToken } from '@/src/client';
+import { AdminSpawnOptions, InternalRootClientOpts } from '@/src/client';
 import { DbAdmin } from '@/src/devops/db-admin';
 import { WithTimeout } from '@/src/common/types';
 
@@ -38,12 +38,13 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(_db: Db, httpClient: HttpClient, options: AdminSpawnOptions) {
+  constructor(_db: Db, httpClient: HttpClient, options: InternalRootClientOpts['adminOptions']) {
     super();
 
     Object.defineProperty(this, '_httpClient', {
       value: httpClient.cloneInto(DevopsApiHttpClient, (c) => {
         c.baseUrl = options.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINT;
+        c.monitorCommands = options.monitorCommands;
       }),
       enumerable: false,
     });
@@ -257,7 +258,7 @@ export class AstraDbAdmin extends DbAdmin {
 /**
  * @internal
  */
-export function mkDbAdmin(db: Db, httpClient: HttpClient, rootOpts: RootClientOptsWithToken, options?: AdminSpawnOptions): AstraDbAdmin {
+export function mkDbAdmin(db: Db, httpClient: HttpClient, rootOpts: InternalRootClientOpts, options?: AdminSpawnOptions): AstraDbAdmin {
   return new AstraDbAdmin(db, httpClient, {
     ...rootOpts.adminOptions,
     ...options,

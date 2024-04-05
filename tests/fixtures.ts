@@ -32,11 +32,14 @@ export const initTestObjects = async (ctx: Context, useHttp2: boolean = true): P
     ctx.skip();
   }
 
-  const client = new DataApiClient(process.env.APPLICATION_TOKEN!, { dbOptions: { useHttp2 } });
+  const client = new DataApiClient(process.env.APPLICATION_TOKEN!, { dataApiOptions: { useHttp2 } });
   const db = client.db(process.env.ASTRA_URI!);
 
   const coll = (!collCreated)
-    ? await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false })
+    ? await (async () => {
+        await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace: OTHER_NAMESPACE });
+        return await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false })
+      })()
     : db.collection(DEFAULT_COLLECTION_NAME);
 
   collCreated = true;

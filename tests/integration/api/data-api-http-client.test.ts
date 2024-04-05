@@ -46,7 +46,7 @@ describe('integration.api.data-api-http-client', () => {
       }, {
         namespace: OTHER_NAMESPACE,
       });
-      assert.strictEqual(resp.status?.collections.length, 0);
+      assert.strictEqual(resp.status?.collections.length, 1);
     });
 
     it('should execute a collection-level command', async () => {
