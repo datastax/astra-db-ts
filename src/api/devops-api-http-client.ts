@@ -16,7 +16,7 @@ import { hrTimeMs, HttpClient } from '@/src/api/http-client';
 import { AxiosError, AxiosResponse } from 'axios';
 import { HTTPClientOptions, HttpMethodStrings } from '@/src/api/types';
 import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
-import { DevopsApiResponseError, DevopsApiTimeout, DevopsUnexpectedStateError } from '@/src/devops/errors';
+import { DevOpsAPIResponseError, DevOpsAPITimeout, DevOpsUnexpectedStateError } from '@/src/devops/errors';
 import { AdminBlockingOptions } from '@/src/devops/types';
 import { MkTimeoutError, TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
 import { HttpMethods } from '@/src/api/constants';
@@ -30,7 +30,7 @@ import {
 /**
  * @internal
  */
-export interface DevopsApiRequestInfo {
+export interface DevOpsAPIRequestInfo {
   path: string,
   method: HttpMethodStrings,
   data?: Record<string, any>,
@@ -51,13 +51,13 @@ export interface LongRunningRequestInfo {
 /**
  * @internal
  */
-export class DevopsApiHttpClient extends HttpClient {
+export class DevOpsAPIHttpClient extends HttpClient {
   constructor(props: HTTPClientOptions) {
     super(props);
-    this.requestStrategy = new HTTP1Strategy(HTTP1AuthHeaderFactories.DevopsApi);
+    this.requestStrategy = new HTTP1Strategy(HTTP1AuthHeaderFactories.DevOpsAPI);
   }
 
-  public async request(req: DevopsApiRequestInfo, options: TimeoutOptions | undefined, started: number = 0): Promise<AxiosResponse> {
+  public async request(req: DevOpsAPIRequestInfo, options: TimeoutOptions | undefined, started: number = 0): Promise<AxiosResponse> {
     const isLongRunning = started !== 0;
 
     try {
@@ -95,11 +95,11 @@ export class DevopsApiHttpClient extends HttpClient {
       if (!(e instanceof AxiosError)) {
         throw e;
       }
-      throw new DevopsApiResponseError(e);
+      throw new DevOpsAPIResponseError(e);
     }
   }
 
-  public async requestLongRunning(req: DevopsApiRequestInfo, info: LongRunningRequestInfo): Promise<AxiosResponse> {
+  public async requestLongRunning(req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo): Promise<AxiosResponse> {
     const timeoutManager = mkTimeoutManager(info.options?.maxTimeMS);
     const isLongRunning = info?.options?.blocking !== false;
 
@@ -123,7 +123,7 @@ export class DevopsApiHttpClient extends HttpClient {
     return resp;
   }
 
-  private async _awaitStatus(id: string, req: DevopsApiRequestInfo, info: LongRunningRequestInfo, timeoutManager: TimeoutManager, started: number): Promise<void> {
+  private async _awaitStatus(id: string, req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo, timeoutManager: TimeoutManager, started: number): Promise<void> {
     if (info.options?.blocking === false) {
       return;
     }
@@ -153,7 +153,7 @@ export class DevopsApiHttpClient extends HttpClient {
       }
 
       if (!info.legalStates.includes(resp.data?.status)) {
-        const error = new DevopsUnexpectedStateError(`Created database is not in any legal state [${[info.target, ...info.legalStates].join(',')}]`, resp);
+        const error = new DevOpsUnexpectedStateError(`Created database is not in any legal state [${[info.target, ...info.legalStates].join(',')}]`, resp);
 
         if (this.monitorCommands) {
           this.emitter.emit('adminCommandFailed', new AdminCommandFailedEvent(req, true, error, started));
@@ -178,5 +178,5 @@ const mkTimeoutManager = (maxMs: number | undefined) => {
 }
 
 const mkTimeoutErrorMaker = (timeout: number): MkTimeoutError => {
-  return (info) => new DevopsApiTimeout(info.url, timeout);
+  return (info) => new DevOpsAPITimeout(info.url, timeout);
 }

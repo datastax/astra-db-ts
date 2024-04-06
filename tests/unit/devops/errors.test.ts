@@ -14,18 +14,18 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DevopsApiResponseError } from '@/src/devops';
+import { DevOpsAPIResponseError } from '@/src/devops';
 
 describe('unit.devops.errors', () => {
-  describe('DevopsApiResponseError construction', () => {
+  describe('DevOpsAPIResponseError construction', () => {
     it('should properly construct a DataAPIResponseError with no underlying errors given', () => {
       const rootError = { message: 'Something went wrong' } as any;
-      const err = new DevopsApiResponseError(rootError);
+      const err = new DevOpsAPIResponseError(rootError);
       assert.strictEqual(err.message, 'Something went wrong');
       assert.deepStrictEqual(err.errors, []);
       assert.strictEqual(err.status, undefined);
       assert.deepStrictEqual(err.rootError, rootError);
-      assert.strictEqual(err.name, 'DevopsApiResponseError')
+      assert.strictEqual(err.name, 'DevOpsAPIResponseError')
     });
 
     it('should properly construct a DataAPIResponseError with underlying errors', () => {
@@ -40,12 +40,12 @@ describe('unit.devops.errors', () => {
           },
         },
       } as any;
-      const err = new DevopsApiResponseError(rootError);
+      const err = new DevOpsAPIResponseError(rootError);
       assert.strictEqual(err.message, 'Error 1');
       assert.deepStrictEqual(err.errors, [{ message: 'Error 1' }, { message: 'Error 2' }]);
       assert.strictEqual(err.status, undefined);
       assert.deepStrictEqual(err.rootError, rootError);
-      assert.strictEqual(err.name, 'DevopsApiResponseError')
+      assert.strictEqual(err.name, 'DevOpsAPIResponseError')
     });
   });
 });

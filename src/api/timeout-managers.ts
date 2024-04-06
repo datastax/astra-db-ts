@@ -35,7 +35,7 @@ export type TimeoutOptions = {
  * @example
  * ```typescript
  * const mkTimeoutError: MkTimeoutError = (info) => {
- *   return new DevopsApiTimeout(info.url, timeout);
+ *   return new DevOpsAPITimeout(info.url, timeout);
  * }
  * ```
  *

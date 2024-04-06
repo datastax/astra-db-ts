@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, hrTimeMs, HttpClient, HttpMethods, RawDataApiResponse } from '@/src/api';
+import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, hrTimeMs, HttpClient, HttpMethods, RawDataAPIResponse } from '@/src/api';
 import { DataAPIResponseError, DataAPITimeout, mkRespErrorFromResponse, ObjectId, UUID } from '@/src/data-api';
 import { MkTimeoutError, TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
@@ -21,7 +21,7 @@ import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '
 /**
  * @internal
  */
-export interface DataApiRequestInfo {
+export interface DataAPIRequestInfo {
   url: string;
   collection?: string;
   namespace?: string;
@@ -37,7 +37,7 @@ type ExecuteCommandOptions = TimeoutOptions & {
 /**
  * @internal
  */
-export class DataApiHttpClient extends HttpClient {
+export class DataAPIHttpClient extends HttpClient {
   public collection?: string;
   public namespace?: string;
 
@@ -48,7 +48,7 @@ export class DataApiHttpClient extends HttpClient {
   public async executeCommand(command: Record<string, any>, options: ExecuteCommandOptions | undefined) {
     const timeoutManager = options?.timeoutManager ?? mkTimeoutManager(options?.maxTimeMS);
 
-    return await this._requestDataApi({
+    return await this._requestDataAPI({
       url: this.baseUrl,
       timeoutManager: timeoutManager,
       collection: options?.collection,
@@ -57,7 +57,7 @@ export class DataApiHttpClient extends HttpClient {
     });
   }
 
-  private async _requestDataApi(info: DataApiRequestInfo): Promise<RawDataApiResponse> {
+  private async _requestDataAPI(info: DataAPIRequestInfo): Promise<RawDataAPIResponse> {
     let started = 0;
 
     try {
@@ -124,7 +124,7 @@ const mkTimeoutErrorMaker = (timeout: number): MkTimeoutError => {
   return () => new DataAPITimeout(timeout);
 }
 
-const mkFauxErroredResponse = (message: string): RawDataApiResponse => {
+const mkFauxErroredResponse = (message: string): RawDataAPIResponse => {
   return { errors: [{ message }] };
 }
 

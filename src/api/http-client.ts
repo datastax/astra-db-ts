@@ -17,7 +17,7 @@ import { GuaranteedAPIResponse, HTTPClientOptions, HTTPRequestInfo, HTTPRequestS
 import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
 import { HTTP2Strategy } from '@/src/api/http2';
 import { Mutable } from '@/src/data-api/types/utils';
-import { Caller, DataApiClientEvents } from '@/src/client';
+import { Caller, DataAPIClientEvents } from '@/src/client';
 import TypedEmitter from 'typed-emitter';
 
 /**
@@ -27,7 +27,7 @@ export class HttpClient {
   public readonly baseUrl: string;
   public readonly userAgent: string;
   public requestStrategy: HTTPRequestStrategy;
-  public emitter: TypedEmitter<DataApiClientEvents>;
+  public emitter: TypedEmitter<DataAPIClientEvents>;
   public monitorCommands: boolean;
   #applicationToken: string;
 
@@ -42,7 +42,7 @@ export class HttpClient {
         ? options.requestStrategy :
       (options.useHttp2 !== false)
         ? new HTTP2Strategy(this.baseUrl)
-        : new HTTP1Strategy(HTTP1AuthHeaderFactories.DataApi);
+        : new HTTP1Strategy(HTTP1AuthHeaderFactories.DataAPI);
 
     if (options.baseApiPath) {
       this.baseUrl += '/' + options.baseApiPath;

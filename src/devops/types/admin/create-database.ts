@@ -42,5 +42,5 @@ export interface DatabaseConfig {
 }
 
 export type CreateDatabaseOptions = AdminBlockingOptions & {
-  dataApiOptions?: DbSpawnOptions,
+  dbOptions?: DbSpawnOptions,
 }

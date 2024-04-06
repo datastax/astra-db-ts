@@ -26,7 +26,7 @@ import {
   UpdateManyError,
 } from '@/src/data-api/errors';
 import objectHash from 'object-hash';
-import { DataApiHttpClient } from '@/src/api';
+import { DataAPIHttpClient } from '@/src/api';
 import {
   AnyBulkWriteOperation,
   BulkWriteOptions,
@@ -97,7 +97,7 @@ import { WithTimeout } from '@/src/common/types';
  * @see VectorDoc
  */
 export class Collection<Schema extends SomeDoc = SomeDoc> {
-  private readonly _httpClient!: DataApiHttpClient;
+  private readonly _httpClient!: DataAPIHttpClient;
   private readonly _db!: Db
 
   /**
@@ -115,7 +115,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataApiHttpClient, name: string, namespace: string | undefined) {
+  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, namespace: string | undefined) {
     Object.defineProperty(this, 'collectionName', {
       value: name,
       writable: false,
@@ -127,7 +127,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     });
 
     Object.defineProperty(this, '_httpClient', {
-      value: httpClient.cloneInto(DataApiHttpClient, c => {
+      value: httpClient.cloneInto(DataAPIHttpClient, c => {
         c.collection = this.collectionName;
         c.namespace = this.namespace;
       }),
@@ -1505,7 +1505,7 @@ const coalesceVectorSpecialsIntoSort = <T extends OptionsWithSort | undefined>(o
 /**
  * @internal
  */
-const insertManyOrdered = async <Schema>(httpClient: DataApiHttpClient, documents: unknown[], chunkSize: number, timeoutManager: TimeoutManager): Promise<IdOf<Schema>[]> => {
+const insertManyOrdered = async <Schema>(httpClient: DataAPIHttpClient, documents: unknown[], chunkSize: number, timeoutManager: TimeoutManager): Promise<IdOf<Schema>[]> => {
   const insertedIds: IdOf<Schema>[] = [];
 
   for (let i = 0, n = documents.length; i < n; i += chunkSize) {
@@ -1531,7 +1531,7 @@ const insertManyOrdered = async <Schema>(httpClient: DataApiHttpClient, document
 /**
  * @internal
  */
-const insertManyUnordered = async <Schema>(httpClient: DataApiHttpClient, documents: unknown[], concurrency: number, chunkSize: number, timeoutManager: TimeoutManager): Promise<IdOf<Schema>[]> => {
+const insertManyUnordered = async <Schema>(httpClient: DataAPIHttpClient, documents: unknown[], concurrency: number, chunkSize: number, timeoutManager: TimeoutManager): Promise<IdOf<Schema>[]> => {
   const insertedIds: IdOf<Schema>[] = [];
   let masterIndex = 0;
 
@@ -1579,7 +1579,7 @@ const insertManyUnordered = async <Schema>(httpClient: DataApiHttpClient, docume
 /**
  * @internal
  */
-const insertMany = async <Schema>(httpClient: DataApiHttpClient, documents: unknown[], ordered: boolean, timeoutManager: TimeoutManager): Promise<IdOf<Schema>[]> => {
+const insertMany = async <Schema>(httpClient: DataAPIHttpClient, documents: unknown[], ordered: boolean, timeoutManager: TimeoutManager): Promise<IdOf<Schema>[]> => {
   const command: InsertManyCommand = {
     insertMany: {
       documents,
@@ -1596,7 +1596,7 @@ const insertMany = async <Schema>(httpClient: DataApiHttpClient, documents: unkn
 /**
  * @internal
  */
-const bulkWriteOrdered = async (httpClient: DataApiHttpClient, operations: AnyBulkWriteOperation<SomeDoc>[], timeoutManager: TimeoutManager): Promise<BulkWriteResult<SomeDoc>> => {
+const bulkWriteOrdered = async (httpClient: DataAPIHttpClient, operations: AnyBulkWriteOperation<SomeDoc>[], timeoutManager: TimeoutManager): Promise<BulkWriteResult<SomeDoc>> => {
   const results = new BulkWriteResult();
   let i = 0;
 
@@ -1623,7 +1623,7 @@ const bulkWriteOrdered = async (httpClient: DataApiHttpClient, operations: AnyBu
 /**
  * @internal
  */
-const bulkWriteUnordered = async (httpClient: DataApiHttpClient, operations: AnyBulkWriteOperation<SomeDoc>[], concurrency: number, timeoutManager: TimeoutManager): Promise<BulkWriteResult<SomeDoc>> => {
+const bulkWriteUnordered = async (httpClient: DataAPIHttpClient, operations: AnyBulkWriteOperation<SomeDoc>[], concurrency: number, timeoutManager: TimeoutManager): Promise<BulkWriteResult<SomeDoc>> => {
   const results = new BulkWriteResult();
   let masterIndex = 0;
 
@@ -1661,7 +1661,7 @@ const bulkWriteUnordered = async (httpClient: DataApiHttpClient, operations: Any
   return results;
 }
 
-const bulkWrite = async (httpClient: DataApiHttpClient, operation: AnyBulkWriteOperation<SomeDoc>, results: BulkWriteResult<SomeDoc>, i: number, timeoutManager: TimeoutManager): Promise<void> => {
+const bulkWrite = async (httpClient: DataAPIHttpClient, operation: AnyBulkWriteOperation<SomeDoc>, results: BulkWriteResult<SomeDoc>, i: number, timeoutManager: TimeoutManager): Promise<void> => {
   const command = buildBulkWriteCommand(operation);
   const resp = await httpClient.executeCommand(command, { timeoutManager });
   addToBulkWriteResult(results, resp.status!, i);

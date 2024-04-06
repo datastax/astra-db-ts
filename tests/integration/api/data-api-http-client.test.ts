@@ -15,11 +15,11 @@
 
 import { Collection, DataAPIResponseError, DataAPITimeout, Db } from '@/src/data-api';
 import { DEFAULT_COLLECTION_NAME, initTestObjects, OTHER_NAMESPACE } from '@/tests/fixtures';
-import { DataApiHttpClient } from '@/src/api';
+import { DataAPIHttpClient } from '@/src/api';
 import assert from 'assert';
 
 describe('integration.api.data-api-http-client', () => {
-  let httpClient: DataApiHttpClient;
+  let httpClient: DataAPIHttpClient;
   let collection: Collection;
 
   before(async function () {
@@ -59,7 +59,7 @@ describe('integration.api.data-api-http-client', () => {
     });
 
     it('should error on invalid token', async () => {
-      const clonedClient = httpClient.cloneInto(DataApiHttpClient, (c) => {
+      const clonedClient = httpClient.cloneInto(DataAPIHttpClient, (c) => {
         c.applicationToken = 'invalid';
       });
 

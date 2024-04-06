@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataApiClient } from '@/src/client';
+import { DataAPIClient } from '@/src/client';
 import * as process from 'process';
 import assert from 'assert';
 import { DEFAULT_DATA_API_PATH } from '@/src/api';
@@ -27,40 +27,40 @@ describe('unit.client.data-api-client', () => {
 
   describe('constructor tests', () => {
     it('should allow construction with just a token', () => {
-      const client = new DataApiClient('dummy-token');
+      const client = new DataAPIClient('dummy-token');
       assert.ok(client);
     });
 
     it('should throw if no token is passed', () => {
       // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataApiClient());
+      assert.throws(() => new DataAPIClient());
     });
 
     it('should throw if a non-string token is passed', () => {
       // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataApiClient(3));
+      assert.throws(() => new DataAPIClient(3));
       // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataApiClient({ logLevel: 'warn' }));
+      assert.throws(() => new DataAPIClient({ logLevel: 'warn' }));
     });
   });
 
   describe('db tests', () => {
     it('should allow db construction from endpoint', () => {
-      const db = new DataApiClient('dummy-token').db(endpoint);
+      const db = new DataAPIClient('dummy-token').db(endpoint);
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `${endpoint}/${DEFAULT_DATA_API_PATH}`);
       assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'dummy-token');
     });
 
     it('should allow db construction from id + region', () => {
-      const db = new DataApiClient('dummy-token').db(id, region);
+      const db = new DataAPIClient('dummy-token').db(id, region);
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `https://${id}-${region}.apps.astra.datastax.com/${DEFAULT_DATA_API_PATH}`);
       assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'dummy-token');
     });
 
     it('should have unique http clients for each db', () => {
-      const client = new DataApiClient('dummy-token');
+      const client = new DataAPIClient('dummy-token');
       const db1 = client.db(endpoint);
       const db2 = client.db(endpoint);
       assert.notStrictEqual(db1['_httpClient'], db2['_httpClient']);

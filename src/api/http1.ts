@@ -33,10 +33,10 @@ const axiosAgent = axios.create({
  * @internal
  */
 export const HTTP1AuthHeaderFactories = {
-  DataApi(token: string) {
+  DataAPI(token: string) {
     return { [DEFAULT_DATA_API_AUTH_HEADER]: token };
   },
-  DevopsApi(token: string) {
+  DevOpsAPI(token: string) {
     return { [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` };
   },
 }

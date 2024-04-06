@@ -1,5 +1,5 @@
 import { AdminBlockingOptions, FullDatabaseInfo } from '@/src/devops/types';
-import { DEFAULT_DEVOPS_API_ENDPOINT, DevopsApiHttpClient, HttpClient, HttpMethods } from '@/src/api';
+import { DEFAULT_DEVOPS_API_ENDPOINT, DevOpsAPIHttpClient, HttpClient, HttpMethods } from '@/src/api';
 import { Db } from '@/src/data-api';
 import { AdminSpawnOptions, InternalRootClientOpts } from '@/src/client';
 import { DbAdmin } from '@/src/devops/db-admin';
@@ -8,13 +8,13 @@ import { WithTimeout } from '@/src/common/types';
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
  *
- * **Shouldn't be instantiated directly; use {@link DataApiClient.admin} to obtain an instance of this class.**
+ * **Shouldn't be instantiated directly; use {@link DataAPIClient.admin} to obtain an instance of this class.**
  *
  * To perform admin tasks on a per-database basis, see the {@link AstraDbAdmin} class.
  *
  * @example
  * ```typescript
- * const client = new DataApiClient('token');
+ * const client = new DataAPIClient('token');
  *
  * // Create an admin instance with the default token
  * const admin1 = client.admin();
@@ -26,11 +26,11 @@ import { WithTimeout } from '@/src/common/types';
  * console.log(dbs);
  * ```
  *
- * @see DataApiClient.admin
+ * @see DataAPIClient.admin
  * @see AstraDbAdmin
  */
 export class AstraDbAdmin extends DbAdmin {
-  private readonly _httpClient!: DevopsApiHttpClient;
+  private readonly _httpClient!: DevOpsAPIHttpClient;
   private readonly _db!: Db;
 
   /**
@@ -42,7 +42,7 @@ export class AstraDbAdmin extends DbAdmin {
     super();
 
     Object.defineProperty(this, '_httpClient', {
-      value: httpClient.cloneInto(DevopsApiHttpClient, (c) => {
+      value: httpClient.cloneInto(DevOpsAPIHttpClient, (c) => {
         c.baseUrl = options.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINT;
         c.monitorCommands = options.monitorCommands;
       }),

@@ -21,7 +21,7 @@ import {
   Sort,
 } from '@/src/data-api/types';
 import { CursorAlreadyInitializedError, SomeDoc } from '@/src/data-api';
-import { DataApiHttpClient } from '@/src/api';
+import { DataAPIHttpClient } from '@/src/api';
 
 /** @internal */
 const enum CursorStatus {
@@ -74,7 +74,7 @@ const enum CursorStatus {
  */
 export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   private readonly _namespace: string;
-  private readonly _httpClient: DataApiHttpClient;
+  private readonly _httpClient: DataAPIHttpClient;
   private readonly _options: FindOptions<boolean>;
   private _filter: Filter<SomeDoc>;
   private _mapping?: (doc: unknown) => T;
@@ -83,7 +83,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   private _nextPageState?: string | null;
   private _state = CursorStatus.Uninitialized;
 
-  constructor(namespace: string, httpClient: DataApiHttpClient, filter: Filter<SomeDoc>, options?: FindOptions<boolean>) {
+  constructor(namespace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: FindOptions<boolean>) {
     this._namespace = namespace;
     this._httpClient = httpClient;
     this._filter = filter;

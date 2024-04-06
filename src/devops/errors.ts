@@ -15,22 +15,22 @@
 import type { AxiosError, AxiosResponse } from 'axios';
 import { DataAPIError } from '@/src/data-api/errors';
 
-export class DevopsApiTimeout extends DataAPIError {
+export class DevOpsAPITimeout extends DataAPIError {
   constructor(readonly url: string, readonly timeout: number) {
     super(`Command timed out after ${timeout}ms`);
-    this.name = 'DevopsAPITimeout';
+    this.name = 'DevOpsAPITimeout';
   }
 }
 
-export interface DevopsAPIErrorDescriptor {
+export interface DevOpsAPIErrorDescriptor {
   ID?: number,
   message: string,
 }
 
-export abstract class DevopsApiError extends Error {}
+export abstract class DevOpsAPIError extends Error {}
 
-export class DevopsApiResponseError extends DevopsApiError {
-  readonly errors: DevopsAPIErrorDescriptor[];
+export class DevOpsAPIResponseError extends DevOpsAPIError {
+  readonly errors: DevOpsAPIErrorDescriptor[];
   readonly rootError: AxiosError;
   readonly status?: number;
 
@@ -39,11 +39,11 @@ export class DevopsApiResponseError extends DevopsApiError {
     this.errors = (<any>error.response)?.data.errors ?? [];
     this.status = (<any>error.response)?.status;
     this.rootError = error
-    this.name = 'DevopsApiResponseError';
+    this.name = 'DevOpsAPIResponseError';
   }
 }
 
-export class DevopsUnexpectedStateError extends DevopsApiError {
+export class DevOpsUnexpectedStateError extends DevOpsAPIError {
   readonly status?: number;
   readonly rawResponse?: AxiosResponse;
 
@@ -51,6 +51,6 @@ export class DevopsUnexpectedStateError extends DevopsApiError {
     super(message);
     this.rawResponse = raw;
     this.status = raw?.status;
-    this.name = 'DevopsUnexpectedStateError';
+    this.name = 'DevOpsUnexpectedStateError';
   }
 }

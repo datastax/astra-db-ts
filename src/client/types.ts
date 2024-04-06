@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataApiClientEvents } from '@/src/client/data-api-client';
+import { DataAPIClientEvents } from '@/src/client/data-api-client';
 import TypedEmitter from 'typed-emitter';
 
 /**
@@ -34,7 +34,7 @@ import TypedEmitter from 'typed-emitter';
 export type Caller = [name: string, version?: string];
 
 /**
- * The default options for the {@link DataApiClient}. The Data API & DevOps specific options may be overridden
+ * The default options for the {@link DataAPIClient}. The Data API & DevOps specific options may be overridden
  * when spawning a new instance of their respective classes.
  */
 export interface RootClientOptions {
@@ -56,12 +56,12 @@ export interface RootClientOptions {
    * @example
    * ```typescript
    * // 'my-app/1.0.0 astra-db-ts/1.0.0'
-   * const client1 = new DataApiClient('AstraCS:...', {
+   * const client1 = new DataAPIClient('AstraCS:...', {
    *   caller: ['my-app', '1.0.0'],
    * });
    *
    * // 'my-app/1.0.0 my-other-app astra-db-ts/1.0.0'
-   * const client2 = new DataApiClient('AstraCS:...', {
+   * const client2 = new DataAPIClient('AstraCS:...', {
    *   caller: [['my-app', '1.0.0'], ['my-other-app']],
    * });
    * ```
@@ -70,7 +70,7 @@ export interface RootClientOptions {
   /**
    * The default options when spawning a {@link Db} instance.
    */
-  dataApiOptions?: DbSpawnOptions,
+  dbOptions?: DbSpawnOptions,
   /**
    * The default options when spawning an {@link AstraAdmin} instance.
    */
@@ -80,21 +80,21 @@ export interface RootClientOptions {
 /**
  * The options available spawning a new {@link Db} instance.
  *
- * If any of these options are not provided, the client will use the default options provided by the {@link DataApiClient}.
+ * If any of these options are not provided, the client will use the default options provided by the {@link DataAPIClient}.
  */
 export interface DbSpawnOptions {
   /**
    * The namespace (aka keyspace) to use for the database.
    *
    * Defaults to `'default_keyspace'`. if never provided. However, if it was provided when creating the
-   * {@link DataApiClient}, it will default to that value instead.
+   * {@link DataAPIClient}, it will default to that value instead.
    *
    * Every db method will use this namespace as the default namespace, but they all allow you to override it
    * in their options.
    *
    * @example
    * ```typescript
-   * const client = new DataApiClient('AstraCS:...');
+   * const client = new DataAPIClient('AstraCS:...');
    *
    * // Using 'default_keyspace' as the namespace
    * const db1 = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
@@ -118,13 +118,53 @@ export interface DbSpawnOptions {
    */
   namespace?: string,
   /**
-   * The access token for the Data API, typically of the format `'AstraCS:...'`.
+   * Whether to monitor commands for {@link Db}-level & {@link Collection}-level events through an event emitter.
    *
-   * If never provided, this will default to the token provided when creating the {@link DataApiClient}.
+   * Defaults to `false` if never provided. However, if it was provided when creating the {@link DataAPIClient}, it will
+   * default to that value instead.
    *
    * @example
    * ```typescript
-   * const client = new DataApiClient('strong-token');
+   * const client = new DataAPIClient('*TOKEN*', {
+   *   dbOptions: {
+   *     monitorCommands: true,
+   *   },
+   * });
+   *
+   * client.on('commandStarted', (event) => {
+   *   console.log(`Running command ${event.commandName}`);
+   * });
+   *
+   * client.on('commandSucceeded', (event) => {
+   *   console.log(`Command ${event.commandName} succeeded in ${event.duration}ms`);
+   * });
+   *
+   * client.on('commandFailed', (event) => {
+   *   console.error(`Command ${event.commandName} failed w/ error ${event.error}`);
+   * });
+   *
+   * const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
+   * const coll = db.collection('my_collection');
+   *
+   * // Logs:
+   * // - Running command insertOne
+   * // - Command insertOne succeeded in <time>ms
+   * await coll.insertOne({ name: 'Lordi' });
+   * ```
+   *
+   * @defaultValue false
+   *
+   * @see DataAPICommandEvents
+   */
+  monitorCommands?: boolean,
+  /**
+   * The access token for the Data API, typically of the format `'AstraCS:...'`.
+   *
+   * If never provided, this will default to the token provided when creating the {@link DataAPIClient}.
+   *
+   * @example
+   * ```typescript
+   * const client = new DataAPIClient('strong-token');
    *
    * // Using 'strong-token' as the token
    * const db1 = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
@@ -142,7 +182,7 @@ export interface DbSpawnOptions {
    * Both versions are typically interchangeable, but HTTP2 is generally recommended for better performance. However,
    * some errors may differ between the two versions, due to different underlying implementations.
    *
-   * Defaults to `true` if never provided. However, if it was provided when creating the {@link DataApiClient}, it will
+   * Defaults to `true` if never provided. However, if it was provided when creating the {@link DataAPIClient}, it will
    * default to that value instead.
    *
    * @defaultValue true
@@ -152,13 +192,12 @@ export interface DbSpawnOptions {
    * The path to the Data API, which is going to be `api/json/v1` for all Astra instances. However, it may vary
    * if you're using a different Data API-compatible endpoint.
    *
-   * Defaults to `'api/json/v1'` if never provided. However, if it was provided when creating the {@link DataApiClient},
+   * Defaults to `'api/json/v1'` if never provided. However, if it was provided when creating the {@link DataAPIClient},
    * it will default to that value instead.
    *
    * @defaultValue 'api/json/v1'
    */
   dataApiPath?: string,
-  monitorCommands?: boolean,
 }
 
 /**
@@ -166,19 +205,63 @@ export interface DbSpawnOptions {
  *
  * **Note that this is only available when using Astra as the underlying database.**
  *
- * If any of these options are not provided, the client will use the default options provided by the {@link DataApiClient}.
+ * If any of these options are not provided, the client will use the default options provided by the {@link DataAPIClient}.
  */
 export interface AdminSpawnOptions {
   /**
+   * Whether to monitor commands for {@link AstraAdmin}-level & {@link DbAdmin}-level events through an event emitter.
+   *
+   * Defaults to `false` if never provided. However, if it was provided when creating the {@link DataAPIClient}, it will
+   * default to that value instead.
+   *
+   * @example
+   * ```typescript
+   * const client = new DataAPIClient('*TOKEN*', {
+   *   devopsOptions: {
+   *     monitorCommands: true,
+   *   },
+   * });
+   *
+   * client.on('adminCommandStarted', (e) => {
+   *   console.log(`Running command ${e.method} ${e.path}`);
+   * });
+   *
+   * client.on('adminCommandPolling', (e) => {
+   *   console.log(`Command ${e.method} ${e.path} running for ${e.elapsed}ms`);
+   * });
+   *
+   * client.on('adminCommandSucceeded', (e) => {
+   *   console.log(`Command ${e.method} ${e.path} took ${e.duration}ms`);
+   * });
+   *
+   * client.on('adminCommandFailed', (e) => {
+   *   console.error(`Command ${e.method} ${e.path} failed w/ error ${e.error}`);
+   * });
+   *
+   * const admin = client.admin();
+   *
+   * // Logs:
+   * // - Running command POST /databases
+   * // - Command POST /databases running for <time>ms [x10]
+   * // - Command POST /databases succeeded in <time>ms
+   * await admin.createDatabase({ ... });
+   * ```
+   *
+   * @defaultValue false
+   *
+   * @see AdminCommandEvents
+   */
+  monitorCommands?: boolean,
+  /**
    * The access token for the DevOps API, typically of the format `'AstraCS:...'`.
    *
-   * If never provided, this will default to the token provided when creating the {@link DataApiClient}.
+   * If never provided, this will default to the token provided when creating the {@link DataAPIClient}.
    *
    * May be useful for if you want to use a stronger token for the DevOps API than the Data API.
    *
    * @example
    * ```typescript
-   * const client = new Data('weak-token');
+   * const client = Projection'weak-token');
    *
    * // Using 'weak-token' as the token
    * const db = client.db();
@@ -195,13 +278,12 @@ export interface AdminSpawnOptions {
    * ```
    */
   endpointUrl?: string,
-  monitorCommands?: boolean,
 }
 
 export interface InternalRootClientOpts {
   caller?: Caller | Caller[],
-  emitter: TypedEmitter<DataApiClientEvents>,
-  dataApiOptions: DbSpawnOptions & {
+  emitter: TypedEmitter<DataAPIClientEvents>,
+  dbOptions: DbSpawnOptions & {
     token: string,
     monitorCommands: boolean,
   },

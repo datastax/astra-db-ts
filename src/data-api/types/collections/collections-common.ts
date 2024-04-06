@@ -134,12 +134,12 @@ export interface DefaultIdOptions {
 /**
  * Allows you to override the namespace (aka keyspace) to use for some db operation. If not specified,
  * the db operation will use either the namespace provided when creating the Db instance, the namespace
- * provided when creating the DataApiClient instance, or the default namespace `'default_keyspace'`.
+ * provided when creating the DataAPIClient instance, or the default namespace `'default_keyspace'`.
  * (in that order)
  *
  * @example
  * ```typescript
- * const client = new DataApiClient('AstraCS:...');
+ * const client = new DataAPIClient('AstraCS:...');
  *
  * // Using 'default_keyspace' as the namespace
  * const db1 = client.db('https://<db_id>-<region>.apps.astra.datastax.com');

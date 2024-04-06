@@ -14,12 +14,12 @@
 // noinspection DuplicatedCode
 
 import { initTestObjects } from '@/tests/fixtures';
-import { DevopsApiHttpClient, HttpMethods } from '@/src/api';
+import { DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
 import assert from 'assert';
-import { DevopsApiTimeout } from '@/src/devops';
+import { DevOpsAPITimeout } from '@/src/devops';
 
 describe('integration.api.devops-http-client', () => {
-  let httpClient: DevopsApiHttpClient;
+  let httpClient: DevOpsAPIHttpClient;
 
   before(async function () {
     const [, db] = await initTestObjects(this);
@@ -32,6 +32,6 @@ describe('integration.api.devops-http-client', () => {
         method: HttpMethods.Get,
         path: '/databases',
       }, { maxTimeMS: 10 });
-    }, DevopsApiTimeout);
+    }, DevOpsAPITimeout);
   });
 });

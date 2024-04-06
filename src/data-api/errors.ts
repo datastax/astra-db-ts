@@ -16,7 +16,7 @@ import type { InsertManyResult } from '@/src/data-api/types/insert/insert-many';
 import type { DeleteManyResult } from '@/src/data-api/types/delete/delete-many';
 import type { UpdateManyResult } from '@/src/data-api/types/update/update-many';
 import type { BulkWriteResult } from '@/src/data-api/types/misc/bulk-write';
-import type { RawDataApiResponse } from '@/src/api';
+import type { RawDataAPIResponse } from '@/src/api';
 import { SomeDoc } from '@/src/data-api/document';
 
 /**
@@ -108,7 +108,7 @@ export interface DataAPIDetailedErrorDescriptor {
    * }
    * ```
    */
-  readonly rawResponse: RawDataApiResponse,
+  readonly rawResponse: RawDataAPIResponse,
 }
 
 /**
@@ -343,12 +343,12 @@ export class BulkWriteError extends CumulativeDataAPIError {
 type InferPartialResult<T> = T extends { readonly partialResult: infer P } ? P : never;
 
 /** @internal */
-export const mkRespErrorFromResponse = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, command: Record<string, any>, raw: RawDataApiResponse, partialResult?: InferPartialResult<E>) => {
+export const mkRespErrorFromResponse = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, command: Record<string, any>, raw: RawDataAPIResponse, partialResult?: InferPartialResult<E>) => {
   return mkRespErrorFromResponses(err, [command], [raw], partialResult);
 }
 
 /** @internal */
-export const mkRespErrorFromResponses = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, commands: Record<string, any>[], raw: RawDataApiResponse[], partialResult?: InferPartialResult<E>) => {
+export const mkRespErrorFromResponses = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, commands: Record<string, any>[], raw: RawDataAPIResponse[], partialResult?: InferPartialResult<E>) => {
   const detailedDescriptors = [] as DataAPIDetailedErrorDescriptor[];
 
   for (let i = 0, n = commands.length; i < n; i++) {

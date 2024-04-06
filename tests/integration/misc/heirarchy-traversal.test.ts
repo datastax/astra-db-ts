@@ -14,13 +14,13 @@
 // noinspection DuplicatedCode
 
 import { assertTestsEnabled, DEFAULT_COLLECTION_NAME, initTestObjects } from '@/tests/fixtures';
-import { DataApiClient } from '@/src/client';
+import { DataAPIClient } from '@/src/client';
 import { Collection, Db } from '@/src/data-api';
 import assert from 'assert';
 import process from 'process';
 
 describe('integration.misc.hierarchy-traversal', () => {
-  let client: DataApiClient;
+  let client: DataAPIClient;
   let db: Db;
   let collection: Collection;
 

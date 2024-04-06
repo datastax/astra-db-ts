@@ -15,10 +15,10 @@
 
 import assert from 'assert';
 import { FindCursor, CursorAlreadyInitializedError } from '@/src/data-api';
-import { DataApiHttpClient } from '@/src/api';
+import { DataAPIHttpClient } from '@/src/api';
 
 describe('unit.data-api.cursor', async () => {
-  let httpClient: DataApiHttpClient;
+  let httpClient: DataAPIHttpClient;
 
   const add1 = (a: number) => a + 1;
   const mul2 = (a: number) => a * 2;

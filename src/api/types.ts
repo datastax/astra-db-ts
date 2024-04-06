@@ -16,7 +16,7 @@ import { Caller } from '@/src/client';
 import { TimeoutManager } from '@/src/api/timeout-managers';
 import { HttpMethods } from '@/src/api/constants';
 import TypedEmitter from 'typed-emitter';
-import { DataApiCommandEvents } from '@/src/data-api/events';
+import { DataAPICommandEvents } from '@/src/data-api/events';
 
 /**
  * @internal
@@ -29,11 +29,11 @@ export interface HTTPClientOptions {
   useHttp2?: boolean;
   requestStrategy?: HTTPRequestStrategy;
   userAgent?: string;
-  emitter: TypedEmitter<DataApiCommandEvents>;
+  emitter: TypedEmitter<DataAPICommandEvents>;
   monitorCommands: boolean;
 }
 
-export interface RawDataApiResponse {
+export interface RawDataAPIResponse {
   status?: Record<string, any>;
   errors?: any[];
   data?: Record<string, any>;

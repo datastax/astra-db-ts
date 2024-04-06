@@ -15,12 +15,12 @@
 
 import { Collection, CursorAlreadyInitializedError, DataAPIResponseError, FindCursor } from '@/src/data-api';
 import { initTestObjects } from '@/tests/fixtures';
-import { DataApiHttpClient } from '@/src/api';
+import { DataAPIHttpClient } from '@/src/api';
 import assert from 'assert';
 
 describe('integration.data-api.cursor', async () => {
   let collection: Collection;
-  let httpClient: DataApiHttpClient;
+  let httpClient: DataAPIHttpClient;
 
   const add1 = (a: number) => a + 1;
 

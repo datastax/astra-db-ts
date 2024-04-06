@@ -17,11 +17,11 @@ import { AstraAdmin, mkAdmin } from '@/src/devops/astra-admin';
 import { AdminSpawnOptions, DbSpawnOptions, InternalRootClientOpts, RootClientOptions } from '@/src/client/types';
 import TypedEmitter from 'typed-emitter';
 import EventEmitter from 'events';
-import { DataApiCommandEvents } from '@/src/data-api/events';
+import { DataAPICommandEvents } from '@/src/data-api/events';
 import { AdminCommandEvents } from '@/src/devops';
 
-export type DataApiClientEvents =
-  & DataApiCommandEvents
+export type DataAPIClientEvents =
+  & DataAPICommandEvents
   & AdminCommandEvents
 
 /**
@@ -50,11 +50,11 @@ export type DataApiClientEvents =
  * console.log(await admin1.listDatabases());
  * ```
  */
-export class DataApiClient extends (EventEmitter as new () => TypedEmitter<DataApiClientEvents>) {
+export class DataAPIClient extends (EventEmitter as new () => TypedEmitter<DataAPIClientEvents>) {
   readonly #options: InternalRootClientOpts;
 
   /**
-   * Constructs a new instance of the {@link DataApiClient}.
+   * Constructs a new instance of the {@link DataAPIClient}.
    *
    * @param token - The default token to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    * @param options - The default options to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
@@ -63,15 +63,15 @@ export class DataApiClient extends (EventEmitter as new () => TypedEmitter<DataA
     super();
 
     if (!token || typeof token as any !== 'string') {
-      throw new Error('A valid token is required to use the DataApiClient');
+      throw new Error('A valid token is required to use the DataAPIClient');
     }
 
     this.#options = {
       ...options,
-      dataApiOptions: {
+      dbOptions: {
         monitorCommands: false,
         token: token,
-        ...options?.dataApiOptions,
+        ...options?.dbOptions,
       },
       adminOptions: {
         monitorCommands: false,
@@ -91,7 +91,7 @@ export class DataApiClient extends (EventEmitter as new () => TypedEmitter<DataA
    * `https://<db_id>-<region>.apps.astra.datastax.com`, but it can be used with DSE or any other Data-API-compatible
    * endpoint.
    *
-   * The given options will override any default options set when creating the {@link DataApiClient} through
+   * The given options will override any default options set when creating the {@link DataAPIClient} through
    * a deep merge (i.e. unset properties in the options object will just default to the default options).
    *
    * @example
@@ -110,7 +110,7 @@ export class DataApiClient extends (EventEmitter as new () => TypedEmitter<DataA
    * instead.
    *
    * @param endpoint - The direct endpoint to use.
-   * @param options - Any options to override the default options set when creating the {@link DataApiClient}.
+   * @param options - Any options to override the default options set when creating the {@link DataAPIClient}.
    *
    * @returns A new {@link Db} instance.
    */
@@ -124,7 +124,7 @@ export class DataApiClient extends (EventEmitter as new () => TypedEmitter<DataA
    * This overload is purely for user convenience, but it **only supports using Astra as the underlying database**. For
    * DSE or any other Data-API-compatible endpoint, use the other overload instead.
    *
-   * The given options will override any default options set when creating the {@link DataApiClient} through
+   * The given options will override any default options set when creating the {@link DataAPIClient} through
    * a deep merge (i.e. unset properties in the options object will just default to the default options).
    *
    * @example
@@ -144,7 +144,7 @@ export class DataApiClient extends (EventEmitter as new () => TypedEmitter<DataA
    *
    * @param id - The database ID to use.
    * @param region - The region to use.
-   * @param options - Any options to override the default options set when creating the {@link DataApiClient}.
+   * @param options - Any options to override the default options set when creating the {@link DataAPIClient}.
    *
    * @returns A new {@link Db} instance.
    */
@@ -160,7 +160,7 @@ export class DataApiClient extends (EventEmitter as new () => TypedEmitter<DataA
    *
    * **NB. This method is only available for Astra databases.**
    *
-   * The given options will override any default options set when creating the {@link DataApiClient} through
+   * The given options will override any default options set when creating the {@link DataAPIClient} through
    * a deep merge (i.e. unset properties in the options object will just default to the default options).
    *
    * @example
@@ -172,7 +172,7 @@ export class DataApiClient extends (EventEmitter as new () => TypedEmitter<DataA
    * console.log(dbs);
    * ```
    *
-   * @param options - Any options to override the default options set when creating the {@link DataApiClient}.
+   * @param options - Any options to override the default options set when creating the {@link DataAPIClient}.
    *
    * @returns A new {@link AstraAdmin} instance.
    */

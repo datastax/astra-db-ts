@@ -15,7 +15,7 @@ Get the *API endpoint* and your *applicaton token* for your Astra DB instance @ 
 Try the following code after setting the following environment variables:
 
 ```typescript
-import { DataApiClient, VectorDoc, UUID, ObjectId } from '@datastax/astra-db-ts';
+import { DataAPIClient, VectorDoc, UUID, ObjectId } from '@datastax/astra-db-ts';
 
 // Schema for the collection (VectorDoc adds the $vector field)
 interface Idea extends VectorDoc {
@@ -23,8 +23,8 @@ interface Idea extends VectorDoc {
 }
 
 // Connect to the db
-const client = new DataApiClient('AstraCS:...');
-const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
+const client = new DataAPIClient('*TOKEN*');
+const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
 
 (async () => {
   // Creates collection, or gets it if it already exists with same options
@@ -86,7 +86,7 @@ const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
 Next steps:
 - More info and usage patterns are given in the ts-doc of classes and methods
 - [TS client reference](https://docs.datastax.com/en/astra/astra-db-vector/clients/typescript.html)
-- [Data API refernce](https://docs.datastax.com/en/astra/astra-db-vector/api-reference/data-api-commands.html)
+- [Data API reference](https://docs.datastax.com/en/astra/astra-db-vector/api-reference/data-api-commands.html)
 - Package on [npm](https://www.npmjs.com/package/@datastax/astra-db-ts)
 
 ## astra-db-ts's API
@@ -100,9 +100,10 @@ astra-db-ts's abstractions for working at the data and admin layers are structur
 Here's a small admin-oriented example:
 
 ```typescript
-import { DataApiClient } from '@datastax/astra-db-ts';
+import { DataAPIClient } from '@datastax/astra-db-ts';
 
-const client = new DataApiClient('AstraCS:...');
+// Spawn an admin 
+const client = new DataAPIClient('*TOKEN*');
 const admin = client.admin();
 
 (async () => {
@@ -122,7 +123,7 @@ const admin = client.admin();
 astra-db-ts exports an `ObjectId` and `UUID` class for working with these types in the database. Here's an example:
 
 ```typescript
-import { DataApiClient, ObjectId, UUID } from '@datastax/astra-db-ts';
+import { DataAPIClient, ObjectId, UUID } from '@datastax/astra-db-ts';
 
 interface Person {
   _id: ObjectId | UUID,
@@ -130,8 +131,9 @@ interface Person {
   friendId?: string,
 }
 
-const client = new DataApiClient('AstraCS:...');
-const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
+// Connect to the db
+const client = new DataAPIClient('*TOKEN*');
+const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
 
 (async () => {
   // Create a collection with a UUIDv7 as the default ID

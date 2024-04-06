@@ -20,7 +20,7 @@ import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
 
 describe('unit.data-api.db', () => {
   const mkOptions = (data?: DbSpawnOptions, devops?: AdminSpawnOptions) => {
-    return { dataApiOptions: { token: 'old', monitorCommands: false, ...data }, adminOptions: { adminToken: 'old-admin', monitorCommands: false, ...devops }, emitter: null as any };
+    return { dbOptions: { token: 'old', monitorCommands: false, ...data }, adminOptions: { adminToken: 'old-admin', monitorCommands: false, ...devops }, emitter: null as any };
   }
 
   describe('constructor tests', () => {

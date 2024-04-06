@@ -6,7 +6,7 @@ import {
   ListDatabasesOptions,
 } from '@/src/devops/types';
 import { Db, mkDb } from '@/src/data-api';
-import { DEFAULT_DEVOPS_API_ENDPOINT, DEFAULT_NAMESPACE, DevopsApiHttpClient, HttpMethods } from '@/src/api';
+import { DEFAULT_DEVOPS_API_ENDPOINT, DEFAULT_NAMESPACE, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
 import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
 import { AdminSpawnOptions, DbSpawnOptions, InternalRootClientOpts } from '@/src/client/types';
 
@@ -15,13 +15,13 @@ type AdminOptions = InternalRootClientOpts & { adminOptions: { adminToken: strin
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
  *
- * **Shouldn't be instantiated directly; use {@link DataApiClient.admin} to obtain an instance of this class.**
+ * **Shouldn't be instantiated directly; use {@link DataAPIClient.admin} to obtain an instance of this class.**
  *
  * To perform admin tasks on a per-database basis, see the {@link AstraDbAdmin} class.
  *
  * @example
  * ```typescript
- * const client = new DataApiClient('token');
+ * const client = new DataAPIClient('token');
  *
  * // Create an admin instance with the default token
  * const admin1 = client.admin();
@@ -33,16 +33,16 @@ type AdminOptions = InternalRootClientOpts & { adminOptions: { adminToken: strin
  * console.log(dbs);
  * ```
  *
- * @see DataApiClient.admin
+ * @see DataAPIClient.admin
  * @see AstraDbAdmin
  */
 export class AstraAdmin {
   readonly #defaultOpts!: InternalRootClientOpts;
 
-  private readonly _httpClient!: DevopsApiHttpClient;
+  private readonly _httpClient!: DevOpsAPIHttpClient;
 
   /**
-   * Use {@link DataApiClient.admin} to obtain an instance of this class.
+   * Use {@link DataAPIClient.admin} to obtain an instance of this class.
    *
    * @internal
    */
@@ -52,7 +52,7 @@ export class AstraAdmin {
     this.#defaultOpts = options;
 
     Object.defineProperty(this, '_httpClient', {
-      value: new DevopsApiHttpClient({
+      value: new DevOpsAPIHttpClient({
         baseUrl: adminOpts.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINT,
         applicationToken: adminOpts.adminToken,
         caller: options.caller,
@@ -70,12 +70,12 @@ export class AstraAdmin {
    * `https://<db_id>-<region>.apps.astra.datastax.com`, but it can be used with DSE or any other Data-API-compatible
    * endpoint.
    *
-   * The given options will override any default options set when creating the {@link DataApiClient} through
+   * The given options will override any default options set when creating the {@link DataAPIClient} through
    * a deep merge (i.e. unset properties in the options object will just default to the default options).
    *
    * @example
    * ```typescript
-   * const admin = new DataApiClient('token').admin();
+   * const admin = new DataAPIClient('token').admin();
    *
    * const db1 = admin.db('https://<db_id>-<region>.apps.astra.datastax.com');
    *
@@ -91,7 +91,7 @@ export class AstraAdmin {
    * instead.
    *
    * @param endpoint - The direct endpoint to use.
-   * @param options - Any options to override the default options set when creating the {@link DataApiClient}.
+   * @param options - Any options to override the default options set when creating the {@link DataAPIClient}.
    *
    * @returns A new {@link Db} instance.
    */
@@ -103,12 +103,12 @@ export class AstraAdmin {
    * This overload is purely for user convenience, but it **only supports using Astra as the underlying database**. For
    * DSE or any other Data-API-compatible endpoint, use the other overload instead.
    *
-   * The given options will override any default options set when creating the {@link DataApiClient} through
+   * The given options will override any default options set when creating the {@link DataAPIClient} through
    * a deep merge (i.e. unset properties in the options object will just default to the default options).
    *
    * @example
    * ```typescript
-   * const admin = new DataApiClient('token').admin();
+   * const admin = new DataAPIClient('token').admin();
    *
    * const db1 = admin.db('a6a1d8d6-31bc-4af8-be57-377566f345bf', 'us-east1');
    *
@@ -125,7 +125,7 @@ export class AstraAdmin {
    *
    * @param id - The database ID to use.
    * @param region - The region to use.
-   * @param options - Any options to override the default options set when creating the {@link DataApiClient}.
+   * @param options - Any options to override the default options set when creating the {@link DataAPIClient}.
    *
    * @returns A new {@link Db} instance.
    */
@@ -145,12 +145,12 @@ export class AstraAdmin {
    * The given options are for the underlying implicitly-created {@link Db} instance, not the {@link AstraDbAdmin} instance.
    * The db admin will use the same options as this {@link AstraAdmin} instance.
    *
-   * The given options will override any default options set when creating the {@link DataApiClient} through
+   * The given options will override any default options set when creating the {@link DataAPIClient} through
    * a deep merge (i.e. unset properties in the options object will just default to the default options).
    *
    * @example
    * ```typescript
-   * const admin = new DataApiClient('token').admin();
+   * const admin = new DataAPIClient('token').admin();
    *
    * const dbAdmin1 = admin.dbAdmin('https://<db_id>-<region>...');
    *
@@ -166,7 +166,7 @@ export class AstraAdmin {
    * instead.
    *
    * @param endpoint - The direct endpoint to use.
-   * @param options - Any options to override the default options set when creating the {@link DataApiClient}.
+   * @param options - Any options to override the default options set when creating the {@link DataAPIClient}.
    *
    * @returns A new {@link Db} instance.
    */
@@ -181,12 +181,12 @@ export class AstraAdmin {
    * The given options are for the underlying implicitly-created {@link Db} instance, not the {@link AstraDbAdmin} instance.
    * The db admin will use the same options as this {@link AstraAdmin} instance.
    *
-   * The given options will override any default options set when creating the {@link DataApiClient} through
+   * The given options will override any default options set when creating the {@link DataAPIClient} through
    * a deep merge (i.e. unset properties in the options object will just default to the default options).
    *
    * @example
    * ```typescript
-   * const admin = new DataApiClient('token').admin();
+   * const admin = new DataAPIClient('token').admin();
    *
    * const dbAdmin1 = admin.dbAdmin('a6a1d8d6-...-377566f345bf', 'us-east1');
    *
@@ -203,7 +203,7 @@ export class AstraAdmin {
    *
    * @param id - The database ID to use.
    * @param region - The region to use.
-   * @param options - Any options to override the default options set when creating the {@link DataApiClient}.
+   * @param options - Any options to override the default options set when creating the {@link DataAPIClient}.
    *
    * @returns A new {@link Db} instance.
    */
@@ -228,7 +228,7 @@ export class AstraAdmin {
    *
    * @example
    * ```typescript
-   * const admin = new DataApiClient('AstraCS:...').admin();
+   * const admin = new DataAPIClient('AstraCS:...').admin();
    *
    * const activeDbs = await admin.listDatabases({ include: 'ACTIVE' });
    *
@@ -264,7 +264,7 @@ export class AstraAdmin {
    * idempotent**.
    *
    * You may also provide options for the implicit {@link Db} instance that will be created with the database, which
-   * will override any default options set when creating the {@link DataApiClient} through a deep merge (i.e. unset
+   * will override any default options set when creating the {@link DataAPIClient} through a deep merge (i.e. unset
    * properties in the options object will just default to the default options).
    *
    * See {@link CreateDatabaseOptions} for complete information about the options available for this operation.
@@ -287,7 +287,7 @@ export class AstraAdmin {
    *   namespace: 'my_namespace',
    * }, {
    *   blocking: false,
-   *   dataApiOptions: {
+   *   dbOptions: {
    *     useHttp2: false,
    *     token: '<weaker-token>',
    *   },
@@ -327,7 +327,7 @@ export class AstraAdmin {
       options,
     });
 
-    const db = mkDb(this.#defaultOpts, resp.headers.location, definition.region, { ...options?.dataApiOptions, namespace: definition.keyspace });
+    const db = mkDb(this.#defaultOpts, resp.headers.location, definition.region, { ...options?.dbOptions, namespace: definition.keyspace });
     return db.admin(this.#defaultOpts.adminOptions);
   }
 

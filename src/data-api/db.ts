@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { Collection, CollectionAlreadyExistsError, extractDbIdFromUrl, SomeDoc } from '@/src/data-api';
-import { DataApiHttpClient, DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE, RawDataApiResponse } from '@/src/api';
+import { DataAPIHttpClient, DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE, RawDataAPIResponse } from '@/src/api';
 import {
   CreateCollectionCommand,
   CreateCollectionOptions,
@@ -33,7 +33,7 @@ import { DropCollectionOptions } from '@/src/data-api/types/collections/drop-col
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
  * creating/deleting collections, connecting to collections, and executing arbitrary commands.
  *
- * **Shouldn't be instantiated directly; use {@link DataApiClient.db} to obtain an instance of this class.**
+ * **Shouldn't be instantiated directly; use {@link DataAPIClient.db} to obtain an instance of this class.**
  *
  * Note that creating an instance of a `Db` doesn't trigger actual database creation; the database must have already
  * existed beforehand. If you need to create a new database, use the {@link AstraAdmin} class.
@@ -43,12 +43,12 @@ import { DropCollectionOptions } from '@/src/data-api/types/collections/drop-col
  *
  * @example
  * ```typescript
- * const client = new DataApiClient('AstraCS:...');
+ * const client = new DataAPIClient('AstraCS:...');
  *
  * // Connect to a database using a direct endpoint
  * const db1 = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
  *
- * // Overrides default options from the DataApiClient
+ * // Overrides default options from the DataAPIClient
  * const db2 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', {
  *   namespace: 'my-namespace',
  *   useHttp2: false,
@@ -58,13 +58,13 @@ import { DropCollectionOptions } from '@/src/data-api/types/collections/drop-col
  * const db3 = client.db('a6a1d8d6-31bc-4af8-be57-377566f345bf', 'us-east1');
  * ```
  *
- * @see DataApiClient.db
+ * @see DataAPIClient.db
  * @see AstraAdmin.db
  */
 export class Db implements Disposable {
   readonly #defaultOpts!: InternalRootClientOpts;
 
-  private readonly _httpClient!: DataApiHttpClient;
+  private readonly _httpClient!: DataAPIHttpClient;
   private readonly _id?: string;
 
   /**
@@ -74,11 +74,11 @@ export class Db implements Disposable {
    * ```typescript
    *
    * // Uses 'default_keyspace' as the default namespace for all future db spawns
-   * const client1 = new DataApiClient('AstraCS:...');
+   * const client1 = new DataAPIClient('AstraCS:...');
    *
    * // Overrides the default namespace for all future db spawns
-   * const client2 = new DataApiClient('AstraCS:...', {
-   *   dataApiOptions: { namespace: 'my_namespace' }
+   * const client2 = new DataAPIClient('AstraCS:...', {
+   *   dbOptions: { namespace: 'my_namespace' }
    * });
    *
    * // Created with 'default_keyspace' as the default namespace
@@ -101,12 +101,12 @@ export class Db implements Disposable {
   public readonly namespace!: string;
 
   /**
-   * Use {@link DataApiClient.db} to obtain an instance of this class.
+   * Use {@link DataAPIClient.db} to obtain an instance of this class.
    *
    * @internal
    */
   constructor(endpoint: string, options: InternalRootClientOpts) {
-    const dbOpts = options.dataApiOptions;
+    const dbOpts = options.dbOptions;
 
     Object.defineProperty(this, 'namespace', {
       value: dbOpts.namespace ?? DEFAULT_NAMESPACE,
@@ -120,7 +120,7 @@ export class Db implements Disposable {
     }
 
     Object.defineProperty(this, '_httpClient', {
-      value: new DataApiHttpClient({
+      value: new DataAPIHttpClient({
         baseUrl: endpoint,
         applicationToken: dbOpts.token,
         baseApiPath: dbOpts?.dataApiPath || DEFAULT_DATA_API_PATH,
@@ -158,7 +158,7 @@ export class Db implements Disposable {
    *
    * **NB. This method will throw an error if the database is not an Astra database.**
    *
-   * The given options will override any default options set when creating the {@link DataApiClient} through
+   * The given options will override any default options set when creating the {@link DataAPIClient} through
    * a deep merge (i.e. unset properties in the options object will just default to the default options).
    *
    * @example
@@ -170,7 +170,7 @@ export class Db implements Disposable {
    * console.log(namespaces);
    * ```
    *
-   * @param options - Any options to override the default options set when creating the {@link DataApiClient}.
+   * @param options - Any options to override the default options set when creating the {@link DataAPIClient}.
    *
    * @returns A new {@link AstraDbAdmin} instance for this database instance.
    *
@@ -248,6 +248,38 @@ export class Db implements Disposable {
    */
   public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: WithNamespace): Collection<Schema> {
     return new Collection<Schema>(this, this._httpClient, name, options?.namespace);
+  }
+
+  /**
+   * Fetches all the collections in the database (& in the working/given namespace), and establishes references to them.
+   *
+   * You can also specify a namespace in the options parameter, which will override the default namespace for this database.
+   *
+   * @example
+   * ```typescript
+   * // Uses db's default namespace
+   * const collections1 = await db.collections();
+   * console.log(collections1); // [Collection<SomeDoc>, Collection<SomeDoc>]
+   *
+   * // Overrides db's default namespace
+   * const collections2 = await db.collections({ namespace: 'my_namespace' });
+   * console.log(collections2); // [Collection<SomeDoc>]
+   * ```
+   *
+   * @param options Options for this operation.
+   *
+   * @return A promise that resolves to an array of references to the working Db's collections.
+   */
+  public async collections(options?: WithNamespace & WithTimeout): Promise<Collection[]> {
+    const timeoutManager = this._httpClient.timeoutManager(options?.maxTimeMS);
+
+    const collections = await this.listCollections({
+      namespace: options?.namespace,
+      maxTimeMS: timeoutManager.msRemaining,
+      nameOnly: true,
+    });
+
+    return collections.map(c => this.collection(c, options));
   }
 
   /**
@@ -438,12 +470,12 @@ export class Db implements Disposable {
    *
    * @return A promise that resolves to the raw response from the Data API.
    */
-  public async command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataApiResponse> {
+  public async command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse> {
     return await this._httpClient.executeCommand(command, options);
   }
 
   /**
-   * @returns whether the client is using HTTP/2 for requests.
+   * @returns the request strategy used by the underlying HTTP client.
    */
   public httpStrategy(): 'http1' | 'http2' {
     return this._httpClient.isUsingHttp2()
@@ -500,8 +532,8 @@ export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, reg
 
   return new Db(endpoint, {
     ...rootOpts,
-    dataApiOptions: {
-      ...rootOpts?.dataApiOptions,
+    dbOptions: {
+      ...rootOpts?.dbOptions,
       ...options,
     },
   });

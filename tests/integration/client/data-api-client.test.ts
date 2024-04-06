@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataApiClient } from '@/src/client';
+import { DataAPIClient } from '@/src/client';
 import * as process from 'process';
 import assert from 'assert';
 import { assertTestsEnabled, DEFAULT_COLLECTION_NAME, initTestObjects, OTHER_NAMESPACE } from '@/tests/fixtures';
@@ -24,7 +24,7 @@ import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT } from '@/src/api';
 describe('integration.client.data-api-client', () => {
   describe('db', () => {
     it('properly connects to a db by endpoint', async () => {
-      const db = new DataApiClient(process.env.APPLICATION_TOKEN!).db(process.env.ASTRA_URI!);
+      const db = new DataAPIClient(process.env.APPLICATION_TOKEN!).db(process.env.ASTRA_URI!);
       const collections = await db.listCollections();
       assert.ok(Array.isArray(collections));
     });
@@ -34,7 +34,7 @@ describe('integration.client.data-api-client', () => {
       const idAndRegion = process.env.ASTRA_URI!.split('.')[0].split('https://')[1].split('-');
       const id = idAndRegion.slice(0, 5).join('-');
       const region = idAndRegion.slice(5).join('-');
-      const db = new DataApiClient(process.env.APPLICATION_TOKEN!).db(id, region);
+      const db = new DataAPIClient(process.env.APPLICATION_TOKEN!).db(id, region);
       const collections = await db.listCollections();
       assert.ok(Array.isArray(collections));
     });
@@ -53,7 +53,7 @@ describe('integration.client.data-api-client', () => {
     });
 
     it('should not emit any command events when not enabled', async () => {
-      const client = new DataApiClient(process.env.APPLICATION_TOKEN!);
+      const client = new DataAPIClient(process.env.APPLICATION_TOKEN!);
       const db = client.db(process.env.ASTRA_URI!);
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
@@ -65,7 +65,7 @@ describe('integration.client.data-api-client', () => {
     });
 
     it('should not emit any command events when set to false', async () => {
-      const client = new DataApiClient(process.env.APPLICATION_TOKEN!, { dataApiOptions: { monitorCommands: false } });
+      const client = new DataAPIClient(process.env.APPLICATION_TOKEN!, { dbOptions: { monitorCommands: false } });
       const db = client.db(process.env.ASTRA_URI!);
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
@@ -77,7 +77,7 @@ describe('integration.client.data-api-client', () => {
     });
 
     it('should allow cross-collection monitoring of successful commands when enabled', async () => {
-      const client = new DataApiClient(process.env.APPLICATION_TOKEN!, { dataApiOptions: { monitorCommands: true } });
+      const client = new DataAPIClient(process.env.APPLICATION_TOKEN!, { dbOptions: { monitorCommands: true } });
       const db = client.db(process.env.ASTRA_URI!);
       const collection1 = db.collection(DEFAULT_COLLECTION_NAME);
       const collection2 = db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
@@ -140,7 +140,7 @@ describe('integration.client.data-api-client', () => {
     });
 
     it('should allow monitoring of failed commands when enabled', async () => {
-      const client = new DataApiClient(process.env.APPLICATION_TOKEN!);
+      const client = new DataAPIClient(process.env.APPLICATION_TOKEN!);
       const db = client.db(process.env.ASTRA_URI!, { monitorCommands: true });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
@@ -195,7 +195,7 @@ describe('integration.client.data-api-client', () => {
     });
 
     it('should allow monitoring of timed-out commands when enabled', async () => {
-      const client = new DataApiClient(process.env.APPLICATION_TOKEN!);
+      const client = new DataAPIClient(process.env.APPLICATION_TOKEN!);
       const db = client.db(process.env.ASTRA_URI!, { monitorCommands: true });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
