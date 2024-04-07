@@ -930,7 +930,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  public async findOne<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
+  public async findOne<const GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneCommand = {

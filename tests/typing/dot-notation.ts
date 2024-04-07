@@ -14,9 +14,9 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { BasicSchema, ConvolutedSchema1, Equal, Expect, Schema } from '@/tests/typing/prelude';
+import { BasicSchema, ConvolutedSchema1, ConvolutedSchema3, Equal, Expect, Schema } from '@/tests/typing/prelude';
 import { ToDotNotation } from '@/src/data-api/types';
-import { SomeDoc } from '@/src/data-api';
+import { SomeDoc, UUID } from '@/src/data-api';
 
 type test1 = Expect<Equal<ToDotNotation<BasicSchema>, {
   num: number,
@@ -35,7 +35,7 @@ type test2 = Expect<Equal<ToDotNotation<Schema>, {
   'obj.str2': string,
   'obj.obj': { num: number, any: SomeDoc },
   'obj.obj.num': number,
-  'obj.obj.any': SomeDoc,
+  'obj.obj.any': SomeDoc & Required<SomeDoc>,
   [k: `obj.obj.any.${string}`]: any,
   arr: string[],
   [k: `arr.${number}`]: string,
@@ -103,4 +103,8 @@ const test9: Partial<ToDotNotation<ConvolutedSchema1>> = {
   numOrBigInt: '',
   // @ts-expect-error - Invalid type
   numOrString: 1n,
+}
+
+const test10: Partial<ToDotNotation<ConvolutedSchema3>> = {
+  'obj.id': UUID.v7(),
 }

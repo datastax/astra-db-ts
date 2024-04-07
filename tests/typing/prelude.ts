@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/data-api';
+import { SomeDoc, UUID } from '@/src/data-api';
+import { ObjectId } from 'bson';
 
 export type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends (<T>() => T extends Y ? 1 : 2) ? true : false;
 export type Expect<T extends true> = T;
@@ -54,4 +55,10 @@ export interface ConvolutedSchema1 {
 
 export interface ConvolutedSchema2 {
   numOrArray: number | string[],
+}
+
+export interface ConvolutedSchema3 {
+  obj: {
+    id: UUID | ObjectId,
+  }
 }

@@ -2,15 +2,13 @@
 
 `astra-db-ts` is a TypeScript client for interacting with [DataStax Astra DB](https://astra.datastax.com/signup).
 
-*This README targets v1.0.0+, which introduces a whole new API. Click [here](https://www.youtube.com/watch?v=dQw4w9WgXcQ) for the pre-existing client readme.*
-
-*For the sake of my job, I hope I remember to update that link before release.*
+*This README targets v1.0.0+, which introduces a whole new API. Click [here](https://github.com/datastax/astra-db-ts/tree/90ebeac6fec53fd951126c2bcc010c87f7f678f8?tab=readme-ov-file#datastaxastra-db-ts) for the pre-existing client readme.*
 
 ## Quickstart
 
-Use your preferred package manager to install `@datastax/astra-db-ts`. Note that this requires a Node-compatable runtime.
+Use your preferred package manager to install `@datastax/astra-db-ts`. Note that this is not supported in browsers.
 
-Get the *API endpoint* and your *applicaton token* for your Astra DB instance @ [astra.datastax.com](https://astra.datastax.com).
+Get the *API endpoint* and your *application token* for your Astra DB instance @ [astra.datastax.com](https://astra.datastax.com).
 
 Try the following code after setting the following environment variables:
 
@@ -93,7 +91,7 @@ Next steps:
 
 ### Abstraction diagram
 
-astra-db-ts's abstractions for working at the data and admin layers are structured as depicted by this diagram:
+`astra-db-ts`'s abstractions for working at the data and admin layers are structured as depicted by this diagram:
 
 ![Class hierarchy diagram](assets/imgs/class-hierarchy.png)
 
@@ -118,9 +116,98 @@ const admin = client.admin();
 })();
 ```
 
-## Working with ObjectIds and UUIDs
+### Getting the most out of the typing
 
-astra-db-ts exports an `ObjectId` and `UUID` class for working with these types in the database. Here's an example:
+`astra-db-ts` is a typescript-first library, performing minimal runtime type-checking. As such, it provides
+a rich set of types to help you write type-safe code.
+
+Here are some examples of how you can properly leverage types to make your code more robust:
+
+```typescript
+import { DataAPIClient, StrictFilter, StrictSort, UUID } from '@/src/index';
+
+const client = new DataAPIClient('*TOKEN*');
+const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
+
+// You can strictly type your collections for proper type-checking
+interface Person {
+  _id: UUID,
+  name: string,
+  interests: {
+    favoriteBand?: string,
+    friend?: UUID,
+  }
+}
+
+(async () => {
+  // Create your collections with a defaultId type to enforce the type of the _id field
+  // (Otherwise it'll default to a string UUID that wouldn't be deserialized as a UUID by the client)
+  const collection = await db.createCollection<Person>('my_collection', { defaultId: { type: 'uuidv7' } });
+
+  // Now it'll raise type-errors if you try to insert a document with the wrong shape
+  await collection.insertOne({
+    _id: new UUID('e7f1f3a0-7e3d-11eb-9439-0242ac130002'),
+    name: 'John',
+    interests: {
+      favoriteBand: 'Nightwish',
+    },
+    // @ts-expect-error - 'eyeColor' does not exist in type MaybeId<Person>
+    eyeColor: 'blue',
+  });
+
+  // You can use the 'Strict*' version of Sort/Projection/Filter/UpdateFilter for proper type-checking and autocomplete
+  await collection.findOne({
+    // @ts-expect-error - Type number is not assignable to type FilterExpr<UUID | undefined>
+    'interests.friend': 3,
+  } satisfies StrictFilter<Person>, {
+    sort: {
+      name: 1,
+      // @ts-expect-error - 'interests.favoriteColor' does not exist in type StrictProjection<Person>
+      'interests.favoriteColor': 1 as const,
+    } satisfies StrictSort<Person>,
+  });
+})();
+```
+
+### Working with Dates
+
+Native JS `Date` objects can be used anywhere in documents to represent dates and times.
+
+Document fields stored using the `{ $date: number }` will also be returned as Date objects when read.
+
+```typescript
+import { DataApiClient } from '@datastax/astra-db-ts';
+
+// Reference an untyped collection
+const client = new DataApiClient('TOKEN');
+const db = client.db('ENDPOINT', { namespace: 'NAMESPACE' });
+const collection = db.collection('COLLECTION');
+
+// Insert documents with some dates
+await collection.insertOne({ dateOfBirth: new Date(1394104654000) });
+await collection.insertOne({ dateOfBirth: new Date('1863-05-28') });
+
+// Update a document with a date and setting lastModified to now
+await collection.updateOne(
+  {
+    dateOfBirth: new Date('1863-05-28'),
+  },
+  {
+    $set: { message: 'Happy Birthday!' },
+    $currentDate: { lastModified: true },
+  },
+);
+
+// Will print *around* `new Date()` (i.e. when server processed the request)
+const found = await collection.findOne({ dateOfBirth: { $lt: new Date('1900-01-01') } });
+console.log(found?.lastModified);
+```
+
+### Working with ObjectIds and UUIDs
+
+`astra-db-ts` exports an `ObjectId` and `UUID` class for working with these types in the database.
+
+Note that these are custom classes, and *not* the ones from the `bson` package. Make sure you're using the right one!
 
 ```typescript
 import { DataAPIClient, ObjectId, UUID } from '@datastax/astra-db-ts';
@@ -128,7 +215,7 @@ import { DataAPIClient, ObjectId, UUID } from '@datastax/astra-db-ts';
 interface Person {
   _id: ObjectId | UUID,
   name: string,
-  friendId?: string,
+  friendId?: ObjectId | UUID,
 }
 
 // Connect to the db
@@ -152,7 +239,7 @@ const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
   
   await collection.updateOne(
     { name: 'Jane' },
-    { $set: { friendId: friendId.toString() } },
+    { $set: { friendId } },
   );
   
   // And let's get Jane as a document
@@ -162,4 +249,44 @@ const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
 })();
 ```
 
-Note that these are custom classes, and *not* the ones from the `bson` package. Make sure you're using the right one!
+### Monitoring/logging
+
+[Like Mongo](https://www.mongodb.com/docs/drivers/node/current/fundamentals/logging/), `astra-db-ts` doesn't provide a
+traditional logging system—instead, it uses a "monitoring" system based on event emitters, which allow you to listen to
+events and log them as you see fit.
+
+Supported events include `commandStarted`, `commandSucceeded`, `commandFailed`, and `adminCommandStarted`,
+`adminCommandPolling`, `adminCommandSucceeded`, `adminCommandFailed`.
+
+Note that it's disabled by default, and it can be enabled by passing `monitorCommands: true` option to the root options'
+`dbOptions` and `adminOptions`.
+
+```typescript
+import { DataAPIClient } from '@datastax/astra-db-ts';
+
+const client = new DataAPIClient('*TOKEN*', {
+  dbOptions: {
+    monitorCommands: true,
+  },
+});
+
+client.on('commandStarted', (event) => {
+  console.log(`Running command ${event.commandName}`);
+});
+
+client.on('commandSucceeded', (event) => {
+  console.log(`Command ${event.commandName} succeeded in ${event.duration}ms`);
+});
+
+client.on('commandFailed', (event) => {
+  console.error(`Command ${event.commandName} failed w/ error ${event.error}`);
+});
+
+const db = client.db('*ENDPOINT*');
+const coll = db.collection('*COLLECTION*');
+
+// Should log
+// - "Running command insertOne"
+// - "Command insertOne succeeded in <time>ms"
+await coll.insertOne({ name: 'Queen' });
+```

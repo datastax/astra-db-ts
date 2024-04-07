@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeDoc } from '@/src/data-api';
+import { SomeDoc, UUID, ObjectId } from '@/src/data-api';
 
 /**
  * Converts some {@link Schema} into a type representing its dot notation (object paths).
@@ -45,9 +45,9 @@ import type { SomeDoc } from '@/src/data-api';
  * }
  * ```
  */
-export type ToDotNotation<Schema extends SomeDoc> = Merge<_ToDotNotation<Required<Schema>, ''>>;
+export type ToDotNotation<Schema extends SomeDoc> = Merge<_ToDotNotation<Schema, ''>>;
 
-type _ToDotNotation<Elem extends SomeDoc, Prefix extends string> = {
+type _ToDotNotation<_Elem extends SomeDoc, Prefix extends string, Elem = Required<_Elem>> = {
   [Key in keyof Elem]:
     SomeDoc extends Elem
       ? (
@@ -64,6 +64,8 @@ type _ToDotNotation<Elem extends SomeDoc, Prefix extends string> = {
         | { [Path in `${Prefix}${Key & string}`]: Elem[Key] }
         | { [Path in `${Prefix}${Key & string}.${number}`]: Elem[Key][number] }
         ) :
+    Elem[Key] extends UUID | ObjectId
+      ? { [Path in `${Prefix}${Key & string}`]: Elem[Key] } :
     Elem[Key] extends Date
       ? { [Path in `${Prefix}${Key & string}`]: Date | { $date: number } } :
     Elem[Key] extends SomeDoc
