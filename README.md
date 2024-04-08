@@ -93,7 +93,7 @@ Next steps:
 
 `astra-db-ts`'s abstractions for working at the data and admin layers are structured as depicted by this diagram:
 
-![Class hierarchy diagram](assets/imgs/class-hierarchy.png)
+![Class hierarchy diagram](etc/imgs/class-hierarchy.png)
 
 Here's a small admin-oriented example:
 

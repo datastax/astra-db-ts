@@ -35,6 +35,8 @@ export interface CreateCollectionCommand {
  * @field checkExists - Whether to check if the collection exists before creating it.
  *
  * @see Db.createCollection
+ *
+ * @public
  */
 export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, WithNamespace {
   /**

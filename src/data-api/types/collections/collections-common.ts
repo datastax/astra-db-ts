@@ -22,6 +22,8 @@ import { ToDotNotation } from '@/src/data-api/types/dot-notation';
  *
  * @field dimension - The dimension of the vectors.
  * @field metric - The similarity metric to use for the vector search.
+ *
+ * @public
  */
 export interface VectorOptions {
   /**
@@ -72,6 +74,8 @@ export interface VectorizeServiceOptions {
  *
  * @field allow - The fields to index.
  * @field deny - The fields to not index.
+ *
+ * @public
  */
 export type IndexingOptions<Schema extends SomeDoc> =
   | { allow: (keyof ToDotNotation<Schema>)[] | ['*'], deny?: never }
@@ -83,6 +87,8 @@ export type IndexingOptions<Schema extends SomeDoc> =
  * **If `type` is not specified, the default ID will be a string UUID.**
  *
  * @field type - The type of the default ID.
+ *
+ * @public
  */
 export interface DefaultIdOptions {
   /**
@@ -159,6 +165,8 @@ export interface DefaultIdOptions {
  * ```
  *
  * @field namespace - The namespace (aka keyspace) to use for the db operation.
+ *
+ * @public
  */
 export interface WithNamespace {
   /**

@@ -26,7 +26,6 @@ void dummyCollection<TestSchema>().findOneAndUpdate({
     // @ts-expect-error - 'status.car' is not a valid field
     'status.car': '',
   },
-  // @ts-expect-error - 'status.car' is not a valid field
 } satisfies StrictUpdateFilter<TestSchema>, {
   returnDocument: 'after',
 });

@@ -29,6 +29,8 @@ import { validateAdminOpts } from '@/src/devops/astra-admin';
  *
  * @see DataAPIClient.admin
  * @see AstraDbAdmin
+ *
+ * @public
  */
 export class AstraDbAdmin extends DbAdmin {
   private readonly _httpClient!: DevOpsAPIHttpClient;
@@ -227,7 +229,7 @@ export class AstraDbAdmin extends DbAdmin {
    * **NB. this is a long-running operation. See {@link AdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 10 seconds. Expect it to take roughly 6-7 min to complete.
    *
-   * The database info will still be accessible by ID, or by using the {@link listDatabases} method with the filter
+   * The database info will still be accessible by ID, or by using the {@link AstraAdmin.listDatabases} method with the filter
    * set to `'ALL'` or `'TERMINATED'`. However, all of its data will very much be lost.
    *
    * @example

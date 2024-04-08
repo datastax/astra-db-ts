@@ -17,6 +17,8 @@ import { DataAPIRequestInfo, DEFAULT_NAMESPACE, hrTimeMs, RawDataAPIResponse } f
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
  * command's lifecycle. Intended for use for monitoring and logging purposes.
+ *
+ * @public
  */
 export type DataAPICommandEvents = {
   /**
@@ -35,6 +37,8 @@ export type DataAPICommandEvents = {
 
 /**
  * Common base class for all command events.
+ *
+ * @public
  */
 export abstract class CommandEvent {
   /**
@@ -69,6 +73,8 @@ export abstract class CommandEvent {
 
 /**
  * Emitted when a command is started, before the initial HTTP request is made.
+ *
+ * @public
  */
 export class CommandStartedEvent extends CommandEvent {
   /**
@@ -84,6 +90,8 @@ export class CommandStartedEvent extends CommandEvent {
 
 /**
  * Emitted when a command has succeeded.
+ *
+ * @public
  */
 export class CommandSucceededEvent extends CommandEvent {
   /**
@@ -104,6 +112,8 @@ export class CommandSucceededEvent extends CommandEvent {
 
 /**
  * Emitted when a command has errored.
+ *
+ * @public
  */
 export class CommandFailedEvent extends CommandEvent {
   /**

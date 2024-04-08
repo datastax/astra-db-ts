@@ -65,10 +65,21 @@ If a new tag really, really, needs to be added, it can be done by adding a new e
 format, and updating the `assertTestsEnabled` function. However, this should be done sparingly, as it can make the
 test suite harder to manage.
 
-### Linting
+## Linting
 Run `npm run lint` to run ESLint.
 ESLint will point out any formatting and code quality issues it finds.
 You should try to run `npm run lint` before committing to minimize risk of regressions.
+
+## Building the library
+At the moment, you need to be using a unix-like system to build the library, as it uses a small shell script,
+which can be found in `scripts/build.sh`, and run manually enough on Windows if necessary.
+
+To build it, just run `npm run build`, which does the following:
+- Deletes the `dist` directory
+- Updates the versioning file (`src/version.ts`)
+- Runs `tsc` to compile the TypeScript files & resolves path aliases w/ `tsc-alias`
+- Uses `api-extractor` to generate the API report & generate a rolled-up `.d.ts` file
+- Deletes any extraneous `.d.ts` files
 
 ## Building API Reference Documentation
 API Documentation of this library is generated using [jsdoc-to-markdown](https://github.com/jsdoc2md/jsdoc-to-markdown)

@@ -22,5 +22,7 @@ import { WithTimeout } from '@/src/common/types';
  * @field maxTimeMS - The maximum time to allow the operation to run.
  *
  * @see Db.dropCollection
+ *
+ * @public
  */
 export interface DropCollectionOptions extends WithTimeout, WithNamespace {}

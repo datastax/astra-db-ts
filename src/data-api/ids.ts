@@ -1,3 +1,17 @@
+// Copyright DataStax, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import { uuidv4, uuidv7, UUID as UUIDv7 } from 'uuidv7';
 import { ObjectId as MongoObjectId } from 'bson';
 
@@ -41,6 +55,8 @@ const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9
  * ```
  *
  * @see ObjectId
+ *
+ * @public
  */
 export class UUID {
   /**
@@ -55,8 +71,8 @@ export class UUID {
    *
    * Use `UUID.v4()` or `UUID.v7()` to generate random new UUIDs.
    *
-   * @param uuid The UUID string.
-   * @param validate Whether to validate the UUID string. Defaults to `true`.
+   * @param uuid - The UUID string.
+   * @param validate - Whether to validate the UUID string. Defaults to `true`.
    */
   constructor(uuid: string, validate?: boolean) {
     if (validate !== false) {
@@ -84,7 +100,7 @@ export class UUID {
    *
    * A UUID is considered equal to another UUID if their lowercase string representations are equal.
    *
-   * @param other The UUID to compare to.
+   * @param other - The UUID to compare to.
    *
    * @returns `true` if the UUIDs are equal, `false` otherwise.
    */
@@ -128,17 +144,11 @@ export class UUID {
     return new UUID(uuidv7(), false);
   }
 
-  /**
-   * @internal
-   */
   public inspect(): string {
     return `UUID("${this.toString()}")`;
   }
 
   // noinspection JSUnusedGlobalSymbols
-  /**
-   * @internal
-   */
   public toJSON() {
     return { $uuid: this.toString() };
   }
@@ -182,6 +192,8 @@ const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
  * // Prints the timestamp when the document was created (server time)
  * console.log(doc._id.getTimestamp());
  * ```
+ *
+ * @public
  */
 export class ObjectId {
   private readonly _objectId: MongoObjectId;
@@ -191,8 +203,8 @@ export class ObjectId {
    *
    * If `id` is provided, it must be a 24-character hex string. Otherwise, a new ObjectId is generated.
    *
-   * @param id The ObjectId string.
-   * @param validate Whether to validate the ObjectId string. Defaults to `true`.
+   * @param id - The ObjectId string.
+   * @param validate - Whether to validate the ObjectId string. Defaults to `true`.
    */
   constructor(id?: string, validate = true) {
     if (validate && id) {
@@ -215,7 +227,7 @@ export class ObjectId {
    *
    * An ObjectId is considered equal to another ObjectId if their string representations are equal.
    *
-   * @param other The ObjectId to compare to.
+   * @param other - The ObjectId to compare to.
    *
    * @returns `true` if the ObjectIds are equal, `false` otherwise.
    */
@@ -239,26 +251,17 @@ export class ObjectId {
     return this._objectId.toString();
   }
 
-  /**
-   * @internal
-   */
   public inspect(): string {
     return `ObjectId("${this.toString()}")`;
   }
 
   // noinspection JSUnusedGlobalSymbols
-  /**
-   * @internal
-   */
   public toJSON() {
     return { $objectId: this.toString() };
   }
 }
 
-/**
- * @internal
- */
-const timestampFromUUID = (uuid: UUID): Date | undefined => {
+function timestampFromUUID(uuid: UUID): Date | undefined {
   if (uuid.version !== 7) {
     return undefined;
   }

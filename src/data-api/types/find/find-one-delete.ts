@@ -33,6 +33,8 @@ export interface FindOneAndDeleteCommand {
  * @field includeResultMetadata - When true, returns alongside the document, an `ok` field with a value of 1 if the command executed successfully.
  *
  * @see Collection.findOneAndDelete
+ *
+ * @public
  */
 export interface FindOneAndDeleteOptions extends WithTimeout {
   /**

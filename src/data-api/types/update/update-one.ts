@@ -36,6 +36,8 @@ export interface UpdateOneCommand {
  * @field vector - An optional vector to use for the appropriate dimensionality to perform an ANN vector search on the collection.
  *
  * @see Collection.updateOne
+ *
+ * @public
  */
 export interface UpdateOneOptions extends WithTimeout {
   /**
@@ -99,5 +101,7 @@ export interface UpdateOneOptions extends WithTimeout {
  * @field upsertedId - The identifier of the upserted document if `upsertedCount > 0`.
  *
  * @see Collection.updateOne
+ *
+ * @public
  */
 export type UpdateOneResult<Schema extends SomeDoc> = InternalUpdateResult<Schema, 0 | 1>;

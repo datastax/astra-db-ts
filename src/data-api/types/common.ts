@@ -15,6 +15,9 @@
 import { ObjectId, SomeDoc, UUID, WithId } from '@/src/data-api';
 import type { ToDotNotation } from '@/src/data-api/types';
 
+/**
+ * @public
+ */
 export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId;
 
 /**
@@ -39,6 +42,8 @@ export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId
  *   $vector: [0.23, 0.38, 0.27, 0.91, 0.21],
  * }
  * ```
+ *
+ * @public
  */
 export type Sort =
   | Record<string, 1 | -1>
@@ -71,8 +76,10 @@ export type Sort =
  *   test_scores: { $slice: [2, 4] },
  * }
  * ```
+ *
+ * @public
  */
-export type Projection = Record<string, 1 | 0 | true | false | Slice>;
+export type Projection = Record<string, 1 | 0 | true | false | ProjectionSlice>;
 
 /**
  * Specifies the sort criteria for selecting documents.
@@ -98,6 +105,8 @@ export type Projection = Record<string, 1 | 0 | true | false | Slice>;
  *   } satisfies StrictSort<SomeDoc>,
  * });
  * ```
+ *
+ * @public
  */
 export type StrictSort<Schema extends SomeDoc> =
   | { [K in keyof ToDotNotation<WithId<Schema>>]?: 1 | -1 }
@@ -131,10 +140,12 @@ export type StrictSort<Schema extends SomeDoc> =
  *   } satisfies StrictProjection<SomeDoc>,
  * });
  * ```
+ *
+ * @public
  */
 export type StrictProjection<Schema extends SomeDoc> = {
   [K in keyof ToDotNotation<WithId<Schema>>]?: any[] extends (ToDotNotation<WithId<Schema>>)[K]
-    ? 1 | 0 | true | false | Slice
+    ? 1 | 0 | true | false | ProjectionSlice
     : 1 | 0 | true | false;
 };
 
@@ -155,7 +166,9 @@ export type StrictProjection<Schema extends SomeDoc> = {
  * // Skip backward 4 elements, return next 2 elements (forward)
  * { $slice: [-4, 2] }
  * ```
+ *
+ * @public
  */
-interface Slice {
+export interface ProjectionSlice {
   $slice: number | [number, number];
 }

@@ -34,6 +34,8 @@ export interface FindOneCommand {
  * @field sort - The sort order to pick which document to return if the filter selects multiple documents.
  * @field projection - Specifies which fields should be included/excluded in the returned documents.
  * @field includeSimilarity - If true, include the similarity score in the result via the `$similarity` field.
+ *
+ * @public
  */
 export interface FindOneOptions<GetSim extends boolean> extends WithTimeout {
   /**

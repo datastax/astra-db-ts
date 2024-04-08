@@ -23,6 +23,8 @@ import { WithTimeout } from '@/src/common/types';
  * The parameters depend on the `ordered` option. If `ordered` is `true`, the `parallel` option is not allowed.
  *
  * @see Collection.bulkWrite
+ *
+ * @public
  */
 export type BulkWriteOptions =
   | BulkWriteOrderedOptions
@@ -34,6 +36,8 @@ export type BulkWriteOptions =
  * @field ordered - If `true`, the operations are executed in the order provided.
  *
  * @see Collection.bulkWrite
+ *
+ * @public
  */
 export interface BulkWriteOrderedOptions extends WithTimeout {
   /**
@@ -50,6 +54,8 @@ export interface BulkWriteOrderedOptions extends WithTimeout {
  * @field parallel - The number of concurrent requests to use.
  *
  * @see Collection.bulkWrite
+ *
+ * @public
  */
 export interface BulkWriteUnorderedOptions extends WithTimeout {
   /**
@@ -63,6 +69,9 @@ export interface BulkWriteUnorderedOptions extends WithTimeout {
   concurrency?: number,
 }
 
+/**
+ * @public
+ */
 export class BulkWriteResult<Schema extends SomeDoc> {
   constructor(
     readonly deletedCount: number = 0,
@@ -83,6 +92,9 @@ export class BulkWriteResult<Schema extends SomeDoc> {
   }
 }
 
+/**
+ * @public
+ */
 export type AnyBulkWriteOperation<TSchema extends SomeDoc> = {
   insertOne: InsertOneModel<TSchema>;
 } | {
@@ -97,32 +109,50 @@ export type AnyBulkWriteOperation<TSchema extends SomeDoc> = {
   deleteMany: DeleteManyModel<TSchema>;
 }
 
+/**
+ * @public
+ */
 export interface InsertOneModel<TSchema extends SomeDoc> {
   document: TSchema;
 }
 
+/**
+ * @public
+ */
 export interface ReplaceOneModel<TSchema extends SomeDoc> {
   filter: Filter<TSchema>;
   replacement: TSchema;
   upsert?: boolean;
 }
 
+/**
+ * @public
+ */
 export interface UpdateOneModel<TSchema extends SomeDoc> {
   filter: Filter<TSchema>;
   update: UpdateFilter<TSchema>;
   upsert?: boolean;
 }
 
+/**
+ * @public
+ */
 export interface UpdateManyModel<TSchema extends SomeDoc> {
   filter: Filter<TSchema>;
   update: UpdateFilter<TSchema>;
   upsert?: boolean;
 }
 
+/**
+ * @public
+ */
 export interface DeleteOneModel<TSchema extends SomeDoc> {
   filter: Filter<TSchema>;
 }
 
+/**
+ * @public
+ */
 export interface DeleteManyModel<TSchema extends SomeDoc> {
   filter: Filter<TSchema>;
 }

@@ -33,6 +33,9 @@ export interface HTTPClientOptions {
   monitorCommands: boolean;
 }
 
+/**
+ * @public
+ */
 export interface RawDataAPIResponse {
   status?: Record<string, any>;
   errors?: any[];

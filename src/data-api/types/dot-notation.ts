@@ -15,7 +15,7 @@
 import { SomeDoc, UUID, ObjectId } from '@/src/data-api';
 
 /**
- * Converts some {@link Schema} into a type representing its dot notation (object paths).
+ * Converts some `Schema` into a type representing its dot notation (object paths).
  *
  * If a value is any or SomeDoc, it'll be allowed to be any old object.
  *
@@ -44,6 +44,8 @@ import { SomeDoc, UUID, ObjectId } from '@/src/data-api';
  *   [`obj.someDoc.${string}`]: any,
  * }
  * ```
+ *
+ * @public
  */
 export type ToDotNotation<Schema extends SomeDoc> = Merge<_ToDotNotation<Schema, ''>>;
 

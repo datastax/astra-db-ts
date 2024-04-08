@@ -30,6 +30,8 @@ export interface DeleteOneCommand {
  * @field vector - An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection.
  *
  * @see Collection.deleteOne
+ *
+ * @public
  */
 export interface DeleteOneOptions extends WithTimeout {
   /**
@@ -64,6 +66,8 @@ export interface DeleteOneOptions extends WithTimeout {
  * @field deletedCount - The number of deleted documents. Can be either 0 or 1.
  *
  * @see Collection.deleteOne
+ *
+ * @public
  */
 export interface DeleteOneResult {
   /**

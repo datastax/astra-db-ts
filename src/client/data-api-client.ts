@@ -27,6 +27,9 @@ import { DataAPICommandEvents } from '@/src/data-api/events';
 import { AdminCommandEvents } from '@/src/devops';
 import { validateOption } from '@/src/data-api';
 
+/**
+ * @public
+ */
 export type DataAPIClientEvents =
   & DataAPICommandEvents
   & AdminCommandEvents
@@ -56,6 +59,8 @@ export type DataAPIClientEvents =
  * console.log(await coll.insertOne({ name: 'Lordi' }));
  * console.log(await admin1.listDatabases());
  * ```
+ *
+ * @public
  */
 export class DataAPIClient extends (EventEmitter as new () => TypedEmitter<DataAPIClientEvents>) {
   readonly #options: InternalRootClientOpts;

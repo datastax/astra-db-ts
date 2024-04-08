@@ -49,6 +49,8 @@ import type { IsDate, IsNum, ToDotNotation } from '@/src/data-api/types';
  * @field $max - Only update the field if the specified value is greater than the existing value.
  * @field $mul - Multiply the value of a field in the document.
  * @field $addToSet - Add an element to an array field in the document if it does not already exist.
+ *
+ * @public
  */
 export interface UpdateFilter<Schema extends SomeDoc> {
   /**
@@ -245,6 +247,8 @@ export interface UpdateFilter<Schema extends SomeDoc> {
  * @field $max - Only update the field if the specified value is greater than the existing value.
  * @field $mul - Multiply the value of a field in the document.
  * @field $addToSet - Add an element to an array field in the document if it does not already exist.
+ *
+ * @public
  */
 export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> {
   /**

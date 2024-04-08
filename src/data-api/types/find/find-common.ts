@@ -20,6 +20,8 @@ import { WithId } from '@/src/data-api/types';
  * Represents the result of a `findOneAnd*` operation (e.g. `findOneAndUpdate`)
  *
  * @field value - The document that was found and modified.
+ *
+ * @public
  */
 export interface ModifyResult<Schema extends SomeDoc> {
   /**

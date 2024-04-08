@@ -16,6 +16,8 @@ import { DatabaseAction, DatabaseCloudProvider, DatabaseStatus, DatabaseTier } f
 
 /**
  * Represents the complete information about a database.
+ *
+ * @public
  */
 export interface FullDatabaseInfo {
   /**
@@ -78,6 +80,8 @@ export interface FullDatabaseInfo {
 
 /**
  * The user-provided information describing a database
+ *
+ * @public
  */
 export interface DatabaseInfo {
   /**
@@ -126,6 +130,8 @@ export interface DatabaseInfo {
 
 /**
  * Contains the information about how much storage space a cluster has available.
+ *
+ * @public
  */
 export interface DatabaseStorageInfo {
   /**

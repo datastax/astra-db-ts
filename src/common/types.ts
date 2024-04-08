@@ -18,6 +18,8 @@
  *
  * On paginated operations, the timeout applies across all network requests. For example, if you set a timeout of 5
  * seconds and the operation requires 3 network requests, each request must complete in less than 5 seconds total.
+ *
+ * @public
  */
 export interface WithTimeout {
   /**

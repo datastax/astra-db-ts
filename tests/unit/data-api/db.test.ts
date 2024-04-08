@@ -29,7 +29,7 @@ describe('unit.data-api.db', () => {
       const db = new Db('https://id-region.apps.astra.datastax.com', mkOptions());
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATH}`);
-      assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'old');
+      assert.strictEqual(db['_httpClient'].applicationToken, 'old');
     });
   });
 
@@ -38,28 +38,28 @@ describe('unit.data-api.db', () => {
       const db = mkDb(mkOptions(), 'https://id-region.apps.astra.datastax.com');
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATH}`);
-      assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'old');
+      assert.strictEqual(db['_httpClient'].applicationToken, 'old');
     });
 
     it('should allow db construction from id + region, using default options', () => {
       const db = mkDb(mkOptions(), 'id', 'region');
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATH}`);
-      assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'old');
+      assert.strictEqual(db['_httpClient'].applicationToken, 'old');
     });
 
     it('should allow db construction from endpoint, overwriting options', () => {
       const db = mkDb(mkOptions({ dataApiPath: 'old' }), 'https://id-region.apps.astra.datastax.com', { dataApiPath: 'new', token: 'new' });
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, 'https://id-region.apps.astra.datastax.com/new');
-      assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'new');
+      assert.strictEqual(db['_httpClient'].applicationToken, 'new');
     });
 
     it('should allow db construction from id + region, overwriting options', () => {
       const db = mkDb(mkOptions({ dataApiPath: 'old' }), 'id', 'region', { dataApiPath: 'new', token: 'new' });
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, 'https://id-region.apps.astra.datastax.com/new');
-      assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'new');
+      assert.strictEqual(db['_httpClient'].applicationToken, 'new');
     });
 
     it('is initialized with default namespace', () => {
@@ -126,7 +126,7 @@ describe('unit.data-api.db', () => {
 
     it('overrides token in db when provided', () => {
       const db = mkDb(mkOptions(), process.env.ASTRA_URI!, { token: 'new' });
-      assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'new');
+      assert.strictEqual(db['_httpClient'].applicationToken, 'new');
     });
 
     it('should accept valid monitorCommands', () => {
@@ -254,8 +254,8 @@ describe('unit.data-api.db', () => {
     it('should override auth token', () => {
       const db = mkDb(mkOptions({ token: 'old' }), 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb', 'us-east1');
       const admin = db.admin({ adminToken: 'new' });
-      assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'old');
-      assert.strictEqual(admin['_httpClient'].unsafeGetToken(), 'new');
+      assert.strictEqual(db['_httpClient'].applicationToken, 'old');
+      assert.strictEqual(admin['_httpClient'].applicationToken, 'new');
     });
   });
 });

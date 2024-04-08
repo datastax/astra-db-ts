@@ -31,6 +31,8 @@ export interface InsertManyCommand {
  * The parameters depend on the `ordered` option. If `ordered` is `true`, the `parallel` option is not allowed.
  *
  * @see Collection.insertMany
+ *
+ * @public
  */
 export type InsertManyOptions =
   | InsertManyUnorderedOptions
@@ -44,6 +46,8 @@ export type InsertManyOptions =
  * @field vectors - A list of optional vectors to use for the documents, if using a vector-enabled collection.
  *
  * @see Collection.insertMany
+ *
+ * @public
  */
 export interface InsertManyOrderedOptions extends WithTimeout {
   /**
@@ -91,6 +95,8 @@ export interface InsertManyOrderedOptions extends WithTimeout {
  * @field vectors - A list of optional vectors to use for the documents, if using a vector-enabled collection.
  *
  * @see Collection.insertMany
+ *
+ * @public
  */
 export interface InsertManyUnorderedOptions extends WithTimeout {
   /**
@@ -140,6 +146,8 @@ export interface InsertManyUnorderedOptions extends WithTimeout {
  * @field insertedCount - The number of inserted documents.
  *
  * @see Collection.insertMany
+ *
+ * @public
  */
 export interface InsertManyResult<Schema> {
   /**

@@ -15,6 +15,9 @@
 import type { AxiosError, AxiosResponse } from 'axios';
 import { DataAPIError } from '@/src/data-api/errors';
 
+/**
+ * @public
+ */
 export class DevOpsAPITimeout extends DataAPIError {
   constructor(readonly url: string, readonly timeout: number) {
     super(`Command timed out after ${timeout}ms`);
@@ -22,13 +25,22 @@ export class DevOpsAPITimeout extends DataAPIError {
   }
 }
 
+/**
+ * @public
+ */
 export interface DevOpsAPIErrorDescriptor {
   ID?: number,
   message: string,
 }
 
+/**
+ * @public
+ */
 export abstract class DevOpsAPIError extends Error {}
 
+/**
+ * @public
+ */
 export class DevOpsAPIResponseError extends DevOpsAPIError {
   readonly errors: DevOpsAPIErrorDescriptor[];
   readonly rootError: AxiosError;
@@ -43,6 +55,9 @@ export class DevOpsAPIResponseError extends DevOpsAPIError {
   }
 }
 
+/**
+ * @public
+ */
 export class DevOpsUnexpectedStateError extends DevOpsAPIError {
   readonly status?: number;
   readonly rawResponse?: AxiosResponse;

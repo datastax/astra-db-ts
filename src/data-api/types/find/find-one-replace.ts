@@ -40,6 +40,8 @@ export interface FindOneAndReplaceCommand {
  * @field includeResultMetadata - When true, returns alongside the document, an `ok` field with a value of 1 if the command executed successfully.
  *
  * @see Collection.findOneAndReplace
+ *
+ * @public
  */
 export interface FindOneAndReplaceOptions extends WithTimeout {
   /**

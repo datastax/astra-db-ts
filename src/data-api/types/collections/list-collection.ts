@@ -33,6 +33,8 @@ export interface ListCollectionsCommand {
  * @field maxTimeMs - The maximum amount of time to allow the operation to run.
  *
  * @see Db.listCollections
+ *
+ * @public
  */
 export interface ListCollectionsOptions extends WithTimeout, WithNamespace {
   /**
@@ -64,6 +66,8 @@ export interface ListCollectionsOptions extends WithTimeout, WithNamespace {
  *
  * @see ListCollectionsOptions
  * @see Db.listCollections
+ *
+ * @public
  */
 export interface FullCollectionInfo {
   /**

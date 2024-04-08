@@ -39,6 +39,8 @@ import { SomeDoc } from '@/src/data-api/document';
  * @field errorCode - A string code representing the exact error
  * @field message - A human-readable message describing the error
  * @field attributes - A map of additional attributes returned by the API. Often empty
+ *
+ * @public
  */
 export interface DataAPIErrorDescriptor {
   /**
@@ -66,6 +68,8 @@ export interface DataAPIErrorDescriptor {
  * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
  * @field command - The raw command send to the API
  * @field rawResponse - The raw response from the API
+ *
+ * @public
  */
 export interface DataAPIDetailedErrorDescriptor {
   /**
@@ -120,9 +124,14 @@ export interface DataAPIDetailedErrorDescriptor {
  * This is *only* for Data API related errors, such as a non-existent collection, or a duplicate key error. It
  * is *not*, however, for errors such as an HTTP network error, or a malformed request. The exception being timeouts,
  * which are represented by the {@link DataAPITimeout} class.
+ *
+ * @public
  */
 export abstract class DataAPIError extends Error {}
 
+/**
+ * @public
+ */
 export class DataAPITimeout extends DataAPIError {
   constructor(readonly timeout: number) {
     super(`Command timed out after ${timeout}ms`);
@@ -150,6 +159,8 @@ export class DataAPITimeout extends DataAPIError {
  *
  * @field limit - The limit that was set by the caller
  * @field hitServerLimit - Whether the server-imposed limit was hit
+ *
+ * @public
  */
 export class TooManyDocsToCountError extends DataAPIError {
   name = 'TooManyDocsToCountError'
@@ -181,6 +192,8 @@ export class TooManyDocsToCountError extends DataAPIError {
  *   }
  * }
  * ```
+ *
+ * @public
  */
 export class CursorAlreadyInitializedError extends DataAPIError {
   constructor(message: string) {
@@ -189,6 +202,9 @@ export class CursorAlreadyInitializedError extends DataAPIError {
   }
 }
 
+/**
+ * @public
+ */
 export class CollectionAlreadyExistsError extends DataAPIError {
   constructor(readonly namespace: string, readonly collectionName: string) {
     super(`Collection '${namespace}.${collectionName}' already exists`);
@@ -208,6 +224,8 @@ export class CollectionAlreadyExistsError extends DataAPIError {
  * @field message - A human-readable message describing the *first* error
  * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
  * @field detailedErrorDescriptors - A list of errors 1:1 with the number of errorful API requests made to the server.
+ *
+ * @public
  */
 export class DataAPIResponseError extends DataAPIError {
   /**
@@ -258,6 +276,8 @@ export class DataAPIResponseError extends DataAPIError {
  * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
  * @field detailedErrorDescriptors - A list of errors 1:1 with the number of errorful API requests made to the server.
  * @field partialResult - The partial result of the operation that was performed
+ *
+ * @public
  */
 export abstract class CumulativeDataAPIError extends DataAPIResponseError {
   /**
@@ -282,6 +302,8 @@ export abstract class CumulativeDataAPIError extends DataAPIResponseError {
  * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
  * @field detailedErrorDescriptors - A list of errors 1:1 with the number of errorful API requests made to the server.
  * @field partialResult - The partial result of the `InsertMany` operation that was performed
+ *
+ * @public
  */
 export class InsertManyError extends CumulativeDataAPIError {
   name = 'InsertManyError';
@@ -298,6 +320,8 @@ export class InsertManyError extends CumulativeDataAPIError {
  * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
  * @field detailedErrorDescriptors - A list of errors 1:1 with the number of errorful API requests made to the server.
  * @field partialResult - The partial result of the `DeleteMany` operation that was performed
+ *
+ * @public
  */
 export class DeleteManyError extends CumulativeDataAPIError {
   name = 'DeleteManyError';
@@ -314,6 +338,8 @@ export class DeleteManyError extends CumulativeDataAPIError {
  * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
  * @field detailedErrorDescriptors - A list of errors 1:1 with the number of errorful API requests made to the server.
  * @field partialResult - The partial result of the `UpdateMany` operation that was performed
+ *
+ * @public
  */
 export class UpdateManyError extends CumulativeDataAPIError {
   name = 'UpdateManyError';
@@ -333,21 +359,26 @@ export class UpdateManyError extends CumulativeDataAPIError {
  * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
  * @field detailedErrorDescriptors - A list of errors 1:1 with the number of errorful API requests made to the server.
  * @field partialResult - The partial result of the `BulkWrite` operation that was performed
+ *
+ * @public
  */
 export class BulkWriteError extends CumulativeDataAPIError {
   name = 'BulkWriteError';
   declare public readonly partialResult: BulkWriteResult<SomeDoc>;
 }
 
-/** @internal */
 type InferPartialResult<T> = T extends { readonly partialResult: infer P } ? P : never;
 
-/** @internal */
+/**
+ * @internal
+ */
 export const mkRespErrorFromResponse = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, command: Record<string, any>, raw: RawDataAPIResponse, partialResult?: InferPartialResult<E>) => {
   return mkRespErrorFromResponses(err, [command], [raw], partialResult);
 }
 
-/** @internal */
+/**
+ * @internal
+ */
 export const mkRespErrorFromResponses = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, commands: Record<string, any>[], raw: RawDataAPIResponse[], partialResult?: InferPartialResult<E>) => {
   const detailedDescriptors = [] as DataAPIDetailedErrorDescriptor[];
 

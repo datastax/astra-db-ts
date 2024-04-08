@@ -83,14 +83,14 @@ describe('unit.client.data-api-client', () => {
       const db = new DataAPIClient('dummy-token').db(endpoint);
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `${endpoint}/${DEFAULT_DATA_API_PATH}`);
-      assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'dummy-token');
+      assert.strictEqual(db['_httpClient'].applicationToken, 'dummy-token');
     });
 
     it('should allow db construction from id + region', () => {
       const db = new DataAPIClient('dummy-token').db(id, region);
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `https://${id}-${region}.apps.astra.datastax.com/${DEFAULT_DATA_API_PATH}`);
-      assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'dummy-token');
+      assert.strictEqual(db['_httpClient'].applicationToken, 'dummy-token');
     });
 
     it('should have unique http clients for each db', () => {
@@ -105,7 +105,7 @@ describe('unit.client.data-api-client', () => {
     it('should spawn an AstraAdmin instance', () => {
       const admin = new DataAPIClient('dummy-token').admin();
       assert.ok(admin);
-      assert.strictEqual(admin['_httpClient'].unsafeGetToken(), 'dummy-token');
+      assert.strictEqual(admin['_httpClient'].applicationToken, 'dummy-token');
       assert.ok(admin['_httpClient'].requestStrategy instanceof HTTP1Strategy);
     });
   });

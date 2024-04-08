@@ -25,6 +25,8 @@ export interface DeleteManyCommand {
  * @field deletedCount - The number of deleted documents. Can be any non-negative integer.
  *
  * @see Collection.deleteMany
+ *
+ * @public
  */
 export interface DeleteManyResult {
   /**

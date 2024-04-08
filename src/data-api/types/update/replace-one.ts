@@ -24,6 +24,8 @@ import { WithTimeout } from '@/src/common/types';
  * @field vector - An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection.
  *
  * @see Collection.replaceOne
+ *
+ * @public
  */
 export interface ReplaceOneOptions extends WithTimeout {
   /**
@@ -87,5 +89,7 @@ export interface ReplaceOneOptions extends WithTimeout {
  * @field upsertedId - The identifier of the upserted document if `upsertedCount > 0`.
  *
  * @see Collection.replaceOne
+ *
+ * @public
  */
 export type ReplaceOneResult<Schema extends SomeDoc> = InternalUpdateResult<Schema, 0 | 1>;

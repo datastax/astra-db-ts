@@ -11,7 +11,6 @@
 import { Db } from '@/src/data-api';
 import { assertTestsEnabled, DEFAULT_COLLECTION_NAME, initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
-import { randAlphaNumeric } from '@ngneat/falso';
 
 describe('integration.data-api.collection.options', () => {
   let db: Db;
@@ -28,11 +27,10 @@ describe('integration.data-api.collection.options', () => {
 
   it('[long] lists its own empty options', async function () {
     assertTestsEnabled(this, 'LONG');
-    const suffix = randAlphaNumeric({ length: 4 }).join("");
-    const coll = await db.createCollection(`test_db_collection_${suffix}`);
+    const coll = await db.createCollection('test_db_collection_empty_opts');
     const res = await coll.options();
     assert.deepStrictEqual(res, {});
-    await db.dropCollection(`test_db_collection_${suffix}`)
+    await db.dropCollection('test_db_collection_empty_opts')
   });
 
   it('throws an error when collection not found', async () => {

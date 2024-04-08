@@ -18,6 +18,8 @@ import { AxiosResponse } from 'axios';
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
  * admin command's lifecycle. Intended for use for monitoring and logging purposes.
+ *
+ * @public
  */
 export type AdminCommandEvents = {
   /**
@@ -40,6 +42,8 @@ export type AdminCommandEvents = {
 
 /**
  * Common base class for all admin command events.
+ *
+ * @public
  */
 export abstract class AdminCommandEvent {
   /**
@@ -49,7 +53,8 @@ export abstract class AdminCommandEvent {
   /**
    * The HTTP method for the request.
    */
-  public readonly method: 'GET' | 'POST' | 'DELETE';
+  // public readonly method: 'GET' | 'POST' | 'DELETE';
+  public readonly method: string;
   /**
    * The request body, if any.
    */
@@ -74,6 +79,8 @@ export abstract class AdminCommandEvent {
 
 /**
  * Event emitted when an admin command is started. This is emitted before the initial HTTP request is made.
+ *
+ * @public
  */
 export class AdminCommandStartedEvent extends AdminCommandEvent {
   /**
@@ -91,6 +98,8 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
  * Event emitted when a command is polling in a long-running operation (i.e. create database).
  *
  * Emits every time the command polls.
+ *
+ * @public
  */
 export class AdminCommandPollingEvent extends AdminCommandEvent {
   /**
@@ -111,6 +120,8 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
 
 /**
  * Event emitted when an admin command has succeeded, after any necessary polling.
+ *
+ * @public
  */
 export class AdminCommandSucceededEvent extends AdminCommandEvent {
   /**
@@ -131,6 +142,8 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
 
 /**
  * Event emitted when an admin command has errored.
+ *
+ * @public
  */
 export class AdminCommandFailedEvent extends AdminCommandEvent {
   /**

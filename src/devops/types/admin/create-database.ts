@@ -21,6 +21,8 @@ import { DbSpawnOptions } from '@/src/client';
  * @field name - Name of the database--user friendly identifier
  * @field cloudProvider - Cloud provider where the database lives
  * @field region - Cloud region where the database is located
+ *
+ * @public
  */
 export interface DatabaseConfig {
   /**
@@ -41,6 +43,9 @@ export interface DatabaseConfig {
   namespace?: string,
 }
 
+/**
+ * @public
+ */
 export type CreateDatabaseOptions = AdminBlockingOptions & {
   dbOptions?: DbSpawnOptions,
 }

@@ -40,6 +40,8 @@ export interface FindOneAndUpdateCommand {
  * @field includeResultMetadata - When true, returns alongside the document, an `ok` field with a value of 1 if the command executed successfully.
  *
  * @see Collection.findOneAndUpdate
+ *
+ * @public
  */
 export interface FindOneAndUpdateOptions extends WithTimeout {
   /**

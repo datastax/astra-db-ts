@@ -80,7 +80,7 @@ export class HttpClient {
     this.#applicationToken = token;
   }
 
-  public unsafeGetToken(): string {
+  public get applicationToken(): string {
     return this.#applicationToken;
   }
 
@@ -103,6 +103,9 @@ export class HttpClient {
   }
 }
 
+/**
+ * @internal
+ */
 export function hrTimeMs(): number {
   const hrtime = process.hrtime();
   return Math.floor(hrtime[0] * 1000 + hrtime[1] / 1000000);

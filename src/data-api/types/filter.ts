@@ -36,6 +36,8 @@ import type { IdOf, IsDate, IsNum, NoId, ToDotNotation } from '@/src/data-api/ty
  *   ]
  * });
  * ```
+ *
+ * @public
  */
 export type Filter<Schema extends SomeDoc> = {
   [K in keyof NoId<Schema>]?: FilterExpr<NoId<Schema>[K]>
@@ -71,6 +73,8 @@ export type Filter<Schema extends SomeDoc> = {
  *   ]
  * } satisfies StrictFilter<BasicSchema>);
  * ```
+ *
+ * @public
  */
 export type StrictFilter<Schema extends SomeDoc> = {
   [K in keyof ToDotNotation<NoId<Schema>>]?: FilterExpr<ToDotNotation<NoId<Schema>>[K]>
@@ -98,13 +102,13 @@ type FilterOps<Elem> = {
 } & (
   // eslint-disable-next-line @typescript-eslint/ban-types -- Intersection w/ {} is a "noop" here
   IsNum<Elem> extends false ? {} : NumFilterOps
-) & (
+  ) & (
   // eslint-disable-next-line @typescript-eslint/ban-types -- Intersection w/ {} is a "noop" here
   IsDate<Elem> extends false ? {} : DateFilterOps
-) & (
+  ) & (
   // eslint-disable-next-line @typescript-eslint/ban-types -- Intersection w/ {} is a "noop" here
   any[] extends Elem ? ArrayFilterOps<Elem> : {}
-)
+  )
 
 /**
  * Represents filter operations exclusive to number (or dynamically typed) fields

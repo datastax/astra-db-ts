@@ -35,6 +35,8 @@ type AdminOptions = InternalRootClientOpts & { adminOptions: { adminToken: strin
  *
  * @see DataAPIClient.admin
  * @see AstraDbAdmin
+ *
+ * @public
  */
 export class AstraAdmin {
   readonly #defaultOpts!: InternalRootClientOpts;
@@ -87,7 +89,7 @@ export class AstraAdmin {
    *
    * @remarks
    * Note that this does not perform any IO or validation on if the endpoint is valid or not. It's up to the user to
-   * ensure that the endpoint is correct. If you want to create an actual database, see {@link createDatabase}
+   * ensure that the endpoint is correct. If you want to create an actual database, see {@link AstraAdmin.createDatabase}
    * instead.
    *
    * @param endpoint - The direct endpoint to use.
@@ -120,7 +122,7 @@ export class AstraAdmin {
    *
    * @remarks
    * Note that this does not perform any IO or validation on if the endpoint is valid or not. It's up to the user to
-   * ensure that the endpoint is correct. If you want to create an actual database, see {@link createDatabase}
+   * ensure that the endpoint is correct. If you want to create an actual database, see {@link AstraAdmin.createDatabase}
    * instead.
    *
    * @param id - The database ID to use.
@@ -162,7 +164,7 @@ export class AstraAdmin {
    *
    * @remarks
    * Note that this does not perform any IO or validation on if the endpoint is valid or not. It's up to the user to
-   * ensure that the endpoint is correct. If you want to create an actual database, see {@link createDatabase}
+   * ensure that the endpoint is correct. If you want to create an actual database, see {@link AstraAdmin.createDatabase}
    * instead.
    *
    * @param endpoint - The direct endpoint to use.
@@ -198,7 +200,7 @@ export class AstraAdmin {
    *
    * @remarks
    * Note that this does not perform any IO or validation on if the endpoint is valid or not. It's up to the user to
-   * ensure that the endpoint is correct. If you want to create an actual database, see {@link createDatabase}
+   * ensure that the endpoint is correct. If you want to create an actual database, see {@link AstraAdmin.createDatabase}
    * instead.
    *
    * @param id - The database ID to use.
@@ -337,7 +339,7 @@ export class AstraAdmin {
    * **NB. this is a long-running operation. See {@link AdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 10 seconds. Expect it to take roughly 6-7 min to complete.
    *
-   * The database info will still be accessible by ID, or by using the {@link listDatabases} method with the filter
+   * The database info will still be accessible by ID, or by using the {@link AstraAdmin.listDatabases} method with the filter
    * set to `'ALL'` or `'TERMINATED'`. However, all of its data will very much be lost.
    *
    * @example

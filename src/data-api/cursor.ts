@@ -37,7 +37,7 @@ const enum CursorStatus {
  *
  * Typed as `FindCursor<T, TRaw>` where `T` is the type of the mapped documents and `TRaw` is the type of the raw
  * documents before any mapping. If no mapping function is provided, `T` and `TRaw` will be the same type. Mapping
- * is done using the {@link map} method.
+ * is done using the {@link FindCursor.map} method.
  *
  * @example
  * ```typescript
@@ -71,6 +71,8 @@ const enum CursorStatus {
  * // Get next document from cursor
  * const doc = await cursor.next();
  * ```
+ *
+ * @public
  */
 export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   private readonly _namespace: string;
@@ -91,21 +93,21 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * @return The namespace (aka keyspace) of the parent database.
+   * @returns The namespace (aka keyspace) of the parent database.
    */
   get namespace(): string {
     return this._namespace;
   }
 
   /**
-   * @return Whether or not the cursor is closed.
+   * @returns Whether or not the cursor is closed.
    */
   get closed(): boolean {
     return this._state === CursorStatus.Closed;
   }
 
   /**
-   * @return The number of documents in the buffer.
+   * @returns The number of documents in the buffer.
    */
   bufferedCount(): number {
     return this._buffer.length;
@@ -121,7 +123,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @param filter - A filter to select which documents to return.
    *
-   * @return The cursor.
+   * @returns The cursor.
    */
   filter(filter: Filter<TRaw>): FindCursor<T, TRaw> {
     this._assertUninitialized();
@@ -139,7 +141,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @param sort - The sort order to prioritize which documents are returned.
    *
-   * @return The cursor.
+   * @returns The cursor.
    */
   sort(sort: Sort): FindCursor<T, TRaw> {
     this._assertUninitialized();
@@ -156,7 +158,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @param limit - The limit for this cursor.
    *
-   * @return The cursor.
+   * @returns The cursor.
    */
   limit(limit: number): FindCursor<T, TRaw> {
     this._assertUninitialized();
@@ -171,7 +173,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @param skip - The skip for the cursor query.
    *
-   * @return The cursor.
+   * @returns The cursor.
    */
   skip(skip: number): FindCursor<T, TRaw> {
     this._assertUninitialized();
@@ -213,7 +215,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @param projection - Specifies which fields should be included/excluded in the returned documents.
    *
-   * @return The cursor.
+   * @returns The cursor.
    */
   project<R = any, RRaw extends SomeDoc = SomeDoc>(projection: Projection): FindCursor<R, RRaw> {
     this._assertUninitialized();
@@ -228,7 +230,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @param includeSimilarity - Whether similarity scores should be included.
    *
-   * @return The cursor.
+   * @returns The cursor.
    */
   includeSimilarity(includeSimilarity: boolean = true): FindCursor<T, TRaw> {
     this._assertUninitialized();
@@ -246,7 +248,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @param mapping - The mapping function to apply to all documents.
    *
-   * @return The cursor.
+   * @returns The cursor.
    */
   map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw> {
     this._assertUninitialized();
@@ -272,7 +274,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * const cursor = collection.find({ name: 'John' });
    * ```
    *
-   * @return A behavioral clone of this cursor.
+   * @returns A behavioral clone of this cursor.
    */
   clone(): FindCursor<TRaw, TRaw> {
     return new FindCursor<TRaw, TRaw>(this._namespace, this._httpClient, this._filter, this._options);
@@ -285,7 +287,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @param max - The maximum number of documents to read from the buffer. If not provided, all documents will be read.
    *
-   * @return The documents read from the buffer.
+   * @returns The documents read from the buffer.
    */
   readBufferedDocuments(max?: number): TRaw[] {
     const toRead = Math.min(max ?? this._buffer.length, this._buffer.length);
@@ -312,7 +314,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * If the cursor is uninitialized, it will be initialized. If the cursor is closed, this method will return `null`.
    *
-   * @return The next document, or `null` if there are no more documents.
+   * @returns The next document, or `null` if there are no more documents.
    */
   async next(): Promise<T | null> {
     return this._next(false);
@@ -323,7 +325,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * If the cursor is uninitialized, it will be initialized. If the cursor is closed, this method will return `false`.
    *
-   * @return Whether or not there is a next document.
+   * @returns Whether or not there is a next document.
    */
   async hasNext(): Promise<boolean> {
     if (this._buffer.length > 0) {
@@ -343,7 +345,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * An async iterator that lazily iterates over all documents in the cursor.
    *
-   * **Note that there'll only be partial results if the cursor has been previously iterated over. You may use {@link rewind}
+   * **Note that there'll only be partial results if the cursor has been previously iterated over. You may use {@link FindCursor.rewind}
    * to reset the cursor.**
    *
    * If the cursor is uninitialized, it will be initialized. If the cursor is closed, this method will return immediately.
@@ -378,7 +380,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * If the consumer returns `false`, iteration will stop.
    *
-   * Note that there'll only be partial results if the cursor has been previously iterated over. You may use {@link rewind}
+   * Note that there'll only be partial results if the cursor has been previously iterated over. You may use {@link FindCursor.rewind}
    * to reset the cursor.
    *
    * If the cursor is uninitialized, it will be initialized. If the cursor is closed, this method will return immediately.
@@ -387,7 +389,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @param consumer - The consumer to call for each document.
    *
-   * @return A promise that resolves when iteration is complete.
+   * @returns A promise that resolves when iteration is complete.
    *
    * @deprecated - Prefer the `for await (const doc of cursor) { ... }` syntax instead.
    */
@@ -403,12 +405,12 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * Returns an array of all matching documents in the cursor. The user should ensure that there is enough memory to
    * store all documents in the cursor.
    *
-   * Note that there'll only be partial results if the cursor has been previously iterated over. You may use {@link rewind}
+   * Note that there'll only be partial results if the cursor has been previously iterated over. You may use {@link FindCursor.rewind}
    * to reset the cursor.
    *
    * If the cursor is uninitialized, it will be initialized. If the cursor is closed, this method will return an empty array.
    *
-   * @return An array of all documents in the cursor.
+   * @returns An array of all documents in the cursor.
    */
   async toArray(): Promise<T[]> {
     const docs: T[] = [];
@@ -419,7 +421,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Closes the cursor. The cursor will be unusable after this method is called, or until {@link rewind} is called.
+   * Closes the cursor. The cursor will be unusable after this method is called, or until {@link FindCursor.rewind} is called.
    */
   async close(): Promise<void> {
     this._state = CursorStatus.Closed;

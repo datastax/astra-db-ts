@@ -31,6 +31,8 @@ export interface UpdateManyCommand {
  * Represents the options for the updateMany command.
  *
  * @field upsert - If true, perform an insert if no documents match the filter.
+ *
+ * @public
  */
 export interface UpdateManyOptions extends WithTimeout {
   /**
@@ -67,5 +69,7 @@ export interface UpdateManyOptions extends WithTimeout {
  * @field modifiedCount - The number of documents that were actually modified.
  * @field upsertedCount - The number of documents that were upserted.
  * @field upsertedId - The identifier of the upserted document if `upsertedCount > 0`.
+ *
+ * @public
  */
 export type UpdateManyResult<Schema extends SomeDoc> = InternalUpdateResult<Schema, number>;

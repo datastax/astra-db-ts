@@ -60,6 +60,8 @@ import { DropCollectionOptions } from '@/src/data-api/types/collections/drop-col
  *
  * @see DataAPIClient.db
  * @see AstraAdmin.db
+ *
+ * @public
  */
 export class Db implements Disposable {
   readonly #defaultOpts!: InternalRootClientOpts;
@@ -210,7 +212,7 @@ export class Db implements Disposable {
    *
    * **Unlike the MongoDB driver, this method does not create a collection if it doesn't exist.**
    *
-   * Use {@link createCollection} to create a new collection instead.
+   * Use {@link Db.createCollection} to create a new collection instead.
    *
    * Typed as `Collection<SomeDoc>` by default, but you can specify a schema type to get a typed collection. If left
    * as `SomeDoc`, the collection will be untyped.
@@ -234,10 +236,10 @@ export class Db implements Disposable {
    * users2.insertOne({ nam3: "John" });
    * ```
    *
-   * @param name The name of the collection.
-   * @param options Options for the connection.
+   * @param name - The name of the collection.
+   * @param options - Options for the connection.
    *
-   * @return A new, unvalidated, reference to the collection.
+   * @returns A new, unvalidated, reference to the collection.
    *
    * @see SomeDoc
    * @see VectorDoc
@@ -262,9 +264,9 @@ export class Db implements Disposable {
    * console.log(collections2); // [Collection<SomeDoc>]
    * ```
    *
-   * @param options Options for this operation.
+   * @param options - Options for this operation.
    *
-   * @return A promise that resolves to an array of references to the working Db's collections.
+   * @returns A promise that resolves to an array of references to the working Db's collections.
    */
   public async collections(options?: WithNamespace & WithTimeout): Promise<Collection[]> {
     const timeoutManager = this._httpClient.timeoutManager(options?.maxTimeMS);
@@ -283,7 +285,7 @@ export class Db implements Disposable {
    *
    * **NB. You are limited to 10 collections per database in Astra, so be wary when using this command.**
    *
-   * This is a blocking command which performs actual I/O unlike {@link collection}, which simply creates an
+   * This is a blocking command which performs actual I/O unlike {@link Db.collection}, which simply creates an
    * unvalidated reference to a collection.
    *
    * **Creation is idempotent, so if the collection already exists with the same options, this method will not throw
@@ -315,10 +317,10 @@ export class Db implements Disposable {
    * });
    * ```
    *
-   * @param collectionName The name of the collection to create.
-   * @param options Options for the collection.
+   * @param collectionName - The name of the collection to create.
+   * @param options - Options for the collection.
    *
-   * @return A promised reference to the newly created collection.
+   * @returns A promised reference to the newly created collection.
    *
    * @see SomeDoc
    * @see VectorDoc
@@ -368,11 +370,10 @@ export class Db implements Disposable {
    * console.log(success2); // true
    * ```
    *
-   * @param name The name of the collection to drop.
+   * @param name - The name of the collection to drop.
+   * @param options - Options for this operation.
    *
-   * @param options Options for this operation.
-   *
-   * @return A promise that resolves to `true` if the collection was dropped successfully.
+   * @returns A promise that resolves to `true` if the collection was dropped successfully.
    *
    * @remarks Use with caution. Have steel-toe boots on. Don't say I didn't warn you.
    */
@@ -399,9 +400,9 @@ export class Db implements Disposable {
    * console.log(await db.listCollections());
    * ```
    *
-   * @param options Options for this operation.
+   * @param options - Options for this operation.
    *
-   * @return A promise that resolves to an array of collection names.
+   * @returns A promise that resolves to an array of collection names.
    *
    * @see CollectionOptions
    */
@@ -420,9 +421,9 @@ export class Db implements Disposable {
    * console.log(await db.listCollections({ nameOnly: false }));
    * ```
    *
-   * @param options Options for this operation.
+   * @param options - Options for this operation.
    *
-   * @return A promise that resolves to an array of collection info.
+   * @returns A promise that resolves to an array of collection info.
    *
    * @see CollectionOptions
    */
@@ -461,10 +462,10 @@ export class Db implements Disposable {
    * console.log(users); // { data: { document: null } }
    * ```
    *
-   * @param command The command to send to the Data API.
-   * @param options Options for this operation.
+   * @param command - The command to send to the Data API.
+   * @param options - Options for this operation.
    *
-   * @return A promise that resolves to the raw response from the Data API.
+   * @returns A promise that resolves to the raw response from the Data API.
    */
   public async command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse> {
     return await this._httpClient.executeCommand(command, options);
@@ -480,7 +481,7 @@ export class Db implements Disposable {
   }
 
   /**
-   * Returns if the underlying HTTP/2 session was explicitly closed by the {@link close} method (or through ERM with
+   * Returns if the underlying HTTP/2 session was explicitly closed by the {@link Db.close} method (or through ERM with
    * the `using` clause).
    *
    * If the client's using HTTP/1, this method will return `undefined`.

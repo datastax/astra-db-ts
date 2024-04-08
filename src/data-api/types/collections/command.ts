@@ -22,6 +22,8 @@ import { WithTimeout } from '@/src/common';
  * @field namespace - Overrides the namespace to run the command in. If not provided, the default namespace is used.
  *
  * @see Db.command
+ *
+ * @public
  */
 export interface RunCommandOptions extends WithNamespace, WithTimeout {
   /**

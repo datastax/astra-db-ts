@@ -17,12 +17,14 @@
  * bottom type which can represent any legal document, to give more dynamic
  * typing flexibility at the cost of enhanced typechecking/autocomplete.
  *
- * {@link Collection Collections} will default to this if no specific type is provided.
+ * {@link Collection}s will default to this if no specific type is provided.
+ *
+ * @public
  */
 export type SomeDoc = Record<string, any>;
 
 /**
- * Base type for a document that wishes to leverage vector capabilities
+ * Base type for a document that wishes to leverage vector capabilities.
  * 
  * @example
  * ```
@@ -35,6 +37,8 @@ export type SomeDoc = Record<string, any>;
  *   $vector: [.23, .05, .95, .83, .42],
  * });
  * ```
+ *
+ * @public
  */
 export interface VectorDoc {
   /**

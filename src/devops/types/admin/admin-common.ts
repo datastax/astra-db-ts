@@ -15,13 +15,26 @@
 
 import { WithTimeout } from '@/src/common/types';
 
+/**
+ * @public
+ */
 export type DatabaseCloudProvider = 'AWS' | 'GCP' | 'AZURE';
 
+/**
+ * @public
+ */
 export type DatabaseTier = 'developer' | 'A5' | 'A10' | 'A20' | 'A40' | 'C10' | 'C20' | 'C40' | 'D10' | 'D20' | 'D40' | 'serverless';
 
+/**
+ * @public
+ */
 export type DatabaseStatus = 'ACTIVE' | 'PENDING' | 'PREPARING' | 'PREPARED' | 'INITIALIZING' | 'PARKED' | 'PARKING' | 'UNPARKING' | 'TERMINATED' | 'TERMINATING' | 'RESIZING' | 'ERROR' | 'MAINTENANCE' | 'SUSPENDED' | 'UNKNOWN';
 
+/**
+ * @public
+ */
 export type DatabaseAction = 'park' | 'unpark' | 'resize' | 'resetPassword' | 'addKeyspace' | 'addDatacenters' | 'terminateDatacenter' | 'getCreds' | 'terminate' | 'removeKeyspace' | 'removeMigrationProxy' | 'launchMigrationProxy';
+
 /**
  * The options representing the blocking behavior of many admin operations.
  *
@@ -66,6 +79,8 @@ export type DatabaseAction = 'park' | 'unpark' | 'resize' | 'resetPassword' | 'a
  *
  * @field blocking - Whether to block the operation until it is complete.
  * @field pollInterval - The interval at which to poll the operation for completion.
+ *
+ * @public
  */
 export type AdminBlockingOptions =
   | PollBlockingOptions
@@ -78,6 +93,8 @@ export type AdminBlockingOptions =
  * @field pollInterval - The interval (in MS) at which to poll the operation for completion.
  *
  * @see AdminBlockingOptions
+ *
+ * @public
  */
 export interface PollBlockingOptions extends WithTimeout {
   /**
@@ -98,6 +115,8 @@ export interface PollBlockingOptions extends WithTimeout {
  * @field blocking - False to not block until the operation is complete.
  *
  * @see AdminBlockingOptions
+ *
+ * @public
  */
 export interface NoBlockingOptions extends WithTimeout {
   /**

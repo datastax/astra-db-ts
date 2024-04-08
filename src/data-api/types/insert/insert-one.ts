@@ -28,6 +28,8 @@ export interface InsertOneCommand {
  * @field vector - The vector to use for the document.
  *
  * @see Collection.insertOne
+ *
+ * @public
  */
 export interface InsertOneOptions extends WithTimeout {
   /**
@@ -55,6 +57,8 @@ export interface InsertOneOptions extends WithTimeout {
  * @field insertedId - The ID of the inserted document.
  *
  * @see Collection.insertOne
+ *
+ * @public
  */
 export interface InsertOneResult<Schema> {
   /**

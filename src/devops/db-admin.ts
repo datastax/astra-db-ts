@@ -8,6 +8,8 @@ import { Db } from '@/src/data-api';
  * subclasses may have additional methods or properties (e.g. {@link AstraDbAdmin}).
  *
  * Use {@link Db.admin} or {@link AstraAdmin.dbAdmin} to obtain an instance of this class.
+ *
+ * @public
  */
 export abstract class DbAdmin {
   /**

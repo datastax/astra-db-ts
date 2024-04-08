@@ -15,7 +15,7 @@
 declare const __error: unique symbol;
 
 /**
- * Represents some type-level error which forces immediate attention rather than failing @ runtime.
+ * Represents some type-level error which forces immediate attention rather than failing at runtime.
  * 
  * More inflexable type than `never`, and gives contextual error messages.
  * 
@@ -29,6 +29,8 @@ declare const __error: unique symbol;
  * // Type { [__error]: 'Unsupported operation' } is not assignable to type string
  * const result: string = unsupported();
  * ```
+ *
+ * @public
  */
 export type TypeErr<S> = unknown & { [__error]: S };
 

@@ -30,12 +30,16 @@ import TypedEmitter from 'typed-emitter';
  * If no caller information is provided, the client will simply be identified as `astra-db-ts/<version>`.
  *
  * **NB. If providing an array of callers, they should be ordered from most important to least important.**
+ *
+ * @public
  */
 export type Caller = [name: string, version?: string];
 
 /**
  * The default options for the {@link DataAPIClient}. The Data API & DevOps specific options may be overridden
  * when spawning a new instance of their respective classes.
+ *
+ * @public
  */
 export interface RootClientOptions {
   /**
@@ -81,6 +85,8 @@ export interface RootClientOptions {
  * The options available spawning a new {@link Db} instance.
  *
  * If any of these options are not provided, the client will use the default options provided by the {@link DataAPIClient}.
+ *
+ * @public
  */
 export interface DbSpawnOptions {
   /**
@@ -206,6 +212,8 @@ export interface DbSpawnOptions {
  * **Note that this is only available when using Astra as the underlying database.**
  *
  * If any of these options are not provided, the client will use the default options provided by the {@link DataAPIClient}.
+ *
+ * @public
  */
 export interface AdminSpawnOptions {
   /**
@@ -280,6 +288,9 @@ export interface AdminSpawnOptions {
   endpointUrl?: string,
 }
 
+/**
+ * @public
+ */
 export interface InternalRootClientOpts {
   caller?: Caller | Caller[],
   emitter: TypedEmitter<DataAPIClientEvents>,

@@ -95,6 +95,8 @@ import { WithTimeout } from '@/src/common/types';
  *
  * @see SomeDoc
  * @see VectorDoc
+ *
+ * @public
  */
 export class Collection<Schema extends SomeDoc = SomeDoc> {
   private readonly _httpClient!: DataAPIHttpClient;
@@ -144,7 +146,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * Inserts a single document into the collection atomically.
    *
    * If the document does not contain an `_id` field, the server will generate an id for the document. The type of the
-   * id may be specified in {@link CollectionOptions.defaultId} @ creation, otherwise it'll just be a UUID string. This
+   * id may be specified in {@link CollectionOptions.defaultId} at creation, otherwise it'll just be a UUID string. This
    * generation will not mutate the documents.
    *
    * If an `_id` is provided which corresponds to a document that already exists in the collection, an error is raised,
@@ -168,7 +170,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param document - The document to insert.
    * @param options - The options for this operation.
    *
-   * @return The result of the operation.
+   * @returns The result of the operation.
    */
   public async insertOne(document: MaybeId<Schema>, options?: InsertOneOptions): Promise<InsertOneResult<Schema>> {
     const command: InsertOneCommand = {
@@ -201,7 +203,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * means multiple requests may be made to the server, and the operation may not be atomic.**
    *
    * If any document does not contain an `_id` field, the server will generate an id for the document. The type of the
-   * id may be specified in {@link CollectionOptions.defaultId} @ creation, otherwise it'll just be a UUID string. This
+   * id may be specified in {@link CollectionOptions.defaultId} at creation, otherwise it'll just be a UUID string. This
    * generation will not mutate the documents.
    *
    * You may set the `ordered` option to `true` to stop the operation after the first error; otherwise all documents
@@ -262,7 +264,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param documents - The documents to insert.
    * @param options - The options for this operation.
    *
-   * @return The aggregated result of the operation.
+   * @returns The aggregated result of the operation.
    *
    * @throws InsertManyError - If the operation fails.
    */
@@ -347,7 +349,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param update - The update to apply to the selected document.
    * @param options - The options for this operation.
    *
-   * @return The result of the operation.
+   * @returns The result of the operation.
    *
    * @see StrictFilter
    * @see StrictUpdateFilter
@@ -374,7 +376,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     const commonResult = {
       modifiedCount: resp.status?.modifiedCount,
       matchedCount: resp.status?.matchedCount,
-    } as const;
+    };
 
     return (resp.status?.upsertedId)
       ? {
@@ -435,7 +437,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param update - The update to apply to the selected documents.
    * @param options - The options for this operation.
    *
-   * @return The aggregated result of the operation.
+   * @returns The aggregated result of the operation.
    *
    * @see StrictFilter
    * @see StrictUpdateFilter
@@ -453,10 +455,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     const timeoutManager = this._httpClient.timeoutManager(options?.maxTimeMS);
 
-    const commonResult = {
+    const commonResult: any = {
       modifiedCount: 0,
       matchedCount: 0,
-      upsertedCount: <const>0,
+      upsertedCount: 0,
     };
 
     let resp;
@@ -536,7 +538,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param replacement - The replacement document, which contains no `_id` field.
    * @param options - The options for this operation.
    *
-   * @return The result of the operation.
+   * @returns The result of the operation.
    *
    * @see StrictFilter
    */
@@ -563,7 +565,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     const commonResult = {
       modifiedCount: resp.status?.modifiedCount,
       matchedCount: resp.status?.matchedCount,
-    } as const;
+    };
 
     return (resp.status?.upsertedId)
       ? {
@@ -603,7 +605,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param filter - A filter to select the document to delete.
    * @param options - The options for this operation.
    *
-   * @return The result of the operation.
+   * @returns The result of the operation.
    *
    * @see StrictFilter
    */
@@ -631,7 +633,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * **NB. This function paginates the deletion of documents in chunks to avoid running into insertion limits. This
    * means multiple requests may be made to the server, and the operation may not be atomic.**
    *
-   * If an empty filter is passed, an error will be thrown, asking you to use {@link deleteAll} instead for your safety.
+   * If an empty filter is passed, an error will be thrown, asking you to use {@link Collection.deleteAll} instead for your safety.
    *
    * @example
    * ```typescript
@@ -652,7 +654,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param filter - A filter to select the documents to delete.
    * @param options - The options for this operation.
    *
-   * @return The aggregated result of the operation.
+   * @returns The aggregated result of the operation.
    *
    * @throws Error - If an empty filter is passed.
    *
@@ -693,7 +695,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   /**
    * Deletes all documents from the collection.
    *
-   * Unlike {@link deleteMany}, this method is atomic and will delete all documents in the collection in one go,
+   * Unlike {@link Collection.deleteMany}, this method is atomic and will delete all documents in the collection in one go,
    * without making multiple network requests to the server.
    *
    * @remarks Use with caution. Wear a helmet. Don't say I didn't warn you.
@@ -788,7 +790,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param filter - A filter to select the documents to find. If not provided, all documents will be returned.
    * @param options - The options for this operation.
    *
-   * @return A FindCursor which can be iterated over.
+   * @returns A FindCursor which can be iterated over.
    *
    * @see StrictFilter
    */
@@ -850,7 +852,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param key - The dot-notation key to pick which values to retrieve unique
    * @param filter - A filter to select the documents to find. If not provided, all documents will be matched.
    *
-   * @return A list of all the unique values selected by the given `key`
+   * @returns A list of all the unique values selected by the given `key`
    *
    * @see StrictFilter
    */
@@ -921,16 +923,16 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * ```
    *
    * @remarks
-   * If you really need `limit` or `skip`, prefer using the {@link find} method instead.
+   * If you really need `limit` or `skip`, prefer using the {@link Collection.find} method instead.
    *
    * @param filter - A filter to select the document to find.
    * @param options - The options for this operation.
    *
-   * @return The found document, or `null` if no document was found.
+   * @returns The found document, or `null` if no document was found.
    *
    * @see StrictFilter
    */
-  public async findOne<const GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
+  public async findOne<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneCommand = {
@@ -986,7 +988,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param upperBound - The maximum number of documents to count.
    * @param options - The options for this operation.
    *
-   * @return The number of counted documents, if below the provided limit
+   * @returns The number of counted documents, if below the provided limit
    *
    * @throws TooManyDocsToCountError - If the number of documents counted exceeds the provided limit.
    *
@@ -1051,7 +1053,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param replacement - The replacement document, which contains no `_id` field.
    * @param options - The options for this operation.
    *
-   * @return The result of the operation
+   * @returns The result of the operation
    *
    * @see StrictFilter
    */
@@ -1095,7 +1097,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param replacement - The replacement document, which contains no `_id` field.
    * @param options - The options for this operation.
    *
-   * @return The document before/after replacement, depending on the type of `returnDocument`
+   * @returns The document before/after replacement, depending on the type of `returnDocument`
    *
    * @see StrictFilter
    */
@@ -1168,7 +1170,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param filter - A filter to select the document to find.
    * @param options - The options for this operation.
    *
-   * @return The result of the operation
+   * @returns The result of the operation
    *
    * @see StrictFilter
    */
@@ -1200,7 +1202,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param filter - A filter to select the document to find.
    * @param options - The options for this operation.
    *
-   * @return The deleted document, or `null` if no document was found.
+   * @returns The deleted document, or `null` if no document was found.
    *
    * @see StrictFilter
    */
@@ -1268,7 +1270,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param update - The update to apply to the selected document.
    * @param options - The options for this operation.
    *
-   * @return The result of the operation
+   * @returns The result of the operation
    *
    * @see StrictFilter
    * @see StrictUpdateFilter
@@ -1309,7 +1311,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param update - The update to apply to the selected document.
    * @param options - The options for this operation.
    *
-   * @return The document before/after the update, depending on the type of `returnDocument`
+   * @returns The document before/after the update, depending on the type of `returnDocument`
    *
    * @see StrictFilter
    * @see StrictUpdateFilter
@@ -1400,7 +1402,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param operations - The operations to perform.
    * @param options - The options for this operation.
    *
-   * @return The aggregated result of the operations.
+   * @returns The aggregated result of the operations.
    *
    * @throws BulkWriteError - If the operation fails
    */
@@ -1426,7 +1428,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @param options - The options for this operation.
    *
-   * @return The options that the collection was created with (i.e. the `vector` and `indexing` operations).
+   * @returns The options that the collection was created with (i.e. the `vector` and `indexing` operations).
    */
   public async options(options?: WithTimeout): Promise<CollectionOptions<SomeDoc>> {
     const results = await this._db.listCollections({ nameOnly: false, maxTimeMS: options?.maxTimeMS });
@@ -1455,7 +1457,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @param options - The options for this operation.
    *
-   * @return `true` if the collection was dropped okay.
+   * @returns `true` if the collection was dropped okay.
    *
    * @remarks Use with caution. Wear your safety goggles. Don't say I didn't warn you.
    */
@@ -1466,18 +1468,12 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
 // -- Utils-------------------------------------------------------------------------------------------------
 
-/**
- * @internal
- */
 interface OptionsWithSort {
   sort?: Record<string, any>;
   vector?: number[];
   vectorize?: string;
 }
 
-/**
- * @internal
- */
 const coalesceVectorSpecialsIntoSort = <T extends OptionsWithSort | undefined>(options: T): T => {
   if (options?.vector && options?.vectorize) {
     throw new Error('Cannot set both vectors and vectorize options');
@@ -1502,9 +1498,6 @@ const coalesceVectorSpecialsIntoSort = <T extends OptionsWithSort | undefined>(o
 
 // -- Insert Many ------------------------------------------------------------------------------------------
 
-/**
- * @internal
- */
 const insertManyOrdered = async <Schema>(httpClient: DataAPIHttpClient, documents: unknown[], chunkSize: number, timeoutManager: TimeoutManager): Promise<IdOf<Schema>[]> => {
   const insertedIds: IdOf<Schema>[] = [];
 
@@ -1528,9 +1521,6 @@ const insertManyOrdered = async <Schema>(httpClient: DataAPIHttpClient, document
   return insertedIds;
 }
 
-/**
- * @internal
- */
 const insertManyUnordered = async <Schema>(httpClient: DataAPIHttpClient, documents: unknown[], concurrency: number, chunkSize: number, timeoutManager: TimeoutManager): Promise<IdOf<Schema>[]> => {
   const insertedIds: IdOf<Schema>[] = [];
   let masterIndex = 0;
@@ -1576,9 +1566,6 @@ const insertManyUnordered = async <Schema>(httpClient: DataAPIHttpClient, docume
   return insertedIds;
 }
 
-/**
- * @internal
- */
 const insertMany = async <Schema>(httpClient: DataAPIHttpClient, documents: unknown[], ordered: boolean, timeoutManager: TimeoutManager): Promise<IdOf<Schema>[]> => {
   const command: InsertManyCommand = {
     insertMany: {
@@ -1593,11 +1580,8 @@ const insertMany = async <Schema>(httpClient: DataAPIHttpClient, documents: unkn
 
 // -- Bulk Write ------------------------------------------------------------------------------------------
 
-/**
- * @internal
- */
-const bulkWriteOrdered = async (httpClient: DataAPIHttpClient, operations: AnyBulkWriteOperation<SomeDoc>[], timeoutManager: TimeoutManager): Promise<BulkWriteResult<SomeDoc>> => {
-  const results = new BulkWriteResult();
+const bulkWriteOrdered = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient, operations: AnyBulkWriteOperation<Schema>[], timeoutManager: TimeoutManager): Promise<BulkWriteResult<Schema>> => {
+  const results = new BulkWriteResult<Schema>();
   let i = 0;
 
   try {
@@ -1620,11 +1604,8 @@ const bulkWriteOrdered = async (httpClient: DataAPIHttpClient, operations: AnyBu
   return results;
 }
 
-/**
- * @internal
- */
-const bulkWriteUnordered = async (httpClient: DataAPIHttpClient, operations: AnyBulkWriteOperation<SomeDoc>[], concurrency: number, timeoutManager: TimeoutManager): Promise<BulkWriteResult<SomeDoc>> => {
-  const results = new BulkWriteResult();
+const bulkWriteUnordered = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient, operations: AnyBulkWriteOperation<Schema>[], concurrency: number, timeoutManager: TimeoutManager): Promise<BulkWriteResult<Schema>> => {
+  const results = new BulkWriteResult<Schema>();
   let masterIndex = 0;
 
   const failCommands = [] as Record<string, any>[];
@@ -1661,16 +1642,13 @@ const bulkWriteUnordered = async (httpClient: DataAPIHttpClient, operations: Any
   return results;
 }
 
-const bulkWrite = async (httpClient: DataAPIHttpClient, operation: AnyBulkWriteOperation<SomeDoc>, results: BulkWriteResult<SomeDoc>, i: number, timeoutManager: TimeoutManager): Promise<void> => {
+const bulkWrite = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient, operation: AnyBulkWriteOperation<Schema>, results: BulkWriteResult<Schema>, i: number, timeoutManager: TimeoutManager): Promise<void> => {
   const command = buildBulkWriteCommand(operation);
   const resp = await httpClient.executeCommand(command, { timeoutManager });
   addToBulkWriteResult(results, resp.status!, i);
 }
 
-/**
- * @internal
- */
-const buildBulkWriteCommand = (operation: AnyBulkWriteOperation<SomeDoc>): Record<string, any> => {
+const buildBulkWriteCommand = <Schema extends SomeDoc>(operation: AnyBulkWriteOperation<Schema>): Record<string, any> => {
   switch (true) {
     case 'insertOne' in operation:
       return { insertOne: { document: operation.insertOne.document } };
@@ -1689,9 +1667,6 @@ const buildBulkWriteCommand = (operation: AnyBulkWriteOperation<SomeDoc>): Recor
   }
 }
 
-/**
- * @internal
- */
 const addToBulkWriteResult = (result: BulkWriteResult<SomeDoc>, resp: Record<string, any>, i: number) => {
   const asMutable = result as Mutable<BulkWriteResult<SomeDoc>>;
 
@@ -1710,9 +1685,6 @@ const addToBulkWriteResult = (result: BulkWriteResult<SomeDoc>, resp: Record<str
 
 // -- Distinct --------------------------------------------------------------------------------------------
 
-/**
- * @internal
- */
 const assertPathSafe4Distinct = (path: string): void => {
   const split = path.split('.');
 
@@ -1721,16 +1693,10 @@ const assertPathSafe4Distinct = (path: string): void => {
   }
 }
 
-/**
- * @internal
- */
 const pullSafeProjection4Distinct = (path: string): string => {
   return takeWhile(path.split('.'), p => isNaN(p as any)).join('.');
 }
 
-/**
- * @internal
- */
 const mkDistinctPathExtractor = (path: string): (doc: SomeDoc) => any[] => {
   const values = [] as any[];
 

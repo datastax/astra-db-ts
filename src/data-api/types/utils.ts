@@ -47,30 +47,45 @@ export type IsAny<T> = true extends false & T ? true : false
 
 /**
  * Forces the given type to include an `_id`
+ *
+ * @public
  */
 export type WithId<T> = NoId<T> & { _id: IdOf<T> }
 
+/**
+ * Allows the given type to include an `_id` or not, even if it's not declared in the type
+ *
+ * @public
+ */
 export type MaybeId<T> = NoId<T> & { _id?: IdOf<T> }
 
 /**
- * Includes a `$similarity` field if the typeparam `GetSim` is `true`
+ * Includes a `$similarity` field if the type-param `GetSim` is `true`
+ *
+ * @public
  */
-type WithSim<T, GetSim extends boolean> = GetSim extends true
+export type WithSim<T, GetSim extends boolean> = GetSim extends true
   ? Omit<T, '$similarity'> & { $similarity: number }
   : Omit<T, '$similarity'> & { $similarity?: never }
 
 /**
  * Shorthand type for `WithSim` & `WithId`
+ *
+ * @public
  */
 export type FoundDoc<Doc, GetSim extends boolean> = WithSim<WithId<Doc>, GetSim>
 
 /**
  * Represents a doc that doesn't have an `_id`
+ *
+ * @public
  */
 export type NoId<Doc> = Omit<Doc, '_id'>
 
 /**
  * Represents a flattened version of the given type. Only goes one level deep.
+ *
+ * @public
  */
 export type Flatten<Type> = Type extends (infer Item)[]
   ? Item
@@ -78,6 +93,8 @@ export type Flatten<Type> = Type extends (infer Item)[]
 
 /**
  * Extracts the `_id` type from a given schema, or defaults to `SomeId` if uninferable
+ *
+ * @public
  */
 export type IdOf<TSchema> =
   TSchema extends { _id: infer Id }
