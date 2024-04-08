@@ -62,3 +62,25 @@ export function replaceAstraUrlIdAndRegion(uri: string, id: string, region: stri
   url.hostname = parts.join('.');
   return url.toString().slice(0, -1);
 }
+
+/**
+ * @internal
+ */
+export function validateOption<T = unknown>(name: string, obj: unknown, type: string, test?: (obj: T) => void): void {
+  if (isUndefOrNull(obj)) {
+    return;
+  }
+
+  if (typeof obj !== type) {
+    throw new TypeError(`Invalid ${name}; expected a ${type} value, or undefined/null`);
+  }
+
+  test?.(obj as T);
+}
+
+/**
+ * @internal
+ */
+export function isUndefOrNull<T>(x: T | null | undefined): x is null | undefined {
+  return x === null || x === undefined;
+}

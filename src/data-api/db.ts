@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, CollectionAlreadyExistsError, extractDbIdFromUrl, SomeDoc } from '@/src/data-api';
+import { Collection, CollectionAlreadyExistsError, extractDbIdFromUrl, SomeDoc, validateOption } from '@/src/data-api';
 import { DataAPIHttpClient, DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE, RawDataAPIResponse } from '@/src/api';
 import {
   CreateCollectionCommand,
@@ -114,10 +114,6 @@ export class Db implements Disposable {
     });
 
     this.#defaultOpts = options;
-
-    if (!this.namespace.match(/^[a-zA-Z0-9_]{1,222}$/)) {
-      throw new Error('Invalid namespace format; either pass a valid namespace name, or don\'t pass one at all to use the default namespace');
-    }
 
     Object.defineProperty(this, '_httpClient', {
       value: new DataAPIHttpClient({
@@ -523,8 +519,10 @@ export class Db implements Disposable {
  */
 export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions) {
   const options = (typeof regionOrOptions === 'string')
-    ? maybeOptions!
+    ? maybeOptions
     : regionOrOptions;
+
+  validateDbOpts(options);
 
   const endpoint = (typeof regionOrOptions === 'string')
     ? 'https://' + endpointOrId + '-' + regionOrOptions + '.apps.astra.datastax.com'
@@ -537,4 +535,29 @@ export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, reg
       ...options,
     },
   });
+}
+
+/**
+ * @internal
+ */
+export function validateDbOpts(opts: DbSpawnOptions | undefined) {
+  validateOption('db options', opts, 'object');
+
+  if (!opts) {
+    return;
+  }
+
+  validateOption<string>('namespace option', opts.namespace, 'string', (namespace) => {
+    if (!namespace.match(/^\w{1,48}$/)) {
+      throw new Error('Invalid namespace option; expected a string of 1-48 alphanumeric characters');
+    }
+  });
+
+  validateOption('monitorCommands option', opts.monitorCommands, 'boolean');
+
+  validateOption('token option', opts.token, 'string');
+
+  validateOption('dataApiPath option', opts.dataApiPath, 'string');
+
+  validateOption('useHttp2 option', opts.useHttp2, 'boolean');
 }

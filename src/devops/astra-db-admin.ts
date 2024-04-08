@@ -4,6 +4,7 @@ import { Db } from '@/src/data-api';
 import { AdminSpawnOptions, InternalRootClientOpts } from '@/src/client';
 import { DbAdmin } from '@/src/devops/db-admin';
 import { WithTimeout } from '@/src/common/types';
+import { validateAdminOpts } from '@/src/devops/astra-admin';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -259,6 +260,8 @@ export class AstraDbAdmin extends DbAdmin {
  * @internal
  */
 export function mkDbAdmin(db: Db, httpClient: HttpClient, rootOpts: InternalRootClientOpts, options?: AdminSpawnOptions): AstraDbAdmin {
+  validateAdminOpts(options);
+
   return new AstraDbAdmin(db, httpClient, {
     ...rootOpts.adminOptions,
     ...options,

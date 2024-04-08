@@ -5,7 +5,7 @@ import {
   FullDatabaseInfo,
   ListDatabasesOptions,
 } from '@/src/devops/types';
-import { Db, mkDb } from '@/src/data-api';
+import { Db, mkDb, validateOption } from '@/src/data-api';
 import { DEFAULT_DEVOPS_API_ENDPOINT, DEFAULT_NAMESPACE, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
 import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
 import { AdminSpawnOptions, DbSpawnOptions, InternalRootClientOpts } from '@/src/client/types';
@@ -376,6 +376,8 @@ export class AstraAdmin {
  * @internal
  */
 export function mkAdmin(rootOpts: InternalRootClientOpts, options?: AdminSpawnOptions): AstraAdmin {
+  validateAdminOpts(options);
+
   return new AstraAdmin({
     ...rootOpts,
     adminOptions: {
@@ -383,4 +385,21 @@ export function mkAdmin(rootOpts: InternalRootClientOpts, options?: AdminSpawnOp
       ...options,
     },
   });
+}
+
+/**
+ * @internal
+ */
+export function validateAdminOpts(opts: AdminSpawnOptions | undefined) {
+  validateOption('admin options', opts, 'object');
+
+  if (!opts) {
+    return;
+  }
+
+  validateOption('monitorCommands option', opts.monitorCommands, 'boolean');
+
+  validateOption('adminToken option', opts.adminToken, 'string');
+
+  validateOption('endpointUrl option', opts.endpointUrl, 'string');
 }

@@ -16,7 +16,7 @@
 import { DataAPIClient } from '@/src/client';
 import * as process from 'process';
 import assert from 'assert';
-import { DEFAULT_DATA_API_PATH } from '@/src/api';
+import { DEFAULT_DATA_API_PATH, HTTP1Strategy } from '@/src/api';
 
 describe('unit.client.data-api-client', () => {
   const endpoint = process.env.ASTRA_URI!;
@@ -42,6 +42,40 @@ describe('unit.client.data-api-client', () => {
       // @ts-expect-error - testing invalid input
       assert.throws(() => new DataAPIClient({ logLevel: 'warn' }));
     });
+
+    it('should accept null/undefined/{} for options', () => {
+      assert.doesNotThrow(() => new DataAPIClient('dummy-token', null));
+      assert.doesNotThrow(() => new DataAPIClient('dummy-token', undefined));
+      assert.doesNotThrow(() => new DataAPIClient('dummy-token', {}));
+    });
+
+    it('should accept valid callers', () => {
+      // @ts-expect-error - null technically allowed
+      assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: null }));
+      assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: undefined }));
+      assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: ['a', 'b'] }));
+      assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: [['a', 'b'], ['c', 'd']] }));
+    });
+
+    it('should throw on invalid caller', () => {
+      assert.throws(() => new DataAPIClient('dummy-token', { caller: [] }));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => new DataAPIClient('dummy-token', { caller: 'invalid-type' }));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => new DataAPIClient('dummy-token', { caller: [1, 'b'] }));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => new DataAPIClient('dummy-token', { caller: ['a', 2] }));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => new DataAPIClient('dummy-token', { caller: [[1]] }));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => new DataAPIClient('dummy-token', { caller: [['a', 'b', 'c']] }));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => new DataAPIClient('dummy-token', { caller: [[]] }));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => new DataAPIClient('dummy-token', { caller: [{}] }));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => new DataAPIClient('dummy-token', { caller: { 0: ['name', 'version'] } }));
+    });
   });
 
   describe('db tests', () => {
@@ -64,6 +98,15 @@ describe('unit.client.data-api-client', () => {
       const db1 = client.db(endpoint);
       const db2 = client.db(endpoint);
       assert.notStrictEqual(db1['_httpClient'], db2['_httpClient']);
+    });
+  });
+
+  describe('admin tests', () => {
+    it('should spawn an AstraAdmin instance', () => {
+      const admin = new DataAPIClient('dummy-token').admin();
+      assert.ok(admin);
+      assert.strictEqual(admin['_httpClient'].unsafeGetToken(), 'dummy-token');
+      assert.ok(admin['_httpClient'].requestStrategy instanceof HTTP1Strategy);
     });
   });
 });

@@ -12,13 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Db, mkDb } from '@/src/data-api/db';
-import { AstraAdmin, mkAdmin } from '@/src/devops/astra-admin';
-import { AdminSpawnOptions, DbSpawnOptions, InternalRootClientOpts, RootClientOptions } from '@/src/client/types';
+import { Db, mkDb, validateDbOpts } from '@/src/data-api/db';
+import { AstraAdmin, mkAdmin, validateAdminOpts } from '@/src/devops/astra-admin';
+import {
+  AdminSpawnOptions,
+  Caller,
+  DbSpawnOptions,
+  InternalRootClientOpts,
+  RootClientOptions,
+} from '@/src/client/types';
 import TypedEmitter from 'typed-emitter';
 import EventEmitter from 'events';
 import { DataAPICommandEvents } from '@/src/data-api/events';
 import { AdminCommandEvents } from '@/src/devops';
+import { validateOption } from '@/src/data-api';
 
 export type DataAPIClientEvents =
   & DataAPICommandEvents
@@ -59,12 +66,14 @@ export class DataAPIClient extends (EventEmitter as new () => TypedEmitter<DataA
    * @param token - The default token to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    * @param options - The default options to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    */
-  constructor(token: string, options?: RootClientOptions) {
+  constructor(token: string, options?: RootClientOptions | null) {
     super();
 
     if (!token || typeof token as any !== 'string') {
       throw new Error('A valid token is required to use the DataAPIClient');
     }
+
+    validateRootOpts(options);
 
     this.#options = {
       ...options,
@@ -179,4 +188,54 @@ export class DataAPIClient extends (EventEmitter as new () => TypedEmitter<DataA
   public admin(options?: AdminSpawnOptions): AstraAdmin {
     return mkAdmin(this.#options, options);
   }
+}
+
+function validateRootOpts(opts: RootClientOptions | undefined | null) {
+  validateOption('root client options', opts, 'object');
+
+  if (!opts) {
+    return;
+  }
+
+  validateOption('caller', opts.caller, 'object', validateCaller);
+
+  validateDbOpts(opts.dbOptions);
+
+  validateAdminOpts(opts.adminOptions);
+}
+
+function validateCaller(caller: Caller | Caller[]) {
+  if (!Array.isArray(caller)) {
+    throw new TypeError('Invalid caller; expected an array, or undefined/null');
+  }
+
+  const isCallerArr = Array.isArray(caller[0]);
+
+  const callers = (
+    (isCallerArr)
+      ?  caller
+      : [caller]
+  ) as Caller[];
+
+  callers.forEach((c, i) => {
+    const idxMessage = (isCallerArr)
+      ? ` at index ${i}`
+      : '';
+
+    if (!Array.isArray(c)) {
+      throw new TypeError(`Invalid caller; expected [name, version?], or an array of such${idxMessage}`);
+    }
+
+    if (c.length < 1 || 2 < c.length) {
+      throw new Error(`Invalid caller; expected [name, version?], or an array of such${idxMessage}`);
+    }
+
+    if (typeof c[0] !== 'string') {
+      throw new Error(`Invalid caller; expected a string name${idxMessage}`);
+    }
+
+    if (c.length === 2 && typeof c[1] !== 'string') {
+      throw new Error(`Invalid caller; expected a string version${idxMessage}`);
+    }
+  });
 }

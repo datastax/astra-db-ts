@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// noinspection DuplicatedCode
 
 import assert from 'assert';
 import { Db, mkDb } from '@/src/data-api';
@@ -126,6 +127,60 @@ describe('unit.data-api.db', () => {
     it('overrides token in db when provided', () => {
       const db = mkDb(mkOptions(), process.env.ASTRA_URI!, { token: 'new' });
       assert.strictEqual(db['_httpClient'].unsafeGetToken(), 'new');
+    });
+
+    it('should accept valid monitorCommands', () => {
+      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, {}));
+      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { monitorCommands: true }));
+      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { monitorCommands: false }));
+      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { monitorCommands: null! }));
+      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { monitorCommands: undefined }));
+    });
+
+    it('should throw on invalid monitorCommands', () => {
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { monitorCommands: 'invalid' }));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { monitorCommands: 1 }));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { monitorCommands: [] }));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { monitorCommands: {} }));
+    });
+
+    it('should accept valid useHttp2', () => {
+      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, {}));
+      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: true }));
+      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: false }));
+      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: null! }));
+      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: undefined }));
+    });
+
+    it('should throw on invalid useHttp2', () => {
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: 'invalid' }));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: 1 }));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: [] }));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: {} }));
+    });
+
+    it('should accept valid dataApiPath', () => {
+      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, {}));
+      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { dataApiPath: 'api/json/v2' }));
+      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { dataApiPath: null! }));
+      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { dataApiPath: undefined }));
+    });
+
+    it('should throw on invalid dataApiPath', () => {
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { dataApiPath: 1 }));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { dataApiPath: [] }));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { dataApiPath: {} }));
     });
   });
 
