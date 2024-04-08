@@ -26,7 +26,7 @@ export const HttpMethods = {
   Get: 'GET',
   Post: 'POST',
   Delete: 'DELETE',
-};
+} as const;
 
 /**
  * @internal

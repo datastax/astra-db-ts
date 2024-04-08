@@ -14,10 +14,11 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { Db, mkDb } from '@/src/data-api';
+import { Db } from '@/src/data-api';
 import process from 'process';
 import { DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE } from '@/src/api';
 import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
+import { mkDb } from '@/src/data-api/db';
 
 describe('unit.data-api.db', () => {
   const mkOptions = (data?: DbSpawnOptions, devops?: AdminSpawnOptions) => {

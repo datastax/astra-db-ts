@@ -15,13 +15,12 @@
 import {
   Filter,
   FindOptions,
-  InternalFindOptions,
-  InternalGetMoreCommand,
   Projection,
   Sort,
 } from '@/src/data-api/types';
 import { CursorAlreadyInitializedError, SomeDoc } from '@/src/data-api';
 import { DataAPIHttpClient } from '@/src/api';
+import { InternalFindOptions, InternalGetMoreCommand } from '@/src/data-api/types/find/find';
 
 /** @internal */
 const enum CursorStatus {
@@ -85,6 +84,11 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   private _nextPageState?: string | null;
   private _state = CursorStatus.Uninitialized;
 
+  /**
+   * Should not be instantiated directly.
+   *
+   * @internal
+   */
   constructor(namespace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: FindOptions<boolean>) {
     this._namespace = namespace;
     this._httpClient = httpClient;

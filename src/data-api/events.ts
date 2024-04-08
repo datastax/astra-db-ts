@@ -62,6 +62,11 @@ export abstract class CommandEvent {
    */
   public readonly url: string;
 
+  /**
+   * Should not be instantiated directly.
+   *
+   * @internal
+   */
   protected constructor(info: DataAPIRequestInfo) {
     this.command = info.command;
     this.namespace = info.namespace || DEFAULT_NAMESPACE;
@@ -82,6 +87,11 @@ export class CommandStartedEvent extends CommandEvent {
    */
   public readonly timeout: number;
 
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
   constructor(info: DataAPIRequestInfo) {
     super(info);
     this.timeout = info.timeoutManager.ms;
@@ -103,6 +113,11 @@ export class CommandSucceededEvent extends CommandEvent {
    */
   public readonly resp?: RawDataAPIResponse;
 
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
   constructor(info: DataAPIRequestInfo, reply: RawDataAPIResponse, started: number) {
     super(info);
     this.duration = hrTimeMs() - started;
@@ -125,6 +140,11 @@ export class CommandFailedEvent extends CommandEvent {
    */
   public readonly error: Error;
 
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
   constructor(info: DataAPIRequestInfo, error: Error, started: number) {
     super(info);
     this.duration = hrTimeMs() - started;

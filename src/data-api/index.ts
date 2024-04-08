@@ -16,9 +16,23 @@
 export * from './collection';
 export * from './cursor';
 export * from './document';
-export * from './db';
-export * from './errors';
+export { Db } from './db';
+export {
+  DataAPITimeout,
+  DataAPIResponseError,
+  CumulativeDataAPIError,
+  DataAPIError,
+  CollectionAlreadyExistsError,
+  DataAPIErrorDescriptor,
+  DataAPIDetailedErrorDescriptor,
+  DeleteManyError,
+  TooManyDocsToCountError,
+  InsertManyError,
+  BulkWriteError,
+  CursorAlreadyInitializedError,
+  UpdateManyError,
+} from './errors';
 export * from './events';
 export * from './ids';
-export * from './utils';
+export { TypeErr } from './utils';
 export * from './types';

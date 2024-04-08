@@ -13,10 +13,12 @@ export type AdminBlockingOptions = PollBlockingOptions | NoBlockingOptions;
 
 // @public
 export abstract class AdminCommandEvent {
-    // Warning: (ae-incompatible-release-tags) The symbol "__constructor" is marked as @public, but its signature references "DevOpsAPIRequestInfo" which is marked as @internal
+    // Warning: (ae-forgotten-export) The symbol "DevOpsAPIRequestInfo" needs to be exported by the entry point index.d.ts
+    //
+    // @internal
     protected constructor(info: DevOpsAPIRequestInfo, longRunning: boolean);
     readonly longRunning: boolean;
-    readonly method: string;
+    readonly method: 'GET' | 'POST' | 'DELETE';
     readonly params?: Record<string, any>;
     readonly path: string;
     readonly reqBody?: Record<string, any>;
@@ -32,7 +34,7 @@ export type AdminCommandEvents = {
 
 // @public
 export class AdminCommandFailedEvent extends AdminCommandEvent {
-    // Warning: (ae-incompatible-release-tags) The symbol "__constructor" is marked as @public, but its signature references "DevOpsAPIRequestInfo" which is marked as @internal
+    // @internal
     constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number);
     readonly duration: number;
     readonly error: Error;
@@ -40,7 +42,7 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
 
 // @public
 export class AdminCommandPollingEvent extends AdminCommandEvent {
-    // Warning: (ae-incompatible-release-tags) The symbol "__constructor" is marked as @public, but its signature references "DevOpsAPIRequestInfo" which is marked as @internal
+    // @internal
     constructor(info: DevOpsAPIRequestInfo, started: number, interval: number);
     readonly elapsed: number;
     readonly interval: number;
@@ -48,14 +50,14 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
 
 // @public
 export class AdminCommandStartedEvent extends AdminCommandEvent {
-    // Warning: (ae-incompatible-release-tags) The symbol "__constructor" is marked as @public, but its signature references "DevOpsAPIRequestInfo" which is marked as @internal
+    // @internal
     constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: number);
     readonly timeout: number;
 }
 
 // @public
 export class AdminCommandSucceededEvent extends AdminCommandEvent {
-    // Warning: (ae-incompatible-release-tags) The symbol "__constructor" is marked as @public, but its signature references "DevOpsAPIRequestInfo" which is marked as @internal
+    // @internal
     constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, resp: AxiosResponse, started: number);
     readonly duration: number;
     readonly resBody?: Record<string, any>;
@@ -84,6 +86,21 @@ export type AnyBulkWriteOperation<TSchema extends SomeDoc> = {
 };
 
 // @public
+export interface ArrayFilterOps<Elem> {
+    // (undocumented)
+    $all?: Elem;
+    // (undocumented)
+    $size?: number;
+}
+
+// Warning: (ae-forgotten-export) The symbol "PickArrayTypes" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export type ArrayUpdate<Schema> = {
+    [K in keyof Schema as any[] extends Schema[K] ? K : never]?: PickArrayTypes<Schema[K]>;
+};
+
+// @public
 export class AstraAdmin {
     // Warning: (ae-forgotten-export) The symbol "AdminOptions" needs to be exported by the entry point index.d.ts
     //
@@ -100,6 +117,8 @@ export class AstraAdmin {
 
 // @public
 export class AstraDbAdmin extends DbAdmin {
+    // Warning: (ae-forgotten-export) The symbol "HttpClient" needs to be exported by the entry point index.d.ts
+    //
     // @internal
     constructor(_db: Db, httpClient: HttpClient, options: InternalRootClientOpts['adminOptions']);
     createNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
@@ -157,13 +176,10 @@ export interface BulkWriteUnorderedOptions extends WithTimeout {
 // @public
 export type Caller = [name: string, version?: string];
 
-// Warning: (ae-internal-missing-underscore) The name "CLIENT_USER_AGENT" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const CLIENT_USER_AGENT: string;
-
 // @public
 export class Collection<Schema extends SomeDoc = SomeDoc> {
+    // Warning: (ae-forgotten-export) The symbol "DataAPIHttpClient" needs to be exported by the entry point index.d.ts
+    //
     // @internal
     constructor(db: Db, httpClient: DataAPIHttpClient, name: string, namespace: string | undefined);
     bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult<Schema>>;
@@ -221,7 +237,9 @@ export interface CollectionOptions<Schema extends SomeDoc> {
 
 // @public
 export abstract class CommandEvent {
-    // Warning: (ae-incompatible-release-tags) The symbol "__constructor" is marked as @public, but its signature references "DataAPIRequestInfo" which is marked as @internal
+    // Warning: (ae-forgotten-export) The symbol "DataAPIRequestInfo" needs to be exported by the entry point index.d.ts
+    //
+    // @internal
     protected constructor(info: DataAPIRequestInfo);
     readonly collection?: string;
     readonly command: Record<string, any>;
@@ -232,7 +250,7 @@ export abstract class CommandEvent {
 
 // @public
 export class CommandFailedEvent extends CommandEvent {
-    // Warning: (ae-incompatible-release-tags) The symbol "__constructor" is marked as @public, but its signature references "DataAPIRequestInfo" which is marked as @internal
+    // @internal
     constructor(info: DataAPIRequestInfo, error: Error, started: number);
     readonly duration: number;
     readonly error: Error;
@@ -240,28 +258,17 @@ export class CommandFailedEvent extends CommandEvent {
 
 // @public
 export class CommandStartedEvent extends CommandEvent {
-    // Warning: (ae-incompatible-release-tags) The symbol "__constructor" is marked as @public, but its signature references "DataAPIRequestInfo" which is marked as @internal
+    // @internal
     constructor(info: DataAPIRequestInfo);
     readonly timeout: number;
 }
 
 // @public
 export class CommandSucceededEvent extends CommandEvent {
-    // Warning: (ae-incompatible-release-tags) The symbol "__constructor" is marked as @public, but its signature references "DataAPIRequestInfo" which is marked as @internal
+    // @internal
     constructor(info: DataAPIRequestInfo, reply: RawDataAPIResponse, started: number);
     readonly duration: number;
     readonly resp?: RawDataAPIResponse;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "CreateCollectionCommand" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface CreateCollectionCommand {
-    // (undocumented)
-    createCollection: {
-        name: string;
-        options: CollectionOptions<SomeDoc>;
-    };
 }
 
 // @public
@@ -279,20 +286,28 @@ export abstract class CumulativeDataAPIError extends DataAPIResponseError {
     readonly partialResult: unknown;
 }
 
+// @public (undocumented)
+export type CurrentDate<Schema> = {
+    [K in keyof Schema as Schema[K] extends Date | {
+        $date: number;
+    } ? K : never]?: boolean;
+};
+
 // @public
 export class CursorAlreadyInitializedError extends DataAPIError {
     constructor(message: string);
 }
 
-// Warning: (ae-forgotten-export) The symbol "DataAPIClient_base" needs to be exported by the entry point index.d.ts
-//
 // @public
-export class DataAPIClient extends DataAPIClient_base {
+export class DataAPIClient extends DataAPIClientEventEmitterBase {
     constructor(token: string, options?: RootClientOptions | null);
     admin(options?: AdminSpawnOptions): AstraAdmin;
     db(endpoint: string, options?: DbSpawnOptions): Db;
     db(id: string, region: string, options?: DbSpawnOptions): Db;
 }
+
+// @public (undocumented)
+export const DataAPIClientEventEmitterBase: new () => TypedEmitter<DataAPIClientEvents>;
 
 // @public (undocumented)
 export type DataAPIClientEvents = DataAPICommandEvents & AdminCommandEvents;
@@ -320,40 +335,6 @@ export interface DataAPIErrorDescriptor {
     readonly attributes?: Record<string, any>;
     readonly errorCode?: string;
     readonly message?: string;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "DataAPIHttpClient" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export class DataAPIHttpClient extends HttpClient {
-    // (undocumented)
-    collection?: string;
-    // Warning: (ae-forgotten-export) The symbol "ExecuteCommandOptions" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    executeCommand(command: Record<string, any>, options: ExecuteCommandOptions | undefined): Promise<RawDataAPIResponse>;
-    // (undocumented)
-    namespace?: string;
-    // Warning: (ae-forgotten-export) The symbol "TimeoutManager" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    timeoutManager(timeoutMs: number | undefined): TimeoutManager;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "DataAPIRequestInfo" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface DataAPIRequestInfo {
-    // (undocumented)
-    collection?: string;
-    // (undocumented)
-    command: Record<string, any>;
-    // (undocumented)
-    namespace?: string;
-    // (undocumented)
-    timeoutManager: TimeoutManager;
-    // (undocumented)
-    url: string;
 }
 
 // @public
@@ -420,6 +401,37 @@ export interface DatabaseStorageInfo {
 export type DatabaseTier = 'developer' | 'A5' | 'A10' | 'A20' | 'A40' | 'C10' | 'C20' | 'C40' | 'D10' | 'D20' | 'D40' | 'serverless';
 
 // @public
+export interface DateFilterOps {
+    // (undocumented)
+    $date?: number;
+    // (undocumented)
+    $gt?: Date | {
+        $date: number;
+    };
+    // (undocumented)
+    $gte?: Date | {
+        $date: number;
+    };
+    // (undocumented)
+    $lt?: Date | {
+        $date: number;
+    };
+    // (undocumented)
+    $lte?: Date | {
+        $date: number;
+    };
+}
+
+// Warning: (ae-forgotten-export) The symbol "ContainsDate" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export type DateUpdate<Schema> = {
+    [K in keyof Schema as ContainsDate<Schema[K]> extends true ? K : never]?: Date | {
+        $date: number;
+    };
+};
+
+// @public
 export class Db implements Disposable {
     [Symbol.dispose](): void;
     // @internal
@@ -465,49 +477,9 @@ export interface DbSpawnOptions {
     useHttp2?: boolean;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_DATA_API_AUTH_HEADER" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_DATA_API_AUTH_HEADER = "Token";
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_DATA_API_PATH" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_DATA_API_PATH = "api/json/v1";
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_DEVOPS_API_AUTH_HEADER" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_DEVOPS_API_AUTH_HEADER = "Authorization";
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_DEVOPS_API_ENDPOINT" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_DEVOPS_API_ENDPOINT = "https://api.astra.datastax.com/v2";
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_NAMESPACE" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_NAMESPACE = "default_keyspace";
-
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_TIMEOUT" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const DEFAULT_TIMEOUT = 30000;
-
 // @public
 export interface DefaultIdOptions {
     type: 'uuid' | 'uuidv6' | 'uuidv7' | 'objectId';
-}
-
-// Warning: (ae-internal-missing-underscore) The name "DeleteManyCommand" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface DeleteManyCommand {
-    // (undocumented)
-    deleteMany: {
-        filter: Record<string, unknown>;
-    };
 }
 
 // @public
@@ -527,17 +499,6 @@ export interface DeleteManyModel<TSchema extends SomeDoc> {
 // @public
 export interface DeleteManyResult {
     deletedCount: number;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "DeleteOneCommand" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface DeleteOneCommand {
-    // (undocumented)
-    deleteOne: {
-        filter: Record<string, unknown>;
-        sort?: Sort;
-    };
 }
 
 // @public (undocumented)
@@ -569,33 +530,6 @@ export interface DevOpsAPIErrorDescriptor {
     ID?: number;
     // (undocumented)
     message: string;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "DevOpsAPIHttpClient" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export class DevOpsAPIHttpClient extends HttpClient {
-    constructor(props: HTTPClientOptions);
-    // Warning: (ae-forgotten-export) The symbol "TimeoutOptions" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    request(req: DevOpsAPIRequestInfo, options: TimeoutOptions | undefined, started?: number): Promise<AxiosResponse>;
-    // (undocumented)
-    requestLongRunning(req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo): Promise<AxiosResponse>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "DevOpsAPIRequestInfo" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface DevOpsAPIRequestInfo {
-    // (undocumented)
-    data?: Record<string, any>;
-    // (undocumented)
-    method: HttpMethodStrings;
-    // (undocumented)
-    params?: Record<string, any>;
-    // (undocumented)
-    path: string;
 }
 
 // @public (undocumented)
@@ -631,13 +565,6 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
 export interface DropCollectionOptions extends WithTimeout, WithNamespace {
 }
 
-// Warning: (ae-internal-missing-underscore) The name "extractDbIdFromUrl" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function extractDbIdFromUrl(uri: string): string | undefined;
-
-// Warning: (ae-forgotten-export) The symbol "FilterExpr" needs to be exported by the entry point index.d.ts
-//
 // @public
 export type Filter<Schema extends SomeDoc> = {
     [K in keyof NoId<Schema>]?: FilterExpr<NoId<Schema>[K]>;
@@ -651,9 +578,24 @@ export type Filter<Schema extends SomeDoc> = {
 };
 
 // @public
+export type FilterExpr<Elem> = Elem | FilterOps<Elem>;
+
+// Warning: (ae-forgotten-export) The symbol "IsNum" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "IsDate" needs to be exported by the entry point index.d.ts
+//
+// @public
+export type FilterOps<Elem> = {
+    $eq?: Elem;
+    $ne?: Elem;
+    $in?: Elem[];
+    $nin?: Elem[];
+    $exists?: boolean;
+} & (IsNum<Elem> extends false ? {} : NumFilterOps) & (IsDate<Elem> extends false ? {} : DateFilterOps) & (any[] extends Elem ? ArrayFilterOps<Elem> : {});
+
+// @public
 export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     [Symbol.asyncIterator](): AsyncGenerator<T, void, void>;
-    // Warning: (ae-incompatible-release-tags) The symbol "__constructor" is marked as @public, but its signature references "DataAPIHttpClient" which is marked as @internal
+    // @internal
     constructor(namespace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: FindOptions<boolean>);
     // (undocumented)
     bufferedCount(): number;
@@ -679,18 +621,6 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     toArray(): Promise<T[]>;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "FindOneAndDeleteCommand" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface FindOneAndDeleteCommand {
-    // (undocumented)
-    findOneAndDelete: {
-        filter?: Record<string, unknown>;
-        sort?: Sort;
-        projection?: Projection;
-    };
-}
-
 // @public
 export interface FindOneAndDeleteOptions extends WithTimeout {
     includeResultMetadata?: boolean;
@@ -699,23 +629,6 @@ export interface FindOneAndDeleteOptions extends WithTimeout {
     vector?: number[];
     // @alpha (undocumented)
     vectorize?: string;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "FindOneAndReplaceCommand" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface FindOneAndReplaceCommand {
-    // (undocumented)
-    findOneAndReplace: {
-        filter: Record<string, unknown>;
-        replacement: Record<string, unknown>;
-        options?: {
-            returnDocument: 'before' | 'after';
-            upsert?: boolean;
-        };
-        sort?: Sort;
-        projection?: Projection;
-    };
 }
 
 // @public
@@ -730,23 +643,6 @@ export interface FindOneAndReplaceOptions extends WithTimeout {
     vectorize?: string;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "FindOneAndUpdateCommand" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface FindOneAndUpdateCommand {
-    // (undocumented)
-    findOneAndUpdate: {
-        filter?: Record<string, unknown>;
-        update?: Record<string, any>;
-        options?: {
-            returnDocument: 'before' | 'after';
-            upsert?: boolean;
-        };
-        sort?: Sort;
-        projection?: Projection;
-    };
-}
-
 // @public
 export interface FindOneAndUpdateOptions extends WithTimeout {
     includeResultMetadata?: boolean;
@@ -757,21 +653,6 @@ export interface FindOneAndUpdateOptions extends WithTimeout {
     vector?: number[];
     // @alpha (undocumented)
     vectorize?: string;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "FindOneCommand" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface FindOneCommand {
-    // (undocumented)
-    findOne: {
-        filter: Record<string, unknown>;
-        sort?: Sort;
-        projection?: Projection;
-        options?: {
-            includeSimilarity?: boolean;
-        };
-    };
 }
 
 // @public
@@ -826,161 +707,10 @@ export interface FullDatabaseInfo {
     terminationTime?: string;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "GuaranteedAPIResponse" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface GuaranteedAPIResponse {
-    // (undocumented)
-    data?: Record<string, any>;
-    // (undocumented)
-    headers: Record<string, string>;
-    // (undocumented)
-    status: number;
-}
-
 // @public
 export interface GuaranteedUpdateOptions<N extends number> {
     matchedCount: N;
     modifiedCount: N;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "hrTimeMs" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function hrTimeMs(): number;
-
-// Warning: (ae-internal-missing-underscore) The name "HTTP1AuthHeaderFactories" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const HTTP1AuthHeaderFactories: {
-    DataAPI(token: string): {
-        Token: string;
-    };
-    DevOpsAPI(token: string): {
-        Authorization: string;
-    };
-};
-
-// Warning: (ae-internal-missing-underscore) The name "HTTP1Strategy" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export class HTTP1Strategy implements HTTPRequestStrategy {
-    constructor(_authHeaderFactory: (token: string) => Record<string, string>);
-    // (undocumented)
-    request(info: InternalHTTPRequestInfo): Promise<GuaranteedAPIResponse>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "HTTP2Strategy" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export class HTTP2Strategy implements HTTPRequestStrategy {
-    constructor(baseURL: string);
-    // (undocumented)
-    close(): void;
-    // (undocumented)
-    closed: boolean;
-    // (undocumented)
-    origin: string;
-    // (undocumented)
-    request(info: InternalHTTPRequestInfo): Promise<GuaranteedAPIResponse>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "HttpClient" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export class HttpClient {
-    constructor(options: HTTPClientOptions);
-    set applicationToken(token: string);
-    // (undocumented)
-    get applicationToken(): string;
-    // (undocumented)
-    readonly baseUrl: string;
-    // (undocumented)
-    cloneInto<C extends HttpClient>(cls: new (opts: HTTPClientOptions) => C, initialize: (client: Mutable<C>) => void): C;
-    // (undocumented)
-    close(): void;
-    // (undocumented)
-    emitter: TypedEmitter<DataAPIClientEvents>;
-    // (undocumented)
-    isClosed(): boolean | undefined;
-    // (undocumented)
-    isUsingHttp2(): boolean;
-    // (undocumented)
-    monitorCommands: boolean;
-    // (undocumented)
-    protected _request(info: HTTPRequestInfo): Promise<GuaranteedAPIResponse>;
-    // (undocumented)
-    requestStrategy: HTTPRequestStrategy;
-    // (undocumented)
-    readonly userAgent: string;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "HTTPClientOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface HTTPClientOptions {
-    // (undocumented)
-    applicationToken: string;
-    // (undocumented)
-    baseApiPath?: string;
-    // (undocumented)
-    baseUrl: string;
-    // (undocumented)
-    caller?: Caller | Caller[];
-    // (undocumented)
-    emitter: TypedEmitter<DataAPICommandEvents>;
-    // (undocumented)
-    monitorCommands: boolean;
-    // (undocumented)
-    requestStrategy?: HTTPRequestStrategy;
-    // (undocumented)
-    useHttp2?: boolean;
-    // (undocumented)
-    userAgent?: string;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "HttpMethods" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const HttpMethods: {
-    Get: string;
-    Post: string;
-    Delete: string;
-};
-
-// Warning: (ae-internal-missing-underscore) The name "HttpMethodStrings" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export type HttpMethodStrings = typeof HttpMethods[keyof typeof HttpMethods];
-
-// Warning: (ae-internal-missing-underscore) The name "HTTPRequestInfo" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface HTTPRequestInfo {
-    // (undocumented)
-    data?: unknown;
-    // (undocumented)
-    method: HttpMethodStrings;
-    // (undocumented)
-    params?: Record<string, string>;
-    // (undocumented)
-    reviver?: (key: string, value: any) => any;
-    // (undocumented)
-    timeoutManager: TimeoutManager;
-    // (undocumented)
-    url: string;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "HTTPRequestStrategy" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface HTTPRequestStrategy {
-    // (undocumented)
-    close?: () => void;
-    // (undocumented)
-    closed?: boolean;
-    // (undocumented)
-    request: (params: InternalHTTPRequestInfo) => Promise<GuaranteedAPIResponse>;
 }
 
 // @public
@@ -998,19 +728,6 @@ export type IndexingOptions<Schema extends SomeDoc> = {
     deny: (keyof ToDotNotation<Schema>)[] | ['*'];
     allow?: never;
 };
-
-// Warning: (ae-internal-missing-underscore) The name "InsertManyCommand" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface InsertManyCommand {
-    // (undocumented)
-    insertMany: {
-        documents: unknown[];
-        options?: {
-            ordered?: boolean;
-        };
-    };
-}
 
 // @public
 export class InsertManyError extends CumulativeDataAPIError {
@@ -1048,16 +765,6 @@ export interface InsertManyUnorderedOptions extends WithTimeout {
     vectors?: (number[] | null | undefined)[];
 }
 
-// Warning: (ae-internal-missing-underscore) The name "InsertOneCommand" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface InsertOneCommand {
-    // (undocumented)
-    insertOne: {
-        document: object;
-    };
-}
-
 // @public (undocumented)
 export interface InsertOneModel<TSchema extends SomeDoc> {
     // (undocumented)
@@ -1074,45 +781,6 @@ export interface InsertOneOptions extends WithTimeout {
 // @public
 export interface InsertOneResult<Schema> {
     insertedId: IdOf<Schema>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "InternalFindOptions" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface InternalFindOptions {
-    // (undocumented)
-    includeSimilarity?: boolean;
-    // (undocumented)
-    limit?: number;
-    // (undocumented)
-    pagingState?: string;
-    // (undocumented)
-    skip?: number;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "InternalGetMoreCommand" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface InternalGetMoreCommand {
-    // (undocumented)
-    find: {
-        filter?: Record<string, unknown>;
-        options?: InternalFindOptions;
-        sort?: Record<string, unknown>;
-        projection?: Record<string, unknown>;
-    };
-}
-
-// Warning: (ae-internal-missing-underscore) The name "InternalHTTPRequestInfo" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface InternalHTTPRequestInfo extends HTTPRequestInfo {
-    // (undocumented)
-    method: HttpMethodStrings;
-    // (undocumented)
-    token: string;
-    // (undocumented)
-    userAgent: string;
 }
 
 // @public (undocumented)
@@ -1136,40 +804,6 @@ export interface InternalRootClientOpts {
 // @public
 export type InternalUpdateResult<Schema extends SomeDoc, N extends number> = (GuaranteedUpdateOptions<N> & UpsertedUpdateOptions<Schema>) | (GuaranteedUpdateOptions<N> & NoUpsertUpdateOptions);
 
-// Warning: (ae-internal-missing-underscore) The name "IsAny" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export type IsAny<T> = true extends false & T ? true : false;
-
-// Warning: (ae-internal-missing-underscore) The name "IsDate" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export type IsDate<T> = IsAny<T> extends true ? true : T extends Date | {
-    $date: number;
-} ? true : false;
-
-// Warning: (ae-internal-missing-underscore) The name "IsNum" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export type IsNum<T> = number extends T ? true : bigint extends T ? true : false;
-
-// Warning: (ae-internal-missing-underscore) The name "isUndefOrNull" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function isUndefOrNull<T>(x: T | null | undefined): x is null | undefined;
-
-// Warning: (ae-internal-missing-underscore) The name "ListCollectionsCommand" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface ListCollectionsCommand {
-    // (undocumented)
-    findCollections: {
-        options: {
-            explain: boolean;
-        };
-    };
-}
-
 // @public
 export interface ListCollectionsOptions extends WithTimeout, WithNamespace {
     nameOnly?: boolean;
@@ -1183,65 +817,16 @@ export interface ListDatabasesOptions extends WithTimeout {
     skip?: number;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "LongRunningRequestInfo" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface LongRunningRequestInfo {
-    // (undocumented)
-    defaultPollInterval: number;
-    // (undocumented)
-    id: string | ((resp: AxiosResponse) => string);
-    // (undocumented)
-    legalStates: string[];
-    // (undocumented)
-    options: AdminBlockingOptions | undefined;
-    // (undocumented)
-    target: string;
-}
-
 // @public
 export type MaybeId<T> = NoId<T> & {
     _id?: IdOf<T>;
 };
-
-// Warning: (ae-internal-missing-underscore) The name "mkAdmin" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function mkAdmin(rootOpts: InternalRootClientOpts, options?: AdminSpawnOptions): AstraAdmin;
-
-// Warning: (ae-internal-missing-underscore) The name "mkDb" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): Db;
-
-// Warning: (ae-internal-missing-underscore) The name "mkDbAdmin" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function mkDbAdmin(db: Db, httpClient: HttpClient, rootOpts: InternalRootClientOpts, options?: AdminSpawnOptions): AstraDbAdmin;
-
-// Warning: (ae-forgotten-export) The symbol "InferPartialResult" needs to be exported by the entry point index.d.ts
-// Warning: (ae-internal-missing-underscore) The name "mkRespErrorFromResponse" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const mkRespErrorFromResponse: <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, command: Record<string, any>, raw: RawDataAPIResponse, partialResult?: InferPartialResult<E>) => E;
-
-// Warning: (ae-internal-missing-underscore) The name "mkRespErrorFromResponses" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export const mkRespErrorFromResponses: <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, commands: Record<string, any>[], raw: RawDataAPIResponse[], partialResult?: InferPartialResult<E>) => E;
 
 // @public
 export interface ModifyResult<Schema extends SomeDoc> {
     ok: number;
     value: WithId<Schema> | null;
 }
-
-// Warning: (ae-internal-missing-underscore) The name "Mutable" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export type Mutable<T> = {
-    -readonly [P in keyof T]: T[P];
-};
 
 // @public
 export interface NoBlockingOptions extends WithTimeout {
@@ -1255,6 +840,23 @@ export type NoId<Doc> = Omit<Doc, '_id'>;
 export interface NoUpsertUpdateOptions {
     upsertedCount: 0;
     upsertedId?: never;
+}
+
+// @public (undocumented)
+export type NumberUpdate<Schema> = {
+    [K in keyof Schema as IsNum<Schema[K]> extends true ? K : never]?: number | bigint;
+};
+
+// @public
+export interface NumFilterOps {
+    // (undocumented)
+    $gt?: number | bigint;
+    // (undocumented)
+    $gte?: number | bigint;
+    // (undocumented)
+    $lt?: number | bigint;
+    // (undocumented)
+    $lte?: number | bigint;
 }
 
 // @public
@@ -1277,6 +879,11 @@ export interface PollBlockingOptions extends WithTimeout {
     pollInterval?: number;
 }
 
+// @public (undocumented)
+export type Pop<Schema> = {
+    [K in keyof ArrayUpdate<Schema>]?: number;
+};
+
 // @public
 export type Projection = Record<string, 1 | 0 | true | false | ProjectionSlice>;
 
@@ -1285,6 +892,14 @@ export interface ProjectionSlice {
     // (undocumented)
     $slice: number | [number, number];
 }
+
+// @public (undocumented)
+export type Push<Schema> = {
+    [K in keyof ArrayUpdate<Schema>]?: (ArrayUpdate<Schema>[K] | {
+        $each: ArrayUpdate<Schema>[K][];
+        $position?: number;
+    });
+};
 
 // @public (undocumented)
 export interface RawDataAPIResponse {
@@ -1296,10 +911,10 @@ export interface RawDataAPIResponse {
     status?: Record<string, any>;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "replaceAstraUrlIdAndRegion" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function replaceAstraUrlIdAndRegion(uri: string, id: string, region: string): string;
+// @public (undocumented)
+export type Rename<Schema> = {
+    [K in keyof Schema]?: string;
+};
 
 // @public (undocumented)
 export interface ReplaceOneModel<TSchema extends SomeDoc> {
@@ -1322,16 +937,6 @@ export interface ReplaceOneOptions extends WithTimeout {
 
 // @public
 export type ReplaceOneResult<Schema extends SomeDoc> = InternalUpdateResult<Schema, 0 | 1>;
-
-// Warning: (ae-internal-missing-underscore) The name "replacer" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function replacer(this: any, key: string, value: any): any;
-
-// Warning: (ae-internal-missing-underscore) The name "reviver" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function reviver(_: string, value: any): any;
 
 // @public
 export interface RootClientOptions {
@@ -1358,6 +963,13 @@ export type Sort = Record<string, 1 | -1> | {
     $vectorize: string;
 };
 
+// @public (undocumented)
+export type StrictDateUpdate<Schema> = ContainsDate<Schema> extends true ? {
+    [K in keyof Schema as ContainsDate<Schema[K]> extends true ? K : never]?: Date | {
+        $date: number;
+    };
+} : TypeErr<'Can not perform a date operation on a schema with no dates'>;
+
 // @public
 export type StrictFilter<Schema extends SomeDoc> = {
     [K in keyof ToDotNotation<NoId<Schema>>]?: FilterExpr<ToDotNotation<NoId<Schema>>[K]>;
@@ -1368,10 +980,32 @@ export type StrictFilter<Schema extends SomeDoc> = {
     $not?: StrictFilter<Schema>;
 };
 
+// Warning: (ae-forgotten-export) The symbol "ContainsNum" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export type StrictNumberUpdate<Schema> = ContainsNum<Schema> extends true ? {
+    [K in keyof Schema as IsNum<Schema[K]> extends true ? K : never]?: number | bigint;
+} : TypeErr<'Can not perform a number operation on a schema with no numbers'>;
+
+// Warning: (ae-forgotten-export) The symbol "ContainsArr" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export type StrictPop<Schema> = ContainsArr<Schema> extends true ? {
+    [K in keyof ArrayUpdate<Schema>]?: number;
+} : TypeErr<'Can not pop on a schema with no arrays'>;
+
 // @public
 export type StrictProjection<Schema extends SomeDoc> = {
     [K in keyof ToDotNotation<WithId<Schema>>]?: any[] extends (ToDotNotation<WithId<Schema>>)[K] ? 1 | 0 | true | false | ProjectionSlice : 1 | 0 | true | false;
 };
+
+// @public (undocumented)
+export type StrictPush<Schema> = ContainsArr<Schema> extends true ? {
+    [K in keyof ArrayUpdate<Schema>]?: (ArrayUpdate<Schema>[K] | {
+        $each: ArrayUpdate<Schema>[K][];
+        $position?: number;
+    });
+} : TypeErr<'Can not perform array operation on a schema with no arrays'>;
 
 // @public
 export type StrictSort<Schema extends SomeDoc> = {
@@ -1385,30 +1019,18 @@ export type StrictSort<Schema extends SomeDoc> = {
 // @public
 export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> {
     $addToSet?: StrictPush<InNotation>;
-    // Warning: (ae-forgotten-export) The symbol "CurrentDate" needs to be exported by the entry point index.d.ts
     $currentDate?: CurrentDate<InNotation>;
-    // Warning: (ae-forgotten-export) The symbol "StrictNumberUpdate" needs to be exported by the entry point index.d.ts
     $inc?: StrictNumberUpdate<InNotation>;
     $max?: StrictNumberUpdate<InNotation> | StrictDateUpdate<InNotation>;
-    // Warning: (ae-forgotten-export) The symbol "StrictDateUpdate" needs to be exported by the entry point index.d.ts
     $min?: StrictNumberUpdate<InNotation> | StrictDateUpdate<InNotation>;
     $mul?: StrictNumberUpdate<InNotation>;
-    // Warning: (ae-forgotten-export) The symbol "StrictPop" needs to be exported by the entry point index.d.ts
     $pop?: StrictPop<InNotation>;
-    // Warning: (ae-forgotten-export) The symbol "StrictPush" needs to be exported by the entry point index.d.ts
     $push?: StrictPush<InNotation>;
-    // Warning: (ae-forgotten-export) The symbol "Rename" needs to be exported by the entry point index.d.ts
     $rename?: Rename<InNotation>;
     $set?: Partial<InNotation>;
     $setOnInsert?: Partial<InNotation>;
-    // Warning: (ae-forgotten-export) The symbol "Unset" needs to be exported by the entry point index.d.ts
     $unset?: Unset<InNotation>;
 }
-
-// Warning: (ae-internal-missing-underscore) The name "takeWhile" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function takeWhile<T>(arr: T[], pred: (x: T) => boolean): T[];
 
 // Warning: (ae-forgotten-export) The symbol "Merge" needs to be exported by the entry point index.d.ts
 // Warning: (ae-forgotten-export) The symbol "_ToDotNotation" needs to be exported by the entry point index.d.ts
@@ -1432,42 +1054,29 @@ export type TypeErr<S> = unknown & {
     [__error]: S;
 };
 
+// @public (undocumented)
+export type Unset<Schema> = {
+    [K in keyof Schema]?: '';
+};
+
 // @public
 export interface UpdateFilter<Schema extends SomeDoc> {
     $addToSet?: Push<Schema> & SomeDoc;
     $currentDate?: CurrentDate<Schema> & Record<string, boolean>;
-    // Warning: (ae-forgotten-export) The symbol "NumberUpdate" needs to be exported by the entry point index.d.ts
     $inc?: NumberUpdate<Schema> & Record<string, number>;
     $max?: (NumberUpdate<Schema> | DateUpdate<Schema>) & Record<string, number | bigint | Date | {
         $date: number;
     }>;
-    // Warning: (ae-forgotten-export) The symbol "DateUpdate" needs to be exported by the entry point index.d.ts
     $min?: (NumberUpdate<Schema> | DateUpdate<Schema>) & Record<string, number | bigint | Date | {
         $date: number;
     }>;
     $mul?: StrictNumberUpdate<Schema> & Record<string, number>;
-    // Warning: (ae-forgotten-export) The symbol "Pop" needs to be exported by the entry point index.d.ts
     $pop?: Pop<Schema> & Record<string, number>;
-    // Warning: (ae-forgotten-export) The symbol "Push" needs to be exported by the entry point index.d.ts
     $push?: Push<Schema> & SomeDoc;
     $rename?: Record<string, string>;
     $set?: Partial<Schema> & SomeDoc;
     $setOnInsert?: Partial<Schema> & SomeDoc;
     $unset?: Record<string, ''>;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "UpdateManyCommand" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface UpdateManyCommand {
-    // (undocumented)
-    updateMany: {
-        filter: Record<string, unknown>;
-        update: Record<string, any>;
-        options: UpdateManyOptions & {
-            pagingState?: string;
-        };
-    };
 }
 
 // @public
@@ -1495,21 +1104,6 @@ export interface UpdateManyOptions extends WithTimeout {
 
 // @public
 export type UpdateManyResult<Schema extends SomeDoc> = InternalUpdateResult<Schema, number>;
-
-// Warning: (ae-internal-missing-underscore) The name "UpdateOneCommand" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface UpdateOneCommand {
-    // (undocumented)
-    updateOne: {
-        filter: Record<string, unknown>;
-        update: Record<string, any>;
-        sort?: Sort;
-        options: {
-            upsert?: boolean;
-        };
-    };
-}
 
 // @public (undocumented)
 export interface UpdateOneModel<TSchema extends SomeDoc> {
@@ -1555,21 +1149,6 @@ export class UUID {
     static v7(): UUID;
     readonly version: number;
 }
-
-// Warning: (ae-internal-missing-underscore) The name "validateAdminOpts" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function validateAdminOpts(opts: AdminSpawnOptions | undefined): void;
-
-// Warning: (ae-internal-missing-underscore) The name "validateDbOpts" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function validateDbOpts(opts: DbSpawnOptions | undefined): void;
-
-// Warning: (ae-internal-missing-underscore) The name "validateOption" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function validateOption<T = unknown>(name: string, obj: unknown, type: string, test?: (obj: T) => void): void;
 
 // @public
 export interface VectorDoc {

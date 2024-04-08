@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './api';
+export { RawDataAPIResponse } from './api';
 export * from './data-api';
 export * from './client';
 export * from './devops';

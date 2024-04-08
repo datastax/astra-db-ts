@@ -94,7 +94,7 @@ export interface FindOptions<GetSim extends boolean> {
   /**
    * Max number of documents to return. Applies over the whole result set, not per page. I.e. if the
    * result set has 1000 documents and `limit` is 100, only the first 100 documents will be returned,
-   * but it'll still be fetched in pages of some N documents, regardless of if N < or \> 100.
+   * but it'll still be fetched in pages of some N documents, regardless of if N \< or \> 100.
    */
   limit?: number,
   /**

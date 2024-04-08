@@ -53,8 +53,7 @@ export abstract class AdminCommandEvent {
   /**
    * The HTTP method for the request.
    */
-  // public readonly method: 'GET' | 'POST' | 'DELETE';
-  public readonly method: string;
+  public readonly method: 'GET' | 'POST' | 'DELETE';
   /**
    * The request body, if any.
    */
@@ -68,6 +67,11 @@ export abstract class AdminCommandEvent {
    */
   public readonly longRunning: boolean;
 
+  /**
+   * Should not be instantiated directly.
+   *
+   * @internal
+   */
   protected constructor(info: DevOpsAPIRequestInfo, longRunning: boolean) {
     this.path = info.path;
     this.method = info.method;
@@ -88,6 +92,11 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
    */
   public readonly timeout: number;
 
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
   constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: number) {
     super(info, longRunning);
     this.timeout = timeout;
@@ -111,6 +120,11 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
    */
   public readonly interval: number;
 
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
   constructor(info: DevOpsAPIRequestInfo, started: number, interval: number) {
     super(info, true);
     this.elapsed = hrTimeMs() - started;
@@ -133,6 +147,11 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
    */
   public readonly resBody?: Record<string, any>;
 
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
   constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, resp: AxiosResponse, started: number) {
     super(info, longRunning);
     this.duration = hrTimeMs() - started;
@@ -155,6 +174,11 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
    */
   public readonly error: Error;
 
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
   constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number) {
     super(info, longRunning);
     this.duration = hrTimeMs() - started;

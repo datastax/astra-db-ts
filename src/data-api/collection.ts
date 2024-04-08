@@ -32,48 +32,48 @@ import {
   BulkWriteOptions,
   BulkWriteResult,
   CollectionOptions,
-  DeleteManyCommand,
   DeleteManyResult,
-  DeleteOneCommand,
   DeleteOneOptions,
   DeleteOneResult,
   Filter,
-  FindOneAndDeleteCommand,
   FindOneAndDeleteOptions,
-  FindOneAndReplaceCommand,
   FindOneAndReplaceOptions,
-  FindOneAndUpdateCommand,
   FindOneAndUpdateOptions,
-  FindOneCommand,
   FindOneOptions,
   FindOptions,
   Flatten,
   FoundDoc,
   IdOf,
-  InsertManyCommand,
   InsertManyOptions,
   InsertManyResult,
-  InsertOneCommand,
   InsertOneOptions,
   InsertOneResult,
   MaybeId,
   ModifyResult,
-  Mutable,
   NoId,
   ReplaceOneOptions,
   ReplaceOneResult,
   ToDotNotation,
   UpdateFilter,
-  UpdateManyCommand,
   UpdateManyOptions,
   UpdateManyResult,
-  UpdateOneCommand,
   UpdateOneOptions,
   UpdateOneResult,
   WithId,
 } from '@/src/data-api/types';
 import { TimeoutManager } from '@/src/api/timeout-managers';
 import { WithTimeout } from '@/src/common/types';
+import { DeleteManyCommand } from '@/src/data-api/types/delete/delete-many';
+import { FindOneCommand } from '@/src/data-api/types/find/find-one';
+import { InsertOneCommand } from '@/src/data-api/types/insert/insert-one';
+import { UpdateOneCommand } from '@/src/data-api/types/update/update-one';
+import { UpdateManyCommand } from '@/src/data-api/types/update/update-many';
+import { FindOneAndReplaceCommand } from '@/src/data-api/types/find/find-one-replace';
+import { DeleteOneCommand } from '@/src/data-api/types/delete/delete-one';
+import { FindOneAndDeleteCommand } from '@/src/data-api/types/find/find-one-delete';
+import { FindOneAndUpdateCommand } from '@/src/data-api/types/find/find-one-update';
+import { InsertManyCommand } from '@/src/data-api/types/insert/insert-many';
+import { Mutable } from '@/src/data-api/types/utils';
 
 /**
  * Represents the interface to a collection in the database.
@@ -455,10 +455,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     const timeoutManager = this._httpClient.timeoutManager(options?.maxTimeMS);
 
-    const commonResult: any = {
+    const commonResult = {
       modifiedCount: 0,
       matchedCount: 0,
-      upsertedCount: 0,
+      upsertedCount: 0 as const,
     };
 
     let resp;

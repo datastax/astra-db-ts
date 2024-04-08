@@ -69,7 +69,7 @@ export function replaceAstraUrlIdAndRegion(uri: string, id: string, region: stri
  * @internal
  */
 export function validateOption<T = unknown>(name: string, obj: unknown, type: string, test?: (obj: T) => void): void {
-  if (isUndefOrNull(obj)) {
+  if (obj === null || obj === undefined) {
     return;
   }
 
@@ -78,11 +78,4 @@ export function validateOption<T = unknown>(name: string, obj: unknown, type: st
   }
 
   test?.(obj as T);
-}
-
-/**
- * @internal
- */
-export function isUndefOrNull<T>(x: T | null | undefined): x is null | undefined {
-  return x === null || x === undefined;
 }

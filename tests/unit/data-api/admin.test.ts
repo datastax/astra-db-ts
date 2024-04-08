@@ -13,9 +13,10 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { AstraAdmin, mkAdmin } from '@/src/devops';
+import { AstraAdmin } from '@/src/devops';
 import { DEFAULT_DEVOPS_API_ENDPOINT } from '@/src/api';
 import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
+import { mkAdmin } from '@/src/devops/astra-admin';
 
 describe('unit.data-api.admin', () => {
   const mkOptions = (data?: DbSpawnOptions, devops?: AdminSpawnOptions) => {

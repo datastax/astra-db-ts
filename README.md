@@ -124,7 +124,7 @@ a rich set of types to help you write type-safe code.
 Here are some examples of how you can properly leverage types to make your code more robust:
 
 ```typescript
-import { DataAPIClient, StrictFilter, StrictSort, UUID } from '@/src/index';
+import { DataAPIClient, StrictFilter, StrictSort, UUID } from '@datastax/astra-db-ts';
 
 const client = new DataAPIClient('*TOKEN*');
 const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });

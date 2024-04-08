@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/data-api';
-import type { IdOf, IsDate, IsNum, NoId, ToDotNotation } from '@/src/data-api/types';
+import type { IdOf, NoId, ToDotNotation } from '@/src/data-api/types';
+import { IsDate, IsNum } from '@/src/data-api/types/utils';
 
 /**
  * Represents some filter operation for a given document schema.
@@ -85,15 +86,20 @@ export type StrictFilter<Schema extends SomeDoc> = {
   $not?: StrictFilter<Schema>,
 }
 
+
 /**
  * Represents an expression in a filter statement, such as an exact value, or a filter operator
+ *
+ * @public
  */
-type FilterExpr<Elem> = Elem | FilterOps<Elem>;
+export type FilterExpr<Elem> = Elem | FilterOps<Elem>;
 
 /**
  * Represents filter operators such as `$eq` and `$in` (but not statements like `$and`)
+ *
+ * @public
  */
-type FilterOps<Elem> = {
+export type FilterOps<Elem> = {
   $eq?: Elem,
   $ne?: Elem,
   $in?: Elem[],
@@ -102,18 +108,20 @@ type FilterOps<Elem> = {
 } & (
   // eslint-disable-next-line @typescript-eslint/ban-types -- Intersection w/ {} is a "noop" here
   IsNum<Elem> extends false ? {} : NumFilterOps
-  ) & (
+) & (
   // eslint-disable-next-line @typescript-eslint/ban-types -- Intersection w/ {} is a "noop" here
   IsDate<Elem> extends false ? {} : DateFilterOps
-  ) & (
+) & (
   // eslint-disable-next-line @typescript-eslint/ban-types -- Intersection w/ {} is a "noop" here
   any[] extends Elem ? ArrayFilterOps<Elem> : {}
-  )
+)
 
 /**
  * Represents filter operations exclusive to number (or dynamically typed) fields
+ *
+ * @public
  */
-interface NumFilterOps {
+export interface NumFilterOps {
   $lt?: number | bigint,
   $lte?: number | bigint,
   $gt?: number | bigint,
@@ -122,8 +130,10 @@ interface NumFilterOps {
 
 /**
  * Represents filter operations exclusive to Dates (or dynamically typed) fields
+ *
+ * @public
  */
-interface DateFilterOps {
+export interface DateFilterOps {
   $lt?: Date | { $date: number },
   $lte?: Date | { $date: number },
   $gt?: Date | { $date: number },
@@ -133,8 +143,10 @@ interface DateFilterOps {
 
 /**
  * Represents filter operations exclusive to array (or dynamically typed) fields
+ *
+ * @public
  */
-interface ArrayFilterOps<Elem> {
+export interface ArrayFilterOps<Elem> {
   $size?: number,
   $all?: Elem,
 }

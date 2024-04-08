@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import type { SomeDoc, TypeErr } from '@/src/data-api';
-import type { IsDate, IsNum, ToDotNotation } from '@/src/data-api/types';
+import type { ToDotNotation } from '@/src/data-api/types';
+import { IsDate, IsNum } from '@/src/data-api/types/utils';
 
 /**
  * Represents the update filter to specify how to update a document.
@@ -409,62 +410,97 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
   $addToSet?: StrictPush<InNotation>,
 }
 
-type Unset<Schema> = {
+/**
+ * @public
+ */
+export type Unset<Schema> = {
   [K in keyof Schema]?: ''
 }
 
-type Pop<Schema> ={
+/**
+ * @public
+ */
+export type Pop<Schema> ={
   [K in keyof ArrayUpdate<Schema>]?: number
 }
 
-type StrictPop<Schema> = ContainsArr<Schema> extends true ? {
+/**
+ * @public
+ */
+export type StrictPop<Schema> = ContainsArr<Schema> extends true ? {
   [K in keyof ArrayUpdate<Schema>]?: number
 } : TypeErr<'Can not pop on a schema with no arrays'>
 
-type Push<Schema> = {
+/**
+ * @public
+ */
+export type Push<Schema> = {
   [K in keyof ArrayUpdate<Schema>]?: (
     | ArrayUpdate<Schema>[K]
     | { $each: ArrayUpdate<Schema>[K][], $position?: number }
   )
 }
 
-type StrictPush<Schema> = ContainsArr<Schema> extends true ? {
+/**
+ * @public
+ */
+export type StrictPush<Schema> = ContainsArr<Schema> extends true ? {
   [K in keyof ArrayUpdate<Schema>]?: (
     | ArrayUpdate<Schema>[K]
     | { $each: ArrayUpdate<Schema>[K][], $position?: number }
   )
 } : TypeErr<'Can not perform array operation on a schema with no arrays'>
 
-type Rename<Schema> = {
+/**
+ * @public
+ */
+export type Rename<Schema> = {
   [K in keyof Schema]?: string
 }
 
-type NumberUpdate<Schema> = {
+/**
+ * @public
+ */
+export type NumberUpdate<Schema> = {
   [K in keyof Schema as IsNum<Schema[K]> extends true ? K : never]?: number | bigint
 }
 
-type StrictNumberUpdate<Schema> = ContainsNum<Schema> extends true ? {
+/**
+ * @public
+ */
+export type StrictNumberUpdate<Schema> = ContainsNum<Schema> extends true ? {
   [K in keyof Schema as IsNum<Schema[K]> extends true ? K : never]?: number | bigint
 } : TypeErr<'Can not perform a number operation on a schema with no numbers'>;
 
-type DateUpdate<Schema> = {
+/**
+ * @public
+ */
+export type DateUpdate<Schema> = {
   [K in keyof Schema as ContainsDate<Schema[K]> extends true ? K : never]?: Date | { $date: number }
 };
 
-type StrictDateUpdate<Schema> = ContainsDate<Schema> extends true ? {
+/**
+ * @public
+ */
+export type StrictDateUpdate<Schema> = ContainsDate<Schema> extends true ? {
   [K in keyof Schema as ContainsDate<Schema[K]> extends true ? K : never]?: Date | { $date: number }
 } : TypeErr<'Can not perform a date operation on a schema with no dates'>;
 
-type ArrayUpdate<Schema> = {
+/**
+ * @public
+ */
+export type ArrayUpdate<Schema> = {
   [K in keyof Schema as any[] extends Schema[K] ? K : never]?: PickArrayTypes<Schema[K]>
 };
 
-type CurrentDate<Schema> =  {
+/**
+ * @public
+ */
+export type CurrentDate<Schema> =  {
   [K in keyof Schema as Schema[K] extends Date | { $date: number } ? K : never]?: boolean
 };
 
 type ContainsArr<Schema> = any[] extends Schema[keyof Schema] ? true : false;
 type ContainsNum<Schema> = IsNum<Schema[keyof Schema]>;
 type ContainsDate<Schema> = IsDate<Schema[keyof Schema]>;
-
 type PickArrayTypes<Schema> = Extract<Schema, any[]> extends (infer E)[] ? E : unknown

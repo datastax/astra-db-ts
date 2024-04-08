@@ -400,6 +400,11 @@
       "default": {
         "logLevel": "warning"
         // "addToApiReportFile": false
+      },
+
+      "ae-internal-missing-underscore": {
+        "logLevel": "none",
+        "addToApiReportFile": false
       }
 
       // "ae-extra-release-tag": {

@@ -17,12 +17,12 @@ import {
   DataAPIResponseError,
   DeleteManyError,
   InsertManyError,
-  mkRespErrorFromResponse,
-  mkRespErrorFromResponses, SomeDoc,
+  SomeDoc,
   UpdateManyError,
 } from '@/src/data-api';
 import assert from 'assert';
 import { DeleteManyResult, InsertManyResult, SomeId, UpdateManyResult } from '@/src/data-api/types';
+import { mkRespErrorFromResponse, mkRespErrorFromResponses } from '@/src/data-api/errors';
 
 describe('unit.data-api.errors', () => {
   const commands = [

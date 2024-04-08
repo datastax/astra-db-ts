@@ -12,13 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, CollectionAlreadyExistsError, extractDbIdFromUrl, SomeDoc, validateOption } from '@/src/data-api';
+import { Collection, CollectionAlreadyExistsError, SomeDoc } from '@/src/data-api';
 import { DataAPIHttpClient, DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE, RawDataAPIResponse } from '@/src/api';
 import {
-  CreateCollectionCommand,
   CreateCollectionOptions,
   FullCollectionInfo,
-  ListCollectionsCommand,
   ListCollectionsOptions,
   WithNamespace,
 } from '@/src/data-api/types';
@@ -28,6 +26,9 @@ import { AdminSpawnOptions, DbSpawnOptions, InternalRootClientOpts } from '@/src
 import { RunCommandOptions } from '@/src/data-api/types/collections/command';
 import { WithTimeout } from '@/src/common/types';
 import { DropCollectionOptions } from '@/src/data-api/types/collections/drop-collection';
+import { extractDbIdFromUrl, validateOption } from '@/src/data-api/utils';
+import { CreateCollectionCommand } from '@/src/data-api/types/collections/create-collection';
+import { ListCollectionsCommand } from '@/src/data-api/types/collections/list-collection';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as

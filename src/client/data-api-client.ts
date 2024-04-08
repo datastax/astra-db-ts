@@ -25,7 +25,7 @@ import TypedEmitter from 'typed-emitter';
 import EventEmitter from 'events';
 import { DataAPICommandEvents } from '@/src/data-api/events';
 import { AdminCommandEvents } from '@/src/devops';
-import { validateOption } from '@/src/data-api';
+import { validateOption } from '@/src/data-api/utils';
 
 /**
  * @public
@@ -33,6 +33,11 @@ import { validateOption } from '@/src/data-api';
 export type DataAPIClientEvents =
   & DataAPICommandEvents
   & AdminCommandEvents
+
+/**
+ * @public
+ */
+export const DataAPIClientEventEmitterBase = EventEmitter as (new () => TypedEmitter<DataAPIClientEvents>);
 
 /**
  * The main entrypoint into working with the Data API. It sits at the top of the
@@ -62,7 +67,7 @@ export type DataAPIClientEvents =
  *
  * @public
  */
-export class DataAPIClient extends (EventEmitter as new () => TypedEmitter<DataAPIClientEvents>) {
+export class DataAPIClient extends DataAPIClientEventEmitterBase {
   readonly #options: InternalRootClientOpts;
 
   /**

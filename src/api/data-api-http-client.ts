@@ -14,9 +14,10 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, hrTimeMs, HttpClient, HttpMethods, RawDataAPIResponse } from '@/src/api';
-import { DataAPIResponseError, DataAPITimeout, mkRespErrorFromResponse, ObjectId, UUID } from '@/src/data-api';
+import { DataAPIResponseError, DataAPITimeout, ObjectId, UUID } from '@/src/data-api';
 import { MkTimeoutError, TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
+import { mkRespErrorFromResponse } from '@/src/data-api/errors';
 
 /**
  * @internal

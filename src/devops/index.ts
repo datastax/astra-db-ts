@@ -13,8 +13,8 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-export * from './astra-admin';
-export * from './astra-db-admin';
+export { AstraAdmin } from './astra-admin';
+export { AstraDbAdmin } from './astra-db-admin';
 export * from './db-admin';
 export * from './errors';
 export * from './events';
