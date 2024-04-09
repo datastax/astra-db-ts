@@ -92,7 +92,7 @@ export interface UpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $unset?: Record<string, ''>,
+  $unset?: Record<string, '' | true | 1>,
   /**
    * Increment the value of a field in the document if it's potentially a `number`.
    *
@@ -414,7 +414,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
  * @public
  */
 export type Unset<Schema> = {
-  [K in keyof Schema]?: ''
+  [K in keyof Schema]?: '' | true | 1
 }
 
 /**

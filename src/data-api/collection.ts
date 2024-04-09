@@ -794,7 +794,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  find<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<GetSim>): FindCursor<FoundDoc<Schema, GetSim>, FoundDoc<Schema, GetSim>> {
+  find(filter: Filter<Schema>, options?: FindOptions): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>> {
     return new FindCursor(this.namespace, this._httpClient, filter as any, coalesceVectorSpecialsIntoSort(options)) as any;
   }
 
@@ -856,11 +856,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  public async distinct<Key extends string, GetSim extends boolean = false>(key: Key, filter: Filter<Schema> = {}): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema, GetSim>>)[Key]>[]> {
+  public async distinct<Key extends string>(key: Key, filter: Filter<Schema> = {}): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]> {
     assertPathSafe4Distinct(key);
 
     const projection = pullSafeProjection4Distinct(key);
-    const cursor = this.find<GetSim>(filter, { projection: { _id: 0, [projection]: 1 } });
+    const cursor = this.find(filter, { projection: { _id: 0, [projection]: 1 } });
 
     const seen = new Set<unknown>();
     const ret = [];
@@ -932,7 +932,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  public async findOne<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<GetSim>): Promise<FoundDoc<Schema, GetSim> | null> {
+  public async findOne(filter: Filter<Schema>, options?: FindOneOptions): Promise<FoundDoc<Schema> | null> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneCommand = {

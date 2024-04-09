@@ -16,7 +16,7 @@
 
 import { dummyCollection, TestSchema } from '@/tests/typing/collections/prelude';
 import { Equal, Expect } from '@/tests/typing/prelude';
-import { FindCursor, SomeDoc } from '@/src/data-api';
+import { FindCursor, SomeDoc, WithId } from '@/src/data-api';
 import { IdOf, StrictFilter } from '@/src/data-api/types';
 
 type GetTOfCursor<Cursor> = Cursor extends FindCursor<infer T> ? T : undefined;
@@ -27,22 +27,25 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
 
   type T_and_TRaw_are_equal = Expect<Equal<GetTOfCursor<typeof cursor>, GetTRawOfCursor<typeof cursor>>>;
 
-  type T_is_expected = Expect<Equal<GetTOfCursor<typeof cursor>, TestSchema & { $similarity?: never }>>;
+  // type T_is_expected = Expect<Equal<GetTOfCursor<typeof cursor>, TestSchema & { $similarity?: never }>>;
+  type T_is_expected = Expect<Equal<GetTOfCursor<typeof cursor>, WithId<TestSchema & { $similarity?: number }>>>;
 
   type _id_is_expected = Expect<Equal<IdOf<GetTOfCursor<typeof cursor>>, string>>;
 
   cursor.next().then((doc) => {
-    type doc_type_is_expected = Expect<Equal<TestSchema & { $similarity?: never } | null, typeof doc>>;
+    // type doc_type_is_expected = Expect<Equal<TestSchema & { $similarity?: never } | null, typeof doc>>;
+    type doc_type_is_expected = Expect<Equal<WithId<TestSchema & { $similarity?: number }> | null, typeof doc>>;
   });
 
   (async () => {
     for await (const doc of cursor) {
-      type doc_type_is_expected = Expect<Equal<TestSchema & { $similarity?: never }, typeof doc>>;
+      // type doc_type_is_expected = Expect<Equal<TestSchema & { $similarity?: never }, typeof doc>>;
+      type doc_type_is_expected = Expect<Equal<WithId<TestSchema & { $similarity?: number }>, typeof doc>>;
     }
   })();
 
   cursor.toArray().then((docs) => {
-    type docs_type_is_expected = Expect<Equal<(TestSchema & { $similarity?: never })[], typeof docs>>;
+    type docs_type_is_expected = Expect<Equal<WithId<TestSchema & { $similarity?: number }>[], typeof docs>>;
   });
 
   cursor.filter({ amount: { $gt: 5 } } satisfies StrictFilter<GetTRawOfCursor<typeof cursor>>);
@@ -56,13 +59,15 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
 
   type T_and_TRaw_are_equal = Expect<Equal<GetTOfCursor<typeof cursor>, GetTRawOfCursor<typeof cursor>>>;
 
-  type T_is_expected = Expect<Equal<GetTOfCursor<typeof cursor>, TestSchema & { $similarity?: never }>>;
+  // type T_is_expected = Expect<Equal<GetTOfCursor<typeof cursor>, TestSchema & { $similarity?: never }>>;
+  type T_is_expected = Expect<Equal<GetTOfCursor<typeof cursor>, WithId<TestSchema & { $similarity?: number }>>>;
 
   type _id_is_expected = Expect<Equal<IdOf<GetTOfCursor<typeof cursor>>, string>>;
 
   const mapped = cursor.map((doc) => doc._id);
 
-  type mapped_is_expected = Expect<Equal<typeof mapped, FindCursor<string, TestSchema & { $similarity?: never }>>>;
+  // type mapped_is_expected = Expect<Equal<typeof mapped, FindCursor<string, TestSchema & { $similarity?: never }>>>;
+  type mapped_is_expected = Expect<Equal<typeof mapped, FindCursor<string, WithId<TestSchema & { $similarity?: number }>>>>;
 
   mapped.next().then((mappedDoc) => {
     type mappedDoc_type_is_expected = Expect<Equal<string | null, typeof mappedDoc>>;
@@ -79,7 +84,8 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
 
   type T_and_TRaw_are_equal = Expect<Equal<GetTOfCursor<typeof cursor>, GetTRawOfCursor<typeof cursor>>>;
 
-  type T_is_expected = Expect<Equal<GetTOfCursor<typeof cursor>, TestSchema & { $similarity?: never }>>;
+  // type T_is_expected = Expect<Equal<GetTOfCursor<typeof cursor>, TestSchema & { $similarity?: never }>>;
+  type T_is_expected = Expect<Equal<GetTOfCursor<typeof cursor>, WithId<TestSchema & { $similarity?: number }>>>;
 
   type _id_is_expected = Expect<Equal<IdOf<GetTOfCursor<typeof cursor>>, string>>;
 

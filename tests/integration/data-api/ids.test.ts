@@ -53,7 +53,7 @@ describe('integration.data-api.ids', () => {
       const found = await collection.findOne({ name: 'test' });
       const id = found?._id;
       assert.ok(typeof <any>id === 'string');
-      assert.doesNotThrow(() => new UUID(id));
+      assert.doesNotThrow(() => new UUID(id as string));
     });
   });
 
@@ -86,7 +86,7 @@ describe('integration.data-api.ids', () => {
       assert.ok(<any>inserted.insertedId instanceof UUID);
       const found = await collection.findOne({ name: 'test' });
       const id = found?._id;
-      assert.ok(<any>id instanceof UUID);
+      assert.ok(id instanceof UUID);
       assert.strictEqual(id.version, 4);
       assert.ok(id.toString(), inserted.insertedId.toString());
       assert.ok(id.equals(inserted.insertedId));
@@ -122,7 +122,7 @@ describe('integration.data-api.ids', () => {
       assert.ok(<any>inserted.insertedId instanceof UUID);
       const found = await collection.findOne({ name: 'test' });
       const id = found?._id;
-      assert.ok(<any>id instanceof UUID);
+      assert.ok(id instanceof UUID);
       assert.strictEqual(id.version, 6);
       assert.ok(id.toString(), inserted.insertedId.toString());
       assert.ok(id.equals(inserted.insertedId));
@@ -158,7 +158,7 @@ describe('integration.data-api.ids', () => {
       assert.ok(<any>inserted.insertedId instanceof UUID);
       const found = await collection.findOne({ name: 'test' });
       const id = found?._id;
-      assert.ok(<any>id instanceof UUID);
+      assert.ok(id instanceof UUID);
       assert.strictEqual(id.version, 7);
       assert.ok(id.toString(), inserted.insertedId.toString());
       assert.ok(id.equals(inserted.insertedId));
@@ -194,7 +194,7 @@ describe('integration.data-api.ids', () => {
       assert.ok(<any>inserted.insertedId instanceof ObjectId);
       const found = await collection.findOne({ name: 'test' });
       const id = found?._id;
-      assert.ok(<any>id instanceof ObjectId);
+      assert.ok(id instanceof ObjectId);
       assert.ok(id.toString(), inserted.insertedId.toString());
       assert.ok(id.equals(inserted.insertedId));
     });

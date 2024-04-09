@@ -36,12 +36,12 @@ type test1 = Expect<Equal<StrictUpdateFilter<BasicSchema>, {
     obj?: { str: string },
   },
   $unset?: Partial<{
-    num: '',
-    str: '',
-    any: '',
-    [k: `any.${string}`]: '',
-    'obj.str': '',
-    obj: '',
+    num: '' | 1 | true,
+    str: '' | 1 | true,
+    any: '' | 1 | true,
+    [k: `any.${string}`]: '' | 1 | true,
+    'obj.str': '' | 1 | true,
+    obj: '' | 1 | true,
   }>,
   $inc?: Partial<{
     num: number | bigint,
@@ -182,7 +182,6 @@ const test3: StrictUpdateFilter<Schema> = {
     },
   },
   $unset: {
-    // @ts-expect-error - Invalid type
     num1: 1,
     // @ts-expect-error - Invalid type
     num2: '1',
@@ -232,7 +231,6 @@ const test4: StrictUpdateFilter<SomeDoc> = {
     },
   },
   $unset: {
-    // @ts-expect-error - Invalid type
     num1: 1,
     // @ts-expect-error - Invalid type
     num2: '1',

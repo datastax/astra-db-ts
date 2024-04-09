@@ -76,7 +76,7 @@ const enum CursorStatus {
 export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   private readonly _namespace: string;
   private readonly _httpClient: DataAPIHttpClient;
-  private readonly _options: FindOptions<boolean>;
+  private readonly _options: FindOptions;
   private _filter: Filter<SomeDoc>;
   private _mapping?: (doc: unknown) => T;
 
@@ -89,7 +89,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(namespace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: FindOptions<boolean>) {
+  constructor(namespace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: FindOptions) {
     this._namespace = namespace;
     this._httpClient = httpClient;
     this._filter = filter;

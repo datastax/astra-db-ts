@@ -756,7 +756,8 @@ describe('integration.data-api.collection.finds', () => {
     assert.strictEqual(findRespDocs.length, 3);
     //check if the doc ids of the returned docs are in the input list
     findRespDocs.forEach((doc) => {
-      assert.ok(doc._id);
+      // noinspection SuspiciousTypeOfGuard
+      assert.ok(typeof doc._id === 'string');
       assert.ok(doc._id.startsWith('id'));
       assert.ok(doc._id.length > 2);
       assert.ok(ids.has(doc._id));
@@ -766,7 +767,7 @@ describe('integration.data-api.collection.finds', () => {
     filter = { '_id': { '$in': idsArr } };
     const findOneRespDoc = await collection.findOne(filter);
     assert.ok(findOneRespDoc!._id);
-    assert.ok(ids.has(findOneRespDoc!._id));
+    assert.ok(ids.has(findOneRespDoc!._id as string));
   });
 
   it('should find & find doc $nin test', async () => {
@@ -970,11 +971,11 @@ describe('integration.data-api.collection.finds', () => {
       assert.ok(doc._id);
       assert.ok(doc.city);
       assert.strictEqual(doc.tags.length, 0);
-      assert.ok(idsToCheck.has(doc._id));
+      assert.ok(idsToCheck.has(doc._id as string));
     });
     const findOneRespDoc = await collection.findOne(filter);
     assert.ok(findOneRespDoc!._id);
     assert.ok(findOneRespDoc!.tags.length == 0);
-    assert.ok(idsToCheck.has(findOneRespDoc!._id));
+    assert.ok(idsToCheck.has(findOneRespDoc!._id as string));
   });
 });

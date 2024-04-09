@@ -98,7 +98,8 @@ describe('integration.misc.code-samples', () => {
       assert.strictEqual(jane?.name, 'Jane');
       assert.strictEqual(jane?._id.toString(), '016b1cac-14ce-660e-8974-026c927b9b91');
 
-      assert.ok(jane?._id.equals(john?.friendId));
+      assert.ok(jane?._id instanceof UUID);
+      assert.ok(jane._id.equals(john?.friendId));
 
       const countedDocuments = await collection.countDocuments({}, 1000);
       assert.strictEqual(countedDocuments, 4);

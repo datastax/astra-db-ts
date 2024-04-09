@@ -89,7 +89,7 @@ describe('integration.misc.quickstart', () => {
       for await (const doc of cursor) {
         // An AI quilt to help you sleep forever: 1
         // A smartwatch that tells you what to eat based on your mood: 0.85490346
-        assert.ok([1, 0.85490346].includes(doc.$similarity));
+        assert.ok([1, 0.85490346].includes(doc.$similarity!));
         assert.ok([ideas[0].idea, ideas[2].idea].includes(doc.idea));
       }
     });

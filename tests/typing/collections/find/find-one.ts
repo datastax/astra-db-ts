@@ -21,12 +21,14 @@ import { StrictProjection } from '@/src/data-api';
 
 dummyCollection<TestSchema>().findOne({}, {}).then((_a) => {
   const a = _a!;
-  type b = Expect<Equal<undefined, typeof a['$similarity']>>
+  // type b = Expect<Equal<undefined, typeof a['$similarity']>>
+  type b = Expect<Equal<undefined | number, typeof a['$similarity']>>
 });
 
 dummyCollection<TestSchema>().findOne({}, { includeSimilarity: true }).then((_a) => {
   const a = _a!;
-  type b = Expect<Equal<number, typeof a['$similarity']>>
+  // type b = Expect<Equal<number, typeof a['$similarity']>>
+  type b = Expect<Equal<undefined | number, typeof a['$similarity']>>
 });
 
 dummyCollection<TestSchema>().findOne({}, { includeSimilarity: !!Math.random() }).then((_a) => {

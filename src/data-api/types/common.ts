@@ -21,6 +21,11 @@ import type { ToDotNotation } from '@/src/data-api/types';
 export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId;
 
 /**
+ * @public
+ */
+export type SortDirection = 1 | -1;
+
+/**
  * Specifies the sort criteria for selecting documents.
  *
  * **If you want stricter type-checking and full auto-complete, see {@link StrictSort}.**
@@ -46,7 +51,7 @@ export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId
  * @public
  */
 export type Sort =
-  | Record<string, 1 | -1>
+  | Record<string, SortDirection>
   | { $vector: number[] }
   | { $vectorize: string };
 

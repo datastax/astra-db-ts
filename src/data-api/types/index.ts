@@ -37,4 +37,4 @@ export * from './common';
 export * from './dot-notation';
 export * from './filter';
 export * from './update-filter';
-export { WithId, MaybeId, WithSim, FoundDoc, NoId, Flatten, IdOf } from './utils';
+export { WithId, MaybeId, FoundDoc, NoId, Flatten, IdOf } from './utils';

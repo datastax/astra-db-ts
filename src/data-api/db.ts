@@ -398,7 +398,7 @@ export class Db implements Disposable {
    * @example
    * ```typescript
    * // [{ name: "users" }, { name: "posts" }]
-   * console.log(await db.listCollections());
+   * console.log(await db.listCollections({ nameOnly: true }));
    * ```
    *
    * @param options - Options for this operation.
@@ -419,7 +419,7 @@ export class Db implements Disposable {
    * @example
    * ```typescript
    * // [{ name: "users" }, { name: "posts", options: { ... } }]
-   * console.log(await db.listCollections({ nameOnly: false }));
+   * console.log(await db.listCollections());
    * ```
    *
    * @param options - Options for this operation.

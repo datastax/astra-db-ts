@@ -112,7 +112,7 @@ describe('integration.data-api.collection.bulk-write', () => {
       assert.strictEqual(e.partialResult.upsertedCount, 0);
       assert.deepStrictEqual(e.partialResult.upsertedIds, {});
 
-      const found = (await collection.find({}).toArray()).sort((a, b) => a._id.localeCompare(b._id));
+      const found = (await collection.find({}).toArray()).sort((a, b) => a._id.toString().localeCompare(b._id.toString()));
       assert.strictEqual(found.length, 3);
       assert.strictEqual(found[0]._id, 'a');
       assert.strictEqual(found[1]._id, 'b');
@@ -148,7 +148,7 @@ describe('integration.data-api.collection.bulk-write', () => {
       assert.strictEqual(e.partialResult.upsertedCount, 0);
       assert.deepStrictEqual(e.partialResult.upsertedIds, {});
 
-      const found = (await collection.find({}).toArray()).sort((a, b) => a._id.localeCompare(b._id));
+      const found = (await collection.find({}).toArray()).sort((a, b) => a._id.toString().localeCompare(b._id.toString()));
       assert.strictEqual(found.length, 5);
       assert.strictEqual(found[0]._id, 'a');
       assert.strictEqual(found[1]._id, 'b');

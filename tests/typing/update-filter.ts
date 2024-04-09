@@ -37,8 +37,8 @@ const test2: UpdateFilter<BasicSchema> = {
   },
   $unset: {
     num: '',
-    str: '',
-    any: '',
+    str: true,
+    any: 1,
     'any.a': '',
     'obj.str': '',
     obj: '',
@@ -108,7 +108,6 @@ const test3: UpdateFilter<Schema> = {
     },
   },
   $unset: {
-    // @ts-expect-error - Invalid type
     num1: 1,
     // @ts-expect-error - Invalid type
     num2: '1',
@@ -158,7 +157,6 @@ const test4: UpdateFilter<SomeDoc> = {
     },
   },
   $unset: {
-    // @ts-expect-error - Invalid type
     num1: 1,
     // @ts-expect-error - Invalid type
     num2: '1',

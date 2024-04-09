@@ -28,7 +28,7 @@ import type { Projection, Sort } from '@/src/data-api/types';
  *
  * @public
  */
-export interface FindOptions<GetSim extends boolean> {
+export interface FindOptions {
   /**
    * The order in which to apply the update if the filter selects multiple documents.
    *
@@ -122,7 +122,7 @@ export interface FindOptions<GetSim extends boolean> {
    * console.log(doc?.$similarity);
    * ```
    */
-  includeSimilarity?: GetSim;
+  includeSimilarity?: boolean;
 }
 
 /** @internal */

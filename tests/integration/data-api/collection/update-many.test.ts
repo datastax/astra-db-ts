@@ -198,6 +198,8 @@ describe('integration.data-api.collection.update-many', () => {
     const allDocs = await collection.find({}).toArray();
     assert.strictEqual(allDocs.length, 20);
     allDocs.forEach((doc) => {
+      // noinspection SuspiciousTypeOfGuard
+      assert.ok(typeof doc._id === 'string')
       const docIdNum = parseInt(doc._id.substring(2));
       if (docIdNum === 5) {
         assert.strictEqual(doc.count, 7);
@@ -241,6 +243,8 @@ describe('integration.data-api.collection.update-many', () => {
     const allDocs = await collection.find({}).toArray();
     assert.strictEqual(allDocs.length, 20);
     allDocs.forEach((doc) => {
+      // noinspection SuspiciousTypeOfGuard
+      assert.ok(typeof doc._id === 'string')
       const docIdNum = parseInt(doc._id.substring(2));
       if (docIdNum === 5) {
         assert.strictEqual(doc.count, 7.5);

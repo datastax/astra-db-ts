@@ -37,7 +37,7 @@ export interface FindOneCommand {
  *
  * @public
  */
-export interface FindOneOptions<GetSim extends boolean> extends WithTimeout {
+export interface FindOneOptions extends WithTimeout {
   /**
    * The order in which to apply the update if the filter selects multiple documents.
    *
@@ -119,5 +119,5 @@ export interface FindOneOptions<GetSim extends boolean> extends WithTimeout {
    * console.log(doc?.$similarity);
    * ```
    */
-  includeSimilarity?: GetSim,
+  includeSimilarity?: boolean,
 }

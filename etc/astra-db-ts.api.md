@@ -300,7 +300,7 @@ export class CursorAlreadyInitializedError extends DataAPIError {
 
 // @public
 export class DataAPIClient extends DataAPIClientEventEmitterBase {
-    constructor(token: string, options?: RootClientOptions | null);
+    constructor(token: string, options?: DataAPIClientOptions | null);
     admin(options?: AdminSpawnOptions): AstraAdmin;
     db(endpoint: string, options?: DbSpawnOptions): Db;
     db(id: string, region: string, options?: DbSpawnOptions): Db;
@@ -311,6 +311,13 @@ export const DataAPIClientEventEmitterBase: new () => TypedEmitter<DataAPIClient
 
 // @public (undocumented)
 export type DataAPIClientEvents = DataAPICommandEvents & AdminCommandEvents;
+
+// @public
+export interface DataAPIClientOptions {
+    adminOptions?: AdminSpawnOptions;
+    caller?: Caller | Caller[];
+    dbOptions?: DbSpawnOptions;
+}
 
 // @public
 export type DataAPICommandEvents = {
@@ -939,13 +946,6 @@ export interface ReplaceOneOptions extends WithTimeout {
 export type ReplaceOneResult<Schema extends SomeDoc> = InternalUpdateResult<Schema, 0 | 1>;
 
 // @public
-export interface RootClientOptions {
-    adminOptions?: AdminSpawnOptions;
-    caller?: Caller | Caller[];
-    dbOptions?: DbSpawnOptions;
-}
-
-// @public
 export interface RunCommandOptions extends WithNamespace, WithTimeout {
     collection?: string;
 }
@@ -1056,7 +1056,7 @@ export type TypeErr<S> = unknown & {
 
 // @public (undocumented)
 export type Unset<Schema> = {
-    [K in keyof Schema]?: '';
+    [K in keyof Schema]?: '' | true | 1;
 };
 
 // @public
@@ -1076,7 +1076,7 @@ export interface UpdateFilter<Schema extends SomeDoc> {
     $rename?: Record<string, string>;
     $set?: Partial<Schema> & SomeDoc;
     $setOnInsert?: Partial<Schema> & SomeDoc;
-    $unset?: Record<string, ''>;
+    $unset?: Record<string, '' | true | 1>;
 }
 
 // @public

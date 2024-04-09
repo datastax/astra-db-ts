@@ -19,7 +19,7 @@ import {
   Caller,
   DbSpawnOptions,
   InternalRootClientOpts,
-  RootClientOptions,
+  DataAPIClientOptions,
 } from '@/src/client/types';
 import TypedEmitter from 'typed-emitter';
 import EventEmitter from 'events';
@@ -47,7 +47,7 @@ export const DataAPIClientEventEmitterBase = EventEmitter as (new () => TypedEmi
  * The client takes in a default token, which can be overridden by a stronger/weaker token when spawning a new
  * {@link Db} or {@link AstraAdmin} instance.
  *
- * It also takes in a set of default options (see {@link RootClientOptions}) that may also be overridden as necessary.
+ * It also takes in a set of default options (see {@link DataAPIClientOptions}) that may also be overridden as necessary.
  *
  * @example
  * ```typescript
@@ -76,7 +76,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * @param token - The default token to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    * @param options - The default options to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    */
-  constructor(token: string, options?: RootClientOptions | null) {
+  constructor(token: string, options?: DataAPIClientOptions | null) {
     super();
 
     if (!token || typeof token as any !== 'string') {
@@ -200,7 +200,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
   }
 }
 
-function validateRootOpts(opts: RootClientOptions | undefined | null) {
+function validateRootOpts(opts: DataAPIClientOptions | undefined | null) {
   validateOption('root client options', opts, 'object');
 
   if (!opts) {

@@ -41,7 +41,7 @@ export type Caller = [name: string, version?: string];
  *
  * @public
  */
-export interface RootClientOptions {
+export interface DataAPIClientOptions {
   /**
    * The caller information to send with requests, of the form `[name, version?]`, or an array of such.
    *
