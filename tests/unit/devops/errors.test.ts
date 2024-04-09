@@ -18,33 +18,31 @@ import { DevOpsAPIResponseError } from '@/src/devops';
 
 describe('unit.devops.errors', () => {
   describe('DevOpsAPIResponseError construction', () => {
-    it('should properly construct a DataAPIResponseError with no underlying errors given', () => {
+    it('should properly construct a DevOpsAPIResponseError with no underlying errors given', () => {
       const rootError = { message: 'Something went wrong' } as any;
       const err = new DevOpsAPIResponseError(rootError);
       assert.strictEqual(err.message, 'Something went wrong');
       assert.deepStrictEqual(err.errors, []);
       assert.strictEqual(err.status, undefined);
-      assert.deepStrictEqual(err.rootError, rootError);
       assert.strictEqual(err.name, 'DevOpsAPIResponseError')
     });
 
-    it('should properly construct a DataAPIResponseError with underlying errors', () => {
+    it('should properly construct a DevOpsAPIResponseError with underlying errors', () => {
       const rootError = {
         message: 'Something went wrong',
         response: {
           data: {
             errors: [
-              { message: 'Error 1' },
-              { message: 'Error 2' },
+              { ID: 1, message: 'Error 1' },
+              { ID: 2 },
             ],
           },
         },
       } as any;
       const err = new DevOpsAPIResponseError(rootError);
       assert.strictEqual(err.message, 'Error 1');
-      assert.deepStrictEqual(err.errors, [{ message: 'Error 1' }, { message: 'Error 2' }]);
+      assert.deepStrictEqual(err.errors, [{ id: 1, message: 'Error 1' }, { id: 2, message: undefined }]);
       assert.strictEqual(err.status, undefined);
-      assert.deepStrictEqual(err.rootError, rootError);
       assert.strictEqual(err.name, 'DevOpsAPIResponseError')
     });
   });

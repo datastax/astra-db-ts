@@ -12,6 +12,7 @@ import { Collection, DataAPITimeout, Db } from '@/src/data-api';
 import { DEFAULT_COLLECTION_NAME, initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
 import { DEFAULT_NAMESPACE } from '@/src/api';
+import { CollectionNotFoundError } from '@/src/data-api/errors';
 
 describe('integration.data-api.collection.misc', () => {
   let db: Db;
@@ -58,6 +59,32 @@ describe('integration.data-api.collection.misc', () => {
       } catch (e: any) {
         assert.ok(e instanceof DataAPITimeout);
         assert.strictEqual(e.message, 'Command timed out after 10ms');
+      }
+    });
+  });
+
+  describe('CollectionNotFoundError', () => {
+    it('is thrown when doing data api operation on non-existent collection', async () => {
+      const collection = db.collection('non_existent_collection');
+
+      try {
+        await collection.insertOne({ username: 'test' });
+      } catch (e: any) {
+        assert.ok(e instanceof CollectionNotFoundError);
+        assert.strictEqual(e.namespace, DEFAULT_NAMESPACE);
+        assert.strictEqual(e.collectionName, 'non_existent_collection');
+      }
+    });
+
+    it('is thrown when doing .options() on non-existent collection', async () => {
+      const collection = db.collection('non_existent_collection');
+
+      try {
+        await collection.options();
+      } catch (e: any) {
+        assert.ok(e instanceof CollectionNotFoundError);
+        assert.strictEqual(e.namespace, DEFAULT_NAMESPACE);
+        assert.strictEqual(e.collectionName, 'non_existent_collection');
       }
     });
   });

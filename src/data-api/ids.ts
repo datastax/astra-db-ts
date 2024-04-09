@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { uuidv4, uuidv7, UUID as UUIDv7 } from 'uuidv7';
-import { ObjectId as MongoObjectId } from 'bson';
+import MongoObjectId from 'bson-objectid';
 
 const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
 
@@ -144,11 +144,18 @@ export class UUID {
     return new UUID(uuidv7(), false);
   }
 
+  /**
+   * Inspects the UUID.
+   */
   public inspect(): string {
     return `UUID("${this.toString()}")`;
   }
 
-  // noinspection JSUnusedGlobalSymbols
+  /**
+   * Converts the UUID to a JSON representation.
+   *
+   * Serializes to `{ $uuid: 'uuid' }`.
+   */
   public toJSON() {
     return { $uuid: this.toString() };
   }
@@ -207,17 +214,17 @@ export class ObjectId {
    * @param validate - Whether to validate the ObjectId string. Defaults to `true`.
    */
   constructor(id?: string, validate = true) {
-    if (validate && id) {
-      if (typeof <any>id === 'string') {
+    if (validate) {
+      if (typeof id === 'string') {
         if (id.length !== 24 || !objectIdRegex.test(id)) {
           throw new Error('ObjectId must be a 24-character hex string');
         }
-      } else {
+      } else if (id !== undefined && id !== null) {
         throw new Error('ObjectId must be a string');
       }
     }
 
-    this._objectId = new MongoObjectId(id);
+    this._objectId = (id) ? MongoObjectId(id) : MongoObjectId();
   }
 
   /**
@@ -251,11 +258,18 @@ export class ObjectId {
     return this._objectId.toString();
   }
 
+  /**
+   * Inspects the ObjectId.
+   */
   public inspect(): string {
     return `ObjectId("${this.toString()}")`;
   }
 
-  // noinspection JSUnusedGlobalSymbols
+  /**
+   * Converts the ObjectId to a JSON representation.
+   *
+   * Serializes to `{ $objectId: 'objectId' }`.
+   */
   public toJSON() {
     return { $objectId: this.toString() };
   }

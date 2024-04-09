@@ -44,8 +44,13 @@ export interface DatabaseConfig {
 }
 
 /**
+ * Represents the options for creating a database (i.e. blocking options + database spawn options).
+ *
  * @public
  */
 export type CreateDatabaseOptions = AdminBlockingOptions & {
+  /**
+   * Any options to override the default options set when creating the root {@link DataAPIClient}.
+   */
   dbOptions?: DbSpawnOptions,
 }

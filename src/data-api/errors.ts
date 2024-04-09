@@ -130,11 +130,22 @@ export interface DataAPIDetailedErrorDescriptor {
 export abstract class DataAPIError extends Error {}
 
 /**
+ * An error thrown when a Data API operation timed out.
+ *
+ * Depending on the method, this may be a request timeout occurring during a specific HTTP request, or can happen over
+ * the course of a method involving several requests in a row, such as a paginated `insertMany`.
+ *
  * @public
  */
 export class DataAPITimeout extends DataAPIError {
-  constructor(readonly timeout: number) {
+  /**
+   * The timeout that was set for the operation, in milliseconds.
+   */
+  public readonly timeout: number;
+
+  constructor(timeout: number) {
     super(`Command timed out after ${timeout}ms`);
+    this.timeout = timeout;
     this.name = 'DataAPITimeout';
   }
 }
@@ -163,13 +174,12 @@ export class DataAPITimeout extends DataAPIError {
  * @public
  */
 export class TooManyDocsToCountError extends DataAPIError {
-  name = 'TooManyDocsToCountError'
-
   constructor(readonly limit: number, readonly hitServerLimit: boolean) {
     const message = (hitServerLimit)
       ? `Too many documents to count (server limit of ${limit} reached)`
       : `Too many documents to count (provided limit is ${limit})`;
     super(message);
+    this.name = 'TooManyDocsToCountError';
   }
 }
 
@@ -195,7 +205,7 @@ export class TooManyDocsToCountError extends DataAPIError {
  *
  * @public
  */
-export class CursorAlreadyInitializedError extends DataAPIError {
+export class CursorIsStartedError extends DataAPIError {
   constructor(message: string) {
     super(message);
     this.name = 'CursorAlreadyInitializedError';
@@ -203,11 +213,56 @@ export class CursorAlreadyInitializedError extends DataAPIError {
 }
 
 /**
+ * An exception thrown when certain operations are attempted on a collection that does not exist.
+ *
+ * @field namespace - The namespace that the collection was not found in
+ * @field collectionName - The name of the collection that was not found
+ *
+ * @public
+ */
+export class CollectionNotFoundError extends DataAPIError {
+  /**
+   * The namespace where the collection already exists
+   */
+  public readonly namespace: string;
+
+  /**
+   * The name of the collection that already exists
+   */
+  public readonly collectionName: string;
+
+  constructor(namespace: string, collectionName: string) {
+    super(`Collection '${namespace}.${collectionName}' not found`);
+    this.namespace = namespace;
+    this.collectionName = collectionName;
+    this.name = 'CollectionNotFoundError';
+  }
+}
+
+/**
+ * An exception thrown when an operation that expects a collection not to exist is attempted on a collection that
+ * already exists.
+ *
+ * @field namespace - The namespace where the collection already exists
+ * @field collectionName - The name of the collection that already exists
+ *
  * @public
  */
 export class CollectionAlreadyExistsError extends DataAPIError {
-  constructor(readonly namespace: string, readonly collectionName: string) {
+  /**
+   * The namespace where the collection already exists
+   */
+  public readonly namespace: string;
+
+  /**
+   * The name of the collection that already exists
+   */
+  public readonly collectionName: string;
+
+  constructor(namespace: string, collectionName: string) {
     super(`Collection '${namespace}.${collectionName}' already exists`);
+    this.namespace = namespace;
+    this.collectionName = collectionName;
     this.name = 'CollectionAlreadyExistsError';
   }
 }
@@ -216,7 +271,7 @@ export class CollectionAlreadyExistsError extends DataAPIError {
  * An error representing the *complete* errors for an operation. This is a cohesive error that represents all the
  * errors that occurred during a single operation, and should not be thought of as *always* 1:1 with the number of
  * API requests—rather it's 1:1 with the number of *logical* operations performed by the user (i.e. the methods
- * on the {@link Collection} class.
+ * on the {@link Collection} class).
  *
  * This is *not* used for "hard" (4XX, 5XX) errors, which are rarer and would be thrown directly by the underlying
  * code.
@@ -306,8 +361,16 @@ export abstract class CumulativeDataAPIError extends DataAPIResponseError {
  * @public
  */
 export class InsertManyError extends CumulativeDataAPIError {
+  /**
+   * The name of the error. This is always 'InsertManyError'.
+   */
   name = 'InsertManyError';
-  declare public readonly partialResult: InsertManyResult<any>;
+
+  /**
+   * The partial result of the `InsertMany` operation that was performed. This is *always* defined, and is the result
+   * of all successful insertions.
+   */
+  declare public readonly partialResult: InsertManyResult<SomeDoc>;
 }
 
 /**
@@ -324,7 +387,15 @@ export class InsertManyError extends CumulativeDataAPIError {
  * @public
  */
 export class DeleteManyError extends CumulativeDataAPIError {
+  /**
+   * The name of the error. This is always 'DeleteManyError'.
+   */
   name = 'DeleteManyError';
+
+  /**
+   * The partial result of the `DeleteMany` operation that was performed. This is *always* defined, and is the result
+   * of the operation up to the point of the first error.
+   */
   declare public readonly partialResult: DeleteManyResult;
 }
 
@@ -342,7 +413,15 @@ export class DeleteManyError extends CumulativeDataAPIError {
  * @public
  */
 export class UpdateManyError extends CumulativeDataAPIError {
+  /**
+   * The name of the error. This is always 'UpdateManyError'.
+   */
   name = 'UpdateManyError';
+
+  /**
+   * The partial result of the `UpdateMany` operation that was performed. This is *always* defined, and is the result
+   * of the operation up to the point of the first error.
+   */
   declare public readonly partialResult: UpdateManyResult<SomeDoc>;
 }
 
@@ -363,7 +442,15 @@ export class UpdateManyError extends CumulativeDataAPIError {
  * @public
  */
 export class BulkWriteError extends CumulativeDataAPIError {
+  /**
+   * The name of the error. This is always 'BulkWriteError'.
+   */
   name = 'BulkWriteError';
+
+  /**
+   * The partial result of the `BulkWrite` operation that was performed. This is *always* defined, and is the result
+   * of all successful operations.
+   */
   declare public readonly partialResult: BulkWriteResult<SomeDoc>;
 }
 

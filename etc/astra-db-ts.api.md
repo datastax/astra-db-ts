@@ -70,7 +70,7 @@ export interface AdminSpawnOptions {
     monitorCommands?: boolean;
 }
 
-// @public (undocumented)
+// @public
 export type AnyBulkWriteOperation<TSchema extends SomeDoc> = {
     insertOne: InsertOneModel<TSchema>;
 } | {
@@ -87,15 +87,13 @@ export type AnyBulkWriteOperation<TSchema extends SomeDoc> = {
 
 // @public
 export interface ArrayFilterOps<Elem> {
-    // (undocumented)
     $all?: Elem;
-    // (undocumented)
     $size?: number;
 }
 
 // Warning: (ae-forgotten-export) The symbol "PickArrayTypes" needs to be exported by the entry point index.d.ts
 //
-// @public (undocumented)
+// @public
 export type ArrayUpdate<Schema> = {
     [K in keyof Schema as any[] extends Schema[K] ? K : never]?: PickArrayTypes<Schema[K]>;
 };
@@ -132,9 +130,7 @@ export class AstraDbAdmin extends DbAdmin {
 
 // @public
 export class BulkWriteError extends CumulativeDataAPIError {
-    // (undocumented)
     name: string;
-    // (undocumented)
     readonly partialResult: BulkWriteResult<SomeDoc>;
 }
 
@@ -146,24 +142,22 @@ export interface BulkWriteOrderedOptions extends WithTimeout {
     ordered: true;
 }
 
-// @public (undocumented)
+// @public
 export class BulkWriteResult<Schema extends SomeDoc> {
-    constructor(deletedCount?: number, insertedCount?: number, matchedCount?: number, modifiedCount?: number, upsertedCount?: number, upsertedIds?: Record<number, IdOf<Schema>>, _raw?: object[]);
-    // (undocumented)
+    constructor(
+    deletedCount?: number,
+    insertedCount?: number,
+    matchedCount?: number,
+    modifiedCount?: number,
+    upsertedCount?: number,
+    upsertedIds?: Record<number, IdOf<Schema>>, _raw?: object[]);
     readonly deletedCount: number;
-    // (undocumented)
     getRawResponse(): Record<string, any>[];
-    // (undocumented)
-    getUpsertedIdAt(index: number): IdOf<Schema>;
-    // (undocumented)
+    getUpsertedIdAt(index: number): IdOf<Schema> | undefined;
     readonly insertedCount: number;
-    // (undocumented)
     readonly matchedCount: number;
-    // (undocumented)
     readonly modifiedCount: number;
-    // (undocumented)
     readonly upsertedCount: number;
-    // (undocumented)
     readonly upsertedIds: Record<number, IdOf<Schema>>;
 }
 
@@ -188,10 +182,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     deleteAll(options?: WithTimeout): Promise<void>;
     deleteMany(filter?: Filter<Schema>, options?: WithTimeout): Promise<DeleteManyResult>;
     deleteOne(filter?: Filter<Schema>, options?: DeleteOneOptions): Promise<DeleteOneResult>;
-    distinct<Key extends string, GetSim extends boolean = false>(key: Key, filter?: Filter<Schema>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema, GetSim>>)[Key]>[]>;
+    distinct<Key extends string>(key: Key, filter?: Filter<Schema>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]>;
     drop(options?: WithTimeout): Promise<boolean>;
-    find<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOptions<GetSim>): FindCursor<FoundDoc<Schema, GetSim>, FoundDoc<Schema, GetSim>>;
-    findOne<GetSim extends boolean = false>(filter: Filter<Schema>, options?: FindOneOptions<GetSim>): Promise<FoundDoc<Schema, GetSim> | null>;
+    find(filter: Filter<Schema>, options?: FindOptions): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>>;
+    findOne(filter: Filter<Schema>, options?: FindOneOptions): Promise<FoundDoc<Schema> | null>;
     findOneAndDelete(filter: Filter<Schema>, options: FindOneAndDeleteOptions & {
         includeResultMetadata: true;
     }): Promise<ModifyResult<Schema>>;
@@ -219,12 +213,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions): Promise<UpdateOneResult<Schema>>;
 }
 
-// @public (undocumented)
+// @public
 export class CollectionAlreadyExistsError extends DataAPIError {
     constructor(namespace: string, collectionName: string);
-    // (undocumented)
     readonly collectionName: string;
-    // (undocumented)
     readonly namespace: string;
 }
 
@@ -276,7 +268,7 @@ export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTim
     checkExists?: boolean;
 }
 
-// @public (undocumented)
+// @public
 export type CreateDatabaseOptions = AdminBlockingOptions & {
     dbOptions?: DbSpawnOptions;
 };
@@ -286,7 +278,7 @@ export abstract class CumulativeDataAPIError extends DataAPIResponseError {
     readonly partialResult: unknown;
 }
 
-// @public (undocumented)
+// @public
 export type CurrentDate<Schema> = {
     [K in keyof Schema as Schema[K] extends Date | {
         $date: number;
@@ -294,7 +286,7 @@ export type CurrentDate<Schema> = {
 };
 
 // @public
-export class CursorAlreadyInitializedError extends DataAPIError {
+export class CursorIsStartedError extends DataAPIError {
     constructor(message: string);
 }
 
@@ -306,10 +298,10 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
     db(id: string, region: string, options?: DbSpawnOptions): Db;
 }
 
-// @public (undocumented)
+// @public
 export const DataAPIClientEventEmitterBase: new () => TypedEmitter<DataAPIClientEvents>;
 
-// @public (undocumented)
+// @public
 export type DataAPIClientEvents = DataAPICommandEvents & AdminCommandEvents;
 
 // @public
@@ -352,20 +344,19 @@ export class DataAPIResponseError extends DataAPIError {
     readonly message: string;
 }
 
-// @public (undocumented)
+// @public
 export class DataAPITimeout extends DataAPIError {
     constructor(timeout: number);
-    // (undocumented)
     readonly timeout: number;
 }
 
-// @public (undocumented)
+// @public
 export type DatabaseAction = 'park' | 'unpark' | 'resize' | 'resetPassword' | 'addKeyspace' | 'addDatacenters' | 'terminateDatacenter' | 'getCreds' | 'terminate' | 'removeKeyspace' | 'removeMigrationProxy' | 'launchMigrationProxy';
 
-// @public (undocumented)
+// @public
 export type DatabaseCloudProvider = 'AWS' | 'GCP' | 'AZURE';
 
-// @public (undocumented)
+// @public
 export type DatabaseCloudProviderFilter = DatabaseCloudProvider | 'ALL';
 
 // @public
@@ -390,10 +381,10 @@ export interface DatabaseInfo {
     user: string;
 }
 
-// @public (undocumented)
+// @public
 export type DatabaseStatus = 'ACTIVE' | 'PENDING' | 'PREPARING' | 'PREPARED' | 'INITIALIZING' | 'PARKED' | 'PARKING' | 'UNPARKING' | 'TERMINATED' | 'TERMINATING' | 'RESIZING' | 'ERROR' | 'MAINTENANCE' | 'SUSPENDED' | 'UNKNOWN';
 
-// @public (undocumented)
+// @public
 export type DatabaseStatusFilter = DatabaseStatus | 'ALL' | 'NONTERMINATED';
 
 // @public
@@ -404,34 +395,20 @@ export interface DatabaseStorageInfo {
     usedStorage?: number;
 }
 
-// @public (undocumented)
+// @public
 export type DatabaseTier = 'developer' | 'A5' | 'A10' | 'A20' | 'A40' | 'C10' | 'C20' | 'C40' | 'D10' | 'D20' | 'D40' | 'serverless';
 
 // @public
 export interface DateFilterOps {
-    // (undocumented)
-    $date?: number;
-    // (undocumented)
-    $gt?: Date | {
-        $date: number;
-    };
-    // (undocumented)
-    $gte?: Date | {
-        $date: number;
-    };
-    // (undocumented)
-    $lt?: Date | {
-        $date: number;
-    };
-    // (undocumented)
-    $lte?: Date | {
-        $date: number;
-    };
+    $gt?: Date;
+    $gte?: Date;
+    $lt?: Date;
+    $lte?: Date;
 }
 
 // Warning: (ae-forgotten-export) The symbol "ContainsDate" needs to be exported by the entry point index.d.ts
 //
-// @public (undocumented)
+// @public
 export type DateUpdate<Schema> = {
     [K in keyof Schema as ContainsDate<Schema[K]> extends true ? K : never]?: Date | {
         $date: number;
@@ -491,15 +468,12 @@ export interface DefaultIdOptions {
 
 // @public
 export class DeleteManyError extends CumulativeDataAPIError {
-    // (undocumented)
     name: string;
-    // (undocumented)
     readonly partialResult: DeleteManyResult;
 }
 
-// @public (undocumented)
+// @public
 export interface DeleteManyModel<TSchema extends SomeDoc> {
-    // (undocumented)
     filter: Filter<TSchema>;
 }
 
@@ -508,9 +482,8 @@ export interface DeleteManyResult {
     deletedCount: number;
 }
 
-// @public (undocumented)
+// @public
 export interface DeleteOneModel<TSchema extends SomeDoc> {
-    // (undocumented)
     filter: Filter<TSchema>;
 }
 
@@ -527,44 +500,37 @@ export interface DeleteOneResult {
     deletedCount: 0 | 1;
 }
 
-// @public (undocumented)
+// @public
 export abstract class DevOpsAPIError extends Error {
 }
 
-// @public (undocumented)
+// @public
 export interface DevOpsAPIErrorDescriptor {
-    // (undocumented)
-    ID?: number;
-    // (undocumented)
-    message: string;
+    id: number;
+    message?: string;
 }
 
-// @public (undocumented)
+// @public
 export class DevOpsAPIResponseError extends DevOpsAPIError {
+    // @internal
     constructor(error: AxiosError);
-    // (undocumented)
     readonly errors: DevOpsAPIErrorDescriptor[];
-    // (undocumented)
-    readonly rootError: AxiosError;
-    // (undocumented)
     readonly status?: number;
 }
 
-// @public (undocumented)
-export class DevOpsAPITimeout extends DataAPIError {
+// @public
+export class DevOpsAPITimeout extends DevOpsAPIError {
+    // @internal
     constructor(url: string, timeout: number);
-    // (undocumented)
     readonly timeout: number;
-    // (undocumented)
     readonly url: string;
 }
 
-// @public (undocumented)
+// @public
 export class DevOpsUnexpectedStateError extends DevOpsAPIError {
+    // @internal
     constructor(message: string, raw?: AxiosResponse);
-    // (undocumented)
-    readonly rawResponse?: AxiosResponse;
-    // (undocumented)
+    readonly dbInfo?: FullDatabaseInfo;
     readonly status?: number;
 }
 
@@ -597,13 +563,13 @@ export type FilterOps<Elem> = {
     $in?: Elem[];
     $nin?: Elem[];
     $exists?: boolean;
-} & (IsNum<Elem> extends false ? {} : NumFilterOps) & (IsDate<Elem> extends false ? {} : DateFilterOps) & (any[] extends Elem ? ArrayFilterOps<Elem> : {});
+} & (IsNum<Elem> extends false ? {} : NumFilterOps) & (IsDate<Elem> extends false ? {} : (DateFilterOps | Date)) & (any[] extends Elem ? ArrayFilterOps<Elem> : {});
 
 // @public
 export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     [Symbol.asyncIterator](): AsyncGenerator<T, void, void>;
     // @internal
-    constructor(namespace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: FindOptions<boolean>);
+    constructor(namespace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: FindOptions);
     // (undocumented)
     bufferedCount(): number;
     clone(): FindCursor<TRaw, TRaw>;
@@ -663,8 +629,8 @@ export interface FindOneAndUpdateOptions extends WithTimeout {
 }
 
 // @public
-export interface FindOneOptions<GetSim extends boolean> extends WithTimeout {
-    includeSimilarity?: GetSim;
+export interface FindOneOptions extends WithTimeout {
+    includeSimilarity?: boolean;
     projection?: Projection;
     sort?: Sort;
     vector?: number[];
@@ -673,8 +639,8 @@ export interface FindOneOptions<GetSim extends boolean> extends WithTimeout {
 }
 
 // @public
-export interface FindOptions<GetSim extends boolean> {
-    includeSimilarity?: GetSim;
+export interface FindOptions {
+    includeSimilarity?: boolean;
     limit?: number;
     projection?: Projection;
     skip?: number;
@@ -688,7 +654,9 @@ export interface FindOptions<GetSim extends boolean> {
 export type Flatten<Type> = Type extends (infer Item)[] ? Item : Type;
 
 // @public
-export type FoundDoc<Doc, GetSim extends boolean> = WithSim<WithId<Doc>, GetSim>;
+export type FoundDoc<Doc> = WithId<Omit<Doc, '$similarity'> & {
+    $similarity?: number;
+}>;
 
 // @public
 export interface FullCollectionInfo {
@@ -738,10 +706,8 @@ export type IndexingOptions<Schema extends SomeDoc> = {
 
 // @public
 export class InsertManyError extends CumulativeDataAPIError {
-    // (undocumented)
     name: string;
-    // (undocumented)
-    readonly partialResult: InsertManyResult<any>;
+    readonly partialResult: InsertManyResult<SomeDoc>;
 }
 
 // @public
@@ -757,7 +723,7 @@ export interface InsertManyOrderedOptions extends WithTimeout {
 }
 
 // @public
-export interface InsertManyResult<Schema> {
+export interface InsertManyResult<Schema extends SomeDoc> {
     insertedCount: number;
     insertedIds: IdOf<Schema>[];
 }
@@ -772,9 +738,8 @@ export interface InsertManyUnorderedOptions extends WithTimeout {
     vectors?: (number[] | null | undefined)[];
 }
 
-// @public (undocumented)
+// @public
 export interface InsertOneModel<TSchema extends SomeDoc> {
-    // (undocumented)
     document: TSchema;
 }
 
@@ -849,20 +814,16 @@ export interface NoUpsertUpdateOptions {
     upsertedId?: never;
 }
 
-// @public (undocumented)
+// @public
 export type NumberUpdate<Schema> = {
     [K in keyof Schema as IsNum<Schema[K]> extends true ? K : never]?: number | bigint;
 };
 
 // @public
 export interface NumFilterOps {
-    // (undocumented)
     $gt?: number | bigint;
-    // (undocumented)
     $gte?: number | bigint;
-    // (undocumented)
     $lt?: number | bigint;
-    // (undocumented)
     $lte?: number | bigint;
 }
 
@@ -871,9 +832,7 @@ export class ObjectId {
     constructor(id?: string, validate?: boolean);
     equals(other: unknown): boolean;
     getTimestamp(): Date;
-    // (undocumented)
     inspect(): string;
-    // (undocumented)
     toJSON(): {
         $objectId: string;
     };
@@ -886,7 +845,7 @@ export interface PollBlockingOptions extends WithTimeout {
     pollInterval?: number;
 }
 
-// @public (undocumented)
+// @public
 export type Pop<Schema> = {
     [K in keyof ArrayUpdate<Schema>]?: number;
 };
@@ -900,7 +859,7 @@ export interface ProjectionSlice {
     $slice: number | [number, number];
 }
 
-// @public (undocumented)
+// @public
 export type Push<Schema> = {
     [K in keyof ArrayUpdate<Schema>]?: (ArrayUpdate<Schema>[K] | {
         $each: ArrayUpdate<Schema>[K][];
@@ -918,18 +877,10 @@ export interface RawDataAPIResponse {
     status?: Record<string, any>;
 }
 
-// @public (undocumented)
-export type Rename<Schema> = {
-    [K in keyof Schema]?: string;
-};
-
-// @public (undocumented)
+// @public
 export interface ReplaceOneModel<TSchema extends SomeDoc> {
-    // (undocumented)
     filter: Filter<TSchema>;
-    // (undocumented)
-    replacement: TSchema;
-    // (undocumented)
+    replacement: NoId<TSchema>;
     upsert?: boolean;
 }
 
@@ -957,15 +908,18 @@ export type SomeDoc = Record<string, any>;
 export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId;
 
 // @public
-export type Sort = Record<string, 1 | -1> | {
+export type Sort = Record<string, SortDirection> | {
     $vector: number[];
 } | {
     $vectorize: string;
 };
 
 // @public (undocumented)
-export type StrictDateUpdate<Schema> = ContainsDate<Schema> extends true ? {
-    [K in keyof Schema as ContainsDate<Schema[K]> extends true ? K : never]?: Date | {
+export type SortDirection = 1 | -1;
+
+// @public
+export type StrictDateUpdate<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsDate<InNotation> extends true ? {
+    [K in keyof InNotation as ContainsDate<InNotation[K]> extends true ? K : never]?: Date | {
         $date: number;
     };
 } : TypeErr<'Can not perform a date operation on a schema with no dates'>;
@@ -982,16 +936,16 @@ export type StrictFilter<Schema extends SomeDoc> = {
 
 // Warning: (ae-forgotten-export) The symbol "ContainsNum" needs to be exported by the entry point index.d.ts
 //
-// @public (undocumented)
-export type StrictNumberUpdate<Schema> = ContainsNum<Schema> extends true ? {
-    [K in keyof Schema as IsNum<Schema[K]> extends true ? K : never]?: number | bigint;
+// @public
+export type StrictNumberUpdate<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsNum<InNotation> extends true ? {
+    [K in keyof InNotation as IsNum<InNotation[K]> extends true ? K : never]?: number | bigint;
 } : TypeErr<'Can not perform a number operation on a schema with no numbers'>;
 
 // Warning: (ae-forgotten-export) The symbol "ContainsArr" needs to be exported by the entry point index.d.ts
 //
-// @public (undocumented)
-export type StrictPop<Schema> = ContainsArr<Schema> extends true ? {
-    [K in keyof ArrayUpdate<Schema>]?: number;
+// @public
+export type StrictPop<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsArr<InNotation> extends true ? {
+    [K in keyof ArrayUpdate<InNotation>]?: number;
 } : TypeErr<'Can not pop on a schema with no arrays'>;
 
 // @public
@@ -999,13 +953,18 @@ export type StrictProjection<Schema extends SomeDoc> = {
     [K in keyof ToDotNotation<WithId<Schema>>]?: any[] extends (ToDotNotation<WithId<Schema>>)[K] ? 1 | 0 | true | false | ProjectionSlice : 1 | 0 | true | false;
 };
 
-// @public (undocumented)
-export type StrictPush<Schema> = ContainsArr<Schema> extends true ? {
-    [K in keyof ArrayUpdate<Schema>]?: (ArrayUpdate<Schema>[K] | {
-        $each: ArrayUpdate<Schema>[K][];
+// @public
+export type StrictPush<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsArr<InNotation> extends true ? {
+    [K in keyof ArrayUpdate<InNotation>]?: (ArrayUpdate<InNotation>[K] | {
+        $each: ArrayUpdate<InNotation>[K][];
         $position?: number;
     });
 } : TypeErr<'Can not perform array operation on a schema with no arrays'>;
+
+// @public
+export type StrictRename<Schema extends SomeDoc> = {
+    [K in keyof ToDotNotation<Schema>]?: string;
+};
 
 // @public
 export type StrictSort<Schema extends SomeDoc> = {
@@ -1017,19 +976,24 @@ export type StrictSort<Schema extends SomeDoc> = {
 };
 
 // @public
-export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> {
-    $addToSet?: StrictPush<InNotation>;
-    $currentDate?: CurrentDate<InNotation>;
-    $inc?: StrictNumberUpdate<InNotation>;
-    $max?: StrictNumberUpdate<InNotation> | StrictDateUpdate<InNotation>;
-    $min?: StrictNumberUpdate<InNotation> | StrictDateUpdate<InNotation>;
-    $mul?: StrictNumberUpdate<InNotation>;
-    $pop?: StrictPop<InNotation>;
-    $push?: StrictPush<InNotation>;
-    $rename?: Rename<InNotation>;
-    $set?: Partial<InNotation>;
-    $setOnInsert?: Partial<InNotation>;
-    $unset?: Unset<InNotation>;
+export type StrictUnset<Schema extends SomeDoc> = {
+    [K in keyof ToDotNotation<Schema>]?: '' | true | 1;
+};
+
+// @public
+export interface StrictUpdateFilter<Schema extends SomeDoc> {
+    $addToSet?: StrictPush<Schema>;
+    $currentDate?: CurrentDate<ToDotNotation<Schema>>;
+    $inc?: StrictNumberUpdate<Schema>;
+    $max?: StrictNumberUpdate<Schema> | StrictDateUpdate<Schema>;
+    $min?: StrictNumberUpdate<Schema> | StrictDateUpdate<Schema>;
+    $mul?: StrictNumberUpdate<Schema>;
+    $pop?: StrictPop<Schema>;
+    $push?: StrictPush<Schema>;
+    $rename?: StrictRename<Schema>;
+    $set?: Partial<ToDotNotation<Schema>>;
+    $setOnInsert?: Partial<ToDotNotation<Schema>>;
+    $unset?: StrictUnset<Schema>;
 }
 
 // Warning: (ae-forgotten-export) The symbol "Merge" needs to be exported by the entry point index.d.ts
@@ -1045,18 +1009,11 @@ export class TooManyDocsToCountError extends DataAPIError {
     readonly hitServerLimit: boolean;
     // (undocumented)
     readonly limit: number;
-    // (undocumented)
-    name: string;
 }
 
 // @public
 export type TypeErr<S> = unknown & {
     [__error]: S;
-};
-
-// @public (undocumented)
-export type Unset<Schema> = {
-    [K in keyof Schema]?: '' | true | 1;
 };
 
 // @public
@@ -1081,19 +1038,14 @@ export interface UpdateFilter<Schema extends SomeDoc> {
 
 // @public
 export class UpdateManyError extends CumulativeDataAPIError {
-    // (undocumented)
     name: string;
-    // (undocumented)
     readonly partialResult: UpdateManyResult<SomeDoc>;
 }
 
-// @public (undocumented)
+// @public
 export interface UpdateManyModel<TSchema extends SomeDoc> {
-    // (undocumented)
     filter: Filter<TSchema>;
-    // (undocumented)
     update: UpdateFilter<TSchema>;
-    // (undocumented)
     upsert?: boolean;
 }
 
@@ -1105,13 +1057,10 @@ export interface UpdateManyOptions extends WithTimeout {
 // @public
 export type UpdateManyResult<Schema extends SomeDoc> = InternalUpdateResult<Schema, number>;
 
-// @public (undocumented)
+// @public
 export interface UpdateOneModel<TSchema extends SomeDoc> {
-    // (undocumented)
     filter: Filter<TSchema>;
-    // (undocumented)
     update: UpdateFilter<TSchema>;
-    // (undocumented)
     upsert?: boolean;
 }
 
@@ -1138,9 +1087,7 @@ export class UUID {
     constructor(uuid: string, validate?: boolean);
     equals(other: unknown): boolean;
     getTimestamp(): Date | undefined;
-    // (undocumented)
     inspect(): string;
-    // (undocumented)
     toJSON(): {
         $uuid: string;
     };
@@ -1180,13 +1127,6 @@ export type WithId<T> = NoId<T> & {
 export interface WithNamespace {
     namespace?: string;
 }
-
-// @public
-export type WithSim<T, GetSim extends boolean> = GetSim extends true ? Omit<T, '$similarity'> & {
-    $similarity: number;
-} : Omit<T, '$similarity'> & {
-    $similarity?: never;
-};
 
 // @public
 export interface WithTimeout {

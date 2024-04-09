@@ -64,7 +64,7 @@ describe('unit.data-api.errors', () => {
   });
 
   describe('InsertManyError construction', () => {
-    const partialResult: InsertManyResult<SomeId> = { insertedIds: ['1', '2'], insertedCount: 2 };
+    const partialResult: InsertManyResult<SomeDoc> = { insertedIds: ['1', '2'], insertedCount: 2 };
 
     it('should properly construct a single-response InsertManyError', () => {
       const err = mkRespErrorFromResponse(InsertManyError, commands[0], raws[0], partialResult);

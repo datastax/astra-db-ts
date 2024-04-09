@@ -86,7 +86,6 @@ export type StrictFilter<Schema extends SomeDoc> = {
   $not?: StrictFilter<Schema>,
 }
 
-
 /**
  * Represents an expression in a filter statement, such as an exact value, or a filter operator
  *
@@ -110,7 +109,7 @@ export type FilterOps<Elem> = {
   IsNum<Elem> extends false ? {} : NumFilterOps
 ) & (
   // eslint-disable-next-line @typescript-eslint/ban-types -- Intersection w/ {} is a "noop" here
-  IsDate<Elem> extends false ? {} : DateFilterOps
+  IsDate<Elem> extends false ? {} : (DateFilterOps | Date)
 ) & (
   // eslint-disable-next-line @typescript-eslint/ban-types -- Intersection w/ {} is a "noop" here
   any[] extends Elem ? ArrayFilterOps<Elem> : {}
@@ -122,9 +121,21 @@ export type FilterOps<Elem> = {
  * @public
  */
 export interface NumFilterOps {
+  /**
+   * Less than (exclusive) some number
+   */
   $lt?: number | bigint,
+  /**
+   * Less than or equal to some number
+   */
   $lte?: number | bigint,
+  /**
+   * Greater than (exclusive) some number
+   */
   $gt?: number | bigint,
+  /**
+   * Greater than or equal to some number
+   */
   $gte?: number | bigint,
 }
 
@@ -134,11 +145,30 @@ export interface NumFilterOps {
  * @public
  */
 export interface DateFilterOps {
-  $lt?: Date | { $date: number },
-  $lte?: Date | { $date: number },
-  $gt?: Date | { $date: number },
-  $gte?: Date | { $date: number },
-  $date?: number,
+  /**
+   * Less than (exclusive) some date.
+   *
+   * `{ $date: number }` can be replaced with `new Date(number)`.
+   */
+  $lt?: Date,
+  /**
+   * Less than or equal to some date.
+   *
+   * `{ $date: number }` can be replaced with `new Date(number)`.
+   */
+  $lte?: Date,
+  /**
+   * Greater than (exclusive) some date.
+   *
+   * `{ $date: number }` can be replaced with `new Date(number)`.
+   */
+  $gt?: Date,
+  /**
+   * Greater than or equal to some date.
+   *
+   * `{ $date: number }` can be replaced with `new Date(number)`.
+   */
+  $gte?: Date,
 }
 
 /**
@@ -147,6 +177,12 @@ export interface DateFilterOps {
  * @public
  */
 export interface ArrayFilterOps<Elem> {
+  /**
+   * Checks if the array is of a certain size.
+   */
   $size?: number,
+  /**
+   * Checks if the array contains all the specified elements.
+   */
   $all?: Elem,
 }

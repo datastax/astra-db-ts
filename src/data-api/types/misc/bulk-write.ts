@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import type { IdOf, SomeDoc } from '@/src/data-api';
+import type { IdOf, NoId, SomeDoc } from '@/src/data-api';
 import type { Filter, UpdateFilter } from '@/src/data-api/types';
 import { WithTimeout } from '@/src/common/types';
 
@@ -70,29 +70,66 @@ export interface BulkWriteUnorderedOptions extends WithTimeout {
 }
 
 /**
+ * Represents the result of a bulk write operation.
+ *
  * @public
  */
 export class BulkWriteResult<Schema extends SomeDoc> {
   constructor(
+    /**
+     * The number of documents deleted.
+     */
     readonly deletedCount: number = 0,
+    /**
+     * The number of documents inserted.
+     */
     readonly insertedCount: number = 0,
+    /**
+     * The number of documents matched by an update operation.
+     */
     readonly matchedCount: number = 0,
+    /**
+     * The number of documents modified.
+     */
     readonly modifiedCount: number = 0,
+    /**
+     * The number of documents upserted.
+     */
     readonly upsertedCount: number = 0,
+    /**
+     * Upserted document generated ids. Sparse array, indexed by the position of the upserted operation in the bulk
+     * write request.
+     */
     readonly upsertedIds: Record<number, IdOf<Schema>> = {},
     private readonly _raw: object[] = [],
   ) {}
 
+  /**
+   * Returns the raw, internal result.
+   *
+   * @returns the raw, internal result.
+   */
   getRawResponse(): Record<string, any>[] {
     return this._raw;
   }
 
-  getUpsertedIdAt(index: number): IdOf<Schema> {
+  /**
+   * Returns the upserted id at the given index.
+   *
+   * @param index - The index of the upserted id to retrieve.
+   *
+   * @returns The upserted id at the given index, or `undefined` if there is no upserted id at that index.
+   */
+  getUpsertedIdAt(index: number): IdOf<Schema> | undefined {
     return this.upsertedIds[index];
   }
 }
 
 /**
+ * Represents *some* bulk write operation.
+ *
+ * Be careful not to pass in multiple operations in the same object.
+ *
  * @public
  */
 export type AnyBulkWriteOperation<TSchema extends SomeDoc> = {
@@ -110,49 +147,131 @@ export type AnyBulkWriteOperation<TSchema extends SomeDoc> = {
 }
 
 /**
+ * Represents an insertOne operation that can be used in a bulk write operation.
+ *
+ * @field document - The document to insert.
+ *
  * @public
  */
 export interface InsertOneModel<TSchema extends SomeDoc> {
-  document: TSchema;
+  /**
+   * The document to insert.
+   */
+  document: TSchema,
 }
 
 /**
+ * Represents a replaceOne operation that can be used in a bulk write operation.
+ *
+ * @field filter - The filter to choose the document to replace.
+ * @field replacement - The replacement document, which contains no `_id` field.
+ * @field upsert - If true, perform an insert if no documents match the filter.
+ *
  * @public
  */
 export interface ReplaceOneModel<TSchema extends SomeDoc> {
-  filter: Filter<TSchema>;
-  replacement: TSchema;
-  upsert?: boolean;
+  /**
+   * The filter to choose the document to replace.
+   */
+  filter: Filter<TSchema>,
+  /**
+   * The replacement document, which contains no `_id` field.
+   */
+  replacement: NoId<TSchema>,
+  /**
+   * If true, perform an insert if no documents match the filter.
+   *
+   * If false, do not insert if no documents match the filter.
+   *
+   * Defaults to false.
+   *
+   * @defaultValue false
+   */
+  upsert?: boolean,
 }
 
 /**
+ * Represents an updateOne operation that can be used in a bulk write operation.
+ *
+ * @field filter - The filter to choose the document to update.
+ * @field update - The update to apply to the document.
+ * @field upsert - If true, perform an insert if no documents match the filter.
+ *
  * @public
  */
 export interface UpdateOneModel<TSchema extends SomeDoc> {
-  filter: Filter<TSchema>;
-  update: UpdateFilter<TSchema>;
-  upsert?: boolean;
+  /**
+   * The filter to choose the document to update.
+   */
+  filter: Filter<TSchema>,
+  /**
+   * The update to apply to the document.
+   */
+  update: UpdateFilter<TSchema>,
+  /**
+   * If true, perform an insert if no documents match the filter.
+   *
+   * If false, do not insert if no documents match the filter.
+   *
+   * Defaults to false.
+   *
+   * @defaultValue false
+   */
+  upsert?: boolean,
 }
 
 /**
+ * Represents an updateMany operation that can be used in a bulk write operation.
+ *
+ * @field filter - The filter to choose the documents to update.
+ * @field update - The update to apply to the documents.
+ * @field upsert - If true, perform an insert if no documents match the filter.
+ *
  * @public
  */
 export interface UpdateManyModel<TSchema extends SomeDoc> {
-  filter: Filter<TSchema>;
-  update: UpdateFilter<TSchema>;
-  upsert?: boolean;
+  /**
+   * The filter to choose the documents to update.
+   */
+  filter: Filter<TSchema>,
+  /**
+   * The update to apply to the documents.
+   */
+  update: UpdateFilter<TSchema>,
+  /**
+   * If true, perform an insert if no documents match the filter.
+   *
+   * If false, do not insert if no documents match the filter.
+   *
+   * Defaults to false.
+   *
+   * @defaultValue false
+   */
+  upsert?: boolean,
 }
 
 /**
+ * Represents a deleteOne operation that can be used in a bulk write operation.
+ *
+ * @field filter - The filter to choose the document to delete.
+ *
  * @public
  */
 export interface DeleteOneModel<TSchema extends SomeDoc> {
-  filter: Filter<TSchema>;
+  /**
+   * The filter to choose the document to delete.
+   */
+  filter: Filter<TSchema>,
 }
 
 /**
+ * Represents a deleteMany operation that can be used in a bulk write operation.
+ *
  * @public
  */
 export interface DeleteManyModel<TSchema extends SomeDoc> {
-  filter: Filter<TSchema>;
+  /**
+   * The filter to choose the documents to delete.
+   */
+  filter: Filter<TSchema>,
 }

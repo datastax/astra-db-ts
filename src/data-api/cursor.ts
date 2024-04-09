@@ -18,7 +18,7 @@ import {
   Projection,
   Sort,
 } from '@/src/data-api/types';
-import { CursorAlreadyInitializedError, SomeDoc } from '@/src/data-api';
+import { CursorIsStartedError, SomeDoc } from '@/src/data-api';
 import { DataAPIHttpClient } from '@/src/api';
 import { InternalFindOptions, InternalGetMoreCommand } from '@/src/data-api/types/find/find';
 
@@ -433,7 +433,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
 
   private _assertUninitialized(): void {
     if (this._state !== CursorStatus.Uninitialized) {
-      throw new CursorAlreadyInitializedError('Cursor is already initialized/in use; cannot perform options modification. Rewind or clone the cursor.');
+      throw new CursorIsStartedError('Cursor is already initialized/in use; cannot perform options modification. Rewind or clone the cursor.');
     }
   }
 

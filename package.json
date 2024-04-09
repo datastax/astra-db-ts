@@ -1,6 +1,6 @@
 {
   "name": "@datastax/astra-db-ts",
-  "version": "1.0.0-alpha.1",
+  "version": "0.1.4",
   "description": "Astra DB TS Client",
   "contributors": [
     "Kavin Gupta (https://github.com/toptobes)",
@@ -33,19 +33,11 @@
       "tests/setup.ts"
     ]
   },
-  "madge": {
-    "detectiveOptions": {
-      "ts": {
-        "skipTypeImports": true
-      }
-    }
-  },
   "directories": {
     "lib": "src",
     "test": "tests"
   },
   "files": [
-    "src",
     "dist"
   ],
   "publishConfig": {
@@ -58,14 +50,12 @@
   "scripts": {
     "lint": "eslint .",
     "test": "ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts tests/integration/**/*.test.ts tests/integration/**/**/*.test.ts",
-    "test:integration": "ts-mocha --paths -p tsconfig.json tests/integration/**/**/*.test.ts",
-    "test:unit": "ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts",
-    "test:coverage": "nyc npm run test -- -b",
+    "test:all": "env ASTRA_RUN_LONG_TESTS=1 ASTRA_RUN_ADMIN_TESTS=1 ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts tests/integration/**/*.test.ts tests/integration/**/**/*.test.ts",
+    "test:coverage": "nyc npm run test:all -- -b",
     "test:types": "tsc --noEmit --skipLibCheck",
-    "preinstall": "npm run update-version-file",
+    "api-extractor": "api-extractor run -c ./api-extractor.jsonc --local",
     "build": "sh ./scripts/build.sh",
-    "update-version-file": "node -p \"'export const LIB_NAME = ' + JSON.stringify('astra-db-ts') + ';'\" > src/version.ts && node -p \"'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'\" >> src/version.ts",
-    "api-extractor": "api-extractor run -c ./api-extractor.jsonc --local"
+    "version": "npm run build && git add src/version.ts etc/astra-db-ts.api.md"
   },
   "bugs": {
     "url": "https://github.com/datastax/astra-ts-client/issues"
@@ -77,6 +67,7 @@
     "@babel/plugin-proposal-object-rest-spread": "^7.18.0",
     "@babel/preset-env": "^7.18.2",
     "@babel/preset-typescript": "^7.17.12",
+    "@microsoft/api-extractor": "^7.43.0",
     "@types/expect": "^24.3.0",
     "@types/mocha": "^9.1.1",
     "@types/node": "^17.0.36",
@@ -93,9 +84,8 @@
     "typescript": "^5.3.3"
   },
   "dependencies": {
-    "@microsoft/api-extractor": "^7.43.0",
     "axios": "^1.6.7",
-    "bson": "^6.3.0",
+    "bson-objectid": "^2.0.4",
     "object-hash": "^3.0.0",
     "typed-emitter": "^2.1.0",
     "uuidv7": "^0.6.3"

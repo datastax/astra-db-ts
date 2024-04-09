@@ -1,7 +1,7 @@
 # Contents
 1. [Running the tests](#running-the-tests)
 2. [Linting](#linting)
-3. [Building API Reference Documentation](#building-api-reference-documentation)
+3. [Building the library](#building-the-library)
 
 ## Running the tests
 Prerequisites:
@@ -14,13 +14,10 @@ Prerequisites:
 npm run test
 
 # Run only unit tests
-npm run test:unit
+npm run test -- -f 'unit.'
 
 # Run only integration tests
-npm run test:integration
-
-# Run both unit and integration tests with coverage check
-npm run test:coverage
+npm run test -- -f 'integration.'
 
 # Run tsc with the noEmit flag to check for type errors
 npm run test:types
@@ -31,16 +28,25 @@ Tests can be given certain tags to allow for more granular control over which te
 - `[long]`/`'LONG'`: Longer running tests that take more than a few seconds to run
 - `[admin]`/`'ADMIN'`: Tests that require admin permissions to run
 - `[dev]`/`'DEV'`: Tests that require the dev environment to run
+- `[prod]`/`'PROD'`: Tests that require the dev environment to run
+- `[vectorize]`/`'VECTORIZE'`: Tests that require a specific vectorize-enabled kube to run
 
-To enable these tags, you can set the corresponding environment variables to some values. The env variables are in the
-`env.example` file, but they're repeated here for convenience:
-- `ASTRA_RUN_DEV_TESTS`
+To enable these some of these tags, you can set the corresponding environment variables to some values. The env 
+variables are in the `env.example` file, but they're repeated here for convenience:
+- `ASTRA_RUN_VECTORIZE_TESTS`
 - `ASTRA_RUN_LONG_TESTS`
 - `ASTRA_RUN_ADMIN_TESTS`
 
 Or you can run the tests by doing something like
 ```shell
 env ASTRA_RUN_LONG_TESTS=1 npm run test
+```
+
+The `PROD` and `DEV` tags are enabled/disabled automatically, inferred from the astra endpoint URL.
+
+Use the following to run tests with ADMIN and LONG tags automatically enabled (note that doesn't include vectorize tests):
+```shell
+npm run test:all
 ```
 
 ### Adding your own tagged tests
@@ -65,10 +71,18 @@ If a new tag really, really, needs to be added, it can be done by adding a new e
 format, and updating the `assertTestsEnabled` function. However, this should be done sparingly, as it can make the
 test suite harder to manage.
 
+### Coverage testing
+
+To run coverage testing, run the following command:
+```shell
+npm run test:coverage
+```
+
+This uses `test:all` under the hood, as well as a "bail early" flag as there's not really a point continuing to run 
+tests if one of them fails, as the coverage report will be impacted.
+
 ## Linting
-Run `npm run lint` to run ESLint.
-ESLint will point out any formatting and code quality issues it finds.
-You should try to run `npm run lint` before committing to minimize risk of regressions.
+Run `npm run lint` to run ESLint. ESLint will point out any formatting and code quality issues it finds.
 
 ## Building the library
 At the moment, you need to be using a unix-like system to build the library, as it uses a small shell script,
@@ -80,16 +94,3 @@ To build it, just run `npm run build`, which does the following:
 - Runs `tsc` to compile the TypeScript files & resolves path aliases w/ `tsc-alias`
 - Uses `api-extractor` to generate the API report & generate a rolled-up `.d.ts` file
 - Deletes any extraneous `.d.ts` files
-
-## Building API Reference Documentation
-API Documentation of this library is generated using [jsdoc-to-markdown](https://github.com/jsdoc2md/jsdoc-to-markdown)
-
-Run the following to generate API documentation. This takes the `APIReference.hbs` and the library code as input and generates and `APIReference.md` file.
-
-```shell
-# Generate API documentation
-npm run build:docs
-
-# Optionally serve docs locally
-npx markserv APIReference.md
-```

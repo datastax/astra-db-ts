@@ -42,10 +42,10 @@ void dummyCollection<TestSchema>().findOne({
     { 'customer.age': { $gt: 18 } },
     { 'customer.age': { $lt: 50 } },
     { $not: { 'customer.name': { $in: ['John'] } } },
-    { 'purchase_date': { $date: 123 } },
+    { 'purchase_date': new Date(123) },
   ],
-  'purchase_date': { $gte: { $date: 123 } },
-  'items': { $gte: { $date: 123 } },
+  'purchase_date': { $gte: new Date(123) },
+  'items': { $gte: new Date(123) },
   'arr.0': { age: 3 },
   'arr.0.age': 3,
 }, {
@@ -66,10 +66,10 @@ void dummyCollection<TestSchema>().findOne({
     { 'customer.age': { $gt: 18 } },
     { 'customer.age': { $lt: 50 } },
     { $not: { 'customer.name': { $in: ['John'] } } },
-    { 'purchase_date': { $date: 123 } },
+    { 'purchase_date': new Date(123) },
   ],
-  'purchase_date': { $gte: { $date: 123 } },
-  'items': { $gte: { $date: 123 } },
+  'purchase_date': { $gte: new Date(123) },
+  'items': { $gte: new Date(123) },
   'arr.0': { age: 3 },
 } satisfies StrictFilter<TestSchema>, {
   sort: {

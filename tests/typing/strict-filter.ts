@@ -57,13 +57,12 @@ type test1 = Expect<Equal<StrictFilter<SuperBasicSchema>, {
     $lte?: number | bigint,
     $gt?: number | bigint,
     $gte?: number | bigint,
-  } & {
-    $lt?: Date | { $date: number },
-    $lte?: Date | { $date: number },
-    $gt?: Date | { $date: number },
-    $gte?: Date | { $date: number },
-    $date?: number,
-  },
+  } & ({
+    $lt?: Date,
+    $lte?: Date,
+    $gt?: Date,
+    $gte?: Date,
+  } | Date)
   $and?: StrictFilter<SuperBasicSchema>[],
   $or?: StrictFilter<SuperBasicSchema>[],
   $not?: StrictFilter<SuperBasicSchema>,

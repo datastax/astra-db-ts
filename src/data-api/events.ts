@@ -18,6 +18,9 @@ import { DataAPIRequestInfo, DEFAULT_NAMESPACE, hrTimeMs, RawDataAPIResponse } f
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
  * command's lifecycle. Intended for use for monitoring and logging purposes.
  *
+ * **Note that these emit *real* commands, not any abstracted commands like "bulkWrite", "insertMany", or "deleteAll",
+ * which have to be translated into appropriate Data API commands.**
+ *
  * @public
  */
 export type DataAPICommandEvents = {
@@ -37,6 +40,9 @@ export type DataAPICommandEvents = {
 
 /**
  * Common base class for all command events.
+ *
+ * **Note that these emit *real* commands, not any abstracted commands like "bulkWrite", "insertMany", or "deleteAll",
+ * which have to be translated into appropriate Data API commands.**
  *
  * @public
  */
@@ -79,6 +85,9 @@ export abstract class CommandEvent {
 /**
  * Emitted when a command is started, before the initial HTTP request is made.
  *
+ * **Note that these emit *real* commands, not any abstracted commands like "bulkWrite", "insertMany", or "deleteAll",
+ * which have to be translated into appropriate Data API commands.**
+ *
  * @public
  */
 export class CommandStartedEvent extends CommandEvent {
@@ -100,6 +109,9 @@ export class CommandStartedEvent extends CommandEvent {
 
 /**
  * Emitted when a command has succeeded.
+ *
+ * **Note that these emit *real* commands, not any abstracted commands like "bulkWrite", "insertMany", or "deleteAll",
+ * which have to be translated into appropriate Data API commands.**
  *
  * @public
  */
@@ -127,6 +139,9 @@ export class CommandSucceededEvent extends CommandEvent {
 
 /**
  * Emitted when a command has errored.
+ *
+ * **Note that these emit *real* commands, not any abstracted commands like "bulkWrite", "insertMany", or "deleteAll",
+ * which have to be translated into appropriate Data API commands.**
  *
  * @public
  */

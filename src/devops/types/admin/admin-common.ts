@@ -16,21 +16,29 @@
 import { WithTimeout } from '@/src/common/types';
 
 /**
+ * Represents the available cloud providers that Astra offers.
+ *
  * @public
  */
 export type DatabaseCloudProvider = 'AWS' | 'GCP' | 'AZURE';
 
 /**
+ * Defines all possible compute powers (vertical scaling) for a database.
+ *
  * @public
  */
 export type DatabaseTier = 'developer' | 'A5' | 'A10' | 'A20' | 'A40' | 'C10' | 'C20' | 'C40' | 'D10' | 'D20' | 'D40' | 'serverless';
 
 /**
+ * Represents all possible statuses of a database.
+ *
  * @public
  */
 export type DatabaseStatus = 'ACTIVE' | 'PENDING' | 'PREPARING' | 'PREPARED' | 'INITIALIZING' | 'PARKED' | 'PARKING' | 'UNPARKING' | 'TERMINATED' | 'TERMINATING' | 'RESIZING' | 'ERROR' | 'MAINTENANCE' | 'SUSPENDED' | 'UNKNOWN';
 
 /**
+ * List of actions that can be performed on a database.
+ *
  * @public
  */
 export type DatabaseAction = 'park' | 'unpark' | 'resize' | 'resetPassword' | 'addKeyspace' | 'addDatacenters' | 'terminateDatacenter' | 'getCreds' | 'terminate' | 'removeKeyspace' | 'removeMigrationProxy' | 'launchMigrationProxy';

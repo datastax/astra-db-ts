@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { FindCursor, CursorAlreadyInitializedError } from '@/src/data-api';
+import { FindCursor, CursorIsStartedError } from '@/src/data-api';
 import { DataAPIHttpClient } from '@/src/api';
 
 describe('unit.data-api.cursor', async () => {
@@ -66,7 +66,7 @@ describe('unit.data-api.cursor', async () => {
     it('should fail setting filter if cursor is not uninitialized', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       await cursor.close();
-      assert.throws(() => cursor.filter({ _id: '1' }), CursorAlreadyInitializedError);
+      assert.throws(() => cursor.filter({ _id: '1' }), CursorIsStartedError);
     });
 
     it('should set new sort', async () => {
@@ -78,7 +78,7 @@ describe('unit.data-api.cursor', async () => {
     it('should fail setting sort if cursor is not uninitialized', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       await cursor.close();
-      assert.throws(() => cursor.sort({ _id: 1 }), CursorAlreadyInitializedError);
+      assert.throws(() => cursor.sort({ _id: 1 }), CursorIsStartedError);
     });
 
     it('should set new limit', async () => {
@@ -90,7 +90,7 @@ describe('unit.data-api.cursor', async () => {
     it('should fail setting limit if cursor is not uninitialized', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       await cursor.close();
-      assert.throws(() => cursor.limit(10), CursorAlreadyInitializedError);
+      assert.throws(() => cursor.limit(10), CursorIsStartedError);
     });
 
     it('should set new skip', async () => {
@@ -102,7 +102,7 @@ describe('unit.data-api.cursor', async () => {
     it('should fail setting skip if cursor is not uninitialized', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       await cursor.close();
-      assert.throws(() => cursor.skip(5), CursorAlreadyInitializedError);
+      assert.throws(() => cursor.skip(5), CursorIsStartedError);
     });
 
     it('should set new projection', async () => {
@@ -114,7 +114,7 @@ describe('unit.data-api.cursor', async () => {
     it('should fail setting projection if cursor is not uninitialized', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       await cursor.close();
-      assert.throws(() => cursor.project({ _id: 0 }), CursorAlreadyInitializedError);
+      assert.throws(() => cursor.project({ _id: 0 }), CursorIsStartedError);
     });
 
     it('should set new includeSimilarity', async () => {
@@ -132,7 +132,7 @@ describe('unit.data-api.cursor', async () => {
     it('should fail setting includeSimilarity if cursor is not uninitialized', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       await cursor.close();
-      assert.throws(() => cursor.includeSimilarity(true), CursorAlreadyInitializedError);
+      assert.throws(() => cursor.includeSimilarity(true), CursorIsStartedError);
     });
 
     it('should set new mapping', async () => {
@@ -150,7 +150,7 @@ describe('unit.data-api.cursor', async () => {
     it('should fail setting mapping if cursor is not uninitialized', async () => {
       const cursor = new FindCursor<any>('test_keyspace', httpClient, {});
       await cursor.close();
-      assert.throws(() => cursor.map(add1), CursorAlreadyInitializedError);
+      assert.throws(() => cursor.map(add1), CursorIsStartedError);
     });
   });
 });

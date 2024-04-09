@@ -14,7 +14,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import type { SomeDoc } from '@/src/data-api';
+import { CurrentDate, SomeDoc, ToDotNotation } from '@/src/data-api';
 import type { StrictUpdateFilter } from '@/src/data-api/types';
 import type { BasicSchema, ConvolutedSchema1, ConvolutedSchema2, Equal, Expect, Schema } from '@/tests/typing/prelude';
 
@@ -64,7 +64,7 @@ type test1 = Expect<Equal<StrictUpdateFilter<BasicSchema>, {
     'obj.str': string,
     obj: string,
   }>,
-  $currentDate?: Partial<NonNullable<unknown>>,
+  $currentDate?: CurrentDate<ToDotNotation<BasicSchema>>,
   $min?: Partial<{
     num: number | bigint,
     [k: `any.${string}`]: number | bigint,

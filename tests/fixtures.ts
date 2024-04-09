@@ -37,6 +37,8 @@ export const initTestObjects = async (ctx: Context, useHttp2: boolean = true): P
 
   const coll = (!collCreated)
     ? await (async () => {
+        await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
+        await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
         await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace: OTHER_NAMESPACE });
         return await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false })
       })()

@@ -29,7 +29,7 @@ export {
   TooManyDocsToCountError,
   InsertManyError,
   BulkWriteError,
-  CursorAlreadyInitializedError,
+  CursorIsStartedError,
   UpdateManyError,
 } from './errors';
 export * from './events';

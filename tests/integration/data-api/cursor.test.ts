@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, CursorAlreadyInitializedError, DataAPIResponseError, FindCursor } from '@/src/data-api';
+import { Collection, CursorIsStartedError, DataAPIResponseError, FindCursor } from '@/src/data-api';
 import { initTestObjects } from '@/tests/fixtures';
 import { DataAPIHttpClient } from '@/src/api';
 import assert from 'assert';
@@ -114,7 +114,7 @@ describe('integration.data-api.cursor', async () => {
       assert.strictEqual(cursor.bufferedCount(), 3, 'Cursor did not set buffer');
 
       await cursor.close();
-      assert.throws(() => cursor.filter({ _id: '1' }), CursorAlreadyInitializedError);
+      assert.throws(() => cursor.filter({ _id: '1' }), CursorIsStartedError);
       const clone = cursor.clone();
       clone.filter({ _id: '1' });
       assert.deepStrictEqual(clone['_filter'], { _id: '1' }, 'Cursor did not set new filter');

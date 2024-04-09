@@ -17,7 +17,8 @@ import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, hrTimeMs, HttpClient, HttpMethods, 
 import { DataAPIResponseError, DataAPITimeout, ObjectId, UUID } from '@/src/data-api';
 import { MkTimeoutError, TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
-import { mkRespErrorFromResponse } from '@/src/data-api/errors';
+import { CollectionNotFoundError, mkRespErrorFromResponse } from '@/src/data-api/errors';
+import * as util from 'util';
 
 /**
  * @internal
@@ -85,6 +86,11 @@ export class DataAPIHttpClient extends HttpClient {
       if (response.status === 401 || (response.data?.errors?.length > 0 && response.data?.errors[0]?.message === 'UNAUTHENTICATED: Invalid token')) {
         const fauxResponse = mkFauxErroredResponse('Authentication failed; is your token valid?');
         throw mkRespErrorFromResponse(DataAPIResponseError, info.command, fauxResponse);
+      }
+
+      if (response.data?.errors?.length > 0 && response.data?.errors[0]?.errorCode === 'COLLECTION_NOT_EXIST') {
+        const name = response.data?.errors[0]?.message.split(': ')[1];
+        throw new CollectionNotFoundError(info.namespace, name);
       }
 
       if (response.status === 200) {

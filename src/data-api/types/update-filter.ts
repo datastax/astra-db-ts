@@ -251,7 +251,7 @@ export interface UpdateFilter<Schema extends SomeDoc> {
  *
  * @public
  */
-export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> {
+export interface StrictUpdateFilter<Schema extends SomeDoc> {
   /**
    * Set the value of a field in the document.
    *
@@ -264,7 +264,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $set?: Partial<InNotation>,
+  $set?: Partial<ToDotNotation<Schema>>,
   /**
    * Set the value of a field in the document if an upsert is performed.
    *
@@ -277,7 +277,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $setOnInsert?: Partial<InNotation>,
+  $setOnInsert?: Partial<ToDotNotation<Schema>>,
   /**
    * Remove the field from the document.
    *
@@ -290,7 +290,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $unset?: Unset<InNotation>,
+  $unset?: StrictUnset<Schema>,
   /**
    * Increment the value of a field in the document if it's potentially a `number`.
    *
@@ -303,7 +303,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $inc?: StrictNumberUpdate<InNotation>,
+  $inc?: StrictNumberUpdate<Schema>,
   /**
    * Add an element to an array field in the document.
    *
@@ -316,7 +316,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $push?: StrictPush<InNotation>,
+  $push?: StrictPush<Schema>,
   /**
    * Remove an element from an array field in the document.
    *
@@ -329,7 +329,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $pop?: StrictPop<InNotation>,
+  $pop?: StrictPop<Schema>,
   /**
    * Rename a field in the document.
    *
@@ -342,7 +342,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $rename?: Rename<InNotation>,
+  $rename?: StrictRename<Schema>,
   /**
    * Set the value of a field to the current date.
    *
@@ -355,7 +355,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $currentDate?: CurrentDate<InNotation>,
+  $currentDate?: CurrentDate<ToDotNotation<Schema>>,
   /**
    * Only update the field if the specified value is less than the existing value.
    *
@@ -368,7 +368,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $min?: StrictNumberUpdate<InNotation> | StrictDateUpdate<InNotation>,
+  $min?: StrictNumberUpdate<Schema> | StrictDateUpdate<Schema>,
   /**
    * Only update the field if the specified value is greater than the existing value.
    *
@@ -381,7 +381,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $max?: StrictNumberUpdate<InNotation> | StrictDateUpdate<InNotation>,
+  $max?: StrictNumberUpdate<Schema> | StrictDateUpdate<Schema>,
   /**
    * Multiply the value of a field in the document.
    *
@@ -394,7 +394,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $mul?: StrictNumberUpdate<InNotation>,
+  $mul?: StrictNumberUpdate<Schema>,
   /**
    * Add an element to an array field in the document if it does not already exist.
    *
@@ -407,17 +407,21 @@ export interface StrictUpdateFilter<Schema extends SomeDoc, InNotation = ToDotNo
    * }
    * ```
    */
-  $addToSet?: StrictPush<InNotation>,
+  $addToSet?: StrictPush<Schema>,
 }
 
 /**
+ * Very strongly types the unset operation (inc. dot notation schema).
+ *
  * @public
  */
-export type Unset<Schema> = {
-  [K in keyof Schema]?: '' | true | 1
+export type StrictUnset<Schema extends SomeDoc> = {
+  [K in keyof ToDotNotation<Schema>]?: '' | true | 1
 }
 
 /**
+ * Weaker version os StrictPop which allows for more flexibility in typing pop operations.
+ *
  * @public
  */
 export type Pop<Schema> ={
@@ -425,13 +429,17 @@ export type Pop<Schema> ={
 }
 
 /**
+ * Strongly types the pop operation (inc. dot notation schema).
+ *
  * @public
  */
-export type StrictPop<Schema> = ContainsArr<Schema> extends true ? {
-  [K in keyof ArrayUpdate<Schema>]?: number
+export type StrictPop<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsArr<InNotation> extends true ? {
+  [K in keyof ArrayUpdate<InNotation>]?: number
 } : TypeErr<'Can not pop on a schema with no arrays'>
 
 /**
+ * Weaker version of StrictPush which allows for more flexibility in typing push operations.
+ *
  * @public
  */
 export type Push<Schema> = {
@@ -442,23 +450,29 @@ export type Push<Schema> = {
 }
 
 /**
+ * Strongly types the push operation (inc. dot notation schema).
+ *
  * @public
  */
-export type StrictPush<Schema> = ContainsArr<Schema> extends true ? {
-  [K in keyof ArrayUpdate<Schema>]?: (
-    | ArrayUpdate<Schema>[K]
-    | { $each: ArrayUpdate<Schema>[K][], $position?: number }
+export type StrictPush<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsArr<InNotation> extends true ? {
+  [K in keyof ArrayUpdate<InNotation>]?: (
+    | ArrayUpdate<InNotation>[K]
+    | { $each: ArrayUpdate<InNotation>[K][], $position?: number }
   )
 } : TypeErr<'Can not perform array operation on a schema with no arrays'>
 
 /**
+ * Strongly types the rename operation (inc. dot notation schema).
+ *
  * @public
  */
-export type Rename<Schema> = {
-  [K in keyof Schema]?: string
+export type StrictRename<Schema extends SomeDoc> = {
+  [K in keyof ToDotNotation<Schema>]?: string
 }
 
 /**
+ * Weaker version of StrictNumberUpdate which allows for more flexibility in typing number update operations.
+ *
  * @public
  */
 export type NumberUpdate<Schema> = {
@@ -466,13 +480,17 @@ export type NumberUpdate<Schema> = {
 }
 
 /**
+ * Strongly types number update operations (inc. dot notation schema).
+ *
  * @public
  */
-export type StrictNumberUpdate<Schema> = ContainsNum<Schema> extends true ? {
-  [K in keyof Schema as IsNum<Schema[K]> extends true ? K : never]?: number | bigint
+export type StrictNumberUpdate<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsNum<InNotation> extends true ? {
+  [K in keyof InNotation as IsNum<InNotation[K]> extends true ? K : never]?: number | bigint
 } : TypeErr<'Can not perform a number operation on a schema with no numbers'>;
 
 /**
+ * Weaker version of StrictDateUpdate which allows for more flexibility in typing date update operations.
+ *
  * @public
  */
 export type DateUpdate<Schema> = {
@@ -480,13 +498,17 @@ export type DateUpdate<Schema> = {
 };
 
 /**
+ * Strongly types date update operations (inc. dot notation schema).
+ *
  * @public
  */
-export type StrictDateUpdate<Schema> = ContainsDate<Schema> extends true ? {
-  [K in keyof Schema as ContainsDate<Schema[K]> extends true ? K : never]?: Date | { $date: number }
+export type StrictDateUpdate<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsDate<InNotation> extends true ? {
+  [K in keyof InNotation as ContainsDate<InNotation[K]> extends true ? K : never]?: Date | { $date: number }
 } : TypeErr<'Can not perform a date operation on a schema with no dates'>;
 
 /**
+ * Types some array operations. Not inherently strict or weak.
+ *
  * @public
  */
 export type ArrayUpdate<Schema> = {
@@ -494,6 +516,8 @@ export type ArrayUpdate<Schema> = {
 };
 
 /**
+ * Types the $currentDate operation. Not inherently strict or weak.
+ *
  * @public
  */
 export type CurrentDate<Schema> =  {

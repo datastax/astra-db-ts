@@ -1,0 +1,4 @@
+{
+  "testScript": "test:types",
+  "anyBranch": true
+}

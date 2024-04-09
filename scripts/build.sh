@@ -1,7 +1,7 @@
 #!/usr/bin/sh
 
 rm -rf ./dist
-node -p "'export const LIB_NAME = ' + JSON.stringify('astra-db-ts') + ';'" > src/version.ts
+echo "export const LIB_NAME = 'astra-db-ts';" > src/version.ts
 node -p "'export const LIB_VERSION = ' + JSON.stringify(require('./package.json').version) + ';'" >> src/version.ts
 npx tsc --project tsconfig.build.json
 npx tsc-alias -p tsconfig.build.json

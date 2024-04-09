@@ -25,6 +25,7 @@ import { CollectionAlreadyExistsError, DataAPIResponseError, Db } from '@/src/da
 import { DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE } from '@/src/api';
 import { DataAPIClient } from '@/src/client';
 import process from 'process';
+import { CollectionNotFoundError } from '@/src/data-api/errors';
 
 describe('integration.data-api.db', async () => {
   let db: Db;
@@ -223,7 +224,7 @@ describe('integration.data-api.db', async () => {
         await db.command({ findOne: {} }, { collection: EPHEMERAL_COLLECTION_NAME });
         assert.fail('Expected an error');
       } catch (e) {
-        assert.ok(e instanceof DataAPIResponseError);
+        assert.ok(e instanceof CollectionNotFoundError);
       }
     });
   });

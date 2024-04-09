@@ -14,9 +14,10 @@
 
 import { takeWhile } from './utils';
 import { FindCursor } from '@/src/data-api/cursor';
-import { Db, SomeDoc } from '@/src/data-api';
+import { Db, SomeDoc, SomeId } from '@/src/data-api';
 import {
   BulkWriteError,
+  CollectionNotFoundError,
   DataAPIResponseError,
   DeleteManyError,
   InsertManyError,
@@ -1436,7 +1437,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     const collection = results.find((c) => c.name === this.collectionName);
 
     if (!collection) {
-      throw new Error(`Collection '${this.collectionName}' not found`);
+      throw new CollectionNotFoundError(this.namespace, this.collectionName);
     }
 
     return collection.options ?? {};
@@ -1514,7 +1515,7 @@ const insertManyOrdered = async <Schema>(httpClient: DataAPIHttpClient, document
       const desc = e.detailedErrorDescriptors[0];
 
       insertedIds.push(...desc.rawResponse.status?.insertedIds ?? []);
-      throw mkRespErrorFromResponse(InsertManyError, desc.command, desc.rawResponse, { insertedIds: insertedIds, insertedCount: insertedIds.length })
+      throw mkRespErrorFromResponse(InsertManyError, desc.command, desc.rawResponse, { insertedIds: insertedIds as SomeId[], insertedCount: insertedIds.length })
     }
   }
 
@@ -1560,7 +1561,7 @@ const insertManyUnordered = async <Schema>(httpClient: DataAPIHttpClient, docume
   await Promise.all(workers);
 
   if (failCommands.length > 0) {
-    throw mkRespErrorFromResponses(InsertManyError, failCommands, failRaw, { insertedIds: insertedIds, insertedCount: insertedIds.length });
+    throw mkRespErrorFromResponses(InsertManyError, failCommands, failRaw, { insertedIds: insertedIds as SomeId[], insertedCount: insertedIds.length });
   }
 
   return insertedIds;

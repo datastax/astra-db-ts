@@ -16,11 +16,15 @@ import { DatabaseCloudProvider, DatabaseStatus, } from '@/src/devops/types';
 import { WithTimeout } from '@/src/common/types';
 
 /**
+ * Represents all possible statuses of a database that you can filter by.
+ *
  * @public
  */
 export type DatabaseStatusFilter = DatabaseStatus | 'ALL' | 'NONTERMINATED';
 
 /**
+ * Represents all possible cloud providers that you can filter by.
+ *
  * @public
  */
 export type DatabaseCloudProviderFilter = DatabaseCloudProvider | 'ALL';
