@@ -1,10 +1,11 @@
 import { AdminBlockingOptions, FullDatabaseInfo } from '@/src/devops/types';
-import { DEFAULT_DEVOPS_API_ENDPOINT, DevOpsAPIHttpClient, HttpClient, HttpMethods } from '@/src/api';
+import { DEFAULT_DEVOPS_API_ENDPOINT, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
 import { Db } from '@/src/data-api';
-import { AdminSpawnOptions, InternalRootClientOpts } from '@/src/client';
+import { AdminSpawnOptions } from '@/src/client';
 import { DbAdmin } from '@/src/devops/db-admin';
 import { WithTimeout } from '@/src/common/types';
 import { validateAdminOpts } from '@/src/devops/astra-admin';
+import { InternalRootClientOpts } from '@/src/client/types';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -41,13 +42,18 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(_db: Db, httpClient: HttpClient, options: InternalRootClientOpts['adminOptions']) {
+  constructor(_db: Db, options: InternalRootClientOpts) {
     super();
 
+    const adminOpts = options.adminOptions;
+
     Object.defineProperty(this, '_httpClient', {
-      value: httpClient.cloneInto(DevOpsAPIHttpClient, (c) => {
-        c.baseUrl = options.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINT;
-        c.monitorCommands = options.monitorCommands;
+      value: new DevOpsAPIHttpClient({
+        baseUrl: adminOpts.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINT,
+        applicationToken: adminOpts.adminToken,
+        monitorCommands: adminOpts.monitorCommands,
+        fetchCtx: options.fetchCtx,
+        emitter: options.emitter,
       }),
       enumerable: false,
     });
@@ -56,10 +62,6 @@ export class AstraDbAdmin extends DbAdmin {
       value: _db,
       enumerable: false,
     });
-
-    if (options.adminToken) {
-      this._httpClient.applicationToken = options.adminToken;
-    }
   }
 
   /**
@@ -113,7 +115,8 @@ export class AstraDbAdmin extends DbAdmin {
       method: HttpMethods.Get,
       path: `/databases/${this._db.id}`,
     }, options);
-    return resp.data;
+
+    return resp.data as FullDatabaseInfo;
   }
 
   /**
@@ -261,11 +264,14 @@ export class AstraDbAdmin extends DbAdmin {
 /**
  * @internal
  */
-export function mkDbAdmin(db: Db, httpClient: HttpClient, rootOpts: InternalRootClientOpts, options?: AdminSpawnOptions): AstraDbAdmin {
+export function mkDbAdmin(db: Db, rootOpts: InternalRootClientOpts, options?: AdminSpawnOptions): AstraDbAdmin {
   validateAdminOpts(options);
 
-  return new AstraDbAdmin(db, httpClient, {
-    ...rootOpts.adminOptions,
-    ...options,
+  return new AstraDbAdmin(db, {
+    ...rootOpts,
+    adminOptions: {
+      ...rootOpts.adminOptions,
+      ...options,
+    },
   });
 }

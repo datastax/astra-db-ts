@@ -14,6 +14,7 @@
 
 import { DataAPIClientEvents } from '@/src/client/data-api-client';
 import TypedEmitter from 'typed-emitter';
+import { FetchCtx } from '@/src/api';
 
 /**
  * The caller information to send with requests, of the form `[name, version?]`, or an array of such.
@@ -43,6 +44,24 @@ export type Caller = [name: string, version?: string];
  */
 export interface DataAPIClientOptions {
   /**
+   * Whether to prefer HTTP/2 for requests to the Data API.
+   *
+   * Both versions are generally interchangeable, but HTTP2 is generally recommended for better performance.
+   *
+   * Defaults to `true` if never provided.
+   *
+   * @defaultValue true
+   */
+  preferHttp2?: boolean,
+  /**
+   * The default options when spawning a {@link Db} instance.
+   */
+  dbOptions?: DbSpawnOptions,
+  /**
+   * The default options when spawning an {@link AstraAdmin} instance.
+   */
+  adminOptions?: AdminSpawnOptions,
+  /**
    * The caller information to send with requests, of the form `[name, version?]`, or an array of such.
    *
    * **Intended generally for integrations or frameworks that wrap the client.**
@@ -71,14 +90,6 @@ export interface DataAPIClientOptions {
    * ```
    */
   caller?: Caller | Caller[],
-  /**
-   * The default options when spawning a {@link Db} instance.
-   */
-  dbOptions?: DbSpawnOptions,
-  /**
-   * The default options when spawning an {@link AstraAdmin} instance.
-   */
-  adminOptions?: AdminSpawnOptions,
 }
 
 /**
@@ -183,18 +194,6 @@ export interface DbSpawnOptions {
    */
   token?: string,
   /**
-   * Whether to use HTTP/2 for requests.
-   *
-   * Both versions are typically interchangeable, but HTTP2 is generally recommended for better performance. However,
-   * some errors may differ between the two versions, due to different underlying implementations.
-   *
-   * Defaults to `true` if never provided. However, if it was provided when creating the {@link DataAPIClient}, it will
-   * default to that value instead.
-   *
-   * @defaultValue true
-   */
-  useHttp2?: boolean,
-  /**
    * The path to the Data API, which is going to be `api/json/v1` for all Astra instances. However, it may vary
    * if you're using a different Data API-compatible endpoint.
    *
@@ -289,11 +288,12 @@ export interface AdminSpawnOptions {
 }
 
 /**
- * @public
+ * @internal
  */
 export interface InternalRootClientOpts {
   caller?: Caller | Caller[],
   emitter: TypedEmitter<DataAPIClientEvents>,
+  fetchCtx: FetchCtx,
   dbOptions: DbSpawnOptions & {
     token: string,
     monitorCommands: boolean,

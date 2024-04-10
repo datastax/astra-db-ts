@@ -130,10 +130,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     });
 
     Object.defineProperty(this, '_httpClient', {
-      value: httpClient.cloneInto(DataAPIHttpClient, c => {
-        c.collection = this.collectionName;
-        c.namespace = this.namespace;
-      }),
+      value: httpClient.withCollection(this.namespace, this.collectionName),
       enumerable: false,
     });
 

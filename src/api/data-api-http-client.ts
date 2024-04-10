@@ -13,7 +13,16 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, hrTimeMs, HttpClient, HttpMethods, RawDataAPIResponse } from '@/src/api';
+import {
+  DEFAULT_DATA_API_AUTH_HEADER,
+  DEFAULT_NAMESPACE,
+  DEFAULT_TIMEOUT,
+  hrTimeMs,
+  HttpClient,
+  HTTPClientOptions,
+  HttpMethods,
+  RawDataAPIResponse,
+} from '@/src/api';
 import { DataAPIResponseError, DataAPITimeout, ObjectId, UUID } from '@/src/data-api';
 import { MkTimeoutError, TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
@@ -35,12 +44,37 @@ type ExecuteCommandOptions = TimeoutOptions & {
   namespace?: string;
 }
 
+type DataAPIHttpClientOptions = HTTPClientOptions & {
+  namespace: string;
+}
+
 /**
  * @internal
  */
 export class DataAPIHttpClient extends HttpClient {
   public collection?: string;
   public namespace?: string;
+  readonly #props: DataAPIHttpClientOptions;
+
+  constructor(props: DataAPIHttpClientOptions) {
+    super({
+      ...props,
+      mkAuthHeader: (token) => ({ [DEFAULT_DATA_API_AUTH_HEADER]: token }),
+      fetchCtx: {
+        preferred: props.fetchCtx.preferred,
+        closed: props.fetchCtx.closed,
+      },
+    });
+    this.namespace = props.namespace;
+    this.#props = props;
+  }
+
+  public withCollection(namespace: string, collection: string): DataAPIHttpClient {
+    const clone = new DataAPIHttpClient(this.#props);
+    clone.collection = collection;
+    clone.namespace = namespace;
+    return clone;
+  }
 
   public timeoutManager(timeoutMs: number | undefined) {
     return mkTimeoutManager(timeoutMs);

@@ -12,25 +12,49 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Caller } from '@/src/client';
 import { TimeoutManager } from '@/src/api/timeout-managers';
 import { HttpMethods } from '@/src/api/constants';
 import TypedEmitter from 'typed-emitter';
 import { DataAPICommandEvents } from '@/src/data-api/events';
+import { context } from 'fetch-h2';
+import { Headers } from 'fetch-h2/dist/lib/headers';
 
 /**
  * @internal
  */
 export interface HTTPClientOptions {
-  baseUrl: string;
-  caller?: Caller | Caller[];
-  baseApiPath?: string;
-  applicationToken: string;
-  useHttp2?: boolean;
-  requestStrategy?: HTTPRequestStrategy;
-  userAgent?: string;
-  emitter: TypedEmitter<DataAPICommandEvents>;
-  monitorCommands: boolean;
+  baseUrl: string,
+  baseApiPath?: string,
+  applicationToken: string,
+  emitter: TypedEmitter<DataAPICommandEvents>,
+  monitorCommands: boolean,
+  fetchCtx: FetchCtx,
+}
+
+/**
+ * @internal
+ */
+export interface InternalHTTPClientOptions extends Omit<HTTPClientOptions, 'fetchCtx'> {
+  fetchCtx: InternalFetchCtx,
+  mkAuthHeader: (token: string) => Record<string, any>,
+}
+
+/**
+ * @internal
+ */
+export interface FetchCtx {
+  preferred: ReturnType<typeof context>,
+  http1: ReturnType<typeof context>,
+  preferredType: 'http1' | 'http2',
+  closed: { ref: boolean },
+}
+
+/**
+ * @internal
+ */
+export interface InternalFetchCtx {
+  preferred: ReturnType<typeof context>,
+  closed: { ref: boolean },
 }
 
 /**
@@ -47,7 +71,7 @@ export interface RawDataAPIResponse {
  */
 export interface GuaranteedAPIResponse {
   data?: Record<string, any>,
-  headers: Record<string, string>,
+  headers: Headers,
   status: number,
 }
 
@@ -66,22 +90,4 @@ export interface HTTPRequestInfo {
   method: HttpMethodStrings,
   reviver?: (key: string, value: any) => any,
   timeoutManager: TimeoutManager,
-}
-
-/**
- * @internal
- */
-export interface InternalHTTPRequestInfo extends HTTPRequestInfo {
-  token: string,
-  method: HttpMethodStrings,
-  userAgent: string,
-}
-
-/**
- * @internal
- */
-export interface HTTPRequestStrategy {
-  request: (params: InternalHTTPRequestInfo) => Promise<GuaranteedAPIResponse>;
-  close?: () => void;
-  closed?: boolean;
 }

@@ -14,6 +14,20 @@
 
 import { LIB_NAME, LIB_VERSION } from '@/src/version';
 
+export const RAG_STACK_REQUESTED_WITH = (() => {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const lib = require('ragstack-ai');
+
+    if (!lib['LIB_NAME'] || !lib['LIB_VERSION']) {
+      return '';
+    }
+    return lib['LIB_NAME'] + '/' + lib['LIB_VERSION'];
+  } catch (e) {
+    return '';
+  }
+})();
+
 /**
  * @internal
  */

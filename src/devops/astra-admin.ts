@@ -59,9 +59,9 @@ export class AstraAdmin {
       value: new DevOpsAPIHttpClient({
         baseUrl: adminOpts.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINT,
         applicationToken: adminOpts.adminToken,
-        caller: options.caller,
         monitorCommands: adminOpts.monitorCommands,
         emitter: options.emitter,
+        fetchCtx: options.fetchCtx,
       }),
       enumerable: false,
     });
@@ -255,7 +255,8 @@ export class AstraAdmin {
         starting_after: options?.skip,
       },
     }, options);
-    return resp.data;
+
+    return resp.data as FullDatabaseInfo[];
   }
 
   /**
@@ -324,14 +325,14 @@ export class AstraAdmin {
       path: '/databases',
       data: definition,
     }, {
-      id: (resp) => resp.headers.location,
+      id: (resp) => resp.headers.get('location')!,
       target: 'ACTIVE',
       legalStates: ['INITIALIZING', 'PENDING'],
       defaultPollInterval: 10000,
       options,
     });
 
-    const db = mkDb(this.#defaultOpts, resp.headers.location, definition.region, { ...options?.dbOptions, namespace: definition.keyspace });
+    const db = mkDb(this.#defaultOpts, resp.headers.get('location')!, definition.region, { ...options?.dbOptions, namespace: definition.keyspace });
     return db.admin(this.#defaultOpts.adminOptions);
   }
 

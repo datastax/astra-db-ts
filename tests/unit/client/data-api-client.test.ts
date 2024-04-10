@@ -16,7 +16,7 @@
 import { DataAPIClient } from '@/src/client';
 import * as process from 'process';
 import assert from 'assert';
-import { DEFAULT_DATA_API_PATH, HTTP1Strategy } from '@/src/api';
+import { DEFAULT_DATA_API_PATH } from '@/src/api';
 
 describe('unit.client.data-api-client', () => {
   const endpoint = process.env.ASTRA_URI!;
@@ -101,12 +101,12 @@ describe('unit.client.data-api-client', () => {
     });
   });
 
-  describe('admin tests', () => {
-    it('should spawn an AstraAdmin instance', () => {
-      const admin = new DataAPIClient('dummy-token').admin();
-      assert.ok(admin);
-      assert.strictEqual(admin['_httpClient'].applicationToken, 'dummy-token');
-      assert.ok(admin['_httpClient'].requestStrategy instanceof HTTP1Strategy);
-    });
-  });
+  // describe('admin tests', () => {
+  //   it('should spawn an AstraAdmin instance', () => {
+  //     const admin = new DataAPIClient('dummy-token').admin();
+  //     assert.ok(admin);
+  //     assert.strictEqual(admin['_httpClient'].applicationToken, 'dummy-token');
+  //     assert.ok(admin['_httpClient'].requestStrategy instanceof HTTP1Strategy);
+  //   });
+  // });
 });

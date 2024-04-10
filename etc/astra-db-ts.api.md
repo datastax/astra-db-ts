@@ -4,8 +4,8 @@
 
 ```ts
 
-import type { AxiosError } from 'axios';
-import { AxiosResponse } from 'axios';
+import { context as context_2 } from 'fetch-h2';
+import { Headers as Headers_2 } from 'fetch-h2/dist/lib/headers';
 import TypedEmitter from 'typed-emitter';
 
 // @public
@@ -57,8 +57,10 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
 
 // @public
 export class AdminCommandSucceededEvent extends AdminCommandEvent {
+    // Warning: (ae-forgotten-export) The symbol "GuaranteedAPIResponse" needs to be exported by the entry point index.d.ts
+    //
     // @internal
-    constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, resp: AxiosResponse, started: number);
+    constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, resp: GuaranteedAPIResponse, started: number);
     readonly duration: number;
     readonly resBody?: Record<string, any>;
 }
@@ -115,10 +117,10 @@ export class AstraAdmin {
 
 // @public
 export class AstraDbAdmin extends DbAdmin {
-    // Warning: (ae-forgotten-export) The symbol "HttpClient" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "InternalRootClientOpts" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(_db: Db, httpClient: HttpClient, options: InternalRootClientOpts['adminOptions']);
+    constructor(_db: Db, options: InternalRootClientOpts);
     createNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
     db(): Db;
     drop(options?: AdminBlockingOptions): Promise<void>;
@@ -294,6 +296,7 @@ export class CursorIsStartedError extends DataAPIError {
 export class DataAPIClient extends DataAPIClientEventEmitterBase {
     constructor(token: string, options?: DataAPIClientOptions | null);
     admin(options?: AdminSpawnOptions): AstraAdmin;
+    close(): Promise<void>;
     db(endpoint: string, options?: DbSpawnOptions): Db;
     db(id: string, region: string, options?: DbSpawnOptions): Db;
 }
@@ -309,6 +312,8 @@ export interface DataAPIClientOptions {
     adminOptions?: AdminSpawnOptions;
     caller?: Caller | Caller[];
     dbOptions?: DbSpawnOptions;
+    // (undocumented)
+    preferHttp2?: boolean;
 }
 
 // @public
@@ -416,22 +421,17 @@ export type DateUpdate<Schema> = {
 };
 
 // @public
-export class Db implements Disposable {
-    [Symbol.dispose](): void;
+export class Db {
     // @internal
     constructor(endpoint: string, options: InternalRootClientOpts);
     admin(options?: AdminSpawnOptions): AstraDbAdmin;
-    close(): void;
     collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: WithNamespace): Collection<Schema>;
     collections(options?: WithNamespace & WithTimeout): Promise<Collection[]>;
     command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse>;
     createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>>;
     dropCollection(name: string, options?: DropCollectionOptions): Promise<boolean>;
-    // (undocumented)
-    httpStrategy(): 'http1' | 'http2';
     get id(): string;
     info(options?: WithTimeout): Promise<DatabaseInfo>;
-    isClosed(): boolean | undefined;
     listCollections(options: ListCollectionsOptions & {
         nameOnly: true;
     }): Promise<string[]>;
@@ -458,7 +458,6 @@ export interface DbSpawnOptions {
     monitorCommands?: boolean;
     namespace?: string;
     token?: string;
-    useHttp2?: boolean;
 }
 
 // @public
@@ -513,7 +512,7 @@ export interface DevOpsAPIErrorDescriptor {
 // @public
 export class DevOpsAPIResponseError extends DevOpsAPIError {
     // @internal
-    constructor(error: AxiosError);
+    constructor(resp: GuaranteedAPIResponse);
     readonly errors: DevOpsAPIErrorDescriptor[];
     readonly status?: number;
 }
@@ -529,7 +528,7 @@ export class DevOpsAPITimeout extends DevOpsAPIError {
 // @public
 export class DevOpsUnexpectedStateError extends DevOpsAPIError {
     // @internal
-    constructor(message: string, raw?: AxiosResponse);
+    constructor(message: string, raw?: GuaranteedAPIResponse);
     readonly dbInfo?: FullDatabaseInfo;
     readonly status?: number;
 }
@@ -753,24 +752,6 @@ export interface InsertOneOptions extends WithTimeout {
 // @public
 export interface InsertOneResult<Schema> {
     insertedId: IdOf<Schema>;
-}
-
-// @public (undocumented)
-export interface InternalRootClientOpts {
-    // (undocumented)
-    adminOptions: AdminSpawnOptions & {
-        adminToken: string;
-        monitorCommands: boolean;
-    };
-    // (undocumented)
-    caller?: Caller | Caller[];
-    // (undocumented)
-    dbOptions: DbSpawnOptions & {
-        token: string;
-        monitorCommands: boolean;
-    };
-    // (undocumented)
-    emitter: TypedEmitter<DataAPIClientEvents>;
 }
 
 // @public

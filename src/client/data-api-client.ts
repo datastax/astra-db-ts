@@ -26,6 +26,8 @@ import EventEmitter from 'events';
 import { DataAPICommandEvents } from '@/src/data-api/events';
 import { AdminCommandEvents } from '@/src/devops';
 import { validateOption } from '@/src/data-api/utils';
+import { context } from 'fetch-h2';
+import { buildUserAgent } from '@/src/api';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -100,8 +102,30 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
 
     validateRootOpts(options);
 
+    const baseCtxOptions = {
+      userAgent: buildUserAgent(options?.caller),
+      overwriteUserAgent: true,
+    };
+
+    const http1Ctx = context({
+      ...baseCtxOptions,
+      httpsProtocols: ['http1'],
+    });
+
+    const preferredCtx = (options?.preferHttp2 !== false)
+      ? context(baseCtxOptions)
+      : http1Ctx;
+
     this.#options = {
       ...options,
+      fetchCtx: {
+        http1: http1Ctx,
+        preferred: preferredCtx,
+        preferredType: (options?.preferHttp2 !== false)
+          ? 'http2'
+          : 'http1',
+        closed: { ref: false },
+      },
       dbOptions: {
         monitorCommands: false,
         token: token,
@@ -213,6 +237,23 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
   public admin(options?: AdminSpawnOptions): AstraAdmin {
     return mkAdmin(this.#options, options);
   }
+
+  /**
+   * Closes the client and disconnects all underlying connections. This should be called when the client is no longer
+   * needed to free up resources.
+   *
+   * The client will be no longer usable after this method is called.
+   *
+   * @remarks
+   * This method is idempotent and can be called multiple times without issue.
+   *
+   * @returns A promise that resolves when the client has been closed.
+   */
+  public async close(): Promise<void> {
+    this.#options.fetchCtx.closed.ref = true;
+    await this.#options.fetchCtx.preferred.disconnectAll();
+    await this.#options.fetchCtx.http1.disconnectAll();
+  }
 }
 
 function validateRootOpts(opts: DataAPIClientOptions | undefined | null) {
@@ -223,6 +264,8 @@ function validateRootOpts(opts: DataAPIClientOptions | undefined | null) {
   }
 
   validateOption('caller', opts.caller, 'object', validateCaller);
+
+  validateOption('preferHttp2 option', opts.preferHttp2, 'boolean');
 
   validateDbOpts(opts.dbOptions);
 

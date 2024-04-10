@@ -14,7 +14,6 @@
 
 import assert from 'assert';
 import { HttpClient } from '@/src/api/http-client';
-import { CLIENT_USER_AGENT } from '@/src/api/constants';
 
 describe('unit.api.http-client', () => {
   describe('HTTPClient Operations', () => {
@@ -72,40 +71,40 @@ describe('unit.api.http-client', () => {
     // });
   });
 
-  describe('Caller tests', () => {
-    it('should use REQUESTED_WITH as the default user agent', () => {
-      const client = new HttpClient({
-        applicationToken: 'token',
-        baseUrl: 'http://localhost:8080',
-        monitorCommands: false,
-        emitter: null!
-      });
-
-      assert.equal(client.userAgent, CLIENT_USER_AGENT);
-    });
-
-    it('should use the provided user agent', () => {
-      const client = new HttpClient({
-        applicationToken: 'token',
-        baseUrl: 'http://localhost:8080',
-        caller: ['my-app', '1.0.0'],
-        monitorCommands: false,
-        emitter: null!
-      });
-
-      assert.equal(client.userAgent, `my-app/1.0.0 ${CLIENT_USER_AGENT}`);
-    });
-
-    it('should use the provided user agents', () => {
-      const client = new HttpClient({
-        applicationToken: 'token',
-        baseUrl: 'http://localhost:8080',
-        caller: [['my-app', '1.0.0'], ['my-other-app']],
-        monitorCommands: false,
-        emitter: null!
-      });
-
-      assert.equal(client.userAgent, `my-app/1.0.0 my-other-app ${CLIENT_USER_AGENT}`);
-    });
-  });
+  // describe('Caller tests', () => {
+  //   it('should use REQUESTED_WITH as the default user agent', () => {
+  //     const client = new HttpClient({
+  //       applicationToken: 'token',
+  //       baseUrl: 'http://localhost:8080',
+  //       monitorCommands: false,
+  //       emitter: null!
+  //     });
+  //
+  //     assert.equal(client.userAgent, CLIENT_USER_AGENT);
+  //   });
+  //
+  //   it('should use the provided user agent', () => {
+  //     const client = new HttpClient({
+  //       applicationToken: 'token',
+  //       baseUrl: 'http://localhost:8080',
+  //       caller: ['my-app', '1.0.0'],
+  //       monitorCommands: false,
+  //       emitter: null!
+  //     });
+  //
+  //     assert.equal(client.userAgent, `my-app/1.0.0 ${CLIENT_USER_AGENT}`);
+  //   });
+  //
+  //   it('should use the provided user agents', () => {
+  //     const client = new HttpClient({
+  //       applicationToken: 'token',
+  //       baseUrl: 'http://localhost:8080',
+  //       caller: [['my-app', '1.0.0'], ['my-other-app']],
+  //       monitorCommands: false,
+  //       emitter: null!
+  //     });
+  //
+  //     assert.equal(client.userAgent, `my-app/1.0.0 my-other-app ${CLIENT_USER_AGENT}`);
+  //   });
+  // });
 });

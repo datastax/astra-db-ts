@@ -11,15 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// noinspection ExceptionCaughtLocallyJS
 
 import { hrTimeMs, HttpClient } from '@/src/api/http-client';
-import { AxiosError, AxiosResponse } from 'axios';
-import { HTTPClientOptions, HttpMethodStrings } from '@/src/api/types';
-import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
+import { GuaranteedAPIResponse, HTTPClientOptions, HttpMethodStrings } from '@/src/api/types';
 import { DevOpsAPIResponseError, DevOpsAPITimeout, DevOpsUnexpectedStateError } from '@/src/devops/errors';
 import { AdminBlockingOptions } from '@/src/devops/types';
 import { MkTimeoutError, TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
-import { HttpMethods } from '@/src/api/constants';
+import { DEFAULT_DEVOPS_API_AUTH_HEADER, HttpMethods } from '@/src/api/constants';
 import {
   AdminCommandFailedEvent,
   AdminCommandPollingEvent,
@@ -41,7 +40,7 @@ export interface DevOpsAPIRequestInfo {
  * @internal
  */
 export interface LongRunningRequestInfo {
-  id: string | ((resp: AxiosResponse) => string),
+  id: string | ((resp: GuaranteedAPIResponse) => string),
   target: string,
   legalStates: string[],
   defaultPollInterval: number,
@@ -53,11 +52,17 @@ export interface LongRunningRequestInfo {
  */
 export class DevOpsAPIHttpClient extends HttpClient {
   constructor(props: HTTPClientOptions) {
-    super(props);
-    this.requestStrategy = new HTTP1Strategy(HTTP1AuthHeaderFactories.DevOpsAPI);
+    super({
+      ...props,
+      mkAuthHeader: (token) => ({ [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` }),
+      fetchCtx: {
+        preferred: props.fetchCtx.http1,
+        closed: props.fetchCtx.closed,
+      }
+    });
   }
 
-  public async request(req: DevOpsAPIRequestInfo, options: TimeoutOptions | undefined, started: number = 0): Promise<AxiosResponse> {
+  public async request(req: DevOpsAPIRequestInfo, options: TimeoutOptions | undefined, started: number = 0): Promise<GuaranteedAPIResponse> {
     const isLongRunning = started !== 0;
 
     try {
@@ -74,9 +79,13 @@ export class DevOpsAPIHttpClient extends HttpClient {
         url: url,
         method: req.method,
         params: req.params,
-        data: req.data,
+        data: JSON.stringify(req.data),
         timeoutManager,
-      }) as AxiosResponse;
+      });
+
+      if (resp.status >= 400) {
+        throw new DevOpsAPIResponseError(resp);
+      }
 
       if (this.monitorCommands && !isLongRunning) {
         this.emitter.emit('adminCommandSucceeded', new AdminCommandSucceededEvent(req, false, resp, started));
@@ -92,14 +101,11 @@ export class DevOpsAPIHttpClient extends HttpClient {
         this.emitter.emit('adminCommandFailed', new AdminCommandFailedEvent(req, isLongRunning, e, started));
       }
 
-      if (!(e instanceof AxiosError)) {
-        throw e;
-      }
-      throw new DevOpsAPIResponseError(e);
+      throw e;
     }
   }
 
-  public async requestLongRunning(req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo): Promise<AxiosResponse> {
+  public async requestLongRunning(req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo): Promise<GuaranteedAPIResponse> {
     const timeoutManager = mkTimeoutManager(info.options?.maxTimeMS);
     const isLongRunning = info?.options?.blocking !== false;
 

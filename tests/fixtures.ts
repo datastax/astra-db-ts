@@ -15,7 +15,7 @@
 // Changing this line of code took 6 long hours of my life.
 // - import { Client } from '@/src/client/client';
 // + import { Client } from '@/src/client';
-// And now it's not even bloody needed anymore.
+// And now it's not even needed anymore :(
 
 import { Collection, Db } from '@/src/data-api';
 import { DataAPIClient } from '@/src/client';
@@ -27,12 +27,14 @@ export const OTHER_NAMESPACE = 'other_keyspace';
 
 let collCreated = false;
 
-export const initTestObjects = async (ctx: Context, useHttp2: boolean = true): Promise<[DataAPIClient, Db, Collection]> => {
+export const USE_HTTP2 = !process.env.ASTRA_USE_HTTP1;
+
+export const initTestObjects = async (ctx: Context, preferHttp2 = USE_HTTP2): Promise<[DataAPIClient, Db, Collection]> => {
   if (!process.env.ASTRA_URI || !process.env.APPLICATION_TOKEN) {
     ctx.skip();
   }
 
-  const client = new DataAPIClient(process.env.APPLICATION_TOKEN!, { dbOptions: { useHttp2 } });
+  const client = new DataAPIClient(process.env.APPLICATION_TOKEN!, { preferHttp2 });
   const db = client.db(process.env.ASTRA_URI!);
 
   const coll = (!collCreated)

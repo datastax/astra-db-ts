@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DevOpsAPIRequestInfo, hrTimeMs } from '@/src/api';
-import { AxiosResponse } from 'axios';
+import { DevOpsAPIRequestInfo, GuaranteedAPIResponse, hrTimeMs } from '@/src/api';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -152,7 +151,7 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, resp: AxiosResponse, started: number) {
+  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, resp: GuaranteedAPIResponse, started: number) {
     super(info, longRunning);
     this.duration = hrTimeMs() - started;
     this.resBody = resp.data || undefined;

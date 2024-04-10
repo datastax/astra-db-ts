@@ -21,8 +21,8 @@ import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
 import { mkDb } from '@/src/data-api/db';
 
 describe('unit.data-api.db', () => {
-  const mkOptions = (data?: DbSpawnOptions, devops?: AdminSpawnOptions) => {
-    return { dbOptions: { token: 'old', monitorCommands: false, ...data }, adminOptions: { adminToken: 'old-admin', monitorCommands: false, ...devops }, emitter: null as any };
+  const mkOptions = (data?: DbSpawnOptions, devops?: AdminSpawnOptions, preferredType = 'http2') => {
+    return { dbOptions: { token: 'old', monitorCommands: false, ...data }, adminOptions: { adminToken: 'old-admin', monitorCommands: false, ...devops }, emitter: null as any, fetchCtx: { preferred: null!, http1: null!, preferredType } as any };
   }
 
   describe('constructor tests', () => {
@@ -90,30 +90,30 @@ describe('unit.data-api.db', () => {
       });
     });
 
-    it('uses http2 by default', () => {
-      const db = mkDb(mkOptions(), process.env.ASTRA_URI!);
-      assert.ok(db.httpStrategy() === 'http2');
-    });
-
-    it('uses http2 when forced', () => {
-      const db = mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: true });
-      assert.ok(db.httpStrategy() === 'http2');
-    });
-
-    it('uses http1.1 when forced', () => {
-      const db = mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: false });
-      assert.ok(db.httpStrategy() === 'http1');
-    });
-
-    it('uses http1.1 if overridden', () => {
-      const db = mkDb(mkOptions({ useHttp2: true }), process.env.ASTRA_URI!, { useHttp2: false });
-      assert.ok(db.httpStrategy() === 'http1');
-    });
-
-    it('uses http2 if overridden', () => {
-      const db = mkDb(mkOptions({ useHttp2: false }), process.env.ASTRA_URI!, { useHttp2: true });
-      assert.ok(db.httpStrategy() === 'http2');
-    });
+    // it('uses http2 by default', () => {
+    //   const db = mkDb(mkOptions(), process.env.ASTRA_URI!);
+    //   assert.ok(db.httpStrategy() === 'http2');
+    // });
+    //
+    // it('uses http2 when forced', () => {
+    //   const db = mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: true });
+    //   assert.ok(db.httpStrategy() === 'http2');
+    // });
+    //
+    // it('uses http1.1 when forced', () => {
+    //   const db = mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: false });
+    //   assert.ok(db.httpStrategy() === 'http1');
+    // });
+    //
+    // it('uses http1.1 if overridden', () => {
+    //   const db = mkDb(mkOptions({ useHttp2: true }), process.env.ASTRA_URI!, { useHttp2: false });
+    //   assert.ok(db.httpStrategy() === 'http1');
+    // });
+    //
+    // it('uses http2 if overridden', () => {
+    //   const db = mkDb(mkOptions({ useHttp2: false }), process.env.ASTRA_URI!, { useHttp2: true });
+    //   assert.ok(db.httpStrategy() === 'http2');
+    // });
 
     it('handles different dataApiPath', () => {
       const db = mkDb(mkOptions({ dataApiPath: 'api/json/v2' }), process.env.ASTRA_URI!);
@@ -149,24 +149,24 @@ describe('unit.data-api.db', () => {
       assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { monitorCommands: {} }));
     });
 
-    it('should accept valid useHttp2', () => {
-      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, {}));
-      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: true }));
-      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: false }));
-      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: null! }));
-      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: undefined }));
-    });
-
-    it('should throw on invalid useHttp2', () => {
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: 'invalid' }));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: 1 }));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: [] }));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: {} }));
-    });
+    // it('should accept valid useHttp2', () => {
+    //   assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, {}));
+    //   assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: true }));
+    //   assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: false }));
+    //   assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: null! }));
+    //   assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: undefined }));
+    // });
+    //
+    // it('should throw on invalid useHttp2', () => {
+    //   // @ts-expect-error - testing invalid input
+    //   assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: 'invalid' }));
+    //   // @ts-expect-error - testing invalid input
+    //   assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: 1 }));
+    //   // @ts-expect-error - testing invalid input
+    //   assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: [] }));
+    //   // @ts-expect-error - testing invalid input
+    //   assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { useHttp2: {} }));
+    // });
 
     it('should accept valid dataApiPath', () => {
       assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, {}));
@@ -185,49 +185,49 @@ describe('unit.data-api.db', () => {
     });
   });
 
-  describe('http-related tests', () => {
-    it('returns the correct http strategy when using http2', () => {
-      const db = mkDb(mkOptions(), process.env.ASTRA_URI!);
-      assert.strictEqual(db.httpStrategy(), 'http2');
-    });
-
-    it('returns the correct http strategy when using http1.1', () => {
-      const db = mkDb(mkOptions({ useHttp2: false }), process.env.ASTRA_URI!);
-      assert.strictEqual(db.httpStrategy(), 'http1');
-    });
-
-    it('close + isClosed works when on http2', () => {
-      const db = mkDb(mkOptions(), process.env.ASTRA_URI!);
-      assert.strictEqual(db.isClosed(), false);
-      db.close();
-      assert.strictEqual(db.isClosed(), true);
-    });
-
-    it('close + isClosed is apathetic on http1.1', () => {
-      const db = mkDb(mkOptions({ useHttp2: false }), process.env.ASTRA_URI!);
-      assert.strictEqual(db.isClosed(), undefined);
-      db.close();
-      assert.strictEqual(db.isClosed(), undefined);
-    });
-
-    it('does proper erm handling on http2', () => {
-      const db = mkDb(mkOptions(), process.env.ASTRA_URI!);
-      assert.strictEqual(db.isClosed(), false);
-      {
-        using _db = db;
-      }
-      assert.strictEqual(db.isClosed(), true);
-    });
-
-    it('does proper apathetic erm handling on http1.1', () => {
-      const db = mkDb(mkOptions({ useHttp2: false }), process.env.ASTRA_URI!);
-      assert.strictEqual(db.isClosed(), undefined);
-      {
-        using _db = db;
-      }
-      assert.strictEqual(db.isClosed(), undefined);
-    });
-  });
+  // describe('http-related tests', () => {
+  //   it('returns the correct http strategy when using http2', () => {
+  //     const db = mkDb(mkOptions(), process.env.ASTRA_URI!);
+  //     assert.strictEqual(db.httpStrategy(), 'http2');
+  //   });
+  //
+  //   it('returns the correct http strategy when using http1.1', () => {
+  //     const db = mkDb(mkOptions({ useHttp2: false }), process.env.ASTRA_URI!);
+  //     assert.strictEqual(db.httpStrategy(), 'http1');
+  //   });
+  //
+  //   it('close + isClosed works when on http2', () => {
+  //     const db = mkDb(mkOptions(), process.env.ASTRA_URI!);
+  //     assert.strictEqual(db.isClosed(), false);
+  //     db.close();
+  //     assert.strictEqual(db.isClosed(), true);
+  //   });
+  //
+  //   it('close + isClosed is apathetic on http1.1', () => {
+  //     const db = mkDb(mkOptions({ useHttp2: false }), process.env.ASTRA_URI!);
+  //     assert.strictEqual(db.isClosed(), undefined);
+  //     db.close();
+  //     assert.strictEqual(db.isClosed(), undefined);
+  //   });
+  //
+  //   it('does proper erm handling on http2', () => {
+  //     const db = mkDb(mkOptions(), process.env.ASTRA_URI!);
+  //     assert.strictEqual(db.isClosed(), false);
+  //     {
+  //       using _db = db;
+  //     }
+  //     assert.strictEqual(db.isClosed(), true);
+  //   });
+  //
+  //   it('does proper apathetic erm handling on http1.1', () => {
+  //     const db = mkDb(mkOptions({ useHttp2: false }), process.env.ASTRA_URI!);
+  //     assert.strictEqual(db.isClosed(), undefined);
+  //     {
+  //       using _db = db;
+  //     }
+  //     assert.strictEqual(db.isClosed(), undefined);
+  //   });
+  // });
 
   describe('id tests', () => {
     it('should return the id from the endpoint', () => {

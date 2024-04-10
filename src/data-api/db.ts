@@ -22,13 +22,14 @@ import {
 } from '@/src/data-api/types';
 import { DatabaseInfo } from '@/src/devops/types/admin/database-info';
 import { AstraDbAdmin, mkDbAdmin } from '@/src/devops/astra-db-admin';
-import { AdminSpawnOptions, DbSpawnOptions, InternalRootClientOpts } from '@/src/client';
+import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
 import { RunCommandOptions } from '@/src/data-api/types/collections/command';
 import { WithTimeout } from '@/src/common/types';
 import { DropCollectionOptions } from '@/src/data-api/types/collections/drop-collection';
 import { extractDbIdFromUrl, validateOption } from '@/src/data-api/utils';
 import { CreateCollectionCommand } from '@/src/data-api/types/collections/create-collection';
 import { ListCollectionsCommand } from '@/src/data-api/types/collections/list-collection';
+import { InternalRootClientOpts } from '@/src/client/types';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -64,7 +65,7 @@ import { ListCollectionsCommand } from '@/src/data-api/types/collections/list-co
  *
  * @public
  */
-export class Db implements Disposable {
+export class Db {
   readonly #defaultOpts!: InternalRootClientOpts;
 
   private readonly _httpClient!: DataAPIHttpClient;
@@ -123,15 +124,13 @@ export class Db implements Disposable {
         baseUrl: endpoint,
         applicationToken: dbOpts.token,
         baseApiPath: dbOpts?.dataApiPath || DEFAULT_DATA_API_PATH,
-        caller: options.caller,
-        useHttp2: dbOpts.useHttp2,
         emitter: options.emitter,
         monitorCommands: dbOpts.monitorCommands,
+        fetchCtx: options.fetchCtx,
+        namespace: this.namespace,
       }),
       enumerable: false,
     });
-
-    this._httpClient.namespace = this.namespace;
 
     Object.defineProperty(this, '_id', {
       value: extractDbIdFromUrl(endpoint),
@@ -179,7 +178,7 @@ export class Db implements Disposable {
     if (!this._id) {
       throw new Error('Admin operations are only supported on Astra databases');
     }
-    return mkDbAdmin(this, this._httpClient, this.#defaultOpts, options);
+    return mkDbAdmin(this, this.#defaultOpts, options);
   }
 
   /**
@@ -471,49 +470,6 @@ export class Db implements Disposable {
   public async command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse> {
     return await this._httpClient.executeCommand(command, options);
   }
-
-  /**
-   * @returns the request strategy used by the underlying HTTP client.
-   */
-  public httpStrategy(): 'http1' | 'http2' {
-    return this._httpClient.isUsingHttp2()
-      ? 'http2'
-      : 'http1';
-  }
-
-  /**
-   * Returns if the underlying HTTP/2 session was explicitly closed by the {@link Db.close} method (or through ERM with
-   * the `using` clause).
-   *
-   * If the client's using HTTP/1, this method will return `undefined`.
-   *
-   * @returns whether the client was explicitly closed if using HTTP/2.
-   */
-  public isClosed(): boolean | undefined {
-    return this._httpClient.isClosed();
-  }
-
-  /**
-   * Closes the underlying HTTP/2 session, if the client is using HTTP/2. Closing the session will prevent any further
-   * requests from being made from this Db instance.
-   *
-   * This method is idempotent. If the client is using HTTP/1, this method will do nothing.
-   */
-  public close() {
-    this._httpClient.close();
-  }
-
-  /**
-   * Closes the underlying HTTP/2 session, if the client is using HTTP/2. Closing the session will prevent any further
-   * requests from being made from this Db instance.
-   *
-   * This method is idempotent. If the client is using HTTP/1, this method will do nothing.
-   *
-   * Meant for usage with the `using` clause in ERM (Explicit Resource Management).
-   */
-  public [Symbol.dispose]() {
-    this.close();
-  }
 }
 
 /**
@@ -561,5 +517,5 @@ export function validateDbOpts(opts: DbSpawnOptions | undefined) {
 
   validateOption('dataApiPath option', opts.dataApiPath, 'string');
 
-  validateOption('useHttp2 option', opts.useHttp2, 'boolean');
+  // validateOption('useHttp2 option', opts.useHttp2, 'boolean');
 }

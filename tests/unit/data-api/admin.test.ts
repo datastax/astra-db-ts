@@ -19,8 +19,8 @@ import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
 import { mkAdmin } from '@/src/devops/astra-admin';
 
 describe('unit.data-api.admin', () => {
-  const mkOptions = (data?: DbSpawnOptions, devops?: AdminSpawnOptions) => {
-    return { dbOptions: { token: 'old', monitorCommands: false, ...data }, adminOptions: { adminToken: 'old-admin', monitorCommands: false, ...devops }, emitter: null as any };
+  const mkOptions = (data?: DbSpawnOptions, devops?: AdminSpawnOptions, preferredType = 'http2') => {
+    return { dbOptions: { token: 'old', monitorCommands: false, ...data }, adminOptions: { adminToken: 'old-admin', monitorCommands: false, ...devops }, emitter: null as any, fetchCtx: { preferred: null!, http1: null!, preferredType } as any };
   }
 
   describe('constructor tests', () => {

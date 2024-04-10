@@ -58,33 +58,18 @@ describe('integration.api.data-api-http-client', () => {
       assert.ok(resp.status?.insertedIds[0]);
     });
 
-    it('should error on invalid token', async () => {
-      const clonedClient = httpClient.cloneInto(DataAPIHttpClient, (c) => {
-        c.applicationToken = 'invalid';
-      });
+    it('should error on invalid token', async function () {
+      const [client] = await initTestObjects(this);
+      const httpClient = client.db(process.env.ASTRA_URI!, { token: 'invalid-token' })['_httpClient'];
 
       try {
-        await clonedClient.executeCommand({ findCollections: {} }, {});
+        await httpClient.executeCommand({ findCollections: {} }, {});
         assert.fail('Expected error');
       } catch (e) {
         assert.ok(e instanceof DataAPIResponseError);
         assert.strictEqual(e.errorDescriptors.length, 1);
         assert.strictEqual(e.detailedErrorDescriptors.length, 1);
         assert.strictEqual(e.errorDescriptors[0].message, 'Authentication failed; is your token valid?');
-      }
-    });
-
-    it('should error when underlying strategy is closed', async function () {
-      const [, db] = await initTestObjects(this);
-      const localClient = db['_httpClient'];
-
-      try {
-        localClient.close();
-        await localClient.executeCommand({ findCollections: function () {} }, {});
-        assert.fail('Expected error');
-      } catch (e) {
-        assert.ok(e instanceof Error);
-        assert.strictEqual(e.message, 'Cannot make http2 request when client is closed');
       }
     });
 

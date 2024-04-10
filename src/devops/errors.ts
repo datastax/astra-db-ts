@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { AxiosError, AxiosResponse } from 'axios';
 import { FullDatabaseInfo } from '@/src/devops/types';
+import { GuaranteedAPIResponse } from '@/src/api';
 
 /**
  * A representation of what went wrong when interacting with the DevOps API.
@@ -104,10 +104,11 @@ export class DevOpsAPIResponseError extends DevOpsAPIError {
    *
    * @internal
    */
-  constructor(error: AxiosError) {
-    super((<any>error.response)?.data.errors[0]?.message ?? error.message);
-    this.errors = extractErrorDescriptors(error);
-    this.status = (<any>error.response)?.status;
+  constructor(resp: GuaranteedAPIResponse) {
+    const message = (resp.data?.errors as any[])?.find(e => e.message)?.message ?? 'Something went wrong';
+    super(message);
+    this.errors = extractErrorDescriptors(resp);
+    this.status = resp.status;
     this.name = 'DevOpsAPIResponseError';
   }
 }
@@ -137,16 +138,16 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
    *
    * @internal
    */
-  constructor(message: string, raw?: AxiosResponse) {
+  constructor(message: string, raw?: GuaranteedAPIResponse) {
     super(message);
-    this.dbInfo = raw?.data;
+    this.dbInfo = raw?.data as any;
     this.status = raw?.status;
     this.name = 'DevOpsUnexpectedStateError';
   }
 }
 
-function extractErrorDescriptors(error: AxiosError): DevOpsAPIErrorDescriptor[] {
-  const errors: any[] = (<any>error.response)?.data.errors || [];
+function extractErrorDescriptors(resp: GuaranteedAPIResponse): DevOpsAPIErrorDescriptor[] {
+  const errors: any[] = resp.data?.errors || [];
 
   return errors.map((e: any) => ({
     id: e.ID,

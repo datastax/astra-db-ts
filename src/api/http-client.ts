@@ -12,72 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CLIENT_USER_AGENT } from '@/src/api/constants';
-import { GuaranteedAPIResponse, HTTPClientOptions, HTTPRequestInfo, HTTPRequestStrategy } from '@/src/api/types';
-import { HTTP1AuthHeaderFactories, HTTP1Strategy } from '@/src/api/http1';
-import { HTTP2Strategy } from '@/src/api/http2';
-import { Mutable } from '@/src/data-api/types/utils';
+import { CLIENT_USER_AGENT, RAG_STACK_REQUESTED_WITH } from '@/src/api/constants';
+import { GuaranteedAPIResponse, HTTPRequestInfo, InternalFetchCtx, InternalHTTPClientOptions } from '@/src/api/types';
 import { Caller, DataAPIClientEvents } from '@/src/client';
 import TypedEmitter from 'typed-emitter';
+import { TimeoutError } from 'fetch-h2';
 
 /**
  * @internal
  */
-export class HttpClient {
-  public readonly baseUrl: string;
-  public readonly userAgent: string;
-  public requestStrategy: HTTPRequestStrategy;
-  public emitter: TypedEmitter<DataAPIClientEvents>;
-  public monitorCommands: boolean;
-  #applicationToken: string;
+export abstract class HttpClient {
+  readonly baseUrl: string;
+  readonly emitter: TypedEmitter<DataAPIClientEvents>;
+  readonly monitorCommands: boolean;
+  readonly fetchCtx: InternalFetchCtx;
+  readonly #applicationToken: string;
+  readonly baseHeaders: Record<string, any>;
 
-  constructor(options: HTTPClientOptions) {
+  protected constructor(options: InternalHTTPClientOptions) {
     this.#applicationToken = options.applicationToken;
     this.baseUrl = options.baseUrl;
     this.emitter = options.emitter;
     this.monitorCommands = options.monitorCommands;
-
-    this.requestStrategy =
-      (options.requestStrategy)
-        ? options.requestStrategy :
-      (options.useHttp2 !== false)
-        ? new HTTP2Strategy(this.baseUrl)
-        : new HTTP1Strategy(HTTP1AuthHeaderFactories.DataAPI);
+    this.fetchCtx = options.fetchCtx;
 
     if (options.baseApiPath) {
       this.baseUrl += '/' + options.baseApiPath;
     }
 
-    this.userAgent = options.userAgent ?? buildUserAgent(CLIENT_USER_AGENT, options.caller);
-  }
-
-  public close() {
-    this.requestStrategy.close?.();
-  }
-
-  public isClosed(): boolean | undefined {
-    return this.requestStrategy.closed;
-  }
-
-  public isUsingHttp2(): boolean {
-    return this.requestStrategy instanceof HTTP2Strategy;
-  }
-
-  public cloneInto<C extends HttpClient>(cls: new (opts: HTTPClientOptions) => C, initialize: (client: Mutable<C>) => void): C {
-    const clone = new cls({
-      baseUrl: this.baseUrl,
-      applicationToken: this.#applicationToken,
-      requestStrategy: this.requestStrategy,
-      userAgent: this.userAgent,
-      emitter: this.emitter,
-      monitorCommands: this.monitorCommands,
-    });
-    initialize(clone);
-    return clone;
-  }
-
-  public set applicationToken(token: string) {
-    this.#applicationToken = token;
+    this.baseHeaders = options.mkAuthHeader?.(this.#applicationToken) ?? {};
   }
 
   public get applicationToken(): string {
@@ -85,21 +48,42 @@ export class HttpClient {
   }
 
   protected async _request(info: HTTPRequestInfo): Promise<GuaranteedAPIResponse> {
-    const fullInfo = {
-      url: info.url,
-      data: info.data,
-      method: info.method,
-      params: info.params ?? {},
-      token: this.#applicationToken,
-      userAgent: this.userAgent,
-      timeoutManager: info.timeoutManager,
-      reviver: info.reviver,
-    };
+    if (this.fetchCtx.closed.ref) {
+      throw new Error('Can\'t make requests on a closed client');
+    }
 
     if (info.timeoutManager.msRemaining <= 0) {
-      throw info.timeoutManager.mkTimeoutError(fullInfo);
+      throw info.timeoutManager.mkTimeoutError(info);
     }
-    return await this.requestStrategy.request(fullInfo);
+
+    const params = info.params ?? {};
+    Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
+
+    const url = (Object.keys(params).length > 0)
+      ? `${info.url}?${new URLSearchParams(params).toString()}`
+      : info.url;
+
+    try {
+      const resp = await this.fetchCtx.preferred.fetch(url, {
+        body: info.data as string,
+        method: info.method,
+        timeout: info.timeoutManager.msRemaining,
+        headers: this.baseHeaders,
+      });
+
+      const respBody = await resp.text();
+
+      return {
+        data: respBody ? JSON.parse(respBody, info.reviver) : undefined,
+        headers: resp.headers,
+        status: resp.status,
+      }
+    } catch (e) {
+      if (e instanceof TimeoutError) {
+        throw info.timeoutManager.mkTimeoutError(info);
+      }
+      throw e;
+    }
   }
 }
 
@@ -111,7 +95,7 @@ export function hrTimeMs(): number {
   return Math.floor(hrtime[0] * 1000 + hrtime[1] / 1000000);
 }
 
-function buildUserAgent(client: string, caller?: Caller | Caller[]): string {
+export function buildUserAgent(caller: Caller | Caller[] | undefined): string {
   const callers = (
     (!caller)
       ? [] :
@@ -124,5 +108,5 @@ function buildUserAgent(client: string, caller?: Caller | Caller[]): string {
     return c[1] ? `${c[0]}/${c[1]}` : c[0];
   }).join(' ');
 
-  return `${callerString} ${client}`.trim();
+  return `${RAG_STACK_REQUESTED_WITH} ${callerString} ${CLIENT_USER_AGENT}`.trim();
 }

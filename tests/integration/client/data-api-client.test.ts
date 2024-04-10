@@ -40,6 +40,21 @@ describe('integration.client.data-api-client', () => {
     });
   });
 
+  describe('close', () => {
+    it('should not allow operations after closing the client', async () => {
+      const client = new DataAPIClient(process.env.APPLICATION_TOKEN!);
+      const db = client.db(process.env.ASTRA_URI!);
+      await client.close();
+
+      try {
+        await db.listCollections();
+        assert.fail('should have thrown an error');
+      } catch (e) {
+        assert.ok(e instanceof Error);
+      }
+    });
+  });
+
   describe('monitoring commands', () => {
     let db: Db;
 

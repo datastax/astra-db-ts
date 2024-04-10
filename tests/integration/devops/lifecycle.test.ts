@@ -46,9 +46,6 @@ describe('integration.devops.lifecycle', async () => {
         namespace: 'my_namespace',
       }, {
         blocking: false,
-        dbOptions: {
-          useHttp2: false,
-        },
       });
       const asyncDb = asyncDbAdmin.db();
 
@@ -56,7 +53,6 @@ describe('integration.devops.lifecycle', async () => {
         assert.ok(asyncDb.id);
         assert.ok(asyncDbAdmin.id);
         assert.strictEqual(asyncDb.namespace, 'my_namespace');
-        assert.strictEqual(asyncDb.httpStrategy() === 'http2', false);
       }
 
       {
@@ -80,7 +76,7 @@ describe('integration.devops.lifecycle', async () => {
           assert.strictEqual(event.method, HttpMethods.Post);
           assert.strictEqual(event.longRunning, true);
           assert.strictEqual(event.params, undefined);
-          assert.strictEqual(event.timeout, Infinity);
+          assert.strictEqual(event.timeout, 2147483647);
         });
 
         client.on('adminCommandPolling', (event) => {
@@ -121,7 +117,6 @@ describe('integration.devops.lifecycle', async () => {
         assert.ok(syncDb.id);
         assert.ok(syncDbAdmin.id);
         assert.strictEqual(syncDb.namespace, DEFAULT_NAMESPACE);
-        assert.strictEqual(syncDb.httpStrategy() === 'http1', false);
       }
 
       {

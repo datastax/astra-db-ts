@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './http1';
-export * from './http2';
 export * from './http-client';
 export * from './data-api-http-client';
 export * from './devops-api-http-client';
