@@ -1,4 +1,3 @@
 {
-  "testScript": "test:types",
-  "anyBranch": true
+  "testScript": "test:all"
 }

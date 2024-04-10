@@ -2,6 +2,7 @@
 1. [Running the tests](#running-the-tests)
 2. [Linting](#linting)
 3. [Building the library](#building-the-library)
+4. [Publishing](#publishing)
 
 ## Running the tests
 Prerequisites:
@@ -94,3 +95,7 @@ To build it, just run `npm run build`, which does the following:
 - Runs `tsc` to compile the TypeScript files & resolves path aliases w/ `tsc-alias`
 - Uses `api-extractor` to generate the API report & generate a rolled-up `.d.ts` file
 - Deletes any extraneous `.d.ts` files
+
+## Publishing
+I heavily recommend using [np](https://github.com/sindresorhus/np) to publish the package. Running it will involve running `test:all`, and the
+versioning step will update the api report + update the version in `src/version.ts`. 

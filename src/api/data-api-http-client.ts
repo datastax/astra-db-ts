@@ -18,7 +18,6 @@ import { DataAPIResponseError, DataAPITimeout, ObjectId, UUID } from '@/src/data
 import { MkTimeoutError, TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
 import { CollectionNotFoundError, mkRespErrorFromResponse } from '@/src/data-api/errors';
-import * as util from 'util';
 
 /**
  * @internal
