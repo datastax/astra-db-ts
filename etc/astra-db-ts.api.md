@@ -312,7 +312,6 @@ export interface DataAPIClientOptions {
     adminOptions?: AdminSpawnOptions;
     caller?: Caller | Caller[];
     dbOptions?: DbSpawnOptions;
-    // (undocumented)
     preferHttp2?: boolean;
 }
 
