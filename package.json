@@ -51,6 +51,7 @@
     "lint": "eslint .",
     "test": "ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts tests/integration/**/*.test.ts tests/integration/**/**/*.test.ts",
     "test:all": "env ASTRA_RUN_LONG_TESTS=1 ASTRA_RUN_ADMIN_TESTS=1 ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts tests/integration/**/*.test.ts tests/integration/**/**/*.test.ts",
+    "test:prerelease": "npm run test:all -- -b --exit",
     "test:coverage": "nyc npm run test:all -- -b",
     "test:types": "tsc --noEmit --skipLibCheck",
     "api-extractor": "api-extractor run -c ./api-extractor.jsonc --local",
@@ -62,7 +63,6 @@
   },
   "devDependencies": {
     "@microsoft/api-extractor": "^7.43.0",
-    "@types/expect": "^24.3.0",
     "@types/mocha": "^9.1.1",
     "@types/node": "^17.0.36",
     "@types/object-hash": "^3.0.6",
@@ -70,7 +70,6 @@
     "@typescript-eslint/parser": "^7.6.0",
     "dotenv": "^16.0.1",
     "eslint": "^8.57.0",
-    "jsdoc-babel": "^0.5.0",
     "nyc": "^15.1.0",
     "ts-mocha": "^10.0.0",
     "tsc-alias": "^1.8.8",
