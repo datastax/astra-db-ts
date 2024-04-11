@@ -12,5 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { Collection } from "./collections";
-export { AstraDB } from "./collections/client";
+export { RawDataAPIResponse, CuratedAPIResponse } from './api';
+export * from './data-api';
+export * from './client';
+export * from './devops';
+export * from './common';

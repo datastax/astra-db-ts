@@ -5,16 +5,24 @@
     "moduleResolution": "node",
     "declaration": true,
     "sourceMap": true,
-    "baseUrl": "./",
+    "noEmitOnError": true,
+    "baseUrl": ".",
     "outDir": "./dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
+    "useDefineForClassFields": true,
+    "allowSyntheticDefaultImports": true,
     "strict": true,
     "skipLibCheck": true,
     "paths": {
       "@/src/*": ["./src/*"],
       "@/tests/*": ["./tests/*"]
-    }
+    },
+    "lib": [
+      "es2020",
+      "esnext.disposable",
+      "dom"
+    ]
   },
   "include": ["tests/**/*", "src/**/*"]
 }

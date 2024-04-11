@@ -1,76 +1,101 @@
-
 # Contents
-1. [Build & Run tests locally](#build--test)
-2. [Build API Reference Documentation](#build-api-reference-documentation)
-3. [Contributing](CONTRIBUTING.md)
-4. [Creating a release](#publishing-to-npm-registry)
+1. [Running the tests](#running-the-tests)
+2. [Linting](#linting)
+3. [Building the library](#building-the-library)
+4. [Publishing](#publishing)
 
-## Build & Test
-
+## Running the tests
 Prerequisites:
-- [Docker](https://docker.com/) / [JSON API](https://github.com/stargate/jsonapi)
+- A JS package manager (npm, bun, etc.)
+- A clean Astra instance with two keyspaces—`default_keyspace` and `other_keyspace`
+- Copy the `.env.example` file and create a new `.env` file following the example template
 
-### Build
 ```shell
-npm install 
-npm run build
-```
-
-### Test
-- Start Docker
-- Start JSON API
-```shell
-bin/start_json_api.sh
-```
-- Copy the `.env.example` file and create a new `.env` file that should have all the connection details as shown below.
-
-```env
-JSON_API_URI=http://localhost:8181/v1/testks1
-STARGATE_AUTH_URL=http://localhost:8081/v1/auth
-STARGATE_USERNAME=cassandra
-STARGATE_PASSWORD=cassandra
-```
-- Run the tests
-```shell
+# Run both unit and integration tests
 npm run test
+
+# Run only unit tests
+npm run test -- -f 'unit.'
+
+# Run only integration tests
+npm run test -- -f 'integration.'
+
+# Run tsc with the noEmit flag to check for type errors
+npm run test:types
 ```
 
-### Lint
-Run `npm run lint` to run ESLint.
-ESLint will point out any formatting and code quality issues it finds.
-ESLint can automatically fix some issues: run `npm run lint -- --fix` to tell ESLint to automatically fix what issues it can.
-You should try to run `npm run lint` before committing to minimize risk of regressions.
+### Running tagged tests
+Tests can be given certain tags to allow for more granular control over which tests are run. These tags currently include:
+- `[long]`/`'LONG'`: Longer running tests that take more than a few seconds to run
+- `[admin]`/`'ADMIN'`: Tests that require admin permissions to run
+- `[dev]`/`'DEV'`: Tests that require the dev environment to run
+- `[prod]`/`'PROD'`: Tests that require the dev environment to run
+- `[vectorize]`/`'VECTORIZE'`: Tests that require a specific vectorize-enabled kube to run
 
-## Update Stargate and JSON API versions
+To enable these some of these tags, you can set the corresponding environment variables to some values. The env 
+variables are in the `env.example` file, but they're repeated here for convenience:
+- `ASTRA_RUN_VECTORIZE_TESTS`
+- `ASTRA_RUN_LONG_TESTS`
+- `ASTRA_RUN_ADMIN_TESTS`
 
-Stargate and the JSON API versions are maintained in the file `api-compatibility.versions`. Update the versions accordingly, submit a PR and make sure that the GitHub Actions that verify the new versions run fine.
-
-
-## Build API Reference Documentation
-
-API Documentation of this library is generated using [jsdoc-to-markdown](https://github.com/jsdoc2md/jsdoc-to-markdown)
-
-Run below to generate API documentation. This takes the `APIReference.hbs` and the library code as input and generates APIReference.md file.
+Or you can run the tests by doing something like
 ```shell
-npm run build:docs
+env ASTRA_RUN_LONG_TESTS=1 npm run test
 ```
 
-## Publishing to npm registry
+The `PROD` and `DEV` tags are enabled/disabled automatically, inferred from the astra endpoint URL.
 
-We are using [npm-publish](https://github.com/JS-DevTools/npm-publish) to handle publishing.
-So to publish a release to NPM, we need to 
-- Create a branch out of 'main' and change `version` in the `package.json` as needed.
-- Run `npm install` (this will update `src/version.ts` file).
-- Run `npm run build`
-- Submit a PR and get that merged into `main` branch
-- Check out 'main' branch & pull the latest
+Use the following to run tests with ADMIN and LONG tags automatically enabled (note that doesn't include vectorize tests):
 ```shell
- git checkout main 
- git pull origin main
-``` 
-- Then create a tag with the required version, prefixed with 'rel-'. This will trigger a workflow that publishes the current version to npm. For example: `rel-0.2.0-ALPHA`
+npm run test:all
 ```
-git tag rel-x.y.z
-git push origin rel-x.y.z
+
+### Adding your own tagged tests
+To enforce the tags, use the `assertTestsEnabled` function from `test/fixtures.ts`, which will skip the function if the
+given tag is not enabled. 
+
+It's also encouraged to add the corresponding tag to the test name, so that it's clear why the test is being skipped.
+
+For example:
+```typescript
+describe('[long] createCollection + dropCollection', () => {
+  // Note that it's important to use an actual function here, not an arrow function
+  before(async function () {
+    assertTestsEnabled(this, 'LONG');
+  });
+
+  // ...
+});
 ```
-- Finally, check the stargate-mongoose npm registry page https://www.npmjs.com/package/stargate-mongoose and make sure the latest version is updated.
+
+If a new tag really, really, needs to be added, it can be done by adding a new environment variable of the proper
+format, and updating the `assertTestsEnabled` function. However, this should be done sparingly, as it can make the
+test suite harder to manage.
+
+### Coverage testing
+
+To run coverage testing, run the following command:
+```shell
+npm run test:coverage
+```
+
+This uses `test:all` under the hood, as well as a "bail early" flag as there's not really a point continuing to run 
+tests if one of them fails, as the coverage report will be impacted.
+
+## Linting
+Run `npm run lint` to run ESLint. ESLint will point out any formatting and code quality issues it finds.
+
+## Building the library
+At the moment, you need to be using a unix-like system to build the library, as it uses a small shell script,
+which can be found in `scripts/build.sh`, and run manually enough on Windows if necessary.
+
+To build it, just run `npm run build`, which does the following:
+- Deletes the `dist` directory
+- Updates the versioning file (`src/version.ts`)
+- Runs `tsc` to compile the TypeScript files & resolves path aliases w/ `tsc-alias`
+- Uses `api-extractor` to generate the API report & generate a rolled-up `.d.ts` file
+- Deletes any extraneous `.d.ts` files
+
+## Publishing
+I heavily recommend using [np](https://github.com/sindresorhus/np) to publish the package. Running it will involve running `test:all`, and the
+versioning step will update the api report + update the version in `src/version.ts`. 

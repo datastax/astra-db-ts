@@ -42,20 +42,20 @@ Before you submit your Pull Request (PR) consider the following guidelines:
 * Search the repository (https://github.com/datastax/astra-db-ts/pulls) for an open or closed PR that relates to your submission. You don't want to duplicate effort.
 
 * Create a fork of the repo
-	* Navigate to the repo you want to fork
-	* In the top right corner of the page click **Fork**:
-	![](https://help.github.com/assets/images/help/repository/fork_button.jpg)
+* Navigate to the repo you want to fork
+* In the top right corner of the page click **Fork**:
+![](https://help.github.com/assets/images/help/repository/fork_button.jpg)
 
 * Make your changes in the forked repo
 * Commit your changes using a descriptive commit message
 * In GitHub, create a pull request: https://help.github.com/en/articles/creating-a-pull-request-from-a-fork
 * If we suggest changes then:
-  * Make the required updates.
-  * Rebase your fork and force push to your GitHub repository (this will update your Pull Request):
+* Make the required updates.
+* Rebase your fork and force push to your GitHub repository (this will update your Pull Request):
 
-    ```shell
-    git rebase master -i
-    git push -f
+  ```shell
+  git rebase master -i
+  git push -f
     ```
 
 That's it! Thank you for your contribution!

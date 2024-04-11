@@ -12,56 +12,51 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import assert from "assert";
-import { Client, ClientOptions } from "@/src/collections/client";
+// Changing this line of code took 6 long hours of my life.
+// - import { Client } from '@/src/client/client';
+// + import { Client } from '@/src/client';
+// And now it's not even needed anymore :(
 
-export const TEST_COLLECTION_NAME = "collection1";
+import { Collection, Db } from '@/src/data-api';
+import { DataAPIClient } from '@/src/client';
+import { Context } from 'mocha';
 
-export const getJSONAPIClient = async () => {
-  if (!process.env.JSON_API_URI) {
-    return null;
+export const DEFAULT_COLLECTION_NAME = 'test_coll';
+export const EPHEMERAL_COLLECTION_NAME = 'temp_coll';
+export const OTHER_NAMESPACE = 'other_keyspace';
+
+let collCreated = false;
+
+export const USE_HTTP2 = !process.env.ASTRA_USE_HTTP1;
+
+export const initTestObjects = async (ctx: Context, preferHttp2 = USE_HTTP2): Promise<[DataAPIClient, Db, Collection]> => {
+  if (!process.env.ASTRA_URI || !process.env.APPLICATION_TOKEN) {
+    ctx.skip();
   }
-  const options: ClientOptions = {
-    authHeaderName: process.env.AUTH_HEADER_NAME,
-  };
-  if (
-    process.env.STARGATE_AUTH_URL &&
-    process.env.STARGATE_USERNAME &&
-    process.env.STARGATE_PASSWORD
-  ) {
-    options.authUrl = process.env.STARGATE_AUTH_URL;
-    options.username = process.env.STARGATE_USERNAME;
-    options.password = process.env.STARGATE_PASSWORD;
-  }
-  //options.logLevel = 'debug';
-  return await Client.connect(process.env.JSON_API_URI, options);
+
+  const client = new DataAPIClient(process.env.APPLICATION_TOKEN!, { preferHttp2 });
+  const db = client.db(process.env.ASTRA_URI!);
+
+  const coll = (!collCreated)
+    ? await (async () => {
+        await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
+        await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
+        await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace: OTHER_NAMESPACE });
+        return await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false })
+      })()
+    : db.collection(DEFAULT_COLLECTION_NAME);
+
+  collCreated = true;
+  await coll.deleteAll();
+
+  return [client, db, coll];
 };
 
-export const getAstraClient = async () => {
-  if (!process.env.ASTRA_URI) {
-    return null;
-  }
-  const options: ClientOptions = {
-    authHeaderName: process.env.AUTH_HEADER_NAME,
-  };
-  if (
-    process.env.STARGATE_AUTH_URL &&
-    process.env.STARGATE_USERNAME &&
-    process.env.STARGATE_PASSWORD
-  ) {
-    options.authUrl = process.env.STARGATE_AUTH_URL;
-    options.username = process.env.STARGATE_USERNAME;
-    options.password = process.env.STARGATE_PASSWORD;
-  }
-  //options.logLevel = 'debug';
-  options.isAstra = true;
-  return await Client.connect(process.env.ASTRA_URI, options);
-};
-
-export const createSampleDoc = () => ({
-  _id: "doc1",
-  username: "aaron",
-});
+export const initCollectionWithFailingClient = async (ctx: Context) => {
+  const [, , collection] = await initTestObjects(ctx);
+  (<any>collection['_httpClient']).executeCommand = async () => { throw new Error('test') };
+  return collection;
+}
 
 export type Employee = {
   _id?: string;
@@ -79,93 +74,77 @@ export type Employee = {
   };
 };
 
-const sampleMultiLevelDoc: Employee = {
-  username: "aaron",
-  human: true,
-  age: 47,
-  password: null,
-  address: {
-    number: 86,
-    street: "monkey street",
-    suburb: null,
-    city: "big banana",
-    is_office: false,
-  },
-};
-
-export const createSampleDocWithMultiLevelWithId = (docId: string) => {
-  const sampleMultiLevelDocWithId = JSON.parse(
-    JSON.stringify(sampleMultiLevelDoc),
-  ) as Employee; //parse and stringigy is to clone and modify only the new object
-  sampleMultiLevelDocWithId._id = docId;
-  return sampleMultiLevelDocWithId;
-};
-
 export const createSampleDocWithMultiLevel = () =>
-  sampleMultiLevelDoc as Employee;
+  ({
+    username: 'aaron',
+    human: true,
+    age: 47,
+    password: null,
+    address: {
+      number: 86,
+      street: 'monkey street',
+      suburb: 'not null',
+      city: 'big banana',
+      is_office: false,
+    },
+  }) as Employee;
 
 export const createSampleDoc2WithMultiLevel = () =>
   ({
-    username: "jimr",
+    username: 'jimr',
     human: true,
     age: 52,
-    password: "gasxaq==",
+    password: 'gasxaq==',
     address: {
       number: 45,
-      street: "main street",
+      street: 'main street',
       suburb: null,
-      city: "nyc",
+      city: 'nyc',
       is_office: true,
-      country: "usa",
+      country: 'usa',
     },
   }) as Employee;
 
 export const createSampleDoc3WithMultiLevel = () =>
   ({
-    username: "saml",
+    username: 'saml',
     human: false,
     age: 25,
-    password: "jhkasfka==",
+    password: 'jhkasfka==',
     address: {
       number: 123,
-      street: "church street",
+      street: 'church street',
       suburb: null,
-      city: "la",
+      city: 'la',
       is_office: true,
-      country: "usa",
+      country: 'usa',
     },
   }) as Employee;
 
-export const sampleUsersList = Array.of(
+export const sampleUsersList = [
   createSampleDocWithMultiLevel(),
   createSampleDoc2WithMultiLevel(),
   createSampleDoc3WithMultiLevel(),
-) as Employee[];
+];
 
-export const getSampleDocs = (numUsers: number) =>
-  Array.from({ length: numUsers }, createSampleDoc);
+export const assertTestsEnabled = (ctx: Context, ...filters: ('VECTORIZE' | 'LONG' | 'ADMIN' | 'DEV' | 'PROD')[]) => {
+  if (filters.includes('VECTORIZE') && !process.env.ASTRA_RUN_VECTORIZE_TESTS) {
+    ctx.skip();
+  }
 
-export const sleep = async (ms = 100) =>
-  new Promise((resolve) => setTimeout(resolve, ms));
+  if (filters.includes('LONG') && !process.env.ASTRA_RUN_LONG_TESTS) {
+    ctx.skip();
+  }
 
-export const testClientName = process.env.TEST_DOC_DB;
-assert.ok(testClientName === "astra" || testClientName === "jsonapi");
+  if (filters.includes('ADMIN') && !process.env.ASTRA_RUN_ADMIN_TESTS) {
+    ctx.skip();
+  }
 
-export const testClient =
-  process.env.TEST_DOC_DB === "astra"
-    ? process.env.ASTRA_URI
-      ? {
-          client: getAstraClient(),
-          isAstra: true,
-          uri: process.env.ASTRA_URI,
-        }
-      : null
-    : process.env.TEST_DOC_DB === "jsonapi"
-    ? process.env.JSON_API_URI
-      ? {
-          client: getJSONAPIClient(),
-          isAstra: false,
-          uri: process.env.JSON_API_URI,
-        }
-      : null
-    : null;
+  if (filters.includes('DEV') && !(process.env.ASTRA_URI as string).includes('apps.astra-dev.datastax.com')) {
+    ctx.skip();
+  }
+
+  if (filters.includes('PROD') && !(process.env.ASTRA_URI as string).includes('apps.astra.datastax.com')) {
+    ctx.skip();
+  }
+}

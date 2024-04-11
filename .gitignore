@@ -133,3 +133,6 @@ dist
 creds.json
 .DS_Store
 build.zip
+
+temp
+tsdoc-metadata.json
