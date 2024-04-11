@@ -107,7 +107,7 @@ export class BulkWriteResult<Schema extends SomeDoc> {
   /**
    * Returns the raw, internal result.
    *
-   * @returns the raw, internal result.
+   * @returns The raw, internal result.
    */
   getRawResponse(): Record<string, any>[] {
     return this._raw;

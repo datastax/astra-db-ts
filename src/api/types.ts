@@ -58,12 +58,23 @@ export interface InternalFetchCtx {
 }
 
 /**
+ * The response format of a 2XX-status Data API call
+ *
  * @public
  */
 export interface RawDataAPIResponse {
-  status?: Record<string, any>;
-  errors?: any[];
-  data?: Record<string, any>;
+  /**
+   * A response data holding documents that were returned as the result of a command.
+   */
+  status?: Record<string, any>,
+  /**
+   * Status objects, generally describe the side effects of commands, such as the number of updated or inserted documents.
+   */
+  errors?: any[],
+  /**
+   * Array of objects or null (Error)
+   */
+  data?: Record<string, any>,
 }
 
 /**

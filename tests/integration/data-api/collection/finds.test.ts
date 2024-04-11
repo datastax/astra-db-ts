@@ -60,7 +60,6 @@ describe('integration.data-api.collection.finds', () => {
   });
 
   it('should find with sort', async () => {
-    await collection.deleteAll();
     await collection.insertMany([
       { username: 'a' },
       { username: 'c' },
@@ -75,7 +74,6 @@ describe('integration.data-api.collection.finds', () => {
   });
 
   it('should findOne with sort', async () => {
-    await collection.deleteAll();
     await collection.insertMany([
       { username: 'a' },
       { username: 'c' },
@@ -87,6 +85,26 @@ describe('integration.data-api.collection.finds', () => {
 
     doc = await collection.findOne({}, { sort: { username: -1 } });
     assert.deepStrictEqual(doc!.username, 'c');
+  });
+
+  it('should find with multiple, and different, sorts', async () => {
+    await collection.insertMany([
+      { username: 'a', age: 1 },
+      { username: 'a', age: 3 },
+      { username: 'a', age: 2 }
+    ]);
+
+    let docs = await collection.find({}, { sort: { username: 1, age: 1 }, limit: 20 }).toArray();
+    assert.deepStrictEqual(docs.map(doc => doc.age), [1, 2, 3]);
+
+    docs = await collection.find({}, { sort: { username: "asc", age: "desc" }, limit: 20 }).toArray();
+    assert.deepStrictEqual(docs.map(doc => doc.age), [3, 2, 1]);
+
+    docs = await collection.find({}, { sort: { username: -1, age: "ascending" }, limit: 20 }).toArray();
+    assert.deepStrictEqual(docs.map(doc => doc.age), [1, 2, 3]);
+
+    docs = await collection.find({}, { sort: { username: -1, age: "descending" }, limit: 20 }).toArray();
+    assert.deepStrictEqual(docs.map(doc => doc.age), [3, 2, 1]);
   });
 
   it('should find & findOne eq document', async () => {

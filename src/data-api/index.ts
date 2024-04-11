@@ -26,7 +26,7 @@ export {
   DataAPIErrorDescriptor,
   DataAPIDetailedErrorDescriptor,
   DeleteManyError,
-  TooManyDocsToCountError,
+  TooManyDocumentsToCountError,
   InsertManyError,
   BulkWriteError,
   CursorIsStartedError,
@@ -36,3 +36,4 @@ export * from './events';
 export * from './ids';
 export { TypeErr } from './utils';
 export * from './types';
+export { normalizeSort } from '@/src/data-api/utils';

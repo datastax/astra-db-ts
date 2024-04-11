@@ -82,6 +82,8 @@ export interface InsertManyOrderedOptions extends WithTimeout {
    */
   vectors?: (number[] | null | undefined)[],
   /**
+   * NOTE: This feature is under current development.
+   *
    * @alpha
    */
   vectorize?: (string | null | undefined)[],
@@ -135,6 +137,8 @@ export interface InsertManyUnorderedOptions extends WithTimeout {
    */
   vectors?: (number[] | null | undefined)[],
   /**
+   * NOTE: This feature is under current development.
+   *
    * @alpha
    */
   vectorize?: (string | null | undefined)[],

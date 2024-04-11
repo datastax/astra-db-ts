@@ -51,9 +51,9 @@
     "lint": "eslint .",
     "test": "ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts tests/integration/**/*.test.ts tests/integration/**/**/*.test.ts",
     "test:all": "env ASTRA_RUN_LONG_TESTS=1 ASTRA_RUN_ADMIN_TESTS=1 ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts tests/integration/**/*.test.ts tests/integration/**/**/*.test.ts",
-    "test:prerelease": "npm run test:all -- -b --exit",
     "test:coverage": "nyc npm run test:all -- -b",
     "test:types": "tsc --noEmit --skipLibCheck",
+    "test:prerelease": "npm run lint && npm run test:types && npm run test:all -- -b --exit",
     "api-extractor": "api-extractor run -c ./api-extractor.jsonc --local",
     "build": "sh ./scripts/build.sh",
     "version": "npm run build && git add src/version.ts etc/astra-db-ts.api.md"

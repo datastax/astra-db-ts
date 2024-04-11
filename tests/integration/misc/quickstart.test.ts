@@ -92,6 +92,8 @@ describe('integration.misc.quickstart', () => {
         assert.ok([1, 0.85490346].includes(doc.$similarity!));
         assert.ok([ideas[0].idea, ideas[2].idea].includes(doc.idea));
       }
+
+      await client.close();
     });
   });
 
@@ -114,6 +116,8 @@ describe('integration.misc.quickstart', () => {
       const namespaces = await dbAdmin.listNamespaces();
       assert.ok(namespaces.includes(DEFAULT_NAMESPACE));
       assert.ok(namespaces.includes(OTHER_NAMESPACE));
+
+      await client.close();
     });
   });
 
@@ -154,6 +158,8 @@ describe('integration.misc.quickstart', () => {
       const jane = await collection.findOne({ name: 'Jane' });
       assert.strictEqual(jane?.name, 'Jane');
       assert.ok(friendId.equals(jane?.friendId));
+
+      await client.close();
     });
   });
 

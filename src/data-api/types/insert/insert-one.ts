@@ -46,6 +46,8 @@ export interface InsertOneOptions extends WithTimeout {
    */
   vector?: number[],
   /**
+   * NOTE: This feature is under current development.
+   *
    * @alpha
    */
   vectorize?: string,

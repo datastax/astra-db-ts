@@ -18,7 +18,7 @@ import {
   Projection,
   Sort,
 } from '@/src/data-api/types';
-import { CursorIsStartedError, SomeDoc } from '@/src/data-api';
+import { CursorIsStartedError, normalizeSort, SomeDoc } from '@/src/data-api';
 import { DataAPIHttpClient } from '@/src/api';
 import { InternalFindOptions, InternalGetMoreCommand } from '@/src/data-api/types/find/find';
 
@@ -94,16 +94,24 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this._httpClient = httpClient;
     this._filter = filter;
     this._options = { ...options };
+
+    if (options?.sort) {
+      this._options.sort = normalizeSort(options.sort);
+    }
   }
 
   /**
-   * @returns The namespace (aka keyspace) of the parent database.
+   * The namespace (aka keyspace) of the collection that's being iterated over.
+   *
+   * @returns The namespace of the collection that's being iterated over.
    */
   get namespace(): string {
     return this._namespace;
   }
 
   /**
+   * Whether the cursor is closed, whether it be manually, or because the cursor is exhausted.
+   *
    * @returns Whether or not the cursor is closed.
    */
   get closed(): boolean {
@@ -111,6 +119,8 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   /**
+   * Returns the number of documents in the buffer. If the cursor is unused, it'll return 0.
+   *
    * @returns The number of documents in the buffer.
    */
   bufferedCount(): number {
@@ -149,7 +159,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    */
   sort(sort: Sort): FindCursor<T, TRaw> {
     this._assertUninitialized();
-    this._options.sort = sort;
+    this._options.sort = normalizeSort(sort);
     return this;
   }
 

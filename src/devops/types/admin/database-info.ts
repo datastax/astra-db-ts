@@ -37,17 +37,25 @@ export interface FullDatabaseInfo {
    */
   info: DatabaseInfo,
   /**
-   * Creation time in ISO RFC3339 format
+   * Creation time, in ISO RFC3339 format
    */
   creationTime?: string,
   /**
-   * Termination time in ISO RFC3339 format
+   * The last time the database was used, in ISO RFC3339 format
+   */
+  lastUsageTime?: string,
+  /**
+   * The termination time, in ISO RFC3339 format, if the database was terminated
    */
   terminationTime?: string,
   /**
    * The current status of the database.
    */
   status: DatabaseStatus,
+  /**
+   * The observed status of the database.
+   */
+  observedStatus: DatabaseStatus,
   /**
    * Contains the information about how much storage space a cluster has available
    */
@@ -56,6 +64,10 @@ export interface FullDatabaseInfo {
    * The available actions that can be performed on the database
    */
   availableActions?: DatabaseAction[],
+  /**
+   * The cost information for the database
+   */
+  cost?: CostInfo,
   /**
    * Message to the user about the cluster
    */
@@ -76,6 +88,10 @@ export interface FullDatabaseInfo {
    * REST URL for the database
    */
   dataEndpointUrl?: string,
+  /**
+   * Basic metrics information about the database
+   */
+  metrics?: DbMetricsInfo,
 }
 
 /**
@@ -112,20 +128,28 @@ export interface DatabaseInfo {
   /**
    * The user to connect to the database.
    */
-  user: string,
+  user?: string,
   /**
    * The password to connect to the database.
    */
-  password: string,
+  password?: string,
   /**
    * Additional keyspace names in database.
    */
   additionalKeyspaces?: string[],
   /**
+   * All keyspace names in database.
+   */
+  keyspaces?: string[],
+  /**
    * Type of the serverless database, currently only supported value is “vector”. "vector" creates a cassandra
    * database with vector support. Field not being inputted creates default serverless database.
    */
   dbType?: 'vector',
+  /**
+   * The datacenters for the database
+   */
+  datacenters?: DatacenterInfo[],
 }
 
 /**
@@ -150,4 +174,152 @@ export interface DatabaseStorageInfo {
    * Used storage of the cluster in GB
    */
   usedStorage?: number,
+}
+
+/**
+ * Information about a datacenter.
+ *
+ * @public
+ */
+export interface DatacenterInfo {
+  /**
+   * The number of capacity units for the datacenter.
+   */
+  capacityUnits: number,
+  /**
+   * The cloud provider where the datacenter is located.
+   */
+  cloudProvider: DatabaseCloudProvider,
+  /**
+   * The date the datacenter was created in ISO RFC3339 format.
+   */
+  dateCreated: string,
+  /**
+   * The id of the datacenter.
+   */
+  id: string,
+  /**
+   * Whether the datacenter is the primary datacenter.
+   */
+  isPrimary: boolean,
+  /**
+   * The name of the datacenter.
+   */
+  name: string,
+  /**
+   * The region where the datacenter is located.
+   */
+  region: string,
+  /**
+   * The region classification of the datacenter.
+   */
+  regionClassification: string,
+  /**
+   * The region zone of the datacenter.
+   */
+  regionZone: string,
+  /**
+   * The internal URL for the secure bundle.
+   */
+  secureBundleUrl: string,
+  /**
+   * The status of the datacenter (might be an empty string)
+   */
+  status: string,
+  /**
+   * The tier of the datacenter.
+   */
+  tier: DatabaseTier,
+}
+
+/**
+ * Information about the running cost of the database.
+ *
+ * @public
+ */
+export interface CostInfo {
+  /**
+   * Regular cost per day in cents
+   */
+  costPerDayCents: number,
+  /**
+   * Cost per day for multi-region in cents
+   */
+  costPerDayMRCents: number,
+  /**
+   * Cost per day in cents while the database is parked
+   */
+  costPerDayParkedCents: number,
+  /**
+   * Cost per hour in cents
+   */
+  costPerHourCents: number,
+  /**
+   * Cost per hour for multi-region in cents
+   */
+  costPerHourMRCents: number,
+  /**
+   * Cost per hour in cents while the database is parked
+   */
+  costPerHourParkedCents: number,
+  /**
+   * Cost per minute in cents
+   */
+  costPerMinCents: number,
+  /**
+   * Cost per minute for multi-region in cents
+   */
+  costPerMinMRCents: number,
+  /**
+   * Cost per minute in cents while the database is parked
+   */
+  costPerMinParkedCents: number,
+  /**
+   * Cost per month in cents
+   */
+  costPerMonthCents: number,
+  /**
+   * Cost per month for multi-region in cents
+   */
+  costPerMonthMRCents: number,
+  /**
+   * Cost per month in cents while the database is parked
+   */
+  costPerMonthParkedCents: number,
+  /**
+   * Cost per GB of network transfer in cents
+   */
+  costPerNetworkGbCents: number,
+  /**
+   * Cost per GB read in cents
+   */
+  costPerReadGbCents: number,
+  /**
+   * Cost per GB written in cents
+   */
+  costPerWrittenGbCents: number,
+}
+
+/**
+ * Basic metrics information about a database.
+ *
+ * @public
+ */
+export interface DbMetricsInfo {
+  /**
+   * The number of errors that have occurred in the database.
+   */
+  errorsTotalCount: number,
+  /**
+   * The number of live data bytes in the database.
+   */
+  liveDataSizeBytes: number,
+  /**
+   * The number of read requests that have occurred in the database.
+   */
+  readRequestsTotalCount: number,
+  /**
+   * The number of write requests that have occurred in the database.
+   */
+  writeRequestsTotalCount: number
 }

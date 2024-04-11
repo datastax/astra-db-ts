@@ -161,7 +161,7 @@ export class DataAPITimeout extends DataAPIError {
  * try {
  *   await collection.countDocuments({}, 50);
  * } catch (e) {
- *   if (e instanceof TooManyDocsToCountError) {
+ *   if (e instanceof TooManyDocumentsToCountError) {
  *     console.log(e.limit); // 50
  *     console.log(e.hitServerLimit); // false
  *   }
@@ -173,13 +173,26 @@ export class DataAPITimeout extends DataAPIError {
  *
  * @public
  */
-export class TooManyDocsToCountError extends DataAPIError {
-  constructor(readonly limit: number, readonly hitServerLimit: boolean) {
+export class TooManyDocumentsToCountError extends DataAPIError {
+  /**
+   * The limit that was specified by the caller, or the server-imposed limit if the caller's limit was too high.
+   */
+  public readonly limit: number;
+
+  /**
+   * Specifies if the server-imposed limit was hit. If this is `true`, the `limit` field will contain the server's
+   * limit; otherwise it will contain the caller's limit.
+   */
+  public readonly hitServerLimit: boolean;
+
+  constructor(limit: number, hitServerLimit: boolean) {
     const message = (hitServerLimit)
       ? `Too many documents to count (server limit of ${limit} reached)`
       : `Too many documents to count (provided limit is ${limit})`;
     super(message);
-    this.name = 'TooManyDocsToCountError';
+    this.limit = limit;
+    this.hitServerLimit = hitServerLimit;
+    this.name = 'TooManyDocumentsToCountError';
   }
 }
 

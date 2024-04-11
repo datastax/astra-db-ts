@@ -72,6 +72,8 @@ export interface UpdateOneOptions extends WithTimeout {
    */
   vector?: number[],
   /**
+   * NOTE: This feature is under current development.
+   *
    * @alpha
    */
   vectorize?: string,

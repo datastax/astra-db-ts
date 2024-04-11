@@ -266,6 +266,25 @@ export class CommandSucceededEvent extends CommandEvent {
 }
 
 // @public
+export interface CostInfo {
+    costPerDayCents: number;
+    costPerDayMRCents: number;
+    costPerDayParkedCents: number;
+    costPerHourCents: number;
+    costPerHourMRCents: number;
+    costPerHourParkedCents: number;
+    costPerMinCents: number;
+    costPerMinMRCents: number;
+    costPerMinParkedCents: number;
+    costPerMonthCents: number;
+    costPerMonthMRCents: number;
+    costPerMonthParkedCents: number;
+    costPerNetworkGbCents: number;
+    costPerReadGbCents: number;
+    costPerWrittenGbCents: number;
+}
+
+// @public
 export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, WithNamespace {
     checkExists?: boolean;
 }
@@ -376,13 +395,15 @@ export interface DatabaseInfo {
     additionalKeyspaces?: string[];
     capacityUnits: number;
     cloudProvider?: DatabaseCloudProvider;
+    datacenters?: DatacenterInfo[];
     dbType?: 'vector';
     keyspace?: string;
+    keyspaces?: string[];
     name: string;
-    password: string;
+    password?: string;
     region: string;
     tier: DatabaseTier;
-    user: string;
+    user?: string;
 }
 
 // @public
@@ -401,6 +422,22 @@ export interface DatabaseStorageInfo {
 
 // @public
 export type DatabaseTier = 'developer' | 'A5' | 'A10' | 'A20' | 'A40' | 'C10' | 'C20' | 'C40' | 'D10' | 'D20' | 'D40' | 'serverless';
+
+// @public
+export interface DatacenterInfo {
+    capacityUnits: number;
+    cloudProvider: DatabaseCloudProvider;
+    dateCreated: string;
+    id: string;
+    isPrimary: boolean;
+    name: string;
+    region: string;
+    regionClassification: string;
+    regionZone: string;
+    secureBundleUrl: string;
+    status: string;
+    tier: DatabaseTier;
+}
 
 // @public
 export interface DateFilterOps {
@@ -442,13 +479,18 @@ export class Db {
 
 // @public
 export abstract class DbAdmin {
-    // (undocumented)
     abstract createNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
     abstract db(): Db;
-    // (undocumented)
     abstract dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
-    // (undocumented)
     abstract listNamespaces(): Promise<string[]>;
+}
+
+// @public
+export interface DbMetricsInfo {
+    errorsTotalCount: number;
+    liveDataSizeBytes: number;
+    readRequestsTotalCount: number;
+    writeRequestsTotalCount: number;
 }
 
 // @public
@@ -489,7 +531,7 @@ export interface DeleteOneModel<TSchema extends SomeDoc> {
 export interface DeleteOneOptions extends WithTimeout {
     sort?: Sort;
     vector?: number[];
-    // @alpha (undocumented)
+    // @alpha
     vectorize?: string;
 }
 
@@ -568,11 +610,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     [Symbol.asyncIterator](): AsyncGenerator<T, void, void>;
     // @internal
     constructor(namespace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: FindOptions);
-    // (undocumented)
     bufferedCount(): number;
     clone(): FindCursor<TRaw, TRaw>;
     close(): Promise<void>;
-    // (undocumented)
     get closed(): boolean;
     filter(filter: Filter<TRaw>): FindCursor<T, TRaw>;
     // @deprecated
@@ -581,7 +621,6 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     includeSimilarity(includeSimilarity?: boolean): FindCursor<T, TRaw>;
     limit(limit: number): FindCursor<T, TRaw>;
     map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw>;
-    // (undocumented)
     get namespace(): string;
     next(): Promise<T | null>;
     project<R = any, RRaw extends SomeDoc = SomeDoc>(projection: Projection): FindCursor<R, RRaw>;
@@ -598,7 +637,7 @@ export interface FindOneAndDeleteOptions extends WithTimeout {
     projection?: Projection;
     sort?: Sort;
     vector?: number[];
-    // @alpha (undocumented)
+    // @alpha
     vectorize?: string;
 }
 
@@ -610,7 +649,7 @@ export interface FindOneAndReplaceOptions extends WithTimeout {
     sort?: Sort;
     upsert?: boolean;
     vector?: number[];
-    // @alpha (undocumented)
+    // @alpha
     vectorize?: string;
 }
 
@@ -622,7 +661,7 @@ export interface FindOneAndUpdateOptions extends WithTimeout {
     sort?: Sort;
     upsert?: boolean;
     vector?: number[];
-    // @alpha (undocumented)
+    // @alpha
     vectorize?: string;
 }
 
@@ -632,7 +671,7 @@ export interface FindOneOptions extends WithTimeout {
     projection?: Projection;
     sort?: Sort;
     vector?: number[];
-    // @alpha (undocumented)
+    // @alpha
     vectorize?: string;
 }
 
@@ -644,7 +683,7 @@ export interface FindOptions {
     skip?: number;
     sort?: Sort;
     vector?: number[];
-    // @alpha (undocumented)
+    // @alpha
     vectorize?: string;
 }
 
@@ -665,6 +704,7 @@ export interface FullCollectionInfo {
 // @public
 export interface FullDatabaseInfo {
     availableActions?: DatabaseAction[];
+    cost?: CostInfo;
     cqlshUrl?: string;
     creationTime?: string;
     dataEndpointUrl?: string;
@@ -672,7 +712,10 @@ export interface FullDatabaseInfo {
     graphqlUrl?: string;
     id: string;
     info: DatabaseInfo;
+    lastUsageTime?: string;
     message?: string;
+    metrics?: DbMetricsInfo;
+    observedStatus: DatabaseStatus;
     orgId: string;
     ownerId: string;
     status: DatabaseStatus;
@@ -715,7 +758,7 @@ export type InsertManyOptions = InsertManyUnorderedOptions | InsertManyOrderedOp
 export interface InsertManyOrderedOptions extends WithTimeout {
     chunkSize?: number;
     ordered: true;
-    // @alpha (undocumented)
+    // @alpha
     vectorize?: (string | null | undefined)[];
     vectors?: (number[] | null | undefined)[];
 }
@@ -731,7 +774,7 @@ export interface InsertManyUnorderedOptions extends WithTimeout {
     chunkSize?: number;
     concurrency?: number;
     ordered?: false;
-    // @alpha (undocumented)
+    // @alpha
     vectorize?: (string | null | undefined)[];
     vectors?: (number[] | null | undefined)[];
 }
@@ -744,7 +787,7 @@ export interface InsertOneModel<TSchema extends SomeDoc> {
 // @public
 export interface InsertOneOptions extends WithTimeout {
     vector?: number[];
-    // @alpha (undocumented)
+    // @alpha
     vectorize?: string;
 }
 
@@ -835,7 +878,6 @@ export type Projection = Record<string, 1 | 0 | true | false | ProjectionSlice>;
 
 // @public
 export interface ProjectionSlice {
-    // (undocumented)
     $slice: number | [number, number];
 }
 
@@ -847,13 +889,10 @@ export type Push<Schema> = {
     });
 };
 
-// @public (undocumented)
+// @public
 export interface RawDataAPIResponse {
-    // (undocumented)
     data?: Record<string, any>;
-    // (undocumented)
     errors?: any[];
-    // (undocumented)
     status?: Record<string, any>;
 }
 
@@ -869,7 +908,7 @@ export interface ReplaceOneOptions extends WithTimeout {
     sort?: Sort;
     upsert?: boolean;
     vector?: number[];
-    // @alpha (undocumented)
+    // @alpha
     vectorize?: string;
 }
 
@@ -884,7 +923,7 @@ export interface RunCommandOptions extends WithNamespace, WithTimeout {
 // @public
 export type SomeDoc = Record<string, any>;
 
-// @public (undocumented)
+// @public
 export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId;
 
 // @public
@@ -894,7 +933,7 @@ export type Sort = Record<string, SortDirection> | {
     $vectorize: string;
 };
 
-// @public (undocumented)
+// @public
 export type SortDirection = 1 | -1;
 
 // @public
@@ -948,7 +987,7 @@ export type StrictRename<Schema extends SomeDoc> = {
 
 // @public
 export type StrictSort<Schema extends SomeDoc> = {
-    [K in keyof ToDotNotation<WithId<Schema>>]?: 1 | -1;
+    [K in keyof ToDotNotation<WithId<Schema>>]?: SortDirection;
 } | {
     $vector: number[];
 } | {
@@ -983,11 +1022,9 @@ export interface StrictUpdateFilter<Schema extends SomeDoc> {
 export type ToDotNotation<Schema extends SomeDoc> = Merge<_ToDotNotation<Schema, ''>>;
 
 // @public
-export class TooManyDocsToCountError extends DataAPIError {
+export class TooManyDocumentsToCountError extends DataAPIError {
     constructor(limit: number, hitServerLimit: boolean);
-    // (undocumented)
     readonly hitServerLimit: boolean;
-    // (undocumented)
     readonly limit: number;
 }
 
@@ -1049,7 +1086,7 @@ export interface UpdateOneOptions extends WithTimeout {
     sort?: Sort;
     upsert?: boolean;
     vector?: number[];
-    // @alpha (undocumented)
+    // @alpha
     vectorize?: string;
 }
 
@@ -1082,11 +1119,9 @@ export interface VectorDoc {
     $vector?: number[];
 }
 
-// @alpha (undocumented)
+// @alpha
 export interface VectorizeServiceOptions {
-    // (undocumented)
     modelName: string;
-    // (undocumented)
     provider: string;
 }
 
@@ -1094,7 +1129,7 @@ export interface VectorizeServiceOptions {
 export interface VectorOptions {
     dimension?: number;
     metric?: 'cosine' | 'euclidean' | 'dot_product';
-    // @alpha (undocumented)
+    // @alpha
     service?: VectorizeServiceOptions;
 }
 

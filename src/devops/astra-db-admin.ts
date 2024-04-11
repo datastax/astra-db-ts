@@ -67,7 +67,7 @@ export class AstraDbAdmin extends DbAdmin {
   /**
    * Gets the ID of the Astra DB instance this object is managing.
    *
-   * @returns the ID of the Astra DB instance.
+   * @returns The ID of the Astra DB instance.
    */
   public get id(): string {
     return this._db.id;
@@ -88,7 +88,7 @@ export class AstraDbAdmin extends DbAdmin {
    * console.log(db.id);
    * ```
    *
-   * @returns the underlying `Db` object.
+   * @returns The underlying `Db` object.
    */
   public override db(): Db {
     return this._db;
@@ -133,7 +133,7 @@ export class AstraDbAdmin extends DbAdmin {
    * console.log(namespaces);
    * ```
    *
-   * @returns A promise that resolves to an array of namespace names.
+   * @returns A promise that resolves to list of all the namespaces in the database.
    */
   public override async listNamespaces(options?: WithTimeout): Promise<string[]> {
     return this.info(options).then(i => [i.info.keyspace!, ...i.info.additionalKeyspaces ?? []].filter(Boolean))
@@ -161,7 +161,7 @@ export class AstraDbAdmin extends DbAdmin {
    * ```
    *
    * @remarks
-   * Note that if you choose not to block, the created namespace object will not be able to be used until the
+   * Note that if you choose not to block, the created namespace will not be able to be used until the
    * operation completes, which is up to the caller to determine.
    *
    * @param namespace - The name of the new namespace.
@@ -205,7 +205,7 @@ export class AstraDbAdmin extends DbAdmin {
    * ```
    *
    * @remarks
-   * Note that if you choose not to block, the namespace object will still be able to be used until the operation
+   * Note that if you choose not to block, the namespace will still be able to be used until the operation
    * completes, which is up to the caller to determine.
    *
    * @param namespace - The name of the namespace to drop.

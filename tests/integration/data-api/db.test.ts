@@ -19,7 +19,7 @@ import {
   DEFAULT_COLLECTION_NAME,
   EPHEMERAL_COLLECTION_NAME,
   initTestObjects,
-  OTHER_NAMESPACE
+  OTHER_NAMESPACE,
 } from '@/tests/fixtures';
 import { CollectionAlreadyExistsError, DataAPIResponseError, Db } from '@/src/data-api';
 import { DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE } from '@/src/api';

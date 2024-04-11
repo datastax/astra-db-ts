@@ -37,16 +37,30 @@ export interface VectorOptions {
    */
   metric?: 'cosine' | 'euclidean' | 'dot_product',
   /**
+   * NOTE: This feature is under current development.
+   *
    * @alpha
    */
   service?: VectorizeServiceOptions,
 }
 
 /**
+ * NOTE: This feature is under current development.
+ *
  * @alpha
  */
 export interface VectorizeServiceOptions {
+  /**
+   * NOTE: This feature is under current development.
+   *
+   * @alpha
+   */
   provider: string,
+  /**
+   * NOTE: This feature is under current development.
+   *
+   * @alpha
+   */
   modelName: string,
 }
 

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { Sort } from '@/src/data-api/types';
+
 declare const __error: unique symbol;
 
 /**
@@ -78,4 +80,30 @@ export function validateOption<T = unknown>(name: string, obj: unknown, type: st
   }
 
   test?.(obj as T);
+}
+
+/**
+ * @internal
+ */
+export const normalizeSort = (sort: Record<string, unknown>): Sort => {
+  const ret: Sort = {};
+
+  for (const key in sort) {
+    switch (sort[key]) {
+      case 1:
+      case 'asc':
+      case 'ascending':
+        ret[key] = 1;
+        break;
+      case -1:
+      case 'desc':
+      case 'descending':
+        ret[key] = -1;
+        break;
+      default:
+        ret[key] = sort[key] as any;
+    }
+  }
+
+  return ret;
 }

@@ -9,7 +9,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, TooManyDocsToCountError } from '@/src/data-api';
+import { Collection, TooManyDocumentsToCountError } from '@/src/data-api';
 import { initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
 
@@ -98,7 +98,7 @@ describe('integration.data-api.collection.count-documents', () => {
       await collection.countDocuments({}, 1);
       assert.fail('Expected an error');
     } catch (e) {
-      assert.ok(e instanceof TooManyDocsToCountError);
+      assert.ok(e instanceof TooManyDocumentsToCountError);
       assert.strictEqual(e.limit, 1);
       assert.strictEqual(e.hitServerLimit, false);
     }
@@ -112,7 +112,7 @@ describe('integration.data-api.collection.count-documents', () => {
       await collection.countDocuments({}, 2000);
       assert.fail('Expected an error');
     } catch (e) {
-      assert.ok(e instanceof TooManyDocsToCountError);
+      assert.ok(e instanceof TooManyDocumentsToCountError);
       assert.strictEqual(e.limit, 1000);
       assert.strictEqual(e.hitServerLimit, true);
     }

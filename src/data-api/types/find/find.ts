@@ -51,6 +51,8 @@ export interface FindOptions {
    */
   vector?: number[],
   /**
+   * NOTE: This feature is under current development.
+   *
    * @alpha
    */
   vectorize?: string,

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { takeWhile } from './utils';
+import { normalizeSort, takeWhile } from './utils';
 import { FindCursor } from '@/src/data-api/cursor';
 import { Db, SomeDoc, SomeId } from '@/src/data-api';
 import {
@@ -23,7 +23,7 @@ import {
   InsertManyError,
   mkRespErrorFromResponse,
   mkRespErrorFromResponses,
-  TooManyDocsToCountError,
+  TooManyDocumentsToCountError,
   UpdateManyError,
 } from '@/src/data-api/errors';
 import objectHash from 'object-hash';
@@ -366,7 +366,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     };
 
     if (options?.sort) {
-      command.updateOne.sort = options.sort;
+      command.updateOne.sort = normalizeSort(options.sort);
     }
 
     const resp = await this._httpClient.executeCommand(command, options);
@@ -555,7 +555,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     };
 
     if (options?.sort) {
-      command.findOneAndReplace.sort = options.sort;
+      command.findOneAndReplace.sort = normalizeSort(options.sort);
     }
 
     const resp = await this._httpClient.executeCommand(command, options);
@@ -615,7 +615,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     };
 
     if (options?.sort) {
-      command.deleteOne.sort = options.sort;
+      command.deleteOne.sort = normalizeSort(options.sort);
     }
 
     const deleteOneResp = await this._httpClient.executeCommand(command, options);
@@ -943,7 +943,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     };
 
     if (options?.sort) {
-      command.findOne.sort = options.sort;
+      command.findOne.sort = normalizeSort(options.sort);
     }
 
     if (options?.projection && Object.keys(options.projection).length > 0) {
@@ -958,8 +958,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * Counts the number of documents in the collection, optionally with a filter.
    *
    * Takes in a `limit` option which dictates the maximum number of documents that may be present before a
-   * {@link TooManyDocsToCountError} is thrown. If the limit is higher than the highest limit accepted by the
-   * Data API, a {@link TooManyDocsToCountError} will be thrown anyway (i.e. `1000`).
+   * {@link TooManyDocumentsToCountError} is thrown. If the limit is higher than the highest limit accepted by the
+   * Data API, a {@link TooManyDocumentsToCountError} will be thrown anyway (i.e. `1000`).
    *
    * @example
    * ```typescript
@@ -971,7 +971,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * const count = await collection.countDocuments({ name: 'John Doe' }, 1000);
    * console.log(count); // 1
    *
-   * // Will throw a TooManyDocsToCountError as it counts 1, but the limit is 0
+   * // Will throw a TooManyDocumentsToCountError as it counts 1, but the limit is 0
    * const count = await collection.countDocuments({ name: 'John Doe' }, 0);
    * ```
    *
@@ -988,7 +988,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns The number of counted documents, if below the provided limit
    *
-   * @throws TooManyDocsToCountError - If the number of documents counted exceeds the provided limit.
+   * @throws TooManyDocumentsToCountError - If the number of documents counted exceeds the provided limit.
    *
    * @see StrictFilter
    */
@@ -1004,11 +1004,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     const resp = await this._httpClient.executeCommand(command, options);
 
     if (resp.status?.moreData) {
-      throw new TooManyDocsToCountError(resp.status.count, true);
+      throw new TooManyDocumentsToCountError(resp.status.count, true);
     }
 
     if (resp.status?.count > upperBound) {
-      throw new TooManyDocsToCountError(upperBound, false);
+      throw new TooManyDocumentsToCountError(upperBound, false);
     }
 
     return resp.status?.count;
@@ -1120,7 +1120,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     };
 
     if (options?.sort) {
-      command.findOneAndReplace.sort = options.sort;
+      command.findOneAndReplace.sort = normalizeSort(options.sort);
     }
 
     if (options?.projection && Object.keys(options.projection).length > 0) {
@@ -1128,7 +1128,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     }
 
     const resp = await this._httpClient.executeCommand(command, options);
-    const document = resp.data?.document;
+    const document = resp.data?.document || null;
 
     return (options.includeResultMetadata)
       ? {
@@ -1217,7 +1217,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     };
 
     if (options?.sort) {
-      command.findOneAndDelete.sort = options.sort;
+      command.findOneAndDelete.sort = normalizeSort(options.sort);
     }
 
     if (options?.projection && Object.keys(options.projection).length > 0) {
@@ -1225,7 +1225,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     }
 
     const resp = await this._httpClient.executeCommand(command, options);
-    const document = resp.data?.document;
+    const document = resp.data?.document || null;
 
     return (options?.includeResultMetadata)
       ? {
@@ -1335,7 +1335,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     };
 
     if (options?.sort) {
-      command.findOneAndUpdate.sort = options.sort;
+      command.findOneAndUpdate.sort = normalizeSort(options.sort);
     }
 
     if (options?.projection && Object.keys(options.projection).length > 0) {
@@ -1343,7 +1343,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     }
 
     const resp = await this._httpClient.executeCommand(command, options);
-    const document = resp.data?.document;
+    const document = resp.data?.document || null;
 
     return (options.includeResultMetadata)
       ? {
@@ -1699,7 +1699,7 @@ const mkDistinctPathExtractor = (path: string): (doc: SomeDoc) => any[] => {
   const values = [] as any[];
 
   const extract = (path: string[], index: number, value: any) => {
-    if (!value) {
+    if (value === undefined) {
       return;
     }
 
