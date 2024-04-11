@@ -187,6 +187,22 @@ describe('integration.data-api.db', async () => {
     });
   });
 
+  describe('collections', () => {
+    it('should return the collections in the db', async () => {
+      const collections = await db.collections();
+      assert.ok(<any>collections instanceof Array);
+      assert.deepStrictEqual(collections.map(c => c.collectionName), [DEFAULT_COLLECTION_NAME]);
+      assert.deepStrictEqual(collections.map(c => c.namespace), [DEFAULT_NAMESPACE]);
+    });
+
+    it('should return the collections in the db in another namespace', async () => {
+      const collections = await db.collections({ namespace: OTHER_NAMESPACE });
+      assert.ok(<any>collections instanceof Array);
+      assert.deepStrictEqual(collections.map(c => c.collectionName), [DEFAULT_COLLECTION_NAME]);
+      assert.deepStrictEqual(collections.map(c => c.namespace), [OTHER_NAMESPACE]);
+    });
+  });
+
   describe('command', () => {
     afterEach(async function () {
       await db.dropCollection(EPHEMERAL_COLLECTION_NAME);

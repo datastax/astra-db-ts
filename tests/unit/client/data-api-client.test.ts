@@ -76,6 +76,27 @@ describe('unit.client.data-api-client', () => {
       // @ts-expect-error - testing invalid input
       assert.throws(() => new DataAPIClient('dummy-token', { caller: { 0: ['name', 'version'] } }));
     });
+
+    it('uses http2 by default', () => {
+      const client = new DataAPIClient('dummy-token');
+      const httpClient = client.db(endpoint)['_httpClient'];
+      const http1Client = client.admin()['_httpClient'];
+      assert.ok(httpClient.fetchCtx.preferred !== http1Client.fetchCtx.preferred);
+    });
+
+    it('uses http2 when forced', () => {
+      const client = new DataAPIClient('dummy-token', { preferHttp2: true });
+      const httpClient = client.db(endpoint)['_httpClient'];
+      const http1Client = client.admin()['_httpClient'];
+      assert.ok(httpClient.fetchCtx.preferred !== http1Client.fetchCtx.preferred);
+    });
+
+    it('uses http1.1 when forced', () => {
+      const client = new DataAPIClient('dummy-token', { preferHttp2: false });
+      const httpClient = client.db(endpoint)['_httpClient'];
+      const http1Client = client.admin()['_httpClient'];
+      assert.ok(httpClient.fetchCtx.preferred === http1Client.fetchCtx.preferred);
+    });
   });
 
   describe('db tests', () => {

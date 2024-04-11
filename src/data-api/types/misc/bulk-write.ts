@@ -75,6 +75,11 @@ export interface BulkWriteUnorderedOptions extends WithTimeout {
  * @public
  */
 export class BulkWriteResult<Schema extends SomeDoc> {
+  /**
+   * Should not be instantiated directly.
+   *
+   * @internal
+   */
   constructor(
     /**
      * The number of documents deleted.

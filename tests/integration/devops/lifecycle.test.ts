@@ -35,6 +35,8 @@ describe('integration.devops.lifecycle', async () => {
     }
   });
 
+  // https://62ef0e85-1530-4d6a-ab60-d3dcd0b8162a-us-east1.apps.astra.datastax.com
+
   it('[admin] works', async () => {
     try {
       const admin = client.admin();

@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import { FullDatabaseInfo } from '@/src/devops/types';
-import { GuaranteedAPIResponse } from '@/src/api';
+import { CuratedAPIResponse, ResponseWithBody } from '@/src/api';
+import { toCuratedApiResponse } from '@/src/api/utils';
 
 /**
  * A representation of what went wrong when interacting with the DevOps API.
@@ -55,7 +56,7 @@ export abstract class DevOpsAPIError extends Error {}
  *
  * @public
  */
-export class DevOpsAPITimeout extends DevOpsAPIError {
+export class DevOpsAPITimeoutError extends DevOpsAPIError {
   /**
    * The URL that the request was made to.
    */
@@ -75,7 +76,7 @@ export class DevOpsAPITimeout extends DevOpsAPIError {
     super(`Command timed out after ${timeout}ms`);
     this.url = url;
     this.timeout = timeout;
-    this.name = 'DevOpsAPITimeout';
+    this.name = 'DevOpsAPITimeoutError';
   }
 }
 
@@ -97,18 +98,24 @@ export class DevOpsAPIResponseError extends DevOpsAPIError {
   /**
    * The HTTP status code of the response, if available.
    */
-  public readonly status?: number;
+  public readonly status: number;
+
+  /**
+   * The "raw", errored response from the API.
+   */
+  public readonly raw: CuratedAPIResponse;
 
   /**
    * Shouldn't be instantiated directly.
    *
    * @internal
    */
-  constructor(resp: GuaranteedAPIResponse) {
-    const message = (resp.data?.errors as any[])?.find(e => e.message)?.message ?? 'Something went wrong';
+  constructor(resp: ResponseWithBody, data: Record<string, any> | undefined) {
+    const message = (data?.errors as any[])?.find(e => e.message)?.message ?? 'Something went wrong';
     super(message);
-    this.errors = extractErrorDescriptors(resp);
+    this.errors = extractErrorDescriptors(data);
     this.status = resp.status;
+    this.raw = toCuratedApiResponse(resp);
     this.name = 'DevOpsAPIResponseError';
   }
 }
@@ -124,9 +131,9 @@ export class DevOpsAPIResponseError extends DevOpsAPIError {
  */
 export class DevOpsUnexpectedStateError extends DevOpsAPIError {
   /**
-   * The HTTP status code of the response, if available.
+   * The expected states that were not met.
    */
-  public readonly status?: number;
+  public readonly expected: string[];
 
   /**
    * The complete database info, which includes the status of the database.
@@ -138,16 +145,16 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
    *
    * @internal
    */
-  constructor(message: string, raw?: GuaranteedAPIResponse) {
+  constructor(message: string, expected: string[], data: Record<string, any> | undefined) {
     super(message);
-    this.dbInfo = raw?.data as any;
-    this.status = raw?.status;
+    this.expected = expected;
+    this.dbInfo = data as FullDatabaseInfo;
     this.name = 'DevOpsUnexpectedStateError';
   }
 }
 
-function extractErrorDescriptors(resp: GuaranteedAPIResponse): DevOpsAPIErrorDescriptor[] {
-  const errors: any[] = resp.data?.errors || [];
+function extractErrorDescriptors(data: Record<string, any> | undefined): DevOpsAPIErrorDescriptor[] {
+  const errors: any[] = data?.errors || [];
 
   return errors.map((e: any) => ({
     id: e.ID,

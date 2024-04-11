@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DevOpsAPIRequestInfo, GuaranteedAPIResponse, hrTimeMs } from '@/src/api';
+import { DevOpsAPIRequestInfo, hrTimeMs } from '@/src/api';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -83,6 +83,8 @@ export abstract class AdminCommandEvent {
 /**
  * Event emitted when an admin command is started. This is emitted before the initial HTTP request is made.
  *
+ * See {@link AdminCommandEvent} for more information about all the common properties available on this event.
+ *
  * @public
  */
 export class AdminCommandStartedEvent extends AdminCommandEvent {
@@ -107,6 +109,8 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
  *
  * Emits every time the command polls.
  *
+ * See {@link AdminCommandEvent} for more information about all the common properties available on this event.
+ *
  * @public
  */
 export class AdminCommandPollingEvent extends AdminCommandEvent {
@@ -114,6 +118,7 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
    * The elapsed time since the command was started, in milliseconds.
    */
   public readonly elapsed: number;
+
   /**
    * The polling interval, in milliseconds.
    */
@@ -134,6 +139,8 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
 /**
  * Event emitted when an admin command has succeeded, after any necessary polling.
  *
+ * See {@link AdminCommandEvent} for more information about all the common properties available on this event.
+ *
  * @public
  */
 export class AdminCommandSucceededEvent extends AdminCommandEvent {
@@ -141,6 +148,7 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
    * The duration of the command, in milliseconds.
    */
   public readonly duration: number;
+
   /**
    * The response body of the command, if any.
    */
@@ -151,15 +159,17 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, resp: GuaranteedAPIResponse, started: number) {
+  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number) {
     super(info, longRunning);
     this.duration = hrTimeMs() - started;
-    this.resBody = resp.data || undefined;
+    this.resBody = data || undefined;
   }
 }
 
 /**
  * Event emitted when an admin command has errored.
+ *
+ * See {@link AdminCommandEvent} for more information about all the common properties available on this event.
  *
  * @public
  */
@@ -168,8 +178,12 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
    * The duration of the command, in milliseconds.
    */
   public readonly duration: number;
+
   /**
    * The error that occurred.
+   *
+   * Typically, some {@link DevOpsAPIError}, commonly a {@link DevOpsAPIResponseError} or sometimes a
+   * {@link DevOpsUnexpectedStateError}
    */
   public readonly error: Error;
 

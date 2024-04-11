@@ -8,7 +8,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, DataAPITimeout, Db } from '@/src/data-api';
+import { Collection, DataAPITimeoutError, Db } from '@/src/data-api';
 import { DEFAULT_COLLECTION_NAME, initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
 import { DEFAULT_NAMESPACE } from '@/src/api';
@@ -46,7 +46,7 @@ describe('integration.data-api.collection.misc', () => {
       try {
         await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });
       } catch (e: any) {
-        assert.ok(e instanceof DataAPITimeout);
+        assert.ok(e instanceof DataAPITimeoutError);
         assert.strictEqual(e.message, 'Command timed out after 10ms');
       }
     });
@@ -57,7 +57,7 @@ describe('integration.data-api.collection.misc', () => {
       try {
         await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });
       } catch (e: any) {
-        assert.ok(e instanceof DataAPITimeout);
+        assert.ok(e instanceof DataAPITimeoutError);
         assert.strictEqual(e.message, 'Command timed out after 10ms');
       }
     });

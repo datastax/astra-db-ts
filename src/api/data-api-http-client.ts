@@ -23,10 +23,10 @@ import {
   HttpMethods,
   RawDataAPIResponse,
 } from '@/src/api';
-import { DataAPIResponseError, DataAPITimeout, ObjectId, UUID } from '@/src/data-api';
+import { DataAPIResponseError, DataAPITimeoutError, ObjectId, UUID } from '@/src/data-api';
 import { MkTimeoutError, TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
-import { CollectionNotFoundError, mkRespErrorFromResponse } from '@/src/data-api/errors';
+import { CollectionNotFoundError, DataAPIHttpError, mkRespErrorFromResponse } from '@/src/data-api/errors';
 
 /**
  * @internal
@@ -108,44 +108,44 @@ export class DataAPIHttpClient extends HttpClient {
         this.emitter.emit('commandStarted', new CommandStartedEvent(info));
       }
 
-      const response = await this._request({
+      const resp = await this._request({
         url: info.url,
         data: JSON.stringify(info.command, replacer),
         timeoutManager: info.timeoutManager,
         method: HttpMethods.Post,
-        reviver: reviver,
       });
 
-      if (response.status === 401 || (response.data?.errors?.length > 0 && response.data?.errors[0]?.message === 'UNAUTHENTICATED: Invalid token')) {
+      if (resp.status >= 400 && resp.status !== 401) {
+        throw new DataAPIHttpError(resp);
+      }
+
+      const data: RawDataAPIResponse = JSON.parse(resp.body!, reviver);
+
+      if (resp.status === 401 || (data.errors && data.errors?.length > 0 && data?.errors[0]?.message === 'UNAUTHENTICATED: Invalid token')) {
         const fauxResponse = mkFauxErroredResponse('Authentication failed; is your token valid?');
         throw mkRespErrorFromResponse(DataAPIResponseError, info.command, fauxResponse);
       }
 
-      if (response.data?.errors?.length > 0 && response.data?.errors[0]?.errorCode === 'COLLECTION_NOT_EXIST') {
-        const name = response.data?.errors[0]?.message.split(': ')[1];
+      if (data.errors && data?.errors?.length > 0 && data?.errors[0]?.errorCode === 'COLLECTION_NOT_EXIST') {
+        const name = data?.errors[0]?.message.split(': ')[1];
         throw new CollectionNotFoundError(info.namespace, name);
       }
 
-      if (response.status === 200) {
-        if (response.data?.errors && response.data?.errors.length > 0) {
-          throw mkRespErrorFromResponse(DataAPIResponseError, info.command, response.data);
-        }
-
-        const respData = {
-          status: response.data?.status,
-          data: response.data?.data,
-          errors: response.data?.errors,
-        }
-
-        if (this.monitorCommands) {
-          this.emitter.emit('commandSucceeded', new CommandSucceededEvent(info, respData, started));
-        }
-
-        return respData;
-      } else {
-        const fauxResponse = mkFauxErroredResponse(`Some non-200 status code was returned. Check the logs for more information. ${response.status}, ${JSON.stringify(response.data)}`);
-        throw mkRespErrorFromResponse(DataAPIResponseError, info.command, fauxResponse);
+      if (data?.errors && data?.errors.length > 0) {
+        throw mkRespErrorFromResponse(DataAPIResponseError, info.command, data);
       }
+
+      const respData = {
+        status: data?.status,
+        data: data?.data,
+        errors: data?.errors,
+      }
+
+      if (this.monitorCommands) {
+        this.emitter.emit('commandSucceeded', new CommandSucceededEvent(info, respData, started));
+      }
+
+      return respData;
     } catch (e: any) {
       if (this.monitorCommands) {
         this.emitter.emit('commandFailed', new CommandFailedEvent(info, e, started));
@@ -161,7 +161,7 @@ const mkTimeoutManager = (maxMs: number | undefined) => {
 }
 
 const mkTimeoutErrorMaker = (timeout: number): MkTimeoutError => {
-  return () => new DataAPITimeout(timeout);
+  return () => new DataAPITimeoutError(timeout);
 }
 
 const mkFauxErroredResponse = (message: string): RawDataAPIResponse => {

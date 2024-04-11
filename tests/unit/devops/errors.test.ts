@@ -15,32 +15,58 @@
 
 import assert from 'assert';
 import { DevOpsAPIResponseError } from '@/src/devops';
+import { ResponseWithBody } from '@/src/api';
+import { Headers } from 'fetch-h2';
 
 describe('unit.devops.errors', () => {
   describe('DevOpsAPIResponseError construction', () => {
+    const rootError = {
+      status: 500,
+      headers: new Headers({ 'content-type': 'application/json' }),
+      url: 'http://localhost:8080',
+      body: '{ "body": true }',
+      httpVersion: 1,
+      statusText: 'Internal Server Error',
+    } as ResponseWithBody;
+
     it('should properly construct a DevOpsAPIResponseError with no underlying errors given', () => {
-      const rootError = {} as any;
-      const err = new DevOpsAPIResponseError(rootError);
+      const err = new DevOpsAPIResponseError(rootError, {});
       assert.strictEqual(err.message, 'Something went wrong');
       assert.deepStrictEqual(err.errors, []);
-      assert.strictEqual(err.status, undefined);
-      assert.strictEqual(err.name, 'DevOpsAPIResponseError')
+      assert.strictEqual(err.status, 500);
+      assert.strictEqual(err.name, 'DevOpsAPIResponseError');
+      assert.strictEqual(err.raw.status, 500);
+      assert.strictEqual(err.raw.headers['content-type'], 'application/json');
+      assert.strictEqual(err.raw.httpVersion, 1);
+    });
+
+    it('should properly construct a DevOpsAPIResponseError with no underlying errors given + undefined data', () => {
+      const err = new DevOpsAPIResponseError(rootError, undefined);
+      assert.strictEqual(err.message, 'Something went wrong');
+      assert.deepStrictEqual(err.errors, []);
+      assert.strictEqual(err.status, 500);
+      assert.strictEqual(err.name, 'DevOpsAPIResponseError');
+      assert.strictEqual(err.raw.status, 500);
+      assert.strictEqual(err.raw.headers['content-type'], 'application/json');
+      assert.strictEqual(err.raw.httpVersion, 1);
     });
 
     it('should properly construct a DevOpsAPIResponseError with underlying errors', () => {
-      const rootError = {
-        data: {
-          errors: [
-            { ID: 1 },
-            { ID: 2, message: 'Error 2' },
-          ],
-        },
-      } as any;
-      const err = new DevOpsAPIResponseError(rootError);
+      const data = {
+        errors: [
+          { ID: 1 },
+          { ID: 2, message: 'Error 2' },
+        ],
+      };
+
+      const err = new DevOpsAPIResponseError(rootError, data);
       assert.strictEqual(err.message, 'Error 2');
       assert.deepStrictEqual(err.errors, [{ id: 1, message: undefined }, { id: 2, message: 'Error 2' }]);
-      assert.strictEqual(err.status, undefined);
-      assert.strictEqual(err.name, 'DevOpsAPIResponseError')
+      assert.strictEqual(err.status, 500);
+      assert.strictEqual(err.name, 'DevOpsAPIResponseError');
+      assert.strictEqual(err.raw.status, 500);
+      assert.strictEqual(err.raw.headers['content-type'], 'application/json');
+      assert.strictEqual(err.raw.httpVersion, 1);
     });
   });
 });

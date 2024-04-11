@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, DataAPIResponseError, DataAPITimeout, Db } from '@/src/data-api';
+import { Collection, DataAPIResponseError, DataAPITimeoutError, Db } from '@/src/data-api';
 import { DEFAULT_COLLECTION_NAME, initTestObjects, OTHER_NAMESPACE } from '@/tests/fixtures';
 import { DataAPIHttpClient } from '@/src/api';
 import assert from 'assert';
@@ -81,7 +81,23 @@ describe('integration.api.data-api-http-client', () => {
           namespace: OTHER_NAMESPACE,
           maxTimeMS: 1,
         });
-      }, DataAPITimeout);
+      }, DataAPITimeoutError);
     });
+
+    // it('should throw DataAPIHttpError on non-2XX responses', async function () {
+    //   try {
+    //     const [client] = await initTestObjects(this, false);
+    //     const httpClient = client.db('https://f1183f15-dc85-4fbf-8aae-f1ca97338bbb-us-east-1.apps.astra.datastax.com', { token: 'invalid-token' })['_httpClient'];
+    //     await httpClient.executeCommand({
+    //       findCollections: {},
+    //     }, {});
+    //   } catch (e) {
+    //     console.log(e);
+    //     assert.ok(e instanceof DataAPIHttpError);
+    //     assert.strictEqual(e.status, 502);
+    //     assert.ok(typeof e.body === 'string');
+    //     assert.strictEqual(e.raw.httpVersion, 1);
+    //   }
+    // });
   });
 });

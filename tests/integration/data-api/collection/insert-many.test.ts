@@ -9,7 +9,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, DataAPIError, DataAPITimeout, InsertManyError, ObjectId, UUID } from '@/src/data-api';
+import { Collection, DataAPIError, DataAPITimeoutError, InsertManyError, ObjectId, UUID } from '@/src/data-api';
 import { assertTestsEnabled, initCollectionWithFailingClient, initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
 
@@ -210,7 +210,7 @@ describe('integration.data-api.collection.insert-many', () => {
       await collection.insertMany(docs, { ordered: true, maxTimeMS: 500, chunkSize: 10 });
       assert.fail('Expected an error');
     } catch (e) {
-      assert.ok(e instanceof DataAPITimeout);
+      assert.ok(e instanceof DataAPITimeoutError);
       assert.strictEqual(e.timeout, 500);
       const found = await collection.find({}).toArray();
       assert.ok(found.length > 0);

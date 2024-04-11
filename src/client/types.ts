@@ -268,7 +268,7 @@ export interface AdminSpawnOptions {
    *
    * @example
    * ```typescript
-   * const client = Projection'weak-token');
+   * const client = new DataAPIClient('weak-token');
    *
    * // Using 'weak-token' as the token
    * const db = client.db();

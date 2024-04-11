@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { CLIENT_USER_AGENT, RAG_STACK_REQUESTED_WITH } from '@/src/api/constants';
-import { GuaranteedAPIResponse, HTTPRequestInfo, InternalFetchCtx, InternalHTTPClientOptions } from '@/src/api/types';
+import { HTTPRequestInfo, InternalFetchCtx, InternalHTTPClientOptions, ResponseWithBody } from '@/src/api/types';
 import { Caller, DataAPIClientEvents } from '@/src/client';
 import TypedEmitter from 'typed-emitter';
 import { TimeoutError } from 'fetch-h2';
@@ -47,7 +47,7 @@ export abstract class HttpClient {
     return this.#applicationToken;
   }
 
-  protected async _request(info: HTTPRequestInfo): Promise<GuaranteedAPIResponse> {
+  protected async _request(info: HTTPRequestInfo): Promise<ResponseWithBody> {
     if (this.fetchCtx.closed.ref) {
       throw new Error('Can\'t make requests on a closed client');
     }
@@ -69,15 +69,11 @@ export abstract class HttpClient {
         method: info.method,
         timeout: info.timeoutManager.msRemaining,
         headers: this.baseHeaders,
-      });
+      }) as ResponseWithBody;
 
-      const respBody = await resp.text();
+      resp.body = await resp.text();
 
-      return {
-        data: respBody ? JSON.parse(respBody, info.reviver) : undefined,
-        headers: resp.headers,
-        status: resp.status,
-      }
+      return resp;
     } catch (e) {
       if (e instanceof TimeoutError) {
         throw info.timeoutManager.mkTimeoutError(info);

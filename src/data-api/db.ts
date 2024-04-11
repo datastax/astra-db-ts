@@ -516,6 +516,4 @@ export function validateDbOpts(opts: DbSpawnOptions | undefined) {
   validateOption('token option', opts.token, 'string');
 
   validateOption('dataApiPath option', opts.dataApiPath, 'string');
-
-  // validateOption('useHttp2 option', opts.useHttp2, 'boolean');
 }

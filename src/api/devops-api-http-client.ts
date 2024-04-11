@@ -14,8 +14,8 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import { hrTimeMs, HttpClient } from '@/src/api/http-client';
-import { GuaranteedAPIResponse, HTTPClientOptions, HttpMethodStrings } from '@/src/api/types';
-import { DevOpsAPIResponseError, DevOpsAPITimeout, DevOpsUnexpectedStateError } from '@/src/devops/errors';
+import { APIResponse, HTTPClientOptions, HttpMethodStrings } from '@/src/api/types';
+import { DevOpsAPIResponseError, DevOpsAPITimeoutError, DevOpsUnexpectedStateError } from '@/src/devops/errors';
 import { AdminBlockingOptions } from '@/src/devops/types';
 import { MkTimeoutError, TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
 import { DEFAULT_DEVOPS_API_AUTH_HEADER, HttpMethods } from '@/src/api/constants';
@@ -40,7 +40,7 @@ export interface DevOpsAPIRequestInfo {
  * @internal
  */
 export interface LongRunningRequestInfo {
-  id: string | ((resp: GuaranteedAPIResponse) => string),
+  id: string | ((resp: APIResponse) => string),
   target: string,
   legalStates: string[],
   defaultPollInterval: number,
@@ -62,7 +62,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
     });
   }
 
-  public async request(req: DevOpsAPIRequestInfo, options: TimeoutOptions | undefined, started: number = 0): Promise<GuaranteedAPIResponse> {
+  public async request(req: DevOpsAPIRequestInfo, options: TimeoutOptions | undefined, started: number = 0): Promise<APIResponse> {
     const isLongRunning = started !== 0;
 
     try {
@@ -83,15 +83,21 @@ export class DevOpsAPIHttpClient extends HttpClient {
         timeoutManager,
       });
 
+      const data = resp.body ? JSON.parse(resp.body) : undefined;
+
       if (resp.status >= 400) {
-        throw new DevOpsAPIResponseError(resp);
+        throw new DevOpsAPIResponseError(resp, data);
       }
 
       if (this.monitorCommands && !isLongRunning) {
-        this.emitter.emit('adminCommandSucceeded', new AdminCommandSucceededEvent(req, false, resp, started));
+        this.emitter.emit('adminCommandSucceeded', new AdminCommandSucceededEvent(req, false, data, started));
       }
 
-      return resp;
+      return {
+        data: data,
+        status: resp.status,
+        headers: resp.headers,
+      };
     } catch (e) {
       if (!(e instanceof Error)) {
         throw e;
@@ -105,7 +111,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
     }
   }
 
-  public async requestLongRunning(req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo): Promise<GuaranteedAPIResponse> {
+  public async requestLongRunning(req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo): Promise<APIResponse> {
     const timeoutManager = mkTimeoutManager(info.options?.maxTimeMS);
     const isLongRunning = info?.options?.blocking !== false;
 
@@ -159,7 +165,8 @@ export class DevOpsAPIHttpClient extends HttpClient {
       }
 
       if (!info.legalStates.includes(resp.data?.status)) {
-        const error = new DevOpsUnexpectedStateError(`Created database is not in any legal state [${[info.target, ...info.legalStates].join(',')}]`, resp);
+        const okStates = [info.target, ...info.legalStates];
+        const error = new DevOpsUnexpectedStateError(`Created database is not in any legal state [${okStates.join(',')}]`, okStates, resp.data);
 
         if (this.monitorCommands) {
           this.emitter.emit('adminCommandFailed', new AdminCommandFailedEvent(req, true, error, started));
@@ -184,5 +191,5 @@ const mkTimeoutManager = (maxMs: number | undefined) => {
 }
 
 const mkTimeoutErrorMaker = (timeout: number): MkTimeoutError => {
-  return (info) => new DevOpsAPITimeout(info.url, timeout);
+  return (info) => new DevOpsAPITimeoutError(info.url, timeout);
 }

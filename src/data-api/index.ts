@@ -18,7 +18,7 @@ export * from './cursor';
 export * from './document';
 export { Db } from './db';
 export {
-  DataAPITimeout,
+  DataAPITimeoutError,
   DataAPIResponseError,
   CumulativeDataAPIError,
   DataAPIError,
@@ -36,4 +36,3 @@ export * from './events';
 export * from './ids';
 export { TypeErr } from './utils';
 export * from './types';
-export { normalizeSort } from '@/src/data-api/utils';

@@ -18,9 +18,10 @@ import {
   Projection,
   Sort,
 } from '@/src/data-api/types';
-import { CursorIsStartedError, normalizeSort, SomeDoc } from '@/src/data-api';
+import { CursorIsStartedError, SomeDoc } from '@/src/data-api';
 import { DataAPIHttpClient } from '@/src/api';
 import { InternalFindOptions, InternalGetMoreCommand } from '@/src/data-api/types/find/find';
+import { normalizeSort } from '@/src/data-api/utils';
 
 /** @internal */
 const enum CursorStatus {

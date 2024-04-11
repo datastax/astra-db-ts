@@ -49,20 +49,41 @@ export type DataAPICommandEvents = {
 export abstract class CommandEvent {
   /**
    * The command object. Equal to the response body of the HTTP request.
+   *
+   * Note that this is the actual raw command object; it's not necessarily 1:1 with methods called on the collection/db.
+   *
+   * For example, a `deleteAll` method on a collection will be translated into a `deleteMany` command, and a `bulkWrite`
+   * method will be translated into a series of `insertOne`, `updateOne`, etc. commands.
+   *
+   * @example
+   * ```typescript
+   * {
+   *   insertOne: { document: { name: 'John' } }
+   * }
+   * ```
    */
   public readonly command: Record<string, any>;
+
   /**
    * The namespace the command is being run in.
    */
   public readonly namespace: string;
+
   /**
    * The collection the command is being run on, if applicable.
    */
   public readonly collection?: string;
+
   /**
    * The command name.
+   *
+   * This is the key of the command object. For example, if the command object is
+   * `{ insertOne: { document: { name: 'John' } } }`, the command name is `insertOne`.
+   *
+   * Meaning, abstracted commands like `bulkWrite`, or `deleteAll` will be shown as their actual command equivalents.
    */
   public readonly commandName: string;
+
   /**
    * The URL the command is being sent to.
    */
@@ -87,6 +108,8 @@ export abstract class CommandEvent {
  *
  * **Note that these emit *real* commands, not any abstracted commands like "bulkWrite", "insertMany", or "deleteAll",
  * which have to be translated into appropriate Data API commands.**
+ *
+ * See {@link CommandEvent} for more information about all the common properties available on this event.
  *
  * @public
  */
@@ -113,13 +136,16 @@ export class CommandStartedEvent extends CommandEvent {
  * **Note that these emit *real* commands, not any abstracted commands like "bulkWrite", "insertMany", or "deleteAll",
  * which have to be translated into appropriate Data API commands.**
  *
+ * See {@link CommandEvent} for more information about all the common properties available on this event.
+ *
  * @public
  */
 export class CommandSucceededEvent extends CommandEvent {
   /**
-   * The duration of the command, in milliseconds.
+   * The duration of the command, in milliseconds. Starts counting from the moment of the initial HTTP request.
    */
   public readonly duration: number;
+
   /**
    * The response object from the Data API.
    */
@@ -143,6 +169,8 @@ export class CommandSucceededEvent extends CommandEvent {
  * **Note that these emit *real* commands, not any abstracted commands like "bulkWrite", "insertMany", or "deleteAll",
  * which have to be translated into appropriate Data API commands.**
  *
+ * See {@link CommandEvent} for more information about all the common properties available on this event.
+ *
  * @public
  */
 export class CommandFailedEvent extends CommandEvent {
@@ -150,8 +178,11 @@ export class CommandFailedEvent extends CommandEvent {
    * The duration of the command, in milliseconds.
    */
   public readonly duration: number;
+
   /**
    * The error that caused the command to fail.
+   *
+   * Typically, some {@link DataAPIError}, commonly a {@link DataAPIResponseError} or one of its subclasses.
    */
   public readonly error: Error;
 

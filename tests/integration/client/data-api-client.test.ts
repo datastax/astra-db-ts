@@ -17,7 +17,7 @@ import { DataAPIClient } from '@/src/client';
 import * as process from 'process';
 import assert from 'assert';
 import { assertTestsEnabled, DEFAULT_COLLECTION_NAME, initTestObjects, OTHER_NAMESPACE } from '@/tests/fixtures';
-import { DataAPIResponseError, DataAPITimeout, Db } from '@/src/data-api';
+import { DataAPIResponseError, DataAPITimeoutError, Db } from '@/src/data-api';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
 import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT } from '@/src/api';
 
@@ -257,7 +257,7 @@ describe('integration.client.data-api-client', () => {
       assert.deepStrictEqual(startedEvent.command, { insertOne: { document: { name: 'Xandria' } } });
       assert.deepStrictEqual(failedEvent.command, { insertOne: { document: { name: 'Xandria' } } });
 
-      assert.ok(failedEvent.error instanceof DataAPITimeout);
+      assert.ok(failedEvent.error instanceof DataAPITimeoutError);
       assert.strictEqual(failedEvent.error.timeout, 1);
     });
   });

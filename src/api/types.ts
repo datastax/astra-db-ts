@@ -16,7 +16,7 @@ import { TimeoutManager } from '@/src/api/timeout-managers';
 import { HttpMethods } from '@/src/api/constants';
 import TypedEmitter from 'typed-emitter';
 import { DataAPICommandEvents } from '@/src/data-api/events';
-import { context } from 'fetch-h2';
+import { context, Response } from 'fetch-h2';
 import { Headers } from 'fetch-h2/dist/lib/headers';
 
 /**
@@ -58,6 +58,38 @@ export interface InternalFetchCtx {
 }
 
 /**
+ * Curated response object from an API call
+ *
+ * @public
+ */
+export interface CuratedAPIResponse {
+  /**
+   * The string body of the response, if it exists.
+   */
+  body?: string,
+  /**
+   * The headers of the response.
+   */
+  headers: Record<string, any>,
+  /**
+   * The HTTP status code of the response.
+   */
+  status: number,
+  /**
+   * The HTTP version used for the request.
+   */
+  httpVersion: 1 | 2,
+  /**
+   * The URL that the request was made to.
+   */
+  url: string,
+  /**
+   * The status text for the response.
+   */
+  statusText: string,
+}
+
+/**
  * The response format of a 2XX-status Data API call
  *
  * @public
@@ -80,11 +112,16 @@ export interface RawDataAPIResponse {
 /**
  * @internal
  */
-export interface GuaranteedAPIResponse {
+export interface APIResponse {
   data?: Record<string, any>,
   headers: Headers,
   status: number,
 }
+
+/**
+ * @internal
+ */
+export type ResponseWithBody = Response & { body: string };
 
 /**
  * @internal
@@ -99,6 +136,5 @@ export interface HTTPRequestInfo {
   data?: unknown,
   params?: Record<string, string>,
   method: HttpMethodStrings,
-  reviver?: (key: string, value: any) => any,
   timeoutManager: TimeoutManager,
 }

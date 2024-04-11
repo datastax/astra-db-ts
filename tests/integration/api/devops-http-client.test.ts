@@ -16,7 +16,7 @@
 import { initTestObjects } from '@/tests/fixtures';
 import { DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
 import assert from 'assert';
-import { DevOpsAPITimeout } from '@/src/devops';
+import { DevOpsAPITimeoutError } from '@/src/devops';
 
 describe('integration.api.devops-http-client', () => {
   let httpClient: DevOpsAPIHttpClient;
@@ -32,6 +32,6 @@ describe('integration.api.devops-http-client', () => {
         method: HttpMethods.Get,
         path: '/databases',
       }, { maxTimeMS: 10 });
-    }, DevOpsAPITimeout);
+    }, DevOpsAPITimeoutError);
   });
 });

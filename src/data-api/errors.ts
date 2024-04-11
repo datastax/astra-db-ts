@@ -16,8 +16,9 @@ import type { InsertManyResult } from '@/src/data-api/types/insert/insert-many';
 import type { DeleteManyResult } from '@/src/data-api/types/delete/delete-many';
 import type { UpdateManyResult } from '@/src/data-api/types/update/update-many';
 import type { BulkWriteResult } from '@/src/data-api/types/misc/bulk-write';
-import type { RawDataAPIResponse } from '@/src/api';
+import type { CuratedAPIResponse, RawDataAPIResponse, ResponseWithBody } from '@/src/api';
 import { SomeDoc } from '@/src/data-api/document';
+import { toCuratedApiResponse } from '@/src/api/utils';
 
 /**
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a
@@ -123,11 +124,44 @@ export interface DataAPIDetailedErrorDescriptor {
  *
  * This is *only* for Data API related errors, such as a non-existent collection, or a duplicate key error. It
  * is *not*, however, for errors such as an HTTP network error, or a malformed request. The exception being timeouts,
- * which are represented by the {@link DataAPITimeout} class.
+ * which are represented by the {@link DataAPITimeoutError} class.
  *
  * @public
  */
 export abstract class DataAPIError extends Error {}
+
+/**
+ * An error thrown on non-2XX status codes from the Data API, such as 4XX or 5XX errors.
+ */
+export class DataAPIHttpError extends DataAPIError {
+  /**
+   * The error descriptors returned by the API to describe what went wrong.
+   */
+  public readonly status: number;
+
+  /**
+   * The HTTP status code of the response, if available.
+   */
+  public readonly body: string;
+
+  /**
+   * The "raw", errored response from the API.
+   */
+  public readonly raw: CuratedAPIResponse;
+
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
+  constructor(resp: ResponseWithBody) {
+    super(`HTTP error: ${resp.status}`);
+    this.status = resp.status;
+    this.body = resp.body;
+    this.raw = toCuratedApiResponse(resp);
+    this.name = 'DataAPIHttpError';
+  }
+}
 
 /**
  * An error thrown when a Data API operation timed out.
@@ -137,16 +171,21 @@ export abstract class DataAPIError extends Error {}
  *
  * @public
  */
-export class DataAPITimeout extends DataAPIError {
+export class DataAPITimeoutError extends DataAPIError {
   /**
    * The timeout that was set for the operation, in milliseconds.
    */
   public readonly timeout: number;
 
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
   constructor(timeout: number) {
     super(`Command timed out after ${timeout}ms`);
     this.timeout = timeout;
-    this.name = 'DataAPITimeout';
+    this.name = 'DataAPITimeoutError';
   }
 }
 
@@ -185,6 +224,11 @@ export class TooManyDocumentsToCountError extends DataAPIError {
    */
   public readonly hitServerLimit: boolean;
 
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
   constructor(limit: number, hitServerLimit: boolean) {
     const message = (hitServerLimit)
       ? `Too many documents to count (server limit of ${limit} reached)`
@@ -219,6 +263,11 @@ export class TooManyDocumentsToCountError extends DataAPIError {
  * @public
  */
 export class CursorIsStartedError extends DataAPIError {
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
   constructor(message: string) {
     super(message);
     this.name = 'CursorAlreadyInitializedError';
@@ -244,6 +293,11 @@ export class CollectionNotFoundError extends DataAPIError {
    */
   public readonly collectionName: string;
 
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
   constructor(namespace: string, collectionName: string) {
     super(`Collection '${namespace}.${collectionName}' not found`);
     this.namespace = namespace;
@@ -272,6 +326,11 @@ export class CollectionAlreadyExistsError extends DataAPIError {
    */
   public readonly collectionName: string;
 
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
   constructor(namespace: string, collectionName: string) {
     super(`Collection '${namespace}.${collectionName}' already exists`);
     this.namespace = namespace;
@@ -320,6 +379,11 @@ export class DataAPIResponseError extends DataAPIError {
    */
   public readonly detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[];
 
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
   constructor(message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) {
     super(message);
     this.message = message;
@@ -338,7 +402,7 @@ export class DataAPIResponseError extends DataAPIError {
  *
  * This is *only* for Data API related errors, such as a non-existent collection, or a duplicate key error. It
  * is *not*, however, for errors such as an HTTP network error, or a malformed request. The exception being timeouts,
- * which are represented by the {@link DataAPITimeout} class.
+ * which are represented by the {@link DataAPITimeoutError} class.
  *
  * @field message - A human-readable message describing the *first* error
  * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API

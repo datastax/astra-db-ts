@@ -5,7 +5,7 @@
 ```ts
 
 import { context as context_2 } from 'fetch-h2';
-import { Headers as Headers_2 } from 'fetch-h2/dist/lib/headers';
+import { Response as Response_2 } from 'fetch-h2';
 import TypedEmitter from 'typed-emitter';
 
 // @public
@@ -57,10 +57,8 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
 
 // @public
 export class AdminCommandSucceededEvent extends AdminCommandEvent {
-    // Warning: (ae-forgotten-export) The symbol "GuaranteedAPIResponse" needs to be exported by the entry point index.d.ts
-    //
     // @internal
-    constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, resp: GuaranteedAPIResponse, started: number);
+    constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number);
     readonly duration: number;
     readonly resBody?: Record<string, any>;
 }
@@ -146,6 +144,7 @@ export interface BulkWriteOrderedOptions extends WithTimeout {
 
 // @public
 export class BulkWriteResult<Schema extends SomeDoc> {
+    // @internal
     constructor(
     deletedCount?: number,
     insertedCount?: number,
@@ -217,6 +216,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
 // @public
 export class CollectionAlreadyExistsError extends DataAPIError {
+    // @internal
     constructor(namespace: string, collectionName: string);
     readonly collectionName: string;
     readonly namespace: string;
@@ -300,6 +300,16 @@ export abstract class CumulativeDataAPIError extends DataAPIResponseError {
 }
 
 // @public
+export interface CuratedAPIResponse {
+    body?: string;
+    headers: Record<string, any>;
+    httpVersion: 1 | 2;
+    status: number;
+    statusText: string;
+    url: string;
+}
+
+// @public
 export type CurrentDate<Schema> = {
     [K in keyof Schema as Schema[K] extends Date | {
         $date: number;
@@ -361,6 +371,7 @@ export interface DataAPIErrorDescriptor {
 
 // @public
 export class DataAPIResponseError extends DataAPIError {
+    // @internal
     constructor(message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]);
     readonly detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[];
     readonly errorDescriptors: DataAPIErrorDescriptor[];
@@ -368,7 +379,8 @@ export class DataAPIResponseError extends DataAPIError {
 }
 
 // @public
-export class DataAPITimeout extends DataAPIError {
+export class DataAPITimeoutError extends DataAPIError {
+    // @internal
     constructor(timeout: number);
     readonly timeout: number;
 }
@@ -552,14 +564,17 @@ export interface DevOpsAPIErrorDescriptor {
 
 // @public
 export class DevOpsAPIResponseError extends DevOpsAPIError {
+    // Warning: (ae-forgotten-export) The symbol "ResponseWithBody" needs to be exported by the entry point index.d.ts
+    //
     // @internal
-    constructor(resp: GuaranteedAPIResponse);
+    constructor(resp: ResponseWithBody, data: Record<string, any> | undefined);
     readonly errors: DevOpsAPIErrorDescriptor[];
-    readonly status?: number;
+    readonly raw: CuratedAPIResponse;
+    readonly status: number;
 }
 
 // @public
-export class DevOpsAPITimeout extends DevOpsAPIError {
+export class DevOpsAPITimeoutError extends DevOpsAPIError {
     // @internal
     constructor(url: string, timeout: number);
     readonly timeout: number;
@@ -569,9 +584,9 @@ export class DevOpsAPITimeout extends DevOpsAPIError {
 // @public
 export class DevOpsUnexpectedStateError extends DevOpsAPIError {
     // @internal
-    constructor(message: string, raw?: GuaranteedAPIResponse);
+    constructor(message: string, expected: string[], data: Record<string, any> | undefined);
     readonly dbInfo?: FullDatabaseInfo;
-    readonly status?: number;
+    readonly expected: string[];
 }
 
 // @public
@@ -934,7 +949,7 @@ export type Sort = Record<string, SortDirection> | {
 };
 
 // @public
-export type SortDirection = 1 | -1;
+export type SortDirection = 1 | -1 | 'asc' | 'desc' | 'ascending' | 'descending';
 
 // @public
 export type StrictDateUpdate<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsDate<InNotation> extends true ? {
@@ -1023,6 +1038,7 @@ export type ToDotNotation<Schema extends SomeDoc> = Merge<_ToDotNotation<Schema,
 
 // @public
 export class TooManyDocumentsToCountError extends DataAPIError {
+    // @internal
     constructor(limit: number, hitServerLimit: boolean);
     readonly hitServerLimit: boolean;
     readonly limit: number;
