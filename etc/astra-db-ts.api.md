@@ -318,6 +318,7 @@ export type CurrentDate<Schema> = {
 
 // @public
 export class CursorIsStartedError extends DataAPIError {
+    // @internal
     constructor(message: string);
 }
 

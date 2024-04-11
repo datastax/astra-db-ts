@@ -21,8 +21,8 @@ interface Idea extends VectorDoc {
 }
 
 // Connect to the db
-const client = new DataAPIClient('AstraCS:OengMjURbGWRjuMTBMqXWwOn:3bcbf200a056069bb00f17fa52d92d935952a1f2ac58c99596edabb1e1b3950c');
-const db = client.db('https://f1183f14-dc85-4fbf-8aae-f1ca97338bbb-us-east-1.apps.astra.datastax.com');
+const client = new DataAPIClient('*TOKEN*');
+const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
 
 (async () => {
   try {
@@ -81,6 +81,7 @@ const db = client.db('https://f1183f14-dc85-4fbf-8aae-f1ca97338bbb-us-east-1.app
       console.log(`${doc.idea}: ${doc.$similarity}`);
     }
 
+    // Cleanup (if desired)
     await collection.drop();
   } finally {
     // Cleans up all open http sessions
@@ -132,6 +133,10 @@ a rich set of types to help you write type-safe code.
 Here are some examples of how you can properly leverage types to make your code more robust:
 
 ```typescript
+// First of all:
+// I *highly* recommend writing your query objects & filter objects and such inline with the methods
+// to get the best possible type-checking and autocomplete
+
 import { DataAPIClient, StrictFilter, StrictSort, UUID } from '@datastax/astra-db-ts';
 
 const client = new DataAPIClient('*TOKEN*');
@@ -189,9 +194,10 @@ import { DataAPIClient } from '@datastax/astra-db-ts';
 // Reference an untyped collection
 const client = new DataAPIClient('*TOKEN*');
 const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
-const collection = db.collection('*COLLECTION*');
 
 (async () => {
+  const collection = await db.createCollection('dates_test');
+  
   // Insert documents with some dates
   await collection.insertOne({ dateOfBirth: new Date(1394104654000) });
   await collection.insertOne({ dateOfBirth: new Date('1863-05-28') });
@@ -210,8 +216,10 @@ const collection = db.collection('*COLLECTION*');
   // Will print *around* `new Date()` (i.e. when server processed the request)
   const found = await collection.findOne({ dateOfBirth: { $lt: new Date('1900-01-01') } });
   console.log(found?.lastModified);
+  
+  // Cleanup (if desired)
+  await collection.drop();
 })();
-
 ```
 
 ### Working with ObjectIds and UUIDs
@@ -235,7 +243,7 @@ const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
 
 (async () => {
   // Create a collection with a UUIDv7 as the default ID
-  const collection = await db.createCollection<Person>('my_collection', { defaultId: { type: 'uuidv7' } });
+  const collection = await db.createCollection<Person>('ids_test', { defaultId: { type: 'uuidv7' } });
   
   // You can manually set whatever ID you want
   await collection.insertOne({ _id: new ObjectId("65fd9b52d7fabba03349d013"), name: 'John' });
@@ -256,7 +264,10 @@ const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
   // And let's get Jane as a document
   // (Prints "Jane", the generated UUIDv4, and true)
   const jane = await collection.findOne({ name: 'Jane' });
-  console.log(jane?.name, jane?.friendId, friendId.equals(jane?.friendId));
+  console.log(jane?.name, jane?.friendId?.toString(), friendId.equals(jane?.friendId));
+  
+  // Cleanup (if desired)
+  await collection.drop();
 })();
 ```
 
@@ -280,6 +291,7 @@ const client = new DataAPIClient('*TOKEN*', {
     monitorCommands: true,
   },
 });
+const db = client.db('*ENDPOINT*');
 
 client.on('commandStarted', (event) => {
   console.log(`Running command ${event.commandName}`);
@@ -293,13 +305,21 @@ client.on('commandFailed', (event) => {
   console.error(`Command ${event.commandName} failed w/ error ${event.error}`);
 });
 
-const db = client.db('*ENDPOINT*');
-const coll = db.collection('*COLLECTION*');
-
 (async () => {
+  // Should log
+  // - "Running command createCollection"
+  // - "Command createCollection succeeded in <time>ms"
+  const collection = await db.createCollection('my_collection', { checkExists: false });
+
   // Should log
   // - "Running command insertOne"
   // - "Command insertOne succeeded in <time>ms"
-  await coll.insertOne({ name: 'Queen' });
+  await collection.insertOne({ name: 'Queen' });
+
+  // Remove all monitoring listeners
+  client.removeAllListeners();
+
+  // Cleanup (if desired) (with no logging)
+  await collection.drop();
 })();
 ```
