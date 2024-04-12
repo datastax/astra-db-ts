@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CLIENT_USER_AGENT, RAG_STACK_REQUESTED_WITH } from '@/src/api/constants';
+import { CLIENT_USER_AGENT, RAGSTACK_REQUESTED_WITH } from '@/src/api/constants';
 import { HTTPRequestInfo, InternalFetchCtx, InternalHTTPClientOptions, ResponseWithBody } from '@/src/api/types';
 import { Caller, DataAPIClientEvents } from '@/src/client';
 import TypedEmitter from 'typed-emitter';
@@ -104,5 +104,5 @@ export function buildUserAgent(caller: Caller | Caller[] | undefined): string {
     return c[1] ? `${c[0]}/${c[1]}` : c[0];
   }).join(' ');
 
-  return `${RAG_STACK_REQUESTED_WITH} ${callerString} ${CLIENT_USER_AGENT}`.trim();
+  return `${RAGSTACK_REQUESTED_WITH} ${callerString} ${CLIENT_USER_AGENT}`.trim();
 }

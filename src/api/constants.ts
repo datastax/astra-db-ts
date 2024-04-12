@@ -14,15 +14,12 @@
 
 import { LIB_NAME, LIB_VERSION } from '@/src/version';
 
-export const RAG_STACK_REQUESTED_WITH = (() => {
+export const RAGSTACK_REQUESTED_WITH = (() => {
   try {
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const lib = require('ragstack-ai');
-
-    if (!lib['LIB_NAME'] || !lib['LIB_VERSION']) {
-      return '';
-    }
-    return lib['LIB_NAME'] + '/' + lib['LIB_VERSION'];
+    const ragstack = require('@datastax/ragstack-ai');
+    const version =  ragstack['RAGSTACK_VERSION'] || "?";
+    return `ragstack-ai-ts/${version}`
   } catch (e) {
     return '';
   }
