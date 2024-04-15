@@ -13,13 +13,24 @@
 // limitations under the License.
 
 import { LIB_NAME, LIB_VERSION } from '@/src/version';
+import * as path from "path";
+import * as fs from "fs";
 
 export const RAGSTACK_REQUESTED_WITH = (() => {
+  /**
+   * Do not use require() here, it will break the build in some environments such as NextJS application
+   * if @datastax/ragstack-ai is not installed (which is perfectly fine).
+   */
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const ragstack = require('@datastax/ragstack-ai');
-    const version =  ragstack['RAGSTACK_VERSION'] || "?";
-    return `ragstack-ai-ts/${version}`
+    const expectedFilePath = path.join('@datastax', 'ragstack-ai', 'package.json');
+    for (const nodeModulesPath of module.paths) {
+      const fullFilePath = path.join(nodeModulesPath, expectedFilePath);
+      if (fs.existsSync(fullFilePath)) {
+        const packageJson = JSON.parse(fs.readFileSync(fullFilePath, 'utf8'))
+        return `ragstack-ai-ts/${packageJson.version}`
+      }
+    }
+    return ''
   } catch (e) {
     return '';
   }
