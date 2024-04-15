@@ -27,7 +27,6 @@ export const RAGSTACK_REQUESTED_WITH = (() => {
     return '';
   }
 })();
-console.log("RAGSTACK_REQUESTED_WITH", RAGSTACK_REQUESTED_WITH)
 
 /**
  * @internal
