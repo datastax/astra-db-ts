@@ -16,14 +16,18 @@ import { LIB_NAME, LIB_VERSION } from '@/src/version';
 
 export const RAGSTACK_REQUESTED_WITH = (() => {
   try {
-    // eslint-disable-next-line @typescript-eslint/no-var-requires
-    const ragstack = require('@datastax/ragstack-ai');
+    /**
+     * Do not use require() here, it will break the build in some environments such as NextJS application^M
+     * if @datastax/ragstack-ai is not installed (which is perfectly fine).
+     */
+    const ragstack = eval(`require('@datastax/ragstack-ai')`);
     const version =  ragstack['RAGSTACK_VERSION'] || "?";
     return `ragstack-ai-ts/${version}`
   } catch (e) {
     return '';
   }
 })();
+console.log("RAGSTACK_REQUESTED_WITH", RAGSTACK_REQUESTED_WITH)
 
 /**
  * @internal
