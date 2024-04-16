@@ -157,7 +157,7 @@ export type StrictProjection<Schema extends SomeDoc> = {
     ? 1 | 0 | true | false | ProjectionSlice
     : 1 | 0 | true | false;
 } & {
-  '*': 1 | 0 | true | false;
+  '*'?: 1 | 0 | true | false;
 };
 
 /**
