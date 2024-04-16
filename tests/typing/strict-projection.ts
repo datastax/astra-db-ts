@@ -43,3 +43,12 @@ const test4: StrictProjection<Schema> = {
 const test5: StrictProjection<ConvolutedSchema2> = {
   numOrArray: { $slice: [1, 3] },
 }
+
+const test6: StrictProjection<ConvolutedSchema2> = {
+  numOrArray: { $slice: [1, 3] },
+  '*': 1,
+}
+
+const test7: StrictProjection<ConvolutedSchema2> = {
+  '*': false,
+}
