@@ -91,6 +91,9 @@ export function hrTimeMs(): number {
   return Math.floor(hrtime[0] * 1000 + hrtime[1] / 1000000);
 }
 
+/**
+ * @internal
+ */
 export function buildUserAgent(caller: Caller | Caller[] | undefined): string {
   const callers = (
     (!caller)

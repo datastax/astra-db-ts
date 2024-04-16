@@ -288,8 +288,8 @@ export class Db {
    * This is a blocking command which performs actual I/O unlike {@link Db.collection}, which simply creates an
    * unvalidated reference to a collection.
    *
-   * **Creation is idempotent, so if the collection already exists with the same options, this method will not throw
-   * an error. If the options differ though, it'll raise an error.**
+   * **If `checkExists: false`, creation is idempotent, so if the collection already exists with the same options,
+   * this method will not throw an error. If the options differ though, it'll raise an error.**
    *
    * Typed as `Collection<SomeDoc>` by default, but you can specify a schema type to get a typed collection. If left
    * as `SomeDoc`, the collection will be untyped.

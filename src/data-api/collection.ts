@@ -551,6 +551,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
           returnDocument: 'before',
           upsert: options?.upsert,
         },
+        // projection: { '*': 0 },
       },
     };
 

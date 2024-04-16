@@ -14,14 +14,15 @@
 
 import { LIB_NAME, LIB_VERSION } from '@/src/version';
 
+/**
+ * @internal
+ */
 export const RAGSTACK_REQUESTED_WITH = (() => {
   try {
-    /**
-     * Do not use require() here, it will break the build in some environments such as NextJS application^M
-     * if @datastax/ragstack-ai is not installed (which is perfectly fine).
-     */
+    // Do not use require() here, it will break the build in some environments such as NextJS application
+    // if @datastax/ragstack-ai is not installed (which is perfectly fine).
     const ragstack = eval(`require('@datastax/ragstack-ai')`);
-    const version =  ragstack['RAGSTACK_VERSION'] || "?";
+    const version = ragstack['RAGSTACK_VERSION'] || '?';
     return `ragstack-ai-ts/${version}`
   } catch (e) {
     return '';

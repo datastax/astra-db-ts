@@ -67,12 +67,30 @@ describe('integration.data-api.collection.replace-one', () => {
     assert.strictEqual(resp.modifiedCount, 1);
   });
 
-  it('should replaceOne with upsert true', async () => {
+  it('should replaceOne with upsert true if match', async () => {
+    await collection.insertOne({ _id: 1 });
+    const resp = await collection.replaceOne(
+      {
+        _id: 1,
+      },
+      createSampleDoc2WithMultiLevel(),
+      {
+        upsert: true,
+      },
+    );
+
+    assert.strictEqual(resp.matchedCount, 1);
+    assert.strictEqual(resp.modifiedCount, 1);
+    assert.strictEqual(resp.upsertedCount, 0);
+    assert.strictEqual(resp.upsertedId, undefined);
+  });
+
+  it('should replaceOne with upsert true if no match', async () => {
     await collection.insertOne(createSampleDocWithMultiLevel());
     const newDocId = '123';
     const resp = await collection.replaceOne(
       {
-        '_id': newDocId,
+        _id: newDocId,
       },
       createSampleDoc2WithMultiLevel(),
       {
