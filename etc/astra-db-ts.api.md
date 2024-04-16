@@ -987,7 +987,7 @@ export type StrictPop<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>
 export type StrictProjection<Schema extends SomeDoc> = {
     [K in keyof ToDotNotation<WithId<Schema>>]?: any[] extends (ToDotNotation<WithId<Schema>>)[K] ? 1 | 0 | true | false | ProjectionSlice : 1 | 0 | true | false;
 } & {
-    '*': 1 | 0 | true | false;
+    '*'?: 1 | 0 | true | false;
 };
 
 // @public
