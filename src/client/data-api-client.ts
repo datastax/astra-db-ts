@@ -49,8 +49,9 @@ export type DataAPIClientEvents =
   & AdminCommandEvents
 
 /**
- * The base class for the {@link DataAPIClient} event emitter to make it properly typed. Should probably never need
- * to be used directly.
+ * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
+ *
+ * Should probably never need to be used directly.
  *
  * @public
  */
