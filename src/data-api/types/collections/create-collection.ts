@@ -40,9 +40,14 @@ export interface CreateCollectionCommand {
  */
 export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, WithNamespace {
   /**
-   * If `true`, runs an additional existence check before creating the collection, failing if the collection with the
-   * same name already exists, raising an error. Otherwise, the creation is always attempted, and the command's will
-   * succeed even if the collection with the given name already exists, as long as the options are the exact same.
+   * If `true` or unset, runs an additional existence check before creating the collection, failing if the collection
+   * with the same name already exists, raising a {@link CollectionAlreadyExistsError}.
+   *
+   * Otherwise, if `false`, the creation is always attempted, and the command will succeed even if the collection
+   * with the given name already exists, as long as the options are the exact same (if options mismatch, it'll
+   * throw a {@link DataAPIResponseError}).
+   *
+   * @defaultValue true
    */
   checkExists?: boolean;
 }

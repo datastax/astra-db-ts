@@ -92,8 +92,8 @@ export interface VectorizeServiceOptions {
  * @public
  */
 export type IndexingOptions<Schema extends SomeDoc> =
-  | { allow: (keyof ToDotNotation<Schema>)[] | ['*'], deny?: never }
-  | { deny: (keyof ToDotNotation<Schema>)[] | ['*'], allow?: never }
+  | { allow: (keyof ToDotNotation<Schema>)[] | ['*'], deny?:  never }
+  | { deny:  (keyof ToDotNotation<Schema>)[] | ['*'], allow?: never }
 
 /**
  * Represents the options for the default ID.

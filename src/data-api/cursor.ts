@@ -315,10 +315,6 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * resultant data was already fetched by this cursor.
    */
   rewind(): void {
-    // if (this._state === CursorStatus.Uninitialized) {
-    //   return;
-    // }
-
     this._buffer.length = 0;
     this._nextPageState = undefined;
     this._state = CursorStatus.Uninitialized;
