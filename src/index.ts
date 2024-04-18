@@ -13,6 +13,7 @@
 // limitations under the License.
 
 export { RawDataAPIResponse, CuratedAPIResponse } from './api';
+export * from './symbol-dispose';
 export * from './data-api';
 export * from './client';
 export * from './devops';

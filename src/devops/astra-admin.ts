@@ -12,8 +12,6 @@ import { AdminSpawnOptions, DbSpawnOptions, InternalRootClientOpts } from '@/src
 import { validateOption } from '@/src/data-api/utils';
 import { mkDb } from '@/src/data-api/db';
 
-type AdminOptions = InternalRootClientOpts & { adminOptions: { adminToken: string } };
-
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
  *
@@ -50,7 +48,7 @@ export class AstraAdmin {
    *
    * @internal
    */
-  constructor(options: AdminOptions) {
+  constructor(options: InternalRootClientOpts & { adminOptions: { adminToken: string } }) {
     const adminOpts = options.adminOptions ?? {};
 
     this.#defaultOpts = options;

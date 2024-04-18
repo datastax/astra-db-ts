@@ -266,6 +266,15 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
     await this.#options.fetchCtx.preferred.disconnectAll();
     await this.#options.fetchCtx.http1.disconnectAll();
   }
+
+  /**
+   * Allows for the `await using` syntax
+   *
+   * @public
+   */
+  public [Symbol.asyncDispose](): Promise<void> {
+    return this.close();
+  }
 }
 
 function validateRootOpts(opts: DataAPIClientOptions | undefined | null) {

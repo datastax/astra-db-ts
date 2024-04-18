@@ -22,7 +22,7 @@ import type { SomeId } from '@/src/data-api/types';
  * IsNum<string | number> === true
  * ```
  *
- * @internal
+ * @public
  */
 export type IsNum<T> = number extends T ? true : bigint extends T ? true : false
 
@@ -34,14 +34,14 @@ export type IsNum<T> = number extends T ? true : bigint extends T ? true : false
  * IsDate<string | Date> === boolean
  * ```
  *
- * @internal
+ * @public
  */
 export type IsDate<T> = IsAny<T> extends true ? true : T extends Date | { $date: number } ? true : false
 
 /**
  * Checks if a type is any
  *
- * @internal
+ * @public
  */
 export type IsAny<T> = true extends false & T ? true : false
 

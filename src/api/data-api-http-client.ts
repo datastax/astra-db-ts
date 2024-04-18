@@ -23,7 +23,7 @@ import {
   HttpMethods,
   RawDataAPIResponse,
 } from '@/src/api';
-import { DataAPIResponseError, DataAPITimeoutError, ObjectId, UUID } from '@/src/data-api';
+import { DataAPIResponseError, DataAPITimeoutError, ObjectId, UUID, WithNamespace } from '@/src/data-api';
 import { MkTimeoutError, TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
 import { CollectionNotFoundError, DataAPIHttpError, mkRespErrorFromResponse } from '@/src/data-api/errors';
@@ -39,13 +39,9 @@ export interface DataAPIRequestInfo {
   timeoutManager: TimeoutManager;
 }
 
-type ExecuteCommandOptions = TimeoutOptions & {
+type ExecuteCommandOptions = {
   collection?: string;
   namespace?: string;
-}
-
-type DataAPIHttpClientOptions = HTTPClientOptions & {
-  namespace: string;
 }
 
 /**
@@ -54,9 +50,9 @@ type DataAPIHttpClientOptions = HTTPClientOptions & {
 export class DataAPIHttpClient extends HttpClient {
   public collection?: string;
   public namespace?: string;
-  readonly #props: DataAPIHttpClientOptions;
+  readonly #props: HTTPClientOptions & WithNamespace;
 
-  constructor(props: DataAPIHttpClientOptions) {
+  constructor(props: HTTPClientOptions & WithNamespace) {
     super({
       ...props,
       mkAuthHeader: (token) => ({ [DEFAULT_DATA_API_AUTH_HEADER]: token }),
@@ -80,7 +76,7 @@ export class DataAPIHttpClient extends HttpClient {
     return mkTimeoutManager(timeoutMs);
   }
 
-  public async executeCommand(command: Record<string, any>, options: ExecuteCommandOptions | undefined) {
+  public async executeCommand(command: Record<string, any>, options: TimeoutOptions & ExecuteCommandOptions | undefined) {
     const timeoutManager = options?.timeoutManager ?? mkTimeoutManager(options?.maxTimeMS);
 
     return await this._requestDataAPI({
