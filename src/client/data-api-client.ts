@@ -247,6 +247,17 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * @remarks
    * This method is idempotent and can be called multiple times without issue.
    *
+   * --
+   *
+   * For most users, this method isn't necessary to call, as resources will be freed up when the
+   * server is shut down or the process is killed. However, it's useful in long-running processes or when you want to
+   * free up resources immediately.
+   *
+   * --
+   *
+   * Think of it as using malloc or using a file descriptor. Freeing them isn't always strictly necessary for
+   * long-running usages, but it's there for when you need it.
+   *
    * @returns A promise that resolves when the client has been closed.
    */
   public async close(): Promise<void> {
