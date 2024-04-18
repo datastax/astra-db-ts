@@ -52,7 +52,7 @@ import { InternalRootClientOpts } from '@/src/client/types';
  *
  * // Overrides default options from the DataAPIClient
  * const db2 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', {
- *   namespace: 'my-namespace',
+ *   namespace: 'my_namespace',
  *   useHttp2: false,
  * });
  *
@@ -78,18 +78,18 @@ export class Db {
    * ```typescript
    *
    * // Uses 'default_keyspace' as the default namespace for all future db spawns
-   * const client1 = new DataAPIClient('AstraCS:...');
+   * const client1 = new DataAPIClient('*TOKEN*');
    *
    * // Overrides the default namespace for all future db spawns
-   * const client2 = new DataAPIClient('AstraCS:...', {
+   * const client2 = new DataAPIClient('*TOKEN*', {
    *   dbOptions: { namespace: 'my_namespace' }
    * });
    *
    * // Created with 'default_keyspace' as the default namespace
-   * const db1 = client1.db('https://<db_id>-<region>.apps.astra.datastax.com');
+   * const db1 = client1.db('*ENDPOINT*');
    *
    * // Created with 'my_namespace' as the default namespace
-   * const db2 = client1.db('https://<db_id>-<region>.apps.astra.datastax.com', {
+   * const db2 = client1.db('*ENDPOINT*', {
    *   namespace: 'my_namespace'
    * });
    *
@@ -139,7 +139,7 @@ export class Db {
   }
 
   /**
-   * The ID of the database, if it's an Astra database. If it's a non-Astra database, this will throw an error.
+   * The ID of the database, if it's an Astra database. If it's not an Astra database, this will throw an error.
    *
    * @throws Error - if the database is not an Astra database.
    */
@@ -154,7 +154,7 @@ export class Db {
    * Spawns a new {@link AstraDbAdmin} instance for this database, used for performing administrative operations
    * on the database, such as managing namespaces, or getting database information.
    *
-   * **NB. This method will throw an error if the database is not an Astra database.**
+   * **NB. Only available for Astra databases.**
    *
    * The given options will override any default options set when creating the {@link DataAPIClient} through
    * a deep merge (i.e. unset properties in the options object will just default to the default options).
@@ -184,12 +184,12 @@ export class Db {
   /**
    * Fetches information about the database, such as the database name, region, and other metadata.
    *
+   * **NB. Only available for Astra databases.**
+   *
    * For the full, complete, information, see {@link AstraDbAdmin.info}.
    *
    * The method issues a request to the DevOps API each time it is invoked, without caching mechanisms;
    * this ensures up-to-date information for usages such as real-time collection validation by the application.
-   *
-   * Only available for Astra databases.
    *
    * @example
    * ```typescript
@@ -249,9 +249,9 @@ export class Db {
   }
 
   /**
-   * Fetches all the collections in the database (& in the working/given namespace), and establishes references to them.
+   * Establishes references to all the collections in the working/given namespace.
    *
-   * You can also specify a namespace in the options parameter, which will override the default namespace for this database.
+   * You can specify a namespace in the options parameter, which will override the default namespace for this `Db` instance.
    *
    * @example
    * ```typescript
@@ -269,11 +269,9 @@ export class Db {
    * @returns A promise that resolves to an array of references to the working Db's collections.
    */
   public async collections(options?: WithNamespace & WithTimeout): Promise<Collection[]> {
-    const timeoutManager = this._httpClient.timeoutManager(options?.maxTimeMS);
-
     const collections = await this.listCollections({
       namespace: options?.namespace,
-      maxTimeMS: timeoutManager.msRemaining,
+      maxTimeMS: options?.maxTimeMS,
       nameOnly: true,
     });
 
@@ -283,13 +281,13 @@ export class Db {
   /**
    * Creates a new collection in the database, and establishes a reference to it.
    *
-   * **NB. You are limited to 10 collections per database in Astra, so be wary when using this command.**
+   * **NB. You are limited in the amount of collections you can create, so be wary when using this command.**
    *
    * This is a blocking command which performs actual I/O unlike {@link Db.collection}, which simply creates an
    * unvalidated reference to a collection.
    *
-   * **If `checkExists: false`, creation is idempotent, so if the collection already exists with the same options,
-   * this method will not throw an error. If the options differ though, it'll raise an error.**
+   * If `checkExists: false`, creation is idempotent, so if the collection already exists with the same options,
+   * this method will not throw an error. If the options mismatch, it will throw a {@link DataAPIResponseError}.
    *
    * Typed as `Collection<SomeDoc>` by default, but you can specify a schema type to get a typed collection. If left
    * as `SomeDoc`, the collection will be untyped.
@@ -297,6 +295,8 @@ export class Db {
    * *If vector options are not specified, the collection will not support vector search.*
    *
    * You can also specify a namespace in the options parameter, which will override the default namespace for this database.
+   *
+   * See {@link CreateCollectionOptions} for *much* more information on the options available.
    *
    * @example
    * ```typescript
@@ -314,6 +314,7 @@ export class Db {
    *   defaultId: {
    *     type: "objectId",
    *   },
+   *   checkExists: false,
    * });
    * ```
    *
@@ -321,6 +322,8 @@ export class Db {
    * @param options - Options for the collection.
    *
    * @returns A promised reference to the newly created collection.
+   *
+   * @throws CollectionAlreadyExistsError - if the collection already exists and `checkExists` is `true` or unset.
    *
    * @see SomeDoc
    * @see VectorDoc
@@ -433,6 +436,7 @@ export class Db {
     const command: ListCollectionsCommand = {
       findCollections: {
         options: {
+          // Is 'nameOnly' instead of 'explain' for Mongo-compatibility reasons
           explain: options?.nameOnly !== true,
         },
       },
