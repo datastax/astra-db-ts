@@ -36,6 +36,8 @@ export type SortDirection = 1 | -1 | 'asc' | 'desc' | 'ascending' | 'descending'
  *
  * Can use `1`/`-1` for ascending/descending, or `$vector` for sorting by vector distance.
  *
+ * See {@link SortDirection} for all possible sort values.
+ *
  * **NB. The order of the fields in the sort option is significant—fields are sorted in the order they are listed.**
  *
  * @example
@@ -52,6 +54,9 @@ export type SortDirection = 1 | -1 | 'asc' | 'desc' | 'ascending' | 'descending'
  * }
  * ```
  *
+ * @see StrictSort
+ * @see SortDirection
+ *
  * @public
  */
 export type Sort =
@@ -64,7 +69,9 @@ export type Sort =
  *
  * **If you want stricter type-checking and full auto-complete, see {@link StrictProjection}.**
  *
- * Can use `1`/`0`, or `true`/`false`
+ * Can use `1`/`0`, or `true`/`false`.
+ *
+ * There's a special field `'*'` that can be used to include/exclude all fields.
  *
  * @example
  * ```typescript
@@ -86,6 +93,8 @@ export type Sort =
  * }
  * ```
  *
+ * @see StrictProjection
+ *
  * @public
  */
 export type Projection = Record<string, 1 | 0 | true | false | ProjectionSlice>;
@@ -94,6 +103,8 @@ export type Projection = Record<string, 1 | 0 | true | false | ProjectionSlice>;
  * Specifies the sort criteria for selecting documents.
  *
  * Can use `1`/`-1` for ascending/descending, or `$vector` for sorting by vector distance.
+ *
+ * See {@link SortDirection} for all possible sort values.
  *
  * **NB. The order of the fields in the sort option is significant—fields are sorted in the order they are listed.**
  *
@@ -115,6 +126,9 @@ export type Projection = Record<string, 1 | 0 | true | false | ProjectionSlice>;
  * });
  * ```
  *
+ * @see Sort
+ * @see SortDirection
+ *
  * @public
  */
 export type StrictSort<Schema extends SomeDoc> =
@@ -125,7 +139,9 @@ export type StrictSort<Schema extends SomeDoc> =
 /**
  * Specifies which fields should be included/excluded in the returned documents.
  *
- * Can use `1`/`0`, or `true`/`false`
+ * Can use `1`/`0`, or `true`/`false`.
+ *
+ * There's a special field `'*'` that can be used to include/exclude all fields.
  *
  * @example
  * ```typescript
@@ -149,6 +165,8 @@ export type StrictSort<Schema extends SomeDoc> =
  *   } satisfies StrictProjection<SomeDoc>,
  * });
  * ```
+ *
+ * @see Projection
  *
  * @public
  */
@@ -176,6 +194,25 @@ export type StrictProjection<Schema extends SomeDoc> = {
  *
  * // Skip backward 4 elements, return next 2 elements (forward)
  * { $slice: [-4, 2] }
+ * ```
+ *
+ * @example
+ * ```typescript
+ * await collection.insertOne({ arr: [1, 2, 3, 4, 5] });
+ *
+ * // Return [1, 2]
+ * await collection.findOne({}, {
+ *   projection: {
+ *     arr: { $slice: 2 },
+ *   },
+ * });
+ *
+ * // Return [3, 4]
+ * await collection.findOne({}, {
+ *   projection: {
+ *     arr: { $slice: [-3, 2] },
+ *   },
+ * });
  * ```
  *
  * @public
