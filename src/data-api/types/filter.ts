@@ -38,6 +38,8 @@ import { IsDate, IsNum } from '@/src/data-api/types/utils';
  * });
  * ```
  *
+ * @see StrictFilter
+ *
  * @public
  */
 export type Filter<Schema extends SomeDoc> = {
@@ -74,6 +76,8 @@ export type Filter<Schema extends SomeDoc> = {
  *   ]
  * } satisfies StrictFilter<BasicSchema>);
  * ```
+ *
+ * @see Filter
  *
  * @public
  */

@@ -133,7 +133,7 @@ export class BulkWriteResult<Schema extends SomeDoc> {
 /**
  * Represents *some* bulk write operation.
  *
- * Be careful not to pass in multiple operations in the same object.
+ * Be careful not to pass in multiple operations in the same object (only one operation per object allowed)
  *
  * @public
  */
