@@ -51,6 +51,26 @@ describe('integration.client.data-api-client', () => {
         assert.fail('should have thrown an error');
       } catch (e) {
         assert.ok(e instanceof Error);
+        assert.ok(e.name !== 'AssertionError');
+      }
+    });
+  });
+
+  describe('asyncDispose', () => {
+    it('should not allow operations after using the client', async () => {
+      const client = new DataAPIClient(process.env.APPLICATION_TOKEN!);
+      const db = client.db(process.env.ASTRA_URI!);
+
+      {
+        await using _client = client;
+      }
+
+      try {
+        await db.listCollections();
+        assert.fail('should have thrown an error');
+      } catch (e) {
+        assert.ok(e instanceof Error);
+        assert.ok(e.name !== 'AssertionError');
       }
     });
   });

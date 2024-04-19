@@ -106,7 +106,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The namespace of the collection that's being iterated over.
    */
-  get namespace(): string {
+  public get namespace(): string {
     return this._namespace;
   }
 
@@ -115,7 +115,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns Whether or not the cursor is closed.
    */
-  get closed(): boolean {
+  public get closed(): boolean {
     return this._state === CursorStatus.Closed;
   }
 
@@ -124,7 +124,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The number of documents in the buffer.
    */
-  bufferedCount(): number {
+  public bufferedCount(): number {
     return this._buffer.length;
   }
 
@@ -140,7 +140,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The cursor.
    */
-  filter(filter: Filter<TRaw>): FindCursor<T, TRaw> {
+  public filter(filter: Filter<TRaw>): FindCursor<T, TRaw> {
     this._assertUninitialized();
     this._filter = filter as any;
     return this;
@@ -158,7 +158,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The cursor.
    */
-  sort(sort: Sort): FindCursor<T, TRaw> {
+  public sort(sort: Sort): FindCursor<T, TRaw> {
     this._assertUninitialized();
     this._options.sort = normalizeSort(sort);
     return this;
@@ -175,7 +175,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The cursor.
    */
-  limit(limit: number): FindCursor<T, TRaw> {
+  public limit(limit: number): FindCursor<T, TRaw> {
     this._assertUninitialized();
     this._options.limit = limit || Infinity;
     return this;
@@ -190,7 +190,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The cursor.
    */
-  skip(skip: number): FindCursor<T, TRaw> {
+  public skip(skip: number): FindCursor<T, TRaw> {
     this._assertUninitialized();
     this._options.skip = skip;
     return this;
@@ -232,7 +232,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The cursor.
    */
-  project<R = any, RRaw extends SomeDoc = SomeDoc>(projection: Projection): FindCursor<R, RRaw> {
+  public project<R = any, RRaw extends SomeDoc = SomeDoc>(projection: Projection): FindCursor<R, RRaw> {
     this._assertUninitialized();
     this._options.projection = projection;
     return this as any;
@@ -247,7 +247,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The cursor.
    */
-  includeSimilarity(includeSimilarity: boolean = true): FindCursor<T, TRaw> {
+  public includeSimilarity(includeSimilarity: boolean = true): FindCursor<T, TRaw> {
     this._assertUninitialized();
     this._options.includeSimilarity = includeSimilarity;
     return this;
@@ -265,7 +265,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The cursor.
    */
-  map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw> {
+  public map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw> {
     this._assertUninitialized();
 
     if (this._mapping) {
@@ -291,7 +291,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns A behavioral clone of this cursor.
    */
-  clone(): FindCursor<TRaw, TRaw> {
+  public clone(): FindCursor<TRaw, TRaw> {
     return new FindCursor<TRaw, TRaw>(this._namespace, this._httpClient, this._filter, this._options);
   }
 
@@ -304,7 +304,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The documents read from the buffer.
    */
-  readBufferedDocuments(max?: number): TRaw[] {
+  public readBufferedDocuments(max?: number): TRaw[] {
     const toRead = Math.min(max ?? this._buffer.length, this._buffer.length);
     return this._buffer.splice(0, toRead);
   }
@@ -314,7 +314,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * cursor will remain, but iteration will start from the beginning, sending new queries to the server, even if the
    * resultant data was already fetched by this cursor.
    */
-  rewind(): void {
+  public rewind(): void {
     this._buffer.length = 0;
     this._nextPageState = undefined;
     this._state = CursorStatus.Uninitialized;
@@ -327,7 +327,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The next document, or `null` if there are no more documents.
    */
-  async next(): Promise<T | null> {
+  public async next(): Promise<T | null> {
     return this._next(false);
   }
 
@@ -338,7 +338,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns Whether or not there is a next document.
    */
-  async hasNext(): Promise<boolean> {
+  public async hasNext(): Promise<boolean> {
     if (this._buffer.length > 0) {
       return true;
     }
@@ -370,7 +370,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * }
    * ```
    */
-  async *[Symbol.asyncIterator](): AsyncGenerator<T, void, void> {
+  public async *[Symbol.asyncIterator](): AsyncGenerator<T, void, void> {
     try {
       while (true) {
         const doc = await this.next();
@@ -382,7 +382,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
         yield doc;
       }
     } finally {
-      await this.close();
+      this.close();
     }
   }
 
@@ -404,7 +404,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @deprecated - Prefer the `for await (const doc of cursor) { ... }` syntax instead.
    */
-  async forEach(consumer: (doc: T) => boolean | void): Promise<void> {
+  public async forEach(consumer: (doc: T) => boolean | void): Promise<void> {
     for await (const doc of this) {
       if (consumer(doc) === false) {
         break;
@@ -423,7 +423,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns An array of all documents in the cursor.
    */
-  async toArray(): Promise<T[]> {
+  public async toArray(): Promise<T[]> {
     const docs: T[] = [];
     for await (const doc of this) {
       docs.push(doc);
@@ -434,8 +434,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * Closes the cursor. The cursor will be unusable after this method is called, or until {@link FindCursor.rewind} is called.
    */
-  async close(): Promise<void> {
+  public close(): void {
     this._state = CursorStatus.Closed;
+    this._buffer = [];
   }
 
   private _assertUninitialized(): void {
@@ -460,7 +461,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
             ? this._mapping(doc)
             : doc;
         } catch (err) {
-          await this.close();
+          this.close();
           throw err;
         }
       }
@@ -472,7 +473,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
       try {
         await this._getMore();
       } catch (err) {
-        await this.close();
+        this.close();
         throw err;
       }
     } while (this._buffer.length !== 0);

@@ -139,6 +139,10 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
       },
       emitter: this,
     };
+
+    if (Symbol.asyncDispose) {
+      this[Symbol.asyncDispose] = this.close;
+    }
   }
 
   /**
@@ -266,6 +270,33 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
     await this.#options.fetchCtx.preferred.disconnectAll();
     await this.#options.fetchCtx.http1.disconnectAll();
   }
+
+  /**
+   * Allows for the `await using` syntax (if your typescript version \>= 5.2) to automatically close the client when
+   * it's out of scope.
+   *
+   * Equivalent to wrapping the client usage in a `try`/`finally` block and calling `client.close()` in the `finally`
+   * block.
+   *
+   * @example
+   * ```typescript
+   * async function main() {
+   *   // Will unconditionally close the client when the function exits
+   *   await using client = new DataAPIClient('*TOKEN*');
+   *
+   *   // Using the client as normal
+   *   const db = client.db('*ENDPOINT*');
+   *   console.log(await db.listCollections());
+   *
+   *   // Or pass it to another function to run your app
+   *   app(client);
+   * }
+   * main();
+   * ```
+   *
+   * *This will only be defined if the `Symbol.asyncDispose` symbol is actually defined.*
+   */
+  public [Symbol.asyncDispose]!: () => Promise<void>;
 }
 
 function validateRootOpts(opts: DataAPIClientOptions | undefined | null) {

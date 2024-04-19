@@ -100,10 +100,14 @@ export type ArrayUpdate<Schema> = {
 
 // @public
 export class AstraAdmin {
-    // Warning: (ae-forgotten-export) The symbol "AdminOptions" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "InternalRootClientOpts" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(options: AdminOptions);
+    constructor(options: InternalRootClientOpts & {
+        adminOptions: {
+            adminToken: string;
+        };
+    });
     createDatabase(config: DatabaseConfig, options?: CreateDatabaseOptions): Promise<AstraDbAdmin>;
     db(endpoint: string, options?: DbSpawnOptions): Db;
     db(id: string, region: string, options?: DbSpawnOptions): Db;
@@ -115,8 +119,6 @@ export class AstraAdmin {
 
 // @public
 export class AstraDbAdmin extends DbAdmin {
-    // Warning: (ae-forgotten-export) The symbol "InternalRootClientOpts" needs to be exported by the entry point index.d.ts
-    //
     // @internal
     constructor(_db: Db, options: InternalRootClientOpts);
     createNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
@@ -324,6 +326,7 @@ export class CursorIsStartedError extends DataAPIError {
 
 // @public
 export class DataAPIClient extends DataAPIClientEventEmitterBase {
+    [Symbol.asyncDispose]: () => Promise<void>;
     constructor(token: string, options?: DataAPIClientOptions | null);
     admin(options?: AdminSpawnOptions): AstraAdmin;
     close(): Promise<void>;
@@ -628,7 +631,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     constructor(namespace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: FindOptions);
     bufferedCount(): number;
     clone(): FindCursor<TRaw, TRaw>;
-    close(): Promise<void>;
+    close(): void;
     get closed(): boolean;
     filter(filter: Filter<TRaw>): FindCursor<T, TRaw>;
     // @deprecated
