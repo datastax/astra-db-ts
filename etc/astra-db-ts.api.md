@@ -326,7 +326,7 @@ export class CursorIsStartedError extends DataAPIError {
 
 // @public
 export class DataAPIClient extends DataAPIClientEventEmitterBase {
-    [Symbol.asyncDispose](): Promise<void>;
+    [Symbol.asyncDispose]: () => Promise<void>;
     constructor(token: string, options?: DataAPIClientOptions | null);
     admin(options?: AdminSpawnOptions): AstraAdmin;
     close(): Promise<void>;
@@ -627,7 +627,6 @@ export type FilterOps<Elem> = {
 // @public
 export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     [Symbol.asyncIterator](): AsyncGenerator<T, void, void>;
-    [Symbol.dispose](): void;
     // @internal
     constructor(namespace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: FindOptions);
     bufferedCount(): number;

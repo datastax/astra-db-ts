@@ -439,15 +439,6 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this._buffer = [];
   }
 
-  /**
-   * Allows for the `using` syntax
-   *
-   * @public
-   */
-  public [Symbol.dispose](): void {
-    this.close();
-  }
-
   private _assertUninitialized(): void {
     if (this._state !== CursorStatus.Uninitialized) {
       throw new CursorIsStartedError('Cursor is already initialized/in use; cannot perform options modification. Rewind or clone the cursor.');
