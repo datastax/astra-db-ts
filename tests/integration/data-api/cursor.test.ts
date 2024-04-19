@@ -382,7 +382,7 @@ describe('integration.data-api.cursor', async () => {
       }
       assert.deepStrictEqual(res, docs.slice(0, 1), 'Cursor did not read all documents');
       assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
-      assert.strictEqual(cursor.bufferedCount(), 2, 'Cursor did not properly consume buffer');
+      assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
     });
   });
@@ -502,7 +502,7 @@ describe('integration.data-api.cursor', async () => {
       });
       assert.deepStrictEqual(res, docs.slice(0, 1), 'Cursor did not read all documents');
       assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
-      assert.strictEqual(cursor.bufferedCount(), 2, 'Cursor did not properly consume buffer');
+      assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
     });
   });
