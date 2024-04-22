@@ -1016,6 +1016,29 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
+   * Gets an estimate of the count of documents in a collection.
+   *
+   * This operation is faster than {@link Collection.countDocuments} but may not be as accurate, and doesn't
+   * accept a filter. Unlike the former, **It can handle more than 1000 documents.**
+   *
+   * @remarks
+   * This gives a very rough estimate of the number of documents in the collection. It is not guaranteed to be
+   * accurate, and should not be used as a source of truth for the number of documents in the collection.
+   *
+   * @param options - The options for this operation.
+   *
+   * @returns The estimated number of documents in the collection
+   */
+  public async estimatedDocumentCount(options?: WithTimeout): Promise<number> {
+    const command = {
+      estimatedDocumentCount: {},
+    };
+
+    const resp = await this._httpClient.executeCommand(command, options);
+    return resp.status?.count;
+  }
+
+  /**
    * Atomically finds a single document in the collection and replaces it.
    *
    * If `upsert` is set to true, it will insert the replacement regardless of if no match is found.
