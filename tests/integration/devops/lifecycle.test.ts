@@ -58,12 +58,16 @@ describe('integration.devops.lifecycle', async () => {
       }
 
       {
-        const dbInfo = await asyncDbAdmin.info();
-        assert.ok(['PENDING', 'INITIALIZING'].includes(dbInfo.status));
-        assert.strictEqual(dbInfo.info.name, 'astra-test-db');
-        assert.strictEqual(dbInfo.info.cloudProvider, 'GCP');
-        assert.strictEqual(dbInfo.info.region, 'us-east1');
-        assert.strictEqual(dbInfo.info.keyspace, 'my_namespace');
+        const dbInfo1 = await asyncDbAdmin.info();
+        assert.ok(['PENDING', 'INITIALIZING'].includes(dbInfo1.status));
+        assert.strictEqual(dbInfo1.info.name, 'astra-test-db');
+        assert.strictEqual(dbInfo1.info.cloudProvider, 'GCP');
+        assert.strictEqual(dbInfo1.info.region, 'us-east1');
+        assert.strictEqual(dbInfo1.info.keyspace, 'my_namespace');
+
+        const dbInfo2 = await admin.dbInfo(asyncDb.id);
+        assert.deepStrictEqual(dbInfo1.info, dbInfo2.info);
+        assert.ok(['PENDING', 'INITIALIZING'].includes(dbInfo2.status));
       }
 
       const monitoringAdmin = client.admin({ monitorCommands: true });

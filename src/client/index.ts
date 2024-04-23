@@ -14,4 +14,4 @@
 // noinspection DuplicatedCode
 
 export * from './data-api-client';
-export { DbSpawnOptions, AdminSpawnOptions, DataAPIClientOptions, Caller } from './types';
+export { DbSpawnOptions, AdminSpawnOptions, DataAPIClientOptions, Caller, DataAPIHttpOptions, DataAPIHttp1Options } from './types';
