@@ -11,6 +11,7 @@ import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
 import { AdminSpawnOptions, DbSpawnOptions, InternalRootClientOpts } from '@/src/client/types';
 import { validateOption } from '@/src/data-api/utils';
 import { mkDb } from '@/src/data-api/db';
+import { WithTimeout } from '@/src/common';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -214,6 +215,27 @@ export class AstraAdmin {
   public dbAdmin(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): AstraDbAdmin {
     // @ts-expect-error - calls internal representation of method
     return this.db(endpointOrId, regionOrOptions, maybeOptions).admin(this.#defaultOpts.adminOptions);
+  }
+
+  /**
+   * Fetches the complete information about the database, such as the database name, IDs, region, status, actions, and
+   * other metadata.
+   *
+   * @example
+   * ```typescript
+   * const info = await admin.info('<db_id>');
+   * console.log(info.info.name, info.creationTime);
+   * ```
+   *
+   * @returns A promise that resolves to the complete database information.
+   */
+  public async dbInfo(id: string, options?: WithTimeout): Promise<FullDatabaseInfo> {
+    const resp = await this._httpClient.request({
+      method: HttpMethods.Get,
+      path: `/databases/${id}`,
+    }, options);
+
+    return resp.data as FullDatabaseInfo;
   }
 
   /**

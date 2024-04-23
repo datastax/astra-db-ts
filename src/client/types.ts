@@ -85,9 +85,13 @@ export interface DataAPIClientOptions {
    */
   caller?: Caller | Caller[],
   /**
-   * **Prefer to use the {@link httpOptions} property instead.**
+   * Whether to prefer HTTP/2 for requests to the Data API; if set to `false`, HTTP/1.1 will be used instead.
    *
-   * @deprecated
+   * **Prefer to use the {@link DataAPIClientOptions.httpOptions} property instead.**
+   *
+   * The two are functionally equivalent; this is provided for backwards compatibility.
+   *
+   * @deprecated Use the {@link DataAPIClientOptions.httpOptions} property instead.
    *
    * @see DataAPIHttpOptions
    */
@@ -96,6 +100,8 @@ export interface DataAPIClientOptions {
 
 /**
  * The options available for the {@link DataAPIClient} related to making HTTP requests.
+ *
+ * @public
  */
 export interface DataAPIHttpOptions {
   /**
@@ -127,6 +133,8 @@ export interface DataAPIHttpOptions {
 
 /**
  * The options available for the {@link DataAPIClient} related to making HTTP/1.1 requests.
+ *
+ * @public
  */
 export interface DataAPIHttp1Options {
   /**

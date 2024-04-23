@@ -113,6 +113,7 @@ export class AstraAdmin {
     db(id: string, region: string, options?: DbSpawnOptions): Db;
     dbAdmin(endpoint: string, options?: DbSpawnOptions): AstraDbAdmin;
     dbAdmin(id: string, region: string, options?: DbSpawnOptions): AstraDbAdmin;
+    dbInfo(id: string, options?: WithTimeout): Promise<FullDatabaseInfo>;
     dropDatabase(db: Db | string, options?: AdminBlockingOptions): Promise<void>;
     listDatabases(options?: ListDatabasesOptions): Promise<FullDatabaseInfo[]>;
 }
@@ -187,6 +188,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     deleteOne(filter?: Filter<Schema>, options?: DeleteOneOptions): Promise<DeleteOneResult>;
     distinct<Key extends string>(key: Key, filter?: Filter<Schema>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]>;
     drop(options?: WithTimeout): Promise<boolean>;
+    estimatedDocumentCount(options?: WithTimeout): Promise<number>;
     find(filter: Filter<Schema>, options?: FindOptions): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>>;
     findOne(filter: Filter<Schema>, options?: FindOneOptions): Promise<FoundDoc<Schema> | null>;
     findOneAndDelete(filter: Filter<Schema>, options: FindOneAndDeleteOptions & {
@@ -345,6 +347,8 @@ export interface DataAPIClientOptions {
     adminOptions?: AdminSpawnOptions;
     caller?: Caller | Caller[];
     dbOptions?: DbSpawnOptions;
+    httpOptions?: DataAPIHttpOptions;
+    // @deprecated
     preferHttp2?: boolean;
 }
 
@@ -371,6 +375,21 @@ export interface DataAPIErrorDescriptor {
     readonly attributes?: Record<string, any>;
     readonly errorCode?: string;
     readonly message?: string;
+}
+
+// @public
+export interface DataAPIHttp1Options {
+    keepAlive?: boolean;
+    keepAliveMS?: number;
+    maxFreeSockets?: number;
+    maxSockets?: number;
+}
+
+// @public
+export interface DataAPIHttpOptions {
+    http1?: DataAPIHttp1Options;
+    maxTimeMS?: number;
+    preferHttp2?: boolean;
 }
 
 // @public
