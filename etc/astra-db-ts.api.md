@@ -962,7 +962,7 @@ export interface RunCommandOptions extends WithNamespace, WithTimeout {
 export type SomeDoc = Record<string, any>;
 
 // @public
-export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId;
+export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId | null;
 
 // @public
 export type Sort = Record<string, SortDirection> | {
