@@ -47,6 +47,7 @@ export interface FetchCtx {
   http1: ReturnType<typeof context>,
   preferredType: 'http1' | 'http2',
   closed: { ref: boolean },
+  maxTimeMS: number | undefined,
 }
 
 /**
@@ -55,6 +56,7 @@ export interface FetchCtx {
 export interface InternalFetchCtx {
   preferred: ReturnType<typeof context>,
   closed: { ref: boolean },
+  maxTimeMS: number | undefined,
 }
 
 /**

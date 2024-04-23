@@ -30,7 +30,7 @@ export interface ListCollectionsCommand {
  *
  * @field nameOnly - If true, only the name of the collection is returned. If false, the full collection info is returned. Defaults to true.
  * @field namespace - Overrides the namespace to list collections from. If not provided, the default namespace is used.
- * @field maxTimeMs - The maximum amount of time to allow the operation to run.
+ * @field maxTimeMS - The maximum amount of time to allow the operation to run.
  *
  * @see Db.listCollections
  *

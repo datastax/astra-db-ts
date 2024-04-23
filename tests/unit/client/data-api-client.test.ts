@@ -85,17 +85,54 @@ describe('unit.client.data-api-client', () => {
     });
 
     it('uses http2 when forced', () => {
-      const client = new DataAPIClient('dummy-token', { preferHttp2: true });
+      const client = new DataAPIClient('dummy-token', { httpOptions: { preferHttp2: true } });
       const httpClient = client.db(endpoint)['_httpClient'];
       const http1Client = client.admin()['_httpClient'];
       assert.ok(httpClient.fetchCtx.preferred !== http1Client.fetchCtx.preferred);
     });
 
     it('uses http1.1 when forced', () => {
+      const client = new DataAPIClient('dummy-token', { httpOptions: { preferHttp2: false } });
+      const httpClient = client.db(endpoint)['_httpClient'];
+      const http1Client = client.admin()['_httpClient'];
+      assert.ok(httpClient.fetchCtx.preferred === http1Client.fetchCtx.preferred);
+    });
+
+    it('uses http2 when forced (deprecated version)', () => {
+      const client = new DataAPIClient('dummy-token', { preferHttp2: true });
+      const httpClient = client.db(endpoint)['_httpClient'];
+      const http1Client = client.admin()['_httpClient'];
+      assert.ok(httpClient.fetchCtx.preferred !== http1Client.fetchCtx.preferred);
+    });
+
+    it('uses http1.1 when forced (deprecated version)', () => {
       const client = new DataAPIClient('dummy-token', { preferHttp2: false });
       const httpClient = client.db(endpoint)['_httpClient'];
       const http1Client = client.admin()['_httpClient'];
       assert.ok(httpClient.fetchCtx.preferred === http1Client.fetchCtx.preferred);
+    });
+
+    it('validates options properly', () => {
+      assert.throws(() => new DataAPIClient('dummy-token', {
+        // @ts-expect-error - testing invalid input
+        httpOptions: { maxTimeMS: '3' },
+      }));
+      assert.throws(() => new DataAPIClient('dummy-token', {
+        // @ts-expect-error - testing invalid input
+        httpOptions: { preferHttp2: 3 },
+      }));
+      assert.throws(() => new DataAPIClient('dummy-token', {
+        // @ts-expect-error - testing invalid input
+        httpOptions: { http1: { maxSockets: '3' } },
+      }));
+      assert.throws(() => new DataAPIClient('dummy-token', {
+        // @ts-expect-error - testing invalid input
+        adminOptions: 3,
+      }));
+      assert.throws(() => new DataAPIClient('dummy-token', {
+        // @ts-expect-error - testing invalid input
+        dbOptions: { token: 3 },
+      }));
     });
   });
 

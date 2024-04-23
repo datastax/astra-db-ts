@@ -44,15 +44,9 @@ export type Caller = [name: string, version?: string];
  */
 export interface DataAPIClientOptions {
   /**
-   * Whether to prefer HTTP/2 for requests to the Data API.
-   *
-   * Both versions are generally interchangeable, but HTTP2 is generally recommended for better performance.
-   *
-   * Defaults to `true` if never provided.
-   *
-   * @defaultValue true
+   * The client-wide options related to http operations.
    */
-  preferHttp2?: boolean,
+  httpOptions?: DataAPIHttpOptions,
   /**
    * The default options when spawning a {@link Db} instance.
    */
@@ -90,6 +84,83 @@ export interface DataAPIClientOptions {
    * ```
    */
   caller?: Caller | Caller[],
+  /**
+   * **Prefer to use the {@link httpOptions} property instead.**
+   *
+   * @deprecated
+   *
+   * @see DataAPIHttpOptions
+   */
+  preferHttp2?: boolean,
+}
+
+/**
+ * The options available for the {@link DataAPIClient} related to making HTTP requests.
+ */
+export interface DataAPIHttpOptions {
+  /**
+   * Whether to prefer HTTP/2 for requests to the Data API; if set to `false`, HTTP/1.1 will be used instead.
+   *
+   * **Note that this is only available when using the Data API; the DevOps API does not support HTTP/2**
+   *
+   * Both versions are generally interchangeable, but HTTP2 is generally recommended for better performance.
+   *
+   * Defaults to `true` if never provided.
+   *
+   * @defaultValue true
+   */
+  preferHttp2?: boolean,
+  /**
+   * The default maximum time in milliseconds to wait for a response from the server.
+   *
+   * This does *not* mean the request will be cancelled after this time, but rather that the client will wait
+   * for this time before considering the request to have timed out.
+   *
+   * The request may or may not still be running on the server after this time.
+   */
+  maxTimeMS?: number,
+  /**
+   * Options specific to HTTP/1.1 requests.
+   */
+  http1?: DataAPIHttp1Options,
+}
+
+/**
+ * The options available for the {@link DataAPIClient} related to making HTTP/1.1 requests.
+ */
+export interface DataAPIHttp1Options {
+  /**
+   * Whether to keep the connection alive for future requests. This is generally recommended for better performance.
+   *
+   * Defaults to true.
+   *
+   * @defaultValue true
+   */
+  keepAlive?: boolean,
+  /**
+   * The delay (in milliseconds) before keep-alive probing.
+   *
+   * Defaults to 1000ms.
+   *
+   * @defaultValue 1000
+   */
+  keepAliveMS?: number,
+  /**
+   * Maximum number of sockets to allow per origin.
+   *
+   * Defaults to 256.
+   *
+   * @defaultValue 256
+   */
+  maxSockets?: number,
+  /**
+   * Maximum number of lingering sockets, waiting to be re-used for new requests.
+   *
+   * Defaults to Infinity.
+   *
+   * @defaultValue Infinity
+   */
+  maxFreeSockets?: number,
 }
 
 /**

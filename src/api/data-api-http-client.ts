@@ -24,7 +24,7 @@ import {
   RawDataAPIResponse,
 } from '@/src/api';
 import { DataAPIResponseError, DataAPITimeoutError, ObjectId, UUID, WithNamespace } from '@/src/data-api';
-import { MkTimeoutError, TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
+import { TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
 import { CollectionNotFoundError, DataAPIHttpError, mkRespErrorFromResponse } from '@/src/data-api/errors';
 
@@ -56,10 +56,6 @@ export class DataAPIHttpClient extends HttpClient {
     super({
       ...props,
       mkAuthHeader: (token) => ({ [DEFAULT_DATA_API_AUTH_HEADER]: token }),
-      fetchCtx: {
-        preferred: props.fetchCtx.preferred,
-        closed: props.fetchCtx.closed,
-      },
     });
     this.namespace = props.namespace;
     this.#props = props;
@@ -73,11 +69,11 @@ export class DataAPIHttpClient extends HttpClient {
   }
 
   public timeoutManager(timeoutMs: number | undefined) {
-    return mkTimeoutManager(timeoutMs);
+    return this._mkTimeoutManager(timeoutMs);
   }
 
   public async executeCommand(command: Record<string, any>, options: TimeoutOptions & ExecuteCommandOptions | undefined) {
-    const timeoutManager = options?.timeoutManager ?? mkTimeoutManager(options?.maxTimeMS);
+    const timeoutManager = options?.timeoutManager ?? this._mkTimeoutManager(options?.maxTimeMS);
 
     return await this._requestDataAPI({
       url: this.baseUrl,
@@ -149,15 +145,11 @@ export class DataAPIHttpClient extends HttpClient {
       throw e;
     }
   }
-}
 
-const mkTimeoutManager = (maxMs: number | undefined) => {
-  const timeout = maxMs ?? DEFAULT_TIMEOUT;
-  return new TimeoutManager(timeout, mkTimeoutErrorMaker(timeout));
-}
-
-const mkTimeoutErrorMaker = (timeout: number): MkTimeoutError => {
-  return () => new DataAPITimeoutError(timeout);
+  private _mkTimeoutManager(timeout: number | undefined) {
+    timeout ??= this.fetchCtx.maxTimeMS ?? DEFAULT_TIMEOUT;
+    return new TimeoutManager(timeout, () => new DataAPITimeoutError(timeout));
+  }
 }
 
 const mkFauxErroredResponse = (message: string): RawDataAPIResponse => {

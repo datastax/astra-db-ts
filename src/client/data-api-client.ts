@@ -11,22 +11,24 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// noinspection JSDeprecatedSymbols
 
 import { Db, mkDb, validateDbOpts } from '@/src/data-api/db';
 import { AstraAdmin, mkAdmin, validateAdminOpts } from '@/src/devops/astra-admin';
 import {
   AdminSpawnOptions,
   Caller,
+  DataAPIClientOptions,
+  DataAPIHttpOptions,
   DbSpawnOptions,
   InternalRootClientOpts,
-  DataAPIClientOptions,
 } from '@/src/client/types';
 import TypedEmitter from 'typed-emitter';
 import EventEmitter from 'events';
 import { DataAPICommandEvents } from '@/src/data-api/events';
 import { AdminCommandEvents } from '@/src/devops';
 import { validateOption } from '@/src/data-api/utils';
-import { context } from 'fetch-h2';
+import { context, ContextOptions } from 'fetch-h2';
 import { buildUserAgent } from '@/src/api';
 
 /**
@@ -103,9 +105,15 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
 
     validateRootOpts(options);
 
-    const baseCtxOptions = {
+    const baseCtxOptions: Partial<ContextOptions> = {
       userAgent: buildUserAgent(options?.caller),
       overwriteUserAgent: true,
+      http1: {
+        keepAlive: options?.httpOptions?.http1?.keepAlive,
+        keepAliveMsecs: options?.httpOptions?.http1?.keepAliveMS,
+        maxSockets: options?.httpOptions?.http1?.maxSockets,
+        maxFreeSockets: options?.httpOptions?.http1?.maxFreeSockets,
+      },
     };
 
     const http1Ctx = context({
@@ -113,7 +121,9 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
       httpsProtocols: ['http1'],
     });
 
-    const preferredCtx = (options?.preferHttp2 !== false)
+    const preferHttp2 = options?.httpOptions?.preferHttp2 ?? getDeprecatedPrefersHttp2(options) ?? true;
+
+    const preferredCtx = (preferHttp2)
       ? context(baseCtxOptions)
       : http1Ctx;
 
@@ -122,10 +132,11 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
       fetchCtx: {
         http1: http1Ctx,
         preferred: preferredCtx,
-        preferredType: (options?.preferHttp2 !== false)
+        preferredType: (preferHttp2)
           ? 'http2'
           : 'http1',
         closed: { ref: false },
+        maxTimeMS: options?.httpOptions?.maxTimeMS,
       },
       dbOptions: {
         monitorCommands: false,
@@ -299,6 +310,11 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
   public [Symbol.asyncDispose]!: () => Promise<void>;
 }
 
+// Shuts the linter up about 'preferHttp2' not being deprecated
+function getDeprecatedPrefersHttp2(opts: DataAPIClientOptions | undefined | null) {
+  return opts?.[('preferHttp2' as any as null)!];
+}
+
 function validateRootOpts(opts: DataAPIClientOptions | undefined | null) {
   validateOption('root client options', opts, 'object');
 
@@ -307,12 +323,29 @@ function validateRootOpts(opts: DataAPIClientOptions | undefined | null) {
   }
 
   validateOption('caller', opts.caller, 'object', validateCaller);
-
-  validateOption('preferHttp2 option', opts.preferHttp2, 'boolean');
+  validateOption('preferHttp2 option', getDeprecatedPrefersHttp2(opts), 'boolean');
 
   validateDbOpts(opts.dbOptions);
-
   validateAdminOpts(opts.adminOptions);
+  validateHttpOpts(opts.httpOptions);
+}
+
+function validateHttpOpts(opts: DataAPIHttpOptions | undefined | null) {
+  validateOption('http options', opts, 'object');
+
+  if (!opts) {
+    return;
+  }
+
+  validateOption('preferHttp2 option', opts.preferHttp2, 'boolean');
+  validateOption('maxTimeMS option', opts.maxTimeMS, 'number');
+
+  validateOption('http1 options', opts.http1, 'object', (http1) => {
+    validateOption('http1.keepAlive option', http1.keepAlive, 'boolean');
+    validateOption('http1.keepAliveMS option', http1.keepAliveMS, 'number');
+    validateOption('http1.maxSockets option', http1.maxSockets, 'number');
+    validateOption('http1.maxFreeSockets option', http1.maxFreeSockets, 'number');
+  });
 }
 
 function validateCaller(caller: Caller | Caller[]) {

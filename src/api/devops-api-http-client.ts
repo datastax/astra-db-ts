@@ -17,7 +17,7 @@ import { hrTimeMs, HttpClient } from '@/src/api/http-client';
 import { APIResponse, HTTPClientOptions, HttpMethodStrings } from '@/src/api/types';
 import { DevOpsAPIResponseError, DevOpsAPITimeoutError, DevOpsUnexpectedStateError } from '@/src/devops/errors';
 import { AdminBlockingOptions } from '@/src/devops/types';
-import { MkTimeoutError, TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
+import { TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
 import { DEFAULT_DEVOPS_API_AUTH_HEADER, HttpMethods } from '@/src/api/constants';
 import {
   AdminCommandFailedEvent,
@@ -56,9 +56,9 @@ export class DevOpsAPIHttpClient extends HttpClient {
       ...props,
       mkAuthHeader: (token) => ({ [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` }),
       fetchCtx: {
+        ...props.fetchCtx,
         preferred: props.fetchCtx.http1,
-        closed: props.fetchCtx.closed,
-      }
+      },
     });
   }
 
@@ -66,7 +66,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
     const isLongRunning = started !== 0;
 
     try {
-      const timeoutManager = options?.timeoutManager ?? mkTimeoutManager(options?.maxTimeMS);
+      const timeoutManager = options?.timeoutManager ?? this._mkTimeoutManager(options?.maxTimeMS);
       const url = this.baseUrl + req.path;
 
       if (this.monitorCommands && !isLongRunning) {
@@ -112,7 +112,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
   }
 
   public async requestLongRunning(req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo): Promise<APIResponse> {
-    const timeoutManager = mkTimeoutManager(info.options?.maxTimeMS);
+    const timeoutManager = this._mkTimeoutManager(info.options?.maxTimeMS);
     const isLongRunning = info?.options?.blocking !== false;
 
     if (this.monitorCommands) {
@@ -183,13 +183,9 @@ export class DevOpsAPIHttpClient extends HttpClient {
       });
     }
   }
-}
 
-const mkTimeoutManager = (maxMs: number | undefined) => {
-  const timeout = maxMs ?? 0;
-  return new TimeoutManager(timeout, mkTimeoutErrorMaker(timeout));
-}
-
-const mkTimeoutErrorMaker = (timeout: number): MkTimeoutError => {
-  return (info) => new DevOpsAPITimeoutError(info.url, timeout);
+  private _mkTimeoutManager(timeout: number | undefined) {
+    timeout ??= this.fetchCtx.maxTimeMS ?? (12 * 60 * 1000);
+    return new TimeoutManager(timeout, (info) => new DevOpsAPITimeoutError(info.url, timeout));
+  }
 }
