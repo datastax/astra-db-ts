@@ -12,15 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ObjectId, SomeDoc, UUID, WithId } from '@/src/data-api';
+import { SomeDoc, WithId } from '@/src/data-api';
 import type { ToDotNotation } from '@/src/data-api/types';
-
-/**
- * All possible types for a document ID. JSON scalar types, `Date`, `UUID`, and `ObjectId`.
- *
- * @public
- */
-export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId;
 
 /**
  * Allowed types to specify an ascending or descending sort.

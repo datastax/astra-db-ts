@@ -37,18 +37,26 @@ describe('integration.data-api.collection.insert-one', () => {
     assert.ok(res.insertedId, '123');
   });
 
+  it('should insertOne document with a null id', async () => {
+    const res = await collection.insertOne({ name: 'Lzzy', _id: null });
+    assert.ok(res);
+    assert.strictEqual(res.insertedId, null);
+    const found = await collection.findOne({ _id: null });
+    assert.strictEqual(found?.name, 'Lzzy');
+  });
+
   it('should insertOne document with a UUID', async () => {
     const id = UUID.v7();
     const res = await collection.insertOne({ _id: id });
     assert.ok(res);
-    assert.strictEqual(res.insertedId.toString(), id.toString());
+    assert.strictEqual(res.insertedId?.toString(), id.toString());
   });
 
   it('should insertOne document with an ObjectId', async () => {
     const id = new ObjectId();
     const res = await collection.insertOne({ _id: id });
     assert.ok(res);
-    assert.strictEqual(res.insertedId.toString(), id.toString());
+    assert.strictEqual(res.insertedId?.toString(), id.toString());
   });
 
   it('should insertOne document with a non-_id UUID', async () => {

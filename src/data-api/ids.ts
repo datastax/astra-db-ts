@@ -12,8 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { uuidv4, uuidv7, UUID as UUIDv7 } from 'uuidv7';
+import { UUID as UUIDv7, uuidv4, uuidv7 } from 'uuidv7';
 import MongoObjectId from 'bson-objectid';
+
+/**
+ * All possible types for a document ID. JSON scalar types, `Date`, `UUID`, and `ObjectId`.
+ *
+ * Note that the `_id` *can* technically be `null`. Trying to set the `_id` to `null` doesn't mean "auto-generate
+ * an ID" like it may in some other databases; it quite literally means "set the ID to `null`".
+ *
+ * It's heavily recommended to properly type this in your Schema, so you know what to expect for your `_id` field.
+ *
+ * @public
+ */
+export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId | null;
 
 const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
 
