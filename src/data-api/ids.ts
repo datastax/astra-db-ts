@@ -21,6 +21,8 @@ import MongoObjectId from 'bson-objectid';
  * Note that the `_id` *can* technically be `null`. Trying to set the `_id` to `null` doesn't mean "auto-generate
  * an ID" like it may in some other databases; it quite literally means "set the ID to `null`".
  *
+ * It's heavily recommended to properly type this in your Schema, so you know what to expect for your `_id` field.
+ *
  * @public
  */
 export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId | null;
