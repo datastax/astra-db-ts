@@ -34,7 +34,7 @@ export const initTestObjects = async (ctx: Context, preferHttp2 = USE_HTTP2): Pr
     ctx.skip();
   }
 
-  const client = new DataAPIClient(process.env.APPLICATION_TOKEN!, { preferHttp2 });
+  const client = new DataAPIClient(process.env.APPLICATION_TOKEN!, { httpOptions: { preferHttp2 } });
   const db = client.db(process.env.ASTRA_URI!);
 
   const coll = (!collCreated)

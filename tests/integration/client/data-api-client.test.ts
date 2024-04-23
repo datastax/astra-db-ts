@@ -40,6 +40,32 @@ describe('integration.client.data-api-client', () => {
     });
   });
 
+  describe('timeout', () => {
+    it('times out on base timeout', async () => {
+      const client = new DataAPIClient(process.env.APPLICATION_TOKEN!, { httpOptions: { maxTimeMS: 1 } });
+      const db = client.db(process.env.ASTRA_URI!);
+      const collection = db.collection(DEFAULT_COLLECTION_NAME);
+
+      try {
+        await collection.insertOne({ name: 'Nightwish' });
+        assert.fail('should have thrown an error');
+      } catch (e) {
+        assert.ok(e instanceof DataAPITimeoutError);
+        assert.strictEqual(e.timeout, 1);
+      }
+    });
+
+    it('overrides base timeout', async () => {
+      const client = new DataAPIClient(process.env.APPLICATION_TOKEN!, { httpOptions: { maxTimeMS: 1 } });
+      const db = client.db(process.env.ASTRA_URI!);
+      const collection = db.collection(DEFAULT_COLLECTION_NAME);
+
+      await assert.doesNotReject(async () => {
+        await collection.insertOne({ name: 'Nightwish' }, { maxTimeMS: 100 });
+      });
+    });
+  });
+
   describe('close', () => {
     it('should not allow operations after closing the client', async () => {
       const client = new DataAPIClient(process.env.APPLICATION_TOKEN!);

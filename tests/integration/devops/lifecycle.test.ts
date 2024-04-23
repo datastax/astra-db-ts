@@ -28,10 +28,10 @@ describe('integration.devops.lifecycle', async () => {
 
     [client] = await initTestObjects(this);
 
-    const dbs = await client.admin().listDatabases();
-
-    if (dbs.some(db => db.info.name === 'astra-test-db' && db.status !== 'TERMINATING')) {
-      throw new Error('Database \'astra-test-db\' already exists, drop it to proceed w/ lifecycle test');
+    for (const db of await client.admin().listDatabases()) {
+      if (db.info.name === 'astra-test-db' && db.status !== 'TERMINATING') {
+        void client.admin().dropDatabase(db.id);
+      }
     }
   });
 
@@ -78,7 +78,7 @@ describe('integration.devops.lifecycle', async () => {
           assert.strictEqual(event.method, HttpMethods.Post);
           assert.strictEqual(event.longRunning, true);
           assert.strictEqual(event.params, undefined);
-          assert.strictEqual(event.timeout, 2147483647);
+          assert.strictEqual(event.timeout, 720000);
         });
 
         client.on('adminCommandPolling', (event) => {

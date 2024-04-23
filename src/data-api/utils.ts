@@ -70,7 +70,7 @@ export function replaceAstraUrlIdAndRegion(uri: string, id: string, region: stri
 /**
  * @internal
  */
-export function validateOption<T = unknown>(name: string, obj: unknown, type: string, test?: (obj: T) => void): void {
+export function validateOption<T>(name: string, obj: T, type: string, test?: (obj: NonNullable<T>) => void): void {
   if (obj === null || obj === undefined) {
     return;
   }
@@ -79,7 +79,7 @@ export function validateOption<T = unknown>(name: string, obj: unknown, type: st
     throw new TypeError(`Invalid ${name}; expected a ${type} value, or undefined/null`);
   }
 
-  test?.(obj as T);
+  test?.(obj);
 }
 
 /**
