@@ -1,6 +1,6 @@
 {
   "name": "@datastax/astra-db-ts",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Astra DB TS Client",
   "contributors": [
     "Kavin Gupta (https://github.com/toptobes)",
