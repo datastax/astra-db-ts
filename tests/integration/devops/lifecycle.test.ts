@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { assertTestsEnabled, initTestObjects } from '@/tests/fixtures';
+import { assertTestsEnabled, initTestObjects, TEMP_DB_NAME } from '@/tests/fixtures';
 import { DataAPIClient } from '@/src/client';
 import assert from 'assert';
 import { DevOpsAPIResponseError } from '@/src/devops';
@@ -29,20 +29,18 @@ describe('integration.devops.lifecycle', async () => {
     [client] = await initTestObjects(this);
 
     for (const db of await client.admin().listDatabases()) {
-      if (db.info.name === 'astra-test-db' && db.status !== 'TERMINATING') {
+      if (db.info.name === TEMP_DB_NAME && db.status !== 'TERMINATING') {
         void client.admin().dropDatabase(db.id);
       }
     }
   });
-
-  // https://62ef0e85-1530-4d6a-ab60-d3dcd0b8162a-us-east1.apps.astra.datastax.com
 
   it('[admin] works', async () => {
     try {
       const admin = client.admin();
 
       const asyncDbAdmin = await admin.createDatabase({
-        name: 'astra-test-db',
+        name: TEMP_DB_NAME,
         cloudProvider: 'GCP',
         region: 'us-east1',
         namespace: 'my_namespace',
@@ -60,7 +58,7 @@ describe('integration.devops.lifecycle', async () => {
       {
         const dbInfo1 = await asyncDbAdmin.info();
         assert.ok(['PENDING', 'INITIALIZING'].includes(dbInfo1.status));
-        assert.strictEqual(dbInfo1.info.name, 'astra-test-db');
+        assert.strictEqual(dbInfo1.info.name, TEMP_DB_NAME);
         assert.strictEqual(dbInfo1.info.cloudProvider, 'GCP');
         assert.strictEqual(dbInfo1.info.region, 'us-east1');
         assert.strictEqual(dbInfo1.info.keyspace, 'my_namespace');
@@ -106,7 +104,7 @@ describe('integration.devops.lifecycle', async () => {
       }
 
       const syncDbAdmin = await monitoringAdmin.createDatabase({
-        name: 'astra-test-db',
+        name: TEMP_DB_NAME,
         cloudProvider: 'GCP',
         region: 'us-east1',
       });
@@ -127,7 +125,7 @@ describe('integration.devops.lifecycle', async () => {
 
       {
         const dbInfo = await syncDb.info();
-        assert.strictEqual(dbInfo.name, 'astra-test-db');
+        assert.strictEqual(dbInfo.name, TEMP_DB_NAME);
         assert.strictEqual(dbInfo.cloudProvider, 'GCP');
         assert.strictEqual(dbInfo.region, 'us-east1');
         assert.strictEqual(dbInfo.keyspace, DEFAULT_NAMESPACE);
@@ -146,7 +144,7 @@ describe('integration.devops.lifecycle', async () => {
       for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
         const dbInfo = await dbAdmin.info();
         assert.strictEqual(dbInfo.status, 'ACTIVE');
-        assert.strictEqual(dbInfo.info.name, 'astra-test-db');
+        assert.strictEqual(dbInfo.info.name, TEMP_DB_NAME);
         assert.strictEqual(dbInfo.info.cloudProvider, 'GCP');
         assert.strictEqual(dbInfo.info.region, 'us-east1');
         assert.strictEqual(dbInfo.info.keyspace, db.namespace);

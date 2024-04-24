@@ -9,15 +9,21 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, DataAPIError, DataAPITimeoutError, InsertManyError, ObjectId, UUID } from '@/src/data-api';
-import { assertTestsEnabled, initCollectionWithFailingClient, initTestObjects } from '@/tests/fixtures';
+import { Collection, DataAPIError, DataAPITimeoutError, Db, InsertManyError, ObjectId, UUID } from '@/src/data-api';
+import {
+  assertTestsEnabled,
+  initCollectionWithFailingClient,
+  initTestObjects,
+  VECTORIZE_COLLECTION_NAME,
+} from '@/tests/fixtures';
 import assert from 'assert';
 
 describe('integration.data-api.collection.insert-many', () => {
   let collection: Collection;
+  let db: Db;
 
   before(async function () {
-    [, , collection] = await initTestObjects(this);
+    [, db, collection] = await initTestObjects(this);
   });
 
   beforeEach(async () => {
@@ -225,6 +231,10 @@ describe('integration.data-api.collection.insert-many', () => {
 
   it('[vectorize] should insertMany with vectorize', async function () {
     assertTestsEnabled(this, 'VECTORIZE');
+
+    const collection = db.collection(VECTORIZE_COLLECTION_NAME);
+    await collection.deleteAll();
+
     const res = await collection.insertMany([
       { name: 'Arch Enemy' },
       { name: 'Equilibrium' },
