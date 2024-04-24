@@ -22,10 +22,12 @@ import { DataAPIClient } from '@/src/client';
 import { Context } from 'mocha';
 
 export const DEFAULT_COLLECTION_NAME = 'test_coll';
+export const VECTORIZE_COLLECTION_NAME = 'vectorize_coll';
 export const EPHEMERAL_COLLECTION_NAME = 'temp_coll';
 export const OTHER_NAMESPACE = 'other_keyspace';
+export const TEMP_DB_NAME = 'astra-test-db-plus-random-name-1284'
 
-let collCreated = false;
+let collsSetup = false;
 
 export const USE_HTTP2 = !process.env.ASTRA_USE_HTTP1;
 
@@ -37,19 +39,23 @@ export const initTestObjects = async (ctx: Context, preferHttp2 = USE_HTTP2): Pr
   const client = new DataAPIClient(process.env.APPLICATION_TOKEN!, { httpOptions: { preferHttp2 } });
   const db = client.db(process.env.ASTRA_URI!);
 
-  const coll = (!collCreated)
-    ? await (async () => {
-        await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
-        await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
-        await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace: OTHER_NAMESPACE });
-        return await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false })
-      })()
-    : db.collection(DEFAULT_COLLECTION_NAME);
+  if (!collsSetup) {
+    if (process.env.ASTRA_RUN_VECTORIZE_TESTS) {
+      await db.createCollection(VECTORIZE_COLLECTION_NAME, { vector: { service: { modelName: 'NV-Embed-QA', provider: 'nvidia' } }, checkExists: false });
+    }
 
-  collCreated = true;
-  await coll.deleteAll();
+    await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
+    await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
+    await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace: OTHER_NAMESPACE });
+    await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false });
 
-  return [client, db, coll];
+    collsSetup = true;
+  }
+
+  const collection = db.collection(DEFAULT_COLLECTION_NAME);
+  await collection.deleteAll();
+
+  return [client, db, collection];
 };
 
 export const initCollectionWithFailingClient = async (ctx: Context) => {
