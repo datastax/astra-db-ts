@@ -24,7 +24,7 @@ import {
   InternalRootClientOpts,
 } from '@/src/client/types';
 import TypedEmitter from 'typed-emitter';
-import EventEmitter from 'events';
+import EventEmitter from 'node:events';
 import { DataAPICommandEvents } from '@/src/data-api/events';
 import { AdminCommandEvents } from '@/src/devops';
 import { validateOption } from '@/src/data-api/utils';
