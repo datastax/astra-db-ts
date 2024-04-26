@@ -13,10 +13,9 @@
 // limitations under the License.
 
 import { CLIENT_USER_AGENT, RAGSTACK_REQUESTED_WITH } from '@/src/api/constants';
-import { HTTPRequestInfo, InternalFetchCtx, InternalHTTPClientOptions, ResponseWithBody } from '@/src/api/types';
+import { HTTPRequestInfo, InternalFetchCtx, InternalHTTPClientOptions, ResponseData } from '@/src/api/types';
 import { Caller, DataAPIClientEvents } from '@/src/client';
 import TypedEmitter from 'typed-emitter';
-import { TimeoutError } from 'fetch-h2';
 
 /**
  * @internal
@@ -47,13 +46,13 @@ export abstract class HttpClient {
     return this.#applicationToken;
   }
 
-  protected async _request(info: HTTPRequestInfo): Promise<ResponseWithBody> {
+  protected async _request(info: HTTPRequestInfo): Promise<ResponseData> {
     if (this.fetchCtx.closed.ref) {
       throw new Error('Can\'t make requests on a closed client');
     }
 
     if (info.timeoutManager.msRemaining <= 0) {
-      throw info.timeoutManager.mkTimeoutError(info);
+      throw info.timeoutManager.mkTimeoutError(info.url);
     }
 
     const params = info.params ?? {};
@@ -63,23 +62,12 @@ export abstract class HttpClient {
       ? `${info.url}?${new URLSearchParams(params).toString()}`
       : info.url;
 
-    try {
-      const resp = await this.fetchCtx.preferred.fetch(url, {
-        body: info.data as string,
-        method: info.method,
-        timeout: info.timeoutManager.msRemaining,
-        headers: this.baseHeaders,
-      }) as ResponseWithBody;
-
-      resp.body = await resp.text();
-
-      return resp;
-    } catch (e) {
-      if (e instanceof TimeoutError) {
-        throw info.timeoutManager.mkTimeoutError(info);
-      }
-      throw e;
-    }
+    return await this.fetchCtx.preferred.fetch(url, {
+      body: info.data as string,
+      method: info.method,
+      timeoutManager: info.timeoutManager,
+      headers: this.baseHeaders,
+    });
   }
 }
 

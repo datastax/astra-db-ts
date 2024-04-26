@@ -4,8 +4,6 @@
 
 ```ts
 
-import { context as context_2 } from 'fetch-h2';
-import { Response as Response_2 } from 'fetch-h2';
 import TypedEmitter from 'typed-emitter';
 
 // @public
@@ -587,10 +585,10 @@ export interface DevOpsAPIErrorDescriptor {
 
 // @public
 export class DevOpsAPIResponseError extends DevOpsAPIError {
-    // Warning: (ae-forgotten-export) The symbol "ResponseWithBody" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "ResponseData" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(resp: ResponseWithBody, data: Record<string, any> | undefined);
+    constructor(resp: ResponseData, data: Record<string, any> | undefined);
     readonly errors: DevOpsAPIErrorDescriptor[];
     readonly raw: CuratedAPIResponse;
     readonly status: number;

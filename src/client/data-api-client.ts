@@ -24,12 +24,12 @@ import {
   InternalRootClientOpts,
 } from '@/src/client/types';
 import TypedEmitter from 'typed-emitter';
-import EventEmitter from 'node:events';
+import { EventEmitter } from 'events';
 import { DataAPICommandEvents } from '@/src/data-api/events';
 import { AdminCommandEvents } from '@/src/devops';
 import { validateOption } from '@/src/data-api/utils';
-import { context, ContextOptions } from 'fetch-h2';
-import { buildUserAgent } from '@/src/api';
+import { FetchCtx } from '@/src/api';
+import { FetchNativeFetcher } from '@/src/api/fetch-native-fetcher';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -105,39 +105,9 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
 
     validateRootOpts(options);
 
-    const baseCtxOptions: Partial<ContextOptions> = {
-      userAgent: buildUserAgent(options?.caller),
-      overwriteUserAgent: true,
-      http1: {
-        keepAlive: options?.httpOptions?.http1?.keepAlive,
-        keepAliveMsecs: options?.httpOptions?.http1?.keepAliveMS,
-        maxSockets: options?.httpOptions?.http1?.maxSockets,
-        maxFreeSockets: options?.httpOptions?.http1?.maxFreeSockets,
-      },
-    };
-
-    const http1Ctx = context({
-      ...baseCtxOptions,
-      httpsProtocols: ['http1'],
-    });
-
-    const preferHttp2 = options?.httpOptions?.preferHttp2 ?? getDeprecatedPrefersHttp2(options) ?? true;
-
-    const preferredCtx = (preferHttp2)
-      ? context(baseCtxOptions)
-      : http1Ctx;
-
     this.#options = {
       ...options,
-      fetchCtx: {
-        http1: http1Ctx,
-        preferred: preferredCtx,
-        preferredType: (preferHttp2)
-          ? 'http2'
-          : 'http1',
-        closed: { ref: false },
-        maxTimeMS: options?.httpOptions?.maxTimeMS,
-      },
+      fetchCtx: buildFetchCtx(options || undefined),
       dbOptions: {
         monitorCommands: false,
         token: token,
@@ -308,6 +278,37 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * *This will only be defined if the `Symbol.asyncDispose` symbol is actually defined.*
    */
   public [Symbol.asyncDispose]!: () => Promise<void>;
+}
+
+function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
+  const preferHttp2 = options?.httpOptions?.preferHttp2 ?? getDeprecatedPrefersHttp2(options) ?? true;
+
+  const [http1Ctx, preferredCtx] =(() => {
+    try {
+      const { FetchH2Fetcher } = eval(`require('../api/fetch-h2-fetcher')`);
+
+      const http1Ctx = new FetchH2Fetcher(options, false);
+
+      const preferredCtx = (preferHttp2)
+        ? new FetchH2Fetcher(options, true)
+        : http1Ctx;
+
+      return [http1Ctx, preferredCtx];
+    } catch (e) {
+      const fetcher = new FetchNativeFetcher(options);
+      return [fetcher, fetcher];
+    }
+  })();
+
+  return {
+    http1: http1Ctx,
+    preferred: preferredCtx,
+    preferredType: (preferHttp2)
+      ? 'http2'
+      : 'http1',
+    closed: { ref: false },
+    maxTimeMS: options?.httpOptions?.maxTimeMS,
+  };
 }
 
 // Shuts the linter up about 'preferHttp2' not being deprecated

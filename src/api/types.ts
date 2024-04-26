@@ -12,12 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TimeoutManager } from '@/src/api/timeout-managers';
-import { HttpMethods } from '@/src/api/constants';
-import TypedEmitter from 'typed-emitter';
-import { DataAPICommandEvents } from '@/src/data-api/events';
-import { context, Response } from 'fetch-h2';
-import { Headers } from 'fetch-h2/dist/lib/headers';
+import type { TimeoutManager } from '@/src/api/timeout-managers';
+import type { HttpMethods } from '@/src/api/constants';
+import type TypedEmitter from 'typed-emitter';
+import type { DataAPICommandEvents } from '@/src/data-api/events';
 
 /**
  * @internal
@@ -42,9 +40,32 @@ export interface InternalHTTPClientOptions extends Omit<HTTPClientOptions, 'fetc
 /**
  * @internal
  */
+export interface RequestData {
+  body: string,
+  method: HttpMethodStrings,
+  timeoutManager: TimeoutManager,
+  headers: Record<string, string>,
+}
+
+/**
+ * @internal
+ */
+export type ResponseData = CuratedAPIResponse;
+
+/**
+ * @internal
+ */
+export interface Fetcher {
+  fetch: (input: string, init: RequestData) => Promise<ResponseData>,
+  disconnectAll: () => Promise<void>,
+}
+
+/**
+ * @internal
+ */
 export interface FetchCtx {
-  preferred: ReturnType<typeof context>,
-  http1: ReturnType<typeof context>,
+  preferred: Fetcher,
+  http1: Fetcher,
   preferredType: 'http1' | 'http2',
   closed: { ref: boolean },
   maxTimeMS: number | undefined,
@@ -54,7 +75,7 @@ export interface FetchCtx {
  * @internal
  */
 export interface InternalFetchCtx {
-  preferred: ReturnType<typeof context>,
+  preferred: Fetcher,
   closed: { ref: boolean },
   maxTimeMS: number | undefined,
 }
@@ -116,14 +137,9 @@ export interface RawDataAPIResponse {
  */
 export interface APIResponse {
   data?: Record<string, any>,
-  headers: Headers,
+  headers: Record<string, string>,
   status: number,
 }
-
-/**
- * @internal
- */
-export type ResponseWithBody = Response & { body: string };
 
 /**
  * @internal
