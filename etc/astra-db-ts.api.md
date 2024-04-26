@@ -377,14 +377,6 @@ export interface DataAPIErrorDescriptor {
 }
 
 // @public
-export interface DataAPIHttp1Options {
-    keepAlive?: boolean;
-    keepAliveMS?: number;
-    maxFreeSockets?: number;
-    maxSockets?: number;
-}
-
-// @public
 export class DataAPIResponseError extends DataAPIError {
     // @internal
     constructor(message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]);
@@ -529,6 +521,15 @@ export interface DbSpawnOptions {
 }
 
 // @public
+export interface DefaultHttpClientOptions {
+    // (undocumented)
+    client?: 'default';
+    http1?: Http1Options;
+    maxTimeMS?: number;
+    preferHttp2?: boolean;
+}
+
+// @public
 export interface DefaultIdOptions {
     type: 'uuid' | 'uuidv6' | 'uuidv7' | 'objectId';
 }
@@ -606,15 +607,6 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
 
 // @public
 export interface DropCollectionOptions extends WithTimeout, WithNamespace {
-}
-
-// @public
-export interface FetchH2DataAPIHttpOptions {
-    // (undocumented)
-    client?: 'fetch-h2';
-    http1?: DataAPIHttp1Options;
-    maxTimeMS?: number;
-    preferHttp2?: boolean;
 }
 
 // @public
@@ -766,6 +758,14 @@ export interface FullDatabaseInfo {
 export interface GuaranteedUpdateOptions<N extends number> {
     matchedCount: N;
     modifiedCount: N;
+}
+
+// @public
+export interface Http1Options {
+    keepAlive?: boolean;
+    keepAliveMS?: number;
+    maxFreeSockets?: number;
+    maxSockets?: number;
 }
 
 // @public

@@ -10,34 +10,38 @@ export class FetchNativeFetcher implements Fetcher {
   }
 
   async fetch(url: string, init: RequestData): Promise<ResponseData> {
-    const timeout = init.timeoutManager.msRemaining;
+    try {
+      const timeout = init.timeoutManager.msRemaining;
 
-    const id = setTimeout(() => {
-      throw init.timeoutManager.mkTimeoutError(url);
-    }, timeout);
+      init.headers['User-Agent'] = this.#userAgent;
+      init.headers['Content-Type'] = 'application/json';
 
-    init.headers['User-Agent'] = this.#userAgent;
-    init.headers['Content-Type'] = 'application/json';
+      // @ts-expect-error - keepalive is fine to set here
+      init.keepalive = true;
 
-    // @ts-expect-error - keepalive is fine to set here
-    init.keepalive = true;
+      // @ts-expect-error - signal is fine to set here
+      init.signal = AbortSignal.timeout(timeout);
 
-    const resp = await fetch(url, init);
+      const resp = await fetch(url, init);
 
-    clearTimeout(id);
+      const headers = {} as Record<string, string>;
+      resp.headers.forEach((value, key) => {
+        headers[key] = value;
+      });
 
-    const headers = {} as Record<string, string>;
-    resp.headers.forEach((value, key) => {
-      headers[key] = value;
-    });
-
-    return {
-      url: resp.url,
-      statusText: resp.statusText,
-      httpVersion: 1,
-      headers: headers,
-      body: await resp.text(),
-      status: resp.status,
+      return {
+        url: resp.url,
+        statusText: resp.statusText,
+        httpVersion: 1,
+        headers: headers,
+        body: await resp.text(),
+        status: resp.status,
+      }
+    } catch (e: any) {
+      if (e.name === 'TimeoutError') {
+        throw init.timeoutManager.mkTimeoutError(url);
+      }
+      throw e;
     }
   }
 

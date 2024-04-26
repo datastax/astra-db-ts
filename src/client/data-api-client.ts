@@ -280,13 +280,27 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
   public [Symbol.asyncDispose]!: () => Promise<void>;
 }
 
+function getDefaultHttpClient(): 'fetch' | 'default' {
+  const isNode = globalThis.process?.release?.name === 'node';
+  const isBun = !!globalThis['Bun' as keyof typeof globalThis] || !!globalThis.process?.versions?.bun;
+  const isDeno = !!globalThis['Deno' as keyof typeof globalThis];
+
+  return (isNode && !isBun && !isDeno)
+    ? 'default'
+    : 'fetch';
+}
+
 function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
-  const preferHttp2 = (options?.httpOptions?.client !== 'fetch')
-    ? options?.httpOptions?.preferHttp2 ?? getDeprecatedPrefersHttp2(options) ?? true
+  const clientType = (options?.httpOptions)
+    ? options.httpOptions.client
+    : getDefaultHttpClient();
+
+  const preferHttp2 = (options?.httpOptions && options.httpOptions.client !== 'fetch')
+    ? options.httpOptions.preferHttp2 ?? getDeprecatedPrefersHttp2(options) ?? true
     : false;
 
   const [http1Ctx, preferredCtx] = (() => {
-    if (options?.httpOptions?.client !== 'fetch') {
+    if (clientType !== 'fetch') {
       try {
         // Complicated expression to stop Next.js and such from tracing require and trying to load the fetch-h2 client
         const [indirectRequire] = [require].map(x => Math.random() > 10 ? null! : x);

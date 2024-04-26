@@ -17,6 +17,7 @@ import { DataAPIClient } from '@/src/client';
 import * as process from 'process';
 import assert from 'assert';
 import { DEFAULT_DATA_API_PATH } from '@/src/api';
+import { HTTP_CLIENT_TYPE } from '@/tests/fixtures';
 
 describe('unit.client.data-api-client', () => {
   const endpoint = process.env.ASTRA_URI!;
@@ -77,14 +78,22 @@ describe('unit.client.data-api-client', () => {
       assert.throws(() => new DataAPIClient('dummy-token', { caller: { 0: ['name', 'version'] } }));
     });
 
-    it('uses http2 by default', () => {
+    it('uses http2 by default', function () {
+      if (HTTP_CLIENT_TYPE !== undefined) {
+        this.skip();
+      }
+
       const client = new DataAPIClient('dummy-token');
       const httpClient = client.db(endpoint)['_httpClient'];
       const http1Client = client.admin()['_httpClient'];
       assert.ok(httpClient.fetchCtx.preferred !== http1Client.fetchCtx.preferred);
     });
 
-    it('uses http2 when forced', () => {
+    it('uses http2 when forced', function () {
+      if (HTTP_CLIENT_TYPE !== undefined) {
+        this.skip();
+      }
+
       const client = new DataAPIClient('dummy-token', { httpOptions: { preferHttp2: true } });
       const httpClient = client.db(endpoint)['_httpClient'];
       const http1Client = client.admin()['_httpClient'];

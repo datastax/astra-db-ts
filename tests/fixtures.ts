@@ -30,9 +30,9 @@ export const TEMP_DB_NAME = 'astra-test-db-plus-random-name-1284'
 let collsSetup = false;
 
 export const USE_HTTP2 = !process.env.ASTRA_USE_HTTP1;
-export const CLIENT_TYPE = process.env.ASTRA_USE_FETCH ? 'fetch' : undefined;
+export const HTTP_CLIENT_TYPE = process.env.ASTRA_USE_FETCH ? 'fetch' : undefined;
 
-export const initTestObjects = async (ctx: Context, preferHttp2 = USE_HTTP2, clientType: typeof CLIENT_TYPE = CLIENT_TYPE): Promise<[DataAPIClient, Db, Collection]> => {
+export const initTestObjects = async (ctx: Context, preferHttp2 = USE_HTTP2, clientType: typeof HTTP_CLIENT_TYPE = HTTP_CLIENT_TYPE): Promise<[DataAPIClient, Db, Collection]> => {
   if (!process.env.ASTRA_URI || !process.env.APPLICATION_TOKEN) {
     ctx.skip();
   }
