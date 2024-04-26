@@ -107,7 +107,11 @@ describe('unit.client.data-api-client', () => {
       assert.ok(httpClient.fetchCtx.preferred === http1Client.fetchCtx.preferred);
     });
 
-    it('uses http2 when forced (deprecated version)', () => {
+    it('uses http2 when forced (deprecated version)', function () {
+      if (HTTP_CLIENT_TYPE !== undefined) {
+        this.skip();
+      }
+
       const client = new DataAPIClient('dummy-token', { preferHttp2: true });
       const httpClient = client.db(endpoint)['_httpClient'];
       const http1Client = client.admin()['_httpClient'];

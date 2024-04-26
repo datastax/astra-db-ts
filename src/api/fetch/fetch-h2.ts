@@ -1,12 +1,17 @@
-import { Fetcher, RequestData, ResponseData } from '@/src/api/types';
 import { context, TimeoutError } from 'fetch-h2';
-import { DataAPIClientOptions, DefaultHttpClientOptions } from '@/src/client';
-import { buildUserAgent } from '@/src/api/http-client';
+import { DataAPIClientOptions } from '@/src/client';
+import { buildUserAgent } from '@/src/api/clients/http-client';
+import { Fetcher, RequestInfo, ResponseInfo } from '@/src/api/fetch/types';
 
-export class FetchH2Fetcher implements Fetcher {
+export class FetchH2 implements Fetcher {
   readonly #context: ReturnType<typeof context>;
 
-  constructor(options: DataAPIClientOptions & { httpOptions: DefaultHttpClientOptions } | undefined, preferHttp2: boolean) {
+  constructor(options: DataAPIClientOptions | undefined, preferHttp2: boolean) {
+    // Sanity check, and shuts up the type checker; should actually never happen
+    if (options?.httpOptions?.client !== undefined && options?.httpOptions?.client !== 'default') {
+      throw new Error('FetchH2 client tried to initialize using options for a different client type.');
+    }
+
     this.#context = context({
       userAgent: buildUserAgent(options?.caller),
       overwriteUserAgent: true,
@@ -22,7 +27,7 @@ export class FetchH2Fetcher implements Fetcher {
     });
   }
 
-  async fetch(url: string, init: RequestData): Promise<ResponseData> {
+  async fetch(url: string, init: RequestInfo): Promise<ResponseInfo> {
     (<any>init).timeout = init.timeoutManager.msRemaining;
 
     try {

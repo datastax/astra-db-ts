@@ -18,7 +18,8 @@ import { AstraAdmin, mkAdmin, validateAdminOpts } from '@/src/devops/astra-admin
 import {
   AdminSpawnOptions,
   Caller,
-  DataAPIClientOptions, DataAPIHttpOptions,
+  DataAPIClientOptions,
+  DataAPIHttpOptions,
   DbSpawnOptions,
   InternalRootClientOpts,
 } from '@/src/client/types';
@@ -28,7 +29,7 @@ import { DataAPICommandEvents } from '@/src/data-api/events';
 import { AdminCommandEvents } from '@/src/devops';
 import { validateOption } from '@/src/data-api/utils';
 import { FetchCtx } from '@/src/api';
-import { FetchNativeFetcher } from '@/src/api/fetch-native-fetcher';
+import { FetchNative } from '@/src/api/fetch/fetch-native';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -304,12 +305,12 @@ function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
       try {
         // Complicated expression to stop Next.js and such from tracing require and trying to load the fetch-h2 client
         const [indirectRequire] = [require].map(x => Math.random() > 10 ? null! : x);
-        const { FetchH2Fetcher } = indirectRequire('../api/fetch-h2-fetcher');
+        const { FetchH2 } = indirectRequire('@/src/api/fetch/fetch-h2') as typeof import('@/src/api/fetch/fetch-h2');
 
-        const http1Ctx = new FetchH2Fetcher(options, false);
+        const http1Ctx = new FetchH2(options, false);
 
         const preferredCtx = (preferHttp2)
-          ? new FetchH2Fetcher(options, true)
+          ? new FetchH2(options, true)
           : http1Ctx;
 
         return [http1Ctx, preferredCtx];
@@ -317,7 +318,7 @@ function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
         throw new Error('Error loading the fetch-h2 client for the DataAPIClient... try setting httpOptions.client to \'fetch\'');
       }
     } else {
-      const deceiver = new FetchNativeFetcher(options);
+      const deceiver = new FetchNative(options);
       return [deceiver, deceiver];
     }
   })();

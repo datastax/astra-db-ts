@@ -12,8 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './http-client';
-export * from './data-api-http-client';
-export * from './devops-api-http-client';
+export * from './clients/http-client';
+export * from './clients/data-api-http-client';
+export * from './clients/devops-api-http-client';
 export * from './types';
 export * from './constants';
+export { FetchCtx } from '@/src/api/fetch/types';
+export { InternalHTTPClientOptions } from '@/src/api/clients/types';
+export { HTTPClientOptions } from '@/src/api/clients/types';
+export { HTTPRequestInfo } from '@/src/api/clients/types';
+export { HttpMethodStrings } from '@/src/api/clients/types';

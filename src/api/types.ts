@@ -12,74 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { TimeoutManager } from '@/src/api/timeout-managers';
-import type { HttpMethods } from '@/src/api/constants';
-import type TypedEmitter from 'typed-emitter';
-import type { DataAPICommandEvents } from '@/src/data-api/events';
-
-/**
- * @internal
- */
-export interface HTTPClientOptions {
-  baseUrl: string,
-  baseApiPath?: string,
-  applicationToken: string,
-  emitter: TypedEmitter<DataAPICommandEvents>,
-  monitorCommands: boolean,
-  fetchCtx: FetchCtx,
-}
-
-/**
- * @internal
- */
-export interface InternalHTTPClientOptions extends Omit<HTTPClientOptions, 'fetchCtx'> {
-  fetchCtx: InternalFetchCtx,
-  mkAuthHeader: (token: string) => Record<string, any>,
-}
-
-/**
- * @internal
- */
-export interface RequestData {
-  body: string,
-  method: HttpMethodStrings,
-  timeoutManager: TimeoutManager,
-  headers: Record<string, string>,
-}
-
-/**
- * @internal
- */
-export type ResponseData = CuratedAPIResponse;
-
-/**
- * @internal
- */
-export interface Fetcher {
-  fetch: (input: string, init: RequestData) => Promise<ResponseData>,
-  disconnectAll: () => Promise<void>,
-}
-
-/**
- * @internal
- */
-export interface FetchCtx {
-  preferred: Fetcher,
-  http1: Fetcher,
-  preferredType: 'http1' | 'http2',
-  closed: { ref: boolean },
-  maxTimeMS: number | undefined,
-}
-
-/**
- * @internal
- */
-export interface InternalFetchCtx {
-  preferred: Fetcher,
-  closed: { ref: boolean },
-  maxTimeMS: number | undefined,
-}
-
 /**
  * Curated response object from an API call
  *
@@ -130,29 +62,4 @@ export interface RawDataAPIResponse {
    * Array of objects or null (Error)
    */
   data?: Record<string, any>,
-}
-
-/**
- * @internal
- */
-export interface APIResponse {
-  data?: Record<string, any>,
-  headers: Record<string, string>,
-  status: number,
-}
-
-/**
- * @internal
- */
-export type HttpMethodStrings = typeof HttpMethods[keyof typeof HttpMethods];
-
-/**
- * @internal
- */
-export interface HTTPRequestInfo {
-  url: string,
-  data?: unknown,
-  params?: Record<string, string>,
-  method: HttpMethodStrings,
-  timeoutManager: TimeoutManager,
 }

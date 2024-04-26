@@ -1,15 +1,15 @@
-import { Fetcher, RequestData, ResponseData } from '@/src/api/types';
 import { DataAPIClientOptions } from '@/src/client';
-import { buildUserAgent } from '@/src/api/http-client';
+import { buildUserAgent } from '@/src/api/clients/http-client';
+import { Fetcher, RequestInfo, ResponseInfo } from '@/src/api/fetch/types';
 
-export class FetchNativeFetcher implements Fetcher {
+export class FetchNative implements Fetcher {
   readonly #userAgent: string;
 
   constructor(options: DataAPIClientOptions | undefined) {
     this.#userAgent = buildUserAgent(options?.caller);
   }
 
-  async fetch(url: string, init: RequestData): Promise<ResponseData> {
+  async fetch(url: string, init: RequestInfo): Promise<ResponseInfo> {
     try {
       const timeout = init.timeoutManager.msRemaining;
 

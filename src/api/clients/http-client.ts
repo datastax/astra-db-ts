@@ -13,9 +13,10 @@
 // limitations under the License.
 
 import { CLIENT_USER_AGENT, RAGSTACK_REQUESTED_WITH } from '@/src/api/constants';
-import { HTTPRequestInfo, InternalFetchCtx, InternalHTTPClientOptions, ResponseData } from '@/src/api/types';
 import { Caller, DataAPIClientEvents } from '@/src/client';
 import TypedEmitter from 'typed-emitter';
+import { FetchCtx, ResponseInfo } from '@/src/api/fetch/types';
+import { HTTPRequestInfo, InternalHTTPClientOptions } from '@/src/api/clients/types';
 
 /**
  * @internal
@@ -24,7 +25,7 @@ export abstract class HttpClient {
   readonly baseUrl: string;
   readonly emitter: TypedEmitter<DataAPIClientEvents>;
   readonly monitorCommands: boolean;
-  readonly fetchCtx: InternalFetchCtx;
+  readonly fetchCtx: FetchCtx;
   readonly #applicationToken: string;
   readonly baseHeaders: Record<string, any>;
 
@@ -46,7 +47,7 @@ export abstract class HttpClient {
     return this.#applicationToken;
   }
 
-  protected async _request(info: HTTPRequestInfo): Promise<ResponseData> {
+  protected async _request(info: HTTPRequestInfo): Promise<ResponseInfo> {
     if (this.fetchCtx.closed.ref) {
       throw new Error('Can\'t make requests on a closed client');
     }
