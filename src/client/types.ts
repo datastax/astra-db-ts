@@ -93,9 +93,26 @@ export interface DataAPIClientOptions {
    *
    * @deprecated Use the {@link DataAPIClientOptions.httpOptions} property instead.
    *
-   * @see DataAPIHttpOptions
+   * @see FetchH2DataAPIHttpOptions
    */
   preferHttp2?: boolean,
+}
+
+export type DataAPIHttpOptions =
+  | FetchDataAPIHttpOptions
+  | FetchH2DataAPIHttpOptions;
+
+export interface FetchDataAPIHttpOptions {
+  client: 'fetch',
+  /**
+   * The default maximum time in milliseconds to wait for a response from the server.
+   *
+   * This does *not* mean the request will be cancelled after this time, but rather that the client will wait
+   * for this time before considering the request to have timed out.
+   *
+   * The request may or may not still be running on the server after this time.
+   */
+  maxTimeMS?: number,
 }
 
 /**
@@ -103,7 +120,8 @@ export interface DataAPIClientOptions {
  *
  * @public
  */
-export interface DataAPIHttpOptions {
+export interface FetchH2DataAPIHttpOptions {
+  client?: 'fetch-h2',
   /**
    * Whether to prefer HTTP/2 for requests to the Data API; if set to `false`, HTTP/1.1 will be used instead.
    *

@@ -1,12 +1,12 @@
 import { Fetcher, RequestData, ResponseData } from '@/src/api/types';
 import { context, TimeoutError } from 'fetch-h2';
-import { DataAPIClientOptions } from '@/src/client';
+import { DataAPIClientOptions, FetchH2DataAPIHttpOptions } from '@/src/client';
 import { buildUserAgent } from '@/src/api/http-client';
 
 export class FetchH2Fetcher implements Fetcher {
   readonly #context: ReturnType<typeof context>;
 
-  constructor(options: DataAPIClientOptions | undefined, preferHttp2: boolean) {
+  constructor(options: DataAPIClientOptions & { httpOptions: FetchH2DataAPIHttpOptions } | undefined, preferHttp2: boolean) {
     this.#context = context({
       userAgent: buildUserAgent(options?.caller),
       overwriteUserAgent: true,
