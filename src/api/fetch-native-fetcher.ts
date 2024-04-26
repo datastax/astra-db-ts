@@ -19,6 +19,9 @@ export class FetchNativeFetcher implements Fetcher {
     init.headers['User-Agent'] = this.#userAgent;
     init.headers['Content-Type'] = 'application/json';
 
+    // @ts-expect-error - keepalive is fine to set here
+    init.keepalive = true;
+
     const resp = await fetch(url, init);
 
     clearTimeout(id);

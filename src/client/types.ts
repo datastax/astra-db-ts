@@ -93,16 +93,16 @@ export interface DataAPIClientOptions {
    *
    * @deprecated Use the {@link DataAPIClientOptions.httpOptions} property instead.
    *
-   * @see FetchH2DataAPIHttpOptions
+   * @see DefaultHttpClientOptions
    */
   preferHttp2?: boolean,
 }
 
 export type DataAPIHttpOptions =
-  | FetchDataAPIHttpOptions
-  | FetchH2DataAPIHttpOptions;
+  | FetchHttpClientOptions
+  | DefaultHttpClientOptions;
 
-export interface FetchDataAPIHttpOptions {
+export interface FetchHttpClientOptions {
   client: 'fetch',
   /**
    * The default maximum time in milliseconds to wait for a response from the server.
@@ -120,8 +120,8 @@ export interface FetchDataAPIHttpOptions {
  *
  * @public
  */
-export interface FetchH2DataAPIHttpOptions {
-  client?: 'fetch-h2',
+export interface DefaultHttpClientOptions {
+  client?: 'default',
   /**
    * Whether to prefer HTTP/2 for requests to the Data API; if set to `false`, HTTP/1.1 will be used instead.
    *
@@ -146,7 +146,7 @@ export interface FetchH2DataAPIHttpOptions {
   /**
    * Options specific to HTTP/1.1 requests.
    */
-  http1?: DataAPIHttp1Options,
+  http1?: Http1Options,
 }
 
 /**
@@ -154,7 +154,7 @@ export interface FetchH2DataAPIHttpOptions {
  *
  * @public
  */
-export interface DataAPIHttp1Options {
+export interface Http1Options {
   /**
    * Whether to keep the connection alive for future requests. This is generally recommended for better performance.
    *

@@ -120,6 +120,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
       emitter: this,
     };
 
+
     if (Symbol.asyncDispose) {
       this[Symbol.asyncDispose] = this.close;
     }
@@ -346,8 +347,8 @@ function validateHttpOpts(opts: DataAPIHttpOptions | undefined | null) {
   }
 
   validateOption('client option', opts.client, 'string', (client) => {
-    if (client !== 'fetch' && client !== 'fetch-h2') {
-      throw new Error('Invalid httpOptions.client; expected \'fetch\' or \'fetch-h2\'');
+    if (client !== 'fetch' && client !== 'default') {
+      throw new Error('Invalid httpOptions.client; expected \'fetch\' or \'default\'');
     }
   });
   validateOption('maxTimeMS option', opts.maxTimeMS, 'number');
