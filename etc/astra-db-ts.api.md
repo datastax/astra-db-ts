@@ -345,7 +345,6 @@ export interface DataAPIClientOptions {
     adminOptions?: AdminSpawnOptions;
     caller?: Caller | Caller[];
     dbOptions?: DbSpawnOptions;
-    // Warning: (ae-forgotten-export) The symbol "DataAPIHttpOptions" needs to be exported by the entry point index.d.ts
     httpOptions?: DataAPIHttpOptions;
     // @deprecated
     preferHttp2?: boolean;
@@ -375,6 +374,9 @@ export interface DataAPIErrorDescriptor {
     readonly errorCode?: string;
     readonly message?: string;
 }
+
+// @public
+export type DataAPIHttpOptions = FetchHttpClientOptions | DefaultHttpClientOptions;
 
 // @public
 export class DataAPIResponseError extends DataAPIError {
@@ -522,7 +524,6 @@ export interface DbSpawnOptions {
 
 // @public
 export interface DefaultHttpClientOptions {
-    // (undocumented)
     client?: 'default';
     http1?: Http1Options;
     maxTimeMS?: number;
@@ -607,6 +608,12 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
 
 // @public
 export interface DropCollectionOptions extends WithTimeout, WithNamespace {
+}
+
+// @public
+export interface FetchHttpClientOptions {
+    client: 'fetch';
+    maxTimeMS?: number;
 }
 
 // @public

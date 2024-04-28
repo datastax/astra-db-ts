@@ -98,11 +98,24 @@ export interface DataAPIClientOptions {
   preferHttp2?: boolean,
 }
 
+/**
+ * The options available for the {@link DataAPIClient} related to making HTTP requests.
+ *
+ * @public
+ */
 export type DataAPIHttpOptions =
   | FetchHttpClientOptions
   | DefaultHttpClientOptions;
 
+/**
+ * The options available for the {@link DataAPIClient} related to making HTTP requests using the native fetch API.
+ *
+ * @public
+ */
 export interface FetchHttpClientOptions {
+  /**
+   * Use the native fetch API for making HTTP requests.
+   */
   client: 'fetch',
   /**
    * The default maximum time in milliseconds to wait for a response from the server.
@@ -116,11 +129,16 @@ export interface FetchHttpClientOptions {
 }
 
 /**
- * The options available for the {@link DataAPIClient} related to making HTTP requests.
+ * The options available for the {@link DataAPIClient} related to making HTTP requests using the default http client.
  *
  * @public
  */
 export interface DefaultHttpClientOptions {
+  /**
+   * Use the default http client for making HTTP requests (currently fetch-h2).
+   *
+   * Leave undefined to use the default client (you don't need to specify `'default'`).
+   */
   client?: 'default',
   /**
    * Whether to prefer HTTP/2 for requests to the Data API; if set to `false`, HTTP/1.1 will be used instead.
