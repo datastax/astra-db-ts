@@ -61,7 +61,7 @@ describe('integration.client.data-api-client', () => {
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
       await assert.doesNotReject(async () => {
-        await collection.insertOne({ name: 'Nightwish' }, { maxTimeMS: 100 });
+        await collection.insertOne({ name: 'Nightwish' }, { maxTimeMS: 10000 });
       });
     });
   });

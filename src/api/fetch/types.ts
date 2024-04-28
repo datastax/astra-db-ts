@@ -5,10 +5,12 @@ import type { TimeoutManager } from '@/src/api/timeout-managers';
  * @internal
  */
 export interface RequestInfo {
-  body: string,
+  url: string,
+  body: string | undefined,
   method: HttpMethodStrings,
   timeoutManager: TimeoutManager,
   headers: Record<string, string>,
+  forceHttp1: boolean | undefined,
 }
 
 /**
@@ -20,7 +22,7 @@ export type ResponseInfo = CuratedAPIResponse;
  * @internal
  */
 export interface Fetcher {
-  fetch: (input: string, init: RequestInfo) => Promise<ResponseInfo>,
+  fetch: (info: RequestInfo) => Promise<ResponseInfo>,
   disconnectAll: () => Promise<void>,
 }
 
@@ -28,9 +30,7 @@ export interface Fetcher {
  * @internal
  */
 export interface FetchCtx {
-  preferred: Fetcher,
-  http1: Fetcher,
-  preferredType: 'http1' | 'http2',
+  ctx: Fetcher,
   closed: { ref: boolean },
   maxTimeMS: number | undefined,
 }

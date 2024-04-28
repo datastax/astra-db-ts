@@ -3,26 +3,26 @@ import { buildUserAgent } from '@/src/api/clients/http-client';
 import { Fetcher, RequestInfo, ResponseInfo } from '@/src/api/fetch/types';
 
 export class FetchNative implements Fetcher {
-  readonly #userAgent: string;
+  private readonly _userAgent: string;
 
   constructor(options: DataAPIClientOptions | undefined) {
-    this.#userAgent = buildUserAgent(options?.caller);
+    this._userAgent = buildUserAgent(options?.caller);
   }
 
-  async fetch(url: string, init: RequestInfo): Promise<ResponseInfo> {
+  async fetch(info: RequestInfo): Promise<ResponseInfo> {
     try {
-      const timeout = init.timeoutManager.msRemaining;
+      const init = info as RequestInit;
 
-      init.headers['User-Agent'] = this.#userAgent;
-      init.headers['Content-Type'] = 'application/json';
+      const timeout = info.timeoutManager.msRemaining();
 
-      // @ts-expect-error - keepalive is fine to set here
+      info.headers ??= {};
+      info.headers['User-Agent'] = this._userAgent;
+      info.headers['Content-Type'] = 'application/json';
+
       init.keepalive = true;
-
-      // @ts-expect-error - signal is fine to set here
       init.signal = AbortSignal.timeout(timeout);
 
-      const resp = await fetch(url, init);
+      const resp = await fetch(info.url, init);
 
       const headers = {} as Record<string, string>;
       resp.headers.forEach((value, key) => {
@@ -39,7 +39,7 @@ export class FetchNative implements Fetcher {
       }
     } catch (e: any) {
       if (e.name === 'TimeoutError') {
-        throw init.timeoutManager.mkTimeoutError(url);
+        throw info.timeoutManager.mkTimeoutError(info.url);
       }
       throw e;
     }

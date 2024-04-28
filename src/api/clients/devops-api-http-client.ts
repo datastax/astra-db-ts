@@ -54,15 +54,8 @@ interface DevopsAPIResponse {
  * @internal
  */
 export class DevOpsAPIHttpClient extends HttpClient {
-  constructor(props: HTTPClientOptions) {
-    super({
-      ...props,
-      mkAuthHeader: (token) => ({ [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` }),
-      fetchCtx: {
-        ...props.fetchCtx,
-        preferred: props.fetchCtx.http1,
-      },
-    });
+  constructor(opts: HTTPClientOptions) {
+    super(opts, mkAuthHeader);
   }
 
   public async request(req: DevOpsAPIRequestInfo, options: TimeoutOptions | undefined, started: number = 0): Promise<DevopsAPIResponse> {
@@ -83,6 +76,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
         method: req.method,
         params: req.params,
         data: JSON.stringify(req.data),
+        forceHttp1: true,
         timeoutManager,
       });
 
@@ -191,4 +185,8 @@ export class DevOpsAPIHttpClient extends HttpClient {
     timeout ??= this.fetchCtx.maxTimeMS ?? (12 * 60 * 1000);
     return new TimeoutManager(timeout, (url) => new DevOpsAPITimeoutError(url, timeout));
   }
+}
+
+function mkAuthHeader(token: string) {
+  return { [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` };
 }

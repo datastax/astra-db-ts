@@ -17,7 +17,7 @@ import { DataAPIClient } from '@/src/client';
 import * as process from 'process';
 import assert from 'assert';
 import { DEFAULT_DATA_API_PATH } from '@/src/api';
-import { HTTP_CLIENT_TYPE } from '@/tests/fixtures';
+import { FetchH2 } from '@/src/api/fetch/fetch-h2';
 
 describe('unit.client.data-api-client', () => {
   const endpoint = process.env.ASTRA_URI!;
@@ -78,51 +78,41 @@ describe('unit.client.data-api-client', () => {
       assert.throws(() => new DataAPIClient('dummy-token', { caller: { 0: ['name', 'version'] } }));
     });
 
-    it('uses http2 by default', function () {
-      if (HTTP_CLIENT_TYPE !== undefined) {
-        this.skip();
-      }
+    describe('using fetch-h2', () => {
+      it('uses http2 by default', function () {
+        const client = new DataAPIClient('dummy-token', { httpOptions: {} });
+        const httpClient = client.db(endpoint)['_httpClient'];
+        assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
+        assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
+      });
 
-      const client = new DataAPIClient('dummy-token');
-      const httpClient = client.db(endpoint)['_httpClient'];
-      const http1Client = client.admin()['_httpClient'];
-      assert.ok(httpClient.fetchCtx.preferred !== http1Client.fetchCtx.preferred);
-    });
+      it('uses http2 when forced', function () {
+        const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'default', preferHttp2: true } });
+        const httpClient = client.db(endpoint)['_httpClient'];
+        assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
+        assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
+      });
 
-    it('uses http2 when forced', function () {
-      if (HTTP_CLIENT_TYPE !== undefined) {
-        this.skip();
-      }
+      it('uses http1.1 when forced', () => {
+        const client = new DataAPIClient('dummy-token', { httpOptions: { preferHttp2: false } });
+        const httpClient = client.db(endpoint)['_httpClient'];
+        assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
+        assert.ok(httpClient.fetchCtx.ctx['_http1'] === httpClient.fetchCtx.ctx['_preferred']);
+      });
 
-      const client = new DataAPIClient('dummy-token', { httpOptions: { preferHttp2: true } });
-      const httpClient = client.db(endpoint)['_httpClient'];
-      const http1Client = client.admin()['_httpClient'];
-      assert.ok(httpClient.fetchCtx.preferred !== http1Client.fetchCtx.preferred);
-    });
+      it('uses http2 when forced (deprecated version)', function () {
+        const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'default' }, preferHttp2: true });
+        const httpClient = client.db(endpoint)['_httpClient'];
+        assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
+        assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
+      });
 
-    it('uses http1.1 when forced', () => {
-      const client = new DataAPIClient('dummy-token', { httpOptions: { preferHttp2: false } });
-      const httpClient = client.db(endpoint)['_httpClient'];
-      const http1Client = client.admin()['_httpClient'];
-      assert.ok(httpClient.fetchCtx.preferred === http1Client.fetchCtx.preferred);
-    });
-
-    it('uses http2 when forced (deprecated version)', function () {
-      if (HTTP_CLIENT_TYPE !== undefined) {
-        this.skip();
-      }
-
-      const client = new DataAPIClient('dummy-token', { preferHttp2: true });
-      const httpClient = client.db(endpoint)['_httpClient'];
-      const http1Client = client.admin()['_httpClient'];
-      assert.ok(httpClient.fetchCtx.preferred !== http1Client.fetchCtx.preferred);
-    });
-
-    it('uses http1.1 when forced (deprecated version)', () => {
-      const client = new DataAPIClient('dummy-token', { preferHttp2: false });
-      const httpClient = client.db(endpoint)['_httpClient'];
-      const http1Client = client.admin()['_httpClient'];
-      assert.ok(httpClient.fetchCtx.preferred === http1Client.fetchCtx.preferred);
+      it('uses http1.1 when forced (deprecated version)', () => {
+        const client = new DataAPIClient('dummy-token', { preferHttp2: false });
+        const httpClient = client.db(endpoint)['_httpClient'];
+        assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
+        assert.ok(httpClient.fetchCtx.ctx['_http1'] === httpClient.fetchCtx.ctx['_preferred']);
+      });
     });
 
     it('validates options properly', () => {

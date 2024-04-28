@@ -15,11 +15,11 @@
 
 import assert from 'assert';
 import { DevOpsAPIResponseError } from '@/src/devops';
-import { ResponseData } from '@/src/api';
+import { ResponseInfo } from '@/src/api';
 
 describe('unit.devops.errors', () => {
   describe('DevOpsAPIResponseError construction', () => {
-    const rootError: ResponseData = {
+    const rootError: ResponseInfo = {
       status: 500,
       headers: { 'content-type': 'application/json' },
       url: 'http://localhost:8080',

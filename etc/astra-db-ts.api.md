@@ -580,10 +580,10 @@ export interface DevOpsAPIErrorDescriptor {
 
 // @public
 export class DevOpsAPIResponseError extends DevOpsAPIError {
-    // Warning: (ae-forgotten-export) The symbol "ResponseData" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "ResponseInfo" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(resp: ResponseData, data: Record<string, any> | undefined);
+    constructor(resp: ResponseInfo, data: Record<string, any> | undefined);
     readonly errors: DevOpsAPIErrorDescriptor[];
     readonly raw: CuratedAPIResponse;
     readonly status: number;

@@ -18,9 +18,7 @@ export interface HTTPClientOptions {
 /**
  * @internal
  */
-export interface InternalHTTPClientOptions extends HTTPClientOptions {
-  mkAuthHeader: (token: string) => Record<string, any>,
-}
+export type AuthHeaderFactory = (token: string) => Record<string, any>;
 
 /**
  * @internal
@@ -32,8 +30,9 @@ export type HttpMethodStrings = typeof HttpMethods[keyof typeof HttpMethods];
  */
 export interface HTTPRequestInfo {
   url: string,
-  data?: unknown,
+  data?: string,
   params?: Record<string, string>,
   method: HttpMethodStrings,
   timeoutManager: TimeoutManager,
+  forceHttp1?: boolean,
 }

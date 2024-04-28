@@ -248,9 +248,8 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * @returns A promise that resolves when the client has been closed.
    */
   public async close(): Promise<void> {
+    await this.#options.fetchCtx.ctx.disconnectAll();
     this.#options.fetchCtx.closed.ref = true;
-    await this.#options.fetchCtx.preferred.disconnectAll();
-    await this.#options.fetchCtx.http1.disconnectAll();
   }
 
   /**
@@ -292,43 +291,32 @@ function getDefaultHttpClient(): 'fetch' | 'default' {
 }
 
 function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
-  const clientType = (options?.httpOptions)
-    ? options.httpOptions.client
+  const clientType = (options?.httpOptions || getDeprecatedPrefersHttp2(options))
+    ? options?.httpOptions?.client ?? 'default'
     : getDefaultHttpClient();
 
-  const preferHttp2 = (options?.httpOptions && options.httpOptions.client !== 'fetch')
-    ? options.httpOptions.preferHttp2 ?? getDeprecatedPrefersHttp2(options) ?? true
-    : false;
-
-  const [http1Ctx, preferredCtx] = (() => {
-    if (clientType !== 'fetch') {
+  const ctx = (() => {
+    if (clientType === 'default') {
       try {
         // Complicated expression to stop Next.js and such from tracing require and trying to load the fetch-h2 client
         const [indirectRequire] = [require].map(x => Math.random() > 10 ? null! : x);
         const { FetchH2 } = indirectRequire('@/src/api/fetch/fetch-h2') as typeof import('@/src/api/fetch/fetch-h2');
 
-        const http1Ctx = new FetchH2(options, false);
+        const preferHttp2 = (<any>options?.httpOptions)?.preferHttp2
+          ?? getDeprecatedPrefersHttp2(options)
+          ?? true
 
-        const preferredCtx = (preferHttp2)
-          ? new FetchH2(options, true)
-          : http1Ctx;
-
-        return [http1Ctx, preferredCtx];
+        return new FetchH2(options, preferHttp2);
       } catch (e) {
         throw new Error('Error loading the fetch-h2 client for the DataAPIClient... try setting httpOptions.client to \'fetch\'');
       }
     } else {
-      const deceiver = new FetchNative(options);
-      return [deceiver, deceiver];
+      return new FetchNative(options);
     }
   })();
 
   return {
-    http1: http1Ctx,
-    preferred: preferredCtx,
-    preferredType: (preferHttp2)
-      ? 'http2'
-      : 'http1',
+    ctx: ctx,
     closed: { ref: false },
     maxTimeMS: options?.httpOptions?.maxTimeMS,
   };

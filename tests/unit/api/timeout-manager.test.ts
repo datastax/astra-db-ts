@@ -19,12 +19,12 @@ import { TimeoutManager } from '@/src/api/timeout-managers';
 describe('unit.api.timeout-manager', () => {
   it('works', async () => {
     const timeoutManager = new TimeoutManager(1000, () => new Error('timeout'));
-    assert.strictEqual(timeoutManager.msRemaining, 1000);
+    assert.strictEqual(timeoutManager.msRemaining(), 1000);
     await new Promise((resolve) => setTimeout(resolve, 500));
-    assert.ok(timeoutManager.msRemaining < 500);
-    assert.ok(timeoutManager.msRemaining > 480);
+    assert.ok(timeoutManager.msRemaining() < 500);
+    assert.ok(timeoutManager.msRemaining() > 480);
     await new Promise((resolve) => setTimeout(resolve, 500));
-    assert.ok(timeoutManager.msRemaining < 0);
-    assert.ok(timeoutManager.msRemaining > -40);
+    assert.ok(timeoutManager.msRemaining() < 0);
+    assert.ok(timeoutManager.msRemaining() > -40);
   });
 });

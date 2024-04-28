@@ -16,7 +16,7 @@ import type { InsertManyResult } from '@/src/data-api/types/insert/insert-many';
 import type { DeleteManyResult } from '@/src/data-api/types/delete/delete-many';
 import type { UpdateManyResult } from '@/src/data-api/types/update/update-many';
 import type { BulkWriteResult } from '@/src/data-api/types/misc/bulk-write';
-import type { CuratedAPIResponse, RawDataAPIResponse, ResponseData } from '@/src/api';
+import type { CuratedAPIResponse, RawDataAPIResponse, ResponseInfo } from '@/src/api';
 import { SomeDoc } from '@/src/data-api/document';
 
 /**
@@ -153,8 +153,8 @@ export class DataAPIHttpError extends DataAPIError {
    *
    * @internal
    */
-  constructor(resp: ResponseData) {
-    super(`HTTP error: ${resp.status}`);
+  constructor(resp: ResponseInfo) {
+    super(`HTTP error: ${resp.status}${resp.body ? `; ${resp.body}` : ''}`);
     this.status = resp.status;
     this.body = resp.body!;
     this.raw = resp;

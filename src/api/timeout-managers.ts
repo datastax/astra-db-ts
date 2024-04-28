@@ -39,7 +39,7 @@ export type TimeoutOptions = {
  *
  * @internal
  */
-export type MkTimeoutError = (url: string) => Error;
+export type MkTimeoutError = (info: string) => Error;
 
 /**
  * Tracks the remaining time before a timeout occurs. Can be used for both single and multi-call timeout management.
@@ -59,7 +59,7 @@ export class TimeoutManager {
     this._started = false;
   }
 
-  get msRemaining() {
+  msRemaining() {
     if (!this._started) {
       this._started = true;
       this._deadline = Date.now() + this.ms;

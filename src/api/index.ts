@@ -18,7 +18,7 @@ export * from './clients/devops-api-http-client';
 export * from './types';
 export * from './constants';
 export { FetchCtx } from '@/src/api/fetch/types';
-export { InternalHTTPClientOptions } from '@/src/api/clients/types';
 export { HTTPClientOptions } from '@/src/api/clients/types';
 export { HTTPRequestInfo } from '@/src/api/clients/types';
 export { HttpMethodStrings } from '@/src/api/clients/types';
+export { ResponseInfo } from '@/src/api/fetch/types';
