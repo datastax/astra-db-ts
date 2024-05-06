@@ -19,5 +19,6 @@ module.exports = {
         'caughtErrorsIgnorePattern': '^_',
       },
     ],
+    '@typescript-eslint/no-var-requires': 'off',
   },
 };

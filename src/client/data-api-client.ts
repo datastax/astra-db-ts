@@ -24,12 +24,12 @@ import {
   InternalRootClientOpts,
 } from '@/src/client/types';
 import TypedEmitter from 'typed-emitter';
-import { EventEmitter } from 'events';
 import { DataAPICommandEvents } from '@/src/data-api/events';
 import { AdminCommandEvents } from '@/src/devops';
 import { validateOption } from '@/src/data-api/utils';
 import { FetchCtx } from '@/src/api';
 import { FetchNative } from '@/src/api/fetch/fetch-native';
+import { LIB_NAME } from '@/src/version';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -57,7 +57,13 @@ export type DataAPIClientEvents =
  *
  * @public
  */
-export const DataAPIClientEventEmitterBase = EventEmitter as (new () => TypedEmitter<DataAPIClientEvents>);
+export const DataAPIClientEventEmitterBase = (() => {
+  try {
+    return require('events').EventEmitter as (new () => TypedEmitter<DataAPIClientEvents>);
+  } catch (e) {
+    throw new Error(`\`${LIB_NAME}\` requires the \`events\` module to be available for usage. Please provide a polyfill (e.g. the \`events\` package) or use a compatible environment.`);
+  }
+})();
 
 /**
  * The main entrypoint into working with the Data API. It sits at the top of the
@@ -300,7 +306,7 @@ function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
       try {
         // Complicated expression to stop Next.js and such from tracing require and trying to load the fetch-h2 client
         const [indirectRequire] = [require].map(x => Math.random() > 10 ? null! : x);
-        const { FetchH2 } = indirectRequire('@/src/api/fetch/fetch-h2') as typeof import('@/src/api/fetch/fetch-h2');
+        const { FetchH2 } = indirectRequire('../api/fetch/fetch-h2') as typeof import('../api/fetch/fetch-h2');
 
         const preferHttp2 = (<any>options?.httpOptions)?.preferHttp2
           ?? getDeprecatedPrefersHttp2(options)
