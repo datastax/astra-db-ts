@@ -4,8 +4,6 @@
 
 ```ts
 
-import { context as context_2 } from 'fetch-h2';
-import { Response as Response_2 } from 'fetch-h2';
 import TypedEmitter from 'typed-emitter';
 
 // @public
@@ -378,19 +376,7 @@ export interface DataAPIErrorDescriptor {
 }
 
 // @public
-export interface DataAPIHttp1Options {
-    keepAlive?: boolean;
-    keepAliveMS?: number;
-    maxFreeSockets?: number;
-    maxSockets?: number;
-}
-
-// @public
-export interface DataAPIHttpOptions {
-    http1?: DataAPIHttp1Options;
-    maxTimeMS?: number;
-    preferHttp2?: boolean;
-}
+export type DataAPIHttpOptions = FetchHttpClientOptions | DefaultHttpClientOptions;
 
 // @public
 export class DataAPIResponseError extends DataAPIError {
@@ -537,6 +523,14 @@ export interface DbSpawnOptions {
 }
 
 // @public
+export interface DefaultHttpClientOptions {
+    client?: 'default';
+    http1?: Http1Options;
+    maxTimeMS?: number;
+    preferHttp2?: boolean;
+}
+
+// @public
 export interface DefaultIdOptions {
     type: 'uuid' | 'uuidv6' | 'uuidv7' | 'objectId';
 }
@@ -587,10 +581,10 @@ export interface DevOpsAPIErrorDescriptor {
 
 // @public
 export class DevOpsAPIResponseError extends DevOpsAPIError {
-    // Warning: (ae-forgotten-export) The symbol "ResponseWithBody" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "ResponseInfo" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(resp: ResponseWithBody, data: Record<string, any> | undefined);
+    constructor(resp: ResponseInfo, data: Record<string, any> | undefined);
     readonly errors: DevOpsAPIErrorDescriptor[];
     readonly raw: CuratedAPIResponse;
     readonly status: number;
@@ -614,6 +608,12 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
 
 // @public
 export interface DropCollectionOptions extends WithTimeout, WithNamespace {
+}
+
+// @public
+export interface FetchHttpClientOptions {
+    client: 'fetch';
+    maxTimeMS?: number;
 }
 
 // @public
@@ -765,6 +765,14 @@ export interface FullDatabaseInfo {
 export interface GuaranteedUpdateOptions<N extends number> {
     matchedCount: N;
     modifiedCount: N;
+}
+
+// @public
+export interface Http1Options {
+    keepAlive?: boolean;
+    keepAliveMS?: number;
+    maxFreeSockets?: number;
+    maxSockets?: number;
 }
 
 // @public

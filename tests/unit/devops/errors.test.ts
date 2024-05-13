@@ -15,19 +15,18 @@
 
 import assert from 'assert';
 import { DevOpsAPIResponseError } from '@/src/devops';
-import { ResponseWithBody } from '@/src/api';
-import { Headers } from 'fetch-h2';
+import { ResponseInfo } from '@/src/api';
 
 describe('unit.devops.errors', () => {
   describe('DevOpsAPIResponseError construction', () => {
-    const rootError = {
+    const rootError: ResponseInfo = {
       status: 500,
-      headers: new Headers({ 'content-type': 'application/json' }),
+      headers: { 'content-type': 'application/json' },
       url: 'http://localhost:8080',
       body: '{ "body": true }',
       httpVersion: 1,
       statusText: 'Internal Server Error',
-    } as ResponseWithBody;
+    };
 
     it('should properly construct a DevOpsAPIResponseError with no underlying errors given', () => {
       const err = new DevOpsAPIResponseError(rootError, {});

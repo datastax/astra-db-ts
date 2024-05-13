@@ -39,7 +39,7 @@ export interface DataAPIRequestInfo {
   timeoutManager: TimeoutManager;
 }
 
-type ExecuteCommandOptions = {
+interface ExecuteCommandOptions {
   collection?: string;
   namespace?: string;
 }
@@ -53,10 +53,7 @@ export class DataAPIHttpClient extends HttpClient {
   readonly #props: HTTPClientOptions & WithNamespace;
 
   constructor(props: HTTPClientOptions & WithNamespace) {
-    super({
-      ...props,
-      mkAuthHeader: (token) => ({ [DEFAULT_DATA_API_AUTH_HEADER]: token }),
-    });
+    super(props, mkAuthHeader);
     this.namespace = props.namespace;
     this.#props = props;
   }
@@ -194,4 +191,8 @@ export function reviver(_: string, value: any): any {
     return new UUID(value.$uuid);
   }
   return value;
+}
+
+function mkAuthHeader(token: string): Record<string, any> {
+  return { [DEFAULT_DATA_API_AUTH_HEADER]: token };
 }

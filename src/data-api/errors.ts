@@ -16,9 +16,8 @@ import type { InsertManyResult } from '@/src/data-api/types/insert/insert-many';
 import type { DeleteManyResult } from '@/src/data-api/types/delete/delete-many';
 import type { UpdateManyResult } from '@/src/data-api/types/update/update-many';
 import type { BulkWriteResult } from '@/src/data-api/types/misc/bulk-write';
-import type { CuratedAPIResponse, RawDataAPIResponse, ResponseWithBody } from '@/src/api';
+import type { CuratedAPIResponse, RawDataAPIResponse, ResponseInfo } from '@/src/api';
 import { SomeDoc } from '@/src/data-api/document';
-import { toCuratedApiResponse } from '@/src/api/utils';
 
 /**
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a
@@ -154,11 +153,11 @@ export class DataAPIHttpError extends DataAPIError {
    *
    * @internal
    */
-  constructor(resp: ResponseWithBody) {
-    super(`HTTP error: ${resp.status}`);
+  constructor(resp: ResponseInfo) {
+    super(`HTTP error: ${resp.status}${resp.body ? `; ${resp.body}` : ''}`);
     this.status = resp.status;
-    this.body = resp.body;
-    this.raw = toCuratedApiResponse(resp);
+    this.body = resp.body!;
+    this.raw = resp;
     this.name = 'DataAPIHttpError';
   }
 }

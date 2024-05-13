@@ -13,8 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { hrTimeMs, HttpClient } from '@/src/api/http-client';
-import { APIResponse, HTTPClientOptions, HttpMethodStrings } from '@/src/api/types';
+import { hrTimeMs, HttpClient } from '@/src/api/clients/http-client';
 import { DevOpsAPIResponseError, DevOpsAPITimeoutError, DevOpsUnexpectedStateError } from '@/src/devops/errors';
 import { AdminBlockingOptions } from '@/src/devops/types';
 import { TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
@@ -25,6 +24,7 @@ import {
   AdminCommandStartedEvent,
   AdminCommandSucceededEvent,
 } from '@/src/devops';
+import { HTTPClientOptions, HttpMethodStrings } from '@/src/api/clients/types';
 
 /**
  * @internal
@@ -36,33 +36,29 @@ export interface DevOpsAPIRequestInfo {
   params?: Record<string, any>,
 }
 
-/**
- * @internal
- */
-export interface LongRunningRequestInfo {
-  id: string | ((resp: APIResponse) => string),
+interface LongRunningRequestInfo {
+  id: string | ((resp: DevopsAPIResponse) => string),
   target: string,
   legalStates: string[],
   defaultPollInterval: number,
   options: AdminBlockingOptions | undefined,
 }
 
+interface DevopsAPIResponse {
+  data?: Record<string, any>,
+  headers: Record<string, string>,
+  status: number,
+}
+
 /**
  * @internal
  */
 export class DevOpsAPIHttpClient extends HttpClient {
-  constructor(props: HTTPClientOptions) {
-    super({
-      ...props,
-      mkAuthHeader: (token) => ({ [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` }),
-      fetchCtx: {
-        ...props.fetchCtx,
-        preferred: props.fetchCtx.http1,
-      },
-    });
+  constructor(opts: HTTPClientOptions) {
+    super(opts, mkAuthHeader);
   }
 
-  public async request(req: DevOpsAPIRequestInfo, options: TimeoutOptions | undefined, started: number = 0): Promise<APIResponse> {
+  public async request(req: DevOpsAPIRequestInfo, options: TimeoutOptions | undefined, started: number = 0): Promise<DevopsAPIResponse> {
     const isLongRunning = started !== 0;
 
     try {
@@ -80,6 +76,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
         method: req.method,
         params: req.params,
         data: JSON.stringify(req.data),
+        forceHttp1: true,
         timeoutManager,
       });
 
@@ -111,7 +108,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
     }
   }
 
-  public async requestLongRunning(req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo): Promise<APIResponse> {
+  public async requestLongRunning(req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo): Promise<DevopsAPIResponse> {
     const timeoutManager = this._mkTimeoutManager(info.options?.maxTimeMS);
     const isLongRunning = info?.options?.blocking !== false;
 
@@ -186,6 +183,10 @@ export class DevOpsAPIHttpClient extends HttpClient {
 
   private _mkTimeoutManager(timeout: number | undefined) {
     timeout ??= this.fetchCtx.maxTimeMS ?? (12 * 60 * 1000);
-    return new TimeoutManager(timeout, (info) => new DevOpsAPITimeoutError(info.url, timeout));
+    return new TimeoutManager(timeout, (url) => new DevOpsAPITimeoutError(url, timeout));
   }
+}
+
+function mkAuthHeader(token: string) {
+  return { [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` };
 }

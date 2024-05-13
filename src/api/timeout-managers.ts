@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { HTTPRequestInfo } from '@/src/api/types';
-
 /**
  * Internal representation of timeout options, allowing a shorthand for a single call timeout manager via
  * `maxTimeMS`, with an explicit {@link TimeoutManager} being allowed to be passed if necessary, generally
@@ -41,7 +39,7 @@ export type TimeoutOptions = {
  *
  * @internal
  */
-export type MkTimeoutError = (ctx: HTTPRequestInfo) => Error;
+export type MkTimeoutError = (info: string) => Error;
 
 /**
  * Tracks the remaining time before a timeout occurs. Can be used for both single and multi-call timeout management.
@@ -61,7 +59,7 @@ export class TimeoutManager {
     this._started = false;
   }
 
-  get msRemaining() {
+  msRemaining() {
     if (!this._started) {
       this._started = true;
       this._deadline = Date.now() + this.ms;

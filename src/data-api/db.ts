@@ -344,7 +344,7 @@ export class Db {
     const namespace = options?.namespace ?? this.namespace;
 
     if (options?.checkExists !== false) {
-      const collections = await this.listCollections({ namespace, maxTimeMS: timeoutManager.msRemaining });
+      const collections = await this.listCollections({ namespace, maxTimeMS: timeoutManager.msRemaining() });
 
       if (collections.some(c => c.name === collectionName)) {
         throw new CollectionAlreadyExistsError(options?.namespace ?? this.namespace, collectionName);

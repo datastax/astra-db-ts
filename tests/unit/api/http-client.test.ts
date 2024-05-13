@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { HttpClient } from '@/src/api/http-client';
+import { HttpClient } from '@/src/api/clients/http-client';
 
 describe('unit.api.http-client', () => {
   describe('HTTPClient Operations', () => {

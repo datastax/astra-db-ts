@@ -93,7 +93,7 @@ export interface DataAPIClientOptions {
    *
    * @deprecated Use the {@link DataAPIClientOptions.httpOptions} property instead.
    *
-   * @see DataAPIHttpOptions
+   * @see DefaultHttpClientOptions
    */
   preferHttp2?: boolean,
 }
@@ -103,7 +103,43 @@ export interface DataAPIClientOptions {
  *
  * @public
  */
-export interface DataAPIHttpOptions {
+export type DataAPIHttpOptions =
+  | FetchHttpClientOptions
+  | DefaultHttpClientOptions;
+
+/**
+ * The options available for the {@link DataAPIClient} related to making HTTP requests using the native fetch API.
+ *
+ * @public
+ */
+export interface FetchHttpClientOptions {
+  /**
+   * Use the native fetch API for making HTTP requests.
+   */
+  client: 'fetch',
+  /**
+   * The default maximum time in milliseconds to wait for a response from the server.
+   *
+   * This does *not* mean the request will be cancelled after this time, but rather that the client will wait
+   * for this time before considering the request to have timed out.
+   *
+   * The request may or may not still be running on the server after this time.
+   */
+  maxTimeMS?: number,
+}
+
+/**
+ * The options available for the {@link DataAPIClient} related to making HTTP requests using the default http client.
+ *
+ * @public
+ */
+export interface DefaultHttpClientOptions {
+  /**
+   * Use the default http client for making HTTP requests (currently fetch-h2).
+   *
+   * Leave undefined to use the default client (you don't need to specify `'default'`).
+   */
+  client?: 'default',
   /**
    * Whether to prefer HTTP/2 for requests to the Data API; if set to `false`, HTTP/1.1 will be used instead.
    *
@@ -128,7 +164,7 @@ export interface DataAPIHttpOptions {
   /**
    * Options specific to HTTP/1.1 requests.
    */
-  http1?: DataAPIHttp1Options,
+  http1?: Http1Options,
 }
 
 /**
@@ -136,7 +172,7 @@ export interface DataAPIHttpOptions {
  *
  * @public
  */
-export interface DataAPIHttp1Options {
+export interface Http1Options {
   /**
    * Whether to keep the connection alive for future requests. This is generally recommended for better performance.
    *

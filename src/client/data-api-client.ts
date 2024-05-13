@@ -24,12 +24,12 @@ import {
   InternalRootClientOpts,
 } from '@/src/client/types';
 import TypedEmitter from 'typed-emitter';
-import EventEmitter from 'events';
 import { DataAPICommandEvents } from '@/src/data-api/events';
 import { AdminCommandEvents } from '@/src/devops';
 import { validateOption } from '@/src/data-api/utils';
-import { context, ContextOptions } from 'fetch-h2';
-import { buildUserAgent } from '@/src/api';
+import { FetchCtx } from '@/src/api';
+import { FetchNative } from '@/src/api/fetch/fetch-native';
+import { LIB_NAME } from '@/src/version';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -57,7 +57,13 @@ export type DataAPIClientEvents =
  *
  * @public
  */
-export const DataAPIClientEventEmitterBase = EventEmitter as (new () => TypedEmitter<DataAPIClientEvents>);
+export const DataAPIClientEventEmitterBase = (() => {
+  try {
+    return require('events').EventEmitter as (new () => TypedEmitter<DataAPIClientEvents>);
+  } catch (e) {
+    throw new Error(`\`${LIB_NAME}\` requires the \`events\` module to be available for usage. Please provide a polyfill (e.g. the \`events\` package) or use a compatible environment.`);
+  }
+})();
 
 /**
  * The main entrypoint into working with the Data API. It sits at the top of the
@@ -105,39 +111,9 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
 
     validateRootOpts(options);
 
-    const baseCtxOptions: Partial<ContextOptions> = {
-      userAgent: buildUserAgent(options?.caller),
-      overwriteUserAgent: true,
-      http1: {
-        keepAlive: options?.httpOptions?.http1?.keepAlive,
-        keepAliveMsecs: options?.httpOptions?.http1?.keepAliveMS,
-        maxSockets: options?.httpOptions?.http1?.maxSockets,
-        maxFreeSockets: options?.httpOptions?.http1?.maxFreeSockets,
-      },
-    };
-
-    const http1Ctx = context({
-      ...baseCtxOptions,
-      httpsProtocols: ['http1'],
-    });
-
-    const preferHttp2 = options?.httpOptions?.preferHttp2 ?? getDeprecatedPrefersHttp2(options) ?? true;
-
-    const preferredCtx = (preferHttp2)
-      ? context(baseCtxOptions)
-      : http1Ctx;
-
     this.#options = {
       ...options,
-      fetchCtx: {
-        http1: http1Ctx,
-        preferred: preferredCtx,
-        preferredType: (preferHttp2)
-          ? 'http2'
-          : 'http1',
-        closed: { ref: false },
-        maxTimeMS: options?.httpOptions?.maxTimeMS,
-      },
+      fetchCtx: buildFetchCtx(options || undefined),
       dbOptions: {
         monitorCommands: false,
         token: token,
@@ -150,6 +126,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
       },
       emitter: this,
     };
+
 
     if (Symbol.asyncDispose) {
       this[Symbol.asyncDispose] = this.close;
@@ -277,9 +254,8 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * @returns A promise that resolves when the client has been closed.
    */
   public async close(): Promise<void> {
+    await this.#options.fetchCtx.ctx.disconnectAll();
     this.#options.fetchCtx.closed.ref = true;
-    await this.#options.fetchCtx.preferred.disconnectAll();
-    await this.#options.fetchCtx.http1.disconnectAll();
   }
 
   /**
@@ -310,7 +286,49 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
   public [Symbol.asyncDispose]!: () => Promise<void>;
 }
 
-// Shuts the linter up about 'preferHttp2' not being deprecated
+function getDefaultHttpClient(): 'fetch' | 'default' {
+  const isNode = globalThis.process?.release?.name === 'node';
+  const isBun = !!globalThis['Bun' as keyof typeof globalThis] || !!globalThis.process?.versions?.bun;
+  const isDeno = !!globalThis['Deno' as keyof typeof globalThis];
+
+  return (isNode && !isBun && !isDeno)
+    ? 'default'
+    : 'fetch';
+}
+
+function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
+  const clientType = (options?.httpOptions || getDeprecatedPrefersHttp2(options))
+    ? options?.httpOptions?.client ?? 'default'
+    : getDefaultHttpClient();
+
+  const ctx = (() => {
+    if (clientType === 'default') {
+      try {
+        // Complicated expression to stop Next.js and such from tracing require and trying to load the fetch-h2 client
+        const [indirectRequire] = [require].map(x => Math.random() > 10 ? null! : x);
+        const { FetchH2 } = indirectRequire('../api/fetch/fetch-h2') as typeof import('../api/fetch/fetch-h2');
+
+        const preferHttp2 = (<any>options?.httpOptions)?.preferHttp2
+          ?? getDeprecatedPrefersHttp2(options)
+          ?? true
+
+        return new FetchH2(options, preferHttp2);
+      } catch (e) {
+        throw new Error('Error loading the fetch-h2 client for the DataAPIClient... try setting httpOptions.client to \'fetch\'');
+      }
+    } else {
+      return new FetchNative(options);
+    }
+  })();
+
+  return {
+    ctx: ctx,
+    closed: { ref: false },
+    maxTimeMS: options?.httpOptions?.maxTimeMS,
+  };
+}
+
+// Shuts the linter up about 'preferHttp2' being deprecated
 function getDeprecatedPrefersHttp2(opts: DataAPIClientOptions | undefined | null) {
   return opts?.[('preferHttp2' as any as null)!];
 }
@@ -337,15 +355,23 @@ function validateHttpOpts(opts: DataAPIHttpOptions | undefined | null) {
     return;
   }
 
-  validateOption('preferHttp2 option', opts.preferHttp2, 'boolean');
+  validateOption('client option', opts.client, 'string', (client) => {
+    if (client !== 'fetch' && client !== 'default') {
+      throw new Error('Invalid httpOptions.client; expected \'fetch\' or \'default\'');
+    }
+  });
   validateOption('maxTimeMS option', opts.maxTimeMS, 'number');
 
-  validateOption('http1 options', opts.http1, 'object', (http1) => {
-    validateOption('http1.keepAlive option', http1.keepAlive, 'boolean');
-    validateOption('http1.keepAliveMS option', http1.keepAliveMS, 'number');
-    validateOption('http1.maxSockets option', http1.maxSockets, 'number');
-    validateOption('http1.maxFreeSockets option', http1.maxFreeSockets, 'number');
-  });
+  if (opts.client !== 'fetch') {
+    validateOption('preferHttp2 option', opts.preferHttp2, 'boolean');
+
+    validateOption('http1 options', opts.http1, 'object', (http1) => {
+      validateOption('http1.keepAlive option', http1.keepAlive, 'boolean');
+      validateOption('http1.keepAliveMS option', http1.keepAliveMS, 'number');
+      validateOption('http1.maxSockets option', http1.maxSockets, 'number');
+      validateOption('http1.maxFreeSockets option', http1.maxFreeSockets, 'number');
+    });
+  }
 }
 
 function validateCaller(caller: Caller | Caller[]) {

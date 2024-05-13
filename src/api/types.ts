@@ -12,53 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TimeoutManager } from '@/src/api/timeout-managers';
-import { HttpMethods } from '@/src/api/constants';
-import TypedEmitter from 'typed-emitter';
-import { DataAPICommandEvents } from '@/src/data-api/events';
-import { context, Response } from 'fetch-h2';
-import { Headers } from 'fetch-h2/dist/lib/headers';
-
-/**
- * @internal
- */
-export interface HTTPClientOptions {
-  baseUrl: string,
-  baseApiPath?: string,
-  applicationToken: string,
-  emitter: TypedEmitter<DataAPICommandEvents>,
-  monitorCommands: boolean,
-  fetchCtx: FetchCtx,
-}
-
-/**
- * @internal
- */
-export interface InternalHTTPClientOptions extends Omit<HTTPClientOptions, 'fetchCtx'> {
-  fetchCtx: InternalFetchCtx,
-  mkAuthHeader: (token: string) => Record<string, any>,
-}
-
-/**
- * @internal
- */
-export interface FetchCtx {
-  preferred: ReturnType<typeof context>,
-  http1: ReturnType<typeof context>,
-  preferredType: 'http1' | 'http2',
-  closed: { ref: boolean },
-  maxTimeMS: number | undefined,
-}
-
-/**
- * @internal
- */
-export interface InternalFetchCtx {
-  preferred: ReturnType<typeof context>,
-  closed: { ref: boolean },
-  maxTimeMS: number | undefined,
-}
-
 /**
  * Curated response object from an API call
  *
@@ -109,34 +62,4 @@ export interface RawDataAPIResponse {
    * Array of objects or null (Error)
    */
   data?: Record<string, any>,
-}
-
-/**
- * @internal
- */
-export interface APIResponse {
-  data?: Record<string, any>,
-  headers: Headers,
-  status: number,
-}
-
-/**
- * @internal
- */
-export type ResponseWithBody = Response & { body: string };
-
-/**
- * @internal
- */
-export type HttpMethodStrings = typeof HttpMethods[keyof typeof HttpMethods];
-
-/**
- * @internal
- */
-export interface HTTPRequestInfo {
-  url: string,
-  data?: unknown,
-  params?: Record<string, string>,
-  method: HttpMethodStrings,
-  timeoutManager: TimeoutManager,
 }

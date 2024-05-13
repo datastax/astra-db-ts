@@ -13,8 +13,7 @@
 // limitations under the License.
 
 import { FullDatabaseInfo } from '@/src/devops/types';
-import { CuratedAPIResponse, ResponseWithBody } from '@/src/api';
-import { toCuratedApiResponse } from '@/src/api/utils';
+import { CuratedAPIResponse, ResponseInfo } from '@/src/api';
 
 /**
  * A representation of what went wrong when interacting with the DevOps API.
@@ -110,12 +109,12 @@ export class DevOpsAPIResponseError extends DevOpsAPIError {
    *
    * @internal
    */
-  constructor(resp: ResponseWithBody, data: Record<string, any> | undefined) {
+  constructor(resp: ResponseInfo, data: Record<string, any> | undefined) {
     const message = (data?.errors as any[])?.find(e => e.message)?.message ?? 'Something went wrong';
     super(message);
     this.errors = extractErrorDescriptors(data);
     this.status = resp.status;
-    this.raw = toCuratedApiResponse(resp);
+    this.raw = resp;
     this.name = 'DevOpsAPIResponseError';
   }
 }

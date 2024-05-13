@@ -345,14 +345,14 @@ export class AstraAdmin {
       path: '/databases',
       data: definition,
     }, {
-      id: (resp) => resp.headers.get('location')!,
+      id: (resp) => resp.headers.location!,
       target: 'ACTIVE',
       legalStates: ['INITIALIZING', 'PENDING'],
       defaultPollInterval: 10000,
       options,
     });
 
-    const db = mkDb(this.#defaultOpts, resp.headers.get('location')!, definition.region, { ...options?.dbOptions, namespace: definition.keyspace });
+    const db = mkDb(this.#defaultOpts, resp.headers.location!, definition.region, { ...options?.dbOptions, namespace: definition.keyspace });
     return db.admin(this.#defaultOpts.adminOptions);
   }
 

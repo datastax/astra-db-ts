@@ -13,10 +13,10 @@
 // limitations under the License.
 
 import { CLIENT_USER_AGENT, RAGSTACK_REQUESTED_WITH } from '@/src/api/constants';
-import { HTTPRequestInfo, InternalFetchCtx, InternalHTTPClientOptions, ResponseWithBody } from '@/src/api/types';
 import { Caller, DataAPIClientEvents } from '@/src/client';
 import TypedEmitter from 'typed-emitter';
-import { TimeoutError } from 'fetch-h2';
+import { FetchCtx, ResponseInfo } from '@/src/api/fetch/types';
+import { AuthHeaderFactory, HTTPClientOptions, HTTPRequestInfo } from '@/src/api/clients/types';
 
 /**
  * @internal
@@ -25,11 +25,11 @@ export abstract class HttpClient {
   readonly baseUrl: string;
   readonly emitter: TypedEmitter<DataAPIClientEvents>;
   readonly monitorCommands: boolean;
-  readonly fetchCtx: InternalFetchCtx;
+  readonly fetchCtx: FetchCtx;
   readonly #applicationToken: string;
   readonly baseHeaders: Record<string, any>;
 
-  protected constructor(options: InternalHTTPClientOptions) {
+  protected constructor(options: HTTPClientOptions, mkAuthHeader: AuthHeaderFactory) {
     this.#applicationToken = options.applicationToken;
     this.baseUrl = options.baseUrl;
     this.emitter = options.emitter;
@@ -40,20 +40,20 @@ export abstract class HttpClient {
       this.baseUrl += '/' + options.baseApiPath;
     }
 
-    this.baseHeaders = options.mkAuthHeader?.(this.#applicationToken) ?? {};
+    this.baseHeaders = mkAuthHeader?.(this.#applicationToken) ?? {};
   }
 
   public get applicationToken(): string {
     return this.#applicationToken;
   }
 
-  protected async _request(info: HTTPRequestInfo): Promise<ResponseWithBody> {
+  protected async _request(info: HTTPRequestInfo): Promise<ResponseInfo> {
     if (this.fetchCtx.closed.ref) {
       throw new Error('Can\'t make requests on a closed client');
     }
 
-    if (info.timeoutManager.msRemaining <= 0) {
-      throw info.timeoutManager.mkTimeoutError(info);
+    if (info.timeoutManager.msRemaining() <= 0) {
+      throw info.timeoutManager.mkTimeoutError(info.url);
     }
 
     const params = info.params ?? {};
@@ -63,23 +63,14 @@ export abstract class HttpClient {
       ? `${info.url}?${new URLSearchParams(params).toString()}`
       : info.url;
 
-    try {
-      const resp = await this.fetchCtx.preferred.fetch(url, {
-        body: info.data as string,
-        method: info.method,
-        timeout: info.timeoutManager.msRemaining,
-        headers: this.baseHeaders,
-      }) as ResponseWithBody;
-
-      resp.body = await resp.text();
-
-      return resp;
-    } catch (e) {
-      if (e instanceof TimeoutError) {
-        throw info.timeoutManager.mkTimeoutError(info);
-      }
-      throw e;
-    }
+    return await this.fetchCtx.ctx.fetch({
+      url: url,
+      body: info.data,
+      method: info.method,
+      timeoutManager: info.timeoutManager,
+      headers: this.baseHeaders,
+      forceHttp1: info.forceHttp1,
+    });
   }
 }
 
