@@ -24,7 +24,7 @@ describe('integration.data-api.collection.misc', () => {
 
   describe('initialization', () => {
     it('should initialize a Collection', () => {
-      const collection = new Collection(db, db['_httpClient'], 'new_collection', DEFAULT_NAMESPACE);
+      const collection = new Collection(db, db['_httpClient'], 'new_collection', undefined);
       assert.ok(collection);
     });
   });

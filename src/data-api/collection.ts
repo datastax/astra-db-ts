@@ -75,6 +75,7 @@ import { FindOneAndDeleteCommand } from '@/src/data-api/types/find/find-one-dele
 import { FindOneAndUpdateCommand } from '@/src/data-api/types/find/find-one-update';
 import { InsertManyCommand } from '@/src/data-api/types/insert/insert-many';
 import { Mutable } from '@/src/data-api/types/utils';
+import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-collection';
 
 /**
  * Represents the interface to a collection in the database.
@@ -118,19 +119,19 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, namespace: string | undefined) {
+  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions | undefined) {
     Object.defineProperty(this, 'collectionName', {
       value: name,
       writable: false,
     });
 
     Object.defineProperty(this, 'namespace', {
-      value: namespace ?? db.namespace,
+      value: opts?.namespace ?? db.namespace,
       writable: false,
     });
 
     Object.defineProperty(this, '_httpClient', {
-      value: httpClient.withCollection(this.namespace, this.collectionName),
+      value: httpClient.forCollection(this.namespace, this.collectionName, opts?.embeddingApiKey),
       enumerable: false,
     });
 

@@ -15,6 +15,7 @@
 import { SomeDoc, WithNamespace } from '@/src/data-api';
 import { CollectionOptions } from '@/src/data-api/types';
 import { WithTimeout } from '@/src/common/types';
+import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-collection';
 
 /** @internal */
 export interface CreateCollectionCommand {
@@ -38,7 +39,7 @@ export interface CreateCollectionCommand {
  *
  * @public
  */
-export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, WithNamespace {
+export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, CollectionSpawnOptions {
   /**
    * If `true` or unset, runs an additional existence check before creating the collection, failing if the collection
    * with the same name already exists, raising a {@link CollectionAlreadyExistsError}.

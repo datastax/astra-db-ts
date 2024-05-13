@@ -56,6 +56,11 @@ export const DEFAULT_TIMEOUT = 30000;
 /**
  * @internal
  */
+export const DEFAULT_EMBEDDING_API_KEY_HEADER = 'x-embedding-api-key';
+
+/**
+ * @internal
+ */
 export const DEFAULT_DATA_API_AUTH_HEADER = 'Token';
 
 /**

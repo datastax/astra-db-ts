@@ -55,7 +55,7 @@ interface DevopsAPIResponse {
  */
 export class DevOpsAPIHttpClient extends HttpClient {
   constructor(opts: HTTPClientOptions) {
-    super(opts, mkAuthHeader);
+    super(opts, mkHeaders);
   }
 
   public async request(req: DevOpsAPIRequestInfo, options: TimeoutOptions | undefined, started: number = 0): Promise<DevopsAPIResponse> {
@@ -187,6 +187,6 @@ export class DevOpsAPIHttpClient extends HttpClient {
   }
 }
 
-function mkAuthHeader(token: string) {
+function mkHeaders(token: string) {
   return { [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` };
 }

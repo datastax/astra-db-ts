@@ -14,7 +14,7 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import {
-  DEFAULT_DATA_API_AUTH_HEADER,
+  DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_EMBEDDING_API_KEY_HEADER,
   DEFAULT_NAMESPACE,
   DEFAULT_TIMEOUT,
   hrTimeMs,
@@ -23,7 +23,7 @@ import {
   HttpMethods,
   RawDataAPIResponse,
 } from '@/src/api';
-import { DataAPIResponseError, DataAPITimeoutError, ObjectId, UUID, WithNamespace } from '@/src/data-api';
+import { DataAPIResponseError, DataAPITimeoutError, ObjectId, UUID } from '@/src/data-api';
 import { TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
 import { CollectionNotFoundError, DataAPIHttpError, mkRespErrorFromResponse } from '@/src/data-api/errors';
@@ -32,16 +32,20 @@ import { CollectionNotFoundError, DataAPIHttpError, mkRespErrorFromResponse } fr
  * @internal
  */
 export interface DataAPIRequestInfo {
-  url: string;
-  collection?: string;
-  namespace?: string;
-  command: Record<string, any>;
-  timeoutManager: TimeoutManager;
+  url: string,
+  collection?: string,
+  namespace?: string,
+  command: Record<string, any>,
+  timeoutManager: TimeoutManager,
 }
 
 interface ExecuteCommandOptions {
-  collection?: string;
-  namespace?: string;
+  collection?: string,
+  namespace?: string,
+}
+
+interface DataAPIHttpClientOptions extends HTTPClientOptions {
+  namespace: string | undefined,
 }
 
 /**
@@ -50,16 +54,16 @@ interface ExecuteCommandOptions {
 export class DataAPIHttpClient extends HttpClient {
   public collection?: string;
   public namespace?: string;
-  readonly #props: HTTPClientOptions & WithNamespace;
+  readonly #props: DataAPIHttpClientOptions;
 
-  constructor(props: HTTPClientOptions & WithNamespace) {
-    super(props, mkAuthHeader);
+  constructor(props: DataAPIHttpClientOptions, embeddingApiKey?: string) {
+    super(props, mkHeaders(embeddingApiKey));
     this.namespace = props.namespace;
     this.#props = props;
   }
 
-  public withCollection(namespace: string, collection: string): DataAPIHttpClient {
-    const clone = new DataAPIHttpClient(this.#props);
+  public forCollection(namespace: string, collection: string, embeddingApiKey: string | undefined): DataAPIHttpClient {
+    const clone = new DataAPIHttpClient(this.#props, embeddingApiKey);
     clone.collection = collection;
     clone.namespace = namespace;
     return clone;
@@ -193,6 +197,9 @@ export function reviver(_: string, value: any): any {
   return value;
 }
 
-function mkAuthHeader(token: string): Record<string, any> {
-  return { [DEFAULT_DATA_API_AUTH_HEADER]: token };
+function mkHeaders(embeddingApiKey: string | undefined) {
+  return (token: string) => ({
+    [DEFAULT_EMBEDDING_API_KEY_HEADER]: embeddingApiKey,
+    [DEFAULT_DATA_API_AUTH_HEADER]: token,
+  });
 }

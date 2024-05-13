@@ -30,6 +30,7 @@ import { extractDbIdFromUrl, validateOption } from '@/src/data-api/utils';
 import { CreateCollectionCommand } from '@/src/data-api/types/collections/create-collection';
 import { ListCollectionsCommand } from '@/src/data-api/types/collections/list-collection';
 import { InternalRootClientOpts } from '@/src/client/types';
+import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-collection';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -244,8 +245,8 @@ export class Db {
    * @see SomeDoc
    * @see VectorDoc
    */
-  public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: WithNamespace): Collection<Schema> {
-    return new Collection<Schema>(this, this._httpClient, name, options?.namespace);
+  public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions): Collection<Schema> {
+    return new Collection<Schema>(this, this._httpClient, name, options);
   }
 
   /**
