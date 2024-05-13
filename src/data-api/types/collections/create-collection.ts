@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc, WithNamespace } from '@/src/data-api';
+import { SomeDoc } from '@/src/data-api';
 import { CollectionOptions } from '@/src/data-api/types';
 import { WithTimeout } from '@/src/common/types';
 import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-collection';
