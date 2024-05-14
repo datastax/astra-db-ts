@@ -175,9 +175,10 @@ export type Caller = [name: string, version?: string];
 // @public
 export class Collection<Schema extends SomeDoc = SomeDoc> {
     // Warning: (ae-forgotten-export) The symbol "DataAPIHttpClient" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "CollectionSpawnOptions" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(db: Db, httpClient: DataAPIHttpClient, name: string, namespace: string | undefined);
+    constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions | undefined);
     bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult<Schema>>;
     readonly collectionName: string;
     countDocuments(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number>;
@@ -287,7 +288,7 @@ export interface CostInfo {
 }
 
 // @public
-export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, WithNamespace {
+export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, CollectionSpawnOptions {
     checkExists?: boolean;
 }
 
@@ -482,7 +483,7 @@ export class Db {
     // @internal
     constructor(endpoint: string, options: InternalRootClientOpts);
     admin(options?: AdminSpawnOptions): AstraDbAdmin;
-    collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: WithNamespace): Collection<Schema>;
+    collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions): Collection<Schema>;
     collections(options?: WithNamespace & WithTimeout): Promise<Collection[]>;
     command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse>;
     createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>>;
@@ -1170,7 +1171,11 @@ export interface VectorDoc {
 
 // @alpha
 export interface VectorizeServiceOptions {
+    authorization?: {
+        type: string[];
+    } & Record<string, unknown>;
     modelName: string;
+    parameters?: Record<string, unknown>;
     provider: string;
 }
 
