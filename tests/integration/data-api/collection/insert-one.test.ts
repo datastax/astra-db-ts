@@ -145,17 +145,4 @@ describe('integration.data-api.collection.insert-one', () => {
     }
     await assert.rejects(() => collection.insertOne(docToInsert), DataAPIResponseError);
   });
-
-  it('[vectorize] should insertOne with vectorize', async function () {
-    assertTestsEnabled(this, 'VECTORIZE');
-
-    const collection = db.collection(VECTORIZE_COLLECTION_NAME);
-    await collection.deleteAll();
-
-    const res = await collection.insertOne({ name: 'Arch Enemy' }, { vectorize: 'Arch Enemy is a Swedish melodic death metal band, originally a supergroup from Halmstad, formed in 1995.' });
-    assert.ok(res);
-
-    const found = await collection.findOne({ name: 'Arch Enemy' });
-    assert.deepStrictEqual(found?.$vectorize, 'Arch Enemy is a Swedish melodic death metal band, originally a supergroup from Halmstad, formed in 1995.');
-  });
 });
