@@ -9,16 +9,15 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, DataAPIResponseError, Db, ObjectId, UUID } from '@/src/data-api';
-import { assertTestsEnabled, initTestObjects, VECTORIZE_COLLECTION_NAME } from '@/tests/fixtures';
+import { Collection, DataAPIResponseError, ObjectId, UUID } from '@/src/data-api';
+import { initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
 
 describe('integration.data-api.collection.insert-one', () => {
   let collection: Collection;
-  let db: Db;
 
   before(async function () {
-    [, db, collection] = await initTestObjects(this);
+    [, , collection] = await initTestObjects(this);
   });
 
   beforeEach(async () => {

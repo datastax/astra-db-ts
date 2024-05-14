@@ -9,21 +9,15 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, DataAPIError, DataAPITimeoutError, Db, InsertManyError, ObjectId, UUID } from '@/src/data-api';
-import {
-  assertTestsEnabled,
-  initCollectionWithFailingClient,
-  initTestObjects,
-  VECTORIZE_COLLECTION_NAME,
-} from '@/tests/fixtures';
+import { Collection, DataAPIError, DataAPITimeoutError, InsertManyError, ObjectId, UUID } from '@/src/data-api';
+import { initCollectionWithFailingClient, initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
 
 describe('integration.data-api.collection.insert-many', () => {
   let collection: Collection;
-  let db: Db;
 
   before(async function () {
-    [, db, collection] = await initTestObjects(this);
+    [, , collection] = await initTestObjects(this);
   });
 
   beforeEach(async () => {
