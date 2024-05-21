@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { WithNamespace } from '@/src/data-api';
 import { WithTimeout } from '@/src/common';
 
 /**
@@ -25,9 +24,13 @@ import { WithTimeout } from '@/src/common';
  *
  * @public
  */
-export interface RunCommandOptions extends WithNamespace, WithTimeout {
+export interface RunCommandOptions extends WithTimeout {
   /**
    * The collection to run the command on. If not provided, the command is run on the database.
    */
-  collection?: string
+  collection?: string,
+  /**
+   * The namespace (aka keyspace) to use for the db operation.
+   */
+  namespace?: string | null,
 }

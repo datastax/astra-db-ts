@@ -67,7 +67,7 @@ export interface VectorizeServiceOptions {
    *
    * @alpha
    */
-  authorization?: { type: string[] } & Record<string, unknown>,
+  authentication?: Record<string, string | undefined>,
   /**
    * NOTE: This feature is under current development.
    *

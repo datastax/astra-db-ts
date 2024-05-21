@@ -27,6 +27,7 @@ import { DataAPIResponseError, DataAPITimeoutError, ObjectId, UUID } from '@/src
 import { TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
 import { CollectionNotFoundError, DataAPIHttpError, mkRespErrorFromResponse } from '@/src/data-api/errors';
+import * as util from 'util';
 
 /**
  * @internal
@@ -34,14 +35,14 @@ import { CollectionNotFoundError, DataAPIHttpError, mkRespErrorFromResponse } fr
 export interface DataAPIRequestInfo {
   url: string,
   collection?: string,
-  namespace?: string,
+  namespace?: string | null,
   command: Record<string, any>,
   timeoutManager: TimeoutManager,
 }
 
 interface ExecuteCommandOptions {
+  namespace?: string | null,
   collection?: string,
-  namespace?: string,
 }
 
 interface DataAPIHttpClientOptions extends HTTPClientOptions {
@@ -90,9 +91,12 @@ export class DataAPIHttpClient extends HttpClient {
 
     try {
       info.collection ||= this.collection;
-      info.namespace ||= this.namespace || DEFAULT_NAMESPACE;
 
-      const keyspacePath = `/${info.namespace}`;
+      if (info.namespace !== null) {
+        info.namespace ||= this.namespace || DEFAULT_NAMESPACE;
+      }
+
+      const keyspacePath = info.namespace ? `/${info.namespace}` : '';
       const collectionPath = info.collection ? `/${info.collection}` : '';
       info.url += keyspacePath + collectionPath;
 
@@ -121,7 +125,7 @@ export class DataAPIHttpClient extends HttpClient {
 
       if (data.errors && data?.errors?.length > 0 && data?.errors[0]?.errorCode === 'COLLECTION_NOT_EXIST') {
         const name = data?.errors[0]?.message.split(': ')[1];
-        throw new CollectionNotFoundError(info.namespace, name);
+        throw new CollectionNotFoundError(info.namespace!, name);
       }
 
       if (data?.errors && data?.errors.length > 0) {
@@ -198,8 +202,14 @@ export function reviver(_: string, value: any): any {
 }
 
 function mkHeaders(embeddingApiKey: string | undefined) {
-  return (token: string) => ({
-    [DEFAULT_EMBEDDING_API_KEY_HEADER]: embeddingApiKey,
-    [DEFAULT_DATA_API_AUTH_HEADER]: token,
-  });
+  if (embeddingApiKey) {
+    return (token: string) => ({
+      [DEFAULT_EMBEDDING_API_KEY_HEADER]: embeddingApiKey,
+      [DEFAULT_DATA_API_AUTH_HEADER]: token,
+    });
+  } else {
+    return (token: string) => ({
+      [DEFAULT_DATA_API_AUTH_HEADER]: token,
+    });
+  }
 }

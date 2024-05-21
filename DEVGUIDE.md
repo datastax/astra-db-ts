@@ -72,6 +72,33 @@ If a new tag really, really, needs to be added, it can be done by adding a new e
 format, and updating the `assertTestsEnabled` function. However, this should be done sparingly, as it can make the
 test suite harder to manage.
 
+### Running vectorize tests
+To run vectorize tests, you need to have a vectorize-enabled kube running, with the correct tags enabled.
+You must create a file, `tests/vectorize_tests.json`, with the following format:
+
+```ts
+interface Config {
+  [providerName: string]: {
+    apiKey?: string,
+    providerKey?: string,
+    parameters?: {
+      [modelName: string]: Record<string, string>
+    },
+  }
+}
+```
+
+where:
+- `providerName` is the name of the provider (e.g. `nvidia`, `openai`, etc.) as found in `findEmbeddingProviders`
+- `apiKey` is the API key for the provider (which will be passed in through the header) 
+  - optional if no header auth test wanted
+- `providerKey` is the provider key for the provider (which will be passed in @ collection creation) 
+  - optional if no KMS auth test wanted
+- `parameters` is a mapping of model names to their corresponding parameters
+  - optional if not required. `azureOpenAI`, for example, will need this.
+
+This file is gitignored by default and will not be checked into VCS.
+
 ### Coverage testing
 
 To run coverage testing, run the following command:

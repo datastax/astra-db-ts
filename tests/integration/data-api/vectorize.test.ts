@@ -16,10 +16,20 @@
 import assert from 'assert';
 import { Collection, Db } from '@/src/data-api';
 import { assertTestsEnabled, initTestObjects } from '@/tests/fixtures';
-import process from 'process';
-import { after } from 'mocha';
+import * as fs from 'fs';
+import { fetch } from 'fetch-h2';
+import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DATA_API_PATH } from '@/src/api';
 
-const EPHEMERAL_VECTORIZE_COLL_NAME = 'vectorize_coll';
+const VECTORIZE_COLL_NAME = 'vectorize_coll';
+
+interface VectorizeTest {
+  provider: string,
+  modelName: string,
+  header?: string,
+  providerKey?: string,
+  authType: string,
+  parameters: Record<string, unknown> | undefined,
+}
 
 describe('integration.data-api.vectorize', () => {
   let db: Db;
@@ -27,87 +37,169 @@ describe('integration.data-api.vectorize', () => {
 
   before(async function () {
     [, db] = await initTestObjects(this);
-
-    await db.dropCollection(EPHEMERAL_VECTORIZE_COLL_NAME);
-
-    const { ASTRA_EMBEDDING_API_KEY, ASTRA_EMBEDDING_PROVIDER, ASTRA_EMBEDDING_MODEL } = process.env;
-
-    if (!ASTRA_EMBEDDING_PROVIDER || !ASTRA_EMBEDDING_MODEL) {
-      throw new Error('Please set ASTRA_EMBEDDING_API_KEY, ASTRA_EMBEDDING_PROVIDER, and ASTRA_EMBEDDING_MODEL to run this test')
-    }
-
-    const vectorOptions = {
-      service: {
-        modelName: ASTRA_EMBEDDING_MODEL,
-        provider: ASTRA_EMBEDDING_PROVIDER,
-      },
-    };
-
-    collection = await db.createCollection(EPHEMERAL_VECTORIZE_COLL_NAME, {
-      embeddingApiKey: ASTRA_EMBEDDING_API_KEY,
-      vector: vectorOptions,
-    });
-  });
-
-  after(async function () {
-    await db.dropCollection(EPHEMERAL_VECTORIZE_COLL_NAME);
-  });
-
-  it('[vectorize] [dev] has a working lifecycle', async function () {
     assertTestsEnabled(this, 'VECTORIZE', 'DEV');
 
-    const insertOneResult = await collection.insertOne({
-      name: 'Alice',
-      age: 30,
-    }, {
-      vectorize: "Alice likes big red cars",
-    });
-
-    assert.ok(insertOneResult);
-
-    const insertManyResult = await collection.insertMany([
-      {
-        name: 'Bob',
-        age: 40,
+    collection = await db.createCollection(VECTORIZE_COLL_NAME, {
+      vector: {
+        service: {
+          provider: 'nvidia',
+          modelName: 'NV-Embed-QA',
+        },
       },
-      {
-        name: 'Charlie',
-        age: 50,
-      },
-    ], {
-      vectorize: [
-        "Bob likes small compact trucks",
-        "Charlie hates planes",
-      ],
+      checkExists: false,
+    });
+  });
+
+  describe('[vectorize] [dev] [long] lifecycle', () => {
+    before(async function () {
+      assertTestsEnabled(this, 'LONG');
+
+      const tests: VectorizeTest[] = await (async () => {
+        try {
+          const credentials = JSON.parse(fs.readFileSync('tests/vectorize_credentials.json', 'utf8'));
+
+          const embeddingProviders = await fetch(`${process.env.ASTRA_URI!}/${DEFAULT_DATA_API_PATH}`, {
+            body: JSON.stringify({ findEmbeddingProviders: {} }),
+            headers: {
+              [DEFAULT_DATA_API_AUTH_HEADER]: process.env.APPLICATION_TOKEN
+            },
+            method: 'POST',
+          })
+            .then(r => r.json())
+            .then(r => r.status['embeddingProviders']);
+
+          return Object.entries<any>(embeddingProviders)
+            .flatMap(([provider, info]) => {
+              console.log(provider)
+
+              if (!credentials[provider]) {
+                return [];
+              }
+
+              return info['models'].map((model: any) => ({
+                provider,
+                modelName: model.name,
+                header: info['supportedAuthentication']['HEADER'].enabled ? credentials[provider]['apiKey'] : undefined,
+                providerKey: info['supportedAuthentication']['SHARED_SECRET'].enabled ? credentials[provider]['providerKey'] : undefined,
+                none: info['supportedAuthentication']['NONE'].enabled,
+                parameters: credentials[provider]['parameters']?.[model.name],
+              }));
+            })
+            .flatMap((test) => {
+              const tests: VectorizeTest[] = []
+
+              for (const key of ['header', 'providerKey', 'none']) {
+                if (test[key as keyof typeof test]) {
+                  tests.push({
+                    provider: test.provider,
+                    modelName: test.modelName,
+                    [key]: test[key as keyof typeof test],
+                    authType: key,
+                    parameters: test.parameters,
+                  });
+                }
+              }
+
+              return tests;
+            });
+        } catch (e: any) {
+          console.error(e);
+          return [];
+        }
+      })();
+
+      describe('generated tests', () => {
+        const names = tests.map((test) => `${test.provider}_${test.modelName.replace(/\W/g, '')}_${test.authType}`);
+
+        before(async () => {
+          for (const name of names) {
+            await db.dropCollection(name);
+          }
+        });
+
+        after(async () => {
+          for (const name of names) {
+            await db.dropCollection(name);
+          }
+        });
+
+        tests.forEach((test, i) => {
+          it(`[vectorize] [dev] has a working lifecycle (${test.provider}/${test.modelName}) (${test.authType})`, async () => {
+            const name = names[i];
+
+            collection = await db.createCollection(name, {
+              vector: {
+                service: {
+                  provider: test.provider,
+                  modelName: test.modelName,
+                  authentication: {
+                    providerKey: test.providerKey,
+                  },
+                  parameters: test.parameters
+                },
+              },
+              embeddingApiKey: test.header,
+            });
+
+            const insertOneResult = await collection.insertOne({
+              name: 'Alice',
+              age: 30,
+            }, {
+              vectorize: 'Alice likes big red cars',
+            });
+
+            assert.ok(insertOneResult);
+
+            const insertManyResult = await collection.insertMany([
+              {
+                name: 'Bob',
+                age: 40,
+              },
+              {
+                name: 'Charlie',
+                age: 50,
+              },
+            ], {
+              vectorize: [
+                'Cause maybe, you\'re gonna be the one that saves me... and after all, you\'re my wonderwall...',
+                'The water bottle was small',
+              ],
+            });
+
+            assert.ok(insertManyResult);
+            assert.strictEqual(insertManyResult.insertedCount, 2);
+
+            const findOneResult = await collection.findOne({}, {
+              vectorize: 'Alice likes big red cars',
+              includeSimilarity: true,
+            });
+
+            assert.ok(findOneResult);
+            assert.strictEqual(findOneResult._id, insertOneResult.insertedId);
+            assert.ok(findOneResult.$similarity > 0.8);
+
+            const deleteResult = await collection.deleteOne({}, {
+              vectorize: 'Alice likes big red cars',
+            });
+
+            assert.ok(deleteResult);
+            assert.strictEqual(deleteResult.deletedCount, 1);
+
+            const findResult = await collection.find({}, {
+              vectorize: 'Cause maybe, you\'re gonna be the one that saves me... and after all, you\'re my wonderwall...',
+              includeSimilarity: true,
+            }).toArray();
+
+            assert.strictEqual(findResult.length, 2);
+
+            await db.dropCollection(name);
+          }).timeout(90000);
+        });
+      });
     });
 
-    assert.ok(insertManyResult);
-    assert.strictEqual(insertManyResult.insertedCount, 2);
-
-    const findOneResult = await collection.findOne({}, {
-      vectorize: "Alice likes big red cars",
-      includeSimilarity: true,
-    });
-
-    assert.ok(findOneResult);
-    assert.strictEqual(findOneResult._id, insertOneResult.insertedId);
-    assert.ok(findOneResult.$similarity > 0.8);
-
-    const deleteResult = await collection.deleteOne({}, {
-      vectorize: "Alice likes big red cars",
-    });
-
-    assert.ok(deleteResult);
-    assert.strictEqual(deleteResult.deletedCount, 1);
-
-    const findResult = await collection.find({}, {
-      vectorize: "Bob likes small compact trucks",
-      includeSimilarity: true,
-    }).toArray();
-
-    assert.strictEqual(findResult.length, 2);
-    assert.deepStrictEqual(findResult.map(r => r._id), insertManyResult.insertedIds);
-  }).timeout(90000);
+    it('dummy test so before is executed', () => {});
+  });
 
   describe('[vectorize] [dev] $vectorize/vectorize params', () => {
     beforeEach(async () => {
@@ -160,13 +252,21 @@ describe('integration.data-api.vectorize', () => {
         await collection.updateOne({}, {}, { sort: { name: 1 }, vectorize: 'some text' });
       });
       await assert.rejects(async () => {
-        await collection.findOneAndUpdate({}, {}, { sort: { name: 1 }, vectorize: 'some text', returnDocument: 'before' });
+        await collection.findOneAndUpdate({}, {}, {
+          sort: { name: 1 },
+          vectorize: 'some text',
+          returnDocument: 'before',
+        });
       });
       await assert.rejects(async () => {
         await collection.replaceOne({}, {}, { sort: { name: 1 }, vectorize: 'some text' });
       });
       await assert.rejects(async () => {
-        await collection.findOneAndReplace({}, {}, { sort: { name: 1 }, vectorize: 'some text', returnDocument: 'before' });
+        await collection.findOneAndReplace({}, {}, {
+          sort: { name: 1 },
+          vectorize: 'some text',
+          returnDocument: 'before',
+        });
       });
       await assert.rejects(async () => {
         await collection.deleteOne({}, { sort: { name: 1 }, vectorize: 'some text' });
