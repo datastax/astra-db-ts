@@ -14,7 +14,8 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import {
-  DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_EMBEDDING_API_KEY_HEADER,
+  DEFAULT_DATA_API_AUTH_HEADER,
+  DEFAULT_EMBEDDING_API_KEY_HEADER,
   DEFAULT_NAMESPACE,
   DEFAULT_TIMEOUT,
   hrTimeMs,
@@ -27,7 +28,6 @@ import { DataAPIResponseError, DataAPITimeoutError, ObjectId, UUID } from '@/src
 import { TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
 import { CollectionNotFoundError, DataAPIHttpError, mkRespErrorFromResponse } from '@/src/data-api/errors';
-import * as util from 'util';
 
 /**
  * @internal
