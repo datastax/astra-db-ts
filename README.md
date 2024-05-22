@@ -4,6 +4,15 @@
 
 *This README targets v1.0.0+, which introduces a whole new API. Click [here](https://github.com/datastax/astra-db-ts/tree/90ebeac6fec53fd951126c2bcc010c87f7f678f8?tab=readme-ov-file#datastaxastra-db-ts) for the pre-existing client readme.*
 
+## Table of contents
+- [Quickstart](#quickstart)
+- [High-level architecture](#high-level-architecture)
+- [Getting the most out of the typing](#getting-the-most-out-of-the-typing)
+- [Working with Dates](#working-with-dates)
+- [Working with ObjectIds and UUIDs](#working-with-objectids-and-uuids)
+- [Monitoring/logging](#monitoringlogging)
+- [Non-standard runtime support](#non-standard-runtime-support)
+
 ## Quickstart
 
 Use your preferred package manager to install `@datastax/astra-db-ts`. Note that this is not supported in browsers.
@@ -96,9 +105,7 @@ Next steps:
 - [Data API reference](https://docs.datastax.com/en/astra/astra-db-vector/api-reference/data-api-commands.html)
 - Package on [npm](https://www.npmjs.com/package/@datastax/astra-db-ts)
 
-## astra-db-ts's API
-
-### Abstraction diagram
+## High-level architecture
 
 `astra-db-ts`'s abstractions for working at the data and admin layers are structured as depicted by this diagram:
 
@@ -125,7 +132,7 @@ const admin = client.admin();
 })();
 ```
 
-### Getting the most out of the typing
+## Getting the most out of the typing
 
 `astra-db-ts` is a typescript-first library, performing minimal runtime type-checking. As such, it provides
 a rich set of types to help you write type-safe code.
@@ -182,7 +189,7 @@ interface Person {
 })();
 ```
 
-### Working with Dates
+## Working with Dates
 
 Native JS `Date` objects can be used anywhere in documents to represent dates and times.
 
@@ -222,7 +229,7 @@ const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
 })();
 ```
 
-### Working with ObjectIds and UUIDs
+## Working with ObjectIds and UUIDs
 
 `astra-db-ts` exports an `ObjectId` and `UUID` class for working with these types in the database.
 
@@ -271,7 +278,7 @@ const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
 })();
 ```
 
-### Monitoring/logging
+## Monitoring/logging
 
 [Like Mongo](https://www.mongodb.com/docs/drivers/node/current/fundamentals/logging/), `astra-db-ts` doesn't provide a
 traditional logging system—instead, it uses a "monitoring" system based on event emitters, which allow you to listen to
@@ -323,3 +330,29 @@ client.on('commandFailed', (event) => {
   await collection.drop();
 })();
 ```
+
+## Non-standard runtime support
+
+`astra-db-ts` is designed foremost to work in Node.js environments, and it's not supported in browsers. It will work
+in edge runtimes and other non-node environments as well, though it'll use the native `fetch` API for HTTP requests,
+as opposed to `fetch-h2` which provides extended HTTP/2 and HTTP/1.1 support for performance.
+
+On Node (exactly node; not Bun or Deno with node compat on) environments, it'll use `fetch-h2` by default; on others,
+it'll use `fetch`. You can explicitly set the fetch implementation when instantiating the client:
+
+```typescript
+import { DataAPIClient } from '@datastax/astra-db-ts';
+
+const client = new DataAPIClient('*TOKEN*', {
+  httpOptions: {
+    client: 'fetch', // or 'default' for fetch-h2
+  },
+});
+```
+
+Note that setting the `httpOptions` implicitly sets the fetch implementation to default (fetch-h2),
+so you'll need to set it explicitly if you want to use the native fetch implementation.
+
+On some environments, such as Cloudflare Workers, you may additionally need to use the events
+polyfill for the client to work properly (i.e. `npm i events`). Cloudflare's node-compat won't
+work here.
