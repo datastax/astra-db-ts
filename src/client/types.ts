@@ -110,6 +110,8 @@ export type DataAPIHttpOptions =
 /**
  * The options available for the {@link DataAPIClient} related to making HTTP requests using the native fetch API.
  *
+ * This will be the default client when running on non-node runtimes.
+ *
  * @public
  */
 export interface FetchHttpClientOptions {
@@ -130,6 +132,9 @@ export interface FetchHttpClientOptions {
 
 /**
  * The options available for the {@link DataAPIClient} related to making HTTP requests using the default http client.
+ *
+ * This will be the default client when running on node. May cause issues on non-node runtimes. Prefer to use the
+ * {@link FetchHttpClientOptions} instead if that is the case.
  *
  * @public
  */
