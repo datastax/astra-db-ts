@@ -16,7 +16,7 @@ import { CLIENT_USER_AGENT, RAGSTACK_REQUESTED_WITH } from '@/src/api/constants'
 import { Caller, DataAPIClientEvents } from '@/src/client';
 import TypedEmitter from 'typed-emitter';
 import { FetchCtx, ResponseInfo } from '@/src/api/fetch/types';
-import { AuthHeaderFactory, HTTPClientOptions, HTTPRequestInfo } from '@/src/api/clients/types';
+import { MkBaseHeaders, HTTPClientOptions, HTTPRequestInfo } from '@/src/api/clients/types';
 
 /**
  * @internal
@@ -29,7 +29,7 @@ export abstract class HttpClient {
   readonly #applicationToken: string;
   readonly baseHeaders: Record<string, any>;
 
-  protected constructor(options: HTTPClientOptions, mkAuthHeader: AuthHeaderFactory) {
+  protected constructor(options: HTTPClientOptions, mkAuthHeader: MkBaseHeaders) {
     this.#applicationToken = options.applicationToken;
     this.baseUrl = options.baseUrl;
     this.emitter = options.emitter;

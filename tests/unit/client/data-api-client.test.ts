@@ -73,9 +73,21 @@ describe('unit.client.data-api-client', () => {
       // @ts-expect-error - testing invalid input
       assert.throws(() => new DataAPIClient('dummy-token', { caller: [[]] }));
       // @ts-expect-error - testing invalid input
+      assert.throws(() => new DataAPIClient('dummy-token', { caller: [['a', 'b'], 3] }));
+      // @ts-expect-error - testing invalid input
       assert.throws(() => new DataAPIClient('dummy-token', { caller: [{}] }));
       // @ts-expect-error - testing invalid input
       assert.throws(() => new DataAPIClient('dummy-token', { caller: { 0: ['name', 'version'] } }));
+    });
+
+    it('should only accept valid http client types', () => {
+      assert.doesNotThrow(() => new DataAPIClient('dummy-token', { httpOptions: {} }));
+      assert.doesNotThrow(() => new DataAPIClient('dummy-token', { httpOptions: { client: 'default' } }));
+      assert.doesNotThrow(() => new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch' } }));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => new DataAPIClient('dummy-token', { httpOptions: { client: 'archspire' } }));
+      // @ts-expect-error - testing invalid input
+      assert.throws(() => new DataAPIClient('dummy-token', { httpOptions: { client: 12312312312 } }));
     });
 
     describe('using fetch-h2', () => {

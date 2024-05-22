@@ -18,7 +18,7 @@ export interface HTTPClientOptions {
 /**
  * @internal
  */
-export type AuthHeaderFactory = (token: string) => Record<string, any>;
+export type MkBaseHeaders = (token: string) => Record<string, any>;
 
 /**
  * @internal

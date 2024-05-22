@@ -62,6 +62,18 @@ export interface VectorizeServiceOptions {
    * @alpha
    */
   modelName: string,
+  /**
+   * NOTE: This feature is under current development.
+   *
+   * @alpha
+   */
+  authentication?: Record<string, string | undefined>,
+  /**
+   * NOTE: This feature is under current development.
+   *
+   * @alpha
+   */
+  parameters?: Record<string, unknown>,
 }
 
 /**

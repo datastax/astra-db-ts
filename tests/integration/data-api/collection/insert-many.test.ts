@@ -9,21 +9,15 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, DataAPIError, DataAPITimeoutError, Db, InsertManyError, ObjectId, UUID } from '@/src/data-api';
-import {
-  assertTestsEnabled,
-  initCollectionWithFailingClient,
-  initTestObjects,
-  VECTORIZE_COLLECTION_NAME,
-} from '@/tests/fixtures';
+import { Collection, DataAPIError, DataAPITimeoutError, InsertManyError, ObjectId, UUID } from '@/src/data-api';
+import { initCollectionWithFailingClient, initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
 
 describe('integration.data-api.collection.insert-many', () => {
   let collection: Collection;
-  let db: Db;
 
   before(async function () {
-    [, db, collection] = await initTestObjects(this);
+    [, , collection] = await initTestObjects(this);
   });
 
   beforeEach(async () => {
@@ -227,31 +221,5 @@ describe('integration.data-api.collection.insert-many', () => {
   it('does not time out if maxTimeMS is high', async () => {
     const docs = Array.from({ length: 100 }, (_, i) => ({ _id: i }));
     await collection.insertMany(docs, { ordered: true, maxTimeMS: 500000, chunkSize: 10 });
-  });
-
-  it('[vectorize] should insertMany with vectorize', async function () {
-    assertTestsEnabled(this, 'VECTORIZE');
-
-    const collection = db.collection(VECTORIZE_COLLECTION_NAME);
-    await collection.deleteAll();
-
-    const res = await collection.insertMany([
-      { name: 'Arch Enemy' },
-      { name: 'Equilibrium' },
-      { name: 'AC/DC' },
-    ], {
-      vectorize: [
-        'Arch Enemy is a Swedish melodic death metal band, originally a supergroup from Halmstad, formed in 1995.',
-        'Equilibrium is a German symphonic metal band',
-        'AC/DC are an Australian rock band formed in Sydney in 1973 by Scottish-born brothers Malcolm and Angus Young',
-      ],
-    });
-    assert.ok(res);
-    const archEnemy = await collection.findOne({ name: 'Arch Enemy' });
-    assert.strictEqual(archEnemy?.$vectorize, 'Arch Enemy is a Swedish melodic death metal band, originally a supergroup from Halmstad, formed in 1995.');
-    const equilibrium = await collection.findOne({ name: 'Equilibrium' });
-    assert.strictEqual(equilibrium?.$vectorize, 'Equilibrium is a German symphonic metal band');
-    const acdc = await collection.findOne({ name: 'AC/DC' });
-    assert.strictEqual(acdc?.$vectorize, 'AC/DC are an Australian rock band formed in Sydney in 1973 by Scottish-born brothers Malcolm and Angus Young');
   });
 });

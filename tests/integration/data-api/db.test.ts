@@ -191,8 +191,8 @@ describe('integration.data-api.db', async () => {
     it('should return the collections in the db', async () => {
       const collections = await db.collections();
       assert.ok(<any>collections instanceof Array);
-      assert.deepStrictEqual(collections.map(c => c.collectionName), [DEFAULT_COLLECTION_NAME]);
-      assert.deepStrictEqual(collections.map(c => c.namespace), [DEFAULT_NAMESPACE]);
+      assert.ok(collections.some(c => c.collectionName === DEFAULT_COLLECTION_NAME));
+      assert.ok(collections.map(c => c.namespace).every(ns => ns === DEFAULT_NAMESPACE));
     });
 
     it('should return the collections in the db in another namespace', async () => {

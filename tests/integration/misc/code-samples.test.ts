@@ -270,7 +270,6 @@ describe('integration.misc.code-samples', () => {
         { 'Marco': 'Polo' },
         { $set: { title: 'Mr.' } },
       );
-      // console.log(updated1?.modifiedCount);
       assert.strictEqual(updated1?.matchedCount, 1);
       assert.strictEqual(updated1?.modifiedCount, 1);
       assert.strictEqual(updated1?.upsertedCount, 0);
@@ -280,7 +279,6 @@ describe('integration.misc.code-samples', () => {
         { name: 'Johnny' },
         { $set: { rank: 0 } },
       );
-      // console.log(updated2.matchedCount, updated2?.upsertedCount);
       assert.strictEqual(updated2?.matchedCount, 0);
       assert.strictEqual(updated2?.modifiedCount, 0);
       assert.strictEqual(updated2?.upsertedCount, 0);
@@ -291,23 +289,9 @@ describe('integration.misc.code-samples', () => {
         { $set: { rank: 0 } },
         { upsert: true },
       );
-      // console.log(updated3.matchedCount, updated3?.upsertedCount);
       assert.strictEqual(updated3?.matchedCount, 0);
       assert.strictEqual(updated3?.modifiedCount, 0);
       assert.strictEqual(updated3?.upsertedCount, 1);
     });
   });
-
-  // describe('[vectorize] vectorize', () => {
-  //   let db: Db;
-  //
-  //   before(async function () {
-  //     assertTestsEnabled(this, 'VECTORIZE');
-  //     [, db] = await initTestObjects(this);
-  //   });
-  //
-  //   it('works for collection creation', async () => {
-  //
-  //   });
-  // });
 });
