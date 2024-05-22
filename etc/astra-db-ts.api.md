@@ -963,8 +963,9 @@ export interface ReplaceOneOptions extends WithTimeout {
 export type ReplaceOneResult<Schema extends SomeDoc> = InternalUpdateResult<Schema, 0 | 1>;
 
 // @public
-export interface RunCommandOptions extends WithNamespace, WithTimeout {
+export interface RunCommandOptions extends WithTimeout {
     collection?: string;
+    namespace?: string | null;
 }
 
 // @public
@@ -1171,9 +1172,7 @@ export interface VectorDoc {
 
 // @alpha
 export interface VectorizeServiceOptions {
-    authorization?: {
-        type: string[];
-    } & Record<string, unknown>;
+    authentication?: Record<string, string | undefined>;
     modelName: string;
     parameters?: Record<string, unknown>;
     provider: string;
