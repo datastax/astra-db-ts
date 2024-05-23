@@ -131,7 +131,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     });
 
     Object.defineProperty(this, '_httpClient', {
-      value: httpClient.forCollection(this.namespace, this.collectionName, opts?.embeddingApiKey),
+      value: httpClient.forCollection(this.namespace, this.collectionName, opts),
       enumerable: false,
     });
 

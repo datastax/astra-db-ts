@@ -28,6 +28,7 @@ import { DataAPIResponseError, DataAPITimeoutError, ObjectId, UUID } from '@/src
 import { TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
 import { CollectionNotFoundError, DataAPIHttpError, mkRespErrorFromResponse } from '@/src/data-api/errors';
+import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-collection';
 
 /**
  * @internal
@@ -55,18 +56,21 @@ interface DataAPIHttpClientOptions extends HTTPClientOptions {
 export class DataAPIHttpClient extends HttpClient {
   public collection?: string;
   public namespace?: string;
+  public maxTimeMS: number;
   readonly #props: DataAPIHttpClientOptions;
 
   constructor(props: DataAPIHttpClientOptions, embeddingApiKey?: string) {
     super(props, mkHeaders(embeddingApiKey));
     this.namespace = props.namespace;
     this.#props = props;
+    this.maxTimeMS = this.fetchCtx.maxTimeMS ?? DEFAULT_TIMEOUT;
   }
 
-  public forCollection(namespace: string, collection: string, embeddingApiKey: string | undefined): DataAPIHttpClient {
-    const clone = new DataAPIHttpClient(this.#props, embeddingApiKey);
+  public forCollection(namespace: string, collection: string, opts: CollectionSpawnOptions | undefined): DataAPIHttpClient {
+    const clone = new DataAPIHttpClient(this.#props, opts?.embeddingApiKey);
     clone.collection = collection;
     clone.namespace = namespace;
+    clone.maxTimeMS = opts?.defaultMaxTimeMS ?? this.maxTimeMS;
     return clone;
   }
 
@@ -133,8 +137,8 @@ export class DataAPIHttpClient extends HttpClient {
       }
 
       const respData = {
-        status: data?.status,
         data: data?.data,
+        status: data?.status,
         errors: data?.errors,
       }
 
@@ -152,7 +156,7 @@ export class DataAPIHttpClient extends HttpClient {
   }
 
   private _mkTimeoutManager(timeout: number | undefined) {
-    timeout ??= this.fetchCtx.maxTimeMS ?? DEFAULT_TIMEOUT;
+    timeout ??= this.maxTimeMS;
     return new TimeoutManager(timeout, () => new DataAPITimeoutError(timeout));
   }
 }
