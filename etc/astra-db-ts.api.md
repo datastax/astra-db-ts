@@ -175,7 +175,6 @@ export type Caller = [name: string, version?: string];
 // @public
 export class Collection<Schema extends SomeDoc = SomeDoc> {
     // Warning: (ae-forgotten-export) The symbol "DataAPIHttpClient" needs to be exported by the entry point index.d.ts
-    // Warning: (ae-forgotten-export) The symbol "CollectionSpawnOptions" needs to be exported by the entry point index.d.ts
     //
     // @internal
     constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions | undefined);
@@ -230,6 +229,12 @@ export interface CollectionOptions<Schema extends SomeDoc> {
     defaultId?: DefaultIdOptions;
     indexing?: IndexingOptions<Schema>;
     vector?: VectorOptions;
+}
+
+// @public
+export interface CollectionSpawnOptions extends WithNamespace {
+    defaultMaxTimeMS?: number;
+    embeddingApiKey?: string;
 }
 
 // @public
@@ -1168,6 +1173,11 @@ export class UUID {
 // @public
 export interface VectorDoc {
     $vector?: number[];
+}
+
+// @public
+export interface VectorizeDoc {
+    $vectorize: string;
 }
 
 // @alpha

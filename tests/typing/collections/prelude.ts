@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { Collection, VectorDoc } from '@/src/data-api';
-import { SomeDoc } from '@/src/data-api/document';
+import { SomeDoc } from '@/src/data-api/types/document';
 import { Db } from '@/src/data-api/db';
 
 export interface TestSchema extends VectorDoc {

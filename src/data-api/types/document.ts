@@ -24,15 +24,17 @@
 export type SomeDoc = Record<string, any>;
 
 /**
- * Base type for a document that wishes to leverage vector capabilities.
+ * Base type for a document that wishes to leverage raw vector capabilities.
  * 
  * @example
  * ```
  * export interface Idea extends VectorDoc {
+ *   category: string,
  *   idea: string,
  * }
  * 
  * db.collection<Idea>('ideas').insertOne({
+ *   category: 'doors',
  *   idea: 'Upside down doors',
  *   $vector: [.23, .05, .95, .83, .42],
  * });
@@ -45,4 +47,28 @@ export interface VectorDoc {
    * A raw vector
    */
   $vector?: number[],
+}
+
+/**
+ * Base type for a document that wishes to leverage automatic vectorization (assuming the collection is vectorize-enabled).
+ *
+ * @example
+ * ```
+ * export interface Idea extends VectorizeDoc {
+ *   category: string,
+ * }
+ *
+ * db.collection<Idea>('ideas').insertOne({
+ *   category: 'doors',
+ *   $vectorize: 'Upside down doors',
+ * });
+ * ```
+ *
+ * @public
+ */
+export interface VectorizeDoc {
+  /**
+   * A string field to be automatically vectorized
+   */
+  $vectorize: string,
 }

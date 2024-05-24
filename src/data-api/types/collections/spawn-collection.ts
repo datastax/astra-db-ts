@@ -16,6 +16,8 @@ import { WithNamespace } from '@/src/data-api';
 
 /**
  * Options for spawning a new collection.
+ *
+ * @public
  */
 export interface CollectionSpawnOptions extends WithNamespace {
   /**
