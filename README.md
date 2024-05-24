@@ -356,3 +356,5 @@ so you'll need to set it explicitly if you want to use the native fetch implemen
 On some environments, such as Cloudflare Workers, you may additionally need to use the events
 polyfill for the client to work properly (i.e. `npm i events`). Cloudflare's node-compat won't
 work here.
+
+Check out the `examples/` subdirectory for some non-standard runtime examples with more info.
