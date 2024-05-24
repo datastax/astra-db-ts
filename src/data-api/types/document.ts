@@ -63,6 +63,8 @@ export interface VectorDoc {
  *   $vectorize: 'Upside down doors',
  * });
  * ```
+ *
+ * @public
  */
 export interface VectorizeDoc {
   /**
