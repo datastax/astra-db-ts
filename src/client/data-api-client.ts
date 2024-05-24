@@ -18,6 +18,7 @@ import { AstraAdmin, mkAdmin, validateAdminOpts } from '@/src/devops/astra-admin
 import {
   AdminSpawnOptions,
   Caller,
+  CustomHttpClientOptions,
   DataAPIClientOptions,
   DataAPIHttpOptions,
   DbSpawnOptions,
@@ -31,6 +32,7 @@ import { buildUserAgent, FetchCtx } from '@/src/api';
 import { FetchNative } from '@/src/api/fetch/fetch-native';
 import { LIB_NAME } from '@/src/version';
 import { FailedToLoadDefaultClientError } from '@/src/client/errors';
+import { Fetcher } from '@/src/api/fetch/types';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -255,7 +257,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * @returns A promise that resolves when the client has been closed.
    */
   public async close(): Promise<void> {
-    await this.#options.fetchCtx.ctx.close();
+    await this.#options.fetchCtx.ctx.close?.();
     this.#options.fetchCtx.closed.ref = true;
   }
 
@@ -303,26 +305,13 @@ function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
     : getDefaultHttpClient();
 
   const ctx = (() => {
-    if (clientType === 'default' || clientType === undefined) {
-      try {
-        // Complicated expression to stop Next.js and such from tracing require and trying to load the fetch-h2 client
-        const [indirectRequire] = [require].map(x => Math.random() > 10 ? null! : x);
-        const { FetchH2 } = indirectRequire('../api/fetch/fetch-h2') as typeof import('../api/fetch/fetch-h2');
-
-        const preferHttp2 = (<any>options?.httpOptions)?.preferHttp2
-          ?? getDeprecatedPrefersHttp2(options)
-          ?? true
-
-        return new FetchH2(options, preferHttp2);
-      } catch (e) {
-        if (clientType === undefined) {
-          return new FetchNative();
-        } else {
-          throw new FailedToLoadDefaultClientError(e as Error);
-        }
-      }
-    } else {
-      return new FetchNative();
+    switch (clientType) {
+      case 'fetch':
+        return new FetchNative();
+      case 'custom':
+        return (options!.httpOptions as CustomHttpClientOptions).fetcher;
+      default:
+        return tryLoadFetchH2(clientType, options);
     }
   })();
 
@@ -331,6 +320,26 @@ function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
     closed: { ref: false },
     maxTimeMS: options?.httpOptions?.maxTimeMS,
   };
+}
+
+function tryLoadFetchH2(clientType: string | undefined, options: DataAPIClientOptions | undefined): Fetcher {
+  try {
+    // Complicated expression to stop Next.js and such from tracing require and trying to load the fetch-h2 client
+    const [indirectRequire] = [require].map(x => Math.random() > 10 ? null! : x);
+    const { FetchH2 } = indirectRequire('../api/fetch/fetch-h2') as typeof import('../api/fetch/fetch-h2');
+
+    const preferHttp2 = (<any>options?.httpOptions)?.preferHttp2
+      ?? getDeprecatedPrefersHttp2(options)
+      ?? true
+
+    return new FetchH2(options, preferHttp2);
+  } catch (e) {
+    if (clientType === undefined) {
+      return new FetchNative();
+    } else {
+      throw new FailedToLoadDefaultClientError(e as Error);
+    }
+  }
 }
 
 // Shuts the linter up about 'preferHttp2' being deprecated
@@ -345,7 +354,7 @@ function validateRootOpts(opts: DataAPIClientOptions | undefined | null) {
     return;
   }
 
-  validateOption('caller', opts.caller, 'object', validateCaller);
+  validateOption('caller', opts.caller, 'object', false, validateCaller);
   validateOption('preferHttp2 option', getDeprecatedPrefersHttp2(opts), 'boolean');
 
   validateDbOpts(opts.dbOptions);
@@ -360,21 +369,28 @@ function validateHttpOpts(opts: DataAPIHttpOptions | undefined | null) {
     return;
   }
 
-  validateOption('client option', opts.client, 'string', (client) => {
-    if (client !== 'fetch' && client !== 'default') {
+  validateOption('client option', opts.client, 'string', false, (client) => {
+    if (client !== 'fetch' && client !== 'default' && client !== 'custom') {
       throw new Error('Invalid httpOptions.client; expected \'fetch\' or \'default\'');
     }
   });
   validateOption('maxTimeMS option', opts.maxTimeMS, 'number');
 
-  if (opts.client !== 'fetch') {
+  if (opts.client === 'default' || opts.client === undefined) {
     validateOption('preferHttp2 option', opts.preferHttp2, 'boolean');
 
-    validateOption('http1 options', opts.http1, 'object', (http1) => {
+    validateOption('http1 options', opts.http1, 'object', false, (http1) => {
       validateOption('http1.keepAlive option', http1.keepAlive, 'boolean');
       validateOption('http1.keepAliveMS option', http1.keepAliveMS, 'number');
       validateOption('http1.maxSockets option', http1.maxSockets, 'number');
       validateOption('http1.maxFreeSockets option', http1.maxFreeSockets, 'number');
+    });
+  }
+
+  if (opts.client === 'custom') {
+    validateOption('fetcher option', opts.fetcher, 'object', true, (fetcher) => {
+      validateOption('fetcher.fetch option', fetcher.fetch, 'function', true);
+      validateOption('fetcher.close option', fetcher.close, 'function');
     });
   }
 }

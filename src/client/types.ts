@@ -15,6 +15,7 @@
 import { DataAPIClientEvents } from '@/src/client/data-api-client';
 import TypedEmitter from 'typed-emitter';
 import { FetchCtx } from '@/src/api';
+import { Fetcher } from '@/src/api/fetch/types';
 
 /**
  * The caller information to send with requests, of the form `[name, version?]`, or an array of such.
@@ -105,7 +106,8 @@ export interface DataAPIClientOptions {
  */
 export type DataAPIHttpOptions =
   | FetchHttpClientOptions
-  | DefaultHttpClientOptions;
+  | DefaultHttpClientOptions
+  | CustomHttpClientOptions;
 
 /**
  * The options available for the {@link DataAPIClient} related to making HTTP requests using the native fetch API.
@@ -170,6 +172,29 @@ export interface DefaultHttpClientOptions {
    * Options specific to HTTP/1.1 requests.
    */
   http1?: Http1Options,
+}
+
+/**
+ * @public
+ */
+export interface CustomHttpClientOptions {
+  /**
+   * Use a custom http client for making HTTP requests.
+   */
+  client: 'custom',
+  /**
+   * The custom http client to use.
+   */
+  fetcher: Fetcher,
+  /**
+   * The default maximum time in milliseconds to wait for a response from the server.
+   *
+   * This does *not* mean the request will be cancelled after this time, but rather that the client will wait
+   * for this time before considering the request to have timed out.
+   *
+   * The request may or may not still be running on the server after this time.
+   */
+  maxTimeMS?: number,
 }
 
 /**

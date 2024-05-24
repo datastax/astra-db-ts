@@ -20,7 +20,7 @@ import type { CuratedAPIResponse } from '@/src/api';
  */
 export interface Fetcher {
   fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo>,
-  close(): Promise<void>,
+  close?(): Promise<void>,
 }
 
 /**

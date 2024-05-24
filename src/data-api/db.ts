@@ -511,7 +511,7 @@ export function validateDbOpts(opts: DbSpawnOptions | undefined) {
     return;
   }
 
-  validateOption('namespace option', opts.namespace, 'string', (namespace) => {
+  validateOption('namespace option', opts.namespace, 'string', false, (namespace) => {
     if (!namespace.match(/^\w{1,48}$/)) {
       throw new Error('Invalid namespace option; expected a string of 1-48 alphanumeric characters');
     }
