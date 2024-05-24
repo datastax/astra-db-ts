@@ -14,6 +14,22 @@
 
 import { WithNamespace } from '@/src/data-api';
 
+/**
+ * Options for spawning a new collection.
+ */
 export interface CollectionSpawnOptions extends WithNamespace {
-  embeddingApiKey?: string;
+  /**
+   * The API key for the embedding service to use
+   */
+  embeddingApiKey?: string,
+  /**
+   * The default `maxTimeMS` for all operations on the collection. Will override the maxTimeMS set in the DataAPIClient
+   * options; it can be overridden on a per-operation basis.
+   *
+   * This does *not* mean the request will be cancelled after this time, but rather that the client will wait
+   * for this time before considering the request to have timed out.
+   *
+   * The request may or may not still be running on the server after this time.
+   */
+  defaultMaxTimeMS?: number,
 }
