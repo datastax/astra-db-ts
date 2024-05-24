@@ -21,4 +21,4 @@ export { FetchCtx } from '@/src/api/fetch/types';
 export { HTTPClientOptions } from '@/src/api/clients/types';
 export { HTTPRequestInfo } from '@/src/api/clients/types';
 export { HttpMethodStrings } from '@/src/api/clients/types';
-export { ResponseInfo } from '@/src/api/fetch/types';
+export { FetcherResponseInfo } from '@/src/api/fetch/types';

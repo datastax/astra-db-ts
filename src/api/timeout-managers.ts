@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { HTTPRequestInfo } from '@/src/api/clients/types';
+
 /**
  * Internal representation of timeout options, allowing a shorthand for a single call timeout manager via
  * `maxTimeMS`, with an explicit {@link TimeoutManager} being allowed to be passed if necessary, generally
@@ -39,7 +41,7 @@ export type TimeoutOptions = {
  *
  * @internal
  */
-export type MkTimeoutError = (info: string) => Error;
+export type MkTimeoutError = (info: HTTPRequestInfo) => Error;
 
 /**
  * Tracks the remaining time before a timeout occurs. Can be used for both single and multi-call timeout management.

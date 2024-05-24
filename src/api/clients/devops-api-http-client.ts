@@ -183,7 +183,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
 
   private _mkTimeoutManager(timeout: number | undefined) {
     timeout ??= this.fetchCtx.maxTimeMS ?? (12 * 60 * 1000);
-    return new TimeoutManager(timeout, (url) => new DevOpsAPITimeoutError(url, timeout));
+    return new TimeoutManager(timeout, (info) => new DevOpsAPITimeoutError(info.url, timeout));
   }
 }
 

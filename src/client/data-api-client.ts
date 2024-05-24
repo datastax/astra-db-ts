@@ -255,7 +255,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * @returns A promise that resolves when the client has been closed.
    */
   public async close(): Promise<void> {
-    await this.#options.fetchCtx.ctx.disconnectAll();
+    await this.#options.fetchCtx.ctx.close();
     this.#options.fetchCtx.closed.ref = true;
   }
 

@@ -1,14 +1,27 @@
-import { Fetcher, RequestInfo, ResponseInfo } from '@/src/api/fetch/types';
+// Copyright DataStax, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// noinspection ExceptionCaughtLocallyJS
+
+import { Fetcher, FetcherRequestInfo, FetcherResponseInfo } from '@/src/api/fetch/types';
 
 export class FetchNative implements Fetcher {
-  async fetch(info: RequestInfo): Promise<ResponseInfo> {
+  async fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo> {
     try {
       const init = info as RequestInit;
 
-      const timeout = info.timeoutManager.msRemaining();
-
       init.keepalive = true;
-      init.signal = AbortSignal.timeout(timeout);
+      init.signal = AbortSignal.timeout(info.timeout);
 
       const resp = await fetch(info.url, init);
 
@@ -27,11 +40,11 @@ export class FetchNative implements Fetcher {
       }
     } catch (e: any) {
       if (e.name === 'TimeoutError') {
-        throw info.timeoutManager.mkTimeoutError(info.url);
+        throw info.mkTimeoutError();
       }
       throw e;
     }
   }
 
-  async disconnectAll(): Promise<void> {}
+  async close(): Promise<void> {}
 }

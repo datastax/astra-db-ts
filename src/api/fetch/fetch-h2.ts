@@ -1,6 +1,21 @@
+// Copyright DataStax, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// noinspection ExceptionCaughtLocallyJS
+
 import { context, FetchInit, TimeoutError } from 'fetch-h2';
 import { DataAPIClientOptions } from '@/src/client';
-import { Fetcher, RequestInfo, ResponseInfo } from '@/src/api/fetch/types';
+import { Fetcher, FetcherRequestInfo, FetcherResponseInfo } from '@/src/api/fetch/types';
 
 export class FetchH2 implements Fetcher {
   private readonly _http1: ReturnType<typeof context>;
@@ -12,8 +27,7 @@ export class FetchH2 implements Fetcher {
       throw new Error('FetchH2 client tried to initialize using options for a different client type.');
     }
 
-    const http1Opts = {
-      overwriteUserAgent: false,
+    this._http1 = context({
       http1: {
         keepAlive: options?.httpOptions?.http1?.keepAlive,
         keepAliveMsecs: options?.httpOptions?.http1?.keepAliveMS,
@@ -21,22 +35,15 @@ export class FetchH2 implements Fetcher {
         maxFreeSockets: options?.httpOptions?.http1?.maxFreeSockets,
       },
       httpsProtocols: <const>['http1'],
-    };
-
-    this._http1 = context(http1Opts);
+    });
 
     this._preferred = (preferHttp2)
-      ? context({
-        overwriteUserAgent: false,
-        httpsProtocols: ['http2', 'http1'],
-      })
+      ? context()
       : this._http1;
   }
 
-  async fetch(info: RequestInfo): Promise<ResponseInfo> {
+  async fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo> {
     const init = info as Partial<FetchInit>;
-
-    init.timeout = info.timeoutManager.msRemaining();
 
     try {
       const resp = (info.forceHttp1)
@@ -53,13 +60,13 @@ export class FetchH2 implements Fetcher {
       }
     } catch (e) {
       if (e instanceof TimeoutError) {
-        throw info.timeoutManager.mkTimeoutError(info.url);
+        throw info.mkTimeoutError();
       }
       throw e;
     }
   }
 
-  async disconnectAll(): Promise<void> {
+  async close(): Promise<void> {
     await this._preferred.disconnectAll();
     await this._http1.disconnectAll();
   }

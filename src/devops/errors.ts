@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { FullDatabaseInfo } from '@/src/devops/types';
-import { CuratedAPIResponse, ResponseInfo } from '@/src/api';
+import { CuratedAPIResponse, FetcherResponseInfo } from '@/src/api';
 
 /**
  * A representation of what went wrong when interacting with the DevOps API.
@@ -109,7 +109,7 @@ export class DevOpsAPIResponseError extends DevOpsAPIError {
    *
    * @internal
    */
-  constructor(resp: ResponseInfo, data: Record<string, any> | undefined) {
+  constructor(resp: FetcherResponseInfo, data: Record<string, any> | undefined) {
     const message = (data?.errors as any[])?.find(e => e.message)?.message ?? 'Something went wrong';
     super(message);
     this.errors = extractErrorDescriptors(data);
