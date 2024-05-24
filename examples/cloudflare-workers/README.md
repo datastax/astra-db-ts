@@ -2,12 +2,12 @@
 
 ## Overview
 
-`astra-db-ts` works nearly natively with the Cloudflare Workers runtime. This is a simple example of
-how it can be used to interact with an Astra database; it'll simply list out all the collections in 
-a given database.
+`astra-db-ts` works nearly natively with the Cloudflare Workers runtime. The only detour required
+to make this work is to install the `events` polyfill, which is not included natively in the
+Workers runtime. Luckily, this is as simple as doing `npm i events` in your project.
 
-The only detour required to make this work is to install the `events` polyfill, which is not included
-natively in the Workers runtime. Luckily, this is as simple as doing `npm i events` in your project.
+This is a simple example of how it can be used to interact with an Astra database; it'll simply
+list out all the collections in a given database.
 
 ## Getting started
 

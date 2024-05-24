@@ -1,6 +1,8 @@
 import { DataAPIClient } from '@datastax/astra-db-ts';
 
-const client = new DataAPIClient(process.env.ASTRA_DB_TOKEN!);
+const client = new DataAPIClient(process.env.ASTRA_DB_TOKEN!, {
+  httpOptions: { client: 'fetch' },
+});
 const db = client.db(process.env.ASTRA_DB_ENDPOINT!);
 
 export async function GET(_: Request) {

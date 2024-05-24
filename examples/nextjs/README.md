@@ -2,9 +2,18 @@
 
 ## Overview
 
-`astra-db-ts` works natively with Next.js (including its different available runtimes), with no
-`events` polyfill needed to make it work. This is a simple example of how it can be used to interact
-with an Astra database; it'll simply list out all the collections in a given database.
+`astra-db-ts` works nearly natively with Next.js, depending on the runtime used:
+- `edge`: `astra-db-ts` will work like normal here.
+- `nodejs`:`astra-db-ts` will work like normal here—the `DataAPIClient` may just need a hint to
+  use `fetch` instead of the default http client under the hood, as such:
+  ```ts
+  const client = new DataAPIClient('*TOKEN*', {
+    httpOptions: { client: 'fetch' },
+  });
+  ```
+
+This is a simple example of how it can be used to interact with an Astra database; it'll simply 
+list out all the collections in a given database.
 
 ## Getting started
 
@@ -31,4 +40,7 @@ with an Astra database; it'll simply list out all the collections in a given dat
 
 2. Install `@datastax/astra-db-ts` by running `npm i @datastax/astra-db-ts`.
 
-3. You should be able to use `@datastax/astra-db-ts` in your project as normal now.
+3. If you're using the (default) `nodejs` runtime, be sure to set `httpOptions.client` to `'fetch'`
+   in the `DataAPIClient`
+
+4. You should be able to use `@datastax/astra-db-ts` in your project as normal now.
