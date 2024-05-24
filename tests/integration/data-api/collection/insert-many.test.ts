@@ -36,6 +36,18 @@ describe('integration.data-api.collection.insert-many', () => {
     });
   });
 
+  it('should insertMany many documents', async () => {
+    const docs = Array.from({ length: 1000 }, (_, i) => ({ name: `Player ${i}` }));
+    const res = await collection.insertMany(docs);
+    assert.strictEqual(res.insertedCount, docs.length);
+    assert.strictEqual(Object.keys(res.insertedIds).length, docs.length);
+
+    res.insertedIds.forEach((id) => {
+      assert.ok(typeof id as any === 'string');
+      assert.doesNotThrow(() => new UUID(<any>id));
+    });
+  });
+
   it('should insertMany documents with ids', async () => {
     const docs = [{ name: 'Inis Mona', _id: 1 }, { name: 'Helvetios', _id: 2 }, { name: 'Epona', _id: 3 }];
     const res = await collection.insertMany(docs);
