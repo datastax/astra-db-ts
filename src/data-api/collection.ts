@@ -268,7 +268,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @throws InsertManyError - If the operation fails.
    */
   public async insertMany(documents: MaybeId<Schema>[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>> {
-    const chunkSize = options?.chunkSize ?? 20;
+    const chunkSize = options?.chunkSize ?? 50;
 
     if (options?.vectors) {
       if (options.vectors.length !== documents.length) {
