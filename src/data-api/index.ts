@@ -15,7 +15,6 @@
 
 export * from './collection';
 export * from './cursor';
-export * from './document';
 export { Db } from './db';
 export {
   DataAPITimeoutError,
