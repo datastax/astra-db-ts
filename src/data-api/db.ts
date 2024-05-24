@@ -129,6 +129,7 @@ export class Db {
         monitorCommands: dbOpts.monitorCommands,
         fetchCtx: options.fetchCtx,
         namespace: this.namespace,
+        userAgent: options.userAgent,
       }),
       enumerable: false,
     });

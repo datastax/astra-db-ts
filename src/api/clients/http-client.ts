@@ -40,7 +40,9 @@ export abstract class HttpClient {
       this.baseUrl += '/' + options.baseApiPath;
     }
 
-    this.baseHeaders = mkAuthHeader?.(this.#applicationToken) ?? {};
+    this.baseHeaders = mkAuthHeader(this.#applicationToken);
+    this.baseHeaders['User-Agent'] = options.userAgent;
+    this.baseHeaders['Content-Type'] = 'application/json';
   }
 
   public get applicationToken(): string {
@@ -90,7 +92,7 @@ export function buildUserAgent(caller: Caller | Caller[] | undefined): string {
     (!caller)
       ? [] :
     Array.isArray(caller[0])
-      ? caller
+      ?  caller
       : [caller]
   ) as Caller[];
 

@@ -54,6 +54,7 @@ export class AstraDbAdmin extends DbAdmin {
         monitorCommands: adminOpts.monitorCommands,
         fetchCtx: options.fetchCtx,
         emitter: options.emitter,
+        userAgent: options.userAgent,
       }),
       enumerable: false,
     });

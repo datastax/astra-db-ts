@@ -1,6 +1,5 @@
 import { context, FetchInit, TimeoutError } from 'fetch-h2';
 import { DataAPIClientOptions } from '@/src/client';
-import { buildUserAgent } from '@/src/api/clients/http-client';
 import { Fetcher, RequestInfo, ResponseInfo } from '@/src/api/fetch/types';
 
 export class FetchH2 implements Fetcher {
@@ -14,8 +13,7 @@ export class FetchH2 implements Fetcher {
     }
 
     const http1Opts = {
-      userAgent: buildUserAgent(options?.caller),
-      overwriteUserAgent: true,
+      overwriteUserAgent: false,
       http1: {
         keepAlive: options?.httpOptions?.http1?.keepAlive,
         keepAliveMsecs: options?.httpOptions?.http1?.keepAliveMS,
@@ -29,7 +27,7 @@ export class FetchH2 implements Fetcher {
 
     this._preferred = (preferHttp2)
       ? context({
-        ...http1Opts,
+        overwriteUserAgent: false,
         httpsProtocols: ['http2', 'http1'],
       })
       : this._http1;

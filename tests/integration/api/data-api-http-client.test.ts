@@ -13,11 +13,10 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, DataAPIResponseError, DataAPITimeoutError, Db } from '@/src/data-api';
+import { Collection, DataAPIResponseError, Db } from '@/src/data-api';
 import { DEFAULT_COLLECTION_NAME, initTestObjects, OTHER_NAMESPACE } from '@/tests/fixtures';
 import { DataAPIHttpClient } from '@/src/api';
 import assert from 'assert';
-import { DataAPIHttpError } from '@/src/data-api/errors';
 
 describe('integration.api.data-api-http-client', () => {
   let httpClient: DataAPIHttpClient;

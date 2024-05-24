@@ -27,9 +27,10 @@ import TypedEmitter from 'typed-emitter';
 import { DataAPICommandEvents } from '@/src/data-api/events';
 import { AdminCommandEvents } from '@/src/devops';
 import { validateOption } from '@/src/data-api/utils';
-import { FetchCtx } from '@/src/api';
+import { buildUserAgent, FetchCtx } from '@/src/api';
 import { FetchNative } from '@/src/api/fetch/fetch-native';
 import { LIB_NAME } from '@/src/version';
+import { FailedToLoadDefaultClientError } from '@/src/client/errors';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -125,8 +126,8 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
         ...options?.adminOptions,
       },
       emitter: this,
+      userAgent: buildUserAgent(options?.caller),
     };
-
 
     if (Symbol.asyncDispose) {
       this[Symbol.asyncDispose] = this.close;
@@ -286,13 +287,13 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
   public [Symbol.asyncDispose]!: () => Promise<void>;
 }
 
-function getDefaultHttpClient(): 'fetch' | 'default' {
+function getDefaultHttpClient(): 'fetch' | undefined {
   const isNode = globalThis.process?.release?.name === 'node';
   const isBun = !!globalThis['Bun' as keyof typeof globalThis] || !!globalThis.process?.versions?.bun;
   const isDeno = !!globalThis['Deno' as keyof typeof globalThis];
 
   return (isNode && !isBun && !isDeno)
-    ? 'default'
+    ? undefined
     : 'fetch';
 }
 
@@ -302,7 +303,7 @@ function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
     : getDefaultHttpClient();
 
   const ctx = (() => {
-    if (clientType === 'default') {
+    if (clientType === 'default' || clientType === undefined) {
       try {
         // Complicated expression to stop Next.js and such from tracing require and trying to load the fetch-h2 client
         const [indirectRequire] = [require].map(x => Math.random() > 10 ? null! : x);
@@ -314,10 +315,14 @@ function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
 
         return new FetchH2(options, preferHttp2);
       } catch (e) {
-        throw new Error('Error loading the fetch-h2 client for the DataAPIClient... try setting httpOptions.client to \'fetch\'');
+        if (clientType === undefined) {
+          return new FetchNative();
+        } else {
+          throw new FailedToLoadDefaultClientError(e as Error);
+        }
       }
     } else {
-      return new FetchNative(options);
+      return new FetchNative();
     }
   })();
 

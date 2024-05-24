@@ -1,23 +1,11 @@
-import { DataAPIClientOptions } from '@/src/client';
-import { buildUserAgent } from '@/src/api/clients/http-client';
 import { Fetcher, RequestInfo, ResponseInfo } from '@/src/api/fetch/types';
 
 export class FetchNative implements Fetcher {
-  private readonly _userAgent: string;
-
-  constructor(options: DataAPIClientOptions | undefined) {
-    this._userAgent = buildUserAgent(options?.caller);
-  }
-
   async fetch(info: RequestInfo): Promise<ResponseInfo> {
     try {
       const init = info as RequestInit;
 
       const timeout = info.timeoutManager.msRemaining();
-
-      info.headers ??= {};
-      info.headers['User-Agent'] = this._userAgent;
-      info.headers['Content-Type'] = 'application/json';
 
       init.keepalive = true;
       init.signal = AbortSignal.timeout(timeout);

@@ -22,7 +22,13 @@ import { mkDb } from '@/src/data-api/db';
 
 describe('unit.data-api.db', () => {
   const mkOptions = (data?: DbSpawnOptions, devops?: AdminSpawnOptions, preferredType = 'http2') => {
-    return { dbOptions: { token: 'old', monitorCommands: false, ...data }, adminOptions: { adminToken: 'old-admin', monitorCommands: false, ...devops }, emitter: null as any, fetchCtx: { preferred: null!, http1: null!, preferredType } as any };
+    return {
+      dbOptions: { token: 'old', monitorCommands: false, ...data },
+      adminOptions: { adminToken: 'old-admin', monitorCommands: false, ...devops },
+      emitter: null as any,
+      fetchCtx: { preferred: null!, http1: null!, preferredType } as any,
+      userAgent: '',
+    };
   }
 
   describe('constructor tests', () => {

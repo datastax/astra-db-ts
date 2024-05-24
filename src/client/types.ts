@@ -414,6 +414,7 @@ export interface InternalRootClientOpts {
   caller?: Caller | Caller[],
   emitter: TypedEmitter<DataAPIClientEvents>,
   fetchCtx: FetchCtx,
+  userAgent: string,
   dbOptions: DbSpawnOptions & {
     token: string,
     monitorCommands: boolean,
