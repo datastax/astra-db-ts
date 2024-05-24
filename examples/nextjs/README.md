@@ -15,6 +15,9 @@
 This is a simple example of how it can be used to interact with an Astra database; it'll simply 
 list out all the collections in a given database.
 
+Check out the [Non-standard runtime support](../../README.md#non-standard-runtime-support) section
+in the main `README.md` for more information common between non-standard runtimes.
+
 ## Getting started
 
 ### Prerequisites:
