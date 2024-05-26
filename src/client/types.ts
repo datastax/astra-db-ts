@@ -172,6 +172,12 @@ export interface DefaultHttpClientOptions {
    * Options specific to HTTP/1.1 requests.
    */
   http1?: Http1Options,
+  /**
+   * The fetch-h2 module to use for making HTTP requests.
+   *
+   * Leave undefined to use the default module.
+   */
+  fetchH2?: typeof import('fetch-h2'),
 }
 
 /**

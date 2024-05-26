@@ -28,10 +28,9 @@ import TypedEmitter from 'typed-emitter';
 import { DataAPICommandEvents } from '@/src/data-api/events';
 import { AdminCommandEvents } from '@/src/devops';
 import { validateOption } from '@/src/data-api/utils';
-import { buildUserAgent, FetchCtx } from '@/src/api';
+import { buildUserAgent, FetchCtx, FetchH2 } from '@/src/api';
 import { FetchNative } from '@/src/api/fetch/fetch-native';
 import { LIB_NAME } from '@/src/version';
-import { FailedToLoadDefaultClientError } from '@/src/client/errors';
 import { Fetcher } from '@/src/api/fetch/types';
 
 /**
@@ -324,20 +323,16 @@ function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
 
 function tryLoadFetchH2(clientType: string | undefined, options: DataAPIClientOptions | undefined): Fetcher {
   try {
-    // Complicated expression to stop Next.js and such from tracing require and trying to load the fetch-h2 client
-    const [indirectRequire] = [require].map(x => Math.random() > 10 ? null! : x);
-    const { FetchH2 } = indirectRequire('../api/fetch/fetch-h2') as typeof import('../api/fetch/fetch-h2');
-
     const preferHttp2 = (<any>options?.httpOptions)?.preferHttp2
       ?? getDeprecatedPrefersHttp2(options)
       ?? true
 
-    return new FetchH2(options, preferHttp2);
+    return new FetchH2(options?.httpOptions as any, preferHttp2);
   } catch (e) {
     if (clientType === undefined) {
       return new FetchNative();
     } else {
-      throw new FailedToLoadDefaultClientError(e as Error);
+      throw e;
     }
   }
 }

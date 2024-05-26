@@ -4,6 +4,7 @@
 
 ```ts
 
+import { fetchH2 } from 'fetch-h2';
 import TypedEmitter from 'typed-emitter';
 
 // @public
@@ -533,6 +534,7 @@ export interface DbSpawnOptions {
 // @public
 export interface DefaultHttpClientOptions {
     client?: 'default';
+    fetchH2?: fetchH2;
     http1?: Http1Options;
     maxTimeMS?: number;
     preferHttp2?: boolean;
@@ -589,8 +591,6 @@ export interface DevOpsAPIErrorDescriptor {
 
 // @public
 export class DevOpsAPIResponseError extends DevOpsAPIError {
-    // Warning: (ae-forgotten-export) The symbol "FetcherResponseInfo" needs to be exported by the entry point index.d.ts
-    //
     // @internal
     constructor(resp: FetcherResponseInfo, data: Record<string, any> | undefined);
     readonly errors: DevOpsAPIErrorDescriptor[];
@@ -617,6 +617,35 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
 // @public
 export interface DropCollectionOptions extends WithTimeout, WithNamespace {
 }
+
+// @public (undocumented)
+export interface Fetcher {
+    // (undocumented)
+    close?(): Promise<void>;
+    // (undocumented)
+    fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo>;
+}
+
+// @public (undocumented)
+export interface FetcherRequestInfo {
+    // (undocumented)
+    body: string | undefined;
+    // (undocumented)
+    forceHttp1: boolean | undefined;
+    // (undocumented)
+    headers: Record<string, string>;
+    // (undocumented)
+    method: 'DELETE' | 'GET' | 'POST';
+    // (undocumented)
+    mkTimeoutError: () => Error;
+    // (undocumented)
+    timeout: number;
+    // (undocumented)
+    url: string;
+}
+
+// @public (undocumented)
+export type FetcherResponseInfo = CuratedAPIResponse;
 
 // @public
 export interface FetchHttpClientOptions {
