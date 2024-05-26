@@ -381,8 +381,10 @@ export interface DataAPIErrorDescriptor {
     readonly message?: string;
 }
 
+// Warning: (ae-forgotten-export) The symbol "CustomHttpClientOptions" needs to be exported by the entry point index.d.ts
+//
 // @public
-export type DataAPIHttpOptions = FetchHttpClientOptions | DefaultHttpClientOptions;
+export type DataAPIHttpOptions = FetchHttpClientOptions | DefaultHttpClientOptions | CustomHttpClientOptions;
 
 // @public
 export class DataAPIResponseError extends DataAPIError {
@@ -587,10 +589,10 @@ export interface DevOpsAPIErrorDescriptor {
 
 // @public
 export class DevOpsAPIResponseError extends DevOpsAPIError {
-    // Warning: (ae-forgotten-export) The symbol "ResponseInfo" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "FetcherResponseInfo" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(resp: ResponseInfo, data: Record<string, any> | undefined);
+    constructor(resp: FetcherResponseInfo, data: Record<string, any> | undefined);
     readonly errors: DevOpsAPIErrorDescriptor[];
     readonly raw: CuratedAPIResponse;
     readonly status: number;
