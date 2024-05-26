@@ -4,7 +4,6 @@
 
 ```ts
 
-import { fetchH2 } from 'fetch-h2';
 import TypedEmitter from 'typed-emitter';
 
 // @public
@@ -534,7 +533,7 @@ export interface DbSpawnOptions {
 // @public
 export interface DefaultHttpClientOptions {
     client?: 'default';
-    fetchH2?: fetchH2;
+    fetchH2?: any;
     http1?: Http1Options;
     maxTimeMS?: number;
     preferHttp2?: boolean;

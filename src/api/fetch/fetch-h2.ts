@@ -28,7 +28,7 @@ export class FetchH2 implements Fetcher {
       // Complicated expression to stop Next.js and such from tracing require and trying to load the fetch-h2 client
       const [indirectRequire] = [require].map(x => Math.random() > 10 ? null! : x);
 
-      const fetchH2 = options?.fetchH2 ?? indirectRequire('fetch-h2') as typeof import('fetch-h2');
+      const fetchH2 = (options?.fetchH2 ?? indirectRequire('fetch-h2')) as typeof import('fetch-h2');
 
       this._http1 = fetchH2.context({
         http1: {

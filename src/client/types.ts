@@ -177,7 +177,7 @@ export interface DefaultHttpClientOptions {
    *
    * Leave undefined to use the default module.
    */
-  fetchH2?: typeof import('fetch-h2'),
+  fetchH2?: any,
 }
 
 /**

@@ -10,7 +10,7 @@ const client = new DataAPIClient(process.env.ASTRA_DB_TOKEN!, {
 });
 const db = client.db(process.env.ASTRA_DB_ENDPOINT!);
 
-// Simple example which (attempts to) list all the collections in the database
+// Simple example which (attempts to) list all the collections in the database using http2
 export async function GET(_: Request) {
   try {
     const collections = await db.listCollections();

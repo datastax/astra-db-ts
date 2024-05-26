@@ -1,31 +1,31 @@
-# astra-db-ts w/ Next.js
+# astra-db-ts with HTTP/2 in a Minified Project
 
 ## Overview
 
-`astra-db-ts` works nearly natively with Next.js, depending on the runtime used:
-- `edge`: `astra-db-ts` will work like normal here.
-- `nodejs`:`astra-db-ts` will work like normal here—the `DataAPIClient` may just need a hint to
-  use `fetch` instead of the default http client under the hood, as such:
-  ```ts
-  const client = new DataAPIClient('*TOKEN*', {
-    httpOptions: { client: 'fetch' },
-  });
-  ```
+Due to the variety of runtimes offered by the JS environment, it's tricky to create a single module that
+works with them all. Because `HTTP/2` doesn't natively work in all environments, `astra-db-ts` attempts
+to dynamically require the underlying `fetch-h2` module to see if it works or not. However, this can be
+problematic in minified environments, as it often breaks dynamic imports.
 
-This is a simple example of how it can be used to interact with an Astra database; it'll simply 
-list out all the collections in a given database.
+Most of the time, this isn't an issue, but in some cases, if you really want to use `HTTP/2` in a
+non-standard or minified environment, you can manually import and pass in the `fetch-h2` module
+into the `DataAPIClient` constructor.
 
-Check out the [Non-standard runtime support](../../README.md#non-standard-runtime-support) section
-in the main `README.md` for more information common between non-standard runtimes.
+This is a simple example of how we can interact with an Astra database using HTTP/2 in a minified
+environment. It will list out all the collections in a given database. Note that Next.js is used as
+the example here, but the same principles should apply to other minified environments.
 
-## Getting started
+Check out the [Non-standard runtime support](../../README.md#non-standard-runtime-support) section 
+in the main `README.md` for more information common to non-standard runtimes.
+
+## Getting Started
 
 ### Prerequisites:
 
-- Make sure you have an existing Astra Database running @ [astra.datastax.com](https://astra.datastax.com/).
+- Ensure you have an existing Astra Database running at [astra.datastax.com](https://astra.datastax.com/).
     - You'll need an API key and a database endpoint URL to get started.
 
-### How to use this example:
+### How to Use This Example:
 
 1. Clone this repository to your local machine.
 
@@ -37,47 +37,28 @@ in the main `README.md` for more information common between non-standard runtime
 
 5. Visit `http://localhost:3000` in your browser to see the example in action.
 
-### Steps to start your own project:
+### Steps to Start Your Own Project:
 
-1. Use the typical `npx create-next-app@latest` to create a new Next.js project.
+1. Create a new project as you please.
 
-2. Install `@datastax/astra-db-ts` by running `npm i @datastax/astra-db-ts`.
+2. Install `@datastax/astra-db-ts` and `fetch-h2` by running `npm i @datastax/astra-db-ts fetch-h2`.
 
-3. If you're using the (default) `nodejs` runtime, be sure to set `httpOptions.client` to `'fetch'`
-   in the `DataAPIClient`
+3. Ensure to set `httpOptions.fetchH2` to `fetchH2` in the `DataAPIClient`, where `fetchH2` is
+   imported as `import * as fetchH2 from 'fetch-h2'`.
 
-4. You should be able to use `@datastax/astra-db-ts` in your project as normal now.
+4. You should be able to use `@datastax/astra-db-ts` over `HTTP/2` in your project as normal now, 
+   even when minified.
 
-## Full code sample
+## Full Code Sample
 
 ```ts
 import { DataAPIClient } from '@datastax/astra-db-ts';
+import * as fetchH2 from 'fetch-h2';
 
-// Creates the client with the `httpOptions` set to use the `fetch` client as next.js's minification
-// conflicts with the importing of our default http client (see http2-when-minified for more info)
+// Creates the client with the `httpOptions` explicitly set to use our `fetchH2` client as 
+// minification often conflicts with our own dynamic importing of `fetch-h2`.
 const client = new DataAPIClient(process.env.ASTRA_DB_TOKEN!, {
-  httpOptions: { client: 'fetch' },
+  httpOptions: { fetchH2 },
 });
 const db = client.db(process.env.ASTRA_DB_ENDPOINT!);
-
-// If `runtime` is set to `edge`, you could get away without needing to specify the specific
-// client, as `astra-db-ts` would be able to infer that it should use `fetch` for you.
-// e.g. `const client = new DataAPIClient(process.env.ASTRA_DB_TOKEN!);`
-// export const runtime = 'edge';
-
-// Simple example which (attempts to) list all the collections in the database
-export async function GET(_: Request) {
-  try {
-    const collections = await db.listCollections();
-
-    return new Response(JSON.stringify(collections), {
-      headers: { 'Content-Type': 'application/json' },
-    });
-  } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { 'Content-Type': 'application/json' },
-      status: 500,
-    });
-  }
-}
 ```
