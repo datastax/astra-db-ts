@@ -53,16 +53,15 @@ in the main `README.md` for more information common between non-standard runtime
 ```ts
 import { DataAPIClient } from '@datastax/astra-db-ts';
 
-// Creates the client with the `httpOptions` set to use the `fetch` client
-// as we're on Vercel's node.js runtime which doesn't support the default http client
-// that the `@datastax/astra-db-ts` package uses.
+// Creates the client with the `httpOptions` set to use the `fetch` client as next.js's minification
+// conflicts with the importing of our default http client (see http2-when-minified for more info)
 const client = new DataAPIClient(process.env.ASTRA_DB_TOKEN!, {
   httpOptions: { client: 'fetch' },
 });
 const db = client.db(process.env.ASTRA_DB_ENDPOINT!);
 
-// If `runtime` is set to `edge`, you could get away without needing to specify the specific client, as `astra-db-ts`
-// would be able to infer that it should use `fetch` for you.
+// If `runtime` is set to `edge`, you could get away without needing to specify the specific
+// client, as `astra-db-ts` would be able to infer that it should use `fetch` for you.
 // e.g. `const client = new DataAPIClient(process.env.ASTRA_DB_TOKEN!);`
 // export const runtime = 'edge';
 

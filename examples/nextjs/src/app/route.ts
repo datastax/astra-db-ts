@@ -1,8 +1,7 @@
 import { DataAPIClient } from '@datastax/astra-db-ts';
 
-// Creates the client with the `httpOptions` set to use the `fetch` client
-// as we're on Vercel's node.js runtime which doesn't support the default http client
-// that the `@datastax/astra-db-ts` package uses.
+// Creates the client with the `httpOptions` set to use the `fetch` client as next.js's minification
+// conflicts with the importing of our default http client (see http2-when-minified for more info)
 const client = new DataAPIClient(process.env.ASTRA_DB_TOKEN!, {
   httpOptions: { client: 'fetch' },
 });
