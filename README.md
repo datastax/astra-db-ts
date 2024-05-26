@@ -12,6 +12,7 @@
 - [Working with ObjectIds and UUIDs](#working-with-objectids-and-uuids)
 - [Monitoring/logging](#monitoringlogging)
 - [Non-standard runtime support](#non-standard-runtime-support)
+- [HTTP/2 with minification](#http2-with-minification)
 
 ## Quickstart
 
@@ -358,3 +359,30 @@ polyfill for the client to work properly (i.e. `npm i events`). Cloudflare's nod
 work here.
 
 Check out the `examples/` subdirectory for some non-standard runtime examples with more info.
+
+## HTTP/2 with minification
+
+Due to the variety of different runtimes JS can run in, `astra-db-ts` does its best to be as flexible as possible.
+Unfortunately however, because we need to dynamically require the `fetch-h2` module to test whether it works, the
+dynamic import often breaks in minified environments, even if the runtime properly supports HTTP/2.
+
+There is a simple workaround however, consisting of the following steps, if you truly want to use HTTP/2:
+1. Install `fetch-h2` as a dependency (`npm i fetch-h2`)
+2. Import the `fetch-h2` module in your code as `fetchH2` (e.g. `import * as fetchH2 from 'fetch-h2'`)
+3. Set the `httpOptions.fetchH2` option to the imported module when instantiating the client
+
+```typescript
+import { DataAPIClient } from '@datastax/astra-db-ts';
+import * as fetchH2 from 'fetch-h2';
+
+const client = new DataAPIClient('*TOKEN*', {
+  httpOptions: { fetchH2 },
+});
+```
+
+This way, the dynamic import is avoided, and the client will work in minified environments.
+
+Note this is not required if you don't explicitly need HTTP/2 support, as the client will default 
+to the native fetch implementation instead if importing fails. 
+
+(But keep in mind this defaulting will only happen if `httpOptions` is not set at all).
