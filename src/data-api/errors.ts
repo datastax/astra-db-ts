@@ -16,7 +16,7 @@ import type { InsertManyResult } from '@/src/data-api/types/insert/insert-many';
 import type { DeleteManyResult } from '@/src/data-api/types/delete/delete-many';
 import type { UpdateManyResult } from '@/src/data-api/types/update/update-many';
 import type { BulkWriteResult } from '@/src/data-api/types/misc/bulk-write';
-import type { CuratedAPIResponse, RawDataAPIResponse, FetcherResponseInfo } from '@/src/api';
+import type { FetcherResponseInfo, RawDataAPIResponse } from '@/src/api';
 import { SomeDoc } from '@/src/data-api/types/document';
 
 /**

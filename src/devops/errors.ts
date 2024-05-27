@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { FullDatabaseInfo } from '@/src/devops/types';
-import { CuratedAPIResponse, FetcherResponseInfo } from '@/src/api';
+import { FetcherResponseInfo } from '@/src/api';
 
 /**
  * A representation of what went wrong when interacting with the DevOps API.
