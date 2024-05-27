@@ -13,11 +13,24 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
+/**
+ * Error thrown when the default fetch-h2 client fails to load.
+ *
+ * @public
+ */
 export class FailedToLoadDefaultClientError extends Error {
+  /**
+   * Root error that caused the failure to load the default client.
+   */
   public readonly rootCause: Error;
 
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
   constructor(rootCause: Error) {
-    super('Error loading the default client for the DataAPIClient... try setting httpOptions.client to \'fetch\'');
+    super('Error loading the fetch-h2 client for the DataAPIClient... please check the "Non-standard runtime support" section of https://github.com/datastax/astra-db-ts for more information.');
     this.rootCause = rootCause;
   }
 }

@@ -102,7 +102,7 @@ export class DevOpsAPIResponseError extends DevOpsAPIError {
   /**
    * The "raw", errored response from the API.
    */
-  public readonly raw: CuratedAPIResponse;
+  public readonly raw: FetcherResponseInfo;
 
   /**
    * Shouldn't be instantiated directly.

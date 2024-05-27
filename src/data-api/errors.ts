@@ -146,7 +146,7 @@ export class DataAPIHttpError extends DataAPIError {
   /**
    * The "raw", errored response from the API.
    */
-  public readonly raw: CuratedAPIResponse;
+  public readonly raw: FetcherResponseInfo;
 
   /**
    * Should not be instantiated by the user.

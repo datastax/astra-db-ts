@@ -307,15 +307,8 @@ export abstract class CumulativeDataAPIError extends DataAPIResponseError {
     readonly partialResult: unknown;
 }
 
-// @public
-export interface CuratedAPIResponse {
-    body?: string;
-    headers: Record<string, any>;
-    httpVersion: 1 | 2;
-    status: number;
-    statusText: string;
-    url: string;
-}
+// @public @deprecated
+export type CuratedAPIResponse = FetcherResponseInfo;
 
 // @public
 export type CurrentDate<Schema> = {
@@ -384,7 +377,7 @@ export interface DataAPIErrorDescriptor {
 // Warning: (ae-forgotten-export) The symbol "CustomHttpClientOptions" needs to be exported by the entry point index.d.ts
 //
 // @public
-export type DataAPIHttpOptions = FetchHttpClientOptions | DefaultHttpClientOptions | CustomHttpClientOptions;
+export type DataAPIHttpOptions = DefaultHttpClientOptions | FetchHttpClientOptions | CustomHttpClientOptions;
 
 // @public
 export class DataAPIResponseError extends DataAPIError {
@@ -593,7 +586,7 @@ export class DevOpsAPIResponseError extends DevOpsAPIError {
     // @internal
     constructor(resp: FetcherResponseInfo, data: Record<string, any> | undefined);
     readonly errors: DevOpsAPIErrorDescriptor[];
-    readonly raw: CuratedAPIResponse;
+    readonly raw: FetcherResponseInfo;
     readonly status: number;
 }
 
@@ -617,34 +610,40 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
 export interface DropCollectionOptions extends WithTimeout, WithNamespace {
 }
 
-// @public (undocumented)
+// @public
+export class FailedToLoadDefaultClientError extends Error {
+    // @internal
+    constructor(rootCause: Error);
+    readonly rootCause: Error;
+}
+
+// @public
 export interface Fetcher {
-    // (undocumented)
     close?(): Promise<void>;
-    // (undocumented)
     fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo>;
 }
 
-// @public (undocumented)
+// @public
 export interface FetcherRequestInfo {
-    // (undocumented)
     body: string | undefined;
-    // (undocumented)
     forceHttp1: boolean | undefined;
-    // (undocumented)
     headers: Record<string, string>;
-    // (undocumented)
     method: 'DELETE' | 'GET' | 'POST';
-    // (undocumented)
     mkTimeoutError: () => Error;
-    // (undocumented)
     timeout: number;
-    // (undocumented)
     url: string;
 }
 
-// @public (undocumented)
-export type FetcherResponseInfo = CuratedAPIResponse;
+// @public
+export interface FetcherResponseInfo {
+    additionalAttributes?: Record<string, any>;
+    body?: string;
+    headers: Record<string, any>;
+    httpVersion: 1 | 2;
+    status: number;
+    statusText: string;
+    url: string;
+}
 
 // @public
 export interface FetchHttpClientOptions {

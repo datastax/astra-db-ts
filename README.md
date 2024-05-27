@@ -12,7 +12,7 @@
 - [Working with ObjectIds and UUIDs](#working-with-objectids-and-uuids)
 - [Monitoring/logging](#monitoringlogging)
 - [Non-standard runtime support](#non-standard-runtime-support)
-- [HTTP/2 with minification](#http2-with-minification)
+  - [HTTP/2 with minification](#http2-with-minification)
 
 ## Quickstart
 
@@ -338,21 +338,26 @@ client.on('commandFailed', (event) => {
 in edge runtimes and other non-node environments as well, though it'll use the native `fetch` API for HTTP requests,
 as opposed to `fetch-h2` which provides extended HTTP/2 and HTTP/1.1 support for performance.
 
-On Node (exactly node; not Bun or Deno with node compat on) environments, it'll use `fetch-h2` by default; on others,
-it'll use `fetch`. You can explicitly set the fetch implementation when instantiating the client:
+On Node (exactly node; not Bun or Deno with node compat on) environments, it'll attempt to use `fetch-h2` by default;
+on others, it'll directly use `fetch`. You can explicitly set the fetch implementation when instantiating the client:
 
 ```typescript
 import { DataAPIClient } from '@datastax/astra-db-ts';
 
 const client = new DataAPIClient('*TOKEN*', {
-  httpOptions: {
-    client: 'fetch', // or 'default' for fetch-h2
-  },
+  httpOptions: { client: 'fetch' },
 });
 ```
 
-Note that setting the `httpOptions` implicitly sets the fetch implementation to default (fetch-h2),
-so you'll need to set it explicitly if you want to use the native fetch implementation.
+There are four different behaviours for setting the client:
+- Not setting the `httpOptions` at all
+  - This will attempt to use `fetch-h2` if available, and fall back to `fetch` if not available
+- `client: 'default'` or `client: undefined` (or unset)
+  - This will attempt to use `fetch-h2` if available, and throw an error if not available
+- `client: 'fetch'`
+  - This will always use the native `fetch` API
+- `client: 'custom'`
+  - This will allow you to pass a custom `Fetcher` implementation to the client
 
 On some environments, such as Cloudflare Workers, you may additionally need to use the events
 polyfill for the client to work properly (i.e. `npm i events`). Cloudflare's node-compat won't
@@ -360,7 +365,7 @@ work here.
 
 Check out the `examples/` subdirectory for some non-standard runtime examples with more info.
 
-## HTTP/2 with minification
+### HTTP/2 with minification
 
 Due to the variety of different runtimes JS can run in, `astra-db-ts` does its best to be as flexible as possible.
 Unfortunately however, because we need to dynamically require the `fetch-h2` module to test whether it works, the
