@@ -58,7 +58,7 @@ non-standard runtimes.
 ```ts
 import { DataAPIClient } from '@datastax/astra-db-ts';
 
-const client = new DataAPIClient(import.meta.env.ASTRA_DB_TOKEN);
+const client = new DataAPIClient(prompt('Enter your AstraDB API key: '));
 const db = client.db(`${import.meta.env.CORS_PROXY_URL}${import.meta.env.ASTRA_DB_ENDPOINT}`);
 
 const app = document.querySelector<HTMLDivElement>('#app')!;
