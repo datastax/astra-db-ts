@@ -405,3 +405,5 @@ However, if, for some reason, you really want to use this in a browser, you can 
 
 But keep in mind that this is not officially supported, and may be very insecure if you're encoding sensitive
 data into the browser client.
+
+(See `examples/browser` for a full example of this workaround in action.)
