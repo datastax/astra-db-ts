@@ -11,8 +11,9 @@
 - [Working with Dates](#working-with-dates)
 - [Working with ObjectIds and UUIDs](#working-with-objectids-and-uuids)
 - [Monitoring/logging](#monitoringlogging)
-- [Non-standard runtime support](#non-standard-runtime-support)
+- [Non-standard environment support](#non-standard-environment-support)
   - [HTTP/2 with minification](#http2-with-minification)
+  - [Browser support](#browser-support)
 
 ## Quickstart
 
@@ -332,14 +333,15 @@ client.on('commandFailed', (event) => {
 })();
 ```
 
-## Non-standard runtime support
+## Non-standard environment support
 
-`astra-db-ts` is designed foremost to work in Node.js environments, and it's not supported in browsers. It will work
-in edge runtimes and other non-node environments as well, though it'll use the native `fetch` API for HTTP requests,
-as opposed to `fetch-h2` which provides extended HTTP/2 and HTTP/1.1 support for performance.
+`astra-db-ts` is designed foremost to work in Node.js environments. 
 
-On Node (exactly node; not Bun or Deno with node compat on) environments, it'll attempt to use `fetch-h2` by default;
-on others, it'll directly use `fetch`. You can explicitly set the fetch implementation when instantiating the client:
+It will work in edge runtimes and other non-node environments as well, though it'll use the native `fetch` API for HTTP
+requests, as opposed to `fetch-h2` which provides extended HTTP/2 and HTTP/1.1 support for performance.
+
+By default, it'll attempt to use `fetch-h2` if available, and fall back to `fetch` if not available in that environment.
+You can explicitly force the fetch implementation when instantiating the client:
 
 ```typescript
 import { DataAPIClient } from '@datastax/astra-db-ts';
@@ -371,9 +373,9 @@ Due to the variety of different runtimes JS can run in, `astra-db-ts` does its b
 Unfortunately however, because we need to dynamically require the `fetch-h2` module to test whether it works, the
 dynamic import often breaks in minified environments, even if the runtime properly supports HTTP/2.
 
-There is a simple workaround however, consisting of the following steps, if you truly want to use HTTP/2:
+There is a simple workaround however, consisting of the following steps, if you really want to use HTTP/2:
 1. Install `fetch-h2` as a dependency (`npm i fetch-h2`)
-2. Import the `fetch-h2` module in your code as `fetchH2` (e.g. `import * as fetchH2 from 'fetch-h2'`)
+2. Import the `fetch-h2` module in your code as `fetchH2` (i.e. `import * as fetchH2 from 'fetch-h2'`)
 3. Set the `httpOptions.fetchH2` option to the imported module when instantiating the client
 
 ```typescript
@@ -391,3 +393,16 @@ Note this is not required if you don't explicitly need HTTP/2 support, as the cl
 to the native fetch implementation instead if importing fails. 
 
 (But keep in mind this defaulting will only happen if `httpOptions` is not set at all).
+
+(See `examples/http2-when-minified` for a full example of this workaround in action.)
+
+### Browser support
+
+The Data API itself does not natively support browsers, so `astra-db-ts` isn't technically supported in browsers either.
+
+However, if, for some reason, you really want to use this in a browser, you can probably do so by installing the 
+`events` polyfill and setting up a [CORS proxy](https://github.com/Rob--W/cors-anywhere) to forward requests to the
+Data API.
+
+But keep in mind that this is not officially supported, and may be very insecure if you're encoding sensitive
+data into the browser client.

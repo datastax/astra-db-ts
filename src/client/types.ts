@@ -59,7 +59,7 @@ export interface DataAPIClientOptions {
    *
    * `fetch-h2` is a fetch implementation that supports HTTP/2, and is the recommended client for the best performance.
    *
-   * However, it's generally only available by default on node runtimes; on other runtimes, you may need to use the
+   * However, it's generally only available by default on node runtimes; in other environments, you may need to use the
    * native `fetch` API instead, or pass in the fetch-h2 module manually.
    *
    * See the `astra-db-ts` README for more information on different clients.
@@ -150,11 +150,9 @@ export type DataAPIHttpOptions =
 /**
  * The options available for the {@link DataAPIClient} related to making HTTP requests using the default http client.
  *
- * This will be the default client when running on node. May cause issues on non-node runtimes. Prefer to use the
- * {@link FetchHttpClientOptions} instead if that is the case. If you'd rather it defaults to the native fetch API
- * silently, don't provide {@link DataAPIHttpOptions} at all.
+ * If loading the default client fails, and httpOptions is set, it'll throw an {@link FailedToLoadDefaultClientError}.
  *
- * If loading the default client fails, it'll throw an {@link FailedToLoadDefaultClientError}.
+ * If loading the default client fails, and httpOptions is not set, it'll silently fall back to the native fetch API.
  *
  * If you're minifying your code, you'll need to provide the fetch-h2 module manually (see
  * {@link DefaultHttpClientOptions.fetchH2}).
@@ -208,7 +206,7 @@ export interface DefaultHttpClientOptions {
 /**
  * The options available for the {@link DataAPIClient} related to making HTTP requests using the native fetch API.
  *
- * This will be the default client when *not* running on node.
+ * This will be the fallback client if the default client fails to load/if the default client is not available.
  *
  * See the `astra-db-ts` README for more information on different clients.
  *

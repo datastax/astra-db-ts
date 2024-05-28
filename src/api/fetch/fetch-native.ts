@@ -22,6 +22,8 @@ export class FetchNative implements Fetcher {
 
       init.keepalive = true;
       init.signal = AbortSignal.timeout(info.timeout);
+      init.mode = 'no-cors';
+      init.credentials = 'include';
 
       const resp = await fetch(info.url, init);
 

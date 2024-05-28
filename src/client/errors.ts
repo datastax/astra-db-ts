@@ -30,7 +30,7 @@ export class FailedToLoadDefaultClientError extends Error {
    * @internal
    */
   constructor(rootCause: Error) {
-    super('Error loading the fetch-h2 client for the DataAPIClient... please check the "Non-standard runtime support" section of https://github.com/datastax/astra-db-ts for more information.');
+    super('Error loading the fetch-h2 client for the DataAPIClient... please check the "Non-standard environment support" section of https://github.com/datastax/astra-db-ts for more information.');
     this.rootCause = rootCause;
   }
 }

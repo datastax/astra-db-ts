@@ -288,20 +288,10 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
   public [Symbol.asyncDispose]!: () => Promise<void>;
 }
 
-function getDefaultHttpClient(): 'fetch' | undefined {
-  const isNode = globalThis.process?.release?.name === 'node';
-  const isBun = !!globalThis['Bun' as keyof typeof globalThis] || !!globalThis.process?.versions?.bun;
-  const isDeno = !!globalThis['Deno' as keyof typeof globalThis];
-
-  return (isNode && !isBun && !isDeno)
-    ? undefined
-    : 'fetch';
-}
-
 function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
   const clientType = (options?.httpOptions || getDeprecatedPrefersHttp2(options))
     ? options?.httpOptions?.client ?? 'default'
-    : getDefaultHttpClient();
+    : undefined;
 
   const ctx = (() => {
     switch (clientType) {
