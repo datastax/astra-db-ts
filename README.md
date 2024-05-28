@@ -401,8 +401,7 @@ to the native fetch implementation instead if importing fails.
 The Data API itself does not natively support browsers, so `astra-db-ts` isn't technically supported in browsers either.
 
 However, if, for some reason, you really want to use this in a browser, you can probably do so by installing the 
-`events` polyfill and setting up a [CORS proxy](https://github.com/Rob--W/cors-anywhere) to forward requests to the
-Data API.
+`events` polyfill and setting up a [CORS proxy](https://github.com/Rob--W/cors-anywhere) to forward requests to the Data API.
 
 But keep in mind that this is not officially supported, and may be very insecure if you're encoding sensitive
 data into the browser client.
