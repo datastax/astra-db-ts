@@ -4,19 +4,20 @@
 
 `astra-db-ts` works nearly natively with Next.js, depending on the runtime used:
 - `edge`: `astra-db-ts` will work like normal here.
-- `nodejs`:`astra-db-ts` will work like normal here—the `DataAPIClient` may just need a hint to
-  use `fetch` instead of the default http client under the hood, as such:
+- `nodejs`: the `DataAPIClient` may just need a hint to use `fetch` instead of the default http client under the hood, as such:
   ```ts
   const client = new DataAPIClient('*TOKEN*', {
     httpOptions: { client: 'fetch' },
   });
   ```
+  
+See `examples/http2-when-minified` for more information about using HTTP/2 with Next.js.
 
 This is a simple example of how it can be used to interact with an Astra database; it'll simply 
 list out all the collections in a given database.
 
-Check out the [Non-standard runtime support](../../README.md#non-standard-runtime-support) section
-in the main `README.md` for more information common between non-standard runtimes.
+Check out the [Non-standard environment support](../../README.md#non-standard-environment-support) section
+in the main `README.md` for more information common between non-standard environments.
 
 ## Getting started
 
@@ -53,16 +54,15 @@ in the main `README.md` for more information common between non-standard runtime
 ```ts
 import { DataAPIClient } from '@datastax/astra-db-ts';
 
-// Creates the client with the `httpOptions` set to use the `fetch` client
-// as we're on Vercel's node.js runtime which doesn't support the default http client
-// that the `@datastax/astra-db-ts` package uses.
+// Creates the client with the `httpOptions` set to use the `fetch` client as next.js's minification
+// conflicts with the importing of our default http client (see http2-when-minified for more info)
 const client = new DataAPIClient(process.env.ASTRA_DB_TOKEN!, {
   httpOptions: { client: 'fetch' },
 });
 const db = client.db(process.env.ASTRA_DB_ENDPOINT!);
 
-// If `runtime` is set to `edge`, you could get away without needing to specify the specific client, as `astra-db-ts`
-// would be able to infer that it should use `fetch` for you.
+// If `runtime` is set to `edge`, you could get away without needing to specify the specific
+// client, as `astra-db-ts` would be able to infer that it should use `fetch` for you.
 // e.g. `const client = new DataAPIClient(process.env.ASTRA_DB_TOKEN!);`
 // export const runtime = 'edge';
 

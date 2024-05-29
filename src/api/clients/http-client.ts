@@ -15,7 +15,7 @@
 import { CLIENT_USER_AGENT, RAGSTACK_REQUESTED_WITH } from '@/src/api/constants';
 import { Caller, DataAPIClientEvents } from '@/src/client';
 import TypedEmitter from 'typed-emitter';
-import { FetchCtx, ResponseInfo } from '@/src/api/fetch/types';
+import { FetchCtx, FetcherResponseInfo } from '@/src/api/fetch/types';
 import { MkBaseHeaders, HTTPClientOptions, HTTPRequestInfo } from '@/src/api/clients/types';
 
 /**
@@ -40,20 +40,24 @@ export abstract class HttpClient {
       this.baseUrl += '/' + options.baseApiPath;
     }
 
-    this.baseHeaders = mkAuthHeader?.(this.#applicationToken) ?? {};
+    this.baseHeaders = mkAuthHeader(this.#applicationToken);
+    this.baseHeaders['User-Agent'] = options.userAgent;
+    this.baseHeaders['Content-Type'] = 'application/json';
   }
 
   public get applicationToken(): string {
     return this.#applicationToken;
   }
 
-  protected async _request(info: HTTPRequestInfo): Promise<ResponseInfo> {
+  protected async _request(info: HTTPRequestInfo): Promise<FetcherResponseInfo> {
     if (this.fetchCtx.closed.ref) {
       throw new Error('Can\'t make requests on a closed client');
     }
 
-    if (info.timeoutManager.msRemaining() <= 0) {
-      throw info.timeoutManager.mkTimeoutError(info.url);
+    const msRemaining = info.timeoutManager.msRemaining();
+
+    if (msRemaining <= 0) {
+      throw info.timeoutManager.mkTimeoutError(info);
     }
 
     const params = info.params ?? {};
@@ -67,9 +71,10 @@ export abstract class HttpClient {
       url: url,
       body: info.data,
       method: info.method,
-      timeoutManager: info.timeoutManager,
       headers: this.baseHeaders,
       forceHttp1: info.forceHttp1,
+      timeout: msRemaining,
+      mkTimeoutError: () => info.timeoutManager.mkTimeoutError(info),
     });
   }
 }
@@ -90,7 +95,7 @@ export function buildUserAgent(caller: Caller | Caller[] | undefined): string {
     (!caller)
       ? [] :
     Array.isArray(caller[0])
-      ? caller
+      ?  caller
       : [caller]
   ) as Caller[];
 

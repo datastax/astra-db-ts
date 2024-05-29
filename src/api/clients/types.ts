@@ -13,6 +13,7 @@ export interface HTTPClientOptions {
   emitter: TypedEmitter<DataAPICommandEvents>,
   monitorCommands: boolean,
   fetchCtx: FetchCtx,
+  userAgent: string,
 }
 
 /**

@@ -307,15 +307,8 @@ export abstract class CumulativeDataAPIError extends DataAPIResponseError {
     readonly partialResult: unknown;
 }
 
-// @public
-export interface CuratedAPIResponse {
-    body?: string;
-    headers: Record<string, any>;
-    httpVersion: 1 | 2;
-    status: number;
-    statusText: string;
-    url: string;
-}
+// @public @deprecated
+export type CuratedAPIResponse = FetcherResponseInfo;
 
 // @public
 export type CurrentDate<Schema> = {
@@ -381,8 +374,10 @@ export interface DataAPIErrorDescriptor {
     readonly message?: string;
 }
 
+// Warning: (ae-forgotten-export) The symbol "CustomHttpClientOptions" needs to be exported by the entry point index.d.ts
+//
 // @public
-export type DataAPIHttpOptions = FetchHttpClientOptions | DefaultHttpClientOptions;
+export type DataAPIHttpOptions = DefaultHttpClientOptions | FetchHttpClientOptions | CustomHttpClientOptions;
 
 // @public
 export class DataAPIResponseError extends DataAPIError {
@@ -531,6 +526,7 @@ export interface DbSpawnOptions {
 // @public
 export interface DefaultHttpClientOptions {
     client?: 'default';
+    fetchH2?: any;
     http1?: Http1Options;
     maxTimeMS?: number;
     preferHttp2?: boolean;
@@ -587,12 +583,10 @@ export interface DevOpsAPIErrorDescriptor {
 
 // @public
 export class DevOpsAPIResponseError extends DevOpsAPIError {
-    // Warning: (ae-forgotten-export) The symbol "ResponseInfo" needs to be exported by the entry point index.d.ts
-    //
     // @internal
-    constructor(resp: ResponseInfo, data: Record<string, any> | undefined);
+    constructor(resp: FetcherResponseInfo, data: Record<string, any> | undefined);
     readonly errors: DevOpsAPIErrorDescriptor[];
-    readonly raw: CuratedAPIResponse;
+    readonly raw: FetcherResponseInfo;
     readonly status: number;
 }
 
@@ -614,6 +608,41 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
 
 // @public
 export interface DropCollectionOptions extends WithTimeout, WithNamespace {
+}
+
+// @public
+export class FailedToLoadDefaultClientError extends Error {
+    // @internal
+    constructor(rootCause: Error);
+    readonly rootCause: Error;
+}
+
+// @public
+export interface Fetcher {
+    close?(): Promise<void>;
+    fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo>;
+}
+
+// @public
+export interface FetcherRequestInfo {
+    body: string | undefined;
+    forceHttp1: boolean | undefined;
+    headers: Record<string, string>;
+    method: 'DELETE' | 'GET' | 'POST';
+    mkTimeoutError: () => Error;
+    timeout: number;
+    url: string;
+}
+
+// @public
+export interface FetcherResponseInfo {
+    additionalAttributes?: Record<string, any>;
+    body?: string;
+    headers: Record<string, any>;
+    httpVersion: 1 | 2;
+    status: number;
+    statusText: string;
+    url: string;
 }
 
 // @public

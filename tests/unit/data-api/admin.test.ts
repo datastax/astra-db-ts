@@ -20,7 +20,13 @@ import { mkAdmin } from '@/src/devops/astra-admin';
 
 describe('unit.data-api.admin', () => {
   const mkOptions = (data?: DbSpawnOptions, devops?: AdminSpawnOptions, preferredType = 'http2') => {
-    return { dbOptions: { token: 'old', monitorCommands: false, ...data }, adminOptions: { adminToken: 'old-admin', monitorCommands: false, ...devops }, emitter: null as any, fetchCtx: { preferred: null!, http1: null!, preferredType } as any };
+    return {
+      dbOptions: { token: 'old', monitorCommands: false, ...data },
+      adminOptions: { adminToken: 'old-admin', monitorCommands: false, ...devops },
+      emitter: null as any,
+      fetchCtx: { preferred: null!, http1: null!, preferredType } as any,
+      userAgent: '',
+    };
   }
 
   describe('constructor tests', () => {
@@ -45,7 +51,10 @@ describe('unit.data-api.admin', () => {
     });
 
     it('should allow admin construction, overwriting options', () => {
-      const admin = mkAdmin(mkOptions({}, { endpointUrl: 'https://api.astra.datastax.com/old' }), { adminToken: 'new-admin', endpointUrl: 'https://api.astra.datastax.com/new' });
+      const admin = mkAdmin(mkOptions({}, { endpointUrl: 'https://api.astra.datastax.com/old' }), {
+        adminToken: 'new-admin',
+        endpointUrl: 'https://api.astra.datastax.com/new',
+      });
       assert.ok(admin);
       assert.strictEqual(admin['_httpClient'].baseUrl, 'https://api.astra.datastax.com/new');
     });

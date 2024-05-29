@@ -12,37 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { FetcherResponseInfo } from '@/src/api/fetch/types';
+
 /**
- * Curated response object from an API call
+ * Response object from an API call
+ *
+ * @deprecated Use {@link FetcherResponseInfo} instead (synonymous type)
  *
  * @public
  */
-export interface CuratedAPIResponse {
-  /**
-   * The string body of the response, if it exists.
-   */
-  body?: string,
-  /**
-   * The headers of the response.
-   */
-  headers: Record<string, any>,
-  /**
-   * The HTTP status code of the response.
-   */
-  status: number,
-  /**
-   * The HTTP version used for the request.
-   */
-  httpVersion: 1 | 2,
-  /**
-   * The URL that the request was made to.
-   */
-  url: string,
-  /**
-   * The status text for the response.
-   */
-  statusText: string,
-}
+export type CuratedAPIResponse = FetcherResponseInfo;
 
 /**
  * The response format of a 2XX-status Data API call

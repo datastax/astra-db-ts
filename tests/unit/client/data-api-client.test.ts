@@ -16,8 +16,9 @@
 import { DataAPIClient } from '@/src/client';
 import * as process from 'process';
 import assert from 'assert';
-import { DEFAULT_DATA_API_PATH } from '@/src/api';
+import { DEFAULT_DATA_API_PATH, FetcherResponseInfo } from '@/src/api';
 import { FetchH2 } from '@/src/api/fetch/fetch-h2';
+import { FetcherRequestInfo } from '@/src/api/fetch/types';
 
 describe('unit.client.data-api-client', () => {
   const endpoint = process.env.ASTRA_URI!;
@@ -127,6 +128,40 @@ describe('unit.client.data-api-client', () => {
       });
     });
 
+    describe('using custom http client', () => {
+      it('should allow custom http client', () => {
+        class CustomFetcher {
+          async fetch(_: FetcherRequestInfo): Promise<FetcherResponseInfo> {
+            return {} as FetcherResponseInfo;
+          }
+        }
+
+        const client = new DataAPIClient('dummy-token', {
+          httpOptions: {
+            client: 'custom',
+            fetcher: new CustomFetcher(),
+          },
+        });
+
+        const httpClient = client.db(endpoint)['_httpClient'];
+        assert.ok(httpClient.fetchCtx.ctx instanceof CustomFetcher);
+      });
+
+      it('should throw if fetcher not properly implemented', () => {
+        assert.throws(() => new DataAPIClient('dummy-token', {
+          httpOptions: {
+            client: 'custom',
+            // @ts-expect-error - testing invalid input
+            fetcher: {},
+          },
+        }));
+        assert.throws(() => new DataAPIClient('dummy-token', {
+          // @ts-expect-error - testing invalid input
+          httpOptions: { client: 'custom' },
+        }));
+      });
+    });
+
     it('validates options properly', () => {
       assert.throws(() => new DataAPIClient('dummy-token', {
         // @ts-expect-error - testing invalid input
@@ -173,13 +208,4 @@ describe('unit.client.data-api-client', () => {
       assert.notStrictEqual(db1['_httpClient'], db2['_httpClient']);
     });
   });
-
-  // describe('admin tests', () => {
-  //   it('should spawn an AstraAdmin instance', () => {
-  //     const admin = new DataAPIClient('dummy-token').admin();
-  //     assert.ok(admin);
-  //     assert.strictEqual(admin['_httpClient'].applicationToken, 'dummy-token');
-  //     assert.ok(admin['_httpClient'].requestStrategy instanceof HTTP1Strategy);
-  //   });
-  // });
 });

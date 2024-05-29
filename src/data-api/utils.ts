@@ -70,8 +70,11 @@ export function replaceAstraUrlIdAndRegion(uri: string, id: string, region: stri
 /**
  * @internal
  */
-export function validateOption<T>(name: string, obj: T, type: string, test?: (obj: NonNullable<T>) => void): void {
+export function validateOption<T>(name: string, obj: T, type: string, require: boolean = false, test?: (obj: NonNullable<T>) => void): void {
   if (obj === null || obj === undefined) {
+    if (require) {
+      throw new Error(`Missing required ${name}; expected a ${type} value`);
+    }
     return;
   }
 

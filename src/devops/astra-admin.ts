@@ -61,6 +61,7 @@ export class AstraAdmin {
         monitorCommands: adminOpts.monitorCommands,
         emitter: options.emitter,
         fetchCtx: options.fetchCtx,
+        userAgent: options.userAgent,
       }),
       enumerable: false,
     });
