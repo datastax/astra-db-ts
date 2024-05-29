@@ -14,8 +14,8 @@ all the collections in a given database.
 Do keep in mind that this is not officially supported, and may be very insecure if you're encoding sensitive
 data into the browser client.
 
-Check out the [Non-standard runtime support](../../README.md#non-standard-runtime-support) section in the main `README.md` for more information common to
-non-standard runtimes.
+Check out the [Non-standard environment support](../../README.md#non-standard-environment-support) section
+in the main `README.md` for more information common to non-standard environments.
 
 ## Getting Started
 

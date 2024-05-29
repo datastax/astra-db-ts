@@ -4,19 +4,20 @@
 
 `astra-db-ts` works nearly natively with Next.js, depending on the runtime used:
 - `edge`: `astra-db-ts` will work like normal here.
-- `nodejs`:`astra-db-ts` will work like normal here—the `DataAPIClient` may just need a hint to
-  use `fetch` instead of the default http client under the hood, as such:
+- `nodejs`: the `DataAPIClient` may just need a hint to use `fetch` instead of the default http client under the hood, as such:
   ```ts
   const client = new DataAPIClient('*TOKEN*', {
     httpOptions: { client: 'fetch' },
   });
   ```
+  
+See `examples/http2-when-minified` for more information about using HTTP/2 with Next.js.
 
 This is a simple example of how it can be used to interact with an Astra database; it'll simply 
 list out all the collections in a given database.
 
-Check out the [Non-standard runtime support](../../README.md#non-standard-runtime-support) section
-in the main `README.md` for more information common between non-standard runtimes.
+Check out the [Non-standard environment support](../../README.md#non-standard-environment-support) section
+in the main `README.md` for more information common between non-standard environments.
 
 ## Getting started
 

@@ -15,8 +15,8 @@ This is a simple example of how we can interact with an Astra database using HTT
 environment. It will list out all the collections in a given database. Note that Next.js is used as
 the example here, but the same principles should apply to other minified environments.
 
-Check out the [Non-standard runtime support](../../README.md#non-standard-runtime-support) section 
-in the main `README.md` for more information common to non-standard runtimes.
+Check out the [Non-standard environment support](../../README.md#non-standard-environment-support) section 
+in the main `README.md` for more information common to non-standard environments.
 
 ## Getting Started
 
