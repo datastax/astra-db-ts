@@ -37,7 +37,7 @@ export class FetchH2 implements Fetcher {
           maxSockets: options?.http1?.maxSockets,
           maxFreeSockets: options?.http1?.maxFreeSockets,
         },
-        httpsProtocols: <const>['http1'],
+        httpsProtocols: ['http1'],
       });
 
       this._preferred = (preferHttp2)

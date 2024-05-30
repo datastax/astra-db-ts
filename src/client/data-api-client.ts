@@ -333,7 +333,7 @@ function getDeprecatedPrefersHttp2(opts: DataAPIClientOptions | undefined | null
 }
 
 function validateRootOpts(opts: DataAPIClientOptions | undefined | null) {
-  validateOption('root client options', opts, 'object');
+  validateOption('DataAPIClientOptions', opts, 'object');
 
   if (!opts) {
     return;
@@ -348,32 +348,32 @@ function validateRootOpts(opts: DataAPIClientOptions | undefined | null) {
 }
 
 function validateHttpOpts(opts: DataAPIHttpOptions | undefined | null) {
-  validateOption('http options', opts, 'object');
+  validateOption('httpOptions', opts, 'object');
 
   if (!opts) {
     return;
   }
 
-  validateOption('client option', opts.client, 'string', false, (client) => {
+  validateOption('httpOptions.client', opts.client, 'string', false, (client) => {
     if (client !== 'fetch' && client !== 'default' && client !== 'custom') {
-      throw new Error('Invalid httpOptions.client; expected \'fetch\' or \'default\'');
+      throw new Error('Invalid httpOptions.client; expected \'fetch\', \'default\', \'custom\', or undefined');
     }
   });
-  validateOption('maxTimeMS option', opts.maxTimeMS, 'number');
+  validateOption('httpOptions.maxTimeMS', opts.maxTimeMS, 'number');
 
   if (opts.client === 'default' || opts.client === undefined) {
-    validateOption('preferHttp2 option', opts.preferHttp2, 'boolean');
+    validateOption('httpOptions.preferHttp2', opts.preferHttp2, 'boolean');
 
-    validateOption('http1 options', opts.http1, 'object', false, (http1) => {
-      validateOption('http1.keepAlive option', http1.keepAlive, 'boolean');
-      validateOption('http1.keepAliveMS option', http1.keepAliveMS, 'number');
-      validateOption('http1.maxSockets option', http1.maxSockets, 'number');
-      validateOption('http1.maxFreeSockets option', http1.maxFreeSockets, 'number');
+    validateOption('httpOptions.http1 options', opts.http1, 'object', false, (http1) => {
+      validateOption('http1.keepAlive', http1.keepAlive, 'boolean');
+      validateOption('http1.keepAliveMS', http1.keepAliveMS, 'number');
+      validateOption('http1.maxSockets', http1.maxSockets, 'number');
+      validateOption('http1.maxFreeSockets', http1.maxFreeSockets, 'number');
     });
   }
 
   if (opts.client === 'custom') {
-    validateOption('fetcher option', opts.fetcher, 'object', true, (fetcher) => {
+    validateOption('httpOptions.fetcher option', opts.fetcher, 'object', true, (fetcher) => {
       validateOption('fetcher.fetch option', fetcher.fetch, 'function', true);
       validateOption('fetcher.close option', fetcher.close, 'function');
     });
