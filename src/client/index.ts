@@ -24,4 +24,5 @@ export {
   Http1Options,
   DataAPIHttpOptions,
   FetchHttpClientOptions,
+  CustomHttpClientOptions,
 } from './types';

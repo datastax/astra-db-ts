@@ -7,7 +7,7 @@
 ## Running the tests
 Prerequisites:
 - A JS package manager (npm, bun, etc.)
-- A clean Astra instance with two keyspaces—`default_keyspace` and `other_keyspace`
+- A clean AstraDB instance with two keyspaces—`default_keyspace` and `other_keyspace`
 - Copy the `.env.example` file and create a new `.env` file following the example template
 
 ```shell
@@ -124,5 +124,5 @@ To build it, just run `npm run build`, which does the following:
 - Deletes any extraneous `.d.ts` files
 
 ## Publishing
-I heavily recommend using [np](https://github.com/sindresorhus/np) to publish the package. Running it will involve running `test:all`, and the
+I heavily recommend using [np](https://github.com/sindresorhus/np) to publish the package. Running it will involve running `test:prerelease`, and the
 versioning step will update the api report + update the version in `src/version.ts`. 

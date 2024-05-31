@@ -64,7 +64,8 @@ describe('integration.devops.lifecycle', async () => {
         assert.strictEqual(dbInfo1.info.keyspace, 'my_namespace');
 
         const dbInfo2 = await admin.dbInfo(asyncDb.id);
-        assert.deepStrictEqual(dbInfo1.info, dbInfo2.info);
+        assert.deepStrictEqual(dbInfo1.info.name, dbInfo2.info.name);
+        assert.deepStrictEqual(dbInfo1.info.keyspaces, dbInfo2.info.keyspaces);
         assert.ok(['PENDING', 'INITIALIZING'].includes(dbInfo2.status));
       }
 

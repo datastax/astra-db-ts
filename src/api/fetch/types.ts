@@ -77,7 +77,7 @@ export interface FetcherRequestInfo {
 }
 
 /**
- * Response object from an API call.
+ * Response object from an API call made by a {@link Fetcher}.
  *
  * @public
  */
@@ -89,7 +89,7 @@ export interface FetcherResponseInfo {
   /**
    * The headers of the response.
    */
-  headers: Record<string, any>,
+  headers: Record<string, string>,
   /**
    * The HTTP status code of the response.
    */
@@ -106,8 +106,10 @@ export interface FetcherResponseInfo {
    * The status text for the response.
    */
   statusText: string,
-/**
+  /**
    * Any additional attributes that may be included in the response (for use w/ custom {@link Fetcher} implementations).
+   *
+   * This is mainly for any potential logging or debugging information that may be useful for the user.
    */
   additionalAttributes?: Record<string, any>,
 }

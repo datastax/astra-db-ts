@@ -59,7 +59,7 @@ describe('integration.data-api.vectorize', () => {
           createVectorizeProvidersTest(db, test, name)
 
           if (i === 0) {
-            createVectorizeParamTests(db, name);
+            createVectorizeParamTests(db, test, name);
           }
 
           after(async () => {
@@ -121,15 +121,17 @@ async function initVectorTests() {
     });
 }
 
-function createVectorizeParamTests(db: Db, name: string) {
+function createVectorizeParamTests(db: Db, test: VectorizeTest, name: string) {
   describe('[vectorize] [dev] $vectorize/vectorize params', () => {
-    const collection = db.collection(name);
+    const collection = db.collection(name, {
+      embeddingApiKey: test.header,
+    });
 
     before(async function () {
-      if (!await db.listCollections({ nameOnly: true }).then(cs => cs.every((c) => c !== name))) {
+      if (!await db.listCollections({ nameOnly: true }).then(cs => cs.some((c) => c === name))) {
         this.skip();
       }
-    })
+    });
 
     beforeEach(async () => {
       await collection.deleteAll();

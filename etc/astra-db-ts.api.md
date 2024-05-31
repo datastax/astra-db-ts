@@ -324,6 +324,13 @@ export class CursorIsStartedError extends DataAPIError {
 }
 
 // @public
+export interface CustomHttpClientOptions {
+    client: 'custom';
+    fetcher: Fetcher;
+    maxTimeMS?: number;
+}
+
+// @public
 export class DataAPIClient extends DataAPIClientEventEmitterBase {
     [Symbol.asyncDispose]: () => Promise<void>;
     constructor(token: string, options?: DataAPIClientOptions | null);
@@ -374,8 +381,6 @@ export interface DataAPIErrorDescriptor {
     readonly message?: string;
 }
 
-// Warning: (ae-forgotten-export) The symbol "CustomHttpClientOptions" needs to be exported by the entry point index.d.ts
-//
 // @public
 export type DataAPIHttpOptions = DefaultHttpClientOptions | FetchHttpClientOptions | CustomHttpClientOptions;
 
@@ -638,7 +643,7 @@ export interface FetcherRequestInfo {
 export interface FetcherResponseInfo {
     additionalAttributes?: Record<string, any>;
     body?: string;
-    headers: Record<string, any>;
+    headers: Record<string, string>;
     httpVersion: 1 | 2;
     status: number;
     statusText: string;
