@@ -46,16 +46,13 @@ in the main `README.md` for more information common between non-standard environ
 ```ts
 import { DataAPIClient } from '@datastax/astra-db-ts';
 
-// Creates the client with the `httpOptions` set to use the `fetch` client as next.js's minification
-// conflicts with the importing of our default http client (see http2-when-minified for more info)
-const client = new DataAPIClient(process.env.ASTRA_DB_TOKEN!, {
-  httpOptions: { client: 'fetch' },
-});
+// Creates the client. Because the code is minified (when ran), astra-db-ts will default to using
+// `fetch` as the HTTP client. If you need HTTP/2, please see `examples/http2-when-minified` for more
+// information on how to use HTTP/2 with Next.js
+const client = new DataAPIClient(process.env.ASTRA_DB_TOKEN!);
 const db = client.db(process.env.ASTRA_DB_ENDPOINT!);
 
-// If `runtime` is set to `edge`, you could get away without needing to specify the specific
-// client, as `astra-db-ts` would be able to infer that it should use `fetch` for you.
-// e.g. `const client = new DataAPIClient(process.env.ASTRA_DB_TOKEN!);`
+// You may use the edge runtime as normal as well. HTTP/2 is not supported here, at all.
 // export const runtime = 'edge';
 
 // Simple example which (attempts to) list all the collections in the database
