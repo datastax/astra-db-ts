@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@datastax/astra-db-ts": "^1.2.1-1",
+    "@datastax/astra-db-ts": "^1.2.1",
     "fetch-h2": "^3.0.0",
     "next": "14.2.3",
     "react": "^18",
