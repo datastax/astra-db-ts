@@ -795,7 +795,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    */
   find(filter: Filter<Schema>, options?: FindOptions): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>> {
-    return new FindCursor(this.namespace, this._httpClient, filter as any, coalesceVectorSpecialsIntoSort(options)) as any;
+    return new FindCursor(this.namespace, this._httpClient, filter as any, coalesceVectorSpecialsIntoSort(options));
   }
 
   /**
@@ -871,18 +871,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       const values = extract(doc);
 
       for (let i = 0, n = values.length; i < n; i++) {
-        if (typeof values[i] === 'object') {
-          const hash = objectHash(values[i]);
+        const key = (typeof values[i] === 'object')
+          ? objectHash(values[i])
+          : values[i];
 
-          if (!seen.has(hash)) {
-            seen.add(hash);
-            ret.push(values[i]);
-          }
-        } else {
-          if (!seen.has(values[i])) {
-            seen.add(values[i]);
-            ret.push(values[i]);
-          }
+        if (!seen.has(key)) {
+          seen.add(key);
+          ret.push(values[i]);
         }
       }
     }
