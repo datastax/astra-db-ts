@@ -31,6 +31,7 @@ import { FetchNative } from '@/src/api/fetch/fetch-native';
 import { LIB_NAME } from '@/src/version';
 import { Fetcher } from '@/src/api/fetch/types';
 import { DbSpawnOptions } from '@/src/data-api';
+import { StaticTokenProvider, TokenProvider } from '@/src/common';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -103,7 +104,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * @param token - The default token to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    * @param options - The default options to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    */
-  constructor(token: string, options?: DataAPIClientOptions | null) {
+  constructor(token: string | TokenProvider, options?: DataAPIClientOptions | null) {
     super();
 
     if (!token || typeof token as any !== 'string') {
@@ -112,22 +113,33 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
 
     validateRootOpts(options);
 
+    const dbToken = StaticTokenProvider.fromMaybeString(options?.dbOptions?.token || token);
+    const adminToken = StaticTokenProvider.fromMaybeString(options?.adminOptions?.adminToken || token);
+
     this.#options = {
       ...options,
       fetchCtx: buildFetchCtx(options || undefined),
       dbOptions: {
         monitorCommands: false,
-        token: token,
         ...options?.dbOptions,
+        token: dbToken,
       },
       adminOptions: {
         monitorCommands: false,
-        adminToken: token,
         ...options?.adminOptions,
+        adminToken: adminToken,
       },
       emitter: this,
       userAgent: buildUserAgent(options?.caller),
     };
+
+    tempOptions.dbOptions.token = (typeof tempOptions.dbOptions.token === 'string')
+      ? new StaticTokenProvider(tempOptions.dbOptions.token)
+      : tempOptions.dbOptions.token;
+
+    tempOptions.adminOptions.adminToken = (typeof tempOptions.adminOptions.adminToken === 'string')
+      ? new StaticTokenProvider(tempOptions.adminOptions.adminToken)
+      : tempOptions.adminOptions.adminToken;
 
     if (Symbol.asyncDispose) {
       this[Symbol.asyncDispose] = this.close;

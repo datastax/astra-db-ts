@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { TokenProvider } from '@/src/common';
+
 /**
  * The options available spawning a new {@link AstraAdmin} instance.
  *
@@ -84,7 +86,7 @@ export interface AdminSpawnOptions {
    * const admin = client.admin({ adminToken: 'strong-token' });
    * ```
    */
-  adminToken?: string,
+  adminToken?: string | TokenProvider,
   /**
    * The base URL for the devops API, which is typically always going to be the following:
    * ```

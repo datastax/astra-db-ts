@@ -18,6 +18,7 @@ import { FetchCtx } from '@/src/api';
 import { Fetcher } from '@/src/api/fetch/types';
 import { AdminSpawnOptions } from '@/src/devops';
 import { DbSpawnOptions } from '@/src/data-api';
+import { TokenProvider } from '@/src/common';
 
 /**
  * The caller information to send with requests, of the form `[name, version?]`, or an array of such.
@@ -311,12 +312,12 @@ export interface InternalRootClientOpts {
   emitter: TypedEmitter<DataAPIClientEvents>,
   fetchCtx: FetchCtx,
   userAgent: string,
-  dbOptions: DbSpawnOptions & {
-    token: string,
+  dbOptions: Omit<DbSpawnOptions, 'token'> & {
+    token?: TokenProvider,
     monitorCommands: boolean,
   },
-  adminOptions: AdminSpawnOptions & {
-    adminToken: string,
+  adminOptions: Omit<AdminSpawnOptions, 'adminToken'> & {
+    adminToken?: TokenProvider,
     monitorCommands: boolean,
   },
 }

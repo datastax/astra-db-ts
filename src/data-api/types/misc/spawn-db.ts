@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { TokenProvider } from '@/src/common';
+
 /**
  * The options available spawning a new {@link Db} instance.
  *
@@ -112,7 +114,7 @@ export interface DbSpawnOptions {
    * });
    * ```
    */
-  token?: string,
+  token?: string | TokenProvider,
   /**
    * The path to the Data API, which is going to be `api/json/v1` for all Astra instances. However, it may vary
    * if you're using a different Data API-compatible endpoint.
