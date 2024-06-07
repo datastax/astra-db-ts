@@ -101,7 +101,8 @@ const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
 })();
 ```
 
-Next steps:
+### Next steps
+
 - More info and usage patterns are given in the ts-doc of classes and methods
 - [TS client reference](https://docs.datastax.com/en/astra/astra-db-vector/clients/typescript.html)
 - [Data API reference](https://docs.datastax.com/en/astra/astra-db-vector/api-reference/data-api-commands.html)
