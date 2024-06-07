@@ -74,7 +74,7 @@ test suite harder to manage.
 
 ### Running vectorize tests
 To run vectorize tests, you need to have a vectorize-enabled kube running, with the correct tags enabled.
-You must create a file, `tests/vectorize_tests.json`, with the following format:
+You must create a file, `vectorize_tests.json`, in the root folder, with the following format:
 
 ```ts
 interface Config {

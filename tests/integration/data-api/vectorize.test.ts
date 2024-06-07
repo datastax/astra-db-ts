@@ -70,11 +70,11 @@ describe('integration.data-api.vectorize', () => {
     });
   });
 
-  it('dummy test so before is executed', () => {});
+  it('dummy test so before is executed', () => { assert.ok(true) });
 });
 
 async function initVectorTests() {
-  const credentials = JSON.parse(fs.readFileSync('tests/vectorize_credentials.json', 'utf8'));
+  const credentials = JSON.parse(fs.readFileSync('vectorize_credentials.json', 'utf8'));
 
   const embeddingProviders = await fetch(`${process.env.ASTRA_URI!}/${DEFAULT_DATA_API_PATH}`, {
     body: JSON.stringify({ findEmbeddingProviders: {} }),

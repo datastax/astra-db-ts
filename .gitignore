@@ -137,4 +137,4 @@ build.zip
 temp
 tsdoc-metadata.json
 
-tests/vectorize_credentials.json
+vectorize_credentials.json
