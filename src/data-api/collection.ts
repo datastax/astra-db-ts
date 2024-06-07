@@ -26,7 +26,7 @@ import {
   TooManyDocumentsToCountError,
   UpdateManyError,
 } from '@/src/data-api/errors';
-import objectHash from 'object-hash';
+import stableStringify from 'safe-stable-stringify';
 import { DataAPIHttpClient } from '@/src/api';
 import {
   AnyBulkWriteOperation,
@@ -871,13 +871,15 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       const values = extract(doc);
 
       for (let i = 0, n = values.length; i < n; i++) {
-        const key = (typeof values[i] === 'object')
-          ? objectHash(values[i])
-          : values[i];
+        const value = values[i];
+
+        const key = (typeof value === 'object')
+          ? stableStringify(value)
+          : value;
 
         if (!seen.has(key)) {
+          ret.push(value);
           seen.add(key);
-          ret.push(values[i]);
         }
       }
     }
