@@ -1,7 +1,6 @@
-import { AdminBlockingOptions, FullDatabaseInfo } from '@/src/devops/types';
+import { AdminBlockingOptions, AdminSpawnOptions, FullDatabaseInfo } from '@/src/devops/types';
 import { DEFAULT_DEVOPS_API_ENDPOINT, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
 import { Db } from '@/src/data-api';
-import { AdminSpawnOptions } from '@/src/client';
 import { DbAdmin } from '@/src/devops/db-admin';
 import { WithTimeout } from '@/src/common/types';
 import { validateAdminOpts } from '@/src/devops/astra-admin';

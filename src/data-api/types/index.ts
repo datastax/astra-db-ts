@@ -19,6 +19,7 @@ export { ListCollectionsOptions, FullCollectionInfo } from './collections/list-c
 export * from './collections/drop-collection';
 export * from './collections/command';
 export * from './collections/spawn-collection';
+export * from './misc/spawn-db';
 export { DeleteManyResult } from './delete/delete-many';
 export { DeleteOneResult, DeleteOneOptions } from './delete/delete-one';
 export { FindOptions } from './find/find';

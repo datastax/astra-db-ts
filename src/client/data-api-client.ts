@@ -16,22 +16,21 @@
 import { Db, mkDb, validateDbOpts } from '@/src/data-api/db';
 import { AstraAdmin, mkAdmin, validateAdminOpts } from '@/src/devops/astra-admin';
 import {
-  AdminSpawnOptions,
   Caller,
   CustomHttpClientOptions,
   DataAPIClientOptions,
   DataAPIHttpOptions,
-  DbSpawnOptions,
   InternalRootClientOpts,
 } from '@/src/client/types';
 import TypedEmitter from 'typed-emitter';
 import { DataAPICommandEvents } from '@/src/data-api/events';
-import { AdminCommandEvents } from '@/src/devops';
+import { AdminCommandEvents, AdminSpawnOptions } from '@/src/devops';
 import { validateOption } from '@/src/data-api/utils';
 import { buildUserAgent, FetchCtx, FetchH2 } from '@/src/api';
 import { FetchNative } from '@/src/api/fetch/fetch-native';
 import { LIB_NAME } from '@/src/version';
 import { Fetcher } from '@/src/api/fetch/types';
+import { DbSpawnOptions } from '@/src/data-api';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the

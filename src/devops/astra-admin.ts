@@ -1,14 +1,14 @@
 import {
-  AdminBlockingOptions,
+  AdminBlockingOptions, AdminSpawnOptions,
   CreateDatabaseOptions,
   DatabaseConfig,
   FullDatabaseInfo,
   ListDatabasesOptions,
 } from '@/src/devops/types';
-import { Db } from '@/src/data-api';
+import { Db, DbSpawnOptions } from '@/src/data-api';
 import { DEFAULT_DEVOPS_API_ENDPOINT, DEFAULT_NAMESPACE, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
 import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
-import { AdminSpawnOptions, DbSpawnOptions, InternalRootClientOpts } from '@/src/client/types';
+import { InternalRootClientOpts } from '@/src/client/types';
 import { validateOption } from '@/src/data-api/utils';
 import { mkDb } from '@/src/data-api/db';
 import { WithTimeout } from '@/src/common';

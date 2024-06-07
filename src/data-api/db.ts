@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, CollectionAlreadyExistsError, SomeDoc } from '@/src/data-api';
+import { Collection, CollectionAlreadyExistsError, DbSpawnOptions, SomeDoc } from '@/src/data-api';
 import { DataAPIHttpClient, DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE, RawDataAPIResponse } from '@/src/api';
 import {
   CreateCollectionOptions,
@@ -22,7 +22,6 @@ import {
 } from '@/src/data-api/types';
 import { DatabaseInfo } from '@/src/devops/types/admin/database-info';
 import { AstraDbAdmin, mkDbAdmin } from '@/src/devops/astra-db-admin';
-import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
 import { RunCommandOptions } from '@/src/data-api/types/collections/command';
 import { WithTimeout } from '@/src/common/types';
 import { DropCollectionOptions } from '@/src/data-api/types/collections/drop-collection';
@@ -31,6 +30,7 @@ import { CreateCollectionCommand } from '@/src/data-api/types/collections/create
 import { ListCollectionsCommand } from '@/src/data-api/types/collections/list-collection';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-collection';
+import { AdminSpawnOptions } from '@/src/devops';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as

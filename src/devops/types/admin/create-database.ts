@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import { AdminBlockingOptions, DatabaseCloudProvider } from '@/src/devops/types';
-import { DbSpawnOptions } from '@/src/client';
+
+import { DbSpawnOptions } from '@/src/data-api';
 
 /**
  * Represents the options for creating a database.
