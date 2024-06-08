@@ -63,7 +63,7 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
 
 // @public
 export interface AdminSpawnOptions {
-    adminToken?: string | TokenProvider;
+    adminToken?: string | TokenProvider | null;
     endpointUrl?: string;
     monitorCommands?: boolean;
 }
@@ -522,7 +522,7 @@ export interface DbSpawnOptions {
     dataApiPath?: string;
     monitorCommands?: boolean;
     namespace?: string;
-    token?: string | TokenProvider;
+    token?: string | TokenProvider | null;
 }
 
 // @public
@@ -612,12 +612,9 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
 export interface DropCollectionOptions extends WithTimeout, WithNamespace {
 }
 
-// @public (undocumented)
+// @public
 export class DSEUsernamePasswordTokenProvider extends TokenProvider {
     constructor(username: string, password: string);
-    // (undocumented)
-    _encodeB64(input: string): string;
-    // (undocumented)
     getTokenAsString(): Promise<string>;
 }
 
@@ -929,7 +926,7 @@ export interface NoUpsertUpdateOptions {
     upsertedId?: never;
 }
 
-// @public (undocumented)
+// @public
 export type nullish = null | undefined;
 
 // @public
@@ -1032,12 +1029,9 @@ export type Sort = Record<string, SortDirection> | {
 // @public
 export type SortDirection = 1 | -1 | 'asc' | 'desc' | 'ascending' | 'descending';
 
-// @public (undocumented)
+// @public
 export class StaticTokenProvider extends TokenProvider {
     constructor(token: string);
-    // (undocumented)
-    static fromMaybeString(token: string | TokenProvider | undefined): TokenProvider | undefined;
-    // (undocumented)
     getTokenAsString(): Promise<string>;
 }
 
@@ -1128,10 +1122,11 @@ export interface StrictUpdateFilter<Schema extends SomeDoc> {
 // @public
 export type ToDotNotation<Schema extends SomeDoc> = Merge<_ToDotNotation<Schema, ''>>;
 
-// @public (undocumented)
+// @public
 export abstract class TokenProvider {
-    // (undocumented)
     abstract getTokenAsString(): Promise<string>;
+    // @internal
+    static parseToken(token: unknown): TokenProvider | nullish;
 }
 
 // @public
