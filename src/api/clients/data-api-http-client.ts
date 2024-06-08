@@ -207,12 +207,12 @@ export function reviver(_: string, value: any): any {
 
 function mkHeaders(embeddingApiKey: string | undefined) {
   if (embeddingApiKey) {
-    return (token: string) => ({
+    return (token: string | undefined) => ({
       [DEFAULT_EMBEDDING_API_KEY_HEADER]: embeddingApiKey,
       [DEFAULT_DATA_API_AUTH_HEADER]: token,
     });
   } else {
-    return (token: string) => ({
+    return (token: string | undefined) => ({
       [DEFAULT_DATA_API_AUTH_HEADER]: token,
     });
   }

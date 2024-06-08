@@ -57,7 +57,7 @@ export class TimeoutManager {
   public readonly ms: number;
 
   constructor(ms: number, readonly mkTimeoutError: MkTimeoutError) {
-    this.ms = ms || 2147483647;
+    this.ms = ms || 600000;
     this._started = false;
   }
 

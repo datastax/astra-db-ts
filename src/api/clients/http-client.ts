@@ -16,7 +16,8 @@ import { CLIENT_USER_AGENT, RAGSTACK_REQUESTED_WITH } from '@/src/api/constants'
 import { Caller, DataAPIClientEvents } from '@/src/client';
 import TypedEmitter from 'typed-emitter';
 import { FetchCtx, FetcherResponseInfo } from '@/src/api/fetch/types';
-import { MkBaseHeaders, HTTPClientOptions, HTTPRequestInfo } from '@/src/api/clients/types';
+import { MkReqHeaders, HTTPClientOptions, HTTPRequestInfo } from '@/src/api/clients/types';
+import { TokenProvider } from '@/src/common';
 
 /**
  * @internal
@@ -26,11 +27,11 @@ export abstract class HttpClient {
   readonly emitter: TypedEmitter<DataAPIClientEvents>;
   readonly monitorCommands: boolean;
   readonly fetchCtx: FetchCtx;
-  readonly #applicationToken: string;
+  readonly applicationToken: TokenProvider | undefined;
   readonly baseHeaders: Record<string, any>;
 
-  protected constructor(options: HTTPClientOptions, mkAuthHeader: MkBaseHeaders) {
-    this.#applicationToken = options.applicationToken;
+  protected constructor(options: HTTPClientOptions, readonly mkReqHeaders: MkReqHeaders) {
+    this.applicationToken = options.applicationToken;
     this.baseUrl = options.baseUrl;
     this.emitter = options.emitter;
     this.monitorCommands = options.monitorCommands;
@@ -40,13 +41,9 @@ export abstract class HttpClient {
       this.baseUrl += '/' + options.baseApiPath;
     }
 
-    this.baseHeaders = mkAuthHeader(this.#applicationToken);
+    this.baseHeaders = {};
     this.baseHeaders['User-Agent'] = options.userAgent;
     this.baseHeaders['Content-Type'] = 'application/json';
-  }
-
-  public get applicationToken(): string {
-    return this.#applicationToken;
   }
 
   protected async _request(info: HTTPRequestInfo): Promise<FetcherResponseInfo> {
@@ -67,11 +64,14 @@ export abstract class HttpClient {
       ? `${info.url}?${new URLSearchParams(params).toString()}`
       : info.url;
 
+    const reqHeaders = this.mkReqHeaders(await this.applicationToken?.getTokenAsString());
+    Object.assign(reqHeaders, this.baseHeaders);
+
     return await this.fetchCtx.ctx.fetch({
       url: url,
       body: info.data,
       method: info.method,
-      headers: this.baseHeaders,
+      headers: reqHeaders,
       forceHttp1: info.forceHttp1,
       timeout: msRemaining,
       mkTimeoutError: () => info.timeoutManager.mkTimeoutError(info),

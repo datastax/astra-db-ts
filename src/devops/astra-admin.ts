@@ -14,7 +14,8 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import {
-  AdminBlockingOptions, AdminSpawnOptions,
+  AdminBlockingOptions,
+  AdminSpawnOptions,
   CreateDatabaseOptions,
   DatabaseConfig,
   FullDatabaseInfo,
@@ -26,7 +27,7 @@ import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { validateOption } from '@/src/data-api/utils';
 import { mkDb } from '@/src/data-api/db';
-import { WithTimeout } from '@/src/common';
+import { StaticTokenProvider, TokenProvider, WithTimeout } from '@/src/common';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -64,7 +65,7 @@ export class AstraAdmin {
    *
    * @internal
    */
-  constructor(options: InternalRootClientOpts & { adminOptions: { adminToken: string } }) {
+  constructor(options: InternalRootClientOpts) {
     const adminOpts = options.adminOptions ?? {};
 
     this.#defaultOpts = options;
@@ -424,6 +425,7 @@ export function mkAdmin(rootOpts: InternalRootClientOpts, options?: AdminSpawnOp
     adminOptions: {
       ...rootOpts?.adminOptions,
       ...options,
+      adminToken: StaticTokenProvider.fromMaybeString(options?.adminToken ?? rootOpts?.adminOptions?.adminToken),
     },
   });
 }
@@ -432,15 +434,19 @@ export function mkAdmin(rootOpts: InternalRootClientOpts, options?: AdminSpawnOp
  * @internal
  */
 export function validateAdminOpts(opts: AdminSpawnOptions | undefined) {
-  validateOption('admin options', opts, 'object');
+  validateOption('adminOptions', opts, 'object');
 
   if (!opts) {
     return;
   }
 
-  validateOption('monitorCommands option', opts.monitorCommands, 'boolean');
+  validateOption('adminOptions.monitorCommands', opts.monitorCommands, 'boolean');
 
-  validateOption('adminToken option', opts.adminToken, 'string');
+  validateOption('adminOptions.adminToken', opts.adminToken, ['string', 'object'], false, (token) => {
+    if (typeof token === 'object' && !(<any>token instanceof TokenProvider)) {
+      throw new TypeError('Expected adminOptions.token to be type of string or TokenProvider');
+    }
+  });
 
-  validateOption('endpointUrl option', opts.endpointUrl, 'string');
+  validateOption('adminOptions.endpointUrl', opts.endpointUrl, 'string');
 }

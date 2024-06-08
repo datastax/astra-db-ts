@@ -31,6 +31,7 @@ import { ListCollectionsCommand } from '@/src/data-api/types/collections/list-co
 import { InternalRootClientOpts } from '@/src/client/types';
 import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-collection';
 import { AdminSpawnOptions } from '@/src/devops';
+import { StaticTokenProvider, TokenProvider } from '@/src/common';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -497,6 +498,7 @@ export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, reg
     dbOptions: {
       ...rootOpts?.dbOptions,
       ...options,
+      token: StaticTokenProvider.fromMaybeString(options?.token ?? rootOpts?.dbOptions?.token),
     },
   });
 }
@@ -505,21 +507,25 @@ export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, reg
  * @internal
  */
 export function validateDbOpts(opts: DbSpawnOptions | undefined) {
-  validateOption('db options', opts, 'object');
+  validateOption('dbOptions', opts, 'object');
 
   if (!opts) {
     return;
   }
 
-  validateOption('namespace option', opts.namespace, 'string', false, (namespace) => {
+  validateOption('dbOptions.namespace', opts.namespace, 'string', false, (namespace) => {
     if (!namespace.match(/^\w{1,48}$/)) {
       throw new Error('Invalid namespace option; expected a string of 1-48 alphanumeric characters');
     }
   });
 
-  validateOption('monitorCommands option', opts.monitorCommands, 'boolean');
+  validateOption('dbOptions.monitorCommands', opts.monitorCommands, 'boolean');
 
-  validateOption('token option', opts.token, 'string');
+  validateOption('dbOptions.token', opts.token, ['string', 'object'], false, (token) => {
+    if (typeof token === 'object' && !(<any>token instanceof TokenProvider)) {
+      throw new TypeError('Expected dbOptions.token to be type of string or TokenProvider');
+    }
+  });
 
-  validateOption('dataApiPath option', opts.dataApiPath, 'string');
+  validateOption('dbOptions.dataApiPath', opts.dataApiPath, 'string');
 }

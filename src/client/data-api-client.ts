@@ -113,8 +113,8 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
 
     validateRootOpts(options);
 
-    const dbToken = StaticTokenProvider.fromMaybeString(options?.dbOptions?.token || token);
-    const adminToken = StaticTokenProvider.fromMaybeString(options?.adminOptions?.adminToken || token);
+    const dbToken = StaticTokenProvider.fromMaybeString(options?.dbOptions?.token ?? token);
+    const adminToken = StaticTokenProvider.fromMaybeString(options?.adminOptions?.adminToken ?? token);
 
     this.#options = {
       ...options,
@@ -132,14 +132,6 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
       emitter: this,
       userAgent: buildUserAgent(options?.caller),
     };
-
-    tempOptions.dbOptions.token = (typeof tempOptions.dbOptions.token === 'string')
-      ? new StaticTokenProvider(tempOptions.dbOptions.token)
-      : tempOptions.dbOptions.token;
-
-    tempOptions.adminOptions.adminToken = (typeof tempOptions.adminOptions.adminToken === 'string')
-      ? new StaticTokenProvider(tempOptions.adminOptions.adminToken)
-      : tempOptions.adminOptions.adminToken;
 
     if (Symbol.asyncDispose) {
       this[Symbol.asyncDispose] = this.close;

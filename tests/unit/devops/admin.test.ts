@@ -13,16 +13,17 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { AdminSpawnOptions, AstraAdmin } from '@/src/devops';
+import { AstraAdmin } from '@/src/devops';
 import { DEFAULT_DEVOPS_API_ENDPOINT } from '@/src/api';
 import { mkAdmin } from '@/src/devops/astra-admin';
-import { DbSpawnOptions } from '@/src/data-api';
+import { InternalRootClientOpts } from '@/src/client/types';
+import { StaticTokenProvider } from '@/src/common';
 
-describe('unit.data-api.admin', () => {
-  const mkOptions = (data?: DbSpawnOptions, devops?: AdminSpawnOptions, preferredType = 'http2') => {
+describe('unit.devops.admin', () => {
+  const mkOptions = (data?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2') => {
     return {
-      dbOptions: { token: 'old', monitorCommands: false, ...data },
-      adminOptions: { adminToken: 'old-admin', monitorCommands: false, ...devops },
+      dbOptions: { token: new StaticTokenProvider('old'), monitorCommands: false, ...data },
+      adminOptions: { adminToken: new StaticTokenProvider('old-admin'), monitorCommands: false, ...devops },
       emitter: null as any,
       fetchCtx: { preferred: null!, http1: null!, preferredType } as any,
       userAgent: '',

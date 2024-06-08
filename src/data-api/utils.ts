@@ -70,16 +70,18 @@ export function replaceAstraUrlIdAndRegion(uri: string, id: string, region: stri
 /**
  * @internal
  */
-export function validateOption<T>(name: string, obj: T, type: string, require: boolean = false, test?: (obj: NonNullable<T>) => void): void {
+export function validateOption<T>(name: string, obj: T, types: string | string[], require: boolean = false, test?: (obj: NonNullable<T>) => void): void {
   if (obj === null || obj === undefined) {
     if (require) {
-      throw new Error(`Missing required ${name}; expected a ${type} value`);
+      throw new Error(`Missing required ${name}; expected a value of some type in ${types}`);
     }
     return;
   }
 
-  if (typeof obj !== type) {
-    throw new TypeError(`Invalid ${name}; expected a ${type} value, or undefined/null`);
+  types = Array.isArray(types) ? types : [types]
+
+  if (!types?.some(t => t === typeof obj)) {
+    throw new TypeError(`Invalid ${name}; expected a value of some type in ${types}, or undefined/null`);
   }
 
   test?.(obj);

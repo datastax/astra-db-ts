@@ -20,6 +20,7 @@ import { DbAdmin } from '@/src/devops/db-admin';
 import { WithTimeout } from '@/src/common/types';
 import { validateAdminOpts } from '@/src/devops/astra-admin';
 import { InternalRootClientOpts } from '@/src/client/types';
+import { StaticTokenProvider } from '@/src/common';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -286,6 +287,7 @@ export function mkDbAdmin(db: Db, rootOpts: InternalRootClientOpts, options?: Ad
     adminOptions: {
       ...rootOpts.adminOptions,
       ...options,
+      adminToken: StaticTokenProvider.fromMaybeString(options?.adminToken ?? rootOpts?.adminOptions?.adminToken),
     },
   });
 }
