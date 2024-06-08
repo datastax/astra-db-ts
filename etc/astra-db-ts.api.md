@@ -63,7 +63,7 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
 
 // @public
 export interface AdminSpawnOptions {
-    adminToken?: string;
+    adminToken?: string | TokenProvider;
     endpointUrl?: string;
     monitorCommands?: boolean;
 }
@@ -101,11 +101,7 @@ export class AstraAdmin {
     // Warning: (ae-forgotten-export) The symbol "InternalRootClientOpts" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(options: InternalRootClientOpts & {
-        adminOptions: {
-            adminToken: string;
-        };
-    });
+    constructor(options: InternalRootClientOpts);
     createDatabase(config: DatabaseConfig, options?: CreateDatabaseOptions): Promise<AstraDbAdmin>;
     db(endpoint: string, options?: DbSpawnOptions): Db;
     db(id: string, region: string, options?: DbSpawnOptions): Db;
@@ -333,7 +329,8 @@ export interface CustomHttpClientOptions {
 // @public
 export class DataAPIClient extends DataAPIClientEventEmitterBase {
     [Symbol.asyncDispose]: () => Promise<void>;
-    constructor(token: string, options?: DataAPIClientOptions | null);
+    constructor(options?: DataAPIClientOptions | nullish);
+    constructor(token: string | TokenProvider | nullish, options?: DataAPIClientOptions | nullish);
     admin(options?: AdminSpawnOptions): AstraAdmin;
     close(): Promise<void>;
     db(endpoint: string, options?: DbSpawnOptions): Db;
@@ -525,7 +522,7 @@ export interface DbSpawnOptions {
     dataApiPath?: string;
     monitorCommands?: boolean;
     namespace?: string;
-    token?: string;
+    token?: string | TokenProvider;
 }
 
 // @public
@@ -613,6 +610,15 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
 
 // @public
 export interface DropCollectionOptions extends WithTimeout, WithNamespace {
+}
+
+// @public (undocumented)
+export class DSEUsernamePasswordTokenProvider extends TokenProvider {
+    constructor(username: string, password: string);
+    // (undocumented)
+    _encodeB64(input: string): string;
+    // (undocumented)
+    getTokenAsString(): Promise<string>;
 }
 
 // @public
@@ -923,6 +929,9 @@ export interface NoUpsertUpdateOptions {
     upsertedId?: never;
 }
 
+// @public (undocumented)
+export type nullish = null | undefined;
+
 // @public
 export type NumberUpdate<Schema> = {
     [K in keyof Schema as IsNum<Schema[K]> extends true ? K : never]?: number | bigint;
@@ -1023,6 +1032,15 @@ export type Sort = Record<string, SortDirection> | {
 // @public
 export type SortDirection = 1 | -1 | 'asc' | 'desc' | 'ascending' | 'descending';
 
+// @public (undocumented)
+export class StaticTokenProvider extends TokenProvider {
+    constructor(token: string);
+    // (undocumented)
+    static fromMaybeString(token: string | TokenProvider | undefined): TokenProvider | undefined;
+    // (undocumented)
+    getTokenAsString(): Promise<string>;
+}
+
 // @public
 export type StrictDateUpdate<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsDate<InNotation> extends true ? {
     [K in keyof InNotation as ContainsDate<InNotation[K]> extends true ? K : never]?: Date | {
@@ -1109,6 +1127,12 @@ export interface StrictUpdateFilter<Schema extends SomeDoc> {
 //
 // @public
 export type ToDotNotation<Schema extends SomeDoc> = Merge<_ToDotNotation<Schema, ''>>;
+
+// @public (undocumented)
+export abstract class TokenProvider {
+    // (undocumented)
+    abstract getTokenAsString(): Promise<string>;
+}
 
 // @public
 export class TooManyDocumentsToCountError extends DataAPIError {

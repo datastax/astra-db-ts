@@ -17,7 +17,7 @@ import { Caller, DataAPIClientEvents } from '@/src/client';
 import TypedEmitter from 'typed-emitter';
 import { FetchCtx, FetcherResponseInfo } from '@/src/api/fetch/types';
 import { MkReqHeaders, HTTPClientOptions, HTTPRequestInfo } from '@/src/api/clients/types';
-import { TokenProvider } from '@/src/common';
+import { nullish, TokenProvider } from '@/src/common';
 
 /**
  * @internal
@@ -27,7 +27,7 @@ export abstract class HttpClient {
   readonly emitter: TypedEmitter<DataAPIClientEvents>;
   readonly monitorCommands: boolean;
   readonly fetchCtx: FetchCtx;
-  readonly applicationToken: TokenProvider | undefined;
+  readonly applicationToken: TokenProvider | nullish;
   readonly baseHeaders: Record<string, any>;
 
   protected constructor(options: HTTPClientOptions, readonly mkReqHeaders: MkReqHeaders) {

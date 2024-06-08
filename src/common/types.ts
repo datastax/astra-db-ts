@@ -27,3 +27,5 @@ export interface WithTimeout {
    */
   maxTimeMS?: number;
 }
+
+export type nullish = null | undefined;

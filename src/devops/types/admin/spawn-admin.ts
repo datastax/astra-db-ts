@@ -86,7 +86,7 @@ export interface AdminSpawnOptions {
    * const admin = client.admin({ adminToken: 'strong-token' });
    * ```
    */
-  adminToken?: string | TokenProvider,
+  adminToken?: string | TokenProvider | null,
   /**
    * The base URL for the devops API, which is typically always going to be the following:
    * ```

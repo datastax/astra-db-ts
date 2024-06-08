@@ -8,13 +8,7 @@ export class StaticTokenProvider extends TokenProvider {
     this.#token = token;
   }
 
-  getTokenAsString(): Promise<string> {
+  override getTokenAsString(): Promise<string> {
     return Promise.resolve(this.#token);
-  }
-
-  static fromMaybeString(token: string | TokenProvider | undefined): TokenProvider | undefined {
-    return (typeof token === 'string')
-      ? new StaticTokenProvider(token)
-      : token;
   }
 }

@@ -31,7 +31,7 @@ import { FetchNative } from '@/src/api/fetch/fetch-native';
 import { LIB_NAME } from '@/src/version';
 import { Fetcher } from '@/src/api/fetch/types';
 import { DbSpawnOptions } from '@/src/data-api';
-import { StaticTokenProvider, TokenProvider } from '@/src/common';
+import { nullish, TokenProvider } from '@/src/common';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -101,20 +101,35 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
   /**
    * Constructs a new instance of the {@link DataAPIClient}.
    *
+   * @param options - The default options to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
+   */
+  constructor(options?: DataAPIClientOptions | nullish)
+
+  /**
+   * Constructs a new instance of the {@link DataAPIClient}.
+   *
    * @param token - The default token to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    * @param options - The default options to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    */
-  constructor(token: string | TokenProvider, options?: DataAPIClientOptions | null) {
+  constructor(token: string | TokenProvider | nullish, options?: DataAPIClientOptions | nullish)
+
+  constructor(tokenOrOptions?: string | TokenProvider | DataAPIClientOptions | null, maybeOptions?: DataAPIClientOptions | null) {
     super();
 
-    if (!token || typeof token as any !== 'string') {
-      throw new Error('A valid token is required to use the DataAPIClient');
-    }
+    const tokenPassed = (typeof tokenOrOptions === 'string' || tokenOrOptions instanceof TokenProvider || maybeOptions !== undefined);
+
+    const token = (tokenPassed)
+      ? tokenOrOptions
+      : undefined;
+
+    const options = (tokenPassed)
+      ? maybeOptions
+      : tokenOrOptions;
 
     validateRootOpts(options);
 
-    const dbToken = StaticTokenProvider.fromMaybeString(options?.dbOptions?.token ?? token);
-    const adminToken = StaticTokenProvider.fromMaybeString(options?.adminOptions?.adminToken ?? token);
+    const dbToken = TokenProvider.parseToken(options?.dbOptions?.token ?? token);
+    const adminToken = TokenProvider.parseToken(options?.adminOptions?.adminToken ?? token);
 
     this.#options = {
       ...options,

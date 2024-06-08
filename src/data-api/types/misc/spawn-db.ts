@@ -114,7 +114,7 @@ export interface DbSpawnOptions {
    * });
    * ```
    */
-  token?: string | TokenProvider,
+  token?: string | TokenProvider | null,
   /**
    * The path to the Data API, which is going to be `api/json/v1` for all Astra instances. However, it may vary
    * if you're using a different Data API-compatible endpoint.

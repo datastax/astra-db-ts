@@ -16,15 +16,15 @@ import type TypedEmitter from 'typed-emitter';
 import type { DataAPICommandEvents } from '@/src/data-api';
 import type { FetchCtx, HttpMethods } from '@/src/api';
 import type { TimeoutManager } from '@/src/api/timeout-managers';
-import { TokenProvider } from '@/src/common';
+import { nullish, TokenProvider } from '@/src/common';
 
 /**
  * @internal
  */
 export interface HTTPClientOptions {
   baseUrl: string,
-  baseApiPath?: string,
-  applicationToken?: TokenProvider,
+  baseApiPath?: string | null,
+  applicationToken: TokenProvider | nullish,
   emitter: TypedEmitter<DataAPICommandEvents>,
   monitorCommands: boolean,
   fetchCtx: FetchCtx,

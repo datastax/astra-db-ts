@@ -31,7 +31,7 @@ import { ListCollectionsCommand } from '@/src/data-api/types/collections/list-co
 import { InternalRootClientOpts } from '@/src/client/types';
 import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-collection';
 import { AdminSpawnOptions } from '@/src/devops';
-import { StaticTokenProvider, TokenProvider } from '@/src/common';
+import { TokenProvider } from '@/src/common';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -498,7 +498,7 @@ export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, reg
     dbOptions: {
       ...rootOpts?.dbOptions,
       ...options,
-      token: StaticTokenProvider.fromMaybeString(options?.token ?? rootOpts?.dbOptions?.token),
+      token: TokenProvider.parseToken(options?.token ?? rootOpts?.dbOptions?.token),
     },
   });
 }
@@ -520,12 +520,6 @@ export function validateDbOpts(opts: DbSpawnOptions | undefined) {
   });
 
   validateOption('dbOptions.monitorCommands', opts.monitorCommands, 'boolean');
-
-  validateOption('dbOptions.token', opts.token, ['string', 'object'], false, (token) => {
-    if (typeof token === 'object' && !(<any>token instanceof TokenProvider)) {
-      throw new TypeError('Expected dbOptions.token to be type of string or TokenProvider');
-    }
-  });
 
   validateOption('dbOptions.dataApiPath', opts.dataApiPath, 'string');
 }

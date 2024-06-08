@@ -8,11 +8,11 @@ export class DSEUsernamePasswordTokenProvider extends TokenProvider {
     this.#token = `cassandra:${this._encodeB64(username)}:${this._encodeB64(password)}`;
   }
 
-  getTokenAsString(): Promise<string> {
+  override getTokenAsString(): Promise<string> {
     return Promise.resolve(this.#token);
   }
 
-  _encodeB64(input: string) {
+  private _encodeB64(input: string) {
     if (typeof window !== 'undefined' && typeof window.btoa === 'function') {
       return window.btoa(decodeURIComponent(encodeURIComponent(input)));
     } else if (typeof Buffer === 'function') {

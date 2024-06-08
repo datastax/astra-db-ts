@@ -27,7 +27,7 @@ import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { validateOption } from '@/src/data-api/utils';
 import { mkDb } from '@/src/data-api/db';
-import { StaticTokenProvider, TokenProvider, WithTimeout } from '@/src/common';
+import { TokenProvider, WithTimeout } from '@/src/common';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -425,7 +425,7 @@ export function mkAdmin(rootOpts: InternalRootClientOpts, options?: AdminSpawnOp
     adminOptions: {
       ...rootOpts?.adminOptions,
       ...options,
-      adminToken: StaticTokenProvider.fromMaybeString(options?.adminToken ?? rootOpts?.adminOptions?.adminToken),
+      adminToken: TokenProvider.parseToken(options?.adminToken ?? rootOpts?.adminOptions?.adminToken),
     },
   });
 }
@@ -441,12 +441,6 @@ export function validateAdminOpts(opts: AdminSpawnOptions | undefined) {
   }
 
   validateOption('adminOptions.monitorCommands', opts.monitorCommands, 'boolean');
-
-  validateOption('adminOptions.adminToken', opts.adminToken, ['string', 'object'], false, (token) => {
-    if (typeof token === 'object' && !(<any>token instanceof TokenProvider)) {
-      throw new TypeError('Expected adminOptions.token to be type of string or TokenProvider');
-    }
-  });
 
   validateOption('adminOptions.endpointUrl', opts.endpointUrl, 'string');
 }

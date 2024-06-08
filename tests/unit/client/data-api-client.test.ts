@@ -19,6 +19,7 @@ import assert from 'assert';
 import { DEFAULT_DATA_API_PATH, FetcherResponseInfo } from '@/src/api';
 import { FetchH2 } from '@/src/api/fetch/fetch-h2';
 import { FetcherRequestInfo } from '@/src/api/fetch/types';
+import { DSEUsernamePasswordTokenProvider } from '@/src/common';
 
 describe('unit.client.data-api-client', () => {
   const endpoint = process.env.ASTRA_URI!;
@@ -28,21 +29,17 @@ describe('unit.client.data-api-client', () => {
   const region = idAndRegion.slice(5).join('-');
 
   describe('constructor tests', () => {
-    it('should allow construction with just a token', () => {
-      const client = new DataAPIClient('dummy-token');
-      assert.ok(client);
-    });
+    it('should accept valid tokens', () => {
+      assert.doesNotThrow(() => new DataAPIClient());
+      assert.doesNotThrow(() => new DataAPIClient('token'));
+      assert.doesNotThrow(() => new DataAPIClient(new DSEUsernamePasswordTokenProvider('username', 'password')));
+    })
 
-    it('should throw if no token is passed', () => {
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataAPIClient());
-    });
-
-    it('should throw if a non-string token is passed', () => {
+    it('should throw if an invalid token is passed', () => {
       // @ts-expect-error - testing invalid input
       assert.throws(() => new DataAPIClient(3));
       // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataAPIClient({ logLevel: 'warn' }));
+      assert.throws(() => new DataAPIClient({ logLevel: 'warn' }, {}));
     });
 
     it('should accept null/undefined/{} for options', () => {
