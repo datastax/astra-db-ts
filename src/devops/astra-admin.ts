@@ -66,7 +66,7 @@ export class AstraAdmin {
    * @internal
    */
   constructor(options: InternalRootClientOpts) {
-    const adminOpts = options.adminOptions ?? {};
+    const adminOpts = options.adminOptions;
 
     this.#defaultOpts = options;
 
@@ -282,15 +282,18 @@ export class AstraAdmin {
    * @returns A list of the complete information for all the databases matching the given filter.
    */
   public async listDatabases(options?: ListDatabasesOptions): Promise<FullDatabaseInfo[]> {
+    const params = {} as Record<string, string>;
+
+    typeof options?.include === 'string'  && (params['include'] = options.include);
+    typeof options?.provider === 'string' && (params['provider'] = options.provider);
+
+    typeof options?.limit === 'number' && (params['limit'] = String(options.skip));
+    typeof options?.skip === 'number'  && (params['starting_after'] = String(options.skip));
+
     const resp = await this._httpClient.request({
       method: HttpMethods.Get,
       path: `/databases`,
-      params: {
-        include: options?.include,
-        provider: options?.provider,
-        limit: options?.limit,
-        starting_after: options?.skip,
-      },
+      params: params,
     }, options);
 
     return resp.data as FullDatabaseInfo[];
@@ -362,14 +365,14 @@ export class AstraAdmin {
       path: '/databases',
       data: definition,
     }, {
-      id: (resp) => resp.headers.location!,
+      id: (resp) => resp.headers.location,
       target: 'ACTIVE',
       legalStates: ['INITIALIZING', 'PENDING'],
       defaultPollInterval: 10000,
       options,
     });
 
-    const db = mkDb(this.#defaultOpts, resp.headers.location!, definition.region, { ...options?.dbOptions, namespace: definition.keyspace });
+    const db = mkDb(this.#defaultOpts, resp.headers.location, definition.region, { ...options?.dbOptions, namespace: definition.keyspace });
     return db.admin(this.#defaultOpts.adminOptions);
   }
 
@@ -423,9 +426,9 @@ export function mkAdmin(rootOpts: InternalRootClientOpts, options?: AdminSpawnOp
   return new AstraAdmin({
     ...rootOpts,
     adminOptions: {
-      ...rootOpts?.adminOptions,
+      ...rootOpts.adminOptions,
       ...options,
-      adminToken: TokenProvider.parseToken(options?.adminToken ?? rootOpts?.adminOptions?.adminToken),
+      adminToken: TokenProvider.parseToken(options?.adminToken ?? rootOpts.adminOptions.adminToken),
     },
   });
 }
@@ -434,13 +437,8 @@ export function mkAdmin(rootOpts: InternalRootClientOpts, options?: AdminSpawnOp
  * @internal
  */
 export function validateAdminOpts(opts: AdminSpawnOptions | undefined) {
-  validateOption('adminOptions', opts, 'object');
-
-  if (!opts) {
-    return;
-  }
-
-  validateOption('adminOptions.monitorCommands', opts.monitorCommands, 'boolean');
-
-  validateOption('adminOptions.endpointUrl', opts.endpointUrl, 'string');
+  validateOption('adminOptions', opts, 'object', false, (opts) => {
+    validateOption('adminOptions.monitorCommands', opts.monitorCommands, 'boolean');
+    validateOption('adminOptions.endpointUrl', opts.endpointUrl, 'string');
+  });
 }

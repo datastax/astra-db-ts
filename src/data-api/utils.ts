@@ -18,23 +18,23 @@ declare const __error: unique symbol;
 
 /**
  * Represents some type-level error which forces immediate attention rather than failing at runtime.
- * 
+ *
  * More inflexable type than `never`, and gives contextual error messages.
- * 
+ *
  * @example
  * ```
  * function unsupported(): TypeErr<'Unsupported operation'> {
  *   throw new Error('Unsupported operation');
  * }
- * 
+ *
  * // Doesn't compile with error:
- * // Type { [__error]: 'Unsupported operation' } is not assignable to type string
+ * // Type TypeErr<'Unsupported operation'> is not assignable to type string
  * const result: string = unsupported();
  * ```
  *
  * @public
  */
-export type TypeErr<S> = unknown & { [__error]: S };
+export type TypeErr<S> =  { [__error]: S };
 
 /**
  * @internal
@@ -71,17 +71,19 @@ export function replaceAstraUrlIdAndRegion(uri: string, id: string, region: stri
  * @internal
  */
 export function validateOption<T>(name: string, obj: T, types: string | string[], require: boolean = false, test?: (obj: NonNullable<T>) => void): void {
+  types = Array.isArray(types) ? types : [types]
+
+  const typesString = `[${types.join(', ')}]`
+
   if (obj === null || obj === undefined) {
     if (require) {
-      throw new Error(`Missing required ${name}; expected a value of some type in ${types}`);
+      throw new Error(`Missing required ${name}; expected a value of some type in ${typesString}`);
     }
     return;
   }
 
-  types = Array.isArray(types) ? types : [types]
-
-  if (!types?.some(t => t === typeof obj)) {
-    throw new TypeError(`Invalid ${name}; expected a value of some type in ${types}, or undefined/null`);
+  if (!types.some(t => t === typeof obj)) {
+    throw new TypeError(`Invalid ${name}; expected a value of some type in ${typesString}, or undefined/null`);
   }
 
   test?.(obj);

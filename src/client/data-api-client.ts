@@ -19,7 +19,7 @@ import {
   Caller,
   CustomHttpClientOptions,
   DataAPIClientOptions,
-  DataAPIHttpOptions,
+  DataAPIHttpOptions, DefaultHttpClientOptions,
   InternalRootClientOpts,
 } from '@/src/client/types';
 import TypedEmitter from 'typed-emitter';
@@ -61,7 +61,7 @@ export type DataAPIClientEvents =
  */
 export const DataAPIClientEventEmitterBase = (() => {
   try {
-    return require('events').EventEmitter as (new () => TypedEmitter<DataAPIClientEvents>);
+    return (require('events') as { EventEmitter: (new () => TypedEmitter<DataAPIClientEvents>) }).EventEmitter;
   } catch (e) {
     throw new Error(`\`${LIB_NAME}\` requires the \`events\` module to be available for usage. Please provide a polyfill (e.g. the \`events\` package) or use a compatible environment.`);
   }
@@ -149,7 +149,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
     };
 
     if (Symbol.asyncDispose) {
-      this[Symbol.asyncDispose] = this.close;
+      this[Symbol.asyncDispose] = () => this.close();
     }
   }
 
@@ -311,16 +311,12 @@ function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
     ? options?.httpOptions?.client ?? 'default'
     : undefined;
 
-  const ctx = (() => {
-    switch (clientType) {
-      case 'fetch':
-        return new FetchNative();
-      case 'custom':
-        return (options!.httpOptions as CustomHttpClientOptions).fetcher;
-      default:
-        return tryLoadFetchH2(clientType, options);
-    }
-  })();
+  const ctx =
+    (clientType === 'fetch')
+      ? new FetchNative() :
+    (clientType === 'custom')
+      ? (options!.httpOptions as CustomHttpClientOptions).fetcher
+      : tryLoadFetchH2(clientType, options)
 
   return {
     ctx: ctx,
@@ -331,11 +327,13 @@ function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
 
 function tryLoadFetchH2(clientType: string | undefined, options: DataAPIClientOptions | undefined): Fetcher {
   try {
-    const preferHttp2 = (<any>options?.httpOptions)?.preferHttp2
+    const httpOptions = options?.httpOptions as DefaultHttpClientOptions | undefined;
+
+    const preferHttp2 = httpOptions?.preferHttp2
       ?? getDeprecatedPrefersHttp2(options)
       ?? true
 
-    return new FetchH2(options?.httpOptions as any, preferHttp2);
+    return new FetchH2(httpOptions, preferHttp2);
   } catch (e) {
     if (clientType === undefined) {
       return new FetchNative();
@@ -346,7 +344,7 @@ function tryLoadFetchH2(clientType: string | undefined, options: DataAPIClientOp
 }
 
 // Shuts the linter up about 'preferHttp2' being deprecated
-function getDeprecatedPrefersHttp2(opts: DataAPIClientOptions | undefined | null) {
+function getDeprecatedPrefersHttp2(opts: DataAPIClientOptions | undefined | null): boolean | undefined {
   return opts?.[('preferHttp2' as any as null)!];
 }
 
@@ -373,7 +371,7 @@ function validateHttpOpts(opts: DataAPIHttpOptions | undefined | null) {
   }
 
   validateOption('httpOptions.client', opts.client, 'string', false, (client) => {
-    if (client !== 'fetch' && client !== 'default' && client !== 'custom') {
+    if (!['fetch', 'default', 'custom'].includes(client)) {
       throw new Error('Invalid httpOptions.client; expected \'fetch\', \'default\', \'custom\', or undefined');
     }
   });

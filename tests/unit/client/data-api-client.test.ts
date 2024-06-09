@@ -14,15 +14,15 @@
 // noinspection DuplicatedCode
 
 import { DataAPIClient } from '@/src/client';
-import * as process from 'process';
 import assert from 'assert';
 import { DEFAULT_DATA_API_PATH, FetcherResponseInfo } from '@/src/api';
 import { FetchH2 } from '@/src/api/fetch/fetch-h2';
 import { FetcherRequestInfo } from '@/src/api/fetch/types';
 import { DSEUsernamePasswordTokenProvider } from '@/src/common';
+import { TEST_ASTRA_URI } from '@/tests/fixtures';
 
 describe('unit.client.data-api-client', () => {
-  const endpoint = process.env.ASTRA_URI!;
+  const endpoint = TEST_ASTRA_URI;
 
   const idAndRegion = endpoint.split('.')[0].split('https://')[1].split('-');
   const id = idAndRegion.slice(0, 5).join('-');
@@ -128,8 +128,8 @@ describe('unit.client.data-api-client', () => {
     describe('using custom http client', () => {
       it('should allow custom http client', () => {
         class CustomFetcher {
-          async fetch(_: FetcherRequestInfo): Promise<FetcherResponseInfo> {
-            return {} as FetcherResponseInfo;
+          fetch(_: FetcherRequestInfo): Promise<FetcherResponseInfo> {
+            return Promise.resolve(<FetcherResponseInfo>{});
           }
         }
 

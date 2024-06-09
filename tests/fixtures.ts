@@ -31,13 +31,16 @@ let collsSetup = false;
 export const USE_HTTP2 = !process.env.ASTRA_USE_HTTP1;
 export const HTTP_CLIENT_TYPE = process.env.ASTRA_USE_FETCH ? 'fetch' : undefined;
 
-export const initTestObjects = async (ctx: Context, preferHttp2 = USE_HTTP2, clientType: typeof HTTP_CLIENT_TYPE = HTTP_CLIENT_TYPE): Promise<[DataAPIClient, Db, Collection]> => {
-  if (!process.env.ASTRA_URI || !process.env.APPLICATION_TOKEN) {
-    ctx.skip();
-  }
+if (!process.env.ASTRA_URI || !process.env.APPLICATION_TOKEN) {
+  throw new Error('Please ensure the ASTRA_URI and APPLICATION_TOKEN env vars are set')
+}
 
-  const client = new DataAPIClient(process.env.APPLICATION_TOKEN!, { httpOptions: { preferHttp2, client: clientType } });
-  const db = client.db(process.env.ASTRA_URI!);
+export const TEST_APPLICATION_TOKEN = process.env.APPLICATION_TOKEN;
+export const TEST_ASTRA_URI = process.env.ASTRA_URI;
+
+export const initTestObjects = async (ctx: Context, preferHttp2 = USE_HTTP2, clientType: typeof HTTP_CLIENT_TYPE = HTTP_CLIENT_TYPE): Promise<[DataAPIClient, Db, Collection]> => {
+  const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { httpOptions: { preferHttp2, client: clientType } });
+  const db = client.db(TEST_ASTRA_URI);
 
   if (!collsSetup) {
     await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
@@ -56,7 +59,7 @@ export const initTestObjects = async (ctx: Context, preferHttp2 = USE_HTTP2, cli
 
 export const initCollectionWithFailingClient = async (ctx: Context) => {
   const [, , collection] = await initTestObjects(ctx);
-  (<any>collection['_httpClient']).executeCommand = async () => { throw new Error('test') };
+  collection['_httpClient'].executeCommand = () => { throw new Error('test') };
   return collection;
 }
 

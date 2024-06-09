@@ -15,7 +15,7 @@
 
 import assert from 'assert';
 import { Db } from '@/src/data-api';
-import { assertTestsEnabled, initTestObjects } from '@/tests/fixtures';
+import { assertTestsEnabled, initTestObjects, TEST_ASTRA_URI } from '@/tests/fixtures';
 import * as fs from 'fs';
 import { fetch } from 'fetch-h2';
 import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DATA_API_PATH } from '@/src/api';
@@ -38,7 +38,7 @@ describe('integration.data-api.vectorize', () => {
 
     [, db] = await initTestObjects(this);
 
-    const tests: VectorizeTest[] = await initVectorTests().catch((e) => {
+    const tests: VectorizeTest[] = await initVectorTests().catch((e: unknown) => {
       console.error('Failed to initialize vectorize tests', e);
       return [];
     });
@@ -76,7 +76,7 @@ describe('integration.data-api.vectorize', () => {
 async function initVectorTests() {
   const credentials = JSON.parse(fs.readFileSync('vectorize_credentials.json', 'utf8'));
 
-  const embeddingProviders = await fetch(`${process.env.ASTRA_URI!}/${DEFAULT_DATA_API_PATH}`, {
+  const embeddingProviders = await fetch(`${TEST_ASTRA_URI}/${DEFAULT_DATA_API_PATH}`, {
     body: JSON.stringify({ findEmbeddingProviders: {} }),
     headers: {
       [DEFAULT_DATA_API_AUTH_HEADER]: process.env.APPLICATION_TOKEN,
@@ -176,7 +176,7 @@ function createVectorizeParamTests(db: Db, test: VectorizeTest, name: string) {
       await assert.rejects(async () => {
         await collection.findOne({}, { sort: { name: 1 }, vectorize: 'some text' });
       });
-      await assert.rejects(async () => {
+      assert.throws(() => {
         collection.find({}, { sort: { name: 1 }, vectorize: 'some text' });
       });
       await assert.rejects(async () => {

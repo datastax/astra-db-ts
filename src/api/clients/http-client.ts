@@ -58,7 +58,6 @@ export abstract class HttpClient {
     }
 
     const params = info.params ?? {};
-    Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
 
     const url = (Object.keys(params).length > 0)
       ? `${info.url}?${new URLSearchParams(params).toString()}`

@@ -32,7 +32,7 @@ describe('integration.data-api.collection.insert-one', () => {
     const res = await collection.insertOne({ name: 'Lzzy' });
     assert.ok(res);
     assert.ok(typeof res.insertedId as any === 'string');
-    assert.doesNotThrow(() => new UUID(<any>res.insertedId));
+    assert.doesNotThrow(() => new UUID(<string>res.insertedId));
   });
 
   it('should insertOne document with id', async () => {
@@ -69,7 +69,7 @@ describe('integration.data-api.collection.insert-one', () => {
     assert.ok(res.insertedId);
     const found = await collection.findOne({ foreignId: id });
     assert.ok(found);
-    assert.strictEqual(found?.foreignId.toString(), id.toString());
+    assert.strictEqual(found.foreignId.toString(), id.toString());
   });
 
   it('should insertOne document with a non-_id ObjectId', async () => {
@@ -78,7 +78,7 @@ describe('integration.data-api.collection.insert-one', () => {
     assert.ok(res.insertedId);
     const found = await collection.findOne({ foreignId: id });
     assert.ok(found);
-    assert.strictEqual(found?.foreignId.toString(), id.toString());
+    assert.strictEqual(found.foreignId.toString(), id.toString());
   });
 
   it('should insertOne with vector', async () => {
@@ -94,7 +94,7 @@ describe('integration.data-api.collection.insert-one', () => {
     assert.ok(res);
     const found = await collection.findOne({ name: 'Hot Fuzz' });
     assert.ok(found?.date instanceof Date);
-    assert.strictEqual(found?.date.toISOString(), timestamp.toISOString());
+    assert.strictEqual(found.date.toISOString(), timestamp.toISOString());
   });
 
   it('should store bigint as number', async () => {
@@ -104,7 +104,7 @@ describe('integration.data-api.collection.insert-one', () => {
     });
 
     const res = await collection.findOne({ _id: 'bigint-test' });
-    assert.strictEqual(res!.answer, 42);
+    assert.strictEqual(res?.answer, 42);
   });
 
   it('should fail when inserting with both vector and vectorize', async () => {

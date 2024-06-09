@@ -41,10 +41,10 @@ describe('integration.data-api.collection.find-one-and-replace', () => {
       },
     );
     assert.strictEqual(resp.ok, 1);
-    assert.strictEqual(resp.value!._id, docId);
-    assert.strictEqual(resp.value!.username, 'jimr');
-    assert.strictEqual(resp.value!.address.city, 'nyc');
-    assert.strictEqual(resp.value!.address.country, 'usa');
+    assert.strictEqual(resp.value?._id, docId);
+    assert.strictEqual(resp.value.username, 'jimr');
+    assert.strictEqual(resp.value.address?.city, 'nyc');
+    assert.strictEqual(resp.value.address.country, 'usa');
   });
 
   it('should findOneAndReplace with returnDocument before', async () => {
@@ -64,10 +64,10 @@ describe('integration.data-api.collection.find-one-and-replace', () => {
       },
     );
     assert.strictEqual(resp.ok, 1);
-    assert.strictEqual(resp.value!._id, docId);
-    assert.strictEqual(resp.value!.username, usernameBefore);
-    assert.strictEqual(resp.value!.address.city, cityBefore);
-    assert.strictEqual(resp.value!.address.country, undefined);
+    assert.strictEqual(resp.value?._id, docId);
+    assert.strictEqual(resp.value.username, usernameBefore);
+    assert.strictEqual(resp.value.address?.city, cityBefore);
+    assert.strictEqual(resp.value.address.country, undefined);
   });
 
   it('should findOneAndReplace with upsert true', async () => {
@@ -85,10 +85,10 @@ describe('integration.data-api.collection.find-one-and-replace', () => {
       },
     );
     assert.strictEqual(resp.ok, 1);
-    assert.strictEqual(resp.value!._id, newDocId);
-    assert.strictEqual(resp.value!.username, 'jimr');
-    assert.strictEqual(resp.value!.address.city, 'nyc');
-    assert.strictEqual(resp.value!.address.country, 'usa');
+    assert.strictEqual(resp.value?._id, newDocId);
+    assert.strictEqual(resp.value.username, 'jimr');
+    assert.strictEqual(resp.value.address?.city, 'nyc');
+    assert.strictEqual(resp.value.address.country, 'usa');
   });
 
   it('should findOneAndReplace with upsert true and returnDocument before', async () => {
@@ -134,8 +134,8 @@ describe('integration.data-api.collection.find-one-and-replace', () => {
       { username: 'b' },
       { projection: { username: 1 }, returnDocument: 'after', includeResultMetadata: true },
     );
-    assert.strictEqual(res.value!.username, 'b');
-    assert.strictEqual(res.value!.answer, undefined);
+    assert.strictEqual(res.value?.username, 'b');
+    assert.strictEqual(res.value.answer, undefined);
   });
 
   it('should findOneAndReplace with sort', async () => {
@@ -150,14 +150,14 @@ describe('integration.data-api.collection.find-one-and-replace', () => {
       { username: 'aaa' },
       { sort: { username: 1 }, returnDocument: 'before', includeResultMetadata: true },
     );
-    assert.strictEqual(res.value!.username, 'a');
+    assert.strictEqual(res.value?.username, 'a');
 
     res = await collection.findOneAndReplace(
       {},
       { username: 'ccc' },
       { sort: { username: -1 }, returnDocument: 'before', includeResultMetadata: true },
     );
-    assert.deepStrictEqual(res.value!.username, 'c');
+    assert.deepStrictEqual(res.value?.username, 'c');
   });
 
   it('should not return metadata when includeResultMetadata is false', async () => {
@@ -194,7 +194,7 @@ describe('integration.data-api.collection.find-one-and-replace', () => {
       { username: 'aaa' },
       { sort: { $vector: [1, 1, 1, 1, 1] }, returnDocument: 'before', includeResultMetadata: true },
     );
-    assert.strictEqual(res.value!.username, 'a');
+    assert.strictEqual(res.value?.username, 'a');
   });
 
   it('should findOneAndReplace with vector sort in option', async () => {
@@ -209,7 +209,7 @@ describe('integration.data-api.collection.find-one-and-replace', () => {
       { username: 'aaa' },
       { vector: [1, 1, 1, 1, 1], returnDocument: 'before', includeResultMetadata: true },
     );
-    assert.strictEqual(res.value!.username, 'a');
+    assert.strictEqual(res.value?.username, 'a');
   });
 
   it('should error when both sort and vector are provided', async () => {

@@ -120,26 +120,26 @@ export class DataAPIHttpClient extends HttpClient {
         throw new DataAPIHttpError(resp);
       }
 
-      const data: RawDataAPIResponse = JSON.parse(resp.body!, reviver);
+      const data: RawDataAPIResponse = resp.body ? JSON.parse(resp.body, reviver) : {};
 
-      if (resp.status === 401 || (data.errors && data.errors?.length > 0 && data?.errors[0]?.message === 'UNAUTHENTICATED: Invalid token')) {
+      if (resp.status === 401 || (data.errors && data.errors.length > 0 && data.errors[0]?.message === 'UNAUTHENTICATED: Invalid token')) {
         const fauxResponse = mkFauxErroredResponse('Authentication failed; is your token valid?');
         throw mkRespErrorFromResponse(DataAPIResponseError, info.command, fauxResponse);
       }
 
-      if (data.errors && data?.errors?.length > 0 && data?.errors[0]?.errorCode === 'COLLECTION_NOT_EXIST') {
-        const name = data?.errors[0]?.message.split(': ')[1];
-        throw new CollectionNotFoundError(info.namespace!, name);
+      if (data.errors && data.errors.length > 0 && data.errors[0]?.errorCode === 'COLLECTION_NOT_EXIST') {
+        const name = data.errors[0]?.message.split(': ')[1];
+        throw new CollectionNotFoundError(info.namespace ?? '<unknown>', name);
       }
 
-      if (data?.errors && data?.errors.length > 0) {
+      if (data.errors && data.errors.length > 0) {
         throw mkRespErrorFromResponse(DataAPIResponseError, info.command, data);
       }
 
       const respData = {
-        data: data?.data,
-        status: data?.status,
-        errors: data?.errors,
+        data: data.data,
+        status: data.status,
+        errors: data.errors,
       }
 
       if (this.monitorCommands) {

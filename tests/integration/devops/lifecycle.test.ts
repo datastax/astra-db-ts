@@ -20,7 +20,7 @@ import { DevOpsAPIResponseError } from '@/src/devops';
 import { DEFAULT_NAMESPACE, HttpMethods } from '@/src/api';
 import { TimeoutManager } from '@/src/api/timeout-managers';
 
-describe('integration.devops.lifecycle', async () => {
+describe('integration.devops.lifecycle', () => {
   let client: DataAPIClient;
 
   before(async function () {
@@ -249,12 +249,12 @@ describe('integration.devops.lifecycle', async () => {
       }
 
       {
-        await assert.rejects(async () => await admin.dropDatabase(syncDb.id), DevOpsAPIResponseError);
-        await assert.rejects(async () => await admin.dropDatabase(syncDb.id, { blocking: false }), DevOpsAPIResponseError);
-        await assert.rejects(async () => await admin.dropDatabase(syncDb), DevOpsAPIResponseError);
-        await assert.rejects(async () => await admin.dropDatabase(syncDb, { blocking: false }), DevOpsAPIResponseError);
-        await assert.rejects(async () => await syncDbAdmin.drop(), DevOpsAPIResponseError);
-        await assert.rejects(async () => await syncDbAdmin.drop({ blocking: false }), DevOpsAPIResponseError);
+        await assert.rejects(async () => { await admin.dropDatabase(syncDb.id); }, DevOpsAPIResponseError);
+        await assert.rejects(async () => { await admin.dropDatabase(syncDb.id, { blocking: false }); }, DevOpsAPIResponseError);
+        await assert.rejects(async () => { await admin.dropDatabase(syncDb); }, DevOpsAPIResponseError);
+        await assert.rejects(async () => { await admin.dropDatabase(syncDb, { blocking: false }); }, DevOpsAPIResponseError);
+        await assert.rejects(async () => { await syncDbAdmin.drop(); }, DevOpsAPIResponseError);
+        await assert.rejects(async () => { await syncDbAdmin.drop({ blocking: false }); }, DevOpsAPIResponseError);
       }
 
       // Either this stops occasionally 500s in the following tests,

@@ -33,7 +33,7 @@ export interface DevOpsAPIRequestInfo {
   path: string,
   method: HttpMethodStrings,
   data?: Record<string, any>,
-  params?: Record<string, any>,
+  params?: Record<string, string>,
 }
 
 interface LongRunningRequestInfo {
@@ -80,7 +80,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
         timeoutManager,
       });
 
-      const data = resp.body ? JSON.parse(resp.body) : undefined;
+      const data = resp.body ? JSON.parse(resp.body) as Record<string, any> : undefined;
 
       if (resp.status >= 400) {
         throw new DevOpsAPIResponseError(resp, data);
@@ -110,7 +110,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
 
   public async requestLongRunning(req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo): Promise<DevopsAPIResponse> {
     const timeoutManager = this._mkTimeoutManager(info.options?.maxTimeMS);
-    const isLongRunning = info?.options?.blocking !== false;
+    const isLongRunning = info.options?.blocking !== false;
 
     if (this.monitorCommands) {
       this.emitter.emit('adminCommandStarted', new AdminCommandStartedEvent(req, isLongRunning, timeoutManager.ms));
@@ -188,5 +188,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
 }
 
 function mkHeaders(token: string | undefined) {
-  return { [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` };
+  return (token)
+    ? { [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` }
+    : {}
 }

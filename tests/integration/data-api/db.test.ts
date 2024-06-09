@@ -20,14 +20,15 @@ import {
   EPHEMERAL_COLLECTION_NAME,
   initTestObjects,
   OTHER_NAMESPACE,
+  TEST_APPLICATION_TOKEN,
+  TEST_ASTRA_URI,
 } from '@/tests/fixtures';
 import { CollectionAlreadyExistsError, DataAPIResponseError, Db } from '@/src/data-api';
 import { DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE } from '@/src/api';
 import { DataAPIClient } from '@/src/client';
-import process from 'process';
 import { CollectionNotFoundError } from '@/src/data-api/errors';
 
-describe('integration.data-api.db', async () => {
+describe('integration.data-api.db', () => {
   let db: Db;
 
   before(async function () {
@@ -37,7 +38,7 @@ describe('integration.data-api.db', async () => {
   });
 
   describe('[long] createCollection + dropCollection', () => {
-    before(async function () {
+    before(function () {
       assertTestsEnabled(this, 'LONG');
     });
 
@@ -144,9 +145,9 @@ describe('integration.data-api.db', async () => {
     });
 
     it('should work even when instantiated weirdly', async () => {
-      const db = new DataAPIClient(process.env.APPLICATION_TOKEN!, { dbOptions: { namespace: '123123123', dataApiPath: 'King, by Eluveitie' } })
+      const db = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { namespace: '123123123', dataApiPath: 'King, by Eluveitie' } })
         .admin({ adminToken: 'dummy-token' })
-        .dbAdmin(process.env.ASTRA_URI!, { dataApiPath: DEFAULT_DATA_API_PATH, namespace: DEFAULT_NAMESPACE })
+        .dbAdmin(TEST_ASTRA_URI, { dataApiPath: DEFAULT_DATA_API_PATH, namespace: DEFAULT_NAMESPACE })
         .db()
         .admin({ adminToken: 'tummy-token', endpointUrl: 'Memento Mori, by Feuerschwanz' })
         .db();
@@ -169,16 +170,16 @@ describe('integration.data-api.db', async () => {
       const res = await db.listCollections({ nameOnly: false });
       const found = res.find((collection) => collection.name === DEFAULT_COLLECTION_NAME);
       assert.ok(found);
-      assert.strictEqual(found.options?.vector?.dimension, 5);
-      assert.strictEqual(found.options?.vector?.metric, 'cosine');
+      assert.strictEqual(found.options.vector?.dimension, 5);
+      assert.strictEqual(found.options.vector.metric, 'cosine');
     });
 
     it('should return a list of collection infos with nameOnly not set', async () => {
       const res = await db.listCollections();
       const found = res.find((collection) => collection.name === DEFAULT_COLLECTION_NAME);
       assert.ok(found);
-      assert.strictEqual(found.options?.vector?.dimension, 5);
-      assert.strictEqual(found.options?.vector?.metric, 'cosine');
+      assert.strictEqual(found.options.vector?.dimension, 5);
+      assert.strictEqual(found.options.vector.metric, 'cosine');
     });
 
     it('should not list collections in another namespace', async () => {

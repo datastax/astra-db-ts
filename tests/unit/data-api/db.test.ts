@@ -15,19 +15,19 @@
 
 import assert from 'assert';
 import { Db } from '@/src/data-api';
-import process from 'process';
 import { DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE } from '@/src/api';
 import { mkDb } from '@/src/data-api/db';
 import { StaticTokenProvider } from '@/src/common';
 import { InternalRootClientOpts } from '@/src/client/types';
+import { TEST_ASTRA_URI } from '@/tests/fixtures';
 
 describe('unit.data-api.db', () => {
   const mkOptions = (data?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2') => {
     return {
       dbOptions: { token: new StaticTokenProvider('old'), monitorCommands: false, ...data },
       adminOptions: { adminToken: new StaticTokenProvider('old-admin'), monitorCommands: false, ...devops },
-      emitter: null as any,
-      fetchCtx: { preferred: null!, http1: null!, preferredType } as any,
+      emitter: null!,
+      fetchCtx: { preferredType } as any,
       userAgent: '',
     };
   }
@@ -71,80 +71,80 @@ describe('unit.data-api.db', () => {
     });
 
     it('is initialized with default namespace', () => {
-      const db = mkDb(mkOptions(), process.env.ASTRA_URI!);
+      const db = mkDb(mkOptions(), TEST_ASTRA_URI);
       assert.strictEqual(db.namespace, DEFAULT_NAMESPACE);
     });
 
     it('uses custon namespace when provided', () => {
-      const db = mkDb(mkOptions({ namespace: 'new_namespace' }), process.env.ASTRA_URI!);
+      const db = mkDb(mkOptions({ namespace: 'new_namespace' }), TEST_ASTRA_URI);
       assert.strictEqual(db.namespace, 'new_namespace');
     });
 
     it('overrides namespace in db when provided', () => {
-      const db = mkDb(mkOptions(), process.env.ASTRA_URI!, { namespace: 'new_namespace' });
+      const db = mkDb(mkOptions(), TEST_ASTRA_URI, { namespace: 'new_namespace' });
       assert.strictEqual(db.namespace, 'new_namespace');
     });
 
     it('throws error on empty namespace', () => {
       assert.throws(() => {
-        mkDb(mkOptions(), process.env.ASTRA_URI!, { namespace: '' });
+        mkDb(mkOptions(), TEST_ASTRA_URI, { namespace: '' });
       });
     });
 
     it('throws error on invalid namespace', () => {
       assert.throws(() => {
-        mkDb(mkOptions(), process.env.ASTRA_URI!, { namespace: 'bad namespace' });
+        mkDb(mkOptions(), TEST_ASTRA_URI, { namespace: 'bad namespace' });
       });
     });
 
     it('handles different dataApiPath', () => {
-      const db = mkDb(mkOptions({ dataApiPath: 'api/json/v2' }), process.env.ASTRA_URI!);
-      assert.strictEqual(db['_httpClient'].baseUrl, `${process.env.ASTRA_URI}/api/json/v2`);
+      const db = mkDb(mkOptions({ dataApiPath: 'api/json/v2' }), TEST_ASTRA_URI);
+      assert.strictEqual(db['_httpClient'].baseUrl, `${TEST_ASTRA_URI}/api/json/v2`);
     });
 
     it('handles different dataApiPath when overridden', () => {
-      const db = mkDb(mkOptions({ dataApiPath: 'api/json/v2' }), process.env.ASTRA_URI!, { dataApiPath: 'api/json/v3' });
-      assert.strictEqual(db['_httpClient'].baseUrl, `${process.env.ASTRA_URI}/api/json/v3`);
+      const db = mkDb(mkOptions({ dataApiPath: 'api/json/v2' }), TEST_ASTRA_URI, { dataApiPath: 'api/json/v3' });
+      assert.strictEqual(db['_httpClient'].baseUrl, `${TEST_ASTRA_URI}/api/json/v3`);
     });
 
     it('overrides token in db when provided', async () => {
-      const db = mkDb(mkOptions(), process.env.ASTRA_URI!, { token: 'new' });
+      const db = mkDb(mkOptions(), TEST_ASTRA_URI, { token: 'new' });
       assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'new');
     });
 
     it('should accept valid monitorCommands', () => {
-      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, {}));
-      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { monitorCommands: true }));
-      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { monitorCommands: false }));
-      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { monitorCommands: null! }));
-      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { monitorCommands: undefined }));
+      assert.doesNotThrow(() => mkDb(mkOptions(), TEST_ASTRA_URI, {}));
+      assert.doesNotThrow(() => mkDb(mkOptions(), TEST_ASTRA_URI, { monitorCommands: true }));
+      assert.doesNotThrow(() => mkDb(mkOptions(), TEST_ASTRA_URI, { monitorCommands: false }));
+      assert.doesNotThrow(() => mkDb(mkOptions(), TEST_ASTRA_URI, { monitorCommands: null! }));
+      assert.doesNotThrow(() => mkDb(mkOptions(), TEST_ASTRA_URI, { monitorCommands: undefined }));
     });
 
     it('should throw on invalid monitorCommands', () => {
       // @ts-expect-error - testing invalid input
-      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { monitorCommands: 'invalid' }));
+      assert.throws(() => mkDb(mkOptions(), TEST_ASTRA_URI, { monitorCommands: 'invalid' }));
       // @ts-expect-error - testing invalid input
-      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { monitorCommands: 1 }));
+      assert.throws(() => mkDb(mkOptions(), TEST_ASTRA_URI, { monitorCommands: 1 }));
       // @ts-expect-error - testing invalid input
-      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { monitorCommands: [] }));
+      assert.throws(() => mkDb(mkOptions(), TEST_ASTRA_URI, { monitorCommands: [] }));
       // @ts-expect-error - testing invalid input
-      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { monitorCommands: {} }));
+      assert.throws(() => mkDb(mkOptions(), TEST_ASTRA_URI, { monitorCommands: {} }));
     });
 
     it('should accept valid dataApiPath', () => {
-      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, {}));
-      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { dataApiPath: 'api/json/v2' }));
-      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { dataApiPath: null! }));
-      assert.doesNotThrow(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { dataApiPath: undefined }));
+      assert.doesNotThrow(() => mkDb(mkOptions(), TEST_ASTRA_URI, {}));
+      assert.doesNotThrow(() => mkDb(mkOptions(), TEST_ASTRA_URI, { dataApiPath: 'api/json/v2' }));
+      assert.doesNotThrow(() => mkDb(mkOptions(), TEST_ASTRA_URI, { dataApiPath: null! }));
+      assert.doesNotThrow(() => mkDb(mkOptions(), TEST_ASTRA_URI, { dataApiPath: undefined }));
     });
 
     it('should throw on invalid dataApiPath', () => {
       // @ts-expect-error - testing invalid input
-      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { dataApiPath: 1 }));
+      assert.throws(() => mkDb(mkOptions(), TEST_ASTRA_URI, { dataApiPath: 1 }));
       // @ts-expect-error - testing invalid input
-      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { dataApiPath: [] }));
+      assert.throws(() => mkDb(mkOptions(), TEST_ASTRA_URI, { dataApiPath: [] }));
       // @ts-expect-error - testing invalid input
-      assert.throws(() => mkDb(mkOptions(), process.env.ASTRA_URI!, { dataApiPath: {} }));
+      assert.throws(() => mkDb(mkOptions(), TEST_ASTRA_URI, { dataApiPath: {} }));
     });
   });
 

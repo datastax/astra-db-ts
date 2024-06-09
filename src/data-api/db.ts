@@ -125,7 +125,7 @@ export class Db {
       value: new DataAPIHttpClient({
         baseUrl: endpoint,
         applicationToken: dbOpts.token,
-        baseApiPath: dbOpts?.dataApiPath || DEFAULT_DATA_API_PATH,
+        baseApiPath: dbOpts.dataApiPath || DEFAULT_DATA_API_PATH,
         emitter: options.emitter,
         monitorCommands: dbOpts.monitorCommands,
         fetchCtx: options.fetchCtx,
@@ -496,9 +496,9 @@ export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, reg
   return new Db(endpoint, {
     ...rootOpts,
     dbOptions: {
-      ...rootOpts?.dbOptions,
+      ...rootOpts.dbOptions,
       ...options,
-      token: TokenProvider.parseToken(options?.token ?? rootOpts?.dbOptions?.token),
+      token: TokenProvider.parseToken(options?.token ?? rootOpts.dbOptions.token),
     },
   });
 }

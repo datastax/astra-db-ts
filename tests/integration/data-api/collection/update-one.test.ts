@@ -43,9 +43,9 @@ describe('integration.data-api.collection.update-one', () => {
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     assert.strictEqual(updateOneResp.upsertedCount, 0);
     const updatedDoc = await collection.findOne({ 'username': 'aaronm' });
-    assert.strictEqual(updatedDoc!._id, idToCheck);
-    assert.strictEqual(updatedDoc!.username, 'aaronm');
-    assert.strictEqual(updatedDoc!.address.city, undefined);
+    assert.strictEqual(updatedDoc?._id, idToCheck);
+    assert.strictEqual(updatedDoc.username, 'aaronm');
+    assert.strictEqual(updatedDoc.address?.city, undefined);
   });
 
   it('should updateOne document by col', async () => {
@@ -63,10 +63,10 @@ describe('integration.data-api.collection.update-one', () => {
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     assert.strictEqual(updateOneResp.upsertedCount, 0);
     const updatedDoc = await collection.findOne({ 'username': 'aaron' });
-    assert.strictEqual(updatedDoc!._id, idToCheck);
-    assert.strictEqual(updatedDoc!.username, 'aaron');
-    assert.strictEqual(updatedDoc!.address.city, 'big banana');
-    assert.strictEqual(updatedDoc!.address.state, 'new state');
+    assert.strictEqual(updatedDoc?._id, idToCheck);
+    assert.strictEqual(updatedDoc.username, 'aaron');
+    assert.strictEqual(updatedDoc.address?.city, 'big banana');
+    assert.strictEqual(updatedDoc.address.state, 'new state');
   });
 
   it('should updateOne with sort', async () => {
@@ -113,10 +113,10 @@ describe('integration.data-api.collection.update-one', () => {
     assert.ok(updateOneResp.upsertedId);
     assert.strictEqual(updateOneResp.upsertedCount, 1);
     const updatedDoc = await collection.findOne({ 'address.city': 'nyc' });
-    assert.ok(updatedDoc!._id);
-    assert.notStrictEqual(updatedDoc!._id, idToCheck);
-    assert.strictEqual(updatedDoc!.address.city, 'nyc');
-    assert.strictEqual(updatedDoc!.address.state, 'ny');
+    assert.ok(updatedDoc?._id);
+    assert.notStrictEqual(updatedDoc._id, idToCheck);
+    assert.strictEqual(updatedDoc.address?.city, 'nyc');
+    assert.strictEqual(updatedDoc.address.state, 'ny');
   });
 
   it('should not overwrite user-specified _id in $setOnInsert', async () => {

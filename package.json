@@ -48,7 +48,7 @@
     "url": "git+https://github.com/datastax/astra-db-ts.git"
   },
   "scripts": {
-    "lint": "eslint .",
+    "lint": "eslint src/* tests/*",
     "test": "ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts tests/integration/**/*.test.ts tests/integration/**/**/*.test.ts",
     "test:all": "env ASTRA_RUN_LONG_TESTS=1 ASTRA_RUN_ADMIN_TESTS=1 ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts tests/integration/**/*.test.ts tests/integration/**/**/*.test.ts",
     "test:coverage": "nyc npm run test:all -- -b",

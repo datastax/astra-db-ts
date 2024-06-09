@@ -13,18 +13,22 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { assertTestsEnabled, initTestObjects, OTHER_NAMESPACE } from '@/tests/fixtures';
+import {
+  assertTestsEnabled,
+  initTestObjects,
+  OTHER_NAMESPACE,
+  TEST_APPLICATION_TOKEN,
+  TEST_ASTRA_URI,
+} from '@/tests/fixtures';
 import { DataAPIClient } from '@/src/client';
 import { Db, ObjectId, UUID, VectorDoc } from '@/src/data-api';
-import process from 'process';
 import assert from 'assert';
 import { DEFAULT_NAMESPACE } from '@/src/api';
 
 describe('integration.misc.quickstart', () => {
   let db: Db;
 
-  const endpoint = process.env.ASTRA_URI!;
-  const idAndRegion = endpoint.split('.')[0].split('https://')[1].split('-');
+  const idAndRegion = TEST_ASTRA_URI.split('.')[0].split('https://')[1].split('-');
   const id = idAndRegion.slice(0, 5).join('-');
   const region = idAndRegion.slice(5).join('-');
 
@@ -33,7 +37,7 @@ describe('integration.misc.quickstart', () => {
   });
 
   describe('[long] quickstart', () => {
-    before(async function () {
+    before(function () {
       assertTestsEnabled(this, 'LONG');
     });
 
@@ -46,8 +50,8 @@ describe('integration.misc.quickstart', () => {
         idea: string,
       }
 
-      const client = new DataAPIClient(process.env.APPLICATION_TOKEN!);
-      const db = client.db(process.env.ASTRA_URI!);
+      const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
+      const db = client.db(TEST_ASTRA_URI);
 
       const collection = await db.createCollection<Idea>('vector_5_collection', { vector: { dimension: 5, metric: 'cosine' } });
 
@@ -89,7 +93,7 @@ describe('integration.misc.quickstart', () => {
       for await (const doc of cursor) {
         // An AI quilt to help you sleep forever: 1
         // A smartwatch that tells you what to eat based on your mood: 0.85490346
-        assert.ok([1, 0.85490346].includes(doc.$similarity!));
+        assert.ok([1, 0.85490346].includes(doc.$similarity ?? 0));
         assert.ok([ideas[0].idea, ideas[2].idea].includes(doc.idea));
       }
 
@@ -98,17 +102,17 @@ describe('integration.misc.quickstart', () => {
   });
 
   describe('[prod] admin-quickstart', () => {
-    before(async function () {
+    before(function () {
       assertTestsEnabled(this, 'PROD');
     });
 
     it('works', async () => {
-      const client = new DataAPIClient(process.env.APPLICATION_TOKEN!);
+      const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
       const admin = client.admin();
 
       const databases = await admin.listDatabases();
-      const dbInfo = databases.find(db => db.id === id)!;
-      assert.ok(dbInfo.info.name);
+      const dbInfo = databases.find(db => db.id === id);
+      assert.ok(dbInfo?.info.name);
       assert.strictEqual(dbInfo.id, id);
       assert.strictEqual(dbInfo.info.region, region);
 
@@ -122,7 +126,7 @@ describe('integration.misc.quickstart', () => {
   });
 
   describe('[long] ids-quickstart', () => {
-    before(async function () {
+    before(function () {
       assertTestsEnabled(this, 'LONG');
     });
 
@@ -137,8 +141,8 @@ describe('integration.misc.quickstart', () => {
         friendId?: string,
       }
 
-      const client = new DataAPIClient(process.env.APPLICATION_TOKEN!);
-      const db = client.db(process.env.ASTRA_URI!);
+      const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
+      const db = client.db(TEST_ASTRA_URI);
 
       const collection = await db.createCollection<Person>('my_collection', { defaultId: { type: 'uuidv7' } });
 
@@ -157,7 +161,7 @@ describe('integration.misc.quickstart', () => {
 
       const jane = await collection.findOne({ name: 'Jane' });
       assert.strictEqual(jane?.name, 'Jane');
-      assert.ok(friendId.equals(jane?.friendId));
+      assert.ok(friendId.equals(jane.friendId));
 
       await client.close();
     });
@@ -165,8 +169,8 @@ describe('integration.misc.quickstart', () => {
 
   describe('portal-quickstart', () => {
     it('works', async () => {
-      const client = new DataAPIClient(process.env.APPLICATION_TOKEN!);
-      const db = client.db(process.env.ASTRA_URI!, { namespace: OTHER_NAMESPACE });
+      const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
+      const db = client.db(TEST_ASTRA_URI, { namespace: OTHER_NAMESPACE });
       assert.ok(Array.isArray(await db.listCollections()));
     });
   });

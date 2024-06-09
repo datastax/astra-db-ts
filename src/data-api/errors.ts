@@ -139,9 +139,9 @@ export class DataAPIHttpError extends DataAPIError {
   public readonly status: number;
 
   /**
-   * The HTTP status code of the response, if available.
+   * The raw string body of the HTTP response, if it exists
    */
-  public readonly body: string;
+  public readonly body?: string;
 
   /**
    * The "raw", errored response from the API.
@@ -156,7 +156,7 @@ export class DataAPIHttpError extends DataAPIError {
   constructor(resp: FetcherResponseInfo) {
     super(`HTTP error: ${resp.status}${resp.body ? `; ${resp.body}` : ''}`);
     this.status = resp.status;
-    this.body = resp.body!;
+    this.body = resp.body;
     this.raw = resp;
     this.name = 'DataAPIHttpError';
   }

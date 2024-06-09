@@ -32,19 +32,19 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
 
   type _id_is_expected = Expect<Equal<IdOf<GetTOfCursor<typeof cursor>>, string>>;
 
-  cursor.next().then((doc) => {
+  void cursor.next().then((doc) => {
     // type doc_type_is_expected = Expect<Equal<TestSchema & { $similarity?: never } | null, typeof doc>>;
     type doc_type_is_expected = Expect<Equal<WithId<TestSchema & { $similarity?: number }> | null, typeof doc>>;
   });
 
-  (async () => {
+  void (async () => {
     for await (const doc of cursor) {
       // type doc_type_is_expected = Expect<Equal<TestSchema & { $similarity?: never }, typeof doc>>;
       type doc_type_is_expected = Expect<Equal<WithId<TestSchema & { $similarity?: number }>, typeof doc>>;
     }
   })();
 
-  cursor.toArray().then((docs) => {
+  void cursor.toArray().then((docs) => {
     type docs_type_is_expected = Expect<Equal<WithId<TestSchema & { $similarity?: number }>[], typeof docs>>;
   });
 
@@ -69,7 +69,7 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
   // type mapped_is_expected = Expect<Equal<typeof mapped, FindCursor<string, TestSchema & { $similarity?: never }>>>;
   type mapped_is_expected = Expect<Equal<typeof mapped, FindCursor<string, WithId<TestSchema & { $similarity?: number }>>>>;
 
-  mapped.next().then((mappedDoc) => {
+  void mapped.next().then((mappedDoc) => {
     type mappedDoc_type_is_expected = Expect<Equal<string | null, typeof mappedDoc>>;
   });
 
@@ -93,7 +93,7 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
 
   type rawProjected_T_and_TRaw_are_expected = Expect<Equal<typeof rawProjected, FindCursor<any>>>;
 
-  rawProjected.next().then((doc) => {
+  void rawProjected.next().then((doc) => {
     type doc_type_is_expected = Expect<Equal<any | null, typeof doc>>;
   });
 
@@ -101,7 +101,7 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
 
   type projected_T_is_expected = Expect<Equal<GetTOfCursor<typeof projected>, { amount: number }>>;
 
-  projected.next().then((doc) => {
+  void projected.next().then((doc) => {
     type doc_type_is_expected = Expect<Equal<{ amount: number } | null, typeof doc>>;
   });
 

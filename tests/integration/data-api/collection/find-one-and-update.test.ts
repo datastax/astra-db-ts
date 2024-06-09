@@ -48,9 +48,9 @@ describe('integration.data-api.collection.find-one-and-update', () => {
       },
     );
     assert.strictEqual(resp.ok, 1);
-    assert.strictEqual(resp.value!._id, docId);
-    assert.strictEqual(resp.value!.username, 'aaronm');
-    assert.strictEqual(resp.value!.address.city, undefined);
+    assert.strictEqual(resp.value?._id, docId);
+    assert.strictEqual(resp.value.username, 'aaronm');
+    assert.strictEqual(resp.value.address?.city, undefined);
   });
 
   it('should findOneAndUpdate with returnDocument before', async () => {
@@ -77,9 +77,9 @@ describe('integration.data-api.collection.find-one-and-update', () => {
       },
     );
     assert.strictEqual(resp.ok, 1);
-    assert.strictEqual(resp.value!._id, docId);
-    assert.strictEqual(resp.value!.username, usernameBefore);
-    assert.strictEqual(resp.value!.address.city, cityBefore);
+    assert.strictEqual(resp.value?._id, docId);
+    assert.strictEqual(resp.value.username, usernameBefore);
+    assert.strictEqual(resp.value.address?.city, cityBefore);
   });
 
   it('should findOneAndUpdate with upsert true', async () => {
@@ -104,9 +104,9 @@ describe('integration.data-api.collection.find-one-and-update', () => {
       },
     );
     assert.strictEqual(resp.ok, 1);
-    assert.strictEqual(resp.value!._id, newDocId);
-    assert.strictEqual(resp.value!.username, 'aaronm');
-    assert.strictEqual(resp.value!.address, undefined);
+    assert.strictEqual(resp.value?._id, newDocId);
+    assert.strictEqual(resp.value.username, 'aaronm');
+    assert.strictEqual(resp.value.address, undefined);
   });
 
   it('should findOneAndUpdate with upsert true and returnDocument before', async () => {
@@ -144,7 +144,7 @@ describe('integration.data-api.collection.find-one-and-update', () => {
       { $set: { username: 'a' } },
       { sort: { username: 1 }, returnDocument: 'before', includeResultMetadata: true },
     );
-    assert.strictEqual(res.value!.username, 'a');
+    assert.strictEqual(res.value?.username, 'a');
   });
 
   it('should findOneAndUpdate with a projection', async () => {
@@ -159,8 +159,8 @@ describe('integration.data-api.collection.find-one-and-update', () => {
       { $set: { username: 'b' } },
       { projection: { username: 1 }, returnDocument: 'after', includeResultMetadata: true },
     );
-    assert.strictEqual(res.value!.username, 'b');
-    assert.strictEqual(res.value!.answer, undefined);
+    assert.strictEqual(res.value?.username, 'b');
+    assert.strictEqual(res.value.answer, undefined);
   });
 
   it('should findOneAndUpdate with sort', async () => {
@@ -176,14 +176,14 @@ describe('integration.data-api.collection.find-one-and-update', () => {
       { $set: { username: 'aaa' } },
       { sort: { username: 1 }, returnDocument: 'before', includeResultMetadata: true },
     );
-    assert.strictEqual(res.value!.username, 'a');
+    assert.strictEqual(res.value?.username, 'a');
 
     res = await collection.findOneAndUpdate(
       {},
       { $set: { username: 'ccc' } },
       { sort: { username: -1 }, returnDocument: 'before', includeResultMetadata: true },
     );
-    assert.deepStrictEqual(res.value!.username, 'c');
+    assert.deepStrictEqual(res.value?.username, 'c');
   });
 
   it('should not return metadata when includeResultMetadata is false', async () => {
@@ -220,7 +220,7 @@ describe('integration.data-api.collection.find-one-and-update', () => {
       { $set: { username: 'aaa' } },
       { sort: { $vector: [1, 1, 1, 1, 1] }, returnDocument: 'before', includeResultMetadata: true },
     );
-    assert.strictEqual(res.value!.username, 'a');
+    assert.strictEqual(res.value?.username, 'a');
   });
 
   it('should findOneAndUpdate with vector sort in option', async () => {
@@ -235,7 +235,7 @@ describe('integration.data-api.collection.find-one-and-update', () => {
       { $set: { username: 'aaa' } },
       { vector: [1, 1, 1, 1, 1], returnDocument: 'before', includeResultMetadata: true },
     );
-    assert.strictEqual(res.value!.username, 'a');
+    assert.strictEqual(res.value?.username, 'a');
   });
 
   it('should error when both sort and vector are provided', async () => {

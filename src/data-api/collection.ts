@@ -27,7 +27,7 @@ import {
   UpdateManyError,
 } from '@/src/data-api/errors';
 import stableStringify from 'safe-stable-stringify';
-import { DataAPIHttpClient } from '@/src/api';
+import { DataAPIHttpClient, RawDataAPIResponse } from '@/src/api';
 import {
   AnyBulkWriteOperation,
   BulkWriteOptions,
@@ -176,7 +176,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       insertOne: { document },
     }
 
-    if (options?.vector && options?.vectorize) {
+    if (options?.vector && options.vectorize) {
       throw new Error('Cannot set both vector and vectorize options');
     }
 
@@ -380,7 +380,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     return (resp.status?.upsertedId)
       ? {
         ...commonResult,
-        upsertedId: resp.status?.upsertedId,
+        upsertedId: resp.status.upsertedId,
         upsertedCount: 1,
       }
       : {
@@ -475,9 +475,9 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       }
       const desc = e.detailedErrorDescriptors[0];
 
-      commonResult.modifiedCount += desc.rawResponse?.status?.modifiedCount ?? 0;
-      commonResult.matchedCount += desc.rawResponse?.status?.matchedCount ?? 0;
-      commonResult.upsertedCount = desc.rawResponse?.status?.upsertedCount ?? 0;
+      commonResult.modifiedCount += desc.rawResponse.status?.modifiedCount ?? 0;
+      commonResult.matchedCount += desc.rawResponse.status?.matchedCount ?? 0;
+      commonResult.upsertedCount = desc.rawResponse.status?.upsertedCount ?? 0;
 
       throw mkRespErrorFromResponse(UpdateManyError, command, desc.rawResponse, commonResult);
     }
@@ -485,7 +485,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     return (resp.status?.upsertedId)
       ? {
         ...commonResult,
-        upsertedId: resp.status?.upsertedId,
+        upsertedId: resp.status.upsertedId,
         upsertedCount: 1,
       }
       : commonResult;
@@ -570,7 +570,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     return (resp.status?.upsertedId)
       ? {
         ...commonResult,
-        upsertedId: resp.status?.upsertedId,
+        upsertedId: resp.status.upsertedId,
         upsertedCount: 1,
       }
       : {
@@ -684,7 +684,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         throw e;
       }
       const desc = e.detailedErrorDescriptors[0];
-      throw mkRespErrorFromResponse(DeleteManyError, command, desc.rawResponse, { deletedCount: numDeleted + (desc.rawResponse?.status?.deletedCount ?? 0) })
+      throw mkRespErrorFromResponse(DeleteManyError, command, desc.rawResponse, { deletedCount: numDeleted + (desc.rawResponse.status?.deletedCount ?? 0) })
     }
 
     return {
@@ -1141,11 +1141,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       },
     };
 
-    if (options?.sort) {
+    if (options.sort) {
       command.findOneAndReplace.sort = normalizeSort(options.sort);
     }
 
-    if (options?.projection && Object.keys(options.projection).length > 0) {
+    if (options.projection && Object.keys(options.projection).length > 0) {
       command.findOneAndReplace.projection = options.projection;
     }
 
@@ -1356,11 +1356,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       },
     };
 
-    if (options?.sort) {
+    if (options.sort) {
       command.findOneAndUpdate.sort = normalizeSort(options.sort);
     }
 
-    if (options?.projection && Object.keys(options.projection).length > 0) {
+    if (options.projection && Object.keys(options.projection).length > 0) {
       command.findOneAndUpdate.projection = options.projection;
     }
 
@@ -1459,7 +1459,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       throw new CollectionNotFoundError(this.namespace, this.collectionName);
     }
 
-    return collection.options ?? {};
+    return collection.options;
   }
 
   /**
@@ -1495,7 +1495,7 @@ interface OptionsWithSort {
 }
 
 const coalesceVectorSpecialsIntoSort = <T extends OptionsWithSort | undefined>(options: T): T => {
-  if (options?.vector && options?.vectorize) {
+  if (options?.vector && options.vectorize) {
     throw new Error('Cannot set both vectors and vectorize options');
   }
 
@@ -1665,7 +1665,7 @@ const bulkWriteUnordered = async <Schema extends SomeDoc>(httpClient: DataAPIHtt
 const bulkWrite = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient, operation: AnyBulkWriteOperation<Schema>, results: BulkWriteResult<Schema>, i: number, timeoutManager: TimeoutManager): Promise<void> => {
   const command = buildBulkWriteCommand(operation);
   const resp = await httpClient.executeCommand(command, { timeoutManager });
-  addToBulkWriteResult(results, resp.status!, i);
+  addToBulkWriteResult(results, resp, i);
 }
 
 const buildBulkWriteCommand = <Schema extends SomeDoc>(operation: AnyBulkWriteOperation<Schema>): Record<string, any> => {
@@ -1687,17 +1687,20 @@ const buildBulkWriteCommand = <Schema extends SomeDoc>(operation: AnyBulkWriteOp
   }
 }
 
-const addToBulkWriteResult = (result: BulkWriteResult<SomeDoc>, resp: Record<string, any>, i: number) => {
+const addToBulkWriteResult = (result: BulkWriteResult<SomeDoc>, resp: RawDataAPIResponse, i: number) => {
   const asMutable = result as Mutable<BulkWriteResult<SomeDoc>>;
+  const status = resp.status;
 
-  asMutable.insertedCount += resp.insertedIds?.length ?? 0;
-  asMutable.modifiedCount += resp.modifiedCount ?? 0;
-  asMutable.matchedCount += resp.matchedCount ?? 0;
-  asMutable.deletedCount += resp.deletedCount ?? 0;
+  if (status) {
+    asMutable.insertedCount += status.insertedIds?.length ?? 0;
+    asMutable.modifiedCount += status.modifiedCount ?? 0;
+    asMutable.matchedCount += status.matchedCount ?? 0;
+    asMutable.deletedCount += status.deletedCount ?? 0;
 
-  if (resp.upsertedId) {
-    asMutable.upsertedCount++;
-    asMutable.upsertedIds[i] = resp.upsertedId;
+    if (status.upsertedId) {
+      asMutable.upsertedCount++;
+      asMutable.upsertedIds[i] = status.upsertedId;
+    }
   }
 
   asMutable.getRawResponse().push(resp);
@@ -1714,7 +1717,7 @@ const assertPathSafe4Distinct = (path: string): void => {
 }
 
 const pullSafeProjection4Distinct = (path: string): string => {
-  return takeWhile(path.split('.'), p => isNaN(p as any)).join('.');
+  return takeWhile(path.split('.'), p => isNaN(+p)).join('.');
 }
 
 const mkDistinctPathExtractor = (path: string): (doc: SomeDoc) => any[] => {

@@ -43,7 +43,7 @@ describe('unit.common.token-providers', () => {
       [anyGlobalThis.window, anyGlobalThis.Buffer] = [window, buffer];
     });
 
-    it('should throw an error if invalid environment', async () => {
+    it('should throw an error if invalid environment', () => {
       const buffer = globalThis.Buffer;
 
       anyGlobalThis.Buffer = null!;
