@@ -711,6 +711,7 @@ describe('integration.data-api.collection.finds', () => {
 
     const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', address: { city: 'nyc' } }));
     docList.forEach((doc, index) => {
+      doc.username = `id${index+1}`;
       if (index == 5) {
         doc.tags = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5'];
       }
@@ -877,6 +878,7 @@ describe('integration.data-api.collection.finds', () => {
 
     const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
     docList.forEach((doc, index) => {
+      doc._id = `id${index}`;
       if (index == 5) {
         doc.tags = ['tag1', 'tag2', 'tag3'];
       }
@@ -910,6 +912,7 @@ describe('integration.data-api.collection.finds', () => {
 
     const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
     docList.forEach((doc, index) => {
+      doc._id = `id${index}`;
       if (index == 4) {
         doc.tags = ['tag1', 'tag2', 'tag3', 'tag4'];
       }
