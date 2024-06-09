@@ -176,10 +176,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       insertOne: { document },
     }
 
-    if (options?.vector && options.vectorize) {
-      throw new Error('Cannot set both vector and vectorize options');
-    }
-
     if (options?.vector) {
       command.insertOne.document = { ...command.insertOne.document, $vector: options.vector };
     }
@@ -289,9 +285,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
       for (let i = 0, n = documents.length; i < n; i++) {
         if (options.vectorize[i]) {
-          if (documents[i].$vector) {
-            throw new Error('Vector and vectorize options cannot overlap');
-          }
           documents[i] = { ...documents[i], $vectorize: options.vectorize[i] };
         }
       }
