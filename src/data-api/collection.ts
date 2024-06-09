@@ -306,7 +306,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     return {
       insertedCount: insertedIds.length,
       insertedIds: insertedIds,
-    }
+    };
   }
 
   /**
