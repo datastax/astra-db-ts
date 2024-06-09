@@ -1124,10 +1124,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   public async findOneAndReplace(
     filter: Filter<Schema>,
     replacement: NoId<Schema>,
-    options: FindOneAndReplaceOptions & { includeResultMetadata?: false },
+    options?: FindOneAndReplaceOptions & { includeResultMetadata?: false },
   ): Promise<WithId<Schema> | null>
 
-  public async findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options: FindOneAndReplaceOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options?: FindOneAndReplaceOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneAndReplaceCommand = {
@@ -1135,24 +1135,24 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         filter,
         replacement,
         options: {
-          returnDocument: options.returnDocument,
-          upsert: options.upsert,
+          returnDocument: options?.returnDocument,
+          upsert: options?.upsert,
         },
       },
     };
 
-    if (options.sort) {
+    if (options?.sort) {
       command.findOneAndReplace.sort = normalizeSort(options.sort);
     }
 
-    if (options.projection && Object.keys(options.projection).length > 0) {
+    if (options?.projection && Object.keys(options.projection).length > 0) {
       command.findOneAndReplace.projection = options.projection;
     }
 
     const resp = await this._httpClient.executeCommand(command, options);
     const document = resp.data?.document || null;
 
-    return (options.includeResultMetadata)
+    return (options?.includeResultMetadata)
       ? {
         value: document,
         ok: 1,
@@ -1339,10 +1339,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   public async findOneAndUpdate(
     filter: Filter<Schema>,
     update: UpdateFilter<Schema>,
-    options: FindOneAndUpdateOptions & { includeResultMetadata?: false },
+    options?: FindOneAndUpdateOptions & { includeResultMetadata?: false },
   ): Promise<WithId<Schema> | null>
 
-  public async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options: FindOneAndUpdateOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: FindOneAndUpdateOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
     options = coalesceVectorSpecialsIntoSort(options);
 
     const command: FindOneAndUpdateCommand = {
@@ -1350,24 +1350,24 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         filter,
         update,
         options: {
-          returnDocument: options.returnDocument,
-          upsert: options.upsert,
+          returnDocument: options?.returnDocument,
+          upsert: options?.upsert,
         },
       },
     };
 
-    if (options.sort) {
+    if (options?.sort) {
       command.findOneAndUpdate.sort = normalizeSort(options.sort);
     }
 
-    if (options.projection && Object.keys(options.projection).length > 0) {
+    if (options?.projection && Object.keys(options.projection).length > 0) {
       command.findOneAndUpdate.projection = options.projection;
     }
 
     const resp = await this._httpClient.executeCommand(command, options);
     const document = resp.data?.document || null;
 
-    return (options.includeResultMetadata)
+    return (options?.includeResultMetadata)
       ? {
         value: document,
         ok: 1,

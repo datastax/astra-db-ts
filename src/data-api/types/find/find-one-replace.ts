@@ -21,7 +21,7 @@ export interface FindOneAndReplaceCommand {
     filter: Record<string, unknown>;
     replacement: Record<string, unknown>;
     options?: {
-      returnDocument: 'before' | 'after',
+      returnDocument?: 'before' | 'after',
       upsert?: boolean,
     };
     sort?: Sort;
