@@ -203,7 +203,7 @@ export interface DefaultHttpClientOptions {
    *
    * Leave undefined to use the default module.
    */
-  fetchH2?: any,
+  fetchH2?: unknown,
 }
 
 /**
