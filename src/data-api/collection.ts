@@ -26,7 +26,7 @@ import {
   TooManyDocumentsToCountError,
   UpdateManyError,
 } from '@/src/data-api/errors';
-import objectHash from 'object-hash';
+import stableStringify from 'safe-stable-stringify';
 import { DataAPIHttpClient } from '@/src/api';
 import {
   AnyBulkWriteOperation,
@@ -552,7 +552,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
           returnDocument: 'before',
           upsert: options?.upsert,
         },
-        // projection: { '*': 0 },
+        projection: { '*': 0 },
       },
     };
 
@@ -795,7 +795,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    */
   find(filter: Filter<Schema>, options?: FindOptions): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>> {
-    return new FindCursor(this.namespace, this._httpClient, filter as any, coalesceVectorSpecialsIntoSort(options)) as any;
+    return new FindCursor(this.namespace, this._httpClient, filter as any, coalesceVectorSpecialsIntoSort(options));
   }
 
   /**
@@ -871,18 +871,15 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       const values = extract(doc);
 
       for (let i = 0, n = values.length; i < n; i++) {
-        if (typeof values[i] === 'object') {
-          const hash = objectHash(values[i]);
+        const value = values[i];
 
-          if (!seen.has(hash)) {
-            seen.add(hash);
-            ret.push(values[i]);
-          }
-        } else {
-          if (!seen.has(values[i])) {
-            seen.add(values[i]);
-            ret.push(values[i]);
-          }
+        const key = (typeof value === 'object')
+          ? stableStringify(value)
+          : value;
+
+        if (!seen.has(key)) {
+          ret.push(value);
+          seen.add(key);
         }
       }
     }

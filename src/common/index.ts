@@ -13,3 +13,4 @@
 // limitations under the License.
 
 export * from './types';
+export * from './token-providers';

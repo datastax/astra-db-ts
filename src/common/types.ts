@@ -27,3 +27,10 @@ export interface WithTimeout {
    */
   maxTimeMS?: number;
 }
+
+/**
+ * Shorthand type to represent some nullish value. Generally meant for internal use.
+ *
+ * @public
+ */
+export type nullish = null | undefined;

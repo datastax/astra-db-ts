@@ -187,6 +187,6 @@ export class DevOpsAPIHttpClient extends HttpClient {
   }
 }
 
-function mkHeaders(token: string) {
+function mkHeaders(token: string | undefined) {
   return { [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` };
 }

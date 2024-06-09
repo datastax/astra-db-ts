@@ -1,17 +1,33 @@
+// Copyright DataStax, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+// noinspection ExceptionCaughtLocallyJS
+
 import {
   AdminBlockingOptions,
+  AdminSpawnOptions,
   CreateDatabaseOptions,
   DatabaseConfig,
   FullDatabaseInfo,
   ListDatabasesOptions,
 } from '@/src/devops/types';
-import { Db } from '@/src/data-api';
+import { Db, DbSpawnOptions } from '@/src/data-api';
 import { DEFAULT_DEVOPS_API_ENDPOINT, DEFAULT_NAMESPACE, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
 import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
-import { AdminSpawnOptions, DbSpawnOptions, InternalRootClientOpts } from '@/src/client/types';
+import { InternalRootClientOpts } from '@/src/client/types';
 import { validateOption } from '@/src/data-api/utils';
 import { mkDb } from '@/src/data-api/db';
-import { WithTimeout } from '@/src/common';
+import { TokenProvider, WithTimeout } from '@/src/common';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -49,7 +65,7 @@ export class AstraAdmin {
    *
    * @internal
    */
-  constructor(options: InternalRootClientOpts & { adminOptions: { adminToken: string } }) {
+  constructor(options: InternalRootClientOpts) {
     const adminOpts = options.adminOptions ?? {};
 
     this.#defaultOpts = options;
@@ -409,6 +425,7 @@ export function mkAdmin(rootOpts: InternalRootClientOpts, options?: AdminSpawnOp
     adminOptions: {
       ...rootOpts?.adminOptions,
       ...options,
+      adminToken: TokenProvider.parseToken(options?.adminToken ?? rootOpts?.adminOptions?.adminToken),
     },
   });
 }
@@ -417,15 +434,13 @@ export function mkAdmin(rootOpts: InternalRootClientOpts, options?: AdminSpawnOp
  * @internal
  */
 export function validateAdminOpts(opts: AdminSpawnOptions | undefined) {
-  validateOption('admin options', opts, 'object');
+  validateOption('adminOptions', opts, 'object');
 
   if (!opts) {
     return;
   }
 
-  validateOption('monitorCommands option', opts.monitorCommands, 'boolean');
+  validateOption('adminOptions.monitorCommands', opts.monitorCommands, 'boolean');
 
-  validateOption('adminToken option', opts.adminToken, 'string');
-
-  validateOption('endpointUrl option', opts.endpointUrl, 'string');
+  validateOption('adminOptions.endpointUrl', opts.endpointUrl, 'string');
 }

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, CollectionAlreadyExistsError, SomeDoc } from '@/src/data-api';
+import { Collection, CollectionAlreadyExistsError, DbSpawnOptions, SomeDoc } from '@/src/data-api';
 import { DataAPIHttpClient, DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE, RawDataAPIResponse } from '@/src/api';
 import {
   CreateCollectionOptions,
@@ -22,7 +22,6 @@ import {
 } from '@/src/data-api/types';
 import { DatabaseInfo } from '@/src/devops/types/admin/database-info';
 import { AstraDbAdmin, mkDbAdmin } from '@/src/devops/astra-db-admin';
-import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
 import { RunCommandOptions } from '@/src/data-api/types/collections/command';
 import { WithTimeout } from '@/src/common/types';
 import { DropCollectionOptions } from '@/src/data-api/types/collections/drop-collection';
@@ -31,6 +30,8 @@ import { CreateCollectionCommand } from '@/src/data-api/types/collections/create
 import { ListCollectionsCommand } from '@/src/data-api/types/collections/list-collection';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-collection';
+import { AdminSpawnOptions } from '@/src/devops';
+import { TokenProvider } from '@/src/common';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -497,6 +498,7 @@ export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, reg
     dbOptions: {
       ...rootOpts?.dbOptions,
       ...options,
+      token: TokenProvider.parseToken(options?.token ?? rootOpts?.dbOptions?.token),
     },
   });
 }
@@ -505,21 +507,19 @@ export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, reg
  * @internal
  */
 export function validateDbOpts(opts: DbSpawnOptions | undefined) {
-  validateOption('db options', opts, 'object');
+  validateOption('dbOptions', opts, 'object');
 
   if (!opts) {
     return;
   }
 
-  validateOption('namespace option', opts.namespace, 'string', false, (namespace) => {
+  validateOption('dbOptions.namespace', opts.namespace, 'string', false, (namespace) => {
     if (!namespace.match(/^\w{1,48}$/)) {
       throw new Error('Invalid namespace option; expected a string of 1-48 alphanumeric characters');
     }
   });
 
-  validateOption('monitorCommands option', opts.monitorCommands, 'boolean');
+  validateOption('dbOptions.monitorCommands', opts.monitorCommands, 'boolean');
 
-  validateOption('token option', opts.token, 'string');
-
-  validateOption('dataApiPath option', opts.dataApiPath, 'string');
+  validateOption('dbOptions.dataApiPath', opts.dataApiPath, 'string');
 }

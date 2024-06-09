@@ -17,6 +17,7 @@ import type { context, FetchInit, TimeoutError } from 'fetch-h2';
 import { DefaultHttpClientOptions } from '@/src/client';
 import { Fetcher, FetcherRequestInfo, FetcherResponseInfo } from '@/src/api/fetch/types';
 import { FailedToLoadDefaultClientError } from '@/src/client/errors';
+import { nullish } from '@/src/common';
 
 export class FetchH2 implements Fetcher {
   private readonly _http1: ReturnType<typeof context>;
@@ -28,7 +29,7 @@ export class FetchH2 implements Fetcher {
       // Complicated expression to stop Next.js and such from tracing require and trying to load the fetch-h2 client
       const [indirectRequire] = [require].map(x => Math.random() > 10 ? null! : x);
 
-      const fetchH2 = (options?.fetchH2 ?? indirectRequire('fetch-h2')) as typeof import('fetch-h2');
+      const fetchH2 = validateFetchH2(options?.fetchH2) ?? indirectRequire('fetch-h2') as typeof import('fetch-h2');
 
       this._http1 = fetchH2.context({
         http1: {
@@ -78,4 +79,22 @@ export class FetchH2 implements Fetcher {
     await this._preferred.disconnectAll();
     await this._http1.disconnectAll();
   }
+}
+
+function validateFetchH2(fetchH2: unknown): typeof import('fetch-h2') | nullish {
+  if (fetchH2 === null || fetchH2 === undefined) {
+    return fetchH2;
+  }
+
+  if (typeof fetchH2 !== 'object') {
+    throw new TypeError('fetchH2 must be an object—did you pass in the module correctly?');
+  }
+
+  for (const prop of ['context', 'TimeoutError']) {
+    if (!(prop in fetchH2)) {
+      throw new Error(`fetchH2 missing the required ${prop} property`)
+    }
+  }
+
+  return fetchH2 as typeof import('fetch-h2');
 }

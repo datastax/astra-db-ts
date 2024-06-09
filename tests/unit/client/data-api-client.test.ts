@@ -19,6 +19,7 @@ import assert from 'assert';
 import { DEFAULT_DATA_API_PATH, FetcherResponseInfo } from '@/src/api';
 import { FetchH2 } from '@/src/api/fetch/fetch-h2';
 import { FetcherRequestInfo } from '@/src/api/fetch/types';
+import { DSEUsernamePasswordTokenProvider } from '@/src/common';
 
 describe('unit.client.data-api-client', () => {
   const endpoint = process.env.ASTRA_URI!;
@@ -28,21 +29,17 @@ describe('unit.client.data-api-client', () => {
   const region = idAndRegion.slice(5).join('-');
 
   describe('constructor tests', () => {
-    it('should allow construction with just a token', () => {
-      const client = new DataAPIClient('dummy-token');
-      assert.ok(client);
-    });
+    it('should accept valid tokens', () => {
+      assert.doesNotThrow(() => new DataAPIClient());
+      assert.doesNotThrow(() => new DataAPIClient('token'));
+      assert.doesNotThrow(() => new DataAPIClient(new DSEUsernamePasswordTokenProvider('username', 'password')));
+    })
 
-    it('should throw if no token is passed', () => {
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataAPIClient());
-    });
-
-    it('should throw if a non-string token is passed', () => {
+    it('should throw if an invalid token is passed', () => {
       // @ts-expect-error - testing invalid input
       assert.throws(() => new DataAPIClient(3));
       // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataAPIClient({ logLevel: 'warn' }));
+      assert.throws(() => new DataAPIClient({ logLevel: 'warn' }, {}));
     });
 
     it('should accept null/undefined/{} for options', () => {
@@ -187,18 +184,18 @@ describe('unit.client.data-api-client', () => {
   });
 
   describe('db tests', () => {
-    it('should allow db construction from endpoint', () => {
+    it('should allow db construction from endpoint', async () => {
       const db = new DataAPIClient('dummy-token').db(endpoint);
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `${endpoint}/${DEFAULT_DATA_API_PATH}`);
-      assert.strictEqual(db['_httpClient'].applicationToken, 'dummy-token');
+      assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'dummy-token');
     });
 
-    it('should allow db construction from id + region', () => {
+    it('should allow db construction from id + region', async () => {
       const db = new DataAPIClient('dummy-token').db(id, region);
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `https://${id}-${region}.apps.astra.datastax.com/${DEFAULT_DATA_API_PATH}`);
-      assert.strictEqual(db['_httpClient'].applicationToken, 'dummy-token');
+      assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'dummy-token');
     });
 
     it('should have unique http clients for each db', () => {

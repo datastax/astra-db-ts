@@ -17,7 +17,7 @@ import { assertTestsEnabled, initTestObjects, TEMP_DB_NAME } from '@/tests/fixtu
 import { DataAPIClient } from '@/src/client';
 import assert from 'assert';
 import { DevOpsAPIResponseError } from '@/src/devops';
-import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT, HttpMethods } from '@/src/api';
+import { DEFAULT_NAMESPACE, HttpMethods } from '@/src/api';
 import { TimeoutManager } from '@/src/api/timeout-managers';
 
 describe('integration.devops.lifecycle', async () => {
@@ -139,7 +139,7 @@ describe('integration.devops.lifecycle', async () => {
           defaultPollInterval: 10000,
           id: null!,
           options: undefined,
-        }, new TimeoutManager(DEFAULT_TIMEOUT, () => new Error('Timeout')), 0);
+        }, new TimeoutManager(0, () => new Error('Timeout')), 0);
       }
 
       for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -188,7 +188,7 @@ describe('integration.devops.lifecycle', async () => {
           defaultPollInterval: 1000,
           id: null!,
           options: undefined,
-        }, new TimeoutManager(DEFAULT_TIMEOUT, () => new Error('Timeout')), 0);
+        }, new TimeoutManager(0, () => new Error('Timeout')), 0);
       }
 
       for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -213,7 +213,7 @@ describe('integration.devops.lifecycle', async () => {
           defaultPollInterval: 1000,
           id: null!,
           options: undefined,
-        }, new TimeoutManager(DEFAULT_TIMEOUT, () => new Error('Timeout')), 0);
+        }, new TimeoutManager(0, () => new Error('Timeout')), 0);
       }
 
       for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -240,7 +240,7 @@ describe('integration.devops.lifecycle', async () => {
           defaultPollInterval: 10000,
           id: null!,
           options: undefined,
-        }, new TimeoutManager(DEFAULT_TIMEOUT, () => new Error('Timeout')), 0);
+        }, new TimeoutManager(0, () => new Error('Timeout')), 0);
       }
 
       for (const [dbAdmin, dbType] of [[syncDbAdmin, 'sync'], [asyncDbAdmin, 'async']] as const) {

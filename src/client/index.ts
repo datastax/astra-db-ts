@@ -16,8 +16,6 @@
 export * from './data-api-client';
 export * from './errors';
 export {
-  DbSpawnOptions,
-  AdminSpawnOptions,
   DataAPIClientOptions,
   Caller,
   DefaultHttpClientOptions,

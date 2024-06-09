@@ -17,14 +17,15 @@ import assert from 'assert';
 import { Db } from '@/src/data-api';
 import process from 'process';
 import { DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE } from '@/src/api';
-import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
 import { mkDb } from '@/src/data-api/db';
+import { StaticTokenProvider } from '@/src/common';
+import { InternalRootClientOpts } from '@/src/client/types';
 
 describe('unit.data-api.db', () => {
-  const mkOptions = (data?: DbSpawnOptions, devops?: AdminSpawnOptions, preferredType = 'http2') => {
+  const mkOptions = (data?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2') => {
     return {
-      dbOptions: { token: 'old', monitorCommands: false, ...data },
-      adminOptions: { adminToken: 'old-admin', monitorCommands: false, ...devops },
+      dbOptions: { token: new StaticTokenProvider('old'), monitorCommands: false, ...data },
+      adminOptions: { adminToken: new StaticTokenProvider('old-admin'), monitorCommands: false, ...devops },
       emitter: null as any,
       fetchCtx: { preferred: null!, http1: null!, preferredType } as any,
       userAgent: '',
@@ -32,41 +33,41 @@ describe('unit.data-api.db', () => {
   }
 
   describe('constructor tests', () => {
-    it('should allow db construction from endpoint', () => {
+    it('should allow db construction from endpoint', async () => {
       const db = new Db('https://id-region.apps.astra.datastax.com', mkOptions());
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATH}`);
-      assert.strictEqual(db['_httpClient'].applicationToken, 'old');
+      assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'old');
     });
   });
 
   describe('mkDb tests', () => {
-    it('should allow db construction from endpoint, using default options', () => {
+    it('should allow db construction from endpoint, using default options', async () => {
       const db = mkDb(mkOptions(), 'https://id-region.apps.astra.datastax.com');
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATH}`);
-      assert.strictEqual(db['_httpClient'].applicationToken, 'old');
+      assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'old');
     });
 
-    it('should allow db construction from id + region, using default options', () => {
+    it('should allow db construction from id + region, using default options', async () => {
       const db = mkDb(mkOptions(), 'id', 'region');
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATH}`);
-      assert.strictEqual(db['_httpClient'].applicationToken, 'old');
+      assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'old');
     });
 
-    it('should allow db construction from endpoint, overwriting options', () => {
+    it('should allow db construction from endpoint, overwriting options', async () => {
       const db = mkDb(mkOptions({ dataApiPath: 'old' }), 'https://id-region.apps.astra.datastax.com', { dataApiPath: 'new', token: 'new' });
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, 'https://id-region.apps.astra.datastax.com/new');
-      assert.strictEqual(db['_httpClient'].applicationToken, 'new');
+      assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'new');
     });
 
-    it('should allow db construction from id + region, overwriting options', () => {
+    it('should allow db construction from id + region, overwriting options', async () => {
       const db = mkDb(mkOptions({ dataApiPath: 'old' }), 'id', 'region', { dataApiPath: 'new', token: 'new' });
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, 'https://id-region.apps.astra.datastax.com/new');
-      assert.strictEqual(db['_httpClient'].applicationToken, 'new');
+      assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'new');
     });
 
     it('is initialized with default namespace', () => {
@@ -106,9 +107,9 @@ describe('unit.data-api.db', () => {
       assert.strictEqual(db['_httpClient'].baseUrl, `${process.env.ASTRA_URI}/api/json/v3`);
     });
 
-    it('overrides token in db when provided', () => {
+    it('overrides token in db when provided', async () => {
       const db = mkDb(mkOptions(), process.env.ASTRA_URI!, { token: 'new' });
-      assert.strictEqual(db['_httpClient'].applicationToken, 'new');
+      assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'new');
     });
 
     it('should accept valid monitorCommands', () => {
@@ -170,11 +171,11 @@ describe('unit.data-api.db', () => {
       assert.throws(() => { const _admin = db.admin() });
     });
 
-    it('should override auth token', () => {
-      const db = mkDb(mkOptions({ token: 'old' }), 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb', 'us-east1');
+    it('should override auth token', async () => {
+      const db = mkDb(mkOptions({ token: new StaticTokenProvider('old') }), 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb', 'us-east1');
       const admin = db.admin({ adminToken: 'new' });
-      assert.strictEqual(db['_httpClient'].applicationToken, 'old');
-      assert.strictEqual(admin['_httpClient'].applicationToken, 'new');
+      assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'old');
+      assert.strictEqual(await admin['_httpClient'].applicationToken?.getTokenAsString(), 'new');
     });
   });
 });
