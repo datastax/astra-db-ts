@@ -14,6 +14,8 @@
 
 import { UUID as UUIDv7, uuidv4, uuidv7 } from 'uuidv7';
 import MongoObjectId from 'bson-objectid';
+import { isNullish } from '@/src/common';
+import ObjectID from 'bson-objectid';
 
 /**
  * All possible types for a document ID. JSON scalar types, `Date`, `UUID`, and `ObjectId`.
@@ -225,13 +227,13 @@ export class ObjectId {
    * @param id - The ObjectId string.
    * @param validate - Whether to validate the ObjectId string. Defaults to `true`.
    */
-  constructor(id?: string, validate = true) {
+  constructor(id?: string | null, validate = true) {
     if (validate) {
       if (typeof id === 'string') {
         if (id.length !== 24 || !objectIdRegex.test(id)) {
           throw new Error('ObjectId must be a 24-character hex string');
         }
-      } else if (id !== undefined && id !== null) {
+      } else if (!isNullish(id)) {
         throw new Error('ObjectId must be a string');
       }
     }
@@ -251,7 +253,7 @@ export class ObjectId {
    * @returns `true` if the ObjectIds are equal, `false` otherwise.
    */
   public equals(other: unknown): boolean {
-    return this._objectId.equals((other && typeof other === 'object' && '_objectId' in other ? other._objectId : other) as any);
+    return this._objectId.equals((other && typeof other === 'object' && '_objectId' in other ? other._objectId : other) as ObjectID);
   }
 
   /**
@@ -267,7 +269,7 @@ export class ObjectId {
    * Returns the string representation of the ObjectId.
    */
   public toString(): string {
-    return this._objectId.toString();
+    return this._objectId.toHexString();
   }
 
   /**

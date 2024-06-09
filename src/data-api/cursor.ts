@@ -140,7 +140,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The cursor.
    */
-  public filter(filter: Filter<TRaw>): FindCursor<T, TRaw> {
+  public filter(filter: Filter<TRaw>): this {
     this._assertUninitialized();
     this._filter = filter as any;
     return this;
@@ -158,7 +158,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The cursor.
    */
-  public sort(sort: Sort): FindCursor<T, TRaw> {
+  public sort(sort: Sort): this {
     this._assertUninitialized();
     this._options.sort = normalizeSort(sort);
     return this;
@@ -175,7 +175,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The cursor.
    */
-  public limit(limit: number): FindCursor<T, TRaw> {
+  public limit(limit: number): this {
     this._assertUninitialized();
     this._options.limit = limit || Infinity;
     return this;
@@ -190,7 +190,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The cursor.
    */
-  public skip(skip: number): FindCursor<T, TRaw> {
+  public skip(skip: number): this {
     this._assertUninitialized();
     this._options.skip = skip;
     return this;
@@ -247,7 +247,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The cursor.
    */
-  public includeSimilarity(includeSimilarity: boolean = true): FindCursor<T, TRaw> {
+  public includeSimilarity(includeSimilarity: boolean = true): this {
     this._assertUninitialized();
     this._options.includeSimilarity = includeSimilarity;
     return this;
@@ -404,7 +404,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @deprecated - Prefer the `for await (const doc of cursor) { ... }` syntax instead.
    */
-  public async forEach(consumer: (doc: T) => boolean | void): Promise<void> {
+  public async forEach(consumer: ((doc: T) => boolean) | ((doc: T) => void)): Promise<void> {
     for await (const doc of this) {
       if (consumer(doc) === false) {
         break;
@@ -453,9 +453,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     }
 
     do {
-      if (this._buffer.length > 0) {
-        const doc = this._buffer.shift()!;
+      const doc = this._buffer.shift();
 
+      if (doc) {
         try {
           return (!raw && this._mapping)
             ? this._mapping(doc)
@@ -515,7 +515,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
 
     const resp = await this._httpClient.executeCommand(command, {});
 
-    this._nextPageState = resp.data!.nextPageState || null;
+    this._nextPageState = resp.data?.nextPageState || null;
     this._buffer = resp.data!.documents as TRaw[];
   }
 }

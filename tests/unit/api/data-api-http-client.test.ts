@@ -54,7 +54,7 @@ describe('unit.api.data-api-http-client', () => {
 
   describe('reviver tests', () => {
     it('works', () => {
-      const actual = JSON.parse(JSON.stringify({
+      const actual = <unknown>JSON.parse(JSON.stringify({
         bigInt: Number(9007199254740991n),
         date: { $date: new Date('2021-01-01').valueOf() },
         _id: { $objectId: '5f5b9e6e8b1d8f001f6b3b3d' },

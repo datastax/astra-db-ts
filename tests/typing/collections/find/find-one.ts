@@ -19,21 +19,16 @@ import { Equal, Expect } from '@/tests/typing/prelude';
 import { StrictFilter } from '@/src/data-api/types/filter';
 import { StrictProjection } from '@/src/data-api';
 
-dummyCollection<TestSchema>().findOne({}, {}).then((_a) => {
-  const a = _a!;
-  // type b = Expect<Equal<undefined, typeof a['$similarity']>>
-  type b = Expect<Equal<undefined | number, typeof a['$similarity']>>
+void dummyCollection<TestSchema>().findOne({}, {}).then((a) => {
+  type b = Expect<Equal<undefined | number, NonNullable<typeof a>['$similarity']>>
 });
 
-dummyCollection<TestSchema>().findOne({}, { includeSimilarity: true }).then((_a) => {
-  const a = _a!;
-  // type b = Expect<Equal<number, typeof a['$similarity']>>
-  type b = Expect<Equal<undefined | number, typeof a['$similarity']>>
+void dummyCollection<TestSchema>().findOne({}, { includeSimilarity: true }).then((a) => {
+  type b = Expect<Equal<undefined | number, NonNullable<typeof a>['$similarity']>>
 });
 
-dummyCollection<TestSchema>().findOne({}, { includeSimilarity: !!Math.random() }).then((_a) => {
-  const a = _a!;
-  type b = Expect<Equal<undefined | number, typeof a['$similarity']>>
+void dummyCollection<TestSchema>().findOne({}, { includeSimilarity: !!Math.random() }).then((a) => {
+  type b = Expect<Equal<undefined | number, NonNullable<typeof a>['$similarity']>>
 });
 
 void dummyCollection<TestSchema>().findOne({

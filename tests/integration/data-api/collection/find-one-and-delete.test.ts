@@ -39,9 +39,9 @@ describe('integration.data-api.collection.find-one-and-delete', () => {
       },
     );
     assert.strictEqual(resp.ok, 1);
-    assert.strictEqual(resp.value!._id, docId);
-    assert.strictEqual(resp.value!.username, 'aaron');
-    assert.strictEqual(resp.value!.address.city, 'big banana');
+    assert.strictEqual(resp.value?._id, docId);
+    assert.strictEqual(resp.value.username, 'aaron');
+    assert.strictEqual(resp.value.address?.city, 'big banana');
   });
 
   it('should findOneAndDelete with a projection', async () => {
@@ -55,8 +55,8 @@ describe('integration.data-api.collection.find-one-and-delete', () => {
       { username: 'a' },
       { projection: { username: 1 }, includeResultMetadata: true },
     );
-    assert.strictEqual(res.value!.username, 'a');
-    assert.strictEqual(res.value!.answer, undefined);
+    assert.strictEqual(res.value?.username, 'a');
+    assert.strictEqual(res.value.answer, undefined);
   });
 
   it('should findOneAndDelete with sort', async () => {
@@ -70,13 +70,13 @@ describe('integration.data-api.collection.find-one-and-delete', () => {
       {},
       { sort: { username: 1 }, includeResultMetadata: true },
     );
-    assert.strictEqual(res.value!.username, 'a');
+    assert.strictEqual(res.value?.username, 'a');
 
     res = await collection.findOneAndDelete(
       {},
       { sort: { username: -1 }, includeResultMetadata: true },
     );
-    assert.deepStrictEqual(res.value!.username, 'c');
+    assert.deepStrictEqual(res.value?.username, 'c');
   });
 
   it('should not return metadata when includeResultMetadata is false', async () => {
@@ -109,7 +109,7 @@ describe('integration.data-api.collection.find-one-and-delete', () => {
       {},
       { sort: { $vector: [1, 1, 1, 1, 1] }, includeResultMetadata: true },
     );
-    assert.strictEqual(res.value!.username, 'a');
+    assert.strictEqual(res.value?.username, 'a');
   });
 
   it('should findOneAndDelete with vector sort in option', async () => {
@@ -123,7 +123,7 @@ describe('integration.data-api.collection.find-one-and-delete', () => {
       {},
       { vector: [1, 1, 1, 1, 1], includeResultMetadata: true },
     );
-    assert.strictEqual(res.value!.username, 'a');
+    assert.strictEqual(res.value?.username, 'a');
   });
 
   it('should error when both sort and vector are provided', async () => {

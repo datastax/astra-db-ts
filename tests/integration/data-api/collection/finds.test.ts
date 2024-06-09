@@ -85,10 +85,10 @@ describe('integration.data-api.collection.finds', () => {
     ]);
 
     let doc = await collection.findOne({}, { sort: { username: 1 } });
-    assert.strictEqual(doc!.username, 'a');
+    assert.strictEqual(doc?.username, 'a');
 
     doc = await collection.findOne({}, { sort: { username: -1 } });
-    assert.deepStrictEqual(doc!.username, 'c');
+    assert.deepStrictEqual(doc?.username, 'c');
   });
 
   it('should find with multiple, and different, sorts', async () => {
@@ -536,7 +536,7 @@ describe('integration.data-api.collection.finds', () => {
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
     assert.strictEqual(resDoc.username, doc.username);
-    assert.strictEqual(resDoc.address.city, doc.address?.city);
+    assert.strictEqual(resDoc.address?.city, doc.address?.city);
     assert.strictEqual(resDoc.address.number, undefined);
   });
 
@@ -557,7 +557,7 @@ describe('integration.data-api.collection.finds', () => {
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, undefined);
     assert.strictEqual(resDoc.username, doc.username);
-    assert.strictEqual(resDoc.address.city, doc.address?.city);
+    assert.strictEqual(resDoc.address?.city, doc.address?.city);
     assert.strictEqual(resDoc.address.number, undefined);
   });
 
@@ -572,8 +572,6 @@ describe('integration.data-api.collection.finds', () => {
 
     const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', address: { city: 'nyc' } }));
     docList.forEach((doc, index) => {
-      doc._id = 'id' + index;
-      doc.username = doc.username + (index + 1);
       if (index == 5) {
         doc.tags = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5'];
       }
@@ -621,8 +619,6 @@ describe('integration.data-api.collection.finds', () => {
 
     const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', address: { city: 'nyc' } }));
     docList.forEach((doc, index) => {
-      doc._id = 'id' + index;
-      doc.username = doc.username + (index + 1);
       if (index == 5) {
         doc.tags = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5'];
       }
@@ -670,8 +666,6 @@ describe('integration.data-api.collection.finds', () => {
 
     const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', address: { city: 'nyc' } }));
     docList.forEach((doc, index) => {
-      doc._id = 'id' + index;
-      doc.username = doc.username + (index + 1);
       if (index == 5) {
         doc.tags = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5'];
       }
@@ -717,8 +711,7 @@ describe('integration.data-api.collection.finds', () => {
 
     const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', address: { city: 'nyc' } }));
     docList.forEach((doc, index) => {
-      doc._id = 'id' + index;
-      doc.username = doc.username + (index + 1);
+      doc.username = `id${index+1}`;
       if (index == 5) {
         doc.tags = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5'];
       }
@@ -766,7 +759,6 @@ describe('integration.data-api.collection.finds', () => {
     const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
     docList.forEach((doc, index) => {
       doc._id = 'id' + index;
-      doc.username = doc.username + (index + 1);
     });
     const res = await collection.insertMany(docList);
     assert.strictEqual(res.insertedCount, docList.length);
@@ -788,8 +780,8 @@ describe('integration.data-api.collection.finds', () => {
     ids = new Set(idsArr);
     filter = { '_id': { '$in': idsArr } };
     const findOneRespDoc = await collection.findOne(filter);
-    assert.ok(findOneRespDoc!._id);
-    assert.ok(ids.has(findOneRespDoc!._id as string));
+    assert.ok(findOneRespDoc?._id);
+    assert.ok(ids.has(findOneRespDoc._id as string));
   });
 
   it('should find & find doc $nin test', async () => {
@@ -802,11 +794,11 @@ describe('integration.data-api.collection.finds', () => {
 
     const docList_nyc: Doc[] = Array.from({ length: 3 }, () => ({ city: 'nyc' }));
     docList_nyc.forEach((doc, index) => {
-      doc.city = doc.city + (index + 1);
+      doc.city = doc.city + String(index + 1);
     });
     const docList_seattle: Doc[] = Array.from({ length: 2 }, () => ({ city: 'seattle' }));
     docList_seattle.forEach((doc, index) => {
-      doc.city = doc.city + (index + 1);
+      doc.city = doc.city + String(index + 1);
     });
     const res = await collection.insertMany(docList_nyc);
     assert.strictEqual(res.insertedCount, docList_nyc.length);
@@ -834,10 +826,6 @@ describe('integration.data-api.collection.finds', () => {
     }
 
     const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
-    docList.forEach((doc, index) => {
-      doc._id = 'id' + index;
-      doc.username = doc.username + (index + 1);
-    });
     const res = await collection.insertMany(docList);
     assert.strictEqual(res.insertedCount, docList.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, 20);
@@ -850,8 +838,8 @@ describe('integration.data-api.collection.finds', () => {
       assert.ok(doc.city);
     });
     const findOneRespDoc = await collection.findOne(filter);
-    assert.ok(findOneRespDoc!._id);
-    assert.ok(findOneRespDoc!.city);
+    assert.ok(findOneRespDoc?._id);
+    assert.ok(findOneRespDoc.city);
   });
 
   it('should find & find doc $exists false test', async () => {
@@ -863,13 +851,7 @@ describe('integration.data-api.collection.finds', () => {
     }
 
     const docList: Doc[] = Array.from({ length: 10 }, () => ({ username: 'withCity', city: 'nyc' }));
-    docList.forEach((doc, index) => {
-      doc.username = doc.username + (index + 1);
-    });
     const docList_noCity: Doc[] = Array.from({ length: 10 }, () => ({ username: 'noCity' }));
-    docList.forEach((doc, index) => {
-      doc.username = doc.username + (index + 1);
-    });
     const res = await collection.insertMany(docList);
     assert.strictEqual(res.insertedCount, docList.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, 10);
@@ -896,8 +878,7 @@ describe('integration.data-api.collection.finds', () => {
 
     const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
     docList.forEach((doc, index) => {
-      doc._id = 'id' + index;
-      doc.username = doc.username + (index + 1);
+      doc._id = `id${index}`;
       if (index == 5) {
         doc.tags = ['tag1', 'tag2', 'tag3'];
       }
@@ -916,9 +897,9 @@ describe('integration.data-api.collection.finds', () => {
       assert.strictEqual(doc._id, docList[5]._id);
     });
     const findOneRespDoc = await collection.findOne(filter);
-    assert.ok(findOneRespDoc!._id);
-    assert.strictEqual(findOneRespDoc!.tags.length, 3);
-    assert.strictEqual(findOneRespDoc!._id, docList[5]._id);
+    assert.ok(findOneRespDoc?._id);
+    assert.strictEqual(findOneRespDoc.tags?.length, 3);
+    assert.strictEqual(findOneRespDoc._id, docList[5]._id);
   });
 
   it('should find & find doc $size test', async () => {
@@ -931,8 +912,7 @@ describe('integration.data-api.collection.finds', () => {
 
     const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
     docList.forEach((doc, index) => {
-      doc._id = 'id' + index;
-      doc.username = doc.username + (index + 1);
+      doc._id = `id${index}`;
       if (index == 4) {
         doc.tags = ['tag1', 'tag2', 'tag3', 'tag4'];
       }
@@ -954,9 +934,9 @@ describe('integration.data-api.collection.finds', () => {
       assert.strictEqual(doc._id, docList[5]._id);
     });
     const findOneRespDoc = await collection.findOne(filter);
-    assert.ok(findOneRespDoc!._id);
-    assert.strictEqual(findOneRespDoc!.tags.length, 3);
-    assert.strictEqual(findOneRespDoc!._id, docList[5]._id);
+    assert.ok(findOneRespDoc?._id);
+    assert.strictEqual(findOneRespDoc.tags?.length, 3);
+    assert.strictEqual(findOneRespDoc._id, docList[5]._id);
   });
 
   it('should find & find doc $size 0 test', async () => {
@@ -970,7 +950,6 @@ describe('integration.data-api.collection.finds', () => {
     const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
     docList.forEach((doc, index) => {
       doc._id = 'id' + index;
-      doc.username = doc.username + (index + 1);
       if (index == 4) {
         doc.tags = ['tag1', 'tag2', 'tag3', 'tag4'];
       }
@@ -996,8 +975,8 @@ describe('integration.data-api.collection.finds', () => {
       assert.ok(idsToCheck.has(doc._id as string));
     });
     const findOneRespDoc = await collection.findOne(filter);
-    assert.ok(findOneRespDoc!._id);
-    assert.ok(findOneRespDoc!.tags.length == 0);
-    assert.ok(idsToCheck.has(findOneRespDoc!._id as string));
+    assert.ok(findOneRespDoc?._id);
+    assert.ok(findOneRespDoc.tags?.length == 0);
+    assert.ok(idsToCheck.has(findOneRespDoc._id as string));
   });
 });

@@ -110,7 +110,7 @@ export class DevOpsAPIResponseError extends DevOpsAPIError {
    * @internal
    */
   constructor(resp: FetcherResponseInfo, data: Record<string, any> | undefined) {
-    const message = (data?.errors as any[])?.find(e => e.message)?.message ?? 'Something went wrong';
+    const message = data?.errors?.find((e: any) => e.message)?.message ?? 'Something went wrong';
     super(message);
     this.errors = extractErrorDescriptors(data);
     this.status = resp.status;
@@ -153,9 +153,9 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
 }
 
 function extractErrorDescriptors(data: Record<string, any> | undefined): DevOpsAPIErrorDescriptor[] {
-  const errors: any[] = data?.errors || [];
+  const errors: { ID: number, message: string }[] = data?.errors || [];
 
-  return errors.map((e: any) => ({
+  return errors.map((e) => ({
     id: e.ID,
     message: e.message,
   }));

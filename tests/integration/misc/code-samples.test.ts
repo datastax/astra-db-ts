@@ -13,23 +13,19 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import process from 'process';
 import { DataAPIClient } from '@/src/client';
 import { DEFAULT_NAMESPACE } from '@/src/api';
-import { DEFAULT_COLLECTION_NAME, initTestObjects } from '@/tests/fixtures';
+import { DEFAULT_COLLECTION_NAME, initTestObjects, TEST_APPLICATION_TOKEN, TEST_ASTRA_URI } from '@/tests/fixtures';
 import assert from 'assert';
 import { Collection, ObjectId, UUID } from '@/src/data-api';
 
 describe('integration.misc.code-samples', () => {
-  const token = process.env.APPLICATION_TOKEN!;
-  const endpoint = process.env.ASTRA_URI!;
+  const token = TEST_APPLICATION_TOKEN;
+  const endpoint = TEST_ASTRA_URI;
 
   let collection: Collection;
 
   before(async function () {
-    if (!process.env.ASTRA_URI || !process.env.APPLICATION_TOKEN) {
-      this.skip();
-    }
     [, , collection] = await initTestObjects(this);
   });
 
@@ -61,8 +57,8 @@ describe('integration.misc.code-samples', () => {
       // console.log(found?.lastModified);
 
       assert.strictEqual(found?.message, 'Happy Birthday!');
-      assert.ok(found?.lastModified instanceof Date);
-      assert.strictEqual(found?.dateOfBirth.toISOString(), new Date('1863-05-28').toISOString());
+      assert.ok(found.lastModified instanceof Date);
+      assert.strictEqual(found.dateOfBirth.toISOString(), new Date('1863-05-28').toISOString());
 
       const countedDocuments = await collection.countDocuments({}, 1000);
       assert.strictEqual(countedDocuments, 2);
@@ -85,21 +81,19 @@ describe('integration.misc.code-samples', () => {
       );
 
       const john = await collection.findOne({ name: 'John' });
-      const jane = await collection.findOne({ _id: john!.friendId });
+      const jane = await collection.findOne({ _id: john?.friendId });
 
       // Prints 'Jane 016b1cac-14ce-660e-8974-026c927b9b91 6'
       // console.log(jane?.name, jane?._id.toString(), jane?._id.version);
 
-      assert.ok(john?.friendId instanceof UUID);
-      assert.strictEqual(john?.friendId.toString(), '016b1cac-14ce-660e-8974-026c927b9b91');
-      assert.strictEqual(john?.friendId.version, 6);
-
       assert.ok(john?._id instanceof UUID);
-      assert.strictEqual(jane?.name, 'Jane');
-      assert.strictEqual(jane?._id?.toString(), '016b1cac-14ce-660e-8974-026c927b9b91');
-
       assert.ok(jane?._id instanceof UUID);
-      assert.ok(jane._id.equals(john?.friendId));
+
+      assert.strictEqual(jane.name, 'Jane');
+      assert.strictEqual(jane._id.toString(), '016b1cac-14ce-660e-8974-026c927b9b91');
+
+      assert.ok(john.friendId instanceof UUID);
+      assert.ok(jane._id.equals(john.friendId));
 
       const countedDocuments = await collection.countDocuments({}, 1000);
       assert.strictEqual(countedDocuments, 4);
@@ -141,7 +135,7 @@ describe('integration.misc.code-samples', () => {
       const john = await collection.findOne({}, { vector: [1, 1, 1, 1, 1], includeSimilarity: true });
       // console.log(john?.name, john?.$similarity);
       assert.strictEqual(john?.name, 'John');
-      assert.strictEqual(john?.$similarity, 1);
+      assert.strictEqual(john.$similarity, 1);
     });
 
     it('works for finding documents', async () => {
@@ -182,7 +176,7 @@ describe('integration.misc.code-samples', () => {
       const john = await collection.find({}, { vector: [1, 1, 1, 1, 1], includeSimilarity: true }).next();
       // console.log(john?.name, john?.$similarity);
       assert.strictEqual(john?.name, 'John');
-      assert.strictEqual(john?.$similarity, 1);
+      assert.strictEqual(john.$similarity, 1);
     });
 
     it('works for example sort operations', async () => {
@@ -224,7 +218,7 @@ describe('integration.misc.code-samples', () => {
       );
       // console.log(updated1?.title);
       assert.strictEqual(updated1?.title, 'Mr.');
-      assert.strictEqual(updated1?.Marco, 'Polo');
+      assert.strictEqual(updated1.Marco, 'Polo');
 
       // Prints { _id: ..., title: 'Mr.', rank: 3 }
       const updated2 = await collection.findOneAndUpdate(
@@ -234,8 +228,8 @@ describe('integration.misc.code-samples', () => {
       );
       // console.log(updated2);
       assert.strictEqual(updated2?.title, 'Mr.');
-      assert.strictEqual(updated2?.rank, 3);
-      assert.strictEqual(updated2?.Marco, undefined);
+      assert.strictEqual(updated2.rank, 3);
+      assert.strictEqual(updated2.Marco, undefined);
 
       // Prints null
       const updated3 = await collection.findOneAndUpdate(
@@ -254,7 +248,7 @@ describe('integration.misc.code-samples', () => {
       );
       // console.log(updated4);
       assert.strictEqual(updated4?.name, 'Johnny');
-      assert.strictEqual(updated4?.rank, 0);
+      assert.strictEqual(updated4.rank, 0);
     });
 
     it('works for updating a document', async () => {
@@ -270,18 +264,18 @@ describe('integration.misc.code-samples', () => {
         { 'Marco': 'Polo' },
         { $set: { title: 'Mr.' } },
       );
-      assert.strictEqual(updated1?.matchedCount, 1);
-      assert.strictEqual(updated1?.modifiedCount, 1);
-      assert.strictEqual(updated1?.upsertedCount, 0);
+      assert.strictEqual(updated1.matchedCount, 1);
+      assert.strictEqual(updated1.modifiedCount, 1);
+      assert.strictEqual(updated1.upsertedCount, 0);
 
       // Prints 0, 0
       const updated2 = await collection.updateOne(
         { name: 'Johnny' },
         { $set: { rank: 0 } },
       );
-      assert.strictEqual(updated2?.matchedCount, 0);
-      assert.strictEqual(updated2?.modifiedCount, 0);
-      assert.strictEqual(updated2?.upsertedCount, 0);
+      assert.strictEqual(updated2.matchedCount, 0);
+      assert.strictEqual(updated2.modifiedCount, 0);
+      assert.strictEqual(updated2.upsertedCount, 0);
 
       // Prints 0, 1
       const updated3 = await collection.updateOne(
@@ -289,9 +283,9 @@ describe('integration.misc.code-samples', () => {
         { $set: { rank: 0 } },
         { upsert: true },
       );
-      assert.strictEqual(updated3?.matchedCount, 0);
-      assert.strictEqual(updated3?.modifiedCount, 0);
-      assert.strictEqual(updated3?.upsertedCount, 1);
+      assert.strictEqual(updated3.matchedCount, 0);
+      assert.strictEqual(updated3.modifiedCount, 0);
+      assert.strictEqual(updated3.upsertedCount, 1);
     });
   });
 });

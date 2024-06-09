@@ -1,6 +1,5 @@
 /* eslint-env node */
 module.exports = {
-  ignorePatterns: ['dist/*', 'scripts/*'],
   extends: ['eslint:recommended', 'plugin:@typescript-eslint/recommended'],
   parser: '@typescript-eslint/parser',
   plugins: ['@typescript-eslint'],
@@ -19,6 +18,13 @@ module.exports = {
         'caughtErrorsIgnorePattern': '^_',
       },
     ],
+    // Sometimes 'requires' is necessary
     '@typescript-eslint/no-var-requires': 'off',
+  },
+  parserOptions: {
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+    project: ['./tsconfig.json'],
+    tsconfigRootDir: __dirname,
   },
 };

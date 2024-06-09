@@ -48,7 +48,7 @@ describe('integration.data-api.collection.count-documents', () => {
   it('should return count of documents with non id filter', async () => {
     const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
     docList.forEach((doc, index) => {
-      doc.username = doc.username + (index + 1);
+      doc.username = doc.username + String(index + 1);
     });
     const res = await collection.insertMany(docList);
     assert.strictEqual(res.insertedCount, 20);
@@ -59,7 +59,7 @@ describe('integration.data-api.collection.count-documents', () => {
   it('should return count of documents with no filter', async () => {
     const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
     docList.forEach((doc, index) => {
-      doc.username = doc.username + (index + 1);
+      doc.username = doc.username + String(index + 1);
     });
     const res = await collection.insertMany(docList);
     assert.strictEqual(res.insertedCount, 20);
@@ -70,14 +70,14 @@ describe('integration.data-api.collection.count-documents', () => {
   it('should return count of documents for more than default page size limit', async () => {
     const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
     docList.forEach((doc, index) => {
-      doc.username = doc.username + (index + 1);
+      doc.username = doc.username + String(index + 1);
     });
     const res = await collection.insertMany(docList);
     assert.strictEqual(res.insertedCount, 20);
     //insert next 20
     const docListNextSet = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
     docListNextSet.forEach((doc, index) => {
-      doc.username = doc.username + (index + 21);
+      doc.username = doc.username + String(index + 21);
     });
     const resNextSet = await collection.insertMany(docListNextSet);
     assert.strictEqual(resNextSet.insertedCount, docListNextSet.length);
@@ -122,8 +122,8 @@ describe('integration.data-api.collection.count-documents', () => {
     }
   });
 
-  it('should throw an error when no limit is provided', () => {
-    assert.rejects(async () => {
+  it('should throw an error when no limit is provided', async () => {
+    await assert.rejects(async () => {
       // @ts-expect-error - intentionally testing invalid input
       return await collection.countDocuments({});
     })

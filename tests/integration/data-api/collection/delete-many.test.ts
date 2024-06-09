@@ -31,7 +31,7 @@ describe('integration.data-api.collection.delete-many', () => {
   it('should deleteMany when match is <= 20', async () => {
     const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
     docList.forEach((doc, index) => {
-      doc.username = doc.username + (index + 1);
+      doc.username = doc.username + String(index + 1);
     });
     const res = await collection.insertMany(docList);
     assert.strictEqual(res.insertedCount, 20);

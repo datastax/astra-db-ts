@@ -21,7 +21,7 @@ export interface FindOneAndUpdateCommand {
     filter?: Record<string, unknown>;
     update?: Record<string, any>;
     options?: {
-      returnDocument: 'before' | 'after',
+      returnDocument?: 'before' | 'after',
       upsert?: boolean,
     };
     sort?: Sort;

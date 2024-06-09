@@ -24,8 +24,8 @@ describe('unit.devops.admin', () => {
     return {
       dbOptions: { token: new StaticTokenProvider('old'), monitorCommands: false, ...data },
       adminOptions: { adminToken: new StaticTokenProvider('old-admin'), monitorCommands: false, ...devops },
-      emitter: null as any,
-      fetchCtx: { preferred: null!, http1: null!, preferredType } as any,
+      emitter: null!,
+      fetchCtx: { preferredType } as any,
       userAgent: '',
     };
   }

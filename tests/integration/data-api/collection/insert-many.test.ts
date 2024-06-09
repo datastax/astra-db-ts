@@ -36,7 +36,7 @@ describe('integration.data-api.collection.insert-many', () => {
 
     res.insertedIds.forEach((id) => {
       assert.ok(typeof id as any === 'string');
-      assert.doesNotThrow(() => new UUID(<any>id));
+      assert.doesNotThrow(() => new UUID(<string>id));
     });
   });
 
@@ -48,7 +48,7 @@ describe('integration.data-api.collection.insert-many', () => {
 
     res.insertedIds.forEach((id) => {
       assert.ok(typeof id as any === 'string');
-      assert.doesNotThrow(() => new UUID(<any>id));
+      assert.doesNotThrow(() => new UUID(<string>id));
     });
   });
 
@@ -162,11 +162,11 @@ describe('integration.data-api.collection.insert-many', () => {
   it('should error out when one of the docs in insertMany is invalid with ordered true', async () => {
     const docs = Array.from({ length: 20 }, (_, i) => ({ _id: i }));
     docs[10] = docs[9];
-    let error: any;
+    let error: unknown;
     try {
       await collection.insertMany(docs, { ordered: true });
       assert.fail('Should have thrown an error');
-    } catch (e: any) {
+    } catch (e) {
       error = e;
     }
     assert.ok(error);
@@ -174,17 +174,17 @@ describe('integration.data-api.collection.insert-many', () => {
     assert.strictEqual(error.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
     assert.strictEqual(error.partialResult.insertedCount, 10);
     docs.slice(0, 10).forEach((doc, index) => {
-      assert.strictEqual((error as InsertManyError).partialResult.insertedIds[index], doc._id);
+      assert.strictEqual(error.partialResult.insertedIds[index], doc._id);
     });
   });
 
   it('should error out when one of the docs in insertMany is invalid with ordered false', async () => {
     const docs = Array.from({ length: 20 }, (_, i) => ({ _id: i }));
     docs[10] = docs[9];
-    let error: any;
+    let error: unknown;
     try {
       await collection.insertMany(docs, { ordered: false });
-    } catch (e: any) {
+    } catch (e) {
       error = e;
     }
     assert.ok(error);
@@ -192,7 +192,7 @@ describe('integration.data-api.collection.insert-many', () => {
     assert.strictEqual(error.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
     assert.strictEqual(error.partialResult.insertedCount, 19);
     docs.slice(0, 9).concat(docs.slice(10)).forEach((doc) => {
-      assert.ok((error as InsertManyError).partialResult.insertedIds.includes(doc._id!));
+      assert.ok(error.partialResult.insertedIds.includes(doc._id));
     });
   });
 

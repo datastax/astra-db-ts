@@ -13,13 +13,12 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEFAULT_COLLECTION_NAME, initTestObjects } from '@/tests/fixtures';
+import { DEFAULT_COLLECTION_NAME, initTestObjects, TEST_APPLICATION_TOKEN, TEST_ASTRA_URI } from '@/tests/fixtures';
 import { Collection, DataAPITimeoutError, Db } from '@/src/data-api';
 import assert from 'assert';
 import { HttpMethods } from '@/src/api';
 import { DevOpsAPITimeoutError } from '@/src/devops';
 import { DataAPIClient } from '@/src/client';
-import process from 'process';
 
 describe('integration.misc.timeouts', () => {
   let db: Db;
@@ -39,8 +38,8 @@ describe('integration.misc.timeouts', () => {
     });
 
     it('should timeout based on DataAPIClient maxTimeMS', async () => {
-      const collection = new DataAPIClient(process.env.APPLICATION_TOKEN!, { httpOptions: { maxTimeMS: 1 } })
-        .db(process.env.ASTRA_URI!)
+      const collection = new DataAPIClient(TEST_APPLICATION_TOKEN, { httpOptions: { maxTimeMS: 1 } })
+        .db(TEST_ASTRA_URI)
         .collection(DEFAULT_COLLECTION_NAME);
 
       await assert.rejects(async () => {
@@ -49,8 +48,8 @@ describe('integration.misc.timeouts', () => {
     });
 
     it('should timeout based on collection maxTimeMS', async () => {
-      const collection = new DataAPIClient(process.env.APPLICATION_TOKEN!, { httpOptions: { maxTimeMS: 30000 } })
-        .db(process.env.ASTRA_URI!)
+      const collection = new DataAPIClient(TEST_APPLICATION_TOKEN, { httpOptions: { maxTimeMS: 30000 } })
+        .db(TEST_ASTRA_URI)
         .collection(DEFAULT_COLLECTION_NAME, { defaultMaxTimeMS: 1 });
 
       await assert.rejects(async () => {
@@ -59,8 +58,8 @@ describe('integration.misc.timeouts', () => {
     });
 
     it('should timeout based on operation maxTimeMS', async () => {
-      const collection = new DataAPIClient(process.env.APPLICATION_TOKEN!, { httpOptions: { maxTimeMS: 30000 } })
-        .db(process.env.ASTRA_URI!)
+      const collection = new DataAPIClient(TEST_APPLICATION_TOKEN, { httpOptions: { maxTimeMS: 30000 } })
+        .db(TEST_ASTRA_URI)
         .collection(DEFAULT_COLLECTION_NAME, { defaultMaxTimeMS: 30000 });
 
       await assert.rejects(async () => {
@@ -79,8 +78,8 @@ describe('integration.misc.timeouts', () => {
     });
 
     it('should timeout based on DataAPIClient maxTimeMS', async () => {
-      const admin = new DataAPIClient(process.env.APPLICATION_TOKEN!, { httpOptions: { maxTimeMS: 1 } })
-        .db(process.env.ASTRA_URI!)
+      const admin = new DataAPIClient(TEST_APPLICATION_TOKEN, { httpOptions: { maxTimeMS: 1 } })
+        .db(TEST_ASTRA_URI)
         .admin();
 
       await assert.rejects(async () => {
@@ -89,8 +88,8 @@ describe('integration.misc.timeouts', () => {
     });
 
     it('should timeout based on operation maxTimeMS', async () => {
-      const admin = new DataAPIClient(process.env.APPLICATION_TOKEN!, { httpOptions: { maxTimeMS: 30000 } })
-        .db(process.env.ASTRA_URI!)
+      const admin = new DataAPIClient(TEST_APPLICATION_TOKEN, { httpOptions: { maxTimeMS: 30000 } })
+        .db(TEST_ASTRA_URI)
         .admin();
 
       await assert.rejects(async () => {

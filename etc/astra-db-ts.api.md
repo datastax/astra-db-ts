@@ -194,13 +194,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options: FindOneAndReplaceOptions & {
         includeResultMetadata: true;
     }): Promise<ModifyResult<Schema>>;
-    findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options: FindOneAndReplaceOptions & {
+    findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options?: FindOneAndReplaceOptions & {
         includeResultMetadata?: false;
     }): Promise<WithId<Schema> | null>;
     findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options: FindOneAndUpdateOptions & {
         includeResultMetadata: true;
     }): Promise<ModifyResult<Schema>>;
-    findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options: FindOneAndUpdateOptions & {
+    findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: FindOneAndUpdateOptions & {
         includeResultMetadata?: false;
     }): Promise<WithId<Schema> | null>;
     insertMany(documents: MaybeId<Schema>[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>>;
@@ -528,7 +528,7 @@ export interface DbSpawnOptions {
 // @public
 export interface DefaultHttpClientOptions {
     client?: 'default';
-    fetchH2?: any;
+    fetchH2?: unknown;
     http1?: Http1Options;
     maxTimeMS?: number;
     preferHttp2?: boolean;
@@ -695,20 +695,20 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     clone(): FindCursor<TRaw, TRaw>;
     close(): void;
     get closed(): boolean;
-    filter(filter: Filter<TRaw>): FindCursor<T, TRaw>;
+    filter(filter: Filter<TRaw>): this;
     // @deprecated
-    forEach(consumer: (doc: T) => boolean | void): Promise<void>;
+    forEach(consumer: ((doc: T) => boolean) | ((doc: T) => void)): Promise<void>;
     hasNext(): Promise<boolean>;
-    includeSimilarity(includeSimilarity?: boolean): FindCursor<T, TRaw>;
-    limit(limit: number): FindCursor<T, TRaw>;
+    includeSimilarity(includeSimilarity?: boolean): this;
+    limit(limit: number): this;
     map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw>;
     get namespace(): string;
     next(): Promise<T | null>;
     project<R = any, RRaw extends SomeDoc = SomeDoc>(projection: Projection): FindCursor<R, RRaw>;
     readBufferedDocuments(max?: number): TRaw[];
     rewind(): void;
-    skip(skip: number): FindCursor<T, TRaw>;
-    sort(sort: Sort): FindCursor<T, TRaw>;
+    skip(skip: number): this;
+    sort(sort: Sort): this;
     toArray(): Promise<T[]>;
 }
 
@@ -944,7 +944,7 @@ export interface NumFilterOps {
 
 // @public
 export class ObjectId {
-    constructor(id?: string, validate?: boolean);
+    constructor(id?: string | null, validate?: boolean);
     equals(other: unknown): boolean;
     getTimestamp(): Date;
     inspect(): string;
@@ -1138,7 +1138,7 @@ export class TooManyDocumentsToCountError extends DataAPIError {
 }
 
 // @public
-export type TypeErr<S> = unknown & {
+export type TypeErr<S> = {
     [__error]: S;
 };
 
