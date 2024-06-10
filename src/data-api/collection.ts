@@ -176,12 +176,14 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       insertOne: { document },
     }
 
-    if (options?.vector) {
-      command.insertOne.document = { ...command.insertOne.document, $vector: options.vector };
+    const { vector, vectorize } = <any>options ?? {};
+
+    if (vector) {
+      command.insertOne.document = { ...command.insertOne.document, $vector: vector };
     }
 
-    if (options?.vectorize) {
-      command.insertOne.document = { ...command.insertOne.document, $vectorize: options.vectorize };
+    if (vectorize) {
+      command.insertOne.document = { ...command.insertOne.document, $vectorize: vectorize };
     }
 
     const resp = await this._httpClient.executeCommand(command, options);
@@ -266,26 +268,28 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   public async insertMany(documents: MaybeId<Schema>[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>> {
     const chunkSize = options?.chunkSize ?? 50;
 
-    if (options?.vectors) {
-      if (options.vectors.length !== documents.length) {
+    const { vectors, vectorize } = <any>options ?? {};
+
+    if (vectors) {
+      if (vectors.length !== documents.length) {
         throw new Error('The number of vectors must match the number of documents');
       }
 
       for (let i = 0, n = documents.length; i < n; i++) {
-        if (options.vectors[i]) {
-          documents[i] = { ...documents[i], $vector: options.vectors[i] };
+        if (vectors[i]) {
+          documents[i] = { ...documents[i], $vector: vectors[i] };
         }
       }
     }
 
-    if (options?.vectorize) {
-      if (options.vectorize.length !== documents.length) {
+    if (vectorize) {
+      if (vectorize.length !== documents.length) {
         throw new Error('The number of vectors must match the number of documents');
       }
 
       for (let i = 0, n = documents.length; i < n; i++) {
-        if (options.vectorize[i]) {
-          documents[i] = { ...documents[i], $vectorize: options.vectorize[i] };
+        if (vectorize[i]) {
+          documents[i] = { ...documents[i], $vectorize: vectorize[i] };
         }
       }
     }

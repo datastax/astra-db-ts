@@ -57,12 +57,14 @@ export interface ReplaceOneOptions extends WithTimeout {
    *
    * If the sort field is already set, an error will be thrown. If you really need to use both, you can set the $vector
    * field in the sort object directly.
+   *
+   * @deprecated - Prefer to use `sort: { $vector: [...] }` instead
    */
   vector?: number[],
   /**
    * NOTE: This feature is under current development.
    *
-   * @alpha
+   * @deprecated - Prefer to use `sort: { $vectorize: '...' }` instead
    */
   vectorize?: string,
 }
