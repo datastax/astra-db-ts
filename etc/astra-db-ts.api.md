@@ -953,7 +953,7 @@ export interface NumFilterOps {
 
 // @public
 export class ObjectId {
-    constructor(id?: string | null, validate?: boolean);
+    constructor(id?: string | number | null, validate?: boolean);
     equals(other: unknown): boolean;
     getTimestamp(): Date;
     inspect(): string;
