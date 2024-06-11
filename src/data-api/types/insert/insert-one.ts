@@ -43,12 +43,14 @@ export interface InsertOneOptions extends WithTimeout {
    *
    * If the document already has a `$vector` field, and this is set, the `$vector` field will be overwritten. It is
    * up to the user to ensure that both fields are not set at once.
+   *
+   * @deprecated - Prefer to set the `$vector` field in the doc directly
    */
   vector?: number[],
   /**
    * NOTE: This feature is under current development.
    *
-   * @alpha
+   * @deprecated - Prefer to set the `$vectorize` field in the doc directly
    */
   vectorize?: string,
 }

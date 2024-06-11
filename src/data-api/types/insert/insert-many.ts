@@ -79,12 +79,14 @@ export interface InsertManyOrderedOptions extends WithTimeout {
    *
    * If any document already has a `$vector` field, and this is set, the `$vector` field will be overwritten. It is
    * up to the user to ensure that both fields are not set at once.
+   *
+   * @deprecated - Prefer to set the `$vector` fields in the docs directly
    */
   vectors?: (number[] | null | undefined)[],
   /**
    * NOTE: This feature is under current development.
    *
-   * @alpha
+   * @deprecated - Prefer to set the `$vectorize` fields in the docs directly
    */
   vectorize?: (string | null | undefined)[],
 }
@@ -134,12 +136,14 @@ export interface InsertManyUnorderedOptions extends WithTimeout {
    *
    * If any document already has a `$vector` field, and this is set, the `$vector` field will be overwritten. It is
    * up to the user to ensure that both fields are not set at once.
+   *
+   * @deprecated - Prefer to set the `$vector` fields in the docs directly
    */
   vectors?: (number[] | null | undefined)[],
   /**
    * NOTE: This feature is under current development.
    *
-   * @alpha
+   * @deprecated - Prefer to set the `$vectorize` fields in the docs directly
    */
   vectorize?: (string | null | undefined)[],
 }

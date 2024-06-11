@@ -563,8 +563,9 @@ export interface DeleteOneModel<TSchema extends SomeDoc> {
 // @public
 export interface DeleteOneOptions extends WithTimeout {
     sort?: Sort;
+    // @deprecated
     vector?: number[];
-    // @alpha
+    // @deprecated
     vectorize?: string;
 }
 
@@ -717,8 +718,9 @@ export interface FindOneAndDeleteOptions extends WithTimeout {
     includeResultMetadata?: boolean;
     projection?: Projection;
     sort?: Sort;
+    // @deprecated
     vector?: number[];
-    // @alpha
+    // @deprecated
     vectorize?: string;
 }
 
@@ -729,8 +731,9 @@ export interface FindOneAndReplaceOptions extends WithTimeout {
     returnDocument: 'before' | 'after';
     sort?: Sort;
     upsert?: boolean;
+    // @deprecated
     vector?: number[];
-    // @alpha
+    // @deprecated
     vectorize?: string;
 }
 
@@ -741,8 +744,9 @@ export interface FindOneAndUpdateOptions extends WithTimeout {
     returnDocument: 'before' | 'after';
     sort?: Sort;
     upsert?: boolean;
+    // @deprecated
     vector?: number[];
-    // @alpha
+    // @deprecated
     vectorize?: string;
 }
 
@@ -751,8 +755,9 @@ export interface FindOneOptions extends WithTimeout {
     includeSimilarity?: boolean;
     projection?: Projection;
     sort?: Sort;
+    // @deprecated
     vector?: number[];
-    // @alpha
+    // @deprecated
     vectorize?: string;
 }
 
@@ -763,8 +768,9 @@ export interface FindOptions {
     projection?: Projection;
     skip?: number;
     sort?: Sort;
+    // @deprecated
     vector?: number[];
-    // @alpha
+    // @deprecated
     vectorize?: string;
 }
 
@@ -847,8 +853,9 @@ export type InsertManyOptions = InsertManyUnorderedOptions | InsertManyOrderedOp
 export interface InsertManyOrderedOptions extends WithTimeout {
     chunkSize?: number;
     ordered: true;
-    // @alpha
+    // @deprecated
     vectorize?: (string | null | undefined)[];
+    // @deprecated
     vectors?: (number[] | null | undefined)[];
 }
 
@@ -863,8 +870,9 @@ export interface InsertManyUnorderedOptions extends WithTimeout {
     chunkSize?: number;
     concurrency?: number;
     ordered?: false;
-    // @alpha
+    // @deprecated
     vectorize?: (string | null | undefined)[];
+    // @deprecated
     vectors?: (number[] | null | undefined)[];
 }
 
@@ -875,8 +883,9 @@ export interface InsertOneModel<TSchema extends SomeDoc> {
 
 // @public
 export interface InsertOneOptions extends WithTimeout {
+    // @deprecated
     vector?: number[];
-    // @alpha
+    // @deprecated
     vectorize?: string;
 }
 
@@ -999,8 +1008,9 @@ export interface ReplaceOneModel<TSchema extends SomeDoc> {
 export interface ReplaceOneOptions extends WithTimeout {
     sort?: Sort;
     upsert?: boolean;
+    // @deprecated
     vector?: number[];
-    // @alpha
+    // @deprecated
     vectorize?: string;
 }
 
@@ -1194,8 +1204,9 @@ export interface UpdateOneModel<TSchema extends SomeDoc> {
 export interface UpdateOneOptions extends WithTimeout {
     sort?: Sort;
     upsert?: boolean;
+    // @deprecated
     vector?: number[];
-    // @alpha
+    // @deprecated
     vectorize?: string;
 }
 
