@@ -12,11 +12,11 @@ yes | npx tsc --project tsconfig.build.json
 # Replaces alias paths with relative paths (e.g. `@/src/version` -> `../../src/version`)
 yes | npx tsc-alias -p tsconfig.build.json
 
-# Creates the rollup .d.ts and generates an API report in etc/
-npm run api-extractor
+# Creates the rollup .d.ts, generates an API report in etc/, and cleans up any temp files
+npm run api-extractor && rm -r ./temp
 
-# Deletes the temp folder that was created by API extractor
-rm -r ./temp
+# Uses a more succinct licence notice + removes block comments (the rollup .d.ts file already contains the ts-doc)
+find ./dist -type f -name '*.js' -exec node scripts/reduce-comments.js {} \;
 
 # Removes all .d.ts files except the main rollup .d.ts
 cd dist || return 1

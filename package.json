@@ -72,6 +72,7 @@
     "dotenv": "^16.0.1",
     "eslint": "^8.57.0",
     "nyc": "^15.1.0",
+    "strip-comments": "^2.0.1",
     "ts-mocha": "^10.0.0",
     "tsc-alias": "^1.8.8",
     "typescript": "^5.3.3"
