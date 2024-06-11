@@ -13,9 +13,7 @@
 // limitations under the License.
 
 import { UUID as UUIDv7, uuidv4, uuidv7 } from 'uuidv7';
-import MongoObjectId from 'bson-objectid';
 import { isNullish } from '@/src/common';
-import ObjectID from 'bson-objectid';
 
 /**
  * All possible types for a document ID. JSON scalar types, `Date`, `UUID`, and `ObjectId`.
@@ -217,7 +215,7 @@ const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
  * @public
  */
 export class ObjectId {
-  private readonly _objectId: MongoObjectId;
+  private readonly _objectId: string;
 
   /**
    * Creates a new ObjectId instance.
@@ -227,18 +225,18 @@ export class ObjectId {
    * @param id - The ObjectId string.
    * @param validate - Whether to validate the ObjectId string. Defaults to `true`.
    */
-  constructor(id?: string | null, validate = true) {
+  constructor(id?: string | number | null, validate = true) {
     if (validate) {
       if (typeof id === 'string') {
         if (id.length !== 24 || !objectIdRegex.test(id)) {
           throw new Error('ObjectId must be a 24-character hex string');
         }
-      } else if (!isNullish(id)) {
-        throw new Error('ObjectId must be a string');
+      } else if (typeof id !== 'number' && !isNullish(id)) {
+        throw new Error('ObjectId must be a string, number, or nullish');
       }
     }
 
-    this._objectId = (id) ? MongoObjectId(id) : MongoObjectId();
+    this._objectId = typeof id === 'string' ? id.toLowerCase() : genObjectId(id);
   }
 
   /**
@@ -253,7 +251,13 @@ export class ObjectId {
    * @returns `true` if the ObjectIds are equal, `false` otherwise.
    */
   public equals(other: unknown): boolean {
-    return this._objectId.equals((other && typeof other === 'object' && '_objectId' in other ? other._objectId : other) as ObjectID);
+    if (typeof other === 'string') {
+      return this._objectId.localeCompare(other, undefined, { sensitivity: 'accent' }) === 0;
+    }
+    if (other instanceof ObjectId) {
+      return this._objectId.localeCompare(other._objectId, undefined, { sensitivity: 'accent' }) === 0;
+    }
+    return false;
   }
 
   /**
@@ -262,14 +266,15 @@ export class ObjectId {
    * @returns The timestamp of the ObjectId.
    */
   public getTimestamp(): Date {
-    return this._objectId.getTimestamp();
+    const time = parseInt(this._objectId.slice(0, 8), 16);
+    return new Date(~~time * 1000);
   }
 
   /**
    * Returns the string representation of the ObjectId.
    */
   public toString(): string {
-    return this._objectId.toHexString();
+    return this._objectId;
   }
 
   /**
@@ -287,6 +292,39 @@ export class ObjectId {
   public toJSON() {
     return { $objectId: this.toString() };
   }
+}
+
+const MACHINE_ID = ~~(Math.random() * 0xFFFFFF);
+const PID = ((typeof process?.pid !== 'number') ? ~~(Math.random() * 100000) : process.pid) % 0xFFFF;
+
+const hexTable = Array.from({ length: 256 }, (_, i) => {
+  return (i <= 15 ? '0' : '') + i.toString(16);
+});
+
+let index = ~~(Math.random() * 0xFFFFFF);
+
+function genObjectId(time?: number | null): string {
+  time ??= ~~(Date.now() / 1000);
+  time = time % 0xFFFFFFFF;
+
+  index = (index + 1) % 0xFFFFFF
+
+  let hexString = '';
+
+  hexString += hexTable[((time >> 24) & 0xFF)]
+  hexString += hexTable[((time >> 16) & 0xFF)]
+  hexString += hexTable[((time >> 8) & 0xFF)]
+  hexString += hexTable[(time & 0xFF)]
+  hexString += hexTable[((MACHINE_ID >> 16) & 0xFF)]
+  hexString += hexTable[((MACHINE_ID >> 8) & 0xFF)]
+  hexString += hexTable[(MACHINE_ID & 0xFF)]
+  hexString += hexTable[((PID >> 8) & 0xFF)]
+  hexString += hexTable[(PID & 0xFF)]
+  hexString += hexTable[((index >> 16) & 0xFF)]
+  hexString += hexTable[((index >> 8) & 0xFF)]
+  hexString += hexTable[(index & 0xFF)]
+
+  return hexString;
 }
 
 function timestampFromUUID(uuid: UUID): Date | undefined {

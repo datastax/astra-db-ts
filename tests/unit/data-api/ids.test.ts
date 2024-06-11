@@ -104,6 +104,7 @@ describe('unit.data-api.ids', () => {
 
     it('should properly serialize to JSON', () => {
       const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');
+      assert.deepStrictEqual(uuid.toJSON(), { $uuid: '123e4567-e89b-12d3-a456-426614174000' });
       assert.strictEqual(JSON.stringify(uuid), '{"$uuid":"123e4567-e89b-12d3-a456-426614174000"}');
     });
   });
@@ -112,6 +113,16 @@ describe('unit.data-api.ids', () => {
     it('should properly construct an ObjectId', () => {
       const objectId = new ObjectId('507f191e810c19729de860ea');
       assert.strictEqual(objectId.toString(), '507f191e810c19729de860ea');
+    });
+
+    it('should properly generate an ObjectId', () => {
+      const objectId = new ObjectId();
+      assert.strictEqual(objectId.toString().length, 24);
+    });
+
+    it('should properly construct an ObjectId given timestamp', () => {
+      const objectId = new ObjectId(123123123);
+      assert.strictEqual(objectId.getTimestamp().toDateString(), new Date(123123123 * 1000).toDateString());
     });
 
     it('should error on invalid ObjectId', () => {
@@ -123,11 +134,13 @@ describe('unit.data-api.ids', () => {
     });
 
     it('should "allow" force construction on invalid ObjectId', () => {
-      assert.throws(() => new ObjectId('507f191e810c19729de860e', false), Error);
+      const objectId = new ObjectId('23d032jd', false);
+      assert.ok(objectId.equals('23d032jd'));
     });
 
     it('should "allow" force construction on invalid type', () => {
-      assert.throws(() => new ObjectId({} as any, false), Error);
+      const objectId = new ObjectId(<any>{}, false);
+      assert.ok(objectId.toString());
     });
 
     it('should properly parse an ObjectId', () => {
@@ -171,6 +184,7 @@ describe('unit.data-api.ids', () => {
 
     it('should properly serialize to JSON', () => {
       const objectId = new ObjectId('507f191e810c19729de860ea');
+      assert.deepStrictEqual(objectId.toJSON(), { $objectId: '507f191e810c19729de860ea' });
       assert.strictEqual(JSON.stringify(objectId), '{"$objectId":"507f191e810c19729de860ea"}');
     });
   });
