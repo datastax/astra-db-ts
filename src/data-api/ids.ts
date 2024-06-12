@@ -295,7 +295,7 @@ export class ObjectId {
 }
 
 const MACHINE_ID = ~~(Math.random() * 0xFFFFFF);
-const PID = ((typeof process?.pid !== 'number') ? ~~(Math.random() * 100000) : process.pid) % 0xFFFF;
+const PID = ((typeof process === 'undefined' || typeof process.pid !== 'number') ? ~~(Math.random() * 100000) : process.pid) % 0xFFFF;
 
 const hexTable = Array.from({ length: 256 }, (_, i) => {
   return (i <= 15 ? '0' : '') + i.toString(16);

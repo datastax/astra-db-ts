@@ -32,9 +32,11 @@ in the main `README.md` for more information common to non-standard environments
 
 3. Copy the `.env.example` file to `.env` and fill in the required values.
 
-4. Run `npm run dev` to start the local development server.
+4. Visit https://cors-anywhere.herokuapp.com/corsdemo to temporarily enable access to the demo server.
 
-5. Visit `http://localhost:5173` in your browser to see the example in action.
+5. Run `npm run dev` to start the local development server.
+
+6. Visit `http://localhost:5173` in your browser to see the example in action.
 
 ### Steps to Start Your Own Project:
 
@@ -44,8 +46,8 @@ in the main `README.md` for more information common to non-standard environments
 
 3. Install the `events` polyfill (if your build tool doesn't provide polyfills) by running `npm i events`. 
 
-4. Set up a CORS proxy to forward requests to the Data API. You can use [cors-anywhere](https://github.com/Rob--W/cors-anywhere),
-   or any other CORS proxy of your choice.
+4. Set up a CORS proxy to forward requests to the Data API. You can use something like [cors-anywhere](https://github.com/Rob--W/cors-anywhere),
+   [corsproxy.io](https://corsproxy.io/), or any other CORS proxy of your choice.
 
 5. When doing `client.db()`, prefix the endpoint URL with the CORS proxy URL as appropriate.
 
