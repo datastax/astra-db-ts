@@ -489,6 +489,10 @@ export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, reg
 
   validateDbOpts(options);
 
+  if (typeof regionOrOptions === 'string' && endpointOrId.startsWith('https://')) {
+    throw new Error('Unexpected db() argument: database id can\'t start with "https://". Did you mean to call `.db(endpoint, { namespace })`?');
+  }
+ 
   const endpoint = (typeof regionOrOptions === 'string')
     ? 'https://' + endpointOrId + '-' + regionOrOptions + '.apps.astra.datastax.com'
     : endpointOrId;
