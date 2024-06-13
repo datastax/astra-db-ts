@@ -286,5 +286,13 @@ describe('integration.client.data-api-client', () => {
       assert.ok(failedEvent.error instanceof DataAPITimeoutError);
       assert.strictEqual(failedEvent.error.timeout, 1);
     });
+
+    it('throws an error if passing in endpoint and keyspace name as a string', () => {
+      const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
+      assert.throws(
+        () => client.db(TEST_ASTRA_URI, OTHER_NAMESPACE),
+        { message: 'Unexpected regionOrOptions parameter: must be options object if endpointOrId starts with "https://"' }
+      );
+    });
   });
 });

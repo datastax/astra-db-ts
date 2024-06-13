@@ -489,6 +489,10 @@ export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, reg
 
   validateDbOpts(options);
 
+  if (typeof regionOrOptions === 'string' && endpointOrId.startsWith('https://')) {
+    throw new Error('Unexpected regionOrOptions parameter: must be options object if endpointOrId starts with "https://"');
+  }
+ 
   const endpoint = (typeof regionOrOptions === 'string')
     ? 'https://' + endpointOrId + '-' + regionOrOptions + '.apps.astra.datastax.com'
     : endpointOrId;
