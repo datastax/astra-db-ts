@@ -291,7 +291,7 @@ describe('integration.client.data-api-client', () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
       assert.throws(
         () => client.db(TEST_ASTRA_URI, OTHER_NAMESPACE),
-        { message: 'Unexpected regionOrOptions parameter: must be options object if endpointOrId starts with "https://"' }
+        { message: 'Unexpected db() argument: database id can\'t start with "https://". Did you mean to call `.db(endpoint, { namespace })`?' }
       );
     });
   });
