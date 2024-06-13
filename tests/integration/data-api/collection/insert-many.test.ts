@@ -97,7 +97,7 @@ describe('integration.data-api.collection.insert-many', () => {
     });
     assert.ok(res);
 
-    const archEnemy = await collection.findOne({ name: 'Arch Enemy' });
+    const archEnemy = await collection.findOne({ name: 'Arch Enemy' }, { projection: { $vector: 1 } });
     assert.deepStrictEqual(archEnemy?.$vector, [1, 1, 1, 1, 1]);
 
     const equilibrium = await collection.findOne({ name: 'Equilibrium' });
