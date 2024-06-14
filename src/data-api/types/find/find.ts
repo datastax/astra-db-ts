@@ -127,6 +127,32 @@ export interface FindOptions {
    * ```
    */
   includeSimilarity?: boolean;
+  /**
+   * If true, fetch the sort vector on the very first API call.
+   *
+   * If false, it won't fetch the sort vector until {@link FindCursor.getSortVector} is called.
+   *
+   * Note that this is *not* a requirement to use {@link FindCursor.getSortVector}—it simply saves it an extra API call
+   * to fetch the sort vector.
+   *
+   * Set this to true if you're sure you're going to need the sort vector in the very near future.
+   *
+   * @example
+   * ```typescript
+   * const doc = await collection.findOne({}, {
+   *   sort: {
+   *     $vector: [.12, .52, .32],
+   *   },
+   *   includeSortVector: true,
+   * });
+   *
+   * // sortVector is fetched during this call
+   * const next = await cursor.next();
+   *
+   * // so no I/O is done here as the cursor already has the sortVector cached
+   * const sortVector = await cursor.getSortVector();
+   * ```
+   */
   includeSortVector?: boolean;
 }
 

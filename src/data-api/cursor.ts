@@ -254,6 +254,17 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     return this;
   }
 
+  /**
+   * Sets whether the sort vector should be fetched on the very first API call. Note that this is *not* a requirement
+   * to use {@link FindCursor.getSortVector}—it simply saves it an extra API call to fetch the sort vector. Set
+   * this to true if you're sure you're going to need the sort vector in the very near future.
+   *
+   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   *
+   * @param includeSortVector - Whether the sort vector should be fetched on the first API call
+   *
+   * @returns The cursor.
+   */
   public includeSortVector(includeSortVector: boolean = true): this {
     this._assertUninitialized();
     this._options.includeSortVector = includeSortVector;
@@ -360,6 +371,17 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     return false;
   }
 
+  /**
+   * Retrieves the vector used to perform the vector search, if applicable.
+   *
+   * If `sort: { $vector }` was used, `getSortVector()` will simply regurgitate that same `$vector`.
+   *
+   * If `sort: { $vectorize }` was used, `getSortVector()` will return the `$vector` that was created from the text.
+   *
+   * If vector search is not used, `getSortVector()` will simply return `null`.
+   *
+   * @returns The sort vector, or `null` if none was used.
+   */
   public async getSortVector(): Promise<number[] | null> {
     if (this._sortVector === undefined) {
       this._options.includeSortVector = true;

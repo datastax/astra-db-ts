@@ -699,8 +699,10 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     filter(filter: Filter<TRaw>): this;
     // @deprecated
     forEach(consumer: ((doc: T) => boolean) | ((doc: T) => void)): Promise<void>;
+    getSortVector(): Promise<number[] | null>;
     hasNext(): Promise<boolean>;
     includeSimilarity(includeSimilarity?: boolean): this;
+    includeSortVector(includeSortVector?: boolean): this;
     limit(limit: number): this;
     map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw>;
     get namespace(): string;
@@ -764,6 +766,7 @@ export interface FindOneOptions extends WithTimeout {
 // @public
 export interface FindOptions {
     includeSimilarity?: boolean;
+    includeSortVector?: boolean;
     limit?: number;
     projection?: Projection;
     skip?: number;

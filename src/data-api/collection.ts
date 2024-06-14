@@ -791,7 +791,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  find(filter: Filter<Schema>, options?: FindOptions): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>> {
+  public find(filter: Filter<Schema>, options?: FindOptions): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>> {
     return new FindCursor(this.namespace, this._httpClient, filter as any, coalesceVectorSpecialsIntoSort(options));
   }
 
@@ -915,7 +915,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * ```
    *
    * @remarks
-   * If you really need `limit` or `skip`, prefer using the {@link Collection.find} method instead.
+   * If you really need `skip` or `includeSortVector`, prefer using the {@link Collection.find} method instead with `limit: 1`.
    *
    * @param filter - A filter to select the document to find.
    * @param options - The options for this operation.
