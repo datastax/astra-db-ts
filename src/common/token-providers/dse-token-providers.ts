@@ -38,7 +38,7 @@ export class DSEUsernamePasswordTokenProvider extends TokenProvider {
    */
   constructor(username: string, password: string) {
     super();
-    this.#token = `cassandra:${this._encodeB64(username)}:${this._encodeB64(password)}`;
+    this.#token = `Cassandra:${this._encodeB64(username)}:${this._encodeB64(password)}`;
   }
 
   /**

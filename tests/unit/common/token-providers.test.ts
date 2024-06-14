@@ -29,7 +29,7 @@ describe('unit.common.token-providers', () => {
   describe('DSEUsernamePasswordTokenProvider', () => {
     it('should provide the properly encoded cassandra token in node', async () => {
       const tp = new DSEUsernamePasswordTokenProvider('username', 'password');
-      assert.strictEqual(await tp.getTokenAsString(), 'cassandra:dXNlcm5hbWU=:cGFzc3dvcmQ=');
+      assert.strictEqual(await tp.getTokenAsString(), 'Cassandra:dXNlcm5hbWU=:cGFzc3dvcmQ=');
     });
 
     it('should provide the properly encoded cassandra token in the browser', async () => {
@@ -38,7 +38,7 @@ describe('unit.common.token-providers', () => {
       anyGlobalThis.window = { btoa: anyGlobalThis.btoa };
       anyGlobalThis.Buffer = null!;
       const tp = new DSEUsernamePasswordTokenProvider('username', 'password');
-      assert.strictEqual(await tp.getTokenAsString(), 'cassandra:dXNlcm5hbWU=:cGFzc3dvcmQ=');
+      assert.strictEqual(await tp.getTokenAsString(), 'Cassandra:dXNlcm5hbWU=:cGFzc3dvcmQ=');
 
       [anyGlobalThis.window, anyGlobalThis.Buffer] = [window, buffer];
     });
