@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { normalizeSort, takeWhile } from './utils';
+import { normalizeSort } from './utils';
 import { FindCursor } from '@/src/data-api/cursor';
 import { Db, SomeDoc, SomeId } from '@/src/data-api';
 import {
@@ -854,8 +854,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    */
   public async distinct<Key extends string>(key: Key, filter: Filter<Schema> = {}): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]> {
-    assertPathSafe4Distinct(key);
-
     const projection = pullSafeProjection4Distinct(key);
     const cursor = this.find(filter, { projection: { _id: 0, [projection]: 1 } });
 
@@ -1705,16 +1703,19 @@ const addToBulkWriteResult = (result: BulkWriteResult<SomeDoc>, resp: RawDataAPI
 
 // -- Distinct --------------------------------------------------------------------------------------------
 
-const assertPathSafe4Distinct = (path: string): void => {
+const pullSafeProjection4Distinct = (path: string): string => {
   const split = path.split('.');
 
   if (split.some(p => !p)) {
     throw new Error('Path cannot contain empty segments');
   }
-}
 
-const pullSafeProjection4Distinct = (path: string): string => {
-  return takeWhile(path.split('.'), p => isNaN(+p)).join('.');
+  let i, n;
+  for (i = 0, n = split.length; i < n && isNaN(+split[i]); i++) { /* empty */ }
+
+  split.length = i;
+
+  return split.join('.');
 }
 
 const mkDistinctPathExtractor = (path: string): (doc: SomeDoc) => any[] => {

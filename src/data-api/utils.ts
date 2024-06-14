@@ -39,19 +39,6 @@ export type TypeErr<S> =  { [__error]: S };
 /**
  * @internal
  */
-export function takeWhile<T>(arr: T[], pred: (x: T) => boolean): T[] {
-  const result: T[] = [];
-
-  for (let i = 0, n = arr.length; i < n && pred(arr[i]); i++) {
-    result.push(arr[i]);
-  }
-
-  return result;
-}
-
-/**
- * @internal
- */
 export function extractDbIdFromUrl(uri: string): string | undefined {
   return new URL(uri).hostname.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}/)?.[0];
 }
