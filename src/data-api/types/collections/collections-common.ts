@@ -61,7 +61,7 @@ export interface VectorizeServiceOptions {
    *
    * @alpha
    */
-  modelName: string,
+  modelName?: string,
   /**
    * NOTE: This feature is under current development.
    *

@@ -28,6 +28,18 @@ interface VectorizeTest {
   providerKey?: string,
   authType: string,
   parameters: Record<string, unknown> | undefined,
+  dimension: number | undefined,
+}
+
+interface VectorizeTestSpec {
+  [providerName: string]: {
+    apiKey?: string,
+    providerKey?: string,
+    dimension?: number,
+    parameters?: {
+      [modelNameRegex: string]: Record<string, string>
+    },
+  }
 }
 
 describe('integration.data-api.vectorize', () => {
@@ -44,7 +56,7 @@ describe('integration.data-api.vectorize', () => {
     });
 
     describe('[vectorize] [long] generated tests', () => {
-      const names = tests.map((test) => `${test.provider}_${test.modelName.replace(/\W/g, '')}_${test.authType}`);
+      const names = tests.map((test) => `${test.provider}_${test.modelName.replace(/\W/g, '')}_${test.authType}`.slice(0, 48));
 
       before(async () => {
         for (const name of names) {
@@ -74,7 +86,7 @@ describe('integration.data-api.vectorize', () => {
 });
 
 async function initVectorTests() {
-  const credentials = JSON.parse(fs.readFileSync('vectorize_credentials.json', 'utf8'));
+  const allCredentials = JSON.parse(fs.readFileSync('vectorize_credentials.json', 'utf8')) as VectorizeTestSpec;
 
   const embeddingProviders = await fetch(`${TEST_ASTRA_URI}/${DEFAULT_DATA_API_PATH}`, {
     body: JSON.stringify({ findEmbeddingProviders: {} }),
@@ -88,19 +100,35 @@ async function initVectorTests() {
 
   return Object.entries<any>(embeddingProviders)
     .flatMap(([provider, info]) => {
-      if (!credentials[provider]) {
+      if (!allCredentials[provider]) {
         console.warn(`No credentials found for provider ${provider}; skipping models `)
         return [];
       }
 
-      return info['models'].map((model: any) => ({
-        provider,
-        modelName: model.name,
-        header: info['supportedAuthentication']['HEADER'].enabled ? credentials[provider]['apiKey'] : undefined,
-        providerKey: info['supportedAuthentication']['SHARED_SECRET'].enabled ? credentials[provider]['providerKey'] : undefined,
-        none: info['supportedAuthentication']['NONE'].enabled,
-        parameters: credentials[provider]['parameters']?.[model.name],
-      }));
+      function modelToTest(model: any) {
+        const credentials = allCredentials[provider];
+        const auth = info['supportedAuthentication'];
+
+        const params = credentials.parameters;
+        const matchingParam = Object.keys(params!).find((regex) => RegExp(regex).test(model.name))!;
+
+        if (params && !matchingParam) {
+          throw new Error(`can not find matching param for ${provider}/${model.name}`)
+        }
+
+        return {
+          provider,
+          modelName: model.name,
+          header: auth['HEADER'].enabled ? credentials.apiKey : undefined,
+          providerKey: auth['SHARED_SECRET'].enabled ? credentials.providerKey : undefined,
+          none: auth['NONE'].enabled,
+          parameters: credentials.parameters?.[matchingParam],
+          dimension: credentials.dimension,
+          authType: '(to be set later)',
+        };
+      }
+
+      return (<any[]>info['models']).map<VectorizeTest>(modelToTest);
     })
     .flatMap((test) => {
       const tests: VectorizeTest[] = []
@@ -113,6 +141,7 @@ async function initVectorTests() {
             [key]: test[key as keyof typeof test],
             authType: key,
             parameters: test.parameters,
+            dimension: test.dimension,
           });
         }
       }
@@ -213,6 +242,7 @@ function createVectorizeProvidersTest(db: Db, test: VectorizeTest, name: string)
   it(`[vectorize] [dev] has a working lifecycle (${test.provider}/${test.modelName}) (${test.authType})`, async () => {
     const collection = await db.createCollection(name, {
       vector: {
+        dimension: test.dimension,
         service: {
           provider: test.provider,
           modelName: test.modelName,

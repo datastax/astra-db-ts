@@ -29,6 +29,7 @@ import { TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
 import { CollectionNotFoundError, DataAPIHttpError, mkRespErrorFromResponse } from '@/src/data-api/errors';
 import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-collection';
+import * as util from 'util';
 
 /**
  * @internal
@@ -108,6 +109,8 @@ export class DataAPIHttpClient extends HttpClient {
         started = hrTimeMs();
         this.emitter.emit('commandStarted', new CommandStartedEvent(info));
       }
+
+      console.log(util.inspect(info.command, { depth: null }));
 
       const resp = await this._request({
         url: info.url,

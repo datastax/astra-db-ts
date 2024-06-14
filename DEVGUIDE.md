@@ -77,12 +77,13 @@ To run vectorize tests, you need to have a vectorize-enabled kube running, with 
 You must create a file, `vectorize_tests.json`, in the root folder, with the following format:
 
 ```ts
-interface Config {
+interface VectorizeTestSpec {
   [providerName: string]: {
     apiKey?: string,
     providerKey?: string,
+    dimension?: number,
     parameters?: {
-      [modelName: string]: Record<string, string>
+      [modelNameRegex: string]: Record<string, string>
     },
   }
 }
@@ -94,8 +95,11 @@ where:
   - optional if no header auth test wanted
 - `providerKey` is the provider key for the provider (which will be passed in @ collection creation) 
   - optional if no KMS auth test wanted
-- `parameters` is a mapping of model names to their corresponding parameters
+- `parameters` is a mapping of model names to their corresponding parameters. The model name can be some regex that partially matches the full model name.
+  - `"text-embedding-3-small"`, `"3-small"`, and `".*"` will all match `"text-embedding-3-small"`
   - optional if not required. `azureOpenAI`, for example, will need this.
+- `dimension` is the vector dimension, if required
+  - optional if not required. `huggingfaceDedicated`, for example, will need this.
 
 This file is gitignored by default and will not be checked into VCS.
 
