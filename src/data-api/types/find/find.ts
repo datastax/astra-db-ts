@@ -127,6 +127,7 @@ export interface FindOptions {
    * ```
    */
   includeSimilarity?: boolean;
+  includeSortVector?: boolean;
 }
 
 /** @internal */
@@ -135,6 +136,7 @@ export interface InternalFindOptions {
   limit?: number;
   skip?: number;
   includeSimilarity?: boolean;
+  includeSortVector?: boolean;
 }
 
 /** @internal */

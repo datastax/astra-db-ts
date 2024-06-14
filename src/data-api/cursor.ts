@@ -84,6 +84,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   private _buffer: TRaw[] = [];
   private _nextPageState?: string | null;
   private _state = CursorStatus.Uninitialized;
+  private _sortVector?: number[] | null;
 
   /**
    * Should not be instantiated directly.
@@ -253,6 +254,12 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     return this;
   }
 
+  public includeSortVector(includeSortVector: boolean = true): this {
+    this._assertUninitialized();
+    this._options.includeSortVector = includeSortVector;
+    return this;
+  }
+
   /**
    * Map all documents using the provided mapping function. Previous mapping functions will be composed with the new
    * mapping function (new ∘ old).
@@ -351,6 +358,14 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     }
 
     return false;
+  }
+
+  public async getSortVector(): Promise<number[] | null> {
+    if (this._sortVector === undefined) {
+      this._options.includeSortVector = true;
+      await this._getMore(true);
+    }
+    return this._sortVector!;
   }
 
   /**
@@ -471,7 +486,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
       }
 
       try {
-        await this._getMore();
+        await this._getMore(false);
       } catch (err) {
         this.close();
         throw err;
@@ -481,7 +496,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     return null;
   }
 
-  private async _getMore(): Promise<void> {
+  private async _getMore(peek: boolean): Promise<void> {
     this._state = CursorStatus.Initialized;
 
     const options: InternalFindOptions = {};
@@ -497,6 +512,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     }
     if (this._options.includeSimilarity) {
       options.includeSimilarity = this._options.includeSimilarity;
+    }
+    if (this._options.includeSortVector) {
+      options.includeSortVector = this._options.includeSortVector;
     }
 
     const command: InternalGetMoreCommand = {
@@ -515,7 +533,12 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
 
     const resp = await this._httpClient.executeCommand(command, {});
 
-    this._nextPageState = resp.data?.nextPageState || null;
-    this._buffer = resp.data!.documents as TRaw[];
+    if (!peek) {
+      this._nextPageState = resp.data?.nextPageState || null;
+      this._buffer = resp.data!.documents as TRaw[];
+    }
+
+    this._sortVector = resp.status?.sortVector;
+    this._options.includeSortVector = false;
   }
 }
