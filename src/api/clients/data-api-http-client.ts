@@ -110,8 +110,6 @@ export class DataAPIHttpClient extends HttpClient {
         this.emitter.emit('commandStarted', new CommandStartedEvent(info));
       }
 
-      console.log(util.inspect(info.command, { depth: null }));
-
       const resp = await this._request({
         url: info.url,
         data: JSON.stringify(info.command, replacer),

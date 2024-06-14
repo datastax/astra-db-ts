@@ -110,7 +110,7 @@ async function initVectorTests() {
         const auth = info['supportedAuthentication'];
 
         const params = credentials.parameters;
-        const matchingParam = Object.keys(params!).find((regex) => RegExp(regex).test(model.name))!;
+        const matchingParam = Object.keys(params ?? {}).find((regex) => RegExp(regex).test(model.name))!;
 
         if (params && !matchingParam) {
           throw new Error(`can not find matching param for ${provider}/${model.name}`)
