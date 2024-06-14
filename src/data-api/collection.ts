@@ -992,7 +992,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     };
 
     if (!upperBound) {
-      throw new Error('options.limit is required');
+      throw new Error('upperBound is required');
     }
 
     const resp = await this._httpClient.executeCommand(command, options);
