@@ -1250,7 +1250,7 @@ export interface VectorizeDoc {
 // @alpha
 export interface VectorizeServiceOptions {
     authentication?: Record<string, string | undefined>;
-    modelName: string;
+    modelName?: string;
     parameters?: Record<string, unknown>;
     provider: string;
 }
