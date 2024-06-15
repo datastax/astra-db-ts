@@ -16,6 +16,7 @@
 import { Collection, DataAPIResponseError, ObjectId, UUID } from '@/src/data-api';
 import { initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
+import { DataAPIHttpError } from '@/src/data-api/errors';
 
 describe('integration.data-api.collection.insert-one', () => {
   let collection: Collection;
@@ -84,7 +85,7 @@ describe('integration.data-api.collection.insert-one', () => {
   it('should insertOne with vector', async () => {
     const res = await collection.insertOne({ name: 'Arch Enemy' }, { vector: [1, 1, 1, 1, 1] });
     assert.ok(res);
-    const found = await collection.findOne({ name: 'Arch Enemy' });
+    const found = await collection.findOne({ name: 'Arch Enemy' }, { projection: { '*': 1 } });
     assert.deepStrictEqual(found?.$vector, [1, 1, 1, 1, 1]);
   });
 
@@ -138,7 +139,7 @@ describe('integration.data-api.collection.insert-one', () => {
 
   it('should fail if an array field size is > 1000', async () => {
     const docToInsert = { tags: new Array(1001).fill('tag') };
-    await assert.rejects(() => collection.insertOne(docToInsert), DataAPIResponseError);
+    await assert.rejects(() => collection.insertOne(docToInsert), DataAPIHttpError);
   });
 
   it('should fail if a doc contains more than 1000 properties', async () => {
@@ -146,6 +147,6 @@ describe('integration.data-api.collection.insert-one', () => {
     for (let i = 1; i <= 1000; i++) {
       docToInsert[`prop${i}`] = `prop${i}value`;
     }
-    await assert.rejects(() => collection.insertOne(docToInsert), DataAPIResponseError);
+    await assert.rejects(() => collection.insertOne(docToInsert), DataAPIHttpError);
   });
 });

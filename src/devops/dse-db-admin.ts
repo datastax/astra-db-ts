@@ -13,8 +13,8 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { AdminBlockingOptions, AdminSpawnOptions, FullDatabaseInfo } from '@/src/devops/types';
-import { DEFAULT_DEVOPS_API_ENDPOINT, DEFAULT_NAMESPACE, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
+import { AdminBlockingOptions, AdminSpawnOptions } from '@/src/devops/types';
+import { DataAPIHttpClient } from '@/src/api';
 import { Db } from '@/src/data-api';
 import { DbAdmin } from '@/src/devops/db-admin';
 import { WithTimeout } from '@/src/common/types';
@@ -48,8 +48,8 @@ import { TokenProvider } from '@/src/common';
  *
  * @public
  */
-export class AstraDbAdmin extends DbAdmin {
-  private readonly _httpClient!: DevOpsAPIHttpClient;
+export class DSEDbAdmin extends DbAdmin {
+  private readonly _httpClient!: DataAPIHttpClient;
   private readonly _db!: Db;
 
   /**
@@ -57,20 +57,11 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(_db: Db, options: InternalRootClientOpts) {
+  constructor(_db: Db, httpClient: DataAPIHttpClient, options: InternalRootClientOpts) {
     super();
 
-    const adminOpts = options.adminOptions;
-
     Object.defineProperty(this, '_httpClient', {
-      value: new DevOpsAPIHttpClient({
-        baseUrl: adminOpts.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINT,
-        applicationToken: adminOpts.adminToken,
-        monitorCommands: adminOpts.monitorCommands,
-        fetchCtx: options.fetchCtx,
-        emitter: options.emitter,
-        userAgent: options.userAgent,
-      }),
+      value: httpClient.forDbAdmin(options.adminOptions),
       enumerable: false,
     });
 
@@ -111,30 +102,6 @@ export class AstraDbAdmin extends DbAdmin {
   }
 
   /**
-   * Fetches the complete information about the database, such as the database name, IDs, region, status, actions, and
-   * other metadata.
-   *
-   * The method issues a request to the DevOps API each time it is invoked, without caching mechanisms;
-   * this ensures up-to-date information for usages such as real-time collection validation by the application.
-   *
-   * @example
-   * ```typescript
-   * const info = await dbAdmin.info();
-   * console.log(info.info.name, info.creationTime);
-   * ```
-   *
-   * @returns A promise that resolves to the complete database information.
-   */
-  public async info(options?: WithTimeout): Promise<FullDatabaseInfo> {
-    const resp = await this._httpClient.request({
-      method: HttpMethods.Get,
-      path: `/databases/${this._db.id}`,
-    }, options);
-
-    return resp.data as FullDatabaseInfo;
-  }
-
-  /**
    * Lists the namespaces in the database.
    *
    * The first element in the returned array is the default namespace of the database, and the rest are additional
@@ -151,7 +118,8 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns A promise that resolves to list of all the namespaces in the database.
    */
   public override async listNamespaces(options?: WithTimeout): Promise<string[]> {
-    return this.info(options).then(i => [i.info.keyspace ?? DEFAULT_NAMESPACE, ...i.info.additionalKeyspaces ?? []].filter(Boolean))
+    const resp = await this._httpClient.executeCommand({ findNamespaces: {} }, { maxTimeMS: options?.maxTimeMS });
+    return resp.status!.namespaces;
   }
 
   /**
@@ -185,16 +153,7 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns A promise that resolves when the operation completes.
    */
   public override async createNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void> {
-    await this._httpClient.requestLongRunning({
-      method: HttpMethods.Post,
-      path: `/databases/${this._db.id}/keyspaces/${namespace}`,
-    }, {
-      id: this._db.id,
-      target: 'ACTIVE',
-      legalStates: ['MAINTENANCE'],
-      defaultPollInterval: 1000,
-      options,
-    });
+    await this._httpClient.executeCommand({ createNamespace: { name: namespace } }, { maxTimeMS: options?.maxTimeMS });
   }
 
   /**
@@ -229,60 +188,17 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns A promise that resolves when the operation completes.
    */
   public override async dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void> {
-    await this._httpClient.requestLongRunning({
-      method: HttpMethods.Delete,
-      path: `/databases/${this._db.id}/keyspaces/${namespace}`,
-    }, {
-      id: this._db.id,
-      target: 'ACTIVE',
-      legalStates: ['MAINTENANCE'],
-      defaultPollInterval: 1000,
-      options,
-    });
-  }
-
-  /**
-   * Drops the database.
-   *
-   * **NB. this is a long-running operation. See {@link AdminBlockingOptions} about such blocking operations.** The
-   * default polling interval is 10 seconds. Expect it to take roughly 6-7 min to complete.
-   *
-   * The database info will still be accessible by ID, or by using the {@link AstraAdmin.listDatabases} method with the filter
-   * set to `'ALL'` or `'TERMINATED'`. However, all of its data will very much be lost.
-   *
-   * @example
-   * ```typescript
-   * const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
-   * await db.admin().drop();
-   * ```
-   *
-   * @param options - The options for the blocking behavior of the operation.
-   *
-   * @returns A promise that resolves when the operation completes.
-   *
-   * @remarks Use with caution. Use a surge protector. Don't say I didn't warn you.
-   */
-  public async drop(options?: AdminBlockingOptions): Promise<void> {
-    await this._httpClient.requestLongRunning({
-      method: HttpMethods.Post,
-      path: `/databases/${this._db.id}/terminate`,
-    }, {
-      id: this._db.id,
-      target: 'TERMINATED',
-      legalStates: ['TERMINATING'],
-      defaultPollInterval: 10000,
-      options,
-    });
+    await this._httpClient.executeCommand({ dropNamespace: { name: namespace } }, { maxTimeMS: options?.maxTimeMS });
   }
 }
 
 /**
  * @internal
  */
-export function mkAstraDbAdmin(db: Db, rootOpts: InternalRootClientOpts, options?: AdminSpawnOptions): AstraDbAdmin {
+export function mkDSEDbAdmin(db: Db, httpClient: DataAPIHttpClient, rootOpts: InternalRootClientOpts, options?: AdminSpawnOptions): DSEDbAdmin {
   validateAdminOpts(options);
 
-  return new AstraDbAdmin(db, {
+  return new DSEDbAdmin(db, httpClient, {
     ...rootOpts,
     adminOptions: {
       ...rootOpts.adminOptions,

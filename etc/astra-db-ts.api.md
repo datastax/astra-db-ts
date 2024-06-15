@@ -348,6 +348,8 @@ export interface DataAPIClientOptions {
     adminOptions?: AdminSpawnOptions;
     caller?: Caller | Caller[];
     dbOptions?: DbSpawnOptions;
+    // (undocumented)
+    environment?: 'astra' | 'dse';
     httpOptions?: DataAPIHttpOptions;
     // @deprecated
     preferHttp2?: boolean;
@@ -484,7 +486,16 @@ export type DateUpdate<Schema> = {
 export class Db {
     // @internal
     constructor(endpoint: string, options: InternalRootClientOpts);
-    admin(options?: AdminSpawnOptions): AstraDbAdmin;
+    // (undocumented)
+    admin(options?: AdminSpawnOptions & {
+        environment?: 'astra';
+    }): AstraDbAdmin;
+    // Warning: (ae-forgotten-export) The symbol "DSEDbAdmin" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    admin(options: AdminSpawnOptions & {
+        environment: 'dse';
+    }): DSEDbAdmin;
     collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions): Collection<Schema>;
     collections(options?: WithNamespace & WithTimeout): Promise<Collection[]>;
     command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse>;

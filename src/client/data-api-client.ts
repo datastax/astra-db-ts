@@ -116,10 +116,10 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
   constructor(tokenOrOptions?: string | TokenProvider | DataAPIClientOptions | null, maybeOptions?: DataAPIClientOptions | null) {
     super();
 
-    const tokenPassed = (typeof tokenOrOptions === 'string' || tokenOrOptions instanceof TokenProvider || maybeOptions !== undefined);
+    const tokenPassed = (typeof tokenOrOptions === 'string' || tokenOrOptions instanceof TokenProvider || arguments.length > 1);
 
     const token = (tokenPassed)
-      ? tokenOrOptions
+      ? tokenOrOptions as string | TokenProvider | nullish
       : undefined;
 
     const options = (tokenPassed)
@@ -128,21 +128,18 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
 
     validateRootOpts(options);
 
-    const dbToken = TokenProvider.parseToken(options?.dbOptions?.token ?? token);
-    const adminToken = TokenProvider.parseToken(options?.adminOptions?.adminToken ?? token);
-
     this.#options = {
-      ...options,
+      environment: options?.environment ?? 'astra',
       fetchCtx: buildFetchCtx(options || undefined),
       dbOptions: {
         monitorCommands: false,
         ...options?.dbOptions,
-        token: dbToken,
+        token: TokenProvider.parseToken(options?.dbOptions?.token ?? token),
       },
       adminOptions: {
         monitorCommands: false,
         ...options?.adminOptions,
-        adminToken: adminToken,
+        adminToken: TokenProvider.parseToken(options?.dbOptions?.token ?? token),
       },
       emitter: this,
       userAgent: buildUserAgent(options?.caller),

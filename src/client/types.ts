@@ -47,6 +47,7 @@ export type Caller = [name: string, version?: string];
  * @public
  */
 export interface DataAPIClientOptions {
+  environment?: 'astra' | 'dse',
   /**
    * The client-wide options related to http operations.
    *
@@ -308,15 +309,16 @@ export interface Http1Options {
  * @internal
  */
 export interface InternalRootClientOpts {
+  environment: 'astra' | 'dse',
   emitter: TypedEmitter<DataAPIClientEvents>,
   fetchCtx: FetchCtx,
   userAgent: string,
   dbOptions: Omit<DbSpawnOptions, 'token'> & {
-    token: TokenProvider | nullish,
+    token: string | TokenProvider | nullish,
     monitorCommands: boolean,
   },
   adminOptions: Omit<AdminSpawnOptions, 'adminToken'> & {
-    adminToken: TokenProvider | nullish,
+    adminToken: string | TokenProvider | nullish,
     monitorCommands: boolean,
   },
 }

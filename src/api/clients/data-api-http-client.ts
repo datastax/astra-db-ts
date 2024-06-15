@@ -29,7 +29,14 @@ import { TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
 import { CollectionNotFoundError, DataAPIHttpError, mkRespErrorFromResponse } from '@/src/data-api/errors';
 import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-collection';
-import * as util from 'util';
+import TypedEmitter from 'typed-emitter';
+import { DataAPIClientEvents } from '@/src/client';
+import {
+  AdminCommandFailedEvent,
+  AdminCommandStartedEvent,
+  AdminCommandSucceededEvent,
+  AdminSpawnOptions,
+} from '@/src/devops';
 
 /**
  * @internal
@@ -49,7 +56,46 @@ interface ExecuteCommandOptions {
 
 interface DataAPIHttpClientOptions extends HTTPClientOptions {
   namespace: string | undefined,
+  emissionStrategy: EmissionStrategy,
 }
+
+type EmissionStrategy = (emitter: TypedEmitter<DataAPIClientEvents>) => {
+  emitCommandStarted(info: DataAPIRequestInfo): void,
+  emitCommandFailed(info: DataAPIRequestInfo, error: Error, started: number): void,
+  emitCommandSucceeded(info: DataAPIRequestInfo, resp: RawDataAPIResponse, started: number): void,
+}
+
+export const EmissionStrategy: Record<'Normal' | 'Admin', EmissionStrategy> = {
+  Normal: (emitter) => ({
+    emitCommandStarted(info) {
+      emitter.emit('commandStarted', new CommandStartedEvent(info));
+    },
+    emitCommandFailed(info, error, started) {
+      emitter.emit('commandFailed', new CommandFailedEvent(info, error, started));
+    },
+    emitCommandSucceeded(info, resp, started) {
+      emitter.emit('commandSucceeded', new CommandSucceededEvent(info, resp, started));
+    },
+  }),
+  Admin: (emitter) => ({
+    emitCommandStarted(info) {
+      emitter.emit('adminCommandStarted', new AdminCommandStartedEvent(adaptInfo4Devops(info), true, info.timeoutManager.msRemaining()));
+    },
+    emitCommandFailed(info, error, started) {
+      emitter.emit('adminCommandFailed', new AdminCommandFailedEvent(adaptInfo4Devops(info), true, error, started));
+    },
+    emitCommandSucceeded(info, resp, started) {
+      emitter.emit('adminCommandSucceeded', new AdminCommandSucceededEvent(adaptInfo4Devops(info), true, resp, started));
+    },
+  }),
+}
+
+const adaptInfo4Devops = (info: DataAPIRequestInfo) => (<const>{
+  method: 'POST',
+  data: info.command,
+  params: {},
+  path: info.url,
+});
 
 /**
  * @internal
@@ -58,13 +104,15 @@ export class DataAPIHttpClient extends HttpClient {
   public collection?: string;
   public namespace?: string;
   public maxTimeMS: number;
+  public emissionStrategy: ReturnType<EmissionStrategy>
   readonly #props: DataAPIHttpClientOptions;
 
   constructor(props: DataAPIHttpClientOptions, embeddingApiKey?: string) {
     super(props, mkHeaders(embeddingApiKey));
-    this.namespace = props.namespace;
+    this.namespace = 'namespace' in props ? props.namespace : DEFAULT_NAMESPACE;
     this.#props = props;
     this.maxTimeMS = this.fetchCtx.maxTimeMS ?? DEFAULT_TIMEOUT;
+    this.emissionStrategy = props.emissionStrategy(props.emitter);
   }
 
   public forCollection(namespace: string, collection: string, opts: CollectionSpawnOptions | undefined): DataAPIHttpClient {
@@ -72,6 +120,20 @@ export class DataAPIHttpClient extends HttpClient {
     clone.collection = collection;
     clone.namespace = namespace;
     clone.maxTimeMS = opts?.defaultMaxTimeMS ?? this.maxTimeMS;
+    return clone;
+  }
+
+  public forDbAdmin(opts: AdminSpawnOptions | undefined): DataAPIHttpClient {
+    const clone = new DataAPIHttpClient({
+      ...this.#props,
+      monitorCommands: opts?.monitorCommands || this.#props.monitorCommands,
+      applicationToken: opts?.adminToken || this.#props.applicationToken,
+      baseUrl: opts?.endpointUrl || this.#props.baseUrl,
+      baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
+    });
+    clone.emissionStrategy = EmissionStrategy.Admin(this.emitter);
+    clone.collection = undefined;
+    clone.namespace = undefined;
     return clone;
   }
 
@@ -98,7 +160,7 @@ export class DataAPIHttpClient extends HttpClient {
       info.collection ||= this.collection;
 
       if (info.namespace !== null) {
-        info.namespace ||= this.namespace || DEFAULT_NAMESPACE;
+        info.namespace ||= this.namespace;
       }
 
       const keyspacePath = info.namespace ? `/${info.namespace}` : '';
@@ -107,7 +169,7 @@ export class DataAPIHttpClient extends HttpClient {
 
       if (this.monitorCommands) {
         started = hrTimeMs();
-        this.emitter.emit('commandStarted', new CommandStartedEvent(info));
+        this.emissionStrategy.emitCommandStarted(info);
       }
 
       const resp = await this._request({
@@ -144,13 +206,13 @@ export class DataAPIHttpClient extends HttpClient {
       }
 
       if (this.monitorCommands) {
-        this.emitter.emit('commandSucceeded', new CommandSucceededEvent(info, respData, started));
+        this.emissionStrategy.emitCommandSucceeded(info, respData, started);
       }
 
       return respData;
     } catch (e: any) {
       if (this.monitorCommands) {
-        this.emitter.emit('commandFailed', new CommandFailedEvent(info, e, started));
+        this.emissionStrategy.emitCommandFailed(info, e, started);
       }
       throw e;
     }

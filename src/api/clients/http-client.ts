@@ -31,7 +31,7 @@ export abstract class HttpClient {
   readonly baseHeaders: Record<string, any>;
 
   protected constructor(options: HTTPClientOptions, readonly mkReqHeaders: MkReqHeaders) {
-    this.applicationToken = options.applicationToken;
+    this.applicationToken = TokenProvider.parseToken(options.applicationToken);
     this.baseUrl = options.baseUrl;
     this.emitter = options.emitter;
     this.monitorCommands = options.monitorCommands;
