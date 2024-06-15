@@ -81,7 +81,9 @@ interface VectorizeTestSpec {
   [providerName: string]: {
     apiKey?: string,
     providerKey?: string,
-    dimension?: number,
+    dimension?: {
+      [modelNameRegex: string]: number,
+    },
     parameters?: {
       [modelNameRegex: string]: Record<string, string>
     },
@@ -90,18 +92,20 @@ interface VectorizeTestSpec {
 ```
 
 where:
-- `providerName` is the name of the provider (e.g. `nvidia`, `openai`, etc.) as found in `findEmbeddingProviders`
-- `apiKey` is the API key for the provider (which will be passed in through the header) 
-  - optional if no header auth test wanted
-- `providerKey` is the provider key for the provider (which will be passed in @ collection creation) 
-  - optional if no KMS auth test wanted
+- `providerName` is the name of the provider (e.g. `nvidia`, `openai`, etc.) as found in `findEmbeddingProviders`.
+- `apiKey` is the API key for the provider (which will be passed in through the header) .
+  - optional if no header auth test wanted.
+- `providerKey` is the provider key for the provider (which will be passed in @ collection creation) .
+  - optional if no KMS auth test wanted.
 - `parameters` is a mapping of model names to their corresponding parameters. The model name can be some regex that partially matches the full model name.
-  - `"text-embedding-3-small"`, `"3-small"`, and `".*"` will all match `"text-embedding-3-small"`
+  - `"text-embedding-3-small"`, `"3-small"`, and `".*"` will all match `"text-embedding-3-small"`.
   - optional if not required. `azureOpenAI`, for example, will need this.
-- `dimension` is the vector dimension, if required
+- `dimension` is a also a mapping of model name regex to their corresponding dimensions, like the `parameters` field.
   - optional if not required. `huggingfaceDedicated`, for example, will need this.
 
 This file is gitignored by default and will not be checked into VCS.
+
+See `vectorize_credentials.example.json` for—guess what—an example.
 
 ### Coverage testing
 

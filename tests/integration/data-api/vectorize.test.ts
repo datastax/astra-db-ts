@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// noinspection DuplicatedCode
 
 import assert from 'assert';
 import { Db } from '@/src/data-api';
@@ -169,10 +168,10 @@ interface DimensionBranch extends AuthBranch {
 }
 
 const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: any) => (test: AuthBranch): DimensionBranch[] => {
-  const modelVectorDimParam = modelInfo.parameters.find((p: any) => p.name === 'vectorDimension');
-  const defaultDim = +modelVectorDimParam?.defaultValue;
+  const vectorDimParam = modelInfo.parameters.find((p: any) => p.name === 'vectorDimension');
+  const defaultDim = +vectorDimParam?.defaultValue;
 
-  if (modelVectorDimParam && !defaultDim) {
+  if (vectorDimParam && !defaultDim) {
     const matchingDim = Object.keys(spec.dimension ?? {}).find((regex) => RegExp(regex).test(test.modelName))!;
 
     if (!spec.dimension || !matchingDim) {
@@ -182,7 +181,7 @@ const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: any) => (
     return [{ ...test, dimension: spec.dimension[matchingDim] }];
   }
 
-  if (modelVectorDimParam && defaultDim) {
+  if (vectorDimParam && defaultDim) {
     return [test, { ...test, dimension: defaultDim, testName: `${test.testName}/${defaultDim}` }];
   }
 
