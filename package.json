@@ -56,7 +56,7 @@
     "test:prerelease": "npm run lint && npm run test:types && npm run test:all -- -b --exit",
     "build": "sh ./scripts/build.sh",
     "find-missing-licensing": "sh ./scripts/check-licensing.sh",
-    "list-embedding-provders": "chmod +x ./scripts/find-embedding-providers.sh && ./scripts/find-embedding-providers.sh",
+    "list-embedding-providers": "chmod +x ./scripts/find-embedding-providers.sh && ./scripts/find-embedding-providers.sh",
     "version": "npm run build && git add src/version.ts etc/astra-db-ts.api.md"
   },
   "bugs": {
