@@ -15,4 +15,4 @@ curl -sL "${ASTRA_URI}/api/json/v1" \
 --header "Content-Type: application/json" \
 --data '{
   "findEmbeddingProviders": {}
-}' | jq
+}' | jq .status.embeddingProviders
