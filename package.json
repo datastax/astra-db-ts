@@ -54,7 +54,6 @@
     "test:coverage": "nyc npm run test:all -- -b",
     "test:types": "tsc --noEmit --skipLibCheck",
     "test:prerelease": "npm run lint && npm run test:types && npm run test:all -- -b --exit",
-    "api-extractor": "api-extractor run -c ./api-extractor.jsonc --local",
     "build": "sh ./scripts/build.sh",
     "find-missing-licensing": "sh ./scripts/check-licensing.sh",
     "version": "npm run build && git add src/version.ts etc/astra-db-ts.api.md"
