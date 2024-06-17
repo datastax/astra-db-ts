@@ -18,9 +18,9 @@ import { DEFAULT_DEVOPS_API_ENDPOINT, DEFAULT_NAMESPACE, DevOpsAPIHttpClient, Ht
 import { Db } from '@/src/data-api';
 import { DbAdmin } from '@/src/devops/db-admin';
 import { WithTimeout } from '@/src/common/types';
-import { validateAdminOpts } from '@/src/devops/astra-admin';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { TokenProvider } from '@/src/common';
+import { validateAdminOpts } from '@/src/devops/utils';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -57,25 +57,31 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(_db: Db, options: InternalRootClientOpts) {
+  constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts?: AdminSpawnOptions) {
     super();
 
-    const adminOpts = options.adminOptions;
+    validateAdminOpts(adminOpts);
+
+    const combinedAdminOps = {
+      ...rootOpts.adminOptions,
+      ...adminOpts,
+      adminToken: TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken),
+    }
 
     Object.defineProperty(this, '_httpClient', {
       value: new DevOpsAPIHttpClient({
-        baseUrl: adminOpts.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINT,
-        applicationToken: adminOpts.adminToken,
-        monitorCommands: adminOpts.monitorCommands,
-        fetchCtx: options.fetchCtx,
-        emitter: options.emitter,
-        userAgent: options.userAgent,
+        baseUrl: combinedAdminOps.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINT,
+        applicationToken: combinedAdminOps.adminToken,
+        monitorCommands: combinedAdminOps.monitorCommands,
+        fetchCtx: rootOpts.fetchCtx,
+        emitter: rootOpts.emitter,
+        userAgent: rootOpts.userAgent,
       }),
       enumerable: false,
     });
 
     Object.defineProperty(this, '_db', {
-      value: _db,
+      value: db,
       enumerable: false,
     });
   }
@@ -274,20 +280,4 @@ export class AstraDbAdmin extends DbAdmin {
       options,
     });
   }
-}
-
-/**
- * @internal
- */
-export function mkAstraDbAdmin(db: Db, rootOpts: InternalRootClientOpts, options?: AdminSpawnOptions): AstraDbAdmin {
-  validateAdminOpts(options);
-
-  return new AstraDbAdmin(db, {
-    ...rootOpts,
-    adminOptions: {
-      ...rootOpts.adminOptions,
-      ...options,
-      adminToken: TokenProvider.parseToken(options?.adminToken ?? rootOpts.adminOptions.adminToken),
-    },
-  });
 }

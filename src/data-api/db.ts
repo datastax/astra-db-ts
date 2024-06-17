@@ -27,7 +27,7 @@ import {
   WithNamespace,
 } from '@/src/data-api/types';
 import { DatabaseInfo } from '@/src/devops/types/admin/database-info';
-import { AstraDbAdmin, mkAstraDbAdmin } from '@/src/devops/astra-db-admin';
+import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
 import { RunCommandOptions } from '@/src/data-api/types/collections/command';
 import { WithTimeout } from '@/src/common/types';
 import { DropCollectionOptions } from '@/src/data-api/types/collections/drop-collection';
@@ -38,7 +38,7 @@ import { InternalRootClientOpts } from '@/src/client/types';
 import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-collection';
 import { AdminSpawnOptions, DbAdmin } from '@/src/devops';
 import { TokenProvider } from '@/src/common';
-import { DSEDbAdmin, mkDSEDbAdmin } from '@/src/devops/dse-db-admin';
+import { DSEDbAdmin } from '@/src/devops/dse-db-admin';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -201,10 +201,10 @@ export class Db {
     }
 
     if (environment === 'dse') {
-      return mkDSEDbAdmin(this, this._httpClient, this.#defaultOpts, options);
+      return new DSEDbAdmin(this, this._httpClient, options);
     }
 
-    return mkAstraDbAdmin(this, this.#defaultOpts, options);
+    return new AstraDbAdmin(this, this.#defaultOpts, options);
   }
 
   /**
@@ -413,7 +413,7 @@ export class Db {
 
     const resp = await this._httpClient.executeCommand(command, options);
 
-    return resp.status?.ok === 1 && !resp.errors;
+    return resp.status?.ok === 1;
   }
 
   /**
@@ -462,7 +462,7 @@ export class Db {
     const command: ListCollectionsCommand = {
       findCollections: {
         options: {
-          // Is 'nameOnly' instead of 'explain' for Mongo-compatibility reasons
+          /* Is 'nameOnly' instead of 'explain' for Mongo-compatibility reasons */
           explain: options?.nameOnly !== true,
         },
       },

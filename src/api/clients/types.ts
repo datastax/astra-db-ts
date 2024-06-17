@@ -24,7 +24,7 @@ import { nullish, TokenProvider } from '@/src/common';
 export interface HTTPClientOptions {
   baseUrl: string,
   baseApiPath?: string | null,
-  applicationToken: string | TokenProvider | nullish,
+  applicationToken: TokenProvider | nullish,
   emitter: TypedEmitter<DataAPICommandEvents>,
   monitorCommands: boolean,
   fetchCtx: FetchCtx,

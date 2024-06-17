@@ -568,7 +568,7 @@ export const mkRespErrorFromResponses = <E extends DataAPIResponseError>(err: ne
   const instance = new err(message, errorDescriptors, detailedDescriptors) ;
 
   if (partialResult) {
-    // @ts-expect-error - If the lord wants a partialResult, the lord will get a partialResult.
+    /* @ts-expect-error - If the lord wants a partialResult, the lord will get a partialResult. */
     instance.partialResult = partialResult;
   }
   return instance;

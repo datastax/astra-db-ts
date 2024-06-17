@@ -18,9 +18,7 @@ import { DataAPIHttpClient } from '@/src/api';
 import { Db } from '@/src/data-api';
 import { DbAdmin } from '@/src/devops/db-admin';
 import { WithTimeout } from '@/src/common/types';
-import { validateAdminOpts } from '@/src/devops/astra-admin';
-import { InternalRootClientOpts } from '@/src/client/types';
-import { TokenProvider } from '@/src/common';
+import { validateAdminOpts } from '@/src/devops/utils';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -57,16 +55,18 @@ export class DSEDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(_db: Db, httpClient: DataAPIHttpClient, options: InternalRootClientOpts) {
+  constructor(db: Db, httpClient: DataAPIHttpClient, adminOpts?: AdminSpawnOptions) {
     super();
 
+    validateAdminOpts(adminOpts);
+
     Object.defineProperty(this, '_httpClient', {
-      value: httpClient.forDbAdmin(options.adminOptions),
+      value: httpClient.forDbAdmin(adminOpts),
       enumerable: false,
     });
 
     Object.defineProperty(this, '_db', {
-      value: _db,
+      value: db,
       enumerable: false,
     });
   }
@@ -190,20 +190,4 @@ export class DSEDbAdmin extends DbAdmin {
   public override async dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void> {
     await this._httpClient.executeCommand({ dropNamespace: { name: namespace } }, { maxTimeMS: options?.maxTimeMS });
   }
-}
-
-/**
- * @internal
- */
-export function mkDSEDbAdmin(db: Db, httpClient: DataAPIHttpClient, rootOpts: InternalRootClientOpts, options?: AdminSpawnOptions): DSEDbAdmin {
-  validateAdminOpts(options);
-
-  return new DSEDbAdmin(db, httpClient, {
-    ...rootOpts,
-    adminOptions: {
-      ...rootOpts.adminOptions,
-      ...options,
-      adminToken: TokenProvider.parseToken(options?.adminToken ?? rootOpts.adminOptions.adminToken),
-    },
-  });
 }

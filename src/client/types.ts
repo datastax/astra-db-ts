@@ -314,11 +314,11 @@ export interface InternalRootClientOpts {
   fetchCtx: FetchCtx,
   userAgent: string,
   dbOptions: Omit<DbSpawnOptions, 'token'> & {
-    token: string | TokenProvider | nullish,
+    token: TokenProvider | nullish,
     monitorCommands: boolean,
   },
   adminOptions: Omit<AdminSpawnOptions, 'adminToken'> & {
-    adminToken: string | TokenProvider | nullish,
+    adminToken: TokenProvider | nullish,
     monitorCommands: boolean,
   },
 }

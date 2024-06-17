@@ -101,7 +101,7 @@ export class AstraAdmin {
     // Warning: (ae-forgotten-export) The symbol "InternalRootClientOpts" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(options: InternalRootClientOpts);
+    constructor(rootOpts: InternalRootClientOpts, adminOpts?: AdminSpawnOptions);
     createDatabase(config: DatabaseConfig, options?: CreateDatabaseOptions): Promise<AstraDbAdmin>;
     db(endpoint: string, options?: DbSpawnOptions): Db;
     db(id: string, region: string, options?: DbSpawnOptions): Db;
@@ -115,7 +115,7 @@ export class AstraAdmin {
 // @public
 export class AstraDbAdmin extends DbAdmin {
     // @internal
-    constructor(_db: Db, options: InternalRootClientOpts);
+    constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts?: AdminSpawnOptions);
     createNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
     db(): Db;
     drop(options?: AdminBlockingOptions): Promise<void>;
@@ -1247,6 +1247,11 @@ export class UUID {
     static v7(): UUID;
     readonly version: number;
 }
+
+// Warning: (ae-internal-missing-underscore) The name "validateAdminOpts" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal (undocumented)
+export function validateAdminOpts(opts: AdminSpawnOptions | undefined): void;
 
 // @public
 export interface VectorDoc {

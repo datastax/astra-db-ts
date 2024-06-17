@@ -14,7 +14,7 @@
 // noinspection JSDeprecatedSymbols
 
 import { Db, mkDb, validateDbOpts } from '@/src/data-api/db';
-import { AstraAdmin, mkAdmin, validateAdminOpts } from '@/src/devops/astra-admin';
+import { AstraAdmin } from '@/src/devops/astra-admin';
 import {
   Caller,
   CustomHttpClientOptions,
@@ -24,7 +24,7 @@ import {
 } from '@/src/client/types';
 import TypedEmitter from 'typed-emitter';
 import { DataAPICommandEvents } from '@/src/data-api/events';
-import { AdminCommandEvents, AdminSpawnOptions } from '@/src/devops';
+import { AdminCommandEvents, AdminSpawnOptions, validateAdminOpts } from '@/src/devops';
 import { validateOption } from '@/src/data-api/utils';
 import { buildUserAgent, FetchCtx, FetchH2 } from '@/src/api';
 import { FetchNative } from '@/src/api/fetch/fetch-native';
@@ -245,7 +245,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * @returns A new {@link AstraAdmin} instance.
    */
   public admin(options?: AdminSpawnOptions): AstraAdmin {
-    return mkAdmin(this.#options, options);
+    return new AstraAdmin(this.#options, options);
   }
 
   /**

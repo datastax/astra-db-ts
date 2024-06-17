@@ -37,6 +37,7 @@ import {
   AdminCommandSucceededEvent,
   AdminSpawnOptions,
 } from '@/src/devops';
+import { TokenProvider } from '@/src/common';
 
 /**
  * @internal
@@ -127,7 +128,7 @@ export class DataAPIHttpClient extends HttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       monitorCommands: opts?.monitorCommands || this.#props.monitorCommands,
-      applicationToken: opts?.adminToken || this.#props.applicationToken,
+      applicationToken: TokenProvider.parseToken(opts?.adminToken || this.#props.applicationToken),
       baseUrl: opts?.endpointUrl || this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
     });

@@ -34,7 +34,7 @@ declare const __error: unique symbol;
  *
  * @public
  */
-export type TypeErr<S> =  { [__error]: S };
+export type TypeErr<S> = { [__error]: S };
 
 /**
  * @internal

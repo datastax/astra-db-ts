@@ -15,7 +15,6 @@
 import assert from 'assert';
 import { AstraAdmin } from '@/src/devops';
 import { DEFAULT_DEVOPS_API_ENDPOINT } from '@/src/api';
-import { mkAdmin } from '@/src/devops/astra-admin';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { StaticTokenProvider } from '@/src/common';
 
@@ -45,13 +44,13 @@ describe('unit.devops.admin', () => {
 
   describe('mkAdmin tests', () => {
     it('should allow admin construction using default options', () => {
-      const admin = mkAdmin(internalOps({}, { endpointUrl: 'https://api.astra.datastax.com/v1' }), {});
+      const admin = new AstraAdmin(internalOps({}, { endpointUrl: 'https://api.astra.datastax.com/v1' }), {});
       assert.ok(admin);
       assert.strictEqual(admin['_httpClient'].baseUrl, 'https://api.astra.datastax.com/v1');
     });
 
     it('should allow admin construction, overwriting options', () => {
-      const admin = mkAdmin(internalOps({}, { endpointUrl: 'https://api.astra.datastax.com/old' }), {
+      const admin = new AstraAdmin(internalOps({}, { endpointUrl: 'https://api.astra.datastax.com/old' }), {
         adminToken: 'new-admin',
         endpointUrl: 'https://api.astra.datastax.com/new',
       });
