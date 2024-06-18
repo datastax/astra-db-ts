@@ -17,7 +17,7 @@ import { Db } from '@/src/data-api';
 import { assertTestsEnabled, initTestObjects, TEST_ASTRA_URI } from '@/tests/fixtures';
 import * as fs from 'fs';
 import { fetch } from 'fetch-h2';
-import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DATA_API_PATH } from '@/src/api';
+import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DATA_API_PATHS } from '@/src/api';
 import { after } from 'mocha';
 
 interface VectorizeTestSpec {
@@ -79,7 +79,7 @@ describe('integration.data-api.vectorize', () => {
 const initVectorTests = async () => {
   const spec = JSON.parse(fs.readFileSync('vectorize_credentials.json', 'utf8')) as VectorizeTestSpec;
 
-  const embeddingProviders = await fetch(`${TEST_ASTRA_URI}/${DEFAULT_DATA_API_PATH}`, {
+  const embeddingProviders = await fetch(`${TEST_ASTRA_URI}/${DEFAULT_DATA_API_PATHS['astra']}`, {
     body: JSON.stringify({ findEmbeddingProviders: {} }),
     headers: {
       [DEFAULT_DATA_API_AUTH_HEADER]: process.env.APPLICATION_TOKEN,

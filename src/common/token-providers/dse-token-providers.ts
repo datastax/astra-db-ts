@@ -56,7 +56,7 @@ export class DSEUsernamePasswordTokenProvider extends TokenProvider {
     } else if (typeof Buffer === 'function') {
       return Buffer.from(input, 'utf-8').toString('base64');
     } else {
-      throw new Error('Unable to encode username/password to base64... please provide the "cassandra:[username_b64]:[password_b64]" token manually');
+      throw new Error('Unable to encode username/password to base64... please provide the "Cassandra:[username_b64]:[password_b64]" token manually');
     }
   }
 }

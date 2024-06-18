@@ -16,4 +16,4 @@ export { RawDataAPIResponse, CuratedAPIResponse, Fetcher, FetcherRequestInfo, Fe
 export * from './data-api';
 export * from './client';
 export * from './devops';
-export { TokenProvider, WithTimeout, StaticTokenProvider, DSEUsernamePasswordTokenProvider, nullish } from './common';
+export { TokenProvider, WithTimeout, StaticTokenProvider, DSEUsernamePasswordTokenProvider, nullish, DataAPIEnvironment, DataAPIEnvironments } from './common';

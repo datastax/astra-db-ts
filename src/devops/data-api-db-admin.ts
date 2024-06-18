@@ -46,7 +46,7 @@ import { validateAdminOpts } from '@/src/devops/utils';
  *
  * @public
  */
-export class DSEDbAdmin extends DbAdmin {
+export class DataAPIDbAdmin extends DbAdmin {
   private readonly _httpClient!: DataAPIHttpClient;
   private readonly _db!: Db;
 

@@ -24,7 +24,7 @@ import {
   TEST_ASTRA_URI,
 } from '@/tests/fixtures';
 import { CollectionAlreadyExistsError, DataAPIResponseError, Db } from '@/src/data-api';
-import { DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE } from '@/src/api';
+import { DEFAULT_DATA_API_PATHS, DEFAULT_NAMESPACE } from '@/src/api';
 import { DataAPIClient } from '@/src/client';
 import { CollectionNotFoundError } from '@/src/data-api/errors';
 
@@ -147,7 +147,7 @@ describe('integration.data-api.db', () => {
     it('should work even when instantiated weirdly', async () => {
       const db = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { namespace: '123123123', dataApiPath: 'King, by Eluveitie' } })
         .admin({ adminToken: 'dummy-token' })
-        .dbAdmin(TEST_ASTRA_URI, { dataApiPath: DEFAULT_DATA_API_PATH, namespace: DEFAULT_NAMESPACE })
+        .dbAdmin(TEST_ASTRA_URI, { dataApiPath: DEFAULT_DATA_API_PATHS['astra'], namespace: DEFAULT_NAMESPACE })
         .db()
         .admin({ adminToken: 'tummy-token', endpointUrl: 'Memento Mori, by Feuerschwanz' })
         .db();

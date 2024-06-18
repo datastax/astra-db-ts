@@ -15,7 +15,7 @@
 import { Collection, CollectionAlreadyExistsError, DbSpawnOptions, SomeDoc } from '@/src/data-api';
 import {
   DataAPIHttpClient,
-  DEFAULT_DATA_API_PATH,
+  DEFAULT_DATA_API_PATHS,
   DEFAULT_NAMESPACE,
   EmissionStrategy,
   RawDataAPIResponse,
@@ -29,7 +29,7 @@ import {
 import { DatabaseInfo } from '@/src/devops/types/admin/database-info';
 import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
 import { RunCommandOptions } from '@/src/data-api/types/collections/command';
-import { WithTimeout } from '@/src/common/types';
+import { DataAPIEnvironment, WithTimeout } from '@/src/common/types';
 import { DropCollectionOptions } from '@/src/data-api/types/collections/drop-collection';
 import { extractDbIdFromUrl, validateOption } from '@/src/data-api/utils';
 import { CreateCollectionCommand } from '@/src/data-api/types/collections/create-collection';
@@ -37,8 +37,8 @@ import { ListCollectionsCommand } from '@/src/data-api/types/collections/list-co
 import { InternalRootClientOpts } from '@/src/client/types';
 import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-collection';
 import { AdminSpawnOptions, DbAdmin } from '@/src/devops';
-import { TokenProvider } from '@/src/common';
-import { DSEDbAdmin } from '@/src/devops/dse-db-admin';
+import { TokenProvider, validateDataAPIEnv } from '@/src/common';
+import { DataAPIDbAdmin } from '@/src/devops/data-api-db-admin';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -132,7 +132,7 @@ export class Db {
       value: new DataAPIHttpClient({
         baseUrl: endpoint,
         applicationToken: dbOpts.token,
-        baseApiPath: dbOpts.dataApiPath || DEFAULT_DATA_API_PATH,
+        baseApiPath: dbOpts.dataApiPath || DEFAULT_DATA_API_PATHS[options.environment],
         emitter: options.emitter,
         monitorCommands: dbOpts.monitorCommands,
         fetchCtx: options.fetchCtx,
@@ -163,7 +163,7 @@ export class Db {
 
   public admin(options?: AdminSpawnOptions & { environment?: 'astra' }): AstraDbAdmin
 
-  public admin(options: AdminSpawnOptions & { environment: 'dse' }): DSEDbAdmin
+  public admin(options: AdminSpawnOptions & { environment: 'dse' }): DataAPIDbAdmin
 
   /**
    * Spawns a new {@link AstraDbAdmin} instance for this database, used for performing administrative operations
@@ -189,19 +189,21 @@ export class Db {
    *
    * @throws Error - if the database is not an Astra database.
    */
-  public admin(options?: AdminSpawnOptions & { environment?: 'astra' | 'dse' }): DbAdmin {
+  public admin(options?: AdminSpawnOptions & { environment?: DataAPIEnvironment }): DbAdmin {
     if (!this._id) {
       throw new Error('Admin operations are only supported on Astra databases');
     }
 
     const environment = options?.environment ?? 'astra';
 
+    validateDataAPIEnv(environment);
+
     if (this.#defaultOpts.environment !== environment) {
       throw new Error('Mismatching environment—environment option is not the same as set in the DataAPIClient');
     }
 
     if (environment === 'dse') {
-      return new DSEDbAdmin(this, this._httpClient, options);
+      return new DataAPIDbAdmin(this, this._httpClient, options);
     }
 
     return new AstraDbAdmin(this, this.#defaultOpts, options);

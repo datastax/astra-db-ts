@@ -15,7 +15,7 @@
 
 import assert from 'assert';
 import { Db } from '@/src/data-api';
-import { DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE } from '@/src/api';
+import { DEFAULT_DATA_API_PATHS, DEFAULT_NAMESPACE } from '@/src/api';
 import { mkDb } from '@/src/data-api/db';
 import { StaticTokenProvider } from '@/src/common';
 import { InternalRootClientOpts } from '@/src/client/types';
@@ -35,7 +35,7 @@ describe('unit.data-api.db', () => {
     it('should allow db construction from endpoint', async () => {
       const db = new Db('https://id-region.apps.astra.datastax.com', internalOps());
       assert.ok(db);
-      assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATH}`);
+      assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
       assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'old');
     });
   });
@@ -44,14 +44,14 @@ describe('unit.data-api.db', () => {
     it('should allow db construction from endpoint, using default options', async () => {
       const db = mkDb(internalOps(), 'https://id-region.apps.astra.datastax.com');
       assert.ok(db);
-      assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATH}`);
+      assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
       assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'old');
     });
 
     it('should allow db construction from id + region, using default options', async () => {
       const db = mkDb(internalOps(), 'id', 'region');
       assert.ok(db);
-      assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATH}`);
+      assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
       assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'old');
     });
 

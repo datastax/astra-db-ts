@@ -18,7 +18,7 @@ import { FetchCtx } from '@/src/api';
 import { Fetcher } from '@/src/api/fetch/types';
 import { AdminSpawnOptions } from '@/src/devops';
 import { DbSpawnOptions } from '@/src/data-api';
-import { nullish, TokenProvider } from '@/src/common';
+import { DataAPIEnvironment, nullish, TokenProvider } from '@/src/common';
 
 /**
  * The caller information to send with requests, of the form `[name, version?]`, or an array of such.
@@ -47,7 +47,7 @@ export type Caller = [name: string, version?: string];
  * @public
  */
 export interface DataAPIClientOptions {
-  environment?: 'astra' | 'dse',
+  environment?: DataAPIEnvironment,
   /**
    * The client-wide options related to http operations.
    *
@@ -309,7 +309,7 @@ export interface Http1Options {
  * @internal
  */
 export interface InternalRootClientOpts {
-  environment: 'astra' | 'dse',
+  environment: DataAPIEnvironment,
   emitter: TypedEmitter<DataAPIClientEvents>,
   fetchCtx: FetchCtx,
   userAgent: string,

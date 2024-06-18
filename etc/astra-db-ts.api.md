@@ -349,7 +349,7 @@ export interface DataAPIClientOptions {
     caller?: Caller | Caller[];
     dbOptions?: DbSpawnOptions;
     // (undocumented)
-    environment?: 'astra' | 'dse';
+    environment?: DataAPIEnvironment;
     httpOptions?: DataAPIHttpOptions;
     // @deprecated
     preferHttp2?: boolean;
@@ -363,11 +363,28 @@ export type DataAPICommandEvents = {
 };
 
 // @public
+export class DataAPIDbAdmin extends DbAdmin {
+    // @internal
+    constructor(db: Db, httpClient: DataAPIHttpClient, adminOpts?: AdminSpawnOptions);
+    createNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
+    db(): Db;
+    dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
+    get id(): string;
+    listNamespaces(options?: WithTimeout): Promise<string[]>;
+}
+
+// @public
 export interface DataAPIDetailedErrorDescriptor {
     readonly command: Record<string, any>;
     readonly errorDescriptors: DataAPIErrorDescriptor[];
     readonly rawResponse: RawDataAPIResponse;
 }
+
+// @public (undocumented)
+export type DataAPIEnvironment = typeof DataAPIEnvironments[number];
+
+// @public (undocumented)
+export const DataAPIEnvironments: readonly ["astra", "dse"];
 
 // @public
 export abstract class DataAPIError extends Error {
@@ -490,12 +507,10 @@ export class Db {
     admin(options?: AdminSpawnOptions & {
         environment?: 'astra';
     }): AstraDbAdmin;
-    // Warning: (ae-forgotten-export) The symbol "DSEDbAdmin" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     admin(options: AdminSpawnOptions & {
         environment: 'dse';
-    }): DSEDbAdmin;
+    }): DataAPIDbAdmin;
     collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions): Collection<Schema>;
     collections(options?: WithNamespace & WithTimeout): Promise<Collection[]>;
     command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse>;
@@ -1247,11 +1262,6 @@ export class UUID {
     static v7(): UUID;
     readonly version: number;
 }
-
-// Warning: (ae-internal-missing-underscore) The name "validateAdminOpts" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export function validateAdminOpts(opts: AdminSpawnOptions | undefined): void;
 
 // @public
 export interface VectorDoc {

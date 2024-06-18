@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { DataAPIEnvironments } from '@/src/common/constants';
+
 /**
  * Represents options related to timeouts. Note that this means "the max time the client will wait for a response
  * from the server"—**an operation timing out does not necessarily mean the operation failed on the server**.
@@ -34,3 +36,8 @@ export interface WithTimeout {
  * @public
  */
 export type nullish = null | undefined;
+
+/**
+ * @public
+ */
+export type DataAPIEnvironment = typeof DataAPIEnvironments[number];

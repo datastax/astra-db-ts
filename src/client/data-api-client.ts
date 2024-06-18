@@ -24,14 +24,15 @@ import {
 } from '@/src/client/types';
 import TypedEmitter from 'typed-emitter';
 import { DataAPICommandEvents } from '@/src/data-api/events';
-import { AdminCommandEvents, AdminSpawnOptions, validateAdminOpts } from '@/src/devops';
+import { AdminCommandEvents, AdminSpawnOptions } from '@/src/devops';
 import { validateOption } from '@/src/data-api/utils';
 import { buildUserAgent, FetchCtx, FetchH2 } from '@/src/api';
 import { FetchNative } from '@/src/api/fetch/fetch-native';
 import { LIB_NAME } from '@/src/version';
 import { Fetcher } from '@/src/api/fetch/types';
 import { DbSpawnOptions } from '@/src/data-api';
-import { nullish, TokenProvider } from '@/src/common';
+import { nullish, TokenProvider, validateDataAPIEnv } from '@/src/common';
+import { validateAdminOpts } from '@/src/devops/utils';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -358,6 +359,7 @@ function validateRootOpts(opts: DataAPIClientOptions | undefined | null) {
   validateDbOpts(opts.dbOptions);
   validateAdminOpts(opts.adminOptions);
   validateHttpOpts(opts.httpOptions);
+  validateDataAPIEnv(opts.environment);
 }
 
 function validateHttpOpts(opts: DataAPIHttpOptions | undefined | null) {

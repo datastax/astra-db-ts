@@ -15,7 +15,7 @@
 
 import { DataAPIClient } from '@/src/client';
 import assert from 'assert';
-import { DEFAULT_DATA_API_PATH, FetcherResponseInfo } from '@/src/api';
+import { DEFAULT_DATA_API_PATHS, FetcherResponseInfo } from '@/src/api';
 import { FetchH2 } from '@/src/api/fetch/fetch-h2';
 import { FetcherRequestInfo } from '@/src/api/fetch/types';
 import { DSEUsernamePasswordTokenProvider } from '@/src/common';
@@ -187,14 +187,14 @@ describe('unit.client.data-api-client', () => {
     it('should allow db construction from endpoint', async () => {
       const db = new DataAPIClient('dummy-token').db(endpoint);
       assert.ok(db);
-      assert.strictEqual(db['_httpClient'].baseUrl, `${endpoint}/${DEFAULT_DATA_API_PATH}`);
+      assert.strictEqual(db['_httpClient'].baseUrl, `${endpoint}/${DEFAULT_DATA_API_PATHS['astra']}`);
       assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'dummy-token');
     });
 
     it('should allow db construction from id + region', async () => {
       const db = new DataAPIClient('dummy-token').db(id, region);
       assert.ok(db);
-      assert.strictEqual(db['_httpClient'].baseUrl, `https://${id}-${region}.apps.astra.datastax.com/${DEFAULT_DATA_API_PATH}`);
+      assert.strictEqual(db['_httpClient'].baseUrl, `https://${id}-${region}.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
       assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'dummy-token');
     });
 
