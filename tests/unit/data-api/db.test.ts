@@ -33,7 +33,7 @@ describe('unit.data-api.db', () => {
 
   describe('constructor tests', () => {
     it('should allow db construction from endpoint', async () => {
-      const db = new Db('https://id-region.apps.astra.datastax.com', internalOps());
+      const db = new Db('https://id-region.apps.astra.datastax.com', internalOps(), null);
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
       assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'old');
@@ -42,21 +42,21 @@ describe('unit.data-api.db', () => {
 
   describe('mkDb tests', () => {
     it('should allow db construction from endpoint, using default options', async () => {
-      const db = mkDb(internalOps(), 'https://id-region.apps.astra.datastax.com');
+      const db = mkDb(internalOps(), 'https://id-region.apps.astra.datastax.com', null, null);
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
       assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'old');
     });
 
     it('should allow db construction from id + region, using default options', async () => {
-      const db = mkDb(internalOps(), 'id', 'region');
+      const db = mkDb(internalOps(), 'id', 'region', null);
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
       assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'old');
     });
 
     it('should allow db construction from endpoint, overwriting options', async () => {
-      const db = mkDb(internalOps({ dataApiPath: 'old' }), 'https://id-region.apps.astra.datastax.com', { dataApiPath: 'new', token: 'new' });
+      const db = mkDb(internalOps({ dataApiPath: 'old' }), 'https://id-region.apps.astra.datastax.com', { dataApiPath: 'new', token: 'new' }, null);
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, 'https://id-region.apps.astra.datastax.com/new');
       assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'new');
@@ -70,53 +70,53 @@ describe('unit.data-api.db', () => {
     });
 
     it('is initialized with default namespace', () => {
-      const db = mkDb(internalOps(), TEST_ASTRA_URI);
+      const db = mkDb(internalOps(), TEST_ASTRA_URI, null, null);
       assert.strictEqual(db.namespace, DEFAULT_NAMESPACE);
     });
 
-    it('uses custon namespace when provided', () => {
-      const db = mkDb(internalOps({ namespace: 'new_namespace' }), TEST_ASTRA_URI);
+    it('uses custom namespace when provided', () => {
+      const db = mkDb(internalOps({ namespace: 'new_namespace' }), TEST_ASTRA_URI, null, null);
       assert.strictEqual(db.namespace, 'new_namespace');
     });
 
     it('overrides namespace in db when provided', () => {
-      const db = mkDb(internalOps(), TEST_ASTRA_URI, { namespace: 'new_namespace' });
+      const db = mkDb(internalOps(), TEST_ASTRA_URI, { namespace: 'new_namespace' }, null);
       assert.strictEqual(db.namespace, 'new_namespace');
     });
 
     it('throws error on empty namespace', () => {
       assert.throws(() => {
-        mkDb(internalOps(), TEST_ASTRA_URI, { namespace: '' });
+        mkDb(internalOps(), TEST_ASTRA_URI, { namespace: '' }, null);
       });
     });
 
     it('throws error on invalid namespace', () => {
       assert.throws(() => {
-        mkDb(internalOps(), TEST_ASTRA_URI, { namespace: 'bad namespace' });
+        mkDb(internalOps(), TEST_ASTRA_URI, { namespace: 'bad namespace' }, null);
       });
     });
 
     it('handles different dataApiPath', () => {
-      const db = mkDb(internalOps({ dataApiPath: 'api/json/v2' }), TEST_ASTRA_URI);
+      const db = mkDb(internalOps({ dataApiPath: 'api/json/v2' }), TEST_ASTRA_URI, null, null);
       assert.strictEqual(db['_httpClient'].baseUrl, `${TEST_ASTRA_URI}/api/json/v2`);
     });
 
     it('handles different dataApiPath when overridden', () => {
-      const db = mkDb(internalOps({ dataApiPath: 'api/json/v2' }), TEST_ASTRA_URI, { dataApiPath: 'api/json/v3' });
+      const db = mkDb(internalOps({ dataApiPath: 'api/json/v2' }), TEST_ASTRA_URI, { dataApiPath: 'api/json/v3' }, null);
       assert.strictEqual(db['_httpClient'].baseUrl, `${TEST_ASTRA_URI}/api/json/v3`);
     });
 
     it('overrides token in db when provided', async () => {
-      const db = mkDb(internalOps(), TEST_ASTRA_URI, { token: 'new' });
+      const db = mkDb(internalOps(), TEST_ASTRA_URI, { token: 'new' }, null);
       assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'new');
     });
 
     it('should accept valid monitorCommands', () => {
-      assert.doesNotThrow(() => mkDb(internalOps(), TEST_ASTRA_URI, {}));
-      assert.doesNotThrow(() => mkDb(internalOps(), TEST_ASTRA_URI, { monitorCommands: true }));
-      assert.doesNotThrow(() => mkDb(internalOps(), TEST_ASTRA_URI, { monitorCommands: false }));
-      assert.doesNotThrow(() => mkDb(internalOps(), TEST_ASTRA_URI, { monitorCommands: null! }));
-      assert.doesNotThrow(() => mkDb(internalOps(), TEST_ASTRA_URI, { monitorCommands: undefined }));
+      assert.doesNotThrow(() => mkDb(internalOps(), TEST_ASTRA_URI, {}, null));
+      assert.doesNotThrow(() => mkDb(internalOps(), TEST_ASTRA_URI, { monitorCommands: true }, null));
+      assert.doesNotThrow(() => mkDb(internalOps(), TEST_ASTRA_URI, { monitorCommands: false }, null));
+      assert.doesNotThrow(() => mkDb(internalOps(), TEST_ASTRA_URI, { monitorCommands: null! }, null));
+      assert.doesNotThrow(() => mkDb(internalOps(), TEST_ASTRA_URI, { monitorCommands: undefined }, null));
     });
 
     it('should throw on invalid monitorCommands', () => {
@@ -131,10 +131,10 @@ describe('unit.data-api.db', () => {
     });
 
     it('should accept valid dataApiPath', () => {
-      assert.doesNotThrow(() => mkDb(internalOps(), TEST_ASTRA_URI, {}));
-      assert.doesNotThrow(() => mkDb(internalOps(), TEST_ASTRA_URI, { dataApiPath: 'api/json/v2' }));
-      assert.doesNotThrow(() => mkDb(internalOps(), TEST_ASTRA_URI, { dataApiPath: null! }));
-      assert.doesNotThrow(() => mkDb(internalOps(), TEST_ASTRA_URI, { dataApiPath: undefined }));
+      assert.doesNotThrow(() => mkDb(internalOps(), TEST_ASTRA_URI, {}, null));
+      assert.doesNotThrow(() => mkDb(internalOps(), TEST_ASTRA_URI, { dataApiPath: 'api/json/v2' }, null));
+      assert.doesNotThrow(() => mkDb(internalOps(), TEST_ASTRA_URI, { dataApiPath: null! }, null));
+      assert.doesNotThrow(() => mkDb(internalOps(), TEST_ASTRA_URI, { dataApiPath: undefined }, null));
     });
 
     it('should throw on invalid dataApiPath', () => {
@@ -149,29 +149,29 @@ describe('unit.data-api.db', () => {
 
   describe('id tests', () => {
     it('should return the id from the endpoint', () => {
-      const db = mkDb(internalOps(), 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb', 'us-east1');
+      const db = mkDb(internalOps(), 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb', 'us-east1', null);
       assert.strictEqual(db.id, 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb');
     });
 
     it('should throw error if attempting to get ID for non-astra db', () => {
-      const db = mkDb(internalOps(), 'https://localhost:3000');
-      assert.throws(() => { const _id = db.id });
+      const db = mkDb(internalOps(), 'https://localhost:3000', null, null);
+      assert.throws(() => { db.id });
     });
   });
 
   describe('admin tests', () => {
     it('should return the admin if on astra db', () => {
-      const db = mkDb(internalOps(), 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb', 'us-east1');
+      const db = mkDb(internalOps(), 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb', 'us-east1', null);
       assert.strictEqual(db.admin().id, 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb');
     });
 
     it('should throw error if attempting to get admin for non-astra db', () => {
-      const db = mkDb(internalOps(), 'https://localhost:3000');
-      assert.throws(() => { const _admin = db.admin() });
+      const db = mkDb(internalOps(), 'https://localhost:3000', null, null);
+      assert.throws(() => { db.admin() });
     });
 
     it('should override auth token', async () => {
-      const db = mkDb(internalOps({ token: new StaticTokenProvider('old') }), 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb', 'us-east1');
+      const db = mkDb(internalOps({ token: new StaticTokenProvider('old') }), 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb', 'us-east1', null);
       const admin = db.admin({ adminToken: 'new' });
       assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'old');
       assert.strictEqual(await admin['_httpClient'].applicationToken?.getTokenAsString(), 'new');

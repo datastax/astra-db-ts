@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { nullish, StaticTokenProvider } from '@/src/common';
+import { isNullish, nullish, StaticTokenProvider } from '@/src/common';
 
 /**
  * The base class for some "token provider", a general concept for anything that provides some token to the client,
@@ -47,21 +47,40 @@ export abstract class TokenProvider {
 
   /**
    * Turns a string token into a {@link StaticTokenProvider} if necessary. Throws an error if
+   * it's not a string or a `TokenProvider` already.
+   *
+   * Not intended for external use.
+   *
+   * @internal
+   */
+  static parseToken(token: unknown, require: true): TokenProvider
+
+  /**
+   * Turns a string token into a {@link StaticTokenProvider} if necessary. Throws an error if
    * it's not a string, nullish, or a `TokenProvider` already.
    *
    * Not intended for external use.
    *
    * @internal
    */
-  static parseToken(token: unknown): TokenProvider | nullish {
+  static parseToken(token: unknown, require?: false): TokenProvider | nullish
+
+  static parseToken(token: unknown, require?: boolean): TokenProvider | nullish {
     if (typeof token === 'string') {
       return new StaticTokenProvider(token);
     }
 
-    if (token instanceof TokenProvider || token === null || token === undefined) {
+    if (isNullish(token)) {
+      if (require) {
+        throw new Error('Token is nullish; did you forget to provide one?')
+      }
       return token;
     }
 
-    throw new TypeError('Expected token to be type string | TokenProvider');
+    if (token instanceof TokenProvider) {
+      return token;
+    }
+
+    throw new TypeError('Expected token to be type string | TokenProvider | nullish');
   }
 }

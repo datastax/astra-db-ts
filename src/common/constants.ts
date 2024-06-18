@@ -13,6 +13,11 @@
 // limitations under the License.
 
 /**
+ * All the available Data API backends the Typescript client recognizes.
+ *
+ * If using a non-Astra database as the backend, the `environment` option should be set in the `DataAPIClient` options,
+ * as well as in the `db.admin()` options.
+ *
  * @public
  */
-export const DataAPIEnvironments = ['astra', 'dse'] as const;
+export const DataAPIEnvironments = <const>['astra', 'dse', 'hcd', 'cassandra', 'other'];

@@ -38,6 +38,11 @@ export interface WithTimeout {
 export type nullish = null | undefined;
 
 /**
+ * All the available Data API backends the Typescript client recognizes.
+ *
+ * If using a non-Astra database as the backend, the `environment` option should be set in the `DataAPIClient` options,
+ * as well as in the `db.admin()` options.
+ *
  * @public
  */
 export type DataAPIEnvironment = typeof DataAPIEnvironments[number];

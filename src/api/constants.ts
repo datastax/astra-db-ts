@@ -78,5 +78,8 @@ export const DEFAULT_DEVOPS_API_ENDPOINT = 'https://api.astra.datastax.com/v2';
  */
 export const DEFAULT_DATA_API_PATHS = {
   astra: 'api/json/v1',
-  dse: 'v1'
+  dse: 'v1',
+  hcd: 'v1',
+  cassandra: 'v1',
+  other: 'v1',
 };

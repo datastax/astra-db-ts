@@ -128,7 +128,7 @@ export class DataAPIHttpClient extends HttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       monitorCommands: opts?.monitorCommands || this.#props.monitorCommands,
-      applicationToken: TokenProvider.parseToken(opts?.adminToken || this.#props.applicationToken),
+      applicationToken: TokenProvider.parseToken(opts?.adminToken || this.#props.applicationToken, true),
       baseUrl: opts?.endpointUrl || this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
     });

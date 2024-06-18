@@ -348,7 +348,6 @@ export interface DataAPIClientOptions {
     adminOptions?: AdminSpawnOptions;
     caller?: Caller | Caller[];
     dbOptions?: DbSpawnOptions;
-    // (undocumented)
     environment?: DataAPIEnvironment;
     httpOptions?: DataAPIHttpOptions;
     // @deprecated
@@ -380,11 +379,11 @@ export interface DataAPIDetailedErrorDescriptor {
     readonly rawResponse: RawDataAPIResponse;
 }
 
-// @public (undocumented)
+// @public
 export type DataAPIEnvironment = typeof DataAPIEnvironments[number];
 
-// @public (undocumented)
-export const DataAPIEnvironments: readonly ["astra", "dse"];
+// @public
+export const DataAPIEnvironments: readonly ["astra", "dse", "hcd", "cassandra", "other"];
 
 // @public
 export abstract class DataAPIError extends Error {
@@ -502,14 +501,12 @@ export type DateUpdate<Schema> = {
 // @public
 export class Db {
     // @internal
-    constructor(endpoint: string, options: InternalRootClientOpts);
-    // (undocumented)
+    constructor(endpoint: string, rootOpts: InternalRootClientOpts, dbOpts: DbSpawnOptions | nullish);
     admin(options?: AdminSpawnOptions & {
         environment?: 'astra';
     }): AstraDbAdmin;
-    // (undocumented)
     admin(options: AdminSpawnOptions & {
-        environment: 'dse';
+        environment: Exclude<DataAPIEnvironment, 'astra'>;
     }): DataAPIDbAdmin;
     collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions): Collection<Schema>;
     collections(options?: WithNamespace & WithTimeout): Promise<Collection[]>;
@@ -1165,7 +1162,9 @@ export type ToDotNotation<Schema extends SomeDoc> = Merge<_ToDotNotation<Schema,
 export abstract class TokenProvider {
     abstract getTokenAsString(): Promise<string>;
     // @internal
-    static parseToken(token: unknown): TokenProvider | nullish;
+    static parseToken(token: unknown, require: true): TokenProvider;
+    // @internal
+    static parseToken(token: unknown, require?: false): TokenProvider | nullish;
 }
 
 // @public

@@ -16,7 +16,7 @@ import type TypedEmitter from 'typed-emitter';
 import type { DataAPICommandEvents } from '@/src/data-api';
 import type { FetchCtx, HttpMethods } from '@/src/api';
 import type { TimeoutManager } from '@/src/api/timeout-managers';
-import { nullish, TokenProvider } from '@/src/common';
+import { TokenProvider } from '@/src/common';
 
 /**
  * @internal
@@ -24,7 +24,7 @@ import { nullish, TokenProvider } from '@/src/common';
 export interface HTTPClientOptions {
   baseUrl: string,
   baseApiPath?: string | null,
-  applicationToken: TokenProvider | nullish,
+  applicationToken: TokenProvider,
   emitter: TypedEmitter<DataAPICommandEvents>,
   monitorCommands: boolean,
   fetchCtx: FetchCtx,

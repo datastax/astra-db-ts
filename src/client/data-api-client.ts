@@ -56,7 +56,7 @@ export type DataAPIClientEvents =
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
  *
- * Should probably never need to be used directly.
+ * Should never need to be used directly.
  *
  * @public
  */
@@ -73,41 +73,82 @@ export const DataAPIClientEventEmitterBase = (() => {
  * [conceptual hierarchy](https://github.com/datastax/astra-db-ts/tree/signature-cleanup?tab=readme-ov-file#abstraction-diagram)
  * of the SDK.
  *
- * The client takes in a default token, which can be overridden by a stronger/weaker token when spawning a new
+ * The client may take in a default token, which can be overridden by a stronger/weaker token when spawning a new
  * {@link Db} or {@link AstraAdmin} instance.
  *
- * It also takes in a set of default options (see {@link DataAPIClientOptions}) that may also be overridden as necessary.
+ * It also takes in a set of default options (see {@link DataAPIClientOptions}) that may also generally be overridden as necessary.
+ *
+ * **Depending on the Data API backend used, you may need to set the environment option to "dse", "hcd", etc.** See
+ * {@link DataAPIEnvironment} for all possible backends. It defaults to "astra".
  *
  * @example
  * ```typescript
- * const client = new DataAPIClient('AstraCS:...');
+ * // Client with default token
+ * const client1 = new DataAPIClient('AstraCS:...');
  *
- * const db1 = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
- * const db2 = client.db('my-database', 'us-east1');
+ * // Client with no default token; must provide token in .db() or .admin()
+ * const client2 = new DataAPIClient();
+ *
+ * // Client connecting to a local DSE instance
+ * const dseToken = new DSEUsernamePasswordTokenProvider('username', 'password');
+ * const client3 = new DataAPIClient(dseToken, { environment: 'dse' });
+ *
+ * const db1 = client1.db('https://<db_id>-<region>.apps.astra.datastax.com');
+ * const db2 = client1.db('<db_id>', '<region>');
  *
  * const coll = await db1.collection('my-collection');
  *
- * const admin1 = client.admin();
- * const admin2 = client.admin({ adminToken: '<stronger_token>' });
+ * const admin1 = client1.admin();
+ * const admin2 = client1.admin({ adminToken: '<stronger_token>' });
  *
- * console.log(await coll.insertOne({ name: 'Lordi' }));
+ * console.log(await coll.insertOne({ name: 'RATATATA' }));
  * console.log(await admin1.listDatabases());
  * ```
  *
  * @public
+ *
+ * @see DataAPIEnvironment
  */
 export class DataAPIClient extends DataAPIClientEventEmitterBase {
   readonly #options: InternalRootClientOpts;
 
   /**
-   * Constructs a new instance of the {@link DataAPIClient}.
+   * Constructs a new instance of the {@link DataAPIClient} without a default token. The token will instead need to
+   * be specified when calling `.db()` or `.admin()`.
+   *
+   * Prefer this method when using a db-scoped token instead of a more universal token.
+   *
+   * @example
+   * ```typescript
+   * const client = new DataAPIClient();
+   *
+   * // OK
+   * const db1 = client.db('<db_id>', '<region>', { token: 'AstraCS:...' });
+   *
+   * // Will throw error as no token is ever provided
+   * const db2 = client.db('<db_id>', '<region>');
+   * ```
    *
    * @param options - The default options to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    */
   constructor(options?: DataAPIClientOptions | nullish)
 
   /**
-   * Constructs a new instance of the {@link DataAPIClient}.
+   * Constructs a new instance of the {@link DataAPIClient} with a default token. This token will be used everywhere
+   * if no overriding token is provided in `.db()` or `.admin()`.
+   *
+   * Prefer this method when using a universal/admin-scoped token.
+   *
+   * @example
+   * ```typescript
+   * const client = new DataAPIClient('<default_token>');
+   *
+   * // OK
+   * const db1 = client.db('<db_id>', '<region>', { token: '<weaker_token>' });
+   *
+   * // OK; will use <default_token>
+   * const db2 = client.db('<db_id>', '<region>');
+   * ```
    *
    * @param token - The default token to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    * @param options - The default options to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
@@ -171,6 +212,8 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    *   namespace: 'my-namespace',
    *   useHttp2: false,
    * });
+   *
+   * const db3 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', { token: 'AstraCS:...' });
    * ```
    *
    * @remarks
@@ -204,6 +247,8 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    *   namespace: 'my-namespace',
    *   useHttp2: false,
    * });
+   *
+   * const db3 = client.db('a6a1d8d6-31bc-4af8-be57-377566f345bf', 'us-east1', { token: 'AstraCS:...' });
    * ```
    *
    * @remarks

@@ -47,6 +47,27 @@ export type Caller = [name: string, version?: string];
  * @public
  */
 export interface DataAPIClientOptions {
+  /**
+   * Sets the Data API "backend" that is being used (e.g. 'dse', 'hcd', 'cassandra', or 'other'). Defaults to 'astra'.
+   *
+   * Generally, the majority of operations stay the same between backends. However, authentication may differ, and
+   * availability of admin operations does as well.
+   *
+   * - With Astra databases, you'll use an `'AstraCS:...'` token; for other backends, you'll generally want to use the
+   *   {@link DSEUsernamePasswordTokenProvider}, or, rarely, even create your own.
+   *
+   * - {@link AstraAdmin} is only available on Astra databases. {@link AstraDbAdmin} is also only available on Astra
+   *   databases, but the {@link DataAPIDbAdmin} alternative is used for all other backends, albeit the expense of a
+   *   couple extra features.
+   *
+   * - Some functions/properties may also not be available on non-Astra backends, such as {@link Db.id} or {@link Db.info}.
+   *
+   * @remarks
+   * No error will be thrown if this is set incorrectly, but bugs may appear in your code, with some operations just
+   * throwing errors and refusing to work properly.
+   *
+   * @defaultValue "astra"
+   */
   environment?: DataAPIEnvironment,
   /**
    * The client-wide options related to http operations.
