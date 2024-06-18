@@ -14,6 +14,7 @@
 
 import { SomeDoc } from '@/src/data-api';
 import { ToDotNotation } from '@/src/data-api/types/dot-notation';
+import { nullish } from '@/src/common';
 
 /**
  * Represents the options for the vector search.
@@ -61,7 +62,7 @@ export interface VectorizeServiceOptions {
    *
    * @alpha
    */
-  modelName?: string,
+  modelName: string | nullish,
   /**
    * NOTE: This feature is under current development.
    *
