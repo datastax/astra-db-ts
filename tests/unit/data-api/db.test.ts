@@ -20,6 +20,7 @@ import { mkDb } from '@/src/data-api/db';
 import { StaticTokenProvider } from '@/src/common';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { TEST_ASTRA_URI } from '@/tests/fixtures';
+import { DataAPIClient } from '@/src/client';
 
 describe('unit.data-api.db', () => {
   const internalOps = (data?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({
@@ -37,6 +38,11 @@ describe('unit.data-api.db', () => {
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
       assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'old');
+    });
+
+    it('should throw on missing token', () => {
+      const client = new DataAPIClient();
+      assert.throws(() => client.db(TEST_ASTRA_URI), { message: 'Token is nullish; did you forget to provide one?' });
     });
   });
 
@@ -160,14 +166,39 @@ describe('unit.data-api.db', () => {
   });
 
   describe('admin tests', () => {
+    it('should accept matching environments', () => {
+      assert.doesNotThrow(() => {
+        const db = new DataAPIClient('dummy_token').db(TEST_ASTRA_URI);
+        db.admin();
+      });
+      assert.doesNotThrow(() => {
+        const db = new DataAPIClient('dummy_token', { environment: 'dse' }).db(TEST_ASTRA_URI);
+        db.admin({ environment: 'dse' });
+      });
+      assert.doesNotThrow(() => {
+        const db = new DataAPIClient('dummy_token', { environment: 'other' }).db(TEST_ASTRA_URI);
+        db.admin({ environment: 'other' });
+      });
+    });
+
+    it('should throw on mismatching environments', () => {
+      assert.throws(() => {
+        const db = new DataAPIClient('dummy_token').db(TEST_ASTRA_URI);
+        db.admin({ environment: 'dse' });
+      });
+      assert.throws(() => {
+        const db = new DataAPIClient('dummy_token', { environment: 'dse' }).db(TEST_ASTRA_URI);
+        db.admin();
+      });
+      assert.throws(() => {
+        const db = new DataAPIClient('dummy_token', { environment: 'dse' }).db(TEST_ASTRA_URI);
+        db.admin({ environment: 'hcd' });
+      });
+    });
+
     it('should return the admin if on astra db', () => {
       const db = mkDb(internalOps(), 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb', 'us-east1', null);
       assert.strictEqual(db.admin().id, 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb');
-    });
-
-    it('should throw error if attempting to get admin for non-astra db', () => {
-      const db = mkDb(internalOps(), 'https://localhost:3000', null, null);
-      assert.throws(() => { db.admin() });
     });
 
     it('should override auth token', async () => {

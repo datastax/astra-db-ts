@@ -17,6 +17,7 @@ import { AstraAdmin } from '@/src/devops';
 import { DEFAULT_DEVOPS_API_ENDPOINT } from '@/src/api';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { StaticTokenProvider } from '@/src/common';
+import { DataAPIClient } from '@/src/client';
 
 describe('unit.devops.admin', () => {
   const internalOps = (data?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({
@@ -40,9 +41,12 @@ describe('unit.devops.admin', () => {
       assert.ok(admin);
       assert.strictEqual(admin['_httpClient'].baseUrl, 'https://api.astra.datastax.com/v1');
     });
-  });
 
-  describe('mkAdmin tests', () => {
+    it('should throw on missing token', () => {
+      const client = new DataAPIClient();
+      assert.throws(() => client.admin(), { message: 'Token is nullish; did you forget to provide one?' });
+    });
+
     it('should allow admin construction using default options', () => {
       const admin = new AstraAdmin(internalOps({}, { endpointUrl: 'https://api.astra.datastax.com/v1' }), {});
       assert.ok(admin);
