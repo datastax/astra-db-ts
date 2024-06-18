@@ -23,28 +23,35 @@ import { TokenProvider } from '@/src/common';
 import { validateAdminOpts } from '@/src/devops/utils';
 
 /**
- * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
+ * An administrative class for managing Astra databases, including creating, listing, and deleting namespaces.
  *
- * **Shouldn't be instantiated directly; use {@link DataAPIClient.admin} to obtain an instance of this class.**
+ * **Shouldn't be instantiated directly; use {@link Db.admin} or {@link AstraDbAdmin.dbAdmin} to obtain an instance of this class.**
  *
- * To perform admin tasks on a per-database basis, see the {@link AstraDbAdmin} class.
+ * To manage databases as a whole, see {@link AstraAdmin}.
  *
  * @example
  * ```typescript
- * const client = new DataAPIClient('token');
+ * const client = new DataAPIClient('*TOKEN*');
  *
- * // Create an admin instance with the default token
- * const admin1 = client.admin();
+ * // Create an admin instance through a Db
+ * const db = client.db('*ENDPOINT*');
+ * const dbAdmin1 = db.admin();
+ * const dbAdmin2 = db.admin({ adminToken: 'stronger-token' });
  *
- * // Create an admin instance with a custom token
- * const admin2 = client.admin({ adminToken: 'stronger-token' });
+ * // Create an admin instance through an AstraAdmin
+ * const admin = client.admin();
+ * const dbAdmin3 = admin.dbAdmin('*ENDPOINT*');
+ * const dbAdmin4 = admin.dbAdmin('*DB_ID*', '*REGION*');
  *
- * const dbs = await admin1.listDatabases();
- * console.log(dbs);
+ * const namespaces = await admin1.listNamespaces();
+ * console.log(namespaces);
+ *
+ * const dbInfo = await admin1.info();
+ * console.log(dbInfo);
  * ```
  *
- * @see DataAPIClient.admin
- * @see AstraDbAdmin
+ * @see Db.admin
+ * @see AstraDbAdmin.dbAdmin
  *
  * @public
  */
@@ -96,7 +103,7 @@ export class AstraDbAdmin extends DbAdmin {
   }
 
   /**
-   * Gets the underlying `Db` object. The options for the db were set when the AstraDbAdmin instance, or whatever
+   * Gets the underlying `Db` object. The options for the db were set when the `AstraDbAdmin` instance, or whatever
    * spawned it, was created.
    *
    * @example

@@ -20,31 +20,37 @@ import { DbAdmin } from '@/src/devops/db-admin';
 import { WithTimeout } from '@/src/common/types';
 import { validateAdminOpts } from '@/src/devops/utils';
 import { CreateNamespaceOptions } from '@/src/devops/types/db-admin/create-namespace';
-import { isNullish } from '@/src/common';
 
 /**
- * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
+ * An administrative class for managing non-Astra databases, including creating, listing, and deleting namespaces.
  *
- * **Shouldn't be instantiated directly; use {@link DataAPIClient.admin} to obtain an instance of this class.**
+ * **Shouldn't be instantiated directly; use {@link Db.admin} to obtain an instance of this class.**
  *
- * To perform admin tasks on a per-database basis, see the {@link AstraDbAdmin} class.
+ * **Note that the `environment` parameter MUST match the one used in the `DataAPIClient` options.**
  *
  * @example
  * ```typescript
- * const client = new DataAPIClient('token');
+ * const client = new DataAPIClient('*TOKEN*');
  *
- * // Create an admin instance with the default token
- * const admin1 = client.admin();
+ * // Create an admin instance through a Db
+ * const db = client.db('*ENDPOINT*');
+ * const dbAdmin1 = db.admin({ environment: 'dse' );
+ * const dbAdmin2 = db.admin({ environment: 'dse', adminToken: 'stronger-token' });
  *
- * // Create an admin instance with a custom token
- * const admin2 = client.admin({ adminToken: 'stronger-token' });
+ * await admin1.createNamespace({
+ *   replication: {
+ *     class: 'NetworkTopologyStrategy',
+ *     datacenter1: 3,
+ *     datacenter2: 2,
+ *   },
+ * });
  *
- * const dbs = await admin1.listDatabases();
- * console.log(dbs);
+ * const namespaces = await admin1.listNamespaces();
+ * console.log(namespaces);
  * ```
  *
- * @see DataAPIClient.admin
- * @see AstraDbAdmin
+ * @see Db.admin
+ * @see AstraDbAdmin.dbAdmin
  *
  * @public
  */
@@ -53,7 +59,7 @@ export class DataAPIDbAdmin extends DbAdmin {
   private readonly _db!: Db;
 
   /**
-   * Use {@link Db.admin} or {@link AstraAdmin.dbAdmin} to obtain an instance of this class.
+   * Use {@link Db.admin} to obtain an instance of this class.
    *
    * @internal
    */
@@ -74,16 +80,7 @@ export class DataAPIDbAdmin extends DbAdmin {
   }
 
   /**
-   * Gets the ID of the Astra DB instance this object is managing.
-   *
-   * @returns The ID of the Astra DB instance.
-   */
-  public get id(): string {
-    return this._db.id;
-  }
-
-  /**
-   * Gets the underlying `Db` object. The options for the db were set when the AstraDbAdmin instance, or whatever
+   * Gets the underlying `Db` object. The options for the db were set when the `DataAPIDbAdmin` instance, or whatever
    * spawned it, was created.
    *
    * @example
@@ -94,7 +91,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    * });
    *
    * const db = dbAdmin.db();
-   * console.log(db.id);
+   * console.log(db.namespace);
    * ```
    *
    * @returns The underlying `Db` object.
@@ -127,71 +124,59 @@ export class DataAPIDbAdmin extends DbAdmin {
   /**
    * Creates a new, additional, namespace (aka keyspace) for this database.
    *
-   * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
-   * default polling interval is 1 second. Expect it to take roughly 8-10 seconds to complete.
+   * **NB. The operation will always wait for the operation to complete, regardless of the {@link AdminBlockingOptions}. Expect it to take roughly 8-10 seconds.**
    *
    * @example
    * ```typescript
-   * await dbAdmin.createNamespace('my_other_keyspace1');
+   * await dbAdmin.createNamespace('my_namespace');
    *
-   * // ['default_keyspace', 'my_other_keyspace1']
-   * console.log(await dbAdmin.listNamespaces());
-   *
-   * await dbAdmin.createNamespace('my_other_keyspace2', {
-   *   blocking: false,
+   * await dbAdmin.createNamespace('my_namespace' {
+   *   replication: {
+   *     class: 'SimpleStrategy',
+   *     replicatonFactor: 3,
+   *   },
    * });
    *
-   * // Will not include 'my_other_keyspace2' until the operation completes
-   * console.log(await dbAdmin.listNamespaces());
+   * await dbAdmin.createNamespace('my_namespace' {
+   *   replication: {
+   *     class: 'NetworkTopologyStrategy',
+   *     datacenter1: 3,
+   *     datacenter1: 2,
+   *   },
+   * });
    * ```
    *
-   * @remarks
-   * Note that if you choose not to block, the created namespace will not be able to be used until the
-   * operation completes, which is up to the caller to determine.
-   *
    * @param namespace - The name of the new namespace.
-   * @param options - The options for the blocking behavior of the operation.
+   * @param options - The options for the timeout & replication behavior of the operation.
    *
    * @returns A promise that resolves when the operation completes.
    */
   public override async createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void> {
-    const namespaceOpts = {
-      class: options?.class ?? 'SimpleStrategy',
-      ...options?.class === 'SimpleStrategy' && { replication_factor: options.replicationFactor },
-      ...options?.class === 'NetworkTopologyStrategy' && options.datacenters,
-      ...isNullish(options?.class) && { replication_factor: 1 },
-    }
-    await this._httpClient.executeCommand({ createNamespace: { name: namespace, options: namespaceOpts } }, { maxTimeMS: options?.maxTimeMS });
+    const replication = options?.replication ?? {
+      class: 'SimpleStrategy',
+      replicationFactor: 1,
+    };
+    await this._httpClient.executeCommand({ createNamespace: { name: namespace, options: { replication } } }, { maxTimeMS: options?.maxTimeMS });
   }
 
   /**
    * Drops a namespace (aka keyspace) from this database.
    *
-   * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
-   * default polling interval is 1 second. Expect it to take roughly 8-10 seconds to complete.
+   * **NB. The operation will always wait for the operation to complete, regardless of the {@link AdminBlockingOptions}. Expect it to take roughly 8-10 seconds.**
    *
    * @example
    * ```typescript
-   * await dbAdmin.dropNamespace('my_other_keyspace1');
-   *
-   * // ['default_keyspace', 'my_other_keyspace2']
+   * // ['default_keyspace', 'my_other_keyspace']
    * console.log(await dbAdmin.listNamespaces());
    *
-   * await dbAdmin.dropNamespace('my_other_keyspace2', {
-   *   blocking: false,
-   * });
+   * await dbAdmin.dropNamespace('my_other_keyspace');
    *
-   * // Will still include 'my_other_keyspace2' until the operation completes
-   * // ['default_keyspace', 'my_other_keyspace2']
+   * // ['default_keyspace', 'my_other_keyspace']
    * console.log(await dbAdmin.listNamespaces());
    * ```
    *
-   * @remarks
-   * Note that if you choose not to block, the namespace will still be able to be used until the operation
-   * completes, which is up to the caller to determine.
-   *
    * @param namespace - The name of the namespace to drop.
-   * @param options - The options for the blocking behavior of the operation.
+   * @param options - The options for the timeout of the operation.
    *
    * @returns A promise that resolves when the operation completes.
    */
