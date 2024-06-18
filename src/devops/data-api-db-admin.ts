@@ -19,6 +19,8 @@ import { Db } from '@/src/data-api';
 import { DbAdmin } from '@/src/devops/db-admin';
 import { WithTimeout } from '@/src/common/types';
 import { validateAdminOpts } from '@/src/devops/utils';
+import { CreateNamespaceOptions } from '@/src/devops/types/db-admin/create-namespace';
+import { isNullish } from '@/src/common';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -152,8 +154,14 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async createNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void> {
-    await this._httpClient.executeCommand({ createNamespace: { name: namespace } }, { maxTimeMS: options?.maxTimeMS });
+  public override async createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void> {
+    const namespaceOpts = {
+      class: options?.class ?? 'SimpleStrategy',
+      ...options?.class === 'SimpleStrategy' && { replication_factor: options.replicationFactor },
+      ...options?.class === 'NetworkTopologyStrategy' && options.datacenters,
+      ...isNullish(options?.class) && { replication_factor: 1 },
+    }
+    await this._httpClient.executeCommand({ createNamespace: { name: namespace, options: namespaceOpts } }, { maxTimeMS: options?.maxTimeMS });
   }
 
   /**
