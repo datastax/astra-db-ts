@@ -636,10 +636,21 @@ describe('integration.data-api.cursor', () => {
       await cursor.hasNext();
       assert.deepStrictEqual(cursor['_sortVector'], [1, 1, 1, 1, 1]);
       assert.strictEqual(cursor['_options'].includeSortVector, false);
+      const oldSortVector = cursor['_sortVector'];
       assert.deepStrictEqual(await cursor.getSortVector(), [1, 1, 1, 1, 1]);
+      assert.strictEqual(oldSortVector, cursor['_sortVector']);
     });
 
-    it('should return sort vector on only getSortVector API call if includeSortVector: false', async () => {
+    it('getSortVector should populate buffer if called first w/ includeSortVector: true', async () => {
+      await collection.insertMany([{ $vector: [1, 1, 1, 1, 1] }, { $vector: [1, 1, 1, 1, 1] }, { $vector: [1, 1, 1, 1, 1] }]);
+      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).sort({ $vector: [1, 1, 1, 1, 1] }).includeSortVector();
+      assert.strictEqual(cursor['_sortVector'], undefined);
+      assert.strictEqual(cursor['_options'].includeSortVector, true);
+      assert.deepStrictEqual(await cursor.getSortVector(), [1, 1, 1, 1, 1]);
+      assert.strictEqual(cursor['_buffer'].length, 3);
+    });
+
+    it('should return null in getSortVector if includeSortVector: false', async () => {
       await collection.insertMany([{}, {}, {}]);
       const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).sort({ $vector: [1, 1, 1, 1, 1] });
       assert.strictEqual(cursor['_sortVector'], undefined);
@@ -647,18 +658,18 @@ describe('integration.data-api.cursor', () => {
       await cursor.hasNext();
       assert.deepStrictEqual(cursor['_sortVector'], undefined);
       assert.strictEqual(cursor['_options'].includeSortVector, false);
-      assert.deepStrictEqual(await cursor.getSortVector(), [1, 1, 1, 1, 1]);
-      assert.deepStrictEqual(cursor['_sortVector'], [1, 1, 1, 1, 1]);
+      assert.deepStrictEqual(await cursor.getSortVector(), null);
+      assert.deepStrictEqual(cursor['_sortVector'], undefined);
       assert.strictEqual(cursor['_options'].includeSortVector, false);
     });
 
-    it('should return null in getSortVector no sort vector', async () => {
+    it('should return null in getSortVector if no sort vector', async () => {
       await collection.insertMany([{}, {}, {}]);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {})
+      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).includeSortVector();
       assert.strictEqual(cursor['_sortVector'], undefined);
-      assert.strictEqual(cursor['_options'].includeSortVector, undefined);
+      assert.strictEqual(cursor['_options'].includeSortVector, true);
       await cursor.hasNext();
-      assert.deepStrictEqual(cursor['_sortVector'], undefined);
+      assert.deepStrictEqual(cursor['_sortVector'], null);
       assert.strictEqual(cursor['_options'].includeSortVector, false);
       assert.strictEqual(await cursor.getSortVector(), null);
       assert.strictEqual(cursor['_sortVector'], null);

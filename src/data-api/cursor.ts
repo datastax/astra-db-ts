@@ -95,7 +95,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this._namespace = namespace;
     this._httpClient = httpClient;
     this._filter = filter;
-    this._options = { ...options };
+    this._options = structuredClone(options ?? {});
 
     if (options?.sort) {
       this._options.sort = normalizeSort(options.sort);
@@ -255,9 +255,8 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Sets whether the sort vector should be fetched on the very first API call. Note that this is *not* a requirement
-   * to use {@link FindCursor.getSortVector}—it simply saves it an extra API call to fetch the sort vector. Set
-   * this to true if you're sure you're going to need the sort vector in the very near future.
+   * Sets whether the sort vector should be fetched on the very first API call. Note that this is a requirement
+   * to use {@link FindCursor.getSortVector}—it'll unconditionally return `null` if this is not set to `true`.
    *
    * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
    *
@@ -374,18 +373,33 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * Retrieves the vector used to perform the vector search, if applicable.
    *
-   * If `sort: { $vector }` was used, `getSortVector()` will simply regurgitate that same `$vector`.
+   * - If `includeSortVector` is not `true`, this will unconditionally return `null`. No find request will be made.
    *
-   * If `sort: { $vectorize }` was used, `getSortVector()` will return the `$vector` that was created from the text.
+   * - If `sort: { $vector }` was used, `getSortVector()` will simply regurgitate that same `$vector`.
    *
-   * If vector search is not used, `getSortVector()` will simply return `null`.
+   * - If `sort: { $vectorize }` was used, `getSortVector()` will return the `$vector` that was created from the text.
    *
-   * @returns The sort vector, or `null` if none was used.
+   * - If vector search is not used, `getSortVector()` will simply return `null`. A find request will still be made.
+   *
+   * If `includeSortVector` is `true`, and this function is called before any other cursor operation (such as
+   * `.next()` or `.toArray()`), it'll make an API request to fetch the sort vector, filling the cursor's buffer
+   * in the process.
+   *
+   * If the cursor has already been executed before this function has been called, no additional API request
+   * will be made to fetch the sort vector, as it has already been cached.
+   *
+   * But to reiterate, if `includeSortVector` is `false`, and this function is called, no API request is made, and
+   * the cursor's buffer is not populated; it simply returns `null`.
+   *
+   * @returns The sort vector, or `null` if none was used (or if `includeSortVector !== true`).
    */
   public async getSortVector(): Promise<number[] | null> {
     if (this._sortVector === undefined) {
-      this._options.includeSortVector = true;
-      await this._getMore(true);
+      if (this._options.includeSortVector) {
+        await this.hasNext();
+      } else {
+        return null;
+      }
     }
     return this._sortVector!;
   }
@@ -508,7 +522,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
       }
 
       try {
-        await this._getMore(false);
+        await this._getMore();
       } catch (err) {
         this.close();
         throw err;
@@ -518,7 +532,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     return null;
   }
 
-  private async _getMore(peek: boolean): Promise<void> {
+  private async _getMore(): Promise<void> {
     this._state = CursorStatus.Initialized;
 
     const options: InternalFindOptions = {};
@@ -555,12 +569,10 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
 
     const resp = await this._httpClient.executeCommand(command, {});
 
-    if (!peek) {
-      this._nextPageState = resp.data?.nextPageState || null;
-      this._buffer = resp.data!.documents as TRaw[];
-    }
+    this._nextPageState = resp.data?.nextPageState || null;
+    this._buffer = resp.data!.documents as TRaw[];
 
-    this._sortVector = resp.status?.sortVector;
+    this._sortVector ??= resp.status?.sortVector;
     this._options.includeSortVector = false;
   }
 }
