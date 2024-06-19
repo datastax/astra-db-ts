@@ -139,7 +139,7 @@ describe('integration.data-api.collection.insert-one', () => {
 
   it('should fail if an array field size is > 1000', async () => {
     const docToInsert = { tags: new Array(1001).fill('tag') };
-    await assert.rejects(() => collection.insertOne(docToInsert), DataAPIHttpError);
+    await assert.rejects(() => collection.insertOne(docToInsert), DataAPIResponseError);
   });
 
   it('should fail if a doc contains more than 1000 properties', async () => {
@@ -147,6 +147,6 @@ describe('integration.data-api.collection.insert-one', () => {
     for (let i = 1; i <= 1000; i++) {
       docToInsert[`prop${i}`] = `prop${i}value`;
     }
-    await assert.rejects(() => collection.insertOne(docToInsert), DataAPIHttpError);
+    await assert.rejects(() => collection.insertOne(docToInsert), DataAPIResponseError);
   });
 });
