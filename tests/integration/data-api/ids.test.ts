@@ -63,7 +63,7 @@ describe('integration.data-api.ids', () => {
 
     before(async function () {
       assertTestsEnabled(this, 'LONG');
-      collection = await db.createCollection(name, { defaultId: { type: 'uuid' } });
+      collection = await db.createCollection(name, { defaultId: { type: 'uuid' }, checkExists: false });
     });
 
     beforeEach(async function () {

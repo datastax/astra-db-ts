@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import { Collection, DataAPIResponseError, Db } from '@/src/data-api';
-import { DEFAULT_COLLECTION_NAME, initTestObjects, OTHER_NAMESPACE, TEST_ASTRA_URI } from '@/tests/fixtures';
+import { DEFAULT_COLLECTION_NAME, initTestObjects, OTHER_NAMESPACE, TEST_APPLICATION_URI } from '@/tests/fixtures';
 import { DataAPIHttpClient } from '@/src/api';
 import assert from 'assert';
 
@@ -60,7 +60,7 @@ describe('integration.api.data-api-http-client', () => {
 
     it('should error on invalid token', async function () {
       const [client] = await initTestObjects(this);
-      const httpClient = client.db(TEST_ASTRA_URI, { token: 'invalid-token' })['_httpClient'];
+      const httpClient = client.db(TEST_APPLICATION_URI, { token: 'invalid-token' })['_httpClient'];
 
       try {
         await httpClient.executeCommand({ findCollections: {} }, {});

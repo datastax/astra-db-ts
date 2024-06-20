@@ -15,13 +15,19 @@
 
 import { DataAPIClient } from '@/src/client';
 import { DEFAULT_NAMESPACE } from '@/src/api';
-import { DEFAULT_COLLECTION_NAME, initTestObjects, TEST_APPLICATION_TOKEN, TEST_ASTRA_URI } from '@/tests/fixtures';
+import {
+  DEFAULT_COLLECTION_NAME,
+  ENVIRONMENT,
+  initTestObjects,
+  TEST_APPLICATION_TOKEN,
+  TEST_APPLICATION_URI,
+} from '@/tests/fixtures';
 import assert from 'assert';
 import { Collection, ObjectId, UUID } from '@/src/data-api';
 
 describe('integration.misc.code-samples', () => {
   const token = TEST_APPLICATION_TOKEN;
-  const endpoint = TEST_ASTRA_URI;
+  const endpoint = TEST_APPLICATION_URI;
 
   let collection: Collection;
 
@@ -35,7 +41,7 @@ describe('integration.misc.code-samples', () => {
 
   describe('documents', () => {
     it('works for dates', async () => {
-      const client = new DataAPIClient(token);
+      const client = new DataAPIClient(token, { environment: ENVIRONMENT });
       const db = client.db(endpoint, { namespace: DEFAULT_NAMESPACE });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
@@ -65,7 +71,7 @@ describe('integration.misc.code-samples', () => {
     });
 
     it('works for document IDs', async () => {
-      const client = new DataAPIClient(token);
+      const client = new DataAPIClient(token, { environment: ENVIRONMENT });
       const db = client.db(endpoint, { namespace: DEFAULT_NAMESPACE });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
@@ -100,7 +106,7 @@ describe('integration.misc.code-samples', () => {
     });
 
     it('works for finding a document', async () => {
-      const client = new DataAPIClient(token);
+      const client = new DataAPIClient(token, { environment: ENVIRONMENT });
       const db = client.db(endpoint, { namespace: DEFAULT_NAMESPACE });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
@@ -139,7 +145,7 @@ describe('integration.misc.code-samples', () => {
     });
 
     it('works for finding documents', async () => {
-      const client = new DataAPIClient(token);
+      const client = new DataAPIClient(token, { environment: ENVIRONMENT });
       const db = client.db(endpoint, { namespace: DEFAULT_NAMESPACE });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
@@ -180,7 +186,7 @@ describe('integration.misc.code-samples', () => {
     });
 
     it('works for example sort operations', async () => {
-      const client = new DataAPIClient(token);
+      const client = new DataAPIClient(token, { environment: ENVIRONMENT });
       const db = client.db(endpoint, { namespace: DEFAULT_NAMESPACE });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
@@ -203,7 +209,7 @@ describe('integration.misc.code-samples', () => {
     });
 
     it('works for finding & updating a document', async () => {
-      const client = new DataAPIClient(token);
+      const client = new DataAPIClient(token, { environment: ENVIRONMENT });
       const db = client.db(endpoint, { namespace: DEFAULT_NAMESPACE });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
@@ -252,7 +258,7 @@ describe('integration.misc.code-samples', () => {
     });
 
     it('works for updating a document', async () => {
-      const client = new DataAPIClient(token);
+      const client = new DataAPIClient(token, { environment: ENVIRONMENT });
       const db = client.db(endpoint, { namespace: DEFAULT_NAMESPACE });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 

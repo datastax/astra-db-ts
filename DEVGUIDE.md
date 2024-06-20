@@ -24,6 +24,17 @@ npm run test -- -f 'integration.'
 npm run test:types
 ```
 
+### Running the tests on local Stargate
+You can do `sh scripts/start-stargate-4-tests.sh` to spin up an ephemeral Data API on DSE instance which automatically
+creates the required keyspaces and destroys itself on exit.
+
+Then, be sure to set the following vars in `.env` exactly, then run the tests as usual.
+```dotenv
+APPLICATION_URI=http://localhost:8181
+APPLICATION_TOKEN=Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh
+APPLICATION_ENVIRONMENT=dse
+```
+
 ### Running tagged tests
 Tests can be given certain tags to allow for more granular control over which tests are run. These tags currently include:
 - `[long]`/`'LONG'`: Longer running tests that take more than a few seconds to run

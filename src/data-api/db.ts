@@ -548,8 +548,8 @@ export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, reg
 
   validateDbOpts(dbOpts);
 
-  if (typeof regionOrOptions === 'string' && endpointOrId.startsWith('https://')) {
-    throw new Error('Unexpected db() argument: database id can\'t start with "https://". Did you mean to call `.db(endpoint, { namespace })`?');
+  if (typeof regionOrOptions === 'string' && (endpointOrId.startsWith('https://') || endpointOrId.startsWith('http://'))) {
+    throw new Error('Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { namespace })`?');
   }
  
   const endpoint = (typeof regionOrOptions === 'string')

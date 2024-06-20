@@ -19,7 +19,7 @@ import { FetcherResponseInfo } from '@/src/api';
 import { FetchH2 } from '@/src/api/fetch/fetch-h2';
 import { FetcherRequestInfo } from '@/src/api/fetch/types';
 import { DataAPIEnvironments, DSEUsernamePasswordTokenProvider } from '@/src/common';
-import { TEST_ASTRA_URI } from '@/tests/fixtures';
+import { TEST_APPLICATION_URI } from '@/tests/fixtures';
 
 describe('unit.client.data-api-client', () => {
   it('should accept valid tokens', () => {
@@ -128,35 +128,35 @@ describe('unit.client.data-api-client', () => {
   describe('using fetch-h2', () => {
     it('uses http2 by default', function () {
       const client = new DataAPIClient('dummy-token', { httpOptions: {} });
-      const httpClient = client.db(TEST_ASTRA_URI)['_httpClient'];
+      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
       assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
       assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
     });
 
     it('uses http2 when forced', function () {
       const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'default', preferHttp2: true } });
-      const httpClient = client.db(TEST_ASTRA_URI)['_httpClient'];
+      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
       assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
       assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
     });
 
     it('uses http1.1 when forced', () => {
       const client = new DataAPIClient('dummy-token', { httpOptions: { preferHttp2: false } });
-      const httpClient = client.db(TEST_ASTRA_URI)['_httpClient'];
+      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
       assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
       assert.ok(httpClient.fetchCtx.ctx['_http1'] === httpClient.fetchCtx.ctx['_preferred']);
     });
 
     it('uses http2 when forced (deprecated version)', function () {
       const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'default' }, preferHttp2: true });
-      const httpClient = client.db(TEST_ASTRA_URI)['_httpClient'];
+      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
       assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
       assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
     });
 
     it('uses http1.1 when forced (deprecated version)', () => {
       const client = new DataAPIClient('dummy-token', { preferHttp2: false });
-      const httpClient = client.db(TEST_ASTRA_URI)['_httpClient'];
+      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
       assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
       assert.ok(httpClient.fetchCtx.ctx['_http1'] === httpClient.fetchCtx.ctx['_preferred']);
     });
@@ -177,7 +177,7 @@ describe('unit.client.data-api-client', () => {
         },
       });
 
-      const httpClient = client.db(TEST_ASTRA_URI)['_httpClient'];
+      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
       assert.ok(httpClient.fetchCtx.ctx instanceof CustomFetcher);
     });
 

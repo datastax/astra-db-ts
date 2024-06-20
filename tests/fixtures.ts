@@ -20,6 +20,7 @@
 import { Collection, Db } from '@/src/data-api';
 import { DataAPIClient } from '@/src/client';
 import { Context } from 'mocha';
+import { DataAPIEnvironment } from '@/src/common';
 
 export const DEFAULT_COLLECTION_NAME = 'test_coll';
 export const EPHEMERAL_COLLECTION_NAME = 'temp_coll';
@@ -31,16 +32,18 @@ let collsSetup = false;
 export const USE_HTTP2 = !process.env.ASTRA_USE_HTTP1;
 export const HTTP_CLIENT_TYPE = process.env.ASTRA_USE_FETCH ? 'fetch' : undefined;
 
-if (!process.env.ASTRA_URI || !process.env.APPLICATION_TOKEN) {
-  throw new Error('Please ensure the ASTRA_URI and APPLICATION_TOKEN env vars are set')
+if (!process.env.APPLICATION_URI || !process.env.APPLICATION_TOKEN) {
+  throw new Error('Please ensure the APPLICATION_URI and APPLICATION_TOKEN env vars are set')
 }
 
 export const TEST_APPLICATION_TOKEN = process.env.APPLICATION_TOKEN;
-export const TEST_ASTRA_URI = process.env.ASTRA_URI;
+export const TEST_APPLICATION_URI = process.env.APPLICATION_URI;
+export const DEMO_APPLICATION_URI = 'https://12341234-1234-1234-1234-123412341234-us-west-2.apps.astra-dev.datastax.com';
+export const ENVIRONMENT = (process.env.APPLICATION_ENVIRONMENT ?? 'astra') as DataAPIEnvironment;
 
 export const initTestObjects = async (ctx: Context, preferHttp2 = USE_HTTP2, clientType: typeof HTTP_CLIENT_TYPE = HTTP_CLIENT_TYPE): Promise<[DataAPIClient, Db, Collection]> => {
-  const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { httpOptions: { preferHttp2, client: clientType } });
-  const db = client.db(TEST_ASTRA_URI);
+  const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { httpOptions: { preferHttp2, client: clientType }, environment: ENVIRONMENT });
+  const db = client.db(TEST_APPLICATION_URI);
 
   if (!collsSetup) {
     await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
@@ -132,7 +135,7 @@ export const sampleUsersList = [
   createSampleDoc3WithMultiLevel(),
 ];
 
-export const assertTestsEnabled = (ctx: Context, ...filters: ('VECTORIZE' | 'LONG' | 'ADMIN' | 'DEV' | 'PROD')[]) => {
+export const assertTestsEnabled = (ctx: Context, ...filters: ('VECTORIZE' | 'LONG' | 'ADMIN' | 'DEV' | 'PROD' | 'ASTRA')[]) => {
   if (filters.includes('VECTORIZE') && !process.env.ASTRA_RUN_VECTORIZE_TESTS) {
     ctx.skip();
   }
@@ -145,11 +148,15 @@ export const assertTestsEnabled = (ctx: Context, ...filters: ('VECTORIZE' | 'LON
     ctx.skip();
   }
 
-  if (filters.includes('DEV') && !(process.env.ASTRA_URI as string).includes('apps.astra-dev.datastax.com')) {
+  if (filters.includes('DEV') && !TEST_APPLICATION_URI.includes('apps.astra-dev.datastax.com')) {
     ctx.skip();
   }
 
-  if (filters.includes('PROD') && !(process.env.ASTRA_URI as string).includes('apps.astra.datastax.com')) {
+  if (filters.includes('PROD') && !TEST_APPLICATION_URI.includes('apps.astra.datastax.com')) {
+    ctx.skip();
+  }
+
+  if (filters.includes('ASTRA') && !TEST_APPLICATION_URI.includes('datastax.com')) {
     ctx.skip();
   }
 }

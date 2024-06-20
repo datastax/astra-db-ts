@@ -13,24 +13,29 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { assertTestsEnabled, DEFAULT_COLLECTION_NAME, initTestObjects, TEST_ASTRA_URI } from '@/tests/fixtures';
+import { assertTestsEnabled, DEFAULT_COLLECTION_NAME, initTestObjects, TEST_APPLICATION_URI } from '@/tests/fixtures';
 import { DataAPIClient } from '@/src/client';
 import { Collection, Db } from '@/src/data-api';
 import assert from 'assert';
 
-describe('integration.misc.hierarchy-traversal', () => {
+describe('[astra] integration.misc.hierarchy-traversal', () => {
   let client: DataAPIClient;
   let db: Db;
   let collection: Collection;
 
-  const endpoint = TEST_ASTRA_URI;
-
-  const idAndRegion = endpoint.split('.')[0].split('https://')[1].split('-');
-  const id = idAndRegion.slice(0, 5).join('-');
-  const region = idAndRegion.slice(5).join('-');
+  const endpoint = TEST_APPLICATION_URI;
+  let id: string
+  let region: string;
 
   before(async function () {
+    assertTestsEnabled(this, 'ASTRA');
+
     [client, db, collection] = await initTestObjects(this);
+
+    const idAndRegion = endpoint.split('.')[0].split('https://')[1].split('-');
+
+    id = idAndRegion.slice(0, 5).join('-');
+    region = idAndRegion.slice(5).join('-');
   });
 
   beforeEach(async function () {
