@@ -89,8 +89,11 @@ const initVectorTests = async () => {
     .then(r => r.json())
     .then(r => r.status['embeddingProviders']);
 
+  const whitelist = RegExp(process.env.VECTORIZE_WHITELIST ?? '.*');
+
   return Object.entries<any>(embeddingProviders)
     .flatMap(branchOnModel(spec))
+    .filter(t => whitelist.test(t.testName));
 };
 
 interface ModelBranch {
@@ -178,14 +181,14 @@ const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: any) => (
       throw new Error(`No matching "dimension" parameter found in spec for ${test.testName}}`);
     }
 
-    return [{ ...test, dimension: spec.dimension[matchingDim] }];
+    return [{ ...test, dimension: spec.dimension[matchingDim], testName: `${test.testName}/specified` }];
   }
 
   if (vectorDimParam && defaultDim) {
-    return [test, { ...test, dimension: defaultDim, testName: `${test.testName}/${defaultDim}` }];
+    return [{ ...test, testName: `${test.testName}/default` }, { ...test, dimension: defaultDim, testName: `${test.testName}/${defaultDim}` }];
   }
 
-  return [test];
+  return [{ ...test, testName: `${test.testName}/default` }];
 }
 
 type VectorizeTest = DimensionBranch;
