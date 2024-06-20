@@ -135,7 +135,7 @@ export const sampleUsersList = [
   createSampleDoc3WithMultiLevel(),
 ];
 
-export const assertTestsEnabled = (ctx: Context, ...filters: ('VECTORIZE' | 'LONG' | 'ADMIN' | 'DEV' | 'PROD' | 'ASTRA')[]) => {
+export const assertTestsEnabled = (ctx: Context, ...filters: ('VECTORIZE' | 'LONG' | 'ADMIN' | 'DEV' | 'NOT-DEV' | 'ASTRA')[]) => {
   if (filters.includes('VECTORIZE') && !process.env.ASTRA_RUN_VECTORIZE_TESTS) {
     ctx.skip();
   }
@@ -152,7 +152,7 @@ export const assertTestsEnabled = (ctx: Context, ...filters: ('VECTORIZE' | 'LON
     ctx.skip();
   }
 
-  if (filters.includes('PROD') && !TEST_APPLICATION_URI.includes('apps.astra.datastax.com')) {
+  if (filters.includes('NOT-DEV') && TEST_APPLICATION_URI.includes('apps.astra-dev.datastax.com')) {
     ctx.skip();
   }
 

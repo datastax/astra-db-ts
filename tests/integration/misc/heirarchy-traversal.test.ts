@@ -70,9 +70,9 @@ describe('[astra] integration.misc.hierarchy-traversal', () => {
     });
   });
 
-  describe('[prod] client->admin->dbAdmin <-> client->db->admin', () => {
+  describe('[not-dev] client->admin->dbAdmin <-> client->db->admin', () => {
     before(function () {
-      assertTestsEnabled(this, 'PROD')
+      assertTestsEnabled(this, 'NOT-DEV')
     });
 
     it('is essentially a noop', () => {
@@ -110,9 +110,9 @@ describe('[astra] integration.misc.hierarchy-traversal', () => {
     });
   });
 
-  describe('[prod] client->admin->dbAdmin->db <-> client->db->admin->db', () => {
+  describe('[not-dev] client->admin->dbAdmin->db <-> client->db->admin->db', () => {
     before(function () {
-      assertTestsEnabled(this, 'PROD')
+      assertTestsEnabled(this, 'NOT-DEV')
     });
 
     it('is essentially a noop', async () => {

@@ -97,9 +97,9 @@ describe('integration.misc.quickstart', () => {
     });
   });
 
-  describe('[prod] [astra] admin-quickstart', () => {
+  describe('[not-dev] [astra] admin-quickstart', () => {
     before(function () {
-      assertTestsEnabled(this, 'PROD', 'ASTRA');
+      assertTestsEnabled(this, 'NOT-DEV', 'ASTRA');
     });
 
     it('works', async () => {

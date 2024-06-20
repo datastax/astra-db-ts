@@ -40,7 +40,7 @@ Tests can be given certain tags to allow for more granular control over which te
 - `[long]`/`'LONG'`: Longer running tests that take more than a few seconds to run
 - `[admin]`/`'ADMIN'`: Tests that require admin permissions to run
 - `[dev]`/`'DEV'`: Tests that require the dev environment to run
-- `[prod]`/`'PROD'`: Tests that require the dev environment to run
+- `[not-dev]`/`'NOT-DEV'`: Tests that require the dev environment to run
 - `[vectorize]`/`'VECTORIZE'`: Tests that require a specific vectorize-enabled kube to run
 
 To enable these some of these tags, you can set the corresponding environment variables to some values. The env 

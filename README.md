@@ -41,7 +41,7 @@ const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
     const collection = await db.createCollection<Idea>('vector_5_collection', {
       vector: {
         dimension: 5,
-        metric: 'cosine'
+        metric: 'cosine',
       },
       checkExists: false,
     });
