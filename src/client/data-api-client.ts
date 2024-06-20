@@ -31,7 +31,7 @@ import { FetchNative } from '@/src/api/fetch/fetch-native';
 import { LIB_NAME } from '@/src/version';
 import { Fetcher } from '@/src/api/fetch/types';
 import { DbSpawnOptions } from '@/src/data-api';
-import { nullish, TokenProvider, validateDataAPIEnv } from '@/src/common';
+import { isNullish, nullish, TokenProvider, validateDataAPIEnv } from '@/src/common';
 import { validateAdminOpts } from '@/src/devops/utils';
 
 /**
@@ -368,7 +368,7 @@ function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
   };
 }
 
-function tryLoadFetchH2(clientType: string | undefined, options: DataAPIClientOptions | undefined): Fetcher {
+function tryLoadFetchH2(clientType: string | nullish, options: DataAPIClientOptions | undefined): Fetcher {
   try {
     const httpOptions = options?.httpOptions as DefaultHttpClientOptions | undefined;
 
@@ -378,7 +378,7 @@ function tryLoadFetchH2(clientType: string | undefined, options: DataAPIClientOp
 
     return new FetchH2(httpOptions, preferHttp2);
   } catch (e) {
-    if (clientType === undefined) {
+    if (isNullish(clientType)) {
       return new FetchNative();
     } else {
       throw e;
@@ -421,7 +421,7 @@ function validateHttpOpts(opts: DataAPIHttpOptions | undefined | null) {
   });
   validateOption('httpOptions.maxTimeMS', opts.maxTimeMS, 'number');
 
-  if (opts.client === 'default' || opts.client === undefined) {
+  if (opts.client === 'default' || isNullish(opts.client)) {
     validateOption('httpOptions.preferHttp2', opts.preferHttp2, 'boolean');
 
     validateOption('httpOptions.http1 options', opts.http1, 'object', false, (http1) => {

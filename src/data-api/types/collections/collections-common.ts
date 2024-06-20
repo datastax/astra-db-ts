@@ -64,6 +64,8 @@ export interface VectorOptions {
  * @field model - The specific model to use for embedding, or undefined if it's an endpoint-defined model
  * @field authentication - Object containing any necessary collection-bound authentication, if any
  * @field parameters - Object allowing arbitrary parameters that may be necessary on a per-model basis
+ *
+ * @public
  */
 export interface VectorizeServiceOptions {
   /**

@@ -16,7 +16,6 @@
 import { Collection, DataAPIResponseError, ObjectId, UUID } from '@/src/data-api';
 import { initTestObjects } from '@/tests/fixtures';
 import assert from 'assert';
-import { DataAPIHttpError } from '@/src/data-api/errors';
 
 describe('integration.data-api.collection.insert-one', () => {
   let collection: Collection;

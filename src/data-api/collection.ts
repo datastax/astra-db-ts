@@ -932,7 +932,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         filter,
         options: {
           includeSimilarity: options?.includeSimilarity,
-        }
+        },
       },
     };
 
@@ -1271,7 +1271,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * const result = await collection.findOneAndUpdate(
    *   { _id: '1' },
    *   { $set: { name: 'Jane Doe' } },
-   *   { returnDocument: 'after', includeResultMetadata: true }
+   *   { returnDocument: 'after', includeResultMetadata: true },
    * );
    *
    * // Prints { _id: '1', name: 'Jane Doe' }
@@ -1315,7 +1315,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * const doc = await collection.findOneAndUpdate(
    *   { _id: '1' },
    *   { $set: { name: 'Jane Doe' } },
-   *   { returnDocument: 'after'}
+   *   { returnDocument: 'after'},
    * );
    *
    * // Prints { _id: '1', name: 'Jane Doe' }
@@ -1489,7 +1489,7 @@ interface OptionsWithSort {
   vectorize?: string;
 }
 
-const coalesceVectorSpecialsIntoSort = <T extends OptionsWithSort | undefined>(options: T): T => {
+const coalesceVectorSpecialsIntoSort = <T extends OptionsWithSort>(options: T | undefined): T | undefined => {
   if (options?.vector && options.vectorize) {
     throw new Error('Cannot set both vectors and vectorize options');
   }
@@ -1714,7 +1714,6 @@ const pullSafeProjection4Distinct = (path: string): string => {
   for (i = 0, n = split.length; i < n && isNaN(+split[i]); i++) { /* empty */ }
 
   split.length = i;
-
   return split.join('.');
 }
 

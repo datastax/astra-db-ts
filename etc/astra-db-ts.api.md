@@ -299,6 +299,11 @@ export type CreateDatabaseOptions = AdminBlockingOptions & {
 };
 
 // @public
+export type CreateNamespaceOptions = AdminBlockingOptions & {
+    replication?: NamespaceReplicationOptions;
+};
+
+// @public
 export abstract class CumulativeDataAPIError extends DataAPIResponseError {
     readonly partialResult: unknown;
 }
@@ -365,10 +370,9 @@ export type DataAPICommandEvents = {
 export class DataAPIDbAdmin extends DbAdmin {
     // @internal
     constructor(db: Db, httpClient: DataAPIHttpClient, adminOpts?: AdminSpawnOptions);
-    createNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
+    createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void>;
     db(): Db;
     dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
-    get id(): string;
     listNamespaces(options?: WithTimeout): Promise<string[]>;
 }
 
@@ -948,6 +952,15 @@ export interface ModifyResult<Schema extends SomeDoc> {
 }
 
 // @public
+export type NamespaceReplicationOptions = {
+    class: 'SimpleStrategy';
+    replicationFactor: number;
+} | {
+    class: 'NetworkTopologyStrategy';
+    [datacenter: string]: number | 'NetworkTopologyStrategy';
+};
+
+// @public
 export interface NoBlockingOptions extends WithTimeout {
     blocking: false;
 }
@@ -1272,10 +1285,10 @@ export interface VectorizeDoc {
     $vectorize: string;
 }
 
-// @alpha
+// @public
 export interface VectorizeServiceOptions {
     authentication?: Record<string, string | undefined>;
-    modelName?: string;
+    modelName: string | nullish;
     parameters?: Record<string, unknown>;
     provider: string;
 }

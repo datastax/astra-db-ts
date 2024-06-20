@@ -55,6 +55,8 @@ export type CreateNamespaceOptions = AdminBlockingOptions & { replication?: Name
  * ```
  *
  * See the [datastax docs](https://docs.datastax.com/en/cassandra-oss/3.0/cassandra/architecture/archDataDistributeReplication.html) for more info.
+ *
+ * @public
  */
 export type NamespaceReplicationOptions = {
   class: 'SimpleStrategy',
