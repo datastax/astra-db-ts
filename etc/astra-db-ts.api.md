@@ -177,6 +177,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult<Schema>>;
     readonly collectionName: string;
     countDocuments(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number>;
+    // @deprecated
     deleteAll(options?: WithTimeout): Promise<void>;
     deleteMany(filter?: Filter<Schema>, options?: WithTimeout): Promise<DeleteManyResult>;
     deleteOne(filter?: Filter<Schema>, options?: DeleteOneOptions): Promise<DeleteOneResult>;
@@ -641,12 +642,6 @@ export interface DropCollectionOptions extends WithTimeout, WithNamespace {
 }
 
 // @public
-export class UsernamePasswordTokenProvider extends TokenProvider {
-    constructor(username: string, password: string);
-    getTokenAsString(): Promise<string>;
-}
-
-// @public
 export class FailedToLoadDefaultClientError extends Error {
     // @internal
     constructor(rootCause: Error);
@@ -1080,8 +1075,8 @@ export type SortDirection = 1 | -1 | 'asc' | 'desc' | 'ascending' | 'descending'
 
 // @public
 export class StaticTokenProvider extends TokenProvider {
-    constructor(token: string);
-    getTokenAsString(): Promise<string>;
+    constructor(token: string | nullish);
+    getToken(): Promise<string | nullish>;
 }
 
 // @public
@@ -1173,11 +1168,9 @@ export type ToDotNotation<Schema extends SomeDoc> = Merge<_ToDotNotation<Schema,
 
 // @public
 export abstract class TokenProvider {
-    abstract getTokenAsString(): Promise<string>;
+    abstract getToken(): Promise<string | nullish>;
     // @internal
-    static parseToken(token: unknown, require: true): TokenProvider;
-    // @internal
-    static parseToken(token: unknown, require?: false): TokenProvider | nullish;
+    static parseToken(token: unknown): TokenProvider;
 }
 
 // @public
@@ -1258,6 +1251,12 @@ export type UpdateOneResult<Schema extends SomeDoc> = InternalUpdateResult<Schem
 export interface UpsertedUpdateOptions<Schema extends SomeDoc> {
     upsertedCount: 1;
     upsertedId: IdOf<Schema>;
+}
+
+// @public
+export class UsernamePasswordTokenProvider extends TokenProvider {
+    constructor(username: string, password: string);
+    getToken(): Promise<string>;
 }
 
 // @public

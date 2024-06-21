@@ -18,7 +18,7 @@ import { FetchCtx } from '@/src/api';
 import { Fetcher } from '@/src/api/fetch/types';
 import { AdminSpawnOptions } from '@/src/devops';
 import { DbSpawnOptions } from '@/src/data-api';
-import { DataAPIEnvironment, nullish, TokenProvider } from '@/src/common';
+import { DataAPIEnvironment, TokenProvider } from '@/src/common';
 
 /**
  * The caller information to send with requests, of the form `[name, version?]`, or an array of such.

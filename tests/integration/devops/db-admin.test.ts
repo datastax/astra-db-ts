@@ -27,7 +27,9 @@ describe('integration.devops.db-admin', () => {
   it('[long] [not-dev] works', async function () {
     assertTestsEnabled(this, 'LONG', 'NOT-DEV');
 
-    const dbAdmin = db.admin({ environment: ENVIRONMENT });
+    const dbAdmin = (ENVIRONMENT === 'astra')
+      ? db.admin({ environment: ENVIRONMENT })
+      : db.admin({ environment: ENVIRONMENT });
 
     const namespaces1 = await dbAdmin.listNamespaces();
     assert.ok(!namespaces1.includes('slania'));

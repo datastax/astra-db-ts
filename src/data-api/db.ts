@@ -223,8 +223,6 @@ export class Db {
    */
   public admin(options: AdminSpawnOptions & { environment: Exclude<DataAPIEnvironment, 'astra'> }): DataAPIDbAdmin
 
-  public admin(options?: AdminSpawnOptions & { environment?: DataAPIEnvironment }): DbAdmin
-
   public admin(options?: AdminSpawnOptions & { environment?: DataAPIEnvironment }): DbAdmin {
     const environment = options?.environment ?? 'astra';
 
