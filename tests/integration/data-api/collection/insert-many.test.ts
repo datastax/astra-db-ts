@@ -25,7 +25,7 @@ describe('integration.data-api.collection.insert-many', () => {
   });
 
   beforeEach(async () => {
-    await collection.deleteAll();
+    await collection.deleteMany({});
   });
 
   it('should insertMany documents', async () => {

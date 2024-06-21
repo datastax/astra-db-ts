@@ -25,7 +25,7 @@ describe('integration.data-api.collection.replace-one', () => {
   });
 
   beforeEach(async () => {
-    await collection.deleteAll();
+    await collection.deleteMany({});
   });
 
   it('should replaceOne', async () => {

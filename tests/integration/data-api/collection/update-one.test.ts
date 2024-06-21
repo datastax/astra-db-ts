@@ -24,7 +24,7 @@ describe('integration.data-api.collection.update-one', () => {
   });
 
   beforeEach(async () => {
-    await collection.deleteAll();
+    await collection.deleteMany({});
   });
 
   it('should updateOne document by id', async () => {
@@ -120,7 +120,7 @@ describe('integration.data-api.collection.update-one', () => {
   });
 
   it('should not overwrite user-specified _id in $setOnInsert', async () => {
-    await collection.deleteAll();
+    await collection.deleteMany({});
     const updateOneResp = await collection.updateOne(
       {},
       {

@@ -25,7 +25,7 @@ describe('integration.data-api.collection.delete-many', () => {
   });
 
   beforeEach(async () => {
-    await collection.deleteAll();
+    await collection.deleteMany({});
   });
 
   it('should deleteMany when match is <= 20', async () => {
@@ -47,11 +47,13 @@ describe('integration.data-api.collection.delete-many', () => {
     assert.strictEqual(deleteManyResp.deletedCount, 101);
   });
 
-  it('should throw an error when deleting with an empty filter', async () => {
-    await assert.rejects(
-      async () => collection.deleteMany({}),
-      /Can't pass an empty filter to deleteMany, use deleteAll instead if you really want to delete everything/
-    );
+  it('should deleteMany with an empty filter', async () => {
+    const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
+    const res = await collection.insertMany(docList);
+    assert.strictEqual(res.insertedCount, 20);
+    await collection.deleteMany({});
+    const numDocs = await collection.countDocuments({}, 1000);
+    assert.strictEqual(numDocs, 0);
   });
 
   it('fails gracefully on 2XX exceptions', async () => {

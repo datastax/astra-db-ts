@@ -39,7 +39,7 @@ describe('[astra] integration.misc.hierarchy-traversal', () => {
   });
 
   beforeEach(async function () {
-    await collection.deleteAll();
+    await collection.deleteMany({});
   });
 
   describe('db->admin->db', () => {

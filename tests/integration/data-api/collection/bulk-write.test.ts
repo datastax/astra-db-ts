@@ -25,7 +25,7 @@ describe('integration.data-api.collection.bulk-write', () => {
   });
 
   beforeEach(async () => {
-    await collection.deleteAll();
+    await collection.deleteMany({});
   });
 
   it('bulkWrites ordered', async () => {

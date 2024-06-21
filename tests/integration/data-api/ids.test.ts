@@ -37,7 +37,7 @@ describe('integration.data-api.ids', () => {
     });
 
     beforeEach(async function () {
-      await collection.deleteAll();
+      await collection.deleteMany({});
     });
 
     it('is set in listCollections', async () => {
@@ -67,7 +67,7 @@ describe('integration.data-api.ids', () => {
     });
 
     beforeEach(async function () {
-      await collection.deleteAll();
+      await collection.deleteMany({});
     });
 
     after(async function () {
@@ -103,7 +103,7 @@ describe('integration.data-api.ids', () => {
     });
 
     beforeEach(async function () {
-      await collection.deleteAll();
+      await collection.deleteMany({});
     });
 
     after(async function () {
@@ -139,7 +139,7 @@ describe('integration.data-api.ids', () => {
     });
 
     beforeEach(async function () {
-      await collection.deleteAll();
+      await collection.deleteMany({});
     });
 
     after(async function () {
@@ -175,7 +175,7 @@ describe('integration.data-api.ids', () => {
     });
 
     beforeEach(async function () {
-      await collection.deleteAll();
+      await collection.deleteMany({});
     });
 
     after(async function () {

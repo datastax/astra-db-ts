@@ -29,7 +29,7 @@ describe('integration.api.data-api-http-client', () => {
   });
 
   beforeEach(async function () {
-    await collection.deleteAll();
+    await collection.deleteMany({});
   });
 
   describe('executeCommand tests', () => {

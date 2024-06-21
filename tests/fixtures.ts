@@ -55,7 +55,7 @@ export const initTestObjects = async (ctx: Context, preferHttp2 = USE_HTTP2, cli
   }
 
   const collection = db.collection(DEFAULT_COLLECTION_NAME);
-  await collection.deleteAll();
+  await collection.deleteMany({});
 
   return [client, db, collection];
 };

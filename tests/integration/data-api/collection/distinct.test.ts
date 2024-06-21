@@ -24,7 +24,7 @@ describe('integration.data-api.collection.distinct', () => {
   });
 
   beforeEach(async () => {
-    await collection.deleteAll();
+    await collection.deleteMany({});
   });
 
   it('rejects invalid paths', async () => {

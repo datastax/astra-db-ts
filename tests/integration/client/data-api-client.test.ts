@@ -97,8 +97,8 @@ describe('integration.client.data-api-client', () => {
     });
 
     beforeEach(async () => {
-      await db.collection(DEFAULT_COLLECTION_NAME).deleteAll();
-      await db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE }).deleteAll();
+      await db.collection(DEFAULT_COLLECTION_NAME).deleteMany({});
+      await db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE }).deleteMany({});
     });
 
     it('should not emit any command events when not enabled', async () => {

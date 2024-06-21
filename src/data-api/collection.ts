@@ -658,10 +658,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    */
   public async deleteMany(filter: Filter<Schema> = {}, options?: WithTimeout): Promise<DeleteManyResult> {
-    if (Object.keys(filter).length === 0) {
-      throw new Error('Can\'t pass an empty filter to deleteMany, use deleteAll instead if you really want to delete everything');
-    }
-
     const command: DeleteManyCommand = {
       deleteMany: { filter },
     };
@@ -699,14 +695,12 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @param options - The options for this operation.
    *
+   * @deprecated - Prefer the traditional `deleteMany({})` instead
+   *
    * @returns A promise that resolves when the operation is complete.
    */
   public async deleteAll(options?: WithTimeout): Promise<void> {
-    const command: DeleteManyCommand = {
-      deleteMany: { filter: {} },
-    };
-
-    await this._httpClient.executeCommand(command, options);
+    await this.deleteMany({}, options);
   }
 
   /**

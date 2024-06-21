@@ -33,7 +33,7 @@ describe('integration.data-api.cursor', () => {
   });
 
   beforeEach(async function () {
-    await collection.deleteAll();
+    await collection.deleteMany({});
   });
 
   describe('Cursor initialization', () => {

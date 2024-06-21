@@ -36,7 +36,7 @@ describe('integration.misc.code-samples', () => {
   });
 
   beforeEach(async function () {
-    await collection.deleteAll();
+    await collection.deleteMany({});
   });
 
   describe('documents', () => {

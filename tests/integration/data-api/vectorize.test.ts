@@ -279,7 +279,7 @@ const createVectorizeParamTests = function (db: Db, test: VectorizeTest, name: s
     });
 
     beforeEach(async () => {
-      await collection.deleteAll();
+      await collection.deleteMany({});
     });
 
     it('should override $vectorize if both are set in insertOne', async () => {

@@ -24,7 +24,7 @@ describe('integration.data-api.collection.delete-one', () => {
   });
 
   beforeEach(async () => {
-    await collection.deleteAll();
+    await collection.deleteMany({});
   });
 
   it('should deleteOne document', async () => {
