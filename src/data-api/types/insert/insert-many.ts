@@ -31,6 +31,11 @@ export interface InsertManyCommand {
  *
  * The parameters depend on the `ordered` option. If `ordered` is `true`, the `parallel` option is not allowed.
  *
+ * @field ordered - If `true`, the docs are inserted sequentially; else, they're arbitrary inserted in parallel.
+ * @field concurrency - The maximum number of concurrent requests to make at once.
+ * @field chunkSize - The number of documents to upload per request. Defaults to 20.
+ * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
+ *
  * @see Collection.insertMany
  *
  * @public
@@ -44,7 +49,7 @@ export type InsertManyOptions =
  *
  * @field ordered - If `true`, the documents are inserted sequentially in the order provided.
  * @field chunkSize - The number of documents to upload per request. Defaults to 20.
- * @field vectors - A list of optional vectors to use for the documents, if using a vector-enabled collection.
+ * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
  *
  * @see Collection.insertMany
  *
@@ -84,7 +89,7 @@ export interface InsertManyOrderedOptions extends WithTimeout {
    */
   vectors?: (number[] | null | undefined)[],
   /**
-   * NOTE: This feature is under current development.
+   Akin to {@link InsertManyOrderedOptions.vectors}, but for `$vectorize`.
    *
    * @deprecated - Prefer to set the `$vectorize` fields in the docs directly
    */
@@ -97,7 +102,7 @@ export interface InsertManyOrderedOptions extends WithTimeout {
  * @field ordered - If `false` or unset, the documents are inserted in an arbitrary, parallelized order.
  * @field concurrency - The maximum number of concurrent requests to make at once.
  * @field chunkSize - The number of documents to upload per request. Defaults to 20.
- * @field vectors - A list of optional vectors to use for the documents, if using a vector-enabled collection.
+ * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
  *
  * @see Collection.insertMany
  *
@@ -141,7 +146,7 @@ export interface InsertManyUnorderedOptions extends WithTimeout {
    */
   vectors?: (number[] | null | undefined)[],
   /**
-   * NOTE: This feature is under current development.
+   * Akin to {@link InsertManyUnorderedOptions.vectors}, but for `$vectorize`.
    *
    * @deprecated - Prefer to set the `$vectorize` fields in the docs directly
    */

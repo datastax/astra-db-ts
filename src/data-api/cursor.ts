@@ -140,6 +140,8 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @param filter - A filter to select which documents to return.
    *
    * @returns The cursor.
+   *
+   * @see StrictFilter
    */
   public filter(filter: Filter<TRaw>): this {
     this._assertUninitialized();
@@ -158,6 +160,8 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @param sort - The sort order to prioritize which documents are returned.
    *
    * @returns The cursor.
+   *
+   * @see StrictSort
    */
   public sort(sort: Sort): this {
     this._assertUninitialized();
@@ -232,6 +236,8 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @param projection - Specifies which fields should be included/excluded in the returned documents.
    *
    * @returns The cursor.
+   *
+   * @see StrictProjection
    */
   public project<R = any, RRaw extends SomeDoc = SomeDoc>(projection: Projection): FindCursor<R, RRaw> {
     this._assertUninitialized();

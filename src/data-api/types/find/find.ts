@@ -18,7 +18,6 @@ import type { Projection, Sort } from '@/src/data-api/types';
  * Options for the `find` method.
  *
  * @field sort - The sort order to pick which document to return if the filter selects multiple documents.
- * @field vector - An optional vector to use for the appropriate dimensionality to perform an ANN vector search on the collection.
  * @field projection - Specifies which fields should be included/excluded in the returned documents.
  * @field limit - Max number of documents to return in the lifetime of the cursor.
  * @field skip - Number of documents to skip if using a sort.
@@ -39,25 +38,6 @@ export interface FindOptions {
    * @defaultValue null
    */
   sort?: Sort,
-  /**
-   * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
-   * to find the closest matching document.
-   *
-   * This is purely for the user's convenience and intuitiveness—it is equivalent to setting the `$vector` field in the
-   * sort field itself. The two are interchangeable, but mutually exclusive.
-   *
-   * If the sort field is already set, an error will be thrown. If you really need to use both, you can set the $vector
-   * field in the sort object directly.
-   *
-   * @deprecated - Prefer to use `sort: { $vector: [...] }` instead
-   */
-  vector?: number[],
-  /**
-   * NOTE: This feature is under current development.
-   *
-   * @deprecated - Prefer to use `sort: { $vectorize: '...' }` instead
-   */
-  vectorize?: string,
   /**
    * Specifies which fields should be included/excluded in the returned documents.
    *
@@ -154,6 +134,25 @@ export interface FindOptions {
    * ```
    */
   includeSortVector?: boolean;
+  /**
+   * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
+   * to find the closest matching document.
+   *
+   * This is purely for the user's convenience and intuitiveness—it is equivalent to setting the `$vector` field in the
+   * sort field itself. The two are interchangeable, but mutually exclusive.
+   *
+   * If the sort field is already set, an error will be thrown. If you really need to use both, you can set the $vector
+   * field in the sort object directly.
+   *
+   * @deprecated - Prefer to use `sort: { $vector: [...] }` instead
+   */
+  vector?: number[],
+  /**
+   * Akin to {@link FindOptions.vector}, but for `$vectorize`.
+   *
+   * @deprecated - Prefer to use `sort: { $vectorize: '...' }` instead
+   */
+  vectorize?: string,
 }
 
 /** @internal */

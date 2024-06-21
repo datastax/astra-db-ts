@@ -25,7 +25,7 @@ export interface InsertOneCommand {
 /**
  * Options for the insertOne command.
  *
- * @field vector - The vector to use for the document.
+ * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
  *
  * @see Collection.insertOne
  *
@@ -48,7 +48,7 @@ export interface InsertOneOptions extends WithTimeout {
    */
   vector?: number[],
   /**
-   * NOTE: This feature is under current development.
+   Akin to {@link InsertOneOptions.vector}, but for `$vectorize`.
    *
    * @deprecated - Prefer to set the `$vectorize` field in the doc directly
    */
