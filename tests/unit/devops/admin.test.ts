@@ -42,9 +42,9 @@ describe('unit.devops.admin', () => {
       assert.strictEqual(admin['_httpClient'].baseUrl, 'https://api.astra.datastax.com/v1');
     });
 
-    it('should throw on missing token', () => {
+    it('should not throw on missing token', () => {
       const client = new DataAPIClient();
-      assert.throws(() => client.admin(), { message: 'Token is nullish; did you forget to provide one?' });
+      assert.doesNotThrow(() => client.admin());
     });
 
     it('should allow admin construction using default options', () => {

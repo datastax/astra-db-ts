@@ -124,7 +124,7 @@ export class Db {
     const combinedDbOpts = {
       ...rootOpts.dbOptions,
       ...dbOpts,
-      token: TokenProvider.parseToken(dbOpts?.token ?? rootOpts.dbOptions.token, true),
+      token: TokenProvider.parseToken(dbOpts?.token ?? rootOpts.dbOptions.token),
     }
 
     Object.defineProperty(this, 'namespace', {

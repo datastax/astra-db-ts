@@ -71,7 +71,7 @@ export class AstraAdmin {
     const combinedAdminOpts = {
       ...rootOpts.adminOptions,
       ...adminOpts,
-      adminToken: TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken, true),
+      adminToken: TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken),
     };
 
     this.#defaultOpts = rootOpts;

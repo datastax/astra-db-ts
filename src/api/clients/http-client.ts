@@ -63,7 +63,8 @@ export abstract class HttpClient {
       ? `${info.url}?${new URLSearchParams(params).toString()}`
       : info.url;
 
-    const reqHeaders = this.mkReqHeaders(await this.applicationToken?.getTokenAsString());
+    const token = await this.applicationToken?.getToken();
+    const reqHeaders = this.mkReqHeaders(token ?? undefined);
     Object.assign(reqHeaders, this.baseHeaders);
 
     return await this.fetchCtx.ctx.fetch({

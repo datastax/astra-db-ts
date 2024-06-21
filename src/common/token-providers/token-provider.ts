@@ -18,7 +18,7 @@ import { isNullish, nullish, StaticTokenProvider } from '@/src/common';
  * The base class for some "token provider", a general concept for anything that provides some token to the client,
  * whether it be a static token, or if the token is dynamically fetched at runtime, or periodically refreshed.
  *
- * The {@link TokenProvider.getTokenAsString} function is called any time the token is required, whether it be
+ * The {@link TokenProvider.getToken} function is called any time the token is required, whether it be
  * for the Data API, or the DevOps API.
  *
  * `astra-db-ts` provides all the main token providers you may ever need to use, but you're able to extend this
@@ -43,17 +43,7 @@ export abstract class TokenProvider {
    * The function which provides the token. It may do any I/O as it wishes to obtain/refresh the token, as it's called
    * every time the token is required for use, whether it be for the Data API, or the DevOps API.
    */
-  abstract getTokenAsString(): Promise<string>;
-
-  /**
-   * Turns a string token into a {@link StaticTokenProvider} if necessary. Throws an error if
-   * it's not a string or a `TokenProvider` already.
-   *
-   * Not intended for external use.
-   *
-   * @internal
-   */
-  static parseToken(token: unknown, require: true): TokenProvider
+  abstract getToken(): Promise<string | nullish>;
 
   /**
    * Turns a string token into a {@link StaticTokenProvider} if necessary. Throws an error if
@@ -63,18 +53,9 @@ export abstract class TokenProvider {
    *
    * @internal
    */
-  static parseToken(token: unknown, require?: false): TokenProvider | nullish
-
-  static parseToken(token: unknown, require?: boolean): TokenProvider | nullish {
-    if (typeof token === 'string') {
+  static parseToken(token: unknown): TokenProvider {
+    if (typeof token === 'string' || isNullish(token)) {
       return new StaticTokenProvider(token);
-    }
-
-    if (isNullish(token)) {
-      if (require) {
-        throw new Error('Token is nullish; did you forget to provide one?')
-      }
-      return token;
     }
 
     if (token instanceof TokenProvider) {

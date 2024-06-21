@@ -52,6 +52,16 @@ describe('integration.data-api.collection.insert-many', () => {
     });
   });
 
+  it('should insertMany 0 documents', async () => {
+    const res = await collection.insertMany([]);
+    assert.deepStrictEqual(res, { insertedCount: 0, insertedIds: [] });
+  });
+
+  it('should insertMany 0 documents ordered', async () => {
+    const res = await collection.insertMany([], { ordered: true });
+    assert.deepStrictEqual(res, { insertedCount: 0, insertedIds: [] });
+  });
+
   it('should insertMany documents with ids', async () => {
     const docs = [{ name: 'Inis Mona', _id: 1 }, { name: 'Helvetios', _id: 2 }, { name: 'Epona', _id: 3 }];
     const res = await collection.insertMany(docs);

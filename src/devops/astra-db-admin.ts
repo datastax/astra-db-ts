@@ -72,7 +72,7 @@ export class AstraDbAdmin extends DbAdmin {
     const combinedAdminOps = {
       ...rootOpts.adminOptions,
       ...adminOpts,
-      adminToken: TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken, true),
+      adminToken: TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken),
     }
 
     Object.defineProperty(this, '_httpClient', {

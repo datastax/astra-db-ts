@@ -93,7 +93,10 @@ const initVectorTests = async () => {
 
   return Object.entries<any>(embeddingProviders)
     .flatMap(branchOnModel(spec))
-    .filter(t => whitelist.test(t.testName));
+    .filter(t => {
+      console.log(t.testName);
+      return whitelist.test(t.testName);
+    });
 };
 
 interface ModelBranch {
@@ -113,7 +116,7 @@ const branchOnModel = (fullSpec: VectorizeTestSpec) => ([providerName, providerI
   const modelBranches = (<any[]>providerInfo['models']).map((model) => ({
     providerName: providerName,
     modelName: model.name,
-    testName: `${providerName}/${model.name}`,
+    testName: `${providerName}@${model.name}`,
   }));
 
   return modelBranches.flatMap(addParameters(spec, providerInfo));
@@ -150,15 +153,15 @@ const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: any) => (te
   const tests: AuthBranch[] = []
 
   if (auth['HEADER'].enabled && spec.apiKey) {
-    tests.push({ ...test, authType: 'header', header: spec.apiKey, testName: `${test.testName}/header` });
+    tests.push({ ...test, authType: 'header', header: spec.apiKey, testName: `${test.testName}@header` });
   }
 
   if (auth['SHARED_SECRET'].enabled && spec.providerKey) {
-    tests.push({ ...test, authType: 'providerKey', providerKey: spec.providerKey, testName: `${test.testName}/providerKey` });
+    tests.push({ ...test, authType: 'providerKey', providerKey: spec.providerKey, testName: `${test.testName}@providerKey` });
   }
 
   if (auth['NONE'].enabled) {
-    tests.push({ ...test, authType: 'none', testName: `${test.testName}/none` });
+    tests.push({ ...test, authType: 'none', testName: `${test.testName}@none` });
   }
 
   const modelInfo = (<any>providerInfo)['models'].find((m: any) => m.name === test.modelName);
@@ -181,14 +184,14 @@ const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: any) => (
       throw new Error(`No matching "dimension" parameter found in spec for ${test.testName}}`);
     }
 
-    return [{ ...test, dimension: spec.dimension[matchingDim], testName: `${test.testName}/specified` }];
+    return [{ ...test, dimension: spec.dimension[matchingDim], testName: `${test.testName}@default` }];
   }
 
   if (vectorDimParam && defaultDim) {
-    return [{ ...test, testName: `${test.testName}/default` }, { ...test, dimension: defaultDim, testName: `${test.testName}/${defaultDim}` }];
+    return [{ ...test, testName: `${test.testName}@default` }, { ...test, dimension: defaultDim, testName: `${test.testName}/${defaultDim}` }];
   }
 
-  return [{ ...test, testName: `${test.testName}/default` }];
+  return [{ ...test, testName: `${test.testName}@default` }];
 }
 
 type VectorizeTest = DimensionBranch;

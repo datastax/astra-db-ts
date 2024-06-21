@@ -46,7 +46,7 @@ export class DSEUsernamePasswordTokenProvider extends TokenProvider {
    *
    * @returns the token in the format `cassandra:[username_b64]:[password_b64]`
    */
-  override getTokenAsString(): Promise<string> {
+  override getToken(): Promise<string> {
     return Promise.resolve(this.#token);
   }
 
