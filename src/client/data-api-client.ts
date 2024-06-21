@@ -90,7 +90,7 @@ export const DataAPIClientEventEmitterBase = (() => {
  * const client2 = new DataAPIClient();
  *
  * // Client connecting to a local DSE instance
- * const dseToken = new DSEUsernamePasswordTokenProvider('username', 'password');
+ * const dseToken = new UsernamePasswordTokenProvider('username', 'password');
  * const client3 = new DataAPIClient(dseToken, { environment: 'dse' });
  *
  * const db1 = client1.db('https://<db_id>-<region>.apps.astra.datastax.com');
@@ -374,7 +374,7 @@ function tryLoadFetchH2(clientType: string | nullish, options: DataAPIClientOpti
 
     const preferHttp2 = httpOptions?.preferHttp2
       ?? getDeprecatedPrefersHttp2(options)
-      ?? true
+      ?? true;
 
     return new FetchH2(httpOptions, preferHttp2);
   } catch (e) {

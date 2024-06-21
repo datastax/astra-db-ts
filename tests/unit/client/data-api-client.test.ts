@@ -18,14 +18,14 @@ import assert from 'assert';
 import { FetcherResponseInfo } from '@/src/api';
 import { FetchH2 } from '@/src/api/fetch/fetch-h2';
 import { FetcherRequestInfo } from '@/src/api/fetch/types';
-import { DataAPIEnvironments, DSEUsernamePasswordTokenProvider } from '@/src/common';
-import { TEST_APPLICATION_URI } from '@/tests/fixtures';
+import { DataAPIEnvironments, UsernamePasswordTokenProvider } from '@/src/common';
+import { DEMO_APPLICATION_URI, OTHER_NAMESPACE, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/fixtures';
 
 describe('unit.client.data-api-client', () => {
   it('should accept valid tokens', () => {
     assert.doesNotThrow(() => new DataAPIClient());
     assert.doesNotThrow(() => new DataAPIClient('token'));
-    assert.doesNotThrow(() => new DataAPIClient(new DSEUsernamePasswordTokenProvider('username', 'password')));
+    assert.doesNotThrow(() => new DataAPIClient(new UsernamePasswordTokenProvider('username', 'password')));
   })
 
   it('should throw if an invalid token is passed', () => {
@@ -123,6 +123,14 @@ describe('unit.client.data-api-client', () => {
       // @ts-expect-error - testing invalid input
       dbOptions: { token: 3 },
     }));
+  });
+
+  it('throws an error if passing in endpoint and keyspace name as a string', () => {
+    const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
+    assert.throws(
+      () => client.db(DEMO_APPLICATION_URI, OTHER_NAMESPACE),
+      { message: 'Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { namespace })`?' }
+    );
   });
 
   describe('using fetch-h2', () => {

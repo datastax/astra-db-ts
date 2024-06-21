@@ -17,7 +17,8 @@ import { DataAPIClient } from '@/src/client';
 import assert from 'assert';
 import {
   assertTestsEnabled,
-  DEFAULT_COLLECTION_NAME, DEMO_APPLICATION_URI, ENVIRONMENT,
+  DEFAULT_COLLECTION_NAME,
+  ENVIRONMENT,
   initTestObjects,
   OTHER_NAMESPACE,
   TEST_APPLICATION_TOKEN,
@@ -45,12 +46,9 @@ describe('integration.client.data-api-client', () => {
       assert.ok(Array.isArray(collections));
     });
 
-    it('throws an error if passing in endpoint and keyspace name as a string', () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
-      assert.throws(
-        () => client.db(DEMO_APPLICATION_URI, OTHER_NAMESPACE),
-        { message: 'Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { namespace })`?' }
-      );
+    it('lets Data API deal with throwing missing token error', async () => {
+      const db = new DataAPIClient().db(TEST_APPLICATION_URI);
+      await assert.rejects(() => db.listCollections(), { message: 'Authentication failed; is your token valid?' });
     });
   });
 

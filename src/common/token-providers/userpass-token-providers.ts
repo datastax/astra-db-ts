@@ -15,19 +15,21 @@
 import { TokenProvider } from '@/src/common/token-providers/token-provider';
 
 /**
- * A token provider which translates a DSE username-password pair into the appropriate authentication token.
+ * A token provider which translates a username-password pair into the appropriate authentication token for DSE, HCD.
+ *
+ * Uses the format `Cassandra:b64(username):password(username)`
  *
  * @example
  * ```
- * const provider = new DSEUsernamePasswordTokenProvider('username', 'password');
- * const client = new DataAPIClient(provider);
+ * const provider = new UsernamePasswordTokenProvider('username', 'password');
+ * const client = new DataAPIClient(provider, { environment: 'dse' });
  * ```
  *
  * @see TokenProvider
  *
  * @public
  */
-export class DSEUsernamePasswordTokenProvider extends TokenProvider {
+export class UsernamePasswordTokenProvider extends TokenProvider {
   readonly #token: string;
 
   /**

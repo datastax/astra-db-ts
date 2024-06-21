@@ -641,7 +641,7 @@ export interface DropCollectionOptions extends WithTimeout, WithNamespace {
 }
 
 // @public
-export class DSEUsernamePasswordTokenProvider extends TokenProvider {
+export class UsernamePasswordTokenProvider extends TokenProvider {
     constructor(username: string, password: string);
     getTokenAsString(): Promise<string>;
 }

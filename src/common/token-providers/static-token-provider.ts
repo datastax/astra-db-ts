@@ -19,7 +19,7 @@ import { nullish } from '@/src/common';
  * The most basic token provider, which simply returns the token it was instantiated with.
  *
  * Generally, anywhere this can be used in the public `astra-db-ts` interfaces, you may also pass in a plain
- * string, which is transformed into a {@link StaticTokenProvider} under the hood.
+ * string or null/undefined, which is transformed into a {@link StaticTokenProvider} under the hood.
  *
  * @example
  * ```

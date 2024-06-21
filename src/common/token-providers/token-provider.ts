@@ -29,12 +29,12 @@ import { isNullish, nullish, StaticTokenProvider } from '@/src/common';
  *
  * @example
  * ```
- * const provider = new DSEUsernamePasswordTokenProvider('username', 'password');
+ * const provider = new UsernamePasswordTokenProvider('username', 'password');
  * const client = new DataAPIClient(provider);
  * ```
  *
  * @see StaticTokenProvider
- * @see DSEUsernamePasswordTokenProvider
+ * @see UsernamePasswordTokenProvider
  *
  * @public
  */

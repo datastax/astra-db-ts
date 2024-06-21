@@ -54,7 +54,7 @@ export interface DataAPIClientOptions {
    * availability of admin operations does as well.
    *
    * - With Astra databases, you'll use an `'AstraCS:...'` token; for other backends, you'll generally want to use the
-   *   {@link DSEUsernamePasswordTokenProvider}, or, rarely, even create your own.
+   *   {@link UsernamePasswordTokenProvider}, or, rarely, even create your own.
    *
    * - {@link AstraAdmin} is only available on Astra databases. {@link AstraDbAdmin} is also only available on Astra
    *   databases, but the {@link DataAPIDbAdmin} alternative is used for all other backends, albeit the expense of a
