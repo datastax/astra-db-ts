@@ -362,6 +362,8 @@ as necessary, depending on the Data API backend. Tokens may even be omitted if n
 - `StaticTokenProvider` - This unit provider simply regurgitates whatever token was passed into its constructor
 - `UsernamePasswordTokenProvider` - Turns a user/pass pair into an appropriate token for DSE/HCD
 
+(See `examples/non-astra-backends` for a full example of this in action.)
+
 ## Non-standard environment support
 
 `astra-db-ts` is designed foremost to work in Node.js environments. 
