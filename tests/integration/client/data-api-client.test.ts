@@ -47,7 +47,7 @@ describe('integration.client.data-api-client', () => {
     });
 
     it('lets Data API deal with throwing missing token error', async () => {
-      const db = new DataAPIClient().db(TEST_APPLICATION_URI);
+      const db = new DataAPIClient({ environment: ENVIRONMENT }).db(TEST_APPLICATION_URI);
       await assert.rejects(() => db.listCollections(), { message: 'Authentication failed; is your token valid?' });
     });
   });

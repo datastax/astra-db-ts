@@ -1,9 +1,3 @@
-# Gracefully stops the docker containers if anything goes wrong
-cleanup() {
-  docker-compose -f scripts/docker-compose-stargate.yml down
-}
-trap cleanup EXIT
-
 # Starts the containers in detached mode so we can set up things as necessary
 docker-compose -f scripts/docker-compose-stargate.yml up -d
 
