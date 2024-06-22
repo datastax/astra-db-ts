@@ -25,7 +25,7 @@ describe('integration.data-api.collection.count-documents', () => {
   });
 
   beforeEach(async () => {
-    await collection.deleteAll();
+    await collection.deleteMany({});
   });
 
   it('works', async () => {

@@ -25,7 +25,7 @@ describe('integration.data-api.collection.insert-many', () => {
   });
 
   beforeEach(async () => {
-    await collection.deleteAll();
+    await collection.deleteMany({});
   });
 
   it('should insertMany documents', async () => {
@@ -50,6 +50,16 @@ describe('integration.data-api.collection.insert-many', () => {
       assert.ok(typeof id as any === 'string');
       assert.doesNotThrow(() => new UUID(<string>id));
     });
+  });
+
+  it('should insertMany 0 documents', async () => {
+    const res = await collection.insertMany([]);
+    assert.deepStrictEqual(res, { insertedCount: 0, insertedIds: [] });
+  });
+
+  it('should insertMany 0 documents ordered', async () => {
+    const res = await collection.insertMany([], { ordered: true });
+    assert.deepStrictEqual(res, { insertedCount: 0, insertedIds: [] });
   });
 
   it('should insertMany documents with ids', async () => {
@@ -97,7 +107,7 @@ describe('integration.data-api.collection.insert-many', () => {
     });
     assert.ok(res);
 
-    const archEnemy = await collection.findOne({ name: 'Arch Enemy' });
+    const archEnemy = await collection.findOne({ name: 'Arch Enemy' }, { projection: { $vector: 1 } });
     assert.deepStrictEqual(archEnemy?.$vector, [1, 1, 1, 1, 1]);
 
     const equilibrium = await collection.findOne({ name: 'Equilibrium' });

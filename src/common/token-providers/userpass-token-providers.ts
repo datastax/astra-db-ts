@@ -15,19 +15,21 @@
 import { TokenProvider } from '@/src/common/token-providers/token-provider';
 
 /**
- * A token provider which translates a DSE username-password pair into the appropriate authentication token.
+ * A token provider which translates a username-password pair into the appropriate authentication token for DSE, HCD.
+ *
+ * Uses the format `Cassandra:b64(username):password(username)`
  *
  * @example
  * ```
- * const provider = new DSEUsernamePasswordTokenProvider('username', 'password');
- * const client = new DataAPIClient(provider);
+ * const provider = new UsernamePasswordTokenProvider('username', 'password');
+ * const client = new DataAPIClient(provider, { environment: 'dse' });
  * ```
  *
  * @see TokenProvider
  *
  * @public
  */
-export class DSEUsernamePasswordTokenProvider extends TokenProvider {
+export class UsernamePasswordTokenProvider extends TokenProvider {
   readonly #token: string;
 
   /**
@@ -46,7 +48,7 @@ export class DSEUsernamePasswordTokenProvider extends TokenProvider {
    *
    * @returns the token in the format `cassandra:[username_b64]:[password_b64]`
    */
-  override getTokenAsString(): Promise<string> {
+  override getToken(): Promise<string> {
     return Promise.resolve(this.#token);
   }
 
@@ -56,7 +58,7 @@ export class DSEUsernamePasswordTokenProvider extends TokenProvider {
     } else if (typeof Buffer === 'function') {
       return Buffer.from(input, 'utf-8').toString('base64');
     } else {
-      throw new Error('Unable to encode username/password to base64... please provide the "cassandra:[username_b64]:[password_b64]" token manually');
+      throw new Error('Unable to encode username/password to base64... please provide the "Cassandra:[username_b64]:[password_b64]" token manually');
     }
   }
 }

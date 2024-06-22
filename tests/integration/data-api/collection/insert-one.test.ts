@@ -25,7 +25,7 @@ describe('integration.data-api.collection.insert-one', () => {
   });
 
   beforeEach(async () => {
-    await collection.deleteAll();
+    await collection.deleteMany({});
   });
 
   it('should insertOne document', async () => {
@@ -84,7 +84,7 @@ describe('integration.data-api.collection.insert-one', () => {
   it('should insertOne with vector', async () => {
     const res = await collection.insertOne({ name: 'Arch Enemy' }, { vector: [1, 1, 1, 1, 1] });
     assert.ok(res);
-    const found = await collection.findOne({ name: 'Arch Enemy' });
+    const found = await collection.findOne({ name: 'Arch Enemy' }, { projection: { '*': 1 } });
     assert.deepStrictEqual(found?.$vector, [1, 1, 1, 1, 1]);
   });
 

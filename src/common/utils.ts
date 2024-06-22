@@ -12,8 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { nullish } from '@/src/common/types';
+import { DataAPIEnvironment, nullish } from '@/src/common/types';
+import { DataAPIEnvironments } from '@/src/common/constants';
 
 export function isNullish(t: unknown): t is nullish {
   return t === null || t === undefined;
+}
+
+export function validateDataAPIEnv(env: unknown): asserts env is DataAPIEnvironment | nullish {
+  if (!isNullish(env) && !DataAPIEnvironments.includes(env as any)) {
+    throw new Error(`Given environment is invalid (must be ${DataAPIEnvironments.map(e => `"${e}"`).join(', ')}, or nullish to default to "astra".`);
+  }
 }

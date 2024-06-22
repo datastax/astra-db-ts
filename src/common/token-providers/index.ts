@@ -12,6 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './dse-token-providers';
+export * from './userpass-token-providers';
 export * from './static-token-provider';
 export * from './token-provider'

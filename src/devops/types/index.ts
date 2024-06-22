@@ -17,3 +17,4 @@ export * from './admin/create-database';
 export * from './admin/database-info';
 export * from './admin/list-databases';
 export * from './admin/spawn-admin';
+export * from './db-admin/create-namespace';

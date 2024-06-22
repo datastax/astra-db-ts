@@ -101,7 +101,7 @@ export class AstraAdmin {
     // Warning: (ae-forgotten-export) The symbol "InternalRootClientOpts" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(options: InternalRootClientOpts);
+    constructor(rootOpts: InternalRootClientOpts, adminOpts?: AdminSpawnOptions);
     createDatabase(config: DatabaseConfig, options?: CreateDatabaseOptions): Promise<AstraDbAdmin>;
     db(endpoint: string, options?: DbSpawnOptions): Db;
     db(id: string, region: string, options?: DbSpawnOptions): Db;
@@ -115,7 +115,7 @@ export class AstraAdmin {
 // @public
 export class AstraDbAdmin extends DbAdmin {
     // @internal
-    constructor(_db: Db, options: InternalRootClientOpts);
+    constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts?: AdminSpawnOptions);
     createNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
     db(): Db;
     drop(options?: AdminBlockingOptions): Promise<void>;
@@ -177,6 +177,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult<Schema>>;
     readonly collectionName: string;
     countDocuments(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number>;
+    // @deprecated
     deleteAll(options?: WithTimeout): Promise<void>;
     deleteMany(filter?: Filter<Schema>, options?: WithTimeout): Promise<DeleteManyResult>;
     deleteOne(filter?: Filter<Schema>, options?: DeleteOneOptions): Promise<DeleteOneResult>;
@@ -299,6 +300,11 @@ export type CreateDatabaseOptions = AdminBlockingOptions & {
 };
 
 // @public
+export type CreateNamespaceOptions = AdminBlockingOptions & {
+    replication?: NamespaceReplicationOptions;
+};
+
+// @public
 export abstract class CumulativeDataAPIError extends DataAPIResponseError {
     readonly partialResult: unknown;
 }
@@ -348,6 +354,7 @@ export interface DataAPIClientOptions {
     adminOptions?: AdminSpawnOptions;
     caller?: Caller | Caller[];
     dbOptions?: DbSpawnOptions;
+    environment?: DataAPIEnvironment;
     httpOptions?: DataAPIHttpOptions;
     // @deprecated
     preferHttp2?: boolean;
@@ -361,11 +368,27 @@ export type DataAPICommandEvents = {
 };
 
 // @public
+export class DataAPIDbAdmin extends DbAdmin {
+    // @internal
+    constructor(db: Db, httpClient: DataAPIHttpClient, adminOpts?: AdminSpawnOptions);
+    createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void>;
+    db(): Db;
+    dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
+    listNamespaces(options?: WithTimeout): Promise<string[]>;
+}
+
+// @public
 export interface DataAPIDetailedErrorDescriptor {
     readonly command: Record<string, any>;
     readonly errorDescriptors: DataAPIErrorDescriptor[];
     readonly rawResponse: RawDataAPIResponse;
 }
+
+// @public
+export type DataAPIEnvironment = typeof DataAPIEnvironments[number];
+
+// @public
+export const DataAPIEnvironments: readonly ["astra", "dse", "hcd", "cassandra", "other"];
 
 // @public
 export abstract class DataAPIError extends Error {
@@ -483,8 +506,13 @@ export type DateUpdate<Schema> = {
 // @public
 export class Db {
     // @internal
-    constructor(endpoint: string, options: InternalRootClientOpts);
-    admin(options?: AdminSpawnOptions): AstraDbAdmin;
+    constructor(endpoint: string, rootOpts: InternalRootClientOpts, dbOpts: DbSpawnOptions | nullish);
+    admin(options?: AdminSpawnOptions & {
+        environment?: 'astra';
+    }): AstraDbAdmin;
+    admin(options: AdminSpawnOptions & {
+        environment: Exclude<DataAPIEnvironment, 'astra'>;
+    }): DataAPIDbAdmin;
     collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions): Collection<Schema>;
     collections(options?: WithNamespace & WithTimeout): Promise<Collection[]>;
     command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse>;
@@ -614,12 +642,6 @@ export interface DropCollectionOptions extends WithTimeout, WithNamespace {
 }
 
 // @public
-export class DSEUsernamePasswordTokenProvider extends TokenProvider {
-    constructor(username: string, password: string);
-    getTokenAsString(): Promise<string>;
-}
-
-// @public
 export class FailedToLoadDefaultClientError extends Error {
     // @internal
     constructor(rootCause: Error);
@@ -699,8 +721,10 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     filter(filter: Filter<TRaw>): this;
     // @deprecated
     forEach(consumer: ((doc: T) => boolean) | ((doc: T) => void)): Promise<void>;
+    getSortVector(): Promise<number[] | null>;
     hasNext(): Promise<boolean>;
     includeSimilarity(includeSimilarity?: boolean): this;
+    includeSortVector(includeSortVector?: boolean): this;
     limit(limit: number): this;
     map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw>;
     get namespace(): string;
@@ -764,6 +788,7 @@ export interface FindOneOptions extends WithTimeout {
 // @public
 export interface FindOptions {
     includeSimilarity?: boolean;
+    includeSortVector?: boolean;
     limit?: number;
     projection?: Projection;
     skip?: number;
@@ -922,6 +947,15 @@ export interface ModifyResult<Schema extends SomeDoc> {
 }
 
 // @public
+export type NamespaceReplicationOptions = {
+    class: 'SimpleStrategy';
+    replicationFactor: number;
+} | {
+    class: 'NetworkTopologyStrategy';
+    [datacenter: string]: number | 'NetworkTopologyStrategy';
+};
+
+// @public
 export interface NoBlockingOptions extends WithTimeout {
     blocking: false;
 }
@@ -1041,8 +1075,8 @@ export type SortDirection = 1 | -1 | 'asc' | 'desc' | 'ascending' | 'descending'
 
 // @public
 export class StaticTokenProvider extends TokenProvider {
-    constructor(token: string);
-    getTokenAsString(): Promise<string>;
+    constructor(token: string | nullish);
+    getToken(): Promise<string | nullish>;
 }
 
 // @public
@@ -1134,9 +1168,9 @@ export type ToDotNotation<Schema extends SomeDoc> = Merge<_ToDotNotation<Schema,
 
 // @public
 export abstract class TokenProvider {
-    abstract getTokenAsString(): Promise<string>;
+    abstract getToken(): Promise<string | nullish>;
     // @internal
-    static parseToken(token: unknown): TokenProvider | nullish;
+    static parseToken(token: unknown): TokenProvider;
 }
 
 // @public
@@ -1220,6 +1254,12 @@ export interface UpsertedUpdateOptions<Schema extends SomeDoc> {
 }
 
 // @public
+export class UsernamePasswordTokenProvider extends TokenProvider {
+    constructor(username: string, password: string);
+    getToken(): Promise<string>;
+}
+
+// @public
 export class UUID {
     constructor(uuid: string, validate?: boolean);
     equals(other: unknown): boolean;
@@ -1244,10 +1284,10 @@ export interface VectorizeDoc {
     $vectorize: string;
 }
 
-// @alpha
+// @public
 export interface VectorizeServiceOptions {
     authentication?: Record<string, string | undefined>;
-    modelName: string;
+    modelName: string | nullish;
     parameters?: Record<string, unknown>;
     provider: string;
 }

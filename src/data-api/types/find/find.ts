@@ -18,7 +18,6 @@ import type { Projection, Sort } from '@/src/data-api/types';
  * Options for the `find` method.
  *
  * @field sort - The sort order to pick which document to return if the filter selects multiple documents.
- * @field vector - An optional vector to use for the appropriate dimensionality to perform an ANN vector search on the collection.
  * @field projection - Specifies which fields should be included/excluded in the returned documents.
  * @field limit - Max number of documents to return in the lifetime of the cursor.
  * @field skip - Number of documents to skip if using a sort.
@@ -39,25 +38,6 @@ export interface FindOptions {
    * @defaultValue null
    */
   sort?: Sort,
-  /**
-   * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
-   * to find the closest matching document.
-   *
-   * This is purely for the user's convenience and intuitiveness—it is equivalent to setting the `$vector` field in the
-   * sort field itself. The two are interchangeable, but mutually exclusive.
-   *
-   * If the sort field is already set, an error will be thrown. If you really need to use both, you can set the $vector
-   * field in the sort object directly.
-   *
-   * @deprecated - Prefer to use `sort: { $vector: [...] }` instead
-   */
-  vector?: number[],
-  /**
-   * NOTE: This feature is under current development.
-   *
-   * @deprecated - Prefer to use `sort: { $vectorize: '...' }` instead
-   */
-  vectorize?: string,
   /**
    * Specifies which fields should be included/excluded in the returned documents.
    *
@@ -127,6 +107,52 @@ export interface FindOptions {
    * ```
    */
   includeSimilarity?: boolean;
+  /**
+   * If true, fetch the sort vector on the very first API call.
+   *
+   * If false, it won't fetch the sort vector until {@link FindCursor.getSortVector} is called.
+   *
+   * Note that this is *not* a requirement to use {@link FindCursor.getSortVector}—it simply saves it an extra API call
+   * to fetch the sort vector.
+   *
+   * Set this to true if you're sure you're going to need the sort vector in the very near future.
+   *
+   * @example
+   * ```typescript
+   * const doc = await collection.findOne({}, {
+   *   sort: {
+   *     $vector: [.12, .52, .32],
+   *   },
+   *   includeSortVector: true,
+   * });
+   *
+   * // sortVector is fetched during this call
+   * const next = await cursor.next();
+   *
+   * // so no I/O is done here as the cursor already has the sortVector cached
+   * const sortVector = await cursor.getSortVector();
+   * ```
+   */
+  includeSortVector?: boolean;
+  /**
+   * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
+   * to find the closest matching document.
+   *
+   * This is purely for the user's convenience and intuitiveness—it is equivalent to setting the `$vector` field in the
+   * sort field itself. The two are interchangeable, but mutually exclusive.
+   *
+   * If the sort field is already set, an error will be thrown. If you really need to use both, you can set the $vector
+   * field in the sort object directly.
+   *
+   * @deprecated - Prefer to use `sort: { $vector: [...] }` instead
+   */
+  vector?: number[],
+  /**
+   * Akin to {@link FindOptions.vector}, but for `$vectorize`.
+   *
+   * @deprecated - Prefer to use `sort: { $vectorize: '...' }` instead
+   */
+  vectorize?: string,
 }
 
 /** @internal */
@@ -135,6 +161,7 @@ export interface InternalFindOptions {
   limit?: number;
   skip?: number;
   includeSimilarity?: boolean;
+  includeSortVector?: boolean;
 }
 
 /** @internal */

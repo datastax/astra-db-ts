@@ -24,12 +24,23 @@ npm run test -- -f 'integration.'
 npm run test:types
 ```
 
+### Running the tests on local Stargate
+You can do `sh scripts/start-stargate-4-tests.sh` to spin up an ephemeral Data API on DSE instance which automatically
+creates the required keyspaces and destroys itself on exit.
+
+Then, be sure to set the following vars in `.env` exactly, then run the tests as usual.
+```dotenv
+APPLICATION_URI=http://localhost:8181
+APPLICATION_TOKEN=Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh
+APPLICATION_ENVIRONMENT=dse
+```
+
 ### Running tagged tests
 Tests can be given certain tags to allow for more granular control over which tests are run. These tags currently include:
 - `[long]`/`'LONG'`: Longer running tests that take more than a few seconds to run
 - `[admin]`/`'ADMIN'`: Tests that require admin permissions to run
 - `[dev]`/`'DEV'`: Tests that require the dev environment to run
-- `[prod]`/`'PROD'`: Tests that require the dev environment to run
+- `[not-dev]`/`'NOT-DEV'`: Tests that require the dev environment to run
 - `[vectorize]`/`'VECTORIZE'`: Tests that require a specific vectorize-enabled kube to run
 
 To enable these some of these tags, you can set the corresponding environment variables to some values. The env 
@@ -77,27 +88,35 @@ To run vectorize tests, you need to have a vectorize-enabled kube running, with 
 You must create a file, `vectorize_tests.json`, in the root folder, with the following format:
 
 ```ts
-interface Config {
+interface VectorizeTestSpec {
   [providerName: string]: {
     apiKey?: string,
     providerKey?: string,
+    dimension?: {
+      [modelNameRegex: string]: number,
+    },
     parameters?: {
-      [modelName: string]: Record<string, string>
+      [modelNameRegex: string]: Record<string, string>
     },
   }
 }
 ```
 
 where:
-- `providerName` is the name of the provider (e.g. `nvidia`, `openai`, etc.) as found in `findEmbeddingProviders`
-- `apiKey` is the API key for the provider (which will be passed in through the header) 
-  - optional if no header auth test wanted
-- `providerKey` is the provider key for the provider (which will be passed in @ collection creation) 
-  - optional if no KMS auth test wanted
-- `parameters` is a mapping of model names to their corresponding parameters
+- `providerName` is the name of the provider (e.g. `nvidia`, `openai`, etc.) as found in `findEmbeddingProviders`.
+- `apiKey` is the API key for the provider (which will be passed in through the header) .
+  - optional if no header auth test wanted.
+- `providerKey` is the provider key for the provider (which will be passed in @ collection creation) .
+  - optional if no KMS auth test wanted.
+- `parameters` is a mapping of model names to their corresponding parameters. The model name can be some regex that partially matches the full model name.
+  - `"text-embedding-3-small"`, `"3-small"`, and `".*"` will all match `"text-embedding-3-small"`.
   - optional if not required. `azureOpenAI`, for example, will need this.
+- `dimension` is a also a mapping of model name regex to their corresponding dimensions, like the `parameters` field.
+  - optional if not required. `huggingfaceDedicated`, for example, will need this.
 
 This file is gitignored by default and will not be checked into VCS.
+
+See `vectorize_credentials.example.json` for—guess what—an example.
 
 ### Coverage testing
 

@@ -31,6 +31,7 @@ export interface UpdateManyCommand {
  * Represents the options for the updateMany command.
  *
  * @field upsert - If true, perform an insert if no documents match the filter.
+ * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
  *
  * @public
  */

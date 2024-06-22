@@ -84,6 +84,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   private _buffer: TRaw[] = [];
   private _nextPageState?: string | null;
   private _state = CursorStatus.Uninitialized;
+  private _sortVector?: number[] | null;
 
   /**
    * Should not be instantiated directly.
@@ -94,7 +95,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this._namespace = namespace;
     this._httpClient = httpClient;
     this._filter = filter;
-    this._options = { ...options };
+    this._options = structuredClone(options ?? {});
 
     if (options?.sort) {
       this._options.sort = normalizeSort(options.sort);
@@ -139,6 +140,8 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @param filter - A filter to select which documents to return.
    *
    * @returns The cursor.
+   *
+   * @see StrictFilter
    */
   public filter(filter: Filter<TRaw>): this {
     this._assertUninitialized();
@@ -157,6 +160,8 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @param sort - The sort order to prioritize which documents are returned.
    *
    * @returns The cursor.
+   *
+   * @see StrictSort
    */
   public sort(sort: Sort): this {
     this._assertUninitialized();
@@ -231,6 +236,8 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @param projection - Specifies which fields should be included/excluded in the returned documents.
    *
    * @returns The cursor.
+   *
+   * @see StrictProjection
    */
   public project<R = any, RRaw extends SomeDoc = SomeDoc>(projection: Projection): FindCursor<R, RRaw> {
     this._assertUninitialized();
@@ -250,6 +257,22 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   public includeSimilarity(includeSimilarity: boolean = true): this {
     this._assertUninitialized();
     this._options.includeSimilarity = includeSimilarity;
+    return this;
+  }
+
+  /**
+   * Sets whether the sort vector should be fetched on the very first API call. Note that this is a requirement
+   * to use {@link FindCursor.getSortVector}—it'll unconditionally return `null` if this is not set to `true`.
+   *
+   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   *
+   * @param includeSortVector - Whether the sort vector should be fetched on the first API call
+   *
+   * @returns The cursor.
+   */
+  public includeSortVector(includeSortVector: boolean = true): this {
+    this._assertUninitialized();
+    this._options.includeSortVector = includeSortVector;
     return this;
   }
 
@@ -351,6 +374,40 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     }
 
     return false;
+  }
+
+  /**
+   * Retrieves the vector used to perform the vector search, if applicable.
+   *
+   * - If `includeSortVector` is not `true`, this will unconditionally return `null`. No find request will be made.
+   *
+   * - If `sort: { $vector }` was used, `getSortVector()` will simply regurgitate that same `$vector`.
+   *
+   * - If `sort: { $vectorize }` was used, `getSortVector()` will return the `$vector` that was created from the text.
+   *
+   * - If vector search is not used, `getSortVector()` will simply return `null`. A find request will still be made.
+   *
+   * If `includeSortVector` is `true`, and this function is called before any other cursor operation (such as
+   * `.next()` or `.toArray()`), it'll make an API request to fetch the sort vector, filling the cursor's buffer
+   * in the process.
+   *
+   * If the cursor has already been executed before this function has been called, no additional API request
+   * will be made to fetch the sort vector, as it has already been cached.
+   *
+   * But to reiterate, if `includeSortVector` is `false`, and this function is called, no API request is made, and
+   * the cursor's buffer is not populated; it simply returns `null`.
+   *
+   * @returns The sort vector, or `null` if none was used (or if `includeSortVector !== true`).
+   */
+  public async getSortVector(): Promise<number[] | null> {
+    if (this._sortVector === undefined) {
+      if (this._options.includeSortVector) {
+        await this.hasNext();
+      } else {
+        return null;
+      }
+    }
+    return this._sortVector!;
   }
 
   /**
@@ -498,6 +555,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     if (this._options.includeSimilarity) {
       options.includeSimilarity = this._options.includeSimilarity;
     }
+    if (this._options.includeSortVector) {
+      options.includeSortVector = this._options.includeSortVector;
+    }
 
     const command: InternalGetMoreCommand = {
       find: { filter: this._filter }
@@ -517,5 +577,8 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
 
     this._nextPageState = resp.data?.nextPageState || null;
     this._buffer = resp.data!.documents as TRaw[];
+
+    this._sortVector ??= resp.status?.sortVector;
+    this._options.includeSortVector = false;
   }
 }

@@ -15,44 +15,46 @@
 import assert from 'assert';
 import { AstraAdmin } from '@/src/devops';
 import { DEFAULT_DEVOPS_API_ENDPOINT } from '@/src/api';
-import { mkAdmin } from '@/src/devops/astra-admin';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { StaticTokenProvider } from '@/src/common';
+import { DataAPIClient } from '@/src/client';
 
 describe('unit.devops.admin', () => {
-  const mkOptions = (data?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2') => {
-    return {
-      dbOptions: { token: new StaticTokenProvider('old'), monitorCommands: false, ...data },
-      adminOptions: { adminToken: new StaticTokenProvider('old-admin'), monitorCommands: false, ...devops },
-      emitter: null!,
-      fetchCtx: { preferredType } as any,
-      userAgent: '',
-    };
-  }
+  const internalOps = (data?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({
+    dbOptions: { token: new StaticTokenProvider('old'), monitorCommands: false, ...data },
+    adminOptions: { adminToken: new StaticTokenProvider('old-admin'), monitorCommands: false, ...devops },
+    emitter: null!,
+    fetchCtx: { preferredType } as any,
+    userAgent: '',
+    environment: 'astra',
+  });
 
   describe('constructor tests', () => {
     it('should properly construct an AstraAdmin object', () => {
-      const admin = new AstraAdmin(mkOptions());
+      const admin = new AstraAdmin(internalOps());
       assert.ok(admin);
       assert.strictEqual(admin['_httpClient'].baseUrl, DEFAULT_DEVOPS_API_ENDPOINT);
     });
 
     it('should properly construct an AstraAdmin object with a custom base URL', () => {
-      const admin = new AstraAdmin(mkOptions({}, { endpointUrl: 'https://api.astra.datastax.com/v1' }));
+      const admin = new AstraAdmin(internalOps({}, { endpointUrl: 'https://api.astra.datastax.com/v1' }));
       assert.ok(admin);
       assert.strictEqual(admin['_httpClient'].baseUrl, 'https://api.astra.datastax.com/v1');
     });
-  });
 
-  describe('mkAdmin tests', () => {
+    it('should not throw on missing token', () => {
+      const client = new DataAPIClient();
+      assert.doesNotThrow(() => client.admin());
+    });
+
     it('should allow admin construction using default options', () => {
-      const admin = mkAdmin(mkOptions({}, { endpointUrl: 'https://api.astra.datastax.com/v1' }), {});
+      const admin = new AstraAdmin(internalOps({}, { endpointUrl: 'https://api.astra.datastax.com/v1' }), {});
       assert.ok(admin);
       assert.strictEqual(admin['_httpClient'].baseUrl, 'https://api.astra.datastax.com/v1');
     });
 
     it('should allow admin construction, overwriting options', () => {
-      const admin = mkAdmin(mkOptions({}, { endpointUrl: 'https://api.astra.datastax.com/old' }), {
+      const admin = new AstraAdmin(internalOps({}, { endpointUrl: 'https://api.astra.datastax.com/old' }), {
         adminToken: 'new-admin',
         endpointUrl: 'https://api.astra.datastax.com/new',
       });

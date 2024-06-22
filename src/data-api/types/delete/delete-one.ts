@@ -27,7 +27,7 @@ export interface DeleteOneCommand {
  * Represents the options for the deleteOne command.
  *
  * @field sort - The sort order to pick which document to delete if the filter selects multiple documents.
- * @field vector - An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection.
+ * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
  *
  * @see Collection.deleteOne
  *
@@ -57,7 +57,7 @@ export interface DeleteOneOptions extends WithTimeout {
    */
   vector?: number[],
   /**
-   * NOTE: This feature is under current development.
+   * Akin to {@link DeleteOneOptions.vector}, but for `$vectorize`.
    *
    * @deprecated - Prefer to use `sort: { $vectorize: '...' }` instead
    */

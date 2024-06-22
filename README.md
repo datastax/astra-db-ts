@@ -11,6 +11,7 @@
 - [Working with Dates](#working-with-dates)
 - [Working with ObjectIds and UUIDs](#working-with-objectids-and-uuids)
 - [Monitoring/logging](#monitoringlogging)
+- [Non-astra support](#non-astra-support)
 - [Non-standard environment support](#non-standard-environment-support)
   - [HTTP/2 with minification](#http2-with-minification)
   - [Browser support](#browser-support)
@@ -41,7 +42,7 @@ const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
     const collection = await db.createCollection<Idea>('vector_5_collection', {
       vector: {
         dimension: 5,
-        metric: 'cosine'
+        metric: 'cosine',
       },
       checkExists: false,
     });
@@ -333,6 +334,35 @@ client.on('commandFailed', (event) => {
   await collection.drop();
 })();
 ```
+
+## Non-astra support
+
+`astra-db-ts` officially supports Data API instances using non-Astra backends, such as Data API on DSE or HCD. 
+
+However, while support is native, detection is not; you will have to manually declare the environment at times.
+
+```typescript
+import { DataAPIClient, UsernamePasswordTokenProvider, DataAPIDbAdmin } from '@datastax/astra-db-ts';
+
+// You'll need to pass in environment to the DataAPIClient when not using Astra
+const tp = new UsernamePasswordTokenProvider('*USERNAME*', '*PASSWORD*');
+const client = new DataAPIClient(tp, { environment: 'dse' });
+const db = client.db('*ENDPOINT*');
+
+// You'll also need to pass it to db.admin() when not using Astra for typing purposes
+// If the environment does not match, an error will be thrown as a reminder
+const dbAdmin: DataAPIDbAdmin = db.admin({ environment: 'dse' });
+dbAdmin.createNamespace(...);
+```
+
+The `TokenProvider` class is an extensible concept to allow you to create or even refresh your tokens
+as necessary, depending on the Data API backend. Tokens may even be omitted if necessary.
+
+`astra-db-ts` provides two `TokenProvider` instances by default:
+- `StaticTokenProvider` - This unit provider simply regurgitates whatever token was passed into its constructor
+- `UsernamePasswordTokenProvider` - Turns a user/pass pair into an appropriate token for DSE/HCD
+
+(See `examples/non-astra-backends` for a full example of this in action.)
 
 ## Non-standard environment support
 

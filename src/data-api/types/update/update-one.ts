@@ -33,7 +33,7 @@ export interface UpdateOneCommand {
  *
  * @field upsert - If true, perform an insert if no documents match the filter.
  * @field sort - The sort order to pick which document to update if the filter selects multiple documents.
- * @field vector - An optional vector to use for the appropriate dimensionality to perform an ANN vector search on the collection.
+ * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
  *
  * @see Collection.updateOne
  *
@@ -74,7 +74,7 @@ export interface UpdateOneOptions extends WithTimeout {
    */
   vector?: number[],
   /**
-   * NOTE: This feature is under current development.
+   * Akin to {@link UpdateOneOptions.vector}, but for `$vectorize`.
    *
    * @deprecated - Prefer to use `sort: { $vectorize: '...' }` instead
    */

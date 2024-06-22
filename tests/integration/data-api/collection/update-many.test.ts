@@ -25,7 +25,7 @@ describe('integration.data-api.collection.update-many', () => {
   });
 
   beforeEach(async () => {
-    await collection.deleteAll();
+    await collection.deleteMany({});
   });
 
   it('should updateMany documents with ids', async () => {

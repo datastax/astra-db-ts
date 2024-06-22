@@ -14,20 +14,29 @@
 
 import { SomeDoc } from '@/src/data-api';
 import { ToDotNotation } from '@/src/data-api/types/dot-notation';
+import { nullish } from '@/src/common';
 
 /**
  * Represents the options for the vector search.
  *
- * **If not specified, the collection will not support vector search.**
- *
  * @field dimension - The dimension of the vectors.
  * @field metric - The similarity metric to use for the vector search.
+ * @field service - Options related to configuring the automatic embedding service (vectorize)
  *
  * @public
  */
 export interface VectorOptions {
   /**
    * The dimension of the vectors stored in the collection.
+   *
+   * If `service` is not provided, this must be set. Otherwise, the necessity of this being set comes on a per-model
+   * basis:
+   * - Some models have default vector dimensions which may be flexibly modified
+   * - Some models have no default dimension, and must be given an explicit one
+   * - Some models require a specific dimension that's already set by default
+   *
+   * You can find out more information about each model in the [DataStax docs](https://docs.datastax.com/en/astra-db-serverless/databases/embedding-generation.html),
+   * or through the `findEmbeddingsProvider` command.
    */
   dimension?: number,
   /**
@@ -45,33 +54,54 @@ export interface VectorOptions {
 }
 
 /**
- * NOTE: This feature is under current development.
+ * The options for defining the embedding service used for vectorize, to automatically transform your
+ * text into a vector ready for semantic vector searching.
  *
- * @alpha
+ * You can find out more information about each provider/model in the [DataStax docs](https://docs.datastax.com/en/astra-db-serverless/databases/embedding-generation.html),
+ * or through the `findEmbeddingsProvider` command.
+ *
+ * @field provider - The name of the embedding provider which provides the model to use
+ * @field model - The specific model to use for embedding, or undefined if it's an endpoint-defined model
+ * @field authentication - Object containing any necessary collection-bound authentication, if any
+ * @field parameters - Object allowing arbitrary parameters that may be necessary on a per-model basis
+ *
+ * @public
  */
 export interface VectorizeServiceOptions {
   /**
-   * NOTE: This feature is under current development.
+   * The name of the embedding provider which provides the model to use.
    *
-   * @alpha
+   * You can find out more information about each provider in the [DataStax docs](https://docs.datastax.com/en/astra-db-serverless/databases/embedding-generation.html),
+   * or through the `findEmbeddingsProvider` command.
    */
   provider: string,
   /**
-   * NOTE: This feature is under current development.
+   * The name of the embedding model to use.
    *
-   * @alpha
+   * In some situations, this may be `null`/`undefined` if the model may be arbitrary (such as with `huggingfaceDedicated`).
+   *
+   * You can find out more information about each model in the [DataStax docs](https://docs.datastax.com/en/astra-db-serverless/databases/embedding-generation.html),
+   * or through the `findEmbeddingsProvider` command.
    */
-  modelName: string,
+  modelName: string | nullish,
   /**
-   * NOTE: This feature is under current development.
+   * Object containing any necessary collection-bound authentication, if any.
    *
-   * @alpha
+   * Most commonly, `providerKey: '*SHARED_SECRET_NAME*'` may be used here to reference an API key from the Astra KMS.
+   *
+   * {@link Db.createCollection} and {@link Db.collection} both offer an `embeddingApiKey` parameter which utilizes
+   * header-based auth to pass the provider's token/api-key to the Data API on a per-request basis instead, if that
+   * is preferred (or necessary).
    */
   authentication?: Record<string, string | undefined>,
   /**
-   * NOTE: This feature is under current development.
+   * Object allowing arbitrary parameters that may be necessary on a per-model/per-provider basis.
    *
-   * @alpha
+   * Not all providers need this, but some, such as `huggingfaceDedicated` have required parameters, others have
+   * optional parameters (e.g. `openAi`), and some don't require any at all.
+   *
+   * You can find out more information about each provider/model in the [DataStax docs](https://docs.datastax.com/en/astra-db-serverless/databases/embedding-generation.html),
+   * or through the `findEmbeddingsProvider` command.
    */
   parameters?: Record<string, unknown>,
 }

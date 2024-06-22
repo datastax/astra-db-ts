@@ -14,11 +14,11 @@
 // noinspection DuplicatedCode
 
 import {
-  assertTestsEnabled,
+  assertTestsEnabled, ENVIRONMENT,
   initTestObjects,
   OTHER_NAMESPACE,
   TEST_APPLICATION_TOKEN,
-  TEST_ASTRA_URI,
+  TEST_APPLICATION_URI,
 } from '@/tests/fixtures';
 import { DataAPIClient } from '@/src/client';
 import { Db, ObjectId, UUID, VectorDoc } from '@/src/data-api';
@@ -27,10 +27,6 @@ import { DEFAULT_NAMESPACE } from '@/src/api';
 
 describe('integration.misc.quickstart', () => {
   let db: Db;
-
-  const idAndRegion = TEST_ASTRA_URI.split('.')[0].split('https://')[1].split('-');
-  const id = idAndRegion.slice(0, 5).join('-');
-  const region = idAndRegion.slice(5).join('-');
 
   before(async function () {
     [, db] = await initTestObjects(this);
@@ -50,8 +46,8 @@ describe('integration.misc.quickstart', () => {
         idea: string,
       }
 
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
-      const db = client.db(TEST_ASTRA_URI);
+      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
+      const db = client.db(TEST_APPLICATION_URI);
 
       const collection = await db.createCollection<Idea>('vector_5_collection', { vector: { dimension: 5, metric: 'cosine' } });
 
@@ -101,14 +97,18 @@ describe('integration.misc.quickstart', () => {
     });
   });
 
-  describe('[prod] admin-quickstart', () => {
+  describe('[not-dev] [astra] admin-quickstart', () => {
     before(function () {
-      assertTestsEnabled(this, 'PROD');
+      assertTestsEnabled(this, 'NOT-DEV', 'ASTRA');
     });
 
     it('works', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
       const admin = client.admin();
+
+      const idAndRegion = TEST_APPLICATION_URI.split('.')[0].split('https://')[1].split('-');
+      const id = idAndRegion.slice(0, 5).join('-');
+      const region = idAndRegion.slice(5).join('-');
 
       const databases = await admin.listDatabases();
       const dbInfo = databases.find(db => db.id === id);
@@ -141,8 +141,8 @@ describe('integration.misc.quickstart', () => {
         friendId?: string,
       }
 
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
-      const db = client.db(TEST_ASTRA_URI);
+      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
+      const db = client.db(TEST_APPLICATION_URI);
 
       const collection = await db.createCollection<Person>('my_collection', { defaultId: { type: 'uuidv7' } });
 
@@ -169,8 +169,8 @@ describe('integration.misc.quickstart', () => {
 
   describe('portal-quickstart', () => {
     it('works', async () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
-      const db = client.db(TEST_ASTRA_URI, { namespace: OTHER_NAMESPACE });
+      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
+      const db = client.db(TEST_APPLICATION_URI, { namespace: OTHER_NAMESPACE });
       assert.ok(Array.isArray(await db.listCollections()));
     });
   });

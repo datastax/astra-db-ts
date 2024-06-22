@@ -14,7 +14,7 @@
 // noinspection JSDeprecatedSymbols
 
 import { Db, mkDb, validateDbOpts } from '@/src/data-api/db';
-import { AstraAdmin, mkAdmin, validateAdminOpts } from '@/src/devops/astra-admin';
+import { AstraAdmin } from '@/src/devops/astra-admin';
 import {
   Caller,
   CustomHttpClientOptions,
@@ -31,7 +31,8 @@ import { FetchNative } from '@/src/api/fetch/fetch-native';
 import { LIB_NAME } from '@/src/version';
 import { Fetcher } from '@/src/api/fetch/types';
 import { DbSpawnOptions } from '@/src/data-api';
-import { nullish, TokenProvider } from '@/src/common';
+import { isNullish, nullish, TokenProvider, validateDataAPIEnv } from '@/src/common';
+import { validateAdminOpts } from '@/src/devops/utils';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -55,7 +56,7 @@ export type DataAPIClientEvents =
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
  *
- * Should probably never need to be used directly.
+ * Should never need to be used directly.
  *
  * @public
  */
@@ -72,41 +73,82 @@ export const DataAPIClientEventEmitterBase = (() => {
  * [conceptual hierarchy](https://github.com/datastax/astra-db-ts/tree/signature-cleanup?tab=readme-ov-file#abstraction-diagram)
  * of the SDK.
  *
- * The client takes in a default token, which can be overridden by a stronger/weaker token when spawning a new
+ * The client may take in a default token, which can be overridden by a stronger/weaker token when spawning a new
  * {@link Db} or {@link AstraAdmin} instance.
  *
- * It also takes in a set of default options (see {@link DataAPIClientOptions}) that may also be overridden as necessary.
+ * It also takes in a set of default options (see {@link DataAPIClientOptions}) that may also generally be overridden as necessary.
+ *
+ * **Depending on the Data API backend used, you may need to set the environment option to "dse", "hcd", etc.** See
+ * {@link DataAPIEnvironment} for all possible backends. It defaults to "astra".
  *
  * @example
  * ```typescript
- * const client = new DataAPIClient('AstraCS:...');
+ * // Client with default token
+ * const client1 = new DataAPIClient('AstraCS:...');
  *
- * const db1 = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
- * const db2 = client.db('my-database', 'us-east1');
+ * // Client with no default token; must provide token in .db() or .admin()
+ * const client2 = new DataAPIClient();
+ *
+ * // Client connecting to a local DSE instance
+ * const dseToken = new UsernamePasswordTokenProvider('username', 'password');
+ * const client3 = new DataAPIClient(dseToken, { environment: 'dse' });
+ *
+ * const db1 = client1.db('https://<db_id>-<region>.apps.astra.datastax.com');
+ * const db2 = client1.db('<db_id>', '<region>');
  *
  * const coll = await db1.collection('my-collection');
  *
- * const admin1 = client.admin();
- * const admin2 = client.admin({ adminToken: '<stronger_token>' });
+ * const admin1 = client1.admin();
+ * const admin2 = client1.admin({ adminToken: '<stronger_token>' });
  *
- * console.log(await coll.insertOne({ name: 'Lordi' }));
+ * console.log(await coll.insertOne({ name: 'RATATATA' }));
  * console.log(await admin1.listDatabases());
  * ```
  *
  * @public
+ *
+ * @see DataAPIEnvironment
  */
 export class DataAPIClient extends DataAPIClientEventEmitterBase {
   readonly #options: InternalRootClientOpts;
 
   /**
-   * Constructs a new instance of the {@link DataAPIClient}.
+   * Constructs a new instance of the {@link DataAPIClient} without a default token. The token will instead need to
+   * be specified when calling `.db()` or `.admin()`.
+   *
+   * Prefer this method when using a db-scoped token instead of a more universal token.
+   *
+   * @example
+   * ```typescript
+   * const client = new DataAPIClient();
+   *
+   * // OK
+   * const db1 = client.db('<db_id>', '<region>', { token: 'AstraCS:...' });
+   *
+   * // Will throw error as no token is ever provided
+   * const db2 = client.db('<db_id>', '<region>');
+   * ```
    *
    * @param options - The default options to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    */
   constructor(options?: DataAPIClientOptions | nullish)
 
   /**
-   * Constructs a new instance of the {@link DataAPIClient}.
+   * Constructs a new instance of the {@link DataAPIClient} with a default token. This token will be used everywhere
+   * if no overriding token is provided in `.db()` or `.admin()`.
+   *
+   * Prefer this method when using a universal/admin-scoped token.
+   *
+   * @example
+   * ```typescript
+   * const client = new DataAPIClient('<default_token>');
+   *
+   * // OK
+   * const db1 = client.db('<db_id>', '<region>', { token: '<weaker_token>' });
+   *
+   * // OK; will use <default_token>
+   * const db2 = client.db('<db_id>', '<region>');
+   * ```
    *
    * @param token - The default token to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    * @param options - The default options to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
@@ -116,10 +158,10 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
   constructor(tokenOrOptions?: string | TokenProvider | DataAPIClientOptions | null, maybeOptions?: DataAPIClientOptions | null) {
     super();
 
-    const tokenPassed = (typeof tokenOrOptions === 'string' || tokenOrOptions instanceof TokenProvider || maybeOptions !== undefined);
+    const tokenPassed = (typeof tokenOrOptions === 'string' || tokenOrOptions instanceof TokenProvider || arguments.length > 1);
 
     const token = (tokenPassed)
-      ? tokenOrOptions
+      ? tokenOrOptions as string | TokenProvider | nullish
       : undefined;
 
     const options = (tokenPassed)
@@ -128,21 +170,18 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
 
     validateRootOpts(options);
 
-    const dbToken = TokenProvider.parseToken(options?.dbOptions?.token ?? token);
-    const adminToken = TokenProvider.parseToken(options?.adminOptions?.adminToken ?? token);
-
     this.#options = {
-      ...options,
+      environment: options?.environment ?? 'astra',
       fetchCtx: buildFetchCtx(options || undefined),
       dbOptions: {
         monitorCommands: false,
         ...options?.dbOptions,
-        token: dbToken,
+        token: TokenProvider.parseToken(options?.dbOptions?.token ?? token),
       },
       adminOptions: {
         monitorCommands: false,
         ...options?.adminOptions,
-        adminToken: adminToken,
+        adminToken: TokenProvider.parseToken(options?.dbOptions?.token ?? token),
       },
       emitter: this,
       userAgent: buildUserAgent(options?.caller),
@@ -173,6 +212,8 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    *   namespace: 'my-namespace',
    *   useHttp2: false,
    * });
+   *
+   * const db3 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', { token: 'AstraCS:...' });
    * ```
    *
    * @remarks
@@ -206,6 +247,8 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    *   namespace: 'my-namespace',
    *   useHttp2: false,
    * });
+   *
+   * const db3 = client.db('a6a1d8d6-31bc-4af8-be57-377566f345bf', 'us-east1', { token: 'AstraCS:...' });
    * ```
    *
    * @remarks
@@ -248,7 +291,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * @returns A new {@link AstraAdmin} instance.
    */
   public admin(options?: AdminSpawnOptions): AstraAdmin {
-    return mkAdmin(this.#options, options);
+    return new AstraAdmin(this.#options, options);
   }
 
   /**
@@ -325,17 +368,17 @@ function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
   };
 }
 
-function tryLoadFetchH2(clientType: string | undefined, options: DataAPIClientOptions | undefined): Fetcher {
+function tryLoadFetchH2(clientType: string | nullish, options: DataAPIClientOptions | undefined): Fetcher {
   try {
     const httpOptions = options?.httpOptions as DefaultHttpClientOptions | undefined;
 
     const preferHttp2 = httpOptions?.preferHttp2
       ?? getDeprecatedPrefersHttp2(options)
-      ?? true
+      ?? true;
 
     return new FetchH2(httpOptions, preferHttp2);
   } catch (e) {
-    if (clientType === undefined) {
+    if (isNullish(clientType)) {
       return new FetchNative();
     } else {
       throw e;
@@ -361,6 +404,7 @@ function validateRootOpts(opts: DataAPIClientOptions | undefined | null) {
   validateDbOpts(opts.dbOptions);
   validateAdminOpts(opts.adminOptions);
   validateHttpOpts(opts.httpOptions);
+  validateDataAPIEnv(opts.environment);
 }
 
 function validateHttpOpts(opts: DataAPIHttpOptions | undefined | null) {
@@ -377,7 +421,7 @@ function validateHttpOpts(opts: DataAPIHttpOptions | undefined | null) {
   });
   validateOption('httpOptions.maxTimeMS', opts.maxTimeMS, 'number');
 
-  if (opts.client === 'default' || opts.client === undefined) {
+  if (opts.client === 'default' || isNullish(opts.client)) {
     validateOption('httpOptions.preferHttp2', opts.preferHttp2, 'boolean');
 
     validateOption('httpOptions.http1 options', opts.http1, 'object', false, (http1) => {

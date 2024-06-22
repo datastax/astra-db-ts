@@ -24,7 +24,7 @@ describe('integration.data-api.collection.find-one-and-delete', () => {
   });
 
   beforeEach(async () => {
-    await collection.deleteAll();
+    await collection.deleteMany({});
   });
 
   it('should findOneAndDelete', async () => {

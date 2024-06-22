@@ -32,7 +32,7 @@ describe('integration.data-api.collection.finds', () => {
   });
 
   beforeEach(async () => {
-    await collection.deleteAll();
+    await collection.deleteMany({});
   });
 
   it('should find & findOne document', async () => {

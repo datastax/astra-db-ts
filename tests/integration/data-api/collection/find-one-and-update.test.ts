@@ -24,7 +24,7 @@ describe('integration.data-api.collection.find-one-and-update', () => {
   });
 
   beforeEach(async () => {
-    await collection.deleteAll();
+    await collection.deleteMany({});
   });
 
   it('should findOneAndUpdate', async () => {
@@ -164,7 +164,7 @@ describe('integration.data-api.collection.find-one-and-update', () => {
   });
 
   it('should findOneAndUpdate with sort', async () => {
-    await collection.deleteAll();
+    await collection.deleteMany({});
     await collection.insertMany([
       { username: 'a' },
       { username: 'c' },

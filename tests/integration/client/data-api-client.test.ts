@@ -18,38 +18,44 @@ import assert from 'assert';
 import {
   assertTestsEnabled,
   DEFAULT_COLLECTION_NAME,
+  ENVIRONMENT,
   initTestObjects,
   OTHER_NAMESPACE,
   TEST_APPLICATION_TOKEN,
-  TEST_ASTRA_URI,
+  TEST_APPLICATION_URI,
 } from '@/tests/fixtures';
 import { DataAPIResponseError, DataAPITimeoutError, Db } from '@/src/data-api';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
-import { DEFAULT_NAMESPACE, DEFAULT_TIMEOUT } from '@/src/api';
+import { DEFAULT_DATA_API_PATHS, DEFAULT_NAMESPACE, DEFAULT_TIMEOUT } from '@/src/api';
 
 describe('integration.client.data-api-client', () => {
   describe('db', () => {
     it('properly connects to a db by endpoint', async () => {
-      const db = new DataAPIClient(TEST_APPLICATION_TOKEN).db(TEST_ASTRA_URI);
+      const db = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT }).db(TEST_APPLICATION_URI);
       const collections = await db.listCollections();
       assert.ok(Array.isArray(collections));
     });
 
-    it('[prod] properly connects to a db by id and region', async function () {
-      assertTestsEnabled(this, 'PROD');
-      const idAndRegion = TEST_ASTRA_URI.split('.')[0].split('https://')[1].split('-');
+    it('[not-dev] [astra] properly connects to a db by id and region', async function () {
+      assertTestsEnabled(this, 'NOT-DEV', 'ASTRA');
+      const idAndRegion = TEST_APPLICATION_URI.split('.')[0].split('https://')[1].split('-');
       const id = idAndRegion.slice(0, 5).join('-');
       const region = idAndRegion.slice(5).join('-');
       const db = new DataAPIClient(TEST_APPLICATION_TOKEN).db(id, region);
       const collections = await db.listCollections();
       assert.ok(Array.isArray(collections));
     });
+
+    it('lets Data API deal with throwing missing token error', async () => {
+      const db = new DataAPIClient({ environment: ENVIRONMENT }).db(TEST_APPLICATION_URI);
+      await assert.rejects(() => db.listCollections(), { message: 'Authentication failed; is your token valid?' });
+    });
   });
 
   describe('close', () => {
     it('should not allow operations after closing the client', async () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
-      const db = client.db(TEST_ASTRA_URI);
+      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
+      const db = client.db(TEST_APPLICATION_URI);
       await client.close();
 
       try {
@@ -64,8 +70,8 @@ describe('integration.client.data-api-client', () => {
 
   describe('asyncDispose', () => {
     it('should not allow operations after using the client', async () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
-      const db = client.db(TEST_ASTRA_URI);
+      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
+      const db = client.db(TEST_APPLICATION_URI);
 
       {
         await using _client = client;
@@ -89,13 +95,13 @@ describe('integration.client.data-api-client', () => {
     });
 
     beforeEach(async () => {
-      await db.collection(DEFAULT_COLLECTION_NAME).deleteAll();
-      await db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE }).deleteAll();
+      await db.collection(DEFAULT_COLLECTION_NAME).deleteMany({});
+      await db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE }).deleteMany({});
     });
 
     it('should not emit any command events when not enabled', async () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
-      const db = client.db(TEST_ASTRA_URI);
+      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
+      const db = client.db(TEST_APPLICATION_URI);
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
       client.on('commandStarted', () => assert.fail('should not have emitted commandStarted event'));
@@ -106,8 +112,8 @@ describe('integration.client.data-api-client', () => {
     });
 
     it('should not emit any command events when set to false', async () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { monitorCommands: false } });
-      const db = client.db(TEST_ASTRA_URI);
+      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { monitorCommands: false }, environment: ENVIRONMENT });
+      const db = client.db(TEST_APPLICATION_URI);
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
       client.on('commandStarted', () => assert.fail('should not have emitted commandStarted event'));
@@ -118,8 +124,8 @@ describe('integration.client.data-api-client', () => {
     });
 
     it('should allow cross-collection monitoring of successful commands when enabled', async () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { monitorCommands: true } });
-      const db = client.db(TEST_ASTRA_URI);
+      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { monitorCommands: true }, environment: ENVIRONMENT });
+      const db = client.db(TEST_APPLICATION_URI);
       const collection1 = db.collection(DEFAULT_COLLECTION_NAME);
       const collection2 = db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
 
@@ -161,10 +167,10 @@ describe('integration.client.data-api-client', () => {
       assert.strictEqual(startedEvents[1].collection, DEFAULT_COLLECTION_NAME);
       assert.strictEqual(succeededEvents[1].collection, DEFAULT_COLLECTION_NAME);
 
-      assert.strictEqual(startedEvents[0].url, `${TEST_ASTRA_URI}/api/json/v1/${DEFAULT_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(succeededEvents[0].url, `${TEST_ASTRA_URI}/api/json/v1/${DEFAULT_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(startedEvents[1].url, `${TEST_ASTRA_URI}/api/json/v1/${OTHER_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(succeededEvents[1].url, `${TEST_ASTRA_URI}/api/json/v1/${OTHER_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(startedEvents[0].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(succeededEvents[0].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(startedEvents[1].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${OTHER_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(succeededEvents[1].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${OTHER_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
 
       assert.strictEqual(startedEvents[0].timeout, DEFAULT_TIMEOUT);
       assert.ok(succeededEvents[0].duration > 0);
@@ -181,8 +187,8 @@ describe('integration.client.data-api-client', () => {
     });
 
     it('should allow monitoring of failed commands when enabled', async () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
-      const db = client.db(TEST_ASTRA_URI, { monitorCommands: true });
+      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
+      const db = client.db(TEST_APPLICATION_URI, { monitorCommands: true });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
       let startedEvent: CommandStartedEvent | undefined;
@@ -221,8 +227,8 @@ describe('integration.client.data-api-client', () => {
       assert.strictEqual(startedEvent.collection, DEFAULT_COLLECTION_NAME);
       assert.strictEqual(failedEvent.collection, DEFAULT_COLLECTION_NAME);
 
-      assert.strictEqual(startedEvent.url, `${TEST_ASTRA_URI}/api/json/v1/${DEFAULT_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(failedEvent.url, `${TEST_ASTRA_URI}/api/json/v1/${DEFAULT_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(startedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(failedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
 
       assert.strictEqual(startedEvent.timeout, DEFAULT_TIMEOUT);
       assert.ok(failedEvent.duration > 0);
@@ -236,8 +242,8 @@ describe('integration.client.data-api-client', () => {
     });
 
     it('should allow monitoring of timed-out commands when enabled', async () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
-      const db = client.db(TEST_ASTRA_URI, { monitorCommands: true });
+      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
+      const db = client.db(TEST_APPLICATION_URI, { monitorCommands: true });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
       let startedEvent: CommandStartedEvent | undefined;
@@ -274,8 +280,8 @@ describe('integration.client.data-api-client', () => {
       assert.strictEqual(startedEvent.collection, DEFAULT_COLLECTION_NAME);
       assert.strictEqual(failedEvent.collection, DEFAULT_COLLECTION_NAME);
 
-      assert.strictEqual(startedEvent.url, `${TEST_ASTRA_URI}/api/json/v1/${DEFAULT_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(failedEvent.url, `${TEST_ASTRA_URI}/api/json/v1/${DEFAULT_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(startedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(failedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
 
       assert.strictEqual(startedEvent.timeout, 1);
       assert.ok(failedEvent.duration > 0);
@@ -285,14 +291,6 @@ describe('integration.client.data-api-client', () => {
 
       assert.ok(failedEvent.error instanceof DataAPITimeoutError);
       assert.strictEqual(failedEvent.error.timeout, 1);
-    });
-
-    it('throws an error if passing in endpoint and keyspace name as a string', () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
-      assert.throws(
-        () => client.db(TEST_ASTRA_URI, OTHER_NAMESPACE),
-        { message: 'Unexpected db() argument: database id can\'t start with "https://". Did you mean to call `.db(endpoint, { namespace })`?' }
-      );
     });
   });
 });

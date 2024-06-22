@@ -20,11 +20,11 @@ import { DevOpsAPIResponseError } from '@/src/devops';
 import { DEFAULT_NAMESPACE, HttpMethods } from '@/src/api';
 import { TimeoutManager } from '@/src/api/timeout-managers';
 
-describe('integration.devops.lifecycle', () => {
+describe('[admin] [long] [not-dev] integration.devops.lifecycle', () => {
   let client: DataAPIClient;
 
   before(async function () {
-    assertTestsEnabled(this, 'ADMIN', 'LONG', 'PROD');
+    assertTestsEnabled(this, 'ADMIN', 'LONG', 'NOT-DEV', 'ASTRA');
 
     [client] = await initTestObjects(this);
 
@@ -35,7 +35,7 @@ describe('integration.devops.lifecycle', () => {
     }
   });
 
-  it('[admin] works', async () => {
+  it('works', async () => {
     try {
       const admin = client.admin();
 

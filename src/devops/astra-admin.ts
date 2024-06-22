@@ -25,9 +25,9 @@ import { Db, DbSpawnOptions } from '@/src/data-api';
 import { DEFAULT_DEVOPS_API_ENDPOINT, DEFAULT_NAMESPACE, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
 import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
 import { InternalRootClientOpts } from '@/src/client/types';
-import { validateOption } from '@/src/data-api/utils';
 import { mkDb } from '@/src/data-api/db';
 import { TokenProvider, WithTimeout } from '@/src/common';
+import { validateAdminOpts } from '@/src/devops/utils';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -65,19 +65,25 @@ export class AstraAdmin {
    *
    * @internal
    */
-  constructor(options: InternalRootClientOpts) {
-    const adminOpts = options.adminOptions;
+  constructor(rootOpts: InternalRootClientOpts, adminOpts?: AdminSpawnOptions) {
+    validateAdminOpts(adminOpts);
 
-    this.#defaultOpts = options;
+    const combinedAdminOpts = {
+      ...rootOpts.adminOptions,
+      ...adminOpts,
+      adminToken: TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken),
+    };
+
+    this.#defaultOpts = rootOpts;
 
     Object.defineProperty(this, '_httpClient', {
       value: new DevOpsAPIHttpClient({
-        baseUrl: adminOpts.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINT,
-        applicationToken: adminOpts.adminToken,
-        monitorCommands: adminOpts.monitorCommands,
-        emitter: options.emitter,
-        fetchCtx: options.fetchCtx,
-        userAgent: options.userAgent,
+        baseUrl: combinedAdminOpts.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINT,
+        applicationToken: combinedAdminOpts.adminToken,
+        monitorCommands: combinedAdminOpts.monitorCommands,
+        emitter: rootOpts.emitter,
+        fetchCtx: rootOpts.fetchCtx,
+        userAgent: rootOpts.userAgent,
       }),
       enumerable: false,
     });
@@ -230,7 +236,7 @@ export class AstraAdmin {
   public dbAdmin(id: string, region: string, options?: DbSpawnOptions): AstraDbAdmin;
 
   public dbAdmin(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): AstraDbAdmin {
-    // @ts-expect-error - calls internal representation of method
+    /* @ts-expect-error - calls internal representation of method */
     return this.db(endpointOrId, regionOrOptions, maybeOptions).admin(this.#defaultOpts.adminOptions);
   }
 
@@ -415,30 +421,4 @@ export class AstraAdmin {
       options,
     });
   }
-}
-
-/**
- * @internal
- */
-export function mkAdmin(rootOpts: InternalRootClientOpts, options?: AdminSpawnOptions): AstraAdmin {
-  validateAdminOpts(options);
-
-  return new AstraAdmin({
-    ...rootOpts,
-    adminOptions: {
-      ...rootOpts.adminOptions,
-      ...options,
-      adminToken: TokenProvider.parseToken(options?.adminToken ?? rootOpts.adminOptions.adminToken),
-    },
-  });
-}
-
-/**
- * @internal
- */
-export function validateAdminOpts(opts: AdminSpawnOptions | undefined) {
-  validateOption('adminOptions', opts, 'object', false, (opts) => {
-    validateOption('adminOptions.monitorCommands', opts.monitorCommands, 'boolean');
-    validateOption('adminOptions.endpointUrl', opts.endpointUrl, 'string');
-  });
 }

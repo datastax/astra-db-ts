@@ -13,12 +13,13 @@
 // limitations under the License.
 
 import { TokenProvider } from '@/src/common/token-providers/token-provider';
+import { nullish } from '@/src/common';
 
 /**
  * The most basic token provider, which simply returns the token it was instantiated with.
  *
  * Generally, anywhere this can be used in the public `astra-db-ts` interfaces, you may also pass in a plain
- * string, which is transformed into a {@link StaticTokenProvider} under the hood.
+ * string or null/undefined, which is transformed into a {@link StaticTokenProvider} under the hood.
  *
  * @example
  * ```
@@ -35,14 +36,14 @@ import { TokenProvider } from '@/src/common/token-providers/token-provider';
  * @public
  */
 export class StaticTokenProvider extends TokenProvider {
-  readonly #token: string;
+  readonly #token: string | nullish;
 
   /**
    * Constructs an instead of the {@link StaticTokenProvider}.
    *
    * @param token - The token to regurgitate in `getTokenAsString`
    */
-  constructor(token: string) {
+  constructor(token: string | nullish) {
     super();
     this.#token = token;
   }
@@ -52,7 +53,7 @@ export class StaticTokenProvider extends TokenProvider {
    *
    * @returns the string the token provider was instantiated with.
    */
-  override getTokenAsString(): Promise<string> {
+  override getToken(): Promise<string | nullish> {
     return Promise.resolve(this.#token);
   }
 }

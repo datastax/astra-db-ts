@@ -34,20 +34,7 @@ declare const __error: unique symbol;
  *
  * @public
  */
-export type TypeErr<S> =  { [__error]: S };
-
-/**
- * @internal
- */
-export function takeWhile<T>(arr: T[], pred: (x: T) => boolean): T[] {
-  const result: T[] = [];
-
-  for (let i = 0, n = arr.length; i < n && pred(arr[i]); i++) {
-    result.push(arr[i]);
-  }
-
-  return result;
-}
+export type TypeErr<S> = { [__error]: S };
 
 /**
  * @internal

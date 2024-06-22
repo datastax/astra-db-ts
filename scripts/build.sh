@@ -13,7 +13,7 @@ yes | npx tsc --project tsconfig.build.json
 yes | npx tsc-alias -p tsconfig.build.json
 
 # Creates the rollup .d.ts, generates an API report in etc/, and cleans up any temp files
-npm run api-extractor && rm -r ./temp
+yes | npx api-extractor run -c ./api-extractor.jsonc --local && rm -r ./temp
 
 # Uses a more succinct licence notice + removes block comments (the rollup .d.ts file already contains the ts-doc)
 find ./dist -type f -name '*.js' -exec node scripts/reduce-comments.js {} \;

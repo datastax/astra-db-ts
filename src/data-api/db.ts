@@ -13,7 +13,13 @@
 // limitations under the License.
 
 import { Collection, CollectionAlreadyExistsError, DbSpawnOptions, SomeDoc } from '@/src/data-api';
-import { DataAPIHttpClient, DEFAULT_DATA_API_PATH, DEFAULT_NAMESPACE, RawDataAPIResponse } from '@/src/api';
+import {
+  DataAPIHttpClient,
+  DEFAULT_DATA_API_PATHS,
+  DEFAULT_NAMESPACE,
+  EmissionStrategy,
+  RawDataAPIResponse,
+} from '@/src/api';
 import {
   CreateCollectionOptions,
   FullCollectionInfo,
@@ -21,17 +27,18 @@ import {
   WithNamespace,
 } from '@/src/data-api/types';
 import { DatabaseInfo } from '@/src/devops/types/admin/database-info';
-import { AstraDbAdmin, mkDbAdmin } from '@/src/devops/astra-db-admin';
+import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
 import { RunCommandOptions } from '@/src/data-api/types/collections/command';
-import { WithTimeout } from '@/src/common/types';
+import { DataAPIEnvironment, nullish, WithTimeout } from '@/src/common/types';
 import { DropCollectionOptions } from '@/src/data-api/types/collections/drop-collection';
 import { extractDbIdFromUrl, validateOption } from '@/src/data-api/utils';
 import { CreateCollectionCommand } from '@/src/data-api/types/collections/create-collection';
 import { ListCollectionsCommand } from '@/src/data-api/types/collections/list-collection';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-collection';
-import { AdminSpawnOptions } from '@/src/devops';
-import { TokenProvider } from '@/src/common';
+import { AdminSpawnOptions, DbAdmin } from '@/src/devops';
+import { TokenProvider, validateDataAPIEnv } from '@/src/common';
+import { DataAPIDbAdmin } from '@/src/devops/data-api-db-admin';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -111,26 +118,31 @@ export class Db {
    *
    * @internal
    */
-  constructor(endpoint: string, options: InternalRootClientOpts) {
-    const dbOpts = options.dbOptions;
+  constructor(endpoint: string, rootOpts: InternalRootClientOpts, dbOpts: DbSpawnOptions | nullish) {
+    this.#defaultOpts = rootOpts;
+
+    const combinedDbOpts = {
+      ...rootOpts.dbOptions,
+      ...dbOpts,
+      token: TokenProvider.parseToken(dbOpts?.token ?? rootOpts.dbOptions.token),
+    }
 
     Object.defineProperty(this, 'namespace', {
-      value: dbOpts.namespace ?? DEFAULT_NAMESPACE,
+      value: combinedDbOpts.namespace ?? DEFAULT_NAMESPACE,
       writable: false,
     });
-
-    this.#defaultOpts = options;
 
     Object.defineProperty(this, '_httpClient', {
       value: new DataAPIHttpClient({
         baseUrl: endpoint,
-        applicationToken: dbOpts.token,
-        baseApiPath: dbOpts.dataApiPath || DEFAULT_DATA_API_PATH,
-        emitter: options.emitter,
-        monitorCommands: dbOpts.monitorCommands,
-        fetchCtx: options.fetchCtx,
+        applicationToken: combinedDbOpts.token,
+        baseApiPath: combinedDbOpts.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment],
+        emitter: rootOpts.emitter,
+        monitorCommands: combinedDbOpts.monitorCommands,
+        fetchCtx: rootOpts.fetchCtx,
         namespace: this.namespace,
-        userAgent: options.userAgent,
+        userAgent: rootOpts.userAgent,
+        emissionStrategy: EmissionStrategy.Normal,
       }),
       enumerable: false,
     });
@@ -157,10 +169,10 @@ export class Db {
    * Spawns a new {@link AstraDbAdmin} instance for this database, used for performing administrative operations
    * on the database, such as managing namespaces, or getting database information.
    *
-   * **NB. Only available for Astra databases.**
-   *
    * The given options will override any default options set when creating the {@link DataAPIClient} through
    * a deep merge (i.e. unset properties in the options object will just default to the default options).
+   *
+   * **If using a non-Astra backend, the `environment` option MUST be set as it is on the `DataAPIClient`**
    *
    * @example
    * ```typescript
@@ -177,11 +189,54 @@ export class Db {
    *
    * @throws Error - if the database is not an Astra database.
    */
-  public admin(options?: AdminSpawnOptions): AstraDbAdmin {
-    if (!this._id) {
-      throw new Error('Admin operations are only supported on Astra databases');
+  public admin(options?: AdminSpawnOptions & { environment?: 'astra' }): AstraDbAdmin
+
+  /**
+   * Spawns a new {@link DataAPIDbAdmin} instance for this database, used for performing administrative operations
+   * on the database, such as managing namespaces, or getting database information.
+   *
+   * The given options will override any default options set when creating the {@link DataAPIClient} through
+   * a deep merge (i.e. unset properties in the options object will just default to the default options).
+   *
+   * **If using a non-Astra backend, the `environment` option MUST be set as it is on the `DataAPIClient`**
+   *
+   * @example
+   * ```typescript
+   * const client = new DataAPIClient({ environment: 'dse' });
+   * const db = client.db('*ENDPOINT*', { token });
+   *
+   * // OK
+   * const admin1 = db.admin({ environment: 'dse' });
+   *
+   * // Will throw "mismatching environments" error
+   * const admin2 = db.admin();
+   *
+   * const namespaces = await admin1.listNamespaces();
+   * console.log(namespaces);
+   * ```
+   *
+   * @param options - Any options to override the default options set when creating the {@link DataAPIClient}.
+   *
+   * @returns A new {@link AstraDbAdmin} instance for this database instance.
+   *
+   * @throws Error - if the database is not an Astra database.
+   */
+  public admin(options: AdminSpawnOptions & { environment: Exclude<DataAPIEnvironment, 'astra'> }): DataAPIDbAdmin
+
+  public admin(options?: AdminSpawnOptions & { environment?: DataAPIEnvironment }): DbAdmin {
+    const environment = options?.environment ?? 'astra';
+
+    validateDataAPIEnv(environment);
+
+    if (this.#defaultOpts.environment !== environment) {
+      throw new Error('Mismatching environment—environment option is not the same as set in the DataAPIClient');
     }
-    return mkDbAdmin(this, this.#defaultOpts, options);
+
+    if (environment === 'astra') {
+      return new AstraDbAdmin(this, this.#defaultOpts, options);
+    }
+
+    return new DataAPIDbAdmin(this, this._httpClient, options);
   }
 
   /**
@@ -390,7 +445,7 @@ export class Db {
 
     const resp = await this._httpClient.executeCommand(command, options);
 
-    return resp.status?.ok === 1 && !resp.errors;
+    return resp.status?.ok === 1;
   }
 
   /**
@@ -439,7 +494,7 @@ export class Db {
     const command: ListCollectionsCommand = {
       findCollections: {
         options: {
-          // Is 'nameOnly' instead of 'explain' for Mongo-compatibility reasons
+          /* Is 'nameOnly' instead of 'explain' for Mongo-compatibility reasons */
           explain: options?.nameOnly !== true,
         },
       },
@@ -482,35 +537,28 @@ export class Db {
 /**
  * @internal
  */
-export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions) {
-  const options = (typeof regionOrOptions === 'string')
+export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, regionOrOptions: string | DbSpawnOptions | nullish, maybeOptions: DbSpawnOptions | nullish) {
+  const dbOpts = (typeof regionOrOptions === 'string')
     ? maybeOptions
     : regionOrOptions;
 
-  validateDbOpts(options);
+  validateDbOpts(dbOpts);
 
-  if (typeof regionOrOptions === 'string' && endpointOrId.startsWith('https://')) {
-    throw new Error('Unexpected db() argument: database id can\'t start with "https://". Did you mean to call `.db(endpoint, { namespace })`?');
+  if (typeof regionOrOptions === 'string' && (endpointOrId.startsWith('https://') || endpointOrId.startsWith('http://'))) {
+    throw new Error('Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { namespace })`?');
   }
  
   const endpoint = (typeof regionOrOptions === 'string')
     ? 'https://' + endpointOrId + '-' + regionOrOptions + '.apps.astra.datastax.com'
     : endpointOrId;
 
-  return new Db(endpoint, {
-    ...rootOpts,
-    dbOptions: {
-      ...rootOpts.dbOptions,
-      ...options,
-      token: TokenProvider.parseToken(options?.token ?? rootOpts.dbOptions.token),
-    },
-  });
+  return new Db(endpoint, rootOpts, dbOpts);
 }
 
 /**
  * @internal
  */
-export function validateDbOpts(opts: DbSpawnOptions | undefined) {
+export function validateDbOpts(opts: DbSpawnOptions | nullish) {
   validateOption('dbOptions', opts, 'object');
 
   if (!opts) {

@@ -15,194 +15,192 @@
 
 import { DataAPIClient } from '@/src/client';
 import assert from 'assert';
-import { DEFAULT_DATA_API_PATH, FetcherResponseInfo } from '@/src/api';
+import { FetcherResponseInfo } from '@/src/api';
 import { FetchH2 } from '@/src/api/fetch/fetch-h2';
 import { FetcherRequestInfo } from '@/src/api/fetch/types';
-import { DSEUsernamePasswordTokenProvider } from '@/src/common';
-import { TEST_ASTRA_URI } from '@/tests/fixtures';
+import { DataAPIEnvironments, UsernamePasswordTokenProvider } from '@/src/common';
+import { DEMO_APPLICATION_URI, OTHER_NAMESPACE, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/fixtures';
 
 describe('unit.client.data-api-client', () => {
-  const endpoint = TEST_ASTRA_URI;
+  it('should accept valid tokens', () => {
+    assert.doesNotThrow(() => new DataAPIClient());
+    assert.doesNotThrow(() => new DataAPIClient('token'));
+    assert.doesNotThrow(() => new DataAPIClient(new UsernamePasswordTokenProvider('username', 'password')));
+  })
 
-  const idAndRegion = endpoint.split('.')[0].split('https://')[1].split('-');
-  const id = idAndRegion.slice(0, 5).join('-');
-  const region = idAndRegion.slice(5).join('-');
+  it('should throw if an invalid token is passed', () => {
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient(3));
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient({ logLevel: 'warn' }, {}));
+  });
 
-  describe('constructor tests', () => {
-    it('should accept valid tokens', () => {
-      assert.doesNotThrow(() => new DataAPIClient());
-      assert.doesNotThrow(() => new DataAPIClient('token'));
-      assert.doesNotThrow(() => new DataAPIClient(new DSEUsernamePasswordTokenProvider('username', 'password')));
-    })
+  it('should accept null/undefined/{} for options', () => {
+    assert.doesNotThrow(() => new DataAPIClient('dummy-token', null));
+    assert.doesNotThrow(() => new DataAPIClient('dummy-token', undefined));
+    assert.doesNotThrow(() => new DataAPIClient('dummy-token', {}));
+  });
 
-    it('should throw if an invalid token is passed', () => {
+  it('should accept valid environments', () => {
+    // @ts-expect-error - null technically allowed
+    assert.doesNotThrow(() => new DataAPIClient('dummy-token', { environment: null }));
+    assert.doesNotThrow(() => new DataAPIClient('dummy-token', { environment: undefined }));
+
+    for (const environment of DataAPIEnvironments) {
+      assert.doesNotThrow(() => new DataAPIClient('dummy-token', { environment }));
+    }
+  });
+
+  it('should throw on invalid environments', () => {
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient('dummy-token', { environment: [] }));
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient('dummy-token', { environment: 'asdasd' }));
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient('dummy-token', { environment: 32 }));
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient('dummy-token', { environment: 'DSE' }));
+  });
+
+  it('should accept valid callers', () => {
+    // @ts-expect-error - null technically allowed
+    assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: null }));
+    assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: undefined }));
+    assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: ['a', 'b'] }));
+    assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: [['a', 'b'], ['c', 'd']] }));
+  });
+
+  it('should throw on invalid callers', () => {
+    assert.throws(() => new DataAPIClient('dummy-token', { caller: [] }));
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient('dummy-token', { caller: 'invalid-type' }));
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient('dummy-token', { caller: [1, 'b'] }));
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient('dummy-token', { caller: ['a', 2] }));
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient('dummy-token', { caller: [[1]] }));
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient('dummy-token', { caller: [['a', 'b', 'c']] }));
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient('dummy-token', { caller: [[]] }));
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient('dummy-token', { caller: [['a', 'b'], 3] }));
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient('dummy-token', { caller: [{}] }));
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient('dummy-token', { caller: { 0: ['name', 'version'] } }));
+  });
+
+  it('should only accept valid http client types', () => {
+    assert.doesNotThrow(() => new DataAPIClient('dummy-token', { httpOptions: {} }));
+    assert.doesNotThrow(() => new DataAPIClient('dummy-token', { httpOptions: { client: 'default' } }));
+    assert.doesNotThrow(() => new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch' } }));
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient('dummy-token', { httpOptions: { client: 'archspire' } }));
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient('dummy-token', { httpOptions: { client: 12312312312 } }));
+  });
+
+  it('validates options properly', () => {
+    assert.throws(() => new DataAPIClient('dummy-token', {
       // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataAPIClient(3));
+      httpOptions: { maxTimeMS: '3' },
+    }));
+    assert.throws(() => new DataAPIClient('dummy-token', {
       // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataAPIClient({ logLevel: 'warn' }, {}));
+      httpOptions: { preferHttp2: 3 },
+    }));
+    assert.throws(() => new DataAPIClient('dummy-token', {
+      // @ts-expect-error - testing invalid input
+      httpOptions: { http1: { maxSockets: '3' } },
+    }));
+    assert.throws(() => new DataAPIClient('dummy-token', {
+      // @ts-expect-error - testing invalid input
+      adminOptions: 3,
+    }));
+    assert.throws(() => new DataAPIClient('dummy-token', {
+      // @ts-expect-error - testing invalid input
+      dbOptions: { token: 3 },
+    }));
+  });
+
+  it('throws an error if passing in endpoint and keyspace name as a string', () => {
+    const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
+    assert.throws(
+      () => client.db(DEMO_APPLICATION_URI, OTHER_NAMESPACE),
+      { message: 'Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { namespace })`?' }
+    );
+  });
+
+  describe('using fetch-h2', () => {
+    it('uses http2 by default', function () {
+      const client = new DataAPIClient('dummy-token', { httpOptions: {} });
+      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
+      assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
+      assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
     });
 
-    it('should accept null/undefined/{} for options', () => {
-      assert.doesNotThrow(() => new DataAPIClient('dummy-token', null));
-      assert.doesNotThrow(() => new DataAPIClient('dummy-token', undefined));
-      assert.doesNotThrow(() => new DataAPIClient('dummy-token', {}));
+    it('uses http2 when forced', function () {
+      const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'default', preferHttp2: true } });
+      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
+      assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
+      assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
     });
 
-    it('should accept valid callers', () => {
-      // @ts-expect-error - null technically allowed
-      assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: null }));
-      assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: undefined }));
-      assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: ['a', 'b'] }));
-      assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: [['a', 'b'], ['c', 'd']] }));
+    it('uses http1.1 when forced', () => {
+      const client = new DataAPIClient('dummy-token', { httpOptions: { preferHttp2: false } });
+      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
+      assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
+      assert.ok(httpClient.fetchCtx.ctx['_http1'] === httpClient.fetchCtx.ctx['_preferred']);
     });
 
-    it('should throw on invalid caller', () => {
-      assert.throws(() => new DataAPIClient('dummy-token', { caller: [] }));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataAPIClient('dummy-token', { caller: 'invalid-type' }));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataAPIClient('dummy-token', { caller: [1, 'b'] }));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataAPIClient('dummy-token', { caller: ['a', 2] }));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataAPIClient('dummy-token', { caller: [[1]] }));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataAPIClient('dummy-token', { caller: [['a', 'b', 'c']] }));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataAPIClient('dummy-token', { caller: [[]] }));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataAPIClient('dummy-token', { caller: [['a', 'b'], 3] }));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataAPIClient('dummy-token', { caller: [{}] }));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataAPIClient('dummy-token', { caller: { 0: ['name', 'version'] } }));
+    it('uses http2 when forced (deprecated version)', function () {
+      const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'default' }, preferHttp2: true });
+      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
+      assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
+      assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
     });
 
-    it('should only accept valid http client types', () => {
-      assert.doesNotThrow(() => new DataAPIClient('dummy-token', { httpOptions: {} }));
-      assert.doesNotThrow(() => new DataAPIClient('dummy-token', { httpOptions: { client: 'default' } }));
-      assert.doesNotThrow(() => new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch' } }));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataAPIClient('dummy-token', { httpOptions: { client: 'archspire' } }));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new DataAPIClient('dummy-token', { httpOptions: { client: 12312312312 } }));
-    });
-
-    describe('using fetch-h2', () => {
-      it('uses http2 by default', function () {
-        const client = new DataAPIClient('dummy-token', { httpOptions: {} });
-        const httpClient = client.db(endpoint)['_httpClient'];
-        assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
-        assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
-      });
-
-      it('uses http2 when forced', function () {
-        const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'default', preferHttp2: true } });
-        const httpClient = client.db(endpoint)['_httpClient'];
-        assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
-        assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
-      });
-
-      it('uses http1.1 when forced', () => {
-        const client = new DataAPIClient('dummy-token', { httpOptions: { preferHttp2: false } });
-        const httpClient = client.db(endpoint)['_httpClient'];
-        assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
-        assert.ok(httpClient.fetchCtx.ctx['_http1'] === httpClient.fetchCtx.ctx['_preferred']);
-      });
-
-      it('uses http2 when forced (deprecated version)', function () {
-        const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'default' }, preferHttp2: true });
-        const httpClient = client.db(endpoint)['_httpClient'];
-        assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
-        assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
-      });
-
-      it('uses http1.1 when forced (deprecated version)', () => {
-        const client = new DataAPIClient('dummy-token', { preferHttp2: false });
-        const httpClient = client.db(endpoint)['_httpClient'];
-        assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
-        assert.ok(httpClient.fetchCtx.ctx['_http1'] === httpClient.fetchCtx.ctx['_preferred']);
-      });
-    });
-
-    describe('using custom http client', () => {
-      it('should allow custom http client', () => {
-        class CustomFetcher {
-          fetch(_: FetcherRequestInfo): Promise<FetcherResponseInfo> {
-            return Promise.resolve(<FetcherResponseInfo>{});
-          }
-        }
-
-        const client = new DataAPIClient('dummy-token', {
-          httpOptions: {
-            client: 'custom',
-            fetcher: new CustomFetcher(),
-          },
-        });
-
-        const httpClient = client.db(endpoint)['_httpClient'];
-        assert.ok(httpClient.fetchCtx.ctx instanceof CustomFetcher);
-      });
-
-      it('should throw if fetcher not properly implemented', () => {
-        assert.throws(() => new DataAPIClient('dummy-token', {
-          httpOptions: {
-            client: 'custom',
-            // @ts-expect-error - testing invalid input
-            fetcher: {},
-          },
-        }));
-        assert.throws(() => new DataAPIClient('dummy-token', {
-          // @ts-expect-error - testing invalid input
-          httpOptions: { client: 'custom' },
-        }));
-      });
-    });
-
-    it('validates options properly', () => {
-      assert.throws(() => new DataAPIClient('dummy-token', {
-        // @ts-expect-error - testing invalid input
-        httpOptions: { maxTimeMS: '3' },
-      }));
-      assert.throws(() => new DataAPIClient('dummy-token', {
-        // @ts-expect-error - testing invalid input
-        httpOptions: { preferHttp2: 3 },
-      }));
-      assert.throws(() => new DataAPIClient('dummy-token', {
-        // @ts-expect-error - testing invalid input
-        httpOptions: { http1: { maxSockets: '3' } },
-      }));
-      assert.throws(() => new DataAPIClient('dummy-token', {
-        // @ts-expect-error - testing invalid input
-        adminOptions: 3,
-      }));
-      assert.throws(() => new DataAPIClient('dummy-token', {
-        // @ts-expect-error - testing invalid input
-        dbOptions: { token: 3 },
-      }));
+    it('uses http1.1 when forced (deprecated version)', () => {
+      const client = new DataAPIClient('dummy-token', { preferHttp2: false });
+      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
+      assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
+      assert.ok(httpClient.fetchCtx.ctx['_http1'] === httpClient.fetchCtx.ctx['_preferred']);
     });
   });
 
-  describe('db tests', () => {
-    it('should allow db construction from endpoint', async () => {
-      const db = new DataAPIClient('dummy-token').db(endpoint);
-      assert.ok(db);
-      assert.strictEqual(db['_httpClient'].baseUrl, `${endpoint}/${DEFAULT_DATA_API_PATH}`);
-      assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'dummy-token');
+  describe('using custom http client', () => {
+    it('should allow custom http client', () => {
+      class CustomFetcher {
+        fetch(_: FetcherRequestInfo): Promise<FetcherResponseInfo> {
+          return Promise.resolve(<FetcherResponseInfo>{});
+        }
+      }
+
+      const client = new DataAPIClient('dummy-token', {
+        httpOptions: {
+          client: 'custom',
+          fetcher: new CustomFetcher(),
+        },
+      });
+
+      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
+      assert.ok(httpClient.fetchCtx.ctx instanceof CustomFetcher);
     });
 
-    it('should allow db construction from id + region', async () => {
-      const db = new DataAPIClient('dummy-token').db(id, region);
-      assert.ok(db);
-      assert.strictEqual(db['_httpClient'].baseUrl, `https://${id}-${region}.apps.astra.datastax.com/${DEFAULT_DATA_API_PATH}`);
-      assert.strictEqual(await db['_httpClient'].applicationToken?.getTokenAsString(), 'dummy-token');
-    });
-
-    it('should have unique http clients for each db', () => {
-      const client = new DataAPIClient('dummy-token');
-      const db1 = client.db(endpoint);
-      const db2 = client.db(endpoint);
-      assert.notStrictEqual(db1['_httpClient'], db2['_httpClient']);
+    it('should throw if fetcher not properly implemented', () => {
+      assert.throws(() => new DataAPIClient('dummy-token', {
+        httpOptions: {
+          client: 'custom',
+          // @ts-expect-error - testing invalid input
+          fetcher: {},
+        },
+      }));
+      assert.throws(() => new DataAPIClient('dummy-token', {
+        // @ts-expect-error - testing invalid input
+        httpOptions: { client: 'custom' },
+      }));
     });
   });
 });
