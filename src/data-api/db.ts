@@ -135,7 +135,8 @@ export class Db {
     Object.defineProperty(this, '_httpClient', {
       value: new DataAPIHttpClient({
         baseUrl: endpoint,
-        applicationToken: combinedDbOpts.token,
+        tokenProvider: combinedDbOpts.token,
+        embeddingHeaders: null!,
         baseApiPath: combinedDbOpts.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment],
         emitter: rootOpts.emitter,
         monitorCommands: combinedDbOpts.monitorCommands,

@@ -43,7 +43,7 @@ export abstract class TokenProvider {
    * The function which provides the token. It may do any I/O as it wishes to obtain/refresh the token, as it's called
    * every time the token is required for use, whether it be for the Data API, or the DevOps API.
    */
-  abstract getToken(): Promise<string | nullish>;
+  abstract getToken(): string | nullish | Promise<string | nullish>;
 
   /**
    * Turns a string token into a {@link StaticTokenProvider} if necessary. Throws an error if

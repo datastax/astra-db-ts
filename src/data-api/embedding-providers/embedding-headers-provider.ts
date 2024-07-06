@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { isNullish } from '@/src/common';
-import { DefaultEmbeddingHeadersProvider, StaticEmbeddingHeadersProvider } from '@/src/data-api/embedding-providers';
+import { DefaultEmbeddingHeadersProvider } from '@/src/data-api/embedding-providers';
 
 /**
  * The base class for some "token provider", a general concept for anything that provides some token to the client,
@@ -55,11 +55,7 @@ export abstract class EmbeddingHeadersProvider {
    * @internal
    */
   static parseHeaders(token: unknown): EmbeddingHeadersProvider {
-    if (isNullish(token)) {
-      return new StaticEmbeddingHeadersProvider({});
-    }
-
-    if (typeof token === 'string') {
+    if (typeof token === 'string' || isNullish(token)) {
       return new DefaultEmbeddingHeadersProvider(token);
     }
 

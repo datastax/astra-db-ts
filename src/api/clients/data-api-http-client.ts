@@ -15,9 +15,8 @@
 
 import {
   DEFAULT_DATA_API_AUTH_HEADER,
-  DEFAULT_EMBEDDING_API_KEY_HEADER,
   DEFAULT_NAMESPACE,
-  DEFAULT_TIMEOUT,
+  DEFAULT_TIMEOUT, HeaderProvider,
   hrTimeMs,
   HttpClient,
   HTTPClientOptions,
@@ -37,7 +36,8 @@ import {
   AdminCommandSucceededEvent,
   AdminSpawnOptions,
 } from '@/src/devops';
-import { TokenProvider } from '@/src/common';
+import { nullish, TokenProvider } from '@/src/common';
+import { EmbeddingHeadersProvider } from '@/src/data-api/embedding-providers';
 
 /**
  * @internal
@@ -53,11 +53,6 @@ export interface DataAPIRequestInfo {
 interface ExecuteCommandOptions {
   namespace?: string | null,
   collection?: string,
-}
-
-interface DataAPIHttpClientOptions extends HTTPClientOptions {
-  namespace: string | undefined,
-  emissionStrategy: EmissionStrategy,
 }
 
 type EmissionStrategy = (emitter: TypedEmitter<DataAPIClientEvents>) => {
@@ -98,6 +93,13 @@ const adaptInfo4Devops = (info: DataAPIRequestInfo) => (<const>{
   path: info.url,
 });
 
+interface DataAPIHttpClientOpts extends HTTPClientOptions {
+  namespace: string | undefined,
+  emissionStrategy: EmissionStrategy,
+  embeddingHeaders: EmbeddingHeadersProvider,
+  tokenProvider: TokenProvider,
+}
+
 /**
  * @internal
  */
@@ -106,10 +108,10 @@ export class DataAPIHttpClient extends HttpClient {
   public namespace?: string;
   public maxTimeMS: number;
   public emissionStrategy: ReturnType<EmissionStrategy>
-  readonly #props: DataAPIHttpClientOptions;
+  readonly #props: DataAPIHttpClientOpts;
 
-  constructor(props: DataAPIHttpClientOptions, embeddingApiKey?: string) {
-    super(props, mkHeaders(embeddingApiKey));
+  constructor(props: DataAPIHttpClientOpts) {
+    super(props, [mkAuthHeaderProvider(props.tokenProvider), props.embeddingHeaders.getHeaders]);
     this.namespace = 'namespace' in props ? props.namespace : DEFAULT_NAMESPACE;
     this.#props = props;
     this.maxTimeMS = this.fetchCtx.maxTimeMS ?? DEFAULT_TIMEOUT;
@@ -117,33 +119,41 @@ export class DataAPIHttpClient extends HttpClient {
   }
 
   public forCollection(namespace: string, collection: string, opts: CollectionSpawnOptions | undefined): DataAPIHttpClient {
-    const clone = new DataAPIHttpClient(this.#props, opts?.embeddingApiKey);
+    const clone = new DataAPIHttpClient({
+      ...this.#props,
+      embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(opts?.embeddingApiKey),
+      namespace: namespace,
+    });
+
     clone.collection = collection;
-    clone.namespace = namespace;
     clone.maxTimeMS = opts?.defaultMaxTimeMS ?? this.maxTimeMS;
+
     return clone;
   }
 
   public forDbAdmin(opts: AdminSpawnOptions | undefined): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
+      tokenProvider: opts?.adminToken ? TokenProvider.parseToken(opts?.adminToken) : this.#props.tokenProvider,
       monitorCommands: opts?.monitorCommands || this.#props.monitorCommands,
-      applicationToken: TokenProvider.parseToken(opts?.adminToken || this.#props.applicationToken),
       baseUrl: opts?.endpointUrl || this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
     });
+
     clone.emissionStrategy = EmissionStrategy.Admin(this.emitter);
     clone.collection = undefined;
     clone.namespace = undefined;
+
     return clone;
   }
 
-  public timeoutManager(timeoutMs: number | undefined) {
-    return this._mkTimeoutManager(timeoutMs);
+  public timeoutManager(timeout: number | undefined) {
+    timeout ??= this.maxTimeMS;
+    return new TimeoutManager(timeout, () => new DataAPITimeoutError(timeout));
   }
 
   public async executeCommand(command: Record<string, any>, options: TimeoutOptions & ExecuteCommandOptions | undefined) {
-    const timeoutManager = options?.timeoutManager ?? this._mkTimeoutManager(options?.maxTimeMS);
+    const timeoutManager = options?.timeoutManager ?? this.timeoutManager(options?.maxTimeMS);
 
     return await this._requestDataAPI({
       url: this.baseUrl,
@@ -218,11 +228,6 @@ export class DataAPIHttpClient extends HttpClient {
       throw e;
     }
   }
-
-  private _mkTimeoutManager(timeout: number | undefined) {
-    timeout ??= this.maxTimeMS;
-    return new TimeoutManager(timeout, () => new DataAPITimeoutError(timeout));
-  }
 }
 
 const mkFauxErroredResponse = (message: string): RawDataAPIResponse => {
@@ -269,15 +274,14 @@ export function reviver(_: string, value: any): any {
   return value;
 }
 
-function mkHeaders(embeddingApiKey: string | undefined) {
-  if (embeddingApiKey) {
-    return (token: string | undefined) => ({
-      [DEFAULT_EMBEDDING_API_KEY_HEADER]: embeddingApiKey,
-      [DEFAULT_DATA_API_AUTH_HEADER]: token,
-    });
-  } else {
-    return (token: string | undefined) => ({
-      [DEFAULT_DATA_API_AUTH_HEADER]: token,
-    });
-  }
+const mkAuthHeaderProvider = (tp: TokenProvider): HeaderProvider => () => {
+  const token = tp.getToken();
+
+  return (token instanceof Promise)
+    ? token.then(mkAuthHeader)
+    : mkAuthHeader(token);
 }
+
+const mkAuthHeader = (token: string | nullish): Record<string, string> => (token)
+  ? { [DEFAULT_DATA_API_AUTH_HEADER]: `Bearer ${token}` }
+  : {};

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { EmbeddingHeadersProvider } from '@/src/data-api/embedding-providers';
+import { nullish } from '@/src/common';
 
 /**
  * The most basic token provider, which simply returns the token it was instantiated with.
@@ -42,9 +43,12 @@ export class DefaultEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
    *
    * @param apiKey - The token to regurgitate in `getTokenAsString`
    */
-  constructor(apiKey: string) {
+  constructor(apiKey: string | nullish) {
     super();
-    this.#headers = { 'x-embedding-api-key': apiKey };
+
+    this.#headers = (apiKey)
+      ? { 'x-embedding-api-key': apiKey }
+      : {};
   }
 
   /**

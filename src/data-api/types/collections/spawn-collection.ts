@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { WithNamespace } from '@/src/data-api';
+import { EmbeddingHeadersProvider } from '@/src/data-api/embedding-providers';
 
 /**
  * Options for spawning a new collection.
@@ -23,7 +24,7 @@ export interface CollectionSpawnOptions extends WithNamespace {
   /**
    * The API key for the embedding service to use
    */
-  embeddingApiKey?: string,
+  embeddingApiKey?: string | EmbeddingHeadersProvider | null,
   /**
    * The default `maxTimeMS` for all operations on the collection. Will override the maxTimeMS set in the DataAPIClient
    * options; it can be overridden on a per-operation basis.
@@ -33,5 +34,5 @@ export interface CollectionSpawnOptions extends WithNamespace {
    *
    * The request may or may not still be running on the server after this time.
    */
-  defaultMaxTimeMS?: number,
+  defaultMaxTimeMS?: number | null,
 }

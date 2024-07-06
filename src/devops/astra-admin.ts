@@ -79,11 +79,11 @@ export class AstraAdmin {
     Object.defineProperty(this, '_httpClient', {
       value: new DevOpsAPIHttpClient({
         baseUrl: combinedAdminOpts.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINT,
-        applicationToken: combinedAdminOpts.adminToken,
         monitorCommands: combinedAdminOpts.monitorCommands,
         emitter: rootOpts.emitter,
         fetchCtx: rootOpts.fetchCtx,
         userAgent: rootOpts.userAgent,
+        tokenProvider: combinedAdminOpts.adminToken,
       }),
       enumerable: false,
     });

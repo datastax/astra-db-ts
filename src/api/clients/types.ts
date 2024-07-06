@@ -16,7 +16,6 @@ import type TypedEmitter from 'typed-emitter';
 import type { DataAPICommandEvents } from '@/src/data-api';
 import type { FetchCtx, HttpMethods } from '@/src/api';
 import type { TimeoutManager } from '@/src/api/timeout-managers';
-import { TokenProvider } from '@/src/common';
 
 /**
  * @internal
@@ -24,7 +23,6 @@ import { TokenProvider } from '@/src/common';
 export interface HTTPClientOptions {
   baseUrl: string,
   baseApiPath?: string | null,
-  applicationToken: TokenProvider,
   emitter: TypedEmitter<DataAPICommandEvents>,
   monitorCommands: boolean,
   fetchCtx: FetchCtx,
@@ -34,7 +32,7 @@ export interface HTTPClientOptions {
 /**
  * @internal
  */
-export type MkReqHeaders = (token: string | undefined) => Record<string, any>;
+export type HeaderProvider = (() => Promise<Record<string, string>> | Record<string, string>);
 
 /**
  * @internal

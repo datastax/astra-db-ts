@@ -69,7 +69,7 @@ export class AstraDbAdmin extends DbAdmin {
 
     validateAdminOpts(adminOpts);
 
-    const combinedAdminOps = {
+    const combinedAdminOpts = {
       ...rootOpts.adminOptions,
       ...adminOpts,
       adminToken: TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken),
@@ -77,12 +77,12 @@ export class AstraDbAdmin extends DbAdmin {
 
     Object.defineProperty(this, '_httpClient', {
       value: new DevOpsAPIHttpClient({
-        baseUrl: combinedAdminOps.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINT,
-        applicationToken: combinedAdminOps.adminToken,
-        monitorCommands: combinedAdminOps.monitorCommands,
+        baseUrl: combinedAdminOpts.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINT,
+        monitorCommands: combinedAdminOpts.monitorCommands,
         fetchCtx: rootOpts.fetchCtx,
         emitter: rootOpts.emitter,
         userAgent: rootOpts.userAgent,
+        tokenProvider: combinedAdminOpts.adminToken,
       }),
       enumerable: false,
     });

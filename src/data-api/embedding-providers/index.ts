@@ -13,6 +13,5 @@
 // limitations under the License.
 
 export * from './aws-embedding-headers-provider';
-export * from './static-embedding-headers-provider';
 export * from './default-embedding-headers-provider';
 export * from './embedding-headers-provider'
