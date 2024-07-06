@@ -22,7 +22,8 @@ import { EmbeddingHeadersProvider } from '@/src/data-api/embedding-providers';
  */
 export interface CollectionSpawnOptions extends WithNamespace {
   /**
-   * The API key for the embedding service to use
+   * The API key for the embedding service to use, or the {@link EmbeddingHeadersProvider} if using
+   * a provider that requires it (e.g. AWS bedrock).
    */
   embeddingApiKey?: string | EmbeddingHeadersProvider | null,
   /**

@@ -15,17 +15,18 @@
 import { EmbeddingHeadersProvider } from '@/src/data-api/embedding-providers/embedding-headers-provider';
 
 /**
- * A token provider which translates a username-password pair into the appropriate authentication token for DSE, HCD.
+ * An embedding headers provider which translates AWS access keys into the appropriate authentication headers for
+ * AWS-based embedding providers (bedrock).
  *
- * Uses the format `Cassandra:b64(username):password(username)`
+ * Sets the headers `x-embedding-access-id` and `x-embedding-secret-id`.
  *
  * @example
  * ```
- * const provider = new UsernamePasswordTokenProvider('username', 'password');
- * const client = new DataAPIClient(provider, { environment: 'dse' });
+ * const provider = new AWSEmbeddingHeadersProvider('access-key-id', 'secret-access-key');
+ * const collection = await db.collection('my_coll', { embeddingApiKey: provider });
  * ```
  *
- * @see TokenProvider
+ * @see EmbeddingHeadersProvider
  *
  * @public
  */
@@ -35,8 +36,8 @@ export class AWSEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
   /**
    * Constructs an instead of the {@link TokenProvider}.
    *
-   * @param accessKeyId - The username for the DSE instance
-   * @param secretAccessKey - The password for the DSE instance
+   * @param accessKeyId - The access key ID part of the AWS access keys
+   * @param secretAccessKey - The secret access key part of the AWS access keys
    */
   constructor(accessKeyId: string, secretAccessKey: string) {
     super();
@@ -47,9 +48,9 @@ export class AWSEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
   }
 
   /**
-   * Returns the token in the format `cassandra:[username_b64]:[password_b64]`
+   * Returns the appropriate embedding auth headers.
    *
-   * @returns the token in the format `cassandra:[username_b64]:[password_b64]`
+   * @returns the appropriate embedding auth headers.
    */
   override getHeaders(): Record<string, string> {
     return this.#headers;

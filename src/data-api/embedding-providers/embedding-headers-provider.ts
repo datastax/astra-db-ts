@@ -16,39 +16,44 @@ import { isNullish } from '@/src/common';
 import { DefaultEmbeddingHeadersProvider } from '@/src/data-api/embedding-providers';
 
 /**
- * The base class for some "token provider", a general concept for anything that provides some token to the client,
- * whether it be a static token, or if the token is dynamically fetched at runtime, or periodically refreshed.
+ * The base class for an "embedding headers provider", a general concept for anything that provides headers used for
+ * vectorize operations on a per-call basis, whether the headers be static, dynamically fetched at runtime, or
+ * periodically refreshed/cycled.
  *
- * The {@link EmbeddingHeadersProvider.getToken} function is called any time the token is required, whether it be
- * for the Data API, or the DevOps API.
+ * The {@link EmbeddingHeadersProvider.getHeaders} function is called for every request to the Data API, regardless
+ * of if vectorize is being utilized or not. Note that this is called for every individual request on multipart
+ * operations, such as insertMany or find.
  *
- * `astra-db-ts` provides all the main token providers you may ever need to use, but you're able to extend this
- * class to create your own if you find it necessary.
+ * `astra-db-ts` provides all the main embedding headers providers you may ever need to use, but you're able to extend
+ * this class to create your own if you find it necessary.
  *
- * Generally, where you can pass in a `TokenProvider`, you may also pass in a plain string which is translated
- * into a {@link StaticTokenProvider} under the hood.
+ * Generally, where you can pass in a `EmbeddingHeadersProvider`, you may also pass in a plain string which is
+ * translated into a {@link DefaultEmbeddingHeadersProvider} under the hood.
  *
  * @example
  * ```
- * const provider = new UsernamePasswordTokenProvider('username', 'password');
- * const client = new DataAPIClient(provider);
+ * const provider = new AWSEmbeddingHeadersProvider('access-key-id', 'secret-access-key');
+ * const collection = await db.collection('my_coll', { embeddingApiKey: provider });
  * ```
  *
- * @see StaticTokenProvider
- * @see UsernamePasswordTokenProvider
+ * @see DefaultEmbeddingHeadersProvider
+ * @see AWSEmbeddingHeadersProvider
  *
  * @public
  */
 export abstract class EmbeddingHeadersProvider {
   /**
-   * The function which provides the token. It may do any I/O as it wishes to obtain/refresh the token, as it's called
-   * every time the token is required for use, whether it be for the Data API, or the DevOps API.
+   * The function which provides the headers.
+   *
+   * It may do any I/O as it wishes to obtain/refresh the token, as it's called for every request to the Data API.
+   *
+   * If no promise is returned, it will not be awaited (no minor performance impact).
    */
   abstract getHeaders(): Promise<Record<string, string>> | Record<string, string>;
 
   /**
-   * Turns a string token into a {@link StaticTokenProvider} if necessary. Throws an error if
-   * it's not a string, nullish, or a `TokenProvider` already.
+   * Turns a string embedding api key into a {@link DefaultEmbeddingHeadersProvider} if necessary. Throws an error if
+   * it's not a string, nullish, or a `EmbeddingHeadersProvider` already.
    *
    * Not intended for external use.
    *

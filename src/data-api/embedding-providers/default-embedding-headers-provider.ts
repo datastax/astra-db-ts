@@ -16,22 +16,22 @@ import { EmbeddingHeadersProvider } from '@/src/data-api/embedding-providers/emb
 import { nullish } from '@/src/common';
 
 /**
- * The most basic token provider, which simply returns the token it was instantiated with.
+ * The most basic embedding header provider, used for the vast majority of providers.
  *
  * Generally, anywhere this can be used in the public `astra-db-ts` interfaces, you may also pass in a plain
- * string or null/undefined, which is transformed into a {@link StaticEmbeddingHeadersProvider} under the hood.
+ * string or null/undefined, which is transformed into a {@link DefaultEmbeddingHeadersProvider} under the hood.
  *
  * @example
  * ```
- * const provider = new StaticTokenProvider('token');
- * const client = new DataAPIClient(provider);
+ * const provider = new DefaultEmbeddingHeadersProvider('api-key');
+ * const collection = await db.collection('my_coll', { embeddingApiKey: provider });
  *
  * // or just
  *
- * const client = new DataAPIClient('token');
+ * const collection = await db.collection('my_coll', { embeddingApiKey: 'api-key' });
  * ```
  *
- * @see TokenProvider
+ * @see EmbeddingHeadersProvider
  *
  * @public
  */
@@ -39,9 +39,9 @@ export class DefaultEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
   readonly #headers: Record<string, string>;
 
   /**
-   * Constructs an instead of the {@link StaticEmbeddingHeadersProvider}.
+   * Constructs an instead of the {@link DefaultEmbeddingHeadersProvider}.
    *
-   * @param apiKey - The token to regurgitate in `getTokenAsString`
+   * @param apiKey - The api-key/token to regurgitate in `getTokenAsString`
    */
   constructor(apiKey: string | nullish) {
     super();
@@ -52,9 +52,9 @@ export class DefaultEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
   }
 
   /**
-   * Returns the string the token provider was instantiated with.
+   * Returns the proper header for the default embedding header authentication, or an empty record if `apiKey` was undefined.
    *
-   * @returns the string the token provider was instantiated with.
+   * @returns the proper header for the default embedding header authentication.
    */
   override getHeaders(): Record<string, string> {
     return this.#headers;
