@@ -111,7 +111,7 @@ export class DataAPIHttpClient extends HttpClient {
   readonly #props: DataAPIHttpClientOpts;
 
   constructor(props: DataAPIHttpClientOpts) {
-    super(props, [mkAuthHeaderProvider(props.tokenProvider), props.embeddingHeaders.getHeaders]);
+    super(props, [mkAuthHeaderProvider(props.tokenProvider), props.embeddingHeaders.getHeaders.bind(props.embeddingHeaders)]);
     this.namespace = 'namespace' in props ? props.namespace : DEFAULT_NAMESPACE;
     this.#props = props;
     this.maxTimeMS = this.fetchCtx.maxTimeMS ?? DEFAULT_TIMEOUT;
@@ -283,5 +283,5 @@ const mkAuthHeaderProvider = (tp: TokenProvider): HeaderProvider => () => {
 }
 
 const mkAuthHeader = (token: string | nullish): Record<string, string> => (token)
-  ? { [DEFAULT_DATA_API_AUTH_HEADER]: `Bearer ${token}` }
+  ? { [DEFAULT_DATA_API_AUTH_HEADER]: token }
   : {};

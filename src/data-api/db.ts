@@ -12,7 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, CollectionAlreadyExistsError, DbSpawnOptions, SomeDoc } from '@/src/data-api';
+import {
+  Collection,
+  CollectionAlreadyExistsError,
+  DbSpawnOptions,
+  EmbeddingHeadersProvider,
+  SomeDoc,
+} from '@/src/data-api';
 import {
   DataAPIHttpClient,
   DEFAULT_DATA_API_PATHS,
@@ -136,7 +142,7 @@ export class Db {
       value: new DataAPIHttpClient({
         baseUrl: endpoint,
         tokenProvider: combinedDbOpts.token,
-        embeddingHeaders: null!,
+        embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(null),
         baseApiPath: combinedDbOpts.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment],
         emitter: rootOpts.emitter,
         monitorCommands: combinedDbOpts.monitorCommands,

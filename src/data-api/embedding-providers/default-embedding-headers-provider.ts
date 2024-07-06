@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { EmbeddingHeadersProvider } from '@/src/data-api/embedding-providers';
+import { EmbeddingHeadersProvider } from '@/src/data-api/embedding-providers/embedding-headers-provider';
 import { nullish } from '@/src/common';
 
 /**
