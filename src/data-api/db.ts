@@ -157,7 +157,7 @@ export class Db {
    */
   public get namespace(): string {
     if (!this._namespace.ref) {
-      throw new Error('Non-Astra databases do not have an appropriate ID');
+      throw new Error('No namespace set for DB (can\'t do db.namespace)');
     }
     return this._namespace.ref;
   }

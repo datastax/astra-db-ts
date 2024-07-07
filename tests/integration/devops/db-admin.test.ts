@@ -13,15 +13,18 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { assertTestsEnabled, ENVIRONMENT, initTestObjects } from '@/tests/fixtures';
+import { assertTestsEnabled, ENVIRONMENT, initTestObjects, TEST_APPLICATION_URI } from '@/tests/fixtures';
 import { Db } from '@/src/data-api';
 import assert from 'assert';
+import { DataAPIClient } from '@/src/client';
+import { DEFAULT_NAMESPACE } from '@/src/api';
 
 describe('integration.devops.db-admin', () => {
   let db: Db;
+  let client: DataAPIClient;
 
   before(async function () {
-    [, db] = await initTestObjects(this);
+    [client, db] = await initTestObjects(this);
   });
 
   it('[long] [not-dev] works', async function () {
@@ -35,13 +38,33 @@ describe('integration.devops.db-admin', () => {
     assert.ok(!namespaces1.includes('slania'));
 
     await dbAdmin.createNamespace('slania');
+    assert.strictEqual(db.namespace, DEFAULT_NAMESPACE);
 
     const namespaces2 = await dbAdmin.listNamespaces();
     assert.ok(namespaces2.includes('slania'));
 
     await dbAdmin.dropNamespace('slania');
+    assert.strictEqual(db.namespace, DEFAULT_NAMESPACE);
 
     const namespaces3 = await dbAdmin.listNamespaces();
     assert.ok(!namespaces3.includes('slania'));
+  }).timeout(100000);
+
+  it('[long] [not-dev] works w/ updateDbNamespace set', async function () {
+    assertTestsEnabled(this, 'LONG', 'NOT-DEV');
+
+    const db = client.db(TEST_APPLICATION_URI, { namespace: 'mimic_well' });
+
+    assert.strictEqual(db.namespace, 'mimic_well');
+
+    const dbAdmin = (ENVIRONMENT === 'astra')
+      ? db.admin({ environment: ENVIRONMENT })
+      : db.admin({ environment: ENVIRONMENT });
+
+    await dbAdmin.createNamespace('my_test_keyspace_123', {
+      updateDbNamespace: true,
+    });
+
+    assert.strictEqual(db.namespace, 'my_test_keyspace_123');
   }).timeout(100000);
 });

@@ -47,7 +47,7 @@ describe('integration.misc.quickstart', () => {
       }
 
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI);
+      const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
 
       const collection = await db.createCollection<Idea>('vector_5_collection', { vector: { dimension: 5, metric: 'cosine' } });
 
@@ -142,7 +142,7 @@ describe('integration.misc.quickstart', () => {
       }
 
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI);
+      const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
 
       const collection = await db.createCollection<Person>('my_collection', { defaultId: { type: 'uuidv7' } });
 
