@@ -120,6 +120,8 @@ export class AstraDbAdmin extends DbAdmin {
     db(): Db;
     drop(options?: AdminBlockingOptions): Promise<void>;
     dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
+    // Warning: (ae-forgotten-export) The symbol "FindEmbeddingProvidersResult" needs to be exported by the entry point index.d.ts
+    findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
     get id(): string;
     info(options?: WithTimeout): Promise<FullDatabaseInfo>;
     listNamespaces(options?: WithTimeout): Promise<string[]>;
@@ -380,6 +382,7 @@ export class DataAPIDbAdmin extends DbAdmin {
     createNamespace(namespace: string, options?: LocalCreateNamespaceOptions): Promise<void>;
     db(): Db;
     dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
+    findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
     listNamespaces(options?: WithTimeout): Promise<string[]>;
 }
 
@@ -541,6 +544,7 @@ export abstract class DbAdmin {
     abstract createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void>;
     abstract db(): Db;
     abstract dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
+    abstract findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
     abstract listNamespaces(): Promise<string[]>;
 }
 
@@ -558,12 +562,6 @@ export interface DbSpawnOptions {
     monitorCommands?: boolean;
     namespace?: string;
     token?: string | TokenProvider | null;
-}
-
-// @public
-export class EmbeddingAPIKeyHeaderProvider extends EmbeddingHeadersProvider {
-    constructor(apiKey: string | nullish);
-    getHeaders(): Record<string, string>;
 }
 
 // @public
@@ -652,6 +650,12 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
 
 // @public
 export interface DropCollectionOptions extends WithTimeout, WithNamespace {
+}
+
+// @public
+export class EmbeddingAPIKeyHeaderProvider extends EmbeddingHeadersProvider {
+    constructor(apiKey: string | nullish);
+    getHeaders(): Record<string, string>;
 }
 
 // @public
@@ -1321,7 +1325,6 @@ export interface VectorizeServiceOptions {
 export interface VectorOptions {
     dimension?: number;
     metric?: 'cosine' | 'euclidean' | 'dot_product';
-    // @alpha
     service?: VectorizeServiceOptions;
 }
 
