@@ -82,6 +82,7 @@ import { DataAPIDbAdmin } from '@/src/devops/data-api-db-admin';
  */
 export class Db {
   readonly #defaultOpts!: InternalRootClientOpts;
+  readonly #token!: TokenProvider;
 
   private readonly _httpClient!: DataAPIHttpClient;
   private readonly _id?: string;
@@ -127,10 +128,11 @@ export class Db {
   constructor(endpoint: string, rootOpts: InternalRootClientOpts, dbOpts: DbSpawnOptions | nullish) {
     this.#defaultOpts = rootOpts;
 
+    this.#token = TokenProvider.parseToken(dbOpts?.token ?? rootOpts.dbOptions.token);
+
     const combinedDbOpts = {
       ...rootOpts.dbOptions,
       ...dbOpts,
-      token: TokenProvider.parseToken(dbOpts?.token ?? rootOpts.dbOptions.token),
     }
 
     Object.defineProperty(this, 'namespace', {
@@ -141,7 +143,7 @@ export class Db {
     Object.defineProperty(this, '_httpClient', {
       value: new DataAPIHttpClient({
         baseUrl: endpoint,
-        tokenProvider: combinedDbOpts.token,
+        tokenProvider: this.#token,
         embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(null),
         baseApiPath: combinedDbOpts.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment],
         emitter: rootOpts.emitter,
@@ -240,7 +242,7 @@ export class Db {
     }
 
     if (environment === 'astra') {
-      return new AstraDbAdmin(this, this.#defaultOpts, options);
+      return new AstraDbAdmin(this, this.#defaultOpts, options, this.#token);
     }
 
     return new DataAPIDbAdmin(this, this._httpClient, options);

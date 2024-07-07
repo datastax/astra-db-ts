@@ -19,7 +19,7 @@ import { Db } from '@/src/data-api';
 import { DbAdmin } from '@/src/devops/db-admin';
 import { WithTimeout } from '@/src/common/types';
 import { InternalRootClientOpts } from '@/src/client/types';
-import { TokenProvider } from '@/src/common';
+import { isNullish, StaticTokenProvider, TokenProvider } from '@/src/common';
 import { validateAdminOpts } from '@/src/devops/utils';
 
 /**
@@ -64,7 +64,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts?: AdminSpawnOptions) {
+  constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts: AdminSpawnOptions | undefined, dbToken: TokenProvider) {
     super();
 
     validateAdminOpts(adminOpts);
@@ -72,8 +72,13 @@ export class AstraDbAdmin extends DbAdmin {
     const combinedAdminOpts = {
       ...rootOpts.adminOptions,
       ...adminOpts,
-      adminToken: TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken),
     }
+
+    const _adminToken = TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken);
+
+    const adminToken = (_adminToken instanceof StaticTokenProvider && isNullish(_adminToken.getToken()))
+      ? dbToken
+      : _adminToken
 
     Object.defineProperty(this, '_httpClient', {
       value: new DevOpsAPIHttpClient({
@@ -82,7 +87,7 @@ export class AstraDbAdmin extends DbAdmin {
         fetchCtx: rootOpts.fetchCtx,
         emitter: rootOpts.emitter,
         userAgent: rootOpts.userAgent,
-        tokenProvider: combinedAdminOpts.adminToken,
+        tokenProvider: adminToken,
       }),
       enumerable: false,
     });
