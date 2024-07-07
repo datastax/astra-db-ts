@@ -55,8 +55,8 @@ import { LocalCreateNamespaceOptions } from '@/src/devops/types/db-admin/local-c
  * @public
  */
 export class DataAPIDbAdmin extends DbAdmin {
-  private readonly _httpClient!: DataAPIHttpClient;
-  private readonly _db!: Db;
+  readonly #httpClient!: DataAPIHttpClient;
+  readonly #db!: Db;
 
   /**
    * Use {@link Db.admin} to obtain an instance of this class.
@@ -65,18 +65,10 @@ export class DataAPIDbAdmin extends DbAdmin {
    */
   constructor(db: Db, httpClient: DataAPIHttpClient, adminOpts?: AdminSpawnOptions) {
     super();
-
     validateAdminOpts(adminOpts);
 
-    Object.defineProperty(this, '_httpClient', {
-      value: httpClient.forDbAdmin(adminOpts),
-      enumerable: false,
-    });
-
-    Object.defineProperty(this, '_db', {
-      value: db,
-      enumerable: false,
-    });
+    this.#httpClient = httpClient.forDbAdmin(adminOpts);
+    this.#db = db;
   }
 
   /**
@@ -97,7 +89,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @returns The underlying `Db` object.
    */
   public override db(): Db {
-    return this._db;
+    return this.#db;
   }
 
   /**
@@ -117,7 +109,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @returns A promise that resolves to list of all the namespaces in the database.
    */
   public override async listNamespaces(options?: WithTimeout): Promise<string[]> {
-    const resp = await this._httpClient.executeCommand({ findNamespaces: {} }, { maxTimeMS: options?.maxTimeMS });
+    const resp = await this.#httpClient.executeCommand({ findNamespaces: {} }, { maxTimeMS: options?.maxTimeMS });
     return resp.status!.namespaces;
   }
 
@@ -157,10 +149,10 @@ export class DataAPIDbAdmin extends DbAdmin {
       replicationFactor: 1,
     };
 
-    await this._httpClient.executeCommand({ createNamespace: { name: namespace, options: { replication } } }, { maxTimeMS: options?.maxTimeMS });
+    await this.#httpClient.executeCommand({ createNamespace: { name: namespace, options: { replication } } }, { maxTimeMS: options?.maxTimeMS });
 
     if (options?.updateDbNamespace) {
-      this._db.useNamespace(namespace);
+      this.#db.useNamespace(namespace);
     }
   }
 
@@ -186,6 +178,10 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @returns A promise that resolves when the operation completes.
    */
   public override async dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void> {
-    await this._httpClient.executeCommand({ dropNamespace: { name: namespace } }, { maxTimeMS: options?.maxTimeMS });
+    await this.#httpClient.executeCommand({ dropNamespace: { name: namespace } }, { maxTimeMS: options?.maxTimeMS });
+  }
+
+  private get _httpClient() {
+    return this.#httpClient;
   }
 }

@@ -76,7 +76,7 @@ export class UUID {
    */
   public readonly version!: number;
 
-  private readonly _uuid: string;
+  readonly #uuid: string;
 
   /**
    * Creates a new UUID instance.
@@ -97,10 +97,10 @@ export class UUID {
       }
     }
 
-    this._uuid = uuid.toLowerCase();
+    this.#uuid = uuid.toLowerCase();
 
     Object.defineProperty(this, 'version', {
-      value: parseInt(this._uuid[14], 16),
+      value: parseInt(this.#uuid[14], 16),
       writable: false,
     });
   }
@@ -118,10 +118,10 @@ export class UUID {
    */
   public equals(other: unknown): boolean {
     if (typeof other === 'string') {
-      return this._uuid === other;
+      return this.#uuid === other;
     }
     if (other instanceof UUID) {
-      return this._uuid === other._uuid;
+      return this.#uuid === other.#uuid;
     }
     return false;
   }
@@ -139,7 +139,7 @@ export class UUID {
    * Returns the string representation of the UUID in lowercase.
    */
   public toString(): string {
-    return this._uuid;
+    return this.#uuid;
   }
 
   /**

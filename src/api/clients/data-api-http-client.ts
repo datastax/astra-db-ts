@@ -90,8 +90,8 @@ export const EmissionStrategy: Record<'Normal' | 'Admin', EmissionStrategy> = {
 const adaptInfo4Devops = (info: DataAPIRequestInfo) => (<const>{
   method: 'POST',
   data: info.command,
-  params: {},
   path: info.url,
+  params: {},
 });
 
 interface DataAPIHttpClientOpts extends HTTPClientOptions {

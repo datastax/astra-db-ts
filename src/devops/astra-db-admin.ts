@@ -56,8 +56,8 @@ import { validateAdminOpts } from '@/src/devops/utils';
  * @public
  */
 export class AstraDbAdmin extends DbAdmin {
-  private readonly _httpClient!: DevOpsAPIHttpClient;
-  private readonly _db!: Db;
+  readonly #httpClient: DevOpsAPIHttpClient;
+  readonly #db: Db;
 
   /**
    * Use {@link Db.admin} or {@link AstraAdmin.dbAdmin} to obtain an instance of this class.
@@ -80,22 +80,16 @@ export class AstraDbAdmin extends DbAdmin {
       ? dbToken
       : _adminToken
 
-    Object.defineProperty(this, '_httpClient', {
-      value: new DevOpsAPIHttpClient({
-        baseUrl: combinedAdminOpts.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINT,
-        monitorCommands: combinedAdminOpts.monitorCommands,
-        fetchCtx: rootOpts.fetchCtx,
-        emitter: rootOpts.emitter,
-        userAgent: rootOpts.userAgent,
-        tokenProvider: adminToken,
-      }),
-      enumerable: false,
+    this.#httpClient = new DevOpsAPIHttpClient({
+      baseUrl: combinedAdminOpts.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINT,
+      monitorCommands: combinedAdminOpts.monitorCommands,
+      fetchCtx: rootOpts.fetchCtx,
+      emitter: rootOpts.emitter,
+      userAgent: rootOpts.userAgent,
+      tokenProvider: adminToken,
     });
 
-    Object.defineProperty(this, '_db', {
-      value: db,
-      enumerable: false,
-    });
+    this.#db = db;
   }
 
   /**
@@ -104,7 +98,7 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns The ID of the Astra DB instance.
    */
   public get id(): string {
-    return this._db.id;
+    return this.#db.id;
   }
 
   /**
@@ -125,7 +119,7 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns The underlying `Db` object.
    */
   public override db(): Db {
-    return this._db;
+    return this.#db;
   }
 
   /**
@@ -144,9 +138,9 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns A promise that resolves to the complete database information.
    */
   public async info(options?: WithTimeout): Promise<FullDatabaseInfo> {
-    const resp = await this._httpClient.request({
+    const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
-      path: `/databases/${this._db.id}`,
+      path: `/databases/${this.#db.id}`,
     }, options);
 
     return resp.data as FullDatabaseInfo;
@@ -203,11 +197,11 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns A promise that resolves when the operation completes.
    */
   public override async createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void> {
-    await this._httpClient.requestLongRunning({
+    await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
-      path: `/databases/${this._db.id}/keyspaces/${namespace}`,
+      path: `/databases/${this.#db.id}/keyspaces/${namespace}`,
     }, {
-      id: this._db.id,
+      id: this.#db.id,
       target: 'ACTIVE',
       legalStates: ['MAINTENANCE'],
       defaultPollInterval: 1000,
@@ -215,7 +209,7 @@ export class AstraDbAdmin extends DbAdmin {
     });
 
     if (options?.updateDbNamespace) {
-      this._db.useNamespace(namespace);
+      this.#db.useNamespace(namespace);
     }
   }
 
@@ -251,11 +245,11 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns A promise that resolves when the operation completes.
    */
   public override async dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void> {
-    await this._httpClient.requestLongRunning({
+    await this.#httpClient.requestLongRunning({
       method: HttpMethods.Delete,
-      path: `/databases/${this._db.id}/keyspaces/${namespace}`,
+      path: `/databases/${this.#db.id}/keyspaces/${namespace}`,
     }, {
-      id: this._db.id,
+      id: this.#db.id,
       target: 'ACTIVE',
       legalStates: ['MAINTENANCE'],
       defaultPollInterval: 1000,
@@ -285,15 +279,19 @@ export class AstraDbAdmin extends DbAdmin {
    * @remarks Use with caution. Use a surge protector. Don't say I didn't warn you.
    */
   public async drop(options?: AdminBlockingOptions): Promise<void> {
-    await this._httpClient.requestLongRunning({
+    await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
-      path: `/databases/${this._db.id}/terminate`,
+      path: `/databases/${this.#db.id}/terminate`,
     }, {
-      id: this._db.id,
+      id: this.#db.id,
       target: 'TERMINATED',
       legalStates: ['TERMINATING'],
       defaultPollInterval: 10000,
       options,
     });
+  }
+
+  private get _httpClient() {
+    return this.#httpClient;
   }
 }
