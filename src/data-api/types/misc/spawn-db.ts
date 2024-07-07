@@ -25,8 +25,13 @@ export interface DbSpawnOptions {
   /**
    * The namespace (aka keyspace) to use for the database.
    *
-   * Defaults to `'default_keyspace'`. if never provided. However, if it was provided when creating the
-   * {@link DataAPIClient}, it will default to that value instead.
+   * There are a few rules for what the default namespace will be:
+   * 1. If a namespace was provided when creating the {@link DataAPIClient}, it will default to that value.
+   * 2. If using an `astra` database, it'll default to "default_namespace".
+   * 3. Otherwise, no default will be set, and it'll be on the user to provide one when necessary.
+   *
+   * The client itself will not throw an error if an invalid namespace (or even no namespace at all) is provided—it'll
+   * let the Data API propagate the error itself.
    *
    * Every db method will use this namespace as the default namespace, but they all allow you to override it
    * in their options.

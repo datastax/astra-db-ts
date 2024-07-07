@@ -130,13 +130,12 @@ export class Db {
    *
    * @example
    * ```typescript
-   *
    * // Uses 'default_keyspace' as the default namespace for all future db spawns
    * const client1 = new DataAPIClient('*TOKEN*');
    *
    * // Overrides the default namespace for all future db spawns
    * const client2 = new DataAPIClient('*TOKEN*', {
-   *   dbOptions: { namespace: 'my_namespace' }
+   *   dbOptions: { namespace: 'my_namespace' },
    * });
    *
    * // Created with 'default_keyspace' as the default namespace
@@ -176,8 +175,43 @@ export class Db {
   }
 
   /**
-   * Sets the current working namespace of the `Db` instance. Does not retroactively update any previous collections
+   * Sets the default working namespace of the `Db` instance. Does not retroactively update any previous collections
    * spawned from this `Db` to use the new namespace.
+   *
+   * @example
+   * ```typescript
+   * // Spawns a `Db` with default working namespace `my_namespace`
+   * const db = client.db('<endpoint>', { namespace: 'my_namespace' });
+   *
+   * // Gets a collection from namespace `my_namespace`
+   * const coll1 = db.collection('my_coll');
+   *
+   * // `db` now uses `my_other_namespace` as the default namespace for all operations
+   * db.useNamespace('my_other_namespace');
+   *
+   * // Gets a collection from namespace `my_other_namespace`
+   * // `coll1` still uses namespace `my_namespace`
+   * const coll2 = db.collection('my_other_coll');
+   *
+   * // Gets `my_coll` from namespace `my_namespace` again
+   * // (The default namespace is still `my_other_namespace`)
+   * const coll3 = db.collection('my_coll', { namespace: 'my_namespace' });
+   * ```
+   *
+   * @example
+   * ```typescript
+   * // If using non-astra, this may be a common idiom:
+   * const client = new DataAPIClient({ environment: 'dse' });
+   * const db = client.db('<endpoint>', { token: '<token>' });
+   *
+   * // Will internally call `db.useNamespace('new_namespace')`
+   * await db.admin().createNamespace('new_namespace', {
+   *   updateDbNamespace: true,
+   * });
+   *
+   * // Creates collection in namespace `new_namespace` by default now
+   * const coll = db.createCollection('my_coll');
+   * ```
    *
    * @param namespace - The namespace to use
    */

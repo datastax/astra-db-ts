@@ -15,9 +15,30 @@
 import { CreateNamespaceOptions } from '@/src/devops';
 
 /**
- * Represents the options for creating a database on a non-Astra database (i.e. blocking options + namespace creation options).
+ * Represents the options for creating a namespace on a non-Astra database (i.e. blocking options + namespace creation options).
  *
  * If no replication options are provided, it will default to `'SimpleStrategy'` with a replication factor of `1`.
+ *
+ * See {@link AdminBlockingOptions} for more options about blocking behavior.
+ *
+ * If `updateDbNamespace` is set to true, the underlying `Db` instance used to create the `DbAdmin` will have its
+ * current working namespace set to the newly created namespace immediately (even if the namespace isn't technically
+ * yet created).
+ *
+ * @example
+ * ```typescript
+ * // If using non-astra, this may be a common idiom:
+ * const client = new DataAPIClient({ environment: 'dse' });
+ * const db = client.db('<endpoint>', { token: '<token>' });
+ *
+ * // Will internally call `db.useNamespace('new_namespace')`
+ * await db.admin().createNamespace('new_namespace', {
+ *   updateDbNamespace: true,
+ * });
+ *
+ * // Creates collection in namespace `new_namespace` by default now
+ * const coll = db.createCollection('my_coll');
+ * ```
  *
  * @public
  */
