@@ -154,11 +154,56 @@ export class Db {
    * });
    * ```
    */
+<<<<<<< HEAD
   public get namespace(): string {
     if (!this._namespace.ref) {
       throw new Error('No namespace set for DB (can\'t do db.namespace)');
     }
     return this._namespace.ref;
+=======
+  public readonly namespace!: string;
+
+  /**
+   * Use {@link DataAPIClient.db} to obtain an instance of this class.
+   *
+   * @internal
+   */
+  constructor(endpoint: string, rootOpts: InternalRootClientOpts, dbOpts: DbSpawnOptions | nullish) {
+    this.#defaultOpts = rootOpts;
+
+    this.#token = TokenProvider.parseToken(dbOpts?.token ?? rootOpts.dbOptions.token);
+
+    const combinedDbOpts = {
+      ...rootOpts.dbOptions,
+      ...dbOpts,
+    }
+
+    Object.defineProperty(this, 'namespace', {
+      value: combinedDbOpts.namespace ?? DEFAULT_NAMESPACE,
+      writable: false,
+    });
+
+    Object.defineProperty(this, '_httpClient', {
+      value: new DataAPIHttpClient({
+        baseUrl: endpoint,
+        tokenProvider: this.#token,
+        embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(null),
+        baseApiPath: combinedDbOpts.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment],
+        emitter: rootOpts.emitter,
+        monitorCommands: combinedDbOpts.monitorCommands,
+        fetchCtx: rootOpts.fetchCtx,
+        namespace: this.namespace,
+        userAgent: rootOpts.userAgent,
+        emissionStrategy: EmissionStrategy.Normal,
+      }),
+      enumerable: false,
+    });
+
+    Object.defineProperty(this, '_id', {
+      value: extractDbIdFromUrl(endpoint),
+      enumerable: false,
+    });
+>>>>>>> ad96fae (headers integration testing)
   }
 
   /**
