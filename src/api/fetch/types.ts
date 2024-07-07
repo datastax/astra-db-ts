@@ -13,6 +13,8 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
+import { Ref } from '@/src/common';
+
 /**
  * A simple adapter interface that allows you to define a custom http client that `astra-db-ts` may use to make requests.
  *
@@ -119,6 +121,6 @@ export interface FetcherResponseInfo {
  */
 export interface FetchCtx {
   ctx: Fetcher,
-  closed: { ref: boolean },
+  closed: Ref<boolean>,
   maxTimeMS: number | undefined,
 }

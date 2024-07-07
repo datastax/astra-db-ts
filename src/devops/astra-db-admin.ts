@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { AdminBlockingOptions, AdminSpawnOptions, FullDatabaseInfo } from '@/src/devops/types';
+import { AdminBlockingOptions, AdminSpawnOptions, CreateNamespaceOptions, FullDatabaseInfo } from '@/src/devops/types';
 import { DEFAULT_DEVOPS_API_ENDPOINT, DEFAULT_NAMESPACE, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
 import { Db } from '@/src/data-api';
 import { DbAdmin } from '@/src/devops/db-admin';
@@ -202,7 +202,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async createNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void> {
+  public override async createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void> {
     await this._httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: `/databases/${this._db.id}/keyspaces/${namespace}`,
@@ -213,6 +213,10 @@ export class AstraDbAdmin extends DbAdmin {
       defaultPollInterval: 1000,
       options,
     });
+
+    if (options?.updateDbNamespace) {
+      this._db.useNamespace(namespace);
+    }
   }
 
   /**

@@ -23,7 +23,7 @@ import {
   DataAPIHttpClient,
   DEFAULT_DATA_API_PATHS,
   DEFAULT_NAMESPACE,
-  EmissionStrategy,
+  EmissionStrategy, NamespaceRef,
   RawDataAPIResponse,
 } from '@/src/api';
 import {
@@ -84,8 +84,46 @@ export class Db {
   readonly #defaultOpts!: InternalRootClientOpts;
   readonly #token!: TokenProvider;
 
-  private readonly _httpClient!: DataAPIHttpClient;
+  private readonly _httpClient: DataAPIHttpClient;
+  private readonly _namespace: NamespaceRef;
   private readonly _id?: string;
+
+  /**
+   * Use {@link DataAPIClient.db} to obtain an instance of this class.
+   *
+   * @internal
+   */
+  constructor(endpoint: string, rootOpts: InternalRootClientOpts, dbOpts: DbSpawnOptions | nullish) {
+    this.#defaultOpts = rootOpts;
+
+    this.#token = TokenProvider.parseToken(dbOpts?.token ?? rootOpts.dbOptions.token);
+
+    const combinedDbOpts = {
+      ...rootOpts.dbOptions,
+      ...dbOpts,
+    }
+
+    this._namespace = {
+      ref: (rootOpts.environment === 'astra')
+        ? combinedDbOpts.namespace ?? DEFAULT_NAMESPACE
+        : combinedDbOpts.namespace
+    };
+
+    this._httpClient = new DataAPIHttpClient({
+      baseUrl: endpoint,
+      tokenProvider: this.#token,
+      embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(null),
+      baseApiPath: combinedDbOpts.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment],
+      emitter: rootOpts.emitter,
+      monitorCommands: combinedDbOpts.monitorCommands,
+      fetchCtx: rootOpts.fetchCtx,
+      namespace: this._namespace,
+      userAgent: rootOpts.userAgent,
+      emissionStrategy: EmissionStrategy.Normal,
+    });
+
+    this._id = extractDbIdFromUrl(endpoint);
+  }
 
   /**
    * The default namespace to use for all operations in this database, unless overridden in a method call.
@@ -118,48 +156,11 @@ export class Db {
    * });
    * ```
    */
-  public readonly namespace!: string;
-
-  /**
-   * Use {@link DataAPIClient.db} to obtain an instance of this class.
-   *
-   * @internal
-   */
-  constructor(endpoint: string, rootOpts: InternalRootClientOpts, dbOpts: DbSpawnOptions | nullish) {
-    this.#defaultOpts = rootOpts;
-
-    this.#token = TokenProvider.parseToken(dbOpts?.token ?? rootOpts.dbOptions.token);
-
-    const combinedDbOpts = {
-      ...rootOpts.dbOptions,
-      ...dbOpts,
+  public get namespace(): string {
+    if (!this._namespace.ref) {
+      throw new Error('Non-Astra databases do not have an appropriate ID');
     }
-
-    Object.defineProperty(this, 'namespace', {
-      value: combinedDbOpts.namespace ?? DEFAULT_NAMESPACE,
-      writable: false,
-    });
-
-    Object.defineProperty(this, '_httpClient', {
-      value: new DataAPIHttpClient({
-        baseUrl: endpoint,
-        tokenProvider: this.#token,
-        embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(null),
-        baseApiPath: combinedDbOpts.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment],
-        emitter: rootOpts.emitter,
-        monitorCommands: combinedDbOpts.monitorCommands,
-        fetchCtx: rootOpts.fetchCtx,
-        namespace: this.namespace,
-        userAgent: rootOpts.userAgent,
-        emissionStrategy: EmissionStrategy.Normal,
-      }),
-      enumerable: false,
-    });
-
-    Object.defineProperty(this, '_id', {
-      value: extractDbIdFromUrl(endpoint),
-      enumerable: false,
-    });
+    return this._namespace.ref;
   }
 
   /**
@@ -167,11 +168,21 @@ export class Db {
    *
    * @throws Error - if the database is not an Astra database.
    */
-  get id(): string {
+  public get id(): string {
     if (!this._id) {
       throw new Error('Non-Astra databases do not have an appropriate ID');
     }
     return this._id;
+  }
+
+  /**
+   * Sets the current working namespace of the `Db` instance. Does not retroactively update any previous collections
+   * spawned from this `Db` to use the new namespace.
+   *
+   * @param namespace - The namespace to use
+   */
+  public useNamespace(namespace: string) {
+    this._namespace.ref = namespace;
   }
 
   /**

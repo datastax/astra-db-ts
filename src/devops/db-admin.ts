@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { AdminBlockingOptions } from '@/src/devops/types';
+import { AdminBlockingOptions, CreateNamespaceOptions } from '@/src/devops/types';
 import { Db } from '@/src/data-api';
 
 /**
@@ -92,7 +92,7 @@ export abstract class DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  abstract createNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
+  abstract createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void>;
   /**
    * Drops a namespace (aka keyspace) from this database.
    *

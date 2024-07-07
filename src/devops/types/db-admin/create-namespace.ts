@@ -21,47 +21,4 @@ import { AdminBlockingOptions } from '@/src/devops/types';
  *
  * @public
  */
-export type CreateNamespaceOptions = AdminBlockingOptions & { replication?: NamespaceReplicationOptions };
-
-/**
- * Represents the replication options for a namespace.
- *
- * Two replication strategies are available:
- *
- * - SimpleStrategy: Use only for a single datacenter and one rack. If you ever intend more than one datacenter, use the `NetworkTopologyStrategy`.
- *
- * - NetworkTopologyStrategy: Highly recommended for most deployments because it is much easier to expand to multiple datacenters when required by future expansion.
- *
- * If no replication options are provided, it will default to `'SimpleStrategy'` with a replication factor of `1`.
- *
- * @example
- * ```typescript
- * await dbAdmin.createNamespace('my_namespace');
- *
- * await dbAdmin.createNamespace('my_namespace' {
- *   replication: {
- *     class: 'SimpleStrategy',
- *     replicatonFactor: 3,
- *   },
- * });
- *
- * await dbAdmin.createNamespace('my_namespace' {
- *   replication: {
- *     class: 'NetworkTopologyStrategy',
- *     datacenter1: 3,
- *     datacenter1: 2,
- *   },
- * });
- * ```
- *
- * See the [datastax docs](https://docs.datastax.com/en/cassandra-oss/3.0/cassandra/architecture/archDataDistributeReplication.html) for more info.
- *
- * @public
- */
-export type NamespaceReplicationOptions = {
-  class: 'SimpleStrategy',
-  replicationFactor: number,
-} | {
-  class: 'NetworkTopologyStrategy',
-  [datacenter: string]: number | 'NetworkTopologyStrategy',
-}
+export type CreateNamespaceOptions = AdminBlockingOptions & { updateDbNamespace?: boolean };
