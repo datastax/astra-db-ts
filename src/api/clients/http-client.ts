@@ -27,8 +27,9 @@ export abstract class HttpClient {
   readonly monitorCommands: boolean;
   readonly fetchCtx: FetchCtx;
   readonly baseHeaders: Record<string, any>;
+  readonly headerProviders: HeaderProvider[];
 
-  protected constructor(options: HTTPClientOptions, readonly headerProviders: HeaderProvider[]) {
+  protected constructor(options: HTTPClientOptions, headerProviders: HeaderProvider[]) {
     this.baseUrl = options.baseUrl;
     this.emitter = options.emitter;
     this.monitorCommands = options.monitorCommands;
@@ -41,6 +42,8 @@ export abstract class HttpClient {
     this.baseHeaders = {};
     this.baseHeaders['User-Agent'] = options.userAgent;
     this.baseHeaders['Content-Type'] = 'application/json';
+
+    this.headerProviders = headerProviders;
   }
 
   protected async _request(info: HTTPRequestInfo): Promise<FetcherResponseInfo> {

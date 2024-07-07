@@ -197,11 +197,6 @@ export class DataAPIHttpClient extends HttpClient {
 
       const data: RawDataAPIResponse = resp.body ? JSON.parse(resp.body, reviver) : {};
 
-      if (resp.status === 401 || (data.errors && data.errors.length > 0 && data.errors[0]?.message === 'UNAUTHENTICATED: Invalid token')) {
-        const fauxResponse = mkFauxErroredResponse('Authentication failed; is your token valid?');
-        throw mkRespErrorFromResponse(DataAPIResponseError, info.command, fauxResponse);
-      }
-
       if (data.errors && data.errors.length > 0 && data.errors[0]?.errorCode === 'COLLECTION_NOT_EXIST') {
         const name = data.errors[0]?.message.split(': ')[1];
         throw new CollectionNotFoundError(info.namespace ?? '<unknown>', name);
@@ -229,10 +224,6 @@ export class DataAPIHttpClient extends HttpClient {
       throw e;
     }
   }
-}
-
-const mkFauxErroredResponse = (message: string): RawDataAPIResponse => {
-  return { errors: [{ message }] };
 }
 
 /**

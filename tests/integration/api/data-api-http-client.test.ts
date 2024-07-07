@@ -69,7 +69,7 @@ describe('integration.api.data-api-http-client', () => {
         assert.ok(e instanceof DataAPIResponseError);
         assert.strictEqual(e.errorDescriptors.length, 1);
         assert.strictEqual(e.detailedErrorDescriptors.length, 1);
-        assert.strictEqual(e.errorDescriptors[0].message, 'Authentication failed; is your token valid?');
+        assert.strictEqual(e.errorDescriptors[0].errorCode, 'UNAUTHENTICATED_REQUEST');
       }
     });
   });
