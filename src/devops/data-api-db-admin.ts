@@ -141,7 +141,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    *   replication: {
    *     class: 'NetworkTopologyStrategy',
    *     datacenter1: 3,
-   *     datacenter1: 2,
+   *     datacenter2: 2,
    *   },
    * });
    * ```

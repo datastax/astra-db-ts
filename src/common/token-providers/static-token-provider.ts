@@ -53,7 +53,7 @@ export class StaticTokenProvider extends TokenProvider {
    *
    * @returns the string the token provider was instantiated with.
    */
-  override getToken(): Promise<string | nullish> {
-    return Promise.resolve(this.#token);
+  override getToken(): string | nullish {
+    return this.#token;
   }
 }

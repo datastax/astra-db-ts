@@ -35,3 +35,4 @@ export * from './events';
 export * from './ids';
 export { TypeErr } from './utils';
 export * from './types';
+export * from './embedding-providers';

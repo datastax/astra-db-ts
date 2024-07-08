@@ -24,7 +24,8 @@ import {
   AdminCommandStartedEvent,
   AdminCommandSucceededEvent,
 } from '@/src/devops';
-import { HTTPClientOptions, HttpMethodStrings } from '@/src/api/clients/types';
+import { HeaderProvider, HTTPClientOptions, HttpMethodStrings } from '@/src/api/clients/types';
+import { nullish, TokenProvider } from '@/src/common';
 
 /**
  * @internal
@@ -50,19 +51,23 @@ interface DevopsAPIResponse {
   status: number,
 }
 
+interface DevOpsAPIHttpClientOpts extends HTTPClientOptions {
+  tokenProvider: TokenProvider,
+}
+
 /**
  * @internal
  */
 export class DevOpsAPIHttpClient extends HttpClient {
-  constructor(opts: HTTPClientOptions) {
-    super(opts, mkHeaders);
+  constructor(opts: DevOpsAPIHttpClientOpts) {
+    super(opts, [mkAuthHeaderProvider(opts.tokenProvider)]);
   }
 
   public async request(req: DevOpsAPIRequestInfo, options: TimeoutOptions | undefined, started: number = 0): Promise<DevopsAPIResponse> {
     const isLongRunning = started !== 0;
 
     try {
-      const timeoutManager = options?.timeoutManager ?? this._mkTimeoutManager(options?.maxTimeMS);
+      const timeoutManager = options?.timeoutManager ?? this._timeoutManager(options?.maxTimeMS);
       const url = this.baseUrl + req.path;
 
       if (this.monitorCommands && !isLongRunning) {
@@ -109,7 +114,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
   }
 
   public async requestLongRunning(req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo): Promise<DevopsAPIResponse> {
-    const timeoutManager = this._mkTimeoutManager(info.options?.maxTimeMS);
+    const timeoutManager = this._timeoutManager(info.options?.maxTimeMS);
     const isLongRunning = info.options?.blocking !== false;
 
     if (this.monitorCommands) {
@@ -130,6 +135,11 @@ export class DevOpsAPIHttpClient extends HttpClient {
     }
 
     return resp;
+  }
+
+  private _timeoutManager(timeout: number | undefined) {
+    timeout ??= this.fetchCtx.maxTimeMS ?? (12 * 60 * 1000);
+    return new TimeoutManager(timeout, (info) => new DevOpsAPITimeoutError(info.url, timeout));
   }
 
   private async _awaitStatus(id: string, req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo, timeoutManager: TimeoutManager, started: number): Promise<void> {
@@ -180,15 +190,16 @@ export class DevOpsAPIHttpClient extends HttpClient {
       });
     }
   }
-
-  private _mkTimeoutManager(timeout: number | undefined) {
-    timeout ??= this.fetchCtx.maxTimeMS ?? (12 * 60 * 1000);
-    return new TimeoutManager(timeout, (info) => new DevOpsAPITimeoutError(info.url, timeout));
-  }
 }
 
-function mkHeaders(token: string | undefined) {
-  return (token)
-    ? { [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` }
-    : {}
+const mkAuthHeaderProvider = (tp: TokenProvider): HeaderProvider => () => {
+  const token = tp.getToken();
+
+  return (token instanceof Promise)
+    ? token.then(mkAuthHeader)
+    : mkAuthHeader(token);
 }
+
+const mkAuthHeader = (token: string | nullish): Record<string, string> => (token)
+  ? { [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` }
+  : {};

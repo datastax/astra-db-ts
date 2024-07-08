@@ -16,8 +16,7 @@ import { CLIENT_USER_AGENT, RAGSTACK_REQUESTED_WITH } from '@/src/api/constants'
 import { Caller, DataAPIClientEvents } from '@/src/client';
 import TypedEmitter from 'typed-emitter';
 import { FetchCtx, FetcherResponseInfo } from '@/src/api/fetch/types';
-import { HTTPClientOptions, HTTPRequestInfo, MkReqHeaders } from '@/src/api/clients/types';
-import { TokenProvider } from '@/src/common';
+import { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/api/clients/types';
 
 /**
  * @internal
@@ -27,11 +26,9 @@ export abstract class HttpClient {
   readonly emitter: TypedEmitter<DataAPIClientEvents>;
   readonly monitorCommands: boolean;
   readonly fetchCtx: FetchCtx;
-  readonly applicationToken: TokenProvider;
   readonly baseHeaders: Record<string, any>;
 
-  protected constructor(options: HTTPClientOptions, readonly mkReqHeaders: MkReqHeaders) {
-    this.applicationToken = options.applicationToken;
+  protected constructor(options: HTTPClientOptions, readonly headerProviders: HeaderProvider[]) {
     this.baseUrl = options.baseUrl;
     this.emitter = options.emitter;
     this.monitorCommands = options.monitorCommands;
@@ -63,9 +60,17 @@ export abstract class HttpClient {
       ? `${info.url}?${new URLSearchParams(params).toString()}`
       : info.url;
 
-    const token = await this.applicationToken.getToken();
-    const reqHeaders = this.mkReqHeaders(token ?? undefined);
-    Object.assign(reqHeaders, this.baseHeaders);
+    const reqHeaders = { ...this.baseHeaders };
+
+    for (const provider of this.headerProviders) {
+      const maybePromise = provider();
+
+      const newHeaders = ('then' in maybePromise)
+        ? await maybePromise
+        : maybePromise;
+
+      Object.assign(reqHeaders, newHeaders);
+    }
 
     return await this.fetchCtx.ctx.fetch({
       url: url,

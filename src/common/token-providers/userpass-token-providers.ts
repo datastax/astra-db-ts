@@ -48,8 +48,8 @@ export class UsernamePasswordTokenProvider extends TokenProvider {
    *
    * @returns the token in the format `cassandra:[username_b64]:[password_b64]`
    */
-  override getToken(): Promise<string> {
-    return Promise.resolve(this.#token);
+  override getToken(): string {
+    return this.#token;
   }
 
   private _encodeB64(input: string) {
