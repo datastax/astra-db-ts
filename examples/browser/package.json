@@ -13,7 +13,7 @@
     "vite": "^5.2.0"
   },
   "dependencies": {
-    "@datastax/astra-db-ts": "file:../../datastax-astra-db-ts-1.3.0.tgz",
+    "@datastax/astra-db-ts": "^1.3.0",
     "events": "^3.3.0"
   }
 }
