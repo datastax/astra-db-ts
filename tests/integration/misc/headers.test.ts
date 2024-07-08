@@ -22,16 +22,12 @@ import {
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
 } from '@/tests/fixtures';
-<<<<<<< HEAD
 import {
   DEFAULT_DATA_API_AUTH_HEADER,
   DEFAULT_DEVOPS_API_AUTH_HEADER,
   DEFAULT_NAMESPACE,
   FetchNative,
 } from '@/src/api';
-=======
-import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DEVOPS_API_AUTH_HEADER, FetchNative } from '@/src/api';
->>>>>>> ad96fae (headers integration testing)
 import { nullish, StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvider } from '@/src/common';
 import assert from 'assert';
 import { Collection, EmbeddingHeadersProvider } from '@/src/data-api';
@@ -52,12 +48,9 @@ describe('integration.misc.headers', () => {
         },
       },
     },
-<<<<<<< HEAD
     dbOptions: {
       namespace: DEFAULT_NAMESPACE,
     },
-=======
->>>>>>> ad96fae (headers integration testing)
   });
 
   class AsyncTokenProvider extends TokenProvider {
