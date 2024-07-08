@@ -19,11 +19,11 @@ import { nullish } from '@/src/common';
  * The most basic embedding header provider, used for the vast majority of providers.
  *
  * Generally, anywhere this can be used in the public `astra-db-ts` interfaces, you may also pass in a plain
- * string or null/undefined, which is transformed into a {@link DefaultEmbeddingHeadersProvider} under the hood.
+ * string or null/undefined, which is transformed into an {@link EmbeddingAPIKeyHeaderProvider} under the hood.
  *
  * @example
  * ```
- * const provider = new DefaultEmbeddingHeadersProvider('api-key');
+ * const provider = new EmbeddingAPIKeyHeaderProvider('api-key');
  * const collection = await db.collection('my_coll', { embeddingApiKey: provider });
  *
  * // or just
@@ -35,11 +35,11 @@ import { nullish } from '@/src/common';
  *
  * @public
  */
-export class DefaultEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
+export class EmbeddingAPIKeyHeaderProvider extends EmbeddingHeadersProvider {
   readonly #headers: Record<string, string>;
 
   /**
-   * Constructs an instead of the {@link DefaultEmbeddingHeadersProvider}.
+   * Constructs an instead of the {@link EmbeddingAPIKeyHeaderProvider}.
    *
    * @param apiKey - The api-key/token to regurgitate in `getTokenAsString`
    */

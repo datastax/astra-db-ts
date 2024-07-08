@@ -561,7 +561,7 @@ export interface DbSpawnOptions {
 }
 
 // @public
-export class DefaultEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
+export class EmbeddingAPIKeyHeaderProvider extends EmbeddingHeadersProvider {
     constructor(apiKey: string | nullish);
     getHeaders(): Record<string, string>;
 }

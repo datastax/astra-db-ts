@@ -14,18 +14,18 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DefaultEmbeddingHeadersProvider, AWSEmbeddingHeadersProvider } from '@/src/data-api';
+import { EmbeddingAPIKeyHeaderProvider, AWSEmbeddingHeadersProvider } from '@/src/data-api';
 
 describe('unit.common.embedding-providers', () => {
-  describe('DefaultEmbeddingHeadersProvider', () => {
+  describe('EmbeddingAPIKeyHeaderProvider', () => {
     it('should provide the proper header for an api key', async () => {
-      const ehp = new DefaultEmbeddingHeadersProvider('key');
+      const ehp = new EmbeddingAPIKeyHeaderProvider('key');
       assert.deepStrictEqual(ehp.getHeaders(), { 'x-embedding-api-key': 'key' });
     });
 
     it('should provide no headers for a nullish api key', async () => {
-      const ehp1 = new DefaultEmbeddingHeadersProvider(undefined);
-      const ehp2 = new DefaultEmbeddingHeadersProvider(null);
+      const ehp1 = new EmbeddingAPIKeyHeaderProvider(undefined);
+      const ehp2 = new EmbeddingAPIKeyHeaderProvider(null);
       assert.deepStrictEqual(ehp1.getHeaders(), {});
       assert.deepStrictEqual(ehp2.getHeaders(), {});
     });
