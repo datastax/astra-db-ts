@@ -31,6 +31,10 @@ const dbAdmin = db.admin({ environment: 'dse' });
 
   // Example of document manipulation in the newly created namespace
   const _id = UUID.v7();
+
   await collection.insertOne({ _id });
+
+  console.log(await collection.findOne({}))
+
   await collection.deleteOne({ _id });
 })();
