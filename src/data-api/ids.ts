@@ -76,7 +76,7 @@ export class UUID {
    */
   public readonly version!: number;
 
-  readonly #uuid: string;
+  private readonly _raw!: string;
 
   /**
    * Creates a new UUID instance.
@@ -86,8 +86,8 @@ export class UUID {
    * @param uuid - The UUID string.
    * @param validate - Whether to validate the UUID string. Defaults to `true`.
    */
-  constructor(uuid: string, validate?: boolean) {
-    if (validate !== false) {
+  constructor(uuid: string, validate = true) {
+    if (validate) {
       if (typeof <unknown>uuid !== 'string') {
         throw new Error('UUID must be a string');
       }
@@ -97,10 +97,13 @@ export class UUID {
       }
     }
 
-    this.#uuid = uuid.toLowerCase();
+    Object.defineProperty(this, '_raw', {
+      value: uuid.toLowerCase(),
+      writable: false,
+    });
 
     Object.defineProperty(this, 'version', {
-      value: parseInt(this.#uuid[14], 16),
+      value: parseInt(this._raw[14], 16),
       writable: false,
     });
   }
@@ -118,10 +121,10 @@ export class UUID {
    */
   public equals(other: unknown): boolean {
     if (typeof other === 'string') {
-      return this.#uuid === other;
+      return this._raw === other;
     }
     if (other instanceof UUID) {
-      return this.#uuid === other.#uuid;
+      return this._raw === other._raw;
     }
     return false;
   }
@@ -139,7 +142,7 @@ export class UUID {
    * Returns the string representation of the UUID in lowercase.
    */
   public toString(): string {
-    return this.#uuid;
+    return this._raw;
   }
 
   /**
@@ -215,7 +218,7 @@ const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
  * @public
  */
 export class ObjectId {
-  private readonly _objectId: string;
+  private readonly _raw!: string;
 
   /**
    * Creates a new ObjectId instance.
@@ -236,7 +239,10 @@ export class ObjectId {
       }
     }
 
-    this._objectId = typeof id === 'string' ? id.toLowerCase() : genObjectId(id);
+    Object.defineProperty(this, '_raw', {
+      value: (typeof id === 'string') ? id.toLowerCase() : genObjectId(id),
+      writable: false,
+    });
   }
 
   /**
@@ -252,10 +258,10 @@ export class ObjectId {
    */
   public equals(other: unknown): boolean {
     if (typeof other === 'string') {
-      return this._objectId.localeCompare(other, undefined, { sensitivity: 'accent' }) === 0;
+      return this._raw.localeCompare(other, undefined, { sensitivity: 'accent' }) === 0;
     }
     if (other instanceof ObjectId) {
-      return this._objectId.localeCompare(other._objectId, undefined, { sensitivity: 'accent' }) === 0;
+      return this._raw.localeCompare(other._raw, undefined, { sensitivity: 'accent' }) === 0;
     }
     return false;
   }
@@ -266,7 +272,7 @@ export class ObjectId {
    * @returns The timestamp of the ObjectId.
    */
   public getTimestamp(): Date {
-    const time = parseInt(this._objectId.slice(0, 8), 16);
+    const time = parseInt(this._raw.slice(0, 8), 16);
     return new Date(~~time * 1000);
   }
 
@@ -274,7 +280,7 @@ export class ObjectId {
    * Returns the string representation of the ObjectId.
    */
   public toString(): string {
-    return this._objectId;
+    return this._raw;
   }
 
   /**
