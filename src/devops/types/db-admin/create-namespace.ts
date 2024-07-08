@@ -15,53 +15,29 @@
 import { AdminBlockingOptions } from '@/src/devops/types';
 
 /**
- * Represents the options for creating a database on a non-Astra database (i.e. blocking options + namespace creation options).
+ * Represents the common options for creating a namespace through the `astra-db-ts` client.
  *
- * If no replication options are provided, it will default to `'SimpleStrategy'` with a replication factor of `1`.
+ * See {@link AdminBlockingOptions} for more options about blocking behavior.
  *
- * @public
- */
-export type CreateNamespaceOptions = AdminBlockingOptions & { replication?: NamespaceReplicationOptions };
-
-/**
- * Represents the replication options for a namespace.
- *
- * Two replication strategies are available:
- *
- * - SimpleStrategy: Use only for a single datacenter and one rack. If you ever intend more than one datacenter, use the `NetworkTopologyStrategy`.
- *
- * - NetworkTopologyStrategy: Highly recommended for most deployments because it is much easier to expand to multiple datacenters when required by future expansion.
- *
- * If no replication options are provided, it will default to `'SimpleStrategy'` with a replication factor of `1`.
+ * If `updateDbNamespace` is set to true, the underlying `Db` instance used to create the `DbAdmin` will have its
+ * current working namespace set to the newly created namespace immediately (even if the namespace isn't technically
+ * yet created).
  *
  * @example
  * ```typescript
- * await dbAdmin.createNamespace('my_namespace');
+ * // If using non-astra, this may be a common idiom:
+ * const client = new DataAPIClient({ environment: 'dse' });
+ * const db = client.db('<endpoint>', { token: '<token>' });
  *
- * await dbAdmin.createNamespace('my_namespace' {
- *   replication: {
- *     class: 'SimpleStrategy',
- *     replicatonFactor: 3,
- *   },
+ * // Will internally call `db.useNamespace('new_namespace')`
+ * await db.admin().createNamespace('new_namespace', {
+ *   updateDbNamespace: true,
  * });
  *
- * await dbAdmin.createNamespace('my_namespace' {
- *   replication: {
- *     class: 'NetworkTopologyStrategy',
- *     datacenter1: 3,
- *     datacenter1: 2,
- *   },
- * });
+ * // Creates collection in namespace `new_namespace` by default now
+ * const coll = db.createCollection('my_coll');
  * ```
- *
- * See the [datastax docs](https://docs.datastax.com/en/cassandra-oss/3.0/cassandra/architecture/archDataDistributeReplication.html) for more info.
  *
  * @public
  */
-export type NamespaceReplicationOptions = {
-  class: 'SimpleStrategy',
-  replicationFactor: number,
-} | {
-  class: 'NetworkTopologyStrategy',
-  [datacenter: string]: number | 'NetworkTopologyStrategy',
-}
+export type CreateNamespaceOptions = AdminBlockingOptions & { updateDbNamespace?: boolean };

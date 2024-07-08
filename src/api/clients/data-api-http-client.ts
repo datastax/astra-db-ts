@@ -15,12 +15,13 @@
 
 import {
   DEFAULT_DATA_API_AUTH_HEADER,
-  DEFAULT_NAMESPACE,
-  DEFAULT_TIMEOUT, HeaderProvider,
+  DEFAULT_TIMEOUT,
+  HeaderProvider,
   hrTimeMs,
   HttpClient,
   HTTPClientOptions,
   HttpMethods,
+  NamespaceRef,
   RawDataAPIResponse,
 } from '@/src/api';
 import { DataAPIResponseError, DataAPITimeoutError, ObjectId, UUID } from '@/src/data-api';
@@ -94,7 +95,7 @@ const adaptInfo4Devops = (info: DataAPIRequestInfo) => (<const>{
 });
 
 interface DataAPIHttpClientOpts extends HTTPClientOptions {
-  namespace: string | undefined,
+  namespace: NamespaceRef,
   emissionStrategy: EmissionStrategy,
   embeddingHeaders: EmbeddingHeadersProvider,
   tokenProvider: TokenProvider,
@@ -105,14 +106,14 @@ interface DataAPIHttpClientOpts extends HTTPClientOptions {
  */
 export class DataAPIHttpClient extends HttpClient {
   public collection?: string;
-  public namespace?: string;
+  public namespace?: NamespaceRef;
   public maxTimeMS: number;
   public emissionStrategy: ReturnType<EmissionStrategy>
   readonly #props: DataAPIHttpClientOpts;
 
   constructor(props: DataAPIHttpClientOpts) {
     super(props, [mkAuthHeaderProvider(props.tokenProvider), props.embeddingHeaders.getHeaders.bind(props.embeddingHeaders)]);
-    this.namespace = 'namespace' in props ? props.namespace : DEFAULT_NAMESPACE;
+    this.namespace = props.namespace;
     this.#props = props;
     this.maxTimeMS = this.fetchCtx.maxTimeMS ?? DEFAULT_TIMEOUT;
     this.emissionStrategy = props.emissionStrategy(props.emitter);
@@ -122,7 +123,7 @@ export class DataAPIHttpClient extends HttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(opts?.embeddingApiKey),
-      namespace: namespace,
+      namespace: { ref: namespace },
     });
 
     clone.collection = collection;
@@ -171,7 +172,7 @@ export class DataAPIHttpClient extends HttpClient {
       info.collection ||= this.collection;
 
       if (info.namespace !== null) {
-        info.namespace ||= this.namespace;
+        info.namespace ||= this.namespace?.ref;
       }
 
       const keyspacePath = info.namespace ? `/${info.namespace}` : '';

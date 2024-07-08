@@ -19,7 +19,7 @@ import { Db } from '@/src/data-api';
 import { DbAdmin } from '@/src/devops/db-admin';
 import { WithTimeout } from '@/src/common/types';
 import { validateAdminOpts } from '@/src/devops/utils';
-import { CreateNamespaceOptions } from '@/src/devops/types/db-admin/create-namespace';
+import { LocalCreateNamespaceOptions } from '@/src/devops/types/db-admin/local-create-namespace';
 
 /**
  * An administrative class for managing non-Astra databases, including creating, listing, and deleting namespaces.
@@ -130,14 +130,14 @@ export class DataAPIDbAdmin extends DbAdmin {
    * ```typescript
    * await dbAdmin.createNamespace('my_namespace');
    *
-   * await dbAdmin.createNamespace('my_namespace' {
+   * await dbAdmin.createNamespace('my_namespace', {
    *   replication: {
    *     class: 'SimpleStrategy',
    *     replicatonFactor: 3,
    *   },
    * });
    *
-   * await dbAdmin.createNamespace('my_namespace' {
+   * await dbAdmin.createNamespace('my_namespace', {
    *   replication: {
    *     class: 'NetworkTopologyStrategy',
    *     datacenter1: 3,
@@ -151,12 +151,17 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void> {
+  public override async createNamespace(namespace: string, options?: LocalCreateNamespaceOptions): Promise<void> {
     const replication = options?.replication ?? {
       class: 'SimpleStrategy',
       replicationFactor: 1,
     };
+
     await this._httpClient.executeCommand({ createNamespace: { name: namespace, options: { replication } } }, { maxTimeMS: options?.maxTimeMS });
+
+    if (options?.updateDbNamespace) {
+      this._db.useNamespace(namespace);
+    }
   }
 
   /**

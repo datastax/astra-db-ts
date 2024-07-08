@@ -18,3 +18,4 @@ export * from './admin/database-info';
 export * from './admin/list-databases';
 export * from './admin/spawn-admin';
 export * from './db-admin/create-namespace';
+export * from './db-admin/local-create-namespace';

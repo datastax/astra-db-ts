@@ -21,6 +21,7 @@ import { Collection, Db } from '@/src/data-api';
 import { DataAPIClient } from '@/src/client';
 import { Context } from 'mocha';
 import { DataAPIEnvironment } from '@/src/common';
+import { DEFAULT_NAMESPACE } from '@/src/api';
 
 export const DEFAULT_COLLECTION_NAME = 'test_coll';
 export const EPHEMERAL_COLLECTION_NAME = 'temp_coll';
@@ -42,7 +43,12 @@ export const DEMO_APPLICATION_URI = 'https://12341234-1234-1234-1234-12341234123
 export const ENVIRONMENT = (process.env.APPLICATION_ENVIRONMENT ?? 'astra') as DataAPIEnvironment;
 
 export const initTestObjects = async (ctx: Context, preferHttp2 = USE_HTTP2, clientType: typeof HTTP_CLIENT_TYPE = HTTP_CLIENT_TYPE): Promise<[DataAPIClient, Db, Collection]> => {
-  const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { httpOptions: { preferHttp2, client: clientType }, environment: ENVIRONMENT });
+  const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {
+    httpOptions: { preferHttp2, client: clientType },
+    dbOptions: { namespace: DEFAULT_NAMESPACE },
+    environment: ENVIRONMENT,
+  });
+
   const db = client.db(TEST_APPLICATION_URI);
 
   if (!collsSetup) {

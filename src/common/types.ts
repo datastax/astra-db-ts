@@ -46,3 +46,8 @@ export type nullish = null | undefined;
  * @public
  */
 export type DataAPIEnvironment = typeof DataAPIEnvironments[number];
+
+/**
+ * @internal
+ */
+export type Ref<T> = { ref: T }

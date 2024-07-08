@@ -16,6 +16,7 @@ import type TypedEmitter from 'typed-emitter';
 import type { DataAPICommandEvents } from '@/src/data-api';
 import type { FetchCtx, HttpMethods } from '@/src/api';
 import type { TimeoutManager } from '@/src/api/timeout-managers';
+import { Ref } from '@/src/common';
 
 /**
  * @internal
@@ -38,6 +39,11 @@ export type HeaderProvider = (() => Promise<Record<string, string>> | Record<str
  * @internal
  */
 export type HttpMethodStrings = typeof HttpMethods[keyof typeof HttpMethods];
+
+/**
+ * @internal
+ */
+export type NamespaceRef = Ref<string | undefined>;
 
 /**
  * @internal

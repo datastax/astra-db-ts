@@ -23,7 +23,7 @@ import {
 } from '@/tests/fixtures';
 import { Collection, DataAPITimeoutError, Db } from '@/src/data-api';
 import assert from 'assert';
-import { HttpMethods } from '@/src/api';
+import { DEFAULT_NAMESPACE, HttpMethods } from '@/src/api';
 import { DevOpsAPITimeoutError } from '@/src/devops';
 import { DataAPIClient } from '@/src/client';
 
@@ -46,7 +46,7 @@ describe('integration.misc.timeouts', () => {
 
     it('should timeout based on DataAPIClient maxTimeMS', async () => {
       const collection = new DataAPIClient(TEST_APPLICATION_TOKEN, { httpOptions: { maxTimeMS: 1 }, environment: ENVIRONMENT })
-        .db(TEST_APPLICATION_URI)
+        .db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE })
         .collection(DEFAULT_COLLECTION_NAME);
 
       await assert.rejects(async () => {
@@ -56,7 +56,7 @@ describe('integration.misc.timeouts', () => {
 
     it('should timeout based on collection maxTimeMS', async () => {
       const collection = new DataAPIClient(TEST_APPLICATION_TOKEN, { httpOptions: { maxTimeMS: 30000 }, environment: ENVIRONMENT })
-        .db(TEST_APPLICATION_URI)
+        .db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE })
         .collection(DEFAULT_COLLECTION_NAME, { defaultMaxTimeMS: 1 });
 
       await assert.rejects(async () => {
@@ -66,7 +66,7 @@ describe('integration.misc.timeouts', () => {
 
     it('should timeout based on operation maxTimeMS', async () => {
       const collection = new DataAPIClient(TEST_APPLICATION_TOKEN, { httpOptions: { maxTimeMS: 30000 }, environment: ENVIRONMENT })
-        .db(TEST_APPLICATION_URI)
+        .db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE })
         .collection(DEFAULT_COLLECTION_NAME, { defaultMaxTimeMS: 30000 });
 
       await assert.rejects(async () => {

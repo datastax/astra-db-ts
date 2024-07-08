@@ -31,7 +31,8 @@ import { DEFAULT_DATA_API_PATHS, DEFAULT_NAMESPACE, DEFAULT_TIMEOUT } from '@/sr
 describe('integration.client.data-api-client', () => {
   describe('db', () => {
     it('properly connects to a db by endpoint', async () => {
-      const db = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT }).db(TEST_APPLICATION_URI);
+      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
+      const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
       const collections = await db.listCollections();
       assert.ok(Array.isArray(collections));
     });
@@ -55,7 +56,7 @@ describe('integration.client.data-api-client', () => {
   describe('close', () => {
     it('should not allow operations after closing the client', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI);
+      const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
       await client.close();
 
       try {
@@ -71,7 +72,7 @@ describe('integration.client.data-api-client', () => {
   describe('asyncDispose', () => {
     it('should not allow operations after using the client', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI);
+      const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
 
       {
         await using _client = client;
@@ -101,7 +102,7 @@ describe('integration.client.data-api-client', () => {
 
     it('should not emit any command events when not enabled', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI);
+      const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
       client.on('commandStarted', () => assert.fail('should not have emitted commandStarted event'));
@@ -113,7 +114,7 @@ describe('integration.client.data-api-client', () => {
 
     it('should not emit any command events when set to false', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { monitorCommands: false }, environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI);
+      const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
       client.on('commandStarted', () => assert.fail('should not have emitted commandStarted event'));
@@ -125,7 +126,7 @@ describe('integration.client.data-api-client', () => {
 
     it('should allow cross-collection monitoring of successful commands when enabled', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { monitorCommands: true }, environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI);
+      const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
       const collection1 = db.collection(DEFAULT_COLLECTION_NAME);
       const collection2 = db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
 
@@ -188,7 +189,7 @@ describe('integration.client.data-api-client', () => {
 
     it('should allow monitoring of failed commands when enabled', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { monitorCommands: true });
+      const db = client.db(TEST_APPLICATION_URI, { monitorCommands: true, namespace: DEFAULT_NAMESPACE });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
       let startedEvent: CommandStartedEvent | undefined;
@@ -243,7 +244,7 @@ describe('integration.client.data-api-client', () => {
 
     it('should allow monitoring of timed-out commands when enabled', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { monitorCommands: true });
+      const db = client.db(TEST_APPLICATION_URI, { monitorCommands: true, namespace: DEFAULT_NAMESPACE });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
       let startedEvent: CommandStartedEvent | undefined;
