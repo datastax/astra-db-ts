@@ -173,7 +173,7 @@ interface DimensionBranch extends AuthBranch {
 
 const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: EmbeddingProviderModelInfo) => (test: AuthBranch): DimensionBranch[] => {
   const vectorDimParam = modelInfo.parameters.find((p) => p.name === 'vectorDimension');
-  const defaultDim = +vectorDimParam!.defaultValue;
+  const defaultDim = Number(vectorDimParam?.defaultValue);
 
   if (vectorDimParam && !defaultDim) {
     const matchingDim = Object.keys(spec.dimension ?? {}).find((regex) => RegExp(regex).test(test.modelName))!;
