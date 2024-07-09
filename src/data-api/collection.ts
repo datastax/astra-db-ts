@@ -106,8 +106,8 @@ import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-c
  * @public
  */
 export class Collection<Schema extends SomeDoc = SomeDoc> {
-  private readonly _httpClient!: DataAPIHttpClient;
-  private readonly _db!: Db
+  readonly #httpClient: DataAPIHttpClient;
+  readonly #db: Db
 
   /**
    * The name of the collection.
@@ -135,15 +135,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       writable: false,
     });
 
-    Object.defineProperty(this, '_httpClient', {
-      value: httpClient.forCollection(this.namespace, this.collectionName, opts),
-      enumerable: false,
-    });
-
-    Object.defineProperty(this, '_db', {
-      value: db,
-      enumerable: false,
-    });
+    this.#httpClient = httpClient.forCollection(this.namespace, this.collectionName, opts);
+    this.#db = db;
   }
 
   /**
@@ -197,7 +190,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       command.insertOne.document = { ...command.insertOne.document, $vectorize: vectorize };
     }
 
-    const resp = await this._httpClient.executeCommand(command, options);
+    const resp = await this.#httpClient.executeCommand(command, options);
 
     return {
       insertedId: resp.status?.insertedIds[0],
@@ -304,11 +297,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       }
     }
 
-    const timeoutManager = this._httpClient.timeoutManager(options?.maxTimeMS);
+    const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
 
     const insertedIds = (options?.ordered)
-      ? await insertManyOrdered<Schema>(this._httpClient, documents, chunkSize, timeoutManager)
-      : await insertManyUnordered<Schema>(this._httpClient, documents, options?.concurrency ?? 8, chunkSize, timeoutManager);
+      ? await insertManyOrdered<Schema>(this.#httpClient, documents, chunkSize, timeoutManager)
+      : await insertManyUnordered<Schema>(this.#httpClient, documents, options?.concurrency ?? 8, chunkSize, timeoutManager);
 
     return {
       insertedCount: insertedIds.length,
@@ -372,7 +365,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       command.updateOne.sort = normalizeSort(options.sort);
     }
 
-    const resp = await this._httpClient.executeCommand(command, options);
+    const resp = await this.#httpClient.executeCommand(command, options);
 
     const commonResult = {
       modifiedCount: resp.status?.modifiedCount,
@@ -454,7 +447,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       },
     };
 
-    const timeoutManager = this._httpClient.timeoutManager(options?.maxTimeMS);
+    const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
 
     const commonResult = {
       modifiedCount: 0,
@@ -466,7 +459,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     try {
       while (!resp || resp.status?.nextPageState) {
-        resp = await this._httpClient.executeCommand(command, { timeoutManager });
+        resp = await this.#httpClient.executeCommand(command, { timeoutManager });
         command.updateMany.options.pagingState = resp.status?.nextPageState ;
         commonResult.modifiedCount += resp.status?.modifiedCount ?? 0;
         commonResult.matchedCount += resp.status?.matchedCount ?? 0;
@@ -564,7 +557,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       command.findOneAndReplace.sort = normalizeSort(options.sort);
     }
 
-    const resp = await this._httpClient.executeCommand(command, options);
+    const resp = await this.#httpClient.executeCommand(command, options);
 
     const commonResult = {
       modifiedCount: resp.status?.modifiedCount,
@@ -625,7 +618,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       command.deleteOne.sort = normalizeSort(options.sort);
     }
 
-    const deleteOneResp = await this._httpClient.executeCommand(command, options);
+    const deleteOneResp = await this.#httpClient.executeCommand(command, options);
 
     return {
       deletedCount: deleteOneResp.status?.deletedCount,
@@ -670,14 +663,14 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       deleteMany: { filter },
     };
 
-    const timeoutManager = this._httpClient.timeoutManager(options?.maxTimeMS);
+    const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
 
     let resp;
     let numDeleted = 0;
 
     try {
       while (!resp || resp.status?.moreData) {
-        resp = await this._httpClient.executeCommand(command, { timeoutManager });
+        resp = await this.#httpClient.executeCommand(command, { timeoutManager });
         numDeleted += resp.status?.deletedCount ?? 0;
       }
     } catch (e) {
@@ -790,7 +783,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictProjection
    */
   public find(filter: Filter<Schema>, options?: FindOptions): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>> {
-    return new FindCursor(this.namespace, this._httpClient, filter as any, coalesceVectorSpecialsIntoSort(options));
+    return new FindCursor(this.namespace, this.#httpClient, filter as any, coalesceVectorSpecialsIntoSort(options));
   }
 
   /**
@@ -857,7 +850,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       command.findOne.projection = options.projection;
     }
 
-    const resp = await this._httpClient.executeCommand(command, options);
+    const resp = await this.#httpClient.executeCommand(command, options);
     return resp.data?.document;
   }
 
@@ -995,7 +988,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       throw new Error('upperBound is required');
     }
 
-    const resp = await this._httpClient.executeCommand(command, options);
+    const resp = await this.#httpClient.executeCommand(command, options);
 
     if (resp.status?.moreData) {
       throw new TooManyDocumentsToCountError(resp.status.count, true);
@@ -1027,7 +1020,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       estimatedDocumentCount: {},
     };
 
-    const resp = await this._httpClient.executeCommand(command, options);
+    const resp = await this.#httpClient.executeCommand(command, options);
     return resp.status?.count;
   }
 
@@ -1144,7 +1137,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       command.findOneAndReplace.projection = options.projection;
     }
 
-    const resp = await this._httpClient.executeCommand(command, options);
+    const resp = await this.#httpClient.executeCommand(command, options);
     const document = resp.data?.document || null;
 
     return (options?.includeResultMetadata)
@@ -1241,7 +1234,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       command.findOneAndDelete.projection = options.projection;
     }
 
-    const resp = await this._httpClient.executeCommand(command, options);
+    const resp = await this.#httpClient.executeCommand(command, options);
     const document = resp.data?.document || null;
 
     return (options?.includeResultMetadata)
@@ -1359,7 +1352,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       command.findOneAndUpdate.projection = options.projection;
     }
 
-    const resp = await this._httpClient.executeCommand(command, options);
+    const resp = await this.#httpClient.executeCommand(command, options);
     const document = resp.data?.document || null;
 
     return (options?.includeResultMetadata)
@@ -1424,11 +1417,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @throws BulkWriteError - If the operation fails
    */
   public async bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult<Schema>> {
-    const timeoutManager = this._httpClient.timeoutManager(options?.maxTimeMS)
+    const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS)
 
     return (options?.ordered)
-      ? await bulkWriteOrdered(this._httpClient, operations, timeoutManager)
-      : await bulkWriteUnordered(this._httpClient, operations, options?.concurrency ?? 8, timeoutManager);
+      ? await bulkWriteOrdered(this.#httpClient, operations, timeoutManager)
+      : await bulkWriteUnordered(this.#httpClient, operations, options?.concurrency ?? 8, timeoutManager);
   }
 
   /**
@@ -1448,7 +1441,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @returns The options that the collection was created with (i.e. the `vector` and `indexing` operations).
    */
   public async options(options?: WithTimeout): Promise<CollectionOptions<SomeDoc>> {
-    const results = await this._db.listCollections({ nameOnly: false, maxTimeMS: options?.maxTimeMS });
+    const results = await this.#db.listCollections({ nameOnly: false, maxTimeMS: options?.maxTimeMS });
 
     const collection = results.find((c) => c.name === this.collectionName);
 
@@ -1479,7 +1472,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @remarks Use with caution. Wear your safety goggles. Don't say I didn't warn you.
    */
   public async drop(options?: WithTimeout): Promise<boolean> {
-    return await this._db.dropCollection(this.collectionName, options);
+    return await this.#db.dropCollection(this.collectionName, options);
+  }
+
+  private get _httpClient() {
+    return this.#httpClient;
   }
 }
 

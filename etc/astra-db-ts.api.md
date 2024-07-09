@@ -115,14 +115,20 @@ export class AstraAdmin {
 // @public
 export class AstraDbAdmin extends DbAdmin {
     // @internal
-    constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts?: AdminSpawnOptions);
-    createNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
+    constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts: AdminSpawnOptions | undefined, dbToken: TokenProvider);
+    createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void>;
     db(): Db;
     drop(options?: AdminBlockingOptions): Promise<void>;
     dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
     get id(): string;
     info(options?: WithTimeout): Promise<FullDatabaseInfo>;
     listNamespaces(options?: WithTimeout): Promise<string[]>;
+}
+
+// @public
+export class AWSEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
+    constructor(accessKeyId: string, secretAccessKey: string);
+    getHeaders(): Record<string, string>;
 }
 
 // @public
@@ -230,8 +236,8 @@ export interface CollectionOptions<Schema extends SomeDoc> {
 
 // @public
 export interface CollectionSpawnOptions extends WithNamespace {
-    defaultMaxTimeMS?: number;
-    embeddingApiKey?: string;
+    defaultMaxTimeMS?: number | null;
+    embeddingApiKey?: string | EmbeddingHeadersProvider | null;
 }
 
 // @public
@@ -301,7 +307,7 @@ export type CreateDatabaseOptions = AdminBlockingOptions & {
 
 // @public
 export type CreateNamespaceOptions = AdminBlockingOptions & {
-    replication?: NamespaceReplicationOptions;
+    updateDbNamespace?: boolean;
 };
 
 // @public
@@ -371,7 +377,7 @@ export type DataAPICommandEvents = {
 export class DataAPIDbAdmin extends DbAdmin {
     // @internal
     constructor(db: Db, httpClient: DataAPIHttpClient, adminOpts?: AdminSpawnOptions);
-    createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void>;
+    createNamespace(namespace: string, options?: LocalCreateNamespaceOptions): Promise<void>;
     db(): Db;
     dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
     listNamespaces(options?: WithTimeout): Promise<string[]>;
@@ -526,12 +532,13 @@ export class Db {
     listCollections(options?: ListCollectionsOptions & {
         nameOnly?: false;
     }): Promise<FullCollectionInfo[]>;
-    readonly namespace: string;
+    get namespace(): string;
+    useNamespace(namespace: string): void;
 }
 
 // @public
 export abstract class DbAdmin {
-    abstract createNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
+    abstract createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void>;
     abstract db(): Db;
     abstract dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
     abstract listNamespaces(): Promise<string[]>;
@@ -551,6 +558,12 @@ export interface DbSpawnOptions {
     monitorCommands?: boolean;
     namespace?: string;
     token?: string | TokenProvider | null;
+}
+
+// @public
+export class EmbeddingAPIKeyHeaderProvider extends EmbeddingHeadersProvider {
+    constructor(apiKey: string | nullish);
+    getHeaders(): Record<string, string>;
 }
 
 // @public
@@ -639,6 +652,13 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
 
 // @public
 export interface DropCollectionOptions extends WithTimeout, WithNamespace {
+}
+
+// @public
+export abstract class EmbeddingHeadersProvider {
+    abstract getHeaders(): Promise<Record<string, string>> | Record<string, string>;
+    // @internal
+    static parseHeaders(token: unknown): EmbeddingHeadersProvider;
 }
 
 // @public
@@ -936,6 +956,11 @@ export interface ListDatabasesOptions extends WithTimeout {
 }
 
 // @public
+export type LocalCreateNamespaceOptions = CreateNamespaceOptions & {
+    replication?: NamespaceReplicationOptions;
+};
+
+// @public
 export type MaybeId<T> = NoId<T> & {
     _id?: IdOf<T>;
 };
@@ -1076,7 +1101,7 @@ export type SortDirection = 1 | -1 | 'asc' | 'desc' | 'ascending' | 'descending'
 // @public
 export class StaticTokenProvider extends TokenProvider {
     constructor(token: string | nullish);
-    getToken(): Promise<string | nullish>;
+    getToken(): string | nullish;
 }
 
 // @public
@@ -1168,7 +1193,7 @@ export type ToDotNotation<Schema extends SomeDoc> = Merge<_ToDotNotation<Schema,
 
 // @public
 export abstract class TokenProvider {
-    abstract getToken(): Promise<string | nullish>;
+    abstract getToken(): string | nullish | Promise<string | nullish>;
     // @internal
     static parseToken(token: unknown): TokenProvider;
 }
@@ -1256,7 +1281,7 @@ export interface UpsertedUpdateOptions<Schema extends SomeDoc> {
 // @public
 export class UsernamePasswordTokenProvider extends TokenProvider {
     constructor(username: string, password: string);
-    getToken(): Promise<string>;
+    getToken(): string;
 }
 
 // @public

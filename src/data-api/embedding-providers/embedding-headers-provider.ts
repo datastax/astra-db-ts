@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { isNullish } from '@/src/common';
-import { DefaultEmbeddingHeadersProvider } from '@/src/data-api/embedding-providers';
+import { EmbeddingAPIKeyHeaderProvider } from '@/src/data-api/embedding-providers';
 
 /**
  * The base class for an "embedding headers provider", a general concept for anything that provides headers used for
@@ -28,7 +28,7 @@ import { DefaultEmbeddingHeadersProvider } from '@/src/data-api/embedding-provid
  * this class to create your own if you find it necessary.
  *
  * Generally, where you can pass in a `EmbeddingHeadersProvider`, you may also pass in a plain string which is
- * translated into a {@link DefaultEmbeddingHeadersProvider} under the hood.
+ * translated into an {@link EmbeddingAPIKeyHeaderProvider} under the hood.
  *
  * @example
  * ```
@@ -36,7 +36,7 @@ import { DefaultEmbeddingHeadersProvider } from '@/src/data-api/embedding-provid
  * const collection = await db.collection('my_coll', { embeddingApiKey: provider });
  * ```
  *
- * @see DefaultEmbeddingHeadersProvider
+ * @see EmbeddingAPIKeyHeaderProvider
  * @see AWSEmbeddingHeadersProvider
  *
  * @public
@@ -52,7 +52,7 @@ export abstract class EmbeddingHeadersProvider {
   abstract getHeaders(): Promise<Record<string, string>> | Record<string, string>;
 
   /**
-   * Turns a string embedding api key into a {@link DefaultEmbeddingHeadersProvider} if necessary. Throws an error if
+   * Turns a string embedding api key into an {@link EmbeddingAPIKeyHeaderProvider} if necessary. Throws an error if
    * it's not a string, nullish, or a `EmbeddingHeadersProvider` already.
    *
    * Not intended for external use.
@@ -61,7 +61,7 @@ export abstract class EmbeddingHeadersProvider {
    */
   static parseHeaders(token: unknown): EmbeddingHeadersProvider {
     if (typeof token === 'string' || isNullish(token)) {
-      return new DefaultEmbeddingHeadersProvider(token);
+      return new EmbeddingAPIKeyHeaderProvider(token);
     }
 
     if (token instanceof EmbeddingHeadersProvider) {

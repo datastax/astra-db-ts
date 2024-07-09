@@ -56,9 +56,8 @@ import { validateAdminOpts } from '@/src/devops/utils';
  * @public
  */
 export class AstraAdmin {
-  readonly #defaultOpts!: InternalRootClientOpts;
-
-  private readonly _httpClient!: DevOpsAPIHttpClient;
+  readonly #defaultOpts: InternalRootClientOpts;
+  readonly #httpClient: DevOpsAPIHttpClient;
 
   /**
    * Use {@link DataAPIClient.admin} to obtain an instance of this class.
@@ -68,24 +67,21 @@ export class AstraAdmin {
   constructor(rootOpts: InternalRootClientOpts, adminOpts?: AdminSpawnOptions) {
     validateAdminOpts(adminOpts);
 
+    this.#defaultOpts = rootOpts;
+
     const combinedAdminOpts = {
       ...rootOpts.adminOptions,
       ...adminOpts,
       adminToken: TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken),
     };
 
-    this.#defaultOpts = rootOpts;
-
-    Object.defineProperty(this, '_httpClient', {
-      value: new DevOpsAPIHttpClient({
-        baseUrl: combinedAdminOpts.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINT,
-        monitorCommands: combinedAdminOpts.monitorCommands,
-        emitter: rootOpts.emitter,
-        fetchCtx: rootOpts.fetchCtx,
-        userAgent: rootOpts.userAgent,
-        tokenProvider: combinedAdminOpts.adminToken,
-      }),
-      enumerable: false,
+    this.#httpClient = new DevOpsAPIHttpClient({
+      baseUrl: combinedAdminOpts.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINT,
+      monitorCommands: combinedAdminOpts.monitorCommands,
+      emitter: rootOpts.emitter,
+      fetchCtx: rootOpts.fetchCtx,
+      userAgent: rootOpts.userAgent,
+      tokenProvider: combinedAdminOpts.adminToken,
     });
   }
 
@@ -253,7 +249,7 @@ export class AstraAdmin {
    * @returns A promise that resolves to the complete database information.
    */
   public async dbInfo(id: string, options?: WithTimeout): Promise<FullDatabaseInfo> {
-    const resp = await this._httpClient.request({
+    const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases/${id}`,
     }, options);
@@ -296,7 +292,7 @@ export class AstraAdmin {
     typeof options?.limit === 'number' && (params['limit'] = String(options.skip));
     typeof options?.skip === 'number'  && (params['starting_after'] = String(options.skip));
 
-    const resp = await this._httpClient.request({
+    const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases`,
       params: params,
@@ -366,7 +362,7 @@ export class AstraAdmin {
       ...config,
     }
 
-    const resp = await this._httpClient.requestLongRunning({
+    const resp = await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: '/databases',
       data: definition,
@@ -410,7 +406,7 @@ export class AstraAdmin {
   async dropDatabase(db: Db | string, options?: AdminBlockingOptions): Promise<void> {
     const id = typeof db === 'string' ? db : db.id;
 
-    await this._httpClient.requestLongRunning({
+    await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: `/databases/${id}/terminate`,
     }, {
@@ -420,5 +416,9 @@ export class AstraAdmin {
       defaultPollInterval: 10000,
       options,
     });
+  }
+
+  private get _httpClient() {
+    return this.#httpClient;
   }
 }

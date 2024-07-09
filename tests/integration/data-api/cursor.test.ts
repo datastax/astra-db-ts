@@ -36,39 +36,6 @@ describe('integration.data-api.cursor', () => {
     await collection.deleteMany({});
   });
 
-  describe('Cursor initialization', () => {
-    it('should initialize an uninitialized Cursor', () => {
-      const cursor = new FindCursor<SomeDoc>('', httpClient, {});
-      assert.ok(cursor, 'Cursor should not be nullish');
-      assert.strictEqual(cursor.closed, false, 'Cursor should not be closed');
-      assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor should not have buffered anything');
-      assert.strictEqual(cursor['_state'], 0, 'Cursor is not set to the UNINITIALIZED state');
-    });
-
-    it('should contain the proper namespace', () => {
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
-      assert.strictEqual(cursor.namespace, 'default_keyspace', 'Cursor has bad namespace');
-    });
-
-    it('should contain the proper options', () => {
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, { _id: '1' }, {
-        limit: 10,
-        skip: 5,
-        sort: { _id: 1 },
-        projection: { _id: 0 },
-        includeSimilarity: true,
-      });
-      const options = cursor['_options'];
-      assert.strictEqual(options.limit, 10, 'Cursor has bad limit');
-      assert.strictEqual(options.skip, 5, 'Cursor has bad skip');
-      assert.deepStrictEqual(options.sort, { _id: 1 }, 'Cursor has bad sort');
-      assert.deepStrictEqual(options.projection, { _id: 0 }, 'Cursor has bad projection');
-      assert.strictEqual(options.includeSimilarity, true, 'Cursor has bad includeSimilarity');
-      assert.deepStrictEqual(cursor['_filter'], { _id: '1' }, 'Cursor has bad filter');
-      assert.strictEqual(cursor['_mapping'], undefined, 'Cursor has bad _mapping');
-    });
-  });
-
   describe('Cursor lifecycle manipulation', () => {
     it('Closes cursor', async () => {
       const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});

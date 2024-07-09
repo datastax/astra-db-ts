@@ -83,8 +83,8 @@ import { DataAPIDbAdmin } from '@/src/devops/data-api-db-admin';
 export class Db {
   readonly #defaultOpts!: InternalRootClientOpts;
   readonly #token!: TokenProvider;
+  readonly #httpClient: DataAPIHttpClient;
 
-  private readonly _httpClient: DataAPIHttpClient;
   private readonly _namespace: NamespaceRef;
   private readonly _id?: string;
 
@@ -109,7 +109,7 @@ export class Db {
         : combinedDbOpts.namespace
     };
 
-    this._httpClient = new DataAPIHttpClient({
+    this.#httpClient = new DataAPIHttpClient({
       baseUrl: endpoint,
       tokenProvider: this.#token,
       embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(null),
@@ -290,7 +290,7 @@ export class Db {
       return new AstraDbAdmin(this, this.#defaultOpts, options, this.#token);
     }
 
-    return new DataAPIDbAdmin(this, this._httpClient, options);
+    return new DataAPIDbAdmin(this, this.#httpClient, options);
   }
 
   /**
@@ -357,7 +357,7 @@ export class Db {
    * @see VectorDoc
    */
   public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions): Collection<Schema> {
-    return new Collection<Schema>(this, this._httpClient, name, options);
+    return new Collection<Schema>(this, this.#httpClient, name, options);
   }
 
   /**
@@ -452,7 +452,7 @@ export class Db {
       },
     };
 
-    const timeoutManager = this._httpClient.timeoutManager(options?.maxTimeMS);
+    const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
     const namespace = options?.namespace ?? this.namespace;
 
     if (options?.checkExists !== false) {
@@ -463,7 +463,7 @@ export class Db {
       }
     }
 
-    await this._httpClient.executeCommand(command, { namespace, timeoutManager });
+    await this.#httpClient.executeCommand(command, { namespace, timeoutManager });
     return this.collection(collectionName, options);
   }
 
@@ -497,7 +497,7 @@ export class Db {
       deleteCollection: { name },
     };
 
-    const resp = await this._httpClient.executeCommand(command, options);
+    const resp = await this.#httpClient.executeCommand(command, options);
 
     return resp.status?.ok === 1;
   }
@@ -554,7 +554,7 @@ export class Db {
       },
     }
 
-    const resp = await this._httpClient.executeCommand(command, options);
+    const resp = await this.#httpClient.executeCommand(command, options);
     return resp.status!.collections;
   }
 
@@ -584,7 +584,11 @@ export class Db {
    * @returns A promise that resolves to the raw response from the Data API.
    */
   public async command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse> {
-    return await this._httpClient.executeCommand(command, options);
+    return await this.#httpClient.executeCommand(command, options);
+  }
+
+  private get _httpClient() {
+    return this.#httpClient;
   }
 }
 

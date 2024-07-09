@@ -48,7 +48,14 @@ const db = client.db('http://localhost:8181', { token: tp });
 const dbAdmin = db.admin({ environment: 'dse' });
 
 (async () => {
-  await dbAdmin.createNamespace('my_keyspace');
+  await dbAdmin.createNamespace('my_keyspace', {
+    updateDbNamespace: true,
+  });
+  
   console.log(await dbAdmin.listNamespaces());
+  
+  const collection = await db.createCollection('my_coll', {
+    checkExists: false,
+  });
 })();
 ```
