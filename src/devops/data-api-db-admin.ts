@@ -20,6 +20,7 @@ import { DbAdmin } from '@/src/devops/db-admin';
 import { WithTimeout } from '@/src/common/types';
 import { validateAdminOpts } from '@/src/devops/utils';
 import { LocalCreateNamespaceOptions } from '@/src/devops/types/db-admin/local-create-namespace';
+import { FindEmbeddingProvidersResult } from '@/src/devops/types/db-admin/find-embedding-providers';
 
 /**
  * An administrative class for managing non-Astra databases, including creating, listing, and deleting namespaces.
@@ -90,6 +91,11 @@ export class DataAPIDbAdmin extends DbAdmin {
    */
   public override db(): Db {
     return this.#db;
+  }
+
+  public override async findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult> {
+    const resp = await this.#httpClient.executeCommand({ findEmbeddingProviders: {} }, { namespace: null, maxTimeMS: options?.maxTimeMS });
+    return resp.status as FindEmbeddingProvidersResult;
   }
 
   /**

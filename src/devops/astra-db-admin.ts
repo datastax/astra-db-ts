@@ -21,6 +21,7 @@ import { WithTimeout } from '@/src/common/types';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { isNullish, StaticTokenProvider, TokenProvider } from '@/src/common';
 import { validateAdminOpts } from '@/src/devops/utils';
+import { FindEmbeddingProvidersResult } from '@/src/devops/types/db-admin/find-embedding-providers';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting namespaces.
@@ -120,6 +121,11 @@ export class AstraDbAdmin extends DbAdmin {
    */
   public override db(): Db {
     return this.#db;
+  }
+
+  public override async findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult> {
+    const resp = await this.#db.command({ findEmbeddingProviders: {} }, { namespace: null, maxTimeMS: options?.maxTimeMS });
+    return resp.status as FindEmbeddingProvidersResult;
   }
 
   /**

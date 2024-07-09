@@ -15,6 +15,8 @@
 
 import { AdminBlockingOptions, CreateNamespaceOptions } from '@/src/devops/types';
 import { Db } from '@/src/data-api';
+import { FindEmbeddingProvidersResult } from '@/src/devops/types/db-admin/find-embedding-providers';
+import { WithTimeout } from '@/src/common';
 
 /**
  * Represents some DatabaseAdmin class used for managing some specific database.
@@ -45,6 +47,7 @@ export abstract class DbAdmin {
    * @returns The underlying `Db` object.
    */
   abstract db(): Db;
+  abstract findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
   /**
    * Retrieves a list of all the namespaces in the database.
    *

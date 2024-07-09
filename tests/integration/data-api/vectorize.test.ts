@@ -14,11 +14,13 @@
 
 import assert from 'assert';
 import { Db } from '@/src/data-api';
-import { assertTestsEnabled, initTestObjects, TEST_APPLICATION_URI } from '@/tests/fixtures';
+import { assertTestsEnabled, ENVIRONMENT, initTestObjects } from '@/tests/fixtures';
 import * as fs from 'fs';
-import { fetch } from 'fetch-h2';
-import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DATA_API_PATHS } from '@/src/api';
 import { after } from 'mocha';
+import {
+  EmbeddingProviderInfo,
+  EmbeddingProviderModelInfo,
+} from '@/src/devops/types/db-admin/find-embedding-providers';
 
 interface VectorizeTestSpec {
   [providerName: string]: {
@@ -41,7 +43,7 @@ describe('[astra] integration.data-api.vectorize', () => {
 
     [, db] = await initTestObjects(this);
 
-    const tests: VectorizeTest[] = await initVectorTests().catch((e: unknown) => {
+    const tests: VectorizeTest[] = await initVectorTests(db).catch((e: unknown) => {
       console.error('Failed to initialize vectorize tests', e);
       return [];
     });
@@ -76,22 +78,18 @@ describe('[astra] integration.data-api.vectorize', () => {
   it('dummy test so before is executed', () => { assert.ok(true) });
 });
 
-const initVectorTests = async () => {
+const initVectorTests = async (db: Db) => {
   const spec = JSON.parse(fs.readFileSync('vectorize_credentials.json', 'utf8')) as VectorizeTestSpec;
 
-  const embeddingProviders = await fetch(`${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS['astra']}`, {
-    body: JSON.stringify({ findEmbeddingProviders: {} }),
-    headers: {
-      [DEFAULT_DATA_API_AUTH_HEADER]: process.env.APPLICATION_TOKEN,
-    },
-    method: 'POST',
-  })
-    .then(r => r.json())
-    .then(r => r.status['embeddingProviders']);
+  const { embeddingProviders } = await (
+    (ENVIRONMENT === 'astra')
+      ? db.admin({ environment: ENVIRONMENT })
+      : db.admin({ environment: ENVIRONMENT })
+  ).findEmbeddingProviders();
 
   const whitelist = RegExp(process.env.VECTORIZE_WHITELIST ?? '.*');
 
-  return Object.entries<any>(embeddingProviders)
+  return Object.entries(embeddingProviders)
     .flatMap(branchOnModel(spec))
     .filter(t => {
       console.log(t.testName);
@@ -105,7 +103,7 @@ interface ModelBranch {
   testName: string,
 }
 
-const branchOnModel = (fullSpec: VectorizeTestSpec) => ([providerName, providerInfo]: [string, any]): AuthBranch[] => {
+const branchOnModel = (fullSpec: VectorizeTestSpec) => ([providerName, providerInfo]: [string, EmbeddingProviderInfo]): AuthBranch[] => {
   const spec = fullSpec[providerName];
 
   if (!spec) {
@@ -113,7 +111,7 @@ const branchOnModel = (fullSpec: VectorizeTestSpec) => ([providerName, providerI
     return [];
   }
 
-  const modelBranches = (<any[]>providerInfo['models']).map((model) => ({
+  const modelBranches = providerInfo.models.map((model) => ({
     providerName: providerName,
     modelName: model.name,
     testName: `${providerName}@${model.name}`,
@@ -123,10 +121,10 @@ const branchOnModel = (fullSpec: VectorizeTestSpec) => ([providerName, providerI
 }
 
 interface WithParams extends ModelBranch {
-  parameters?: Record<string, any>,
+  parameters?: Record<string, string>,
 }
 
-const addParameters = (spec: VectorizeTestSpec[string], providerInfo: any) => (test: ModelBranch): AuthBranch[] => {
+const addParameters = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingProviderInfo) => (test: ModelBranch): AuthBranch[] => {
   const params = spec.parameters;
   const matchingParam = Object.keys(params ?? {}).find((regex) => RegExp(regex).test(test.modelName))!;
 
@@ -148,7 +146,7 @@ interface AuthBranch extends WithParams {
   header?: string,
 }
 
-const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: any) => (test: WithParams): AuthBranch[] => {
+const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingProviderInfo) => (test: WithParams): AuthBranch[] => {
   const auth = providerInfo['supportedAuthentication'];
   const tests: AuthBranch[] = []
 
@@ -164,7 +162,7 @@ const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: any) => (te
     tests.push({ ...test, authType: 'none', testName: `${test.testName}@none` });
   }
 
-  const modelInfo = (<any>providerInfo)['models'].find((m: any) => m.name === test.modelName);
+  const modelInfo = providerInfo.models.find((m) => m.name === test.modelName)!;
 
   return tests.flatMap(branchOnDimension(spec, modelInfo));
 }
@@ -173,9 +171,9 @@ interface DimensionBranch extends AuthBranch {
   dimension?: number,
 }
 
-const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: any) => (test: AuthBranch): DimensionBranch[] => {
-  const vectorDimParam = modelInfo.parameters.find((p: any) => p.name === 'vectorDimension');
-  const defaultDim = +vectorDimParam?.defaultValue;
+const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: EmbeddingProviderModelInfo) => (test: AuthBranch): DimensionBranch[] => {
+  const vectorDimParam = modelInfo.parameters.find((p) => p.name === 'vectorDimension');
+  const defaultDim = +vectorDimParam!.defaultValue;
 
   if (vectorDimParam && !defaultDim) {
     const matchingDim = Object.keys(spec.dimension ?? {}).find((regex) => RegExp(regex).test(test.modelName))!;
@@ -184,7 +182,7 @@ const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: any) => (
       throw new Error(`No matching "dimension" parameter found in spec for ${test.testName}}`);
     }
 
-    return [{ ...test, dimension: spec.dimension[matchingDim], testName: `${test.testName}@default` }];
+    return [{ ...test, dimension: spec.dimension[matchingDim], testName: `${test.testName}@specified` }];
   }
 
   if (vectorDimParam && defaultDim) {
