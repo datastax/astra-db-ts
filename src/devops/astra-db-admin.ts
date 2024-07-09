@@ -123,6 +123,22 @@ export class AstraDbAdmin extends DbAdmin {
     return this.#db;
   }
 
+  /**
+   * Returns detailed information about the availability and usage of the vectorize embedding providers available on the
+   * current database (may vary based on cloud provider & region).
+   *
+   * @example
+   * ```typescript
+   * const { embeddingProviders } = await dbAdmin.findEmbeddingProviders();
+   *
+   * // ['text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002']
+   * console.log(embeddingProviders['openai'].models.map(m => m.name));
+   * ```
+   *
+   * @param options - The options for the timeout of the operation.
+   *
+   * @returns The available embedding providers.
+   */
   public override async findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult> {
     const resp = await this.#db.command({ findEmbeddingProviders: {} }, { namespace: null, maxTimeMS: options?.maxTimeMS });
     return resp.status as FindEmbeddingProvidersResult;

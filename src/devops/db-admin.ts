@@ -47,6 +47,23 @@ export abstract class DbAdmin {
    * @returns The underlying `Db` object.
    */
   abstract db(): Db;
+
+  /**
+   * Returns detailed information about the availability and usage of the vectorize embedding providers available on the
+   * current database (may vary based on cloud provider & region).
+   *
+   * @example
+   * ```typescript
+   * const { embeddingProviders } = await dbAdmin.findEmbeddingProviders();
+   *
+   * // ['text-embedding-3-small', 'text-embedding-3-large', 'text-embedding-ada-002']
+   * console.log(embeddingProviders['openai'].models.map(m => m.name));
+   * ```
+   *
+   * @param options - The options for the timeout of the operation.
+   *
+   * @returns The available embedding providers.
+   */
   abstract findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
   /**
    * Retrieves a list of all the namespaces in the database.
