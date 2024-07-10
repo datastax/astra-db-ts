@@ -53,7 +53,12 @@ while [ $# -gt 0 ]; do
       raw_args="$1"
       ;;
     *)
-      echo "Invalid flag (expecting --all|--light|--coverage|--types|--prerelease|-f <filter>|-b|--args <args>)"
+      echo "Invalid flag $1"
+      echo ""
+      echo "Usage:"
+      echo "npm run test -- [--all | --light | --coverage | --prerelease] [-f <filter>] [-b] [--args <raw_args>]"
+      echo "or"
+      echo "npm run test -- <--types>"
       exit
       ;;
   esac
