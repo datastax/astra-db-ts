@@ -11,14 +11,20 @@ Prerequisites:
 - Copy the `.env.example` file and create a new `.env` file following the example template
 
 ```shell
+npm run test -- [--all | --light | --coverage | --prerelease] [-f <filter>] [-b] [--args <raw_args>]
+# or
+npm run test -- <--types>
+```
+
+```shell
 # Run both unit and integration tests
 npm run test
 
 # Run only unit tests
-npm run test -- -- -f 'unit.'
+npm run test -- -f 'unit.'
 
 # Run only integration tests
-npm run test -- -- -f 'integration.'
+npm run test -- -f 'integration.'
 
 # Run all possible tests
 npm run test -- --all

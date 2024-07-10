@@ -1,7 +1,5 @@
 #!/usr/bin/sh
 
-setup_colls="npx ts-mocha --paths -p tsconfig.json tests/prelude.ts > /dev/null"
-
 test_cmd="npx ts-mocha --paths -p tsconfig.json --recursive tests/prelude.test.ts tests/unit tests/integration --extension .test.ts"
 
 all_tests_cmd="env ASTRA_RUN_LONG_TESTS=1 ASTRA_RUN_ADMIN_TESTS=1 ASTRA_RUN_VECTORIZE_TESTS=1 $test_cmd"
@@ -64,8 +62,8 @@ while [ $# -gt 0 ]; do
   shift
 done
 
-if [ "$test_type" = '--types' ] && { [ -n "$bail_early" ] || [ -n "$filter" ]; }; then
-  echo "Can't use a filter or bail flag when typechecking"
+if [ "$test_type" = '--types' ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$raw_args" ]; }; then
+  echo "Can't use a filter, bail, or args flag when typechecking"
   exit
 fi
 
