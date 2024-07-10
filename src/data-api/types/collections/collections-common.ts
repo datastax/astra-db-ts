@@ -36,7 +36,7 @@ export interface VectorOptions {
    * - Some models require a specific dimension that's already set by default
    *
    * You can find out more information about each model in the [DataStax docs](https://docs.datastax.com/en/astra-db-serverless/databases/embedding-generation.html),
-   * or through the `findEmbeddingsProvider` command.
+   * or through {@link DbAdmin.findEmbeddingProviders}.
    */
   dimension?: number,
   /**
@@ -46,9 +46,11 @@ export interface VectorOptions {
    */
   metric?: 'cosine' | 'euclidean' | 'dot_product',
   /**
-   * NOTE: This feature is under current development.
+   * The options for defining the embedding service used for vectorize, to automatically transform your
+   * text into a vector ready for semantic vector searching.
    *
-   * @alpha
+   * You can find out more information about each provider/model in the [DataStax docs](https://docs.datastax.com/en/astra-db-serverless/databases/embedding-generation.html),
+   * or through {@link DbAdmin.findEmbeddingProviders}.
    */
   service?: VectorizeServiceOptions,
 }
@@ -58,7 +60,7 @@ export interface VectorOptions {
  * text into a vector ready for semantic vector searching.
  *
  * You can find out more information about each provider/model in the [DataStax docs](https://docs.datastax.com/en/astra-db-serverless/databases/embedding-generation.html),
- * or through the `findEmbeddingsProvider` command.
+ * or through {@link DbAdmin.findEmbeddingProviders}.
  *
  * @field provider - The name of the embedding provider which provides the model to use
  * @field model - The specific model to use for embedding, or undefined if it's an endpoint-defined model
@@ -72,16 +74,14 @@ export interface VectorizeServiceOptions {
    * The name of the embedding provider which provides the model to use.
    *
    * You can find out more information about each provider in the [DataStax docs](https://docs.datastax.com/en/astra-db-serverless/databases/embedding-generation.html),
-   * or through the `findEmbeddingsProvider` command.
+   * or through  {@link DbAdmin.findEmbeddingProviders}.
    */
   provider: string,
   /**
    * The name of the embedding model to use.
    *
-   * In some situations, this may be `null`/`undefined` if the model may be arbitrary (such as with `huggingfaceDedicated`).
-   *
    * You can find out more information about each model in the [DataStax docs](https://docs.datastax.com/en/astra-db-serverless/databases/embedding-generation.html),
-   * or through the `findEmbeddingsProvider` command.
+   * or through {@link DbAdmin.findEmbeddingProviders}.
    */
   modelName: string | nullish,
   /**
@@ -101,7 +101,7 @@ export interface VectorizeServiceOptions {
    * optional parameters (e.g. `openAi`), and some don't require any at all.
    *
    * You can find out more information about each provider/model in the [DataStax docs](https://docs.datastax.com/en/astra-db-serverless/databases/embedding-generation.html),
-   * or through the `findEmbeddingsProvider` command.
+   * or through {@link DbAdmin.findEmbeddingProviders}.
    */
   parameters?: Record<string, unknown>,
 }
