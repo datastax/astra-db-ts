@@ -261,7 +261,7 @@ const createVectorizeProvidersTest = (db: Db, test: VectorizeTest, name: string)
     }).toArray();
 
     assert.strictEqual(findResult.length, 2);
-  }).timeout(90000);
+  });
 };
 
 const createVectorizeParamTests = function (db: Db, test: VectorizeTest, name: string) {
