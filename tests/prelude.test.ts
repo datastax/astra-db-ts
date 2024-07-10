@@ -12,36 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import dotenv from 'dotenv';
-import { DataAPIClient } from '@/src/client';
-import { DEFAULT_NAMESPACE } from '@/src/api';
-import {
-  DEFAULT_COLLECTION_NAME,
-  ENVIRONMENT,
-  EPHEMERAL_COLLECTION_NAME,
-  OTHER_NAMESPACE,
-  TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
-} from '@/tests/fixtures';
+import { DEFAULT_COLLECTION_NAME, initTestObjects, OTHER_NAMESPACE } from '@/tests/fixtures';
 
-dotenv.config();
-
-const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {
-  httpOptions: { client: 'fetch' },
-  dbOptions: { namespace: DEFAULT_NAMESPACE },
-  environment: ENVIRONMENT,
-});
-
-const db = client.db(TEST_APPLICATION_URI);
-
-(async () => {
-  await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
-
-  await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
+before(async () => {
+  const [, db] = await initTestObjects();
 
   await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace: OTHER_NAMESPACE })
     .then(c => c.deleteMany());
 
   await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false })
     .then(c => c.deleteMany());
-})();
+});

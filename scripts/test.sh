@@ -1,14 +1,8 @@
 #!/usr/bin/sh
 
-flag="$1"
-
-if [ -n "$1" ]; then
-  shift
-fi
-
 setup_colls="npx ts-mocha --paths -p tsconfig.json tests/prelude.ts > /dev/null"
 
-test_cmd="$setup_colls && npx ts-mocha --paths -p tsconfig.json --recursive tests/unit tests/integration --extension .test.ts $*"
+test_cmd="npx ts-mocha --paths -p tsconfig.json --recursive tests/prelude.test.ts tests/unit tests/integration --extension .test.ts"
 
 all_tests_cmd="env ASTRA_RUN_LONG_TESTS=1 ASTRA_RUN_ADMIN_TESTS=1 ASTRA_RUN_VECTORIZE_TESTS=1 $test_cmd"
 
@@ -24,29 +18,88 @@ run_tsc()
   npx tsc --noEmit --skipLibCheck
 }
 
-case "$flag" in
+test_type_set=0
+
+while [ $# -gt 0 ]; do
+  for test_type_flag in --all --light --coverage --types --prerelease; do
+    [ "$1" = "$test_type_flag" ] && test_type_set=$((test_type_set + 1))
+  done
+
+  if [ "$test_type_set" -gt 1 ]; then
+    echo "Can't set multiple of --all, --light, --coverage, --types, and --prerelease"
+    exit
+  fi
+
+  case "$1" in
+    "--all")
+      test_type="all"
+      ;;
+    "--light")
+      test_type="light"
+      ;;
+    "--coverage")
+      test_type="coverage"
+      ;;
+    "--types")
+      test_type="types"
+      ;;
+    "--prerelease")
+      test_type="prerelease"
+      ;;
+    "-f")
+      shift
+      filter="$1"
+      ;;
+    "-b")
+      bail_early=1
+      ;;
+    "--args")
+      shift
+      raw_args="$1"
+      ;;
+    *)
+      echo "Invalid flag (expecting --all|--light|--coverage|--types|--prerelease|-f <filter>|-b|--args <args>)"
+      ;;
+  esac
+  shift
+done
+
+if [ "$test_type" = '--types' ] && { [ -n "$bail_early" ] || [ -n "$filter" ]; }; then
+  echo "Can't use a filter or bail flag when typechecking"
+  exit
+fi
+
+case "$test_type" in
   "")
-    eval "$test_cmd"
+    cmd_to_run="$test_cmd"
     ;;
-  "--all")
-    eval "$all_tests_cmd"
+  "all")
+    cmd_to_run="$all_tests_cmd"
     ;;
-  "--light")
-    eval "$light_tests_cmd"
+  "light")
+    cmd_to_run="$light_tests_cmd"
     ;;
-  "--coverage")
-    eval "npx nyc $all_tests_cmd -b"
+  "coverage")
+    cmd_to_run="npx nyc $all_tests_cmd -b"
     ;;
-  "--types")
-    run_tsc
+  "types")
+    cmd_to_run="run_tsc"
     ;;
-  "--prerelease")
-    run_lint && run_tsc && eval eval "$all_tests_cmd -b --exit"
-    ;;
-  "--")
-    eval "$test_cmd"
-    ;;
-  *)
-    echo "Invalid flag (expecting --all|--light|--coverage|--types|--prerelease|--)"
+  "prerelease")
+    cmd_to_run="run_lint && run_tsc && $all_tests_cmd -b --exit"
     ;;
 esac
+
+if [ -n "$filter" ]; then
+  cmd_to_run="$cmd_to_run -f '$filter'"
+fi
+
+if [ -n "$bail_early" ]; then
+  cmd_to_run="$cmd_to_run -b"
+fi
+
+if [ -n "$raw_args" ]; then
+  cmd_to_run="$cmd_to_run $raw_args"
+fi
+
+eval "$cmd_to_run"
