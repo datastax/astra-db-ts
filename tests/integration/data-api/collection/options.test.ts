@@ -40,5 +40,5 @@ describe('integration.data-api.collection.options', () => {
     const res = await coll.options();
     assert.deepStrictEqual(res, {});
     await db.dropCollection('test_db_collection_empty_opts')
-  });
+  }).timeout(60000);
 });

@@ -52,7 +52,7 @@
     "test": "sh ./scripts/test.sh",
     "build": "sh ./scripts/build.sh",
     "list-embedding-providers": "chmod +x scripts/list-embedding-providers.sh && scripts/list-embedding-providers.sh",
-    "version": "npm run build && git add src/version.ts etc/astra-db-ts.api.md"
+    "version": "sh scripts/version.sh"
   },
   "bugs": {
     "url": "https://github.com/datastax/astra-ts-client/issues"
