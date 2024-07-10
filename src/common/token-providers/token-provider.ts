@@ -28,7 +28,7 @@ import { isNullish, nullish, StaticTokenProvider } from '@/src/common';
  * into a {@link StaticTokenProvider} under the hood.
  *
  * @example
- * ```
+ * ```typescript
  * const provider = new UsernamePasswordTokenProvider('username', 'password');
  * const client = new DataAPIClient(provider);
  * ```

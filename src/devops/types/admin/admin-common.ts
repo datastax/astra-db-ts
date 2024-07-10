@@ -55,7 +55,7 @@ export type DatabaseAction = 'park' | 'unpark' | 'resize' | 'resetPassword' | 'a
  * to determine when the operation is complete.
  *
  * @example
- * ```
+ * ```typescript
  * // Will block by default until the operation is complete.
  * const dbAdmin1 = await admin.createDatabase({...});
  *

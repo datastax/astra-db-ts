@@ -22,7 +22,7 @@ declare const __error: unique symbol;
  * More inflexable type than `never`, and gives contextual error messages.
  *
  * @example
- * ```
+ * ```typescript
  * function unsupported(): TypeErr<'Unsupported operation'> {
  *   throw new Error('Unsupported operation');
  * }

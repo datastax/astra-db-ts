@@ -24,7 +24,7 @@ import { SomeDoc, UUID, ObjectId } from '@/src/data-api';
  * to support that.*
  *
  * @example
- * ```
+ * ```typescript
  * interface BasicSchema {
  *   num: number,
  *   arr: string[],

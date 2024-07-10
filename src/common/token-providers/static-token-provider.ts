@@ -22,7 +22,7 @@ import { nullish } from '@/src/common';
  * string or null/undefined, which is transformed into a {@link StaticTokenProvider} under the hood.
  *
  * @example
- * ```
+ * ```typescript
  * const provider = new StaticTokenProvider('token');
  * const client = new DataAPIClient(provider);
  *

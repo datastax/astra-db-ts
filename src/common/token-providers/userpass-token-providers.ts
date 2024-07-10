@@ -20,7 +20,7 @@ import { TokenProvider } from '@/src/common/token-providers/token-provider';
  * Uses the format `Cassandra:b64(username):password(username)`
  *
  * @example
- * ```
+ * ```typescript
  * const provider = new UsernamePasswordTokenProvider('username', 'password');
  * const client = new DataAPIClient(provider, { environment: 'dse' });
  * ```
