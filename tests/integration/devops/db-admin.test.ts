@@ -67,4 +67,14 @@ describe('integration.devops.db-admin', () => {
 
     assert.strictEqual(db.namespace, 'my_test_keyspace_123');
   }).timeout(100000);
+
+  it('should findEmbeddingProviders', async () => {
+    const dbAdmin = (ENVIRONMENT === 'astra')
+      ? db.admin({ environment: ENVIRONMENT })
+      : db.admin({ environment: ENVIRONMENT });
+
+    const { embeddingProviders } = await dbAdmin.findEmbeddingProviders();
+
+    assert.ok(typeof embeddingProviders === 'object');
+  });
 });
