@@ -26,7 +26,7 @@ describe('integration.data-api.ids', () => {
   let db: Db;
 
   before(async function() {
-    [, db] = await initTestObjects(this);
+    [, db] = await initTestObjects();
   });
 
   describe('default', () => {

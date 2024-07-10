@@ -30,7 +30,7 @@ describe('[astra] integration.misc.hierarchy-traversal', () => {
   before(async function () {
     assertTestsEnabled(this, 'ASTRA');
 
-    [client, db, collection] = await initTestObjects(this);
+    [client, db, collection] = await initTestObjects();
 
     const idAndRegion = endpoint.split('.')[0].split('https://')[1].split('-');
 

@@ -32,7 +32,7 @@ describe('integration.data-api.db', () => {
   let db: Db;
 
   before(async function () {
-    [, db] = await initTestObjects(this);
+    [, db] = await initTestObjects();
     await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
     await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
   });

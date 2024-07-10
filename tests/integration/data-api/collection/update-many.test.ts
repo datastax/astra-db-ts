@@ -21,7 +21,7 @@ describe('integration.data-api.collection.update-many', () => {
   let collection: Collection;
 
   before(async function () {
-    [, , collection] = await initTestObjects(this);
+    [, , collection] = await initTestObjects();
   });
 
   beforeEach(async () => {
@@ -879,7 +879,7 @@ describe('integration.data-api.collection.update-many', () => {
   });
 
   it('fails fast on hard errors', async function () {
-    const collection = await initCollectionWithFailingClient(this);
+    const collection = await initCollectionWithFailingClient();
     try {
       await collection.updateMany({}, {});
       assert.fail('Expected an error');

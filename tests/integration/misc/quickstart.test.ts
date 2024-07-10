@@ -29,7 +29,7 @@ describe('integration.misc.quickstart', () => {
   let db: Db;
 
   before(async function () {
-    [, db] = await initTestObjects(this);
+    [, db] = await initTestObjects();
   });
 
   describe('[long] quickstart', () => {

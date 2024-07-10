@@ -92,7 +92,7 @@ describe('integration.client.data-api-client', () => {
     let db: Db;
 
     before(async function () {
-      [, db] = await initTestObjects(this);
+      [, db] = await initTestObjects();
     });
 
     beforeEach(async () => {

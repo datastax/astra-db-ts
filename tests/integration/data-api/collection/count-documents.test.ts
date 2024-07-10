@@ -21,7 +21,7 @@ describe('integration.data-api.collection.count-documents', () => {
   let collection: Collection;
 
   before(async function () {
-    [, , collection] = await initTestObjects(this);
+    [, , collection] = await initTestObjects();
   });
 
   beforeEach(async () => {

@@ -24,7 +24,7 @@ describe('integration.api.data-api-http-client', () => {
 
   before(async function () {
     let db: Db;
-    [, db, collection] = await initTestObjects(this);
+    [, db, collection] = await initTestObjects();
     httpClient = db['_httpClient'];
   });
 
@@ -59,7 +59,7 @@ describe('integration.api.data-api-http-client', () => {
     });
 
     it('should error on invalid token', async function () {
-      const [client] = await initTestObjects(this);
+      const [client] = await initTestObjects();
       const httpClient = client.db(TEST_APPLICATION_URI, { token: 'invalid-token' })['_httpClient'];
 
       try {

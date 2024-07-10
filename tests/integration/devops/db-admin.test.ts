@@ -24,7 +24,7 @@ describe('integration.devops.db-admin', () => {
   let client: DataAPIClient;
 
   before(async function () {
-    [client, db] = await initTestObjects(this);
+    [client, db] = await initTestObjects();
   });
 
   it('[long] [not-dev] works', async function () {

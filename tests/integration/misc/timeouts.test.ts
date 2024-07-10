@@ -32,7 +32,7 @@ describe('integration.misc.timeouts', () => {
   let collection: Collection;
 
   before(async function () {
-    [, db, collection] = await initTestObjects(this);
+    [, db, collection] = await initTestObjects();
   });
 
   describe('in data-api', () => {

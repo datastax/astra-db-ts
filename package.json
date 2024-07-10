@@ -49,11 +49,7 @@
   },
   "scripts": {
     "lint": "eslint src/* tests/*",
-    "test": "ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts tests/integration/**/*.test.ts tests/integration/**/**/*.test.ts",
-    "test:all": "env ASTRA_RUN_LONG_TESTS=1 ASTRA_RUN_ADMIN_TESTS=1 ts-mocha --paths -p tsconfig.json tests/unit/**/*.test.ts tests/integration/**/*.test.ts tests/integration/**/**/*.test.ts",
-    "test:coverage": "nyc npm run test:all -- -b",
-    "test:types": "tsc --noEmit --skipLibCheck",
-    "test:prerelease": "npm run lint && npm run test:types && npm run test:all -- -b --exit",
+    "test": "sh ./scripts/test.sh",
     "build": "sh ./scripts/build.sh",
     "list-embedding-providers": "chmod +x scripts/list-embedding-providers.sh && scripts/list-embedding-providers.sh",
     "version": "npm run build && git add src/version.ts etc/astra-db-ts.api.md"

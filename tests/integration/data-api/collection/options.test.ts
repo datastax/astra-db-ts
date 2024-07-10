@@ -20,7 +20,7 @@ describe('integration.data-api.collection.options', () => {
   let db: Db;
 
   before(async function () {
-    [, db] = await initTestObjects(this);
+    [, db] = await initTestObjects();
     await db.dropCollection('test_db_collection_empty_opts');
   });
 

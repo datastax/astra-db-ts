@@ -15,14 +15,25 @@ Prerequisites:
 npm run test
 
 # Run only unit tests
-npm run test -- -f 'unit.'
+npm run test -- -- -f 'unit.'
 
 # Run only integration tests
-npm run test -- -f 'integration.'
+npm run test -- -- -f 'integration.'
+
+# Run all possible tests
+npm run test -- --all
+
+# Run all possible integration tests
+npm run test -- --all -f 'integration.'
+
+# Run all tests that aren't admin/long/vectorize
+npm run test -- --light -f 'integration.'
 
 # Run tsc with the noEmit flag to check for type errors
-npm run test:types
+npm run test -- --types
 ```
+
+(bun does not need the extra initial `--` like npm does)
 
 ### Running the tests on local Stargate
 You can do `sh scripts/start-stargate-4-tests.sh` to spin up an ephemeral Data API on DSE instance which automatically
@@ -55,11 +66,6 @@ env ASTRA_RUN_LONG_TESTS=1 npm run test
 ```
 
 The `PROD` and `DEV` tags are enabled/disabled automatically, inferred from the astra endpoint URL.
-
-Use the following to run tests with ADMIN and LONG tags automatically enabled (note that doesn't include vectorize tests):
-```shell
-npm run test:all
-```
 
 ### Adding your own tagged tests
 To enforce the tags, use the `assertTestsEnabled` function from `test/fixtures.ts`, which will skip the function if the
@@ -122,10 +128,10 @@ See `vectorize_credentials.example.json` for—guess what—an example.
 
 To run coverage testing, run the following command:
 ```shell
-npm run test:coverage
+npm run test -- --coverage
 ```
 
-This uses `test:all` under the hood, as well as a "bail early" flag as there's not really a point continuing to run 
+This uses `test --all` under the hood, as well as a "bail early" flag as there's not really a point continuing to run 
 tests if one of them fails, as the coverage report will be impacted.
 
 ## Linting
@@ -143,5 +149,5 @@ To build it, just run `npm run build`, which does the following:
 - Deletes any extraneous `.d.ts` files
 
 ## Publishing
-I heavily recommend using [np](https://github.com/sindresorhus/np) to publish the package. Running it will involve running `test:prerelease`, and the
+I heavily recommend using [np](https://github.com/sindresorhus/np) to publish the package. Running it will involve running `test --prerelease`, and the
 versioning step will update the api report + update the version in `src/version.ts`. 

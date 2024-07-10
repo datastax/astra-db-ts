@@ -21,7 +21,7 @@ describe('integration.data-api.collection.insert-many', () => {
   let collection: Collection;
 
   before(async function () {
-    [, , collection] = await initTestObjects(this);
+    [, , collection] = await initTestObjects();
   });
 
   beforeEach(async () => {
@@ -207,7 +207,7 @@ describe('integration.data-api.collection.insert-many', () => {
   });
 
   it('fails fast on hard errors ordered', async function () {
-    const collection = await initCollectionWithFailingClient(this);
+    const collection = await initCollectionWithFailingClient();
     try {
       await collection.insertMany([{ name: 'Ignea' }], { ordered: true });
       assert.fail('Expected an error');
@@ -219,7 +219,7 @@ describe('integration.data-api.collection.insert-many', () => {
   });
 
   it('fails fast on hard errors unordered', async function () {
-    const collection = await initCollectionWithFailingClient(this);
+    const collection = await initCollectionWithFailingClient();
     try {
       await collection.insertMany([{ name: 'Ignea' }], { ordered: false });
       assert.fail('Expected an error');

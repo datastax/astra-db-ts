@@ -23,7 +23,7 @@ describe('integration.data-api.collection.misc', () => {
   let collection: Collection;
 
   before(async function () {
-    [, db, collection] = await initTestObjects(this);
+    [, db, collection] = await initTestObjects();
   });
 
   describe('initialization', () => {
@@ -45,7 +45,7 @@ describe('integration.data-api.collection.misc', () => {
 
   describe('timeout', () => {
     it('times out on http2', async function () {
-      const [, newDb] = await initTestObjects(this, true);
+      const [, newDb] = await initTestObjects(true);
 
       try {
         await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });
@@ -56,7 +56,7 @@ describe('integration.data-api.collection.misc', () => {
     });
 
     it('times out on http1', async function () {
-      const [, newDb] = await initTestObjects(this, false);
+      const [, newDb] = await initTestObjects(false);
 
       try {
         await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });

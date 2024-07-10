@@ -28,8 +28,6 @@ export const EPHEMERAL_COLLECTION_NAME = 'temp_coll';
 export const OTHER_NAMESPACE = 'other_keyspace';
 export const TEMP_DB_NAME = 'astra-test-db-plus-random-name-1284'
 
-let collsSetup = false;
-
 export const USE_HTTP2 = !process.env.ASTRA_USE_HTTP1;
 export const HTTP_CLIENT_TYPE = process.env.ASTRA_USE_FETCH ? 'fetch' : undefined;
 
@@ -42,7 +40,7 @@ export const TEST_APPLICATION_URI = process.env.APPLICATION_URI;
 export const DEMO_APPLICATION_URI = 'https://12341234-1234-1234-1234-123412341234-us-west-2.apps.astra-dev.datastax.com';
 export const ENVIRONMENT = (process.env.APPLICATION_ENVIRONMENT ?? 'astra') as DataAPIEnvironment;
 
-export const initTestObjects = async (ctx: Context, preferHttp2 = USE_HTTP2, clientType: typeof HTTP_CLIENT_TYPE = HTTP_CLIENT_TYPE): Promise<[DataAPIClient, Db, Collection]> => {
+export const initTestObjects = async (preferHttp2 = USE_HTTP2, clientType: typeof HTTP_CLIENT_TYPE = HTTP_CLIENT_TYPE): Promise<[DataAPIClient, Db, Collection]> => {
   const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {
     httpOptions: { preferHttp2, client: clientType },
     dbOptions: { namespace: DEFAULT_NAMESPACE },
@@ -51,23 +49,13 @@ export const initTestObjects = async (ctx: Context, preferHttp2 = USE_HTTP2, cli
 
   const db = client.db(TEST_APPLICATION_URI);
 
-  if (!collsSetup) {
-    await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
-    await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
-    await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace: OTHER_NAMESPACE });
-    await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false });
-
-    collsSetup = true;
-  }
-
   const collection = db.collection(DEFAULT_COLLECTION_NAME);
-  await collection.deleteMany({});
 
   return [client, db, collection];
 };
 
-export const initCollectionWithFailingClient = async (ctx: Context) => {
-  const [, , collection] = await initTestObjects(ctx);
+export const initCollectionWithFailingClient = async () => {
+  const [, , collection] = await initTestObjects();
   collection['_httpClient'].executeCommand = () => { throw new Error('test') };
   return collection;
 }

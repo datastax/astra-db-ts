@@ -20,7 +20,7 @@ describe('integration.data-api.collection.find-one-and-replace', () => {
   let collection: Collection;
 
   before(async function () {
-    [, , collection] = await initTestObjects(this);
+    [, , collection] = await initTestObjects();
   });
 
   beforeEach(async () => {

@@ -41,7 +41,7 @@ describe('[astra] integration.data-api.vectorize', () => {
   before(async function () {
     assertTestsEnabled(this, 'VECTORIZE', 'LONG', 'ASTRA');
 
-    [, db] = await initTestObjects(this);
+    [, db] = await initTestObjects();
 
     const tests: VectorizeTest[] = await initVectorTests(db).catch((e: unknown) => {
       console.error('Failed to initialize vectorize tests', e);

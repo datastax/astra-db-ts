@@ -28,7 +28,7 @@ describe('integration.data-api.cursor', () => {
   const ageToString = (doc: SomeDoc) => ({ age: `${doc.age}` });
 
   before(async function () {
-    [, , collection] = await initTestObjects(this);
+    [, , collection] = await initTestObjects();
     httpClient = collection['_httpClient'];
   });
 
