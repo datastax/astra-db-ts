@@ -54,6 +54,7 @@ while [ $# -gt 0 ]; do
       ;;
     *)
       echo "Invalid flag (expecting --all|--light|--coverage|--types|--prerelease|-f <filter>|-b|--args <args>)"
+      exit
       ;;
   esac
   shift
