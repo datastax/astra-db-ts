@@ -252,14 +252,14 @@ describe('integration.data-api.db', () => {
     });
 
     it('should throw an error if no namespace set', async () => {
-      const [client] = await initTestObjects(USE_HTTP2, 'dse');
-      const db = client.db(TEST_APPLICATION_URI, { namespace: undefined, dataApiPath: DEFAULT_DATA_API_PATHS['astra'] });
+      const [, db] = await initTestObjects();
+      db.useNamespace(undefined!);
       await assert.rejects(() => db.command({ findEmbeddingProviders: {} }), { message: 'Db is missing a required namespace; be sure to set one w/ client.db(..., { namespace }), or db.useNamespace()' });
     });
 
     it('should not throw an error if no namespace set but namespace: null', async () => {
-      const [client] = await initTestObjects(USE_HTTP2, 'dse');
-      const db = client.db(TEST_APPLICATION_URI, { namespace: undefined, dataApiPath: DEFAULT_DATA_API_PATHS['astra'] });
+      const [, db] = await initTestObjects();
+      db.useNamespace(undefined!);
       await assert.doesNotReject(() => db.command({ findEmbeddingProviders: {} }, { namespace: null }));
     });
   });

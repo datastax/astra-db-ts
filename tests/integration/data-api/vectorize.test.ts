@@ -35,11 +35,11 @@ interface VectorizeTestSpec {
   }
 }
 
-describe('[astra] integration.data-api.vectorize', () => {
+describe('integration.data-api.vectorize', () => {
   let db: Db;
 
   before(async function () {
-    assertTestsEnabled(this, 'VECTORIZE', 'LONG', 'ASTRA');
+    assertTestsEnabled(this, 'VECTORIZE', 'LONG');
 
     [, db] = await initTestObjects();
 
@@ -92,7 +92,6 @@ const initVectorTests = async (db: Db) => {
   return Object.entries(embeddingProviders)
     .flatMap(branchOnModel(spec))
     .filter(t => {
-      console.log(t.testName);
       return whitelist.test(t.testName);
     });
 };
@@ -154,11 +153,11 @@ const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingPr
     tests.push({ ...test, authType: 'header', header: spec.apiKey, testName: `${test.testName}@header` });
   }
 
-  if (auth['SHARED_SECRET'].enabled && spec.providerKey) {
+  if (auth['SHARED_SECRET'].enabled && spec.providerKey && ENVIRONMENT === 'astra') {
     tests.push({ ...test, authType: 'providerKey', providerKey: spec.providerKey, testName: `${test.testName}@providerKey` });
   }
 
-  if (auth['NONE'].enabled) {
+  if (auth['NONE'].enabled && ENVIRONMENT === 'astra') {
     tests.push({ ...test, authType: 'none', testName: `${test.testName}@none` });
   }
 
