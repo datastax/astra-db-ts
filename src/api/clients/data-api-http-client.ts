@@ -37,7 +37,7 @@ import {
   AdminCommandSucceededEvent,
   AdminSpawnOptions,
 } from '@/src/devops';
-import { nullish, TokenProvider } from '@/src/common';
+import { isNullish, nullish, TokenProvider } from '@/src/common';
 import { EmbeddingHeadersProvider } from '@/src/data-api/embedding-providers';
 
 /**
@@ -106,7 +106,7 @@ interface DataAPIHttpClientOpts extends HTTPClientOptions {
  */
 export class DataAPIHttpClient extends HttpClient {
   public collection?: string;
-  public namespace?: NamespaceRef;
+  public namespace: NamespaceRef;
   public maxTimeMS: number;
   public emissionStrategy: ReturnType<EmissionStrategy>
   readonly #props: DataAPIHttpClientOpts;
@@ -143,7 +143,6 @@ export class DataAPIHttpClient extends HttpClient {
 
     clone.emissionStrategy = EmissionStrategy.Admin(this.emitter);
     clone.collection = undefined;
-    clone.namespace = undefined;
 
     return clone;
   }
@@ -173,6 +172,10 @@ export class DataAPIHttpClient extends HttpClient {
 
       if (info.namespace !== null) {
         info.namespace ||= this.namespace?.ref;
+
+        if (isNullish(info.namespace)) {
+          throw new Error('Db is missing a required namespace; be sure to set one w/ client.db(..., { namespace }), or db.useNamespace()')
+        }
       }
 
       const keyspacePath = info.namespace ? `/${info.namespace}` : '';

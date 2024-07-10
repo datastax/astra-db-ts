@@ -40,11 +40,11 @@ export const TEST_APPLICATION_URI = process.env.APPLICATION_URI;
 export const DEMO_APPLICATION_URI = 'https://12341234-1234-1234-1234-123412341234-us-west-2.apps.astra-dev.datastax.com';
 export const ENVIRONMENT = (process.env.APPLICATION_ENVIRONMENT ?? 'astra') as DataAPIEnvironment;
 
-export const initTestObjects = async (preferHttp2 = USE_HTTP2, clientType: typeof HTTP_CLIENT_TYPE = HTTP_CLIENT_TYPE): Promise<[DataAPIClient, Db, Collection]> => {
+export const initTestObjects = async (preferHttp2 = USE_HTTP2, environment: typeof ENVIRONMENT = ENVIRONMENT): Promise<[DataAPIClient, Db, Collection]> => {
   const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {
-    httpOptions: { preferHttp2, client: clientType },
+    httpOptions: { preferHttp2, client: HTTP_CLIENT_TYPE },
     dbOptions: { namespace: DEFAULT_NAMESPACE },
-    environment: ENVIRONMENT,
+    environment: environment,
   });
 
   const db = client.db(TEST_APPLICATION_URI);

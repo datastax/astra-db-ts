@@ -21,7 +21,7 @@ import {
   initTestObjects,
   OTHER_NAMESPACE,
   TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
+  TEST_APPLICATION_URI, USE_HTTP2,
 } from '@/tests/fixtures';
 import { CollectionAlreadyExistsError, DataAPIResponseError, Db } from '@/src/data-api';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_NAMESPACE } from '@/src/api';
@@ -207,6 +207,10 @@ describe('integration.data-api.db', () => {
   });
 
   describe('command', () => {
+    beforeEach(async () => {
+      await db.collection(DEFAULT_COLLECTION_NAME).deleteMany({});
+    });
+
     afterEach(async function () {
       await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
       await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
@@ -245,6 +249,18 @@ describe('integration.data-api.db', () => {
       } catch (e) {
         assert.ok(e instanceof CollectionNotFoundError);
       }
+    });
+
+    it('should throw an error if no namespace set', async () => {
+      const [client] = await initTestObjects(USE_HTTP2, 'dse');
+      const db = client.db(TEST_APPLICATION_URI, { namespace: undefined, dataApiPath: DEFAULT_DATA_API_PATHS['astra'] });
+      await assert.rejects(() => db.command({ findEmbeddingProviders: {} }), { message: 'Db is missing a required namespace; be sure to set one w/ client.db(..., { namespace }), or db.useNamespace()' });
+    });
+
+    it('should not throw an error if no namespace set but namespace: null', async () => {
+      const [client] = await initTestObjects(USE_HTTP2, 'dse');
+      const db = client.db(TEST_APPLICATION_URI, { namespace: undefined, dataApiPath: DEFAULT_DATA_API_PATHS['astra'] });
+      await assert.doesNotReject(() => db.command({ findEmbeddingProviders: {} }, { namespace: null }));
     });
   });
 });
