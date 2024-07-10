@@ -21,7 +21,13 @@ find ./dist -type f -name '*.js' -exec node scripts/reduce-comments.js {} \;
 # Adds the missing license notice to the rollup .d.ts
 node scripts/add-license-bumf.js dist/astra-db-ts.d.ts
 
+# Delete the "empty" files where only types were declared
+node scripts/del-empty-dist-files.js
+
 # Removes all .d.ts files except the main rollup .d.ts
 cd dist || return 1
 find . -type f -name '*.d.ts' ! -name 'astra-db-ts.d.ts' -exec rm {} +
 cd ..
+
+# Delete any empty leftover directories
+find ./dist -type d -empty -delete
