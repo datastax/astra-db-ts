@@ -19,4 +19,4 @@ export * from './data-api-db-admin';
 export * from './db-admin';
 export * from './errors';
 export * from './events';
-export * from './types';
+export type * from './types';

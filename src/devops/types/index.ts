@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './admin/admin-common';
-export * from './admin/create-database';
-export * from './admin/database-info';
-export * from './admin/list-databases';
-export * from './admin/spawn-admin';
-export * from './db-admin/create-namespace';
-export * from './db-admin/local-create-namespace';
+export type * from './admin/admin-common';
+export type * from './admin/create-database';
+export type * from './admin/database-info';
+export type * from './admin/list-databases';
+export type * from './admin/spawn-admin';
+export type * from './db-admin/create-namespace';
+export type * from './db-admin/local-create-namespace';

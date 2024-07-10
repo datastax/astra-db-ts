@@ -230,6 +230,14 @@ export class CollectionAlreadyExistsError extends DataAPIError {
 }
 
 // @public
+export class CollectionNotFoundError extends DataAPIError {
+    // @internal
+    constructor(namespace: string, collectionName: string);
+    readonly collectionName: string;
+    readonly namespace: string;
+}
+
+// @public
 export interface CollectionOptions<Schema extends SomeDoc> {
     defaultId?: DefaultIdOptions;
     indexing?: IndexingOptions<Schema>;
@@ -408,6 +416,15 @@ export interface DataAPIErrorDescriptor {
     readonly attributes?: Record<string, any>;
     readonly errorCode?: string;
     readonly message?: string;
+}
+
+// @public
+export class DataAPIHttpError extends DataAPIError {
+    // @internal
+    constructor(resp: FetcherResponseInfo);
+    readonly body?: string;
+    readonly raw: FetcherResponseInfo;
+    readonly status: number;
 }
 
 // @public

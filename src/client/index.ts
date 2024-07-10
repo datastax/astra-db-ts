@@ -15,7 +15,7 @@
 
 export * from './data-api-client';
 export * from './errors';
-export {
+export type {
   DataAPIClientOptions,
   Caller,
   DefaultHttpClientOptions,

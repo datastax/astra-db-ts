@@ -131,6 +131,8 @@ export abstract class DataAPIError extends Error {}
 
 /**
  * An error thrown on non-2XX status codes from the Data API, such as 4XX or 5XX errors.
+ *
+ * @public
  */
 export class DataAPIHttpError extends DataAPIError {
   /**
