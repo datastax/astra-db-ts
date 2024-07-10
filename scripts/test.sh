@@ -1,23 +1,20 @@
 #!/usr/bin/sh
 
+# Define necessary commands
 test_cmd="npx ts-mocha --paths -p tsconfig.json --recursive tests/prelude.test.ts tests/unit tests/integration --extension .test.ts"
 
 all_tests_cmd="env ASTRA_RUN_LONG_TESTS=1 ASTRA_RUN_ADMIN_TESTS=1 ASTRA_RUN_VECTORIZE_TESTS=1 $test_cmd"
 
 light_tests_cmd="env ASTRA_RUN_LONG_TESTS=0 ASTRA_RUN_ADMIN_TESTS=0 ASTRA_RUN_VECTORIZE_TESTS=0 $test_cmd"
 
-run_lint()
-{
-  npm run lint
-}
+run_lint_cmd="npm run lint"
 
-run_tsc()
-{
-  npx tsc --noEmit --skipLibCheck
-}
+run_tsc_cmd="npx tsc --noEmit --skipLibCheck"
 
+# Counter to make sure test type isn't set multiple times
 test_type_set=0
 
+# Process all of the flags
 while [ $# -gt 0 ]; do
   for test_type_flag in --all --light --coverage --types --prerelease; do
     [ "$1" = "$test_type_flag" ] && test_type_set=$((test_type_set + 1))
@@ -62,11 +59,13 @@ while [ $# -gt 0 ]; do
   shift
 done
 
+# Ensure the flags are compatible with each other
 if [ "$test_type" = '--types' ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$raw_args" ]; }; then
   echo "Can't use a filter, bail, or args flag when typechecking"
   exit
 fi
 
+# Build the actual command to run
 case "$test_type" in
   "")
     cmd_to_run="$test_cmd"
@@ -81,10 +80,10 @@ case "$test_type" in
     cmd_to_run="npx nyc $all_tests_cmd -b"
     ;;
   "types")
-    cmd_to_run="run_tsc"
+    cmd_to_run="$run_tsc_cmd"
     ;;
   "prerelease")
-    cmd_to_run="run_lint && run_tsc && $all_tests_cmd -b --exit"
+    cmd_to_run="$run_lint_cmd && $run_tsc_cmd && $all_tests_cmd -b --exit"
     ;;
 esac
 
@@ -100,4 +99,5 @@ if [ -n "$raw_args" ]; then
   cmd_to_run="$cmd_to_run $raw_args"
 fi
 
+# Run it
 eval "$cmd_to_run"
