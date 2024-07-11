@@ -21,7 +21,7 @@ import {
   initTestObjects,
   OTHER_NAMESPACE,
   TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI, USE_HTTP2,
+  TEST_APPLICATION_URI,
 } from '@/tests/fixtures';
 import { CollectionAlreadyExistsError, DataAPIResponseError, Db } from '@/src/data-api';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_NAMESPACE } from '@/src/api';
