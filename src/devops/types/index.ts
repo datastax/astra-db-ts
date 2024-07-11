@@ -19,3 +19,4 @@ export type * from './admin/list-databases';
 export type * from './admin/spawn-admin';
 export type * from './db-admin/create-namespace';
 export type * from './db-admin/local-create-namespace';
+export type * from './db-admin/find-embedding-providers';

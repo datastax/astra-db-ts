@@ -120,7 +120,6 @@ export class AstraDbAdmin extends DbAdmin {
     db(): Db;
     drop(options?: AdminBlockingOptions): Promise<void>;
     dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
-    // Warning: (ae-forgotten-export) The symbol "FindEmbeddingProvidersResult" needs to be exported by the entry point index.d.ts
     findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
     get id(): string;
     info(options?: WithTimeout): Promise<FullDatabaseInfo>;
@@ -683,6 +682,44 @@ export abstract class EmbeddingHeadersProvider {
 }
 
 // @public
+export interface EmbeddingProviderAuthInfo {
+    enabled: boolean;
+    tokens: EmbeddingProviderTokenInfo[];
+}
+
+// @public
+export interface EmbeddingProviderInfo {
+    displayName: string;
+    models: EmbeddingProviderModelInfo[];
+    parameters: EmbeddingProviderParameterInfo[];
+    supportedAuthentication: Record<string, EmbeddingProviderAuthInfo>;
+    url: string;
+}
+
+// @public
+export interface EmbeddingProviderModelInfo {
+    name: string;
+    parameters: EmbeddingProviderParameterInfo[];
+    vectorDimension: number | null;
+}
+
+// @public
+export interface EmbeddingProviderParameterInfo {
+    defaultValue: string;
+    help: string;
+    name: string;
+    required: boolean;
+    type: string;
+    validation: Record<string, unknown>[];
+}
+
+// @public
+export interface EmbeddingProviderTokenInfo {
+    accepted: string;
+    forwarded: string;
+}
+
+// @public
 export class FailedToLoadDefaultClientError extends Error {
     // @internal
     constructor(rootCause: Error);
@@ -776,6 +813,11 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     skip(skip: number): this;
     sort(sort: Sort): this;
     toArray(): Promise<T[]>;
+}
+
+// @public
+export interface FindEmbeddingProvidersResult {
+    embeddingProviders: Record<string, EmbeddingProviderInfo>;
 }
 
 // @public
