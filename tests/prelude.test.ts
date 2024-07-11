@@ -18,8 +18,8 @@ before(async () => {
   const [, db] = await initTestObjects();
 
   await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace: OTHER_NAMESPACE })
-    .then(c => c.deleteMany());
+    .then(c => c.deleteMany({}));
 
   await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false })
-    .then(c => c.deleteMany());
+    .then(c => c.deleteMany({}));
 });
