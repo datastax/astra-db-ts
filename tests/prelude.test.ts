@@ -11,12 +11,15 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// noinspection DuplicatedCode
 
-export * from './astra-admin';
-export * from './astra-db-admin';
-export * from './data-api-db-admin';
-export * from './db-admin';
-export * from './errors';
-export * from './events';
-export type * from './types';
+import { DEFAULT_COLLECTION_NAME, initTestObjects, OTHER_NAMESPACE } from '@/tests/fixtures';
+
+before(async () => {
+  const [, db] = await initTestObjects();
+
+  await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace: OTHER_NAMESPACE })
+    .then(c => c.deleteMany({}));
+
+  await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false })
+    .then(c => c.deleteMany({}));
+});

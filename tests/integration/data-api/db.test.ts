@@ -32,7 +32,7 @@ describe('integration.data-api.db', () => {
   let db: Db;
 
   before(async function () {
-    [, db] = await initTestObjects(this);
+    [, db] = await initTestObjects();
     await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
     await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
   });
@@ -207,6 +207,10 @@ describe('integration.data-api.db', () => {
   });
 
   describe('command', () => {
+    beforeEach(async () => {
+      await db.collection(DEFAULT_COLLECTION_NAME).deleteMany({});
+    });
+
     afterEach(async function () {
       await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
       await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
@@ -245,6 +249,18 @@ describe('integration.data-api.db', () => {
       } catch (e) {
         assert.ok(e instanceof CollectionNotFoundError);
       }
+    });
+
+    it('should throw an error if no namespace set', async () => {
+      const [, db] = await initTestObjects();
+      db.useNamespace(undefined!);
+      await assert.rejects(() => db.command({ findEmbeddingProviders: {} }), { message: 'Db is missing a required namespace; be sure to set one w/ client.db(..., { namespace }), or db.useNamespace()' });
+    });
+
+    it('should not throw an error if no namespace set but namespace: null', async () => {
+      const [, db] = await initTestObjects();
+      db.useNamespace(undefined!);
+      await assert.doesNotReject(() => db.command({ findEmbeddingProviders: {} }, { namespace: null }));
     });
   });
 });

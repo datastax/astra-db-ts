@@ -21,7 +21,7 @@ describe('integration.data-api.collection.bulk-write', () => {
   let collection: Collection;
 
   before(async function () {
-    [, , collection] = await initTestObjects(this);
+    [, , collection] = await initTestObjects();
   });
 
   beforeEach(async () => {
@@ -177,7 +177,7 @@ describe('integration.data-api.collection.bulk-write', () => {
   });
 
   it('fails fast on hard errors ordered', async function () {
-    const collection = await initCollectionWithFailingClient(this);
+    const collection = await initCollectionWithFailingClient();
     try {
       await collection.bulkWrite([{ insertOne: { document: { _id: 'a' } } }], { ordered: true });
       assert.fail('Expected an error');
@@ -189,7 +189,7 @@ describe('integration.data-api.collection.bulk-write', () => {
   });
 
   it('fails fast on hard errors unordered', async function () {
-    const collection = await initCollectionWithFailingClient(this);
+    const collection = await initCollectionWithFailingClient();
     try {
       await collection.bulkWrite([{ insertOne: { document: { _id: 'a' } } }], { ordered: false });
       assert.fail('Expected an error');

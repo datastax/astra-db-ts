@@ -48,7 +48,7 @@ describe('integration.client.data-api-client', () => {
     });
 
     it('lets Data API deal with throwing missing token error', async () => {
-      const db = new DataAPIClient({ environment: ENVIRONMENT }).db(TEST_APPLICATION_URI);
+      const db = new DataAPIClient({ environment: ENVIRONMENT }).db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
       await assert.rejects(() => db.listCollections(), { message: 'Role unauthorized for operation: Missing token, expecting one in the Token header.' });
     });
   });
@@ -92,7 +92,7 @@ describe('integration.client.data-api-client', () => {
     let db: Db;
 
     before(async function () {
-      [, db] = await initTestObjects(this);
+      [, db] = await initTestObjects();
     });
 
     beforeEach(async () => {

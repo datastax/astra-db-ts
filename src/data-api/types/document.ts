@@ -27,7 +27,7 @@ export type SomeDoc = Record<string, any>;
  * Base type for a document that wishes to leverage raw vector capabilities.
  * 
  * @example
- * ```
+ * ```typescript
  * export interface Idea extends VectorDoc {
  *   category: string,
  *   idea: string,
@@ -53,7 +53,7 @@ export interface VectorDoc {
  * Base type for a document that wishes to leverage automatic vectorization (assuming the collection is vectorize-enabled).
  *
  * @example
- * ```
+ * ```typescript
  * export interface Idea extends VectorizeDoc {
  *   category: string,
  * }

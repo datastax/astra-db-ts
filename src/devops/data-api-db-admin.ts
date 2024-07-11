@@ -131,7 +131,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @returns A promise that resolves to list of all the namespaces in the database.
    */
   public override async listNamespaces(options?: WithTimeout): Promise<string[]> {
-    const resp = await this.#httpClient.executeCommand({ findNamespaces: {} }, { maxTimeMS: options?.maxTimeMS });
+    const resp = await this.#httpClient.executeCommand({ findNamespaces: {} }, { maxTimeMS: options?.maxTimeMS, namespace: null });
     return resp.status!.namespaces;
   }
 
@@ -171,7 +171,7 @@ export class DataAPIDbAdmin extends DbAdmin {
       replicationFactor: 1,
     };
 
-    await this.#httpClient.executeCommand({ createNamespace: { name: namespace, options: { replication } } }, { maxTimeMS: options?.maxTimeMS });
+    await this.#httpClient.executeCommand({ createNamespace: { name: namespace, options: { replication } } }, { maxTimeMS: options?.maxTimeMS, namespace: null });
 
     if (options?.updateDbNamespace) {
       this.#db.useNamespace(namespace);
@@ -200,7 +200,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @returns A promise that resolves when the operation completes.
    */
   public override async dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void> {
-    await this.#httpClient.executeCommand({ dropNamespace: { name: namespace } }, { maxTimeMS: options?.maxTimeMS });
+    await this.#httpClient.executeCommand({ dropNamespace: { name: namespace } }, { maxTimeMS: options?.maxTimeMS, namespace: null });
   }
 
   private get _httpClient() {

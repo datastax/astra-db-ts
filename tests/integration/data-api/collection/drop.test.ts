@@ -20,7 +20,7 @@ describe('integration.data-api.collection.drop', () => {
   let db: Db;
 
   before(async function () {
-    [, db] = await initTestObjects(this);
+    [, db] = await initTestObjects();
   });
 
   it('[long] drops itself', async function () {

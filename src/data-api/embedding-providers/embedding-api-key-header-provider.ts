@@ -22,7 +22,7 @@ import { nullish } from '@/src/common';
  * string or null/undefined, which is transformed into an {@link EmbeddingAPIKeyHeaderProvider} under the hood.
  *
  * @example
- * ```
+ * ```typescript
  * const provider = new EmbeddingAPIKeyHeaderProvider('api-key');
  * const collection = await db.collection('my_coll', { embeddingApiKey: provider });
  *

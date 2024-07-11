@@ -98,7 +98,7 @@ export interface EmbeddingProviderInfo {
    * });
    * ```
    *
-   * - `SHARED_SECRET`: Authentication tied to a collection @ collection creation time using the Astra KMS.
+   * - `SHARED_SECRET`: Authentication tied to a collection at collection creation time using the Astra KMS.
    * ```typescript
    * const collection = await db.collection('my_coll', {
    *   // Not tied to the collection; can be different every time.

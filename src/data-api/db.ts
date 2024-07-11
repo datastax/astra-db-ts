@@ -58,7 +58,8 @@ import { DataAPIDbAdmin } from '@/src/devops/data-api-db-admin';
  * Db spawning methods let you pass in the default namespace for the database, which is used for all subsequent db
  * operations in that object, but each method lets you override the namespace if necessary in its options.
  *
- * {@link DbAdmin.findEmbeddingProviders}typescript
+ * @example
+ * ```typescript
  * const client = new DataAPIClient('AstraCS:...');
  *
  * // Connect to a database using a direct endpoint

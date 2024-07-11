@@ -26,7 +26,7 @@ describe('[admin] [long] [not-dev] integration.devops.lifecycle', () => {
   before(async function () {
     assertTestsEnabled(this, 'ADMIN', 'LONG', 'NOT-DEV', 'ASTRA');
 
-    [client] = await initTestObjects(this);
+    [client] = await initTestObjects();
 
     for (const db of await client.admin().listDatabases()) {
       if (db.info.name === TEMP_DB_NAME && db.status !== 'TERMINATING') {

@@ -24,7 +24,7 @@ import { IsDate, IsNum } from '@/src/data-api/types/utils';
  * This is a more relaxed version of {@link StrictFilter} that doesn't type-check nested fields.
  *
  * @example
- * ```
+ * ```typescript
  * interface BasicSchema {
  *   arr: string[],
  *   num: number,
@@ -63,7 +63,7 @@ export type Filter<Schema extends SomeDoc> = {
  * You can use it anywhere by using the `satisfies` keyword, or by creating a temporary const with the StrictFilter type.
  *
  * @example
- * ```
+ * ```typescript
  * interface BasicSchema {
  *   arr: string[],
  *   num: number,

@@ -30,6 +30,8 @@ export {
   BulkWriteError,
   CursorIsStartedError,
   UpdateManyError,
+  CollectionNotFoundError,
+  DataAPIHttpError,
 } from './errors';
 export * from './events';
 export * from './ids';

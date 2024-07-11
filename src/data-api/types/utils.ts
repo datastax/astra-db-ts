@@ -19,7 +19,7 @@ import { SomeId } from '@/src/data-api';
  * Checks if a type can possibly be some number
  *
  * @example
- * ```
+ * ```typescript
  * IsNum<string | number> === true
  * ```
  *
@@ -31,7 +31,7 @@ export type IsNum<T> = number extends T ? true : bigint extends T ? true : false
  * Checks if a type can possibly be a date
  *
  * @example
- * ```
+ * ```typescript
  * IsDate<string | Date> === boolean
  * ```
  *

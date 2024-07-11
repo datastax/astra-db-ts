@@ -1,3 +1,3 @@
 {
-  "testScript": "test:prerelease"
+  "testScript": "test -- --prerelease"
 }

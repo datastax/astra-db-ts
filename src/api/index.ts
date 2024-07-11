@@ -15,10 +15,10 @@
 export * from './clients/http-client';
 export * from './clients/data-api-http-client';
 export * from './clients/devops-api-http-client';
-export * from './clients/types';
+export type * from './clients/types';
 export * from './fetch/fetch-h2';
 export * from './fetch/fetch-native';
-export * from './fetch/types';
+export type * from './fetch/types';
 export * from './timeout-managers';
 export * from './constants';
-export * from './types';
+export type * from './types';

@@ -120,6 +120,7 @@ export class AstraDbAdmin extends DbAdmin {
     db(): Db;
     drop(options?: AdminBlockingOptions): Promise<void>;
     dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
+    findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
     get id(): string;
     info(options?: WithTimeout): Promise<FullDatabaseInfo>;
     listNamespaces(options?: WithTimeout): Promise<string[]>;
@@ -221,6 +222,14 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
 // @public
 export class CollectionAlreadyExistsError extends DataAPIError {
+    // @internal
+    constructor(namespace: string, collectionName: string);
+    readonly collectionName: string;
+    readonly namespace: string;
+}
+
+// @public
+export class CollectionNotFoundError extends DataAPIError {
     // @internal
     constructor(namespace: string, collectionName: string);
     readonly collectionName: string;
@@ -380,6 +389,7 @@ export class DataAPIDbAdmin extends DbAdmin {
     createNamespace(namespace: string, options?: LocalCreateNamespaceOptions): Promise<void>;
     db(): Db;
     dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
+    findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
     listNamespaces(options?: WithTimeout): Promise<string[]>;
 }
 
@@ -405,6 +415,15 @@ export interface DataAPIErrorDescriptor {
     readonly attributes?: Record<string, any>;
     readonly errorCode?: string;
     readonly message?: string;
+}
+
+// @public
+export class DataAPIHttpError extends DataAPIError {
+    // @internal
+    constructor(resp: FetcherResponseInfo);
+    readonly body?: string;
+    readonly raw: FetcherResponseInfo;
+    readonly status: number;
 }
 
 // @public
@@ -541,6 +560,7 @@ export abstract class DbAdmin {
     abstract createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void>;
     abstract db(): Db;
     abstract dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
+    abstract findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
     abstract listNamespaces(): Promise<string[]>;
 }
 
@@ -558,12 +578,6 @@ export interface DbSpawnOptions {
     monitorCommands?: boolean;
     namespace?: string;
     token?: string | TokenProvider | null;
-}
-
-// @public
-export class EmbeddingAPIKeyHeaderProvider extends EmbeddingHeadersProvider {
-    constructor(apiKey: string | nullish);
-    getHeaders(): Record<string, string>;
 }
 
 // @public
@@ -655,10 +669,54 @@ export interface DropCollectionOptions extends WithTimeout, WithNamespace {
 }
 
 // @public
+export class EmbeddingAPIKeyHeaderProvider extends EmbeddingHeadersProvider {
+    constructor(apiKey: string | nullish);
+    getHeaders(): Record<string, string>;
+}
+
+// @public
 export abstract class EmbeddingHeadersProvider {
     abstract getHeaders(): Promise<Record<string, string>> | Record<string, string>;
     // @internal
     static parseHeaders(token: unknown): EmbeddingHeadersProvider;
+}
+
+// @public
+export interface EmbeddingProviderAuthInfo {
+    enabled: boolean;
+    tokens: EmbeddingProviderTokenInfo[];
+}
+
+// @public
+export interface EmbeddingProviderInfo {
+    displayName: string;
+    models: EmbeddingProviderModelInfo[];
+    parameters: EmbeddingProviderParameterInfo[];
+    supportedAuthentication: Record<string, EmbeddingProviderAuthInfo>;
+    url: string;
+}
+
+// @public
+export interface EmbeddingProviderModelInfo {
+    name: string;
+    parameters: EmbeddingProviderParameterInfo[];
+    vectorDimension: number | null;
+}
+
+// @public
+export interface EmbeddingProviderParameterInfo {
+    defaultValue: string;
+    help: string;
+    name: string;
+    required: boolean;
+    type: string;
+    validation: Record<string, unknown>[];
+}
+
+// @public
+export interface EmbeddingProviderTokenInfo {
+    accepted: string;
+    forwarded: string;
 }
 
 // @public
@@ -755,6 +813,11 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     skip(skip: number): this;
     sort(sort: Sort): this;
     toArray(): Promise<T[]>;
+}
+
+// @public
+export interface FindEmbeddingProvidersResult {
+    embeddingProviders: Record<string, EmbeddingProviderInfo>;
 }
 
 // @public
@@ -1321,7 +1384,6 @@ export interface VectorizeServiceOptions {
 export interface VectorOptions {
     dimension?: number;
     metric?: 'cosine' | 'euclidean' | 'dot_product';
-    // @alpha
     service?: VectorizeServiceOptions;
 }
 

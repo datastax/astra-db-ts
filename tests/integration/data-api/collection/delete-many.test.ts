@@ -21,7 +21,7 @@ describe('integration.data-api.collection.delete-many', () => {
   let collection: Collection;
 
   before(async function () {
-    [, , collection] = await initTestObjects(this);
+    [, , collection] = await initTestObjects();
   });
 
   beforeEach(async () => {
@@ -72,7 +72,7 @@ describe('integration.data-api.collection.delete-many', () => {
   });
 
   it('fails fast on hard errors', async function () {
-    const collection = await initCollectionWithFailingClient(this);
+    const collection = await initCollectionWithFailingClient();
     try {
       await collection.deleteMany({ _id: 3 });
       assert.fail('Expected an error');

@@ -21,7 +21,7 @@ import { EmbeddingHeadersProvider } from '@/src/data-api/embedding-providers/emb
  * Sets the headers `x-embedding-access-id` and `x-embedding-secret-id`.
  *
  * @example
- * ```
+ * ```typescript
  * const provider = new AWSEmbeddingHeadersProvider('access-key-id', 'secret-access-key');
  * const collection = await db.collection('my_coll', { embeddingApiKey: provider });
  * ```

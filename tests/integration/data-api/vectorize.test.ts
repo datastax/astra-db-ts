@@ -13,7 +13,12 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { Db } from '@/src/data-api';
+import {
+  AWSEmbeddingHeadersProvider,
+  Db,
+  EmbeddingAPIKeyHeaderProvider,
+  EmbeddingHeadersProvider,
+} from '@/src/data-api';
 import { assertTestsEnabled, ENVIRONMENT, initTestObjects } from '@/tests/fixtures';
 import * as fs from 'fs';
 import { after } from 'mocha';
@@ -22,9 +27,9 @@ import {
   EmbeddingProviderModelInfo,
 } from '@/src/devops/types/db-admin/find-embedding-providers';
 
-interface VectorizeTestSpec {
+type VectorizeTestSpec = {
   [providerName: string]: {
-    apiKey?: string,
+    [header: `x-${string}`]: string,
     providerKey?: string,
     dimension?: {
       [modelNameRegex: string]: number,
@@ -35,13 +40,13 @@ interface VectorizeTestSpec {
   }
 }
 
-describe('[astra] integration.data-api.vectorize', () => {
+describe('integration.data-api.vectorize', () => {
   let db: Db;
 
   before(async function () {
-    assertTestsEnabled(this, 'VECTORIZE', 'LONG', 'ASTRA');
+    assertTestsEnabled(this, 'VECTORIZE', 'LONG');
 
-    [, db] = await initTestObjects(this);
+    [, db] = await initTestObjects();
 
     const tests: VectorizeTest[] = await initVectorTests(db).catch((e: unknown) => {
       console.error('Failed to initialize vectorize tests', e);
@@ -92,7 +97,6 @@ const initVectorTests = async (db: Db) => {
   return Object.entries(embeddingProviders)
     .flatMap(branchOnModel(spec))
     .filter(t => {
-      console.log(t.testName);
       return whitelist.test(t.testName);
     });
 };
@@ -142,29 +146,49 @@ const addParameters = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingP
 
 interface AuthBranch extends WithParams {
   authType: 'header' | 'providerKey' | 'none',
+  header?: EmbeddingHeadersProvider,
   providerKey?: string,
-  header?: string,
 }
 
 const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingProviderInfo) => (test: WithParams): AuthBranch[] => {
   const auth = providerInfo['supportedAuthentication'];
   const tests: AuthBranch[] = []
 
-  if (auth['HEADER'].enabled && spec.apiKey) {
-    tests.push({ ...test, authType: 'header', header: spec.apiKey, testName: `${test.testName}@header` });
+  const ehp = resolveHeaderProvider(spec);
+
+  if (auth['HEADER'].enabled && ehp) {
+    tests.push({ ...test, authType: 'header', header: ehp, testName: `${test.testName}@header` });
   }
 
-  if (auth['SHARED_SECRET'].enabled && spec.providerKey) {
+  if (auth['SHARED_SECRET'].enabled && spec.providerKey && ENVIRONMENT === 'astra') {
     tests.push({ ...test, authType: 'providerKey', providerKey: spec.providerKey, testName: `${test.testName}@providerKey` });
   }
 
-  if (auth['NONE'].enabled) {
+  if (auth['NONE'].enabled && ENVIRONMENT === 'astra') {
     tests.push({ ...test, authType: 'none', testName: `${test.testName}@none` });
   }
 
   const modelInfo = providerInfo.models.find((m) => m.name === test.modelName)!;
 
   return tests.flatMap(branchOnDimension(spec, modelInfo));
+}
+
+const resolveHeaderProvider = (spec: VectorizeTestSpec[string]) => {
+  const headers = Object.entries(spec).filter(([k]) => k.startsWith('x-')).sort() as [string, string][];
+
+  if (headers.length === 0) {
+    return null;
+  }
+
+  if (headers.length === 1 && headers[0][0] === 'x-embedding-api-key') {
+    return new EmbeddingAPIKeyHeaderProvider(headers[0][1]);
+  }
+
+  if (headers.length === 2 && headers[0][0] === 'x-embedding-access-id' && headers[1][0] === 'x-embedding-secret-id') {
+    return new AWSEmbeddingHeadersProvider(headers[0][1], headers[1][1]);
+  }
+
+  throw new Error(`No embeddings header provider resolved for headers ${headers}`);
 }
 
 interface DimensionBranch extends AuthBranch {
@@ -261,7 +285,7 @@ const createVectorizeProvidersTest = (db: Db, test: VectorizeTest, name: string)
     }).toArray();
 
     assert.strictEqual(findResult.length, 2);
-  }).timeout(90000);
+  });
 };
 
 const createVectorizeParamTests = function (db: Db, test: VectorizeTest, name: string) {
