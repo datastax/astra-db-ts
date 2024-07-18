@@ -7,7 +7,7 @@
 ## Running the tests
 Prerequisites:
 - A JS package manager (npm, bun, etc.)
-- A clean AstraDB instance with two keyspaces—`default_keyspace` and `other_keyspace`
+- A clean Data API instance with two keyspaces—`default_keyspace` and `other_keyspace`
 - Copy the `.env.example` file and create a new `.env` file following the example template
 
 The library comes with a small custom test script, whose usage is shown below:
