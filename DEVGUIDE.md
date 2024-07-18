@@ -97,7 +97,11 @@ test suite harder to manage.
 
 ### Running vectorize tests
 To run vectorize tests, you need to have a vectorize-enabled kube running, with the correct tags enabled.
-You must create a file, `vectorize_tests.json`, in the root folder, with the following format:
+
+Ensure `ASTRA_RUN_VECTORIZE_TESTS` and `ASTRA_RUN_LONG_TESTS` are enabled as well (or just pass the `--all` flag to
+the test script).
+
+Lastly, you must create a file, `vectorize_tests.json`, in the root folder, with the following format:
 
 ```ts
 type VectorizeTestSpec = {
