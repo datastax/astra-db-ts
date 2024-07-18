@@ -129,7 +129,7 @@ where:
 - `parameters` is a mapping of model names to their corresponding parameters. The model name can be some regex that partially matches the full model name.
   - `"text-embedding-3-small"`, `"3-small"`, and `".*"` will all match `"text-embedding-3-small"`.
   - optional if not required. `azureOpenAI`, for example, will need this.
-- `dimension` is a also a mapping of model name regex to their corresponding dimensions, like the `parameters` field.
+- `dimension` is also a mapping of model name regex to their corresponding dimensions, like the `parameters` field.
   - optional if not required. `huggingfaceDedicated`, for example, will need this.
 
 This file is gitignored by default and will not be checked into VCS.
