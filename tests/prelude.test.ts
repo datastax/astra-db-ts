@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DEFAULT_COLLECTION_NAME, ENVIRONMENT, initTestObjects, OTHER_NAMESPACE } from '@/tests/fixtures';
-import { DEFAULT_NAMESPACE } from '@/src/api';
+import { DEFAULT_COLLECTION_NAME, initTestObjects, OTHER_NAMESPACE } from '@/tests/fixtures';
 
 before(async () => {
   const [, db] = await initTestObjects();
