@@ -134,7 +134,7 @@ where:
 
 This file is gitignored by default and will not be checked into VCS.
 
-See `vectorize_test_spec.example.json` for—guess what—an example.
+See `vectorize_test_spec.example.json` for, guess what, an example.
 
 ### Coverage testing
 
