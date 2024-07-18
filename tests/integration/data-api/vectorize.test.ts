@@ -29,8 +29,12 @@ import {
 
 type VectorizeTestSpec = {
   [providerName: string]: {
-    [header: `x-${string}`]: string,
-    providerKey?: string,
+    headers?: {
+      [header: `x-${string}`]: string,
+    }
+    sharedSecret?: {
+      providerKey?: string,
+    }
     dimension?: {
       [modelNameRegex: string]: number,
     },
@@ -160,8 +164,8 @@ const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingPr
     tests.push({ ...test, authType: 'header', header: ehp, testName: `${test.testName}@header` });
   }
 
-  if (auth['SHARED_SECRET']?.enabled && spec.providerKey && ENVIRONMENT === 'astra') {
-    tests.push({ ...test, authType: 'providerKey', providerKey: spec.providerKey, testName: `${test.testName}@providerKey` });
+  if (auth['SHARED_SECRET']?.enabled && spec.sharedSecret?.providerKey && ENVIRONMENT === 'astra') {
+    tests.push({ ...test, authType: 'providerKey', providerKey: spec.sharedSecret?.providerKey, testName: `${test.testName}@providerKey` });
   }
 
   if (auth['NONE']?.enabled && ENVIRONMENT === 'astra') {
@@ -174,7 +178,7 @@ const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingPr
 }
 
 const resolveHeaderProvider = (spec: VectorizeTestSpec[string]) => {
-  const headers = Object.entries(spec).filter(([k]) => k.startsWith('x-')).sort() as [string, string][];
+  const headers = Object.entries(spec?.headers ?? []).sort();
 
   if (headers.length === 0) {
     return null;
