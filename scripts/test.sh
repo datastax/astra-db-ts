@@ -60,7 +60,7 @@ while [ $# -gt 0 ]; do
       echo "Invalid flag $1"
       echo ""
       echo "Usage:"
-      echo "npm run test -- [--all | --light | --coverage | --prerelease] [-f <filter>] [-b] [--args <raw_args>]"
+      echo "npm run test -- [--all | --light | --coverage | --prerelease] [-f <filter>] [-w <vectorize_whitelist>] [-b] [--args <raw_args>]"
       echo "or"
       echo "npm run test -- <--types>"
       exit
@@ -71,7 +71,7 @@ done
 
 # Ensure the flags are compatible with each other
 if [ "$test_type" = '--types' ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$raw_args" ] || [ -n "$whitelist" ]; }; then
-  echo "Can't use a filter, bail, or args flag when typechecking"
+  echo "Can't use a filter, bail, whitelist, or args flag when typechecking"
   exit
 fi
 
