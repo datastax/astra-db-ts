@@ -12,10 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DEFAULT_COLLECTION_NAME, initTestObjects, OTHER_NAMESPACE } from '@/tests/fixtures';
+import { DEFAULT_COLLECTION_NAME, ENVIRONMENT, initTestObjects, OTHER_NAMESPACE } from '@/tests/fixtures';
+import { DEFAULT_NAMESPACE } from '@/src/api';
 
 before(async () => {
   const [, db] = await initTestObjects();
+
+  const admin = (ENVIRONMENT === 'astra')
+    ? db.admin({ environment: ENVIRONMENT })
+    : db.admin({ environment: ENVIRONMENT });
+
+  const keyspaces = await admin.listNamespaces();
+
+  if (!keyspaces.includes(DEFAULT_NAMESPACE) || !keyspaces.includes(OTHER_NAMESPACE)) {
+    throw new Error(`Missing required namespace(s)... make sure you have both ${DEFAULT_NAMESPACE} and ${OTHER_NAMESPACE}`);
+  }
 
   await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace: OTHER_NAMESPACE })
     .then(c => c.deleteMany({}));
