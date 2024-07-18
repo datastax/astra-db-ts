@@ -114,7 +114,7 @@ type VectorizeTestSpec = {
     parameters?: {
       [modelNameRegex: string]: Record<string, string>,
     },
-  }
+  },
 }
 ```
 
