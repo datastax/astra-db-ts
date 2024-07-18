@@ -7,11 +7,13 @@
 ## Running the tests
 Prerequisites:
 - A JS package manager (npm, bun, etc.)
-- A clean AstraDB instance with two keyspaces—`default_keyspace` and `other_keyspace`
+- A clean Data API instance with two keyspaces—`default_keyspace` and `other_keyspace`
 - Copy the `.env.example` file and create a new `.env` file following the example template
 
+The library comes with a small custom test script, whose usage is shown below:
+
 ```shell
-npm run test -- [--all | --light | --coverage | --prerelease] [-f <filter>] [-b] [--args <raw_args>]
+npm run test -- [--all | --light | --coverage | --prerelease] [-f <filter>] [-w <vectorize_whitelist>] [-b] [--args <raw_args>]
 # or
 npm run test -- <--types>
 ```
@@ -39,18 +41,21 @@ npm run test -- --light -f 'integration.'
 npm run test -- --types
 ```
 
-(bun does not need the extra initial `--` like npm does)
+(bun does not need the extra initial `--` like npm does).
 
 ### Running the tests on local Stargate
 You can do `sh scripts/start-stargate-4-tests.sh` to spin up an ephemeral Data API on DSE instance which automatically
 creates the required keyspaces and destroys itself on exit.
 
-Then, be sure to set the following vars in `.env` exactly, then run the tests as usual.
+Then, be sure to set the following vars in `.env` exactly.
 ```dotenv
 APPLICATION_URI=http://localhost:8181
 APPLICATION_TOKEN=Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh
 APPLICATION_ENVIRONMENT=dse
 ```
+
+Once the local Data API instance is ready (you see the output for the created namespaces and everything), you can
+run the tests.
 
 ### Running tagged tests
 Tests can be given certain tags to allow for more granular control over which tests are run. These tags currently include:
@@ -97,38 +102,65 @@ test suite harder to manage.
 
 ### Running vectorize tests
 To run vectorize tests, you need to have a vectorize-enabled kube running, with the correct tags enabled.
-You must create a file, `vectorize_tests.json`, in the root folder, with the following format:
+
+Ensure `ASTRA_RUN_VECTORIZE_TESTS` and `ASTRA_RUN_LONG_TESTS` are enabled as well (or just pass the `--all` flag to
+the test script).
+
+Lastly, you must create a file, `vectorize_tests.json`, in the root folder, with the following format:
 
 ```ts
-interface VectorizeTestSpec {
+type VectorizeTestSpec = {
   [providerName: string]: {
-    apiKey?: string,
-    providerKey?: string,
+    headers?: {
+      [header: `x-${string}`]: string,
+    },
+    sharedSecret?: {
+      providerKey?: string,
+    },
     dimension?: {
       [modelNameRegex: string]: number,
     },
     parameters?: {
-      [modelNameRegex: string]: Record<string, string>
+      [modelNameRegex: string]: Record<string, string>,
     },
-  }
+  },
 }
 ```
 
 where:
 - `providerName` is the name of the provider (e.g. `nvidia`, `openai`, etc.) as found in `findEmbeddingProviders`.
-- `apiKey` is the API key for the provider (which will be passed in through the header) .
+- `headers` sets the embedding headers to be used for header auth.
+  - resolves to an `EmbeddingHeadersProvider` under the hood—throws error if no corresponding one found.
   - optional if no header auth test wanted.
-- `providerKey` is the provider key for the provider (which will be passed in @ collection creation) .
+- `sharedSecret` is the block for KMS auth (isomorphic to `providerKey`, but it's an object for future-compatability).
+  - `providerKey` is the provider key for the provider (which will be passed in @ collection creation).
   - optional if no KMS auth test wanted.
 - `parameters` is a mapping of model names to their corresponding parameters. The model name can be some regex that partially matches the full model name.
   - `"text-embedding-3-small"`, `"3-small"`, and `".*"` will all match `"text-embedding-3-small"`.
   - optional if not required. `azureOpenAI`, for example, will need this.
-- `dimension` is a also a mapping of model name regex to their corresponding dimensions, like the `parameters` field.
+- `dimension` is also a mapping of model name regex to their corresponding dimensions, like the `parameters` field.
   - optional if not required. `huggingfaceDedicated`, for example, will need this.
 
 This file is gitignored by default and will not be checked into VCS.
 
-See `vectorize_credentials.example.json` for—guess what—an example.
+See `vectorize_test_spec.example.json` for, guess what, an example.
+
+This spec is cross-referenced with `findEmbeddingProviders` to create a suite of tests branching off each possible
+parameter, with tests names of the format `providerName@modelName@authType@dimension`, where each section is another
+potential branch.
+
+These branches can be narrowed down with the `VECTORIZE_WHITELIST` env var (or pass `-w <vectorize_whitelist>` to
+the test script). It's a regex parameter which only needs to match part of the test name to whitelist (so use `^$` as 
+necessary). 
+
+An example would be `VECTORIZE_WHITELIST=^.*@(header|none)@(default|specified)` to only run the vectorize tests using
+the header auth (or no-auth for nvidia), and only using the default/specified version of the dimension, essentially 
+stopping creating additional branches off of authentication and vector dimension to reduce the number of near-duplicate
+tests run.
+
+Defaults to just `*`.
+
+To run *only* the vectorize tests, a common pattern I use is `bun run test --all -f vectorize [-w <vectorize_whitelist>]`.
 
 ### Coverage testing
 

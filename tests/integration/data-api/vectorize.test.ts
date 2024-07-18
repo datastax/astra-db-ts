@@ -29,8 +29,12 @@ import {
 
 type VectorizeTestSpec = {
   [providerName: string]: {
-    [header: `x-${string}`]: string,
-    providerKey?: string,
+    headers?: {
+      [header: `x-${string}`]: string,
+    }
+    sharedSecret?: {
+      providerKey?: string,
+    }
     dimension?: {
       [modelNameRegex: string]: number,
     },
@@ -84,7 +88,7 @@ describe('integration.data-api.vectorize', () => {
 });
 
 const initVectorTests = async (db: Db) => {
-  const spec = JSON.parse(fs.readFileSync('vectorize_credentials.json', 'utf8')) as VectorizeTestSpec;
+  const spec = JSON.parse(fs.readFileSync('vectorize_test_spec.json', 'utf8')) as VectorizeTestSpec;
 
   const { embeddingProviders } = await (
     (ENVIRONMENT === 'astra')
@@ -156,15 +160,15 @@ const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingPr
 
   const ehp = resolveHeaderProvider(spec);
 
-  if (auth['HEADER'].enabled && ehp) {
+  if (auth['HEADER']?.enabled && ehp) {
     tests.push({ ...test, authType: 'header', header: ehp, testName: `${test.testName}@header` });
   }
 
-  if (auth['SHARED_SECRET'].enabled && spec.providerKey && ENVIRONMENT === 'astra') {
-    tests.push({ ...test, authType: 'providerKey', providerKey: spec.providerKey, testName: `${test.testName}@providerKey` });
+  if (auth['SHARED_SECRET']?.enabled && spec.sharedSecret?.providerKey && ENVIRONMENT === 'astra') {
+    tests.push({ ...test, authType: 'providerKey', providerKey: spec.sharedSecret?.providerKey, testName: `${test.testName}@providerKey` });
   }
 
-  if (auth['NONE'].enabled && ENVIRONMENT === 'astra') {
+  if (auth['NONE']?.enabled && ENVIRONMENT === 'astra') {
     tests.push({ ...test, authType: 'none', testName: `${test.testName}@none` });
   }
 
@@ -174,7 +178,7 @@ const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingPr
 }
 
 const resolveHeaderProvider = (spec: VectorizeTestSpec[string]) => {
-  const headers = Object.entries(spec).filter(([k]) => k.startsWith('x-')).sort() as [string, string][];
+  const headers = Object.entries(spec?.headers ?? []).sort();
 
   if (headers.length === 0) {
     return null;
@@ -219,7 +223,9 @@ const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: Embedding
 type VectorizeTest = DimensionBranch;
 
 const createVectorizeProvidersTest = (db: Db, test: VectorizeTest, name: string) => {
-  it(`[vectorize] [dev] has a working lifecycle (${test.testName})`, async () => {
+  it(`[vectorize] [long] has a working lifecycle (${test.testName})`, async function () {
+    assertTestsEnabled(this, 'VECTORIZE', 'LONG');
+
     const collection = await db.createCollection(name, {
       vector: {
         dimension: test.dimension,
@@ -289,12 +295,14 @@ const createVectorizeProvidersTest = (db: Db, test: VectorizeTest, name: string)
 };
 
 const createVectorizeParamTests = function (db: Db, test: VectorizeTest, name: string) {
-  describe('[vectorize] [dev] $vectorize/vectorize params', () => {
+  describe('[vectorize] $vectorize/vectorize params', () => {
     const collection = db.collection(name, {
       embeddingApiKey: test.header,
     });
 
     before(async function () {
+      assertTestsEnabled(this, 'VECTORIZE');
+
       if (!await db.listCollections({ nameOnly: true }).then(cs => cs.some((c) => c === name))) {
         this.skip();
       }

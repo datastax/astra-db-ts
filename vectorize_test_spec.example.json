@@ -1,0 +1,109 @@
+{
+  "$comment": "You can easily comment/uncomment fields by adding/removing underscores from the start of the field name",
+  "azureOpenAI": {
+    "sharedSecret": {
+      "providerKey": "___.providerKey"
+    },
+    "headers": {
+      "x-embedding-api-key": "___"
+    },
+    "parameters": {
+      "text-embedding-3-small": {
+        "deploymentId": "___",
+        "resourceName": "___"
+      },
+      "text-embedding-3-large": {
+        "deploymentId": "___",
+        "resourceName": "___"
+      },
+      "text-embedding-ada-002": {
+        "deploymentId": "___",
+        "resourceName": "___"
+      }
+    }
+  },
+  "bedrock": {
+    "headers": {
+      "x-embedding-access-id": "___",
+      "x-embedding-secret-id": "___"
+    },
+    "sharedSecret": {
+      "providerKey": "___.providerKey"
+    },
+    "dimension": {
+      ".*": 1234
+    },
+    "parameters": {
+      ".*": {
+        "region": "___"
+      }
+    }
+  },
+  "huggingface": {
+    "headers": {
+      "x-embedding-api-key": "___"
+    },
+    "sharedSecret": {
+      "providerKey": "___.providerKey"
+    }
+  },
+  "huggingfaceDedicated": {
+    "headers": {
+      "x-embedding-api-key": "___"
+    },
+    "sharedSecret": {
+      "providerKey": "___.providerKey"
+    },
+    "dimension": {
+      ".*": 1234
+    },
+    "parameters": {
+      ".*": {
+        "endpointName": "___",
+        "regionName": "___",
+        "cloudName": "___"
+      }
+    }
+  },
+  "jinaAI": {
+    "headers": {
+      "x-embedding-api-key": "___"
+    },
+    "sharedSecret": {
+      "providerKey": "___.providerKey"
+    }
+  },
+  "mistral": {
+    "headers": {
+      "x-embedding-api-key": "___"
+    },
+    "sharedSecret": {
+      "providerKey": "___.providerKey"
+    }
+  },
+  "nvidia": {},
+  "openai": {
+    "headers": {
+      "x-embedding-api-key": "___"
+    },
+    "sharedSecret": {
+      "providerKey": "___.providerKey"
+    }
+  },
+  "upstageAI": {
+    "headers": {
+      "x-embedding-api-key": "___"
+    },
+    "sharedSecret": {
+      "providerKey": "___.providerKey"
+    }
+  },
+  "voyageAI": {
+    "headers": {
+      "x-embedding-api-key": "___"
+    },
+    "sharedSecret": {
+      "providerKey": "___.providerKey"
+    }
+  }
+}
