@@ -39,7 +39,7 @@ npm run test -- --light -f 'integration.'
 npm run test -- --types
 ```
 
-(bun does not need the extra initial `--` like npm does)
+(bun does not need the extra initial `--` like npm does).
 
 ### Running the tests on local Stargate
 You can do `sh scripts/start-stargate-4-tests.sh` to spin up an ephemeral Data API on DSE instance which automatically
@@ -135,6 +135,21 @@ where:
 This file is gitignored by default and will not be checked into VCS.
 
 See `vectorize_test_spec.example.json` for, guess what, an example.
+
+This spec is cross-referenced with `findEmbeddingProviders` to create a suite of tests branching off each possible
+parameter, with tests names of the format `providerName@modelName@authType@dimension`, where each section is another
+potential branch.
+
+These branches can be narrowed down with the `VECTORIZE_WHITELIST` env var (or pass `-w <vectorize_whitelist>` to
+the test script). It's a regex parameter which only needs to match part of the test name to whitelist (so use `^$` as 
+necessary). 
+
+An example would be `VECTORIZE_WHITELIST=^.*@(header|none)@(default|specified)` to only run the vectorize tests using
+the header auth (or no-auth for nvidia), and only using the default/specified version of the dimension, essentially 
+stopping creating additional branches off of authentication and vector dimension to reduce the number of near-duplicate
+tests run.
+
+Defaults to just `*`.
 
 ### Coverage testing
 
