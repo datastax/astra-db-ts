@@ -22,9 +22,9 @@ before(async () => {
     ? db.admin({ environment: ENVIRONMENT })
     : db.admin({ environment: ENVIRONMENT });
 
-  const keyspaces = await admin.listNamespaces();
+  const namespaces = await admin.listNamespaces();
 
-  if (!keyspaces.includes(DEFAULT_NAMESPACE) || !keyspaces.includes(OTHER_NAMESPACE)) {
+  if (!namespaces.includes(DEFAULT_NAMESPACE) || !namespaces.includes(OTHER_NAMESPACE)) {
     throw new Error(`Missing required namespace(s)... make sure you have both ${DEFAULT_NAMESPACE} and ${OTHER_NAMESPACE}`);
   }
 
