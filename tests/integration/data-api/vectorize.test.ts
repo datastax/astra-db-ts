@@ -223,7 +223,7 @@ const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: Embedding
 type VectorizeTest = DimensionBranch;
 
 const createVectorizeProvidersTest = (db: Db, test: VectorizeTest, name: string) => {
-  it(`[vectorize] [dev] has a working lifecycle (${test.testName})`, async function () {
+  it(`[vectorize] [long] has a working lifecycle (${test.testName})`, async function () {
     assertTestsEnabled(this, 'VECTORIZE', 'LONG');
 
     const collection = await db.createCollection(name, {
@@ -295,13 +295,13 @@ const createVectorizeProvidersTest = (db: Db, test: VectorizeTest, name: string)
 };
 
 const createVectorizeParamTests = function (db: Db, test: VectorizeTest, name: string) {
-  describe('[vectorize] [dev] $vectorize/vectorize params', () => {
+  describe('[vectorize] $vectorize/vectorize params', () => {
     const collection = db.collection(name, {
       embeddingApiKey: test.header,
     });
 
     before(async function () {
-      assertTestsEnabled(this, 'VECTORIZE', 'LONG');
+      assertTestsEnabled(this, 'VECTORIZE');
 
       if (!await db.listCollections({ nameOnly: true }).then(cs => cs.some((c) => c === name))) {
         this.skip();
