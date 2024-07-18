@@ -100,10 +100,14 @@ To run vectorize tests, you need to have a vectorize-enabled kube running, with 
 You must create a file, `vectorize_tests.json`, in the root folder, with the following format:
 
 ```ts
-interface VectorizeTestSpec {
+type VectorizeTestSpec = {
   [providerName: string]: {
-    apiKey?: string,
-    providerKey?: string,
+    headers?: {
+      [header: `x-${string}`]: string,
+    },
+    sharedSecret?: {
+      providerKey?: string,
+    },
     dimension?: {
       [modelNameRegex: string]: number,
     },
@@ -116,9 +120,11 @@ interface VectorizeTestSpec {
 
 where:
 - `providerName` is the name of the provider (e.g. `nvidia`, `openai`, etc.) as found in `findEmbeddingProviders`.
-- `apiKey` is the API key for the provider (which will be passed in through the header) .
+- `headers` sets the embedding headers to be used for header auth.
+  - resolves to an `EmbeddingHeadersProvider` under the hood—throws error if no corresponding one found.
   - optional if no header auth test wanted.
-- `providerKey` is the provider key for the provider (which will be passed in @ collection creation) .
+- `sharedSecret` is the block for KMS auth (isomorphic to `providerKey`, but it's an object for future-compatability).
+  - `providerKey` is the provider key for the provider (which will be passed in @ collection creation).
   - optional if no KMS auth test wanted.
 - `parameters` is a mapping of model names to their corresponding parameters. The model name can be some regex that partially matches the full model name.
   - `"text-embedding-3-small"`, `"3-small"`, and `".*"` will all match `"text-embedding-3-small"`.
