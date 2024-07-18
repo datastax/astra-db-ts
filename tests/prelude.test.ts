@@ -18,16 +18,6 @@ import { DEFAULT_NAMESPACE } from '@/src/api';
 before(async () => {
   const [, db] = await initTestObjects();
 
-  const admin = (ENVIRONMENT === 'astra')
-    ? db.admin({ environment: ENVIRONMENT })
-    : db.admin({ environment: ENVIRONMENT });
-
-  const namespaces = await admin.listNamespaces();
-
-  if (!namespaces.includes(DEFAULT_NAMESPACE) || !namespaces.includes(OTHER_NAMESPACE)) {
-    throw new Error(`Missing required namespace(s)... make sure you have both ${DEFAULT_NAMESPACE} and ${OTHER_NAMESPACE}`);
-  }
-
   await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace: OTHER_NAMESPACE })
     .then(c => c.deleteMany({}));
 
