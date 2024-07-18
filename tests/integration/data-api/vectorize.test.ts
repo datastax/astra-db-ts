@@ -88,7 +88,7 @@ describe('integration.data-api.vectorize', () => {
 });
 
 const initVectorTests = async (db: Db) => {
-  const spec = JSON.parse(fs.readFileSync('vectorize_credentials.json', 'utf8')) as VectorizeTestSpec;
+  const spec = JSON.parse(fs.readFileSync('vectorize_test_spec.json', 'utf8')) as VectorizeTestSpec;
 
   const { embeddingProviders } = await (
     (ENVIRONMENT === 'astra')
