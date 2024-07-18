@@ -156,15 +156,15 @@ const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingPr
 
   const ehp = resolveHeaderProvider(spec);
 
-  if (auth['HEADER'].enabled && ehp) {
+  if (auth['HEADER']?.enabled && ehp) {
     tests.push({ ...test, authType: 'header', header: ehp, testName: `${test.testName}@header` });
   }
 
-  if (auth['SHARED_SECRET'].enabled && spec.providerKey && ENVIRONMENT === 'astra') {
+  if (auth['SHARED_SECRET']?.enabled && spec.providerKey && ENVIRONMENT === 'astra') {
     tests.push({ ...test, authType: 'providerKey', providerKey: spec.providerKey, testName: `${test.testName}@providerKey` });
   }
 
-  if (auth['NONE'].enabled && ENVIRONMENT === 'astra') {
+  if (auth['NONE']?.enabled && ENVIRONMENT === 'astra') {
     tests.push({ ...test, authType: 'none', testName: `${test.testName}@none` });
   }
 
