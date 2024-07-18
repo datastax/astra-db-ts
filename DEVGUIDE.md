@@ -11,7 +11,7 @@ Prerequisites:
 - Copy the `.env.example` file and create a new `.env` file following the example template
 
 ```shell
-npm run test -- [--all | --light | --coverage | --prerelease] [-f <filter>] [-b] [--args <raw_args>]
+npm run test -- [--all | --light | --coverage | --prerelease] [-f <filter>] [-w <vectorize_whitelist>] [-b] [--args <raw_args>]
 # or
 npm run test -- <--types>
 ```
