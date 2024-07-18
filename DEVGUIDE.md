@@ -157,6 +157,8 @@ tests run.
 
 Defaults to just `*`.
 
+To run *only* the vectorize tests, a common pattern I use is `bun run test --all -f vectorize [-w <vectorize_whitelist>]`.
+
 ### Coverage testing
 
 To run coverage testing, run the following command:
