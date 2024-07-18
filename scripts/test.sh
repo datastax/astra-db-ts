@@ -3,9 +3,9 @@
 # Define necessary commands
 test_cmd="npx ts-mocha --paths -p tsconfig.json --recursive tests/prelude.test.ts tests/unit tests/integration --extension .test.ts -t 60000"
 
-all_tests_cmd="env ASTRA_RUN_LONG_TESTS=1 ASTRA_RUN_ADMIN_TESTS=1 ASTRA_RUN_VECTORIZE_TESTS=1 $test_cmd"
+all_tests_cmd="ASTRA_RUN_LONG_TESTS=1 ASTRA_RUN_ADMIN_TESTS=1 ASTRA_RUN_VECTORIZE_TESTS=1 $test_cmd"
 
-light_tests_cmd="env ASTRA_RUN_LONG_TESTS=0 ASTRA_RUN_ADMIN_TESTS=0 ASTRA_RUN_VECTORIZE_TESTS=0 $test_cmd"
+light_tests_cmd="ASTRA_RUN_LONG_TESTS= ASTRA_RUN_ADMIN_TESTS= ASTRA_RUN_VECTORIZE_TESTS= $test_cmd"
 
 run_lint_cmd="npm run lint"
 
@@ -48,6 +48,10 @@ while [ $# -gt 0 ]; do
     "-b")
       bail_early=1
       ;;
+    "-w")
+      shift
+      whitelist="$1"
+      ;;
     "--args")
       shift
       raw_args="$1"
@@ -66,7 +70,7 @@ while [ $# -gt 0 ]; do
 done
 
 # Ensure the flags are compatible with each other
-if [ "$test_type" = '--types' ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$raw_args" ]; }; then
+if [ "$test_type" = '--types' ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$raw_args" ] || [ -n "$whitelist" ]; }; then
   echo "Can't use a filter, bail, or args flag when typechecking"
   exit
 fi
@@ -105,5 +109,10 @@ if [ -n "$raw_args" ]; then
   cmd_to_run="$cmd_to_run $raw_args"
 fi
 
+if [ -n "$whitelist" ]; then
+  cmd_to_run="VECTORIZE_WHITELIST='$whitelist' $cmd_to_run"
+fi
+
 # Run it
+echo "$cmd_to_run"
 eval "$cmd_to_run"
