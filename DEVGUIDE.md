@@ -47,12 +47,15 @@ npm run test -- --types
 You can do `sh scripts/start-stargate-4-tests.sh` to spin up an ephemeral Data API on DSE instance which automatically
 creates the required keyspaces and destroys itself on exit.
 
-Then, be sure to set the following vars in `.env` exactly, then run the tests as usual.
+Then, be sure to set the following vars in `.env` exactly.
 ```dotenv
 APPLICATION_URI=http://localhost:8181
 APPLICATION_TOKEN=Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh
 APPLICATION_ENVIRONMENT=dse
 ```
+
+Once the local Data API instance is ready (you see the output for the created namespaces and everything), you can
+run the tests.
 
 ### Running tagged tests
 Tests can be given certain tags to allow for more granular control over which tests are run. These tags currently include:
