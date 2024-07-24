@@ -691,7 +691,7 @@ export interface EmbeddingProviderAuthInfo {
 export interface EmbeddingProviderInfo {
     displayName: string;
     models: EmbeddingProviderModelInfo[];
-    parameters: EmbeddingProviderParameterInfo[];
+    parameters: EmbeddingProviderProviderParameterInfo[];
     supportedAuthentication: Record<string, EmbeddingProviderAuthInfo>;
     url: string;
 }
@@ -699,18 +699,24 @@ export interface EmbeddingProviderInfo {
 // @public
 export interface EmbeddingProviderModelInfo {
     name: string;
-    parameters: EmbeddingProviderParameterInfo[];
+    parameters: EmbeddingProviderModelParameterInfo[];
     vectorDimension: number | null;
 }
 
 // @public
-export interface EmbeddingProviderParameterInfo {
+export interface EmbeddingProviderModelParameterInfo {
     defaultValue: string;
     help: string;
     name: string;
     required: boolean;
     type: string;
     validation: Record<string, unknown>[];
+}
+
+// @public
+export interface EmbeddingProviderProviderParameterInfo extends EmbeddingProviderModelParameterInfo {
+    displayName: string;
+    hint: string;
 }
 
 // @public

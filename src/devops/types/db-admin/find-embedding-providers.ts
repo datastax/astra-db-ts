@@ -147,7 +147,7 @@ export interface EmbeddingProviderInfo {
    * }
    * ```
    */
-  parameters: EmbeddingProviderParameterInfo[],
+  parameters: EmbeddingProviderProviderParameterInfo[],
   /**
    * The specific models that the provider supports.
    *
@@ -258,20 +258,21 @@ export interface EmbeddingProviderTokenInfo {
 }
 
 /**
- * Info about any additional, arbitrary parameter the provider may take in. May or may not be required.
+ * Info about any additional, arbitrary parameter the model may take in. May or may not be required.
  *
- * Passed into the `parameters` block in {@link VectorizeServiceOptions} (except for `vectorDimension`).
+ * Passed into the `parameters` block in {@link VectorizeServiceOptions} (except for `vectorDimension`, which should be
+ * set in the upper-level `dimension: number` field).
  *
  * @example
  * ```typescript
  * // openai.parameters[1]
  * {
- *   name: 'projectId',
- *   type: 'STRING',
- *   required: false,
- *   defaultValue: '',
- *   validation: {},
- *   help: 'Optional, OpenAI Project ID. If provided passed as `OpenAI-Project` header.',
+ *   name: 'vectorDimension',
+ *   type: 'number',
+ *   required: true,
+ *   defaultValue: '1536',
+ *   validation: { numericRange: [2, 1536] },
+ *   help: 'Vector dimension to use in the database and when calling OpenAI.',
  * }
  * ```
  *
@@ -287,7 +288,7 @@ export interface EmbeddingProviderTokenInfo {
  *
  * @public
  */
-export interface EmbeddingProviderParameterInfo {
+export interface EmbeddingProviderModelParameterInfo {
   /**
    * The name of the parameter to be passed in.
    *
@@ -357,6 +358,64 @@ export interface EmbeddingProviderParameterInfo {
    * ```
    */
   help: string,
+}
+
+/**
+ * Info about any additional, arbitrary parameter the provider may take in. May or may not be required.
+ *
+ * Passed into the `parameters` block in {@link VectorizeServiceOptions} (except for `vectorDimension`, which should be
+ * set in the upper-level `dimension: number` field).
+ *
+ * @example
+ * ```typescript
+ * // openai.parameters[1]
+ * {
+ *   name: 'projectId',
+ *   type: 'STRING',
+ *   required: false,
+ *   defaultValue: '',
+ *   validation: {},
+ *   help: 'Optional, OpenAI Project ID. If provided passed as `OpenAI-Project` header.',
+ *   displayName: 'Organization ID',
+ *   hint: 'Add an (optional) organization ID',
+ * }
+ * ```
+ *
+ * @field name - The name of the parameter to be passed in.
+ * @field type - The datatype of the parameter.
+ * @field required - Whether the parameter is required to be passed in.
+ * @field defaultValue - The default value of the provider, or an empty string if there is none.
+ * @field validation - Validations that may be done on the inputted value.
+ * @field help - Any additional help text/information about the parameter.
+ * @field displayName - Display name for the parameter.
+ * @field hint - Hint for parameter usage.
+ *
+ * @see EmbeddingProviderInfo
+ * @see EmbeddingProviderModelInfo
+ *
+ * @public
+ */
+export interface EmbeddingProviderProviderParameterInfo extends EmbeddingProviderModelParameterInfo {
+  /**
+   * Display name for the parameter.
+   *
+   * @example
+   * ```typescript
+   * // openai.parameters[0].displayName
+   * 'Organization ID'
+   * ```
+   */
+  displayName: string,
+  /**
+   * Hint for parameter usage.
+   *
+   * @example
+   * ```typescript
+   * // openai.parameters[0].hint
+   * 'Add an (optional) organization ID'
+   * ```
+   */
+  hint: string,
 }
 
 /**
@@ -433,5 +492,5 @@ export interface EmbeddingProviderModelInfo {
    * }
    * ```
    */
-  parameters: EmbeddingProviderParameterInfo[],
+  parameters: EmbeddingProviderModelParameterInfo[],
 }
