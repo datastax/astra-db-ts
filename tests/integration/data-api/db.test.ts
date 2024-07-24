@@ -23,25 +23,19 @@ import {
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
 } from '@/tests/fixtures';
-import { CollectionAlreadyExistsError, DataAPIResponseError, Db } from '@/src/data-api';
+import { CollectionAlreadyExistsError, DataAPIResponseError } from '@/src/data-api';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_NAMESPACE } from '@/src/api';
 import { DataAPIClient } from '@/src/client';
 import { CollectionNotFoundError } from '@/src/data-api/errors';
+import { describe, it } from '@/tests/test-utils';
 
-describe('integration.data-api.db', () => {
-  let db: Db;
-
+describe('integration.data-api.db', ([, db]) => {
   before(async function () {
-    [, db] = await initTestObjects();
     await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
     await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
   });
 
   describe('[long] createCollection + dropCollection', () => {
-    before(function () {
-      assertTestsEnabled(this, 'LONG');
-    });
-
     afterEach(async function () {
       await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
       await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
@@ -144,9 +138,7 @@ describe('integration.data-api.db', () => {
       assert.ok(collection);
     });
 
-    it('[astra] should work even when instantiated weirdly', async function () {
-      assertTestsEnabled(this, 'ASTRA');
-
+    it('[astra] should work even when instantiated weirdly', async () => {
       const db = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { namespace: '123123123', dataApiPath: 'King, by Eluveitie' } })
         .admin({ adminToken: 'dummy-token' })
         .dbAdmin(TEST_APPLICATION_URI, { dataApiPath: DEFAULT_DATA_API_PATHS['astra'], namespace: DEFAULT_NAMESPACE })
@@ -237,12 +229,13 @@ describe('integration.data-api.db', () => {
       assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: 1 } }, errors: undefined });
     });
 
-    it('[long] should execute a collection-level command in different namespace', async function () {
-      assertTestsEnabled(this, 'LONG');
+    it('[long] should execute a collection-level command in different namespace', async () => {
       const collection = await db.createCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
       await collection.insertOne({ _id: 1 });
+
       const resp = await db.command({ findOne: {} }, { collection: EPHEMERAL_COLLECTION_NAME, namespace: OTHER_NAMESPACE });
       assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: 1 } }, errors: undefined });
+
       try {
         await db.command({ findOne: {} }, { collection: EPHEMERAL_COLLECTION_NAME });
         assert.fail('Expected an error');
@@ -252,13 +245,13 @@ describe('integration.data-api.db', () => {
     });
 
     it('should throw an error if no namespace set', async () => {
-      const [, db] = await initTestObjects();
+      const [, db] = initTestObjects();
       db.useNamespace(undefined!);
       await assert.rejects(() => db.command({ findEmbeddingProviders: {} }), { message: 'Db is missing a required namespace; be sure to set one w/ client.db(..., { namespace }), or db.useNamespace()' });
     });
 
     it('should not throw an error if no namespace set but namespace: null', async () => {
-      const [, db] = await initTestObjects();
+      const [, db] = initTestObjects();
       db.useNamespace(undefined!);
       await assert.doesNotReject(() => db.command({ findEmbeddingProviders: {} }, { namespace: null }));
     });

@@ -27,12 +27,6 @@
   "license": "Apache-2.0",
   "main": "dist/index.js",
   "types": "dist/astra-db-ts.d.ts",
-  "mocha": {
-    "timeout": 30000,
-    "require": [
-      "tests/setup.ts"
-    ]
-  },
   "directories": {
     "lib": "src",
     "test": "tests"
