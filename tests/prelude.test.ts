@@ -13,13 +13,24 @@
 // limitations under the License.
 
 import { DEFAULT_COLLECTION_NAME, initTestObjects, OTHER_NAMESPACE } from '@/tests/fixtures';
+import { DEFAULT_NAMESPACE } from '@/src/api';
 
 before(async () => {
-  const { db } = await initTestObjects();
+  const { db } = initTestObjects();
 
   await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace: OTHER_NAMESPACE })
     .then(c => c.deleteMany({}));
 
   await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false })
     .then(c => c.deleteMany({}));
+
+  for (const namespace of [DEFAULT_NAMESPACE, OTHER_NAMESPACE]) {
+    const collections = await db.listCollections({ namespace });
+
+    const promises = collections
+      .filter(c => c.name !== DEFAULT_COLLECTION_NAME)
+      .map(c => db.dropCollection(c.name))
+
+    await Promise.all(promises);
+  }
 });

@@ -63,7 +63,7 @@ describe('integration.data-api.collection.delete-many', { truncateColls: 'defaul
   });
 
   it('fails fast on hard errors', async () => {
-    const collection = await initCollectionWithFailingClient();
+    const collection = initCollectionWithFailingClient();
     try {
       await collection.deleteMany({ _id: 3 });
       assert.fail('Expected an error');

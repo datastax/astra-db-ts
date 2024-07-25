@@ -18,7 +18,6 @@
 // And now it's not even needed anymore :(
 
 import { DataAPIClient } from '@/src/client';
-import { Context } from 'mocha';
 import { DataAPIEnvironment } from '@/src/common';
 import { DEFAULT_NAMESPACE } from '@/src/api';
 import dotenv from 'dotenv';
@@ -56,7 +55,7 @@ export const initTestObjects = (preferHttp2 = USE_HTTP2, environment: typeof ENV
   return { client, db, collection };
 };
 
-export const initCollectionWithFailingClient = async () => {
+export const initCollectionWithFailingClient = () => {
   const { collection } = initTestObjects();
   collection['_httpClient'].executeCommand = () => { throw new Error('test') };
   return collection;
@@ -130,29 +129,3 @@ export const sampleUsersList = [
   createSampleDoc2WithMultiLevel(),
   createSampleDoc3WithMultiLevel(),
 ];
-
-export const assertTestsEnabled = (ctx: Context, ...filters: ('VECTORIZE' | 'LONG' | 'ADMIN' | 'DEV' | 'NOT-DEV' | 'ASTRA')[]) => {
-  if (filters.includes('VECTORIZE') && !process.env.ASTRA_RUN_VECTORIZE_TESTS) {
-    ctx.skip();
-  }
-
-  if (filters.includes('LONG') && !process.env.ASTRA_RUN_LONG_TESTS) {
-    ctx.skip();
-  }
-
-  if (filters.includes('ADMIN') && !process.env.ASTRA_RUN_ADMIN_TESTS) {
-    ctx.skip();
-  }
-
-  if (filters.includes('DEV') && !TEST_APPLICATION_URI.includes('apps.astra-dev.datastax.com')) {
-    ctx.skip();
-  }
-
-  if (filters.includes('NOT-DEV') && TEST_APPLICATION_URI.includes('apps.astra-dev.datastax.com')) {
-    ctx.skip();
-  }
-
-  if (filters.includes('ASTRA') && !TEST_APPLICATION_URI.includes('datastax.com')) {
-    ctx.skip();
-  }
-}

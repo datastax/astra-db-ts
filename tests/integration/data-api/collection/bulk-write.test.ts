@@ -168,7 +168,7 @@ describe('integration.data-api.collection.bulk-write', { truncateColls: 'default
   });
 
   it('fails fast on hard errors ordered', async () => {
-    const collection = await initCollectionWithFailingClient();
+    const collection = initCollectionWithFailingClient();
     try {
       await collection.bulkWrite([{ insertOne: { document: { _id: 'a' } } }], { ordered: true });
       assert.fail('Expected an error');
@@ -180,7 +180,7 @@ describe('integration.data-api.collection.bulk-write', { truncateColls: 'default
   });
 
   it('fails fast on hard errors unordered', async () => {
-    const collection = await initCollectionWithFailingClient();
+    const collection = initCollectionWithFailingClient();
     try {
       await collection.bulkWrite([{ insertOne: { document: { _id: 'a' } } }], { ordered: false });
       assert.fail('Expected an error');

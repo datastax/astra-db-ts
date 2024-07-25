@@ -198,7 +198,7 @@ describe('integration.data-api.collection.insert-many', { truncateColls: 'defaul
   });
 
   it('fails fast on hard errors ordered', async () => {
-    const collection = await initCollectionWithFailingClient();
+    const collection = initCollectionWithFailingClient();
     try {
       await collection.insertMany([{ name: 'Ignea' }], { ordered: true });
       assert.fail('Expected an error');
@@ -210,7 +210,7 @@ describe('integration.data-api.collection.insert-many', { truncateColls: 'defaul
   });
 
   it('fails fast on hard errors unordered', async () => {
-    const collection = await initCollectionWithFailingClient();
+    const collection = initCollectionWithFailingClient();
     try {
       await collection.insertMany([{ name: 'Ignea' }], { ordered: false });
       assert.fail('Expected an error');

@@ -870,7 +870,7 @@ describe('integration.data-api.collection.update-many', { truncateColls: 'defaul
   });
 
   it('fails fast on hard errors', async () => {
-    const collection = await initCollectionWithFailingClient();
+    const collection = initCollectionWithFailingClient();
     try {
       await collection.updateMany({}, {});
       assert.fail('Expected an error');
