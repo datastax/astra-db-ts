@@ -22,7 +22,7 @@ import {
   ListDatabasesOptions,
 } from '@/src/devops/types';
 import { Db, DbSpawnOptions } from '@/src/data-api';
-import { DEFAULT_DEVOPS_API_ENDPOINT, DEFAULT_NAMESPACE, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
+import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_NAMESPACE, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
 import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { mkDb } from '@/src/data-api/db';
@@ -76,7 +76,7 @@ export class AstraAdmin {
     };
 
     this.#httpClient = new DevOpsAPIHttpClient({
-      baseUrl: combinedAdminOpts.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINT,
+      baseUrl: combinedAdminOpts.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINTS.prod,
       monitorCommands: combinedAdminOpts.monitorCommands,
       emitter: rootOpts.emitter,
       fetchCtx: rootOpts.fetchCtx,

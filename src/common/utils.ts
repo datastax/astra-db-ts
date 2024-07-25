@@ -24,3 +24,11 @@ export function validateDataAPIEnv(env: unknown): asserts env is DataAPIEnvironm
     throw new Error(`Given environment is invalid (must be ${DataAPIEnvironments.map(e => `"${e}"`).join(', ')}, or nullish to default to "astra".`);
   }
 }
+
+export function jsonTryParse<T>(json: string, otherwise: T, reviver?: (this: any, key: string, value: any) => any): T {
+  try {
+    return JSON.parse(json, reviver);
+  } catch (e) {
+    return otherwise;
+  }
+}

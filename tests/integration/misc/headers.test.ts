@@ -119,7 +119,7 @@ describe('integration.misc.headers', { truncateColls: 'default' }, () => {
       assert.strictEqual(latestHeaders[DEFAULT_DEVOPS_API_AUTH_HEADER], 'Bearer ages');
     });
 
-    it('[NOT-DEV] should properly set/override tokens throughout the hierarchy', async () => {
+    it('should properly set/override tokens throughout the hierarchy', async () => {
       const client = mkClient(TEST_APPLICATION_TOKEN);
 
       const db1 = client.db(TEST_APPLICATION_URI);

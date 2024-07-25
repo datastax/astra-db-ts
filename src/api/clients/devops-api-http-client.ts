@@ -25,7 +25,7 @@ import {
   AdminCommandSucceededEvent,
 } from '@/src/devops';
 import { HeaderProvider, HTTPClientOptions, HttpMethodStrings } from '@/src/api/clients/types';
-import { nullish, TokenProvider } from '@/src/common';
+import { jsonTryParse, nullish, TokenProvider } from '@/src/common';
 
 /**
  * @internal
@@ -85,7 +85,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
         timeoutManager,
       });
 
-      const data = resp.body ? JSON.parse(resp.body) as Record<string, any> : undefined;
+      const data = resp.body ? jsonTryParse(resp.body, undefined) : undefined;
 
       if (resp.status >= 400) {
         throw new DevOpsAPIResponseError(resp, data);

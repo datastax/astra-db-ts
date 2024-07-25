@@ -14,7 +14,7 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import { AdminBlockingOptions, AdminSpawnOptions, CreateNamespaceOptions, FullDatabaseInfo } from '@/src/devops/types';
-import { DEFAULT_DEVOPS_API_ENDPOINT, DEFAULT_NAMESPACE, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
+import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_NAMESPACE, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
 import { Db } from '@/src/data-api';
 import { DbAdmin } from '@/src/devops/db-admin';
 import { WithTimeout } from '@/src/common/types';
@@ -65,7 +65,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts: AdminSpawnOptions | undefined, dbToken: TokenProvider) {
+  constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts: AdminSpawnOptions | undefined, dbToken: TokenProvider, endpoint: string) {
     super();
 
     validateAdminOpts(adminOpts);
@@ -81,8 +81,12 @@ export class AstraDbAdmin extends DbAdmin {
       ? dbToken
       : _adminToken
 
+    const environment = (endpoint.includes('apps.astra-dev.datastax.com'))
+      ? 'dev'
+      : 'prod';
+
     this.#httpClient = new DevOpsAPIHttpClient({
-      baseUrl: combinedAdminOpts.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINT,
+      baseUrl: combinedAdminOpts.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINTS[environment],
       monitorCommands: combinedAdminOpts.monitorCommands,
       fetchCtx: rootOpts.fetchCtx,
       emitter: rootOpts.emitter,

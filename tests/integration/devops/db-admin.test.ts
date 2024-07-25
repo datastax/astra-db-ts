@@ -19,7 +19,7 @@ import { describe, it } from '@/tests/test-utils';
 import { ENVIRONMENT, TEST_APPLICATION_URI } from '@/tests/config';
 
 describe('integration.devops.db-admin', ({ client, db, dbAdmin }) => {
-  it('[LONG] [NOT-DEV] works', async () => {
+  it('[LONG] works', async () => {
     const namespaces1 = await dbAdmin.listNamespaces();
     assert.ok(!namespaces1.includes('slania'));
 
@@ -36,7 +36,7 @@ describe('integration.devops.db-admin', ({ client, db, dbAdmin }) => {
     assert.ok(!namespaces3.includes('slania'));
   }).timeout(100000);
 
-  it('[LONG] [NOT-DEV] works w/ updateDbNamespace set', async () => {
+  it('[LONG] works w/ updateDbNamespace set', async () => {
     const db = client.db(TEST_APPLICATION_URI, { namespace: 'mimic_well' });
 
     assert.strictEqual(db.namespace, 'mimic_well');

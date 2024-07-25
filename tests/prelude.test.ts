@@ -17,13 +17,14 @@ import { DEFAULT_NAMESPACE } from '@/src/api';
 import { DEFAULT_COLLECTION_NAME, OTHER_NAMESPACE } from '@/tests/config';
 
 before(async () => {
-  const { db } = initTestObjects();
+  const { db, dbAdmin } = initTestObjects();
 
   const namespaces = await db.command({ findNamespaces: {} }, { namespace: null });
 
   for (const namespace of [DEFAULT_NAMESPACE, OTHER_NAMESPACE]) {
     if (!namespaces.status?.namespaces.includes(namespace)) {
-      throw new Error(`Missing namespace '${namespace}'`)
+      console.log(`creating namespace ${namespace}`);
+      await dbAdmin.createNamespace(namespace);
     }
 
     const collections = await db.listCollections({ namespace });

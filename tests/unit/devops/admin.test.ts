@@ -14,7 +14,7 @@
 
 import assert from 'assert';
 import { AstraAdmin } from '@/src/devops';
-import { DEFAULT_DEVOPS_API_ENDPOINT } from '@/src/api';
+import { DEFAULT_DEVOPS_API_ENDPOINTS } from '@/src/api';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { StaticTokenProvider } from '@/src/common';
 import { DataAPIClient } from '@/src/client';
@@ -34,7 +34,7 @@ describe('unit.devops.admin', () => {
     it('should properly construct an AstraAdmin object', () => {
       const admin = new AstraAdmin(internalOps());
       assert.ok(admin);
-      assert.strictEqual(admin['_httpClient'].baseUrl, DEFAULT_DEVOPS_API_ENDPOINT);
+      assert.strictEqual(admin['_httpClient'].baseUrl, DEFAULT_DEVOPS_API_ENDPOINTS.prod);
     });
 
     it('should properly construct an AstraAdmin object with a custom base URL', () => {
