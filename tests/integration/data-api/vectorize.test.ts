@@ -19,7 +19,6 @@ import {
   EmbeddingAPIKeyHeaderProvider,
   EmbeddingHeadersProvider,
 } from '@/src/data-api';
-import { ENVIRONMENT } from '@/tests/fixtures';
 import * as fs from 'fs';
 import { after } from 'mocha';
 import {
@@ -27,6 +26,8 @@ import {
   EmbeddingProviderModelInfo,
 } from '@/src/devops/types/db-admin/find-embedding-providers';
 import { describe, it } from '@/tests/test-utils';
+import { DbAdmin } from '@/src/devops';
+import { ENVIRONMENT } from '@/tests/config';
 
 type VectorizeTestSpec = {
   [providerName: string]: {
@@ -45,9 +46,9 @@ type VectorizeTestSpec = {
   }
 }
 
-describe('[VECTORIZE] [LONG] integration.data-api.vectorize', ({ db }) => {
+describe('[VECTORIZE] [LONG] integration.data-api.vectorize', ({ db, dbAdmin }) => {
   before(async () => {
-    const tests: VectorizeTest[] = await initVectorTests(db).catch((e: unknown) => {
+    const tests: VectorizeTest[] = await initVectorTests(dbAdmin).catch((e: unknown) => {
       console.error('Failed to initialize vectorize tests', e);
       return [];
     });
@@ -78,14 +79,10 @@ describe('[VECTORIZE] [LONG] integration.data-api.vectorize', ({ db }) => {
   it('dummy test so before is executed', () => { assert.ok(true) });
 });
 
-const initVectorTests = async (db: Db) => {
+const initVectorTests = async (dbAdmin: DbAdmin) => {
   const spec = JSON.parse(fs.readFileSync('vectorize_test_spec.json', 'utf8')) as VectorizeTestSpec;
 
-  const { embeddingProviders } = await (
-    (ENVIRONMENT === 'astra')
-      ? db.admin({ environment: ENVIRONMENT })
-      : db.admin({ environment: ENVIRONMENT })
-  ).findEmbeddingProviders();
+  const { embeddingProviders } = await dbAdmin.findEmbeddingProviders();
 
   const whitelist = process.env.VECTORIZE_WHITELIST ?? '.*';
 

@@ -81,8 +81,8 @@ import { DataAPIDbAdmin } from '@/src/devops/data-api-db-admin';
  * @public
  */
 export class Db {
-  readonly #defaultOpts!: InternalRootClientOpts;
-  readonly #token!: TokenProvider;
+  readonly #defaultOpts: InternalRootClientOpts;
+  readonly #token: TokenProvider;
   readonly #httpClient: DataAPIHttpClient;
 
   private readonly _namespace: NamespaceRef;

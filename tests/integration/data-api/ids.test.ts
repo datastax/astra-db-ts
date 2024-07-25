@@ -15,8 +15,8 @@
 
 import assert from 'assert';
 import { ObjectId, UUID } from '@/src/data-api';
-import { DEFAULT_COLLECTION_NAME, EPHEMERAL_COLLECTION_NAME } from '@/tests/fixtures';
 import { createManagedCollection, describe, it } from '@/tests/test-utils';
+import { DEFAULT_COLLECTION_NAME, EPHEMERAL_COLLECTION_NAME } from '@/tests/config';
 
 describe('integration.data-api.ids', ({ db }) => {
   describe('default', { truncateColls: 'default' } , ({ collection }) => {

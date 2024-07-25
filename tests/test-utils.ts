@@ -14,15 +14,19 @@
 /* eslint-disable prefer-const */
 
 import {
-  DEFAULT_COLLECTION_NAME,
-  EPHEMERAL_COLLECTION_NAME,
   initTestObjects,
-  OTHER_NAMESPACE,
-  TEST_APPLICATION_URI,
+
+
 } from '@/tests/fixtures';
 import { Context } from 'mocha';
 import { Collection, CreateCollectionOptions, Db, SomeDoc } from '@/src/data-api';
 import { Ref } from '@/src/common';
+import {
+  DEFAULT_COLLECTION_NAME,
+  EPHEMERAL_COLLECTION_NAME,
+  OTHER_NAMESPACE,
+  TEST_APPLICATION_URI,
+} from '@/tests/config';
 
 export function createManagedCollection(db: Db, name: string, opts: CreateCollectionOptions<SomeDoc>) {
   const collection: Ref<Collection> = { ref: null! };
@@ -156,4 +160,15 @@ function assertTestsEnabled(this: Context, tags: string[]) {
   if (tags.includes('ASTRA') && !TEST_APPLICATION_URI.includes('datastax.com')) {
     this.skip();
   }
+}
+
+declare global {
+  interface Array<T> {
+    tap(consumer: (t: T) => void): Array<T>;
+  }
+}
+
+Array.prototype.tap = function <T>(consumer: (t: T) => void) {
+  this.forEach(consumer);
+  return this;
 }

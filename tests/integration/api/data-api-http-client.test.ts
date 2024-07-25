@@ -14,10 +14,11 @@
 // noinspection DuplicatedCode
 
 import { DataAPIResponseError } from '@/src/data-api';
-import { DEFAULT_COLLECTION_NAME, initTestObjects, OTHER_NAMESPACE, TEST_APPLICATION_URI } from '@/tests/fixtures';
+import { initTestObjects } from '@/tests/fixtures';
 import { DataAPIHttpClient } from '@/src/api';
 import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
+import { DEFAULT_COLLECTION_NAME, OTHER_NAMESPACE, TEST_APPLICATION_URI } from '@/tests/config';
 
 describe('integration.api.data-api-http-client', ({ db }) => {
   let httpClient: DataAPIHttpClient;

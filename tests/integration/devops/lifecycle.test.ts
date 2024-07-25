@@ -13,12 +13,12 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { TEMP_DB_NAME } from '@/tests/fixtures';
 import assert from 'assert';
 import { DevOpsAPIResponseError } from '@/src/devops';
 import { DEFAULT_NAMESPACE, HttpMethods } from '@/src/api';
 import { TimeoutManager } from '@/src/api/timeout-managers';
 import { describe, it } from '@/tests/test-utils';
+import { TEMP_DB_NAME } from '@/tests/config';
 
 describe('[ADMIN] [LONG] [NOT-DEV] [ASTRA] integration.devops.lifecycle', ({ client }) => {
   before(async () => {

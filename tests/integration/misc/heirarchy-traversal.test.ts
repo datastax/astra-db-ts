@@ -13,9 +13,9 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEFAULT_COLLECTION_NAME, TEST_APPLICATION_URI } from '@/tests/fixtures';
 import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
+import { DEFAULT_COLLECTION_NAME, TEST_APPLICATION_URI } from '@/tests/config';
 
 describe('[ASTRA] integration.misc.hierarchy-traversal', { truncateColls: 'default' }, ({ client, db }) => {
   const endpoint = TEST_APPLICATION_URI;

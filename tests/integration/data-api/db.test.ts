@@ -15,18 +15,23 @@
 
 import assert from 'assert';
 import {
-  DEFAULT_COLLECTION_NAME,
-  EPHEMERAL_COLLECTION_NAME,
   initTestObjects,
-  OTHER_NAMESPACE,
-  TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
+
+
+
 } from '@/tests/fixtures';
 import { CollectionAlreadyExistsError, DataAPIResponseError } from '@/src/data-api';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_NAMESPACE } from '@/src/api';
 import { DataAPIClient } from '@/src/client';
 import { CollectionNotFoundError } from '@/src/data-api/errors';
 import { describe, it } from '@/tests/test-utils';
+import {
+  DEFAULT_COLLECTION_NAME,
+  EPHEMERAL_COLLECTION_NAME,
+  OTHER_NAMESPACE,
+  TEST_APPLICATION_TOKEN,
+  TEST_APPLICATION_URI,
+} from '@/tests/config';
 
 describe('integration.data-api.db', ({ db }) => {
   describe('[LONG] createCollection + dropCollection', { dropEphemeral: true }, () => {
@@ -205,7 +210,7 @@ describe('integration.data-api.db', ({ db }) => {
     it('should execute a collection-level command', async () => {
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
       await collection.insertOne({ _id: 1 });
-      const resp = await db.command({ findOne: {} }, { collection: DEFAULT_COLLECTION_NAME });
+      const resp = await db.command({ findOne: { _id: 1 } }, { collection: DEFAULT_COLLECTION_NAME });
       assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: 1 } }, errors: undefined });
     });
 
@@ -213,7 +218,7 @@ describe('integration.data-api.db', ({ db }) => {
       const collection = await db.createCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
       await collection.insertOne({ _id: 1 });
 
-      const resp = await db.command({ findOne: {} }, { collection: EPHEMERAL_COLLECTION_NAME, namespace: OTHER_NAMESPACE });
+      const resp = await db.command({ findOne: { _id: 1 } }, { collection: EPHEMERAL_COLLECTION_NAME, namespace: OTHER_NAMESPACE });
       assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: 1 } }, errors: undefined });
 
       try {

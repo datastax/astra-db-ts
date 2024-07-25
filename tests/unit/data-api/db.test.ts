@@ -19,9 +19,9 @@ import { DEFAULT_DATA_API_PATHS, DEFAULT_NAMESPACE } from '@/src/api';
 import { mkDb } from '@/src/data-api/db';
 import { StaticTokenProvider } from '@/src/common';
 import { InternalRootClientOpts } from '@/src/client/types';
-import { DEMO_APPLICATION_URI, TEST_APPLICATION_URI } from '@/tests/fixtures';
 import { DataAPIClient } from '@/src/client';
 import { describe, it } from '@/tests/test-utils';
+import { DEMO_APPLICATION_URI, TEST_APPLICATION_URI } from '@/tests/config';
 
 describe('unit.data-api.db', () => {
   const internalOps = (data?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({

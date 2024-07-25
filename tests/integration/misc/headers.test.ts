@@ -14,7 +14,6 @@
 // noinspection DuplicatedCode
 
 import { DataAPIClient } from '@/src/client';
-import { DEFAULT_COLLECTION_NAME, ENVIRONMENT, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/fixtures';
 import {
   DEFAULT_DATA_API_AUTH_HEADER,
   DEFAULT_DEVOPS_API_AUTH_HEADER,
@@ -25,6 +24,7 @@ import { nullish, StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvi
 import assert from 'assert';
 import { EmbeddingHeadersProvider } from '@/src/data-api';
 import { describe, it } from '@/tests/test-utils';
+import { DEFAULT_COLLECTION_NAME, ENVIRONMENT, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/config';
 
 describe('integration.misc.headers', { truncateColls: 'default' }, () => {
   const fetchNative = new FetchNative();

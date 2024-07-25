@@ -13,11 +13,12 @@
 // limitations under the License.
 
 import { Collection, DataAPITimeoutError } from '@/src/data-api';
-import { DEFAULT_COLLECTION_NAME, initTestObjects } from '@/tests/fixtures';
+import { initTestObjects } from '@/tests/fixtures';
 import { DEFAULT_NAMESPACE } from '@/src/api';
 import { CollectionNotFoundError } from '@/src/data-api/errors';
 import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
+import { DEFAULT_COLLECTION_NAME } from '@/tests/config';
 
 describe('integration.data-api.collection.misc', ({ db, collection }) => {
   describe('initialization', () => {

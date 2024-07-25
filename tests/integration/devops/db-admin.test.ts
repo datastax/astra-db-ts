@@ -13,17 +13,13 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { ENVIRONMENT, TEST_APPLICATION_URI } from '@/tests/fixtures';
 import assert from 'assert';
 import { DEFAULT_NAMESPACE } from '@/src/api';
 import { describe, it } from '@/tests/test-utils';
+import { ENVIRONMENT, TEST_APPLICATION_URI } from '@/tests/config';
 
-describe('integration.devops.db-admin', ({ client, db }) => {
+describe('integration.devops.db-admin', ({ client, db, dbAdmin }) => {
   it('[LONG] [NOT-DEV] works', async () => {
-    const dbAdmin = (ENVIRONMENT === 'astra')
-      ? db.admin({ environment: ENVIRONMENT })
-      : db.admin({ environment: ENVIRONMENT });
-
     const namespaces1 = await dbAdmin.listNamespaces();
     assert.ok(!namespaces1.includes('slania'));
 
@@ -57,12 +53,7 @@ describe('integration.devops.db-admin', ({ client, db }) => {
   }).timeout(100000);
 
   it('should findEmbeddingProviders', async () => {
-    const dbAdmin = (ENVIRONMENT === 'astra')
-      ? db.admin({ environment: ENVIRONMENT })
-      : db.admin({ environment: ENVIRONMENT });
-
     const { embeddingProviders } = await dbAdmin.findEmbeddingProviders();
-
     assert.ok(typeof embeddingProviders === 'object');
   });
 });

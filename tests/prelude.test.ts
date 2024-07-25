@@ -12,25 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DEFAULT_COLLECTION_NAME, initTestObjects, OTHER_NAMESPACE } from '@/tests/fixtures';
+import { initTestObjects } from '@/tests/fixtures';
 import { DEFAULT_NAMESPACE } from '@/src/api';
+import { DEFAULT_COLLECTION_NAME, OTHER_NAMESPACE } from '@/tests/config';
 
 before(async () => {
   const { db } = initTestObjects();
+
+  const namespaces = await db.command({ findNamespaces: {} }, { namespace: null });
+
+  for (const namespace of [DEFAULT_NAMESPACE, OTHER_NAMESPACE]) {
+    if (!namespaces.status?.namespaces.includes(namespace)) {
+      throw new Error(`Missing namespace '${namespace}'`)
+    }
+
+    const collections = await db.listCollections({ namespace });
+
+    const promises = collections
+      .filter(c => c.name !== DEFAULT_COLLECTION_NAME)
+      .tap(c => console.log(`deleting collection '${c.name}'`))
+      .map(c => db.dropCollection(c.name));
+
+    await Promise.all(promises);
+  }
 
   await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace: OTHER_NAMESPACE })
     .then(c => c.deleteMany({}));
 
   await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false })
     .then(c => c.deleteMany({}));
-
-  for (const namespace of [DEFAULT_NAMESPACE, OTHER_NAMESPACE]) {
-    const collections = await db.listCollections({ namespace });
-
-    const promises = collections
-      .filter(c => c.name !== DEFAULT_COLLECTION_NAME)
-      .map(c => db.dropCollection(c.name))
-
-    await Promise.all(promises);
-  }
 });

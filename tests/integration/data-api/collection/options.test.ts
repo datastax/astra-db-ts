@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DEFAULT_COLLECTION_NAME } from '@/tests/fixtures';
 import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
+import { DEFAULT_COLLECTION_NAME } from '@/tests/config';
 
 describe('integration.data-api.collection.options', ({ db }) => {
   before(async () => {

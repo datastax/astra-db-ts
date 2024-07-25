@@ -13,15 +13,15 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEFAULT_COLLECTION_NAME, ENVIRONMENT, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/fixtures';
 import { DataAPITimeoutError } from '@/src/data-api';
 import { DEFAULT_NAMESPACE, HttpMethods } from '@/src/api';
 import { DevOpsAPITimeoutError } from '@/src/devops';
 import { DataAPIClient } from '@/src/client';
 import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
+import { DEFAULT_COLLECTION_NAME, ENVIRONMENT, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/config';
 
-describe('integration.misc.timeouts', ({ db, collection }) => {
+describe('integration.misc.timeouts', ({ collection, dbAdmin }) => {
   describe('in data-api', () => {
     it('should timeout @ the http-client level', async () => {
       const httpClient = collection['_httpClient'];
@@ -64,7 +64,7 @@ describe('integration.misc.timeouts', ({ db, collection }) => {
 
   describe('[ASTRA] in devops', () => {
     it('should timeout @ the http-client level', async () => {
-      const httpClient = db.admin()['_httpClient'];
+      const httpClient = (<any>dbAdmin)['_httpClient'];
 
       await assert.rejects(async () => {
         await httpClient.request({ method: HttpMethods.Get, path: '/databases' }, { maxTimeMS: 5 });
