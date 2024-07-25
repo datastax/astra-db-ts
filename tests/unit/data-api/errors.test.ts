@@ -14,9 +14,10 @@
 // noinspection DuplicatedCode
 
 import { DataAPIResponseError, DeleteManyError, InsertManyError, SomeDoc, UpdateManyError } from '@/src/data-api';
-import assert from 'assert';
 import { DeleteManyResult, InsertManyResult, UpdateManyResult } from '@/src/data-api/types';
 import { mkRespErrorFromResponse, mkRespErrorFromResponses } from '@/src/data-api/errors';
+import { describe, it } from '@/tests/test-utils';
+import assert from 'assert';
 
 describe('unit.data-api.errors', () => {
   const commands = [

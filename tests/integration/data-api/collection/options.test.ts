@@ -12,15 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Db } from '@/src/data-api';
-import { assertTestsEnabled, DEFAULT_COLLECTION_NAME, initTestObjects } from '@/tests/fixtures';
+import { DEFAULT_COLLECTION_NAME } from '@/tests/fixtures';
+import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 
-describe('integration.data-api.collection.options', () => {
-  let db: Db;
-
-  before(async function () {
-    [, db] = await initTestObjects();
+describe('integration.data-api.collection.options', ({ db }) => {
+  before(async () => {
     await db.dropCollection('test_db_collection_empty_opts');
   });
 
@@ -34,8 +31,7 @@ describe('integration.data-api.collection.options', () => {
     assert.deepStrictEqual(res, { vector: { dimension: 5, metric: 'cosine' } });
   });
 
-  it('[long] lists its own empty options', async function () {
-    assertTestsEnabled(this, 'LONG');
+  it('[long] lists its own empty options', async () => {
     const coll = await db.createCollection('test_db_collection_empty_opts');
     const res = await coll.options();
     assert.deepStrictEqual(res, {});

@@ -21,6 +21,7 @@ import { StaticTokenProvider } from '@/src/common';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { DEMO_APPLICATION_URI, TEST_APPLICATION_URI } from '@/tests/fixtures';
 import { DataAPIClient } from '@/src/client';
+import { describe, it } from '@/tests/test-utils';
 
 describe('unit.data-api.db', () => {
   const internalOps = (data?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({

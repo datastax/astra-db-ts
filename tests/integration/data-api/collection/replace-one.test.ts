@@ -13,21 +13,11 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection } from '@/src/data-api';
-import { createSampleDoc2WithMultiLevel, createSampleDocWithMultiLevel, initTestObjects } from '@/tests/fixtures';
+import { createSampleDoc2WithMultiLevel, createSampleDocWithMultiLevel } from '@/tests/fixtures';
+import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 
-describe('integration.data-api.collection.replace-one', () => {
-  let collection: Collection;
-
-  before(async function () {
-    [, , collection] = await initTestObjects();
-  });
-
-  beforeEach(async () => {
-    await collection.deleteMany({});
-  });
-
+describe('integration.data-api.collection.replace-one', { truncateColls: 'default' }, ({ collection }) => {
   it('should replaceOne', async () => {
     const res = await collection.insertOne(createSampleDocWithMultiLevel());
     const docId = res.insertedId;

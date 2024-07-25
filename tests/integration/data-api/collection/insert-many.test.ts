@@ -13,21 +13,12 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, DataAPIError, DataAPITimeoutError, InsertManyError, ObjectId, UUID } from '@/src/data-api';
-import { initCollectionWithFailingClient, initTestObjects } from '@/tests/fixtures';
+import { DataAPIError, DataAPITimeoutError, InsertManyError, ObjectId, UUID } from '@/src/data-api';
+import { initCollectionWithFailingClient } from '@/tests/fixtures';
+import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 
-describe('integration.data-api.collection.insert-many', () => {
-  let collection: Collection;
-
-  before(async function () {
-    [, , collection] = await initTestObjects();
-  });
-
-  beforeEach(async () => {
-    await collection.deleteMany({});
-  });
-
+describe('integration.data-api.collection.insert-many', { truncateColls: 'default' }, ({ collection }) => {
   it('should insertMany documents', async () => {
     const docs = [{ name: 'Inis Mona' }, { name: 'Helvetios' }, { name: 'Epona' }];
     const res = await collection.insertMany(docs);
@@ -206,7 +197,7 @@ describe('integration.data-api.collection.insert-many', () => {
     });
   });
 
-  it('fails fast on hard errors ordered', async function () {
+  it('fails fast on hard errors ordered', async () => {
     const collection = await initCollectionWithFailingClient();
     try {
       await collection.insertMany([{ name: 'Ignea' }], { ordered: true });
@@ -218,7 +209,7 @@ describe('integration.data-api.collection.insert-many', () => {
     }
   });
 
-  it('fails fast on hard errors unordered', async function () {
+  it('fails fast on hard errors unordered', async () => {
     const collection = await initCollectionWithFailingClient();
     try {
       await collection.insertMany([{ name: 'Ignea' }], { ordered: false });

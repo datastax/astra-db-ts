@@ -15,6 +15,7 @@
 
 import { replacer, reviver } from '@/src/api';
 import { UUID, ObjectId } from '@/src/data-api';
+import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 
 describe('unit.api.data-api-http-client', () => {

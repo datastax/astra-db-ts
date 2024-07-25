@@ -17,7 +17,6 @@
 // + import { Client } from '@/src/client';
 // And now it's not even needed anymore :(
 
-import { Collection, Db } from '@/src/data-api';
 import { DataAPIClient } from '@/src/client';
 import { Context } from 'mocha';
 import { DataAPIEnvironment } from '@/src/common';
@@ -43,7 +42,7 @@ export const TEST_APPLICATION_URI = process.env.APPLICATION_URI;
 export const DEMO_APPLICATION_URI = 'https://12341234-1234-1234-1234-123412341234-us-west-2.apps.astra-dev.datastax.com';
 export const ENVIRONMENT = (process.env.APPLICATION_ENVIRONMENT ?? 'astra') as DataAPIEnvironment;
 
-export const initTestObjects = (preferHttp2 = USE_HTTP2, environment: typeof ENVIRONMENT = ENVIRONMENT): [DataAPIClient, Db, Collection] => {
+export const initTestObjects = (preferHttp2 = USE_HTTP2, environment: typeof ENVIRONMENT = ENVIRONMENT) => {
   const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {
     httpOptions: { preferHttp2, client: HTTP_CLIENT_TYPE },
     dbOptions: { namespace: DEFAULT_NAMESPACE },
@@ -54,11 +53,11 @@ export const initTestObjects = (preferHttp2 = USE_HTTP2, environment: typeof ENV
 
   const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
-  return [client, db, collection];
+  return { client, db, collection };
 };
 
 export const initCollectionWithFailingClient = async () => {
-  const [, , collection] = await initTestObjects();
+  const { collection } = initTestObjects();
   collection['_httpClient'].executeCommand = () => { throw new Error('test') };
   return collection;
 }

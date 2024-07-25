@@ -16,6 +16,7 @@
 import assert from 'assert';
 import { DevOpsAPIResponseError } from '@/src/devops';
 import { FetcherResponseInfo } from '@/src/api';
+import { describe, it } from '@/tests/test-utils';
 
 describe('unit.devops.errors', () => {
   describe('DevOpsAPIResponseError construction', () => {

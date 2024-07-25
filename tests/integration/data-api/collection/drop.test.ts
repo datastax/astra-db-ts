@@ -12,19 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Db } from '@/src/data-api';
-import { assertTestsEnabled, EPHEMERAL_COLLECTION_NAME, initTestObjects } from '@/tests/fixtures';
+import { EPHEMERAL_COLLECTION_NAME } from '@/tests/fixtures';
+import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 
-describe('integration.data-api.collection.drop', () => {
-  let db: Db;
-
-  before(async function () {
-    [, db] = await initTestObjects();
-  });
-
-  it('[long] drops itself', async function () {
-    assertTestsEnabled(this, 'LONG');
+describe('integration.data-api.collection.drop', ({ db }) => {
+  it('[long] drops itself', async () => {
     const collection = await db.createCollection(EPHEMERAL_COLLECTION_NAME);
 
     const res = await collection.drop();

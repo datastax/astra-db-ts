@@ -14,32 +14,12 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { Collection, Db, ObjectId, UUID } from '@/src/data-api';
-import {
-  assertTestsEnabled,
-  DEFAULT_COLLECTION_NAME,
-  EPHEMERAL_COLLECTION_NAME,
-  initTestObjects
-} from '@/tests/fixtures';
+import { ObjectId, UUID } from '@/src/data-api';
+import { DEFAULT_COLLECTION_NAME, EPHEMERAL_COLLECTION_NAME } from '@/tests/fixtures';
+import { createManagedCollection, describe, it } from '@/tests/test-utils';
 
-describe('integration.data-api.ids', () => {
-  let db: Db;
-
-  before(async function() {
-    [, db] = await initTestObjects();
-  });
-
-  describe('default', () => {
-    let collection: Collection;
-
-    before(function () {
-      collection = db.collection(DEFAULT_COLLECTION_NAME);
-    });
-
-    beforeEach(async function () {
-      await collection.deleteMany({});
-    });
-
+describe('integration.data-api.ids', ({ db }) => {
+  describe('default', { truncateColls: 'default' } , ({ collection }) => {
     it('is set in listCollections', async () => {
       const collections = await db.listCollections();
       const collection = collections.find(c => c.name === DEFAULT_COLLECTION_NAME);
@@ -58,21 +38,8 @@ describe('integration.data-api.ids', () => {
   });
 
   describe('[long] uuid', () => {
-    let collection: Collection;
     const name = `${EPHEMERAL_COLLECTION_NAME}_uuid`;
-
-    before(async function () {
-      assertTestsEnabled(this, 'LONG');
-      collection = await db.createCollection(name, { defaultId: { type: 'uuid' }, checkExists: false });
-    });
-
-    beforeEach(async function () {
-      await collection.deleteMany({});
-    });
-
-    after(async function () {
-      await db.dropCollection(name);
-    });
+    const collection = createManagedCollection(db, name, { defaultId: { type: 'uuid' } });
 
     it('is set in listCollections', async () => {
       const collections = await db.listCollections();
@@ -82,9 +49,9 @@ describe('integration.data-api.ids', () => {
     });
 
     it('sets it as the default id', async () => {
-      const inserted = await collection.insertOne({ name: 'test' });
+      const inserted = await collection.ref.insertOne({ name: 'test' });
       assert.ok(<any>inserted.insertedId instanceof UUID);
-      const found = await collection.findOne({ name: 'test' });
+      const found = await collection.ref.findOne({ name: 'test' });
       const id = found?._id;
       assert.ok(id instanceof UUID);
       assert.strictEqual(id.version, 4);
@@ -94,21 +61,8 @@ describe('integration.data-api.ids', () => {
   });
 
   describe('[long] uuidv6', () => {
-    let collection: Collection;
     const name = `${EPHEMERAL_COLLECTION_NAME}_uuid_v6`;
-
-    before(async function () {
-      assertTestsEnabled(this, 'LONG');
-      collection = await db.createCollection(name, { defaultId: { type: 'uuidv6' } });
-    });
-
-    beforeEach(async function () {
-      await collection.deleteMany({});
-    });
-
-    after(async function () {
-      await db.dropCollection(name);
-    });
+    const collection = createManagedCollection(db, name, { defaultId: { type: 'uuidv6' } });
 
     it('is set in listCollections', async () => {
       const collections = await db.listCollections();
@@ -118,9 +72,9 @@ describe('integration.data-api.ids', () => {
     });
 
     it('sets it as the default id', async () => {
-      const inserted = await collection.insertOne({ name: 'test' });
+      const inserted = await collection.ref.insertOne({ name: 'test' });
       assert.ok(<any>inserted.insertedId instanceof UUID);
-      const found = await collection.findOne({ name: 'test' });
+      const found = await collection.ref.findOne({ name: 'test' });
       const id = found?._id;
       assert.ok(id instanceof UUID);
       assert.strictEqual(id.version, 6);
@@ -130,21 +84,8 @@ describe('integration.data-api.ids', () => {
   });
 
   describe('[long] uuidv7', () => {
-    let collection: Collection;
     const name = `${EPHEMERAL_COLLECTION_NAME}_uuid_v7`;
-
-    before(async function () {
-      assertTestsEnabled(this, 'LONG');
-      collection = await db.createCollection(name, { defaultId: { type: 'uuidv7' } });
-    });
-
-    beforeEach(async function () {
-      await collection.deleteMany({});
-    });
-
-    after(async function () {
-      await db.dropCollection(name);
-    });
+    const collection = createManagedCollection(db, name, { defaultId: { type: 'uuidv7' } });
 
     it('is set in listCollections', async () => {
       const collections = await db.listCollections();
@@ -154,9 +95,9 @@ describe('integration.data-api.ids', () => {
     });
 
     it('sets it as the default id', async () => {
-      const inserted = await collection.insertOne({ name: 'test' });
+      const inserted = await collection.ref.insertOne({ name: 'test' });
       assert.ok(<any>inserted.insertedId instanceof UUID);
-      const found = await collection.findOne({ name: 'test' });
+      const found = await collection.ref.findOne({ name: 'test' });
       const id = found?._id;
       assert.ok(id instanceof UUID);
       assert.strictEqual(id.version, 7);
@@ -166,21 +107,8 @@ describe('integration.data-api.ids', () => {
   });
 
   describe('[long] objectId', () => {
-    let collection: Collection;
-    const name = `${EPHEMERAL_COLLECTION_NAME}_objectId`;
-
-    before(async function () {
-      assertTestsEnabled(this, 'LONG');
-      collection = await db.createCollection(name, { defaultId: { type: 'objectId' } });
-    });
-
-    beforeEach(async function () {
-      await collection.deleteMany({});
-    });
-
-    after(async function () {
-      await db.dropCollection(name);
-    });
+    const name = `${EPHEMERAL_COLLECTION_NAME}__objectId`;
+    const collection = createManagedCollection(db, name, { defaultId: { type: 'objectId' } });
 
     it('is set in listCollections', async () => {
       const collections = await db.listCollections();
@@ -190,9 +118,9 @@ describe('integration.data-api.ids', () => {
     });
 
     it('sets it as the default id', async () => {
-      const inserted = await collection.insertOne({ name: 'test' });
+      const inserted = await collection.ref.insertOne({ name: 'test' });
       assert.ok(<any>inserted.insertedId instanceof ObjectId);
-      const found = await collection.findOne({ name: 'test' });
+      const found = await collection.ref.findOne({ name: 'test' });
       const id = found?._id;
       assert.ok(id instanceof ObjectId);
       assert.ok(id.toString(), inserted.insertedId?.toString());

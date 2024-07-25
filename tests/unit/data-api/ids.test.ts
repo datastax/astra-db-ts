@@ -15,6 +15,7 @@
 
 import assert from 'assert';
 import { ObjectId, UUID } from '@/src/data-api';
+import { describe, it } from '@/tests/test-utils';
 
 describe('unit.data-api.ids', () => {
   describe('UUID', () => {

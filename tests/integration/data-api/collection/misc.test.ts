@@ -12,20 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, DataAPITimeoutError, Db } from '@/src/data-api';
+import { Collection, DataAPITimeoutError } from '@/src/data-api';
 import { DEFAULT_COLLECTION_NAME, initTestObjects } from '@/tests/fixtures';
-import assert from 'assert';
 import { DEFAULT_NAMESPACE } from '@/src/api';
 import { CollectionNotFoundError } from '@/src/data-api/errors';
+import { describe, it } from '@/tests/test-utils';
+import assert from 'assert';
 
-describe('integration.data-api.collection.misc', () => {
-  let db: Db;
-  let collection: Collection;
-
-  before(async function () {
-    [, db, collection] = await initTestObjects();
-  });
-
+describe('integration.data-api.collection.misc', ({ db, collection }) => {
   describe('initialization', () => {
     it('should initialize a Collection', () => {
       const collection = new Collection(db, db['_httpClient'], 'new_collection', undefined);
@@ -44,23 +38,23 @@ describe('integration.data-api.collection.misc', () => {
   });
 
   describe('timeout', () => {
-    it('times out on http2', async function () {
-      const [, newDb] = await initTestObjects(true);
+    it('times out on http2', async () => {
+      const { db: newDb } = initTestObjects(true);
 
       try {
         await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });
-      } catch (e: any) {
+      } catch (e) {
         assert.ok(e instanceof DataAPITimeoutError);
         assert.strictEqual(e.message, 'Command timed out after 10ms');
       }
     });
 
-    it('times out on http1', async function () {
-      const [, newDb] = await initTestObjects(false);
+    it('times out on http1', async () => {
+      const { db: newDb } = initTestObjects(false);
 
       try {
         await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });
-      } catch (e: any) {
+      } catch (e) {
         assert.ok(e instanceof DataAPITimeoutError);
         assert.strictEqual(e.message, 'Command timed out after 10ms');
       }
@@ -73,7 +67,7 @@ describe('integration.data-api.collection.misc', () => {
 
       try {
         await collection.insertOne({ username: 'test' });
-      } catch (e: any) {
+      } catch (e) {
         assert.ok(e instanceof CollectionNotFoundError);
         assert.strictEqual(e.namespace, DEFAULT_NAMESPACE);
         assert.strictEqual(e.collectionName, 'non_existent_collection');
@@ -85,7 +79,7 @@ describe('integration.data-api.collection.misc', () => {
 
       try {
         await collection.options();
-      } catch (e: any) {
+      } catch (e) {
         assert.ok(e instanceof CollectionNotFoundError);
         assert.strictEqual(e.namespace, DEFAULT_NAMESPACE);
         assert.strictEqual(e.collectionName, 'non_existent_collection');

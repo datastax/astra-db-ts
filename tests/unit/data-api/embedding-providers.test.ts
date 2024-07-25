@@ -15,6 +15,7 @@
 
 import assert from 'assert';
 import { EmbeddingAPIKeyHeaderProvider, AWSEmbeddingHeadersProvider } from '@/src/data-api';
+import { describe, it } from '@/tests/test-utils';
 
 describe('unit.common.embedding-providers', () => {
   describe('EmbeddingAPIKeyHeaderProvider', () => {

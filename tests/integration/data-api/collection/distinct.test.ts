@@ -12,21 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection } from '@/src/data-api';
-import { initTestObjects } from '@/tests/fixtures';
+import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 
-describe('integration.data-api.collection.distinct', () => {
-  let collection: Collection;
-
-  before(async function () {
-    [, , collection] = await initTestObjects();
-  });
-
-  beforeEach(async () => {
-    await collection.deleteMany({});
-  });
-
+describe('integration.data-api.collection.distinct', { truncateColls: 'default' }, ({ collection }) => {
   it('rejects invalid paths', async () => {
     await assert.rejects(async () => {
       await collection.distinct('');

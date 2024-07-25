@@ -13,21 +13,12 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, DataAPIError, DeleteManyError } from '@/src/data-api';
-import { initCollectionWithFailingClient, initTestObjects } from '@/tests/fixtures';
+import { DataAPIError, DeleteManyError } from '@/src/data-api';
+import { initCollectionWithFailingClient } from '@/tests/fixtures';
+import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 
-describe('integration.data-api.collection.delete-many', () => {
-  let collection: Collection;
-
-  before(async function () {
-    [, , collection] = await initTestObjects();
-  });
-
-  beforeEach(async () => {
-    await collection.deleteMany({});
-  });
-
+describe('integration.data-api.collection.delete-many', { truncateColls: 'default' }, ({ collection }) => {
   it('should deleteMany when match is <= 20', async () => {
     const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
     docList.forEach((doc, index) => {
@@ -71,7 +62,7 @@ describe('integration.data-api.collection.delete-many', () => {
     }
   });
 
-  it('fails fast on hard errors', async function () {
+  it('fails fast on hard errors', async () => {
     const collection = await initCollectionWithFailingClient();
     try {
       await collection.deleteMany({ _id: 3 });

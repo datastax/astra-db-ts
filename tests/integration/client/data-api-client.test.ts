@@ -16,17 +16,16 @@
 import { DataAPIClient } from '@/src/client';
 import assert from 'assert';
 import {
-  assertTestsEnabled,
   DEFAULT_COLLECTION_NAME,
   ENVIRONMENT,
-  initTestObjects,
   OTHER_NAMESPACE,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
 } from '@/tests/fixtures';
-import { DataAPIResponseError, DataAPITimeoutError, Db } from '@/src/data-api';
+import { DataAPIResponseError, DataAPITimeoutError } from '@/src/data-api';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_NAMESPACE, DEFAULT_TIMEOUT } from '@/src/api';
+import { describe, it } from '@/tests/test-utils';
 
 describe('integration.client.data-api-client', () => {
   describe('db', () => {
@@ -37,8 +36,7 @@ describe('integration.client.data-api-client', () => {
       assert.ok(Array.isArray(collections));
     });
 
-    it('[not-dev] [astra] properly connects to a db by id and region', async function () {
-      assertTestsEnabled(this, 'NOT-DEV', 'ASTRA');
+    it('[not-dev] [astra] properly connects to a db by id and region', async () => {
       const idAndRegion = TEST_APPLICATION_URI.split('.')[0].split('https://')[1].split('-');
       const id = idAndRegion.slice(0, 5).join('-');
       const region = idAndRegion.slice(5).join('-');
@@ -88,18 +86,7 @@ describe('integration.client.data-api-client', () => {
     });
   });
 
-  describe('monitoring commands', () => {
-    let db: Db;
-
-    before(async function () {
-      [, db] = await initTestObjects();
-    });
-
-    beforeEach(async () => {
-      await db.collection(DEFAULT_COLLECTION_NAME).deleteMany({});
-      await db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE }).deleteMany({});
-    });
-
+  describe('monitoring commands', { truncateColls: 'both' }, () => {
     it('should not emit any command events when not enabled', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
       const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });

@@ -13,21 +13,15 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { assertTestsEnabled, initTestObjects, TEMP_DB_NAME } from '@/tests/fixtures';
-import { DataAPIClient } from '@/src/client';
+import { TEMP_DB_NAME } from '@/tests/fixtures';
 import assert from 'assert';
 import { DevOpsAPIResponseError } from '@/src/devops';
 import { DEFAULT_NAMESPACE, HttpMethods } from '@/src/api';
 import { TimeoutManager } from '@/src/api/timeout-managers';
+import { describe, it } from '@/tests/test-utils';
 
-describe('[admin] [long] [not-dev] integration.devops.lifecycle', () => {
-  let client: DataAPIClient;
-
-  before(async function () {
-    assertTestsEnabled(this, 'ADMIN', 'LONG', 'NOT-DEV', 'ASTRA');
-
-    [client] = await initTestObjects();
-
+describe('[admin] [long] [not-dev] [astra] integration.devops.lifecycle', ({ client }) => {
+  before(async () => {
     for (const db of await client.admin().listDatabases()) {
       if (db.info.name === TEMP_DB_NAME && db.status !== 'TERMINATING') {
         void client.admin().dropDatabase(db.id);

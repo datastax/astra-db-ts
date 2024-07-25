@@ -13,13 +13,12 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, CursorIsStartedError, DataAPIResponseError, FindCursor, SomeDoc } from '@/src/data-api';
-import { initTestObjects } from '@/tests/fixtures';
+import { CursorIsStartedError, DataAPIResponseError, FindCursor, SomeDoc } from '@/src/data-api';
 import { DataAPIHttpClient } from '@/src/api';
+import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 
-describe('integration.data-api.cursor', () => {
-  let collection: Collection;
+describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collection }) => {
   let httpClient: DataAPIHttpClient;
 
   const sortById = (a: SomeDoc, b: SomeDoc) => parseInt(a._id) - parseInt(b._id);
@@ -27,17 +26,12 @@ describe('integration.data-api.cursor', () => {
 
   const ageToString = (doc: SomeDoc) => ({ age: `${doc.age}` });
 
-  before(async function () {
-    [, , collection] = await initTestObjects();
+  before(async () => {
     httpClient = collection['_httpClient'];
   });
 
-  beforeEach(async function () {
-    await collection.deleteMany({});
-  });
-
-  describe('Cursor lifecycle manipulation', () => {
-    it('Closes cursor', async () => {
+  describe('cursor lifecycle manipulation', () => {
+    it('closes cursor', async () => {
       const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
       cursor.close();
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
@@ -47,7 +41,7 @@ describe('integration.data-api.cursor', () => {
       assert.deepStrictEqual(res, [], 'Cursor did not close');
     });
 
-    it('Clones cursor without sharing state', async () => {
+    it('clones cursor without sharing state', async () => {
       await collection.insertMany([{ _id: '0', age: '0' }, { _id: '1', age: '1' }, { _id: '2', age: '2' }]);
       const cursor = new FindCursor<{ age: number }>('default_keyspace', httpClient, {}, { projection: { _id: 0 } }).sort({ name: 1 }).map(ageToString);
       await cursor.hasNext();
@@ -274,7 +268,7 @@ describe('integration.data-api.cursor', () => {
     });
   });
 
-  describe('[Symbol.asyncIterator]() tests', () => {
+  describe('Symbol.asyncIterator() tests', () => {
     it('should iterate over all documents', async () => {
       const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
       await collection.insertMany(docs);

@@ -13,8 +13,34 @@
 // limitations under the License.
 /* eslint-disable prefer-const */
 
-import { initTestObjects, TEST_APPLICATION_URI } from '@/tests/fixtures';
+import {
+  DEFAULT_COLLECTION_NAME,
+  EPHEMERAL_COLLECTION_NAME,
+  initTestObjects,
+  OTHER_NAMESPACE,
+  TEST_APPLICATION_URI,
+} from '@/tests/fixtures';
 import { Context } from 'mocha';
+import { Collection, CreateCollectionOptions, Db, SomeDoc } from '@/src/data-api';
+import { Ref } from '@/src/common';
+
+export function createManagedCollection(db: Db, name: string, opts: CreateCollectionOptions<SomeDoc>) {
+  const collection: Ref<Collection> = { ref: null! };
+
+  before(async () => {
+    collection.ref = await db.createCollection(name, { checkExists: false, ...opts });
+  });
+
+  beforeEach(async () => {
+    await collection.ref.deleteMany({});
+  });
+
+  after(async () => {
+    await db.dropCollection(name);
+  });
+
+  return collection;
+}
 
 type TestFn = Mocha.Func | Mocha.AsyncFunc;
 
@@ -42,16 +68,28 @@ it = function (name: string, fn: TestFn) {
 
 type SuiteFn = (this: Mocha.Suite, fixtures: ReturnType<typeof initTestObjects>) => void;
 
+interface SuiteOptions {
+  truncateColls?: 'default' | 'both',
+  dropEphemeral?: boolean,
+}
+
 interface TaggableSuiteFunction {
   (name: string, fn: SuiteFn): Mocha.Suite;
-  (name: string): Mocha.Suite;
+  (name: string, options: SuiteOptions, fn: SuiteFn): Mocha.Suite;
 }
 
 export let describe: TaggableSuiteFunction;
 
-describe = function (name: string, fn: SuiteFn) {
-  const fixtures = initTestObjects();
+describe = function (name: string, optsOrFn: SuiteOptions | SuiteFn, maybeFn?: SuiteFn) {
+  const fn = (!maybeFn)
+    ? optsOrFn as SuiteFn
+    : maybeFn;
 
+  const opts = (maybeFn)
+    ? optsOrFn as SuiteOptions
+    : {};
+
+  const fixtures = initTestObjects();
   const tags = processTags(name);
 
   function modifiedFn(this: Mocha.Suite) {
@@ -59,11 +97,28 @@ describe = function (name: string, fn: SuiteFn) {
       assertTestsEnabled.call(this, tags);
     });
 
+    if (opts.dropEphemeral || opts.truncateColls) {
+      beforeEach(async () => {
+        if (opts.dropEphemeral) {
+          await fixtures.db.dropCollection(EPHEMERAL_COLLECTION_NAME);
+          await fixtures.db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
+        }
+
+        if (opts.truncateColls) {
+          await fixtures.collection.deleteMany({});
+        }
+
+        if (opts.truncateColls === 'both') {
+          await fixtures.db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE }).deleteMany();
+        }
+      });
+    }
+
     fn.call(this, fixtures);
   }
 
   return global.describe(name, modifiedFn);
-} as any;
+}
 
 function processTags(tags: string): string[] {
   const matches = tags.match( /\[(.*?)]/g);

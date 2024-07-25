@@ -15,7 +15,6 @@
 
 import assert from 'assert';
 import {
-  assertTestsEnabled,
   DEFAULT_COLLECTION_NAME,
   EPHEMERAL_COLLECTION_NAME,
   initTestObjects,
@@ -29,18 +28,8 @@ import { DataAPIClient } from '@/src/client';
 import { CollectionNotFoundError } from '@/src/data-api/errors';
 import { describe, it } from '@/tests/test-utils';
 
-describe('integration.data-api.db', ([, db]) => {
-  before(async function () {
-    await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
-    await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
-  });
-
-  describe('[long] createCollection + dropCollection', () => {
-    afterEach(async function () {
-      await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
-      await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
-    });
-
+describe('integration.data-api.db', ({ db }) => {
+  describe('[long] createCollection + dropCollection', { dropEphemeral: true }, () => {
     it('should create a collection', async () => {
       const res = await db.createCollection(EPHEMERAL_COLLECTION_NAME);
       assert.ok(res);
@@ -198,16 +187,7 @@ describe('integration.data-api.db', ([, db]) => {
     });
   });
 
-  describe('command', () => {
-    beforeEach(async () => {
-      await db.collection(DEFAULT_COLLECTION_NAME).deleteMany({});
-    });
-
-    afterEach(async function () {
-      await db.dropCollection(EPHEMERAL_COLLECTION_NAME);
-      await db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
-    });
-
+  describe('command', { dropEphemeral: true }, () => {
     it('should execute a db-level command', async () => {
       const resp = await db.command({ findCollections: {} });
       assert.strictEqual(resp.status?.data, undefined);
@@ -245,13 +225,13 @@ describe('integration.data-api.db', ([, db]) => {
     });
 
     it('should throw an error if no namespace set', async () => {
-      const [, db] = initTestObjects();
+      const { db } = initTestObjects();
       db.useNamespace(undefined!);
       await assert.rejects(() => db.command({ findEmbeddingProviders: {} }), { message: 'Db is missing a required namespace; be sure to set one w/ client.db(..., { namespace }), or db.useNamespace()' });
     });
 
     it('should not throw an error if no namespace set but namespace: null', async () => {
-      const [, db] = initTestObjects();
+      const { db } = initTestObjects();
       db.useNamespace(undefined!);
       await assert.doesNotReject(() => db.command({ findEmbeddingProviders: {} }, { namespace: null }));
     });

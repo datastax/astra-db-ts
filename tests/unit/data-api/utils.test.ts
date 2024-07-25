@@ -14,6 +14,7 @@
 
 import assert from 'assert';
 import { extractDbIdFromUrl, replaceAstraUrlIdAndRegion } from '@/src/data-api/utils';
+import { describe, it } from '@/tests/test-utils';
 
 describe('unit.data-api.utils', () => {
   describe('extractDbIdFromUri tests', () => {

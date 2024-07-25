@@ -15,6 +15,7 @@
 
 import assert from 'assert';
 import { TimeoutManager } from '@/src/api/timeout-managers';
+import { describe, it } from '@/tests/test-utils';
 
 describe('unit.api.timeout-manager', () => {
   it('works', async () => {

@@ -13,21 +13,12 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { BulkWriteError, Collection, DataAPIError } from '@/src/data-api';
-import { initCollectionWithFailingClient, initTestObjects } from '@/tests/fixtures';
+import { BulkWriteError, DataAPIError } from '@/src/data-api';
+import { initCollectionWithFailingClient } from '@/tests/fixtures';
+import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 
-describe('integration.data-api.collection.bulk-write', () => {
-  let collection: Collection;
-
-  before(async function () {
-    [, , collection] = await initTestObjects();
-  });
-
-  beforeEach(async () => {
-    await collection.deleteMany({});
-  });
-
+describe('integration.data-api.collection.bulk-write', { truncateColls: 'default' }, ({ collection }) => {
   it('bulkWrites ordered', async () => {
     const res = await collection.bulkWrite([
       { insertOne: { document: { name: 'John' } } },
@@ -176,7 +167,7 @@ describe('integration.data-api.collection.bulk-write', () => {
     }
   });
 
-  it('fails fast on hard errors ordered', async function () {
+  it('fails fast on hard errors ordered', async () => {
     const collection = await initCollectionWithFailingClient();
     try {
       await collection.bulkWrite([{ insertOne: { document: { _id: 'a' } } }], { ordered: true });
@@ -188,7 +179,7 @@ describe('integration.data-api.collection.bulk-write', () => {
     }
   });
 
-  it('fails fast on hard errors unordered', async function () {
+  it('fails fast on hard errors unordered', async () => {
     const collection = await initCollectionWithFailingClient();
     try {
       await collection.bulkWrite([{ insertOne: { document: { _id: 'a' } } }], { ordered: false });

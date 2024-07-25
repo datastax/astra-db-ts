@@ -13,31 +13,16 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import {
-  assertTestsEnabled, ENVIRONMENT,
-  initTestObjects,
-  OTHER_NAMESPACE,
-  TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
-} from '@/tests/fixtures';
+import { ENVIRONMENT, OTHER_NAMESPACE, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/fixtures';
 import { DataAPIClient } from '@/src/client';
-import { Db, ObjectId, UUID, VectorDoc } from '@/src/data-api';
-import assert from 'assert';
+import { ObjectId, UUID, VectorDoc } from '@/src/data-api';
 import { DEFAULT_NAMESPACE } from '@/src/api';
+import { describe, it } from '@/tests/test-utils';
+import assert from 'assert';
 
-describe('integration.misc.quickstart', () => {
-  let db: Db;
-
-  before(async function () {
-    [, db] = await initTestObjects();
-  });
-
+describe('integration.misc.quickstart', ({ db }) => {
   describe('[long] quickstart', () => {
-    before(function () {
-      assertTestsEnabled(this, 'LONG');
-    });
-
-    after(async function () {
+    after(async () => {
       await db.dropCollection('vector_5_collection');
     });
 
@@ -98,10 +83,6 @@ describe('integration.misc.quickstart', () => {
   });
 
   describe('[not-dev] [astra] admin-quickstart', () => {
-    before(function () {
-      assertTestsEnabled(this, 'NOT-DEV', 'ASTRA');
-    });
-
     it('works', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
       const admin = client.admin();
@@ -126,11 +107,7 @@ describe('integration.misc.quickstart', () => {
   });
 
   describe('[long] ids-quickstart', () => {
-    before(function () {
-      assertTestsEnabled(this, 'LONG');
-    });
-
-    after(async function () {
+    after(async () => {
       await db.dropCollection('my_collection');
     });
 

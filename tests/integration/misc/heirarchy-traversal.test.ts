@@ -13,33 +13,20 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { assertTestsEnabled, DEFAULT_COLLECTION_NAME, initTestObjects, TEST_APPLICATION_URI } from '@/tests/fixtures';
-import { DataAPIClient } from '@/src/client';
-import { Collection, Db } from '@/src/data-api';
+import { DEFAULT_COLLECTION_NAME, TEST_APPLICATION_URI } from '@/tests/fixtures';
+import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 
-describe('[astra] integration.misc.hierarchy-traversal', () => {
-  let client: DataAPIClient;
-  let db: Db;
-  let collection: Collection;
-
+describe('[astra] integration.misc.hierarchy-traversal', { truncateColls: 'default' }, ({ client, db }) => {
   const endpoint = TEST_APPLICATION_URI;
   let id: string
   let region: string;
 
-  before(async function () {
-    assertTestsEnabled(this, 'ASTRA');
-
-    [client, db, collection] = await initTestObjects();
-
+  before(async () => {
     const idAndRegion = endpoint.split('.')[0].split('https://')[1].split('-');
 
     id = idAndRegion.slice(0, 5).join('-');
     region = idAndRegion.slice(5).join('-');
-  });
-
-  beforeEach(async function () {
-    await collection.deleteMany({});
   });
 
   describe('db->admin->db', () => {
@@ -71,10 +58,6 @@ describe('[astra] integration.misc.hierarchy-traversal', () => {
   });
 
   describe('[not-dev] client->admin->dbAdmin <-> client->db->admin', () => {
-    before(function () {
-      assertTestsEnabled(this, 'NOT-DEV')
-    });
-
     it('is essentially a noop', () => {
       const dbAdmin1 = client.admin().dbAdmin(endpoint);
       const dbAdmin2 = client.db(endpoint).admin();
@@ -111,10 +94,6 @@ describe('[astra] integration.misc.hierarchy-traversal', () => {
   });
 
   describe('[not-dev] client->admin->dbAdmin->db <-> client->db->admin->db', () => {
-    before(function () {
-      assertTestsEnabled(this, 'NOT-DEV')
-    });
-
     it('is essentially a noop', async () => {
       const db1 = client.admin().dbAdmin(endpoint).db();
       const db2 = client.db(endpoint).admin().db();

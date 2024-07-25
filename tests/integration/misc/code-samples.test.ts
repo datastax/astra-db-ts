@@ -15,29 +15,14 @@
 
 import { DataAPIClient } from '@/src/client';
 import { DEFAULT_NAMESPACE } from '@/src/api';
-import {
-  DEFAULT_COLLECTION_NAME,
-  ENVIRONMENT,
-  initTestObjects,
-  TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
-} from '@/tests/fixtures';
+import { DEFAULT_COLLECTION_NAME, ENVIRONMENT, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/fixtures';
 import assert from 'assert';
-import { Collection, ObjectId, UUID } from '@/src/data-api';
+import { ObjectId, UUID } from '@/src/data-api';
+import { describe, it } from '@/tests/test-utils';
 
-describe('integration.misc.code-samples', () => {
+describe('integration.misc.code-samples', { truncateColls: 'default' }, () => {
   const token = TEST_APPLICATION_TOKEN;
   const endpoint = TEST_APPLICATION_URI;
-
-  let collection: Collection;
-
-  before(async function () {
-    [, , collection] = await initTestObjects();
-  });
-
-  beforeEach(async function () {
-    await collection.deleteMany({});
-  });
 
   describe('documents', () => {
     it('works for dates', async () => {

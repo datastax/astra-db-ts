@@ -13,21 +13,11 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, TooManyDocumentsToCountError } from '@/src/data-api';
-import { initTestObjects } from '@/tests/fixtures';
+import { TooManyDocumentsToCountError } from '@/src/data-api';
+import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 
-describe('integration.data-api.collection.count-documents', () => {
-  let collection: Collection;
-
-  before(async function () {
-    [, , collection] = await initTestObjects();
-  });
-
-  beforeEach(async () => {
-    await collection.deleteMany({});
-  });
-
+describe('integration.data-api.collection.count-documents', { truncateColls: 'default' }, ({ collection }) => {
   it('works', async () => {
     await collection.insertMany([
       { username: 'a' },

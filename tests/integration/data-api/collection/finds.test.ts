@@ -13,28 +13,17 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection } from '@/src/data-api';
 import {
   createSampleDoc2WithMultiLevel,
   createSampleDoc3WithMultiLevel,
   createSampleDocWithMultiLevel,
-  initTestObjects
 } from '@/tests/fixtures';
+import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 
 // I was going to go through split this up but yeah... no
 // Don't want to spend too much time sifting through a thousand lines of intertwined tests
-describe('integration.data-api.collection.finds', () => {
-  let collection: Collection;
-
-  before(async function () {
-    [, , collection] = await initTestObjects();
-  });
-
-  beforeEach(async () => {
-    await collection.deleteMany({});
-  });
-
+describe('integration.data-api.collection.finds', { truncateColls: 'default' }, ({ collection }) => {
   it('should find & findOne document', async () => {
     const insertDocResp = await collection.insertOne(createSampleDocWithMultiLevel());
     const idToCheck = insertDocResp.insertedId;

@@ -13,8 +13,9 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import assert from 'assert';
 import { UsernamePasswordTokenProvider, StaticTokenProvider } from '@/src/common';
+import { describe, it } from '@/tests/test-utils';
+import assert from 'assert';
 
 describe('unit.common.token-providers', () => {
   const anyGlobalThis = globalThis as any;
@@ -22,14 +23,14 @@ describe('unit.common.token-providers', () => {
   describe('StaticTokenProvider', () => {
     it('should provide the token it was given', async () => {
       const tp = new StaticTokenProvider('token');
-      assert.strictEqual(await tp.getToken(), 'token');
+      assert.strictEqual(tp.getToken(), 'token');
     });
   });
 
   describe('UsernamePasswordTokenProvider', () => {
     it('should provide the properly encoded cassandra token in node', async () => {
       const tp = new UsernamePasswordTokenProvider('username', 'password');
-      assert.strictEqual(await tp.getToken(), 'Cassandra:dXNlcm5hbWU=:cGFzc3dvcmQ=');
+      assert.strictEqual(tp.getToken(), 'Cassandra:dXNlcm5hbWU=:cGFzc3dvcmQ=');
     });
 
     it('should provide the properly encoded cassandra token in the browser', async () => {
@@ -38,7 +39,7 @@ describe('unit.common.token-providers', () => {
       anyGlobalThis.window = { btoa: anyGlobalThis.btoa };
       anyGlobalThis.Buffer = null!;
       const tp = new UsernamePasswordTokenProvider('username', 'password');
-      assert.strictEqual(await tp.getToken(), 'Cassandra:dXNlcm5hbWU=:cGFzc3dvcmQ=');
+      assert.strictEqual(tp.getToken(), 'Cassandra:dXNlcm5hbWU=:cGFzc3dvcmQ=');
 
       [anyGlobalThis.window, anyGlobalThis.Buffer] = [window, buffer];
     });

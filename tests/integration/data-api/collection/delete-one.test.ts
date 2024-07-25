@@ -12,21 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection } from '@/src/data-api';
-import { createSampleDocWithMultiLevel, initTestObjects } from '@/tests/fixtures';
+import { createSampleDocWithMultiLevel } from '@/tests/fixtures';
+import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 
-describe('integration.data-api.collection.delete-one', () => {
-  let collection: Collection;
-
-  before(async function () {
-    [, , collection] = await initTestObjects();
-  });
-
-  beforeEach(async () => {
-    await collection.deleteMany({});
-  });
-
+describe('integration.data-api.collection.delete-one', { truncateColls: 'default' }, ({ collection }) => {
   it('should deleteOne document', async () => {
     const res = await collection.insertOne(createSampleDocWithMultiLevel());
     const docId = res.insertedId;

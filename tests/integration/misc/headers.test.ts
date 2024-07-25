@@ -14,14 +14,7 @@
 // noinspection DuplicatedCode
 
 import { DataAPIClient } from '@/src/client';
-import {
-  assertTestsEnabled,
-  DEFAULT_COLLECTION_NAME,
-  ENVIRONMENT,
-  initTestObjects,
-  TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
-} from '@/tests/fixtures';
+import { DEFAULT_COLLECTION_NAME, ENVIRONMENT, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/fixtures';
 import {
   DEFAULT_DATA_API_AUTH_HEADER,
   DEFAULT_DEVOPS_API_AUTH_HEADER,
@@ -30,9 +23,10 @@ import {
 } from '@/src/api';
 import { nullish, StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvider } from '@/src/common';
 import assert from 'assert';
-import { Collection, EmbeddingHeadersProvider } from '@/src/data-api';
+import { EmbeddingHeadersProvider } from '@/src/data-api';
+import { describe, it } from '@/tests/test-utils';
 
-describe('integration.misc.headers', () => {
+describe('integration.misc.headers', { truncateColls: 'default' }, () => {
   const fetchNative = new FetchNative();
 
   let latestHeaders = {} as Record<string, string>;
@@ -85,16 +79,6 @@ describe('integration.misc.headers', () => {
     }
   }
 
-  let collection: Collection;
-
-  before(async function () {
-    [, , collection] = await initTestObjects();
-  });
-
-  beforeEach(async function () {
-    await collection.deleteMany({});
-  });
-
   describe('token providers', () => {
     it('should call the provider on a per-call basis to the Data API', async () => {
       const client = mkClient();
@@ -120,9 +104,7 @@ describe('integration.misc.headers', () => {
       assert.strictEqual(latestHeaders[DEFAULT_DATA_API_AUTH_HEADER], TEST_APPLICATION_TOKEN);
     });
 
-    it('should call the provider on a per-call basis to the DevOps API', async function () {
-      assertTestsEnabled(this, 'ASTRA');
-
+    it('[astra] should call the provider on a per-call basis to the DevOps API', async () => {
       const client = mkClient();
       const db = client.db(TEST_APPLICATION_URI, { token: new CyclingTokenProvider() });
       const dbAdmin = db.admin({ environment: ENVIRONMENT as 'astra' });
@@ -137,9 +119,7 @@ describe('integration.misc.headers', () => {
       assert.strictEqual(latestHeaders[DEFAULT_DEVOPS_API_AUTH_HEADER], 'Bearer ages');
     });
 
-    it('[prod] should properly set/override tokens throughout the hierarchy', async function () {
-      assertTestsEnabled(this, 'NOT-DEV');
-
+    it('[not-dev] should properly set/override tokens throughout the hierarchy', async () => {
       const client = mkClient(TEST_APPLICATION_TOKEN);
 
       const db1 = client.db(TEST_APPLICATION_URI);

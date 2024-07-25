@@ -13,21 +13,12 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, DataAPIError, UpdateManyError } from '@/src/data-api';
-import { initCollectionWithFailingClient, initTestObjects, sampleUsersList } from '@/tests/fixtures';
+import { DataAPIError, UpdateManyError } from '@/src/data-api';
+import { initCollectionWithFailingClient, sampleUsersList } from '@/tests/fixtures';
+import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 
-describe('integration.data-api.collection.update-many', () => {
-  let collection: Collection;
-
-  before(async function () {
-    [, , collection] = await initTestObjects();
-  });
-
-  beforeEach(async () => {
-    await collection.deleteMany({});
-  });
-
+describe('integration.data-api.collection.update-many', { truncateColls: 'default' }, ({ collection }) => {
   it('should updateMany documents with ids', async () => {
     const sampleDocsWithIdList = structuredClone(sampleUsersList);
     sampleDocsWithIdList[0]._id = 'docml1';
@@ -878,7 +869,7 @@ describe('integration.data-api.collection.update-many', () => {
     }
   });
 
-  it('fails fast on hard errors', async function () {
+  it('fails fast on hard errors', async () => {
     const collection = await initCollectionWithFailingClient();
     try {
       await collection.updateMany({}, {});

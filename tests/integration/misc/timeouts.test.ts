@@ -13,28 +13,15 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import {
-  assertTestsEnabled,
-  DEFAULT_COLLECTION_NAME,
-  ENVIRONMENT,
-  initTestObjects,
-  TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
-} from '@/tests/fixtures';
-import { Collection, DataAPITimeoutError, Db } from '@/src/data-api';
-import assert from 'assert';
+import { DEFAULT_COLLECTION_NAME, ENVIRONMENT, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/fixtures';
+import { DataAPITimeoutError } from '@/src/data-api';
 import { DEFAULT_NAMESPACE, HttpMethods } from '@/src/api';
 import { DevOpsAPITimeoutError } from '@/src/devops';
 import { DataAPIClient } from '@/src/client';
+import { describe, it } from '@/tests/test-utils';
+import assert from 'assert';
 
-describe('integration.misc.timeouts', () => {
-  let db: Db;
-  let collection: Collection;
-
-  before(async function () {
-    [, db, collection] = await initTestObjects();
-  });
-
+describe('integration.misc.timeouts', ({ db, collection }) => {
   describe('in data-api', () => {
     it('should timeout @ the http-client level', async () => {
       const httpClient = collection['_httpClient'];
@@ -76,10 +63,6 @@ describe('integration.misc.timeouts', () => {
   });
 
   describe('[astra] in devops', () => {
-    before(async function () {
-      assertTestsEnabled(this, 'ASTRA');
-    });
-
     it('should timeout @ the http-client level', async () => {
       const httpClient = db.admin()['_httpClient'];
 

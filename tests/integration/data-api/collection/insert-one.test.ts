@@ -13,21 +13,11 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, DataAPIResponseError, ObjectId, UUID } from '@/src/data-api';
-import { initTestObjects } from '@/tests/fixtures';
+import { DataAPIResponseError, ObjectId, UUID } from '@/src/data-api';
+import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 
-describe('integration.data-api.collection.insert-one', () => {
-  let collection: Collection;
-
-  before(async function () {
-    [, , collection] = await initTestObjects();
-  });
-
-  beforeEach(async () => {
-    await collection.deleteMany({});
-  });
-
+describe('integration.data-api.collection.insert-one', { truncateColls: 'default' }, ({ collection }) => {
   it('should insertOne document', async () => {
     const res = await collection.insertOne({ name: 'Lzzy' });
     assert.ok(res);

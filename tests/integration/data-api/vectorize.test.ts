@@ -19,13 +19,14 @@ import {
   EmbeddingAPIKeyHeaderProvider,
   EmbeddingHeadersProvider,
 } from '@/src/data-api';
-import { assertTestsEnabled, ENVIRONMENT, initTestObjects } from '@/tests/fixtures';
+import { ENVIRONMENT } from '@/tests/fixtures';
 import * as fs from 'fs';
 import { after } from 'mocha';
 import {
   EmbeddingProviderInfo,
   EmbeddingProviderModelInfo,
 } from '@/src/devops/types/db-admin/find-embedding-providers';
+import { describe, it } from '@/tests/test-utils';
 
 type VectorizeTestSpec = {
   [providerName: string]: {
@@ -44,14 +45,8 @@ type VectorizeTestSpec = {
   }
 }
 
-describe('integration.data-api.vectorize', () => {
-  let db: Db;
-
-  before(async function () {
-    assertTestsEnabled(this, 'VECTORIZE', 'LONG');
-
-    [, db] = await initTestObjects();
-
+describe('[vectorize] [long] integration.data-api.vectorize', ({ db }) => {
+  before(async () => {
     const tests: VectorizeTest[] = await initVectorTests(db).catch((e: unknown) => {
       console.error('Failed to initialize vectorize tests', e);
       return [];
@@ -223,9 +218,7 @@ const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: Embedding
 type VectorizeTest = DimensionBranch;
 
 const createVectorizeProvidersTest = (db: Db, test: VectorizeTest, name: string) => {
-  it(`[vectorize] [long] has a working lifecycle (${test.testName})`, async function () {
-    assertTestsEnabled(this, 'VECTORIZE', 'LONG');
-
+  it(`[vectorize] [long] has a working lifecycle (${test.testName})`, async () => {
     const collection = await db.createCollection(name, {
       vector: {
         dimension: test.dimension,
@@ -301,8 +294,6 @@ const createVectorizeParamTests = function (db: Db, test: VectorizeTest, name: s
     });
 
     before(async function () {
-      assertTestsEnabled(this, 'VECTORIZE');
-
       if (!await db.listCollections({ nameOnly: true }).then(cs => cs.some((c) => c === name))) {
         this.skip();
       }
