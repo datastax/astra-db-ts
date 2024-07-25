@@ -17,7 +17,7 @@ import { DEFAULT_COLLECTION_NAME, TEST_APPLICATION_URI } from '@/tests/fixtures'
 import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 
-describe('[astra] integration.misc.hierarchy-traversal', { truncateColls: 'default' }, ({ client, db }) => {
+describe('[ASTRA] integration.misc.hierarchy-traversal', { truncateColls: 'default' }, ({ client, db }) => {
   const endpoint = TEST_APPLICATION_URI;
   let id: string
   let region: string;
@@ -57,7 +57,7 @@ describe('[astra] integration.misc.hierarchy-traversal', { truncateColls: 'defau
     });
   });
 
-  describe('[not-dev] client->admin->dbAdmin <-> client->db->admin', () => {
+  describe('[NOT-DEV] client->admin->dbAdmin <-> client->db->admin', () => {
     it('is essentially a noop', () => {
       const dbAdmin1 = client.admin().dbAdmin(endpoint);
       const dbAdmin2 = client.db(endpoint).admin();
@@ -93,7 +93,7 @@ describe('[astra] integration.misc.hierarchy-traversal', { truncateColls: 'defau
     });
   });
 
-  describe('[not-dev] client->admin->dbAdmin->db <-> client->db->admin->db', () => {
+  describe('[NOT-DEV] client->admin->dbAdmin->db <-> client->db->admin->db', () => {
     it('is essentially a noop', async () => {
       const db1 = client.admin().dbAdmin(endpoint).db();
       const db2 = client.db(endpoint).admin().db();

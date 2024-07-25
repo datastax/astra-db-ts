@@ -36,7 +36,7 @@ describe('integration.client.data-api-client', () => {
       assert.ok(Array.isArray(collections));
     });
 
-    it('[not-dev] [astra] properly connects to a db by id and region', async () => {
+    it('[NOT-DEV] [ASTRA] properly connects to a db by id and region', async () => {
       const idAndRegion = TEST_APPLICATION_URI.split('.')[0].split('https://')[1].split('-');
       const id = idAndRegion.slice(0, 5).join('-');
       const region = idAndRegion.slice(5).join('-');

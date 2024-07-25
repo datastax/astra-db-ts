@@ -62,7 +62,7 @@ describe('integration.misc.timeouts', ({ db, collection }) => {
     });
   });
 
-  describe('[astra] in devops', () => {
+  describe('[ASTRA] in devops', () => {
     it('should timeout @ the http-client level', async () => {
       const httpClient = db.admin()['_httpClient'];
 

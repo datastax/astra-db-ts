@@ -29,7 +29,7 @@ import { CollectionNotFoundError } from '@/src/data-api/errors';
 import { describe, it } from '@/tests/test-utils';
 
 describe('integration.data-api.db', ({ db }) => {
-  describe('[long] createCollection + dropCollection', { dropEphemeral: true }, () => {
+  describe('[LONG] createCollection + dropCollection', { dropEphemeral: true }, () => {
     it('should create a collection', async () => {
       const res = await db.createCollection(EPHEMERAL_COLLECTION_NAME);
       assert.ok(res);
@@ -127,7 +127,7 @@ describe('integration.data-api.db', ({ db }) => {
       assert.ok(collection);
     });
 
-    it('[astra] should work even when instantiated weirdly', async () => {
+    it('[ASTRA] should work even when instantiated weirdly', async () => {
       const db = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { namespace: '123123123', dataApiPath: 'King, by Eluveitie' } })
         .admin({ adminToken: 'dummy-token' })
         .dbAdmin(TEST_APPLICATION_URI, { dataApiPath: DEFAULT_DATA_API_PATHS['astra'], namespace: DEFAULT_NAMESPACE })
@@ -209,7 +209,7 @@ describe('integration.data-api.db', ({ db }) => {
       assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: 1 } }, errors: undefined });
     });
 
-    it('[long] should execute a collection-level command in different namespace', async () => {
+    it('[LONG] should execute a collection-level command in different namespace', async () => {
       const collection = await db.createCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
       await collection.insertOne({ _id: 1 });
 

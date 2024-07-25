@@ -45,35 +45,31 @@ type VectorizeTestSpec = {
   }
 }
 
-describe('[vectorize] [long] integration.data-api.vectorize', ({ db }) => {
+describe('[VECTORIZE] [LONG] integration.data-api.vectorize', ({ db }) => {
   before(async () => {
     const tests: VectorizeTest[] = await initVectorTests(db).catch((e: unknown) => {
       console.error('Failed to initialize vectorize tests', e);
       return [];
     });
 
-    describe('[vectorize] [long] generated tests', () => {
-      const names = tests.map((test) => Buffer.from(test.testName).toString('base64').replace(/\W/g, '').slice(0, 48));
+    const names = tests.map((test) => Buffer.from(test.testName).toString('base64').replace(/\W/g, '').slice(0, 48));
 
-      before(async () => {
-        for (const name of names) {
-          try { await db.dropCollection(name); } catch (_) { /* empty */ }
+    for (const name of names) {
+      try { await db.dropCollection(name); } catch (_) { /* empty */ }
+    }
+
+    tests.forEach((test, i) => {
+      const name = names[i];
+
+      describe('[VECTORIZE] generated test', () => {
+        createVectorizeProvidersTest(db, test, name);
+
+        if (i === 0) {
+          createVectorizeParamTests(db, test, name);
         }
-      });
 
-      tests.forEach((test, i) => {
-        const name = names[i];
-
-        describe('generated test', () => {
-          createVectorizeProvidersTest(db, test, name);
-
-          if (i === 0) {
-            createVectorizeParamTests(db, test, name);
-          }
-
-          after(async () => {
-            await db.dropCollection(name);
-          });
+        after(async () => {
+          await db.dropCollection(name);
         });
       });
     });
@@ -91,12 +87,16 @@ const initVectorTests = async (db: Db) => {
       : db.admin({ environment: ENVIRONMENT })
   ).findEmbeddingProviders();
 
-  const whitelist = RegExp(process.env.VECTORIZE_WHITELIST ?? '.*');
+  const whitelist = process.env.VECTORIZE_WHITELIST ?? '.*';
+
+  const test = whitelist.startsWith('$limit:')
+    ? (_: string, i: number) => i < +whitelist.split('$limit:')[1]
+    : (name: string) => RegExp(whitelist).test(name);
 
   return Object.entries(embeddingProviders)
     .flatMap(branchOnModel(spec))
-    .filter(t => {
-      return whitelist.test(t.testName);
+    .filter((t, i) => {
+      return test(t.testName, i);
     });
 };
 
@@ -218,7 +218,7 @@ const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: Embedding
 type VectorizeTest = DimensionBranch;
 
 const createVectorizeProvidersTest = (db: Db, test: VectorizeTest, name: string) => {
-  it(`[vectorize] [long] has a working lifecycle (${test.testName})`, async () => {
+  it(`has a working lifecycle (${test.testName})`, async () => {
     const collection = await db.createCollection(name, {
       vector: {
         dimension: test.dimension,
@@ -288,7 +288,7 @@ const createVectorizeProvidersTest = (db: Db, test: VectorizeTest, name: string)
 };
 
 const createVectorizeParamTests = function (db: Db, test: VectorizeTest, name: string) {
-  describe('[vectorize] $vectorize/vectorize params', () => {
+  describe('$vectorize/vectorize params', () => {
     const collection = db.collection(name, {
       embeddingApiKey: test.header,
     });

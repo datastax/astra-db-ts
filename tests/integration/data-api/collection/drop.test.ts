@@ -17,7 +17,7 @@ import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 
 describe('integration.data-api.collection.drop', ({ db }) => {
-  it('[long] drops itself', async () => {
+  it('[LONG] drops itself', async () => {
     const collection = await db.createCollection(EPHEMERAL_COLLECTION_NAME);
 
     const res = await collection.drop();

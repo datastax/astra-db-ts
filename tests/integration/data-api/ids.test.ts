@@ -37,7 +37,7 @@ describe('integration.data-api.ids', ({ db }) => {
     });
   });
 
-  describe('[long] uuid', () => {
+  describe('[LONG] uuid', () => {
     const name = `${EPHEMERAL_COLLECTION_NAME}_uuid`;
     const collection = createManagedCollection(db, name, { defaultId: { type: 'uuid' } });
 
@@ -60,7 +60,7 @@ describe('integration.data-api.ids', ({ db }) => {
     });
   });
 
-  describe('[long] uuidv6', () => {
+  describe('[LONG] uuidv6', () => {
     const name = `${EPHEMERAL_COLLECTION_NAME}_uuid_v6`;
     const collection = createManagedCollection(db, name, { defaultId: { type: 'uuidv6' } });
 
@@ -83,7 +83,7 @@ describe('integration.data-api.ids', ({ db }) => {
     });
   });
 
-  describe('[long] uuidv7', () => {
+  describe('[LONG] uuidv7', () => {
     const name = `${EPHEMERAL_COLLECTION_NAME}_uuid_v7`;
     const collection = createManagedCollection(db, name, { defaultId: { type: 'uuidv7' } });
 
@@ -106,7 +106,7 @@ describe('integration.data-api.ids', ({ db }) => {
     });
   });
 
-  describe('[long] objectId', () => {
+  describe('[LONG] objectId', () => {
     const name = `${EPHEMERAL_COLLECTION_NAME}__objectId`;
     const collection = createManagedCollection(db, name, { defaultId: { type: 'objectId' } });
 

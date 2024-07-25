@@ -21,7 +21,7 @@ import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 
 describe('integration.misc.quickstart', ({ db }) => {
-  describe('[long] quickstart', () => {
+  describe('[LONG] quickstart', () => {
     after(async () => {
       await db.dropCollection('vector_5_collection');
     });
@@ -82,7 +82,7 @@ describe('integration.misc.quickstart', ({ db }) => {
     });
   });
 
-  describe('[not-dev] [astra] admin-quickstart', () => {
+  describe('[NOT-DEV] [ASTRA] admin-quickstart', () => {
     it('works', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
       const admin = client.admin();
@@ -106,7 +106,7 @@ describe('integration.misc.quickstart', ({ db }) => {
     });
   });
 
-  describe('[long] ids-quickstart', () => {
+  describe('[LONG] ids-quickstart', () => {
     after(async () => {
       await db.dropCollection('my_collection');
     });

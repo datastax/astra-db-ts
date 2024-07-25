@@ -54,16 +54,12 @@ export let it: TaggableTestFunction;
 it = function (name: string, fn: TestFn) {
   const tags = processTags(name);
 
-  function modifiedFn(this: Mocha.Context, done?: Mocha.Done) {
+  function modifiedFn(this: Mocha.Context) {
     assertTestsEnabled.call(this, tags);
-    fn.call(this, done!);
+    return fn.call(this, null!);
   }
 
-  const wrappedModifiedFn = (fn.length === 1)
-    ? function (this: Mocha.Context, done?: Mocha.Done) { return modifiedFn.call(this, done) }
-    : function (this: Mocha.Context) { return modifiedFn.call(this) }
-
-  return global.it(name, wrappedModifiedFn);
+  return global.it(name, modifiedFn);
 }
 
 type SuiteFn = (this: Mocha.Suite, fixtures: ReturnType<typeof initTestObjects>) => void;
@@ -114,14 +110,14 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteFn, maybeFn?: S
       });
     }
 
-    fn.call(this, fixtures);
+    return fn.call(this, fixtures);
   }
 
   return global.describe(name, modifiedFn);
 }
 
 function processTags(tags: string): string[] {
-  const matches = tags.match( /\[(.*?)]/g);
+  const matches = tags.match(/\[(.*?)]/g);
 
   if (!matches) {
     return [];
@@ -132,32 +128,32 @@ function processTags(tags: string): string[] {
 
 function assertTestsEnabled(this: Context, tags: string[]) {
   tags.forEach((tag) => {
-    if (!['vectorize', 'long', 'admin', 'dev', 'not-dev', 'astra'].includes(tag)) {
+    if (!['VECTORIZE', 'LONG', 'ADMIN', 'DEV', 'NOT-DEV', 'ASTRA'].includes(tag)) {
       throw new Error(`Unknown test tag, '${tag}'`)
     }
   });
 
-  if (tags.includes('vectorize') && !process.env.ASTRA_RUN_VECTORIZE_TESTS) {
+  if (tags.includes('VECTORIZE') && !process.env.ASTRA_RUN_VECTORIZE_TESTS) {
     this.skip();
   }
 
-  if (tags.includes('long') && !process.env.ASTRA_RUN_LONG_TESTS) {
+  if (tags.includes('LONG') && !process.env.ASTRA_RUN_LONG_TESTS) {
     this.skip();
   }
 
-  if (tags.includes('admin') && !process.env.ASTRA_RUN_ADMIN_TESTS) {
+  if (tags.includes('ADMIN') && !process.env.ASTRA_RUN_ADMIN_TESTS) {
     this.skip();
   }
 
-  if (tags.includes('dev') && !TEST_APPLICATION_URI.includes('apps.astra-dev.datastax.com')) {
+  if (tags.includes('DEV') && !TEST_APPLICATION_URI.includes('apps.astra-dev.datastax.com')) {
     this.skip();
   }
 
-  if (tags.includes('not-dev') && TEST_APPLICATION_URI.includes('apps.astra-dev.datastax.com')) {
+  if (tags.includes('NOT-DEV') && TEST_APPLICATION_URI.includes('apps.astra-dev.datastax.com')) {
     this.skip();
   }
 
-  if (tags.includes('astra') && !TEST_APPLICATION_URI.includes('datastax.com')) {
+  if (tags.includes('ASTRA') && !TEST_APPLICATION_URI.includes('datastax.com')) {
     this.skip();
   }
 }

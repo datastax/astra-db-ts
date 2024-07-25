@@ -114,4 +114,5 @@ if [ -n "$whitelist" ]; then
 fi
 
 # Run it
+echo "$cmd_to_run"
 eval "$cmd_to_run"

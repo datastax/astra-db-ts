@@ -104,7 +104,7 @@ describe('integration.misc.headers', { truncateColls: 'default' }, () => {
       assert.strictEqual(latestHeaders[DEFAULT_DATA_API_AUTH_HEADER], TEST_APPLICATION_TOKEN);
     });
 
-    it('[astra] should call the provider on a per-call basis to the DevOps API', async () => {
+    it('[ASTRA] should call the provider on a per-call basis to the DevOps API', async () => {
       const client = mkClient();
       const db = client.db(TEST_APPLICATION_URI, { token: new CyclingTokenProvider() });
       const dbAdmin = db.admin({ environment: ENVIRONMENT as 'astra' });
@@ -119,7 +119,7 @@ describe('integration.misc.headers', { truncateColls: 'default' }, () => {
       assert.strictEqual(latestHeaders[DEFAULT_DEVOPS_API_AUTH_HEADER], 'Bearer ages');
     });
 
-    it('[not-dev] should properly set/override tokens throughout the hierarchy', async () => {
+    it('[NOT-DEV] should properly set/override tokens throughout the hierarchy', async () => {
       const client = mkClient(TEST_APPLICATION_TOKEN);
 
       const db1 = client.db(TEST_APPLICATION_URI);
