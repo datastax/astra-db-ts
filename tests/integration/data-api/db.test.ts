@@ -210,7 +210,7 @@ describe('integration.data-api.db', ({ db }) => {
     it('should execute a collection-level command', async () => {
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
       await collection.insertOne({ _id: 1 });
-      const resp = await db.command({ findOne: { _id: 1 } }, { collection: DEFAULT_COLLECTION_NAME });
+      const resp = await db.command({ findOne: { filter: { _id: 1 } } }, { collection: DEFAULT_COLLECTION_NAME });
       assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: 1 } }, errors: undefined });
     });
 
@@ -218,7 +218,7 @@ describe('integration.data-api.db', ({ db }) => {
       const collection = await db.createCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
       await collection.insertOne({ _id: 1 });
 
-      const resp = await db.command({ findOne: { _id: 1 } }, { collection: EPHEMERAL_COLLECTION_NAME, namespace: OTHER_NAMESPACE });
+      const resp = await db.command({ findOne: { filter: { _id: 1 } } }, { collection: EPHEMERAL_COLLECTION_NAME, namespace: OTHER_NAMESPACE });
       assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: 1 } }, errors: undefined });
 
       try {
