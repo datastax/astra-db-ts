@@ -13,14 +13,8 @@
 // limitations under the License.
 /* eslint-disable prefer-const */
 
-import {
-  initTestObjects,
-
-
-} from '@/tests/fixtures';
+import { initTestObjects } from '@/tests/fixtures';
 import { Context } from 'mocha';
-import { Collection, CreateCollectionOptions, Db, SomeDoc } from '@/src/data-api';
-import { Ref } from '@/src/common';
 import {
   DEFAULT_COLLECTION_NAME,
   EPHEMERAL_COLLECTION_NAME,
@@ -28,22 +22,67 @@ import {
   TEST_APPLICATION_URI,
 } from '@/tests/config';
 
-export function createManagedCollection(db: Db, name: string, opts: CreateCollectionOptions<SomeDoc>) {
-  const collection: Ref<Collection> = { ref: null! };
+let inParallelBlock: boolean = false;
+let globalTests: { name: string, fn: ParallelTest; }[] = [];
 
-  before(async () => {
-    collection.ref = await db.createCollection(name, { checkExists: false, ...opts });
-  });
+type ParallelBlock = (this: Mocha.Suite, fixtures: ReturnType<typeof initTestObjects>) => void;
+type ParallelTest = () => Promise<void>;
 
-  beforeEach(async () => {
-    await collection.ref.deleteMany({});
-  });
+interface ParallelizedTestsBlock {
+  (fn: ParallelBlock): void;
+  (name: string, fn: ParallelBlock): void;
+}
 
-  after(async () => {
-    await db.dropCollection(name);
-  });
+export let parallel: ParallelizedTestsBlock;
 
-  return collection;
+parallel = function (fnOrName: string | ParallelBlock, maybeFn?: ParallelBlock) {
+  const fn = (!maybeFn)
+    ? fnOrName as ParallelBlock
+    : maybeFn;
+
+  const name = maybeFn
+    ? `(parallel) ${fnOrName}`
+    : 'parallelized block';
+
+  function modifiedFn(this: Mocha.Suite, fixtures: ReturnType<typeof initTestObjects>) {
+    if (inParallelBlock) {
+      throw new Error('Can\'t nest parallel blocks');
+    }
+
+    inParallelBlock = true;
+    fn.call(this, fixtures);
+    inParallelBlock = false;
+
+    let tests = globalTests;
+    let results: { ms: number, error?: Error }[];
+
+    before(async () => {
+      const promises = tests.map(async (test) => {
+        const startTime = performance.now();
+
+        return {
+          error: await test.fn().catch(e => e),
+          ms: performance.now() - startTime,
+        };
+      });
+
+      results = await Promise.all(promises);
+    });
+
+    tests.forEach((t, i) => {
+      it(t.name, function () {
+        this.test!.title = `${t.name} (${~~results[i].ms}ms)`;
+
+        if (results[i] instanceof Error) {
+          throw results[i];
+        }
+      });
+    });
+
+    globalTests = [];
+  }
+
+  return describe(name, modifiedFn);
 }
 
 type TestFn = Mocha.Func | Mocha.AsyncFunc;
@@ -63,10 +102,15 @@ it = function (name: string, fn: TestFn) {
     return fn.call(this, null!);
   }
 
+  if (inParallelBlock) {
+    globalTests.push({ name, fn: <any>modifiedFn });
+    return null!;
+  }
+
   return global.it(name, modifiedFn);
 }
 
-type SuiteFn = (this: Mocha.Suite, fixtures: ReturnType<typeof initTestObjects>) => void;
+type SuiteBlock = (this: Mocha.Suite, fixtures: ReturnType<typeof initTestObjects>) => void;
 
 interface SuiteOptions {
   truncateColls?: 'default' | 'both',
@@ -74,15 +118,19 @@ interface SuiteOptions {
 }
 
 interface TaggableSuiteFunction {
-  (name: string, fn: SuiteFn): Mocha.Suite;
-  (name: string, options: SuiteOptions, fn: SuiteFn): Mocha.Suite;
+  (name: string, fn: SuiteBlock): Mocha.Suite;
+  (name: string, options: SuiteOptions, fn: SuiteBlock): Mocha.Suite;
 }
 
 export let describe: TaggableSuiteFunction;
 
-describe = function (name: string, optsOrFn: SuiteOptions | SuiteFn, maybeFn?: SuiteFn) {
+describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?: SuiteBlock) {
+  if (inParallelBlock) {
+    throw new Error('Can\'t use `describe` in parallel blocks');
+  }
+
   const fn = (!maybeFn)
-    ? optsOrFn as SuiteFn
+    ? optsOrFn as SuiteBlock
     : maybeFn;
 
   const opts = (maybeFn)
