@@ -21,6 +21,8 @@ module.exports = {
     ],
     // Sometimes 'requires' is necessary
     '@typescript-eslint/no-var-requires': 'off',
+    // https://stackoverflow.com/questions/49743842/javascript-unexpected-control-characters-in-regular-expression
+    "no-control-regex": 0
   },
   parserOptions: {
     ecmaVersion: 'latest',
