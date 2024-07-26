@@ -18,13 +18,11 @@ import assert from 'assert';
 parallel('unit.testing', () => {
   it('abc', async () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log('abc')
     assert.equal(1, 1);
   });
 
   it('123', async () => {
     await new Promise((resolve) => setTimeout(resolve, 1000));
-    console.log('123')
     assert.equal(1, 1);
   });
 });

@@ -17,17 +17,17 @@ import { DataAPITimeoutError } from '@/src/data-api';
 import { DEFAULT_NAMESPACE, HttpMethods } from '@/src/api';
 import { DevOpsAPITimeoutError } from '@/src/devops';
 import { DataAPIClient } from '@/src/client';
-import { describe, it } from '@/tests/test-utils';
+import { describe, it, parallel } from '@/tests/test-utils';
 import assert from 'assert';
 import { DEFAULT_COLLECTION_NAME, ENVIRONMENT, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/config';
 
 describe('integration.misc.timeouts', ({ collection, dbAdmin }) => {
-  describe('in data-api', () => {
+  parallel('in data-api', () => {
     it('should timeout @ the http-client level', async () => {
       const httpClient = collection['_httpClient'];
 
       await assert.rejects(async () => {
-        await httpClient.executeCommand({ insertOne: { document: {} } }, { maxTimeMS: 5 });
+        await httpClient.executeCommand({ findOne: { filter: {} } }, { maxTimeMS: 5 });
       }, DataAPITimeoutError);
     });
 
@@ -37,7 +37,7 @@ describe('integration.misc.timeouts', ({ collection, dbAdmin }) => {
         .collection(DEFAULT_COLLECTION_NAME);
 
       await assert.rejects(async () => {
-        await collection.insertOne({ name: 'Nightwish' });
+        await collection.findOne({});
       }, DataAPITimeoutError);
     });
 
@@ -47,7 +47,7 @@ describe('integration.misc.timeouts', ({ collection, dbAdmin }) => {
         .collection(DEFAULT_COLLECTION_NAME, { defaultMaxTimeMS: 1 });
 
       await assert.rejects(async () => {
-        await collection.insertOne({ name: 'Nightwish' });
+        await collection.findOne({});
       }, DataAPITimeoutError);
     });
 
@@ -57,12 +57,12 @@ describe('integration.misc.timeouts', ({ collection, dbAdmin }) => {
         .collection(DEFAULT_COLLECTION_NAME, { defaultMaxTimeMS: 30000 });
 
       await assert.rejects(async () => {
-        await collection.insertOne({ name: 'Nightwish' }, { maxTimeMS: 1 });
+        await collection.findOne({}, { maxTimeMS: 1 });
       }, DataAPITimeoutError);
     });
   });
 
-  describe('[ASTRA] in devops', () => {
+  parallel('[ASTRA] in devops', () => {
     it('should timeout @ the http-client level', async () => {
       const httpClient = (<any>dbAdmin)['_httpClient'];
 

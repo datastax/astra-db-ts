@@ -31,8 +31,8 @@ before(async () => {
 
     const promises = collections
       .filter(c => c.name !== DEFAULT_COLLECTION_NAME)
-      .tap(c => console.log(`deleting collection '${c.name}'`))
-      .map(c => db.dropCollection(c.name));
+      .tap(c => console.log(`deleting collection '${namespace}.${c.name}'`))
+      .map(c => db.dropCollection(c.name, { namespace }));
 
     await Promise.all(promises);
   }

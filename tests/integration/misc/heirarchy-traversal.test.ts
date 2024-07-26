@@ -13,24 +13,19 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { describe, it } from '@/tests/test-utils';
+import { describe, it, parallel } from '@/tests/test-utils';
 import assert from 'assert';
 import { DEFAULT_COLLECTION_NAME, TEST_APPLICATION_URI } from '@/tests/config';
 
-describe('[ASTRA] integration.misc.hierarchy-traversal', { truncateColls: 'default' }, ({ client, db }) => {
+describe('[ASTRA] integration.misc.hierarchy-traversal', ({ client, db }) => {
   const endpoint = TEST_APPLICATION_URI;
-  let id: string
-  let region: string;
+  const idAndRegion = endpoint.split('.')[0].split('https://')[1].split('-');
 
-  before(async () => {
-    const idAndRegion = endpoint.split('.')[0].split('https://')[1].split('-');
+  const id = idAndRegion.slice(0, 5).join('-');
+  const region = idAndRegion.slice(5).join('-');
 
-    id = idAndRegion.slice(0, 5).join('-');
-    region = idAndRegion.slice(5).join('-');
-  });
-
-  describe('db->admin->db', () => {
-    it('is a noop', () => {
+  parallel('db->admin->db', () => {
+    it('is a noop', async () => {
       const db1 = db.admin().db();
       const db2 = db.admin().db().admin().db();
       assert.strictEqual(db, db1);
@@ -52,13 +47,13 @@ describe('[ASTRA] integration.misc.hierarchy-traversal', { truncateColls: 'defau
       assert.deepStrictEqual(collections, collections1);
       assert.deepStrictEqual(collections, collections2);
 
-      assert.doesNotThrow(async () => await db1.collection(DEFAULT_COLLECTION_NAME).insertOne({ name: 'test' }));
-      assert.doesNotThrow(async () => await db2.collection(DEFAULT_COLLECTION_NAME).insertOne({ name: 'test' }));
+      assert.doesNotThrow(async () => await db1.collection(DEFAULT_COLLECTION_NAME).findOne({}));
+      assert.doesNotThrow(async () => await db2.collection(DEFAULT_COLLECTION_NAME).findOne({}));
     });
   });
 
-  describe('[NOT-DEV] client->admin->dbAdmin <-> client->db->admin', () => {
-    it('is essentially a noop', () => {
+  parallel('[NOT-DEV] client->admin->dbAdmin <-> client->db->admin', () => {
+    it('is essentially a noop', async () => {
       const dbAdmin1 = client.admin().dbAdmin(endpoint);
       const dbAdmin2 = client.db(endpoint).admin();
       assert.strictEqual(dbAdmin1.db().id, dbAdmin2.db().id);
@@ -93,15 +88,15 @@ describe('[ASTRA] integration.misc.hierarchy-traversal', { truncateColls: 'defau
     });
   });
 
-  describe('[NOT-DEV] client->admin->dbAdmin->db <-> client->db->admin->db', () => {
+  parallel('[NOT-DEV] client->admin->dbAdmin->db <-> client->db->admin->db', () => {
     it('is essentially a noop', async () => {
       const db1 = client.admin().dbAdmin(endpoint).db();
       const db2 = client.db(endpoint).admin().db();
       assert.strictEqual(db1.id, db2.id);
       assert.strictEqual(db1.namespace, db2.namespace);
 
-      await assert.doesNotReject(async () => await db1.collection(DEFAULT_COLLECTION_NAME).insertOne({ name: 'test' }));
-      await assert.doesNotReject(async () => await db1.collection(DEFAULT_COLLECTION_NAME).insertOne({ name: 'test' }));
+      await assert.doesNotReject(async () => await db1.collection(DEFAULT_COLLECTION_NAME).findOne({}));
+      await assert.doesNotReject(async () => await db1.collection(DEFAULT_COLLECTION_NAME).findOne({}));
     });
 
     it('works with endpoint', async () => {
@@ -115,8 +110,8 @@ describe('[ASTRA] integration.misc.hierarchy-traversal', { truncateColls: 'defau
 
       assert.deepStrictEqual(collections1, collections2);
 
-      await assert.doesNotReject(async () => await db1.collection(DEFAULT_COLLECTION_NAME).insertOne({ name: 'test' }));
-      await assert.doesNotReject(async () => await db2.collection(DEFAULT_COLLECTION_NAME).insertOne({ name: 'test' }));
+      await assert.doesNotReject(async () => await db1.collection(DEFAULT_COLLECTION_NAME).findOne({}));
+      await assert.doesNotReject(async () => await db2.collection(DEFAULT_COLLECTION_NAME).findOne({}));
     });
 
     it('works with endpoint & id + region', async () => {
@@ -130,8 +125,8 @@ describe('[ASTRA] integration.misc.hierarchy-traversal', { truncateColls: 'defau
 
       assert.deepStrictEqual(collections1, collections2);
 
-      await assert.doesNotReject(async () => await db1.collection(DEFAULT_COLLECTION_NAME).insertOne({ name: 'test' }));
-      await assert.doesNotReject(async () => await db2.collection(DEFAULT_COLLECTION_NAME).insertOne({ name: 'test' }));
+      await assert.doesNotReject(async () => await db1.collection(DEFAULT_COLLECTION_NAME).findOne({}));
+      await assert.doesNotReject(async () => await db2.collection(DEFAULT_COLLECTION_NAME).findOne({}));
     });
 
     it('works with id + region & endpoint', async () => {

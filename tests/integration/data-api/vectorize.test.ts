@@ -20,12 +20,11 @@ import {
   EmbeddingHeadersProvider,
 } from '@/src/data-api';
 import * as fs from 'fs';
-import { after } from 'mocha';
 import {
   EmbeddingProviderInfo,
   EmbeddingProviderModelInfo,
 } from '@/src/devops/types/db-admin/find-embedding-providers';
-import { describe, it } from '@/tests/test-utils';
+import { describe, it, parallel } from '@/tests/test-utils';
 import { DbAdmin } from '@/src/devops';
 import { ENVIRONMENT } from '@/tests/config';
 
@@ -53,27 +52,31 @@ describe('[VECTORIZE] [LONG] integration.data-api.vectorize', ({ db, dbAdmin }) 
       return [];
     });
 
-    const names = tests.map((test) => Buffer.from(test.testName).toString('base64').replace(/\W/g, '').slice(0, 48));
+    const names = tests.map((test) =>
+      Buffer.from(test.testName)
+        .toString('base64')
+        .replace(/\W/g, '')
+        .slice(0, 48)
+    );
 
-    for (const name of names) {
-      try { await db.dropCollection(name); } catch (_) { /* empty */ }
+    if (tests.length === 0) {
+      return;
     }
 
-    tests.forEach((test, i) => {
-      const name = names[i];
-
-      describe('[VECTORIZE] generated test', () => {
-        createVectorizeProvidersTest(db, test, name);
-
-        if (i === 0) {
-          createVectorizeParamTests(db, test, name);
-        }
-
-        after(async () => {
-          await db.dropCollection(name);
-        });
-      });
+    describe('[VECTORIZE] generated test', { dropEphemeral: 'after' }, () => {
+      createVectorizeProvidersTest(db, tests[0], names[0]);
+      createVectorizeParamTests(db, tests[0], names[0]);
     });
+
+    tests.unshift();
+
+    for (let i = 0, n = tests.length; i < n; i += 8) {
+      parallel('[VECTORIZE] generated tests', { dropEphemeral: 'after' }, () => {
+        for (let j = 0; j < 8 && i + j < n; j++) {
+          createVectorizeProvidersTest(db, tests[i + j], names[i + j]);
+        }
+      });
+    }
   });
 
   it('dummy test so before is executed', () => { assert.ok(true) });

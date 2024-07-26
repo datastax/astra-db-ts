@@ -15,10 +15,10 @@
 
 import { CursorIsStartedError, DataAPIResponseError, FindCursor, SomeDoc } from '@/src/data-api';
 import { DataAPIHttpClient } from '@/src/api';
-import { describe, it } from '@/tests/test-utils';
+import { describe, it, parallel } from '@/tests/test-utils';
 import assert from 'assert';
 
-describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collection }) => {
+describe('integration.data-api.cursor', ({ collection }) => {
   let httpClient: DataAPIHttpClient;
 
   const sortById = (a: SomeDoc, b: SomeDoc) => parseInt(a._id) - parseInt(b._id);
@@ -30,7 +30,7 @@ describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collect
     httpClient = collection['_httpClient'];
   });
 
-  describe('cursor lifecycle manipulation', () => {
+  describe('cursor lifecycle manipulation', { truncateColls: 'default' }, () => {
     it('closes cursor', async () => {
       const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
       cursor.close();
@@ -148,9 +148,13 @@ describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collect
     });
   });
 
-  describe('hasNext() tests', () => {
-    it('should test if there are more documents with hasNext()', async () => {
+  parallel('hasNext() tests', () => {
+    before(async () => {
+      await collection.deleteMany({});
       await collection.insertMany([{ _id: '0' }, { _id: '1' }, { _id: '2' }]);
+    });
+
+    it('should test if there are more documents with hasNext()', async () => {
       const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
       const next = await cursor.next();
       assert.ok(next, 'Cursor did not read next');
@@ -159,14 +163,12 @@ describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collect
     });
 
     it('should test if there are more documents with hasNext() with no buffer set', async () => {
-      await collection.insertMany([{ _id: '0' }, { _id: '1' }, { _id: '2' }]);
       const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
       const hasNext = await cursor.hasNext();
       assert.strictEqual(hasNext, true, 'Cursor did not properly check for more documents');
     });
 
     it('should test if there are no more documents with hasNext()', async () => {
-      await collection.insertMany([{ _id: '0' }, { _id: '1' }, { _id: '2' }]);
       const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
       for (let i = 0; i < 3; i++) {
         const doc = await cursor.next();
@@ -177,9 +179,15 @@ describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collect
     });
   });
 
-  describe('readBufferedDocuments() tests', () => {
+  parallel('readBufferedDocuments() tests', () => {
+    const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
+
+    before(async () => {
+      await collection.deleteMany({});
+      await collection.insertMany(docs);
+    });
+
     it('should read all raw buffered documents', async () => {
-      const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
       await collection.insertMany(docs);
       const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
       await cursor.hasNext();
@@ -193,7 +201,6 @@ describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collect
     });
 
     it('should read all raw buffered documents with a max', async () => {
-      const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
       await collection.insertMany(docs);
       const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
       await cursor.hasNext();
@@ -207,7 +214,6 @@ describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collect
     });
 
     it('should read all raw buffered documents even with transformation', async () => {
-      const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
       await collection.insertMany(docs);
       const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).map(() => ({ _id: 0 }));
       await cursor.hasNext();
@@ -221,7 +227,7 @@ describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collect
     });
   });
 
-  describe('next() tests', () => {
+  describe('next() tests', { truncateColls: 'default' }, () => {
     it('should get next document with next()', async () => {
       await collection.insertMany([{ _id: '0' }, { _id: '1' }, { _id: '2' }]);
       const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
@@ -268,7 +274,7 @@ describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collect
     });
   });
 
-  describe('Symbol.asyncIterator() tests', () => {
+  describe('Symbol.asyncIterator() tests', { truncateColls: 'default' }, () => {
     it('should iterate over all documents', async () => {
       const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
       await collection.insertMany(docs);
@@ -346,7 +352,7 @@ describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collect
     });
   });
 
-  describe('toArray() tests', () => {
+  describe('toArray() tests', { truncateColls: 'default' }, () => {
     it('Gets all documents with toArray()', async () => {
       const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
       await collection.insertMany(docs);
@@ -393,7 +399,7 @@ describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collect
     });
   });
 
-  describe('forEach() tests', () => {
+  describe('forEach() tests', { truncateColls: 'default' }, () => {
     it('should iterate over all documents', async () => {
       const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
       await collection.insertMany(docs);
@@ -466,7 +472,7 @@ describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collect
     });
   });
 
-  describe('filter tests', () => {
+  describe('filter tests', { truncateColls: 'default' }, () => {
     it('should filter documents', async () => {
       const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
       await collection.insertMany(docs);
@@ -484,7 +490,7 @@ describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collect
     });
   });
 
-  describe('skip/limit tests', () => {
+  describe('skip/limit tests', { truncateColls: 'default' }, () => {
     it('should limit documents', async () => {
       const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
       await collection.insertMany(docs);
@@ -534,7 +540,7 @@ describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collect
     });
   });
 
-  describe('sort tests', () => {
+  describe('sort tests', { truncateColls: 'default' }, () => {
     it('should sort documents', async () => {
       const docs = [{ _id: '2' }, { _id: '0' }, { _id: '1' }];
       await collection.insertMany(docs);
@@ -552,7 +558,7 @@ describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collect
     });
   });
 
-  describe('projection tests', () => {
+  describe('projection tests', { truncateColls: 'default' }, () => {
     it('should project documents', async () => {
       const docs = [{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }];
       await collection.insertMany(docs);
@@ -570,7 +576,7 @@ describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collect
     });
   });
 
-  describe('mapping tests', () => {
+  describe('mapping tests', { truncateColls: 'default' }, () => {
     it('should map documents', async () => {
       const docs = [{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }];
       await collection.insertMany(docs);
@@ -588,7 +594,7 @@ describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collect
     });
   });
 
-  describe('sort vector tests', () => {
+  describe('sort vector tests', { truncateColls: 'default' }, () => {
     it('should return sort vector on only first API call if includeSortVector: true', async () => {
       await collection.insertMany([{}, {}, {}]);
       const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).sort({ $vector: [1, 1, 1, 1, 1] }).includeSortVector();
@@ -638,7 +644,7 @@ describe('integration.data-api.cursor', { truncateColls: 'default' }, ({ collect
     });
   });
 
-  describe('misc', () => {
+  describe('misc', { truncateColls: 'default' }, () => {
     it('should close cursor and rethrow error if getting documents throws', async () => {
       const docs = [{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }];
       await collection.insertMany(docs);

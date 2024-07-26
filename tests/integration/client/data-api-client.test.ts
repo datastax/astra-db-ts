@@ -18,7 +18,7 @@ import assert from 'assert';
 import { DataAPIResponseError, DataAPITimeoutError } from '@/src/data-api';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_NAMESPACE, DEFAULT_TIMEOUT } from '@/src/api';
-import { describe, it } from '@/tests/test-utils';
+import { describe, it, parallel } from '@/tests/test-utils';
 import {
   DEFAULT_COLLECTION_NAME,
   ENVIRONMENT,
@@ -28,7 +28,7 @@ import {
 } from '@/tests/config';
 
 describe('integration.client.data-api-client', () => {
-  describe('db', () => {
+  parallel('db', () => {
     it('properly connects to a db by endpoint', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
       const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });

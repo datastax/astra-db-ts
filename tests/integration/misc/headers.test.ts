@@ -23,7 +23,7 @@ import {
 import { nullish, StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvider } from '@/src/common';
 import assert from 'assert';
 import { EmbeddingHeadersProvider } from '@/src/data-api';
-import { describe, it } from '@/tests/test-utils';
+import { describe, it, parallel } from '@/tests/test-utils';
 import { DEFAULT_COLLECTION_NAME, ENVIRONMENT, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/config';
 
 describe('integration.misc.headers', { truncateColls: 'default' }, () => {
@@ -79,19 +79,19 @@ describe('integration.misc.headers', { truncateColls: 'default' }, () => {
     }
   }
 
-  describe('token providers', () => {
+  parallel('token providers', () => {
     it('should call the provider on a per-call basis to the Data API', async () => {
       const client = mkClient();
       const db = client.db(TEST_APPLICATION_URI, { token: new CyclingTokenProvider() });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
-      await assert.rejects(() => collection.insertOne({}));
+      await assert.rejects(() => collection.findOne({}));
       assert.strictEqual(latestHeaders[DEFAULT_DATA_API_AUTH_HEADER], 'tree');
 
-      await assert.rejects(() => collection.insertOne({}));
+      await assert.rejects(() => collection.findOne({}));
       assert.strictEqual(latestHeaders[DEFAULT_DATA_API_AUTH_HEADER], 'of');
 
-      await assert.rejects(() => collection.insertOne({}));
+      await assert.rejects(() => collection.findOne({}));
       assert.strictEqual(latestHeaders[DEFAULT_DATA_API_AUTH_HEADER], 'ages');
     });
 
@@ -99,8 +99,7 @@ describe('integration.misc.headers', { truncateColls: 'default' }, () => {
       const client = mkClient();
       const db = client.db(TEST_APPLICATION_URI, { token: new AsyncTokenProvider() });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
-      const result = await collection.insertOne({});
-      assert.ok(result.insertedId);
+      await collection.findOne({});
       assert.strictEqual(latestHeaders[DEFAULT_DATA_API_AUTH_HEADER], TEST_APPLICATION_TOKEN);
     });
 
@@ -124,14 +123,13 @@ describe('integration.misc.headers', { truncateColls: 'default' }, () => {
 
       const db1 = client.db(TEST_APPLICATION_URI);
       const coll1 = db1.collection(DEFAULT_COLLECTION_NAME);
-      const result = await coll1.insertOne({});
-      assert.ok(result.insertedId);
+      await coll1.findOne({});
       assert.strictEqual(latestHeaders[DEFAULT_DATA_API_AUTH_HEADER], TEST_APPLICATION_TOKEN);
 
       const tp = new UsernamePasswordTokenProvider('cadence of', 'her last breath');
       const db2 = client.db(TEST_APPLICATION_URI, { token: tp });
       const coll2 = db2.collection(DEFAULT_COLLECTION_NAME);
-      await assert.rejects(() => coll2.insertOne({}));
+      await assert.rejects(() => coll2.findOne({}));
       assert.strictEqual(latestHeaders[DEFAULT_DATA_API_AUTH_HEADER], tp.getToken());
 
       const badTokenProvider = new class extends TokenProvider {
@@ -160,19 +158,19 @@ describe('integration.misc.headers', { truncateColls: 'default' }, () => {
     });
   });
 
-  describe('embedding header providers', () => {
+  parallel('embedding header providers', () => {
     it('should call the provider on a per-call basis to the Data API', async () => {
       const client = mkClient();
       const db = client.db(TEST_APPLICATION_URI, { token: TEST_APPLICATION_TOKEN });
       const collection = db.collection(DEFAULT_COLLECTION_NAME, { embeddingApiKey: new CyclingEmbeddingHeadersProvider() });
 
-      await collection.insertOne({});
+      await collection.findOne({});
       assert.strictEqual(latestHeaders['x-my-custom-header'], 'tree');
 
-      await collection.insertOne({});
+      await collection.findOne({});
       assert.strictEqual(latestHeaders['x-my-custom-header'], 'of');
 
-      await collection.insertOne({});
+      await collection.findOne({});
       assert.strictEqual(latestHeaders['x-my-custom-header'], 'ages');
     });
 
@@ -181,8 +179,7 @@ describe('integration.misc.headers', { truncateColls: 'default' }, () => {
       const client = mkClient();
       const db = client.db(TEST_APPLICATION_URI, { token: TEST_APPLICATION_TOKEN });
       const collection = db.collection(DEFAULT_COLLECTION_NAME, { embeddingApiKey: ehp });
-      const result = await collection.insertOne({});
-      assert.ok(result.insertedId);
+      await collection.findOne({});
       assert.strictEqual(latestHeaders['x-my-custom-header'], (await ehp.getHeaders())['x-my-custom-header']);
     });
   });

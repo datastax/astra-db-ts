@@ -14,13 +14,14 @@
 /* eslint-disable prefer-const */
 
 import { initTestObjects } from '@/tests/fixtures';
-import { Context } from 'mocha';
+import { afterEach, Context } from 'mocha';
 import {
   DEFAULT_COLLECTION_NAME,
-  EPHEMERAL_COLLECTION_NAME,
   OTHER_NAMESPACE,
   TEST_APPLICATION_URI,
 } from '@/tests/config';
+import { DEFAULT_NAMESPACE } from '@/src/api';
+import { Collection } from '@/src/data-api';
 
 let inParallelBlock: boolean = false;
 let globalTests: { name: string, fn: ParallelTest; }[] = [];
@@ -29,20 +30,22 @@ type ParallelBlock = (this: Mocha.Suite, fixtures: ReturnType<typeof initTestObj
 type ParallelTest = () => Promise<void>;
 
 interface ParallelizedTestsBlock {
-  (fn: ParallelBlock): void;
   (name: string, fn: ParallelBlock): void;
+  (name: string, options: SuiteOptions, fn: ParallelBlock): void;
 }
 
 export let parallel: ParallelizedTestsBlock;
 
-parallel = function (fnOrName: string | ParallelBlock, maybeFn?: ParallelBlock) {
+parallel = function (name: string, optsOrFn: SuiteOptions | ParallelBlock, maybeFn?: ParallelBlock) {
+  name = `(parallel) ${name}`
+
   const fn = (!maybeFn)
-    ? fnOrName as ParallelBlock
+    ? optsOrFn as ParallelBlock
     : maybeFn;
 
-  const name = maybeFn
-    ? `(parallel) ${fnOrName}`
-    : 'parallelized block';
+  const opts = (maybeFn)
+    ? optsOrFn as SuiteOptions
+    : {};
 
   function modifiedFn(this: Mocha.Suite, fixtures: ReturnType<typeof initTestObjects>) {
     if (inParallelBlock) {
@@ -82,7 +85,7 @@ parallel = function (fnOrName: string | ParallelBlock, maybeFn?: ParallelBlock) 
     globalTests = [];
   }
 
-  return describe(name, modifiedFn);
+  return describe(name, opts, modifiedFn);
 }
 
 type TestFn = Mocha.Func | Mocha.AsyncFunc;
@@ -114,7 +117,7 @@ type SuiteBlock = (this: Mocha.Suite, fixtures: ReturnType<typeof initTestObject
 
 interface SuiteOptions {
   truncateColls?: 'default' | 'both',
-  dropEphemeral?: boolean,
+  dropEphemeral?: 'after' | 'afterEach',
 }
 
 interface TaggableSuiteFunction {
@@ -140,6 +143,20 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
   const fixtures = initTestObjects();
   const tags = processTags(name);
 
+  async function dropEphemeralColls() {
+    const promises: Promise<boolean>[] = [];
+
+    for (const namespace of [DEFAULT_NAMESPACE, OTHER_NAMESPACE]) {
+      const collections = await fixtures.db.listCollections({ namespace });
+
+      collections
+        .filter(c => c.name !== DEFAULT_COLLECTION_NAME)
+        .forEach(c => promises.push(fixtures.db.dropCollection(c.name, { namespace })));
+    }
+
+    await Promise.all(promises);
+  }
+
   function modifiedFn(this: Mocha.Suite) {
     before(function () {
       assertTestsEnabled.call(this, tags);
@@ -147,11 +164,6 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
 
     if (opts.dropEphemeral || opts.truncateColls) {
       beforeEach(async () => {
-        if (opts.dropEphemeral) {
-          await fixtures.db.dropCollection(EPHEMERAL_COLLECTION_NAME);
-          await fixtures.db.dropCollection(EPHEMERAL_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
-        }
-
         if (opts.truncateColls) {
           await fixtures.collection.deleteMany({});
         }
@@ -160,6 +172,14 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
           await fixtures.db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE }).deleteMany();
         }
       });
+
+      if (opts.dropEphemeral === 'after') {
+        after(dropEphemeralColls);
+      }
+
+      if (opts.dropEphemeral === 'afterEach') {
+        afterEach(dropEphemeralColls);
+      }
     }
 
     return fn.call(this, fixtures);
@@ -219,4 +239,22 @@ declare global {
 Array.prototype.tap = function <T>(consumer: (t: T) => void) {
   this.forEach(consumer);
   return this;
+}
+
+export function createCollections<Keys extends string>(colls: Record<Keys, Promise<Collection>>): Record<Keys, Collection> {
+  const collections: Record<string, Collection> = {}
+
+  before(async () => {
+    console.log('sdfjasldfjsda')
+
+    const promises = Object.entries(colls).map(([name, promise]) => (<Promise<Collection>>promise).then(coll => <const>[name, coll]));
+
+    const entries = await Promise.all(promises);
+
+    for (const [name, coll] of entries) {
+      collections[name] = coll;
+    }
+  });
+
+  return collections;
 }

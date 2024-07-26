@@ -16,7 +16,7 @@
 import { DataAPIResponseError } from '@/src/data-api';
 import { initTestObjects } from '@/tests/fixtures';
 import { DataAPIHttpClient } from '@/src/api';
-import { describe, it } from '@/tests/test-utils';
+import { describe, it, parallel } from '@/tests/test-utils';
 import assert from 'assert';
 import { DEFAULT_COLLECTION_NAME, OTHER_NAMESPACE, TEST_APPLICATION_URI } from '@/tests/config';
 
@@ -27,7 +27,7 @@ describe('integration.api.data-api-http-client', ({ db }) => {
     httpClient = db['_httpClient'];
   });
 
-  describe('executeCommand tests', () => {
+  parallel('executeCommand tests', () => {
     it('should execute a db-level command', async () => {
       const resp = await httpClient.executeCommand({
         findCollections: {},

@@ -15,10 +15,10 @@
 
 import assert from 'assert';
 import { DEFAULT_NAMESPACE } from '@/src/api';
-import { describe, it } from '@/tests/test-utils';
+import { it, parallel } from '@/tests/test-utils';
 import { ENVIRONMENT, TEST_APPLICATION_URI } from '@/tests/config';
 
-describe('integration.devops.db-admin', ({ client, db, dbAdmin }) => {
+parallel('integration.devops.db-admin', ({ client, db, dbAdmin }) => {
   it('[LONG] works', async () => {
     const namespaces1 = await dbAdmin.listNamespaces();
     assert.ok(!namespaces1.includes('slania'));
@@ -34,7 +34,7 @@ describe('integration.devops.db-admin', ({ client, db, dbAdmin }) => {
 
     const namespaces3 = await dbAdmin.listNamespaces();
     assert.ok(!namespaces3.includes('slania'));
-  }).timeout(100000);
+  });
 
   it('[LONG] works w/ updateDbNamespace set', async () => {
     const db = client.db(TEST_APPLICATION_URI, { namespace: 'mimic_well' });
@@ -50,7 +50,9 @@ describe('integration.devops.db-admin', ({ client, db, dbAdmin }) => {
     });
 
     assert.strictEqual(db.namespace, 'my_test_keyspace_123');
-  }).timeout(100000);
+
+    await dbAdmin.dropNamespace('my_test_keyspace_123');
+  });
 
   it('should findEmbeddingProviders', async () => {
     const { embeddingProviders } = await dbAdmin.findEmbeddingProviders();
