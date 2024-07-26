@@ -21,6 +21,7 @@ export interface InsertManyCommand {
   insertMany: {
     documents: unknown[],
     options?: {
+      returnDocumentResponses: true,
       ordered?: boolean,
     },
   }

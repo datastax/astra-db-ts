@@ -1588,7 +1588,10 @@ const insertMany = async <Schema>(httpClient: DataAPIHttpClient, documents: unkn
   const command: InsertManyCommand = {
     insertMany: {
       documents,
-      options: { ordered },
+      options: {
+        returnDocumentResponses: true,
+        ordered,
+      },
     }
   }
 

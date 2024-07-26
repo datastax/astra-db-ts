@@ -18,6 +18,7 @@ import type { UpdateManyResult } from '@/src/data-api/types/update/update-many';
 import type { BulkWriteResult } from '@/src/data-api/types/misc/bulk-write';
 import type { FetcherResponseInfo, RawDataAPIResponse } from '@/src/api';
 import { SomeDoc } from '@/src/data-api/types/document';
+import { SomeId } from '@/src/data-api/ids';
 
 /**
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a
@@ -449,6 +450,37 @@ export class InsertManyError extends CumulativeDataAPIError {
    * of all successful insertions.
    */
   declare public readonly partialResult: InsertManyResult<SomeDoc>;
+
+  /**
+   * The specific statuses and ids for each document present in the `insertMany` command
+   *
+   * The position of each document response is the same as its corresponding document in the input `documents` array
+   */
+  declare public readonly documentResponses: InsertManyDocumentResponse[];
+}
+
+/**
+ * Represents the specific status and id for a document present in the `insertMany` command
+ */
+interface InsertManyDocumentResponse {
+  /**
+   * The exact value of the `_id` field of the document that was inserted, whether it be the value passed by the client,
+   * or a server generated ID.
+   */
+  _id: SomeId,
+  /**
+   * The processing status of the document
+   * - `OK`: The document was successfully processed, in which case the `error` field will be undefined for this object
+   * - `ERROR`: There was an error processing the document, in which case the `error` field will be present for this object
+   * - `SKIPPED`: The document was not processed because either the `insertMany` command was processing documents in order
+   * which means the processing fails at the first failure, or some other failure occurred before this document was
+   * processed. The `error` field will be undefined for this object.
+   */
+  status: 'OK' | 'ERROR' | 'SKIPPED',
+  /**
+   * The error which caused this document to fail insertion.
+   */
+  error?: DataAPIErrorDescriptor,
 }
 
 /**
