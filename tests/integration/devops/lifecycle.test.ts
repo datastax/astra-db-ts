@@ -24,7 +24,7 @@ describe('[ADMIN] [LONG] [NOT-DEV] [ASTRA] integration.devops.lifecycle', ({ cli
   before(async () => {
     for (const db of await client.admin().listDatabases()) {
       if (db.info.name === TEMP_DB_NAME && db.status !== 'TERMINATING') {
-        void client.admin().dropDatabase(db.id);
+        void client.admin().dropDatabase(db.id, { maxTimeMS: 720000 });
       }
     }
   });
@@ -39,6 +39,7 @@ describe('[ADMIN] [LONG] [NOT-DEV] [ASTRA] integration.devops.lifecycle', ({ cli
       namespace: 'my_namespace',
     }, {
       blocking: false,
+      maxTimeMS: 720000,
     });
     const asyncDb = asyncDbAdmin.db();
 
@@ -226,7 +227,7 @@ describe('[ADMIN] [LONG] [NOT-DEV] [ASTRA] integration.devops.lifecycle', ({ cli
     }
 
     {
-      await admin.dropDatabase(syncDb);
+      await admin.dropDatabase(syncDb, { maxTimeMS: 720000 });
       await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, null!, {
         target: 'TERMINATED',
         legalStates: ['TERMINATING'],
@@ -242,10 +243,10 @@ describe('[ADMIN] [LONG] [NOT-DEV] [ASTRA] integration.devops.lifecycle', ({ cli
     }
 
     {
-      await assert.rejects(async () => { await admin.dropDatabase(syncDb.id); }, DevOpsAPIResponseError);
-      await assert.rejects(async () => { await admin.dropDatabase(syncDb.id, { blocking: false }); }, DevOpsAPIResponseError);
-      await assert.rejects(async () => { await admin.dropDatabase(syncDb); }, DevOpsAPIResponseError);
-      await assert.rejects(async () => { await admin.dropDatabase(syncDb, { blocking: false }); }, DevOpsAPIResponseError);
+      await assert.rejects(async () => { await admin.dropDatabase(syncDb.id, { maxTimeMS: 720000 }); }, DevOpsAPIResponseError);
+      await assert.rejects(async () => { await admin.dropDatabase(syncDb.id, { blocking: false, maxTimeMS: 720000 }); }, DevOpsAPIResponseError);
+      await assert.rejects(async () => { await admin.dropDatabase(syncDb, { maxTimeMS: 720000 }); }, DevOpsAPIResponseError);
+      await assert.rejects(async () => { await admin.dropDatabase(syncDb, { blocking: false, maxTimeMS: 720000 }); }, DevOpsAPIResponseError);
       await assert.rejects(async () => { await syncDbAdmin.drop(); }, DevOpsAPIResponseError);
       await assert.rejects(async () => { await syncDbAdmin.drop({ blocking: false }); }, DevOpsAPIResponseError);
     }
