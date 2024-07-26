@@ -19,13 +19,13 @@ import { createCollections, it, parallel } from '@/tests/test-utils';
 import { DEFAULT_COLLECTION_NAME, EPHEMERAL_COLLECTION_NAME } from '@/tests/config';
 
 parallel('[LONG] integration.data-api.ids', { dropEphemeral: 'after' }, ({ db }) => {
-  const collections = createCollections({
+  const collections = createCollections(() => ({
     default: db.collection(DEFAULT_COLLECTION_NAME).deleteMany({}).then(_ => db.collection(DEFAULT_COLLECTION_NAME)),
     uuid: db.createCollection(`${EPHEMERAL_COLLECTION_NAME}_uuid`, { checkExists: false, defaultId: { type: 'uuid' } }),
     uuidv6: db.createCollection(`${EPHEMERAL_COLLECTION_NAME}_uuidv6`, { checkExists: false, defaultId: { type: 'uuidv6' } }),
     uuidv7: db.createCollection(`${EPHEMERAL_COLLECTION_NAME}_uuidv7`, { checkExists: false, defaultId: { type: 'uuidv7' } }),
     objectId: db.createCollection(`${EPHEMERAL_COLLECTION_NAME}_objectId`, { checkExists: false, defaultId: { type: 'objectId' } }),
-  });
+  }));
 
   it('default id is not in listCollections', async () => {
     const collections = await db.listCollections();

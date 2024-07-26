@@ -68,7 +68,7 @@ describe('[VECTORIZE] [LONG] integration.data-api.vectorize', ({ db, dbAdmin }) 
       createVectorizeParamTests(db, tests[0], names[0]);
     });
 
-    tests.unshift();
+    tests.shift();
 
     for (let i = 0, n = tests.length; i < n; i += 8) {
       parallel('[VECTORIZE] generated tests', { dropEphemeral: 'after' }, () => {

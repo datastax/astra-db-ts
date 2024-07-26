@@ -76,8 +76,8 @@ parallel = function (name: string, optsOrFn: SuiteOptions | ParallelBlock, maybe
       it(t.name, function () {
         this.test!.title = `${t.name} (${~~results[i].ms}ms)`;
 
-        if (results[i] instanceof Error) {
-          throw results[i];
+        if (results[i].error) {
+          throw results[i].error;
         }
       });
     });
@@ -241,11 +241,11 @@ Array.prototype.tap = function <T>(consumer: (t: T) => void) {
   return this;
 }
 
-export function createCollections<Keys extends string>(colls: Record<Keys, Promise<Collection>>): Record<Keys, Collection> {
+export function createCollections<Keys extends string>(colls: () => Record<Keys, Promise<Collection>>): Record<Keys, Collection> {
   const collections: Record<string, Collection> = {}
 
   before(async () => {
-    const promises = Object.entries(colls).map(([name, promise]) => (<Promise<Collection>>promise).then(coll => <const>[name, coll]));
+    const promises = Object.entries(colls()).map(([name, promise]) => (<Promise<Collection>>promise).then(coll => <const>[name, coll]));
 
     const entries = await Promise.all(promises);
 
