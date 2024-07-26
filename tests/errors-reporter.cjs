@@ -25,10 +25,9 @@ class ErrorsReporter extends reporters.Spec {
         : test.title
 
       const newHierarchy = [testName];
-      let parent = test
 
-      while ((parent = parent.parent).title) {
-        newHierarchy.unshift(parent.title);
+      for (let suite = test.parent; suite.title; suite = suite.parent) {
+        newHierarchy.unshift(suite.title);
       }
 
       const hierarchyDiff = newHierarchy.map((v, i) => existingHierarchy[i] === v ? undefined : v);
@@ -36,11 +35,12 @@ class ErrorsReporter extends reporters.Spec {
 
       output += hierarchyDiff.map((v, i) => v ? '#'.repeat(i + 1) + ' ' + v + '\n' : '').join('\n');
       output += '\n```ts\n';
-      output += util.inspect(err, { depth: null })
+      output += util.inspect(err, { depth: null }).replaceAll(/\u001b\[[0-9]+?m/, '');
       output += '\n```\n';
     }
 
     output = output.slice(0, -1);
+
     fs.writeFileSync('etc/test-errors-report.md', output);
   }
 }
