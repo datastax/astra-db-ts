@@ -250,7 +250,7 @@ describe('[ADMIN] [LONG] [NOT-DEV] [ASTRA] integration.devops.lifecycle', ({ cli
       await assert.rejects(async () => { await syncDbAdmin.drop({ blocking: false }); }, DevOpsAPIResponseError);
     }
 
-    // Either this stops occasionally 500s in the following tests,
+    // Either this stops occasional 500s in the following tests,
     // or I'm having a severe case of the Placebo effect
     await new Promise(resolve => setTimeout(resolve, 1000));
   }).timeout(0);
