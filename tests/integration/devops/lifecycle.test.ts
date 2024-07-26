@@ -101,7 +101,7 @@ describe('[ADMIN] [LONG] [NOT-DEV] [ASTRA] integration.devops.lifecycle', ({ cli
       name: TEMP_DB_NAME,
       cloudProvider: 'GCP',
       region: 'us-east1',
-    });
+    }, { maxTimeMS: 720000 });
     const syncDb = syncDbAdmin.db();
 
     {

@@ -27,6 +27,7 @@ import {
 import { describe, it, parallel } from '@/tests/test-utils';
 import { DbAdmin } from '@/src/devops';
 import { ENVIRONMENT } from '@/tests/config';
+import * as crypto from 'node:crypto';
 
 type VectorizeTestSpec = {
   [providerName: string]: {
@@ -53,10 +54,10 @@ describe('[VECTORIZE] [LONG] integration.data-api.vectorize', ({ db, dbAdmin }) 
     });
 
     const names = tests.map((test) =>
-      Buffer.from(test.testName)
-        .toString('base64')
-        .replace(/\W/g, '')
-        .slice(0, 48),
+      test.testName[0] + crypto
+        .createHash('md5')
+        .update(test.testName)
+        .digest('hex'),
     );
 
     if (tests.length === 0) {
@@ -70,9 +71,9 @@ describe('[VECTORIZE] [LONG] integration.data-api.vectorize', ({ db, dbAdmin }) 
 
     tests.shift();
 
-    for (let i = 0, n = tests.length; i < n; i += 7) {
+    for (let i = 0, n = tests.length; i < n; i += 8) {
       parallel('[VECTORIZE] generated tests', { dropEphemeral: 'after' }, () => {
-        for (let j = 0; j < 7 && i + j < n; j++) {
+        for (let j = 0; j < 8 && i + j < n; j++) {
           createVectorizeProvidersTest(db, tests[i + j], names[i + j]);
         }
       });

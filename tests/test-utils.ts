@@ -155,6 +155,7 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
     }
 
     await Promise.all(promises);
+    await new Promise((resolve) => setTimeout(resolve, 100));
   }
 
   function modifiedFn(this: Mocha.Suite) {
