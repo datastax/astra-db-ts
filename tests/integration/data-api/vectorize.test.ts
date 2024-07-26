@@ -56,7 +56,7 @@ describe('[VECTORIZE] [LONG] integration.data-api.vectorize', ({ db, dbAdmin }) 
       Buffer.from(test.testName)
         .toString('base64')
         .replace(/\W/g, '')
-        .slice(0, 48)
+        .slice(0, 48),
     );
 
     if (tests.length === 0) {

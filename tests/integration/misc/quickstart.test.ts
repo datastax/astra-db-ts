@@ -20,7 +20,7 @@ import { describe, it } from '@/tests/test-utils';
 import assert from 'assert';
 import { ENVIRONMENT, OTHER_NAMESPACE, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/config';
 
-describe('integration.misc.quickstart', { dropEphemeral: 'after' }, ({ db }) => {
+describe('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
   it('[LONG] works for the quickstart', async () => {
     interface Idea extends VectorDoc {
       idea: string,
