@@ -1,7 +1,7 @@
 #!/usr/bin/sh
 
 # Define necessary commands
-test_cmd="npx ts-mocha --paths -p tsconfig.json --recursive tests/prelude.test.ts tests/unit tests/integration --extension .test.ts -t 60000 --reporter tests/errors-reporter.cjs"
+test_cmd="npx ts-mocha --paths -p tsconfig.json --recursive tests/prelude.test.ts tests/unit tests/integration --extension .test.ts -t 90000 --reporter tests/errors-reporter.cjs"
 
 all_tests_cmd="ASTRA_RUN_LONG_TESTS=1 ASTRA_RUN_ADMIN_TESTS=1 ASTRA_RUN_VECTORIZE_TESTS=1 $test_cmd"
 

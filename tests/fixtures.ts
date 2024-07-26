@@ -30,7 +30,7 @@ import {
 
 export const initTestObjects = (preferHttp2 = USE_HTTP2, environment: typeof ENVIRONMENT = ENVIRONMENT) => {
   const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {
-    httpOptions: { preferHttp2, client: HTTP_CLIENT_TYPE },
+    httpOptions: { preferHttp2, client: HTTP_CLIENT_TYPE, maxTimeMS: 60000 },
     dbOptions: { namespace: DEFAULT_NAMESPACE },
     environment: environment,
   });

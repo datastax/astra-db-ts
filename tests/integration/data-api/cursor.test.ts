@@ -188,7 +188,6 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should read all raw buffered documents', async () => {
-      await collection.insertMany(docs);
       const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
       await cursor.hasNext();
       assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
@@ -201,7 +200,6 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should read all raw buffered documents with a max', async () => {
-      await collection.insertMany(docs);
       const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
       await cursor.hasNext();
       assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
@@ -214,7 +212,6 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should read all raw buffered documents even with transformation', async () => {
-      await collection.insertMany(docs);
       const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).map(() => ({ _id: 0 }));
       await cursor.hasNext();
       assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');

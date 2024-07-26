@@ -70,9 +70,9 @@ describe('[VECTORIZE] [LONG] integration.data-api.vectorize', ({ db, dbAdmin }) 
 
     tests.shift();
 
-    for (let i = 0, n = tests.length; i < n; i += 8) {
+    for (let i = 0, n = tests.length; i < n; i += 7) {
       parallel('[VECTORIZE] generated tests', { dropEphemeral: 'after' }, () => {
-        for (let j = 0; j < 8 && i + j < n; j++) {
+        for (let j = 0; j < 7 && i + j < n; j++) {
           createVectorizeProvidersTest(db, tests[i + j], names[i + j]);
         }
       });

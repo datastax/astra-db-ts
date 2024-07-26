@@ -15,10 +15,10 @@
 
 import assert from 'assert';
 import { DEFAULT_NAMESPACE } from '@/src/api';
-import { it, parallel } from '@/tests/test-utils';
+import { it, describe } from '@/tests/test-utils';
 import { ENVIRONMENT, TEST_APPLICATION_URI } from '@/tests/config';
 
-parallel('integration.devops.db-admin', ({ client, db, dbAdmin }) => {
+describe('integration.devops.db-admin', ({ client, db, dbAdmin }) => {
   it('[LONG] works', async () => {
     const namespaces1 = await dbAdmin.listNamespaces();
     assert.ok(!namespaces1.includes('slania'));
