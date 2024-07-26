@@ -245,8 +245,6 @@ export function createCollections<Keys extends string>(colls: Record<Keys, Promi
   const collections: Record<string, Collection> = {}
 
   before(async () => {
-    console.log('sdfjasldfjsda')
-
     const promises = Object.entries(colls).map(([name, promise]) => (<Promise<Collection>>promise).then(coll => <const>[name, coll]));
 
     const entries = await Promise.all(promises);

@@ -35,11 +35,8 @@ before(async () => {
       .map(c => db.dropCollection(c.name, { namespace }));
 
     await Promise.all(promises);
+
+    await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace })
+      .then(c => c.deleteMany({}));
   }
-
-  await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace: OTHER_NAMESPACE })
-    .then(c => c.deleteMany({}));
-
-  await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false })
-    .then(c => c.deleteMany({}));
 });
