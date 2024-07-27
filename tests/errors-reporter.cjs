@@ -1,4 +1,4 @@
-const { Runner, reporters } = require('mocha');
+const { Runner, reporters } = require(['mocha'][0]);
 const util = require('node:util');
 const fs = require('node:fs');
 
