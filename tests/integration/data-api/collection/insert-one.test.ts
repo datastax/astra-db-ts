@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import { DataAPIResponseError, ObjectId, UUID } from '@/src/data-api';
-import { describe, it } from '@/tests/test-utils';
+import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
 describe('integration.data-api.collection.insert-one', { truncateColls: 'default' }, ({ collection }) => {

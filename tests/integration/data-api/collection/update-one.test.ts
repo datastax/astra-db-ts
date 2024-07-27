@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createSampleDocWithMultiLevel } from '@/tests/fixtures';
-import { describe, it } from '@/tests/test-utils';
+import { createSampleDocWithMultiLevel, describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
 describe('integration.data-api.collection.update-one', { truncateColls: 'default' }, ({ collection }) => {

@@ -20,8 +20,7 @@ import { mkDb } from '@/src/data-api/db';
 import { StaticTokenProvider } from '@/src/common';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { DataAPIClient } from '@/src/client';
-import { describe, it } from '@/tests/test-utils';
-import { DEMO_APPLICATION_URI, TEST_APPLICATION_URI } from '@/tests/config';
+import { DEMO_APPLICATION_URI, describe, it, TEST_APPLICATION_URI } from '@/tests/testlib';
 
 describe('unit.data-api.db', () => {
   const internalOps = (data?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({

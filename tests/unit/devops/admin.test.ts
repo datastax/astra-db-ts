@@ -18,7 +18,7 @@ import { DEFAULT_DEVOPS_API_ENDPOINTS } from '@/src/api';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { StaticTokenProvider } from '@/src/common';
 import { DataAPIClient } from '@/src/client';
-import { describe, it } from '@/tests/test-utils';
+import { describe, it } from '@/tests/testlib';
 
 describe('unit.devops.admin', () => {
   const internalOps = (data?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({

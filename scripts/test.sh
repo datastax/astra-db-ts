@@ -3,9 +3,9 @@
 # Define necessary commands
 test_cmd="npx ts-mocha --paths -p tsconfig.json --recursive tests/prelude.test.ts tests/unit tests/integration tests/postlude.test.ts --extension .test.ts -t 90000 --reporter tests/errors-reporter.cjs"
 
-all_tests_cmd="ASTRA_RUN_LONG_TESTS=1 ASTRA_RUN_ADMIN_TESTS=1 ASTRA_RUN_VECTORIZE_TESTS=1 $test_cmd"
+all_tests_cmd="CLIENT_RUN_LONG_TESTS=1 CLIENT_RUN_ADMIN_TESTS=1 CLIENT_RUN_VECTORIZE_TESTS=1 $test_cmd"
 
-light_tests_cmd="ASTRA_RUN_LONG_TESTS= ASTRA_RUN_ADMIN_TESTS= ASTRA_RUN_VECTORIZE_TESTS= $test_cmd"
+light_tests_cmd="CLIENT_RUN_LONG_TESTS= CLIENT_RUN_ADMIN_TESTS= CLIENT_RUN_VECTORIZE_TESTS= $test_cmd"
 
 run_lint_cmd="npm run lint"
 
@@ -45,6 +45,13 @@ while [ $# -gt 0 ]; do
       shift
       filter="$1"
       ;;
+    "-g")
+      shift
+      regex="$1"
+      ;;
+    "-i")
+      filter_invert=1
+      ;;
     "-b")
       bail_early=1
       ;;
@@ -52,15 +59,11 @@ while [ $# -gt 0 ]; do
       shift
       whitelist="$1"
       ;;
-    "--args")
-      shift
-      raw_args="$1"
-      ;;
     *)
       echo "Invalid flag $1"
       echo ""
       echo "Usage:"
-      echo "npm run test -- [--all | --light | --coverage | --prerelease] [-f <filter>] [-w <vectorize_whitelist>] [-b] [--args <raw_args>]"
+      echo "npm run test -- [--all | --light | --coverage | --prerelease] [-f <filter> | -g <regex>] [-i] [-w <vectorize_whitelist>] [-b]"
       echo "or"
       echo "npm run test -- <--types>"
       exit
@@ -70,8 +73,13 @@ while [ $# -gt 0 ]; do
 done
 
 # Ensure the flags are compatible with each other
-if [ "$test_type" = '--types' ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$raw_args" ] || [ -n "$whitelist" ]; }; then
-  echo "Can't use a filter, bail, whitelist, or args flag when typechecking"
+if [ "$test_type" = '--types' ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$regex" ] || [ -n "$filter_invert" ] || [ -n "$whitelist" ]; }; then
+  echo "Can't use a filter, bail, whitelist flags when typechecking"
+  exit
+fi
+
+if [ -n "$filter" ] && [ -n "$regex" ]; then
+  echo "Can't have both a 'filter' and a 'regex' flag"
   exit
 fi
 
@@ -98,19 +106,23 @@ case "$test_type" in
 esac
 
 if [ -n "$filter" ]; then
-  cmd_to_run="MOCHA_TESTS_FILTER='$filter' $cmd_to_run -f '$filter'"
+  cmd_to_run="CLIENT_TESTS_FILTER='$filter' CLIENT_TESTS_FILTER_TYPE='match' $cmd_to_run"
+fi
+
+if [ -n "$regex" ]; then
+  cmd_to_run="CLIENT_TESTS_FILTER='$regex' CLIENT_TESTS_FILTER_TYPE='regex' $cmd_to_run"
+fi
+
+if [ -n "$filter_invert" ]; then
+  cmd_to_run="CLIENT_TESTS_FILTER_INVERT=1 $cmd_to_run"
 fi
 
 if [ -n "$bail_early" ]; then
   cmd_to_run="$cmd_to_run -b"
 fi
 
-if [ -n "$raw_args" ]; then
-  cmd_to_run="$cmd_to_run $raw_args"
-fi
-
 if [ -n "$whitelist" ]; then
-  cmd_to_run="VECTORIZE_WHITELIST='$whitelist' $cmd_to_run"
+  cmd_to_run="CLIENT_VECTORIZE_WHITELIST='$whitelist' $cmd_to_run"
 fi
 
 # Run it

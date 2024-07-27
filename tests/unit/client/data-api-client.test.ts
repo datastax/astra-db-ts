@@ -18,9 +18,15 @@ import { FetcherResponseInfo } from '@/src/api';
 import { FetchH2 } from '@/src/api/fetch/fetch-h2';
 import { FetcherRequestInfo } from '@/src/api/fetch/types';
 import { DataAPIEnvironments, UsernamePasswordTokenProvider } from '@/src/common';
-import { describe, it } from '@/tests/test-utils';
+import {
+  DEMO_APPLICATION_URI,
+  describe,
+  it,
+  OTHER_NAMESPACE,
+  TEST_APPLICATION_TOKEN,
+  TEST_APPLICATION_URI,
+} from '@/tests/testlib';
 import assert from 'assert';
-import { DEMO_APPLICATION_URI, OTHER_NAMESPACE, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/config';
 
 describe('unit.client.data-api-client', () => {
   it('should accept valid tokens', () => {

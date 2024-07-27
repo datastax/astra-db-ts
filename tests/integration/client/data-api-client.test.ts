@@ -18,14 +18,16 @@ import assert from 'assert';
 import { DataAPIResponseError, DataAPITimeoutError } from '@/src/data-api';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_NAMESPACE, DEFAULT_TIMEOUT } from '@/src/api';
-import { describe, it, parallel } from '@/tests/test-utils';
 import {
   DEFAULT_COLLECTION_NAME,
+  describe,
   ENVIRONMENT,
+  it,
   OTHER_NAMESPACE,
+  parallel,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
-} from '@/tests/config';
+} from '@/tests/testlib';
 
 describe('integration.client.data-api-client', () => {
   parallel('db', () => {

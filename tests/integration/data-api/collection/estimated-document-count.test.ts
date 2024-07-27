@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { describe, it } from '@/tests/test-utils';
+import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
 describe('integration.data-api.collection.estimated-document-count', ({ collection }) => {

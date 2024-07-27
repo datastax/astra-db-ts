@@ -17,8 +17,14 @@ import { DataAPIClient } from '@/src/client';
 import { DEFAULT_NAMESPACE } from '@/src/api';
 import assert from 'assert';
 import { ObjectId, UUID } from '@/src/data-api';
-import { describe, it } from '@/tests/test-utils';
-import { DEFAULT_COLLECTION_NAME, ENVIRONMENT, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/config';
+import {
+  DEFAULT_COLLECTION_NAME,
+  describe,
+  ENVIRONMENT,
+  it,
+  TEST_APPLICATION_TOKEN,
+  TEST_APPLICATION_URI,
+} from '@/tests/testlib';
 
 describe('integration.misc.code-samples', { truncateColls: 'default' }, () => {
   const token = TEST_APPLICATION_TOKEN;

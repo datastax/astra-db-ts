@@ -14,8 +14,7 @@
 // noinspection DuplicatedCode
 
 import { DataAPIError, DeleteManyError } from '@/src/data-api';
-import { initCollectionWithFailingClient } from '@/tests/fixtures';
-import { describe, it } from '@/tests/test-utils';
+import { describe, initCollectionWithFailingClient, it } from '@/tests/testlib';
 import assert from 'assert';
 
 describe('integration.data-api.collection.delete-many', { truncateColls: 'default' }, ({ collection }) => {

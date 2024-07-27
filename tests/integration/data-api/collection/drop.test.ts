@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { describe, it } from '@/tests/test-utils';
+import { describe, EPHEMERAL_COLLECTION_NAME, it } from '@/tests/testlib';
 import assert from 'assert';
-import { EPHEMERAL_COLLECTION_NAME } from '@/tests/config';
 
 describe('integration.data-api.collection.drop', ({ db }) => {
   it('[LONG] drops itself', async () => {

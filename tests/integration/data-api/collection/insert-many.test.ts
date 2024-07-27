@@ -14,8 +14,7 @@
 // noinspection DuplicatedCode
 
 import { DataAPIError, DataAPITimeoutError, InsertManyError, ObjectId, UUID } from '@/src/data-api';
-import { initCollectionWithFailingClient } from '@/tests/fixtures';
-import { describe, it } from '@/tests/test-utils';
+import { describe, initCollectionWithFailingClient, it } from '@/tests/testlib';
 import assert from 'assert';
 
 describe('integration.data-api.collection.insert-many', { truncateColls: 'default' }, ({ collection }) => {

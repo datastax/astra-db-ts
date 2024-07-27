@@ -11,17 +11,20 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+/* eslint-disable prefer-const */
 
-import { describe, it } from '@/tests/testlib';
-import assert from 'assert';
+import { describe, initTestObjects, it, SuiteBlock } from '@/tests/testlib';
 
-describe('integration.data-api.collection.delete-all', { truncateColls: 'default' }, ({ collection }) => {
-  it('should deleteAll', async () => {
-    const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
-    const res = await collection.insertMany(docList);
-    assert.strictEqual(res.insertedCount, 20);
-    await collection.deleteAll();
-    const numDocs = await collection.countDocuments({}, 1000);
-    assert.strictEqual(numDocs, 0);
+interface DynamicTestConfig {
+  (name: string, fn: SuiteBlock): void;
+  (name: string, fn: SuiteBlock): void;
+}
+
+export let dynamic: DynamicTestConfig;
+
+dynamic = function (name: string, fn: SuiteBlock) {
+  describe(`(dynamic) ${name}`, function () {
+    before(() => fn.call(this, initTestObjects()));
+    it('Dummy test that always runs', () => {});
   });
-});
+}

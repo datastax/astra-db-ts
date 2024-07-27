@@ -14,18 +14,20 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { initTestObjects } from '@/tests/fixtures';
+import {
+  DEFAULT_COLLECTION_NAME,
+  describe,
+  initTestObjects,
+  it,
+  OTHER_NAMESPACE,
+  parallel,
+  TEST_APPLICATION_TOKEN,
+  TEST_APPLICATION_URI,
+} from '@/tests/testlib';
 import { CollectionAlreadyExistsError, DataAPIResponseError, UUID } from '@/src/data-api';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_NAMESPACE } from '@/src/api';
 import { DataAPIClient } from '@/src/client';
 import { CollectionNotFoundError } from '@/src/data-api/errors';
-import { describe, it, parallel } from '@/tests/test-utils';
-import {
-  DEFAULT_COLLECTION_NAME,
-  OTHER_NAMESPACE,
-  TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
-} from '@/tests/config';
 
 describe('integration.data-api.db', ({ db }) => {
   parallel('[LONG] createCollection', { dropEphemeral: 'after' }, () => {

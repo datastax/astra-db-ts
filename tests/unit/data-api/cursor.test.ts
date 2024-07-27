@@ -16,7 +16,7 @@
 import assert from 'assert';
 import { FindCursor, CursorIsStartedError } from '@/src/data-api';
 import { DataAPIHttpClient } from '@/src/api';
-import { describe, it } from '@/tests/test-utils';
+import { describe, it } from '@/tests/testlib';
 
 describe('unit.data-api.cursor', () => {
   let httpClient: DataAPIHttpClient;

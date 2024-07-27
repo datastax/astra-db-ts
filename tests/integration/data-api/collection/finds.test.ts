@@ -17,8 +17,9 @@ import {
   createSampleDoc2WithMultiLevel,
   createSampleDoc3WithMultiLevel,
   createSampleDocWithMultiLevel,
-} from '@/tests/fixtures';
-import { describe, it } from '@/tests/test-utils';
+  describe,
+  it,
+} from '@/tests/testlib';
 import assert from 'assert';
 
 // I was going to go through split this up but yeah... no

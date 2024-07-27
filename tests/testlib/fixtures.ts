@@ -26,7 +26,7 @@ import {
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
   USE_HTTP2,
-} from '@/tests/config';
+} from '@/tests/testlib/config';
 
 export const initTestObjects = (preferHttp2 = USE_HTTP2, environment: typeof ENVIRONMENT = ENVIRONMENT) => {
   const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {

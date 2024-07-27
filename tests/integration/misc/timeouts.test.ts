@@ -17,9 +17,16 @@ import { DataAPITimeoutError } from '@/src/data-api';
 import { DEFAULT_NAMESPACE, HttpMethods } from '@/src/api';
 import { DevOpsAPITimeoutError } from '@/src/devops';
 import { DataAPIClient } from '@/src/client';
-import { describe, it, parallel } from '@/tests/test-utils';
+import {
+  DEFAULT_COLLECTION_NAME,
+  describe,
+  ENVIRONMENT,
+  it,
+  parallel,
+  TEST_APPLICATION_TOKEN,
+  TEST_APPLICATION_URI,
+} from '@/tests/testlib';
 import assert from 'assert';
-import { DEFAULT_COLLECTION_NAME, ENVIRONMENT, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/config';
 
 describe('integration.misc.timeouts', ({ collection, dbAdmin }) => {
   parallel('in data-api', () => {

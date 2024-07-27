@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import { TooManyDocumentsToCountError } from '@/src/data-api';
-import { describe, it } from '@/tests/test-utils';
+import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
 describe('integration.data-api.collection.count-documents', { truncateColls: 'default' }, ({ collection }) => {

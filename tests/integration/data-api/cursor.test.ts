@@ -15,7 +15,7 @@
 
 import { CursorIsStartedError, DataAPIResponseError, FindCursor, SomeDoc } from '@/src/data-api';
 import { DataAPIHttpClient } from '@/src/api';
-import { describe, it, parallel } from '@/tests/test-utils';
+import { describe, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
 describe('integration.data-api.cursor', ({ collection }) => {

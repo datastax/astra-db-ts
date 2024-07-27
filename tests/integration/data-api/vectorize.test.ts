@@ -24,9 +24,8 @@ import {
   EmbeddingProviderInfo,
   EmbeddingProviderModelInfo,
 } from '@/src/devops/types/db-admin/find-embedding-providers';
-import { describe, it, parallel } from '@/tests/test-utils';
+import { describe, dynamic, ENVIRONMENT, it, parallel } from '@/tests/testlib';
 import { DbAdmin } from '@/src/devops';
-import { ENVIRONMENT } from '@/tests/config';
 import * as crypto from 'node:crypto';
 
 type VectorizeTestSpec = {
@@ -46,41 +45,37 @@ type VectorizeTestSpec = {
   }
 }
 
-describe('[VECTORIZE] [LONG] integration.data-api.vectorize', ({ db, dbAdmin }) => {
-  before(async () => {
-    const tests: VectorizeTest[] = await initVectorTests(dbAdmin).catch((e: unknown) => {
-      console.error('Failed to initialize vectorize tests', e);
-      return [];
-    });
-
-    const names = tests.map((test) =>
-      test.testName[0] + crypto
-        .createHash('md5')
-        .update(test.testName)
-        .digest('hex'),
-    );
-
-    if (tests.length === 0) {
-      return;
-    }
-
-    describe('[VECTORIZE] generated test', { dropEphemeral: 'after' }, () => {
-      createVectorizeProvidersTest(db, tests[0], names[0]);
-      createVectorizeParamTests(db, tests[0], names[0]);
-    });
-
-    tests.shift();
-
-    for (let i = 0, n = tests.length; i < n; i += 7) {
-      parallel('[VECTORIZE] generated tests', { dropEphemeral: 'after' }, () => {
-        for (let j = 0; j < 7 && i + j < n; j++) {
-          createVectorizeProvidersTest(db, tests[i + j], names[i + j]);
-        }
-      });
-    }
+dynamic('[VECTORIZE] [LONG] integration.data-api.vectorize', async ({ db, dbAdmin }) => {
+  const tests: VectorizeTest[] = await initVectorTests(dbAdmin).catch((e: unknown) => {
+    console.error('Failed to initialize vectorize tests', e);
+    return [];
   });
 
-  it('dummy test so before is executed', () => { assert.ok(true) });
+  const names = tests.map((test) =>
+    test.testName[0] + crypto
+      .createHash('md5')
+      .update(test.testName)
+      .digest('hex'),
+  );
+
+  if (tests.length === 0) {
+    return;
+  }
+
+  describe('[VECTORIZE] generated test', { dropEphemeral: 'after' }, () => {
+    createVectorizeProvidersTest(db, tests[0], names[0]);
+    createVectorizeParamTests(db, tests[0], names[0]);
+  });
+
+  tests.shift();
+
+  for (let i = 0, n = tests.length; i < n; i += 7) {
+    parallel('[VECTORIZE] generated tests', { dropEphemeral: 'after' }, () => {
+      for (let j = 0; j < 7 && i + j < n; j++) {
+        createVectorizeProvidersTest(db, tests[i + j], names[i + j]);
+      }
+    });
+  }
 });
 
 const initVectorTests = async (dbAdmin: DbAdmin) => {
@@ -88,7 +83,7 @@ const initVectorTests = async (dbAdmin: DbAdmin) => {
 
   const { embeddingProviders } = await dbAdmin.findEmbeddingProviders();
 
-  const whitelist = process.env.VECTORIZE_WHITELIST ?? '.*';
+  const whitelist = process.env.CLIENT_VECTORIZE_WHITELIST ?? '.*';
 
   const test = whitelist.startsWith('$limit:')
     ? (_: string, i: number) => i < +whitelist.split('$limit:')[1]

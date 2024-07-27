@@ -23,8 +23,15 @@ import {
 import { nullish, Ref, StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvider } from '@/src/common';
 import assert from 'assert';
 import { EmbeddingHeadersProvider } from '@/src/data-api';
-import { describe, it, parallel } from '@/tests/test-utils';
-import { DEFAULT_COLLECTION_NAME, ENVIRONMENT, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/config';
+import {
+  DEFAULT_COLLECTION_NAME,
+  describe,
+  ENVIRONMENT,
+  it,
+  parallel,
+  TEST_APPLICATION_TOKEN,
+  TEST_APPLICATION_URI,
+} from '@/tests/testlib';
 
 describe('integration.misc.headers', { truncateColls: 'default' }, () => {
   const fetchNative = new FetchNative();

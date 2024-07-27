@@ -17,8 +17,7 @@ import assert from 'assert';
 import { DevOpsAPIResponseError } from '@/src/devops';
 import { DEFAULT_NAMESPACE, HttpMethods } from '@/src/api';
 import { TimeoutManager } from '@/src/api/timeout-managers';
-import { background } from '@/tests/test-utils';
-import { TEMP_DB_NAME } from '@/tests/config';
+import { background, TEMP_DB_NAME } from '@/tests/testlib';
 
 background('[ADMIN] [LONG] [NOT-DEV] [ASTRA] integration.devops.lifecycle', async ({ client }) => {
   for (const db of await client.admin().listDatabases()) {

@@ -15,8 +15,7 @@
 
 import assert from 'assert';
 import { DEFAULT_NAMESPACE } from '@/src/api';
-import { it, describe } from '@/tests/test-utils';
-import { ENVIRONMENT, TEST_APPLICATION_URI } from '@/tests/config';
+import { describe, ENVIRONMENT, it, TEST_APPLICATION_URI } from '@/tests/testlib';
 
 describe('integration.devops.db-admin', ({ client, db, dbAdmin }) => {
   it('[LONG] works', async () => {

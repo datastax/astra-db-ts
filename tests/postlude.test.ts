@@ -12,17 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { globalBackgroundTests } from '@/tests/test-utils';
+import { globalBackgroundTests } from '@/tests/testlib';
 
 describe('(background)', () => {
   globalBackgroundTests.forEach((test) => {
     it(test.name, async function () {
-      const result = await test.res;
+      if ('skipped' in test) {
+        this.skip();
+      } else {
+        const result = await test.res;
 
-      this.test!.title = `${test.name} (${~~result.ms}ms)`;
+        this.test!.title = `${test.name} (${~~result.ms}ms)`;
 
-      if (result.error) {
-        throw result.error;
+        if (result.error) {
+          throw result.error;
+        }
       }
     });
   });

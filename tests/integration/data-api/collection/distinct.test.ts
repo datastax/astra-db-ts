@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { describe, it } from '@/tests/test-utils';
+import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
 describe('integration.data-api.collection.distinct', { truncateColls: 'default' }, ({ collection }) => {

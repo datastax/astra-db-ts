@@ -67,13 +67,13 @@ Tests can be given certain tags to allow for more granular control over which te
 
 To enable these some of these tags, you can set the corresponding environment variables to some values. The env 
 variables are in the `env.example` file, but they're repeated here for convenience:
-- `ASTRA_RUN_VECTORIZE_TESTS`
-- `ASTRA_RUN_LONG_TESTS`
-- `ASTRA_RUN_ADMIN_TESTS`
+- `CLIENT_RUN_VECTORIZE_TESTS`
+- `CLIENT_RUN_LONG_TESTS`
+- `CLIENT_RUN_ADMIN_TESTS`
 
 Or you can run the tests by doing something like
 ```shell
-env ASTRA_RUN_LONG_TESTS=1 npm run test
+env CLIENT_RUN_LONG_TESTS=1 npm run test
 ```
 
 The `PROD` and `DEV` tags are enabled/disabled automatically, inferred from the astra endpoint URL.
@@ -103,7 +103,7 @@ test suite harder to manage.
 ### Running vectorize tests
 To run vectorize tests, you need to have a vectorize-enabled kube running, with the correct tags enabled.
 
-Ensure `ASTRA_RUN_VECTORIZE_TESTS` and `ASTRA_RUN_LONG_TESTS` are enabled as well (or just pass the `--all` flag to
+Ensure `CLIENT_RUN_VECTORIZE_TESTS` and `CLIENT_RUN_LONG_TESTS` are enabled as well (or just pass the `--all` flag to
 the test script).
 
 Lastly, you must create a file, `vectorize_tests.json`, in the root folder, with the following format:
@@ -149,11 +149,11 @@ This spec is cross-referenced with `findEmbeddingProviders` to create a suite of
 parameter, with tests names of the format `providerName@modelName@authType@dimension`, where each section is another
 potential branch.
 
-These branches can be narrowed down with the `VECTORIZE_WHITELIST` env var (or pass `-w <vectorize_whitelist>` to
+These branches can be narrowed down with the `CLIENT_VECTORIZE_WHITELIST` env var (or pass `-w <vectorize_whitelist>` to
 the test script). It's a regex parameter which only needs to match part of the test name to whitelist (so use `^$` as 
 necessary). 
 
-An example would be `VECTORIZE_WHITELIST=^.*@(header|none)@(default|specified)` to only run the vectorize tests using
+An example would be `CLIENT_VECTORIZE_WHITELIST=^.*@(header|none)@(default|specified)` to only run the vectorize tests using
 the header auth (or no-auth for nvidia), and only using the default/specified version of the dimension, essentially 
 stopping creating additional branches off of authentication and vector dimension to reduce the number of near-duplicate
 tests run.

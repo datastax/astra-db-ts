@@ -12,16 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { describe, it } from '@/tests/testlib';
-import assert from 'assert';
+import { initTestObjects } from '@/tests/testlib/fixtures';
 
-describe('integration.data-api.collection.delete-all', { truncateColls: 'default' }, ({ collection }) => {
-  it('should deleteAll', async () => {
-    const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
-    const res = await collection.insertMany(docList);
-    assert.strictEqual(res.insertedCount, 20);
-    await collection.deleteAll();
-    const numDocs = await collection.countDocuments({}, 1000);
-    assert.strictEqual(numDocs, 0);
-  });
-});
+export const GLOBAL_FIXTURES = initTestObjects();
+
+export const TEST_FILTER_PASSES: boolean[] = [];

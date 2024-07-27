@@ -13,8 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { createSampleDoc2WithMultiLevel, createSampleDocWithMultiLevel } from '@/tests/fixtures';
-import { describe, it } from '@/tests/test-utils';
+import { createSampleDoc2WithMultiLevel, createSampleDocWithMultiLevel, describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
 describe('integration.data-api.collection.replace-one', { truncateColls: 'default' }, ({ collection }) => {

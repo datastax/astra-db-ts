@@ -16,9 +16,9 @@
 import { DataAPIClient } from '@/src/client';
 import { ObjectId, UUID, VectorDoc } from '@/src/data-api';
 import { DEFAULT_NAMESPACE } from '@/src/api';
-import { it, parallel } from '@/tests/test-utils';
+import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
-import { ENVIRONMENT, OTHER_NAMESPACE, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/config';
+import { ENVIRONMENT, OTHER_NAMESPACE, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/testlib';
 
 parallel('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
   it('[LONG] works for the quickstart', async () => {

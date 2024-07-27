@@ -15,8 +15,7 @@
 
 import assert from 'assert';
 import { ObjectId, UUID } from '@/src/data-api';
-import { createCollections, it, parallel } from '@/tests/test-utils';
-import { DEFAULT_COLLECTION_NAME, EPHEMERAL_COLLECTION_NAME } from '@/tests/config';
+import { createCollections, DEFAULT_COLLECTION_NAME, EPHEMERAL_COLLECTION_NAME, it, parallel } from '@/tests/testlib';
 
 parallel('[LONG] integration.data-api.ids', { dropEphemeral: 'after' }, ({ db }) => {
   const collections = createCollections(() => ({

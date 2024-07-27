@@ -16,7 +16,7 @@
 import { DataAPIResponseError, DeleteManyError, InsertManyError, SomeDoc, UpdateManyError } from '@/src/data-api';
 import { DeleteManyResult, InsertManyResult, UpdateManyResult } from '@/src/data-api/types';
 import { mkRespErrorFromResponse, mkRespErrorFromResponses } from '@/src/data-api/errors';
-import { describe, it } from '@/tests/test-utils';
+import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
 describe('unit.data-api.errors', () => {

@@ -13,20 +13,11 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { background } from '@/tests/test-utils';
+import { dynamic, describe } from '@/tests/testlib';
 import assert from 'assert';
 
-// describe('unit.testing-123', () => {
-//   it('123', () => {
-//     console.log('second');
-//   });
+// describe('testing.test', () => {
+//   it('sdfjaslkfads', () => {
 //
-//   it('abc', () => {
-//     console.log('third');
 //   });
-// });
-//
-// background('unit.testing-abc', async () => {
-//   console.log('first');
-//   assert.ok('123');
 // });

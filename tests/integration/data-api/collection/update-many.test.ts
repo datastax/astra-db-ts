@@ -14,8 +14,7 @@
 // noinspection DuplicatedCode
 
 import { DataAPIError, UpdateManyError } from '@/src/data-api';
-import { initCollectionWithFailingClient, sampleUsersList } from '@/tests/fixtures';
-import { describe, it } from '@/tests/test-utils';
+import { describe, initCollectionWithFailingClient, it, sampleUsersList } from '@/tests/testlib';
 import assert from 'assert';
 
 describe('integration.data-api.collection.update-many', { truncateColls: 'default' }, ({ collection }) => {
