@@ -16,6 +16,10 @@ class ErrorsReporter extends reporters.Spec {
   epilogue() {
     super.epilogue();
 
+    if (!this.#erroredTests) {
+      return;
+    }
+
     let output = '';
     let existingHierarchy = [];
 
@@ -43,7 +47,9 @@ class ErrorsReporter extends reporters.Spec {
       output += '\n```\n';
     }
 
-    fs.writeFileSync('etc/test-errors-report.md', output);
+    const timestamp = new Date().toISOString().replaceAll(':', '_');
+
+    fs.writeFileSync(`etc/test-errors-report-${timestamp}.md`, output);
   }
 }
 
