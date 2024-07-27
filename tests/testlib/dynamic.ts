@@ -13,7 +13,7 @@
 // limitations under the License.
 /* eslint-disable prefer-const */
 
-import { describe, initTestObjects, it, SuiteBlock } from '@/tests/testlib';
+import { describe, initTestObjects, SuiteBlock } from '@/tests/testlib';
 
 interface DynamicTestConfig {
   (name: string, fn: SuiteBlock): void;
