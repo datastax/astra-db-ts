@@ -23,6 +23,8 @@ import {
 import { DEFAULT_NAMESPACE } from '@/src/api';
 import { Collection } from '@/src/data-api';
 
+const globalFixtures = initTestObjects();
+
 let inParallelBlock: boolean = false;
 let globalTests: { name: string, fn: ParallelTest; }[] = [];
 
@@ -52,9 +54,16 @@ parallel = function (name: string, optsOrFn: SuiteOptions | ParallelBlock, maybe
       throw new Error('Can\'t nest parallel blocks');
     }
 
+    const [oldBeforeEach, oldAfterEach] = [beforeEach, afterEach];
+
+    global.beforeEach = () => { throw new Error('Can\'t use `beforeEach` in a parallel block'); }
+    global.afterEach = () => { throw new Error('Can\'t use `afterEach` in a parallel block'); }
+
     inParallelBlock = true;
     fn.call(this, fixtures);
     inParallelBlock = false;
+
+    [global.beforeEach, global.afterEach] = [oldBeforeEach, oldAfterEach];
 
     let tests = globalTests;
     let results: { ms: number, error?: Error }[];
@@ -62,9 +71,17 @@ parallel = function (name: string, optsOrFn: SuiteOptions | ParallelBlock, maybe
     before(async () => {
       const promises = tests.map(async (test) => {
         const startTime = performance.now();
+        let error: Error | undefined;
+
+        try {
+          await test.fn();
+        } catch (e: any) {
+          error = e;
+        }
 
         return {
-          error: await test.fn().catch(e => e),
+          name: test.name,
+          error: error,
           ms: performance.now() - startTime,
         };
       });
@@ -97,6 +114,10 @@ interface TaggableTestFunction {
 
 export let it: TaggableTestFunction;
 
+const parallelItErrorProxy = new Proxy({}, {
+  get() { throw new Error('Can not use return type of `it` when in a parallel block') }
+});
+
 it = function (name: string, fn: TestFn) {
   const tags = processTags(name);
 
@@ -107,7 +128,7 @@ it = function (name: string, fn: TestFn) {
 
   if (inParallelBlock) {
     globalTests.push({ name, fn: <any>modifiedFn });
-    return null!;
+    return parallelItErrorProxy as any;
   }
 
   return global.it(name, modifiedFn);
@@ -143,21 +164,6 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
   const fixtures = initTestObjects();
   const tags = processTags(name);
 
-  async function dropEphemeralColls() {
-    const promises: Promise<boolean>[] = [];
-
-    for (const namespace of [DEFAULT_NAMESPACE, OTHER_NAMESPACE]) {
-      const collections = await fixtures.db.listCollections({ namespace });
-
-      collections
-        .filter(c => c.name !== DEFAULT_COLLECTION_NAME)
-        .forEach(c => promises.push(fixtures.db.dropCollection(c.name, { namespace })));
-    }
-
-    await Promise.all(promises);
-    await new Promise((resolve) => setTimeout(resolve, 100));
-  }
-
   function modifiedFn(this: Mocha.Suite) {
     before(function () {
       assertTestsEnabled.call(this, tags);
@@ -187,6 +193,21 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
   }
 
   return global.describe(name, modifiedFn);
+}
+
+async function dropEphemeralColls() {
+  const promises: Promise<boolean>[] = [];
+
+  for (const namespace of [DEFAULT_NAMESPACE, OTHER_NAMESPACE]) {
+    const collections = await globalFixtures.db.listCollections({ namespace });
+
+    collections
+      .filter(c => c.name !== DEFAULT_COLLECTION_NAME)
+      .forEach(c => promises.push(globalFixtures.db.dropCollection(c.name, { namespace })));
+  }
+
+  await Promise.all(promises);
+  await new Promise((resolve) => setTimeout(resolve, 100));
 }
 
 function processTags(tags: string): string[] {

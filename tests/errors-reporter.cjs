@@ -2,6 +2,8 @@ const { Runner, reporters } = require(['mocha'][0]);
 const util = require('node:util');
 const fs = require('node:fs');
 
+const REPORTS_DIR = 'etc/test-errors-reports';
+
 class ErrorsReporter extends reporters.Spec {
   #erroredTests = [];
 
@@ -16,7 +18,7 @@ class ErrorsReporter extends reporters.Spec {
   epilogue() {
     super.epilogue();
 
-    if (!this.#erroredTests) {
+    if (!this.#erroredTests.length) {
       return;
     }
 
@@ -47,7 +49,11 @@ class ErrorsReporter extends reporters.Spec {
 
     const timestamp = new Date().toISOString().replaceAll(':', '_');
 
-    fs.writeFileSync(`etc/test-errors-report-${timestamp}.md`, output);
+    if (!fs.existsSync(REPORTS_DIR)){
+      fs.mkdirSync(REPORTS_DIR);
+    }
+
+    fs.writeFileSync(`${REPORTS_DIR}/${timestamp}.md`, output);
   }
 }
 

@@ -138,4 +138,4 @@ temp
 tsdoc-metadata.json
 
 vectorize_test_spec.json
-etc/test-errors-report-*.md
+etc/test-errors-reports/
