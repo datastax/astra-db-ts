@@ -19,12 +19,12 @@ import { describe, it } from '@/tests/test-utils';
 
 describe('unit.common.embedding-providers', () => {
   describe('EmbeddingAPIKeyHeaderProvider', () => {
-    it('should provide the proper header for an api key', async () => {
+    it('should provide the proper header for an api key', () => {
       const ehp = new EmbeddingAPIKeyHeaderProvider('key');
       assert.deepStrictEqual(ehp.getHeaders(), { 'x-embedding-api-key': 'key' });
     });
 
-    it('should provide no headers for a nullish api key', async () => {
+    it('should provide no headers for a nullish api key', () => {
       const ehp1 = new EmbeddingAPIKeyHeaderProvider(undefined);
       const ehp2 = new EmbeddingAPIKeyHeaderProvider(null);
       assert.deepStrictEqual(ehp1.getHeaders(), {});
@@ -33,7 +33,7 @@ describe('unit.common.embedding-providers', () => {
   });
 
   describe('AWSEmbeddingHeadersProvider', () => {
-    it('should provide the proper headers for the AWS access keys', async () => {
+    it('should provide the proper headers for the AWS access keys', () => {
       const tp = new AWSEmbeddingHeadersProvider('access', 'secret');
       assert.deepStrictEqual(tp.getHeaders(), { 'x-embedding-access-id': 'access', 'x-embedding-secret-id': 'secret' });
     });

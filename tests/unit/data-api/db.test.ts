@@ -34,7 +34,7 @@ describe('unit.data-api.db', () => {
   });
 
   describe('constructor tests', () => {
-    it('should allow db construction from endpoint', async () => {
+    it('should allow db construction from endpoint', () => {
       const db = new Db('https://id-region.apps.astra.datastax.com', internalOps(), null);
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
@@ -47,26 +47,26 @@ describe('unit.data-api.db', () => {
   });
 
   describe('mkDb tests', () => {
-    it('should allow db construction from endpoint, using default options', async () => {
+    it('should allow db construction from endpoint, using default options', () => {
       const db = mkDb(internalOps(), 'https://id-region.apps.astra.datastax.com', null, null);
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
     });
 
-    it('should allow db construction from id + region, using default options', async () => {
+    it('should allow db construction from id + region, using default options', () => {
       const db = mkDb(internalOps(), 'id', 'region', null);
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
     });
 
-    it('should allow db construction from endpoint, overwriting options', async () => {
+    it('should allow db construction from endpoint, overwriting options', () => {
       const db = mkDb(internalOps({ dataApiPath: 'old', namespace: 'old' }), 'https://id-region.apps.astra.datastax.com', { dataApiPath: 'new', namespace: 'new' }, null);
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, 'https://id-region.apps.astra.datastax.com/new');
       assert.strictEqual(db.namespace, 'new');
     });
 
-    it('should allow db construction from id + region, overwriting options', async () => {
+    it('should allow db construction from id + region, overwriting options', () => {
       const db = mkDb(internalOps({ dataApiPath: 'old', namespace: 'old' }), 'id', 'region', { dataApiPath: 'new', namespace: 'new' });
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, 'https://id-region.apps.astra.datastax.com/new');
