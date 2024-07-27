@@ -16,11 +16,11 @@
 import { DataAPIClient } from '@/src/client';
 import { ObjectId, UUID, VectorDoc } from '@/src/data-api';
 import { DEFAULT_NAMESPACE } from '@/src/api';
-import { describe, it } from '@/tests/test-utils';
+import { it, parallel } from '@/tests/test-utils';
 import assert from 'assert';
 import { ENVIRONMENT, OTHER_NAMESPACE, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/config';
 
-describe('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
+parallel('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
   it('[LONG] works for the quickstart', async () => {
     interface Idea extends VectorDoc {
       idea: string,
