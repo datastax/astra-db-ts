@@ -23,10 +23,19 @@ import {
 import { DEFAULT_NAMESPACE } from '@/src/api';
 import { Collection } from '@/src/data-api';
 
-const globalFixtures = initTestObjects();
+const TESTS_FILTER = (process.env.MOCHA_TESTS_FILTER)
+  ? RegExp(process.env.MOCHA_TESTS_FILTER)
+  : /.*/;
+
+const GLOBAL_FIXTURES = initTestObjects();
 
 let inParallelBlock: boolean = false;
-let globalTests: { name: string, fn: ParallelTest; }[] = [];
+let globalTests: ParallelTestSpec [] = [];
+
+interface ParallelTestSpec {
+  name: string,
+  fn: ParallelTest,
+}
 
 type ParallelBlock = (this: Mocha.Suite, fixtures: ReturnType<typeof initTestObjects>) => void;
 type ParallelTest = () => Promise<void>;
@@ -71,17 +80,9 @@ parallel = function (name: string, optsOrFn: SuiteOptions | ParallelBlock, maybe
     before(async () => {
       const promises = tests.map(async (test) => {
         const startTime = performance.now();
-        let error: Error | undefined;
-
-        try {
-          await test.fn();
-        } catch (e: any) {
-          error = e;
-        }
 
         return {
-          name: test.name,
-          error: error,
+          error: await tryCatchErr(test.fn),
           ms: performance.now() - startTime,
         };
       });
@@ -195,15 +196,62 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
   return global.describe(name, modifiedFn);
 }
 
+export const globalBackgroundTests: BackgroundTestSpec[] = [];
+
+interface BackgroundTestSpec {
+  name: string,
+  res: Promise<{
+    error?: Error,
+    ms: number,
+  }>
+}
+
+type BackgroundTest = (fixtures: ReturnType<typeof initTestObjects>) => Promise<void>;
+
+interface BackgroundTestsBlock {
+  (name: string, fn: BackgroundTest): void;
+  (name: string, fn: BackgroundTest): void;
+}
+
+export let background: BackgroundTestsBlock;
+
+background = function (name: string, test: BackgroundTest) {
+  if (!TESTS_FILTER.test(name)) {
+    return;
+  }
+
+  async function modifiedFn() {
+    const startTime = performance.now();
+
+    return {
+      error: await tryCatchErr(() => test(initTestObjects())),
+      ms: performance.now() - startTime,
+    };
+  }
+
+  globalBackgroundTests.push({
+    name: name,
+    res: modifiedFn(),
+  });
+}
+
+async function tryCatchErr(fn: () => Promise<void>) {
+  try {
+    await fn();
+  } catch (e: any) {
+    return e as Error;
+  }
+}
+
 async function dropEphemeralColls() {
   const promises: Promise<boolean>[] = [];
 
   for (const namespace of [DEFAULT_NAMESPACE, OTHER_NAMESPACE]) {
-    const collections = await globalFixtures.db.listCollections({ namespace });
+    const collections = await GLOBAL_FIXTURES.db.listCollections({ namespace });
 
     collections
       .filter(c => c.name !== DEFAULT_COLLECTION_NAME)
-      .forEach(c => promises.push(globalFixtures.db.dropCollection(c.name, { namespace })));
+      .forEach(c => promises.push(GLOBAL_FIXTURES.db.dropCollection(c.name, { namespace })));
   }
 
   await Promise.all(promises);

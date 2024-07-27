@@ -1,7 +1,7 @@
 #!/usr/bin/sh
 
 # Define necessary commands
-test_cmd="npx ts-mocha --paths -p tsconfig.json --recursive tests/prelude.test.ts tests/unit tests/integration --extension .test.ts -t 90000 --reporter tests/errors-reporter.cjs"
+test_cmd="npx ts-mocha --paths -p tsconfig.json --recursive tests/prelude.test.ts tests/unit tests/integration tests/postlude.test.ts --extension .test.ts -t 90000 --reporter tests/errors-reporter.cjs"
 
 all_tests_cmd="ASTRA_RUN_LONG_TESTS=1 ASTRA_RUN_ADMIN_TESTS=1 ASTRA_RUN_VECTORIZE_TESTS=1 $test_cmd"
 
@@ -98,7 +98,7 @@ case "$test_type" in
 esac
 
 if [ -n "$filter" ]; then
-  cmd_to_run="$cmd_to_run -f '$filter'"
+  cmd_to_run="MOCHA_TESTS_FILTER='$filter' $cmd_to_run -f '$filter'"
 fi
 
 if [ -n "$bail_early" ]; then
