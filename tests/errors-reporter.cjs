@@ -28,8 +28,6 @@ class ErrorsReporter extends reporters.Spec {
         ? `${test.title} (${test.duration}ms)`
         : test.title
 
-      console.log(test);
-
       const newHierarchy = [testName];
 
       for (let suite = test.parent; suite.title; suite = suite.parent) {
