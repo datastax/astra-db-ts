@@ -54,29 +54,28 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
       checkTestsEnabled(name) || this.skip();
     });
 
-    if (opts.dropEphemeral || opts.truncateColls) {
+    if (opts.truncateColls) {
       beforeEach(async () => {
-        if (opts.truncateColls) {
-          await fixtures.collection.deleteMany({});
-        }
+        await fixtures.collection.deleteMany({});
 
         if (opts.truncateColls === 'both') {
           await fixtures.db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE }).deleteMany();
         }
       });
+    }
 
-      if (opts.dropEphemeral === 'after') {
-        after(dropEphemeralColls);
-      }
+    if (opts.dropEphemeral === 'after') {
+      after(dropEphemeralColls);
+    }
 
-      if (opts.dropEphemeral === 'afterEach') {
-        afterEach(dropEphemeralColls);
-      }
+    if (opts.dropEphemeral === 'afterEach') {
+      afterEach(dropEphemeralColls);
     }
 
     TEST_FILTER_PASSES.push(TESTS_FILTER.test(name));
 
     fn.call(this, fixtures);
+
     TEST_FILTER_PASSES.pop();
   }
 

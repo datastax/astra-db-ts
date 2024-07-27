@@ -78,22 +78,46 @@ dynamic('[VECTORIZE] [LONG] integration.data-api.vectorize', async ({ db, dbAdmi
   }
 });
 
-const initVectorTests = async (dbAdmin: DbAdmin) => {
+const whitelistImplFor = (whitelist: string) => {
+  if (whitelist.startsWith('$limit:')) {
+    const limit = +whitelist.split('$limit:')[1];
+
+    return (_: VectorizeTest, index: number) => {
+      return index < limit;
+    };
+  }
+
+  if (whitelist.startsWith('$provider-limit:') || whitelist.startsWith('$model-limit:')) {
+    const limit = +whitelist.split(':')[1];
+    const seen = new Map<string, number>();
+
+    return (test: VectorizeTest) => {
+      const key = test.providerName + (whitelist.startsWith('$model') ? test.modelName : '');
+
+      const timesSeen = (seen.get(key) ?? 0) + 1;
+      seen.set(key, timesSeen);
+
+      return timesSeen < limit;
+    }
+  }
+
+  const regex = RegExp(whitelist);
+
+  return (test: VectorizeTest) => {
+    return regex.test(test.testName);
+  }
+}
+
+const initVectorTests = async (dbAdmin: DbAdmin): Promise<VectorizeTest[]> => {
   const spec = JSON.parse(fs.readFileSync('vectorize_test_spec.json', 'utf8')) as VectorizeTestSpec;
 
   const { embeddingProviders } = await dbAdmin.findEmbeddingProviders();
 
-  const whitelist = process.env.CLIENT_VECTORIZE_WHITELIST ?? '.*';
-
-  const test = whitelist.startsWith('$limit:')
-    ? (_: string, i: number) => i < +whitelist.split('$limit:')[1]
-    : (name: string) => RegExp(whitelist).test(name);
+  const whitelist = whitelistImplFor(process.env.CLIENT_VECTORIZE_WHITELIST ?? '.*')
 
   return Object.entries(embeddingProviders)
     .flatMap(branchOnModel(spec))
-    .filter((t, i) => {
-      return test(t.testName, i);
-    });
+    .filter(whitelist);
 };
 
 interface ModelBranch {
@@ -102,7 +126,7 @@ interface ModelBranch {
   testName: string,
 }
 
-const branchOnModel = (fullSpec: VectorizeTestSpec) => ([providerName, providerInfo]: [string, EmbeddingProviderInfo]): AuthBranch[] => {
+const branchOnModel = (fullSpec: VectorizeTestSpec) => ([providerName, providerInfo]: [string, EmbeddingProviderInfo]): VectorizeTest[] => {
   const spec = fullSpec[providerName];
 
   if (!spec) {
@@ -123,7 +147,7 @@ interface WithParams extends ModelBranch {
   parameters?: Record<string, string>,
 }
 
-const addParameters = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingProviderInfo) => (test: ModelBranch): AuthBranch[] => {
+const addParameters = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingProviderInfo) => (test: ModelBranch): VectorizeTest[] => {
   const params = spec.parameters;
   const matchingParam = Object.keys(params ?? {}).find((regex) => RegExp(regex).test(test.modelName))!;
 
@@ -145,7 +169,7 @@ interface AuthBranch extends WithParams {
   providerKey?: string,
 }
 
-const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingProviderInfo) => (test: WithParams): AuthBranch[] => {
+const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingProviderInfo) => (test: WithParams): VectorizeTest[] => {
   const auth = providerInfo['supportedAuthentication'];
   const tests: AuthBranch[] = []
 
@@ -190,7 +214,7 @@ interface DimensionBranch extends AuthBranch {
   dimension?: number,
 }
 
-const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: EmbeddingProviderModelInfo) => (test: AuthBranch): DimensionBranch[] => {
+const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: EmbeddingProviderModelInfo) => (test: AuthBranch): VectorizeTest[] => {
   const vectorDimParam = modelInfo.parameters.find((p) => p.name === 'vectorDimension');
   const defaultDim = Number(vectorDimParam?.defaultValue);
 
