@@ -44,7 +44,7 @@ type VectorizeTestSpec = {
     parameters?: {
       [modelNameRegex: string]: Record<string, string>
     },
-    needsToLoad: boolean,
+    loadingTime: number,
   }
 }
 
@@ -132,7 +132,7 @@ interface ModelBranch {
   providerName: string,
   modelName: string,
   testName: string,
-  needsToLoad: boolean,
+  loadingTime: number,
 }
 
 const branchOnModel = (fullSpec: VectorizeTestSpec) => ([providerName, providerInfo]: [string, EmbeddingProviderInfo]): VectorizeTest[] => {
@@ -147,7 +147,7 @@ const branchOnModel = (fullSpec: VectorizeTestSpec) => ([providerName, providerI
     providerName: providerName,
     modelName: model.name,
     testName: `${providerName}@${model.name}`,
-    needsToLoad: !!spec.needsToLoad,
+    loadingTime: spec.loadingTime ?? 0,
   }));
 
   return modelBranches.flatMap(addParameters(spec, providerInfo));
@@ -264,11 +264,11 @@ const createVectorizeProvidersTest = (db: Db, test: VectorizeTest, name: string)
       embeddingApiKey: test.header,
     });
 
-    if (test.needsToLoad) {
+    if (test.loadingTime) {
       const _id = UUID.v4();
       await collection.insertOne({ _id, $vectorize: 'a' });
       await collection.deleteOne({ _id });
-      await new Promise((resolve) => setTimeout(resolve, 3000));
+      await new Promise((resolve) => setTimeout(resolve, test.loadingTime));
     }
 
     const insertOneResult = await collection.insertOne({
