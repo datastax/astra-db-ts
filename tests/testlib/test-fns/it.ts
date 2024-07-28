@@ -14,7 +14,7 @@
 /* eslint-disable prefer-const */
 
 import { checkTestsEnabled } from '@/tests/testlib/utils';
-import { parallelTestState } from '@/tests/testlib/parallel';
+import { parallelTestState } from '@/tests/testlib/test-fns/parallel';
 import { TEST_FILTER_PASSES } from '@/tests/testlib/global';
 import { TESTS_FILTER } from '@/tests/testlib/config';
 

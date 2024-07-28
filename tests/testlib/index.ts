@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './background';
+export * from './test-fns/background';
 export * from './config';
-export * from './describe';
-export * from './dynamic';
+export * from './test-fns/describe';
+export * from './test-fns/dynamic';
 export * from './fixtures';
 export * from './global';
-export * from './it';
-export * from './parallel';
+export * from './test-fns/it';
+export * from './test-fns/parallel';
 export { createCollections } from './utils';

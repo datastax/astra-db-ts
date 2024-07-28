@@ -17,7 +17,7 @@ import { initTestObjects } from '@/tests/testlib/fixtures';
 import { DEFAULT_COLLECTION_NAME, OTHER_NAMESPACE, TESTS_FILTER } from '@/tests/testlib/config';
 import { afterEach } from 'mocha';
 import { checkTestsEnabled, dropEphemeralColls } from '@/tests/testlib/utils';
-import { parallelTestState } from '@/tests/testlib/parallel';
+import { parallelTestState } from '@/tests/testlib/test-fns/parallel';
 import { TEST_FILTER_PASSES } from '@/tests/testlib/global';
 
 export type SuiteBlock = (this: Mocha.Suite, fixtures: ReturnType<typeof initTestObjects>) => void;

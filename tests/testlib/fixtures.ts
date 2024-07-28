@@ -22,7 +22,7 @@ import { DEFAULT_NAMESPACE } from '@/src/api';
 import {
   DEFAULT_COLLECTION_NAME,
   ENVIRONMENT,
-  HTTP_CLIENT_TYPE,
+  HTTP_CLIENT_TYPE, OTHER_NAMESPACE,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
   USE_HTTP2,
@@ -38,12 +38,13 @@ export const initTestObjects = (preferHttp2 = USE_HTTP2, environment: typeof ENV
   const db = client.db(TEST_APPLICATION_URI);
 
   const collection = db.collection(DEFAULT_COLLECTION_NAME);
+  const collection_ = db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
 
   const dbAdmin = (ENVIRONMENT === 'astra')
     ? db.admin({ environment: ENVIRONMENT })
     : db.admin({ environment: ENVIRONMENT });
 
-  return { client, db, collection, dbAdmin };
+  return { client, db, collection, collection_, dbAdmin };
 };
 
 export const initCollectionWithFailingClient = () => {
