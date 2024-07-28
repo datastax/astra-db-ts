@@ -16,7 +16,7 @@
 import { initTestObjects } from '@/tests/testlib/fixtures';
 import { afterEach } from 'mocha';
 import { checkTestsEnabled, tryCatchErr } from '@/tests/testlib/utils';
-import { describe, it, SuiteOptions, TESTS_FILTER } from '@/tests/testlib';
+import { describe, SuiteOptions, TEST_FILTER_PASSES, TESTS_FILTER } from '@/tests/testlib';
 
 export const parallelTestState = {
   inParallelBlock: false,
@@ -65,7 +65,7 @@ parallel = function (name: string, optsOrFn: SuiteOptions | ParallelBlock, maybe
 
     [global.beforeEach, global.afterEach] = [oldBeforeEach, oldAfterEach];
 
-    let tests = parallelTestState.tests.filter(t => TESTS_FILTER.test(t.name));
+    let tests = parallelTestState.tests.filter(t => TEST_FILTER_PASSES.some(b => b) || TESTS_FILTER.test(t.name));
     let results: ({ ms?: number, error?: Error } | { skipped: true })[];
 
     before(async () => {

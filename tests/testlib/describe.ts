@@ -59,7 +59,7 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
         await fixtures.collection.deleteMany({});
 
         if (opts.truncateColls === 'both') {
-          await fixtures.db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE }).deleteMany();
+          await fixtures.db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE }).deleteMany({});
         }
       });
     }

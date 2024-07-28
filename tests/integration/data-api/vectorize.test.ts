@@ -18,6 +18,7 @@ import {
   Db,
   EmbeddingAPIKeyHeaderProvider,
   EmbeddingHeadersProvider,
+  UUID,
 } from '@/src/data-api';
 import * as fs from 'fs';
 import {
@@ -27,6 +28,7 @@ import {
 import { describe, dynamic, ENVIRONMENT, it, parallel } from '@/tests/testlib';
 import { DbAdmin } from '@/src/devops';
 import * as crypto from 'node:crypto';
+import { negate } from '@/tests/testlib/utils';
 
 type VectorizeTestSpec = {
   [providerName: string]: {
@@ -42,6 +44,7 @@ type VectorizeTestSpec = {
     parameters?: {
       [modelNameRegex: string]: Record<string, string>
     },
+    needsToLoad: boolean,
   }
 }
 
@@ -113,17 +116,23 @@ const initVectorTests = async (dbAdmin: DbAdmin): Promise<VectorizeTest[]> => {
 
   const { embeddingProviders } = await dbAdmin.findEmbeddingProviders();
 
-  const whitelist = whitelistImplFor(process.env.CLIENT_VECTORIZE_WHITELIST ?? '.*')
+  const whitelist = whitelistImplFor(process.env.CLIENT_VECTORIZE_WHITELIST ?? '.*');
+  const invertWhitelist = !!process.env.CLIENT_VECTORIZE_WHITELIST_INVERT;
+
+  const filter = (invertWhitelist)
+    ? negate(whitelist)
+    : whitelist;
 
   return Object.entries(embeddingProviders)
     .flatMap(branchOnModel(spec))
-    .filter(whitelist);
+    .filter(filter);
 };
 
 interface ModelBranch {
   providerName: string,
   modelName: string,
   testName: string,
+  needsToLoad: boolean,
 }
 
 const branchOnModel = (fullSpec: VectorizeTestSpec) => ([providerName, providerInfo]: [string, EmbeddingProviderInfo]): VectorizeTest[] => {
@@ -138,6 +147,7 @@ const branchOnModel = (fullSpec: VectorizeTestSpec) => ([providerName, providerI
     providerName: providerName,
     modelName: model.name,
     testName: `${providerName}@${model.name}`,
+    needsToLoad: !!spec.needsToLoad,
   }));
 
   return modelBranches.flatMap(addParameters(spec, providerInfo));
@@ -152,7 +162,7 @@ const addParameters = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingP
   const matchingParam = Object.keys(params ?? {}).find((regex) => RegExp(regex).test(test.modelName))!;
 
   if (params && !matchingParam) {
-    throw new Error(`can not find matching param for ${test.testName}`)
+    throw new Error(`can not find matching param for ${test.testName}`);
   }
 
   const withParams = [{
@@ -253,6 +263,13 @@ const createVectorizeProvidersTest = (db: Db, test: VectorizeTest, name: string)
       },
       embeddingApiKey: test.header,
     });
+
+    if (test.needsToLoad) {
+      const _id = UUID.v4();
+      await collection.insertOne({ _id, $vectorize: 'a' });
+      await collection.deleteOne({ _id });
+      await new Promise((resolve) => setTimeout(resolve, 3000));
+    }
 
     const insertOneResult = await collection.insertOne({
       name: 'Alice',

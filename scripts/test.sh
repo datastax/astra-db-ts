@@ -41,21 +41,21 @@ while [ $# -gt 0 ]; do
     "--prerelease")
       test_type="prerelease"
       ;;
-    "-f")
+    "-f" | "~f")
+      [ "${1#"~"}" != "$1" ] && invert_filter=1
       shift
       filter="$1"
       ;;
-    "-g")
+    "-g" | "~g")
+      [ "${1#"~"}" != "$1" ] && invert_filter=1
       shift
       regex="$1"
-      ;;
-    "-i")
-      filter_invert=1
       ;;
     "-b")
       bail_early=1
       ;;
-    "-w")
+    "-w" | "~w")
+      [ "${1#"~"}" != "$1" ] && invert_whitelist=1
       shift
       whitelist="$1"
       ;;
@@ -113,7 +113,7 @@ if [ -n "$regex" ]; then
   cmd_to_run="CLIENT_TESTS_FILTER='$regex' CLIENT_TESTS_FILTER_TYPE='regex' $cmd_to_run"
 fi
 
-if [ -n "$filter_invert" ]; then
+if [ -n "$invert_filter" ]; then
   cmd_to_run="CLIENT_TESTS_FILTER_INVERT=1 $cmd_to_run"
 fi
 
@@ -123,6 +123,10 @@ fi
 
 if [ -n "$whitelist" ]; then
   cmd_to_run="CLIENT_VECTORIZE_WHITELIST='$whitelist' $cmd_to_run"
+fi
+
+if [ -n "$invert_whitelist" ]; then
+  cmd_to_run="CLIENT_VECTORIZE_WHITELIST_INVERT=1 $cmd_to_run"
 fi
 
 # Run it

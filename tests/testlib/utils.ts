@@ -112,3 +112,7 @@ export function createCollections<Keys extends string>(colls: () => Record<Keys,
 
   return collections;
 }
+
+export function negate<T extends any[]>(fn: (...args: T) => boolean): (...args: T) => boolean {
+  return (...args: T) => !fn(...args);
+}

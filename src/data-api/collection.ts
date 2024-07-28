@@ -658,7 +658,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  public async deleteMany(filter: Filter<Schema> = {}, options?: WithTimeout): Promise<DeleteManyResult> {
+  public async deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<DeleteManyResult> {
     const command: DeleteManyCommand = {
       deleteMany: { filter },
     };
