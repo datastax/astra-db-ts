@@ -13,37 +13,36 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { CursorIsStartedError, DataAPIResponseError, FindCursor, SomeDoc } from '@/src/data-api';
-import { DataAPIHttpClient } from '@/src/api';
+import { CursorIsStartedError, DataAPIResponseError, SomeDoc } from '@/src/data-api';
 import { describe, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.cursor', ({ collection }) => {
-  let httpClient: DataAPIHttpClient;
-
+describe('integration.data-api.cursor', { truncateColls: 'both:before' }, ({ collection, collection_ }) => {
   const sortById = (a: SomeDoc, b: SomeDoc) => parseInt(a._id) - parseInt(b._id);
   const sortByAge = (a: SomeDoc, b: SomeDoc) => a.age - b.age;
 
   const ageToString = (doc: SomeDoc) => ({ age: `${doc.age}` });
 
+  const docs = [{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }];
+  const docs_ = Array.from({ length: 100 }, (_, i) => ({ _id: (i < 10 ? '0' : '') + `${i}` }));
+
   before(async () => {
-    httpClient = collection['_httpClient'];
+    await collection.insertMany(docs);
+    await collection_.insertMany(docs_, { ordered: true });
   });
 
-  describe('cursor lifecycle manipulation', { truncateColls: 'default' }, () => {
+  parallel('cursor lifecycle manipulation', () => {
     it('closes cursor', async () => {
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       cursor.close();
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
       assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
-      await collection.insertMany([{ _id: '0', age: '0' }, { _id: '1', age: '1' }, { _id: '2', age: '2' }]);
       const res = await cursor.toArray();
       assert.deepStrictEqual(res, [], 'Cursor did not close');
     });
 
     it('clones cursor without sharing state', async () => {
-      await collection.insertMany([{ _id: '0', age: '0' }, { _id: '1', age: '1' }, { _id: '2', age: '2' }]);
-      const cursor = new FindCursor<{ age: number }>('default_keyspace', httpClient, {}, { projection: { _id: 0 } }).sort({ name: 1 }).map(ageToString);
+      const cursor = collection.find({},{  projection: { _id: 0 } }).sort({ name: 1 }).map(ageToString);
       await cursor.hasNext();
       assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 3, 'Cursor did not set buffer');
@@ -59,29 +58,28 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should not copy the mapping function', () => {
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       cursor.map(() => 3);
       const clone = cursor.clone();
       assert.strictEqual(clone['_mapping'], undefined, 'Cursor clone has bad mapping');
     });
 
     it('should let you build on a cloned cursor', async () => {
-      await collection.insertMany([{ _id: '0' }, { _id: '1' }, { _id: '2' }]);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       await cursor.hasNext();
       assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 3, 'Cursor did not set buffer');
 
       cursor.close();
-      assert.throws(() => cursor.filter({ _id: '1' }), CursorIsStartedError);
+      const filter = { _id: docs[1]._id };
+      assert.throws(() => cursor.filter(filter), CursorIsStartedError);
       const clone = cursor.clone();
-      clone.filter({ _id: '1' });
-      assert.deepStrictEqual(clone['_filter'], { _id: '1' }, 'Cursor did not set new filter');
+      clone.filter(filter);
+      assert.deepStrictEqual(clone['_filter'], filter, 'Cursor did not set new filter');
     });
 
     it('should rewind cursor', async () => {
-      await collection.insertMany([{ _id: '0' }, { _id: '1' }, { _id: '2' }]);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       await cursor.hasNext();
       assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 3, 'Cursor did not set buffer');
@@ -92,9 +90,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should allow cloned cursor to re-fetch all data', async () => {
-      const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       cursor.close();
       const res = await cursor.toArray();
       assert.deepStrictEqual(res, [], 'Cursor did not close');
@@ -106,9 +102,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should allow cloned cursor with mapping function to re-fetch all data without mapping', async () => {
-      const docs = [{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).map(ageToString);
+      const cursor = collection.find({}).map(ageToString);
       cursor.close();
       const res = await cursor.toArray();
       assert.deepStrictEqual(res, [], 'Cursor did not close');
@@ -120,9 +114,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should allow rewind-ed cursor to re-fetch all data', async () => {
-      const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       cursor.close();
       const res = await cursor.toArray();
       assert.deepStrictEqual(res, [], 'Cursor did not close');
@@ -134,9 +126,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should allow rewind-ed cursor with mapping function to re-fetch all data with mapping', async () => {
-      const docs = [{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).map(ageToString);
+      const cursor = collection.find({}).map(ageToString);
       cursor.close();
       const res = await cursor.toArray();
       assert.deepStrictEqual(res, [], 'Cursor did not close');
@@ -149,13 +139,8 @@ describe('integration.data-api.cursor', ({ collection }) => {
   });
 
   parallel('hasNext() tests', () => {
-    before(async () => {
-      await collection.deleteMany({});
-      await collection.insertMany([{ _id: '0' }, { _id: '1' }, { _id: '2' }]);
-    });
-
     it('should test if there are more documents with hasNext()', async () => {
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       const next = await cursor.next();
       assert.ok(next, 'Cursor did not read next');
       const hasNext = await cursor.hasNext();
@@ -163,13 +148,13 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should test if there are more documents with hasNext() with no buffer set', async () => {
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       const hasNext = await cursor.hasNext();
       assert.strictEqual(hasNext, true, 'Cursor did not properly check for more documents');
     });
 
     it('should test if there are no more documents with hasNext()', async () => {
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       for (let i = 0; i < 3; i++) {
         const doc = await cursor.next();
         assert.ok(doc, `Doc #${i} is null`);
@@ -180,15 +165,8 @@ describe('integration.data-api.cursor', ({ collection }) => {
   });
 
   parallel('readBufferedDocuments() tests', () => {
-    const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
-
-    before(async () => {
-      await collection.deleteMany({});
-      await collection.insertMany(docs);
-    });
-
     it('should read all raw buffered documents', async () => {
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       await cursor.hasNext();
       assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 3, 'Cursor did not set buffer');
@@ -200,7 +178,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should read all raw buffered documents with a max', async () => {
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       await cursor.hasNext();
       assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 3, 'Cursor did not set buffer');
@@ -212,7 +190,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should read all raw buffered documents even with transformation', async () => {
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).map(() => ({ _id: 0 }));
+      const cursor = collection.find({}).map(() => ({ _id: 0 }));
       await cursor.hasNext();
       assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 3, 'Cursor did not set buffer');
@@ -224,19 +202,17 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
   });
 
-  describe('next() tests', { truncateColls: 'default' }, () => {
+  parallel('next() tests', () => {
     it('should get next document with next()', async () => {
-      await collection.insertMany([{ _id: '0' }, { _id: '1' }, { _id: '2' }]);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       const doc = await cursor.next();
-      assert.deepStrictEqual(doc, { _id: '0' }, 'Doc is not the first in the collection');
+      assert.deepStrictEqual(doc, docs[0], 'Doc is not the first in the collection');
       assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 2, 'Cursor did properly buffer');
     });
 
     it('should get 21st document with next()', async () => {
-      await collection.insertMany(Array.from({ length: 40 }, (_, i) => ({ _id: `${i}` })));
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection_.find({});
 
       let doc: any;
       for (let i = 0; i < 21; i++) {
@@ -252,8 +228,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should return null if there are no more documents with next()', async () => {
-      await collection.insertMany([{ _id: '0' }]);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({ _id: '0' });
       const doc = await cursor.next();
       assert.ok(doc, 'Doc is null');
       const next = await cursor.next();
@@ -261,8 +236,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('Provides the next document with a mapping function', async () => {
-      await collection.insertMany([{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }]);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).map(ageToString);
+      const cursor = collection.find({}).map(ageToString);
       const doc = await cursor.next();
       assert.ok(doc, 'Doc is null');
       assert.ok(typeof doc['age'] === 'string', 'Doc did not map properly');
@@ -271,11 +245,9 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
   });
 
-  describe('Symbol.asyncIterator() tests', { truncateColls: 'default' }, () => {
+  parallel('Symbol.asyncIterator() tests', () => {
     it('should iterate over all documents', async () => {
-      const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       const res: any[] = [];
       for await (const doc of cursor) {
         res.push(doc);
@@ -287,9 +259,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should iterate over all documents with a mapping function', async () => {
-      const docs = [{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).map(ageToString);
+      const cursor = collection.find({}).map(ageToString);
       const res: any[] = [];
       for await (const doc of cursor) {
         res.push(doc);
@@ -301,7 +271,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should iterate over all documents with no documents', async () => {
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({ _id: 'Deep Purple' });
       const res: any[] = [];
       for await (const doc of cursor) {
         res.push(doc);
@@ -313,9 +283,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should not iterate when called a second time', async () => {
-      const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       const res: any[] = [];
       for await (const doc of cursor) {
         res.push(doc);
@@ -333,9 +301,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should close cursor after break', async () => {
-      const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       const res: any[] = [];
       // noinspection LoopStatementThatDoesntLoopJS
       for await (const doc of cursor) {
@@ -349,11 +315,9 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
   });
 
-  describe('toArray() tests', { truncateColls: 'default' }, () => {
+  parallel('toArray() tests', () => {
     it('Gets all documents with toArray()', async () => {
-      const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       const res = await cursor.toArray();
       assert.deepStrictEqual(res.sort(sortById), docs, 'Cursor did not read all documents');
       assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
@@ -362,9 +326,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('Gets all documents with toArray() with a mapping function', async () => {
-      const docs = [{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).map(ageToString);
+      const cursor = collection.find({}).map(ageToString);
       const res = await cursor.toArray();
       assert.deepStrictEqual(res.sort(sortById), docs.map(ageToString), 'Cursor did not read all documents');
       assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
@@ -373,7 +335,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('Gets all documents with toArray() with no documents', async () => {
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({ _id: 'Iron Maiden' });
       const res = await cursor.toArray();
       assert.deepStrictEqual(res, [], 'Cursor did not read all documents');
       assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
@@ -382,9 +344,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should return an empty array when called a second time', async () => {
-      const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       const res = await cursor.toArray();
       assert.deepStrictEqual(res.sort(sortById), docs, 'Cursor did not read all documents');
       assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
@@ -396,11 +356,9 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
   });
 
-  describe('forEach() tests', { truncateColls: 'default' }, () => {
+  parallel('forEach() tests', () => {
     it('should iterate over all documents', async () => {
-      const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       const res: any[] = [];
       // noinspection JSDeprecatedSymbols
       await cursor.forEach(doc => { res.push(doc) });
@@ -411,9 +369,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should iterate over all documents with a mapping function', async () => {
-      const docs = [{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).map(ageToString);
+      const cursor = collection.find({}).map(ageToString);
       const res: any[] = [];
       // noinspection JSDeprecatedSymbols
       await cursor.forEach(doc => { res.push(doc) });
@@ -424,7 +380,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should iterate over all documents with no documents', async () => {
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({ _id: 'Styx' }, {});
       const res: any[] = [];
       // noinspection JSDeprecatedSymbols
       await cursor.forEach(doc => { res.push(doc) });
@@ -435,9 +391,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should not iterate when called a second time', async () => {
-      const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       const res: any[] = [];
       // noinspection JSDeprecatedSymbols
       await cursor.forEach(doc => { res.push(doc) });
@@ -453,9 +407,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should close cursor after returning false', async () => {
-      const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       const res: any[] = [];
       // noinspection JSDeprecatedSymbols
       await cursor.forEach(doc => {
@@ -469,132 +421,111 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
   });
 
-  describe('filter tests', { truncateColls: 'default' }, () => {
+  parallel('filter tests', () => {
     it('should filter documents', async () => {
-      const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).filter({ _id: '1' });
+      const cursor = collection.find({}).filter({ _id: '1' });
       const res = await cursor.toArray();
       assert.deepStrictEqual(res, [docs[1]], 'Cursor did not filter documents');
     });
 
     it('should filter documents with a mapping function', async () => {
-      const docs = [{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).filter({ _id: '1' }).map(ageToString);
+      const cursor = collection.find({}).filter({ _id: '1' }).map(ageToString);
       const res = await cursor.toArray();
       assert.deepStrictEqual(res, [ageToString(docs[1])], 'Cursor did not filter documents');
     });
   });
 
-  describe('skip/limit tests', { truncateColls: 'default' }, () => {
+  parallel('skip/limit tests', () => {
     it('should limit documents', async () => {
-      const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).limit(2);
+      const cursor = collection.find({}).limit(2);
       const res = await cursor.toArray();
       assert.deepStrictEqual(res.sort(sortById), docs.slice(0, 2), 'Cursor did not limit documents');
     });
 
     it('should limit documents across pages', async () => {
-      const docs = Array.from({ length: 100 }, (_, i) => ({ _id: `${i}` }));
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).limit(50);
+      const cursor = collection_.find({}).limit(50);
       const res = await cursor.toArray();
       assert.strictEqual(res.length, 50, 'Cursor did not limit documents');
     });
 
     it('should have no limit if limit is set to 0', async () => {
-      const docs = Array.from({ length: 100 }, (_, i) => ({ _id: `${i}` }));
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).limit(0);
+      const cursor = collection_.find({}).limit(0);
       const res = await cursor.toArray();
-      assert.strictEqual(res.length, 100, 'Cursor limited documents');
+      assert.strictEqual(res.length, docs_.length, 'Cursor limited documents');
     });
 
     it('should skip documents', async () => {
-      const docs = [{ _id: '0' }, { _id: '1' }, { _id: '2' }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).skip(1).sort({ _id: 1 });
+      const cursor = collection.find({}).skip(1).sort({ _id: 1 });
       const res = await cursor.toArray();
       assert.deepStrictEqual(res.sort(sortById), docs.slice(1), 'Cursor did not skip documents');
     });
 
     it('should skip documents across pages', async () => {
-      const docs = Array.from({ length: 100 }, (_, i) => ({ _id: i }));
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).skip(50).sort({ _id: 1 });
+      const cursor = collection_.find({}).skip(50).sort({ _id: 1 });
       const res = await cursor.toArray();
-      assert.deepStrictEqual(res, docs.slice(50, 70), 'Cursor did not skip documents');
+      assert.deepStrictEqual(res, docs_.slice(50, 70), 'Cursor did not skip documents');
     });
 
     it('should limit and skip documents across pages', async () => {
-      const docs = Array.from({ length: 100 }, (_, i) => ({ _id: i }));
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).skip(50).limit(20).sort({ _id: 1 });
+      const cursor = collection_.find({}).skip(50).limit(20).sort({ _id: 1 });
       const res = await cursor.toArray();
-      assert.deepStrictEqual(res, docs.slice(50, 70), 'Cursor did not limit and skip documents');
+      assert.deepStrictEqual(res, docs_.slice(50, 70), 'Cursor did not limit and skip documents');
     });
   });
 
-  describe('sort tests', { truncateColls: 'default' }, () => {
+  parallel('sort tests', () => {
     it('should sort documents', async () => {
-      const docs = [{ _id: '2' }, { _id: '0' }, { _id: '1' }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).sort({ _id: 1 });
+      const cursor = collection.find({}).sort({ _id: 1 });
       const res = await cursor.toArray();
       assert.deepStrictEqual(res, docs.sort(sortById), 'Cursor did not sort documents');
     });
 
     it('should sort documents with a mapping function', async () => {
-      const docs = [{ _id: '2', age: 2 }, { _id: '0', age: 0 }, { _id: '1', age: 1 }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).sort({ age: 1 }).map(ageToString);
+      const cursor = collection.find({}).sort({ age: 1 }).map(ageToString);
       const res = await cursor.toArray();
       assert.deepStrictEqual(res, docs.sort(sortByAge).map(ageToString), 'Cursor did not sort documents');
     });
   });
 
-  describe('projection tests', { truncateColls: 'default' }, () => {
+  parallel('projection tests', () => {
     it('should project documents', async () => {
-      const docs = [{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).project({ _id: 0 }).sort({ age: 1 });
+      const cursor = collection.find({}).project({ _id: 0 }).sort({ age: 1 });
       const res = await cursor.toArray();
       assert.deepStrictEqual(res, [{ age: 0 }, { age: 1 }, { age: 2 }], 'Cursor did not project documents');
     });
 
     it('should project documents with a mapping function', async () => {
-      const docs = [{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).project<{ age: number }>({ _id: 0, age: 1 }).map(ageToString).sort({ age: 1 });
+      const cursor = collection.find({}).project<{ age: number }>({ _id: 0, age: 1 }).map(ageToString).sort({ age: 1 });
       const res = await cursor.toArray();
       assert.deepStrictEqual(res, [{ age: '0' }, { age: '1' }, { age: '2' }], 'Cursor did not project documents');
     });
   });
 
-  describe('mapping tests', { truncateColls: 'default' }, () => {
+  parallel('mapping tests', () => {
     it('should map documents', async () => {
-      const docs = [{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).map(ageToString);
+      const cursor = collection.find({}).map(ageToString);
       const res = await cursor.toArray();
       assert.deepStrictEqual(res, [{ age: '0' }, { age: '1' }, { age: '2' }], 'Cursor did not map documents');
     });
 
     it('should close cursor and rethrow error if mapping function throws', async () => {
-      const docs = [{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).map(() => { throw new Error('Mapping error') });
+      const cursor = collection.find({}).map(() => { throw new Error('Mapping error') });
       await assert.rejects(async () => await cursor.toArray(), { message: 'Mapping error' });
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
     });
   });
 
-  describe('sort vector tests', { truncateColls: 'default' }, () => {
+  parallel('sort vector tests', () => {
+    before(async () => {
+      await collection.insertMany([{ $vector: [1, 1, 1, 1, 1] }, { $vector: [1, 1, 1, 1, 1] }, { $vector: [1, 1, 1, 1, 1] }]);
+    });
+
+    after(async () => {
+      await collection.deleteMany({ $vector: { $exists: true } });
+    });
+
     it('should return sort vector on only first API call if includeSortVector: true', async () => {
-      await collection.insertMany([{}, {}, {}]);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).sort({ $vector: [1, 1, 1, 1, 1] }).includeSortVector();
+      const cursor = collection_.find({}).sort({ $vector: [1, 1, 1, 1, 1] }).includeSortVector();
       assert.strictEqual(cursor['_sortVector'], undefined);
       assert.strictEqual(cursor['_options'].includeSortVector, true);
       await cursor.hasNext();
@@ -606,8 +537,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('getSortVector should populate buffer if called first w/ includeSortVector: true', async () => {
-      await collection.insertMany([{ $vector: [1, 1, 1, 1, 1] }, { $vector: [1, 1, 1, 1, 1] }, { $vector: [1, 1, 1, 1, 1] }]);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).sort({ $vector: [1, 1, 1, 1, 1] }).includeSortVector();
+      const cursor = collection.find({}).sort({ $vector: [1, 1, 1, 1, 1] }).includeSortVector();
       assert.strictEqual(cursor['_sortVector'], undefined);
       assert.strictEqual(cursor['_options'].includeSortVector, true);
       assert.deepStrictEqual(await cursor.getSortVector(), [1, 1, 1, 1, 1]);
@@ -615,8 +545,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should return null in getSortVector if includeSortVector: false', async () => {
-      await collection.insertMany([{}, {}, {}]);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).sort({ $vector: [1, 1, 1, 1, 1] });
+      const cursor = collection_.find({}).sort({ $vector: [1, 1, 1, 1, 1] });
       assert.strictEqual(cursor['_sortVector'], undefined);
       assert.strictEqual(cursor['_options'].includeSortVector, undefined);
       await cursor.hasNext();
@@ -628,8 +557,7 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
 
     it('should return null in getSortVector if no sort vector', async () => {
-      await collection.insertMany([{}, {}, {}]);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {}).includeSortVector();
+      const cursor = collection_.find({}).includeSortVector();
       assert.strictEqual(cursor['_sortVector'], undefined);
       assert.strictEqual(cursor['_options'].includeSortVector, true);
       await cursor.hasNext();
@@ -641,11 +569,9 @@ describe('integration.data-api.cursor', ({ collection }) => {
     });
   });
 
-  describe('misc', { truncateColls: 'default' }, () => {
+  parallel('misc', () => {
     it('should close cursor and rethrow error if getting documents throws', async () => {
-      const docs = [{ _id: '0', age: 0 }, { _id: '1', age: 1 }, { _id: '2', age: 2 }];
-      await collection.insertMany(docs);
-      const cursor = new FindCursor<SomeDoc>('default_keyspace', httpClient, {});
+      const cursor = collection.find({});
       cursor['_filter'] = 3 as any;
       await assert.rejects(async () => await cursor.toArray(), DataAPIResponseError);
     });

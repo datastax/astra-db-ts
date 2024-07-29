@@ -12,77 +12,56 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, DataAPITimeoutError } from '@/src/data-api';
+import { DataAPITimeoutError } from '@/src/data-api';
 import { DEFAULT_NAMESPACE } from '@/src/api';
 import { CollectionNotFoundError } from '@/src/data-api/errors';
-import { DEFAULT_COLLECTION_NAME, describe, initTestObjects, it } from '@/tests/testlib';
+import { DEFAULT_COLLECTION_NAME, initTestObjects, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.collection.misc', ({ db, collection }) => {
-  describe('initialization', () => {
-    it('should initialize a Collection', () => {
-      const collection = new Collection(db, db['_httpClient'], 'new_collection', undefined);
-      assert.ok(collection);
-    });
+parallel('integration.data-api.collection.misc', ({ db }) => {
+  it('times out on http2', async () => {
+    const { db: newDb } = initTestObjects(true);
+
+    try {
+      await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });
+    } catch (e) {
+      assert.ok(e instanceof DataAPITimeoutError);
+      assert.strictEqual(e.message, 'Command timed out after 10ms');
+    }
   });
 
-  describe('accessors', () => {
-    it('returns the namespace', () => {
-      assert.strictEqual(collection.namespace, DEFAULT_NAMESPACE);
-    });
+  it('times out on http1', async () => {
+    const { db: newDb } = initTestObjects(false);
 
-    it('returns the name', () => {
-      assert.strictEqual(collection.collectionName, DEFAULT_COLLECTION_NAME);
-    });
+    try {
+      await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });
+    } catch (e) {
+      assert.ok(e instanceof DataAPITimeoutError);
+      assert.strictEqual(e.message, 'Command timed out after 10ms');
+    }
   });
 
-  describe('timeout', () => {
-    it('times out on http2', async () => {
-      const { db: newDb } = initTestObjects(true);
+  it('CollectionNotFoundError is thrown when doing data api operation on non-existent collection', async () => {
+    const collection = db.collection('non_existent_collection');
 
-      try {
-        await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });
-      } catch (e) {
-        assert.ok(e instanceof DataAPITimeoutError);
-        assert.strictEqual(e.message, 'Command timed out after 10ms');
-      }
-    });
-
-    it('times out on http1', async () => {
-      const { db: newDb } = initTestObjects(false);
-
-      try {
-        await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });
-      } catch (e) {
-        assert.ok(e instanceof DataAPITimeoutError);
-        assert.strictEqual(e.message, 'Command timed out after 10ms');
-      }
-    });
+    try {
+      await collection.insertOne({ username: 'test' });
+    } catch (e) {
+      assert.ok(e instanceof CollectionNotFoundError);
+      assert.strictEqual(e.namespace, DEFAULT_NAMESPACE);
+      assert.strictEqual(e.collectionName, 'non_existent_collection');
+    }
   });
 
-  describe('CollectionNotFoundError', () => {
-    it('is thrown when doing data api operation on non-existent collection', async () => {
-      const collection = db.collection('non_existent_collection');
+  it('CollectionNotFoundError is thrown when doing .options() on non-existent collection', async () => {
+    const collection = db.collection('non_existent_collection');
 
-      try {
-        await collection.insertOne({ username: 'test' });
-      } catch (e) {
-        assert.ok(e instanceof CollectionNotFoundError);
-        assert.strictEqual(e.namespace, DEFAULT_NAMESPACE);
-        assert.strictEqual(e.collectionName, 'non_existent_collection');
-      }
-    });
-
-    it('is thrown when doing .options() on non-existent collection', async () => {
-      const collection = db.collection('non_existent_collection');
-
-      try {
-        await collection.options();
-      } catch (e) {
-        assert.ok(e instanceof CollectionNotFoundError);
-        assert.strictEqual(e.namespace, DEFAULT_NAMESPACE);
-        assert.strictEqual(e.collectionName, 'non_existent_collection');
-      }
-    });
+    try {
+      await collection.options();
+    } catch (e) {
+      assert.ok(e instanceof CollectionNotFoundError);
+      assert.strictEqual(e.namespace, DEFAULT_NAMESPACE);
+      assert.strictEqual(e.collectionName, 'non_existent_collection');
+    }
   });
 });

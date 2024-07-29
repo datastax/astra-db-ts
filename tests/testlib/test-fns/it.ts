@@ -17,12 +17,16 @@ import { checkTestsEnabled } from '@/tests/testlib/utils';
 import { parallelTestState } from '@/tests/testlib/test-fns/parallel';
 import { TEST_FILTER_PASSES } from '@/tests/testlib/global';
 import { TESTS_FILTER } from '@/tests/testlib/config';
+import { UUID } from '@/src/data-api';
 
-type TestFn = Mocha.Func | Mocha.AsyncFunc;
+type TestFn = SyncTestFn | AsyncTestFn;
+
+type SyncTestFn = (this: Mocha.Context, key: string) => void;
+type AsyncTestFn = (this: Mocha.Context, key: string) => PromiseLike<any>;
 
 interface TaggableTestFunction {
-  (name: string, fn: Mocha.Func): Mocha.Test | null;
-  (name: string, fn: Mocha.AsyncFunc): Mocha.Test | null;
+  (name: string, fn: SyncTestFn): Mocha.Test | null;
+  (name: string, fn: AsyncTestFn): Mocha.Test | null;
 }
 
 export let it: TaggableTestFunction;
@@ -34,7 +38,7 @@ const parallelItErrorProxy = new Proxy({}, {
 it = function (name: string, fn: TestFn) {
   function modifiedFn(this: Mocha.Context) {
     checkTestsEnabled(name) || this.skip();
-    return fn.call(this, null!);
+    return fn.call(this, UUID.v4().toString());
   }
 
   if (parallelTestState.inParallelBlock) {

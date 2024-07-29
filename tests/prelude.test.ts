@@ -19,10 +19,18 @@ import { DEFAULT_COLLECTION_NAME, OTHER_NAMESPACE } from '@/tests/testlib/config
 before(async () => {
   const { db, dbAdmin } = initTestObjects();
 
-  const namespaces = await db.command({ findNamespaces: {} }, { namespace: null });
+  const namespaces: string[] = await db.command({ findNamespaces: {} }, { namespace: null })
+    .then(res => res.status?.namespaces);
+
+  await Promise.all(
+    namespaces
+      .filter(ns => ![DEFAULT_NAMESPACE, OTHER_NAMESPACE].includes(ns))
+      .tap(ns => console.log(`deleting namespace '${ns}s'`))
+      .map(ns => dbAdmin.dropNamespace(ns))
+  );
 
   for (const namespace of [DEFAULT_NAMESPACE, OTHER_NAMESPACE]) {
-    if (!namespaces.status?.namespaces.includes(namespace)) {
+    if (!namespaces.includes(namespace)) {
       console.log(`creating namespace ${namespace}`);
       await dbAdmin.createNamespace(namespace);
     }

@@ -12,18 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DEFAULT_COLLECTION_NAME, describe, it } from '@/tests/testlib';
+import { DEFAULT_COLLECTION_NAME, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.collection.options', ({ db }) => {
-  before(async () => {
-    await db.dropCollection('test_db_collection_empty_opts');
-  });
-
-  after(async () => {
-    await db.dropCollection('test_db_collection_empty_opts');
-  });
-
+parallel('integration.data-api.collection.options', { dropEphemeral: 'after' }, ({ db }) => {
   it('lists its own options', async () => {
     const coll = db.collection(DEFAULT_COLLECTION_NAME);
     const res = await coll.options();
@@ -34,6 +26,6 @@ describe('integration.data-api.collection.options', ({ db }) => {
     const coll = await db.createCollection('test_db_collection_empty_opts');
     const res = await coll.options();
     assert.deepStrictEqual(res, {});
-    await db.dropCollection('test_db_collection_empty_opts')
+    await db.dropCollection('test_db_collection_empty_opts');
   });
 });

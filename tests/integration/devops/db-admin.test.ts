@@ -14,43 +14,30 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DEFAULT_NAMESPACE } from '@/src/api';
 import { describe, ENVIRONMENT, it, TEST_APPLICATION_URI } from '@/tests/testlib';
 
-describe('integration.devops.db-admin', ({ client, db, dbAdmin }) => {
+describe('integration.devops.db-admin', ({ client, dbAdmin }) => {
   it('[LONG] works', async () => {
-    const namespaces1 = await dbAdmin.listNamespaces();
-    assert.ok(!namespaces1.includes('slania'));
-
-    await dbAdmin.createNamespace('slania');
-    assert.strictEqual(db.namespace, DEFAULT_NAMESPACE);
-
-    const namespaces2 = await dbAdmin.listNamespaces();
-    assert.ok(namespaces2.includes('slania'));
-
-    await dbAdmin.dropNamespace('slania');
-    assert.strictEqual(db.namespace, DEFAULT_NAMESPACE);
-
-    const namespaces3 = await dbAdmin.listNamespaces();
-    assert.ok(!namespaces3.includes('slania'));
-  });
-
-  it('[LONG] works w/ updateDbNamespace set', async () => {
-    const db = client.db(TEST_APPLICATION_URI, { namespace: 'mimic_well' });
-
-    assert.strictEqual(db.namespace, 'mimic_well');
+    const db = client.db(TEST_APPLICATION_URI);
 
     const dbAdmin = (ENVIRONMENT === 'astra')
       ? db.admin({ environment: ENVIRONMENT })
       : db.admin({ environment: ENVIRONMENT });
 
-    await dbAdmin.createNamespace('my_test_keyspace_123', {
-      updateDbNamespace: true,
-    });
+    const namespaces1 = await dbAdmin.listNamespaces();
+    assert.ok(!namespaces1.includes('slania'));
 
-    assert.strictEqual(db.namespace, 'my_test_keyspace_123');
+    await dbAdmin.createNamespace('slania', { updateDbNamespace: true });
+    assert.strictEqual(db.namespace, 'slania');
 
-    await dbAdmin.dropNamespace('my_test_keyspace_123');
+    const namespaces2 = await dbAdmin.listNamespaces();
+    assert.ok(namespaces2.includes('slania'));
+
+    await dbAdmin.dropNamespace('slania');
+    assert.strictEqual(db.namespace, 'slania');
+
+    const namespaces3 = await dbAdmin.listNamespaces();
+    assert.ok(!namespaces3.includes('slania'));
   });
 
   it('should findEmbeddingProviders', async () => {

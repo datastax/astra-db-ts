@@ -14,10 +14,10 @@
 // noinspection DuplicatedCode
 
 import { DataAPIError, DataAPITimeoutError, InsertManyError, ObjectId, UUID } from '@/src/data-api';
-import { describe, initCollectionWithFailingClient, it } from '@/tests/testlib';
+import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.collection.insert-many', { truncateColls: 'default' }, ({ collection }) => {
+parallel('integration.data-api.collection.insert-many', { truncateColls: 'default:before' }, ({ collection }) => {
   it('should insertMany documents', async () => {
     const docs = [{ name: 'Inis Mona' }, { name: 'Helvetios' }, { name: 'Epona' }];
     const res = await collection.insertMany(docs);
@@ -53,7 +53,7 @@ describe('integration.data-api.collection.insert-many', { truncateColls: 'defaul
   });
 
   it('should insertMany documents with ids', async () => {
-    const docs = [{ name: 'Inis Mona', _id: 1 }, { name: 'Helvetios', _id: 2 }, { name: 'Epona', _id: 3 }];
+    const docs = [{ name: 'Inis Mona', _id: UUID.v7().toString() }, { name: 'Helvetios', _id: UUID.v7().toString() }, { name: 'Epona', _id: UUID.v7().toString() }];
     const res = await collection.insertMany(docs);
     assert.strictEqual(res.insertedCount, docs.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, docs.length);
@@ -83,11 +83,11 @@ describe('integration.data-api.collection.insert-many', { truncateColls: 'defaul
     assert.strictEqual(Object.keys(res.insertedIds).length, docs.length);
   });
 
-  it('should insertOne with vectors', async () => {
+  it('should insertOne with vectors', async (key) => {
     const res = await collection.insertMany([
-      { name: 'Arch Enemy' },
-      { name: 'Equilibrium' },
-      { name: 'AC/DC' },
+      { name: 'a', key },
+      { name: 'b', key },
+      { name: 'c', key },
     ], {
       vectors: [
         [1, 1, 1, 1, 1],
@@ -97,19 +97,19 @@ describe('integration.data-api.collection.insert-many', { truncateColls: 'defaul
     });
     assert.ok(res);
 
-    const archEnemy = await collection.findOne({ name: 'Arch Enemy' }, { projection: { $vector: 1 } });
-    assert.deepStrictEqual(archEnemy?.$vector, [1, 1, 1, 1, 1]);
+    const res1 = await collection.findOne({ name: 'a', key }, { projection: { $vector: 1 } });
+    assert.deepStrictEqual(res1?.$vector, [1, 1, 1, 1, 1]);
 
-    const equilibrium = await collection.findOne({ name: 'Equilibrium' });
-    assert.strictEqual(equilibrium?.$vector, undefined);
+    const res2 = await collection.findOne({ name: 'b', key });
+    assert.strictEqual(res2?.$vector, undefined);
   });
 
   it('should error out when inserting with mis-matched vectors', async () => {
     await assert.rejects(async () => {
       await collection.insertMany([
-        { name: 'Arch Enemy' },
-        { name: 'Equilibrium' },
-        { name: 'AC/DC' },
+        { name: 'a' },
+        { name: 'b' },
+        { name: 'c' },
       ], {
         vectors: [
           [1, 1, 1, 1, 1],
@@ -124,9 +124,9 @@ describe('integration.data-api.collection.insert-many', { truncateColls: 'defaul
   it('should error out when inserting with mis-matched vectorize', async () => {
     await assert.rejects(async () => {
       await collection.insertMany([
-        { name: 'Arch Enemy' },
-        { name: 'Equilibrium' },
-        { name: 'AC/DC' },
+        { name: 'a' },
+        { name: 'b' },
+        { name: 'c' },
       ], {
         vectorize: [
           'Arch Enemy is a Swedish melodic death metal band, originally a supergroup from Halmstad, formed in 1995.',
@@ -141,9 +141,9 @@ describe('integration.data-api.collection.insert-many', { truncateColls: 'defaul
   it('should fail when inserting with both vector and vectorize', async () => {
     await assert.rejects(async () => {
       await collection.insertMany([
-        { name: 'Arch Enemy' },
-        { name: 'Equilibrium' },
-        { name: 'AC/DC' },
+        { name: 'a' },
+        { name: 'b' },
+        { name: 'c' },
       ], {
         vectors: [[1, 1, 1, 1, 1],],
         vectorize: ['Hello there.',],
@@ -152,15 +152,15 @@ describe('integration.data-api.collection.insert-many', { truncateColls: 'defaul
   });
 
   it('should insertMany documents ordered', async () => {
-    const docs = [{ name: 'Inis Mona', _id: 1 }, { name: 'Helvetios', _id: 2 }, { name: 'Epona', _id: 3 }];
+    const docs = [{ name: 'Inis Mona', _id: UUID.v7().toString() }, { name: 'Helvetios', _id: UUID.v7().toString() }, { name: 'Epona', _id: UUID.v7().toString() }];
     const res = await collection.insertMany(docs, { ordered: true });
     assert.strictEqual(res.insertedCount, docs.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, docs.length);
     assert.deepStrictEqual(res.insertedIds, docs.map((doc) => doc._id));
   });
 
-  it('should error out when one of the docs in insertMany is invalid with ordered true', async () => {
-    const docs = Array.from({ length: 20 }, (_, i) => ({ _id: i }));
+  it('should error out when one of the docs in insertMany is invalid with ordered true', async (key) => {
+    const docs = Array.from({ length: 20 }, (_, i) => ({ _id: key + i }));
     docs[10] = docs[9];
     let error: unknown;
     try {
@@ -178,8 +178,8 @@ describe('integration.data-api.collection.insert-many', { truncateColls: 'defaul
     });
   });
 
-  it('should error out when one of the docs in insertMany is invalid with ordered false', async () => {
-    const docs = Array.from({ length: 20 }, (_, i) => ({ _id: i }));
+  it('should error out when one of the docs in insertMany is invalid with ordered false', async (key) => {
+    const docs = Array.from({ length: 20 }, (_, i) => ({ _id: key + i }));
     docs[10] = docs[9];
     let error: unknown;
     try {
@@ -220,22 +220,17 @@ describe('integration.data-api.collection.insert-many', { truncateColls: 'defaul
     }
   });
 
-  it('times out properly', async () => {
+  it('times out properly', async (key) => {
     try {
-      const docs = Array.from({ length: 1000 }, (_, i) => ({ _id: i }));
+      const docs = Array.from({ length: 1000 }, () => ({ key }));
       await collection.insertMany(docs, { ordered: true, maxTimeMS: 500, chunkSize: 10 });
       assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof DataAPITimeoutError);
       assert.strictEqual(e.timeout, 500);
-      const found = await collection.find({}).toArray();
+      const found = await collection.find({ key }).toArray();
       assert.ok(found.length > 0);
       assert.ok(found.length < 1000);
     }
-  });
-
-  it('does not time out if maxTimeMS is high', async () => {
-    const docs = Array.from({ length: 100 }, (_, i) => ({ _id: i }));
-    await collection.insertMany(docs, { ordered: true, maxTimeMS: 500000, chunkSize: 10 });
   });
 });

@@ -14,10 +14,10 @@
 // noinspection DuplicatedCode
 
 import { DataAPIResponseError, ObjectId, UUID } from '@/src/data-api';
-import { describe, it } from '@/tests/testlib';
+import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.collection.insert-one', { truncateColls: 'default' }, ({ collection }) => {
+parallel('integration.data-api.collection.insert-one', { truncateColls: 'default:before' }, ({ collection }) => {
   it('should insertOne document', async () => {
     const res = await collection.insertOne({ name: 'Lzzy' });
     assert.ok(res);
@@ -25,8 +25,8 @@ describe('integration.data-api.collection.insert-one', { truncateColls: 'default
     assert.doesNotThrow(() => new UUID(<string>res.insertedId));
   });
 
-  it('should insertOne document with id', async () => {
-    const res = await collection.insertOne({ name: 'Lzzy', _id: '123' });
+  it('should insertOne document with id', async (key) => {
+    const res = await collection.insertOne({ name: 'Lzzy', _id: key });
     assert.ok(res);
     assert.ok(res.insertedId, '123');
   });
@@ -71,29 +71,29 @@ describe('integration.data-api.collection.insert-one', { truncateColls: 'default
     assert.strictEqual(found.foreignId.toString(), id.toString());
   });
 
-  it('should insertOne with vector', async () => {
-    const res = await collection.insertOne({ name: 'Arch Enemy' }, { vector: [1, 1, 1, 1, 1] });
+  it('should insertOne with vector', async (key) => {
+    const res = await collection.insertOne({ name: key }, { vector: [1, 1, 1, 1, 1] });
     assert.ok(res);
-    const found = await collection.findOne({ name: 'Arch Enemy' }, { projection: { '*': 1 } });
+    const found = await collection.findOne({ name: key }, { projection: { '*': 1 } });
     assert.deepStrictEqual(found?.$vector, [1, 1, 1, 1, 1]);
   });
 
-  it('should insertOne with $date', async () => {
+  it('should insertOne with $date', async (key) => {
     const timestamp = new Date();
-    const res = await collection.insertOne({ name: 'Hot Fuzz', date: { $date: timestamp } });
+    const res = await collection.insertOne({ name: key, date: { $date: timestamp } });
     assert.ok(res);
-    const found = await collection.findOne({ name: 'Hot Fuzz' });
+    const found = await collection.findOne({ name: key });
     assert.ok(found?.date instanceof Date);
     assert.strictEqual(found.date.toISOString(), timestamp.toISOString());
   });
 
-  it('should store bigint as number', async () => {
+  it('should store bigint as number', async (key) => {
     await collection.insertOne({
-      _id: 'bigint-test',
+      _id: key,
       answer: 42n
     });
 
-    const res = await collection.findOne({ _id: 'bigint-test' });
+    const res = await collection.findOne({ _id: key });
     assert.strictEqual(res?.answer, 42);
   });
 
@@ -103,7 +103,7 @@ describe('integration.data-api.collection.insert-one', { truncateColls: 'default
 
   it('should fail insert of doc over size 1 MB', async () => {
     const bigDoc = new Array(1024 * 1024).fill('a').join('');
-    const docToInsert = { username: bigDoc };
+    const docToInsert = { name: bigDoc };
     await assert.rejects(() => collection.insertOne(docToInsert), Error);
   });
 
@@ -122,7 +122,7 @@ describe('integration.data-api.collection.insert-one', { truncateColls: 'default
 
   it('should fail if the string field value is > 8000', async () => {
     const longValue = new Array(8001).fill('a').join('');
-    const docToInsert = { username: longValue };
+    const docToInsert = { name: longValue };
     await assert.rejects(() => collection.insertOne(docToInsert), DataAPIResponseError);
   });
 
@@ -132,7 +132,7 @@ describe('integration.data-api.collection.insert-one', { truncateColls: 'default
   });
 
   it('should fail if a doc contains more than 1000 properties', async () => {
-    const docToInsert: any = { _id: '123' };
+    const docToInsert: Record<string, string> = {};
     for (let i = 1; i <= 1000; i++) {
       docToInsert[`prop${i}`] = `prop${i}value`;
     }

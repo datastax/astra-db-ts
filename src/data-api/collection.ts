@@ -988,6 +988,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       throw new Error('upperBound is required');
     }
 
+    if (upperBound < 0) {
+      throw new Error('upperBound must be >= 0');
+    }
+
     const resp = await this.#httpClient.executeCommand(command, options);
 
     if (resp.status?.moreData) {

@@ -17,7 +17,7 @@ import { DataAPIError, UpdateManyError } from '@/src/data-api';
 import { describe, initCollectionWithFailingClient, it, sampleUsersList } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.collection.update-many', { truncateColls: 'default' }, ({ collection }) => {
+describe('integration.data-api.collection.update-many', { truncateColls: 'default:beforeEach' }, ({ collection }) => {
   it('should updateMany documents with ids', async () => {
     const sampleDocsWithIdList = structuredClone(sampleUsersList);
     sampleDocsWithIdList[0]._id = 'docml1';

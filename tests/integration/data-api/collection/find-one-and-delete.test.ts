@@ -12,118 +12,115 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { describe, it, createSampleDocWithMultiLevel } from '@/tests/testlib';
+import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.collection.find-one-and-delete', { truncateColls: 'default' }, ({ collection }) => {
+describe('integration.data-api.collection.find-one-and-delete', { truncateColls: 'default:before' }, ({ collection }) => {
   it('should findOneAndDelete', async () => {
-    const res = await collection.insertOne(createSampleDocWithMultiLevel());
+    const res = await collection.insertOne({ name: 'kamelot' });
     const docId = res.insertedId;
     const resp = await collection.findOneAndDelete(
-      {
-        '_id': docId,
-      },
-      {
-        includeResultMetadata: true,
-      },
+      { '_id': docId },
+      { includeResultMetadata: true },
     );
     assert.strictEqual(resp.ok, 1);
     assert.strictEqual(resp.value?._id, docId);
-    assert.strictEqual(resp.value.username, 'aaron');
-    assert.strictEqual(resp.value.address?.city, 'big banana');
+    assert.strictEqual(resp.value.name, 'kamelot');
   });
 
-  it('should findOneAndDelete with a projection', async () => {
+  it('should findOneAndDelete with a projection', async (key) => {
     await collection.insertMany([
-      { username: 'a', answer: 42 },
-      { username: 'aa', answer: 42 },
-      { username: 'aaa', answer: 42 },
+      { name: 'a', age: 42, key },
+      { name: 'aa', age: 42, key },
+      { name: 'aaa', age: 42, key },
     ]);
 
     const res = await collection.findOneAndDelete(
-      { username: 'a' },
-      { projection: { username: 1 }, includeResultMetadata: true },
+      { name: 'a', key },
+      { projection: { name: 1 }, includeResultMetadata: true },
     );
-    assert.strictEqual(res.value?.username, 'a');
-    assert.strictEqual(res.value.answer, undefined);
+    assert.strictEqual(res.value?.name, 'a');
+    assert.strictEqual(res.value.age, undefined);
   });
 
-  it('should findOneAndDelete with sort', async () => {
+  it('should findOneAndDelete with sort', async (key) => {
     await collection.insertMany([
-      { username: 'a' },
-      { username: 'c' },
-      { username: 'b' },
+      { name: 'a', key },
+      { name: 'c', key },
+      { name: 'b', key },
     ]);
 
-    let res = await collection.findOneAndDelete(
-      {},
-      { sort: { username: 1 }, includeResultMetadata: true },
+    const res1 = await collection.findOneAndDelete(
+      { key },
+      { sort: { name: 1 }, includeResultMetadata: true },
     );
-    assert.strictEqual(res.value?.username, 'a');
+    assert.strictEqual(res1.value?.name, 'a');
 
-    res = await collection.findOneAndDelete(
-      {},
-      { sort: { username: -1 }, includeResultMetadata: true },
+    const res2 = await collection.findOneAndDelete(
+      { key },
+      { sort: { name: -1 }, includeResultMetadata: true },
     );
-    assert.deepStrictEqual(res.value?.username, 'c');
+    assert.deepStrictEqual(res2.value?.name, 'c');
   });
 
-  it('should not return metadata when includeResultMetadata is false', async () => {
-    await collection.insertOne({ username: 'a' });
+  it('should not return metadata when includeResultMetadata is false', async (key) => {
+    await collection.insertOne({ name: 'a', key });
+
     const res = await collection.findOneAndDelete(
-      { username: 'a' },
+      { name: 'a', key },
       { includeResultMetadata: false },
     );
 
-    assert.deepStrictEqual(res, { _id: res?._id, username: 'a' });
+    assert.deepStrictEqual(res, { _id: res?._id, name: 'a', key });
   });
 
-  it('should not return metadata by default', async () => {
-    await collection.insertOne({ username: 'a' });
+  it('should not return metadata by default', async (key) => {
+    await collection.insertOne({ name: 'b', key });
+
     const res = await collection.findOneAndDelete(
-      { username: 'a' },
+      { name: 'b', key },
     );
 
-    assert.deepStrictEqual(res, { _id: res?._id, username: 'a' });
+    assert.deepStrictEqual(res, { _id: res?._id, name: 'b', key });
   });
 
-  it('should findOneAndDelete with $vector sort', async () => {
+  it('should findOneAndDelete with $vector sort', async (key) => {
     await collection.insertMany([
-      { username: 'a', $vector: [1.0, 1.0, 1.0, 1.0, 1.0] },
-      { username: 'c', $vector: [-.1, -.1, -.1, -.1, -.1] },
-      { username: 'b', $vector: [-.1, -.1, -.1, -.1, -.1] },
+      { name: 'a', $vector: [1.0, 1.0, 1.0, 1.0, 1.0], key },
+      { name: 'c', $vector: [-.1, -.1, -.1, -.1, -.1], key },
+      { name: 'b', $vector: [-.1, -.1, -.1, -.1, -.1], key },
     ]);
 
     const res = await collection.findOneAndDelete(
-      {},
+      { key },
       { sort: { $vector: [1, 1, 1, 1, 1] }, includeResultMetadata: true },
     );
-    assert.strictEqual(res.value?.username, 'a');
+    assert.strictEqual(res.value?.name, 'a');
   });
 
-  it('should findOneAndDelete with vector sort in option', async () => {
+  it('should findOneAndDelete with vector sort in option', async (key) => {
     await collection.insertMany([
-      { username: 'a', $vector: [1.0, 1.0, 1.0, 1.0, 1.0] },
-      { username: 'c', $vector: [-.1, -.1, -.1, -.1, -.1] },
-      { username: 'b', $vector: [-.1, -.1, -.1, -.1, -.1] },
+      { name: 'a', $vector: [1.0, 1.0, 1.0, 1.0, 1.0], key },
+      { name: 'c', $vector: [-.1, -.1, -.1, -.1, -.1], key },
+      { name: 'b', $vector: [-.1, -.1, -.1, -.1, -.1], key },
     ]);
 
     const res = await collection.findOneAndDelete(
-      {},
+      { key },
       { vector: [1, 1, 1, 1, 1], includeResultMetadata: true },
     );
-    assert.strictEqual(res.value?.username, 'a');
+    assert.strictEqual(res.value?.name, 'a');
   });
 
   it('should error when both sort and vector are provided', async () => {
     await assert.rejects(async () => {
-      await collection.findOneAndDelete({}, { sort: { username: 1 }, vector: [1, 1, 1, 1, 1] });
+      await collection.findOneAndDelete({}, { sort: { name: 1 }, vector: [1, 1, 1, 1, 1] });
     }, /Can't use both `sort` and `vector` options at once; if you need both, include a \$vector key in the sort object/)
   });
 
   it('should error when both sort and vectorize are provided', async () => {
     await assert.rejects(async () => {
-      await collection.findOneAndDelete({}, { sort: { username: 1 }, vectorize: 'American Idiot is a good song' });
+      await collection.findOneAndDelete({}, { sort: { name: 1 }, vectorize: 'American Idiot is a good song' });
     }, /Can't use both `sort` and `vectorize` options at once; if you need both, include a \$vectorize key in the sort object/)
   });
 

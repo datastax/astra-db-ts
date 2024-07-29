@@ -33,7 +33,7 @@ import {
   TEST_APPLICATION_URI,
 } from '@/tests/testlib';
 
-describe('integration.misc.headers', { truncateColls: 'default' }, () => {
+describe('integration.misc.headers', () => {
   const fetchNative = new FetchNative();
 
   const mkClient = (latestHeaders: Ref<Record<string, string>>, tp?: string | TokenProvider | nullish) => new DataAPIClient(tp, {

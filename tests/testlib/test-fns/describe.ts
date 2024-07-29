@@ -23,7 +23,7 @@ import { TEST_FILTER_PASSES } from '@/tests/testlib/global';
 export type SuiteBlock = (this: Mocha.Suite, fixtures: ReturnType<typeof initTestObjects>) => void;
 
 export interface SuiteOptions {
-  truncateColls?: 'default' | 'both',
+  truncateColls?: `${'default' | 'both'}:${'before' | 'beforeEach'}`,
   dropEphemeral?: 'after' | 'afterEach',
 }
 
@@ -54,11 +54,11 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
       checkTestsEnabled(name) || this.skip();
     });
 
-    if (opts.truncateColls) {
-      beforeEach(async () => {
+    if (opts.truncateColls?.includes(':')) {
+      global[opts.truncateColls.split(':')[1] as keyof typeof globalThis](async () => {
         await fixtures.collection.deleteMany({});
 
-        if (opts.truncateColls === 'both') {
+        if (opts.truncateColls?.startsWith('both')) {
           await fixtures.db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE }).deleteMany({});
         }
       });

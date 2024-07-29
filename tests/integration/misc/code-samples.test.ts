@@ -13,29 +13,13 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIClient } from '@/src/client';
-import { DEFAULT_NAMESPACE } from '@/src/api';
 import assert from 'assert';
 import { ObjectId, UUID } from '@/src/data-api';
-import {
-  DEFAULT_COLLECTION_NAME,
-  describe,
-  ENVIRONMENT,
-  it,
-  TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
-} from '@/tests/testlib';
+import { describe, it } from '@/tests/testlib';
 
-describe('integration.misc.code-samples', { truncateColls: 'default' }, () => {
-  const token = TEST_APPLICATION_TOKEN;
-  const endpoint = TEST_APPLICATION_URI;
-
+describe('integration.misc.code-samples', { truncateColls: 'default:beforeEach' }, ({ collection }) => {
   describe('documents', () => {
     it('works for dates', async () => {
-      const client = new DataAPIClient(token, { environment: ENVIRONMENT });
-      const db = client.db(endpoint, { namespace: DEFAULT_NAMESPACE });
-      const collection = db.collection(DEFAULT_COLLECTION_NAME);
-
       await collection.insertOne({ dateOfBirth: new Date(1394104654000) });
       await collection.insertOne({ dateOfBirth: new Date('1863-05-28') });
 
@@ -62,10 +46,6 @@ describe('integration.misc.code-samples', { truncateColls: 'default' }, () => {
     });
 
     it('works for document IDs', async () => {
-      const client = new DataAPIClient(token, { environment: ENVIRONMENT });
-      const db = client.db(endpoint, { namespace: DEFAULT_NAMESPACE });
-      const collection = db.collection(DEFAULT_COLLECTION_NAME);
-
       await collection.insertOne({ name: 'John', _id: UUID.v4() });
       await collection.insertOne({ name: 'Jane', _id: new UUID('016b1cac-14ce-660e-8974-026c927b9b91') });
 
@@ -97,10 +77,6 @@ describe('integration.misc.code-samples', { truncateColls: 'default' }, () => {
     });
 
     it('works for finding a document', async () => {
-      const client = new DataAPIClient(token, { environment: ENVIRONMENT });
-      const db = client.db(endpoint, { namespace: DEFAULT_NAMESPACE });
-      const collection = db.collection(DEFAULT_COLLECTION_NAME);
-
       // Insert some documents
       await collection.insertMany([
         { name: 'John', age: 30, $vector: [1, 1, 1, 1, 1] },
@@ -136,10 +112,6 @@ describe('integration.misc.code-samples', { truncateColls: 'default' }, () => {
     });
 
     it('works for finding documents', async () => {
-      const client = new DataAPIClient(token, { environment: ENVIRONMENT });
-      const db = client.db(endpoint, { namespace: DEFAULT_NAMESPACE });
-      const collection = db.collection(DEFAULT_COLLECTION_NAME);
-
       // Insert some documents
       await collection.insertMany([
         { name: 'John', age: 30, $vector: [1, 1, 1, 1, 1] },
@@ -177,10 +149,6 @@ describe('integration.misc.code-samples', { truncateColls: 'default' }, () => {
     });
 
     it('works for example sort operations', async () => {
-      const client = new DataAPIClient(token, { environment: ENVIRONMENT });
-      const db = client.db(endpoint, { namespace: DEFAULT_NAMESPACE });
-      const collection = db.collection(DEFAULT_COLLECTION_NAME);
-
       // Insert some documents
       await collection.insertMany([
         { name: 'Jane', age: 25, $vector: [1.0, 1.0, 1.0, 1.0, 1.0] },
@@ -200,10 +168,6 @@ describe('integration.misc.code-samples', { truncateColls: 'default' }, () => {
     });
 
     it('works for finding & updating a document', async () => {
-      const client = new DataAPIClient(token, { environment: ENVIRONMENT });
-      const db = client.db(endpoint, { namespace: DEFAULT_NAMESPACE });
-      const collection = db.collection(DEFAULT_COLLECTION_NAME);
-
       // Insert a document
       await collection.insertOne({ 'Marco': 'Polo' });
 
@@ -249,10 +213,6 @@ describe('integration.misc.code-samples', { truncateColls: 'default' }, () => {
     });
 
     it('works for updating a document', async () => {
-      const client = new DataAPIClient(token, { environment: ENVIRONMENT });
-      const db = client.db(endpoint, { namespace: DEFAULT_NAMESPACE });
-      const collection = db.collection(DEFAULT_COLLECTION_NAME);
-
       // Insert a document
       await collection.insertOne({ 'Marco': 'Polo' });
 

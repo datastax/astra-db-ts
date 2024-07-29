@@ -14,35 +14,28 @@
 // noinspection DuplicatedCode
 
 import { DataAPIError, DeleteManyError } from '@/src/data-api';
-import { describe, initCollectionWithFailingClient, it } from '@/tests/testlib';
+import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.collection.delete-many', { truncateColls: 'default' }, ({ collection }) => {
+parallel('integration.data-api.collection.delete-many', { truncateColls: 'both:before' }, ({ collection, collection_ }) => {
+  before(async () => {
+    await collection.insertMany(Array.from({ length: 50 }, (_, i) => ({ age: i })));
+    await collection_.insertMany(Array.from({ length: 100 }, () => ({})));
+  });
+
   it('should deleteMany when match is <= 20', async () => {
-    const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
-    docList.forEach((doc, index) => {
-      doc.username = doc.username + String(index + 1);
-    });
-    const res = await collection.insertMany(docList);
-    assert.strictEqual(res.insertedCount, 20);
-    const deleteManyResp = await collection.deleteMany({ 'city': 'trichy' });
-    assert.strictEqual(deleteManyResp.deletedCount, 20);
+    const deleteManyResp = await collection.deleteMany({ age: { $lt: 10 } });
+    assert.strictEqual(deleteManyResp.deletedCount, 10);
   });
 
   it('should deleteMany when match is > 20', async () => {
-    const docList = Array.from({ length: 101 }, () => ({ 'username': 'id', 'city': 'trichy' }));
-    const res = await collection.insertMany(docList);
-    assert.strictEqual(res.insertedCount, 101);
-    const deleteManyResp = await collection.deleteMany({ 'city': 'trichy' });
-    assert.strictEqual(deleteManyResp.deletedCount, 101);
+    const deleteManyResp = await collection.deleteMany({ age: { $gte: 10 } });
+    assert.strictEqual(deleteManyResp.deletedCount, 40);
   });
 
-  it('should deleteMany with an empty filter', async () => {
-    const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
-    const res = await collection.insertMany(docList);
-    assert.strictEqual(res.insertedCount, 20);
-    await collection.deleteMany({});
-    const numDocs = await collection.countDocuments({}, 1000);
+  it('should delete all documents given an empty filter', async () => {
+    await collection_.deleteMany({});
+    const numDocs = await collection_.countDocuments({}, 1000);
     assert.strictEqual(numDocs, 0);
   });
 

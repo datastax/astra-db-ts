@@ -20,7 +20,9 @@ describe('(background)', () => {
       if ('skipped' in test) {
         this.skip();
       } else {
+        const startTime = performance.now();
         const result = await test.res;
+        console.log('background test waited', performance.now() - startTime);
 
         this.test!.title = `${test.name} (${~~result.ms}ms)`;
 

@@ -24,7 +24,7 @@ import assert from 'assert';
 
 // I was going to go through split this up but yeah... no
 // Don't want to spend too much time sifting through a thousand lines of intertwined tests
-describe('integration.data-api.collection.finds', { truncateColls: 'default' }, ({ collection }) => {
+describe('integration.data-api.collection.finds', { truncateColls: 'default:beforeEach' }, ({ collection }) => {
   it('should find & findOne document', async () => {
     const insertDocResp = await collection.insertOne(createSampleDocWithMultiLevel());
     const idToCheck = insertDocResp.insertedId;

@@ -12,36 +12,35 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { createSampleDocWithMultiLevel, describe, it } from '@/tests/testlib';
+import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.collection.delete-one', { truncateColls: 'default' }, ({ collection }) => {
+parallel('integration.data-api.collection.delete-one', { truncateColls: 'default:before' }, ({ collection }) => {
   it('should deleteOne document', async () => {
-    const res = await collection.insertOne(createSampleDocWithMultiLevel());
-    const docId = res.insertedId;
-    const deleteOneResp = await collection.deleteOne({ _id: docId });
+    const res = await collection.insertOne({});
+    const deleteOneResp = await collection.deleteOne({ _id: res.insertedId });
     assert.strictEqual(deleteOneResp.deletedCount, 1);
   });
 
   it('should not delete any when no match in deleteOne', async () => {
-    await collection.insertOne(createSampleDocWithMultiLevel());
-    const deleteOneResp = await collection.deleteOne({ 'username': 'samlxyz' });
+    await collection.insertOne({});
+    const deleteOneResp = await collection.deleteOne({ 'name': 'band-maid' });
     assert.strictEqual(deleteOneResp.deletedCount, 0);
   });
 
-  it('should deleteOne with sort', async () => {
+  it('should deleteOne with sort', async (key) => {
     await collection.insertMany([
-      { username: 'a' },
-      { username: 'c' },
-      { username: 'b' }
+      { name: 'a', key },
+      { name: 'c', key },
+      { name: 'b', key },
     ]);
 
     await collection.deleteOne(
-      {},
-      { sort: { username: 1 } }
+      { key },
+      { sort: { name: 1 } },
     );
 
-    const docs = await collection.find({}, { sort: { username: 1 }, limit: 20 }).toArray();
-    assert.deepStrictEqual(docs.map(doc => doc.username), ['b', 'c']);
+    const docs = await collection.find({ key }, { sort: { name: 1 }, limit: 20 }).toArray();
+    assert.deepStrictEqual(docs.map(doc => doc.name), ['b', 'c']);
   });
 });

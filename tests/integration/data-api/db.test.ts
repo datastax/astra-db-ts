@@ -126,21 +126,30 @@ describe('integration.data-api.db', ({ db }) => {
       assert.strictEqual(collection, undefined);
     });
 
-    it('should drop a collection in non-default namespace', async () => {
-      await db.createCollection('coll_2', { namespace: OTHER_NAMESPACE });
-      const res = await db.dropCollection('coll_2', { namespace: OTHER_NAMESPACE });
+    it('should drop a collection using the collection method', async () => {
+      const coll = await db.createCollection('coll_2');
+      const res = await coll.drop();
       assert.strictEqual(res, true);
       const collections = await db.listCollections();
       const collection = collections.find(c => c.name === 'coll_2');
       assert.strictEqual(collection, undefined);
     });
 
-    it('should not drop a collection in different namespace', async () => {
-      await db.createCollection('coll_3');
+    it('should drop a collection in non-default namespace', async () => {
+      await db.createCollection('coll_3', { namespace: OTHER_NAMESPACE });
       const res = await db.dropCollection('coll_3', { namespace: OTHER_NAMESPACE });
       assert.strictEqual(res, true);
       const collections = await db.listCollections();
       const collection = collections.find(c => c.name === 'coll_3');
+      assert.strictEqual(collection, undefined);
+    });
+
+    it('should not drop a collection in different namespace', async () => {
+      await db.createCollection('coll_4');
+      const res = await db.dropCollection('coll_4', { namespace: OTHER_NAMESPACE });
+      assert.strictEqual(res, true);
+      const collections = await db.listCollections();
+      const collection = collections.find(c => c.name === 'coll_4');
       assert.ok(collection);
     });
   });
