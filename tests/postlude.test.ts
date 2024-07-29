@@ -12,24 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { globalBackgroundTests } from '@/tests/testlib';
+import { describe, it, globalBackgroundTests } from '@/tests/testlib';
 
 describe('(background)', () => {
-  globalBackgroundTests.forEach((test) => {
-    it(test.name, async function () {
-      if ('skipped' in test) {
-        this.skip();
-      } else {
-        const startTime = performance.now();
-        const result = await test.res;
-        console.log('background test waited', performance.now() - startTime);
+  before(() => {
+    globalBackgroundTests.forEach((test) => {
+      describe(test.name, () => {
+        it(test.name, async function () {
+          if ('skipped' in test) {
+            this.skip();
+          } else {
+            const result = await test.res;
 
-        this.test!.title = `${test.name} (${~~result.ms}ms)`;
+            this.test!.title = `${test.name} (${~~result.ms}ms)`;
 
-        if (result.error) {
-          throw result.error;
-        }
-      }
+            if (result.error) {
+              throw result.error;
+            }
+          }
+        });
+      })
     });
   });
+  global.it('Dummy test that always runs', () => {});
 });

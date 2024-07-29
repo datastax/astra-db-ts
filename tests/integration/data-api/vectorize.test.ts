@@ -402,7 +402,7 @@ const createVectorizeProvidersTest = (testsCollSupplier: TestCollsSupplier) => {
 };
 
 const createVectorizeParamTests = function (db: Db, collName: string, embeddingApiKey?: EmbeddingHeadersProvider) {
-  describe('$vectorize/vectorize params', () => {
+  parallel('$vectorize/vectorize params', () => {
     const collection = db.collection(collName, {
       embeddingApiKey: embeddingApiKey,
     });
@@ -413,30 +413,26 @@ const createVectorizeParamTests = function (db: Db, collName: string, embeddingA
       }
     });
 
-    beforeEach(async () => {
-      await collection.deleteMany({});
-    });
-
-    it('should override $vectorize if both are set in insertOne', async () => {
+    it('should override $vectorize if both are set in insertOne', async (key) => {
       await collection.insertOne({
-        _id: '1',
+        _id: key,
         $vectorize: 'The grass was as green as it always was that sinister day',
       }, {
         vectorize: 'The blackbirds sang their song as they always did that black-letter day',
       })
 
-      const result = await collection.findOne({ _id: '1' }, { projection: { '*': 1 } });
+      const result = await collection.findOne({ _id: key }, { projection: { '*': 1 } });
       assert.strictEqual(result?.$vectorize, 'The blackbirds sang their song as they always did that black-letter day');
     });
 
-    it('should override $vectorize if both are set in insertMany', async () => {
+    it('should override $vectorize if both are set in insertMany', async (key) => {
       await collection.insertMany([
         {
-          _id: '1',
+          _id: `${key}1`,
           $vectorize: 'The grass was as green as it always was that sinister day',
         },
         {
-          _id: '2',
+          _id: `${key}2`,
           $vectorize: 'The grass was as green as it always was that sinister day',
         },
       ], {
@@ -446,44 +442,44 @@ const createVectorizeParamTests = function (db: Db, collName: string, embeddingA
         ],
       });
 
-      const result1 = await collection.findOne({ _id: '1' }, { projection: { '*': 1 } });
+      const result1 = await collection.findOne({ _id: `${key}1` }, { projection: { '*': 1 } });
       assert.strictEqual(result1?.$vectorize, 'The blackbirds sang their song as they always did that black-letter day');
-      const result2 = await collection.findOne({ _id: '2' }, { projection: { '*': 1 } });
+      const result2 = await collection.findOne({ _id: `${key}2` }, { projection: { '*': 1 } });
       assert.strictEqual(result2?.$vectorize, 'The grass was as green as it always was that sinister day');
     });
 
-    it('should throw an error if vectorize and sort are both set', async () => {
+    it('should throw an error if vectorize and sort are both set', async (key) => {
       await assert.rejects(async () => {
-        await collection.findOne({}, { sort: { name: 1 }, vectorize: 'some text' });
+        await collection.findOne({ key }, { sort: { name: 1 }, vectorize: 'some text' });
       });
       assert.throws(() => {
-        collection.find({}, { sort: { name: 1 }, vectorize: 'some text' });
+        collection.find({ key }, { sort: { name: 1 }, vectorize: 'some text' });
       });
       await assert.rejects(async () => {
-        await collection.updateOne({}, {}, { sort: { name: 1 }, vectorize: 'some text' });
+        await collection.updateOne({ key }, {}, { sort: { name: 1 }, vectorize: 'some text' });
       });
       await assert.rejects(async () => {
-        await collection.findOneAndUpdate({}, {}, {
+        await collection.findOneAndUpdate({ key }, {}, {
           sort: { name: 1 },
           vectorize: 'some text',
           returnDocument: 'before',
         });
       });
       await assert.rejects(async () => {
-        await collection.replaceOne({}, {}, { sort: { name: 1 }, vectorize: 'some text' });
+        await collection.replaceOne({ key }, {}, { sort: { name: 1 }, vectorize: 'some text' });
       });
       await assert.rejects(async () => {
-        await collection.findOneAndReplace({}, {}, {
+        await collection.findOneAndReplace({ key }, {}, {
           sort: { name: 1 },
           vectorize: 'some text',
           returnDocument: 'before',
         });
       });
       await assert.rejects(async () => {
-        await collection.deleteOne({}, { sort: { name: 1 }, vectorize: 'some text' });
+        await collection.deleteOne({ key }, { sort: { name: 1 }, vectorize: 'some text' });
       });
       await assert.rejects(async () => {
-        await collection.findOneAndDelete({}, { sort: { name: 1 }, vectorize: 'some text' });
+        await collection.findOneAndDelete({ key }, { sort: { name: 1 }, vectorize: 'some text' });
       });
     });
   });

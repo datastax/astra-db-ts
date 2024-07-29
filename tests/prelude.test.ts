@@ -24,7 +24,7 @@ before(async () => {
 
   await Promise.all(
     namespaces
-      .filter(ns => ![DEFAULT_NAMESPACE, OTHER_NAMESPACE].includes(ns))
+      .filter(ns => ['slania'].includes(ns))
       .tap(ns => console.log(`deleting namespace '${ns}s'`))
       .map(ns => dbAdmin.dropNamespace(ns))
   );

@@ -14,9 +14,9 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { describe, ENVIRONMENT, it, TEST_APPLICATION_URI } from '@/tests/testlib';
+import { ENVIRONMENT, it, parallel, TEST_APPLICATION_URI } from '@/tests/testlib';
 
-describe('integration.devops.db-admin', ({ client, dbAdmin }) => {
+parallel('integration.devops.db-admin', ({ client, dbAdmin }) => {
   it('[LONG] works', async () => {
     const db = client.db(TEST_APPLICATION_URI);
 

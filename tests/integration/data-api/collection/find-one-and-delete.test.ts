@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { describe, it } from '@/tests/testlib';
+import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.collection.find-one-and-delete', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.data-api.collection.find-one-and-delete', { truncateColls: 'default:before' }, ({ collection }) => {
   it('should findOneAndDelete', async () => {
     const res = await collection.insertOne({ name: 'kamelot' });
     const docId = res.insertedId;
