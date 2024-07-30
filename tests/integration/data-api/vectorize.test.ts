@@ -355,8 +355,10 @@ const createVectorizeProvidersTest = (testsCollSupplier: TestCollsSupplier) => {
 
       if (supplier.test.loadingTime && i === 0) {
         const _id = UUID.v4();
-        await collection.insertOne({ _id, $vectorize: 'a' });
-        await collection.deleteOne({ _id });
+        try {
+          await collection.insertOne({ _id, $vectorize: 'a' });
+          await collection.deleteOne({ _id });
+        } catch (_) { /* empty */ }
         await new Promise((resolve) => setTimeout(resolve, supplier.test.loadingTime));
       }
 

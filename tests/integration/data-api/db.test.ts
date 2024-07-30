@@ -118,7 +118,7 @@ describe('integration.data-api.db', ({ db }) => {
 
   parallel('[LONG] dropCollection', { dropEphemeral: 'after' }, () => {
     it('should drop a collection', async () => {
-      await db.createCollection('coll_1');
+      await db.createCollection('coll_1', { indexing: { deny: ['*'] } });
       const res = await db.dropCollection('coll_1');
       assert.strictEqual(res, true);
       const collections = await db.listCollections();
@@ -127,7 +127,7 @@ describe('integration.data-api.db', ({ db }) => {
     });
 
     it('should drop a collection using the collection method', async () => {
-      const coll = await db.createCollection('coll_2');
+      const coll = await db.createCollection('coll_2', { indexing: { deny: ['*'] } });
       const res = await coll.drop();
       assert.strictEqual(res, true);
       const collections = await db.listCollections();
@@ -136,7 +136,7 @@ describe('integration.data-api.db', ({ db }) => {
     });
 
     it('should drop a collection in non-default namespace', async () => {
-      await db.createCollection('coll_3', { namespace: OTHER_NAMESPACE });
+      await db.createCollection('coll_3', { indexing: { deny: ['*'] }, namespace: OTHER_NAMESPACE });
       const res = await db.dropCollection('coll_3', { namespace: OTHER_NAMESPACE });
       assert.strictEqual(res, true);
       const collections = await db.listCollections();
@@ -145,7 +145,7 @@ describe('integration.data-api.db', ({ db }) => {
     });
 
     it('should not drop a collection in different namespace', async () => {
-      await db.createCollection('coll_4');
+      await db.createCollection('coll_4', { indexing: { deny: ['*'] } });
       const res = await db.dropCollection('coll_4', { namespace: OTHER_NAMESPACE });
       assert.strictEqual(res, true);
       const collections = await db.listCollections();
