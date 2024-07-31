@@ -1476,7 +1476,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @remarks Use with caution. Wear your safety goggles. Don't say I didn't warn you.
    */
   public async drop(options?: WithTimeout): Promise<boolean> {
-    return await this.#db.dropCollection(this.collectionName, options);
+    return await this.#db.dropCollection(this.collectionName, { namespace: this.namespace, ...options });
   }
 
   private get _httpClient() {

@@ -69,8 +69,9 @@ export type Employee = {
   };
 };
 
-export const createSampleDocWithMultiLevel = () =>
+export const createSampleDocWithMultiLevel = (key: string) =>
   ({
+    key,
     username: 'aaron',
     human: true,
     age: 47,
@@ -84,8 +85,9 @@ export const createSampleDocWithMultiLevel = () =>
     },
   }) as Employee;
 
-export const createSampleDoc2WithMultiLevel = () =>
+export const createSampleDoc2WithMultiLevel = (key: string) =>
   ({
+    key,
     username: 'jimr',
     human: true,
     age: 52,
@@ -100,8 +102,9 @@ export const createSampleDoc2WithMultiLevel = () =>
     },
   }) as Employee;
 
-export const createSampleDoc3WithMultiLevel = () =>
+export const createSampleDoc3WithMultiLevel = (key: string) =>
   ({
+    key,
     username: 'saml',
     human: false,
     age: 25,
@@ -115,9 +118,3 @@ export const createSampleDoc3WithMultiLevel = () =>
       country: 'usa',
     },
   }) as Employee;
-
-export const sampleUsersList = [
-  createSampleDocWithMultiLevel(),
-  createSampleDoc2WithMultiLevel(),
-  createSampleDoc3WithMultiLevel(),
-];

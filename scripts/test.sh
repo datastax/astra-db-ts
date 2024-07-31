@@ -1,11 +1,16 @@
 #!/usr/bin/sh
 
+# Properly sources the .env file to bring env variables into scope
+if [ -f .env ]; then
+  eval "$(tr -d '\r' < .env)"
+fi
+
 # Define necessary commands
-test_cmd="npx ts-mocha --paths -p tsconfig.json --recursive tests/prelude.test.ts tests/unit tests/integration tests/postlude.test.ts --extension .test.ts -t 90000 --reporter tests/errors-reporter.cjs"
+test_cmd="npx ts-mocha --paths -p tsconfig.json --recursive tests/prelude.test.ts tests/unit tests/integration tests/postlude.test.ts --extension .test.ts -t 0 --reporter tests/errors-reporter.cjs"
 
-all_tests_cmd="CLIENT_RUN_LONG_TESTS=1 CLIENT_RUN_ADMIN_TESTS=1 CLIENT_RUN_VECTORIZE_TESTS=1 $test_cmd"
+all_tests_cmd="CLIENT_RUN_LONG_TESTS=1 CLIENT_RUN_ADMIN_TESTS=1 $test_cmd"
 
-light_tests_cmd="CLIENT_RUN_LONG_TESTS= CLIENT_RUN_ADMIN_TESTS= CLIENT_RUN_VECTORIZE_TESTS= $test_cmd"
+light_tests_cmd="CLIENT_RUN_LONG_TESTS= CLIENT_RUN_ADMIN_TESTS= $test_cmd"
 
 run_lint_cmd="npm run lint"
 
@@ -22,14 +27,16 @@ while [ $# -gt 0 ]; do
 
   if [ "$test_type_set" -gt 1 ]; then
     echo "Can't set multiple of --all, --light, --coverage, --types, and --prerelease"
-    exit
+    exit 1
   fi
 
   case "$1" in
     "--all")
+      CLIENT_RUN_VECTORIZE_TESTS=1
       test_type="all"
       ;;
     "--light")
+      CLIENT_RUN_VECTORIZE_TESTS=
       test_type="light"
       ;;
     "--coverage")
@@ -40,6 +47,10 @@ while [ $# -gt 0 ]; do
       ;;
     "--prerelease")
       test_type="prerelease"
+      ;;
+    "-t")
+      shift
+      timeout="$1"
       ;;
     "-f" | "~f")
       [ "${1#"~"}" != "$1" ] && invert_filter=1
@@ -63,7 +74,7 @@ while [ $# -gt 0 ]; do
       echo "Invalid flag $1"
       echo ""
       echo "Usage:"
-      echo "npm run test -- [--all | --light | --coverage | --prerelease] [-f <filter> | -g <regex>] [-i] [-w <vectorize_whitelist>] [-b]"
+      echo "npm run test -- [--all | --light | --coverage | --prerelease] [-f <filter> | -g <regex>] [-i] [-t <timeout>] [-w <vectorize_whitelist>] [-b]"
       echo "or"
       echo "npm run test -- <--types>"
       exit
@@ -73,14 +84,14 @@ while [ $# -gt 0 ]; do
 done
 
 # Ensure the flags are compatible with each other
-if [ "$test_type" = '--types' ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$regex" ] || [ -n "$filter_invert" ] || [ -n "$whitelist" ]; }; then
+if [ "$test_type" = '--types' ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$regex" ] || [ -n "$filter_invert" ] || [ -n "$whitelist" ] || [ -n "$timeout" ]; }; then
   echo "Can't use a filter, bail, whitelist flags when typechecking"
-  exit
+  exit 1
 fi
 
 if [ -n "$filter" ] && [ -n "$regex" ]; then
   echo "Can't have both a 'filter' and a 'regex' flag"
-  exit
+  exit 1
 fi
 
 # Build the actual command to run
@@ -117,18 +128,31 @@ if [ -n "$invert_filter" ]; then
   cmd_to_run="CLIENT_TESTS_FILTER_INVERT=1 $cmd_to_run"
 fi
 
+if [ -n "$timeout" ]; then
+  cmd_to_run="CLIENT_TESTS_TIMEOUT=$timeout $cmd_to_run"
+fi
+
 if [ -n "$bail_early" ]; then
   cmd_to_run="$cmd_to_run -b"
 fi
 
-if [ -n "$whitelist" ]; then
-  cmd_to_run="CLIENT_VECTORIZE_WHITELIST='$whitelist' $cmd_to_run"
+# Get embedding providers, if desired, to build the vectorize part of the command
+if [ -n "$CLIENT_RUN_VECTORIZE_TESTS" ]; then
+  # shellcheck disable=SC2016
+  embedding_providers=$(sh scripts/list-embedding-providers.sh | jq -c | sed 's@"@\\"@g; s@`@\\`@g')
 fi
 
-if [ -n "$invert_whitelist" ]; then
-  cmd_to_run="CLIENT_VECTORIZE_WHITELIST_INVERT=1 $cmd_to_run"
+if [ -n "$embedding_providers" ]; then
+  cmd_to_run="CLIENT_VECTORIZE_PROVIDERS=\"$embedding_providers\" $cmd_to_run"
+
+  if [ -n "$whitelist" ]; then
+    cmd_to_run="CLIENT_VECTORIZE_WHITELIST='$whitelist' $cmd_to_run"
+  fi
+
+  if [ -n "$invert_whitelist" ]; then
+    cmd_to_run="CLIENT_VECTORIZE_WHITELIST_INVERT=1 $cmd_to_run"
+  fi
 fi
 
 # Run it
-echo "$cmd_to_run"
 eval "$cmd_to_run"

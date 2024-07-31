@@ -15,7 +15,6 @@
 export * from './test-fns/background';
 export * from './config';
 export * from './test-fns/describe';
-export * from './test-fns/dynamic';
 export * from './fixtures';
 export * from './global';
 export * from './test-fns/it';

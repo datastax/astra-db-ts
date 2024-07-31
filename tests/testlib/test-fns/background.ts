@@ -15,55 +15,73 @@
 
 import { initTestObjects } from '@/tests/testlib/fixtures';
 import { checkTestsEnabled, tryCatchErr } from '@/tests/testlib/utils';
-import { TESTS_FILTER } from '@/tests/testlib/config';
+import { SuiteBlock, TESTS_FILTER } from '@/tests/testlib';
+import { AsyncSuiteResult, AsyncSuiteSpec, GlobalAsyncSuiteSpec } from '@/tests/testlib/test-fns/types';
+import { UUID } from '@/src/data-api';
 
-export const globalBackgroundTests: BackgroundTestState[] = [];
+export const backgroundTestState: GlobalAsyncSuiteSpec = {
+  inBlock: false,
+  suites: [],
+  describe() {
+    throw new Error('Can\'t use `describe` in `background` blocks');
+  },
+  it(name, testFn, skipped) {
+    this.suites.at(-1)!.tests.push({ name, testFn, skipped });
+  },
+};
 
-type BackgroundTestState =
-  ({
-    name: string,
-    res: Promise<{
-      error?: Error,
-      ms: number,
-    }>,
-  }) | ({
-    name: string,
-    skipped: true,
-  });
-
-type BackgroundTest = (fixtures: ReturnType<typeof initTestObjects>) => Promise<void>;
+export const backgroundTestResults: Promise<AsyncSuiteResult>[] = [];
 
 interface BackgroundTestsBlock {
-  (name: string, fn: BackgroundTest): void;
-  (name: string, fn: BackgroundTest): void;
+  (name: string, fn: SuiteBlock): void;
+  (name: string, fn: SuiteBlock): void;
 }
 
 export let background: BackgroundTestsBlock;
 
-background = function (name: string, test: BackgroundTest) {
-  if (!TESTS_FILTER.test(name)) {
-    return;
-  }
+background = function (name: string, suiteFn: SuiteBlock) {
+  before(function () {
+    this.timeout(0);
 
-  if (!checkTestsEnabled(name)) {
-    globalBackgroundTests.push({
+    const suite: AsyncSuiteSpec = {
       name: name,
-      skipped: true,
-    });
-    return;
-  }
-
-  async function modifiedFn() {
-    const startTime = performance.now();
-
-    return {
-      error: await tryCatchErr(() => test(initTestObjects())),
-      ms: performance.now() - startTime,
+      skipped: !checkTestsEnabled(name),
+      tests: [],
     };
-  }
 
-  globalBackgroundTests.push({
-    name: name,
-    res: modifiedFn(),
+    backgroundTestState.suites.push(suite);
+
+    backgroundTestState.inBlock = true;
+    suiteFn(initTestObjects());
+    backgroundTestState.inBlock = false;
+
+    suite.tests = suite.tests.filter(t => TESTS_FILTER.test(suite.name!) || TESTS_FILTER.test(t.name));
+
+    if (!suite.tests.length) {
+      backgroundTestState.suites.pop();
+      return;
+    }
+
+    let promise = Promise.resolve<AsyncSuiteResult>([]);
+
+    suite.tests.forEach((test) => {
+      promise = promise.then(async (arr) => {
+        if (suite.skipped || test.skipped) {
+          arr.push(null);
+          return arr;
+        }
+
+        const startTime = performance.now();
+
+        arr.push({
+          error: await tryCatchErr(() => test.testFn(UUID.v4().toString())),
+          ms: performance.now() - startTime,
+        });
+
+        return arr;
+      })
+    });
+
+    backgroundTestResults.push(promise);
   });
 }

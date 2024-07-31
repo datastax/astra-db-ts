@@ -29,61 +29,61 @@ import { DEFAULT_DATA_API_PATHS, DEFAULT_NAMESPACE } from '@/src/api';
 import { DataAPIClient } from '@/src/client';
 import { CollectionNotFoundError } from '@/src/data-api/errors';
 
-describe('integration.data-api.db', ({ db }) => {
-  parallel('[LONG] createCollection', { dropEphemeral: 'after' }, () => {
+parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
+  describe('[LONG] createCollection', () => {
     it('should create a collection', async () => {
-      const res = await db.createCollection('coll_1', { indexing: { deny: ['*'] } });
+      const res = await db.createCollection('coll_1c', { indexing: { deny: ['*'] } });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_1');
+      assert.strictEqual(res.collectionName, 'coll_1c');
       assert.strictEqual(res.namespace, DEFAULT_NAMESPACE);
     });
 
     it('should create a collection in another namespace', async () => {
-      const res = await db.createCollection('coll_2', { namespace: OTHER_NAMESPACE });
+      const res = await db.createCollection('coll_2c', { namespace: OTHER_NAMESPACE });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_2');
+      assert.strictEqual(res.collectionName, 'coll_2c');
       assert.strictEqual(res.namespace, OTHER_NAMESPACE);
     });
 
     it('should throw CollectionAlreadyExistsError if collection already exists', async () => {
-      await db.createCollection('coll_3', { indexing: { deny: ['*'] } });
+      await db.createCollection('coll_3c', { indexing: { deny: ['*'] } });
       try {
-        await db.createCollection('coll_3', { indexing: { deny: ['*'] } });
+        await db.createCollection('coll_3c', { indexing: { deny: ['*'] } });
         assert.fail('Expected an error');
       } catch (e) {
         assert.ok(e instanceof CollectionAlreadyExistsError);
-        assert.strictEqual(e.collectionName, 'coll_3');
+        assert.strictEqual(e.collectionName, 'coll_3c');
         assert.strictEqual(e.namespace, DEFAULT_NAMESPACE);
       }
     });
 
     it('should create collection idempotently if checkExists is false', async () => {
-      const res = await db.createCollection('coll_4', { indexing: { deny: ['*'] } });
+      const res = await db.createCollection('coll_4c', { indexing: { deny: ['*'] } });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_4');
-      const res2 = await db.createCollection('coll_4', { checkExists: false, indexing: { deny: ['*'] } });
+      assert.strictEqual(res.collectionName, 'coll_4c');
+      const res2 = await db.createCollection('coll_4c', { checkExists: false, indexing: { deny: ['*'] } });
       assert.ok(res2);
-      assert.strictEqual(res2.collectionName, 'coll_4');
+      assert.strictEqual(res2.collectionName, 'coll_4c');
     });
 
     it('should create collection with same options idempotently if checkExists is false', async () => {
-      const res = await db.createCollection('coll_5', { indexing: { deny: ['*'] } });
+      const res = await db.createCollection('coll_5c', { indexing: { deny: ['*'] } });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_5');
+      assert.strictEqual(res.collectionName, 'coll_5c');
       assert.strictEqual(res.namespace, DEFAULT_NAMESPACE);
-      const res2 = await db.createCollection('coll_5', { indexing: { deny: ['*'] }, checkExists: false });
+      const res2 = await db.createCollection('coll_5c', { indexing: { deny: ['*'] }, checkExists: false });
       assert.ok(res2);
-      assert.strictEqual(res2.collectionName, 'coll_5');
+      assert.strictEqual(res2.collectionName, 'coll_5c');
       assert.strictEqual(res2.namespace, DEFAULT_NAMESPACE);
     });
 
     it('should fail creating collection with different options even if checkExists is false', async () => {
-      const res = await db.createCollection('coll_6', { indexing: { deny: ['*'] } });
+      const res = await db.createCollection('coll_6c', { indexing: { deny: ['*'] } });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_6');
+      assert.strictEqual(res.collectionName, 'coll_6c');
       assert.strictEqual(res.namespace, DEFAULT_NAMESPACE);
       try {
-        await db.createCollection('coll_6', { indexing: { allow: ['*'] }, checkExists: false });
+        await db.createCollection('coll_6c', { indexing: { allow: ['*'] }, checkExists: false });
         assert.fail('Expected an error');
       } catch (e) {
         assert.ok(e instanceof DataAPIResponseError);
@@ -91,70 +91,70 @@ describe('integration.data-api.db', ({ db }) => {
     });
 
     it('should create collection with different options in different namespaces', async () => {
-      const res = await db.createCollection('coll_7', { indexing: { deny: ['*'] } });
+      const res = await db.createCollection('coll_7c', { indexing: { deny: ['*'] } });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_7');
+      assert.strictEqual(res.collectionName, 'coll_7c');
       assert.strictEqual(res.namespace, DEFAULT_NAMESPACE);
-      const res2 = await db.createCollection('coll_7', { indexing: { deny: ['*'] }, namespace: OTHER_NAMESPACE });
+      const res2 = await db.createCollection('coll_7c', { indexing: { deny: ['*'] }, namespace: OTHER_NAMESPACE });
       assert.ok(res2);
-      assert.strictEqual(res2.collectionName, 'coll_7');
+      assert.strictEqual(res2.collectionName, 'coll_7c');
       assert.strictEqual(res2.namespace, OTHER_NAMESPACE);
     });
 
     it('[ASTRA] should work even when instantiated weirdly', async () => {
-      const db = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { namespace: '123123123', dataApiPath: 'King, by Eluveitie' } })
+      const db = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { namespace: '123123123', dataApiPath: 'King' } })
         .admin({ adminToken: 'dummy-token' })
         .dbAdmin(TEST_APPLICATION_URI, { dataApiPath: DEFAULT_DATA_API_PATHS['astra'], namespace: DEFAULT_NAMESPACE })
         .db()
-        .admin({ adminToken: 'tummy-token', endpointUrl: 'Memento Mori, by Feuerschwanz' })
+        .admin({ adminToken: 'tummy-token', endpointUrl: 'Memento Mori' })
         .db();
 
-      const res = await db.createCollection('coll_8');
+      const res = await db.createCollection('coll_8c', { indexing: { deny: ['*'] }, maxTimeMS: 60000 });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_8');
+      assert.strictEqual(res.collectionName, 'coll_8c');
       assert.strictEqual(res.namespace, DEFAULT_NAMESPACE);
     });
   });
 
-  parallel('[LONG] dropCollection', { dropEphemeral: 'after' }, () => {
+  describe('[LONG] dropCollection', () => {
     it('should drop a collection', async () => {
-      await db.createCollection('coll_1', { indexing: { deny: ['*'] } });
-      const res = await db.dropCollection('coll_1');
+      await db.createCollection('coll_1d', { indexing: { deny: ['*'] } });
+      const res = await db.dropCollection('coll_1d');
       assert.strictEqual(res, true);
       const collections = await db.listCollections();
-      const collection = collections.find(c => c.name === 'coll_1');
+      const collection = collections.find(c => c.name === 'coll_1d');
       assert.strictEqual(collection, undefined);
     });
 
     it('should drop a collection using the collection method', async () => {
-      const coll = await db.createCollection('coll_2', { indexing: { deny: ['*'] } });
+      const coll = await db.createCollection('coll_2d', { indexing: { deny: ['*'] } });
       const res = await coll.drop();
       assert.strictEqual(res, true);
       const collections = await db.listCollections();
-      const collection = collections.find(c => c.name === 'coll_2');
+      const collection = collections.find(c => c.name === 'coll_2d');
       assert.strictEqual(collection, undefined);
     });
 
     it('should drop a collection in non-default namespace', async () => {
-      await db.createCollection('coll_3', { indexing: { deny: ['*'] }, namespace: OTHER_NAMESPACE });
-      const res = await db.dropCollection('coll_3', { namespace: OTHER_NAMESPACE });
+      await db.createCollection('coll_3d', { indexing: { deny: ['*'] }, namespace: OTHER_NAMESPACE });
+      const res = await db.dropCollection('coll_3d', { namespace: OTHER_NAMESPACE });
       assert.strictEqual(res, true);
       const collections = await db.listCollections();
-      const collection = collections.find(c => c.name === 'coll_3');
+      const collection = collections.find(c => c.name === 'coll_3d');
       assert.strictEqual(collection, undefined);
     });
 
     it('should not drop a collection in different namespace', async () => {
-      await db.createCollection('coll_4', { indexing: { deny: ['*'] } });
-      const res = await db.dropCollection('coll_4', { namespace: OTHER_NAMESPACE });
+      await db.createCollection('coll_4d', { indexing: { deny: ['*'] } });
+      const res = await db.dropCollection('coll_4d', { namespace: OTHER_NAMESPACE });
       assert.strictEqual(res, true);
       const collections = await db.listCollections();
-      const collection = collections.find(c => c.name === 'coll_4');
+      const collection = collections.find(c => c.name === 'coll_4d');
       assert.ok(collection);
     });
   });
 
-  parallel('listCollections', () => {
+  describe('listCollections', () => {
     it('should return a list of just names of collections with nameOnly set to true', async () => {
       const res = await db.listCollections({ nameOnly: true });
       const found = res.find((collection) => collection === DEFAULT_COLLECTION_NAME);
@@ -183,7 +183,7 @@ describe('integration.data-api.db', ({ db }) => {
     });
   });
 
-  parallel('collections', () => {
+  describe('collections', () => {
     it('should return the collections in the db', async () => {
       const collections = await db.collections();
       assert.ok(<any>collections instanceof Array);
@@ -199,7 +199,7 @@ describe('integration.data-api.db', ({ db }) => {
     });
   });
 
-  parallel('command', () => {
+  describe('command', () => {
     it('should execute a db-level command', async () => {
       const resp = await db.command({ findCollections: {} });
       assert.strictEqual(resp.status?.data, undefined);

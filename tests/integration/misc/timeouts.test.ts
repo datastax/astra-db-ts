@@ -28,8 +28,8 @@ import {
 } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.misc.timeouts', ({ collection, dbAdmin }) => {
-  parallel('in data-api', () => {
+parallel('integration.misc.timeouts', ({ collection, dbAdmin }) => {
+  describe('in data-api', () => {
     it('should timeout @ the http-client level', async () => {
       const httpClient = collection['_httpClient'];
 
@@ -69,7 +69,7 @@ describe('integration.misc.timeouts', ({ collection, dbAdmin }) => {
     });
   });
 
-  parallel('[ASTRA] in devops', () => {
+  describe('[ASTRA] in devops', () => {
     it('should timeout @ the http-client level', async () => {
       const httpClient = (<any>dbAdmin)['_httpClient'];
 

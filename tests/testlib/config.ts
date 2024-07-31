@@ -37,6 +37,8 @@ export const TEST_APPLICATION_TOKEN = process.env.CLIENT_APPLICATION_TOKEN;
 export const TEST_APPLICATION_URI = process.env.CLIENT_APPLICATION_URI;
 export const DEMO_APPLICATION_URI = 'https://12341234-1234-1234-1234-123412341234-us-west-2.apps.astra.datastax.com';
 
+export const DEFAULT_TEST_TIMEOUT = +process.env.CLIENT_TESTS_TIMEOUT! || 90000;
+
 export const TESTS_FILTER = (() => {
   const filter = process.env.CLIENT_TESTS_FILTER;
 

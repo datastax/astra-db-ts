@@ -15,34 +15,48 @@
 
 import { initTestObjects } from '@/tests/testlib/fixtures';
 import { afterEach } from 'mocha';
-import { checkTestsEnabled, tryCatchErr } from '@/tests/testlib/utils';
-import { describe, SuiteOptions, TEST_FILTER_PASSES, TESTS_FILTER } from '@/tests/testlib';
+import { tryCatchErr, updatingGlobalTestFilter } from '@/tests/testlib/utils';
+import { describe, SuiteBlock, SuiteOptions, TEST_FILTER_PASSES, TESTS_FILTER } from '@/tests/testlib';
+import { UUID } from '@/src/data-api';
+import { AsyncSuiteResult, GlobalAsyncSuiteSpec } from '@/tests/testlib/test-fns/types';
 
-export const parallelTestState = {
-  inParallelBlock: false,
-  tests: [] as ParallelTestSpec[],
-}
+const mkDefaultSuite = () => ({ name: undefined, skipped: false, tests: [] });
 
-interface ParallelTestSpec {
-  name: string,
-  fn: ParallelTest,
-}
+export const parallelTestState: GlobalAsyncSuiteSpec  = {
+  suites: [mkDefaultSuite()],
+  inBlock: false,
+  describe(name, fn, opts, skipped, fixtures) {
+    if (this.suites.at(-1)?.name) {
+      throw new Error('`describe` is not reentrant in `parallel` blocks');
+    }
 
-type ParallelBlock = (this: Mocha.Suite, fixtures: ReturnType<typeof initTestObjects>) => void;
-type ParallelTest = () => Promise<void>;
+    if (opts) {
+      throw new Error('Can not pass `SuiteOptions` to `describe` in `parallel` block');
+    }
+
+    this.suites.push({ name: name, skipped, tests: [] });
+    fn(fixtures);
+    this.suites.push(mkDefaultSuite());
+
+    return null;
+  },
+  it(name, testFn, skipped) {
+    this.suites.at(-1)!.tests.push({ name, testFn, skipped });
+  },
+};
 
 interface ParallelizedTestsBlock {
-  (name: string, fn: ParallelBlock): void;
-  (name: string, options: SuiteOptions, fn: ParallelBlock): void;
+  (name: string, fn: SuiteBlock): void;
+  (name: string, options: SuiteOptions, fn: SuiteBlock): void;
 }
 
 export let parallel: ParallelizedTestsBlock;
 
-parallel = function (name: string, optsOrFn: SuiteOptions | ParallelBlock, maybeFn?: ParallelBlock) {
+parallel = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?: SuiteBlock) {
   name = `(parallel) ${name}`
 
   const fn = (!maybeFn)
-    ? optsOrFn as ParallelBlock
+    ? optsOrFn as SuiteBlock
     : maybeFn;
 
   const opts = (maybeFn)
@@ -50,7 +64,7 @@ parallel = function (name: string, optsOrFn: SuiteOptions | ParallelBlock, maybe
     : {};
 
   function modifiedFn(this: Mocha.Suite, fixtures: ReturnType<typeof initTestObjects>) {
-    if (parallelTestState.inParallelBlock) {
+    if (parallelTestState.inBlock) {
       throw new Error('Can\'t nest parallel blocks');
     }
 
@@ -59,49 +73,71 @@ parallel = function (name: string, optsOrFn: SuiteOptions | ParallelBlock, maybe
     global.beforeEach = () => { throw new Error('Can\'t use `beforeEach` in a parallel block'); }
     global.afterEach = () => { throw new Error('Can\'t use `afterEach` in a parallel block'); }
 
-    parallelTestState.inParallelBlock = true;
+    parallelTestState.inBlock = true;
     fn.call(this, fixtures);
-    parallelTestState.inParallelBlock = false;
+    parallelTestState.inBlock = false;
 
     [global.beforeEach, global.afterEach] = [oldBeforeEach, oldAfterEach];
 
-    let tests = parallelTestState.tests.filter(t => TEST_FILTER_PASSES.some(b => b) || TESTS_FILTER.test(t.name));
-    let results: ({ ms?: number, error?: Error } | { skipped: true })[];
+    const suites =  parallelTestState.suites
+      .tap((s) => {
+        updatingGlobalTestFilter(s.name, () => {
+          s.tests = s.tests.filter(t => TEST_FILTER_PASSES.some(b => b) || TESTS_FILTER.test(t.name));
+        });
+      })
+      .filter(s => s.tests.length);
+
+    let results: AsyncSuiteResult[];
 
     before(async () => {
-      const promises = tests.map(async (test) => {
-        if (!checkTestsEnabled(name)) {
-          return { skipped: true };
-        }
+      const promises = suites.map((suite) => {
+        return suite.tests.map(async (test) => {
+          if (suite.skipped || test.skipped) {
+            return null;
+          }
 
-        const startTime = performance.now();
+          const startTime = performance.now();
 
-        return {
-          error: await tryCatchErr(test.fn),
-          ms: performance.now() - startTime,
-        };
+          return {
+            error: await tryCatchErr(() => test.testFn(UUID.v4().toString())),
+            ms: performance.now() - startTime,
+          };
+        });
       });
 
-      results = await Promise.all(promises);
+      results = await Promise.all(promises.map(p => Promise.all(p)));
     });
 
-    tests.forEach((t, i) => {
-      it(t.name, function () {
-        const result = results[i];
+    suites.forEach((suite, suiteIdx) => {
+      const wrapperFn = (suite.name)
+        ? (fn: () => void) => describe(suite.name!, () => {
+          before(function () {
+            suite.skipped && this.skip();
+          });
+          fn();
+        })
+        : (fn: () => void) => fn();
 
-        if ('skipped' in result) {
-          this.skip();
-        }
+      wrapperFn(() => {
+        suite.tests.forEach((test, testIdx) => {
+          global.it(test.name, function () {
+            if (test.skipped) {
+              this.skip();
+            }
 
-        this.test!.title = `${t.name} (${~~result.ms!}ms)`;
+            const result = results[suiteIdx][testIdx]!;
 
-        if (result.error) {
-          throw result.error;
-        }
+            this.test!.title += ` (${~~result.ms!}ms)`;
+
+            if (result.error) {
+              throw result.error;
+            }
+          });
+        });
       });
     });
 
-    parallelTestState.tests = [];
+    parallelTestState.suites = [mkDefaultSuite()];
   }
 
   return describe(name, opts, modifiedFn);

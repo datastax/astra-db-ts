@@ -17,18 +17,18 @@ import {
   createSampleDoc2WithMultiLevel,
   createSampleDoc3WithMultiLevel,
   createSampleDocWithMultiLevel,
-  describe,
   it,
+  parallel,
 } from '@/tests/testlib';
 import assert from 'assert';
 
 // I was going to go through split this up but yeah... no
 // Don't want to spend too much time sifting through a thousand lines of intertwined tests
-describe('integration.data-api.collection.finds', { truncateColls: 'default:beforeEach' }, ({ collection }) => {
-  it('should find & findOne document', async () => {
-    const insertDocResp = await collection.insertOne(createSampleDocWithMultiLevel());
+parallel('integration.data-api.collection.finds', { truncateColls: 'default:before' }, ({ collection }) => {
+  it('should find & findOne document', async (key) => {
+    const insertDocResp = await collection.insertOne(createSampleDocWithMultiLevel(key));
     const idToCheck = insertDocResp.insertedId;
-    const filter = { '_id': idToCheck };
+    const filter = { '_id': idToCheck, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -37,10 +37,10 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne document with projection', async () => {
-    const insertDocResp = await collection.insertOne(createSampleDocWithMultiLevel());
+  it('should find & findOne document with projection', async (key) => {
+    const insertDocResp = await collection.insertOne(createSampleDocWithMultiLevel(key));
     const idToCheck = insertDocResp.insertedId;
-    const filter = { '_id': idToCheck };
+    const filter = { '_id': idToCheck, key };
     const resDoc = await collection.findOne(filter, { projection: { username: 1 } });
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -53,58 +53,58 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0].age, undefined);
   });
 
-  it('should find with sort', async () => {
+  it('should find with sort', async (key) => {
     await collection.insertMany([
-      { username: 'a' },
-      { username: 'c' },
-      { username: 'b' }
+      { username: 'a', key },
+      { username: 'c', key },
+      { username: 'b', key }
     ]);
 
-    let docs = await collection.find({}, { sort: { username: 1 }, limit: 20 }).toArray();
+    let docs = await collection.find({ key }, { sort: { username: 1 }, limit: 20 }).toArray();
     assert.deepStrictEqual(docs.map(doc => doc.username), ['a', 'b', 'c']);
 
-    docs = await collection.find({}, { sort: { username: -1 }, limit: 20 }).toArray();
+    docs = await collection.find({ key }, { sort: { username: -1 }, limit: 20 }).toArray();
     assert.deepStrictEqual(docs.map(doc => doc.username), ['c', 'b', 'a']);
   });
 
-  it('should findOne with sort', async () => {
+  it('should findOne with sort', async (key) => {
     await collection.insertMany([
-      { username: 'a' },
-      { username: 'c' },
-      { username: 'b' }
+      { username: 'a', key },
+      { username: 'c', key },
+      { username: 'b', key }
     ]);
 
-    let doc = await collection.findOne({}, { sort: { username: 1 } });
+    let doc = await collection.findOne({ key }, { sort: { username: 1 } });
     assert.strictEqual(doc?.username, 'a');
 
-    doc = await collection.findOne({}, { sort: { username: -1 } });
+    doc = await collection.findOne({ key }, { sort: { username: -1 } });
     assert.deepStrictEqual(doc?.username, 'c');
   });
 
-  it('should find with multiple, and different, sorts', async () => {
+  it('should find with multiple, and different, sorts', async (key) => {
     await collection.insertMany([
-      { username: 'a', age: 1 },
-      { username: 'a', age: 3 },
-      { username: 'a', age: 2 }
+      { username: 'a', age: 1, key },
+      { username: 'a', age: 3, key },
+      { username: 'a', age: 2, key }
     ]);
 
-    let docs = await collection.find({}, { sort: { username: 1, age: 1 }, limit: 20 }).toArray();
+    let docs = await collection.find({ key }, { sort: { username: 1, age: 1 }, limit: 20 }).toArray();
     assert.deepStrictEqual(docs.map(doc => doc.age), [1, 2, 3]);
 
-    docs = await collection.find({}, { sort: { username: "asc", age: "desc" }, limit: 20 }).toArray();
+    docs = await collection.find({ key }, { sort: { username: "asc", age: "desc" }, limit: 20 }).toArray();
     assert.deepStrictEqual(docs.map(doc => doc.age), [3, 2, 1]);
 
-    docs = await collection.find({}, { sort: { username: -1, age: "ascending" }, limit: 20 }).toArray();
+    docs = await collection.find({ key }, { sort: { username: -1, age: "ascending" }, limit: 20 }).toArray();
     assert.deepStrictEqual(docs.map(doc => doc.age), [1, 2, 3]);
 
-    docs = await collection.find({}, { sort: { username: -1, age: "descending" }, limit: 20 }).toArray();
+    docs = await collection.find({ key }, { sort: { username: -1, age: "descending" }, limit: 20 }).toArray();
     assert.deepStrictEqual(docs.map(doc => doc.age), [3, 2, 1]);
   });
 
-  it('should find & findOne eq document', async () => {
-    const insertDocResp = await collection.insertOne(createSampleDocWithMultiLevel());
+  it('should find & findOne eq document', async (key) => {
+    const insertDocResp = await collection.insertOne(createSampleDocWithMultiLevel(key));
     const idToCheck = insertDocResp.insertedId;
-    const filter = { '_id': { '$eq': idToCheck } };
+    const filter = { '_id': { '$eq': idToCheck }, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -113,12 +113,12 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne ne document', async () => {
-    const insertDocResp1 = await collection.insertOne(createSampleDocWithMultiLevel());
-    const insertDocResp2 = await collection.insertOne(createSampleDoc2WithMultiLevel());
+  it('should find & findOne ne document', async (key) => {
+    const insertDocResp1 = await collection.insertOne(createSampleDocWithMultiLevel(key));
+    const insertDocResp2 = await collection.insertOne(createSampleDoc2WithMultiLevel(key));
     const idToCheck1 = insertDocResp1.insertedId;
     const idToCheck2 = insertDocResp2.insertedId;
-    const filter = { '_id': { '$ne': idToCheck1 } };
+    const filter = { '_id': { '$ne': idToCheck1 }, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck2);
@@ -126,7 +126,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs.length, 1);
     assert.strictEqual(findResDocs[0]._id, idToCheck2);
 
-    const filter1 = { '_id': { '$ne': idToCheck2 } };
+    const filter1 = { '_id': { '$ne': idToCheck2 }, key };
     const resDoc1 = await collection.findOne(filter1);
     assert.ok(resDoc1);
     assert.strictEqual(resDoc1._id, idToCheck1);
@@ -135,11 +135,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs1[0]._id, idToCheck1);
   });
 
-  it('should find & findOne L1 String EQ document', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should find & findOne L1 String EQ document', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
-    const filter = { 'username': doc.username };
+    const filter = { 'username': doc.username, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -148,11 +148,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne L1 String EQ $eq document', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should find & findOne L1 String EQ $eq document', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
-    const filter = { 'username': { '$eq': doc.username } };
+    const filter = { 'username': { '$eq': doc.username }, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -161,13 +161,13 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne L1 String NE $ne document', async () => {
-    const doc1 = createSampleDocWithMultiLevel();
-    const doc2 = createSampleDoc2WithMultiLevel();
+  it('should find & findOne L1 String NE $ne document', async (key) => {
+    const doc1 = createSampleDocWithMultiLevel(key);
+    const doc2 = createSampleDoc2WithMultiLevel(key);
     await collection.insertOne(doc1);
     const insertDocResp2 = await collection.insertOne(doc2);
     const idToCheck2 = insertDocResp2.insertedId;
-    const filter = { 'username': { '$ne': doc1.username } };
+    const filter = { 'username': { '$ne': doc1.username }, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck2);
@@ -176,11 +176,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck2);
   });
 
-  it('should find & findOne L1 Number EQ document', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should find & findOne L1 Number EQ document', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
-    const filter = { 'age': doc.age };
+    const filter = { 'age': doc.age, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -189,11 +189,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne L1 Number EQ $eq document', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should find & findOne L1 Number EQ $eq document', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
-    const filter = { 'age': { '$eq': doc.age } };
+    const filter = { 'age': { '$eq': doc.age }, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -202,13 +202,13 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne L1 Number NE $ne document', async () => {
-    const doc1 = createSampleDocWithMultiLevel();
-    const doc2 = createSampleDoc2WithMultiLevel();
+  it('should find & findOne L1 Number NE $ne document', async (key) => {
+    const doc1 = createSampleDocWithMultiLevel(key);
+    const doc2 = createSampleDoc2WithMultiLevel(key);
     await collection.insertOne(doc1);
     const insertDocResp2 = await collection.insertOne(doc2);
     const idToCheck2 = insertDocResp2.insertedId;
-    const filter = { 'age': { '$ne': doc1.age } };
+    const filter = { 'age': { '$ne': doc1.age }, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck2);
@@ -217,11 +217,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck2);
   });
 
-  it('should find & findOne L1 Boolean EQ document', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should find & findOne L1 Boolean EQ document', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
-    const filter = { 'human': doc.human };
+    const filter = { 'human': doc.human, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -230,11 +230,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne L1 Boolean EQ $eq document', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should find & findOne L1 Boolean EQ $eq document', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
-    const filter = { 'human': { '$eq': doc.human } };
+    const filter = { 'human': { '$eq': doc.human }, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -243,13 +243,13 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne L1 Boolean NE $ne document', async () => {
-    const doc1 = createSampleDoc2WithMultiLevel();
-    const doc2 = createSampleDoc3WithMultiLevel();
+  it('should find & findOne L1 Boolean NE $ne document', async (key) => {
+    const doc1 = createSampleDoc2WithMultiLevel(key);
+    const doc2 = createSampleDoc3WithMultiLevel(key);
     const insertDocResp1 = await collection.insertOne(doc1);
     await collection.insertOne(doc2);
     const idToCheck1 = insertDocResp1.insertedId;
-    const filter = { 'human': { '$ne': false } };
+    const filter = { 'human': { '$ne': false }, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck1);
@@ -258,11 +258,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck1);
   });
 
-  it('should find & findOne L1 Null EQ document', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should find & findOne L1 Null EQ document', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
-    const filter = { 'password': null};
+    const filter = { 'password': null, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -271,11 +271,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne L1 Null EQ $eq document', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should find & findOne L1 Null EQ $eq document', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
-    const filter = { 'password': { '$eq': null } };
+    const filter = { 'password': { '$eq': null }, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -284,13 +284,13 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne L1 Null NE $ne document', async () => {
-    const doc1 = createSampleDocWithMultiLevel();
-    const doc2 = createSampleDoc2WithMultiLevel();
+  it('should find & findOne L1 Null NE $ne document', async (key) => {
+    const doc1 = createSampleDocWithMultiLevel(key);
+    const doc2 = createSampleDoc2WithMultiLevel(key);
     await collection.insertOne(doc1);
     const insertDocResp2 = await collection.insertOne(doc2);
     const idToCheck2 = insertDocResp2.insertedId;
-    const filter = { 'password': { '$ne': doc1.password } };
+    const filter = { 'password': { '$ne': doc1.password }, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck2);
@@ -299,11 +299,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck2);
   });
 
-  it('should find & findOne any level String EQ document', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should find & findOne any level String EQ document', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
-    const filter = { 'address.street': doc.address?.street };
+    const filter = { 'address.street': doc.address?.street, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -312,11 +312,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne any level String EQ $eq document', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should find & findOne any level String EQ $eq document', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
-    const filter = { 'address.street': { '$eq': doc.address?.street } };
+    const filter = { 'address.street': { '$eq': doc.address?.street }, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -325,13 +325,13 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne any level String NE $ne document', async () => {
-    const doc1 = createSampleDocWithMultiLevel();
-    const doc2 = createSampleDoc2WithMultiLevel();
+  it('should find & findOne any level String NE $ne document', async (key) => {
+    const doc1 = createSampleDocWithMultiLevel(key);
+    const doc2 = createSampleDoc2WithMultiLevel(key);
     const insertDocResp1 = await collection.insertOne(doc1);
     await collection.insertOne(doc2);
     const idToCheck1 = insertDocResp1.insertedId;
-    const filter = { 'address.street': { '$ne': doc2.address?.street } };
+    const filter = { 'address.street': { '$ne': doc2.address?.street }, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck1);
@@ -340,11 +340,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck1);
   });
 
-  it('should find & findOne any level Number EQ document', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should find & findOne any level Number EQ document', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
-    const filter = { 'address.number': doc.address?.number };
+    const filter = { 'address.number': doc.address?.number, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -353,11 +353,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should findOne any level Number EQ $eq document', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should findOne any level Number EQ $eq document', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
-    const filter = { 'address.number': { '$eq': doc.address?.number } };
+    const filter = { 'address.number': { '$eq': doc.address?.number }, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -366,13 +366,13 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne any level Number NE $ne document', async () => {
-    const doc1 = createSampleDocWithMultiLevel();
-    const doc2 = createSampleDoc2WithMultiLevel();
+  it('should find & findOne any level Number NE $ne document', async (key) => {
+    const doc1 = createSampleDocWithMultiLevel(key);
+    const doc2 = createSampleDoc2WithMultiLevel(key);
     await collection.insertOne(doc1);
     const insertDocResp2 = await collection.insertOne(doc2);
     const idToCheck2 = insertDocResp2.insertedId;
-    const filter = { 'address.number': { '$ne': doc1.address?.number } };
+    const filter = { 'address.number': { '$ne': doc1.address?.number }, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck2);
@@ -381,11 +381,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck2);
   });
 
-  it('should find & findOne any level Boolean EQ document', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should find & findOne any level Boolean EQ document', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
-    const filter = { 'address.is_office': doc.address?.is_office };
+    const filter = { 'address.is_office': doc.address?.is_office, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -394,11 +394,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne any level Boolean EQ $eq document', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should find & findOne any level Boolean EQ $eq document', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
-    const filter = { 'address.is_office': { '$eq': doc.address?.is_office } };
+    const filter = { 'address.is_office': { '$eq': doc.address?.is_office }, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -407,13 +407,13 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne any level Boolean NE $ne document', async () => {
-    const doc1 = createSampleDocWithMultiLevel();
-    const doc2 = createSampleDoc2WithMultiLevel();
+  it('should find & findOne any level Boolean NE $ne document', async (key) => {
+    const doc1 = createSampleDocWithMultiLevel(key);
+    const doc2 = createSampleDoc2WithMultiLevel(key);
     await collection.insertOne(doc1);
     const insertDocResp2 = await collection.insertOne(doc2);
     const idToCheck2 = insertDocResp2.insertedId;
-    const filter = { 'address.is_office': { '$ne': doc1.address?.is_office } };
+    const filter = { 'address.is_office': { '$ne': doc1.address?.is_office }, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck2);
@@ -422,11 +422,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck2);
   });
 
-  it('should find & findOne any level Null EQ document', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should find & findOne any level Null EQ document', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
-    const filter = { 'address.suburb': doc.address?.suburb };
+    const filter = { 'address.suburb': doc.address?.suburb, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -435,11 +435,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne any level Null EQ $eq document', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should find & findOne any level Null EQ $eq document', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
-    const filter = { 'address.suburb': { '$eq': doc.address?.suburb } };
+    const filter = { 'address.suburb': { '$eq': doc.address?.suburb }, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -448,13 +448,13 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne any level Null EQ $ne document', async () => {
-    const doc1 = createSampleDocWithMultiLevel();
-    const doc2 = createSampleDoc2WithMultiLevel();
+  it('should find & findOne any level Null EQ $ne document', async (key) => {
+    const doc1 = createSampleDocWithMultiLevel(key);
+    const doc2 = createSampleDoc2WithMultiLevel(key);
     await collection.insertOne(doc1);
     const insertDocResp2 = await collection.insertOne(doc2);
     const idToCheck2 = insertDocResp2.insertedId;
-    const filter = { 'address.suburb': { '$ne': doc1.address?.suburb } };
+    const filter = { 'address.suburb': { '$ne': doc1.address?.suburb }, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck2);
@@ -463,11 +463,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck2);
   });
 
-  it('should find & findOne multiple top level conditions', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should find & findOne multiple top level conditions', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
-    const filter = { age: doc.age, human: doc.human, password: doc.password };
+    const filter = { age: doc.age, human: doc.human, password: doc.password, key };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
     assert.strictEqual(resDoc._id, idToCheck);
@@ -476,14 +476,15 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne multiple level>=2 conditions', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should find & findOne multiple level>=2 conditions', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
     const filter = {
       'address.number': doc.address?.number,
       'address.street': doc.address?.street,
-      'address.is_office': doc.address?.is_office
+      'address.is_office': doc.address?.is_office,
+      key,
     };
     const resDoc = await collection.findOne(filter);
     assert.ok(resDoc);
@@ -493,14 +494,15 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find & findOne multiple mixed levels conditions', async () => {
-    const doc = createSampleDocWithMultiLevel();
+  it('should find & findOne multiple mixed levels conditions', async (key) => {
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     const idToCheck = insertDocResp.insertedId;
     const filter = {
       'age': doc.age,
       'address.street': doc.address?.street,
-      'address.is_office': doc.address?.is_office
+      'address.is_office': doc.address?.is_office,
+      key,
     };
     const findOneResDoc = await collection.findOne(filter);
     assert.ok(findOneResDoc);
@@ -510,13 +512,13 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findResDocs[0]._id, idToCheck);
   });
 
-  it('should find doc - return only selected fields', async () => {
+  it('should find doc - return only selected fields', async (key) => {
     //insert a new doc
-    const doc = createSampleDocWithMultiLevel();
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     //read that back with projection
     const idToCheck = insertDocResp.insertedId;
-    const findCursor = collection.find({ '_id': idToCheck }, {
+    const findCursor = collection.find({ '_id': idToCheck, key }, {
       projection: {
         username: 1,
         'address.city': true
@@ -530,13 +532,13 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(resDoc.address.number, undefined);
   });
 
-  it('should find doc - return only selected fields (with exclusion)', async () => {
+  it('should find doc - return only selected fields (with exclusion)', async (key) => {
     //insert a new doc
-    const doc = createSampleDocWithMultiLevel();
+    const doc = createSampleDocWithMultiLevel(key);
     const insertDocResp = await collection.insertOne(doc);
     //read that back with projection
     const idToCheck = insertDocResp.insertedId;
-    const findCursor = collection.find({ '_id': idToCheck }, {
+    const findCursor = collection.find({ '_id': idToCheck, key }, {
       projection: {
         username: 1,
         'address.city': true,
@@ -551,7 +553,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(resDoc.address.number, undefined);
   });
 
-  it('should find doc - return only selected fields (array slice)', async () => {
+  it('should find doc - return only selected fields (array slice)', async (key) => {
     //insert some docs
     interface Doc {
       _id?: string;
@@ -560,7 +562,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
       tags?: string[]
     }
 
-    const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', address: { city: 'nyc' } }));
+    const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', address: { city: 'nyc' }, key }));
     docList.forEach((doc, index) => {
       if (index == 5) {
         doc.tags = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5'];
@@ -573,7 +575,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(res.insertedCount, docList.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, 20);
     //read that back with projection
-    const findDocs = await collection.find({}, {
+    const findDocs = await collection.find({ key }, {
       projection: {
         username: 1,
         'address.city': true,
@@ -598,7 +600,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     });
   });
 
-  it('should find doc - return only selected fields (array slice negative)', async () => {
+  it('should find doc - return only selected fields (array slice negative)', async (key) => {
     //insert some docs
     interface Doc {
       _id?: string;
@@ -607,7 +609,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
       tags?: string[]
     }
 
-    const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', address: { city: 'nyc' } }));
+    const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', address: { city: 'nyc' }, key }));
     docList.forEach((doc, index) => {
       if (index == 5) {
         doc.tags = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5'];
@@ -620,7 +622,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(res.insertedCount, docList.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, 20);
     //read that back with projection
-    const findDocs = await collection.find({}, {
+    const findDocs = await collection.find({ key }, {
       projection: {
         username: 1,
         'address.city': true,
@@ -645,7 +647,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     });
   });
 
-  it('should find doc - return only selected fields (array slice gt elements)', async () => {
+  it('should find doc - return only selected fields (array slice gt elements)', async (key) => {
     //insert some docs
     interface Doc {
       _id?: string;
@@ -654,7 +656,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
       tags?: string[]
     }
 
-    const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', address: { city: 'nyc' } }));
+    const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', address: { city: 'nyc' }, key }));
     docList.forEach((doc, index) => {
       if (index == 5) {
         doc.tags = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5'];
@@ -667,7 +669,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(res.insertedCount, docList.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, 20);
     //read that back with projection
-    const findDocs = await collection.find({}, {
+    const findDocs = await collection.find({ key }, {
       projection: {
         username: 1,
         'address.city': true,
@@ -690,7 +692,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     });
   });
 
-  it('should find doc - return only selected fields (array slice gt elements negative)', async () => {
+  it('should find doc - return only selected fields (array slice gt elements negative)', async (key) => {
     //insert some docs
     interface Doc {
       _id?: string;
@@ -699,9 +701,9 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
       tags?: string[]
     }
 
-    const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', address: { city: 'nyc' } }));
+    const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', address: { city: 'nyc' }, key }));
     docList.forEach((doc, index) => {
-      doc.username = `id${index+1}`;
+      doc.username = `${key}${index+1}`;
       if (index == 5) {
         doc.tags = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5'];
       }
@@ -713,7 +715,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(res.insertedCount, docList.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, 20);
     //read that back with projection
-    const findDocs = await collection.find({}, {
+    const findDocs = await collection.find({ key }, {
       projection: {
         username: 1,
         'address.city': true,
@@ -728,9 +730,9 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
       assert.ok(resDoc.username);
       assert.ok(resDoc.address.city);
       assert.strictEqual(resDoc.address.number, undefined);
-      if (resDoc.username == 'id6') {
+      if (resDoc.username == `${key}6`) {
         assert.strictEqual(resDoc.tags.length, 5);
-      } else if (resDoc.username == 'id7') {
+      } else if (resDoc.username == `${key}7`) {
         assert.strictEqual(resDoc.tags.length, 6);
       } else {
         assert.ok(!resDoc.tags);
@@ -738,7 +740,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     });
   });
 
-  it('should find & find doc $in test', async () => {
+  it('should find & find doc $in test', async (key) => {
     interface Doc {
       _id?: string;
       username: string;
@@ -746,35 +748,35 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
       tags?: string[];
     }
 
-    const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
+    const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc', key }));
     docList.forEach((doc, index) => {
-      doc._id = 'id' + index;
+      doc._id = `${key}` + index;
     });
     const res = await collection.insertMany(docList);
     assert.strictEqual(res.insertedCount, docList.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, 20);
-    let idsArr = ['id1', 'id2', 'id3'];
+    let idsArr = [`${key}1`, `${key}2`, `${key}3`];
     let ids: Set<string> = new Set(idsArr);
-    let filter = { '_id': { '$in': idsArr } };
+    let filter = { '_id': { '$in': idsArr }, key };
     const findRespDocs = await collection.find(filter).toArray();
     assert.strictEqual(findRespDocs.length, 3);
     //check if the doc ids of the returned docs are in the input list
     findRespDocs.forEach((doc) => {
       // noinspection SuspiciousTypeOfGuard
       assert.ok(typeof doc._id === 'string');
-      assert.ok(doc._id.startsWith('id'));
+      assert.ok(doc._id.startsWith(key));
       assert.ok(doc._id.length > 2);
       assert.ok(ids.has(doc._id));
     });
-    idsArr = ['id2'];
+    idsArr = [`${key}2`];
     ids = new Set(idsArr);
-    filter = { '_id': { '$in': idsArr } };
+    filter = { '_id': { '$in': idsArr }, key };
     const findOneRespDoc = await collection.findOne(filter);
     assert.ok(findOneRespDoc?._id);
     assert.ok(ids.has(findOneRespDoc._id as string));
   });
 
-  it('should find & find doc $nin test', async () => {
+  it('should find & find doc $nin test', async (key) => {
     interface Doc {
       _id?: string;
       username?: string;
@@ -782,11 +784,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
       tags?: string[];
     }
 
-    const docList_nyc: Doc[] = Array.from({ length: 3 }, () => ({ city: 'nyc' }));
+    const docList_nyc: Doc[] = Array.from({ length: 3 }, () => ({ city: 'nyc', key }));
     docList_nyc.forEach((doc, index) => {
       doc.city = doc.city + String(index + 1);
     });
-    const docList_seattle: Doc[] = Array.from({ length: 2 }, () => ({ city: 'seattle' }));
+    const docList_seattle: Doc[] = Array.from({ length: 2 }, () => ({ city: 'seattle', key }));
     docList_seattle.forEach((doc, index) => {
       doc.city = doc.city + String(index + 1);
     });
@@ -798,7 +800,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(Object.keys(res1.insertedIds).length, 2);
 
     const cityArr = ['nyc1', 'nyc2', 'nyc3'];
-    const filter = { 'city': { '$nin': cityArr } };
+    const filter = { 'city': { '$nin': cityArr }, key };
     const findRespDocs = await collection.find(filter).toArray();
     assert.strictEqual(findRespDocs.length, 2);
     //check if found docs city field starts with seattle
@@ -807,7 +809,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     });
   });
 
-  it('should find & find doc $exists true test', async () => {
+  it('should find & find doc $exists true test', async (key) => {
     interface Doc {
       _id?: string;
       username: string;
@@ -815,11 +817,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
       tags?: string[];
     }
 
-    const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
+    const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc', key }));
     const res = await collection.insertMany(docList);
     assert.strictEqual(res.insertedCount, docList.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, 20);
-    const filter = { 'city': { '$exists': true } };
+    const filter = { 'city': { '$exists': true }, key };
     const findRespDocs = await collection.find(filter).toArray();
     assert.strictEqual(findRespDocs.length, 20);
     //check if the doc ids of the returned docs are in the input list
@@ -832,7 +834,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.ok(findOneRespDoc.city);
   });
 
-  it('should find & find doc $exists false test', async () => {
+  it('should find & find doc $exists false test', async (key) => {
     interface Doc {
       _id?: string;
       username: string;
@@ -840,15 +842,15 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
       tags?: string[];
     }
 
-    const docList: Doc[] = Array.from({ length: 10 }, () => ({ username: 'withCity', city: 'nyc' }));
-    const docList_noCity: Doc[] = Array.from({ length: 10 }, () => ({ username: 'noCity' }));
+    const docList: Doc[] = Array.from({ length: 10 }, () => ({ username: 'withCity', city: 'nyc', key }));
+    const docList_noCity: Doc[] = Array.from({ length: 10 }, () => ({ username: 'noCity', key }));
     const res = await collection.insertMany(docList);
     assert.strictEqual(res.insertedCount, docList.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, 10);
     const res1 = await collection.insertMany(docList_noCity);
     assert.strictEqual(res1.insertedCount, docList_noCity.length);
     assert.strictEqual(Object.keys(res1.insertedIds).length, 10);
-    const filter = { 'city': { '$exists': false } };
+    const filter = { 'city': { '$exists': false }, key };
     const findRespDocs = await collection.find(filter).toArray();
     assert.strictEqual(findRespDocs.length, 10);
     //check city is not in return list
@@ -858,7 +860,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     });
   });
 
-  it('should find & find doc $all test', async () => {
+  it('should find & find doc $all test', async (key) => {
     interface Doc {
       _id?: string;
       username: string;
@@ -866,7 +868,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
       tags?: string[];
     }
 
-    const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
+    const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc', key }));
     docList.forEach((doc, index) => {
       doc._id = `id${index}`;
       if (index == 5) {
@@ -876,7 +878,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     const res = await collection.insertMany(docList);
     assert.strictEqual(res.insertedCount, docList.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, 20);
-    const filter = { 'tags': { '$all': ['tag1', 'tag2', 'tag3'] } };
+    const filter = { 'tags': { '$all': ['tag1', 'tag2', 'tag3'] }, key };
     const findRespDocs = await collection.find(filter).toArray();
     assert.strictEqual(findRespDocs.length, 1);
     //check if the doc ids of the returned docs are in the input list
@@ -892,7 +894,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findOneRespDoc._id, docList[5]._id);
   });
 
-  it('should find & find doc $size test', async () => {
+  it('should find & find doc $size test', async (key) => {
     interface Doc {
       _id?: string;
       username: string;
@@ -900,9 +902,9 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
       tags?: string[];
     }
 
-    const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
+    const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc', key }));
     docList.forEach((doc, index) => {
-      doc._id = `id${index}`;
+      doc._id = `${key}${index}`;
       if (index == 4) {
         doc.tags = ['tag1', 'tag2', 'tag3', 'tag4'];
       }
@@ -913,7 +915,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     const res = await collection.insertMany(docList);
     assert.strictEqual(res.insertedCount, docList.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, 20);
-    const filter = { 'tags': { '$size': 3 } };
+    const filter = { 'tags': { '$size': 3 }, key };
     const findRespDocs = await collection.find(filter).toArray();
     assert.strictEqual(findRespDocs.length, 1);
     //check if the doc ids of the returned docs are in the input list
@@ -929,7 +931,7 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     assert.strictEqual(findOneRespDoc._id, docList[5]._id);
   });
 
-  it('should find & find doc $size 0 test', async () => {
+  it('should find & find doc $size 0 test', async (key) => {
     interface Doc {
       _id?: string;
       username: string;
@@ -937,9 +939,9 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
       tags?: string[];
     }
 
-    const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
+    const docList: Doc[] = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc', key }));
     docList.forEach((doc, index) => {
-      doc._id = 'id' + index;
+      doc._id = key + index;
       if (index == 4) {
         doc.tags = ['tag1', 'tag2', 'tag3', 'tag4'];
       }
@@ -953,11 +955,11 @@ describe('integration.data-api.collection.finds', { truncateColls: 'default:befo
     const res = await collection.insertMany(docList);
     assert.strictEqual(res.insertedCount, docList.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, 20);
-    const filter = { 'tags': { '$size': 0 } };
+    const filter = { 'tags': { '$size': 0 }, key };
     const findRespDocs = await collection.find(filter).toArray();
     assert.strictEqual(findRespDocs.length, 1);
     //check if the doc ids of the returned docs are in the input list
-    const idsToCheck: Set<string> = new Set(['id6']);
+    const idsToCheck: Set<string> = new Set([`${key}6`]);
     findRespDocs.forEach((doc) => {
       assert.ok(doc._id);
       assert.ok(doc.city);

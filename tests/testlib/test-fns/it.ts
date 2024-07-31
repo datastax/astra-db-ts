@@ -16,13 +16,14 @@
 import { checkTestsEnabled } from '@/tests/testlib/utils';
 import { parallelTestState } from '@/tests/testlib/test-fns/parallel';
 import { TEST_FILTER_PASSES } from '@/tests/testlib/global';
-import { TESTS_FILTER } from '@/tests/testlib/config';
+import { DEFAULT_TEST_TIMEOUT, TESTS_FILTER } from '@/tests/testlib/config';
 import { UUID } from '@/src/data-api';
+import { backgroundTestState } from '@/tests/testlib';
 
-type TestFn = SyncTestFn | AsyncTestFn;
+export type TestFn = SyncTestFn | AsyncTestFn;
 
-type SyncTestFn = (this: Mocha.Context, key: string) => void;
-type AsyncTestFn = (this: Mocha.Context, key: string) => PromiseLike<any>;
+type SyncTestFn = (key: string) => void;
+type AsyncTestFn = (key: string) => Promise<void>;
 
 interface TaggableTestFunction {
   (name: string, fn: SyncTestFn): Mocha.Test | null;
@@ -31,23 +32,28 @@ interface TaggableTestFunction {
 
 export let it: TaggableTestFunction;
 
-const parallelItErrorProxy = new Proxy({}, {
-  get() { throw new Error('Can not use return type of `it` when in a parallel block') },
-});
+// const nonstandardItProxy = new Proxy({}, {
+//   get() { throw new Error('Can not use return type of `it` when in a parallel/background block') },
+// });
 
-it = function (name: string, fn: TestFn) {
-  function modifiedFn(this: Mocha.Context) {
-    checkTestsEnabled(name) || this.skip();
-    return fn.call(this, UUID.v4().toString());
-  }
+it = function (name: string, testFn: TestFn) {
+  const skipped = !checkTestsEnabled(name);
 
-  if (parallelTestState.inParallelBlock) {
-    parallelTestState.tests.push({ name, fn: <any>modifiedFn });
-    return parallelItErrorProxy as any;
+  for (const asyncTestState of [parallelTestState, backgroundTestState]) {
+    if (asyncTestState.inBlock) {
+      asyncTestState.it(name, testFn, skipped);
+      return null;
+    }
   }
 
   if (!TEST_FILTER_PASSES.some(b => b) && !TESTS_FILTER.test(name)) {
     return null;
+  }
+
+  function modifiedFn(this: Mocha.Context) {
+    skipped && this.skip();
+    this.timeout(DEFAULT_TEST_TIMEOUT);
+    return testFn(UUID.v4().toString());
   }
 
   return global.it(name, modifiedFn);

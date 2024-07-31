@@ -16,12 +16,18 @@ import { DEFAULT_NAMESPACE } from '@/src/api';
 import {
   DEFAULT_COLLECTION_NAME,
   OTHER_NAMESPACE,
-  TEST_APPLICATION_URI,
+  TEST_APPLICATION_URI, TESTS_FILTER,
 } from '@/tests/testlib/config';
 import { Collection } from '@/src/data-api';
-import { GLOBAL_FIXTURES } from '@/tests/testlib/global';
+import { GLOBAL_FIXTURES, TEST_FILTER_PASSES } from '@/tests/testlib/global';
 
-export async function tryCatchErr(fn: () => Promise<void>) {
+export function updatingGlobalTestFilter(name: string | undefined, fn: () => void): void {
+  name && TEST_FILTER_PASSES.push(TESTS_FILTER.test(name));
+  fn();
+  name && TEST_FILTER_PASSES.pop();
+}
+
+export async function tryCatchErr(fn: () => void | Promise<void>) {
   try {
     await fn();
   } catch (e: any) {

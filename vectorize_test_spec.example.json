@@ -45,8 +45,7 @@
     },
     "sharedSecret": {
       "providerKey": "___.providerKey"
-    },
-    "loadingTime": 10000
+    }
   },
   "huggingfaceDedicated": {
     "headers": {

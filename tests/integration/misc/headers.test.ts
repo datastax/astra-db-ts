@@ -25,15 +25,15 @@ import assert from 'assert';
 import { EmbeddingHeadersProvider } from '@/src/data-api';
 import {
   DEFAULT_COLLECTION_NAME,
-  describe,
   ENVIRONMENT,
   it,
   parallel,
+  describe,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
 } from '@/tests/testlib';
 
-describe('integration.misc.headers', () => {
+parallel('integration.misc.headers', () => {
   const fetchNative = new FetchNative();
 
   const mkClient = (latestHeaders: Ref<Record<string, string>>, tp?: string | TokenProvider | nullish) => new DataAPIClient(tp, {
@@ -84,7 +84,7 @@ describe('integration.misc.headers', () => {
     }
   }
 
-  parallel('token providers', () => {
+  describe('token providers', () => {
     it('should call the provider on a per-call basis to the Data API', async () => {
       const latestHeaders: Ref<Record<string, string>> = { ref: {} };
       const client = mkClient(latestHeaders);
@@ -167,7 +167,7 @@ describe('integration.misc.headers', () => {
     });
   });
 
-  parallel('embedding header providers', () => {
+  describe('embedding header providers', () => {
     it('should call the provider on a per-call basis to the Data API', async () => {
       const latestHeaders: Ref<Record<string, string>> = { ref: {} };
       const client = mkClient(latestHeaders);

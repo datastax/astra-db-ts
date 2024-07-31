@@ -14,13 +14,13 @@
 /* eslint-disable prefer-const */
 
 import { initTestObjects } from '@/tests/testlib/fixtures';
-import { DEFAULT_COLLECTION_NAME, OTHER_NAMESPACE, TESTS_FILTER } from '@/tests/testlib/config';
+import { DEFAULT_COLLECTION_NAME, OTHER_NAMESPACE } from '@/tests/testlib/config';
 import { afterEach } from 'mocha';
-import { checkTestsEnabled, dropEphemeralColls } from '@/tests/testlib/utils';
+import { checkTestsEnabled, dropEphemeralColls, updatingGlobalTestFilter } from '@/tests/testlib/utils';
 import { parallelTestState } from '@/tests/testlib/test-fns/parallel';
-import { TEST_FILTER_PASSES } from '@/tests/testlib/global';
+import { backgroundTestState } from '@/tests/testlib';
 
-export type SuiteBlock = (this: Mocha.Suite, fixtures: ReturnType<typeof initTestObjects>) => void;
+export type SuiteBlock = (fixtures: ReturnType<typeof initTestObjects>) => void;
 
 export interface SuiteOptions {
   truncateColls?: `${'default' | 'both'}:${'before' | 'beforeEach'}`,
@@ -28,55 +28,57 @@ export interface SuiteOptions {
 }
 
 interface TaggableSuiteFunction {
-  (name: string, fn: SuiteBlock): Mocha.Suite;
-  (name: string, options: SuiteOptions, fn: SuiteBlock): Mocha.Suite;
+  (name: string, fn: SuiteBlock): Mocha.Suite | null;
+  (name: string, options: SuiteOptions, fn: SuiteBlock): Mocha.Suite | null;
 }
 
 export let describe: TaggableSuiteFunction;
 
 describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?: SuiteBlock) {
-  if (parallelTestState.inParallelBlock) {
-    throw new Error('Can\'t use `describe` in parallel blocks');
-  }
-
   const fn = (!maybeFn)
     ? optsOrFn as SuiteBlock
     : maybeFn;
 
   const opts = (maybeFn)
     ? optsOrFn as SuiteOptions
-    : {};
+    : undefined;
 
   const fixtures = initTestObjects();
+  const skipped = !checkTestsEnabled(name);
+
+  for (const asyncTestState of [parallelTestState, backgroundTestState]) {
+    if (asyncTestState.inBlock) {
+      asyncTestState.describe(name, fn, opts, skipped, fixtures);
+      return null;
+    }
+  }
 
   function modifiedFn(this: Mocha.Suite) {
     before(function () {
       checkTestsEnabled(name) || this.skip();
     });
 
-    if (opts.truncateColls?.includes(':')) {
+    if (opts?.truncateColls?.includes(':')) {
       global[opts.truncateColls.split(':')[1] as keyof typeof globalThis](async () => {
         await fixtures.collection.deleteMany({});
 
-        if (opts.truncateColls?.startsWith('both')) {
+        if (opts?.truncateColls?.startsWith('both')) {
           await fixtures.db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE }).deleteMany({});
         }
       });
     }
 
-    if (opts.dropEphemeral === 'after') {
+    if (opts?.dropEphemeral === 'after') {
       after(dropEphemeralColls);
     }
 
-    if (opts.dropEphemeral === 'afterEach') {
+    if (opts?.dropEphemeral === 'afterEach') {
       afterEach(dropEphemeralColls);
     }
 
-    TEST_FILTER_PASSES.push(TESTS_FILTER.test(name));
-
-    fn.call(this, fixtures);
-
-    TEST_FILTER_PASSES.pop();
+    updatingGlobalTestFilter(name, () => {
+      fn(fixtures);
+    });
   }
 
   return global.describe(name, modifiedFn);

@@ -16,14 +16,14 @@
 import { DEFAULT_COLLECTION_NAME, describe, it, parallel, TEST_APPLICATION_URI } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('[ASTRA] integration.misc.hierarchy-traversal', ({ client, db }) => {
+parallel('[ASTRA] integration.misc.hierarchy-traversal', ({ client, db }) => {
   const endpoint = TEST_APPLICATION_URI;
   const idAndRegion = endpoint.split('.')[0].split('https://')[1].split('-');
 
   const id = idAndRegion.slice(0, 5).join('-');
   const region = idAndRegion.slice(5).join('-');
 
-  parallel('db->admin->db', () => {
+  describe('db->admin->db', () => {
     it('is a noop', async () => {
       const db1 = db.admin().db();
       const db2 = db.admin().db().admin().db();
@@ -51,7 +51,7 @@ describe('[ASTRA] integration.misc.hierarchy-traversal', ({ client, db }) => {
     });
   });
 
-  parallel('[NOT-DEV] client->admin->dbAdmin <-> client->db->admin', () => {
+  describe('[NOT-DEV] client->admin->dbAdmin <-> client->db->admin', () => {
     it('is essentially a noop', async () => {
       const dbAdmin1 = client.admin().dbAdmin(endpoint);
       const dbAdmin2 = client.db(endpoint).admin();
@@ -87,7 +87,7 @@ describe('[ASTRA] integration.misc.hierarchy-traversal', ({ client, db }) => {
     });
   });
 
-  parallel('[NOT-DEV] client->admin->dbAdmin->db <-> client->db->admin->db', () => {
+  describe('[NOT-DEV] client->admin->dbAdmin->db <-> client->db->admin->db', () => {
     it('is essentially a noop', async () => {
       const db1 = client.admin().dbAdmin(endpoint).db();
       const db2 = client.db(endpoint).admin().db();

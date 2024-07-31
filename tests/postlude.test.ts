@@ -12,26 +12,44 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { describe, it, globalBackgroundTests } from '@/tests/testlib';
+import { backgroundTestResults, backgroundTestState, describe } from '@/tests/testlib';
+import { AsyncSuiteResult } from '@/tests/testlib/test-fns/types';
 
 describe('(background)', () => {
-  before(() => {
-    globalBackgroundTests.forEach((test) => {
-      describe(test.name, () => {
-        it(test.name, async function () {
-          if ('skipped' in test) {
-            this.skip();
-          } else {
-            const result = await test.res;
+  before(async () => {
+    backgroundTestState.suites.forEach((suite, suiteIdx) => {
+      describe(suite.name!, () => {
+        let results: AsyncSuiteResult;
+        let waited: number;
 
-            this.test!.title = `${test.name} (${~~result.ms}ms)`;
+        before(async function () {
+          suite.skipped && this.skip();
+
+          const time = performance.now();
+          results = await backgroundTestResults[suiteIdx];
+          waited = performance.now() - time;
+        });
+
+        suite.tests.forEach((test, testIdx) => {
+          global.it(test.name, function () {
+            if (testIdx === 0) {
+              this.test!.title += ` (waited ${~~waited}ms)`;
+            }
+
+            if (test.skipped) {
+              this.skip();
+            }
+
+            const result = results[testIdx]!;
+
+            this.test!.title += ` (${~~result.ms}ms)`;
 
             if (result.error) {
               throw result.error;
             }
-          }
+          });
         });
-      })
+      });
     });
   });
   global.it('Dummy test that always runs', () => {});
