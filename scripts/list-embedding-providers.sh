@@ -5,8 +5,8 @@ set -u
 eval "$(tr -d '\r' < .env)"
 
 # jq strips away the irrelevant fields we don't care about
-curl -sL "${APPLICATION_URI}/api/json/v1" \
---header "Token: ${APPLICATION_TOKEN}" \
+curl -sL "${CLIENT_APPLICATION_URI}/api/json/v1" \
+--header "Token: ${CLIENT_APPLICATION_TOKEN}" \
 --header "Content-Type: application/json" \
 --data '{
   "findEmbeddingProviders": {}
