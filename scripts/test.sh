@@ -8,10 +8,6 @@ fi
 # Define necessary commands
 test_cmd="npx ts-mocha --paths -p tsconfig.json --recursive tests/prelude.test.ts tests/unit tests/integration tests/postlude.test.ts --extension .test.ts -t 0 --reporter tests/errors-reporter.cjs"
 
-all_tests_cmd="CLIENT_RUN_LONG_TESTS=1 CLIENT_RUN_ADMIN_TESTS=1 $test_cmd"
-
-light_tests_cmd="CLIENT_RUN_LONG_TESTS= CLIENT_RUN_ADMIN_TESTS= $test_cmd"
-
 run_lint_cmd="npm run lint"
 
 run_tsc_cmd="npx tsc --noEmit --skipLibCheck"
@@ -32,11 +28,9 @@ while [ $# -gt 0 ]; do
 
   case "$1" in
     "-all")
-      CLIENT_RUN_VECTORIZE_TESTS=1
       test_type="all"
       ;;
     "-light")
-      CLIENT_RUN_VECTORIZE_TESTS=
       test_type="light"
       ;;
     "-coverage")
@@ -46,14 +40,14 @@ while [ $# -gt 0 ]; do
       test_type="code"
       ;;
     "-f" | "~f")
-      filter_type="$([ "${1#"~"}" != "$1" ] && echo 'i' || echo 'n')"
+      [ "${1#"~"}" != "$1" ] && filter_type='i' || filter_type='n'
       shift
-      filter="f$filter_type\\\"$1\\\" $filter"
+      filter="f$filter_type\"$1\" $filter"
       ;;
     "-g" | "~g")
-      filter_type="$([ "${1#"~"}" != "$1" ] && echo 'i' || echo 'n')"
+      [ "${1#"~"}" != "$1" ] && filter_type='i' || filter_type='n'
       shift
-      filter="g$filter_type\\\"$1\\\" $filter"
+      filter="g$filter_type\"$1\" $filter"
       ;;
     "-fand")
       filter_combinator='and'
@@ -64,6 +58,9 @@ while [ $# -gt 0 ]; do
     "-b")
       bail_early=1
       ;;
+    "~report")
+      no_err_report=1
+      ;;
     "-w" | "~w")
       [ "${1#"~"}" != "$1" ] && invert_whitelist=1
       shift
@@ -73,7 +70,7 @@ while [ $# -gt 0 ]; do
       echo "Invalid flag $1"
       echo ""
       echo "Usage:"
-      echo "npm run test -- [-all | -light | -coverage] [-fand | -for] [-/~f <filter>] [-/~g <regex>] [-/~w <vectorize_whitelist>] [-b]"
+      echo "npm run test -- [-all | -light | -coverage] [-fand | -for] [-/~f <filter>]+ [-/~g <regex>]+ [-/~w <vectorize_whitelist>] [-b] [~report]"
       echo "or"
       echo "npm run test -- <-code>"
       exit
@@ -83,13 +80,8 @@ while [ $# -gt 0 ]; do
 done
 
 # Ensure the flags are compatible with each other
-if [ "$test_type" = '--types' ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$regex" ] || [ -n "$filter_invert" ] || [ -n "$whitelist" ] || [ -n "$filter_combinator" ]; }; then
-  echo "Can't use a filter, bail, whitelist flags when typechecking"
-  exit 1
-fi
-
-if [ -n "$filter" ] && [ -n "$regex" ]; then
-  echo "Can't have both a 'filter' and a 'regex' flag"
+if [ "$test_type" = "code" ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$filter_combinator" ] || [ -n "$whitelist" ] || [ -n "$no_err_report" ]; }; then
+  echo "Can't use a filter, bail, whitelist flags when typechecking/linting"
   exit 1
 fi
 
@@ -99,13 +91,16 @@ case "$test_type" in
     cmd_to_run="$test_cmd"
     ;;
   "all")
-    cmd_to_run="$all_tests_cmd"
+    export CLIENT_RUN_VECTORIZE_TESTS=1 CLIENT_RUN_LONG_TESTS=1 CLIENT_RUN_ADMIN_TESTS=1
+    cmd_to_run="$test_cmd"
     ;;
   "light")
-    cmd_to_run="$light_tests_cmd"
+    export CLIENT_RUN_VECTORIZE_TESTS='' CLIENT_RUN_LONG_TESTS='' CLIENT_RUN_ADMIN_TESTS=''
+    cmd_to_run="$test_cmd"
     ;;
   "coverage")
-    cmd_to_run="npx nyc $all_tests_cmd -b"
+    export CLIENT_RUN_VECTORIZE_TESTS=1 CLIENT_RUN_LONG_TESTS=1 CLIENT_RUN_ADMIN_TESTS=1
+    cmd_to_run="npx nyc $test_cmd -b"
     ;;
   "code")
     cmd_to_run="$run_tsc_cmd ; $run_lint_cmd"
@@ -113,35 +108,37 @@ case "$test_type" in
 esac
 
 if [ -n "$filter" ]; then
-  cmd_to_run="CLIENT_TESTS_FILTER=\"${filter% }\" $cmd_to_run"
+  # Drops trailing space to make filter symmetrical
+  export CLIENT_TESTS_FILTER="${filter% }"
 fi
 
 if [ -n "$filter_combinator" ]; then
-  cmd_to_run="CLIENT_TESTS_FILTER_COMBINATOR='$filter_combinator' $cmd_to_run"
+  export CLIENT_TESTS_FILTER_COMBINATOR="$filter_combinator"
 fi
 
 if [ -n "$bail_early" ]; then
   cmd_to_run="$cmd_to_run -b"
 fi
 
-# Get embedding providers, if desired, to build the vectorize part of the command
-if [ -n "$CLIENT_RUN_VECTORIZE_TESTS" ] && [ "$test_type" != 'code' ]; then
-  # shellcheck disable=SC2016
-  embedding_providers=$(bash scripts/list-embedding-providers.sh | jq -c | sed 's@"@\\"@g; s@`@\\`@g')
+if [ -n "$no_err_report" ]; then
+  export CLIENT_NO_ERROR_REPORT=1
 fi
 
-if [ -n "$embedding_providers" ]; then
-  cmd_to_run="CLIENT_VECTORIZE_PROVIDERS=\"$embedding_providers\" $cmd_to_run"
+# Get embedding providers, if desired, to build the vectorize part of the command
+if [ -n "$CLIENT_RUN_VECTORIZE_TESTS" ] && [ "$test_type" != 'code' ]; then
+  CLIENT_VECTORIZE_PROVIDERS=$(bash scripts/list-embedding-providers.sh | jq -c)
+
+  export CLIENT_VECTORIZE_PROVIDERS
 
   if [ -n "$whitelist" ]; then
-    cmd_to_run="CLIENT_VECTORIZE_WHITELIST='$whitelist' $cmd_to_run"
+    export CLIENT_VECTORIZE_WHITELIST="$whitelist"
   fi
 
   if [ -n "$invert_whitelist" ]; then
-    cmd_to_run="CLIENT_VECTORIZE_WHITELIST_INVERT=1 $cmd_to_run"
+    export CLIENT_VECTORIZE_WHITELIST_INVERT=1
   fi
 fi
 
 # Run it
-#echo "$cmd_to_run"
+echo "$cmd_to_run"
 eval "$cmd_to_run"

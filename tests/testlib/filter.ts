@@ -24,6 +24,8 @@ export const FILTER_STATE = {
 export const TEST_FILTER = (() => {
   const rawFilters = (process.env.CLIENT_TESTS_FILTER ?? '').slice(0, -1).split('" ').filter(Boolean);
 
+  console.log(process.env.CLIENT_TESTS_FILTER);
+
   const filters = rawFilters
     .map((rawFilter) => (<const>{
       type: rawFilter[0] === 'f' ? 'match' : 'regex',
@@ -66,20 +68,6 @@ function buildAndTestFn(filters: ((name: string) => number)[]) {
     .map(filter => Math.max(...names.map(name => filter(name))))
     .every(s => s === FILTER_STATE.SOFT_OK || s === FILTER_STATE.HARD_OK)
 }
-
-// function buildAndTestFn(filters: ((name: string) => number)[]) {
-//   return (...names: string[]) => {
-//     if (names.some(n => n.includes('VECTORIZE'))) {
-//       console.log(names, filters
-//         .map(filter => Math.max(...names.map(name => filter(name))))
-//         .every(s => s === FILTER_STATE.SOFT_OK || s === FILTER_STATE.HARD_OK));
-//     }
-//
-//     return filters
-//       .map(filter => Math.max(...names.map(name => filter(name))))
-//       .every(s => s === FILTER_STATE.SOFT_OK || s === FILTER_STATE.HARD_OK);
-//   }
-// }
 
 function buildOrTestFn(filters: ((name: string) => number)[]) {
   return (...names: string[]) => names

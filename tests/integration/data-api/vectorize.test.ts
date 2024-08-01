@@ -58,6 +58,27 @@ interface TestCollsSupplier {
   tests: TestCollSupplier[];
 }
 
+const initVectorTests = (): VectorizeTest[] => {
+  if (!process.env.CLIENT_VECTORIZE_PROVIDERS) {
+    return [];
+  }
+
+  const spec = JSON.parse(fs.readFileSync('vectorize_test_spec.json', 'utf8')) as VectorizeTestSpec;
+
+  const embeddingProviders = JSON.parse(process.env.CLIENT_VECTORIZE_PROVIDERS) as Record<string, EmbeddingProviderInfo>;
+
+  const whitelist = whitelistImplFor(process.env.CLIENT_VECTORIZE_WHITELIST ?? '$model-limit:1');
+  const invertWhitelist = !!process.env.CLIENT_VECTORIZE_WHITELIST_INVERT;
+
+  const filter = (invertWhitelist)
+    ? negate(whitelist)
+    : whitelist;
+
+  return Object.entries(embeddingProviders)
+    .flatMap(branchOnModel(spec))
+    .filter(filter);
+};
+
 const whitelistImplFor = (whitelist: string) => {
   if (whitelist.startsWith('$limit:')) {
     const limit = +whitelist.split('$limit:')[1];
@@ -180,27 +201,6 @@ const mkCollectionName = (testName: string): string => {
     .update(testName)
     .digest('hex');
 }
-
-const initVectorTests = (): VectorizeTest[] => {
-  if (!process.env.CLIENT_VECTORIZE_PROVIDERS) {
-    return [];
-  }
-
-  const spec = JSON.parse(fs.readFileSync('vectorize_test_spec.json', 'utf8')) as VectorizeTestSpec;
-
-  const embeddingProviders = JSON.parse(process.env.CLIENT_VECTORIZE_PROVIDERS) as Record<string, EmbeddingProviderInfo>;
-
-  const whitelist = whitelistImplFor(process.env.CLIENT_VECTORIZE_WHITELIST ?? '$model-limit:1');
-  const invertWhitelist = !!process.env.CLIENT_VECTORIZE_WHITELIST_INVERT;
-
-  const filter = (invertWhitelist)
-    ? negate(whitelist)
-    : whitelist;
-
-  return Object.entries(embeddingProviders)
-    .flatMap(branchOnModel(spec))
-    .filter(filter);
-};
 
 interface ModelBranch {
   providerName: string,

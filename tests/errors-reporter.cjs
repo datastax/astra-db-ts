@@ -10,6 +10,10 @@ class ErrorsReporter extends reporters.Spec {
   constructor(runner) {
     super(runner);
 
+    if (process.env.CLIENT_NO_ERROR_REPORT) {
+      return;
+    }
+
     runner.on(Runner.constants.EVENT_TEST_FAIL, (test, err) => {
       this.#erroredTests.push([test, err])
     });
