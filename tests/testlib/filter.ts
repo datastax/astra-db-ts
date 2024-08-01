@@ -62,15 +62,13 @@ function buildMatchFilter(filter: string) {
 }
 
 function buildAndTestFn(filters: ((name: string) => number)[]) {
-  return (...names: string[]) => names
-    .map(name => filters.map(f => f(name)))
-    .map(fs => fs.every(s => s === FILTER_STATE.SOFT_OK || s === FILTER_STATE.HARD_OK))
-    .some(Boolean);
+  return (...names: string[]) => filters
+    .map(filter => Math.max(...names.map(name => filter(name))))
+    .every(s => s === FILTER_STATE.SOFT_OK || s === FILTER_STATE.HARD_OK)
 }
 
 function buildOrTestFn(filters: ((name: string) => number)[]) {
   return (...names: string[]) => names
-    .map(name => filters.map(f => f(name)))
-    .map(states => Math.max(...states))
-    .some(state => state === FILTER_STATE.SOFT_OK || state === FILTER_STATE.HARD_OK);
+    .map(name => Math.max(...filters.map(filter => filter(name))))
+    .some(s => s === FILTER_STATE.SOFT_OK || s === FILTER_STATE.HARD_OK);
 }

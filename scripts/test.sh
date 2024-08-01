@@ -1,7 +1,5 @@
 #!/usr/bin/sh
 
-# Utils
-
 # Properly sources the .env file to bring env variables into scope
 if [ -f .env ]; then
   eval "$(tr -d '\r' < .env)"
