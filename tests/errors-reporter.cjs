@@ -2,7 +2,7 @@ const { Runner, reporters } = require(['mocha'][0]);
 const util = require('node:util');
 const fs = require('node:fs');
 
-const REPORTS_DIR = 'etc/test-errors-reports';
+const REPORTS_DIR = 'etc/test-reports';
 
 class ErrorsReporter extends reporters.Spec {
   #erroredTests = [];
