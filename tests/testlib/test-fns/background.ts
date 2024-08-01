@@ -15,7 +15,7 @@
 
 import { initTestObjects } from '@/tests/testlib/fixtures';
 import { checkTestsEnabled, tryCatchErr } from '@/tests/testlib/utils';
-import { SuiteBlock, TESTS_FILTER } from '@/tests/testlib';
+import { SuiteBlock, TEST_FILTER } from '@/tests/testlib';
 import { AsyncSuiteResult, AsyncSuiteSpec, GlobalAsyncSuiteSpec } from '@/tests/testlib/test-fns/types';
 import { UUID } from '@/src/data-api';
 
@@ -40,6 +40,8 @@ interface BackgroundTestsBlock {
 export let background: BackgroundTestsBlock;
 
 background = function (name: string, suiteFn: SuiteBlock) {
+  name = `(background) ${name}`;
+
   before(function () {
     this.timeout(0);
 
@@ -55,7 +57,7 @@ background = function (name: string, suiteFn: SuiteBlock) {
     suiteFn(initTestObjects());
     backgroundTestState.inBlock = false;
 
-    suite.tests = suite.tests.filter(t => TESTS_FILTER.test(suite.name!) || TESTS_FILTER.test(t.name));
+    suite.tests = suite.tests.filter(test => TEST_FILTER.test(suite.name!, test.name));
 
     if (!suite.tests.length) {
       backgroundTestState.suites.pop();

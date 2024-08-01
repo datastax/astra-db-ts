@@ -182,11 +182,11 @@ const mkCollectionName = (testName: string): string => {
 }
 
 const initVectorTests = (): VectorizeTest[] => {
-  const spec = JSON.parse(fs.readFileSync('vectorize_test_spec.json', 'utf8')) as VectorizeTestSpec;
-
   if (!process.env.CLIENT_VECTORIZE_PROVIDERS) {
-    throw new Error('CLIENT_VECTORIZE_PROVIDERS must be set if running vectorize tests');
+    return [];
   }
+
+  const spec = JSON.parse(fs.readFileSync('vectorize_test_spec.json', 'utf8')) as VectorizeTestSpec;
 
   const embeddingProviders = JSON.parse(process.env.CLIENT_VECTORIZE_PROVIDERS) as Record<string, EmbeddingProviderInfo>;
 

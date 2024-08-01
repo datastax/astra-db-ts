@@ -39,30 +39,3 @@ export const DEMO_APPLICATION_URI = 'https://12341234-1234-1234-1234-12341234123
 
 export const DEFAULT_TEST_TIMEOUT = +process.env.CLIENT_TESTS_TIMEOUT! || 90000;
 
-export const TESTS_FILTER = (() => {
-  const filter = process.env.CLIENT_TESTS_FILTER;
-
-  if (!filter) {
-    return { test: () => true };
-  }
-
-  if (process.env.CLIENT_TESTS_FILTER_TYPE === 'regex') {
-    const regex = RegExp(filter);
-
-    const regexTest = (process.env.CLIENT_TESTS_FILTER_INVERTED)
-      ? (name: string) => !regex.test(name)
-      : regex.test.bind(regex);
-
-    return { test: regexTest };
-  }
-
-  if (process.env.CLIENT_TESTS_FILTER_TYPE === 'match') {
-    const filterTest = (process.env.CLIENT_TESTS_FILTER_INVERTED)
-      ? (name: string) => !name.includes(filter)
-      : (name: string) => name.includes(filter);
-
-    return { test: filterTest };
-  }
-
-  throw new Error('If CLIENT_TESTS_FILTER is set, CLIENT_TESTS_FILTER_TYPE must be set to "regex" or "match"');
-})();

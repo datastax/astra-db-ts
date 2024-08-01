@@ -1,3 +1,5 @@
+#!/usr/bin/sh
+
 # Convenience script which auto-updates the `astra-db-ts` dependencies in all of the examples/ to use either:
 # - the local astra-db-ts for testing purposes (which should always be reverted before merging)
 # - the npm-published astra-db-ts so it can actually be used by normal people

@@ -15,7 +15,7 @@
 import { backgroundTestResults, backgroundTestState, describe } from '@/tests/testlib';
 import { AsyncSuiteResult } from '@/tests/testlib/test-fns/types';
 
-describe('(background)', () => {
+describe('(dummy)', () => {
   before(async () => {
     backgroundTestState.suites.forEach((suite, suiteIdx) => {
       describe(suite.name!, () => {

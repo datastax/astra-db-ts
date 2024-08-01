@@ -16,4 +16,4 @@ import { initTestObjects } from '@/tests/testlib/fixtures';
 
 export const GLOBAL_FIXTURES = initTestObjects();
 
-export const TEST_FILTER_PASSES: boolean[] = [];
+export const CURRENT_DESCRIBE_NAMES: string[] = [];

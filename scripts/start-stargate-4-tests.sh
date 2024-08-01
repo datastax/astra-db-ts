@@ -1,3 +1,5 @@
+#!/usr/bin/sh
+
 # Starts the containers in detached mode so we can set up things as necessary
 docker-compose -f scripts/docker-compose-stargate.yml up -d
 

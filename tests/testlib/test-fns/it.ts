@@ -15,10 +15,10 @@
 
 import { checkTestsEnabled } from '@/tests/testlib/utils';
 import { parallelTestState } from '@/tests/testlib/test-fns/parallel';
-import { TEST_FILTER_PASSES } from '@/tests/testlib/global';
-import { DEFAULT_TEST_TIMEOUT, TESTS_FILTER } from '@/tests/testlib/config';
+import { CURRENT_DESCRIBE_NAMES } from '@/tests/testlib/global';
+import { DEFAULT_TEST_TIMEOUT } from '@/tests/testlib/config';
 import { UUID } from '@/src/data-api';
-import { backgroundTestState } from '@/tests/testlib';
+import { backgroundTestState, TEST_FILTER } from '@/tests/testlib';
 
 export type TestFn = SyncTestFn | AsyncTestFn;
 
@@ -46,7 +46,7 @@ it = function (name: string, testFn: TestFn) {
     }
   }
 
-  if (!TEST_FILTER_PASSES.some(b => b) && !TESTS_FILTER.test(name)) {
+  if (!TEST_FILTER.test(name, ...CURRENT_DESCRIBE_NAMES)) {
     return null;
   }
 

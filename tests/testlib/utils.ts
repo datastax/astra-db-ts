@@ -13,19 +13,9 @@
 // limitations under the License.
 
 import { DEFAULT_NAMESPACE } from '@/src/api';
-import {
-  DEFAULT_COLLECTION_NAME,
-  OTHER_NAMESPACE,
-  TEST_APPLICATION_URI, TESTS_FILTER,
-} from '@/tests/testlib/config';
+import { DEFAULT_COLLECTION_NAME, OTHER_NAMESPACE, TEST_APPLICATION_URI } from '@/tests/testlib/config';
 import { Collection } from '@/src/data-api';
-import { GLOBAL_FIXTURES, TEST_FILTER_PASSES } from '@/tests/testlib/global';
-
-export function updatingGlobalTestFilter(name: string | undefined, fn: () => void): void {
-  name && TEST_FILTER_PASSES.push(TESTS_FILTER.test(name));
-  fn();
-  name && TEST_FILTER_PASSES.pop();
-}
+import { GLOBAL_FIXTURES } from '@/tests/testlib/global';
 
 export async function tryCatchErr(fn: () => void | Promise<void>) {
   try {

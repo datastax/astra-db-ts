@@ -1,3 +1,5 @@
+#!/usr/bin/sh
+
 # Errors on using unbound variables
 set -u
 

@@ -16,9 +16,9 @@
 import { initTestObjects } from '@/tests/testlib/fixtures';
 import { DEFAULT_COLLECTION_NAME, OTHER_NAMESPACE } from '@/tests/testlib/config';
 import { afterEach } from 'mocha';
-import { checkTestsEnabled, dropEphemeralColls, updatingGlobalTestFilter } from '@/tests/testlib/utils';
+import { checkTestsEnabled, dropEphemeralColls } from '@/tests/testlib/utils';
 import { parallelTestState } from '@/tests/testlib/test-fns/parallel';
-import { backgroundTestState } from '@/tests/testlib';
+import { backgroundTestState, CURRENT_DESCRIBE_NAMES } from '@/tests/testlib';
 
 export type SuiteBlock = (fixtures: ReturnType<typeof initTestObjects>) => void;
 
@@ -76,9 +76,9 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
       afterEach(dropEphemeralColls);
     }
 
-    updatingGlobalTestFilter(name, () => {
-      fn(fixtures);
-    });
+    CURRENT_DESCRIBE_NAMES.push(name);
+    fn(fixtures);
+    CURRENT_DESCRIBE_NAMES.pop();
   }
 
   return global.describe(name, modifiedFn);

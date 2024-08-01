@@ -1,3 +1,5 @@
+#!/usr/bin/sh
+
 # Uses jq to format/print the input if it's valid JSON
 pp_if_json ()
 {

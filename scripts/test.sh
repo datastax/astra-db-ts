@@ -1,5 +1,7 @@
 #!/usr/bin/sh
 
+# Utils
+
 # Properly sources the .env file to bring env variables into scope
 if [ -f .env ]; then
   eval "$(tr -d '\r' < .env)"
@@ -21,46 +23,45 @@ test_type_set=0
 
 # Process all of the flags
 while [ $# -gt 0 ]; do
-  for test_type_flag in --all --light --coverage --types --prerelease; do
+  for test_type_flag in -all -light -coverage -code; do
     [ "$1" = "$test_type_flag" ] && test_type_set=$((test_type_set + 1))
   done
 
   if [ "$test_type_set" -gt 1 ]; then
-    echo "Can't set multiple of --all, --light, --coverage, --types, and --prerelease"
+    echo "Can't set multiple of -all, -light, -coverage, and -code"
     exit 1
   fi
 
   case "$1" in
-    "--all")
+    "-all")
       CLIENT_RUN_VECTORIZE_TESTS=1
       test_type="all"
       ;;
-    "--light")
+    "-light")
       CLIENT_RUN_VECTORIZE_TESTS=
       test_type="light"
       ;;
-    "--coverage")
+    "-coverage")
       test_type="coverage"
       ;;
-    "--types")
-      test_type="types"
-      ;;
-    "--prerelease")
-      test_type="prerelease"
-      ;;
-    "-t")
-      shift
-      timeout="$1"
+    "-code")
+      test_type="code"
       ;;
     "-f" | "~f")
-      [ "${1#"~"}" != "$1" ] && invert_filter=1
+      filter_type="$([ "${1#"~"}" != "$1" ] && echo 'i' || echo 'n')"
       shift
-      filter="$1"
+      filter="f$filter_type\\\"$1\\\" $filter"
       ;;
     "-g" | "~g")
-      [ "${1#"~"}" != "$1" ] && invert_filter=1
+      filter_type="$([ "${1#"~"}" != "$1" ] && echo 'i' || echo 'n')"
       shift
-      regex="$1"
+      filter="g$filter_type\\\"$1\\\" $filter"
+      ;;
+    "-fand")
+      filter_combinator='and'
+      ;;
+    "-for")
+      filter_combinator='or'
       ;;
     "-b")
       bail_early=1
@@ -74,9 +75,9 @@ while [ $# -gt 0 ]; do
       echo "Invalid flag $1"
       echo ""
       echo "Usage:"
-      echo "npm run test -- [--all | --light | --coverage | --prerelease] [-f <filter> | -g <regex>] [-i] [-t <timeout>] [-w <vectorize_whitelist>] [-b]"
+      echo "npm run test -- [-all | -light | -coverage] [-fand | -for] [-/~f <filter>] [-/~g <regex>] [-/~w <vectorize_whitelist>] [-b]"
       echo "or"
-      echo "npm run test -- <--types>"
+      echo "npm run test -- <-code>"
       exit
       ;;
   esac
@@ -84,7 +85,7 @@ while [ $# -gt 0 ]; do
 done
 
 # Ensure the flags are compatible with each other
-if [ "$test_type" = '--types' ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$regex" ] || [ -n "$filter_invert" ] || [ -n "$whitelist" ] || [ -n "$timeout" ]; }; then
+if [ "$test_type" = '--types' ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$regex" ] || [ -n "$filter_invert" ] || [ -n "$whitelist" ] || [ -n "$filter_combinator" ]; }; then
   echo "Can't use a filter, bail, whitelist flags when typechecking"
   exit 1
 fi
@@ -108,28 +109,17 @@ case "$test_type" in
   "coverage")
     cmd_to_run="npx nyc $all_tests_cmd -b"
     ;;
-  "types")
-    cmd_to_run="$run_tsc_cmd"
-    ;;
-  "prerelease")
-    cmd_to_run="$run_lint_cmd && $run_tsc_cmd && $all_tests_cmd -b --exit"
+  "code")
+    cmd_to_run="$run_tsc_cmd ; $run_lint_cmd"
     ;;
 esac
 
 if [ -n "$filter" ]; then
-  cmd_to_run="CLIENT_TESTS_FILTER='$filter' CLIENT_TESTS_FILTER_TYPE='match' $cmd_to_run"
+  cmd_to_run="CLIENT_TESTS_FILTER=\"${filter% }\" $cmd_to_run"
 fi
 
-if [ -n "$regex" ]; then
-  cmd_to_run="CLIENT_TESTS_FILTER='$regex' CLIENT_TESTS_FILTER_TYPE='regex' $cmd_to_run"
-fi
-
-if [ -n "$invert_filter" ]; then
-  cmd_to_run="CLIENT_TESTS_FILTER_INVERT=1 $cmd_to_run"
-fi
-
-if [ -n "$timeout" ]; then
-  cmd_to_run="CLIENT_TESTS_TIMEOUT=$timeout $cmd_to_run"
+if [ -n "$filter_combinator" ]; then
+  cmd_to_run="CLIENT_TESTS_FILTER_COMBINATOR='$filter_combinator' $cmd_to_run"
 fi
 
 if [ -n "$bail_early" ]; then
@@ -137,9 +127,9 @@ if [ -n "$bail_early" ]; then
 fi
 
 # Get embedding providers, if desired, to build the vectorize part of the command
-if [ -n "$CLIENT_RUN_VECTORIZE_TESTS" ]; then
+if [ -n "$CLIENT_RUN_VECTORIZE_TESTS" ] && [ "$test_type" != 'code' ]; then
   # shellcheck disable=SC2016
-  embedding_providers=$(sh scripts/list-embedding-providers.sh | jq -c | sed 's@"@\\"@g; s@`@\\`@g')
+  embedding_providers=$(bash scripts/list-embedding-providers.sh | jq -c | sed 's@"@\\"@g; s@`@\\`@g')
 fi
 
 if [ -n "$embedding_providers" ]; then
@@ -155,4 +145,5 @@ if [ -n "$embedding_providers" ]; then
 fi
 
 # Run it
+#echo "$cmd_to_run"
 eval "$cmd_to_run"
