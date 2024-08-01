@@ -66,13 +66,17 @@ while [ $# -gt 0 ]; do
       shift
       whitelist="$1"
       ;;
+    "-c")
+      shift
+      http_client="$1"
+      ;;
     *)
       echo "Invalid flag $1"
       echo ""
       echo "Usage:"
-      echo "npm run test -- [-all | -light | -coverage] [-fand | -for] [-/~f <filter>]+ [-/~g <regex>]+ [-/~w <vectorize_whitelist>] [-b] [~report]"
+      echo "scripts/test.sh [-all | -light | -coverage] [-fand | -for] [-/~f <filter>]+ [-/~g <regex>]+ [-/~w <vectorize_whitelist>] [-b] [~report] [-c <http_client>]"
       echo "or"
-      echo "npm run test -- <-code>"
+      echo "scripts/test.sh <-code>"
       exit
       ;;
   esac
@@ -80,7 +84,7 @@ while [ $# -gt 0 ]; do
 done
 
 # Ensure the flags are compatible with each other
-if [ "$test_type" = "code" ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$filter_combinator" ] || [ -n "$whitelist" ] || [ -n "$no_err_report" ]; }; then
+if [ "$test_type" = "code" ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$filter_combinator" ] || [ -n "$whitelist" ] || [ -n "$no_err_report" ] || [ -n "$http_client" ]; }; then
   echo "Can't use a filter, bail, whitelist flags when typechecking/linting"
   exit 1
 fi
@@ -122,6 +126,10 @@ fi
 
 if [ -n "$no_err_report" ]; then
   export CLIENT_NO_ERROR_REPORT=1
+fi
+
+if [ -n "$http_client" ]; then
+  export CLIENT_TEST_HTTP_CLIENT="$http_client"
 fi
 
 # Get embedding providers, if desired, to build the vectorize part of the command

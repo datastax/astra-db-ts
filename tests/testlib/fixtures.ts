@@ -22,15 +22,17 @@ import { DEFAULT_NAMESPACE } from '@/src/api';
 import {
   DEFAULT_COLLECTION_NAME,
   ENVIRONMENT,
-  HTTP_CLIENT_TYPE, OTHER_NAMESPACE,
+  OTHER_NAMESPACE,
   TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
-  USE_HTTP2,
+  TEST_APPLICATION_URI, TEST_HTTP_CLIENT,
 } from '@/tests/testlib/config';
 
-export const initTestObjects = (preferHttp2 = USE_HTTP2, environment: typeof ENVIRONMENT = ENVIRONMENT) => {
+export const initTestObjects = (httpClient: typeof TEST_HTTP_CLIENT = TEST_HTTP_CLIENT, environment: typeof ENVIRONMENT = ENVIRONMENT) => {
+  const preferHttp2 = httpClient === 'default:http2';
+  const clientType = httpClient.split(':')[0];
+
   const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {
-    httpOptions: { preferHttp2, client: HTTP_CLIENT_TYPE, maxTimeMS: 60000 },
+    httpOptions: { preferHttp2, client: <any>clientType, maxTimeMS: 60000 },
     dbOptions: { namespace: DEFAULT_NAMESPACE },
     environment: environment,
   });
