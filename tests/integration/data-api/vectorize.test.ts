@@ -77,7 +77,7 @@ const whitelistImplFor = (whitelist: string) => {
       const timesSeen = (seen.get(key) ?? 0) + 1;
       seen.set(key, timesSeen);
 
-      return timesSeen < limit;
+      return timesSeen <= limit;
     }
   }
 
@@ -199,7 +199,7 @@ const initVectorTests = (): VectorizeTest[] => {
 
   return Object.entries(embeddingProviders)
     .flatMap(branchOnModel(spec))
-    .filter(filter)
+    .filter(filter);
 };
 
 interface ModelBranch {
@@ -395,4 +395,4 @@ describe('[VECTORIZE] [LONG] integration.data-api.vectorize', ({ db }) => {
       groups.slice(i, i + 7).forEach(createVectorizeProvidersTest(i));
     });
   }
-})
+});
