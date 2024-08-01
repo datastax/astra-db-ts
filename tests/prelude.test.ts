@@ -19,8 +19,7 @@ import { DEFAULT_COLLECTION_NAME, OTHER_NAMESPACE } from '@/tests/testlib/config
 before(async () => {
   const { db, dbAdmin } = initTestObjects();
 
-  const namespaces: string[] = await db.command({ findNamespaces: {} }, { namespace: null })
-    .then(res => res.status?.namespaces);
+  const namespaces = await dbAdmin.listNamespaces();
 
   await Promise.all(
     namespaces
