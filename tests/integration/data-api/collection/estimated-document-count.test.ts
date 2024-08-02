@@ -13,17 +13,10 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection } from '@/src/data-api';
-import { initTestObjects } from '@/tests/fixtures';
+import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.collection.estimated-document-count', () => {
-  let collection: Collection;
-
-  before(async function () {
-    [, , collection] = await initTestObjects();
-  });
-
+describe('integration.data-api.collection.estimated-document-count', ({ collection }) => {
   it('roughly works', async () => {
     const resp = await collection.estimatedDocumentCount();
     assert.ok(typeof <any>resp === 'number');

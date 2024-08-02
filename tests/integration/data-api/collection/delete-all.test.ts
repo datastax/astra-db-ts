@@ -12,24 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection } from '@/src/data-api';
-import { initTestObjects } from '@/tests/fixtures';
+import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.collection.delete-all', () => {
-  let collection: Collection;
-
-  before(async function () {
-    [, , collection] = await initTestObjects();
-  });
-
-  beforeEach(async () => {
-    await collection.deleteMany({});
-  });
-
+describe('integration.data-api.collection.delete-all', { truncateColls: 'default:before' }, ({ collection }) => {
   it('should deleteAll', async () => {
-    const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
-    const res = await collection.insertMany(docList);
+    const res = await collection.insertMany(Array.from({ length: 20 }, () => ({})));
     assert.strictEqual(res.insertedCount, 20);
     await collection.deleteAll();
     const numDocs = await collection.countDocuments({}, 1000);

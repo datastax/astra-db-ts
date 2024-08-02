@@ -13,26 +13,27 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, DataAPIResponseError, Db } from '@/src/data-api';
-import { DEFAULT_COLLECTION_NAME, initTestObjects, OTHER_NAMESPACE, TEST_APPLICATION_URI } from '@/tests/fixtures';
+import { DataAPIResponseError } from '@/src/data-api';
+import {
+  DEFAULT_COLLECTION_NAME,
+  describe,
+  initTestObjects,
+  it,
+  OTHER_NAMESPACE,
+  parallel,
+  TEST_APPLICATION_URI,
+} from '@/tests/testlib';
 import { DataAPIHttpClient } from '@/src/api';
 import assert from 'assert';
 
-describe('integration.api.data-api-http-client', () => {
+describe('integration.api.data-api-http-client', ({ db }) => {
   let httpClient: DataAPIHttpClient;
-  let collection: Collection;
 
-  before(async function () {
-    let db: Db;
-    [, db, collection] = await initTestObjects();
+  before(async () => {
     httpClient = db['_httpClient'];
   });
 
-  beforeEach(async function () {
-    await collection.deleteMany({});
-  });
-
-  describe('executeCommand tests', () => {
+  parallel('executeCommand tests', () => {
     it('should execute a db-level command', async () => {
       const resp = await httpClient.executeCommand({
         findCollections: {},
@@ -58,8 +59,8 @@ describe('integration.api.data-api-http-client', () => {
       assert.ok(resp.status?.insertedIds[0]);
     });
 
-    it('should error on invalid token', async function () {
-      const [client] = await initTestObjects();
+    it('should error on invalid token', async () => {
+      const { client } = initTestObjects();
       const httpClient = client.db(TEST_APPLICATION_URI, { token: 'invalid-token' })['_httpClient'];
 
       try {

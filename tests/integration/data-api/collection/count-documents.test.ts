@@ -13,91 +13,43 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection, TooManyDocumentsToCountError } from '@/src/data-api';
-import { initTestObjects } from '@/tests/fixtures';
+import { TooManyDocumentsToCountError } from '@/src/data-api';
+import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.collection.count-documents', () => {
-  let collection: Collection;
+parallel('integration.data-api.collection.count-documents', { truncateColls: 'both:before' }, ({ collection, collection_ }) => {
+  const docs = Array.from({ length: 20 }, (_, i) => ({
+    _id: `${i}`,
+    name: 'Bloodywood',
+    age: i,
+  }));
 
-  before(async function () {
-    [, , collection] = await initTestObjects();
+  before(async () => {
+    await collection.insertMany(docs);
+    await collection_.insertMany(Array.from({ length: 1001 }, () => ({})));
   });
 
-  beforeEach(async () => {
-    await collection.deleteMany({});
-  });
-
-  it('works', async () => {
-    await collection.insertMany([
-      { username: 'a' },
-      { username: 'aa', answer: 42 },
-      { username: 'aaa', answer: 42 }
-    ]);
-
-    let count = await collection.countDocuments({}, 1000);
-    assert.strictEqual(count, 3);
-
-    count = await collection.countDocuments({ username: 'a' }, 1000);
+  it('should return a single doc for an _id filter', async () => {
+    const count = await collection.countDocuments({ _id: '0' }, 1000);
     assert.strictEqual(count, 1);
-
-    count = await collection.countDocuments({ answer: 42 }, 1000);
-    assert.strictEqual(count, 2);
   });
 
-  it('should return count of documents with non id filter', async () => {
-    const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
-    docList.forEach((doc, index) => {
-      doc.username = doc.username + String(index + 1);
-    });
-    const res = await collection.insertMany(docList);
-    assert.strictEqual(res.insertedCount, 20);
-    const count = await collection.countDocuments({ 'city': 'trichy' }, 1000);
-    assert.strictEqual(count, 20);
-  });
-
-  it('should return count of documents with no filter', async () => {
-    const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
-    docList.forEach((doc, index) => {
-      doc.username = doc.username + String(index + 1);
-    });
-    const res = await collection.insertMany(docList);
-    assert.strictEqual(res.insertedCount, 20);
+  it('should return count of all documents with no filter', async () => {
     const count = await collection.countDocuments({}, 1000);
     assert.strictEqual(count, 20);
   });
 
-  it('should return count of documents for more than default page size limit', async () => {
-    const docList = Array.from({ length: 20 }, () => ({ 'username': 'id', 'city': 'trichy' }));
-    docList.forEach((doc, index) => {
-      doc.username = doc.username + String(index + 1);
-    });
-    const res = await collection.insertMany(docList);
-    assert.strictEqual(res.insertedCount, 20);
-    //insert next 20
-    const docListNextSet = Array.from({ length: 20 }, () => ({ username: 'id', city: 'nyc' }));
-    docListNextSet.forEach((doc, index) => {
-      doc.username = doc.username + String(index + 21);
-    });
-    const resNextSet = await collection.insertMany(docListNextSet);
-    assert.strictEqual(resNextSet.insertedCount, docListNextSet.length);
-    assert.strictEqual(Object.keys(resNextSet.insertedIds).length, docListNextSet.length);
-    //verify counts
-    assert.strictEqual(await collection.countDocuments({ city: 'nyc' }, 1000), 20);
-    assert.strictEqual(await collection.countDocuments({ city: 'trichy' }, 1000), 20);
-    assert.strictEqual(await collection.countDocuments({ city: 'chennai' }, 1000), 0);
-    assert.strictEqual(await collection.countDocuments({}, 1000), 40);
+  it('should return count of documents with filter', async () => {
+    const count = await collection.countDocuments({ name: 'Bloodywood', age: { $lt: 10 } }, 1000);
+    assert.strictEqual(count, 10);
   });
 
-  it('should return 0 when no documents are in the collection', async () => {
-    const count = await collection.countDocuments({}, 1000);
+  it('should return 0 if no filter matches', async () => {
+    const count = await collection.countDocuments({ age: { $gt: 30 } }, 1000);
     assert.strictEqual(count, 0);
   });
 
   it('should throw an error when # docs over limit', async () => {
-    const docList = Array.from({ length: 2 }, () => ({}));
-    await collection.insertMany(docList);
-
     try {
       await collection.countDocuments({}, 1);
       assert.fail('Expected an error');
@@ -109,11 +61,8 @@ describe('integration.data-api.collection.count-documents', () => {
   });
 
   it('should throw an error when moreData is returned', async () => {
-    const docList = Array.from({ length: 1001 }, () => ({}));
-    await collection.insertMany(docList);
-
     try {
-      await collection.countDocuments({}, 2000);
+      await collection_.countDocuments({}, 2000);
       assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof TooManyDocumentsToCountError);
@@ -122,10 +71,13 @@ describe('integration.data-api.collection.count-documents', () => {
     }
   });
 
-  it('should throw an error when no limit is provided', async () => {
+  it('should throw an error when an invalid limit is provided', async () => {
     await assert.rejects(async () => {
       // @ts-expect-error - intentionally testing invalid input
       return await collection.countDocuments({});
-    })
+    });
+    await assert.rejects(async () => {
+      return await collection.countDocuments({}, -1);
+    });
   });
 });

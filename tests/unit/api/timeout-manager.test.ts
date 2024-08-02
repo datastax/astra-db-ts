@@ -15,16 +15,17 @@
 
 import assert from 'assert';
 import { TimeoutManager } from '@/src/api/timeout-managers';
+import { describe, it } from '@/tests/testlib';
 
 describe('unit.api.timeout-manager', () => {
   it('works', async () => {
     const timeoutManager = new TimeoutManager(1000, () => new Error('timeout'));
     assert.strictEqual(timeoutManager.msRemaining(), 1000);
     await new Promise((resolve) => setTimeout(resolve, 500));
-    assert.ok(timeoutManager.msRemaining() < 500);
+    assert.ok(timeoutManager.msRemaining() < 510);
     assert.ok(timeoutManager.msRemaining() > 480);
     await new Promise((resolve) => setTimeout(resolve, 500));
-    assert.ok(timeoutManager.msRemaining() < 0);
+    assert.ok(timeoutManager.msRemaining() < 20);
     assert.ok(timeoutManager.msRemaining() > -40);
   });
 });

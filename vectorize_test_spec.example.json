@@ -1,5 +1,7 @@
 {
-  "$comment": "You can easily comment/uncomment fields by adding/removing underscores from the start of the field name",
+  "$comment.1": "You can easily comment/uncomment fields by adding/removing underscores from the start of the field name",
+  "$comment.2": "Make sure you copy this into `vectorize_test_spec.json` (with no .example in it)",
+  "$comment.3": "It'll be automatically .gitignore-d",
   "azureOpenAI": {
     "sharedSecret": {
       "providerKey": "___.providerKey"

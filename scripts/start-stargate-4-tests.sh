@@ -1,11 +1,9 @@
-# Starts the containers in detached mode so we can set up things as necessary
-docker-compose -f scripts/docker-compose-stargate.yml up -d
+#!/usr/bin/sh
 
-# Sleeps 10s to give the containers some extra time to properly start working
-sleep 10
+echo "Copy paste the following into your .env file:"
+echo "CLIENT_DB_URL=http://localhost:8181"
+echo "CLIENT_DB_TOKEN=Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh"
+echo "CLIENT_DB_ENVIRONMENT=dse"
+echo
 
-# Idempotently sets up 'default_keyspace' and 'other_keyspace' (as required for the astra-db-ts test suite)
-sh scripts/setup-stargate-keyspaces-4-tests.sh
-
-# Reconnects to the running containers so we can easily exit the script on Ctrl+C
 docker-compose -f scripts/docker-compose-stargate.yml up

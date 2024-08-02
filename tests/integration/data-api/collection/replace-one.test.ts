@@ -13,74 +13,54 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { Collection } from '@/src/data-api';
-import { createSampleDoc2WithMultiLevel, createSampleDocWithMultiLevel, initTestObjects } from '@/tests/fixtures';
+import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.collection.replace-one', () => {
-  let collection: Collection;
-
-  before(async function () {
-    [, , collection] = await initTestObjects();
-  });
-
-  beforeEach(async () => {
-    await collection.deleteMany({});
-  });
-
-  it('should replaceOne', async () => {
-    const res = await collection.insertOne(createSampleDocWithMultiLevel());
+parallel('integration.data-api.collection.replace-one', { truncateColls: 'default:before' }, ({ collection }) => {
+  it('should replaceOne', async (key) => {
+    const res = await collection.insertOne({ name: 'deep_purple', key });
     const docId = res.insertedId;
     const resp = await collection.replaceOne(
-      {
-        '_id': docId,
-      },
-      createSampleDoc2WithMultiLevel(),
+      { _id: docId, key },
+      { name: 'shallow_yellow_green' },
     );
     assert.strictEqual(resp.matchedCount, 1);
     assert.strictEqual(resp.modifiedCount, 1);
   });
 
-  it('should replaceOne with same doc', async () => {
-    const res = await collection.insertOne(createSampleDocWithMultiLevel());
+  it('should replaceOne with same doc', async (key) => {
+    const res = await collection.insertOne({ name: 'halestorm', key });
     const docId = res.insertedId;
     const resp = await collection.replaceOne(
-      {
-        '_id': docId,
-      },
-      createSampleDocWithMultiLevel(),
+      { _id: docId, key },
+      { name: 'halestorm', key },
     );
     assert.strictEqual(resp.matchedCount, 1);
     assert.strictEqual(resp.modifiedCount, 0);
   });
 
-  it('should replaceOne with multiple matches', async () => {
+  it('should replaceOne with multiple matches', async (key) => {
     await collection.insertMany([
-      createSampleDocWithMultiLevel(),
-      createSampleDocWithMultiLevel(),
+      { key },
+      { key },
     ]);
 
     const resp = await collection.replaceOne(
-      {
-        username: 'aaron',
-      },
-      createSampleDoc2WithMultiLevel(),
+      { key },
+      { key: 'ignea' },
     );
 
     assert.strictEqual(resp.matchedCount, 1);
     assert.strictEqual(resp.modifiedCount, 1);
   });
 
-  it('should replaceOne with upsert true if match', async () => {
-    await collection.insertOne({ _id: 1 });
+  it('should replaceOne with upsert true if match', async (key) => {
+    await collection.insertOne({ _id: key });
+
     const resp = await collection.replaceOne(
-      {
-        _id: 1,
-      },
-      createSampleDoc2WithMultiLevel(),
-      {
-        upsert: true,
-      },
+      { _id: key },
+      { key: key },
+      { upsert: true, },
     );
 
     assert.strictEqual(resp.matchedCount, 1);
@@ -89,91 +69,87 @@ describe('integration.data-api.collection.replace-one', () => {
     assert.strictEqual(resp.upsertedId, undefined);
   });
 
-  it('should replaceOne with upsert true if no match', async () => {
-    await collection.insertOne(createSampleDocWithMultiLevel());
-    const newDocId = '123';
+  it('should replaceOne with upsert true if no match', async (key) => {
+    await collection.insertOne({});
+
     const resp = await collection.replaceOne(
-      {
-        _id: newDocId,
-      },
-      createSampleDoc2WithMultiLevel(),
-      {
-        upsert: true,
-      },
+      { _id: key },
+      { key: key },
+      { upsert: true },
     );
 
     assert.strictEqual(resp.matchedCount, 0);
     assert.strictEqual(resp.modifiedCount, 0);
     assert.strictEqual(resp.upsertedCount, 1);
-    assert.strictEqual(resp.upsertedId, newDocId);
+    assert.strictEqual(resp.upsertedId, key);
   });
 
-  it('should replaceOne with an empty doc', async () => {
+  it('should replaceOne with an empty doc', async (key) => {
     await collection.insertMany([
-      { username: 'a' },
+      { name: 'a', key },
     ]);
 
     const res = await collection.replaceOne(
-      { username: 'a' },
+      { name: 'a', key },
       {},
     );
     assert.strictEqual(res.matchedCount, 1);
     assert.strictEqual(res.modifiedCount, 1);
   });
 
-  it('should replaceOne with sort', async () => {
+  it('should replaceOne with sort', async (key) => {
     await collection.insertMany([
-      { username: 'a' },
-      { username: 'c' },
-      { username: 'b' },
+      { name: 'a', key },
+      { name: 'c', key },
+      { name: 'b', key },
     ]);
 
-    let res = await collection.replaceOne(
-      {},
-      { username: 'aaa' },
-      { sort: { username: 1 } },
+    const res1 = await collection.replaceOne(
+      { key },
+      { name: 'aaa', key },
+      { sort: { name: 1 } },
     )
-    assert.strictEqual(res.matchedCount, 1);
-    assert.strictEqual(res.modifiedCount, 1);
+    assert.strictEqual(res1.matchedCount, 1);
+    assert.strictEqual(res1.modifiedCount, 1);
 
-    res = await collection.replaceOne(
-      {},
-      { username: 'ccc' },
-      { sort: { username: -1 } },
+    const res2 = await collection.replaceOne(
+      { key },
+      { name: 'ccc', key },
+      { sort: { name: -1 } },
     );
-    assert.strictEqual(res.matchedCount, 1);
-    assert.strictEqual(res.modifiedCount, 1);
+    assert.strictEqual(res2.matchedCount, 1);
+    assert.strictEqual(res2.modifiedCount, 1);
 
-    const found = await collection.find({}).toArray();
-    assert.deepStrictEqual(found.map(d => d.username).sort(), ['aaa', 'b', 'ccc']);
+    const found = await collection.find({ key }).toArray();
+    assert.deepStrictEqual(found.map(d => d.name).sort(), ['aaa', 'b', 'ccc']);
   });
 
-  it('should replaceOne with $vector sort', async () => {
+  it('should replaceOne with $vector sort', async (key) => {
     await collection.insertMany([
-      { username: 'a', $vector: [1.0, 1.0, 1.0, 1.0, 1.0] },
-      { username: 'c', $vector: [-.1, -.1, -.1, -.1, -.1] },
-      { username: 'b', $vector: [-.1, -.1, -.1, -.1, -.1] },
+      { name: 'a', $vector: [1.0, 1.0, 1.0, 1.0, 1.0], key },
+      { name: 'c', $vector: [-.1, -.1, -.1, -.1, -.1], key },
+      { name: 'b', $vector: [-.1, -.1, -.1, -.1, -.1], key },
     ]);
 
     const res = await collection.replaceOne(
-      {},
-      { username: 'aaa' },
+      { key },
+      { name: 'aaa' },
       { sort: { $vector: [1, 1, 1, 1, 1] } },
     );
     assert.strictEqual(res.matchedCount, 1);
     assert.strictEqual(res.modifiedCount, 1);
   });
 
-  it('should replaceOne with vector sort in option', async () => {
+  it('should replaceOne with vector sort in option', async (key) => {
     await collection.insertMany([
-      { username: 'a', $vector: [1.0, 1.0, 1.0, 1.0, 1.0] },
-      { username: 'c', $vector: [-.1, -.1, -.1, -.1, -.1] },
-      { username: 'b', $vector: [-.1, -.1, -.1, -.1, -.1] },
+      { name: 'a', $vector: [1.0, 1.0, 1.0, 1.0, 1.0], key },
+      { name: 'c', $vector: [-.1, -.1, -.1, -.1, -.1], key },
+      { name: 'b', $vector: [-.1, -.1, -.1, -.1, -.1], key },
     ]);
 
     const res = await collection.replaceOne(
-      {},
-      { username: 'aaa' },
+      { key },
+      { name: 'aaa' },
       { vector: [1, 1, 1, 1, 1] },
     );
     assert.strictEqual(res.matchedCount, 1);
@@ -182,13 +158,13 @@ describe('integration.data-api.collection.replace-one', () => {
 
   it('should error when both sort and vector are provided', async () => {
     await assert.rejects(async () => {
-      await collection.replaceOne({}, {}, { sort: { username: 1 }, vector: [1, 1, 1, 1, 1] });
+      await collection.replaceOne({}, {}, { sort: { name: 1 }, vector: [1, 1, 1, 1, 1] });
     }, /Can't use both `sort` and `vector` options at once; if you need both, include a \$vector key in the sort object/)
   });
 
   it('should error when both sort and vectorize are provided', async () => {
     await assert.rejects(async () => {
-      await collection.replaceOne({}, {}, { sort: { username: 1 }, vectorize: 'American Idiot is a good song' });
+      await collection.replaceOne({}, {}, { sort: { name: 1 }, vectorize: 'American Idiot is a good song' });
     }, /Can't use both `sort` and `vectorize` options at once; if you need both, include a \$vectorize key in the sort object/)
   });
 
