@@ -29,7 +29,7 @@ sure why you'd have a namespace named that, but if you do, I like your taste in 
 
 ### I can't be bothered to read all of this
 
-1. Just make sure `CLIENT_APPLICATION_URI` and `CLIENT_APPLICATION_TOKEN` are set in your `.env` file
+1. Just make sure `CLIENT_DB_URL` and `CLIENT_DB_TOKEN` are set in your `.env` file
 2. If you're running the full test suite, copy `vectorize_test_spec.example.json`, fill out the providers you want
    to test, and delete the rest
 3. Run one of the following commands:
@@ -231,9 +231,9 @@ instance which will destroy itself on script exit. The test suite will set up an
 
 Then, be sure to set the following vars in `.env` exactly.
 ```dotenv
-APPLICATION_URI=http://localhost:8181
-APPLICATION_TOKEN=Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh
-APPLICATION_ENVIRONMENT=dse
+CLIENT_DB_URL=http://localhost:8181
+CLIENT_DB_TOKEN=Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh
+CLIENT_DB_ENVIRONMENT=dse
 ```
 
 Once the local Data API instance is fully started and ready for requests, you can run the tests.

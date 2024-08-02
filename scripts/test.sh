@@ -156,7 +156,7 @@ if [ -n "$http_client" ]; then
 fi
 
 if [ -n "$environment" ]; then
-  export CLIENT_APPLICATION_ENVIRONMENT="$environment"
+  export CLIENT_DB_ENVIRONMENT="$environment"
 fi
 
 # Get embedding providers, if desired, to build the vectorize part of the command

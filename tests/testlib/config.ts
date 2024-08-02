@@ -18,8 +18,8 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-if (!process.env.CLIENT_APPLICATION_URI || !process.env.CLIENT_APPLICATION_TOKEN) {
-  throw new Error('Please ensure the CLIENT_APPLICATION_URI and CLIENT_APPLICATION_TOKEN env vars are set')
+if (!process.env.CLIENT_DB_URL || !process.env.CLIENT_DB_TOKEN) {
+  throw new Error('Please ensure the CLIENT_DB_URL and CLIENT_DB_TOKEN env vars are set')
 }
 
 const testHttpClient = process.env.CLIENT_TEST_HTTP_CLIENT ?? 'default:http2';
@@ -28,10 +28,10 @@ if (testHttpClient !== 'default:http2' && testHttpClient !== 'default:http1' && 
   throw new Error('CLIENT_TEST_HTTP_CLIENT must be one of \'default:http2\', \'default:http1\', \'fetch\', or unset to default to \'default:http2\'');
 }
 
-const environment = (process.env.CLIENT_APPLICATION_ENVIRONMENT ?? 'astra');
+const environment = (process.env.CLIENT_DB_ENVIRONMENT ?? 'astra');
 
 if (!DataAPIEnvironments.includes(<any>environment)) {
-  throw new Error(`CLIENT_APPLICATION_ENVIRONMENT must be one of ${DataAPIEnvironments.map(e => `'${e}'`).join(', ')}, or unset to default to 'astra'`);
+  throw new Error(`CLIENT_DB_ENVIRONMENT must be one of ${DataAPIEnvironments.map(e => `'${e}'`).join(', ')}, or unset to default to 'astra'`);
 }
 
 export const ENVIRONMENT = environment as DataAPIEnvironment;
@@ -44,8 +44,8 @@ export const OTHER_NAMESPACE = 'other_keyspace';
 
 export const TEST_HTTP_CLIENT = testHttpClient;
 
-export const TEST_APPLICATION_TOKEN = process.env.CLIENT_APPLICATION_TOKEN;
-export const TEST_APPLICATION_URI = process.env.CLIENT_APPLICATION_URI;
+export const TEST_APPLICATION_TOKEN = process.env.CLIENT_DB_TOKEN;
+export const TEST_APPLICATION_URI = process.env.CLIENT_DB_URL;
 export const DEMO_APPLICATION_URI = 'https://12341234-1234-1234-1234-123412341234-us-west-2.apps.astra.datastax.com';
 
 export const DEFAULT_TEST_TIMEOUT = +process.env.CLIENT_TESTS_TIMEOUT! || 90000;
