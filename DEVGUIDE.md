@@ -2,6 +2,11 @@
 
 ##  Contents
 1. [Running the tests](#running-the-tests)
+   1. [Prerequisites](#prerequisites)
+   2. [I can't be bothered to read all of this](#i-cant-be-bothered-to-read-all-of-this)
+   3. [The custom test script](#the-custom-test-script)
+   4. [Test tags](#test-tags)
+   5. [Running vectorize tests](#running-vectorize-tests)
 2. [Typechecking & Linting](#typechecking--linting)
 3. [Building the library](#building-the-library)
 4. [Publishing](#publishing)
@@ -136,17 +141,101 @@ By default, the test suite logs the complete error objects of any that may've be
 `./etc/test-reports` directory for greatest debuggability. However, this can be disabled for a test run using the
 `~report` flag.
 
-#### 7. The http client
+#### 7. The HTTP client
 
 By default, `astra-db-ts` will run its tests on `fetch-h2` using `HTTP/2`, but you can specify a specific client, which
 is one of `default:http1`, `default:http2`, or `fetch`.
 
-#### 8. The test environment
+#### 8. The Data API environment
 
 By default, `astra-db-ts` assumes you're running on Astra, but you can specify the Data API environment through this
 flag. It should be one of `dse`, `hcd`, `cassandra`, or `other`. You can also provide `astra`, but it would't really
 do anything. But I'm not the boss of you; you can make your own big-boy/girl/other decisions.
 
+### Test tags
+
+
+
+### Running vectorize tests
+
+To run vectorize tests, you need to have a vectorize-enabled kube running, with the correct tags enabled.
+
+Ensure `CLIENT_RUN_VECTORIZE_TESTS` and `CLIENT_RUN_LONG_TESTS` are enabled as well (or just pass the `-all` flag to
+the test script).
+
+Lastly, you must create a file, `vectorize_tests.json`, in the root folder, with the following format:
+
+```ts
+type VectorizeTestSpec = {
+  [providerName: string]: {
+    headers?: {
+      [header: `x-${string}`]: string,
+    },
+    sharedSecret?: {
+      providerKey?: string,
+    },
+    dimension?: {
+      [modelNameRegex: string]: number,
+    },
+    parameters?: {
+      [modelNameRegex: string]: Record<string, string>,
+    },
+  },
+}
+```
+
+where:
+- `providerName` is the name of the provider (e.g. `nvidia`, `openai`, etc.) as found in `findEmbeddingProviders`.
+- `headers` sets the embedding headers to be used for header auth.
+   - resolves to an `EmbeddingHeadersProvider` under the hood—throws error if no corresponding one found.
+   - optional if no header auth test wanted.
+- `sharedSecret` is the block for KMS auth (isomorphic to `providerKey`, but it's an object for future-compatability).
+   - `providerKey` is the provider key for the provider (which will be passed in @ collection creation).
+   - optional if no KMS auth test wanted.
+- `parameters` is a mapping of model names to their corresponding parameters. The model name can be some regex that partially matches the full model name.
+   - `"text-embedding-3-small"`, `"3-small"`, and `".*"` will all match `"text-embedding-3-small"`.
+   - optional if not required. `azureOpenAI`, for example, will need this.
+- `dimension` is also a mapping of model name regex to their corresponding dimensions, like the `parameters` field.
+   - optional if not required. `huggingfaceDedicated`, for example, will need this.
+
+This file is .gitignore-d by default and will not be checked into VCS.
+
+See `vectorize_test_spec.example.json` for, guess what, an example.
+
+This spec is cross-referenced with `findEmbeddingProviders` to create a suite of tests branching off each possible
+parameter, with tests names of the format `providerName@modelName@authType@dimension`, where each section is another
+potential branch.
+
+To run *only* the vectorize tests, a common pattern I use is `scripts/test.sh -all -f VECTORIZE [-w <vectorize_whitelist>]`.
+
 ## Typechecking & Linting
 
+The test script also provides typechecking and linting through the following commands:
 
+```sh
+# Full typechecking
+scripts/test.sh -tc
+
+# Linting
+scripts/test.sh -lint
+
+# Or even both
+scripts/test.sh -lint -tc
+```
+
+## Building the library
+
+At the moment, you need to be using a unix-like system to build the library, as it uses a small shell script,
+which can be found in `scripts/build.sh`, and run manually enough on Windows if necessary.
+
+To build it, just run `npm run build`, which does the following:
+- Deletes the `dist` directory
+- Updates the versioning file (`src/version.ts`)
+- Runs `tsc` to compile the TypeScript files & resolves path aliases w/ `tsc-alias`
+- Uses `api-extractor` to generate the API report & generate a rolled-up `.d.ts` file
+- Deletes any extraneous `.d.ts` files
+
+## Publishing
+
+I heavily recommend using [np](https://github.com/sindresorhus/np) to publish the package. Running it will involve running `test --prerelease`, and the
+versioning step will update the api report + update the version in `src/version.ts`. 
