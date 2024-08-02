@@ -59,7 +59,7 @@ interface TestCollsSupplier {
 }
 
 const initVectorTests = (): VectorizeTest[] => {
-  if (!process.env.CLIENT_VECTORIZE_PROVIDERS) {
+  if (!process.env.CLIENT_VECTORIZE_PROVIDERS || process.env.CLIENT_VECTORIZE_PROVIDERS === 'null') {
     return [];
   }
 

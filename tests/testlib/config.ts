@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIEnvironment } from '@/src/common';
+import { DataAPIEnvironment, DataAPIEnvironments } from '@/src/common';
 import * as process from 'node:process';
 import dotenv from 'dotenv';
 
@@ -25,10 +25,16 @@ if (!process.env.CLIENT_APPLICATION_URI || !process.env.CLIENT_APPLICATION_TOKEN
 const testHttpClient = process.env.CLIENT_TEST_HTTP_CLIENT ?? 'default:http2';
 
 if (testHttpClient !== 'default:http2' && testHttpClient !== 'default:http1' && testHttpClient !== 'fetch') {
-  throw new Error('CLIENT_TEST_HTTP_CLIENT must be one of \'default:http2\', \'default:http1\', \'fetch\', or `unset` to default to \'default:http2\'');
+  throw new Error('CLIENT_TEST_HTTP_CLIENT must be one of \'default:http2\', \'default:http1\', \'fetch\', or unset to default to \'default:http2\'');
 }
 
-export const ENVIRONMENT = (process.env.CLIENT_APPLICATION_ENVIRONMENT ?? 'astra') as DataAPIEnvironment;
+const environment = (process.env.CLIENT_APPLICATION_ENVIRONMENT ?? 'astra');
+
+if (!DataAPIEnvironments.includes(<any>environment)) {
+  throw new Error(`CLIENT_APPLICATION_ENVIRONMENT must be one of ${DataAPIEnvironments.map(e => `'${e}'`).join(', ')}, or unset to default to 'astra'`);
+}
+
+export const ENVIRONMENT = environment as DataAPIEnvironment;
 export const TEMP_DB_NAME = 'astra-test-db-plus-random-name-1284'
 
 export const DEFAULT_COLLECTION_NAME = 'test_coll';

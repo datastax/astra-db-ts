@@ -1,14 +1,13 @@
 # Contents
 1. [Running the tests](#running-the-tests)
-2. [Linting](#linting)
+2. [Typechecking & Linting](#typechecking--linting)
 3. [Building the library](#building-the-library)
 4. [Publishing](#publishing)
 
 ## Running the tests
 Prerequisites:
-- A JS package manager (npm, bun, etc.)
-- A clean Data API instance with two keyspaces—`default_keyspace` and `other_keyspace`
-- Copy the `.env.example` file and create a new `.env` file following the example template
+- A clean Data API instance
+- Copy the `.env.example` file and create a new `.env` file with your Data API creds
 
 The library comes with a small custom test script, whose usage is shown below:
 
@@ -172,7 +171,7 @@ npm run test -- --coverage
 This uses `test --all` under the hood, as well as a "bail early" flag as there's not really a point continuing to run 
 tests if one of them fails, as the coverage report will be impacted.
 
-## Linting
+## Typechecking & Linting
 Run `npm run lint` to run ESLint. ESLint will point out any formatting and code quality issues it finds.
 
 ## Building the library

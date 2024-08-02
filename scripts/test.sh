@@ -70,11 +70,15 @@ while [ $# -gt 0 ]; do
       shift
       http_client="$1"
       ;;
+    "-e")
+      shift
+      environment="$1"
+      ;;
     *)
       echo "Invalid flag $1"
       echo ""
       echo "Usage:"
-      echo "scripts/test.sh [-all | -light | -coverage] [-fand | -for] [-/~f <filter>]+ [-/~g <regex>]+ [-/~w <vectorize_whitelist>] [-b] [~report] [-c <http_client>]"
+      echo "scripts/test.sh [-all | -light | -coverage] [-fand | -for] [-/~f <filter>]+ [-/~g <regex>]+ [-/~w <vectorize_whitelist>] [-b] [~report] [-c <http_client>] [-e <environment>]"
       echo "or"
       echo "scripts/test.sh <-code>"
       exit
@@ -84,7 +88,7 @@ while [ $# -gt 0 ]; do
 done
 
 # Ensure the flags are compatible with each other
-if [ "$test_type" = "code" ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$filter_combinator" ] || [ -n "$whitelist" ] || [ -n "$no_err_report" ] || [ -n "$http_client" ]; }; then
+if [ "$test_type" = "code" ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$filter_combinator" ] || [ -n "$whitelist" ] || [ -n "$no_err_report" ] || [ -n "$http_client" ] || [ -n "$environment" ]; }; then
   echo "Can't use a filter, bail, whitelist flags when typechecking/linting"
   exit 1
 fi
@@ -130,6 +134,10 @@ fi
 
 if [ -n "$http_client" ]; then
   export CLIENT_TEST_HTTP_CLIENT="$http_client"
+fi
+
+if [ -n "$environment" ]; then
+  export CLIENT_APPLICATION_ENVIRONMENT="$environment"
 fi
 
 # Get embedding providers, if desired, to build the vectorize part of the command

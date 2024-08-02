@@ -17,11 +17,17 @@ import { DEFAULT_COLLECTION_NAME, describe, it, parallel, TEST_APPLICATION_URI }
 import assert from 'assert';
 
 parallel('[ASTRA] integration.misc.hierarchy-traversal', ({ client, db }) => {
-  const endpoint = TEST_APPLICATION_URI;
-  const idAndRegion = endpoint.split('.')[0].split('https://')[1].split('-');
+  let id: string, region: string;
 
-  const id = idAndRegion.slice(0, 5).join('-');
-  const region = idAndRegion.slice(5).join('-');
+  before(() => {
+    const idAndRegion = TEST_APPLICATION_URI
+      .split('.')[0]
+      .split('https://')[1]
+      .split('-');
+
+    id = idAndRegion.slice(0, 5).join('-');
+    region = idAndRegion.slice(5).join('-');
+  });
 
   describe('db->admin->db', () => {
     it('is a noop', async () => {
@@ -53,15 +59,15 @@ parallel('[ASTRA] integration.misc.hierarchy-traversal', ({ client, db }) => {
 
   describe('[NOT-DEV] client->admin->dbAdmin <-> client->db->admin', () => {
     it('is essentially a noop', async () => {
-      const dbAdmin1 = client.admin().dbAdmin(endpoint);
-      const dbAdmin2 = client.db(endpoint).admin();
+      const dbAdmin1 = client.admin().dbAdmin(TEST_APPLICATION_URI);
+      const dbAdmin2 = client.db(TEST_APPLICATION_URI).admin();
       assert.strictEqual(dbAdmin1.db().id, dbAdmin2.db().id);
       assert.strictEqual(dbAdmin1.db().namespace, dbAdmin2.db().namespace);
     });
 
     it('works with endpoint', async () => {
-      const dbAdmin1 = client.admin().dbAdmin(endpoint);
-      const dbAdmin2 = client.db(endpoint).admin();
+      const dbAdmin1 = client.admin().dbAdmin(TEST_APPLICATION_URI);
+      const dbAdmin2 = client.db(TEST_APPLICATION_URI).admin();
       const info1 = await dbAdmin1.info();
       const info2 = await dbAdmin2.info();
       assert.deepStrictEqual(info1.info.name, info2.info.name);
@@ -69,7 +75,7 @@ parallel('[ASTRA] integration.misc.hierarchy-traversal', ({ client, db }) => {
     });
 
     it('works with endpoint & id + region', async () => {
-      const dbAdmin1 = client.admin().dbAdmin(endpoint);
+      const dbAdmin1 = client.admin().dbAdmin(TEST_APPLICATION_URI);
       const dbAdmin2 = client.db(id, region).admin();
       const info1 = await dbAdmin1.info();
       const info2 = await dbAdmin2.info();
@@ -79,7 +85,7 @@ parallel('[ASTRA] integration.misc.hierarchy-traversal', ({ client, db }) => {
 
     it('works with id + region & endpoint', async () => {
       const dbAdmin1 = client.admin().dbAdmin(id, region);
-      const dbAdmin2 = client.db(endpoint).admin();
+      const dbAdmin2 = client.db(TEST_APPLICATION_URI).admin();
       const info1 = await dbAdmin1.info();
       const info2 = await dbAdmin2.info();
       assert.deepStrictEqual(info1.info.name, info2.info.name);
@@ -89,8 +95,8 @@ parallel('[ASTRA] integration.misc.hierarchy-traversal', ({ client, db }) => {
 
   describe('[NOT-DEV] client->admin->dbAdmin->db <-> client->db->admin->db', () => {
     it('is essentially a noop', async () => {
-      const db1 = client.admin().dbAdmin(endpoint).db();
-      const db2 = client.db(endpoint).admin().db();
+      const db1 = client.admin().dbAdmin(TEST_APPLICATION_URI).db();
+      const db2 = client.db(TEST_APPLICATION_URI).admin().db();
       assert.strictEqual(db1.id, db2.id);
       assert.strictEqual(db1.namespace, db2.namespace);
 
@@ -99,11 +105,11 @@ parallel('[ASTRA] integration.misc.hierarchy-traversal', ({ client, db }) => {
     });
 
     it('works with endpoint', async () => {
-      const db1 = client.admin().dbAdmin(endpoint).db();
+      const db1 = client.admin().dbAdmin(TEST_APPLICATION_URI).db();
       const collections1 = await db1.listCollections();
       assert.ok(Array.isArray(collections1));
 
-      const db2 = client.db(endpoint).admin().db();
+      const db2 = client.db(TEST_APPLICATION_URI).admin().db();
       const collections2 = await db2.listCollections();
       assert.ok(Array.isArray(collections2));
 
@@ -114,7 +120,7 @@ parallel('[ASTRA] integration.misc.hierarchy-traversal', ({ client, db }) => {
     });
 
     it('works with endpoint & id + region', async () => {
-      const db1 = client.admin().dbAdmin(endpoint).db();
+      const db1 = client.admin().dbAdmin(TEST_APPLICATION_URI).db();
       const collections1 = await db1.listCollections();
       assert.ok(Array.isArray(collections1));
 
@@ -133,7 +139,7 @@ parallel('[ASTRA] integration.misc.hierarchy-traversal', ({ client, db }) => {
       const collections1 = await db1.listCollections();
       assert.ok(Array.isArray(collections1));
 
-      const db2 = client.db(endpoint).admin().db();
+      const db2 = client.db(TEST_APPLICATION_URI).admin().db();
       const collections2 = await db2.listCollections();
       assert.ok(Array.isArray(collections2));
 

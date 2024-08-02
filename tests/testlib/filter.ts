@@ -24,8 +24,6 @@ export const FILTER_STATE = {
 export const TEST_FILTER = (() => {
   const rawFilters = (process.env.CLIENT_TESTS_FILTER ?? '').slice(0, -1).split('" ').filter(Boolean);
 
-  console.log(process.env.CLIENT_TESTS_FILTER);
-
   const filters = rawFilters
     .map((rawFilter) => (<const>{
       type: rawFilter[0] === 'f' ? 'match' : 'regex',
