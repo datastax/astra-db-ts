@@ -6,7 +6,7 @@ if [ -f .env ]; then
 fi
 
 # Define necessary commands
-test_cmd="npx ts-mocha --paths -p tsconfig.json --recursive tests/prelude.test.ts tests/unit tests/integration tests/postlude.test.ts --extension .test.ts -t 0 --reporter tests/errors-reporter.cjs"
+test_cmd="ts-mocha --paths -p tsconfig.json --recursive tests/prelude.test.ts tests/unit tests/integration tests/postlude.test.ts --extension .test.ts -t 0 --reporter tests/errors-reporter.cjs"
 
 run_lint_cmd="npm run lint"
 
@@ -17,12 +17,12 @@ test_type_set=0
 
 # Process all of the flags
 while [ $# -gt 0 ]; do
-  for test_type_flag in -all -light -coverage -code; do
+  for test_type_flag in -all -light -coverage; do
     [ "$1" = "$test_type_flag" ] && test_type_set=$((test_type_set + 1))
   done
 
   if [ "$test_type_set" -gt 1 ]; then
-    echo "Can't set multiple of -all, -light, -coverage, and -code"
+    echo "Can't set multiple of -all, -light, -coverage"
     exit 1
   fi
 
@@ -35,9 +35,15 @@ while [ $# -gt 0 ]; do
       ;;
     "-coverage")
       test_type="coverage"
+      bail_early=1
       ;;
-    "-code")
+    "-lint")
       test_type="code"
+      run_linting=1
+      ;;
+    "-tc")
+      test_type="code"
+      run_typechecking=1
       ;;
     "-f" | "~f")
       [ "${1#"~"}" != "$1" ] && filter_type='i' || filter_type='n'
@@ -80,7 +86,7 @@ while [ $# -gt 0 ]; do
       echo "Usage:"
       echo "scripts/test.sh [-all | -light | -coverage] [-fand | -for] [-/~f <filter>]+ [-/~g <regex>]+ [-/~w <vectorize_whitelist>] [-b] [~report] [-c <http_client>] [-e <environment>]"
       echo "or"
-      echo "scripts/test.sh <-code>"
+      echo "scripts/test.sh [-lint] [-tc]"
       exit
       ;;
   esac
@@ -93,25 +99,38 @@ if [ "$test_type" = "code" ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ 
   exit 1
 fi
 
+if [ "$test_type_set" -gt 0 ] && { [ -n "$run_linting" ] || [ -n "$run_typecheking" ]; }; then
+  echo "Conflicting flags; -all/-light/-coverage and -tc/-lint present at the same time"
+  exit 1
+fi
+
 # Build the actual command to run
 case "$test_type" in
   "")
-    cmd_to_run="$test_cmd"
+    cmd_to_run="npx $test_cmd"
     ;;
   "all")
     export CLIENT_RUN_VECTORIZE_TESTS=1 CLIENT_RUN_LONG_TESTS=1 CLIENT_RUN_ADMIN_TESTS=1
-    cmd_to_run="$test_cmd"
+    cmd_to_run="npx $test_cmd"
     ;;
   "light")
     export CLIENT_RUN_VECTORIZE_TESTS='' CLIENT_RUN_LONG_TESTS='' CLIENT_RUN_ADMIN_TESTS=''
-    cmd_to_run="$test_cmd"
+    cmd_to_run="npx $test_cmd"
     ;;
   "coverage")
     export CLIENT_RUN_VECTORIZE_TESTS=1 CLIENT_RUN_LONG_TESTS=1 CLIENT_RUN_ADMIN_TESTS=1
-    cmd_to_run="npx nyc $test_cmd -b"
+    cmd_to_run="npx nyc $test_cmd"
     ;;
   "code")
-    cmd_to_run="$run_tsc_cmd ; $run_lint_cmd"
+    if [ -n "$run_linting" ]; then
+      cmd_to_run="$run_lint_cmd; $cmd_to_run"
+    fi
+
+    if [ -n "$run_typechecking" ]; then
+      cmd_to_run="$run_tsc_cmd; $cmd_to_run"
+    fi
+
+    cmd_to_run="${cmd_to_run%; }"
     ;;
 esac
 

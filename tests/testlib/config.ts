@@ -19,7 +19,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 if (!process.env.CLIENT_APPLICATION_URI || !process.env.CLIENT_APPLICATION_TOKEN) {
-  throw new Error('Please ensure the APPLICATION_URI and APPLICATION_TOKEN env vars are set')
+  throw new Error('Please ensure the CLIENT_APPLICATION_URI and CLIENT_APPLICATION_TOKEN env vars are set')
 }
 
 const testHttpClient = process.env.CLIENT_TEST_HTTP_CLIENT ?? 'default:http2';
