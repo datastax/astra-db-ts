@@ -306,6 +306,7 @@ To build it, just run `npm run build`, which does the following:
 - Updates the versioning file (`src/version.ts`)
 - Runs `tsc` to compile the TypeScript files & resolves path aliases w/ `tsc-alias`
 - Uses `api-extractor` to generate the API report & generate a rolled-up `.d.ts` file
+- Runs over the code and trims any extra comments/files to reduce code size
 - Deletes any extraneous `.d.ts` files
 
 ## Publishing
