@@ -19,31 +19,43 @@ import { DEFAULT_COLLECTION_NAME, OTHER_NAMESPACE } from '@/tests/testlib/config
 before(async () => {
   const { db, dbAdmin } = initTestObjects();
 
-  const namespaces = await dbAdmin.listNamespaces();
+  const allNamespaces = await dbAdmin.listNamespaces();
 
-  await Promise.all(
-    namespaces
-      .filter(ns => ['slania'].includes(ns))
-      .tap(ns => console.log(`deleting namespace '${ns}s'`))
-      .map(ns => dbAdmin.dropNamespace(ns))
-  );
+  if (allNamespaces.includes('slania')) {
+    console.log(`deleting namespace 'slania'`);
+    await dbAdmin.dropNamespace('slania');
+  }
 
   for (const namespace of [DEFAULT_NAMESPACE, OTHER_NAMESPACE]) {
-    if (!namespaces.includes(namespace)) {
-      console.log(`creating namespace ${namespace}`);
+    if (!allNamespaces.includes(namespace)) {
+      console.log(`creating namespace 'slania'`);
       await dbAdmin.createNamespace(namespace);
     }
-
-    const collections = await db.listCollections({ namespace });
-
-    const promises = collections
-      .filter(c => c.name !== DEFAULT_COLLECTION_NAME)
-      .tap(c => console.log(`deleting collection '${namespace}.${c.name}'`))
-      .map(c => db.dropCollection(c.name, { namespace }));
-
-    await Promise.all(promises);
-
-    await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace })
-      .then(c => c.deleteMany({}));
   }
+
+  const createCollPromises = [DEFAULT_NAMESPACE, OTHER_NAMESPACE]
+    .map(async (namespace) => {
+      await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace })
+        .then(c => c.deleteMany({}));
+    })
+    .awaitAll();
+
+  const allCollections = await allNamespaces
+    .map(async (namespace) => {
+      const colls = await db.listCollections({ namespace, nameOnly: true });
+      return [namespace, colls] as const;
+    })
+    .awaitAll();
+
+  await allCollections
+    .map(async ([namespace, colls]) => {
+      return colls
+        .filter(c => [DEFAULT_NAMESPACE, OTHER_NAMESPACE].includes(namespace) ? c !== DEFAULT_COLLECTION_NAME : true)
+        .tap(c => console.log(`deleting collection '${namespace}.${c}'`))
+        .map(c => db.dropCollection(c, { namespace }))
+        .awaitAll();
+    })
+    .awaitAll();
+
+  await createCollPromises;
 });

@@ -84,13 +84,18 @@ export function checkTestsEnabled(name: string) {
 
 declare global {
   interface Array<T> {
-    tap(consumer: (t: T) => void): Array<T>;
+    tap(consumer: (t: T) => void): T[];
+    awaitAll(): Promise<(T extends Promise<infer P> ? P : T)[]>;
   }
 }
 
 Array.prototype.tap = function <T>(consumer: (t: T) => void) {
   this.forEach(consumer);
   return this;
+}
+
+Array.prototype.awaitAll = function () {
+  return Promise.all(this);
 }
 
 export function createCollections<Keys extends string>(colls: () => Record<Keys, Promise<Collection>>): Record<Keys, Collection> {
