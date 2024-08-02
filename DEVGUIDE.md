@@ -7,6 +7,7 @@
    3. [The custom test script](#the-custom-test-script)
    4. [Test tags](#test-tags)
    5. [Running vectorize tests](#running-vectorize-tests)
+   6. [The custom Mocha wrapper](#the-custom-mocha-wrapper)
 2. [Typechecking & Linting](#typechecking--linting)
 3. [Building the library](#building-the-library)
 4. [Publishing](#publishing)
@@ -154,7 +155,22 @@ do anything. But I'm not the boss of you; you can make your own big-boy/girl/oth
 
 ### Test tags
 
+The `astra-db-ts` test suite uses the concept of "test tags" to further advance test filtering. These are tags in
+the names of test blocks, such as `[LONG] createCollection tests` or `[ADMIN] [ASTRA] AstraAdmin tests`.
 
+These tags are automatically parsed and filtered through the custom wrapper our test suite uses, though
+you can still interact with them through test filters as well. For example, I commonly use `-f VECTORIZE` to
+only run the vectorize tests.
+
+Current tags include:
+ - `VECTORIZE` - Enabled if `CLIENT_RUN_VECTORIZE_TESTS` is set (or `-all` is set)
+ - `LONG` - Enabled if `CLIENT_RUN_LONG_TESTS` is set (or `-all` is set)
+ - `ADMIN` - Enabled if `CLIENT_RUN_ADMIN_TESTS` is set (or `-all` is set)
+ - `DEV` - Automatically enabled if running on Astra-dev
+ - `NOT-DEV` - Automatically enabled if not running on Astra-dev
+ - `ASTRA` - Automatically enabled if running on Astra
+
+Attempting to set any other test tag will throw an error.
 
 ### Running vectorize tests
 
@@ -207,6 +223,48 @@ parameter, with tests names of the format `providerName@modelName@authType@dimen
 potential branch.
 
 To run *only* the vectorize tests, a common pattern I use is `scripts/test.sh -all -f VECTORIZE [-w <vectorize_whitelist>]`.
+
+### The custom Mocha wrapper
+
+The `astra-db-ts` test suite is massively IO-bound, and desires a more advanced test filtering system than
+Mocha provides by default. As such, we have written a (relatively) light custom wrapper around Mocha, extending
+it to allow us to squeeze all possible performance out of our tests, and make it easier to write, scale, and work
+with tests in both the present, and the future.
+
+#### The custom test functions
+
+The most prominent changes are the introduction of 5 new Mocha-API-esque functions (two of which are overhauls)
+- [`describe`](https://github.com/datastax/astra-db-ts/blob/e0b5913503d58117d0af4e3b5292866f7372a975/tests/testlib/describe.ts) - An overhaul to the existing `dynamic` block
+   - Provides fresh instances of the "common fixtures" in its callback
+   - Performs "tag filtering" on the suite names
+   - Some suite options to reduce boilerplate
+      - `truncateColls: 'default'` - Does `deleteMany({})` on the default collection in the default namespace after each test case
+      - `truncateColls: 'both'` - Does `deleteMany({})` on the default collection in both test namespaces after each test case
+      - `dropEphemeral: 'after'` - Drops all non-default collections in both test namespaces after all of the test cases in the suite
+      - `dropEphemeral: 'afterEach'` - Drops all non-default collections in both test namespaces each test case
+- [`it`](https://github.com/datastax/astra-db-ts/blob/e0b5913503d58117d0af4e3b5292866f7372a975/tests/testlib/it.ts) - An overhaul to the existing `it` block
+   - Performs "tag filtering" on the test names
+- [`parallel`](https://github.com/datastax/astra-db-ts/blob/e0b5913503d58117d0af4e3b5292866f7372a975/tests/testlib/parallel.ts) - A wrapper around `describe` which runs all of its test cases in parallel
+   - Only allows `it`, `before`, `after`, and a single layer of `describe` functions
+   - Will run all tests simultaneously in a `before` hook, capture any exceptions, and rethrow them in reconstructed `it`/`describe` blocks for the most native-like behavior
+   - Performs tag and test filtering as normal
+   - Nearly all integration tests have been made parallel
+- [`background`](https://github.com/datastax/astra-db-ts/blob/e0b5913503d58117d0af4e3b5292866f7372a975/tests/testlib/background.ts) - A version of `describe` which runs in the background while all of the other test cases run
+   - Only allows `it` blocks
+   - Will run the test at the very start of the test script, capture any exceptions, and rethrow them in reconstructed `it`/`describe` blocks for the most native-like behavior at the end of the test script
+   - Performs tag and test filtering as normal
+   - Meant for independent tests that take a very long time to execute (such as the `integration.devops.db-admin` lifecycle test)
+
+These are not globals like Mocha's—rather, they are imported, like so:
+```ts
+import { background, describe, it, parallel } from '@/tests/testlib';
+```
+
+#### Examples
+
+You can find examples of usages of each in most, if not all, test files, such as:
+- [`/tests/integration/miscs/timeouts.test.ts`](https://github.com/datastax/astra-db-ts/blob/e0b5913503d58117d0af4e3b5292866f7372a975/tests/integration/misc/timeouts.test.ts) (`describe`, `parallel`, `it`)
+- [`/tests/integration/devops/lifecycle.test.ts`](https://github.com/datastax/astra-db-ts/blob/e0b5913503d58117d0af4e3b5292866f7372a975/tests/integration/devops/lifecycle.test.ts) (`background`)
 
 ## Typechecking & Linting
 
