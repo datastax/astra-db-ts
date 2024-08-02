@@ -25,7 +25,7 @@
 the database will be deleted.*</sub>
 
 <sub>*Also, if you for some reason already have an existing namespace called 'slania', it too will be deleted. Not
-sure why you'd have a namespace named that, but if you do, I like your taste in music.*</sub>
+sure why you'd have a namespace named that, but if you do, you have a good taste in music.*</sub>
 
 ### I can't be bothered to read all of this
 
@@ -311,5 +311,12 @@ To build it, just run `npm run build`, which does the following:
 
 ## Publishing
 
-I heavily recommend using [np](https://github.com/sindresorhus/np) to publish the package. Running it will involve running `test --prerelease`, and the
-versioning step will update the api report + update the version in `src/version.ts`. 
+I heavily recommend using [np](https://github.com/sindresorhus/np) to publish the package. 
+
+Unfortunately, because certain tests in the `astra-db-ts` test suite can fail for reasons outside your control,
+such as the `huggingface` embedding provider failing, I **heavily** recommend running the full test suite manually
+using the following command: `scripts/test.sh -all -w '.*'`, and, if the tests are all passing to your best judgement,
+continue on to publish the package using `np --no-tests`.
+
+The versioning step will automatically update the api report + update the version in `src/version.ts`, so you don't
+need to worry about that.
