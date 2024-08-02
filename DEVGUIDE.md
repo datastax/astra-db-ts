@@ -7,7 +7,8 @@
    3. [The custom test script](#the-custom-test-script)
    4. [Test tags](#test-tags)
    5. [Running vectorize tests](#running-vectorize-tests)
-   6. [The custom Mocha wrapper](#the-custom-mocha-wrapper)
+   6. [Running the tests on local Stargate](#running-the-tests-on-local-stargate)
+   7. [The custom Mocha wrapper](#the-custom-mocha-wrapper)
 2. [Typechecking & Linting](#typechecking--linting)
 3. [Building the library](#building-the-library)
 4. [Publishing](#publishing)
@@ -223,6 +224,19 @@ parameter, with tests names of the format `providerName@modelName@authType@dimen
 potential branch.
 
 To run *only* the vectorize tests, a common pattern I use is `scripts/test.sh -all -f VECTORIZE [-w <vectorize_whitelist>]`.
+
+### Running the tests on local Stargate
+In another terminal tab, you can do `sh scripts/start-stargate-4-tests.sh` to spin up an ephemeral Data API on DSE
+instance which will destroy itself on script exit. The test suite will set up any keyspaces/collections as necessary.
+
+Then, be sure to set the following vars in `.env` exactly.
+```dotenv
+APPLICATION_URI=http://localhost:8181
+APPLICATION_TOKEN=Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh
+APPLICATION_ENVIRONMENT=dse
+```
+
+Once the local Data API instance is fully started and ready for requests, you can run the tests.
 
 ### The custom Mocha wrapper
 
