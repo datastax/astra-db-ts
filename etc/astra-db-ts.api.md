@@ -115,7 +115,7 @@ export class AstraAdmin {
 // @public
 export class AstraDbAdmin extends DbAdmin {
     // @internal
-    constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts: AdminSpawnOptions | undefined, dbToken: TokenProvider);
+    constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts: AdminSpawnOptions | undefined, dbToken: TokenProvider, endpoint: string);
     createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void>;
     db(): Db;
     drop(options?: AdminBlockingOptions): Promise<void>;
@@ -186,7 +186,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     countDocuments(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number>;
     // @deprecated
     deleteAll(options?: WithTimeout): Promise<void>;
-    deleteMany(filter?: Filter<Schema>, options?: WithTimeout): Promise<DeleteManyResult>;
+    deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<DeleteManyResult>;
     deleteOne(filter?: Filter<Schema>, options?: DeleteOneOptions): Promise<DeleteOneResult>;
     distinct<Key extends string>(key: Key, filter?: Filter<Schema>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]>;
     drop(options?: WithTimeout): Promise<boolean>;
@@ -841,7 +841,7 @@ export interface FindOneAndDeleteOptions extends WithTimeout {
 export interface FindOneAndReplaceOptions extends WithTimeout {
     includeResultMetadata?: boolean;
     projection?: Projection;
-    returnDocument: 'before' | 'after';
+    returnDocument?: 'before' | 'after';
     sort?: Sort;
     upsert?: boolean;
     // @deprecated
@@ -854,7 +854,7 @@ export interface FindOneAndReplaceOptions extends WithTimeout {
 export interface FindOneAndUpdateOptions extends WithTimeout {
     includeResultMetadata?: boolean;
     projection?: Projection;
-    returnDocument: 'before' | 'after';
+    returnDocument?: 'before' | 'after';
     sort?: Sort;
     upsert?: boolean;
     // @deprecated
@@ -955,7 +955,16 @@ export type IndexingOptions<Schema extends SomeDoc> = {
 };
 
 // @public
+export interface InsertManyDocumentResponse<Schema extends SomeDoc> {
+    error?: DataAPIErrorDescriptor;
+    _id: IdOf<Schema>;
+    status: 'OK' | 'ERROR' | 'SKIPPED';
+}
+
+// @public
 export class InsertManyError extends CumulativeDataAPIError {
+    readonly documentResponses: InsertManyDocumentResponse<SomeDoc>[];
+    readonly failedCount: number;
     name: string;
     readonly partialResult: InsertManyResult<SomeDoc>;
 }

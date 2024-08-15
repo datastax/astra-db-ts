@@ -179,7 +179,13 @@ export interface InsertManyResult<Schema extends SomeDoc> {
 }
 
 /**
- * Represents the specific status and id for a document present in the `insertMany` command
+ * Represents the specific status and id for a document present in the `insertMany` command. Present when an
+ * {@link InsertManyError} is thrown.
+ *
+ * @see Collection.insertMany
+ * @see InsertManyError
+ *
+ * @public
  */
 export interface InsertManyDocumentResponse<Schema extends SomeDoc> {
   /**
