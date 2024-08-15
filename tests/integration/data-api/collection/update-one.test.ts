@@ -12,129 +12,109 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection } from '@/src/data-api';
-import { createSampleDocWithMultiLevel, initTestObjects } from '@/tests/fixtures';
+import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.collection.update-one', () => {
-  let collection: Collection;
-
-  before(async function () {
-    [, , collection] = await initTestObjects();
-  });
-
-  beforeEach(async () => {
-    await collection.deleteMany({});
-  });
-
-  it('should updateOne document by id', async () => {
-    //insert a new doc
-    const doc = createSampleDocWithMultiLevel();
-    const insertDocResp = await collection.insertOne(doc);
+parallel('integration.data-api.collection.update-one', { truncateColls: 'default:before' }, ({ collection }) => {
+  it('should updateOne document by id', async (key) => {
+    const insertDocResp = await collection.insertOne({ age: 3, key });
     const idToCheck = insertDocResp.insertedId;
-    //update doc
-    const updateOneResp = await collection.updateOne({ '_id': idToCheck },
+
+    const updateOneResp = await collection.updateOne(
+      { _id: idToCheck },
       {
-        '$set': { 'username': 'aaronm' },
-        '$unset': { 'address.city': '' }
-      });
+        $set: { name: 'ruoska' },
+        $unset: { age: '' },
+      },
+    );
     assert.strictEqual(updateOneResp.modifiedCount, 1);
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     assert.strictEqual(updateOneResp.upsertedCount, 0);
-    const updatedDoc = await collection.findOne({ 'username': 'aaronm' });
+
+    const updatedDoc = await collection.findOne({ key });
     assert.strictEqual(updatedDoc?._id, idToCheck);
-    assert.strictEqual(updatedDoc.username, 'aaronm');
-    assert.strictEqual(updatedDoc.address?.city, undefined);
+    assert.strictEqual(updatedDoc.name, 'ruoska');
+    assert.strictEqual(updatedDoc.age, undefined);
   });
 
-  it('should updateOne document by col', async () => {
-    //insert a new doc
-    const doc = createSampleDocWithMultiLevel();
-    const insertDocResp = await collection.insertOne(doc);
+  it('should updateOne document by col', async (key) => {
+    const insertDocResp = await collection.insertOne({ key });
     const idToCheck = insertDocResp.insertedId;
-    //update doc
-    const updateOneResp = await collection.updateOne({ 'address.city': 'big banana' },
-      {
-        '$set': { 'address.state': 'new state' }
-      });
+
+    const updateOneResp = await collection.updateOne(
+      { key },
+      { $set: { age: 3 } },
+    );
     assert.strictEqual(updateOneResp.modifiedCount, 1);
     assert.strictEqual(updateOneResp.matchedCount, 1);
     assert.strictEqual(updateOneResp.upsertedId, undefined);
     assert.strictEqual(updateOneResp.upsertedCount, 0);
-    const updatedDoc = await collection.findOne({ 'username': 'aaron' });
+
+    const updatedDoc = await collection.findOne({ key: key });
     assert.strictEqual(updatedDoc?._id, idToCheck);
-    assert.strictEqual(updatedDoc.username, 'aaron');
-    assert.strictEqual(updatedDoc.address?.city, 'big banana');
-    assert.strictEqual(updatedDoc.address.state, 'new state');
+    assert.strictEqual(updatedDoc.age, 3);
   });
 
-  it('should updateOne with sort', async () => {
+  it('should updateOne with sort', async (key) => {
     await collection.insertMany([
-      { username: 'a' },
-      { username: 'c' },
-      { username: 'b' }
+      { name: 'a', key },
+      { name: 'c', key },
+      { name: 'b', key },
     ]);
 
     await collection.updateOne(
-      {},
-      { $set: { username: 'aa' } },
-      { sort: { username: 1 } }
+      { key },
+      { $set: { name: 'aa' } },
+      { sort: { name: 1 } },
     );
 
-    const docs = await collection.find({}, { sort: { username: 1 }, limit: 20 }).toArray();
-    assert.deepStrictEqual(docs.map(doc => doc.username), ['aa', 'b', 'c']);
+    const docs = await collection.find({ key }, { sort: { name: 1 }, limit: 20 }).toArray();
+    assert.deepStrictEqual(docs.map(doc => doc.name), ['aa', 'b', 'c']);
   });
 
-  it('should updateOne document by col with sort', async () => {
-    const docs = [{ age: 2, user: 'a' }, { age: 0, user: 'a' }, { age: 1, user: 'a' }];
-    await collection.insertMany(docs);
-    const updateOneResp = await collection.updateOne({ user: 'a' }, { $set: { age: 10 } }, { sort: { age: 1 } });
+  it('should updateOne document by col with sort', async (key) => {
+    await collection.insertMany([
+      { age: 2, user: 'a', key },
+      { age: 0, user: 'a', key },
+      { age: 1, user: 'a', key },
+    ]);
+
+    const updateOneResp = await collection.updateOne({ user: 'a', key }, { $set: { age: 10 } }, { sort: { age: 1 } });
     assert.strictEqual(updateOneResp.modifiedCount, 1);
-    const updatedDoc = await collection.find({}, { sort: { age: -1 }, limit: 20 }).toArray();
+
+    const updatedDoc = await collection.find({ key }, { sort: { age: -1 }, limit: 20 }).toArray();
     assert.strictEqual(updatedDoc[0].age, 10);
   });
 
-  it('should upsert a doc with upsert flag true in updateOne call', async () => {
-    //insert a new doc
-    const doc = createSampleDocWithMultiLevel();
-    const insertDocResp = await collection.insertOne(doc);
+  it('should upsert a doc with upsert flag true in updateOne call', async (key) => {
+    const insertDocResp = await collection.insertOne({ key });
     const idToCheck = insertDocResp.insertedId;
-    //update doc
-    const updateOneResp = await collection.updateOne({ 'address.city': 'nyc' },
-      {
-        '$set': { 'address.state': 'ny' }
-      },
-      {
-        'upsert': true
-      });
+
+    const updateOneResp = await collection.updateOne(
+      { age: 12, key },
+      { $set: { name: 'copperhead_road' }, },
+      { upsert: true },
+    );
     assert.strictEqual(updateOneResp.modifiedCount, 0);
     assert.strictEqual(updateOneResp.matchedCount, 0);
     assert.ok(updateOneResp.upsertedId);
     assert.strictEqual(updateOneResp.upsertedCount, 1);
-    const updatedDoc = await collection.findOne({ 'address.city': 'nyc' });
+
+    const updatedDoc = await collection.findOne({ age: 12 });
     assert.ok(updatedDoc?._id);
     assert.notStrictEqual(updatedDoc._id, idToCheck);
-    assert.strictEqual(updatedDoc.address?.city, 'nyc');
-    assert.strictEqual(updatedDoc.address.state, 'ny');
+    assert.strictEqual(updatedDoc.age, 12);
+    assert.strictEqual(updatedDoc.name, 'copperhead_road');
   });
 
-  it('should not overwrite user-specified _id in $setOnInsert', async () => {
-    await collection.deleteMany({});
+  it('should not overwrite user-specified _id in $setOnInsert', async (key) => {
     const updateOneResp = await collection.updateOne(
-      {},
-      {
-        '$setOnInsert': {
-          '_id': 'foo'
-        },
-        '$set': {
-          'username': 'aaronm'
-        }
-      },
-      {
-        'upsert': true
-      }
+      { key },
+      { $setOnInsert: { _id: 'foo' } },
+      { upsert: true },
     );
+
     assert.equal(updateOneResp.upsertedId, 'foo');
   });
 });

@@ -81,9 +81,10 @@ import { DataAPIDbAdmin } from '@/src/devops/data-api-db-admin';
  * @public
  */
 export class Db {
-  readonly #defaultOpts!: InternalRootClientOpts;
-  readonly #token!: TokenProvider;
+  readonly #defaultOpts: InternalRootClientOpts;
+  readonly #token: TokenProvider;
   readonly #httpClient: DataAPIHttpClient;
+  readonly #endpoint?: string;
 
   private readonly _namespace: NamespaceRef;
   private readonly _id?: string;
@@ -123,6 +124,7 @@ export class Db {
     });
 
     this._id = extractDbIdFromUrl(endpoint);
+    this.#endpoint = endpoint;
   }
 
   /**
@@ -287,7 +289,7 @@ export class Db {
     }
 
     if (environment === 'astra') {
-      return new AstraDbAdmin(this, this.#defaultOpts, options, this.#token);
+      return new AstraDbAdmin(this, this.#defaultOpts, options, this.#token, this.#endpoint!);
     }
 
     return new DataAPIDbAdmin(this, this.#httpClient, options);

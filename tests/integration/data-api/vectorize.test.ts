@@ -15,19 +15,22 @@
 import assert from 'assert';
 import {
   AWSEmbeddingHeadersProvider,
+  Collection,
   Db,
   EmbeddingAPIKeyHeaderProvider,
   EmbeddingHeadersProvider,
+  UUID,
 } from '@/src/data-api';
-import { assertTestsEnabled, ENVIRONMENT, initTestObjects } from '@/tests/fixtures';
 import * as fs from 'fs';
-import { after } from 'mocha';
 import {
   EmbeddingProviderInfo,
   EmbeddingProviderModelInfo,
 } from '@/src/devops/types/db-admin/find-embedding-providers';
+import { describe, ENVIRONMENT, it, parallel } from '@/tests/testlib';
+import * as crypto from 'node:crypto';
+import { negate } from '@/tests/testlib/utils';
 
-type VectorizeTestSpec = {
+interface VectorizeTestSpec {
   [providerName: string]: {
     headers?: {
       [header: `x-${string}`]: string,
@@ -44,66 +47,160 @@ type VectorizeTestSpec = {
   }
 }
 
-describe('integration.data-api.vectorize', () => {
-  let db: Db;
+interface TestCollSupplier {
+  test: VectorizeTest,
+  getColl: () => Promise<Collection>,
+}
 
-  before(async function () {
-    assertTestsEnabled(this, 'VECTORIZE', 'LONG');
+interface TestCollsSupplier {
+  testName: string,
+  collName: string,
+  tests: TestCollSupplier[];
+}
 
-    [, db] = await initTestObjects();
+const initVectorTests = (): VectorizeTest[] => {
+  if (!process.env.CLIENT_VECTORIZE_PROVIDERS || process.env.CLIENT_VECTORIZE_PROVIDERS === 'null') {
+    return [];
+  }
 
-    const tests: VectorizeTest[] = await initVectorTests(db).catch((e: unknown) => {
-      console.error('Failed to initialize vectorize tests', e);
-      return [];
-    });
-
-    describe('[vectorize] [long] generated tests', () => {
-      const names = tests.map((test) => Buffer.from(test.testName).toString('base64').replace(/\W/g, '').slice(0, 48));
-
-      before(async () => {
-        for (const name of names) {
-          try { await db.dropCollection(name); } catch (_) { /* empty */ }
-        }
-      });
-
-      tests.forEach((test, i) => {
-        const name = names[i];
-
-        describe('generated test', () => {
-          createVectorizeProvidersTest(db, test, name);
-
-          if (i === 0) {
-            createVectorizeParamTests(db, test, name);
-          }
-
-          after(async () => {
-            await db.dropCollection(name);
-          });
-        });
-      });
-    });
-  });
-
-  it('dummy test so before is executed', () => { assert.ok(true) });
-});
-
-const initVectorTests = async (db: Db) => {
   const spec = JSON.parse(fs.readFileSync('vectorize_test_spec.json', 'utf8')) as VectorizeTestSpec;
 
-  const { embeddingProviders } = await (
-    (ENVIRONMENT === 'astra')
-      ? db.admin({ environment: ENVIRONMENT })
-      : db.admin({ environment: ENVIRONMENT })
-  ).findEmbeddingProviders();
+  const embeddingProviders = JSON.parse(process.env.CLIENT_VECTORIZE_PROVIDERS) as Record<string, EmbeddingProviderInfo>;
 
-  const whitelist = RegExp(process.env.VECTORIZE_WHITELIST ?? '.*');
+  const whitelist = whitelistImplFor(process.env.CLIENT_VECTORIZE_WHITELIST ?? '$model-limit:1');
+  const invertWhitelist = !!process.env.CLIENT_VECTORIZE_WHITELIST_INVERT;
+
+  const filter = (invertWhitelist)
+    ? negate(whitelist)
+    : whitelist;
 
   return Object.entries(embeddingProviders)
     .flatMap(branchOnModel(spec))
-    .filter(t => {
-      return whitelist.test(t.testName);
-    });
+    .filter(filter);
 };
+
+const whitelistImplFor = (whitelist: string) => {
+  if (whitelist.startsWith('$limit:')) {
+    const limit = +whitelist.split('$limit:')[1];
+
+    return (_: VectorizeTest, index: number) => {
+      return index < limit;
+    };
+  }
+
+  if (whitelist.startsWith('$provider-limit:') || whitelist.startsWith('$model-limit:')) {
+    const limit = +whitelist.split(':')[1];
+    const seen = new Map<string, number>();
+
+    return (test: VectorizeTest) => {
+      const key = test.providerName + (whitelist.startsWith('$model') ? test.modelName : '');
+
+      const timesSeen = (seen.get(key) ?? 0) + 1;
+      seen.set(key, timesSeen);
+
+      return timesSeen <= limit;
+    }
+  }
+
+  const regex = RegExp(whitelist);
+
+  return (test: VectorizeTest) => {
+    return regex.test(test.testName);
+  }
+}
+
+function groupTests(db: Db, modelBranches: VectorizeTest[]): TestCollsSupplier[] {
+  const groups: Record<string, VectorizeTest[]> = {};
+
+  for (const branch of modelBranches) {
+    const authType = (branch.authType === 'none')
+      ? 'none'
+      : 'header+kms';
+
+    const key = `${branch.providerName}@${branch.modelName}@${authType}`;
+
+    if (!groups[key]) {
+      groups[key] = [];
+    }
+    groups[key].push(branch);
+  }
+
+  return Object.values(groups).map((tests) => {
+    if (tests[0].authType === 'none') {
+      const test = tests[0];
+      const collectionName = mkCollectionName(test.testName);
+
+      const testCreation = () => db.createCollection(collectionName, {
+        vector: {
+          dimension: test.dimension,
+          service: {
+            provider: test.providerName,
+            modelName: test.modelName,
+            parameters: test.parameters,
+          },
+        },
+      });
+
+      return {
+        testName: test.testName,
+        collName: collectionName,
+        tests: [{ test: test, getColl: testCreation }],
+      };
+    } else {
+      const kmsTest = tests.find(t => t.authType === 'providerKey');
+      const headerTest = tests.find(t => t.authType === 'header');
+
+      const combinedTestName = (kmsTest ?? headerTest)!.testName
+        .replace('@header', '@header+kms')
+        .replace('@providerKey', '@header+kms')
+
+      const collectionName = mkCollectionName(combinedTestName);
+
+      const createCollection = (test: VectorizeTest) => () => db.createCollection(collectionName, {
+        vector: {
+          dimension: test.dimension,
+          service: {
+            provider: test.providerName,
+            modelName: test.modelName,
+            authentication: {
+              providerKey: test.providerKey,
+            },
+            parameters: test.parameters,
+          },
+        },
+        embeddingApiKey: test.header,
+        maxTimeMS: 0,
+      });
+
+      const useCollection = (test: VectorizeTest) => async () => db.collection(collectionName, {
+        embeddingApiKey: test.header,
+      });
+
+      const kmsCreation: TestCollSupplier = kmsTest ? ({
+        test: kmsTest,
+        getColl: createCollection(kmsTest),
+      }) : null!;
+
+      const headerCreation: TestCollSupplier = headerTest ? ({
+        test: headerTest,
+        getColl: kmsTest ? useCollection(headerTest) : createCollection(headerTest),
+      }) : null!;
+
+      return {
+        testName: combinedTestName,
+        collName: collectionName,
+        tests: [kmsCreation, headerCreation].filter(Boolean),
+      };
+    }
+  });
+}
+
+const mkCollectionName = (testName: string): string => {
+  return testName[0] + crypto
+    .createHash('md5')
+    .update(testName)
+    .digest('hex');
+}
 
 interface ModelBranch {
   providerName: string,
@@ -111,7 +208,7 @@ interface ModelBranch {
   testName: string,
 }
 
-const branchOnModel = (fullSpec: VectorizeTestSpec) => ([providerName, providerInfo]: [string, EmbeddingProviderInfo]): AuthBranch[] => {
+const branchOnModel = (fullSpec: VectorizeTestSpec) => ([providerName, providerInfo]: [string, EmbeddingProviderInfo]): VectorizeTest[] => {
   const spec = fullSpec[providerName];
 
   if (!spec) {
@@ -132,12 +229,12 @@ interface WithParams extends ModelBranch {
   parameters?: Record<string, string>,
 }
 
-const addParameters = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingProviderInfo) => (test: ModelBranch): AuthBranch[] => {
+const addParameters = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingProviderInfo) => (test: ModelBranch): VectorizeTest[] => {
   const params = spec.parameters;
   const matchingParam = Object.keys(params ?? {}).find((regex) => RegExp(regex).test(test.modelName))!;
 
   if (params && !matchingParam) {
-    throw new Error(`can not find matching param for ${test.testName}`)
+    throw new Error(`can not find matching param for ${test.testName}`);
   }
 
   const withParams = [{
@@ -154,7 +251,7 @@ interface AuthBranch extends WithParams {
   providerKey?: string,
 }
 
-const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingProviderInfo) => (test: WithParams): AuthBranch[] => {
+const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingProviderInfo) => (test: WithParams): VectorizeTest[] => {
   const auth = providerInfo['supportedAuthentication'];
   const tests: AuthBranch[] = []
 
@@ -199,7 +296,7 @@ interface DimensionBranch extends AuthBranch {
   dimension?: number,
 }
 
-const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: EmbeddingProviderModelInfo) => (test: AuthBranch): DimensionBranch[] => {
+const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: EmbeddingProviderModelInfo) => (test: AuthBranch): VectorizeTest[] => {
   const vectorDimParam = modelInfo.parameters.find((p) => p.name === 'vectorDimension');
   const defaultDim = Number(vectorDimParam?.defaultValue);
 
@@ -222,164 +319,80 @@ const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: Embedding
 
 type VectorizeTest = DimensionBranch;
 
-const createVectorizeProvidersTest = (db: Db, test: VectorizeTest, name: string) => {
-  it(`[vectorize] [long] has a working lifecycle (${test.testName})`, async function () {
-    assertTestsEnabled(this, 'VECTORIZE', 'LONG');
+const createVectorizeProvidersTest = (batchIdx: number) => (testsCollSupplier: TestCollsSupplier) => {
+  it(`has a working lifecycle (${testsCollSupplier.testName})`, async () => {
+    let collection: Collection;
 
-    const collection = await db.createCollection(name, {
-      vector: {
-        dimension: test.dimension,
-        service: {
-          provider: test.providerName,
-          modelName: test.modelName,
-          authentication: {
-            providerKey: test.providerKey,
-          },
-          parameters: test.parameters,
-        },
-      },
-      embeddingApiKey: test.header,
-    });
+    if (batchIdx !== 0) {
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
 
-    const insertOneResult = await collection.insertOne({
-      name: 'Alice',
-      age: 30,
-    }, {
-      vectorize: 'Alice likes big red cars',
-    });
+    for (let i = 0, n = testsCollSupplier.tests.length; i < n; i++) {
+      const key = UUID.v4().toString();
 
-    assert.ok(insertOneResult);
+      const supplier = testsCollSupplier.tests[i];
+      collection = await supplier.getColl();
 
-    const insertManyResult = await collection.insertMany([
-      {
-        name: 'Bob',
-        age: 40,
-      },
-      {
-        name: 'Charlie',
-        age: 50,
-      },
-    ], {
-      vectorize: [
-        'Cause maybe, you\'re gonna be the one that saves me... and after all, you\'re my wonderwall...',
-        'The water bottle was small',
-      ],
-    });
+      let err: Error | undefined = new Error();
 
-    assert.ok(insertManyResult);
-    assert.strictEqual(insertManyResult.insertedCount, 2);
-
-    const findOneResult = await collection.findOne({}, {
-      vectorize: 'Alice likes big red cars',
-      includeSimilarity: true,
-    });
-
-    assert.ok(findOneResult);
-    assert.strictEqual(findOneResult._id, insertOneResult.insertedId);
-    assert.ok(findOneResult.$similarity > 0.8);
-
-    const deleteResult = await collection.deleteOne({}, {
-      vectorize: 'Alice likes big red cars',
-    });
-
-    assert.ok(deleteResult);
-    assert.strictEqual(deleteResult.deletedCount, 1);
-
-    const findResult = await collection.find({}, {
-      vectorize: 'Cause maybe, you\'re gonna be the one that saves me... and after all, you\'re my wonderwall...',
-      includeSimilarity: true,
-    }).toArray();
-
-    assert.strictEqual(findResult.length, 2);
-  });
-};
-
-const createVectorizeParamTests = function (db: Db, test: VectorizeTest, name: string) {
-  describe('[vectorize] $vectorize/vectorize params', () => {
-    const collection = db.collection(name, {
-      embeddingApiKey: test.header,
-    });
-
-    before(async function () {
-      assertTestsEnabled(this, 'VECTORIZE');
-
-      if (!await db.listCollections({ nameOnly: true }).then(cs => cs.some((c) => c === name))) {
-        this.skip();
+      while (err) {
+        try {
+          await collection.findOne({ key }, {
+            sort: { $vectorize: 'Alice likes big red cars' },
+          });
+          err = undefined;
+        } catch (e: any) {
+          if (e.message.includes('is currently loading')) {
+            err = e;
+            await new Promise((resolve) => setTimeout(resolve, 1000));
+          } else {
+            throw e;
+          }
+        }
       }
-    });
 
-    beforeEach(async () => {
-      await collection.deleteMany({});
-    });
+      const insertManyResult = await collection.insertMany([
+        { name: 'Alice', age: 30, $vectorize: 'Alice likes big red cars', key },
+        { name: 'Bob', age: 40, $vectorize: 'Cause maybe, you\'re gonna be the one that saves me... and after all, you\'re my wonderwall...', key },
+        { name: 'Charlie', age: 50, $vectorize: 'The water bottle was small', key },
+      ]);
 
-    it('should override $vectorize if both are set in insertOne', async () => {
-      await collection.insertOne({
-        _id: '1',
-        $vectorize: 'The grass was as green as it always was that sinister day',
-      }, {
-        vectorize: 'The blackbirds sang their song as they always did that black-letter day',
-      })
+      assert.ok(insertManyResult);
+      assert.strictEqual(insertManyResult.insertedCount, 3);
 
-      const result = await collection.findOne({ _id: '1' }, { projection: { '*': 1 } });
-      assert.strictEqual(result?.$vectorize, 'The blackbirds sang their song as they always did that black-letter day');
-    });
-
-    it('should override $vectorize if both are set in insertMany', async () => {
-      await collection.insertMany([
-        {
-          _id: '1',
-          $vectorize: 'The grass was as green as it always was that sinister day',
-        },
-        {
-          _id: '2',
-          $vectorize: 'The grass was as green as it always was that sinister day',
-        },
-      ], {
-        vectorize: [
-          'The blackbirds sang their song as they always did that black-letter day',
-          null,
-        ],
+      const findOneResult = await collection.findOne({ key }, {
+        sort: { $vectorize: 'Alice likes big red cars' },
+        includeSimilarity: true,
       });
 
-      const result1 = await collection.findOne({ _id: '1' }, { projection: { '*': 1 } });
-      assert.strictEqual(result1?.$vectorize, 'The blackbirds sang their song as they always did that black-letter day');
-      const result2 = await collection.findOne({ _id: '2' }, { projection: { '*': 1 } });
-      assert.strictEqual(result2?.$vectorize, 'The grass was as green as it always was that sinister day');
-    });
+      assert.ok(findOneResult);
+      assert.strictEqual(findOneResult._id, insertManyResult.insertedIds[0]);
+      assert.ok(findOneResult.$similarity > 0.8);
 
-    it('should throw an error if vectorize and sort are both set', async () => {
-      await assert.rejects(async () => {
-        await collection.findOne({}, { sort: { name: 1 }, vectorize: 'some text' });
+      const deleteResult = await collection.deleteOne({ key }, {
+        sort: { $vectorize: 'Alice likes big red cars' },
       });
-      assert.throws(() => {
-        collection.find({}, { sort: { name: 1 }, vectorize: 'some text' });
-      });
-      await assert.rejects(async () => {
-        await collection.updateOne({}, {}, { sort: { name: 1 }, vectorize: 'some text' });
-      });
-      await assert.rejects(async () => {
-        await collection.findOneAndUpdate({}, {}, {
-          sort: { name: 1 },
-          vectorize: 'some text',
-          returnDocument: 'before',
-        });
-      });
-      await assert.rejects(async () => {
-        await collection.replaceOne({}, {}, { sort: { name: 1 }, vectorize: 'some text' });
-      });
-      await assert.rejects(async () => {
-        await collection.findOneAndReplace({}, {}, {
-          sort: { name: 1 },
-          vectorize: 'some text',
-          returnDocument: 'before',
-        });
-      });
-      await assert.rejects(async () => {
-        await collection.deleteOne({}, { sort: { name: 1 }, vectorize: 'some text' });
-      });
-      await assert.rejects(async () => {
-        await collection.findOneAndDelete({}, { sort: { name: 1 }, vectorize: 'some text' });
-      });
-    });
+
+      assert.ok(deleteResult);
+      assert.strictEqual(deleteResult.deletedCount, 1);
+
+      const findResult = await collection.find({ key }, {
+        sort: { $vectorize: 'Cause maybe, you\'re gonna be the one that saves me... and after all, you\'re my wonderwall...' },
+        includeSimilarity: true,
+      }).toArray();
+
+      assert.strictEqual(findResult.length, 2);
+    }
   });
 };
+
+describe('(VECTORIZE) (LONG) integration.data-api.vectorize', ({ db }) => {
+  const tests = initVectorTests();
+  const groups = groupTests(db, tests);
+
+  for (let i = 0; i < groups.length; i += 7) {
+    parallel('(VECTORIZE) generated tests', { dropEphemeral: 'after' }, () => {
+      groups.slice(i, i + 7).forEach(createVectorizeProvidersTest(i));
+    });
+  }
+});

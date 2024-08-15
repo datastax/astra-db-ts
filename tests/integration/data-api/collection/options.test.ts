@@ -12,33 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Db } from '@/src/data-api';
-import { assertTestsEnabled, DEFAULT_COLLECTION_NAME, initTestObjects } from '@/tests/fixtures';
+import { DEFAULT_COLLECTION_NAME, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.collection.options', () => {
-  let db: Db;
-
-  before(async function () {
-    [, db] = await initTestObjects();
-    await db.dropCollection('test_db_collection_empty_opts');
-  });
-
-  after(async () => {
-    await db.dropCollection('test_db_collection_empty_opts');
-  });
-
+parallel('integration.data-api.collection.options', { dropEphemeral: 'after' }, ({ db }) => {
   it('lists its own options', async () => {
     const coll = db.collection(DEFAULT_COLLECTION_NAME);
     const res = await coll.options();
     assert.deepStrictEqual(res, { vector: { dimension: 5, metric: 'cosine' } });
   });
 
-  it('[long] lists its own empty options', async function () {
-    assertTestsEnabled(this, 'LONG');
+  it('(LONG) lists its own empty options', async () => {
     const coll = await db.createCollection('test_db_collection_empty_opts');
     const res = await coll.options();
     assert.deepStrictEqual(res, {});
-    await db.dropCollection('test_db_collection_empty_opts')
+    await db.dropCollection('test_db_collection_empty_opts');
   });
 });

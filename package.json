@@ -27,12 +27,6 @@
   "license": "Apache-2.0",
   "main": "dist/index.js",
   "types": "dist/astra-db-ts.d.ts",
-  "mocha": {
-    "timeout": 30000,
-    "require": [
-      "tests/setup.ts"
-    ]
-  },
   "directories": {
     "lib": "src",
     "test": "tests"
@@ -51,7 +45,6 @@
     "lint": "eslint src/* tests/*",
     "test": "sh scripts/test.sh",
     "build": "sh scripts/build.sh",
-    "list-embedding-providers": "chmod +x scripts/list-embedding-providers.sh && scripts/list-embedding-providers.sh",
     "version": "sh scripts/version.sh"
   },
   "bugs": {

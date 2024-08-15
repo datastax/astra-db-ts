@@ -13,34 +13,28 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import {
-  assertTestsEnabled,
-  DEFAULT_COLLECTION_NAME,
-  ENVIRONMENT,
-  initTestObjects,
-  TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
-} from '@/tests/fixtures';
-import { Collection, DataAPITimeoutError, Db } from '@/src/data-api';
-import assert from 'assert';
+import { DataAPITimeoutError } from '@/src/data-api';
 import { DEFAULT_NAMESPACE, HttpMethods } from '@/src/api';
 import { DevOpsAPITimeoutError } from '@/src/devops';
 import { DataAPIClient } from '@/src/client';
+import {
+  DEFAULT_COLLECTION_NAME,
+  describe,
+  ENVIRONMENT,
+  it,
+  parallel,
+  TEST_APPLICATION_TOKEN,
+  TEST_APPLICATION_URI,
+} from '@/tests/testlib';
+import assert from 'assert';
 
-describe('integration.misc.timeouts', () => {
-  let db: Db;
-  let collection: Collection;
-
-  before(async function () {
-    [, db, collection] = await initTestObjects();
-  });
-
+parallel('integration.misc.timeouts', ({ collection, dbAdmin }) => {
   describe('in data-api', () => {
     it('should timeout @ the http-client level', async () => {
       const httpClient = collection['_httpClient'];
 
       await assert.rejects(async () => {
-        await httpClient.executeCommand({ insertOne: { document: {} } }, { maxTimeMS: 5 });
+        await httpClient.executeCommand({ findOne: { filter: {} } }, { maxTimeMS: 5 });
       }, DataAPITimeoutError);
     });
 
@@ -50,7 +44,7 @@ describe('integration.misc.timeouts', () => {
         .collection(DEFAULT_COLLECTION_NAME);
 
       await assert.rejects(async () => {
-        await collection.insertOne({ name: 'Nightwish' });
+        await collection.findOne({});
       }, DataAPITimeoutError);
     });
 
@@ -60,7 +54,7 @@ describe('integration.misc.timeouts', () => {
         .collection(DEFAULT_COLLECTION_NAME, { defaultMaxTimeMS: 1 });
 
       await assert.rejects(async () => {
-        await collection.insertOne({ name: 'Nightwish' });
+        await collection.findOne({});
       }, DataAPITimeoutError);
     });
 
@@ -70,18 +64,14 @@ describe('integration.misc.timeouts', () => {
         .collection(DEFAULT_COLLECTION_NAME, { defaultMaxTimeMS: 30000 });
 
       await assert.rejects(async () => {
-        await collection.insertOne({ name: 'Nightwish' }, { maxTimeMS: 1 });
+        await collection.findOne({}, { maxTimeMS: 1 });
       }, DataAPITimeoutError);
     });
   });
 
-  describe('[astra] in devops', () => {
-    before(async function () {
-      assertTestsEnabled(this, 'ASTRA');
-    });
-
+  describe('(ASTRA) in devops', () => {
     it('should timeout @ the http-client level', async () => {
-      const httpClient = db.admin()['_httpClient'];
+      const httpClient = (<any>dbAdmin)['_httpClient'];
 
       await assert.rejects(async () => {
         await httpClient.request({ method: HttpMethods.Get, path: '/databases' }, { maxTimeMS: 5 });

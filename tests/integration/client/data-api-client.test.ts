@@ -15,21 +15,22 @@
 
 import { DataAPIClient } from '@/src/client';
 import assert from 'assert';
-import {
-  assertTestsEnabled,
-  DEFAULT_COLLECTION_NAME,
-  ENVIRONMENT,
-  initTestObjects,
-  OTHER_NAMESPACE,
-  TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
-} from '@/tests/fixtures';
-import { DataAPIResponseError, DataAPITimeoutError, Db } from '@/src/data-api';
+import { DataAPIResponseError, DataAPITimeoutError } from '@/src/data-api';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_NAMESPACE, DEFAULT_TIMEOUT } from '@/src/api';
+import {
+  DEFAULT_COLLECTION_NAME,
+  describe,
+  ENVIRONMENT,
+  it,
+  OTHER_NAMESPACE,
+  parallel,
+  TEST_APPLICATION_TOKEN,
+  TEST_APPLICATION_URI,
+} from '@/tests/testlib';
 
 describe('integration.client.data-api-client', () => {
-  describe('db', () => {
+  parallel('db', () => {
     it('properly connects to a db by endpoint', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
       const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
@@ -37,8 +38,7 @@ describe('integration.client.data-api-client', () => {
       assert.ok(Array.isArray(collections));
     });
 
-    it('[not-dev] [astra] properly connects to a db by id and region', async function () {
-      assertTestsEnabled(this, 'NOT-DEV', 'ASTRA');
+    it('(NOT-DEV) (ASTRA) properly connects to a db by id and region', async () => {
       const idAndRegion = TEST_APPLICATION_URI.split('.')[0].split('https://')[1].split('-');
       const id = idAndRegion.slice(0, 5).join('-');
       const region = idAndRegion.slice(5).join('-');
@@ -88,18 +88,7 @@ describe('integration.client.data-api-client', () => {
     });
   });
 
-  describe('monitoring commands', () => {
-    let db: Db;
-
-    before(async function () {
-      [, db] = await initTestObjects();
-    });
-
-    beforeEach(async () => {
-      await db.collection(DEFAULT_COLLECTION_NAME).deleteMany({});
-      await db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE }).deleteMany({});
-    });
-
+  parallel('monitoring commands', () => {
     it('should not emit any command events when not enabled', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
       const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
@@ -109,7 +98,7 @@ describe('integration.client.data-api-client', () => {
       client.on('commandSucceeded', () => assert.fail('should not have emitted commandSucceeded event'));
       client.on('commandFailed', () => assert.fail('should not have emitted commandFailed event'));
 
-      await collection.insertOne({ name: 'Lordi' });
+      await collection.insertOne({ _id: 'Lordi' });
     });
 
     it('should not emit any command events when set to false', async () => {
@@ -121,7 +110,7 @@ describe('integration.client.data-api-client', () => {
       client.on('commandSucceeded', () => assert.fail('should not have emitted commandSucceeded event'));
       client.on('commandFailed', () => assert.fail('should not have emitted commandFailed event'));
 
-      await collection.insertOne({ name: 'Lordi' });
+      await collection.insertOne({ _id: 'TRiDENT' });
     });
 
     it('should allow cross-collection monitoring of successful commands when enabled', async () => {
@@ -145,8 +134,8 @@ describe('integration.client.data-api-client', () => {
         assert.fail('should not have emitted commandFailed event')
       });
 
-      await collection1.insertOne({ name: 'Lordi' });
-      await collection2.deleteOne({ name: 'Lordi' }, { maxTimeMS: 10000 });
+      await collection1.insertOne({ name: 'Chthonic' });
+      await collection2.deleteOne({ name: 'Chthonic' }, { maxTimeMS: 10000 });
 
       assert.ok(startedEvents[0] instanceof CommandStartedEvent);
       assert.ok(succeededEvents[0] instanceof CommandSucceededEvent);
@@ -178,10 +167,10 @@ describe('integration.client.data-api-client', () => {
       assert.strictEqual(startedEvents[1].timeout, 10000);
       assert.ok(succeededEvents[1].duration > 0);
 
-      assert.deepStrictEqual(startedEvents[0].command, { insertOne: { document: { name: 'Lordi' } } });
-      assert.deepStrictEqual(startedEvents[0].command, { insertOne: { document: { name: 'Lordi' } } });
-      assert.deepStrictEqual(startedEvents[1].command, { deleteOne: { filter: { name: 'Lordi' } } });
-      assert.deepStrictEqual(startedEvents[1].command, { deleteOne: { filter: { name: 'Lordi' } } });
+      assert.deepStrictEqual(startedEvents[0].command, { insertOne: { document: { name: 'Chthonic' } } });
+      assert.deepStrictEqual(startedEvents[0].command, { insertOne: { document: { name: 'Chthonic' } } });
+      assert.deepStrictEqual(startedEvents[1].command, { deleteOne: { filter: { name: 'Chthonic' } } });
+      assert.deepStrictEqual(startedEvents[1].command, { deleteOne: { filter: { name: 'Chthonic' } } });
 
       assert.ok(succeededEvents[0].resp?.status?.insertedIds instanceof Array);
       assert.ok(typeof succeededEvents[1].resp?.status?.deletedCount === 'number');
@@ -262,12 +251,7 @@ describe('integration.client.data-api-client', () => {
         failedEvent = event;
       });
 
-      try {
-        await collection.insertOne({ name: 'Xandria' }, { maxTimeMS: 1 });
-        assert.fail('should have thrown an error');
-      } catch (e) {
-        assert.ok(e instanceof Error);
-      }
+      await assert.rejects(() => collection.insertOne({ name: 'Xandria' }, { maxTimeMS: 1 }));
 
       assert.ok(startedEvent instanceof CommandStartedEvent);
       assert.ok(failedEvent instanceof CommandFailedEvent);

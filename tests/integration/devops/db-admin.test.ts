@@ -13,22 +13,12 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { assertTestsEnabled, ENVIRONMENT, initTestObjects, TEST_APPLICATION_URI } from '@/tests/fixtures';
-import { Db } from '@/src/data-api';
 import assert from 'assert';
-import { DataAPIClient } from '@/src/client';
-import { DEFAULT_NAMESPACE } from '@/src/api';
+import { ENVIRONMENT, it, parallel, TEST_APPLICATION_URI } from '@/tests/testlib';
 
-describe('integration.devops.db-admin', () => {
-  let db: Db;
-  let client: DataAPIClient;
-
-  before(async function () {
-    [client, db] = await initTestObjects();
-  });
-
-  it('[long] [not-dev] works', async function () {
-    assertTestsEnabled(this, 'LONG', 'NOT-DEV');
+parallel('integration.devops.db-admin', ({ client, dbAdmin }) => {
+  it('{LONG} works', async () => {
+    const db = client.db(TEST_APPLICATION_URI);
 
     const dbAdmin = (ENVIRONMENT === 'astra')
       ? db.admin({ environment: ENVIRONMENT })
@@ -37,44 +27,21 @@ describe('integration.devops.db-admin', () => {
     const namespaces1 = await dbAdmin.listNamespaces();
     assert.ok(!namespaces1.includes('slania'));
 
-    await dbAdmin.createNamespace('slania');
-    assert.strictEqual(db.namespace, DEFAULT_NAMESPACE);
+    await dbAdmin.createNamespace('slania', { updateDbNamespace: true });
+    assert.strictEqual(db.namespace, 'slania');
 
     const namespaces2 = await dbAdmin.listNamespaces();
     assert.ok(namespaces2.includes('slania'));
 
     await dbAdmin.dropNamespace('slania');
-    assert.strictEqual(db.namespace, DEFAULT_NAMESPACE);
+    assert.strictEqual(db.namespace, 'slania');
 
     const namespaces3 = await dbAdmin.listNamespaces();
     assert.ok(!namespaces3.includes('slania'));
-  }).timeout(100000);
-
-  it('[long] [not-dev] works w/ updateDbNamespace set', async function () {
-    assertTestsEnabled(this, 'LONG', 'NOT-DEV');
-
-    const db = client.db(TEST_APPLICATION_URI, { namespace: 'mimic_well' });
-
-    assert.strictEqual(db.namespace, 'mimic_well');
-
-    const dbAdmin = (ENVIRONMENT === 'astra')
-      ? db.admin({ environment: ENVIRONMENT })
-      : db.admin({ environment: ENVIRONMENT });
-
-    await dbAdmin.createNamespace('my_test_keyspace_123', {
-      updateDbNamespace: true,
-    });
-
-    assert.strictEqual(db.namespace, 'my_test_keyspace_123');
-  }).timeout(100000);
+  });
 
   it('should findEmbeddingProviders', async () => {
-    const dbAdmin = (ENVIRONMENT === 'astra')
-      ? db.admin({ environment: ENVIRONMENT })
-      : db.admin({ environment: ENVIRONMENT });
-
     const { embeddingProviders } = await dbAdmin.findEmbeddingProviders();
-
     assert.ok(typeof embeddingProviders === 'object');
   });
 });
