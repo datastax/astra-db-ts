@@ -51,7 +51,7 @@ export interface FindOneAndUpdateOptions extends WithTimeout {
    *
    * Set to `after` to return the document after the update to see the updated state of the document immediately.
    */
-  returnDocument: 'before' | 'after',
+  returnDocument?: 'before' | 'after',
   /**
    * If true, perform an insert if no documents match the filter.
    *

@@ -126,7 +126,7 @@ parallel('integration.data-api.collection.find-one-and-update', { truncateColls:
     const res = await collection.findOneAndUpdate(
       { key },
       { $set: { name: 'a' } },
-      { sort: { name: 1 }, returnDocument: 'before', includeResultMetadata: true },
+      { sort: { name: 1 }, includeResultMetadata: true },
     );
     assert.strictEqual(res.value?.name, 'a');
   });
@@ -157,14 +157,14 @@ parallel('integration.data-api.collection.find-one-and-update', { truncateColls:
     const res1 = await collection.findOneAndUpdate(
       { key },
       { $set: { name: 'aaa' } },
-      { sort: { name: 1 }, returnDocument: 'before', includeResultMetadata: true },
+      { sort: { name: 1 }, includeResultMetadata: true },
     );
     assert.strictEqual(res1.value?.name, 'a');
 
     const res2 = await collection.findOneAndUpdate(
       { key },
       { $set: { name: 'ccc' } },
-      { sort: { name: -1 }, returnDocument: 'before', includeResultMetadata: true },
+      { sort: { name: -1 }, includeResultMetadata: true },
     );
     assert.deepStrictEqual(res2.value?.name, 'c');
   });
@@ -203,7 +203,7 @@ parallel('integration.data-api.collection.find-one-and-update', { truncateColls:
     const res = await collection.findOneAndUpdate(
       { key },
       { $set: { name: 'aaa' } },
-      { sort: { $vector: [1, 1, 1, 1, 1] }, returnDocument: 'before', includeResultMetadata: true },
+      { sort: { $vector: [1, 1, 1, 1, 1] }, includeResultMetadata: true },
     );
     assert.strictEqual(res.value?.name, 'a');
   });
@@ -218,7 +218,7 @@ parallel('integration.data-api.collection.find-one-and-update', { truncateColls:
     const res = await collection.findOneAndUpdate(
       { key },
       { $set: { name: 'aaa' } },
-      { vector: [1, 1, 1, 1, 1], returnDocument: 'before', includeResultMetadata: true },
+      { vector: [1, 1, 1, 1, 1], includeResultMetadata: true },
     );
     assert.strictEqual(res.value?.name, 'a');
   });
