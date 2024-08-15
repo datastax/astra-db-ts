@@ -223,10 +223,6 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns A promise that resolves when the operation completes.
    */
   public override async createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void> {
-    if (options?.updateDbNamespace) {
-      this.#db.useNamespace(namespace);
-    }
-
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: `/databases/${this.#db.id}/keyspaces/${namespace}`,
@@ -237,6 +233,10 @@ export class AstraDbAdmin extends DbAdmin {
       defaultPollInterval: 1000,
       options,
     });
+
+    if (options?.updateDbNamespace) {
+      this.#db.useNamespace(namespace);
+    }
   }
 
   /**
