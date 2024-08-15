@@ -80,7 +80,7 @@ avoid a headache.
 #### 2. The test types (`[-all | -light | -coverage]`)
 
 There are three main test types:
-- `-all`: This is a shorthand for running enabling the `[LONG]`, `[ADMIN]`, and `[VECTORIZE]` tests (alongside all the normal tests that always run)
+- `-all`: This is a shorthand for running enabling the `(LONG)`, `(ADMIN)`, and `(VECTORIZE)` tests (alongside all the normal tests that always run)
 - `-light`: This is a shorthand for disabling the aforementioned tests. This runs only the normal tests, which are much quicker to run in comparison
 - `-coverage`: This runs all tests, but uses `nyc` to test for coverage statistics. Enabled the `-b` (bail) flag, as no point continuing if a test fails
 
@@ -157,7 +157,7 @@ do anything. But I'm not the boss of you; you can make your own big-boy/girl/oth
 ### Test tags
 
 The `astra-db-ts` test suite uses the concept of "test tags" to further advance test filtering. These are tags in
-the names of test blocks, such as `[LONG] createCollection tests` or `[ADMIN] [ASTRA] AstraAdmin tests`.
+the names of test blocks, such as `(LONG) createCollection tests` or `(ADMIN) (ASTRA) AstraAdmin tests`.
 
 These tags are automatically parsed and filtered through the custom wrapper our test suite uses, though
 you can still interact with them through test filters as well. For example, I commonly use `-f VECTORIZE` to
@@ -171,7 +171,8 @@ Current tags include:
  - `NOT-DEV` - Automatically enabled if not running on Astra-dev
  - `ASTRA` - Automatically enabled if running on Astra
 
-Attempting to set any other test tag will throw an error.
+Attempting to set any other test tag will throw an error. (All test tags must contain only uppercase letters & 
+hyphens—any tag not matching `\([A-Za]+?\)` will not be counted.)
 
 ### Running vectorize tests
 

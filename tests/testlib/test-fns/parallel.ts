@@ -59,7 +59,7 @@ interface ParallelizedTestsBlock {
 export let parallel: ParallelizedTestsBlock;
 
 parallel = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?: SuiteBlock) {
-  name = `(parallel) ${name}`
+  name = `{parallel} ${name}`
 
   const fn = (!maybeFn)
     ? optsOrFn as SuiteBlock

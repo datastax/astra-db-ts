@@ -30,7 +30,7 @@ import { DataAPIClient } from '@/src/client';
 import { CollectionNotFoundError } from '@/src/data-api/errors';
 
 parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
-  describe('[LONG] createCollection', () => {
+  describe('(LONG) createCollection', () => {
     it('should create a collection', async () => {
       const res = await db.createCollection('coll_1c', { indexing: { deny: ['*'] } });
       assert.ok(res);
@@ -101,7 +101,7 @@ parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
       assert.strictEqual(res2.namespace, OTHER_NAMESPACE);
     });
 
-    it('[ASTRA] should work even when instantiated weirdly', async () => {
+    it('(ASTRA) should work even when instantiated weirdly', async () => {
       const db = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { namespace: '123123123', dataApiPath: 'King' } })
         .admin({ adminToken: 'dummy-token' })
         .dbAdmin(TEST_APPLICATION_URI, { dataApiPath: DEFAULT_DATA_API_PATHS['astra'], namespace: DEFAULT_NAMESPACE })
@@ -116,7 +116,7 @@ parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
     });
   });
 
-  describe('[LONG] dropCollection', () => {
+  describe('(LONG) dropCollection', () => {
     it('should drop a collection', async () => {
       await db.createCollection('coll_1d', { indexing: { deny: ['*'] } });
       const res = await db.dropCollection('coll_1d');

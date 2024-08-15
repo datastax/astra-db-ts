@@ -40,7 +40,7 @@ interface BackgroundTestsBlock {
 export let background: BackgroundTestsBlock;
 
 background = function (name: string, suiteFn: SuiteBlock) {
-  name = `(background) ${name}`;
+  name = `{background} ${name}`;
 
   before(function () {
     this.timeout(0);

@@ -21,7 +21,7 @@ import assert from 'assert';
 import { ENVIRONMENT, OTHER_NAMESPACE, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/testlib';
 
 parallel('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
-  it('[LONG] works for the quickstart', async () => {
+  it('(LONG) works for the quickstart', async () => {
     interface Idea extends VectorDoc {
       idea: string,
     }
@@ -76,7 +76,7 @@ parallel('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
     await client.close();
   });
 
-  it('[NOT-DEV] [ASTRA] works for the admin-quickstart', async () => {
+  it('(NOT-DEV) (ASTRA) works for the admin-quickstart', async () => {
     const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
     const admin = client.admin();
 
@@ -98,7 +98,7 @@ parallel('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
     await client.close();
   });
 
-  it('[LONG] works for the ids quickstart', async () => {
+  it('(LONG) works for the ids quickstart', async () => {
     interface Person {
       _id: ObjectId | UUID,
       name: string,

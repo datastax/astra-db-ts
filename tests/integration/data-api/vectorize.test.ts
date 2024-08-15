@@ -386,12 +386,12 @@ const createVectorizeProvidersTest = (batchIdx: number) => (testsCollSupplier: T
   });
 };
 
-describe('[VECTORIZE] [LONG] integration.data-api.vectorize', ({ db }) => {
+describe('(VECTORIZE) (LONG) integration.data-api.vectorize', ({ db }) => {
   const tests = initVectorTests();
   const groups = groupTests(db, tests);
 
   for (let i = 0; i < groups.length; i += 7) {
-    parallel('[VECTORIZE] generated tests', { dropEphemeral: 'after' }, () => {
+    parallel('(VECTORIZE) generated tests', { dropEphemeral: 'after' }, () => {
       groups.slice(i, i + 7).forEach(createVectorizeProvidersTest(i));
     });
   }

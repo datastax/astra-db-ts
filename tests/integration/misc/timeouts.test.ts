@@ -69,7 +69,7 @@ parallel('integration.misc.timeouts', ({ collection, dbAdmin }) => {
     });
   });
 
-  describe('[ASTRA] in devops', () => {
+  describe('(ASTRA) in devops', () => {
     it('should timeout @ the http-client level', async () => {
       const httpClient = (<any>dbAdmin)['_httpClient'];
 

@@ -17,7 +17,7 @@ import assert from 'assert';
 import { ENVIRONMENT, it, parallel, TEST_APPLICATION_URI } from '@/tests/testlib';
 
 parallel('integration.devops.db-admin', ({ client, dbAdmin }) => {
-  it('[LONG] works', async () => {
+  it('{LONG} works', async () => {
     const db = client.db(TEST_APPLICATION_URI);
 
     const dbAdmin = (ENVIRONMENT === 'astra')

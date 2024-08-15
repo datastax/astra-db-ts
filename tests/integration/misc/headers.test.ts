@@ -110,7 +110,7 @@ parallel('integration.misc.headers', () => {
       assert.strictEqual(latestHeaders.ref[DEFAULT_DATA_API_AUTH_HEADER], TEST_APPLICATION_TOKEN);
     });
 
-    it('[ASTRA] should call the provider on a per-call basis to the DevOps API', async () => {
+    it('(ASTRA) should call the provider on a per-call basis to the DevOps API', async () => {
       const latestHeaders: Ref<Record<string, string>> = { ref: {} };
       const client = mkClient(latestHeaders);
       const db = client.db(TEST_APPLICATION_URI, { token: new CyclingTokenProvider() });

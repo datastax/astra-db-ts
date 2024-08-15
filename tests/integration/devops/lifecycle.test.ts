@@ -19,7 +19,7 @@ import { DEFAULT_NAMESPACE, HttpMethods } from '@/src/api';
 import { TimeoutManager } from '@/src/api/timeout-managers';
 import { background, it, TEMP_DB_NAME } from '@/tests/testlib';
 
-background('[ADMIN] [LONG] [NOT-DEV] [ASTRA] integration.devops.lifecycle', ({ client }) => {
+background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', ({ client }) => {
   it('works', async () => {
     for (const db of await client.admin().listDatabases()) {
       if (db.info.name === TEMP_DB_NAME && db.status !== 'TERMINATING') {

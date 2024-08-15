@@ -22,7 +22,7 @@ parallel('integration.data-api.collection.options', { dropEphemeral: 'after' }, 
     assert.deepStrictEqual(res, { vector: { dimension: 5, metric: 'cosine' } });
   });
 
-  it('[LONG] lists its own empty options', async () => {
+  it('(LONG) lists its own empty options', async () => {
     const coll = await db.createCollection('test_db_collection_empty_opts');
     const res = await coll.options();
     assert.deepStrictEqual(res, {});

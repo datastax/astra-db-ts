@@ -41,7 +41,7 @@ export async function dropEphemeralColls() {
 }
 
 export function processTags(tags: string): string[] {
-  const matches = tags.match(/\[(.*?)]/g);
+  const matches = tags.match(/\(([A-Z-]+?)\)/g);
 
   if (!matches) {
     return [];
