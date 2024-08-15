@@ -166,16 +166,16 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @returns A promise that resolves when the operation completes.
    */
   public override async createNamespace(namespace: string, options?: LocalCreateNamespaceOptions): Promise<void> {
+    if (options?.updateDbNamespace) {
+      this.#db.useNamespace(namespace);
+    }
+
     const replication = options?.replication ?? {
       class: 'SimpleStrategy',
       replicationFactor: 1,
     };
 
     await this.#httpClient.executeCommand({ createNamespace: { name: namespace, options: { replication } } }, { maxTimeMS: options?.maxTimeMS, namespace: null });
-
-    if (options?.updateDbNamespace) {
-      this.#db.useNamespace(namespace);
-    }
   }
 
   /**
