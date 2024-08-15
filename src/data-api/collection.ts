@@ -14,13 +14,12 @@
 
 import { normalizeSort } from './utils';
 import { FindCursor } from '@/src/data-api/cursor';
-import { Db, SomeDoc, SomeId } from '@/src/data-api';
+import { DataAPIDetailedErrorDescriptor, Db, SomeDoc, SomeId } from '@/src/data-api';
 import {
   BulkWriteError,
   CollectionNotFoundError,
   DataAPIResponseError,
-  DeleteManyError,
-  InsertManyError,
+  DeleteManyError, InsertManyError,
   mkRespErrorFromResponse,
   mkRespErrorFromResponses,
   TooManyDocumentsToCountError,
@@ -73,7 +72,7 @@ import { FindOneAndReplaceCommand } from '@/src/data-api/types/find/find-one-rep
 import { DeleteOneCommand } from '@/src/data-api/types/delete/delete-one';
 import { FindOneAndDeleteCommand } from '@/src/data-api/types/find/find-one-delete';
 import { FindOneAndUpdateCommand } from '@/src/data-api/types/find/find-one-update';
-import { InsertManyCommand } from '@/src/data-api/types/insert/insert-many';
+import { InsertManyCommand, InsertManyDocumentResponse } from '@/src/data-api/types/insert/insert-many';
 import { Mutable } from '@/src/data-api/types/utils';
 import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-collection';
 
@@ -474,7 +473,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       commonResult.matchedCount += desc.rawResponse.status?.matchedCount ?? 0;
       commonResult.upsertedCount = desc.rawResponse.status?.upsertedCount ?? 0;
 
-      throw mkRespErrorFromResponse(UpdateManyError, command, desc.rawResponse, commonResult);
+      throw mkRespErrorFromResponse(UpdateManyError, command, desc.rawResponse, { partialResult: commonResult });
     }
 
     return (resp.status?.upsertedId)
@@ -677,8 +676,14 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       if (!(e instanceof DataAPIResponseError)) {
         throw e;
       }
+
       const desc = e.detailedErrorDescriptors[0];
-      throw mkRespErrorFromResponse(DeleteManyError, command, desc.rawResponse, { deletedCount: numDeleted + (desc.rawResponse.status?.deletedCount ?? 0) })
+
+      throw mkRespErrorFromResponse(DeleteManyError, command, desc.rawResponse, {
+        partialResult: {
+          deletedCount: numDeleted + (desc.rawResponse.status?.deletedCount ?? 0),
+        },
+      });
     }
 
     return {
@@ -1516,35 +1521,37 @@ const coalesceVectorSpecialsIntoSort = <T extends OptionsWithSort>(options: T | 
 
 // -- Insert Many ------------------------------------------------------------------------------------------
 
-const insertManyOrdered = async <Schema>(httpClient: DataAPIHttpClient, documents: unknown[], chunkSize: number, timeoutManager: TimeoutManager): Promise<IdOf<Schema>[]> => {
+const insertManyOrdered = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient, documents: unknown[], chunkSize: number, timeoutManager: TimeoutManager): Promise<IdOf<Schema>[]> => {
   const insertedIds: IdOf<Schema>[] = [];
 
   for (let i = 0, n = documents.length; i < n; i += chunkSize) {
     const slice = documents.slice(i, i + chunkSize);
 
-    try {
-      const inserted = await insertMany<Schema>(httpClient, slice, true, timeoutManager);
-      insertedIds.push(...inserted);
-    } catch (e) {
-      if (!(e instanceof DataAPIResponseError)) {
-        throw e;
-      }
-      const desc = e.detailedErrorDescriptors[0];
+    const [docResp, inserted, errDesc] = await insertMany<Schema>(httpClient, slice, true, timeoutManager);
+    insertedIds.push(...inserted);
 
-      insertedIds.push(...desc.rawResponse.status?.insertedIds ?? []);
-      throw mkRespErrorFromResponse(InsertManyError, desc.command, desc.rawResponse, { insertedIds: insertedIds as SomeId[], insertedCount: insertedIds.length })
+    if (errDesc) {
+      throw mkRespErrorFromResponse(InsertManyError, errDesc.command, errDesc.rawResponse, {
+        partialResult: {
+          insertedIds: insertedIds as SomeId[],
+          insertedCount: insertedIds.length,
+        },
+        documentResponses: docResp,
+        failedCount: docResp.length - insertedIds.length,
+      });
     }
   }
 
   return insertedIds;
 }
 
-const insertManyUnordered = async <Schema>(httpClient: DataAPIHttpClient, documents: unknown[], concurrency: number, chunkSize: number, timeoutManager: TimeoutManager): Promise<IdOf<Schema>[]> => {
+const insertManyUnordered = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient, documents: unknown[], concurrency: number, chunkSize: number, timeoutManager: TimeoutManager): Promise<IdOf<Schema>[]> => {
   const insertedIds: IdOf<Schema>[] = [];
   let masterIndex = 0;
 
   const failCommands = [] as Record<string, any>[];
   const failRaw = [] as Record<string, any>[];
+  const docResps = [] as InsertManyDocumentResponse<SomeDoc>[];
 
   const workers = Array.from({ length: concurrency }, async () => {
     while (masterIndex < documents.length) {
@@ -1558,42 +1565,72 @@ const insertManyUnordered = async <Schema>(httpClient: DataAPIHttpClient, docume
 
       const slice = documents.slice(localI, endIdx);
 
-      try {
-        const inserted = await insertMany<Schema>(httpClient, slice, false, timeoutManager);
-        insertedIds.push(...inserted);
-      } catch (e) {
-        if (!(e instanceof DataAPIResponseError)) {
-          throw e;
-        }
-        const desc = e.detailedErrorDescriptors[0];
+      const [docResp, inserted, errDesc] = await insertMany<Schema>(httpClient, slice, false, timeoutManager);
+      insertedIds.push(...inserted);
+      docResps.push(...docResp);
 
-        const justInserted = desc.rawResponse.status?.insertedIds ?? [];
-        insertedIds.push(...justInserted);
-
-        failCommands.push(desc.command);
-        failRaw.push(desc.rawResponse);
+      if (errDesc) {
+        failCommands.push(errDesc.command);
+        failRaw.push(errDesc.rawResponse);
       }
     }
   });
   await Promise.all(workers);
 
   if (failCommands.length > 0) {
-    throw mkRespErrorFromResponses(InsertManyError, failCommands, failRaw, { insertedIds: insertedIds as SomeId[], insertedCount: insertedIds.length });
+    throw mkRespErrorFromResponses(InsertManyError, failCommands, failRaw, {
+      partialResult: {
+        insertedIds: insertedIds as SomeId[],
+        insertedCount: insertedIds.length,
+      },
+      documentResponses: docResps,
+      failedCount: docResps.length - insertedIds.length,
+    });
   }
 
   return insertedIds;
 }
 
-const insertMany = async <Schema>(httpClient: DataAPIHttpClient, documents: unknown[], ordered: boolean, timeoutManager: TimeoutManager): Promise<IdOf<Schema>[]> => {
+const insertMany = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient, documents: unknown[], ordered: boolean, timeoutManager: TimeoutManager): Promise<[InsertManyDocumentResponse<Schema>[], IdOf<Schema>[], DataAPIDetailedErrorDescriptor | undefined]> => {
   const command: InsertManyCommand = {
     insertMany: {
       documents,
-      options: { ordered },
+      options: {
+        returnDocumentResponses: true,
+        ordered,
+      },
     }
   }
 
-  const resp = await httpClient.executeCommand(command, { timeoutManager });
-  return resp.status?.insertedIds ?? [];
+  let resp, err: DataAPIResponseError | undefined;
+
+  try {
+    resp = await httpClient.executeCommand(command, { timeoutManager });
+  } catch (e) {
+    if (! (e instanceof DataAPIResponseError)) {
+      throw e;
+    }
+    resp = e.detailedErrorDescriptors[0].rawResponse;
+    err = e;
+  }
+
+  const documentResponses = resp.status!.documentResponses;
+  const errors = resp.errors!;
+
+  const insertedIds = [];
+
+  for (let i = 0, n = documentResponses.length; i < n; i++) {
+    const resp = documentResponses[i];
+
+    if (resp.status === "OK") {
+      insertedIds.push(resp._id);
+    } else if (resp.errorIdx) {
+      resp.error = errors[resp.errorIdx];
+      delete resp.errorIdx;
+    }
+  }
+
+  return [documentResponses, insertedIds, err?.detailedErrorDescriptors[0]];
 }
 
 // -- Bulk Write ------------------------------------------------------------------------------------------
@@ -1616,7 +1653,7 @@ const bulkWriteOrdered = async <Schema extends SomeDoc>(httpClient: DataAPIHttpC
       addToBulkWriteResult(results, desc.rawResponse.status, i)
     }
 
-    throw mkRespErrorFromResponse(BulkWriteError, desc.command, desc.rawResponse, results);
+    throw mkRespErrorFromResponse(BulkWriteError, desc.command, desc.rawResponse, { partialResult: results });
   }
 
   return results;
@@ -1654,7 +1691,7 @@ const bulkWriteUnordered = async <Schema extends SomeDoc>(httpClient: DataAPIHtt
   await Promise.all(workers);
 
   if (failCommands.length > 0) {
-    throw mkRespErrorFromResponses(BulkWriteError, failCommands, failRaw, results);
+    throw mkRespErrorFromResponses(BulkWriteError, failCommands, failRaw, { partialResult: results });
   }
 
   return results;

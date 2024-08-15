@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { InsertManyResult } from '@/src/data-api/types/insert/insert-many';
+import type { InsertManyDocumentResponse, InsertManyResult } from '@/src/data-api/types/insert/insert-many';
 import type { DeleteManyResult } from '@/src/data-api/types/delete/delete-many';
 import type { UpdateManyResult } from '@/src/data-api/types/update/update-many';
 import type { BulkWriteResult } from '@/src/data-api/types/misc/bulk-write';
@@ -449,6 +449,19 @@ export class InsertManyError extends CumulativeDataAPIError {
    * of all successful insertions.
    */
   declare public readonly partialResult: InsertManyResult<SomeDoc>;
+
+  /**
+   * The specific statuses and ids for each document present in the `insertMany` command
+   *
+   * The position of each document response is the same as its corresponding document in the input `documents` array
+   */
+  declare public readonly documentResponses: InsertManyDocumentResponse<SomeDoc>[];
+
+  /**
+   * The number of documents which failed insertion (i.e. their status in {@link InsertManyError.documentResponses} was
+   * `'ERROR'` or `'SKIPPED'`)
+   */
+  declare public readonly failedCount: number;
 }
 
 /**
@@ -532,19 +545,17 @@ export class BulkWriteError extends CumulativeDataAPIError {
   declare public readonly partialResult: BulkWriteResult<SomeDoc>;
 }
 
-type InferPartialResult<T> = T extends { readonly partialResult: infer P } ? P : never;
-
 /**
  * @internal
  */
-export const mkRespErrorFromResponse = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, command: Record<string, any>, raw: RawDataAPIResponse, partialResult?: InferPartialResult<E>) => {
-  return mkRespErrorFromResponses(err, [command], [raw], partialResult);
+export const mkRespErrorFromResponse = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, command: Record<string, any>, raw: RawDataAPIResponse, attributes?: Omit<E, keyof DataAPIResponseError>) => {
+  return mkRespErrorFromResponses(err, [command], [raw], attributes);
 }
 
 /**
  * @internal
  */
-export const mkRespErrorFromResponses = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, commands: Record<string, any>[], raw: RawDataAPIResponse[], partialResult?: InferPartialResult<E>) => {
+export const mkRespErrorFromResponses = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, commands: Record<string, any>[], raw: RawDataAPIResponse[], attributes?: Omit<E, keyof DataAPIResponseError>) => {
   const detailedDescriptors = [] as DataAPIDetailedErrorDescriptor[];
 
   for (let i = 0, n = commands.length; i < n; i++) {
@@ -564,14 +575,9 @@ export const mkRespErrorFromResponses = <E extends DataAPIResponseError>(err: ne
   }
 
   const errorDescriptors = detailedDescriptors.flatMap(d => d.errorDescriptors);
-
   const message = errorDescriptors[0]?.message || 'Something unexpected occurred';
 
   const instance = new err(message, errorDescriptors, detailedDescriptors) ;
-
-  if (partialResult) {
-    /* @ts-expect-error - If the lord wants a partialResult, the lord will get a partialResult. */
-    instance.partialResult = partialResult;
-  }
+  Object.assign(instance, attributes ?? {});
   return instance;
 }
