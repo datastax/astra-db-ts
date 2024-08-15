@@ -44,6 +44,7 @@ interface VectorizeTestSpec {
     parameters?: {
       [modelNameRegex: string]: Record<string, string>
     },
+    warmupErr?: string,
   }
 }
 
@@ -206,6 +207,7 @@ interface ModelBranch {
   providerName: string,
   modelName: string,
   testName: string,
+  warmupErr?: RegExp,
 }
 
 const branchOnModel = (fullSpec: VectorizeTestSpec) => ([providerName, providerInfo]: [string, EmbeddingProviderInfo]): VectorizeTest[] => {
@@ -220,6 +222,7 @@ const branchOnModel = (fullSpec: VectorizeTestSpec) => ([providerName, providerI
     providerName: providerName,
     modelName: model.name,
     testName: `${providerName}@${model.name}`,
+    warmupErr: spec.warmupErr ? RegExp(spec.warmupErr) : undefined,
   }));
 
   return modelBranches.flatMap(addParameters(spec, providerInfo));
@@ -333,17 +336,14 @@ const createVectorizeProvidersTest = (batchIdx: number) => (testsCollSupplier: T
       const supplier = testsCollSupplier.tests[i];
       collection = await supplier.getColl();
 
-      let err: Error | undefined = new Error();
-
-      while (err) {
+      while (supplier.test.warmupErr) {
         try {
           await collection.findOne({ key }, {
-            sort: { $vectorize: 'Alice likes big red cars' },
+            sort: { $vectorize: 'amaryllis' },
           });
-          err = undefined;
+          break;
         } catch (e: any) {
-          if (e.message.includes('is currently loading')) {
-            err = e;
+          if (supplier.test.warmupErr.test(e.message)) {
             await new Promise((resolve) => setTimeout(resolve, 1000));
           } else {
             throw e;
