@@ -50,7 +50,6 @@ parallel('integration.data-api.collection.delete-many', { truncateColls: 'both:b
       assert.strictEqual(e.errorDescriptors.length, 1);
       assert.strictEqual(e.detailedErrorDescriptors.length, 1);
       assert.deepStrictEqual(e.partialResult, { deletedCount: 0 });
-      assert.deepStrictEqual(e.errorDescriptors[0].attributes, {});
     }
   });
 

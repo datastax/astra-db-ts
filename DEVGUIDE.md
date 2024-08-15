@@ -60,15 +60,15 @@ The API for the test script is as the following:
 ```sh
 1. scripts/test.sh 
 2.  [-all | -light | -coverage] 
-3.  [-fand | -for] [-/~f <filter>]+ [-/~g <regex>]+ 
-4.  [-/~w <vectorize_whitelist>] 
-5.  [-b] 
-6.  [~report] 
+3.  [-fand | -for] [-f/F <filter>]+ [-g/G <regex>]+ 
+4.  [-w/W <vectorize_whitelist>] 
+5.  [-b | -bail]
+6.  [-R | -no-report]
 7.  [-c <http_client>] 
 8.  [-e <environment>]
 ```
 
-#### 1. The test file
+#### 1. The test file (`scripts/test.sh`)
 
 While you can use `npm run test` or `bun run test` if you so desire, attempting to use the test script's flags with it
 may be a bit iffy, as the inputs are first "de-quoted" (evaluated) when you use the shell command, but they're 
@@ -77,7 +77,7 @@ may be a bit iffy, as the inputs are first "de-quoted" (evaluated) when you use 
 Just use `scripts/test.sh` (or `sh scripts/test.sh`) directly if you're using command-line flags and want to
 avoid a headache.
 
-#### 2. The test types
+#### 2. The test types (`[-all | -light | -coverage]`)
 
 There are three main test types:
 - `-all`: This is a shorthand for running enabling the `[LONG]`, `[ADMIN]`, and `[VECTORIZE]` tests (alongside all the normal tests that always run)
@@ -87,7 +87,7 @@ There are three main test types:
 By default, just running `scripts/test.sh` will be like using `-light`, but you can set the default config for which tests
 to enable in your `.env` file, through the `CLIENT_RUN_*_TESTS` env vars.
 
-#### 3. The test filters
+#### 3. The test filters (`[-fand | -for] [-f/F <filter>]+ [-g/G <regex>]+`)
 
 The `astra-db-ts` test suite implements fully custom test filtering, inspired by Mocha's, but improved upon.
 
@@ -95,16 +95,16 @@ You can add a basic filter using `-f <filter>` which acts like Mocha's own `-f` 
 which is like `-f`, but for regex. Each only needs to match a part of the test name (or its parent describes' names) to
 succeed, so use `^$` as necessary.
 
-Unlike Mocha, there is no `-i` flag—instead, you can invert a filter by using `~f <filter>` or `~g <regex>`, so that the
+Unlike Mocha, there is no `-i` flag—instead, you can invert a filter by using `-F <filter>` or `-G <regex>`, so that the
 test needs to NOT match that string/regex to run.
 
-You can also use multiple filters by simply using multiple of `-f`, `-g`, `~f`, and `~g` as you please. By default,
+You can also use multiple filters by simply using multiple of `-f`, `-g`, `-F`, and `-G` as you please. By default,
 it'll only run a test if it satisfies all the filters (`-fand`), but you can use the `-for` flag to run a test if
 it satisfies any one of the filters.
 
 In case filters overlap, an inverted filter always wins over a regular filter, and the conflicted test won't run.
 
-#### 4. The vectorize whitelist
+#### 4. The vectorize whitelist (`[-w/W <vectorize_whitelist>]`)
 
 There's a special filtering system just for vectorize tests, called the "vectorize whitelist", of which there are two
 different types: either a piece of regex, or a special filter operator.
@@ -133,22 +133,22 @@ basic regex. They come of the format `-w $<operator>:<colon_separated_args>`
 
 The default whitelist is `$limit-per-model:1`.
 
-#### 5. Bailing
+#### 5. Bailing (`[-b | -bail]`)
 
 Simply sets the bail flag, as it does in Mocha. Forces the test script to exit after a single test failure.
 
-#### 6. Disabling error reporting
+#### 6. Disabling error reporting (`[-R | -no-report]`)
 
 By default, the test suite logs the complete error objects of any that may've been thrown during your tests to the
 `./etc/test-reports` directory for greatest debuggability. However, this can be disabled for a test run using the
-`~report` flag.
+`-R`/`-no-report` flag.
 
-#### 7. The HTTP client
+#### 7. The HTTP client (`[-c <http_client>]`)
 
 By default, `astra-db-ts` will run its tests on `fetch-h2` using `HTTP/2`, but you can specify a specific client, which
 is one of `default:http1`, `default:http2`, or `fetch`.
 
-#### 8. The Data API environment
+#### 8. The Data API environment (`[-e <environment>]`)
 
 By default, `astra-db-ts` assumes you're running on Astra, but you can specify the Data API environment through this
 flag. It should be one of `dse`, `hcd`, `cassandra`, or `other`. You can also provide `astra`, but it wouldn't really

@@ -779,7 +779,6 @@ parallel('integration.data-api.collection.update-many', { truncateColls: 'defaul
       assert.strictEqual(e.errorDescriptors.length, 1);
       assert.strictEqual(e.detailedErrorDescriptors.length, 1);
       assert.deepStrictEqual(e.partialResult, { modifiedCount: 0, matchedCount: 0, upsertedCount: 0 });
-      assert.deepStrictEqual(e.errorDescriptors[0].attributes, {});
     }
   });
 

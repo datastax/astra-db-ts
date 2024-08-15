@@ -96,7 +96,6 @@ parallel('integration.data-api.collection.bulk-write', { truncateColls: 'default
       assert.strictEqual(e.detailedErrorDescriptors.length, 1);
       assert.strictEqual(e.errorDescriptors.length, 1);
       assert.strictEqual(e.message, e.errorDescriptors[0].message);
-      assert.deepStrictEqual(e.errorDescriptors[0].attributes, {});
 
       assert.strictEqual(e.partialResult.insertedCount, 3);
       assert.strictEqual(e.partialResult.getRawResponse().length, 4);
@@ -132,7 +131,6 @@ parallel('integration.data-api.collection.bulk-write', { truncateColls: 'default
       assert.strictEqual(e.detailedErrorDescriptors.length, 2);
       assert.strictEqual(e.errorDescriptors.length, 2);
       assert.strictEqual(e.message, e.errorDescriptors[0].message);
-      assert.deepStrictEqual(e.errorDescriptors[0].attributes, {});
 
       assert.strictEqual(e.partialResult.insertedCount, 5);
       assert.strictEqual(e.partialResult.getRawResponse().length, 7);

@@ -28,7 +28,7 @@ before(async () => {
 
   for (const namespace of [DEFAULT_NAMESPACE, OTHER_NAMESPACE]) {
     if (!allNamespaces.includes(namespace)) {
-      console.log(`creating namespace 'slania'`);
+      console.log(`creating namespace '${namespace}'`);
       await dbAdmin.createNamespace(namespace);
     }
   }

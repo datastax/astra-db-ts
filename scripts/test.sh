@@ -45,13 +45,13 @@ while [ $# -gt 0 ]; do
       test_type="code"
       run_typechecking=1
       ;;
-    "-f" | "~f")
-      [ "${1#"~"}" != "$1" ] && filter_type='i' || filter_type='n'
+    "-f" | "-F")
+      [ "$1" = "-F" ] && filter_type='i' || filter_type='n'
       shift
       filter="f$filter_type\"$1\" $filter"
       ;;
-    "-g" | "~g")
-      [ "${1#"~"}" != "$1" ] && filter_type='i' || filter_type='n'
+    "-g" | "-G")
+      [ "$1" = "-G" ] && filter_type='i' || filter_type='n'
       shift
       filter="g$filter_type\"$1\" $filter"
       ;;
@@ -61,14 +61,14 @@ while [ $# -gt 0 ]; do
     "-for")
       filter_combinator='or'
       ;;
-    "-b")
+    "-b" | "-bail")
       bail_early=1
       ;;
-    "~report")
+    "-R" | "-no-report")
       no_err_report=1
       ;;
-    "-w" | "~w")
-      [ "${1#"~"}" != "$1" ] && invert_whitelist=1
+    "-w" | "-W")
+      [ "$1" = "-W" ] && invert_whitelist=1
       shift
       whitelist="$1"
       ;;
@@ -84,7 +84,7 @@ while [ $# -gt 0 ]; do
       echo "Invalid flag $1"
       echo ""
       echo "Usage:"
-      echo "scripts/test.sh [-all | -light | -coverage] [-fand | -for] [-/~f <filter>]+ [-/~g <regex>]+ [-/~w <vectorize_whitelist>] [-b] [~report] [-c <http_client>] [-e <environment>]"
+      echo "scripts/test.sh [-all | -light | -coverage] [-fand | -for] [-f/F <filter>]+ [-g/G <regex>]+ [-w/W <vectorize_whitelist>] [-b | -bail] [-R | -no-report] [-c <http_client>] [-e <environment>]"
       echo "or"
       echo "scripts/test.sh [-lint] [-tc]"
       exit
