@@ -173,6 +173,7 @@ parallel('integration.data-api.collection.insert-many', { truncateColls: 'defaul
     assert.ok(error instanceof InsertManyError);
     assert.strictEqual(error.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
     assert.strictEqual(error.partialResult.insertedCount, 10);
+    assert.strictEqual(error.failedCount, 10);
     docs.slice(0, 10).forEach((doc, index) => {
       assert.strictEqual(error.partialResult.insertedIds[index], doc._id);
     });
@@ -191,6 +192,7 @@ parallel('integration.data-api.collection.insert-many', { truncateColls: 'defaul
     assert.ok(error instanceof InsertManyError);
     assert.strictEqual(error.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
     assert.strictEqual(error.partialResult.insertedCount, 19);
+    assert.strictEqual(error.failedCount, 1);
     docs.slice(0, 9).concat(docs.slice(10)).forEach((doc) => {
       assert.ok(error.partialResult.insertedIds.includes(doc._id));
     });

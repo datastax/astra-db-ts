@@ -12,13 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { InsertManyResult } from '@/src/data-api/types/insert/insert-many';
+import type { InsertManyDocumentResponse, InsertManyResult } from '@/src/data-api/types/insert/insert-many';
 import type { DeleteManyResult } from '@/src/data-api/types/delete/delete-many';
 import type { UpdateManyResult } from '@/src/data-api/types/update/update-many';
 import type { BulkWriteResult } from '@/src/data-api/types/misc/bulk-write';
 import type { FetcherResponseInfo, RawDataAPIResponse } from '@/src/api';
 import { SomeDoc } from '@/src/data-api/types/document';
-import { SomeId } from '@/src/data-api/ids';
 
 /**
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a
@@ -456,31 +455,13 @@ export class InsertManyError extends CumulativeDataAPIError {
    *
    * The position of each document response is the same as its corresponding document in the input `documents` array
    */
-  declare public readonly documentResponses: InsertManyDocumentResponse[];
-}
+  declare public readonly documentResponses: InsertManyDocumentResponse<SomeDoc>[];
 
-/**
- * Represents the specific status and id for a document present in the `insertMany` command
- */
-interface InsertManyDocumentResponse {
   /**
-   * The exact value of the `_id` field of the document that was inserted, whether it be the value passed by the client,
-   * or a server generated ID.
+   * The number of documents which failed insertion (i.e. their status in {@link InsertManyError.documentResponses} was
+   * `'ERROR'` or `'SKIPPED'`)
    */
-  _id: SomeId,
-  /**
-   * The processing status of the document
-   * - `OK`: The document was successfully processed, in which case the `error` field will be undefined for this object
-   * - `ERROR`: There was an error processing the document, in which case the `error` field will be present for this object
-   * - `SKIPPED`: The document was not processed because either the `insertMany` command was processing documents in order
-   * which means the processing fails at the first failure, or some other failure occurred before this document was
-   * processed. The `error` field will be undefined for this object.
-   */
-  status: 'OK' | 'ERROR' | 'SKIPPED',
-  /**
-   * The error which caused this document to fail insertion.
-   */
-  error?: DataAPIErrorDescriptor,
+  declare public readonly failedCount: number;
 }
 
 /**
@@ -564,19 +545,17 @@ export class BulkWriteError extends CumulativeDataAPIError {
   declare public readonly partialResult: BulkWriteResult<SomeDoc>;
 }
 
-type InferPartialResult<T> = T extends { readonly partialResult: infer P } ? P : never;
-
 /**
  * @internal
  */
-export const mkRespErrorFromResponse = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, command: Record<string, any>, raw: RawDataAPIResponse, partialResult?: InferPartialResult<E>) => {
-  return mkRespErrorFromResponses(err, [command], [raw], partialResult);
+export const mkRespErrorFromResponse = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, command: Record<string, any>, raw: RawDataAPIResponse, attributes?: Omit<E, keyof DataAPIResponseError>) => {
+  return mkRespErrorFromResponses(err, [command], [raw], attributes);
 }
 
 /**
  * @internal
  */
-export const mkRespErrorFromResponses = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, commands: Record<string, any>[], raw: RawDataAPIResponse[], partialResult?: InferPartialResult<E>) => {
+export const mkRespErrorFromResponses = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, commands: Record<string, any>[], raw: RawDataAPIResponse[], attributes?: Omit<E, keyof DataAPIResponseError>) => {
   const detailedDescriptors = [] as DataAPIDetailedErrorDescriptor[];
 
   for (let i = 0, n = commands.length; i < n; i++) {
@@ -596,14 +575,9 @@ export const mkRespErrorFromResponses = <E extends DataAPIResponseError>(err: ne
   }
 
   const errorDescriptors = detailedDescriptors.flatMap(d => d.errorDescriptors);
-
   const message = errorDescriptors[0]?.message || 'Something unexpected occurred';
 
   const instance = new err(message, errorDescriptors, detailedDescriptors) ;
-
-  if (partialResult) {
-    /* @ts-expect-error - If the lord wants a partialResult, the lord will get a partialResult. */
-    instance.partialResult = partialResult;
-  }
+  Object.assign(instance, attributes ?? {});
   return instance;
 }
