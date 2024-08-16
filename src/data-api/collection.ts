@@ -1614,10 +1614,6 @@ const insertMany = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient,
     err = e;
   }
 
-  if (!resp.status) {
-    console.log(resp);
-  }
-
   const documentResponses = resp.status?.documentResponses ?? [];
   const errors = resp.errors!;
 
