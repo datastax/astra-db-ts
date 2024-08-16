@@ -41,7 +41,7 @@ export const createTestGroups = (branches: FinalVectorizeTestBranch[]): Vectoriz
       ? HeaderKMSTestGroup
       : NoAuthTestGroup;
 
-    const key = `${branch.providerName}@${branch.modelName}@${groupClass.name}`;
+    const key = branch.branchName.replace(`@${branch.authType}`, `@${groupClass}`);
 
     if (!groups[key]) {
       groups[key] = {
