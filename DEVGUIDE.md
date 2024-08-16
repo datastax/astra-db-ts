@@ -198,6 +198,7 @@ type VectorizeTestSpec = {
     parameters?: {
       [modelNameRegex: string]: Record<string, string>,
     },
+    warmupErr?: string,
   },
 }
 ```
@@ -215,6 +216,8 @@ where:
    - optional if not required. `azureOpenAI`, for example, will need this.
 - `dimension` is also a mapping of model name regex to their corresponding dimensions, like the `parameters` field.
    - optional if not required. `huggingfaceDedicated`, for example, will need this.
+- `warmupErr` may be set if the provider errors on a cold start
+   - if set, the provider will be called in a `while (true)` loop until it stops throwing an error matching this message
 
 This file is .gitignore-d by default and will not be checked into VCS.
 
