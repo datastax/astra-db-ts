@@ -62,7 +62,7 @@ describe('unit.data-api.errors', () => {
     const partialResult: InsertManyResult<SomeDoc> = { insertedIds: ['1', '2'], insertedCount: 2 };
 
     it('should properly construct a single-response InsertManyError', () => {
-      const err = mkRespErrorFromResponse(InsertManyError, commands[0], raws[0], partialResult);
+      const err = mkRespErrorFromResponse(InsertManyError, commands[0], raws[0], <any>{ partialResult });
       assert.strictEqual(err.message, raws[0].errors[0].message);
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
@@ -73,7 +73,7 @@ describe('unit.data-api.errors', () => {
     });
 
     it('should properly construct a multi-response InsertManyError', () => {
-      const err = mkRespErrorFromResponses(InsertManyError, commands, raws, partialResult);
+      const err = mkRespErrorFromResponses(InsertManyError, commands, raws, <any>{ partialResult });
       assert.strictEqual(err.message, raws[0].errors[0].message);
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0], descriptions[1]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
@@ -89,7 +89,7 @@ describe('unit.data-api.errors', () => {
     const partialResult: DeleteManyResult = { deletedCount: 2 };
 
     it('should properly construct a single-response DeleteManyError', () => {
-      const err = mkRespErrorFromResponse(DeleteManyError, commands[0], raws[0], partialResult);
+      const err = mkRespErrorFromResponse(DeleteManyError, commands[0], raws[0], { partialResult });
       assert.strictEqual(err.message, raws[0].errors[0].message);
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
@@ -100,7 +100,7 @@ describe('unit.data-api.errors', () => {
     });
 
     it('should properly construct a multi-response DeleteManyError', () => {
-      const err = mkRespErrorFromResponses(DeleteManyError, commands, raws, partialResult);
+      const err = mkRespErrorFromResponses(DeleteManyError, commands, raws, { partialResult });
       assert.strictEqual(err.message, raws[0].errors[0].message);
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0], descriptions[1]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
@@ -116,7 +116,7 @@ describe('unit.data-api.errors', () => {
     const partialResult: UpdateManyResult<SomeDoc> = { matchedCount: 2, modifiedCount: 2, upsertedCount: 0 };
 
     it('should properly construct a single-response UpdateManyError', () => {
-      const err = mkRespErrorFromResponse(UpdateManyError, commands[0], raws[0], partialResult);
+      const err = mkRespErrorFromResponse(UpdateManyError, commands[0], raws[0], { partialResult });
       assert.strictEqual(err.message, raws[0].errors[0].message);
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
@@ -127,7 +127,7 @@ describe('unit.data-api.errors', () => {
     });
 
     it('should properly construct a multi-response UpdateManyError', () => {
-      const err = mkRespErrorFromResponses(UpdateManyError, commands, raws, partialResult);
+      const err = mkRespErrorFromResponses(UpdateManyError, commands, raws, { partialResult });
       assert.strictEqual(err.message, raws[0].errors[0].message);
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0], descriptions[1]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [

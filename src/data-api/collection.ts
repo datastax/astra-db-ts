@@ -1599,7 +1599,7 @@ const insertMany = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient,
         returnDocumentResponses: true,
         ordered,
       },
-    }
+    },
   }
 
   let resp, err: DataAPIResponseError | undefined;
@@ -1614,7 +1614,11 @@ const insertMany = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient,
     err = e;
   }
 
-  const documentResponses = resp.status!.documentResponses;
+  if (!resp.status) {
+    console.log(resp);
+  }
+
+  const documentResponses = resp.status?.documentResponses ?? [];
   const errors = resp.errors!;
 
   const insertedIds = [];
