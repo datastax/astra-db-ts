@@ -1650,7 +1650,7 @@ const bulkWriteOrdered = async <Schema extends SomeDoc>(httpClient: DataAPIHttpC
     const desc = e.detailedErrorDescriptors[0];
 
     if (desc.rawResponse.status) {
-      addToBulkWriteResult(results, desc.rawResponse.status, i)
+      addToBulkWriteResult(results, desc.rawResponse.status, i);
     }
 
     throw mkRespErrorFromResponse(BulkWriteError, desc.command, desc.rawResponse, { partialResult: results });
