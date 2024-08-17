@@ -27,9 +27,9 @@ export interface ModifyResult<Schema extends SomeDoc> {
   /**
    * The document that was found and modified, or `null` if nothing matched.
    */
-  value: WithId<Schema> | null;
+  value: WithId<Schema> | null,
   /**
    * If the operation was ok.
    */
-  ok: number;
+  ok: number,
 }

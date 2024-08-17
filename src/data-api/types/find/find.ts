@@ -133,7 +133,7 @@ export interface FindOptions {
    * const sortVector = await cursor.getSortVector();
    * ```
    */
-  includeSortVector?: boolean;
+  includeSortVector?: boolean,
   /**
    * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
    * to find the closest matching document.
@@ -157,11 +157,11 @@ export interface FindOptions {
 
 /** @internal */
 export interface InternalFindOptions {
-  pagingState?: string;
-  limit?: number;
-  skip?: number;
-  includeSimilarity?: boolean;
-  includeSortVector?: boolean;
+  pagingState?: string,
+  limit?: number,
+  skip?: number,
+  includeSimilarity?: boolean,
+  includeSortVector?: boolean,
 }
 
 /** @internal */

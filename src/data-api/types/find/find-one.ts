@@ -18,11 +18,11 @@ import { WithTimeout } from '@/src/common/types';
 /** @internal */
 export interface FindOneCommand {
   findOne: {
-    filter: Record<string, unknown>;
-    sort?: Sort;
-    projection?: Projection;
+    filter: Record<string, unknown>,
+    sort?: Sort,
+    projection?: Projection,
     options?: {
-      includeSimilarity?: boolean;
+      includeSimilarity?: boolean,
     };
   };
 }

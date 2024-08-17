@@ -18,14 +18,14 @@ import { WithTimeout } from '@/src/common/types';
 /** @internal */
 export interface FindOneAndUpdateCommand {
   findOneAndUpdate: {
-    filter?: Record<string, unknown>;
-    update?: Record<string, any>;
+    filter?: Record<string, unknown>,
+    update?: Record<string, any>,
     options?: {
       returnDocument?: 'before' | 'after',
       upsert?: boolean,
     };
-    sort?: Sort;
-    projection?: Projection;
+    sort?: Sort,
+    projection?: Projection,
   };
 }
 

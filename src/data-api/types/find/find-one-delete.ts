@@ -18,9 +18,9 @@ import { WithTimeout } from '@/src/common/types';
 /** @internal */
 export interface FindOneAndDeleteCommand {
   findOneAndDelete: {
-    filter?: Record<string, unknown>;
-    sort?: Sort;
-    projection?: Projection;
+    filter?: Record<string, unknown>,
+    sort?: Sort,
+    projection?: Projection,
   };
 }
 
