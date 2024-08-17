@@ -14,5 +14,5 @@ console.log([
   `// limitations under the License.`,
   ``,
   `export const LIB_NAME = 'astra-db-ts';`,
-  `export const LIB_VERSION = '${require('../package.json').version}';`,
+  `export const LIB_VERSION = '${require('../../package.json').version}';`,
 ].join('\n'));

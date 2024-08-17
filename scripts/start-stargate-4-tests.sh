@@ -6,4 +6,4 @@ echo "CLIENT_DB_TOKEN=Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh"
 echo "CLIENT_DB_ENVIRONMENT=dse"
 echo
 
-docker-compose -f scripts/docker-compose-stargate.yml up
+docker-compose -f scripts/utils/docker-compose-stargate.yml up
