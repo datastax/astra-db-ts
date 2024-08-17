@@ -12,7 +12,7 @@
 2. [Typechecking & Linting](#typechecking--linting)
 3. [Building the library](#building-the-library)
 4. [Publishing](#publishing)
-5. [Misc](#misc)
+5. [Miscellaneous](#miscellaneous)
     1. [nix-shell + direnv support](#nix-shell--direnv-support)
 
 ## Running the tests
@@ -327,7 +327,7 @@ continue on to publish the package using `np --no-tests`.
 The versioning step will automatically update the api report + update the version in `src/version.ts`, so you don't
 need to worry about that.
 
-## Misc
+## Miscellaneous
 
 ### nix-shell + direnv support
 
