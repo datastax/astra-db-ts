@@ -51,7 +51,7 @@ import { validateAdminOpts } from '@/src/devops/utils';
  */
 export type DataAPIClientEvents =
   & DataAPICommandEvents
-  & AdminCommandEvents
+  & AdminCommandEvents;
 
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
