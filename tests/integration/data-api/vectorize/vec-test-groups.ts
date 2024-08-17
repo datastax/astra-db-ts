@@ -88,7 +88,7 @@ class HeaderKMSTestGroup implements VectorizeTestGroup {
     this.tests = [kmsTest, headerTest].filter(Boolean);
   }
 
-  _mkCombinedTestName = (kmsTestName?: string, headerTestName?: string) => {
+  private _mkCombinedTestName = (kmsTestName?: string, headerTestName?: string) => {
     const combinedAuthType = [kmsTestName, headerTestName].filter(Boolean).join('+');
 
     return (kmsTestName ?? headerTestName)!
@@ -96,7 +96,7 @@ class HeaderKMSTestGroup implements VectorizeTestGroup {
       .replace('@providerKey', combinedAuthType);
   };
 
-  _mkColl = (branch: FinalVectorizeTestBranch) => (db: Db) => db.createCollection(this.collName, {
+  private _mkColl = (branch: FinalVectorizeTestBranch) => (db: Db) => db.createCollection(this.collName, {
     vector: {
       dimension: branch.dimension,
       service: {
@@ -108,10 +108,11 @@ class HeaderKMSTestGroup implements VectorizeTestGroup {
         parameters: branch.parameters,
       },
     },
+    embeddingApiKey: branch.header,
     maxTimeMS: 0,
   });
 
-  _useColl = (branch: FinalVectorizeTestBranch) => (db: Db) => Promise.resolve(
+  private _useColl = (branch: FinalVectorizeTestBranch) => (db: Db) => Promise.resolve(
     db.collection(this.collName, {
       embeddingApiKey: branch.header,
     }),
@@ -139,7 +140,7 @@ class NoAuthTestGroup implements VectorizeTestGroup {
     }];
   }
 
-  _mkColl = (branch: FinalVectorizeTestBranch) => (db: Db) => db.createCollection(this.collName, {
+  private _mkColl = (branch: FinalVectorizeTestBranch) => (db: Db) => db.createCollection(this.collName, {
     vector: {
       dimension: branch.dimension,
       service: {
