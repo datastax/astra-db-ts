@@ -50,6 +50,10 @@ export interface FindOneAndReplaceOptions extends WithTimeout {
    * Set to `before` to return the document before the update to see the original state of the document.
    *
    * Set to `after` to return the document after the update to see the updated state of the document immediately.
+   *
+   * Defaults to `'before'`.
+   *
+   * @defaultValue 'before'
    */
   returnDocument?: 'before' | 'after',
   /**
