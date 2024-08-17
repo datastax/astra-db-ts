@@ -37,7 +37,7 @@ export interface VectorizeTestSpec {
       [modelNameRegex: string]: Record<string, string>
     },
     warmupErr?: string,
-  }
+  },
 }
 
 const createTestBranches = (): FinalVectorizeTestBranch[] => {
