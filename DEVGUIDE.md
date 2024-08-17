@@ -1,6 +1,6 @@
 # DEVGUIDE.md
 
-##  Contents
+## Contents
 1. [Running the tests](#running-the-tests)
    1. [Prerequisites](#prerequisites)
    2. [I can't be bothered to read all of this](#i-cant-be-bothered-to-read-all-of-this)
@@ -12,6 +12,8 @@
 2. [Typechecking & Linting](#typechecking--linting)
 3. [Building the library](#building-the-library)
 4. [Publishing](#publishing)
+5. [Misc](#misc)
+    1. [nix-shell + direnv support](#nix-shell--direnv-support)
 
 ## Running the tests
 
@@ -324,3 +326,15 @@ continue on to publish the package using `np --no-tests`.
 
 The versioning step will automatically update the api report + update the version in `src/version.ts`, so you don't
 need to worry about that.
+
+## Misc
+
+### nix-shell + direnv support
+
+This is in no way required, but just for convenience purposes, a `.envrc` file is present that will
+ - If you have nix, use the `shell.nix` to drop you into a nix-shell w/ `nodejs_20` & `jq`
+ - Ephemerally add the `scripts/` dir to `PATH`
+ - Ephemerally source `.env` into your shell
+
+In case you have `direnv` installed, but don't want to use this, you can of course simply do `direnv block` and never
+worry about any of this ever again.
