@@ -45,7 +45,7 @@
     "lint": "eslint src/* tests/*",
     "test": "sh scripts/test.sh",
     "build": "sh scripts/build.sh",
-    "version": "sh scripts/version.sh"
+    "version": "sh scripts/utils/version.sh"
   },
   "bugs": {
     "url": "https://github.com/datastax/astra-ts-client/issues"

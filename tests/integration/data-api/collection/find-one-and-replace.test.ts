@@ -121,14 +121,14 @@ parallel('integration.data-api.collection.find-one-and-replace', { truncateColls
     const res1 = await collection.findOneAndReplace(
       { key },
       { name: 'aaa', key },
-      { sort: { name: 1 }, returnDocument: 'before', includeResultMetadata: true },
+      { sort: { name: 1 }, includeResultMetadata: true },
     );
     assert.strictEqual(res1.value?.name, 'a');
 
     const res2 = await collection.findOneAndReplace(
       { key },
       { name: 'ccc', key },
-      { sort: { name: -1 }, returnDocument: 'before', includeResultMetadata: true },
+      { sort: { name: -1 }, includeResultMetadata: true },
     );
     assert.deepStrictEqual(res2.value?.name, 'c');
   });
@@ -166,7 +166,7 @@ parallel('integration.data-api.collection.find-one-and-replace', { truncateColls
     const res = await collection.findOneAndReplace(
       { key },
       { name: 'aaa', key },
-      { sort: { $vector: [1, 1, 1, 1, 1] }, returnDocument: 'before', includeResultMetadata: true },
+      { sort: { $vector: [1, 1, 1, 1, 1] }, includeResultMetadata: true },
     );
     assert.strictEqual(res.value?.name, 'a');
   });
@@ -181,7 +181,7 @@ parallel('integration.data-api.collection.find-one-and-replace', { truncateColls
     const res = await collection.findOneAndReplace(
       { key },
       { name: 'aaa', key },
-      { vector: [1, 1, 1, 1, 1], returnDocument: 'before', includeResultMetadata: true },
+      { vector: [1, 1, 1, 1, 1], includeResultMetadata: true },
     );
     assert.strictEqual(res.value?.name, 'a');
   });

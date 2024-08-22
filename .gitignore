@@ -139,3 +139,5 @@ tsdoc-metadata.json
 
 vectorize_test_spec.json
 etc/test-reports/
+
+.direnv

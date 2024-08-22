@@ -28,7 +28,7 @@ export type { FindOneOptions } from './find/find-one';
 export type { FindOneAndDeleteOptions } from './find/find-one-delete';
 export type { FindOneAndReplaceOptions } from './find/find-one-replace';
 export type { FindOneAndUpdateOptions } from './find/find-one-update';
-export type { InsertManyResult, InsertManyOptions, InsertManyOrderedOptions, InsertManyUnorderedOptions } from './insert/insert-many';
+export type { InsertManyResult, InsertManyOptions, InsertManyOrderedOptions, InsertManyUnorderedOptions, InsertManyDocumentResponse } from './insert/insert-many';
 export type { InsertOneOptions, InsertOneResult } from './insert/insert-one';
 export type * from './update/update-common';
 export type { UpdateManyResult, UpdateManyOptions } from './update/update-many';

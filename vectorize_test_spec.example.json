@@ -65,7 +65,8 @@
         "regionName": "___",
         "cloudName": "___"
       }
-    }
+    },
+    "warmupErr": "is currently loading"
   },
   "jinaAI": {
     "headers": {
@@ -73,7 +74,8 @@
     },
     "sharedSecret": {
       "providerKey": "___.providerKey"
-    }
+    },
+    "warmupErr": "The timeout period of 5000ms has been exceeded"
   },
   "mistral": {
     "headers": {
@@ -106,6 +108,7 @@
     },
     "sharedSecret": {
       "providerKey": "___.providerKey"
-    }
+    },
+    "warmupErr": "The timeout period of 5000ms has been exceeded"
   }
 }

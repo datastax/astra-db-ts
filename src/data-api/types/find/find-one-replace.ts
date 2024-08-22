@@ -18,14 +18,14 @@ import { WithTimeout } from '@/src/common/types';
 /** @internal */
 export interface FindOneAndReplaceCommand {
   findOneAndReplace: {
-    filter: Record<string, unknown>;
-    replacement: Record<string, unknown>;
+    filter: Record<string, unknown>,
+    replacement: Record<string, unknown>,
     options?: {
       returnDocument?: 'before' | 'after',
       upsert?: boolean,
     };
-    sort?: Sort;
-    projection?: Projection;
+    sort?: Sort,
+    projection?: Projection,
   };
 }
 
@@ -50,8 +50,12 @@ export interface FindOneAndReplaceOptions extends WithTimeout {
    * Set to `before` to return the document before the update to see the original state of the document.
    *
    * Set to `after` to return the document after the update to see the updated state of the document immediately.
+   *
+   * Defaults to `'before'`.
+   *
+   * @defaultValue 'before'
    */
-  returnDocument: 'before' | 'after',
+  returnDocument?: 'before' | 'after',
   /**
    * If true, perform an insert if no documents match the filter.
    *

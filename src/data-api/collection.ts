@@ -1403,7 +1403,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *   await collection.bulkWrite([
    *     { insertOne: { document: { _id: '1', name: 'John Doe' } } },
    *     { deleteOne: { filter: { name: 'John Doe' } } },
-   *   ]);
+   *   ], { ordered: true });
    *
    *   // Insert and delete operations, will cause a data race
    *   await collection.bulkWrite([
@@ -1599,7 +1599,7 @@ const insertMany = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient,
         returnDocumentResponses: true,
         ordered,
       },
-    }
+    },
   }
 
   let resp, err: DataAPIResponseError | undefined;
@@ -1615,7 +1615,7 @@ const insertMany = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient,
   }
 
   const documentResponses = resp.status!.documentResponses;
-  const errors = resp.errors!;
+  const errors = resp.errors;
 
   const insertedIds = [];
 
@@ -1625,7 +1625,7 @@ const insertMany = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient,
     if (resp.status === "OK") {
       insertedIds.push(resp._id);
     } else if (resp.errorIdx) {
-      resp.error = errors[resp.errorIdx];
+      resp.error = errors![resp.errorIdx];
       delete resp.errorIdx;
     }
   }
@@ -1650,7 +1650,7 @@ const bulkWriteOrdered = async <Schema extends SomeDoc>(httpClient: DataAPIHttpC
     const desc = e.detailedErrorDescriptors[0];
 
     if (desc.rawResponse.status) {
-      addToBulkWriteResult(results, desc.rawResponse.status, i)
+      addToBulkWriteResult(results, desc.rawResponse.status, i);
     }
 
     throw mkRespErrorFromResponse(BulkWriteError, desc.command, desc.rawResponse, { partialResult: results });

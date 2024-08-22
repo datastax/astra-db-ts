@@ -33,7 +33,7 @@ export const TEST_FILTER = (() => {
     .map((info) => {
       const filter = (info.type === 'regex')
         ? buildRegexFilter(info.filter)
-        : buildMatchFilter(info.filter)
+        : buildMatchFilter(info.filter);
 
       return [filter, info.inverted] as const;
     })

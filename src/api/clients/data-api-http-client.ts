@@ -39,7 +39,6 @@ import {
 } from '@/src/devops';
 import { isNullish, nullish, TokenProvider } from '@/src/common';
 import { EmbeddingHeadersProvider } from '@/src/data-api/embedding-providers';
-import { log } from 'node:console';
 
 /**
  * @internal

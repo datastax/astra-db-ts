@@ -51,7 +51,7 @@ import { validateAdminOpts } from '@/src/devops/utils';
  */
 export type DataAPIClientEvents =
   & DataAPICommandEvents
-  & AdminCommandEvents
+  & AdminCommandEvents;
 
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
@@ -359,7 +359,7 @@ function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
       ? new FetchNative() :
     (clientType === 'custom')
       ? (options!.httpOptions as CustomHttpClientOptions).fetcher
-      : tryLoadFetchH2(clientType, options)
+      : tryLoadFetchH2(clientType, options);
 
   return {
     ctx: ctx,
