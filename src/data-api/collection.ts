@@ -1403,7 +1403,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *   await collection.bulkWrite([
    *     { insertOne: { document: { _id: '1', name: 'John Doe' } } },
    *     { deleteOne: { filter: { name: 'John Doe' } } },
-   *   ]);
+   *   ], { ordered: true });
    *
    *   // Insert and delete operations, will cause a data race
    *   await collection.bulkWrite([
