@@ -1614,8 +1614,8 @@ const insertMany = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient,
     err = e;
   }
 
-  const documentResponses = resp.status?.documentResponses ?? [];
-  const errors = resp.errors!;
+  const documentResponses = resp.status!.documentResponses;
+  const errors = resp.errors;
 
   const insertedIds = [];
 
@@ -1625,7 +1625,7 @@ const insertMany = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient,
     if (resp.status === "OK") {
       insertedIds.push(resp._id);
     } else if (resp.errorIdx) {
-      resp.error = errors[resp.errorIdx];
+      resp.error = errors![resp.errorIdx];
       delete resp.errorIdx;
     }
   }
