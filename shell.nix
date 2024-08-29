@@ -1,7 +1,5 @@
 { pkgs ? import <nixpkgs> {} }:
 
-with pkgs;
-
-mkShell {
-  packages = [ nodejs_20 jq ];
+pkgs.mkShell {
+  packages = with pkgs; [ nodejs_20 jq ];
 }
