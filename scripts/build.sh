@@ -7,10 +7,10 @@ rm -rf ./dist
 node scripts/utils/build-version-file.js > src/version.ts
 
 # Transpiles the project
-npx tsc --project tsconfig.build.json
+npx tsc --project tsconfig.production.json
 
 # Replaces alias paths with relative paths (e.g. `@/src/version` -> `../../src/version`)
-npx tsc-alias -p tsconfig.build.json
+npx tsc-alias -p tsconfig.production.json
 
 # Creates the rollup .d.ts, generates an API report in etc/, and cleans up any temp files
 npx api-extractor run -c ./api-extractor.jsonc --local && rm -r ./temp
