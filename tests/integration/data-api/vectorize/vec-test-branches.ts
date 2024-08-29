@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { EmbeddingProviderInfo, EmbeddingProviderModelInfo } from '@/src/devops';
-import { AWSEmbeddingHeadersProvider, EmbeddingAPIKeyHeaderProvider, EmbeddingHeadersProvider } from '@/src/data-api';
+import { EmbeddingHeadersProvider } from '@/src/data-api';
 import { ENVIRONMENT } from '@/tests/testlib';
 import { VectorizeTestSpec } from '@/tests/integration/data-api/vectorize/vectorize.test';
 
@@ -72,7 +72,9 @@ const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingPr
   const auth = providerInfo['supportedAuthentication'];
   const branches: AuthBranch[] = []
 
-  const ehp = resolveHeaderProvider(spec);
+  const ehp = (Object.entries(spec?.headers ?? []).length)
+    ? { getHeaders: () => spec?.headers ?? {} } as EmbeddingHeadersProvider
+    : null;
 
   if (auth['HEADER']?.enabled && ehp) {
     branches.push({ ...branch, authType: 'header', header: ehp, branchName: `${branch.branchName}@header` });
@@ -89,24 +91,6 @@ const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingPr
   const modelInfo = providerInfo.models.find((m) => m.name === branch.modelName)!;
 
   return branches.flatMap(branchOnDimension(spec, modelInfo));
-}
-
-const resolveHeaderProvider = (spec: VectorizeTestSpec[string]) => {
-  const headers = Object.entries(spec?.headers ?? []).sort();
-
-  if (headers.length === 0) {
-    return null;
-  }
-
-  if (headers.length === 1 && headers[0][0] === 'x-embedding-api-key') {
-    return new EmbeddingAPIKeyHeaderProvider(headers[0][1]);
-  }
-
-  if (headers.length === 2 && headers[0][0] === 'x-embedding-access-id' && headers[1][0] === 'x-embedding-secret-id') {
-    return new AWSEmbeddingHeadersProvider(headers[0][1], headers[1][1]);
-  }
-
-  throw new Error(`No embeddings header provider resolved for headers ${headers}`);
 }
 
 interface DimensionBranch extends AuthBranch {
