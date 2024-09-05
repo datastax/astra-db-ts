@@ -68,6 +68,7 @@ export const DEFAULT_DEVOPS_API_AUTH_HEADER = 'Authorization';
  */
 export const DEFAULT_DEVOPS_API_ENDPOINTS = {
   prod: 'https://api.astra.datastax.com/v2',
+  test: 'https://api.test.cloud.datastax.com/v2',
   dev: 'https://api.dev.cloud.datastax.com/v2',
 };
 
