@@ -345,7 +345,7 @@ export class Db {
    *
    * // Untyped collection from different namespace
    * const users2 = db.collection("users", {
-   *   namespace: "my_namespace"
+   *   namespace: "my_namespace",
    * });
    * users2.insertOne({ nam3: "John" });
    * ```
@@ -607,7 +607,7 @@ export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, reg
   if (typeof regionOrOptions === 'string' && (endpointOrId.startsWith('https://') || endpointOrId.startsWith('http://'))) {
     throw new Error('Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { namespace })`?');
   }
- 
+
   const endpoint = (typeof regionOrOptions === 'string')
     ? 'https://' + endpointOrId + '-' + regionOrOptions + '.apps.astra.datastax.com'
     : endpointOrId;

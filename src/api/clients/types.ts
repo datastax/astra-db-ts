@@ -33,7 +33,7 @@ export interface HTTPClientOptions {
 /**
  * @internal
  */
-export type HeaderProvider = (() => Promise<Record<string, string>> | Record<string, string>);
+export type HeaderProvider = () => (Promise<Record<string, string>> | Record<string, string>);
 
 /**
  * @internal
