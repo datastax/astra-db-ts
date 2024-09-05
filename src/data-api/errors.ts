@@ -156,7 +156,7 @@ export class DataAPIHttpError extends DataAPIError {
    * @internal
    */
   constructor(resp: FetcherResponseInfo) {
-    super(`HTTP error: ${resp.status}${resp.body ? `; ${resp.body}` : ''}`);
+    super(`HTTP error (${resp.status}): ${resp.body ? resp.body : resp.statusText}`);
     this.status = resp.status;
     this.body = resp.body;
     this.raw = resp;
@@ -255,7 +255,7 @@ export class TooManyDocumentsToCountError extends DataAPIError {
  * try {
  *   await cursor.limit(10);
  * } catch (e) {
- *   if (e instanceof CursorAlreadyInitializedError) {
+ *   if (e instanceof CursorIsStartedError) {
  *     console.log(e.message); // "Cursor is already initialized..."
  *   }
  * }
@@ -271,7 +271,7 @@ export class CursorIsStartedError extends DataAPIError {
    */
   constructor(message: string) {
     super(message);
-    this.name = 'CursorAlreadyInitializedError';
+    this.name = 'CursorIsStartedError';
   }
 }
 
@@ -385,11 +385,16 @@ export class DataAPIResponseError extends DataAPIError {
    *
    * @internal
    */
-  constructor(message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) {
+  constructor(detailedErrDescriptors: DataAPIDetailedErrorDescriptor[]) {
+    const errorDescriptors = detailedErrDescriptors.flatMap(d => d.errorDescriptors);
+
+    const message = (errorDescriptors[0]?.message)
+      ? `${errorDescriptors[0].message}${errorDescriptors.length > 1 ? ` (+ ${errorDescriptors.length - 1} more errors)` : ''}`
+      : 'Something went wrong';
+
     super(message);
-    this.message = message;
     this.errorDescriptors = errorDescriptors;
-    this.detailedErrorDescriptors = detailedErrorDescriptors;
+    this.detailedErrorDescriptors = detailedErrDescriptors;
     this.name = 'DataAPIResponseError';
   }
 }
@@ -548,15 +553,15 @@ export class BulkWriteError extends CumulativeDataAPIError {
 /**
  * @internal
  */
-export const mkRespErrorFromResponse = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, command: Record<string, any>, raw: RawDataAPIResponse, attributes?: Omit<E, keyof DataAPIResponseError>) => {
+export const mkRespErrorFromResponse = <E extends DataAPIResponseError>(err: new (descs: DataAPIDetailedErrorDescriptor[]) => E, command: Record<string, any>, raw: RawDataAPIResponse, attributes?: Omit<E, keyof DataAPIResponseError>) => {
   return mkRespErrorFromResponses(err, [command], [raw], attributes);
 }
 
 /**
  * @internal
  */
-export const mkRespErrorFromResponses = <E extends DataAPIResponseError>(err: new (message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]) => E, commands: Record<string, any>[], raw: RawDataAPIResponse[], attributes?: Omit<E, keyof DataAPIResponseError>) => {
-  const detailedDescriptors = [] as DataAPIDetailedErrorDescriptor[];
+export const mkRespErrorFromResponses = <E extends DataAPIResponseError>(err: new (descs: DataAPIDetailedErrorDescriptor[]) => E, commands: Record<string, any>[], raw: RawDataAPIResponse[], attributes?: Omit<E, keyof DataAPIResponseError>) => {
+  const detailedErrDescriptors = [] as DataAPIDetailedErrorDescriptor[];
 
   for (let i = 0, n = commands.length; i < n; i++) {
     const command = commands[i], response = raw[i];
@@ -569,15 +574,12 @@ export const mkRespErrorFromResponses = <E extends DataAPIResponseError>(err: ne
         return { errorCode: error.errorCode, message: error.message, attributes };
       }) as DataAPIErrorDescriptor[];
 
-      const detailedDescriptor = { errorDescriptors: descriptors, command, rawResponse: response };
-      detailedDescriptors.push(detailedDescriptor);
+      const detailedErrDescriptor = { errorDescriptors: descriptors, command, rawResponse: response };
+      detailedErrDescriptors.push(detailedErrDescriptor);
     }
   }
 
-  const errorDescriptors = detailedDescriptors.flatMap(d => d.errorDescriptors);
-  const message = errorDescriptors[0]?.message || 'Something unexpected occurred';
-
-  const instance = new err(message, errorDescriptors, detailedDescriptors) ;
+  const instance = new err(detailedErrDescriptors) ;
   Object.assign(instance, attributes ?? {});
   return instance;
 }
