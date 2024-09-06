@@ -576,7 +576,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     const resp = await this._httpClient.executeCommand(command, {});
 
     this._nextPageState = resp.data?.nextPageState || null;
-    this._buffer = resp.data!.documents as TRaw[];
+    this._buffer = resp.data?.documents ?? [];
 
     this._sortVector ??= resp.status?.sortVector;
     this._options.includeSortVector = false;
