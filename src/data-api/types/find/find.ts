@@ -157,7 +157,7 @@ export interface FindOptions {
 
 /** @internal */
 export interface InternalFindOptions {
-  pagingState?: string,
+  pageState?: string,
   limit?: number,
   skip?: number,
   includeSimilarity?: boolean,

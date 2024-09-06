@@ -547,7 +547,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
       options.limit = this._options.limit;
     }
     if (this._nextPageState) {
-      options.pagingState = this._nextPageState;
+      options.pageState = this._nextPageState;
     }
     if (this._options.skip) {
       options.skip = this._options.skip;

@@ -459,7 +459,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     try {
       while (!resp || resp.status?.nextPageState) {
         resp = await this.#httpClient.executeCommand(command, { timeoutManager });
-        command.updateMany.options.pagingState = resp.status?.nextPageState ;
+        command.updateMany.options.pageState = resp.status?.nextPageState ;
         commonResult.modifiedCount += resp.status?.modifiedCount ?? 0;
         commonResult.matchedCount += resp.status?.matchedCount ?? 0;
       }
