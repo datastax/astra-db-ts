@@ -63,7 +63,7 @@
     "strip-comments": "^2.0.1",
     "ts-mocha": "^10.0.0",
     "tsc-alias": "^1.8.8",
-    "typescript": "^5.3.3"
+    "typescript": "^5.5.4"
   },
   "dependencies": {
     "fetch-h2": "^3.0.2",

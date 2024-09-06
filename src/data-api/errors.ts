@@ -393,6 +393,7 @@ export class DataAPIResponseError extends DataAPIError {
       : 'Something went wrong';
 
     super(message);
+    this.message = message;
     this.errorDescriptors = errorDescriptors;
     this.detailedErrorDescriptors = detailedErrDescriptors;
     this.name = 'DataAPIResponseError';

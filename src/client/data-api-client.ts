@@ -425,7 +425,7 @@ function validateHttpOpts(opts: DataAPIHttpOptions | undefined | null) {
   });
   validateOption('httpOptions.maxTimeMS', opts.maxTimeMS, 'number');
 
-  if (opts.client === 'default' || isNullish(opts.client)) {
+  if (opts.client === 'default' || !opts.client) {
     validateOption('httpOptions.preferHttp2', opts.preferHttp2, 'boolean');
 
     validateOption('httpOptions.http1 options', opts.http1, 'object', false, (http1) => {
