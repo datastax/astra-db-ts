@@ -175,5 +175,4 @@ if [ -n "$CLIENT_RUN_VECTORIZE_TESTS" ] && [ "$test_type" != 'code' ]; then
 fi
 
 # Run it
-echo "$cmd_to_run"
 eval "$cmd_to_run"
