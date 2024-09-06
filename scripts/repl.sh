@@ -11,10 +11,8 @@ if [ -z "$CLIENT_DB_TOKEN" ] || [ -z "$CLIENT_DB_TOKEN" ]; then
   exit 1
 fi
 
-# If not built already, build the client
-if [ ! -d "dist" ]; then
-  sh scripts/build.sh || exit 2
-fi
+# rebuild the client
+sh scripts/build.sh || exit 2
 
 # Start the REPL w/ some utility stuff and stuff
 node -i -e "
