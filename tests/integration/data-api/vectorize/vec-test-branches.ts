@@ -73,7 +73,7 @@ const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingPr
   const branches: AuthBranch[] = []
 
   const ehp = (Object.entries(spec?.headers ?? []).length)
-    ? { getHeaders: () => spec?.headers ?? {} } as EmbeddingHeadersProvider
+    ? new class extends EmbeddingHeadersProvider { getHeaders = () => spec?.headers ?? {} }
     : null;
 
   if (auth['HEADER']?.enabled && ehp) {

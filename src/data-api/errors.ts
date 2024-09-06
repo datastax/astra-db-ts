@@ -390,7 +390,7 @@ export class DataAPIResponseError extends DataAPIError {
 
     const message = (errorDescriptors[0]?.message)
       ? `${errorDescriptors[0].message}${errorDescriptors.length > 1 ? ` (+ ${errorDescriptors.length - 1} more errors)` : ''}`
-      : 'Something went wrong';
+      : `Something went wrong (${errorDescriptors.length} errors)`;
 
     super(message);
     this.message = message;
