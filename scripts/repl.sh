@@ -11,12 +11,12 @@ if [ -z "$CLIENT_DB_TOKEN" ] || [ -z "$CLIENT_DB_TOKEN" ]; then
   exit 1
 fi
 
-# Rebuild the client
+# Rebuild the client (without types or any extra processing for speed)
 sh scripts/build.sh -light || exit 2
 
 # Start the REPL w/ some utility stuff and stuff
 node -i -e "
-  require('./node_modules/dotenv').config();
+  require('./node_modules/dotenv/config');
 
   const $ = require('./dist');
 
