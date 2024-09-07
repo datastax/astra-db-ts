@@ -1527,7 +1527,7 @@ const insertManyOrdered = async <Schema extends SomeDoc>(httpClient: DataAPIHttp
   for (let i = 0, n = documents.length; i < n; i += chunkSize) {
     const slice = documents.slice(i, i + chunkSize);
 
-    const [docResp, inserted, errDesc] = await insertMany<Schema>(httpClient, slice, true, timeoutManager);
+    const [_docResp, inserted, errDesc] = await insertMany<Schema>(httpClient, slice, true, timeoutManager);
     insertedIds.push(...inserted);
 
     if (errDesc) {
@@ -1536,8 +1536,8 @@ const insertManyOrdered = async <Schema extends SomeDoc>(httpClient: DataAPIHttp
           insertedIds: insertedIds as SomeId[],
           insertedCount: insertedIds.length,
         },
-        documentResponses: docResp,
-        failedCount: docResp.length - insertedIds.length,
+        // documentResponses: docResp,
+        // failedCount: docResp.length - insertedIds.length,
       });
     }
   }
@@ -1583,8 +1583,8 @@ const insertManyUnordered = async <Schema extends SomeDoc>(httpClient: DataAPIHt
         insertedIds: insertedIds as SomeId[],
         insertedCount: insertedIds.length,
       },
-      documentResponses: docResps,
-      failedCount: docResps.length - insertedIds.length,
+      // documentResponses: docResps,
+      // failedCount: docResps.length - insertedIds.length,
     });
   }
 
@@ -1614,7 +1614,7 @@ const insertMany = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient,
     err = e;
   }
 
-  const documentResponses = resp.status!.documentResponses;
+  const documentResponses = resp.status?.documentResponses ?? [];
   const errors = resp.errors;
 
   const insertedIds = [];

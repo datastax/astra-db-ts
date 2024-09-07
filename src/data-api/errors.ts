@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { InsertManyDocumentResponse, InsertManyResult } from '@/src/data-api/types/insert/insert-many';
+import type { InsertManyResult } from '@/src/data-api/types/insert/insert-many';
 import type { DeleteManyResult } from '@/src/data-api/types/delete/delete-many';
 import type { UpdateManyResult } from '@/src/data-api/types/update/update-many';
 import type { BulkWriteResult } from '@/src/data-api/types/misc/bulk-write';
 import type { FetcherResponseInfo, RawDataAPIResponse } from '@/src/api';
-import { SomeDoc } from '@/src/data-api/types/document';
+import type { SomeDoc } from '@/src/data-api/types/document';
 
 /**
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a
@@ -455,19 +455,19 @@ export class InsertManyError extends CumulativeDataAPIError {
    * of all successful insertions.
    */
   declare public readonly partialResult: InsertManyResult<SomeDoc>;
-
-  /**
-   * The specific statuses and ids for each document present in the `insertMany` command
-   *
-   * The position of each document response is the same as its corresponding document in the input `documents` array
-   */
-  declare public readonly documentResponses: InsertManyDocumentResponse<SomeDoc>[];
-
-  /**
-   * The number of documents which failed insertion (i.e. their status in {@link InsertManyError.documentResponses} was
-   * `'ERROR'` or `'SKIPPED'`)
-   */
-  declare public readonly failedCount: number;
+  //
+  // /**
+  //  * The specific statuses and ids for each document present in the `insertMany` command
+  //  *
+  //  * The position of each document response is the same as its corresponding document in the input `documents` array
+  //  */
+  // declare public readonly documentResponses: InsertManyDocumentResponse<SomeDoc>[];
+  //
+  // /**
+  //  * The number of documents which failed insertion (i.e. their status in {@link InsertManyError.documentResponses} was
+  //  * `'ERROR'` or `'SKIPPED'`)
+  //  */
+  // declare public readonly failedCount: number;
 }
 
 /**
