@@ -14,7 +14,7 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import { AdminBlockingOptions, AdminSpawnOptions, CreateNamespaceOptions, FullDatabaseInfo } from '@/src/devops/types';
-import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_NAMESPACE, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
+import { DEFAULT_DEVOPS_API_ENDPOINTS, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
 import { Db } from '@/src/data-api';
 import { DbAdmin } from '@/src/devops/db-admin';
 import { WithTimeout } from '@/src/common/types';
@@ -187,7 +187,7 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns A promise that resolves to list of all the namespaces in the database.
    */
   public override async listNamespaces(options?: WithTimeout): Promise<string[]> {
-    return this.info(options).then(i => [i.info.keyspace ?? DEFAULT_NAMESPACE, ...i.info.additionalKeyspaces ?? []].filter(Boolean))
+    return this.info(options).then(i => [i.info.keyspace!, ...i.info.additionalKeyspaces ?? []].filter(Boolean))
   }
 
   /**

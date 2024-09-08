@@ -38,6 +38,14 @@ parallel('integration.misc.timeouts', ({ collection, dbAdmin }) => {
       }, DataAPITimeoutError);
     });
 
+    it('should timeout @ the http-client level if timeout is negative', async () => {
+      const httpClient = collection['_httpClient'];
+
+      await assert.rejects(async () => {
+        await httpClient.executeCommand({ findOne: { filter: {} } }, { maxTimeMS: -1 });
+      }, DataAPITimeoutError);
+    });
+
     it('should timeout based on DataAPIClient maxTimeMS', async () => {
       const collection = new DataAPIClient(TEST_APPLICATION_TOKEN, { httpOptions: { maxTimeMS: 1 }, environment: ENVIRONMENT })
         .db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE })

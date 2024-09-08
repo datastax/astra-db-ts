@@ -27,7 +27,7 @@ export class FetchH2 implements Fetcher {
   constructor(options: DefaultHttpClientOptions | undefined, preferHttp2: boolean) {
     try {
       /* Complicated expression to stop Next.js and such from tracing require and trying to load the fetch-h2 client */
-      const [indirectRequire] = [require].map(x => Math.random() > 10 ? null! : x);
+      const [indirectRequire] = [require].map(x => isNaN(Math.random()) ? null! : x);
 
       const fetchH2 = validateFetchH2(options?.fetchH2) ?? indirectRequire('fetch-h2') as typeof import('fetch-h2');
 
@@ -92,7 +92,7 @@ function validateFetchH2(fetchH2: unknown): typeof import('fetch-h2') | nullish 
 
   for (const prop of ['context', 'TimeoutError']) {
     if (!(prop in fetchH2)) {
-      throw new Error(`fetchH2 missing the required ${prop} property`)
+      throw new TypeError(`fetchH2 missing the required '${prop}' property`)
     }
   }
 

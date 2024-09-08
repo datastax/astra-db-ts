@@ -42,6 +42,9 @@ export class FetchNative implements Fetcher {
       if (e.name === 'TimeoutError') {
         throw info.mkTimeoutError();
       }
+      if (e instanceof TypeError && e.message === 'fetch failed' && 'cause' in e) {
+        throw e.cause;
+      }
       throw e;
     }
   }

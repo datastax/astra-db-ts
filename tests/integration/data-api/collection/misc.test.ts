@@ -20,7 +20,7 @@ import assert from 'assert';
 
 parallel('integration.data-api.collection.misc', ({ db }) => {
   it('times out on http2', async () => {
-    const { db: newDb } = initTestObjects('default:http2');
+    const { db: newDb } = initTestObjects({ httpClient: 'default:http2' });
 
     try {
       await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });
@@ -31,7 +31,7 @@ parallel('integration.data-api.collection.misc', ({ db }) => {
   });
 
   it('times out on http1', async () => {
-    const { db: newDb } = initTestObjects('default:http1');
+    const { db: newDb } = initTestObjects({ httpClient: 'default:http1' });
 
     try {
       await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });

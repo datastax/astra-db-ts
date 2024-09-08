@@ -102,7 +102,7 @@ export class Db {
     const combinedDbOpts = {
       ...rootOpts.dbOptions,
       ...dbOpts,
-    }
+    };
 
     this._namespace = {
       ref: (rootOpts.environment === 'astra')
@@ -554,7 +554,7 @@ export class Db {
           explain: options?.nameOnly !== true,
         },
       },
-    }
+    };
 
     const resp = await this.#httpClient.executeCommand(command, options);
     return resp.status!.collections;

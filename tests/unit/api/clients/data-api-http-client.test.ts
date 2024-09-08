@@ -18,7 +18,7 @@ import { UUID, ObjectId } from '@/src/data-api';
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('unit.api.data-api-http-client', () => {
+describe('unit.api.clients.data-api-http-client', () => {
   describe('replacer tests', () => {
     it('works', () => {
       const actual = JSON.stringify({
