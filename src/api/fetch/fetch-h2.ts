@@ -66,7 +66,7 @@ export class FetchH2 implements Fetcher {
         url: resp.url,
         httpVersion: resp.httpVersion,
         statusText: resp.statusText,
-      }
+      };
     } catch (e) {
       if (e instanceof this._timeoutErrorCls) {
         throw info.mkTimeoutError();
@@ -92,7 +92,7 @@ function validateFetchH2(fetchH2: unknown): typeof import('fetch-h2') | nullish 
 
   for (const prop of ['context', 'TimeoutError']) {
     if (!(prop in fetchH2)) {
-      throw new TypeError(`fetchH2 missing the required '${prop}' property`)
+      throw new TypeError(`fetchH2 missing the required '${prop}' property`);
     }
   }
 
