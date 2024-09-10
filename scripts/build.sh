@@ -8,7 +8,7 @@ node scripts/utils/build-version-file.js > src/version.ts
 
 # Transpiles the project
 if [ "$1" = "-light" ]; then
-  npx tsc --project tsconfig.production.json -d false
+  npx tsc --project tsconfig.production.json -d false --noCheck
 else
   npx tsc --project tsconfig.production.json
 fi
