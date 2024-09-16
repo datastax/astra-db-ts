@@ -33,7 +33,7 @@ export type DatabaseTier = 'developer' | 'A5' | 'A10' | 'A20' | 'A40' | 'C10' | 
  *
  * @public
  */
-export type DatabaseStatus = 'ACTIVE' | 'PENDING' | 'PREPARING' | 'PREPARED' | 'INITIALIZING' | 'PARKED' | 'PARKING' | 'UNPARKING' | 'TERMINATED' | 'TERMINATING' | 'RESIZING' | 'ERROR' | 'MAINTENANCE' | 'SUSPENDED' | 'UNKNOWN';
+export type DatabaseStatus = 'ACTIVE' | 'ERROR' | 'DECOMMISSIONING' | 'DEGRADED' | 'HIBERNATED' | 'HIBERNATING' | 'INITIALIZING' | 'MAINTENANCE' | 'PARKED' | 'PARKING' | 'PENDING' | 'PREPARED' | 'PREPARING' | 'RESIZING' | 'RESUMING' | 'TERMINATED' | 'TERMINATING' | 'UNKNOWN' | 'UNPARKING' | 'SYNCHRONIZING';
 
 /**
  * List of actions that can be performed on a database.
