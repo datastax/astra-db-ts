@@ -14,13 +14,13 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import { AdminBlockingOptions, AdminSpawnOptions, CreateNamespaceOptions, FullDatabaseInfo } from '@/src/devops/types';
-import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_NAMESPACE, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
+import { DEFAULT_DEVOPS_API_ENDPOINTS, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
 import { Db } from '@/src/data-api';
 import { DbAdmin } from '@/src/devops/db-admin';
 import { WithTimeout } from '@/src/common/types';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { isNullish, StaticTokenProvider, TokenProvider } from '@/src/common';
-import { validateAdminOpts } from '@/src/devops/utils';
+import { extractAstraEnvironment, validateAdminOpts } from '@/src/devops/utils';
 import { FindEmbeddingProvidersResult } from '@/src/devops/types/db-admin/find-embedding-providers';
 
 /**
@@ -81,9 +81,7 @@ export class AstraDbAdmin extends DbAdmin {
       ? dbToken
       : _adminToken
 
-    const environment = (endpoint.includes('apps.astra-dev.datastax.com'))
-      ? 'dev'
-      : 'prod';
+    const environment = extractAstraEnvironment(endpoint);
 
     this.#httpClient = new DevOpsAPIHttpClient({
       baseUrl: combinedAdminOpts.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINTS[environment],
@@ -189,7 +187,7 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns A promise that resolves to list of all the namespaces in the database.
    */
   public override async listNamespaces(options?: WithTimeout): Promise<string[]> {
-    return this.info(options).then(i => [i.info.keyspace ?? DEFAULT_NAMESPACE, ...i.info.additionalKeyspaces ?? []].filter(Boolean))
+    return this.info(options).then(i => [i.info.keyspace!, ...i.info.additionalKeyspaces ?? []].filter(Boolean))
   }
 
   /**

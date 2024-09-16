@@ -432,7 +432,7 @@ export type DataAPIHttpOptions = DefaultHttpClientOptions | FetchHttpClientOptio
 // @public
 export class DataAPIResponseError extends DataAPIError {
     // @internal
-    constructor(message: string, errorDescriptors: DataAPIErrorDescriptor[], detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[]);
+    constructor(detailedErrDescriptors: DataAPIDetailedErrorDescriptor[]);
     readonly detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[];
     readonly errorDescriptors: DataAPIErrorDescriptor[];
     readonly message: string;

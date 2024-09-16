@@ -24,3 +24,19 @@ export function validateAdminOpts(opts: AdminSpawnOptions | undefined) {
     validateOption('adminOptions.endpointUrl', opts.endpointUrl, 'string');
   });
 }
+
+/**
+ * @internal
+ */
+export function extractAstraEnvironment(endpoint: string) {
+  switch (true) {
+    case endpoint.includes('apps.astra-dev.datastax.com'):
+      return 'dev';
+    case endpoint.includes('apps.astra-test.datastax.com'):
+      return 'test';
+    case endpoint.includes('apps.astra.datastax.com'):
+      return 'prod';
+    default:
+      throw new Error(`Cannot extract astra environment for endpoint '${endpoint}'`)
+  }
+}

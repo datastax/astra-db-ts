@@ -17,17 +17,18 @@ import assert from 'assert';
 import { DevOpsAPIResponseError } from '@/src/devops';
 import { DEFAULT_NAMESPACE, HttpMethods } from '@/src/api';
 import { TimeoutManager } from '@/src/api/timeout-managers';
-import { background, it, TEMP_DB_NAME } from '@/tests/testlib';
+import { background, initTestObjects, it, TEMP_DB_NAME } from '@/tests/testlib';
 
-background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', ({ client }) => {
+background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () => {
   it('works', async () => {
-    for (const db of await client.admin().listDatabases()) {
+    const { client } = initTestObjects({ monitoring: true });
+    const admin = client.admin();
+
+    for (const db of await admin.listDatabases()) {
       if (db.info.name === TEMP_DB_NAME && db.status !== 'TERMINATING') {
-        void client.admin().dropDatabase(db.id, { maxTimeMS: 720000 });
+        void admin.dropDatabase(db.id, { maxTimeMS: 720000 });
       }
     }
-
-    const admin = client.admin();
 
     const asyncDbAdmin = await admin.createDatabase({
       name: TEMP_DB_NAME,
@@ -124,7 +125,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', ({ c
     }
 
     {
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, null!, {
+      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['PENDING', 'INITIALIZING'],
         defaultPollInterval: 10000,
@@ -155,7 +156,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', ({ c
       const dbs1 = await admin.listDatabases();
       assert.ok(dbs1.find(db => db.id === dbAdmin.id), `in ${dbType}`);
 
-      const dbs2 = await admin.listDatabases({ include: 'ACTIVE' });
+      const dbs2 = await admin.listDatabases({ include: 'ACTIVE', provider: 'GCP', limit: 56 });
       assert.ok(dbs2.find(db => db.id === dbAdmin.id), `in ${dbType}`);
 
       const namespaces = await dbAdmin.listNamespaces();
@@ -173,7 +174,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', ({ c
 
     {
       await syncDbAdmin.createNamespace('other_namespace');
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, null!, {
+      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
         defaultPollInterval: 1000,
@@ -198,7 +199,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', ({ c
 
     {
       await syncDbAdmin.dropNamespace('other_namespace', { blocking: true });
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, null!, {
+      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
         defaultPollInterval: 1000,
@@ -225,7 +226,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', ({ c
 
     {
       await admin.dropDatabase(syncDb, { maxTimeMS: 720000 });
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, null!, {
+      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'TERMINATED',
         legalStates: ['TERMINATING'],
         defaultPollInterval: 10000,

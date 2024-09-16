@@ -196,8 +196,8 @@ parallel('integration.data-api.collection.find-one-and-update', { truncateColls:
   it('should findOneAndUpdate with $vector sort', async (key) => {
     await collection.insertMany([
       { name: 'a', $vector: [1.0, 1.0, 1.0, 1.0, 1.0], key },
-      { name: 'c', $vector: [-.1, -.1, -.1, -.1, -.1], key },
-      { name: 'b', $vector: [-.1, -.1, -.1, -.1, -.1], key },
+      { name: 'c', $vector: [-.1, -.2, -.3, -.4, -.5], key },
+      { name: 'b', $vector: [-.1, -.2, -.3, -.4, -.5], key },
     ]);
 
     const res = await collection.findOneAndUpdate(
@@ -211,8 +211,8 @@ parallel('integration.data-api.collection.find-one-and-update', { truncateColls:
   it('should findOneAndUpdate with vector sort in option', async (key) => {
     await collection.insertMany([
       { name: 'a', $vector: [1.0, 1.0, 1.0, 1.0, 1.0], key },
-      { name: 'c', $vector: [-.1, -.1, -.1, -.1, -.1], key },
-      { name: 'b', $vector: [-.1, -.1, -.1, -.1, -.1], key },
+      { name: 'c', $vector: [-.1, -.2, -.3, -.4, -.5], key },
+      { name: 'b', $vector: [-.1, -.2, -.3, -.4, -.5], key },
     ]);
 
     const res = await collection.findOneAndUpdate(

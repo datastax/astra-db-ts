@@ -360,7 +360,7 @@ export class AstraAdmin {
       dbType: 'vector',
       keyspace: config.namespace || DEFAULT_NAMESPACE,
       ...config,
-    }
+    };
 
     const resp = await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,

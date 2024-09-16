@@ -27,14 +27,23 @@ import {
   TEST_APPLICATION_URI, TEST_HTTP_CLIENT,
 } from '@/tests/testlib/config';
 
-export const initTestObjects = (httpClient: typeof TEST_HTTP_CLIENT = TEST_HTTP_CLIENT, environment: typeof ENVIRONMENT = ENVIRONMENT) => {
+export interface TestObjectsOptions {
+  httpClient?: typeof TEST_HTTP_CLIENT,
+  env?: typeof ENVIRONMENT,
+  monitoring?: boolean,
+}
+
+export const initTestObjects = (opts?: TestObjectsOptions) => {
+  const { httpClient = TEST_HTTP_CLIENT, env = ENVIRONMENT, monitoring = false } = opts ?? {};
+
   const preferHttp2 = httpClient === 'default:http2';
   const clientType = httpClient.split(':')[0];
 
   const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {
     httpOptions: { preferHttp2, client: <any>clientType, maxTimeMS: 60000 },
-    dbOptions: { namespace: DEFAULT_NAMESPACE },
-    environment: environment,
+    dbOptions: { namespace: DEFAULT_NAMESPACE, monitorCommands: monitoring },
+    adminOptions: { monitorCommands: monitoring },
+    environment: env,
   });
 
   const db = client.db(TEST_APPLICATION_URI);

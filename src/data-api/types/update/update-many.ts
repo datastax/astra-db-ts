@@ -22,7 +22,7 @@ export interface UpdateManyCommand {
     filter: Record<string, unknown>;
     update: Record<string, any>;
     options: UpdateManyOptions & {
-      pagingState?: string;
+      pageState?: string;
     };
   }
 }

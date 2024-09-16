@@ -547,7 +547,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
       options.limit = this._options.limit;
     }
     if (this._nextPageState) {
-      options.pagingState = this._nextPageState;
+      options.pageState = this._nextPageState;
     }
     if (this._options.skip) {
       options.skip = this._options.skip;
@@ -576,7 +576,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     const resp = await this._httpClient.executeCommand(command, {});
 
     this._nextPageState = resp.data?.nextPageState || null;
-    this._buffer = resp.data!.documents as TRaw[];
+    this._buffer = resp.data?.documents ?? [];
 
     this._sortVector ??= resp.status?.sortVector;
     this._options.includeSortVector = false;

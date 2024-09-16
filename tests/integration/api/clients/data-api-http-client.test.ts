@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIResponseError } from '@/src/data-api';
+import { DataAPIHttpError, DataAPIResponseError } from '@/src/data-api';
 import {
   DEFAULT_COLLECTION_NAME,
   describe,
@@ -26,7 +26,7 @@ import {
 import { DataAPIHttpClient } from '@/src/api';
 import assert from 'assert';
 
-describe('integration.api.data-api-http-client', ({ db }) => {
+describe('integration.api.clients.data-api-http-client', ({ db }) => {
   let httpClient: DataAPIHttpClient;
 
   before(async () => {
@@ -59,7 +59,7 @@ describe('integration.api.data-api-http-client', ({ db }) => {
       assert.ok(resp.status?.insertedIds[0]);
     });
 
-    it('should error on invalid token', async () => {
+    it('should error on DataAPIResponseError token', async () => {
       const { client } = initTestObjects();
       const httpClient = client.db(TEST_APPLICATION_URI, { token: 'invalid-token' })['_httpClient'];
 
@@ -71,6 +71,20 @@ describe('integration.api.data-api-http-client', ({ db }) => {
         assert.strictEqual(e.errorDescriptors.length, 1);
         assert.strictEqual(e.detailedErrorDescriptors.length, 1);
         assert.strictEqual(e.errorDescriptors[0].errorCode, 'UNAUTHENTICATED_REQUEST');
+      }
+    });
+
+    it('should throw DataAPIHttpError on invalid url', async () => {
+      const { client } = initTestObjects();
+      const httpClient = client.db(TEST_APPLICATION_URI + '/invalid_path')['_httpClient'];
+
+      try {
+        await httpClient.executeCommand({ findCollections: {} }, {});
+        assert.fail('Expected error');
+      } catch (e) {
+        assert.ok(e instanceof DataAPIHttpError);
+        assert.strictEqual(e.status, 404);
+        assert.strictEqual(typeof e.body, 'string');
       }
     });
   });

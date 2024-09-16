@@ -47,7 +47,8 @@
     },
     "sharedSecret": {
       "providerKey": "___.providerKey"
-    }
+    },
+    "warmupErr": "is currently loading"
   },
   "huggingfaceDedicated": {
     "headers": {

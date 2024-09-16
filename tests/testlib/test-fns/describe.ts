@@ -18,7 +18,7 @@ import { DEFAULT_COLLECTION_NAME, OTHER_NAMESPACE } from '@/tests/testlib/config
 import { afterEach } from 'mocha';
 import { checkTestsEnabled, dropEphemeralColls } from '@/tests/testlib/utils';
 import { parallelTestState } from '@/tests/testlib/test-fns/parallel';
-import { backgroundTestState, CURRENT_DESCRIBE_NAMES } from '@/tests/testlib';
+import { backgroundTestState, CURRENT_DESCRIBE_NAMES, GLOBAL_FIXTURES } from '@/tests/testlib';
 
 export type SuiteBlock = (fixtures: ReturnType<typeof initTestObjects>) => void;
 
@@ -60,10 +60,10 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
 
     if (opts?.truncateColls?.includes(':')) {
       global[opts.truncateColls.split(':')[1] as keyof typeof globalThis](async () => {
-        await fixtures.collection.deleteMany({});
+        await GLOBAL_FIXTURES.collection.deleteMany({});
 
         if (opts?.truncateColls?.startsWith('both')) {
-          await fixtures.db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE }).deleteMany({});
+          await GLOBAL_FIXTURES.db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE }).deleteMany({});
         }
       });
     }

@@ -213,7 +213,9 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    *   useHttp2: false,
    * });
    *
-   * const db3 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', { token: 'AstraCS:...' });
+   * const db3 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', {
+   *   token: 'AstraCS:...'
+   * });
    * ```
    *
    * @remarks
@@ -248,7 +250,9 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    *   useHttp2: false,
    * });
    *
-   * const db3 = client.db('a6a1d8d6-31bc-4af8-be57-377566f345bf', 'us-east1', { token: 'AstraCS:...' });
+   * const db3 = client.db('a6a1d8d6-31bc-4af8-be57-377566f345bf', 'us-east1', {
+   *   token: 'AstraCS:...'
+   * });
    * ```
    *
    * @remarks
@@ -421,7 +425,7 @@ function validateHttpOpts(opts: DataAPIHttpOptions | undefined | null) {
   });
   validateOption('httpOptions.maxTimeMS', opts.maxTimeMS, 'number');
 
-  if (opts.client === 'default' || isNullish(opts.client)) {
+  if (opts.client === 'default' || !opts.client) {
     validateOption('httpOptions.preferHttp2', opts.preferHttp2, 'boolean');
 
     validateOption('httpOptions.http1 options', opts.http1, 'object', false, (http1) => {
