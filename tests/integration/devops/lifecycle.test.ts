@@ -125,7 +125,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
     }
 
     {
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, null!, {
+      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['PENDING', 'INITIALIZING'],
         defaultPollInterval: 10000,
@@ -156,7 +156,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
       const dbs1 = await admin.listDatabases();
       assert.ok(dbs1.find(db => db.id === dbAdmin.id), `in ${dbType}`);
 
-      const dbs2 = await admin.listDatabases({ include: 'ACTIVE', provider: 'GCP', limit: 56, skip: 0 });
+      const dbs2 = await admin.listDatabases({ include: 'ACTIVE', provider: 'GCP', limit: 56 });
       assert.ok(dbs2.find(db => db.id === dbAdmin.id), `in ${dbType}`);
 
       const namespaces = await dbAdmin.listNamespaces();
@@ -174,7 +174,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
 
     {
       await syncDbAdmin.createNamespace('other_namespace');
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, null!, {
+      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
         defaultPollInterval: 1000,
@@ -199,7 +199,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
 
     {
       await syncDbAdmin.dropNamespace('other_namespace', { blocking: true });
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, null!, {
+      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
         defaultPollInterval: 1000,
@@ -226,7 +226,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
 
     {
       await admin.dropDatabase(syncDb, { maxTimeMS: 720000 });
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, null!, {
+      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'TERMINATED',
         legalStates: ['TERMINATING'],
         defaultPollInterval: 10000,
