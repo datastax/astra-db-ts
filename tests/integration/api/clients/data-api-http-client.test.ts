@@ -19,7 +19,7 @@ import {
   describe,
   initTestObjects,
   it,
-  OTHER_NAMESPACE,
+  OTHER_KEYSPACE,
   parallel,
   TEST_APPLICATION_URI,
 } from '@/tests/testlib';
@@ -45,7 +45,7 @@ describe('integration.api.clients.data-api-http-client', ({ db }) => {
       const resp = await httpClient.executeCommand({
         findCollections: {},
       }, {
-        namespace: OTHER_NAMESPACE,
+        keyspace: OTHER_KEYSPACE,
       });
       assert.strictEqual(resp.status?.collections.length, 1);
     });

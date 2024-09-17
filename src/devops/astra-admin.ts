@@ -22,11 +22,11 @@ import {
   ListDatabasesOptions,
 } from '@/src/devops/types';
 import { Db, DbSpawnOptions } from '@/src/data-api';
-import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_NAMESPACE, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
+import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
 import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { mkDb } from '@/src/data-api/db';
-import { TokenProvider, WithTimeout } from '@/src/common';
+import { resolveKeyspace, TokenProvider, WithTimeout } from '@/src/common';
 import { validateAdminOpts } from '@/src/devops/utils';
 
 /**
@@ -102,7 +102,7 @@ export class AstraAdmin {
    * const db1 = admin.db('https://<db_id>-<region>.apps.astra.datastax.com');
    *
    * const db2 = admin.db('https://<db_id>-<region>.apps.astra.datastax.com', {
-   *   namespace: 'my-namespace',
+   *   keyspace: 'my-keyspace',
    *   useHttp2: false,
    * });
    * ```
@@ -135,7 +135,7 @@ export class AstraAdmin {
    * const db1 = admin.db('a6a1d8d6-31bc-4af8-be57-377566f345bf', 'us-east1');
    *
    * const db2 = admin.db('a6a1d8d6-31bc-4af8-be57-377566f345bf', 'us-east1', {
-   *   namespace: 'my-namespace',
+   *   keyspace: 'my-keyspace',
    *   useHttp2: false,
    * });
    * ```
@@ -177,7 +177,7 @@ export class AstraAdmin {
    * const dbAdmin1 = admin.dbAdmin('https://<db_id>-<region>...');
    *
    * const dbAdmin2 = admin.dbAdmin('https://<db_id>-<region>...', {
-   *   namespace: 'my-namespace',
+   *   keyspace: 'my-keyspace',
    *   useHttp2: false,
    * });
    * ```
@@ -213,7 +213,7 @@ export class AstraAdmin {
    * const dbAdmin1 = admin.dbAdmin('a6a1d8d6-...-377566f345bf', 'us-east1');
    *
    * const dbAdmin2 = admin.dbAdmin('a6a1d8d6-...-377566f345bf', 'us-east1', {
-   *   namespace: 'my-namespace',
+   *   keyspace: 'my-keyspace',
    *   useHttp2: false,
    * });
    * ```
@@ -341,7 +341,7 @@ export class AstraAdmin {
    *   name: 'my_database_2',
    *   cloudProvider: 'GCP',
    *   region: 'us-east1',
-   *   namespace: 'my_namespace',
+   *   keyspace: 'my_keyspace',
    * }, {
    *   blocking: false,
    *   dbOptions: {
@@ -368,7 +368,7 @@ export class AstraAdmin {
       capacityUnits: 1,
       tier: 'serverless',
       dbType: 'vector',
-      keyspace: config.namespace || DEFAULT_NAMESPACE,
+      keyspace: resolveKeyspace(config) || DEFAULT_KEYSPACE,
       ...config,
     };
 
@@ -384,7 +384,7 @@ export class AstraAdmin {
       options,
     });
 
-    const db = mkDb(this.#defaultOpts, resp.headers.location, definition.region, { ...options?.dbOptions, namespace: definition.keyspace });
+    const db = mkDb(this.#defaultOpts, resp.headers.location, definition.region, { ...options?.dbOptions, keyspace: definition.keyspace });
     return db.admin(this.#defaultOpts.adminOptions);
   }
 

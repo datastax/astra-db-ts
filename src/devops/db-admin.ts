@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { AdminBlockingOptions, CreateNamespaceOptions } from '@/src/devops/types';
+import { AdminBlockingOptions, CreateKeyspaceOptions, CreateNamespac3Options } from '@/src/devops/types';
 import { Db } from '@/src/data-api';
 import { FindEmbeddingProvidersResult } from '@/src/devops/types/db-admin/find-embedding-providers';
 import { WithTimeout } from '@/src/common';
@@ -36,7 +36,7 @@ export abstract class DbAdmin {
    * @example
    * ```typescript
    * const dbAdmin = client.admin().dbAdmin('<endpoint>', {
-   *   namespace: 'my-namespace',
+   *   keyspace: 'my-keyspace',
    *   useHttp2: false,
    * });
    *
@@ -66,83 +66,112 @@ export abstract class DbAdmin {
    */
   abstract findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
   /**
-   * Retrieves a list of all the namespaces in the database.
+   * Retrieves a list of all the keyspaces in the database.
    *
    * Semantic order is not guaranteed, but implementations are free to assign one. {@link AstraDbAdmin}, for example,
    * always has the first keyspace in the array be the default one.
    *
    * @example
    * ```typescript
-   * const namespaces = await dbAdmin.listNamespaces();
+   * const keyspaces = await dbAdmin.listKeyspaces();
    *
    * // ['default_keyspace', 'my_other_keyspace']
-   * console.log(namespaces);
+   * console.log(keyspaces);
    * ```
    *
-   * @returns A promise that resolves to list of all the namespaces in the database.
+   * @returns A promise that resolves to list of all the keyspaces in the database.
    */
-  abstract listNamespaces(): Promise<string[]>;
+  abstract listKeyspaces(): Promise<string[]>;
   /**
-   * Creates a new, additional, namespace (aka keyspace) for this database.
+   * Retrieves a list of all the keyspaces in the database.
+   *
+   * Creates a new, additional, keyspace for this database.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link DbAdmin.listKeyspaces}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link DbAdmin.listKeyspaces} instead.
+   */
+  abstract listNamespac3s(): Promise<string[]>;
+  /**
+   * Creates a new, additional, keyspace for this database.
    *
    * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 1 second. Expect it to take roughly 8-10 seconds to complete.
    *
    * @example
    * ```typescript
-   * await dbAdmin.createNamespace('my_other_keyspace1');
+   * await dbAdmin.createKeyspace('my_other_keyspace1');
    *
    * // ['default_keyspace', 'my_other_keyspace1']
-   * console.log(await dbAdmin.listNamespaces());
+   * console.log(await dbAdmin.listKeyspaces());
    *
-   * await dbAdmin.createNamespace('my_other_keyspace2', {
+   * await dbAdmin.createKeyspace('my_other_keyspace2', {
    *   blocking: false,
    * });
    *
    * // Will not include 'my_other_keyspace2' until the operation completes
-   * console.log(await dbAdmin.listNamespaces());
+   * console.log(await dbAdmin.listKeyspaces());
    * ```
    *
    * @remarks
-   * Note that if you choose not to block, the created namespace will not be able to be used until the
+   * Note that if you choose not to block, the created keyspace will not be able to be used until the
    * operation completes, which is up to the caller to determine.
    *
-   * @param namespace - The name of the new namespace.
+   * @param keyspace - The name of the new keyspace.
    * @param options - The options for the blocking behavior of the operation.
    *
    * @returns A promise that resolves when the operation completes.
    */
-  abstract createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void>;
+  abstract createKeyspace(keyspace: string, options?: CreateKeyspaceOptions): Promise<void>;
   /**
-   * Drops a namespace (aka keyspace) from this database.
+   * Creates a new, additional, keyspace for this database.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link DbAdmin.createKeyspace}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link DbAdmin.createKeyspace} instead.
+   */
+  abstract createNamespac3(keyspace: string, options?: CreateNamespac3Options): Promise<void>;
+  /**
+   * Drops a keyspace from this database.
    *
    * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 1 second. Expect it to take roughly 8-10 seconds to complete.
    *
    * @example
    * ```typescript
-   * await dbAdmin.dropNamespace('my_other_keyspace1');
+   * await dbAdmin.dropKeyspace('my_other_keyspace1');
    *
    * // ['default_keyspace', 'my_other_keyspace2']
-   * console.log(await dbAdmin.listNamespaces());
+   * console.log(await dbAdmin.listKeyspaces());
    *
-   * await dbAdmin.dropNamespace('my_other_keyspace2', {
+   * await dbAdmin.dropKeyspace('my_other_keyspace2', {
    *   blocking: false,
    * });
    *
    * // Will still include 'my_other_keyspace2' until the operation completes
    * // ['default_keyspace', 'my_other_keyspace2']
-   * console.log(await dbAdmin.listNamespaces());
+   * console.log(await dbAdmin.listKeyspaces());
    * ```
    *
    * @remarks
-   * Note that if you choose not to block, the namespace will still be able to be used until the operation
+   * Note that if you choose not to block, the keyspace will still be able to be used until the operation
    * completes, which is up to the caller to determine.
    *
-   * @param namespace - The name of the namespace to drop.
+   * @param keyspace - The name of the keyspace to drop.
    * @param options - The options for the blocking behavior of the operation.
    *
    * @returns A promise that resolves when the operation completes.
    */
-  abstract dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
+  abstract dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
+  /**
+   * Drops a keyspace from this database.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link DbAdmin.dropKeyspace}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link DbAdmin.dropKeyspace} instead.
+   */
+  abstract dropNamespac3(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
 }

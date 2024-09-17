@@ -31,7 +31,7 @@ export interface CreateCollectionCommand {
  * @field vector - The vector configuration for the collection.
  * @field indexing - The indexing configuration for the collection.
  * @field defaultId - The default ID for the collection.
- * @field namespace - Overrides the namespace for the collection.
+ * @field keyspace - Overrides the keyspace for the collection.
  * @field maxTimeMS - The maximum time to allow the operation to run.
  * @field checkExists - Whether to check if the collection exists before creating it.
  *

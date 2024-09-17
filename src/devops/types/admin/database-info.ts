@@ -105,7 +105,7 @@ export interface DatabaseInfo {
    */
   name: string,
   /**
-   * Keyspace (aka namespace) name in database. If not passed, keyspace is created with name "default_keyspace"
+   * Keyspace name in database. If not passed, keyspace is created with name "default_keyspace"
    */
   keyspace?: string,
   /**

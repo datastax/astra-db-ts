@@ -14,6 +14,7 @@
 
 import { DataAPIEnvironment, nullish } from '@/src/common/types';
 import { DataAPIEnvironments } from '@/src/common/constants';
+import { WithKeyspace, WithNullableKeyspace } from '@/src/data-api';
 
 export function isNullish(t: unknown): t is nullish {
   return t === null || t === undefined;
@@ -31,4 +32,14 @@ export function jsonTryParse<T>(json: string, otherwise: T, reviver?: (this: any
   } catch (_) {
     return otherwise;
   }
+}
+
+export function resolveKeyspace(obj: WithKeyspace | nullish, allowNull?: false): string | undefined
+
+export function resolveKeyspace(obj: WithNullableKeyspace | nullish, allowNull: true): string | nullish
+
+export function resolveKeyspace(obj: WithNullableKeyspace | nullish, allowNull?: boolean): string | nullish {
+  return (!allowNull)
+    ? obj?.keyspace ?? (<any>obj)?.namespac3 ?? undefined
+    : obj?.keyspace ?? (<any>obj)?.namespac3;
 }

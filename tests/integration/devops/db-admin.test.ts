@@ -24,19 +24,19 @@ parallel('integration.devops.db-admin', ({ client, dbAdmin }) => {
       ? db.admin({ environment: ENVIRONMENT })
       : db.admin({ environment: ENVIRONMENT });
 
-    const namespaces1 = await dbAdmin.listNamespaces();
+    const namespaces1 = await dbAdmin.listKeyspaces();
     assert.ok(!namespaces1.includes('slania'));
 
-    await dbAdmin.createNamespace('slania', { updateDbNamespace: true });
-    assert.strictEqual(db.namespace, 'slania');
+    await dbAdmin.createKeyspace('slania', { updateDbNamespace: true });
+    assert.strictEqual(db.keyspace, 'slania');
 
-    const namespaces2 = await dbAdmin.listNamespaces();
+    const namespaces2 = await dbAdmin.listKeyspaces();
     assert.ok(namespaces2.includes('slania'));
 
-    await dbAdmin.dropNamespace('slania');
-    assert.strictEqual(db.namespace, 'slania');
+    await dbAdmin.dropKeyspace('slania');
+    assert.strictEqual(db.keyspace, 'slania');
 
-    const namespaces3 = await dbAdmin.listNamespaces();
+    const namespaces3 = await dbAdmin.listKeyspaces();
     assert.ok(!namespaces3.includes('slania'));
   });
 

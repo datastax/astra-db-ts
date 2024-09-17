@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { WithNamespace } from '@/src/data-api';
+import { WithKeyspace } from '@/src/data-api';
 import { EmbeddingHeadersProvider } from '@/src/data-api/embedding-providers';
 
 /**
@@ -20,7 +20,7 @@ import { EmbeddingHeadersProvider } from '@/src/data-api/embedding-providers';
  *
  * @public
  */
-export interface CollectionSpawnOptions extends WithNamespace {
+export interface CollectionSpawnOptions extends WithKeyspace {
   /**
    * The API key for the embedding service to use, or the {@link EmbeddingHeadersProvider} if using
    * a provider that requires it (e.g. AWS bedrock).

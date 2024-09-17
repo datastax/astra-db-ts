@@ -209,7 +209,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * const db1 = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
    *
    * const db2 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', {
-   *   namespace: 'my-namespace',
+   *   keyspace: 'my-keyspace',
    *   useHttp2: false,
    * });
    *
@@ -246,7 +246,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * const db1 = client.db('a6a1d8d6-31bc-4af8-be57-377566f345bf', 'us-east1');
    *
    * const db2 = client.db('a6a1d8d6-31bc-4af8-be57-377566f345bf', 'us-east1', {
-   *   namespace: 'my-namespace',
+   *   keyspace: 'my-keyspace',
    *   useHttp2: false,
    * });
    *

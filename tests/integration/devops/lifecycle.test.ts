@@ -15,7 +15,7 @@
 
 import assert from 'assert';
 import { DevOpsAPIResponseError } from '@/src/devops';
-import { DEFAULT_NAMESPACE, HttpMethods } from '@/src/api';
+import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/api';
 import { TimeoutManager } from '@/src/api/timeout-managers';
 import { background, initTestObjects, it, TEMP_DB_NAME } from '@/tests/testlib';
 
@@ -34,7 +34,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
       name: TEMP_DB_NAME,
       cloudProvider: 'GCP',
       region: 'us-east1',
-      namespace: 'my_namespace',
+      keyspace: 'my_namespace',
     }, {
       blocking: false,
       maxTimeMS: 720000,
@@ -44,7 +44,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
     {
       assert.ok(asyncDb.id);
       assert.ok(asyncDbAdmin.id);
-      assert.strictEqual(asyncDb.namespace, 'my_namespace');
+      assert.strictEqual(asyncDb.keyspace, 'my_namespace');
     }
 
     {
@@ -113,7 +113,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
     {
       assert.ok(syncDb.id);
       assert.ok(syncDbAdmin.id);
-      assert.strictEqual(syncDb.namespace, DEFAULT_NAMESPACE);
+      assert.strictEqual(syncDb.keyspace, DEFAULT_KEYSPACE);
     }
 
     {
@@ -121,7 +121,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
       assert.strictEqual(dbInfo.name, TEMP_DB_NAME);
       assert.strictEqual(dbInfo.cloudProvider, 'GCP');
       assert.strictEqual(dbInfo.region, 'us-east1');
-      assert.strictEqual(dbInfo.keyspace, DEFAULT_NAMESPACE);
+      assert.strictEqual(dbInfo.keyspace, DEFAULT_KEYSPACE);
     }
 
     {
@@ -140,7 +140,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
       assert.strictEqual(dbInfo.info.name, TEMP_DB_NAME);
       assert.strictEqual(dbInfo.info.cloudProvider, 'GCP');
       assert.strictEqual(dbInfo.info.region, 'us-east1');
-      assert.strictEqual(dbInfo.info.keyspace, db.namespace);
+      assert.strictEqual(dbInfo.info.keyspace, db.keyspace);
 
       const collections1 = await db.listCollections({ nameOnly: true });
       assert.deepStrictEqual(collections1, [], `in ${dbType}`);
@@ -159,12 +159,12 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
       const dbs2 = await admin.listDatabases({ include: 'ACTIVE', provider: 'GCP', limit: 56 });
       assert.ok(dbs2.find(db => db.id === dbAdmin.id), `in ${dbType}`);
 
-      const namespaces = await dbAdmin.listNamespaces();
-      assert.deepStrictEqual(namespaces, [db.namespace], `in ${dbType}`);
+      const namespaces = await dbAdmin.listKeyspaces();
+      assert.deepStrictEqual(namespaces, [db.keyspace], `in ${dbType}`);
     }
 
     {
-      await asyncDbAdmin.createNamespace('other_namespace', { blocking: false });
+      await asyncDbAdmin.createKeyspace('other_namespace', { blocking: false });
 
       const fullDbInfo3 = await asyncDbAdmin.info();
       assert.strictEqual(fullDbInfo3.status, 'MAINTENANCE');
@@ -173,7 +173,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
     }
 
     {
-      await syncDbAdmin.createNamespace('other_namespace');
+      await syncDbAdmin.createKeyspace('other_namespace');
       await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
@@ -184,12 +184,12 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
     }
 
     for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
-      const namespaces2 = await dbAdmin.listNamespaces();
-      assert.deepStrictEqual(namespaces2, [db.namespace, 'other_namespace'], `in ${dbType}`);
+      const namespaces2 = await dbAdmin.listKeyspaces();
+      assert.deepStrictEqual(namespaces2, [db.keyspace, 'other_namespace'], `in ${dbType}`);
     }
 
     {
-      await asyncDbAdmin.dropNamespace('other_namespace', { blocking: false });
+      await asyncDbAdmin.dropKeyspace('other_namespace', { blocking: false });
 
       const fullDbInfo4 = await asyncDbAdmin.info();
       assert.strictEqual(fullDbInfo4.status, 'MAINTENANCE');
@@ -198,7 +198,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
     }
 
     {
-      await syncDbAdmin.dropNamespace('other_namespace', { blocking: true });
+      await syncDbAdmin.dropKeyspace('other_namespace', { blocking: true });
       await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
@@ -211,11 +211,11 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
     for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
       const dbInfo = await dbAdmin.info();
       assert.strictEqual(dbInfo.status, 'ACTIVE');
-      assert.strictEqual(dbInfo.info.keyspace, db.namespace);
+      assert.strictEqual(dbInfo.info.keyspace, db.keyspace);
       assert.strictEqual(dbInfo.info.additionalKeyspaces, undefined);
 
-      const namespaces3 = await dbAdmin.listNamespaces();
-      assert.deepStrictEqual(namespaces3, [db.namespace], `in ${dbType}`);
+      const namespaces3 = await dbAdmin.listKeyspaces();
+      assert.deepStrictEqual(namespaces3, [db.keyspace], `in ${dbType}`);
     }
 
     {

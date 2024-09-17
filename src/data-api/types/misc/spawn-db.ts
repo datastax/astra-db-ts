@@ -23,44 +23,53 @@ import { TokenProvider } from '@/src/common';
  */
 export interface DbSpawnOptions {
   /**
-   * The namespace (aka keyspace) to use for the database.
+   * The keyspace to use for the database.
    *
-   * There are a few rules for what the default namespace will be:
-   * 1. If a namespace was provided when creating the {@link DataAPIClient}, it will default to that value.
-   * 2. If using an `astra` database, it'll default to "default_namespace".
+   * There are a few rules for what the default keyspace will be:
+   * 1. If a keyspace was provided when creating the {@link DataAPIClient}, it will default to that value.
+   * 2. If using an `astra` database, it'll default to "default_keyspace".
    * 3. Otherwise, no default will be set, and it'll be on the user to provide one when necessary.
    *
-   * The client itself will not throw an error if an invalid namespace (or even no namespace at all) is provided—it'll
+   * The client itself will not throw an error if an invalid keyspace (or even no keyspace at all) is provided—it'll
    * let the Data API propagate the error itself.
    *
-   * Every db method will use this namespace as the default namespace, but they all allow you to override it
+   * Every db method will use this keyspace as the default keyspace, but they all allow you to override it
    * in their options.
    *
    * @example
    * ```typescript
    * const client = new DataAPIClient('AstraCS:...');
    *
-   * // Using 'default_keyspace' as the namespace
+   * // Using 'default_keyspace' as the keyspace
    * const db1 = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
    *
-   * // Using 'my_namespace' as the namespace
+   * // Using 'my_keyspace' as the keyspace
    * const db2 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', {
-   *   namespace: 'my_keyspace',
+   *   keyspace: 'my_keyspace',
    * });
    *
    * // Finds 'my_collection' in 'default_keyspace'
    * const coll1 = db1.collection('my_collection');
    *
-   * // Finds 'my_collection' in 'my_namespace'
+   * // Finds 'my_collection' in 'my_keyspace'
    * const coll2 = db1.collection('my_collection');
    *
    * // Finds 'my_collection' in 'other_keyspace'
-   * const coll3 = db1.collection('my_collection', { namespace: 'other_keyspace' });
+   * const coll3 = db1.collection('my_collection', { keyspace: 'other_keyspace' });
    * ```
    *
    * @defaultValue 'default_keyspace'
    */
-  namespace?: string,
+  keyspace?: string,
+  /**
+   * The keyspace to use for the database.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link DbSpawnOptions.keyspace}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link DbSpawnOptions.keyspace} instead.
+   */
+  namespac3?: string,
   /**
    * Whether to monitor commands for {@link Db}-level & {@link Collection}-level events through an event emitter.
    *

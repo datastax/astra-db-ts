@@ -278,19 +278,29 @@ export class CursorIsStartedError extends DataAPIError {
 /**
  * An exception thrown when certain operations are attempted on a collection that does not exist.
  *
- * @field namespace - The namespace that the collection was not found in
+ * @field keyspace - The keyspace that the collection was not found in
  * @field collectionName - The name of the collection that was not found
  *
  * @public
  */
 export class CollectionNotFoundError extends DataAPIError {
   /**
-   * The namespace where the collection already exists
+   * The keyspace where the collection is not found.
    */
-  public readonly namespace: string;
+  public readonly keyspace: string;
 
   /**
-   * The name of the collection that already exists
+   * The keyspace where the collection is not found.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link CollectionNotFoundError.keyspace}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link CollectionNotFoundError.keyspace} instead.
+   */
+  public readonly namespac3: string;
+
+  /**
+   * The name of the collection that is not found.
    */
   public readonly collectionName: string;
 
@@ -299,9 +309,9 @@ export class CollectionNotFoundError extends DataAPIError {
    *
    * @internal
    */
-  constructor(namespace: string, collectionName: string) {
-    super(`Collection '${namespace}.${collectionName}' not found`);
-    this.namespace = namespace;
+  constructor(keyspace: string, collectionName: string) {
+    super(`Collection '${keyspace}.${collectionName}' not found`);
+    this.keyspace = this.namespac3 = keyspace;
     this.collectionName = collectionName;
     this.name = 'CollectionNotFoundError';
   }
@@ -311,16 +321,26 @@ export class CollectionNotFoundError extends DataAPIError {
  * An exception thrown when an operation that expects a collection not to exist is attempted on a collection that
  * already exists.
  *
- * @field namespace - The namespace where the collection already exists
+ * @field keyspace - The keyspace where the collection already exists
  * @field collectionName - The name of the collection that already exists
  *
  * @public
  */
 export class CollectionAlreadyExistsError extends DataAPIError {
   /**
-   * The namespace where the collection already exists
+   * The keyspace where the collection already exists
    */
-  public readonly namespace: string;
+  public readonly keyspace: string;
+
+  /**
+   * The keyspace where the collection already exists
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link CollectionNotFoundError.keyspace}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link CollectionNotFoundError.keyspace} instead.
+   */
+  public readonly namespac3: string;
 
   /**
    * The name of the collection that already exists
@@ -332,9 +352,9 @@ export class CollectionAlreadyExistsError extends DataAPIError {
    *
    * @internal
    */
-  constructor(namespace: string, collectionName: string) {
-    super(`Collection '${namespace}.${collectionName}' already exists`);
-    this.namespace = namespace;
+  constructor(keyspace: string, collectionName: string) {
+    super(`Collection '${keyspace}.${collectionName}' already exists`);
+    this.keyspace = this.namespac3 = keyspace;
     this.collectionName = collectionName;
     this.name = 'CollectionAlreadyExistsError';
   }

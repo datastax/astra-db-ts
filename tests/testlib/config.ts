@@ -40,7 +40,7 @@ export const TEMP_DB_NAME = 'astra-test-db-plus-random-name-1284';
 export const DEFAULT_COLLECTION_NAME = 'test_coll';
 export const EPHEMERAL_COLLECTION_NAME = 'temp_coll';
 
-export const OTHER_NAMESPACE = 'other_keyspace';
+export const OTHER_KEYSPACE = 'other_keyspace';
 
 export const TEST_HTTP_CLIENT = testHttpClient;
 

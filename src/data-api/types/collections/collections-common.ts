@@ -194,39 +194,64 @@ export interface DefaultIdOptions {
 }
 
 /**
- * Allows you to override the namespace (aka keyspace) to use for some db operation. If not specified,
- * the db operation will use either the namespace provided when creating the Db instance, the namespace
- * provided when creating the DataAPIClient instance, or the default namespace `'default_keyspace'`.
+ * Allows you to override the keyspace to use for some db operation. If not specified,
+ * the db operation will use either the keyspace provided when creating the Db instance, the keyspace
+ * provided when creating the DataAPIClient instance, or the default keyspace `'default_keyspace'`.
  * (in that order)
  *
  * @example
  * ```typescript
  * const client = new DataAPIClient('AstraCS:...');
  *
- * // Using 'default_keyspace' as the namespace
+ * // Using 'default_keyspace' as the keyspace
  * const db1 = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
  *
- * // Using 'my_namespace' as the namespace
+ * // Using 'my_keyspace' as the keyspace
  * const db2 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', {
- *   namespace: 'my_keyspace',
+ *   keyspace: 'my_keyspace',
  * });
  *
  * // Finds 'my_collection' in 'default_keyspace'
  * const coll1 = db1.collection('my_collection');
  *
- * // Finds 'my_collection' in 'my_namespace'
+ * // Finds 'my_collection' in 'my_keyspace'
  * const coll2 = db1.collection('my_collection', {
- *   namespace: 'my_namespace',
+ *   keyspace: 'my_keyspace',
  * });
  * ```
  *
- * @field namespace - The namespace (aka keyspace) to use for the db operation.
+ * @field keyspace - The keyspace to use for the db operation.
  *
  * @public
  */
-export interface WithNamespace {
+export interface WithKeyspace {
   /**
-   * The namespace (aka keyspace) to use for the db operation.
+   * The keyspace to use for the operation.
    */
-  namespace?: string
+  keyspace?: string
+  /**
+   * The keyspace to use for the operation.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link WithKeyspace.keyspace}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link WithKeyspace.keyspace} instead.
+   */
+  namespac3?: string
 }
+
+/**
+ * @internal
+ */
+export interface WithNullableKeyspace {
+  keyspace?: string | null;
+  namespac3?: string | null;
+}
+
+/**
+ * This is now a deprecated alias for the strictly equivalent {@link WithKeyspace}, and will be removed
+ * in an upcoming major version.
+ *
+ * @deprecated - Prefer {@link WithKeyspace} instead.
+ */
+export type WithNamespac3 = WithKeyspace;

@@ -12,38 +12,38 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DEFAULT_NAMESPACE } from '@/src/api';
-import { DEFAULT_COLLECTION_NAME, OTHER_NAMESPACE } from '@/tests/testlib/config';
+import { DEFAULT_KEYSPACE } from '@/src/api';
+import { DEFAULT_COLLECTION_NAME, OTHER_KEYSPACE } from '@/tests/testlib/config';
 import { GLOBAL_FIXTURES } from '@/tests/testlib';
 
-const TEST_NAMESPACES = [DEFAULT_NAMESPACE, OTHER_NAMESPACE];
+const TEST_KEYSPACES = [DEFAULT_KEYSPACE, OTHER_KEYSPACE];
 
 before(async () => {
   const { db, dbAdmin } = GLOBAL_FIXTURES;
-  const allNamespaces = await dbAdmin.listNamespaces();
+  const allNamespaces = await dbAdmin.listKeyspaces();
 
   if (allNamespaces.includes('slania')) {
     console.log(`deleting namespace 'slania'`);
-    await dbAdmin.dropNamespace('slania');
+    await dbAdmin.dropKeyspace('slania');
   }
 
-  for (const namespace of TEST_NAMESPACES) {
+  for (const namespace of TEST_KEYSPACES) {
     if (!allNamespaces.includes(namespace)) {
       console.log(`creating namespace '${namespace}'`);
-      await dbAdmin.createNamespace(namespace);
+      await dbAdmin.createKeyspace(namespace);
     }
   }
 
-  const createCollPromises = TEST_NAMESPACES
+  const createCollPromises = TEST_KEYSPACES
     .map(async (namespace) => {
-      await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace })
+      await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespac3: namespace })
         .then(c => c.deleteMany({}));
     })
     .awaitAll();
 
-  const allCollections = await TEST_NAMESPACES
+  const allCollections = await TEST_KEYSPACES
     .map(async (namespace) => {
-      const colls = await db.listCollections({ namespace, nameOnly: true });
+      const colls = await db.listCollections({ namespac3: namespace, nameOnly: true });
       return [namespace, colls] as const;
     })
     .awaitAll();
@@ -51,9 +51,9 @@ before(async () => {
   await allCollections
     .map(async ([namespace, colls]) => {
       await colls
-        .filter(c => TEST_NAMESPACES.includes(namespace) ? c !== DEFAULT_COLLECTION_NAME : true)
+        .filter(c => TEST_KEYSPACES.includes(namespace) ? c !== DEFAULT_COLLECTION_NAME : true)
         .tap(c => console.log(`deleting collection '${namespace}.${c}'`))
-        .map(c => db.dropCollection(c, { namespace }))
+        .map(c => db.dropCollection(c, { namespac3: namespace }))
         .awaitAll();
     })
     .awaitAll();

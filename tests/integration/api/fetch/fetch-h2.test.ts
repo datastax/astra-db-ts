@@ -14,12 +14,12 @@
 // noinspection DuplicatedCode
 
 import { DEMO_APPLICATION_URI, it, parallel, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/testlib';
-import { DEFAULT_NAMESPACE, FetchH2 } from '@/src/api';
+import { DEFAULT_KEYSPACE, FetchH2 } from '@/src/api';
 import assert from 'assert';
 
 parallel('integration.api.fetch.fetch-h2', () => {
   const genericOptions = <const>{
-    url: `${TEST_APPLICATION_URI}/api/json/v1/${DEFAULT_NAMESPACE}`,
+    url: `${TEST_APPLICATION_URI}/api/json/v1/${DEFAULT_KEYSPACE}`,
     method: 'POST',
     body: JSON.stringify({ findCollections: {} }),
     headers: { Token: TEST_APPLICATION_TOKEN },

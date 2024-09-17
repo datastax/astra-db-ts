@@ -43,7 +43,7 @@ export type HttpMethodStrings = typeof HttpMethods[keyof typeof HttpMethods];
 /**
  * @internal
  */
-export type NamespaceRef = Ref<string | undefined>;
+export type KeyspaceRef = Ref<string | undefined>;
 
 /**
  * @internal

@@ -35,7 +35,7 @@ describe('unit.data-api.cursor', () => {
 
     it('should contain the proper namespace', () => {
       const cursor = new FindCursor<any>('default_keyspace', httpClient, {});
-      assert.strictEqual(cursor.namespace, 'default_keyspace', 'Cursor has bad namespace');
+      assert.strictEqual(cursor.keyspace, 'default_keyspace', 'Cursor has bad namespace');
     });
 
     it('should contain the proper options', () => {

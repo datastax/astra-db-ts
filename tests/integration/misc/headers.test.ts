@@ -17,7 +17,7 @@ import { DataAPIClient } from '@/src/client';
 import {
   DEFAULT_DATA_API_AUTH_HEADER,
   DEFAULT_DEVOPS_API_AUTH_HEADER,
-  DEFAULT_NAMESPACE,
+  DEFAULT_KEYSPACE,
   FetchNative,
 } from '@/src/api';
 import { nullish, Ref, StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvider } from '@/src/common';
@@ -48,7 +48,7 @@ parallel('integration.misc.headers', () => {
       },
     },
     dbOptions: {
-      namespace: DEFAULT_NAMESPACE,
+      keyspace: DEFAULT_KEYSPACE,
     },
   });
 
@@ -116,13 +116,13 @@ parallel('integration.misc.headers', () => {
       const db = client.db(TEST_APPLICATION_URI, { token: new CyclingTokenProvider() });
       const dbAdmin = db.admin({ environment: ENVIRONMENT as 'astra' });
 
-      await assert.rejects(() => dbAdmin.listNamespaces());
+      await assert.rejects(() => dbAdmin.listKeyspaces());
       assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], 'Bearer tree');
 
-      await assert.rejects(() => dbAdmin.listNamespaces());
+      await assert.rejects(() => dbAdmin.listKeyspaces());
       assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], 'Bearer of');
 
-      await assert.rejects(() => dbAdmin.listNamespaces());
+      await assert.rejects(() => dbAdmin.listKeyspaces());
       assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], 'Bearer ages');
     });
 
@@ -147,21 +147,21 @@ parallel('integration.misc.headers', () => {
 
       if (ENVIRONMENT === 'astra') {
         const dbAdmin1 = db1.admin({ environment: ENVIRONMENT });
-        const namespaces = await dbAdmin1.listNamespaces();
+        const namespaces = await dbAdmin1.listKeyspaces();
         assert.ok(Array.isArray(namespaces));
         assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], `Bearer ${TEST_APPLICATION_TOKEN}`);
 
         const dbAdmin2 = db1.admin({ environment: ENVIRONMENT, adminToken: badTokenProvider });
-        await assert.rejects(() => dbAdmin2.listNamespaces());
+        await assert.rejects(() => dbAdmin2.listKeyspaces());
         assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], `Bearer ${badTokenProvider.getToken()}`);
       } else {
         const dbAdmin1 = db1.admin({ environment: ENVIRONMENT });
-        const namespaces = await dbAdmin1.listNamespaces();
+        const namespaces = await dbAdmin1.listKeyspaces();
         assert.ok(Array.isArray(namespaces));
         assert.strictEqual(latestHeaders.ref[DEFAULT_DATA_API_AUTH_HEADER], TEST_APPLICATION_TOKEN);
 
         const dbAdmin2 = db1.admin({ environment: ENVIRONMENT, adminToken: badTokenProvider });
-        await assert.rejects(() => dbAdmin2.listNamespaces());
+        await assert.rejects(() => dbAdmin2.listKeyspaces());
         assert.strictEqual(latestHeaders.ref[DEFAULT_DATA_API_AUTH_HEADER], badTokenProvider.getToken());
       }
     });

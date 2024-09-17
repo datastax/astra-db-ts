@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DEFAULT_NAMESPACE } from '@/src/api';
-import { DEFAULT_COLLECTION_NAME, OTHER_NAMESPACE, TEST_APPLICATION_URI } from '@/tests/testlib/config';
+import { DEFAULT_KEYSPACE } from '@/src/api';
+import { DEFAULT_COLLECTION_NAME, OTHER_KEYSPACE, TEST_APPLICATION_URI } from '@/tests/testlib/config';
 import { Collection } from '@/src/data-api';
 import { GLOBAL_FIXTURES } from '@/tests/testlib/global';
 
@@ -28,12 +28,12 @@ export async function tryCatchErr(fn: () => void | Promise<void>) {
 export async function dropEphemeralColls() {
   const promises: Promise<boolean>[] = [];
 
-  for (const namespace of [DEFAULT_NAMESPACE, OTHER_NAMESPACE]) {
-    const collections = await GLOBAL_FIXTURES.db.listCollections({ namespace });
+  for (const namespace of [DEFAULT_KEYSPACE, OTHER_KEYSPACE]) {
+    const collections = await GLOBAL_FIXTURES.db.listCollections({ namespac3: namespace });
 
     collections
       .filter(c => c.name !== DEFAULT_COLLECTION_NAME)
-      .forEach(c => promises.push(GLOBAL_FIXTURES.db.dropCollection(c.name, { namespace })));
+      .forEach(c => promises.push(GLOBAL_FIXTURES.db.dropCollection(c.name, { namespac3: namespace })));
   }
 
   await Promise.all(promises);

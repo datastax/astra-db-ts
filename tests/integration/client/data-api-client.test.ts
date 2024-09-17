@@ -17,13 +17,13 @@ import { DataAPIClient } from '@/src/client';
 import assert from 'assert';
 import { DataAPIResponseError, DataAPITimeoutError } from '@/src/data-api';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
-import { DEFAULT_DATA_API_PATHS, DEFAULT_NAMESPACE, DEFAULT_TIMEOUT } from '@/src/api';
+import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE, DEFAULT_TIMEOUT } from '@/src/api';
 import {
   DEFAULT_COLLECTION_NAME,
   describe,
   ENVIRONMENT,
   it,
-  OTHER_NAMESPACE,
+  OTHER_KEYSPACE,
   parallel,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
@@ -33,7 +33,7 @@ describe('integration.client.data-api-client', () => {
   parallel('db', () => {
     it('properly connects to a db by endpoint', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
+      const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
       const collections = await db.listCollections();
       assert.ok(Array.isArray(collections));
     });
@@ -48,7 +48,7 @@ describe('integration.client.data-api-client', () => {
     });
 
     it('lets Data API deal with throwing missing token error', async () => {
-      const db = new DataAPIClient({ environment: ENVIRONMENT }).db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
+      const db = new DataAPIClient({ environment: ENVIRONMENT }).db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
       await assert.rejects(() => db.listCollections(), { message: 'Role unauthorized for operation: Missing token, expecting one in the Token header.' });
     });
   });
@@ -56,7 +56,7 @@ describe('integration.client.data-api-client', () => {
   describe('close', () => {
     it('should not allow operations after closing the client', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
+      const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
       await client.close();
 
       try {
@@ -72,7 +72,7 @@ describe('integration.client.data-api-client', () => {
   describe('asyncDispose', () => {
     it('should not allow operations after using the client', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
+      const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
 
       {
         await using _client = client;
@@ -91,7 +91,7 @@ describe('integration.client.data-api-client', () => {
   parallel('monitoring commands', () => {
     it('should not emit any command events when not enabled', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
+      const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
       client.on('commandStarted', () => assert.fail('should not have emitted commandStarted event'));
@@ -103,7 +103,7 @@ describe('integration.client.data-api-client', () => {
 
     it('should not emit any command events when set to false', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { monitorCommands: false }, environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
+      const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
       client.on('commandStarted', () => assert.fail('should not have emitted commandStarted event'));
@@ -115,9 +115,9 @@ describe('integration.client.data-api-client', () => {
 
     it('should allow cross-collection monitoring of successful commands when enabled', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { monitorCommands: true }, environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
+      const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
       const collection1 = db.collection(DEFAULT_COLLECTION_NAME);
-      const collection2 = db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
+      const collection2 = db.collection(DEFAULT_COLLECTION_NAME, { namespac3: OTHER_KEYSPACE });
 
       const startedEvents: CommandStartedEvent[] = [];
       const succeededEvents: CommandSucceededEvent[] = [];
@@ -147,20 +147,20 @@ describe('integration.client.data-api-client', () => {
       assert.strictEqual(startedEvents[1].commandName, 'deleteOne');
       assert.strictEqual(succeededEvents[1].commandName, 'deleteOne');
 
-      assert.strictEqual(startedEvents[0].namespace, DEFAULT_NAMESPACE);
-      assert.strictEqual(succeededEvents[0].namespace, DEFAULT_NAMESPACE);
-      assert.strictEqual(startedEvents[1].namespace, OTHER_NAMESPACE);
-      assert.strictEqual(succeededEvents[1].namespace, OTHER_NAMESPACE);
+      assert.strictEqual(startedEvents[0].keyspace, DEFAULT_KEYSPACE);
+      assert.strictEqual(succeededEvents[0].keyspace, DEFAULT_KEYSPACE);
+      assert.strictEqual(startedEvents[1].keyspace, OTHER_KEYSPACE);
+      assert.strictEqual(succeededEvents[1].keyspace, OTHER_KEYSPACE);
 
       assert.strictEqual(startedEvents[0].collection, DEFAULT_COLLECTION_NAME);
       assert.strictEqual(succeededEvents[0].collection, DEFAULT_COLLECTION_NAME);
       assert.strictEqual(startedEvents[1].collection, DEFAULT_COLLECTION_NAME);
       assert.strictEqual(succeededEvents[1].collection, DEFAULT_COLLECTION_NAME);
 
-      assert.strictEqual(startedEvents[0].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(succeededEvents[0].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(startedEvents[1].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${OTHER_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(succeededEvents[1].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${OTHER_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(startedEvents[0].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(succeededEvents[0].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(startedEvents[1].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${OTHER_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(succeededEvents[1].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${OTHER_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
 
       assert.strictEqual(startedEvents[0].timeout, DEFAULT_TIMEOUT);
       assert.ok(succeededEvents[0].duration > 0);
@@ -178,7 +178,7 @@ describe('integration.client.data-api-client', () => {
 
     it('should allow monitoring of failed commands when enabled', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { monitorCommands: true, namespace: DEFAULT_NAMESPACE });
+      const db = client.db(TEST_APPLICATION_URI, { monitorCommands: true, keyspace: DEFAULT_KEYSPACE });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
       let startedEvent: CommandStartedEvent | undefined;
@@ -211,14 +211,14 @@ describe('integration.client.data-api-client', () => {
       assert.strictEqual(startedEvent.commandName, 'insertOne');
       assert.strictEqual(failedEvent.commandName, 'insertOne');
 
-      assert.strictEqual(startedEvent.namespace, DEFAULT_NAMESPACE);
-      assert.strictEqual(failedEvent.namespace, DEFAULT_NAMESPACE);
+      assert.strictEqual(startedEvent.keyspace, DEFAULT_KEYSPACE);
+      assert.strictEqual(failedEvent.keyspace, DEFAULT_KEYSPACE);
 
       assert.strictEqual(startedEvent.collection, DEFAULT_COLLECTION_NAME);
       assert.strictEqual(failedEvent.collection, DEFAULT_COLLECTION_NAME);
 
-      assert.strictEqual(startedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(failedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(startedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(failedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
 
       assert.strictEqual(startedEvent.timeout, DEFAULT_TIMEOUT);
       assert.ok(failedEvent.duration > 0);
@@ -233,7 +233,7 @@ describe('integration.client.data-api-client', () => {
 
     it('should allow monitoring of timed-out commands when enabled', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { monitorCommands: true, namespace: DEFAULT_NAMESPACE });
+      const db = client.db(TEST_APPLICATION_URI, { monitorCommands: true, keyspace: DEFAULT_KEYSPACE });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
       let startedEvent: CommandStartedEvent | undefined;
@@ -259,14 +259,14 @@ describe('integration.client.data-api-client', () => {
       assert.strictEqual(startedEvent.commandName, 'insertOne');
       assert.strictEqual(failedEvent.commandName, 'insertOne');
 
-      assert.strictEqual(startedEvent.namespace, DEFAULT_NAMESPACE);
-      assert.strictEqual(failedEvent.namespace, DEFAULT_NAMESPACE);
+      assert.strictEqual(startedEvent.keyspace, DEFAULT_KEYSPACE);
+      assert.strictEqual(failedEvent.keyspace, DEFAULT_KEYSPACE);
 
       assert.strictEqual(startedEvent.collection, DEFAULT_COLLECTION_NAME);
       assert.strictEqual(failedEvent.collection, DEFAULT_COLLECTION_NAME);
 
-      assert.strictEqual(startedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
-      assert.strictEqual(failedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_NAMESPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(startedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
+      assert.strictEqual(failedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
 
       assert.strictEqual(startedEvent.timeout, 1);
       assert.ok(failedEvent.duration > 0);

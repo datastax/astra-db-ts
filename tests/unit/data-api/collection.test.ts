@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { Collection } from '@/src/data-api';
-import { DEFAULT_NAMESPACE } from '@/src/api';
+import { DEFAULT_KEYSPACE } from '@/src/api';
 import { DEFAULT_COLLECTION_NAME, describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
@@ -27,7 +27,7 @@ describe('unit.data-api.collection', ({ db, collection }) => {
 
   describe('accessors', () => {
     it('returns the namespace', () => {
-      assert.strictEqual(collection.namespace, DEFAULT_NAMESPACE);
+      assert.strictEqual(collection.keyspace, DEFAULT_KEYSPACE);
     });
 
     it('returns the name', () => {

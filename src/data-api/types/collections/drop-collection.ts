@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { WithNamespace } from '@/src/data-api';
+import { WithKeyspace } from '@/src/data-api';
 import { WithTimeout } from '@/src/common/types';
 
 /**
  * Options for dropping a collection.
  *
- * @field namespace - Overrides the namespace for the collection.
+ * @field keyspace - Overrides the keyspace for the collection.
  * @field maxTimeMS - The maximum time to allow the operation to run.
  *
  * @see Db.dropCollection
  *
  * @public
  */
-export interface DropCollectionOptions extends WithTimeout, WithNamespace {}
+export interface DropCollectionOptions extends WithTimeout, WithKeyspace {}

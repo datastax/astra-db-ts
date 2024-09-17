@@ -18,7 +18,7 @@ import { WithTimeout } from '@/src/common';
  * Options for executing some arbitrary command.
  *
  * @field collection - The collection to run the command on. If not provided, the command is run on the database.
- * @field namespace - Overrides the namespace to run the command in. If not provided, the default namespace is used.
+ * @field keyspace - Overrides the keyspace to run the command in. If not provided, the default keyspace is used.
  *
  * @see Db.command
  *
@@ -30,7 +30,16 @@ export interface RunCommandOptions extends WithTimeout {
    */
   collection?: string,
   /**
-   * The namespace (aka keyspace) to use for the db operation.
+   * The keyspace to use for the db operation.
    */
-  namespace?: string | null,
+  keyspace?: string | null,
+  /**
+   * The keyspace to use for the db operation.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link RunCommandOptions.keyspace}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link RunCommandOptions.keyspace} instead.
+   */
+  namespac3?: string | null,
 }

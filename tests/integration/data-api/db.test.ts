@@ -19,13 +19,13 @@ import {
   describe,
   initTestObjects,
   it,
-  OTHER_NAMESPACE,
+  OTHER_KEYSPACE,
   parallel,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
 } from '@/tests/testlib';
 import { CollectionAlreadyExistsError, DataAPIResponseError, UUID } from '@/src/data-api';
-import { DEFAULT_DATA_API_PATHS, DEFAULT_NAMESPACE } from '@/src/api';
+import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/api';
 import { DataAPIClient } from '@/src/client';
 import { CollectionNotFoundError } from '@/src/data-api/errors';
 
@@ -35,14 +35,14 @@ parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
       const res = await db.createCollection('coll_1c', { indexing: { deny: ['*'] } });
       assert.ok(res);
       assert.strictEqual(res.collectionName, 'coll_1c');
-      assert.strictEqual(res.namespace, DEFAULT_NAMESPACE);
+      assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
     });
 
     it('should create a collection in another namespace', async () => {
-      const res = await db.createCollection('coll_2c', { namespace: OTHER_NAMESPACE });
+      const res = await db.createCollection('coll_2c', { namespac3: OTHER_KEYSPACE });
       assert.ok(res);
       assert.strictEqual(res.collectionName, 'coll_2c');
-      assert.strictEqual(res.namespace, OTHER_NAMESPACE);
+      assert.strictEqual(res.keyspace, OTHER_KEYSPACE);
     });
 
     it('should throw CollectionAlreadyExistsError if collection already exists', async () => {
@@ -53,7 +53,7 @@ parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
       } catch (e) {
         assert.ok(e instanceof CollectionAlreadyExistsError);
         assert.strictEqual(e.collectionName, 'coll_3c');
-        assert.strictEqual(e.namespace, DEFAULT_NAMESPACE);
+        assert.strictEqual(e.namespac3, DEFAULT_KEYSPACE);
       }
     });
 
@@ -70,18 +70,18 @@ parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
       const res = await db.createCollection('coll_5c', { indexing: { deny: ['*'] } });
       assert.ok(res);
       assert.strictEqual(res.collectionName, 'coll_5c');
-      assert.strictEqual(res.namespace, DEFAULT_NAMESPACE);
+      assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
       const res2 = await db.createCollection('coll_5c', { indexing: { deny: ['*'] }, checkExists: false });
       assert.ok(res2);
       assert.strictEqual(res2.collectionName, 'coll_5c');
-      assert.strictEqual(res2.namespace, DEFAULT_NAMESPACE);
+      assert.strictEqual(res2.keyspace, DEFAULT_KEYSPACE);
     });
 
     it('should fail creating collection with different options even if checkExists is false', async () => {
       const res = await db.createCollection('coll_6c', { indexing: { deny: ['*'] } });
       assert.ok(res);
       assert.strictEqual(res.collectionName, 'coll_6c');
-      assert.strictEqual(res.namespace, DEFAULT_NAMESPACE);
+      assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
       try {
         await db.createCollection('coll_6c', { indexing: { allow: ['*'] }, checkExists: false });
         assert.fail('Expected an error');
@@ -94,17 +94,17 @@ parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
       const res = await db.createCollection('coll_7c', { indexing: { deny: ['*'] } });
       assert.ok(res);
       assert.strictEqual(res.collectionName, 'coll_7c');
-      assert.strictEqual(res.namespace, DEFAULT_NAMESPACE);
-      const res2 = await db.createCollection('coll_7c', { indexing: { deny: ['*'] }, namespace: OTHER_NAMESPACE });
+      assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
+      const res2 = await db.createCollection('coll_7c', { indexing: { deny: ['*'] }, namespac3: OTHER_KEYSPACE });
       assert.ok(res2);
       assert.strictEqual(res2.collectionName, 'coll_7c');
-      assert.strictEqual(res2.namespace, OTHER_NAMESPACE);
+      assert.strictEqual(res2.keyspace, OTHER_KEYSPACE);
     });
 
     it('(ASTRA) should work even when instantiated weirdly', async () => {
-      const db = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { namespace: '123123123', dataApiPath: 'King' } })
+      const db = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { keyspace: '123123123', dataApiPath: 'King' } })
         .admin({ adminToken: 'dummy-token' })
-        .dbAdmin(TEST_APPLICATION_URI, { dataApiPath: DEFAULT_DATA_API_PATHS['astra'], namespace: DEFAULT_NAMESPACE })
+        .dbAdmin(TEST_APPLICATION_URI, { dataApiPath: DEFAULT_DATA_API_PATHS['astra'], keyspace: DEFAULT_KEYSPACE })
         .db()
         .admin({ adminToken: 'tummy-token', endpointUrl: 'Memento Mori' })
         .db();
@@ -112,7 +112,7 @@ parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
       const res = await db.createCollection('coll_8c', { indexing: { deny: ['*'] }, maxTimeMS: 60000 });
       assert.ok(res);
       assert.strictEqual(res.collectionName, 'coll_8c');
-      assert.strictEqual(res.namespace, DEFAULT_NAMESPACE);
+      assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
     });
   });
 
@@ -136,8 +136,8 @@ parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
     });
 
     it('should drop a collection in non-default namespace', async () => {
-      await db.createCollection('coll_3d', { indexing: { deny: ['*'] }, namespace: OTHER_NAMESPACE });
-      const res = await db.dropCollection('coll_3d', { namespace: OTHER_NAMESPACE });
+      await db.createCollection('coll_3d', { indexing: { deny: ['*'] }, namespac3: OTHER_KEYSPACE });
+      const res = await db.dropCollection('coll_3d', { namespac3: OTHER_KEYSPACE });
       assert.strictEqual(res, true);
       const collections = await db.listCollections();
       const collection = collections.find(c => c.name === 'coll_3d');
@@ -146,7 +146,7 @@ parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
 
     it('should not drop a collection in different namespace', async () => {
       await db.createCollection('coll_4d', { indexing: { deny: ['*'] } });
-      const res = await db.dropCollection('coll_4d', { namespace: OTHER_NAMESPACE });
+      const res = await db.dropCollection('coll_4d', { namespac3: OTHER_KEYSPACE });
       assert.strictEqual(res, true);
       const collections = await db.listCollections();
       const collection = collections.find(c => c.name === 'coll_4d');
@@ -178,7 +178,7 @@ parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
     });
 
     it('should not list collections in another namespace', async () => {
-      const res = await db.listCollections({ namespace: OTHER_NAMESPACE });
+      const res = await db.listCollections({ namespac3: OTHER_KEYSPACE });
       assert.strictEqual(res.length, 1);
     });
   });
@@ -188,14 +188,14 @@ parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
       const collections = await db.collections();
       assert.ok(<any>collections instanceof Array);
       assert.ok(collections.some(c => c.collectionName === DEFAULT_COLLECTION_NAME));
-      assert.ok(collections.map(c => c.namespace).every(ns => ns === DEFAULT_NAMESPACE));
+      assert.ok(collections.map(c => c.keyspace).every(ns => ns === DEFAULT_KEYSPACE));
     });
 
     it('should return the collections in the db in another namespace', async () => {
-      const collections = await db.collections({ namespace: OTHER_NAMESPACE });
+      const collections = await db.collections({ namespac3: OTHER_KEYSPACE });
       assert.ok(<any>collections instanceof Array);
       assert.deepStrictEqual(collections.map(c => c.collectionName), [DEFAULT_COLLECTION_NAME]);
-      assert.deepStrictEqual(collections.map(c => c.namespace), [OTHER_NAMESPACE]);
+      assert.deepStrictEqual(collections.map(c => c.keyspace), [OTHER_KEYSPACE]);
     });
   });
 
@@ -208,7 +208,7 @@ parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
     });
 
     it('should execute a db-level command in different namespace', async () => {
-      const resp = await db.command({ findCollections: {} }, { namespace: OTHER_NAMESPACE });
+      const resp = await db.command({ findCollections: {} }, { keyspace: OTHER_KEYSPACE });
       assert.strictEqual(resp.status?.data, undefined);
       assert.strictEqual(resp.status?.errors, undefined);
       assert.ok(resp.status?.collections instanceof Array);
@@ -224,9 +224,9 @@ parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
 
     it('should execute a collection-level command in different namespace', async () => {
       const uuid = UUID.v4();
-      const collection = db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
+      const collection = db.collection(DEFAULT_COLLECTION_NAME, { namespac3: OTHER_KEYSPACE });
       await collection.insertOne({ _id: uuid });
-      const resp = await db.command({ findOne: { filter: { _id: uuid } } }, { collection: DEFAULT_COLLECTION_NAME, namespace: OTHER_NAMESPACE });
+      const resp = await db.command({ findOne: { filter: { _id: uuid } } }, { collection: DEFAULT_COLLECTION_NAME, keyspace: OTHER_KEYSPACE });
       assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: uuid } }, errors: undefined });
     });
 
@@ -241,14 +241,14 @@ parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
 
     it('should throw an error if no namespace set', async () => {
       const { db } = initTestObjects();
-      db.useNamespace(undefined!);
+      db.useKeyspace(undefined!);
       await assert.rejects(() => db.command({ findEmbeddingProviders: {} }), { message: 'Db is missing a required namespace; be sure to set one w/ client.db(..., { namespace }), or db.useNamespace()' });
     });
 
     it('should not throw an error if no namespace set but namespace: null', async () => {
       const { db } = initTestObjects();
-      db.useNamespace(undefined!);
-      await assert.doesNotReject(() => db.command({ findEmbeddingProviders: {} }, { namespace: null }));
+      db.useKeyspace(undefined!);
+      await assert.doesNotReject(() => db.command({ findEmbeddingProviders: {} }, { keyspace: null }));
     });
   });
 });

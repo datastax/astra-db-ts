@@ -62,7 +62,7 @@ parallel('(ASTRA) integration.misc.hierarchy-traversal', ({ client, db }) => {
       const dbAdmin1 = client.admin().dbAdmin(TEST_APPLICATION_URI);
       const dbAdmin2 = client.db(TEST_APPLICATION_URI).admin();
       assert.strictEqual(dbAdmin1.db().id, dbAdmin2.db().id);
-      assert.strictEqual(dbAdmin1.db().namespace, dbAdmin2.db().namespace);
+      assert.strictEqual(dbAdmin1.db().keyspace, dbAdmin2.db().keyspace);
     });
 
     it('works with endpoint', async () => {
@@ -98,7 +98,7 @@ parallel('(ASTRA) integration.misc.hierarchy-traversal', ({ client, db }) => {
       const db1 = client.admin().dbAdmin(TEST_APPLICATION_URI).db();
       const db2 = client.db(TEST_APPLICATION_URI).admin().db();
       assert.strictEqual(db1.id, db2.id);
-      assert.strictEqual(db1.namespace, db2.namespace);
+      assert.strictEqual(db1.keyspace, db2.keyspace);
 
       await assert.doesNotReject(async () => await db1.collection(DEFAULT_COLLECTION_NAME).findOne({}));
       await assert.doesNotReject(async () => await db1.collection(DEFAULT_COLLECTION_NAME).findOne({}));

@@ -75,7 +75,7 @@ const enum CursorStatus {
  * @public
  */
 export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
-  private readonly _namespace: string;
+  private readonly _keyspace: string;
   private readonly _httpClient: DataAPIHttpClient;
   private readonly _options: FindOptions;
   private _filter: Filter<SomeDoc>;
@@ -91,8 +91,8 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(namespace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: FindOptions) {
-    this._namespace = namespace;
+  constructor(keyspace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: FindOptions) {
+    this._keyspace = keyspace;
     this._httpClient = httpClient;
     this._filter = filter;
     this._options = structuredClone(options ?? {});
@@ -103,12 +103,24 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * The namespace (aka keyspace) of the collection that's being iterated over.
+   * The keyspace of the collection that's being iterated over.
    *
-   * @returns The namespace of the collection that's being iterated over.
+   * @returns The keyspace of the collection that's being iterated over.
    */
-  public get namespace(): string {
-    return this._namespace;
+  public get keyspace(): string {
+    return this._keyspace;
+  }
+
+  /**
+   * The keyspace of the collection that's being iterated over.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link FindCursor.keyspace}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link FindCursor.keyspace} instead.
+   */
+  public get namespac3(): string {
+    return this._keyspace;
   }
 
   /**
@@ -315,7 +327,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns A behavioral clone of this cursor.
    */
   public clone(): FindCursor<TRaw, TRaw> {
-    return new FindCursor<TRaw, TRaw>(this._namespace, this._httpClient, this._filter, this._options);
+    return new FindCursor<TRaw, TRaw>(this._keyspace, this._httpClient, this._filter, this._options);
   }
 
   /**

@@ -14,7 +14,7 @@
 /* eslint-disable prefer-const */
 
 import { initTestObjects } from '@/tests/testlib/fixtures';
-import { DEFAULT_COLLECTION_NAME, OTHER_NAMESPACE } from '@/tests/testlib/config';
+import { DEFAULT_COLLECTION_NAME, OTHER_KEYSPACE } from '@/tests/testlib/config';
 import { afterEach } from 'mocha';
 import { checkTestsEnabled, dropEphemeralColls } from '@/tests/testlib/utils';
 import { parallelTestState } from '@/tests/testlib/test-fns/parallel';
@@ -65,7 +65,7 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
         await GLOBAL_FIXTURES.collection.deleteMany({});
 
         if (opts?.truncateColls?.startsWith('both')) {
-          await GLOBAL_FIXTURES.db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE }).deleteMany({});
+          await GLOBAL_FIXTURES.db.collection(DEFAULT_COLLECTION_NAME, { namespac3: OTHER_KEYSPACE }).deleteMany({});
         }
       });
     }

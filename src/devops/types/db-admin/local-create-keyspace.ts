@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CreateNamespaceOptions } from '@/src/devops';
+import { CreateKeyspaceOptions, CreateNamespac3Options } from '@/src/devops';
 
 /**
- * Represents the options for creating a namespace on a non-Astra database (i.e. blocking options + namespace creation options).
+ * Represents the options for creating a keyspace on a non-Astra database (i.e. blocking options + keyspace creation options).
  *
  * If no replication options are provided, it will default to `'SimpleStrategy'` with a replication factor of `1`.
  *
  * See {@link AdminBlockingOptions} for more options about blocking behavior.
  *
- * If `updateDbNamespace` is set to true, the underlying `Db` instance used to create the `DbAdmin` will have its
- * current working namespace set to the newly created namespace immediately (even if the namespace isn't technically
+ * If `updateDbKeyspace` is set to true, the underlying `Db` instance used to create the `DbAdmin` will have its
+ * current working keyspace set to the newly created keyspace immediately (even if the keyspace isn't technically
  * yet created).
  *
  * @example
@@ -31,21 +31,33 @@ import { CreateNamespaceOptions } from '@/src/devops';
  * const client = new DataAPIClient({ environment: 'dse' });
  * const db = client.db('<endpoint>', { token: '<token>' });
  *
- * // Will internally call `db.useNamespace('new_namespace')`
- * await db.admin().createNamespace('new_namespace', {
- *   updateDbNamespace: true,
+ * // Will internally call `db.useKeyspace('new_keyspace')`
+ * await db.admin().createKeyspace('new_keyspace', {
+ *   updateDbKeyspace: true,
  * });
  *
- * // Creates collection in namespace `new_namespace` by default now
+ * // Creates collection in keyspace `new_keyspace` by default now
  * const coll = db.createCollection('my_coll');
  * ```
  *
  * @public
  */
-export type LocalCreateNamespaceOptions = CreateNamespaceOptions & { replication?: NamespaceReplicationOptions };
+export type LocalCreateKeyspaceOptions = CreateKeyspaceOptions & { replication?: KeyspaceReplicationOptions };
 
 /**
- * Represents the replication options for a namespace.
+ * Represents the options for creating a keyspace on a non-Astra database (i.e. blocking options + keyspace creation options).
+ *
+ * This is now a deprecated alias for the strictly equivalent {@link LocalCreateKeyspaceOptions}, and will be removed
+ * in an upcoming major version.
+ *
+ * @deprecated - Prefer {@link LocalCreateKeyspaceOptions} instead.
+ *
+ * @public
+ */
+export type LocalCreateNamespac3Options = CreateNamespac3Options & { replication?: KeyspaceReplicationOptions };
+
+/**
+ * Represents the replication options for a keyspace.
  *
  * Two replication strategies are available:
  *
@@ -57,16 +69,16 @@ export type LocalCreateNamespaceOptions = CreateNamespaceOptions & { replication
  *
  * @example
  * ```typescript
- * await dbAdmin.createNamespace('my_namespace');
+ * await dbAdmin.createKeyspace('my_keyspace');
  *
- * await dbAdmin.createNamespace('my_namespace', {
+ * await dbAdmin.createKeyspace('my_keyspace', {
  *   replication: {
  *     class: 'SimpleStrategy',
  *     replicatonFactor: 3,
  *   },
  * });
  *
- * await dbAdmin.createNamespace('my_namespace', {
+ * await dbAdmin.createKeyspace('my_keyspace', {
  *   replication: {
  *     class: 'NetworkTopologyStrategy',
  *     datacenter1: 3,
@@ -79,7 +91,7 @@ export type LocalCreateNamespaceOptions = CreateNamespaceOptions & { replication
  *
  * @public
  */
-export type NamespaceReplicationOptions = {
+export type KeyspaceReplicationOptions = {
   class: 'SimpleStrategy',
   replicationFactor: number,
 } | {

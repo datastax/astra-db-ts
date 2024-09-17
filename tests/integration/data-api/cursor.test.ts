@@ -52,7 +52,7 @@ describe('integration.data-api.cursor', { truncateColls: 'both:before' }, ({ col
       assert.deepStrictEqual(clone['_buffer'], [], 'Cursor clone shares _buffer');
       assert.strictEqual(clone.closed, false, 'Cursor clone is closed');
       assert.strictEqual(clone['_state'], 0, 'Cursor clone is not set to the UNINITIALIZED state');
-      assert.strictEqual(clone.namespace, 'default_keyspace', 'Cursor clone has bad namespace');
+      assert.strictEqual(clone.keyspace, 'default_keyspace', 'Cursor clone has bad namespace');
       assert.deepStrictEqual(clone['_options'].projection, { _id: 0 }, 'Cursor clone has bad projection');
       assert.deepStrictEqual(clone['_options'].sort, { name: 1 }, 'Cursor clone has bad sort');
     });
