@@ -335,10 +335,10 @@ export class CollectionAlreadyExistsError extends DataAPIError {
   /**
    * The keyspace where the collection already exists
    *
-   * This is now a deprecated alias for the strictly equivalent {@link CollectionNotFoundError.keyspace}, and will be removed
+   * This is now a deprecated alias for the strictly equivalent {@link CollectionAlreadyExistsError.keyspace}, and will be removed
    * in an upcoming major version.
    *
-   * @deprecated - Prefer {@link CollectionNotFoundError.keyspace} instead.
+   * @deprecated - Prefer {@link CollectionAlreadyExistsError.keyspace} instead.
    */
   public readonly namespace: string;
 
