@@ -116,13 +116,19 @@ export class AstraAdmin {
 export class AstraDbAdmin extends DbAdmin {
     // @internal
     constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts: AdminSpawnOptions | undefined, dbToken: TokenProvider, endpoint: string);
-    createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void>;
+    createKeyspace(keyspace: string, options?: CreateKeyspaceOptions): Promise<void>;
+    // @deprecated
+    createNamespace(keyspace: string, options?: CreateNamespaceOptions): Promise<void>;
     db(): Db;
     drop(options?: AdminBlockingOptions): Promise<void>;
-    dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
+    dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
+    // @deprecated
+    dropNamespace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
     findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
     get id(): string;
     info(options?: WithTimeout): Promise<FullDatabaseInfo>;
+    listKeyspaces(options?: WithTimeout): Promise<string[]>;
+    // @deprecated
     listNamespaces(options?: WithTimeout): Promise<string[]>;
 }
 
@@ -213,6 +219,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     }): Promise<WithId<Schema> | null>;
     insertMany(documents: MaybeId<Schema>[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>>;
     insertOne(document: MaybeId<Schema>, options?: InsertOneOptions): Promise<InsertOneResult<Schema>>;
+    readonly keyspace: string;
+    // @deprecated
     readonly namespace: string;
     options(options?: WithTimeout): Promise<CollectionOptions<SomeDoc>>;
     replaceOne(filter: Filter<Schema>, replacement: NoId<Schema>, options?: ReplaceOneOptions): Promise<ReplaceOneResult<Schema>>;
@@ -223,16 +231,20 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 // @public
 export class CollectionAlreadyExistsError extends DataAPIError {
     // @internal
-    constructor(namespace: string, collectionName: string);
+    constructor(keyspace: string, collectionName: string);
     readonly collectionName: string;
+    readonly keyspace: string;
+    // @deprecated
     readonly namespace: string;
 }
 
 // @public
 export class CollectionNotFoundError extends DataAPIError {
     // @internal
-    constructor(namespace: string, collectionName: string);
+    constructor(keyspace: string, collectionName: string);
     readonly collectionName: string;
+    readonly keyspace: string;
+    // @deprecated
     readonly namespace: string;
 }
 
@@ -244,7 +256,7 @@ export interface CollectionOptions<Schema extends SomeDoc> {
 }
 
 // @public
-export interface CollectionSpawnOptions extends WithNamespace {
+export interface CollectionSpawnOptions extends WithKeyspace {
     defaultMaxTimeMS?: number | null;
     embeddingApiKey?: string | EmbeddingHeadersProvider | null;
 }
@@ -258,6 +270,8 @@ export abstract class CommandEvent {
     readonly collection?: string;
     readonly command: Record<string, any>;
     readonly commandName: string;
+    readonly keyspace: string;
+    // @deprecated
     readonly namespace: string;
     readonly url: string;
 }
@@ -315,6 +329,11 @@ export type CreateDatabaseOptions = AdminBlockingOptions & {
 };
 
 // @public
+export type CreateKeyspaceOptions = AdminBlockingOptions & {
+    updateDbKeyspace?: boolean;
+};
+
+// @public @deprecated
 export type CreateNamespaceOptions = AdminBlockingOptions & {
     updateDbNamespace?: boolean;
 };
@@ -386,10 +405,16 @@ export type DataAPICommandEvents = {
 export class DataAPIDbAdmin extends DbAdmin {
     // @internal
     constructor(db: Db, httpClient: DataAPIHttpClient, adminOpts?: AdminSpawnOptions);
-    createNamespace(namespace: string, options?: LocalCreateNamespaceOptions): Promise<void>;
+    createKeyspace(keyspace: string, options?: LocalCreateKeyspaceOptions): Promise<void>;
+    // @deprecated
+    createNamespace(keyspace: string, options?: LocalCreateNamespaceOptions): Promise<void>;
     db(): Db;
-    dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
+    dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
+    // @deprecated
+    dropNamespace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
     findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
+    listKeyspaces(options?: WithTimeout): Promise<string[]>;
+    // @deprecated
     listNamespaces(options?: WithTimeout): Promise<string[]>;
 }
 
@@ -457,7 +482,9 @@ export type DatabaseCloudProviderFilter = DatabaseCloudProvider | 'ALL';
 // @public
 export interface DatabaseConfig {
     cloudProvider?: DatabaseCloudProvider;
+    keyspace?: string;
     name: string;
+    // @deprecated
     namespace?: string;
     region: string;
 }
@@ -479,7 +506,7 @@ export interface DatabaseInfo {
 }
 
 // @public
-export type DatabaseStatus = 'ACTIVE' | 'PENDING' | 'PREPARING' | 'PREPARED' | 'INITIALIZING' | 'PARKED' | 'PARKING' | 'UNPARKING' | 'TERMINATED' | 'TERMINATING' | 'RESIZING' | 'ERROR' | 'MAINTENANCE' | 'SUSPENDED' | 'UNKNOWN';
+export type DatabaseStatus = 'ACTIVE' | 'ERROR' | 'DECOMMISSIONING' | 'DEGRADED' | 'HIBERNATED' | 'HIBERNATING' | 'INITIALIZING' | 'MAINTENANCE' | 'PARKED' | 'PARKING' | 'PENDING' | 'PREPARED' | 'PREPARING' | 'RESIZING' | 'RESUMING' | 'TERMINATED' | 'TERMINATING' | 'UNKNOWN' | 'UNPARKING' | 'SYNCHRONIZING';
 
 // @public
 export type DatabaseStatusFilter = DatabaseStatus | 'ALL' | 'NONTERMINATED';
@@ -539,28 +566,38 @@ export class Db {
         environment: Exclude<DataAPIEnvironment, 'astra'>;
     }): DataAPIDbAdmin;
     collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions): Collection<Schema>;
-    collections(options?: WithNamespace & WithTimeout): Promise<Collection[]>;
+    collections(options?: WithKeyspace & WithTimeout): Promise<Collection[]>;
     command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse>;
     createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>>;
     dropCollection(name: string, options?: DropCollectionOptions): Promise<boolean>;
     get id(): string;
     info(options?: WithTimeout): Promise<DatabaseInfo>;
+    get keyspace(): string;
     listCollections(options: ListCollectionsOptions & {
         nameOnly: true;
     }): Promise<string[]>;
     listCollections(options?: ListCollectionsOptions & {
         nameOnly?: false;
     }): Promise<FullCollectionInfo[]>;
+    // @deprecated
     get namespace(): string;
-    useNamespace(namespace: string): void;
+    useKeyspace(keyspace: string): void;
+    // @deprecated
+    useNamespace(keyspace: string): void;
 }
 
 // @public
 export abstract class DbAdmin {
-    abstract createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void>;
+    abstract createKeyspace(keyspace: string, options?: CreateKeyspaceOptions): Promise<void>;
+    // @deprecated
+    abstract createNamespace(keyspace: string, options?: CreateNamespaceOptions): Promise<void>;
     abstract db(): Db;
-    abstract dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void>;
+    abstract dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
+    // @deprecated
+    abstract dropNamespace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
     abstract findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
+    abstract listKeyspaces(): Promise<string[]>;
+    // @deprecated
     abstract listNamespaces(): Promise<string[]>;
 }
 
@@ -575,7 +612,9 @@ export interface DbMetricsInfo {
 // @public
 export interface DbSpawnOptions {
     dataApiPath?: string;
+    keyspace?: string;
     monitorCommands?: boolean;
+    // @deprecated
     namespace?: string;
     token?: string | TokenProvider | null;
 }
@@ -665,7 +704,7 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
 }
 
 // @public
-export interface DropCollectionOptions extends WithTimeout, WithNamespace {
+export interface DropCollectionOptions extends WithTimeout, WithKeyspace {
 }
 
 // @public
@@ -797,7 +836,7 @@ export type FilterOps<Elem> = {
 export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     [Symbol.asyncIterator](): AsyncGenerator<T, void, void>;
     // @internal
-    constructor(namespace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: FindOptions);
+    constructor(keyspace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: FindOptions);
     bufferedCount(): number;
     clone(): FindCursor<TRaw, TRaw>;
     close(): void;
@@ -809,8 +848,10 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     hasNext(): Promise<boolean>;
     includeSimilarity(includeSimilarity?: boolean): this;
     includeSortVector(includeSortVector?: boolean): this;
+    get keyspace(): string;
     limit(limit: number): this;
     map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw>;
+    // @deprecated
     get namespace(): string;
     next(): Promise<T | null>;
     project<R = any, RRaw extends SomeDoc = SomeDoc>(projection: Projection): FindCursor<R, RRaw>;
@@ -955,16 +996,7 @@ export type IndexingOptions<Schema extends SomeDoc> = {
 };
 
 // @public
-export interface InsertManyDocumentResponse<Schema extends SomeDoc> {
-    error?: DataAPIErrorDescriptor;
-    _id: IdOf<Schema>;
-    status: 'OK' | 'ERROR' | 'SKIPPED';
-}
-
-// @public
 export class InsertManyError extends CumulativeDataAPIError {
-    readonly documentResponses: InsertManyDocumentResponse<SomeDoc>[];
-    readonly failedCount: number;
     name: string;
     readonly partialResult: InsertManyResult<SomeDoc>;
 }
@@ -1021,7 +1053,16 @@ export interface InsertOneResult<Schema> {
 export type InternalUpdateResult<Schema extends SomeDoc, N extends number> = (GuaranteedUpdateOptions<N> & UpsertedUpdateOptions<Schema>) | (GuaranteedUpdateOptions<N> & NoUpsertUpdateOptions);
 
 // @public
-export interface ListCollectionsOptions extends WithTimeout, WithNamespace {
+export type KeyspaceReplicationOptions = {
+    class: 'SimpleStrategy';
+    replicationFactor: number;
+} | {
+    class: 'NetworkTopologyStrategy';
+    [datacenter: string]: number | 'NetworkTopologyStrategy';
+};
+
+// @public
+export interface ListCollectionsOptions extends WithTimeout, WithKeyspace {
     nameOnly?: boolean;
 }
 
@@ -1034,8 +1075,13 @@ export interface ListDatabasesOptions extends WithTimeout {
 }
 
 // @public
+export type LocalCreateKeyspaceOptions = CreateKeyspaceOptions & {
+    replication?: KeyspaceReplicationOptions;
+};
+
+// @public @deprecated
 export type LocalCreateNamespaceOptions = CreateNamespaceOptions & {
-    replication?: NamespaceReplicationOptions;
+    replication?: KeyspaceReplicationOptions;
 };
 
 // @public
@@ -1048,15 +1094,6 @@ export interface ModifyResult<Schema extends SomeDoc> {
     ok: number;
     value: WithId<Schema> | null;
 }
-
-// @public
-export type NamespaceReplicationOptions = {
-    class: 'SimpleStrategy';
-    replicationFactor: number;
-} | {
-    class: 'NetworkTopologyStrategy';
-    [datacenter: string]: number | 'NetworkTopologyStrategy';
-};
 
 // @public
 export interface NoBlockingOptions extends WithTimeout {
@@ -1157,6 +1194,8 @@ export type ReplaceOneResult<Schema extends SomeDoc> = InternalUpdateResult<Sche
 // @public
 export interface RunCommandOptions extends WithTimeout {
     collection?: string;
+    keyspace?: string | null;
+    // @deprecated
     namespace?: string | null;
 }
 
@@ -1408,9 +1447,14 @@ export type WithId<T> = NoId<T> & {
 };
 
 // @public
-export interface WithNamespace {
+export interface WithKeyspace {
+    keyspace?: string;
+    // @deprecated
     namespace?: string;
 }
+
+// @public @deprecated
+export type WithNamespace = WithKeyspace;
 
 // @public
 export interface WithTimeout {

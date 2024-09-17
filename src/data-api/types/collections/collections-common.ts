@@ -241,17 +241,19 @@ export interface WithKeyspace {
 }
 
 /**
+ * This is now a deprecated alias for the strictly equivalent {@link WithKeyspace}, and will be removed
+ * in an upcoming major version.
+ *
+ * @deprecated - Prefer {@link WithKeyspace} instead.
+ *
+ * @public
+ */
+export type WithNamespace = WithKeyspace;
+
+/**
  * @internal
  */
 export interface WithNullableKeyspace {
   keyspace?: string | null;
   namespace?: string | null;
 }
-
-/**
- * This is now a deprecated alias for the strictly equivalent {@link WithKeyspace}, and will be removed
- * in an upcoming major version.
- *
- * @deprecated - Prefer {@link WithKeyspace} instead.
- */
-export type WithNamespace = WithKeyspace;

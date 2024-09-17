@@ -24,7 +24,7 @@ import {
   KeyspaceRef,
   RawDataAPIResponse,
 } from '@/src/api';
-import { DataAPIResponseError, DataAPITimeoutError, ObjectId, UUID, WithNullableKeyspace } from '@/src/data-api';
+import { DataAPIResponseError, DataAPITimeoutError, ObjectId, UUID } from '@/src/data-api';
 import { TimeoutManager, TimeoutOptions } from '@/src/api/timeout-managers';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
 import { CollectionNotFoundError, DataAPIHttpError, mkRespErrorFromResponse } from '@/src/data-api/errors';
@@ -39,6 +39,7 @@ import {
 } from '@/src/devops';
 import { isNullish, nullish, resolveKeyspace, TokenProvider } from '@/src/common';
 import { EmbeddingHeadersProvider } from '@/src/data-api/embedding-providers';
+import { WithNullableKeyspace } from '@/src/data-api/types/collections/collections-common';
 
 /**
  * @internal

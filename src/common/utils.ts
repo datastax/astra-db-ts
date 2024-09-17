@@ -14,7 +14,8 @@
 
 import { DataAPIEnvironment, nullish } from '@/src/common/types';
 import { DataAPIEnvironments } from '@/src/common/constants';
-import { WithKeyspace, WithNullableKeyspace } from '@/src/data-api';
+import { WithKeyspace } from '@/src/data-api';
+import { WithNullableKeyspace } from '@/src/data-api/types/collections/collections-common';
 
 export function isNullish(t: unknown): t is nullish {
   return t === null || t === undefined;
