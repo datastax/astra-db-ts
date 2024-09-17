@@ -98,11 +98,11 @@ parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
       const res2 = await db.createCollection('coll_7c', { indexing: { deny: ['*'] }, keyspace: OTHER_KEYSPACE });
       assert.ok(res2);
       assert.strictEqual(res2.collectionName, 'coll_7c');
-      assert.strictEqual(res2.keyspace, OTHER_KEYSPACE);
+      assert.strictEqual(res2.namespace, OTHER_KEYSPACE);
     });
 
     it('(ASTRA) should work even when instantiated weirdly', async () => {
-      const db = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { keyspace: '123123123', dataApiPath: 'King' } })
+      const db = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { namespace: '123123123', dataApiPath: 'King' } })
         .admin({ adminToken: 'dummy-token' })
         .dbAdmin(TEST_APPLICATION_URI, { dataApiPath: DEFAULT_DATA_API_PATHS['astra'], keyspace: DEFAULT_KEYSPACE })
         .db()
@@ -146,7 +146,7 @@ parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
 
     it('should not drop a collection in different keyspace', async () => {
       await db.createCollection('coll_4d', { indexing: { deny: ['*'] } });
-      const res = await db.dropCollection('coll_4d', { keyspace: OTHER_KEYSPACE });
+      const res = await db.dropCollection('coll_4d', { namespace: OTHER_KEYSPACE });
       assert.strictEqual(res, true);
       const collections = await db.listCollections();
       const collection = collections.find(c => c.name === 'coll_4d');
@@ -192,7 +192,7 @@ parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
     });
 
     it('should return the collections in the db in another keyspace', async () => {
-      const collections = await db.collections({ keyspace: OTHER_KEYSPACE });
+      const collections = await db.collections({ namespace: OTHER_KEYSPACE });
       assert.ok(<any>collections instanceof Array);
       assert.deepStrictEqual(collections.map(c => c.collectionName), [DEFAULT_COLLECTION_NAME]);
       assert.deepStrictEqual(collections.map(c => c.keyspace), [OTHER_KEYSPACE]);
