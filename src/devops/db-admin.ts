@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { AdminBlockingOptions, CreateKeyspaceOptions, CreateNamespac3Options } from '@/src/devops/types';
+import { AdminBlockingOptions, CreateKeyspaceOptions, CreateNamespaceOptions } from '@/src/devops/types';
 import { Db } from '@/src/data-api';
 import { FindEmbeddingProvidersResult } from '@/src/devops/types/db-admin/find-embedding-providers';
 import { WithTimeout } from '@/src/common';
@@ -92,7 +92,7 @@ export abstract class DbAdmin {
    *
    * @deprecated - Prefer {@link DbAdmin.listKeyspaces} instead.
    */
-  abstract listNamespac3s(): Promise<string[]>;
+  abstract listNamespaces(): Promise<string[]>;
   /**
    * Creates a new, additional, keyspace for this database.
    *
@@ -132,7 +132,7 @@ export abstract class DbAdmin {
    *
    * @deprecated - Prefer {@link DbAdmin.createKeyspace} instead.
    */
-  abstract createNamespac3(keyspace: string, options?: CreateNamespac3Options): Promise<void>;
+  abstract createNamespace(keyspace: string, options?: CreateNamespaceOptions): Promise<void>;
   /**
    * Drops a keyspace from this database.
    *
@@ -173,5 +173,5 @@ export abstract class DbAdmin {
    *
    * @deprecated - Prefer {@link DbAdmin.dropKeyspace} instead.
    */
-  abstract dropNamespac3(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
+  abstract dropNamespace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
 }

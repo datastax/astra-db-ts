@@ -69,7 +69,7 @@ export interface DbSpawnOptions {
    *
    * @deprecated - Prefer {@link DbSpawnOptions.keyspace} instead.
    */
-  namespac3?: string,
+  namespace?: string,
   /**
    * Whether to monitor commands for {@link Db}-level & {@link Collection}-level events through an event emitter.
    *

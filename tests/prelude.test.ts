@@ -36,14 +36,14 @@ before(async () => {
 
   const createCollPromises = TEST_KEYSPACES
     .map(async (namespace) => {
-      await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespac3: namespace })
+      await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace: namespace })
         .then(c => c.deleteMany({}));
     })
     .awaitAll();
 
   const allCollections = await TEST_KEYSPACES
     .map(async (namespace) => {
-      const colls = await db.listCollections({ namespac3: namespace, nameOnly: true });
+      const colls = await db.listCollections({ namespace: namespace, nameOnly: true });
       return [namespace, colls] as const;
     })
     .awaitAll();
@@ -53,7 +53,7 @@ before(async () => {
       await colls
         .filter(c => TEST_KEYSPACES.includes(namespace) ? c !== DEFAULT_COLLECTION_NAME : true)
         .tap(c => console.log(`deleting collection '${namespace}.${c}'`))
-        .map(c => db.dropCollection(c, { namespac3: namespace }))
+        .map(c => db.dropCollection(c, { namespace: namespace }))
         .awaitAll();
     })
     .awaitAll();

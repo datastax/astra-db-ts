@@ -297,7 +297,7 @@ export class CollectionNotFoundError extends DataAPIError {
    *
    * @deprecated - Prefer {@link CollectionNotFoundError.keyspace} instead.
    */
-  public readonly namespac3: string;
+  public readonly namespace: string;
 
   /**
    * The name of the collection that is not found.
@@ -311,7 +311,7 @@ export class CollectionNotFoundError extends DataAPIError {
    */
   constructor(keyspace: string, collectionName: string) {
     super(`Collection '${keyspace}.${collectionName}' not found`);
-    this.keyspace = this.namespac3 = keyspace;
+    this.keyspace = this.namespace = keyspace;
     this.collectionName = collectionName;
     this.name = 'CollectionNotFoundError';
   }
@@ -340,7 +340,7 @@ export class CollectionAlreadyExistsError extends DataAPIError {
    *
    * @deprecated - Prefer {@link CollectionNotFoundError.keyspace} instead.
    */
-  public readonly namespac3: string;
+  public readonly namespace: string;
 
   /**
    * The name of the collection that already exists
@@ -354,7 +354,7 @@ export class CollectionAlreadyExistsError extends DataAPIError {
    */
   constructor(keyspace: string, collectionName: string) {
     super(`Collection '${keyspace}.${collectionName}' already exists`);
-    this.keyspace = this.namespac3 = keyspace;
+    this.keyspace = this.namespace = keyspace;
     this.collectionName = collectionName;
     this.name = 'CollectionAlreadyExistsError';
   }

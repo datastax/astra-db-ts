@@ -41,5 +41,5 @@ export interface RunCommandOptions extends WithTimeout {
    *
    * @deprecated - Prefer {@link RunCommandOptions.keyspace} instead.
    */
-  namespac3?: string | null,
+  namespace?: string | null,
 }

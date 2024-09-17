@@ -29,11 +29,11 @@ export async function dropEphemeralColls() {
   const promises: Promise<boolean>[] = [];
 
   for (const namespace of [DEFAULT_KEYSPACE, OTHER_KEYSPACE]) {
-    const collections = await GLOBAL_FIXTURES.db.listCollections({ namespac3: namespace });
+    const collections = await GLOBAL_FIXTURES.db.listCollections({ namespace: namespace });
 
     collections
       .filter(c => c.name !== DEFAULT_COLLECTION_NAME)
-      .forEach(c => promises.push(GLOBAL_FIXTURES.db.dropCollection(c.name, { namespac3: namespace })));
+      .forEach(c => promises.push(GLOBAL_FIXTURES.db.dropCollection(c.name, { namespace: namespace })));
   }
 
   await Promise.all(promises);

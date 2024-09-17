@@ -127,7 +127,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @deprecated - Prefer {@link Collection.keyspace} instead.
    */
-  public readonly namespac3!: string;
+  public readonly namespace!: string;
 
   /**
    * Use {@link Db.collection} to obtain an instance of this class.
@@ -145,7 +145,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       writable: false,
     });
 
-    Object.defineProperty(this, 'namespac3', {
+    Object.defineProperty(this, 'namespace', {
       value: this.keyspace,
       writable: false,
     });

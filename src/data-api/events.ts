@@ -77,7 +77,7 @@ export abstract class CommandEvent {
    *
    * @deprecated - Prefer {@link CommandEvent.keyspace} instead.
    */
-  public readonly namespac3: string;
+  public readonly namespace: string;
 
   /**
    * The collection the command is being run on, if applicable.
@@ -106,7 +106,7 @@ export abstract class CommandEvent {
    */
   protected constructor(info: DataAPIRequestInfo) {
     this.command = info.command;
-    this.keyspace = this.namespac3 = info.keyspace || DEFAULT_KEYSPACE;
+    this.keyspace = this.namespace = info.keyspace || DEFAULT_KEYSPACE;
     this.collection = info.collection;
     this.commandName = Object.keys(info.command)[0];
     this.url = info.url;

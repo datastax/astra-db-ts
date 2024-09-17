@@ -237,7 +237,7 @@ export interface WithKeyspace {
    *
    * @deprecated - Prefer {@link WithKeyspace.keyspace} instead.
    */
-  namespac3?: string
+  namespace?: string
 }
 
 /**
@@ -245,7 +245,7 @@ export interface WithKeyspace {
  */
 export interface WithNullableKeyspace {
   keyspace?: string | null;
-  namespac3?: string | null;
+  namespace?: string | null;
 }
 
 /**
@@ -254,4 +254,4 @@ export interface WithNullableKeyspace {
  *
  * @deprecated - Prefer {@link WithKeyspace} instead.
  */
-export type WithNamespac3 = WithKeyspace;
+export type WithNamespace = WithKeyspace;

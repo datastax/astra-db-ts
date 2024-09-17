@@ -50,7 +50,7 @@ export interface DatabaseConfig {
    *
    * @deprecated - Prefer {@link DatabaseConfig.keyspace} instead.
    */
-  namespac3?: string,
+  namespace?: string,
 }
 
 /**

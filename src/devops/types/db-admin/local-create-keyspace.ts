@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CreateKeyspaceOptions, CreateNamespac3Options } from '@/src/devops';
+import { CreateKeyspaceOptions, CreateNamespaceOptions } from '@/src/devops';
 
 /**
  * Represents the options for creating a keyspace on a non-Astra database (i.e. blocking options + keyspace creation options).
@@ -54,7 +54,7 @@ export type LocalCreateKeyspaceOptions = CreateKeyspaceOptions & { replication?:
  *
  * @public
  */
-export type LocalCreateNamespac3Options = CreateNamespac3Options & { replication?: KeyspaceReplicationOptions };
+export type LocalCreateNamespaceOptions = CreateNamespaceOptions & { replication?: KeyspaceReplicationOptions };
 
 /**
  * Represents the replication options for a keyspace.

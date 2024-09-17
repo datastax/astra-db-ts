@@ -40,6 +40,6 @@ export function resolveKeyspace(obj: WithNullableKeyspace | nullish, nullBypass:
 
 export function resolveKeyspace(obj: WithNullableKeyspace | nullish, nullBypass?: boolean): string | nullish {
   return (nullBypass)
-    ? (obj?.keyspace !== undefined) ? obj?.keyspace: (<any>obj)?.namespac3
-    : obj?.keyspace ?? (<any>obj)?.namespac3 ?? undefined;
+    ? (obj?.keyspace !== undefined) ? obj?.keyspace: (<any>obj)?.namespace
+    : obj?.keyspace ?? (<any>obj)?.namespace ?? undefined;
 }

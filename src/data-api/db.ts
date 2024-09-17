@@ -172,9 +172,9 @@ export class Db {
    *
    * @deprecated - Prefer {@link Db.keyspace} instead.
    */
-  public get namespac3(): string {
+  public get namespace(): string {
     if (!this._keyspace.ref) {
-      throw new Error('No keyspace set for DB (can\'t do db.namespac3, or perform any operation requiring it). Use `db.useKeyspace`, or pass the keyspace as an option parameter explicitly.');
+      throw new Error('No keyspace set for DB (can\'t do db.namespace, or perform any operation requiring it). Use `db.useKeyspace`, or pass the keyspace as an option parameter explicitly.');
     }
     return this._keyspace.ref;
   }
@@ -245,7 +245,7 @@ export class Db {
    *
    * @deprecated - Prefer {@link Db.useKeyspace} instead.
    */
-  public useNamespac3(keyspace: string) {
+  public useNamespace(keyspace: string) {
     this._keyspace.ref = keyspace;
   }
 
@@ -653,7 +653,7 @@ export function validateDbOpts(opts: DbSpawnOptions | nullish) {
     return;
   }
 
-  for (const prop of <const>['keyspace', 'namespac3']) {
+  for (const prop of <const>['keyspace', 'namespace']) {
     validateOption(`dbOptions.${prop}`, opts[prop], 'string', false, (keyspace) => {
       if (!keyspace.match(/^\w{1,48}$/)) {
         throw new Error(`Invalid ${prop} option; expected a string of 1-48 alphanumeric characters`);

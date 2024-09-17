@@ -119,7 +119,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @deprecated - Prefer {@link FindCursor.keyspace} instead.
    */
-  public get namespac3(): string {
+  public get namespace(): string {
     return this._keyspace;
   }
 

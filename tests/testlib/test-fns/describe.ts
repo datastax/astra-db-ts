@@ -65,7 +65,7 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
         await GLOBAL_FIXTURES.collection.deleteMany({});
 
         if (opts?.truncateColls?.startsWith('both')) {
-          await GLOBAL_FIXTURES.db.collection(DEFAULT_COLLECTION_NAME, { namespac3: OTHER_KEYSPACE }).deleteMany({});
+          await GLOBAL_FIXTURES.db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_KEYSPACE }).deleteMany({});
         }
       });
     }

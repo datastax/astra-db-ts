@@ -54,4 +54,4 @@ export type CreateKeyspaceOptions = AdminBlockingOptions & { updateDbKeyspace?: 
  *
  * @public
  */
-export type CreateNamespac3Options = AdminBlockingOptions & { updateDbNamespac3?: boolean };
+export type CreateNamespaceOptions = AdminBlockingOptions & { updateDbNamespace?: boolean };

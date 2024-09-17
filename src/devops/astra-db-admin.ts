@@ -17,7 +17,7 @@ import {
   AdminBlockingOptions,
   AdminSpawnOptions,
   CreateKeyspaceOptions,
-  CreateNamespac3Options,
+  CreateNamespaceOptions,
   FullDatabaseInfo,
 } from '@/src/devops/types';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
@@ -204,7 +204,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @deprecated - Prefer {@link AstraDbAdmin.listKeyspaces} instead.
    */
-  public override async listNamespac3s(options?: WithTimeout): Promise<string[]> {
+  public override async listNamespaces(options?: WithTimeout): Promise<string[]> {
     return this.listKeyspaces(options);
   }
 
@@ -263,8 +263,8 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @deprecated - Prefer {@link AstraDbAdmin.createKeyspace} instead.
    */
-  public override async createNamespac3(keyspace: string, options?: CreateNamespac3Options): Promise<void> {
-    return this.createKeyspace(keyspace, { ...options, updateDbKeyspace: options?.updateDbNamespac3 });
+  public override async createNamespace(keyspace: string, options?: CreateNamespaceOptions): Promise<void> {
+    return this.createKeyspace(keyspace, { ...options, updateDbKeyspace: options?.updateDbNamespace });
   }
 
   /**
@@ -319,7 +319,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @deprecated - Prefer {@link AstraDbAdmin.dropKeyspace} instead.
    */
-  public override async dropNamespac3(keyspace: string, options?: AdminBlockingOptions): Promise<void> {
+  public override async dropNamespace(keyspace: string, options?: AdminBlockingOptions): Promise<void> {
     return this.dropKeyspace(keyspace, options);
   }
 

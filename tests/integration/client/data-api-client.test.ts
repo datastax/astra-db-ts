@@ -117,7 +117,7 @@ describe('integration.client.data-api-client', () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { monitorCommands: true }, environment: ENVIRONMENT });
       const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
       const collection1 = db.collection(DEFAULT_COLLECTION_NAME);
-      const collection2 = db.collection(DEFAULT_COLLECTION_NAME, { namespac3: OTHER_KEYSPACE });
+      const collection2 = db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_KEYSPACE });
 
       const startedEvents: CommandStartedEvent[] = [];
       const succeededEvents: CommandSucceededEvent[] = [];
