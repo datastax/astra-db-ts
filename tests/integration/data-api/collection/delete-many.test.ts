@@ -41,7 +41,7 @@ parallel('integration.data-api.collection.delete-many', { truncateColls: 'both:b
 
   it('fails gracefully on 2XX exceptions', async () => {
     try {
-      await collection.deleteMany({ $invalidOperator: 1 })
+      await collection.deleteMany({ $invalidOperator: 1 });
       assert.fail('Expected error');
     } catch (e) {
       assert.ok(e instanceof DeleteManyError);

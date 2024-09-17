@@ -24,9 +24,9 @@ parallel('integration.api.fetch.fetch-h2', () => {
     body: JSON.stringify({ findCollections: {} }),
     headers: { Token: TEST_APPLICATION_TOKEN },
     timeout: 10000,
-    mkTimeoutError: () => { throw new Error('timeout') },
+    mkTimeoutError: () => { throw new Error('timeout'); },
     forceHttp1: false,
-  }
+  };
 
   it('should work with http1', async () => {
     const fetcher = new FetchH2({}, false);
@@ -64,7 +64,7 @@ parallel('integration.api.fetch.fetch-h2', () => {
     const fetcher = new FetchH2({}, true);
     try {
       await fetcher.fetch({ ...genericOptions, timeout: 0 });
-      assert.fail('Expected an error')
+      assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof Error);
       assert.strictEqual(e.message, 'timeout');
@@ -77,7 +77,7 @@ parallel('integration.api.fetch.fetch-h2', () => {
     const fetcher = new FetchH2({}, true);
     try {
       await fetcher.fetch({ ...genericOptions, url: DEMO_APPLICATION_URI });
-      assert.fail('Expected an error')
+      assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof Error);
       assert.ok('code' in e);

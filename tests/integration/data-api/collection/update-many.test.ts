@@ -770,7 +770,7 @@ parallel('integration.data-api.collection.update-many', { truncateColls: 'defaul
   it('fails gracefully on 2XX exceptions', async (key) => {
     try {
       // @ts-expect-error - testing invalid input
-      await collection.updateMany({ key }, { $invalidOperator: 1 })
+      await collection.updateMany({ key }, { $invalidOperator: 1 });
       assert.fail('Expected error');
     } catch (e) {
       assert.ok(e instanceof UpdateManyError);

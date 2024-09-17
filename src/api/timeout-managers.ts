@@ -65,7 +65,7 @@ export class TimeoutManager {
     if (!this._started) {
       this._started = true;
       this._deadline = Date.now() + this.ms;
-      return this.ms
+      return this.ms;
     }
     return this._deadline - Date.now();
   }

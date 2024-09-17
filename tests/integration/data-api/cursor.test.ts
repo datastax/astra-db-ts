@@ -361,7 +361,7 @@ describe('integration.data-api.cursor', { truncateColls: 'both:before' }, ({ col
       const cursor = collection.find({});
       const res: any[] = [];
       // noinspection JSDeprecatedSymbols
-      await cursor.forEach(doc => { res.push(doc) });
+      await cursor.forEach(doc => { res.push(doc); });
       assert.deepStrictEqual(res.sort(sortById), docs, 'Cursor did not read all documents');
       assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
@@ -372,7 +372,7 @@ describe('integration.data-api.cursor', { truncateColls: 'both:before' }, ({ col
       const cursor = collection.find({}).map(ageToString);
       const res: any[] = [];
       // noinspection JSDeprecatedSymbols
-      await cursor.forEach(doc => { res.push(doc) });
+      await cursor.forEach(doc => { res.push(doc); });
       assert.deepStrictEqual(res.sort(sortById), docs.map(ageToString), 'Cursor did not read all documents');
       assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
@@ -383,7 +383,7 @@ describe('integration.data-api.cursor', { truncateColls: 'both:before' }, ({ col
       const cursor = collection.find({ _id: 'Styx' }, {});
       const res: any[] = [];
       // noinspection JSDeprecatedSymbols
-      await cursor.forEach(doc => { res.push(doc) });
+      await cursor.forEach(doc => { res.push(doc); });
       assert.deepStrictEqual(res, [], 'Cursor did not read all documents');
       assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
@@ -394,14 +394,14 @@ describe('integration.data-api.cursor', { truncateColls: 'both:before' }, ({ col
       const cursor = collection.find({});
       const res: any[] = [];
       // noinspection JSDeprecatedSymbols
-      await cursor.forEach(doc => { res.push(doc) });
+      await cursor.forEach(doc => { res.push(doc); });
       assert.deepStrictEqual(res.sort(sortById), docs, 'Cursor did not read all documents');
       assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
       const res2: any[] = [];
       // noinspection JSDeprecatedSymbols
-      await cursor.forEach(doc => { res.push(doc) });
+      await cursor.forEach(doc => { res.push(doc); });
       assert.deepStrictEqual(res2, [], 'Cursor did not read all documents');
       assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
     });
@@ -509,7 +509,7 @@ describe('integration.data-api.cursor', { truncateColls: 'both:before' }, ({ col
     });
 
     it('should close cursor and rethrow error if mapping function throws', async () => {
-      const cursor = collection.find({}).map(() => { throw new Error('Mapping error') });
+      const cursor = collection.find({}).map(() => { throw new Error('Mapping error'); });
       await assert.rejects(async () => await cursor.toArray(), { message: 'Mapping error' });
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
     });

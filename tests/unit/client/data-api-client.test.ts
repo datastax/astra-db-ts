@@ -33,7 +33,7 @@ describe('unit.client.data-api-client', () => {
     assert.doesNotThrow(() => new DataAPIClient());
     assert.doesNotThrow(() => new DataAPIClient('token'));
     assert.doesNotThrow(() => new DataAPIClient(new UsernamePasswordTokenProvider('username', 'password')));
-  })
+  });
 
   it('should throw if an invalid token is passed', () => {
     // @ts-expect-error - testing invalid input

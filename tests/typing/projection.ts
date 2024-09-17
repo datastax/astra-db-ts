@@ -23,9 +23,9 @@ const test1: Projection = {
   'obj.str1': false,
   'obj.str2': { $slice: 1 },
   'sdff34uu9fu44329$9843f@90&@)#(0y92fsa': { $slice: [23, 34] },
-}
+};
 
 const test2: Projection = {
   // @ts-expect-error - Invalid type
   'num1': 1n,
-}
+};

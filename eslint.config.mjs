@@ -59,6 +59,9 @@ export default [
 
       // https://stackoverflow.com/questions/49743842/javascript-unexpected-control-characters-in-regular-expression
       'no-control-regex': 'off',
+
+      'semi': 'error',
+      // 'comma-dangle': ['error', 'only-multiline'],
     },
   },
 ];

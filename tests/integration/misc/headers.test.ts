@@ -142,8 +142,8 @@ parallel('integration.misc.headers', () => {
       assert.strictEqual(latestHeaders.ref[DEFAULT_DATA_API_AUTH_HEADER], tp.getToken());
 
       const badTokenProvider = new class extends TokenProvider {
-        getToken() { return 'are we we are' }
-      }
+        getToken() { return 'are we we are'; }
+      };
 
       if (ENVIRONMENT === 'astra') {
         const dbAdmin1 = db1.admin({ environment: ENVIRONMENT });

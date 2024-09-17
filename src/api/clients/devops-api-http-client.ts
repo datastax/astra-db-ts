@@ -198,7 +198,7 @@ const mkAuthHeaderProvider = (tp: TokenProvider): HeaderProvider => () => {
   return (token instanceof Promise)
     ? token.then(mkAuthHeader)
     : mkAuthHeader(token);
-}
+};
 
 const mkAuthHeader = (token: string | nullish): Record<string, string> => (token)
   ? { [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` }

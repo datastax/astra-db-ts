@@ -88,7 +88,7 @@ describe('integration.misc.code-samples', { truncateColls: 'default:before' }, (
       // Unpredictably prints one of their names
       const unpredictable = await collection.findOne({ key });
       // console.log(unpredictable?.name);
-      assert.strictEqual(typeof unpredictable?.name, 'string')
+      assert.strictEqual(typeof unpredictable?.name, 'string');
 
       // Failed find by name (null)
       const failed = await collection.findOne({ name: 'Carrie', key });

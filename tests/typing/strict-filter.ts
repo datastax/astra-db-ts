@@ -83,7 +83,7 @@ const test2: StrictFilter<Schema> = {
       ]
     }
   ],
-}
+};
 
 const test3: StrictFilter<Schema> = {
   // @ts-expect-error - Invalid type
@@ -129,7 +129,7 @@ const test3: StrictFilter<Schema> = {
       ]
     }
   ]
-}
+};
 
 const test4: StrictFilter<SomeDoc> = {
   num1: '1',
@@ -145,12 +145,12 @@ const test4: StrictFilter<SomeDoc> = {
       ]
     }
   ]
-}
+};
 
 const test5: StrictFilter<Schema> = {
   // @ts-expect-error - Invalid path
   'obj.obj.xyz': null!
-}
+};
 
 const test6: StrictFilter<ConvolutedSchema2> = {
   $or: [
@@ -158,7 +158,7 @@ const test6: StrictFilter<ConvolutedSchema2> = {
     { numOrArray: { $gte: 3 } },
     { numOrArray: { $size: 3 } },
   ]
-}
+};
 
 const test7: StrictFilter<any> = {
   $and: [
@@ -166,9 +166,9 @@ const test7: StrictFilter<any> = {
     { $not: { $and: [{ 'some_random_key': Symbol.for('123') }] } },
   ],
   '123123123': 123123,
-}
+};
 
 const test8: StrictFilter<any> = {
   // @ts-expect-error - Invalid type
   $and: 3,
-}
+};

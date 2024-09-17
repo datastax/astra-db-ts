@@ -59,4 +59,4 @@ it = function (name: string, testFn: TestFn) {
   }
 
   return global.it(name, modifiedFn);
-}
+};

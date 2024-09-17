@@ -24,9 +24,9 @@ parallel('integration.api.fetch.fetch-native', () => {
     body: JSON.stringify({ findCollections: {} }),
     headers: { Token: TEST_APPLICATION_TOKEN, 'Content-Type': 'application/json' },
     timeout: 10000,
-    mkTimeoutError: () => { throw new Error('timeout') },
+    mkTimeoutError: () => { throw new Error('timeout'); },
     forceHttp1: false,
-  }
+  };
 
   it('should work', async () => {
     const fetcher = new FetchNative();
@@ -44,7 +44,7 @@ parallel('integration.api.fetch.fetch-native', () => {
     try {
       const fetcher = new FetchNative();
       await fetcher.fetch({ ...genericOptions, timeout: 0 });
-      assert.fail('Expected an error')
+      assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof Error);
       assert.strictEqual(e.message, 'timeout');
@@ -56,7 +56,7 @@ parallel('integration.api.fetch.fetch-native', () => {
       const fetcher = new FetchNative();
       // @ts-expect-error - Testing invalid input
       await fetcher.fetch(2);
-      assert.fail('Expected an error')
+      assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof TypeError);
       assert.ok(e.message.includes('Cannot create property'));
@@ -67,7 +67,7 @@ parallel('integration.api.fetch.fetch-native', () => {
     try {
       const fetcher = new FetchNative();
       await fetcher.fetch({ ...genericOptions, url: DEMO_APPLICATION_URI });
-      assert.fail('Expected an error')
+      assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof Error);
       assert.ok('code' in e);

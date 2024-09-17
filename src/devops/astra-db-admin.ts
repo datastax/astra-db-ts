@@ -73,13 +73,13 @@ export class AstraDbAdmin extends DbAdmin {
     const combinedAdminOpts = {
       ...rootOpts.adminOptions,
       ...adminOpts,
-    }
+    };
 
     const _adminToken = TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken);
 
     const adminToken = (_adminToken instanceof StaticTokenProvider && isNullish(_adminToken.getToken()))
       ? dbToken
-      : _adminToken
+      : _adminToken;
 
     const environment = extractAstraEnvironment(endpoint);
 
@@ -187,7 +187,7 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns A promise that resolves to list of all the namespaces in the database.
    */
   public override async listNamespaces(options?: WithTimeout): Promise<string[]> {
-    return this.info(options).then(i => [i.info.keyspace!, ...i.info.additionalKeyspaces ?? []].filter(Boolean))
+    return this.info(options).then(i => [i.info.keyspace!, ...i.info.additionalKeyspaces ?? []].filter(Boolean));
   }
 
   /**

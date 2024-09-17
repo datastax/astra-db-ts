@@ -226,18 +226,18 @@ parallel('integration.data-api.collection.find-one-and-update', { truncateColls:
   it('should error when both sort and vector are provided', async () => {
     await assert.rejects(async () => {
       await collection.findOneAndUpdate({}, {}, { returnDocument: 'after', sort: { name: 1 }, vector: [1, 1, 1, 1, 1] });
-    }, /Can't use both `sort` and `vector` options at once; if you need both, include a \$vector key in the sort object/)
+    }, /Can't use both `sort` and `vector` options at once; if you need both, include a \$vector key in the sort object/);
   });
 
   it('should error when both sort and vectorize are provided', async () => {
     await assert.rejects(async () => {
       await collection.findOneAndUpdate({}, {}, { returnDocument: 'after', sort: { name: 1 }, vectorize: 'American Idiot is a good song' });
-    }, /Can't use both `sort` and `vectorize` options at once; if you need both, include a \$vectorize key in the sort object/)
+    }, /Can't use both `sort` and `vectorize` options at once; if you need both, include a \$vectorize key in the sort object/);
   });
 
   it('should error when both vector and vectorize are provided', async () => {
     await assert.rejects(async () => {
       await collection.findOneAndUpdate({}, {}, { returnDocument: 'after', vector: [1, 1, 1, 1, 1], vectorize: 'American Idiot is a good song' });
-    }, /Cannot set both vectors and vectorize options/)
+    }, /Cannot set both vectors and vectorize options/);
   });
 });

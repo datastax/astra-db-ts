@@ -54,10 +54,10 @@ const test3: Partial<ToDotNotation<Schema>> = {
   'obj.obj.any.some-random-property': 1,
   'obj.obj.any.some-other-property': '1',
   arr: ['1', '2'],
-}
+};
 
 // @ts-expect-no-error - Empty object (for better or for worse)
-const test4: Partial<ToDotNotation<Schema>> = {}
+const test4: Partial<ToDotNotation<Schema>> = {};
 
 const test5: Partial<ToDotNotation<Schema>> = {
   // @ts-expect-error - Invalid type
@@ -79,32 +79,32 @@ const test5: Partial<ToDotNotation<Schema>> = {
   ],
   // @ts-expect-error - Invalid type
   'obj.obj.any': 3,
-}
+};
 
 const test6: Partial<ToDotNotation<Schema>> = {
   num1: 1,
   'obj.str1': '1',
   // @ts-expect-error - Invalid path
   'obj.rammstein': 'Angst',
-}
+};
 
 const test7: Partial<ToDotNotation<ConvolutedSchema1>> = {
   numOrBigInt: 1n,
   numOrString: '',
-}
+};
 
 const test8: Partial<ToDotNotation<ConvolutedSchema1>> = {
   numOrBigInt: 1,
   numOrString: 1,
-}
+};
 
 const test9: Partial<ToDotNotation<ConvolutedSchema1>> = {
   // @ts-expect-error - Invalid type
   numOrBigInt: '',
   // @ts-expect-error - Invalid type
   numOrString: 1n,
-}
+};
 
 const test10: Partial<ToDotNotation<ConvolutedSchema3>> = {
   'obj.id': UUID.v7(),
-}
+};

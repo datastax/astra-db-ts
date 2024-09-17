@@ -33,7 +33,7 @@ const test2: Filter<Schema> = {
       ]
     }
   ],
-}
+};
 
 const test3: Filter<Schema> = {
   // @ts-expect-error - Invalid type
@@ -84,7 +84,7 @@ const test3: Filter<Schema> = {
       ]
     }
   ]
-}
+};
 
 const test4: Filter<SomeDoc> = {
   num1: '1',
@@ -100,12 +100,12 @@ const test4: Filter<SomeDoc> = {
       ]
     }
   ]
-}
+};
 
 const test5: Filter<Schema> = {
   // Doesn't check nested paths
   'obj.obj.xyz': null!,
-}
+};
 
 const test6: Filter<ConvolutedSchema2> = {
   $or: [
@@ -113,7 +113,7 @@ const test6: Filter<ConvolutedSchema2> = {
     { numOrArray: { $gte: 3 } },
     { numOrArray: { $size: 3 } },
   ]
-}
+};
 
 const test7: Filter<any> = {
   $and: [
@@ -121,9 +121,9 @@ const test7: Filter<any> = {
     { $not: { $and: [ { 'some_random_key': Symbol.for('123') } ] } },
   ],
   '123123123': 123123,
-}
+};
 
 const test8: Filter<any> = {
   // @ts-expect-error - Invalid type
   $and: 3,
-}
+};

@@ -160,7 +160,7 @@ const test2: StrictUpdateFilter<BasicSchema> = {
     'any.a': 1,
     any: 1,
   },
-}
+};
 
 const test3: StrictUpdateFilter<Schema> = {
   $set: {
@@ -214,7 +214,7 @@ const test3: StrictUpdateFilter<Schema> = {
     // @ts-expect-error - Invalid type
     'obj.obj.any.xyz': new Date(),
   },
-}
+};
 
 const test4: StrictUpdateFilter<SomeDoc> = {
   $set: {
@@ -262,7 +262,7 @@ const test4: StrictUpdateFilter<SomeDoc> = {
     // @ts-expect-error - Invalid type
     'obj.obj.any.xyz': new Date(),
   },
-}
+};
 
 const test5: StrictUpdateFilter<Schema> = {
   $set: {
@@ -293,7 +293,7 @@ const test5: StrictUpdateFilter<Schema> = {
     // @ts-expect-error - Invalid path
     'obj.obj.any': true,
   },
-}
+};
 
 const test6: StrictUpdateFilter<SomeDoc> = {
   $set: {
@@ -317,7 +317,7 @@ const test6: StrictUpdateFilter<SomeDoc> = {
   $currentDate: {
     'obj.obj.any': true,
   },
-}
+};
 
 const test7: StrictUpdateFilter<ConvolutedSchema1> = {
   $set: {
@@ -340,7 +340,7 @@ const test7: StrictUpdateFilter<ConvolutedSchema1> = {
     numOrBigInt: 'new_name',
     numOrString: 'new_name',
   },
-}
+};
 
 const test8: StrictUpdateFilter<ConvolutedSchema1> = {
   $set: {
@@ -363,7 +363,7 @@ const test8: StrictUpdateFilter<ConvolutedSchema1> = {
     numOrBigInt: 'new_name',
     numOrString: 'new_name',
   },
-}
+};
 
 const test9: StrictUpdateFilter<ConvolutedSchema1> = {
   $set: {
@@ -384,7 +384,7 @@ const test9: StrictUpdateFilter<ConvolutedSchema1> = {
     // @ts-expect-error - Invalid type
     numOrString: '',
   },
-}
+};
 
 const test10: StrictUpdateFilter<SomeDoc> = {
   $set: {
@@ -402,7 +402,7 @@ const test10: StrictUpdateFilter<SomeDoc> = {
     // @ts-expect-error - Invalid type
     numOrString: '',
   },
-}
+};
 
 const test11: StrictUpdateFilter<ConvolutedSchema2> = {
   $set: {
@@ -429,7 +429,7 @@ const test11: StrictUpdateFilter<ConvolutedSchema2> = {
   $max: {
     numOrArray: 1,
   },
-}
+};
 
 const test12: StrictUpdateFilter<ConvolutedSchema2> = {
   $set: {
@@ -454,7 +454,7 @@ const test12: StrictUpdateFilter<ConvolutedSchema2> = {
     // @ts-expect-error - Invalid type
     numOrArray: [''],
   },
-}
+};
 
 const test13: StrictUpdateFilter<SomeDoc> = {
   $set: {
@@ -473,4 +473,4 @@ const test13: StrictUpdateFilter<SomeDoc> = {
     // @ts-expect-error - Invalid type
     numOrArray: [''],
   },
-}
+};

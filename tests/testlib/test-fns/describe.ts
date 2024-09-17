@@ -84,4 +84,4 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
   }
 
   return global.describe(name, modifiedFn);
-}
+};

@@ -58,9 +58,9 @@ export function replaceAstraUrlIdAndRegion(uri: string, id: string, region: stri
  * @internal
  */
 export function validateOption<T>(name: string, obj: T, types: string | string[], require: boolean = false, test?: (obj: NonNullable<T>) => void): void {
-  types = Array.isArray(types) ? types : [types]
+  types = Array.isArray(types) ? types : [types];
 
-  const typesString = `[${types.join(', ')}]`
+  const typesString = `[${types.join(', ')}]`;
 
   if (obj === null || obj === undefined) {
     if (require) {
@@ -100,4 +100,4 @@ export const normalizeSort = (sort: Record<string, unknown>): Sort => {
   }
 
   return ret;
-}
+};

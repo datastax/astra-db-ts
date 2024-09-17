@@ -131,7 +131,7 @@ describe('integration.client.data-api-client', () => {
       });
 
       client.on('commandFailed', () => {
-        assert.fail('should not have emitted commandFailed event')
+        assert.fail('should not have emitted commandFailed event');
       });
 
       await collection1.insertOne({ name: 'Chthonic' });
@@ -191,7 +191,7 @@ describe('integration.client.data-api-client', () => {
       });
 
       client.on('commandSucceeded', () => {
-        assert.fail('should not have emitted commandSucceeded event')
+        assert.fail('should not have emitted commandSucceeded event');
       });
 
       client.on('commandFailed', (event) => {
@@ -244,7 +244,7 @@ describe('integration.client.data-api-client', () => {
       });
 
       client.on('commandSucceeded', () => {
-        assert.fail('should not have emitted commandSucceeded event')
+        assert.fail('should not have emitted commandSucceeded event');
       });
 
       client.on('commandFailed', (event) => {

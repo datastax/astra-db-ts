@@ -80,7 +80,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
         commandPollingEvent = true;
         assert.strictEqual(event.path, '/databases');
         assert.strictEqual(event.method, HttpMethods.Post);
-        assert.strictEqual(event.longRunning, true)
+        assert.strictEqual(event.longRunning, true);
         assert.strictEqual(event.params, undefined);
         assert.strictEqual(event.interval, 10000);
         assert.ok(event.elapsed > 0);
@@ -143,7 +143,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
       assert.strictEqual(dbInfo.info.keyspace, db.namespace);
 
       const collections1 = await db.listCollections({ nameOnly: true });
-      assert.deepStrictEqual(collections1, [], `in ${dbType}`)
+      assert.deepStrictEqual(collections1, [], `in ${dbType}`);
 
       const collection = await db.createCollection('test_collection');
       assert.ok(collection, `in ${dbType}`);
