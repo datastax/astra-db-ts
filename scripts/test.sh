@@ -8,7 +8,7 @@ fi
 # Define necessary commands
 test_cmd="ts-mocha --paths -p tsconfig.json --recursive tests/prelude.test.ts tests/unit tests/integration tests/postlude.test.ts --extension .test.ts -t 0 --reporter tests/errors-reporter.cjs"
 
-run_lint_cmd="npm run lint"
+run_lint_cmd="npm run lint -- --no-warn-ignored"
 
 run_tsc_cmd="npx tsc --noEmit --skipLibCheck"
 
