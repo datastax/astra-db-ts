@@ -34,7 +34,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
       name: TEMP_DB_NAME,
       cloudProvider: 'GCP',
       region: 'us-east1',
-      keyspace: 'my_namespace',
+      keyspace: 'my_keyspace',
     }, {
       blocking: false,
       maxTimeMS: 720000,
@@ -44,7 +44,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
     {
       assert.ok(asyncDb.id);
       assert.ok(asyncDbAdmin.id);
-      assert.strictEqual(asyncDb.keyspace, 'my_namespace');
+      assert.strictEqual(asyncDb.keyspace, 'my_keyspace');
     }
 
     {
@@ -53,7 +53,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
       assert.strictEqual(dbInfo1.info.name, TEMP_DB_NAME);
       assert.strictEqual(dbInfo1.info.cloudProvider, 'GCP');
       assert.strictEqual(dbInfo1.info.region, 'us-east1');
-      assert.strictEqual(dbInfo1.info.keyspace, 'my_namespace');
+      assert.strictEqual(dbInfo1.info.keyspace, 'my_keyspace');
 
       const dbInfo2 = await admin.dbInfo(asyncDb.id);
       assert.deepStrictEqual(dbInfo1.info.name, dbInfo2.info.name);
@@ -159,21 +159,21 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
       const dbs2 = await admin.listDatabases({ include: 'ACTIVE', provider: 'GCP', limit: 56 });
       assert.ok(dbs2.find(db => db.id === dbAdmin.id), `in ${dbType}`);
 
-      const namespaces = await dbAdmin.listKeyspaces();
-      assert.deepStrictEqual(namespaces, [db.keyspace], `in ${dbType}`);
+      const keyspaces = await dbAdmin.listKeyspaces();
+      assert.deepStrictEqual(keyspaces, [db.keyspace], `in ${dbType}`);
     }
 
     {
-      await asyncDbAdmin.createKeyspace('other_namespace', { blocking: false });
+      await asyncDbAdmin.createKeyspace('other_keyspace', { blocking: false });
 
       const fullDbInfo3 = await asyncDbAdmin.info();
       assert.strictEqual(fullDbInfo3.status, 'MAINTENANCE');
-      assert.strictEqual(fullDbInfo3.info.keyspace, 'my_namespace');
+      assert.strictEqual(fullDbInfo3.info.keyspace, 'my_keyspace');
       assert.strictEqual(fullDbInfo3.info.additionalKeyspaces, undefined);
     }
 
     {
-      await syncDbAdmin.createKeyspace('other_namespace');
+      await syncDbAdmin.createKeyspace('other_keyspace');
       await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
@@ -184,21 +184,21 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
     }
 
     for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
-      const namespaces2 = await dbAdmin.listKeyspaces();
-      assert.deepStrictEqual(namespaces2, [db.keyspace, 'other_namespace'], `in ${dbType}`);
+      const keyspaces2 = await dbAdmin.listKeyspaces();
+      assert.deepStrictEqual(keyspaces2, [db.keyspace, 'other_keyspace'], `in ${dbType}`);
     }
 
     {
-      await asyncDbAdmin.dropKeyspace('other_namespace', { blocking: false });
+      await asyncDbAdmin.dropKeyspace('other_keyspace', { blocking: false });
 
       const fullDbInfo4 = await asyncDbAdmin.info();
       assert.strictEqual(fullDbInfo4.status, 'MAINTENANCE');
-      assert.strictEqual(fullDbInfo4.info.keyspace, 'my_namespace');
-      assert.deepStrictEqual(fullDbInfo4.info.additionalKeyspaces, ['other_namespace']);
+      assert.strictEqual(fullDbInfo4.info.keyspace, 'my_keyspace');
+      assert.deepStrictEqual(fullDbInfo4.info.additionalKeyspaces, ['other_keyspace']);
     }
 
     {
-      await syncDbAdmin.dropKeyspace('other_namespace', { blocking: true });
+      await syncDbAdmin.dropKeyspace('other_keyspace', { blocking: true });
       await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
@@ -214,8 +214,8 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () =
       assert.strictEqual(dbInfo.info.keyspace, db.keyspace);
       assert.strictEqual(dbInfo.info.additionalKeyspaces, undefined);
 
-      const namespaces3 = await dbAdmin.listKeyspaces();
-      assert.deepStrictEqual(namespaces3, [db.keyspace], `in ${dbType}`);
+      const keyspaces3 = await dbAdmin.listKeyspaces();
+      assert.deepStrictEqual(keyspaces3, [db.keyspace], `in ${dbType}`);
     }
 
     {

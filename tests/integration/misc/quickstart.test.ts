@@ -91,9 +91,9 @@ parallel('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
     assert.strictEqual(dbInfo.info.region, region);
 
     const dbAdmin = admin.dbAdmin(dbInfo.id, dbInfo.info.region);
-    const namespaces = await dbAdmin.listKeyspaces();
-    assert.ok(namespaces.includes(DEFAULT_KEYSPACE));
-    assert.ok(namespaces.includes(OTHER_KEYSPACE));
+    const keyspaces = await dbAdmin.listKeyspaces();
+    assert.ok(keyspaces.includes(DEFAULT_KEYSPACE));
+    assert.ok(keyspaces.includes(OTHER_KEYSPACE));
 
     await client.close();
   });

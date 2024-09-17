@@ -33,9 +33,9 @@ describe('unit.data-api.cursor', () => {
       assert.strictEqual(cursor['_state'], 0, 'Cursor is not set to the UNINITIALIZED state');
     });
 
-    it('should contain the proper namespace', () => {
+    it('should contain the proper keyspace', () => {
       const cursor = new FindCursor<any>('default_keyspace', httpClient, {});
-      assert.strictEqual(cursor.keyspace, 'default_keyspace', 'Cursor has bad namespace');
+      assert.strictEqual(cursor.keyspace, 'default_keyspace', 'Cursor has bad keyspace');
     });
 
     it('should contain the proper options', () => {

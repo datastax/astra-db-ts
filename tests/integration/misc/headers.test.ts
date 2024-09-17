@@ -147,8 +147,8 @@ parallel('integration.misc.headers', () => {
 
       if (ENVIRONMENT === 'astra') {
         const dbAdmin1 = db1.admin({ environment: ENVIRONMENT });
-        const namespaces = await dbAdmin1.listKeyspaces();
-        assert.ok(Array.isArray(namespaces));
+        const keyspaces = await dbAdmin1.listKeyspaces();
+        assert.ok(Array.isArray(keyspaces));
         assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], `Bearer ${TEST_APPLICATION_TOKEN}`);
 
         const dbAdmin2 = db1.admin({ environment: ENVIRONMENT, adminToken: badTokenProvider });
@@ -156,8 +156,8 @@ parallel('integration.misc.headers', () => {
         assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], `Bearer ${badTokenProvider.getToken()}`);
       } else {
         const dbAdmin1 = db1.admin({ environment: ENVIRONMENT });
-        const namespaces = await dbAdmin1.listKeyspaces();
-        assert.ok(Array.isArray(namespaces));
+        const keyspaces = await dbAdmin1.listKeyspaces();
+        assert.ok(Array.isArray(keyspaces));
         assert.strictEqual(latestHeaders.ref[DEFAULT_DATA_API_AUTH_HEADER], TEST_APPLICATION_TOKEN);
 
         const dbAdmin2 = db1.admin({ environment: ENVIRONMENT, adminToken: badTokenProvider });

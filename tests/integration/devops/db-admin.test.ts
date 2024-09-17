@@ -24,20 +24,20 @@ parallel('integration.devops.db-admin', ({ client, dbAdmin }) => {
       ? db.admin({ environment: ENVIRONMENT })
       : db.admin({ environment: ENVIRONMENT });
 
-    const namespaces1 = await dbAdmin.listKeyspaces();
-    assert.ok(!namespaces1.includes('slania'));
+    const keyspaces1 = await dbAdmin.listKeyspaces();
+    assert.ok(!keyspaces1.includes('slania'));
 
     await dbAdmin.createKeyspace('slania', { updateDbKeyspace: true });
     assert.strictEqual(db.keyspace, 'slania');
 
-    const namespaces2 = await dbAdmin.listKeyspaces();
-    assert.ok(namespaces2.includes('slania'));
+    const keyspaces2 = await dbAdmin.listKeyspaces();
+    assert.ok(keyspaces2.includes('slania'));
 
     await dbAdmin.dropKeyspace('slania');
     assert.strictEqual(db.keyspace, 'slania');
 
-    const namespaces3 = await dbAdmin.listKeyspaces();
-    assert.ok(!namespaces3.includes('slania'));
+    const keyspaces3 = await dbAdmin.listKeyspaces();
+    assert.ok(!keyspaces3.includes('slania'));
   });
 
   it('should findEmbeddingProviders', async () => {

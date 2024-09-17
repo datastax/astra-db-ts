@@ -49,7 +49,7 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
   const db = client.db(TEST_APPLICATION_URI);
 
   const collection = db.collection(DEFAULT_COLLECTION_NAME);
-  const collection_ = db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_KEYSPACE });
+  const collection_ = db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE });
 
   const dbAdmin = (ENVIRONMENT === 'astra')
     ? db.admin({ environment: ENVIRONMENT })

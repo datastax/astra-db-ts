@@ -48,7 +48,7 @@ parallel('integration.data-api.collection.misc', ({ db }) => {
       await collection.insertOne({ username: 'test' });
     } catch (e) {
       assert.ok(e instanceof CollectionNotFoundError);
-      assert.strictEqual(e.namespace, DEFAULT_KEYSPACE);
+      assert.strictEqual(e.keyspace, DEFAULT_KEYSPACE);
       assert.strictEqual(e.collectionName, 'non_existent_collection');
     }
   });
@@ -60,7 +60,7 @@ parallel('integration.data-api.collection.misc', ({ db }) => {
       await collection.options();
     } catch (e) {
       assert.ok(e instanceof CollectionNotFoundError);
-      assert.strictEqual(e.namespace, DEFAULT_KEYSPACE);
+      assert.strictEqual(e.keyspace, DEFAULT_KEYSPACE);
       assert.strictEqual(e.collectionName, 'non_existent_collection');
     }
   });

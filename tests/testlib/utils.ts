@@ -28,12 +28,12 @@ export async function tryCatchErr(fn: () => void | Promise<void>) {
 export async function dropEphemeralColls() {
   const promises: Promise<boolean>[] = [];
 
-  for (const namespace of [DEFAULT_KEYSPACE, OTHER_KEYSPACE]) {
-    const collections = await GLOBAL_FIXTURES.db.listCollections({ namespace: namespace });
+  for (const keyspace of [DEFAULT_KEYSPACE, OTHER_KEYSPACE]) {
+    const collections = await GLOBAL_FIXTURES.db.listCollections({ keyspace: keyspace });
 
     collections
       .filter(c => c.name !== DEFAULT_COLLECTION_NAME)
-      .forEach(c => promises.push(GLOBAL_FIXTURES.db.dropCollection(c.name, { namespace: namespace })));
+      .forEach(c => promises.push(GLOBAL_FIXTURES.db.dropCollection(c.name, { keyspace: keyspace })));
   }
 
   await Promise.all(promises);

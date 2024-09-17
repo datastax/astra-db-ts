@@ -26,7 +26,7 @@ describe('unit.data-api.collection', ({ db, collection }) => {
   });
 
   describe('accessors', () => {
-    it('returns the namespace', () => {
+    it('returns the keyspace', () => {
       assert.strictEqual(collection.keyspace, DEFAULT_KEYSPACE);
     });
 

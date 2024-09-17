@@ -72,30 +72,30 @@ describe('unit.data-api.db', () => {
       assert.strictEqual(db.keyspace, 'new');
     });
 
-    it('is initialized with default namespace', () => {
+    it('is initialized with default keyspace', () => {
       const db = mkDb(internalOps(), TEST_APPLICATION_URI, null, null);
       assert.strictEqual(db.keyspace, DEFAULT_KEYSPACE);
     });
 
-    it('uses custom namespace when provided', () => {
-      const db = mkDb(internalOps({ keyspace: 'new_namespace' }), TEST_APPLICATION_URI, null, null);
-      assert.strictEqual(db.keyspace, 'new_namespace');
+    it('uses custom keyspace when provided', () => {
+      const db = mkDb(internalOps({ keyspace: 'new_keyspace' }), TEST_APPLICATION_URI, null, null);
+      assert.strictEqual(db.keyspace, 'new_keyspace');
     });
 
-    it('overrides namespace in db when provided', () => {
-      const db = mkDb(internalOps(), TEST_APPLICATION_URI, { keyspace: 'new_namespace' }, null);
-      assert.strictEqual(db.keyspace, 'new_namespace');
+    it('overrides keyspace in db when provided', () => {
+      const db = mkDb(internalOps(), TEST_APPLICATION_URI, { keyspace: 'new_keyspace' }, null);
+      assert.strictEqual(db.keyspace, 'new_keyspace');
     });
 
-    it('throws error on empty namespace', () => {
+    it('throws error on empty keyspace', () => {
       assert.throws(() => {
         mkDb(internalOps(), TEST_APPLICATION_URI, { keyspace: '' }, null);
       });
     });
 
-    it('throws error on invalid namespace', () => {
+    it('throws error on invalid keyspace', () => {
       assert.throws(() => {
-        mkDb(internalOps(), TEST_APPLICATION_URI, { keyspace: 'bad namespace' }, null);
+        mkDb(internalOps(), TEST_APPLICATION_URI, { keyspace: 'bad keyspace' }, null);
       });
     });
 
@@ -157,35 +157,35 @@ describe('unit.data-api.db', () => {
     });
   });
 
-  describe('namespace tests', () => {
-    it('should return the namespace passed into the constructor', () => {
-      const db = mkDb(internalOps({ keyspace: 'namespace' }), TEST_APPLICATION_URI, {}, null);
-      assert.strictEqual(db.keyspace, 'namespace');
+  describe('keyspace tests', () => {
+    it('should return the keyspace passed into the constructor', () => {
+      const db = mkDb(internalOps({ keyspace: 'keyspace' }), TEST_APPLICATION_URI, {}, null);
+      assert.strictEqual(db.keyspace, 'keyspace');
     });
 
-    it('should throw an error if the namespace is not set in the namespace', () => {
+    it('should throw an error if the keyspace is not set in the keyspace', () => {
       const db = mkDb({ ...internalOps(), environment: 'dse' }, TEST_APPLICATION_URI, {}, null);
       assert.throws(() => db.keyspace);
     });
 
-    it('should mutate the namespace (non-retroactively)', () => {
-      const db = mkDb(internalOps({ keyspace: 'namespace' }), TEST_APPLICATION_URI, {}, null);
+    it('should mutate the keyspace (non-retroactively)', () => {
+      const db = mkDb(internalOps({ keyspace: 'keyspace' }), TEST_APPLICATION_URI, {}, null);
       const coll1 = db.collection('coll');
-      assert.strictEqual(db.keyspace, 'namespace');
-      assert.strictEqual(coll1.keyspace, 'namespace');
+      assert.strictEqual(db.keyspace, 'keyspace');
+      assert.strictEqual(coll1.keyspace, 'keyspace');
 
-      db.useKeyspace('other_namespace');
+      db.useKeyspace('other_keyspace');
       const coll2 = db.collection('coll');
-      assert.strictEqual(db.keyspace, 'other_namespace');
-      assert.strictEqual(coll1.keyspace, 'namespace');
-      assert.strictEqual(coll2.keyspace, 'other_namespace');
+      assert.strictEqual(db.keyspace, 'other_keyspace');
+      assert.strictEqual(coll1.keyspace, 'keyspace');
+      assert.strictEqual(coll2.keyspace, 'other_keyspace');
     });
 
-    it('should should not throw an error when getting namespace if namespace is set later', () => {
+    it('should should not throw an error when getting keyspace if keyspace is set later', () => {
       const db = mkDb({ ...internalOps(), environment: 'dse' }, TEST_APPLICATION_URI, {}, null);
       assert.throws(() => db.keyspace);
-      db.useKeyspace('other_namespace');
-      assert.strictEqual(db.keyspace, 'other_namespace');
+      db.useKeyspace('other_keyspace');
+      assert.strictEqual(db.keyspace, 'other_keyspace');
     });
   });
 

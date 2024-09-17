@@ -20,40 +20,40 @@ const TEST_KEYSPACES = [DEFAULT_KEYSPACE, OTHER_KEYSPACE];
 
 before(async () => {
   const { db, dbAdmin } = GLOBAL_FIXTURES;
-  const allNamespaces = await dbAdmin.listKeyspaces();
+  const allKeyspaces = await dbAdmin.listKeyspaces();
 
-  if (allNamespaces.includes('slania')) {
-    console.log(`deleting namespace 'slania'`);
+  if (allKeyspaces.includes('slania')) {
+    console.log(`deleting keyspace 'slania'`);
     await dbAdmin.dropKeyspace('slania');
   }
 
-  for (const namespace of TEST_KEYSPACES) {
-    if (!allNamespaces.includes(namespace)) {
-      console.log(`creating namespace '${namespace}'`);
-      await dbAdmin.createKeyspace(namespace);
+  for (const keyspace of TEST_KEYSPACES) {
+    if (!allKeyspaces.includes(keyspace)) {
+      console.log(`creating keyspace '${keyspace}'`);
+      await dbAdmin.createKeyspace(keyspace);
     }
   }
 
   const createCollPromises = TEST_KEYSPACES
-    .map(async (namespace) => {
-      await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, namespace: namespace })
+    .map(async (keyspace) => {
+      await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, keyspace: keyspace })
         .then(c => c.deleteMany({}));
     })
     .awaitAll();
 
   const allCollections = await TEST_KEYSPACES
-    .map(async (namespace) => {
-      const colls = await db.listCollections({ namespace: namespace, nameOnly: true });
-      return [namespace, colls] as const;
+    .map(async (keyspace) => {
+      const colls = await db.listCollections({ keyspace: keyspace, nameOnly: true });
+      return [keyspace, colls] as const;
     })
     .awaitAll();
 
   await allCollections
-    .map(async ([namespace, colls]) => {
+    .map(async ([keyspace, colls]) => {
       await colls
-        .filter(c => TEST_KEYSPACES.includes(namespace) ? c !== DEFAULT_COLLECTION_NAME : true)
-        .tap(c => console.log(`deleting collection '${namespace}.${c}'`))
-        .map(c => db.dropCollection(c, { namespace: namespace }))
+        .filter(c => TEST_KEYSPACES.includes(keyspace) ? c !== DEFAULT_COLLECTION_NAME : true)
+        .tap(c => console.log(`deleting collection '${keyspace}.${c}'`))
+        .map(c => db.dropCollection(c, { keyspace: keyspace }))
         .awaitAll();
     })
     .awaitAll();
