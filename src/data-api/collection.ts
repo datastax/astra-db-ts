@@ -75,6 +75,7 @@ import { FindOneAndUpdateCommand } from '@/src/data-api/types/find/find-one-upda
 import { InsertManyCommand, InsertManyDocumentResponse } from '@/src/data-api/types/insert/insert-many';
 import { Mutable } from '@/src/data-api/types/utils';
 import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-collection';
+import { resolveKeyspace } from '@/src/common';
 
 /**
  * Represents the interface to a collection in the database.
@@ -114,7 +115,17 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   public readonly collectionName!: string;
 
   /**
-   * The namespace (aka keyspace) that the collection lives in.
+   * The keyspace that the collection resides in.
+   */
+  public readonly keyspace!: string;
+
+  /**
+   * The keyspace that the collection resides in.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link Collection.keyspace}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link Collection.keyspace} instead.
    */
   public readonly namespace!: string;
 
@@ -129,12 +140,17 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       writable: false,
     });
 
-    Object.defineProperty(this, 'namespace', {
-      value: opts?.namespace ?? db.namespace,
+    Object.defineProperty(this, 'keyspace', {
+      value: resolveKeyspace(opts) ?? db.keyspace,
       writable: false,
     });
 
-    this.#httpClient = httpClient.forCollection(this.namespace, this.collectionName, opts);
+    Object.defineProperty(this, 'namespace', {
+      value: this.keyspace,
+      writable: false,
+    });
+
+    this.#httpClient = httpClient.forCollection(this.keyspace, this.collectionName, opts);
     this.#db = db;
   }
 
@@ -788,7 +804,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictProjection
    */
   public find(filter: Filter<Schema>, options?: FindOptions): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>> {
-    return new FindCursor(this.namespace, this.#httpClient, filter as any, coalesceVectorSpecialsIntoSort(options));
+    return new FindCursor(this.keyspace, this.#httpClient, filter as any, coalesceVectorSpecialsIntoSort(options));
   }
 
   /**
@@ -1455,7 +1471,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     const collection = results.find((c) => c.name === this.collectionName);
 
     if (!collection) {
-      throw new CollectionNotFoundError(this.namespace, this.collectionName);
+      throw new CollectionNotFoundError(this.keyspace, this.collectionName);
     }
 
     return collection.options;
@@ -1481,7 +1497,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @remarks Use with caution. Wear your safety goggles. Don't say I didn't warn you.
    */
   public async drop(options?: WithTimeout): Promise<boolean> {
-    return await this.#db.dropCollection(this.collectionName, { namespace: this.namespace, ...options });
+    return await this.#db.dropCollection(this.collectionName, { keyspace: this.keyspace, ...options });
   }
 
   private get _httpClient() {

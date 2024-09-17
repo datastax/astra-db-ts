@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { DataAPITimeoutError } from '@/src/data-api';
-import { DEFAULT_NAMESPACE } from '@/src/api';
+import { DEFAULT_KEYSPACE } from '@/src/api';
 import { CollectionNotFoundError } from '@/src/data-api/errors';
 import { DEFAULT_COLLECTION_NAME, initTestObjects, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
@@ -48,7 +48,7 @@ parallel('integration.data-api.collection.misc', ({ db }) => {
       await collection.insertOne({ username: 'test' });
     } catch (e) {
       assert.ok(e instanceof CollectionNotFoundError);
-      assert.strictEqual(e.namespace, DEFAULT_NAMESPACE);
+      assert.strictEqual(e.keyspace, DEFAULT_KEYSPACE);
       assert.strictEqual(e.collectionName, 'non_existent_collection');
     }
   });
@@ -60,7 +60,7 @@ parallel('integration.data-api.collection.misc', ({ db }) => {
       await collection.options();
     } catch (e) {
       assert.ok(e instanceof CollectionNotFoundError);
-      assert.strictEqual(e.namespace, DEFAULT_NAMESPACE);
+      assert.strictEqual(e.keyspace, DEFAULT_KEYSPACE);
       assert.strictEqual(e.collectionName, 'non_existent_collection');
     }
   });

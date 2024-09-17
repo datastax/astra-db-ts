@@ -13,17 +13,21 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { AdminBlockingOptions, AdminSpawnOptions } from '@/src/devops/types';
+import {
+  AdminBlockingOptions,
+  AdminSpawnOptions,
+  LocalCreateKeyspaceOptions,
+  LocalCreateNamespaceOptions,
+} from '@/src/devops/types';
 import { DataAPIHttpClient } from '@/src/api';
 import { Db } from '@/src/data-api';
 import { DbAdmin } from '@/src/devops/db-admin';
 import { WithTimeout } from '@/src/common/types';
 import { validateAdminOpts } from '@/src/devops/utils';
-import { LocalCreateNamespaceOptions } from '@/src/devops/types/db-admin/local-create-namespace';
 import { FindEmbeddingProvidersResult } from '@/src/devops/types/db-admin/find-embedding-providers';
 
 /**
- * An administrative class for managing non-Astra databases, including creating, listing, and deleting namespaces.
+ * An administrative class for managing non-Astra databases, including creating, listing, and deleting keyspaces.
  *
  * **Shouldn't be instantiated directly; use {@link Db.admin} to obtain an instance of this class.**
  *
@@ -38,7 +42,7 @@ import { FindEmbeddingProvidersResult } from '@/src/devops/types/db-admin/find-e
  * const dbAdmin1 = db.admin({ environment: 'dse' );
  * const dbAdmin2 = db.admin({ environment: 'dse', adminToken: 'stronger-token' });
  *
- * await admin1.createNamespace({
+ * await admin1.createKeyspace({
  *   replication: {
  *     class: 'NetworkTopologyStrategy',
  *     datacenter1: 3,
@@ -46,12 +50,12 @@ import { FindEmbeddingProvidersResult } from '@/src/devops/types/db-admin/find-e
  *   },
  * });
  *
- * const namespaces = await admin1.listNamespaces();
- * console.log(namespaces);
+ * const keyspaces = await admin1.listKeyspaces();
+ * console.log(keyspaces);
  * ```
  *
  * @see Db.admin
- * @see AstraDbAdmin.dbAdmin
+ * @see DataAPIDbAdmin.dbAdmin
  *
  * @public
  */
@@ -79,12 +83,12 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @example
    * ```typescript
    * const dbAdmin = client.admin().dbAdmin('<endpoint>', {
-   *   namespace: 'my-namespace',
+   *   keyspace: 'my-keyspace',
    *   useHttp2: false,
    * });
    *
    * const db = dbAdmin.db();
-   * console.log(db.namespace);
+   * console.log(db.keyspace);
    * ```
    *
    * @returns The underlying `Db` object.
@@ -110,48 +114,60 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @returns The available embedding providers.
    */
   public override async findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult> {
-    const resp = await this.#httpClient.executeCommand({ findEmbeddingProviders: {} }, { namespace: null, maxTimeMS: options?.maxTimeMS });
+    const resp = await this.#httpClient.executeCommand({ findEmbeddingProviders: {} }, { keyspace: null, maxTimeMS: options?.maxTimeMS });
     return resp.status as FindEmbeddingProvidersResult;
   }
 
   /**
-   * Lists the namespaces in the database.
+   * Lists the keyspaces in the database.
    *
-   * The first element in the returned array is the default namespace of the database, and the rest are additional
-   * namespaces in no particular order.
+   * The first element in the returned array is the default keyspace of the database, and the rest are additional
+   * keyspaces in no particular order.
    *
    * @example
    * ```typescript
-   * const namespaces = await dbAdmin.listNamespaces();
+   * const keyspaces = await dbAdmin.listKeyspaces();
    *
    * // ['default_keyspace', 'my_other_keyspace']
-   * console.log(namespaces);
+   * console.log(keyspaces);
    * ```
    *
-   * @returns A promise that resolves to list of all the namespaces in the database.
+   * @returns A promise that resolves to list of all the keyspaces in the database.
    */
-  public override async listNamespaces(options?: WithTimeout): Promise<string[]> {
-    const resp = await this.#httpClient.executeCommand({ findNamespaces: {} }, { maxTimeMS: options?.maxTimeMS, namespace: null });
+  public override async listKeyspaces(options?: WithTimeout): Promise<string[]> {
+    const resp = await this.#httpClient.executeCommand({ findNamespaces: {} }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
     return resp.status!.namespaces;
   }
 
   /**
-   * Creates a new, additional, namespace (aka keyspace) for this database.
+   * Lists the keyspaces in the database.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link DataAPIDbAdmin.listKeyspaces}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link DataAPIDbAdmin.listKeyspaces} instead.
+   */
+  public override async listNamespaces(options?: WithTimeout): Promise<string[]> {
+    return this.listKeyspaces(options);
+  }
+
+  /**
+   * Creates a new, additional, keyspace for this database.
    *
    * **NB. The operation will always wait for the operation to complete, regardless of the {@link AdminBlockingOptions}. Expect it to take roughly 8-10 seconds.**
    *
    * @example
    * ```typescript
-   * await dbAdmin.createNamespace('my_namespace');
+   * await dbAdmin.createKeyspace('my_keyspace');
    *
-   * await dbAdmin.createNamespace('my_namespace', {
+   * await dbAdmin.createKeyspace('my_keyspace', {
    *   replication: {
    *     class: 'SimpleStrategy',
    *     replicatonFactor: 3,
    *   },
    * });
    *
-   * await dbAdmin.createNamespace('my_namespace', {
+   * await dbAdmin.createKeyspace('my_keyspace', {
    *   replication: {
    *     class: 'NetworkTopologyStrategy',
    *     datacenter1: 3,
@@ -160,14 +176,14 @@ export class DataAPIDbAdmin extends DbAdmin {
    * });
    * ```
    *
-   * @param namespace - The name of the new namespace.
+   * @param keyspace - The name of the new keyspace.
    * @param options - The options for the timeout & replication behavior of the operation.
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async createNamespace(namespace: string, options?: LocalCreateNamespaceOptions): Promise<void> {
-    if (options?.updateDbNamespace) {
-      this.#db.useNamespace(namespace);
+  public override async createKeyspace(keyspace: string, options?: LocalCreateKeyspaceOptions): Promise<void> {
+    if (options?.updateDbKeyspace) {
+      this.#db.useKeyspace(keyspace);
     }
 
     const replication = options?.replication ?? {
@@ -175,32 +191,56 @@ export class DataAPIDbAdmin extends DbAdmin {
       replicationFactor: 1,
     };
 
-    await this.#httpClient.executeCommand({ createNamespace: { name: namespace, options: { replication } } }, { maxTimeMS: options?.maxTimeMS, namespace: null });
+    await this.#httpClient.executeCommand({ createNamespace: { name: keyspace, options: { replication } } }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
   }
 
   /**
-   * Drops a namespace (aka keyspace) from this database.
+   * Creates a new, additional, keyspace for this database.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link DataAPIDbAdmin.createKeyspace}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link DataAPIDbAdmin.createKeyspace} instead.
+   */
+  public override async createNamespace(keyspace: string, options?: LocalCreateNamespaceOptions): Promise<void> {
+    return this.createKeyspace(keyspace, { ...options, updateDbKeyspace: options?.updateDbNamespace });
+  }
+
+  /**
+   * Drops a keyspace from this database.
    *
    * **NB. The operation will always wait for the operation to complete, regardless of the {@link AdminBlockingOptions}. Expect it to take roughly 8-10 seconds.**
    *
    * @example
    * ```typescript
    * // ['default_keyspace', 'my_other_keyspace']
-   * console.log(await dbAdmin.listNamespaces());
+   * console.log(await dbAdmin.listKeyspaces());
    *
-   * await dbAdmin.dropNamespace('my_other_keyspace');
+   * await dbAdmin.dropKeyspace('my_other_keyspace');
    *
    * // ['default_keyspace', 'my_other_keyspace']
-   * console.log(await dbAdmin.listNamespaces());
+   * console.log(await dbAdmin.listKeyspaces());
    * ```
    *
-   * @param namespace - The name of the namespace to drop.
+   * @param keyspace - The name of the keyspace to drop.
    * @param options - The options for the timeout of the operation.
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void> {
-    await this.#httpClient.executeCommand({ dropNamespace: { name: namespace } }, { maxTimeMS: options?.maxTimeMS, namespace: null });
+  public override async dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void> {
+    await this.#httpClient.executeCommand({ dropNamespace: { name: keyspace } }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
+  }
+
+  /**
+   Drops a keyspace from this database.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link DataAPIDbAdmin.dropKeyspace}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link DataAPIDbAdmin.dropKeyspace} instead.
+   */
+  public override async dropNamespace(keyspace: string, options?: AdminBlockingOptions): Promise<void> {
+    return this.dropKeyspace(keyspace, options);
   }
 
   private get _httpClient() {

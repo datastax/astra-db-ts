@@ -15,7 +15,7 @@
 
 import assert from 'assert';
 import { Db } from '@/src/data-api';
-import { DEFAULT_DATA_API_PATHS, DEFAULT_NAMESPACE } from '@/src/api';
+import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/api';
 import { mkDb } from '@/src/data-api/db';
 import { StaticTokenProvider } from '@/src/common';
 import { InternalRootClientOpts } from '@/src/client/types';
@@ -59,43 +59,43 @@ describe('unit.data-api.db', () => {
     });
 
     it('should allow db construction from endpoint, overwriting options', () => {
-      const db = mkDb(internalOps({ dataApiPath: 'old', namespace: 'old' }), 'https://id-region.apps.astra.datastax.com', { dataApiPath: 'new', namespace: 'new' }, null);
+      const db = mkDb(internalOps({ dataApiPath: 'old', keyspace: 'old' }), 'https://id-region.apps.astra.datastax.com', { dataApiPath: 'new', keyspace: 'new' }, null);
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, 'https://id-region.apps.astra.datastax.com/new');
-      assert.strictEqual(db.namespace, 'new');
+      assert.strictEqual(db.keyspace, 'new');
     });
 
     it('should allow db construction from id + region, overwriting options', () => {
       const db = mkDb(internalOps({ dataApiPath: 'old', namespace: 'old' }), 'id', 'region', { dataApiPath: 'new', namespace: 'new' });
       assert.ok(db);
       assert.strictEqual(db['_httpClient'].baseUrl, 'https://id-region.apps.astra.datastax.com/new');
-      assert.strictEqual(db.namespace, 'new');
+      assert.strictEqual(db.keyspace, 'new');
     });
 
-    it('is initialized with default namespace', () => {
+    it('is initialized with default keyspace', () => {
       const db = mkDb(internalOps(), TEST_APPLICATION_URI, null, null);
-      assert.strictEqual(db.namespace, DEFAULT_NAMESPACE);
+      assert.strictEqual(db.keyspace, DEFAULT_KEYSPACE);
     });
 
-    it('uses custom namespace when provided', () => {
-      const db = mkDb(internalOps({ namespace: 'new_namespace' }), TEST_APPLICATION_URI, null, null);
-      assert.strictEqual(db.namespace, 'new_namespace');
+    it('uses custom keyspace when provided', () => {
+      const db = mkDb(internalOps({ keyspace: 'new_keyspace' }), TEST_APPLICATION_URI, null, null);
+      assert.strictEqual(db.keyspace, 'new_keyspace');
     });
 
-    it('overrides namespace in db when provided', () => {
-      const db = mkDb(internalOps(), TEST_APPLICATION_URI, { namespace: 'new_namespace' }, null);
-      assert.strictEqual(db.namespace, 'new_namespace');
+    it('overrides keyspace in db when provided', () => {
+      const db = mkDb(internalOps(), TEST_APPLICATION_URI, { namespace: 'new_keyspace' }, null);
+      assert.strictEqual(db.namespace, 'new_keyspace');
     });
 
-    it('throws error on empty namespace', () => {
+    it('throws error on empty keyspace', () => {
       assert.throws(() => {
-        mkDb(internalOps(), TEST_APPLICATION_URI, { namespace: '' }, null);
+        mkDb(internalOps(), TEST_APPLICATION_URI, { keyspace: '' }, null);
       });
     });
 
-    it('throws error on invalid namespace', () => {
+    it('throws error on invalid keyspace', () => {
       assert.throws(() => {
-        mkDb(internalOps(), TEST_APPLICATION_URI, { namespace: 'bad namespace' }, null);
+        mkDb(internalOps(), TEST_APPLICATION_URI, { namespace: 'bad keyspace' }, null);
       });
     });
 
@@ -157,35 +157,35 @@ describe('unit.data-api.db', () => {
     });
   });
 
-  describe('namespace tests', () => {
-    it('should return the namespace passed into the constructor', () => {
-      const db = mkDb(internalOps({ namespace: 'namespace' }), TEST_APPLICATION_URI, {}, null);
-      assert.strictEqual(db.namespace, 'namespace');
+  describe('keyspace tests', () => {
+    it('should return the keyspace passed into the constructor', () => {
+      const db = mkDb(internalOps({ keyspace: 'keyspace' }), TEST_APPLICATION_URI, {}, null);
+      assert.strictEqual(db.keyspace, 'keyspace');
     });
 
-    it('should throw an error if the namespace is not set in the namespace', () => {
+    it('should throw an error if the keyspace is not set in the keyspace', () => {
       const db = mkDb({ ...internalOps(), environment: 'dse' }, TEST_APPLICATION_URI, {}, null);
       assert.throws(() => db.namespace);
     });
 
-    it('should mutate the namespace (non-retroactively)', () => {
-      const db = mkDb(internalOps({ namespace: 'namespace' }), TEST_APPLICATION_URI, {}, null);
+    it('should mutate the keyspace (non-retroactively)', () => {
+      const db = mkDb(internalOps({ keyspace: 'keyspace' }), TEST_APPLICATION_URI, {}, null);
       const coll1 = db.collection('coll');
-      assert.strictEqual(db.namespace, 'namespace');
-      assert.strictEqual(coll1.namespace, 'namespace');
+      assert.strictEqual(db.namespace, 'keyspace');
+      assert.strictEqual(coll1.namespace, 'keyspace');
 
-      db.useNamespace('other_namespace');
+      db.useKeyspace('other_keyspace');
       const coll2 = db.collection('coll');
-      assert.strictEqual(db.namespace, 'other_namespace');
-      assert.strictEqual(coll1.namespace, 'namespace');
-      assert.strictEqual(coll2.namespace, 'other_namespace');
+      assert.strictEqual(db.keyspace, 'other_keyspace');
+      assert.strictEqual(coll1.keyspace, 'keyspace');
+      assert.strictEqual(coll2.namespace, 'other_keyspace');
     });
 
-    it('should should not throw an error when getting namespace if namespace is set later', () => {
+    it('should should not throw an error when getting keyspace if keyspace is set later', () => {
       const db = mkDb({ ...internalOps(), environment: 'dse' }, TEST_APPLICATION_URI, {}, null);
-      assert.throws(() => db.namespace);
-      db.useNamespace('other_namespace');
-      assert.strictEqual(db.namespace, 'other_namespace');
+      assert.throws(() => db.keyspace);
+      db.useKeyspace('other_keyspace');
+      assert.strictEqual(db.namespace, 'other_keyspace');
     });
   });
 

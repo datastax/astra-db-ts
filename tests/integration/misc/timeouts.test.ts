@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import { DataAPITimeoutError } from '@/src/data-api';
-import { DEFAULT_NAMESPACE, HttpMethods } from '@/src/api';
+import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/api';
 import { DevOpsAPITimeoutError } from '@/src/devops';
 import { DataAPIClient } from '@/src/client';
 import {
@@ -48,7 +48,7 @@ parallel('integration.misc.timeouts', ({ collection, dbAdmin }) => {
 
     it('should timeout based on DataAPIClient maxTimeMS', async () => {
       const collection = new DataAPIClient(TEST_APPLICATION_TOKEN, { httpOptions: { maxTimeMS: 1 }, environment: ENVIRONMENT })
-        .db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE })
+        .db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE })
         .collection(DEFAULT_COLLECTION_NAME);
 
       await assert.rejects(async () => {
@@ -58,7 +58,7 @@ parallel('integration.misc.timeouts', ({ collection, dbAdmin }) => {
 
     it('should timeout based on collection maxTimeMS', async () => {
       const collection = new DataAPIClient(TEST_APPLICATION_TOKEN, { httpOptions: { maxTimeMS: 30000 }, environment: ENVIRONMENT })
-        .db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE })
+        .db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE })
         .collection(DEFAULT_COLLECTION_NAME, { defaultMaxTimeMS: 1 });
 
       await assert.rejects(async () => {
@@ -68,7 +68,7 @@ parallel('integration.misc.timeouts', ({ collection, dbAdmin }) => {
 
     it('should timeout based on operation maxTimeMS', async () => {
       const collection = new DataAPIClient(TEST_APPLICATION_TOKEN, { httpOptions: { maxTimeMS: 30000 }, environment: ENVIRONMENT })
-        .db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE })
+        .db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE })
         .collection(DEFAULT_COLLECTION_NAME, { defaultMaxTimeMS: 30000 });
 
       await assert.rejects(async () => {
@@ -92,7 +92,7 @@ parallel('integration.misc.timeouts', ({ collection, dbAdmin }) => {
         .admin();
 
       await assert.rejects(async () => {
-        await admin.listNamespaces();
+        await admin.listKeyspaces();
       }, DevOpsAPITimeoutError);
     });
 
@@ -102,7 +102,7 @@ parallel('integration.misc.timeouts', ({ collection, dbAdmin }) => {
         .admin();
 
       await assert.rejects(async () => {
-        await admin.listNamespaces({ maxTimeMS: 1 });
+        await admin.listKeyspaces({ maxTimeMS: 1 });
       }, DevOpsAPITimeoutError);
     });
   });

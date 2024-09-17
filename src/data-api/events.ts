@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIRequestInfo, DEFAULT_NAMESPACE, hrTimeMs, RawDataAPIResponse } from '@/src/api';
+import { DataAPIRequestInfo, DEFAULT_KEYSPACE, hrTimeMs, RawDataAPIResponse } from '@/src/api';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -65,7 +65,17 @@ export abstract class CommandEvent {
   public readonly command: Record<string, any>;
 
   /**
-   * The namespace the command is being run in.
+   * The keyspace the command is being run in.
+   */
+  public readonly keyspace: string;
+
+  /**
+   * The keyspace the command is being run in.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link CommandEvent.keyspace}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link CommandEvent.keyspace} instead.
    */
   public readonly namespace: string;
 
@@ -96,7 +106,7 @@ export abstract class CommandEvent {
    */
   protected constructor(info: DataAPIRequestInfo) {
     this.command = info.command;
-    this.namespace = info.namespace || DEFAULT_NAMESPACE;
+    this.keyspace = this.namespace = info.keyspace || DEFAULT_KEYSPACE;
     this.collection = info.collection;
     this.commandName = Object.keys(info.command)[0];
     this.url = info.url;

@@ -22,15 +22,15 @@ import {
 import {
   DataAPIHttpClient,
   DEFAULT_DATA_API_PATHS,
-  DEFAULT_NAMESPACE,
-  EmissionStrategy, NamespaceRef,
+  DEFAULT_KEYSPACE,
+  EmissionStrategy, KeyspaceRef,
   RawDataAPIResponse,
 } from '@/src/api';
 import {
   CreateCollectionOptions,
   FullCollectionInfo,
   ListCollectionsOptions,
-  WithNamespace,
+  WithKeyspace,
 } from '@/src/data-api/types';
 import { DatabaseInfo } from '@/src/devops/types/admin/database-info';
 import { AstraDbAdmin } from '@/src/devops/astra-db-admin';
@@ -43,7 +43,7 @@ import { ListCollectionsCommand } from '@/src/data-api/types/collections/list-co
 import { InternalRootClientOpts } from '@/src/client/types';
 import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-collection';
 import { AdminSpawnOptions, DbAdmin } from '@/src/devops';
-import { TokenProvider, validateDataAPIEnv } from '@/src/common';
+import { resolveKeyspace, TokenProvider, validateDataAPIEnv } from '@/src/common';
 import { DataAPIDbAdmin } from '@/src/devops/data-api-db-admin';
 
 /**
@@ -55,8 +55,8 @@ import { DataAPIDbAdmin } from '@/src/devops/data-api-db-admin';
  * Note that creating an instance of a `Db` doesn't trigger actual database creation; the database must have already
  * existed beforehand. If you need to create a new database, use the {@link AstraAdmin} class.
  *
- * Db spawning methods let you pass in the default namespace for the database, which is used for all subsequent db
- * operations in that object, but each method lets you override the namespace if necessary in its options.
+ * Db spawning methods let you pass in the default keyspace for the database, which is used for all subsequent db
+ * operations in that object, but each method lets you override the keyspace if necessary in its options.
  *
  * @example
  * ```typescript
@@ -67,7 +67,7 @@ import { DataAPIDbAdmin } from '@/src/devops/data-api-db-admin';
  *
  * // Overrides default options from the DataAPIClient
  * const db2 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', {
- *   namespace: 'my_namespace',
+ *   keyspace: 'my_keyspace',
  *   useHttp2: false,
  * });
  *
@@ -86,7 +86,7 @@ export class Db {
   readonly #httpClient: DataAPIHttpClient;
   readonly #endpoint?: string;
 
-  private readonly _namespace: NamespaceRef;
+  private readonly _keyspace: KeyspaceRef;
   private readonly _id?: string;
 
   /**
@@ -104,10 +104,10 @@ export class Db {
       ...dbOpts,
     };
 
-    this._namespace = {
+    this._keyspace = {
       ref: (rootOpts.environment === 'astra')
-        ? combinedDbOpts.namespace ?? DEFAULT_NAMESPACE
-        : combinedDbOpts.namespace,
+        ? resolveKeyspace(combinedDbOpts) ?? DEFAULT_KEYSPACE
+        : resolveKeyspace(combinedDbOpts),
     };
 
     this.#httpClient = new DataAPIHttpClient({
@@ -118,7 +118,7 @@ export class Db {
       emitter: rootOpts.emitter,
       monitorCommands: combinedDbOpts.monitorCommands,
       fetchCtx: rootOpts.fetchCtx,
-      namespace: this._namespace,
+      keyspace: this._keyspace,
       userAgent: rootOpts.userAgent,
       emissionStrategy: EmissionStrategy.Normal,
     });
@@ -128,40 +128,55 @@ export class Db {
   }
 
   /**
-   * The default namespace to use for all operations in this database, unless overridden in a method call.
+   * The default keyspace to use for all operations in this database, unless overridden in a method call.
    *
    * @example
    * ```typescript
-   * // Uses 'default_keyspace' as the default namespace for all future db spawns
+   * // Uses 'default_keyspace' as the default keyspace for all future db spawns
    * const client1 = new DataAPIClient('*TOKEN*');
    *
-   * // Overrides the default namespace for all future db spawns
+   * // Overrides the default keyspace for all future db spawns
    * const client2 = new DataAPIClient('*TOKEN*', {
-   *   dbOptions: { namespace: 'my_namespace' },
+   *   dbOptions: { keyspace: 'my_keyspace' },
    * });
    *
-   * // Created with 'default_keyspace' as the default namespace
+   * // Created with 'default_keyspace' as the default keyspace
    * const db1 = client1.db('*ENDPOINT*');
    *
-   * // Created with 'my_namespace' as the default namespace
+   * // Created with 'my_keyspace' as the default keyspace
    * const db2 = client1.db('*ENDPOINT*', {
-   *   namespace: 'my_namespace'
+   *   keyspace: 'my_keyspace'
    * });
    *
    * // Uses 'default_keyspace'
    * const coll1 = db1.collection('users');
    *
-   * // Uses 'my_namespace'
+   * // Uses 'my_keyspace'
    * const coll2 = db1.collection('users', {
-   *   namespace: 'my_namespace'
+   *   keyspace: 'my_keyspace'
    * });
    * ```
    */
-  public get namespace(): string {
-    if (!this._namespace.ref) {
-      throw new Error('No namespace set for DB (can\'t do db.namespace)');
+  public get keyspace(): string {
+    if (!this._keyspace.ref) {
+      throw new Error('No keyspace set for DB (can\'t do db.keyspace, or perform any operation requiring it). Use `db.useKeyspace`, or pass the keyspace as an option parameter explicitly.');
     }
-    return this._namespace.ref;
+    return this._keyspace.ref;
+  }
+
+  /**
+   * The default keyspace to use for all operations in this database, unless overridden in a method call.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link Db.keyspace}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link Db.keyspace} instead.
+   */
+  public get namespace(): string {
+    if (!this._keyspace.ref) {
+      throw new Error('No keyspace set for DB (can\'t do db.namespace, or perform any operation requiring it). Use `db.useKeyspace`, or pass the keyspace as an option parameter explicitly.');
+    }
+    return this._keyspace.ref;
   }
 
   /**
@@ -177,27 +192,27 @@ export class Db {
   }
 
   /**
-   * Sets the default working namespace of the `Db` instance. Does not retroactively update any previous collections
-   * spawned from this `Db` to use the new namespace.
+   * Sets the default working keyspace of the `Db` instance. Does not retroactively update any previous collections
+   * spawned from this `Db` to use the new keyspace.
    *
    * @example
    * ```typescript
-   * // Spawns a `Db` with default working namespace `my_namespace`
-   * const db = client.db('<endpoint>', { namespace: 'my_namespace' });
+   * // Spawns a `Db` with default working keyspace `my_keyspace`
+   * const db = client.db('<endpoint>', { keyspace: 'my_keyspace' });
    *
-   * // Gets a collection from namespace `my_namespace`
+   * // Gets a collection from keyspace `my_keyspace`
    * const coll1 = db.collection('my_coll');
    *
-   * // `db` now uses `my_other_namespace` as the default namespace for all operations
-   * db.useNamespace('my_other_namespace');
+   * // `db` now uses `my_other_keyspace` as the default keyspace for all operations
+   * db.useKeyspace('my_other_keyspace');
    *
-   * // Gets a collection from namespace `my_other_namespace`
-   * // `coll1` still uses namespace `my_namespace`
+   * // Gets a collection from keyspace `my_other_keyspace`
+   * // `coll1` still uses keyspace `my_keyspace`
    * const coll2 = db.collection('my_other_coll');
    *
-   * // Gets `my_coll` from namespace `my_namespace` again
-   * // (The default namespace is still `my_other_namespace`)
-   * const coll3 = db.collection('my_coll', { namespace: 'my_namespace' });
+   * // Gets `my_coll` from keyspace `my_keyspace` again
+   * // (The default keyspace is still `my_other_keyspace`)
+   * const coll3 = db.collection('my_coll', { keyspace: 'my_keyspace' });
    * ```
    *
    * @example
@@ -206,24 +221,37 @@ export class Db {
    * const client = new DataAPIClient({ environment: 'dse' });
    * const db = client.db('<endpoint>', { token: '<token>' });
    *
-   * // Will internally call `db.useNamespace('new_namespace')`
-   * await db.admin().createNamespace('new_namespace', {
-   *   updateDbNamespace: true,
+   * // Will internally call `db.useKeyspace('new_keyspace')`
+   * await db.admin().createKeyspace('new_keyspace', {
+   *   updateDbKeyspace: true,
    * });
    *
-   * // Creates collection in namespace `new_namespace` by default now
+   * // Creates collection in keyspace `new_keyspace` by default now
    * const coll = db.createCollection('my_coll');
    * ```
    *
-   * @param namespace - The namespace to use
+   * @param keyspace - The keyspace to use
    */
-  public useNamespace(namespace: string) {
-    this._namespace.ref = namespace;
+  public useKeyspace(keyspace: string) {
+    this._keyspace.ref = keyspace;
+  }
+
+  /**
+   * Sets the default working keyspace of the `Db` instance. Does not retroactively update any previous collections
+   * spawned from this `Db` to use the new keyspace.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link Db.useKeyspace}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link Db.useKeyspace} instead.
+   */
+  public useNamespace(keyspace: string) {
+    this._keyspace.ref = keyspace;
   }
 
   /**
    * Spawns a new {@link AstraDbAdmin} instance for this database, used for performing administrative operations
-   * on the database, such as managing namespaces, or getting database information.
+   * on the database, such as managing keyspaces, or getting database information.
    *
    * The given options will override any default options set when creating the {@link DataAPIClient} through
    * a deep merge (i.e. unset properties in the options object will just default to the default options).
@@ -235,8 +263,8 @@ export class Db {
    * const admin1 = db.admin();
    * const admin2 = db.admin({ adminToken: '<stronger-token>' });
    *
-   * const namespaces = await admin1.listNamespaces();
-   * console.log(namespaces);
+   * const keyspaces = await admin1.listKeyspaces();
+   * console.log(keyspaces);
    * ```
    *
    * @param options - Any options to override the default options set when creating the {@link DataAPIClient}.
@@ -249,7 +277,7 @@ export class Db {
 
   /**
    * Spawns a new {@link DataAPIDbAdmin} instance for this database, used for performing administrative operations
-   * on the database, such as managing namespaces, or getting database information.
+   * on the database, such as managing keyspaces, or getting database information.
    *
    * The given options will override any default options set when creating the {@link DataAPIClient} through
    * a deep merge (i.e. unset properties in the options object will just default to the default options).
@@ -267,8 +295,8 @@ export class Db {
    * // Will throw "mismatching environments" error
    * const admin2 = db.admin();
    *
-   * const namespaces = await admin1.listNamespaces();
-   * console.log(namespaces);
+   * const keyspaces = await admin1.listKeyspaces();
+   * console.log(keyspaces);
    * ```
    *
    * @param options - Any options to override the default options set when creating the {@link DataAPIClient}.
@@ -331,7 +359,7 @@ export class Db {
    * Typed as `Collection<SomeDoc>` by default, but you can specify a schema type to get a typed collection. If left
    * as `SomeDoc`, the collection will be untyped.
    *
-   * You can also specify a namespace in the options parameter, which will override the default namespace for this database.
+   * You can also specify a keyspace in the options parameter, which will override the default keyspace for this database.
    *
    * @example
    * ```typescript
@@ -343,9 +371,9 @@ export class Db {
    * const users1 = db.collection<User>("users");
    * users1.insertOne({ name: "John" });
    *
-   * // Untyped collection from different namespace
+   * // Untyped collection from different keyspace
    * const users2 = db.collection("users", {
-   *   namespace: "my_namespace",
+   *   keyspace: "my_keyspace",
    * });
    * users2.insertOne({ nam3: "John" });
    * ```
@@ -363,18 +391,18 @@ export class Db {
   }
 
   /**
-   * Establishes references to all the collections in the working/given namespace.
+   * Establishes references to all the collections in the working/given keyspace.
    *
-   * You can specify a namespace in the options parameter, which will override the default namespace for this `Db` instance.
+   * You can specify a keyspace in the options parameter, which will override the default keyspace for this `Db` instance.
    *
    * @example
    * ```typescript
-   * // Uses db's default namespace
+   * // Uses db's default keyspace
    * const collections1 = await db.collections();
    * console.log(collections1); // [Collection<SomeDoc>, Collection<SomeDoc>]
    *
-   * // Overrides db's default namespace
-   * const collections2 = await db.collections({ namespace: 'my_namespace' });
+   * // Overrides db's default keyspace
+   * const collections2 = await db.collections({ keyspace: 'my_keyspace' });
    * console.log(collections2); // [Collection<SomeDoc>]
    * ```
    *
@@ -382,9 +410,9 @@ export class Db {
    *
    * @returns A promise that resolves to an array of references to the working Db's collections.
    */
-  public async collections(options?: WithNamespace & WithTimeout): Promise<Collection[]> {
+  public async collections(options?: WithKeyspace & WithTimeout): Promise<Collection[]> {
     const collections = await this.listCollections({
-      namespace: options?.namespace,
+      keyspace: resolveKeyspace(options),
       maxTimeMS: options?.maxTimeMS,
       nameOnly: true,
     });
@@ -408,7 +436,7 @@ export class Db {
    *
    * *If vector options are not specified, the collection will not support vector search.*
    *
-   * You can also specify a namespace in the options parameter, which will override the default namespace for this database.
+   * You can also specify a keyspace in the options parameter, which will override the default keyspace for this database.
    *
    * See {@link CreateCollectionOptions} for *much* more information on the options available.
    *
@@ -422,9 +450,9 @@ export class Db {
    * const users = await db.createCollection<User>("users");
    * users.insertOne({ name: "John" });
    *
-   * // Untyped collection with custom options in a different namespace
+   * // Untyped collection with custom options in a different keyspace
    * const users2 = await db.createCollection("users", {
-   *   namespace: "my_namespace",
+   *   keyspace: "my_keyspace",
    *   defaultId: {
    *     type: "objectId",
    *   },
@@ -455,34 +483,34 @@ export class Db {
     };
 
     const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
-    const namespace = options?.namespace ?? this.namespace;
+    const keyspace = resolveKeyspace(options) ?? this.keyspace;
 
     if (options?.checkExists !== false) {
-      const collections = await this.listCollections({ namespace, maxTimeMS: timeoutManager.msRemaining() });
+      const collections = await this.listCollections({ keyspace: keyspace, maxTimeMS: timeoutManager.msRemaining() });
 
       if (collections.some(c => c.name === collectionName)) {
-        throw new CollectionAlreadyExistsError(options?.namespace ?? this.namespace, collectionName);
+        throw new CollectionAlreadyExistsError(resolveKeyspace(options) ?? this.keyspace, collectionName);
       }
     }
 
-    await this.#httpClient.executeCommand(command, { namespace, timeoutManager });
+    await this.#httpClient.executeCommand(command, { keyspace: keyspace, timeoutManager });
     return this.collection(collectionName, options);
   }
 
   /**
    * Drops a collection from the database, including all the contained documents.
    *
-   * You can also specify a namespace in the options parameter, which will override the default namespace for this database.
+   * You can also specify a keyspace in the options parameter, which will override the default keyspace for this database.
    *
    * @example
    * ```typescript
-   * // Uses db's default namespace
+   * // Uses db's default keyspace
    * const success1 = await db.dropCollection("users");
    * console.log(success1); // true
    *
-   * // Overrides db's default namespace
+   * // Overrides db's default keyspace
    * const success2 = await db.dropCollection("users", {
-   *   namespace: "my_namespace"
+   *   keyspace: "my_keyspace"
    * });
    * console.log(success2); // true
    * ```
@@ -509,7 +537,7 @@ export class Db {
    *
    * If you want to include the collection options in the response, set `nameOnly` to `false`, using the other overload.
    *
-   * You can also specify a namespace in the options parameter, which will override the default namespace for this database.
+   * You can also specify a keyspace in the options parameter, which will override the default keyspace for this database.
    *
    * @example
    * ```typescript
@@ -530,7 +558,7 @@ export class Db {
    *
    * If you want to use only the collection names, set `nameOnly` to `true` (or omit it completely), using the other overload.
    *
-   * You can also specify a namespace in the options parameter, which will override the default namespace for this database.
+   * You can also specify a keyspace in the options parameter, which will override the default keyspace for this database.
    *
    * @example
    * ```typescript
@@ -566,7 +594,7 @@ export class Db {
    * You can specify a collection to target in the options parameter, thereby allowing you to perform
    * arbitrary collection-level operations as well.
    *
-   * You're also able to specify a namespace in the options parameter, which will override the default namespace
+   * You're also able to specify a keyspace in the options parameter, which will override the default keyspace
    * for this database.
    *
    * If no collection is specified, the command will be executed at the database level.
@@ -605,7 +633,7 @@ export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, reg
   validateDbOpts(dbOpts);
 
   if (typeof regionOrOptions === 'string' && (endpointOrId.startsWith('https://') || endpointOrId.startsWith('http://'))) {
-    throw new Error('Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { namespace })`?');
+    throw new Error('Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { keyspace })`?');
   }
 
   const endpoint = (typeof regionOrOptions === 'string')
@@ -625,11 +653,13 @@ export function validateDbOpts(opts: DbSpawnOptions | nullish) {
     return;
   }
 
-  validateOption('dbOptions.namespace', opts.namespace, 'string', false, (namespace) => {
-    if (!namespace.match(/^\w{1,48}$/)) {
-      throw new Error('Invalid namespace option; expected a string of 1-48 alphanumeric characters');
-    }
-  });
+  for (const prop of <const>['keyspace', 'namespace']) {
+    validateOption(`dbOptions.${prop}`, opts[prop], 'string', false, (keyspace) => {
+      if (!keyspace.match(/^\w{1,48}$/)) {
+        throw new Error(`Invalid ${prop} option; expected a string of 1-48 alphanumeric characters`);
+      }
+    });
+  }
 
   validateOption('dbOptions.monitorCommands', opts.monitorCommands, 'boolean');
 

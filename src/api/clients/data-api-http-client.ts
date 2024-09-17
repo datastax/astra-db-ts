@@ -21,7 +21,7 @@ import {
   HttpClient,
   HTTPClientOptions,
   HttpMethods,
-  NamespaceRef,
+  KeyspaceRef,
   RawDataAPIResponse,
 } from '@/src/api';
 import { DataAPIResponseError, DataAPITimeoutError, ObjectId, UUID } from '@/src/data-api';
@@ -37,8 +37,9 @@ import {
   AdminCommandSucceededEvent,
   AdminSpawnOptions,
 } from '@/src/devops';
-import { isNullish, nullish, TokenProvider } from '@/src/common';
+import { isNullish, nullish, resolveKeyspace, TokenProvider } from '@/src/common';
 import { EmbeddingHeadersProvider } from '@/src/data-api/embedding-providers';
+import { WithNullableKeyspace } from '@/src/data-api/types/collections/collections-common';
 
 /**
  * @internal
@@ -46,13 +47,12 @@ import { EmbeddingHeadersProvider } from '@/src/data-api/embedding-providers';
 export interface DataAPIRequestInfo {
   url: string,
   collection?: string,
-  namespace?: string | null,
+  keyspace?: string | null,
   command: Record<string, any>,
   timeoutManager: TimeoutManager,
 }
 
-interface ExecuteCommandOptions {
-  namespace?: string | null,
+interface ExecuteCommandOptions extends WithNullableKeyspace {
   collection?: string,
 }
 
@@ -95,7 +95,7 @@ const adaptInfo4Devops = (info: DataAPIRequestInfo) => (<const>{
 });
 
 interface DataAPIHttpClientOpts extends HTTPClientOptions {
-  namespace: NamespaceRef,
+  keyspace: KeyspaceRef,
   emissionStrategy: EmissionStrategy,
   embeddingHeaders: EmbeddingHeadersProvider,
   tokenProvider: TokenProvider,
@@ -106,24 +106,24 @@ interface DataAPIHttpClientOpts extends HTTPClientOptions {
  */
 export class DataAPIHttpClient extends HttpClient {
   public collection?: string;
-  public namespace: NamespaceRef;
+  public keyspace: KeyspaceRef;
   public maxTimeMS: number;
   public emissionStrategy: ReturnType<EmissionStrategy>;
   readonly #props: DataAPIHttpClientOpts;
 
   constructor(props: DataAPIHttpClientOpts) {
     super(props, [mkAuthHeaderProvider(props.tokenProvider), props.embeddingHeaders.getHeaders.bind(props.embeddingHeaders)]);
-    this.namespace = props.namespace;
+    this.keyspace = props.keyspace;
     this.#props = props;
     this.maxTimeMS = this.fetchCtx.maxTimeMS ?? DEFAULT_TIMEOUT;
     this.emissionStrategy = props.emissionStrategy(props.emitter);
   }
 
-  public forCollection(namespace: string, collection: string, opts: CollectionSpawnOptions | undefined): DataAPIHttpClient {
+  public forCollection(keyspace: string, collection: string, opts: CollectionSpawnOptions | undefined): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(opts?.embeddingApiKey),
-      namespace: { ref: namespace },
+      keyspace: { ref: keyspace },
     });
 
     clone.collection = collection;
@@ -159,7 +159,7 @@ export class DataAPIHttpClient extends HttpClient {
       url: this.baseUrl,
       timeoutManager: timeoutManager,
       collection: options?.collection,
-      namespace: options?.namespace,
+      keyspace: resolveKeyspace(options, true),
       command: command,
     });
   }
@@ -170,15 +170,15 @@ export class DataAPIHttpClient extends HttpClient {
     try {
       info.collection ||= this.collection;
 
-      if (info.namespace !== null) {
-        info.namespace ||= this.namespace?.ref;
+      if (info.keyspace !== null) {
+        info.keyspace ||= this.keyspace?.ref;
 
-        if (isNullish(info.namespace)) {
-          throw new Error('Db is missing a required namespace; be sure to set one w/ client.db(..., { namespace }), or db.useNamespace()');
+        if (isNullish(info.keyspace)) {
+          throw new Error('Db is missing a required keyspace; be sure to set one w/ client.db(..., { keyspace }), or db.useKeyspace()');
         }
       }
 
-      const keyspacePath = info.namespace ? `/${info.namespace}` : '';
+      const keyspacePath = info.keyspace ? `/${info.keyspace}` : '';
       const collectionPath = info.collection ? `/${info.collection}` : '';
       info.url += keyspacePath + collectionPath;
 
@@ -202,7 +202,7 @@ export class DataAPIHttpClient extends HttpClient {
 
       if (data.errors && data.errors.length > 0 && data.errors[0]?.errorCode === 'COLLECTION_NOT_EXIST') {
         const name = data.errors[0]?.message.split(': ')[1];
-        throw new CollectionNotFoundError(info.namespace ?? '<unknown>', name);
+        throw new CollectionNotFoundError(info.keyspace ?? '<unknown>', name);
       }
 
       if (data.errors && data.errors.length > 0) {

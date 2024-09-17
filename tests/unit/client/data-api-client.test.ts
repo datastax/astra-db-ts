@@ -22,7 +22,7 @@ import {
   DEMO_APPLICATION_URI,
   describe,
   it,
-  OTHER_NAMESPACE,
+  OTHER_KEYSPACE,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
 } from '@/tests/testlib';
@@ -135,8 +135,8 @@ describe('unit.client.data-api-client', () => {
   it('throws an error if passing in endpoint and keyspace name as a string', () => {
     const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
     assert.throws(
-      () => client.db(DEMO_APPLICATION_URI, OTHER_NAMESPACE),
-      { message: 'Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { namespace })`?' },
+      () => client.db(DEMO_APPLICATION_URI, OTHER_KEYSPACE),
+      { message: 'Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { keyspace })`?' },
     );
   });
 

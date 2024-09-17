@@ -18,11 +18,11 @@
 // And now it's not even needed anymore :(
 
 import { DataAPIClient } from '@/src/client';
-import { DEFAULT_NAMESPACE } from '@/src/api';
+import { DEFAULT_KEYSPACE } from '@/src/api';
 import {
   DEFAULT_COLLECTION_NAME,
   ENVIRONMENT,
-  OTHER_NAMESPACE,
+  OTHER_KEYSPACE,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI, TEST_HTTP_CLIENT,
 } from '@/tests/testlib/config';
@@ -41,7 +41,7 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
 
   const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {
     httpOptions: { preferHttp2, client: <any>clientType, maxTimeMS: 60000 },
-    dbOptions: { namespace: DEFAULT_NAMESPACE, monitorCommands: monitoring },
+    dbOptions: { keyspace: DEFAULT_KEYSPACE, monitorCommands: monitoring },
     adminOptions: { monitorCommands: monitoring },
     environment: env,
   });
@@ -49,7 +49,7 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
   const db = client.db(TEST_APPLICATION_URI);
 
   const collection = db.collection(DEFAULT_COLLECTION_NAME);
-  const collection_ = db.collection(DEFAULT_COLLECTION_NAME, { namespace: OTHER_NAMESPACE });
+  const collection_ = db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE });
 
   const dbAdmin = (ENVIRONMENT === 'astra')
     ? db.admin({ environment: ENVIRONMENT })

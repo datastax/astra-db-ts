@@ -15,12 +15,12 @@
 import { AdminBlockingOptions } from '@/src/devops/types';
 
 /**
- * Represents the common options for creating a namespace through the `astra-db-ts` client.
+ * Represents the common options for creating a keyspace through the `astra-db-ts` client.
  *
  * See {@link AdminBlockingOptions} for more options about blocking behavior.
  *
- * If `updateDbNamespace` is set to true, the underlying `Db` instance used to create the `DbAdmin` will have its
- * current working namespace set to the newly created namespace immediately (even if the namespace isn't technically
+ * If `updateDbKeyspace` is set to true, the underlying `Db` instance used to create the `DbAdmin` will have its
+ * current working keyspace set to the newly created keyspace immediately (even if the keyspace isn't technically
  * yet created).
  *
  * @example
@@ -29,14 +29,28 @@ import { AdminBlockingOptions } from '@/src/devops/types';
  * const client = new DataAPIClient({ environment: 'dse' });
  * const db = client.db('<endpoint>', { token: '<token>' });
  *
- * // Will internally call `db.useNamespace('new_namespace')`
- * await db.admin().createNamespace('new_namespace', {
- *   updateDbNamespace: true,
+ * // Will internally call `db.useKeyspace('new_keyspace')`
+ * await db.admin().createKeyspace('new_keyspace', {
+ *   updateDbKeyspace: true,
  * });
  *
- * // Creates collection in namespace `new_namespace` by default now
+ * // Creates collection in keyspace `new_keyspace` by default now
  * const coll = db.createCollection('my_coll');
  * ```
+ *
+ * @see DbAdmin.createKeyspace
+ *
+ * @public
+ */
+export type CreateKeyspaceOptions = AdminBlockingOptions & { updateDbKeyspace?: boolean };
+
+/**
+ * Represents the common options for creating a keyspace through the `astra-db-ts` client.
+ *
+ * This is now a deprecated alias for the strictly equivalent {@link CreateKeyspaceOptions}, and will be removed
+ * in an upcoming major version.
+ *
+ * @deprecated - Prefer {@link CreateKeyspaceOptions} instead.
  *
  * @public
  */

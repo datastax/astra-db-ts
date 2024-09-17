@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type * from './collections/collections-common';
+export type { VectorOptions, WithNamespace, WithKeyspace, VectorizeServiceOptions, DefaultIdOptions, IndexingOptions } from './collections/collections-common';
 export type * from './collections/collection-options';
 export type { CreateCollectionOptions } from './collections/create-collection';
 export type { ListCollectionsOptions, FullCollectionInfo } from './collections/list-collection';

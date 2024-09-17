@@ -13,7 +13,13 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { AdminBlockingOptions, AdminSpawnOptions, CreateNamespaceOptions, FullDatabaseInfo } from '@/src/devops/types';
+import {
+  AdminBlockingOptions,
+  AdminSpawnOptions,
+  CreateKeyspaceOptions,
+  CreateNamespaceOptions,
+  FullDatabaseInfo,
+} from '@/src/devops/types';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DevOpsAPIHttpClient, HttpMethods } from '@/src/api';
 import { Db } from '@/src/data-api';
 import { DbAdmin } from '@/src/devops/db-admin';
@@ -24,7 +30,7 @@ import { extractAstraEnvironment, validateAdminOpts } from '@/src/devops/utils';
 import { FindEmbeddingProvidersResult } from '@/src/devops/types/db-admin/find-embedding-providers';
 
 /**
- * An administrative class for managing Astra databases, including creating, listing, and deleting namespaces.
+ * An administrative class for managing Astra databases, including creating, listing, and deleting keyspaces.
  *
  * **Shouldn't be instantiated directly; use {@link Db.admin} or {@link AstraDbAdmin.dbAdmin} to obtain an instance of this class.**
  *
@@ -44,8 +50,8 @@ import { FindEmbeddingProvidersResult } from '@/src/devops/types/db-admin/find-e
  * const dbAdmin3 = admin.dbAdmin('*ENDPOINT*');
  * const dbAdmin4 = admin.dbAdmin('*DB_ID*', '*REGION*');
  *
- * const namespaces = await admin1.listNamespaces();
- * console.log(namespaces);
+ * const keyspaces = await admin1.listKeyspaces();
+ * console.log(keyspaces);
  *
  * const dbInfo = await admin1.info();
  * console.log(dbInfo);
@@ -111,7 +117,7 @@ export class AstraDbAdmin extends DbAdmin {
    * @example
    * ```typescript
    * const dbAdmin = client.admin().dbAdmin('<endpoint>', {
-   *   namespace: 'my-namespace',
+   *   keyspace: 'my-keyspace',
    *   useHttp2: false,
    * });
    *
@@ -142,7 +148,7 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns The available embedding providers.
    */
   public override async findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult> {
-    const resp = await this.#db.command({ findEmbeddingProviders: {} }, { namespace: null, maxTimeMS: options?.maxTimeMS });
+    const resp = await this.#db.command({ findEmbeddingProviders: {} }, { keyspace: null, maxTimeMS: options?.maxTimeMS });
     return resp.status as FindEmbeddingProvidersResult;
   }
 
@@ -171,63 +177,75 @@ export class AstraDbAdmin extends DbAdmin {
   }
 
   /**
-   * Lists the namespaces in the database.
+   * Lists the keyspaces in the database.
    *
-   * The first element in the returned array is the default namespace of the database, and the rest are additional
-   * namespaces in no particular order.
+   * The first element in the returned array is the default keyspace of the database, and the rest are additional
+   * keyspaces in no particular order.
    *
    * @example
    * ```typescript
-   * const namespaces = await dbAdmin.listNamespaces();
+   * const keyspaces = await dbAdmin.listKeyspaces();
    *
    * // ['default_keyspace', 'my_other_keyspace']
-   * console.log(namespaces);
+   * console.log(keyspaces);
    * ```
    *
-   * @returns A promise that resolves to list of all the namespaces in the database.
+   * @returns A promise that resolves to list of all the keyspaces in the database.
    */
-  public override async listNamespaces(options?: WithTimeout): Promise<string[]> {
+  public override async listKeyspaces(options?: WithTimeout): Promise<string[]> {
     return this.info(options).then(i => [i.info.keyspace!, ...i.info.additionalKeyspaces ?? []].filter(Boolean));
   }
 
   /**
-   * Creates a new, additional, namespace (aka keyspace) for this database.
+   * Lists the keyspaces in the database.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link AstraDbAdmin.listKeyspaces}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link AstraDbAdmin.listKeyspaces} instead.
+   */
+  public override async listNamespaces(options?: WithTimeout): Promise<string[]> {
+    return this.listKeyspaces(options);
+  }
+
+  /**
+   * Creates a new, additional, keyspace for this database.
    *
    * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 1 second. Expect it to take roughly 8-10 seconds to complete.
    *
    * @example
    * ```typescript
-   * await dbAdmin.createNamespace('my_other_keyspace1');
+   * await dbAdmin.createKeyspace('my_other_keyspace1');
    *
    * // ['default_keyspace', 'my_other_keyspace1']
-   * console.log(await dbAdmin.listNamespaces());
+   * console.log(await dbAdmin.listKeyspaces());
    *
-   * await dbAdmin.createNamespace('my_other_keyspace2', {
+   * await dbAdmin.createKeyspace('my_other_keyspace2', {
    *   blocking: false,
    * });
    *
    * // Will not include 'my_other_keyspace2' until the operation completes
-   * console.log(await dbAdmin.listNamespaces());
+   * console.log(await dbAdmin.listKeyspaces());
    * ```
    *
    * @remarks
-   * Note that if you choose not to block, the created namespace will not be able to be used until the
+   * Note that if you choose not to block, the created keyspace will not be able to be used until the
    * operation completes, which is up to the caller to determine.
    *
-   * @param namespace - The name of the new namespace.
+   * @param keyspace - The name of the new keyspace.
    * @param options - The options for the blocking behavior of the operation.
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async createNamespace(namespace: string, options?: CreateNamespaceOptions): Promise<void> {
-    if (options?.updateDbNamespace) {
-      this.#db.useNamespace(namespace);
+  public override async createKeyspace(keyspace: string, options?: CreateKeyspaceOptions): Promise<void> {
+    if (options?.updateDbKeyspace) {
+      this.#db.useKeyspace(keyspace);
     }
 
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
-      path: `/databases/${this.#db.id}/keyspaces/${namespace}`,
+      path: `/databases/${this.#db.id}/keyspaces/${keyspace}`,
     }, {
       id: this.#db.id,
       target: 'ACTIVE',
@@ -238,40 +256,52 @@ export class AstraDbAdmin extends DbAdmin {
   }
 
   /**
-   * Drops a namespace (aka keyspace) from this database.
+   * Creates a new, additional, keyspace for this database.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link AstraDbAdmin.createKeyspace}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link AstraDbAdmin.createKeyspace} instead.
+   */
+  public override async createNamespace(keyspace: string, options?: CreateNamespaceOptions): Promise<void> {
+    return this.createKeyspace(keyspace, { ...options, updateDbKeyspace: options?.updateDbNamespace });
+  }
+
+  /**
+   * Drops a keyspace from this database.
    *
    * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 1 second. Expect it to take roughly 8-10 seconds to complete.
    *
    * @example
    * ```typescript
-   * await dbAdmin.dropNamespace('my_other_keyspace1');
+   * await dbAdmin.dropKeyspace('my_other_keyspace1');
    *
    * // ['default_keyspace', 'my_other_keyspace2']
-   * console.log(await dbAdmin.listNamespaces());
+   * console.log(await dbAdmin.listKeyspaces());
    *
-   * await dbAdmin.dropNamespace('my_other_keyspace2', {
+   * await dbAdmin.dropKeyspace('my_other_keyspace2', {
    *   blocking: false,
    * });
    *
    * // Will still include 'my_other_keyspace2' until the operation completes
    * // ['default_keyspace', 'my_other_keyspace2']
-   * console.log(await dbAdmin.listNamespaces());
+   * console.log(await dbAdmin.listKeyspaces());
    * ```
    *
    * @remarks
-   * Note that if you choose not to block, the namespace will still be able to be used until the operation
+   * Note that if you choose not to block, the keyspace will still be able to be used until the operation
    * completes, which is up to the caller to determine.
    *
-   * @param namespace - The name of the namespace to drop.
+   * @param keyspace - The name of the keyspace to drop.
    * @param options - The options for the blocking behavior of the operation.
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async dropNamespace(namespace: string, options?: AdminBlockingOptions): Promise<void> {
+  public override async dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void> {
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Delete,
-      path: `/databases/${this.#db.id}/keyspaces/${namespace}`,
+      path: `/databases/${this.#db.id}/keyspaces/${keyspace}`,
     }, {
       id: this.#db.id,
       target: 'ACTIVE',
@@ -279,6 +309,18 @@ export class AstraDbAdmin extends DbAdmin {
       defaultPollInterval: 1000,
       options,
     });
+  }
+
+  /**
+   Drops a keyspace from this database.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link AstraDbAdmin.dropKeyspace}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link AstraDbAdmin.dropKeyspace} instead.
+   */
+  public override async dropNamespace(keyspace: string, options?: AdminBlockingOptions): Promise<void> {
+    return this.dropKeyspace(keyspace, options);
   }
 
   /**

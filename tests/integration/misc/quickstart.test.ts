@@ -15,10 +15,10 @@
 
 import { DataAPIClient } from '@/src/client';
 import { ObjectId, UUID, VectorDoc } from '@/src/data-api';
-import { DEFAULT_NAMESPACE } from '@/src/api';
+import { DEFAULT_KEYSPACE } from '@/src/api';
 import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
-import { ENVIRONMENT, OTHER_NAMESPACE, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/testlib';
+import { ENVIRONMENT, OTHER_KEYSPACE, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/testlib';
 
 parallel('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
   it('(LONG) works for the quickstart', async () => {
@@ -27,7 +27,7 @@ parallel('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
     }
 
     const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-    const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
+    const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
 
     const collection = await db.createCollection<Idea>('vector_5_collection', { vector: { dimension: 5, metric: 'cosine' }, maxTimeMS: 60000 });
 
@@ -91,9 +91,9 @@ parallel('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
     assert.strictEqual(dbInfo.info.region, region);
 
     const dbAdmin = admin.dbAdmin(dbInfo.id, dbInfo.info.region);
-    const namespaces = await dbAdmin.listNamespaces();
-    assert.ok(namespaces.includes(DEFAULT_NAMESPACE));
-    assert.ok(namespaces.includes(OTHER_NAMESPACE));
+    const keyspaces = await dbAdmin.listKeyspaces();
+    assert.ok(keyspaces.includes(DEFAULT_KEYSPACE));
+    assert.ok(keyspaces.includes(OTHER_KEYSPACE));
 
     await client.close();
   });
@@ -106,7 +106,7 @@ parallel('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
     }
 
     const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-    const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_NAMESPACE });
+    const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
 
     const collection = await db.createCollection<Person>('my_collection', { defaultId: { type: 'uuidv7' }, maxTimeMS: 60000 });
 
@@ -132,7 +132,7 @@ parallel('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
 
   it('works for the portal quickstart', async () => {
     const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-    const db = client.db(TEST_APPLICATION_URI, { namespace: OTHER_NAMESPACE });
+    const db = client.db(TEST_APPLICATION_URI, { keyspace: OTHER_KEYSPACE });
     assert.ok(Array.isArray(await db.listCollections()));
   });
 });

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc, WithNamespace } from '@/src/data-api';
+import { SomeDoc, WithKeyspace } from '@/src/data-api';
 import { CollectionOptions } from '@/src/data-api/types';
 import { WithTimeout } from '@/src/common/types';
 
@@ -29,14 +29,14 @@ export interface ListCollectionsCommand {
  * Options for listing collections.
  *
  * @field nameOnly - If true, only the name of the collection is returned. If false, the full collection info is returned. Defaults to true.
- * @field namespace - Overrides the namespace to list collections from. If not provided, the default namespace is used.
+ * @field keyspace - Overrides the keyspace to list collections from. If not provided, the default keyspace is used.
  * @field maxTimeMS - The maximum amount of time to allow the operation to run.
  *
  * @see Db.listCollections
  *
  * @public
  */
-export interface ListCollectionsOptions extends WithTimeout, WithNamespace {
+export interface ListCollectionsOptions extends WithTimeout, WithKeyspace {
   /**
    * If true, only the name of the collection is returned.
    *

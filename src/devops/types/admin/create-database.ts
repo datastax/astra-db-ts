@@ -39,7 +39,16 @@ export interface DatabaseConfig {
    */
   region: string,
   /**
-   * The default namespace to use for the database.
+   * The default keyspace to use for the database.
+   */
+  keyspace?: string,
+  /**
+   * The default keyspace to use for the database.
+   *
+   * This is now a deprecated alias for the strictly equivalent {@link DatabaseConfig.keyspace}, and will be removed
+   * in an upcoming major version.
+   *
+   * @deprecated - Prefer {@link DatabaseConfig.keyspace} instead.
    */
   namespace?: string,
 }

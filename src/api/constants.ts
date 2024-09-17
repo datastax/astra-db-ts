@@ -46,7 +46,7 @@ export const HttpMethods = {
 /**
  * @internal
  */
-export const DEFAULT_NAMESPACE = 'default_keyspace';
+export const DEFAULT_KEYSPACE = 'default_keyspace';
 
 /**
  * @internal
