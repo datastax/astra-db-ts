@@ -34,12 +34,12 @@ export function jsonTryParse<T>(json: string, otherwise: T, reviver?: (this: any
   }
 }
 
-export function resolveKeyspace(obj: WithKeyspace | nullish, allowNull?: false): string | undefined
+export function resolveKeyspace(obj: WithKeyspace | nullish, nullBypass?: false): string | undefined
 
-export function resolveKeyspace(obj: WithNullableKeyspace | nullish, allowNull: true): string | nullish
+export function resolveKeyspace(obj: WithNullableKeyspace | nullish, nullBypass: true): string | nullish
 
-export function resolveKeyspace(obj: WithNullableKeyspace | nullish, allowNull?: boolean): string | nullish {
-  return (!allowNull)
-    ? obj?.keyspace ?? (<any>obj)?.namespac3 ?? undefined
-    : obj?.keyspace ?? (<any>obj)?.namespac3;
+export function resolveKeyspace(obj: WithNullableKeyspace | nullish, nullBypass?: boolean): string | nullish {
+  return (nullBypass)
+    ? (obj?.keyspace !== undefined) ? obj?.keyspace: (<any>obj)?.namespac3
+    : obj?.keyspace ?? (<any>obj)?.namespac3 ?? undefined;
 }

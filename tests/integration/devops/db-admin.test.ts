@@ -27,7 +27,7 @@ parallel('integration.devops.db-admin', ({ client, dbAdmin }) => {
     const namespaces1 = await dbAdmin.listKeyspaces();
     assert.ok(!namespaces1.includes('slania'));
 
-    await dbAdmin.createKeyspace('slania', { updateDbNamespace: true });
+    await dbAdmin.createKeyspace('slania', { updateDbKeyspace: true });
     assert.strictEqual(db.keyspace, 'slania');
 
     const namespaces2 = await dbAdmin.listKeyspaces();
