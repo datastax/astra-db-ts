@@ -24,7 +24,7 @@ export const RAGSTACK_REQUESTED_WITH = (() => {
     const ragstack = eval(`require('@datastax/ragstack-ai')`);
     const version = ragstack['RAGSTACK_VERSION'] || '?';
     return `ragstack-ai-ts/${version}`
-  } catch (e) {
+  } catch (_) {
     return '';
   }
 })();

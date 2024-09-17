@@ -153,7 +153,7 @@ describe('unit.data-api.db', () => {
 
     it('should throw error if attempting to get ID for non-astra db', () => {
       const db = mkDb(internalOps(), 'https://localhost:3000', null, null);
-      assert.throws(() => { db.id });
+      assert.throws(() => db.id);
     });
   });
 

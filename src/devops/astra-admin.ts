@@ -286,11 +286,21 @@ export class AstraAdmin {
   public async listDatabases(options?: ListDatabasesOptions): Promise<FullDatabaseInfo[]> {
     const params = {} as Record<string, string>;
 
-    typeof options?.include === 'string'  && (params['include'] = options.include);
-    typeof options?.provider === 'string' && (params['provider'] = options.provider);
+    if (typeof options?.include === 'string') {
+      (params['include'] = options.include);
+    }
 
-    typeof options?.limit === 'number' && (params['limit'] = String(options.skip));
-    typeof options?.skip === 'number'  && (params['starting_after'] = String(options.skip));
+    if (typeof options?.provider === 'string') {
+      (params['provider'] = options.provider);
+    }
+
+    if (typeof options?.limit === 'number') {
+      (params['limit'] = String(options.skip));
+    }
+
+    if (typeof options?.skip === 'number') {
+      (params['starting_after'] = String(options.skip));
+    }
 
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,

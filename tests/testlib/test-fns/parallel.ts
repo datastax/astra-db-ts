@@ -116,7 +116,9 @@ parallel = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
       const wrapperFn = (suite.name)
         ? (fn: () => void) => describe(suite.name!, () => {
           before(function () {
-            suite.skipped && this.skip();
+            if (suite.skipped) {
+              this.skip();
+            }
           });
           fn();
         })
