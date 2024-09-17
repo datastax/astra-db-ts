@@ -81,7 +81,7 @@ const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingPr
   }
 
   if (auth['SHARED_SECRET']?.enabled && spec.sharedSecret?.providerKey && ENVIRONMENT === 'astra') {
-    branches.push({ ...branch, authType: 'providerKey', providerKey: spec.sharedSecret?.providerKey, branchName: `${branch.branchName}@providerKey`, });
+    branches.push({ ...branch, authType: 'providerKey', providerKey: spec.sharedSecret?.providerKey, branchName: `${branch.branchName}@providerKey` });
   }
 
   if (auth['NONE']?.enabled && ENVIRONMENT === 'astra') {
@@ -112,7 +112,7 @@ const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: Embedding
   }
 
   if (vectorDimParam && defaultDim) {
-    return [{ ...branch, branchName: `${branch.branchName}@default` }, { ...branch, dimension: defaultDim, branchName: `${branch.branchName}/${defaultDim}`, }];
+    return [{ ...branch, branchName: `${branch.branchName}@default` }, { ...branch, dimension: defaultDim, branchName: `${branch.branchName}/${defaultDim}` }];
   }
 
   return [{ ...branch, branchName: `${branch.branchName}@default` }];

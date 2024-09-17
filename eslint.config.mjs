@@ -61,7 +61,7 @@ export default [
       'no-control-regex': 'off',
 
       'semi': 'error',
-      // 'comma-dangle': ['error', 'only-multiline'],
+      'comma-dangle': ['error', 'always-multiline'],
     },
   },
 ];

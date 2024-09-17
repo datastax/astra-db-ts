@@ -560,7 +560,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     }
 
     const command: InternalGetMoreCommand = {
-      find: { filter: this._filter }
+      find: { filter: this._filter },
     };
 
     if (this._options.sort) {

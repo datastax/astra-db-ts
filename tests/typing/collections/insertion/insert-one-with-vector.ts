@@ -26,20 +26,20 @@ void dummyCollection<TestSchema>().insertOne({
     'address': {
       'address_line': '1234 Broadway',
       'city': 'New York',
-      'state': 'NY'
-    }
+      'state': 'NY',
+    },
   },
   'purchase_date': new Date(1690045891),
   'seller': {
     'name': 'Jon B.',
-    'location': 'Manhattan NYC'
+    'location': 'Manhattan NYC',
   },
   'items': [
     {
       'car': 'BMW 330i Sedan',
-      'color': 'Silver'
+      'color': 'Silver',
     },
-    'Extended warranty - 5 years'
+    'Extended warranty - 5 years',
   ],
   'amount': 47601,
   'status': 'active',

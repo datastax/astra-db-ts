@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DatabaseCloudProvider, DatabaseStatus, } from '@/src/devops/types';
+import { DatabaseCloudProvider, DatabaseStatus } from '@/src/devops/types';
 import { WithTimeout } from '@/src/common/types';
 
 /**

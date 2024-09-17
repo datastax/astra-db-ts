@@ -169,7 +169,7 @@ const test3: StrictUpdateFilter<Schema> = {
     arr: [
       // @ts-expect-error - Invalid type
       1,
-      '1'
+      '1',
     ],
     // @ts-expect-error - Invalid type
     'obj.str2': 2,
@@ -178,7 +178,7 @@ const test3: StrictUpdateFilter<Schema> = {
     'obj.obj': {
       // @ts-expect-error - Invalid type
       num: '1',
-      any: { a: 1 }
+      any: { a: 1 },
     },
   },
   $unset: {
@@ -221,13 +221,13 @@ const test4: StrictUpdateFilter<SomeDoc> = {
     num1: 'a',
     arr: [
       1,
-      '1'
+      '1',
     ],
     'obj.str2': 2,
     obj: {},
     'obj.obj': {
       num: '1',
-      any: { a: 1 }
+      any: { a: 1 },
     },
   },
   $unset: {
@@ -435,7 +435,7 @@ const test12: StrictUpdateFilter<ConvolutedSchema2> = {
   $set: {
     numOrArray: [
       // @ts-expect-error - Invalid type
-      1
+      1,
     ],
   },
   $inc: {
@@ -446,7 +446,7 @@ const test12: StrictUpdateFilter<ConvolutedSchema2> = {
     numOrArray: {
       $each: [
         // @ts-expect-error - Invalid type
-        1
+        1,
       ],
     },
   },

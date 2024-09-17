@@ -90,7 +90,7 @@ parallel('integration.data-api.collection.insert-one', { truncateColls: 'default
   it('should store bigint as number', async (key) => {
     await collection.insertOne({
       _id: key,
-      answer: 42n
+      answer: 42n,
     });
 
     const res = await collection.findOne({ _id: key });

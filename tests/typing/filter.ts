@@ -30,8 +30,8 @@ const test2: Filter<Schema> = {
       $or: [
         { 'obj.obj.num': { $exists: true } },
         { 'obj.obj.any': { $gt: 1 } },
-      ]
-    }
+      ],
+    },
   ],
 };
 
@@ -44,7 +44,7 @@ const test3: Filter<Schema> = {
       2,
       // @ts-expect-error - Invalid type
       '3',
-    ]
+    ],
   },
   // Doesn't check nested types
   'obj.obj.num': '3',
@@ -52,8 +52,8 @@ const test3: Filter<Schema> = {
     {
       num1: {
         // @ts-expect-error - Invalid type
-        $eq: 1n
-      }
+        $eq: 1n,
+      },
     }, {
       num2: {
         $in: [
@@ -61,29 +61,29 @@ const test3: Filter<Schema> = {
           2,
           // @ts-expect-error - Invalid type
           '3',
-        ]
-      }
+        ],
+      },
     }, {
       $or: [
         {
           'obj.obj.num': {
             // Doesn't check nested types
-            $size: 3
-          }
+            $size: 3,
+          },
         }, {
           'obj.obj.num': {
             // Doesn't check nested types
-            $and: []
-          }
+            $and: [],
+          },
         }, {
           num1: {
             // @ts-expect-error - Invalid op
-            $size: 3
-          }
-        }
-      ]
-    }
-  ]
+            $size: 3,
+          },
+        },
+      ],
+    },
+  ],
 };
 
 const test4: Filter<SomeDoc> = {
@@ -97,9 +97,9 @@ const test4: Filter<SomeDoc> = {
       $or: [
         { 'obj.obj.num': { $size: 3 } },
         { 'obj.obj.num': { $and: [] } },
-      ]
-    }
-  ]
+      ],
+    },
+  ],
 };
 
 const test5: Filter<Schema> = {
@@ -112,7 +112,7 @@ const test6: Filter<ConvolutedSchema2> = {
     { numOrArray: { $in: [['1'], 2] } },
     { numOrArray: { $gte: 3 } },
     { numOrArray: { $size: 3 } },
-  ]
+  ],
 };
 
 const test7: Filter<any> = {

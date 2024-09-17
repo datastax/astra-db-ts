@@ -52,7 +52,7 @@ void dummyCollection<TestSchema>().findOne({
     'customer.age': true,
     'customer.credit_score': 0,
     'items': { $slice: 1 },
-  }
+  },
 });
 
 void dummyCollection<TestSchema>().findOne({
@@ -75,7 +75,7 @@ void dummyCollection<TestSchema>().findOne({
     'customer.age': true,
     'customer.credit_score': 0,
     'items': { $slice: 1 },
-  }
+  },
 });
 
 void dummyCollection<TestSchema>().findOne({
@@ -129,7 +129,7 @@ void dummyCollection<TestSchema>().findOne({}, {
         1,
         // @ts-expect-error - Must be a number
         '2',
-      ]
+      ],
     },
   },
 });

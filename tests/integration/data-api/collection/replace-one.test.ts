@@ -60,7 +60,7 @@ parallel('integration.data-api.collection.replace-one', { truncateColls: 'defaul
     const resp = await collection.replaceOne(
       { _id: key },
       { key: key },
-      { upsert: true, },
+      { upsert: true },
     );
 
     assert.strictEqual(resp.matchedCount, 1);

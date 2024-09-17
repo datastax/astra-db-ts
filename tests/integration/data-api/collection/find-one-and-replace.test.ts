@@ -20,7 +20,7 @@ parallel('integration.data-api.collection.find-one-and-replace', { truncateColls
     const res = await collection.insertOne({ name: 'kamelot' });
     const docId = res.insertedId;
     const resp = await collection.findOneAndReplace(
-      { '_id': docId, },
+      { '_id': docId },
       { name: 'soad' },
       {
         returnDocument: 'after',
@@ -51,7 +51,7 @@ parallel('integration.data-api.collection.find-one-and-replace', { truncateColls
   it('should findOneAndReplace with upsert true', async (key) => {
     const _id = key;
     const resp = await collection.findOneAndReplace(
-      { _id: _id, },
+      { _id: _id },
       { age: 13 },
       {
         includeResultMetadata: true,
@@ -66,7 +66,7 @@ parallel('integration.data-api.collection.find-one-and-replace', { truncateColls
 
   it('should findOneAndReplace with upsert true and returnDocument before', async (key) => {
     const resp = await collection.findOneAndReplace(
-      { _id: key, },
+      { _id: key },
       { age: 13 },
       {
         includeResultMetadata: true,

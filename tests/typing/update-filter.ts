@@ -95,7 +95,7 @@ const test3: UpdateFilter<Schema> = {
     arr: [
       // @ts-expect-error - Invalid type
       1,
-      '1'
+      '1',
     ],
     // Doesn't check nested types
     'obj.str2': 2,
@@ -104,7 +104,7 @@ const test3: UpdateFilter<Schema> = {
     'obj.obj': {
       // Doesn't check nested types
       num: '1',
-      any: { a: 1 }
+      any: { a: 1 },
     },
   },
   $unset: {
@@ -147,13 +147,13 @@ const test4: UpdateFilter<SomeDoc> = {
     num1: 'a',
     arr: [
       1,
-      '1'
+      '1',
     ],
     'obj.str2': 2,
     obj: {},
     'obj.obj': {
       num: '1',
-      any: { a: 1 }
+      any: { a: 1 },
     },
   },
   $unset: {
@@ -355,7 +355,7 @@ const test12: UpdateFilter<ConvolutedSchema2> = {
   $set: {
     numOrArray: [
       // @ts-expect-error - Invalid type
-      1
+      1,
     ],
   },
   $inc: {
@@ -366,7 +366,7 @@ const test12: UpdateFilter<ConvolutedSchema2> = {
     numOrArray: {
       $each: [
         // @ts-expect-error - Invalid type
-        1
+        1,
       ],
     },
   },

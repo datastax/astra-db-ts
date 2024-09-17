@@ -70,7 +70,7 @@ const test5: Partial<ToDotNotation<Schema>> = {
       num: 3,
       // @ts-expect-error - Invalid type
       any: 'any',
-    }
+    },
   },
   arr: [
     '1',

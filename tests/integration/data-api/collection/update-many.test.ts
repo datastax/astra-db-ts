@@ -95,7 +95,7 @@ parallel('integration.data-api.collection.update-many', { truncateColls: 'defaul
     const updateManyResp = await collection.updateMany(
       { key: 'feuerschwanz' },
       { $set: { age: 10 } },
-      { upsert: true }
+      { upsert: true },
     );
     assert.strictEqual(updateManyResp.matchedCount, 0);
     assert.strictEqual(updateManyResp.modifiedCount, 0);
