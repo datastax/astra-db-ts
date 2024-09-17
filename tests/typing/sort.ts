@@ -19,29 +19,29 @@ import type { Sort } from '@/src/data-api/types';
 const test1: Sort = {
   'num1': 1,
   'nmsdufhklsdafjksdahf': -1,
-}
+};
 
 const test2: Sort = {
   'num1': 1,
   $vector: [0.23, 0.38, 0.27, 0.91, 0.21],
-}
+};
 
 const test3: Sort = {
   // @ts-expect-error - Must be 1 or -1
   'num1': 2,
-}
+};
 
 const test4: Sort = {
   // @ts-expect-error - Must be 1 or -1
   'num1': 1n,
-}
+};
 
 const test5: Sort = {
   // @ts-expect-error - Must be a number[]
   $vector: '[0.23, 0.38, 0.27, 0.91, 0.21]',
-}
+};
 
 const test6: Sort = {
   // @ts-expect-error - Must be a string
   $vectorize: [0.23, 0.38, 0.27, 0.91, 0.21],
-}
+};

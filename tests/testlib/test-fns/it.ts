@@ -51,10 +51,12 @@ it = function (name: string, testFn: TestFn) {
   }
 
   function modifiedFn(this: Mocha.Context) {
-    skipped && this.skip();
+    if (skipped) {
+      this.skip();
+    }
     this.timeout(DEFAULT_TEST_TIMEOUT);
     return testFn(UUID.v4().toString());
   }
 
   return global.it(name, modifiedFn);
-}
+};

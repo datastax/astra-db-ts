@@ -23,32 +23,32 @@ const test1: StrictProjection<Schema> = {
   'obj.str1': false,
   'obj.obj.any.str': 0,
   '_id': 1,
-}
+};
 
 const test2: StrictProjection<Schema> = {
   // @ts-expect-error - Invalid type
   'num1': 1n,
-}
+};
 
 const test3: StrictProjection<Schema> = {
   // @ts-expect-error - Invalid field
   'sdjfklsdjflsd;afj': 0,
-}
+};
 
 const test4: StrictProjection<Schema> = {
   // @ts-expect-error - Can't slice a string
   'obj.str2': { $slice: 1 },
-}
+};
 
 const test5: StrictProjection<ConvolutedSchema2> = {
   numOrArray: { $slice: [1, 3] },
-}
+};
 
 const test6: StrictProjection<ConvolutedSchema2> = {
   numOrArray: { $slice: [1, 3] },
   '*': 1,
-}
+};
 
 const test7: StrictProjection<ConvolutedSchema2> = {
   '*': false,
-}
+};

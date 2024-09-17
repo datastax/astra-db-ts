@@ -52,7 +52,7 @@ describe('integration.api.clients.data-api-http-client', ({ db }) => {
 
     it('should execute a collection-level command', async () => {
       const resp = await httpClient.executeCommand({
-        insertOne: { document: { name: 'John' } }
+        insertOne: { document: { name: 'John' } },
       }, {
         collection: DEFAULT_COLLECTION_NAME,
       });

@@ -106,7 +106,7 @@ import { CollectionSpawnOptions } from '@/src/data-api/types/collections/spawn-c
  */
 export class Collection<Schema extends SomeDoc = SomeDoc> {
   readonly #httpClient: DataAPIHttpClient;
-  readonly #db: Db
+  readonly #db: Db;
 
   /**
    * The name of the collection.
@@ -177,7 +177,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   public async insertOne(document: MaybeId<Schema>, options?: InsertOneOptions): Promise<InsertOneResult<Schema>> {
     const command: InsertOneCommand = {
       insertOne: { document },
-    }
+    };
 
     const { vector, vectorize } = <any>options ?? {};
 
@@ -1426,7 +1426,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @throws BulkWriteError - If the operation fails
    */
   public async bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult<Schema>> {
-    const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS)
+    const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
 
     return (options?.ordered)
       ? await bulkWriteOrdered(this.#httpClient, operations, timeoutManager)
@@ -1504,20 +1504,20 @@ const coalesceVectorSpecialsIntoSort = <T extends OptionsWithSort>(options: T | 
 
   if (options?.vector) {
     if (options.sort) {
-      throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object')
+      throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object');
     }
     return { ...options, sort: { $vector: options.vector } };
   }
 
   if (options?.vectorize) {
     if (options.sort) {
-      throw new Error('Can\'t use both `sort` and `vectorize` options at once; if you need both, include a $vectorize key in the sort object')
+      throw new Error('Can\'t use both `sort` and `vectorize` options at once; if you need both, include a $vectorize key in the sort object');
     }
     return { ...options, sort: { $vectorize: options.vectorize } };
   }
 
   return options;
-}
+};
 
 // -- Insert Many ------------------------------------------------------------------------------------------
 
@@ -1543,7 +1543,7 @@ const insertManyOrdered = async <Schema extends SomeDoc>(httpClient: DataAPIHttp
   }
 
   return insertedIds;
-}
+};
 
 const insertManyUnordered = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient, documents: unknown[], concurrency: number, chunkSize: number, timeoutManager: TimeoutManager): Promise<IdOf<Schema>[]> => {
   const insertedIds: IdOf<Schema>[] = [];
@@ -1589,7 +1589,7 @@ const insertManyUnordered = async <Schema extends SomeDoc>(httpClient: DataAPIHt
   }
 
   return insertedIds;
-}
+};
 
 const insertMany = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient, documents: unknown[], ordered: boolean, timeoutManager: TimeoutManager): Promise<[InsertManyDocumentResponse<Schema>[], IdOf<Schema>[], DataAPIDetailedErrorDescriptor | undefined]> => {
   const command: InsertManyCommand = {
@@ -1600,7 +1600,7 @@ const insertMany = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient,
         ordered,
       },
     },
-  }
+  };
 
   let resp, err: DataAPIResponseError | undefined;
 
@@ -1631,7 +1631,7 @@ const insertMany = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient,
   }
 
   return [documentResponses, insertedIds, err?.detailedErrorDescriptors[0]];
-}
+};
 
 // -- Bulk Write ------------------------------------------------------------------------------------------
 
@@ -1657,7 +1657,7 @@ const bulkWriteOrdered = async <Schema extends SomeDoc>(httpClient: DataAPIHttpC
   }
 
   return results;
-}
+};
 
 const bulkWriteUnordered = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient, operations: AnyBulkWriteOperation<Schema>[], concurrency: number, timeoutManager: TimeoutManager): Promise<BulkWriteResult<Schema>> => {
   const results = new BulkWriteResult<Schema>();
@@ -1695,13 +1695,13 @@ const bulkWriteUnordered = async <Schema extends SomeDoc>(httpClient: DataAPIHtt
   }
 
   return results;
-}
+};
 
 const bulkWrite = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient, operation: AnyBulkWriteOperation<Schema>, results: BulkWriteResult<Schema>, i: number, timeoutManager: TimeoutManager): Promise<void> => {
   const command = buildBulkWriteCommand(operation);
   const resp = await httpClient.executeCommand(command, { timeoutManager });
   addToBulkWriteResult(results, resp, i);
-}
+};
 
 const buildBulkWriteCommand = <Schema extends SomeDoc>(operation: AnyBulkWriteOperation<Schema>): Record<string, any> => {
   switch (true) {
@@ -1720,7 +1720,7 @@ const buildBulkWriteCommand = <Schema extends SomeDoc>(operation: AnyBulkWriteOp
     default:
       throw new Error(`Unknown bulk write operation: ${JSON.stringify(operation)}`);
   }
-}
+};
 
 const addToBulkWriteResult = (result: BulkWriteResult<SomeDoc>, resp: RawDataAPIResponse, i: number) => {
   const asMutable = result as Mutable<BulkWriteResult<SomeDoc>>;
@@ -1739,7 +1739,7 @@ const addToBulkWriteResult = (result: BulkWriteResult<SomeDoc>, resp: RawDataAPI
   }
 
   asMutable.getRawResponse().push(resp);
-}
+};
 
 // -- Distinct --------------------------------------------------------------------------------------------
 
@@ -1755,7 +1755,7 @@ const pullSafeProjection4Distinct = (path: string): string => {
 
   split.length = i;
   return split.join('.');
-}
+};
 
 const mkDistinctPathExtractor = (path: string): (doc: SomeDoc) => any[] => {
   const values = [] as any[];
@@ -1789,10 +1789,10 @@ const mkDistinctPathExtractor = (path: string): (doc: SomeDoc) => any[] => {
     } else if (value && typeof value === 'object') {
       extract(path, index + 1, value[prop]);
     }
-  }
+  };
 
   return (doc: SomeDoc) => {
     extract(path.split('.'), 0, doc);
     return values;
   };
-}
+};

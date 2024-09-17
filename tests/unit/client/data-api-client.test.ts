@@ -33,7 +33,7 @@ describe('unit.client.data-api-client', () => {
     assert.doesNotThrow(() => new DataAPIClient());
     assert.doesNotThrow(() => new DataAPIClient('token'));
     assert.doesNotThrow(() => new DataAPIClient(new UsernamePasswordTokenProvider('username', 'password')));
-  })
+  });
 
   it('should throw if an invalid token is passed', () => {
     // @ts-expect-error - testing invalid input
@@ -136,7 +136,7 @@ describe('unit.client.data-api-client', () => {
     const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
     assert.throws(
       () => client.db(DEMO_APPLICATION_URI, OTHER_NAMESPACE),
-      { message: 'Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { namespace })`?' }
+      { message: 'Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { namespace })`?' },
     );
   });
 

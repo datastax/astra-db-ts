@@ -23,7 +23,9 @@ describe('{dummy}', () => {
         let waited: number;
 
         before(async function () {
-          suite.skipped && this.skip();
+          if (suite.skipped) {
+            this.skip();
+          }
 
           const time = performance.now();
           results = await backgroundTestResults[suiteIdx];

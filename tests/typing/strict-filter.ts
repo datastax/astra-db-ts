@@ -80,10 +80,10 @@ const test2: StrictFilter<Schema> = {
       $or: [
         { 'obj.obj.num': { $exists: true } },
         { 'obj.obj.any': { $gt: 1 } },
-      ]
-    }
+      ],
+    },
   ],
-}
+};
 
 const test3: StrictFilter<Schema> = {
   // @ts-expect-error - Invalid type
@@ -94,7 +94,7 @@ const test3: StrictFilter<Schema> = {
       2,
       // @ts-expect-error - Invalid type
       '3',
-    ]
+    ],
   },
   // @ts-expect-error - Invalid type
   'obj.obj.num': '3',
@@ -102,8 +102,8 @@ const test3: StrictFilter<Schema> = {
     {
       num1: {
         // @ts-expect-error - Invalid type
-        $eq: 1n
-      }
+        $eq: 1n,
+      },
     }, {
       num2: {
         $in: [
@@ -111,25 +111,25 @@ const test3: StrictFilter<Schema> = {
           2,
           // @ts-expect-error - Invalid type
           '3',
-        ]
-      }
+        ],
+      },
     }, {
       $or: [
         {
           'obj.obj.num': {
             // @ts-expect-error - Invalid op
-            $size: 3
-          }
+            $size: 3,
+          },
         }, {
           'obj.obj.num': {
             // @ts-expect-error - Invalid op
-            $and: []
-          }
-        }
-      ]
-    }
-  ]
-}
+            $and: [],
+          },
+        },
+      ],
+    },
+  ],
+};
 
 const test4: StrictFilter<SomeDoc> = {
   num1: '1',
@@ -142,23 +142,23 @@ const test4: StrictFilter<SomeDoc> = {
       $or: [
         { 'obj.obj.num': { $size: 3 } },
         { 'obj.obj.num': { $and: [] } },
-      ]
-    }
-  ]
-}
+      ],
+    },
+  ],
+};
 
 const test5: StrictFilter<Schema> = {
   // @ts-expect-error - Invalid path
-  'obj.obj.xyz': null!
-}
+  'obj.obj.xyz': null!,
+};
 
 const test6: StrictFilter<ConvolutedSchema2> = {
   $or: [
     { numOrArray: { $in: [['1'], 2] } },
     { numOrArray: { $gte: 3 } },
     { numOrArray: { $size: 3 } },
-  ]
-}
+  ],
+};
 
 const test7: StrictFilter<any> = {
   $and: [
@@ -166,9 +166,9 @@ const test7: StrictFilter<any> = {
     { $not: { $and: [{ 'some_random_key': Symbol.for('123') }] } },
   ],
   '123123123': 123123,
-}
+};
 
 const test8: StrictFilter<any> = {
   // @ts-expect-error - Invalid type
   $and: 3,
-}
+};

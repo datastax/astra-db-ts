@@ -95,7 +95,7 @@ parallel('integration.data-api.collection.update-many', { truncateColls: 'defaul
     const updateManyResp = await collection.updateMany(
       { key: 'feuerschwanz' },
       { $set: { age: 10 } },
-      { upsert: true }
+      { upsert: true },
     );
     assert.strictEqual(updateManyResp.matchedCount, 0);
     assert.strictEqual(updateManyResp.modifiedCount, 0);
@@ -770,7 +770,7 @@ parallel('integration.data-api.collection.update-many', { truncateColls: 'defaul
   it('fails gracefully on 2XX exceptions', async (key) => {
     try {
       // @ts-expect-error - testing invalid input
-      await collection.updateMany({ key }, { $invalidOperator: 1 })
+      await collection.updateMany({ key }, { $invalidOperator: 1 });
       assert.fail('Expected error');
     } catch (e) {
       assert.ok(e instanceof UpdateManyError);

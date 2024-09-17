@@ -55,7 +55,9 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
 
   function modifiedFn(this: Mocha.Suite) {
     before(function () {
-      checkTestsEnabled(name) || this.skip();
+      if (!checkTestsEnabled(name)) {
+        this.skip();
+      }
     });
 
     if (opts?.truncateColls?.includes(':')) {
@@ -82,4 +84,4 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
   }
 
   return global.describe(name, modifiedFn);
-}
+};

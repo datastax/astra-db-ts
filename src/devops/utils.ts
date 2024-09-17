@@ -37,6 +37,6 @@ export function extractAstraEnvironment(endpoint: string) {
     case endpoint.includes('apps.astra.datastax.com'):
       return 'prod';
     default:
-      throw new Error(`Cannot extract astra environment for endpoint '${endpoint}'`)
+      throw new Error(`Cannot extract astra environment for endpoint '${endpoint}'`);
   }
 }

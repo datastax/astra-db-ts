@@ -28,7 +28,7 @@ export const branchOnModel = (fullSpec: VectorizeTestSpec) => ([providerName, pr
   const spec = fullSpec[providerName];
 
   if (!spec) {
-    console.warn(`No credentials found for provider ${providerName}; skipping models `)
+    console.warn(`No credentials found for provider ${providerName}; skipping models `);
     return [];
   }
 
@@ -40,7 +40,7 @@ export const branchOnModel = (fullSpec: VectorizeTestSpec) => ([providerName, pr
   }));
 
   return modelBranches.flatMap(addParameters(spec, providerInfo));
-}
+};
 
 interface WithParams extends ModelBranch {
   parameters?: Record<string, string>,
@@ -60,7 +60,7 @@ const addParameters = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingP
   }];
 
   return withParams.flatMap(branchOnAuth(spec, providerInfo));
-}
+};
 
 interface AuthBranch extends WithParams {
   authType: 'header' | 'providerKey' | 'none',
@@ -70,10 +70,10 @@ interface AuthBranch extends WithParams {
 
 const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingProviderInfo) => (branch: WithParams): FinalVectorizeTestBranch[] => {
   const auth = providerInfo['supportedAuthentication'];
-  const branches: AuthBranch[] = []
+  const branches: AuthBranch[] = [];
 
   const ehp = (Object.entries(spec?.headers ?? []).length)
-    ? new class extends EmbeddingHeadersProvider { getHeaders = () => spec?.headers ?? {} }
+    ? new class extends EmbeddingHeadersProvider { getHeaders = () => spec?.headers ?? {}; }
     : null;
 
   if (auth['HEADER']?.enabled && ehp) {
@@ -81,7 +81,7 @@ const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingPr
   }
 
   if (auth['SHARED_SECRET']?.enabled && spec.sharedSecret?.providerKey && ENVIRONMENT === 'astra') {
-    branches.push({ ...branch, authType: 'providerKey', providerKey: spec.sharedSecret?.providerKey, branchName: `${branch.branchName}@providerKey`, });
+    branches.push({ ...branch, authType: 'providerKey', providerKey: spec.sharedSecret?.providerKey, branchName: `${branch.branchName}@providerKey` });
   }
 
   if (auth['NONE']?.enabled && ENVIRONMENT === 'astra') {
@@ -91,7 +91,7 @@ const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingPr
   const modelInfo = providerInfo.models.find((m) => m.name === branch.modelName)!;
 
   return branches.flatMap(branchOnDimension(spec, modelInfo));
-}
+};
 
 interface DimensionBranch extends AuthBranch {
   dimension?: number,
@@ -112,10 +112,10 @@ const branchOnDimension = (spec: VectorizeTestSpec[string], modelInfo: Embedding
   }
 
   if (vectorDimParam && defaultDim) {
-    return [{ ...branch, branchName: `${branch.branchName}@default` }, { ...branch, dimension: defaultDim, branchName: `${branch.branchName}/${defaultDim}`, }];
+    return [{ ...branch, branchName: `${branch.branchName}@default` }, { ...branch, dimension: defaultDim, branchName: `${branch.branchName}/${defaultDim}` }];
   }
 
   return [{ ...branch, branchName: `${branch.branchName}@default` }];
-}
+};
 
 export type FinalVectorizeTestBranch = DimensionBranch;

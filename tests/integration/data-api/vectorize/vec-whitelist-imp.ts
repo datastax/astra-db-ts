@@ -25,7 +25,7 @@ export const whitelistImplFor = (whitelist: string) => {
     default:
       return new RegexWhitelist(whitelist);
   }
-}
+};
 
 class LimitWhitelist {
   limit: number;

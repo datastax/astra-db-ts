@@ -63,7 +63,7 @@ export type DataAPIClientEvents =
 export const DataAPIClientEventEmitterBase = (() => {
   try {
     return (require('events') as { EventEmitter: (new () => TypedEmitter<DataAPIClientEvents>) }).EventEmitter;
-  } catch (e) {
+  } catch (_) {
     throw new Error(`\`${LIB_NAME}\` requires the \`events\` module to be available for usage. Please provide a polyfill (e.g. the \`events\` package) or use a compatible environment.`);
   }
 })();

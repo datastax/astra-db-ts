@@ -64,7 +64,7 @@ function buildMatchFilter(filter: string) {
 function buildAndTestFn(filters: ((name: string) => number)[]) {
   return (...names: string[]) => filters
     .map(filter => Math.max(...names.map(name => filter(name))))
-    .every(s => s === FILTER_STATE.SOFT_OK || s === FILTER_STATE.HARD_OK)
+    .every(s => s === FILTER_STATE.SOFT_OK || s === FILTER_STATE.HARD_OK);
 }
 
 function buildOrTestFn(filters: ((name: string) => number)[]) {

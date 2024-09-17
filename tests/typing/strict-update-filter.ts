@@ -160,7 +160,7 @@ const test2: StrictUpdateFilter<BasicSchema> = {
     'any.a': 1,
     any: 1,
   },
-}
+};
 
 const test3: StrictUpdateFilter<Schema> = {
   $set: {
@@ -169,7 +169,7 @@ const test3: StrictUpdateFilter<Schema> = {
     arr: [
       // @ts-expect-error - Invalid type
       1,
-      '1'
+      '1',
     ],
     // @ts-expect-error - Invalid type
     'obj.str2': 2,
@@ -178,7 +178,7 @@ const test3: StrictUpdateFilter<Schema> = {
     'obj.obj': {
       // @ts-expect-error - Invalid type
       num: '1',
-      any: { a: 1 }
+      any: { a: 1 },
     },
   },
   $unset: {
@@ -214,20 +214,20 @@ const test3: StrictUpdateFilter<Schema> = {
     // @ts-expect-error - Invalid type
     'obj.obj.any.xyz': new Date(),
   },
-}
+};
 
 const test4: StrictUpdateFilter<SomeDoc> = {
   $set: {
     num1: 'a',
     arr: [
       1,
-      '1'
+      '1',
     ],
     'obj.str2': 2,
     obj: {},
     'obj.obj': {
       num: '1',
-      any: { a: 1 }
+      any: { a: 1 },
     },
   },
   $unset: {
@@ -262,7 +262,7 @@ const test4: StrictUpdateFilter<SomeDoc> = {
     // @ts-expect-error - Invalid type
     'obj.obj.any.xyz': new Date(),
   },
-}
+};
 
 const test5: StrictUpdateFilter<Schema> = {
   $set: {
@@ -293,7 +293,7 @@ const test5: StrictUpdateFilter<Schema> = {
     // @ts-expect-error - Invalid path
     'obj.obj.any': true,
   },
-}
+};
 
 const test6: StrictUpdateFilter<SomeDoc> = {
   $set: {
@@ -317,7 +317,7 @@ const test6: StrictUpdateFilter<SomeDoc> = {
   $currentDate: {
     'obj.obj.any': true,
   },
-}
+};
 
 const test7: StrictUpdateFilter<ConvolutedSchema1> = {
   $set: {
@@ -340,7 +340,7 @@ const test7: StrictUpdateFilter<ConvolutedSchema1> = {
     numOrBigInt: 'new_name',
     numOrString: 'new_name',
   },
-}
+};
 
 const test8: StrictUpdateFilter<ConvolutedSchema1> = {
   $set: {
@@ -363,7 +363,7 @@ const test8: StrictUpdateFilter<ConvolutedSchema1> = {
     numOrBigInt: 'new_name',
     numOrString: 'new_name',
   },
-}
+};
 
 const test9: StrictUpdateFilter<ConvolutedSchema1> = {
   $set: {
@@ -384,7 +384,7 @@ const test9: StrictUpdateFilter<ConvolutedSchema1> = {
     // @ts-expect-error - Invalid type
     numOrString: '',
   },
-}
+};
 
 const test10: StrictUpdateFilter<SomeDoc> = {
   $set: {
@@ -402,7 +402,7 @@ const test10: StrictUpdateFilter<SomeDoc> = {
     // @ts-expect-error - Invalid type
     numOrString: '',
   },
-}
+};
 
 const test11: StrictUpdateFilter<ConvolutedSchema2> = {
   $set: {
@@ -429,13 +429,13 @@ const test11: StrictUpdateFilter<ConvolutedSchema2> = {
   $max: {
     numOrArray: 1,
   },
-}
+};
 
 const test12: StrictUpdateFilter<ConvolutedSchema2> = {
   $set: {
     numOrArray: [
       // @ts-expect-error - Invalid type
-      1
+      1,
     ],
   },
   $inc: {
@@ -446,7 +446,7 @@ const test12: StrictUpdateFilter<ConvolutedSchema2> = {
     numOrArray: {
       $each: [
         // @ts-expect-error - Invalid type
-        1
+        1,
       ],
     },
   },
@@ -454,7 +454,7 @@ const test12: StrictUpdateFilter<ConvolutedSchema2> = {
     // @ts-expect-error - Invalid type
     numOrArray: [''],
   },
-}
+};
 
 const test13: StrictUpdateFilter<SomeDoc> = {
   $set: {
@@ -473,4 +473,4 @@ const test13: StrictUpdateFilter<SomeDoc> = {
     // @ts-expect-error - Invalid type
     numOrArray: [''],
   },
-}
+};

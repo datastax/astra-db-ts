@@ -30,10 +30,10 @@ const test2: Filter<Schema> = {
       $or: [
         { 'obj.obj.num': { $exists: true } },
         { 'obj.obj.any': { $gt: 1 } },
-      ]
-    }
+      ],
+    },
   ],
-}
+};
 
 const test3: Filter<Schema> = {
   // @ts-expect-error - Invalid type
@@ -44,7 +44,7 @@ const test3: Filter<Schema> = {
       2,
       // @ts-expect-error - Invalid type
       '3',
-    ]
+    ],
   },
   // Doesn't check nested types
   'obj.obj.num': '3',
@@ -52,8 +52,8 @@ const test3: Filter<Schema> = {
     {
       num1: {
         // @ts-expect-error - Invalid type
-        $eq: 1n
-      }
+        $eq: 1n,
+      },
     }, {
       num2: {
         $in: [
@@ -61,30 +61,30 @@ const test3: Filter<Schema> = {
           2,
           // @ts-expect-error - Invalid type
           '3',
-        ]
-      }
+        ],
+      },
     }, {
       $or: [
         {
           'obj.obj.num': {
             // Doesn't check nested types
-            $size: 3
-          }
+            $size: 3,
+          },
         }, {
           'obj.obj.num': {
             // Doesn't check nested types
-            $and: []
-          }
+            $and: [],
+          },
         }, {
           num1: {
             // @ts-expect-error - Invalid op
-            $size: 3
-          }
-        }
-      ]
-    }
-  ]
-}
+            $size: 3,
+          },
+        },
+      ],
+    },
+  ],
+};
 
 const test4: Filter<SomeDoc> = {
   num1: '1',
@@ -97,23 +97,23 @@ const test4: Filter<SomeDoc> = {
       $or: [
         { 'obj.obj.num': { $size: 3 } },
         { 'obj.obj.num': { $and: [] } },
-      ]
-    }
-  ]
-}
+      ],
+    },
+  ],
+};
 
 const test5: Filter<Schema> = {
   // Doesn't check nested paths
   'obj.obj.xyz': null!,
-}
+};
 
 const test6: Filter<ConvolutedSchema2> = {
   $or: [
     { numOrArray: { $in: [['1'], 2] } },
     { numOrArray: { $gte: 3 } },
     { numOrArray: { $size: 3 } },
-  ]
-}
+  ],
+};
 
 const test7: Filter<any> = {
   $and: [
@@ -121,9 +121,9 @@ const test7: Filter<any> = {
     { $not: { $and: [ { 'some_random_key': Symbol.for('123') } ] } },
   ],
   '123123123': 123123,
-}
+};
 
 const test8: Filter<any> = {
   // @ts-expect-error - Invalid type
   $and: 3,
-}
+};

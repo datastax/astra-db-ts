@@ -37,7 +37,7 @@ export class FetchNative implements Fetcher {
         headers: headers,
         body: await resp.text(),
         status: resp.status,
-      }
+      };
     } catch (e: any) {
       if (e.name === 'TimeoutError') {
         throw info.mkTimeoutError();

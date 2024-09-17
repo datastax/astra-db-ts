@@ -59,7 +59,7 @@ interface ParallelizedTestsBlock {
 export let parallel: ParallelizedTestsBlock;
 
 parallel = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?: SuiteBlock) {
-  name = `{parallel} ${name}`
+  name = `{parallel} ${name}`;
 
   const fn = (!maybeFn)
     ? optsOrFn as SuiteBlock
@@ -76,8 +76,8 @@ parallel = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
 
     const [oldBeforeEach, oldAfterEach] = [beforeEach, afterEach];
 
-    global.beforeEach = () => { throw new Error('Can\'t use `beforeEach` in a parallel block'); }
-    global.afterEach = () => { throw new Error('Can\'t use `afterEach` in a parallel block'); }
+    global.beforeEach = () => { throw new Error('Can\'t use `beforeEach` in a parallel block'); };
+    global.afterEach = () => { throw new Error('Can\'t use `afterEach` in a parallel block'); };
 
     parallelTestState.inBlock = true;
     fn.call(this, fixtures);
@@ -116,7 +116,9 @@ parallel = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
       const wrapperFn = (suite.name)
         ? (fn: () => void) => describe(suite.name!, () => {
           before(function () {
-            suite.skipped && this.skip();
+            if (suite.skipped) {
+              this.skip();
+            }
           });
           fn();
         })
@@ -145,4 +147,4 @@ parallel = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
   }
 
   return describe(name, opts, modifiedFn);
-}
+};

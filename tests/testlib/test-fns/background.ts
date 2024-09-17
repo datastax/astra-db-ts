@@ -81,9 +81,9 @@ background = function (name: string, suiteFn: SuiteBlock) {
         });
 
         return arr;
-      })
+      });
     });
 
     backgroundTestResults.push(promise);
   });
-}
+};

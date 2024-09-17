@@ -28,7 +28,7 @@ export function validateDataAPIEnv(env: unknown): asserts env is DataAPIEnvironm
 export function jsonTryParse<T>(json: string, otherwise: T, reviver?: (this: any, key: string, value: any) => any): T {
   try {
     return JSON.parse(json, reviver);
-  } catch (e) {
+  } catch (_) {
     return otherwise;
   }
 }

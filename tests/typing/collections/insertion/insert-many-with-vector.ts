@@ -27,24 +27,24 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '888 Broadway',
         'city': 'New York',
-        'state': 'NY'
-      }
+        'state': 'NY',
+      },
     },
     'purchase_date': new Date(1690391491),
     'seller': {
       'name': 'Tammy S.',
-      'location': 'Staten Island NYC'
+      'location': 'Staten Island NYC',
     },
     'items': [
       {
         'car': 'Tesla Model 3',
-        'color': 'White'
+        'color': 'White',
       },
       'Extended warranty - 10 years',
-      'Service - 5 years'
+      'Service - 5 years',
     ],
     'amount': 53990,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '3',
@@ -58,17 +58,17 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '12345 Broadway',
         'city': 'New York',
-        'state': 'NY'
-      }
+        'state': 'NY',
+      },
     },
     'purchase_date': new Date(1690564291),
     'seller': {
       'name': 'Jasmine S.',
-      'location': 'Brooklyn NYC'
+      'location': 'Brooklyn NYC',
     },
     'items': 'Extended warranty - 10 years',
     'amount': 4600,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '4',
@@ -82,24 +82,24 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '12346 Broadway',
         'city': 'New York',
-        'state': 'NY'
-      }
+        'state': 'NY',
+      },
     },
     'purchase_date': new Date(1690909891),
     'seller': {
       'name': 'Jon B.',
-      'location': 'Manhattan NYC'
+      'location': 'Manhattan NYC',
     },
     'items': [
       {
         'car': 'BMW 330i Sedan',
-        'color': 'Red'
+        'color': 'Red',
       },
       'Extended warranty - 5 years',
-      'Service - 5 years'
+      'Service - 5 years',
     ],
     'amount': 48510,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '5',
@@ -113,23 +113,23 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '32345 Main Ave',
         'city': 'Jersey City',
-        'state': 'NJ'
-      }
+        'state': 'NJ',
+      },
     },
     'purchase_date': new Date(1690996291),
     'seller': {
       'name': 'Jim A.',
-      'location': 'Jersey City NJ'
+      'location': 'Jersey City NJ',
     },
     'items': [
       {
         'car': 'Tesla Model S',
-        'color': 'Red'
+        'color': 'Red',
       },
-      'Extended warranty - 5 years'
+      'Extended warranty - 5 years',
     ],
     'amount': 94990,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '6',
@@ -143,22 +143,22 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '32346 Broadway',
         'city': 'New York',
-        'state': 'NY'
-      }
+        'state': 'NY',
+      },
     },
     'purchase_date': new Date(1691860291),
     'seller': {
       'name': 'Jim A.',
-      'location': 'Jersey City NJ'
+      'location': 'Jersey City NJ',
     },
     'items': [
       {
         'car': 'Tesla Model X',
-        'color': 'Blue'
-      }
+        'color': 'Blue',
+      },
     ],
     'amount': 109990,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '7',
@@ -172,21 +172,21 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '22999 Broadway',
         'city': 'New York',
-        'state': 'NY'
-      }
+        'state': 'NY',
+      },
     },
     'purchase_date': new Date(1692119491),
     'seller': {
       'name': 'Jasmine S.',
-      'location': 'Brooklyn NYC'
+      'location': 'Brooklyn NYC',
     },
     'items': [{
       'car': 'BMW M440i Gran Coupe',
-      'color': 'Black'
+      'color': 'Black',
     },
       'Extended warranty - 5 years'],
     'amount': 61050,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '8',
@@ -200,22 +200,22 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '1234 Main St',
         'city': 'Orange',
-        'state': 'NJ'
-      }
+        'state': 'NJ',
+      },
     },
     'purchase_date': new Date(1693329091),
     'seller': {
       'name': 'Tammy S.',
-      'location': 'Staten Island NYC'
+      'location': 'Staten Island NYC',
     },
     'items': [{
       'car': 'BMW X3 SUV',
-      'color': 'Black'
+      'color': 'Black',
     },
-      'Extended warranty - 5 years'
+      'Extended warranty - 5 years',
     ],
     'amount': 46900,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '9',
@@ -229,22 +229,22 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '22345 Broadway',
         'city': 'New York',
-        'state': 'NY'
-      }
+        'state': 'NY',
+      },
     },
     'purchase_date': new Date(1693588291),
     'seller': {
       'name': 'Jasmine S.',
-      'location': 'Brooklyn NYC'
+      'location': 'Brooklyn NYC',
     },
     'items': [{
       'car': 'Tesla Model 3',
-      'color': 'White'
+      'color': 'White',
     },
-      'Extended warranty - 5 years'
+      'Extended warranty - 5 years',
     ],
     'amount': 53990,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '10',
@@ -258,21 +258,21 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '9999 River Rd',
         'city': 'Fair Haven',
-        'state': 'NJ'
-      }
+        'state': 'NJ',
+      },
     },
     'purchase_date': new Date(1694797891),
     'seller': {
       'name': 'Jim A.',
-      'location': 'Jersey City NJ'
+      'location': 'Jersey City NJ',
     },
     'items': [{
       'car': 'Tesla Model S',
-      'color': 'Black'
-    }
+      'color': 'Black',
+    },
     ],
     'amount': 93800,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '11',
@@ -286,22 +286,22 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '99 Elm St',
         'city': 'Fair Lawn',
-        'state': 'NJ'
-      }
+        'state': 'NJ',
+      },
     },
     'purchase_date': new Date(1695921091),
     'seller': {
       'name': 'Jim A.',
-      'location': 'Jersey City NJ'
+      'location': 'Jersey City NJ',
     },
     'items': [{
       'car': 'Tesla Model Y',
-      'color': 'White'
+      'color': 'White',
     },
-      'Extended warranty - 5 years'
+      'Extended warranty - 5 years',
     ],
     'amount': 57500,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '12',
@@ -315,22 +315,22 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '23 Main Blvd',
         'city': 'Staten Island',
-        'state': 'NY'
-      }
+        'state': 'NY',
+      },
     },
     'purchase_date': new Date(1696180291),
     'seller': {
       'name': 'Tammy S.',
-      'location': 'Staten Island NYC'
+      'location': 'Staten Island NYC',
     },
     'items': [{
       'car': 'BMW 540i xDrive Sedan',
-      'color': 'Black'
+      'color': 'Black',
     },
-      'Extended warranty - 5 years'
+      'Extended warranty - 5 years',
     ],
     'amount': 64900,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '13',
@@ -344,22 +344,22 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '1234 4th Ave',
         'city': 'New York',
-        'state': 'NY'
-      }
+        'state': 'NY',
+      },
     },
     'purchase_date': new Date(1697389891),
     'seller': {
       'name': 'Jon B.',
-      'location': 'Manhattan NYC'
+      'location': 'Manhattan NYC',
     },
     'items': [{
       'car': 'Tesla Model 3',
-      'color': 'White'
+      'color': 'White',
     },
-      'Extended warranty - 5 years'
+      'Extended warranty - 5 years',
     ],
     'amount': 55000,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '14',
@@ -373,21 +373,21 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '1414 14th Pl',
         'city': 'Brooklyn',
-        'state': 'NY'
-      }
+        'state': 'NY',
+      },
     },
     'purchase_date': new Date(1698513091),
     'seller': {
       'name': 'Jasmine S.',
-      'location': 'Brooklyn NYC'
+      'location': 'Brooklyn NYC',
     },
     'items': [{
       'car': 'Tesla Model X',
-      'color': 'White'
-    }
+      'color': 'White',
+    },
     ],
     'amount': 110400,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '15',
@@ -401,20 +401,20 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '1234 Maple Ave',
         'city': 'West New York',
-        'state': 'NJ'
-      }
+        'state': 'NJ',
+      },
     },
     'purchase_date': new Date(1701191491),
     'seller': {
       'name': 'Jim A.',
-      'location': 'Jersey City NJ'
+      'location': 'Jersey City NJ',
     },
     'items': {
       'car': 'Tesla Model 3',
-      'color': 'White'
+      'color': 'White',
     },
     'amount': 52990,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '16',
@@ -428,22 +428,22 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '1234 Main St',
         'city': 'Staten Island',
-        'state': 'NY'
-      }
+        'state': 'NY',
+      },
     },
     'purchase_date': new Date(1701450691),
     'seller': {
       'name': 'Tammy S.',
-      'location': 'Staten Island NYC'
+      'location': 'Staten Island NYC',
     },
     'items': [{
       'car': 'Tesla Model Y',
-      'color': 'White'
+      'color': 'White',
     },
-      'Extended warranty - 5 years'
+      'Extended warranty - 5 years',
     ],
     'amount': 58990,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '17',
@@ -457,22 +457,22 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '1234 Main St',
         'city': 'Hoboken',
-        'state': 'NJ'
-      }
+        'state': 'NJ',
+      },
     },
     'purchase_date': new Date(1702660291),
     'seller': {
       'name': 'Jim A.',
-      'location': 'Jersey City NJ'
+      'location': 'Jersey City NJ',
     },
     'items': [{
       'car': 'Tesla Model 3',
-      'color': 'Blue'
+      'color': 'Blue',
     },
-      'Extended warranty - 5 years'
+      'Extended warranty - 5 years',
     ],
     'amount': 54900,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '18',
@@ -486,22 +486,22 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '98980 20th St',
         'city': 'New York',
-        'state': 'NY'
-      }
+        'state': 'NY',
+      },
     },
     'purchase_date': new Date(1703092291),
     'seller': {
       'name': 'Jon B.',
-      'location': 'Manhattan NYC'
+      'location': 'Manhattan NYC',
     },
     'items': [{
       'car': 'BMW 750e xDrive Sedan',
-      'color': 'Black'
+      'color': 'Black',
     },
-      'Extended warranty - 5 years'
+      'Extended warranty - 5 years',
     ],
     'amount': 106900,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '19',
@@ -515,22 +515,22 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '5678 Elm St',
         'city': 'Hartford',
-        'state': 'CT'
-      }
+        'state': 'CT',
+      },
     },
     'purchase_date': new Date(1704215491),
     'seller': {
       'name': 'Jasmine S.',
-      'location': 'Brooklyn NYC'
+      'location': 'Brooklyn NYC',
     },
     'items': [{
       'car': 'BMW 330i Sedan',
-      'color': 'White'
+      'color': 'White',
     },
-      'Extended warranty - 5 years'
+      'Extended warranty - 5 years',
     ],
     'amount': 46980,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '20',
@@ -544,22 +544,22 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '1234 Main St',
         'city': 'Newark',
-        'state': 'NJ'
-      }
+        'state': 'NJ',
+      },
     },
     'purchase_date': new Date(1705338691),
     'seller': {
       'name': 'Jim A.',
-      'location': 'Jersey City NJ'
+      'location': 'Jersey City NJ',
     },
     'items': [{
       'car': 'Tesla Model Y',
-      'color': 'Black'
+      'color': 'Black',
     },
-      'Extended warranty - 5 years'
+      'Extended warranty - 5 years',
     ],
     'amount': 59800,
-    'status': 'active'
+    'status': 'active',
   },
   {
     '_id': '21',
@@ -573,23 +573,23 @@ void dummyCollection<TestSchema>().insertMany([
       'address': {
         'address_line': '1234 Park Ave',
         'city': 'New York',
-        'state': 'NY'
-      }
+        'state': 'NY',
+      },
     },
     'purchase_date': new Date(1706202691),
     'seller': {
       'name': 'Jon B.',
-      'location': 'Manhattan NYC'
+      'location': 'Manhattan NYC',
     },
     'items': [{
       'car': 'BMW M440i Gran Coupe',
-      'color': 'Silver'
+      'color': 'Silver',
     },
       'Extended warranty - 5 years',
-      'Gap Insurance - 5 years'
+      'Gap Insurance - 5 years',
     ],
     'amount': 65250,
-    'status': 'active'
+    'status': 'active',
   },
 ], {
   ordered: false,

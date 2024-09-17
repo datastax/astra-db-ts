@@ -14,4 +14,4 @@
 
 export * from './aws-embedding-headers-provider';
 export * from './embedding-api-key-header-provider';
-export * from './embedding-headers-provider'
+export * from './embedding-headers-provider';

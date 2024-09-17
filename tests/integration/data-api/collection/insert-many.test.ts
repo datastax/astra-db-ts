@@ -132,7 +132,7 @@ parallel('integration.data-api.collection.insert-many', { truncateColls: 'defaul
           'Arch Enemy is a Swedish melodic death metal band, originally a supergroup from Halmstad, formed in 1995.',
           'Equilibrium is a German symphonic metal band',
           undefined,
-          'Green Day is an American rock band formed in 1986 by lead vocalist and guitarist Billie Joe Armstrong and bassist Mike Dirnt'
+          'Green Day is an American rock band formed in 1986 by lead vocalist and guitarist Billie Joe Armstrong and bassist Mike Dirnt',
         ],
       });
     }, Error);
@@ -145,8 +145,8 @@ parallel('integration.data-api.collection.insert-many', { truncateColls: 'defaul
         { name: 'b' },
         { name: 'c' },
       ], {
-        vectors: [[1, 1, 1, 1, 1],],
-        vectorize: ['Hello there.',],
+        vectors: [[1, 1, 1, 1, 1]],
+        vectorize: ['Hello there.'],
       });
     }, Error);
   });

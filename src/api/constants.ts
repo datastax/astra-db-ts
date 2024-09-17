@@ -23,8 +23,8 @@ export const RAGSTACK_REQUESTED_WITH = (() => {
     // if @datastax/ragstack-ai is not installed (which is perfectly fine).
     const ragstack = eval(`require('@datastax/ragstack-ai')`);
     const version = ragstack['RAGSTACK_VERSION'] || '?';
-    return `ragstack-ai-ts/${version}`
-  } catch (e) {
+    return `ragstack-ai-ts/${version}`;
+  } catch (_) {
     return '';
   }
 })();

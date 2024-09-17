@@ -109,13 +109,13 @@ export type FilterOps<Elem> = {
   $nin?: Elem[] /* I can't un-see this as 'Nine-Inch Nails'... */,
   $exists?: boolean,
 } & (
-  // eslint-disable-next-line @typescript-eslint/ban-types -- Intersection w/ {} is a "noop" here
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- Intersection w/ {} is a "noop" here
   IsNum<Elem> extends false ? {} : NumFilterOps
 ) & (
-  // eslint-disable-next-line @typescript-eslint/ban-types -- Intersection w/ {} is a "noop" here
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- Intersection w/ {} is a "noop" here
   IsDate<Elem> extends false ? {} : (DateFilterOps | Date)
 ) & (
-  // eslint-disable-next-line @typescript-eslint/ban-types -- Intersection w/ {} is a "noop" here
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- Intersection w/ {} is a "noop" here
   any[] extends Elem ? ArrayFilterOps<Elem> : {}
 )
 

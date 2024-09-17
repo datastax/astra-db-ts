@@ -556,7 +556,7 @@ export class BulkWriteError extends CumulativeDataAPIError {
  */
 export const mkRespErrorFromResponse = <E extends DataAPIResponseError>(err: new (descs: DataAPIDetailedErrorDescriptor[]) => E, command: Record<string, any>, raw: RawDataAPIResponse, attributes?: Omit<E, keyof DataAPIResponseError>) => {
   return mkRespErrorFromResponses(err, [command], [raw], attributes);
-}
+};
 
 /**
  * @internal
@@ -583,4 +583,4 @@ export const mkRespErrorFromResponses = <E extends DataAPIResponseError>(err: ne
   const instance = new err(detailedErrDescriptors) ;
   Object.assign(instance, attributes ?? {});
   return instance;
-}
+};

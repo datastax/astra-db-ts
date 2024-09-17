@@ -93,7 +93,7 @@ parallel('integration.data-api.collection.update-one', { truncateColls: 'default
 
     const updateOneResp = await collection.updateOne(
       { age: 12, key },
-      { $set: { name: 'copperhead_road' }, },
+      { $set: { name: 'copperhead_road' } },
       { upsert: true },
     );
     assert.strictEqual(updateOneResp.modifiedCount, 0);

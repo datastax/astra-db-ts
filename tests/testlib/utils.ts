@@ -55,7 +55,7 @@ export function checkTestsEnabled(name: string) {
 
   tags.forEach((tag) => {
     if (!['VECTORIZE', 'LONG', 'ADMIN', 'DEV', 'NOT-DEV', 'ASTRA'].includes(tag)) {
-      throw new Error(`Unknown test tag, '${tag}'`)
+      throw new Error(`Unknown test tag, '${tag}'`);
     }
   });
 
@@ -92,14 +92,14 @@ declare global {
 Array.prototype.tap = function <T>(consumer: (t: T) => void) {
   this.forEach(consumer);
   return this;
-}
+};
 
 Array.prototype.awaitAll = function () {
   return Promise.all(this);
-}
+};
 
 export function createCollections<Keys extends string>(colls: () => Record<Keys, Promise<Collection>>): Record<Keys, Collection> {
-  const collections: Record<string, Collection> = {}
+  const collections: Record<string, Collection> = {};
 
   before(async () => {
     const promises = Object.entries(colls()).map(([name, promise]) => (<Promise<Collection>>promise).then(coll => <const>[name, coll]));

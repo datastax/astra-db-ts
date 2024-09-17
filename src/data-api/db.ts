@@ -107,7 +107,7 @@ export class Db {
     this._namespace = {
       ref: (rootOpts.environment === 'astra')
         ? combinedDbOpts.namespace ?? DEFAULT_NAMESPACE
-        : combinedDbOpts.namespace
+        : combinedDbOpts.namespace,
     };
 
     this.#httpClient = new DataAPIHttpClient({

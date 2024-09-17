@@ -57,7 +57,7 @@ parallel('integration.data-api.collection.finds', { truncateColls: 'default:befo
     await collection.insertMany([
       { username: 'a', key },
       { username: 'c', key },
-      { username: 'b', key }
+      { username: 'b', key },
     ]);
 
     let docs = await collection.find({ key }, { sort: { username: 1 }, limit: 20 }).toArray();
@@ -71,7 +71,7 @@ parallel('integration.data-api.collection.finds', { truncateColls: 'default:befo
     await collection.insertMany([
       { username: 'a', key },
       { username: 'c', key },
-      { username: 'b', key }
+      { username: 'b', key },
     ]);
 
     let doc = await collection.findOne({ key }, { sort: { username: 1 } });
@@ -85,7 +85,7 @@ parallel('integration.data-api.collection.finds', { truncateColls: 'default:befo
     await collection.insertMany([
       { username: 'a', age: 1, key },
       { username: 'a', age: 3, key },
-      { username: 'a', age: 2, key }
+      { username: 'a', age: 2, key },
     ]);
 
     let docs = await collection.find({ key }, { sort: { username: 1, age: 1 }, limit: 20 }).toArray();
@@ -521,8 +521,8 @@ parallel('integration.data-api.collection.finds', { truncateColls: 'default:befo
     const findCursor = collection.find({ '_id': idToCheck, key }, {
       projection: {
         username: 1,
-        'address.city': true
-      }
+        'address.city': true,
+      },
     });
     const resDoc = await findCursor.next();
     assert.ok(resDoc);
@@ -542,8 +542,8 @@ parallel('integration.data-api.collection.finds', { truncateColls: 'default:befo
       projection: {
         username: 1,
         'address.city': true,
-        _id: 0
-      }
+        _id: 0,
+      },
     });
     const resDoc = await findCursor.next();
     assert.ok(resDoc);
@@ -580,8 +580,8 @@ parallel('integration.data-api.collection.finds', { truncateColls: 'default:befo
         username: 1,
         'address.city': true,
         _id: 0,
-        tags: { '$slice': 1 }
-      }
+        tags: { '$slice': 1 },
+      },
     }).toArray();
     assert.strictEqual(findDocs.length, 20);
     findDocs.forEach((resDoc) => {
@@ -627,8 +627,8 @@ parallel('integration.data-api.collection.finds', { truncateColls: 'default:befo
         username: 1,
         'address.city': true,
         _id: 0,
-        tags: { '$slice': -1 }
-      }
+        tags: { '$slice': -1 },
+      },
     }).toArray();
     assert.strictEqual(findDocs.length, 20);
     findDocs.forEach((resDoc) => {
@@ -674,8 +674,8 @@ parallel('integration.data-api.collection.finds', { truncateColls: 'default:befo
         username: 1,
         'address.city': true,
         _id: 0,
-        tags: { '$slice': 6 }
-      }
+        tags: { '$slice': 6 },
+      },
     }).toArray();
     assert.strictEqual(findDocs.length, 20);
     findDocs.forEach((resDoc) => {
@@ -720,8 +720,8 @@ parallel('integration.data-api.collection.finds', { truncateColls: 'default:befo
         username: 1,
         'address.city': true,
         _id: 0,
-        tags: { '$slice': -6 }
-      }
+        tags: { '$slice': -6 },
+      },
     }).toArray();
     assert.strictEqual(findDocs.length, 20);
     findDocs.forEach((resDoc) => {

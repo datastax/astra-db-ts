@@ -85,7 +85,7 @@ export const EmissionStrategy: Record<'Normal' | 'Admin', EmissionStrategy> = {
       emitter.emit('adminCommandSucceeded', new AdminCommandSucceededEvent(adaptInfo4Devops(info), true, resp, started));
     },
   }),
-}
+};
 
 const adaptInfo4Devops = (info: DataAPIRequestInfo) => (<const>{
   method: 'POST',
@@ -108,7 +108,7 @@ export class DataAPIHttpClient extends HttpClient {
   public collection?: string;
   public namespace: NamespaceRef;
   public maxTimeMS: number;
-  public emissionStrategy: ReturnType<EmissionStrategy>
+  public emissionStrategy: ReturnType<EmissionStrategy>;
   readonly #props: DataAPIHttpClientOpts;
 
   constructor(props: DataAPIHttpClientOpts) {
@@ -174,7 +174,7 @@ export class DataAPIHttpClient extends HttpClient {
         info.namespace ||= this.namespace?.ref;
 
         if (isNullish(info.namespace)) {
-          throw new Error('Db is missing a required namespace; be sure to set one w/ client.db(..., { namespace }), or db.useNamespace()')
+          throw new Error('Db is missing a required namespace; be sure to set one w/ client.db(..., { namespace }), or db.useNamespace()');
         }
       }
 
@@ -213,7 +213,7 @@ export class DataAPIHttpClient extends HttpClient {
         data: data.data,
         status: data.status,
         errors: data.errors,
-      }
+      };
 
       if (this.monitorCommands) {
         this.emissionStrategy.emitCommandSucceeded(info, respData, started);
@@ -275,7 +275,7 @@ const mkAuthHeaderProvider = (tp: TokenProvider): HeaderProvider => () => {
   return (token instanceof Promise)
     ? token.then(mkAuthHeader)
     : mkAuthHeader(token);
-}
+};
 
 const mkAuthHeader = (token: string | nullish): Record<string, string> => (token)
   ? { [DEFAULT_DATA_API_AUTH_HEADER]: token }

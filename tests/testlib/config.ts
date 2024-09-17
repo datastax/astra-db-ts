@@ -19,7 +19,7 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 if (!process.env.CLIENT_DB_URL || !process.env.CLIENT_DB_TOKEN) {
-  throw new Error('Please ensure the CLIENT_DB_URL and CLIENT_DB_TOKEN env vars are set')
+  throw new Error('Please ensure the CLIENT_DB_URL and CLIENT_DB_TOKEN env vars are set');
 }
 
 const testHttpClient = process.env.CLIENT_TEST_HTTP_CLIENT ?? 'default:http2';
@@ -35,7 +35,7 @@ if (!DataAPIEnvironments.includes(<any>environment)) {
 }
 
 export const ENVIRONMENT = environment as DataAPIEnvironment;
-export const TEMP_DB_NAME = 'astra-test-db-plus-random-name-1284'
+export const TEMP_DB_NAME = 'astra-test-db-plus-random-name-1284';
 
 export const DEFAULT_COLLECTION_NAME = 'test_coll';
 export const EPHEMERAL_COLLECTION_NAME = 'temp_coll';

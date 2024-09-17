@@ -52,7 +52,7 @@ parallel('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
       _id: new ObjectId('507f191e810c19729de860ea'),
       idea: 'ChatGPT-integrated sneakers that talk to you',
       $vector: [0.45, 0.09, 0.01, 0.2, 0.11],
-    }
+    };
     await collection.insertOne(sneakersIdea);
 
     await collection.updateOne(

@@ -57,7 +57,7 @@ export const createTestGroups = (branches: FinalVectorizeTestBranch[]): Vectoriz
   return Object.values(acc).map(({ clazz, tests }) => {
     return new clazz(tests);
   });
-}
+};
 
 class HeaderKMSTestGroup implements VectorizeTestGroup {
   groupName: string;
@@ -157,4 +157,4 @@ const mkCollectionName = (groupName: string): string => {
     .createHash('md5')
     .update(groupName)
     .digest('hex');
-}
+};

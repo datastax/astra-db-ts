@@ -313,22 +313,22 @@ function genObjectId(time?: number | null): string {
   time ??= ~~(Date.now() / 1000);
   time = time % 0xFFFFFFFF;
 
-  index = (index + 1) % 0xFFFFFF
+  index = (index + 1) % 0xFFFFFF;
 
   let hexString = '';
 
-  hexString += hexTable[((time >> 24) & 0xFF)]
-  hexString += hexTable[((time >> 16) & 0xFF)]
-  hexString += hexTable[((time >> 8) & 0xFF)]
-  hexString += hexTable[(time & 0xFF)]
-  hexString += hexTable[((MACHINE_ID >> 16) & 0xFF)]
-  hexString += hexTable[((MACHINE_ID >> 8) & 0xFF)]
-  hexString += hexTable[(MACHINE_ID & 0xFF)]
-  hexString += hexTable[((PID >> 8) & 0xFF)]
-  hexString += hexTable[(PID & 0xFF)]
-  hexString += hexTable[((index >> 16) & 0xFF)]
-  hexString += hexTable[((index >> 8) & 0xFF)]
-  hexString += hexTable[(index & 0xFF)]
+  hexString += hexTable[((time >> 24) & 0xFF)];
+  hexString += hexTable[((time >> 16) & 0xFF)];
+  hexString += hexTable[((time >> 8) & 0xFF)];
+  hexString += hexTable[(time & 0xFF)];
+  hexString += hexTable[((MACHINE_ID >> 16) & 0xFF)];
+  hexString += hexTable[((MACHINE_ID >> 8) & 0xFF)];
+  hexString += hexTable[(MACHINE_ID & 0xFF)];
+  hexString += hexTable[((PID >> 8) & 0xFF)];
+  hexString += hexTable[(PID & 0xFF)];
+  hexString += hexTable[((index >> 16) & 0xFF)];
+  hexString += hexTable[((index >> 8) & 0xFF)];
+  hexString += hexTable[(index & 0xFF)];
 
   return hexString;
 }
