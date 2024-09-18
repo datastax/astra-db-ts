@@ -3,7 +3,7 @@ import { SomeDoc, VectorizeServiceOptions } from '@/src/data-api/index';
 const db = { createTable };
 
 // Demo of automagically creating a primary key type for your manually created schema
-interface Users extends TableSchema<Users, [['key'], 'age']> {
+interface Users extends TableSchema<Users, ['key', 'age']> {
   key: string,
   age: number,
   car: string,
@@ -71,7 +71,7 @@ const _h: InferTableSchema<typeof _g> = {
 };
 
 // Better demo of automagically inferring your table schema's type
-const myTable = db.createTable('my_table', {
+const mkTable = () => db.createTable('my_table', {
   columns: {
     key: 'text',
     age: {
@@ -89,7 +89,7 @@ const myTable = db.createTable('my_table', {
   },
 });
 
-type MySchema = InferTableSchema<typeof myTable>;
+type MySchema = InferTableSchema<typeof mkTable>;
 
 type Proof = Expect<Equal<MySchema, {
   key: string,
@@ -105,29 +105,33 @@ type Proof = Expect<Equal<MySchema, {
 }>>;
 
 // insertMany example
-const insertManyResult = myTable.insertMany<MySchema>([
-  {
-    age: 3,
-    car: new Map(),
-    key: '3',
-  },
-  {
-    age: 53,
-    car: new Map(),
-    key: 'hiii',
-  },
-]);
+(async () => {
+  const myTable = await mkTable();
 
-type __ = Expect<Equal<typeof insertManyResult, {
-  insertedIds: ({
-    key: string,
-    bad: 'ERROR: Field `bad` not found as property in table definition',
-  } & {
-    age: number,
-  })[],
-}>> & Proof;
+  const insertManyResult = myTable.insertMany<MySchema>([
+    {
+      age: 3,
+      car: new Map(),
+      key: '3',
+    },
+    {
+      age: 53,
+      car: new Map(),
+      key: 'hiii',
+    },
+  ]);
 
-console.log(insertManyResult.insertedIds[1].age);
+  type __ = Expect<Equal<typeof insertManyResult, {
+    insertedIds: ({
+      key: string,
+      bad: 'ERROR: Field `bad` not found as property in table definition',
+    } & {
+      age: number,
+    })[],
+  }>> & Proof;
+
+  console.log(insertManyResult.insertedIds[1].age);
+})();
 
 // ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
 // ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
@@ -158,15 +162,12 @@ export type Expect<T extends true> = T;
 
 declare const __primaryKeyType: unique symbol;
 
-type Tail<List extends [any, ...any[]]> = List extends readonly [any, ...infer Tail] ? Tail : [];
-
-interface TableSchema<Schema extends SomeDoc, PrimaryKey extends [(keyof Schema)[], ...(keyof Schema)[]]> {
+interface TableSchema<Schema extends SomeDoc, PrimaryKey extends (keyof Schema)[]> {
   [__primaryKeyType]?: {
-    [P in PrimaryKey[0][number]]: Schema[P];
-  } & {
-    [P in Tail<PrimaryKey>[number]]: Schema[P];
+    [P in PrimaryKey[number]]: Schema[P];
   };
 }
+
 type SomeTableKey = Record<string, unknown>;
 
 type TableKey<Schema extends SomeDoc> = Schema extends { [__primaryKeyType]?: infer PrimaryKey }
@@ -175,13 +176,29 @@ type TableKey<Schema extends SomeDoc> = Schema extends { [__primaryKeyType]?: in
     : SomeTableKey
   : SomeTableKey;
 
-export type InferTableSchema<T extends Table<SomeDoc>> = T extends Table<infer Schema>
-  ? Schema
-  : never;
+export type InferrableTable =
+  | ((..._: any[]) => Promise<Table>)
+  | ((..._: any[]) => Table)
+  | CreateTableDefinition
+  | Promise<Table>
+  | Table;
 
-function createTable<_ extends 'infer', const Def extends CreateTableDefinition>(_: string, __: Def): Table<InferTableSchemaFromDefinition<Def>>
+export type InferTableSchema<T extends InferrableTable> =
+  T extends (..._: any[]) => Promise<Table<infer Schema>>
+    ? Schema :
+  T extends (..._: any[]) => Table<infer Schema>
+    ? Schema :
+  T extends CreateTableDefinition
+    ? InferTableSchemaFromDefinition<T> :
+  T extends Promise<Table<infer Schema>>
+    ? Schema :
+  T extends Table<infer Schema>
+    ? Schema
+    : never;
 
-function createTable<T extends SomeDoc>(_: string, __: CreateTableDefinition): Table<T>
+function createTable<_ extends 'infer', const Def extends CreateTableDefinition>(_: string, __: Def): Promise<Table<InferTableSchemaFromDefinition<Def>>>
+
+function createTable<T extends SomeDoc>(_: string, __: CreateTableDefinition): Promise<Table<T>>
 
 function createTable(_: string, __: CreateTableDefinition): unknown {
   throw 'stub';
