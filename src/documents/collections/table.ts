@@ -316,7 +316,7 @@ interface TableInsertManyResult<Schema extends SomeDoc> {
   insertedIds: TableKey<Schema>[];
 }
 
-class Table<_Schema extends SomeDoc> {
+class Table<_Schema extends SomeDoc = SomeDoc> {
   insertMany<Schema extends SomeDoc>(_: Schema[]): TableInsertManyResult<Schema> {
     throw 'stub';
   }
