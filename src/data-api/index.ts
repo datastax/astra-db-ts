@@ -13,8 +13,8 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-export * from './collection';
-export * from './cursor';
+export { Collection } from './collection';
+export { FindCursor } from './cursor';
 export { Db } from './db';
 export {
   DataAPITimeoutError,

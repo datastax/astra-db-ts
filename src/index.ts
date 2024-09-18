@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export { RawDataAPIResponse, CuratedAPIResponse, Fetcher, FetcherRequestInfo, FetcherResponseInfo } from './api';
+export { RawDataAPIResponse, CuratedAPIResponse, Fetcher, FetcherRequestInfo, FetcherResponseInfo, FetchNative, FetchH2, DEFAULT_KEYSPACE } from './api';
 export * from './data-api';
 export * from './client';
 export * from './devops';
