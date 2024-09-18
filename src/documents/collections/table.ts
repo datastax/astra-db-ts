@@ -1,5 +1,7 @@
 import { SomeDoc, VectorizeServiceOptions } from '@/src/data-api/index';
 
+const db = { createTable };
+
 // Demo of automagically creating a primary key type for your manually created schema
 interface Users extends TableSchema<Users, [['key'], 'age']> {
   key: string,
@@ -8,22 +10,14 @@ interface Users extends TableSchema<Users, [['key'], 'age']> {
 }
 
 const _a: TableKey<Users> = {
-  partitionKey: {
-    key: 'abc',
-  },
-  clusteringKey: {
-    age: 31,
-  },
+  key: 'abc',
+  age: 31,
 };
 
 // Demo of the lawless world of weak typing
 const _b: TableKey<SomeDoc> = {
-  partitionKey: {
-    some: 'thing',
-  },
-  clusteringKey: {
-    any: 'thing',
-  },
+  some: 'thing',
+  any: 'thing',
 };
 
 // Demo of automagically inferring your table schema's type
@@ -47,10 +41,7 @@ const _d: InferTableSchema<typeof _c> = {
   age: 3,
   car: new Map(),
   [__primaryKeyType]: {
-    partitionKey: {
-      key: '1',
-    },
-    clusteringKey: {},
+    key: '1',
   },
 };
 
@@ -65,10 +56,7 @@ const _e = createTable('my_table', {
 const _f: InferTableSchema<typeof _e> = {
   key: 1,
   [__primaryKeyType]: {
-    partitionKey: {
-      id: 'ERROR: Field id not found as property in table definition',
-    },
-    clusteringKey: {},
+    id: 'ERROR: Field `id` not found as property in table definition',
   },
 };
 
@@ -83,7 +71,7 @@ const _h: InferTableSchema<typeof _g> = {
 };
 
 // Better demo of automagically inferring your table schema's type
-const _myTable = createTable('my_table', {
+const myTable = db.createTable('my_table', {
   columns: {
     key: 'text',
     age: {
@@ -96,28 +84,50 @@ const _myTable = createTable('my_table', {
     },
   },
   primaryKey: {
-    partitionKey: ['key', 'yek'],
+    partitionKey: ['key', 'bad'],
     partitionSort: { age: -1 },
   },
 });
 
-type MySchema = InferTableSchema<typeof _myTable>;
+type MySchema = InferTableSchema<typeof myTable>;
 
-type _ = Expect<Equal<MySchema, {
+type Proof = Expect<Equal<MySchema, {
   key: string,
   age: number,
   car: Map<string, number>,
 } & {
   [__primaryKeyType]?: {
-    partitionKey: {
-      key: string,
-      yek: 'ERROR: Field yek not found as property in table definition',
-    },
-    clusteringKey: {
-      age: number,
-    },
+    key: string,
+    bad: 'ERROR: Field `bad` not found as property in table definition',
+  } & {
+    age: number,
   },
 }>>;
+
+// insertMany example
+const insertManyResult = myTable.insertMany<MySchema>([
+  {
+    age: 3,
+    car: new Map(),
+    key: '3',
+  },
+  {
+    age: 53,
+    car: new Map(),
+    key: 'hiii',
+  },
+]);
+
+type __ = Expect<Equal<typeof insertManyResult, {
+  insertedIds: ({
+    key: string,
+    bad: 'ERROR: Field `bad` not found as property in table definition',
+  } & {
+    age: number,
+  })[],
+}>> & Proof;
+
+console.log(insertManyResult.insertedIds[1].age);
 
 // ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
 // ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
@@ -152,33 +162,12 @@ type Tail<List extends [any, ...any[]]> = List extends readonly [any, ...infer T
 
 interface TableSchema<Schema extends SomeDoc, PrimaryKey extends [(keyof Schema)[], ...(keyof Schema)[]]> {
   [__primaryKeyType]?: {
-    partitionKey: {
-      [P in PrimaryKey[0][number]]: Schema[P];
-    },
-    clusteringKey: {
-      [P in Tail<PrimaryKey>[number]]: Schema[P];
-    },
+    [P in PrimaryKey[0][number]]: Schema[P];
+  } & {
+    [P in Tail<PrimaryKey>[number]]: Schema[P];
   };
 }
-
-// interface TableSchema<Schema extends SomeDoc, PrimaryKey extends [(keyof Schema)[], ...(keyof Schema)[]]> {
-//   [__primaryKeyType]?: {
-//     partitionKey: BuildKey<Schema, PrimaryKey[0]>,
-//     clusteringKey: BuildKey<Schema, Tail<PrimaryKey>>,
-//   };
-// }
-//
-// type BuildKey<Schema extends Record<string, string>, Key extends unknown[]> =
-//   Key extends [infer Head, ...infer Rest]
-//     ? Head extends keyof Schema
-//       ? [Schema[Head], ...BuildKey<Schema, Rest>]
-//       : never
-//     : [];
-
-interface SomeTableKey {
-  partitionKey: Record<string, unknown>;
-  clusteringKey: Record<string, unknown>;
-}
+type SomeTableKey = Record<string, unknown>;
 
 type TableKey<Schema extends SomeDoc> = Schema extends { [__primaryKeyType]?: infer PrimaryKey }
   ? PrimaryKey extends SomeTableKey
@@ -200,13 +189,11 @@ function createTable(_: string, __: CreateTableDefinition): unknown {
 
 export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition, Schema = _InferTableSchemaFromDefinition<FullDef>, PK extends FullCreateTablePrimaryKeyDefinition = NormalizePK<FullDef['primaryKey']>> = Schema & {
   [__primaryKeyType]?: {
-    partitionKey: {
-      [P in PK['partitionKey'][number]]: P extends keyof Schema ? Schema[P] : `ERROR: Field ${P} not found as property in table definition`;
-    },
-    clusteringKey: PK['partitionSort'] extends Record<string, 1 | -1> ? {
-      -readonly [P in keyof PK['partitionSort']]: P extends keyof Schema ? Schema[P] : `ERROR: Field ${P & string} not found as property in table definition`;
-    } : Record<string, never>,
-  };
+    [P in PK['partitionKey'][number]]: P extends keyof Schema ? Schema[P] : `ERROR: Field \`${P}\` not found as property in table definition`;
+  } & (PK['partitionSort'] extends Record<string, 1 | -1> ? {
+      -readonly [P in keyof PK['partitionSort']]: P extends keyof Schema ? Schema[P] : `ERROR: Field \`${P & string}\` not found as property in table definition`;
+  // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- Intersection w/ {} is a "noop" here
+  } : {}),
 }
 
 export type NormalizePK<PK extends CreateTablePrimaryKeyDefinition> =
@@ -224,15 +211,17 @@ export type InferColDefType<Def> =
     : Def;
 
 export type CqlType2TSType<T, Def> =
-  T extends 'text'
+  T extends 'text' | 'ascii' | 'varchar'
     ? string :
-  T extends 'int'
+  T extends 'int' | 'double' | 'float' | 'smallint' | 'tinyint'
     ? number :
+  T extends 'boolean'
+    ? boolean :
+  T extends 'varint'
+    ? bigint :
   T extends 'map'
     ? CqlMapType2TsType<Def> :
-  T extends 'list'
-    ? CqlListType2TsType<Def> :
-  T extends 'vector'
+  T extends 'list' | 'vector'
     ? CqlListType2TsType<Def> :
   T extends 'set'
     ? CqlSetType2TsType<Def>
@@ -259,18 +248,26 @@ export interface CreateTableDefinition {
 }
 
 export type CreateTableColumnDefinition =
-  | ShortCreateTableColumnDefinition
-  | FullCreateTableColumnDefinition
+  | LooseCreateTableColumnDefinition
+  | StrictCreateTableColumnDefinition
 
 export type TableScalarType =
   | 'text'
-  | 'int';
+  | 'int'
+  | 'double'
+  | 'float'
+  | 'ascii'
+  | 'smallint'
+  | 'tinyint'
+  | 'varchar'
+  | 'varint'
+  | 'boolean';
 
-export type ShortCreateTableColumnDefinition =
+export type LooseCreateTableColumnDefinition =
   | TableScalarType
   | string;
 
-export type FullCreateTableColumnDefinition =
+export type StrictCreateTableColumnDefinition =
   | ScalarCreateTableColumnDefinition
   | MapCreateTableColumnDefinition
   | ListCreateTableColumnDefinition
@@ -315,6 +312,12 @@ export interface FullCreateTablePrimaryKeyDefinition {
   partitionSort?: Record<string, 1 | -1>,
 }
 
-class Table<_Schema extends SomeDoc> {
+interface TableInsertManyResult<Schema extends SomeDoc> {
+  insertedIds: TableKey<Schema>[];
+}
 
+class Table<_Schema extends SomeDoc> {
+  insertMany<Schema extends SomeDoc>(_: Schema[]): TableInsertManyResult<Schema> {
+    throw 'stub';
+  }
 }
