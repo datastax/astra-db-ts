@@ -1440,6 +1440,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @returns The aggregated result of the operations.
    *
    * @throws BulkWriteError - If the operation fails
+   *
+   * @deprecated - Prefer to just call the functions manually; this will be removed in an upcoming major release.
    */
   public async bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult<Schema>> {
     const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
