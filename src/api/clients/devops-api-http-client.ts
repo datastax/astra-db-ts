@@ -92,7 +92,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
       }
 
       if (this.monitorCommands && !isLongRunning) {
-        this.emitter.emit('adminCommandSucceeded', new AdminCommandSucceededEvent(req, false, data, started));
+        this.emitter.emit('adminCommandSucceeded', new AdminCommandSucceededEvent(req, false, data, [], started));
       }
 
       return {
@@ -131,7 +131,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
     await this._awaitStatus(id, req, info, timeoutManager, started);
 
     if (this.monitorCommands && isLongRunning) {
-      this.emitter.emit('adminCommandSucceeded', new AdminCommandSucceededEvent(req, true, resp, started));
+      this.emitter.emit('adminCommandSucceeded', new AdminCommandSucceededEvent(req, true, resp, [], started));
     }
 
     return resp;

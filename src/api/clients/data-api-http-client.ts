@@ -59,7 +59,7 @@ interface ExecuteCommandOptions extends WithNullableKeyspace {
 type EmissionStrategy = (emitter: TypedEmitter<DataAPIClientEvents>) => {
   emitCommandStarted(info: DataAPIRequestInfo): void,
   emitCommandFailed(info: DataAPIRequestInfo, error: Error, started: number): void,
-  emitCommandSucceeded(info: DataAPIRequestInfo, resp: RawDataAPIResponse, started: number): void,
+  emitCommandSucceeded(info: DataAPIRequestInfo, resp: RawDataAPIResponse, warnings: string[], started: number): void,
 }
 
 export const EmissionStrategy: Record<'Normal' | 'Admin', EmissionStrategy> = {
@@ -70,8 +70,8 @@ export const EmissionStrategy: Record<'Normal' | 'Admin', EmissionStrategy> = {
     emitCommandFailed(info, error, started) {
       emitter.emit('commandFailed', new CommandFailedEvent(info, error, started));
     },
-    emitCommandSucceeded(info, resp, started) {
-      emitter.emit('commandSucceeded', new CommandSucceededEvent(info, resp, started));
+    emitCommandSucceeded(info, resp, warnings, started) {
+      emitter.emit('commandSucceeded', new CommandSucceededEvent(info, resp, warnings, started));
     },
   }),
   Admin: (emitter) => ({
@@ -81,8 +81,8 @@ export const EmissionStrategy: Record<'Normal' | 'Admin', EmissionStrategy> = {
     emitCommandFailed(info, error, started) {
       emitter.emit('adminCommandFailed', new AdminCommandFailedEvent(adaptInfo4Devops(info), true, error, started));
     },
-    emitCommandSucceeded(info, resp, started) {
-      emitter.emit('adminCommandSucceeded', new AdminCommandSucceededEvent(adaptInfo4Devops(info), true, resp, started));
+    emitCommandSucceeded(info, resp, warnings, started) {
+      emitter.emit('adminCommandSucceeded', new AdminCommandSucceededEvent(adaptInfo4Devops(info), true, resp, warnings, started));
     },
   }),
 };
@@ -200,13 +200,16 @@ export class DataAPIHttpClient extends HttpClient {
 
       const data: RawDataAPIResponse = resp.body ? JSON.parse(resp.body, reviver) : {};
 
+      const warnings = data?.status?.warnings ?? [];
+      delete data?.status?.warnings;
+
       if (data.errors && data.errors.length > 0 && data.errors[0]?.errorCode === 'COLLECTION_NOT_EXIST') {
         const name = data.errors[0]?.message.split(': ')[1];
         throw new CollectionNotFoundError(info.keyspace ?? '<unknown>', name);
       }
 
       if (data.errors && data.errors.length > 0) {
-        throw mkRespErrorFromResponse(DataAPIResponseError, info.command, data);
+        throw mkRespErrorFromResponse(DataAPIResponseError, info.command, data, warnings);
       }
 
       const respData = {
@@ -216,7 +219,7 @@ export class DataAPIHttpClient extends HttpClient {
       };
 
       if (this.monitorCommands) {
-        this.emissionStrategy.emitCommandSucceeded(info, respData, started);
+        this.emissionStrategy.emitCommandSucceeded(info, respData, warnings, started);
       }
 
       return respData;
