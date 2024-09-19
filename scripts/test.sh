@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/usr/bin/env sh
 
 # Properly sources the .env file to bring env variables into scope
 if [ -f .env ]; then

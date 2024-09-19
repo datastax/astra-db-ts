@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/usr/bin/env sh
 
 # Convenience script which auto-updates the `astra-db-ts` dependencies in all of the examples/ to use either:
 # - the local astra-db-ts for testing purposes (which should always be reverted before merging)

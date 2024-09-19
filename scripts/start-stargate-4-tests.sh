@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/usr/bin/env sh
 
 echo "Copy paste the following into your .env file:"
 echo "CLIENT_DB_URL=http://localhost:8181"
