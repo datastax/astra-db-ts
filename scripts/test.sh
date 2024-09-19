@@ -80,11 +80,14 @@ while [ $# -gt 0 ]; do
       shift
       environment="$1"
       ;;
+    "-stargate")
+      stargate=1
+      ;;
     *)
       echo "Invalid flag $1"
       echo ""
       echo "Usage:"
-      echo "scripts/test.sh [-all | -light | -coverage] [-fand | -for] [-f/F <filter>]+ [-g/G <regex>]+ [-w/W <vectorize_whitelist>] [-b | -bail] [-R | -no-report] [-c <http_client>] [-e <environment>]"
+      echo "scripts/test.sh [-all | -light | -coverage] [-for] [-f/F <filter>]+ [-g/G <regex>]+ [-w/W <vectorize_whitelist>] [-b | -bail] [-R | -no-report] [-c <http_client>] [-e <environment>] [-stargate]"
       echo "or"
       echo "scripts/test.sh [-lint] [-tc]"
       exit
@@ -157,6 +160,10 @@ fi
 
 if [ -n "$environment" ]; then
   export CLIENT_DB_ENVIRONMENT="$environment"
+fi
+
+if [ -n "$stargate" ]; then
+  export USING_LOCAL_STARGATE=1
 fi
 
 # Get embedding providers, if desired, to build the vectorize part of the command
