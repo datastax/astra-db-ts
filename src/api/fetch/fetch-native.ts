@@ -15,6 +15,12 @@
 
 import { Fetcher, FetcherRequestInfo, FetcherResponseInfo } from '@/src/api/fetch/types';
 
+/**
+ * Fetcher implementation which uses the native fetch API to perform HTTP calls. Much more portable
+ * than {@link FetchH2}, though may be less performant.
+ *
+ * @public
+ */
 export class FetchNative implements Fetcher {
   async fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo> {
     try {

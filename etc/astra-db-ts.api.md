@@ -56,9 +56,10 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
 // @public
 export class AdminCommandSucceededEvent extends AdminCommandEvent {
     // @internal
-    constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number);
+    constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, warnings: string[], started: number);
     readonly duration: number;
     readonly resBody?: Record<string, any>;
+    readonly warnings: string[];
 }
 
 // @public
@@ -187,6 +188,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     //
     // @internal
     constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions | undefined);
+    // @deprecated
     bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult<Schema>>;
     readonly collectionName: string;
     countDocuments(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number>;
@@ -294,9 +296,10 @@ export class CommandStartedEvent extends CommandEvent {
 // @public
 export class CommandSucceededEvent extends CommandEvent {
     // @internal
-    constructor(info: DataAPIRequestInfo, reply: RawDataAPIResponse, started: number);
+    constructor(info: DataAPIRequestInfo, reply: RawDataAPIResponse, warnings: string[], started: number);
     readonly duration: number;
     readonly resp?: RawDataAPIResponse;
+    readonly warnings: string[];
 }
 
 // @public
@@ -566,6 +569,7 @@ export class Db {
         environment: Exclude<DataAPIEnvironment, 'astra'>;
     }): DataAPIDbAdmin;
     collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions): Collection<Schema>;
+    // @deprecated
     collections(options?: WithKeyspace & WithTimeout): Promise<Collection[]>;
     command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse>;
     createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>>;
@@ -618,6 +622,11 @@ export interface DbSpawnOptions {
     namespace?: string;
     token?: string | TokenProvider | null;
 }
+
+// Warning: (ae-internal-missing-underscore) The name "DEFAULT_KEYSPACE" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal (undocumented)
+export const DEFAULT_KEYSPACE = "default_keyspace";
 
 // @public
 export interface DefaultHttpClientOptions {
@@ -800,9 +809,26 @@ export interface FetcherResponseInfo {
 }
 
 // @public
+export class FetchH2 implements Fetcher {
+    constructor(options: DefaultHttpClientOptions | undefined, preferHttp2: boolean);
+    // (undocumented)
+    close(): Promise<void>;
+    // (undocumented)
+    fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo>;
+}
+
+// @public
 export interface FetchHttpClientOptions {
     client: 'fetch';
     maxTimeMS?: number;
+}
+
+// @public
+export class FetchNative implements Fetcher {
+    // (undocumented)
+    close(): Promise<void>;
+    // (undocumented)
+    fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo>;
 }
 
 // @public
