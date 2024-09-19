@@ -135,8 +135,8 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @returns A promise that resolves to list of all the keyspaces in the database.
    */
   public override async listKeyspaces(options?: WithTimeout): Promise<string[]> {
-    const resp = await this.#httpClient.executeCommand({ findNamespaces: {} }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
-    return resp.status!.namespaces;
+    const resp = await this.#httpClient.executeCommand({ findKeyspaces: {} }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
+    return resp.status!.keyspaces;
   }
 
   /**
@@ -148,7 +148,8 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @deprecated - Prefer {@link DataAPIDbAdmin.listKeyspaces} instead.
    */
   public override async listNamespaces(options?: WithTimeout): Promise<string[]> {
-    return this.listKeyspaces(options);
+    const resp = await this.#httpClient.executeCommand({ findNamespaces: {} }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
+    return resp.status!.namespaces;
   }
 
   /**
@@ -191,7 +192,7 @@ export class DataAPIDbAdmin extends DbAdmin {
       replicationFactor: 1,
     };
 
-    await this.#httpClient.executeCommand({ createNamespace: { name: keyspace, options: { replication } } }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
+    await this.#httpClient.executeCommand({ createKeyspace: { name: keyspace, options: { replication } } }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
   }
 
   /**
@@ -203,7 +204,16 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @deprecated - Prefer {@link DataAPIDbAdmin.createKeyspace} instead.
    */
   public override async createNamespace(keyspace: string, options?: LocalCreateNamespaceOptions): Promise<void> {
-    return this.createKeyspace(keyspace, { ...options, updateDbKeyspace: options?.updateDbNamespace });
+    if (options?.updateDbNamespace) {
+      this.#db.useKeyspace(keyspace);
+    }
+
+    const replication = options?.replication ?? {
+      class: 'SimpleStrategy',
+      replicationFactor: 1,
+    };
+
+    await this.#httpClient.executeCommand({ createNamespace: { name: keyspace, options: { replication } } }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
   }
 
   /**
@@ -228,7 +238,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @returns A promise that resolves when the operation completes.
    */
   public override async dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void> {
-    await this.#httpClient.executeCommand({ dropNamespace: { name: keyspace } }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
+    await this.#httpClient.executeCommand({ dropKeyspace: { name: keyspace } }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
   }
 
   /**
@@ -240,7 +250,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @deprecated - Prefer {@link DataAPIDbAdmin.dropKeyspace} instead.
    */
   public override async dropNamespace(keyspace: string, options?: AdminBlockingOptions): Promise<void> {
-    return this.dropKeyspace(keyspace, options);
+    await this.#httpClient.executeCommand({ dropNamespace: { name: keyspace } }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
   }
 
   private get _httpClient() {
