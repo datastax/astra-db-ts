@@ -22,6 +22,9 @@ import { Fetcher, FetcherRequestInfo, FetcherResponseInfo } from '@/src/api/fetc
  * @public
  */
 export class FetchNative implements Fetcher {
+  /**
+   Performances the necessary HTTP request.
+   */
   async fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo> {
     try {
       const init = info as RequestInit;
@@ -55,5 +58,8 @@ export class FetchNative implements Fetcher {
     }
   }
 
+  /**
+   * No-op since the native fetch API has no resources to clean up
+   */
   async close(): Promise<void> {}
 }

@@ -623,9 +623,7 @@ export interface DbSpawnOptions {
     token?: string | TokenProvider | null;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "DEFAULT_KEYSPACE" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
+// @public
 export const DEFAULT_KEYSPACE = "default_keyspace";
 
 // @public
@@ -811,9 +809,7 @@ export interface FetcherResponseInfo {
 // @public
 export class FetchH2 implements Fetcher {
     constructor(options: DefaultHttpClientOptions | undefined, preferHttp2: boolean);
-    // (undocumented)
     close(): Promise<void>;
-    // (undocumented)
     fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo>;
 }
 
@@ -825,9 +821,7 @@ export interface FetchHttpClientOptions {
 
 // @public
 export class FetchNative implements Fetcher {
-    // (undocumented)
     close(): Promise<void>;
-    // (undocumented)
     fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo>;
 }
 
