@@ -409,6 +409,9 @@ export class Db {
    * @param options - Options for this operation.
    *
    * @returns A promise that resolves to an array of references to the working Db's collections.
+   *
+   * @deprecated - Essentially equivalent to `(await db.listCollections()).map(c => new Collection(c.name))`; will be
+   * removed in an upcoming major release.
    */
   public async collections(options?: WithKeyspace & WithTimeout): Promise<Collection[]> {
     const collections = await this.listCollections({
