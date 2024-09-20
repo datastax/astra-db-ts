@@ -14,10 +14,18 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { ENVIRONMENT, it, parallel, TEST_APPLICATION_URI } from '@/tests/testlib';
+import { describe, ENVIRONMENT, initTestObjects, it, TEST_APPLICATION_URI } from '@/tests/testlib';
 
-parallel('integration.devops.db-admin', ({ client, dbAdmin }) => {
-  it('{LONG} works', async () => {
+describe('integration.devops.db-admin', ({ dbAdmin }) => {
+  it('(LONG) works', async () => {
+    const { client } = initTestObjects({ monitoring: true });
+    let cmdsSucceeded = 0;
+
+    client.on('adminCommandSucceeded', (e) => {
+      assert.strictEqual(e.warnings.length, 0);
+      cmdsSucceeded++;
+    });
+
     const db = client.db(TEST_APPLICATION_URI);
 
     const dbAdmin = (ENVIRONMENT === 'astra')
@@ -38,6 +46,43 @@ parallel('integration.devops.db-admin', ({ client, dbAdmin }) => {
 
     const keyspaces3 = await dbAdmin.listKeyspaces();
     assert.ok(!keyspaces3.includes('slania'));
+
+    assert.strictEqual(cmdsSucceeded, 5);
+  });
+
+  it('(LONG) works w/ legacy namespace', async () => {
+    const { client } = initTestObjects({ monitoring: true });
+    let cmdsSucceeded = 0;
+
+    client.on('adminCommandSucceeded', (e) => {
+      assert.strictEqual(e.warnings.length, 1);
+      assert.ok(e.warnings[0].includes('Namespace'));
+      assert.ok(e.warnings[0].includes('deprecated'));
+      cmdsSucceeded++;
+    });
+
+    const db = client.db(TEST_APPLICATION_URI);
+
+    const dbAdmin = (ENVIRONMENT === 'astra')
+      ? db.admin({ environment: ENVIRONMENT })
+      : db.admin({ environment: ENVIRONMENT });
+
+    const keyspaces1 = await dbAdmin.listNamespaces();
+    assert.ok(!keyspaces1.includes('slania'));
+
+    await dbAdmin.createNamespace('slania', { updateDbNamespace: true });
+    assert.strictEqual(db.keyspace, 'slania');
+
+    const keyspaces2 = await dbAdmin.listNamespaces();
+    assert.ok(keyspaces2.includes('slania'));
+
+    await dbAdmin.dropNamespace('slania');
+    assert.strictEqual(db.namespace, 'slania');
+
+    const keyspaces3 = await dbAdmin.listNamespaces();
+    assert.ok(!keyspaces3.includes('slania'));
+
+    assert.strictEqual(cmdsSucceeded, 5);
   });
 
   it('should findEmbeddingProviders', async () => {
