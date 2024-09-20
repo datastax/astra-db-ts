@@ -49,18 +49,22 @@ export abstract class AdminCommandEvent {
    * The path for the request, not including the Base URL.
    */
   public readonly path: string;
+
   /**
    * The HTTP method for the request.
    */
   public readonly method: 'GET' | 'POST' | 'DELETE';
+
   /**
    * The request body, if any.
    */
   public readonly reqBody?: Record<string, any>;
+
   /**
    * The query parameters, if any.
    */
   public readonly params?: Record<string, any>;
+
   /**
    * Whether the command is long-running or not, i.e. requires polling.
    */
@@ -155,13 +159,22 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
   public readonly resBody?: Record<string, any>;
 
   /**
+   * Any warnings returned from the Data API that may point out deprecated/incorrect practices,
+   * or any other issues that aren't strictly an error.
+   *
+   * Does not apply to Astra users, as the admin classes will use the DevOps API instead.
+   */
+  public readonly warnings: string[];
+
+  /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number) {
+  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, warnings: string[], started: number) {
     super(info, longRunning);
     this.duration = hrTimeMs() - started;
+    this.warnings = warnings;
     this.resBody = data || undefined;
   }
 }

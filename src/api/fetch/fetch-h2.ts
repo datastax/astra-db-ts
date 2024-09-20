@@ -19,6 +19,12 @@ import { Fetcher, FetcherRequestInfo, FetcherResponseInfo } from '@/src/api/fetc
 import { FailedToLoadDefaultClientError } from '@/src/client/errors';
 import { nullish } from '@/src/common';
 
+/**
+ * Fetcher implementation which uses `fetch-h2` to perform HTTP/1.1 or HTTP/2 calls. Generally more performant than
+ * the native fetch API, but less portable.
+ *
+ * @public
+ */
 export class FetchH2 implements Fetcher {
   private readonly _http1: ReturnType<typeof context>;
   private readonly _preferred: ReturnType<typeof context>;
@@ -51,6 +57,9 @@ export class FetchH2 implements Fetcher {
     }
   }
 
+  /**
+   * Performances the necessary HTTP request using the desired HTTP version.
+   */
   async fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo> {
     const init = info as Partial<FetchInit>;
 
@@ -75,6 +84,9 @@ export class FetchH2 implements Fetcher {
     }
   }
 
+  /**
+   * Explicitly releases any underlying network resources held by the `fetch-h2` context.
+   */
   async close(): Promise<void> {
     await this._preferred.disconnectAll();
     await this._http1.disconnectAll();

@@ -162,13 +162,20 @@ export class CommandSucceededEvent extends CommandEvent {
   public readonly resp?: RawDataAPIResponse;
 
   /**
+   * Any warnings returned from the Data API that may point out deprecated/incorrect practices,
+   * or any other issues that aren't strictly an error.
+   */
+  public readonly warnings: string[];
+
+  /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  constructor(info: DataAPIRequestInfo, reply: RawDataAPIResponse, started: number) {
+  constructor(info: DataAPIRequestInfo, reply: RawDataAPIResponse, warnings: string[], started: number) {
     super(info);
     this.duration = hrTimeMs() - started;
+    this.warnings = warnings;
     this.resp = reply;
   }
 }

@@ -1,4 +1,4 @@
-#!/usr/bin/sh
+#!/usr/bin/env sh
 
 # Cleans the previous build
 rm -rf ./dist

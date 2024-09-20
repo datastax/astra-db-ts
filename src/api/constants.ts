@@ -44,7 +44,9 @@ export const HttpMethods = {
 } as const;
 
 /**
- * @internal
+ * The default keyspace used when no keyspace is explicitly provided on DB creation.
+ *
+ * @public
  */
 export const DEFAULT_KEYSPACE = 'default_keyspace';
 

@@ -36,7 +36,7 @@ export default [
 
       parserOptions: {
         project: ['./tsconfig.json'],
-        tsconfigRootDir: '/home/me/work/astra-db-ts',
+        tsconfigRootDir: __dirname,
       },
     },
 

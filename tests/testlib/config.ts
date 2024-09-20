@@ -18,6 +18,12 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+if (process.env.USING_LOCAL_STARGATE) {
+  process.env.CLIENT_DB_ENVIRONMENT = 'dse';
+  process.env.CLIENT_DB_TOKEN = 'Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh';
+  process.env.CLIENT_DB_URL = 'http://localhost:8181';
+}
+
 if (!process.env.CLIENT_DB_URL || !process.env.CLIENT_DB_TOKEN) {
   throw new Error('Please ensure the CLIENT_DB_URL and CLIENT_DB_TOKEN env vars are set');
 }
