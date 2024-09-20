@@ -54,32 +54,24 @@ export function checkTestsEnabled(name: string) {
   const tags = processTags(name);
 
   tags.forEach((tag) => {
-    if (!['VECTORIZE', 'LONG', 'ADMIN', 'DEV', 'NOT-DEV', 'ASTRA'].includes(tag)) {
+    if (!['VECTORIZE', 'LONG', 'ADMIN', 'DEV', 'ASTRA'].includes(tag.replace(/^NOT-/, ''))) {
       throw new Error(`Unknown test tag, '${tag}'`);
     }
   });
 
-  if (tags.includes('VECTORIZE') && !process.env.CLIENT_RUN_VECTORIZE_TESTS) {
-    return false;
-  }
+  return ifMatchTag(tags, 'VECTORIZE', () => process.env.CLIENT_RUN_VECTORIZE_TESTS)
+      && ifMatchTag(tags, 'LONG',      () => process.env.CLIENT_RUN_LONG_TESTS)
+      && ifMatchTag(tags, 'ADMIN',     () => process.env.CLIENT_RUN_ADMIN_TESTS)
+      && ifMatchTag(tags, 'DEV',       () => TEST_APPLICATION_URI.includes('apps.astra-dev.datastax.com'))
+      && ifMatchTag(tags, 'ASTRA',     () => TEST_APPLICATION_URI.includes('datastax.com'));
+}
 
-  if (tags.includes('LONG') && !process.env.CLIENT_RUN_LONG_TESTS) {
-    return false;
-  }
+function ifMatchTag(tags: string[], expected: string, pred: () => unknown) {
+  const tag = tags.find((tag) => expected === tag || `NOT-${expected}` === tag);
 
-  if (tags.includes('ADMIN') && !process.env.CLIENT_RUN_ADMIN_TESTS) {
-    return false;
-  }
-
-  if (tags.includes('DEV') && !TEST_APPLICATION_URI.includes('apps.astra-dev.datastax.com')) {
-    return false;
-  }
-
-  if (tags.includes('NOT-DEV') && TEST_APPLICATION_URI.includes('apps.astra-dev.datastax.com')) {
-    return false;
-  }
-
-  return !(tags.includes('ASTRA') && !TEST_APPLICATION_URI.includes('datastax.com'));
+  return (tag)
+    ? tag.startsWith('NOT-') !== !!pred()
+    : true;
 }
 
 declare global {

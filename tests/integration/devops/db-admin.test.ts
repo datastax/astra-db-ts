@@ -50,7 +50,7 @@ describe('integration.devops.db-admin', ({ dbAdmin }) => {
     assert.strictEqual(cmdsSucceeded, 5);
   });
 
-  it('(LONG) works w/ legacy namespace', async () => {
+  it('(LONG) (NOT-ASTRA) works w/ legacy namespace', async () => {
     const { client } = initTestObjects({ monitoring: true });
     let cmdsSucceeded = 0;
 
