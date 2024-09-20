@@ -17,7 +17,7 @@ import { FetcherResponseInfo } from '@/src/api/fetch/types';
 /**
  * Response object from an API call
  *
- * @deprecated Use {@link FetcherResponseInfo} instead (synonymous type)
+ * @deprecated - Use {@link FetcherResponseInfo} instead (synonymous type)
  *
  * @public
  */

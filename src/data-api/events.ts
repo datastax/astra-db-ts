@@ -75,6 +75,8 @@ export abstract class CommandEvent {
    * This is now a deprecated alias for the strictly equivalent {@link CommandEvent.keyspace}, and will be removed
    * in an upcoming major version.
    *
+   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
+   *
    * @deprecated - Prefer {@link CommandEvent.keyspace} instead.
    */
   public readonly namespace: string;

@@ -136,7 +136,7 @@ export interface DataAPIClientOptions {
    *
    * The two are functionally equivalent; this is provided for backwards compatibility.
    *
-   * @deprecated Use the {@link DataAPIClientOptions.httpOptions} property instead.
+   * @deprecated - Use the {@link DataAPIClientOptions.httpOptions} property instead.
    *
    * @see DefaultHttpClientOptions
    */

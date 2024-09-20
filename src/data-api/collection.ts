@@ -125,6 +125,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * This is now a deprecated alias for the strictly equivalent {@link Collection.keyspace}, and will be removed
    * in an upcoming major version.
    *
+   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
+   *
    * @deprecated - Prefer {@link Collection.keyspace} instead.
    */
   public readonly namespace!: string;

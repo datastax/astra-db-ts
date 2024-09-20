@@ -130,6 +130,8 @@ export abstract class DbAdmin {
    * This is now a deprecated alias for the strictly equivalent {@link DbAdmin.createKeyspace}, and will be removed
    * in an upcoming major version.
    *
+   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
+   *
    * @deprecated - Prefer {@link DbAdmin.createKeyspace} instead.
    */
   abstract createNamespace(keyspace: string, options?: CreateNamespaceOptions): Promise<void>;
@@ -170,6 +172,8 @@ export abstract class DbAdmin {
    *
    * This is now a deprecated alias for the strictly equivalent {@link DbAdmin.dropKeyspace}, and will be removed
    * in an upcoming major version.
+   *
+   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
    *
    * @deprecated - Prefer {@link DbAdmin.dropKeyspace} instead.
    */

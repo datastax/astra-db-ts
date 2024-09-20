@@ -170,6 +170,8 @@ export class Db {
    * This is now a deprecated alias for the strictly equivalent {@link Db.keyspace}, and will be removed
    * in an upcoming major version.
    *
+   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
+   *
    * @deprecated - Prefer {@link Db.keyspace} instead.
    */
   public get namespace(): string {
@@ -242,6 +244,8 @@ export class Db {
    *
    * This is now a deprecated alias for the strictly equivalent {@link Db.useKeyspace}, and will be removed
    * in an upcoming major version.
+   *
+   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
    *
    * @deprecated - Prefer {@link Db.useKeyspace} instead.
    */
