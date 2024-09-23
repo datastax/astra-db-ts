@@ -34,7 +34,7 @@ const dbAdmin = db.admin({ environment: 'dse' });
 
   await collection.insertOne({ _id });
 
-  console.log(await collection.findOne({}))
+  console.log(await collection.findOne({}));
 
   await collection.deleteOne({ _id });
 })();

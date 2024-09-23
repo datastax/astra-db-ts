@@ -1,8 +1,8 @@
-import './style.css'
+import './style.css';
 import { DataAPIClient } from '@datastax/astra-db-ts';
 
 const client = new DataAPIClient(import.meta.env.VITE_ASTRA_DB_TOKEN, {
-  httpOptions: { client: 'fetch' }
+  httpOptions: { client: 'fetch' },
 });
 const db = client.db(`https://cors-anywhere.herokuapp.com/${import.meta.env.VITE_ASTRA_DB_ENDPOINT}`);
 

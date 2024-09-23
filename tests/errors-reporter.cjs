@@ -29,7 +29,7 @@ class ErrorsReporter extends reporters.Spec {
     }
 
     runner.on(Runner.constants.EVENT_TEST_FAIL, (test, err) => {
-      this.#erroredTests.push([test, err])
+      this.#erroredTests.push([test, err]);
     });
   }
 
@@ -46,7 +46,7 @@ class ErrorsReporter extends reporters.Spec {
     for (const [test, err] of this.#erroredTests) {
       const testName = (!test.title.endsWith('ms)'))
         ? `${test.title} (${test.duration}ms)`
-        : test.title
+        : test.title;
 
       const newHierarchy = [testName];
 
@@ -59,8 +59,8 @@ class ErrorsReporter extends reporters.Spec {
 
       output += hierarchyDiff.map((v, i) => v ? '#'.repeat(i + 1) + ' ' + v + '\n' : '').join('\n');
       output += '\n```ts\n';
-      output += `// ${test.file}\n`
-      output += `// ${existingHierarchy.join(' > ')}\n`
+      output += `// ${test.file}\n`;
+      output += `// ${existingHierarchy.join(' > ')}\n`;
       output += util.inspect(err, { depth: null }).replaceAll(/\u001b\[[0-9]+?m/g, '');
       output += '\n```\n';
     }

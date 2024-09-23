@@ -1,45 +1,16 @@
-import typescriptEslint from '@typescript-eslint/eslint-plugin';
+// @ts-check
+
 import globals from 'globals';
-import tsParser from '@typescript-eslint/parser';
-import path from 'node:path';
-import { fileURLToPath } from 'node:url';
 import js from '@eslint/js';
-import { FlatCompat } from '@eslint/eslintrc';
+import ts from 'typescript-eslint';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const compat = new FlatCompat({
-  baseDirectory: __dirname,
-  recommendedConfig: js.configs.recommended,
-  allConfig: js.configs.all,
-});
-
-export default [
+export default ts.config(
+  js.configs.recommended,
+  ...ts.configs.recommended,
   {
-    ignores: ['**/*.*js'],
-  },
-  ...compat.extends('eslint:recommended', 'plugin:@typescript-eslint/recommended'),
-  {
-    plugins: {
-      '@typescript-eslint': typescriptEslint,
-    },
-
     languageOptions: {
-      globals: {
-        ...globals.node,
-      },
-
-      parser: tsParser,
-      ecmaVersion: 'latest',
-      sourceType: 'module',
-
-      parserOptions: {
-        project: ['./tsconfig.json'],
-        tsconfigRootDir: __dirname,
-      },
+      globals: globals.node,
     },
-
     rules: {
       // We are *way* past this point lmao
       '@typescript-eslint/no-explicit-any': 'off',
@@ -60,8 +31,15 @@ export default [
       // https://stackoverflow.com/questions/49743842/javascript-unexpected-control-characters-in-regular-expression
       'no-control-regex': 'off',
 
+      // Linting
       'semi': 'error',
       'comma-dangle': ['error', 'always-multiline'],
     },
   },
-];
+  {
+    // disable type-aware linting on JS files
+    files: ['**/*.*js'],
+    ...ts.configs.disableTypeChecked,
+    rules: { 'no-undef': 'off' },
+  },
+);
