@@ -25,7 +25,7 @@ import {
 import TypedEmitter from 'typed-emitter';
 import { DataAPICommandEvents } from '@/src/documents/events';
 import { AdminCommandEvents, AdminSpawnOptions } from '@/src/administration';
-import { validateOption } from '@/src/documents/collections/utils';
+import { validateOption } from '@/src/documents/utils';
 import { FetchNative } from '@/src/lib/api/fetch/fetch-native';
 import { LIB_NAME } from '@/src/version';
 import { FetchCtx, Fetcher } from '@/src/lib/api/fetch/types';

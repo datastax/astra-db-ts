@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { AdminSpawnOptions } from '@/src/administration/types';
-import { validateOption } from '@/src/documents/collections/utils';
+import { validateOption } from '@/src/documents/utils';
 
 /**
  * @internal

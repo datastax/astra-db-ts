@@ -17,7 +17,7 @@ import { DEFAULT_KEYSPACE, RawDataAPIResponse } from '@/src/lib/api';
 import { DatabaseInfo } from '@/src/administration/types/admin/database-info';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { DataAPIEnvironment, nullish, WithTimeout } from '@/src/lib/types';
-import { extractDbIdFromUrl, validateOption } from '@/src/documents/collections/utils';
+import { extractDbIdFromUrl, validateOption } from '@/src/documents/utils';
 import { DbSpawnOptions, InternalRootClientOpts } from '@/src/client/types';
 import { AdminSpawnOptions, DbAdmin } from '@/src/administration';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin';

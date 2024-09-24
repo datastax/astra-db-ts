@@ -14,5 +14,5 @@
 // noinspection DuplicatedCode
 
 export * from './collection';
-export type { TypeErr } from './utils';
+export type { TypeErr } from '../utils';
 export * from './types';

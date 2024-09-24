@@ -14,7 +14,7 @@
 
 import { Filter, FindOptions, Projection, SomeDoc, Sort } from '@/src/documents/collections';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import { normalizeSort } from '@/src/documents/collections/utils';
+import { normalizeSort } from '@/src/documents/utils';
 import { CursorIsStartedError } from '@/src/documents/errors';
 import { InternalFindOptions, InternalGetMoreCommand } from '@/src/documents/collections/types/find/find';
 

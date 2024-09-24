@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { extractDbIdFromUrl, replaceAstraUrlIdAndRegion } from '@/src/documents/collections/utils';
+import { extractDbIdFromUrl, replaceAstraUrlIdAndRegion } from '@/src/documents/utils';
 import { describe, it } from '@/tests/testlib';
 
 describe('unit.data-api.utils', () => {
