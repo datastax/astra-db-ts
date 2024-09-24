@@ -15,7 +15,7 @@
 import { EmbeddingProviderInfo, EmbeddingProviderModelInfo } from '@/src/administration';
 import { EmbeddingHeadersProvider } from '@/src/documents';
 import { ENVIRONMENT } from '@/tests/testlib';
-import { VectorizeTestSpec } from '@/tests/integration/data-api/vectorize/vectorize.test';
+import { VectorizeTestSpec } from '@/tests/integration/documents/vectorize/vectorize.test';
 
 interface ModelBranch {
   providerName: string,

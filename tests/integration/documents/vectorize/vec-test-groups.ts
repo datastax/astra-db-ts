@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FinalVectorizeTestBranch } from '@/tests/integration/data-api/vectorize/vec-test-branches';
+import { FinalVectorizeTestBranch } from '@/tests/integration/documents/vectorize/vec-test-branches';
 import crypto from 'node:crypto';
 import * as util from 'node:util';
 import { Db } from '@/src/db';
