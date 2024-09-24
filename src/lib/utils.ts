@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIEnvironment, nullish } from '@/src/lib/types';
-import { DataAPIEnvironments } from '@/src/lib/constants';
 import { WithKeyspace } from '@/src/db';
 import { WithNullableKeyspace } from '@/src/db/types/collections-common';
+import { DataAPIEnvironment, nullish } from '@/src/lib/types';
+import { DataAPIEnvironments } from '@/src/lib/constants';
 
 export function isNullish(t: unknown): t is nullish {
   return t === null || t === undefined;

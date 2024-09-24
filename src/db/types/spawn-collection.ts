@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { EmbeddingHeadersProvider } from 'src/documents/embedding-providers';
 import { WithKeyspace } from '@/src/db';
+import { EmbeddingHeadersProvider } from '@/src/documents';
 
 /**
  * Options for spawning a new collection.

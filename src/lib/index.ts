@@ -12,5 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type { nullish, WithTimeout, DataAPIEnvironment } from './types';
+export * from './api';
 export * from './token-providers';
+export { DataAPIEnvironments } from './constants';
+export type { nullish, WithTimeout, DataAPIEnvironment } from './types';

@@ -14,7 +14,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import type { StrictProjection } from 'src/documents/collections/types';
+import type { StrictProjection } from '@/src/documents/collections/types';
 import { ConvolutedSchema2, Schema } from '@/tests/typing/prelude';
 
 const test1: StrictProjection<Schema> = {

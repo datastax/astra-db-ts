@@ -15,9 +15,8 @@
 
 import type { context, FetchInit, TimeoutError } from 'fetch-h2';
 import { DefaultHttpClientOptions } from '@/src/client';
-import { Fetcher, FetcherRequestInfo, FetcherResponseInfo } from '@/src/lib/api/fetch/types';
 import { FailedToLoadDefaultClientError } from '@/src/client/errors';
-import { nullish } from '@/src/lib';
+import { Fetcher, FetcherRequestInfo, FetcherResponseInfo, nullish } from '@/src/lib';
 
 /**
  * Fetcher implementation which uses `fetch-h2` to perform HTTP/1.1 or HTTP/2 calls. Generally more performant than

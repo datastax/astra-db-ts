@@ -17,7 +17,7 @@ import { DataAPIClient } from '@/src/client';
 import {
   DEFAULT_KEYSPACE,
   FetchNative,
-} from 'src/lib/api';
+} from '@/src/lib/api';
 import assert from 'assert';
 import {
   DEFAULT_COLLECTION_NAME,

@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DeleteManyResult, InsertManyResult, SomeDoc, UpdateManyResult } from 'src/documents/collections/types';
+import { DeleteManyResult, InsertManyResult, SomeDoc, UpdateManyResult } from '@/src/documents/collections/types';
 import {
   DataAPIResponseError, DeleteManyError,
   InsertManyError,

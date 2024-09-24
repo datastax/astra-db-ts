@@ -29,7 +29,6 @@ import {
   AdminCommandSucceededEvent,
   AdminSpawnOptions,
 } from '@/src/administration';
-import { EmbeddingHeadersProvider } from 'src/documents/embedding-providers';
 import { CollectionNotFoundError } from '@/src/db/errors';
 import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_TIMEOUT, HttpMethods } from '@/src/lib/api/constants';
 import { WithNullableKeyspace } from '@/src/db/types/collections-common';
@@ -39,7 +38,7 @@ import { nullish, TokenProvider } from '@/src/lib';
 import { hrTimeMs, HttpClient } from '@/src/lib/api/clients/http-client';
 import { CollectionSpawnOptions } from '@/src/db';
 import { isNullish, resolveKeyspace } from '@/src/lib/utils';
-import { ObjectId, UUID } from '@/src/documents';
+import { EmbeddingHeadersProvider, ObjectId, UUID } from '@/src/documents';
 
 /**
  * @internal

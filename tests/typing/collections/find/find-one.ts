@@ -134,7 +134,6 @@ void dummyCollection<TestSchema>().findOne({}, {
   },
 });
 
-
 void dummyCollection<TestSchema>().findOne({}, {
   projection: {
     // @ts-expect-error - Can't use $slice with non-array fields

@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEFAULT_KEYSPACE } from 'src/lib/api';
+import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import { DevOpsAPITimeoutError } from '@/src/administration';
 import { DataAPIClient } from '@/src/client';
 import {

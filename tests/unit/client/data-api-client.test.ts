@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import { DataAPIClient } from '@/src/client';
-import { FetcherResponseInfo } from 'src/lib/api';
+import { FetcherResponseInfo } from '@/src/lib/api';
 import { FetchH2 } from '@/src/lib/api/fetch/fetch-h2';
 import { FetcherRequestInfo } from '@/src/lib/api/fetch/types';
 import { UsernamePasswordTokenProvider } from '@/src/lib';

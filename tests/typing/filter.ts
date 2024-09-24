@@ -14,7 +14,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import type { Filter } from 'src/documents/collections/types';
+import type { Filter } from '@/src/documents/collections/types';
 import type { ConvolutedSchema2, Schema } from '@/tests/typing/prelude';
 import { SomeDoc } from '@/src/documents/collections';
 

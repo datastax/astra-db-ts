@@ -13,10 +13,10 @@
 // limitations under the License.
 
 import { DataAPITimeoutError } from '@/src/documents';
-import { DEFAULT_KEYSPACE } from 'src/lib/api';
 import { DEFAULT_COLLECTION_NAME, initTestObjects, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 import { CollectionNotFoundError } from '@/src/db/errors';
+import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 
 parallel('integration.data-api.collection.misc', ({ db }) => {
   it('times out on http2', async () => {

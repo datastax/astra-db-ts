@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { Collection } from '@/src/documents/collections';
-import { DEFAULT_KEYSPACE } from 'src/lib/api';
+import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import { DEFAULT_COLLECTION_NAME, describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
