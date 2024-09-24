@@ -24,7 +24,7 @@ import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constant
 describe('unit.db', () => {
   const internalOps = (data?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({
     dbOptions: { token: new StaticTokenProvider('old'), monitorCommands: false, ...data },
-    adminOptions: { adminToken: new StaticTokenProvider('old-admin'), monitorCommands: false, ...administration },
+    adminOptions: { adminToken: new StaticTokenProvider('old-admin'), monitorCommands: false, ...devops },
     emitter: null!,
     fetchCtx: { preferredType } as any,
     userAgent: '',
