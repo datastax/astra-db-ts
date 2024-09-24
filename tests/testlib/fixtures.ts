@@ -18,7 +18,7 @@
 // And now it's not even needed anymore :(
 
 import { DataAPIClient } from '@/src/client';
-import { DEFAULT_KEYSPACE } from '@/src/api';
+import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import {
   DEFAULT_COLLECTION_NAME,
   ENVIRONMENT,

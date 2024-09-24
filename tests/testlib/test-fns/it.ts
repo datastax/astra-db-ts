@@ -17,7 +17,7 @@ import { checkTestsEnabled } from '@/tests/testlib/utils';
 import { parallelTestState } from '@/tests/testlib/test-fns/parallel';
 import { CURRENT_DESCRIBE_NAMES } from '@/tests/testlib/global';
 import { DEFAULT_TEST_TIMEOUT } from '@/tests/testlib/config';
-import { UUID } from '@/src/data-api';
+import { UUID } from '@/src/documents';
 import { backgroundTestState, TEST_FILTER } from '@/tests/testlib';
 
 export type TestFn = SyncTestFn | AsyncTestFn;

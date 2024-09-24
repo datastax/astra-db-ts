@@ -13,9 +13,8 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPITimeoutError } from '@/src/data-api';
-import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/api';
-import { DevOpsAPITimeoutError } from '@/src/devops';
+import { DEFAULT_KEYSPACE } from '@/src/lib/api';
+import { DevOpsAPITimeoutError } from '@/src/administration';
 import { DataAPIClient } from '@/src/client';
 import {
   DEFAULT_COLLECTION_NAME,
@@ -27,6 +26,8 @@ import {
   TEST_APPLICATION_URI,
 } from '@/tests/testlib';
 import assert from 'assert';
+import { DataAPITimeoutError } from '@/src/documents';
+import { HttpMethods } from '@/src/lib/api/constants';
 
 parallel('integration.misc.timeouts', ({ collection, dbAdmin }) => {
   describe('in data-api', () => {

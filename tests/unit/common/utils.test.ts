@@ -13,9 +13,10 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIEnvironments, isNullish, jsonTryParse, validateDataAPIEnv } from '@/src/common';
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
+import { isNullish, jsonTryParse, validateDataAPIEnv } from '@/src/lib/utils';
+import { DataAPIEnvironments } from '@/src/lib/constants';
 
 describe('unit.common.utils', () => {
   describe('isNullish', () => {

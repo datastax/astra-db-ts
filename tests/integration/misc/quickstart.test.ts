@@ -14,8 +14,8 @@
 // noinspection DuplicatedCode
 
 import { DataAPIClient } from '@/src/client';
-import { ObjectId, UUID, VectorDoc } from '@/src/data-api';
-import { DEFAULT_KEYSPACE } from '@/src/api';
+import { ObjectId, UUID, VectorDoc } from '@/src/documents';
+import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 import { ENVIRONMENT, OTHER_KEYSPACE, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/testlib';

@@ -14,7 +14,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import type { Sort, StrictSort } from '@/src/data-api/types';
+import type { Sort, StrictSort } from '@/src/documents/collections/types';
 import { Schema } from '@/tests/typing/prelude';
 
 const test1 = {

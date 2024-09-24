@@ -15,14 +15,10 @@
 
 import { DataAPIClient } from '@/src/client';
 import {
-  DEFAULT_DATA_API_AUTH_HEADER,
-  DEFAULT_DEVOPS_API_AUTH_HEADER,
   DEFAULT_KEYSPACE,
   FetchNative,
-} from '@/src/api';
-import { nullish, Ref, StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvider } from '@/src/common';
+} from '@/src/lib/api';
 import assert from 'assert';
-import { EmbeddingHeadersProvider } from '@/src/data-api';
 import {
   DEFAULT_COLLECTION_NAME,
   ENVIRONMENT,
@@ -32,6 +28,10 @@ import {
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
 } from '@/tests/testlib';
+import { nullish, Ref } from '@/src/lib/types';
+import { StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvider } from '@/src/lib';
+import { EmbeddingHeadersProvider } from '@/src/documents';
+import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DEVOPS_API_AUTH_HEADER } from '@/src/lib/api/constants';
 
 parallel('integration.misc.headers', () => {
   const fetchNative = new FetchNative();

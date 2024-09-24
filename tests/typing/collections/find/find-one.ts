@@ -16,8 +16,8 @@
 
 import { dummyCollection, DynamicSchema, TestSchema } from '@/tests/typing/collections/prelude';
 import { Equal, Expect } from '@/tests/typing/prelude';
-import { StrictFilter } from '@/src/data-api/types/filter';
-import { StrictProjection } from '@/src/data-api';
+import { StrictFilter } from '@/src/documents/collections/types/filter';
+import { StrictProjection } from '@/src/documents/collections';
 
 void dummyCollection<TestSchema>().findOne({}, {}).then((a) => {
   type b = Expect<Equal<undefined | number, NonNullable<typeof a>['$similarity']>>
@@ -133,7 +133,6 @@ void dummyCollection<TestSchema>().findOne({}, {
     },
   },
 });
-
 
 void dummyCollection<TestSchema>().findOne({}, {
   projection: {

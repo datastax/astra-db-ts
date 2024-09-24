@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DEFAULT_KEYSPACE } from '@/src/api';
+import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import { DEFAULT_COLLECTION_NAME, OTHER_KEYSPACE } from '@/tests/testlib/config';
 import { GLOBAL_FIXTURES } from '@/tests/testlib';
 

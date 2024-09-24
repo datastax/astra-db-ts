@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { ObjectId, UUID } from '@/src/data-api';
+import { ObjectId, UUID } from '@/src/documents';
 import { describe, it, parallel } from '@/tests/testlib';
 
 describe('integration.misc.code-samples', { truncateColls: 'default:before' }, ({ collection }) => {
