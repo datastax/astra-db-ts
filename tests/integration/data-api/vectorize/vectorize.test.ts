@@ -13,14 +13,15 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { Collection, Db, UUID } from '@/src/data-api';
+import { Collection, UUID } from '@/src/documents';
 import * as fs from 'fs';
-import { EmbeddingProviderInfo } from '@/src/devops/types/db-admin/find-embedding-providers';
+import { EmbeddingProviderInfo } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { describe, it, parallel } from '@/tests/testlib';
 import { negate } from '@/tests/testlib/utils';
 import { whitelistImplFor } from '@/tests/integration/data-api/vectorize/vec-whitelist-imp';
 import { branchOnModel, FinalVectorizeTestBranch } from '@/tests/integration/data-api/vectorize/vec-test-branches';
 import { createTestGroups, VectorizeTestGroup } from '@/tests/integration/data-api/vectorize/vec-test-groups';
+import { Db } from '@/src/db';
 
 export interface VectorizeTestSpec {
   [providerName: string]: {

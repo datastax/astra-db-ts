@@ -13,10 +13,10 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { replacer, reviver } from '@/src/api';
-import { UUID, ObjectId } from '@/src/data-api';
+import { UUID, ObjectId } from '@/src/documents';
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
+import { replacer, reviver } from '@/src/lib/api/clients/data-api-http-client';
 
 describe('unit.api.clients.data-api-http-client', () => {
   describe('replacer tests', () => {

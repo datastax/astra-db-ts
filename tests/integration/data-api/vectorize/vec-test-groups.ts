@@ -13,9 +13,10 @@
 // limitations under the License.
 
 import { FinalVectorizeTestBranch } from '@/tests/integration/data-api/vectorize/vec-test-branches';
-import { Collection, Db } from '@/src/data-api';
 import crypto from 'node:crypto';
 import * as util from 'node:util';
+import { Db } from '@/src/db';
+import { Collection } from '@/src/documents';
 
 export interface VectorizeTestGroup {
   groupName: string;

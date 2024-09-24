@@ -14,7 +14,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import type { Sort } from '@/src/data-api/types';
+import type { Sort } from 'src/documents/collections/types';
 
 const test1: Sort = {
   'num1': 1,

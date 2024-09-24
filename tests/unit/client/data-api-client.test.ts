@@ -14,10 +14,10 @@
 // noinspection DuplicatedCode
 
 import { DataAPIClient } from '@/src/client';
-import { FetcherResponseInfo } from '@/src/api';
-import { FetchH2 } from '@/src/api/fetch/fetch-h2';
-import { FetcherRequestInfo } from '@/src/api/fetch/types';
-import { DataAPIEnvironments, UsernamePasswordTokenProvider } from '@/src/common';
+import { FetcherResponseInfo } from 'src/lib/api';
+import { FetchH2 } from '@/src/lib/api/fetch/fetch-h2';
+import { FetcherRequestInfo } from '@/src/lib/api/fetch/types';
+import { UsernamePasswordTokenProvider } from '@/src/lib';
 import {
   DEMO_APPLICATION_URI,
   describe,
@@ -27,6 +27,7 @@ import {
   TEST_APPLICATION_URI,
 } from '@/tests/testlib';
 import assert from 'assert';
+import { DataAPIEnvironments } from '@/src/lib/constants';
 
 describe('unit.client.data-api-client', () => {
   it('should accept valid tokens', () => {

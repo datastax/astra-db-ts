@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { TimeoutManager } from '@/src/api/timeout-managers';
+import { TimeoutManager } from '@/src/lib/api/timeout-managers';
 import { describe, it } from '@/tests/testlib';
 
 describe('unit.api.timeout-manager', () => {

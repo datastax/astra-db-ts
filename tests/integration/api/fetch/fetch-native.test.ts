@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import { DEMO_APPLICATION_URI, it, parallel, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/testlib';
-import { DEFAULT_KEYSPACE, FetchNative } from '@/src/api';
+import { DEFAULT_KEYSPACE, FetchNative } from 'src/lib/api';
 import assert from 'assert';
 
 parallel('integration.api.fetch.fetch-native', () => {

@@ -15,7 +15,7 @@
 
 import { DEMO_APPLICATION_URI, describe, it } from '@/tests/testlib';
 import assert from 'assert';
-import { extractAstraEnvironment } from '@/src/devops/utils';
+import { extractAstraEnvironment } from '@/src/administration/utils';
 
 describe('unit.devops.utils', () => {
   describe('extractAstraEnvironment', () => {

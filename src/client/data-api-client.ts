@@ -13,26 +13,27 @@
 // limitations under the License.
 // noinspection JSDeprecatedSymbols
 
-import { Db, mkDb, validateDbOpts } from '@/src/data-api/db';
-import { AstraAdmin } from '@/src/devops/astra-admin';
+import { Db, mkDb, validateDbOpts } from '@/src/db/db';
+import { AstraAdmin } from '@/src/administration/astra-admin';
 import {
   Caller,
   CustomHttpClientOptions,
   DataAPIClientOptions,
-  DataAPIHttpOptions, DefaultHttpClientOptions,
+  DataAPIHttpOptions, DbSpawnOptions, DefaultHttpClientOptions,
   InternalRootClientOpts,
 } from '@/src/client/types';
 import TypedEmitter from 'typed-emitter';
-import { DataAPICommandEvents } from '@/src/data-api/events';
-import { AdminCommandEvents, AdminSpawnOptions } from '@/src/devops';
-import { validateOption } from '@/src/data-api/utils';
-import { buildUserAgent, FetchCtx, FetchH2 } from '@/src/api';
-import { FetchNative } from '@/src/api/fetch/fetch-native';
+import { DataAPICommandEvents } from '@/src/documents/events';
+import { AdminCommandEvents, AdminSpawnOptions } from '@/src/administration';
+import { validateOption } from '@/src/documents/collections/utils';
+import { FetchNative } from '@/src/lib/api/fetch/fetch-native';
 import { LIB_NAME } from '@/src/version';
-import { Fetcher } from '@/src/api/fetch/types';
-import { DbSpawnOptions } from '@/src/data-api';
-import { isNullish, nullish, TokenProvider, validateDataAPIEnv } from '@/src/common';
-import { validateAdminOpts } from '@/src/devops/utils';
+import { FetchCtx, Fetcher } from '@/src/lib/api/fetch/types';
+import { validateAdminOpts } from '@/src/administration/utils';
+import { nullish, TokenProvider } from '@/src/lib';
+import { buildUserAgent } from '@/src/lib/api/clients/http-client';
+import { FetchH2 } from '@/src/lib/api';
+import { isNullish, validateDataAPIEnv } from '@/src/lib/utils';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the

@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { ObjectId, UUID } from '@/src/data-api';
+import { ObjectId, UUID } from '@/src/documents';
 import { describe, it } from '@/tests/testlib';
 
 describe('unit.data-api.ids', () => {

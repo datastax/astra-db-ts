@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { ObjectId, UUID } from '@/src/data-api';
+import { ObjectId, UUID } from '@/src/documents';
 import { createCollections, DEFAULT_COLLECTION_NAME, EPHEMERAL_COLLECTION_NAME, it, parallel } from '@/tests/testlib';
 
 parallel('(LONG) integration.data-api.ids', { dropEphemeral: 'after' }, ({ db }) => {

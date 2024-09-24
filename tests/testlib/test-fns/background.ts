@@ -17,7 +17,7 @@ import { initTestObjects } from '@/tests/testlib/fixtures';
 import { checkTestsEnabled, tryCatchErr } from '@/tests/testlib/utils';
 import { SuiteBlock, TEST_FILTER } from '@/tests/testlib';
 import { AsyncSuiteResult, AsyncSuiteSpec, GlobalAsyncSuiteSpec } from '@/tests/testlib/test-fns/types';
-import { UUID } from '@/src/data-api';
+import { UUID } from '@/src/documents';
 
 export const backgroundTestState: GlobalAsyncSuiteSpec = {
   inBlock: false,

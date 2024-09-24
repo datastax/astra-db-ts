@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIEnvironment, DataAPIEnvironments } from '@/src/common';
 import * as process from 'node:process';
 import dotenv from 'dotenv';
+import { DataAPIEnvironments } from '@/src/lib/constants';
+import { DataAPIEnvironment } from '@/src/lib';
 
 dotenv.config();
 

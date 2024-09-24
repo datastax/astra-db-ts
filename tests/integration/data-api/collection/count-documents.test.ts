@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { TooManyDocumentsToCountError } from '@/src/data-api';
+import { TooManyDocumentsToCountError } from '@/src/documents';
 import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 

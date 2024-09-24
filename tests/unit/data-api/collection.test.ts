@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection } from '@/src/data-api';
-import { DEFAULT_KEYSPACE } from '@/src/api';
+import { Collection } from '@/src/documents/collections';
+import { DEFAULT_KEYSPACE } from 'src/lib/api';
 import { DEFAULT_COLLECTION_NAME, describe, it } from '@/tests/testlib';
 import assert from 'assert';
 

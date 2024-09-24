@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { CursorIsStartedError, DataAPIResponseError, SomeDoc } from '@/src/data-api';
+import { CursorIsStartedError, DataAPIResponseError, SomeDoc } from '@/src/documents';
 import { describe, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 

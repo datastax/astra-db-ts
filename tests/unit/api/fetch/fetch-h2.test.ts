@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import { it, parallel } from '@/tests/testlib';
-import { FetchH2 } from '@/src/api';
+import { FetchH2 } from 'src/lib/api';
 import assert from 'assert';
 import { FailedToLoadDefaultClientError } from '@/src/client';
 

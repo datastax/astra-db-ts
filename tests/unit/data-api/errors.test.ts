@@ -13,9 +13,13 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIResponseError, DeleteManyError, InsertManyError, SomeDoc, UpdateManyError } from '@/src/data-api';
-import { DeleteManyResult, InsertManyResult, UpdateManyResult } from '@/src/data-api/types';
-import { mkRespErrorFromResponse, mkRespErrorFromResponses } from '@/src/data-api/errors';
+import { DeleteManyResult, InsertManyResult, SomeDoc, UpdateManyResult } from 'src/documents/collections/types';
+import {
+  DataAPIResponseError, DeleteManyError,
+  InsertManyError,
+  mkRespErrorFromResponse,
+  mkRespErrorFromResponses, UpdateManyError,
+} from '@/src/documents/errors';
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 

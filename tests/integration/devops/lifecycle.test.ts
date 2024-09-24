@@ -14,10 +14,10 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DevOpsAPIResponseError } from '@/src/devops';
-import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/api';
-import { TimeoutManager } from '@/src/api/timeout-managers';
+import { DevOpsAPIResponseError } from '@/src/administration';
+import { TimeoutManager } from '@/src/lib/api/timeout-managers';
 import { background, initTestObjects, it, TEMP_DB_NAME } from '@/tests/testlib';
+import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
 
 background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () => {
   it('works', async () => {

@@ -14,8 +14,8 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { EmbeddingAPIKeyHeaderProvider, AWSEmbeddingHeadersProvider } from '@/src/data-api';
 import { describe, it } from '@/tests/testlib';
+import { AWSEmbeddingHeadersProvider, EmbeddingAPIKeyHeaderProvider } from '@/src/documents';
 
 describe('unit.common.embedding-providers', () => {
   describe('EmbeddingAPIKeyHeaderProvider', () => {

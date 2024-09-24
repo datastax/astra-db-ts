@@ -23,7 +23,7 @@ import {
   SuiteOptions,
   TEST_FILTER,
 } from '@/tests/testlib';
-import { UUID } from '@/src/data-api';
+import { UUID } from '@/src/documents';
 import { AsyncSuiteResult, GlobalAsyncSuiteSpec } from '@/tests/testlib/test-fns/types';
 
 const mkDefaultSuite = () => ({ name: undefined, skipped: false, tests: [] });

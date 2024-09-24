@@ -24,10 +24,10 @@ import {
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
 } from '@/tests/testlib';
-import { CollectionAlreadyExistsError, DataAPIResponseError, UUID } from '@/src/data-api';
-import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/api';
+import { DataAPIResponseError, UUID } from '@/src/documents';
 import { DataAPIClient } from '@/src/client';
-import { CollectionNotFoundError } from '@/src/data-api/errors';
+import { CollectionAlreadyExistsError, CollectionNotFoundError } from '@/src/db/errors';
+import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants';
 
 parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
   describe('(LONG) createCollection', () => {

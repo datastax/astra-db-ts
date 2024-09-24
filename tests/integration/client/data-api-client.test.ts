@@ -15,9 +15,7 @@
 
 import { DataAPIClient } from '@/src/client';
 import assert from 'assert';
-import { DataAPIResponseError, DataAPITimeoutError } from '@/src/data-api';
-import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/data-api/events';
-import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE, DEFAULT_TIMEOUT } from '@/src/api';
+import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/documents/events';
 import {
   DEFAULT_COLLECTION_NAME,
   describe,
@@ -28,6 +26,9 @@ import {
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
 } from '@/tests/testlib';
+import { DataAPIResponseError, DataAPITimeoutError } from '@/src/documents';
+import { DEFAULT_KEYSPACE } from '@/src/lib/api';
+import { DEFAULT_DATA_API_PATHS, DEFAULT_TIMEOUT } from '@/src/lib/api/constants';
 
 describe('integration.client.data-api-client', () => {
   parallel('db', () => {

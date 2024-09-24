@@ -13,7 +13,6 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIHttpError, DataAPIResponseError } from '@/src/data-api';
 import {
   DEFAULT_COLLECTION_NAME,
   describe,
@@ -23,8 +22,9 @@ import {
   parallel,
   TEST_APPLICATION_URI,
 } from '@/tests/testlib';
-import { DataAPIHttpClient } from '@/src/api';
 import assert from 'assert';
+import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
+import { DataAPIHttpError, DataAPIResponseError } from '@/src/documents';
 
 describe('integration.api.clients.data-api-http-client', ({ db }) => {
   let httpClient: DataAPIHttpClient;

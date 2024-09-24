@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { UsernamePasswordTokenProvider, StaticTokenProvider } from '@/src/common';
+import { UsernamePasswordTokenProvider, StaticTokenProvider } from '@/src/lib';
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 

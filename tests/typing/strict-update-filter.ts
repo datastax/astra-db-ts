@@ -14,8 +14,8 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { CurrentDate, SomeDoc, ToDotNotation } from '@/src/data-api';
-import type { StrictUpdateFilter } from '@/src/data-api/types';
+import { CurrentDate, SomeDoc, ToDotNotation } from '@/src/documents/collections';
+import type { StrictUpdateFilter } from 'src/documents/collections/types';
 import type { BasicSchema, ConvolutedSchema1, ConvolutedSchema2, Equal, Expect, Schema } from '@/tests/typing/prelude';
 
 type test1 = Expect<Equal<StrictUpdateFilter<BasicSchema>, {

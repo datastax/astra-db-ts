@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIError, DataAPITimeoutError, InsertManyError, ObjectId, UUID } from '@/src/data-api';
+import { DataAPIError, DataAPITimeoutError, InsertManyError, ObjectId, UUID } from '@/src/documents';
 import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 

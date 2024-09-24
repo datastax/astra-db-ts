@@ -13,9 +13,9 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIError, DeleteManyError } from '@/src/data-api';
 import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
+import { DataAPIError, DeleteManyError } from '@/src/documents';
 
 parallel('integration.data-api.collection.delete-many', { truncateColls: 'both:before' }, ({ collection, collection_ }) => {
   before(async () => {

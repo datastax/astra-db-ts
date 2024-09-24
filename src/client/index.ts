@@ -15,6 +15,7 @@
 
 export * from './data-api-client';
 export * from './errors';
+
 export type {
   DataAPIClientOptions,
   Caller,
@@ -24,3 +25,4 @@ export type {
   FetchHttpClientOptions,
   CustomHttpClientOptions,
 } from './types';
+export { DbSpawnOptions } from '@/src/client/types';

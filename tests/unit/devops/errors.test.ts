@@ -14,8 +14,8 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DevOpsAPIResponseError } from '@/src/devops';
-import { FetcherResponseInfo } from '@/src/api';
+import { DevOpsAPIResponseError } from '@/src/administration';
+import { FetcherResponseInfo } from 'src/lib/api';
 import { describe, it } from '@/tests/testlib';
 
 describe('unit.devops.errors', () => {

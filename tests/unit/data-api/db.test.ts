@@ -14,13 +14,12 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { Db } from '@/src/data-api';
-import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/api';
-import { mkDb } from '@/src/data-api/db';
-import { StaticTokenProvider } from '@/src/common';
+import { Db, mkDb } from '@/src/db/db';
+import { StaticTokenProvider } from '@/src/lib';
 import { InternalRootClientOpts } from '@/src/client/types';
 import { DataAPIClient } from '@/src/client';
 import { DEMO_APPLICATION_URI, describe, it, TEST_APPLICATION_URI } from '@/tests/testlib';
+import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants';
 
 describe('unit.data-api.db', () => {
   const internalOps = (data?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({
