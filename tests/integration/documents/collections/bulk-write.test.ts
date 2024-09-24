@@ -17,7 +17,7 @@ import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 import { BulkWriteError, DataAPIError } from '@/src/documents';
 
-parallel('integration.data-api.collection.bulk-write', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.bulk-write', { truncateColls: 'default:before' }, ({ collection }) => {
   it('bulkWrites ordered', async (key) => {
     const res = await collection.bulkWrite([
       { insertOne: { document: { name: 'John', key } } },

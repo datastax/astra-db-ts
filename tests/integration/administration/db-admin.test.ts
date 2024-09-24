@@ -16,7 +16,7 @@
 import assert from 'assert';
 import { describe, ENVIRONMENT, initTestObjects, it, TEST_APPLICATION_URI } from '@/tests/testlib';
 
-describe('integration.devops.db-admin', ({ dbAdmin }) => {
+describe('integration.administration.db-admin', ({ dbAdmin }) => {
   it('(LONG) works', async () => {
     const { client } = initTestObjects({ monitoring: true });
     let cmdsSucceeded = 0;

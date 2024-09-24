@@ -30,7 +30,7 @@ import { DataAPIResponseError, DataAPITimeoutError } from '@/src/documents';
 import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_TIMEOUT } from '@/src/lib/api/constants';
 
-describe('integration.client.data-api-client', () => {
+describe('integration.client.documents-client', () => {
   parallel('db', () => {
     it('properly connects to a db by endpoint', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });

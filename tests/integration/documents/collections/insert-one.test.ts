@@ -17,7 +17,7 @@ import { DataAPIResponseError, ObjectId, UUID } from '@/src/documents';
 import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.data-api.collection.insert-one', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.insert-one', { truncateColls: 'default:before' }, ({ collection }) => {
   it('should insertOne document', async () => {
     const res = await collection.insertOne({ name: 'Lzzy' });
     assert.ok(res);

@@ -29,7 +29,7 @@ import { DataAPIClient } from '@/src/client';
 import { CollectionAlreadyExistsError, CollectionNotFoundError } from '@/src/db/errors';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants';
 
-parallel('integration.data-api.db', { dropEphemeral: 'after' }, ({ db }) => {
+parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
   describe('(LONG) createCollection', () => {
     it('should create a collection', async () => {
       const res = await db.createCollection('coll_1c', { indexing: { deny: ['*'] } });

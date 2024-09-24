@@ -21,10 +21,10 @@ import { DataAPIClient } from '@/src/client';
 import { DEMO_APPLICATION_URI, describe, it, TEST_APPLICATION_URI } from '@/tests/testlib';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants';
 
-describe('unit.data-api.db', () => {
+describe('unit.db', () => {
   const internalOps = (data?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({
     dbOptions: { token: new StaticTokenProvider('old'), monitorCommands: false, ...data },
-    adminOptions: { adminToken: new StaticTokenProvider('old-admin'), monitorCommands: false, ...devops },
+    adminOptions: { adminToken: new StaticTokenProvider('old-admin'), monitorCommands: false, ...administration },
     emitter: null!,
     fetchCtx: { preferredType } as any,
     userAgent: '',

@@ -17,7 +17,7 @@ import { CursorIsStartedError, DataAPIResponseError, SomeDoc } from '@/src/docum
 import { describe, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.cursor', { truncateColls: 'both:before' }, ({ collection, collection_ }) => {
+describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ collection, collection_ }) => {
   const sortById = (a: SomeDoc, b: SomeDoc) => parseInt(a._id) - parseInt(b._id);
   const sortByAge = (a: SomeDoc, b: SomeDoc) => a.age - b.age;
 

@@ -29,7 +29,7 @@ import {
 import assert from 'assert';
 import { DataAPIEnvironments } from '@/src/lib/constants';
 
-describe('unit.client.data-api-client', () => {
+describe('unit.client.documents-client', () => {
   it('should accept valid tokens', () => {
     assert.doesNotThrow(() => new DataAPIClient());
     assert.doesNotThrow(() => new DataAPIClient('token'));

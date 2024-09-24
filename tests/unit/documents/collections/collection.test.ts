@@ -17,7 +17,7 @@ import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import { DEFAULT_COLLECTION_NAME, describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('unit.data-api.collection', ({ db, collection }) => {
+describe('unit.documents.collections', ({ db, collection }) => {
   describe('initialization', () => {
     it('should initialize a Collection', () => {
       const collection = new Collection(db, db['_httpClient'], 'new_collection', undefined);

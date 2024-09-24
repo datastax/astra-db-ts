@@ -24,7 +24,7 @@ import assert from 'assert';
 
 // I was going to go through split this up but yeah... no
 // Don't want to spend too much time sifting through a thousand lines of intertwined tests
-parallel('integration.data-api.collection.finds', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.finds', { truncateColls: 'default:before' }, ({ collection }) => {
   it('should find & findOne document', async (key) => {
     const insertDocResp = await collection.insertOne(createSampleDocWithMultiLevel(key));
     const idToCheck = insertDocResp.insertedId;

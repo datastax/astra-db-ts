@@ -26,7 +26,7 @@ import assert from 'assert';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { DataAPIHttpError, DataAPIResponseError } from '@/src/documents';
 
-describe('integration.api.clients.data-api-http-client', ({ db }) => {
+describe('integration.lib.api.clients.documents-http-client', ({ db }) => {
   let httpClient: DataAPIHttpClient;
 
   before(async () => {

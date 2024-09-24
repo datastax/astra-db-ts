@@ -16,7 +16,7 @@ import assert from 'assert';
 import { extractDbIdFromUrl, replaceAstraUrlIdAndRegion } from '@/src/documents/utils';
 import { describe, it } from '@/tests/testlib';
 
-describe('unit.data-api.utils', () => {
+describe('unit.documents.utils', () => {
   describe('extractDbIdFromUri tests', () => {
     it('should extract the db id from the uri', () => {
       const endpoint1 = 'https://a5cf1913-b80b-4f44-ab9f-a8b1c98469d0-ap-south-1.apps.astra.datastax.com';

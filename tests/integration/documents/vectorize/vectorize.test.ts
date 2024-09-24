@@ -126,7 +126,7 @@ const createVectorizeProvidersTest = (db: Db, batchIdx: number) => (group: Vecto
   });
 };
 
-describe('(VECTORIZE) (LONG) integration.data-api.vectorize', ({ db }) => {
+describe('(VECTORIZE) (LONG) integration.documents.vectorize', ({ db }) => {
   const tests = createTestBranches();
   const groups = createTestGroups(tests);
 

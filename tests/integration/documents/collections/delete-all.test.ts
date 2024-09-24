@@ -15,7 +15,7 @@
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.collection.delete-all', { truncateColls: 'default:before' }, ({ collection }) => {
+describe('integration.documents.collections.delete-all', { truncateColls: 'default:before' }, ({ collection }) => {
   it('should deleteAll', async () => {
     const res = await collection.insertMany(Array.from({ length: 20 }, () => ({})));
     assert.strictEqual(res.insertedCount, 20);

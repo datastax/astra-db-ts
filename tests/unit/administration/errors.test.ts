@@ -18,7 +18,7 @@ import { DevOpsAPIResponseError } from '@/src/administration';
 import { FetcherResponseInfo } from '@/src/lib/api';
 import { describe, it } from '@/tests/testlib';
 
-describe('unit.devops.errors', () => {
+describe('unit.administration.errors', () => {
   describe('DevOpsAPIResponseError construction', () => {
     const rootError: FetcherResponseInfo = {
       status: 500,

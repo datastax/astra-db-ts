@@ -15,7 +15,7 @@
 import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.data-api.collection.distinct', { truncateColls: 'both:before' }, ({ collection, collection_ }) => {
+parallel('integration.documents.collections.distinct', { truncateColls: 'both:before' }, ({ collection, collection_ }) => {
   before(async () => {
     await collection.insertMany([
       { username: { full: 'a' }, car: [{ num: 1 }] },

@@ -18,7 +18,7 @@ import { describe, it } from '@/tests/testlib';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CursorIsStartedError, FindCursor } from '@/src/documents';
 
-describe('unit.data-api.cursor', () => {
+describe('unit.documents.cursor', () => {
   let httpClient: DataAPIHttpClient;
 
   const add1 = (a: number) => a + 1;

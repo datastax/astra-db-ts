@@ -17,7 +17,7 @@ import assert from 'assert';
 import { ObjectId, UUID } from '@/src/documents';
 import { describe, it } from '@/tests/testlib';
 
-describe('unit.data-api.ids', () => {
+describe('unit.documents.ids', () => {
   describe('UUID', () => {
     it('should properly construct a UUID', () => {
       const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');

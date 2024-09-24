@@ -17,7 +17,7 @@ import { DataAPIError, UpdateManyError } from '@/src/documents';
 import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.data-api.collection.update-many', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.update-many', { truncateColls: 'default:before' }, ({ collection }) => {
   it('should updateMany documents with ids', async (key) => {
     const docs = [{ _id: `${key}1`, age: 1, key }, { _id: `${key}2`, age: 2, key }, { _id: `${key}3`, age: 3, key }];
     const res = await collection.insertMany(docs);

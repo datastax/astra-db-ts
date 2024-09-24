@@ -16,7 +16,7 @@
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.data-api.collection.estimated-document-count', ({ collection }) => {
+describe('integration.documents.collections.estimated-document-count', ({ collection }) => {
   it('roughly works', async () => {
     const resp = await collection.estimatedDocumentCount();
     assert.ok(typeof <any>resp === 'number');

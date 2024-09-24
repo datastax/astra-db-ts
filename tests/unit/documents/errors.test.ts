@@ -23,7 +23,7 @@ import {
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('unit.data-api.errors', () => {
+describe('unit.documents.errors', () => {
   const commands = [
     { insertOne: { document: { name: 'John' } } },
     { insertOne: { document: { name: 'Jane' } } },

@@ -18,7 +18,7 @@ import assert from 'assert';
 import { CollectionNotFoundError } from '@/src/db/errors';
 import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 
-parallel('integration.data-api.collection.misc', ({ db }) => {
+parallel('integration.documents.collections.misc', ({ db }) => {
   it('times out on http2', async () => {
     const { db: newDb } = initTestObjects({ httpClient: 'default:http2' });
 

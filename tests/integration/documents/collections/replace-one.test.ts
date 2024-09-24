@@ -16,7 +16,7 @@
 import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.data-api.collection.replace-one', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.replace-one', { truncateColls: 'default:before' }, ({ collection }) => {
   it('should replaceOne', async (key) => {
     const res = await collection.insertOne({ name: 'deep_purple', key });
     const docId = res.insertedId;

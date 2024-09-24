@@ -17,7 +17,7 @@ import { TooManyDocumentsToCountError } from '@/src/documents';
 import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.data-api.collection.count-documents', { truncateColls: 'both:before' }, ({ collection, collection_ }) => {
+parallel('integration.documents.collections.count-documents', { truncateColls: 'both:before' }, ({ collection, collection_ }) => {
   const docs = Array.from({ length: 20 }, (_, i) => ({
     _id: `${i}`,
     name: 'Bloodywood',

@@ -15,7 +15,7 @@
 import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.data-api.collection.find-one-and-delete', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.find-one-and-delete', { truncateColls: 'default:before' }, ({ collection }) => {
   it('should findOneAndDelete', async () => {
     const res = await collection.insertOne({ name: 'kamelot' });
     const docId = res.insertedId;

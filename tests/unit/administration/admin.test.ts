@@ -20,10 +20,10 @@ import { DataAPIClient } from '@/src/client';
 import { describe, it } from '@/tests/testlib';
 import { DEFAULT_DEVOPS_API_ENDPOINTS } from '@/src/lib/api/constants';
 
-describe('unit.devops.admin', () => {
+describe('unit.administration.admin', () => {
   const internalOps = (data?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({
     dbOptions: { token: new StaticTokenProvider('old'), monitorCommands: false, ...data },
-    adminOptions: { adminToken: new StaticTokenProvider('old-admin'), monitorCommands: false, ...devops },
+    adminOptions: { adminToken: new StaticTokenProvider('old-admin'), monitorCommands: false, ...administration },
     emitter: null!,
     fetchCtx: { preferredType } as any,
     userAgent: '',

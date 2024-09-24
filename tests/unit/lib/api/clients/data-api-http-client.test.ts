@@ -18,7 +18,7 @@ import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { replacer, reviver } from '@/src/lib/api/clients/data-api-http-client';
 
-describe('unit.api.clients.data-api-http-client', () => {
+describe('unit.lib.api.clients.documents-http-client', () => {
   describe('replacer tests', () => {
     it('works', () => {
       const actual = JSON.stringify({

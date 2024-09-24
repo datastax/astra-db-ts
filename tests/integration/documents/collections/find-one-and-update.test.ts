@@ -15,7 +15,7 @@
 import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.data-api.collection.find-one-and-update', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.find-one-and-update', { truncateColls: 'default:before' }, ({ collection }) => {
   it('should findOneAndUpdate', async () => {
     const res = await collection.insertOne({ name: 'old', age: 0 });
     const docId = res.insertedId;

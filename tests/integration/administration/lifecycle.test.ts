@@ -19,7 +19,7 @@ import { TimeoutManager } from '@/src/lib/api/timeout-managers';
 import { background, initTestObjects, it, TEMP_DB_NAME } from '@/tests/testlib';
 import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
 
-background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.devops.lifecycle', () => {
+background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycle', () => {
   it('works', async () => {
     const { client } = initTestObjects({ monitoring: true });
     const admin = client.admin();

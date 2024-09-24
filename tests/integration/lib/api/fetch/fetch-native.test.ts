@@ -17,7 +17,7 @@ import { DEMO_APPLICATION_URI, it, parallel, TEST_APPLICATION_TOKEN, TEST_APPLIC
 import { DEFAULT_KEYSPACE, FetchNative } from '@/src/lib/api';
 import assert from 'assert';
 
-parallel('integration.api.fetch.fetch-native', () => {
+parallel('integration.lib.api.fetch.fetch-native', () => {
   const genericOptions = <const>{
     url: `${TEST_APPLICATION_URI}/api/json/v1/${DEFAULT_KEYSPACE}`,
     method: 'POST',
