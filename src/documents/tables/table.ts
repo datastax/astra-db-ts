@@ -1,4 +1,5 @@
-import { SomeDoc, VectorizeServiceOptions } from '@/src/data-api/index';
+import { SomeDoc } from '@/src/documents';
+import { VectorizeServiceOptions } from '@/src/db';
 
 const db = { createTable };
 
