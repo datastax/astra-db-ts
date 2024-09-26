@@ -16,9 +16,9 @@ import { WithTimeout } from '@/src/lib/types';
 import { WithKeyspace } from '@/src/db';
 
 /**
- * Options for dropping a collection.
+ * Options for dropping a collections.
  *
- * @field keyspace - Overrides the keyspace for the collection.
+ * @field keyspace - Overrides the keyspace for the collections.
  * @field maxTimeMS - The maximum time to allow the operation to run.
  *
  * @see Db.dropCollection

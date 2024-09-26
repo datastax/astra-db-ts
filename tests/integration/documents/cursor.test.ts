@@ -206,7 +206,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
     it('should get next document with next()', async () => {
       const cursor = collection.find({});
       const doc = await cursor.next();
-      assert.deepStrictEqual(doc, docs[0], 'Doc is not the first in the collection');
+      assert.deepStrictEqual(doc, docs[0], 'Doc is not the first in the collections');
       assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 2, 'Cursor did properly buffer');
     });
@@ -222,7 +222,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
         }
       }
 
-      assert.ok(doc, 'Doc is not the 21st in the collection');
+      assert.ok(doc, 'Doc is not the 21st in the collections');
       assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 19, 'Cursor did properly buffer');
     });

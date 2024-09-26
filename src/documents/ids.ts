@@ -36,15 +36,15 @@ const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9
  *
  * @example
  * ```typescript
- * const collection = await db.createCollection('myCollection'. {
+ * const collections = await db.createCollection('myCollection'. {
  *   defaultId: {
  *     type: 'uuidv7',
  *   },
  * });
  *
- * await collection.insertOne({ album: 'Jomsviking' });
+ * await collections.insertOne({ album: 'Jomsviking' });
  *
- * const doc = await collection.findOne({ album: 'Jomsviking' });
+ * const doc = await collections.findOne({ album: 'Jomsviking' });
  *
  * // Prints the UUID of the document
  * console.log(doc._id.toString());
@@ -55,9 +55,9 @@ const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9
  *
  * @example
  * ```typescript
- * await collection.insertOne({ _id: UUID.v4(), album: 'Berserker' });
+ * await collections.insertOne({ _id: UUID.v4(), album: 'Berserker' });
  *
- * const doc = await collection.findOne({ album: 'Berserker' });
+ * const doc = await collections.findOne({ album: 'Berserker' });
  *
  * // Prints the UUID of the document
  * console.log(doc._id.toString());
@@ -185,15 +185,15 @@ const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
  *
  * @example
  * ```typescript
- * const collection = await db.createCollection('myCollection'. {
+ * const collections = await db.createCollection('myCollection'. {
  *   defaultId: {
  *     type: 'objectId',
  *   },
  * });
  *
- * await collection.insertOne({ album: 'Inhuman Rampage' });
+ * await collections.insertOne({ album: 'Inhuman Rampage' });
  *
- * const doc = await collection.findOne({ album: 'Inhuman Rampage' });
+ * const doc = await collections.findOne({ album: 'Inhuman Rampage' });
  *
  * // Prints the ObjectId of the document
  * console.log(doc._id.toString());
@@ -204,9 +204,9 @@ const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
  *
  * @example
  * ```typescript
- * await collection.insertOne({ _id: new ObjectId(), album: 'Sacrificium' });
+ * await collections.insertOne({ _id: new ObjectId(), album: 'Sacrificium' });
  *
- * const doc = await collection.findOne({ album: 'Sacrificium' });
+ * const doc = await collections.findOne({ album: 'Sacrificium' });
  *
  * // Prints the ObjectId of the document
  * console.log(doc._id.toString());

@@ -26,7 +26,7 @@ export type * from './update/update-common';
 export type { UpdateManyResult, UpdateManyOptions } from './update/update-many';
 export type { UpdateOneOptions, UpdateOneResult } from './update/update-one';
 export type * from './update/replace-one';
-export type * from './common';
+export type * from '../../types/common';
 export type * from './dot-notation';
 export type * from './filter';
 export type * from './update-filter';

@@ -21,29 +21,32 @@ export type {
   VectorizeServiceOptions,
   DefaultIdOptions,
   IndexingOptions,
-} from './types/collections-common';
+} from '@/src/db/types/collections/collections-common';
 
 export type {
   CollectionOptions,
-} from './types/collection-options';
+} from '@/src/db/types/collections/collection-options';
 
 export type {
   CreateCollectionOptions,
-} from './types/create-collection';
+} from '@/src/db/types/collections/create-collection';
 
 export type {
   ListCollectionsOptions,
   FullCollectionInfo,
-} from './types/list-collection';
+} from '@/src/db/types/collections/list-collection';
 
 export type {
   DropCollectionOptions,
-} from './types/drop-collection';
+} from '@/src/db/types/collections/drop-collection';
 
 export type {
   RunCommandOptions,
-} from './types/command';
+} from '@/src/db/types/collections/command';
 
 export type {
   CollectionSpawnOptions,
-} from './types/spawn-collection';
+} from '@/src/db/types/collections/spawn-collection';
+
+export type * from '@/src/db/types/tables/create-table';
+export type * from '@/src/db/types/tables/table-schema';

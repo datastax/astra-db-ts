@@ -27,7 +27,7 @@ Try the following code after setting the following environment variables:
 ```typescript
 import { DataAPIClient, VectorDoc, UUID, ObjectId } from '@datastax/astra-db-ts';
 
-// Schema for the collection (VectorDoc adds the $vector field)
+// Schema for the collections (VectorDoc adds the $vector field)
 interface Idea extends VectorDoc {
   idea: string,
 }
@@ -38,7 +38,7 @@ const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
 
 (async () => {
   try {
-    // Creates collection, or gets it if it already exists with same options
+    // Creates collections, or gets it if it already exists with same options
     const collection = await db.createCollection<Idea>('vector_5_collection', {
       vector: {
         dimension: 5,
@@ -47,7 +47,7 @@ const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
       checkExists: false,
     });
 
-    // Insert many ideas into the collection
+    // Insert many ideas into the collections
     const ideas = [
       {
         idea: 'An AI quilt to help you sleep forever',
@@ -65,7 +65,7 @@ const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
     ];
     await collection.insertMany(ideas);
 
-    // Insert a specific idea into the collection
+    // Insert a specific idea into the collections
     const sneakersIdea = {
       _id: new ObjectId('507f191e810c19729de860ea'),
       idea: 'ChatGPT-integrated sneakers that talk to you',
@@ -202,7 +202,7 @@ Document fields stored using the `{ $date: number }` will also be returned as Da
 ```typescript
 import { DataAPIClient } from '@datastax/astra-db-ts';
 
-// Reference an untyped collection
+// Reference an untyped collections
 const client = new DataAPIClient('*TOKEN*');
 const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
 
@@ -253,7 +253,7 @@ const client = new DataAPIClient('*TOKEN*');
 const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
 
 (async () => {
-  // Create a collection with a UUIDv7 as the default ID
+  // Create a collections with a UUIDv7 as the default ID
   const collection = await db.createCollection<Person>('ids_test', { defaultId: { type: 'uuidv7' } });
   
   // You can manually set whatever ID you want

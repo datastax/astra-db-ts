@@ -31,21 +31,21 @@ import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constant
 
 parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
   describe('(LONG) createCollection', () => {
-    it('should create a collection', async () => {
+    it('should create a collections', async () => {
       const res = await db.createCollection('coll_1c', { indexing: { deny: ['*'] } });
       assert.ok(res);
       assert.strictEqual(res.collectionName, 'coll_1c');
       assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
     });
 
-    it('should create a collection in another keyspace', async () => {
+    it('should create a collections in another keyspace', async () => {
       const res = await db.createCollection('coll_2c', { keyspace: OTHER_KEYSPACE });
       assert.ok(res);
       assert.strictEqual(res.collectionName, 'coll_2c');
       assert.strictEqual(res.keyspace, OTHER_KEYSPACE);
     });
 
-    it('should throw CollectionAlreadyExistsError if collection already exists', async () => {
+    it('should throw CollectionAlreadyExistsError if collections already exists', async () => {
       await db.createCollection('coll_3c', { indexing: { deny: ['*'] } });
       try {
         await db.createCollection('coll_3c', { indexing: { deny: ['*'] } });
@@ -57,7 +57,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
       }
     });
 
-    it('should create collection idempotently if checkExists is false', async () => {
+    it('should create collections idempotently if checkExists is false', async () => {
       const res = await db.createCollection('coll_4c', { indexing: { deny: ['*'] } });
       assert.ok(res);
       assert.strictEqual(res.collectionName, 'coll_4c');
@@ -66,7 +66,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
       assert.strictEqual(res2.collectionName, 'coll_4c');
     });
 
-    it('should create collection with same options idempotently if checkExists is false', async () => {
+    it('should create collections with same options idempotently if checkExists is false', async () => {
       const res = await db.createCollection('coll_5c', { indexing: { deny: ['*'] } });
       assert.ok(res);
       assert.strictEqual(res.collectionName, 'coll_5c');
@@ -77,7 +77,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
       assert.strictEqual(res2.keyspace, DEFAULT_KEYSPACE);
     });
 
-    it('should fail creating collection with different options even if checkExists is false', async () => {
+    it('should fail creating collections with different options even if checkExists is false', async () => {
       const res = await db.createCollection('coll_6c', { indexing: { deny: ['*'] } });
       assert.ok(res);
       assert.strictEqual(res.collectionName, 'coll_6c');
@@ -90,7 +90,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
       }
     });
 
-    it('should create collection with different options in different keyspaces', async () => {
+    it('should create collections with different options in different keyspaces', async () => {
       const res = await db.createCollection('coll_7c', { indexing: { deny: ['*'] } });
       assert.ok(res);
       assert.strictEqual(res.collectionName, 'coll_7c');
@@ -117,7 +117,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
   });
 
   describe('(LONG) dropCollection', () => {
-    it('should drop a collection', async () => {
+    it('should drop a collections', async () => {
       await db.createCollection('coll_1d', { indexing: { deny: ['*'] } });
       const res = await db.dropCollection('coll_1d');
       assert.strictEqual(res, true);
@@ -126,7 +126,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
       assert.strictEqual(collection, undefined);
     });
 
-    it('should drop a collection using the collection method', async () => {
+    it('should drop a collections using the collections method', async () => {
       const coll = await db.createCollection('coll_2d', { indexing: { deny: ['*'] } });
       const res = await coll.drop();
       assert.strictEqual(res, true);
@@ -135,7 +135,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
       assert.strictEqual(collection, undefined);
     });
 
-    it('should drop a collection in non-default keyspace', async () => {
+    it('should drop a collections in non-default keyspace', async () => {
       await db.createCollection('coll_3d', { indexing: { deny: ['*'] }, keyspace: OTHER_KEYSPACE });
       const res = await db.dropCollection('coll_3d', { keyspace: OTHER_KEYSPACE });
       assert.strictEqual(res, true);
@@ -144,7 +144,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
       assert.strictEqual(collection, undefined);
     });
 
-    it('should not drop a collection in different keyspace', async () => {
+    it('should not drop a collections in different keyspace', async () => {
       await db.createCollection('coll_4d', { indexing: { deny: ['*'] } });
       const res = await db.dropCollection('coll_4d', { keyspace: OTHER_KEYSPACE });
       assert.strictEqual(res, true);
@@ -161,7 +161,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
       assert.ok(found);
     });
 
-    it('should return a list of collection infos with nameOnly set to false', async () => {
+    it('should return a list of collections infos with nameOnly set to false', async () => {
       const res = await db.listCollections({ nameOnly: false });
       const found = res.find((collection) => collection.name === DEFAULT_COLLECTION_NAME);
       assert.ok(found);
@@ -169,7 +169,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
       assert.strictEqual(found.options.vector.metric, 'cosine');
     });
 
-    it('should return a list of collection infos with nameOnly not set', async () => {
+    it('should return a list of collections infos with nameOnly not set', async () => {
       const res = await db.listCollections();
       const found = res.find((collection) => collection.name === DEFAULT_COLLECTION_NAME);
       assert.ok(found);
@@ -198,7 +198,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
       assert.ok(resp.status?.collections instanceof Array);
     });
 
-    it('should execute a collection-level command', async () => {
+    it('should execute a collections-level command', async () => {
       const uuid = UUID.v4();
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
       await collection.insertOne({ _id: uuid });
@@ -206,7 +206,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
       assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: uuid } }, errors: undefined });
     });
 
-    it('should execute a collection-level command in different keyspace', async () => {
+    it('should execute a collections-level command in different keyspace', async () => {
       const uuid = UUID.v4();
       const collection = db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE });
       await collection.insertOne({ _id: uuid });
@@ -214,7 +214,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
       assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: uuid } }, errors: undefined });
     });
 
-    it('should throw an error when performing collection-level command on non-existent collection', async () => {
+    it('should throw an error when performing collections-level command on non-existent collections', async () => {
       try {
         await db.command({ findOne: {} }, { collection: 'dasfsdaf' });
         assert.fail('Expected an error');

@@ -30,7 +30,7 @@ import { IsDate, IsNum } from '@/src/documents/collections/types/utils';
  *   num: number,
  * }
  *
- * db.collection<BasicSchema>('coll_name').findOne({
+ * db.collections<BasicSchema>('coll_name').findOne({
  *   $and: [
  *     { _id: { $in: ['abc', 'def'] } },
  *     { $not: { arr: { $size: 0 } } },
@@ -69,7 +69,7 @@ export type Filter<Schema extends SomeDoc> = {
  *   num: number,
  * }
  *
- * db.collection<BasicSchema>('coll_name').findOne({
+ * db.collections<BasicSchema>('coll_name').findOne({
  *   $and: [
  *     { _id: { $in: ['abc', 'def'] } },
  *     { $not: { arr: { $size: 0 } } },

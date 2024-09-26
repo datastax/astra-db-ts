@@ -78,7 +78,7 @@ export interface NoUpsertUpdateOptions {
  *
  * @example
  * ```typescript
- * const result = await collection.updateOne({
+ * const result = await collections.updateOne({
  *   _id: 'abc'
  * }, {
  *   $set: { name: 'John' }

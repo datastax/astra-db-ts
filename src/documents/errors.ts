@@ -120,7 +120,7 @@ export interface DataAPIDetailedErrorDescriptor {
  *
  * Useful for `instanceof` checks.
  *
- * This is *only* for Data API related errors, such as a non-existent collection, or a duplicate key error. It
+ * This is *only* for Data API related errors, such as a non-existent collections, or a duplicate key error. It
  * is *not*, however, for errors such as an HTTP network error, or a malformed request. The exception being timeouts,
  * which are represented by the {@link DataAPITimeoutError} class.
  *
@@ -195,10 +195,10 @@ export class DataAPITimeoutError extends DataAPIError {
  *
  * @example
  * ```typescript
- * await collection.insertMany('<100_length_array>');
+ * await collections.insertMany('<100_length_array>');
  *
  * try {
- *   await collection.countDocuments({}, 50);
+ *   await collections.countDocuments({}, 50);
  * } catch (e) {
  *   if (e instanceof TooManyDocumentsToCountError) {
  *     console.log(e.limit); // 50
@@ -249,7 +249,7 @@ export class TooManyDocumentsToCountError extends DataAPIError {
  *
  * @example
  * ```typescript
- * await collection.find({}).toArray();
+ * await collections.find({}).toArray();
  *
  * try {
  *   await cursor.limit(10);
@@ -341,7 +341,7 @@ export class DataAPIResponseError extends DataAPIError {
  *
  * Useful for `instanceof` checks.
  *
- * This is *only* for Data API related errors, such as a non-existent collection, or a duplicate key error. It
+ * This is *only* for Data API related errors, such as a non-existent collections, or a duplicate key error. It
  * is *not*, however, for errors such as an HTTP network error, or a malformed request. The exception being timeouts,
  * which are represented by the {@link DataAPITimeoutError} class.
  *

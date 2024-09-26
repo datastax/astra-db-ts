@@ -153,7 +153,7 @@ export class AstraDbAdmin extends DbAdmin {
    * other metadata.
    *
    * The method issues a request to the DevOps API each time it is invoked, without caching mechanisms;
-   * this ensures up-to-date information for usages such as real-time collection validation by the application.
+   * this ensures up-to-date information for usages such as real-time collections validation by the application.
    *
    * @example
    * ```typescript

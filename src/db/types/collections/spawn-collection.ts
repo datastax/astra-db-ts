@@ -16,7 +16,7 @@ import { WithKeyspace } from '@/src/db';
 import { EmbeddingHeadersProvider } from '@/src/documents';
 
 /**
- * Options for spawning a new collection.
+ * Options for spawning a new collections.
  *
  * @public
  */
@@ -27,7 +27,7 @@ export interface CollectionSpawnOptions extends WithKeyspace {
    */
   embeddingApiKey?: string | EmbeddingHeadersProvider | null,
   /**
-   * The default `maxTimeMS` for all operations on the collection. Will override the maxTimeMS set in the DataAPIClient
+   * The default `maxTimeMS` for all operations on the collections. Will override the maxTimeMS set in the DataAPIClient
    * options; it can be overridden on a per-operation basis.
    *
    * This does *not* mean the request will be cancelled after this time, but rather that the client will wait

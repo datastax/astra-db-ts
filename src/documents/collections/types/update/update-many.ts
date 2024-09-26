@@ -53,7 +53,7 @@ export interface UpdateManyOptions extends WithTimeout {
  *
  * @example
  * ```typescript
- * const result = await collection.updateOne({
+ * const result = await collections.updateOne({
  *   _id: 'abc'
  * }, {
  *   $set: { name: 'John' }

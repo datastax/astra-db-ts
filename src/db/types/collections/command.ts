@@ -17,7 +17,7 @@ import { WithTimeout } from '@/src/lib';
 /**
  * Options for executing some arbitrary command.
  *
- * @field collection - The collection to run the command on. If not provided, the command is run on the database.
+ * @field collections - The collections to run the command on. If not provided, the command is run on the database.
  * @field keyspace - Overrides the keyspace to run the command in. If not provided, the default keyspace is used.
  *
  * @see Db.command
@@ -26,7 +26,7 @@ import { WithTimeout } from '@/src/lib';
  */
 export interface RunCommandOptions extends WithTimeout {
   /**
-   * The collection to run the command on. If not provided, the command is run on the database.
+   * The collections to run the command on. If not provided, the command is run on the database.
    */
   collection?: string,
   /**
