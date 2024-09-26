@@ -248,17 +248,17 @@ export type CqlType2TSType<T, Def> =
 export type CqlMapType2TsType<Def> =
   Def extends { keyType: infer KeyType, valueType: infer ValueType }
     ? Map<CqlType2TSType<KeyType, never>, CqlType2TSType<ValueType, never>>
-    : never;
+    : 'Error: invalid generics definition for \'map\'; should have keyType and valueType set';
 
 export type CqlListType2TsType<Def> =
   Def extends { valueType: infer ValueType }
     ? Array<CqlType2TSType<ValueType, never>>
-    : never;
+    : 'Error: invalid generics definition for \'list/vector\'; should have valueType set';
 
 export type CqlSetType2TsType<Def> =
   Def extends { valueType: infer ValueType }
     ? Set<CqlType2TSType<ValueType, never>>
-    : never;
+    : 'Error: invalid generics definition for \'set\'; should have valueType set';
 
 export interface CreateTableDefinition {
   columns: Record<string, CreateTableColumnDefinition>,
