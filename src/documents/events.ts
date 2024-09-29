@@ -20,8 +20,8 @@ import { hrTimeMs } from '@/src/lib/api/clients/http-client';
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
  * command's lifecycle. Intended for use for monitoring and logging purposes.
  *
- * **Note that these emit *real* commands, not any abstracted commands like "insertMany" or "deleteAll",
- * which have to be translated into appropriate Data API commands.**
+ * **Note that these emit *real* commands, not any abstracted commands like "insertMany" or "updateMany",
+ * which may be split into multiple of those commands under the hood.**
  *
  * @public
  */
@@ -43,8 +43,8 @@ export type DataAPICommandEvents = {
 /**
  * Common base class for all command events.
  *
- * **Note that these emit *real* commands, not any abstracted commands like "insertMany" or "deleteAll",
- * which have to be translated into appropriate Data API commands.**
+ * **Note that these emit *real* commands, not any abstracted commands like "insertMany" or "updateMany",
+ * which may be split into multiple of those commands under the hood.**
  *
  * @public
  */
@@ -53,8 +53,6 @@ export abstract class CommandEvent {
    * The command object. Equal to the response body of the HTTP request.
    *
    * Note that this is the actual raw command object; it's not necessarily 1:1 with methods called on the collection/db.
-   *
-   * For example, a `deleteAll` method on a collection will be translated into a `deleteMany` command.
    *
    * @example
    * ```typescript
@@ -92,8 +90,6 @@ export abstract class CommandEvent {
    *
    * This is the key of the command object. For example, if the command object is
    * `{ insertOne: { document: { name: 'John' } } }`, the command name is `insertOne`.
-   *
-   * Meaning, abstracted commands like `deleteAll` will be shown as their actual command equivalents.
    */
   public readonly commandName: string;
 
@@ -119,8 +115,8 @@ export abstract class CommandEvent {
 /**
  * Emitted when a command is started, before the initial HTTP request is made.
  *
- * **Note that these emit *real* commands, not any abstracted commands like "insertMany" or "deleteAll",
- * which have to be translated into appropriate Data API commands.**
+ * **Note that these emit *real* commands, not any abstracted commands like "insertMany" or "updateMany",
+ * which may be split into multiple of those commands under the hood.**
  *
  * See {@link CommandEvent} for more information about all the common properties available on this event.
  *
@@ -146,8 +142,8 @@ export class CommandStartedEvent extends CommandEvent {
 /**
  * Emitted when a command has succeeded.
  *
- * **Note that these emit *real* commands, not any abstracted commands like "insertMany" or "deleteAll",
- * which have to be translated into appropriate Data API commands.**
+ * **Note that these emit *real* commands, not any abstracted commands like "insertMany" or "updateMany",
+ * which may be split into multiple of those commands under the hood.**
  *
  * See {@link CommandEvent} for more information about all the common properties available on this event.
  *
@@ -186,8 +182,8 @@ export class CommandSucceededEvent extends CommandEvent {
 /**
  * Emitted when a command has errored.
  *
- * **Note that these emit *real* commands, not any abstracted commands like "insertMany" or "deleteAll",
- * which have to be translated into appropriate Data API commands.**
+ * **Note that these emit *real* commands, not any abstracted commands like "insertMany" or "updateMany",
+ * which may be split into multiple of those commands under the hood.**
  *
  * See {@link CommandEvent} for more information about all the common properties available on this event.
  *

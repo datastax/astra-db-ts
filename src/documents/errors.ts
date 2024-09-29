@@ -80,7 +80,7 @@ export interface DataAPIDetailedErrorDescriptor {
   readonly errorDescriptors: DataAPIErrorDescriptor[],
   /**
    * The original command that was sent to the API, as a plain object. This is the *raw* command, not necessarily in
-   * the exact format the client may use, even with `deleteAll`.
+   * the exact format the client may use, in some rare cases.
    *
    * @example
    * ```typescript

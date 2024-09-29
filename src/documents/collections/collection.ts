@@ -664,24 +664,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Deletes all documents from the collection.
-   *
-   * Unlike {@link Collection.deleteMany}, this method is atomic and will delete all documents in the collection in one go,
-   * without making multiple network requests to the server.
-   *
-   * @remarks Use with caution. Wear a helmet. Don't say I didn't warn you.
-   *
-   * @param options - The options for this operation.
-   *
-   * @deprecated - Prefer the traditional `deleteMany({})` instead
-   *
-   * @returns A promise that resolves when the operation is complete.
-   */
-  public async deleteAll(options?: WithTimeout): Promise<void> {
-    await this.deleteMany({}, options);
-  }
-
-  /**
    * Find documents on the collection, optionally matching the provided filter.
    *
    * Also accepts `sort`, `limit`, `skip`, `includeSimilarity`, and `projection` options.
