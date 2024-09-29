@@ -26,7 +26,7 @@ import { CreateCollectionCommand, CreateCollectionOptions } from '@/src/db/types
 import { TokenProvider } from '@/src/lib';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client';
 import { KeyspaceRef } from '@/src/lib/api/clients/types';
-import { resolveKeyspace, validateDataAPIEnv } from '@/src/lib/utils';
+import { validateDataAPIEnv } from '@/src/lib/utils';
 import { EmbeddingHeadersProvider } from '@/src/documents';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
 import { CollectionSpawnOptions } from '@/src/db/types/spawn-collection';
@@ -95,8 +95,8 @@ export class Db {
 
     this._keyspace = {
       ref: (rootOpts.environment === 'astra')
-        ? resolveKeyspace(combinedDbOpts) ?? DEFAULT_KEYSPACE
-        : resolveKeyspace(combinedDbOpts),
+        ? combinedDbOpts.keyspace ?? DEFAULT_KEYSPACE
+        : combinedDbOpts.keyspace,
     };
 
     this.#httpClient = new DataAPIHttpClient({
@@ -149,23 +149,6 @@ export class Db {
   public get keyspace(): string {
     if (!this._keyspace.ref) {
       throw new Error('No keyspace set for DB (can\'t do db.keyspace, or perform any operation requiring it). Use `db.useKeyspace`, or pass the keyspace as an option parameter explicitly.');
-    }
-    return this._keyspace.ref;
-  }
-
-  /**
-   * The default keyspace to use for all operations in this database, unless overridden in a method call.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link Db.keyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link Db.keyspace} instead.
-   */
-  public get namespace(): string {
-    if (!this._keyspace.ref) {
-      throw new Error('No keyspace set for DB (can\'t do db.namespace, or perform any operation requiring it). Use `db.useKeyspace`, or pass the keyspace as an option parameter explicitly.');
     }
     return this._keyspace.ref;
   }
@@ -224,21 +207,6 @@ export class Db {
    * @param keyspace - The keyspace to use
    */
   public useKeyspace(keyspace: string) {
-    this._keyspace.ref = keyspace;
-  }
-
-  /**
-   * Sets the default working keyspace of the `Db` instance. Does not retroactively update any previous collections
-   * spawned from this `Db` to use the new keyspace.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link Db.useKeyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link Db.useKeyspace} instead.
-   */
-  public useNamespace(keyspace: string) {
     this._keyspace.ref = keyspace;
   }
 
@@ -408,7 +376,7 @@ export class Db {
    */
   public async collections(options?: WithKeyspace & WithTimeout): Promise<Collection[]> {
     const collections = await this.listCollections({
-      keyspace: resolveKeyspace(options),
+      keyspace: options?.keyspace,
       maxTimeMS: options?.maxTimeMS,
       nameOnly: true,
     });
@@ -479,13 +447,13 @@ export class Db {
     };
 
     const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
-    const keyspace = resolveKeyspace(options) ?? this.keyspace;
+    const keyspace = options?.keyspace ?? this.keyspace;
 
     if (options?.checkExists !== false) {
       const collections = await this.listCollections({ keyspace: keyspace, maxTimeMS: timeoutManager.msRemaining() });
 
       if (collections.some(c => c.name === collectionName)) {
-        throw new CollectionAlreadyExistsError(resolveKeyspace(options) ?? this.keyspace, collectionName);
+        throw new CollectionAlreadyExistsError(keyspace, collectionName);
       }
     }
 
@@ -649,13 +617,11 @@ export function validateDbOpts(opts: DbSpawnOptions | nullish) {
     return;
   }
 
-  for (const prop of <const>['keyspace', 'namespace']) {
-    validateOption(`dbOptions.${prop}`, opts[prop], 'string', false, (keyspace) => {
-      if (!keyspace.match(/^\w{1,48}$/)) {
-        throw new Error(`Invalid ${prop} option; expected a string of 1-48 alphanumeric characters`);
-      }
-    });
-  }
+  validateOption(`dbOptions.keyspace`, opts.keyspace, 'string', false, (keyspace) => {
+    if (!keyspace.match(/^\w{1,48}$/)) {
+      throw new Error(`Invalid keyspace option; expected a string of 1-48 alphanumeric characters`);
+    }
+  });
 
   validateOption('dbOptions.monitorCommands', opts.monitorCommands, 'boolean');
 

@@ -13,13 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import {
-  AdminBlockingOptions,
-  AdminSpawnOptions,
-  CreateKeyspaceOptions,
-  CreateNamespaceOptions,
-  FullDatabaseInfo,
-} from '@/src/administration/types';
+import { AdminBlockingOptions, AdminSpawnOptions, CreateKeyspaceOptions, FullDatabaseInfo } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
 import { WithTimeout } from '@/src/lib/types';
 import { InternalRootClientOpts } from '@/src/client/types';
@@ -199,18 +193,6 @@ export class AstraDbAdmin extends DbAdmin {
   }
 
   /**
-   * Lists the keyspaces in the database.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link AstraDbAdmin.listKeyspaces}, and will be removed
-   * in an upcoming major version.
-   *
-   * @deprecated - Prefer {@link AstraDbAdmin.listKeyspaces} instead.
-   */
-  public override async listNamespaces(options?: WithTimeout): Promise<string[]> {
-    return this.listKeyspaces(options);
-  }
-
-  /**
    * Creates a new, additional, keyspace for this database.
    *
    * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
@@ -258,20 +240,6 @@ export class AstraDbAdmin extends DbAdmin {
   }
 
   /**
-   * Creates a new, additional, keyspace for this database.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link AstraDbAdmin.createKeyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link AstraDbAdmin.createKeyspace} instead.
-   */
-  public override async createNamespace(keyspace: string, options?: CreateNamespaceOptions): Promise<void> {
-    return this.createKeyspace(keyspace, { ...options, updateDbKeyspace: options?.updateDbNamespace });
-  }
-
-  /**
    * Drops a keyspace from this database.
    *
    * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
@@ -313,20 +281,6 @@ export class AstraDbAdmin extends DbAdmin {
       defaultPollInterval: 1000,
       options,
     });
-  }
-
-  /**
-   Drops a keyspace from this database.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link AstraDbAdmin.dropKeyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link AstraDbAdmin.dropKeyspace} instead.
-   */
-  public override async dropNamespace(keyspace: string, options?: AdminBlockingOptions): Promise<void> {
-    return this.dropKeyspace(keyspace, options);
   }
 
   /**

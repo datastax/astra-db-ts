@@ -37,7 +37,7 @@ import { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/cl
 import { nullish, TokenProvider } from '@/src/lib';
 import { hrTimeMs, HttpClient } from '@/src/lib/api/clients/http-client';
 import { CollectionSpawnOptions } from '@/src/db';
-import { isNullish, resolveKeyspace } from '@/src/lib/utils';
+import { isNullish } from '@/src/lib/utils';
 import { EmbeddingHeadersProvider, ObjectId, UUID } from '@/src/documents';
 
 /**
@@ -158,7 +158,7 @@ export class DataAPIHttpClient extends HttpClient {
       url: this.baseUrl,
       timeoutManager: timeoutManager,
       collection: options?.collection,
-      keyspace: resolveKeyspace(options, true),
+      keyspace: options?.keyspace,
       command: command,
     });
   }

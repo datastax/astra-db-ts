@@ -69,18 +69,6 @@ export abstract class CommandEvent {
   public readonly keyspace: string;
 
   /**
-   * The keyspace the command is being run in.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link CommandEvent.keyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link CommandEvent.keyspace} instead.
-   */
-  public readonly namespace: string;
-
-  /**
    * The collection the command is being run on, if applicable.
    */
   public readonly collection?: string;
@@ -105,7 +93,7 @@ export abstract class CommandEvent {
    */
   protected constructor(info: DataAPIRequestInfo) {
     this.command = info.command;
-    this.keyspace = this.namespace = info.keyspace || DEFAULT_KEYSPACE;
+    this.keyspace = info.keyspace || DEFAULT_KEYSPACE;
     this.collection = info.collection;
     this.commandName = Object.keys(info.command)[0];
     this.url = info.url;

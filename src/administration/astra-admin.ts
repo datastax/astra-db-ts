@@ -28,7 +28,6 @@ import { validateAdminOpts } from '@/src/administration/utils';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
 import { TokenProvider, WithTimeout } from '@/src/lib';
-import { resolveKeyspace } from '@/src/lib/utils';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -369,7 +368,7 @@ export class AstraAdmin {
       capacityUnits: 1,
       tier: 'serverless',
       dbType: 'vector',
-      keyspace: resolveKeyspace(config) || DEFAULT_KEYSPACE,
+      keyspace: config.keyspace || DEFAULT_KEYSPACE,
       ...config,
     };
 

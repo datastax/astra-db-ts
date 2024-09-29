@@ -48,13 +48,11 @@ export type {
 
 export type {
   CreateKeyspaceOptions,
-  CreateNamespaceOptions,
 } from './db-admin/create-keyspace';
 
 export type {
   KeyspaceReplicationOptions,
   LocalCreateKeyspaceOptions,
-  LocalCreateNamespaceOptions,
 } from './db-admin/local-create-keyspace';
 
 export type {

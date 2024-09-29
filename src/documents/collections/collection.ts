@@ -69,7 +69,6 @@ import { InsertManyCommand, InsertManyDocumentResponse } from '@/src/documents/c
 import { CollectionNotFoundError } from '@/src/db/errors';
 import { CollectionOptions, CollectionSpawnOptions, Db } from '@/src/db';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import { resolveKeyspace } from '@/src/lib/utils';
 import { WithTimeout } from '@/src/lib';
 import { SomeId } from '@/src/documents';
 
@@ -116,18 +115,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   public readonly keyspace!: string;
 
   /**
-   * The keyspace that the collection resides in.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link Collection.keyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link Collection.keyspace} instead.
-   */
-  public readonly namespace!: string;
-
-  /**
    * Use {@link Db.collection} to obtain an instance of this class.
    *
    * @internal
@@ -139,12 +126,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     });
 
     Object.defineProperty(this, 'keyspace', {
-      value: resolveKeyspace(opts) ?? db.keyspace,
-      writable: false,
-    });
-
-    Object.defineProperty(this, 'namespace', {
-      value: this.keyspace,
+      value: opts?.keyspace ?? db.keyspace,
       writable: false,
     });
 
