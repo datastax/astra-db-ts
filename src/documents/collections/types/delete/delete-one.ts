@@ -43,25 +43,6 @@ export interface DeleteOneOptions extends WithTimeout {
    * @defaultValue null
    */
   sort?: Sort,
-  /**
-   * An optional vector to use of the appropriate dimensionality to perform an ANN vector search on the collection
-   * to find the closest matching document.
-   *
-   * This is purely for the user's convenience and intuitiveness—it is equivalent to setting the `$vector` field in the
-   * sort field itself. The two are interchangeable, but mutually exclusive.
-   *
-   * If the sort field is already set, an error will be thrown. If you really need to use both, you can set the $vector
-   * field in the sort object directly.
-   *
-   * @deprecated - Prefer to use `sort: { $vector: [...] }` instead
-   */
-  vector?: number[],
-  /**
-   * Akin to {@link DeleteOneOptions.vector}, but for `$vectorize`.
-   *
-   * @deprecated - Prefer to use `sort: { $vectorize: '...' }` instead
-   */
-  vectorize?: string,
 }
 
 /**

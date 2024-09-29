@@ -13,46 +13,12 @@
 // limitations under the License.
 
 import type { IdOf } from '@/src/documents/collections/types';
-import { WithTimeout } from '@/src/lib/types';
 
 /** @internal */
 export interface InsertOneCommand {
   insertOne: {
     document: object,
   }
-}
-
-/**
- * Options for the insertOne command.
- *
- * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
- *
- * @see Collection.insertOne
- *
- * @public
- */
-export interface InsertOneOptions extends WithTimeout {
-  /**
-   * An optional vector to use for the document, if using a vector-enabled collection.
-   *
-   * This is purely for the user's convenience and intuitiveness—it is equivalent to setting the `$vector` field on the
-   * document itself. The two are interchangeable, but mutually exclusive.
-   *
-   * **NB. Setting this field will cause a shallow copy of the document to be made.** If performance is a concern, it
-   * is recommended to directly set the `$vector` field on the document itself.
-   *
-   * If the document already has a `$vector` field, and this is set, the `$vector` field will be overwritten. It is
-   * up to the user to ensure that both fields are not set at once.
-   *
-   * @deprecated - Prefer to set the `$vector` field in the doc directly
-   */
-  vector?: number[],
-  /**
-   Akin to {@link InsertOneOptions.vector}, but for `$vectorize`.
-   *
-   * @deprecated - Prefer to set the `$vectorize` field in the doc directly
-   */
-  vectorize?: string,
 }
 
 /**

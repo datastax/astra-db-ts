@@ -15,9 +15,11 @@
 import { normalizeSort } from '../utils';
 import { FindCursor } from '@/src/documents/cursor';
 import {
-  BulkWriteError, DataAPIDetailedErrorDescriptor,
+  BulkWriteError,
+  DataAPIDetailedErrorDescriptor,
   DataAPIResponseError,
-  DeleteManyError, InsertManyError,
+  DeleteManyError,
+  InsertManyError,
   mkRespErrorFromResponse,
   mkRespErrorFromResponses,
   TooManyDocumentsToCountError,
@@ -42,7 +44,6 @@ import {
   IdOf,
   InsertManyOptions,
   InsertManyResult,
-  InsertOneOptions,
   InsertOneResult,
   MaybeId,
   ModifyResult,
@@ -193,20 +194,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns The ID of the inserted document.
    */
-  public async insertOne(document: MaybeId<Schema>, options?: InsertOneOptions): Promise<InsertOneResult<Schema>> {
+  public async insertOne(document: MaybeId<Schema>, options?: WithTimeout): Promise<InsertOneResult<Schema>> {
     const command: InsertOneCommand = {
       insertOne: { document },
     };
-
-    const { vector, vectorize } = <any>options ?? {};
-
-    if (vector) {
-      command.insertOne.document = { ...command.insertOne.document, $vector: vector };
-    }
-
-    if (vectorize) {
-      command.insertOne.document = { ...command.insertOne.document, $vectorize: vectorize };
-    }
 
     const resp = await this.#httpClient.executeCommand(command, options);
 
@@ -289,32 +280,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   public async insertMany(documents: MaybeId<Schema>[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>> {
     const chunkSize = options?.chunkSize ?? 50;
 
-    const { vectors, vectorize } = <any>options ?? {};
-
-    if (vectors) {
-      if (vectors.length !== documents.length) {
-        throw new Error('The number of vectors must match the number of documents');
-      }
-
-      for (let i = 0, n = documents.length; i < n; i++) {
-        if (vectors[i]) {
-          documents[i] = { ...documents[i], $vector: vectors[i] };
-        }
-      }
-    }
-
-    if (vectorize) {
-      if (vectorize.length !== documents.length) {
-        throw new Error('The number of vectors must match the number of documents');
-      }
-
-      for (let i = 0, n = documents.length; i < n; i++) {
-        if (vectorize[i]) {
-          documents[i] = { ...documents[i], $vectorize: vectorize[i] };
-        }
-      }
-    }
-
     const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
 
     const insertedIds = (options?.ordered)
@@ -367,8 +332,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictSort
    */
   public async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions): Promise<UpdateOneResult<Schema>> {
-    options = coalesceVectorSpecialsIntoSort(options);
-
     const command: UpdateOneCommand = {
       updateOne: {
         filter,
@@ -557,8 +520,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictSort
    */
   public async replaceOne(filter: Filter<Schema>, replacement: NoId<Schema>, options?: ReplaceOneOptions): Promise<ReplaceOneResult<Schema>> {
-    options = coalesceVectorSpecialsIntoSort(options);
-
     const command: FindOneAndReplaceCommand = {
       findOneAndReplace: {
         filter,
@@ -626,8 +587,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictSort
    */
   public async deleteOne(filter: Filter<Schema> = {}, options?: DeleteOneOptions): Promise<DeleteOneResult> {
-    options = coalesceVectorSpecialsIntoSort(options);
-
     const command: DeleteOneCommand = {
       deleteOne: { filter },
     };
@@ -807,7 +766,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictProjection
    */
   public find(filter: Filter<Schema>, options?: FindOptions): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>> {
-    return new FindCursor(this.keyspace, this.#httpClient, filter as any, coalesceVectorSpecialsIntoSort(options));
+    return new FindCursor(this.keyspace, this.#httpClient, filter as any, options);
   }
 
   /**
@@ -855,8 +814,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictProjection
    */
   public async findOne(filter: Filter<Schema>, options?: FindOneOptions): Promise<FoundDoc<Schema> | null> {
-    options = coalesceVectorSpecialsIntoSort(options);
-
     const command: FindOneCommand = {
       findOne: {
         filter,
@@ -1144,8 +1101,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   ): Promise<WithId<Schema> | null>
 
   public async findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options?: FindOneAndReplaceOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
-    options = coalesceVectorSpecialsIntoSort(options);
-
     const command: FindOneAndReplaceCommand = {
       findOneAndReplace: {
         filter,
@@ -1248,8 +1203,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   ): Promise<WithId<Schema> | null>
 
   public async findOneAndDelete(filter: Filter<Schema>, options?: FindOneAndDeleteOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
-    options = coalesceVectorSpecialsIntoSort(options);
-
     const command: FindOneAndDeleteCommand = {
       findOneAndDelete: { filter },
     };
@@ -1359,8 +1312,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   ): Promise<WithId<Schema> | null>
 
   public async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: FindOneAndUpdateOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
-    options = coalesceVectorSpecialsIntoSort(options);
-
     const command: FindOneAndUpdateCommand = {
       findOneAndUpdate: {
         filter,
@@ -1509,36 +1460,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     return this.#httpClient;
   }
 }
-
-// -- Utils-------------------------------------------------------------------------------------------------
-
-interface OptionsWithSort {
-  sort?: Record<string, any>;
-  vector?: number[];
-  vectorize?: string;
-}
-
-const coalesceVectorSpecialsIntoSort = <T extends OptionsWithSort>(options: T | undefined): T | undefined => {
-  if (options?.vector && options.vectorize) {
-    throw new Error('Cannot set both vectors and vectorize options');
-  }
-
-  if (options?.vector) {
-    if (options.sort) {
-      throw new Error('Can\'t use both `sort` and `vector` options at once; if you need both, include a $vector key in the sort object');
-    }
-    return { ...options, sort: { $vector: options.vector } };
-  }
-
-  if (options?.vectorize) {
-    if (options.sort) {
-      throw new Error('Can\'t use both `sort` and `vectorize` options at once; if you need both, include a $vectorize key in the sort object');
-    }
-    return { ...options, sort: { $vectorize: options.vectorize } };
-  }
-
-  return options;
-};
 
 // -- Insert Many ------------------------------------------------------------------------------------------
 

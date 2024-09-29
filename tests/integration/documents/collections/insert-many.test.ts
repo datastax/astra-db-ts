@@ -85,16 +85,10 @@ parallel('integration.documents.collections.insert-many', { truncateColls: 'defa
 
   it('should insertOne with vectors', async (key) => {
     const res = await collection.insertMany([
-      { name: 'a', key },
+      { name: 'a', key, $vector: [1, 1, 1, 1, 1] },
       { name: 'b', key },
-      { name: 'c', key },
-    ], {
-      vectors: [
-        [1, 1, 1, 1, 1],
-        undefined,
-        [1, 1, 1, 1, 1],
-      ],
-    });
+      { name: 'c', key, $vector: [1, 1, 1, 1, 1] },
+    ]);
     assert.ok(res);
 
     const res1 = await collection.findOne({ name: 'a', key }, { projection: { $vector: 1 } });
@@ -102,53 +96,6 @@ parallel('integration.documents.collections.insert-many', { truncateColls: 'defa
 
     const res2 = await collection.findOne({ name: 'b', key });
     assert.strictEqual(res2?.$vector, undefined);
-  });
-
-  it('should error out when inserting with mis-matched vectors', async () => {
-    await assert.rejects(async () => {
-      await collection.insertMany([
-        { name: 'a' },
-        { name: 'b' },
-        { name: 'c' },
-      ], {
-        vectors: [
-          [1, 1, 1, 1, 1],
-          undefined,
-          [1, 1, 1, 1, 1],
-          [1, 1, 1, 1, 1],
-        ],
-      });
-    }, Error);
-  });
-
-  it('should error out when inserting with mis-matched vectorize', async () => {
-    await assert.rejects(async () => {
-      await collection.insertMany([
-        { name: 'a' },
-        { name: 'b' },
-        { name: 'c' },
-      ], {
-        vectorize: [
-          'Arch Enemy is a Swedish melodic death metal band, originally a supergroup from Halmstad, formed in 1995.',
-          'Equilibrium is a German symphonic metal band',
-          undefined,
-          'Green Day is an American rock band formed in 1986 by lead vocalist and guitarist Billie Joe Armstrong and bassist Mike Dirnt',
-        ],
-      });
-    }, Error);
-  });
-
-  it('should fail when inserting with both vector and vectorize', async () => {
-    await assert.rejects(async () => {
-      await collection.insertMany([
-        { name: 'a' },
-        { name: 'b' },
-        { name: 'c' },
-      ], {
-        vectors: [[1, 1, 1, 1, 1]],
-        vectorize: ['Hello there.'],
-      });
-    }, Error);
   });
 
   it('should insertMany documents ordered', async () => {
