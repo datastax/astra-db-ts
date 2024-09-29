@@ -183,22 +183,6 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
     });
   });
 
-  describe('collections', () => {
-    it('should return the collections in the db', async () => {
-      const collections = await db.collections();
-      assert.ok(<any>collections instanceof Array);
-      assert.ok(collections.some(c => c.collectionName === DEFAULT_COLLECTION_NAME));
-      assert.ok(collections.map(c => c.keyspace).every(ns => ns === DEFAULT_KEYSPACE));
-    });
-
-    it('should return the collections in the db in another keyspace', async () => {
-      const collections = await db.collections({ keyspace: OTHER_KEYSPACE });
-      assert.ok(<any>collections instanceof Array);
-      assert.deepStrictEqual(collections.map(c => c.collectionName), [DEFAULT_COLLECTION_NAME]);
-      assert.deepStrictEqual(collections.map(c => c.keyspace), [OTHER_KEYSPACE]);
-    });
-  });
-
   describe('command', () => {
     it('should execute a db-level command', async () => {
       const resp = await db.command({ findCollections: {} });

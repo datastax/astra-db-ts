@@ -352,39 +352,6 @@ export class Db {
   }
 
   /**
-   * Establishes references to all the collections in the working/given keyspace.
-   *
-   * You can specify a keyspace in the options parameter, which will override the default keyspace for this `Db` instance.
-   *
-   * @example
-   * ```typescript
-   * // Uses db's default keyspace
-   * const collections1 = await db.collections();
-   * console.log(collections1); // [Collection<SomeDoc>, Collection<SomeDoc>]
-   *
-   * // Overrides db's default keyspace
-   * const collections2 = await db.collections({ keyspace: 'my_keyspace' });
-   * console.log(collections2); // [Collection<SomeDoc>]
-   * ```
-   *
-   * @param options - Options for this operation.
-   *
-   * @returns A promise that resolves to an array of references to the working Db's collections.
-   *
-   * @deprecated - Essentially equivalent to `(await db.listCollections()).map(c => new Collection(c.name))`; will be
-   * removed in an upcoming major release.
-   */
-  public async collections(options?: WithKeyspace & WithTimeout): Promise<Collection[]> {
-    const collections = await this.listCollections({
-      keyspace: options?.keyspace,
-      maxTimeMS: options?.maxTimeMS,
-      nameOnly: true,
-    });
-
-    return collections.map(c => this.collection(c, options));
-  }
-
-  /**
    * Creates a new collection in the database, and establishes a reference to it.
    *
    * **NB. You are limited in the amount of collections you can create, so be wary when using this command.**
