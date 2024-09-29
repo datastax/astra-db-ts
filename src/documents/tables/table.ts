@@ -13,10 +13,56 @@
 // limitations under the License.
 
 import { SomeDoc } from '@/src/documents';
-import { TableInsertManyResult } from "@/src/documents/tables/types/insert/insert-many";
+import { TableInsertOneResult } from '@/src/documents/tables/types/insert/insert-one';
+import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
+import { CollectionSpawnOptions, Db } from '@/src/db';
+import { resolveKeyspace } from '@/src/lib/utils';
+import { WithTimeout } from '@/src/lib';
 
-export class Table<_Schema extends SomeDoc = SomeDoc> {
-  insertMany<Schema extends SomeDoc>(_: Schema[]): TableInsertManyResult<Schema> {
-    throw 'stub';
+export class Table<Schema extends SomeDoc = SomeDoc> {
+  readonly #httpClient: DataAPIHttpClient;
+  readonly #db: Db;
+
+  /**
+   * The name of the collection.
+   */
+  public readonly tableName!: string;
+
+  /**
+   * The keyspace that the table resides in.
+   */
+  public readonly keyspace!: string;
+
+  /**
+   * Use {@link Db.collection} to obtain an instance of this class.
+   *
+   * @internal
+   */
+  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions | undefined) {
+    Object.defineProperty(this, 'tableName', {
+      value: name,
+      writable: false,
+    });
+
+    Object.defineProperty(this, 'keyspace', {
+      value: resolveKeyspace(opts) ?? db.keyspace,
+      writable: false,
+    });
+
+    this.#httpClient = httpClient.forCollection(this.keyspace, this.tableName, opts);
+    this.#httpClient.baseHeaders['Feature-Flag-tables'] = 'true';
+    this.#db = db;
+  }
+
+  public async insertOne(document: Schema[], options?: WithTimeout): Promise<TableInsertOneResult<Schema>> {
+    const command = {
+      insertOne: { document },
+    };
+
+    const resp = await this.#httpClient.executeCommand(command, options);
+
+    return {
+      insertedId: resp.status!.insertedIds[0],
+    };
   }
 }

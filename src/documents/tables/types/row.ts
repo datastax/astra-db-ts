@@ -24,9 +24,8 @@ export interface Row<Schema extends SomeDoc, PrimaryKey extends (keyof Schema)[]
 
 export type SomeTableKey = Record<string, unknown>;
 
-export type TableKey<Schema extends SomeDoc> = Schema extends { [$PrimaryKeyType]?: infer PrimaryKey }
+export type KeyOf<Schema extends SomeDoc> = Schema extends { [$PrimaryKeyType]?: infer PrimaryKey }
   ? PrimaryKey extends SomeTableKey
     ? PrimaryKey
     : SomeTableKey
   : SomeTableKey;
-

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $PrimaryKeyType, Row, TableKey } from "@/src/documents/tables/types/row";
+import { $PrimaryKeyType, Row, KeyOf } from "@/src/documents/tables/types/row";
 import { SomeDoc } from "@/src/documents";
 import { InferTableSchema, InferTableSchemaFromDefinition } from "@/src/db/types/tables/table-schema";
 import { CreateTableDefinition } from "@/src/db/types/tables/create-table";
@@ -27,13 +27,13 @@ interface Users extends Row<Users, ['key', 'age']> {
   car: string,
 }
 
-const _a: TableKey<Users> = {
+const _a: KeyOf<Users> = {
   key: 'abc',
   age: 31,
 };
 
 // Demo of the lawless world of weak typing
-const _b: TableKey<SomeDoc> = {
+const _b: KeyOf<SomeDoc> = {
   some: 'thing',
   any: 'thing',
 };
@@ -113,11 +113,9 @@ type Proof = Expect<Equal<MySchema, {
   key: string,
   age: number,
   car: Map<string, number>,
-} & {
   [$PrimaryKeyType]?: {
     key: string,
     bad: 'ERROR: Field `bad` not found as property in table definition',
-  } & {
     age: number,
   },
 }>>;
@@ -143,7 +141,6 @@ type Proof = Expect<Equal<MySchema, {
     insertedIds: ({
       key: string,
       bad: 'ERROR: Field `bad` not found as property in table definition',
-    } & {
       age: number,
     })[],
   }>> & Proof;

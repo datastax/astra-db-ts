@@ -12,5 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type * from './insert/insert-one';
-export type * from './row';
+import { SomeDoc } from "@/src/documents";
+import { KeyOf } from "@/src/documents/tables/types/row";
+
+export interface TableInsertOneResult<Schema extends SomeDoc> {
+  insertedId: KeyOf<Schema>;
+}

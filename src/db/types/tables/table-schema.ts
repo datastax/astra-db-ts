@@ -19,6 +19,7 @@ import {
   CreateTablePrimaryKeyDefinition,
   FullCreateTablePrimaryKeyDefinition,
 } from '@/src/db/types/tables/create-table';
+import { EmptyObj } from '@/src/lib/types';
 
 type InferrableRow =
   | ((..._: any[]) => Promise<Table>)
@@ -27,7 +28,11 @@ type InferrableRow =
   | Promise<Table>
   | Table;
 
-export type InferTableSchema<T extends InferrableRow> =
+export type InferTableSchema<T extends InferrableRow> = Normalize<_InferTableSchema<T>>;
+
+type Normalize<T> = { [K in keyof T]: T[K] };
+
+type _InferTableSchema<T extends InferrableRow> =
   T extends (..._: any[]) => Promise<Table<infer Schema>>
     ? Schema :
   T extends (..._: any[]) => Table<infer Schema>
@@ -40,14 +45,20 @@ export type InferTableSchema<T extends InferrableRow> =
     ? Schema
     : never;
 
-export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition, Schema = _InferTableSchemaFromDefinition<FullDef>, PK extends FullCreateTablePrimaryKeyDefinition = NormalizePK<FullDef['primaryKey']>> = Schema & {
-  [$PrimaryKeyType]?: {
-    -readonly [P in PK['partitionKey'][number]]: P extends keyof Schema ? Schema[P] : `ERROR: Field \`${P}\` not found as property in table definition`;
-  } & (PK['partitionSort'] extends Record<string, 1 | -1> ? {
-    -readonly [P in keyof PK['partitionSort']]: P extends keyof Schema ? Schema[P] : `ERROR: Field \`${P & string}\` not found as property in table definition`;
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- Intersection w/ {} is a "noop" here
-  } : {}),
+export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition, Schema = _InferTableSchemaFromDefinition<FullDef>> = Schema & {
+  [$PrimaryKeyType]?: MkPrimaryKeyType<FullDef, Schema>,
 }
+
+type MkPrimaryKeyType<FullDef extends CreateTableDefinition, Schema, PK extends FullCreateTablePrimaryKeyDefinition = NormalizePK<FullDef['primaryKey']>> = Normalize<
+  {
+    -readonly [P in PK['partitionKey'][number]]: P extends keyof Schema ? Schema[P] : `ERROR: Field \`${P}\` not found as property in table definition`;
+  }
+  & (PK['partitionSort'] extends Record<string, 1 | -1>
+    ? {
+      -readonly [P in keyof PK['partitionSort']]: P extends keyof Schema ? Schema[P] : `ERROR: Field \`${P & string}\` not found as property in table definition`;
+    }
+    : EmptyObj)
+>
 
 type NormalizePK<PK extends CreateTablePrimaryKeyDefinition> =
   PK extends string

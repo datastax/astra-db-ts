@@ -13,8 +13,9 @@
 // limitations under the License.
 
 import { SomeDoc } from "@/src/documents";
-import { TableKey } from "@/src/documents/tables/types/row";
+import { KeyOf } from "@/src/documents/tables/types/row";
 
 export interface TableInsertManyResult<Schema extends SomeDoc> {
-  insertedIds: TableKey<Schema>[];
+  insertedIds: KeyOf<Schema>[];
+  insertedCount: number;
 }

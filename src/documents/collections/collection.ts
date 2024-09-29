@@ -178,7 +178,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     const resp = await this.#httpClient.executeCommand(command, options);
 
     return {
-      insertedId: resp.status?.insertedIds[0],
+      insertedId: resp.status!.insertedIds[0],
     };
   }
 
