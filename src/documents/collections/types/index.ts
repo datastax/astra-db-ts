@@ -32,4 +32,3 @@ export type * from './filter';
 export type * from './update-filter';
 export type * from './document';
 export type { WithId, MaybeId, FoundDoc, NoId, Flatten, IdOf } from './utils';
-export * from './misc/bulk-write';

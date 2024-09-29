@@ -15,7 +15,6 @@
 import { normalizeSort } from '../utils';
 import { FindCursor } from '@/src/documents/cursor';
 import {
-  BulkWriteError,
   DataAPIDetailedErrorDescriptor,
   DataAPIResponseError,
   DeleteManyError,
@@ -27,9 +26,6 @@ import {
 } from '@/src/documents/errors';
 import stableStringify from 'safe-stable-stringify';
 import {
-  AnyBulkWriteOperation,
-  BulkWriteOptions,
-  BulkWriteResult,
   DeleteManyResult,
   DeleteOneOptions,
   DeleteOneResult,
@@ -70,14 +66,12 @@ import { DeleteOneCommand } from '@/src/documents/collections/types/delete/delet
 import { FindOneAndDeleteCommand } from '@/src/documents/collections/types/find/find-one-delete';
 import { FindOneAndUpdateCommand } from '@/src/documents/collections/types/find/find-one-update';
 import { InsertManyCommand, InsertManyDocumentResponse } from '@/src/documents/collections/types/insert/insert-many';
-import { Mutable } from '@/src/documents/collections/types/utils';
 import { CollectionNotFoundError } from '@/src/db/errors';
 import { CollectionOptions, CollectionSpawnOptions, Db } from '@/src/db';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { resolveKeyspace } from '@/src/lib/utils';
 import { WithTimeout } from '@/src/lib';
 import { SomeId } from '@/src/documents';
-import { RawDataAPIResponse } from '@/src/lib/api';
 
 /**
  * Represents the interface to a collection in the database.
@@ -1343,69 +1337,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Execute arbitrary operations sequentially/concurrently on the collection, such as insertions, updates, replaces,
-   * & deletions, **non-atomically**
-   *
-   * **Note: prefer not to use this method; its implementation is subject to change on short notice.**
-   *
-   * Each operation is treated as a separate, unrelated request to the server; it is not performed in a transaction.
-   *
-   * You can set the `ordered` option to `true` to stop the operations after the first error, otherwise all operations
-   * may be parallelized and processed in arbitrary order, improving, perhaps vastly, performance.
-   *
-   * *Note that the bulkWrite being ordered has nothing to do with if the operations themselves are ordered or not.*
-   *
-   * If an operational error occurs, the operation will throw a {@link BulkWriteError} containing the partial result.
-   *
-   * *If the exception is not due to a soft `2XX` error, e.g. a `5xx` error or network error, the operation will throw
-   * the underlying error.*
-   *
-   * *In case of an unordered request, if the error was a simple operational error, a `BulkWriteError` will be thrown
-   * after every operation has been attempted. If it was a `5xx` or similar, the error will be thrown immediately.*
-   *
-   * You can set the `parallel` option to control how many network requests are made in parallel on unordered
-   * insertions. Defaults to `8`.
-   *
-   * @example
-   * ```typescript
-   * try {
-   *   // Insert a document, then delete it
-   *   await collection.bulkWrite([
-   *     { insertOne: { document: { _id: '1', name: 'John Doe' } } },
-   *     { deleteOne: { filter: { name: 'John Doe' } } },
-   *   ], { ordered: true });
-   *
-   *   // Insert and delete operations, will cause a data race
-   *   await collection.bulkWrite([
-   *     { insertOne: { document: { _id: '1', name: 'John Doe' } } },
-   *     { deleteOne: { filter: { name: 'John Doe' } } },
-   *   ]);
-   * } catch (e) {
-   *   if (e instanceof BulkWriteError) {
-   *     console.log(e.insertedCount);
-   *     console.log(e.deletedCount);
-   *   }
-   * }
-   * ```
-   *
-   * @param operations - The operations to perform.
-   * @param options - The options for this operation.
-   *
-   * @returns The aggregated result of the operations.
-   *
-   * @throws BulkWriteError - If the operation fails
-   *
-   * @deprecated - Prefer to just call the functions manually; this will be removed in an upcoming major release.
-   */
-  public async bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult<Schema>> {
-    const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
-
-    return (options?.ordered)
-      ? await bulkWriteOrdered(this.#httpClient, operations, timeoutManager)
-      : await bulkWriteUnordered(this.#httpClient, operations, options?.concurrency ?? 8, timeoutManager);
-  }
-
-  /**
    * Get the collection options, i.e. its configuration as read from the database.
    *
    * The method issues a request to the Data API each time it is invoked, without caching mechanisms;
@@ -1573,114 +1504,6 @@ const insertMany = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient,
   }
 
   return [documentResponses, insertedIds, err?.detailedErrorDescriptors[0]];
-};
-
-// -- Bulk Write ------------------------------------------------------------------------------------------
-
-const bulkWriteOrdered = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient, operations: AnyBulkWriteOperation<Schema>[], timeoutManager: TimeoutManager): Promise<BulkWriteResult<Schema>> => {
-  const results = new BulkWriteResult<Schema>();
-  let i = 0;
-
-  try {
-    for (let n = operations.length; i < n; i++) {
-      await bulkWrite(httpClient, operations[i], results, i, timeoutManager);
-    }
-  } catch (e) {
-    if (!(e instanceof DataAPIResponseError)) {
-      throw e;
-    }
-    const desc = e.detailedErrorDescriptors[0];
-
-    if (desc.rawResponse.status) {
-      addToBulkWriteResult(results, desc.rawResponse.status, i);
-    }
-
-    throw mkRespErrorFromResponse(BulkWriteError, desc.command, desc.rawResponse, { partialResult: results });
-  }
-
-  return results;
-};
-
-const bulkWriteUnordered = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient, operations: AnyBulkWriteOperation<Schema>[], concurrency: number, timeoutManager: TimeoutManager): Promise<BulkWriteResult<Schema>> => {
-  const results = new BulkWriteResult<Schema>();
-  let masterIndex = 0;
-
-  const failCommands = [] as Record<string, any>[];
-  const failRaw = [] as Record<string, any>[];
-
-  const workers = Array.from({ length: concurrency }, async () => {
-    while (masterIndex < operations.length) {
-      const localI = masterIndex;
-      masterIndex++;
-
-      try {
-        await bulkWrite(httpClient, operations[localI], results, localI, timeoutManager);
-      } catch (e) {
-        if (!(e instanceof DataAPIResponseError)) {
-          throw e;
-        }
-        const desc = e.detailedErrorDescriptors[0];
-
-        if (desc.rawResponse.status) {
-          addToBulkWriteResult(results, desc.rawResponse.status, localI);
-        }
-
-        failCommands.push(desc.command);
-        failRaw.push(desc.rawResponse);
-      }
-    }
-  });
-  await Promise.all(workers);
-
-  if (failCommands.length > 0) {
-    throw mkRespErrorFromResponses(BulkWriteError, failCommands, failRaw, { partialResult: results });
-  }
-
-  return results;
-};
-
-const bulkWrite = async <Schema extends SomeDoc>(httpClient: DataAPIHttpClient, operation: AnyBulkWriteOperation<Schema>, results: BulkWriteResult<Schema>, i: number, timeoutManager: TimeoutManager): Promise<void> => {
-  const command = buildBulkWriteCommand(operation);
-  const resp = await httpClient.executeCommand(command, { timeoutManager });
-  addToBulkWriteResult(results, resp, i);
-};
-
-const buildBulkWriteCommand = <Schema extends SomeDoc>(operation: AnyBulkWriteOperation<Schema>): Record<string, any> => {
-  switch (true) {
-    case 'insertOne' in operation:
-      return { insertOne: { document: operation.insertOne.document } };
-    case 'updateOne' in operation:
-      return { updateOne: { filter: operation.updateOne.filter, update: operation.updateOne.update, options: { upsert: operation.updateOne.upsert ?? false } } };
-    case 'updateMany' in operation:
-      return { updateMany: { filter: operation.updateMany.filter, update: operation.updateMany.update, options: { upsert: operation.updateMany.upsert ?? false } } };
-    case 'replaceOne' in operation:
-      return { findOneAndReplace: { filter: operation.replaceOne.filter, replacement: operation.replaceOne.replacement, options: { upsert: operation.replaceOne.upsert ?? false } } };
-    case 'deleteOne' in operation:
-      return { deleteOne: { filter: operation.deleteOne.filter } };
-    case 'deleteMany' in operation:
-      return { deleteMany: { filter: operation.deleteMany.filter } };
-    default:
-      throw new Error(`Unknown bulk write operation: ${JSON.stringify(operation)}`);
-  }
-};
-
-const addToBulkWriteResult = (result: BulkWriteResult<SomeDoc>, resp: RawDataAPIResponse, i: number) => {
-  const asMutable = result as Mutable<BulkWriteResult<SomeDoc>>;
-  const status = resp.status;
-
-  if (status) {
-    asMutable.insertedCount += status.insertedIds?.length ?? 0;
-    asMutable.modifiedCount += status.modifiedCount ?? 0;
-    asMutable.matchedCount += status.matchedCount ?? 0;
-    asMutable.deletedCount += status.deletedCount ?? 0;
-
-    if (status.upsertedId) {
-      asMutable.upsertedCount++;
-      asMutable.upsertedIds[i] = status.upsertedId;
-    }
-  }
-
-  asMutable.getRawResponse().push(resp);
 };
 
 // -- Distinct --------------------------------------------------------------------------------------------

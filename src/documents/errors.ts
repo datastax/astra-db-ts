@@ -15,7 +15,6 @@
 import type { InsertManyResult } from '@/src/documents/collections/types/insert/insert-many';
 import type { DeleteManyResult } from '@/src/documents/collections/types/delete/delete-many';
 import type { UpdateManyResult } from '@/src/documents/collections/types/update/update-many';
-import type { BulkWriteResult } from '@/src/documents/collections/types/misc/bulk-write';
 import type { FetcherResponseInfo, RawDataAPIResponse } from '@/src/lib/api';
 import type { SomeDoc } from '@/src/documents/collections/types/document';
 
@@ -81,7 +80,7 @@ export interface DataAPIDetailedErrorDescriptor {
   readonly errorDescriptors: DataAPIErrorDescriptor[],
   /**
    * The original command that was sent to the API, as a plain object. This is the *raw* command, not necessarily in
-   * the exact format the client may use, even with `bulkWrite`.
+   * the exact format the client may use, even with `deleteAll`.
    *
    * @example
    * ```typescript
@@ -337,8 +336,8 @@ export class DataAPIResponseError extends DataAPIError {
 
 /**
  * An abstract class representing an exception that occurred due to a *cumulative* operation on the Data API. This is
- * the base class for all Data API errors that represent a paginated operation, such as `insertMany`, `deleteMany`,
- * `updateMany`, and `bulkWrite`, and will never be thrown directly.
+ * the base class for all Data API errors that represent a paginated operation, such as `insertMany`, `deleteMany`, and
+ * `updateMany`, and will never be thrown directly.
  *
  * Useful for `instanceof` checks.
  *
@@ -455,35 +454,6 @@ export class UpdateManyError extends CumulativeDataAPIError {
    * of the operation up to the point of the first error.
    */
   declare public readonly partialResult: UpdateManyResult<SomeDoc>;
-}
-
-/**
- * Represents an error that occurred during a `bulkWrite` operation (which is, generally, paginated).
- *
- * Contains the number of documents that were successfully inserted, updated, deleted, etc., as well as the cumulative
- * errors that occurred during the operation.
- *
- * If the operation was ordered, the results will be in the same order as the operations that were attempted to be
- * performed.
- *
- * @field message - A human-readable message describing the *first* error
- * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
- * @field detailedErrorDescriptors - A list of errors 1:1 with the number of errorful API requests made to the server.
- * @field partialResult - The partial result of the `BulkWrite` operation that was performed
- *
- * @public
- */
-export class BulkWriteError extends CumulativeDataAPIError {
-  /**
-   * The name of the error. This is always 'BulkWriteError'.
-   */
-  name = 'BulkWriteError';
-
-  /**
-   * The partial result of the `BulkWrite` operation that was performed. This is *always* defined, and is the result
-   * of all successful operations.
-   */
-  declare public readonly partialResult: BulkWriteResult<SomeDoc>;
 }
 
 /**
