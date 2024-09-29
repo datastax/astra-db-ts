@@ -79,7 +79,11 @@ export function validateOption<T>(name: string, obj: T, types: string | string[]
 /**
  * @internal
  */
-export const normalizeSort = (sort: Record<string, unknown>): Sort => {
+export const normalizeSort = (sort: Record<string, unknown> | undefined): Sort | undefined => {
+  if (!sort) {
+    return sort;
+  }
+
   const ret: Sort = {};
 
   for (const key in sort) {

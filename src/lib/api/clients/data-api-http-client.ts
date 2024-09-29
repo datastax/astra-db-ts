@@ -151,7 +151,7 @@ export class DataAPIHttpClient extends HttpClient {
     return new TimeoutManager(timeout, () => new DataAPITimeoutError(timeout));
   }
 
-  public async executeCommand(command: Record<string, any>, options: TimeoutOptions & ExecuteCommandOptions | undefined) {
+  public async executeCommand(command: Record<string, any>, options: TimeoutOptions & ExecuteCommandOptions | nullish) {
     const timeoutManager = options?.timeoutManager ?? this.timeoutManager(options?.maxTimeMS);
 
     return await this._requestDataAPI({
