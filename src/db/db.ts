@@ -33,7 +33,6 @@ import { CollectionSpawnOptions } from '@/src/db/types/spawn-collection';
 import { DropCollectionOptions } from '@/src/db/types/drop-collection';
 import { FullCollectionInfo, ListCollectionsCommand, ListCollectionsOptions } from '@/src/db/types/list-collection';
 import { RunCommandOptions } from '@/src/db/types/command';
-import { WithKeyspace } from '@/src/db/types/collections-common';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -83,9 +82,10 @@ export class Db {
    *
    * @internal
    */
-  constructor(endpoint: string, rootOpts: InternalRootClientOpts, dbOpts: DbSpawnOptions | nullish) {
-    this.#defaultOpts = rootOpts;
+  constructor(rootOpts: InternalRootClientOpts, endpoint: string, dbOpts: DbSpawnOptions | nullish) {
+    validateDbOpts(dbOpts);
 
+    this.#defaultOpts = rootOpts;
     this.#token = TokenProvider.parseToken(dbOpts?.token ?? rootOpts.dbOptions.token);
 
     const combinedDbOpts = {
@@ -551,27 +551,6 @@ export class Db {
   private get _httpClient() {
     return this.#httpClient;
   }
-}
-
-/**
- * @internal
- */
-export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, regionOrOptions: string | DbSpawnOptions | nullish, maybeOptions: DbSpawnOptions | nullish) {
-  const dbOpts = (typeof regionOrOptions === 'string')
-    ? maybeOptions
-    : regionOrOptions;
-
-  validateDbOpts(dbOpts);
-
-  if (typeof regionOrOptions === 'string' && (endpointOrId.startsWith('https://') || endpointOrId.startsWith('http://'))) {
-    throw new Error('Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { keyspace })`?');
-  }
-
-  const endpoint = (typeof regionOrOptions === 'string')
-    ? 'https://' + endpointOrId + '-' + regionOrOptions + '.apps.astra.datastax.com'
-    : endpointOrId;
-
-  return new Db(endpoint, rootOpts, dbOpts);
 }
 
 /**

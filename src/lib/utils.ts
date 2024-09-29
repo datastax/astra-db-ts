@@ -32,3 +32,7 @@ export function jsonTryParse<T>(json: string, otherwise: T, reviver?: (this: any
     return otherwise;
   }
 }
+
+export function buildAstraEndpoint(id: string, region: string, env: 'dev' | 'test' | 'prod' = 'prod') {
+  return 'https://' + id + '-' + region + `.apps${env === 'prod' ? '' : `-${env}`}.astra.datastax.com`;
+}

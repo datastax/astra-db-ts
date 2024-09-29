@@ -39,15 +39,6 @@ describe('integration.client.documents-client', () => {
       assert.ok(Array.isArray(collections));
     });
 
-    it('(NOT-DEV) (ASTRA) properly connects to a db by id and region', async () => {
-      const idAndRegion = TEST_APPLICATION_URI.split('.')[0].split('https://')[1].split('-');
-      const id = idAndRegion.slice(0, 5).join('-');
-      const region = idAndRegion.slice(5).join('-');
-      const db = new DataAPIClient(TEST_APPLICATION_TOKEN).db(id, region);
-      const collections = await db.listCollections();
-      assert.ok(Array.isArray(collections));
-    });
-
     it('lets Data API deal with throwing missing token error', async () => {
       const db = new DataAPIClient({ environment: ENVIRONMENT }).db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
       await assert.rejects(() => db.listCollections(), { message: 'Role unauthorized for operation: Missing token, expecting one in the Token header.' });
