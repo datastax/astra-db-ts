@@ -12,18 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * Represents the result of a delete command.
- *
- * @field deletedCount - The number of deleted documents. Can be any non-negative integer.
- *
- * @see Collection.deleteMany
- *
- * @public
- */
-export interface DeleteManyResult {
-  /**
-   * The number of deleted documents.
-   */
-  deletedCount: number;
+import { Projection, Sort } from '@/src/documents';
+import { WithTimeout } from '@/src/lib';
+
+export interface GenericFindOneAndUpdateOptions extends WithTimeout {
+  returnDocument?: 'before' | 'after',
+  upsert?: boolean,
+  sort?: Sort,
+  projection?: Projection,
+  includeResultMetadata?: boolean,
 }

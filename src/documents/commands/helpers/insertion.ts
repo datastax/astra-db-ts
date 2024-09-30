@@ -9,7 +9,8 @@ import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { TimeoutManager } from '@/src/lib/api/timeout-managers';
 import { mkRespErrorFromResponse, mkRespErrorFromResponses } from '@/src/documents/errors';
 import { GenericInsertManyDocumentResponse } from '@/src/documents/commands/types/insert/insert-many';
-import { MkID } from '@/src/documents/commands/types/insert/mk-id';
+
+export type MkID<ID> = (id: any, resp: Record<string, string>) => ID;
 
 export const insertManyOrdered = async <ID>(httpClient: DataAPIHttpClient, documents: unknown[], chunkSize: number, timeoutManager: TimeoutManager, mkID: MkID<ID>): Promise<ID[]> => {
   const insertedIds: any = [];
@@ -84,18 +85,16 @@ export const insertManyUnordered = async <ID>(httpClient: DataAPIHttpClient, doc
 const insertMany = async <ID>(httpClient: DataAPIHttpClient, documents: unknown[], ordered: boolean, timeoutManager: TimeoutManager, mkID: MkID<ID>): Promise<[GenericInsertManyDocumentResponse<ID>[], ID[], DataAPIDetailedErrorDescriptor | undefined]> => {
   let resp, err: DataAPIResponseError | undefined;
 
-  const command = {
-    insertMany: {
-      documents,
-      options: {
-        returnDocumentResponses: true,
-        ordered,
-      },
-    },
-  };
-
   try {
-    resp = await httpClient.executeCommand(command, { timeoutManager });
+    resp = await httpClient.executeCommand({
+      insertMany: {
+        documents,
+        options: {
+          returnDocumentResponses: true,
+          ordered,
+        },
+      },
+    }, { timeoutManager });
   } catch (e) {
     if (!(e instanceof DataAPIResponseError)) {
       throw e;

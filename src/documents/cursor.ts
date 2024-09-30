@@ -14,7 +14,7 @@
 
 import { Filter, FindOptions, Projection, SomeDoc, Sort } from '@/src/documents/collections';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import { normalizeSort } from '@/src/documents/utils';
+import { normalizedSort } from '@/src/documents/utils';
 import { CursorIsStartedError } from '@/src/documents/errors';
 import { InternalFindOptions, InternalGetMoreCommand } from '@/src/documents/collections/types/find/find';
 
@@ -93,7 +93,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this._options = structuredClone(options ?? {});
 
     if (options?.sort) {
-      this._options.sort = normalizeSort(options.sort);
+      this._options.sort = normalizedSort(options);
     }
   }
 
@@ -160,7 +160,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    */
   public sort(sort: Sort): this {
     this._assertUninitialized();
-    this._options.sort = normalizeSort(sort);
+    this._options.sort = normalizedSort({ sort });
     return this;
   }
 

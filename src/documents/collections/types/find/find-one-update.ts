@@ -15,20 +15,6 @@
 import type { Projection, Sort } from '@/src/documents/collections/types';
 import { WithTimeout } from '@/src/lib/types';
 
-/** @internal */
-export interface FindOneAndUpdateCommand {
-  findOneAndUpdate: {
-    filter?: Record<string, unknown>,
-    update?: Record<string, any>,
-    options?: {
-      returnDocument?: 'before' | 'after',
-      upsert?: boolean,
-    };
-    sort?: Sort,
-    projection?: Projection,
-  };
-}
-
 /**
  * Represents the options for the `findOneAndUpdate` command.
  *

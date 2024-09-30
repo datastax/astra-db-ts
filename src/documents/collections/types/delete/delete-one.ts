@@ -15,14 +15,6 @@
 import type { Sort } from '@/src/documents/collections/types';
 import { WithTimeout } from '@/src/lib/types';
 
-/** @internal */
-export interface DeleteOneCommand {
-  deleteOne: {
-    filter: Record<string, unknown>;
-    sort?: Sort;
-  };
-}
-
 /**
  * Represents the options for the deleteOne command.
  *

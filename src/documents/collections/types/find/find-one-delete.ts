@@ -15,15 +15,6 @@
 import type { Projection, Sort } from '@/src/documents/collections/types';
 import { WithTimeout } from '@/src/lib/types';
 
-/** @internal */
-export interface FindOneAndDeleteCommand {
-  findOneAndDelete: {
-    filter?: Record<string, unknown>,
-    sort?: Sort,
-    projection?: Projection,
-  };
-}
-
 /**
  * Represents the options for the `findOneAndDelete` command.
  *

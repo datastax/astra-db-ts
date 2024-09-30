@@ -124,7 +124,7 @@ type Proof = Expect<Equal<MySchema, {
 (async () => {
   const myTable = await mkTable();
 
-  const insertManyResult = myTable.insertMany<MySchema>([
+  const insertManyResult = await myTable.insertMany([
     {
       age: 3,
       car: new Map(),
@@ -143,6 +143,7 @@ type Proof = Expect<Equal<MySchema, {
       bad: 'ERROR: Field `bad` not found as property in table definition',
       age: number,
     })[],
+    insertedCount: number,
   }>> & Proof;
 
   console.log(insertManyResult.insertedIds[1].age);

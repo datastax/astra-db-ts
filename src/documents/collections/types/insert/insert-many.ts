@@ -15,17 +15,6 @@
 import { IdOf, SomeDoc } from '@/src/documents/collections/types';
 import { WithTimeout } from '@/src/lib/types';
 
-/** @internal */
-export interface InsertManyCommand {
-  insertMany: {
-    documents: unknown[],
-    options?: {
-      returnDocumentResponses: true,
-      ordered?: boolean,
-    },
-  }
-}
-
 /**
  * Options for insertMany.
  *

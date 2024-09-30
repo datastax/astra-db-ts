@@ -28,6 +28,6 @@ export interface NoUpsertUpdateOptions {
   upsertedId?: never;
 }
 
-export type InternalUpdateResult<ID, N extends number> =
+export type GenericUpdateResult<ID, N extends number> =
   | (GuaranteedUpdateOptions<N> & UpsertedUpdateOptions<ID>)
   | (GuaranteedUpdateOptions<N> & NoUpsertUpdateOptions)

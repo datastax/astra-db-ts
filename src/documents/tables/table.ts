@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { KeyOf, SomeDoc } from '@/src/documents';
+import { InsertManyOptions, KeyOf, SomeDoc } from '@/src/documents';
 import { TableInsertOneResult } from '@/src/documents/tables/types/insert/insert-one';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CollectionSpawnOptions, Db } from '@/src/db';
 import { uncurriedConst } from '@/src/lib/utils';
 import { WithTimeout } from '@/src/lib';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
+import { TableInsertManyResult } from '@/src/documents/tables/types/insert/insert-many';
 
 export class Table<Schema extends SomeDoc = SomeDoc> {
   readonly #httpClient: DataAPIHttpClient;
   readonly #commands: CommandImpls<KeyOf<Schema>>;
-  readonly #db: Db;
+  // readonly #db: Db;
 
   /**
    * The name of the collection.
@@ -54,10 +55,14 @@ export class Table<Schema extends SomeDoc = SomeDoc> {
     this.#httpClient = httpClient.forCollection(this.keyspace, this.tableName, opts);
     this.#httpClient.baseHeaders['Feature-Flag-tables'] = 'true';
     this.#commands = new CommandImpls(this.#httpClient);
-    this.#db = db;
+    // this.#db = db;
   }
 
   public async insertOne(document: Schema[], options?: WithTimeout): Promise<TableInsertOneResult<Schema>> {
     return this.#commands.insertOne(document, options, uncurriedConst);
+  }
+
+  public async insertMany(document: Schema[], options?: InsertManyOptions): Promise<TableInsertManyResult<Schema>> {
+    return this.#commands.insertMany(document, options, uncurriedConst);
   }
 }

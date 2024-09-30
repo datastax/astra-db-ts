@@ -14,13 +14,6 @@
 
 import type { IdOf } from '@/src/documents/collections/types';
 
-/** @internal */
-export interface InsertOneCommand {
-  insertOne: {
-    document: object,
-  }
-}
-
 /**
  * Represents the result of an insertOne command.
  *

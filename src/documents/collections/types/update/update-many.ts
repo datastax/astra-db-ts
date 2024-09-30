@@ -16,17 +16,6 @@ import type { InternalUpdateResult } from '@/src/documents/collections/types';
 import { WithTimeout } from '@/src/lib/types';
 import { SomeDoc } from '@/src/documents/collections';
 
-/** @internal */
-export interface UpdateManyCommand {
-  updateMany: {
-    filter: Record<string, unknown>;
-    update: Record<string, any>;
-    options: UpdateManyOptions & {
-      pageState?: string;
-    };
-  }
-}
-
 /**
  * Represents the options for the updateMany command.
  *

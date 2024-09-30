@@ -16,18 +16,6 @@ import type { SomeDoc } from '@/src/documents/collections';
 import type { InternalUpdateResult, Sort } from '@/src/documents/collections/types';
 import { WithTimeout } from '@/src/lib/types';
 
-/** @internal */
-export interface UpdateOneCommand {
-  updateOne: {
-    filter: Record<string, unknown>;
-    update: Record<string, any>;
-    sort?: Sort;
-    options: {
-      upsert?: boolean;
-    };
-  }
-}
-
 /**
  * Represents the options for the updateOne command.
  *

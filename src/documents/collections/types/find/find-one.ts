@@ -15,18 +15,6 @@
 import type { Projection, Sort } from '@/src/documents/collections/types';
 import { WithTimeout } from '@/src/lib/types';
 
-/** @internal */
-export interface FindOneCommand {
-  findOne: {
-    filter: Record<string, unknown>,
-    sort?: Sort,
-    projection?: Projection,
-    options?: {
-      includeSimilarity?: boolean,
-    };
-  };
-}
-
 /**
  * Represents the options for the `findOne` command.
  *
