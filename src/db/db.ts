@@ -22,17 +22,17 @@ import { DbSpawnOptions, InternalRootClientOpts } from '@/src/client/types';
 import { AdminSpawnOptions, DbAdmin } from '@/src/administration';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin';
 import { CollectionAlreadyExistsError } from '@/src/db/errors';
-import { CreateCollectionCommand, CreateCollectionOptions } from '@/src/db/types/create-collection';
+import { CreateCollectionCommand, CreateCollectionOptions } from '@/src/db/types/collections/create-collection';
 import { TokenProvider } from '@/src/lib';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client';
 import { KeyspaceRef } from '@/src/lib/api/clients/types';
 import { validateDataAPIEnv } from '@/src/lib/utils';
 import { EmbeddingHeadersProvider } from '@/src/documents';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
-import { CollectionSpawnOptions } from '@/src/db/types/spawn-collection';
-import { DropCollectionOptions } from '@/src/db/types/drop-collection';
-import { FullCollectionInfo, ListCollectionsCommand, ListCollectionsOptions } from '@/src/db/types/list-collection';
-import { RunCommandOptions } from '@/src/db/types/command';
+import { CollectionSpawnOptions } from '@/src/db/types/collections/spawn-collection';
+import { DropCollectionOptions } from '@/src/db/types/collections/drop-collection';
+import { FullCollectionInfo, ListCollectionsCommand, ListCollectionsOptions } from '@/src/db/types/collections/list-collection';
+import { RunCommandOptions } from '@/src/db/types/collections/command';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as

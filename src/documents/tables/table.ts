@@ -16,7 +16,7 @@ import { KeyOf, SomeDoc } from '@/src/documents';
 import { TableInsertOneResult } from '@/src/documents/tables/types/insert/insert-one';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CollectionSpawnOptions, Db } from '@/src/db';
-import { resolveKeyspace, uncurriedConst } from '@/src/lib/utils';
+import { uncurriedConst } from '@/src/lib/utils';
 import { WithTimeout } from '@/src/lib';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 
@@ -47,7 +47,7 @@ export class Table<Schema extends SomeDoc = SomeDoc> {
     });
 
     Object.defineProperty(this, 'keyspace', {
-      value: resolveKeyspace(opts) ?? db.keyspace,
+      value: opts?.keyspace ?? db.keyspace,
       writable: false,
     });
 

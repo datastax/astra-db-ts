@@ -17,4 +17,3 @@ import { WithTimeout } from '@/src/lib/types';
 export interface GenericUpdateManyOptions extends WithTimeout {
   upsert?: boolean,
 }
-s
