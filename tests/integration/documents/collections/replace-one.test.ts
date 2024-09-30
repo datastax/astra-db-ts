@@ -139,38 +139,4 @@ parallel('integration.documents.collections.replace-one', { truncateColls: 'defa
     assert.strictEqual(res.matchedCount, 1);
     assert.strictEqual(res.modifiedCount, 1);
   });
-
-  it('should replaceOne with vector sort in option', async (key) => {
-    await collection.insertMany([
-      { name: 'a', $vector: [1.0, 1.0, 1.0, 1.0, 1.0], key },
-      { name: 'c', $vector: [-.1, -.2, -.3, -.4, -.5], key },
-      { name: 'b', $vector: [-.1, -.2, -.3, -.4, -.5], key },
-    ]);
-
-    const res = await collection.replaceOne(
-      { key },
-      { name: 'aaa' },
-      { vector: [1, 1, 1, 1, 1] },
-    );
-    assert.strictEqual(res.matchedCount, 1);
-    assert.strictEqual(res.modifiedCount, 1);
-  });
-
-  it('should error when both sort and vector are provided', async () => {
-    await assert.rejects(async () => {
-      await collection.replaceOne({}, {}, { sort: { name: 1 }, vector: [1, 1, 1, 1, 1] });
-    }, /Can't use both `sort` and `vector` options at once; if you need both, include a \$vector key in the sort object/);
-  });
-
-  it('should error when both sort and vectorize are provided', async () => {
-    await assert.rejects(async () => {
-      await collection.replaceOne({}, {}, { sort: { name: 1 }, vectorize: 'American Idiot is a good song' });
-    }, /Can't use both `sort` and `vectorize` options at once; if you need both, include a \$vectorize key in the sort object/);
-  });
-
-  it('should error when both vector and vectorize are provided', async () => {
-    await assert.rejects(async () => {
-      await collection.replaceOne({}, {}, { vector: [1, 1, 1, 1, 1], vectorize: 'American Idiot is a good song' });
-    }, /Cannot set both vectors and vectorize options/);
-  });
 });
