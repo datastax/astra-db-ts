@@ -43,15 +43,3 @@ import { AdminBlockingOptions } from '@/src/administration/types';
  * @public
  */
 export type CreateKeyspaceOptions = AdminBlockingOptions & { updateDbKeyspace?: boolean };
-
-/**
- * Represents the common options for creating a keyspace through the `astra-db-ts` client.
- *
- * This is now a deprecated alias for the strictly equivalent {@link CreateKeyspaceOptions}, and will be removed
- * in an upcoming major version.
- *
- * @deprecated - Prefer {@link CreateKeyspaceOptions} instead.
- *
- * @public
- */
-export type CreateNamespaceOptions = AdminBlockingOptions & { updateDbNamespace?: boolean };

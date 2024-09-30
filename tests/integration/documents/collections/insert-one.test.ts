@@ -72,7 +72,7 @@ parallel('integration.documents.collections.insert-one', { truncateColls: 'defau
   });
 
   it('should insertOne with vector', async (key) => {
-    const res = await collection.insertOne({ name: key }, { vector: [1, 1, 1, 1, 1] });
+    const res = await collection.insertOne({ name: key, $vector: [1, 1, 1, 1, 1] });
     assert.ok(res);
     const found = await collection.findOne({ name: key }, { projection: { '*': 1 } });
     assert.deepStrictEqual(found?.$vector, [1, 1, 1, 1, 1]);
@@ -95,10 +95,6 @@ parallel('integration.documents.collections.insert-one', { truncateColls: 'defau
 
     const res = await collection.findOne({ _id: key });
     assert.strictEqual(res?.answer, 42);
-  });
-
-  it('should fail when inserting with both vector and vectorize', async () => {
-    await assert.rejects(() => collection.insertOne({ name: 'Arch Enemy' }, { vector: [1, 1, 1, 1, 1], vectorize: 'Arch Enemy' }), Error);
   });
 
   it('should fail insert of doc over size 1 MB', async () => {

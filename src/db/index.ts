@@ -17,7 +17,6 @@ export * from './errors';
 
 export type {
   VectorOptions,
-  WithNamespace,
   WithKeyspace,
   VectorizeServiceOptions,
   DefaultIdOptions,

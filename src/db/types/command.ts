@@ -33,15 +33,4 @@ export interface RunCommandOptions extends WithTimeout {
    * The keyspace to use for the db operation.
    */
   keyspace?: string | null,
-  /**
-   * The keyspace to use for the db operation.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link RunCommandOptions.keyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link RunCommandOptions.keyspace} instead.
-   */
-  namespace?: string | null,
 }

@@ -70,21 +70,6 @@ export interface AdminSpawnOptions {
 }
 
 // @public
-export type AnyBulkWriteOperation<TSchema extends SomeDoc> = {
-    insertOne: InsertOneModel<TSchema>;
-} | {
-    replaceOne: ReplaceOneModel<TSchema>;
-} | {
-    updateOne: UpdateOneModel<TSchema>;
-} | {
-    updateMany: UpdateManyModel<TSchema>;
-} | {
-    deleteOne: DeleteOneModel<TSchema>;
-} | {
-    deleteMany: DeleteManyModel<TSchema>;
-};
-
-// @public
 export interface ArrayFilterOps<Elem> {
     $all?: Elem;
     $size?: number;
@@ -118,65 +103,19 @@ export class AstraDbAdmin extends DbAdmin {
     // @internal
     constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts: AdminSpawnOptions | undefined, dbToken: TokenProvider, endpoint: string);
     createKeyspace(keyspace: string, options?: CreateKeyspaceOptions): Promise<void>;
-    // @deprecated
-    createNamespace(keyspace: string, options?: CreateNamespaceOptions): Promise<void>;
     db(): Db;
     drop(options?: AdminBlockingOptions): Promise<void>;
     dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
-    // @deprecated
-    dropNamespace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
     findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
     get id(): string;
     info(options?: WithTimeout): Promise<FullDatabaseInfo>;
     listKeyspaces(options?: WithTimeout): Promise<string[]>;
-    // @deprecated
-    listNamespaces(options?: WithTimeout): Promise<string[]>;
 }
 
 // @public
 export class AWSEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
     constructor(accessKeyId: string, secretAccessKey: string);
     getHeaders(): Record<string, string>;
-}
-
-// @public
-export class BulkWriteError extends CumulativeDataAPIError {
-    name: string;
-    readonly partialResult: BulkWriteResult<SomeDoc>;
-}
-
-// @public
-export type BulkWriteOptions = BulkWriteOrderedOptions | BulkWriteUnorderedOptions;
-
-// @public
-export interface BulkWriteOrderedOptions extends WithTimeout {
-    ordered: true;
-}
-
-// @public
-export class BulkWriteResult<Schema extends SomeDoc> {
-    // @internal
-    constructor(
-    deletedCount?: number,
-    insertedCount?: number,
-    matchedCount?: number,
-    modifiedCount?: number,
-    upsertedCount?: number,
-    upsertedIds?: Record<number, IdOf<Schema>>, _raw?: object[]);
-    readonly deletedCount: number;
-    getRawResponse(): Record<string, any>[];
-    getUpsertedIdAt(index: number): IdOf<Schema> | undefined;
-    readonly insertedCount: number;
-    readonly matchedCount: number;
-    readonly modifiedCount: number;
-    readonly upsertedCount: number;
-    readonly upsertedIds: Record<number, IdOf<Schema>>;
-}
-
-// @public
-export interface BulkWriteUnorderedOptions extends WithTimeout {
-    concurrency?: number;
-    ordered?: false;
 }
 
 // @public
@@ -188,12 +127,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     //
     // @internal
     constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions | undefined);
-    // @deprecated
-    bulkWrite(operations: AnyBulkWriteOperation<Schema>[], options?: BulkWriteOptions): Promise<BulkWriteResult<Schema>>;
     readonly collectionName: string;
     countDocuments(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number>;
-    // @deprecated
-    deleteAll(options?: WithTimeout): Promise<void>;
     deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<DeleteManyResult>;
     deleteOne(filter?: Filter<Schema>, options?: DeleteOneOptions): Promise<DeleteOneResult>;
     distinct<Key extends string>(key: Key, filter?: Filter<Schema>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]>;
@@ -220,10 +155,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
         includeResultMetadata?: false;
     }): Promise<WithId<Schema> | null>;
     insertMany(documents: MaybeId<Schema>[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>>;
-    insertOne(document: MaybeId<Schema>, options?: InsertOneOptions): Promise<InsertOneResult<Schema>>;
+    insertOne(document: MaybeId<Schema>, options?: WithTimeout): Promise<InsertOneResult<Schema>>;
     readonly keyspace: string;
-    // @deprecated
-    readonly namespace: string;
     options(options?: WithTimeout): Promise<CollectionOptions<SomeDoc>>;
     replaceOne(filter: Filter<Schema>, replacement: NoId<Schema>, options?: ReplaceOneOptions): Promise<ReplaceOneResult<Schema>>;
     updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateManyOptions): Promise<UpdateManyResult<SomeDoc>>;
@@ -236,8 +169,6 @@ export class CollectionAlreadyExistsError extends DataAPIError {
     constructor(keyspace: string, collectionName: string);
     readonly collectionName: string;
     readonly keyspace: string;
-    // @deprecated
-    readonly namespace: string;
 }
 
 // @public
@@ -246,8 +177,6 @@ export class CollectionNotFoundError extends DataAPIError {
     constructor(keyspace: string, collectionName: string);
     readonly collectionName: string;
     readonly keyspace: string;
-    // @deprecated
-    readonly namespace: string;
 }
 
 // @public
@@ -273,8 +202,6 @@ export abstract class CommandEvent {
     readonly command: Record<string, any>;
     readonly commandName: string;
     readonly keyspace: string;
-    // @deprecated
-    readonly namespace: string;
     readonly url: string;
 }
 
@@ -336,11 +263,6 @@ export type CreateKeyspaceOptions = AdminBlockingOptions & {
     updateDbKeyspace?: boolean;
 };
 
-// @public @deprecated
-export type CreateNamespaceOptions = AdminBlockingOptions & {
-    updateDbNamespace?: boolean;
-};
-
 // @public
 export abstract class CumulativeDataAPIError extends DataAPIResponseError {
     readonly partialResult: unknown;
@@ -377,7 +299,6 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
     admin(options?: AdminSpawnOptions): AstraAdmin;
     close(): Promise<void>;
     db(endpoint: string, options?: DbSpawnOptions): Db;
-    db(id: string, region: string, options?: DbSpawnOptions): Db;
 }
 
 // @public
@@ -409,16 +330,10 @@ export class DataAPIDbAdmin extends DbAdmin {
     // @internal
     constructor(db: Db, httpClient: DataAPIHttpClient, adminOpts?: AdminSpawnOptions);
     createKeyspace(keyspace: string, options?: LocalCreateKeyspaceOptions): Promise<void>;
-    // @deprecated
-    createNamespace(keyspace: string, options?: LocalCreateNamespaceOptions): Promise<void>;
     db(): Db;
     dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
-    // @deprecated
-    dropNamespace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
     findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
     listKeyspaces(options?: WithTimeout): Promise<string[]>;
-    // @deprecated
-    listNamespaces(options?: WithTimeout): Promise<string[]>;
 }
 
 // @public
@@ -487,8 +402,6 @@ export interface DatabaseConfig {
     cloudProvider?: DatabaseCloudProvider;
     keyspace?: string;
     name: string;
-    // @deprecated
-    namespace?: string;
     region: string;
 }
 
@@ -561,7 +474,7 @@ export type DateUpdate<Schema> = {
 // @public
 export class Db {
     // @internal
-    constructor(endpoint: string, rootOpts: InternalRootClientOpts, dbOpts: DbSpawnOptions | nullish);
+    constructor(rootOpts: InternalRootClientOpts, endpoint: string, dbOpts: DbSpawnOptions | nullish);
     admin(options?: AdminSpawnOptions & {
         environment?: 'astra';
     }): AstraDbAdmin;
@@ -569,8 +482,6 @@ export class Db {
         environment: Exclude<DataAPIEnvironment, 'astra'>;
     }): DataAPIDbAdmin;
     collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions): Collection<Schema>;
-    // @deprecated
-    collections(options?: WithKeyspace & WithTimeout): Promise<Collection[]>;
     command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse>;
     createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>>;
     dropCollection(name: string, options?: DropCollectionOptions): Promise<boolean>;
@@ -583,26 +494,16 @@ export class Db {
     listCollections(options?: ListCollectionsOptions & {
         nameOnly?: false;
     }): Promise<FullCollectionInfo[]>;
-    // @deprecated
-    get namespace(): string;
     useKeyspace(keyspace: string): void;
-    // @deprecated
-    useNamespace(keyspace: string): void;
 }
 
 // @public
 export abstract class DbAdmin {
     abstract createKeyspace(keyspace: string, options?: CreateKeyspaceOptions): Promise<void>;
-    // @deprecated
-    abstract createNamespace(keyspace: string, options?: CreateNamespaceOptions): Promise<void>;
     abstract db(): Db;
     abstract dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
-    // @deprecated
-    abstract dropNamespace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
     abstract findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
     abstract listKeyspaces(): Promise<string[]>;
-    // @deprecated
-    abstract listNamespaces(): Promise<string[]>;
 }
 
 // @public
@@ -618,8 +519,6 @@ export interface DbSpawnOptions {
     dataApiPath?: string;
     keyspace?: string;
     monitorCommands?: boolean;
-    // @deprecated
-    namespace?: string;
     token?: string | TokenProvider | null;
 }
 
@@ -647,27 +546,13 @@ export class DeleteManyError extends CumulativeDataAPIError {
 }
 
 // @public
-export interface DeleteManyModel<TSchema extends SomeDoc> {
-    filter: Filter<TSchema>;
-}
-
-// @public
 export interface DeleteManyResult {
     deletedCount: number;
 }
 
 // @public
-export interface DeleteOneModel<TSchema extends SomeDoc> {
-    filter: Filter<TSchema>;
-}
-
-// @public
 export interface DeleteOneOptions extends WithTimeout {
     sort?: Sort;
-    // @deprecated
-    vector?: number[];
-    // @deprecated
-    vectorize?: string;
 }
 
 // @public
@@ -871,8 +756,6 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     get keyspace(): string;
     limit(limit: number): this;
     map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw>;
-    // @deprecated
-    get namespace(): string;
     next(): Promise<T | null>;
     project<R = any, RRaw extends SomeDoc = SomeDoc>(projection: Projection): FindCursor<R, RRaw>;
     readBufferedDocuments(max?: number): TRaw[];
@@ -892,10 +775,6 @@ export interface FindOneAndDeleteOptions extends WithTimeout {
     includeResultMetadata?: boolean;
     projection?: Projection;
     sort?: Sort;
-    // @deprecated
-    vector?: number[];
-    // @deprecated
-    vectorize?: string;
 }
 
 // @public
@@ -905,10 +784,6 @@ export interface FindOneAndReplaceOptions extends WithTimeout {
     returnDocument?: 'before' | 'after';
     sort?: Sort;
     upsert?: boolean;
-    // @deprecated
-    vector?: number[];
-    // @deprecated
-    vectorize?: string;
 }
 
 // @public
@@ -918,10 +793,6 @@ export interface FindOneAndUpdateOptions extends WithTimeout {
     returnDocument?: 'before' | 'after';
     sort?: Sort;
     upsert?: boolean;
-    // @deprecated
-    vector?: number[];
-    // @deprecated
-    vectorize?: string;
 }
 
 // @public
@@ -929,10 +800,6 @@ export interface FindOneOptions extends WithTimeout {
     includeSimilarity?: boolean;
     projection?: Projection;
     sort?: Sort;
-    // @deprecated
-    vector?: number[];
-    // @deprecated
-    vectorize?: string;
 }
 
 // @public
@@ -943,10 +810,6 @@ export interface FindOptions {
     projection?: Projection;
     skip?: number;
     sort?: Sort;
-    // @deprecated
-    vector?: number[];
-    // @deprecated
-    vectorize?: string;
 }
 
 // @public
@@ -1028,10 +891,6 @@ export type InsertManyOptions = InsertManyUnorderedOptions | InsertManyOrderedOp
 export interface InsertManyOrderedOptions extends WithTimeout {
     chunkSize?: number;
     ordered: true;
-    // @deprecated
-    vectorize?: (string | null | undefined)[];
-    // @deprecated
-    vectors?: (number[] | null | undefined)[];
 }
 
 // @public
@@ -1045,23 +904,6 @@ export interface InsertManyUnorderedOptions extends WithTimeout {
     chunkSize?: number;
     concurrency?: number;
     ordered?: false;
-    // @deprecated
-    vectorize?: (string | null | undefined)[];
-    // @deprecated
-    vectors?: (number[] | null | undefined)[];
-}
-
-// @public
-export interface InsertOneModel<TSchema extends SomeDoc> {
-    document: TSchema;
-}
-
-// @public
-export interface InsertOneOptions extends WithTimeout {
-    // @deprecated
-    vector?: number[];
-    // @deprecated
-    vectorize?: string;
 }
 
 // @public
@@ -1096,11 +938,6 @@ export interface ListDatabasesOptions extends WithTimeout {
 
 // @public
 export type LocalCreateKeyspaceOptions = CreateKeyspaceOptions & {
-    replication?: KeyspaceReplicationOptions;
-};
-
-// @public @deprecated
-export type LocalCreateNamespaceOptions = CreateNamespaceOptions & {
     replication?: KeyspaceReplicationOptions;
 };
 
@@ -1192,20 +1029,9 @@ export interface RawDataAPIResponse {
 }
 
 // @public
-export interface ReplaceOneModel<TSchema extends SomeDoc> {
-    filter: Filter<TSchema>;
-    replacement: NoId<TSchema>;
-    upsert?: boolean;
-}
-
-// @public
 export interface ReplaceOneOptions extends WithTimeout {
     sort?: Sort;
     upsert?: boolean;
-    // @deprecated
-    vector?: number[];
-    // @deprecated
-    vectorize?: string;
 }
 
 // @public
@@ -1215,8 +1041,6 @@ export type ReplaceOneResult<Schema extends SomeDoc> = InternalUpdateResult<Sche
 export interface RunCommandOptions extends WithTimeout {
     collection?: string;
     keyspace?: string | null;
-    // @deprecated
-    namespace?: string | null;
 }
 
 // @public
@@ -1375,13 +1199,6 @@ export class UpdateManyError extends CumulativeDataAPIError {
 }
 
 // @public
-export interface UpdateManyModel<TSchema extends SomeDoc> {
-    filter: Filter<TSchema>;
-    update: UpdateFilter<TSchema>;
-    upsert?: boolean;
-}
-
-// @public
 export interface UpdateManyOptions extends WithTimeout {
     upsert?: boolean;
 }
@@ -1390,20 +1207,9 @@ export interface UpdateManyOptions extends WithTimeout {
 export type UpdateManyResult<Schema extends SomeDoc> = InternalUpdateResult<Schema, number>;
 
 // @public
-export interface UpdateOneModel<TSchema extends SomeDoc> {
-    filter: Filter<TSchema>;
-    update: UpdateFilter<TSchema>;
-    upsert?: boolean;
-}
-
-// @public
 export interface UpdateOneOptions extends WithTimeout {
     sort?: Sort;
     upsert?: boolean;
-    // @deprecated
-    vector?: number[];
-    // @deprecated
-    vectorize?: string;
 }
 
 // @public
@@ -1469,12 +1275,7 @@ export type WithId<T> = NoId<T> & {
 // @public
 export interface WithKeyspace {
     keyspace?: string;
-    // @deprecated
-    namespace?: string;
 }
-
-// @public @deprecated
-export type WithNamespace = WithKeyspace;
 
 // @public
 export interface WithTimeout {

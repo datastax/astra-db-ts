@@ -372,15 +372,6 @@ export interface DbSpawnOptions {
    */
   keyspace?: string,
   /**
-   * The keyspace to use for the database.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link DbSpawnOptions.keyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * @deprecated - Prefer {@link DbSpawnOptions.keyspace} instead.
-   */
-  namespace?: string,
-  /**
    * Whether to monitor commands for {@link Db}-level & {@link Collection}-level events through an event emitter.
    *
    * Defaults to `false` if never provided. However, if it was provided when creating the {@link DataAPIClient}, it will

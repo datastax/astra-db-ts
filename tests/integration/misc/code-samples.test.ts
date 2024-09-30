@@ -106,7 +106,7 @@ describe('integration.misc.code-samples', { truncateColls: 'default:before' }, (
       assert.strictEqual(jane?.name, 'Jane');
 
       // Find by vector similarity (John)
-      const john = await collection.findOne({ key }, { vector: [1, 1, 1, 1, 1], includeSimilarity: true });
+      const john = await collection.findOne({ key }, { sort: { $vector: [1, 1, 1, 1, 1] }, includeSimilarity: true });
       // console.log(john?.name, john?.$similarity);
       assert.strictEqual(john?.name, 'John');
       assert.strictEqual(john.$similarity, 1);
@@ -143,7 +143,7 @@ describe('integration.misc.code-samples', { truncateColls: 'default:before' }, (
       assert.deepStrictEqual(await sortedAgeCursor.map(d => d.age).toArray(), [25, 30, 40]);
 
       // Find first by vector similarity (John)
-      const john = await collection.find({ key }, { vector: [1, 1, 1, 1, 1], includeSimilarity: true }).next();
+      const john = await collection.find({ key }, { sort: { $vector: [1, 1, 1, 1, 1] }, includeSimilarity: true }).next();
       // console.log(john?.name, john?.$similarity);
       assert.strictEqual(john?.name, 'John');
       assert.strictEqual(john.$similarity, 1);
@@ -163,7 +163,7 @@ describe('integration.misc.code-samples', { truncateColls: 'default:before' }, (
       assert.deepStrictEqual(sorted1.map(d => d.name), ['Jane', 'Jack', 'Dave']);
 
       // Sort by vector distance (Jane, Dave, Jack)
-      const sorted2 = await collection.find({ key }, { vector: [1, 1, 1, 1, 1] }).toArray();
+      const sorted2 = await collection.find({ key }, { sort: { $vector: [1, 1, 1, 1, 1] } }).toArray();
       // console.log(sorted2.map(d => d.name));
       assert.deepStrictEqual(sorted2.map(d => d.name), ['Jane', 'Dave', 'Jack']);
     });

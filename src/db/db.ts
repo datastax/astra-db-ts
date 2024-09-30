@@ -26,14 +26,13 @@ import { CreateCollectionCommand, CreateCollectionOptions } from '@/src/db/types
 import { TokenProvider } from '@/src/lib';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client';
 import { KeyspaceRef } from '@/src/lib/api/clients/types';
-import { resolveKeyspace, validateDataAPIEnv } from '@/src/lib/utils';
+import { validateDataAPIEnv } from '@/src/lib/utils';
 import { EmbeddingHeadersProvider } from '@/src/documents';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
 import { CollectionSpawnOptions } from '@/src/db/types/spawn-collection';
 import { DropCollectionOptions } from '@/src/db/types/drop-collection';
 import { FullCollectionInfo, ListCollectionsCommand, ListCollectionsOptions } from '@/src/db/types/list-collection';
 import { RunCommandOptions } from '@/src/db/types/command';
-import { WithKeyspace } from '@/src/db/types/collections-common';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -83,9 +82,10 @@ export class Db {
    *
    * @internal
    */
-  constructor(endpoint: string, rootOpts: InternalRootClientOpts, dbOpts: DbSpawnOptions | nullish) {
-    this.#defaultOpts = rootOpts;
+  constructor(rootOpts: InternalRootClientOpts, endpoint: string, dbOpts: DbSpawnOptions | nullish) {
+    validateDbOpts(dbOpts);
 
+    this.#defaultOpts = rootOpts;
     this.#token = TokenProvider.parseToken(dbOpts?.token ?? rootOpts.dbOptions.token);
 
     const combinedDbOpts = {
@@ -95,8 +95,8 @@ export class Db {
 
     this._keyspace = {
       ref: (rootOpts.environment === 'astra')
-        ? resolveKeyspace(combinedDbOpts) ?? DEFAULT_KEYSPACE
-        : resolveKeyspace(combinedDbOpts),
+        ? combinedDbOpts.keyspace ?? DEFAULT_KEYSPACE
+        : combinedDbOpts.keyspace,
     };
 
     this.#httpClient = new DataAPIHttpClient({
@@ -149,23 +149,6 @@ export class Db {
   public get keyspace(): string {
     if (!this._keyspace.ref) {
       throw new Error('No keyspace set for DB (can\'t do db.keyspace, or perform any operation requiring it). Use `db.useKeyspace`, or pass the keyspace as an option parameter explicitly.');
-    }
-    return this._keyspace.ref;
-  }
-
-  /**
-   * The default keyspace to use for all operations in this database, unless overridden in a method call.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link Db.keyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link Db.keyspace} instead.
-   */
-  public get namespace(): string {
-    if (!this._keyspace.ref) {
-      throw new Error('No keyspace set for DB (can\'t do db.namespace, or perform any operation requiring it). Use `db.useKeyspace`, or pass the keyspace as an option parameter explicitly.');
     }
     return this._keyspace.ref;
   }
@@ -224,21 +207,6 @@ export class Db {
    * @param keyspace - The keyspace to use
    */
   public useKeyspace(keyspace: string) {
-    this._keyspace.ref = keyspace;
-  }
-
-  /**
-   * Sets the default working keyspace of the `Db` instance. Does not retroactively update any previous collections
-   * spawned from this `Db` to use the new keyspace.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link Db.useKeyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link Db.useKeyspace} instead.
-   */
-  public useNamespace(keyspace: string) {
     this._keyspace.ref = keyspace;
   }
 
@@ -384,39 +352,6 @@ export class Db {
   }
 
   /**
-   * Establishes references to all the collections in the working/given keyspace.
-   *
-   * You can specify a keyspace in the options parameter, which will override the default keyspace for this `Db` instance.
-   *
-   * @example
-   * ```typescript
-   * // Uses db's default keyspace
-   * const collections1 = await db.collections();
-   * console.log(collections1); // [Collection<SomeDoc>, Collection<SomeDoc>]
-   *
-   * // Overrides db's default keyspace
-   * const collections2 = await db.collections({ keyspace: 'my_keyspace' });
-   * console.log(collections2); // [Collection<SomeDoc>]
-   * ```
-   *
-   * @param options - Options for this operation.
-   *
-   * @returns A promise that resolves to an array of references to the working Db's collections.
-   *
-   * @deprecated - Essentially equivalent to `(await db.listCollections()).map(c => new Collection(c.name))`; will be
-   * removed in an upcoming major release.
-   */
-  public async collections(options?: WithKeyspace & WithTimeout): Promise<Collection[]> {
-    const collections = await this.listCollections({
-      keyspace: resolveKeyspace(options),
-      maxTimeMS: options?.maxTimeMS,
-      nameOnly: true,
-    });
-
-    return collections.map(c => this.collection(c, options));
-  }
-
-  /**
    * Creates a new collection in the database, and establishes a reference to it.
    *
    * **NB. You are limited in the amount of collections you can create, so be wary when using this command.**
@@ -479,13 +414,13 @@ export class Db {
     };
 
     const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
-    const keyspace = resolveKeyspace(options) ?? this.keyspace;
+    const keyspace = options?.keyspace ?? this.keyspace;
 
     if (options?.checkExists !== false) {
       const collections = await this.listCollections({ keyspace: keyspace, maxTimeMS: timeoutManager.msRemaining() });
 
       if (collections.some(c => c.name === collectionName)) {
-        throw new CollectionAlreadyExistsError(resolveKeyspace(options) ?? this.keyspace, collectionName);
+        throw new CollectionAlreadyExistsError(keyspace, collectionName);
       }
     }
 
@@ -621,27 +556,6 @@ export class Db {
 /**
  * @internal
  */
-export function mkDb(rootOpts: InternalRootClientOpts, endpointOrId: string, regionOrOptions: string | DbSpawnOptions | nullish, maybeOptions: DbSpawnOptions | nullish) {
-  const dbOpts = (typeof regionOrOptions === 'string')
-    ? maybeOptions
-    : regionOrOptions;
-
-  validateDbOpts(dbOpts);
-
-  if (typeof regionOrOptions === 'string' && (endpointOrId.startsWith('https://') || endpointOrId.startsWith('http://'))) {
-    throw new Error('Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { keyspace })`?');
-  }
-
-  const endpoint = (typeof regionOrOptions === 'string')
-    ? 'https://' + endpointOrId + '-' + regionOrOptions + '.apps.astra.datastax.com'
-    : endpointOrId;
-
-  return new Db(endpoint, rootOpts, dbOpts);
-}
-
-/**
- * @internal
- */
 export function validateDbOpts(opts: DbSpawnOptions | nullish) {
   validateOption('dbOptions', opts, 'object');
 
@@ -649,13 +563,11 @@ export function validateDbOpts(opts: DbSpawnOptions | nullish) {
     return;
   }
 
-  for (const prop of <const>['keyspace', 'namespace']) {
-    validateOption(`dbOptions.${prop}`, opts[prop], 'string', false, (keyspace) => {
-      if (!keyspace.match(/^\w{1,48}$/)) {
-        throw new Error(`Invalid ${prop} option; expected a string of 1-48 alphanumeric characters`);
-      }
-    });
-  }
+  validateOption(`dbOptions.keyspace`, opts.keyspace, 'string', false, (keyspace) => {
+    if (!keyspace.match(/^\w{1,48}$/)) {
+      throw new Error(`Invalid keyspace option; expected a string of 1-48 alphanumeric characters`);
+    }
+  });
 
   validateOption('dbOptions.monitorCommands', opts.monitorCommands, 'boolean');
 

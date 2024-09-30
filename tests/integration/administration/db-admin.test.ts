@@ -42,49 +42,14 @@ describe('integration.administration.db-admin', ({ dbAdmin }) => {
     assert.ok(keyspaces2.includes('slania'));
 
     await dbAdmin.dropKeyspace('slania');
-    assert.strictEqual(db.namespace, 'slania');
+    assert.strictEqual(db.keyspace, 'slania');
 
     const keyspaces3 = await dbAdmin.listKeyspaces();
     assert.ok(!keyspaces3.includes('slania'));
 
     assert.strictEqual(cmdsSucceeded, 5);
   });
-
-  it('(LONG) (NOT-ASTRA) works w/ legacy namespace', async () => {
-    const { client } = initTestObjects({ monitoring: true });
-    let cmdsSucceeded = 0;
-
-    client.on('adminCommandSucceeded', (e) => {
-      assert.strictEqual(e.warnings.length, 1);
-      assert.ok(e.warnings[0].includes('Namespace'));
-      assert.ok(e.warnings[0].includes('deprecated'));
-      cmdsSucceeded++;
-    });
-
-    const db = client.db(TEST_APPLICATION_URI);
-
-    const dbAdmin = (ENVIRONMENT === 'astra')
-      ? db.admin({ environment: ENVIRONMENT })
-      : db.admin({ environment: ENVIRONMENT });
-
-    const keyspaces1 = await dbAdmin.listNamespaces();
-    assert.ok(!keyspaces1.includes('slania'));
-
-    await dbAdmin.createNamespace('slania', { updateDbNamespace: true });
-    assert.strictEqual(db.keyspace, 'slania');
-
-    const keyspaces2 = await dbAdmin.listNamespaces();
-    assert.ok(keyspaces2.includes('slania'));
-
-    await dbAdmin.dropNamespace('slania');
-    assert.strictEqual(db.namespace, 'slania');
-
-    const keyspaces3 = await dbAdmin.listNamespaces();
-    assert.ok(!keyspaces3.includes('slania'));
-
-    assert.strictEqual(cmdsSucceeded, 5);
-  });
-
+  
   it('should findEmbeddingProviders', async () => {
     const { embeddingProviders } = await dbAdmin.findEmbeddingProviders();
     assert.ok(typeof embeddingProviders === 'object');

@@ -13,13 +13,15 @@
 // limitations under the License.
 // noinspection JSDeprecatedSymbols
 
-import { Db, mkDb, validateDbOpts } from '@/src/db/db';
+import { Db, validateDbOpts } from '@/src/db/db';
 import { AstraAdmin } from '@/src/administration/astra-admin';
 import {
   Caller,
   CustomHttpClientOptions,
   DataAPIClientOptions,
-  DataAPIHttpOptions, DbSpawnOptions, DefaultHttpClientOptions,
+  DataAPIHttpOptions,
+  DbSpawnOptions,
+  DefaultHttpClientOptions,
   InternalRootClientOpts,
 } from '@/src/client/types';
 import TypedEmitter from 'typed-emitter';
@@ -229,48 +231,8 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    *
    * @returns A new {@link Db} instance.
    */
-  public db(endpoint: string, options?: DbSpawnOptions): Db;
-
-  /**
-   * Spawns a new {@link Db} instance using a direct endpoint and given options.
-   *
-   * **NB. This method does not validate the existence of the database—it simply creates a reference.**
-   *
-   * This overload is purely for user convenience, but it **only supports using Astra as the underlying database**. For
-   * DSE or any other Data-API-compatible endpoint, use the other overload instead.
-   *
-   * The given options will override any default options set when creating the {@link DataAPIClient} through
-   * a deep merge (i.e. unset properties in the options object will just default to the default options).
-   *
-   * @example
-   * ```typescript
-   * const db1 = client.db('a6a1d8d6-31bc-4af8-be57-377566f345bf', 'us-east1');
-   *
-   * const db2 = client.db('a6a1d8d6-31bc-4af8-be57-377566f345bf', 'us-east1', {
-   *   keyspace: 'my-keyspace',
-   *   useHttp2: false,
-   * });
-   *
-   * const db3 = client.db('a6a1d8d6-31bc-4af8-be57-377566f345bf', 'us-east1', {
-   *   token: 'AstraCS:...'
-   * });
-   * ```
-   *
-   * @remarks
-   * Note that this does not perform any IO or validation on if the endpoint is valid or not. It's up to the user to
-   * ensure that the endpoint is correct. If you want to create an actual database, see {@link AstraAdmin.createDatabase}
-   * instead.
-   *
-   * @param id - The database ID to use.
-   * @param region - The region to use.
-   * @param options - Any options to override the default options set when creating the {@link DataAPIClient}.
-   *
-   * @returns A new {@link Db} instance.
-   */
-  public db(id: string, region: string, options?: DbSpawnOptions): Db;
-
-  public db(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): Db {
-    return mkDb(this.#options, endpointOrId, regionOrOptions, maybeOptions);
+  public db(endpoint: string, options?: DbSpawnOptions): Db {
+    return new Db(this.#options, endpoint, options);
   }
 
   /**

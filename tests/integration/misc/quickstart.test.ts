@@ -61,7 +61,7 @@ parallel('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
     );
 
     const cursor = collection.find({}, {
-      vector: [0.1, 0.15, 0.3, 0.12, 0.05],
+      sort: { $vector: [0.1, 0.15, 0.3, 0.12, 0.05] },
       includeSimilarity: true,
       limit: 2,
     });

@@ -229,33 +229,11 @@ export interface WithKeyspace {
    * The keyspace to use for the operation.
    */
   keyspace?: string
-  /**
-   * The keyspace to use for the operation.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link WithKeyspace.keyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link WithKeyspace.keyspace} instead.
-   */
-  namespace?: string
 }
-
-/**
- * This is now a deprecated alias for the strictly equivalent {@link WithKeyspace}, and will be removed
- * in an upcoming major version.
- *
- * @deprecated - Prefer {@link WithKeyspace} instead.
- *
- * @public
- */
-export type WithNamespace = WithKeyspace;
 
 /**
  * @internal
  */
 export interface WithNullableKeyspace {
   keyspace?: string | null;
-  namespace?: string | null;
 }

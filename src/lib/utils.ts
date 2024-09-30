@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { WithKeyspace } from '@/src/db';
-import { WithNullableKeyspace } from '@/src/db/types/collections-common';
 import { DataAPIEnvironment, nullish } from '@/src/lib/types';
 import { DataAPIEnvironments } from '@/src/lib/constants';
 
@@ -35,12 +33,6 @@ export function jsonTryParse<T>(json: string, otherwise: T, reviver?: (this: any
   }
 }
 
-export function resolveKeyspace(obj: WithKeyspace | nullish, nullBypass?: false): string | undefined
-
-export function resolveKeyspace(obj: WithNullableKeyspace | nullish, nullBypass: true): string | nullish
-
-export function resolveKeyspace(obj: WithNullableKeyspace | nullish, nullBypass?: boolean): string | nullish {
-  return (nullBypass)
-    ? (obj?.keyspace !== undefined) ? obj?.keyspace: (<any>obj)?.namespace
-    : obj?.keyspace ?? (<any>obj)?.namespace ?? undefined;
+export function buildAstraEndpoint(id: string, region: string, env: 'dev' | 'test' | 'prod' = 'prod') {
+  return 'https://' + id + '-' + region + `.apps${env === 'prod' ? '' : `-${env}`}.astra.datastax.com`;
 }

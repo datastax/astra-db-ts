@@ -21,7 +21,6 @@ export * from './embedding-providers';
 export {
   DataAPIResponseError,
   DataAPIHttpError,
-  BulkWriteError,
   DataAPITimeoutError,
   CumulativeDataAPIError,
   CursorIsStartedError,

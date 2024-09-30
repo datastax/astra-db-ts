@@ -70,30 +70,6 @@ export interface InsertManyOrderedOptions extends WithTimeout {
    * @defaultValue 20
    */
   chunkSize?: number,
-  /**
-   * A list of optional vectors to use for the documents, if using a vector-enabled collection.
-   *
-   * This is purely for the user's convenience and intuitiveness—it is equivalent to setting the `$vector` field on the
-   * documents themselves. The two are interchangeable, but mutually exclusive.
-   *
-   * The list may contain `null` or `undefined` values, which mark the corresponding document as not having a vector
-   * (or the doc having its `$vector` field already set).
-   *
-   * **NB. Setting this field will cause a shallow copy of the documents to be made for non-null vectors.** If
-   * performance is a concern, it is recommended to directly set the `$vector` field on the document itself.
-   *
-   * If any document already has a `$vector` field, and this is set, the `$vector` field will be overwritten. It is
-   * up to the user to ensure that both fields are not set at once.
-   *
-   * @deprecated - Prefer to set the `$vector` fields in the docs directly
-   */
-  vectors?: (number[] | null | undefined)[],
-  /**
-   Akin to {@link InsertManyOrderedOptions.vectors}, but for `$vectorize`.
-   *
-   * @deprecated - Prefer to set the `$vectorize` fields in the docs directly
-   */
-  vectorize?: (string | null | undefined)[],
 }
 
 /**
@@ -127,30 +103,6 @@ export interface InsertManyUnorderedOptions extends WithTimeout {
    * @defaultValue 20
    */
   chunkSize?: number,
-  /**
-   * A list of optional vectors to use for the documents, if using a vector-enabled collection.
-   *
-   * This is purely for the user's convenience and intuitiveness—it is equivalent to setting the `$vector` field on the
-   * documents themselves. The two are interchangeable, but mutually exclusive.
-   *
-   * The list may contain `null` or `undefined` values, which mark the corresponding document as not having a vector
-   * (or the doc having its `$vector` field already set).
-   *
-   * **NB. Setting this field will cause a shallow copy of the documents to be made for non-null vectors.** If
-   * performance is a concern, it is recommended to directly set the `$vector` field on the document itself.
-   *
-   * If any document already has a `$vector` field, and this is set, the `$vector` field will be overwritten. It is
-   * up to the user to ensure that both fields are not set at once.
-   *
-   * @deprecated - Prefer to set the `$vector` fields in the docs directly
-   */
-  vectors?: (number[] | null | undefined)[],
-  /**
-   * Akin to {@link InsertManyUnorderedOptions.vectors}, but for `$vectorize`.
-   *
-   * @deprecated - Prefer to set the `$vectorize` fields in the docs directly
-   */
-  vectorize?: (string | null | undefined)[],
 }
 
 /**
