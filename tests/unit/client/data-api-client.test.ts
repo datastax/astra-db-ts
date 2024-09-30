@@ -18,14 +18,7 @@ import { FetcherResponseInfo } from '@/src/lib/api';
 import { FetchH2 } from '@/src/lib/api/fetch/fetch-h2';
 import { FetcherRequestInfo } from '@/src/lib/api/fetch/types';
 import { UsernamePasswordTokenProvider } from '@/src/lib';
-import {
-  DEMO_APPLICATION_URI,
-  describe,
-  it,
-  OTHER_KEYSPACE,
-  TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
-} from '@/tests/testlib';
+import { describe, it, TEST_APPLICATION_URI } from '@/tests/testlib';
 import assert from 'assert';
 import { DataAPIEnvironments } from '@/src/lib/constants';
 
@@ -131,14 +124,6 @@ describe('unit.client.documents-client', () => {
       // @ts-expect-error - testing invalid input
       dbOptions: { token: 3 },
     }));
-  });
-
-  it('throws an error if passing in endpoint and keyspace name as a string', () => {
-    const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
-    assert.throws(
-      () => client.db(DEMO_APPLICATION_URI, OTHER_KEYSPACE),
-      { message: 'Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { keyspace })`?' },
-    );
   });
 
   describe('using fetch-h2', () => {

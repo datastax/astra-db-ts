@@ -20,8 +20,8 @@ import { hrTimeMs } from '@/src/lib/api/clients/http-client';
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
  * command's lifecycle. Intended for use for monitoring and logging purposes.
  *
- * **Note that these emit *real* commands, not any abstracted commands like "bulkWrite", "insertMany", or "deleteAll",
- * which have to be translated into appropriate Data API commands.**
+ * **Note that these emit *real* commands, not any abstracted commands like "insertMany" or "updateMany",
+ * which may be split into multiple of those commands under the hood.**
  *
  * @public
  */
@@ -43,8 +43,8 @@ export type DataAPICommandEvents = {
 /**
  * Common base class for all command events.
  *
- * **Note that these emit *real* commands, not any abstracted commands like "bulkWrite", "insertMany", or "deleteAll",
- * which have to be translated into appropriate Data API commands.**
+ * **Note that these emit *real* commands, not any abstracted commands like "insertMany" or "updateMany",
+ * which may be split into multiple of those commands under the hood.**
  *
  * @public
  */
@@ -53,9 +53,6 @@ export abstract class CommandEvent {
    * The command object. Equal to the response body of the HTTP request.
    *
    * Note that this is the actual raw command object; it's not necessarily 1:1 with methods called on the collection/db.
-   *
-   * For example, a `deleteAll` method on a collection will be translated into a `deleteMany` command, and a `bulkWrite`
-   * method will be translated into a series of `insertOne`, `updateOne`, etc. commands.
    *
    * @example
    * ```typescript
@@ -72,18 +69,6 @@ export abstract class CommandEvent {
   public readonly keyspace: string;
 
   /**
-   * The keyspace the command is being run in.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link CommandEvent.keyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link CommandEvent.keyspace} instead.
-   */
-  public readonly namespace: string;
-
-  /**
    * The collection the command is being run on, if applicable.
    */
   public readonly collection?: string;
@@ -93,8 +78,6 @@ export abstract class CommandEvent {
    *
    * This is the key of the command object. For example, if the command object is
    * `{ insertOne: { document: { name: 'John' } } }`, the command name is `insertOne`.
-   *
-   * Meaning, abstracted commands like `bulkWrite`, or `deleteAll` will be shown as their actual command equivalents.
    */
   public readonly commandName: string;
 
@@ -110,7 +93,7 @@ export abstract class CommandEvent {
    */
   protected constructor(info: DataAPIRequestInfo) {
     this.command = info.command;
-    this.keyspace = this.namespace = info.keyspace || DEFAULT_KEYSPACE;
+    this.keyspace = info.keyspace || DEFAULT_KEYSPACE;
     this.collection = info.collection;
     this.commandName = Object.keys(info.command)[0];
     this.url = info.url;
@@ -120,8 +103,8 @@ export abstract class CommandEvent {
 /**
  * Emitted when a command is started, before the initial HTTP request is made.
  *
- * **Note that these emit *real* commands, not any abstracted commands like "bulkWrite", "insertMany", or "deleteAll",
- * which have to be translated into appropriate Data API commands.**
+ * **Note that these emit *real* commands, not any abstracted commands like "insertMany" or "updateMany",
+ * which may be split into multiple of those commands under the hood.**
  *
  * See {@link CommandEvent} for more information about all the common properties available on this event.
  *
@@ -147,8 +130,8 @@ export class CommandStartedEvent extends CommandEvent {
 /**
  * Emitted when a command has succeeded.
  *
- * **Note that these emit *real* commands, not any abstracted commands like "bulkWrite", "insertMany", or "deleteAll",
- * which have to be translated into appropriate Data API commands.**
+ * **Note that these emit *real* commands, not any abstracted commands like "insertMany" or "updateMany",
+ * which may be split into multiple of those commands under the hood.**
  *
  * See {@link CommandEvent} for more information about all the common properties available on this event.
  *
@@ -187,8 +170,8 @@ export class CommandSucceededEvent extends CommandEvent {
 /**
  * Emitted when a command has errored.
  *
- * **Note that these emit *real* commands, not any abstracted commands like "bulkWrite", "insertMany", or "deleteAll",
- * which have to be translated into appropriate Data API commands.**
+ * **Note that these emit *real* commands, not any abstracted commands like "insertMany" or "updateMany",
+ * which may be split into multiple of those commands under the hood.**
  *
  * See {@link CommandEvent} for more information about all the common properties available on this event.
  *

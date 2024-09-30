@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CreateKeyspaceOptions, CreateNamespaceOptions } from '@/src/administration';
+import { CreateKeyspaceOptions } from '@/src/administration';
 
 /**
  * Represents the options for creating a keyspace on a non-Astra database (i.e. blocking options + keyspace creation options).
@@ -43,18 +43,6 @@ import { CreateKeyspaceOptions, CreateNamespaceOptions } from '@/src/administrat
  * @public
  */
 export type LocalCreateKeyspaceOptions = CreateKeyspaceOptions & { replication?: KeyspaceReplicationOptions };
-
-/**
- * Represents the options for creating a keyspace on a non-Astra database (i.e. blocking options + keyspace creation options).
- *
- * This is now a deprecated alias for the strictly equivalent {@link LocalCreateKeyspaceOptions}, and will be removed
- * in an upcoming major version.
- *
- * @deprecated - Prefer {@link LocalCreateKeyspaceOptions} instead.
- *
- * @public
- */
-export type LocalCreateNamespaceOptions = CreateNamespaceOptions & { replication?: KeyspaceReplicationOptions };
 
 /**
  * Represents the replication options for a keyspace.

@@ -23,12 +23,11 @@ import {
 } from '@/src/administration/types';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { DbSpawnOptions, InternalRootClientOpts } from '@/src/client/types';
-import { Db, mkDb } from '@/src/db/db';
+import { Db } from '@/src/db/db';
 import { validateAdminOpts } from '@/src/administration/utils';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
 import { TokenProvider, WithTimeout } from '@/src/lib';
-import { resolveKeyspace } from '@/src/lib/utils';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -155,7 +154,19 @@ export class AstraAdmin {
   public db(id: string, region: string, options?: DbSpawnOptions): Db;
 
   public db(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): Db {
-    return mkDb(this.#defaultOpts, endpointOrId, regionOrOptions, maybeOptions);
+    const dbOpts = (typeof regionOrOptions === 'string')
+      ? maybeOptions
+      : regionOrOptions;
+
+    if (typeof regionOrOptions === 'string' && (endpointOrId.startsWith('https://') || endpointOrId.startsWith('http://'))) {
+      throw new Error('Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { keyspace })`?');
+    }
+
+    const endpoint = (typeof regionOrOptions === 'string')
+      ? 'https://' + endpointOrId + '-' + regionOrOptions + '.apps.astra.datastax.com'
+      : endpointOrId;
+
+    return new Db(this.#defaultOpts, endpoint, dbOpts);
   }
 
   /**
@@ -369,7 +380,7 @@ export class AstraAdmin {
       capacityUnits: 1,
       tier: 'serverless',
       dbType: 'vector',
-      keyspace: resolveKeyspace(config) || DEFAULT_KEYSPACE,
+      keyspace: config.keyspace || DEFAULT_KEYSPACE,
       ...config,
     };
 
@@ -385,7 +396,7 @@ export class AstraAdmin {
       options,
     });
 
-    const db = mkDb(this.#defaultOpts, resp.headers.location, definition.region, { ...options?.dbOptions, keyspace: definition.keyspace });
+    const db = this.db(resp.headers.location, definition.region, { ...options?.dbOptions, keyspace: definition.keyspace });
     return db.admin(this.#defaultOpts.adminOptions);
   }
 

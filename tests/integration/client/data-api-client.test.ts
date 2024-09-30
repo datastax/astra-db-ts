@@ -39,15 +39,6 @@ describe('integration.client.documents-client', () => {
       assert.ok(Array.isArray(collections));
     });
 
-    it('(NOT-DEV) (ASTRA) properly connects to a db by id and region', async () => {
-      const idAndRegion = TEST_APPLICATION_URI.split('.')[0].split('https://')[1].split('-');
-      const id = idAndRegion.slice(0, 5).join('-');
-      const region = idAndRegion.slice(5).join('-');
-      const db = new DataAPIClient(TEST_APPLICATION_TOKEN).db(id, region);
-      const collections = await db.listCollections();
-      assert.ok(Array.isArray(collections));
-    });
-
     it('lets Data API deal with throwing missing token error', async () => {
       const db = new DataAPIClient({ environment: ENVIRONMENT }).db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
       await assert.rejects(() => db.listCollections(), { message: 'Role unauthorized for operation: Missing token, expecting one in the Token header.' });
@@ -104,7 +95,7 @@ describe('integration.client.documents-client', () => {
 
     it('should not emit any command events when set to false', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { monitorCommands: false }, environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { namespace: DEFAULT_KEYSPACE });
+      const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
       client.on('commandStarted', () => assert.fail('should not have emitted commandStarted event'));
@@ -149,8 +140,8 @@ describe('integration.client.documents-client', () => {
       assert.strictEqual(succeededEvents[1].commandName, 'deleteOne');
 
       assert.strictEqual(startedEvents[0].keyspace, DEFAULT_KEYSPACE);
-      assert.strictEqual(succeededEvents[0].namespace, DEFAULT_KEYSPACE);
-      assert.strictEqual(startedEvents[1].namespace, OTHER_KEYSPACE);
+      assert.strictEqual(succeededEvents[0].keyspace, DEFAULT_KEYSPACE);
+      assert.strictEqual(startedEvents[1].keyspace, OTHER_KEYSPACE);
       assert.strictEqual(succeededEvents[1].keyspace, OTHER_KEYSPACE);
 
       assert.strictEqual(startedEvents[0].collection, DEFAULT_COLLECTION_NAME);
@@ -213,7 +204,7 @@ describe('integration.client.documents-client', () => {
       assert.strictEqual(failedEvent.commandName, 'insertOne');
 
       assert.strictEqual(startedEvent.keyspace, DEFAULT_KEYSPACE);
-      assert.strictEqual(failedEvent.namespace, DEFAULT_KEYSPACE);
+      assert.strictEqual(failedEvent.keyspace, DEFAULT_KEYSPACE);
 
       assert.strictEqual(startedEvent.collection, DEFAULT_COLLECTION_NAME);
       assert.strictEqual(failedEvent.collection, DEFAULT_COLLECTION_NAME);
@@ -260,7 +251,7 @@ describe('integration.client.documents-client', () => {
       assert.strictEqual(startedEvent.commandName, 'insertOne');
       assert.strictEqual(failedEvent.commandName, 'insertOne');
 
-      assert.strictEqual(startedEvent.namespace, DEFAULT_KEYSPACE);
+      assert.strictEqual(startedEvent.keyspace, DEFAULT_KEYSPACE);
       assert.strictEqual(failedEvent.keyspace, DEFAULT_KEYSPACE);
 
       assert.strictEqual(startedEvent.collection, DEFAULT_COLLECTION_NAME);
