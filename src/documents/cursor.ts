@@ -93,7 +93,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this._options = structuredClone(options ?? {});
 
     if (options?.sort) {
-      this._options.sort = normalizedSort(options);
+      this._options.sort = normalizedSort(options.sort);
     }
   }
 
@@ -160,7 +160,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    */
   public sort(sort: Sort): this {
     this._assertUninitialized();
-    this._options.sort = normalizedSort({ sort });
+    this._options.sort = normalizedSort(sort);
     return this;
   }
 

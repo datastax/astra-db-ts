@@ -112,7 +112,7 @@ const insertMany = async <ID>(httpClient: DataAPIHttpClient, documents: unknown[
     const docResp = documentResponses[i];
 
     if (docResp.status === "OK") {
-      insertedIds.push(mkID(resp.status!, docResp._id));
+      insertedIds.push(mkID(docResp._id, resp.status!));
     } else if (docResp.errorIdx) {
       docResp.error = errors![docResp.errorIdx];
       delete docResp.errorIdx;

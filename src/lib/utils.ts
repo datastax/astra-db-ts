@@ -15,7 +15,7 @@
 import { DataAPIEnvironment, nullish } from '@/src/lib/types';
 import { DataAPIEnvironments } from '@/src/lib/constants';
 
-export const uncurriedConst = <A, B>(a: A, _: B) => a;
+export const constUncurried = <A, B>(a: A, _: B) => a;
 
 export function isNullish(t: unknown): t is nullish {
   return t === null || t === undefined;

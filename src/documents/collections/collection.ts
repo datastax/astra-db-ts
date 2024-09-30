@@ -47,7 +47,7 @@ import { CollectionNotFoundError } from '@/src/db/errors';
 import { CollectionOptions, CollectionSpawnOptions, Db } from '@/src/db';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { WithTimeout } from '@/src/lib';
-import { uncurriedConst } from '@/src/lib/utils';
+import { constUncurried } from '@/src/lib/utils';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 
 /**
@@ -151,7 +151,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @returns The ID of the inserted document.
    */
   public async insertOne(document: MaybeId<Schema>, options?: WithTimeout): Promise<InsertOneResult<Schema>> {
-    return this.#commands.insertOne(document, options, uncurriedConst);
+    return this.#commands.insertOne(document, options, constUncurried);
   }
 
   /**
@@ -226,7 +226,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @throws InsertManyError - If the operation fails.
    */
   public async insertMany(documents: MaybeId<Schema>[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>> {
-    return this.#commands.insertMany(documents, options, uncurriedConst);
+    return this.#commands.insertMany(documents, options, constUncurried);
   }
 
   /**

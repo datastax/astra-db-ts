@@ -5,13 +5,14 @@ import {
   FindCursor,
   InsertManyOptions,
   ModifyResult,
-  SomeDoc, TooManyDocumentsToCountError,
+  SomeDoc,
+  TooManyDocumentsToCountError,
   UpdateManyError,
   WithId,
 } from '@/src/documents';
 import { nullish, WithTimeout } from '@/src/lib';
 import { insertManyOrdered, insertManyUnordered, MkID } from '@/src/documents/commands/helpers/insertion';
-import { normalizedProjection, normalizedSort } from '@/src/documents/utils';
+import { normalizedSort } from '@/src/documents/utils';
 import { mkRespErrorFromResponse } from '@/src/documents/errors';
 import { coalesceUpsertIntoUpdateResult, mkUpdateResult } from '@/src/documents/commands/helpers/updates';
 import { GenericInsertOneResult } from '@/src/documents/commands/types/insert/insert-one';
@@ -39,14 +40,14 @@ export class CommandImpls<ID> {
   }
 
   public async insertOne(document: SomeDoc, options: WithTimeout | nullish, mkID: MkID<ID>): Promise<GenericInsertOneResult<ID>> {
-    const command = {
-      insertOne: { document },
-    };
+    const command = mkBasicCmd('insertOne', {
+      document,
+    });
 
     const { status } = await this.#httpClient.executeCommand(command, options);
 
     return {
-      insertedId: mkID(status!, status!.insertedIds[0]),
+      insertedId: mkID(status!.insertedIds[0], status!),
     };
   }
 
@@ -55,8 +56,8 @@ export class CommandImpls<ID> {
     const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
 
     const insertedIds = (options?.ordered)
-      ? await insertManyOrdered<ID>(this.#httpClient, docs, chunkSize, timeoutManager, mkID)
-      : await insertManyUnordered<ID>(this.#httpClient, docs, options?.concurrency ?? 8, chunkSize, timeoutManager, mkID);
+      ? await insertManyOrdered(this.#httpClient, docs, chunkSize, timeoutManager, mkID)
+      : await insertManyUnordered(this.#httpClient, docs, options?.concurrency ?? 8, chunkSize, timeoutManager, mkID);
 
     return {
       insertedCount: insertedIds.length,
@@ -65,31 +66,27 @@ export class CommandImpls<ID> {
   }
 
   public async updateOne(filter: SomeDoc, update: SomeDoc, options?: GenericUpdateOneOptions): Promise<GenericUpdateResult<ID, 0 | 1>> {
-    const command = {
-      updateOne: {
-        filter,
-        update,
-        sort: normalizedSort(options),
-        options: {
-          upsert: options?.upsert,
-        },
+    const command = mkCmdWithSortProj('updateOne', options, {
+      filter,
+      update,
+      options: {
+        upsert: options?.upsert,
       },
-    };
+    });
+
     const resp = await this.#httpClient.executeCommand(command, options);
     return coalesceUpsertIntoUpdateResult(mkUpdateResult(resp), resp);
   }
 
   public async updateMany(filter: SomeDoc, update: SomeDoc, options?: GenericUpdateManyOptions): Promise<GenericUpdateResult<ID, number>> {
-    const command = {
-      updateMany: {
-        filter,
-        update,
-        options: {
-          upsert: options?.upsert,
-          pageState: undefined as string | undefined,
-        },
+    const command = mkBasicCmd('updateMany', {
+      filter,
+      update,
+      options: {
+        pageState: undefined as string | undefined,
+        upsert: options?.upsert,
       },
-    };
+    });
 
     const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
     const commonResult = mkUpdateResult<number>();
@@ -120,27 +117,24 @@ export class CommandImpls<ID> {
   }
 
   public async replaceOne(filter: SomeDoc, replacement: SomeDoc, options?: GenericReplaceOneOptions): Promise<GenericUpdateResult<ID, 0 | 1>> {
-    const command = {
-      replaceOne: {
-        filter,
-        replacement,
-        sort: normalizedSort(options),
-        options: {
-          upsert: options?.upsert,
-        },
+    const command = mkCmdWithSortProj('findOneAndReplace', options, {
+      filter,
+      replacement,
+      options: {
+        returnDocument: 'before',
+        upsert: options?.upsert,
       },
-    };
+      projection: { '*': 0 },
+    });
+
     const resp = await this.#httpClient.executeCommand(command, options);
     return coalesceUpsertIntoUpdateResult(mkUpdateResult(resp), resp);
   }
 
   public async deleteOne(filter: SomeDoc, options?: GenericDeleteOneOptions): Promise<GenericDeleteOneResult> {
-    const command = {
-      deleteOne: {
-        filter,
-        sort: normalizedSort(options),
-      },
-    };
+    const command = mkCmdWithSortProj('deleteOne', options, {
+      filter,
+    });
 
     const deleteOneResp = await this.#httpClient.executeCommand(command, options);
 
@@ -150,9 +144,9 @@ export class CommandImpls<ID> {
   }
 
   public async deleteMany(filter: SomeDoc, options?: WithTimeout): Promise<GenericDeleteManyResult> {
-    const command = {
-      deleteMany: { filter },
-    };
+    const command = mkBasicCmd('deleteMany', {
+      filter,
+    });
 
     const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
     let resp, numDeleted = 0;
@@ -186,61 +180,45 @@ export class CommandImpls<ID> {
   }
 
   public async findOne<Schema>(filter: SomeDoc, options?: GenericFindOneOptions): Promise<Schema | null> {
-    const command = {
-      findOne: {
-        filter,
-        sort: normalizedSort(options),
-        projection: normalizedProjection(options),
-        options: {
-          includeSimilarity: options?.includeSimilarity,
-        },
+    const command = mkCmdWithSortProj('findOne', options, {
+      filter,
+      options: {
+        includeSimilarity: options?.includeSimilarity,
       },
-    };
+    });
 
     const resp = await this.#httpClient.executeCommand(command, options);
     return resp.data?.document;
   }
 
   public async findOneAndReplace<Schema extends SomeDoc>(filter: SomeDoc, replacement: SomeDoc, options?: GenericFindOneAndReplaceOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
-    const command = {
-      findOneAndReplace: {
-        filter,
-        replacement,
-        sort: normalizedSort(options),
-        projection: normalizedProjection(options),
-        options: {
-          returnDocument: options?.returnDocument,
-          upsert: options?.upsert,
-        },
+    const command = mkCmdWithSortProj('findOneAndReplace', options, {
+      filter,
+      replacement,
+      options: {
+        returnDocument: options?.returnDocument,
+        upsert: options?.upsert,
       },
-    };
+    });
     return runFindOneAnd(this.#httpClient, command, options);
   }
 
   public async findOneAndDelete<Schema extends SomeDoc>(filter: SomeDoc, options?: GenericFindOneAndDeleteOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
-    const command = {
-      findOneAndDelete: {
-        filter,
-        sort: normalizedSort(options),
-        projection: normalizedProjection(options),
-      },
-    };
+    const command = mkCmdWithSortProj('findOneAndDelete', options, {
+      filter,
+    });
     return runFindOneAnd(this.#httpClient, command, options);
   }
 
   public async findOneAndUpdate<Schema extends SomeDoc>(filter: SomeDoc, update: SomeDoc, options?: GenericFindOneAndUpdateOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
-    const command = {
-      findOneAndUpdate: {
-        filter,
-        update,
-        sort: normalizedSort(options),
-        projection: normalizedProjection(options),
-        options: {
-          returnDocument: options?.returnDocument,
-          upsert: options?.upsert,
-        },
+    const command = mkCmdWithSortProj('findOneAndUpdate', options, {
+      filter,
+      update,
+      options: {
+        returnDocument: options?.returnDocument,
+        upsert: options?.upsert,
       },
-    };
+    });
     return runFindOneAnd(this.#httpClient, command, options);
   }
 
@@ -282,9 +260,9 @@ export class CommandImpls<ID> {
       throw new Error('upperBound must be >= 0');
     }
 
-    const command = {
-      countDocuments: { filter },
-    };
+    const command = mkBasicCmd('countDocuments', {
+      filter,
+    });
 
     const resp = await this.#httpClient.executeCommand(command, options);
 
@@ -300,11 +278,26 @@ export class CommandImpls<ID> {
   }
 
   public async estimatedDocumentCount(options?: WithTimeout): Promise<number> {
-    const command = {
-      estimatedDocumentCount: {},
-    };
-
+    const command = mkBasicCmd('estimatedDocumentCount', {});
     const resp = await this.#httpClient.executeCommand(command, options);
     return resp.status?.count;
   }
 }
+
+const mkBasicCmd = (name: string, body: SomeDoc) => ({ [name]: body });
+
+const mkCmdWithSortProj = (name: string, options: { sort?: SomeDoc, projection?: SomeDoc } | nullish, body: SomeDoc) => {
+  const command = mkBasicCmd(name, body);
+
+  if (options) {
+    if (options.sort) {
+      body.sort = normalizedSort(options.sort);
+    }
+
+    if (options.projection && Object.keys(options.projection).length > 0) {
+      body.projection = options.projection;
+    }
+  }
+
+  return command;
+};

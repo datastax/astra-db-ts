@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Projection, SomeDoc, Sort } from '@/src/documents/collections/types';
-import { nullish } from '@/src/lib';
+import { SomeDoc, Sort } from '@/src/documents/collections/types';
 
 declare const __error: unique symbol;
 
@@ -80,36 +79,20 @@ export function validateOption<T>(name: string, obj: T, types: string | string[]
 /**
  * @internal
  */
-export const normalizedSort = (opts: { sort?: SomeDoc | nullish } | nullish): Sort | undefined => {
-  if (!opts?.sort) {
-    return undefined;
-  }
-
+export const normalizedSort = (sort: SomeDoc): Sort => {
   const ret: Sort = {};
 
-  for (const key in opts.sort) {
-    switch (opts.sort[key]) {
-      case 1:
-      case 'asc':
-      case 'ascending':
+  for (const key in sort) {
+    if (typeof sort[key] === 'string') {
+      if (sort[key][0] === 'a') {
         ret[key] = 1;
-        break;
-      case -1:
-      case 'desc':
-      case 'descending':
+      } else if (sort[key][0] === 'd') {
         ret[key] = -1;
-        break;
-      default:
-        ret[key] = opts.sort[key] as any;
+      }
+    } else {
+      ret[key] = sort[key];
     }
   }
 
   return ret;
-};
-
-export const normalizedProjection = (opts: { projection?: SomeDoc | nullish } | nullish): Projection | undefined => {
-  if (!opts?.projection || Object.keys(opts.projection).length > 0) {
-    return undefined;
-  }
-  return opts.projection;
 };
