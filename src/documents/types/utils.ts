@@ -13,17 +13,32 @@
 // limitations under the License.
 
 /**
- * Represents the result of a delete command.
+ * Checks if a type can possibly be some number
  *
- * @field deletedCount - The number of deleted documents. Can be any non-negative integer.
- *
- * @see Collection.deleteMany
+ * @example
+ * ```typescript
+ * IsNum<string | number> === true
+ * ```
  *
  * @public
  */
-export interface CollectionDeleteManyResult {
-  /**
-   * The number of deleted documents.
-   */
-  deletedCount: number;
-}
+export type IsNum<T> = number extends T ? true : bigint extends T ? true : false
+
+/**
+ * Checks if a type can possibly be a date
+ *
+ * @example
+ * ```typescript
+ * IsDate<string | Date> === boolean
+ * ```
+ *
+ * @public
+ */
+export type IsDate<T> = IsAny<T> extends true ? true : T extends Date | { $date: number } ? true : false
+
+/**
+ * Checks if a type is any
+ *
+ * @public
+ */
+export type IsAny<T> = true extends false & T ? true : false

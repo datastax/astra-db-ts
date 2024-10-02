@@ -12,20 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from "@/src/documents";
+export type SomeRow = Record<string, any>;
 
 export declare const $PrimaryKeyType: unique symbol;
 
-export interface Row<Schema extends SomeDoc, PrimaryKey extends (keyof Schema)[]> {
+export interface Row<Schema extends SomeRow, PrimaryKey extends (keyof Schema)[]> {
   [$PrimaryKeyType]?: {
     [P in PrimaryKey[number]]: Schema[P];
   };
 }
-
-export type SomeTableKey = Record<string, unknown>;
-
-export type KeyOf<Schema extends SomeDoc> = Schema extends { [$PrimaryKeyType]?: infer PrimaryKey }
-  ? PrimaryKey extends SomeTableKey
-    ? PrimaryKey
-    : SomeTableKey
-  : SomeTableKey;

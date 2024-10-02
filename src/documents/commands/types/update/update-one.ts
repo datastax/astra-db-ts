@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Sort } from '@/src/documents/collections/types';
 import { WithTimeout } from '@/src/lib/types';
+import { Sort } from '@/src/documents';
 
 export interface GenericUpdateOneOptions extends WithTimeout {
   upsert?: boolean,

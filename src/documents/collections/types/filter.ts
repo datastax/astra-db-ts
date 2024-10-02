@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/documents/collections';
-import type { IdOf, NoId, ToDotNotation } from '@/src/documents/collections/types/index';
-import { IsDate, IsNum } from '@/src/documents/collections/types/utils';
+import type { IdOf, NoId, ToDotNotation } from '@/src/documents';
 import { EmptyObj } from '@/src/lib/types';
+import { IsDate, IsNum } from '@/src/documents/types/utils';
 
 /**
  * Represents some filter operation for a given document schema.

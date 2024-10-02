@@ -14,33 +14,33 @@
 
 import { FindCursor } from '@/src/documents/cursor';
 import {
-  DeleteManyResult,
-  DeleteOneOptions,
-  DeleteOneResult,
+  CollectionDeleteManyResult,
+  CollectionDeleteOneOptions,
+  CollectionDeleteOneResult,
   Filter,
-  FindOneAndDeleteOptions,
-  FindOneAndReplaceOptions,
-  FindOneAndUpdateOptions,
-  FindOneOptions,
-  FindOptions,
+  CollectionFindOneAndDeleteOptions,
+  CollectionFindOneAndReplaceOptions,
+  CollectionFindOneAndUpdateOptions,
+  CollectionFindOneOptions,
+  CollectionFindOptions,
   Flatten,
   FoundDoc,
   IdOf,
-  InsertManyOptions,
-  InsertManyResult,
-  InsertOneResult,
+  CollectionInsertManyOptions,
+  CollectionInsertManyResult,
+  CollectionInsertOneResult,
   MaybeId,
-  ModifyResult,
+  CollectionModifyResult,
   NoId,
-  ReplaceOneOptions,
-  ReplaceOneResult,
+  CollectionReplaceOneOptions,
+  CollectionReplaceOneResult,
   SomeDoc,
   ToDotNotation,
   UpdateFilter,
-  UpdateManyOptions,
-  UpdateManyResult,
-  UpdateOneOptions,
-  UpdateOneResult,
+  CollectionUpdateManyOptions,
+  CollectionUpdateManyResult,
+  CollectionUpdateOneOptions,
+  CollectionUpdateOneResult,
   WithId,
 } from '@/src/documents/collections/types';
 import { CollectionNotFoundError } from '@/src/db/errors';
@@ -150,7 +150,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns The ID of the inserted document.
    */
-  public async insertOne(document: MaybeId<Schema>, options?: WithTimeout): Promise<InsertOneResult<Schema>> {
+  public async insertOne(document: MaybeId<Schema>, options?: WithTimeout): Promise<CollectionInsertOneResult<Schema>> {
     return this.#commands.insertOne(document, options, constUncurried);
   }
 
@@ -175,7 +175,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * If a 2XX insertion error occurs, the operation will throw an {@link InsertManyError} containing the partial result.
    *
-   * See {@link InsertManyOptions} for complete information about the options available for this operation.
+   * See {@link CollectionInsertManyOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
@@ -225,7 +225,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @throws InsertManyError - If the operation fails.
    */
-  public async insertMany(documents: MaybeId<Schema>[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>> {
+  public async insertMany(documents: MaybeId<Schema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<Schema>> {
     return this.#commands.insertMany(documents, options, constUncurried);
   }
 
@@ -236,7 +236,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * You can also specify a sort option to determine which document to update if multiple documents match the filter.
    *
-   * See {@link UpdateOneOptions} for complete information about the options available for this operation.
+   * See {@link CollectionUpdateOneOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
@@ -268,7 +268,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictUpdateFilter
    * @see StrictSort
    */
-  public async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions): Promise<UpdateOneResult<Schema>> {
+  public async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: CollectionUpdateOneOptions): Promise<CollectionUpdateOneResult<Schema>> {
     return this.#commands.updateOne(filter, update, options);
   }
 
@@ -282,7 +282,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * You can also specify a sort option to determine which documents to update if multiple documents match the filter.
    *
-   * See {@link UpdateManyOptions} for complete information about the options available for this operation.
+   * See {@link CollectionUpdateManyOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
@@ -324,7 +324,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    * @see StrictUpdateFilter
    */
-  public async updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateManyOptions): Promise<UpdateManyResult<Schema>> {
+  public async updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: CollectionUpdateManyOptions): Promise<CollectionUpdateManyResult<Schema>> {
     return this.#commands.updateMany(filter, update, options);
   }
 
@@ -333,7 +333,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * If `upsert` is set to true, it will insert the replacement regardless of if no match is found.
    *
-   * See {@link ReplaceOneOptions} for complete information about the options available for this operation.
+   * See {@link CollectionReplaceOneOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
@@ -380,7 +380,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    * @see StrictSort
    */
-  public async replaceOne(filter: Filter<Schema>, replacement: NoId<Schema>, options?: ReplaceOneOptions): Promise<ReplaceOneResult<Schema>> {
+  public async replaceOne(filter: Filter<Schema>, replacement: NoId<Schema>, options?: CollectionReplaceOneOptions): Promise<CollectionReplaceOneResult<Schema>> {
     return this.#commands.replaceOne(filter, replacement, options);
   }
 
@@ -389,7 +389,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * You can specify a `sort` option to determine which document to delete if multiple documents match the filter.
    *
-   * See {@link DeleteOneOptions} for complete information about the options available for this operation.
+   * See {@link CollectionDeleteOneOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
@@ -415,7 +415,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    * @see StrictSort
    */
-  public async deleteOne(filter: Filter<Schema>, options?: DeleteOneOptions): Promise<DeleteOneResult> {
+  public async deleteOne(filter: Filter<Schema>, options?: CollectionDeleteOneOptions): Promise<CollectionDeleteOneResult> {
     return this.#commands.deleteOne(filter, options);
   }
 
@@ -452,7 +452,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  public async deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<DeleteManyResult> {
+  public async deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<CollectionDeleteManyResult> {
     return this.#commands.deleteMany(filter, options);
   }
 
@@ -467,7 +467,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * iterate over cursors in an approximate way, exhibiting occasional skipped or duplicate documents, with real-time
    * collection insertions/mutations being displayed.
    *
-   * See {@link FindOptions} and {@link FindCursor} for complete information about the options available for this operation.
+   * See {@link CollectionFindOptions} and {@link FindCursor} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
@@ -534,7 +534,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictSort
    * @see StrictProjection
    */
-  public find(filter: Filter<Schema>, options?: FindOptions): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>> {
+  public find(filter: Filter<Schema>, options?: CollectionFindOptions): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>> {
     return this.#commands.find(this.keyspace, filter, options);
   }
 
@@ -548,7 +548,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * If performing a vector search, you can set the `includeSimilarity` option to `true` to include the similarity score
    * in the returned document as `$similarity: number`.
    *
-   * See {@link FindOneOptions} for complete information about the options available for this operation.
+   * See {@link CollectionFindOneOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
@@ -582,7 +582,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictSort
    * @see StrictProjection
    */
-  public async findOne(filter: Filter<Schema>, options?: FindOneOptions): Promise<FoundDoc<Schema> | null> {
+  public async findOne(filter: Filter<Schema>, options?: CollectionFindOneOptions): Promise<FoundDoc<Schema> | null> {
     return this.#commands.findOne(filter, options);
   }
 
@@ -722,7 +722,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * If you just want the document, either omit `includeResultMetadata`, or set it to `false`.
    *
-   * See {@link FindOneAndReplaceOptions} for complete information about the options available for this operation.
+   * See {@link CollectionFindOneAndReplaceOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
@@ -752,8 +752,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   public async findOneAndReplace(
     filter: Filter<Schema>,
     replacement: NoId<Schema>,
-    options: FindOneAndReplaceOptions & { includeResultMetadata: true },
-  ): Promise<ModifyResult<Schema>>
+    options: CollectionFindOneAndReplaceOptions & { includeResultMetadata: true },
+  ): Promise<CollectionModifyResult<Schema>>
 
   /**
    * Atomically finds a single document in the collection and replaces it.
@@ -769,7 +769,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * If you want the ok status along with the document, set `includeResultMetadata` to `true`.
    *
-   * See {@link FindOneAndReplaceOptions} for complete information about the options available for this operation.
+   * See {@link CollectionFindOneAndReplaceOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
@@ -796,10 +796,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   public async findOneAndReplace(
     filter: Filter<Schema>,
     replacement: NoId<Schema>,
-    options?: FindOneAndReplaceOptions & { includeResultMetadata?: false },
+    options?: CollectionFindOneAndReplaceOptions & { includeResultMetadata?: false },
   ): Promise<WithId<Schema> | null>
 
-  public async findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options?: FindOneAndReplaceOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options?: CollectionFindOneAndReplaceOptions): Promise<CollectionModifyResult<Schema> | WithId<Schema> | null> {
     return this.#commands.findOneAndReplace(filter, replacement, options);
   }
 
@@ -812,7 +812,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * If you just want the document, either omit `includeResultMetadata`, or set it to `false`.
    *
-   * See {@link FindOneAndDeleteOptions} for complete information about the options available for this operation.
+   * See {@link CollectionFindOneAndDeleteOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
@@ -839,8 +839,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    */
   public async findOneAndDelete(
     filter: Filter<Schema>,
-    options: FindOneAndDeleteOptions & { includeResultMetadata: true },
-  ): Promise<ModifyResult<Schema>>
+    options: CollectionFindOneAndDeleteOptions & { includeResultMetadata: true },
+  ): Promise<CollectionModifyResult<Schema>>
 
   /**
    * Atomically finds a single document in the collection and deletes it.
@@ -851,7 +851,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * If you want the ok status along with the document, set `includeResultMetadata` to `true`.
    *
-   * See {@link FindOneAndDeleteOptions} for complete information about the options available for this operation.
+   * See {@link CollectionFindOneAndDeleteOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
@@ -871,10 +871,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    */
   public async findOneAndDelete(
     filter: Filter<Schema>,
-    options?: FindOneAndDeleteOptions & { includeResultMetadata?: false },
+    options?: CollectionFindOneAndDeleteOptions & { includeResultMetadata?: false },
   ): Promise<WithId<Schema> | null>
 
-  public async findOneAndDelete(filter: Filter<Schema>, options?: FindOneAndDeleteOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndDelete(filter: Filter<Schema>, options?: CollectionFindOneAndDeleteOptions): Promise<CollectionModifyResult<Schema> | WithId<Schema> | null> {
     return this.#commands.findOneAndDelete(filter, options);
   }
 
@@ -890,7 +890,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * If you just want the document, either omit `includeResultMetadata`, or set it to `false`.
    *
-   * See {@link FindOneAndUpdateOptions} for complete information about the options available for this operation.
+   * See {@link CollectionFindOneAndUpdateOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
@@ -919,8 +919,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   public async findOneAndUpdate(
     filter: Filter<Schema>,
     update: UpdateFilter<Schema>,
-    options: FindOneAndUpdateOptions & { includeResultMetadata: true },
-  ): Promise<ModifyResult<Schema>>
+    options: CollectionFindOneAndUpdateOptions & { includeResultMetadata: true },
+  ): Promise<CollectionModifyResult<Schema>>
 
   /**
    * Atomically finds a single document in the collection and updates it.
@@ -934,7 +934,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * If you want the ok status along with the document, set `includeResultMetadata` to `true`.
    *
-   * See {@link FindOneAndUpdateOptions} for complete information about the options available for this operation.
+   * See {@link CollectionFindOneAndUpdateOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
@@ -960,10 +960,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   public async findOneAndUpdate(
     filter: Filter<Schema>,
     update: UpdateFilter<Schema>,
-    options?: FindOneAndUpdateOptions & { includeResultMetadata?: false },
+    options?: CollectionFindOneAndUpdateOptions & { includeResultMetadata?: false },
   ): Promise<WithId<Schema> | null>
 
-  public async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: FindOneAndUpdateOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: CollectionFindOneAndUpdateOptions): Promise<CollectionModifyResult<Schema> | WithId<Schema> | null> {
     return this.#commands.findOneAndUpdate(filter, update, options);
   }
 

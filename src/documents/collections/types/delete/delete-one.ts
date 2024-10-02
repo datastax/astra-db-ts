@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Sort } from '@/src/documents/collections/types';
-import { WithTimeout } from '@/src/lib/types';
+import { GenericDeleteOneOptions } from '@/src/documents';
 
 /**
  * Represents the options for the deleteOne command.
@@ -25,17 +24,7 @@ import { WithTimeout } from '@/src/lib/types';
  *
  * @public
  */
-export interface DeleteOneOptions extends WithTimeout {
-  /**
-   * The order in which to apply the update if the filter selects multiple documents.
-   *
-   * If multiple documents match the filter, only one will be updated.
-   *
-   * Defaults to `null`, where the order is not guaranteed.
-   * @defaultValue null
-   */
-  sort?: Sort,
-}
+export type CollectionDeleteOneOptions = GenericDeleteOneOptions;
 
 /**
  * Represents the result of a delete command.
@@ -46,7 +35,7 @@ export interface DeleteOneOptions extends WithTimeout {
  *
  * @public
  */
-export interface DeleteOneResult {
+export interface CollectionDeleteOneResult {
   /**
    * The number of deleted documents.
    */

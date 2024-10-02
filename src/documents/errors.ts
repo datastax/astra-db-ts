@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { InsertManyResult } from '@/src/documents/collections/types/insert/insert-many';
-import type { DeleteManyResult } from '@/src/documents/collections/types/delete/delete-many';
-import type { UpdateManyResult } from '@/src/documents/collections/types/update/update-many';
+import type { CollectionInsertManyResult } from '@/src/documents/collections/types/insert/insert-many';
+import type { CollectionDeleteManyResult } from '@/src/documents/collections/types/delete/delete-many';
+import type { CollectionUpdateManyResult } from '@/src/documents/collections/types/update/update-many';
 import type { FetcherResponseInfo, RawDataAPIResponse } from '@/src/lib/api';
 import type { SomeDoc } from '@/src/documents/collections/types/document';
 
@@ -388,7 +388,7 @@ export class InsertManyError extends CumulativeDataAPIError {
    * The partial result of the `InsertMany` operation that was performed. This is *always* defined, and is the result
    * of all successful insertions.
    */
-  declare public readonly partialResult: InsertManyResult<SomeDoc>;
+  declare public readonly partialResult: CollectionInsertManyResult<SomeDoc>;
   //
   // /**
   //  * The specific statuses and ids for each document present in the `insertMany` command
@@ -427,7 +427,7 @@ export class DeleteManyError extends CumulativeDataAPIError {
    * The partial result of the `DeleteMany` operation that was performed. This is *always* defined, and is the result
    * of the operation up to the point of the first error.
    */
-  declare public readonly partialResult: DeleteManyResult;
+  declare public readonly partialResult: CollectionDeleteManyResult;
 }
 
 /**
@@ -453,7 +453,7 @@ export class UpdateManyError extends CumulativeDataAPIError {
    * The partial result of the `UpdateMany` operation that was performed. This is *always* defined, and is the result
    * of the operation up to the point of the first error.
    */
-  declare public readonly partialResult: UpdateManyResult<SomeDoc>;
+  declare public readonly partialResult: CollectionUpdateManyResult<SomeDoc>;
 }
 
 /**

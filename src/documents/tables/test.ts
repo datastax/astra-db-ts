@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $PrimaryKeyType, Row, KeyOf } from "@/src/documents/tables/types/row";
-import { SomeDoc } from "@/src/documents";
+import { $PrimaryKeyType, Row, SomeRow } from '@/src/documents/tables/types/row';
 import { InferTableSchema, InferTableSchemaFromDefinition } from "@/src/db/types/tables/table-schema";
 import { CreateTableDefinition } from "@/src/db/types/tables/create-table";
 import { Table } from "@/src/documents/tables/table";
+import { KeyOf } from '@/src/documents/tables/types/utils';
 
 const db = { createTable };
 
@@ -33,7 +33,7 @@ const _a: KeyOf<Users> = {
 };
 
 // Demo of the lawless world of weak typing
-const _b: KeyOf<SomeDoc> = {
+const _b: KeyOf<SomeRow> = {
   some: 'thing',
   any: 'thing',
 };
@@ -79,7 +79,7 @@ const _f: InferTableSchema<typeof _e> = {
 };
 
 // Demo of manually providing your own table schema
-const _g = createTable<SomeDoc>('my_table', {
+const _g = createTable<SomeRow>('my_table', {
   columns: {},
   primaryKey: 'id',
 });
@@ -175,7 +175,7 @@ type Proof = Expect<Equal<MySchema, {
 
 function createTable<_ extends 'infer', const Def extends CreateTableDefinition>(_: string, __: Def): Promise<Table<InferTableSchemaFromDefinition<Def>>>
 
-function createTable<T extends SomeDoc>(_: string, __: CreateTableDefinition): Promise<Table<T>>
+function createTable<T extends SomeRow>(_: string, __: CreateTableDefinition): Promise<Table<T>>
 
 function createTable(_: string, __: CreateTableDefinition): unknown {
   throw 'stub';

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Projection, Sort } from '@/src/documents/collections/types';
+import type { Projection, Sort } from '@/src/documents';
 import { WithTimeout } from '@/src/lib/types';
 
 /**
@@ -27,7 +27,7 @@ import { WithTimeout } from '@/src/lib/types';
  *
  * @public
  */
-export interface FindOneAndDeleteOptions extends WithTimeout {
+export interface CollectionFindOneAndDeleteOptions extends WithTimeout {
   /**
    * The order in which to apply the update if the filter selects multiple documents.
    *

@@ -12,5 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+export type * from './delete/delete-one';
+export type * from './find/find';
+export type * from './find/find-one';
+export type * from './insert/insert-many';
 export type * from './insert/insert-one';
+export type * from './update/update-many';
+export type * from './update/update-one';
 export type * from './row';
+export type * from './utils';

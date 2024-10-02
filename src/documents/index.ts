@@ -16,6 +16,7 @@ export * from './cursor';
 export * from './events';
 export * from './ids';
 export * from './collections';
+export * from './commands';
 export * from './tables';
 export * from './embedding-providers';
 export * from './types';

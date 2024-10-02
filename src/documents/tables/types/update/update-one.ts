@@ -12,13 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { WithTimeout } from '@/src/lib/types';
-import { Sort } from '@/src/documents';
+import { GenericUpdateOneOptions, GenericUpdateResult, KeyOf, SomeRow } from '@/src/documents';
 
-export interface GenericDeleteOneResult {
-  deletedCount: 0 | 1;
-}
+export type TableUpdateOneOptions = GenericUpdateOneOptions;
 
-export interface GenericDeleteOneOptions extends WithTimeout {
-  sort?: Sort,
-}
+export type TableUpdateOneResult<Schema extends SomeRow> = GenericUpdateResult<KeyOf<Schema>, 0 | 1>;

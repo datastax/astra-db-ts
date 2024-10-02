@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from "@/src/documents";
-import { KeyOf } from "@/src/documents/tables/types/row";
+import { KeyOf, SomeRow } from '@/src/documents';
 
-export interface TableInsertOneResult<Schema extends SomeDoc> {
+export interface TableInsertOneResult<Schema extends SomeRow> {
   insertedId: KeyOf<Schema>;
 }

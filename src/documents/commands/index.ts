@@ -12,13 +12,4 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { WithTimeout } from '@/src/lib/types';
-import { Sort } from '@/src/documents';
-
-export interface GenericDeleteOneResult {
-  deletedCount: 0 | 1;
-}
-
-export interface GenericDeleteOneOptions extends WithTimeout {
-  sort?: Sort,
-}
+export type * from './types';

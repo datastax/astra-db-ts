@@ -1,10 +1,24 @@
+// Copyright DataStax, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import {
   DataAPIResponseError,
   DeleteManyError,
   FindCursor,
-  InsertManyOptions,
-  ModifyResult,
+  CollectionInsertManyOptions,
+  CollectionModifyResult,
   SomeDoc,
   TooManyDocumentsToCountError,
   UpdateManyError,
@@ -51,7 +65,7 @@ export class CommandImpls<ID> {
     };
   }
 
-  public async insertMany(docs: SomeDoc[], options: InsertManyOptions | nullish, mkID: MkID<ID>): Promise<GenericInsertManyResult<ID>> {
+  public async insertMany(docs: SomeDoc[], options: CollectionInsertManyOptions | nullish, mkID: MkID<ID>): Promise<GenericInsertManyResult<ID>> {
     const chunkSize = options?.chunkSize ?? 50;
     const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
 
@@ -191,7 +205,7 @@ export class CommandImpls<ID> {
     return resp.data?.document;
   }
 
-  public async findOneAndReplace<Schema extends SomeDoc>(filter: SomeDoc, replacement: SomeDoc, options?: GenericFindOneAndReplaceOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndReplace<Schema extends SomeDoc>(filter: SomeDoc, replacement: SomeDoc, options?: GenericFindOneAndReplaceOptions): Promise<CollectionModifyResult<Schema> | WithId<Schema> | null> {
     const command = mkCmdWithSortProj('findOneAndReplace', options, {
       filter,
       replacement,
@@ -203,14 +217,14 @@ export class CommandImpls<ID> {
     return runFindOneAnd(this.#httpClient, command, options);
   }
 
-  public async findOneAndDelete<Schema extends SomeDoc>(filter: SomeDoc, options?: GenericFindOneAndDeleteOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndDelete<Schema extends SomeDoc>(filter: SomeDoc, options?: GenericFindOneAndDeleteOptions): Promise<CollectionModifyResult<Schema> | WithId<Schema> | null> {
     const command = mkCmdWithSortProj('findOneAndDelete', options, {
       filter,
     });
     return runFindOneAnd(this.#httpClient, command, options);
   }
 
-  public async findOneAndUpdate<Schema extends SomeDoc>(filter: SomeDoc, update: SomeDoc, options?: GenericFindOneAndUpdateOptions): Promise<ModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndUpdate<Schema extends SomeDoc>(filter: SomeDoc, update: SomeDoc, options?: GenericFindOneAndUpdateOptions): Promise<CollectionModifyResult<Schema> | WithId<Schema> | null> {
     const command = mkCmdWithSortProj('findOneAndUpdate', options, {
       filter,
       update,

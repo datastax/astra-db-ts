@@ -12,13 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { WithTimeout } from '@/src/lib/types';
-import { Sort } from '@/src/documents';
+import { $PrimaryKeyType } from '@/src/documents';
 
-export interface GenericDeleteOneResult {
-  deletedCount: 0 | 1;
-}
+export type SomeTableKey = Record<string, unknown>;
 
-export interface GenericDeleteOneOptions extends WithTimeout {
-  sort?: Sort,
-}
+export type NoKey<Doc> = Omit<Doc, '_id'>
+
+export type WithKey<T> = NoKey<T> & { _id: KeyOf<T> }
+
+export type FoundRow<Doc> = WithKey<Omit<Doc, '$similarity'> & { $similarity?: number }>
+
+export type KeyOf<Schema> = Schema extends { [$PrimaryKeyType]?: infer PrimaryKey }
+  ? PrimaryKey extends SomeTableKey
+    ? PrimaryKey
+    : SomeTableKey
+  : SomeTableKey;

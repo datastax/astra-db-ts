@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc, Sort } from '@/src/documents/collections/types';
+import { SomeDoc } from '@/src/documents/collections';
+import { Sort } from '@/src/documents/types';
 
 declare const __error: unique symbol;
 

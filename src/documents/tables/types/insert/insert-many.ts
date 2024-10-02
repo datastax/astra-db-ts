@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from "@/src/documents";
-import { KeyOf } from "@/src/documents/tables/types/row";
+import { GenericInsertManyOptions } from '@/src/documents/commands/types';
+import { KeyOf, SomeRow } from '@/src/documents';
 
-export interface TableInsertManyResult<Schema extends SomeDoc> {
+export type TableInsertManyOptions = GenericInsertManyOptions;
+
+export interface TableInsertManyResult<Schema extends SomeRow> {
   insertedIds: KeyOf<Schema>[];
   insertedCount: number;
 }

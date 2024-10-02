@@ -12,16 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { InsertManyOptions, KeyOf, SomeDoc } from '@/src/documents';
+import { Filter, FindCursor, KeyOf, SomeRow, UpdateFilter } from '@/src/documents';
 import { TableInsertOneResult } from '@/src/documents/tables/types/insert/insert-one';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CollectionSpawnOptions, Db } from '@/src/db';
 import { constUncurried } from '@/src/lib/utils';
 import { WithTimeout } from '@/src/lib';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
-import { TableInsertManyResult } from '@/src/documents/tables/types/insert/insert-many';
+import { TableInsertManyOptions, TableInsertManyResult } from '@/src/documents/tables/types/insert/insert-many';
+import { TableUpdateOneOptions, TableUpdateOneResult } from '@/src/documents/tables/types/update/update-one';
+import { TableUpdateManyOptions, TableUpdateManyResult } from '@/src/documents/tables/types/update/update-many';
+import { TableDeleteOneOptions } from '@/src/documents/tables/types/delete/delete-one';
+import { TableFindOptions } from '@/src/documents/tables/types/find/find';
+import { FoundRow } from '@/src/documents/tables/types/utils';
+import { TableFindOneOptions } from '@/src/documents/tables/types/find/find-one';
 
-export class Table<Schema extends SomeDoc = SomeDoc> {
+export class Table<Schema extends SomeRow = SomeRow> {
   readonly #httpClient: DataAPIHttpClient;
   readonly #commands: CommandImpls<KeyOf<Schema>>;
   // readonly #db: Db;
@@ -62,7 +68,31 @@ export class Table<Schema extends SomeDoc = SomeDoc> {
     return this.#commands.insertOne(document, options, constUncurried);
   }
 
-  public async insertMany(document: Schema[], options?: InsertManyOptions): Promise<TableInsertManyResult<Schema>> {
+  public async insertMany(document: Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>> {
     return this.#commands.insertMany(document, options, constUncurried);
+  }
+
+  public async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: TableUpdateOneOptions): Promise<TableUpdateOneResult<Schema>> {
+    return this.#commands.updateOne(filter, update, options);
+  }
+
+  public async updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: TableUpdateManyOptions): Promise<TableUpdateManyResult<Schema>> {
+    return this.#commands.updateMany(filter, update, options);
+  }
+
+  public async deleteOne(filter: Filter<Schema>, options?: TableDeleteOneOptions): Promise<void> {
+    await this.#commands.deleteOne(filter, options);
+  }
+
+  public async deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<void> {
+    void this.#commands.deleteMany(filter, options);
+  }
+
+  public find(filter: Filter<Schema>, options?: TableFindOptions): FindCursor<FoundRow<Schema>, FoundRow<Schema>> {
+    return this.#commands.find(this.keyspace, filter, options);
+  }
+
+  public async findOne(filter: Filter<Schema>, options?: TableFindOneOptions): Promise<FoundRow<Schema> | null> {
+    return this.#commands.findOne(filter, options);
   }
 }

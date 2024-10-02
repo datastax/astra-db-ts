@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeDoc, TypeErr } from '@/src/documents/collections';
-import type { ToDotNotation } from '@/src/documents/collections/types/index';
-import { IsDate, IsNum } from '@/src/documents/collections/types/utils';
+import { SomeDoc, ToDotNotation } from '@/src/documents';
+import { TypeErr } from '@/src/documents/utils';
+import { IsDate, IsNum } from '@/src/documents/types/utils';
 
 /**
  * Represents the update filter to specify how to update a document.
