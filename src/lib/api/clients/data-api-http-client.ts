@@ -31,7 +31,6 @@ import {
 } from '@/src/administration';
 import { CollectionNotFoundError } from '@/src/db/errors';
 import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_TIMEOUT, HttpMethods } from '@/src/lib/api/constants';
-import { WithNullableKeyspace } from '@/src/db/types/collections/collections-common';
 import { RawDataAPIResponse } from '@/src/lib/api';
 import { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
 import { nullish, TokenProvider } from '@/src/lib';
@@ -39,6 +38,7 @@ import { hrTimeMs, HttpClient } from '@/src/lib/api/clients/http-client';
 import { CollectionSpawnOptions } from '@/src/db';
 import { isNullish } from '@/src/lib/utils';
 import { EmbeddingHeadersProvider, ObjectId, UUID } from '@/src/documents';
+import { WithNullableKeyspace } from '@/src/db/types/common';
 
 /**
  * @internal

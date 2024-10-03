@@ -16,15 +16,6 @@ import { WithTimeout } from '@/src/lib/types';
 import { CollectionOptions, WithKeyspace } from '@/src/db';
 import { SomeDoc } from '@/src/documents';
 
-/** @internal */
-export interface ListCollectionsCommand {
-  findCollections: {
-    options: {
-      explain: boolean,
-    }
-  }
-}
-
 /**
  * Options for listing collections.
  *

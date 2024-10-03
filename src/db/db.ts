@@ -22,17 +22,22 @@ import { DbSpawnOptions, InternalRootClientOpts } from '@/src/client/types';
 import { AdminSpawnOptions, DbAdmin } from '@/src/administration';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin';
 import { CollectionAlreadyExistsError } from '@/src/db/errors';
-import { CreateCollectionCommand, CreateCollectionOptions } from '@/src/db/types/collections/create-collection';
+import { CreateCollectionOptions } from '@/src/db/types/collections/create-collection';
 import { TokenProvider } from '@/src/lib';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client';
 import { KeyspaceRef } from '@/src/lib/api/clients/types';
 import { validateDataAPIEnv } from '@/src/lib/utils';
-import { EmbeddingHeadersProvider } from '@/src/documents';
+import { EmbeddingHeadersProvider, SomeRow, Table } from '@/src/documents';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
 import { CollectionSpawnOptions } from '@/src/db/types/collections/spawn-collection';
 import { DropCollectionOptions } from '@/src/db/types/collections/drop-collection';
-import { FullCollectionInfo, ListCollectionsCommand, ListCollectionsOptions } from '@/src/db/types/collections/list-collection';
-import { RunCommandOptions } from '@/src/db/types/collections/command';
+import { FullCollectionInfo, ListCollectionsOptions } from '@/src/db/types/collections/list-collections';
+import { RunCommandOptions } from '@/src/db/types/command';
+import { TableSpawnOptions } from '@/src/db/types/tables/spawn-table';
+import { CreateTableDefinition, CreateTableOptions } from '@/src/db/types/tables/create-table';
+import { InferTableSchemaFromDefinition } from '@/src/db/types/tables/table-schema';
+import { DropTableOptions } from '@/src/db/types/tables/drop-table';
+import { FullTableInfo, ListTablesOptions } from '@/src/db/types/tables/list-tables';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -351,6 +356,10 @@ export class Db {
     return new Collection<Schema>(this, this.#httpClient, name, options);
   }
 
+  public table<Schema extends SomeRow = SomeRow>(name: string, options?: TableSpawnOptions): Table<Schema> {
+    return new Table<Schema>(this, this.#httpClient, name, options);
+  }
+
   /**
    * Creates a new collection in the database, and establishes a reference to it.
    *
@@ -402,7 +411,7 @@ export class Db {
    * @see VectorDoc
    */
   public async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>> {
-    const command: CreateCollectionCommand = {
+    const command = {
       createCollection: {
         name: collectionName,
         options: {
@@ -426,6 +435,33 @@ export class Db {
 
     await this.#httpClient.executeCommand(command, { keyspace: keyspace, timeoutManager });
     return this.collection(collectionName, options);
+  }
+
+  public async createTable<const Def extends CreateTableDefinition>(tableName: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchemaFromDefinition<Def>>>
+
+  public async createTable<T extends SomeRow>(tableName: string, options: CreateTableOptions): Promise<Table<T>>
+
+  public async createTable(tableName: string, options: CreateTableOptions): Promise<Table> {
+    const command = {
+      createTable: {
+        name: tableName,
+        definition: options.definition,
+      },
+    };
+
+    const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
+    const keyspace = options?.keyspace ?? this.keyspace;
+
+    if (options?.checkExists !== false) {
+      const tables = await this.listCollections({ keyspace: keyspace, maxTimeMS: timeoutManager.msRemaining() });
+
+      if (tables.some(c => c.name === tableName)) {
+        throw new CollectionAlreadyExistsError(keyspace, tableName);
+      }
+    }
+
+    await this.#httpClient.executeCommand(command, { keyspace: keyspace, timeoutManager });
+    return this.table(tableName, options);
   }
 
   /**
@@ -456,6 +492,16 @@ export class Db {
   public async dropCollection(name: string, options?: DropCollectionOptions): Promise<boolean> {
     const command = {
       deleteCollection: { name },
+    };
+
+    const resp = await this.#httpClient.executeCommand(command, options);
+
+    return resp.status?.ok === 1;
+  }
+
+  public async dropTable(name: string, options?: DropTableOptions): Promise<boolean> {
+    const command = {
+      deleteTable: { name },
     };
 
     const resp = await this.#httpClient.executeCommand(command, options);
@@ -506,10 +552,9 @@ export class Db {
   public async listCollections(options?: ListCollectionsOptions & { nameOnly?: false }): Promise<FullCollectionInfo[]>
 
   public async listCollections(options?: ListCollectionsOptions): Promise<string[] | FullCollectionInfo[]> {
-    const command: ListCollectionsCommand = {
+    const command = {
       findCollections: {
         options: {
-          /* Is 'nameOnly' instead of 'explain' for Mongo-compatibility reasons */
           explain: options?.nameOnly !== true,
         },
       },
@@ -517,6 +562,23 @@ export class Db {
 
     const resp = await this.#httpClient.executeCommand(command, options);
     return resp.status!.collections;
+  }
+
+  public async listTables(options: ListTablesOptions & { nameOnly: true }): Promise<string[]>
+
+  public async listTables(options?: ListTablesOptions & { nameOnly?: false }): Promise<FullTableInfo[]>
+
+  public async listTables(options?: ListTablesOptions): Promise<string[] | FullTableInfo[]> {
+    const command = {
+      findTables: {
+        options: {
+          explain: options?.nameOnly !== true,
+        },
+      },
+    };
+
+    const resp = await this.#httpClient.executeCommand(command, options);
+    return resp.status!.tables;
   }
 
   /**

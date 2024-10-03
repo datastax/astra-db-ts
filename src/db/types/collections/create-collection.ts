@@ -16,14 +16,6 @@ import { SomeDoc } from '@/src/documents/collections';
 import { WithTimeout } from '@/src/lib/types';
 import { CollectionOptions, CollectionSpawnOptions } from '@/src/db';
 
-/** @internal */
-export interface CreateCollectionCommand {
-  createCollection: {
-    name: string;
-    options: CollectionOptions<SomeDoc>;
-  };
-}
-
 /**
  * Options for creating a new collections.
  *

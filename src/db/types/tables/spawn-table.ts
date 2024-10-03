@@ -12,26 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './cursor';
-export * from './events';
-export * from './ids';
-export * from './collections';
-export * from './tables';
-export * from './embedding-providers';
-export type * from './commands';
-export type * from './types';
+import { WithKeyspace } from '@/src/db';
+import { EmbeddingHeadersProvider } from '@/src/documents';
 
-export {
-  DataAPIResponseError,
-  DataAPIHttpError,
-  DataAPITimeoutError,
-  CumulativeDataAPIError,
-  CursorIsStartedError,
-  DataAPIDetailedErrorDescriptor,
-  DataAPIError,
-  DataAPIErrorDescriptor,
-  DeleteManyError,
-  InsertManyError,
-  TooManyDocumentsToCountError,
-  UpdateManyError,
-} from './errors';
+export interface TableSpawnOptions extends WithKeyspace {
+  embeddingApiKey?: string | EmbeddingHeadersProvider | null,
+  defaultMaxTimeMS?: number | null,
+}

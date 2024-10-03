@@ -13,6 +13,13 @@
 // limitations under the License.
 
 import { VectorizeServiceOptions } from '@/src/db';
+import { WithTimeout } from '@/src/lib';
+import { TableSpawnOptions } from '@/src/db/types/tables/spawn-table';
+
+export interface CreateTableOptions<Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout, TableSpawnOptions {
+  definition: Def,
+  checkExists?: boolean,
+}
 
 export interface CreateTableDefinition {
   columns: Record<string, CreateTableColumnDefinition>,

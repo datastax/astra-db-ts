@@ -12,26 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './cursor';
-export * from './events';
-export * from './ids';
-export * from './collections';
-export * from './tables';
-export * from './embedding-providers';
-export type * from './commands';
-export type * from './types';
+import { WithTimeout } from '@/src/lib/types';
+import { CreateTableDefinition, WithKeyspace } from '@/src/db';
 
-export {
-  DataAPIResponseError,
-  DataAPIHttpError,
-  DataAPITimeoutError,
-  CumulativeDataAPIError,
-  CursorIsStartedError,
-  DataAPIDetailedErrorDescriptor,
-  DataAPIError,
-  DataAPIErrorDescriptor,
-  DeleteManyError,
-  InsertManyError,
-  TooManyDocumentsToCountError,
-  UpdateManyError,
-} from './errors';
+export interface ListTablesOptions extends WithTimeout, WithKeyspace {
+  nameOnly?: boolean,
+}
+
+export interface FullTableInfo {
+  name: string,
+  definition: CreateTableDefinition,
+}
