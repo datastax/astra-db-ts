@@ -26,7 +26,7 @@ export interface CreateTableDefinition {
   primaryKey: CreateTablePrimaryKeyDefinition,
 }
 
-type CreateTableColumnDefinition =
+export type CreateTableColumnDefinition =
   | LooseCreateTableColumnDefinition
   | StrictCreateTableColumnDefinition
 

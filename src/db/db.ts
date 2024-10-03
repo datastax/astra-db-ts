@@ -439,7 +439,7 @@ export class Db {
 
   public async createTable<const Def extends CreateTableDefinition>(tableName: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchemaFromDefinition<Def>>>
 
-  public async createTable<T extends SomeRow>(tableName: string, options: CreateTableOptions): Promise<Table<T>>
+  public async createTable<Schema extends SomeRow>(tableName: string, options: CreateTableOptions): Promise<Table<Schema>>
 
   public async createTable(tableName: string, options: CreateTableOptions): Promise<Table> {
     const command = {
