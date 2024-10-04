@@ -95,4 +95,8 @@ export class Table<Schema extends SomeRow = SomeRow> {
   public async findOne(filter: Filter<Schema>, options?: TableFindOneOptions): Promise<FoundRow<Schema> | null> {
     return this.#commands.findOne(filter, options);
   }
+
+  public async countRows(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number> {
+    return this.#commands.countDocuments(filter, upperBound, options);
+  }
 }
