@@ -277,6 +277,14 @@ export type CollectionUpdateOneOptions = GenericUpdateOneOptions;
 // @public
 export type CollectionUpdateOneResult<Schema extends SomeDoc> = GenericUpdateResult<IdOf<Schema>, 0 | 1>;
 
+// Warning: (ae-forgotten-export) The symbol "CqlType2TSType" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "InferColDefType" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export type Cols2CqlTypes<Columns extends CreateTableColumnDefinitions> = {
+    -readonly [P in keyof Columns]: CqlType2TSType<InferColDefType<Columns[P]>, Columns[P]>;
+};
+
 // @public
 export abstract class CommandEvent {
     // Warning: (ae-forgotten-export) The symbol "DataAPIRequestInfo" needs to be exported by the entry point index.d.ts
@@ -333,6 +341,90 @@ export interface CostInfo {
     costPerWrittenGbCents: number;
 }
 
+// @public (undocumented)
+export class CqlDate {
+    constructor(input: string | Date | CqlDateComponents);
+    // (undocumented)
+    toDate(): Date;
+}
+
+// @public (undocumented)
+export interface CqlDateComponents {
+    // (undocumented)
+    date: number;
+    // (undocumented)
+    month: number;
+    // (undocumented)
+    year: number;
+}
+
+// @public (undocumented)
+export class CqlDuration {
+    constructor(input: string | CqlDurationComponents);
+    // (undocumented)
+    toDuration(): CqlDurationComponents;
+}
+
+// @public (undocumented)
+export interface CqlDurationComponents {
+    // (undocumented)
+    days?: number;
+    // (undocumented)
+    hours?: number;
+    // (undocumented)
+    minutes?: number;
+    // (undocumented)
+    months?: number;
+    // (undocumented)
+    seconds?: number;
+    // (undocumented)
+    years?: number;
+}
+
+// @public (undocumented)
+export class CqlTime {
+    constructor(input: string | Date | CqlTimeComponents);
+    // (undocumented)
+    toDate(): Date;
+}
+
+// @public (undocumented)
+export interface CqlTimeComponents {
+    // (undocumented)
+    hours: number;
+    // (undocumented)
+    milliseconds?: number;
+    // (undocumented)
+    minutes: number;
+    // (undocumented)
+    seconds: number;
+}
+
+// @public (undocumented)
+export class CqlTimestamp {
+    constructor(input: string | Date | CqlTimestampComponents);
+    // (undocumented)
+    toDate(): Date;
+}
+
+// @public (undocumented)
+export interface CqlTimestampComponents {
+    // (undocumented)
+    date?: number;
+    // (undocumented)
+    hours?: number;
+    // (undocumented)
+    minutes?: number;
+    // (undocumented)
+    month: number;
+    // (undocumented)
+    ms?: number;
+    // (undocumented)
+    seconds?: number;
+    // (undocumented)
+    year: number;
+}
+
 // @public
 export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, CollectionSpawnOptions {
     checkExists?: boolean;
@@ -348,18 +440,51 @@ export type CreateKeyspaceOptions = AdminBlockingOptions & {
     updateDbKeyspace?: boolean;
 };
 
+// Warning: (ae-forgotten-export) The symbol "LooseCreateTableColumnDefinition" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "StrictCreateTableColumnDefinition" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export type CreateTableColumnDefinitions = Record<string, LooseCreateTableColumnDefinition | StrictCreateTableColumnDefinition>;
+
 // @public (undocumented)
 export interface CreateTableDefinition {
-    // Warning: (ae-forgotten-export) The symbol "CreateTableColumnDefinition" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
-    columns: Record<string, CreateTableColumnDefinition>;
+    columns: CreateTableColumnDefinitions;
     // (undocumented)
     primaryKey: CreateTablePrimaryKeyDefinition;
 }
 
 // @public (undocumented)
+export type CreateTableIndexOptions = WithTimeout;
+
+// @public (undocumented)
+export interface CreateTableOptions<Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout, TableSpawnOptions {
+    // (undocumented)
+    checkExists?: boolean;
+    // (undocumented)
+    definition: Def;
+}
+
+// @public (undocumented)
 export type CreateTablePrimaryKeyDefinition = ShortCreateTablePrimaryKeyDefinition | FullCreateTablePrimaryKeyDefinition;
+
+// @public (undocumented)
+export interface CreateTableTextIndexOptions extends WithTimeout {
+    // (undocumented)
+    ascii?: boolean;
+    // (undocumented)
+    caseSensitive?: boolean;
+    // (undocumented)
+    normalize?: boolean;
+}
+
+// @public (undocumented)
+export interface CreateTableVectorIndexOptions extends WithTimeout {
+    // (undocumented)
+    similarityFunction: 'cosine' | 'euclidean' | 'dot_product';
+    // (undocumented)
+    sourceModel: string;
+}
 
 // @public
 export abstract class CumulativeDataAPIError extends DataAPIResponseError {
@@ -582,7 +707,13 @@ export class Db {
     collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions): Collection<Schema>;
     command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse>;
     createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>>;
+    // (undocumented)
+    createTable<const Def extends CreateTableDefinition>(tableName: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchemaFromDefinition<Def>>>;
+    // (undocumented)
+    createTable<Schema extends SomeRow>(tableName: string, options: CreateTableOptions): Promise<Table<Schema>>;
     dropCollection(name: string, options?: DropCollectionOptions): Promise<boolean>;
+    // (undocumented)
+    dropTable(name: string, options?: DropTableOptions): Promise<boolean>;
     get id(): string;
     info(options?: WithTimeout): Promise<DatabaseInfo>;
     get keyspace(): string;
@@ -592,6 +723,16 @@ export class Db {
     listCollections(options?: ListCollectionsOptions & {
         nameOnly?: false;
     }): Promise<FullCollectionInfo[]>;
+    // (undocumented)
+    listTables(options: ListTablesOptions & {
+        nameOnly: true;
+    }): Promise<string[]>;
+    // (undocumented)
+    listTables(options?: ListTablesOptions & {
+        nameOnly?: false;
+    }): Promise<FullTableInfo[]>;
+    // (undocumented)
+    table<Schema extends SomeRow = SomeRow>(name: string, options?: TableSpawnOptions): Table<Schema>;
     useKeyspace(keyspace: string): void;
 }
 
@@ -680,6 +821,10 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
 
 // @public
 export interface DropCollectionOptions extends WithTimeout, WithKeyspace {
+}
+
+// @public (undocumented)
+export interface DropTableOptions extends WithTimeout, WithKeyspace {
 }
 
 // @public
@@ -863,9 +1008,9 @@ export type FoundDoc<Doc> = WithId<Omit<Doc, '$similarity'> & {
 }>;
 
 // @public (undocumented)
-export type FoundRow<Doc> = WithKey<Omit<Doc, '$similarity'> & {
+export type FoundRow<Doc> = Omit<Doc, '$similarity'> & {
     $similarity?: number;
-}>;
+};
 
 // @public
 export interface FullCollectionInfo {
@@ -901,6 +1046,14 @@ export interface FullDatabaseInfo {
     status: DatabaseStatus;
     storage?: DatabaseStorageInfo;
     terminationTime?: string;
+}
+
+// @public (undocumented)
+export interface FullTableInfo {
+    // (undocumented)
+    definition: CreateTableDefinition;
+    // (undocumented)
+    name: string;
 }
 
 // @public (undocumented)
@@ -1088,6 +1241,21 @@ export type IndexingOptions<Schema extends SomeDoc> = {
     allow?: never;
 };
 
+// @public (undocumented)
+export class InetAddress {
+    constructor(address: string, version?: 4 | 6);
+    // (undocumented)
+    static fromIP(raw: string): InetAddress;
+    // (undocumented)
+    static fromIPv4(raw: string): InetAddress;
+    // (undocumented)
+    static fromIPv6(raw: string): InetAddress;
+    // (undocumented)
+    get(): string;
+    // (undocumented)
+    version(): 4 | 6;
+}
+
 // Warning: (ae-forgotten-export) The symbol "InferrableRow" needs to be exported by the entry point index.d.ts
 // Warning: (ae-forgotten-export) The symbol "Normalize" needs to be exported by the entry point index.d.ts
 // Warning: (ae-forgotten-export) The symbol "_InferTableSchema" needs to be exported by the entry point index.d.ts
@@ -1095,10 +1263,8 @@ export type IndexingOptions<Schema extends SomeDoc> = {
 // @public (undocumented)
 export type InferTableSchema<T extends InferrableRow> = Normalize<_InferTableSchema<T>>;
 
-// Warning: (ae-forgotten-export) The symbol "_InferTableSchemaFromDefinition" needs to be exported by the entry point index.d.ts
-//
 // @public (undocumented)
-export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition, Schema = _InferTableSchemaFromDefinition<FullDef>> = Schema & {
+export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition, Schema = Cols2CqlTypes<FullDef['columns']>> = Schema & {
     [$PrimaryKeyType]?: MkPrimaryKeyType<FullDef, Schema>;
 };
 
@@ -1138,6 +1304,12 @@ export interface ListDatabasesOptions extends WithTimeout {
     skip?: number;
 }
 
+// @public (undocumented)
+export interface ListTablesOptions extends WithTimeout, WithKeyspace {
+    // (undocumented)
+    nameOnly?: boolean;
+}
+
 // @public
 export type LocalCreateKeyspaceOptions = CreateKeyspaceOptions & {
     replication?: KeyspaceReplicationOptions;
@@ -1155,9 +1327,6 @@ export interface NoBlockingOptions extends WithTimeout {
 
 // @public
 export type NoId<Doc> = Omit<Doc, '_id'>;
-
-// @public (undocumented)
-export type NoKey<Doc> = Omit<Doc, '_id'>;
 
 // @public (undocumented)
 export interface NoUpsertUpdateOptions {
@@ -1241,6 +1410,8 @@ export interface Row<Schema extends SomeRow, PrimaryKey extends (keyof Schema)[]
 export interface RunCommandOptions extends WithTimeout {
     collection?: string;
     keyspace?: string | null;
+    // (undocumented)
+    table?: string;
 }
 
 // @public (undocumented)
@@ -1359,12 +1530,30 @@ export interface StrictUpdateFilter<Schema extends SomeDoc> {
 
 // @public (undocumented)
 export class Table<Schema extends SomeRow = SomeRow> {
-    // @internal
     constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions | undefined);
+    // Warning: (ae-forgotten-export) The symbol "AlterTableOptions" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "AlterTableSchema" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    alter<const Spec extends AlterTableOptions<Schema>>(options: Spec): Promise<Table<AlterTableSchema<Schema, Spec>>>;
+    // (undocumented)
+    alter<NewSchema extends SomeRow>(options: AlterTableOptions<Schema>): Promise<Table<NewSchema>>;
+    // (undocumented)
+    countRows(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number>;
+    // (undocumented)
+    createIndex(name: string, column: string, options?: CreateTableIndexOptions): Promise<void>;
+    // (undocumented)
+    createTextIndex(name: string, column: string, options?: CreateTableTextIndexOptions): Promise<void>;
+    // (undocumented)
+    createVectorIndex(name: string, column: string, options?: CreateTableVectorIndexOptions): Promise<void>;
     // (undocumented)
     deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<void>;
     // (undocumented)
     deleteOne(filter: Filter<Schema>, options?: TableDeleteOneOptions): Promise<void>;
+    // (undocumented)
+    drop(options?: WithTimeout): Promise<boolean>;
+    // (undocumented)
+    dropIndex(name: string, options?: WithTimeout): Promise<void>;
     // (undocumented)
     find(filter: Filter<Schema>, options?: TableFindOptions): FindCursor<FoundRow<Schema>, FoundRow<Schema>>;
     // (undocumented)
@@ -1373,7 +1562,9 @@ export class Table<Schema extends SomeRow = SomeRow> {
     insertMany(document: Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>>;
     // (undocumented)
     insertOne(document: Schema[], options?: WithTimeout): Promise<TableInsertOneResult<Schema>>;
+    // (undocumented)
     readonly keyspace: string;
+    // (undocumented)
     readonly tableName: string;
     // (undocumented)
     updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: TableUpdateManyOptions): Promise<TableUpdateManyResult<Schema>>;
@@ -1405,6 +1596,14 @@ export interface TableInsertManyResult<Schema extends SomeRow> {
 export interface TableInsertOneResult<Schema extends SomeRow> {
     // (undocumented)
     insertedId: KeyOf<Schema>;
+}
+
+// @public (undocumented)
+export interface TableSpawnOptions extends WithKeyspace {
+    // (undocumented)
+    defaultMaxTimeMS?: number | null;
+    // (undocumented)
+    embeddingApiKey?: string | EmbeddingHeadersProvider | null;
 }
 
 // @public (undocumented)
@@ -1523,11 +1722,6 @@ export interface VectorOptions {
 // @public
 export type WithId<T> = NoId<T> & {
     _id: IdOf<T>;
-};
-
-// @public (undocumented)
-export type WithKey<T> = NoKey<T> & {
-    _id: KeyOf<T>;
 };
 
 // @public
