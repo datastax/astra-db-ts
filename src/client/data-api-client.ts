@@ -161,9 +161,6 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
   constructor(tokenOrOptions?: string | TokenProvider | DataAPIClientOptions | null, maybeOptions?: DataAPIClientOptions | null) {
     super();
 
-    const a = new Blob(["abcd"]);
-    console.log(a);
-
     const tokenPassed = (typeof tokenOrOptions === 'string' || tokenOrOptions instanceof TokenProvider || arguments.length > 1);
 
     const token = (tokenPassed)
