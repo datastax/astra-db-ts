@@ -147,13 +147,6 @@ export class UUID {
   }
 
   /**
-   * Inspects the UUID.
-   */
-  public inspect(): string {
-    return `UUID("${this.toString()}")`;
-  }
-
-  /**
    * Converts the UUID to a JSON representation.
    *
    * Serializes to `{ $uuid: 'uuid' }`.

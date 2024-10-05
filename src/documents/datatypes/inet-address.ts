@@ -13,44 +13,47 @@
 // limitations under the License.
 
 export class InetAddress {
-  readonly #address: string;
+  private readonly _raw!: string;
   #version: 4 | 6 | undefined;
 
   constructor(address: string, version?: 4 | 6) {
-    this.#address = address;
+    Object.defineProperty(this, '_raw', {
+      value: address.toLowerCase(),
+      writable: false,
+    });
     this.#version = version;
   }
 
   static fromIP(raw: string): InetAddress {
     if (!isValidIP(raw)) {
-      throw new Error(`${raw} is not a valid IP address`);
+      throw new Error(`'${raw}' is not a valid IP address`);
     }
     return new InetAddress(raw);
   }
 
   static fromIPv4(raw: string): InetAddress {
     if (!isIPv4(raw)) {
-      throw new Error(`${raw} is not a valid IPv4 address`);
+      throw new Error(`'${raw}' is not a valid IPv4 address`);
     }
     return new InetAddress(raw, 4);
   }
 
   static fromIPv6(raw: string): InetAddress {
     if (!isIPv6(raw)) {
-      throw new Error(`${raw} is not a valid IPv6 address`);
+      throw new Error(`'${raw}' is not a valid IPv6 address`);
     }
     return new InetAddress(raw, 6);
   }
 
-  public version(): 4 | 6 {
+  public get version(): 4 | 6 {
     if (!this.#version) {
-      this.#version = isIPv4(this.#address) ? 4 : 6;
+      this.#version = isIPv4(this._raw) ? 4 : 6;
     }
     return this.#version;
   }
 
-  public get(): string {
-    return this.#address;
+  public toString(): string {
+    return this._raw;
   }
 }
 
@@ -77,13 +80,14 @@ const v6 = `
 )(?:%[0-9a-zA-Z]{1,})?                                             // %eth0            %1
 `.replace(/\s*\/\/.*$/gm, '').replace(/\n/g, '').trim();
 
-const IPRegex = new RegExp(`(?:^${v4}$)|^${v6}$`);
+// noinspection RegExpUnnecessaryNonCapturingGroup
+const IPRegex = new RegExp(`(?:^${v4}$)|(?:^${v6}$)`);
 const IPv4Regex = new RegExp(`^${v4}$`);
 const IPv6Regex = new RegExp(`^${v6}$`);
 // =====================================================================================================================
 
 function isValidIP(raw: string) {
-  if (raw.length < IPv4Lengths.min || IPv6Lengths.max < raw.length) {
+  if (raw.length < IPv6Lengths.min || IPv6Lengths.max < raw.length) {
     return false;
   }
   return IPRegex.test(raw);
@@ -93,12 +97,12 @@ function isIPv6(raw: string) {
   if (raw.length < IPv6Lengths.min || IPv6Lengths.max < raw.length) {
     return false;
   }
-  return IPv4Regex.test(raw);
+  return IPv6Regex.test(raw);
 }
 
 function isIPv4(raw: string) {
   if (raw.length < IPv4Lengths.min || IPv4Lengths.max < raw.length) {
     return false;
   }
-  return IPv6Regex.test(raw);
+  return IPv4Regex.test(raw);
 }

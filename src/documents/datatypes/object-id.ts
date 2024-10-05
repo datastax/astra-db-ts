@@ -122,13 +122,6 @@ export class ObjectId {
   }
 
   /**
-   * Inspects the ObjectId.
-   */
-  public inspect(): string {
-    return `ObjectId("${this.toString()}")`;
-  }
-
-  /**
    * Converts the ObjectId to a JSON representation.
    *
    * Serializes to `{ $objectId: 'objectId' }`.
