@@ -21,6 +21,7 @@ import {
   FullCreateTablePrimaryKeyDefinition,
 } from '@/src/db/types/tables/create-table';
 import { EmptyObj } from '@/src/lib/types';
+import { UUID, InetAddress, CqlDate, CqlDuration, CqlTime, CqlTimestamp } from '@/src/documents';
 
 type InferrableRow =
   | ((..._: any[]) => Promise<Table>)
@@ -75,34 +76,51 @@ type InferColDefType<Def> =
     ? Type
     : Def;
 
-type CqlType2TSType<T, Def> =
-  T extends 'text' | 'ascii' | 'varchar'
-    ? string :
-  T extends 'int' | 'double' | 'float' | 'smallint' | 'tinyint'
-    ? number :
-  T extends 'boolean'
-    ? boolean :
-  T extends 'varint'
-    ? bigint :
-  T extends 'map'
-    ? CqlMapType2TsType<Def> :
-  T extends 'list' | 'vector'
-    ? CqlListType2TsType<Def> :
-  T extends 'set'
-    ? CqlSetType2TsType<Def>
+type CqlType2TSType<T extends string, Def> =
+  T extends keyof CqlNonGenericType2TSTypeDict
+    ? CqlNonGenericType2TSTypeDict[T] :
+  T extends keyof CqlGenericType2TSTypeDict<Def>
+    ? CqlGenericType2TSTypeDict<Def>[T]
     : unknown;
 
+interface CqlNonGenericType2TSTypeDict {
+  text: string;
+  ascii: string,
+  varchar: string,
+  int: number,
+  double: number,
+  float: number,
+  smallint: number,
+  tinyint: number,
+  boolean: boolean,
+  varint: bigint,
+  date: CqlDate,
+  duration: CqlDuration,
+  time: CqlTime,
+  timestamp: CqlTimestamp,
+  uuid: UUID,
+  timeuuid: UUID,
+  inet: InetAddress,
+}
+
+interface CqlGenericType2TSTypeDict<Def> {
+  map: CqlMapType2TsType<Def>,
+  list: CqlListType2TsType<Def>,
+  vector: CqlListType2TsType<Def>,
+  set: CqlSetType2TsType<Def>,
+}
+
 type CqlMapType2TsType<Def> =
-  Def extends { keyType: infer KeyType, valueType: infer ValueType }
+  Def extends { keyType: infer KeyType extends string, valueType: infer ValueType extends string }
     ? Map<CqlType2TSType<KeyType, never>, CqlType2TSType<ValueType, never>>
-    : 'Error: invalid generics definition for \'map\'; should have keyType and valueType set';
+    : 'Error: invalid generics definition for \'map\'; should have keyType and valueType set as scalar CQL types (e.g. \'text\')';
 
 type CqlListType2TsType<Def> =
-  Def extends { valueType: infer ValueType }
+  Def extends { valueType: infer ValueType extends string }
     ? Array<CqlType2TSType<ValueType, never>>
-    : 'Error: invalid generics definition for \'list/vector\'; should have valueType set';
+    : 'Error: invalid generics definition for \'list/vector\'; should have valueType set as scalar CQL types (e.g. \'text\')';
 
 type CqlSetType2TsType<Def> =
-  Def extends { valueType: infer ValueType }
+  Def extends { valueType: infer ValueType extends string }
     ? Set<CqlType2TSType<ValueType, never>>
-    : 'Error: invalid generics definition for \'set\'; should have valueType set';
+    : 'Error: invalid generics definition for \'set\'; should have valueType set as scalar CQL types (e.g. \'text\')';

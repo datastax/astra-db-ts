@@ -38,7 +38,14 @@ type TableScalarType =
   | 'tinyint'
   | 'varchar'
   | 'varint'
-  | 'boolean';
+  | 'boolean'
+  | 'inet'
+  | 'uuid'
+  | 'timeuuid'
+  | 'date'
+  | 'duration'
+  | 'time'
+  | 'timestamp';
 
 type LooseCreateTableColumnDefinition =
   | TableScalarType
