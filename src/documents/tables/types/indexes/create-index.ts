@@ -12,14 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $PrimaryKeyType } from '@/src/documents';
+import { WithTimeout } from '@/src/lib';
 
-export type SomeTableKey = Record<string, unknown>;
-
-export type FoundRow<Doc> = Omit<Doc, '$similarity'> & { $similarity?: number }
-
-export type KeyOf<Schema> = Schema extends { [$PrimaryKeyType]?: infer PrimaryKey }
-  ? PrimaryKey extends SomeTableKey
-    ? PrimaryKey
-    : SomeTableKey
-  : SomeTableKey;
+export type CreateTableIndexOptions = WithTimeout;

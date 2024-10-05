@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $PrimaryKeyType } from "@/src/documents/tables/types/row";
-import { Table } from "@/src/documents/tables/table";
+import { $PrimaryKeyType } from '@/src/documents/tables/types/row';
+import { Table } from '@/src/documents/tables/table';
 import {
+  CreateTableColumnDefinitions,
   CreateTableDefinition,
   CreateTablePrimaryKeyDefinition,
   FullCreateTablePrimaryKeyDefinition,
@@ -45,7 +46,7 @@ type _InferTableSchema<T extends InferrableRow> =
     ? Schema
     : never;
 
-export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition, Schema = _InferTableSchemaFromDefinition<FullDef>> = Schema & {
+export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition, Schema = Cols2CqlTypes<FullDef['columns']>> = Schema & {
   [$PrimaryKeyType]?: MkPrimaryKeyType<FullDef, Schema>,
 }
 
@@ -65,8 +66,8 @@ type NormalizePK<PK extends CreateTablePrimaryKeyDefinition> =
     ? { partitionKey: [PK] }
     : PK;
 
-type _InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition> = {
-  -readonly [P in keyof FullDef['columns']]: CqlType2TSType<InferColDefType<FullDef['columns'][P]>, FullDef['columns'][P]>;
+export type Cols2CqlTypes<Columns extends CreateTableColumnDefinitions> = {
+  -readonly [P in keyof Columns]: CqlType2TSType<InferColDefType<Columns[P]>, Columns[P]>;
 };
 
 type InferColDefType<Def> =

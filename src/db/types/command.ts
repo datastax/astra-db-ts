@@ -29,6 +29,7 @@ export interface RunCommandOptions extends WithTimeout {
    * The collections to run the command on. If not provided, the command is run on the database.
    */
   collection?: string,
+  table?: string,
   /**
    * The keyspace to use for the db operation.
    */

@@ -13,37 +13,39 @@
 // limitations under the License.
 
 import { SomeRow } from '@/src/documents';
-import { CreateTableColumnDefinition } from '@/src/db';
+import { Cols2CqlTypes, CreateTableColumnDefinitions } from '@/src/db';
+import { WithTimeout } from '@/src/lib';
+import { EmptyObj } from '@/src/lib/types';
 
-export interface AlterTableOptions<Schema extends SomeRow> {
+export interface AlterTableOptions<Schema extends SomeRow> extends WithTimeout {
   operation: AlterTableOperations<Schema>,
-  ifExists: boolean,
+  ifExists?: boolean,
 }
 
 export interface AlterTableOperations<Schema extends SomeRow> {
-  alterType: AlterTypeOperation<Schema>,
-  add: AddColumnOperation,
-  drop: DropColumnOperation<Schema>,
-  rename: RenameColumnOperation<Schema>,
-}
-
-export interface AlterTypeOperation<Schema extends SomeRow> {
-  column: keyof Schema,
-  type: 'TODO',
-  ifNotExists: boolean,
+  add?: AddColumnOperation,
+  drop?: DropColumnOperation<Schema>,
 }
 
 export interface AddColumnOperation {
-  columns: Record<string, CreateTableColumnDefinition>
-  ifExists: boolean,
+  columns: CreateTableColumnDefinitions
+  ifExists?: boolean,
 }
 
 export interface DropColumnOperation<Schema extends SomeRow> {
   columns: (keyof Schema)[];
-  ifExists: boolean,
+  ifExists?: boolean,
 }
 
-export interface RenameColumnOperation<Schema extends SomeRow> {
-  columns: Record<keyof Schema, string>
-  ifExists: boolean,
-}
+export type AlterTableSchema<Schema extends SomeRow, Alter extends AlterTableOptions<Schema>> = Omit<
+  Schema & Cols2Add<Alter['operation']['add']>,
+  Cols2Drop<Alter['operation']['drop']>
+>;
+
+export type Cols2Add<Op extends AddColumnOperation | undefined> = Op extends AddColumnOperation
+  ? Cols2CqlTypes<Op["columns"]>
+  : EmptyObj;
+
+export type Cols2Drop<Op> = Op extends { columns: (infer U)[] }
+  ? U
+  : never;

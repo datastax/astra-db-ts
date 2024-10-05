@@ -22,13 +22,11 @@ export interface CreateTableOptions<Def extends CreateTableDefinition = CreateTa
 }
 
 export interface CreateTableDefinition {
-  columns: Record<string, CreateTableColumnDefinition>,
+  columns: CreateTableColumnDefinitions,
   primaryKey: CreateTablePrimaryKeyDefinition,
 }
 
-export type CreateTableColumnDefinition =
-  | LooseCreateTableColumnDefinition
-  | StrictCreateTableColumnDefinition
+export type CreateTableColumnDefinitions = Record<string, LooseCreateTableColumnDefinition | StrictCreateTableColumnDefinition>;
 
 type TableScalarType =
   | 'text'

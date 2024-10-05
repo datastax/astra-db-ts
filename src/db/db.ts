@@ -607,7 +607,15 @@ export class Db {
    * @returns A promise that resolves to the raw response from the Data API.
    */
   public async command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse> {
-    return await this.#httpClient.executeCommand(command, options);
+    if (options?.collection && options.table) {
+      throw new Error('Can\'t provide both `table` and `collection` as options to db.command()');
+    }
+
+    return await this.#httpClient.executeCommand(command, {
+      keyspace: options?.keyspace,
+      collection: options?.collection ?? options?.table,
+      maxTimeMS: options?.maxTimeMS,
+    });
   }
 
   private get _httpClient() {
