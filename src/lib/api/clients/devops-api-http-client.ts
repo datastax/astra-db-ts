@@ -15,7 +15,7 @@
 
 import { hrTimeMs, HttpClient } from '@/src/lib/api/clients/http-client';
 import { DevOpsAPIResponseError, DevOpsAPITimeoutError, DevOpsUnexpectedStateError } from '@/src/administration/errors';
-import { AdminBlockingOptions } from '@/src/administration/types';
+import { AstraAdminBlockingOptions } from '@/src/administration/types';
 import { TimeoutManager, TimeoutOptions } from '@/src/lib/api/timeout-managers';
 import { DEFAULT_DEVOPS_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants';
 import {
@@ -43,7 +43,7 @@ interface LongRunningRequestInfo {
   target: string,
   legalStates: string[],
   defaultPollInterval: number,
-  options: AdminBlockingOptions | undefined,
+  options: AstraAdminBlockingOptions | undefined,
 }
 
 interface DevopsAPIResponse {

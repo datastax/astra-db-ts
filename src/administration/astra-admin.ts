@@ -14,7 +14,7 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import {
-  AdminBlockingOptions,
+  AstraAdminBlockingOptions,
   AdminSpawnOptions,
   CreateDatabaseOptions,
   DatabaseConfig,
@@ -326,7 +326,7 @@ export class AstraAdmin {
   /**
    * Creates a new database with the given configuration.
    *
-   * **NB. this is a long-running operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * **NB. this is a long-running operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 10 seconds. Expect it to take roughly 2 min to complete.
    *
    * Note that **the `name` field is non-unique** and thus creating a database, even with the same options, is **not
@@ -403,7 +403,7 @@ export class AstraAdmin {
   /**
    * Terminates a database by ID or by a given {@link Db} instance.
    *
-   * **NB. this is a long-running operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * **NB. this is a long-running operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 10 seconds. Expect it to take roughly 6-7 min to complete.
    *
    * The database info will still be accessible by ID, or by using the {@link AstraAdmin.listDatabases} method with the filter
@@ -425,7 +425,7 @@ export class AstraAdmin {
    *
    * @remarks Use with caution. Wear a harness. Don't say I didn't warn you.
    */
-  async dropDatabase(db: Db | string, options?: AdminBlockingOptions): Promise<void> {
+  async dropDatabase(db: Db | string, options?: AstraAdminBlockingOptions): Promise<void> {
     const id = typeof db === 'string' ? db : db.id;
 
     await this.#httpClient.requestLongRunning({
