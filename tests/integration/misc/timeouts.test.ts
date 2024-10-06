@@ -57,7 +57,7 @@ parallel('integration.misc.timeouts', ({ collection, dbAdmin }) => {
       }, DataAPITimeoutError);
     });
 
-    it('should timeout based on collection maxTimeMS', async () => {
+    it('should timeout based on collections maxTimeMS', async () => {
       const collection = new DataAPIClient(TEST_APPLICATION_TOKEN, { httpOptions: { maxTimeMS: 30000 }, environment: ENVIRONMENT })
         .db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE })
         .collection(DEFAULT_COLLECTION_NAME, { defaultMaxTimeMS: 1 });

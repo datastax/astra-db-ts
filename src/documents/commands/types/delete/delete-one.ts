@@ -13,16 +13,12 @@
 // limitations under the License.
 
 import { WithTimeout } from '@/src/lib/types';
-import { WithKeyspace } from '@/src/db';
+import { Sort } from '@/src/documents';
 
-/**
- * Options for dropping a collection.
- *
- * @field keyspace - Overrides the keyspace for the collection.
- * @field maxTimeMS - The maximum time to allow the operation to run.
- *
- * @see Db.dropCollection
- *
- * @public
- */
-export interface DropCollectionOptions extends WithTimeout, WithKeyspace {}
+export interface GenericDeleteOneResult {
+  deletedCount: 0 | 1;
+}
+
+export interface GenericDeleteOneOptions extends WithTimeout {
+  sort?: Sort,
+}

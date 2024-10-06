@@ -22,7 +22,7 @@ import { WithId } from '@/src/documents/collections/types';
  *
  * @public
  */
-export interface ModifyResult<Schema extends SomeDoc> {
+export interface CollectionModifyResult<Schema extends SomeDoc> {
   /**
    * The document that was found and modified, or `null` if nothing matched.
    */

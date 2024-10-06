@@ -15,25 +15,7 @@
 import { WithKeyspace } from '@/src/db';
 import { EmbeddingHeadersProvider } from '@/src/documents';
 
-/**
- * Options for spawning a new collection.
- *
- * @public
- */
-export interface CollectionSpawnOptions extends WithKeyspace {
-  /**
-   * The API key for the embedding service to use, or the {@link EmbeddingHeadersProvider} if using
-   * a provider that requires it (e.g. AWS bedrock).
-   */
+export interface TableSpawnOptions extends WithKeyspace {
   embeddingApiKey?: string | EmbeddingHeadersProvider | null,
-  /**
-   * The default `maxTimeMS` for all operations on the collection. Will override the maxTimeMS set in the DataAPIClient
-   * options; it can be overridden on a per-operation basis.
-   *
-   * This does *not* mean the request will be cancelled after this time, but rather that the client will wait
-   * for this time before considering the request to have timed out.
-   *
-   * The request may or may not still be running on the server after this time.
-   */
   defaultMaxTimeMS?: number | null,
 }
