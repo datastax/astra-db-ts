@@ -41,7 +41,7 @@ parallel('integration.documents.collections.misc', ({ db }) => {
     }
   });
 
-  it('CollectionNotFoundError is thrown when doing data api operation on non-existent collection', async () => {
+  it('CollectionNotFoundError is thrown when doing data api operation on non-existent collections', async () => {
     const collection = db.collection('non_existent_collection');
 
     try {
@@ -53,7 +53,7 @@ parallel('integration.documents.collections.misc', ({ db }) => {
     }
   });
 
-  it('CollectionNotFoundError is thrown when doing .options() on non-existent collection', async () => {
+  it('CollectionNotFoundError is thrown when doing .options() on non-existent collections', async () => {
     const collection = db.collection('non_existent_collection');
 
     try {

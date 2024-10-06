@@ -105,7 +105,7 @@ describe('integration.client.documents-client', () => {
       await collection.insertOne({ _id: 'TRiDENT' });
     });
 
-    it('should allow cross-collection monitoring of successful commands when enabled', async () => {
+    it('should allow cross-collections monitoring of successful commands when enabled', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { monitorCommands: true }, environment: ENVIRONMENT });
       const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
       const collection1 = db.collection(DEFAULT_COLLECTION_NAME);

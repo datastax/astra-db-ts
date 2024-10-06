@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc, WithId } from '@/src/documents/collections';
-import type { ToDotNotation } from '@/src/documents/collections/types/index';
+import type { SomeDoc, WithId } from '@/src/documents/collections';
+import type { ToDotNotation } from '@/src/documents';
 
 /**
  * Allowed types to specify an ascending or descending sort.
@@ -104,7 +104,7 @@ export type Projection = Record<string, 1 | 0 | true | false | ProjectionSlice>;
  * @example
  * ```typescript
  * // Sort by name in ascending order, then by age in descending order
- * await collection.findOne({}, {
+ * await collections.findOne({}, {
  *   sort: {
  *     name: 1,
  *     age: -1,
@@ -112,7 +112,7 @@ export type Projection = Record<string, 1 | 0 | true | false | ProjectionSlice>;
  * });
  *
  * // Sort by vector distance
- * await collection.findOne({}, {
+ * await collections.findOne({}, {
  *   sort: {
  *     $vector: [0.23, 0.38, 0.27, 0.91, 0.21],
  *   } satisfies StrictSort<SomeDoc>,
@@ -138,7 +138,7 @@ export type StrictSort<Schema extends SomeDoc> =
  *
  * @example
  * ```typescript
- * await collection.findOne({}, {
+ * await collections.findOne({}, {
  *   projection: {
  *     _id: 0,
  *     name: 1,
@@ -146,13 +146,13 @@ export type StrictSort<Schema extends SomeDoc> =
  *   } satisfies StrictProjection<SomeDoc>,
  * });
  *
- * await collection.findOne({}, {
+ * await collections.findOne({}, {
  *   projection: {
  *     $vector: 0,
  *   } satisfies StrictProjection<SomeDoc>,
  * });
  *
- * await collection.findOne({}, {
+ * await collections.findOne({}, {
  *   projection: {
  *     test_scores: { $slice: [2, 4] },
  *   } satisfies StrictProjection<SomeDoc>,
@@ -191,17 +191,17 @@ export type StrictProjection<Schema extends SomeDoc> = {
  *
  * @example
  * ```typescript
- * await collection.insertOne({ arr: [1, 2, 3, 4, 5] });
+ * await collections.insertOne({ arr: [1, 2, 3, 4, 5] });
  *
  * // Return [1, 2]
- * await collection.findOne({}, {
+ * await collections.findOne({}, {
  *   projection: {
  *     arr: { $slice: 2 },
  *   },
  * });
  *
  * // Return [3, 4]
- * await collection.findOne({}, {
+ * await collections.findOne({}, {
  *   projection: {
  *     arr: { $slice: [-3, 2] },
  *   },

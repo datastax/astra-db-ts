@@ -24,11 +24,11 @@ import { nullish } from '@/src/lib';
  * @example
  * ```typescript
  * const provider = new EmbeddingAPIKeyHeaderProvider('api-key');
- * const collection = await db.collection('my_coll', { embeddingApiKey: provider });
+ * const collections = await db.collections('my_coll', { embeddingApiKey: provider });
  *
  * // or just
  *
- * const collection = await db.collection('my_coll', { embeddingApiKey: 'api-key' });
+ * const collections = await db.collections('my_coll', { embeddingApiKey: 'api-key' });
  * ```
  *
  * @see EmbeddingHeadersProvider

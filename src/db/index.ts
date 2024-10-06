@@ -14,36 +14,4 @@
 
 export { Db } from './db';
 export * from './errors';
-
-export type {
-  VectorOptions,
-  WithKeyspace,
-  VectorizeServiceOptions,
-  DefaultIdOptions,
-  IndexingOptions,
-} from './types/collections-common';
-
-export type {
-  CollectionOptions,
-} from './types/collection-options';
-
-export type {
-  CreateCollectionOptions,
-} from './types/create-collection';
-
-export type {
-  ListCollectionsOptions,
-  FullCollectionInfo,
-} from './types/list-collection';
-
-export type {
-  DropCollectionOptions,
-} from './types/drop-collection';
-
-export type {
-  RunCommandOptions,
-} from './types/command';
-
-export type {
-  CollectionSpawnOptions,
-} from './types/spawn-collection';
+export type * from './types';

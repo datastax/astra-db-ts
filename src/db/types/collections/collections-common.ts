@@ -27,7 +27,7 @@ import { nullish } from '@/src/lib';
  */
 export interface VectorOptions {
   /**
-   * The dimension of the vectors stored in the collection.
+   * The dimension of the vectors stored in the collections.
    *
    * If `service` is not provided, this must be set. Otherwise, the necessity of this being set comes on a per-model
    * basis:
@@ -64,7 +64,7 @@ export interface VectorOptions {
  *
  * @field provider - The name of the embedding provider which provides the model to use
  * @field model - The specific model to use for embedding, or undefined if it's an endpoint-defined model
- * @field authentication - Object containing any necessary collection-bound authentication, if any
+ * @field authentication - Object containing any necessary collections-bound authentication, if any
  * @field parameters - Object allowing arbitrary parameters that may be necessary on a per-model basis
  *
  * @public
@@ -85,7 +85,7 @@ export interface VectorizeServiceOptions {
    */
   modelName: string | nullish,
   /**
-   * Object containing any necessary collection-bound authentication, if any.
+   * Object containing any necessary collections-bound authentication, if any.
    *
    * Most commonly, `providerKey: '*SHARED_SECRET_NAME*'` may be used here to reference an API key from the Astra KMS.
    *
@@ -115,13 +115,13 @@ export interface VectorizeServiceOptions {
  *
  * @example
  * ```typescript
- * const collection1 = await db.createCollection('my-collection', {
+ * const collection1 = await db.createCollection('my-collections', {
  *   indexing: {
  *     allow: ['name', 'age'],
  *   },
  * });
  *
- * const collection2 = await db.createCollection('my-collection', {
+ * const collection2 = await db.createCollection('my-collections', {
  *   indexing: {
  *     deny: ['*'],
  *   },
@@ -162,30 +162,30 @@ export interface DefaultIdOptions {
    *
    * @example
    * ```typescript
-   * const collection = await db.createCollection('my-collection');
+   * const collections = await db.createCollection('my-collections');
    *
    * // { name: 'Jessica', _id: 'f47ac10b-58cc-4372-a567-0e02b2c3d479' }
-   * await collection.insertOne({ name: 'Jessica' });
+   * await collections.insertOne({ name: 'Jessica' });
    *```
    *
    * @example
    * ```typescript
-   * const collection = await db.createCollection('my-collection', {
+   * const collections = await db.createCollection('my-collections', {
    *   defaultId: { type: 'uuidv6' },
    * });
    *
    * // { name: 'Allman', _id: UUID('6f752f1a-6b6d-6f3e-8e1e-2e167e3b5f3d') }
-   * await collection.insertOne({ name: 'Allman' });
+   * await collections.insertOne({ name: 'Allman' });
    * ```
    *
    * @example
    * ```typescript
-   * const collection = await db.createCollection('my-collection', {
+   * const collections = await db.createCollection('my-collections', {
    *   defaultId: { type: 'objectId' },
    * });
    *
    * // { name: 'Brothers', _id: ObjectId('507f1f77bcf86cd799439011') }
-   * await collection.insertOne({ name: 'Brothers' });
+   * await collections.insertOne({ name: 'Brothers' });
    * ```
    *
    * @remarks Make sure you're keeping this all in mind if you're specifically typing your _id field.
@@ -193,47 +193,3 @@ export interface DefaultIdOptions {
   type: 'uuid' | 'uuidv6' | 'uuidv7' | 'objectId';
 }
 
-/**
- * Allows you to override the keyspace to use for some db operation. If not specified,
- * the db operation will use either the keyspace provided when creating the Db instance, the keyspace
- * provided when creating the DataAPIClient instance, or the default keyspace `'default_keyspace'`.
- * (in that order)
- *
- * @example
- * ```typescript
- * const client = new DataAPIClient('AstraCS:...');
- *
- * // Using 'default_keyspace' as the keyspace
- * const db1 = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
- *
- * // Using 'my_keyspace' as the keyspace
- * const db2 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', {
- *   keyspace: 'my_keyspace',
- * });
- *
- * // Finds 'my_collection' in 'default_keyspace'
- * const coll1 = db1.collection('my_collection');
- *
- * // Finds 'my_collection' in 'my_keyspace'
- * const coll2 = db1.collection('my_collection', {
- *   keyspace: 'my_keyspace',
- * });
- * ```
- *
- * @field keyspace - The keyspace to use for the db operation.
- *
- * @public
- */
-export interface WithKeyspace {
-  /**
-   * The keyspace to use for the operation.
-   */
-  keyspace?: string
-}
-
-/**
- * @internal
- */
-export interface WithNullableKeyspace {
-  keyspace?: string | null;
-}

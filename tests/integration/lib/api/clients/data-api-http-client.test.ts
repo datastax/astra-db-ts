@@ -50,7 +50,7 @@ describe('integration.lib.api.clients.documents-http-client', ({ db }) => {
       assert.strictEqual(resp.status?.collections.length, 1);
     });
 
-    it('should execute a collection-level command', async () => {
+    it('should execute a collections-level command', async () => {
       const resp = await httpClient.executeCommand({
         insertOne: { document: { name: 'John' } },
       }, {

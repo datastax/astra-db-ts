@@ -16,19 +16,10 @@ import { WithTimeout } from '@/src/lib/types';
 import { CollectionOptions, WithKeyspace } from '@/src/db';
 import { SomeDoc } from '@/src/documents';
 
-/** @internal */
-export interface ListCollectionsCommand {
-  findCollections: {
-    options: {
-      explain: boolean,
-    }
-  }
-}
-
 /**
  * Options for listing collections.
  *
- * @field nameOnly - If true, only the name of the collection is returned. If false, the full collection info is returned. Defaults to true.
+ * @field nameOnly - If true, only the name of the collections is returned. If false, the full collections info is returned. Defaults to true.
  * @field keyspace - Overrides the keyspace to list collections from. If not provided, the default keyspace is used.
  * @field maxTimeMS - The maximum amount of time to allow the operation to run.
  *
@@ -38,9 +29,9 @@ export interface ListCollectionsCommand {
  */
 export interface ListCollectionsOptions extends WithTimeout, WithKeyspace {
   /**
-   * If true, only the name of the collection is returned.
+   * If true, only the name of the collections is returned.
    *
-   * If false, the full collection info is returned.
+   * If false, the full collections info is returned.
    *
    * Defaults to true.
    *
@@ -59,10 +50,10 @@ export interface ListCollectionsOptions extends WithTimeout, WithKeyspace {
 }
 
 /**
- * Information about a collection, used when `nameOnly` is false in {@link ListCollectionsOptions}.
+ * Information about a collections, used when `nameOnly` is false in {@link ListCollectionsOptions}.
  *
- * @field name - The name of the collection.
- * @field options - The creation options for the collection.
+ * @field name - The name of the collections.
+ * @field options - The creation options for the collections.
  *
  * @see ListCollectionsOptions
  * @see Db.listCollections
@@ -71,11 +62,11 @@ export interface ListCollectionsOptions extends WithTimeout, WithKeyspace {
  */
 export interface FullCollectionInfo {
   /**
-   * The name of the collection.
+   * The name of the collections.
    */
   name: string,
   /**
-   * The creation options for the collection (i.e. the `vector`, `indexing`, and `defaultId` fields).
+   * The creation options for the collections (i.e. the `vector`, `indexing`, and `defaultId` fields).
    */
   options: CollectionOptions<SomeDoc>,
 }

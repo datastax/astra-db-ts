@@ -359,13 +359,13 @@ export interface DbSpawnOptions {
    * });
    *
    * // Finds 'my_collection' in 'default_keyspace'
-   * const coll1 = db1.collection('my_collection');
+   * const coll1 = db1.collections('my_collection');
    *
    * // Finds 'my_collection' in 'my_keyspace'
-   * const coll2 = db1.collection('my_collection');
+   * const coll2 = db1.collections('my_collection');
    *
    * // Finds 'my_collection' in 'other_keyspace'
-   * const coll3 = db1.collection('my_collection', { keyspace: 'other_keyspace' });
+   * const coll3 = db1.collections('my_collection', { keyspace: 'other_keyspace' });
    * ```
    *
    * @defaultValue 'default_keyspace'
@@ -398,7 +398,7 @@ export interface DbSpawnOptions {
    * });
    *
    * const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
-   * const coll = db.collection('my_collection');
+   * const coll = db.collections('my_collection');
    *
    * // Logs:
    * // - Running command insertOne

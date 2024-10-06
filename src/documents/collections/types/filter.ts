@@ -13,8 +13,9 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/documents/collections';
-import type { IdOf, NoId, ToDotNotation } from '@/src/documents/collections/types/index';
-import { IsDate, IsNum } from '@/src/documents/collections/types/utils';
+import type { IdOf, NoId, ToDotNotation } from '@/src/documents';
+import { EmptyObj } from '@/src/lib/types';
+import { IsDate, IsNum } from '@/src/documents/types/utils';
 
 /**
  * Represents some filter operation for a given document schema.
@@ -30,7 +31,7 @@ import { IsDate, IsNum } from '@/src/documents/collections/types/utils';
  *   num: number,
  * }
  *
- * db.collection<BasicSchema>('coll_name').findOne({
+ * db.collections<BasicSchema>('coll_name').findOne({
  *   $and: [
  *     { _id: { $in: ['abc', 'def'] } },
  *     { $not: { arr: { $size: 0 } } },
@@ -69,7 +70,7 @@ export type Filter<Schema extends SomeDoc> = {
  *   num: number,
  * }
  *
- * db.collection<BasicSchema>('coll_name').findOne({
+ * db.collections<BasicSchema>('coll_name').findOne({
  *   $and: [
  *     { _id: { $in: ['abc', 'def'] } },
  *     { $not: { arr: { $size: 0 } } },
@@ -109,14 +110,11 @@ export type FilterOps<Elem> = {
   $nin?: Elem[] /* I can't un-see this as 'Nine-Inch Nails'... */,
   $exists?: boolean,
 } & (
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- Intersection w/ {} is a "noop" here
-  IsNum<Elem> extends false ? {} : NumFilterOps
+  IsNum<Elem> extends false ? EmptyObj : NumFilterOps
 ) & (
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- Intersection w/ {} is a "noop" here
-  IsDate<Elem> extends false ? {} : (DateFilterOps | Date)
+  IsDate<Elem> extends false ? EmptyObj : (DateFilterOps | Date)
 ) & (
-  // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- Intersection w/ {} is a "noop" here
-  any[] extends Elem ? ArrayFilterOps<Elem> : {}
+  any[] extends Elem ? ArrayFilterOps<Elem> : EmptyObj
 )
 
 /**
