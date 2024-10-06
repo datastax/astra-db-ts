@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { AdminBlockingOptions, AdminSpawnOptions, LocalCreateKeyspaceOptions } from '@/src/administration/types';
+import { AstraAdminBlockingOptions, AdminSpawnOptions, LocalCreateKeyspaceOptions } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
 import { WithTimeout } from '@/src/lib/types';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
@@ -141,7 +141,7 @@ export class DataAPIDbAdmin extends DbAdmin {
   /**
    * Creates a new, additional, keyspace for this database.
    *
-   * **NB. The operation will always wait for the operation to complete, regardless of the {@link AdminBlockingOptions}. Expect it to take roughly 8-10 seconds.**
+   * **NB. The operation will always wait for the operation to complete, regardless of the {@link AstraAdminBlockingOptions}. Expect it to take roughly 8-10 seconds.**
    *
    * @example
    * ```typescript
@@ -184,7 +184,7 @@ export class DataAPIDbAdmin extends DbAdmin {
   /**
    * Drops a keyspace from this database.
    *
-   * **NB. The operation will always wait for the operation to complete, regardless of the {@link AdminBlockingOptions}. Expect it to take roughly 8-10 seconds.**
+   * **NB. The operation will always wait for the operation to complete, regardless of the {@link AstraAdminBlockingOptions}. Expect it to take roughly 8-10 seconds.**
    *
    * @example
    * ```typescript
@@ -202,7 +202,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void> {
+  public override async dropKeyspace(keyspace: string, options?: AstraAdminBlockingOptions): Promise<void> {
     await this.#httpClient.executeCommand({ dropKeyspace: { name: keyspace } }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
   }
 

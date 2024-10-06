@@ -13,12 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import {
-  AdminBlockingOptions,
-  AdminSpawnOptions,
-  CreateKeyspaceOptions,
-  FullDatabaseInfo,
-} from '@/src/administration/types';
+import { AstraAdminBlockingOptions, AdminSpawnOptions, AstraCreateKeyspaceOptions, FullDatabaseInfo } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
 import { WithTimeout } from '@/src/lib/types';
 import { extractAstraEnvironment } from '@/src/administration/utils';
@@ -203,7 +198,7 @@ export class AstraDbAdmin extends DbAdmin {
   /**
    * Creates a new, additional, keyspace for this database.
    *
-   * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * **NB. this is a "long-running" operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 1 second. Expect it to take roughly 8-10 seconds to complete.
    *
    * @example
@@ -230,7 +225,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async createKeyspace(keyspace: string, options?: CreateKeyspaceOptions): Promise<void> {
+  public override async createKeyspace(keyspace: string, options?: AstraCreateKeyspaceOptions): Promise<void> {
     if (options?.updateDbKeyspace) {
       this.#db.useKeyspace(keyspace);
     }
@@ -250,7 +245,7 @@ export class AstraDbAdmin extends DbAdmin {
   /**
    * Drops a keyspace from this database.
    *
-   * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * **NB. this is a "long-running" operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 1 second. Expect it to take roughly 8-10 seconds to complete.
    *
    * @example
@@ -278,7 +273,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void> {
+  public override async dropKeyspace(keyspace: string, options?: AstraAdminBlockingOptions): Promise<void> {
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Delete,
       path: `/databases/${this.#db.id}/keyspaces/${keyspace}`,
@@ -294,7 +289,7 @@ export class AstraDbAdmin extends DbAdmin {
   /**
    * Drops the database.
    *
-   * **NB. this is a long-running operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * **NB. this is a long-running operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 10 seconds. Expect it to take roughly 6-7 min to complete.
    *
    * The database info will still be accessible by ID, or by using the {@link AstraAdmin.listDatabases} method with the filter
@@ -312,7 +307,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @remarks Use with caution. Use a surge protector. Don't say I didn't warn you.
    */
-  public async drop(options?: AdminBlockingOptions): Promise<void> {
+  public async drop(options?: AstraAdminBlockingOptions): Promise<void> {
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: `/databases/${this.#db.id}/terminate`,

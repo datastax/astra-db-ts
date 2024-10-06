@@ -13,13 +13,13 @@
 // limitations under the License.
 
 export type {
-  AdminBlockingOptions,
+  AstraAdminBlockingOptions,
   DatabaseAction,
   DatabaseCloudProvider,
   DatabaseStatus,
   DatabaseTier,
-  PollBlockingOptions,
-  NoBlockingOptions,
+  AstraPollBlockingOptions,
+  AstraNoBlockingOptions,
 } from './admin/admin-common';
 
 export type {
@@ -47,8 +47,8 @@ export type {
 } from '../../client/types/spawn-admin';
 
 export type {
-  CreateKeyspaceOptions,
-} from './db-admin/create-keyspace';
+  AstraCreateKeyspaceOptions,
+} from './db-admin/astra-create-keyspace';
 
 export type {
   KeyspaceReplicationOptions,

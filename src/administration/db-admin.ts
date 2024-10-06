@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { AdminBlockingOptions, CreateKeyspaceOptions } from '@/src/administration/types';
+import { AstraAdminBlockingOptions, AstraCreateKeyspaceOptions } from '@/src/administration/types';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { WithTimeout } from '@/src/lib';
 import { Db } from '@/src/db';
@@ -85,7 +85,7 @@ export abstract class DbAdmin {
   /**
    * Creates a new, additional, keyspace for this database.
    *
-   * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * **NB. this is a "long-running" operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 1 second. Expect it to take roughly 8-10 seconds to complete.
    *
    * @example
@@ -112,11 +112,11 @@ export abstract class DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  abstract createKeyspace(keyspace: string, options?: CreateKeyspaceOptions): Promise<void>;
+  abstract createKeyspace(keyspace: string, options?: AstraCreateKeyspaceOptions): Promise<void>;
   /**
    * Drops a keyspace from this database.
    *
-   * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * **NB. this is a "long-running" operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 1 second. Expect it to take roughly 8-10 seconds to complete.
    *
    * @example
@@ -144,5 +144,5 @@ export abstract class DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  abstract dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
+  abstract dropKeyspace(keyspace: string, options?: AstraAdminBlockingOptions): Promise<void>;
 }

@@ -89,9 +89,9 @@ export type DatabaseAction = 'park' | 'unpark' | 'resize' | 'resetPassword' | 'a
  *
  * @public
  */
-export type AdminBlockingOptions =
-  | PollBlockingOptions
-  | NoBlockingOptions
+export type AstraAdminBlockingOptions =
+  | AstraPollBlockingOptions
+  | AstraNoBlockingOptions;
 
 /**
  * The options representing the blocking behavior of many admin operations.
@@ -99,11 +99,11 @@ export type AdminBlockingOptions =
  * @field blocking - True or omitted to block until the operation is complete.
  * @field pollInterval - The interval (in MS) at which to poll the operation for completion.
  *
- * @see AdminBlockingOptions
+ * @see AstraAdminBlockingOptions
  *
  * @public
  */
-export interface PollBlockingOptions extends WithTimeout {
+export interface AstraPollBlockingOptions extends WithTimeout {
   /**
    * True or omitted to block until the operation is complete.
    */
@@ -121,11 +121,11 @@ export interface PollBlockingOptions extends WithTimeout {
  *
  * @field blocking - False to not block until the operation is complete.
  *
- * @see AdminBlockingOptions
+ * @see AstraAdminBlockingOptions
  *
  * @public
  */
-export interface NoBlockingOptions extends WithTimeout {
+export interface AstraNoBlockingOptions extends WithTimeout {
   /**
    * False to not block until the operation is complete.
    */
