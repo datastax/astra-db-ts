@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AdminBlockingOptions, DatabaseCloudProvider } from '@/src/administration/types';
+import { AstraAdminBlockingOptions, DatabaseCloudProvider } from '@/src/administration/types';
 
 
 import { DbSpawnOptions } from '@/src/client';
@@ -50,7 +50,7 @@ export interface DatabaseConfig {
  *
  * @public
  */
-export type CreateDatabaseOptions = AdminBlockingOptions & {
+export type CreateDatabaseOptions = AstraAdminBlockingOptions & {
   /**
    * Any options to override the default options set when creating the root {@link DataAPIClient}.
    */
