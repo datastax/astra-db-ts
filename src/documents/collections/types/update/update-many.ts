@@ -12,20 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { InternalUpdateResult } from '@/src/documents/collections/types';
-import { WithTimeout } from '@/src/lib/types';
-import { SomeDoc } from '@/src/documents/collections';
-
-/** @internal */
-export interface UpdateManyCommand {
-  updateMany: {
-    filter: Record<string, unknown>;
-    update: Record<string, any>;
-    options: UpdateManyOptions & {
-      pageState?: string;
-    };
-  }
-}
+import { GenericUpdateManyOptions, GenericUpdateResult, IdOf, SomeDoc } from '@/src/documents';
 
 /**
  * Represents the options for the updateMany command.
@@ -35,25 +22,14 @@ export interface UpdateManyCommand {
  *
  * @public
  */
-export interface UpdateManyOptions extends WithTimeout {
-  /**
-   * If true, perform an insert if no documents match the filter.
-   *
-   * If false, do not insert if no documents match the filter.
-   *
-   * Defaults to false.
-   *
-   * @defaultValue false
-   */
-  upsert?: boolean;
-}
+export type CollectionUpdateManyOptions = GenericUpdateManyOptions;
 
 /**
  * Represents the result of an updateMany operation.
  *
  * @example
  * ```typescript
- * const result = await collection.updateOne({
+ * const result = await collections.updateOne({
  *   _id: 'abc'
  * }, {
  *   $set: { name: 'John' }
@@ -73,4 +49,4 @@ export interface UpdateManyOptions extends WithTimeout {
  *
  * @public
  */
-export type UpdateManyResult<Schema extends SomeDoc> = InternalUpdateResult<Schema, number>;
+export type CollectionUpdateManyResult<Schema extends SomeDoc> = GenericUpdateResult<IdOf<Schema>, number>;

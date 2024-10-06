@@ -6,6 +6,9 @@
 
 import TypedEmitter from 'typed-emitter';
 
+// @public (undocumented)
+export const $PrimaryKeyType: unique symbol;
+
 // @public
 export type AdminBlockingOptions = PollBlockingOptions | NoBlockingOptions;
 
@@ -129,38 +132,38 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions | undefined);
     readonly collectionName: string;
     countDocuments(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number>;
-    deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<DeleteManyResult>;
-    deleteOne(filter?: Filter<Schema>, options?: DeleteOneOptions): Promise<DeleteOneResult>;
+    deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<CollectionDeleteManyResult>;
+    deleteOne(filter: Filter<Schema>, options?: CollectionDeleteOneOptions): Promise<CollectionDeleteOneResult>;
     distinct<Key extends string>(key: Key, filter?: Filter<Schema>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]>;
     drop(options?: WithTimeout): Promise<boolean>;
     estimatedDocumentCount(options?: WithTimeout): Promise<number>;
-    find(filter: Filter<Schema>, options?: FindOptions): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>>;
-    findOne(filter: Filter<Schema>, options?: FindOneOptions): Promise<FoundDoc<Schema> | null>;
-    findOneAndDelete(filter: Filter<Schema>, options: FindOneAndDeleteOptions & {
+    find(filter: Filter<Schema>, options?: CollectionFindOptions): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>>;
+    findOne(filter: Filter<Schema>, options?: CollectionFindOneOptions): Promise<FoundDoc<Schema> | null>;
+    findOneAndDelete(filter: Filter<Schema>, options: CollectionFindOneAndDeleteOptions & {
         includeResultMetadata: true;
-    }): Promise<ModifyResult<Schema>>;
-    findOneAndDelete(filter: Filter<Schema>, options?: FindOneAndDeleteOptions & {
+    }): Promise<CollectionModifyResult<Schema>>;
+    findOneAndDelete(filter: Filter<Schema>, options?: CollectionFindOneAndDeleteOptions & {
         includeResultMetadata?: false;
     }): Promise<WithId<Schema> | null>;
-    findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options: FindOneAndReplaceOptions & {
+    findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options: CollectionFindOneAndReplaceOptions & {
         includeResultMetadata: true;
-    }): Promise<ModifyResult<Schema>>;
-    findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options?: FindOneAndReplaceOptions & {
+    }): Promise<CollectionModifyResult<Schema>>;
+    findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options?: CollectionFindOneAndReplaceOptions & {
         includeResultMetadata?: false;
     }): Promise<WithId<Schema> | null>;
-    findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options: FindOneAndUpdateOptions & {
+    findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options: CollectionFindOneAndUpdateOptions & {
         includeResultMetadata: true;
-    }): Promise<ModifyResult<Schema>>;
-    findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: FindOneAndUpdateOptions & {
+    }): Promise<CollectionModifyResult<Schema>>;
+    findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: CollectionFindOneAndUpdateOptions & {
         includeResultMetadata?: false;
     }): Promise<WithId<Schema> | null>;
-    insertMany(documents: MaybeId<Schema>[], options?: InsertManyOptions): Promise<InsertManyResult<Schema>>;
-    insertOne(document: MaybeId<Schema>, options?: WithTimeout): Promise<InsertOneResult<Schema>>;
+    insertMany(documents: MaybeId<Schema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<Schema>>;
+    insertOne(document: MaybeId<Schema>, options?: WithTimeout): Promise<CollectionInsertOneResult<Schema>>;
     readonly keyspace: string;
     options(options?: WithTimeout): Promise<CollectionOptions<SomeDoc>>;
-    replaceOne(filter: Filter<Schema>, replacement: NoId<Schema>, options?: ReplaceOneOptions): Promise<ReplaceOneResult<Schema>>;
-    updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateManyOptions): Promise<UpdateManyResult<SomeDoc>>;
-    updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: UpdateOneOptions): Promise<UpdateOneResult<Schema>>;
+    replaceOne(filter: Filter<Schema>, replacement: NoId<Schema>, options?: CollectionReplaceOneOptions): Promise<CollectionReplaceOneResult<Schema>>;
+    updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: CollectionUpdateManyOptions): Promise<CollectionUpdateManyResult<Schema>>;
+    updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: CollectionUpdateOneOptions): Promise<CollectionUpdateOneResult<Schema>>;
 }
 
 // @public
@@ -169,6 +172,70 @@ export class CollectionAlreadyExistsError extends DataAPIError {
     constructor(keyspace: string, collectionName: string);
     readonly collectionName: string;
     readonly keyspace: string;
+}
+
+// @public
+export interface CollectionDeleteManyResult {
+    deletedCount: number;
+}
+
+// @public
+export type CollectionDeleteOneOptions = GenericDeleteOneOptions;
+
+// @public
+export interface CollectionDeleteOneResult {
+    deletedCount: 0 | 1;
+}
+
+// @public
+export interface CollectionFindOneAndDeleteOptions extends WithTimeout {
+    includeResultMetadata?: boolean;
+    projection?: Projection;
+    sort?: Sort;
+}
+
+// @public
+export interface CollectionFindOneAndReplaceOptions extends WithTimeout {
+    includeResultMetadata?: boolean;
+    projection?: Projection;
+    returnDocument?: 'before' | 'after';
+    sort?: Sort;
+    upsert?: boolean;
+}
+
+// @public
+export interface CollectionFindOneAndUpdateOptions extends WithTimeout {
+    includeResultMetadata?: boolean;
+    projection?: Projection;
+    returnDocument?: 'before' | 'after';
+    sort?: Sort;
+    upsert?: boolean;
+}
+
+// @public
+export type CollectionFindOneOptions = GenericFindOneOptions;
+
+// @public
+export type CollectionFindOptions = GenericFindOptions;
+
+// @public
+export type CollectionInsertManyOptions = GenericInsertManyOptions;
+
+// @public
+export interface CollectionInsertManyResult<Schema extends SomeDoc> {
+    insertedCount: number;
+    insertedIds: IdOf<Schema>[];
+}
+
+// @public
+export interface CollectionInsertOneResult<Schema> {
+    insertedId: IdOf<Schema>;
+}
+
+// @public
+export interface CollectionModifyResult<Schema extends SomeDoc> {
+    ok: number;
+    value: WithId<Schema> | null;
 }
 
 // @public
@@ -187,10 +254,36 @@ export interface CollectionOptions<Schema extends SomeDoc> {
 }
 
 // @public
+export type CollectionReplaceOneOptions = GenericReplaceOneOptions;
+
+// @public
+export type CollectionReplaceOneResult<Schema extends SomeDoc> = GenericUpdateResult<IdOf<Schema>, 0 | 1>;
+
+// @public
 export interface CollectionSpawnOptions extends WithKeyspace {
     defaultMaxTimeMS?: number | null;
     embeddingApiKey?: string | EmbeddingHeadersProvider | null;
 }
+
+// @public
+export type CollectionUpdateManyOptions = GenericUpdateManyOptions;
+
+// @public
+export type CollectionUpdateManyResult<Schema extends SomeDoc> = GenericUpdateResult<IdOf<Schema>, number>;
+
+// @public
+export type CollectionUpdateOneOptions = GenericUpdateOneOptions;
+
+// @public
+export type CollectionUpdateOneResult<Schema extends SomeDoc> = GenericUpdateResult<IdOf<Schema>, 0 | 1>;
+
+// Warning: (ae-forgotten-export) The symbol "CqlType2TSType" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "InferColDefType" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export type Cols2CqlTypes<Columns extends CreateTableColumnDefinitions> = {
+    -readonly [P in keyof Columns]: CqlType2TSType<InferColDefType<Columns[P]>, Columns[P]>;
+};
 
 // @public
 export abstract class CommandEvent {
@@ -248,6 +341,90 @@ export interface CostInfo {
     costPerWrittenGbCents: number;
 }
 
+// @public (undocumented)
+export class CqlDate {
+    constructor(input: string | Date | CqlDateComponents);
+    // (undocumented)
+    toDate(): Date;
+}
+
+// @public (undocumented)
+export interface CqlDateComponents {
+    // (undocumented)
+    date: number;
+    // (undocumented)
+    month: number;
+    // (undocumented)
+    year: number;
+}
+
+// @public (undocumented)
+export class CqlDuration {
+    constructor(input: string | CqlDurationComponents);
+    // (undocumented)
+    toDuration(): CqlDurationComponents;
+}
+
+// @public (undocumented)
+export interface CqlDurationComponents {
+    // (undocumented)
+    days?: number;
+    // (undocumented)
+    hours?: number;
+    // (undocumented)
+    minutes?: number;
+    // (undocumented)
+    months?: number;
+    // (undocumented)
+    seconds?: number;
+    // (undocumented)
+    years?: number;
+}
+
+// @public (undocumented)
+export class CqlTime {
+    constructor(input: string | Date | CqlTimeComponents);
+    // (undocumented)
+    toDate(): Date;
+}
+
+// @public (undocumented)
+export interface CqlTimeComponents {
+    // (undocumented)
+    hours: number;
+    // (undocumented)
+    milliseconds?: number;
+    // (undocumented)
+    minutes: number;
+    // (undocumented)
+    seconds: number;
+}
+
+// @public (undocumented)
+export class CqlTimestamp {
+    constructor(input: string | Date | CqlTimestampComponents);
+    // (undocumented)
+    toDate(): Date;
+}
+
+// @public (undocumented)
+export interface CqlTimestampComponents {
+    // (undocumented)
+    date?: number;
+    // (undocumented)
+    hours?: number;
+    // (undocumented)
+    minutes?: number;
+    // (undocumented)
+    month: number;
+    // (undocumented)
+    ms?: number;
+    // (undocumented)
+    seconds?: number;
+    // (undocumented)
+    year: number;
+}
+
 // @public
 export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, CollectionSpawnOptions {
     checkExists?: boolean;
@@ -262,6 +439,52 @@ export type CreateDatabaseOptions = AdminBlockingOptions & {
 export type CreateKeyspaceOptions = AdminBlockingOptions & {
     updateDbKeyspace?: boolean;
 };
+
+// Warning: (ae-forgotten-export) The symbol "LooseCreateTableColumnDefinition" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "StrictCreateTableColumnDefinition" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export type CreateTableColumnDefinitions = Record<string, LooseCreateTableColumnDefinition | StrictCreateTableColumnDefinition>;
+
+// @public (undocumented)
+export interface CreateTableDefinition {
+    // (undocumented)
+    columns: CreateTableColumnDefinitions;
+    // (undocumented)
+    primaryKey: CreateTablePrimaryKeyDefinition;
+}
+
+// @public (undocumented)
+export type CreateTableIndexOptions = WithTimeout;
+
+// @public (undocumented)
+export interface CreateTableOptions<Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout, TableSpawnOptions {
+    // (undocumented)
+    checkExists?: boolean;
+    // (undocumented)
+    definition: Def;
+}
+
+// @public (undocumented)
+export type CreateTablePrimaryKeyDefinition = ShortCreateTablePrimaryKeyDefinition | FullCreateTablePrimaryKeyDefinition;
+
+// @public (undocumented)
+export interface CreateTableTextIndexOptions extends WithTimeout {
+    // (undocumented)
+    ascii?: boolean;
+    // (undocumented)
+    caseSensitive?: boolean;
+    // (undocumented)
+    normalize?: boolean;
+}
+
+// @public (undocumented)
+export interface CreateTableVectorIndexOptions extends WithTimeout {
+    // (undocumented)
+    similarityFunction: 'cosine' | 'euclidean' | 'dot_product';
+    // (undocumented)
+    sourceModel: string;
+}
 
 // @public
 export abstract class CumulativeDataAPIError extends DataAPIResponseError {
@@ -484,7 +707,13 @@ export class Db {
     collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions): Collection<Schema>;
     command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse>;
     createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>>;
+    // (undocumented)
+    createTable<const Def extends CreateTableDefinition>(tableName: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchemaFromDefinition<Def>>>;
+    // (undocumented)
+    createTable<Schema extends SomeRow>(tableName: string, options: CreateTableOptions): Promise<Table<Schema>>;
     dropCollection(name: string, options?: DropCollectionOptions): Promise<boolean>;
+    // (undocumented)
+    dropTable(name: string, options?: DropTableOptions): Promise<boolean>;
     get id(): string;
     info(options?: WithTimeout): Promise<DatabaseInfo>;
     get keyspace(): string;
@@ -494,6 +723,16 @@ export class Db {
     listCollections(options?: ListCollectionsOptions & {
         nameOnly?: false;
     }): Promise<FullCollectionInfo[]>;
+    // (undocumented)
+    listTables(options: ListTablesOptions & {
+        nameOnly: true;
+    }): Promise<string[]>;
+    // (undocumented)
+    listTables(options?: ListTablesOptions & {
+        nameOnly?: false;
+    }): Promise<FullTableInfo[]>;
+    // (undocumented)
+    table<Schema extends SomeRow = SomeRow>(name: string, options?: TableSpawnOptions): Table<Schema>;
     useKeyspace(keyspace: string): void;
 }
 
@@ -542,22 +781,7 @@ export interface DefaultIdOptions {
 // @public
 export class DeleteManyError extends CumulativeDataAPIError {
     name: string;
-    readonly partialResult: DeleteManyResult;
-}
-
-// @public
-export interface DeleteManyResult {
-    deletedCount: number;
-}
-
-// @public
-export interface DeleteOneOptions extends WithTimeout {
-    sort?: Sort;
-}
-
-// @public
-export interface DeleteOneResult {
-    deletedCount: 0 | 1;
+    readonly partialResult: CollectionDeleteManyResult;
 }
 
 // @public
@@ -597,6 +821,10 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
 
 // @public
 export interface DropCollectionOptions extends WithTimeout, WithKeyspace {
+}
+
+// @public (undocumented)
+export interface DropTableOptions extends WithTimeout, WithKeyspace {
 }
 
 // @public
@@ -726,6 +954,7 @@ export type Filter<Schema extends SomeDoc> = {
 export type FilterExpr<Elem> = Elem | FilterOps<Elem>;
 
 // Warning: (ae-forgotten-export) The symbol "IsNum" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "EmptyObj" needs to be exported by the entry point index.d.ts
 // Warning: (ae-forgotten-export) The symbol "IsDate" needs to be exported by the entry point index.d.ts
 //
 // @public
@@ -735,13 +964,13 @@ export type FilterOps<Elem> = {
     $in?: Elem[];
     $nin?: Elem[];
     $exists?: boolean;
-} & (IsNum<Elem> extends false ? {} : NumFilterOps) & (IsDate<Elem> extends false ? {} : (DateFilterOps | Date)) & (any[] extends Elem ? ArrayFilterOps<Elem> : {});
+} & (IsNum<Elem> extends false ? EmptyObj : NumFilterOps) & (IsDate<Elem> extends false ? EmptyObj : (DateFilterOps | Date)) & (any[] extends Elem ? ArrayFilterOps<Elem> : EmptyObj);
 
 // @public
 export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     [Symbol.asyncIterator](): AsyncGenerator<T, void, void>;
     // @internal
-    constructor(keyspace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: FindOptions);
+    constructor(keyspace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: CollectionFindOptions);
     bufferedCount(): number;
     clone(): FindCursor<TRaw, TRaw>;
     close(): void;
@@ -771,48 +1000,6 @@ export interface FindEmbeddingProvidersResult {
 }
 
 // @public
-export interface FindOneAndDeleteOptions extends WithTimeout {
-    includeResultMetadata?: boolean;
-    projection?: Projection;
-    sort?: Sort;
-}
-
-// @public
-export interface FindOneAndReplaceOptions extends WithTimeout {
-    includeResultMetadata?: boolean;
-    projection?: Projection;
-    returnDocument?: 'before' | 'after';
-    sort?: Sort;
-    upsert?: boolean;
-}
-
-// @public
-export interface FindOneAndUpdateOptions extends WithTimeout {
-    includeResultMetadata?: boolean;
-    projection?: Projection;
-    returnDocument?: 'before' | 'after';
-    sort?: Sort;
-    upsert?: boolean;
-}
-
-// @public
-export interface FindOneOptions extends WithTimeout {
-    includeSimilarity?: boolean;
-    projection?: Projection;
-    sort?: Sort;
-}
-
-// @public
-export interface FindOptions {
-    includeSimilarity?: boolean;
-    includeSortVector?: boolean;
-    limit?: number;
-    projection?: Projection;
-    skip?: number;
-    sort?: Sort;
-}
-
-// @public
 export type Flatten<Type> = Type extends (infer Item)[] ? Item : Type;
 
 // @public
@@ -820,10 +1007,23 @@ export type FoundDoc<Doc> = WithId<Omit<Doc, '$similarity'> & {
     $similarity?: number;
 }>;
 
+// @public (undocumented)
+export type FoundRow<Doc> = Omit<Doc, '$similarity'> & {
+    $similarity?: number;
+};
+
 // @public
 export interface FullCollectionInfo {
     name: string;
     options: CollectionOptions<SomeDoc>;
+}
+
+// @public (undocumented)
+export interface FullCreateTablePrimaryKeyDefinition {
+    // (undocumented)
+    partitionKey: string[];
+    // (undocumented)
+    partitionSort?: Record<string, 1 | -1>;
 }
 
 // @public
@@ -848,9 +1048,172 @@ export interface FullDatabaseInfo {
     terminationTime?: string;
 }
 
-// @public
+// @public (undocumented)
+export interface FullTableInfo {
+    // (undocumented)
+    definition: CreateTableDefinition;
+    // (undocumented)
+    name: string;
+}
+
+// @public (undocumented)
+export interface GenericDeleteManyResult {
+    // (undocumented)
+    deletedCount: number;
+}
+
+// @public (undocumented)
+export interface GenericDeleteOneOptions extends WithTimeout {
+    // (undocumented)
+    sort?: Sort;
+}
+
+// @public (undocumented)
+export interface GenericDeleteOneResult {
+    // (undocumented)
+    deletedCount: 0 | 1;
+}
+
+// @public (undocumented)
+export interface GenericFindOneAndDeleteOptions extends WithTimeout {
+    // (undocumented)
+    includeResultMetadata?: boolean;
+    // (undocumented)
+    projection?: Projection;
+    // (undocumented)
+    sort?: Sort;
+}
+
+// @public (undocumented)
+export interface GenericFindOneAndReplaceOptions extends WithTimeout {
+    // (undocumented)
+    includeResultMetadata?: boolean;
+    // (undocumented)
+    projection?: Projection;
+    // (undocumented)
+    returnDocument?: 'before' | 'after';
+    // (undocumented)
+    sort?: Sort;
+    // (undocumented)
+    upsert?: boolean;
+}
+
+// @public (undocumented)
+export interface GenericFindOneAndUpdateOptions extends WithTimeout {
+    // (undocumented)
+    includeResultMetadata?: boolean;
+    // (undocumented)
+    projection?: Projection;
+    // (undocumented)
+    returnDocument?: 'before' | 'after';
+    // (undocumented)
+    sort?: Sort;
+    // (undocumented)
+    upsert?: boolean;
+}
+
+// @public (undocumented)
+export interface GenericFindOneOptions extends WithTimeout {
+    // (undocumented)
+    includeSimilarity?: boolean;
+    // (undocumented)
+    projection?: Projection;
+    // (undocumented)
+    sort?: Sort;
+}
+
+// @public (undocumented)
+export interface GenericFindOptions {
+    // (undocumented)
+    includeSimilarity?: boolean;
+    // (undocumented)
+    includeSortVector?: boolean;
+    // (undocumented)
+    limit?: number;
+    // (undocumented)
+    projection?: Projection;
+    // (undocumented)
+    skip?: number;
+    // (undocumented)
+    sort?: Sort;
+}
+
+// @public (undocumented)
+export type GenericInsertManyDocumentResponse<_T> = any;
+
+// @public (undocumented)
+export type GenericInsertManyOptions = GenericInsertManyUnorderedOptions | GenericInsertManyOrderedOptions;
+
+// @public (undocumented)
+export interface GenericInsertManyOrderedOptions extends WithTimeout {
+    // (undocumented)
+    chunkSize?: number;
+    // (undocumented)
+    ordered: true;
+}
+
+// @public (undocumented)
+export interface GenericInsertManyResult<ID> {
+    // (undocumented)
+    insertedCount: number;
+    // (undocumented)
+    insertedIds: ID[];
+}
+
+// @public (undocumented)
+export interface GenericInsertManyUnorderedOptions extends WithTimeout {
+    // (undocumented)
+    chunkSize?: number;
+    // (undocumented)
+    concurrency?: number;
+    // (undocumented)
+    ordered?: false;
+}
+
+// @public (undocumented)
+export interface GenericInsertOneResult<ID> {
+    // (undocumented)
+    insertedId: ID;
+}
+
+// @public (undocumented)
+export interface GenericModifyResult<ID> {
+    // (undocumented)
+    ok: number;
+    // (undocumented)
+    value: ID | null;
+}
+
+// @public (undocumented)
+export interface GenericReplaceOneOptions extends WithTimeout {
+    // (undocumented)
+    sort?: Sort;
+    // (undocumented)
+    upsert?: boolean;
+}
+
+// @public (undocumented)
+export interface GenericUpdateManyOptions extends WithTimeout {
+    // (undocumented)
+    upsert?: boolean;
+}
+
+// @public (undocumented)
+export interface GenericUpdateOneOptions extends WithTimeout {
+    // (undocumented)
+    sort?: Sort;
+    // (undocumented)
+    upsert?: boolean;
+}
+
+// @public (undocumented)
+export type GenericUpdateResult<ID, N extends number> = (GuaranteedUpdateOptions<N> & UpsertedUpdateOptions<ID>) | (GuaranteedUpdateOptions<N> & NoUpsertUpdateOptions);
+
+// @public (undocumented)
 export interface GuaranteedUpdateOptions<N extends number> {
+    // (undocumented)
     matchedCount: N;
+    // (undocumented)
     modifiedCount: N;
 }
 
@@ -863,9 +1226,9 @@ export interface Http1Options {
 }
 
 // @public
-export type IdOf<TSchema> = TSchema extends {
+export type IdOf<Doc> = Doc extends {
     _id: infer Id;
-} ? Id : TSchema extends {
+} ? Id : Doc extends {
     _id?: infer Id;
 } ? unknown extends Id ? SomeId : Id : SomeId;
 
@@ -878,41 +1241,46 @@ export type IndexingOptions<Schema extends SomeDoc> = {
     allow?: never;
 };
 
+// @public (undocumented)
+export class InetAddress {
+    constructor(address: string, version?: 4 | 6);
+    // (undocumented)
+    static fromIP(raw: string): InetAddress;
+    // (undocumented)
+    static fromIPv4(raw: string): InetAddress;
+    // (undocumented)
+    static fromIPv6(raw: string): InetAddress;
+    // (undocumented)
+    get(): string;
+    // (undocumented)
+    version(): 4 | 6;
+}
+
+// Warning: (ae-forgotten-export) The symbol "InferrableRow" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "Normalize" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "_InferTableSchema" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export type InferTableSchema<T extends InferrableRow> = Normalize<_InferTableSchema<T>>;
+
+// @public (undocumented)
+export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition, Schema = Cols2CqlTypes<FullDef['columns']>> = Schema & {
+    [$PrimaryKeyType]?: MkPrimaryKeyType<FullDef, Schema>;
+};
+
+// @public (undocumented)
+export type InsertManyDocumentResponse<_T> = any;
+
 // @public
 export class InsertManyError extends CumulativeDataAPIError {
     name: string;
-    readonly partialResult: InsertManyResult<SomeDoc>;
+    readonly partialResult: CollectionInsertManyResult<SomeDoc>;
 }
 
-// @public
-export type InsertManyOptions = InsertManyUnorderedOptions | InsertManyOrderedOptions;
-
-// @public
-export interface InsertManyOrderedOptions extends WithTimeout {
-    chunkSize?: number;
-    ordered: true;
-}
-
-// @public
-export interface InsertManyResult<Schema extends SomeDoc> {
-    insertedCount: number;
-    insertedIds: IdOf<Schema>[];
-}
-
-// @public
-export interface InsertManyUnorderedOptions extends WithTimeout {
-    chunkSize?: number;
-    concurrency?: number;
-    ordered?: false;
-}
-
-// @public
-export interface InsertOneResult<Schema> {
-    insertedId: IdOf<Schema>;
-}
-
-// @public
-export type InternalUpdateResult<Schema extends SomeDoc, N extends number> = (GuaranteedUpdateOptions<N> & UpsertedUpdateOptions<Schema>) | (GuaranteedUpdateOptions<N> & NoUpsertUpdateOptions);
+// @public (undocumented)
+export type KeyOf<Schema> = Schema extends {
+    [$PrimaryKeyType]?: infer PrimaryKey;
+} ? PrimaryKey extends SomeTableKey ? PrimaryKey : SomeTableKey : SomeTableKey;
 
 // @public
 export type KeyspaceReplicationOptions = {
@@ -936,6 +1304,12 @@ export interface ListDatabasesOptions extends WithTimeout {
     skip?: number;
 }
 
+// @public (undocumented)
+export interface ListTablesOptions extends WithTimeout, WithKeyspace {
+    // (undocumented)
+    nameOnly?: boolean;
+}
+
 // @public
 export type LocalCreateKeyspaceOptions = CreateKeyspaceOptions & {
     replication?: KeyspaceReplicationOptions;
@@ -947,12 +1321,6 @@ export type MaybeId<T> = NoId<T> & {
 };
 
 // @public
-export interface ModifyResult<Schema extends SomeDoc> {
-    ok: number;
-    value: WithId<Schema> | null;
-}
-
-// @public
 export interface NoBlockingOptions extends WithTimeout {
     blocking: false;
 }
@@ -960,9 +1328,11 @@ export interface NoBlockingOptions extends WithTimeout {
 // @public
 export type NoId<Doc> = Omit<Doc, '_id'>;
 
-// @public
+// @public (undocumented)
 export interface NoUpsertUpdateOptions {
+    // (undocumented)
     upsertedCount: 0;
+    // (undocumented)
     upsertedId?: never;
 }
 
@@ -1028,26 +1398,36 @@ export interface RawDataAPIResponse {
     status?: Record<string, any>;
 }
 
-// @public
-export interface ReplaceOneOptions extends WithTimeout {
-    sort?: Sort;
-    upsert?: boolean;
+// @public (undocumented)
+export interface Row<Schema extends SomeRow, PrimaryKey extends (keyof Schema)[]> {
+    // (undocumented)
+    [$PrimaryKeyType]?: {
+        [P in PrimaryKey[number]]: Schema[P];
+    };
 }
-
-// @public
-export type ReplaceOneResult<Schema extends SomeDoc> = InternalUpdateResult<Schema, 0 | 1>;
 
 // @public
 export interface RunCommandOptions extends WithTimeout {
     collection?: string;
     keyspace?: string | null;
+    // (undocumented)
+    table?: string;
 }
+
+// @public (undocumented)
+export type ShortCreateTablePrimaryKeyDefinition = string;
 
 // @public
 export type SomeDoc = Record<string, any>;
 
 // @public
 export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId | null;
+
+// @public (undocumented)
+export type SomeRow = Record<string, any>;
+
+// @public (undocumented)
+export type SomeTableKey = Record<string, unknown>;
 
 // @public
 export type Sort = Record<string, SortDirection> | {
@@ -1065,6 +1445,8 @@ export class StaticTokenProvider extends TokenProvider {
     getToken(): string | nullish;
 }
 
+// Warning: (ae-forgotten-export) The symbol "TypeErr" needs to be exported by the entry point index.d.ts
+//
 // @public
 export type StrictDateUpdate<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsDate<InNotation> extends true ? {
     [K in keyof InNotation as ContainsDate<InNotation[K]> extends true ? K : never]?: Date | {
@@ -1146,6 +1528,96 @@ export interface StrictUpdateFilter<Schema extends SomeDoc> {
     $unset?: StrictUnset<Schema>;
 }
 
+// @public (undocumented)
+export class Table<Schema extends SomeRow = SomeRow> {
+    constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions | undefined);
+    // Warning: (ae-forgotten-export) The symbol "AlterTableOptions" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "AlterTableSchema" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    alter<const Spec extends AlterTableOptions<Schema>>(options: Spec): Promise<Table<AlterTableSchema<Schema, Spec>>>;
+    // (undocumented)
+    alter<NewSchema extends SomeRow>(options: AlterTableOptions<Schema>): Promise<Table<NewSchema>>;
+    // (undocumented)
+    countRows(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number>;
+    // (undocumented)
+    createIndex(name: string, column: string, options?: CreateTableIndexOptions): Promise<void>;
+    // (undocumented)
+    createTextIndex(name: string, column: string, options?: CreateTableTextIndexOptions): Promise<void>;
+    // (undocumented)
+    createVectorIndex(name: string, column: string, options?: CreateTableVectorIndexOptions): Promise<void>;
+    // (undocumented)
+    deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<void>;
+    // (undocumented)
+    deleteOne(filter: Filter<Schema>, options?: TableDeleteOneOptions): Promise<void>;
+    // (undocumented)
+    drop(options?: WithTimeout): Promise<boolean>;
+    // (undocumented)
+    dropIndex(name: string, options?: WithTimeout): Promise<void>;
+    // (undocumented)
+    find(filter: Filter<Schema>, options?: TableFindOptions): FindCursor<FoundRow<Schema>, FoundRow<Schema>>;
+    // (undocumented)
+    findOne(filter: Filter<Schema>, options?: TableFindOneOptions): Promise<FoundRow<Schema> | null>;
+    // (undocumented)
+    insertMany(document: Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>>;
+    // (undocumented)
+    insertOne(document: Schema[], options?: WithTimeout): Promise<TableInsertOneResult<Schema>>;
+    // (undocumented)
+    readonly keyspace: string;
+    // (undocumented)
+    readonly tableName: string;
+    // (undocumented)
+    updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: TableUpdateManyOptions): Promise<TableUpdateManyResult<Schema>>;
+    // (undocumented)
+    updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: TableUpdateOneOptions): Promise<TableUpdateOneResult<Schema>>;
+}
+
+// @public (undocumented)
+export type TableDeleteOneOptions = GenericDeleteOneOptions;
+
+// @public (undocumented)
+export type TableFindOneOptions = GenericFindOneOptions;
+
+// @public (undocumented)
+export type TableFindOptions = GenericFindOptions;
+
+// @public (undocumented)
+export type TableInsertManyOptions = GenericInsertManyOptions;
+
+// @public (undocumented)
+export interface TableInsertManyResult<Schema extends SomeRow> {
+    // (undocumented)
+    insertedCount: number;
+    // (undocumented)
+    insertedIds: KeyOf<Schema>[];
+}
+
+// @public (undocumented)
+export interface TableInsertOneResult<Schema extends SomeRow> {
+    // (undocumented)
+    insertedId: KeyOf<Schema>;
+}
+
+// @public (undocumented)
+export interface TableSpawnOptions extends WithKeyspace {
+    // (undocumented)
+    defaultMaxTimeMS?: number | null;
+    // (undocumented)
+    embeddingApiKey?: string | EmbeddingHeadersProvider | null;
+}
+
+// @public (undocumented)
+export type TableUpdateManyOptions = GenericUpdateManyOptions;
+
+// @public (undocumented)
+export type TableUpdateManyResult<Schema extends SomeRow> = GenericUpdateResult<KeyOf<Schema>, number>;
+
+// @public (undocumented)
+export type TableUpdateOneOptions = GenericUpdateOneOptions;
+
+// @public (undocumented)
+export type TableUpdateOneResult<Schema extends SomeRow> = GenericUpdateResult<KeyOf<Schema>, 0 | 1>;
+
 // Warning: (ae-forgotten-export) The symbol "Merge" needs to be exported by the entry point index.d.ts
 // Warning: (ae-forgotten-export) The symbol "_ToDotNotation" needs to be exported by the entry point index.d.ts
 //
@@ -1166,11 +1638,6 @@ export class TooManyDocumentsToCountError extends DataAPIError {
     readonly hitServerLimit: boolean;
     readonly limit: number;
 }
-
-// @public
-export type TypeErr<S> = {
-    [__error]: S;
-};
 
 // @public
 export interface UpdateFilter<Schema extends SomeDoc> {
@@ -1195,30 +1662,15 @@ export interface UpdateFilter<Schema extends SomeDoc> {
 // @public
 export class UpdateManyError extends CumulativeDataAPIError {
     name: string;
-    readonly partialResult: UpdateManyResult<SomeDoc>;
+    readonly partialResult: CollectionUpdateManyResult<SomeDoc>;
 }
 
-// @public
-export interface UpdateManyOptions extends WithTimeout {
-    upsert?: boolean;
-}
-
-// @public
-export type UpdateManyResult<Schema extends SomeDoc> = InternalUpdateResult<Schema, number>;
-
-// @public
-export interface UpdateOneOptions extends WithTimeout {
-    sort?: Sort;
-    upsert?: boolean;
-}
-
-// @public
-export type UpdateOneResult<Schema extends SomeDoc> = InternalUpdateResult<Schema, 0 | 1>;
-
-// @public
-export interface UpsertedUpdateOptions<Schema extends SomeDoc> {
+// @public (undocumented)
+export interface UpsertedUpdateOptions<ID> {
+    // (undocumented)
     upsertedCount: 1;
-    upsertedId: IdOf<Schema>;
+    // (undocumented)
+    upsertedId: ID;
 }
 
 // @public
@@ -1281,6 +1733,10 @@ export interface WithKeyspace {
 export interface WithTimeout {
     maxTimeMS?: number;
 }
+
+// Warnings were encountered during analysis:
+//
+// dist/db/types/tables/table-schema.d.ts:12:5 - (ae-forgotten-export) The symbol "MkPrimaryKeyType" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

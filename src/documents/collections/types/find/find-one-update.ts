@@ -12,22 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Projection, Sort } from '@/src/documents/collections/types';
+import type { Projection, Sort } from '@/src/documents';
 import { WithTimeout } from '@/src/lib/types';
-
-/** @internal */
-export interface FindOneAndUpdateCommand {
-  findOneAndUpdate: {
-    filter?: Record<string, unknown>,
-    update?: Record<string, any>,
-    options?: {
-      returnDocument?: 'before' | 'after',
-      upsert?: boolean,
-    };
-    sort?: Sort,
-    projection?: Projection,
-  };
-}
 
 /**
  * Represents the options for the `findOneAndUpdate` command.
@@ -43,7 +29,7 @@ export interface FindOneAndUpdateCommand {
  *
  * @public
  */
-export interface FindOneAndUpdateOptions extends WithTimeout {
+export interface CollectionFindOneAndUpdateOptions extends WithTimeout {
   /**
    * Specifies whether to return the document before or after the update.
    *

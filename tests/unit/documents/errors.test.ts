@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DeleteManyResult, InsertManyResult, SomeDoc, UpdateManyResult } from '@/src/documents/collections/types';
+import { CollectionDeleteManyResult, CollectionInsertManyResult, SomeDoc, CollectionUpdateManyResult } from '@/src/documents/collections/types';
 import {
   DataAPIResponseError, DeleteManyError,
   InsertManyError,
@@ -63,7 +63,7 @@ describe('unit.documents.errors', () => {
   });
 
   describe('InsertManyError construction', () => {
-    const partialResult: InsertManyResult<SomeDoc> = { insertedIds: ['1', '2'], insertedCount: 2 };
+    const partialResult: CollectionInsertManyResult<SomeDoc> = { insertedIds: ['1', '2'], insertedCount: 2 };
 
     it('should properly construct a single-response InsertManyError', () => {
       const err = mkRespErrorFromResponse(InsertManyError, commands[0], raws[0], <any>{ partialResult });
@@ -90,7 +90,7 @@ describe('unit.documents.errors', () => {
   });
 
   describe('DeleteManyError construction', () => {
-    const partialResult: DeleteManyResult = { deletedCount: 2 };
+    const partialResult: CollectionDeleteManyResult = { deletedCount: 2 };
 
     it('should properly construct a single-response DeleteManyError', () => {
       const err = mkRespErrorFromResponse(DeleteManyError, commands[0], raws[0], { partialResult });
@@ -117,7 +117,7 @@ describe('unit.documents.errors', () => {
   });
 
   describe('UpdateManyError construction', () => {
-    const partialResult: UpdateManyResult<SomeDoc> = { matchedCount: 2, modifiedCount: 2, upsertedCount: 0 };
+    const partialResult: CollectionUpdateManyResult<SomeDoc> = { matchedCount: 2, modifiedCount: 2, upsertedCount: 0 };
 
     it('should properly construct a single-response UpdateManyError', () => {
       const err = mkRespErrorFromResponse(UpdateManyError, commands[0], raws[0], { partialResult });

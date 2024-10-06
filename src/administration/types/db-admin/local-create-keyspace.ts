@@ -36,7 +36,7 @@ import { CreateKeyspaceOptions } from '@/src/administration';
  *   updateDbKeyspace: true,
  * });
  *
- * // Creates collection in keyspace `new_keyspace` by default now
+ * // Creates collections in keyspace `new_keyspace` by default now
  * const coll = db.createCollection('my_coll');
  * ```
  *

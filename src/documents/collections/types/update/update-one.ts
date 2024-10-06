@@ -12,21 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeDoc } from '@/src/documents/collections';
-import type { InternalUpdateResult, Sort } from '@/src/documents/collections/types';
-import { WithTimeout } from '@/src/lib/types';
-
-/** @internal */
-export interface UpdateOneCommand {
-  updateOne: {
-    filter: Record<string, unknown>;
-    update: Record<string, any>;
-    sort?: Sort;
-    options: {
-      upsert?: boolean;
-    };
-  }
-}
+import { GenericUpdateOneOptions, GenericUpdateResult, IdOf, SomeDoc } from '@/src/documents';
 
 /**
  * Represents the options for the updateOne command.
@@ -39,28 +25,7 @@ export interface UpdateOneCommand {
  *
  * @public
  */
-export interface UpdateOneOptions extends WithTimeout {
-  /**
-   * If true, perform an insert if no documents match the filter.
-   *
-   * If false, do not insert if no documents match the filter.
-   *
-   * Defaults to false.
-   *
-   * @defaultValue false
-   */
-  upsert?: boolean,
-  /**
-   * The order in which to apply the update if the filter selects multiple documents.
-   *
-   * If multiple documents match the filter, only one will be updated.
-   *
-   * Defaults to `null`, where the order is not guaranteed.
-   *
-   * @defaultValue null
-   */
-  sort?: Sort,
-}
+export type CollectionUpdateOneOptions = GenericUpdateOneOptions;
 
 /**
  * Represents the result of an updateOne operation.
@@ -89,4 +54,4 @@ export interface UpdateOneOptions extends WithTimeout {
  *
  * @public
  */
-export type UpdateOneResult<Schema extends SomeDoc> = InternalUpdateResult<Schema, 0 | 1>;
+export type CollectionUpdateOneResult<Schema extends SomeDoc> = GenericUpdateResult<IdOf<Schema>, 0 | 1>;

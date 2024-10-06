@@ -99,7 +99,7 @@ export const DataAPIClientEventEmitterBase = (() => {
  * const db1 = client1.db('https://<db_id>-<region>.apps.astra.datastax.com');
  * const db2 = client1.db('<db_id>', '<region>');
  *
- * const coll = await db1.collection('my-collection');
+ * const coll = await db1.collections('my-collections');
  *
  * const admin1 = client1.admin();
  * const admin2 = client1.admin({ adminToken: '<stronger_token>' });

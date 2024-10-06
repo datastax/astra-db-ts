@@ -33,7 +33,7 @@ export type SomeDoc = Record<string, any>;
  *   idea: string,
  * }
  * 
- * db.collection<Idea>('ideas').insertOne({
+ * db.collections<Idea>('ideas').insertOne({
  *   category: 'doors',
  *   idea: 'Upside down doors',
  *   $vector: [.23, .05, .95, .83, .42],
@@ -50,7 +50,7 @@ export interface VectorDoc {
 }
 
 /**
- * Base type for a document that wishes to leverage automatic vectorization (assuming the collection is vectorize-enabled).
+ * Base type for a document that wishes to leverage automatic vectorization (assuming the collections is vectorize-enabled).
  *
  * @example
  * ```typescript
@@ -58,7 +58,7 @@ export interface VectorDoc {
  *   category: string,
  * }
  *
- * db.collection<Idea>('ideas').insertOne({
+ * db.collections<Idea>('ideas').insertOne({
  *   category: 'doors',
  *   $vectorize: 'Upside down doors',
  * });

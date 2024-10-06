@@ -17,7 +17,7 @@
 import { dummyCollection, DynamicSchema, TestSchema } from '@/tests/typing/collections/prelude';
 import { Equal, Expect } from '@/tests/typing/prelude';
 import { StrictFilter } from '@/src/documents/collections/types/filter';
-import { StrictProjection } from '@/src/documents/collections';
+import { StrictProjection } from '@/src/documents';
 
 void dummyCollection<TestSchema>().findOne({}, {}).then((a) => {
   type b = Expect<Equal<undefined | number, NonNullable<typeof a>['$similarity']>>

@@ -12,13 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/** @internal */
-export interface DeleteManyCommand {
-  deleteMany: {
-    filter: Record<string, unknown>;
-  }
-}
-
 /**
  * Represents the result of a delete command.
  *
@@ -28,7 +21,7 @@ export interface DeleteManyCommand {
  *
  * @public
  */
-export interface DeleteManyResult {
+export interface CollectionDeleteManyResult {
   /**
    * The number of deleted documents.
    */

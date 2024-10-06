@@ -47,7 +47,7 @@ export type nullish = null | undefined;
  */
 export type DataAPIEnvironment = typeof DataAPIEnvironments[number];
 
-/**
- * @internal
- */
 export type Ref<T> = { ref: T }
+
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- Used for when intersection w/ {} is a "noop"
+export type EmptyObj = {};

@@ -12,17 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Filter, FindOptions, Projection, SomeDoc, Sort } from '@/src/documents/collections';
+import { Filter, CollectionFindOptions, SomeDoc } from '@/src/documents/collections';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import { normalizeSort } from '@/src/documents/utils';
+import { normalizedSort } from '@/src/documents/utils';
 import { CursorIsStartedError } from '@/src/documents/errors';
-import { InternalFindOptions, InternalGetMoreCommand } from '@/src/documents/collections/types/find/find';
+import { Projection, Sort } from '@/src/documents/types';
 
-/** @internal */
 const enum CursorStatus {
   Uninitialized,
   Initialized,
   Closed,
+}
+
+interface InternalFindOptions {
+  pageState?: string,
+  limit?: number,
+  skip?: number,
+  includeSimilarity?: boolean,
+  includeSortVector?: boolean,
+}
+
+interface InternalGetMoreCommand {
+  find: {
+    filter?: Record<string, unknown>;
+    options?: InternalFindOptions;
+    sort?: Record<string, unknown>;
+    projection?: Record<string, unknown>;
+  }
 }
 
 /**
@@ -72,7 +88,7 @@ const enum CursorStatus {
 export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   private readonly _keyspace: string;
   private readonly _httpClient: DataAPIHttpClient;
-  private readonly _options: FindOptions;
+  private readonly _options: CollectionFindOptions;
   private _filter: Filter<SomeDoc>;
   private _mapping?: (doc: unknown) => T;
 
@@ -86,14 +102,14 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(keyspace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: FindOptions) {
+  constructor(keyspace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: CollectionFindOptions) {
     this._keyspace = keyspace;
     this._httpClient = httpClient;
     this._filter = filter;
     this._options = structuredClone(options ?? {});
 
     if (options?.sort) {
-      this._options.sort = normalizeSort(options.sort);
+      this._options.sort = normalizedSort(options.sort);
     }
   }
 
@@ -160,7 +176,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    */
   public sort(sort: Sort): this {
     this._assertUninitialized();
-    this._options.sort = normalizeSort(sort);
+    this._options.sort = normalizedSort(sort);
     return this;
   }
 

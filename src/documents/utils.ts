@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Sort } from '@/src/documents/collections/types';
+import { SomeDoc } from '@/src/documents/collections';
+import { Sort } from '@/src/documents/types';
 
 declare const __error: unique symbol;
 
@@ -79,23 +80,18 @@ export function validateOption<T>(name: string, obj: T, types: string | string[]
 /**
  * @internal
  */
-export const normalizeSort = (sort: Record<string, unknown>): Sort => {
+export const normalizedSort = (sort: SomeDoc): Sort => {
   const ret: Sort = {};
 
   for (const key in sort) {
-    switch (sort[key]) {
-      case 1:
-      case 'asc':
-      case 'ascending':
+    if (typeof sort[key] === 'string') {
+      if (sort[key][0] === 'a') {
         ret[key] = 1;
-        break;
-      case -1:
-      case 'desc':
-      case 'descending':
+      } else if (sort[key][0] === 'd') {
         ret[key] = -1;
-        break;
-      default:
-        ret[key] = sort[key] as any;
+      }
+    } else {
+      ret[key] = sort[key];
     }
   }
 

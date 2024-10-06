@@ -34,10 +34,10 @@ import { isNullish } from '@/src/lib/utils';
  * ```typescript
  * // Using explicit `EmbeddingHeadersProvider`
  * const provider = new AWSEmbeddingHeadersProvider('access-key-id', 'secret-access-key');
- * const coll1 = await db.collection('my_coll1', { embeddingApiKey: provider });
+ * const coll1 = await db.collections('my_coll1', { embeddingApiKey: provider });
  *
  * // Implicitly converted to `EmbeddingAPIKeyHeaderProvider`
- * const coll2 = await db.collection('my_coll2', { embeddingApiKey: 'sk-...' });
+ * const coll2 = await db.collections('my_coll2', { embeddingApiKey: 'sk-...' });
  * ```
  *
  * @see EmbeddingAPIKeyHeaderProvider

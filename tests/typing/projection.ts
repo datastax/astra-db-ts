@@ -14,7 +14,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import type { Projection } from '@/src/documents/collections/types';
+import { Projection } from '@/src/documents';
 
 const test1: Projection = {
   'num1': 1,

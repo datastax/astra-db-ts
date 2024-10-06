@@ -33,7 +33,6 @@ parallel('integration.lib.api.fetch.fetch-h2', () => {
     try {
       const resp = await fetcher.fetch(genericOptions);
       assert.strictEqual(resp.url, genericOptions.url);
-      console.log(resp.body);
       assert.strictEqual(typeof JSON.parse(resp.body!)?.status, 'object');
       assert.strictEqual(resp.status, 200);
       assert.strictEqual(resp.statusText, 'OK');
