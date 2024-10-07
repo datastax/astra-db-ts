@@ -10,9 +10,6 @@ import TypedEmitter from 'typed-emitter';
 export const $PrimaryKeyType: unique symbol;
 
 // @public
-export type AdminBlockingOptions = PollBlockingOptions | NoBlockingOptions;
-
-// @public
 export abstract class AdminCommandEvent {
     // Warning: (ae-forgotten-export) The symbol "DevOpsAPIRequestInfo" needs to be exported by the entry point index.d.ts
     //
@@ -68,7 +65,8 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
 // @public
 export interface AdminSpawnOptions {
     adminToken?: string | TokenProvider | null;
-    endpointUrl?: string;
+    // (undocumented)
+    astraEnv?: 'dev' | 'prod' | 'test';
     monitorCommands?: boolean;
 }
 
@@ -96,23 +94,43 @@ export class AstraAdmin {
     db(id: string, region: string, options?: DbSpawnOptions): Db;
     dbAdmin(endpoint: string, options?: DbSpawnOptions): AstraDbAdmin;
     dbAdmin(id: string, region: string, options?: DbSpawnOptions): AstraDbAdmin;
-    dbInfo(id: string, options?: WithTimeout): Promise<FullDatabaseInfo>;
-    dropDatabase(db: Db | string, options?: AdminBlockingOptions): Promise<void>;
-    listDatabases(options?: ListDatabasesOptions): Promise<FullDatabaseInfo[]>;
+    // Warning: (ae-forgotten-export) The symbol "AstraDatabaseAdminInfo" needs to be exported by the entry point index.d.ts
+    dbInfo(id: string, options?: WithTimeout): Promise<AstraDatabaseAdminInfo>;
+    dropDatabase(db: Db | string, options?: AstraAdminBlockingOptions): Promise<void>;
+    listDatabases(options?: ListDatabasesOptions): Promise<AstraDatabaseAdminInfo[]>;
 }
+
+// @public
+export type AstraAdminBlockingOptions = AstraPollBlockingOptions | AstraNoBlockingOptions;
+
+// @public
+export type AstraCreateKeyspaceOptions = AstraAdminBlockingOptions & {
+    updateDbKeyspace?: boolean;
+};
 
 // @public
 export class AstraDbAdmin extends DbAdmin {
     // @internal
     constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts: AdminSpawnOptions | undefined, dbToken: TokenProvider, endpoint: string);
-    createKeyspace(keyspace: string, options?: CreateKeyspaceOptions): Promise<void>;
+    createKeyspace(keyspace: string, options?: AstraCreateKeyspaceOptions): Promise<void>;
     db(): Db;
-    drop(options?: AdminBlockingOptions): Promise<void>;
-    dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
+    drop(options?: AstraAdminBlockingOptions): Promise<void>;
+    dropKeyspace(keyspace: string, options?: AstraAdminBlockingOptions): Promise<void>;
     findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
     get id(): string;
-    info(options?: WithTimeout): Promise<FullDatabaseInfo>;
+    info(options?: WithTimeout): Promise<AstraDatabaseAdminInfo>;
     listKeyspaces(options?: WithTimeout): Promise<string[]>;
+}
+
+// @public
+export interface AstraNoBlockingOptions extends WithTimeout {
+    blocking: false;
+}
+
+// @public
+export interface AstraPollBlockingOptions extends WithTimeout {
+    blocking?: true;
+    pollInterval?: number;
 }
 
 // @public
@@ -431,13 +449,8 @@ export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTim
 }
 
 // @public
-export type CreateDatabaseOptions = AdminBlockingOptions & {
+export type CreateDatabaseOptions = AstraAdminBlockingOptions & {
     dbOptions?: DbSpawnOptions;
-};
-
-// @public
-export type CreateKeyspaceOptions = AdminBlockingOptions & {
-    updateDbKeyspace?: boolean;
 };
 
 // Warning: (ae-forgotten-export) The symbol "LooseCreateTableColumnDefinition" needs to be exported by the entry point index.d.ts
@@ -554,7 +567,7 @@ export class DataAPIDbAdmin extends DbAdmin {
     constructor(db: Db, httpClient: DataAPIHttpClient, adminOpts?: AdminSpawnOptions);
     createKeyspace(keyspace: string, options?: LocalCreateKeyspaceOptions): Promise<void>;
     db(): Db;
-    dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
+    dropKeyspace(keyspace: string, options?: AstraAdminBlockingOptions): Promise<void>;
     findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
     listKeyspaces(options?: WithTimeout): Promise<string[]>;
 }
@@ -629,22 +642,6 @@ export interface DatabaseConfig {
 }
 
 // @public
-export interface DatabaseInfo {
-    additionalKeyspaces?: string[];
-    capacityUnits: number;
-    cloudProvider?: DatabaseCloudProvider;
-    datacenters?: DatacenterInfo[];
-    dbType?: 'vector';
-    keyspace?: string;
-    keyspaces?: string[];
-    name: string;
-    password?: string;
-    region: string;
-    tier: DatabaseTier;
-    user?: string;
-}
-
-// @public
 export type DatabaseStatus = 'ACTIVE' | 'ERROR' | 'DECOMMISSIONING' | 'DEGRADED' | 'HIBERNATED' | 'HIBERNATING' | 'INITIALIZING' | 'MAINTENANCE' | 'PARKED' | 'PARKING' | 'PENDING' | 'PREPARED' | 'PREPARING' | 'RESIZING' | 'RESUMING' | 'TERMINATED' | 'TERMINATING' | 'UNKNOWN' | 'UNPARKING' | 'SYNCHRONIZING';
 
 // @public
@@ -715,7 +712,8 @@ export class Db {
     // (undocumented)
     dropTable(name: string, options?: DropTableOptions): Promise<boolean>;
     get id(): string;
-    info(options?: WithTimeout): Promise<DatabaseInfo>;
+    // Warning: (ae-forgotten-export) The symbol "AstraDatabaseInfo" needs to be exported by the entry point index.d.ts
+    info(options?: WithTimeout): Promise<AstraDatabaseInfo>;
     get keyspace(): string;
     listCollections(options: ListCollectionsOptions & {
         nameOnly: true;
@@ -738,9 +736,9 @@ export class Db {
 
 // @public
 export abstract class DbAdmin {
-    abstract createKeyspace(keyspace: string, options?: CreateKeyspaceOptions): Promise<void>;
+    abstract createKeyspace(keyspace: string, options?: AstraCreateKeyspaceOptions): Promise<void>;
     abstract db(): Db;
-    abstract dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
+    abstract dropKeyspace(keyspace: string, options?: AstraAdminBlockingOptions): Promise<void>;
     abstract findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
     abstract listKeyspaces(): Promise<string[]>;
 }
@@ -815,7 +813,7 @@ export class DevOpsAPITimeoutError extends DevOpsAPIError {
 export class DevOpsUnexpectedStateError extends DevOpsAPIError {
     // @internal
     constructor(message: string, expected: string[], data: Record<string, any> | undefined);
-    readonly dbInfo?: FullDatabaseInfo;
+    readonly dbInfo?: RawAstraDatabaseAdminInfo;
     readonly expected: string[];
 }
 
@@ -1026,28 +1024,6 @@ export interface FullCreateTablePrimaryKeyDefinition {
     partitionSort?: Record<string, 1 | -1>;
 }
 
-// @public
-export interface FullDatabaseInfo {
-    availableActions?: DatabaseAction[];
-    cost?: CostInfo;
-    cqlshUrl?: string;
-    creationTime?: string;
-    dataEndpointUrl?: string;
-    grafanaUrl?: string;
-    graphqlUrl?: string;
-    id: string;
-    info: DatabaseInfo;
-    lastUsageTime?: string;
-    message?: string;
-    metrics?: DbMetricsInfo;
-    observedStatus: DatabaseStatus;
-    orgId: string;
-    ownerId: string;
-    status: DatabaseStatus;
-    storage?: DatabaseStorageInfo;
-    terminationTime?: string;
-}
-
 // @public (undocumented)
 export interface FullTableInfo {
     // (undocumented)
@@ -1251,9 +1227,9 @@ export class InetAddress {
     // (undocumented)
     static fromIPv6(raw: string): InetAddress;
     // (undocumented)
-    get(): string;
+    toString(): string;
     // (undocumented)
-    version(): 4 | 6;
+    get version(): 4 | 6;
 }
 
 // Warning: (ae-forgotten-export) The symbol "InferrableRow" needs to be exported by the entry point index.d.ts
@@ -1311,19 +1287,17 @@ export interface ListTablesOptions extends WithTimeout, WithKeyspace {
 }
 
 // @public
-export type LocalCreateKeyspaceOptions = CreateKeyspaceOptions & {
+export interface LocalCreateKeyspaceOptions extends WithTimeout {
+    // (undocumented)
     replication?: KeyspaceReplicationOptions;
-};
+    // (undocumented)
+    updateDbKeyspace?: boolean;
+}
 
 // @public
 export type MaybeId<T> = NoId<T> & {
     _id?: IdOf<T>;
 };
-
-// @public
-export interface NoBlockingOptions extends WithTimeout {
-    blocking: false;
-}
 
 // @public
 export type NoId<Doc> = Omit<Doc, '_id'>;
@@ -1357,17 +1331,10 @@ export class ObjectId {
     constructor(id?: string | number | null, validate?: boolean);
     equals(other: unknown): boolean;
     getTimestamp(): Date;
-    inspect(): string;
     toJSON(): {
         $objectId: string;
     };
     toString(): string;
-}
-
-// @public
-export interface PollBlockingOptions extends WithTimeout {
-    blocking?: true;
-    pollInterval?: number;
 }
 
 // @public
@@ -1390,6 +1357,44 @@ export type Push<Schema> = {
         $position?: number;
     });
 };
+
+// @public
+export interface RawAstraDatabaseAdminInfo {
+    availableActions?: DatabaseAction[];
+    cost?: CostInfo;
+    cqlshUrl?: string;
+    creationTime?: string;
+    dataEndpointUrl?: string;
+    grafanaUrl?: string;
+    graphqlUrl?: string;
+    id: string;
+    info: RawAstraDatabaseInfo;
+    lastUsageTime?: string;
+    message?: string;
+    metrics?: DbMetricsInfo;
+    observedStatus: DatabaseStatus;
+    orgId: string;
+    ownerId: string;
+    status: DatabaseStatus;
+    storage?: DatabaseStorageInfo;
+    terminationTime?: string;
+}
+
+// @public
+export interface RawAstraDatabaseInfo {
+    additionalKeyspaces?: string[];
+    capacityUnits: number;
+    cloudProvider?: DatabaseCloudProvider;
+    datacenters?: DatacenterInfo[];
+    dbType?: 'vector';
+    keyspace?: string;
+    keyspaces?: string[];
+    name: string;
+    password?: string;
+    region: string;
+    tier: DatabaseTier;
+    user?: string;
+}
 
 // @public
 export interface RawDataAPIResponse {
@@ -1684,7 +1689,6 @@ export class UUID {
     constructor(uuid: string, validate?: boolean);
     equals(other: unknown): boolean;
     getTimestamp(): Date | undefined;
-    inspect(): string;
     toJSON(): {
         $uuid: string;
     };
@@ -1736,7 +1740,7 @@ export interface WithTimeout {
 
 // Warnings were encountered during analysis:
 //
-// dist/db/types/tables/table-schema.d.ts:12:5 - (ae-forgotten-export) The symbol "MkPrimaryKeyType" needs to be exported by the entry point index.d.ts
+// dist/db/types/tables/table-schema.d.ts:13:5 - (ae-forgotten-export) The symbol "MkPrimaryKeyType" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 
