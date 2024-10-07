@@ -28,12 +28,12 @@ export type {
 } from './admin/create-database';
 
 export type {
-  DatabaseInfo,
+  RawAstraDatabaseInfo,
   CostInfo,
   DatabaseStorageInfo,
   DatacenterInfo,
   DbMetricsInfo,
-  FullDatabaseInfo,
+  RawAstraDatabaseAdminInfo,
 } from './admin/database-info';
 
 export type {

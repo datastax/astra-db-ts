@@ -29,5 +29,6 @@ export const parseAdminSpawnOpts: Parser<AdminSpawnOptions | undefined, unknown>
     endpointUrl: p.parse('string?')(opts.endpointUrl, `${field}.endpointUrl`),
     adminToken: TokenProvider.parseToken([opts.adminToken], `${field}.adminToken`),
     additionalHeaders: p.parse('object?')(opts.additionalHeaders, `${field}.additionalHeaders`),
+    astraEnv: p.parse('string?')(opts.astraEnv, `${field}.astraEnv`),
   };
 };

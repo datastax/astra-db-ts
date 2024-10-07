@@ -13,10 +13,15 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { AstraAdminBlockingOptions, AdminSpawnOptions, AstraCreateKeyspaceOptions, FullDatabaseInfo } from '@/src/administration/types';
+import {
+  AdminSpawnOptions,
+  AstraAdminBlockingOptions,
+  AstraCreateKeyspaceOptions,
+  RawAstraDatabaseAdminInfo,
+} from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
 import { WithTimeout } from '@/src/lib/types';
-import { extractAstraEnvironment } from '@/src/administration/utils';
+import { buildAstraDatabaseAdminInfo, extractAstraEnvironment } from '@/src/administration/utils';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, HttpMethods } from '@/src/lib/api/constants';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
@@ -25,8 +30,9 @@ import { StaticTokenProvider, TokenProvider } from '@/src/lib';
 import { isNullish } from '@/src/lib/utils';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
-import { Logger } from '@/src/lib/logging/logger';
 import { $CustomInspect } from '@/src/lib/constants';
+import { AstraDatabaseAdminInfo } from '@/src/administration/types/admin/database-info';
+import { Logger } from '@/src/lib/logging/logger';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting keyspaces.
@@ -64,6 +70,7 @@ import { $CustomInspect } from '@/src/lib/constants';
 export class AstraDbAdmin extends DbAdmin {
   readonly #httpClient: DevOpsAPIHttpClient;
   readonly #db: Db;
+  readonly #environment: 'dev' | 'test' | 'prod';
 
   /**
    * Use {@link Db.admin} or {@link AstraAdmin.dbAdmin} to obtain an instance of this class.
@@ -81,10 +88,10 @@ export class AstraDbAdmin extends DbAdmin {
       ? dbToken
       : _adminToken;
 
-    const environment = extractAstraEnvironment(endpoint);
+    this.#environment = adminOpts?.astraEnv ?? rootOpts.adminOptions.astraEnv ?? extractAstraEnvironment(endpoint);
 
     this.#httpClient = new DevOpsAPIHttpClient({
-      baseUrl: adminOpts?.endpointUrl ?? rootOpts.adminOptions.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINTS[environment],
+      baseUrl: DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
       logging: Logger.advanceConfig(rootOpts.adminOptions.logging, adminOpts?.logging),
       fetchCtx: rootOpts.fetchCtx,
       emitter: rootOpts.emitter,
@@ -166,13 +173,13 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves to the complete database information.
    */
-  public async info(options?: WithTimeout): Promise<FullDatabaseInfo> {
+  public async info(options?: WithTimeout): Promise<AstraDatabaseAdminInfo> {
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases/${this.#db.id}`,
     }, options);
 
-    return resp.data as FullDatabaseInfo;
+    return buildAstraDatabaseAdminInfo(resp.data as RawAstraDatabaseAdminInfo, this.#environment);
   }
 
   /**
@@ -192,7 +199,7 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns A promise that resolves to list of all the keyspaces in the database.
    */
   public override async listKeyspaces(options?: WithTimeout): Promise<string[]> {
-    return this.info(options).then(i => [i.info.keyspace!, ...i.info.additionalKeyspaces ?? []].filter(Boolean));
+    return this.info(options).then(i => i.keyspaces);
   }
 
   /**

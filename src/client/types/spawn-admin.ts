@@ -69,4 +69,5 @@ export interface AdminSpawnOptions {
    * as for enabling feature-flags or other non-standard headers.
    */
   additionalHeaders?: Record<string, string>,
+  astraEnv?: 'dev' | 'prod' | 'test',
 }

@@ -14,7 +14,6 @@
 
 import { Collection, SomeDoc } from '@/src/documents/collections';
 import { DEFAULT_KEYSPACE, RawDataAPIResponse } from '@/src/lib/api';
-import { DatabaseInfo } from '@/src/administration/types/admin/database-info';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { DataAPIEnvironment, nullish, WithTimeout } from '@/src/lib/types';
 import { extractDbIdFromUrl, extractRegionFromUrl } from '@/src/documents/utils';
@@ -42,6 +41,7 @@ import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { Logger } from '@/src/lib/logging/logger';
 import { $CustomInspect } from '@/src/lib/constants';
 import { InvalidEnvironmentError } from '@/src/db/errors';
+import { AstraDatabaseInfo } from '@/src/administration/types/admin/database-info';
 
 /**
  * #### Overview
@@ -116,7 +116,7 @@ import { InvalidEnvironmentError } from '@/src/db/errors';
 export class Db {
   readonly #defaultOpts: InternalRootClientOpts;
   readonly #httpClient: DataAPIHttpClient;
-  readonly #endpoint?: string;
+  readonly #endpoint: string;
 
   readonly _keyspace: KeyspaceRef;
   readonly #id?: string;
@@ -433,11 +433,31 @@ export class Db {
    *
    * @throws Error - if the database is not an Astra database.
    */
-  public async info(options?: WithTimeout): Promise<DatabaseInfo> {
+  public async info(options?: WithTimeout): Promise<AstraDatabaseInfo> {
     if (this.#defaultOpts.environment !== 'astra') {
       throw new InvalidEnvironmentError('db.info()', this.#defaultOpts.environment, ['astra'], 'info() is only available for Astra databases');
     }
-    return await this.admin().info(options).then(i => i.info);
+
+    const data = await this.admin().info(options);
+
+    const region = this.#endpoint
+      .split('.')[0]
+      .split('https://')[1]
+      .split('-')
+      .slice(5)
+      .join('-');
+
+    return {
+      id: data.id,
+      name: data.name,
+      keyspaces: data.keyspaces,
+      status: data.status,
+      environment: data.environment,
+      cloudProvider: data.cloudProvider,
+      region: region,
+      apiEndpoint: this.#endpoint,
+      raw: data.raw.info,
+    };
   }
 
   /**

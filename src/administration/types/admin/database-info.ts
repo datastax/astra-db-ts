@@ -14,12 +14,35 @@
 
 import { DatabaseAction, DatabaseCloudProvider, DatabaseStatus, DatabaseTier } from '@/src/administration/types';
 
+export interface AstraDatabaseAdminInfo extends BaseAstraDatabaseInfo {
+  createdAt: Date,
+  lastUsed: Date,
+  regions: { name: string, apiEndpoint: string }[],
+  orgId: string,
+  raw: RawAstraDatabaseAdminInfo,
+}
+
+export interface AstraDatabaseInfo extends BaseAstraDatabaseInfo {
+  region: string,
+  apiEndpoint: string,
+  raw: RawAstraDatabaseInfo,
+}
+
+export interface BaseAstraDatabaseInfo {
+  id: string,
+  name: string,
+  keyspaces: string[],
+  status: DatabaseStatus,
+  environment: 'dev' | 'test' | 'prod',
+  cloudProvider: DatabaseCloudProvider,
+}
+
 /**
  * Represents the complete information about a database.
  *
  * @public
  */
-export interface FullDatabaseInfo {
+export interface RawAstraDatabaseAdminInfo {
   /**
    * The id of the database
    */
@@ -35,7 +58,7 @@ export interface FullDatabaseInfo {
   /**
    * The user-provided information describing a database
    */
-  info: DatabaseInfo,
+  info: RawAstraDatabaseInfo,
   /**
    * Creation time, in ISO RFC3339 format
    */
@@ -99,7 +122,7 @@ export interface FullDatabaseInfo {
  *
  * @public
  */
-export interface DatabaseInfo {
+export interface RawAstraDatabaseInfo {
   /**
    * Name of the database--user friendly identifier
    */

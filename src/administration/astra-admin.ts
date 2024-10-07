@@ -14,18 +14,20 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import {
-  AstraAdminBlockingOptions,
   AdminSpawnOptions,
+  AstraAdminBlockingOptions,
   CreateDatabaseOptions,
   DatabaseConfig,
-  FullDatabaseInfo,
   ListDatabasesOptions,
+  RawAstraDatabaseAdminInfo,
 } from '@/src/administration/types';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { Db } from '@/src/db/db';
+import { buildAstraDatabaseAdminInfo } from '@/src/administration/utils';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
 import { TokenProvider, WithTimeout } from '@/src/lib';
+import { AstraDatabaseAdminInfo } from '@/src/administration/types/admin/database-info';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { buildAstraEndpoint } from '@/src/lib/utils';
@@ -62,6 +64,7 @@ import { $CustomInspect } from '@/src/lib/constants';
 export class AstraAdmin {
   readonly #defaultOpts: InternalRootClientOpts;
   readonly #httpClient: DevOpsAPIHttpClient;
+  readonly #environment: 'dev' | 'test' | 'prod';
 
   /**
    * Use {@link DataAPIClient.admin} to obtain an instance of this class.
@@ -80,6 +83,7 @@ export class AstraAdmin {
         adminToken: token,
         logging: Logger.advanceConfig(rootOpts.adminOptions.logging, adminOpts?.logging),
         additionalHeaders: { ...rootOpts.adminOptions.additionalHeaders, ...adminOpts?.additionalHeaders },
+        astraEnv: adminOpts?.astraEnv ?? rootOpts.adminOptions.astraEnv,
       },
       dbOptions: {
         ...rootOpts.dbOptions,
@@ -87,9 +91,11 @@ export class AstraAdmin {
       },
     };
 
+    this.#environment = this.#defaultOpts.adminOptions.astraEnv ?? 'prod';
+
     this.#httpClient = new DevOpsAPIHttpClient({
-      baseUrl: this.#defaultOpts.adminOptions.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINTS.prod,
       logging: this.#defaultOpts.adminOptions.logging,
+      baseUrl: DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
       emitter: rootOpts.emitter,
       fetchCtx: rootOpts.fetchCtx,
       userAgent: rootOpts.userAgent,
@@ -277,13 +283,13 @@ export class AstraAdmin {
    *
    * @returns A promise that resolves to the complete database information.
    */
-  public async dbInfo(id: string, options?: WithTimeout): Promise<FullDatabaseInfo> {
+  public async dbInfo(id: string, options?: WithTimeout): Promise<AstraDatabaseAdminInfo> {
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases/${id}`,
     }, options);
 
-    return resp.data as FullDatabaseInfo;
+    return buildAstraDatabaseAdminInfo(resp.data as RawAstraDatabaseAdminInfo, this.#environment);
   }
 
   /**
@@ -312,7 +318,7 @@ export class AstraAdmin {
    * @param options - The options to filter the databases by.
    * @returns A list of the complete information for all the databases matching the given filter.
    */
-  public async listDatabases(options?: ListDatabasesOptions): Promise<FullDatabaseInfo[]> {
+  public async listDatabases(options?: ListDatabasesOptions): Promise<AstraDatabaseAdminInfo[]> {
     const params = {} as Record<string, string>;
 
     if (typeof options?.include === 'string') {
@@ -337,7 +343,7 @@ export class AstraAdmin {
       params: params,
     }, options);
 
-    return resp.data as FullDatabaseInfo[];
+    return resp.data!.map((d: RawAstraDatabaseAdminInfo) => buildAstraDatabaseAdminInfo(d, this.#environment));
   }
 
   /**
@@ -443,7 +449,7 @@ export class AstraAdmin {
    *
    * @remarks Use with caution. Wear a harness. Don't say I didn't warn you.
    */
-  public async dropDatabase(db: Db | string, options?: AdminBlockingOptions): Promise<void> {
+  public async dropDatabase(db: Db | string, options?: AstraAdminBlockingOptions): Promise<void> {
     const id = typeof db === 'string' ? db : db.id;
 
     await this.#httpClient.requestLongRunning({
