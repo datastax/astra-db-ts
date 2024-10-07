@@ -1251,9 +1251,9 @@ export class InetAddress {
     // (undocumented)
     static fromIPv6(raw: string): InetAddress;
     // (undocumented)
-    get(): string;
+    toString(): string;
     // (undocumented)
-    version(): 4 | 6;
+    get version(): 4 | 6;
 }
 
 // Warning: (ae-forgotten-export) The symbol "InferrableRow" needs to be exported by the entry point index.d.ts
@@ -1357,7 +1357,6 @@ export class ObjectId {
     constructor(id?: string | number | null, validate?: boolean);
     equals(other: unknown): boolean;
     getTimestamp(): Date;
-    inspect(): string;
     toJSON(): {
         $objectId: string;
     };
@@ -1684,7 +1683,6 @@ export class UUID {
     constructor(uuid: string, validate?: boolean);
     equals(other: unknown): boolean;
     getTimestamp(): Date | undefined;
-    inspect(): string;
     toJSON(): {
         $uuid: string;
     };
@@ -1736,7 +1734,7 @@ export interface WithTimeout {
 
 // Warnings were encountered during analysis:
 //
-// dist/db/types/tables/table-schema.d.ts:12:5 - (ae-forgotten-export) The symbol "MkPrimaryKeyType" needs to be exported by the entry point index.d.ts
+// dist/db/types/tables/table-schema.d.ts:13:5 - (ae-forgotten-export) The symbol "MkPrimaryKeyType" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 
