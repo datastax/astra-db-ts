@@ -87,11 +87,5 @@ export interface AdminSpawnOptions {
    * ```
    */
   adminToken?: string | TokenProvider | null,
-  /**
-   * The base URL for the devops API, which is typically always going to be the following:
-   * ```
-   * https://api.astra.datastax.com/v2
-   * ```
-   */
-  endpointUrl?: string,
+  astraEnv?: 'dev' | 'prod' | 'test',
 }
