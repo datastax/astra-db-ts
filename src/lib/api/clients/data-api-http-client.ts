@@ -136,8 +136,6 @@ export class DataAPIHttpClient extends HttpClient {
       ...this.#props,
       tokenProvider: opts?.adminToken ? TokenProvider.parseToken(opts?.adminToken) : this.#props.tokenProvider,
       monitorCommands: opts?.monitorCommands || this.#props.monitorCommands,
-      baseUrl: opts?.endpointUrl || this.#props.baseUrl,
-      baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
     });
 
     clone.emissionStrategy = EmissionStrategy.Admin(this.emitter);
