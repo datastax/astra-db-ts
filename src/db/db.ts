@@ -14,7 +14,7 @@
 
 import { Collection, SomeDoc } from '@/src/documents/collections';
 import { DEFAULT_KEYSPACE, RawDataAPIResponse } from '@/src/lib/api';
-import { DatabaseInfo } from '@/src/administration/types/admin/database-info';
+import { AstraDatabaseInfo } from '@/src/administration/types/admin/database-info';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { DataAPIEnvironment, nullish, WithTimeout } from '@/src/lib/types';
 import { extractDbIdFromUrl, validateOption } from '@/src/documents/utils';
@@ -77,7 +77,7 @@ export class Db {
   readonly #defaultOpts: InternalRootClientOpts;
   readonly #token: TokenProvider;
   readonly #httpClient: DataAPIHttpClient;
-  readonly #endpoint?: string;
+  readonly #endpoint: string;
 
   private readonly _keyspace: KeyspaceRef;
   private readonly _id?: string;
@@ -309,8 +309,27 @@ export class Db {
    *
    * @throws Error - if the database is not an Astra database.
    */
-  public async info(options?: WithTimeout): Promise<DatabaseInfo> {
-    return await this.admin().info(options).then(i => i.info);
+  public async info(options?: WithTimeout): Promise<AstraDatabaseInfo> {
+    const data = await this.admin().info(options);
+
+    const region = this.#endpoint
+      .split('.')[0]
+      .split('https://')[1]
+      .split('-')
+      .slice(5)
+      .join('-');
+
+    return {
+      id: data.id,
+      name: data.name,
+      keyspaces: data.keyspaces,
+      status: data.status,
+      environment: data.environment,
+      cloudProvider: data.cloudProvider,
+      region: region,
+      apiEndpoint: this.#endpoint,
+      raw: data.raw.info,
+    };
   }
 
   /**

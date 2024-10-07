@@ -14,20 +14,21 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import {
-  AstraAdminBlockingOptions,
   AdminSpawnOptions,
+  AstraAdminBlockingOptions,
   CreateDatabaseOptions,
   DatabaseConfig,
-  FullDatabaseInfo,
   ListDatabasesOptions,
+  RawAstraDatabaseAdminInfo,
 } from '@/src/administration/types';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { DbSpawnOptions, InternalRootClientOpts } from '@/src/client/types';
 import { Db } from '@/src/db/db';
-import { validateAdminOpts } from '@/src/administration/utils';
+import { buildAstraDatabaseAdminInfo, validateAdminOpts } from '@/src/administration/utils';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
 import { TokenProvider, WithTimeout } from '@/src/lib';
+import { AstraDatabaseAdminInfo } from '@/src/administration/types/admin/database-info';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -58,6 +59,7 @@ import { TokenProvider, WithTimeout } from '@/src/lib';
 export class AstraAdmin {
   readonly #defaultOpts: InternalRootClientOpts;
   readonly #httpClient: DevOpsAPIHttpClient;
+  readonly #environment: 'dev' | 'test' | 'prod';
 
   /**
    * Use {@link DataAPIClient.admin} to obtain an instance of this class.
@@ -75,8 +77,10 @@ export class AstraAdmin {
       adminToken: TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken),
     };
 
+    this.#environment = combinedAdminOpts.astraEnv ?? 'prod';
+
     this.#httpClient = new DevOpsAPIHttpClient({
-      baseUrl: combinedAdminOpts.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINTS.prod,
+      baseUrl: DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
       monitorCommands: combinedAdminOpts.monitorCommands,
       emitter: rootOpts.emitter,
       fetchCtx: rootOpts.fetchCtx,
@@ -260,13 +264,13 @@ export class AstraAdmin {
    *
    * @returns A promise that resolves to the complete database information.
    */
-  public async dbInfo(id: string, options?: WithTimeout): Promise<FullDatabaseInfo> {
+  public async dbInfo(id: string, options?: WithTimeout): Promise<AstraDatabaseAdminInfo> {
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases/${id}`,
     }, options);
 
-    return resp.data as FullDatabaseInfo;
+    return buildAstraDatabaseAdminInfo(resp.data as RawAstraDatabaseAdminInfo, this.#environment);
   }
 
   /**
@@ -295,7 +299,7 @@ export class AstraAdmin {
    * @param options - The options to filter the databases by.
    * @returns A list of the complete information for all the databases matching the given filter.
    */
-  public async listDatabases(options?: ListDatabasesOptions): Promise<FullDatabaseInfo[]> {
+  public async listDatabases(options?: ListDatabasesOptions): Promise<AstraDatabaseAdminInfo[]> {
     const params = {} as Record<string, string>;
 
     if (typeof options?.include === 'string') {
@@ -320,7 +324,7 @@ export class AstraAdmin {
       params: params,
     }, options);
 
-    return resp.data as FullDatabaseInfo[];
+    return resp.data!.map((d: RawAstraDatabaseAdminInfo) => buildAstraDatabaseAdminInfo(d, this.#environment));
   }
 
   /**
