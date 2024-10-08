@@ -22,8 +22,8 @@ export interface CreateTableOptions<Def extends CreateTableDefinition = CreateTa
 }
 
 export interface CreateTableDefinition {
-  columns: CreateTableColumnDefinitions,
-  primaryKey: CreateTablePrimaryKeyDefinition,
+  readonly columns: CreateTableColumnDefinitions,
+  readonly primaryKey: CreateTablePrimaryKeyDefinition,
 }
 
 export type CreateTableColumnDefinitions = Record<string, LooseCreateTableColumnDefinition | StrictCreateTableColumnDefinition>;
@@ -92,6 +92,6 @@ export type CreateTablePrimaryKeyDefinition =
 export type ShortCreateTablePrimaryKeyDefinition = string;
 
 export interface FullCreateTablePrimaryKeyDefinition {
-  partitionKey: string[],
-  partitionSort?: Record<string, 1 | -1>,
+  readonly partitionKey: readonly string[],
+  readonly partitionSort?: Record<string, 1 | -1>,
 }
