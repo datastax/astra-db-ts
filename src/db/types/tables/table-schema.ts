@@ -24,17 +24,89 @@ import { EmptyObj } from '@/src/lib/types';
 import { UUID, InetAddress, CqlDate, CqlDuration, CqlTime, CqlTimestamp } from '@/src/documents';
 import { TypeErr } from '@/src/documents/utils';
 
+/**
+ * The different possible types that a Table's schema may be inferred from using the {@link InferTableSchema} type,
+ * when using {@link Db.createTable} or {@link Table.alter}.
+ *
+ * @see InferTableSchema
+ *
+ * @public
+ */
 export type InferrableTable =
   | ((..._: any[]) => Promise<Table>)
   | ((..._: any[]) => Table)
   | Promise<Table>
   | Table;
 
-export type InferTableSchema<T extends InferrableTable> = Normalize<_InferTableSchema<T>>;
-
-type Normalize<T> = { [K in keyof T]: T[K] };
-
-type _InferTableSchema<T extends InferrableTable> =
+/**
+ * Automagically extracts a table's schema from some Table<Schema>-like type, most useful when performing a
+ * {@link Db.createTable} (or {@link Table.alter}) operation.
+ *
+ * You can think of it as similar to Zod or arktype's `infer<Schema>` types.
+ *
+ * Accepts various different (contextually) isomorphic types to account for differences in instantiation & usage:
+ * - `(...) => Promise<Table<infer Schema>>`
+ * - `(...) => Table<infer Schema>`
+ * - `Promise<Table<infer Schema>>`
+ * - `Table<infer Schema>`
+ *
+ * **NOTE:** A DB's type information is encoded by `db.createTable` & `table.alter` by default. To override this
+ * behavior, please provide the table's type explicitly to help with transpilation times (e.g.
+ * `db.createTable<SomeRow>(...)` or `table.alter<MyNewSchema>()`).
+ *
+ * @example
+ * ```ts
+ * const mkUserTable = () => db.createTable('users', {
+ *   definition: {
+ *     columns: {
+ *       name: 'text',
+ *       dob: {
+ *         type: 'timestamp',
+ *       },
+ *       friends: {
+ *         type: 'set',
+ *         valueType: 'text',
+ *       },
+ *     },
+ *     primaryKey: {
+ *       partitionKey: ['name', 'height'],
+ *       partitionSort: { dob: 1 },
+ *     },
+ *   },
+ * });
+ *
+ * // Type inference is as simple as that
+ * type User = InferTableSchema<typeof mkUserTable>;
+ *
+ * // Utility types for demonstration purposes
+ * type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends (<T>() => T extends Y ? 1 : 2) ? true : false;
+ * type Expect<T extends true> = T;
+ *
+ * // User evaluates to this object representing its TS representation, and a $PrimaryKeyType for type inferrence
+ * // purposes for `insert*` operations
+ * type _Proof = Equal<User, {
+ *   name: string,
+ *   dob: CqlTimestamp,
+ *   friends: Set<string>,
+ *   [$PrimaryKeyType]?: {
+ *     name: string,
+ *     height: TypeErr<'Field `height` not found as property in table definition'>,
+ *     dob: CqlTimestamp,
+ *   }
+ * }>;
+ *
+ * // And now `User` can be used wherever.
+ * const main = async () => {
+ *   const table: Table<User> = await mkUserTable();
+ *   const found: User | null = await table.findOne({});
+ * };
+ * ```
+ *
+ * @see InferTableSchemaFromDefinition
+ *
+ * @public
+ */
+export type InferTableSchema<T extends InferrableTable> =
   T extends (..._: any[]) => Promise<Table<infer Schema>>
     ? Schema :
   T extends (..._: any[]) => Table<infer Schema>
@@ -45,9 +117,71 @@ type _InferTableSchema<T extends InferrableTable> =
     ? Schema
     : never;
 
-export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition, Schema = Cols2CqlTypes<FullDef['columns']>> = Schema & {
-  [$PrimaryKeyType]?: MkPrimaryKeyType<FullDef, Schema>,
-}
+type Normalize<T> = { [K in keyof T]: T[K] };
+
+/**
+ * Automagically infers a table's schema and primary keys from the bespoke table definition given in
+ * {@link Db.createTable} (or {@link Table.alter}).
+ *
+ * You can think of it as similar to Zod or arktype's `infer<Schema>` types.
+ *
+ * Likely, you're looking for the {@link InferTableSchema} type for use in your own codebase, as this infers the schema
+ * directly from a `CreateTableDefinition` rather than from the`Table<Schema>` itself.
+ *
+ * @example
+ * ```ts
+ * // The <const> cast is important here
+ * const UserTableDefinition = <const>{
+ *   columns: {
+ *     name: 'text',
+ *     dob: {
+ *       type: 'timestamp',
+ *     },
+ *     friends: {
+ *       type: 'set',
+ *       valueType: 'text',
+ *     },c
+ *   },
+ *   primaryKey: {
+ *     partitionKey: ['name', 'height'],
+ *     partitionSort: { dob: 1 },
+ *   },
+ * };
+ *
+ * // Type inference is as simple as that
+ * type User = InferTableSchemaFromDefinition<typeof UserTableDefinition>;
+ *
+ * // Utility types for demonstration purposes
+ * type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends (<T>() => T extends Y ? 1 : 2) ? true : false;
+ * type Expect<T extends true> = T;
+ *
+ * // User evaluates to this object representing its TS representation, and a $PrimaryKeyType for type inferrence
+ * // purposes for `insert*` operations
+ * type _Proof = Equal<User, {
+ *   name: string,
+ *   dob: CqlTimestamp,
+ *   friends: Set<string>,
+ *   [$PrimaryKeyType]?: {
+ *     name: string,
+ *     height: TypeErr<'Field `height` not found as property in table definition'>,
+ *     dob: CqlTimestamp,
+ *   }
+ * }>;
+ *
+ * // And now `User` can be used wherever.
+ * const main = async () => {
+ *   const table: Table<User> = await db.createTable('users', { definition: UserTableDefinition });
+ *   const found: User | null = await table.findOne({});
+ * };
+ * ```
+ *
+ * @see InferTableSchema
+ *
+ * @public
+ */
+export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition> = Normalize<Cols2CqlTypes<FullDef['columns']> & {
+  [$PrimaryKeyType]?: MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>,
+}>
 
 type MkPrimaryKeyType<FullDef extends CreateTableDefinition, Schema, PK extends FullCreateTablePrimaryKeyDefinition = NormalizePK<FullDef['primaryKey']>> = Normalize<
   {
@@ -65,15 +199,45 @@ type NormalizePK<PK extends CreateTablePrimaryKeyDefinition> =
     ? { partitionKey: [PK] }
     : PK;
 
+/**
+ * @internal
+ */
 export type Cols2CqlTypes<Columns extends CreateTableColumnDefinitions> = {
-  -readonly [P in keyof Columns]: CqlType2TSType<NormalizeColDef<Columns[P]>, Columns[P]>;
+  -readonly [P in keyof Columns]: CqlType2TSType<PickCqlType<Columns[P]>, Columns[P]>;
 };
 
-type NormalizeColDef<Def> =
+type PickCqlType<Def> =
   Def extends { type: infer Type }
     ? Type
     : Def;
 
+/**
+ * Converts a CQL type to its TS equivalent. If the type isn't some collection type, the second typeparam is
+ * irrelevant.
+ *
+ * @example
+ * ```ts
+ * // number
+ * CqlType2TSType<'int', ...>
+ *
+ * // CqlDuration
+ * CqlType2TSType<'duration', ...>
+ *
+ * // Map<string, number>
+ * CqlType2TSType<'map', { keyType: 'text', valueType: 'int' }>
+ *
+ * // unknown
+ * CqlType2TSType<'idk', ...>
+ *
+ * // TypeErr<'Invalid generics definition for \'map\'; should have keyType and valueType set as scalar CQL types (e.g. \'text\')'>
+ * CqlType2TSType<'map', 123>
+ * ```
+ *
+ * @see InferTableSchema
+ * @see InferTableSchemaFromDefinition
+ *
+ * @public
+ */
 export type CqlType2TSType<T extends string, Def> =
   T extends keyof CqlNonGenericType2TSTypeDict
     ? CqlNonGenericType2TSTypeDict[T] :
