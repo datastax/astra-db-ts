@@ -9,6 +9,14 @@ import TypedEmitter from 'typed-emitter';
 // @public (undocumented)
 export const $PrimaryKeyType: unique symbol;
 
+// @public (undocumented)
+export interface AddColumnOperation {
+    // (undocumented)
+    columns: CreateTableColumnDefinitions;
+    // (undocumented)
+    ifExists?: boolean;
+}
+
 // @public
 export type AdminBlockingOptions = PollBlockingOptions | NoBlockingOptions;
 
@@ -71,6 +79,25 @@ export interface AdminSpawnOptions {
     endpointUrl?: string;
     monitorCommands?: boolean;
 }
+
+// @public (undocumented)
+export interface AlterTableOperations<Schema extends SomeRow> {
+    // (undocumented)
+    add?: AddColumnOperation;
+    // (undocumented)
+    drop?: DropColumnOperation<Schema>;
+}
+
+// @public (undocumented)
+export interface AlterTableOptions<Schema extends SomeRow> extends WithTimeout {
+    // (undocumented)
+    ifExists?: boolean;
+    // (undocumented)
+    operation: AlterTableOperations<Schema>;
+}
+
+// @public (undocumented)
+export type AlterTableSchema<Schema extends SomeRow, Alter extends AlterTableOptions<Schema>> = Omit<Schema & Cols2Add<Alter['operation']['add']>, Cols2Drop<Alter['operation']['drop']>>;
 
 // @public
 export interface ArrayFilterOps<Elem> {
@@ -277,13 +304,22 @@ export type CollectionUpdateOneOptions = GenericUpdateOneOptions;
 // @public
 export type CollectionUpdateOneResult<Schema extends SomeDoc> = GenericUpdateResult<IdOf<Schema>, 0 | 1>;
 
-// Warning: (ae-forgotten-export) The symbol "CqlType2TSType" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "InferColDefType" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "EmptyObj" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export type Cols2Add<Op extends AddColumnOperation | undefined> = Op extends AddColumnOperation ? Cols2CqlTypes<Op["columns"]> : EmptyObj;
+
+// Warning: (ae-forgotten-export) The symbol "NormalizeColDef" needs to be exported by the entry point index.d.ts
 //
 // @public (undocumented)
 export type Cols2CqlTypes<Columns extends CreateTableColumnDefinitions> = {
-    -readonly [P in keyof Columns]: CqlType2TSType<InferColDefType<Columns[P]>, Columns[P]>;
+    -readonly [P in keyof Columns]: CqlType2TSType<NormalizeColDef<Columns[P]>, Columns[P]>;
 };
+
+// @public (undocumented)
+export type Cols2Drop<Op> = Op extends {
+    columns: (infer U)[];
+} ? U : never;
 
 // @public
 export abstract class CommandEvent {
@@ -425,6 +461,12 @@ export interface CqlTimestampComponents {
     year: number;
 }
 
+// Warning: (ae-forgotten-export) The symbol "CqlNonGenericType2TSTypeDict" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "CqlGenericType2TSTypeDict" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export type CqlType2TSType<T extends string, Def> = T extends keyof CqlNonGenericType2TSTypeDict ? CqlNonGenericType2TSTypeDict[T] : T extends keyof CqlGenericType2TSTypeDict<Def> ? CqlGenericType2TSTypeDict<Def>[T] : unknown;
+
 // @public
 export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, CollectionSpawnOptions {
     checkExists?: boolean;
@@ -440,9 +482,6 @@ export type CreateKeyspaceOptions = AdminBlockingOptions & {
     updateDbKeyspace?: boolean;
 };
 
-// Warning: (ae-forgotten-export) The symbol "LooseCreateTableColumnDefinition" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "StrictCreateTableColumnDefinition" needs to be exported by the entry point index.d.ts
-//
 // @public (undocumented)
 export type CreateTableColumnDefinitions = Record<string, LooseCreateTableColumnDefinition | StrictCreateTableColumnDefinition>;
 
@@ -824,6 +863,14 @@ export interface DropCollectionOptions extends WithTimeout, WithKeyspace {
 }
 
 // @public (undocumented)
+export interface DropColumnOperation<Schema extends SomeRow> {
+    // (undocumented)
+    columns: (keyof Schema)[];
+    // (undocumented)
+    ifExists?: boolean;
+}
+
+// @public (undocumented)
 export interface DropTableOptions extends WithTimeout, WithKeyspace {
 }
 
@@ -954,7 +1001,6 @@ export type Filter<Schema extends SomeDoc> = {
 export type FilterExpr<Elem> = Elem | FilterOps<Elem>;
 
 // Warning: (ae-forgotten-export) The symbol "IsNum" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "EmptyObj" needs to be exported by the entry point index.d.ts
 // Warning: (ae-forgotten-export) The symbol "IsDate" needs to be exported by the entry point index.d.ts
 //
 // @public
@@ -1256,12 +1302,14 @@ export class InetAddress {
     get version(): 4 | 6;
 }
 
-// Warning: (ae-forgotten-export) The symbol "InferrableRow" needs to be exported by the entry point index.d.ts
+// @public (undocumented)
+export type InferrableTable = ((..._: any[]) => Promise<Table>) | ((..._: any[]) => Table) | Promise<Table> | Table;
+
 // Warning: (ae-forgotten-export) The symbol "Normalize" needs to be exported by the entry point index.d.ts
 // Warning: (ae-forgotten-export) The symbol "_InferTableSchema" needs to be exported by the entry point index.d.ts
 //
 // @public (undocumented)
-export type InferTableSchema<T extends InferrableRow> = Normalize<_InferTableSchema<T>>;
+export type InferTableSchema<T extends InferrableTable> = Normalize<_InferTableSchema<T>>;
 
 // @public (undocumented)
 export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition, Schema = Cols2CqlTypes<FullDef['columns']>> = Schema & {
@@ -1296,6 +1344,14 @@ export interface ListCollectionsOptions extends WithTimeout, WithKeyspace {
     nameOnly?: boolean;
 }
 
+// @public (undocumented)
+export interface ListCreateTableColumnDefinition {
+    // (undocumented)
+    type: 'list';
+    // (undocumented)
+    valueType: TableScalarType;
+}
+
 // @public
 export interface ListDatabasesOptions extends WithTimeout {
     include?: DatabaseStatusFilter;
@@ -1314,6 +1370,19 @@ export interface ListTablesOptions extends WithTimeout, WithKeyspace {
 export type LocalCreateKeyspaceOptions = CreateKeyspaceOptions & {
     replication?: KeyspaceReplicationOptions;
 };
+
+// @public (undocumented)
+export type LooseCreateTableColumnDefinition = TableScalarType | string;
+
+// @public (undocumented)
+export interface MapCreateTableColumnDefinition {
+    // (undocumented)
+    keyType: TableScalarType;
+    // (undocumented)
+    type: 'map';
+    // (undocumented)
+    valueType: TableScalarType;
+}
 
 // @public
 export type MaybeId<T> = NoId<T> & {
@@ -1414,6 +1483,20 @@ export interface RunCommandOptions extends WithTimeout {
 }
 
 // @public (undocumented)
+export interface ScalarCreateTableColumnDefinition {
+    // (undocumented)
+    type: TableScalarType;
+}
+
+// @public (undocumented)
+export interface SetCreateTableColumnDefinition {
+    // (undocumented)
+    type: 'set';
+    // (undocumented)
+    valueType: TableScalarType;
+}
+
+// @public (undocumented)
 export type ShortCreateTablePrimaryKeyDefinition = string;
 
 // @public
@@ -1443,6 +1526,9 @@ export class StaticTokenProvider extends TokenProvider {
     constructor(token: string | nullish);
     getToken(): string | nullish;
 }
+
+// @public (undocumented)
+export type StrictCreateTableColumnDefinition = ScalarCreateTableColumnDefinition | MapCreateTableColumnDefinition | ListCreateTableColumnDefinition | SetCreateTableColumnDefinition | VectorCreateTableColumnDefinition;
 
 // Warning: (ae-forgotten-export) The symbol "TypeErr" needs to be exported by the entry point index.d.ts
 //
@@ -1530,9 +1616,6 @@ export interface StrictUpdateFilter<Schema extends SomeDoc> {
 // @public (undocumented)
 export class Table<Schema extends SomeRow = SomeRow> {
     constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions | undefined);
-    // Warning: (ae-forgotten-export) The symbol "AlterTableOptions" needs to be exported by the entry point index.d.ts
-    // Warning: (ae-forgotten-export) The symbol "AlterTableSchema" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     alter<const Spec extends AlterTableOptions<Schema>>(options: Spec): Promise<Table<AlterTableSchema<Schema, Spec>>>;
     // (undocumented)
@@ -1596,6 +1679,9 @@ export interface TableInsertOneResult<Schema extends SomeRow> {
     // (undocumented)
     insertedId: KeyOf<Schema>;
 }
+
+// @public (undocumented)
+export type TableScalarType = 'text' | 'int' | 'double' | 'float' | 'ascii' | 'smallint' | 'tinyint' | 'varchar' | 'varint' | 'boolean' | 'inet' | 'uuid' | 'timeuuid' | 'date' | 'duration' | 'time' | 'timestamp';
 
 // @public (undocumented)
 export interface TableSpawnOptions extends WithKeyspace {
@@ -1692,6 +1778,18 @@ export class UUID {
     readonly version: number;
 }
 
+// @public (undocumented)
+export interface VectorCreateTableColumnDefinition {
+    // (undocumented)
+    dimensions?: number[];
+    // (undocumented)
+    service: VectorizeServiceOptions;
+    // (undocumented)
+    type: 'vector';
+    // (undocumented)
+    valueType: TableScalarType;
+}
+
 // @public
 export interface VectorDoc {
     $vector?: number[];
@@ -1734,7 +1832,7 @@ export interface WithTimeout {
 
 // Warnings were encountered during analysis:
 //
-// dist/db/types/tables/table-schema.d.ts:13:5 - (ae-forgotten-export) The symbol "MkPrimaryKeyType" needs to be exported by the entry point index.d.ts
+// dist/db/types/tables/table-schema.d.ts:14:5 - (ae-forgotten-export) The symbol "MkPrimaryKeyType" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 
