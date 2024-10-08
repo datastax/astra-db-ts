@@ -15,7 +15,7 @@
 import { SomeDoc } from '@/src/documents/collections';
 import { Sort } from '@/src/documents/types';
 
-declare const __error: unique symbol;
+declare const $ERROR: unique symbol;
 
 /**
  * Represents some type-level error which forces immediate attention rather than failing at runtime.
@@ -35,7 +35,7 @@ declare const __error: unique symbol;
  *
  * @public
  */
-export type TypeErr<S> = { [__error]: S };
+export type TypeErr<S> = { [$ERROR]: S };
 
 /**
  * @internal

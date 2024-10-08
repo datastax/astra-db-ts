@@ -28,7 +28,7 @@ export interface CreateTableDefinition {
 
 export type CreateTableColumnDefinitions = Record<string, LooseCreateTableColumnDefinition | StrictCreateTableColumnDefinition>;
 
-type TableScalarType =
+export type TableScalarType =
   | 'text'
   | 'int'
   | 'double'
@@ -47,38 +47,38 @@ type TableScalarType =
   | 'time'
   | 'timestamp';
 
-type LooseCreateTableColumnDefinition =
+export type LooseCreateTableColumnDefinition =
   | TableScalarType
   | string;
 
-type StrictCreateTableColumnDefinition =
+export type StrictCreateTableColumnDefinition =
   | ScalarCreateTableColumnDefinition
   | MapCreateTableColumnDefinition
   | ListCreateTableColumnDefinition
   | SetCreateTableColumnDefinition
   | VectorCreateTableColumnDefinition;
 
-interface ScalarCreateTableColumnDefinition {
+export interface ScalarCreateTableColumnDefinition {
   type: TableScalarType,
 }
 
-interface MapCreateTableColumnDefinition {
+export interface MapCreateTableColumnDefinition {
   type: 'map',
   keyType: TableScalarType,
   valueType: TableScalarType,
 }
 
-interface ListCreateTableColumnDefinition {
+export interface ListCreateTableColumnDefinition {
   type: 'list',
   valueType: TableScalarType,
 }
 
-interface SetCreateTableColumnDefinition {
+export interface SetCreateTableColumnDefinition {
   type: 'set',
   valueType: TableScalarType,
 }
 
-interface VectorCreateTableColumnDefinition {
+export interface VectorCreateTableColumnDefinition {
   type: 'vector',
   valueType: TableScalarType,
   dimensions?: number[],

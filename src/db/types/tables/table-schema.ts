@@ -22,25 +22,23 @@ import {
 } from '@/src/db/types/tables/create-table';
 import { EmptyObj } from '@/src/lib/types';
 import { UUID, InetAddress, CqlDate, CqlDuration, CqlTime, CqlTimestamp } from '@/src/documents';
+import { TypeErr } from '@/src/documents/utils';
 
-type InferrableRow =
+export type InferrableTable =
   | ((..._: any[]) => Promise<Table>)
   | ((..._: any[]) => Table)
-  | CreateTableDefinition
   | Promise<Table>
   | Table;
 
-export type InferTableSchema<T extends InferrableRow> = Normalize<_InferTableSchema<T>>;
+export type InferTableSchema<T extends InferrableTable> = Normalize<_InferTableSchema<T>>;
 
 type Normalize<T> = { [K in keyof T]: T[K] };
 
-type _InferTableSchema<T extends InferrableRow> =
+type _InferTableSchema<T extends InferrableTable> =
   T extends (..._: any[]) => Promise<Table<infer Schema>>
     ? Schema :
   T extends (..._: any[]) => Table<infer Schema>
     ? Schema :
-  T extends CreateTableDefinition
-    ? InferTableSchemaFromDefinition<T> :
   T extends Promise<Table<infer Schema>>
     ? Schema :
   T extends Table<infer Schema>
@@ -53,11 +51,11 @@ export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition
 
 type MkPrimaryKeyType<FullDef extends CreateTableDefinition, Schema, PK extends FullCreateTablePrimaryKeyDefinition = NormalizePK<FullDef['primaryKey']>> = Normalize<
   {
-    -readonly [P in PK['partitionKey'][number]]: P extends keyof Schema ? Schema[P] : `ERROR: Field \`${P}\` not found as property in table definition`;
+    -readonly [P in PK['partitionKey'][number]]: P extends keyof Schema ? Schema[P] : TypeErr<`Field \`${P}\` not found as property in table definition`>;
   }
-  & (PK['partitionSort'] extends Record<string, 1 | -1>
+  & (PK['partitionSort'] extends object
     ? {
-      -readonly [P in keyof PK['partitionSort']]: P extends keyof Schema ? Schema[P] : `ERROR: Field \`${P & string}\` not found as property in table definition`;
+      -readonly [P in keyof PK['partitionSort']]: P extends keyof Schema ? Schema[P] : TypeErr<`Field \`${P & string}\` not found as property in table definition`>;
     }
     : EmptyObj)
 >
@@ -68,15 +66,15 @@ type NormalizePK<PK extends CreateTablePrimaryKeyDefinition> =
     : PK;
 
 export type Cols2CqlTypes<Columns extends CreateTableColumnDefinitions> = {
-  -readonly [P in keyof Columns]: CqlType2TSType<InferColDefType<Columns[P]>, Columns[P]>;
+  -readonly [P in keyof Columns]: CqlType2TSType<NormalizeColDef<Columns[P]>, Columns[P]>;
 };
 
-type InferColDefType<Def> =
+type NormalizeColDef<Def> =
   Def extends { type: infer Type }
     ? Type
     : Def;
 
-type CqlType2TSType<T extends string, Def> =
+export type CqlType2TSType<T extends string, Def> =
   T extends keyof CqlNonGenericType2TSTypeDict
     ? CqlNonGenericType2TSTypeDict[T] :
   T extends keyof CqlGenericType2TSTypeDict<Def>
@@ -113,14 +111,14 @@ interface CqlGenericType2TSTypeDict<Def> {
 type CqlMapType2TsType<Def> =
   Def extends { keyType: infer KeyType extends string, valueType: infer ValueType extends string }
     ? Map<CqlType2TSType<KeyType, never>, CqlType2TSType<ValueType, never>>
-    : 'Error: invalid generics definition for \'map\'; should have keyType and valueType set as scalar CQL types (e.g. \'text\')';
+    : TypeErr<'Invalid generics definition for \'map\'; should have keyType and valueType set as scalar CQL types (e.g. \'text\')'>;
 
 type CqlListType2TsType<Def> =
   Def extends { valueType: infer ValueType extends string }
     ? Array<CqlType2TSType<ValueType, never>>
-    : 'Error: invalid generics definition for \'list/vector\'; should have valueType set as scalar CQL types (e.g. \'text\')';
+    : TypeErr<'Invalid generics definition for \'list/vector\'; should have valueType set as scalar CQL types (e.g. \'text\')'>;
 
 type CqlSetType2TsType<Def> =
   Def extends { valueType: infer ValueType extends string }
     ? Set<CqlType2TSType<ValueType, never>>
-    : 'Error: invalid generics definition for \'set\'; should have valueType set as scalar CQL types (e.g. \'text\')';
+    : TypeErr<'Invalid generics definition for \'set\'; should have valueType set as scalar CQL types (e.g. \'text\')'>;
