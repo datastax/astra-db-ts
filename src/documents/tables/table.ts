@@ -12,42 +12,48 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { Filter, FindCursor, KeyOf, SomeDoc, SomeRow, UpdateFilter } from '@/src/documents';
+import { TableInsertOneResult } from '@/src/documents/tables/types/insert/insert-one';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import {
-  CreateTableIndexOptions,
-  CreateTableTextIndexOptions,
-  CreateTableVectorIndexOptions,
-  Filter,
-  FindCursor,
-  FoundRow,
-  KeyOf,
-  SomeDoc,
-  SomeRow,
-  TableDeleteOneOptions,
-  TableFindOneOptions,
-  TableFindOptions,
-  TableInsertManyOptions,
-  TableInsertManyResult,
-  TableInsertOneResult,
-  TableUpdateManyOptions,
-  TableUpdateManyResult,
-  TableUpdateOneOptions,
-  TableUpdateOneResult,
-  UpdateFilter,
-} from '@/src/documents';
-import { CommandImpls } from '@/src/documents/commands/command-impls';
-import { Db, TableSpawnOptions } from '@/src/db';
-import { WithTimeout } from '@/src/lib';
+import { TableSpawnOptions, Db } from '@/src/db';
 import { constUncurried } from '@/src/lib/utils';
+import { WithTimeout } from '@/src/lib';
+import { CommandImpls } from '@/src/documents/commands/command-impls';
+import { TableInsertManyOptions, TableInsertManyResult } from '@/src/documents/tables/types/insert/insert-many';
+import { TableUpdateOneOptions, TableUpdateOneResult } from '@/src/documents/tables/types/update/update-one';
+import { TableUpdateManyOptions, TableUpdateManyResult } from '@/src/documents/tables/types/update/update-many';
+import { TableDeleteOneOptions } from '@/src/documents/tables/types/delete/delete-one';
+import { TableFindOptions } from '@/src/documents/tables/types/find/find';
+import { FoundRow } from '@/src/documents/tables/types/utils';
+import { TableFindOneOptions } from '@/src/documents/tables/types/find/find-one';
 import { AlterTableOptions, AlterTableSchema } from '@/src/db/types/tables/alter-table';
+import { CreateTableIndexOptions } from '@/src/documents/tables/types/indexes/create-index';
+import { CreateTableTextIndexOptions } from '@/src/documents/tables/types/indexes/create-text-index';
+import { CreateTableVectorIndexOptions } from '@/src/documents/tables/types/indexes/create-vector-index';
 
+/**
+ * Represents the interface to a collection in the database.
+ *
+ * **Shouldn't be directly instantiated, but rather created via {@link Db.createCollection},
+ * or connected to using {@link Db.collection}**.
+ *
+ * @see SomeRow
+ *
+ * @public
+ */
 export class Table<Schema extends SomeRow = SomeRow> {
   readonly #httpClient: DataAPIHttpClient;
   readonly #commands: CommandImpls<KeyOf<Schema>>;
   readonly #db: Db;
 
+  /**
+   * The name of the table. Unique per keyspace.
+   */
   public readonly tableName!: string;
 
+  /**
+   * The keyspace that the table resides in.
+   */
   public readonly keyspace!: string;
 
   constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableSpawnOptions | undefined) {

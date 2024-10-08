@@ -84,7 +84,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   readonly #db: Db;
 
   /**
-   * The name of the collection.
+   * The name of the collection. Unique per keyspace.
    */
   public readonly collectionName!: string;
 
