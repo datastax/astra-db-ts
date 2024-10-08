@@ -18,6 +18,7 @@ import { CreateTableDefinition } from '@/src/db/types/tables/create-table';
 import { Table } from '@/src/documents/tables/table';
 import { KeyOf } from '@/src/documents/tables/types/utils';
 import { Db } from '@/src/db';
+import { TypeErr } from '@/src/documents/utils';
 
 const db = null! as Db;
 
@@ -75,7 +76,7 @@ const _e = createTable('my_table', {
 const _f: InferTableSchema<typeof _e> = {
   key: 1,
   [$PrimaryKeyType]: {
-    id: 'ERROR: Field `id` not found as property in table definition',
+    id: {} as TypeErr<'Field `id` not found as property in table definition'>,
   },
 };
 
@@ -118,7 +119,7 @@ type _Proof = Expect<Equal<MySchema, {
   car: Map<string, number>,
   [$PrimaryKeyType]?: {
     key: string,
-    bad: 'ERROR: Field `bad` not found as property in table definition',
+    bad: TypeErr<'Field `bad` not found as property in table definition'>,
     age: number,
   },
 }>>;
@@ -142,7 +143,7 @@ type _Proof = Expect<Equal<MySchema, {
   type _ = Expect<Equal<typeof insertManyResult, {
     insertedIds: ({
       key: string,
-      bad: 'ERROR: Field `bad` not found as property in table definition',
+      bad: TypeErr<'Field `bad` not found as property in table definition'>,
       age: number,
     })[],
     insertedCount: number,
@@ -164,7 +165,7 @@ type _Proof = Expect<Equal<MySchema, {
     car: Map<string, number>,
     [$PrimaryKeyType]?: {
       key: string,
-      bad: 'ERROR: Field `bad` not found as property in table definition',
+      bad: TypeErr<'Field `bad` not found as property in table definition'>,
       age: number,
     },
   }>>>;
@@ -180,7 +181,7 @@ type _Proof = Expect<Equal<MySchema, {
     new: string,
     [$PrimaryKeyType]?: {
       key: string,
-      bad: 'ERROR: Field `bad` not found as property in table definition',
+      bad: TypeErr<'Field `bad` not found as property in table definition'>,
       age: number,
     },
   }>>>;
@@ -194,7 +195,7 @@ type _Proof = Expect<Equal<MySchema, {
     age: number,
     [$PrimaryKeyType]?: {
       key: string,
-      bad: 'ERROR: Field `bad` not found as property in table definition',
+      bad: TypeErr<'Field `bad` not found as property in table definition'>,
       age: number,
     },
   }>>>;
