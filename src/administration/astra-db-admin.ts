@@ -17,7 +17,7 @@ import {
   AdminSpawnOptions,
   AstraAdminBlockingOptions,
   AstraCreateKeyspaceOptions,
-  RawAstraDatabaseAdminInfo,
+  RawAstraAdminDbInfo,
 } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
 import { WithTimeout } from '@/src/lib/types';
@@ -31,7 +31,7 @@ import { isNullish } from '@/src/lib/utils';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { $CustomInspect } from '@/src/lib/constants';
-import { AstraDatabaseAdminInfo } from '@/src/administration/types/admin/database-info';
+import { AstraAdminDbInfo } from '@/src/administration/types/admin/database-info';
 import { Logger } from '@/src/lib/logging/logger';
 
 /**
@@ -173,13 +173,13 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves to the complete database information.
    */
-  public async info(options?: WithTimeout): Promise<AstraDatabaseAdminInfo> {
+  public async info(options?: WithTimeout): Promise<AstraAdminDbInfo> {
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases/${this.#db.id}`,
     }, options);
 
-    return buildAstraDatabaseAdminInfo(resp.data as RawAstraDatabaseAdminInfo, this.#environment);
+    return buildAstraDatabaseAdminInfo(resp.data as RawAstraAdminDbInfo, this.#environment);
   }
 
   /**

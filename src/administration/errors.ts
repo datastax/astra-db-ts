@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { RawAstraDatabaseAdminInfo } from '@/src/administration/types';
+import { RawAstraAdminDbInfo } from '@/src/administration/types';
 import { FetcherResponseInfo } from '@/src/lib/api';
 
 /**
@@ -143,7 +143,7 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
   /**
    * The complete database info, which includes the status of the database.
    */
-  public readonly dbInfo?: RawAstraDatabaseAdminInfo;
+  public readonly dbInfo?: RawAstraAdminDbInfo;
 
   /**
    * Shouldn't be instantiated directly.
@@ -153,7 +153,7 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
   constructor(message: string, expected: string[], data: Record<string, any> | undefined) {
     super(message);
     this.expected = expected;
-    this.dbInfo = data as RawAstraDatabaseAdminInfo;
+    this.dbInfo = data as RawAstraAdminDbInfo;
     this.name = 'DevOpsUnexpectedStateError';
   }
 }

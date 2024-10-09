@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { RawAstraDatabaseAdminInfo } from '@/src/administration/types';
-import { AstraDatabaseAdminInfo } from '@/src/administration/types/admin/database-info';
+import { RawAstraAdminDbInfo } from '@/src/administration/types';
+import { AstraAdminDbInfo } from '@/src/administration/types/admin/database-info';
 import { buildAstraEndpoint } from '@/src/lib/utils';
 
 /**
@@ -35,7 +35,7 @@ export const extractAstraEnvironment = (endpoint: string) => {
 /**
  * @internal
  */
-export const buildAstraDatabaseAdminInfo = (raw: RawAstraDatabaseAdminInfo, environment: 'dev' | 'prod' | 'test'): AstraDatabaseAdminInfo => {
+export const buildAstraDatabaseAdminInfo = (raw: RawAstraAdminDbInfo, environment: 'dev' | 'prod' | 'test'): AstraAdminDbInfo => {
   const regions = raw.info.datacenters?.map(dc => ({
     name: dc.region,
     apiEndpoint: buildAstraEndpoint(raw.id, dc.region, environment),
