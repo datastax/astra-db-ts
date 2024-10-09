@@ -321,19 +321,19 @@ export class AstraAdmin {
     const params = {} as Record<string, string>;
 
     if (typeof options?.include === 'string') {
-      (params['include'] = options.include);
+      params['include'] = options.include;
     }
 
     if (typeof options?.provider === 'string') {
-      (params['provider'] = options.provider);
+      params['provider'] = options.provider;
     }
 
     if (typeof options?.limit === 'number') {
-      (params['limit'] = String(options.skip));
+      params['limit'] = String(options.skip);
     }
 
     if (typeof options?.skip === 'number') {
-      (params['starting_after'] = String(options.skip));
+      params['starting_after'] = String(options.skip);
     }
 
     const resp = await this.#httpClient.request({
