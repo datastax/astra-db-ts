@@ -69,5 +69,13 @@ export interface AdminSpawnOptions {
    * as for enabling feature-flags or other non-standard headers.
    */
   additionalHeaders?: Record<string, string>,
+  /**
+   * The Astra environment to use when interacting with the DevOps API.
+   *
+   * In the case of {@link AstraDbAdmin}, if a database endpoint is provided, and its environment does NOT match
+   * this value (if it is set), it will throw an error.
+   *
+   * In the case of {@link DataAPIDbAdmin}, it will simply ignore this value.
+   */
   astraEnv?: 'dev' | 'prod' | 'test',
 }
