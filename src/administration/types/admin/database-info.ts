@@ -14,21 +14,21 @@
 
 import { AstraDbAction, AstraDbCloudProvider, AstraDbStatus, AstraDbTier } from '@/src/administration/types';
 
-export interface AstraAdminDbInfo extends AstraBaseDbInfo {
+export interface AstraDbAdminInfo extends AstraDbBaseInfo {
   createdAt: Date,
   lastUsed: Date,
   regions: { name: string, apiEndpoint: string }[],
   orgId: string,
-  raw: RawAstraAdminDbInfo,
+  raw: RawAstraDbAdminInfo,
 }
 
-export interface AstraDbInfo extends AstraBaseDbInfo {
+export interface AstraDbInfo extends AstraDbBaseInfo {
   region: string,
   apiEndpoint: string,
   raw: RawAstraDbInfo,
 }
 
-export interface AstraBaseDbInfo {
+export interface AstraDbBaseInfo {
   id: string,
   name: string,
   keyspaces: string[],
@@ -42,7 +42,7 @@ export interface AstraBaseDbInfo {
  *
  * @public
  */
-export interface RawAstraAdminDbInfo {
+export interface RawAstraDbAdminInfo {
   /**
    * The id of the database
    */
