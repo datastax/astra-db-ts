@@ -19,6 +19,7 @@ import {
   AstraDatabaseConfig,
   CreateAstraDatabaseOptions,
   ListAstraDatabasesOptions,
+  RawAstraDbAdminInfo,
 } from '@/src/administration/types';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { Db } from '@/src/db/db';
@@ -26,7 +27,7 @@ import { buildAstraDatabaseAdminInfo } from '@/src/administration/utils';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
 import { TokenProvider, WithTimeout } from '@/src/lib';
-import { AstraAdminDbInfo } from '@/src/administration/types/admin/database-info';
+import { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { buildAstraEndpoint } from '@/src/lib/utils';
@@ -282,13 +283,13 @@ export class AstraAdmin {
    *
    * @returns A promise that resolves to the complete database information.
    */
-  public async dbInfo(id: string, options?: WithTimeout): Promise<AstraAdminDbInfo> {
+  public async dbInfo(id: string, options?: WithTimeout): Promise<AstraDbAdminInfo> {
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases/${id}`,
     }, options);
 
-    return buildAstraDatabaseAdminInfo(resp.data as RawAstraAdminDbInfo, this.#environment);
+    return buildAstraDatabaseAdminInfo(resp.data as RawAstraDbAdminInfo, this.#environment);
   }
 
   /**
@@ -317,7 +318,7 @@ export class AstraAdmin {
    * @param options - The options to filter the databases by.
    * @returns A list of the complete information for all the databases matching the given filter.
    */
-  public async listDatabases(options?: ListAstraDatabasesOptions): Promise<AstraAdminDbInfo[]> {
+  public async listDatabases(options?: ListAstraDatabasesOptions): Promise<AstraDbAdminInfo[]> {
     const params = {} as Record<string, string>;
 
     if (typeof options?.include === 'string') {
@@ -342,7 +343,7 @@ export class AstraAdmin {
       params: params,
     }, options);
 
-    return resp.data!.map((d: RawAstraAdminDbInfo) => buildAstraDatabaseAdminInfo(d, this.#environment));
+    return resp.data!.map((d: RawAstraDbAdminInfo) => buildAstraDatabaseAdminInfo(d, this.#environment));
   }
 
   /**

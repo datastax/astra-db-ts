@@ -33,7 +33,7 @@ export type {
   AstraDbStorageInfo,
   AstraDbDatacenterInfo,
   AstraDbMetricsInfo,
-  RawAstraAdminDbInfo,
+  RawAstraDbAdminInfo,
 } from './admin/database-info';
 
 export type {

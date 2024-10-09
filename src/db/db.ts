@@ -41,7 +41,7 @@ import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { Logger } from '@/src/lib/logging/logger';
 import { $CustomInspect } from '@/src/lib/constants';
 import { InvalidEnvironmentError } from '@/src/db/errors';
-import { AstraDatabaseInfo } from '@/src/administration/types/admin/database-info';
+import { AstraDbInfo } from '@/src/administration/types/admin/database-info';
 
 /**
  * #### Overview
@@ -433,7 +433,7 @@ export class Db {
    *
    * @throws Error - if the database is not an Astra database.
    */
-  public async info(options?: WithTimeout): Promise<AstraDatabaseInfo> {
+  public async info(options?: WithTimeout): Promise<AstraDbInfo> {
     if (this.#defaultOpts.environment !== 'astra') {
       throw new InvalidEnvironmentError('db.info()', this.#defaultOpts.environment, ['astra'], 'info() is only available for Astra databases');
     }
