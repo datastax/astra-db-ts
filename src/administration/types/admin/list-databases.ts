@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DatabaseCloudProvider, DatabaseStatus } from '@/src/administration/types';
+import { AstraDbCloudProvider, AstraDbStatus } from '@/src/administration/types';
 import { WithTimeout } from '@/src/lib/types';
 
 /**
@@ -20,14 +20,14 @@ import { WithTimeout } from '@/src/lib/types';
  *
  * @public
  */
-export type DatabaseStatusFilter = DatabaseStatus | 'ALL' | 'NONTERMINATED';
+export type AstraDbStatusFilter = AstraDbStatus | 'ALL' | 'NONTERMINATED';
 
 /**
  * Represents all possible cloud providers that you can filter by.
  *
  * @public
  */
-export type DatabaseCloudProviderFilter = DatabaseCloudProvider | 'ALL';
+export type AstraDbCloudProviderFilter = AstraDbCloudProvider | 'ALL';
 
 /**
  * Represents the options for listing databases.
@@ -39,15 +39,15 @@ export type DatabaseCloudProviderFilter = DatabaseCloudProvider | 'ALL';
  *
  * @public
  */
-export interface ListDatabasesOptions extends WithTimeout {
+export interface ListAstraDatabasesOptions extends WithTimeout {
   /**
    * Allows filtering so that databases in listed states are returned.
    */
-  include?: DatabaseStatusFilter,
+  include?: AstraDbStatusFilter,
   /**
    * Allows filtering so that databases from a given provider are returned.
    */
-  provider?: DatabaseCloudProviderFilter,
+  provider?: AstraDbCloudProviderFilter,
   /**
    * Optional parameter for pagination purposes. Specify the number of items for one page of data.
    *

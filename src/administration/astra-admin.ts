@@ -16,10 +16,10 @@
 import {
   AdminSpawnOptions,
   AstraAdminBlockingOptions,
-  CreateDatabaseOptions,
-  DatabaseConfig,
-  ListDatabasesOptions,
-  RawAstraDatabaseAdminInfo,
+  CreateAstraDatabaseOptions,
+  AstraDatabaseConfig,
+  ListAstraDatabasesOptions,
+  RawAstraAdminDbInfo,
 } from '@/src/administration/types';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { DbSpawnOptions, InternalRootClientOpts } from '@/src/client/types';
@@ -28,7 +28,7 @@ import { buildAstraDatabaseAdminInfo, validateAdminOpts } from '@/src/administra
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
 import { TokenProvider, WithTimeout } from '@/src/lib';
-import { AstraDatabaseAdminInfo } from '@/src/administration/types/admin/database-info';
+import { AstraAdminDbInfo } from '@/src/administration/types/admin/database-info';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -264,13 +264,13 @@ export class AstraAdmin {
    *
    * @returns A promise that resolves to the complete database information.
    */
-  public async dbInfo(id: string, options?: WithTimeout): Promise<AstraDatabaseAdminInfo> {
+  public async dbInfo(id: string, options?: WithTimeout): Promise<AstraAdminDbInfo> {
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases/${id}`,
     }, options);
 
-    return buildAstraDatabaseAdminInfo(resp.data as RawAstraDatabaseAdminInfo, this.#environment);
+    return buildAstraDatabaseAdminInfo(resp.data as RawAstraAdminDbInfo, this.#environment);
   }
 
   /**
@@ -283,7 +283,7 @@ export class AstraAdmin {
    * You can also filter by the database status using the `include` option, and by the database provider using the
    * `provider` option.
    *
-   * See {@link ListDatabasesOptions} for complete information about the options available for this operation.
+   * See {@link ListAstraDatabasesOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
@@ -299,7 +299,7 @@ export class AstraAdmin {
    * @param options - The options to filter the databases by.
    * @returns A list of the complete information for all the databases matching the given filter.
    */
-  public async listDatabases(options?: ListDatabasesOptions): Promise<AstraDatabaseAdminInfo[]> {
+  public async listDatabases(options?: ListAstraDatabasesOptions): Promise<AstraAdminDbInfo[]> {
     const params = {} as Record<string, string>;
 
     if (typeof options?.include === 'string') {
@@ -324,7 +324,7 @@ export class AstraAdmin {
       params: params,
     }, options);
 
-    return resp.data!.map((d: RawAstraDatabaseAdminInfo) => buildAstraDatabaseAdminInfo(d, this.#environment));
+    return resp.data!.map((d: RawAstraAdminDbInfo) => buildAstraDatabaseAdminInfo(d, this.#environment));
   }
 
   /**
@@ -340,7 +340,7 @@ export class AstraAdmin {
    * will override any default options set when creating the {@link DataAPIClient} through a deep merge (i.e. unset
    * properties in the options object will just default to the default options).
    *
-   * See {@link CreateDatabaseOptions} for complete information about the options available for this operation.
+   * See {@link CreateAstraDatabaseOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
@@ -379,7 +379,7 @@ export class AstraAdmin {
    *
    * @returns The AstraDbAdmin instance for the newly created database.
    */
-  public async createDatabase(config: DatabaseConfig, options?: CreateDatabaseOptions): Promise<AstraDbAdmin> {
+  public async createDatabase(config: AstraDatabaseConfig, options?: CreateAstraDatabaseOptions): Promise<AstraDbAdmin> {
     const definition = {
       capacityUnits: 1,
       tier: 'serverless',

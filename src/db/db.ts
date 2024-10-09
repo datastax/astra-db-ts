@@ -14,7 +14,7 @@
 
 import { Collection, SomeDoc } from '@/src/documents/collections';
 import { DEFAULT_KEYSPACE, RawDataAPIResponse } from '@/src/lib/api';
-import { AstraDatabaseInfo } from '@/src/administration/types/admin/database-info';
+import { AstraDbInfo } from '@/src/administration/types/admin/database-info';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { DataAPIEnvironment, nullish, WithTimeout } from '@/src/lib/types';
 import { extractDbIdFromUrl, validateOption } from '@/src/documents/utils';
@@ -309,7 +309,7 @@ export class Db {
    *
    * @throws Error - if the database is not an Astra database.
    */
-  public async info(options?: WithTimeout): Promise<AstraDatabaseInfo> {
+  public async info(options?: WithTimeout): Promise<AstraDbInfo> {
     const data = await this.admin().info(options);
 
     const region = this.#endpoint
