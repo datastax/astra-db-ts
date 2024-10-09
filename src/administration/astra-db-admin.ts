@@ -17,7 +17,7 @@ import {
   AdminSpawnOptions,
   AstraAdminBlockingOptions,
   AstraCreateKeyspaceOptions,
-  RawAstraDatabaseAdminInfo,
+  RawAstraAdminDbInfo,
 } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
 import { WithTimeout } from '@/src/lib/types';
@@ -29,7 +29,7 @@ import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-clien
 import { Db } from '@/src/db';
 import { StaticTokenProvider, TokenProvider } from '@/src/lib';
 import { isNullish } from '@/src/lib/utils';
-import { AstraDatabaseAdminInfo } from '@/src/administration/types/admin/database-info';
+import { AstraAdminDbInfo } from '@/src/administration/types/admin/database-info';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting keyspaces.
@@ -170,13 +170,13 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves to the complete database information.
    */
-  public async info(options?: WithTimeout): Promise<AstraDatabaseAdminInfo> {
+  public async info(options?: WithTimeout): Promise<AstraAdminDbInfo> {
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases/${this.#db.id}`,
     }, options);
 
-    return buildAstraDatabaseAdminInfo(resp.data as RawAstraDatabaseAdminInfo, this.#environment);
+    return buildAstraDatabaseAdminInfo(resp.data as RawAstraAdminDbInfo, this.#environment);
   }
 
   /**

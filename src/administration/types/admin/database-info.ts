@@ -12,29 +12,29 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DatabaseAction, DatabaseCloudProvider, DatabaseStatus, DatabaseTier } from '@/src/administration/types';
+import { AstraDbAction, AstraDbCloudProvider, AstraDbStatus, AstraDbTier } from '@/src/administration/types';
 
-export interface AstraDatabaseAdminInfo extends BaseAstraDatabaseInfo {
+export interface AstraAdminDbInfo extends AstraBaseDbInfo {
   createdAt: Date,
   lastUsed: Date,
   regions: { name: string, apiEndpoint: string }[],
   orgId: string,
-  raw: RawAstraDatabaseAdminInfo,
+  raw: RawAstraAdminDbInfo,
 }
 
-export interface AstraDatabaseInfo extends BaseAstraDatabaseInfo {
+export interface AstraDbInfo extends AstraBaseDbInfo {
   region: string,
   apiEndpoint: string,
-  raw: RawAstraDatabaseInfo,
+  raw: RawAstraDbInfo,
 }
 
-export interface BaseAstraDatabaseInfo {
+export interface AstraBaseDbInfo {
   id: string,
   name: string,
   keyspaces: string[],
-  status: DatabaseStatus,
+  status: AstraDbStatus,
   environment: 'dev' | 'test' | 'prod',
-  cloudProvider: DatabaseCloudProvider,
+  cloudProvider: AstraDbCloudProvider,
 }
 
 /**
@@ -42,7 +42,7 @@ export interface BaseAstraDatabaseInfo {
  *
  * @public
  */
-export interface RawAstraDatabaseAdminInfo {
+export interface RawAstraAdminDbInfo {
   /**
    * The id of the database
    */
@@ -58,7 +58,7 @@ export interface RawAstraDatabaseAdminInfo {
   /**
    * The user-provided information describing a database
    */
-  info: RawAstraDatabaseInfo,
+  info: RawAstraDbInfo,
   /**
    * Creation time, in ISO RFC3339 format
    */
@@ -74,23 +74,23 @@ export interface RawAstraDatabaseAdminInfo {
   /**
    * The current status of the database.
    */
-  status: DatabaseStatus,
+  status: AstraDbStatus,
   /**
    * The observed status of the database.
    */
-  observedStatus: DatabaseStatus,
+  observedStatus: AstraDbStatus,
   /**
    * Contains the information about how much storage space a cluster has available
    */
-  storage?: DatabaseStorageInfo,
+  storage?: AstraDbStorageInfo,
   /**
    * The available actions that can be performed on the database
    */
-  availableActions?: DatabaseAction[],
+  availableActions?: AstraDbAction[],
   /**
    * The cost information for the database
    */
-  cost?: CostInfo,
+  cost?: AstraDbCostInfo,
   /**
    * Message to the user about the cluster
    */
@@ -114,7 +114,7 @@ export interface RawAstraDatabaseAdminInfo {
   /**
    * Basic metrics information about the database
    */
-  metrics?: DbMetricsInfo,
+  metrics?: AstraDbMetricsInfo,
 }
 
 /**
@@ -122,7 +122,7 @@ export interface RawAstraDatabaseAdminInfo {
  *
  * @public
  */
-export interface RawAstraDatabaseInfo {
+export interface RawAstraDbInfo {
   /**
    * Name of the database--user friendly identifier
    */
@@ -134,11 +134,11 @@ export interface RawAstraDatabaseInfo {
   /**
    * Cloud provider where the database lives
    */
-  cloudProvider?: DatabaseCloudProvider,
+  cloudProvider?: AstraDbCloudProvider,
   /**
    * Tier defines the compute power (vertical scaling) for the database, developer gcp is the free tier.
    */
-  tier: DatabaseTier,
+  tier: AstraDbTier,
   /**
    * The amount of space available (horizontal scaling) for the database. For free tier the max CU's is 1, and 100
    * for CXX/DXX the max is 12 on startup.
@@ -172,7 +172,7 @@ export interface RawAstraDatabaseInfo {
   /**
    * The datacenters for the database
    */
-  datacenters?: DatacenterInfo[],
+  datacenters?: AstraDbDatacenterInfo[],
 }
 
 /**
@@ -180,7 +180,7 @@ export interface RawAstraDatabaseInfo {
  *
  * @public
  */
-export interface DatabaseStorageInfo {
+export interface AstraDbStorageInfo {
   /**
    * Node count for the cluster.
    */
@@ -204,7 +204,7 @@ export interface DatabaseStorageInfo {
  *
  * @public
  */
-export interface DatacenterInfo {
+export interface AstraDbDatacenterInfo {
   /**
    * The number of capacity units for the datacenter.
    */
@@ -212,7 +212,7 @@ export interface DatacenterInfo {
   /**
    * The cloud provider where the datacenter is located.
    */
-  cloudProvider: DatabaseCloudProvider,
+  cloudProvider: AstraDbCloudProvider,
   /**
    * The date the datacenter was created in ISO RFC3339 format.
    */
@@ -252,7 +252,7 @@ export interface DatacenterInfo {
   /**
    * The tier of the datacenter.
    */
-  tier: DatabaseTier,
+  tier: AstraDbTier,
 }
 
 /**
@@ -260,7 +260,7 @@ export interface DatacenterInfo {
  *
  * @public
  */
-export interface CostInfo {
+export interface AstraDbCostInfo {
   /**
    * Regular cost per day in cents
    */
@@ -328,7 +328,7 @@ export interface CostInfo {
  *
  * @public
  */
-export interface DbMetricsInfo {
+export interface AstraDbMetricsInfo {
   /**
    * The number of errors that have occurred in the database.
    */

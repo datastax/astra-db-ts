@@ -14,32 +14,32 @@
 
 export type {
   AstraAdminBlockingOptions,
-  DatabaseAction,
-  DatabaseCloudProvider,
-  DatabaseStatus,
-  DatabaseTier,
+  AstraDbAction,
+  AstraDbCloudProvider,
+  AstraDbStatus,
+  AstraDbTier,
   AstraPollBlockingOptions,
   AstraNoBlockingOptions,
 } from './admin/admin-common';
 
 export type {
-  CreateDatabaseOptions,
-  DatabaseConfig,
+  CreateAstraDatabaseOptions,
+  AstraDatabaseConfig,
 } from './admin/create-database';
 
 export type {
-  RawAstraDatabaseInfo,
-  CostInfo,
-  DatabaseStorageInfo,
-  DatacenterInfo,
-  DbMetricsInfo,
-  RawAstraDatabaseAdminInfo,
+  RawAstraDbInfo,
+  AstraDbCostInfo,
+  AstraDbStorageInfo,
+  AstraDbDatacenterInfo,
+  AstraDbMetricsInfo,
+  RawAstraAdminDbInfo,
 } from './admin/database-info';
 
 export type {
-  DatabaseCloudProviderFilter,
-  DatabaseStatusFilter,
-  ListDatabasesOptions,
+  AstraDbCloudProviderFilter,
+  AstraDbStatusFilter,
+  ListAstraDatabasesOptions,
 } from './admin/list-databases';
 
 export type {
