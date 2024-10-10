@@ -171,7 +171,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 3, 'Cursor did not set buffer');
 
-      const raw = cursor.readBufferedDocuments();
+      const raw = cursor.consumeBuffer();
       assert.strictEqual(raw.length, 3, 'Cursor did not read 3 buffered documents');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.deepStrictEqual(raw.sort(sortById), docs, 'Cursor did not read raw buffered documents');
@@ -183,7 +183,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 3, 'Cursor did not set buffer');
       cursor['_buffer'] = cursor['_buffer'].sort(sortById); // Only for testing purposes
-      const raw = cursor.readBufferedDocuments(2);
+      const raw = cursor.consumeBuffer(2);
       assert.strictEqual(raw.length, 2, 'Cursor did not read 2 buffered documents');
       assert.strictEqual(cursor.bufferedCount(), 1, 'Cursor did not properly consume buffer');
       assert.deepStrictEqual(raw.sort(sortById), docs.slice(0, 2), 'Cursor did not read raw buffered documents');
@@ -195,7 +195,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 3, 'Cursor did not set buffer');
 
-      const raw = cursor.readBufferedDocuments();
+      const raw = cursor.consumeBuffer();
       assert.strictEqual(raw.length, 3, 'Cursor did not read 3 buffered documents');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.deepStrictEqual(raw.sort(sortById), docs, 'Cursor did not read raw buffered documents');
