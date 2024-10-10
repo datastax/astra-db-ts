@@ -40,7 +40,20 @@ type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$PrimaryKeyType
  * **Shouldn't be directly instantiated, but rather created via {@link Db.createCollection},
  * or connected to using {@link Db.collection}**.
  *
+ * Typed as `Table<Schema>` where `Schema` is the type of the documents in the collection.
+ * Operations on the collection will be strongly typed if a specific schema is provided, otherwise
+ * remained largely weakly typed if no type is provided.
+ *
+ * See {@link Db.createTable}, {@link Db.table}, and {@link InferTableSchema} for much more information
+ * about typing.
+ *
+ * It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its
+ * TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.
+ *
  * @see SomeRow
+ * @see Db.createTable
+ * @see Db.table
+ * @see InferTableScehma
  *
  * @public
  */
@@ -59,7 +72,12 @@ export class Table<Schema extends SomeRow = SomeRow> {
    */
   public readonly keyspace!: string;
 
-  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableSpawnOptions | undefined) {
+  /**
+   * Use {@link Db.collection} to obtain an instance of this class.
+   *
+   * @internal
+   */
+  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions | undefined) {
     Object.defineProperty(this, 'tableName', {
       value: name,
       writable: false,

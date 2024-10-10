@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { GuaranteedUpdateOptions, GenericUpdateResult } from '@/src/documents/commands/types/update/update-common';
+import { GuaranteedUpdateResult, GenericUpdateResult } from '@/src/documents/commands/types/update/update-common';
 import { RawDataAPIResponse } from '@/src/lib';
 
 export const mkUpdateResult = <N extends number>(resp?: RawDataAPIResponse) => ({
@@ -20,7 +20,7 @@ export const mkUpdateResult = <N extends number>(resp?: RawDataAPIResponse) => (
   matchedCount: resp?.status?.matchedCount ?? 0 as N,
 });
 
-export const coalesceUpsertIntoUpdateResult = <ID, N extends number>(commonResult: GuaranteedUpdateOptions<N>, resp: RawDataAPIResponse): GenericUpdateResult<ID, N> =>
+export const coalesceUpsertIntoUpdateResult = <ID, N extends number>(commonResult: GuaranteedUpdateResult<N>, resp: RawDataAPIResponse): GenericUpdateResult<ID, N> =>
   (resp.status?.upsertedId)
     ? {
       ...commonResult,

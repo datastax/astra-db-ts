@@ -14,6 +14,44 @@
 
 import { GenericUpdateOneOptions, GenericUpdateResult, KeyOf, SomeRow } from '@/src/documents';
 
+/**
+ * Options for an `updateOne` command on a table.
+ *
+ * @field upsert - If true, perform an insert if no rows match the filter.
+ * @field sort - The sort order to pick which row to update if the filter selects multiple rows.
+ * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
+ *
+ * @see Table.updateOne
+ *
+ * @public
+ */
 export type TableUpdateOneOptions = GenericUpdateOneOptions;
 
+/**
+ * Represents the result of an `updateOne` command on a table.
+ *
+ * @example
+ * ```typescript
+ * const result = await table.updateOne({
+ *   _id: 'abc'
+ * }, {
+ *   $set: { name: 'John' }
+ * }, {
+ *   upsert: true
+ * });
+ *
+ * if (result.upsertedCount) {
+ *   console.log(`Row with primary key ${JSON.stringify(result.upsertedId)} was upserted`);
+ * }
+ * ```
+ *
+ * @field matchedCount - The number of rows that matched the filter.
+ * @field modifiedCount - The number of rows that were actually modified.
+ * @field upsertedCount - The number of rows that were upserted.
+ * @field upsertedId - The identifier of the upserted row if `upsertedCount > 0`.
+ *
+ * @see Table.updateOne
+ *
+ * @public
+ */
 export type TableUpdateOneResult<Schema extends SomeRow> = GenericUpdateResult<KeyOf<Schema>, 0 | 1>;
