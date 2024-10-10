@@ -81,8 +81,8 @@ export interface SetCreateTableColumnDefinition {
 export interface VectorCreateTableColumnDefinition {
   type: 'vector',
   valueType: TableScalarType,
-  dimensions?: number[],
-  service: VectorizeServiceOptions,
+  dimension?: number,
+  service?: VectorizeServiceOptions,
 }
 
 export type CreateTablePrimaryKeyDefinition =
@@ -92,6 +92,6 @@ export type CreateTablePrimaryKeyDefinition =
 export type ShortCreateTablePrimaryKeyDefinition = string;
 
 export interface FullCreateTablePrimaryKeyDefinition {
-  readonly partitionKey: readonly string[],
+  readonly partitionBy: readonly string[],
   readonly partitionSort?: Record<string, 1 | -1>,
 }
