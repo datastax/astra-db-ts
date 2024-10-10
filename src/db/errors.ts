@@ -48,7 +48,7 @@ export class CollectionNotFoundError extends DataAPIError {
 
 /**
  * An exception thrown when an operation that expects a collection not to exist is attempted on a collection that
- * already exists.
+ * already exists (namely, creating a collection).
  *
  * @field keyspace - The keyspace where the collection already exists
  * @field collectionName - The name of the collection that already exists
@@ -76,5 +76,39 @@ export class CollectionAlreadyExistsError extends DataAPIError {
     this.keyspace = keyspace;
     this.collectionName = collectionName;
     this.name = 'CollectionAlreadyExistsError';
+  }
+}
+
+
+/**
+ * An exception thrown when an operation that expects a table not to exist is attempted on a table that
+ * already exists (namely, creating a table).
+ *
+ * @field keyspace - The keyspace where the table already exists
+ * @field tableName - The name of the table that already exists
+ *
+ * @public
+ */
+export class TableAlreadyExistsError extends DataAPIError {
+  /**
+   * The keyspace where the table already exists
+   */
+  public readonly keyspace: string;
+
+  /**
+   * The name of the table that already exists
+   */
+  public readonly tableName: string;
+
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
+  constructor(keyspace: string, tableName: string) {
+    super(`Table '${keyspace}.${tableName}' already exists`);
+    this.keyspace = keyspace;
+    this.tableName = tableName;
+    this.name = 'TableAlreadyExistsError';
   }
 }

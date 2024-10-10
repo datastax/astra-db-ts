@@ -20,7 +20,7 @@
 import { DataAPIClient } from '@/src/client';
 import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import {
-  DEFAULT_COLLECTION_NAME,
+  DEFAULT_COLLECTION_NAME, DEFAULT_TABLE_NAME,
   ENVIRONMENT,
   OTHER_KEYSPACE,
   TEST_APPLICATION_TOKEN,
@@ -52,11 +52,14 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
   const collection = db.collection(DEFAULT_COLLECTION_NAME);
   const collection_ = db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE });
 
+  const table = db.table(DEFAULT_TABLE_NAME);
+  const table_ = db.table(DEFAULT_TABLE_NAME, { keyspace: OTHER_KEYSPACE });
+
   const dbAdmin = (ENVIRONMENT === 'astra')
     ? db.admin({ environment: ENVIRONMENT })
     : db.admin({ environment: ENVIRONMENT });
 
-  return { client, db, collection, collection_, dbAdmin };
+  return { client, db, collection, collection_, dbAdmin, table, table_ };
 };
 
 export const initCollectionWithFailingClient = () => {

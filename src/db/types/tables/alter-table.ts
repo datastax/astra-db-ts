@@ -43,7 +43,7 @@ export type AlterTableSchema<Schema extends SomeRow, Alter extends AlterTableOpt
 >;
 
 export type Cols2Add<Op extends AddColumnOperation | undefined> = Op extends AddColumnOperation
-  ? Cols2CqlTypes<Op["columns"]>
+  ? Partial<Cols2CqlTypes<Op["columns"]>>
   : EmptyObj;
 
 export type Cols2Drop<Op> = Op extends { columns: (infer U)[] }

@@ -16,5 +16,5 @@ import { WithTimeout } from '@/src/lib';
 
 export interface CreateTableVectorIndexOptions extends WithTimeout {
   similarityFunction: 'cosine' | 'euclidean' | 'dot_product',
-  sourceModel: string,
+  sourceModel?: string,
 }

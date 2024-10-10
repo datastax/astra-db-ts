@@ -69,7 +69,7 @@ export type InferrableTable =
  *       },
  *     },
  *     primaryKey: {
- *       partitionKey: ['name', 'height'],
+ *       partitionBy: ['name', 'height'],
  *       partitionSort: { dob: 1 },
  *     },
  *   },
@@ -140,10 +140,10 @@ type Normalize<T> = { [K in keyof T]: T[K] };
  *     friends: {
  *       type: 'set',
  *       valueType: 'text',
- *     },c
+ *     },
  *   },
  *   primaryKey: {
- *     partitionKey: ['name', 'height'],
+ *     partitionBy: ['name', 'height'],
  *     partitionSort: { dob: 1 },
  *   },
  * };
@@ -179,13 +179,19 @@ type Normalize<T> = { [K in keyof T]: T[K] };
  *
  * @public
  */
-export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition> = Normalize<Cols2CqlTypes<FullDef['columns']> & {
+export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition> = Normalize<MkColumnTypes<FullDef['columns'], MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>> & {
   [$PrimaryKeyType]?: MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>,
 }>
 
+type MkColumnTypes<Cols extends CreateTableColumnDefinitions, PK extends Record<string, any>> = {
+  -readonly [P in keyof Cols as P extends keyof PK ? P : never]-?: CqlType2TSType<PickCqlType<Cols[P]>, Cols[P]>;
+} & {
+  -readonly [P in keyof Cols as P extends keyof PK ? never : P]+?: CqlType2TSType<PickCqlType<Cols[P]>, Cols[P]>;
+}
+
 type MkPrimaryKeyType<FullDef extends CreateTableDefinition, Schema, PK extends FullCreateTablePrimaryKeyDefinition = NormalizePK<FullDef['primaryKey']>> = Normalize<
   {
-    -readonly [P in PK['partitionKey'][number]]: P extends keyof Schema ? Schema[P] : TypeErr<`Field \`${P}\` not found as property in table definition`>;
+    -readonly [P in PK['partitionBy'][number]]: P extends keyof Schema ? Schema[P] : TypeErr<`Field \`${P}\` not found as property in table definition`>;
   }
   & (PK['partitionSort'] extends object
     ? {
@@ -196,7 +202,7 @@ type MkPrimaryKeyType<FullDef extends CreateTableDefinition, Schema, PK extends 
 
 type NormalizePK<PK extends CreateTablePrimaryKeyDefinition> =
   PK extends string
-    ? { partitionKey: [PK] }
+    ? { partitionBy: [PK] }
     : PK;
 
 /**

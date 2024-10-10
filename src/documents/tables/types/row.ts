@@ -16,8 +16,8 @@ export type SomeRow = Record<string, any>;
 
 export declare const $PrimaryKeyType: unique symbol;
 
-export interface Row<Schema extends SomeRow, PrimaryKey extends (keyof Schema)[]> {
+export interface Row<Schema extends SomeRow, PrimaryKey extends keyof Schema> {
   [$PrimaryKeyType]?: {
-    [P in PrimaryKey[number]]: Schema[P];
-  };
+    [P in PrimaryKey]: Schema[P];
+  },
 }

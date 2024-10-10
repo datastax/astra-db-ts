@@ -20,7 +20,7 @@ import { DataAPIEnvironment, nullish, WithTimeout } from '@/src/lib/types';
 import { extractDbIdFromUrl } from '@/src/documents/utils';
 import { AdminSpawnOptions, DbAdmin } from '@/src/administration';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin';
-import { CollectionAlreadyExistsError } from '@/src/db/errors';
+import { CollectionAlreadyExistsError, TableAlreadyExistsError } from '@/src/db/errors';
 import { CreateCollectionOptions } from '@/src/db/types/collections/create-collection';
 import { TokenProvider } from '@/src/lib';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client';
@@ -335,7 +335,8 @@ export class Db {
    * Typed as `Collection<SomeDoc>` by default, but you can specify a schema type to get a typed collection. If left
    * as `SomeDoc`, the collection will be untyped.
    *
-   * You can also specify a keyspace in the options parameter, which will override the default keyspace for this database.
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
    *
    * @example
    * ```typescript
@@ -375,20 +376,21 @@ export class Db {
    *
    * **NB. You are limited in the amount of collections you can create, so be wary when using this command.**
    *
-   * This is a blocking command which performs actual I/O unlike {@link Db.collection}, which simply creates an
-   * unvalidated reference to a collection.
+   * This is a *blocking* command which performs actual I/O (unlike {@link Db.collection}, which simply creates an
+   * unvalidated reference to a collection).
    *
-   * If `checkExists: false`, creation is idempotent, so if the collection already exists with the same options,
+   * If `checkExists: false`, collection creation is idempotent—if the collection already exists with the same options,
    * this method will not throw an error. If the options mismatch, it will throw a {@link DataAPIResponseError}.
-   *
-   * Typed as `Collection<SomeDoc>` by default, but you can specify a schema type to get a typed collection. If left
-   * as `SomeDoc`, the collection will be untyped.
    *
    * *If vector options are not specified, the collection will not support vector search.*
    *
-   * You can also specify a keyspace in the options parameter, which will override the default keyspace for this database.
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
    *
    * See {@link CreateCollectionOptions} for *much* more information on the options available.
+   *
+   * By default, the object is typed as `Collection<SomeDoc>`, but you can specify a schema type to get a typed collection.
+   * If left as `SomeDoc`, the collection will be effectively untyped/dynamic in schema.
    *
    * @example
    * ```typescript
@@ -397,6 +399,7 @@ export class Db {
    *   age?: number,
    * }
    *
+   * // Typed collection created in the Db's working keyspace
    * const users = await db.createCollection<User>("users");
    * users.insertOne({ name: "John" });
    *
@@ -418,7 +421,7 @@ export class Db {
    * @throws CollectionAlreadyExistsError - if the collection already exists and `checkExists` is `true` or unset.
    *
    * @see SomeDoc
-   * @see VectorDoc
+   * @see db.collection
    */
   public async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>> {
     const command = {
@@ -436,19 +439,155 @@ export class Db {
     const keyspace = options?.keyspace ?? this.keyspace;
 
     if (options?.checkExists !== false) {
-      const collections = await this.listCollections({ keyspace: keyspace, maxTimeMS: timeoutManager.msRemaining() });
+      const collections = await this.listCollections({ keyspace, maxTimeMS: timeoutManager.msRemaining() });
 
       if (collections.some(c => c.name === collectionName)) {
         throw new CollectionAlreadyExistsError(keyspace, collectionName);
       }
     }
 
-    await this.#httpClient.executeCommand(command, { keyspace: keyspace, timeoutManager });
+    await this.#httpClient.executeCommand(command, { keyspace, timeoutManager });
     return this.collection(collectionName, options);
   }
 
+  /**
+   * Creates a new table in the database, and establishes a reference to it.
+   *
+   * **NB. You are limited in the amount of tables you can create, so be wary when using this command.**
+   *
+   * This is a *blocking* command which performs actual I/O (unlike {@link Db.table}, which simply creates an
+   * unvalidated reference to a table).
+   *
+   * If `checkExists: false`, table creation is idempotent—if the table already exists with the same options,
+   * this method will not throw an error. If the options mismatch, it will throw a {@link DataAPIResponseError}.
+   *
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
+   *
+   * See {@link CreateTableOptions} for *much* more information on the options available.
+   *
+   * This version of {@link Db.createTable} infers the schema of the table using the provided bespoke table definition.
+   *
+   * This behaviour may be extremely convenient, but in case you'd like to manually provide your own schema, leave
+   * the table as untyped, or save some typechecking power, you may provide a generic type parameter to the method
+   * explicitly (e.g. `db.createTable<SomeRow>(...)`).
+   *
+   * See {@link InferTableSchema} for more info.
+   *
+   * @example
+   * ```typescript
+   * // Function to create the actual table
+   * const mkUserTable = () => db.createTable('users', {
+   *   definition: {
+   *     columns: {
+   *       name: 'text',
+   *       dob: {
+   *         type: 'timestamp',
+   *       },
+   *       friends: {
+   *         type: 'set',
+   *         valueType: 'text',
+   *       },
+   *     },
+   *     primaryKey: {
+   *       partitionBy: ['name', 'height'],
+   *       partitionSort: { dob: 1 },
+   *     },
+   *   },
+   * });
+   *
+   * // Type inference is as simple as that
+   * type User = InferTableSchema<typeof mkUserTable>;
+   *
+   * // And now `User` can be used wherever.
+   * const main = async () => {
+   *   const table: Table<User> = await mkUserTable();
+   *   const found: User | null = await table.findOne({});
+   * };
+   * ```
+   *
+   * @param tableName - The name of the collection to create.
+   * @param options - Options for the collection.
+   *
+   * @returns A promised reference to the newly created table.
+   *
+   * @throws TableAlreadyExistsError - if the table already exists and `checkExists` is `true` or unset.
+   *
+   * @see SomeRow
+   * @see db.table
+   */
   public async createTable<const Def extends CreateTableDefinition>(tableName: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchemaFromDefinition<Def>>>
 
+  /**
+   * Creates a new table in the database, and establishes a reference to it.
+   *
+   * **NB. You are limited in the amount of tables you can create, so be wary when using this command.**
+   *
+   * This is a *blocking* command which performs actual I/O (unlike {@link Db.table}, which simply creates an
+   * unvalidated reference to a table).
+   *
+   * If `checkExists: false`, table creation is idempotent—if the table already exists with the same options,
+   * this method will not throw an error. If the options mismatch, it will throw a {@link DataAPIResponseError}.
+   *
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
+   *
+   * See {@link CreateTableOptions} for *much* more information on the options available.
+   *
+   * This version of {@link Db.createTable} takes in an explicit type for the table schema. Use {@link SomeRow} as the
+   * type if you just want a dynamically typed `Table` (e.g. `db.createTable<SomeRow>(...)`).
+   *
+   * Explicit schema types should extend `Row` so the primary key type may be automatically inferred for insertion
+   * results. See {@link Row} for more info.
+   *
+   * **NB. It is on the user to ensure that the provided type param properly corresponds with the actual schema of the
+   * table in its TS-deserialized form. See the other variant of {@link Db.createTable} for automatically inferring
+   * the type of the table's schema.**
+   *
+   * @example
+   * ```typescript
+   * // TS type corresponding to the table's schema
+   * // The `Row` type automagically creates the primary key schema type for insertion results
+   * interface User extends Row<User, 'name' | 'dob'> {
+   *   name: string,
+   *   dob: CqlDate,
+   *   friends?: Set<string>,
+   * }
+   *
+   * // Use the actual table
+   * const main = async () => {
+   *   const user = await db.createTable<User>('users', {
+   *     definition: {
+   *       columns: {
+   *         name: 'text',
+   *         dob: {
+   *           type: 'timestamp',
+   *         },
+   *         friends: {
+   *           type: 'set',
+   *           valueType: 'text',
+   *         },
+   *       },
+   *       primaryKey: {
+   *         partitionBy: ['name'],
+   *         partitionSort: { dob: 1 },
+   *       },
+   *     },
+   *   });
+   *   const found: User | null = await table.findOne({});
+   * };
+   * ```
+   *
+   * @param tableName - The name of the collection to create.
+   * @param options - Options for the collection.
+   *
+   * @returns A promised reference to the newly created table.
+   *
+   * @throws TableAlreadyExistsError - if the table already exists and `checkExists` is `true` or unset.
+   *
+   * @see SomeRow
+   * @see db.table
+   */
   public async createTable<Schema extends SomeRow>(tableName: string, options: CreateTableOptions): Promise<Table<Schema>>
 
   public async createTable(tableName: string, options: CreateTableOptions): Promise<Table> {
@@ -463,29 +602,30 @@ export class Db {
     const keyspace = options?.keyspace ?? this.keyspace;
 
     if (options?.checkExists !== false) {
-      const tables = await this.listCollections({ keyspace: keyspace, maxTimeMS: timeoutManager.msRemaining() });
+      const tables = await this.listTables({ keyspace, maxTimeMS: timeoutManager.msRemaining() });
 
       if (tables.some(c => c.name === tableName)) {
-        throw new CollectionAlreadyExistsError(keyspace, tableName);
+        throw new TableAlreadyExistsError(keyspace, tableName);
       }
     }
 
-    await this.#httpClient.executeCommand(command, { keyspace: keyspace, timeoutManager });
+    await this.#httpClient.executeCommand(command, { keyspace, timeoutManager });
     return this.table(tableName, options);
   }
 
   /**
    * Drops a collection from the database, including all the contained documents.
    *
-   * You can also specify a keyspace in the options parameter, which will override the default keyspace for this database.
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
    *
    * @example
    * ```typescript
-   * // Uses db's default keyspace
+   * // Uses db's working keyspace
    * const success1 = await db.dropCollection("users");
    * console.log(success1); // true
    *
-   * // Overrides db's default keyspace
+   * // Overrides db's working keyspace
    * const success2 = await db.dropCollection("users", {
    *   keyspace: "my_keyspace"
    * });
@@ -509,9 +649,35 @@ export class Db {
     return resp.status?.ok === 1;
   }
 
+  /**
+   * Drops a table from the database, including all the contained rows.
+   *
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
+   *
+   * @example
+   * ```typescript
+   * // Uses db's working keyspace
+   * const success1 = await db.dropTable("users");
+   * console.log(success1); // true
+   *
+   * // Overrides db's working keyspace
+   * const success2 = await db.dropTable("users", {
+   *   keyspace: "my_keyspace"
+   * });
+   * console.log(success2); // true
+   * ```
+   *
+   * @param name - The name of the table to drop.
+   * @param options - Options for this operation.
+   *
+   * @returns A promise that resolves to `true` if the table was dropped successfully.
+   *
+   * @remarks Use with caution. Wear a mask. Don't say I didn't warn you.
+   */
   public async dropTable(name: string, options?: DropTableOptions): Promise<boolean> {
     const command = {
-      deleteTable: { name },
+      dropTable: { name },
     };
 
     const resp = await this.#httpClient.executeCommand(command, options);
@@ -522,13 +688,15 @@ export class Db {
   /**
    * Lists the collection names in the database.
    *
-   * If you want to include the collection options in the response, set `nameOnly` to `false`, using the other overload.
+   * If you want to include the collection options in the response, set `nameOnly` to `false` (or omit it completely),
+   * using the other overload.
    *
-   * You can also specify a keyspace in the options parameter, which will override the default keyspace for this database.
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
    *
    * @example
    * ```typescript
-   * // [{ name: "users" }, { name: "posts" }]
+   * // ['users', 'posts']
    * console.log(await db.listCollections({ nameOnly: true }));
    * ```
    *
@@ -543,9 +711,10 @@ export class Db {
   /**
    * Lists the collections in the database.
    *
-   * If you want to use only the collection names, set `nameOnly` to `true` (or omit it completely), using the other overload.
+   * If you want to use only the collection names, set `nameOnly` to `true`, using the other overload.
    *
-   * You can also specify a keyspace in the options parameter, which will override the default keyspace for this database.
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
    *
    * @example
    * ```typescript
@@ -574,8 +743,49 @@ export class Db {
     return resp.status!.collections;
   }
 
+  /**
+   * Lists the table names in the database.
+   *
+   * If you want to include the table options in the response, set `nameOnly` to `false` (or omit it completely),
+   * using the other overload.
+   *
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
+   *
+   * @example
+   * ```typescript
+   * // ['users', 'posts']
+   * console.log(await db.listTables({ nameOnly: true }));
+   * ```
+   *
+   * @param options - Options for this operation.
+   *
+   * @returns A promise that resolves to an array of table names.
+   *
+   * @see CollectionOptions
+   */
   public async listTables(options: ListTablesOptions & { nameOnly: true }): Promise<string[]>
 
+  /**
+   * Lists the tables in the database.
+   *
+   * If you want to use only the table names, set `nameOnly` to `true`, using the other overload.
+   *
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
+   *
+   * @example
+   * ```typescript
+   * // [{ name: "users" }, { name: "posts", definition: { ... } }]
+   * console.log(await db.listTables());
+   * ```
+   *
+   * @param options - Options for this operation.
+   *
+   * @returns A promise that resolves to an array of table info.
+   *
+   * @see CollectionOptions
+   */
   public async listTables(options?: ListTablesOptions & { nameOnly?: false }): Promise<FullTableInfo[]>
 
   public async listTables(options?: ListTablesOptions): Promise<string[] | FullTableInfo[]> {
@@ -594,21 +804,26 @@ export class Db {
   /**
    * Send a POST request to the Data API for this database with an arbitrary, caller-provided payload.
    *
-   * You can specify a collection to target in the options parameter, thereby allowing you to perform
-   * arbitrary collection-level operations as well.
+   * You can specify a table/collection to target in the options parameter, thereby allowing you to perform
+   * arbitrary table/collection-level operations as well.
    *
-   * You're also able to specify a keyspace in the options parameter, which will override the default keyspace
-   * for this database.
+   * If the keyspace is set to `null`, the command will be run at the database level.
    *
-   * If no collection is specified, the command will be executed at the database level.
+   * If no collection is specified, the command will be executed at the keyspace level.
+   *
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
    *
    * @example
    * ```typescript
    * const colls = await db.command({ findCollections: {} });
    * console.log(colls); // { status: { collections: [] } }
    *
-   * const users = await db.command({ findOne: {} }, { collection: 'users' });
-   * console.log(users); // { data: { document: null } }
+   * const user = await db.command({ findOne: {} }, { collection: 'users' });
+   * console.log(user); // { data: { document: null } }
+   *
+   * const post = await db.command({ findOne: {} }, { table: 'posts' });
+   * console.log(post); // { data: { document: null } }
    * ```
    *
    * @param command - The command to send to the Data API.

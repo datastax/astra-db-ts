@@ -24,6 +24,8 @@ node -i -e "
   let db = client.db(process.env.CLIENT_DB_URL);
   let admin = client.admin();
   let dbAdmin = db.admin({ environment: process.env.CLIENT_DB_ENVIRONMENT });
+  let coll = db.collection('test_coll');
+  let table = db.table('test_table');
 
   Object.defineProperty(this, 'cl', {
     get() {
