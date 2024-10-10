@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import {
+  $PrimaryKeyType,
   CreateTableIndexOptions,
   CreateTableTextIndexOptions,
   CreateTableVectorIndexOptions,
@@ -39,6 +40,8 @@ import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { AlterTableOptions, AlterTableSchema, CollectionSpawnOptions, Db } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
 import { constUncurried } from '@/src/lib/utils';
+
+type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$PrimaryKeyType'>;
 
 /**
  * Represents the interface to a collection in the database.
@@ -77,7 +80,6 @@ export class Table<Schema extends SomeRow = SomeRow> {
     });
 
     this.#httpClient = httpClient.forCollection(this.keyspace, this.tableName, opts);
-    this.#httpClient.baseHeaders['Feature-Flag-tables'] = 'true';
     this.#commands = new CommandImpls(this.#httpClient);
     this.#db = db;
   }
@@ -141,35 +143,31 @@ export class Table<Schema extends SomeRow = SomeRow> {
     return this;
   }
 
-  public async createIndex(name: string, column: string, options?: CreateTableIndexOptions): Promise<void> {
-    await this.#runDbCommand('createIndex', {
-      name: name,
-      definition: { column: column },
+  public async createIndex(name: string, column: Cols<Schema> | string, options?: CreateTableIndexOptions): Promise<void> {
+    await this.#runDbCommand('addIndex', {
+      indexName: name,
+      column: column,
     }, options);
   }
 
-  public async createTextIndex(name: string, column: string, options?: CreateTableTextIndexOptions): Promise<void> {
-    await this.#runDbCommand('createIndex', {
-      name: name,
-      definition: {
-        column: column,
-        options: { caseSensitive: options?.caseSensitive, normalize: options?.normalize, ascii: options?.ascii },
-      },
+  public async createTextIndex(name: string, column: Cols<Schema> | string, options?: CreateTableTextIndexOptions): Promise<void> {
+    await this.#runDbCommand('addIndex', {
+      indexName: name,
+      column: column,
+      options: { caseSensitive: options?.caseSensitive, normalize: options?.normalize, ascii: options?.ascii },
     }, options);
   }
 
-  public async createVectorIndex(name: string, column: string, options?: CreateTableVectorIndexOptions): Promise<void> {
-    await this.#runDbCommand('createVectorIndex', {
-      name: name,
-      definition: {
-        column: column,
-        options: { similarityFunction: options?.similarityFunction, sourceModel: options?.sourceModel },
-      },
+  public async createVectorIndex(name: string, column: Cols<Schema> | string, options?: CreateTableVectorIndexOptions): Promise<void> {
+    await this.#runDbCommand('addVectorIndex', {
+      indexName: name,
+      column: column,
+      options: { similarityFunction: options?.similarityFunction, sourceModel: options?.sourceModel },
     }, options);
   }
 
   public async dropIndex(name: string, options?: WithTimeout): Promise<void> {
-    await this.#runDbCommand('dropIndex', { name }, options);
+    await this.#runDbCommand('dropIndex', { indexName: name }, options);
   }
 
   async #runDbCommand(name: string, command: SomeDoc, timeout?: WithTimeout) {

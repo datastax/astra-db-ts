@@ -13,8 +13,7 @@
 // limitations under the License.
 
 import { $PrimaryKeyType, Row, SomeRow } from '@/src/documents/tables/types/row';
-import { InferTableSchema, InferTableSchemaFromDefinition } from '@/src/db/types/tables/table-schema';
-import { CreateTableDefinition } from '@/src/db/types/tables/create-table';
+import { InferTableSchema } from '@/src/db/types/tables/table-schema';
 import { Table } from '@/src/documents/tables/table';
 import { KeyOf } from '@/src/documents/tables/types/utils';
 import { Db } from '@/src/db';
@@ -23,7 +22,7 @@ import { TypeErr } from '@/src/documents/utils';
 const db = null! as Db;
 
 // Demo of automagically creating a primary key type for your manually created schema
-interface Users extends Row<Users, ['key', 'age']> {
+interface Users extends Row<Users, 'key' | 'age'> {
   key: string,
   age: number,
   car: string,
@@ -41,19 +40,21 @@ const _b: KeyOf<SomeRow> = {
 };
 
 // Demo of automagically inferring your table schema's type
-const _c = createTable('my_table', {
-  columns: {
-    key: 'text',
-    age: {
-      type: 'int',
+const _c = db.createTable('my_table', {
+  definition: {
+    columns: {
+      key: 'text',
+      age: {
+        type: 'int',
+      },
+      car: {
+        type: 'map',
+        keyType: 'text',
+        valueType: 'int',
+      },
     },
-    car: {
-      type: 'map',
-      keyType: 'text',
-      valueType: 'int',
-    },
+    primaryKey: 'key',
   },
-  primaryKey: 'key',
 });
 
 const _d: InferTableSchema<typeof _c> = {
@@ -66,11 +67,13 @@ const _d: InferTableSchema<typeof _c> = {
 };
 
 // Demo of type errors that we can provide if you screw something up
-const _e = createTable('my_table', {
-  columns: {
-    key: 'int',
+const _e = db.createTable('my_table', {
+  definition: {
+    columns: {
+      key: 'int',
+    },
+    primaryKey: 'id',
   },
-  primaryKey: 'id',
 });
 
 const _f: InferTableSchema<typeof _e> = {
@@ -81,9 +84,11 @@ const _f: InferTableSchema<typeof _e> = {
 };
 
 // Demo of manually providing your own table schema
-const _g = createTable<SomeRow>('my_table', {
-  columns: {},
-  primaryKey: 'id',
+const _g = db.createTable<SomeRow>('my_table', {
+  definition: {
+    columns: {},
+    primaryKey: 'id',
+  },
 });
 
 const _h: InferTableSchema<typeof _g> = {
@@ -105,7 +110,7 @@ const mkTable = () => db.createTable('my_table', {
       },
     },
     primaryKey: {
-      partitionKey: ['key', 'bad'],
+      partitionBy: ['key', 'bad'],
       partitionSort: { age: -1 },
     },
   },
@@ -116,7 +121,7 @@ type MySchema = InferTableSchema<typeof mkTable>;
 type _Proof = Expect<Equal<MySchema, {
   key: string,
   age: number,
-  car: Map<string, number>,
+  car?: Map<string, number>,
   [$PrimaryKeyType]?: {
     key: string,
     bad: TypeErr<'Field `bad` not found as property in table definition'>,
@@ -162,7 +167,7 @@ type _Proof = Expect<Equal<MySchema, {
   type _1 = Expect<Equal<typeof _altered1, Table<{
     key: string,
     age: number,
-    car: Map<string, number>,
+    car?: Map<string, number>,
     [$PrimaryKeyType]?: {
       key: string,
       bad: TypeErr<'Field `bad` not found as property in table definition'>,
@@ -177,8 +182,8 @@ type _Proof = Expect<Equal<MySchema, {
   type _2 = Expect<Equal<typeof _altered2, Table<{
     key: string,
     age: number,
-    car: Map<string, number>,
-    new: string,
+    car?: Map<string, number>,
+    new?: string,
     [$PrimaryKeyType]?: {
       key: string,
       bad: TypeErr<'Field `bad` not found as property in table definition'>,
@@ -230,14 +235,6 @@ type _Proof = Expect<Equal<MySchema, {
 // ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
 // ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
 // ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-
-function createTable<_ extends 'infer', const Def extends CreateTableDefinition>(_: string, __: Def): Promise<Table<InferTableSchemaFromDefinition<Def>>>
-
-function createTable<T extends SomeRow>(_: string, __: CreateTableDefinition): Promise<Table<T>>
-
-function createTable(_: string, __: CreateTableDefinition): unknown {
-  throw 'stub';
-}
 
 export type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends (<T>() => T extends Y ? 1 : 2) ? true : false;
 export type Expect<T extends true> = T;
