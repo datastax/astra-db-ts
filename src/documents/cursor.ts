@@ -93,7 +93,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   readonly #options: GenericFindOptions;
 
   private _filter: Filter<SomeDoc>;
-  private _mapping?: (doc: unknown) => T;
+  private _mapping?: (doc: TRaw) => T;
   private _buffer: TRaw[] = [];
   private _nextPageState?: string | null;
   private _state = CursorStatus.Idle;
@@ -265,7 +265,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @see StrictProjection
    */
-  public project<R = any, RRaw extends SomeDoc = SomeDoc>(projection: Projection): FindCursor<R, RRaw> {
+  public project<R = T, RRaw extends SomeDoc = TRaw>(projection: Projection): FindCursor<R, RRaw> {
     this.#assertUninitialized();
     this.#options.projection = projection;
     return this as any;
@@ -319,7 +319,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
 
     if (this._mapping) {
       const oldMapping = this._mapping;
-      this._mapping = (doc: unknown) => mapping(oldMapping(doc)) as any;
+      this._mapping = (doc: TRaw) => mapping(oldMapping(doc)) as any;
     } else {
       this._mapping = mapping as any;
     }
