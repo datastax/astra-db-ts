@@ -15,6 +15,14 @@
 
 export * from './data-api-client';
 export * from './errors';
-export * from './types';
-export * from '../lib/logging/logger';
-export { DataAPIClientEvent } from '@/src/lib/logging/events';
+
+export type {
+  DataAPIClientOptions,
+  Caller,
+  DefaultHttpClientOptions,
+  Http1Options,
+  DataAPIHttpOptions,
+  FetchHttpClientOptions,
+  CustomHttpClientOptions,
+} from './types';
+export { DbSpawnOptions } from '@/src/client/types';

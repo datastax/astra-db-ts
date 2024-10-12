@@ -117,7 +117,7 @@ export type InferTableSchema<T extends InferrableTable> =
     ? Schema
     : never;
 
-type Normalize<T> = { [K in keyof T]: T[K] };
+export type Normalize<T> = { [K in keyof T]: T[K] } & EmptyObj;
 
 /**
  * Automagically infers a table's schema and primary keys from the bespoke table definition given in
