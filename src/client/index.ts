@@ -24,5 +24,5 @@ export type {
   DataAPIHttpOptions,
   FetchHttpClientOptions,
   CustomHttpClientOptions,
+  DbSpawnOptions,
 } from './types';
-export { DbSpawnOptions } from '@/src/client/types';

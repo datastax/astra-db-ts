@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { SomeRow } from '@/src/documents';
-import { Cols2CqlTypes, CreateTableColumnDefinitions } from '@/src/db';
+import { Cols2CqlTypes, CreateTableColumnDefinitions, Normalize } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
 import { EmptyObj } from '@/src/lib/types';
 
@@ -37,10 +37,10 @@ export interface DropColumnOperation<Schema extends SomeRow> {
   ifExists?: boolean,
 }
 
-export type AlterTableSchema<Schema extends SomeRow, Alter extends AlterTableOptions<Schema>> = Omit<
+export type AlterTableSchema<Schema extends SomeRow, Alter extends AlterTableOptions<Schema>> = Normalize<Omit<
   Schema & Cols2Add<Alter['operation']['add']>,
   Cols2Drop<Alter['operation']['drop']>
->;
+>>;
 
 export type Cols2Add<Op extends AddColumnOperation | undefined> = Op extends AddColumnOperation
   ? Partial<Cols2CqlTypes<Op["columns"]>>
