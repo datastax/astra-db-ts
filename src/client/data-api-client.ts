@@ -19,7 +19,11 @@ import {
   Caller,
   CustomHttpClientOptions,
   DataAPIClientOptions,
+  DataAPIExplicitLoggingConfig,
   DataAPIHttpOptions,
+  DataAPILoggingConfig,
+  DataAPILoggingEvent,
+  DataAPILoggingOutput,
   DbSpawnOptions,
   DefaultHttpClientOptions,
   InternalRootClientOpts,
@@ -36,6 +40,17 @@ import { nullish, TokenProvider } from '@/src/lib';
 import { buildUserAgent } from '@/src/lib/api/clients/http-client';
 import { FetchH2 } from '@/src/lib/api';
 import { isNullish, validateDataAPIEnv } from '@/src/lib/utils';
+import {
+  error,
+  isLeft,
+  isNonEmpty,
+  mapMEither,
+  right,
+  typeError,
+  validateInStrEnum,
+  Validation,
+} from '@/src/lib/validation';
+import { Equal, Expect } from '@/tests/typing/prelude';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -407,38 +422,125 @@ function validateHttpOpts(opts: DataAPIHttpOptions | undefined | null) {
   }
 }
 
-function validateCaller(caller: Caller | Caller[]) {
+const validateCaller = (caller: unknown, field: string): Validation<Caller | Caller[] | nullish> => {
   if (!Array.isArray(caller)) {
-    throw new TypeError('Invalid caller; expected an array, or undefined/null');
+    return typeError(`Expected ${field}.caller to be an array, or undefined/null`);
   }
 
   const isCallerArr = Array.isArray(caller[0]);
 
-  const callers = (
-    (isCallerArr)
-      ?  caller
-      : [caller]
-  ) as Caller[];
+  const callers = (isCallerArr)
+    ? caller
+    : [caller];
 
-  callers.forEach((c, i) => {
-    const idxMessage = (isCallerArr)
-      ? ` at index ${i}`
-      : '';
+  const mkIdxMsg = (isCallerArr)
+    ? (i: number) => `[${i}]`
+    : () => '';
 
+  return mapMEither((c, i): Validation<Caller> => {
     if (!Array.isArray(c)) {
-      throw new TypeError(`Invalid caller; expected [name, version?], or an array of such${idxMessage}`);
+      return typeError(`Expected ${field}.caller${mkIdxMsg(i)} to be a tuple [name: string, version?: string]`);
     }
 
     if (c.length < 1 || 2 < c.length) {
-      throw new Error(`Invalid caller; expected [name, version?], or an array of such${idxMessage}`);
+      return typeError(`Expected ${field}.caller${mkIdxMsg(i)} to be of format [name: string, version?: string]`);
     }
 
-    if (typeof c[0] !== 'string') {
-      throw new Error(`Invalid caller; expected a string name${idxMessage}`);
+    const [name, version] = c;
+
+    if (typeof name !== 'string') {
+      return error(`Expected ${field}.caller${mkIdxMsg(i)}[0] to be a string name (got ${typeof name})`);
     }
 
-    if (c.length === 2 && typeof c[1] !== 'string') {
-      throw new Error(`Invalid caller; expected a string version${idxMessage}`);
+    if (isNullish(version) && typeof version !== 'string') {
+      return error(`Expected ${field}.caller${mkIdxMsg(i)}[1] to be a string (or undefined) version (got ${typeof version})`);
     }
-  });
-}
+
+    return right([name, version || undefined]);
+  })(callers);
+};
+
+const validateLoggingConfig = (config: unknown, field: string): Validation<DataAPILoggingConfig | nullish> => {
+  if (isNullish(config)) {
+    return right(config);
+  }
+
+  if (typeof config === 'string') {
+    return validateIsLoggingEvent(config, `${field}.log`);
+  }
+
+  if (!Array.isArray(config)) {
+    return typeError(`Expected ${field}.log to be of type string | (string | object); got ${typeof config}`);
+  }
+
+  if (!isNonEmpty(config)) {
+    return error(`Expected ${field}.log array to be non-empty`);
+  }
+
+  return mapMEither((c, i): Validation<DataAPILoggingEvent | DataAPIExplicitLoggingConfig> => {
+    if (c === null || c === undefined) {
+      return typeError(`Expected ${field}.log[${i}] to be non-null`);
+    }
+    if (typeof c === 'string') {
+      return validateIsLoggingEvent(c, `${field}.log[${i}]`);
+    }
+    if (typeof config === 'object') {
+      return validateIsExplicitLoggingConfig(c, `${field}.log[${i}]`);
+    }
+    return typeError(`Expected ${field}.log[${i}] to be of type string | object; got ${typeof config}`);
+  })(config);
+};
+
+const LoggingEvents = <const>['all', 'none', 'adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded', 'adminCommandFailed', 'commandStarted', 'commandFailed', 'commandSucceeded'];
+type _LoggingEventsProof = Expect<Equal<typeof LoggingEvents[number], DataAPILoggingEvent>>;
+const validateIsLoggingEvent = validateInStrEnum<DataAPILoggingEvent>('DataAPILoggingEvent', LoggingEvents);
+
+const LoggingOutputs = <const>['event', 'stdout', 'stderr'];
+type _LoggingOutputsProof = Expect<Equal<typeof LoggingOutputs[number], DataAPILoggingOutput>>;
+const validateIsLoggingOutput = validateInStrEnum<DataAPILoggingOutput>('DataAPILoggingOutput', LoggingOutputs);
+
+const validateIsExplicitLoggingConfig = (config: object, field: string) => () => {
+  if (!('events' in config)) {
+    return typeError(`Expected ${field} to have an 'events' property`);
+  }
+
+  const events = config.events;
+
+  if (typeof events === 'string') {
+    const v = validateIsLoggingEvent(events, `${field}.events`);
+    if (isLeft(v)) return v;
+  } else if (Array.isArray(events)) {
+    if (!isNonEmpty(events)) {
+      return error(`Expected ${field}.events to be non-empty`);
+    }
+
+    const v = mapMEither((e, i) => {
+      if (typeof e === 'string') {
+        return validateIsLoggingEvent(e, `${field}.events[${i}]`);
+      }
+      return typeError(`Expected ${field}.events[${i}] to be of type string; got ${typeof config}`);
+    })(events);
+    if (isLeft(v)) return v;
+  } else {
+    return typeError(`Expected ${field}.events to be a string or an array of strings`);
+  }
+
+  const emits = ('emits' in config) ? config.emits : null;
+
+  if (typeof emits === 'string') {
+    const v = validateIsLoggingOutput(emits, `${field}.emits`);
+    if (isLeft(v)) return v;
+  } else if (Array.isArray(emits)) {
+    const v = mapMEither((o, i): Validation<DataAPILoggingOutput> => {
+      if (typeof o === 'string') {
+        return validateIsLoggingOutput(o, `${field}.emits[${i}]`);
+      }
+      return typeError(`Expected ${field}.emits[${i}] to be of type string; got ${typeof config}`);
+    })(emits);
+    if (isLeft(v)) return v;
+  } else if (!isNullish(emits)) {
+    return typeError(`Expected ${field}.emits to be a string or an array of strings${field}`);
+  }
+
+  return right({ events, emits });
+};

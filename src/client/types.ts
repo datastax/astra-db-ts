@@ -38,6 +38,16 @@ import type { DataAPIEnvironment, TokenProvider } from '@/src/lib';
  */
 export type Caller = [name: string, version?: string];
 
+export type DataAPILoggingConfig = DataAPILoggingEvent | readonly (DataAPILoggingEvent | DataAPIExplicitLoggingConfig)[]
+
+export type DataAPILoggingEvent = 'all' | 'none' | keyof DataAPIClientEvents;
+export type DataAPILoggingOutput = 'event' | 'stdout' | 'stderr';
+
+export interface DataAPIExplicitLoggingConfig {
+  readonly events: DataAPILoggingEvent | readonly DataAPILoggingEvent[],
+  readonly emits?: DataAPILoggingOutput | readonly DataAPILoggingOutput[] | null,
+}
+
 /**
  * The default options for the {@link DataAPIClient}. The Data API & DevOps specific options may be overridden
  * when spawning a new instance of their respective classes.
@@ -45,6 +55,7 @@ export type Caller = [name: string, version?: string];
  * @public
  */
 export interface DataAPIClientOptions {
+  log?: DataAPILoggingConfig,
   /**
    * Sets the Data API "backend" that is being used (e.g. 'dse', 'hcd', 'cassandra', or 'other'). Defaults to 'astra'.
    *
