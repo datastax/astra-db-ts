@@ -14,7 +14,7 @@
 
 import { Filter, SomeDoc } from '@/src/documents/collections';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import { normalizedSort, TypeErr } from '@/src/documents/utils';
+import { normalizedSort } from '@/src/documents/utils';
 import { CursorIsStartedError } from '@/src/documents/errors';
 import { Projection, Sort } from '@/src/documents/types';
 import { GenericFindOptions } from '@/src/documents/commands';
@@ -96,7 +96,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   readonly #httpClient: DataAPIHttpClient;
 
   private readonly _options: GenericFindOptions;
-  private _filter: Filter<SomeDoc>;
+  private _filter: Filter<TRaw>;
   private _mapping?: (doc: TRaw) => T;
   private _buffer: TRaw[] = [];
   private _nextPageState?: string | null;
@@ -108,10 +108,10 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(keyspace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: GenericFindOptions) {
+  constructor(keyspace: string, httpClient: DataAPIHttpClient, filter: Filter<TRaw>, options?: GenericFindOptions) {
     this.#keyspace = keyspace;
     this.#httpClient = httpClient;
-    this._filter = filter;
+    this._filter = structuredClone(filter);
     this._options = structuredClone(options ?? {});
 
     if (options?.sort) {
@@ -175,7 +175,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    */
   public filter(filter: Filter<TRaw>): this {
     this.#assertUninitialized();
-    this._filter = filter as any;
+    this._filter = filter;
     return this;
   }
 
@@ -272,8 +272,6 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   public project<RRaw extends SomeDoc = DeepPartial<TRaw>>(projection: Projection): FindCursor<RRaw, RRaw> {
     this.#assertUninitialized();
 
-    const cursor = new FindCursor<{ age: 3 }, { age: 3 }>(null!, null!, null!).project({ age: 1 });
-
     if (this._mapping) {
       throw new Error('Cannot set a projection after already using cursor.map(...)');
     }
@@ -347,7 +345,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns A behavioral clone of this cursor.
    */
   public clone(): FindCursor<TRaw, TRaw> {
-    return new FindCursor<TRaw, TRaw>(this.#keyspace, this.#httpClient, this._filter, this._options);
+    return new FindCursor(this.#keyspace, this.#httpClient, this._filter, this._options);
   }
 
   /**
