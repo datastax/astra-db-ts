@@ -15,6 +15,7 @@
 import { DEFAULT_KEYSPACE, RawDataAPIResponse } from '@/src/lib/api';
 import { DataAPIRequestInfo } from '@/src/lib/api/clients/data-api-http-client';
 import { hrTimeMs } from '@/src/lib/api/clients/http-client';
+import { DataAPIClientEvent } from '@/src/client/logging';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -49,7 +50,7 @@ export type DataAPICommandEvents = {
  *
  * @public
  */
-export abstract class CommandEvent {
+export abstract class CommandEvent extends DataAPIClientEvent {
   /**
    * The command object. Equal to the response body of the HTTP request.
    *
@@ -93,11 +94,16 @@ export abstract class CommandEvent {
    * @internal
    */
   protected constructor(info: DataAPIRequestInfo) {
+    super();
     this.command = info.command;
     this.keyspace = info.keyspace || DEFAULT_KEYSPACE;
     this.collection = info.collection;
     this.commandName = Object.keys(info.command)[0];
     this.url = info.url;
+  }
+
+  formatted(): string {
+    return JSON.stringify(this);
   }
 }
 
@@ -125,6 +131,10 @@ export class CommandStartedEvent extends CommandEvent {
   constructor(info: DataAPIRequestInfo) {
     super(info);
     this.timeout = info.timeoutManager.ms;
+  }
+
+  formatted(): string {
+    return JSON.stringify(this);
   }
 }
 
@@ -166,6 +176,10 @@ export class CommandSucceededEvent extends CommandEvent {
     this.warnings = warnings;
     this.resp = reply;
   }
+
+  formatted(): string {
+    return JSON.stringify(this);
+  }
 }
 
 /**
@@ -200,5 +214,9 @@ export class CommandFailedEvent extends CommandEvent {
     super(info);
     this.duration = hrTimeMs() - started;
     this.error = error;
+  }
+
+  formatted(): string {
+    return JSON.stringify(this);
   }
 }

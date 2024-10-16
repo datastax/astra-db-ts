@@ -21,6 +21,28 @@ import {
   DataAPILoggingOutput,
 } from '@/src/client/types';
 import { LoggingEvents } from '@/src/client/parsers/logging';
+import EventEmitter = NodeJS.EventEmitter;
+
+const LoggingEventsWithoutAll = LoggingEvents.filter(e => e !== 'all');
+
+export abstract class DataAPIClientEvent {
+  public abstract formatted(): string;
+}
+
+export type InternalLogger = Record<keyof DataAPIClientEvents, (e: DataAPIClientEvent) => void>;
+
+export const mkLogger = (cfg: InternalLoggingConfig, emitter: EventEmitter) =>
+  Object.fromEntries(Object.entries(cfg).map(([event, outputs]) => [event, (e: DataAPIClientEvent) => {
+    if (outputs?.event) {
+      emitter.emit(event, e);
+    }
+
+    if (outputs?.stdout) {
+      console.log(e.formatted());
+    } else if (outputs?.stderr) {
+      console.error(e.formatted());
+    }
+  }])) as InternalLogger;
 
 export const evalLoggingConfig = (base: InternalLoggingConfig, config: DataAPILoggingConfig | undefined): InternalLoggingConfig => {
   const asExplicit = normalizeLoggingConfig(config);
@@ -30,20 +52,22 @@ export const evalLoggingConfig = (base: InternalLoggingConfig, config: DataAPILo
     for (const event of (layer.events as (keyof DataAPIClientEvents)[])) {
       newConfig[event] = buildOutputsMap(layer.emits);
 
-      if (newConfig[event].stdout && newConfig[event].stderr) {
+      if (newConfig[event]?.stdout && newConfig[event].stderr) {
         throw new Error(`Nonsensical logging configuration; attempted to set both stdout and stderr outputs for '${event}'`);
       }
     }
   }
 
-  return base;
+  return newConfig;
 };
 
-const buildOutputsMap = (emits: readonly DataAPILoggingOutput[]) => ({
-  event: emits.includes('event'),
-  stdout: emits.includes('stdout'),
-  stderr: emits.includes('stderr'),
-});
+const buildOutputsMap = (emits: readonly DataAPILoggingOutput[]) => (emits.length === 0)
+  ? undefined
+  : ({
+    event: emits.includes('event'),
+    stdout: emits.includes('stdout'),
+    stderr: emits.includes('stderr'),
+  });
 
 interface StrictDataAPIExplicitLoggingConfig {
   events: readonly DataAPILoggingEvent[],
@@ -74,7 +98,7 @@ const normalizeLoggingConfig = (config: DataAPILoggingConfig | undefined): Stric
 
     if (c.events === 'all' || Array.isArray(c.events) && c.events.includes('all')) {
       if (c.events === 'all' || c.events.length === 1 && c.events[0] === 'all') {
-        return [{ events: LoggingEvents, emits: Array.isArray(c.emits) ? c.emits : [c.emits] }];
+        return [{ events: LoggingEventsWithoutAll, emits: Array.isArray(c.emits) ? c.emits : [c.emits] }];
       }
       throw new Error(`Nonsensical logging configuration; can not have 'all' in a multi-element array (@ idx ${i})`);
     }
@@ -86,7 +110,7 @@ const normalizeLoggingConfig = (config: DataAPILoggingConfig | undefined): Stric
   });
 };
 
-export const EmptyInternalLoggingConfig = Object.fromEntries(LoggingEvents.map((e) => [e, buildOutputsMap([])])) as InternalLoggingConfig;
+export const EmptyInternalLoggingConfig = Object.fromEntries(LoggingEventsWithoutAll.map((e) => [e, buildOutputsMap([])])) as InternalLoggingConfig;
 
 export const EventLoggingDefaults = <const>{
   adminCommandStarted: ['event', 'stdout'],

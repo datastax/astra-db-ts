@@ -71,8 +71,8 @@ export class DevOpsAPIHttpClient extends HttpClient {
       const timeoutManager = options?.timeoutManager ?? this._timeoutManager(options?.maxTimeMS);
       const url = this.baseUrl + req.path;
 
-      if (this.monitorCommands && !isLongRunning) {
-        this.emitter.emit('adminCommandStarted', new AdminCommandStartedEvent(req, isLongRunning, timeoutManager.ms));
+      if (!isLongRunning) {
+        this.logger.adminCommandSucceeded(new AdminCommandStartedEvent(req, isLongRunning, timeoutManager.ms));
       }
 
       started ||= hrTimeMs();
@@ -92,8 +92,8 @@ export class DevOpsAPIHttpClient extends HttpClient {
         throw new DevOpsAPIResponseError(resp, data);
       }
 
-      if (this.monitorCommands && !isLongRunning) {
-        this.emitter.emit('adminCommandSucceeded', new AdminCommandSucceededEvent(req, false, data, [], started));
+      if (!isLongRunning) {
+        this.logger.adminCommandSucceeded(new AdminCommandSucceededEvent(req, false, data, [], started));
       }
 
       return {
@@ -105,11 +105,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
       if (!(e instanceof Error)) {
         throw e;
       }
-
-      if (this.monitorCommands) {
-        this.emitter.emit('adminCommandFailed', new AdminCommandFailedEvent(req, isLongRunning, e, started));
-      }
-
+      this.logger.adminCommandFailed(new AdminCommandFailedEvent(req, isLongRunning, e, started));
       throw e;
     }
   }
@@ -118,9 +114,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
     const timeoutManager = this._timeoutManager(info.options?.maxTimeMS);
     const isLongRunning = info.options?.blocking !== false;
 
-    if (this.monitorCommands) {
-      this.emitter.emit('adminCommandStarted', new AdminCommandStartedEvent(req, isLongRunning, timeoutManager.ms));
-    }
+    this.logger.adminCommandStarted(new AdminCommandStartedEvent(req, isLongRunning, timeoutManager.ms));
 
     const started = hrTimeMs();
     const resp = await this.request(req, { timeoutManager }, started);
@@ -131,9 +125,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
 
     await this._awaitStatus(id, req, info, timeoutManager, started);
 
-    if (this.monitorCommands && isLongRunning) {
-      this.emitter.emit('adminCommandSucceeded', new AdminCommandSucceededEvent(req, true, resp, [], started));
-    }
+    this.logger.adminCommandSucceeded(new AdminCommandSucceededEvent(req, isLongRunning, resp, [], started));
 
     return resp;
   }
@@ -157,9 +149,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
       }
       waiting = true;
 
-      if (this.monitorCommands) {
-        this.emitter.emit('adminCommandPolling', new AdminCommandPollingEvent(req, started, pollInterval));
-      }
+      this.logger.adminCommandPolling(new AdminCommandPollingEvent(req, started, pollInterval));
 
       const resp = await this.request({
         method: HttpMethods.Get,
@@ -176,10 +166,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
         const okStates = [info.target, ...info.legalStates];
         const error = new DevOpsUnexpectedStateError(`Created database is not in any legal state [${okStates.join(',')}]`, okStates, resp.data);
 
-        if (this.monitorCommands) {
-          this.emitter.emit('adminCommandFailed', new AdminCommandFailedEvent(req, true, error, started));
-        }
-
+        this.logger.adminCommandFailed(new AdminCommandFailedEvent(req, true, error, started));
         throw error;
       }
 

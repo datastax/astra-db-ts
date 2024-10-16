@@ -20,7 +20,7 @@ import type { FetchCtx } from '@/src/lib/api/fetch/types';
 /**
  * @internal
  */
-export type InternalLoggingConfig = Record<keyof DataAPIClientEvents, Record<DataAPILoggingOutput, boolean>>
+export type InternalLoggingConfig = Record<keyof DataAPIClientEvents, Record<DataAPILoggingOutput, boolean> | undefined>
 
 /**
  * @internal

@@ -14,6 +14,7 @@
 
 import { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client';
 import { hrTimeMs } from '@/src/lib/api/clients/http-client';
+import { DataAPIClientEvent } from '@/src/client/logging';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -46,7 +47,7 @@ export type AdminCommandEvents = {
  *
  * @public
  */
-export abstract class AdminCommandEvent {
+export abstract class AdminCommandEvent extends DataAPIClientEvent {
   /**
    * The path for the request, not including the Base URL.
    */
@@ -78,11 +79,16 @@ export abstract class AdminCommandEvent {
    * @internal
    */
   protected constructor(info: DevOpsAPIRequestInfo, longRunning: boolean) {
+    super();
     this.path = info.path;
     this.method = info.method;
     this.reqBody = info.data;
     this.params = info.params;
     this.longRunning = longRunning;
+  }
+
+  formatted(): string {
+    return JSON.stringify(this);
   }
 }
 
@@ -107,6 +113,10 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
   constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: number) {
     super(info, longRunning);
     this.timeout = timeout;
+  }
+
+  formatted(): string {
+    return JSON.stringify(this);
   }
 }
 
@@ -139,6 +149,10 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
     super(info, true);
     this.elapsed = hrTimeMs() - started;
     this.interval = interval;
+  }
+
+  formatted(): string {
+    return JSON.stringify(this);
   }
 }
 
@@ -179,6 +193,10 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
     this.warnings = warnings;
     this.resBody = data || undefined;
   }
+
+  formatted(): string {
+    return JSON.stringify(this);
+  }
 }
 
 /**
@@ -211,5 +229,9 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
     super(info, longRunning);
     this.duration = hrTimeMs() - started;
     this.error = error;
+  }
+
+  formatted(): string {
+    return JSON.stringify(this);
   }
 }
