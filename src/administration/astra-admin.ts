@@ -24,10 +24,10 @@ import {
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { DbSpawnOptions, InternalRootClientOpts } from '@/src/client/types';
 import { Db } from '@/src/db/db';
-import { validateAdminOpts } from '@/src/administration/utils';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
 import { TokenProvider, WithTimeout } from '@/src/lib';
+import { parseAdminSpawnOpts } from '@/src/client/parsers/admin-spawn';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -64,15 +64,15 @@ export class AstraAdmin {
    *
    * @internal
    */
-  constructor(rootOpts: InternalRootClientOpts, adminOpts?: AdminSpawnOptions) {
-    validateAdminOpts(adminOpts);
+  constructor(rootOpts: InternalRootClientOpts, rawAdminOpts?: AdminSpawnOptions) {
+    const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options').unwrap();
 
     this.#defaultOpts = rootOpts;
 
     const combinedAdminOpts = {
       ...rootOpts.adminOptions,
       ...adminOpts,
-      adminToken: TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken),
+      adminToken: TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken, 'admin token').unwrap(),
     };
 
     this.#httpClient = new DevOpsAPIHttpClient({

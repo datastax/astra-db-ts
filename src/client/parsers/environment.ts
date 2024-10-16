@@ -16,8 +16,4 @@ import { EqualityProof, p } from '@/src/lib/validation';
 import { DataAPIEnvironment, DataAPIEnvironments } from '@/src/lib';
 
 void EqualityProof<typeof DataAPIEnvironments[number], DataAPIEnvironment, true>;
-const environmentParser = p.mkStrEnumParser('DataAPIEnvironments', DataAPIEnvironments, false);
-
-export const parseEnvironment = p.do<DataAPIEnvironment | undefined>(function* (raw, field) {
-  return yield* environmentParser(raw, field);
-});
+export const parseEnvironment = p.mkStrEnumParser('DataAPIEnvironments', DataAPIEnvironments, false);
