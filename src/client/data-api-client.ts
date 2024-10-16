@@ -32,7 +32,7 @@ import { nullish, TokenProvider } from '@/src/lib';
 import { buildUserAgent } from '@/src/lib/api/clients/http-client';
 import { FetchH2 } from '@/src/lib/api';
 import { isNullish } from '@/src/lib/utils';
-import { p } from '@/src/lib/validation';
+import { ok, p } from '@/src/lib/validation';
 import { parseLoggingConfig } from '@/src/client/parsers/logging';
 import { parseEnvironment } from '@/src/client/parsers/environment';
 import { parseDbSpawnOpts } from '@/src/client/parsers/db-spawn';
@@ -352,36 +352,19 @@ function tryLoadFetchH2(clientType: string | nullish, options: DataAPIClientOpti
   }
 }
 
-// const parseClientOpts = (rawOpts: unknown) => p.do<DataAPIClientOptions | undefined>(function () {
-//   const opts = this.parse(rawOpts, 'options', 'object?');
-//
-//   if (!opts) {
-//     return ok(undefined);
-//   }
-//
-//   return ok({
-//     log: this.use(parseLoggingConfig, opts.log, 'options.log'),
-//     environment: this.use(parseEnvironment, opts.envirionment, 'options.environment'),
-//     dbOptions: this.use(parseDbSpawnOpts, opts.dbOptions, 'options.dbOptions'),
-//     adminOptions: this.use(parseAdminSpawnOpts, opts.adminOptions, 'options.adminOptions'),
-//     caller: this.use(parseCaller, opts.caller, 'options.caller'),
-//     httpOptions: this.use(parseHttpOpts, opts.httpOptions, 'options.caller'),
-//   });
-// });
-
 const parseClientOpts = p.do<DataAPIClientOptions | undefined>(function* (raw, field) {
   const opts = yield* p.parse('object?')(raw, field);
 
   if (!opts) {
-    return undefined;
+    return ok(undefined);
   }
 
-  return {
+  return ok({
     log: yield* parseLoggingConfig(opts.log, `${field}.log`),
     environment: yield* parseEnvironment(opts.envirionment, `${field}.environment`),
     dbOptions: yield* parseDbSpawnOpts(opts.dbOptions, `${field}.dbOptions`),
     adminOptions: yield* parseAdminSpawnOpts(opts.adminOptions, `${field}.adminOptions`),
     caller: yield* parseCaller(opts.caller, `${field}.caller`),
     httpOptions: yield* parseHttpOpts(opts.httpOptions, `${field}.caller`),
-  };
+  });
 });

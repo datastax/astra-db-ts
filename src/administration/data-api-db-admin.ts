@@ -16,10 +16,10 @@
 import { AdminBlockingOptions, AdminSpawnOptions, LocalCreateKeyspaceOptions } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
 import { WithTimeout } from '@/src/lib/types';
-import { validateAdminOpts } from '@/src/administration/utils';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { Db } from '@/src/db';
+import { parseAdminSpawnOpts } from '@/src/client/parsers/admin-spawn';
 
 /**
  * An administrative class for managing non-Astra databases, including creating, listing, and deleting keyspaces.
@@ -63,10 +63,9 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, adminOpts?: AdminSpawnOptions) {
+  constructor(db: Db, httpClient: DataAPIHttpClient, rawAdminOpts?: AdminSpawnOptions) {
     super();
-    validateAdminOpts(adminOpts);
-
+    const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options').unwrap();
     this.#httpClient = httpClient.forDbAdmin(adminOpts);
     this.#db = db;
   }

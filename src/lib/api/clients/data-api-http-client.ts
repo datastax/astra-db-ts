@@ -134,7 +134,7 @@ export class DataAPIHttpClient extends HttpClient {
   public forDbAdmin(opts: AdminSpawnOptions | undefined): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
-      tokenProvider: opts?.adminToken ? TokenProvider.parseToken(opts?.adminToken) : this.#props.tokenProvider,
+      tokenProvider: opts?.adminToken ? TokenProvider.parseToken(opts?.adminToken, 'admin token').unwrap() : this.#props.tokenProvider,
       monitorCommands: opts?.monitorCommands || this.#props.monitorCommands,
       baseUrl: opts?.endpointUrl || this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,

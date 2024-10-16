@@ -28,7 +28,7 @@ export const parseCaller = (caller: unknown, field: string): Result<Caller | Cal
   const isCallerArr = Array.isArray(caller[0]);
 
   const callers = (isCallerArr)
-    ? caller
+    ?  caller
     : [caller];
 
   const mkIdxMsg = (isCallerArr)

@@ -13,17 +13,23 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { AdminBlockingOptions, AdminSpawnOptions, CreateKeyspaceOptions, FullDatabaseInfo } from '@/src/administration/types';
+import {
+  AdminBlockingOptions,
+  AdminSpawnOptions,
+  CreateKeyspaceOptions,
+  FullDatabaseInfo,
+} from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
 import { WithTimeout } from '@/src/lib/types';
 import { InternalRootClientOpts } from '@/src/client/types';
-import { extractAstraEnvironment, validateAdminOpts } from '@/src/administration/utils';
+import { extractAstraEnvironment } from '@/src/administration/utils';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, HttpMethods } from '@/src/lib/api/constants';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
 import { Db } from '@/src/db';
 import { StaticTokenProvider, TokenProvider } from '@/src/lib';
 import { isNullish } from '@/src/lib/utils';
+import { parseAdminSpawnOpts } from '@/src/client/parsers/admin-spawn';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting keyspaces.
@@ -67,17 +73,17 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts: AdminSpawnOptions | undefined, dbToken: TokenProvider, endpoint: string) {
+  constructor(db: Db, rootOpts: InternalRootClientOpts, rawAdminOpts: AdminSpawnOptions | undefined, dbToken: TokenProvider, endpoint: string) {
     super();
 
-    validateAdminOpts(adminOpts);
+    const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options').unwrap();
 
     const combinedAdminOpts = {
       ...rootOpts.adminOptions,
       ...adminOpts,
     };
 
-    const _adminToken = TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken);
+    const _adminToken = TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken, 'admin token').unwrap();
 
     const adminToken = (_adminToken instanceof StaticTokenProvider && isNullish(_adminToken.getToken()))
       ? dbToken

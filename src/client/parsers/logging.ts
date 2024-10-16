@@ -68,7 +68,7 @@ const parseExplicitLoggingConfig = p.do<DataAPIExplicitLoggingConfig, SomeDoc>(f
     ? yield* parseLoggingConfigField(config.emits, `${field}.emits`, parseLoggingOutput)
     : undefined;
 
-  return { events, emits };
+  return ok({ events, emits });
 });
 
 const parseLoggingConfigField = <E>(value: unknown, field: string, parser: (x: string, field: string) => Result<E>): Result<E | E[]> => {

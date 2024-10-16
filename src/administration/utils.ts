@@ -12,19 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AdminSpawnOptions } from '@/src/administration/types';
-import { validateOption } from '@/src/documents/utils';
-
-/**
- * @internal
- */
-export function validateAdminOpts(opts: AdminSpawnOptions | undefined) {
-  validateOption('adminOptions', opts, 'object', false, (opts) => {
-    validateOption('adminOptions.monitorCommands', opts.monitorCommands, 'boolean');
-    validateOption('adminOptions.endpointUrl', opts.endpointUrl, 'string');
-  });
-}
-
 /**
  * @internal
  */

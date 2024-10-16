@@ -17,7 +17,7 @@ import { DEFAULT_KEYSPACE, RawDataAPIResponse } from '@/src/lib/api';
 import { DatabaseInfo } from '@/src/administration/types/admin/database-info';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { DataAPIEnvironment, nullish, WithTimeout } from '@/src/lib/types';
-import { extractDbIdFromUrl, validateOption } from '@/src/documents/utils';
+import { extractDbIdFromUrl } from '@/src/documents/utils';
 import { DbSpawnOptions, InternalRootClientOpts } from '@/src/client/types';
 import { AdminSpawnOptions, DbAdmin } from '@/src/administration';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin';
@@ -38,6 +38,7 @@ import { CreateTableDefinition, CreateTableOptions } from '@/src/db/types/tables
 import { InferTableSchemaFromDefinition } from '@/src/db/types/tables/table-schema';
 import { DropTableOptions } from '@/src/db/types/tables/drop-table';
 import { FullTableInfo, ListTablesOptions } from '@/src/db/types/tables/list-tables';
+import { parseDbSpawnOpts } from '@/src/client/parsers/db-spawn';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -87,11 +88,11 @@ export class Db {
    *
    * @internal
    */
-  constructor(rootOpts: InternalRootClientOpts, endpoint: string, dbOpts: DbSpawnOptions | nullish) {
-    validateDbOpts(dbOpts);
+  constructor(rootOpts: InternalRootClientOpts, endpoint: string, rawDbOpts: DbSpawnOptions | nullish) {
+    const dbOpts = parseDbSpawnOpts(rawDbOpts, 'options').unwrap();
 
     this.#defaultOpts = rootOpts;
-    this.#token = TokenProvider.parseToken(dbOpts?.token ?? rootOpts.dbOptions.token);
+    this.#token = TokenProvider.parseToken(dbOpts?.token ?? rootOpts.dbOptions.token, 'token').unwrap();
 
     const combinedDbOpts = {
       ...rootOpts.dbOptions,
@@ -101,7 +102,7 @@ export class Db {
     this._keyspace = {
       ref: (rootOpts.environment === 'astra')
         ? combinedDbOpts.keyspace ?? DEFAULT_KEYSPACE
-        : combinedDbOpts.keyspace,
+        : combinedDbOpts.keyspace ?? undefined,
     };
 
     this.#httpClient = new DataAPIHttpClient({
@@ -621,25 +622,4 @@ export class Db {
   private get _httpClient() {
     return this.#httpClient;
   }
-}
-
-/**
- * @internal
- */
-export function validateDbOpts(opts: DbSpawnOptions | nullish) {
-  validateOption('dbOptions', opts, 'object');
-
-  if (!opts) {
-    return;
-  }
-
-  validateOption(`dbOptions.keyspace`, opts.keyspace, 'string', false, (keyspace) => {
-    if (!keyspace.match(/^\w{1,48}$/)) {
-      throw new Error(`Invalid keyspace option; expected a string of 1-48 alphanumeric characters`);
-    }
-  });
-
-  validateOption('dbOptions.monitorCommands', opts.monitorCommands, 'boolean');
-
-  validateOption('dbOptions.dataApiPath', opts.dataApiPath, 'string');
 }

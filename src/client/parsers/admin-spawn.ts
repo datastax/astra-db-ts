@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { p } from '@/src/lib/validation';
+import { ok, p } from '@/src/lib/validation';
 import { TokenProvider } from '@/src/lib';
 import { AdminSpawnOptions } from '@/src/administration';
 
@@ -20,11 +20,11 @@ export const parseAdminSpawnOpts = p.do<AdminSpawnOptions | undefined>(function*
   const opts = yield* p.parse('object?')(raw, field);
 
   if (!opts) {
-    return undefined;
+    return ok(undefined);
   }
 
-  return {
+  return ok({
     endpointUrl: yield* p.parse('string?')(opts.endpointUrl, `${field}.endpointUrl`),
     adminToken: yield* TokenProvider.parseToken(opts.adminToken, `${field}.adminToken`),
-  };
+  });
 });

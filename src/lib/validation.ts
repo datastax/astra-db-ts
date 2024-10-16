@@ -130,19 +130,19 @@ export const p = {
 
     return parser(expected as any, field);
   },
-  do: <A, R = unknown>(fun: (raw: R, field: string) => Generator<Result<unknown>, A, void>): Parser<A, R> => (raw, field) => {
-    const iterator = fun(raw, field);
-    const state = iterator.next();
+  do: <A, R = unknown>(mkGen: (raw: R, field: string) => Generator<Result<unknown>, Result<A>, void>): Parser<A, R> => (raw, field) => {
+    const gen = mkGen(raw, field);
 
-    function run(state: any): any {
+    while (true) {
+      const state = gen.next();
+
       if (state.done) {
-        return ok(state.value);
+        return state.value;
       }
-      return state.value.chain((val: any) => {
-        return run(iterator.next(val));
-      });
-    }
 
-    return run(state);
+      if (!state.value.isOk()) {
+        return r.coerceR(state.value);
+      }
+    }
   },
 };
