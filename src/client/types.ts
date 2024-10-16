@@ -40,7 +40,7 @@ export type Caller = [name: string, version?: string];
 
 export type DataAPILoggingConfig = DataAPILoggingEvent | readonly (DataAPILoggingEvent | DataAPIExplicitLoggingConfig)[]
 
-export type DataAPILoggingEvent = 'all' | 'none' | keyof DataAPIClientEvents;
+export type DataAPILoggingEvent = 'all' | | keyof DataAPIClientEvents;
 export type DataAPILoggingOutput = 'event' | 'stdout' | 'stderr';
 
 export interface DataAPIExplicitLoggingConfig {

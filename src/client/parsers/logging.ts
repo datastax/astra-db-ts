@@ -53,7 +53,7 @@ export const parseLoggingConfig = (config: unknown, field: string): Result<DataA
   })(config);
 };
 
-const LoggingEvents = <const>['all', 'none', 'adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded', 'adminCommandFailed', 'commandStarted', 'commandFailed', 'commandSucceeded'];
+const LoggingEvents = <const>['all', 'adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded', 'adminCommandFailed', 'commandStarted', 'commandFailed', 'commandSucceeded'];
 void EqualityProof<typeof LoggingEvents[number], DataAPILoggingEvent, true>;
 const parseLoggingEvent = p.mkStrEnumParser<DataAPILoggingEvent, true>('DataAPILoggingEvent', LoggingEvents, true);
 
