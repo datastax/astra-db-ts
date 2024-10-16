@@ -155,20 +155,20 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
       : tokenOrOptions;
 
     const options = parseClientOpts(rawOptions, 'options.').unwrap();
+    const logging = evalLoggingConfig(EmptyInternalLoggingConfig, options?.logging);
 
     this.#options = {
       environment: options?.environment ?? 'astra',
       fetchCtx: buildFetchCtx(options || undefined),
-      logging: evalLoggingConfig(EmptyInternalLoggingConfig, options?.logging),
       dbOptions: {
-        monitorCommands: false,
         ...options?.dbOptions,
         token: TokenProvider.parseToken(options?.dbOptions?.token ?? token, 'provided token').unwrap(),
+        logging,
       },
       adminOptions: {
-        monitorCommands: false,
         ...options?.adminOptions,
         adminToken: TokenProvider.parseToken(options?.dbOptions?.token ?? token, 'provided token').unwrap(),
+        logging,
       },
       emitter: this,
       userAgent: buildUserAgent(options?.caller),

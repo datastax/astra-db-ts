@@ -26,17 +26,16 @@ export type InternalLoggingConfig = Record<keyof DataAPIClientEvents, Record<Dat
  * @internal
  */
 export interface InternalRootClientOpts {
-  logging: InternalLoggingConfig,
   environment: DataAPIEnvironment,
   emitter: TypedEmitter<DataAPIClientEvents>,
   fetchCtx: FetchCtx,
   userAgent: string,
-  dbOptions: Omit<DbSpawnOptions, 'token'> & {
+  dbOptions: Omit<DbSpawnOptions, 'token' | 'logging'> & {
     token: TokenProvider,
-    monitorCommands: boolean,
+    logging: InternalLoggingConfig,
   },
-  adminOptions: Omit<AdminSpawnOptions, 'adminToken'> & {
+  adminOptions: Omit<AdminSpawnOptions, 'adminToken' | 'logging'> & {
     adminToken: TokenProvider,
-    monitorCommands: boolean,
+    logging: InternalLoggingConfig,
   },
 }

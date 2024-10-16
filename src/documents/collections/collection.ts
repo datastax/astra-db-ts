@@ -124,8 +124,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * If an `_id` is provided which corresponds to a document that already exists in the collection, an error is raised,
    * and the insertion fails.
    *
-   * See {@link InsertOneOptions} for complete information about the options available for this operation.
-   *
    * @example
    * ```typescript
    * // Insert a document with a specific ID
@@ -253,7 +251,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * await collection.updateOne(
    *   { name: 'John Doe' },
-   *   { $set: { name: 'Jane Doe', $vectorize: "Oooooh, she's a little runaway" } },
+   *   { $set: { name: 'Jane Doe', $vectorize: "Ooh, she's a little runaway" } },
    *   { sort: { $vector: [.09, .58, .21] } }
    * );
    * ```
@@ -1018,7 +1016,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     return await this.#db.dropCollection(this.collectionName, { keyspace: this.keyspace, ...options });
   }
 
-  private get _httpClient() {
+  public get _httpClient() {
     return this.#httpClient;
   }
 }

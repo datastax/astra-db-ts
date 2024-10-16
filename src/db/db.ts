@@ -38,8 +38,9 @@ import { InferTableSchemaFromDefinition } from '@/src/db/types/tables/table-sche
 import { DropTableOptions } from '@/src/db/types/tables/drop-table';
 import { FullTableInfo, ListTablesOptions } from '@/src/db/types/tables/list-tables';
 import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
-
-import { InternalRootClientOpts } from '@/src/client/types';
+import { DbSpawnOptions } from '@/src/client/types';
+import { InternalRootClientOpts } from '@/src/client/types/internal';
+import { evalLoggingConfig } from '@/src/client/logging';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -77,7 +78,6 @@ import { InternalRootClientOpts } from '@/src/client/types';
  */
 export class Db {
   readonly #defaultOpts: InternalRootClientOpts;
-  readonly #token: TokenProvider;
   readonly #httpClient: DataAPIHttpClient;
   readonly #endpoint?: string;
 
@@ -92,27 +92,29 @@ export class Db {
   constructor(rootOpts: InternalRootClientOpts, endpoint: string, rawDbOpts: DbSpawnOptions | nullish) {
     const dbOpts = parseDbSpawnOpts(rawDbOpts, 'options').unwrap();
 
-    this.#defaultOpts = rootOpts;
-    this.#token = TokenProvider.parseToken(dbOpts?.token ?? rootOpts.dbOptions.token, 'token').unwrap();
-
-    const combinedDbOpts = {
-      ...rootOpts.dbOptions,
-      ...dbOpts,
+    this.#defaultOpts = {
+      ...rootOpts,
+      dbOptions: {
+        ...rootOpts.dbOptions,
+        ...dbOpts,
+        token: TokenProvider.parseToken(dbOpts?.token ?? rootOpts.dbOptions.token, 'token').unwrap(),
+        logging: evalLoggingConfig(rootOpts.dbOptions.logging, dbOpts?.logging),
+      },
     };
 
     this._keyspace = {
       ref: (rootOpts.environment === 'astra')
-        ? combinedDbOpts.keyspace ?? DEFAULT_KEYSPACE
-        : combinedDbOpts.keyspace ?? undefined,
+        ? this.#defaultOpts.dbOptions.keyspace ?? DEFAULT_KEYSPACE
+        : this.#defaultOpts.dbOptions.keyspace ?? undefined,
     };
 
     this.#httpClient = new DataAPIHttpClient({
       baseUrl: endpoint,
-      tokenProvider: this.#token,
+      tokenProvider: this.#defaultOpts.dbOptions.token,
       embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(null),
-      baseApiPath: combinedDbOpts.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment],
+      baseApiPath: this.#defaultOpts.dbOptions.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment],
       emitter: rootOpts.emitter,
-      monitorCommands: combinedDbOpts.monitorCommands,
+      logging: this.#defaultOpts.dbOptions.logging,
       fetchCtx: rootOpts.fetchCtx,
       keyspace: this._keyspace,
       userAgent: rootOpts.userAgent,
@@ -285,7 +287,7 @@ export class Db {
     }
 
     if (environment === 'astra') {
-      return new AstraDbAdmin(this, this.#defaultOpts, options, this.#token, this.#endpoint!);
+      return new AstraDbAdmin(this, this.#defaultOpts, options, this.#defaultOpts.dbOptions.token, this.#endpoint!);
     }
 
     return new DataAPIDbAdmin(this, this.#httpClient, options);
@@ -620,7 +622,7 @@ export class Db {
     });
   }
 
-  private get _httpClient() {
+  public get _httpClient() {
     return this.#httpClient;
   }
 }
