@@ -37,7 +37,7 @@ import { CreateTableDefinition, CreateTableOptions } from '@/src/db/types/tables
 import { InferTableSchemaFromDefinition } from '@/src/db/types/tables/table-schema';
 import { DropTableOptions } from '@/src/db/types/tables/drop-table';
 import { FullTableInfo, ListTablesOptions } from '@/src/db/types/tables/list-tables';
-import { parseDbSpawnOpts } from '@/src/client/parsers/db-spawn';
+import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
 
 import { InternalRootClientOpts } from '@/src/client/types';
 

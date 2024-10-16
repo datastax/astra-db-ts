@@ -1,4 +1,24 @@
-import type { AdminSpawnOptions, Caller, DataAPIHttpOptions, DataAPILoggingConfig, DbSpawnOptions } from '@/src/client';
+// Copyright DataStax, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import type {
+  Caller,
+  DataAPIHttpOptions,
+  DataAPILoggingConfig,
+  DefaultAdminSpawnOptions,
+  DefaultDbSpawnOptions,
+} from '@/src/client';
 import type { DataAPIEnvironment } from '@/src/lib';
 
 /**
@@ -57,11 +77,11 @@ export interface DataAPIClientOptions {
   /**
    * The default options when spawning a {@link Db} instance.
    */
-  dbOptions?: DbSpawnOptions,
+  dbOptions?: DefaultDbSpawnOptions,
   /**
    * The default options when spawning an {@link AstraAdmin} instance.
    */
-  adminOptions?: AdminSpawnOptions,
+  adminOptions?: DefaultAdminSpawnOptions,
   /**
    * The caller information to send with requests, of the form `[name, version?]`, or an array of such.
    *
@@ -92,4 +112,3 @@ export interface DataAPIClientOptions {
    */
   caller?: Caller | Caller[],
 }
-

@@ -28,7 +28,7 @@ import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-clien
 import { Db } from '@/src/db';
 import { StaticTokenProvider, TokenProvider } from '@/src/lib';
 import { isNullish } from '@/src/lib/utils';
-import { parseAdminSpawnOpts } from '@/src/client/parsers/admin-spawn';
+import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 
 import { InternalRootClientOpts } from '@/src/client/types';
 

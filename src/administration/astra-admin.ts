@@ -26,7 +26,7 @@ import { Db } from '@/src/db/db';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
 import { TokenProvider, WithTimeout } from '@/src/lib';
-import { parseAdminSpawnOpts } from '@/src/client/parsers/admin-spawn';
+import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 
 import { InternalRootClientOpts } from '@/src/client/types';
 

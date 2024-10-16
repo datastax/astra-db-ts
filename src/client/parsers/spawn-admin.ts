@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ok, p, Parser } from '@/src/lib/validation';
-import { DbSpawnOptions } from '@/src/client';
+import { ok, p } from '@/src/lib/validation';
 import { TokenProvider } from '@/src/lib';
+import { AdminSpawnOptions } from '@/src/administration';
+import { parseLoggingConfig } from '@/src/client/parsers/logging';
 
-export const parseDbSpawnOpts: Parser<DbSpawnOptions | undefined> = p.do(function* (raw, field) {
+export const parseAdminSpawnOpts = p.do<AdminSpawnOptions | undefined>(function* (raw, field) {
   const opts = yield* p.parse('object?')(raw, field);
 
   if (!opts) {
@@ -24,8 +25,8 @@ export const parseDbSpawnOpts: Parser<DbSpawnOptions | undefined> = p.do(functio
   }
 
   return ok({
-    keyspace: yield* p.parse('string?')(opts.keyspace, `${field}.keyspace`),
-    dataApiPath: yield* p.parse('string?')(opts.dataApiPath, `${field}.dataApiPath`),
-    token: yield* TokenProvider.parseToken(opts.token, `${field}.token`),
+    logging: yield* parseLoggingConfig(opts.logging, `${field}.logging`),
+    endpointUrl: yield* p.parse('string?')(opts.endpointUrl, `${field}.endpointUrl`),
+    adminToken: yield* TokenProvider.parseToken(opts.adminToken, `${field}.adminToken`),
   });
 });

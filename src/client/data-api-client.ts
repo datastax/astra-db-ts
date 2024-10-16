@@ -33,8 +33,8 @@ import { isNullish } from '@/src/lib/utils';
 import { ok, p } from '@/src/lib/validation';
 import { parseLoggingConfig } from '@/src/client/parsers/logging';
 import { parseEnvironment } from '@/src/client/parsers/environment';
-import { parseDbSpawnOpts } from '@/src/client/parsers/db-spawn';
-import { parseAdminSpawnOpts } from '@/src/client/parsers/admin-spawn';
+import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
+import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { parseCaller } from '@/src/client/parsers/caller';
 import { parseHttpOpts } from '@/src/client/parsers/http-opts';
 import { EmptyInternalLoggingConfig, evalLoggingConfig } from '@/src/client/logging';
@@ -341,7 +341,7 @@ const parseClientOpts = p.do<DataAPIClientOptions | undefined>(function* (raw, f
   }
 
   return ok({
-    log: yield* parseLoggingConfig(opts.log, `${field}.logging`),
+    logging: yield* parseLoggingConfig(opts.logging, `${field}.logging`),
     environment: yield* parseEnvironment(opts.envirionment, `${field}.environment`),
     dbOptions: yield* parseDbSpawnOpts(opts.dbOptions, `${field}.dbOptions`),
     adminOptions: yield* parseAdminSpawnOpts(opts.adminOptions, `${field}.adminOptions`),
