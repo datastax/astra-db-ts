@@ -23,7 +23,7 @@ import {
 import { LoggingEvents } from '@/src/client/parsers/logging';
 
 export const evalLoggingConfig = (base: InternalLoggingConfig, config: DataAPILoggingConfig | undefined): InternalLoggingConfig => {
-  const asExplicit = logging(config);
+  const asExplicit = normalizeLoggingConfig(config);
   const newConfig = structuredClone(base);
 
   for (const layer of asExplicit) {
@@ -50,7 +50,7 @@ interface StrictDataAPIExplicitLoggingConfig {
   emits: readonly DataAPILoggingOutput[],
 }
 
-const logging = (config: DataAPILoggingConfig | undefined): StrictDataAPIExplicitLoggingConfig[] => {
+const normalizeLoggingConfig = (config: DataAPILoggingConfig | undefined): StrictDataAPIExplicitLoggingConfig[] => {
   if (!config) {
     return [];
   }

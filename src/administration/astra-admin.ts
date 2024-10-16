@@ -27,8 +27,10 @@ import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/s
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
 import { TokenProvider, WithTimeout } from '@/src/lib';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
-
-import { InternalRootClientOpts } from '@/src/client/types';
+import { InternalRootClientOpts } from '@/src/client/types/internal';
+import { evalLoggingConfig } from '@/src/client/logging';
+import { DbSpawnOptions } from '@/src/client';
+import { buildAstraEndpoint } from '@/src/lib/utils';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -68,21 +70,23 @@ export class AstraAdmin {
   constructor(rootOpts: InternalRootClientOpts, rawAdminOpts?: AdminSpawnOptions) {
     const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options').unwrap();
 
-    this.#defaultOpts = rootOpts;
-
-    const combinedAdminOpts = {
-      ...rootOpts.adminOptions,
-      ...adminOpts,
-      adminToken: TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken, 'admin token').unwrap(),
+    this.#defaultOpts = {
+      ...rootOpts,
+      adminOptions: {
+        ...rootOpts.adminOptions,
+        ...adminOpts,
+        adminToken: TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken, 'admin token').unwrap(),
+        logging: evalLoggingConfig(rootOpts.adminOptions.logging, adminOpts?.logging),
+      },
     };
 
     this.#httpClient = new DevOpsAPIHttpClient({
-      baseUrl: combinedAdminOpts.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINTS.prod,
-      monitorCommands: combinedAdminOpts.monitorCommands,
+      baseUrl: this.#defaultOpts.adminOptions.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINTS.prod,
+      logging: this.#defaultOpts.adminOptions.logging,
       emitter: rootOpts.emitter,
       fetchCtx: rootOpts.fetchCtx,
       userAgent: rootOpts.userAgent,
-      tokenProvider: combinedAdminOpts.adminToken,
+      tokenProvider: this.#defaultOpts.adminOptions.adminToken,
     });
   }
 
@@ -397,8 +401,9 @@ export class AstraAdmin {
       options,
     });
 
-    const db = this.db(resp.headers.location, definition.region, { ...options?.dbOptions, keyspace: definition.keyspace });
-    return db.admin(this.#defaultOpts.adminOptions);
+    const endpoint = buildAstraEndpoint(resp.headers.location, definition.region);
+    const db = this.db(endpoint, { ...options?.dbOptions, keyspace: definition.keyspace });
+    return new AstraDbAdmin(db, this.#defaultOpts, {}, this.#defaultOpts.adminOptions.adminToken, endpoint);
   }
 
   /**
@@ -426,7 +431,7 @@ export class AstraAdmin {
    *
    * @remarks Use with caution. Wear a harness. Don't say I didn't warn you.
    */
-  async dropDatabase(db: Db | string, options?: AdminBlockingOptions): Promise<void> {
+  public async dropDatabase(db: Db | string, options?: AdminBlockingOptions): Promise<void> {
     const id = typeof db === 'string' ? db : db.id;
 
     await this.#httpClient.requestLongRunning({
@@ -441,7 +446,7 @@ export class AstraAdmin {
     });
   }
 
-  private get _httpClient() {
+  public get _httpClient() {
     return this.#httpClient;
   }
 }

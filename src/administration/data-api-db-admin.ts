@@ -34,7 +34,7 @@ import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
  *
  * // Create an admin instance through a Db
  * const db = client.db('*ENDPOINT*');
- * const dbAdmin1 = db.admin({ environment: 'dse' );
+ * const dbAdmin1 = db.admin({ environment: 'dse' });
  * const dbAdmin2 = db.admin({ environment: 'dse', adminToken: 'stronger-token' });
  *
  * await admin1.createKeyspace({
@@ -55,8 +55,8 @@ import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
  * @public
  */
 export class DataAPIDbAdmin extends DbAdmin {
-  readonly #httpClient!: DataAPIHttpClient;
-  readonly #db!: Db;
+  readonly #httpClient: DataAPIHttpClient;
+  readonly #db: Db;
 
   /**
    * Use {@link Db.admin} to obtain an instance of this class.
@@ -145,7 +145,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    * await dbAdmin.createKeyspace('my_keyspace', {
    *   replication: {
    *     class: 'SimpleStrategy',
-   *     replicatonFactor: 3,
+   *     replicationFactor: 3,
    *   },
    * });
    *
@@ -201,7 +201,7 @@ export class DataAPIDbAdmin extends DbAdmin {
     await this.#httpClient.executeCommand({ dropKeyspace: { name: keyspace } }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
   }
 
-  private get _httpClient() {
+  public get _httpClient() {
     return this.#httpClient;
   }
 }

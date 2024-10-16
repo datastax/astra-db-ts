@@ -39,6 +39,7 @@ import { CollectionSpawnOptions } from '@/src/db';
 import { isNullish } from '@/src/lib/utils';
 import { EmbeddingHeadersProvider, ObjectId, UUID } from '@/src/documents';
 import { WithNullableKeyspace } from '@/src/db/types/common';
+import { evalLoggingConfig } from '@/src/client/logging';
 
 /**
  * @internal
@@ -122,6 +123,7 @@ export class DataAPIHttpClient extends HttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(opts?.embeddingApiKey),
+      logging: evalLoggingConfig(this.#props.logging, opts?.logging),
       keyspace: { ref: keyspace },
     });
 
@@ -135,7 +137,7 @@ export class DataAPIHttpClient extends HttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       tokenProvider: opts?.adminToken ? TokenProvider.parseToken(opts?.adminToken, 'admin token').unwrap() : this.#props.tokenProvider,
-      monitorCommands: opts?.monitorCommands || this.#props.monitorCommands,
+      logging: evalLoggingConfig(this.#props.logging, opts?.logging),
       baseUrl: opts?.endpointUrl || this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
     });

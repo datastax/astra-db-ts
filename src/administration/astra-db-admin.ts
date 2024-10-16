@@ -29,8 +29,8 @@ import { Db } from '@/src/db';
 import { StaticTokenProvider, TokenProvider } from '@/src/lib';
 import { isNullish } from '@/src/lib/utils';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
-
-import { InternalRootClientOpts } from '@/src/client/types';
+import { evalLoggingConfig } from '@/src/client/logging';
+import { InternalRootClientOpts } from '@/src/client/types/internal';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting keyspaces.
@@ -94,7 +94,7 @@ export class AstraDbAdmin extends DbAdmin {
 
     this.#httpClient = new DevOpsAPIHttpClient({
       baseUrl: combinedAdminOpts.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINTS[environment],
-      monitorCommands: combinedAdminOpts.monitorCommands,
+      logging: evalLoggingConfig(rootOpts.adminOptions.logging, adminOpts?.logging),
       fetchCtx: rootOpts.fetchCtx,
       emitter: rootOpts.emitter,
       userAgent: rootOpts.userAgent,
@@ -324,7 +324,7 @@ export class AstraDbAdmin extends DbAdmin {
     });
   }
 
-  private get _httpClient() {
+  public get _httpClient() {
     return this.#httpClient;
   }
 }
