@@ -17,6 +17,7 @@ import { Caller, DataAPIClientEvents } from '@/src/client';
 import TypedEmitter from 'typed-emitter';
 import { FetchCtx, FetcherResponseInfo } from '@/src/lib/api/fetch/types';
 import { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/lib/api/clients/types';
+import { InternalLogger, mkLogger } from '@/src/client/logging';
 
 /**
  * @internal
@@ -24,7 +25,7 @@ import { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/lib/ap
 export abstract class HttpClient {
   readonly baseUrl: string;
   readonly emitter: TypedEmitter<DataAPIClientEvents>;
-  readonly monitorCommands: boolean;
+  readonly logger: InternalLogger;
   readonly fetchCtx: FetchCtx;
   readonly baseHeaders: Record<string, any>;
   readonly headerProviders: HeaderProvider[];
@@ -32,7 +33,7 @@ export abstract class HttpClient {
   protected constructor(options: HTTPClientOptions, headerProviders: HeaderProvider[]) {
     this.baseUrl = options.baseUrl;
     this.emitter = options.emitter;
-    this.monitorCommands = options.monitorCommands;
+    this.logger = mkLogger(options.logging, options.emitter);
     this.fetchCtx = options.fetchCtx;
 
     if (options.baseApiPath) {
