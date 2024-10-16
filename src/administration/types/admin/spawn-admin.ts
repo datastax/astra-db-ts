@@ -25,50 +25,6 @@ import { TokenProvider } from '@/src/lib';
  */
 export interface AdminSpawnOptions {
   /**
-   * Whether to monitor commands for {@link AstraAdmin}-level & {@link DbAdmin}-level events through an event emitter.
-   *
-   * Defaults to `false` if never provided. However, if it was provided when creating the {@link DataAPIClient}, it will
-   * default to that value instead.
-   *
-   * @example
-   * ```typescript
-   * const client = new DataAPIClient('*TOKEN*', {
-   *   devopsOptions: {
-   *     monitorCommands: true,
-   *   },
-   * });
-   *
-   * client.on('adminCommandStarted', (e) => {
-   *   console.log(`Running command ${e.method} ${e.path}`);
-   * });
-   *
-   * client.on('adminCommandPolling', (e) => {
-   *   console.log(`Command ${e.method} ${e.path} running for ${e.elapsed}ms`);
-   * });
-   *
-   * client.on('adminCommandSucceeded', (e) => {
-   *   console.log(`Command ${e.method} ${e.path} took ${e.duration}ms`);
-   * });
-   *
-   * client.on('adminCommandFailed', (e) => {
-   *   console.error(`Command ${e.method} ${e.path} failed w/ error ${e.error}`);
-   * });
-   *
-   * const admin = client.admin();
-   *
-   * // Logs:
-   * // - Running command POST /databases
-   * // - Command POST /databases running for <time>ms [x10]
-   * // - Command POST /databases succeeded in <time>ms
-   * await admin.createDatabase({ ... });
-   * ```
-   *
-   * @defaultValue false
-   *
-   * @see AdminCommandEvents
-   */
-  monitorCommands?: boolean,
-  /**
    * The access token for the DevOps API, typically of the format `'AstraCS:...'`.
    *
    * If never provided, this will default to the token provided when creating the {@link DataAPIClient}.

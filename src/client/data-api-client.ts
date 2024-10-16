@@ -13,17 +13,11 @@
 // limitations under the License.
 // noinspection JSDeprecatedSymbols
 
-import { Db, validateDbOpts } from '@/src/db/db';
+import { Db } from '@/src/db/db';
 import { AstraAdmin } from '@/src/administration/astra-admin';
 import {
-  Caller,
   CustomHttpClientOptions,
   DataAPIClientOptions,
-  DataAPIExplicitLoggingConfig,
-  DataAPIHttpOptions,
-  DataAPILoggingConfig,
-  DataAPILoggingEvent,
-  DataAPILoggingOutput,
   DbSpawnOptions,
   DefaultHttpClientOptions,
   InternalRootClientOpts,
@@ -31,26 +25,20 @@ import {
 import TypedEmitter from 'typed-emitter';
 import { DataAPICommandEvents } from '@/src/documents/events';
 import { AdminCommandEvents, AdminSpawnOptions } from '@/src/administration';
-import { validateOption } from '@/src/documents/utils';
 import { FetchNative } from '@/src/lib/api/fetch/fetch-native';
 import { LIB_NAME } from '@/src/version';
 import { FetchCtx, Fetcher } from '@/src/lib/api/fetch/types';
-import { validateAdminOpts } from '@/src/administration/utils';
 import { nullish, TokenProvider } from '@/src/lib';
 import { buildUserAgent } from '@/src/lib/api/clients/http-client';
 import { FetchH2 } from '@/src/lib/api';
-import { isNullish, validateDataAPIEnv } from '@/src/lib/utils';
-import {
-  error,
-  isLeft,
-  isNonEmpty,
-  mapMEither,
-  right,
-  typeError,
-  validateInStrEnum,
-  Validation,
-} from '@/src/lib/validation';
-import { Equal, Expect } from '@/tests/typing/prelude';
+import { isNullish } from '@/src/lib/utils';
+import { p } from '@/src/lib/validation';
+import { parseLoggingConfig } from '@/src/client/parsers/logging';
+import { parseEnvironment } from '@/src/client/parsers/environment';
+import { parseDbSpawnOpts } from '@/src/client/parsers/db-spawn';
+import { parseAdminSpawnOpts } from '@/src/client/parsers/admin-spawn';
+import { parseCaller } from '@/src/client/parsers/caller';
+import { parseHttpOpts } from '@/src/client/parsers/http-opts';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -182,11 +170,11 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
       ? tokenOrOptions as string | TokenProvider | nullish
       : undefined;
 
-    const options = (tokenPassed)
+    const rawOptions = (tokenPassed)
       ? maybeOptions
       : tokenOrOptions;
 
-    validateRootOpts(options);
+    const options = parseClientOpts(rawOptions, 'options.').unwrap();
 
     this.#options = {
       environment: options?.environment ?? 'astra',
@@ -194,12 +182,12 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
       dbOptions: {
         monitorCommands: false,
         ...options?.dbOptions,
-        token: TokenProvider.parseToken(options?.dbOptions?.token ?? token),
+        token: TokenProvider.parseToken(options?.dbOptions?.token ?? token, 'provided token').unwrap(),
       },
       adminOptions: {
         monitorCommands: false,
         ...options?.adminOptions,
-        adminToken: TokenProvider.parseToken(options?.dbOptions?.token ?? token),
+        adminToken: TokenProvider.parseToken(options?.dbOptions?.token ?? token, 'provided token').unwrap(),
       },
       emitter: this,
       userAgent: buildUserAgent(options?.caller),
@@ -332,7 +320,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
 }
 
 function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
-  const clientType = (options?.httpOptions || getDeprecatedPrefersHttp2(options))
+  const clientType = (options?.httpOptions)
     ? options?.httpOptions?.client ?? 'default'
     : undefined;
 
@@ -353,11 +341,7 @@ function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
 function tryLoadFetchH2(clientType: string | nullish, options: DataAPIClientOptions | undefined): Fetcher {
   try {
     const httpOptions = options?.httpOptions as DefaultHttpClientOptions | undefined;
-
-    const preferHttp2 = httpOptions?.preferHttp2
-      ?? getDeprecatedPrefersHttp2(options)
-      ?? true;
-
+    const preferHttp2 = httpOptions?.preferHttp2 ?? true;
     return new FetchH2(httpOptions, preferHttp2);
   } catch (e) {
     if (isNullish(clientType)) {
@@ -368,179 +352,36 @@ function tryLoadFetchH2(clientType: string | nullish, options: DataAPIClientOpti
   }
 }
 
-// Shuts the linter up about 'preferHttp2' being deprecated
-function getDeprecatedPrefersHttp2(opts: DataAPIClientOptions | undefined | null): boolean | undefined {
-  return opts?.[('preferHttp2' as any as null)!];
-}
+// const parseClientOpts = (rawOpts: unknown) => p.do<DataAPIClientOptions | undefined>(function () {
+//   const opts = this.parse(rawOpts, 'options', 'object?');
+//
+//   if (!opts) {
+//     return ok(undefined);
+//   }
+//
+//   return ok({
+//     log: this.use(parseLoggingConfig, opts.log, 'options.log'),
+//     environment: this.use(parseEnvironment, opts.envirionment, 'options.environment'),
+//     dbOptions: this.use(parseDbSpawnOpts, opts.dbOptions, 'options.dbOptions'),
+//     adminOptions: this.use(parseAdminSpawnOpts, opts.adminOptions, 'options.adminOptions'),
+//     caller: this.use(parseCaller, opts.caller, 'options.caller'),
+//     httpOptions: this.use(parseHttpOpts, opts.httpOptions, 'options.caller'),
+//   });
+// });
 
-function validateRootOpts(opts: DataAPIClientOptions | undefined | null) {
-  validateOption('DataAPIClientOptions', opts, 'object');
-
-  if (!opts) {
-    return;
-  }
-
-  validateOption('caller', opts.caller, 'object', false, validateCaller);
-  validateOption('preferHttp2 option', getDeprecatedPrefersHttp2(opts), 'boolean');
-
-  validateDbOpts(opts.dbOptions);
-  validateAdminOpts(opts.adminOptions);
-  validateHttpOpts(opts.httpOptions);
-  validateDataAPIEnv(opts.environment);
-}
-
-function validateHttpOpts(opts: DataAPIHttpOptions | undefined | null) {
-  validateOption('httpOptions', opts, 'object');
+const parseClientOpts = p.do<DataAPIClientOptions | undefined>(function* (raw, field) {
+  const opts = yield* p.parse('object?')(raw, field);
 
   if (!opts) {
-    return;
+    return undefined;
   }
 
-  validateOption('httpOptions.client', opts.client, 'string', false, (client) => {
-    if (!['fetch', 'default', 'custom'].includes(client)) {
-      throw new Error('Invalid httpOptions.client; expected \'fetch\', \'default\', \'custom\', or undefined');
-    }
-  });
-  validateOption('httpOptions.maxTimeMS', opts.maxTimeMS, 'number');
-
-  if (opts.client === 'default' || !opts.client) {
-    validateOption('httpOptions.preferHttp2', opts.preferHttp2, 'boolean');
-
-    validateOption('httpOptions.http1 options', opts.http1, 'object', false, (http1) => {
-      validateOption('http1.keepAlive', http1.keepAlive, 'boolean');
-      validateOption('http1.keepAliveMS', http1.keepAliveMS, 'number');
-      validateOption('http1.maxSockets', http1.maxSockets, 'number');
-      validateOption('http1.maxFreeSockets', http1.maxFreeSockets, 'number');
-    });
-  }
-
-  if (opts.client === 'custom') {
-    validateOption('httpOptions.fetcher option', opts.fetcher, 'object', true, (fetcher) => {
-      validateOption('fetcher.fetch option', fetcher.fetch, 'function', true);
-      validateOption('fetcher.close option', fetcher.close, 'function');
-    });
-  }
-}
-
-const validateCaller = (caller: unknown, field: string): Validation<Caller | Caller[] | nullish> => {
-  if (!Array.isArray(caller)) {
-    return typeError(`Expected ${field}.caller to be an array, or undefined/null`);
-  }
-
-  const isCallerArr = Array.isArray(caller[0]);
-
-  const callers = (isCallerArr)
-    ? caller
-    : [caller];
-
-  const mkIdxMsg = (isCallerArr)
-    ? (i: number) => `[${i}]`
-    : () => '';
-
-  return mapMEither((c, i): Validation<Caller> => {
-    if (!Array.isArray(c)) {
-      return typeError(`Expected ${field}.caller${mkIdxMsg(i)} to be a tuple [name: string, version?: string]`);
-    }
-
-    if (c.length < 1 || 2 < c.length) {
-      return typeError(`Expected ${field}.caller${mkIdxMsg(i)} to be of format [name: string, version?: string]`);
-    }
-
-    const [name, version] = c;
-
-    if (typeof name !== 'string') {
-      return error(`Expected ${field}.caller${mkIdxMsg(i)}[0] to be a string name (got ${typeof name})`);
-    }
-
-    if (isNullish(version) && typeof version !== 'string') {
-      return error(`Expected ${field}.caller${mkIdxMsg(i)}[1] to be a string (or undefined) version (got ${typeof version})`);
-    }
-
-    return right([name, version || undefined]);
-  })(callers);
-};
-
-const validateLoggingConfig = (config: unknown, field: string): Validation<DataAPILoggingConfig | nullish> => {
-  if (isNullish(config)) {
-    return right(config);
-  }
-
-  if (typeof config === 'string') {
-    return validateIsLoggingEvent(config, `${field}.log`);
-  }
-
-  if (!Array.isArray(config)) {
-    return typeError(`Expected ${field}.log to be of type string | (string | object); got ${typeof config}`);
-  }
-
-  if (!isNonEmpty(config)) {
-    return error(`Expected ${field}.log array to be non-empty`);
-  }
-
-  return mapMEither((c, i): Validation<DataAPILoggingEvent | DataAPIExplicitLoggingConfig> => {
-    if (c === null || c === undefined) {
-      return typeError(`Expected ${field}.log[${i}] to be non-null`);
-    }
-    if (typeof c === 'string') {
-      return validateIsLoggingEvent(c, `${field}.log[${i}]`);
-    }
-    if (typeof config === 'object') {
-      return validateIsExplicitLoggingConfig(c, `${field}.log[${i}]`);
-    }
-    return typeError(`Expected ${field}.log[${i}] to be of type string | object; got ${typeof config}`);
-  })(config);
-};
-
-const LoggingEvents = <const>['all', 'none', 'adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded', 'adminCommandFailed', 'commandStarted', 'commandFailed', 'commandSucceeded'];
-type _LoggingEventsProof = Expect<Equal<typeof LoggingEvents[number], DataAPILoggingEvent>>;
-const validateIsLoggingEvent = validateInStrEnum<DataAPILoggingEvent>('DataAPILoggingEvent', LoggingEvents);
-
-const LoggingOutputs = <const>['event', 'stdout', 'stderr'];
-type _LoggingOutputsProof = Expect<Equal<typeof LoggingOutputs[number], DataAPILoggingOutput>>;
-const validateIsLoggingOutput = validateInStrEnum<DataAPILoggingOutput>('DataAPILoggingOutput', LoggingOutputs);
-
-const validateIsExplicitLoggingConfig = (config: object, field: string) => () => {
-  if (!('events' in config)) {
-    return typeError(`Expected ${field} to have an 'events' property`);
-  }
-
-  const events = config.events;
-
-  if (typeof events === 'string') {
-    const v = validateIsLoggingEvent(events, `${field}.events`);
-    if (isLeft(v)) return v;
-  } else if (Array.isArray(events)) {
-    if (!isNonEmpty(events)) {
-      return error(`Expected ${field}.events to be non-empty`);
-    }
-
-    const v = mapMEither((e, i) => {
-      if (typeof e === 'string') {
-        return validateIsLoggingEvent(e, `${field}.events[${i}]`);
-      }
-      return typeError(`Expected ${field}.events[${i}] to be of type string; got ${typeof config}`);
-    })(events);
-    if (isLeft(v)) return v;
-  } else {
-    return typeError(`Expected ${field}.events to be a string or an array of strings`);
-  }
-
-  const emits = ('emits' in config) ? config.emits : null;
-
-  if (typeof emits === 'string') {
-    const v = validateIsLoggingOutput(emits, `${field}.emits`);
-    if (isLeft(v)) return v;
-  } else if (Array.isArray(emits)) {
-    const v = mapMEither((o, i): Validation<DataAPILoggingOutput> => {
-      if (typeof o === 'string') {
-        return validateIsLoggingOutput(o, `${field}.emits[${i}]`);
-      }
-      return typeError(`Expected ${field}.emits[${i}] to be of type string; got ${typeof config}`);
-    })(emits);
-    if (isLeft(v)) return v;
-  } else if (!isNullish(emits)) {
-    return typeError(`Expected ${field}.emits to be a string or an array of strings${field}`);
-  }
-
-  return right({ events, emits });
-};
+  return {
+    log: yield* parseLoggingConfig(opts.log, `${field}.log`),
+    environment: yield* parseEnvironment(opts.envirionment, `${field}.environment`),
+    dbOptions: yield* parseDbSpawnOpts(opts.dbOptions, `${field}.dbOptions`),
+    adminOptions: yield* parseAdminSpawnOpts(opts.adminOptions, `${field}.adminOptions`),
+    caller: yield* parseCaller(opts.caller, `${field}.caller`),
+    httpOptions: yield* parseHttpOpts(opts.httpOptions, `${field}.caller`),
+  };
+});

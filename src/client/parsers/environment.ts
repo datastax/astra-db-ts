@@ -1,0 +1,23 @@
+// Copyright DataStax, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+import { EqualityProof, p } from '@/src/lib/validation';
+import { DataAPIEnvironment, DataAPIEnvironments } from '@/src/lib';
+
+void EqualityProof<typeof DataAPIEnvironments[number], DataAPIEnvironment, true>;
+const environmentParser = p.mkStrEnumParser('DataAPIEnvironments', DataAPIEnvironments, false);
+
+export const parseEnvironment = p.do<DataAPIEnvironment | undefined>(function* (raw, field) {
+  return yield* environmentParser(raw, field);
+});
