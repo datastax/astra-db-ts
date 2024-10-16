@@ -21,7 +21,6 @@ import {
 } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
 import { WithTimeout } from '@/src/lib/types';
-import { InternalRootClientOpts } from '@/src/client/types';
 import { extractAstraEnvironment } from '@/src/administration/utils';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, HttpMethods } from '@/src/lib/api/constants';
@@ -30,6 +29,8 @@ import { Db } from '@/src/db';
 import { StaticTokenProvider, TokenProvider } from '@/src/lib';
 import { isNullish } from '@/src/lib/utils';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/admin-spawn';
+
+import { InternalRootClientOpts } from '@/src/client/types';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting keyspaces.

@@ -18,7 +18,6 @@ import { DatabaseInfo } from '@/src/administration/types/admin/database-info';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { DataAPIEnvironment, nullish, WithTimeout } from '@/src/lib/types';
 import { extractDbIdFromUrl } from '@/src/documents/utils';
-import { DbSpawnOptions, InternalRootClientOpts } from '@/src/client/types';
 import { AdminSpawnOptions, DbAdmin } from '@/src/administration';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin';
 import { CollectionAlreadyExistsError } from '@/src/db/errors';
@@ -39,6 +38,8 @@ import { InferTableSchemaFromDefinition } from '@/src/db/types/tables/table-sche
 import { DropTableOptions } from '@/src/db/types/tables/drop-table';
 import { FullTableInfo, ListTablesOptions } from '@/src/db/types/tables/list-tables';
 import { parseDbSpawnOpts } from '@/src/client/parsers/db-spawn';
+
+import { InternalRootClientOpts } from '@/src/client/types';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as

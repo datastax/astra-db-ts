@@ -16,11 +16,12 @@
 import assert from 'assert';
 import { Db } from '@/src/db/db';
 import { StaticTokenProvider } from '@/src/lib';
-import { InternalRootClientOpts } from '@/src/client/types';
 import { DataAPIClient } from '@/src/client';
 import { DEMO_APPLICATION_URI, describe, it, TEST_APPLICATION_URI } from '@/tests/testlib';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants';
 import { buildAstraEndpoint } from '@/src/lib/utils';
+
+import { InternalRootClientOpts } from '@/src/client/types';
 
 describe('unit.db', () => {
   const internalOps = (data?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({

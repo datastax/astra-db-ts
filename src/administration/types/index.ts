@@ -44,7 +44,7 @@ export type {
 
 export type {
   AdminSpawnOptions,
-} from './admin/spawn-admin';
+} from '../../client/types/spawn-admin';
 
 export type {
   CreateKeyspaceOptions,
