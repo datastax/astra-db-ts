@@ -138,18 +138,6 @@ export interface DataAPIClientOptions {
    * ```
    */
   caller?: Caller | Caller[],
-  /**
-   * Whether to prefer HTTP/2 for requests to the Data API; if set to `false`, HTTP/1.1 will be used instead.
-   *
-   * **Prefer to use the {@link DataAPIClientOptions.httpOptions} property instead.**
-   *
-   * The two are functionally equivalent; this is provided for backwards compatibility.
-   *
-   * @deprecated - Use the {@link DataAPIClientOptions.httpOptions} property instead.
-   *
-   * @see DefaultHttpClientOptions
-   */
-  preferHttp2?: boolean,
 }
 
 /**
@@ -381,47 +369,7 @@ export interface DbSpawnOptions {
    *
    * @defaultValue 'default_keyspace'
    */
-  keyspace?: string,
-  /**
-   * Whether to monitor commands for {@link Db}-level & {@link Collection}-level events through an event emitter.
-   *
-   * Defaults to `false` if never provided. However, if it was provided when creating the {@link DataAPIClient}, it will
-   * default to that value instead.
-   *
-   * @example
-   * ```typescript
-   * const client = new DataAPIClient('*TOKEN*', {
-   *   dbOptions: {
-   *     monitorCommands: true,
-   *   },
-   * });
-   *
-   * client.on('commandStarted', (event) => {
-   *   console.log(`Running command ${event.commandName}`);
-   * });
-   *
-   * client.on('commandSucceeded', (event) => {
-   *   console.log(`Command ${event.commandName} succeeded in ${event.duration}ms`);
-   * });
-   *
-   * client.on('commandFailed', (event) => {
-   *   console.error(`Command ${event.commandName} failed w/ error ${event.error}`);
-   * });
-   *
-   * const db = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
-   * const coll = db.collections('my_collection');
-   *
-   * // Logs:
-   * // - Running command insertOne
-   * // - Command insertOne succeeded in <time>ms
-   * await coll.insertOne({ name: 'Lordi' });
-   * ```
-   *
-   * @defaultValue false
-   *
-   * @see DataAPICommandEvents
-   */
-  monitorCommands?: boolean,
+  keyspace?: string | null,
   /**
    * The access token for the Data API, typically of the format `'AstraCS:...'`.
    *

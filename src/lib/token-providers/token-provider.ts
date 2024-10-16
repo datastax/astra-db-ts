@@ -14,6 +14,7 @@
 
 import { nullish, StaticTokenProvider } from '@/src/lib';
 import { isNullish } from '@/src/lib/utils';
+import { ok, p, Result } from '@/src/lib/validation';
 
 /**
  * The base class for some "token provider", a general concept for anything that provides some token to the client,
@@ -54,15 +55,15 @@ export abstract class TokenProvider {
    *
    * @internal
    */
-  static parseToken(token: unknown): TokenProvider {
-    if (typeof token === 'string' || isNullish(token)) {
-      return new StaticTokenProvider(token);
+  static parseToken(raw: unknown, field: string): Result<TokenProvider> {
+    if (typeof raw === 'string' || isNullish(raw)) {
+      return ok(new StaticTokenProvider(raw));
     }
 
-    if (token instanceof TokenProvider) {
-      return token;
+    if (!(raw instanceof TokenProvider)) {
+      return p.typeError(`Expected ${field} to be of type string | TokenProvider | nullish; got ${raw} (${raw})`);
     }
 
-    throw new TypeError('Expected token to be type string | TokenProvider | nullish');
-  }
+    return ok(raw);
+  };
 }
