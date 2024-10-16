@@ -13,14 +13,14 @@
 // limitations under the License.
 
 import { r, EqualityProof, isNonEmpty, ok, p, Result } from '@/src/lib/validation';
+import { isNullish } from '@/src/lib/utils';
+import { SomeDoc } from '@/src/documents';
 import {
   DataAPIExplicitLoggingConfig,
   DataAPILoggingConfig,
   DataAPILoggingEvent,
   DataAPILoggingOutput,
-} from '@/src/client/types';
-import { isNullish } from '@/src/lib/utils';
-import { SomeDoc } from '@/src/documents';
+} from '@/src/client/types/logging';
 
 export const parseLoggingConfig = (config: unknown, field: string): Result<DataAPILoggingConfig | undefined> => {
   if (isNullish(config)) {

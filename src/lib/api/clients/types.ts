@@ -19,6 +19,9 @@ import type { HttpMethods } from '@/src/lib/api/constants';
 import type { Ref } from '@/src/lib/types';
 import type { TimeoutManager } from '@/src/lib/api/timeout-managers';
 
+
+import { InternalLoggingConfig } from '@/src/client/types';
+
 /**
  * @internal
  */
@@ -26,7 +29,7 @@ export interface HTTPClientOptions {
   baseUrl: string,
   baseApiPath?: string | null,
   emitter: TypedEmitter<DataAPICommandEvents>,
-  monitorCommands: boolean,
+  logging: InternalLoggingConfig,
   fetchCtx: FetchCtx,
   userAgent: string,
 }

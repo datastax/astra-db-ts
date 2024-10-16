@@ -14,11 +14,12 @@
 
 import assert from 'assert';
 import { AstraAdmin } from '@/src/administration';
-import { InternalRootClientOpts } from '@/src/client/types';
 import { StaticTokenProvider } from '@/src/lib';
 import { DataAPIClient } from '@/src/client';
 import { describe, it } from '@/tests/testlib';
 import { DEFAULT_DEVOPS_API_ENDPOINTS } from '@/src/lib/api/constants';
+
+import { InternalRootClientOpts } from '@/src/client/types';
 
 describe('unit.administration.admin', () => {
   const internalOps = (data?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({

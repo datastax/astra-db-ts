@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TokenProvider } from '@/src/lib';
+import type { TokenProvider } from '@/src/lib';
 
 /**
  * The options available spawning a new {@link AstraAdmin} instance.

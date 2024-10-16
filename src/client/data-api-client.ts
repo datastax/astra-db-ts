@@ -13,55 +13,31 @@
 // limitations under the License.
 // noinspection JSDeprecatedSymbols
 
-import { Db } from '@/src/db/db';
-import { AstraAdmin } from '@/src/administration/astra-admin';
+import TypedEmitter from 'typed-emitter';
 import {
+  AdminSpawnOptions,
   CustomHttpClientOptions,
+  DataAPIClientEvents,
   DataAPIClientOptions,
-  DataAPILoggingConfig,
-  DataAPILoggingEvent,
-  DataAPILoggingOutput,
   DbSpawnOptions,
   DefaultHttpClientOptions,
-  InternalLoggingConfig,
-  InternalRootClientOpts,
 } from '@/src/client/types';
-import TypedEmitter from 'typed-emitter';
-import { DataAPICommandEvents } from '@/src/documents/events';
-import { AdminCommandEvents, AdminSpawnOptions } from '@/src/administration';
-import { FetchNative } from '@/src/lib/api/fetch/fetch-native';
 import { LIB_NAME } from '@/src/version';
-import { FetchCtx, Fetcher } from '@/src/lib/api/fetch/types';
-import { nullish, TokenProvider } from '@/src/lib';
+import { InternalRootClientOpts } from '@/src/client/types/internal';
+import { Fetcher, FetchH2, FetchNative, nullish, TokenProvider } from '@/src/lib';
 import { buildUserAgent } from '@/src/lib/api/clients/http-client';
-import { FetchH2 } from '@/src/lib/api';
+import { Db } from '@/src/db';
+import { AstraAdmin } from '@/src/administration';
+import { FetchCtx } from '@/src/lib/api/fetch/types';
 import { isNullish } from '@/src/lib/utils';
 import { ok, p } from '@/src/lib/validation';
-import { LoggingEvents, parseLoggingConfig } from '@/src/client/parsers/logging';
+import { parseLoggingConfig } from '@/src/client/parsers/logging';
 import { parseEnvironment } from '@/src/client/parsers/environment';
 import { parseDbSpawnOpts } from '@/src/client/parsers/db-spawn';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/admin-spawn';
 import { parseCaller } from '@/src/client/parsers/caller';
 import { parseHttpOpts } from '@/src/client/parsers/http-opts';
-
-/**
- * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
- * command's lifecycle. Intended for use for monitoring and logging purposes.
- *
- * Events include:
- * - `commandStarted` - Emitted when a command is started, before the initial HTTP request is made.
- * - `commandSucceeded` - Emitted when a command has succeeded.
- * - `commandFailed` - Emitted when a command has errored.
- * - `adminCommandStarted` - Emitted when an admin command is started, before the initial HTTP request is made.
- * - `adminCommandPolling` - Emitted when a command is polling in a long-running operation (i.e. create database).
- * - `adminCommandSucceeded` - Emitted when an admin command has succeeded, after any necessary polling.
- * - `adminCommandFailed` - Emitted when an admin command has errored.
- *
- * @public
- */
-export type DataAPIClientEvents =
-  & DataAPICommandEvents
-  & AdminCommandEvents;
+import { EmptyInternalLoggingConfig, evalLoggingConfig } from '@/src/client/logging';
 
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
@@ -183,7 +159,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
     this.#options = {
       environment: options?.environment ?? 'astra',
       fetchCtx: buildFetchCtx(options || undefined),
-      log: evalLoggingConfig(EmptyInternalLoggingConfig, options?.log),
+      logging: evalLoggingConfig(EmptyInternalLoggingConfig, options?.logging),
       dbOptions: {
         monitorCommands: false,
         ...options?.dbOptions,
@@ -365,7 +341,7 @@ const parseClientOpts = p.do<DataAPIClientOptions | undefined>(function* (raw, f
   }
 
   return ok({
-    log: yield* parseLoggingConfig(opts.log, `${field}.log`),
+    log: yield* parseLoggingConfig(opts.log, `${field}.logging`),
     environment: yield* parseEnvironment(opts.envirionment, `${field}.environment`),
     dbOptions: yield* parseDbSpawnOpts(opts.dbOptions, `${field}.dbOptions`),
     adminOptions: yield* parseAdminSpawnOpts(opts.adminOptions, `${field}.adminOptions`),
@@ -373,92 +349,3 @@ const parseClientOpts = p.do<DataAPIClientOptions | undefined>(function* (raw, f
     httpOptions: yield* parseHttpOpts(opts.httpOptions, `${field}.caller`),
   });
 });
-
-export const evalLoggingConfig = (base: InternalLoggingConfig, config: DataAPILoggingConfig | undefined): InternalLoggingConfig => {
-  const asExplicit = buildExplicitLoggingConfig(config);
-  const newConfig = structuredClone(base);
-
-  for (const layer of asExplicit) {
-    for (const event of (layer.events as (keyof DataAPIClientEvents)[])) {
-      newConfig[event] = buildOutputsMap(layer.emits);
-
-      if (newConfig[event].stdout && newConfig[event].stderr) {
-        throw new Error(`Nonsensical logging configuration; attempted to set both stdout and stderr outputs for '${event}'`);
-      }
-    }
-  }
-
-  return base;
-};
-
-const buildOutputsMap = (emits: readonly DataAPILoggingOutput[]) => ({
-  event:  emits.includes('event'),
-  stdout: emits.includes('stdout'),
-  stderr: emits.includes('stderr'),
-});
-
-interface StrictDataAPIExplicitLoggingConfig {
-  events: readonly DataAPILoggingEvent[],
-  emits: readonly DataAPILoggingOutput[],
-}
-
-const buildExplicitLoggingConfig = (config: DataAPILoggingConfig | undefined): StrictDataAPIExplicitLoggingConfig[] => {
-  if (!config) {
-    return [];
-  }
-
-  if (config === 'all') {
-    return EventLoggingDefaultsAll;
-  }
-
-  if (typeof config === 'string') {
-    return [{ events: [config], emits: EventLoggingDefaults[config] }];
-  }
-
-  return config.flatMap((c, i) => {
-    if (c === 'all') {
-      return EventLoggingDefaultsAll;
-    }
-
-    if (typeof c === 'string') {
-      return [{ events: [c], emits: EventLoggingDefaults[c] }];
-    }
-
-    if (c.events === 'all' || Array.isArray(c.events) && c.events.includes('all')) {
-      if (c.events === 'all' || c.events.length === 1 && c.events[0] === 'all') {
-        return [{ events: LoggingEvents, emits: Array.isArray(c.emits) ? c.emits : [c.emits] }];
-      }
-      throw new Error(`Nonsensical logging configuration; can not have 'all' in a multi-element array (@ idx ${i})`);
-    }
-
-    return [{
-      events: Array.isArray(c.events) ? c.events : [c.events],
-      emits: Array.isArray(c.emits) ? c.emits : [c.emits],
-    }];
-  });
-};
-
-export const EmptyInternalLoggingConfig = Object.fromEntries(LoggingEvents.map((e) => [e, buildOutputsMap([])])) as InternalLoggingConfig;
-
-export const EventLoggingDefaults = <const>{
-  adminCommandStarted:   ['event', 'stdout'],
-  adminCommandPolling:   ['event', 'stdout'],
-  adminCommandSucceeded: ['event', 'stdout'],
-  adminCommandFailed:    ['event', 'stderr'],
-  adminCommandWarning:   ['event', 'stderr'],
-  commandStarted:        ['event'          ],
-  commandFailed:         ['event', 'stderr'],
-  commandSucceeded:      ['event'          ],
-  commandWarning:        ['event', 'stderr'],
-};
-
-export const EventLoggingDefaultsAll: StrictDataAPIExplicitLoggingConfig[] = [{
-  events: ['adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded'],
-  emits: ['event', 'stdout'],
-}, {
-  events: ['adminCommandFailed', 'commandFailed', 'commandWarning', 'adminCommandWarning'],
-  emits: ['event', 'stderr'],
-}, {
-  events: ['commandStarted', 'commandSucceeded'],
-  emits: ['event'],
-}];
