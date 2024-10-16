@@ -13,6 +13,9 @@
 // limitations under the License.
 
 import type { TokenProvider } from '@/src/lib';
+import { DataAPILoggingConfig } from '@/src/client';
+
+export type DefaultDbSpawnOptions = Omit<DbSpawnOptions, 'logging'>;
 
 /**
  * The options available spawning a new {@link Db} instance.
@@ -22,6 +25,7 @@ import type { TokenProvider } from '@/src/lib';
  * @public
  */
 export interface DbSpawnOptions {
+  logging?: DataAPILoggingConfig,
   /**
    * The keyspace to use for the database.
    *

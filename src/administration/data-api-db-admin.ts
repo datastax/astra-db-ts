@@ -19,7 +19,7 @@ import { WithTimeout } from '@/src/lib/types';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { Db } from '@/src/db';
-import { parseAdminSpawnOpts } from '@/src/client/parsers/admin-spawn';
+import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 
 /**
  * An administrative class for managing non-Astra databases, including creating, listing, and deleting keyspaces.

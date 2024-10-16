@@ -13,6 +13,9 @@
 // limitations under the License.
 
 import type { TokenProvider } from '@/src/lib';
+import { DataAPILoggingConfig } from '@/src/client';
+
+export type DefaultAdminSpawnOptions = Omit<AdminSpawnOptions, 'logging'>;
 
 /**
  * The options available spawning a new {@link AstraAdmin} instance.
@@ -24,6 +27,7 @@ import type { TokenProvider } from '@/src/lib';
  * @public
  */
 export interface AdminSpawnOptions {
+  logging?: DataAPILoggingConfig,
   /**
    * The access token for the DevOps API, typically of the format `'AstraCS:...'`.
    *
