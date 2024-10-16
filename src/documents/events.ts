@@ -38,6 +38,7 @@ export type DataAPICommandEvents = {
    * Emitted when a command has errored.
    */
   commandFailed: (event: CommandFailedEvent) => void,
+  commandWarning: () => void,
 }
 
 /**

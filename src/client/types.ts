@@ -40,12 +40,12 @@ export type Caller = [name: string, version?: string];
 
 export type DataAPILoggingConfig = DataAPILoggingEvent | readonly (DataAPILoggingEvent | DataAPIExplicitLoggingConfig)[]
 
-export type DataAPILoggingEvent = 'all' | | keyof DataAPIClientEvents;
+export type DataAPILoggingEvent = 'all' | keyof DataAPIClientEvents;
 export type DataAPILoggingOutput = 'event' | 'stdout' | 'stderr';
 
 export interface DataAPIExplicitLoggingConfig {
   readonly events: DataAPILoggingEvent | readonly DataAPILoggingEvent[],
-  readonly emits?: DataAPILoggingOutput | readonly DataAPILoggingOutput[] | null,
+  readonly emits: DataAPILoggingOutput | readonly DataAPILoggingOutput[],
 }
 
 /**
@@ -405,6 +405,7 @@ export interface DbSpawnOptions {
  * @internal
  */
 export interface InternalRootClientOpts {
+  log: InternalLoggingConfig,
   environment: DataAPIEnvironment,
   emitter: TypedEmitter<DataAPIClientEvents>,
   fetchCtx: FetchCtx,
@@ -418,3 +419,8 @@ export interface InternalRootClientOpts {
     monitorCommands: boolean,
   },
 }
+
+/**
+ * @internal
+ */
+export type InternalLoggingConfig = Record<keyof DataAPIClientEvents, Record<DataAPILoggingOutput, boolean>>

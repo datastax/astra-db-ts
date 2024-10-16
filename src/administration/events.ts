@@ -38,6 +38,7 @@ export type AdminCommandEvents = {
    * Emitted when an admin command has errored.
    */
   adminCommandFailed: (event: AdminCommandFailedEvent) => void,
+  adminCommandWarning: () => void,
 }
 
 /**

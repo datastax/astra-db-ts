@@ -53,7 +53,7 @@ export const parseLoggingConfig = (config: unknown, field: string): Result<DataA
   })(config);
 };
 
-const LoggingEvents = <const>['all', 'adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded', 'adminCommandFailed', 'commandStarted', 'commandFailed', 'commandSucceeded'];
+export const LoggingEvents = <const>['all', 'adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded', 'adminCommandFailed', 'adminCommandWarning', 'commandStarted', 'commandFailed', 'commandSucceeded', 'commandWarning'];
 void EqualityProof<typeof LoggingEvents[number], DataAPILoggingEvent, true>;
 const parseLoggingEvent = p.mkStrEnumParser<DataAPILoggingEvent, true>('DataAPILoggingEvent', LoggingEvents, true);
 
@@ -63,11 +63,7 @@ const parseLoggingOutput = p.mkStrEnumParser<DataAPILoggingOutput, true>('DataAP
 
 const parseExplicitLoggingConfig = p.do<DataAPIExplicitLoggingConfig, SomeDoc>(function* (config, field) {
   const events = yield* parseLoggingConfigField(config.events, `${field}.events`, parseLoggingEvent);
-
-  const emits = (config.emits)
-    ? yield* parseLoggingConfigField(config.emits, `${field}.emits`, parseLoggingOutput)
-    : undefined;
-
+  const emits = yield* parseLoggingConfigField(config.emits, `${field}.emits`, parseLoggingOutput);
   return ok({ events, emits });
 });
 
