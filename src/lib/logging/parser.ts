@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { r, EqualityProof, isNonEmpty, ok, p, Result } from '@/src/lib/validation';
-import { isNullish } from '@/src/lib/utils';
-import { SomeDoc } from '@/src/documents';
+import { isNonEmpty, ok, p, r, Result } from '@/src/lib/validation';
 import {
   DataAPIExplicitLoggingConfig,
   DataAPILoggingConfig,
   DataAPILoggingEvent,
   DataAPILoggingOutput,
-} from '@/src/client/types/logging';
+} from '@/src/lib';
+import { isNullish } from '@/src/lib/utils';
+import { LoggingEvents, LoggingOutputs } from '@/src/lib/logging/constants';
+import { SomeDoc } from '@/src/documents';
 
 export const parseLoggingConfig = (config: unknown, field: string): Result<DataAPILoggingConfig | undefined> => {
   if (isNullish(config)) {
@@ -50,15 +51,10 @@ export const parseLoggingConfig = (config: unknown, field: string): Result<DataA
       return parseExplicitLoggingConfig(c, `${field}[${i}]`);
     }
     return p.typeError(`Expected ${field}[${i}] to be of type string | object; got ${typeof config}`);
-  })(config);
+  }, config);
 };
 
-export const LoggingEvents = <const>['all', 'adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded', 'adminCommandFailed', 'adminCommandWarning', 'commandStarted', 'commandFailed', 'commandSucceeded', 'commandWarning'];
-void EqualityProof<typeof LoggingEvents[number], DataAPILoggingEvent, true>;
 const parseLoggingEvent = p.mkStrEnumParser<DataAPILoggingEvent, true>('DataAPILoggingEvent', LoggingEvents, true);
-
-const LoggingOutputs = <const>['event', 'stdout', 'stderr'];
-void EqualityProof<typeof LoggingOutputs[number], DataAPILoggingOutput, true>;
 const parseLoggingOutput = p.mkStrEnumParser<DataAPILoggingOutput, true>('DataAPILoggingOutput', LoggingOutputs, true);
 
 const parseExplicitLoggingConfig = p.do<DataAPIExplicitLoggingConfig, SomeDoc>(function* (config, field) {
@@ -85,5 +81,5 @@ const parseLoggingConfigField = <E>(value: unknown, field: string, parser: (x: s
       return p.typeError<E>(`Expected ${field}[${i}] to be of type string; got ${typeof e}`);
     }
     return parser(e, `${field}[${i}]`);
-  })(value);
+  }, value);
 };

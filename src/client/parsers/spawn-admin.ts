@@ -15,7 +15,7 @@
 import { ok, p } from '@/src/lib/validation';
 import { TokenProvider } from '@/src/lib';
 import { AdminSpawnOptions } from '@/src/administration';
-import { parseLoggingConfig } from '@/src/client/parsers/logging';
+import { Logger } from '@/src/lib/logging/logging';
 
 export const parseAdminSpawnOpts = p.do<AdminSpawnOptions | undefined>(function* (raw, field) {
   const opts = yield* p.parse('object?')(raw, field);
@@ -25,7 +25,7 @@ export const parseAdminSpawnOpts = p.do<AdminSpawnOptions | undefined>(function*
   }
 
   return ok({
-    logging: yield* parseLoggingConfig(opts.logging, `${field}.logging`),
+    logging: yield* Logger.parseConfig(opts.logging, `${field}.logging`),
     endpointUrl: yield* p.parse('string?')(opts.endpointUrl, `${field}.endpointUrl`),
     adminToken: yield* TokenProvider.parseToken(opts.adminToken, `${field}.adminToken`),
   });

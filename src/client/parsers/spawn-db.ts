@@ -13,9 +13,8 @@
 // limitations under the License.
 
 import { ok, p, Parser } from '@/src/lib/validation';
-import { DbSpawnOptions } from '@/src/client';
+import { DbSpawnOptions, Logger } from '@/src/client';
 import { TokenProvider } from '@/src/lib';
-import { parseLoggingConfig } from '@/src/client/parsers/logging';
 
 export const parseDbSpawnOpts: Parser<DbSpawnOptions | undefined> = p.do(function* (raw, field) {
   const opts = yield* p.parse('object?')(raw, field);
@@ -25,7 +24,7 @@ export const parseDbSpawnOpts: Parser<DbSpawnOptions | undefined> = p.do(functio
   }
 
   return ok({
-    logging: yield* parseLoggingConfig(opts.logging, `${field}.logging`),
+    logging: yield* Logger.parseConfig(opts.logging, `${field}.logging`),
     keyspace: yield* p.parse('string?')(opts.keyspace, `${field}.keyspace`),
     dataApiPath: yield* p.parse('string?')(opts.dataApiPath, `${field}.dataApiPath`),
     token: yield* TokenProvider.parseToken(opts.token, `${field}.token`),

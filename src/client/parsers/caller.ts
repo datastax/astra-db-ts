@@ -55,5 +55,5 @@ export const parseCaller = (caller: unknown, field: string): Result<Caller | Cal
     }
 
     return ok([name, version || undefined]);
-  })(callers);
+  }, callers);
 };

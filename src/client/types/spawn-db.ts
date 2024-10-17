@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { TokenProvider } from '@/src/lib';
-import { DataAPILoggingConfig } from '@/src/client';
+import type { DataAPILoggingConfig, TokenProvider } from '@/src/lib';
 
 export type DefaultDbSpawnOptions = Omit<DbSpawnOptions, 'logging'>;
 

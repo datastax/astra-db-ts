@@ -13,8 +13,7 @@
 // limitations under the License.
 
 import { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client';
-import { hrTimeMs } from '@/src/lib/api/clients/http-client';
-import { DataAPIClientEvent } from '@/src/client/logging';
+import { DataAPIClientEvent } from '@/src/lib/logging/logging';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -39,7 +38,7 @@ export type AdminCommandEvents = {
    * Emitted when an admin command has errored.
    */
   adminCommandFailed: (event: AdminCommandFailedEvent) => void,
-  adminCommandWarning: () => void,
+  adminCommandWarning: (event: AdminCommandFailedEvent) => void,
 }
 
 /**
@@ -147,7 +146,7 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
    */
   constructor(info: DevOpsAPIRequestInfo, started: number, interval: number) {
     super(info, true);
-    this.elapsed = hrTimeMs() - started;
+    this.elapsed = performance.now() - started;
     this.interval = interval;
   }
 
@@ -189,7 +188,7 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
    */
   constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, warnings: string[], started: number) {
     super(info, longRunning);
-    this.duration = hrTimeMs() - started;
+    this.duration = performance.now() - started;
     this.warnings = warnings;
     this.resBody = data || undefined;
   }
@@ -227,7 +226,7 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
    */
   constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number) {
     super(info, longRunning);
-    this.duration = hrTimeMs() - started;
+    this.duration = performance.now() - started;
     this.error = error;
   }
 

@@ -40,7 +40,7 @@ import { FullTableInfo, ListTablesOptions } from '@/src/db/types/tables/list-tab
 import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
 import { DbSpawnOptions } from '@/src/client/types';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
-import { evalLoggingConfig } from '@/src/client/logging';
+import { Logger } from '@/src/lib/logging/logging';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -98,7 +98,7 @@ export class Db {
         ...rootOpts.dbOptions,
         ...dbOpts,
         token: TokenProvider.parseToken(dbOpts?.token ?? rootOpts.dbOptions.token, 'token').unwrap(),
-        logging: evalLoggingConfig(rootOpts.dbOptions.logging, dbOpts?.logging),
+        logging: Logger.advanceConfig(rootOpts.dbOptions.logging, dbOpts?.logging).unwrap(),
       },
     };
 

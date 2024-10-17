@@ -17,27 +17,26 @@ import TypedEmitter from 'typed-emitter';
 import {
   AdminSpawnOptions,
   CustomHttpClientOptions,
-  DataAPIClientEvents,
   DataAPIClientOptions,
   DbSpawnOptions,
   DefaultHttpClientOptions,
 } from '@/src/client/types';
 import { LIB_NAME } from '@/src/version';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
-import { Fetcher, FetchH2, FetchNative, nullish, TokenProvider } from '@/src/lib';
+import { DataAPIClientEvents, Fetcher, FetchH2, FetchNative, nullish, TokenProvider } from '@/src/lib';
 import { buildUserAgent } from '@/src/lib/api/clients/http-client';
 import { Db } from '@/src/db';
 import { AstraAdmin } from '@/src/administration';
 import { FetchCtx } from '@/src/lib/api/fetch/types';
 import { isNullish } from '@/src/lib/utils';
 import { ok, p } from '@/src/lib/validation';
-import { parseLoggingConfig } from '@/src/client/parsers/logging';
 import { parseEnvironment } from '@/src/client/parsers/environment';
 import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { parseCaller } from '@/src/client/parsers/caller';
 import { parseHttpOpts } from '@/src/client/parsers/http-opts';
-import { EmptyInternalLoggingConfig, evalLoggingConfig } from '@/src/client/logging';
+import { Logger } from '@/src/lib/logging/logging';
+import { EmptyInternalLoggingConfig } from '@/src/lib/logging/constants';
 
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
@@ -155,7 +154,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
       : tokenOrOptions;
 
     const options = parseClientOpts(rawOptions, 'options.').unwrap();
-    const logging = evalLoggingConfig(EmptyInternalLoggingConfig, options?.logging);
+    const logging = Logger.advanceConfig(EmptyInternalLoggingConfig, options?.logging).unwrap();
 
     this.#options = {
       environment: options?.environment ?? 'astra',
@@ -289,7 +288,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    *   const db = client.db('*ENDPOINT*');
    *   console.log(await db.listCollections());
    *
-   *   // Or pass it to another function to run your app
+   *   // Or pass it to another function to run your application
    *   app(client);
    * }
    * main();
@@ -341,7 +340,7 @@ const parseClientOpts = p.do<DataAPIClientOptions | undefined>(function* (raw, f
   }
 
   return ok({
-    logging: yield* parseLoggingConfig(opts.logging, `${field}.logging`),
+    logging: yield* Logger.parseConfig(opts.logging, `${field}.logging`),
     environment: yield* parseEnvironment(opts.envirionment, `${field}.environment`),
     dbOptions: yield* parseDbSpawnOpts(opts.dbOptions, `${field}.dbOptions`),
     adminOptions: yield* parseAdminSpawnOpts(opts.adminOptions, `${field}.adminOptions`),

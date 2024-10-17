@@ -13,11 +13,11 @@
 // limitations under the License.
 
 import { CLIENT_USER_AGENT, RAGSTACK_REQUESTED_WITH } from '@/src/lib/api/constants';
-import { Caller, DataAPIClientEvents } from '@/src/client';
+import { Caller, Logger } from '@/src/client';
 import TypedEmitter from 'typed-emitter';
 import { FetchCtx, FetcherResponseInfo } from '@/src/lib/api/fetch/types';
 import { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/lib/api/clients/types';
-import { InternalLogger, mkLogger } from '@/src/client/logging';
+import { DataAPIClientEvents } from '@/src/lib/logging';
 
 /**
  * @internal
@@ -25,7 +25,7 @@ import { InternalLogger, mkLogger } from '@/src/client/logging';
 export abstract class HttpClient {
   readonly baseUrl: string;
   readonly emitter: TypedEmitter<DataAPIClientEvents>;
-  readonly logger: InternalLogger;
+  readonly logger: Logger;
   readonly fetchCtx: FetchCtx;
   readonly baseHeaders: Record<string, any>;
   readonly headerProviders: HeaderProvider[];
@@ -33,7 +33,7 @@ export abstract class HttpClient {
   protected constructor(options: HTTPClientOptions, headerProviders: HeaderProvider[]) {
     this.baseUrl = options.baseUrl;
     this.emitter = options.emitter;
-    this.logger = mkLogger(options.logging, options.emitter);
+    this.logger = new Logger(options.logging, options.emitter, console);
     this.fetchCtx = options.fetchCtx;
 
     if (options.baseApiPath) {
@@ -86,14 +86,6 @@ export abstract class HttpClient {
       mkTimeoutError: () => info.timeoutManager.mkTimeoutError(info),
     });
   }
-}
-
-/**
- * @internal
- */
-export function hrTimeMs(): number {
-  const hrtime = process.hrtime();
-  return Math.floor(hrtime[0] * 1000 + hrtime[1] / 1000000);
 }
 
 /**

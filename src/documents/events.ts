@@ -14,8 +14,7 @@
 
 import { DEFAULT_KEYSPACE, RawDataAPIResponse } from '@/src/lib/api';
 import { DataAPIRequestInfo } from '@/src/lib/api/clients/data-api-http-client';
-import { hrTimeMs } from '@/src/lib/api/clients/http-client';
-import { DataAPIClientEvent } from '@/src/client/logging';
+import { DataAPIClientEvent } from '@/src/lib/logging/logging';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -39,7 +38,7 @@ export type DataAPICommandEvents = {
    * Emitted when a command has errored.
    */
   commandFailed: (event: CommandFailedEvent) => void,
-  commandWarning: () => void,
+  commandWarning: (event: CommandFailedEvent) => void,
 }
 
 /**
@@ -172,7 +171,7 @@ export class CommandSucceededEvent extends CommandEvent {
    */
   constructor(info: DataAPIRequestInfo, reply: RawDataAPIResponse, warnings: string[], started: number) {
     super(info);
-    this.duration = hrTimeMs() - started;
+    this.duration = performance.now() - started;
     this.warnings = warnings;
     this.resp = reply;
   }
@@ -212,7 +211,7 @@ export class CommandFailedEvent extends CommandEvent {
    */
   constructor(info: DataAPIRequestInfo, error: Error, started: number) {
     super(info);
-    this.duration = hrTimeMs() - started;
+    this.duration = performance.now() - started;
     this.error = error;
   }
 

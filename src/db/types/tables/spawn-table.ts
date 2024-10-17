@@ -14,7 +14,7 @@
 
 import { WithKeyspace } from '@/src/db';
 import { EmbeddingHeadersProvider } from '@/src/documents';
-import { DataAPILoggingConfig } from '@/src/client';
+import { DataAPILoggingConfig } from '@/src/lib';
 
 export interface TableSpawnOptions extends WithKeyspace {
   embeddingApiKey?: string | EmbeddingHeadersProvider | null,
