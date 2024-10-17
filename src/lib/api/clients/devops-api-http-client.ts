@@ -87,7 +87,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
       }
 
       if (!isLongRunning) {
-        this.logger.adminCommandSucceeded?.(req, false, data, [], started);
+        this.logger.adminCommandSucceeded?.(req, false, data, started);
       }
 
       return {
@@ -119,7 +119,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
 
     await this._awaitStatus(id, req, info, timeoutManager, started);
 
-    this.logger.adminCommandSucceeded?.(req, isLongRunning, resp, [], started);
+    this.logger.adminCommandSucceeded?.(req, isLongRunning, resp, started);
 
     return resp;
   }

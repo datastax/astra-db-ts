@@ -15,6 +15,7 @@
 
 import { TimeoutManager, TimeoutOptions } from '@/src/lib/api/timeout-managers';
 import {
+  DataAPIErrorDescriptor,
   DataAPIHttpError,
   DataAPIResponseError,
   DataAPITimeoutError,
@@ -51,7 +52,8 @@ interface ExecuteCommandOptions extends WithNullableKeyspace {
 type EmissionStrategy = (logger: Logger) => {
   emitCommandStarted?(info: DataAPIRequestInfo): void,
   emitCommandFailed?(info: DataAPIRequestInfo, error: Error, started: number): void,
-  emitCommandSucceeded?(info: DataAPIRequestInfo, resp: RawDataAPIResponse, warnings: string[], started: number): void,
+  emitCommandSucceeded?(info: DataAPIRequestInfo, resp: RawDataAPIResponse, started: number): void,
+  emitCommandWarnings?(info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[]): void,
 }
 
 export const EmissionStrategy: Record<'Normal' | 'Admin', EmissionStrategy> = {
@@ -59,6 +61,7 @@ export const EmissionStrategy: Record<'Normal' | 'Admin', EmissionStrategy> = {
     emitCommandStarted: logger.commandStarted,
     emitCommandFailed: logger.commandFailed,
     emitCommandSucceeded: logger.commandSucceeded,
+    emitCommandWarnings: logger.commandWarnings,
   }),
   Admin: (logger) => ({
     emitCommandStarted(info) {
@@ -67,8 +70,11 @@ export const EmissionStrategy: Record<'Normal' | 'Admin', EmissionStrategy> = {
     emitCommandFailed(info, error, started) {
       logger.adminCommandFailed?.(adaptInfo4Devops(info), true, error, started);
     },
-    emitCommandSucceeded(info, resp, warnings, started) {
-      logger.adminCommandSucceeded?.(adaptInfo4Devops(info), true, resp, warnings, started);
+    emitCommandSucceeded(info, resp, started) {
+      logger.adminCommandSucceeded?.(adaptInfo4Devops(info), true, resp, started);
+    },
+    emitCommandWarnings(info, warnings) {
+      logger.adminCommandWarnings?.(adaptInfo4Devops(info), true, warnings);
     },
   }),
 };
@@ -186,6 +192,7 @@ export class DataAPIHttpClient extends HttpClient {
       const data: RawDataAPIResponse = resp.body ? JSON.parse(resp.body, reviver) : {};
 
       const warnings = data?.status?.warnings ?? [];
+      this.emissionStrategy.emitCommandWarnings?.(info, warnings);
       delete data?.status?.warnings;
 
       if (data.errors && data.errors.length > 0 && data.errors[0]?.errorCode === 'COLLECTION_NOT_EXIST') {
@@ -203,8 +210,7 @@ export class DataAPIHttpClient extends HttpClient {
         errors: data.errors,
       };
 
-      this.emissionStrategy.emitCommandSucceeded?.(info, respData, warnings, started);
-
+      this.emissionStrategy.emitCommandSucceeded?.(info, respData, started);
       return respData;
     } catch (e: any) {
       this.emissionStrategy.emitCommandFailed?.(info, e, started);

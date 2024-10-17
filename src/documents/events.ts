@@ -15,6 +15,7 @@
 import { DEFAULT_KEYSPACE, RawDataAPIResponse } from '@/src/lib/api';
 import { DataAPIRequestInfo } from '@/src/lib/api/clients/data-api-http-client';
 import { DataAPIClientEvent } from '@/src/lib/logging/logging';
+import { DataAPIErrorDescriptor } from '@/src/documents/errors';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -38,7 +39,7 @@ export type DataAPICommandEvents = {
    * Emitted when a command has errored.
    */
   commandFailed: (event: CommandFailedEvent) => void,
-  commandWarning: (event: CommandFailedEvent) => void,
+  commandWarnings: (event: CommandWarningsEvent) => void,
 }
 
 /**
@@ -159,20 +160,13 @@ export class CommandSucceededEvent extends CommandEvent {
   public readonly resp?: RawDataAPIResponse;
 
   /**
-   * Any warnings returned from the Data API that may point out deprecated/incorrect practices,
-   * or any other issues that aren't strictly an error.
-   */
-  public readonly warnings: string[];
-
-  /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  constructor(info: DataAPIRequestInfo, reply: RawDataAPIResponse, warnings: string[], started: number) {
+  constructor(info: DataAPIRequestInfo, reply: RawDataAPIResponse, started: number) {
     super(info);
     this.duration = performance.now() - started;
-    this.warnings = warnings;
     this.resp = reply;
   }
 
@@ -213,6 +207,19 @@ export class CommandFailedEvent extends CommandEvent {
     super(info);
     this.duration = performance.now() - started;
     this.error = error;
+  }
+
+  formatted(): string {
+    return JSON.stringify(this);
+  }
+}
+
+export class CommandWarningsEvent extends CommandEvent {
+  public readonly warnings: DataAPIErrorDescriptor[];
+
+  constructor(info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[]) {
+    super(info);
+    this.warnings = warnings;
   }
 
   formatted(): string {
