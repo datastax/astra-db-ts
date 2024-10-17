@@ -15,17 +15,17 @@
 
 import { InternalLoggingConfig } from '@/src/client/types/internal';
 import { DataAPIClientEvents, DataAPILoggingConfig, NormalizedLoggingConfig } from '@/src/lib/logging/types';
-import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/documents';
+import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents';
 import {
   AdminCommandFailedEvent,
   AdminCommandPollingEvent,
   AdminCommandStartedEvent,
-  AdminCommandSucceededEvent,
+  AdminCommandSucceededEvent, AdminCommandWarningsEvent,
 } from '@/src/administration';
 import {
   EventConstructors,
+  EventLoggingOutputDefaults,
   EventLoggingDefaults,
-  EventLoggingDefaultsAll,
   LoggingEventsWithoutAll,
 } from '@/src/lib/logging/constants';
 import { buildOutputsMap } from '@/src/lib/logging/util';
@@ -45,13 +45,13 @@ interface ConsoleLike {
 export class Logger implements Partial<Record<keyof DataAPIClientEvents, unknown>> {
   public commandStarted?:        (...args: ConstructorParameters<typeof CommandStartedEvent>       ) => void;
   public commandFailed?:         (...args: ConstructorParameters<typeof CommandFailedEvent>        ) => void;
-  public commandWarning?:        (...args: ConstructorParameters<typeof CommandFailedEvent>        ) => void;
+  public commandWarnings?:       (...args: ConstructorParameters<typeof CommandWarningsEvent>      ) => void;
   public commandSucceeded?:      (...args: ConstructorParameters<typeof CommandSucceededEvent>     ) => void;
   public adminCommandFailed?:    (...args: ConstructorParameters<typeof AdminCommandFailedEvent>   ) => void;
   public adminCommandStarted?:   (...args: ConstructorParameters<typeof AdminCommandStartedEvent>  ) => void;
   public adminCommandPolling?:   (...args: ConstructorParameters<typeof AdminCommandPollingEvent>  ) => void;
+  public adminCommandWarnings?:  (...args: ConstructorParameters<typeof AdminCommandWarningsEvent> ) => void;
   public adminCommandSucceeded?: (...args: ConstructorParameters<typeof AdminCommandSucceededEvent>) => void;
-  public adminCommandWarning?:   (...args: ConstructorParameters<typeof AdminCommandFailedEvent>   ) => void;
 
   constructor(config: InternalLoggingConfig, private emitter: TypedEventEmitter<DataAPIClientEvents>, private console: ConsoleLike) {
     for (const [_event, outputs] of Object.entries(config)) if (outputs) {
@@ -106,20 +106,20 @@ const normalizeLoggingConfig = (config: DataAPILoggingConfig | undefined): Resul
   }
 
   if (config === 'all') {
-    return ok(EventLoggingDefaultsAll);
+    return ok(EventLoggingDefaults);
   }
 
   if (typeof config === 'string') {
-    return ok([{ events: [config], emits: EventLoggingDefaults[config] }]);
+    return ok([{ events: [config], emits: EventLoggingOutputDefaults[config] }]);
   }
 
   return r.mapM((c, i): Result<NormalizedLoggingConfig[]> => {
     if (c === 'all') {
-      return ok(EventLoggingDefaultsAll);
+      return ok(EventLoggingDefaults);
     }
 
     if (typeof c === 'string') {
-      return ok([{ events: [c], emits: EventLoggingDefaults[c] }]);
+      return ok([{ events: [c], emits: EventLoggingOutputDefaults[c] }]);
     }
 
     if (c.events === 'all' || Array.isArray(c.events) && c.events.includes('all')) {

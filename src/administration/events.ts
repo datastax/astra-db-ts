@@ -14,6 +14,7 @@
 
 import { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client';
 import { DataAPIClientEvent } from '@/src/lib/logging/logging';
+import { DataAPIErrorDescriptor } from '@/src/documents';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -38,7 +39,7 @@ export type AdminCommandEvents = {
    * Emitted when an admin command has errored.
    */
   adminCommandFailed: (event: AdminCommandFailedEvent) => void,
-  adminCommandWarning: (event: AdminCommandFailedEvent) => void,
+  adminCommandWarnings: (event: AdminCommandWarningsEvent) => void,
 }
 
 /**
@@ -174,22 +175,13 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
   public readonly resBody?: Record<string, any>;
 
   /**
-   * Any warnings returned from the Data API that may point out deprecated/incorrect practices,
-   * or any other issues that aren't strictly an error.
-   *
-   * Does not apply to Astra users, as the admin classes will use the DevOps API instead.
-   */
-  public readonly warnings: string[];
-
-  /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, warnings: string[], started: number) {
+  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number) {
     super(info, longRunning);
     this.duration = performance.now() - started;
-    this.warnings = warnings;
     this.resBody = data || undefined;
   }
 
@@ -228,6 +220,19 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
     super(info, longRunning);
     this.duration = performance.now() - started;
     this.error = error;
+  }
+
+  formatted(): string {
+    return JSON.stringify(this);
+  }
+}
+
+export class AdminCommandWarningsEvent extends AdminCommandEvent {
+  public readonly warnings: DataAPIErrorDescriptor[];
+
+  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: DataAPIErrorDescriptor[]) {
+    super(info, longRunning);
+    this.warnings = warnings;
   }
 
   formatted(): string {
