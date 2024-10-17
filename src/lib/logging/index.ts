@@ -11,9 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// noinspection DuplicatedCode
 
-export type * from './caller';
-export type * from './client-opts';
-export type * from './http-opts';
-export type * from './spawn-admin';
-export type * from './spawn-db';
+export type {
+  DataAPILoggingOutput,
+  DataAPILoggingEvent,
+  DataAPIClientEvents,
+  DataAPIExplicitLoggingConfig,
+  DataAPILoggingConfig,
+} from './types';

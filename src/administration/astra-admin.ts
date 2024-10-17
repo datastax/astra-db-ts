@@ -28,8 +28,7 @@ import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-clien
 import { TokenProvider, WithTimeout } from '@/src/lib';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
-import { evalLoggingConfig } from '@/src/client/logging';
-import { DbSpawnOptions } from '@/src/client';
+import { DbSpawnOptions, Logger } from '@/src/client';
 import { buildAstraEndpoint } from '@/src/lib/utils';
 
 /**
@@ -76,7 +75,7 @@ export class AstraAdmin {
         ...rootOpts.adminOptions,
         ...adminOpts,
         adminToken: TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken, 'admin token').unwrap(),
-        logging: evalLoggingConfig(rootOpts.adminOptions.logging, adminOpts?.logging),
+        logging: Logger.advanceConfig(rootOpts.adminOptions.logging, adminOpts?.logging).unwrap(),
       },
     };
 

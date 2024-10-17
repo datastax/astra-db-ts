@@ -15,11 +15,10 @@
 import type {
   Caller,
   DataAPIHttpOptions,
-  DataAPILoggingConfig,
   DefaultAdminSpawnOptions,
   DefaultDbSpawnOptions,
 } from '@/src/client';
-import type { DataAPIEnvironment } from '@/src/lib';
+import type { DataAPIEnvironment, DataAPILoggingConfig } from '@/src/lib';
 
 /**
  * The default options for the {@link DataAPIClient}. The Data API & DevOps specific options may be overridden

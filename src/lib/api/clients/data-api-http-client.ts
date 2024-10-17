@@ -14,30 +14,24 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import { TimeoutManager, TimeoutOptions } from '@/src/lib/api/timeout-managers';
-import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/documents/events';
 import {
   DataAPIHttpError,
   DataAPIResponseError,
   DataAPITimeoutError,
   mkRespErrorFromResponse,
 } from '@/src/documents/errors';
-import {
-  AdminCommandFailedEvent,
-  AdminCommandStartedEvent,
-  AdminCommandSucceededEvent,
-  AdminSpawnOptions,
-} from '@/src/administration';
+import { AdminSpawnOptions } from '@/src/administration';
 import { CollectionNotFoundError } from '@/src/db/errors';
 import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_TIMEOUT, HttpMethods } from '@/src/lib/api/constants';
 import { RawDataAPIResponse } from '@/src/lib/api';
 import { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
 import { nullish, TokenProvider } from '@/src/lib';
-import { hrTimeMs, HttpClient } from '@/src/lib/api/clients/http-client';
+import { HttpClient } from '@/src/lib/api/clients/http-client';
 import { CollectionSpawnOptions } from '@/src/db';
 import { isNullish } from '@/src/lib/utils';
 import { EmbeddingHeadersProvider, ObjectId, UUID } from '@/src/documents';
 import { WithNullableKeyspace } from '@/src/db/types/common';
-import { evalLoggingConfig, InternalLogger } from '@/src/client/logging';
+import { Logger } from '@/src/lib/logging/logging';
 
 /**
  * @internal
@@ -54,33 +48,27 @@ interface ExecuteCommandOptions extends WithNullableKeyspace {
   collection?: string,
 }
 
-type EmissionStrategy = (logger: InternalLogger) => {
-  emitCommandStarted(info: DataAPIRequestInfo): void,
-  emitCommandFailed(info: DataAPIRequestInfo, error: Error, started: number): void,
-  emitCommandSucceeded(info: DataAPIRequestInfo, resp: RawDataAPIResponse, warnings: string[], started: number): void,
+type EmissionStrategy = (logger: Logger) => {
+  emitCommandStarted?(info: DataAPIRequestInfo): void,
+  emitCommandFailed?(info: DataAPIRequestInfo, error: Error, started: number): void,
+  emitCommandSucceeded?(info: DataAPIRequestInfo, resp: RawDataAPIResponse, warnings: string[], started: number): void,
 }
 
 export const EmissionStrategy: Record<'Normal' | 'Admin', EmissionStrategy> = {
   Normal: (logger) => ({
-    emitCommandStarted(info) {
-      logger.commandStarted(new CommandStartedEvent(info));
-    },
-    emitCommandFailed(info, error, started) {
-      logger.commandFailed(new CommandFailedEvent(info, error, started));
-    },
-    emitCommandSucceeded(info, resp, warnings, started) {
-      logger.commandSucceeded(new CommandSucceededEvent(info, resp, warnings, started));
-    },
+    emitCommandStarted: logger.commandStarted,
+    emitCommandFailed: logger.commandFailed,
+    emitCommandSucceeded: logger.commandSucceeded,
   }),
   Admin: (logger) => ({
     emitCommandStarted(info) {
-      logger.adminCommandStarted(new AdminCommandStartedEvent(adaptInfo4Devops(info), true, info.timeoutManager.msRemaining()));
+      logger.adminCommandStarted?.(adaptInfo4Devops(info), true, info.timeoutManager.msRemaining());
     },
     emitCommandFailed(info, error, started) {
-      logger.adminCommandFailed(new AdminCommandFailedEvent(adaptInfo4Devops(info), true, error, started));
+      logger.adminCommandFailed?.(adaptInfo4Devops(info), true, error, started);
     },
     emitCommandSucceeded(info, resp, warnings, started) {
-      logger.adminCommandSucceeded(new AdminCommandSucceededEvent(adaptInfo4Devops(info), true, resp, warnings, started));
+      logger.adminCommandSucceeded?.(adaptInfo4Devops(info), true, resp, warnings, started);
     },
   }),
 };
@@ -121,7 +109,7 @@ export class DataAPIHttpClient extends HttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(opts?.embeddingApiKey),
-      logging: evalLoggingConfig(this.#props.logging, opts?.logging),
+      logging: Logger.advanceConfig(this.#props.logging, opts?.logging).unwrap(),
       keyspace: { ref: keyspace },
     });
 
@@ -135,7 +123,7 @@ export class DataAPIHttpClient extends HttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       tokenProvider: opts?.adminToken ? TokenProvider.parseToken(opts?.adminToken, 'admin token').unwrap() : this.#props.tokenProvider,
-      logging: evalLoggingConfig(this.#props.logging, opts?.logging),
+      logging: Logger.advanceConfig(this.#props.logging, opts?.logging).unwrap(),
       baseUrl: opts?.endpointUrl || this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
     });
@@ -181,8 +169,8 @@ export class DataAPIHttpClient extends HttpClient {
       const collectionPath = info.collection ? `/${info.collection}` : '';
       info.url += keyspacePath + collectionPath;
 
-      started = hrTimeMs();
-      this.emissionStrategy.emitCommandStarted(info);
+      started = performance.now();
+      this.emissionStrategy.emitCommandStarted?.(info);
 
       const resp = await this._request({
         url: info.url,
@@ -215,11 +203,11 @@ export class DataAPIHttpClient extends HttpClient {
         errors: data.errors,
       };
 
-      this.emissionStrategy.emitCommandSucceeded(info, respData, warnings, started);
+      this.emissionStrategy.emitCommandSucceeded?.(info, respData, warnings, started);
 
       return respData;
     } catch (e: any) {
-      this.emissionStrategy.emitCommandFailed(info, e, started);
+      this.emissionStrategy.emitCommandFailed?.(info, e, started);
       throw e;
     }
   }

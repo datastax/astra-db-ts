@@ -11,9 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// noinspection DuplicatedCode
 
-export type * from './caller';
-export type * from './client-opts';
-export type * from './http-opts';
-export type * from './spawn-admin';
-export type * from './spawn-db';
+import { DataAPILoggingOutput } from '@/src/lib/logging/types';
+
+export const buildOutputsMap = (emits: readonly DataAPILoggingOutput[]) => (emits.length === 0)
+  ? undefined
+  : ({
+    event: emits.includes('event'),
+    stdout: emits.includes('stdout'),
+    stderr: emits.includes('stderr'),
+  });

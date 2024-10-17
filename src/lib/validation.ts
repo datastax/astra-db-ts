@@ -27,6 +27,7 @@ interface ResultFns<A> {
   [Symbol.iterator]: () => Iterator<Result<A>, A>,
   unwrap(onFail?: (e: Error) => A): A,
   isOk(): this is ResultFns<A> & { $tag: 'r', $value: A },
+  map<B>(f: (a: A) => B): Result<B>,
 }
 
 export type Result<A> = ResultFns<A> & ({ $tag: 'l', $value: Error } | { $tag: 'r', $value: A });
@@ -43,6 +44,9 @@ export const fail = <A>(l: Error): Result<A> => ({
   unwrap(onFail = ((e) => { throw e; })): A {
     return onFail(this.$value);
   },
+  map<B>(): Result<B> {
+    return r.coerceR(this);
+  },
 });
 
 export const ok = <A>(r: A): Result<A> => ({
@@ -57,10 +61,13 @@ export const ok = <A>(r: A): Result<A> => ({
   unwrap(): A {
     return this.$value;
   },
+  map<B>(f: (a: A) => B): Result<B> {
+    return ok(f(this.$value));
+  },
 });
 
 export const r = {
-  mapM: <A, B>(f: (r: A, i: number) => Result<B>) => (r1s: Iterable<A>): Result<B[]> => {
+  mapM: <A, B>(f: (r: A, i: number) => Result<B>, r1s: Iterable<A>): Result<B[]> => {
     const eithers: B[] = [];
     let i = 0;
 

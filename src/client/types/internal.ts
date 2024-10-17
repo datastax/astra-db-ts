@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { AdminSpawnOptions, DataAPIClientEvents, DataAPILoggingOutput, DbSpawnOptions } from '@/src/client';
-import type { DataAPIEnvironment, TokenProvider } from '@/src/lib';
-import type TypedEmitter from 'typed-emitter';
-import type { FetchCtx } from '@/src/lib/api/fetch/types';
+import { DataAPIClientEvents, DataAPIEnvironment, DataAPILoggingOutput, TokenProvider } from '@/src/lib';
+import TypedEmitter from 'typed-emitter';
+import { FetchCtx } from '@/src/lib/api/fetch/types';
+import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
 
 /**
  * @internal
  */
-export type InternalLoggingConfig = Record<keyof DataAPIClientEvents, Record<DataAPILoggingOutput, boolean> | undefined>
+export type InternalLoggingConfig = Readonly<Record<keyof DataAPIClientEvents, Readonly<Record<DataAPILoggingOutput, boolean>> | undefined>>
 
 /**
  * @internal

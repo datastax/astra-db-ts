@@ -11,11 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// noinspection DuplicatedCode
 
 import { DataAPICommandEvents } from '@/src/documents';
 import { AdminCommandEvents } from '@/src/administration';
 
-export type DataAPILoggingConfig = DataAPILoggingEvent | readonly (DataAPILoggingEvent | DataAPIExplicitLoggingConfig)[]
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
  * command's lifecycle. Intended for use for monitoring and logging purposes.
@@ -35,10 +35,17 @@ export type DataAPIClientEvents =
   & DataAPICommandEvents
   & AdminCommandEvents;
 
+export type DataAPILoggingConfig = DataAPILoggingEvent | readonly (DataAPILoggingEvent | DataAPIExplicitLoggingConfig)[]
+
 export type DataAPILoggingEvent = 'all' | keyof DataAPIClientEvents;
 export type DataAPILoggingOutput = 'event' | 'stdout' | 'stderr';
 
 export interface DataAPIExplicitLoggingConfig {
   readonly events: DataAPILoggingEvent | readonly DataAPILoggingEvent[],
   readonly emits: DataAPILoggingOutput | readonly DataAPILoggingOutput[],
+}
+
+export interface NormalizedLoggingConfig {
+  events: readonly DataAPILoggingEvent[],
+  emits: readonly DataAPILoggingOutput[],
 }
