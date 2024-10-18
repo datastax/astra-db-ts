@@ -95,28 +95,25 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   readonly #keyspace: string;
   readonly #httpClient: DataAPIHttpClient;
 
-  private readonly _options: GenericFindOptions;
-  private _filter: Filter<TRaw>;
-  private _mapping?: (doc: TRaw) => T;
-  private _buffer: TRaw[] = [];
-  private _nextPageState?: string | null;
-  private _state = CursorStatus.Idle;
-  private _sortVector?: number[] | null;
+  readonly #options: GenericFindOptions;
+  readonly #filter: Filter<TRaw>;
+  readonly #mapping?: (doc: TRaw) => T;
+  #buffer: TRaw[] = [];
+  #nextPageState?: string | null;
+  #state = CursorStatus.Idle;
+  #sortVector?: number[] | null;
 
   /**
    * Should not be instantiated directly.
    *
    * @internal
    */
-  constructor(keyspace: string, httpClient: DataAPIHttpClient, filter: Filter<TRaw>, options?: GenericFindOptions) {
+  constructor(keyspace: string, httpClient: DataAPIHttpClient, filter: Filter<TRaw>, options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
     this.#keyspace = keyspace;
     this.#httpClient = httpClient;
-    this._filter = structuredClone(filter);
-    this._options = structuredClone(options ?? {});
-
-    if (options?.sort) {
-      this._options.sort = normalizedSort(options.sort);
-    }
+    this.#filter = filter;
+    this.#options = options ?? {};
+    this.#mapping = mapping;
   }
 
   /**
@@ -134,7 +131,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns Whether or not the cursor is closed.
    */
   public get closed(): boolean {
-    return this._state === CursorStatus.Closed;
+    return this.#state === CursorStatus.Closed;
   }
 
   /**
@@ -143,7 +140,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns The number of raw records in the buffer.
    */
   public bufferedCount(): number {
-    return this._buffer.length;
+    return this.#buffer.length;
   }
 
   /**
@@ -156,7 +153,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns The records read from the buffer.
    */
   public consumeBuffer(max?: number): TRaw[] {
-    return this._buffer.splice(0, max ?? this._buffer.length);
+    return this.#buffer.splice(0, max ?? this.#buffer.length);
   }
 
   /**
@@ -173,10 +170,8 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  public filter(filter: Filter<TRaw>): this {
-    this.#assertUninitialized();
-    this._filter = filter;
-    return this;
+  public filter(filter: Filter<TRaw>): FindCursor<T,  TRaw> {
+    return this.#clone(structuredClone(filter), this.#options, this.#mapping);
   }
 
   /**
@@ -193,10 +188,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @see StrictSort
    */
-  public sort(sort: Sort): this {
-    this.#assertUninitialized();
-    this._options.sort = normalizedSort(sort);
-    return this;
+  public sort(sort: Sort): FindCursor<T,  TRaw> {
+    const options = { ...this.#options, sort: normalizedSort(sort) };
+    return this.#clone(this.#filter, options, this.#mapping);
   }
 
   /**
@@ -210,10 +204,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The cursor.
    */
-  public limit(limit: number): this {
-    this.#assertUninitialized();
-    this._options.limit = limit || Infinity;
-    return this;
+  public limit(limit: number): FindCursor<T,  TRaw> {
+    const options = { ...this.#options, limit: limit || Infinity };
+    return this.#clone(this.#filter, options, this.#mapping);
   }
 
   /**
@@ -225,10 +218,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The cursor.
    */
-  public skip(skip: number): this {
-    this.#assertUninitialized();
-    this._options.skip = skip;
-    return this;
+  public skip(skip: number): FindCursor<T,  TRaw> {
+    const options = { ...this.#options, skip };
+    return this.#clone(this.#filter, options, this.#mapping);
   }
 
   /**
@@ -269,15 +261,12 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @see StrictProjection
    */
-  public project<RRaw extends SomeDoc = DeepPartial<TRaw>>(projection: Projection): FindCursor<RRaw, RRaw> {
-    this.#assertUninitialized();
-
-    if (this._mapping) {
+  public project<RRaw extends SomeDoc = DeepPartial<TRaw>>(projection: Projection): FindCursor<T,  RRaw> {
+    if (this.#mapping) {
       throw new Error('Cannot set a projection after already using cursor.map(...)');
     }
-
-    this._options.projection = projection;
-    return this as any;
+    const options = { ...this.#options, projection: structuredClone(projection) };
+    return this.#clone(this.#filter as Filter<RRaw>, options, this.#mapping);
   }
 
   /**
@@ -289,10 +278,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The cursor.
    */
-  public includeSimilarity(includeSimilarity: boolean = true): this {
-    this.#assertUninitialized();
-    this._options.includeSimilarity = includeSimilarity;
-    return this;
+  public includeSimilarity(includeSimilarity: boolean = true): FindCursor<T,  TRaw> {
+    const options = { ...this.#options, includeSimilarity };
+    return this.#clone(this.#filter, options, this.#mapping);
   }
 
   /**
@@ -305,10 +293,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The cursor.
    */
-  public includeSortVector(includeSortVector: boolean = true): this {
-    this.#assertUninitialized();
-    this._options.includeSortVector = includeSortVector;
-    return this;
+  public includeSortVector(includeSortVector: boolean = true): FindCursor<T,  TRaw> {
+    const options = { ...this.#options, includeSortVector };
+    return this.#clone(this.#filter, options, this.#mapping);
   }
 
   /**
@@ -323,17 +310,25 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The cursor.
    */
+  // public map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw> {
+  //   this.#assertUninitialized();
+  //
+  //   if (this._mapping) {
+  //     const oldMapping = this._mapping;
+  //     this._mapping = (doc: TRaw) => mapping(oldMapping(doc)) as any;
+  //   } else {
+  //     this._mapping = mapping as any;
+  //   }
+  //
+  //   return this as any;
+  // }
   public map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw> {
-    this.#assertUninitialized();
-
-    if (this._mapping) {
-      const oldMapping = this._mapping;
-      this._mapping = (doc: TRaw) => mapping(oldMapping(doc)) as any;
+    if (this.#mapping) {
+      const oldMapping = this.#mapping;
+      return this.#clone(this.#filter, this.#options, (doc: TRaw) => mapping(oldMapping(doc)));
     } else {
-      this._mapping = mapping as any;
+      return this.#clone(this.#filter, this.#options, mapping as any);
     }
-
-    return this as any;
   }
 
   /**
@@ -345,7 +340,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns A behavioral clone of this cursor.
    */
   public clone(): FindCursor<TRaw, TRaw> {
-    return new FindCursor(this.#keyspace, this.#httpClient, this._filter, this._options);
+    return new FindCursor(this.#keyspace, this.#httpClient, this.#filter, this.#options);
   }
 
   /**
@@ -354,9 +349,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * resultant data was already fetched by this cursor.
    */
   public rewind(): void {
-    this._buffer.length = 0;
-    this._nextPageState = undefined;
-    this._state = CursorStatus.Idle;
+    this.#buffer.length = 0;
+    this.#nextPageState = undefined;
+    this.#state = CursorStatus.Idle;
   }
 
   /**
@@ -405,14 +400,14 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns The sort vector, or `null` if none was used (or if `includeSortVector !== true`).
    */
   public async getSortVector(): Promise<number[] | null> {
-    if (this._sortVector === undefined) {
-      if (this._options.includeSortVector) {
+    if (this.#sortVector === undefined) {
+      if (this.#options.includeSortVector) {
         void await this.hasNext();
       } else {
         return null;
       }
     }
-    return this._sortVector!;
+    return this.#sortVector!;
   }
 
   /**
@@ -495,37 +490,38 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * Closes the cursor. The cursor will be unusable after this method is called, or until {@link FindCursor.rewind} is called.
    */
   public close(): void {
-    this._state = CursorStatus.Closed;
-    this._buffer = [];
+    this.#state = CursorStatus.Closed;
+    this.#buffer = [];
   }
 
-  #assertUninitialized(): void {
-    if (this._state !== CursorStatus.Idle) {
+  #clone<R, RRaw extends SomeDoc>(filter: Filter<RRaw>, options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
+    if (this.#state !== CursorStatus.Idle) {
       throw new CursorIsStartedError('Cursor is already initialized/in use; cannot perform options modification. Rewind or clone the cursor to modify its options and rerun it.');
     }
+    return new FindCursor(this.#keyspace, this.#httpClient, filter, options, mapping);
   }
 
   async #next(peek: true): Promise<TRaw | nullish>
   async #next(peek: false): Promise<T | nullish>
   async #next(peek: boolean): Promise<T | TRaw | nullish> {
-    if (this._state === CursorStatus.Closed) {
+    if (this.#state === CursorStatus.Closed) {
       return null;
     }
-    this._state = CursorStatus.Started;
+    this.#state = CursorStatus.Started;
 
     try {
-      if (this._buffer.length === 0) {
+      if (this.#buffer.length === 0) {
         await this.#getMore();
       }
 
       if (peek) {
-        return this._buffer.at(-1);
+        return this.#buffer.at(-1);
       }
 
-      const doc = this._buffer.shift();
+      const doc = this.#buffer.shift();
 
-      return (doc && this._mapping)
-        ? this._mapping(doc)
+      return (doc && this.#mapping)
+        ? this.#mapping(doc)
         : doc;
     } catch (e) {
       this.close();
@@ -536,31 +532,31 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   async #getMore(): Promise<void> {
     const options: InternalFindOptions = {};
 
-    if (this._options.limit !== Infinity) {
-      options.limit = this._options.limit;
+    if (this.#options.limit !== Infinity) {
+      options.limit = this.#options.limit;
     }
-    if (this._nextPageState) {
-      options.pageState = this._nextPageState;
+    if (this.#nextPageState) {
+      options.pageState = this.#nextPageState;
     }
-    if (this._options.skip) {
-      options.skip = this._options.skip;
+    if (this.#options.skip) {
+      options.skip = this.#options.skip;
     }
-    if (this._options.includeSimilarity) {
-      options.includeSimilarity = this._options.includeSimilarity;
+    if (this.#options.includeSimilarity) {
+      options.includeSimilarity = this.#options.includeSimilarity;
     }
-    if (this._options.includeSortVector) {
-      options.includeSortVector = this._options.includeSortVector;
+    if (this.#options.includeSortVector) {
+      options.includeSortVector = this.#options.includeSortVector;
     }
 
     const command: InternalGetMoreCommand = {
-      find: { filter: this._filter },
+      find: { filter: this.#filter },
     };
 
-    if (this._options.sort) {
-      command.find.sort = this._options.sort;
+    if (this.#options.sort) {
+      command.find.sort = this.#options.sort;
     }
-    if (this._options.projection) {
-      command.find.projection = this._options.projection;
+    if (this.#options.projection) {
+      command.find.projection = this.#options.projection;
     }
     if (Object.keys(options).length > 0) {
       command.find.options = options;
@@ -568,10 +564,10 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
 
     const resp = await this.#httpClient.executeCommand(command, {});
 
-    this._nextPageState = resp.data?.nextPageState || null;
-    this._buffer = resp.data?.documents ?? [];
+    this.#nextPageState = resp.data?.nextPageState || null;
+    this.#buffer = resp.data?.documents ?? [];
 
-    this._sortVector ??= resp.status?.sortVector;
-    this._options.includeSortVector = false;
+    this.#sortVector ??= resp.status?.sortVector;
+    this.#options.includeSortVector = false;
   }
 }

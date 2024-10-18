@@ -36,7 +36,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       const cursor = collection.find({});
       cursor.close();
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
-      assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
+      assert.strictEqual(cursor['#state'], 2, 'Cursor is not set to the CLOSED state');
       const res = await cursor.toArray();
       assert.deepStrictEqual(res, [], 'Cursor did not close');
     });
@@ -44,30 +44,30 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
     it('clones cursor without sharing state', async () => {
       const cursor = collection.find({},{  projection: { _id: 0 } }).sort({ name: 1 }).map(ageToString);
       await cursor.hasNext();
-      assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
+      assert.strictEqual(cursor['#state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 3, 'Cursor did not set buffer');
       cursor.close();
 
       const clone = cursor.clone();
-      assert.deepStrictEqual(clone['_buffer'], [], 'Cursor clone shares _buffer');
+      assert.deepStrictEqual(clone['#buffer'], [], 'Cursor clone shares _buffer');
       assert.strictEqual(clone.closed, false, 'Cursor clone is closed');
-      assert.strictEqual(clone['_state'], 0, 'Cursor clone is not set to the UNINITIALIZED state');
+      assert.strictEqual(clone['#state'], 0, 'Cursor clone is not set to the UNINITIALIZED state');
       assert.strictEqual(clone.keyspace, 'default_keyspace', 'Cursor clone has bad keyspace');
-      assert.deepStrictEqual(clone['_options'].projection, { _id: 0 }, 'Cursor clone has bad projection');
-      assert.deepStrictEqual(clone['_options'].sort, { name: 1 }, 'Cursor clone has bad sort');
+      assert.deepStrictEqual(clone['#options'].projection, { _id: 0 }, 'Cursor clone has bad projection');
+      assert.deepStrictEqual(clone['#options'].sort, { name: 1 }, 'Cursor clone has bad sort');
     });
 
     it('should not copy the mapping function', () => {
       const cursor = collection.find({});
       cursor.map(() => 3);
       const clone = cursor.clone();
-      assert.strictEqual(clone['_mapping'], undefined, 'Cursor clone has bad mapping');
+      assert.strictEqual(clone['#mapping'], undefined, 'Cursor clone has bad mapping');
     });
 
     it('should let you build on a cloned cursor', async () => {
       const cursor = collection.find({});
       await cursor.hasNext();
-      assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
+      assert.strictEqual(cursor['#state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 3, 'Cursor did not set buffer');
 
       cursor.close();
@@ -75,17 +75,17 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       assert.throws(() => cursor.filter(filter), CursorIsStartedError);
       const clone = cursor.clone();
       clone.filter(filter);
-      assert.deepStrictEqual(clone['_filter'], filter, 'Cursor did not set new filter');
+      assert.deepStrictEqual(clone['#filter'], filter, 'Cursor did not set new filter');
     });
 
     it('should rewind cursor', async () => {
       const cursor = collection.find({});
       await cursor.hasNext();
-      assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
+      assert.strictEqual(cursor['#state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 3, 'Cursor did not set buffer');
 
       cursor.rewind();
-      assert.strictEqual(cursor['_state'], 0, 'Cursor is not set to the UNINITIALIZED state');
+      assert.strictEqual(cursor['#state'], 0, 'Cursor is not set to the UNINITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not reset buffer');
     });
 
@@ -168,7 +168,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
     it('should read all raw buffered documents', async () => {
       const cursor = collection.find({});
       await cursor.hasNext();
-      assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
+      assert.strictEqual(cursor['#state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 3, 'Cursor did not set buffer');
 
       const raw = cursor.consumeBuffer();
@@ -180,9 +180,9 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
     it('should read all raw buffered documents with a max', async () => {
       const cursor = collection.find({});
       await cursor.hasNext();
-      assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
+      assert.strictEqual(cursor['#state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 3, 'Cursor did not set buffer');
-      cursor['_buffer'] = cursor['_buffer'].sort(sortById); // Only for testing purposes
+      cursor['#buffer'] = cursor['#buffer'].sort(sortById); // Only for testing purposes
       const raw = cursor.consumeBuffer(2);
       assert.strictEqual(raw.length, 2, 'Cursor did not read 2 buffered documents');
       assert.strictEqual(cursor.bufferedCount(), 1, 'Cursor did not properly consume buffer');
@@ -192,7 +192,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
     it('should read all raw buffered documents even with transformation', async () => {
       const cursor = collection.find({}).map(() => ({ _id: 0 }));
       await cursor.hasNext();
-      assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
+      assert.strictEqual(cursor['#state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 3, 'Cursor did not set buffer');
 
       const raw = cursor.consumeBuffer();
@@ -207,7 +207,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       const cursor = collection.find({});
       const doc = await cursor.next();
       assert.deepStrictEqual(doc, docs[0], 'Doc is not the first in the collections');
-      assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
+      assert.strictEqual(cursor['#state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 2, 'Cursor did properly buffer');
     });
 
@@ -223,7 +223,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       }
 
       assert.ok(doc, 'Doc is not the 21st in the collections');
-      assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
+      assert.strictEqual(cursor['#state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 19, 'Cursor did properly buffer');
     });
 
@@ -240,7 +240,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       const doc = await cursor.next();
       assert.ok(doc, 'Doc is null');
       assert.ok(typeof doc['age'] === 'string', 'Doc did not map properly');
-      assert.strictEqual(cursor['_state'], 1, 'Cursor is not set to the INITIALIZED state');
+      assert.strictEqual(cursor['#state'], 1, 'Cursor is not set to the INITIALIZED state');
       assert.strictEqual(cursor.bufferedCount(), 2, 'Cursor did not properly read buffer');
     });
   });
@@ -253,7 +253,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
         res.push(doc);
       }
       assert.deepStrictEqual(res.sort(sortById), docs, 'Cursor did not read all documents');
-      assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
+      assert.strictEqual(cursor['#state'], 2, 'Cursor is not set to the CLOSED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
     });
@@ -265,7 +265,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
         res.push(doc);
       }
       assert.deepStrictEqual(res.sort(sortById), docs.map(ageToString), 'Cursor did not read all documents');
-      assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
+      assert.strictEqual(cursor['#state'], 2, 'Cursor is not set to the CLOSED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
     });
@@ -277,7 +277,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
         res.push(doc);
       }
       assert.deepStrictEqual(res, [], 'Cursor did not read all documents');
-      assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
+      assert.strictEqual(cursor['#state'], 2, 'Cursor is not set to the CLOSED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
     });
@@ -289,7 +289,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
         res.push(doc);
       }
       assert.deepStrictEqual(res.sort(sortById), docs, 'Cursor did not read all documents');
-      assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
+      assert.strictEqual(cursor['#state'], 2, 'Cursor is not set to the CLOSED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
       const res2: any[] = [];
@@ -297,7 +297,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
         res2.push(doc);
       }
       assert.deepStrictEqual(res2, [], 'Cursor did not read all documents');
-      assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
+      assert.strictEqual(cursor['#state'], 2, 'Cursor is not set to the CLOSED state');
     });
 
     it('should close cursor after break', async () => {
@@ -309,7 +309,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
         break;
       }
       assert.deepStrictEqual(res, docs.slice(0, 1), 'Cursor did not read all documents');
-      assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
+      assert.strictEqual(cursor['#state'], 2, 'Cursor is not set to the CLOSED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
     });
@@ -320,7 +320,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       const cursor = collection.find({});
       const res = await cursor.toArray();
       assert.deepStrictEqual(res.sort(sortById), docs, 'Cursor did not read all documents');
-      assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
+      assert.strictEqual(cursor['#state'], 2, 'Cursor is not set to the CLOSED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
     });
@@ -329,7 +329,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       const cursor = collection.find({}).map(ageToString);
       const res = await cursor.toArray();
       assert.deepStrictEqual(res.sort(sortById), docs.map(ageToString), 'Cursor did not read all documents');
-      assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
+      assert.strictEqual(cursor['#state'], 2, 'Cursor is not set to the CLOSED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
     });
@@ -338,7 +338,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       const cursor = collection.find({ _id: 'Iron Maiden' });
       const res = await cursor.toArray();
       assert.deepStrictEqual(res, [], 'Cursor did not read all documents');
-      assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
+      assert.strictEqual(cursor['#state'], 2, 'Cursor is not set to the CLOSED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
     });
@@ -347,12 +347,12 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       const cursor = collection.find({});
       const res = await cursor.toArray();
       assert.deepStrictEqual(res.sort(sortById), docs, 'Cursor did not read all documents');
-      assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
+      assert.strictEqual(cursor['#state'], 2, 'Cursor is not set to the CLOSED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
       const res2 = await cursor.toArray();
       assert.deepStrictEqual(res2, [], 'Cursor did not read all documents');
-      assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
+      assert.strictEqual(cursor['#state'], 2, 'Cursor is not set to the CLOSED state');
     });
   });
 
@@ -363,7 +363,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       // noinspection JSDeprecatedSymbols
       await cursor.forEach(doc => { res.push(doc); });
       assert.deepStrictEqual(res.sort(sortById), docs, 'Cursor did not read all documents');
-      assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
+      assert.strictEqual(cursor['#state'], 2, 'Cursor is not set to the CLOSED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
     });
@@ -374,7 +374,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       // noinspection JSDeprecatedSymbols
       await cursor.forEach(doc => { res.push(doc); });
       assert.deepStrictEqual(res.sort(sortById), docs.map(ageToString), 'Cursor did not read all documents');
-      assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
+      assert.strictEqual(cursor['#state'], 2, 'Cursor is not set to the CLOSED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
     });
@@ -385,7 +385,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       // noinspection JSDeprecatedSymbols
       await cursor.forEach(doc => { res.push(doc); });
       assert.deepStrictEqual(res, [], 'Cursor did not read all documents');
-      assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
+      assert.strictEqual(cursor['#state'], 2, 'Cursor is not set to the CLOSED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
     });
@@ -396,14 +396,14 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       // noinspection JSDeprecatedSymbols
       await cursor.forEach(doc => { res.push(doc); });
       assert.deepStrictEqual(res.sort(sortById), docs, 'Cursor did not read all documents');
-      assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
+      assert.strictEqual(cursor['#state'], 2, 'Cursor is not set to the CLOSED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
       const res2: any[] = [];
       // noinspection JSDeprecatedSymbols
       await cursor.forEach(doc => { res.push(doc); });
       assert.deepStrictEqual(res2, [], 'Cursor did not read all documents');
-      assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
+      assert.strictEqual(cursor['#state'], 2, 'Cursor is not set to the CLOSED state');
     });
 
     it('should close cursor after returning false', async () => {
@@ -415,7 +415,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
         return false;
       });
       assert.deepStrictEqual(res, docs.slice(0, 1), 'Cursor did not read all documents');
-      assert.strictEqual(cursor['_state'], 2, 'Cursor is not set to the CLOSED state');
+      assert.strictEqual(cursor['#state'], 2, 'Cursor is not set to the CLOSED state');
       assert.strictEqual(cursor.bufferedCount(), 0, 'Cursor did not properly consume buffer');
       assert.strictEqual(cursor.closed, true, 'Cursor is not closed');
     });
@@ -526,53 +526,53 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
 
     it('should return sort vector on only first API call if includeSortVector: true', async () => {
       const cursor = collection_.find({}).sort({ $vector: [1, 1, 1, 1, 1] }).includeSortVector();
-      assert.strictEqual(cursor['_sortVector'], undefined);
-      assert.strictEqual(cursor['_options'].includeSortVector, true);
+      assert.strictEqual(cursor['#sortVector'], undefined);
+      assert.strictEqual(cursor['#options'].includeSortVector, true);
       await cursor.hasNext();
-      assert.deepStrictEqual(cursor['_sortVector'], [1, 1, 1, 1, 1]);
-      assert.strictEqual(cursor['_options'].includeSortVector, false);
-      const oldSortVector = cursor['_sortVector'];
+      assert.deepStrictEqual(cursor['#sortVector'], [1, 1, 1, 1, 1]);
+      assert.strictEqual(cursor['#options'].includeSortVector, false);
+      const oldSortVector = cursor['#sortVector'];
       assert.deepStrictEqual(await cursor.getSortVector(), [1, 1, 1, 1, 1]);
-      assert.strictEqual(oldSortVector, cursor['_sortVector']);
+      assert.strictEqual(oldSortVector, cursor['#sortVector']);
     });
 
     it('getSortVector should populate buffer if called first w/ includeSortVector: true', async () => {
       const cursor = collection.find({}).sort({ $vector: [1, 1, 1, 1, 1] }).includeSortVector();
-      assert.strictEqual(cursor['_sortVector'], undefined);
-      assert.strictEqual(cursor['_options'].includeSortVector, true);
+      assert.strictEqual(cursor['#sortVector'], undefined);
+      assert.strictEqual(cursor['#options'].includeSortVector, true);
       assert.deepStrictEqual(await cursor.getSortVector(), [1, 1, 1, 1, 1]);
-      assert.strictEqual(cursor['_buffer'].length, 3);
+      assert.strictEqual(cursor['#buffer'].length, 3);
     });
 
     it('should return null in getSortVector if includeSortVector: false', async () => {
       const cursor = collection_.find({}).sort({ $vector: [1, 1, 1, 1, 1] });
-      assert.strictEqual(cursor['_sortVector'], undefined);
-      assert.strictEqual(cursor['_options'].includeSortVector, undefined);
+      assert.strictEqual(cursor['#sortVector'], undefined);
+      assert.strictEqual(cursor['#options'].includeSortVector, undefined);
       await cursor.hasNext();
-      assert.deepStrictEqual(cursor['_sortVector'], undefined);
-      assert.strictEqual(cursor['_options'].includeSortVector, false);
+      assert.deepStrictEqual(cursor['#sortVector'], undefined);
+      assert.strictEqual(cursor['#options'].includeSortVector, false);
       assert.deepStrictEqual(await cursor.getSortVector(), null);
-      assert.deepStrictEqual(cursor['_sortVector'], undefined);
-      assert.strictEqual(cursor['_options'].includeSortVector, false);
+      assert.deepStrictEqual(cursor['#sortVector'], undefined);
+      assert.strictEqual(cursor['#options'].includeSortVector, false);
     });
 
     it('should return null in getSortVector if no sort vector', async () => {
       const cursor = collection_.find({}).includeSortVector();
-      assert.strictEqual(cursor['_sortVector'], undefined);
-      assert.strictEqual(cursor['_options'].includeSortVector, true);
+      assert.strictEqual(cursor['#sortVector'], undefined);
+      assert.strictEqual(cursor['#options'].includeSortVector, true);
       await cursor.hasNext();
-      assert.deepStrictEqual(cursor['_sortVector'], null);
-      assert.strictEqual(cursor['_options'].includeSortVector, false);
+      assert.deepStrictEqual(cursor['#sortVector'], null);
+      assert.strictEqual(cursor['#options'].includeSortVector, false);
       assert.strictEqual(await cursor.getSortVector(), null);
-      assert.strictEqual(cursor['_sortVector'], null);
-      assert.strictEqual(cursor['_options'].includeSortVector, false);
+      assert.strictEqual(cursor['#sortVector'], null);
+      assert.strictEqual(cursor['#options'].includeSortVector, false);
     });
   });
 
   parallel('misc', () => {
     it('should close cursor and rethrow error if getting documents throws', async () => {
       const cursor = collection.find({});
-      cursor['_filter'] = 3 as any;
+      cursor['#filter'] = 3 as any;
       await assert.rejects(async () => await cursor.toArray(), DataAPIResponseError);
     });
   });

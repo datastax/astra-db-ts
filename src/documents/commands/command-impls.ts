@@ -190,7 +190,10 @@ export class CommandImpls<ID> {
   }
 
   public find<Schema extends SomeDoc>(keyspace: string, filter: SomeDoc, options?: GenericFindOptions): FindCursor<Schema, Schema> {
-    return new FindCursor(keyspace, this.#httpClient, filter, options);
+    if (options?.sort) {
+      options.sort = normalizedSort(options.sort);
+    }
+    return new FindCursor(keyspace, this.#httpClient, structuredClone(filter), structuredClone(options));
   }
 
   public async findOne<Schema>(filter: SomeDoc, options?: GenericFindOneOptions): Promise<Schema | null> {
