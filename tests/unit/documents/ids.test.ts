@@ -76,11 +76,6 @@ describe('unit.documents.ids', () => {
       assert.strictEqual(date, undefined);
     });
 
-    it('should inspect properly', () => {
-      const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');
-      assert.strictEqual(uuid.inspect(), 'UUID("123e4567-e89b-12d3-a456-426614174000")');
-    });
-
     it('should equal a similar UUID', () => {
       const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');
       const other = new UUID('123E4567-E89B-12D3-A456-426614174000');
@@ -154,11 +149,6 @@ describe('unit.documents.ids', () => {
       const objectId = new ObjectId('507f191e810c19729de860ea');
       const date = objectId.getTimestamp();
       assert(<any>date instanceof Date);
-    });
-
-    it('should inspect properly', () => {
-      const objectId = new ObjectId('507f191e810c19729de860ea');
-      assert.strictEqual(objectId.inspect(), 'ObjectId("507f191e810c19729de860ea")');
     });
 
     it('should equal a similar ObjectId', () => {

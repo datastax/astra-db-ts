@@ -51,3 +51,12 @@ export type Ref<T> = { ref: T }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type -- Used for when intersection w/ {} is a "noop"
 export type EmptyObj = {};
+
+/**
+ * Recursively makes all properties of a type optional.
+ *
+ * @public
+ */
+export type DeepPartial<T> = T extends object ? {
+  [P in keyof T]?: DeepPartial<T[P]>;
+} : T;

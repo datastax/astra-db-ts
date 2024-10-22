@@ -16,11 +16,12 @@
 
 import { dummyCollection, TestSchema } from '@/tests/typing/collections/prelude';
 import { Equal, Expect } from '@/tests/typing/prelude';
-import { IdOf, StrictFilter, WithId } from '@/src/documents/collections/types';
+import { IdOf, SomeDoc, StrictFilter, WithId } from '@/src/documents/collections/types';
 import { FindCursor } from '@/src/documents';
+import { DeepPartial } from '@/src/lib';
 
-type GetTOfCursor<Cursor> = Cursor extends FindCursor<infer T> ? T : undefined;
-type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw : undefined;
+type GetTOfCursor<Cursor> = Cursor extends FindCursor<infer T, any> ? T : never;
+type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw : never;
 
 {
   const cursor = dummyCollection<TestSchema>().find({});
@@ -59,7 +60,6 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
 
   type T_and_TRaw_are_equal = Expect<Equal<GetTOfCursor<typeof cursor>, GetTRawOfCursor<typeof cursor>>>;
 
-  // type T_is_expected = Expect<Equal<GetTOfCursor<typeof cursor>, TestSchema & { $similarity?: never }>>;
   type T_is_expected = Expect<Equal<GetTOfCursor<typeof cursor>, WithId<TestSchema & { $similarity?: number }>>>;
 
   type _id_is_expected = Expect<Equal<IdOf<GetTOfCursor<typeof cursor>>, string>>;
@@ -84,17 +84,16 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
 
   type T_and_TRaw_are_equal = Expect<Equal<GetTOfCursor<typeof cursor>, GetTRawOfCursor<typeof cursor>>>;
 
-  // type T_is_expected = Expect<Equal<GetTOfCursor<typeof cursor>, TestSchema & { $similarity?: never }>>;
   type T_is_expected = Expect<Equal<GetTOfCursor<typeof cursor>, WithId<TestSchema & { $similarity?: number }>>>;
 
   type _id_is_expected = Expect<Equal<IdOf<GetTOfCursor<typeof cursor>>, string>>;
 
   const rawProjected = cursor.project({ _id: 0, amount: 1 });
 
-  type rawProjected_T_and_TRaw_are_expected = Expect<Equal<typeof rawProjected, FindCursor<any>>>;
+  type rawProjected_T_and_TRaw_are_expected = Expect<Equal<typeof rawProjected, FindCursor<DeepPartial<TestSchema & { $similarity?: number }>, DeepPartial<TestSchema & { $similarity?: number }>>>>;
 
   void rawProjected.next().then((doc) => {
-    type doc_type_is_expected = Expect<Equal<any | null, typeof doc>>;
+    type doc_type_is_expected = Expect<Equal<DeepPartial<TestSchema & { $similarity?: number }> | null, typeof doc>>;
   });
 
   const projected = cursor.project<{ amount: number }>({ _id: 0, amount: 1 });
