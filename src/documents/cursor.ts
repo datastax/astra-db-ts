@@ -15,16 +15,24 @@
 import { Filter, SomeDoc } from '@/src/documents/collections';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { normalizedSort } from '@/src/documents/utils';
-import { CursorIsStartedError } from '@/src/documents/errors';
 import { Projection, Sort } from '@/src/documents/types';
 import { GenericFindOptions } from '@/src/documents/commands';
-import { nullish } from '@/src/lib';
+import { DeepPartial, nullish } from '@/src/lib';
 
-const enum CursorStatus {
-  Idle = "idle",
-  Started = "started",
-  Closed = "closed",
-}
+/**
+ * Represents the status of a cursor.
+ *
+ * | Status         | Description                                                                        |
+ * |----------------|------------------------------------------------------------------------------------|
+ * | `idle`         | The cursor is uninitialized/not in use, and may be modified freely.                |
+ * | `started`      | The cursor is currently in use, and cannot be modified w/out rewinding or cloning. |
+ * | `closed`       | The cursor is closed, and cannot be used w/out rewinding or cloning.               |
+ *
+ * @public
+ *
+ * @see FindCursor.state
+ */
+export type CursorStatus = 'idle' | 'started' | 'closed';
 
 interface InternalFindOptions {
   pageState?: string,
@@ -43,10 +51,6 @@ interface InternalGetMoreCommand {
   },
 }
 
-export type DeepPartial<T> = T extends object ? {
-  [P in keyof T]?: DeepPartial<T[P]>;
-} : T;
-
 /**
  * Lazily iterates over the results of some generic `find` operation using a Data API.
  *
@@ -55,6 +59,10 @@ export type DeepPartial<T> = T extends object ? {
  * Typed as `FindCursor<T, TRaw>` where `T` is the type of the mapped records and `TRaw` is the type of the raw
  * records before any mapping. If no mapping function is provided, `T` and `TRaw` will be the same type. Mapping
  * is done using the {@link FindCursor.map} method.
+ *
+ * Options may be set either through the `find({}, options)` method, or through the various fluent option-setting
+ * methods, which, ***unlike Mongo***, do not mutate the existing cursor, but rather return a new, uninitialized cursor
+ * with the new option(s) set. This means that option methods may be called even after the cursor is started.
  *
  * @example
  * ```typescript
@@ -65,28 +73,26 @@ export type DeepPartial<T> = T extends object ? {
  * }
  *
  * const collection = db.collection<Person>('people');
- * let cursor = collection.find().filter({ firstName: 'John' });
+ * const cursor1: Cursor<Person> = collection.find().filter({ firstName: 'John' });
  *
  * // Lazily iterate all documents matching the filter
- * for await (const doc of cursor) {
+ * for await (const doc of cursor1) {
  *   console.log(doc);
  * }
  *
  * // Rewind the cursor to be able to iterate again
- * cursor.rewind();
+ * cursor1.rewind();
  *
  * // Get all documents matching the filter as an array
- * const docs = await cursor.toArray();
+ * const docs = await cursor1.toArray();
  *
- * cursor.rewind();
- *
- * // Set options & map as needed
- * cursor: Cursor<string> = cursor
- *   .project<Omit<Person, 'age'>>({ firstName: 1, lastName: 1 })
+ * // Immutably set options & map as needed (changing options returns a new, uninitialized cursor)
+ * const cursor2: Cursor<string> = cursor
+ *   .project<Omit<Person, 'age'>>({ age: 0 })
  *   .map(doc => doc.firstName + ' ' + doc.lastName);
  *
  * // Get next document from cursor
- * const doc = await cursor.next();
+ * const doc = await cursor2.next();
  * ```
  *
  * @public
@@ -98,10 +104,12 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   readonly #options: GenericFindOptions;
   readonly #filter: Filter<TRaw>;
   readonly #mapping?: (doc: TRaw) => T;
+
   #buffer: TRaw[] = [];
   #nextPageState?: string | null;
-  #state = CursorStatus.Idle;
+  #state = 'idle' as CursorStatus;
   #sortVector?: number[] | null;
+  #consumed: number = 0;
 
   /**
    * Should not be instantiated directly.
@@ -130,21 +138,36 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns Whether or not the cursor is closed.
    */
-  public get closed(): boolean {
-    return this.#state === CursorStatus.Closed;
+  public get state(): CursorStatus {
+    return this.#state;
   }
 
   /**
    * Returns the number of raw records in the buffer. If the cursor is unused, it'll return 0.
    *
+   * Unless the cursor was closed before the buffer was completely read, the total number of records retrieved from the
+   * server is equal to ({@link FindCursor.consumed} + {@link FindCursor.buffered}).
+   *
    * @returns The number of raw records in the buffer.
    */
-  public bufferedCount(): number {
+  public buffered(): number {
     return this.#buffer.length;
   }
 
   /**
-   * Pulls up to `max` records from the buffer, or all records if `max` is not provided.
+   * Returns the number of records that have been read be the user from the cursor.
+   *
+   * Unless the cursor was closed before the buffer was completely read, the total number of records retrieved from the
+   * server is equal to ({@link FindCursor.consumed} + {@link FindCursor.buffered}).
+   *
+   * @returns The number of records that have been read be the user from the cursor.
+   */
+  public consumed(): number {
+    return this.#consumed;
+  }
+
+  /**
+   * Consumes up to `max` records from the buffer, or all records if `max` is not provided.
    *
    * **Note that this actually consumes the buffer; it doesn't just peek at it.**
    *
@@ -157,16 +180,14 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Sets the filter for the cursor, overwriting any previous filter. Note that this filter is weakly typed. Prefer
-   * to pass in a filter through the constructor instead, if strongly typed filters are desired.
+   * Sets the filter for the cursor, overwriting any previous filter.
    *
-   * **NB. This method acts on the original raw records, before any mapping.**
-   *
-   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
+   * returns a new, uninitialized cursor with the given new filter set.*
    *
    * @param filter - A filter to select which records to return.
    *
-   * @returns The cursor.
+   * @returns A new cursor with the new filter set.
    *
    * @see StrictFilter
    */
@@ -175,16 +196,14 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Sets the sort criteria for prioritizing records. Note that this sort is weakly typed. Prefer to pass in a sort
-   * through the constructor instead, if strongly typed sorts are desired.
+   * Sets the sort criteria for prioritizing records.
    *
-   * **NB. This method acts on the original records, before any mapping.**
-   *
-   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
+   * returns a new, uninitialized cursor with the given new sort set.*
    *
    * @param sort - The sort order to prioritize which records are returned.
    *
-   * @returns The cursor.
+   * @returns A new cursor with the new sort set.
    *
    * @see StrictSort
    */
@@ -198,11 +217,12 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * If `limit == 0`, there will be no limit on the number of records returned.
    *
-   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
+   * returns a new, uninitialized cursor with the given new limit set.*
    *
    * @param limit - The limit for this cursor.
    *
-   * @returns The cursor.
+   * @returns A new cursor with the new limit set.
    */
   public limit(limit: number): FindCursor<T,  TRaw> {
     const options = { ...this.#options, limit: limit || Infinity };
@@ -212,11 +232,12 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * Sets the number of records to skip before returning.
    *
-   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
+   * returns a new, uninitialized cursor with the given new skip set.*
    *
    * @param skip - The skip for the cursor query.
    *
-   * @returns The cursor.
+   * @returns A new cursor with the new skip set.
    */
   public skip(skip: number): FindCursor<T,  TRaw> {
     const options = { ...this.#options, skip };
@@ -226,12 +247,15 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * Sets the projection for the cursor, overwriting any previous projection.
    *
-   * **NB. This method acts on the original records, before any mapping.**
+   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
+   * returns a new, uninitialized cursor with the given new projection set.*
    *
-   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   * **To properly type this method, you should provide a type argument to specify the shape of the projected
+   * records.**
    *
-   * **To properly type this method, you should provide a type argument for `T` to specify the shape of the projected
-   * records, *with mapping applied*.**
+   * **Note that you may NOT provide a projection after a mapping is already provided, to prevent potential
+   * de-sync errors.** If you really want to do so, you may use {@link FindCursor.clone} to create a new cursor
+   * with the same configuration, but without the mapping, and then set the projection.
    *
    * @example
    * ```typescript
@@ -261,7 +285,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @see StrictProjection
    */
-  public project<RRaw extends SomeDoc = DeepPartial<TRaw>>(projection: Projection): FindCursor<T,  RRaw> {
+  public project<RRaw extends SomeDoc = DeepPartial<TRaw>>(projection: Projection): FindCursor<RRaw,  RRaw> {
     if (this.#mapping) {
       throw new Error('Cannot set a projection after already using cursor.map(...)');
     }
@@ -310,18 +334,6 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The cursor.
    */
-  // public map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw> {
-  //   this.#assertUninitialized();
-  //
-  //   if (this._mapping) {
-  //     const oldMapping = this._mapping;
-  //     this._mapping = (doc: TRaw) => mapping(oldMapping(doc)) as any;
-  //   } else {
-  //     this._mapping = mapping as any;
-  //   }
-  //
-  //   return this as any;
-  // }
   public map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw> {
     if (this.#mapping) {
       const oldMapping = this.#mapping;
@@ -351,7 +363,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   public rewind(): void {
     this.#buffer.length = 0;
     this.#nextPageState = undefined;
-    this.#state = CursorStatus.Idle;
+    this.#state = 'idle';
   }
 
   /**
@@ -490,27 +502,28 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * Closes the cursor. The cursor will be unusable after this method is called, or until {@link FindCursor.rewind} is called.
    */
   public close(): void {
-    this.#state = CursorStatus.Closed;
-    this.#buffer = [];
+    this.#state = 'closed';
+    this.#buffer.length = 0;
   }
 
   #clone<R, RRaw extends SomeDoc>(filter: Filter<RRaw>, options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
-    if (this.#state !== CursorStatus.Idle) {
-      throw new CursorIsStartedError('Cursor is already initialized/in use; cannot perform options modification. Rewind or clone the cursor to modify its options and rerun it.');
-    }
     return new FindCursor(this.#keyspace, this.#httpClient, filter, options, mapping);
   }
 
   async #next(peek: true): Promise<TRaw | nullish>
   async #next(peek: false): Promise<T | nullish>
   async #next(peek: boolean): Promise<T | TRaw | nullish> {
-    if (this.#state === CursorStatus.Closed) {
+    if (this.#state === 'closed') {
       return null;
     }
-    this.#state = CursorStatus.Started;
+    this.#state = 'started';
 
     try {
       if (this.#buffer.length === 0) {
+        if (this.#nextPageState === null) {
+          this.close();
+          return null;
+        }
         await this.#getMore();
       }
 
@@ -519,6 +532,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
       }
 
       const doc = this.#buffer.shift();
+      if (doc) this.#consumed++;
 
       return (doc && this.#mapping)
         ? this.#mapping(doc)

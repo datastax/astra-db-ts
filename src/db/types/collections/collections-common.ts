@@ -192,4 +192,3 @@ export interface DefaultIdOptions {
    */
   type: 'uuid' | 'uuidv6' | 'uuidv7' | 'objectId';
 }
-

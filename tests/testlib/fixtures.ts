@@ -60,7 +60,7 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
 
 export const initCollectionWithFailingClient = () => {
   const { collection } = initTestObjects();
-  collection['_httpClient'].executeCommand = () => { throw new Error('test'); };
+  collection['_httpClient'].executeCommand = () => { throw new Error('failing_client'); };
   return collection;
 };
 
