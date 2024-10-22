@@ -21,69 +21,23 @@ import { FindCursor } from '@/src/documents';
 describe('unit.documents.cursor', () => {
   let httpClient: DataAPIHttpClient;
 
-  // const add1 = (a: number) => a + 1;
-
-  describe('Cursor initialization', () => {
-    it('should initialize an uninitialized Cursor', () => {
-      const cursor = new FindCursor<any>('', httpClient, {});
-      assert.ok(cursor);
-      assert.strictEqual(cursor.buffered(), 0);
-      assert.strictEqual(cursor.consumed(), 0);
-    });
-
-    it('should contain the proper keyspace', () => {
-      const cursor = new FindCursor<any>('default_keyspace', httpClient, {});
-      assert.strictEqual(cursor.keyspace, 'default_keyspace');
-    });
+  it('should initialize an uninitialized Cursor', () => {
+    const cursor = new FindCursor<any>('', httpClient, {});
+    assert.ok(cursor);
+    assert.strictEqual(cursor.buffered(), 0);
+    assert.strictEqual(cursor.consumed(), 0);
+    assert.strictEqual(cursor.state, 'idle');
   });
 
-  // describe('Cursor building', () => {
-  //   it('should fail setting filter if cursor is not uninitialized', () => {
-  //     const cursor = new FindCursor<any>('default_keyspace', httpClient, {});
-  //     cursor.close();
-  //     assert.throws(() => cursor.filter({ _id: '1' }), CursorIsStartedError);
-  //   });
-  //
-  //   it('should fail setting sort if cursor is not uninitialized', () => {
-  //     const cursor = new FindCursor<any>('default_keyspace', httpClient, {});
-  //     cursor.close();
-  //     assert.throws(() => cursor.sort({ _id: 1 }), CursorIsStartedError);
-  //   });
-  //
-  //   it('should fail setting limit if cursor is not uninitialized', () => {
-  //     const cursor = new FindCursor<any>('default_keyspace', httpClient, {});
-  //     cursor.close();
-  //     assert.throws(() => cursor.limit(10), CursorIsStartedError);
-  //   });
-  //
-  //   it('should fail setting skip if cursor is not uninitialized', () => {
-  //     const cursor = new FindCursor<any>('default_keyspace', httpClient, {});
-  //     cursor.close();
-  //     assert.throws(() => cursor.skip(5), CursorIsStartedError);
-  //   });
-  //
-  //   it('should fail setting projection if cursor is not uninitialized', () => {
-  //     const cursor = new FindCursor<any>('default_keyspace', httpClient, {});
-  //     cursor.close();
-  //     assert.throws(() => cursor.project({ _id: 0 }), CursorIsStartedError);
-  //   });
-  //
-  //   it('should fail setting includeSimilarity if cursor is not uninitialized', () => {
-  //     const cursor = new FindCursor<any>('default_keyspace', httpClient, {});
-  //     cursor.close();
-  //     assert.throws(() => cursor.includeSimilarity(true), CursorIsStartedError);
-  //   });
-  //
-  //   it('should fail setting includeSortVector if cursor is not uninitialized', () => {
-  //     const cursor = new FindCursor<any>('default_keyspace', httpClient, {});
-  //     cursor.close();
-  //     assert.throws(() => cursor.includeSortVector(true), CursorIsStartedError);
-  //   });
-  //
-  //   it('should fail setting mapping if cursor is not uninitialized', () => {
-  //     const cursor = new FindCursor<any>('default_keyspace', httpClient, {});
-  //     cursor.close();
-  //     assert.throws(() => cursor.map(add1), CursorIsStartedError);
-  //   });
-  // });
+  it('should contain the proper keyspace', () => {
+    const cursor = new FindCursor<any>('abc', httpClient, {});
+    assert.strictEqual(cursor.keyspace, 'abc');
+  });
+
+  it('should fail to set projection after mapping', () => {
+    const cursor1 = new FindCursor<any>('', httpClient, {});
+    const cursor2 = cursor1.map((x) => x);
+    assert.doesNotThrow(() => cursor1.project({}));
+    assert.throws(() => cursor2.project({}));
+  });
 });

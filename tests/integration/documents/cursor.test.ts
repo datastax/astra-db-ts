@@ -107,6 +107,75 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
     });
   });
 
+  parallel('cursor building', () => {
+    it('should immutably set a filter', async () => {
+      const filter = { _id: '1' };
+      const cursor1 = collection.find(filter);
+      assert.deepStrictEqual(await cursor1.next(), docs[1]);
+      filter._id = '2';
+      cursor1.rewind();
+      assert.deepStrictEqual(await cursor1.next(), docs[1]);
+      const cursor2 = cursor1.filter(filter);
+      cursor1.rewind();
+      assert.deepStrictEqual(await cursor1.next(), docs[1]);
+      assert.deepStrictEqual(await cursor2.next(), docs[2]);
+    });
+
+    it('should immutably set a projection', async () => {
+      const projection = { _id: 0 } as SomeDoc;
+      const cursor1 = collection.find({ _id: '0' }, { projection });
+      assert.deepStrictEqual(await cursor1.next(), { age: 0 });
+      projection._id = 1;
+      projection.age = 0;
+      cursor1.rewind();
+      assert.deepStrictEqual(await cursor1.next(), { age: 0 });
+      const cursor2 = cursor1.project(projection);
+      cursor1.rewind();
+      assert.deepStrictEqual(await cursor1.next(), { age: 0 });
+      assert.deepStrictEqual(await cursor2.next(), { _id: '0' });
+    });
+
+    it('should immutably set a sort', async () => {
+      const sort = { age: 1 } as SomeDoc;
+      const cursor1 = collection.find({}, { sort });
+      assert.deepStrictEqual(await cursor1.next(), docs[0]);
+      sort.age = -1;
+      cursor1.rewind();
+      assert.deepStrictEqual(await cursor1.next(), docs[0]);
+      const cursor2 = cursor1.sort(sort);
+      cursor1.rewind();
+      assert.deepStrictEqual(await cursor1.next(), docs[0]);
+      assert.deepStrictEqual(await cursor2.next(), docs[2]);
+    });
+
+    it('should immutably set a limit', async () => {
+      const cursor1 = collection.find({}, { limit: 1 });
+      assert.deepStrictEqual((await cursor1.toArray()).length, 1);
+      const cursor2 = cursor1.limit(2);
+      cursor1.rewind();
+      assert.deepStrictEqual((await cursor1.toArray()).length, 1);
+      assert.deepStrictEqual((await cursor2.toArray()).length, 2);
+    });
+
+    it('should immutably set a skip', async () => {
+      const cursor1 = collection.find({}, { skip: 1, sort: { age: 1 } });
+      assert.deepStrictEqual((await cursor1.toArray()).length, 2);
+      const cursor2 = cursor1.skip(2);
+      cursor1.rewind();
+      assert.deepStrictEqual((await cursor1.toArray()).length, 2);
+      assert.deepStrictEqual((await cursor2.toArray()).length, 1);
+    });
+
+    it('should immutably set a mapping function', async () => {
+      const cursor1 = collection.find({}).map(ageToString);
+      assert.deepStrictEqual(await cursor1.next(), { age: '0' });
+      const cursor2 = cursor1.map(doc => ({ age: `${doc.age}!` }));
+      cursor1.rewind();
+      assert.deepStrictEqual(await cursor1.next(), { age: '0' });
+      assert.deepStrictEqual(await cursor2.next(), { age: '0!' });
+    });
+  });
+
   parallel('hasNext() tests', () => {
     it('should test if there are more documents with hasNext()', async () => {
       const cursor = collection.find({});

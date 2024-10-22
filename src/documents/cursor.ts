@@ -281,7 +281,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @param projection - Specifies which fields should be included/excluded in the returned records.
    *
-   * @returns The cursor.
+   * @returns A new cursor with the new projection set.
    *
    * @see StrictProjection
    */
@@ -296,11 +296,12 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * Sets whether similarity scores should be included in the cursor's results.
    *
-   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
+   * returns a new, uninitialized cursor with the given new similarity setting.*
    *
    * @param includeSimilarity - Whether similarity scores should be included.
    *
-   * @returns The cursor.
+   * @returns A new cursor with the new similarity setting.
    */
   public includeSimilarity(includeSimilarity: boolean = true): FindCursor<T,  TRaw> {
     const options = { ...this.#options, includeSimilarity };
@@ -311,11 +312,12 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * Sets whether the sort vector should be fetched on the very first API call. Note that this is a requirement
    * to use {@link FindCursor.getSortVector}—it'll unconditionally return `null` if this is not set to `true`.
    *
-   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
+   * returns a new, uninitialized cursor with the given new setting.*
    *
    * @param includeSortVector - Whether the sort vector should be fetched on the first API call
    *
-   * @returns The cursor.
+   * @returns A new cursor with the new sort vector inclusion setting.
    */
   public includeSortVector(includeSortVector: boolean = true): FindCursor<T,  TRaw> {
     const options = { ...this.#options, includeSortVector };
@@ -326,13 +328,16 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * Map all records using the provided mapping function. Previous mapping functions will be composed with the new
    * mapping function (new ∘ old).
    *
-   * **NB. Unlike Mongo, it is okay to map a cursor to `null`.**
+   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
+   * returns a new, uninitialized cursor with the given new mapping set.*
    *
-   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   * **You may NOT set a projection after a mapping is already provided, to prevent potential de-sync errors.** If you
+   * really want to do so, you may use {@link FindCursor.clone} to create a new cursor with the same configuration, but
+   * without the mapping, and then set the projection.
    *
    * @param mapping - The mapping function to apply to all records.
    *
-   * @returns The cursor.
+   * @returns A new cursor with the new mapping set.
    */
   public map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw> {
     if (this.#mapping) {
