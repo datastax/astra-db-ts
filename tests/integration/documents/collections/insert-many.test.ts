@@ -153,7 +153,7 @@ parallel('integration.documents.collections.insert-many', { truncateColls: 'defa
     } catch (e) {
       assert.ok(e instanceof Error);
       assert.ok(!(e instanceof DataAPIError));
-      assert.strictEqual(e.message, 'test');
+      assert.strictEqual(e.message, 'failing_client');
     }
   });
 
@@ -165,7 +165,7 @@ parallel('integration.documents.collections.insert-many', { truncateColls: 'defa
     } catch (e) {
       assert.ok(e instanceof Error);
       assert.ok(!(e instanceof DataAPIError));
-      assert.strictEqual(e.message, 'test');
+      assert.strictEqual(e.message, 'failing_client');
     }
   });
 

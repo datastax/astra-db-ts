@@ -15,4 +15,4 @@
 export * from './api';
 export * from './token-providers';
 export { DataAPIEnvironments } from './constants';
-export type { nullish, WithTimeout, DataAPIEnvironment } from './types';
+export type { nullish, WithTimeout, DataAPIEnvironment, DeepPartial } from './types';

@@ -790,7 +790,7 @@ parallel('integration.documents.collections.update-many', { truncateColls: 'defa
     } catch (e) {
       assert.ok(e instanceof Error);
       assert.ok(!(e instanceof DataAPIError));
-      assert.strictEqual(e.message, 'test');
+      assert.strictEqual(e.message, 'failing_client');
     }
   });
 });

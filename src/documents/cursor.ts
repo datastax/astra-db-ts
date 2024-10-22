@@ -12,17 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Filter, CollectionFindOptions, SomeDoc } from '@/src/documents/collections';
+import { Filter, SomeDoc } from '@/src/documents/collections';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { normalizedSort } from '@/src/documents/utils';
-import { CursorIsStartedError } from '@/src/documents/errors';
 import { Projection, Sort } from '@/src/documents/types';
+import { GenericFindOptions } from '@/src/documents/commands';
+import { DeepPartial, nullish } from '@/src/lib';
 
-const enum CursorStatus {
-  Uninitialized,
-  Initialized,
-  Closed,
-}
+/**
+ * Represents the status of a cursor.
+ *
+ * | Status         | Description                                                                        |
+ * |----------------|------------------------------------------------------------------------------------|
+ * | `idle`         | The cursor is uninitialized/not in use, and may be modified freely.                |
+ * | `started`      | The cursor is currently in use, and cannot be modified w/out rewinding or cloning. |
+ * | `closed`       | The cursor is closed, and cannot be used w/out rewinding or cloning.               |
+ *
+ * @public
+ *
+ * @see FindCursor.state
+ */
+export type CursorStatus = 'idle' | 'started' | 'closed';
 
 interface InternalFindOptions {
   pageState?: string,
@@ -34,83 +44,84 @@ interface InternalFindOptions {
 
 interface InternalGetMoreCommand {
   find: {
-    filter?: Record<string, unknown>;
-    options?: InternalFindOptions;
-    sort?: Record<string, unknown>;
-    projection?: Record<string, unknown>;
-  }
+    filter?: Record<string, unknown>,
+    options?: InternalFindOptions,
+    sort?: Record<string, unknown>,
+    projection?: Record<string, unknown>,
+  },
 }
 
 /**
- * Lazily iterates over the document results of a query.
+ * Lazily iterates over the results of some generic `find` operation using a Data API.
  *
  * **Shouldn't be directly instantiated, but rather created via {@link Collection.find}**.
  *
- * Typed as `FindCursor<T, TRaw>` where `T` is the type of the mapped documents and `TRaw` is the type of the raw
- * documents before any mapping. If no mapping function is provided, `T` and `TRaw` will be the same type. Mapping
+ * Typed as `FindCursor<T, TRaw>` where `T` is the type of the mapped records and `TRaw` is the type of the raw
+ * records before any mapping. If no mapping function is provided, `T` and `TRaw` will be the same type. Mapping
  * is done using the {@link FindCursor.map} method.
+ *
+ * Options may be set either through the `find({}, options)` method, or through the various fluent option-setting
+ * methods, which, ***unlike Mongo***, do not mutate the existing cursor, but rather return a new, uninitialized cursor
+ * with the new option(s) set. This means that option methods may be called even after the cursor is started.
  *
  * @example
  * ```typescript
  * interface Person {
- *   firstName: string;
- *   lastName: string;
- *   age: number;
+ *   firstName: string,
+ *   lastName: string,
+ *   age: number,
  * }
  *
  * const collection = db.collection<Person>('people');
- * let cursor = collection.find().filter({ firstName: 'John' });
+ * const cursor1: Cursor<Person> = collection.find().filter({ firstName: 'John' });
  *
  * // Lazily iterate all documents matching the filter
- * for await (const doc of cursor) {
+ * for await (const doc of cursor1) {
  *   console.log(doc);
  * }
  *
  * // Rewind the cursor to be able to iterate again
- * cursor.rewind();
+ * cursor1.rewind();
  *
  * // Get all documents matching the filter as an array
- * const docs = await cursor.toArray();
+ * const docs = await cursor1.toArray();
  *
- * cursor.rewind();
- *
- * // Set options & map as needed
- * cursor: Cursor<string> = cursor
- *   .project<Omit<Person, 'age'>>({ firstName: 1, lastName: 1 })
+ * // Immutably set options & map as needed (changing options returns a new, uninitialized cursor)
+ * const cursor2: Cursor<string> = cursor
+ *   .project<Omit<Person, 'age'>>({ age: 0 })
  *   .map(doc => doc.firstName + ' ' + doc.lastName);
  *
  * // Get next document from cursor
- * const doc = await cursor.next();
+ * const doc = await cursor2.next();
  * ```
  *
  * @public
  */
 export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
-  private readonly _keyspace: string;
-  private readonly _httpClient: DataAPIHttpClient;
-  private readonly _options: CollectionFindOptions;
-  private _filter: Filter<SomeDoc>;
-  private _mapping?: (doc: unknown) => T;
+  readonly #keyspace: string;
+  readonly #httpClient: DataAPIHttpClient;
 
-  private _buffer: TRaw[] = [];
-  private _nextPageState?: string | null;
-  private _state = CursorStatus.Uninitialized;
-  private _sortVector?: number[] | null;
+  readonly #options: GenericFindOptions;
+  readonly #filter: Filter<TRaw>;
+  readonly #mapping?: (doc: TRaw) => T;
+
+  #buffer: TRaw[] = [];
+  #nextPageState?: string | null;
+  #state = 'idle' as CursorStatus;
+  #sortVector?: number[] | null;
+  #consumed: number = 0;
 
   /**
    * Should not be instantiated directly.
    *
    * @internal
    */
-  constructor(keyspace: string, httpClient: DataAPIHttpClient, filter: Filter<SomeDoc>, options?: CollectionFindOptions) {
-    this._keyspace = keyspace;
-    this._httpClient = httpClient;
-    this._filter = filter;
-    this._options = structuredClone(options ?? {});
-
-    if (options?.sort) {
-      this._options.sort = normalizedSort(options.sort);
-    }
+  constructor(keyspace: string, httpClient: DataAPIHttpClient, filter: Filter<TRaw>, options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
+    this.#keyspace = keyspace;
+    this.#httpClient = httpClient;
+    this.#filter = filter;
+    this.#options = options ?? {};
+    this.#mapping = mapping;
   }
 
   /**
@@ -119,7 +130,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns The keyspace of the collection that's being iterated over.
    */
   public get keyspace(): string {
-    return this._keyspace;
+    return this.#keyspace;
   }
 
   /**
@@ -127,189 +138,214 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns Whether or not the cursor is closed.
    */
-  public get closed(): boolean {
-    return this._state === CursorStatus.Closed;
+  public get state(): CursorStatus {
+    return this.#state;
   }
 
   /**
-   * Returns the number of documents in the buffer. If the cursor is unused, it'll return 0.
+   * Returns the number of raw records in the buffer. If the cursor is unused, it'll return 0.
    *
-   * @returns The number of documents in the buffer.
+   * Unless the cursor was closed before the buffer was completely read, the total number of records retrieved from the
+   * server is equal to ({@link FindCursor.consumed} + {@link FindCursor.buffered}).
+   *
+   * @returns The number of raw records in the buffer.
    */
-  public bufferedCount(): number {
-    return this._buffer.length;
+  public buffered(): number {
+    return this.#buffer.length;
   }
 
   /**
-   * Sets the filter for the cursor, overwriting any previous filter. Note that this filter is weakly typed. Prefer
-   * to pass in a filter through the constructor instead, if strongly typed filters are desired.
+   * Returns the number of records that have been read be the user from the cursor.
    *
-   * **NB. This method acts on the original documents, before any mapping.**
+   * Unless the cursor was closed before the buffer was completely read, the total number of records retrieved from the
+   * server is equal to ({@link FindCursor.consumed} + {@link FindCursor.buffered}).
    *
-   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   * @returns The number of records that have been read be the user from the cursor.
+   */
+  public consumed(): number {
+    return this.#consumed;
+  }
+
+  /**
+   * Consumes up to `max` records from the buffer, or all records if `max` is not provided.
    *
-   * @param filter - A filter to select which documents to return.
+   * **Note that this actually consumes the buffer; it doesn't just peek at it.**
    *
-   * @returns The cursor.
+   * @param max - The maximum number of records to read from the buffer. If not provided, all records will be read.
+   *
+   * @returns The records read from the buffer.
+   */
+  public consumeBuffer(max?: number): TRaw[] {
+    return this.#buffer.splice(0, max ?? this.#buffer.length);
+  }
+
+  /**
+   * Sets the filter for the cursor, overwriting any previous filter.
+   *
+   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
+   * returns a new, uninitialized cursor with the given new filter set.*
+   *
+   * @param filter - A filter to select which records to return.
+   *
+   * @returns A new cursor with the new filter set.
    *
    * @see StrictFilter
    */
-  public filter(filter: Filter<TRaw>): this {
-    this._assertUninitialized();
-    this._filter = filter as any;
-    return this;
+  public filter(filter: Filter<TRaw>): FindCursor<T,  TRaw> {
+    return this.#clone(structuredClone(filter), this.#options, this.#mapping);
   }
 
   /**
-   * Sets the sort criteria for prioritizing documents. Note that this sort is weakly typed. Prefer to pass in a sort
-   * through the constructor instead, if strongly typed sorts are desired.
+   * Sets the sort criteria for prioritizing records.
    *
-   * **NB. This method acts on the original documents, before any mapping.**
+   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
+   * returns a new, uninitialized cursor with the given new sort set.*
    *
-   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   * @param sort - The sort order to prioritize which records are returned.
    *
-   * @param sort - The sort order to prioritize which documents are returned.
-   *
-   * @returns The cursor.
+   * @returns A new cursor with the new sort set.
    *
    * @see StrictSort
    */
-  public sort(sort: Sort): this {
-    this._assertUninitialized();
-    this._options.sort = normalizedSort(sort);
-    return this;
+  public sort(sort: Sort): FindCursor<T,  TRaw> {
+    const options = { ...this.#options, sort: normalizedSort(sort) };
+    return this.#clone(this.#filter, options, this.#mapping);
   }
 
   /**
-   * Sets the maximum number of documents to return.
+   * Sets the maximum number of records to return.
    *
-   * If `limit == 0`, there will be no limit on the number of documents returned.
+   * If `limit == 0`, there will be no limit on the number of records returned.
    *
-   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
+   * returns a new, uninitialized cursor with the given new limit set.*
    *
    * @param limit - The limit for this cursor.
    *
-   * @returns The cursor.
+   * @returns A new cursor with the new limit set.
    */
-  public limit(limit: number): this {
-    this._assertUninitialized();
-    this._options.limit = limit || Infinity;
-    return this;
+  public limit(limit: number): FindCursor<T,  TRaw> {
+    const options = { ...this.#options, limit: limit || Infinity };
+    return this.#clone(this.#filter, options, this.#mapping);
   }
 
   /**
-   * Sets the number of documents to skip before returning.
+   * Sets the number of records to skip before returning.
    *
-   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
+   * returns a new, uninitialized cursor with the given new skip set.*
    *
    * @param skip - The skip for the cursor query.
    *
-   * @returns The cursor.
+   * @returns A new cursor with the new skip set.
    */
-  public skip(skip: number): this {
-    this._assertUninitialized();
-    this._options.skip = skip;
-    return this;
+  public skip(skip: number): FindCursor<T,  TRaw> {
+    const options = { ...this.#options, skip };
+    return this.#clone(this.#filter, options, this.#mapping);
   }
 
   /**
    * Sets the projection for the cursor, overwriting any previous projection.
    *
-   * **NB. This method acts on the original documents, before any mapping.**
+   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
+   * returns a new, uninitialized cursor with the given new projection set.*
    *
-   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   * **To properly type this method, you should provide a type argument to specify the shape of the projected
+   * records.**
    *
-   * **To properly type this method, you should provide a type argument for `T` to specify the shape of the projected
-   * documents, *with mapping applied*.**
+   * **Note that you may NOT provide a projection after a mapping is already provided, to prevent potential
+   * de-sync errors.** If you really want to do so, you may use {@link FindCursor.clone} to create a new cursor
+   * with the same configuration, but without the mapping, and then set the projection.
    *
    * @example
    * ```typescript
-   * const cursor = collection.find({ name: 'John' });
+   * const cursor = table.find({ name: 'John' });
    *
    * // T is `any` because the type is not specified
-   * const rawProjected = cursor.project({ _id: 0, name: 1 });
+   * const rawProjected = cursor.project({ id: 0, name: 1 });
    *
    * // T is { name: string }
-   * const projected = cursor.project<{ name: string }>({ _id: 0, name: 1 });
+   * const projected = cursor.project<{ name: string }>({ id: 0, name: 1 });
    *
    * // You can also chain instead of using intermediate variables
-   * const fluentlyProjected = collection
+   * const fluentlyProjected = table
    *   .find({ name: 'John' })
-   *   .project<{ name: string }>({ _id: 0, name: 1 });
+   *   .project<{ name: string }>({ id: 0, name: 1 });
    *
    * // It's important to keep mapping in mind
-   * const mapProjected = collection
+   * const mapProjected = table
    *   .find({ name: 'John' })
    *   .map(doc => doc.name);
-   *   .project<string>({ _id: 0, name: 1 });
+   *   .project<string>({ id: 0, name: 1 });
    * ```
    *
-   * @param projection - Specifies which fields should be included/excluded in the returned documents.
+   * @param projection - Specifies which fields should be included/excluded in the returned records.
    *
-   * @returns The cursor.
+   * @returns A new cursor with the new projection set.
    *
    * @see StrictProjection
    */
-  public project<R = any, RRaw extends SomeDoc = SomeDoc>(projection: Projection): FindCursor<R, RRaw> {
-    this._assertUninitialized();
-    this._options.projection = projection;
-    return this as any;
+  public project<RRaw extends SomeDoc = DeepPartial<TRaw>>(projection: Projection): FindCursor<RRaw,  RRaw> {
+    if (this.#mapping) {
+      throw new Error('Cannot set a projection after already using cursor.map(...)');
+    }
+    const options = { ...this.#options, projection: structuredClone(projection) };
+    return this.#clone(this.#filter as Filter<RRaw>, options, this.#mapping);
   }
 
   /**
    * Sets whether similarity scores should be included in the cursor's results.
    *
-   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
+   * returns a new, uninitialized cursor with the given new similarity setting.*
    *
    * @param includeSimilarity - Whether similarity scores should be included.
    *
-   * @returns The cursor.
+   * @returns A new cursor with the new similarity setting.
    */
-  public includeSimilarity(includeSimilarity: boolean = true): this {
-    this._assertUninitialized();
-    this._options.includeSimilarity = includeSimilarity;
-    return this;
+  public includeSimilarity(includeSimilarity: boolean = true): FindCursor<T,  TRaw> {
+    const options = { ...this.#options, includeSimilarity };
+    return this.#clone(this.#filter, options, this.#mapping);
   }
 
   /**
    * Sets whether the sort vector should be fetched on the very first API call. Note that this is a requirement
    * to use {@link FindCursor.getSortVector}—it'll unconditionally return `null` if this is not set to `true`.
    *
-   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
+   * returns a new, uninitialized cursor with the given new setting.*
    *
    * @param includeSortVector - Whether the sort vector should be fetched on the first API call
    *
-   * @returns The cursor.
+   * @returns A new cursor with the new sort vector inclusion setting.
    */
-  public includeSortVector(includeSortVector: boolean = true): this {
-    this._assertUninitialized();
-    this._options.includeSortVector = includeSortVector;
-    return this;
+  public includeSortVector(includeSortVector: boolean = true): FindCursor<T,  TRaw> {
+    const options = { ...this.#options, includeSortVector };
+    return this.#clone(this.#filter, options, this.#mapping);
   }
 
   /**
-   * Map all documents using the provided mapping function. Previous mapping functions will be composed with the new
+   * Map all records using the provided mapping function. Previous mapping functions will be composed with the new
    * mapping function (new ∘ old).
    *
-   * **NB. Unlike Mongo, it is okay to map a cursor to `null`.**
+   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
+   * returns a new, uninitialized cursor with the given new mapping set.*
    *
-   * *This method mutates the cursor, and the cursor MUST be uninitialized when calling this method.*
+   * **You may NOT set a projection after a mapping is already provided, to prevent potential de-sync errors.** If you
+   * really want to do so, you may use {@link FindCursor.clone} to create a new cursor with the same configuration, but
+   * without the mapping, and then set the projection.
    *
-   * @param mapping - The mapping function to apply to all documents.
+   * @param mapping - The mapping function to apply to all records.
    *
-   * @returns The cursor.
+   * @returns A new cursor with the new mapping set.
    */
   public map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw> {
-    this._assertUninitialized();
-
-    if (this._mapping) {
-      const oldMapping = this._mapping;
-      this._mapping = (doc: unknown) => mapping(oldMapping(doc)) as any;
+    if (this.#mapping) {
+      const oldMapping = this.#mapping;
+      return this.#clone(this.#filter, this.#options, (doc: TRaw) => mapping(oldMapping(doc)));
     } else {
-      this._mapping = mapping as any;
+      return this.#clone(this.#filter, this.#options, mapping as any);
     }
-
-    return this as any;
   }
 
   /**
@@ -318,29 +354,10 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * Like mongo, mapping functions are *not* cloned.
    *
-   * @example
-   * ```typescript
-   * const cursor = collection.find({ name: 'John' });
-   * ```
-   *
    * @returns A behavioral clone of this cursor.
    */
   public clone(): FindCursor<TRaw, TRaw> {
-    return new FindCursor<TRaw, TRaw>(this._keyspace, this._httpClient, this._filter, this._options);
-  }
-
-  /**
-   * Pulls up to `max` documents from the buffer, or all documents if `max` is not provided.
-   *
-   * **Note that this actually consumes the buffer; it doesn't just peek at it.**
-   *
-   * @param max - The maximum number of documents to read from the buffer. If not provided, all documents will be read.
-   *
-   * @returns The documents read from the buffer.
-   */
-  public readBufferedDocuments(max?: number): TRaw[] {
-    const toRead = Math.min(max ?? this._buffer.length, this._buffer.length);
-    return this._buffer.splice(0, toRead);
+    return new FindCursor(this.#keyspace, this.#httpClient, this.#filter, this.#options);
   }
 
   /**
@@ -349,42 +366,31 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * resultant data was already fetched by this cursor.
    */
   public rewind(): void {
-    this._buffer.length = 0;
-    this._nextPageState = undefined;
-    this._state = CursorStatus.Uninitialized;
+    this.#buffer.length = 0;
+    this.#nextPageState = undefined;
+    this.#state = 'idle';
   }
 
   /**
-   * Fetches the next document from the cursor. Returns `null` if there are no more documents to fetch.
+   * Fetches the next record from the cursor. Returns `null` if there are no more records to fetch.
    *
    * If the cursor is uninitialized, it will be initialized. If the cursor is closed, this method will return `null`.
    *
-   * @returns The next document, or `null` if there are no more documents.
+   * @returns The next record, or `null` if there are no more records.
    */
   public async next(): Promise<T | null> {
-    return this._next(false);
+    return await this.#next(false) ?? null;
   }
 
   /**
-   * Tests if there is a next document in the cursor.
+   * Tests if there is a next record in the cursor.
    *
    * If the cursor is uninitialized, it will be initialized. If the cursor is closed, this method will return `false`.
    *
-   * @returns Whether or not there is a next document.
+   * @returns Whether or not there is a next record.
    */
   public async hasNext(): Promise<boolean> {
-    if (this._buffer.length > 0) {
-      return true;
-    }
-
-    const doc = await this._next(true);
-
-    if (doc !== null) {
-      this._buffer.push(doc);
-      return true;
-    }
-
-    return false;
+    return await this.#next(true) !== null;
   }
 
   /**
@@ -411,18 +417,18 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns The sort vector, or `null` if none was used (or if `includeSortVector !== true`).
    */
   public async getSortVector(): Promise<number[] | null> {
-    if (this._sortVector === undefined) {
-      if (this._options.includeSortVector) {
-        await this.hasNext();
+    if (this.#sortVector === undefined) {
+      if (this.#options.includeSortVector) {
+        void await this.hasNext();
       } else {
         return null;
       }
     }
-    return this._sortVector!;
+    return this.#sortVector!;
   }
 
   /**
-   * An async iterator that lazily iterates over all documents in the cursor.
+   * An async iterator that lazily iterates over all records in the cursor.
    *
    * **Note that there'll only be partial results if the cursor has been previously iterated over. You may use {@link FindCursor.rewind}
    * to reset the cursor.**
@@ -455,7 +461,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Iterates over all documents in the cursor, calling the provided consumer for each document.
+   * Iterates over all records in the cursor, calling the provided consumer for each record.
    *
    * If the consumer returns `false`, iteration will stop.
    *
@@ -466,11 +472,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * It will close the cursor when iteration is complete, even if it was stopped early.
    *
-   * @param consumer - The consumer to call for each document.
+   * @param consumer - The consumer to call for each record.
    *
    * @returns A promise that resolves when iteration is complete.
-   *
-   * @deprecated - Prefer the `for await (const doc of cursor) { ... }` syntax instead.
    */
   public async forEach(consumer: ((doc: T) => boolean) | ((doc: T) => void)): Promise<void> {
     for await (const doc of this) {
@@ -481,15 +485,15 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Returns an array of all matching documents in the cursor. The user should ensure that there is enough memory to
-   * store all documents in the cursor.
+   * Returns an array of all matching records in the cursor. The user should ensure that there is enough memory to
+   * store all records in the cursor.
    *
    * Note that there'll only be partial results if the cursor has been previously iterated over. You may use {@link FindCursor.rewind}
    * to reset the cursor.
    *
    * If the cursor is uninitialized, it will be initialized. If the cursor is closed, this method will return an empty array.
    *
-   * @returns An array of all documents in the cursor.
+   * @returns An array of all records in the cursor.
    */
   public async toArray(): Promise<T[]> {
     const docs: T[] = [];
@@ -503,93 +507,86 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * Closes the cursor. The cursor will be unusable after this method is called, or until {@link FindCursor.rewind} is called.
    */
   public close(): void {
-    this._state = CursorStatus.Closed;
-    this._buffer = [];
+    this.#state = 'closed';
+    this.#buffer.length = 0;
   }
 
-  private _assertUninitialized(): void {
-    if (this._state !== CursorStatus.Uninitialized) {
-      throw new CursorIsStartedError('Cursor is already initialized/in use; cannot perform options modification. Rewind or clone the cursor.');
-    }
+  #clone<R, RRaw extends SomeDoc>(filter: Filter<RRaw>, options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
+    return new FindCursor(this.#keyspace, this.#httpClient, filter, options, mapping);
   }
 
-  private async _next(raw: true): Promise<TRaw | null>
-  private async _next(raw: false): Promise<T | null>
-  private async _next(raw: boolean): Promise<T | TRaw | null> {
-    if (this._state === CursorStatus.Closed) {
+  async #next(peek: true): Promise<TRaw | nullish>
+  async #next(peek: false): Promise<T | nullish>
+  async #next(peek: boolean): Promise<T | TRaw | nullish> {
+    if (this.#state === 'closed') {
       return null;
     }
+    this.#state = 'started';
 
-    do {
-      const doc = this._buffer.shift();
-
-      if (doc) {
-        try {
-          return (!raw && this._mapping)
-            ? this._mapping(doc)
-            : doc;
-        } catch (err) {
+    try {
+      if (this.#buffer.length === 0) {
+        if (this.#nextPageState === null) {
           this.close();
-          throw err;
+          return null;
         }
+        await this.#getMore();
       }
 
-      if (this._nextPageState === null) {
-        return null;
+      if (peek) {
+        return this.#buffer.at(-1);
       }
 
-      try {
-        await this._getMore();
-      } catch (err) {
-        this.close();
-        throw err;
-      }
-    } while (this._buffer.length !== 0);
+      const doc = this.#buffer.shift();
+      if (doc) this.#consumed++;
 
-    return null;
+      return (doc && this.#mapping)
+        ? this.#mapping(doc)
+        : doc;
+    } catch (e) {
+      this.close();
+      throw e;
+    }
   }
 
-  private async _getMore(): Promise<void> {
-    this._state = CursorStatus.Initialized;
-
+  async #getMore(): Promise<void> {
     const options: InternalFindOptions = {};
 
-    if (this._options.limit !== Infinity) {
-      options.limit = this._options.limit;
+    if (this.#options.limit !== Infinity) {
+      options.limit = this.#options.limit;
     }
-    if (this._nextPageState) {
-      options.pageState = this._nextPageState;
+    if (this.#nextPageState) {
+      options.pageState = this.#nextPageState;
     }
-    if (this._options.skip) {
-      options.skip = this._options.skip;
+    if (this.#options.skip) {
+      options.skip = this.#options.skip;
     }
-    if (this._options.includeSimilarity) {
-      options.includeSimilarity = this._options.includeSimilarity;
+    if (this.#options.includeSimilarity) {
+      options.includeSimilarity = this.#options.includeSimilarity;
     }
-    if (this._options.includeSortVector) {
-      options.includeSortVector = this._options.includeSortVector;
+    if (this.#options.includeSortVector) {
+      options.includeSortVector = this.#options.includeSortVector;
     }
 
     const command: InternalGetMoreCommand = {
-      find: { filter: this._filter },
+      find: { filter: this.#filter },
     };
 
-    if (this._options.sort) {
-      command.find.sort = this._options.sort;
+    if (this.#options.sort) {
+      command.find.sort = this.#options.sort;
     }
-    if (this._options.projection) {
-      command.find.projection = this._options.projection;
+    if (this.#options.projection) {
+      command.find.projection = this.#options.projection;
     }
     if (Object.keys(options).length > 0) {
       command.find.options = options;
     }
 
-    const resp = await this._httpClient.executeCommand(command, {});
+    const resp = await this.#httpClient.executeCommand(command, {});
 
-    this._nextPageState = resp.data?.nextPageState || null;
-    this._buffer = resp.data?.documents ?? [];
+    this.#nextPageState = resp.data?.nextPageState || null;
+    this.#buffer = resp.data?.documents ?? [];
 
-    this._sortVector ??= resp.status?.sortVector;
-    this._options.includeSortVector = false;
+    this.#sortVector ??= resp.status?.sortVector;
+    this.#options.includeSortVector = false;
   }
 }

@@ -27,7 +27,6 @@ export {
   DataAPIHttpError,
   DataAPITimeoutError,
   CumulativeDataAPIError,
-  CursorIsStartedError,
   DataAPIDetailedErrorDescriptor,
   DataAPIError,
   DataAPIErrorDescriptor,

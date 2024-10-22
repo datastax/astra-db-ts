@@ -241,40 +241,6 @@ export class TooManyDocumentsToCountError extends DataAPIError {
 }
 
 /**
- * Caused by trying to perform an operation on an already-initialized {@link FindCursor} that requires it to be
- * uninitialized.
- *
- * If you run into this error, and you really do need to change an option on the cursor, you can rewind the cursor
- * using {@link FindCursor.rewind}, or clone it using {@link FindCursor.clone}.
- *
- * @example
- * ```typescript
- * await collections.find({}).toArray();
- *
- * try {
- *   await cursor.limit(10);
- * } catch (e) {
- *   if (e instanceof CursorIsStartedError) {
- *     console.log(e.message); // "Cursor is already initialized..."
- *   }
- * }
- * ```
- *
- * @public
- */
-export class CursorIsStartedError extends DataAPIError {
-  /**
-   * Should not be instantiated by the user.
-   *
-   * @internal
-   */
-  constructor(message: string) {
-    super(message);
-    this.name = 'CursorIsStartedError';
-  }
-}
-
-/**
  * An error representing the *complete* errors for an operation. This is a cohesive error that represents all the
  * errors that occurred during a single operation, and should not be thought of as *always* 1:1 with the number of
  * API requests—rather it's 1:1 with the number of *logical* operations performed by the user (i.e. the methods
