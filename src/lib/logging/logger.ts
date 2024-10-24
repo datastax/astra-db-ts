@@ -16,26 +16,24 @@
 import { InternalLoggingConfig } from '@/src/client/types/internal';
 import { DataAPIClientEvents, DataAPILoggingConfig, NormalizedLoggingConfig } from '@/src/lib/logging/types';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents';
-import {
+import type {
   AdminCommandFailedEvent,
   AdminCommandPollingEvent,
   AdminCommandStartedEvent,
-  AdminCommandSucceededEvent, AdminCommandWarningsEvent,
+  AdminCommandSucceededEvent,
+  AdminCommandWarningsEvent,
 } from '@/src/administration';
 import {
+  EmptyInternalLoggingConfig,
   EventConstructors,
-  EventLoggingOutputDefaults,
   EventLoggingDefaults,
+  EventLoggingOutputDefaults,
   LoggingEventsWithoutAll,
 } from '@/src/lib/logging/constants';
 import { buildOutputsMap } from '@/src/lib/logging/util';
 import TypedEventEmitter from 'typed-emitter';
-import { ok, p, r, Result } from '@/src/lib/validation';
 import { parseLoggingConfig } from '@/src/lib/logging/parser';
-
-export abstract class DataAPIClientEvent {
-  public abstract formatted(): string;
-}
+import { DataAPIClientEvent } from '@/src/lib/logging/events';
 
 interface ConsoleLike {
   log: (...args: any[]) => void;
@@ -53,7 +51,9 @@ export class Logger implements Partial<Record<keyof DataAPIClientEvents, unknown
   public adminCommandWarnings?:  (...args: ConstructorParameters<typeof AdminCommandWarningsEvent> ) => void;
   public adminCommandSucceeded?: (...args: ConstructorParameters<typeof AdminCommandSucceededEvent>) => void;
 
-  constructor(config: InternalLoggingConfig, private emitter: TypedEventEmitter<DataAPIClientEvents>, private console: ConsoleLike) {
+  constructor(_config: NormalizedLoggingConfig[] | undefined, private emitter: TypedEventEmitter<DataAPIClientEvents>, private console: ConsoleLike) {
+    const config = Logger.buildInternalConfig(_config);
+
     for (const [_event, outputs] of Object.entries(config)) if (outputs) {
       const event = _event as keyof DataAPIClientEvents;
 
@@ -73,16 +73,56 @@ export class Logger implements Partial<Record<keyof DataAPIClientEvents, unknown
     }
   }
 
-  public static advanceConfig(base: InternalLoggingConfig, config: DataAPILoggingConfig | undefined): Result<InternalLoggingConfig> {
-    const isOk = normalizeLoggingConfig(config);
+  public static advanceConfig(config?: NormalizedLoggingConfig[], newConfig?: DataAPILoggingConfig): NormalizedLoggingConfig[] | undefined {
+    if (!config && !newConfig) {
+      return undefined;
+    }
+    if (!config) {
+      return Logger.normalizeLoggingConfig(newConfig);
+    }
+    return [...config, ...Logger.normalizeLoggingConfig(newConfig)];
+  }
 
-    if (!isOk.isOk()) {
-      return r.coerceR(isOk);
+  private static normalizeLoggingConfig(config: DataAPILoggingConfig | undefined): NormalizedLoggingConfig[] {
+    if (!config) {
+      return [];
     }
 
-    const newConfig = { ...base };
+    if (config === 'all') {
+      return EventLoggingDefaults;
+    }
 
-    for (const layer of isOk.unwrap()) {
+    if (typeof config === 'string') {
+      return [{ events: [config], emits: EventLoggingOutputDefaults[config] }];
+    }
+
+    return config.flatMap((c, i) => {
+      if (c === 'all') {
+        return EventLoggingDefaults;
+      }
+
+      if (typeof c === 'string') {
+        return [{ events: [c], emits: EventLoggingOutputDefaults[c] }];
+      }
+
+      if (c.events === 'all' || Array.isArray(c.events) && c.events.includes('all')) {
+        if (c.events === 'all' || c.events.length === 1 && c.events[0] === 'all') {
+          return [{ events: LoggingEventsWithoutAll, emits: Array.isArray(c.emits) ? c.emits : [c.emits] }];
+        }
+        throw new Error(`Nonsensical logging configuration; can not have 'all' in a multi-element array (@ idx ${i})`);
+      }
+
+      return [{
+        events: Array.isArray(c.events) ? c.events : [c.events],
+        emits: Array.isArray(c.emits) ? c.emits : [c.emits],
+      }];
+    });
+  };
+
+  private static buildInternalConfig(config: NormalizedLoggingConfig[] | undefined): InternalLoggingConfig {
+    const newConfig = { ...EmptyInternalLoggingConfig };
+
+    for (const layer of config ?? []) {
       for (const event of (layer.events as (keyof DataAPIClientEvents)[])) {
         newConfig[event] = buildOutputsMap(layer.emits);
 
@@ -92,46 +132,10 @@ export class Logger implements Partial<Record<keyof DataAPIClientEvents, unknown
       }
     }
 
-    return ok(newConfig);
+    return newConfig;
   }
 
-  public static parseConfig(config: unknown, field: string): Result<DataAPILoggingConfig | undefined> {
+  public static parseConfig(config: DataAPILoggingConfig | undefined, field: string): DataAPILoggingConfig | undefined {
     return parseLoggingConfig(config, field);
   }
 }
-
-const normalizeLoggingConfig = (config: DataAPILoggingConfig | undefined): Result<NormalizedLoggingConfig[]> => {
-  if (!config) {
-    return ok([]);
-  }
-
-  if (config === 'all') {
-    return ok(EventLoggingDefaults);
-  }
-
-  if (typeof config === 'string') {
-    return ok([{ events: [config], emits: EventLoggingOutputDefaults[config] }]);
-  }
-
-  return r.mapM((c, i): Result<NormalizedLoggingConfig[]> => {
-    if (c === 'all') {
-      return ok(EventLoggingDefaults);
-    }
-
-    if (typeof c === 'string') {
-      return ok([{ events: [c], emits: EventLoggingOutputDefaults[c] }]);
-    }
-
-    if (c.events === 'all' || Array.isArray(c.events) && c.events.includes('all')) {
-      if (c.events === 'all' || c.events.length === 1 && c.events[0] === 'all') {
-        return ok([{ events: LoggingEventsWithoutAll, emits: Array.isArray(c.emits) ? c.emits : [c.emits] }]);
-      }
-      return p.error(`Nonsensical logging configuration; can not have 'all' in a multi-element array (@ idx ${i})`);
-    }
-
-    return ok([{
-      events: Array.isArray(c.events) ? c.events : [c.events],
-      emits: Array.isArray(c.emits) ? c.emits : [c.emits],
-    }]);
-  }, config).map(a => a.flat());
-};

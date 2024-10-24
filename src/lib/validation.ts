@@ -17,73 +17,10 @@ import { isNullish } from '@/src/lib/utils';
 export type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends (<T>() => T extends Y ? 1 : 2) ? true : false;
 export const EqualityProof = <X, Y, _ extends Equal<X, Y>>() => {};
 
-export type Parser<A, R = unknown> = (input: R, field: string) => Result<A>;
+export type Parser<A, R = A> = (input: R, field: string) => A;
 
 export const isNonEmpty = <A>(xs: A[]): xs is [A, ...A[]] => {
   return xs.length !== 0;
-};
-
-interface ResultFns<A> {
-  [Symbol.iterator]: () => Iterator<Result<A>, A>,
-  unwrap(onFail?: (e: Error) => A): A,
-  isOk(): this is ResultFns<A> & { $tag: 'r', $value: A },
-  map<B>(f: (a: A) => B): Result<B>,
-}
-
-export type Result<A> = ResultFns<A> & ({ $tag: 'l', $value: Error } | { $tag: 'r', $value: A });
-
-export const fail = <A>(l: Error): Result<A> => ({
-  $tag: 'l',
-  $value: l,
-  isOk(): this is ResultFns<A> & { $tag: 'r', $value: A } {
-    return false;
-  },
-  [Symbol.iterator]: function*() {
-    return (yield this);
-  },
-  unwrap(onFail = ((e) => { throw e; })): A {
-    return onFail(this.$value);
-  },
-  map<B>(): Result<B> {
-    return r.coerceR(this);
-  },
-});
-
-export const ok = <A>(r: A): Result<A> => ({
-  $tag: 'r',
-  $value: r,
-  isOk(): this is ResultFns<A> & { $tag: 'r', $value: A } {
-    return true;
-  },
-  [Symbol.iterator]: function*() {
-    return (yield this);
-  },
-  unwrap(): A {
-    return this.$value;
-  },
-  map<B>(f: (a: A) => B): Result<B> {
-    return ok(f(this.$value));
-  },
-});
-
-export const r = {
-  mapM: <A, B>(f: (r: A, i: number) => Result<B>, r1s: Iterable<A>): Result<B[]> => {
-    const eithers: B[] = [];
-    let i = 0;
-
-    for (const r1 of r1s) {
-      const either = f(r1, i++);
-      if (!either.isOk()) {
-        return r.coerceR(either);
-      }
-      eithers.push(either.$value);
-    }
-
-    return ok(eithers);
-  },
-  coerceR<A, B>(e: Result<A> & { $tag: 'l' }): Result<B> {
-    return e as unknown as Result<B>;
-  },
 };
 
 type TypeOfAble = `${'string' | 'number' | 'boolean' | 'object' | 'function'}${'!' | '?'}`;
@@ -103,53 +40,32 @@ type LitTypeOf<T extends string> =
     ? (...args: any[]) => any
     : never;
 
-type MaybeNullish<T extends string, X> = T extends `${string}?` ? X | undefined : X;
+type ParseRes<T extends string, X> = T extends `${string}?` ? X | undefined : X;
 
 export const p = {
-  error<R>(e: string): Result<R> {
-    return fail(new Error(e));
-  },
-  typeError<R>(e: string): Result<R> {
-    return fail(new TypeError(e));
-  },
   includes<X>(xs: readonly X[], x: unknown): x is X {
     return (xs as readonly X[]).includes(x as X);
   },
-  mkStrEnumParser: <X, const R extends boolean>(name: string, xs: readonly X[], required: R) => (x: unknown, field: string): Result<X | (R extends false ? undefined : never)> => {
+  mkStrEnumParser: <X, const R extends boolean>(name: string, xs: readonly X[], required: R) => (x: unknown, field: string): X | (R extends false ? undefined : never) => {
     if (required !== false && isNullish(x)) {
-      return p.typeError(`Expected ${field} to be of string enum ${name}, but got ${x}`);
+      throw new TypeError(`Expected ${field} to be of string enum ${name}, but got ${x}`);
     }
     if (!isNullish(x) && !p.includes(xs, x)) {
-      return p.typeError(`Expected ${field} to be of string enum ${name} (or null/undefined) (one of ${xs.join(', ')}), but got ${x}`);
+      throw new TypeError(`Expected ${field} to be of string enum ${name} (or null/undefined) (one of ${xs.join(', ')}), but got ${x}`);
     }
-    return ok(x ?? undefined!);
+    return x ?? undefined!;
   },
-  parse: <U extends TypeOfAble, X = TypeOf<U>>(expected: U, parser: Parser<X, TypeOf<U>> = ok) => (x: unknown, field: string): Result<MaybeNullish<U, X>> => {
+  parse: <U extends TypeOfAble, X = TypeOf<U>>(expected: U, parser: Parser<X, TypeOf<U>> = x => x) => <Cast = ParseRes<U, X>>(x: unknown, field: string): Cast => {
     if (expected.at(-1) === '!' && isNullish(x)) {
-      return p.typeError('');
+      throw new TypeError('');
     } else if (isNullish(x)) {
-      return ok(undefined!);
+      return undefined!;
     }
 
     if (typeof x !== expected.slice(0, -1)) {
-      return p.typeError('');
+      throw new TypeError('');
     }
 
-    return parser(expected as any, field);
-  },
-  do: <A, R = unknown>(mkGen: (raw: R, field: string) => Generator<Result<unknown>, Result<A>, void>): Parser<A, R> => (raw, field) => {
-    const gen = mkGen(raw, field);
-
-    while (true) {
-      const state = gen.next();
-
-      if (state.done) {
-        return state.value;
-      }
-
-      if (!state.value.isOk()) {
-        return r.coerceR(state.value);
-      }
-    }
+    return parser(x as any, field) as any;
   },
 };

@@ -20,13 +20,12 @@ import { DataAPIClient } from '@/src/client';
 import { DEMO_APPLICATION_URI, describe, it, TEST_APPLICATION_URI } from '@/tests/testlib';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants';
 import { buildAstraEndpoint } from '@/src/lib/utils';
-
-import { InternalRootClientOpts } from '@/src/client/types';
+import { InternalRootClientOpts } from '@/src/client/types/internal';
 
 describe('unit.db', () => {
-  const internalOps = (data?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({
-    dbOptions: { token: new StaticTokenProvider('old'), monitorCommands: false, ...data },
-    adminOptions: { adminToken: new StaticTokenProvider('old-admin'), monitorCommands: false, ...devops },
+  const internalOps = (db?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({
+    dbOptions: { token: new StaticTokenProvider('old'), logging: undefined, ...db },
+    adminOptions: { adminToken: new StaticTokenProvider('old-admin'), logging: undefined, ...devops },
     emitter: null!,
     fetchCtx: { preferredType } as any,
     userAgent: '',
@@ -97,30 +96,30 @@ describe('unit.db', () => {
       assert.strictEqual(db['_httpClient'].baseUrl, `${TEST_APPLICATION_URI}/api/json/v3`);
     });
 
-    it('should accept valid monitorCommands', () => {
-      assert.doesNotThrow(() => new Db(internalOps(), TEST_APPLICATION_URI, {}));
-      assert.doesNotThrow(() => new Db(internalOps(), TEST_APPLICATION_URI, { monitorCommands: true }));
-      assert.doesNotThrow(() => new Db(internalOps(), TEST_APPLICATION_URI, { monitorCommands: false }));
-      assert.doesNotThrow(() => new Db(internalOps(), TEST_APPLICATION_URI, { monitorCommands: null! }));
-      assert.doesNotThrow(() => new Db(internalOps(), TEST_APPLICATION_URI, { monitorCommands: undefined }));
+    it('should accept valid logging', () => {
+      assert.ok(new Db(internalOps(), TEST_APPLICATION_URI, {}));
+      assert.ok(new Db(internalOps(), TEST_APPLICATION_URI, { logging: 'all' }));
+      assert.ok(new Db(internalOps(), TEST_APPLICATION_URI, { logging: ['adminCommandPolling', 'adminCommandStarted'] }));
+      assert.ok(new Db(internalOps(), TEST_APPLICATION_URI, { logging: ['all', { events: 'all', emits: 'event' }] }));
+      assert.ok(new Db(internalOps(), TEST_APPLICATION_URI, { logging: [{ events: ['adminCommandPolling', 'adminCommandSucceeded'], emits: ['event', 'stdout'] }]}));
     });
 
-    it('should throw on invalid monitorCommands', () => {
+    it('should throw on invalid logging', () => {
       // @ts-expect-error - testing invalid input
-      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, { monitorCommands: 'invalid' }));
+      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, { logging: 'invalid' }));
       // @ts-expect-error - testing invalid input
-      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, { monitorCommands: 1 }));
+      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, { logging: { events: 'all' } }));
       // @ts-expect-error - testing invalid input
-      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, { monitorCommands: [] }));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, { monitorCommands: {} }));
+      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, { logging: [{ events: 'all' }] }));
+      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, { logging: [{ events: 'all', emits: ['stdout', 'stderr'] }] }));
+      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, { logging: [{ events: ['all', 'commandSucceeded'], emits: ['stdout'] }] }));
     });
 
     it('should accept valid dataApiPath', () => {
-      assert.doesNotThrow(() => new Db(internalOps(), TEST_APPLICATION_URI, {}));
-      assert.doesNotThrow(() => new Db(internalOps(), TEST_APPLICATION_URI, { dataApiPath: 'api/json/v2' }));
-      assert.doesNotThrow(() => new Db(internalOps(), TEST_APPLICATION_URI, { dataApiPath: null! }));
-      assert.doesNotThrow(() => new Db(internalOps(), TEST_APPLICATION_URI, { dataApiPath: undefined }));
+      assert.ok(() => new Db(internalOps(), TEST_APPLICATION_URI, {}));
+      assert.ok(() => new Db(internalOps(), TEST_APPLICATION_URI, { dataApiPath: 'api/json/v2' }));
+      assert.ok(() => new Db(internalOps(), TEST_APPLICATION_URI, { dataApiPath: null! }));
+      assert.ok(() => new Db(internalOps(), TEST_APPLICATION_URI, { dataApiPath: undefined }));
     });
 
     it('should throw on invalid dataApiPath', () => {

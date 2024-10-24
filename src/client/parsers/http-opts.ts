@@ -12,27 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { EqualityProof, ok, p } from '@/src/lib/validation';
+import { EqualityProof, p, Parser } from '@/src/lib/validation';
 import {
   CustomHttpClientOptions,
   DataAPIHttpOptions,
   DefaultHttpClientOptions,
   FetchHttpClientOptions,
 } from '@/src/client';
-import { SomeDoc } from '@/src/documents';
 
 const HttpClients = <const>['default', 'fetch', 'custom'];
 void EqualityProof<typeof HttpClients[number], DataAPIHttpOptions['client'] & {}, true>;
 const parseHttpClient = p.mkStrEnumParser('DataAPILoggingOutput', HttpClients, false);
 
-export const parseHttpOpts = p.do<DataAPIHttpOptions | undefined>(function* (raw, field) {
-  const opts = yield* p.parse('object?')(raw, field);
+export const parseHttpOpts: Parser<DataAPIHttpOptions | undefined> = (raw, field) =>  {
+  const opts = p.parse('object?')<DataAPIHttpOptions>(raw, field);
 
   if (!opts) {
-    return ok(undefined);
+    return undefined;
   }
 
-  const client = (yield* parseHttpClient(opts.client, `${field}.client`)) ?? 'default';
+  const client = parseHttpClient(opts.client, `${field}.client`) ?? 'default';
 
   const parser = {
     default: parseDefaultHttpOpts,
@@ -40,46 +39,46 @@ export const parseHttpOpts = p.do<DataAPIHttpOptions | undefined>(function* (raw
     custom: parseCustomHttpOpts,
   }[client];
 
-  return parser(opts, field);
-});
+  return parser(opts as any, field);
+};
 
-const parseDefaultHttpOpts = p.do<DefaultHttpClientOptions, SomeDoc>(function* (opts, field) {
-  const preferHttp2 = (yield* p.parse('boolean?')(opts.preferHttp2, `${field}.preferHttp2`)) ?? true;
-  const maxTimeMS = yield* p.parse('number?')(opts.maxTimeMS, `${field}.maxTimeMS`);
+const parseDefaultHttpOpts: Parser<DefaultHttpClientOptions> = (opts, field) => {
+  const preferHttp2 = p.parse('boolean?')(opts.preferHttp2, `${field}.preferHttp2`) ?? true;
+  const maxTimeMS = p.parse('number?')(opts.maxTimeMS, `${field}.maxTimeMS`);
 
-  const http1 = yield* p.parse('object?', p.do(function* (http1, field) {
-    return ok({
-      keepAlive: yield* p.parse('boolean?')(http1.keepAlive, `${field}.keepAlive`),
-      keepAliveMS: yield* p.parse('number?')(http1.keepAliveMS, `${field}.keepAliveMS`),
-      maxSockets: yield* p.parse('number?')(http1.maxSockets, `${field}.maxSockets`),
-      maxFreeSockets: yield* p.parse('number?')(http1.maxFreeSockets, `${field}.maxFreeSockets`),
-    });
-  }))(opts.http1, `${field}.http1`);
+  const http1 = p.parse('object?', (http1, field) => {
+    return {
+      keepAlive: p.parse('boolean?')(http1.keepAlive, `${field}.keepAlive`),
+      keepAliveMS: p.parse('number?')(http1.keepAliveMS, `${field}.keepAliveMS`),
+      maxSockets: p.parse('number?')(http1.maxSockets, `${field}.maxSockets`),
+      maxFreeSockets: p.parse('number?')(http1.maxFreeSockets, `${field}.maxFreeSockets`),
+    };
+  })(opts.http1, `${field}.http1`);
 
-  const fetchH2 = yield* p.parse('object?', p.do(function* (fetchH2, field) {
-    return ok({
-      TimeoutError: yield* p.parse('function!')(fetchH2.TimeoutError, `${field}.TimeoutError`),
-      context: yield* p.parse('function!')(fetchH2.context, `${field}.context`),
-    });
-  }))(opts.fetchH2, `${field}.fetchH2`);
+  const fetchH2 = p.parse('object?', (fetchH2, field) => {
+    return {
+      TimeoutError: p.parse('function!')(fetchH2.TimeoutError, `${field}.TimeoutError`),
+      context: p.parse('function!')(fetchH2.context, `${field}.context`),
+    };
+  })(opts.fetchH2, `${field}.fetchH2`);
 
-  return ok({ client: 'default', preferHttp2, maxTimeMS, http1, fetchH2 });
-});
+  return { client: 'default', preferHttp2, maxTimeMS, http1, fetchH2 };
+};
 
-const parseFetchHttpOpts = p.do<FetchHttpClientOptions, SomeDoc>(function* (opts, field) {
-  const maxTimeMS = yield* p.parse('number?')(opts.maxTimeMS, `${field}.maxTimeMS`);
-  return ok({ client: 'fetch', maxTimeMS });
-});
+const parseFetchHttpOpts: Parser<FetchHttpClientOptions> = (opts, field) => {
+  const maxTimeMS = p.parse('number?')(opts.maxTimeMS, `${field}.maxTimeMS`);
+  return { client: 'fetch', maxTimeMS };
+};
 
-const parseCustomHttpOpts = p.do<CustomHttpClientOptions, SomeDoc>(function* (opts, field) {
-  const maxTimeMS = yield* p.parse('number?')(opts.maxTimeMS, `${field}.maxTimeMS`);
+const parseCustomHttpOpts: Parser<CustomHttpClientOptions> = (opts, field) => {
+  const maxTimeMS = p.parse('number?')(opts.maxTimeMS, `${field}.maxTimeMS`);
 
-  const fetcher = yield* p.parse('object!', p.do(function* (fetcher, field) {
-    return ok({
-      close: yield* p.parse('function?')(fetcher.close, `${field}.close`),
-      fetch: yield* p.parse('function!')(fetcher.fetch, `${field}.fetch`),
-    });
-  }))(opts.fetchH2, `${field}.fetchH2`);
+  const fetcher = p.parse('object!', (fetcher, field) => {
+    return {
+      close: p.parse('function?')(fetcher.close, `${field}.close`),
+      fetch: p.parse('function!')(fetcher.fetch, `${field}.fetch`),
+    };
+  })(opts.fetcher, `${field}.fetcher`);
 
-  return ok({ client: 'custom', maxTimeMS, fetcher });
-});
+  return { client: 'custom', maxTimeMS, fetcher };
+};

@@ -29,14 +29,13 @@ import { Db } from '@/src/db';
 import { AstraAdmin } from '@/src/administration';
 import { FetchCtx } from '@/src/lib/api/fetch/types';
 import { isNullish } from '@/src/lib/utils';
-import { ok, p } from '@/src/lib/validation';
-import { parseEnvironment } from '@/src/client/parsers/environment';
-import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
-import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
+import { p, Parser } from '@/src/lib/validation';
 import { parseCaller } from '@/src/client/parsers/caller';
+import { Logger } from '@/src/lib/logging/logger';
+import { parseEnvironment } from '@/src/client/parsers/environment';
 import { parseHttpOpts } from '@/src/client/parsers/http-opts';
-import { Logger } from '@/src/lib/logging/logging';
-import { EmptyInternalLoggingConfig } from '@/src/lib/logging/constants';
+import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
+import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
 
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
@@ -153,20 +152,20 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
       ? maybeOptions
       : tokenOrOptions;
 
-    const options = parseClientOpts(rawOptions, 'options.').unwrap();
-    const logging = Logger.advanceConfig(EmptyInternalLoggingConfig, options?.logging).unwrap();
+    const options = parseClientOpts(rawOptions, 'options.');
+    const logging = Logger.advanceConfig(undefined, options?.logging);
 
     this.#options = {
       environment: options?.environment ?? 'astra',
       fetchCtx: buildFetchCtx(options || undefined),
       dbOptions: {
         ...options?.dbOptions,
-        token: TokenProvider.parseToken(options?.dbOptions?.token ?? token, 'provided token').unwrap(),
+        token: TokenProvider.parseToken([options?.dbOptions?.token, token], 'provided token'),
         logging,
       },
       adminOptions: {
         ...options?.adminOptions,
-        adminToken: TokenProvider.parseToken(options?.dbOptions?.token ?? token, 'provided token').unwrap(),
+        adminToken: TokenProvider.parseToken([options?.adminOptions?.adminToken, token], 'provided token'),
         logging,
       },
       emitter: this,
@@ -332,19 +331,19 @@ function tryLoadFetchH2(clientType: string | nullish, options: DataAPIClientOpti
   }
 }
 
-const parseClientOpts = p.do<DataAPIClientOptions | undefined>(function* (raw, field) {
-  const opts = yield* p.parse('object?')(raw, field);
+const parseClientOpts: Parser<DataAPIClientOptions | nullish> = (raw, field) => {
+  const opts = p.parse('object?')<DataAPIClientOptions>(raw, field);
 
   if (!opts) {
-    return ok(undefined);
+    return undefined;
   }
 
-  return ok({
-    logging: yield* Logger.parseConfig(opts.logging, `${field}.logging`),
-    environment: yield* parseEnvironment(opts.envirionment, `${field}.environment`),
-    dbOptions: yield* parseDbSpawnOpts(opts.dbOptions, `${field}.dbOptions`),
-    adminOptions: yield* parseAdminSpawnOpts(opts.adminOptions, `${field}.adminOptions`),
-    caller: yield* parseCaller(opts.caller, `${field}.caller`),
-    httpOptions: yield* parseHttpOpts(opts.httpOptions, `${field}.caller`),
-  });
-});
+  return {
+    logging: Logger.parseConfig(opts.logging, `${field}.logging`),
+    environment: parseEnvironment(opts.environment, `${field}.environment`),
+    dbOptions: parseDbSpawnOpts(opts.dbOptions, `${field}.dbOptions`),
+    adminOptions: parseAdminSpawnOpts(opts.adminOptions, `${field}.adminOptions`),
+    caller: parseCaller(opts.caller, `${field}.caller`),
+    httpOptions: parseHttpOpts(opts.httpOptions, `${field}.httpOptions`),
+  };
+};

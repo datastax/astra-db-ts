@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { r, p, Result, ok } from '@/src/lib/validation';
-import { Caller } from '@/src/client';
+import { DataAPIClientOptions } from '@/src/client';
 import { isNullish } from '@/src/lib/utils';
+import { Parser } from '@/src/lib/validation';
 
-export const parseCaller = (caller: unknown, field: string): Result<Caller | Caller[] | undefined> => {
+export const parseCaller: Parser<DataAPIClientOptions['caller']> = (caller, field) => {
   if (isNullish(caller)) {
-    return ok(undefined);
+    return undefined;
   }
 
   if (!Array.isArray(caller)) {
-    return p.typeError(`Expected ${field}.caller to be an array, or undefined/null`);
+    throw new TypeError(`Expected ${field}.caller to be an array, or undefined/null`);
   }
 
   const isCallerArr = Array.isArray(caller[0]);
@@ -35,25 +35,25 @@ export const parseCaller = (caller: unknown, field: string): Result<Caller | Cal
     ? (i: number) => `[${i}]`
     : () => '';
 
-  return r.mapM((c, i): Result<Caller> => {
+  return callers.map((c, i) => {
     if (!Array.isArray(c)) {
-      return p.typeError(`Expected ${field}.caller${mkIdxMsg(i)} to be a tuple [name: string, version?: string]`);
+      throw new TypeError(`Expected ${field}.caller${mkIdxMsg(i)} to be a tuple [name: string, version?: string]`);
     }
 
     if (c.length < 1 || 2 < c.length) {
-      return p.typeError(`Expected ${field}.caller${mkIdxMsg(i)} to be of format [name: string, version?: string]`);
+      throw new TypeError(`Expected ${field}.caller${mkIdxMsg(i)} to be of format [name: string, version?: string]`);
     }
 
     const [name, version] = c;
 
     if (typeof name !== 'string') {
-      return p.error(`Expected ${field}.caller${mkIdxMsg(i)}[0] to be a string name (got ${typeof name})`);
+      throw new Error(`Expected ${field}.caller${mkIdxMsg(i)}[0] to be a string name (got ${typeof name})`);
     }
 
-    if (isNullish(version) && typeof version !== 'string') {
-      return p.error(`Expected ${field}.caller${mkIdxMsg(i)}[1] to be a string (or undefined) version (got ${typeof version})`);
+    if (isNullish(version) || typeof version !== 'string') {
+      throw new Error(`Expected ${field}.caller${mkIdxMsg(i)}[1] to be a string (or undefined) version (got ${typeof version})`);
     }
 
-    return ok([name, version || undefined]);
-  }, callers);
+    return <const>[name, version || undefined];
+  });
 };

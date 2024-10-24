@@ -12,21 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ok, p, Parser } from '@/src/lib/validation';
+import { p, Parser } from '@/src/lib/validation';
 import { DbSpawnOptions, Logger } from '@/src/client';
 import { TokenProvider } from '@/src/lib';
+import { isNullish } from '@/src/lib/utils';
 
-export const parseDbSpawnOpts: Parser<DbSpawnOptions | undefined> = p.do(function* (raw, field) {
-  const opts = yield* p.parse('object?')(raw, field);
+export const parseDbSpawnOpts: Parser<DbSpawnOptions | undefined, unknown> = (raw, field) => {
+  const opts = p.parse('object?')<DbSpawnOptions>(raw, field);
 
   if (!opts) {
-    return ok(undefined);
+    return undefined;
   }
 
-  return ok({
-    logging: yield* Logger.parseConfig(opts.logging, `${field}.logging`),
-    keyspace: yield* p.parse('string?')(opts.keyspace, `${field}.keyspace`),
-    dataApiPath: yield* p.parse('string?')(opts.dataApiPath, `${field}.dataApiPath`),
-    token: yield* TokenProvider.parseToken(opts.token, `${field}.token`),
-  });
-});
+  return {
+    logging: Logger.parseConfig(opts.logging, `${field}.logging`),
+    keyspace: p.parse('string?', validateKeyspace)(opts.keyspace, `${field}.keyspace`),
+    dataApiPath: p.parse('string?')(opts.dataApiPath, `${field}.dataApiPath`),
+    token: TokenProvider.parseToken([opts.token], `${field}.token`),
+  };
+};
+
+const validateKeyspace = (keyspace: string | undefined, field: string) => {
+  if (isNullish(keyspace)) {
+    return undefined;
+  }
+  if (!keyspace.match(/^\w{1,48}$/)) {
+    throw new Error(`Invalid ${field}; expected a string of 1-48 alphanumeric characters`);
+  }
+  return keyspace;
+};

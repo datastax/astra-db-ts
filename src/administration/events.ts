@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client';
-import { DataAPIClientEvent } from '@/src/lib/logging/logging';
 import { DataAPIErrorDescriptor } from '@/src/documents';
+import { DataAPIClientEvent } from '@/src/lib/logging/events';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the

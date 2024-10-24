@@ -16,6 +16,7 @@ import { DataAPIClientEvents, DataAPIEnvironment, DataAPILoggingOutput, TokenPro
 import TypedEmitter from 'typed-emitter';
 import { FetchCtx } from '@/src/lib/api/fetch/types';
 import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
+import { NormalizedLoggingConfig } from '@/src/lib/logging/types';
 
 /**
  * @internal
@@ -31,11 +32,11 @@ export interface InternalRootClientOpts {
   fetchCtx: FetchCtx,
   userAgent: string,
   dbOptions: Omit<DbSpawnOptions, 'token' | 'logging'> & {
-    token: TokenProvider,
-    logging: InternalLoggingConfig,
+    token: TokenProvider | undefined,
+    logging: NormalizedLoggingConfig[] | undefined,
   },
   adminOptions: Omit<AdminSpawnOptions, 'adminToken' | 'logging'> & {
-    adminToken: TokenProvider,
-    logging: InternalLoggingConfig,
+    adminToken: TokenProvider | undefined,
+    logging: NormalizedLoggingConfig[] | undefined,
   },
 }

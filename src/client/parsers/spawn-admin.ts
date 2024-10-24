@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ok, p } from '@/src/lib/validation';
+import { p, Parser } from '@/src/lib/validation';
 import { TokenProvider } from '@/src/lib';
 import { AdminSpawnOptions } from '@/src/administration';
-import { Logger } from '@/src/lib/logging/logging';
+import { Logger } from '@/src/lib/logging/logger';
 
-export const parseAdminSpawnOpts = p.do<AdminSpawnOptions | undefined>(function* (raw, field) {
-  const opts = yield* p.parse('object?')(raw, field);
+export const parseAdminSpawnOpts: Parser<AdminSpawnOptions | undefined, unknown> = (raw, field) => {
+  const opts = p.parse('object?')<AdminSpawnOptions>(raw, field);
 
   if (!opts) {
-    return ok(undefined);
+    return undefined;
   }
 
-  return ok({
-    logging: yield* Logger.parseConfig(opts.logging, `${field}.logging`),
-    endpointUrl: yield* p.parse('string?')(opts.endpointUrl, `${field}.endpointUrl`),
-    adminToken: yield* TokenProvider.parseToken(opts.adminToken, `${field}.adminToken`),
-  });
-});
+  return {
+    logging: Logger.parseConfig(opts.logging, `${field}.logging`),
+    endpointUrl: p.parse('string?')(opts.endpointUrl, `${field}.endpointUrl`),
+    adminToken: TokenProvider.parseToken([opts.adminToken], `${field}.adminToken`),
+  };
+};

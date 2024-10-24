@@ -65,7 +65,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    */
   constructor(db: Db, httpClient: DataAPIHttpClient, rawAdminOpts?: AdminSpawnOptions) {
     super();
-    const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options').unwrap();
+    const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options');
     this.#httpClient = httpClient.forDbAdmin(adminOpts);
     this.#db = db;
   }

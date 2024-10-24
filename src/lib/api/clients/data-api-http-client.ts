@@ -32,7 +32,7 @@ import { CollectionSpawnOptions } from '@/src/db';
 import { isNullish } from '@/src/lib/utils';
 import { EmbeddingHeadersProvider, ObjectId, UUID } from '@/src/documents';
 import { WithNullableKeyspace } from '@/src/db/types/common';
-import { Logger } from '@/src/lib/logging/logging';
+import { Logger } from '@/src/lib/logging/logger';
 
 /**
  * @internal
@@ -90,7 +90,7 @@ interface DataAPIHttpClientOpts extends HTTPClientOptions {
   keyspace: KeyspaceRef,
   emissionStrategy: EmissionStrategy,
   embeddingHeaders: EmbeddingHeadersProvider,
-  tokenProvider: TokenProvider,
+  tokenProvider: TokenProvider | undefined,
 }
 
 /**
@@ -115,7 +115,7 @@ export class DataAPIHttpClient extends HttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(opts?.embeddingApiKey),
-      logging: Logger.advanceConfig(this.#props.logging, opts?.logging).unwrap(),
+      logging: Logger.advanceConfig(this.#props.logging, opts?.logging),
       keyspace: { ref: keyspace },
     });
 
@@ -128,9 +128,9 @@ export class DataAPIHttpClient extends HttpClient {
   public forDbAdmin(opts: AdminSpawnOptions | undefined): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
-      tokenProvider: opts?.adminToken ? TokenProvider.parseToken(opts?.adminToken, 'admin token').unwrap() : this.#props.tokenProvider,
-      logging: Logger.advanceConfig(this.#props.logging, opts?.logging).unwrap(),
-      baseUrl: opts?.endpointUrl || this.#props.baseUrl,
+      tokenProvider: TokenProvider.parseToken([opts?.adminToken, this.#props.tokenProvider], 'admin token'),
+      logging: Logger.advanceConfig(this.#props.logging, opts?.logging),
+      baseUrl: opts?.endpointUrl ?? this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
     });
 
@@ -259,13 +259,14 @@ export function reviver(_: string, value: any): any {
   return value;
 }
 
-const mkAuthHeaderProvider = (tp: TokenProvider): HeaderProvider => () => {
-  const token = tp.getToken();
+const mkAuthHeaderProvider = (tp: TokenProvider | undefined): HeaderProvider => (tp)
+  ? () => {
+    const token = tp.getToken();
 
-  return (token instanceof Promise)
-    ? token.then(mkAuthHeader)
-    : mkAuthHeader(token);
-};
+    return (token instanceof Promise)
+      ? token.then(mkAuthHeader)
+      : mkAuthHeader(token);
+  } : () => ({});
 
 const mkAuthHeader = (token: string | nullish): Record<string, string> => (token)
   ? { [DEFAULT_DATA_API_AUTH_HEADER]: token }

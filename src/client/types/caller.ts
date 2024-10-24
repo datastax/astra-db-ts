@@ -30,4 +30,4 @@
  *
  * @public
  */
-export type Caller = [name: string, version?: string];
+export type Caller = readonly [name: string, version?: string];

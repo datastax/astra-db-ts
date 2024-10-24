@@ -47,7 +47,7 @@ interface DevopsAPIResponse {
 }
 
 interface DevOpsAPIHttpClientOpts extends HTTPClientOptions {
-  tokenProvider: TokenProvider,
+  tokenProvider: TokenProvider | undefined,
 }
 
 /**
@@ -174,13 +174,14 @@ export class DevOpsAPIHttpClient extends HttpClient {
   }
 }
 
-const mkAuthHeaderProvider = (tp: TokenProvider): HeaderProvider => () => {
-  const token = tp.getToken();
+const mkAuthHeaderProvider = (tp: TokenProvider | undefined): HeaderProvider => (tp)
+  ? () => {
+    const token = tp.getToken();
 
-  return (token instanceof Promise)
-    ? token.then(mkAuthHeader)
-    : mkAuthHeader(token);
-};
+    return (token instanceof Promise)
+      ? token.then(mkAuthHeader)
+      : mkAuthHeader(token);
+  } : () => ({});
 
 const mkAuthHeader = (token: string | nullish): Record<string, string> => (token)
   ? { [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` }

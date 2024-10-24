@@ -40,7 +40,7 @@ import { FullTableInfo, ListTablesOptions } from '@/src/db/types/tables/list-tab
 import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
 import { DbSpawnOptions } from '@/src/client/types';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
-import { Logger } from '@/src/lib/logging/logging';
+import { Logger } from '@/src/lib/logging/logger';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -90,15 +90,21 @@ export class Db {
    * @internal
    */
   constructor(rootOpts: InternalRootClientOpts, endpoint: string, rawDbOpts: DbSpawnOptions | nullish) {
-    const dbOpts = parseDbSpawnOpts(rawDbOpts, 'options').unwrap();
+    const dbOpts = parseDbSpawnOpts(rawDbOpts, 'options');
+
+    const token = TokenProvider.parseToken([dbOpts?.token, rootOpts.dbOptions.token], 'token');
 
     this.#defaultOpts = {
       ...rootOpts,
       dbOptions: {
-        ...rootOpts.dbOptions,
-        ...dbOpts,
-        token: TokenProvider.parseToken(dbOpts?.token ?? rootOpts.dbOptions.token, 'token').unwrap(),
-        logging: Logger.advanceConfig(rootOpts.dbOptions.logging, dbOpts?.logging).unwrap(),
+        keyspace: dbOpts?.keyspace ?? rootOpts.dbOptions.keyspace,
+        dataApiPath: dbOpts?.dataApiPath ?? rootOpts.dbOptions.dataApiPath,
+        token: token,
+        logging: Logger.advanceConfig(rootOpts.dbOptions.logging, dbOpts?.logging),
+      },
+      adminOptions: {
+        ...rootOpts.adminOptions,
+        adminToken: TokenProvider.parseToken([rootOpts.adminOptions.adminToken, token], 'token'),
       },
     };
 

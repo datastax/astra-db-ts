@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { isNonEmpty, ok, p, r, Result } from '@/src/lib/validation';
+import { isNonEmpty, p, Parser } from '@/src/lib/validation';
 import {
   DataAPIExplicitLoggingConfig,
   DataAPILoggingConfig,
@@ -21,11 +21,10 @@ import {
 } from '@/src/lib';
 import { isNullish } from '@/src/lib/utils';
 import { LoggingEvents, LoggingOutputs } from '@/src/lib/logging/constants';
-import { SomeDoc } from '@/src/documents';
 
-export const parseLoggingConfig = (config: unknown, field: string): Result<DataAPILoggingConfig | undefined> => {
+export const parseLoggingConfig: Parser<DataAPILoggingConfig | undefined> = (config, field) => {
   if (isNullish(config)) {
-    return ok(undefined);
+    return undefined;
   }
 
   if (typeof config === 'string') {
@@ -33,16 +32,16 @@ export const parseLoggingConfig = (config: unknown, field: string): Result<DataA
   }
 
   if (!Array.isArray(config)) {
-    return p.typeError(`Expected ${field} to be of type string | (string | object[]); got ${typeof config}`);
+    throw new TypeError(`Expected ${field} to be of type string | (string | object[]); got ${typeof config}`);
   }
 
   if (!isNonEmpty(config)) {
-    return p.error(`Expected ${field} array to be non-empty`);
+    throw new Error(`Expected ${field} array to be non-empty`);
   }
 
-  return r.mapM((c, i): Result<DataAPILoggingEvent | DataAPIExplicitLoggingConfig> => {
+  return config.map((c, i) => {
     if (c === null || c === undefined) {
-      return p.typeError(`Expected ${field}[${i}] to be non-null`);
+      throw new TypeError(`Expected ${field}[${i}] to be non-null`);
     }
     if (typeof c === 'string') {
       return parseLoggingEvent(c, `${field}[${i}]`);
@@ -50,36 +49,36 @@ export const parseLoggingConfig = (config: unknown, field: string): Result<DataA
     if (typeof config === 'object') {
       return parseExplicitLoggingConfig(c, `${field}[${i}]`);
     }
-    return p.typeError(`Expected ${field}[${i}] to be of type string | object; got ${typeof config}`);
-  }, config);
+    throw new TypeError(`Expected ${field}[${i}] to be of type string | object; got ${typeof config}`);
+  });
 };
 
 const parseLoggingEvent = p.mkStrEnumParser<DataAPILoggingEvent, true>('DataAPILoggingEvent', LoggingEvents, true);
 const parseLoggingOutput = p.mkStrEnumParser<DataAPILoggingOutput, true>('DataAPILoggingOutput', LoggingOutputs, true);
 
-const parseExplicitLoggingConfig = p.do<DataAPIExplicitLoggingConfig, SomeDoc>(function* (config, field) {
-  const events = yield* parseLoggingConfigField(config.events, `${field}.events`, parseLoggingEvent);
-  const emits = yield* parseLoggingConfigField(config.emits, `${field}.emits`, parseLoggingOutput);
-  return ok({ events, emits });
-});
+const parseExplicitLoggingConfig: Parser<DataAPIExplicitLoggingConfig> = (config, field) => {
+  const events = parseLoggingConfigField(config.events, `${field}.events`, parseLoggingEvent);
+  const emits = parseLoggingConfigField(config.emits, `${field}.emits`, parseLoggingOutput);
+  return { events, emits };
+};
 
-const parseLoggingConfigField = <E>(value: unknown, field: string, parser: (x: string, field: string) => Result<E>): Result<E | E[]> => {
+const parseLoggingConfigField = <E>(value: unknown, field: string, parser: (x: string, field: string) => E): E | E[] => {
   if (typeof value === 'string') {
     return parser(value, field);
   }
 
   if (!Array.isArray(value)) {
-    return p.typeError(`Expected ${field} to be a string or an array of strings; got ${typeof value}`);
+    throw new TypeError(`Expected ${field} to be a string or an array of strings; got ${typeof value}`);
   }
 
   if (!isNonEmpty(value)) {
-    return p.error(`Expected ${field} to be non-empty`);
+    throw new Error(`Expected ${field} to be non-empty`);
   }
 
-  return r.mapM((e, i) => {
+  return value.map((e, i) => {
     if (typeof e !== 'string') {
-      return p.typeError<E>(`Expected ${field}[${i}] to be of type string; got ${typeof e}`);
+      throw new TypeError(`Expected ${field}[${i}] to be of type string; got ${typeof e}`);
     }
     return parser(e, `${field}[${i}]`);
-  }, value);
+  });
 };

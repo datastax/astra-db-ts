@@ -14,8 +14,8 @@
 
 import { DEFAULT_KEYSPACE, RawDataAPIResponse } from '@/src/lib/api';
 import { DataAPIRequestInfo } from '@/src/lib/api/clients/data-api-http-client';
-import { DataAPIClientEvent } from '@/src/lib/logging/logging';
 import { DataAPIErrorDescriptor } from '@/src/documents/errors';
+import { DataAPIClientEvent } from '@/src/lib/logging/events';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the

@@ -67,15 +67,20 @@ export class AstraAdmin {
    * @internal
    */
   constructor(rootOpts: InternalRootClientOpts, rawAdminOpts?: AdminSpawnOptions) {
-    const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options').unwrap();
+    const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options');
+
+    const token = TokenProvider.parseToken([adminOpts?.adminToken, rootOpts.adminOptions.adminToken], 'admin token');
 
     this.#defaultOpts = {
       ...rootOpts,
       adminOptions: {
-        ...rootOpts.adminOptions,
-        ...adminOpts,
-        adminToken: TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken, 'admin token').unwrap(),
-        logging: Logger.advanceConfig(rootOpts.adminOptions.logging, adminOpts?.logging).unwrap(),
+        endpointUrl: adminOpts?.endpointUrl || rootOpts.adminOptions.endpointUrl,
+        adminToken: token,
+        logging: Logger.advanceConfig(rootOpts.adminOptions.logging, adminOpts?.logging),
+      },
+      dbOptions: {
+        ...rootOpts.dbOptions,
+        token: TokenProvider.parseToken([rootOpts.dbOptions.token, token], 'admin token'),
       },
     };
 
@@ -249,7 +254,8 @@ export class AstraAdmin {
 
   public dbAdmin(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): AstraDbAdmin {
     /* @ts-expect-error - calls internal representation of method */
-    return this.db(endpointOrId, regionOrOptions, maybeOptions).admin(this.#defaultOpts.adminOptions);
+    return this.db(endpointOrId, regionOrOptions, maybeOptions)
+      .admin(this.#defaultOpts.adminOptions);
   }
 
   /**
