@@ -22,6 +22,9 @@ import {
 import { isNullish } from '@/src/lib/utils';
 import { LoggingEvents, LoggingOutputs } from '@/src/lib/logging/constants';
 
+const parseLoggingEvent = p.mkStrEnumParser<DataAPILoggingEvent, true>('DataAPILoggingEvent', LoggingEvents, true);
+const parseLoggingOutput = p.mkStrEnumParser<DataAPILoggingOutput, true>('DataAPILoggingOutput', LoggingOutputs, true);
+
 export const parseLoggingConfig: Parser<DataAPILoggingConfig | undefined> = (config, field) => {
   if (isNullish(config)) {
     return undefined;
@@ -53,9 +56,6 @@ export const parseLoggingConfig: Parser<DataAPILoggingConfig | undefined> = (con
   });
 };
 
-const parseLoggingEvent = p.mkStrEnumParser<DataAPILoggingEvent, true>('DataAPILoggingEvent', LoggingEvents, true);
-const parseLoggingOutput = p.mkStrEnumParser<DataAPILoggingOutput, true>('DataAPILoggingOutput', LoggingOutputs, true);
-
 const parseExplicitLoggingConfig: Parser<DataAPIExplicitLoggingConfig> = (config, field) => {
   const events = parseLoggingConfigField(config.events, `${field}.events`, true, parseLoggingEvent);
   const emits = parseLoggingConfigField(config.emits, `${field}.emits`, false, parseLoggingOutput);
@@ -76,9 +76,6 @@ const parseLoggingConfigField = <E>(value: unknown, field: string, reqNonEmpty: 
   }
 
   return value.map((e, i) => {
-    if (typeof e !== 'string') {
-      throw new TypeError(`Expected ${field}[${i}] to be of type string; got ${typeof e}`);
-    }
     return parser(e, `${field}[${i}]`);
   });
 };
