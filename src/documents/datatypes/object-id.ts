@@ -120,15 +120,6 @@ export class ObjectId {
   public toString(): string {
     return this._raw;
   }
-
-  /**
-   * Converts the ObjectId to a JSON representation.
-   *
-   * Serializes to `{ $objectId: 'objectId' }`.
-   */
-  public toJSON() {
-    return { $objectId: this.toString() };
-  }
 }
 
 const RAND_ID = ~~(Math.random() * 0xFFFFFF);

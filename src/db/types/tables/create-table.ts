@@ -29,23 +29,26 @@ export interface CreateTableDefinition {
 export type CreateTableColumnDefinitions = Record<string, LooseCreateTableColumnDefinition | StrictCreateTableColumnDefinition>;
 
 export type TableScalarType =
-  | 'text'
-  | 'int'
-  | 'double'
-  | 'float'
   | 'ascii'
-  | 'smallint'
-  | 'tinyint'
-  | 'varchar'
-  | 'varint'
+  | 'bigint'
+  | 'blob'
   | 'boolean'
-  | 'inet'
-  | 'uuid'
-  | 'timeuuid'
   | 'date'
+  | 'decimal'
+  | 'double'
   | 'duration'
+  | 'float'
+  | 'int'
+  | 'inet'
+  | 'smallint'
+  | 'text'
   | 'time'
-  | 'timestamp';
+  | 'timestamp'
+  | 'timeuuid'
+  | 'tinyint'
+  | 'uuid'
+  | 'varchar'
+  | 'varint';
 
 export type LooseCreateTableColumnDefinition =
   | TableScalarType

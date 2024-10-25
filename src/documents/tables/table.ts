@@ -143,9 +143,6 @@ export class Table<Schema extends SomeRow = SomeRow> {
       alterTable: {
         name: this.tableName,
         operation: options.operation,
-        options: {
-          ifExists: options.ifExists,
-        },
       },
     };
 

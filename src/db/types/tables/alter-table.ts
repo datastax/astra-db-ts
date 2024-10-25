@@ -13,28 +13,39 @@
 // limitations under the License.
 
 import { SomeRow } from '@/src/documents';
-import { Cols2CqlTypes, CreateTableColumnDefinitions, Normalize } from '@/src/db';
+import { Cols2CqlTypes, CreateTableColumnDefinitions, Normalize, VectorizeServiceOptions } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
 import { EmptyObj } from '@/src/lib/types';
 
 export interface AlterTableOptions<Schema extends SomeRow> extends WithTimeout {
   operation: AlterTableOperations<Schema>,
-  ifExists?: boolean,
+  // ifExists?: boolean,
 }
 
 export interface AlterTableOperations<Schema extends SomeRow> {
   add?: AddColumnOperation,
   drop?: DropColumnOperation<Schema>,
+  addVectorize?: AddVectorizeOperation<Schema>,
+  dropVectorize?: DropVectorizeOperation<Schema>,
 }
 
 export interface AddColumnOperation {
   columns: CreateTableColumnDefinitions
-  ifExists?: boolean,
+  // ifNotExists?: boolean,
 }
 
 export interface DropColumnOperation<Schema extends SomeRow> {
   columns: (keyof Schema)[];
-  ifExists?: boolean,
+  // ifExists?: boolean,
+}
+
+export interface AddVectorizeOperation<Schema extends SomeRow> {
+  columns: Record<keyof Schema, VectorizeServiceOptions>
+}
+
+export interface DropVectorizeOperation<Schema extends SomeRow> {
+  columns: (keyof Schema)[];
+  // ifExists?: boolean,
 }
 
 export type AlterTableSchema<Schema extends SomeRow, Alter extends AlterTableOptions<Schema>> = Normalize<Omit<

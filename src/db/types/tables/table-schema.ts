@@ -269,6 +269,9 @@ interface CqlNonGenericType2TSTypeDict {
   uuid: UUID,
   timeuuid: UUID,
   inet: InetAddress,
+  bigint: number,
+  blob: Blob,
+  decimal: string,
 }
 
 interface CqlGenericType2TSTypeDict<Def> {

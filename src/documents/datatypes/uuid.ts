@@ -57,11 +57,11 @@ const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9
  *
  * @public
  */
-export class UUID {
+export class UUID<Version extends number = number> {
   /**
    * The version of the UUID.
    */
-  public readonly version!: number;
+  public readonly version!: Version;
 
   private readonly _raw!: string;
 
@@ -121,6 +121,10 @@ export class UUID {
    *
    * @returns The timestamp of the UUID, or `undefined` if the UUID is not a v7 UUID.
    */
+  public getTimestamp(this: UUID<7>): Date
+
+  public getTimestamp(this: UUID): Date | undefined
+
   public getTimestamp(): Date | undefined {
     return timestampFromUUID(this);
   }
@@ -135,24 +139,15 @@ export class UUID {
   /**
    * Creates a new v4 UUID.
    */
-  public static v4(): UUID {
+  public static v4(): UUID<4> {
     return new UUID(uuidv4(), false);
   }
 
   /**
    * Creates a new v7 UUID.
    */
-  public static v7(): UUID {
+  public static v7(): UUID<7> {
     return new UUID(uuidv7(), false);
-  }
-
-  /**
-   * Converts the UUID to a JSON representation.
-   *
-   * Serializes to `{ $uuid: 'uuid' }`.
-   */
-  public toJSON() {
-    return { $uuid: this.toString() };
   }
 }
 

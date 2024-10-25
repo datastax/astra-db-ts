@@ -67,7 +67,7 @@ describe('unit.documents.ids', () => {
     it('should get creation date from UUIDv7', () => {
       const uuid = UUID.v7();
       const date = uuid.getTimestamp();
-      assert(date instanceof Date);
+      assert(<any>date instanceof Date);
     });
 
     it('should not get creation date from UUIDv4', () => {
@@ -96,12 +96,6 @@ describe('unit.documents.ids', () => {
     it('should not equal an invalid type', () => {
       const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');
       assert(!uuid.equals({}));
-    });
-
-    it('should properly serialize to JSON', () => {
-      const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');
-      assert.deepStrictEqual(uuid.toJSON(), { $uuid: '123e4567-e89b-12d3-a456-426614174000' });
-      assert.strictEqual(JSON.stringify(uuid), '{"$uuid":"123e4567-e89b-12d3-a456-426614174000"}');
     });
   });
 
@@ -171,12 +165,6 @@ describe('unit.documents.ids', () => {
     it('should not equal an invalid type', () => {
       const objectId = new ObjectId('507f191e810c19729de860ea');
       assert(!objectId.equals({}));
-    });
-
-    it('should properly serialize to JSON', () => {
-      const objectId = new ObjectId('507f191e810c19729de860ea');
-      assert.deepStrictEqual(objectId.toJSON(), { $objectId: '507f191e810c19729de860ea' });
-      assert.strictEqual(JSON.stringify(objectId), '{"$objectId":"507f191e810c19729de860ea"}');
     });
   });
 });
