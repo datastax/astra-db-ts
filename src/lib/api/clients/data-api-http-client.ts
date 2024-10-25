@@ -192,7 +192,9 @@ export class DataAPIHttpClient extends HttpClient {
       const data: RawDataAPIResponse = resp.body ? JSON.parse(resp.body, reviver) : {};
 
       const warnings = data?.status?.warnings ?? [];
-      this.emissionStrategy.emitCommandWarnings?.(info, warnings);
+      if (warnings.length) {
+        this.emissionStrategy.emitCommandWarnings?.(info, warnings);
+      }
       delete data?.status?.warnings;
 
       if (data.errors && data.errors.length > 0 && data.errors[0]?.errorCode === 'COLLECTION_NOT_EXIST') {

@@ -57,12 +57,12 @@ const parseLoggingEvent = p.mkStrEnumParser<DataAPILoggingEvent, true>('DataAPIL
 const parseLoggingOutput = p.mkStrEnumParser<DataAPILoggingOutput, true>('DataAPILoggingOutput', LoggingOutputs, true);
 
 const parseExplicitLoggingConfig: Parser<DataAPIExplicitLoggingConfig> = (config, field) => {
-  const events = parseLoggingConfigField(config.events, `${field}.events`, parseLoggingEvent);
-  const emits = parseLoggingConfigField(config.emits, `${field}.emits`, parseLoggingOutput);
+  const events = parseLoggingConfigField(config.events, `${field}.events`, true, parseLoggingEvent);
+  const emits = parseLoggingConfigField(config.emits, `${field}.emits`, false, parseLoggingOutput);
   return { events, emits };
 };
 
-const parseLoggingConfigField = <E>(value: unknown, field: string, parser: (x: string, field: string) => E): E | E[] => {
+const parseLoggingConfigField = <E>(value: unknown, field: string, reqNonEmpty: boolean, parser: (x: string, field: string) => E): E | E[] => {
   if (typeof value === 'string') {
     return parser(value, field);
   }
@@ -71,7 +71,7 @@ const parseLoggingConfigField = <E>(value: unknown, field: string, parser: (x: s
     throw new TypeError(`Expected ${field} to be a string or an array of strings; got ${typeof value}`);
   }
 
-  if (!isNonEmpty(value)) {
+  if (reqNonEmpty && !isNonEmpty(value)) {
     throw new Error(`Expected ${field} to be non-empty`);
   }
 
