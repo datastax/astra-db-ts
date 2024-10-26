@@ -147,39 +147,23 @@ describe('unit.client.documents-client', () => {
       assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
       assert.ok(httpClient.fetchCtx.ctx['_http1'] === httpClient.fetchCtx.ctx['_preferred']);
     });
-
-    it('uses http2 when forced (deprecated version)', function () {
-      const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'default' }, preferHttp2: true });
-      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
-      assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
-      assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
-    });
-
-    it('uses http1.1 when forced (deprecated version)', () => {
-      const client = new DataAPIClient('dummy-token', { preferHttp2: false });
-      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
-      assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
-      assert.ok(httpClient.fetchCtx.ctx['_http1'] === httpClient.fetchCtx.ctx['_preferred']);
-    });
   });
 
   describe('using custom http client', () => {
-    it('should allow custom http client', () => {
+    it('should allow custom http client', async () => {
       class CustomFetcher {
-        fetch(_: FetcherRequestInfo): Promise<FetcherResponseInfo> {
-          return Promise.resolve(<FetcherResponseInfo>{});
+        async fetch(_: FetcherRequestInfo): Promise<FetcherResponseInfo> {
+          return 3 as any;
         }
       }
 
       const client = new DataAPIClient('dummy-token', {
-        httpOptions: {
-          client: 'custom',
-          fetcher: new CustomFetcher(),
-        },
+        httpOptions: { client: 'custom', fetcher: new CustomFetcher() },
       });
 
       const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
-      assert.ok(httpClient.fetchCtx.ctx instanceof CustomFetcher);
+      assert.strictEqual(await httpClient.fetchCtx.ctx.fetch(null!), 3);
+      assert.strictEqual(httpClient.fetchCtx.ctx.close, undefined);
     });
 
     it('should throw if fetcher not properly implemented', () => {

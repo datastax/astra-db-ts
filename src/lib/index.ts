@@ -14,5 +14,6 @@
 
 export * from './api';
 export * from './token-providers';
+export * from './logging';
 export { DataAPIEnvironments } from './constants';
 export type { nullish, WithTimeout, DataAPIEnvironment, DeepPartial } from './types';

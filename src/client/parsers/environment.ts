@@ -12,18 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @internal
- */
-export function extractAstraEnvironment(endpoint: string) {
-  switch (true) {
-    case endpoint.includes('apps.astra-dev.datastax.com'):
-      return 'dev';
-    case endpoint.includes('apps.astra-test.datastax.com'):
-      return 'test';
-    case endpoint.includes('apps.astra.datastax.com'):
-      return 'prod';
-    default:
-      throw new Error(`Cannot extract astra environment for endpoint '${endpoint}'`);
-  }
-}
+import { EqualityProof, p } from '@/src/lib/validation';
+import { DataAPIEnvironment, DataAPIEnvironments } from '@/src/lib';
+
+void EqualityProof<typeof DataAPIEnvironments[number], DataAPIEnvironment, true>;
+export const parseEnvironment = p.mkStrEnumParser('DataAPIEnvironments', DataAPIEnvironments, false);

@@ -16,12 +16,11 @@
 import assert from 'assert';
 import { DevOpsAPIResponseError } from '@/src/administration';
 import { TimeoutManager } from '@/src/lib/api/timeout-managers';
-import { background, initTestObjects, it, TEMP_DB_NAME } from '@/tests/testlib';
+import { background, it, TEMP_DB_NAME } from '@/tests/testlib';
 import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
 
-background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycle', () => {
+background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycle', ({ client }) => {
   it('works', async () => {
-    const { client } = initTestObjects({ monitoring: true });
     const admin = client.admin();
 
     for (const db of await admin.listDatabases()) {
@@ -61,7 +60,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
       assert.ok(['PENDING', 'INITIALIZING'].includes(dbInfo2.status));
     }
 
-    const monitoringAdmin = client.admin({ monitorCommands: true });
+    const monitoringAdmin = client.admin();
     let commandStartedEvent = false;
     let commandPollingEvent = false;
     let commandSucceededEvent = false;

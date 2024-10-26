@@ -16,10 +16,10 @@
 import { AdminBlockingOptions, AdminSpawnOptions, LocalCreateKeyspaceOptions } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
 import { WithTimeout } from '@/src/lib/types';
-import { validateAdminOpts } from '@/src/administration/utils';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { Db } from '@/src/db';
+import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 
 /**
  * An administrative class for managing non-Astra databases, including creating, listing, and deleting keyspaces.
@@ -34,7 +34,7 @@ import { Db } from '@/src/db';
  *
  * // Create an admin instance through a Db
  * const db = client.db('*ENDPOINT*');
- * const dbAdmin1 = db.admin({ environment: 'dse' );
+ * const dbAdmin1 = db.admin({ environment: 'dse' });
  * const dbAdmin2 = db.admin({ environment: 'dse', adminToken: 'stronger-token' });
  *
  * await admin1.createKeyspace({
@@ -55,18 +55,17 @@ import { Db } from '@/src/db';
  * @public
  */
 export class DataAPIDbAdmin extends DbAdmin {
-  readonly #httpClient!: DataAPIHttpClient;
-  readonly #db!: Db;
+  readonly #httpClient: DataAPIHttpClient;
+  readonly #db: Db;
 
   /**
    * Use {@link Db.admin} to obtain an instance of this class.
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, adminOpts?: AdminSpawnOptions) {
+  constructor(db: Db, httpClient: DataAPIHttpClient, rawAdminOpts?: AdminSpawnOptions) {
     super();
-    validateAdminOpts(adminOpts);
-
+    const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options');
     this.#httpClient = httpClient.forDbAdmin(adminOpts);
     this.#db = db;
   }
@@ -146,7 +145,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    * await dbAdmin.createKeyspace('my_keyspace', {
    *   replication: {
    *     class: 'SimpleStrategy',
-   *     replicatonFactor: 3,
+   *     replicationFactor: 3,
    *   },
    * });
    *
@@ -202,7 +201,7 @@ export class DataAPIDbAdmin extends DbAdmin {
     await this.#httpClient.executeCommand({ dropKeyspace: { name: keyspace } }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
   }
 
-  private get _httpClient() {
+  public get _httpClient() {
     return this.#httpClient;
   }
 }

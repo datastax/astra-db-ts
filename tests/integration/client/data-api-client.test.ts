@@ -26,9 +26,10 @@ import {
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
 } from '@/tests/testlib';
-import { DataAPIResponseError, DataAPITimeoutError } from '@/src/documents';
+import { DataAPIResponseError, DataAPITimeoutError, UUID } from '@/src/documents';
 import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_TIMEOUT } from '@/src/lib/api/constants';
+import { before } from 'mocha';
 
 describe('integration.client.documents-client', () => {
   parallel('db', () => {
@@ -80,39 +81,53 @@ describe('integration.client.documents-client', () => {
     });
   });
 
-  parallel('monitoring commands', () => {
-    it('should not emit any command events when not enabled', async () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
-      const collection = db.collection(DEFAULT_COLLECTION_NAME);
+  describe('monitoring commands', () => {
+    let stdout: string[] = [], stderr: string[] = [];
+    const _console = global.console;
 
-      client.on('commandStarted', () => assert.fail('should not have emitted commandStarted event'));
-      client.on('commandSucceeded', () => assert.fail('should not have emitted commandSucceeded event'));
-      client.on('commandFailed', () => assert.fail('should not have emitted commandFailed event'));
-
-      await collection.insertOne({ _id: 'Lordi' });
+    before(() => {
+      global.console = {
+        log: (msg: string) => {
+          stdout.push(msg);
+        },
+        error: (msg: string) => {
+          stderr.push(msg);
+        },
+      } as Console;
     });
 
-    it('should not emit any command events when set to false', async () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { monitorCommands: false }, environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
-      const collection = db.collection(DEFAULT_COLLECTION_NAME);
+    after(() => {
+      global.console = _console;
+    });
 
-      client.on('commandStarted', () => assert.fail('should not have emitted commandStarted event'));
-      client.on('commandSucceeded', () => assert.fail('should not have emitted commandSucceeded event'));
-      client.on('commandFailed', () => assert.fail('should not have emitted commandFailed event'));
+    it('should not emit any command events when not enabled', async () => {
+      for (const conf of [undefined, null, [{ events: 'all', emits: [] }]]) {
+        stdout = []; stderr = [];
 
-      await collection.insertOne({ _id: 'TRiDENT' });
+        const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { logging: conf as any, environment: ENVIRONMENT });
+        const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
+        const collection = db.collection(DEFAULT_COLLECTION_NAME);
+
+        client.on('commandStarted', () => assert.fail('should not have emitted commandStarted event'));
+        client.on('commandSucceeded', () => assert.fail('should not have emitted commandSucceeded event'));
+        client.on('commandFailed', () => assert.fail('should not have emitted commandFailed event'));
+
+        await collection.insertOne({ _id: UUID.v4() });
+        assert.deepStrictEqual(stdout, []);
+        assert.deepStrictEqual(stderr, []);
+      }
     });
 
     it('should allow cross-collections monitoring of successful commands when enabled', async () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { monitorCommands: true }, environment: ENVIRONMENT });
+      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { logging: ['all', { events: 'commandSucceeded', emits: ['event', 'stdout'] }], environment: ENVIRONMENT });
       const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
       const collection1 = db.collection(DEFAULT_COLLECTION_NAME);
       const collection2 = db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE });
 
       const startedEvents: CommandStartedEvent[] = [];
       const succeededEvents: CommandSucceededEvent[] = [];
+
+      stdout = []; stderr = [];
 
       client.on('commandStarted', (event) => {
         startedEvents.push(event);
@@ -166,17 +181,23 @@ describe('integration.client.documents-client', () => {
 
       assert.ok(succeededEvents[0].resp?.status?.insertedIds instanceof Array);
       assert.ok(typeof succeededEvents[1].resp?.status?.deletedCount === 'number');
+
+      assert.deepStrictEqual(stdout[0], succeededEvents[0].formatted());
+      assert.deepStrictEqual(stdout[1], succeededEvents[1].formatted());
+      assert.deepStrictEqual(stderr, []);
     });
 
     it('should allow monitoring of failed commands when enabled', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { monitorCommands: true, keyspace: DEFAULT_KEYSPACE });
+      const db = client.db(TEST_APPLICATION_URI, { logging: ['all', { events: 'commandSucceeded', emits: ['event', 'stdout'] }], keyspace: DEFAULT_KEYSPACE });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
       let startedEvent: CommandStartedEvent | undefined;
       let failedEvent: CommandFailedEvent | undefined;
 
       await collection.insertOne({ _id: 0, name: 'Oasis' });
+
+      stdout = []; stderr = [];
 
       client.on('commandStarted', (event) => {
         startedEvent = event;
@@ -221,15 +242,20 @@ describe('integration.client.documents-client', () => {
       assert.ok(failedEvent.error instanceof DataAPIResponseError);
       assert.strictEqual(failedEvent.error.errorDescriptors.length, 1);
       assert.strictEqual(failedEvent.error.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
+
+      assert.deepStrictEqual(stdout, []);
+      assert.deepStrictEqual(stderr[0], failedEvent.formatted());
     });
 
     it('should allow monitoring of timed-out commands when enabled', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { monitorCommands: true, keyspace: DEFAULT_KEYSPACE });
+      const db = client.db(TEST_APPLICATION_URI, { logging: ['all', { events: 'commandStarted', emits: ['event', 'stderr'] }], keyspace: DEFAULT_KEYSPACE });
       const collection = db.collection(DEFAULT_COLLECTION_NAME);
 
       let startedEvent: CommandStartedEvent | undefined;
       let failedEvent: CommandFailedEvent | undefined;
+
+      stdout = []; stderr = [];
 
       client.on('commandStarted', (event) => {
         startedEvent = event;
@@ -268,6 +294,10 @@ describe('integration.client.documents-client', () => {
 
       assert.ok(failedEvent.error instanceof DataAPITimeoutError);
       assert.strictEqual(failedEvent.error.timeout, 1);
+
+      assert.deepStrictEqual(stdout, []);
+      assert.deepStrictEqual(stderr[0], startedEvent.formatted());
+      assert.deepStrictEqual(stderr[1], failedEvent.formatted());
     });
   });
 });

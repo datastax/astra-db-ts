@@ -11,19 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// noinspection DuplicatedCode
 
-/**
- * @internal
- */
-export function extractAstraEnvironment(endpoint: string) {
-  switch (true) {
-    case endpoint.includes('apps.astra-dev.datastax.com'):
-      return 'dev';
-    case endpoint.includes('apps.astra-test.datastax.com'):
-      return 'test';
-    case endpoint.includes('apps.astra.datastax.com'):
-      return 'prod';
-    default:
-      throw new Error(`Cannot extract astra environment for endpoint '${endpoint}'`);
-  }
-}
+export type {
+  DataAPILoggingOutput,
+  DataAPILoggingEvent,
+  DataAPIClientEvents,
+  DataAPIExplicitLoggingConfig,
+  DataAPILoggingConfig,
+} from './types';
+
+export * from './events';

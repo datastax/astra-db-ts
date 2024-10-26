@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client';
-import { hrTimeMs } from '@/src/lib/api/clients/http-client';
+import { DataAPIErrorDescriptor } from '@/src/documents';
+import { DataAPIClientEvent } from '@/src/lib/logging/events';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -38,6 +39,7 @@ export type AdminCommandEvents = {
    * Emitted when an admin command has errored.
    */
   adminCommandFailed: (event: AdminCommandFailedEvent) => void,
+  adminCommandWarnings: (event: AdminCommandWarningsEvent) => void,
 }
 
 /**
@@ -45,7 +47,7 @@ export type AdminCommandEvents = {
  *
  * @public
  */
-export abstract class AdminCommandEvent {
+export abstract class AdminCommandEvent extends DataAPIClientEvent {
   /**
    * The path for the request, not including the Base URL.
    */
@@ -77,11 +79,16 @@ export abstract class AdminCommandEvent {
    * @internal
    */
   protected constructor(info: DevOpsAPIRequestInfo, longRunning: boolean) {
+    super();
     this.path = info.path;
     this.method = info.method;
     this.reqBody = info.data;
     this.params = info.params;
     this.longRunning = longRunning;
+  }
+
+  formatted(): string {
+    return JSON.stringify(this);
   }
 }
 
@@ -106,6 +113,10 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
   constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: number) {
     super(info, longRunning);
     this.timeout = timeout;
+  }
+
+  formatted(): string {
+    return JSON.stringify(this);
   }
 }
 
@@ -136,8 +147,12 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
    */
   constructor(info: DevOpsAPIRequestInfo, started: number, interval: number) {
     super(info, true);
-    this.elapsed = hrTimeMs() - started;
+    this.elapsed = performance.now() - started;
     this.interval = interval;
+  }
+
+  formatted(): string {
+    return JSON.stringify(this);
   }
 }
 
@@ -160,23 +175,18 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
   public readonly resBody?: Record<string, any>;
 
   /**
-   * Any warnings returned from the Data API that may point out deprecated/incorrect practices,
-   * or any other issues that aren't strictly an error.
-   *
-   * Does not apply to Astra users, as the admin classes will use the DevOps API instead.
-   */
-  public readonly warnings: string[];
-
-  /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, warnings: string[], started: number) {
+  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number) {
     super(info, longRunning);
-    this.duration = hrTimeMs() - started;
-    this.warnings = warnings;
+    this.duration = performance.now() - started;
     this.resBody = data || undefined;
+  }
+
+  formatted(): string {
+    return JSON.stringify(this);
   }
 }
 
@@ -208,7 +218,24 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
    */
   constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number) {
     super(info, longRunning);
-    this.duration = hrTimeMs() - started;
+    this.duration = performance.now() - started;
     this.error = error;
+  }
+
+  formatted(): string {
+    return JSON.stringify(this);
+  }
+}
+
+export class AdminCommandWarningsEvent extends AdminCommandEvent {
+  public readonly warnings: DataAPIErrorDescriptor[];
+
+  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: DataAPIErrorDescriptor[]) {
+    super(info, longRunning);
+    this.warnings = warnings;
+  }
+
+  formatted(): string {
+    return JSON.stringify(this);
   }
 }
