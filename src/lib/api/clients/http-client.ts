@@ -13,11 +13,12 @@
 // limitations under the License.
 
 import { CLIENT_USER_AGENT, RAGSTACK_REQUESTED_WITH } from '@/src/lib/api/constants';
-import { Caller, Logger } from '@/src/client';
-import TypedEmitter from 'typed-emitter';
-import { FetchCtx, FetcherResponseInfo } from '@/src/lib/api/fetch/types';
-import { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/lib/api/clients/types';
-import { DataAPIClientEvents } from '@/src/lib/logging';
+import type { Caller } from '@/src/client';
+import type TypedEmitter from 'typed-emitter';
+import type { FetchCtx, FetcherResponseInfo } from '@/src/lib/api/fetch/types';
+import type { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/lib/api/clients';
+import type { DataAPIClientEvents } from '@/src/lib/logging';
+import { Logger } from '@/src/lib/logging/logger';
 
 /**
  * @internal

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FindCursor } from '@/src/documents/cursor';
-import {
+import type { FindCursor } from '@/src/documents/cursor';
+import type {
   CollectionDeleteManyResult,
   CollectionDeleteOneOptions,
   CollectionDeleteOneResult,
@@ -44,9 +44,9 @@ import {
   WithId,
 } from '@/src/documents/collections/types';
 import { CollectionNotFoundError } from '@/src/db/errors';
-import { CollectionOptions, CollectionSpawnOptions, Db } from '@/src/db';
-import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import { WithTimeout } from '@/src/lib';
+import type { CollectionOptions, CollectionSpawnOptions, Db } from '@/src/db';
+import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
+import type { WithTimeout } from '@/src/lib';
 import { constUncurried } from '@/src/lib/utils';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 

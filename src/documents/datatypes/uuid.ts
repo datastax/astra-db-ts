@@ -149,6 +149,10 @@ export class UUID<Version extends number = number> {
   public static v7(): UUID<7> {
     return new UUID(uuidv7(), false);
   }
+
+  public toJSON() {
+    return { $uuid: this.toString() };
+  }
 }
 
 function timestampFromUUID(uuid: UUID): Date | undefined {

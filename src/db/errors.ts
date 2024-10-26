@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIError } from '@/src/documents';
+import { DataAPIError } from '@/src/documents/errors';
 
 /**
  * An exception thrown when certain operations are attempted on a collection that does not exist.

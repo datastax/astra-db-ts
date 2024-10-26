@@ -12,13 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type {
-  Caller,
-  DataAPIHttpOptions,
-  DefaultAdminSpawnOptions,
-  DefaultDbSpawnOptions,
-} from '@/src/client';
 import type { DataAPIEnvironment, DataAPILoggingConfig } from '@/src/lib';
+import type { Caller, DataAPIHttpOptions, DefaultAdminSpawnOptions, DefaultDbSpawnOptions } from '@/src/client';
 
 /**
  * The default options for the {@link DataAPIClient}. The Data API & DevOps specific options may be overridden

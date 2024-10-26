@@ -14,17 +14,18 @@
 // noinspection DuplicatedCode
 
 import { EqualityProof } from '@/src/lib/validation';
-import { DataAPIClientEvents, DataAPILoggingEvent, DataAPILoggingOutput } from '@/src/lib';
+import type { DataAPIClientEvents, DataAPILoggingEvent, DataAPILoggingOutput } from '@/src/lib';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents';
 import {
   AdminCommandFailedEvent,
   AdminCommandPollingEvent,
   AdminCommandStartedEvent,
-  AdminCommandSucceededEvent, AdminCommandWarningsEvent,
-} from '@/src/administration';
+  AdminCommandSucceededEvent,
+  AdminCommandWarningsEvent,
+} from '@/src/administration/events';
 import { buildOutputsMap } from '@/src/lib/logging/util';
-import { InternalLoggingConfig } from '@/src/client/types/internal';
-import { NormalizedLoggingConfig } from '@/src/lib/logging/types';
+import type { InternalLoggingConfig } from '@/src/client/types/internal';
+import type { NormalizedLoggingConfig } from '@/src/lib/logging/types';
 
 export const LoggingEvents = <const>['all', 'adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded', 'adminCommandFailed', 'adminCommandWarnings', 'commandStarted', 'commandFailed', 'commandSucceeded', 'commandWarnings'];
 export const LoggingEventsWithoutAll = LoggingEvents.filter((e) => e !== 'all');

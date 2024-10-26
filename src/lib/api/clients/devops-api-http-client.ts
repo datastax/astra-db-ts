@@ -13,13 +13,13 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { HttpClient } from '@/src/lib/api/clients/http-client';
+import { HttpClient } from '@/src/lib/api/clients';
 import { DevOpsAPIResponseError, DevOpsAPITimeoutError, DevOpsUnexpectedStateError } from '@/src/administration/errors';
-import { AdminBlockingOptions } from '@/src/administration/types';
-import { TimeoutManager, TimeoutOptions } from '@/src/lib/api/timeout-managers';
+import type { AdminBlockingOptions } from '@/src/administration/types';
+import { TimeoutManager, type TimeoutOptions } from '@/src/lib/api/timeout-managers';
 import { DEFAULT_DEVOPS_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants';
-import { HeaderProvider, HTTPClientOptions, HttpMethodStrings } from '@/src/lib/api/clients/types';
-import { nullish, TokenProvider } from '@/src/lib';
+import type { HeaderProvider, HTTPClientOptions, HttpMethodStrings } from '@/src/lib/api/clients/types';
+import type { nullish, TokenProvider } from '@/src/lib';
 import { jsonTryParse } from '@/src/lib/utils';
 
 /**

@@ -12,11 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { CollectionInsertManyResult } from '@/src/documents/collections/types/insert/insert-many';
-import type { CollectionDeleteManyResult } from '@/src/documents/collections/types/delete/delete-many';
-import type { CollectionUpdateManyResult } from '@/src/documents/collections/types/update/update-many';
-import type { FetcherResponseInfo, RawDataAPIResponse } from '@/src/lib/api';
-import type { SomeDoc } from '@/src/documents/collections/types/document';
+import type { FetcherResponseInfo, RawDataAPIResponse } from '@/src/lib';
+import type {
+  CollectionDeleteManyResult,
+  CollectionInsertManyResult,
+  CollectionUpdateManyResult,
+  SomeDoc,
+} from '@/src/documents/collections';
 
 /**
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a

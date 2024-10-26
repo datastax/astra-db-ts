@@ -13,8 +13,8 @@
 // limitations under the License.
 // noinspection JSDeprecatedSymbols
 
-import TypedEmitter from 'typed-emitter';
-import {
+import type TypedEmitter from 'typed-emitter';
+import type {
   AdminSpawnOptions,
   CustomHttpClientOptions,
   DataAPIClientOptions,
@@ -22,14 +22,14 @@ import {
   DefaultHttpClientOptions,
 } from '@/src/client/types';
 import { LIB_NAME } from '@/src/version';
-import { InternalRootClientOpts } from '@/src/client/types/internal';
-import { DataAPIClientEvents, Fetcher, FetchH2, FetchNative, nullish, TokenProvider } from '@/src/lib';
+import type { InternalRootClientOpts } from '@/src/client/types/internal';
+import { type DataAPIClientEvents, type Fetcher, FetchH2, FetchNative, type nullish, TokenProvider } from '@/src/lib';
 import { buildUserAgent } from '@/src/lib/api/clients/http-client';
 import { Db } from '@/src/db';
 import { AstraAdmin } from '@/src/administration';
-import { FetchCtx } from '@/src/lib/api/fetch/types';
+import type { FetchCtx } from '@/src/lib/api/fetch/types';
 import { isNullish } from '@/src/lib/utils';
-import { p, Parser } from '@/src/lib/validation';
+import { p, type Parser } from '@/src/lib/validation';
 import { parseCaller } from '@/src/client/parsers/caller';
 import { Logger } from '@/src/lib/logging/logger';
 import { parseEnvironment } from '@/src/client/parsers/environment';

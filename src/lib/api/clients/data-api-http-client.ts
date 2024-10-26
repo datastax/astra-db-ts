@@ -14,25 +14,25 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import { TimeoutManager, TimeoutOptions } from '@/src/lib/api/timeout-managers';
+import type { WithNullableKeyspace } from '@/src/db/types/common';
+import { Logger } from '@/src/lib/logging/logger';
+import { nullish, RawDataAPIResponse, TokenProvider } from '@/src/lib';
 import {
   DataAPIErrorDescriptor,
   DataAPIHttpError,
   DataAPIResponseError,
   DataAPITimeoutError,
-  mkRespErrorFromResponse,
-} from '@/src/documents/errors';
-import { AdminSpawnOptions } from '@/src/administration';
-import { CollectionNotFoundError } from '@/src/db/errors';
-import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_TIMEOUT, HttpMethods } from '@/src/lib/api/constants';
-import { RawDataAPIResponse } from '@/src/lib/api';
-import { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
-import { nullish, TokenProvider } from '@/src/lib';
+  EmbeddingHeadersProvider,
+  ObjectId,
+  UUID,
+} from '@/src/documents';
+import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
 import { HttpClient } from '@/src/lib/api/clients/http-client';
-import { CollectionSpawnOptions } from '@/src/db';
+import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_TIMEOUT, HttpMethods } from '@/src/lib/api/constants';
+import { CollectionNotFoundError, CollectionSpawnOptions } from '@/src/db';
+import type { AdminSpawnOptions } from '@/src/client';
 import { isNullish } from '@/src/lib/utils';
-import { EmbeddingHeadersProvider, ObjectId, UUID } from '@/src/documents';
-import { WithNullableKeyspace } from '@/src/db/types/common';
-import { Logger } from '@/src/lib/logging/logger';
+import { mkRespErrorFromResponse } from '@/src/documents/errors';
 
 /**
  * @internal

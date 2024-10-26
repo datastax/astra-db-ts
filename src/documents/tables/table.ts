@@ -28,11 +28,11 @@ import {
 } from '@/src/documents';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
-import { AlterTableOptions, AlterTableSchema, Db, TableSpawnOptions } from '@/src/db';
+import { AlterTableOptions, AlterTableSchema, CollectionSpawnOptions, Db } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
 import { constUncurried } from '@/src/lib/utils';
 
-type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$PrimaryKeyType'>;
+export type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$PrimaryKeyType'>;
 
 /**
  * Represents the interface to a collection in the database.

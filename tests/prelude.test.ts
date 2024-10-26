@@ -39,23 +39,23 @@ before(async () => {
       await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, keyspace })
         .then(c => c.deleteMany({}));
 
-      const table = await db.createTable(DEFAULT_TABLE_NAME, {
-        definition: {
-          columns: {
-            id: { type: 'text' },
-            name: { type: 'text' },
-            age: { type: 'int' },
-            // vector: { type: 'vector', valueType: 'float', dimension: 5 },
-          },
-          primaryKey: {
-            partitionBy: ['id'],
-            partitionSort: { age: 1 },
-          },
-        },
-        checkExists: false,
-      });
-
-      await table.deleteMany({});
+      // const table = await db.createTable(DEFAULT_TABLE_NAME, {
+      //   definition: {
+      //     columns: {
+      //       id: { type: 'text' },
+      //       name: { type: 'text' },
+      //       age: { type: 'int' },
+      //       // vector: { type: 'vector', valueType: 'float', dimension: 5 },
+      //     },
+      //     primaryKey: {
+      //       partitionBy: ['id'],
+      //       partitionSort: { age: 1 },
+      //     },
+      //   },
+      //   checkExists: false,
+      // });
+      //
+      // await table.deleteMany({});
 
       // await table.createIndex('id_idx', 'id');
       // await table.createIndex('name_idx', 'name');

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Filter, SomeDoc } from '@/src/documents/collections';
-import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
+import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
+import type { Filter, SomeDoc } from '@/src/documents/collections';
+import type { GenericFindOptions } from '@/src/documents/commands';
+import type { Projection, Sort } from '@/src/documents/types';
+import type { DeepPartial, nullish } from '@/src/lib';
 import { normalizedSort } from '@/src/documents/utils';
-import { Projection, Sort } from '@/src/documents/types';
-import { GenericFindOptions } from '@/src/documents/commands';
-import { DeepPartial, nullish } from '@/src/lib';
 
 /**
  * Represents the status of a cursor.
@@ -103,7 +103,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
 
   readonly #options: GenericFindOptions;
   readonly #filter: Filter<TRaw>;
-  readonly #mapping?: (doc: TRaw) => T;
+  readonly #mapping?: (doc: any) => T;
 
   #buffer: TRaw[] = [];
   #nextPageState?: string | null;

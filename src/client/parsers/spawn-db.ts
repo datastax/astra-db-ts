@@ -13,9 +13,10 @@
 // limitations under the License.
 
 import { p, Parser } from '@/src/lib/validation';
-import { DbSpawnOptions, Logger } from '@/src/client';
+import { DbSpawnOptions } from '@/src/client';
 import { TokenProvider } from '@/src/lib';
 import { isNullish } from '@/src/lib/utils';
+import { Logger } from '@/src/lib/logging/logger';
 
 export const parseDbSpawnOpts: Parser<DbSpawnOptions | undefined, unknown> = (raw, field) => {
   const opts = p.parse('object?')<DbSpawnOptions>(raw, field);

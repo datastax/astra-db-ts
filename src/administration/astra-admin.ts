@@ -28,8 +28,9 @@ import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-clien
 import { TokenProvider, WithTimeout } from '@/src/lib';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
-import { DbSpawnOptions, Logger } from '@/src/client';
 import { buildAstraEndpoint } from '@/src/lib/utils';
+import { Logger } from '@/src/lib/logging/logger';
+import { DbSpawnOptions } from '@/src/client';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.

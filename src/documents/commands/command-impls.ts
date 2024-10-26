@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
+import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import {
   DataAPIResponseError,
   DeleteManyError,
@@ -24,27 +24,27 @@ import {
   UpdateManyError,
   WithId,
 } from '@/src/documents';
-import { nullish, WithTimeout } from '@/src/lib';
+import type { nullish, WithTimeout } from '@/src/lib';
 import { insertManyOrdered, insertManyUnordered, MkID } from '@/src/documents/commands/helpers/insertion';
 import { normalizedSort } from '@/src/documents/utils';
 import { mkRespErrorFromResponse } from '@/src/documents/errors';
 import { coalesceUpsertIntoUpdateResult, mkUpdateResult } from '@/src/documents/commands/helpers/updates';
-import { GenericInsertOneResult } from '@/src/documents/commands/types/insert/insert-one';
-import { GenericInsertManyResult } from '@/src/documents/commands/types/insert/insert-many';
-import { GenericUpdateOneOptions } from '@/src/documents/commands/types/update/update-one';
-import { GenericUpdateResult } from '@/src/documents/commands/types/update/update-common';
-import { GenericUpdateManyOptions } from '@/src/documents/commands/types/update/update-many';
-import { GenericReplaceOneOptions } from '@/src/documents/commands/types/update/replace-one';
-import { GenericDeleteOneOptions, GenericDeleteOneResult } from '@/src/documents/commands/types/delete/delete-one';
-import { GenericDeleteManyResult } from '@/src/documents/commands/types/delete/delete-many';
-import { GenericFindOneOptions } from '@/src/documents/commands/types/find/find-one';
-import { GenericFindOneAndReplaceOptions } from '@/src/documents/commands/types/find/find-one-replace';
-import { GenericFindOneAndDeleteOptions } from '@/src/documents/commands/types/find/find-one-delete';
-import { GenericFindOneAndUpdateOptions } from '@/src/documents/commands/types/find/find-one-update';
+import type { GenericInsertOneResult } from '@/src/documents/commands/types/insert/insert-one';
+import type { GenericInsertManyResult } from '@/src/documents/commands/types/insert/insert-many';
+import type { GenericUpdateOneOptions } from '@/src/documents/commands/types/update/update-one';
+import type { GenericUpdateResult } from '@/src/documents/commands/types/update/update-common';
+import type { GenericUpdateManyOptions } from '@/src/documents/commands/types/update/update-many';
+import type { GenericReplaceOneOptions } from '@/src/documents/commands/types/update/replace-one';
+import type { GenericDeleteOneOptions, GenericDeleteOneResult } from '@/src/documents/commands/types/delete/delete-one';
+import type { GenericDeleteManyResult } from '@/src/documents/commands/types/delete/delete-many';
+import type { GenericFindOneOptions } from '@/src/documents/commands/types/find/find-one';
+import type { GenericFindOneAndReplaceOptions } from '@/src/documents/commands/types/find/find-one-replace';
+import type { GenericFindOneAndDeleteOptions } from '@/src/documents/commands/types/find/find-one-delete';
+import type { GenericFindOneAndUpdateOptions } from '@/src/documents/commands/types/find/find-one-update';
 import { runFindOneAnd } from '@/src/documents/commands/helpers/modify';
 import stableStringify from 'safe-stable-stringify';
 import { mkDistinctPathExtractor, pullSafeProjection4Distinct } from '@/src/documents/commands/helpers/distinct';
-import { GenericFindOptions } from '@/src/documents/commands/types/find/find';
+import type { GenericFindOptions } from '@/src/documents/commands/types/find/find';
 
 export class CommandImpls<ID> {
   readonly #httpClient: DataAPIHttpClient;
