@@ -341,8 +341,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    */
   public map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw> {
     if (this.#mapping) {
-      const oldMapping = this.#mapping;
-      return this.#clone(this.#filter, this.#options, (doc: TRaw) => mapping(oldMapping(doc)));
+      return this.#clone(this.#filter, this.#options, (doc: TRaw) => mapping(this.#mapping!(doc)));
     } else {
       return this.#clone(this.#filter, this.#options, mapping as any);
     }

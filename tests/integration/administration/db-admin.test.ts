@@ -14,16 +14,19 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { describe, ENVIRONMENT, initTestObjects, it, TEST_APPLICATION_URI } from '@/tests/testlib';
+import { describe, ENVIRONMENT, it, TEST_APPLICATION_URI } from '@/tests/testlib';
 
-describe('integration.administration.db-admin', ({ dbAdmin }) => {
+describe('integration.administration.db-admin', ({ client, dbAdmin }) => {
   it('(LONG) works', async () => {
-    const { client } = initTestObjects({ monitoring: true });
-    let cmdsSucceeded = 0;
+    let succeeded = 0;
+    let warnings = 0;
 
-    client.on('adminCommandSucceeded', (e) => {
-      assert.strictEqual(e.warnings.length, 0);
-      cmdsSucceeded++;
+    client.on('adminCommandSucceeded', () => {
+      succeeded++;
+    });
+
+    client.on('adminCommandWarnings', () => {
+      warnings++;
     });
 
     const db = client.db(TEST_APPLICATION_URI);
@@ -47,7 +50,8 @@ describe('integration.administration.db-admin', ({ dbAdmin }) => {
     const keyspaces3 = await dbAdmin.listKeyspaces();
     assert.ok(!keyspaces3.includes('slania'));
 
-    assert.strictEqual(cmdsSucceeded, 5);
+    assert.strictEqual(succeeded, 5);
+    assert.strictEqual(warnings, 0);
   });
   
   it('should findEmbeddingProviders', async () => {
