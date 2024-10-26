@@ -47,11 +47,11 @@ export const p = {
     return (xs as readonly X[]).includes(x as X);
   },
   mkStrEnumParser: <X, const R extends boolean>(name: string, xs: readonly X[], required: R) => (x: unknown, field: string): X | (R extends false ? undefined : never) => {
-    if (required && isNullish(x)) {
-      throw new TypeError(`Expected ${field} to be of string enum ${name}, but got ${x}`);
+    if ((required && isNullish(x)) || (typeof x !== 'string' && !isNullish(x))) {
+      throw new TypeError(`Expected ${field} to be of string enum ${name}, but got ${typeof x}`);
     }
     if (!isNullish(x) && !p.includes(xs, x)) {
-      throw new TypeError(`Expected ${field} to be of string enum ${name} ${required ? '' : '(or null/undefined)'} (one of ${xs.join(', ')}), but got ${x}`);
+      throw new TypeError(`Expected ${field} to be of string enum ${name}${required ? '' : '(or null/undefined)'} (one of ${xs.join(', ')}), but got '${x}'`);
     }
     return x ?? undefined!;
   },

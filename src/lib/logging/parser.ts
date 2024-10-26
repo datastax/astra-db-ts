@@ -49,10 +49,10 @@ export const parseLoggingConfig: Parser<DataAPILoggingConfig | undefined> = (con
     if (typeof c === 'string') {
       return parseLoggingEvent(c, `${field}[${i}]`);
     }
-    if (typeof config === 'object') {
+    if (typeof c === 'object') {
       return parseExplicitLoggingConfig(c, `${field}[${i}]`);
     }
-    throw new TypeError(`Expected ${field}[${i}] to be of type string | object; got ${typeof config}`);
+    throw new TypeError(`Expected ${field}[${i}] to be of type string | object; got ${typeof c}`);
   });
 };
 

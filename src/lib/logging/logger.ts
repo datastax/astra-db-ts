@@ -73,9 +73,7 @@ export class Logger implements Partial<Record<keyof DataAPIClientEvents, unknown
     }
   }
 
-  public static parseConfig(config: DataAPILoggingConfig | undefined, field: string): DataAPILoggingConfig | undefined {
-    return parseLoggingConfig(config, field);
-  }
+  public static parseConfig = parseLoggingConfig;
 
   public static advanceConfig(config?: NormalizedLoggingConfig[], newConfig?: DataAPILoggingConfig): NormalizedLoggingConfig[] | undefined {
     if (!config && !newConfig) {
