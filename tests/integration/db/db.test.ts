@@ -26,7 +26,7 @@ import {
 } from '@/tests/testlib';
 import { DataAPIResponseError, UUID } from '@/src/documents';
 import { DataAPIClient } from '@/src/client';
-import { CollectionAlreadyExistsError, CollectionNotFoundError } from '@/src/db/errors';
+import { CollectionNotFoundError } from '@/src/db/errors';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants';
 
 parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
@@ -45,45 +45,33 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
       assert.strictEqual(res.keyspace, OTHER_KEYSPACE);
     });
 
-    it('should throw CollectionAlreadyExistsError if collections already exists', async () => {
-      await db.createCollection('coll_3c', { indexing: { deny: ['*'] } });
-      try {
-        await db.createCollection('coll_3c', { indexing: { deny: ['*'] } });
-        assert.fail('Expected an error');
-      } catch (e) {
-        assert.ok(e instanceof CollectionAlreadyExistsError);
-        assert.strictEqual(e.collectionName, 'coll_3c');
-        assert.strictEqual(e.keyspace, DEFAULT_KEYSPACE);
-      }
-    });
-
-    it('should create collections idempotently if checkExists is false', async () => {
+    it('should create collections idempotently', async () => {
       const res = await db.createCollection('coll_4c', { indexing: { deny: ['*'] } });
       assert.ok(res);
       assert.strictEqual(res.collectionName, 'coll_4c');
-      const res2 = await db.createCollection('coll_4c', { checkExists: false, indexing: { deny: ['*'] } });
+      const res2 = await db.createCollection('coll_4c', { indexing: { deny: ['*'] } });
       assert.ok(res2);
       assert.strictEqual(res2.collectionName, 'coll_4c');
     });
 
-    it('should create collections with same options idempotently if checkExists is false', async () => {
+    it('should create collections with same options idempotently', async () => {
       const res = await db.createCollection('coll_5c', { indexing: { deny: ['*'] } });
       assert.ok(res);
       assert.strictEqual(res.collectionName, 'coll_5c');
       assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
-      const res2 = await db.createCollection('coll_5c', { indexing: { deny: ['*'] }, checkExists: false });
+      const res2 = await db.createCollection('coll_5c', { indexing: { deny: ['*'] } });
       assert.ok(res2);
       assert.strictEqual(res2.collectionName, 'coll_5c');
       assert.strictEqual(res2.keyspace, DEFAULT_KEYSPACE);
     });
 
-    it('should fail creating collections with different options even if checkExists is false', async () => {
+    it('should fail creating collections with different options', async () => {
       const res = await db.createCollection('coll_6c', { indexing: { deny: ['*'] } });
       assert.ok(res);
       assert.strictEqual(res.collectionName, 'coll_6c');
       assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
       try {
-        await db.createCollection('coll_6c', { indexing: { allow: ['*'] }, checkExists: false });
+        await db.createCollection('coll_6c', { indexing: { allow: ['*'] } });
         assert.fail('Expected an error');
       } catch (e) {
         assert.ok(e instanceof DataAPIResponseError);

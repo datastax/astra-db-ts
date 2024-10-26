@@ -20,10 +20,10 @@ import { createCollections, DEFAULT_COLLECTION_NAME, it, parallel } from '@/test
 parallel('(LONG) integration.documents.ids', { dropEphemeral: 'after' }, ({ db }) => {
   const collections = createCollections(() => ({
     default: db.collection(DEFAULT_COLLECTION_NAME).deleteMany({}).then(_ => db.collection(DEFAULT_COLLECTION_NAME)),
-    uuid: db.createCollection(`${DEFAULT_COLLECTION_NAME}_uuid`, { checkExists: false, defaultId: { type: 'uuid' } }),
-    uuidv6: db.createCollection(`${DEFAULT_COLLECTION_NAME}_uuidv6`, { checkExists: false, defaultId: { type: 'uuidv6' } }),
-    uuidv7: db.createCollection(`${DEFAULT_COLLECTION_NAME}_uuidv7`, { checkExists: false, defaultId: { type: 'uuidv7' } }),
-    objectId: db.createCollection(`${DEFAULT_COLLECTION_NAME}_objectId`, { checkExists: false, defaultId: { type: 'objectId' } }),
+    uuid: db.createCollection(`${DEFAULT_COLLECTION_NAME}_uuid`, { defaultId: { type: 'uuid' } }),
+    uuidv6: db.createCollection(`${DEFAULT_COLLECTION_NAME}_uuidv6`, { defaultId: { type: 'uuidv6' } }),
+    uuidv7: db.createCollection(`${DEFAULT_COLLECTION_NAME}_uuidv7`, { defaultId: { type: 'uuidv7' } }),
+    objectId: db.createCollection(`${DEFAULT_COLLECTION_NAME}_objectId`, { defaultId: { type: 'objectId' } }),
   }));
 
   it('default id is not in listCollections', async () => {

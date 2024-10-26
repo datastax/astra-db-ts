@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { DEFAULT_KEYSPACE } from '@/src/lib/api';
-import { DEFAULT_COLLECTION_NAME, DEFAULT_TABLE_NAME, OTHER_KEYSPACE } from '@/tests/testlib/config';
+import { DEFAULT_COLLECTION_NAME, OTHER_KEYSPACE } from '@/tests/testlib/config';
 import { GLOBAL_FIXTURES } from '@/tests/testlib';
 
 const TEST_KEYSPACES = [DEFAULT_KEYSPACE, OTHER_KEYSPACE];
@@ -36,7 +36,7 @@ before(async () => {
 
   const createCollPromises = TEST_KEYSPACES
     .map(async (keyspace) => {
-      await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, checkExists: false, keyspace })
+      await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, keyspace })
         .then(c => c.deleteMany({}));
 
       // const table = await db.createTable(DEFAULT_TABLE_NAME, {

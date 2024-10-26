@@ -24,22 +24,9 @@ import { CollectionOptions, CollectionSpawnOptions } from '@/src/db';
  * @field defaultId - The default ID for the collections.
  * @field keyspace - Overrides the keyspace for the collections.
  * @field maxTimeMS - The maximum time to allow the operation to run.
- * @field checkExists - Whether to check if the collections exists before creating it.
  *
  * @see Db.createCollection
  *
  * @public
  */
-export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, CollectionSpawnOptions {
-  /**
-   * If `true` or unset, runs an additional existence check before creating the collections, failing if the collections
-   * with the same name already exists, raising a {@link CollectionAlreadyExistsError}.
-   *
-   * Otherwise, if `false`, the creation is always attempted, and the command will succeed even if the collections
-   * with the given name already exists, as long as the options are the exact same (if options mismatch, it'll
-   * throw a {@link DataAPIResponseError}).
-   *
-   * @defaultValue true
-   */
-  checkExists?: boolean;
-}
+export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, CollectionSpawnOptions {}

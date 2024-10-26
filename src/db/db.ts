@@ -20,7 +20,6 @@ import { DataAPIEnvironment, nullish, WithTimeout } from '@/src/lib/types';
 import { extractDbIdFromUrl } from '@/src/documents/utils';
 import { AdminSpawnOptions, DbAdmin } from '@/src/administration';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin';
-import { CollectionAlreadyExistsError, TableAlreadyExistsError } from '@/src/db/errors';
 import { CreateCollectionOptions } from '@/src/db/types/collections/create-collection';
 import { TokenProvider } from '@/src/lib';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client';
@@ -435,18 +434,11 @@ export class Db {
       },
     };
 
-    const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
-    const keyspace = options?.keyspace ?? this.keyspace;
+    await this.#httpClient.executeCommand(command, {
+      keyspace: options?.keyspace ?? this.keyspace,
+      maxTimeMS: options?.maxTimeMS,
+    });
 
-    if (options?.checkExists !== false) {
-      const collections = await this.listCollections({ keyspace, maxTimeMS: timeoutManager.msRemaining() });
-
-      if (collections.some(c => c.name === collectionName)) {
-        throw new CollectionAlreadyExistsError(keyspace, collectionName);
-      }
-    }
-
-    await this.#httpClient.executeCommand(command, { keyspace, timeoutManager });
     return this.collection(collectionName, options);
   }
 
@@ -598,18 +590,11 @@ export class Db {
       },
     };
 
-    const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
-    const keyspace = options?.keyspace ?? this.keyspace;
+    await this.#httpClient.executeCommand(command, {
+      keyspace: options?.keyspace ?? this.keyspace,
+      maxTimeMS: options?.maxTimeMS,
+    });
 
-    if (options?.checkExists !== false) {
-      const tables = await this.listTables({ keyspace, maxTimeMS: timeoutManager.msRemaining() });
-
-      if (tables.some(c => c.name === tableName)) {
-        throw new TableAlreadyExistsError(keyspace, tableName);
-      }
-    }
-
-    await this.#httpClient.executeCommand(command, { keyspace, timeoutManager });
     return this.table(tableName, options);
   }
 

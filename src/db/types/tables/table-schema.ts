@@ -252,26 +252,25 @@ export type CqlType2TSType<T extends string, Def> =
     : unknown;
 
 interface CqlNonGenericType2TSTypeDict {
-  text: string;
   ascii: string,
-  varchar: string,
-  int: number,
-  double: number,
-  float: number,
-  smallint: number,
-  tinyint: number,
-  boolean: boolean,
-  varint: bigint,
-  date: CqlDate,
-  duration: CqlDuration,
-  time: CqlTime,
-  timestamp: CqlTimestamp,
-  uuid: UUID,
-  timeuuid: UUID,
-  inet: InetAddress,
   bigint: number,
   blob: Blob,
+  boolean: boolean,
+  date: CqlDate,
   decimal: string,
+  double: number,
+  duration: CqlDuration,
+  float: number,
+  int: number,
+  inet: InetAddress,
+  smallint: number,
+  text: string;
+  time: CqlTime,
+  timestamp: CqlTimestamp,
+  tinyint: number,
+  uuid: UUID,
+  varchar: string,
+  varint: bigint,
 }
 
 interface CqlGenericType2TSTypeDict<Def> {

@@ -18,7 +18,6 @@ import { TableSpawnOptions } from '@/src/db/types/tables/spawn-table';
 
 export interface CreateTableOptions<Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout, TableSpawnOptions {
   definition: Def,
-  checkExists?: boolean,
 }
 
 export interface CreateTableDefinition {
@@ -44,7 +43,6 @@ export type TableScalarType =
   | 'text'
   | 'time'
   | 'timestamp'
-  | 'timeuuid'
   | 'tinyint'
   | 'uuid'
   | 'varchar'
