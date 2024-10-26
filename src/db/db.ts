@@ -17,8 +17,7 @@ import { DEFAULT_KEYSPACE, RawDataAPIResponse } from '@/src/lib/api';
 import { DatabaseInfo } from '@/src/administration/types/admin/database-info';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { DataAPIEnvironment, nullish, WithTimeout } from '@/src/lib/types';
-import { extractDbIdFromUrl, validateOption } from '@/src/documents/utils';
-import { DbSpawnOptions, InternalRootClientOpts } from '@/src/client/types';
+import { extractDbIdFromUrl } from '@/src/documents/utils';
 import { AdminSpawnOptions, DbAdmin } from '@/src/administration';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin';
 import { CollectionAlreadyExistsError } from '@/src/db/errors';
@@ -38,6 +37,10 @@ import { CreateTableDefinition, CreateTableOptions } from '@/src/db/types/tables
 import { InferTableSchemaFromDefinition } from '@/src/db/types/tables/table-schema';
 import { DropTableOptions } from '@/src/db/types/tables/drop-table';
 import { FullTableInfo, ListTablesOptions } from '@/src/db/types/tables/list-tables';
+import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
+import { DbSpawnOptions } from '@/src/client/types';
+import { InternalRootClientOpts } from '@/src/client/types/internal';
+import { Logger } from '@/src/lib/logging/logger';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -75,7 +78,6 @@ import { FullTableInfo, ListTablesOptions } from '@/src/db/types/tables/list-tab
  */
 export class Db {
   readonly #defaultOpts: InternalRootClientOpts;
-  readonly #token: TokenProvider;
   readonly #httpClient: DataAPIHttpClient;
   readonly #endpoint?: string;
 
@@ -87,30 +89,38 @@ export class Db {
    *
    * @internal
    */
-  constructor(rootOpts: InternalRootClientOpts, endpoint: string, dbOpts: DbSpawnOptions | nullish) {
-    validateDbOpts(dbOpts);
+  constructor(rootOpts: InternalRootClientOpts, endpoint: string, rawDbOpts: DbSpawnOptions | nullish) {
+    const dbOpts = parseDbSpawnOpts(rawDbOpts, 'options');
 
-    this.#defaultOpts = rootOpts;
-    this.#token = TokenProvider.parseToken(dbOpts?.token ?? rootOpts.dbOptions.token);
+    const token = TokenProvider.parseToken([dbOpts?.token, rootOpts.dbOptions.token], 'token');
 
-    const combinedDbOpts = {
-      ...rootOpts.dbOptions,
-      ...dbOpts,
+    this.#defaultOpts = {
+      ...rootOpts,
+      dbOptions: {
+        keyspace: dbOpts?.keyspace ?? rootOpts.dbOptions.keyspace,
+        dataApiPath: dbOpts?.dataApiPath ?? rootOpts.dbOptions.dataApiPath,
+        token: token,
+        logging: Logger.advanceConfig(rootOpts.dbOptions.logging, dbOpts?.logging),
+      },
+      adminOptions: {
+        ...rootOpts.adminOptions,
+        adminToken: TokenProvider.parseToken([rootOpts.adminOptions.adminToken, token], 'token'),
+      },
     };
 
     this._keyspace = {
       ref: (rootOpts.environment === 'astra')
-        ? combinedDbOpts.keyspace ?? DEFAULT_KEYSPACE
-        : combinedDbOpts.keyspace,
+        ? this.#defaultOpts.dbOptions.keyspace ?? DEFAULT_KEYSPACE
+        : this.#defaultOpts.dbOptions.keyspace ?? undefined,
     };
 
     this.#httpClient = new DataAPIHttpClient({
       baseUrl: endpoint,
-      tokenProvider: this.#token,
+      tokenProvider: this.#defaultOpts.dbOptions.token,
       embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(null),
-      baseApiPath: combinedDbOpts.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment],
+      baseApiPath: this.#defaultOpts.dbOptions.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment],
       emitter: rootOpts.emitter,
-      monitorCommands: combinedDbOpts.monitorCommands,
+      logging: this.#defaultOpts.dbOptions.logging,
       fetchCtx: rootOpts.fetchCtx,
       keyspace: this._keyspace,
       userAgent: rootOpts.userAgent,
@@ -283,7 +293,7 @@ export class Db {
     }
 
     if (environment === 'astra') {
-      return new AstraDbAdmin(this, this.#defaultOpts, options, this.#token, this.#endpoint!);
+      return new AstraDbAdmin(this, this.#defaultOpts, options, this.#defaultOpts.dbOptions.token, this.#endpoint!);
     }
 
     return new DataAPIDbAdmin(this, this.#httpClient, options);
@@ -618,28 +628,7 @@ export class Db {
     });
   }
 
-  private get _httpClient() {
+  public get _httpClient() {
     return this.#httpClient;
   }
-}
-
-/**
- * @internal
- */
-export function validateDbOpts(opts: DbSpawnOptions | nullish) {
-  validateOption('dbOptions', opts, 'object');
-
-  if (!opts) {
-    return;
-  }
-
-  validateOption(`dbOptions.keyspace`, opts.keyspace, 'string', false, (keyspace) => {
-    if (!keyspace.match(/^\w{1,48}$/)) {
-      throw new Error(`Invalid keyspace option; expected a string of 1-48 alphanumeric characters`);
-    }
-  });
-
-  validateOption('dbOptions.monitorCommands', opts.monitorCommands, 'boolean');
-
-  validateOption('dbOptions.dataApiPath', opts.dataApiPath, 'string');
 }

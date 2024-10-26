@@ -14,31 +14,25 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import { TimeoutManager, TimeoutOptions } from '@/src/lib/api/timeout-managers';
-import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/documents/events';
 import {
+  DataAPIErrorDescriptor,
   DataAPIHttpError,
   DataAPIResponseError,
   DataAPITimeoutError,
   mkRespErrorFromResponse,
 } from '@/src/documents/errors';
-import TypedEmitter from 'typed-emitter';
-import { DataAPIClientEvents } from '@/src/client';
-import {
-  AdminCommandFailedEvent,
-  AdminCommandStartedEvent,
-  AdminCommandSucceededEvent,
-  AdminSpawnOptions,
-} from '@/src/administration';
+import { AdminSpawnOptions } from '@/src/administration';
 import { CollectionNotFoundError } from '@/src/db/errors';
 import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_TIMEOUT, HttpMethods } from '@/src/lib/api/constants';
 import { RawDataAPIResponse } from '@/src/lib/api';
 import { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
 import { nullish, TokenProvider } from '@/src/lib';
-import { hrTimeMs, HttpClient } from '@/src/lib/api/clients/http-client';
+import { HttpClient } from '@/src/lib/api/clients/http-client';
 import { CollectionSpawnOptions } from '@/src/db';
 import { isNullish } from '@/src/lib/utils';
 import { EmbeddingHeadersProvider, ObjectId, UUID } from '@/src/documents';
 import { WithNullableKeyspace } from '@/src/db/types/common';
+import { Logger } from '@/src/lib/logging/logger';
 
 /**
  * @internal
@@ -51,46 +45,36 @@ export interface DataAPIRequestInfo {
   timeoutManager: TimeoutManager,
 }
 
-/**
- * @internal
- */
 interface ExecuteCommandOptions extends WithNullableKeyspace {
   collection?: string,
 }
 
-/**
- * @internal
- */
-type EmissionStrategy = (emitter: TypedEmitter<DataAPIClientEvents>) => {
-  emitCommandStarted(info: DataAPIRequestInfo): void,
-  emitCommandFailed(info: DataAPIRequestInfo, error: Error, started: number): void,
-  emitCommandSucceeded(info: DataAPIRequestInfo, resp: RawDataAPIResponse, warnings: string[], started: number): void,
+type EmissionStrategy = (logger: Logger) => {
+  emitCommandStarted?(info: DataAPIRequestInfo): void,
+  emitCommandFailed?(info: DataAPIRequestInfo, error: Error, started: number): void,
+  emitCommandSucceeded?(info: DataAPIRequestInfo, resp: RawDataAPIResponse, started: number): void,
+  emitCommandWarnings?(info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[]): void,
 }
 
-/**
- * @internal
- */
 export const EmissionStrategy: Record<'Normal' | 'Admin', EmissionStrategy> = {
-  Normal: (emitter) => ({
-    emitCommandStarted(info) {
-      emitter.emit('commandStarted', new CommandStartedEvent(info));
-    },
-    emitCommandFailed(info, error, started) {
-      emitter.emit('commandFailed', new CommandFailedEvent(info, error, started));
-    },
-    emitCommandSucceeded(info, resp, warnings, started) {
-      emitter.emit('commandSucceeded', new CommandSucceededEvent(info, resp, warnings, started));
-    },
+  Normal: (logger) => ({
+    emitCommandStarted: logger.commandStarted,
+    emitCommandFailed: logger.commandFailed,
+    emitCommandSucceeded: logger.commandSucceeded,
+    emitCommandWarnings: logger.commandWarnings,
   }),
-  Admin: (emitter) => ({
+  Admin: (logger) => ({
     emitCommandStarted(info) {
-      emitter.emit('adminCommandStarted', new AdminCommandStartedEvent(adaptInfo4Devops(info), true, info.timeoutManager.msRemaining()));
+      logger.adminCommandStarted?.(adaptInfo4Devops(info), true, info.timeoutManager.msRemaining());
     },
     emitCommandFailed(info, error, started) {
-      emitter.emit('adminCommandFailed', new AdminCommandFailedEvent(adaptInfo4Devops(info), true, error, started));
+      logger.adminCommandFailed?.(adaptInfo4Devops(info), true, error, started);
     },
-    emitCommandSucceeded(info, resp, warnings, started) {
-      emitter.emit('adminCommandSucceeded', new AdminCommandSucceededEvent(adaptInfo4Devops(info), true, resp, warnings, started));
+    emitCommandSucceeded(info, resp, started) {
+      logger.adminCommandSucceeded?.(adaptInfo4Devops(info), true, resp, started);
+    },
+    emitCommandWarnings(info, warnings) {
+      logger.adminCommandWarnings?.(adaptInfo4Devops(info), true, warnings);
     },
   }),
 };
@@ -102,14 +86,11 @@ const adaptInfo4Devops = (info: DataAPIRequestInfo) => (<const>{
   params: {},
 });
 
-/**
- * @internal
- */
 interface DataAPIHttpClientOpts extends HTTPClientOptions {
   keyspace: KeyspaceRef,
   emissionStrategy: EmissionStrategy,
   embeddingHeaders: EmbeddingHeadersProvider,
-  tokenProvider: TokenProvider,
+  tokenProvider: TokenProvider | undefined,
 }
 
 /**
@@ -127,13 +108,14 @@ export class DataAPIHttpClient extends HttpClient {
     this.keyspace = props.keyspace;
     this.#props = props;
     this.maxTimeMS = this.fetchCtx.maxTimeMS ?? DEFAULT_TIMEOUT;
-    this.emissionStrategy = props.emissionStrategy(props.emitter);
+    this.emissionStrategy = props.emissionStrategy(this.logger);
   }
 
   public forCollection(keyspace: string, collection: string, opts: CollectionSpawnOptions | undefined): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(opts?.embeddingApiKey),
+      logging: Logger.advanceConfig(this.#props.logging, opts?.logging),
       keyspace: { ref: keyspace },
     });
 
@@ -146,13 +128,13 @@ export class DataAPIHttpClient extends HttpClient {
   public forDbAdmin(opts: AdminSpawnOptions | undefined): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
-      tokenProvider: opts?.adminToken ? TokenProvider.parseToken(opts?.adminToken) : this.#props.tokenProvider,
-      monitorCommands: opts?.monitorCommands || this.#props.monitorCommands,
-      baseUrl: opts?.endpointUrl || this.#props.baseUrl,
+      tokenProvider: TokenProvider.parseToken([opts?.adminToken, this.#props.tokenProvider], 'admin token'),
+      logging: Logger.advanceConfig(this.#props.logging, opts?.logging),
+      baseUrl: opts?.endpointUrl ?? this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
     });
 
-    clone.emissionStrategy = EmissionStrategy.Admin(this.emitter);
+    clone.emissionStrategy = EmissionStrategy.Admin(clone.logger);
     clone.collection = undefined;
 
     return clone;
@@ -193,10 +175,8 @@ export class DataAPIHttpClient extends HttpClient {
       const collectionPath = info.collection ? `/${info.collection}` : '';
       info.url += keyspacePath + collectionPath;
 
-      if (this.monitorCommands) {
-        started = hrTimeMs();
-        this.emissionStrategy.emitCommandStarted(info);
-      }
+      started = performance.now();
+      this.emissionStrategy.emitCommandStarted?.(info);
 
       const resp = await this._request({
         url: info.url,
@@ -212,6 +192,9 @@ export class DataAPIHttpClient extends HttpClient {
       const data: RawDataAPIResponse = resp.body ? JSON.parse(resp.body, reviver) : {};
 
       const warnings = data?.status?.warnings ?? [];
+      if (warnings.length) {
+        this.emissionStrategy.emitCommandWarnings?.(info, warnings);
+      }
       delete data?.status?.warnings;
 
       if (data.errors && data.errors.length > 0 && data.errors[0]?.errorCode === 'COLLECTION_NOT_EXIST') {
@@ -229,15 +212,10 @@ export class DataAPIHttpClient extends HttpClient {
         errors: data.errors,
       };
 
-      if (this.monitorCommands) {
-        this.emissionStrategy.emitCommandSucceeded(info, respData, warnings, started);
-      }
-
+      this.emissionStrategy.emitCommandSucceeded?.(info, respData, started);
       return respData;
     } catch (e: any) {
-      if (this.monitorCommands) {
-        this.emissionStrategy.emitCommandFailed(info, e, started);
-      }
+      this.emissionStrategy.emitCommandFailed?.(info, e, started);
       throw e;
     }
   }
@@ -283,13 +261,14 @@ export function reviver(_: string, value: any): any {
   return value;
 }
 
-const mkAuthHeaderProvider = (tp: TokenProvider): HeaderProvider => () => {
-  const token = tp.getToken();
+const mkAuthHeaderProvider = (tp: TokenProvider | undefined): HeaderProvider => (tp)
+  ? () => {
+    const token = tp.getToken();
 
-  return (token instanceof Promise)
-    ? token.then(mkAuthHeader)
-    : mkAuthHeader(token);
-};
+    return (token instanceof Promise)
+      ? token.then(mkAuthHeader)
+      : mkAuthHeader(token);
+  } : () => ({});
 
 const mkAuthHeader = (token: string | nullish): Record<string, string> => (token)
   ? { [DEFAULT_DATA_API_AUTH_HEADER]: token }

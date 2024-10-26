@@ -54,15 +54,17 @@ export abstract class TokenProvider {
    *
    * @internal
    */
-  static parseToken(token: unknown): TokenProvider {
-    if (typeof token === 'string' || isNullish(token)) {
-      return new StaticTokenProvider(token);
+  static parseToken(raw: (string | TokenProvider | nullish)[], field: string): TokenProvider | undefined {
+    const first = raw.find((r) => !isNullish(r));
+
+    if (typeof first === 'string') {
+      return new StaticTokenProvider(first);
     }
 
-    if (token instanceof TokenProvider) {
-      return token;
+    if (!(<any>first instanceof TokenProvider) && !isNullish(first)) {
+      throw new TypeError(`Expected ${field} to be of type string | TokenProvider | nullish; got ${first} (${first})`);
     }
 
-    throw new TypeError('Expected token to be type string | TokenProvider | nullish');
-  }
+    return first;
+  };
 }

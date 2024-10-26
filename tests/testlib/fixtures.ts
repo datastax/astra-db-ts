@@ -26,24 +26,25 @@ import {
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI, TEST_HTTP_CLIENT,
 } from '@/tests/testlib/config';
+import { DataAPILoggingConfig } from '@/src/lib';
 
 export interface TestObjectsOptions {
   httpClient?: typeof TEST_HTTP_CLIENT,
   env?: typeof ENVIRONMENT,
-  monitoring?: boolean,
+  logging?: DataAPILoggingConfig,
 }
 
 export const initTestObjects = (opts?: TestObjectsOptions) => {
-  const { httpClient = TEST_HTTP_CLIENT, env = ENVIRONMENT, monitoring = false } = opts ?? {};
+  const { httpClient = TEST_HTTP_CLIENT, env = ENVIRONMENT, logging = [{ events: 'all', emits: 'event' }] } = opts ?? {};
 
   const preferHttp2 = httpClient === 'default:http2';
   const clientType = httpClient.split(':')[0];
 
   const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {
     httpOptions: { preferHttp2, client: <any>clientType, maxTimeMS: 60000 },
-    dbOptions: { keyspace: DEFAULT_KEYSPACE, monitorCommands: monitoring },
-    adminOptions: { monitorCommands: monitoring },
+    dbOptions: { keyspace: DEFAULT_KEYSPACE },
     environment: env,
+    logging,
   });
 
   const db = client.db(TEST_APPLICATION_URI);

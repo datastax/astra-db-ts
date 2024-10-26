@@ -12,18 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-/**
- * @internal
- */
-export function extractAstraEnvironment(endpoint: string) {
-  switch (true) {
-    case endpoint.includes('apps.astra-dev.datastax.com'):
-      return 'dev';
-    case endpoint.includes('apps.astra-test.datastax.com'):
-      return 'test';
-    case endpoint.includes('apps.astra.datastax.com'):
-      return 'prod';
-    default:
-      throw new Error(`Cannot extract astra environment for endpoint '${endpoint}'`);
-  }
-}
+export type * from './caller';
+export type * from './client-opts';
+export type * from './http-opts';
+export type * from './spawn-admin';
+export type * from './spawn-db';

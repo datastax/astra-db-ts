@@ -14,6 +14,7 @@
 
 import { WithKeyspace } from '@/src/db';
 import { EmbeddingHeadersProvider } from '@/src/documents';
+import { DataAPILoggingConfig } from '@/src/lib';
 
 /**
  * Options for spawning a new collections.
@@ -36,4 +37,5 @@ export interface CollectionSpawnOptions extends WithKeyspace {
    * The request may or may not still be running on the server after this time.
    */
   defaultMaxTimeMS?: number | null,
+  logging?: DataAPILoggingConfig,
 }
