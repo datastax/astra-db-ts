@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import { WithKeyspace } from '@/src/db';
-import { EmbeddingHeadersProvider, SomeDoc } from '@/src/documents';
-import { DataAPILoggingConfig, DataAPISerDesConfig } from '@/src/lib';
+import { CollectionSerDes, EmbeddingHeadersProvider, SomeDoc } from '@/src/documents';
+import { DataAPILoggingConfig } from '@/src/lib';
 
 /**
  * Options for spawning a new collections.
@@ -38,5 +38,5 @@ export interface CollectionSpawnOptions<Schema extends SomeDoc> extends WithKeys
    */
   defaultMaxTimeMS?: number | null,
   logging?: DataAPILoggingConfig,
-  serdes?: Omit<DataAPISerDesConfig<Schema>, 'table'>,
+  serdes?: Partial<CollectionSerDes<Schema>> & { mutateInPlace?: boolean },
 }
