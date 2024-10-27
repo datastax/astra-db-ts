@@ -12,10 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeDoc } from '@/src/documents';
+import { SomeDoc, TableSerDes } from '@/src/documents';
 import type { RawDataAPIResponse } from '@/src/lib';
 
 export const $Serialize = Symbol('serializer');
+
+export interface DataAPISerDesConfig<Schema extends SomeDoc> {
+  table?: TableSerDes<Schema>,
+  collection?: TableSerDes<Schema>,
+  mutateInPlace?: boolean,
+}
 
 export interface DataAPISerCtx<Schema extends SomeDoc> {
   rootObj: Schema,
@@ -86,4 +92,6 @@ export const deserializeObject = <Ctx>(obj: SomeDoc, depth: number, ctx: Ctx, fn
       deserializeObject(obj[key], depth + 1, ctx, fns);
     }
   }
+
+  return obj;
 };

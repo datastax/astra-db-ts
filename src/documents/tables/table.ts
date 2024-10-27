@@ -13,10 +13,19 @@
 // limitations under the License.
 
 import {
-  $PrimaryKeyType, CreateTableIndexOptions, CreateTableTextIndexOptions, CreateTableVectorIndexOptions,
-  Filter, FindCursor, FoundRow,
-  KeyOf, SomeDoc,
-  SomeRow, TableDeleteOneOptions, TableFindOneOptions, TableFindOptions,
+  $PrimaryKeyType,
+  CreateTableIndexOptions,
+  CreateTableTextIndexOptions,
+  CreateTableVectorIndexOptions,
+  Filter,
+  FindCursor,
+  FoundRow,
+  KeyOf,
+  SomeDoc,
+  SomeRow,
+  TableDeleteOneOptions,
+  TableFindOneOptions,
+  TableFindOptions,
   TableInsertManyOptions,
   TableInsertManyResult,
   TableInsertOneResult,
@@ -28,7 +37,7 @@ import {
 } from '@/src/documents';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
-import { AlterTableOptions, AlterTableSchema, CollectionSpawnOptions, Db } from '@/src/db';
+import { AlterTableOptions, AlterTableSchema, Db, TableSpawnOptions } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
 import { constUncurried } from '@/src/lib/utils';
 
@@ -77,7 +86,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions | undefined) {
+  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableSpawnOptions<Schema> | undefined) {
     Object.defineProperty(this, 'tableName', {
       value: name,
       writable: false,

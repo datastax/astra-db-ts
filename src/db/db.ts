@@ -362,11 +362,11 @@ export class Db {
    * @see SomeDoc
    * @see VectorDoc
    */
-  public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions): Collection<Schema> {
+  public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions<Schema>): Collection<Schema> {
     return new Collection<Schema>(this, this.#httpClient, name, options);
   }
 
-  public table<Schema extends SomeRow = SomeRow>(name: string, options?: TableSpawnOptions): Table<Schema> {
+  public table<Schema extends SomeRow = SomeRow>(name: string, options?: TableSpawnOptions<Schema>): Table<Schema> {
     return new Table<Schema>(this, this.#httpClient, name, options);
   }
 
@@ -508,7 +508,7 @@ export class Db {
    * @see SomeRow
    * @see db.table
    */
-  public async createTable<const Def extends CreateTableDefinition>(tableName: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchemaFromDefinition<Def>>>
+  public async createTable<const Def extends CreateTableDefinition>(tableName: string, options: CreateTableOptions<InferTableSchemaFromDefinition<Def>, Def>): Promise<Table<InferTableSchemaFromDefinition<Def>>>
 
   /**
    * Creates a new table in the database, and establishes a reference to it.
@@ -580,9 +580,9 @@ export class Db {
    * @see SomeRow
    * @see db.table
    */
-  public async createTable<Schema extends SomeRow>(tableName: string, options: CreateTableOptions): Promise<Table<Schema>>
+  public async createTable<Schema extends SomeRow>(tableName: string, options: CreateTableOptions<Schema>): Promise<Table<Schema>>
 
-  public async createTable(tableName: string, options: CreateTableOptions): Promise<Table> {
+  public async createTable(tableName: string, options: CreateTableOptions<SomeRow>): Promise<Table> {
     const command = {
       createTable: {
         name: tableName,

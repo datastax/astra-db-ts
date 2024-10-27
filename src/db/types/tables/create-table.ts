@@ -15,8 +15,9 @@
 import { VectorizeServiceOptions } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
 import { TableSpawnOptions } from '@/src/db/types/tables/spawn-table';
+import { SomeRow } from '@/src/documents';
 
-export interface CreateTableOptions<Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout, TableSpawnOptions {
+export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout, TableSpawnOptions<Schema> {
   definition: Def,
 }
 

@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPILoggingConfig, TokenProvider } from '@/src/lib';
+import { DataAPILoggingConfig, DataAPISerDesConfig, TokenProvider } from '@/src/lib';
+import { SomeDoc } from '@/src/documents';
 
 export type DefaultDbSpawnOptions = Omit<DbSpawnOptions, 'logging'>;
 
@@ -93,4 +94,5 @@ export interface DbSpawnOptions {
    * @defaultValue 'api/json/v1'
    */
   dataApiPath?: string,
+  serdes?: DataAPISerDesConfig<SomeDoc>,
 }

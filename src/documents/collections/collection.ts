@@ -99,7 +99,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions | undefined) {
+  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions<Schema> | undefined) {
     Object.defineProperty(this, 'collectionName', {
       value: name,
       writable: false,

@@ -24,12 +24,13 @@ import {
   DataAPITimeoutError,
   EmbeddingHeadersProvider,
   ObjectId,
+  SomeDoc,
   UUID,
 } from '@/src/documents';
 import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
 import { HttpClient } from '@/src/lib/api/clients/http-client';
 import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_TIMEOUT, HttpMethods } from '@/src/lib/api/constants';
-import { CollectionNotFoundError, CollectionSpawnOptions } from '@/src/db';
+import { CollectionNotFoundError, CollectionSpawnOptions, TableSpawnOptions } from '@/src/db';
 import type { AdminSpawnOptions } from '@/src/client';
 import { isNullish } from '@/src/lib/utils';
 import { mkRespErrorFromResponse } from '@/src/documents/errors';
@@ -111,7 +112,7 @@ export class DataAPIHttpClient extends HttpClient {
     this.emissionStrategy = props.emissionStrategy(this.logger);
   }
 
-  public forCollection(keyspace: string, collection: string, opts: CollectionSpawnOptions | undefined): DataAPIHttpClient {
+  public forCollection<Schema extends SomeDoc>(keyspace: string, collection: string, opts: CollectionSpawnOptions<Schema> | TableSpawnOptions<Schema> | undefined): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(opts?.embeddingApiKey),

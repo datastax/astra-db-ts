@@ -13,11 +13,12 @@
 // limitations under the License.
 
 import { WithKeyspace } from '@/src/db';
-import { EmbeddingHeadersProvider } from '@/src/documents';
-import { DataAPILoggingConfig } from '@/src/lib';
+import { EmbeddingHeadersProvider, SomeDoc } from '@/src/documents';
+import { DataAPILoggingConfig, DataAPISerDesConfig } from '@/src/lib';
 
-export interface TableSpawnOptions extends WithKeyspace {
+export interface TableSpawnOptions<Schema extends SomeDoc> extends WithKeyspace {
   embeddingApiKey?: string | EmbeddingHeadersProvider | null,
   defaultMaxTimeMS?: number | null,
   logging?: DataAPILoggingConfig,
+  serdes?: Omit<DataAPISerDesConfig<Schema>, 'collection'>,
 }

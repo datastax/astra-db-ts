@@ -29,4 +29,4 @@ import { CollectionOptions, CollectionSpawnOptions } from '@/src/db';
  *
  * @public
  */
-export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, CollectionSpawnOptions {}
+export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, CollectionSpawnOptions<Schema> {}

@@ -13,15 +13,15 @@
 // limitations under the License.
 
 import { WithKeyspace } from '@/src/db';
-import { EmbeddingHeadersProvider } from '@/src/documents';
-import { DataAPILoggingConfig } from '@/src/lib';
+import { EmbeddingHeadersProvider, SomeDoc } from '@/src/documents';
+import { DataAPILoggingConfig, DataAPISerDesConfig } from '@/src/lib';
 
 /**
  * Options for spawning a new collections.
  *
  * @public
  */
-export interface CollectionSpawnOptions extends WithKeyspace {
+export interface CollectionSpawnOptions<Schema extends SomeDoc> extends WithKeyspace {
   /**
    * The API key for the embedding service to use, or the {@link EmbeddingHeadersProvider} if using
    * a provider that requires it (e.g. AWS bedrock).
@@ -38,4 +38,5 @@ export interface CollectionSpawnOptions extends WithKeyspace {
    */
   defaultMaxTimeMS?: number | null,
   logging?: DataAPILoggingConfig,
+  serdes?: Omit<DataAPISerDesConfig<Schema>, 'table'>,
 }
