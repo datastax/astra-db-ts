@@ -16,7 +16,7 @@ export class InetAddress {
   private readonly _raw!: string;
   #version: 4 | 6 | undefined;
 
-  constructor(address: string, version?: 4 | 6) {
+  public constructor(address: string, version?: 4 | 6) {
     Object.defineProperty(this, '_raw', {
       value: address.toLowerCase(),
       writable: false,
@@ -24,21 +24,21 @@ export class InetAddress {
     this.#version = version;
   }
 
-  static fromIP(raw: string): InetAddress {
+  public static fromIP(raw: string): InetAddress {
     if (!isValidIP(raw)) {
       throw new Error(`'${raw}' is not a valid IP address`);
     }
     return new InetAddress(raw);
   }
 
-  static fromIPv4(raw: string): InetAddress {
+  public static fromIPv4(raw: string): InetAddress {
     if (!isIPv4(raw)) {
       throw new Error(`'${raw}' is not a valid IPv4 address`);
     }
     return new InetAddress(raw, 4);
   }
 
-  static fromIPv6(raw: string): InetAddress {
+  public static fromIPv6(raw: string): InetAddress {
     if (!isIPv6(raw)) {
       throw new Error(`'${raw}' is not a valid IPv6 address`);
     }

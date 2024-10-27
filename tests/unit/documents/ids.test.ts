@@ -67,7 +67,7 @@ describe('unit.documents.ids', () => {
     it('should get creation date from UUIDv7', () => {
       const uuid = UUID.v7();
       const date = uuid.getTimestamp();
-      assert(<any>date instanceof Date);
+      assert(date instanceof Date);
     });
 
     it('should not get creation date from UUIDv4', () => {

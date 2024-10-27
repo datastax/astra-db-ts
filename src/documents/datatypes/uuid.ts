@@ -57,11 +57,11 @@ const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9
  *
  * @public
  */
-export class UUID<Version extends number = number> {
+export class UUID {
   /**
    * The version of the UUID.
    */
-  public readonly version!: Version;
+  public readonly version!: number;
 
   private readonly _raw!: string;
 
@@ -121,10 +121,6 @@ export class UUID<Version extends number = number> {
    *
    * @returns The timestamp of the UUID, or `undefined` if the UUID is not a v7 UUID.
    */
-  public getTimestamp(this: UUID<7>): Date
-
-  public getTimestamp(this: UUID): Date | undefined
-
   public getTimestamp(): Date | undefined {
     return timestampFromUUID(this);
   }
@@ -139,14 +135,14 @@ export class UUID<Version extends number = number> {
   /**
    * Creates a new v4 UUID.
    */
-  public static v4(): UUID<4> {
+  public static v4(): UUID {
     return new UUID(uuidv4(), false);
   }
 
   /**
    * Creates a new v7 UUID.
    */
-  public static v7(): UUID<7> {
+  public static v7(): UUID {
     return new UUID(uuidv7(), false);
   }
 
