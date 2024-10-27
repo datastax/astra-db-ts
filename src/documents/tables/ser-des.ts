@@ -47,7 +47,7 @@ export const DefaultTableSerDes: TableSerDes<SomeDoc> = {
     if (this === ctx.rootObj) {
       deserializeObj(ctx.rootObj, key, ctx.tableSchema[key]);
     }
-    return false;
+    return true;
   },
 };
 

@@ -35,6 +35,10 @@ export const DefaultCollectionSerDes: CollectionSerDes<SomeDoc> = {
   },
   deserialize(key, value) {
     if (typeof value === 'object') {
+      if ($Serialize in value || value instanceof Date) {
+        return;
+      }
+
       if (value.$date) {
         this[key] = new Date(value.$date);
       }

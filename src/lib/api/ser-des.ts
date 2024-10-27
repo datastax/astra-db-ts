@@ -19,6 +19,7 @@ export const $Serialize = Symbol('serializer');
 
 export interface DataAPISerCtx<Schema extends SomeDoc> {
   rootObj: Schema,
+  mutatingInPlace: boolean,
 }
 
 export interface DataAPIDesCtx {
@@ -30,45 +31,36 @@ export interface DataAPIDesCtx {
 export type DataAPISerFn<Ctx> = (this: Readonly<SomeDoc>, key: string, value: any, ctx: Ctx) => [any, boolean?] | undefined;
 export type DataAPIDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => boolean | undefined | void;
 
-type DataAPISerFns<Ctx> = [client: DataAPISerFn<Ctx>, user?: DataAPISerFn<Ctx>];
-type DataAPIDesFns<Ctx> = [client: DataAPIDesFn<Ctx>, user?: DataAPIDesFn<Ctx>];
-
 export interface DataAPISerDes<Schema extends SomeDoc, SerCtx extends DataAPISerCtx<Schema>, DesCtx extends DataAPIDesCtx> {
-  serializer: DataAPISerFns<SerCtx>,
-  deserializer: DataAPIDesFns<DesCtx>,
+  serializer: DataAPISerFn<SerCtx>[],
+  deserializer: DataAPIDesFn<DesCtx>[],
   adaptSerCtx: (ctx: DataAPISerCtx<Schema>) => SerCtx,
   adaptDesCtx: (ctx: DataAPIDesCtx) => DesCtx,
+  mutateInPlace: boolean,
 }
 
-export const serializeObject = <Ctx>(obj: SomeDoc, depth: number, ctx: Ctx, fns: DataAPISerFns<Ctx>) => {
+export const serializeObject = <Ctx extends DataAPISerCtx<SomeDoc>>(obj: SomeDoc, depth: number, ctx: Ctx, fns: DataAPISerFn<Ctx>[]) => {
   let ret = obj;
 
   for (let keys = Object.keys(obj), i = keys.length; i--;) {
     const key = keys[i];
     const value = obj[key];
-    let recurse;
+    let stop;
 
-    const replacement1 = fns[0].call(obj, key, value, ctx);
+    for (let f = 0; f < fns.length; f++) {
+      const res = fns[f].call(obj, key, value, ctx);
 
-    if (replacement1 !== undefined) {
-      if (ret === obj) {
-        ret = Array.isArray(obj) ? [...obj] : { ...obj };
-      }
-      ret[key] = replacement1[0];
-      recurse = replacement1[1];
-    } else {
-      const replacement2 = fns[1]?.call(obj, key, value, ctx);
-
-      if (replacement2 !== undefined) {
-        if (ret === obj) {
+      if (res !== undefined) {
+        if (!ctx.mutatingInPlace && ret === obj) {
           ret = Array.isArray(obj) ? [...obj] : { ...obj };
         }
-        ret[key] = replacement2;
-        recurse = false;
+        ret[key] = res[0];
+        stop = res[1];
+        break;
       }
     }
 
-    if (recurse !== false && depth < 250 && typeof ret[key] === 'object') {
+    if (!stop && depth < 250 && typeof ret[key] === 'object') {
       ret[key] = serializeObject(ret[key], depth + 1, ctx, fns);
     }
   }
@@ -76,13 +68,21 @@ export const serializeObject = <Ctx>(obj: SomeDoc, depth: number, ctx: Ctx, fns:
   return ret;
 };
 
-export const deserializeObject = <Ctx>(obj: SomeDoc, depth: number, ctx: Ctx, fns: DataAPIDesFns<Ctx>) => {
+export const deserializeObject = <Ctx>(obj: SomeDoc, depth: number, ctx: Ctx, fns: DataAPIDesFn<Ctx>[]) => {
   for (let keys = Object.keys(obj), i = keys.length; i--;) {
     const key = keys[i];
 
-    const recurse = fns[1]?.call(obj, key, obj[key], ctx) === true || fns[0].call(obj, key, obj[key], ctx);
+    let stop;
 
-    if (recurse && depth < 250 && typeof obj[key] === 'object') {
+    for (let f = 0; f < fns.length; f++) {
+      const stop = fns[f].call(obj, key, obj[key], ctx);
+
+      if (stop !== true) {
+        break;
+      }
+    }
+
+    if (!stop && depth < 250 && typeof obj[key] === 'object') {
       deserializeObject(obj[key], depth + 1, ctx, fns);
     }
   }
