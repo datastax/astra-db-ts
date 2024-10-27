@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { $Serialize } from '@/src/lib';
+
 export interface CqlDateComponents {
   year: number,
   month: number,
@@ -38,10 +40,18 @@ export class CqlDate {
       this.#month = +input.month - 1;
       this.#date = +input.date;
     }
+
+    Object.defineProperty(this, $Serialize, {
+      value: this.toJSON,
+    });
   }
 
   toDate(): Date {
     return new Date(this.#year, this.#month, this.#date);
+  }
+
+  toJSON() {
+    return { $date: 3 as any };
   }
 }
 
@@ -73,6 +83,10 @@ export class CqlDuration {
       this.#minutes = input.minutes || 0;
       this.#seconds = input.seconds || 0;
     }
+
+    Object.defineProperty(this, $Serialize, {
+      value: this.toJSON,
+    });
   }
 
   private parseFromString(input: string): void {
@@ -135,6 +149,10 @@ export class CqlDuration {
       seconds: this.#seconds,
     };
   }
+
+  toJSON() {
+    return { $duration: 3 as any };
+  }
 }
 
 export interface CqlTimeComponents {
@@ -174,12 +192,20 @@ export class CqlTime {
       this.#seconds = input.seconds;
       this.#milliseconds = input.milliseconds ?? 0;
     }
+
+    Object.defineProperty(this, $Serialize, {
+      value: this.toJSON,
+    });
   }
 
   toDate(): Date {
     const now = new Date();
     now.setHours(this.#hours, this.#minutes, this.#seconds, this.#milliseconds);
     return now;
+  }
+
+  toJSON() {
+    return { $time: 3 as any };
   }
 }
 
@@ -202,9 +228,17 @@ export class CqlTimestamp {
     } else {
       this.#date = new Date(input.year, input.month - 1, input.date, input.hours, input.minutes, input.seconds, input.ms);
     }
+
+    Object.defineProperty(this, $Serialize, {
+      value: this.toJSON,
+    });
   }
 
   toDate(): Date {
     return new Date(this.#date);
+  }
+
+  toJSON() {
+    return { $timestamp: 3 as any };
   }
 }

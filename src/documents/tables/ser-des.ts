@@ -13,11 +13,12 @@
 // limitations under the License.
 
 import { CqlDate, CqlDuration, CqlTime, CqlTimestamp, InetAddress, SomeDoc, SomeRow, UUID } from '@/src/documents';
-import { DataAPIDesCtx, DataAPIDesFn, DataAPISerCtx, DataAPISerFn } from '@/src/lib/api/ser-des';
+import { $Serialize, DataAPIDesCtx, DataAPIDesFn, DataAPISerCtx, DataAPISerFn } from '@/src/lib/api/ser-des';
 import {
   ListTableColumnDefinitions,
   ListTableKnownColumnDefinition,
   ListTableUnsupportedColumnDefinition,
+  TableScalarType,
 } from '@/src/db';
 
 export interface TableSerDes<Schema extends SomeRow> {
@@ -28,41 +29,29 @@ export interface TableSerDes<Schema extends SomeRow> {
 export const DefaultTableSerDes: TableSerDes<SomeDoc> = {
   serialize(_, value) {
     if (typeof value === 'object') {
-      if (value instanceof CqlDate) {
-        return [{ $date: value.toString() }, false];
+      if ($Serialize in value) {
+        return [value[$Serialize](), false];
       }
 
-      if (value instanceof CqlDuration) {
-        return [{ $duration: value.toString() }, false];
+      if (value instanceof Map) {
+        return [Object.fromEntries(value)];
       }
 
-      if (value instanceof InetAddress) {
-        return [{ $inet: value.toString() }, false];
-      }
-
-      if (value instanceof CqlTime) {
-        return [{ $time: value.toString() }, false];
-      }
-
-      if (value instanceof CqlTimestamp) {
-        return [{ $timestamp: value.toString() }, false];
-      }
-
-      if (value instanceof UUID) {
-        return [{ $uuid: value.toString() }, false];
+      if (value instanceof Set) {
+        return [[...value]];
       }
     }
     return undefined;
   },
   deserialize(key, _, ctx) {
     if (this === ctx.rootObj) {
-      deserializeRootObj(ctx.rootObj, key, ctx.tableSchema[key]);
+      deserializeObj(ctx.rootObj, key, ctx.tableSchema[key]);
     }
     return false;
   },
 };
 
-const deserializeRootObj = (rootObj: SomeDoc, key: string, column: ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition) => {
+const deserializeObj = (rootObj: SomeDoc, key: string, column: ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition) => {
   const type = (column.type === 'UNSUPPORTED')
     ? column.apiSupport.cqlDefinition
     : column.type;
@@ -70,17 +59,36 @@ const deserializeRootObj = (rootObj: SomeDoc, key: string, column: ListTableKnow
   const parser = Parsers[type];
 
   if (parser) {
-    rootObj[key] = parser(rootObj[key]);
+    rootObj[key] = parser(rootObj[key], (<any>column).valueType, (<any>column).keyType);
   }
 };
 
-const Parsers: Record<string, (val: any) => any> = {
+const Parsers: Record<string, (val: any, v?: TableScalarType, k?: TableScalarType) => any> = {
   date: (date) => new CqlDate(date),
   duration: (duration) => new CqlDuration(duration),
   inet: (inet) => new InetAddress(inet),
   time: (time) => new CqlTime(time),
   timestamp: (timestamp) => new CqlTimestamp(timestamp),
-  uuid: (uuid) => new UUID(uuid),
-  timeuuid: (uuid) => new UUID(uuid),
+  uuid: (uuid) => new UUID(uuid, false),
+  timeuuid: (uuid) => new UUID(uuid, false),
   varint: BigInt,
+  map(map, v, k) {
+    const entries = Array.isArray(map) ? map : Object.entries(map);
+
+    for (let i = entries.length; i--;) {
+      const [key, value] = entries[i];
+      entries[i] = [Parsers[k!] ? Parsers[k!](key) : key, Parsers[v!] ? Parsers[v!](value) : value];
+    }
+
+    return new Map(entries);
+  },
+  list(values, v) {
+    for (let i = values.length; i--;) {
+      values[i] = Parsers[v!] ? Parsers[v!](values[i]) : values[i];
+    }
+    return values;
+  },
+  set(set, v) {
+    return new Set(Parsers.list(set, v));
+  },
 };

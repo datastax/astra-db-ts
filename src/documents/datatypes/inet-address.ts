@@ -12,16 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { $Serialize } from '@/src/lib';
+
 export class InetAddress {
   private readonly _raw!: string;
   #version: 4 | 6 | undefined;
 
   public constructor(address: string, version?: 4 | 6) {
+    this.#version = version;
+
     Object.defineProperty(this, '_raw', {
       value: address.toLowerCase(),
-      writable: false,
     });
-    this.#version = version;
+
+    Object.defineProperty(this, $Serialize, {
+      value: this.toJSON,
+    });
   }
 
   public static fromIP(raw: string): InetAddress {
@@ -54,6 +60,10 @@ export class InetAddress {
 
   public toString(): string {
     return this._raw;
+  }
+
+  public toJSON() {
+    return { $duration: 3 as any };
   }
 }
 

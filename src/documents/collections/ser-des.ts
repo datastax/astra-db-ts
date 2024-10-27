@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { ObjectId, SomeDoc, UUID } from '@/src/documents';
-import { DataAPIDesCtx, DataAPIDesFn, DataAPISerCtx, DataAPISerFn } from '@/src/lib/api/ser-des';
+import { $Serialize, DataAPIDesCtx, DataAPIDesFn, DataAPISerCtx, DataAPISerFn } from '@/src/lib/api/ser-des';
 
 export interface CollectionSerDes<Schema extends SomeDoc> {
   serialize: DataAPISerFn<DataAPISerCtx<Schema>>,
@@ -27,12 +27,8 @@ export const DefaultCollectionSerDes: CollectionSerDes<SomeDoc> = {
         return [{ $date: this[key].valueOf() }, false];
       }
 
-      if (value instanceof ObjectId) {
-        return [{ $objectId: value.toString() }, false];
-      }
-
-      if (value instanceof UUID) {
-        return [{ $uuid: value.toString() }, false];
+      if ($Serialize in value) {
+        return [value[$Serialize](), false];
       }
     }
     return undefined;

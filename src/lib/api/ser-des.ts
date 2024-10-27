@@ -15,6 +15,8 @@
 import type { SomeDoc } from '@/src/documents';
 import type { RawDataAPIResponse } from '@/src/lib';
 
+export const $Serialize = Symbol('serializer');
+
 export interface DataAPISerCtx<Schema extends SomeDoc> {
   rootObj: Schema,
 }
@@ -28,8 +30,8 @@ export interface DataAPIDesCtx {
 export type DataAPISerFn<Ctx> = (this: Readonly<SomeDoc>, key: string, value: any, ctx: Ctx) => [any, boolean?] | undefined;
 export type DataAPIDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => boolean | undefined | void;
 
-export type DataAPISerFns<Ctx> = [client: DataAPISerFn<Ctx>, user?: DataAPISerFn<Ctx>];
-export type DataAPIDesFns<Ctx> = [client: DataAPIDesFn<Ctx>, user?: DataAPIDesFn<Ctx>];
+type DataAPISerFns<Ctx> = [client: DataAPISerFn<Ctx>, user?: DataAPISerFn<Ctx>];
+type DataAPIDesFns<Ctx> = [client: DataAPIDesFn<Ctx>, user?: DataAPIDesFn<Ctx>];
 
 export interface DataAPISerDes<Schema extends SomeDoc, SerCtx extends DataAPISerCtx<Schema>, DesCtx extends DataAPIDesCtx> {
   serializer: DataAPISerFns<SerCtx>,
@@ -50,7 +52,7 @@ export const serializeObject = <Ctx>(obj: SomeDoc, depth: number, ctx: Ctx, fns:
 
     if (replacement1 !== undefined) {
       if (ret === obj) {
-        ret = { ...obj };
+        ret = Array.isArray(obj) ? [...obj] : { ...obj };
       }
       ret[key] = replacement1[0];
       recurse = replacement1[1];
@@ -59,7 +61,7 @@ export const serializeObject = <Ctx>(obj: SomeDoc, depth: number, ctx: Ctx, fns:
 
       if (replacement2 !== undefined) {
         if (ret === obj) {
-          ret = { ...obj };
+          ret = Array.isArray(obj) ? [...obj] : { ...obj };
         }
         ret[key] = replacement2;
         recurse = false;
@@ -78,9 +80,9 @@ export const deserializeObject = <Ctx>(obj: SomeDoc, depth: number, ctx: Ctx, fn
   for (let keys = Object.keys(obj), i = keys.length; i--;) {
     const key = keys[i];
 
-    const recurse = !fns[1]?.call(obj, key, obj[key], ctx) || fns[0].call(obj, key, obj[key], ctx);
+    const recurse = fns[1]?.call(obj, key, obj[key], ctx) === true || fns[0].call(obj, key, obj[key], ctx);
 
-    if (recurse !== false && depth < 250 && typeof obj[key] === 'object') {
+    if (recurse && depth < 250 && typeof obj[key] === 'object') {
       deserializeObject(obj[key], depth + 1, ctx, fns);
     }
   }

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { UUID as UUIDv7, uuidv4, uuidv7 } from 'uuidv7';
+import { $Serialize } from '@/src/lib';
 
 const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
 
@@ -86,12 +87,14 @@ export class UUID {
 
     Object.defineProperty(this, '_raw', {
       value: uuid.toLowerCase(),
-      writable: false,
     });
 
     Object.defineProperty(this, 'version', {
       value: parseInt(this._raw[14], 16),
-      writable: false,
+    });
+
+    Object.defineProperty(this, $Serialize, {
+      value: this.toJSON,
     });
   }
 
@@ -144,6 +147,10 @@ export class UUID {
    */
   public static v7(): UUID {
     return new UUID(uuidv7(), false);
+  }
+
+  public toJSON() {
+    return { $uuid: this._raw };
   }
 }
 
