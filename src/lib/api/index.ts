@@ -26,3 +26,5 @@ export type {
   RawDataAPIResponse,
   CuratedAPIResponse,
 } from './types';
+
+export * from './ser-des';

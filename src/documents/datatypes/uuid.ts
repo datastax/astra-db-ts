@@ -145,10 +145,6 @@ export class UUID {
   public static v7(): UUID {
     return new UUID(uuidv7(), false);
   }
-
-  public toJSON() {
-    return { $uuid: this.toString() };
-  }
 }
 
 function timestampFromUUID(uuid: UUID): Date | undefined {

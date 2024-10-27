@@ -120,10 +120,6 @@ export class ObjectId {
   public toString(): string {
     return this._raw;
   }
-
-  public toJSON() {
-    return { $gobjectId: this.toString() };
-  }
 }
 
 const RAND_ID = ~~(Math.random() * 0xFFFFFF);
