@@ -12,17 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc, TableSerDes } from '@/src/documents';
+import { SomeDoc } from '@/src/documents';
 import type { RawDataAPIResponse } from '@/src/lib';
 
 export const $SerializeStrict = Symbol('SerializeStrict');
 export const $SerializeRelaxed = Symbol('SerializeRelaxed');
-
-export interface DataAPISerDesConfig<Schema extends SomeDoc> {
-  table?: TableSerDes<Schema>,
-  collection?: TableSerDes<Schema>,
-  mutateInPlace?: boolean,
-}
 
 export interface DataAPISerCtx<Schema extends SomeDoc> {
   rootObj: Schema,
@@ -38,15 +32,28 @@ export interface DataAPIDesCtx {
 export type DataAPISerFn<Ctx> = (this: Readonly<SomeDoc>, key: string, value: any, ctx: Ctx) => [any, boolean?] | undefined;
 export type DataAPIDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => boolean | undefined | void;
 
-export interface DataAPISerDes<Schema extends SomeDoc, SerCtx extends DataAPISerCtx<Schema>, DesCtx extends DataAPIDesCtx> {
+export interface DataAPISerDesConfig<Schema extends SomeDoc, SerCtx extends DataAPISerCtx<Schema>, DesCtx extends DataAPIDesCtx> {
   serializer: DataAPISerFn<SerCtx>[],
   deserializer: DataAPIDesFn<DesCtx>[],
   adaptSerCtx: (ctx: DataAPISerCtx<Schema>) => SerCtx,
   adaptDesCtx: (ctx: DataAPIDesCtx) => DesCtx,
-  mutateInPlace: boolean,
+  mutateInPlace?: boolean,
 }
 
-export const serializeObject = <Ctx extends DataAPISerCtx<SomeDoc>>(obj: SomeDoc, depth: number, ctx: Ctx, fns: DataAPISerFn<Ctx>[]) => {
+export type DataAPISerDes = ReturnType<typeof mkSerDes>;
+
+export const mkSerDes = <Schema extends SomeDoc>(cfg: DataAPISerDesConfig<Schema, any, any>) => ({
+  serializeRecord(obj: Schema) {
+    const ctx = cfg.adaptSerCtx({ rootObj: obj, mutatingInPlace: cfg.mutateInPlace || false });
+    return _serializeRecord(obj, 0, ctx, cfg.serializer);
+  },
+  deserializeRecord(obj: SomeDoc, raw: RawDataAPIResponse): Schema {
+    const ctx = cfg.adaptDesCtx({ rootObj: obj, rawDataApiResp: raw, depth: 0 });
+    return _deserializeRecord(obj, 0, ctx, cfg.deserializer) as Schema;
+  },
+});
+
+const _serializeRecord = <Ctx extends DataAPISerCtx<SomeDoc>>(obj: SomeDoc, depth: number, ctx: Ctx, fns: DataAPISerFn<Ctx>[]) => {
   let ret = obj;
 
   for (let keys = Object.keys(obj), i = keys.length; i--;) {
@@ -68,14 +75,14 @@ export const serializeObject = <Ctx extends DataAPISerCtx<SomeDoc>>(obj: SomeDoc
     }
 
     if (!stop && depth < 250 && typeof ret[key] === 'object') {
-      ret[key] = serializeObject(ret[key], depth + 1, ctx, fns);
+      ret[key] = _serializeRecord(ret[key], depth + 1, ctx, fns);
     }
   }
 
   return ret;
 };
 
-export const deserializeObject = <Ctx>(obj: SomeDoc, depth: number, ctx: Ctx, fns: DataAPIDesFn<Ctx>[]) => {
+const _deserializeRecord = <Ctx>(obj: SomeDoc, depth: number, ctx: Ctx, fns: DataAPIDesFn<Ctx>[]) => {
   for (let keys = Object.keys(obj), i = keys.length; i--;) {
     const key = keys[i];
 
@@ -90,7 +97,7 @@ export const deserializeObject = <Ctx>(obj: SomeDoc, depth: number, ctx: Ctx, fn
     }
 
     if (!stop && depth < 250 && typeof obj[key] === 'object') {
-      deserializeObject(obj[key], depth + 1, ctx, fns);
+      _deserializeRecord(obj[key], depth + 1, ctx, fns);
     }
   }
 

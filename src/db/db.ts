@@ -775,7 +775,7 @@ export class Db {
 
   public async listTables(options?: ListTablesOptions): Promise<string[] | FullTableInfo[]> {
     const command = {
-      findTables: {
+      listTables: {
         options: {
           explain: options?.nameOnly !== true,
         },

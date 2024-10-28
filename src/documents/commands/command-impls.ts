@@ -14,17 +14,17 @@
 
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import {
+  CollectionInsertManyOptions,
+  CollectionModifyResult,
   DataAPIResponseError,
   DeleteManyError,
   FindCursor,
-  CollectionInsertManyOptions,
-  CollectionModifyResult,
   SomeDoc,
   TooManyDocumentsToCountError,
   UpdateManyError,
   WithId,
 } from '@/src/documents';
-import type { nullish, WithTimeout } from '@/src/lib';
+import { DataAPISerDes, nullish, WithTimeout } from '@/src/lib';
 import { insertManyOrdered, insertManyUnordered, MkID } from '@/src/documents/commands/helpers/insertion';
 import { normalizedSort } from '@/src/documents/utils';
 import { mkRespErrorFromResponse } from '@/src/documents/errors';
@@ -48,20 +48,22 @@ import type { GenericFindOptions } from '@/src/documents/commands/types/find/fin
 
 export class CommandImpls<ID> {
   readonly #httpClient: DataAPIHttpClient;
+  readonly #serdes: DataAPISerDes;
 
-  constructor(httpClient: DataAPIHttpClient) {
+  constructor(httpClient: DataAPIHttpClient, serdes: DataAPISerDes) {
     this.#httpClient = httpClient;
+    this.#serdes = serdes;
   }
 
   public async insertOne(document: SomeDoc, options: WithTimeout | nullish, mkID: MkID<ID>): Promise<GenericInsertOneResult<ID>> {
     const command = mkBasicCmd('insertOne', {
-      document,
+      document: this.#serdes.serializeRecord(document),
     });
 
-    const { status } = await this.#httpClient.executeCommand(command, options);
+    const raw = await this.#httpClient.executeCommand(command, options);
 
     return {
-      insertedId: mkID(status!.insertedIds[0], status!),
+      insertedId: mkID(this.#serdes.deserializeRecord(raw.status!.insertedIds[0], raw), raw.status!),
     };
   }
 
@@ -70,8 +72,8 @@ export class CommandImpls<ID> {
     const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
 
     const insertedIds = (options?.ordered)
-      ? await insertManyOrdered(this.#httpClient, docs, chunkSize, timeoutManager, mkID)
-      : await insertManyUnordered(this.#httpClient, docs, options?.concurrency ?? 8, chunkSize, timeoutManager, mkID);
+      ? await insertManyOrdered(this.#httpClient, this.#serdes, docs, chunkSize, timeoutManager, mkID)
+      : await insertManyUnordered(this.#httpClient, this.#serdes, docs, options?.concurrency ?? 8, chunkSize, timeoutManager, mkID);
 
     return {
       insertedCount: insertedIds.length,
@@ -81,8 +83,8 @@ export class CommandImpls<ID> {
 
   public async updateOne(filter: SomeDoc, update: SomeDoc, options?: GenericUpdateOneOptions): Promise<GenericUpdateResult<ID, 0 | 1>> {
     const command = mkCmdWithSortProj('updateOne', options, {
-      filter,
-      update,
+      filter: this.#serdes.serializeRecord(filter),
+      update: this.#serdes.serializeRecord(update),
       options: {
         upsert: options?.upsert,
       },
@@ -94,8 +96,8 @@ export class CommandImpls<ID> {
 
   public async updateMany(filter: SomeDoc, update: SomeDoc, options?: GenericUpdateManyOptions): Promise<GenericUpdateResult<ID, number>> {
     const command = mkBasicCmd('updateMany', {
-      filter,
-      update,
+      filter: this.#serdes.serializeRecord(filter),
+      update: this.#serdes.serializeRecord(update),
       options: {
         pageState: undefined as string | undefined,
         upsert: options?.upsert,
@@ -132,8 +134,8 @@ export class CommandImpls<ID> {
 
   public async replaceOne(filter: SomeDoc, replacement: SomeDoc, options?: GenericReplaceOneOptions): Promise<GenericUpdateResult<ID, 0 | 1>> {
     const command = mkCmdWithSortProj('findOneAndReplace', options, {
-      filter,
-      replacement,
+      filter: this.#serdes.serializeRecord(filter),
+      replacement: this.#serdes.serializeRecord(replacement),
       options: {
         returnDocument: 'before',
         upsert: options?.upsert,
@@ -147,7 +149,7 @@ export class CommandImpls<ID> {
 
   public async deleteOne(filter: SomeDoc, options?: GenericDeleteOneOptions): Promise<GenericDeleteOneResult> {
     const command = mkCmdWithSortProj('deleteOne', options, {
-      filter,
+      filter: this.#serdes.serializeRecord(filter),
     });
 
     const deleteOneResp = await this.#httpClient.executeCommand(command, options);
@@ -159,7 +161,7 @@ export class CommandImpls<ID> {
 
   public async deleteMany(filter: SomeDoc, options?: WithTimeout): Promise<GenericDeleteManyResult> {
     const command = mkBasicCmd('deleteMany', {
-      filter,
+      filter: this.#serdes.serializeRecord(filter),
     });
 
     const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
@@ -193,25 +195,25 @@ export class CommandImpls<ID> {
     if (options?.sort) {
       options.sort = normalizedSort(options.sort);
     }
-    return new FindCursor(keyspace, this.#httpClient, structuredClone(filter), structuredClone(options));
+    return new FindCursor(keyspace, this.#httpClient, this.#serdes, this.#serdes.serializeRecord(structuredClone(filter)), structuredClone(options));
   }
 
   public async findOne<Schema>(filter: SomeDoc, options?: GenericFindOneOptions): Promise<Schema | null> {
     const command = mkCmdWithSortProj('findOne', options, {
-      filter,
+      filter: this.#serdes.serializeRecord(filter),
       options: {
         includeSimilarity: options?.includeSimilarity,
       },
     });
 
     const resp = await this.#httpClient.executeCommand(command, options);
-    return resp.data?.document;
+    return resp.data?.document ? this.#serdes.deserializeRecord(resp.data.document, resp) as any : null;
   }
 
   public async findOneAndReplace<Schema extends SomeDoc>(filter: SomeDoc, replacement: SomeDoc, options?: GenericFindOneAndReplaceOptions): Promise<CollectionModifyResult<Schema> | WithId<Schema> | null> {
     const command = mkCmdWithSortProj('findOneAndReplace', options, {
-      filter,
-      replacement,
+      filter: this.#serdes.serializeRecord(filter),
+      replacement: this.#serdes.serializeRecord(replacement),
       options: {
         returnDocument: options?.returnDocument,
         upsert: options?.upsert,
@@ -222,15 +224,15 @@ export class CommandImpls<ID> {
 
   public async findOneAndDelete<Schema extends SomeDoc>(filter: SomeDoc, options?: GenericFindOneAndDeleteOptions): Promise<CollectionModifyResult<Schema> | WithId<Schema> | null> {
     const command = mkCmdWithSortProj('findOneAndDelete', options, {
-      filter,
+      filter: this.#serdes.serializeRecord(filter),
     });
     return runFindOneAnd(this.#httpClient, command, options);
   }
 
   public async findOneAndUpdate<Schema extends SomeDoc>(filter: SomeDoc, update: SomeDoc, options?: GenericFindOneAndUpdateOptions): Promise<CollectionModifyResult<Schema> | WithId<Schema> | null> {
     const command = mkCmdWithSortProj('findOneAndUpdate', options, {
-      filter,
-      update,
+      filter: this.#serdes.serializeRecord(filter),
+      update: this.#serdes.serializeRecord(update),
       options: {
         returnDocument: options?.returnDocument,
         upsert: options?.upsert,

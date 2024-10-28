@@ -16,7 +16,7 @@ import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-clie
 import type { Filter, SomeDoc } from '@/src/documents/collections';
 import type { GenericFindOptions } from '@/src/documents/commands';
 import type { Projection, Sort } from '@/src/documents/types';
-import type { DeepPartial, nullish } from '@/src/lib';
+import type { DataAPISerDes, DeepPartial, nullish } from '@/src/lib';
 import { normalizedSort } from '@/src/documents/utils';
 
 /**
@@ -100,6 +100,7 @@ interface InternalGetMoreCommand {
 export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   readonly #keyspace: string;
   readonly #httpClient: DataAPIHttpClient;
+  readonly #serdes: DataAPISerDes;
 
   readonly #options: GenericFindOptions;
   readonly #filter: Filter<TRaw>;
@@ -116,9 +117,10 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(keyspace: string, httpClient: DataAPIHttpClient, filter: Filter<TRaw>, options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
+  constructor(keyspace: string, httpClient: DataAPIHttpClient, serdes: DataAPISerDes, filter: Filter<TRaw>, options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
     this.#keyspace = keyspace;
     this.#httpClient = httpClient;
+    this.#serdes = serdes;
     this.#filter = filter;
     this.#options = options ?? {};
     this.#mapping = mapping;
@@ -192,7 +194,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    */
   public filter(filter: Filter<TRaw>): FindCursor<T,  TRaw> {
-    return this.#clone(structuredClone(filter), this.#options, this.#mapping);
+    return this.#clone(this.#serdes.serializeRecord(structuredClone(filter)), this.#options, this.#mapping);
   }
 
   /**
@@ -356,7 +358,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns A behavioral clone of this cursor.
    */
   public clone(): FindCursor<TRaw, TRaw> {
-    return new FindCursor(this.#keyspace, this.#httpClient, this.#filter, this.#options);
+    return new FindCursor(this.#keyspace, this.#httpClient, this.#serdes, this.#filter, this.#options);
   }
 
   /**
@@ -511,7 +513,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   #clone<R, RRaw extends SomeDoc>(filter: Filter<RRaw>, options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
-    return new FindCursor(this.#keyspace, this.#httpClient, filter, options, mapping);
+    return new FindCursor(this.#keyspace, this.#httpClient, this.#serdes, filter, options, mapping);
   }
 
   async #next(peek: true): Promise<TRaw | nullish>
@@ -580,12 +582,12 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
       command.find.options = options;
     }
 
-    const resp = await this.#httpClient.executeCommand(command, {});
+    const raw = await this.#httpClient.executeCommand(command, {});
 
-    this.#nextPageState = resp.data?.nextPageState || null;
-    this.#buffer = resp.data?.documents ?? [];
+    this.#nextPageState = raw.data?.nextPageState || null;
+    this.#buffer = this.#serdes.deserializeRecord(raw.data?.documents, raw) as any ?? [];
 
-    this.#sortVector ??= resp.status?.sortVector;
+    this.#sortVector ??= raw.status?.sortVector;
     this.#options.includeSortVector = false;
   }
 }

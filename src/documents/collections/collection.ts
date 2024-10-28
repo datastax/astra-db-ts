@@ -17,38 +17,39 @@ import type {
   CollectionDeleteManyResult,
   CollectionDeleteOneOptions,
   CollectionDeleteOneResult,
-  Filter,
   CollectionFindOneAndDeleteOptions,
   CollectionFindOneAndReplaceOptions,
   CollectionFindOneAndUpdateOptions,
   CollectionFindOneOptions,
   CollectionFindOptions,
-  Flatten,
-  FoundDoc,
-  IdOf,
   CollectionInsertManyOptions,
   CollectionInsertManyResult,
   CollectionInsertOneResult,
-  MaybeId,
   CollectionModifyResult,
-  NoId,
   CollectionReplaceOneOptions,
   CollectionReplaceOneResult,
-  SomeDoc,
-  ToDotNotation,
-  UpdateFilter,
   CollectionUpdateManyOptions,
   CollectionUpdateManyResult,
   CollectionUpdateOneOptions,
   CollectionUpdateOneResult,
+  Filter,
+  Flatten,
+  FoundDoc,
+  IdOf,
+  MaybeId,
+  NoId,
+  SomeDoc,
+  ToDotNotation,
+  UpdateFilter,
   WithId,
 } from '@/src/documents/collections/types';
 import { CollectionNotFoundError } from '@/src/db/errors';
-import type { CollectionOptions, CollectionSpawnOptions, Db } from '@/src/db';
+import { CollectionOptions, CollectionSpawnOptions, Db } from '@/src/db';
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import type { WithTimeout } from '@/src/lib';
-import { constUncurried } from '@/src/lib/utils';
+import { WithTimeout } from '@/src/lib';
+import { constantly } from '@/src/lib/utils';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
+import { mkCollectionSerDes } from '@/src/documents/collections/ser-des';
 
 /**
  * Represents the interface to a collection in the database.
@@ -111,7 +112,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     });
 
     this.#httpClient = httpClient.forCollection(this.keyspace, this.collectionName, opts);
-    this.#commands = new CommandImpls(this.#httpClient);
+    this.#commands = new CommandImpls(this.#httpClient, mkCollectionSerDes(opts?.serdes));
     this.#db = db;
   }
 
@@ -150,7 +151,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @returns The ID of the inserted document.
    */
   public async insertOne(document: MaybeId<Schema>, options?: WithTimeout): Promise<CollectionInsertOneResult<Schema>> {
-    return this.#commands.insertOne(document, options, constUncurried);
+    return this.#commands.insertOne(document, options, constantly);
   }
 
   /**
@@ -225,7 +226,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @throws InsertManyError - If the operation fails.
    */
   public async insertMany(documents: MaybeId<Schema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<Schema>> {
-    return this.#commands.insertMany(documents, options, constUncurried);
+    return this.#commands.insertMany(documents, options, constantly);
   }
 
   /**

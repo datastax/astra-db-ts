@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPILoggingConfig, DataAPISerDesConfig, TokenProvider } from '@/src/lib';
-import { SomeDoc } from '@/src/documents';
+import { DataAPILoggingConfig, TokenProvider } from '@/src/lib';
+import { CollectionSerDesConfig, SomeDoc, TableSerDesConfig } from '@/src/documents';
 
 export type DefaultDbSpawnOptions = Omit<DbSpawnOptions, 'logging'>;
 
@@ -94,5 +94,11 @@ export interface DbSpawnOptions {
    * @defaultValue 'api/json/v1'
    */
   dataApiPath?: string,
-  serdes?: DataAPISerDesConfig<SomeDoc>,
+  serdes?: DbSerDesConfig<SomeDoc>,
+}
+
+export interface DbSerDesConfig<Schema extends SomeDoc> {
+  table?: Omit<TableSerDesConfig<Schema>, 'mutateInPlace'>,
+  collection?: Omit<CollectionSerDesConfig<Schema>, 'mutateInPlace'>,
+  mutateInPlace?: boolean,
 }

@@ -13,14 +13,30 @@
 // limitations under the License.
 
 import { ObjectId, SomeDoc, UUID } from '@/src/documents';
-import { $SerializeStrict, DataAPIDesCtx, DataAPIDesFn, DataAPISerCtx, DataAPISerFn } from '@/src/lib/api/ser-des';
+import {
+  $SerializeStrict,
+  DataAPIDesCtx,
+  DataAPIDesFn,
+  DataAPISerCtx,
+  DataAPISerFn,
+  mkSerDes,
+} from '@/src/lib/api/ser-des';
 
-export interface CollectionSerDes<Schema extends SomeDoc> {
+export interface CollectionSerDesConfig<Schema extends SomeDoc> {
   serialize: DataAPISerFn<DataAPISerCtx<Schema>>,
   deserialize: DataAPIDesFn<DataAPIDesCtx>,
+  mutateInPlace?: boolean,
 }
 
-export const DefaultCollectionSerDes: CollectionSerDes<SomeDoc> = {
+export const mkCollectionSerDes = <Schema extends SomeDoc>(cfg?: CollectionSerDesConfig<Schema>) => mkSerDes({
+  serializer: [cfg?.serialize, DefaultCollectionSerDes.serialize].filter(x => x).map(x => x!),
+  deserializer: [cfg?.deserialize, DefaultCollectionSerDes.deserialize].filter(x => x).map(x => x!),
+  adaptSerCtx: (ctx: DataAPISerCtx<Schema>) => ctx,
+  adaptDesCtx: (ctx) => ctx,
+  mutateInPlace: cfg?.mutateInPlace,
+});
+
+export const DefaultCollectionSerDes: CollectionSerDesConfig<SomeDoc> = {
   serialize(key, value) {
     if (typeof value === 'object') {
       if (value instanceof Date) {

@@ -21,6 +21,7 @@ import {
   FindCursor,
   FoundRow,
   KeyOf,
+  mkTableSerDes,
   SomeDoc,
   SomeRow,
   TableDeleteOneOptions,
@@ -39,7 +40,7 @@ import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { AlterTableOptions, AlterTableSchema, Db, TableSpawnOptions } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
-import { constUncurried } from '@/src/lib/utils';
+import { constantly } from '@/src/lib/utils';
 
 export type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$PrimaryKeyType'>;
 
@@ -99,16 +100,16 @@ export class Table<Schema extends SomeRow = SomeRow> {
 
     this.#httpClient = httpClient.forCollection(this.keyspace, this.tableName, opts);
     this.#httpClient.baseHeaders['Feature-Flag-tables'] = 'true';
-    this.#commands = new CommandImpls(this.#httpClient);
+    this.#commands = new CommandImpls(this.#httpClient, mkTableSerDes(opts?.serdes));
     this.#db = db;
   }
 
   public async insertOne(document: Schema[], options?: WithTimeout): Promise<TableInsertOneResult<Schema>> {
-    return this.#commands.insertOne(document, options, constUncurried);
+    return this.#commands.insertOne(document, options, constantly);
   }
 
   public async insertMany(document: Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>> {
-    return this.#commands.insertMany(document, options, constUncurried);
+    return this.#commands.insertMany(document, options, constantly);
   }
 
   public async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: TableUpdateOneOptions): Promise<TableUpdateOneResult<Schema>> {

@@ -12,8 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CqlDate, CqlDuration, CqlTime, CqlTimestamp, InetAddress, SomeDoc, SomeRow, UUID } from '@/src/documents';
-import { $SerializeRelaxed, DataAPIDesCtx, DataAPIDesFn, DataAPISerCtx, DataAPISerFn } from '@/src/lib/api/ser-des';
+import { CqlDate, CqlDuration, CqlTime, CqlTimestamp, InetAddress, SomeRow, UUID } from '@/src/documents';
+import {
+  $SerializeRelaxed,
+  DataAPIDesCtx,
+  DataAPIDesFn,
+  DataAPISerCtx,
+  DataAPISerFn, mkSerDes,
+} from '@/src/lib/api/ser-des';
 import {
   ListTableColumnDefinitions,
   ListTableKnownColumnDefinition,
@@ -21,12 +27,21 @@ import {
   TableScalarType,
 } from '@/src/db';
 
-export interface TableSerDes<Schema extends SomeRow> {
-  serialize: DataAPISerFn<DataAPISerCtx<Schema>>,
-  deserialize: DataAPIDesFn<DataAPIDesCtx & { tableSchema: ListTableColumnDefinitions }>,
+export interface TableSerDesConfig<Schema extends SomeRow> {
+  serialize?: DataAPISerFn<DataAPISerCtx<Schema>>,
+  deserialize?: DataAPIDesFn<DataAPIDesCtx & { tableSchema: ListTableColumnDefinitions }>,
+  mutateInPlace?: boolean,
 }
 
-export const DefaultTableSerDes: TableSerDes<SomeDoc> = {
+export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Schema>) => mkSerDes({
+  serializer: [cfg?.serialize, DefaultTableSerDes.serialize].filter(x => x).map(x => x!),
+  deserializer: [cfg?.deserialize, DefaultTableSerDes.deserialize].filter(x => x).map(x => x!),
+  adaptSerCtx: (ctx: DataAPISerCtx<Schema>) => ctx,
+  adaptDesCtx: (ctx) => { (<any>ctx).tableSchema = ctx.rawDataApiResp.status?.primaryKeySchema ?? ctx.rawDataApiResp.status!.projectionSchema; return ctx as any; },
+  mutateInPlace: cfg?.mutateInPlace,
+});
+
+export const DefaultTableSerDes: Omit<Required<TableSerDesConfig<SomeRow>>, 'mutateInPlace'> = {
   serialize(_, value) {
     if (typeof value === 'object') {
       if ($SerializeRelaxed in value) {
@@ -51,7 +66,7 @@ export const DefaultTableSerDes: TableSerDes<SomeDoc> = {
   },
 };
 
-const deserializeObj = (rootObj: SomeDoc, key: string, column: ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition) => {
+const deserializeObj = (rootObj: SomeRow, key: string, column: ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition) => {
   const type = (column.type === 'UNSUPPORTED')
     ? column.apiSupport.cqlDefinition
     : column.type;
