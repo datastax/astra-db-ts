@@ -12,29 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CqlDate, CqlDuration, CqlTime, CqlTimestamp, InetAddress, SomeRow, UUID } from '@/src/documents';
-import {
-  $SerializeRelaxed,
-  DataAPIDesCtx,
-  DataAPIDesFn,
-  DataAPISerCtx,
-  DataAPISerFn,
-  mkSerDes,
-} from '@/src/lib/api/ser-des';
+import { CqlDate, CqlDuration, CqlTime, CqlTimestamp, InetAddress, SomeDoc, SomeRow, UUID } from '@/src/documents';
+import { $SerializeRelaxed, DataAPIDesCtx, DataAPISerCtx, mkSerDes } from '@/src/lib/api/ser-des';
 import {
   ListTableColumnDefinitions,
   ListTableKnownColumnDefinition,
   ListTableUnsupportedColumnDefinition,
-  TableScalarType,
 } from '@/src/db';
 
 type TableDesCtx = DataAPIDesCtx & { tableSchema: ListTableColumnDefinitions, parsers: Record<string, TableColumnTypeParser> };
 
-export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, v?: TableScalarType, k?: TableScalarType) => any;
+export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: SomeDoc) => any;
 
 export interface TableSerDesConfig<Schema extends SomeRow> {
-  serialize?: DataAPISerFn<DataAPISerCtx<Schema>>,
-  deserialize?: DataAPIDesFn<TableDesCtx>,
+  serialize?: (this: SomeRow, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | undefined,
+  deserialize?: (this: SomeRow, key: string, value: any, ctx: TableDesCtx) => boolean | undefined | void,
   parsers?: Record<string, TableColumnTypeParser>,
   mutateInPlace?: boolean,
 }
@@ -48,8 +40,16 @@ export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Sc
     adaptSerCtx: (ctx: DataAPISerCtx<Schema>) => ctx,
     adaptDesCtx: (_ctx) => {
       const ctx = _ctx as TableDesCtx;
-      ctx.tableSchema = ctx.rawDataApiResp.status?.primaryKeySchema ?? ctx.rawDataApiResp.status!.projectionSchema;
+      const tableSchema = ctx.rawDataApiResp.status?.primaryKeySchema ?? ctx.rawDataApiResp.status!.projectionSchema;
+
+      if (Array.isArray(ctx.rootObj)) {
+        ctx.rootObj = Object.fromEntries(Object.entries(tableSchema).map(([key], i) => [key, ctx.rootObj[i]]));
+        console.log(ctx.rootObj);
+      }
+
+      ctx.tableSchema = tableSchema;
       ctx.parsers = parsers;
+
       return ctx;
     },
     mutateInPlace: cfg?.mutateInPlace,
@@ -75,7 +75,7 @@ export const DefaultTableSerDes: Omit<Required<TableSerDesConfig<SomeRow>>, 'mut
   },
   deserialize(key, _, ctx) {
     if (this === ctx.rootObj) {
-      deserializeObj(ctx, ctx.rootObj[key], key, ctx.tableSchema[key]);
+      deserializeObj(ctx, ctx.rootObj, key, ctx.tableSchema[key]);
     }
     return true;
   },
@@ -88,24 +88,27 @@ export const DefaultTableSerDes: Omit<Required<TableSerDesConfig<SomeRow>>, 'mut
     uuid: (uuid) => new UUID(uuid, false),
     timeuuid: (uuid) => new UUID(uuid, false),
     varint: BigInt,
-    map(map, ctx, v, k) {
+    map(map, ctx, def) {
       const entries = Array.isArray(map) ? map : Object.entries(map);
 
       for (let i = entries.length; i--;) {
         const [key, value] = entries[i];
-        entries[i] = [ctx.parsers[k!] ? ctx.parsers[k!](key, ctx) : key, ctx.parsers[v!] ? ctx.parsers[v!](value, ctx) : value];
+        const keyParser = ctx.parsers[def.keyType];
+        const valueParser = ctx.parsers[def.valueType];
+        entries[i] = [keyParser ? keyParser(key, ctx, def) : key, valueParser ? valueParser(value, ctx, def) : value];
       }
 
       return new Map(entries);
     },
-    list(values, ctx, v) {
+    list(values, ctx, def) {
       for (let i = values.length; i--;) {
-        values[i] = ctx.parsers[v!] ? ctx.parsers[v!](values[i], ctx) : values[i];
+        const elemParser = ctx.parsers[def.valueType];
+        values[i] = elemParser ? elemParser(values[i], ctx, def) : values[i];
       }
       return values;
     },
-    set(set, ctx, v) {
-      return new Set(ctx.parsers.list(set, ctx, v));
+    set(set, ctx, def) {
+      return new Set(ctx.parsers.list(set, ctx, def));
     },
   },
 };
@@ -118,6 +121,6 @@ const deserializeObj = (ctx: TableDesCtx, obj: SomeRow, key: string, column: Lis
   const parser = ctx.parsers[type];
 
   if (parser) {
-    obj[key] = parser(obj[key], (<any>column).valueType, (<any>column).keyType);
+    obj[key] = parser(obj[key], ctx, column);
   }
 };

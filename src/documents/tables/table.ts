@@ -104,7 +104,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
     this.#db = db;
   }
 
-  public async insertOne(document: Schema[], options?: WithTimeout): Promise<TableInsertOneResult<Schema>> {
+  public async insertOne(document: Schema, options?: WithTimeout): Promise<TableInsertOneResult<Schema>> {
     return this.#commands.insertOne(document, options, constantly);
   }
 

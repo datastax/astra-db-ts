@@ -22,7 +22,7 @@ describe('unit.documents.cursor', () => {
   let httpClient: DataAPIHttpClient;
 
   it('should initialize an uninitialized Cursor', () => {
-    const cursor = new FindCursor<any>('', httpClient, {});
+    const cursor = new FindCursor<any>('', httpClient, null!, {});
     assert.ok(cursor);
     assert.strictEqual(cursor.buffered(), 0);
     assert.strictEqual(cursor.consumed(), 0);
@@ -30,12 +30,12 @@ describe('unit.documents.cursor', () => {
   });
 
   it('should contain the proper keyspace', () => {
-    const cursor = new FindCursor<any>('abc', httpClient, {});
+    const cursor = new FindCursor<any>('abc', httpClient, null!, {});
     assert.strictEqual(cursor.keyspace, 'abc');
   });
 
   it('should fail to set projection after mapping', () => {
-    const cursor1 = new FindCursor<any>('', httpClient, {});
+    const cursor1 = new FindCursor<any>('', httpClient, null!, {});
     const cursor2 = cursor1.map((x) => x);
     assert.doesNotThrow(() => cursor1.project({}));
     assert.throws(() => cursor2.project({}));

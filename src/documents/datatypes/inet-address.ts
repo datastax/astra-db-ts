@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $SerializeRelaxed, $SerializeStrict } from '@/src/lib';
+import { $SerializeRelaxed } from '@/src/lib';
 
 export class InetAddress {
   private readonly _raw!: string;

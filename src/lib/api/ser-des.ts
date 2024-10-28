@@ -45,11 +45,11 @@ export type DataAPISerDes = ReturnType<typeof mkSerDes>;
 export const mkSerDes = <Schema extends SomeDoc>(cfg: DataAPISerDesConfig<Schema, any, any>) => ({
   serializeRecord(obj: Schema) {
     const ctx = cfg.adaptSerCtx({ rootObj: obj, mutatingInPlace: cfg.mutateInPlace || false });
-    return _serializeRecord(obj, 0, ctx, cfg.serializer);
+    return _serializeRecord(ctx.rootObj, 0, ctx, cfg.serializer);
   },
   deserializeRecord(obj: SomeDoc, raw: RawDataAPIResponse): Schema {
     const ctx = cfg.adaptDesCtx({ rootObj: obj, rawDataApiResp: raw, depth: 0 });
-    return _deserializeRecord(obj, 0, ctx, cfg.deserializer) as Schema;
+    return _deserializeRecord(ctx.rootObj, 0, ctx, cfg.deserializer) as Schema;
   },
 });
 
@@ -68,9 +68,12 @@ const _serializeRecord = <Ctx extends DataAPISerCtx<SomeDoc>>(obj: SomeDoc, dept
         if (!ctx.mutatingInPlace && ret === obj) {
           ret = Array.isArray(obj) ? [...obj] : { ...obj };
         }
+
         ret[key] = res[0];
-        stop = res[1];
-        break;
+
+        if ((stop = res[1])) {
+          break;
+        }
       }
     }
 
@@ -89,9 +92,7 @@ const _deserializeRecord = <Ctx>(obj: SomeDoc, depth: number, ctx: Ctx, fns: Dat
     let stop;
 
     for (let f = 0; f < fns.length; f++) {
-      const stop = fns[f].call(obj, key, obj[key], ctx);
-
-      if (stop !== true) {
+      if ((stop = fns[f].call(obj, key, obj[key], ctx))) {
         break;
       }
     }

@@ -336,11 +336,11 @@ export type CollectionReplaceOneResult<Schema extends SomeDoc> = GenericUpdateRe
 // @public (undocumented)
 export interface CollectionSerDesConfig<Schema extends SomeDoc> {
     // (undocumented)
-    deserialize: DataAPIDesFn<DataAPIDesCtx>;
+    deserialize?: (this: SomeDoc, key: string, value: any, ctx: DataAPIDesCtx) => boolean | undefined | void;
     // (undocumented)
     mutateInPlace?: boolean;
     // (undocumented)
-    serialize: DataAPISerFn<DataAPISerCtx<Schema>>;
+    serialize?: (this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | undefined;
 }
 
 // @public
@@ -1869,7 +1869,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
     // (undocumented)
     insertMany(document: Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>>;
     // (undocumented)
-    insertOne(document: Schema[], options?: WithTimeout): Promise<TableInsertOneResult<Schema>>;
+    insertOne(document: Schema, options?: WithTimeout): Promise<TableInsertOneResult<Schema>>;
     readonly keyspace: string;
     readonly tableName: string;
     // (undocumented)
@@ -1881,7 +1881,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
 // Warning: (ae-forgotten-export) The symbol "TableDesCtx" needs to be exported by the entry point index.d.ts
 //
 // @public (undocumented)
-export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, v?: TableScalarType, k?: TableScalarType) => any;
+export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: SomeDoc) => any;
 
 // @public (undocumented)
 export type TableDeleteOneOptions = GenericDeleteOneOptions;
@@ -1913,13 +1913,13 @@ export type TableScalarType = 'ascii' | 'bigint' | 'blob' | 'boolean' | 'date' |
 // @public (undocumented)
 export interface TableSerDesConfig<Schema extends SomeRow> {
     // (undocumented)
-    deserialize?: DataAPIDesFn<TableDesCtx>;
+    deserialize?: (this: SomeRow, key: string, value: any, ctx: TableDesCtx) => boolean | undefined | void;
     // (undocumented)
     mutateInPlace?: boolean;
     // (undocumented)
     parsers?: Record<string, TableColumnTypeParser>;
     // (undocumented)
-    serialize?: DataAPISerFn<DataAPISerCtx<Schema>>;
+    serialize?: (this: SomeRow, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | undefined;
 }
 
 // @public (undocumented)

@@ -13,18 +13,11 @@
 // limitations under the License.
 
 import { ObjectId, SomeDoc, UUID } from '@/src/documents';
-import {
-  $SerializeStrict,
-  DataAPIDesCtx,
-  DataAPIDesFn,
-  DataAPISerCtx,
-  DataAPISerFn,
-  mkSerDes,
-} from '@/src/lib/api/ser-des';
+import { $SerializeStrict, DataAPIDesCtx, DataAPISerCtx, mkSerDes } from '@/src/lib/api/ser-des';
 
 export interface CollectionSerDesConfig<Schema extends SomeDoc> {
-  serialize: DataAPISerFn<DataAPISerCtx<Schema>>,
-  deserialize: DataAPIDesFn<DataAPIDesCtx>,
+  serialize?: (this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | undefined,
+  deserialize?: (this: SomeDoc, key: string, value: any, ctx: DataAPIDesCtx) => boolean | undefined | void,
   mutateInPlace?: boolean,
 }
 
