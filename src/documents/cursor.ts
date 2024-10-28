@@ -585,7 +585,11 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     const raw = await this.#httpClient.executeCommand(command, {});
 
     this.#nextPageState = raw.data?.nextPageState || null;
-    this.#buffer = this.#serdes.deserializeRecord(raw.data?.documents, raw) as any ?? [];
+    this.#buffer = raw.data?.documents ?? [];
+
+    for (let i = 0, n = this.#buffer.length; i < n; i++) {
+      this.#buffer[i] = this.#serdes.deserializeRecord(this.#buffer[i], raw) as TRaw;
+    }
 
     this.#sortVector ??= raw.status?.sortVector;
     this.#options.includeSortVector = false;

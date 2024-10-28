@@ -16,8 +16,8 @@ import { ObjectId, SomeDoc, UUID } from '@/src/documents';
 import { $SerializeStrict, DataAPIDesCtx, DataAPISerCtx, mkSerDes } from '@/src/lib/api/ser-des';
 
 export interface CollectionSerDesConfig<Schema extends SomeDoc> {
-  serialize?: (this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | undefined,
-  deserialize?: (this: SomeDoc, key: string, value: any, ctx: DataAPIDesCtx) => boolean | undefined | void,
+  serialize?: (this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void,
+  deserialize?: (this: SomeDoc, key: string, value: any, ctx: DataAPIDesCtx) => [any, boolean?] | boolean | undefined | void,
   mutateInPlace?: boolean,
 }
 

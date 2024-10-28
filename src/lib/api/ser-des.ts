@@ -29,8 +29,8 @@ export interface DataAPIDesCtx {
   depth: number,
 }
 
-export type DataAPISerFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | undefined;
-export type DataAPIDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => boolean | undefined | void;
+export type DataAPISerFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | undefined | void;
+export type DataAPIDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | undefined | void;
 
 export interface DataAPISerDesConfig<Schema extends SomeDoc, SerCtx extends DataAPISerCtx<Schema>, DesCtx extends DataAPIDesCtx> {
   serializer: DataAPISerFn<SerCtx>[],
@@ -64,14 +64,19 @@ const _serializeRecord = <Ctx extends DataAPISerCtx<SomeDoc>>(obj: SomeDoc, dept
     for (let f = 0; f < fns.length; f++) {
       const res = fns[f].call(obj, key, value, ctx);
 
-      if (res !== undefined) {
+      if (res) {
         if (!ctx.mutatingInPlace && ret === obj) {
           ret = Array.isArray(obj) ? [...obj] : { ...obj };
         }
 
-        ret[key] = res[0];
+        if (typeof res === 'object') {
+          ret[key] = res[0];
+          stop = res[1];
+        } else {
+          stop = res;
+        }
 
-        if ((stop = res[1])) {
+        if (stop) {
           break;
         }
       }
@@ -92,8 +97,19 @@ const _deserializeRecord = <Ctx>(obj: SomeDoc, depth: number, ctx: Ctx, fns: Dat
     let stop;
 
     for (let f = 0; f < fns.length; f++) {
-      if ((stop = fns[f].call(obj, key, obj[key], ctx))) {
-        break;
+      const res = fns[f].call(obj, key, obj[key], ctx);
+
+      if (res) {
+        if (typeof res === 'object') {
+          obj[key] = res[0];
+          stop = res[1];
+        } else {
+          stop = res;
+        }
+
+        if (stop) {
+          break;
+        }
       }
     }
 

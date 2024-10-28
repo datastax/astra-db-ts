@@ -336,11 +336,11 @@ export type CollectionReplaceOneResult<Schema extends SomeDoc> = GenericUpdateRe
 // @public (undocumented)
 export interface CollectionSerDesConfig<Schema extends SomeDoc> {
     // (undocumented)
-    deserialize?: (this: SomeDoc, key: string, value: any, ctx: DataAPIDesCtx) => boolean | undefined | void;
+    deserialize?: (this: SomeDoc, key: string, value: any, ctx: DataAPIDesCtx) => [any, boolean?] | boolean | undefined | void;
     // (undocumented)
     mutateInPlace?: boolean;
     // (undocumented)
-    serialize?: (this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | undefined;
+    serialize?: (this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void;
 }
 
 // @public
@@ -709,7 +709,7 @@ export interface DataAPIDesCtx {
 }
 
 // @public (undocumented)
-export type DataAPIDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => boolean | undefined | void;
+export type DataAPIDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | undefined | void;
 
 // @public
 export interface DataAPIDetailedErrorDescriptor {
@@ -799,7 +799,7 @@ export interface DataAPISerDesConfig<Schema extends SomeDoc, SerCtx extends Data
 }
 
 // @public (undocumented)
-export type DataAPISerFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | undefined;
+export type DataAPISerFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | undefined | void;
 
 // @public
 export class DataAPITimeoutError extends DataAPIError {
@@ -1913,13 +1913,13 @@ export type TableScalarType = 'ascii' | 'bigint' | 'blob' | 'boolean' | 'date' |
 // @public (undocumented)
 export interface TableSerDesConfig<Schema extends SomeRow> {
     // (undocumented)
-    deserialize?: (this: SomeRow, key: string, value: any, ctx: TableDesCtx) => boolean | undefined | void;
+    deserialize?: (this: SomeRow, key: string, value: any, ctx: TableDesCtx) => [any, boolean?] | boolean | undefined | void;
     // (undocumented)
     mutateInPlace?: boolean;
     // (undocumented)
     parsers?: Record<string, TableColumnTypeParser>;
     // (undocumented)
-    serialize?: (this: SomeRow, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | undefined;
+    serialize?: (this: SomeRow, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void;
 }
 
 // @public (undocumented)

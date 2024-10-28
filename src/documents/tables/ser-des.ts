@@ -25,8 +25,8 @@ type TableDesCtx = DataAPIDesCtx & { tableSchema: ListTableColumnDefinitions, pa
 export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: SomeDoc) => any;
 
 export interface TableSerDesConfig<Schema extends SomeRow> {
-  serialize?: (this: SomeRow, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | undefined,
-  deserialize?: (this: SomeRow, key: string, value: any, ctx: TableDesCtx) => boolean | undefined | void,
+  serialize?: (this: SomeRow, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void,
+  deserialize?: (this: SomeRow, key: string, value: any, ctx: TableDesCtx) => [any, boolean?] | boolean | undefined | void,
   parsers?: Record<string, TableColumnTypeParser>,
   mutateInPlace?: boolean,
 }
@@ -43,8 +43,9 @@ export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Sc
       const tableSchema = ctx.rawDataApiResp.status?.primaryKeySchema ?? ctx.rawDataApiResp.status!.projectionSchema;
 
       if (Array.isArray(ctx.rootObj)) {
-        ctx.rootObj = Object.fromEntries(Object.entries(tableSchema).map(([key], i) => [key, ctx.rootObj[i]]));
-        console.log(ctx.rootObj);
+        ctx.rootObj = Object.fromEntries(Object.entries(tableSchema).map(([key], i) => {
+          return [key, ctx.rootObj[i]];
+        }));
       }
 
       ctx.tableSchema = tableSchema;
