@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $Serialize } from '@/src/lib';
+import { $SerializeRelaxed, $SerializeStrict } from '@/src/lib';
 
 export class InetAddress {
   private readonly _raw!: string;
@@ -25,8 +25,8 @@ export class InetAddress {
       value: address.toLowerCase(),
     });
 
-    Object.defineProperty(this, $Serialize, {
-      value: this.toJSON,
+    Object.defineProperty(this, $SerializeRelaxed, {
+      value: this.toString,
     });
   }
 
@@ -60,10 +60,6 @@ export class InetAddress {
 
   public toString(): string {
     return this._raw;
-  }
-
-  public toJSON() {
-    return { $duration: 3 as any };
   }
 }
 

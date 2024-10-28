@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { isNullish } from '@/src/lib/utils';
-import { $Serialize } from '@/src/lib';
+import { $SerializeStrict } from '@/src/lib';
 
 const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
 
@@ -82,7 +82,7 @@ export class ObjectId {
       value: (typeof id === 'string') ? id.toLowerCase() : genObjectId(id),
     });
 
-    Object.defineProperty(this, $Serialize, {
+    Object.defineProperty(this, $SerializeStrict, {
       value: this.toJSON,
     });
   }

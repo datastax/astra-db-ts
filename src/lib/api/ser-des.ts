@@ -15,7 +15,8 @@
 import { SomeDoc, TableSerDes } from '@/src/documents';
 import type { RawDataAPIResponse } from '@/src/lib';
 
-export const $Serialize = Symbol('serializer');
+export const $SerializeStrict = Symbol('SerializeStrict');
+export const $SerializeRelaxed = Symbol('SerializeRelaxed');
 
 export interface DataAPISerDesConfig<Schema extends SomeDoc> {
   table?: TableSerDes<Schema>,

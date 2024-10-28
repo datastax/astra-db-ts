@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { CqlDate, CqlDuration, CqlTime, CqlTimestamp, InetAddress, SomeDoc, SomeRow, UUID } from '@/src/documents';
-import { $Serialize, DataAPIDesCtx, DataAPIDesFn, DataAPISerCtx, DataAPISerFn } from '@/src/lib/api/ser-des';
+import { $SerializeRelaxed, DataAPIDesCtx, DataAPIDesFn, DataAPISerCtx, DataAPISerFn } from '@/src/lib/api/ser-des';
 import {
   ListTableColumnDefinitions,
   ListTableKnownColumnDefinition,
@@ -29,8 +29,8 @@ export interface TableSerDes<Schema extends SomeRow> {
 export const DefaultTableSerDes: TableSerDes<SomeDoc> = {
   serialize(_, value) {
     if (typeof value === 'object') {
-      if ($Serialize in value) {
-        return [value[$Serialize](), false];
+      if ($SerializeRelaxed in value) {
+        return [value[$SerializeRelaxed](), false];
       }
 
       if (value instanceof Map) {

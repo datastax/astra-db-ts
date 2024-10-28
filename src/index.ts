@@ -12,19 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIClient } from '@/src/client';
-
 export * from './client';
 export * from './db';
 export * from './documents';
 export * from './administration';
 export * from './lib';
-
-const client = new DataAPIClient();
-const db = client.db('db1');
-
-const table = db.table('table1', {
-  serdes: {
-
-  },
-});
