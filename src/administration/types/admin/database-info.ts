@@ -14,18 +14,25 @@
 
 import { AstraDbAction, AstraDbCloudProvider, AstraDbStatus, AstraDbTier } from '@/src/administration/types';
 
+export interface AstraDbRegionInfo {
+  name: string,
+  apiEndpoint: string,
+  createdAt: Date,
+}
+
 export interface AstraDbAdminInfo extends AstraDbBaseInfo {
   createdAt: Date,
   lastUsed: Date,
-  regions: { name: string, apiEndpoint: string }[],
+  regions: AstraDbRegionInfo[],
   orgId: string,
-  raw: RawAstraDbAdminInfo,
+  ownerId: string,
+  raw: Record<string, any>,
 }
 
 export interface AstraDbInfo extends AstraDbBaseInfo {
   region: string,
   apiEndpoint: string,
-  raw: RawAstraDbInfo,
+  raw: Record<string, any>,
 }
 
 export interface AstraDbBaseInfo {
