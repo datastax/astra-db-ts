@@ -18,7 +18,8 @@ import {
   DataAPIDesCtx,
   DataAPIDesFn,
   DataAPISerCtx,
-  DataAPISerFn, mkSerDes,
+  DataAPISerFn,
+  mkSerDes,
 } from '@/src/lib/api/ser-des';
 import {
   ListTableColumnDefinitions,
@@ -27,19 +28,33 @@ import {
   TableScalarType,
 } from '@/src/db';
 
+type TableDesCtx = DataAPIDesCtx & { tableSchema: ListTableColumnDefinitions, parsers: Record<string, TableColumnTypeParser> };
+
+export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, v?: TableScalarType, k?: TableScalarType) => any;
+
 export interface TableSerDesConfig<Schema extends SomeRow> {
   serialize?: DataAPISerFn<DataAPISerCtx<Schema>>,
-  deserialize?: DataAPIDesFn<DataAPIDesCtx & { tableSchema: ListTableColumnDefinitions }>,
+  deserialize?: DataAPIDesFn<TableDesCtx>,
+  parsers?: Record<string, TableColumnTypeParser>,
   mutateInPlace?: boolean,
 }
 
-export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Schema>) => mkSerDes({
-  serializer: [cfg?.serialize, DefaultTableSerDes.serialize].filter(x => x).map(x => x!),
-  deserializer: [cfg?.deserialize, DefaultTableSerDes.deserialize].filter(x => x).map(x => x!),
-  adaptSerCtx: (ctx: DataAPISerCtx<Schema>) => ctx,
-  adaptDesCtx: (ctx) => { (<any>ctx).tableSchema = ctx.rawDataApiResp.status?.primaryKeySchema ?? ctx.rawDataApiResp.status!.projectionSchema; return ctx as any; },
-  mutateInPlace: cfg?.mutateInPlace,
-});
+export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Schema>) => {
+  const parsers = { ...DefaultTableSerDes.parsers, ...cfg?.parsers };
+
+  return mkSerDes({
+    serializer: [cfg?.serialize, DefaultTableSerDes.serialize].filter(x => x).map(x => x!),
+    deserializer: [cfg?.deserialize, DefaultTableSerDes.deserialize].filter(x => x).map(x => x!),
+    adaptSerCtx: (ctx: DataAPISerCtx<Schema>) => ctx,
+    adaptDesCtx: (_ctx) => {
+      const ctx = _ctx as TableDesCtx;
+      ctx.tableSchema = ctx.rawDataApiResp.status?.primaryKeySchema ?? ctx.rawDataApiResp.status!.projectionSchema;
+      ctx.parsers = parsers;
+      return ctx;
+    },
+    mutateInPlace: cfg?.mutateInPlace,
+  });
+};
 
 export const DefaultTableSerDes: Omit<Required<TableSerDesConfig<SomeRow>>, 'mutateInPlace'> = {
   serialize(_, value) {
@@ -60,50 +75,49 @@ export const DefaultTableSerDes: Omit<Required<TableSerDesConfig<SomeRow>>, 'mut
   },
   deserialize(key, _, ctx) {
     if (this === ctx.rootObj) {
-      deserializeObj(ctx.rootObj, key, ctx.tableSchema[key]);
+      deserializeObj(ctx, ctx.rootObj[key], key, ctx.tableSchema[key]);
     }
     return true;
   },
+  parsers: {
+    date: (date) => new CqlDate(date),
+    duration: (duration) => new CqlDuration(duration),
+    inet: (inet) => new InetAddress(inet),
+    time: (time) => new CqlTime(time),
+    timestamp: (timestamp) => new CqlTimestamp(timestamp),
+    uuid: (uuid) => new UUID(uuid, false),
+    timeuuid: (uuid) => new UUID(uuid, false),
+    varint: BigInt,
+    map(map, ctx, v, k) {
+      const entries = Array.isArray(map) ? map : Object.entries(map);
+
+      for (let i = entries.length; i--;) {
+        const [key, value] = entries[i];
+        entries[i] = [ctx.parsers[k!] ? ctx.parsers[k!](key, ctx) : key, ctx.parsers[v!] ? ctx.parsers[v!](value, ctx) : value];
+      }
+
+      return new Map(entries);
+    },
+    list(values, ctx, v) {
+      for (let i = values.length; i--;) {
+        values[i] = ctx.parsers[v!] ? ctx.parsers[v!](values[i], ctx) : values[i];
+      }
+      return values;
+    },
+    set(set, ctx, v) {
+      return new Set(ctx.parsers.list(set, ctx, v));
+    },
+  },
 };
 
-const deserializeObj = (rootObj: SomeRow, key: string, column: ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition) => {
+const deserializeObj = (ctx: TableDesCtx, obj: SomeRow, key: string, column: ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition) => {
   const type = (column.type === 'UNSUPPORTED')
     ? column.apiSupport.cqlDefinition
     : column.type;
 
-  const parser = Parsers[type];
+  const parser = ctx.parsers[type];
 
   if (parser) {
-    rootObj[key] = parser(rootObj[key], (<any>column).valueType, (<any>column).keyType);
+    obj[key] = parser(obj[key], (<any>column).valueType, (<any>column).keyType);
   }
-};
-
-const Parsers: Record<string, (val: any, v?: TableScalarType, k?: TableScalarType) => any> = {
-  date: (date) => new CqlDate(date),
-  duration: (duration) => new CqlDuration(duration),
-  inet: (inet) => new InetAddress(inet),
-  time: (time) => new CqlTime(time),
-  timestamp: (timestamp) => new CqlTimestamp(timestamp),
-  uuid: (uuid) => new UUID(uuid, false),
-  timeuuid: (uuid) => new UUID(uuid, false),
-  varint: BigInt,
-  map(map, v, k) {
-    const entries = Array.isArray(map) ? map : Object.entries(map);
-
-    for (let i = entries.length; i--;) {
-      const [key, value] = entries[i];
-      entries[i] = [Parsers[k!] ? Parsers[k!](key) : key, Parsers[v!] ? Parsers[v!](value) : value];
-    }
-
-    return new Map(entries);
-  },
-  list(values, v) {
-    for (let i = values.length; i--;) {
-      values[i] = Parsers[v!] ? Parsers[v!](values[i]) : values[i];
-    }
-    return values;
-  },
-  set(set, v) {
-    return new Set(Parsers.list(set, v));
-  },
 };

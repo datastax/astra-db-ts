@@ -18,7 +18,7 @@ import type { FetchCtx } from '@/src/lib/api/fetch/types';
 import type { HttpMethods } from '@/src/lib/api/constants';
 import type { Ref } from '@/src/lib/types';
 import type { TimeoutManager } from '@/src/lib/api/timeout-managers';
-import { NormalizedLoggingConfig } from '@/src/lib/logging/types';
+import type { NormalizedLoggingConfig } from '@/src/lib/logging/types';
 
 /**
  * @internal

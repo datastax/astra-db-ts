@@ -15,4 +15,4 @@
 export * from './devops-api-http-client';
 export * from './data-api-http-client';
 export * from './http-client';
-export * from './types';
+export type * from './types';
