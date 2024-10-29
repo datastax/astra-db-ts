@@ -50,6 +50,7 @@ import { WithTimeout } from '@/src/lib';
 import { constantly } from '@/src/lib/utils';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { mkCollectionSerDes } from '@/src/documents/collections/ser-des';
+import { $CustomInspect } from '@/src/lib/constants';
 
 /**
  * Represents the interface to a collection in the database.
@@ -112,7 +113,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     });
 
     this.#httpClient = httpClient.forCollection(this.keyspace, this.collectionName, opts);
-    this.#commands = new CommandImpls(this.#httpClient, mkCollectionSerDes(opts?.serdes));
+    this.#commands = new CommandImpls(this.collectionName, this.#httpClient, mkCollectionSerDes(opts?.serdes));
     this.#db = db;
   }
 
@@ -1020,5 +1021,9 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
   public get _httpClient() {
     return this.#httpClient;
+  }
+
+  private [$CustomInspect]() {
+    return `Collection{keyspace="${this.keyspace}",name="${this.collectionName}"}`;
   }
 }

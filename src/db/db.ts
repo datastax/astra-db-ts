@@ -40,6 +40,7 @@ import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
 import { DbSpawnOptions } from '@/src/client/types';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { Logger } from '@/src/lib/logging/logger';
+import { $CustomInspect } from '@/src/lib/constants';
 
 /**
  * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
@@ -830,5 +831,9 @@ export class Db {
 
   public get _httpClient() {
     return this.#httpClient;
+  }
+
+  private [$CustomInspect]() {
+    return `Db{endpoint="${this.#endpoint}",keyspace="${this.keyspace}"}`;
   }
 }

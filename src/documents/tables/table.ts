@@ -41,6 +41,7 @@ import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { AlterTableOptions, AlterTableSchema, Db, TableSpawnOptions } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
 import { constantly } from '@/src/lib/utils';
+import { $CustomInspect } from '@/src/lib/constants';
 
 export type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$PrimaryKeyType'>;
 
@@ -100,7 +101,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
 
     this.#httpClient = httpClient.forCollection(this.keyspace, this.tableName, opts);
     this.#httpClient.baseHeaders['Feature-Flag-tables'] = 'true';
-    this.#commands = new CommandImpls(this.#httpClient, mkTableSerDes(opts?.serdes));
+    this.#commands = new CommandImpls(this.tableName, this.#httpClient, mkTableSerDes(opts?.serdes));
     this.#db = db;
   }
 
@@ -193,5 +194,9 @@ export class Table<Schema extends SomeRow = SomeRow> {
 
   public get _httpClient() {
     return this.#httpClient;
+  }
+
+  private [$CustomInspect]() {
+    return `Table{keyspace="${this.keyspace}",name="${this.tableName}"}`;
   }
 }

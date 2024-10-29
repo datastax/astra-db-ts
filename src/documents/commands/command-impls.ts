@@ -49,10 +49,12 @@ import type { GenericFindOptions } from '@/src/documents/commands/types/find/fin
 export class CommandImpls<ID> {
   readonly #httpClient: DataAPIHttpClient;
   readonly #serdes: DataAPISerDes;
+  readonly #name: string;
 
-  constructor(httpClient: DataAPIHttpClient, serdes: DataAPISerDes) {
+  constructor(name: string, httpClient: DataAPIHttpClient, serdes: DataAPISerDes) {
     this.#httpClient = httpClient;
     this.#serdes = serdes;
+    this.#name = name;
   }
 
   public async insertOne(document: SomeDoc, options: WithTimeout | nullish, mkID: MkID<ID>): Promise<GenericInsertOneResult<ID>> {
@@ -195,7 +197,7 @@ export class CommandImpls<ID> {
     if (options?.sort) {
       options.sort = normalizedSort(options.sort);
     }
-    return new FindCursor(keyspace, this.#httpClient, this.#serdes, this.#serdes.serializeRecord(structuredClone(filter)), structuredClone(options));
+    return new FindCursor(keyspace, this.#name, this.#httpClient, this.#serdes, this.#serdes.serializeRecord(structuredClone(filter)), structuredClone(options));
   }
 
   public async findOne<Schema>(filter: SomeDoc, options?: GenericFindOneOptions): Promise<Schema | null> {

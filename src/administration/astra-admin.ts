@@ -31,6 +31,7 @@ import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { buildAstraEndpoint } from '@/src/lib/utils';
 import { Logger } from '@/src/lib/logging/logger';
 import { DbSpawnOptions } from '@/src/client';
+import { $CustomInspect } from '@/src/lib/constants';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -454,5 +455,9 @@ export class AstraAdmin {
 
   public get _httpClient() {
     return this.#httpClient;
+  }
+
+  private [$CustomInspect]() {
+    return `AstraAdmin{}`;
   }
 }

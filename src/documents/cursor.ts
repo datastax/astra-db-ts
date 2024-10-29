@@ -18,6 +18,7 @@ import type { GenericFindOptions } from '@/src/documents/commands';
 import type { Projection, Sort } from '@/src/documents/types';
 import type { DataAPISerDes, DeepPartial, nullish } from '@/src/lib';
 import { normalizedSort } from '@/src/documents/utils';
+import { $CustomInspect } from '@/src/lib/constants';
 
 /**
  * Represents the status of a cursor.
@@ -99,6 +100,7 @@ interface InternalGetMoreCommand {
  */
 export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   readonly #keyspace: string;
+  readonly #parent: string;
   readonly #httpClient: DataAPIHttpClient;
   readonly #serdes: DataAPISerDes;
 
@@ -117,8 +119,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(keyspace: string, httpClient: DataAPIHttpClient, serdes: DataAPISerDes, filter: Filter<TRaw>, options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
+  constructor(keyspace: string, parent: string, httpClient: DataAPIHttpClient, serdes: DataAPISerDes, filter: Filter<TRaw>, options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
     this.#keyspace = keyspace;
+    this.#parent = parent;
     this.#httpClient = httpClient;
     this.#serdes = serdes;
     this.#filter = filter;
@@ -358,7 +361,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns A behavioral clone of this cursor.
    */
   public clone(): FindCursor<TRaw, TRaw> {
-    return new FindCursor(this.#keyspace, this.#httpClient, this.#serdes, this.#filter, this.#options);
+    return new FindCursor(this.#keyspace, this.#parent, this.#httpClient, this.#serdes, this.#filter, this.#options);
   }
 
   /**
@@ -512,8 +515,12 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this.#buffer.length = 0;
   }
 
+  private [$CustomInspect]() {
+    return `FindCursor{source="${this.keyspace}.${this.#parent}",state="${this.#state}",consumed=${this.#consumed},buffered=${this.#buffer.length}}`;
+  }
+
   #clone<R, RRaw extends SomeDoc>(filter: Filter<RRaw>, options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
-    return new FindCursor(this.#keyspace, this.#httpClient, this.#serdes, filter, options, mapping);
+    return new FindCursor(this.#keyspace, this.#parent, this.#httpClient, this.#serdes, filter, options, mapping);
   }
 
   async #next(peek: true): Promise<TRaw | nullish>

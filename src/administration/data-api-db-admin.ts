@@ -20,6 +20,7 @@ import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admi
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { Db } from '@/src/db';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
+import { $CustomInspect } from '@/src/lib/constants';
 
 /**
  * An administrative class for managing non-Astra databases, including creating, listing, and deleting keyspaces.
@@ -203,5 +204,9 @@ export class DataAPIDbAdmin extends DbAdmin {
 
   public get _httpClient() {
     return this.#httpClient;
+  }
+
+  private [$CustomInspect]() {
+    return `DataAPIDbAdmin{}`;
   }
 }

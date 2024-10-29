@@ -36,6 +36,7 @@ import { parseEnvironment } from '@/src/client/parsers/environment';
 import { parseHttpOpts } from '@/src/client/parsers/http-opts';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
+import { $CustomInspect } from '@/src/lib/constants';
 
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
@@ -296,6 +297,10 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * *This will only be defined if the `Symbol.asyncDispose` symbol is actually defined.*
    */
   public [Symbol.asyncDispose]!: () => Promise<void>;
+
+  private [$CustomInspect]() {
+    return `DataAPIClient{env="${this.#options.environment}"}`;
+  }
 }
 
 function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
