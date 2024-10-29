@@ -13,10 +13,11 @@
 // limitations under the License.
 
 import { p, Parser } from '@/src/lib/validation';
-import { DbSpawnOptions } from '@/src/client';
+import { DbSerDesConfig, DbSpawnOptions } from '@/src/client';
 import { TokenProvider } from '@/src/lib';
 import { isNullish } from '@/src/lib/utils';
 import { Logger } from '@/src/lib/logging/logger';
+import { SomeDoc, TableColumnTypeParser, TableSerDesConfig } from '@/src/documents';
 
 export const parseDbSpawnOpts: Parser<DbSpawnOptions | undefined, unknown> = (raw, field) => {
   const opts = p.parse('object?')<DbSpawnOptions>(raw, field);
@@ -30,7 +31,37 @@ export const parseDbSpawnOpts: Parser<DbSpawnOptions | undefined, unknown> = (ra
     keyspace: p.parse('string?', validateKeyspace)(opts.keyspace, `${field}.keyspace`),
     dataApiPath: p.parse('string?')(opts.dataApiPath, `${field}.dataApiPath`),
     token: TokenProvider.parseToken([opts.token], `${field}.token`),
+    serDes: p.parse('object?', parseSerDes)(opts.serdes, `${field}.serDes`),
   };
+};
+
+const parseSerDes: Parser<DbSerDesConfig<SomeDoc>> = (cfg, field) => ({
+  table: p.parse('object?', parseTableSerDes)(cfg.table, `${field}.table`),
+  collection: p.parse('object?', parseCollectionSerDes)(cfg.collection, `${field}.collection`),
+  mutateInPlace: p.parse('boolean?')(cfg.mutateInPlace, `${field}.mutateInPlace`),
+});
+
+const parseTableSerDes: Parser<TableSerDesConfig<SomeDoc>> = (cfg, field) => ({
+  serialize: p.parse('function?')(cfg.serialize, `${field}.serialize`),
+  deserialize: p.parse('function?')(cfg.deserialize, `${field}.deserialize`),
+  parsers: p.parse('object?', parseTableColumnTypeParser)(cfg.parsers, `${field}.parsers`),
+  mutateInPlace: p.parse('boolean?')(cfg.mutateInPlace, `${field}.mutateInPlace`),
+});
+
+const parseCollectionSerDes: Parser<TableSerDesConfig<SomeDoc>> = (cfg, field) => ({
+  serialize: p.parse('function?')(cfg.serialize, `${field}.serialize`),
+  deserialize: p.parse('function?')(cfg.deserialize, `${field}.deserialize`),
+  mutateInPlace: p.parse('boolean?')(cfg.mutateInPlace, `${field}.mutateInPlace`),
+});
+
+const parseTableColumnTypeParser: Parser<Record<string, TableColumnTypeParser>, Record<string, unknown>> = (raw, field) => {
+  const parsers = Object.entries(raw).map(([key, value]) => {
+    return [
+      p.parse('string!')(key, `key ${field}.${key}`),
+      p.parse('function!')(value, `${field}.${key}`),
+    ];
+  });
+  return Object.fromEntries(parsers);
 };
 
 const validateKeyspace = (keyspace: string | undefined, field: string) => {

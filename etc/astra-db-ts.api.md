@@ -468,11 +468,11 @@ export interface CostInfo {
 
 // @public (undocumented)
 export class CqlDate {
-    constructor(input?: string | Date | CqlDateComponents);
+    constructor(input?: string | Date | Partial<CqlDateComponents>);
     // (undocumented)
     components(): CqlDateComponents;
     // (undocumented)
-    toDate(): Date;
+    toDate(base?: Date | CqlTime | CqlTimestamp): Date;
     // (undocumented)
     toString(): string;
 }
@@ -508,11 +508,11 @@ export interface CqlDurationComponents {
 
 // @public (undocumented)
 export class CqlTime {
-    constructor(input: string | Date | CqlTimeComponents);
+    constructor(input?: string | Date | Partial<CqlTimeComponents>);
     // (undocumented)
     components(): CqlTimeComponents;
     // (undocumented)
-    toDate(): Date;
+    toDate(base?: Date | CqlDate | CqlTimestamp): Date;
     // (undocumented)
     toString(): string;
 }
@@ -531,9 +531,9 @@ export interface CqlTimeComponents {
 
 // @public (undocumented)
 export class CqlTimestamp {
-    constructor(input: string | Date | CqlTimestampComponents);
+    constructor(input?: string | Date | Partial<CqlTimestampComponents>);
     // (undocumented)
-    components(): CqlDurationComponents;
+    components(): CqlTimestampComponents;
     // (undocumented)
     toDate(): Date;
     // (undocumented)
@@ -543,17 +543,17 @@ export class CqlTimestamp {
 // @public (undocumented)
 export interface CqlTimestampComponents {
     // (undocumented)
-    date?: number;
+    date: number;
     // (undocumented)
-    hours?: number;
+    hours: number;
     // (undocumented)
-    minutes?: number;
+    minutes: number;
     // (undocumented)
     month: number;
     // (undocumented)
-    ms?: number;
+    nanoseconds: number;
     // (undocumented)
-    seconds?: number;
+    seconds: number;
     // (undocumented)
     year: number;
 }
@@ -709,7 +709,7 @@ export interface DataAPIDesCtx {
 }
 
 // @public (undocumented)
-export type DataAPIDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | undefined | void;
+export type DataAPIDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | void;
 
 // @public
 export interface DataAPIDetailedErrorDescriptor {
@@ -799,7 +799,7 @@ export interface DataAPISerDesConfig<Schema extends SomeDoc, SerCtx extends Data
 }
 
 // @public (undocumented)
-export type DataAPISerFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | undefined | void;
+export type DataAPISerFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | void;
 
 // @public
 export class DataAPITimeoutError extends DataAPIError {
@@ -990,9 +990,6 @@ export interface DefaultHttpClientOptions {
     maxTimeMS?: number;
     preferHttp2?: boolean;
 }
-
-// @public (undocumented)
-export const DefaultTableSerDes: Omit<Required<TableSerDesConfig<SomeRow>>, 'mutateInPlace'>;
 
 // @public
 export class DeleteManyError extends CumulativeDataAPIError {
@@ -1197,7 +1194,7 @@ export type FilterOps<Elem> = {
 export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     [Symbol.asyncIterator](): AsyncGenerator<T, void, void>;
     // @internal
-    constructor(keyspace: string, httpClient: DataAPIHttpClient, serdes: DataAPISerDes, filter: Filter<TRaw>, options?: GenericFindOptions, mapping?: (doc: TRaw) => T);
+    constructor(keyspace: string, parent: string, httpClient: DataAPIHttpClient, serdes: DataAPISerDes, filter: Filter<TRaw>, options?: GenericFindOptions, mapping?: (doc: TRaw) => T);
     buffered(): number;
     clone(): FindCursor<TRaw, TRaw>;
     close(): void;
@@ -1598,14 +1595,14 @@ export type MaybeId<T> = NoId<T> & {
 
 // @public (undocumented)
 export const mkSerDes: <Schema extends SomeDoc>(cfg: DataAPISerDesConfig<Schema, any, any>) => {
-    serializeRecord(obj: Schema): SomeDoc;
-    deserializeRecord(obj: SomeDoc, raw: RawDataAPIResponse): Schema;
+    serializeRecord<S extends Schema | nullish>(obj: S): S;
+    deserializeRecord<S extends Schema | nullish>(obj: SomeDoc | nullish, raw: RawDataAPIResponse): S;
 };
 
 // @public (undocumented)
 export const mkTableSerDes: <Schema extends SomeRow>(cfg?: TableSerDesConfig<Schema>) => {
-    serializeRecord(obj: Schema): SomeDoc;
-    deserializeRecord(obj: SomeDoc, raw: RawDataAPIResponse): Schema;
+    serializeRecord<S extends nullish | SomeDoc>(obj: S): S;
+    deserializeRecord<S extends nullish | SomeDoc>(obj: SomeDoc | nullish, raw: RawDataAPIResponse): S;
 };
 
 // @public

@@ -305,7 +305,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
 
 function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
   const clientType = (options?.httpOptions)
-    ? options?.httpOptions?.client ?? 'default'
+    ? options.httpOptions?.client ?? 'default'
     : undefined;
 
   const ctx =

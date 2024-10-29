@@ -32,12 +32,12 @@ export interface TableSerDesConfig<Schema extends SomeRow> {
 }
 
 export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Schema>) => {
-  const parsers = { ...DefaultTableSerDes.parsers, ...cfg?.parsers };
+  const parsers = { ...DefaultTableSerDesCfg.parsers, ...cfg?.parsers };
 
   return mkSerDes({
-    serializer: [cfg?.serialize, DefaultTableSerDes.serialize].filter(x => x).map(x => x!),
-    deserializer: [cfg?.deserialize, DefaultTableSerDes.deserialize].filter(x => x).map(x => x!),
-    adaptSerCtx: (ctx: DataAPISerCtx<Schema>) => ctx,
+    serializer: [cfg?.serialize, DefaultTableSerDesCfg.serialize].filter(x => x).map(x => x!),
+    deserializer: [cfg?.deserialize, DefaultTableSerDesCfg.deserialize].filter(x => x).map(x => x!),
+    adaptSerCtx: (ctx) => ctx,
     adaptDesCtx: (_ctx) => {
       const ctx = _ctx as TableDesCtx;
       const tableSchema = ctx.rawDataApiResp.status?.primaryKeySchema ?? ctx.rawDataApiResp.status!.projectionSchema;
@@ -57,7 +57,7 @@ export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Sc
   });
 };
 
-export const DefaultTableSerDes: Omit<Required<TableSerDesConfig<SomeRow>>, 'mutateInPlace'> = {
+const DefaultTableSerDesCfg: Omit<Required<TableSerDesConfig<SomeRow>>, 'mutateInPlace'> = {
   serialize(_, value) {
     if (typeof value === 'object' && value !== null) {
       if ($SerializeRelaxed in value) {
@@ -88,10 +88,12 @@ export const DefaultTableSerDes: Omit<Required<TableSerDesConfig<SomeRow>>, 'mut
     uuid: (uuid) => new UUID(uuid, false),
     timeuuid: (uuid) => new UUID(uuid, false),
     varint: BigInt,
+    double: parseIEE754,
+    float: parseIEE754,
     map(map, ctx, def) {
       const entries = Array.isArray(map) ? map : Object.entries(map);
 
-      for (let i = entries.length; i--;) {
+      for (let i = 0, n = entries.length; i < n; i++) {
         const [key, value] = entries[i];
         const keyParser = ctx.parsers[def.keyType];
         const valueParser = ctx.parsers[def.valueType];
@@ -101,7 +103,7 @@ export const DefaultTableSerDes: Omit<Required<TableSerDesConfig<SomeRow>>, 'mut
       return new Map(entries);
     },
     list(values, ctx, def) {
-      for (let i = values.length; i--;) {
+      for (let i = 0, n = values.length; i < n; i++) {
         const elemParser = ctx.parsers[def.valueType];
         values[i] = elemParser ? elemParser(values[i], ctx, def) : values[i];
       }
@@ -113,7 +115,7 @@ export const DefaultTableSerDes: Omit<Required<TableSerDesConfig<SomeRow>>, 'mut
   },
 };
 
-const deserializeObj = (ctx: TableDesCtx, obj: SomeRow, key: string, column: ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition) => {
+function deserializeObj(ctx: TableDesCtx, obj: SomeRow, key: string, column: ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition) {
   const type = (column.type === 'UNSUPPORTED')
     ? column.apiSupport.cqlDefinition
     : column.type;
@@ -123,4 +125,17 @@ const deserializeObj = (ctx: TableDesCtx, obj: SomeRow, key: string, column: Lis
   if (parser) {
     obj[key] = parser(obj[key], ctx, column);
   }
-};
+}
+
+function parseIEE754(val: number | 'NaN' | 'Infinity' | '-Infinity'): number {
+  switch (val) {
+    case 'NaN':
+      return NaN;
+    case 'Infinity':
+      return Infinity;
+    case '-Infinity':
+      return -Infinity;
+    default:
+      return val;
+  }
+}

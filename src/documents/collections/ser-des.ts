@@ -22,14 +22,14 @@ export interface CollectionSerDesConfig<Schema extends SomeDoc> {
 }
 
 export const mkCollectionSerDes = <Schema extends SomeDoc>(cfg?: CollectionSerDesConfig<Schema>) => mkSerDes({
-  serializer: [cfg?.serialize, DefaultCollectionSerDes.serialize].filter(x => x).map(x => x!),
-  deserializer: [cfg?.deserialize, DefaultCollectionSerDes.deserialize].filter(x => x).map(x => x!),
-  adaptSerCtx: (ctx: DataAPISerCtx<Schema>) => ctx,
+  serializer: [cfg?.serialize, DefaultCollectionSerDesCfg.serialize].filter(x => x).map(x => x!),
+  deserializer: [cfg?.deserialize, DefaultCollectionSerDesCfg.deserialize].filter(x => x).map(x => x!),
+  adaptSerCtx: (ctx) => ctx,
   adaptDesCtx: (ctx) => ctx,
   mutateInPlace: cfg?.mutateInPlace,
 });
 
-export const DefaultCollectionSerDes: CollectionSerDesConfig<SomeDoc> = {
+const DefaultCollectionSerDesCfg: CollectionSerDesConfig<SomeDoc> = {
   serialize(key, value) {
     if (typeof value === 'object' && value !== null) {
       if (value instanceof Date) {
