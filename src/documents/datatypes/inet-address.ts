@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { $SerializeRelaxed } from '@/src/lib';
+import { $CustomInspect } from '@/src/lib/constants';
 
 export class InetAddress {
   private readonly _raw!: string;
@@ -60,6 +61,10 @@ export class InetAddress {
 
   public toString(): string {
     return this._raw;
+  }
+
+  private [$CustomInspect]() {
+    return `InetAddress<${this.version}>("${this._raw}")`;
   }
 }
 

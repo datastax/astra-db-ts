@@ -13,6 +13,8 @@
 // limitations under the License.
 
 import { $SerializeRelaxed } from '@/src/lib';
+import { isNullish } from '@/src/lib/utils';
+import { $CustomInspect } from '@/src/lib/constants';
 
 export interface CqlDateComponents {
   year: number,
@@ -23,13 +25,17 @@ export interface CqlDateComponents {
 export class CqlDate {
   readonly #date: string;
 
-  public constructor(input: string | Date | CqlDateComponents) {
+  public constructor(input?: string | Date | Partial<CqlDateComponents>) {
     if (typeof input === 'string') {
       this.#date = input;
-    } else if (input instanceof Date) {
+    } else if (input instanceof Date || isNullish(input)) {
+      input ||= new Date();
       this.#date = `${input.getFullYear()}-${input.getMonth() + 1}-${input.getDate()}`;
     } else {
-      this.#date = `${input.year}-${input.month}-${input.date}`;
+      if (input.month && (input.month < 1 || input.month > 12)) {
+        throw new RangeError('Month must be between 1 and 12 (CqlDate month is NOT zero-indexed)');
+      }
+      this.#date = `${input.year ?? '0000'}-${input.month ?? '00'}-${input.date ?? '00'}`;
     }
 
     Object.defineProperty(this, $SerializeRelaxed, {
@@ -38,17 +44,44 @@ export class CqlDate {
   }
 
   public components(): CqlDateComponents {
-    const [year, month, day] = this.#date.split('-');
-    return { year: +year, month: +month, date: +day };
+    const signum = this.#date.startsWith('-') ? -1 : 1;
+    const date = this.#date.split('-');
+
+    if (signum === -1) {
+      date.shift();
+    }
+
+    return { year: +date[0], month: +date[1], date: +date[2] };
   }
 
-  public toDate(): Date {
-    const [year, month, day] = this.#date.split('-');
-    return new Date(+year, +month - 1, +day);
+  public toDate(base?: Date | CqlTime | CqlTimestamp): Date {
+    if (base instanceof CqlTimestamp) {
+      base = base.toDate();
+    }
+
+    if (!base) {
+      base = new Date();
+    }
+
+    const date = this.components();
+
+    if (base instanceof Date) {
+      const ret = new Date(base);
+      ret.setFullYear(date.year, date.month - 1, date.date);
+      return ret;
+    }
+
+    const time = base.components();
+
+    return new Date(date.year, date.month - 1, date.date, time.hours, time.minutes, time.seconds, time.nanoseconds / 1_000_000);
   }
 
   public toString(): string {
     return this.#date;
+  }
+
+  private [$CustomInspect]() {
+    return `CqlDate("${this.#date}")`;
   }
 }
 
@@ -80,6 +113,10 @@ export class CqlDuration {
   public toString() {
     return this.#duration;
   }
+
+  private [$CustomInspect]() {
+    return `CqlDuration("${this.#duration}")`;
+  }
 }
 
 export interface CqlTimeComponents {
@@ -92,28 +129,24 @@ export interface CqlTimeComponents {
 export class CqlTime {
   readonly #time: string;
 
-  public constructor(input: string | Date | CqlTimeComponents) {
+  public constructor(input?: string | Date | Partial<CqlTimeComponents>) {
+    input ||= new Date();
+
     if (typeof input === 'string') {
       this.#time = input;
     } else if (input instanceof Date) {
-      const ms = input.getMilliseconds();
-
-      if (ms) {
-        this.#time = `${input.getHours()}:${input.getMinutes()}:${input.getSeconds()}.${input.getMilliseconds() * 1000}`;
-      } else {
-        this.#time = `${input.getHours()}:${input.getMinutes()}:${input.getSeconds()}`;
-      }
+      this.#time = CqlTime.#initTime(input.getHours(), input.getMinutes(), input.getSeconds(), input.getMilliseconds());
     } else {
-      if (input.nanoseconds) {
-        this.#time = `${input.hours}:${input.minutes}:${input.seconds}.${input.nanoseconds}`;
-      } else {
-        this.#time = `${input.hours}:${input.minutes}:${input.seconds}`;
-      }
+      this.#time = CqlTime.#initTime(input.hours, input.minutes, input.seconds, input.nanoseconds ? input.nanoseconds.toString().padStart(9, '0') : '');
     }
 
     Object.defineProperty(this, $SerializeRelaxed, {
       value: this.toString,
     });
+  }
+
+  static #initTime(hours?: number, minutes?: number, seconds?: number, fractional?: unknown): string {
+    return `${!hours || hours < 10 ? '0' : ''}${hours}:${!minutes || minutes < 10 ? '0' : ''}${minutes}:${!seconds || seconds < 10 ? '0' : ''}${seconds}${fractional ? `.${fractional}` : ''}`;
   }
 
   public components(): CqlTimeComponents {
@@ -124,48 +157,63 @@ export class CqlTime {
       hours: +hours,
       minutes: +mins,
       seconds: +secs,
-      nanoseconds: fractionPart ? +fractionPart : 0,
+      nanoseconds: +fractionPart.padEnd(9, '0'),
     };
   }
 
-  public toDate(): Date {
-    const [timePart, fractionPart] = this.#time.split('.');
-    const [hours, mins, secs] = timePart.split(':');
+  public toDate(base?: Date | CqlDate | CqlTimestamp): Date {
+    if (base instanceof CqlTimestamp) {
+      base = base.toDate();
+    }
 
-    const date = new Date();
-    date.setHours(+hours);
-    date.setMinutes(+mins);
-    date.setSeconds(+secs);
-    date.setMilliseconds(fractionPart ? +fractionPart / 1000 : 0);
+    if (!base) {
+      base = new Date();
+    }
 
-    return date;
+    const time = this.components();
+
+    if (base instanceof Date) {
+      const ret = new Date(base);
+      ret.setHours(time.hours, time.minutes, time.seconds, time.nanoseconds / 1_000_000);
+      return ret;
+    }
+
+    const date = base.components();
+
+    return new Date(date.year, date.month - 1, date.date, time.hours, time.minutes, time.seconds, time.nanoseconds / 1_000_000);
   }
 
   public toString() {
     return this.#time;
+  }
+
+  private [$CustomInspect]() {
+    return `CqlTime("${this.#time}")`;
   }
 }
 
 export interface CqlTimestampComponents {
   year: number,
   month: number,
-  date?: number,
-  hours?: number,
-  minutes?: number,
-  seconds?: number
-  ms?: number
+  date: number,
+  hours: number,
+  minutes: number,
+  seconds: number
+  nanoseconds: number
 }
 
 export class CqlTimestamp {
   readonly #timestamp: string;
 
-  public constructor(input: string | Date | CqlTimestampComponents) {
+  public constructor(input?: string | Date | Partial<CqlTimestampComponents>) {
+    input ||= new Date();
+
     if (typeof input === 'string') {
       this.#timestamp = input;
     } else if (input instanceof Date) {
       this.#timestamp = input.toISOString();
     } else {
-      this.#timestamp = new Date(input.year, input.month - 1, input.date, input.hours, input.minutes, input.seconds, input.ms).toISOString();
+      this.#timestamp = new Date(input.year ?? 0, input.month ?? 1 - 1, input.date, input.hours, input.minutes, input.seconds, input.nanoseconds ?? 0 / 1_000_000).toISOString();
     }
 
     Object.defineProperty(this, $SerializeRelaxed, {
@@ -173,8 +221,17 @@ export class CqlTimestamp {
     });
   }
 
-  public components(): CqlDurationComponents {
-    throw 'stub';
+  public components(): CqlTimestampComponents {
+    const date = this.toDate();
+    return {
+      year: date.getFullYear(),
+      month: date.getMonth() + 1,
+      date: date.getDate(),
+      hours: date.getHours(),
+      minutes: date.getMinutes(),
+      seconds: date.getSeconds(),
+      nanoseconds: date.getMilliseconds() * 1_000_000,
+    };
   }
 
   public toDate(): Date {
@@ -183,5 +240,9 @@ export class CqlTimestamp {
 
   public toString() {
     return this.#timestamp;
+  }
+
+  private [$CustomInspect]() {
+    return `CqlTimestamp("${this.#timestamp}")`;
   }
 }

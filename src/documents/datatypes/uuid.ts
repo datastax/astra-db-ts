@@ -14,6 +14,7 @@
 
 import { UUID as UUIDv7, uuidv4, uuidv7 } from 'uuidv7';
 import { $SerializeRelaxed, $SerializeStrict } from '@/src/lib';
+import { $CustomInspect } from '@/src/lib/constants';
 
 const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
 
@@ -155,6 +156,10 @@ export class UUID {
 
   public toJSON() {
     return { $uuid: this._raw };
+  }
+
+  private [$CustomInspect]() {
+    return `UUID<${this.version}>("${this._raw}")`;
   }
 }
 

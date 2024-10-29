@@ -468,7 +468,7 @@ export interface CostInfo {
 
 // @public (undocumented)
 export class CqlDate {
-    constructor(input: string | Date | CqlDateComponents);
+    constructor(input?: string | Date | CqlDateComponents);
     // (undocumented)
     components(): CqlDateComponents;
     // (undocumented)

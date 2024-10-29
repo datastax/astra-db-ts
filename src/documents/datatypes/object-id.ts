@@ -14,6 +14,7 @@
 
 import { isNullish } from '@/src/lib/utils';
 import { $SerializeStrict } from '@/src/lib';
+import { $CustomInspect } from '@/src/lib/constants';
 
 const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
 
@@ -127,6 +128,10 @@ export class ObjectId {
 
   public toJSON() {
     return { $objectId: this._raw };
+  }
+
+  private [$CustomInspect]() {
+    return `ObjectId("${this._raw}")`;
   }
 }
 

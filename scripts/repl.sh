@@ -19,6 +19,7 @@ node -i -e "
   require('./node_modules/dotenv/config');
 
   const $ = require('./dist');
+  require('util').inspect.defaultOptions.depth = null;
 
   let client = new $.DataAPIClient(process.env.CLIENT_DB_TOKEN, { environment: process.env.CLIENT_DB_ENVIRONMENT });
   let db = client.db(process.env.CLIENT_DB_URL);
