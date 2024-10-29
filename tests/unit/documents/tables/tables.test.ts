@@ -20,24 +20,24 @@ import { Table } from '@/src/documents';
 describe('unit.documents.tables', ({ db }) => {
   describe('initialization', () => {
     it('should initialize a Table', () => {
-      const table = new Table(db, db['_httpClient'], 'new_table', undefined);
+      const table = new Table(db, db._httpClient, 'new_table', undefined);
       assert.ok(table);
     });
   });
 
   describe('accessors', () => {
     it('returns the given keyspace', () => {
-      const table = new Table(db, db['_httpClient'], 'new_table', { keyspace: 'hello' });
+      const table = new Table(db, db._httpClient, 'new_table', { keyspace: 'hello' });
       assert.strictEqual(table.keyspace, "hello");
     });
 
     it('returns the default keyspace if not set', () => {
-      const table = new Table(db, db['_httpClient'], 'new_table', undefined);
+      const table = new Table(db, db._httpClient, 'new_table', undefined);
       assert.strictEqual(table.keyspace, DEFAULT_KEYSPACE);
     });
 
     it('returns the name', () => {
-      const table = new Table(db, db['_httpClient'], 'new_table', undefined);
+      const table = new Table(db, db._httpClient, 'new_table', undefined);
       assert.strictEqual(table.tableName, 'new_table');
     });
   });

@@ -124,7 +124,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     }
 
     {
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['PENDING', 'INITIALIZING'],
         defaultPollInterval: 10000,
@@ -173,7 +173,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
     {
       await syncDbAdmin.createKeyspace('other_keyspace');
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
         defaultPollInterval: 1000,
@@ -198,7 +198,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
     {
       await syncDbAdmin.dropKeyspace('other_keyspace', { blocking: true });
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
         defaultPollInterval: 1000,
@@ -225,7 +225,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
     {
       await admin.dropDatabase(syncDb, { maxTimeMS: 720000 });
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'TERMINATED',
         legalStates: ['TERMINATING'],
         defaultPollInterval: 10000,

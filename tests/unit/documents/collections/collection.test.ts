@@ -20,24 +20,24 @@ import assert from 'assert';
 describe('unit.documents.collections', ({ db }) => {
   describe('initialization', () => {
     it('should initialize a Collection', () => {
-      const collection = new Collection(db, db['_httpClient'], 'new_collection', undefined);
+      const collection = new Collection(db, db._httpClient, 'new_collection', undefined);
       assert.ok(collection);
     });
   });
 
   describe('accessors', () => {
     it('returns the given keyspace', () => {
-      const collection = new Collection(db, db['_httpClient'], 'new_collection', { keyspace: 'hello' });
+      const collection = new Collection(db, db._httpClient, 'new_collection', { keyspace: 'hello' });
       assert.strictEqual(collection.keyspace, "hello");
     });
 
     it('returns the default keyspace if not set', () => {
-      const collection = new Collection(db, db['_httpClient'], 'new_collection', undefined);
+      const collection = new Collection(db, db._httpClient, 'new_collection', undefined);
       assert.strictEqual(collection.keyspace, DEFAULT_KEYSPACE);
     });
 
     it('returns the name', () => {
-      const collection = new Collection(db, db['_httpClient'], 'new_collection', undefined);
+      const collection = new Collection(db, db._httpClient, 'new_collection', undefined);
       assert.strictEqual(collection.collectionName, 'new_collection');
     });
   });
