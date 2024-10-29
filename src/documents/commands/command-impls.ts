@@ -209,7 +209,7 @@ export class CommandImpls<ID> {
     });
 
     const resp = await this.#httpClient.executeCommand(command, options);
-    return resp.data?.document ? this.#serdes.deserializeRecord(resp.data.document, resp) as any : null;
+    return this.#serdes.deserializeRecord(resp.data?.document, resp) as any;
   }
 
   public async findOneAndReplace<Schema extends SomeDoc>(filter: SomeDoc, replacement: SomeDoc, options?: GenericFindOneAndReplaceOptions): Promise<CollectionModifyResult<Schema> | WithId<Schema> | null> {

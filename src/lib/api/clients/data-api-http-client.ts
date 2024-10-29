@@ -181,7 +181,7 @@ export class DataAPIHttpClient extends HttpClient {
 
       const resp = await this._request({
         url: info.url,
-        data: JSON.stringify(info.command, replacer),
+        data: JSON.stringify(info.command),
         timeoutManager: info.timeoutManager,
         method: HttpMethods.Post,
       });
@@ -190,7 +190,7 @@ export class DataAPIHttpClient extends HttpClient {
         throw new DataAPIHttpError(resp);
       }
 
-      const data: RawDataAPIResponse = resp.body ? JSON.parse(resp.body, reviver) : {};
+      const data: RawDataAPIResponse = resp.body ? JSON.parse(resp.body) : {};
 
       const warnings = data?.status?.warnings ?? [];
       if (warnings.length) {
@@ -220,46 +220,6 @@ export class DataAPIHttpClient extends HttpClient {
       throw e;
     }
   }
-}
-
-/**
- * @internal
- */
-export function replacer(this: any, key: string, value: any): any {
-  if (typeof value === 'bigint') {
-    return Number(value);
-  }
-
-  if (typeof this[key] === 'object') {
-    if (key === '$date') {
-      return new Date(value).valueOf();
-    }
-
-    if (this[key] instanceof Date) {
-      return { $date: this[key].valueOf() };
-    }
-  }
-
-  return value;
-}
-
-/**
- * @internal
- */
-export function reviver(_: string, value: any): any {
-  if (!value) {
-    return value;
-  }
-  if (value.$date) {
-    return new Date(value.$date);
-  }
-  if (value.$objectId) {
-    return new ObjectId(value.$objectId);
-  }
-  if (value.$uuid) {
-    return new UUID(value.$uuid);
-  }
-  return value;
 }
 
 const mkAuthHeaderProvider = (tp: TokenProvider | undefined): HeaderProvider => (tp)

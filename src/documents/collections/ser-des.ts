@@ -31,19 +31,22 @@ export const mkCollectionSerDes = <Schema extends SomeDoc>(cfg?: CollectionSerDe
 
 export const DefaultCollectionSerDes: CollectionSerDesConfig<SomeDoc> = {
   serialize(key, value) {
-    if (typeof value === 'object') {
+    if (typeof value === 'object' && value !== null) {
       if (value instanceof Date) {
-        return [{ $date: this[key].valueOf() }, false];
+        if (key === '$date') {
+          return [value.valueOf(), true];
+        } else {
+          return [{ $date: value.valueOf() }, true];
+        }
       }
 
       if ($SerializeStrict in value) {
-        return [value[$SerializeStrict](), false];
+        return [value[$SerializeStrict](), true];
       }
     }
-    return undefined;
   },
   deserialize(key, value) {
-    if (typeof value === 'object') {
+    if (typeof value === 'object' && value !== null) {
       if ($SerializeStrict in value || value instanceof Date) {
         return;
       }

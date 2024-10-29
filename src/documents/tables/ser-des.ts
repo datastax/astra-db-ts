@@ -59,9 +59,9 @@ export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Sc
 
 export const DefaultTableSerDes: Omit<Required<TableSerDesConfig<SomeRow>>, 'mutateInPlace'> = {
   serialize(_, value) {
-    if (typeof value === 'object') {
+    if (typeof value === 'object' && value !== null) {
       if ($SerializeRelaxed in value) {
-        return [value[$SerializeRelaxed](), false];
+        return [value[$SerializeRelaxed](), true];
       }
 
       if (value instanceof Map) {
@@ -72,10 +72,9 @@ export const DefaultTableSerDes: Omit<Required<TableSerDesConfig<SomeRow>>, 'mut
         return [[...value]];
       }
     }
-    return undefined;
   },
   deserialize(key, _, ctx) {
-    if (this === ctx.rootObj) {
+    if (this && this === ctx.rootObj) {
       deserializeObj(ctx, ctx.rootObj, key, ctx.tableSchema[key]);
     }
     return true;

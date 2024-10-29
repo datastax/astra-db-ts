@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { SomeDoc } from '@/src/documents';
-import type { RawDataAPIResponse } from '@/src/lib';
+import type { nullish, RawDataAPIResponse } from '@/src/lib';
 
 export const $SerializeStrict = Symbol('SerializeStrict');
 export const $SerializeRelaxed = Symbol('SerializeRelaxed');
@@ -29,8 +29,8 @@ export interface DataAPIDesCtx {
   depth: number,
 }
 
-export type DataAPISerFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | undefined | void;
-export type DataAPIDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | undefined | void;
+export type DataAPISerFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | void;
+export type DataAPIDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | void;
 
 export interface DataAPISerDesConfig<Schema extends SomeDoc, SerCtx extends DataAPISerCtx<Schema>, DesCtx extends DataAPIDesCtx> {
   serializer: DataAPISerFn<SerCtx>[],
@@ -43,13 +43,19 @@ export interface DataAPISerDesConfig<Schema extends SomeDoc, SerCtx extends Data
 export type DataAPISerDes = ReturnType<typeof mkSerDes>;
 
 export const mkSerDes = <Schema extends SomeDoc>(cfg: DataAPISerDesConfig<Schema, any, any>) => ({
-  serializeRecord(obj: Schema) {
+  serializeRecord<S extends Schema | nullish>(obj: S): S {
+    if (obj === null || obj === undefined) {
+      return obj;
+    }
     const ctx = cfg.adaptSerCtx({ rootObj: obj, mutatingInPlace: cfg.mutateInPlace || false });
-    return _serializeRecord(ctx.rootObj, 0, ctx, cfg.serializer);
+    return _serializeRecord(ctx.rootObj, 0, ctx, cfg.serializer) as S;
   },
-  deserializeRecord(obj: SomeDoc, raw: RawDataAPIResponse): Schema {
+  deserializeRecord<S extends Schema | nullish>(obj: SomeDoc | nullish, raw: RawDataAPIResponse): S {
+    if (obj === null || obj === undefined) {
+      return obj as S;
+    }
     const ctx = cfg.adaptDesCtx({ rootObj: obj, rawDataApiResp: raw, depth: 0 });
-    return _deserializeRecord(ctx.rootObj, 0, ctx, cfg.deserializer) as Schema;
+    return _deserializeRecord(ctx.rootObj, 0, ctx, cfg.deserializer) as S;
   },
 });
 
@@ -69,7 +75,7 @@ const _serializeRecord = <Ctx extends DataAPISerCtx<SomeDoc>>(obj: SomeDoc, dept
           ret = Array.isArray(obj) ? [...obj] : { ...obj };
         }
 
-        if (typeof res === 'object') {
+        if (typeof res === 'object' && <any>res !== null) {
           ret[key] = res[0];
           stop = res[1];
         } else {
@@ -82,7 +88,7 @@ const _serializeRecord = <Ctx extends DataAPISerCtx<SomeDoc>>(obj: SomeDoc, dept
       }
     }
 
-    if (!stop && depth < 250 && typeof ret[key] === 'object') {
+    if (!stop && depth < 250 && typeof ret[key] === 'object' && ret[key] !== null) {
       ret[key] = _serializeRecord(ret[key], depth + 1, ctx, fns);
     }
   }
@@ -100,7 +106,7 @@ const _deserializeRecord = <Ctx>(obj: SomeDoc, depth: number, ctx: Ctx, fns: Dat
       const res = fns[f].call(obj, key, obj[key], ctx);
 
       if (res) {
-        if (typeof res === 'object') {
+        if (typeof res === 'object' && <any>res !== null) {
           obj[key] = res[0];
           stop = res[1];
         } else {
@@ -113,7 +119,7 @@ const _deserializeRecord = <Ctx>(obj: SomeDoc, depth: number, ctx: Ctx, fns: Dat
       }
     }
 
-    if (!stop && depth < 250 && typeof obj[key] === 'object') {
+    if (!stop && depth < 250 && typeof obj[key] === 'object' && obj[key] !== null) {
       _deserializeRecord(obj[key], depth + 1, ctx, fns);
     }
   }

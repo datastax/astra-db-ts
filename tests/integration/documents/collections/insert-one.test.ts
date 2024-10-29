@@ -78,6 +78,15 @@ parallel('integration.documents.collections.insert-one', { truncateColls: 'defau
     assert.deepStrictEqual(found?.$vector, [1, 1, 1, 1, 1]);
   });
 
+  it('should insertOne with date', async (key) => {
+    const timestamp = new Date();
+    const res = await collection.insertOne({ name: key, date: timestamp });
+    assert.ok(res);
+    const found = await collection.findOne({ name: key });
+    assert.ok(found?.date instanceof Date);
+    assert.strictEqual(found.date.toISOString(), timestamp.toISOString());
+  });
+
   it('should insertOne with $date', async (key) => {
     const timestamp = new Date();
     const res = await collection.insertOne({ name: key, date: { $date: timestamp } });
