@@ -96,11 +96,13 @@ export class DataAPIVector {
   }
 
   public toString(): string {
-    const partial = (typeof this.#vector === 'string')
-      ? this.#vector.slice(0, 10)
-      : this.#vector.slice(0, 2).join(', ');
+    const type = (typeof this.#vector === 'string' && 'string') || (this.#vector instanceof Float32Array && 'Float32Array') || 'number[]';
 
-    return `DataAPIVector<${this.length}>(${partial}...)`;
+    const partial = (typeof this.#vector === 'string')
+      ? `'${this.#vector.slice(0, 12)}${this.#vector.length > 12 ? '...' : ''}'`
+      : `[${this.#vector.slice(0, 2).join(', ')}${this.#vector.length > 2 ? ', ...' : ''}]`;
+
+    return `DataAPIVector<${this.length}>(typeof raw=${type}, preview=${partial})`;
   }
 
   static #serialize(vector: Exclude<DataAPIVectorLike, DataAPIVector>): { $binary: string } | number[] {

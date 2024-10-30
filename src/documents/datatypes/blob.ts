@@ -20,26 +20,50 @@ type CqlBlobLike = ArrayBuffer | Buffer | string;
 export class CqlBlob {
   readonly #raw: CqlBlobLike;
 
-  public [$SerializeForTables] = this.asBase64;
+  public [$SerializeForTables] = () => ({ $binary: this.asBase64() });
 
   private constructor(blob: CqlBlobLike) {
     this.#raw = blob;
 
     Object.defineProperty(this, $CustomInspect, {
-      value: this.toString(),
+      value: this.toString,
     });
   }
 
   public static fromArrayBuffer(buffer: ArrayBuffer): CqlBlob {
+    if (!(<any>buffer instanceof ArrayBuffer)) {
+      throw new TypeError("Expected buffer to be an ArrayBuffer (got '${buffer}'");
+    }
     return new CqlBlob(buffer);
   }
 
   public static fromBuffer(buffer: Buffer): CqlBlob {
+    if (typeof Buffer === 'undefined') {
+      throw new Error("Buffer is not available in this environment");
+    }
+    if (!(buffer instanceof Buffer)) {
+      throw new TypeError(`Expected buffer to be a Buffer (got '${buffer}'`);
+    }
     return new CqlBlob(buffer);
   }
 
   public static fromBase64(base64: string): CqlBlob {
+    if (typeof <any>base64 !== 'string') {
+      throw new TypeError(`Expected base64 to be a string (got '${base64}')`);
+    }
     return new CqlBlob(base64);
+  }
+
+  public get byteLength(): number {
+    if (this.#raw instanceof ArrayBuffer) {
+      return this.#raw.byteLength;
+    }
+
+    if (this.#raw instanceof Buffer) {
+      return this.#raw.length;
+    }
+
+    return ~~((this.#raw.replace(/=+$/, '').length * 3) / 4);
   }
 
   public asArrayBuffer(): ArrayBuffer {
@@ -48,7 +72,7 @@ export class CqlBlob {
     }
 
     if (this.#raw instanceof Buffer) {
-      return this.#raw.buffer;
+      return bufferToArrayBuffer(this.#raw);
     }
 
     return base64ToArrayBuffer(this.#raw);
@@ -84,7 +108,7 @@ export class CqlBlob {
 
   public toString() {
     const type = (this.#raw instanceof ArrayBuffer && 'ArrayBuffer') || (this.#raw instanceof Buffer && 'Buffer') || 'base64';
-    return `CqlBlob(typeof raw=${type})`;
+    return `CqlBlob(typeof raw=${type}, byteLength=${this.byteLength})`;
   }
 }
 
@@ -93,7 +117,7 @@ const base64ToArrayBuffer =
     ? nodeBase64ToArrayBuffer :
   (typeof window !== 'undefined')
     ? webBase64ToArrayBuffer
-    : panicBase64ToArrayBuffer;
+    : panicBase64ToBuffer;
 
 function webBase64ToArrayBuffer(base64: string): ArrayBuffer {
   const binaryString = window.atob(base64);
@@ -106,11 +130,11 @@ function webBase64ToArrayBuffer(base64: string): ArrayBuffer {
 }
 
 function nodeBase64ToArrayBuffer(base64: string): ArrayBuffer {
-  return Buffer.from(base64, 'base64').buffer;
+  return bufferToArrayBuffer(Buffer.from(base64, 'base64'));
 }
 
-function panicBase64ToArrayBuffer(): ArrayBuffer {
-  throw new Error("Cannot convert base64 to ArrayBuffer in this environment");
+function panicBase64ToBuffer(): ArrayBuffer {
+  throw new Error("Cannot convert base64 to Buffer/ArrayBuffer in this environment; please do so manually");
 }
 
 const arrayBufferToBase64 =
@@ -118,7 +142,7 @@ const arrayBufferToBase64 =
     ? nodeArrayBufferToBase64 :
   (typeof window !== 'undefined')
     ? webArrayBufferToBase64
-    : panicArrayBufferToBase64;
+    : panicBufferToBase64;
 
 function webArrayBufferToBase64(buffer: ArrayBuffer): string {
   let binary = '';
@@ -133,6 +157,10 @@ function nodeArrayBufferToBase64(buffer: ArrayBuffer): string {
   return Buffer.from(buffer).toString('base64');
 }
 
-function panicArrayBufferToBase64(): string {
-  throw new Error("Cannot convert ArrayBuffer to base64 in this environment");
+function panicBufferToBase64(): string {
+  throw new Error("Cannot convert Buffer/ArrayBuffer to base64 in this environment; please do so manually");
+}
+
+function bufferToArrayBuffer(b: Buffer): ArrayBuffer {
+  return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);
 }
