@@ -141,6 +141,10 @@ export class Db {
 
     this._id = extractDbIdFromUrl(endpoint);
     this.#endpoint = endpoint;
+
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `Db(endpoint="${this.#endpoint}",keyspace="${this.keyspace}")`,
+    });
   }
 
   /**
@@ -846,9 +850,5 @@ export class Db {
 
   public get _httpClient() {
     return this.#httpClient;
-  }
-
-  private [$CustomInspect]() {
-    return `Db{endpoint="${this.#endpoint}",keyspace="${this.keyspace}"}`;
   }
 }

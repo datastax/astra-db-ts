@@ -115,6 +115,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     this.#httpClient = httpClient.forCollection(this.keyspace, this.collectionName, opts);
     this.#commands = new CommandImpls(this.collectionName, this.#httpClient, mkCollectionSerDes(opts?.serdes));
     this.#db = db;
+
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `Collection(keyspace="${this.keyspace}",name="${this.collectionName}")`,
+    });
   }
 
   /**
@@ -1021,9 +1025,5 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
   public get _httpClient() {
     return this.#httpClient;
-  }
-
-  private [$CustomInspect]() {
-    return `Collection{keyspace="${this.keyspace}",name="${this.collectionName}"}`;
   }
 }

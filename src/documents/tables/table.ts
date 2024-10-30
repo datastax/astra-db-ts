@@ -103,6 +103,10 @@ export class Table<Schema extends SomeRow = SomeRow> {
     this.#httpClient.baseHeaders['Feature-Flag-tables'] = 'true';
     this.#commands = new CommandImpls(this.tableName, this.#httpClient, mkTableSerDes(opts?.serdes));
     this.#db = db;
+
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `Table{keyspace="${this.keyspace}",name="${this.tableName}"}`,
+    });
   }
 
   public async insertOne(document: Schema, options?: WithTimeout): Promise<TableInsertOneResult<Schema>> {
@@ -194,9 +198,5 @@ export class Table<Schema extends SomeRow = SomeRow> {
 
   public get _httpClient() {
     return this.#httpClient;
-  }
-
-  private [$CustomInspect]() {
-    return `Table{keyspace="${this.keyspace}",name="${this.tableName}"}`;
   }
 }

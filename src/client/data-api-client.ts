@@ -176,6 +176,10 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
     if (Symbol.asyncDispose) {
       this[Symbol.asyncDispose] = () => this.close();
     }
+
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `DataAPIClient(env="${this.#options.environment}")`,
+    });
   }
 
   /**
@@ -297,10 +301,6 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * *This will only be defined if the `Symbol.asyncDispose` symbol is actually defined.*
    */
   public [Symbol.asyncDispose]!: () => Promise<void>;
-
-  private [$CustomInspect]() {
-    return `DataAPIClient{env="${this.#options.environment}"}`;
-  }
 }
 
 function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {

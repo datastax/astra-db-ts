@@ -98,6 +98,10 @@ export class AstraDbAdmin extends DbAdmin {
     });
 
     this.#db = db;
+
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `AstraDbAdmin()`,
+    });
   }
 
   /**
@@ -322,9 +326,5 @@ export class AstraDbAdmin extends DbAdmin {
 
   public get _httpClient() {
     return this.#httpClient;
-  }
-
-  private [$CustomInspect]() {
-    return `AstraDbAdmin{}`;
   }
 }

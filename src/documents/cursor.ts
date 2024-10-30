@@ -128,6 +128,10 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this.#filter = filter;
     this.#options = options ?? {};
     this.#mapping = mapping;
+
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `FindCursor(source="${this.#keyspace}.${this.#parent}",state="${this.#state}",consumed=${this.#consumed},buffered=${this.#buffer.length})`,
+    });
   }
 
   /**
@@ -514,10 +518,6 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   public close(): void {
     this.#state = 'closed';
     this.#buffer.length = 0;
-  }
-
-  private [$CustomInspect]() {
-    return `FindCursor{source="${this.keyspace}.${this.#parent}",state="${this.#state}",consumed=${this.#consumed},buffered=${this.#buffer.length}}`;
   }
 
   #clone<R, RRaw extends SomeDoc>(filter: Filter<RRaw>, options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {

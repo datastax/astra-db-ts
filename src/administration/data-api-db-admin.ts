@@ -69,6 +69,10 @@ export class DataAPIDbAdmin extends DbAdmin {
     const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options');
     this.#httpClient = httpClient.forDbAdmin(adminOpts);
     this.#db = db;
+
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `DataAPIDbAdmin()`,
+    });
   }
 
   /**
@@ -204,9 +208,5 @@ export class DataAPIDbAdmin extends DbAdmin {
 
   public get _httpClient() {
     return this.#httpClient;
-  }
-
-  private [$CustomInspect]() {
-    return `DataAPIDbAdmin{}`;
   }
 }

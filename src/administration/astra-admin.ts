@@ -94,6 +94,10 @@ export class AstraAdmin {
       userAgent: rootOpts.userAgent,
       tokenProvider: this.#defaultOpts.adminOptions.adminToken,
     });
+
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `AstraAdmin()`,
+    });
   }
 
   /**
@@ -455,9 +459,5 @@ export class AstraAdmin {
 
   public get _httpClient() {
     return this.#httpClient;
-  }
-
-  private [$CustomInspect]() {
-    return `AstraAdmin{}`;
   }
 }
