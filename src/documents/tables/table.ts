@@ -43,28 +43,192 @@ import { constantly } from '@/src/lib/utils';
 import { $CustomInspect } from '@/src/lib/constants';
 import { mkTableSerDes } from '@/src/documents/tables/ser-des';
 
+/**
+ * Represents the columns of a table row, excluding the primary key columns.
+ *
+ * Useful for when you want to do `keyof Schema`, but you're getting {@link $PrimaryKeyType} as well in the
+ * resulting union (which you don't want).
+ *
+ * @example
+ * ```ts
+ * interface User extends Row<User, 'id'> {
+ *   id: string,
+ *   friends: Map<string, UUID>,
+ * }
+ *
+ * type Crying = keyof User; // 'id' | 'friends' | typeof $PrimaryKeyType
+ * type Happy = Cols<User>; // 'id' | 'friends'
+ * ```
+ *
+ * @public
+ */
 export type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$PrimaryKeyType'>;
 
 /**
- * Represents the interface to a collection in the database.
+ * #### Overview
  *
- * **Shouldn't be directly instantiated, but rather created via {@link Db.createCollection},
- * or connected to using {@link Db.collection}**.
+ * Represents the interface to a table in a Data-API-enabled database.
  *
- * Typed as `Table<Schema>` where `Schema` is the type of the documents in the collection.
- * Operations on the collection will be strongly typed if a specific schema is provided, otherwise
- * remained largely weakly typed if no type is provided.
+ * **This shouldn't be directly instantiated, but rather created via {@link Db.createTable} or {@link Db.table}**.
+ *
+ * #### Typing
+ *
+ * A `Table` is typed as `Table<Schema extends SomeRow>`, where:
+ *  - `Schema` is the type of the documents in the collection.
+ *  - `SomeRow` is analogous to `Record<string, any>`, representing any valid JSON object.
+ *
+ * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
+ *
+ * For example:
+ *  - `'map<k, v>'` is represented by a native JS `Map<K, V>`
+ *  - `'vector'` is represented by an `astra-db-ts` provided `DataAPIVector`
+ *  - `'date'` is represented by an `astra-db-ts` provided `CqlDate`
+ *
+ * @example
+ * ```ts
+ * interface User {
+ *   id: string,
+ *   friends: Map<string, UUID>, // UUID is also `astra-db-ts` provided
+ *   vector: DataAPIVector,
+ * }
+ *
+ * await db.table<User>('users').insertOne({
+ *   id: '123',
+ *   friends: new Map([['Alice', UUID.random()]]),
+ *   vector: new DataAPIVector([1, 2, 3]),
+ * });
+ * ```
+ *
+ * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
+ *
+ * ###### Typing the key
+ *
+ * The primary key of the table should be provided via the {@link $PrimaryKeyType} symbol in the schema.
+ *
+ * This is a special type that is used to reconstruct the TS type of the primary key in insert operations. It should be an optional object with the same keys as the primary key columns, and the same types as the schema. Note that there is no distinction between partition and clustering keys in this type.
+ *
+ * **Note that this symbol is never present in the actually runtime object. It is effectively just a phantom type for type-inference purposes**
+ *
+ * @example
+ * ```ts
+ * interface User {
+ *   id: string,   // Partition key
+ *   dob: CqlDate, // Clustering (partition sort) key
+ *   friends: Map<string, UUID>,
+ *   [$PrimaryKeyType]?: {
+ *     id: string,
+ *     dob: CqlDate,
+ *   },
+ * }
+ *
+ * // res.insertedId is of type { id: string }
+ * const res = await db.table<User>('users').insertOne({
+ *   id: '123',
+ *   dob: new CqlDate(new Date()),
+ *   friends: new Map([['Alice', UUID.random()]]),
+ * });
+ * ```
+ *
+ * A convenient shorthand exists for this, by extending the {@link Row} type. Simply provide the schema as the first argument, and the keys of the primary key (both partition & clustering/sort) as the second argument.
+ *
+ * @example
+ * ```ts
+ * // equivalent to the above
+ * interface User extends Row<User, 'id' | 'dob'> {
+ *   id: string,   // Partition key
+ *   dob: CqlDate, // Clustering (partition sort) key
+ *   friends: Map<string, UUID>,
+ * }
+ * ```
+ *
+ * ###### Type inference
+ *
+ * When creating a table through {@link Db.createTable}, and not using any custom datatypes (see next session), you can actually use the {@link InferTableSchema} or {@link InferTableSchemaFromDefinition} utility types to infer the schema of the table from the table creation.
+ *
+ * @example
+ * ```ts
+ * // equivalent to:
+ * // type User = {
+ * //   id: string,
+ * //   dob: CqlDate,
+ * //   friends?: Map<string, UUID>, // Optional since it's not in the primary key
+ * //   [$PrimaryKeyType]?: {
+ * //     id: string,
+ * //     dob: CqlDate,
+ * //   },
+ * // }
+ * type User = InferTableSchema<typeof mkTable>;
+ *
+ * const mkTable = () => db.createTable('users', {
+ *   definition: {
+ *      columns: {
+ *        id: 'text',
+ *        dob: 'date',
+ *        friends: { type: 'map', keyType: 'text', valueType: 'uuid' },
+ *      },
+ *      primaryKey: {
+ *        partitionBy: ['id'],
+ *        partitionSort: { dob: -1 }
+ *      },
+ *   },
+ * });
+ *
+ * async function main() {
+ *   const table = await mkTable();
+ *   // ... use table
+ * }
+ * ```
+ *
+ * ###### Custom datatypes
+ *
+ * You can plug in your own custom datatypes by providing some custom serialization/deserialization logic through the `serdes` option in {@link TableSpawnOptions}, {@link DbSpawnOptions} & {@link DataAPIClientOptions.dbOptions}.
+ *
+ * See {@link TableSerDesConfig} for much more information, but here's a quick example:
+ *
+ * @example
+ * ```ts
+ * import { $SerializeForTables, ... } from '@datastax/astra-db-ts';
+ *
+ * // Custom datatype
+ * class UserID {
+ *   constructor(public readonly unwrap: string) {}
+ *   [$SerializeForTables] = () => this.unwrap; // Serializer checks for this symbol
+ * }
+ *
+ * // Schema type of the table, using the custom datatype
+ * interface User extends Row<User, 'id'> {
+ *   id: UserID,
+ *   name: string,
+ * }
+ *
+ * const table = db.table('users', {
+ *   serdes: { // Serializer not necessary here since `$SerializeForTables` is used
+ *     deserialize(key, value) {
+ *       if (key === 'id') return [new UserID(value)]; // [X] specifies a new value
+ *     },
+ *   },
+ * });
+ *
+ * const inserted = await table.insertOne({
+ *   id: new UserID('123'), // will be stored in db as '123'
+ *   name: 'Alice',
+ * });
+ *
+ * console.log(inserted.insertedId.unwrap); // '123'
+ * ```
+ *
+ * ###### Disclaimer
+ *
+ * It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.
  *
  * See {@link Db.createTable}, {@link Db.table}, and {@link InferTableSchema} for much more information
  * about typing.
  *
- * It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its
- * TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.
- *
  * @see SomeRow
  * @see Db.createTable
  * @see Db.table
- * @see InferTableScehma
+ * @see InferTableSchema
+ * @see TableSerDesConfig
  *
  * @public
  */
@@ -76,7 +240,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
   /**
    * The name of the table. Unique per keyspace.
    */
-  public readonly tableName!: string;
+  public readonly name!: string;
 
   /**
    * The keyspace that the table resides in.
@@ -84,27 +248,25 @@ export class Table<Schema extends SomeRow = SomeRow> {
   public readonly keyspace!: string;
 
   /**
-   * Use {@link Db.collection} to obtain an instance of this class.
+   * Use {@link Db.table} to obtain an instance of this class.
    *
    * @internal
    */
   constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableSpawnOptions<Schema> | undefined) {
     Object.defineProperty(this, 'tableName', {
       value: name,
-      writable: false,
     });
 
     Object.defineProperty(this, 'keyspace', {
       value: opts?.keyspace ?? db.keyspace,
-      writable: false,
     });
 
-    this.#httpClient = httpClient.forCollection(this.keyspace, this.tableName, opts);
-    this.#commands = new CommandImpls(this.tableName, this.#httpClient, mkTableSerDes(opts?.serdes));
+    this.#httpClient = httpClient.forCollection(this.keyspace, this.name, opts);
+    this.#commands = new CommandImpls(this.name, this.#httpClient, mkTableSerDes(opts?.serdes));
     this.#db = db;
 
     Object.defineProperty(this, $CustomInspect, {
-      value: () => `Table{keyspace="${this.keyspace}",name="${this.tableName}"}`,
+      value: () => `Table(keyspace="${this.keyspace}",name="${this.name}")`,
     });
   }
 
@@ -145,7 +307,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
   }
 
   public async drop(options?: WithTimeout): Promise<void> {
-    await this.#db.dropCollection(this.tableName, { keyspace: this.keyspace, ...options });
+    await this.#db.dropCollection(this.name, { keyspace: this.keyspace, ...options });
   }
 
   public async alter<const Spec extends AlterTableOptions<Schema>>(options: Spec): Promise<Table<AlterTableSchema<Schema, Spec>>>
@@ -155,12 +317,12 @@ export class Table<Schema extends SomeRow = SomeRow> {
   public async alter(options: AlterTableOptions<Schema>): Promise<unknown> {
     const command = {
       alterTable: {
-        name: this.tableName,
+        name: this.name,
         operation: options.operation,
       },
     };
 
-    await this.#db.command(command, { keyspace: this.keyspace, table: this.tableName, maxTimeMS: options.maxTimeMS });
+    await this.#db.command(command, { keyspace: this.keyspace, table: this.name, maxTimeMS: options.maxTimeMS });
     return this;
   }
 
@@ -191,11 +353,11 @@ export class Table<Schema extends SomeRow = SomeRow> {
     await this.#runDbCommand('dropIndex', { name }, options);
   }
 
-  async #runDbCommand(name: string, command: SomeDoc, timeout?: WithTimeout) {
-    return await this.#db.command({ [name]: command }, { keyspace: this.keyspace, table: this.tableName, maxTimeMS: timeout?.maxTimeMS });
-  }
-
   public get _httpClient() {
     return this.#httpClient;
+  }
+
+  async #runDbCommand(name: string, command: SomeDoc, timeout?: WithTimeout) {
+    return await this.#db.command({ [name]: command }, { keyspace: this.keyspace, table: this.name, maxTimeMS: timeout?.maxTimeMS });
   }
 }

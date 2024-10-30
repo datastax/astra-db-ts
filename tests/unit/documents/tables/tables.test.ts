@@ -38,7 +38,7 @@ describe('unit.documents.tables', ({ db }) => {
 
     it('returns the name', () => {
       const table = new Table(db, db._httpClient, 'new_table', undefined);
-      assert.strictEqual(table.tableName, 'new_table');
+      assert.strictEqual(table.name, 'new_table');
     });
   });
 });
