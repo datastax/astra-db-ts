@@ -652,14 +652,8 @@ export class Db {
    *
    * @remarks Use with caution. Have steel-toe boots on. Don't say I didn't warn you.
    */
-  public async dropCollection(name: string, options?: DropCollectionOptions): Promise<boolean> {
-    const command = {
-      deleteCollection: { name },
-    };
-
-    const resp = await this.#httpClient.executeCommand(command, options);
-
-    return resp.status?.ok === 1;
+  public async dropCollection(name: string, options?: DropCollectionOptions): Promise<void> {
+    await this.#httpClient.executeCommand({ deleteCollection: { name } }, options);
   }
 
   /**
@@ -688,14 +682,8 @@ export class Db {
    *
    * @remarks Use with caution. Wear a mask. Don't say I didn't warn you.
    */
-  public async dropTable(name: string, options?: DropTableOptions): Promise<boolean> {
-    const command = {
-      dropTable: { name },
-    };
-
-    const resp = await this.#httpClient.executeCommand(command, options);
-
-    return resp.status?.ok === 1;
+  public async dropTable(name: string, options?: DropTableOptions): Promise<void> {
+    await this.#httpClient.executeCommand({ dropTable: { name } }, options);
   }
 
   /**

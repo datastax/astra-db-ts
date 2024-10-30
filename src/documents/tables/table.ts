@@ -141,8 +141,8 @@ export class Table<Schema extends SomeRow = SomeRow> {
     return this.#commands.countDocuments(filter, upperBound, options);
   }
 
-  public async drop(options?: WithTimeout): Promise<boolean> {
-    return await this.#db.dropCollection(this.tableName, { keyspace: this.keyspace, ...options });
+  public async drop(options?: WithTimeout): Promise<void> {
+    await this.#db.dropCollection(this.tableName, { keyspace: this.keyspace, ...options });
   }
 
   public async alter<const Spec extends AlterTableOptions<Schema>>(options: Spec): Promise<Table<AlterTableSchema<Schema, Spec>>>
