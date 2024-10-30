@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $Serialize4Colls } from '@/src/documents/collections/ser-des';
-import { $Serialize4Tables } from '@/src/documents/tables/ser-des';
+import { $SerializeForCollections } from '@/src/documents/collections/ser-des';
+import { $SerializeForTables } from '@/src/documents/tables/ser-des';
 
 export type DataAPIVectorLike = number[] | string | Float32Array | DataAPIVector;
 
@@ -27,11 +27,11 @@ export class DataAPIVector {
 
     const serialize = () => ({ $binary: DataAPIVector.#serialize(this.#vector) });
 
-    Object.defineProperty(this, $Serialize4Colls, {
+    Object.defineProperty(this, $SerializeForCollections, {
       value: serialize,
     });
 
-    Object.defineProperty(this, $Serialize4Tables, {
+    Object.defineProperty(this, $SerializeForTables, {
       value: serialize,
     });
   }

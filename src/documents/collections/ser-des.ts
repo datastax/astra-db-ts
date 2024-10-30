@@ -18,7 +18,7 @@ import { OneOrMany } from '@/src/lib/types';
 import { toArray } from '@/src/lib/utils';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
 
-export const $Serialize4Colls = Symbol.for('astra-db-ts.serialize.collection');
+export const $SerializeForCollections = Symbol.for('astra-db-ts.serialize.collection');
 
 export interface CollectionSerDesConfig<Schema extends SomeDoc> {
   serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>,
@@ -49,14 +49,14 @@ const DefaultCollectionSerDesCfg = {
         value = new DataAPIVector(value);
       }
 
-      if ($Serialize4Colls in value) {
-        return [value[$Serialize4Colls](), true];
+      if ($SerializeForCollections in value) {
+        return [value[$SerializeForCollections](), true];
       }
     }
   },
   deserialize(key, value) {
     if (typeof value === 'object' && value !== null) {
-      if ($Serialize4Colls in value || value instanceof Date) {
+      if ($SerializeForCollections in value || value instanceof Date) {
         return;
       }
 

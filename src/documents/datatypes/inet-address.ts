@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { $CustomInspect } from '@/src/lib/constants';
-import { $Serialize4Tables } from '@/src/documents/tables/ser-des';
+import { $SerializeForTables } from '@/src/documents/tables/ser-des';
 
 export class InetAddress {
   private readonly _raw!: string;
@@ -26,7 +26,7 @@ export class InetAddress {
       value: address.toLowerCase(),
     });
 
-    Object.defineProperty(this, $Serialize4Tables, {
+    Object.defineProperty(this, $SerializeForTables, {
       value: this.toString,
     });
   }

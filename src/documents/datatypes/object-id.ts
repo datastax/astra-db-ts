@@ -14,7 +14,7 @@
 
 import { isNullish } from '@/src/lib/utils';
 import { $CustomInspect } from '@/src/lib/constants';
-import { $Serialize4Colls } from '@/src/documents/collections/ser-des';
+import { $SerializeForCollections } from '@/src/documents/collections/ser-des';
 
 const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
 
@@ -83,7 +83,7 @@ export class ObjectId {
       value: (typeof id === 'string') ? id.toLowerCase() : genObjectId(id),
     });
 
-    Object.defineProperty(this, $Serialize4Colls, {
+    Object.defineProperty(this, $SerializeForCollections, {
       value: this.toJSON,
     });
   }

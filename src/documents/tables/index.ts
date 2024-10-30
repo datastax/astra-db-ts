@@ -15,8 +15,10 @@
 export type * from './types';
 export * from './table';
 
-export type {
+export {
   TableColumnTypeParser,
   TableSerDesConfig,
   TableDesCtx,
+  $SerializeForTables,
+  $DeserializeForTables,
 } from './ser-des';
