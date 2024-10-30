@@ -21,7 +21,6 @@ import {
   FindCursor,
   FoundRow,
   KeyOf,
-  mkTableSerDes,
   SomeDoc,
   SomeRow,
   TableDeleteOneOptions,
@@ -42,6 +41,7 @@ import { AlterTableOptions, AlterTableSchema, Db, TableSpawnOptions } from '@/sr
 import { WithTimeout } from '@/src/lib';
 import { constantly } from '@/src/lib/utils';
 import { $CustomInspect } from '@/src/lib/constants';
+import { mkTableSerDes } from '@/src/documents/tables/ser-des';
 
 export type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$PrimaryKeyType'>;
 

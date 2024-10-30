@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $SerializeRelaxed } from '@/src/lib';
 import { $CustomInspect } from '@/src/lib/constants';
+import { $Serialize4Tables } from '@/src/documents/tables/ser-des';
 
 export class InetAddress {
   private readonly _raw!: string;
@@ -26,7 +26,7 @@ export class InetAddress {
       value: address.toLowerCase(),
     });
 
-    Object.defineProperty(this, $SerializeRelaxed, {
+    Object.defineProperty(this, $Serialize4Tables, {
       value: this.toString,
     });
   }

@@ -3,9 +3,9 @@
 tarball_dir=$(pwd)
 
 case "$1" in
-build)
+create)
   if [ -z "$2" ]; then
-    echo "Usage: $0 build <name>"
+    echo "Usage: $0 create <name>"
     exit 1
   fi
 

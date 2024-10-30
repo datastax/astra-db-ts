@@ -15,9 +15,6 @@
 import { SomeDoc } from '@/src/documents';
 import type { nullish, RawDataAPIResponse } from '@/src/lib';
 
-export const $SerializeStrict = Symbol('SerializeStrict');
-export const $SerializeRelaxed = Symbol('SerializeRelaxed');
-
 export interface DataAPISerCtx<Schema extends SomeDoc> {
   rootObj: Schema,
   mutatingInPlace: boolean,
@@ -29,10 +26,10 @@ export interface DataAPIDesCtx {
   depth: number,
 }
 
-export type DataAPISerFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | void;
-export type DataAPIDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | void;
+type DataAPISerFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | void;
+type DataAPIDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | void;
 
-export interface DataAPISerDesConfig<Schema extends SomeDoc, SerCtx extends DataAPISerCtx<Schema>, DesCtx extends DataAPIDesCtx> {
+interface DataAPISerDesConfig<Schema extends SomeDoc, SerCtx extends DataAPISerCtx<Schema>, DesCtx extends DataAPIDesCtx> {
   serializer: DataAPISerFn<SerCtx>[],
   deserializer: DataAPIDesFn<DesCtx>[],
   adaptSerCtx: (ctx: DataAPISerCtx<Schema>) => SerCtx,

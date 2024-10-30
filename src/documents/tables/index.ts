@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './ser-des';
 export type * from './types';
 export * from './table';
+
+export type {
+  TableColumnTypeParser,
+  TableSerDesConfig,
+  TableDesCtx,
+} from './ser-des';

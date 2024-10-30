@@ -35,7 +35,7 @@ export const parseDbSpawnOpts: Parser<DbSpawnOptions | undefined, unknown> = (ra
   };
 };
 
-const parseSerDes: Parser<DbSerDesConfig<SomeDoc>> = (cfg, field) => ({
+const parseSerDes: Parser<DbSerDesConfig> = (cfg, field) => ({
   table: p.parse('object?', parseTableSerDes)(cfg.table, `${field}.table`),
   collection: p.parse('object?', parseCollectionSerDes)(cfg.collection, `${field}.collection`),
   mutateInPlace: p.parse('boolean?')(cfg.mutateInPlace, `${field}.mutateInPlace`),

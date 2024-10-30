@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $SerializeRelaxed } from '@/src/lib';
 import { isNullish } from '@/src/lib/utils';
 import { $CustomInspect } from '@/src/lib/constants';
+import { $Serialize4Tables } from '@/src/documents/tables/ser-des';
 
 export interface CqlDateComponents {
   year: number,
@@ -38,7 +38,7 @@ export class CqlDate {
       this.#date = `${input.year ?? '0000'}-${input.month ?? '00'}-${input.date ?? '00'}`;
     }
 
-    Object.defineProperty(this, $SerializeRelaxed, {
+    Object.defineProperty(this, $Serialize4Tables, {
       value: this.toString,
     });
   }
@@ -101,7 +101,7 @@ export class CqlDuration {
       this.#duration = `${input.months}mo${input.days}d${input.nanoseconds}ns`;
     }
 
-    Object.defineProperty(this, $SerializeRelaxed, {
+    Object.defineProperty(this, $Serialize4Tables, {
       value: this.toString,
     });
   }
@@ -140,7 +140,7 @@ export class CqlTime {
       this.#time = CqlTime.#initTime(input.hours, input.minutes, input.seconds, input.nanoseconds ? input.nanoseconds.toString().padStart(9, '0') : '');
     }
 
-    Object.defineProperty(this, $SerializeRelaxed, {
+    Object.defineProperty(this, $Serialize4Tables, {
       value: this.toString,
     });
   }
@@ -216,7 +216,7 @@ export class CqlTimestamp {
       this.#timestamp = new Date(input.year ?? 0, input.month ?? 1 - 1, input.date, input.hours, input.minutes, input.seconds, input.nanoseconds ?? 0 / 1_000_000).toISOString();
     }
 
-    Object.defineProperty(this, $SerializeRelaxed, {
+    Object.defineProperty(this, $Serialize4Tables, {
       value: this.toString,
     });
   }

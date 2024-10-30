@@ -16,9 +16,10 @@ import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-clie
 import type { Filter, SomeDoc } from '@/src/documents/collections';
 import type { GenericFindOptions } from '@/src/documents/commands';
 import type { Projection, Sort } from '@/src/documents/types';
-import type { DataAPISerDes, DeepPartial, nullish } from '@/src/lib';
+import type { DeepPartial, nullish } from '@/src/lib';
 import { normalizedSort } from '@/src/documents/utils';
 import { $CustomInspect } from '@/src/lib/constants';
+import { DataAPISerDes } from '@/src/lib/api/ser-des';
 
 /**
  * Represents the status of a cursor.

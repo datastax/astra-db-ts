@@ -23,9 +23,7 @@ import {
   DataAPIResponseError,
   DataAPITimeoutError,
   EmbeddingHeadersProvider,
-  ObjectId,
   SomeDoc,
-  UUID,
 } from '@/src/documents';
 import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
 import { HttpClient } from '@/src/lib/api/clients/http-client';

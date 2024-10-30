@@ -12,18 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
-  DataAPIDetailedErrorDescriptor,
-  DataAPIResponseError,
-  InsertManyError,
-  SomeDoc,
-  SomeId,
-} from '@/src/documents';
-import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
+import { DataAPIHttpClient } from '@/src/lib/api/clients';
+import { DataAPISerDes } from '@/src/lib/api/ser-des';
 import { TimeoutManager } from '@/src/lib/api/timeout-managers';
-import { mkRespErrorFromResponse, mkRespErrorFromResponses } from '@/src/documents/errors';
-import { GenericInsertManyDocumentResponse } from '@/src/documents/commands/types/insert/insert-many';
-import { DataAPISerDes } from '@/src/lib';
+import {
+  DataAPIDetailedErrorDescriptor, DataAPIResponseError,
+  InsertManyError,
+  mkRespErrorFromResponse,
+  mkRespErrorFromResponses,
+} from '@/src/documents/errors';
+import { GenericInsertManyDocumentResponse, SomeDoc, SomeId } from '@/src/documents';
 
 export type MkID<ID> = (id: any, resp: Record<string, string>) => ID;
 

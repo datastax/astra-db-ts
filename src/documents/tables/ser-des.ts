@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { CqlDate, CqlDuration, CqlTime, CqlTimestamp, InetAddress, SomeDoc, SomeRow, UUID } from '@/src/documents';
-import { $SerializeRelaxed, DataAPIDesCtx, DataAPISerCtx, mkSerDes } from '@/src/lib/api/ser-des';
+import { DataAPIDesCtx, DataAPISerCtx, mkSerDes } from '@/src/lib/api/ser-des';
 import {
   ListTableColumnDefinitions,
   ListTableKnownColumnDefinition,
@@ -23,7 +23,9 @@ import { OneOrMany } from '@/src/lib/types';
 import { toArray } from '@/src/lib/utils';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
 
-type TableDesCtx = DataAPIDesCtx & { tableSchema: ListTableColumnDefinitions, parsers: Record<string, TableColumnTypeParser> };
+export const $Serialize4Tables = Symbol.for('astra-db-ts.serialize.table');
+
+export type TableDesCtx = DataAPIDesCtx & { tableSchema: ListTableColumnDefinitions, parsers: Record<string, TableColumnTypeParser> };
 
 export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: SomeDoc) => any;
 
@@ -63,8 +65,8 @@ export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Sc
 const DefaultTableSerDesCfg = {
   serialize(_, value) {
     if (typeof value === 'object' && value !== null) {
-      if ($SerializeRelaxed in value) {
-        return [value[$SerializeRelaxed](), true];
+      if ($Serialize4Tables in value) {
+        return [value[$Serialize4Tables](), true];
       }
 
       if (value instanceof Map) {

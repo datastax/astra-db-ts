@@ -27,4 +27,7 @@ export type {
   CuratedAPIResponse,
 } from './types';
 
-export * from './ser-des';
+export type {
+  DataAPISerCtx,
+  DataAPIDesCtx,
+} from './ser-des';

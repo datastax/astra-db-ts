@@ -13,6 +13,9 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-export { type CollectionSerDesConfig } from './ser-des';
 export * from './collection';
 export type * from './types';
+
+export type {
+  CollectionSerDesConfig,
+} from './ser-des';

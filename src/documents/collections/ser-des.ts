@@ -13,10 +13,12 @@
 // limitations under the License.
 
 import { ObjectId, SomeDoc, UUID } from '@/src/documents';
-import { $SerializeStrict, DataAPIDesCtx, DataAPISerCtx, mkSerDes } from '@/src/lib/api/ser-des';
+import { DataAPIDesCtx, DataAPISerCtx, mkSerDes } from '@/src/lib/api/ser-des';
 import { OneOrMany } from '@/src/lib/types';
 import { toArray } from '@/src/lib/utils';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
+
+export const $Serialize4Colls = Symbol.for('astra-db-ts.serialize.collection');
 
 export interface CollectionSerDesConfig<Schema extends SomeDoc> {
   serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>,
@@ -43,14 +45,18 @@ const DefaultCollectionSerDesCfg = {
         }
       }
 
-      if ($SerializeStrict in value) {
-        return [value[$SerializeStrict](), true];
+      if (key === '$vector' && (Array.isArray(value) || value instanceof Float32Array)) {
+        value = new DataAPIVector(value);
+      }
+
+      if ($Serialize4Colls in value) {
+        return [value[$Serialize4Colls](), true];
       }
     }
   },
   deserialize(key, value) {
     if (typeof value === 'object' && value !== null) {
-      if ($SerializeStrict in value || value instanceof Date) {
+      if ($Serialize4Colls in value || value instanceof Date) {
         return;
       }
 

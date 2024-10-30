@@ -336,11 +336,13 @@ export type CollectionReplaceOneResult<Schema extends SomeDoc> = GenericUpdateRe
 // @public (undocumented)
 export interface CollectionSerDesConfig<Schema extends SomeDoc> {
     // (undocumented)
-    deserialize?: (this: SomeDoc, key: string, value: any, ctx: DataAPIDesCtx) => [any, boolean?] | boolean | undefined | void;
+    deserialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPIDesCtx) => [any, boolean?] | boolean | undefined | void>;
     // (undocumented)
     mutateInPlace?: boolean;
+    // Warning: (ae-forgotten-export) The symbol "OneOrMany" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    serialize?: (this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void;
+    serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>;
 }
 
 // @public
@@ -808,6 +810,22 @@ export class DataAPITimeoutError extends DataAPIError {
     readonly timeout: number;
 }
 
+// @public (undocumented)
+export class DataAPIVector {
+    constructor(vector: DataAPIVectorLike);
+    // (undocumented)
+    getAsArray(): number[];
+    // (undocumented)
+    getAsBase64(): string;
+    // (undocumented)
+    getAsFloat32Array(): Float32Array;
+    // (undocumented)
+    getRaw(): Exclude<DataAPIVectorLike, DataAPIVector>;
+}
+
+// @public (undocumented)
+export type DataAPIVectorLike = number[] | string | Float32Array | DataAPIVector;
+
 // @public
 export type DatabaseAction = 'park' | 'unpark' | 'resize' | 'resetPassword' | 'addKeyspace' | 'addDatacenters' | 'terminateDatacenter' | 'getCreds' | 'terminate' | 'removeKeyspace' | 'removeMigrationProxy' | 'launchMigrationProxy';
 
@@ -948,13 +966,13 @@ export interface DbMetricsInfo {
 }
 
 // @public (undocumented)
-export interface DbSerDesConfig<Schema extends SomeDoc> {
+export interface DbSerDesConfig {
     // (undocumented)
-    collection?: Omit<CollectionSerDesConfig<Schema>, 'mutateInPlace'>;
+    collection?: Omit<CollectionSerDesConfig<SomeDoc>, 'mutateInPlace'>;
     // (undocumented)
     mutateInPlace?: boolean;
     // (undocumented)
-    table?: Omit<TableSerDesConfig<Schema>, 'mutateInPlace'>;
+    table?: Omit<TableSerDesConfig<SomeRow>, 'mutateInPlace'>;
 }
 
 // @public
@@ -964,7 +982,7 @@ export interface DbSpawnOptions {
     // (undocumented)
     logging?: DataAPILoggingConfig;
     // (undocumented)
-    serdes?: DbSerDesConfig<SomeDoc>;
+    serdes?: DbSerDesConfig;
     token?: string | TokenProvider | null;
 }
 
@@ -1910,13 +1928,13 @@ export type TableScalarType = 'ascii' | 'bigint' | 'blob' | 'boolean' | 'date' |
 // @public (undocumented)
 export interface TableSerDesConfig<Schema extends SomeRow> {
     // (undocumented)
-    deserialize?: (this: SomeRow, key: string, value: any, ctx: TableDesCtx) => [any, boolean?] | boolean | undefined | void;
+    deserialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: TableDesCtx) => [any, boolean?] | boolean | undefined | void>;
     // (undocumented)
     mutateInPlace?: boolean;
     // (undocumented)
     parsers?: Record<string, TableColumnTypeParser>;
     // (undocumented)
-    serialize?: (this: SomeRow, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void;
+    serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>;
 }
 
 // @public (undocumented)
