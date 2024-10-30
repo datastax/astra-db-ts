@@ -58,7 +58,9 @@ const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
  * @public
  */
 export class ObjectId {
-  private readonly _raw!: string;
+  readonly #raw: string;
+
+  public [$SerializeForCollections] = () => ({ $objectId: this.#raw });
 
   /**
    * Creates a new ObjectId instance.
@@ -79,12 +81,10 @@ export class ObjectId {
       }
     }
 
-    Object.defineProperty(this, '_raw', {
-      value: (typeof id === 'string') ? id.toLowerCase() : genObjectId(id),
-    });
+    this.#raw = (typeof id === 'string') ? id.toLowerCase() : genObjectId(id);
 
-    Object.defineProperty(this, $SerializeForCollections, {
-      value: this.toJSON,
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `ObjectId("${this.#raw}")`,
     });
   }
 
@@ -101,10 +101,10 @@ export class ObjectId {
    */
   public equals(other: unknown): boolean {
     if (typeof other === 'string') {
-      return this._raw.localeCompare(other, undefined, { sensitivity: 'accent' }) === 0;
+      return this.#raw.localeCompare(other, undefined, { sensitivity: 'accent' }) === 0;
     }
     if (other instanceof ObjectId) {
-      return this._raw.localeCompare(other._raw, undefined, { sensitivity: 'accent' }) === 0;
+      return this.#raw.localeCompare(other.#raw, undefined, { sensitivity: 'accent' }) === 0;
     }
     return false;
   }
@@ -115,7 +115,7 @@ export class ObjectId {
    * @returns The timestamp of the ObjectId.
    */
   public getTimestamp(): Date {
-    const time = parseInt(this._raw.slice(0, 8), 16);
+    const time = parseInt(this.#raw.slice(0, 8), 16);
     return new Date(~~time * 1000);
   }
 
@@ -123,15 +123,7 @@ export class ObjectId {
    * Returns the string representation of the ObjectId.
    */
   public toString(): string {
-    return this._raw;
-  }
-
-  public toJSON() {
-    return { $objectId: this._raw };
-  }
-
-  private [$CustomInspect]() {
-    return `ObjectId("${this._raw}")`;
+    return this.#raw;
   }
 }
 

@@ -794,13 +794,15 @@ export class DataAPITimeoutError extends DataAPIError {
 export class DataAPIVector {
     constructor(vector: DataAPIVectorLike);
     // (undocumented)
-    getAsArray(): number[];
+    asArray(): number[];
     // (undocumented)
-    getAsBase64(): string;
+    asBase64(): string;
     // (undocumented)
-    getAsFloat32Array(): Float32Array;
+    asFloat32Array(): Float32Array;
     // (undocumented)
-    getRaw(): Exclude<DataAPIVectorLike, DataAPIVector>;
+    get length(): number;
+    // (undocumented)
+    raw(): Exclude<DataAPIVectorLike, DataAPIVector>;
 }
 
 // @public (undocumented)

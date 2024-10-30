@@ -14,33 +14,38 @@
 
 import { $SerializeForCollections } from '@/src/documents/collections/ser-des';
 import { $SerializeForTables } from '@/src/documents/tables/ser-des';
+import { $CustomInspect } from '@/src/lib/constants';
 
 export type DataAPIVectorLike = number[] | string | Float32Array | DataAPIVector;
 
 export class DataAPIVector {
   readonly #vector: Exclude<DataAPIVectorLike, DataAPIVector>;
 
-  constructor(vector: DataAPIVectorLike) {
+  public [$SerializeForTables] = () => DataAPIVector.#serialize(this.#vector);
+  public [$SerializeForCollections] = this[$SerializeForTables];
+
+  public constructor(vector: DataAPIVectorLike) {
     this.#vector = (vector instanceof DataAPIVector)
-      ? vector.getRaw()
+      ? vector.raw()
       : vector;
 
-    const serialize = () => ({ $binary: DataAPIVector.#serialize(this.#vector) });
-
-    Object.defineProperty(this, $SerializeForCollections, {
-      value: serialize,
-    });
-
-    Object.defineProperty(this, $SerializeForTables, {
-      value: serialize,
+    Object.defineProperty(this, $CustomInspect, {
+      value: this.toString,
     });
   }
 
-  public getRaw(): Exclude<DataAPIVectorLike, DataAPIVector> {
+  public get length(): number {
+    if (typeof this.#vector === 'string') {
+      return ~~((this.#vector.replace(/=+$/, "").length * 3) / 4 / 4);
+    }
+    return this.#vector.length;
+  }
+
+  public raw(): Exclude<DataAPIVectorLike, DataAPIVector> {
     return this.#vector;
   }
 
-  public getAsArray(): number[] {
+  public asArray(): number[] {
     if (this.#vector instanceof Float32Array) {
       return Array.from(this.#vector);
     }
@@ -58,7 +63,7 @@ export class DataAPIVector {
     return this.#vector;
   }
 
-  public getAsFloat32Array(): Float32Array {
+  public asFloat32Array(): Float32Array {
     if (this.#vector instanceof Float32Array) {
       return this.#vector;
     }
@@ -76,10 +81,10 @@ export class DataAPIVector {
     return new Float32Array(this.#vector);
   }
 
-  public getAsBase64(): string {
+  public asBase64(): string {
     const serialized = DataAPIVector.#serialize(this.#vector);
 
-    if (typeof serialized !== 'string') {
+    if (!('$binary' in serialized)) {
       if (Array.isArray(this.#vector)) {
         throw new Error('Could not serialize vector from number[] => base64; unknown environment. Please manually serialize the binary from `vector.getRaw()`/`vector.getAsArray()`.');
       } else {
@@ -87,12 +92,20 @@ export class DataAPIVector {
       }
     }
 
-    return serialized;
+    return serialized.$binary;
   }
 
-  static #serialize(vector: Exclude<DataAPIVectorLike, DataAPIVector>): string | number[] {
+  public toString(): string {
+    const partial = (typeof this.#vector === 'string')
+      ? this.#vector.slice(0, 10)
+      : this.#vector.slice(0, 2).join(', ');
+
+    return `DataAPIVector<${this.length}>(${partial}...)`;
+  }
+
+  static #serialize(vector: Exclude<DataAPIVectorLike, DataAPIVector>): { $binary: string } | number[] {
     if (typeof vector === 'string') {
-      return vector;
+      return { $binary: vector };
     }
 
     if (typeof Buffer !== 'undefined') {
@@ -102,7 +115,7 @@ export class DataAPIVector {
         buffer.writeFloatBE(vector[i], i * 4);
       }
 
-      return buffer.toString('base64');
+      return { $binary: buffer.toString('base64')};
     }
 
     if (typeof window !== 'undefined' && window.btoa) {
@@ -118,7 +131,7 @@ export class DataAPIVector {
         binary += String.fromCharCode(buffer[i]);
       }
 
-      return window.btoa(binary);
+      return { $binary: window.btoa(binary) };
     }
 
     if (vector instanceof Float32Array) {

@@ -16,18 +16,17 @@ import { $CustomInspect } from '@/src/lib/constants';
 import { $SerializeForTables } from '@/src/documents/tables/ser-des';
 
 export class InetAddress {
-  private readonly _raw!: string;
+  readonly #raw: string;
   #version: 4 | 6 | undefined;
 
+  public [$SerializeForTables] = () => this.#raw;
+
   public constructor(address: string, version?: 4 | 6) {
+    this.#raw = address.toLowerCase();
     this.#version = version;
 
-    Object.defineProperty(this, '_raw', {
-      value: address.toLowerCase(),
-    });
-
-    Object.defineProperty(this, $SerializeForTables, {
-      value: this.toString,
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `InetAddress<${this.version}>("${this.#raw}")`,
     });
   }
 
@@ -54,17 +53,13 @@ export class InetAddress {
 
   public get version(): 4 | 6 {
     if (!this.#version) {
-      this.#version = isIPv4(this._raw) ? 4 : 6;
+      this.#version = isIPv4(this.#raw) ? 4 : 6;
     }
     return this.#version;
   }
 
   public toString(): string {
-    return this._raw;
-  }
-
-  private [$CustomInspect]() {
-    return `InetAddress<${this.version}>("${this._raw}")`;
+    return this.#raw;
   }
 }
 

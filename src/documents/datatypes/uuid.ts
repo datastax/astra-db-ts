@@ -66,7 +66,10 @@ export class UUID {
    */
   public readonly version!: number;
 
-  private readonly _raw!: string;
+  readonly #raw: string;
+
+  public [$SerializeForCollections] = () => ({ $uuid: this.#raw });
+  public [$SerializeForTables] = this.toString;
 
   /**
    * Creates a new UUID instance.
@@ -87,20 +90,14 @@ export class UUID {
       }
     }
 
-    Object.defineProperty(this, '_raw', {
-      value: uuid.toLowerCase(),
-    });
+    this.#raw = uuid.toLowerCase();
 
     Object.defineProperty(this, 'version', {
-      value: parseInt(this._raw[14], 16),
+      value: parseInt(this.#raw[14], 16),
     });
 
-    Object.defineProperty(this, $SerializeForCollections, {
-      value: this.toJSON,
-    });
-
-    Object.defineProperty(this, $SerializeForTables, {
-      value: this.toString,
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `UUID<${this.version}>("${this.#raw}")`,
     });
   }
 
@@ -117,10 +114,10 @@ export class UUID {
    */
   public equals(other: unknown): boolean {
     if (typeof other === 'string') {
-      return this._raw === other;
+      return this.#raw === other.toLowerCase();
     }
     if (other instanceof UUID) {
-      return this._raw === other._raw;
+      return this.#raw === other.#raw;
     }
     return false;
   }
@@ -138,7 +135,7 @@ export class UUID {
    * Returns the string representation of the UUID in lowercase.
    */
   public toString(): string {
-    return this._raw;
+    return this.#raw;
   }
 
   /**
@@ -153,14 +150,6 @@ export class UUID {
    */
   public static v7(): UUID {
     return new UUID(uuidv7(), false);
-  }
-
-  public toJSON() {
-    return { $uuid: this._raw };
-  }
-
-  private [$CustomInspect]() {
-    return `UUID<${this.version}>("${this._raw}")`;
   }
 }
 

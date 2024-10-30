@@ -25,6 +25,8 @@ export interface CqlDateComponents {
 export class CqlDate {
   readonly #date: string;
 
+  public [$SerializeForTables] = this.toString;
+
   public constructor(input?: string | Date | Partial<CqlDateComponents>) {
     if (typeof input === 'string') {
       this.#date = input;
@@ -38,8 +40,8 @@ export class CqlDate {
       this.#date = `${input.year ?? '0000'}-${input.month ?? '00'}-${input.date ?? '00'}`;
     }
 
-    Object.defineProperty(this, $SerializeForTables, {
-      value: this.toString,
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `CqlDate("${this.#date}")`,
     });
   }
 
@@ -79,11 +81,8 @@ export class CqlDate {
   public toString(): string {
     return this.#date;
   }
-
-  private [$CustomInspect]() {
-    return `CqlDate("${this.#date}")`;
-  }
 }
+
 
 export interface CqlDurationComponents {
   months: number,
@@ -94,6 +93,8 @@ export interface CqlDurationComponents {
 export class CqlDuration {
   readonly #duration: string;
 
+  public [$SerializeForTables] = this.toString;
+
   constructor(input: string | CqlDurationComponents) {
     if (typeof input === 'string') {
       this.#duration = input;
@@ -101,8 +102,8 @@ export class CqlDuration {
       this.#duration = `${input.months}mo${input.days}d${input.nanoseconds}ns`;
     }
 
-    Object.defineProperty(this, $SerializeForTables, {
-      value: this.toString,
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `CqlDuration("${this.#duration}")`,
     });
   }
 
@@ -112,10 +113,6 @@ export class CqlDuration {
 
   public toString() {
     return this.#duration;
-  }
-
-  private [$CustomInspect]() {
-    return `CqlDuration("${this.#duration}")`;
   }
 }
 
@@ -129,6 +126,8 @@ export interface CqlTimeComponents {
 export class CqlTime {
   readonly #time: string;
 
+  public [$SerializeForTables] = this.toString;
+
   public constructor(input?: string | Date | Partial<CqlTimeComponents>) {
     input ||= new Date();
 
@@ -140,8 +139,8 @@ export class CqlTime {
       this.#time = CqlTime.#initTime(input.hours, input.minutes, input.seconds, input.nanoseconds ? input.nanoseconds.toString().padStart(9, '0') : '');
     }
 
-    Object.defineProperty(this, $SerializeForTables, {
-      value: this.toString,
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `CqlTime("${this.#time}")`,
     });
   }
 
@@ -186,10 +185,6 @@ export class CqlTime {
   public toString() {
     return this.#time;
   }
-
-  private [$CustomInspect]() {
-    return `CqlTime("${this.#time}")`;
-  }
 }
 
 export interface CqlTimestampComponents {
@@ -205,6 +200,8 @@ export interface CqlTimestampComponents {
 export class CqlTimestamp {
   readonly #timestamp: string;
 
+  public [$SerializeForTables] = this.toString;
+
   public constructor(input?: string | Date | Partial<CqlTimestampComponents>) {
     input ||= new Date();
 
@@ -217,7 +214,7 @@ export class CqlTimestamp {
     }
 
     Object.defineProperty(this, $SerializeForTables, {
-      value: this.toString,
+      value: () => `CqlTimestamp("${this.#timestamp}")`,
     });
   }
 
@@ -240,9 +237,5 @@ export class CqlTimestamp {
 
   public toString() {
     return this.#timestamp;
-  }
-
-  private [$CustomInspect]() {
-    return `CqlTimestamp("${this.#timestamp}")`;
   }
 }
