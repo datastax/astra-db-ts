@@ -4,6 +4,16 @@ tarball_dir=$(pwd)
 
 case "$1" in
 create)
+  if [ -d etc/playgrounds/"$2" ]; then
+    echo "Playground '$2' already exists; do you want to delete and recreate it? [y/N]"
+    read -r response
+
+    if [ "$response" != "y" ]; then
+      echo "You can use 'update' to update the playground instead with the latest local build of \`astra-db-ts\`"
+      exit 1
+    fi
+  fi
+
   if [ -z "$2" ]; then
     echo "Usage: $0 create <name>"
     exit 1

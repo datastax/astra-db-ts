@@ -21,7 +21,7 @@ import {
   FullCreateTablePrimaryKeyDefinition,
 } from '@/src/db/types/tables/create-table';
 import { EmptyObj } from '@/src/lib/types';
-import { UUID, InetAddress, CqlDate, CqlDuration, CqlTime, CqlTimestamp } from '@/src/documents';
+import { UUID, InetAddress, CqlDate, CqlDuration, CqlTime, CqlTimestamp, CqlBlob } from '@/src/documents';
 import { TypeErr } from '@/src/documents/utils';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
 
@@ -255,7 +255,7 @@ export type CqlType2TSType<T extends string, Def> =
 interface CqlNonGenericType2TSTypeDict {
   ascii: string,
   bigint: number,
-  blob: Blob,
+  blob: CqlBlob,
   boolean: boolean,
   date: CqlDate,
   decimal: string,

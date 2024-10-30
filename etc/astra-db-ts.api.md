@@ -190,6 +190,9 @@ export class AWSEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
     getHeaders(): Record<string, string>;
 }
 
+// @public (undocumented)
+export type BlobLike = FileReader;
+
 // @public
 export type Caller = readonly [name: string, version?: string];
 
@@ -204,7 +207,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<CollectionDeleteManyResult>;
     deleteOne(filter: Filter<Schema>, options?: CollectionDeleteOneOptions): Promise<CollectionDeleteOneResult>;
     distinct<Key extends string>(key: Key, filter?: Filter<Schema>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]>;
-    drop(options?: WithTimeout): Promise<boolean>;
+    drop(options?: WithTimeout): Promise<void>;
     estimatedDocumentCount(options?: WithTimeout): Promise<number>;
     find(filter: Filter<Schema>, options?: CollectionFindOptions): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>>;
     findOne(filter: Filter<Schema>, options?: CollectionFindOneOptions): Promise<FoundDoc<Schema> | null>;
@@ -472,7 +475,16 @@ export interface CostInfo {
 }
 
 // @public (undocumented)
+export class CqlBlob {
+    constructor(blob: BlobLike);
+    // (undocumented)
+    blob: BlobLike;
+}
+
+// @public (undocumented)
 export class CqlDate {
+    // (undocumented)
+    [$SerializeForTables]: () => string;
     constructor(input?: string | Date | Partial<CqlDateComponents>);
     // (undocumented)
     components(): CqlDateComponents;
@@ -494,9 +506,13 @@ export interface CqlDateComponents {
 
 // @public (undocumented)
 export class CqlDuration {
-    constructor(input: string | CqlDurationComponents);
+    // (undocumented)
+    [$SerializeForTables]: () => string;
+    constructor(input: string | Partial<CqlDurationComponents> | [Date | CqlTimestamp, Date | CqlTimestamp]);
     // (undocumented)
     components(): CqlDurationComponents;
+    // (undocumented)
+    toDates(reference: Date | CqlTimestamp): [Date, Date];
     // (undocumented)
     toString(): string;
 }
@@ -513,6 +529,8 @@ export interface CqlDurationComponents {
 
 // @public (undocumented)
 export class CqlTime {
+    // (undocumented)
+    [$SerializeForTables]: () => string;
     constructor(input?: string | Date | Partial<CqlTimeComponents>);
     // (undocumented)
     components(): CqlTimeComponents;
@@ -536,6 +554,8 @@ export interface CqlTimeComponents {
 
 // @public (undocumented)
 export class CqlTimestamp {
+    // (undocumented)
+    [$SerializeForTables]: () => string;
     constructor(input?: string | Date | Partial<CqlTimestampComponents>);
     // (undocumented)
     components(): CqlTimestampComponents;
@@ -674,7 +694,7 @@ export type DataAPIClientEvents = DataAPICommandEvents & AdminCommandEvents;
 // @public
 export interface DataAPIClientOptions {
     adminOptions?: DefaultAdminSpawnOptions;
-    caller?: Caller | Caller[];
+    caller?: OneOrMany<Caller>;
     dbOptions?: DefaultDbSpawnOptions;
     environment?: DataAPIEnvironment;
     httpOptions?: DataAPIHttpOptions;
@@ -740,9 +760,9 @@ export interface DataAPIErrorDescriptor {
 // @public (undocumented)
 export interface DataAPIExplicitLoggingConfig {
     // (undocumented)
-    readonly emits: DataAPILoggingOutput | readonly DataAPILoggingOutput[];
+    readonly emits: OneOrMany<DataAPILoggingOutput>;
     // (undocumented)
-    readonly events: DataAPILoggingEvent | readonly DataAPILoggingEvent[];
+    readonly events: OneOrMany<DataAPILoggingEvent>;
 }
 
 // @public
@@ -792,6 +812,14 @@ export class DataAPITimeoutError extends DataAPIError {
 
 // @public (undocumented)
 export class DataAPIVector {
+    // (undocumented)
+    [$SerializeForCollections]: () => number[] | {
+        $binary: string;
+    };
+    // (undocumented)
+    [$SerializeForTables]: () => number[] | {
+        $binary: string;
+    };
     constructor(vector: DataAPIVectorLike);
     // (undocumented)
     asArray(): number[];
@@ -803,6 +831,8 @@ export class DataAPIVector {
     get length(): number;
     // (undocumented)
     raw(): Exclude<DataAPIVectorLike, DataAPIVector>;
+    // (undocumented)
+    toString(): string;
 }
 
 // @public (undocumented)
@@ -906,8 +936,8 @@ export class Db {
     createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>>;
     createTable<const Def extends CreateTableDefinition>(tableName: string, options: CreateTableOptions<InferTableSchemaFromDefinition<Def>, Def>): Promise<Table<InferTableSchemaFromDefinition<Def>>>;
     createTable<Schema extends SomeRow>(tableName: string, options: CreateTableOptions<Schema>): Promise<Table<Schema>>;
-    dropCollection(name: string, options?: DropCollectionOptions): Promise<boolean>;
-    dropTable(name: string, options?: DropTableOptions): Promise<boolean>;
+    dropCollection(name: string, options?: DropCollectionOptions): Promise<void>;
+    dropTable(name: string, options?: DropTableOptions): Promise<void>;
     // (undocumented)
     get _httpClient(): DataAPIHttpClient;
     get id(): string;
@@ -1457,6 +1487,8 @@ export type IdOf<Doc> = Doc extends {
 
 // @public (undocumented)
 export class InetAddress {
+    // (undocumented)
+    [$SerializeForTables]: () => string;
     constructor(address: string, version?: 4 | 6);
     // (undocumented)
     static fromIP(raw: string): InetAddress;
@@ -1632,13 +1664,13 @@ export interface NumFilterOps {
 
 // @public
 export class ObjectId {
+    // (undocumented)
+    [$SerializeForCollections]: () => {
+        $objectId: string;
+    };
     constructor(id?: string | number | null, validate?: boolean);
     equals(other: unknown): boolean;
     getTimestamp(): Date;
-    // (undocumented)
-    toJSON(): {
-        $objectId: string;
-    };
     toString(): string;
 }
 
@@ -1844,7 +1876,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
     // (undocumented)
     deleteOne(filter: Filter<Schema>, options?: TableDeleteOneOptions): Promise<void>;
     // (undocumented)
-    drop(options?: WithTimeout): Promise<boolean>;
+    drop(options?: WithTimeout): Promise<void>;
     // (undocumented)
     dropIndex(name: string, options?: WithTimeout): Promise<void>;
     // (undocumented)
@@ -2000,13 +2032,15 @@ export class UsernamePasswordTokenProvider extends TokenProvider {
 
 // @public
 export class UUID {
+    // (undocumented)
+    [$SerializeForCollections]: () => {
+        $uuid: string;
+    };
+    // (undocumented)
+    [$SerializeForTables]: () => string;
     constructor(uuid: string, validate?: boolean);
     equals(other: unknown): boolean;
     getTimestamp(): Date | undefined;
-    // (undocumented)
-    toJSON(): {
-        $uuid: string;
-    };
     toString(): string;
     static v4(): UUID;
     static v7(): UUID;

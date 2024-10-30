@@ -83,7 +83,6 @@ export class CqlDate {
   }
 }
 
-
 export interface CqlDurationComponents {
   months: number,
   days: number,
@@ -95,9 +94,19 @@ export class CqlDuration {
 
   public [$SerializeForTables] = this.toString;
 
-  constructor(input: string | CqlDurationComponents) {
+  constructor(input: string | Partial<CqlDurationComponents> | [Date | CqlTimestamp, Date | CqlTimestamp]) {
     if (typeof input === 'string') {
       this.#duration = input;
+    } else if (Array.isArray(input)) {
+      if (input[0] instanceof CqlTimestamp) {
+        input[0] = input[0].toDate();
+      }
+      if (input[1] instanceof CqlTimestamp) {
+        input[1] = input[1].toDate();
+      }
+      const [start, end] = input;
+      const ns = (end.getTime() - start.getTime()) * 1_000_000;
+      this.#duration = `0mo0d${ns}ns`;
     } else {
       this.#duration = `${input.months}mo${input.days}d${input.nanoseconds}ns`;
     }
@@ -109,6 +118,25 @@ export class CqlDuration {
 
   public components(): CqlDurationComponents {
     throw 'stub';
+  }
+
+  public toDates(reference: Date | CqlTimestamp): [Date, Date] {
+    if (!reference) {
+      throw new Error('Base date is required to convert duration to date ranges');
+    }
+
+    if (reference instanceof CqlTimestamp) {
+      reference = reference.toDate();
+    }
+
+    const components = this.components();
+    const end = new Date(reference);
+
+    end.setMonth(end.getMonth() + components.months);
+    end.setDate(end.getDate() + components.days);
+    end.setMilliseconds(end.getMilliseconds() + components.nanoseconds / 1_000_000);
+
+    return [new Date(reference), end];
   }
 
   public toString() {

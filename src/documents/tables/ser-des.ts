@@ -12,7 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CqlDate, CqlDuration, CqlTime, CqlTimestamp, InetAddress, SomeDoc, SomeRow, UUID } from '@/src/documents';
+import {
+  CqlBlob,
+  CqlDate,
+  CqlDuration,
+  CqlTime,
+  CqlTimestamp,
+  InetAddress,
+  SomeDoc,
+  SomeRow,
+  UUID,
+} from '@/src/documents';
 import { DataAPIDesCtx, DataAPISerCtx, mkSerDes } from '@/src/lib/api/ser-des';
 import {
   ListTableColumnDefinitions,
@@ -94,8 +104,11 @@ const DefaultTableSerDesCfg = {
     return true;
   },
   parsers: {
+    blob: (blob) => new (<any>CqlBlob)(blob), // it's ok for me to use the private constructor here, but no one else >:(
     date: (date) => new CqlDate(date),
+    double: parseIEE754,
     duration: (duration) => new CqlDuration(duration),
+    float: parseIEE754,
     inet: (inet) => new InetAddress(inet),
     time: (time) => new CqlTime(time),
     timestamp: (timestamp) => new CqlTimestamp(timestamp),
@@ -103,8 +116,6 @@ const DefaultTableSerDesCfg = {
     timeuuid: (uuid) => new UUID(uuid, false),
     vector: (vector) => new DataAPIVector(vector),
     varint: BigInt,
-    double: parseIEE754,
-    float: parseIEE754,
     map(map, ctx, def) {
       const entries = Array.isArray(map) ? map : Object.entries(map);
 

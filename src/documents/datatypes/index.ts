@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+export * from './blob';
 export * from './dates';
 export * from './inet-address';
 export * from './object-id';
