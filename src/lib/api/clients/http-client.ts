@@ -42,7 +42,7 @@ export abstract class HttpClient {
       this.baseUrl += '/' + options.baseApiPath;
     }
 
-    this.baseHeaders = {};
+    this.baseHeaders = { ...options.additionalHeaders };
     this.baseHeaders['User-Agent'] = options.userAgent;
     this.baseHeaders['Content-Type'] = 'application/json';
     this.baseHeaders['Feature-Flag-tables'] = 'true';

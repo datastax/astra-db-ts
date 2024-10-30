@@ -114,7 +114,7 @@ const DefaultTableSerDesCfg = {
     timestamp: (timestamp) => new CqlTimestamp(timestamp),
     uuid: (uuid) => new UUID(uuid, false),
     timeuuid: (uuid) => new UUID(uuid, false),
-    vector: (vector) => new DataAPIVector(vector),
+    vector: (vector) => new DataAPIVector(vector, false),
     varint: BigInt,
     map(map, ctx, def) {
       const entries = Array.isArray(map) ? map : Object.entries(map);

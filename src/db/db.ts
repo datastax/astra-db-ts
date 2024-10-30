@@ -101,6 +101,7 @@ export class Db {
         dataApiPath: dbOpts?.dataApiPath ?? rootOpts.dbOptions.dataApiPath,
         token: token,
         logging: Logger.advanceConfig(rootOpts.dbOptions.logging, dbOpts?.logging),
+        additionalHeaders: { ...rootOpts.dbOptions.additionalHeaders, ...dbOpts?.additionalHeaders },
         serdes: {
           collection: {
             serialize: [...toArray(dbOpts?.serdes?.collection?.serialize ?? []), ...toArray(rootOpts.dbOptions.serdes?.collection?.serialize ?? [])],

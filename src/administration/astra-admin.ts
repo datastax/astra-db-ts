@@ -79,6 +79,7 @@ export class AstraAdmin {
         endpointUrl: adminOpts?.endpointUrl || rootOpts.adminOptions.endpointUrl,
         adminToken: token,
         logging: Logger.advanceConfig(rootOpts.adminOptions.logging, adminOpts?.logging),
+        additionalHeaders: { ...rootOpts.adminOptions.additionalHeaders, ...adminOpts?.additionalHeaders },
       },
       dbOptions: {
         ...rootOpts.dbOptions,

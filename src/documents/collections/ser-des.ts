@@ -45,7 +45,7 @@ const DefaultCollectionSerDesCfg = {
         }
       }
 
-      if (key === '$vector' && (Array.isArray(value) || value instanceof Float32Array)) {
+      if (key === '$vector') {
         value = new DataAPIVector(value);
       }
 
@@ -73,7 +73,7 @@ const DefaultCollectionSerDesCfg = {
       }
 
       if (key === '$vector') {
-        this[key] = new DataAPIVector(value);
+        this[key] = new DataAPIVector(value, false).asArray();
       }
     }
   },

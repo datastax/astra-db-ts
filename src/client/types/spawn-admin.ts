@@ -53,4 +53,5 @@ export interface AdminSpawnOptions {
    * ```
    */
   endpointUrl?: string,
+  additionalHeaders?: Record<string, string>,
 }

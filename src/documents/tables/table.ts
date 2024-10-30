@@ -100,7 +100,6 @@ export class Table<Schema extends SomeRow = SomeRow> {
     });
 
     this.#httpClient = httpClient.forCollection(this.keyspace, this.tableName, opts);
-    this.#httpClient.baseHeaders['Feature-Flag-tables'] = 'true';
     this.#commands = new CommandImpls(this.tableName, this.#httpClient, mkTableSerDes(opts?.serdes));
     this.#db = db;
 

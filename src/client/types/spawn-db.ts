@@ -95,6 +95,7 @@ export interface DbSpawnOptions {
    */
   dataApiPath?: string,
   serdes?: DbSerDesConfig,
+  additionalHeaders?: Record<string, string>,
 }
 
 export interface DbSerDesConfig {

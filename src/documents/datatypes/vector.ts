@@ -24,7 +24,13 @@ export class DataAPIVector {
   public [$SerializeForTables] = () => DataAPIVector.#serialize(this.#vector);
   public [$SerializeForCollections] = this[$SerializeForTables];
 
-  public constructor(vector: DataAPIVectorLike) {
+  public constructor(vector: DataAPIVectorLike, validate = true) {
+    if (validate) {
+      if (!Array.isArray(vector) && !(<any>vector instanceof DataAPIVector) && typeof vector !== 'string' && !(vector instanceof Float32Array)) {
+        throw new Error(`Invalid vector type; expected number[], base64 string, Float32Array, or DataAPIVector; got '${vector}'`);
+      }
+    }
+
     this.#vector = (vector instanceof DataAPIVector)
       ? vector.raw()
       : vector;
@@ -54,7 +60,7 @@ export class DataAPIVector {
       const deserialized = DataAPIVector.#deserializeToNumberArray(this.#vector);
 
       if (!deserialized) {
-        throw new Error('Could not to deserialize vector from base64 => number[]; unknown environment. Please manually deserialize the binary from `vector.getAsBase64()`.');
+        throw new Error('Could not to deserialize vector from base64 => number[]; unknown environment. Please manually deserialize the binary from `vector.getAsBase64()`');
       }
 
       return deserialized;
@@ -72,7 +78,7 @@ export class DataAPIVector {
       const deserialized =  DataAPIVector.#deserializeToF32Array(this.#vector);
 
       if (!deserialized) {
-        throw new Error('Could not to deserialize vector from base64 => Float32Array; unknown environment. Please manually deserialize the binary from `vector.getAsBase64()`.');
+        throw new Error('Could not to deserialize vector from base64 => Float32Array; unknown environment. Please manually deserialize the binary from `vector.getAsBase64()`');
       }
 
       return deserialized;
@@ -86,9 +92,9 @@ export class DataAPIVector {
 
     if (!('$binary' in serialized)) {
       if (Array.isArray(this.#vector)) {
-        throw new Error('Could not serialize vector from number[] => base64; unknown environment. Please manually serialize the binary from `vector.getRaw()`/`vector.getAsArray()`.');
+        throw new Error('Could not serialize vector from number[] => base64; unknown environment. Please manually serialize the binary from `vector.getRaw()`/`vector.getAsArray()`');
       } else {
-        throw new Error('Could not serialize vector from Float32Array => base64; unknown environment. Please manually serialize the binary from `vector.getRaw()`/`vector.getAsFloat32Array()`.');
+        throw new Error('Could not serialize vector from Float32Array => base64; unknown environment. Please manually serialize the binary from `vector.getRaw()`/`vector.getAsFloat32Array()`');
       }
     }
 

@@ -32,6 +32,7 @@ export const parseDbSpawnOpts: Parser<DbSpawnOptions | undefined, unknown> = (ra
     dataApiPath: p.parse('string?')(opts.dataApiPath, `${field}.dataApiPath`),
     token: TokenProvider.parseToken([opts.token], `${field}.token`),
     serDes: p.parse('object?', parseSerDes)(opts.serdes, `${field}.serDes`),
+    additionalHeaders: p.parse('object?')(opts.additionalHeaders, `${field}.additionalHeaders`),
   };
 };
 

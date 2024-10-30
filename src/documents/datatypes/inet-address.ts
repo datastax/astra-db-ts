@@ -14,41 +14,40 @@
 
 import { $CustomInspect } from '@/src/lib/constants';
 import { $SerializeForTables } from '@/src/documents/tables/ser-des';
+import { nullish } from '@/src/lib';
 
 export class InetAddress {
   readonly #raw: string;
-  #version: 4 | 6 | undefined;
+  #version: 4 | 6 | nullish;
 
   public [$SerializeForTables] = () => this.#raw;
 
-  public constructor(address: string, version?: 4 | 6) {
+  public constructor(address: string, version?: 4 | 6 | null, validate = true) {
+    if (validate) {
+      switch (version) {
+        case 4:
+          if (!isIPv4(address)) {
+            throw new Error(`'${address}' is not a valid IPv4 address`);
+          }
+          break;
+        case 6:
+          if (!isIPv6(address)) {
+            throw new Error(`'${address}' is not a valid IPv6 address`);
+          }
+          break;
+        default:
+          if (!(version = isIPv4(address) ? 4 : isIPv6(address) ? 6 : null)) {
+            throw new Error(`'${address}' is not a valid IPv4 or IPv6 address`);
+          }
+      }
+    }
+
     this.#raw = address.toLowerCase();
     this.#version = version;
 
     Object.defineProperty(this, $CustomInspect, {
       value: () => `InetAddress<${this.version}>("${this.#raw}")`,
     });
-  }
-
-  public static fromIP(raw: string): InetAddress {
-    if (!isValidIP(raw)) {
-      throw new Error(`'${raw}' is not a valid IP address`);
-    }
-    return new InetAddress(raw);
-  }
-
-  public static fromIPv4(raw: string): InetAddress {
-    if (!isIPv4(raw)) {
-      throw new Error(`'${raw}' is not a valid IPv4 address`);
-    }
-    return new InetAddress(raw, 4);
-  }
-
-  public static fromIPv6(raw: string): InetAddress {
-    if (!isIPv6(raw)) {
-      throw new Error(`'${raw}' is not a valid IPv6 address`);
-    }
-    return new InetAddress(raw, 6);
   }
 
   public get version(): 4 | 6 {
@@ -86,18 +85,9 @@ const v6 = `
 )(?:%[0-9a-zA-Z]{1,})?                                             // %eth0            %1
 `.replace(/\s*\/\/.*$/gm, '').replace(/\n/g, '').trim();
 
-// noinspection RegExpUnnecessaryNonCapturingGroup
-const IPRegex = new RegExp(`(?:^${v4}$)|(?:^${v6}$)`);
 const IPv4Regex = new RegExp(`^${v4}$`);
 const IPv6Regex = new RegExp(`^${v6}$`);
 // =====================================================================================================================
-
-function isValidIP(raw: string) {
-  if (raw.length < IPv6Lengths.min || IPv6Lengths.max < raw.length) {
-    return false;
-  }
-  return IPRegex.test(raw);
-}
 
 function isIPv6(raw: string) {
   if (raw.length < IPv6Lengths.min || IPv6Lengths.max < raw.length) {
