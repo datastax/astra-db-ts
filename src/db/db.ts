@@ -59,11 +59,11 @@ import { $CustomInspect } from '@/src/lib/constants';
  * const client = new DataAPIClient('AstraCS:...');
  *
  * // Connect to a database using a direct endpoint
- * const db1 = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
+ * const db1 = client.db('https://<db#id>-<region>.apps.astra.datastax.com');
  *
  * // Overrides default options from the DataAPIClient
- * const db2 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', {
- *   keyspace: 'my_keyspace',
+ * const db2 = client.db('https://<db#id>-<region>.apps.astra.datastax.com', {
+ *   keyspace: 'my#keyspace',
  *   useHttp2: false,
  * });
  *
@@ -81,8 +81,8 @@ export class Db {
   readonly #httpClient: DataAPIHttpClient;
   readonly #endpoint?: string;
 
-  private readonly _keyspace: KeyspaceRef;
-  private readonly _id?: string;
+  readonly #keyspace: KeyspaceRef;
+  readonly #id?: string;
 
   /**
    * Use {@link DataAPIClient.db} to obtain an instance of this class.
@@ -120,7 +120,7 @@ export class Db {
       },
     };
 
-    this._keyspace = {
+    this.#keyspace = {
       ref: (rootOpts.environment === 'astra')
         ? this.#defaultOpts.dbOptions.keyspace ?? DEFAULT_KEYSPACE
         : this.#defaultOpts.dbOptions.keyspace ?? undefined,
@@ -134,12 +134,12 @@ export class Db {
       emitter: rootOpts.emitter,
       logging: this.#defaultOpts.dbOptions.logging,
       fetchCtx: rootOpts.fetchCtx,
-      keyspace: this._keyspace,
+      keyspace: this.#keyspace,
       userAgent: rootOpts.userAgent,
       emissionStrategy: EmissionStrategy.Normal,
     });
 
-    this._id = extractDbIdFromUrl(endpoint);
+    this.#id = extractDbIdFromUrl(endpoint);
     this.#endpoint = endpoint;
 
     Object.defineProperty(this, $CustomInspect, {
@@ -152,36 +152,36 @@ export class Db {
    *
    * @example
    * ```typescript
-   * // Uses 'default_keyspace' as the default keyspace for all future db spawns
+   * // Uses 'default#keyspace' as the default keyspace for all future db spawns
    * const client1 = new DataAPIClient('*TOKEN*');
    *
    * // Overrides the default keyspace for all future db spawns
    * const client2 = new DataAPIClient('*TOKEN*', {
-   *   dbOptions: { keyspace: 'my_keyspace' },
+   *   dbOptions: { keyspace: 'my#keyspace' },
    * });
    *
-   * // Created with 'default_keyspace' as the default keyspace
+   * // Created with 'default#keyspace' as the default keyspace
    * const db1 = client1.db('*ENDPOINT*');
    *
-   * // Created with 'my_keyspace' as the default keyspace
+   * // Created with 'my#keyspace' as the default keyspace
    * const db2 = client1.db('*ENDPOINT*', {
-   *   keyspace: 'my_keyspace'
+   *   keyspace: 'my#keyspace'
    * });
    *
-   * // Uses 'default_keyspace'
+   * // Uses 'default#keyspace'
    * const coll1 = db1.collection('users');
    *
-   * // Uses 'my_keyspace'
+   * // Uses 'my#keyspace'
    * const coll2 = db1.collection('users', {
-   *   keyspace: 'my_keyspace'
+   *   keyspace: 'my#keyspace'
    * });
    * ```
    */
   public get keyspace(): string {
-    if (!this._keyspace.ref) {
+    if (!this.#keyspace.ref) {
       throw new Error('No keyspace set for DB (can\'t do db.keyspace, or perform any operation requiring it). Use `db.useKeyspace`, or pass the keyspace as an option parameter explicitly.');
     }
-    return this._keyspace.ref;
+    return this.#keyspace.ref;
   }
 
   /**
@@ -190,10 +190,10 @@ export class Db {
    * @throws Error - if the database is not an Astra database.
    */
   public get id(): string {
-    if (!this._id) {
+    if (!this.#id) {
       throw new Error('Non-Astra databases do not have an appropriate ID');
     }
-    return this._id;
+    return this.#id;
   }
 
   /**
@@ -202,22 +202,22 @@ export class Db {
    *
    * @example
    * ```typescript
-   * // Spawns a `Db` with default working keyspace `my_keyspace`
-   * const db = client.db('<endpoint>', { keyspace: 'my_keyspace' });
+   * // Spawns a `Db` with default working keyspace `my#keyspace`
+   * const db = client.db('<endpoint>', { keyspace: 'my#keyspace' });
    *
-   * // Gets a collection from keyspace `my_keyspace`
+   * // Gets a collection from keyspace `my#keyspace`
    * const coll1 = db.collection('my_coll');
    *
-   * // `db` now uses `my_other_keyspace` as the default keyspace for all operations
-   * db.useKeyspace('my_other_keyspace');
+   * // `db` now uses `my_other#keyspace` as the default keyspace for all operations
+   * db.useKeyspace('my_other#keyspace');
    *
-   * // Gets a collection from keyspace `my_other_keyspace`
-   * // `coll1` still uses keyspace `my_keyspace`
+   * // Gets a collection from keyspace `my_other#keyspace`
+   * // `coll1` still uses keyspace `my#keyspace`
    * const coll2 = db.collection('my_other_coll');
    *
-   * // Gets `my_coll` from keyspace `my_keyspace` again
-   * // (The default keyspace is still `my_other_keyspace`)
-   * const coll3 = db.collection('my_coll', { keyspace: 'my_keyspace' });
+   * // Gets `my_coll` from keyspace `my#keyspace` again
+   * // (The default keyspace is still `my_other#keyspace`)
+   * const coll3 = db.collection('my_coll', { keyspace: 'my#keyspace' });
    * ```
    *
    * @example
@@ -226,19 +226,19 @@ export class Db {
    * const client = new DataAPIClient({ environment: 'dse' });
    * const db = client.db('<endpoint>', { token: '<token>' });
    *
-   * // Will internally call `db.useKeyspace('new_keyspace')`
-   * await db.admin().createKeyspace('new_keyspace', {
+   * // Will internally call `db.useKeyspace('new#keyspace')`
+   * await db.admin().createKeyspace('new#keyspace', {
    *   updateDbKeyspace: true,
    * });
    *
-   * // Creates collection in keyspace `new_keyspace` by default now
+   * // Creates collection in keyspace `new#keyspace` by default now
    * const coll = db.createCollection('my_coll');
    * ```
    *
    * @param keyspace - The keyspace to use
    */
   public useKeyspace(keyspace: string) {
-    this._keyspace.ref = keyspace;
+    this.#keyspace.ref = keyspace;
   }
 
   /**
@@ -366,7 +366,7 @@ export class Db {
    *
    * // Untyped collection from different keyspace
    * const users2 = db.collection("users", {
-   *   keyspace: "my_keyspace",
+   *   keyspace: "my#keyspace",
    * });
    * users2.insertOne({ nam3: "John" });
    * ```
@@ -436,7 +436,7 @@ export class Db {
    *
    * // Untyped collection with custom options in a different keyspace
    * const users2 = await db.createCollection("users", {
-   *   keyspace: "my_keyspace",
+   *   keyspace: "my#keyspace",
    *   defaultId: {
    *     type: "objectId",
    *   },
@@ -644,7 +644,7 @@ export class Db {
    *
    * // Overrides db's working keyspace
    * const success2 = await db.dropCollection("users", {
-   *   keyspace: "my_keyspace"
+   *   keyspace: "my#keyspace"
    * });
    * console.log(success2); // true
    * ```
@@ -674,7 +674,7 @@ export class Db {
    *
    * // Overrides db's working keyspace
    * const success2 = await db.dropTable("users", {
-   *   keyspace: "my_keyspace"
+   *   keyspace: "my#keyspace"
    * });
    * console.log(success2); // true
    * ```

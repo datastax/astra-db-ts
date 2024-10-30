@@ -14,6 +14,7 @@
 
 import type { DataAPIEnvironment, DataAPILoggingConfig } from '@/src/lib';
 import type { Caller, DataAPIHttpOptions, DefaultAdminSpawnOptions, DefaultDbSpawnOptions } from '@/src/client';
+import { OneOrMany } from '@/src/lib/types';
 
 /**
  * The default options for the {@link DataAPIClient}. The Data API & DevOps specific options may be overridden
@@ -104,5 +105,5 @@ export interface DataAPIClientOptions {
    * });
    * ```
    */
-  caller?: Caller | Caller[],
+  caller?: OneOrMany<Caller>,
 }

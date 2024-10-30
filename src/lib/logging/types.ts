@@ -15,6 +15,7 @@
 
 import { DataAPICommandEvents } from '@/src/documents';
 import { AdminCommandEvents } from '@/src/administration';
+import { OneOrMany } from '@/src/lib/types';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -41,8 +42,8 @@ export type DataAPILoggingEvent = 'all' | keyof DataAPIClientEvents;
 export type DataAPILoggingOutput = 'event' | 'stdout' | 'stderr';
 
 export interface DataAPIExplicitLoggingConfig {
-  readonly events: DataAPILoggingEvent | readonly DataAPILoggingEvent[],
-  readonly emits: DataAPILoggingOutput | readonly DataAPILoggingOutput[],
+  readonly events: OneOrMany<DataAPILoggingEvent>,
+  readonly emits: OneOrMany<DataAPILoggingOutput>,
 }
 
 export interface NormalizedLoggingConfig {

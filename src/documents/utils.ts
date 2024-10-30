@@ -58,28 +58,6 @@ export function replaceAstraUrlIdAndRegion(uri: string, id: string, region: stri
 /**
  * @internal
  */
-export function validateOption<T>(name: string, obj: T, types: string | string[], require: boolean = false, test?: (obj: NonNullable<T>) => void): void {
-  types = Array.isArray(types) ? types : [types];
-
-  const typesString = `[${types.join(', ')}]`;
-
-  if (obj === null || obj === undefined) {
-    if (require) {
-      throw new Error(`Missing required ${name}; expected a value of some type in ${typesString}`);
-    }
-    return;
-  }
-
-  if (!types.some(t => t === typeof obj)) {
-    throw new TypeError(`Invalid ${name}; expected a value of some type in ${typesString}, or undefined/null`);
-  }
-
-  test?.(obj);
-}
-
-/**
- * @internal
- */
 export const normalizedSort = (sort: SomeDoc): Sort => {
   const ret: Sort = {};
 
