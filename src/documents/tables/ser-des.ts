@@ -19,14 +19,17 @@ import {
   ListTableKnownColumnDefinition,
   ListTableUnsupportedColumnDefinition,
 } from '@/src/db';
+import { OneOrMany } from '@/src/lib/types';
+import { toArray } from '@/src/lib/utils';
+import { DataAPIVector } from '@/src/documents/datatypes/vector';
 
 type TableDesCtx = DataAPIDesCtx & { tableSchema: ListTableColumnDefinitions, parsers: Record<string, TableColumnTypeParser> };
 
 export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: SomeDoc) => any;
 
 export interface TableSerDesConfig<Schema extends SomeRow> {
-  serialize?: (this: SomeRow, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void,
-  deserialize?: (this: SomeRow, key: string, value: any, ctx: TableDesCtx) => [any, boolean?] | boolean | undefined | void,
+  serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>,
+  deserialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: TableDesCtx) => [any, boolean?] | boolean | undefined | void>,
   parsers?: Record<string, TableColumnTypeParser>,
   mutateInPlace?: boolean,
 }
@@ -35,8 +38,8 @@ export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Sc
   const parsers = { ...DefaultTableSerDesCfg.parsers, ...cfg?.parsers };
 
   return mkSerDes({
-    serializer: [cfg?.serialize, DefaultTableSerDesCfg.serialize].filter(x => x).map(x => x!),
-    deserializer: [cfg?.deserialize, DefaultTableSerDesCfg.deserialize].filter(x => x).map(x => x!),
+    serializer: [...toArray(cfg?.serialize ?? []), DefaultTableSerDesCfg.serialize],
+    deserializer: [...toArray(cfg?.deserialize ?? []), DefaultTableSerDesCfg.deserialize],
     adaptSerCtx: (ctx) => ctx,
     adaptDesCtx: (_ctx) => {
       const ctx = _ctx as TableDesCtx;
@@ -57,7 +60,7 @@ export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Sc
   });
 };
 
-const DefaultTableSerDesCfg: Omit<Required<TableSerDesConfig<SomeRow>>, 'mutateInPlace'> = {
+const DefaultTableSerDesCfg = {
   serialize(_, value) {
     if (typeof value === 'object' && value !== null) {
       if ($SerializeRelaxed in value) {
@@ -87,6 +90,7 @@ const DefaultTableSerDesCfg: Omit<Required<TableSerDesConfig<SomeRow>>, 'mutateI
     timestamp: (timestamp) => new CqlTimestamp(timestamp),
     uuid: (uuid) => new UUID(uuid, false),
     timeuuid: (uuid) => new UUID(uuid, false),
+    vector: (vector) => new DataAPIVector(vector),
     varint: BigInt,
     double: parseIEE754,
     float: parseIEE754,
@@ -113,7 +117,7 @@ const DefaultTableSerDesCfg: Omit<Required<TableSerDesConfig<SomeRow>>, 'mutateI
       return new Set(ctx.parsers.list(set, ctx, def));
     },
   },
-};
+} satisfies Omit<Required<TableSerDesConfig<SomeRow>>, 'mutateInPlace'>;
 
 function deserializeObj(ctx: TableDesCtx, obj: SomeRow, key: string, column: ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition) {
   const type = (column.type === 'UNSUPPORTED')

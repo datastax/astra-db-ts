@@ -14,22 +14,25 @@
 
 import { ObjectId, SomeDoc, UUID } from '@/src/documents';
 import { $SerializeStrict, DataAPIDesCtx, DataAPISerCtx, mkSerDes } from '@/src/lib/api/ser-des';
+import { OneOrMany } from '@/src/lib/types';
+import { toArray } from '@/src/lib/utils';
+import { DataAPIVector } from '@/src/documents/datatypes/vector';
 
 export interface CollectionSerDesConfig<Schema extends SomeDoc> {
-  serialize?: (this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void,
-  deserialize?: (this: SomeDoc, key: string, value: any, ctx: DataAPIDesCtx) => [any, boolean?] | boolean | undefined | void,
+  serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>,
+  deserialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPIDesCtx) => [any, boolean?] | boolean | undefined | void>,
   mutateInPlace?: boolean,
 }
 
 export const mkCollectionSerDes = <Schema extends SomeDoc>(cfg?: CollectionSerDesConfig<Schema>) => mkSerDes({
-  serializer: [cfg?.serialize, DefaultCollectionSerDesCfg.serialize].filter(x => x).map(x => x!),
-  deserializer: [cfg?.deserialize, DefaultCollectionSerDesCfg.deserialize].filter(x => x).map(x => x!),
+  serializer: [...toArray(cfg?.serialize ?? []), DefaultCollectionSerDesCfg.serialize],
+  deserializer: [...toArray(cfg?.deserialize ?? []), DefaultCollectionSerDesCfg.deserialize],
   adaptSerCtx: (ctx) => ctx,
   adaptDesCtx: (ctx) => ctx,
   mutateInPlace: cfg?.mutateInPlace,
 });
 
-const DefaultCollectionSerDesCfg: CollectionSerDesConfig<SomeDoc> = {
+const DefaultCollectionSerDesCfg = {
   serialize(key, value) {
     if (typeof value === 'object' && value !== null) {
       if (value instanceof Date) {
@@ -62,6 +65,10 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig<SomeDoc> = {
       if (value.$uuid) {
         this[key] = new UUID(value.$uuid);
       }
+
+      if (key === '$vector') {
+        this[key] = new DataAPIVector(value);
+      }
     }
   },
-};
+} satisfies CollectionSerDesConfig<SomeDoc>;

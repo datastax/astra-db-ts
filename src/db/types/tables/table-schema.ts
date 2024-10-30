@@ -23,6 +23,7 @@ import {
 import { EmptyObj } from '@/src/lib/types';
 import { UUID, InetAddress, CqlDate, CqlDuration, CqlTime, CqlTimestamp } from '@/src/documents';
 import { TypeErr } from '@/src/documents/utils';
+import { DataAPIVector } from '@/src/documents/datatypes/vector';
 
 /**
  * The different possible types that a Table's schema may be inferred from using the {@link InferTableSchema} type,
@@ -271,12 +272,12 @@ interface CqlNonGenericType2TSTypeDict {
   uuid: UUID,
   varchar: string,
   varint: bigint,
+  vector: DataAPIVector,
 }
 
 interface CqlGenericType2TSTypeDict<Def> {
   map: CqlMapType2TsType<Def>,
   list: CqlListType2TsType<Def>,
-  vector: CqlListType2TsType<Def>,
   set: CqlSetType2TsType<Def>,
 }
 
@@ -288,7 +289,7 @@ type CqlMapType2TsType<Def> =
 type CqlListType2TsType<Def> =
   Def extends { valueType: infer ValueType extends string }
     ? Array<CqlType2TSType<ValueType, never>>
-    : TypeErr<'Invalid generics definition for \'list/vector\'; should have valueType set as scalar CQL types (e.g. \'text\')'>;
+    : TypeErr<'Invalid generics definition for \'list\'; should have valueType set as scalar CQL types (e.g. \'text\')'>;
 
 type CqlSetType2TsType<Def> =
   Def extends { valueType: infer ValueType extends string }

@@ -24,7 +24,7 @@ import { CreateCollectionOptions } from '@/src/db/types/collections/create-colle
 import { TokenProvider } from '@/src/lib';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client';
 import { KeyspaceRef } from '@/src/lib/api/clients/types';
-import { validateDataAPIEnv } from '@/src/lib/utils';
+import { toArray, validateDataAPIEnv } from '@/src/lib/utils';
 import { EmbeddingHeadersProvider, SomeRow, Table } from '@/src/documents';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
 import { CollectionSpawnOptions } from '@/src/db/types/collections/spawn-collection';
@@ -101,6 +101,18 @@ export class Db {
         dataApiPath: dbOpts?.dataApiPath ?? rootOpts.dbOptions.dataApiPath,
         token: token,
         logging: Logger.advanceConfig(rootOpts.dbOptions.logging, dbOpts?.logging),
+        serdes: {
+          collection: {
+            serialize: [...toArray(dbOpts?.serdes?.collection?.serialize ?? []), ...toArray(rootOpts.dbOptions.serdes?.collection?.serialize ?? [])],
+            deserialize: [...toArray(dbOpts?.serdes?.collection?.deserialize ?? []), ...toArray(rootOpts.dbOptions.serdes?.collection?.deserialize ?? [])],
+          },
+          table: {
+            serialize: [...toArray(dbOpts?.serdes?.table?.serialize ?? []), ...toArray(rootOpts.dbOptions.serdes?.table?.serialize ?? [])],
+            deserialize: [...toArray(dbOpts?.serdes?.table?.deserialize ?? []), ...toArray(rootOpts.dbOptions.serdes?.table?.deserialize ?? [])],
+            parsers: { ...rootOpts.dbOptions.serdes?.table?.parsers, ...dbOpts?.serdes?.table?.parsers },
+          },
+          mutateInPlace: dbOpts?.serdes?.mutateInPlace ?? rootOpts.dbOptions.serdes?.mutateInPlace,
+        },
       },
       adminOptions: {
         ...rootOpts.adminOptions,
@@ -364,11 +376,26 @@ export class Db {
    * @see VectorDoc
    */
   public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions<Schema>): Collection<Schema> {
-    return new Collection<Schema>(this, this.#httpClient, name, options);
+    return new Collection<Schema>(this, this.#httpClient, name, {
+      ...options,
+      serdes: {
+        serialize: [...toArray(options?.serdes?.serialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.collection?.serialize ?? [])],
+        deserialize: [...toArray(options?.serdes?.deserialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.collection?.deserialize ?? [])],
+        mutateInPlace: options?.serdes?.mutateInPlace ?? this.#defaultOpts.dbOptions.serdes?.mutateInPlace,
+      },
+    });
   }
 
   public table<Schema extends SomeRow = SomeRow>(name: string, options?: TableSpawnOptions<Schema>): Table<Schema> {
-    return new Table<Schema>(this, this.#httpClient, name, options);
+    return new Table<Schema>(this, this.#httpClient, name, {
+      ...options,
+      serdes: {
+        serialize: [...toArray(options?.serdes?.serialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.table?.serialize ?? [])],
+        deserialize: [...toArray(options?.serdes?.deserialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.table?.deserialize ?? [])],
+        mutateInPlace: options?.serdes?.mutateInPlace ?? this.#defaultOpts.dbOptions.serdes?.mutateInPlace,
+        parsers: { ...this.#defaultOpts.dbOptions.serdes?.table?.parsers, ...options?.serdes?.parsers },
+      },
+    });
   }
 
   /**
