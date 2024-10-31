@@ -75,7 +75,7 @@ export type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$Primary
  *
  * A `Table` is typed as `Table<Schema extends SomeRow>`, where:
  *  - `Schema` is the type of the documents in the collection.
- *  - `SomeRow` is analogous to `Record<string, any>`, representing any valid JSON object.
+ *  - `SomeRow` is set to `Record<string, any>`, representing any valid JSON object.
  *
  * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
  *
@@ -253,7 +253,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
    * @internal
    */
   constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableSpawnOptions<Schema> | undefined) {
-    Object.defineProperty(this, 'tableName', {
+    Object.defineProperty(this, 'name', {
       value: name,
     });
 
@@ -280,10 +280,6 @@ export class Table<Schema extends SomeRow = SomeRow> {
 
   public async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: TableUpdateOneOptions): Promise<TableUpdateOneResult<Schema>> {
     return this.#commands.updateOne(filter, update, options);
-  }
-
-  public async updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: TableUpdateManyOptions): Promise<TableUpdateManyResult<Schema>> {
-    return this.#commands.updateMany(filter, update, options);
   }
 
   public async deleteOne(filter: Filter<Schema>, options?: TableDeleteOneOptions): Promise<void> {

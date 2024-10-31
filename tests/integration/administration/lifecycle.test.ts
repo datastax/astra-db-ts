@@ -146,7 +146,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
       const collection = await db.createCollection('test_collection');
       assert.ok(collection, `in ${dbType}`);
-      assert.strictEqual(collection.collectionName, 'test_collection', `in ${dbType}`);
+      assert.strictEqual(collection.name, 'test_collection', `in ${dbType}`);
       assert.deepStrictEqual(await collection.options(), {}, `in ${dbType}`);
 
       const collections2 = await db.listCollections({ nameOnly: true });

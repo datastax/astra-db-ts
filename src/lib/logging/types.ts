@@ -16,19 +16,165 @@
 import { DataAPICommandEvents } from '@/src/documents';
 import { AdminCommandEvents } from '@/src/administration';
 import { OneOrMany } from '@/src/lib/types';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import TypedEventEmitter from 'typed-emitter';
 
 /**
- * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
- * command's lifecycle. Intended for use for monitoring and logging purposes.
+ * #### Overview
  *
- * Events include:
- * - `commandStarted` - Emitted when a command is started, before the initial HTTP request is made.
- * - `commandSucceeded` - Emitted when a command has succeeded.
- * - `commandFailed` - Emitted when a command has errored.
- * - `adminCommandStarted` - Emitted when an admin command is started, before the initial HTTP request is made.
- * - `adminCommandPolling` - Emitted when a command is polling in a long-running operation (i.e. create database).
- * - `adminCommandSucceeded` - Emitted when an admin command has succeeded, after any necessary polling.
- * - `adminCommandFailed` - Emitted when an admin command has errored.
+ * The `EventMap` of events the {@link DataAPIClient} emits, is an instance of {@link TypedEventEmitter}, when
+ * events logging is enabled (via `logging` options throughout the major class hierarchy).
+ *
+ * There are quite a few combinations of ways in which event logging may be enabled in the logging configuration, but
+ * there are a few most common ways to do so:
+ * - `logging: 'all'` - This will emit all events, but will also log some of them to the console
+ * - `logging: [{ events: 'all', emits: 'event' }]` - This will emit all events, without logging any of them to the console
+ * - `logging: '<command>'` - This will emit only the events for the specified command, but may also log some of them to the console
+ *   - The default behavior for if an event is logged to the console or not varies
+ *   - See below section on event types for more info about default behaviors
+ *
+ * ###### When to prefer events
+ *
+ * Events can be thought of as a "generic logging interface" for Data API & DevOps operations. Though the {@link DataAPILoggingConfig},
+ * you can also enable/disable logging to stdout/stderr, but:
+ * - You're forced to use the console as output
+ * - You can't programmatically interact with the logs/data
+ * - You can't easily filter or format the logs
+ *
+ * {@link DataAPIClientEvents} are a more flexible way to interact with the logs, allowing you to basically plug in, or
+ * even build, your own logging system around them.
+ *
+ * And of course, you're free to use both events and console logging in tandem, if you so choose.
+ *
+ * ###### Disclaimer
+ *
+ * **Note that these emit *real* commands, not any abstracted commands like "insertMany" or "updateMany",
+ * which may be split into multiple of those commands under the hood.**
+ *
+ * This generally applies to normal command events; no admin command events are abstracted as such.
+ *
+ * #### Event types
+ *
+ * There are two major categories of events emitted by the {@link DataAPIClient}:
+ * - {@link DataAPICommandEvents} - Events related to the execution of a command
+ *   - i.e. `Db`, `Collection`, `Table` operations
+ * - {@link AdminCommandEvents} - Events related to the execution of an admin command
+ *   - i.e. `AstraAdmin`, `DbAdmin` operations
+ *
+ * Every event may be enabled/disabled individually, independent of one another.
+ *
+ * ###### `commandStarted` ({@link CommandStartedEvent})
+ *
+ * Emitted when a command is started, before the initial HTTP request is made.
+ *
+ * Default behavior when logging is enabled (through 'all' or 'commandStarted'):
+ * - Emits the event
+ * - Does NOT log to the console
+ *
+ * ###### `commandSucceeded` ({@link CommandSucceededEvent})
+ *
+ * Emitted when a command has succeeded (i.e. the status code is 200, and no `errors` are returned).
+ *
+ * Default behavior when logging is enabled (through 'all' or 'commandSucceeded'):
+ * - Emits the event
+ * - Does NOT log to the console
+ *
+ * ###### `commandFailed` ({@link CommandFailedEvent})
+ *
+ * Emitted when a command has errored (i.e. the status code is not 200, or `errors` are returned).
+ *
+ * Default behavior when logging is enabled (through 'all' or 'commandFailed'):
+ * - Emits the event
+ * - Logs to stderr
+ *
+ * ###### `commandWarnings` ({@link CommandWarningsEvent})
+ *
+ * Emitted when a command has warnings (i.e. when the `status.warnings` field is present).
+ *
+ * Warnings may be present even if the command has succeeded.
+ *
+ * Such warnings include updates/deletes without a filter, or using deprecated command aliases.
+ *
+ * Default behavior when logging is enabled (through 'all' or 'commandWarnings'):
+ * - Emits the event
+ * - Logs to stderr
+ *
+ * ###### `adminCommandStarted` ({@link AdminCommandStartedEvent})
+ *
+ * Emitted when an admin command is started, before the initial HTTP request is made.
+ *
+ * Default behavior when logging is enabled (through 'all' or 'adminCommandStarted'):
+ * - Emits the event
+ * - Logs to stdout
+ *
+ * ###### `adminCommandPolling` ({@link AdminCommandPollingEvent})
+ *
+ * Emitted when a command is polling in a long-running operation (i.e. {@link AstraAdmin.createDatabase}).
+ *
+ * **Note: this is ONLY emitted when using {@link AstraAdmin} & {@link AstraDbAdmin} methods.** Non-Astra-backends
+ * do not yet require any command polling.
+ *
+ * Frequency of polling depends on the command being run, and whether a custom polling interval was set.
+ *
+ * Default behavior when logging is enabled (through 'all' or 'adminCommandPolling'):
+ * - Emits the event
+ * - Logs to stdout
+ *
+ * ###### `adminCommandSucceeded` ({@link AdminCommandSucceededEvent})
+ *
+ * Emitted when an admin command has succeeded, after any necessary polling (i.e. when an HTTP 200 is returned).
+ *
+ * Default behavior when logging is enabled (through 'all' or 'adminCommandSucceeded'):
+ * - Emits the event
+ * - Logs to stdout
+ *
+ * ###### `adminCommandFailed` ({@link AdminCommandFailedEvent})
+ *
+ * Emitted when an admin command has failed (i.e. when an HTTP 4xx/5xx is returned, even if while polling).
+ *
+ * Default behavior when logging is enabled (through 'all' or 'adminCommandFailed'):
+ * - Emits the event
+ * - Logs to stderr
+ *
+ * ###### `adminCommandWarnings` ({@link AdminCommandWarningsEvent})
+ *
+ * Emitted when an admin command has warnings (i.e. when the `status.warnings` field is present).
+ *
+ * **Note: this is ONLY emitted when using {@link DataAPIDbAdmin} methods.** Astra-backends work using the DevOps API,
+ * which does not produce any command warnings.
+ *
+ * Warnings may be present even if the command has succeeded.
+ *
+ * Such warnings include using deprecated command aliases, such as those with "namespace" terminology.
+ *
+ * @example
+ * ```ts
+ * const client = new DataAPIClient('*TOKEN*', {
+ *   logging: { events: 'all', emits: 'event' },
+ * });
+ * const db = client.db('*ENDPOINT*');
+ *
+ * client.on('commandStarted', (event) => {
+ *   console.log('Command started:', event);
+ * });
+ *
+ * client.on('commandFailed', (event) => {
+ *   console.error('Command failed:', event);
+ * });
+ *
+ * client.on('commandSucceeded', (event) => {
+ *   console.log('Command succeeded:', event);
+ * });
+ *
+ * // Output:
+ * // 'Command started: <...>'
+ * // 'Command succeeded: <...>'
+ * await db.createCollection('my_collection');
+ * ```
+ *
+ * @see DataAPILoggingConfig
+ * @see DataAPICommandEvents
+ * @see AdminCommandEvents
  *
  * @public
  */
@@ -36,6 +182,66 @@ export type DataAPIClientEvents =
   & DataAPICommandEvents
   & AdminCommandEvents;
 
+/**
+ * #### Overview
+ *
+ * The configuration for logging events emitted by the {@link DataAPIClient}.
+ *
+ * This can be set at any level of the major class hierarchy, and will be inherited by all child classes.
+ *
+ * #### Configuration inheritance
+ *
+ * The logging config, at its core, is just a list of events to enable/disable, and where to emit/log them.
+ *
+ * When they're inherited by child classes, it's done as a simple list merge, with the child's config taking precedence.
+ * (e.g. `[...parentConfig, ...childConfig]`)
+ *
+ * #### Configuration & shorthands
+ *
+ * There's multiple ways to configure logging, depending on how much control you want:
+ *
+ * `logging: 'all'`
+ * - This will emit all events, but will also log some of them to the console
+ *
+ * `logging: [{ events: 'all', emits: 'event' }]`
+ * - This will emit all events, without logging any of them to the console
+ *
+ * `logging: '<command>' | ['<commands>']`
+ * - This will emit only the events for the specified command, but may also log some of them to the console
+ *
+ * `logging: ['all', [{ events: ['<commands>'], emits: [] }]]`
+ * - This will emit all but the specified events, but will also log some of them to the console
+ *
+ * Just keep in mind that it's really just a list of configuration "layers".
+ *
+ * #### Event types
+ *
+ * See {@link DataAPIClientEvents} for more information on the types of events emitted.
+ *
+ * #### Output types
+ *
+ * The `emits` field can be set to either 'event', 'stdout', or 'stderr'.
+ *
+ * - 'event' will emit the event to the {@link DataAPIClient} instance
+ * - 'stdout' will log the event to stdout
+ * - 'stderr' will log the event to stderr
+ *
+ * #### Examples
+ *
+ * ```ts
+ * const client = new DataAPIClient('*TOKEN*', {
+ *  logging: 'all',
+ * });
+ *
+ * // TODO
+ * ```
+ *
+ * @see DataAPIClientEvents
+ * @see DataAPILoggingEvent
+ * @see DataAPILoggingOutput
+ *
+ * @public
+ */
 export type DataAPILoggingConfig = DataAPILoggingEvent | readonly (DataAPILoggingEvent | DataAPIExplicitLoggingConfig)[]
 
 export type DataAPILoggingEvent = 'all' | keyof DataAPIClientEvents;

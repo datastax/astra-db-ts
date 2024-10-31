@@ -52,7 +52,6 @@ export interface UpsertedUpdateResult<ID> {
   upsertedCount: 1,
 }
 
-
 /**
  * Represents the set of fields that are present in the result of some generic `update` command using the Data API where
  * no upsert occurred.

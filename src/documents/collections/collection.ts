@@ -89,7 +89,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   /**
    * The name of the collection. Unique per keyspace.
    */
-  public readonly collectionName!: string;
+  public readonly name!: string;
 
   /**
    * The keyspace that the collection resides in.
@@ -102,7 +102,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @internal
    */
   constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions<Schema> | undefined) {
-    Object.defineProperty(this, 'collectionName', {
+    Object.defineProperty(this, 'name', {
       value: name,
       writable: false,
     });
@@ -112,12 +112,12 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       writable: false,
     });
 
-    this.#httpClient = httpClient.forCollection(this.keyspace, this.collectionName, opts);
-    this.#commands = new CommandImpls(this.collectionName, this.#httpClient, mkCollectionSerDes(opts?.serdes));
+    this.#httpClient = httpClient.forCollection(this.keyspace, this.name, opts);
+    this.#commands = new CommandImpls(this.name, this.#httpClient, mkCollectionSerDes(opts?.serdes));
     this.#db = db;
 
     Object.defineProperty(this, $CustomInspect, {
-      value: () => `Collection(keyspace="${this.keyspace}",name="${this.collectionName}")`,
+      value: () => `Collection(keyspace="${this.keyspace}",name="${this.name}")`,
     });
   }
 
@@ -991,10 +991,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   public async options(options?: WithTimeout): Promise<CollectionOptions<SomeDoc>> {
     const results = await this.#db.listCollections({ nameOnly: false, maxTimeMS: options?.maxTimeMS });
 
-    const collection = results.find((c) => c.name === this.collectionName);
+    const collection = results.find((c) => c.name === this.name);
 
     if (!collection) {
-      throw new CollectionNotFoundError(this.keyspace, this.collectionName);
+      throw new CollectionNotFoundError(this.keyspace, this.name);
     }
 
     return collection.options;
@@ -1020,7 +1020,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @remarks Use with caution. Wear your safety goggles. Don't say I didn't warn you.
    */
   public async drop(options?: WithTimeout): Promise<void> {
-    await this.#db.dropCollection(this.collectionName, { keyspace: this.keyspace, ...options });
+    await this.#db.dropCollection(this.name, { keyspace: this.keyspace, ...options });
   }
 
   public get _httpClient() {

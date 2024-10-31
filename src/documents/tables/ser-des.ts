@@ -104,12 +104,12 @@ const DefaultTableSerDesCfg = {
     return true;
   },
   parsers: {
-    blob: (blob) => new (<any>CqlBlob)(blob), // it's ok for me to use the private constructor here, but no one else >:(
+    blob: (blob) => new CqlBlob(blob),
     date: (date) => new CqlDate(date),
     double: parseIEE754,
     duration: (duration) => new CqlDuration(duration),
     float: parseIEE754,
-    inet: (inet) => new InetAddress(inet),
+    inet: (inet) => new InetAddress(inet, null, false),
     time: (time) => new CqlTime(time),
     timestamp: (timestamp) => new CqlTimestamp(timestamp),
     uuid: (uuid) => new UUID(uuid, false),

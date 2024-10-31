@@ -16,6 +16,18 @@ import { WithKeyspace } from '@/src/db';
 import { EmbeddingHeadersProvider, SomeDoc, TableSerDesConfig } from '@/src/documents';
 import { DataAPILoggingConfig } from '@/src/lib';
 
+/**
+ * Options for spawning a new `Table` instance through {@link db.table} or {@link db.createTable}.
+ *
+ * Note that these are not all the options available for when you're actually creating a table—see {@link CreateTableOptions} for that.
+ *
+ * @field embeddingApiKey - The embedding service's API-key/headers (for $vectorize)
+ * @field defaultMaxTimeMS - Default `maxTimeMS` for all table operations
+ * @field logging - Logging configuration overrides
+ * @field serdes - Additional serialization/deserialization configuration
+ *
+ * @public
+ */
 export interface TableSpawnOptions<Schema extends SomeDoc> extends WithKeyspace {
   embeddingApiKey?: string | EmbeddingHeadersProvider | null,
   defaultMaxTimeMS?: number | null,

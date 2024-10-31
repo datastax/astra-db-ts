@@ -22,7 +22,7 @@ export class CqlBlob {
 
   public [$SerializeForTables] = () => ({ $binary: this.asBase64() });
 
-  private constructor(blob: CqlBlobLike) {
+  public constructor(blob: CqlBlobLike) {
     this.#raw = blob;
 
     Object.defineProperty(this, $CustomInspect, {

@@ -34,41 +34,41 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
     it('should create a collections', async () => {
       const res = await db.createCollection('coll_1c', { indexing: { deny: ['*'] } });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_1c');
+      assert.strictEqual(res.name, 'coll_1c');
       assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
     });
 
     it('should create a collections in another keyspace', async () => {
       const res = await db.createCollection('coll_2c', { keyspace: OTHER_KEYSPACE });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_2c');
+      assert.strictEqual(res.name, 'coll_2c');
       assert.strictEqual(res.keyspace, OTHER_KEYSPACE);
     });
 
     it('should create collections idempotently', async () => {
       const res = await db.createCollection('coll_4c', { indexing: { deny: ['*'] } });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_4c');
+      assert.strictEqual(res.name, 'coll_4c');
       const res2 = await db.createCollection('coll_4c', { indexing: { deny: ['*'] } });
       assert.ok(res2);
-      assert.strictEqual(res2.collectionName, 'coll_4c');
+      assert.strictEqual(res2.name, 'coll_4c');
     });
 
     it('should create collections with same options idempotently', async () => {
       const res = await db.createCollection('coll_5c', { indexing: { deny: ['*'] } });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_5c');
+      assert.strictEqual(res.name, 'coll_5c');
       assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
       const res2 = await db.createCollection('coll_5c', { indexing: { deny: ['*'] } });
       assert.ok(res2);
-      assert.strictEqual(res2.collectionName, 'coll_5c');
+      assert.strictEqual(res2.name, 'coll_5c');
       assert.strictEqual(res2.keyspace, DEFAULT_KEYSPACE);
     });
 
     it('should fail creating collections with different options', async () => {
       const res = await db.createCollection('coll_6c', { indexing: { deny: ['*'] } });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_6c');
+      assert.strictEqual(res.name, 'coll_6c');
       assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
       try {
         await db.createCollection('coll_6c', { indexing: { allow: ['*'] } });
@@ -81,11 +81,11 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
     it('should create collections with different options in different keyspaces', async () => {
       const res = await db.createCollection('coll_7c', { indexing: { deny: ['*'] } });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_7c');
+      assert.strictEqual(res.name, 'coll_7c');
       assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
       const res2 = await db.createCollection('coll_7c', { indexing: { deny: ['*'] }, keyspace: OTHER_KEYSPACE });
       assert.ok(res2);
-      assert.strictEqual(res2.collectionName, 'coll_7c');
+      assert.strictEqual(res2.name, 'coll_7c');
       assert.strictEqual(res2.keyspace, OTHER_KEYSPACE);
     });
 
@@ -99,7 +99,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
 
       const res = await db.createCollection('coll_8c', { indexing: { deny: ['*'] }, maxTimeMS: 60000 });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_8c');
+      assert.strictEqual(res.name, 'coll_8c');
       assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
     });
   });

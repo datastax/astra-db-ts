@@ -17,7 +17,7 @@ import { CollectionSerDesConfig, EmbeddingHeadersProvider, SomeDoc } from '@/src
 import { DataAPILoggingConfig } from '@/src/lib';
 
 /**
- * Options for spawning a new collections.
+ * Options for spawning a new collection.
  *
  * @public
  */

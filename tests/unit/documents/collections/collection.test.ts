@@ -38,7 +38,7 @@ describe('unit.documents.collections', ({ db }) => {
 
     it('returns the name', () => {
       const collection = new Collection(db, db._httpClient, 'new_collection', undefined);
-      assert.strictEqual(collection.collectionName, 'new_collection');
+      assert.strictEqual(collection.name, 'new_collection');
     });
   });
 });
