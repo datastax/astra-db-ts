@@ -138,6 +138,7 @@ export class Db {
       keyspace: this.#keyspace,
       userAgent: rootOpts.userAgent,
       emissionStrategy: EmissionStrategy.Normal,
+      additionalHeaders: this.#defaultOpts.dbOptions.additionalHeaders,
     });
 
     this.#id = extractDbIdFromUrl(endpoint);

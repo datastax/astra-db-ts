@@ -70,9 +70,9 @@ export abstract class CommandEvent extends DataAPIClientEvent {
   public readonly keyspace: string;
 
   /**
-   * The collection the command is being run on, if applicable.
+   * The table/collection the command is being run on, if applicable.
    */
-  public readonly collection?: string;
+  public readonly source?: string;
 
   /**
    * The command name.
@@ -96,13 +96,9 @@ export abstract class CommandEvent extends DataAPIClientEvent {
     super();
     this.command = info.command;
     this.keyspace = info.keyspace || DEFAULT_KEYSPACE;
-    this.collection = info.collection;
+    this.source = info.collection;
     this.commandName = Object.keys(info.command)[0];
     this.url = info.url;
-  }
-
-  formatted(): string {
-    return JSON.stringify(this);
   }
 }
 
@@ -132,8 +128,8 @@ export class CommandStartedEvent extends CommandEvent {
     this.timeout = info.timeoutManager.ms;
   }
 
-  formatted(): string {
-    return JSON.stringify(this);
+  public formatted(): string {
+    return `[CommandStartedEvent] ${this.commandName} in ${this.keyspace}.${this.source || ''}`;
   }
 }
 
@@ -169,8 +165,8 @@ export class CommandSucceededEvent extends CommandEvent {
     this.resp = reply;
   }
 
-  formatted(): string {
-    return JSON.stringify(this);
+  public formatted(): string {
+    return `[CommandSucceededEvent] ${this.commandName} in ${this.keyspace}.${this.source || ''} (took ${this.duration}ms)`;
   }
 }
 
@@ -208,8 +204,8 @@ export class CommandFailedEvent extends CommandEvent {
     this.error = error;
   }
 
-  formatted(): string {
-    return JSON.stringify(this);
+  public formatted(): string {
+    return `[CommandFailedEvent] ${this.commandName} in ${this.keyspace}.${this.source || ''} (took ${this.duration}ms) - '${this.error.message}'`;
   }
 }
 
@@ -221,7 +217,7 @@ export class CommandWarningsEvent extends CommandEvent {
     this.warnings = warnings;
   }
 
-  formatted(): string {
-    return JSON.stringify(this);
+  public formatted(): string {
+    return `[CommandWarningsEvent] ${this.commandName} in ${this.keyspace}.${this.source || ''} '${this.warnings.map(w => w.message).join(', ')}'`;
   }
 }

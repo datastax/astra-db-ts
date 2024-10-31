@@ -95,6 +95,7 @@ export class AstraDbAdmin extends DbAdmin {
       emitter: rootOpts.emitter,
       userAgent: rootOpts.userAgent,
       tokenProvider: adminToken,
+      additionalHeaders: { ...rootOpts.adminOptions.additionalHeaders, ...adminOpts?.additionalHeaders },
     });
 
     this.#db = db;

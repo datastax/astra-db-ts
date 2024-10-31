@@ -100,8 +100,8 @@ export type FoundRow<Doc> = Omit<Doc, '$similarity'> & { $similarity?: number }
  *
  * @public
  */
-export type KeyOf<Schema> = Schema extends { [$PrimaryKeyType]?: infer PrimaryKey }
+export type KeyOf<Schema> = Schema extends { [$PrimaryKeyType]?: infer PrimaryKey | undefined }
   ? PrimaryKey extends SomeTableKey
     ? PrimaryKey
-    : 'ERROR: [$PrimaryKeyType] must be an object with string keys and any values, or undefined'
+    : SomeTableKey
   : SomeTableKey;

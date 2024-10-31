@@ -94,6 +94,7 @@ export class AstraAdmin {
       fetchCtx: rootOpts.fetchCtx,
       userAgent: rootOpts.userAgent,
       tokenProvider: this.#defaultOpts.adminOptions.adminToken,
+      additionalHeaders: this.#defaultOpts.adminOptions.additionalHeaders,
     });
 
     Object.defineProperty(this, $CustomInspect, {

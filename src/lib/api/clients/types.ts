@@ -30,7 +30,7 @@ export interface HTTPClientOptions {
   logging: NormalizedLoggingConfig[] | undefined,
   fetchCtx: FetchCtx,
   userAgent: string,
-  additionalHeaders: Record<string, string>,
+  additionalHeaders: Record<string, string> | undefined,
 }
 
 /**

@@ -131,6 +131,7 @@ export class DataAPIHttpClient extends HttpClient {
       logging: Logger.advanceConfig(this.#props.logging, opts?.logging),
       baseUrl: opts?.endpointUrl ?? this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
+      additionalHeaders: { ...this.#props.additionalHeaders, ...opts?.additionalHeaders },
     });
 
     clone.emissionStrategy = EmissionStrategy.Admin(clone.logger);

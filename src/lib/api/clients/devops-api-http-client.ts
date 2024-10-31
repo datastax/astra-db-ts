@@ -137,13 +137,13 @@ export class DevOpsAPIHttpClient extends HttpClient {
     const pollInterval = info.options?.pollInterval || info.defaultPollInterval;
     let waiting = false;
 
-    for (;;) {
+    for (let i = 1; i++;) {
       if (waiting) {
         continue;
       }
       waiting = true;
 
-      this.logger.adminCommandPolling?.(req, started, pollInterval);
+      this.logger.adminCommandPolling?.(req, started, pollInterval, i);
 
       const resp = await this.request({
         method: HttpMethods.Get,
