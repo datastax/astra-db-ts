@@ -129,7 +129,7 @@ export class CommandStartedEvent extends CommandEvent {
   }
 
   public formatted(): string {
-    return `[CommandStartedEvent] ${this.commandName} in ${this.keyspace}.${this.source || ''}`;
+    return `[CommandStartedEvent] ${this.commandName} in ${this.keyspace}${this.source ? `.${this.source}` : ''}`;
   }
 }
 
@@ -166,7 +166,7 @@ export class CommandSucceededEvent extends CommandEvent {
   }
 
   public formatted(): string {
-    return `[CommandSucceededEvent] ${this.commandName} in ${this.keyspace}.${this.source || ''} (took ${this.duration}ms)`;
+    return `[CommandSucceededEvent] ${this.commandName} in ${this.keyspace}${this.source ? `.${this.source}` : ''} (took ${this.duration}ms)`;
   }
 }
 
@@ -205,7 +205,7 @@ export class CommandFailedEvent extends CommandEvent {
   }
 
   public formatted(): string {
-    return `[CommandFailedEvent] ${this.commandName} in ${this.keyspace}.${this.source || ''} (took ${this.duration}ms) - '${this.error.message}'`;
+    return `[CommandFailedEvent] ${this.commandName} in ${this.keyspace}${this.source ? `.${this.source}` : ''} (took ${this.duration}ms) - '${this.error.message}'`;
   }
 }
 
@@ -218,6 +218,6 @@ export class CommandWarningsEvent extends CommandEvent {
   }
 
   public formatted(): string {
-    return `[CommandWarningsEvent] ${this.commandName} in ${this.keyspace}.${this.source || ''} '${this.warnings.map(w => w.message).join(', ')}'`;
+    return `[CommandWarningsEvent] ${this.commandName} in ${this.keyspace}${this.source ? `.${this.source}` : ''} '${this.warnings.map(w => w.message).join(', ')}'`;
   }
 }

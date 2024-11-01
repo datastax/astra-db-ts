@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 // Copyright DataStax, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,18 +12,17 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// noinspection DuplicatedCode
 
 import { DataAPICommandEvents } from '@/src/documents';
 import { AdminCommandEvents } from '@/src/administration';
 import { OneOrMany } from '@/src/lib/types';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
+// noinspection ES6UnusedImports
 import TypedEventEmitter from 'typed-emitter';
 
 /**
  * #### Overview
  *
- * The `EventMap` of events the {@link DataAPIClient} emits, is an instance of {@link TypedEventEmitter}, when
+ * The `EventMap` of events the {@link DataAPIClient} emits, which is an instance of {@link TypedEventEmitter}, when
  * events logging is enabled (via `logging` options throughout the major class hierarchy).
  *
  * There are quite a few combinations of ways in which event logging may be enabled in the logging configuration, but
@@ -150,7 +150,7 @@ import TypedEventEmitter from 'typed-emitter';
  * @example
  * ```ts
  * const client = new DataAPIClient('*TOKEN*', {
- *   logging: { events: 'all', emits: 'event' },
+ *   logging: [{ events: 'all', emits: 'event' }],
  * });
  * const db = client.db('*ENDPOINT*');
  *
@@ -194,7 +194,8 @@ export type DataAPIClientEvents =
  * The logging config, at its core, is just a list of events to enable/disable, and where to emit/log them.
  *
  * When they're inherited by child classes, it's done as a simple list merge, with the child's config taking precedence.
- * (e.g. `[...parentConfig, ...childConfig]`)
+ * (e.g. `[...parentConfig, ...childConfig]`). Each new layer of config is applied on top of the previous one, overwriting
+ * any previous settings for the same events.
  *
  * #### Configuration & shorthands
  *
@@ -202,12 +203,14 @@ export type DataAPIClientEvents =
  *
  * `logging: 'all'`
  * - This will emit all events, but will also log some of them to the console
+ * - When you use just `'all'`, it simply replaces it with {@link EventLoggingDefaults}
  *
  * `logging: [{ events: 'all', emits: 'event' }]`
  * - This will emit all events, without logging any of them to the console
  *
  * `logging: '<command>' | ['<commands>']`
  * - This will emit only the events for the specified command, but may also log some of them to the console
+ * - Each command's behavior is listed below, & defined in {@link EventLoggingDefaults}
  *
  * `logging: ['all', [{ events: ['<commands>'], emits: [] }]]`
  * - This will emit all but the specified events, but will also log some of them to the console
@@ -230,10 +233,14 @@ export type DataAPIClientEvents =
  *
  * ```ts
  * const client = new DataAPIClient('*TOKEN*', {
- *  logging: 'all',
+ *  logging: [{ events: 'all', emit: 'stdout' }],
  * });
+ * const db = client.db('*ENDPOINT*');
  *
- * // TODO
+ * // Output:
+ * // '[CommandStartedEvent]: createCollection in default_keyspace'
+ * // '[CommandSucceededEvent]: createCollection in default_keyspace (took ...ms)'
+ * await db.createCollection('my_collection');
  * ```
  *
  * @see DataAPIClientEvents
@@ -244,14 +251,45 @@ export type DataAPIClientEvents =
  */
 export type DataAPILoggingConfig = DataAPILoggingEvent | readonly (DataAPILoggingEvent | DataAPIExplicitLoggingConfig)[]
 
+/**
+ * Represents the different events that can be emitted/logged by the {@link DataAPIClient}, as well as the convenient
+ * shorthand 'all' to configure all events at once.
+ *
+ * See {@link DataAPIClientEvents} & {@link DataAPILoggingConfig} for much more info.
+ *
+ * @public
+ */
 export type DataAPILoggingEvent = 'all' | keyof DataAPIClientEvents;
+
+/**
+ * Represents the different outputs that can be emitted/logged to by the {@link DataAPIClient}.
+ *
+ * This can be set to either 'event', 'stdout', or 'stderr'. However, attempting to set both 'stdout' and 'stderr'
+ * as an output for a single event will result in an error.
+ *
+ * See {@link DataAPIClientEvents} & {@link DataAPILoggingConfig} for much more info.
+ *
+ * @public
+ */
 export type DataAPILoggingOutput = 'event' | 'stdout' | 'stderr';
 
+/**
+ * The most explicit way to configure logging, with the ability to set both events and specific outputs.
+ *
+ * Settings the `emits` field to `[]` will disable logging for the specified events.
+ *
+ * See {@link DataAPIClientEvents} & {@link DataAPILoggingConfig} for much more info.
+ *
+ * @public
+ */
 export interface DataAPIExplicitLoggingConfig {
   readonly events: OneOrMany<DataAPILoggingEvent>,
   readonly emits: OneOrMany<DataAPILoggingOutput>,
 }
 
+/**
+ * @internal
+ */
 export interface NormalizedLoggingConfig {
   events: readonly DataAPILoggingEvent[],
   emits: readonly DataAPILoggingOutput[],
