@@ -14,4 +14,8 @@
 
 import { WithTimeout } from '@/src/lib';
 
-export type CreateTableIndexOptions = WithTimeout;
+export interface CreateTableIndexOptions extends WithTimeout {
+  caseSensitive?: boolean,
+  normalize?: boolean,
+  ascii?: boolean,
+}

@@ -12,7 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DEFAULT_KEYSPACE, type RawDataAPIResponse, DataAPIClientEvent } from '@/src/lib';
+import { DEFAULT_KEYSPACE, type RawDataAPIResponse } from '@/src/lib';
+// import { DataAPIClientEvent } from '@/src/lib/logging/events'; needs to be like this or it errors
+import { DataAPIClientEvent } from '@/src/lib/logging/events';
 import type { DataAPIRequestInfo } from '@/src/lib/api/clients/data-api-http-client';
 import type { DataAPIErrorDescriptor } from '@/src/documents/errors';
 

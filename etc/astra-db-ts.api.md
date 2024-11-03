@@ -10,7 +10,7 @@ import type TypedEventEmitter from 'typed-emitter';
 // @public (undocumented)
 export const $DeserializeForTables: unique symbol;
 
-// @public (undocumented)
+// @public
 export const $PrimaryKeyType: unique symbol;
 
 // @public (undocumented)
@@ -40,8 +40,6 @@ export abstract class AdminCommandEvent extends DataAPIClientEvent {
     //
     // @internal
     protected constructor(info: DevOpsAPIRequestInfo, longRunning: boolean);
-    // (undocumented)
-    formatted(): string;
     readonly longRunning: boolean;
     readonly method: 'GET' | 'POST' | 'DELETE';
     readonly params?: Record<string, any>;
@@ -71,11 +69,12 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
 // @public
 export class AdminCommandPollingEvent extends AdminCommandEvent {
     // @internal
-    constructor(info: DevOpsAPIRequestInfo, started: number, interval: number);
+    constructor(info: DevOpsAPIRequestInfo, started: number, interval: number, pollCount: number);
     readonly elapsed: number;
     // (undocumented)
     formatted(): string;
     readonly interval: number;
+    readonly pollCount: number;
 }
 
 // @public
@@ -108,6 +107,8 @@ export class AdminCommandWarningsEvent extends AdminCommandEvent {
 
 // @public
 export interface AdminSpawnOptions {
+    // (undocumented)
+    additionalHeaders?: Record<string, string>;
     adminToken?: string | TokenProvider | null;
     endpointUrl?: string;
     // (undocumented)
@@ -190,9 +191,6 @@ export class AWSEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
     getHeaders(): Record<string, string>;
 }
 
-// @public (undocumented)
-export type BlobLike = FileReader;
-
 // @public
 export type Caller = readonly [name: string, version?: string];
 
@@ -202,38 +200,28 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     //
     // @internal
     constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions<Schema> | undefined);
-    readonly collectionName: string;
     countDocuments(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number>;
     deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<CollectionDeleteManyResult>;
     deleteOne(filter: Filter<Schema>, options?: CollectionDeleteOneOptions): Promise<CollectionDeleteOneResult>;
-    distinct<Key extends string>(key: Key, filter?: Filter<Schema>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]>;
+    distinct<Key extends string>(key: Key, filter: Filter<Schema>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]>;
     drop(options?: WithTimeout): Promise<void>;
     estimatedDocumentCount(options?: WithTimeout): Promise<number>;
-    find(filter: Filter<Schema>, options?: CollectionFindOptions): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>>;
-    findOne(filter: Filter<Schema>, options?: CollectionFindOneOptions): Promise<FoundDoc<Schema> | null>;
-    findOneAndDelete(filter: Filter<Schema>, options: CollectionFindOneAndDeleteOptions & {
-        includeResultMetadata: true;
-    }): Promise<CollectionModifyResult<Schema>>;
-    findOneAndDelete(filter: Filter<Schema>, options?: CollectionFindOneAndDeleteOptions & {
-        includeResultMetadata?: false;
-    }): Promise<WithId<Schema> | null>;
-    findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options: CollectionFindOneAndReplaceOptions & {
-        includeResultMetadata: true;
-    }): Promise<CollectionModifyResult<Schema>>;
-    findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options?: CollectionFindOneAndReplaceOptions & {
-        includeResultMetadata?: false;
-    }): Promise<WithId<Schema> | null>;
-    findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options: CollectionFindOneAndUpdateOptions & {
-        includeResultMetadata: true;
-    }): Promise<CollectionModifyResult<Schema>>;
-    findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: CollectionFindOneAndUpdateOptions & {
-        includeResultMetadata?: false;
-    }): Promise<WithId<Schema> | null>;
-    // (undocumented)
+    find(filter: Filter<Schema>, options?: CollectionFindOptions & {
+        projection?: never;
+    }): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>>;
+    find<TRaw extends SomeDoc = DeepPartial<Schema>>(filter: Filter<Schema>, options: CollectionFindOptions): FindCursor<FoundDoc<TRaw>, FoundDoc<TRaw>>;
+    findOne(filter: Filter<Schema>, options?: CollectionFindOneOptions & {
+        projection?: never;
+    }): Promise<FoundDoc<Schema> | null>;
+    findOne<TRaw extends SomeDoc = DeepPartial<Schema>>(filter: Filter<Schema>, options: CollectionFindOneOptions): Promise<FoundDoc<TRaw> | null>;
+    findOneAndDelete<TRaw extends SomeDoc = WithId<Schema>>(filter: Filter<Schema>, options?: CollectionFindOneAndDeleteOptions): Promise<TRaw | null>;
+    findOneAndReplace<TRaw extends SomeDoc = WithId<Schema>>(filter: Filter<Schema>, replacement: NoId<Schema>, options?: CollectionFindOneAndReplaceOptions): Promise<TRaw | null>;
+    findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: CollectionFindOneAndUpdateOptions): Promise<WithId<Schema> | null>;
     get _httpClient(): DataAPIHttpClient;
     insertMany(documents: MaybeId<Schema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<Schema>>;
     insertOne(document: MaybeId<Schema>, options?: WithTimeout): Promise<CollectionInsertOneResult<Schema>>;
     readonly keyspace: string;
+    readonly name: string;
     options(options?: WithTimeout): Promise<CollectionOptions<SomeDoc>>;
     replaceOne(filter: Filter<Schema>, replacement: NoId<Schema>, options?: CollectionReplaceOneOptions): Promise<CollectionReplaceOneResult<Schema>>;
     updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: CollectionUpdateManyOptions): Promise<CollectionUpdateManyResult<Schema>>;
@@ -260,14 +248,12 @@ export interface CollectionDeleteOneResult {
 
 // @public
 export interface CollectionFindOneAndDeleteOptions extends WithTimeout {
-    includeResultMetadata?: boolean;
     projection?: Projection;
     sort?: Sort;
 }
 
 // @public
 export interface CollectionFindOneAndReplaceOptions extends WithTimeout {
-    includeResultMetadata?: boolean;
     projection?: Projection;
     returnDocument?: 'before' | 'after';
     sort?: Sort;
@@ -313,12 +299,6 @@ export interface CollectionInsertOneResult<Schema> {
 }
 
 // @public
-export interface CollectionModifyResult<Schema extends SomeDoc> {
-    ok: number;
-    value: WithId<Schema> | null;
-}
-
-// @public
 export class CollectionNotFoundError extends DataAPIError {
     // @internal
     constructor(keyspace: string, collectionName: string);
@@ -345,8 +325,6 @@ export interface CollectionSerDesConfig<Schema extends SomeDoc> {
     deserialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPIDesCtx) => [any, boolean?] | boolean | undefined | void>;
     // (undocumented)
     mutateInPlace?: boolean;
-    // Warning: (ae-forgotten-export) The symbol "OneOrMany" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
     serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>;
 }
@@ -380,7 +358,7 @@ export interface CollectionVectorOptions {
     service?: VectorizeServiceOptions;
 }
 
-// @public (undocumented)
+// @public
 export type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$PrimaryKeyType'>;
 
 // Warning: (ae-forgotten-export) The symbol "EmptyObj" needs to be exported by the entry point index.d.ts
@@ -408,12 +386,10 @@ export abstract class CommandEvent extends DataAPIClientEvent {
     //
     // @internal
     protected constructor(info: DataAPIRequestInfo);
-    readonly collection?: string;
     readonly command: Record<string, any>;
     readonly commandName: string;
-    // (undocumented)
-    formatted(): string;
     readonly keyspace: string;
+    readonly source?: string;
     readonly url: string;
 }
 
@@ -476,9 +452,28 @@ export interface CostInfo {
 
 // @public (undocumented)
 export class CqlBlob {
-    constructor(blob: BlobLike);
     // (undocumented)
-    blob: BlobLike;
+    [$SerializeForTables]: () => {
+        $binary: string;
+    };
+    // Warning: (ae-forgotten-export) The symbol "CqlBlobLike" needs to be exported by the entry point index.d.ts
+    constructor(blob: CqlBlobLike);
+    // (undocumented)
+    asArrayBuffer(): ArrayBuffer;
+    // (undocumented)
+    asBase64(): string;
+    // (undocumented)
+    asBuffer(): Buffer;
+    // (undocumented)
+    get byteLength(): number;
+    // (undocumented)
+    static fromArrayBuffer(buffer: ArrayBuffer): CqlBlob;
+    // (undocumented)
+    static fromBase64(base64: string): CqlBlob;
+    // (undocumented)
+    static fromBuffer(buffer: Buffer): CqlBlob;
+    // (undocumented)
+    toString(): string;
 }
 
 // @public (undocumented)
@@ -615,7 +610,14 @@ export interface CreateTableDefinition {
 }
 
 // @public (undocumented)
-export type CreateTableIndexOptions = WithTimeout;
+export interface CreateTableIndexOptions extends WithTimeout {
+    // (undocumented)
+    ascii?: boolean;
+    // (undocumented)
+    caseSensitive?: boolean;
+    // (undocumented)
+    normalize?: boolean;
+}
 
 // @public (undocumented)
 export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout, TableSpawnOptions<Schema> {
@@ -625,16 +627,6 @@ export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTa
 
 // @public (undocumented)
 export type CreateTablePrimaryKeyDefinition = ShortCreateTablePrimaryKeyDefinition | FullCreateTablePrimaryKeyDefinition;
-
-// @public (undocumented)
-export interface CreateTableTextIndexOptions extends WithTimeout {
-    // (undocumented)
-    ascii?: boolean;
-    // (undocumented)
-    caseSensitive?: boolean;
-    // (undocumented)
-    normalize?: boolean;
-}
 
 // @public (undocumented)
 export interface CreateTableVectorIndexOptions extends WithTimeout {
@@ -679,9 +671,8 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
     db(endpoint: string, options?: DbSpawnOptions): Db;
 }
 
-// @public (undocumented)
+// @public
 export abstract class DataAPIClientEvent {
-    // (undocumented)
     abstract formatted(): string;
 }
 
@@ -757,7 +748,7 @@ export interface DataAPIErrorDescriptor {
     readonly message?: string;
 }
 
-// @public (undocumented)
+// @public
 export interface DataAPIExplicitLoggingConfig {
     // (undocumented)
     readonly emits: OneOrMany<DataAPILoggingOutput>;
@@ -777,13 +768,13 @@ export class DataAPIHttpError extends DataAPIError {
 // @public
 export type DataAPIHttpOptions = DefaultHttpClientOptions | FetchHttpClientOptions | CustomHttpClientOptions;
 
-// @public (undocumented)
+// @public
 export type DataAPILoggingConfig = DataAPILoggingEvent | readonly (DataAPILoggingEvent | DataAPIExplicitLoggingConfig)[];
 
-// @public (undocumented)
+// @public
 export type DataAPILoggingEvent = 'all' | keyof DataAPIClientEvents;
 
-// @public (undocumented)
+// @public
 export type DataAPILoggingOutput = 'event' | 'stdout' | 'stderr';
 
 // @public
@@ -820,7 +811,7 @@ export class DataAPIVector {
     [$SerializeForTables]: () => number[] | {
         $binary: string;
     };
-    constructor(vector: DataAPIVectorLike);
+    constructor(vector: DataAPIVectorLike, validate?: boolean);
     // (undocumented)
     asArray(): number[];
     // (undocumented)
@@ -989,6 +980,8 @@ export interface DbSerDesConfig {
 
 // @public
 export interface DbSpawnOptions {
+    // (undocumented)
+    additionalHeaders?: Record<string, string>;
     dataApiPath?: string;
     keyspace?: string | null;
     // (undocumented)
@@ -1138,6 +1131,11 @@ export interface EmbeddingProviderTokenInfo {
     accepted: string;
     forwarded: string;
 }
+
+// Warning: (ae-incompatible-release-tags) The symbol "EventLoggingDefaults" is marked as @public, but its signature references "NormalizedLoggingConfig" which is marked as @internal
+//
+// @public (undocumented)
+export const EventLoggingDefaults: NormalizedLoggingConfig[];
 
 // @public
 export class FailedToLoadDefaultClientError extends Error {
@@ -1333,8 +1331,6 @@ export interface GenericDeleteOneResult {
 // @public (undocumented)
 export interface GenericFindOneAndDeleteOptions extends WithTimeout {
     // (undocumented)
-    includeResultMetadata?: boolean;
-    // (undocumented)
     projection?: Projection;
     // (undocumented)
     sort?: Sort;
@@ -1342,8 +1338,6 @@ export interface GenericFindOneAndDeleteOptions extends WithTimeout {
 
 // @public (undocumented)
 export interface GenericFindOneAndReplaceOptions extends WithTimeout {
-    // (undocumented)
-    includeResultMetadata?: boolean;
     // (undocumented)
     projection?: Projection;
     // (undocumented)
@@ -1356,8 +1350,6 @@ export interface GenericFindOneAndReplaceOptions extends WithTimeout {
 
 // @public (undocumented)
 export interface GenericFindOneAndUpdateOptions extends WithTimeout {
-    // (undocumented)
-    includeResultMetadata?: boolean;
     // (undocumented)
     projection?: Projection;
     // (undocumented)
@@ -1489,13 +1481,7 @@ export type IdOf<Doc> = Doc extends {
 export class InetAddress {
     // (undocumented)
     [$SerializeForTables]: () => string;
-    constructor(address: string, version?: 4 | 6);
-    // (undocumented)
-    static fromIP(raw: string): InetAddress;
-    // (undocumented)
-    static fromIPv4(raw: string): InetAddress;
-    // (undocumented)
-    static fromIPv6(raw: string): InetAddress;
+    constructor(address: string, version?: 4 | 6 | null, validate?: boolean);
     // (undocumented)
     toString(): string;
     // (undocumented)
@@ -1526,9 +1512,9 @@ export class InsertManyError extends CumulativeDataAPIError {
     readonly partialResult: CollectionInsertManyResult<SomeDoc>;
 }
 
-// @public (undocumented)
+// @public
 export type KeyOf<Schema> = Schema extends {
-    [$PrimaryKeyType]?: infer PrimaryKey;
+    [$PrimaryKeyType]?: infer PrimaryKey | undefined;
 } ? PrimaryKey extends SomeTableKey ? PrimaryKey : SomeTableKey : SomeTableKey;
 
 // @public
@@ -1640,6 +1626,16 @@ export type Normalize<T> = {
     [K in keyof T]: T[K];
 } & EmptyObj;
 
+// Warning: (ae-internal-missing-underscore) The name "NormalizedLoggingConfig" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal (undocumented)
+export interface NormalizedLoggingConfig {
+    // (undocumented)
+    emits: readonly DataAPILoggingOutput[];
+    // (undocumented)
+    events: readonly DataAPILoggingEvent[];
+}
+
 // @public
 export interface NoUpsertUpdateResult {
     upsertedCount: 0;
@@ -1675,6 +1671,9 @@ export class ObjectId {
 }
 
 // @public
+export type OneOrMany<T> = T | readonly T[];
+
+// @public
 export interface PollBlockingOptions extends WithTimeout {
     blocking?: true;
     pollInterval?: number;
@@ -1708,11 +1707,11 @@ export interface RawDataAPIResponse {
     status?: Record<string, any>;
 }
 
-// @public (undocumented)
-export interface Row<Schema extends SomeRow, PrimaryKey extends keyof Schema> {
+// @public
+export interface Row<Schema extends SomeRow, Columns extends keyof Schema> {
     // (undocumented)
     [$PrimaryKeyType]?: {
-        [P in PrimaryKey]: Schema[P];
+        [P in Columns]: Schema[P];
     };
 }
 
@@ -1747,11 +1746,11 @@ export type SomeDoc = Record<string, any>;
 // @public
 export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId | null;
 
-// @public (undocumented)
+// @public
 export type SomeRow = Record<string, any>;
 
-// @public (undocumented)
-export type SomeTableKey = Record<string, unknown>;
+// @public
+export type SomeTableKey = Record<string, any>;
 
 // @public
 export type Sort = Record<string, SortDirection> | {
@@ -1868,8 +1867,6 @@ export class Table<Schema extends SomeRow = SomeRow> {
     // (undocumented)
     createIndex(name: string, column: Cols<Schema> | string, options?: CreateTableIndexOptions): Promise<void>;
     // (undocumented)
-    createTextIndex(name: string, column: Cols<Schema> | string, options?: CreateTableTextIndexOptions): Promise<void>;
-    // (undocumented)
     createVectorIndex(name: string, column: Cols<Schema> | string, options?: CreateTableVectorIndexOptions): Promise<void>;
     // (undocumented)
     deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<void>;
@@ -1887,12 +1884,9 @@ export class Table<Schema extends SomeRow = SomeRow> {
     get _httpClient(): DataAPIHttpClient;
     // (undocumented)
     insertMany(document: Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>>;
-    // (undocumented)
-    insertOne(document: Schema, options?: WithTimeout): Promise<TableInsertOneResult<Schema>>;
+    insertOne(row: Schema, options?: WithTimeout): Promise<TableInsertOneResult<Schema>>;
     readonly keyspace: string;
-    readonly tableName: string;
-    // (undocumented)
-    updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: TableUpdateManyOptions): Promise<TableUpdateManyResult<Schema>>;
+    readonly name: string;
     // (undocumented)
     updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: TableUpdateOneOptions): Promise<TableUpdateOneResult<Schema>>;
 }
@@ -1947,7 +1941,7 @@ export interface TableSerDesConfig<Schema extends SomeRow> {
     serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>;
 }
 
-// @public (undocumented)
+// @public
 export interface TableSpawnOptions<Schema extends SomeDoc> extends WithKeyspace {
     // (undocumented)
     defaultMaxTimeMS?: number | null;

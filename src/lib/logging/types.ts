@@ -111,7 +111,7 @@ import TypedEventEmitter from 'typed-emitter';
  *
  * Emitted when a command is polling in a long-running operation (i.e. {@link AstraAdmin.createDatabase}).
  *
- * **Note: this is ONLY emitted when using {@link AstraAdmin} & {@link AstraDbAdmin} methods.** Non-Astra-backends
+ * **NOTE: this is ONLY emitted when using {@link AstraAdmin} & {@link AstraDbAdmin} methods.** Non-Astra-backends
  * do not yet require any command polling.
  *
  * Frequency of polling depends on the command being run, and whether a custom polling interval was set.
@@ -140,7 +140,7 @@ import TypedEventEmitter from 'typed-emitter';
  *
  * Emitted when an admin command has warnings (i.e. when the `status.warnings` field is present).
  *
- * **Note: this is ONLY emitted when using {@link DataAPIDbAdmin} methods.** Astra-backends work using the DevOps API,
+ * **NOTE: this is ONLY emitted when using {@link DataAPIDbAdmin} methods.** Astra-backends work using the DevOps API,
  * which does not produce any command warnings.
  *
  * Warnings may be present even if the command has succeeded.

@@ -20,5 +20,4 @@ export interface GenericFindOneAndReplaceOptions extends WithTimeout {
   upsert?: boolean,
   sort?: Sort,
   projection?: Projection,
-  includeResultMetadata?: boolean,
 }

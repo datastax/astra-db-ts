@@ -25,7 +25,6 @@ import type {
   CollectionInsertManyOptions,
   CollectionInsertManyResult,
   CollectionInsertOneResult,
-  CollectionModifyResult,
   CollectionReplaceOneOptions,
   CollectionReplaceOneResult,
   CollectionUpdateManyOptions,
@@ -46,38 +45,125 @@ import type {
 import { CollectionNotFoundError } from '@/src/db/errors';
 import { CollectionOptions, CollectionSpawnOptions, Db } from '@/src/db';
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import { WithTimeout } from '@/src/lib';
-import { constantly } from '@/src/lib/utils';
+import { DeepPartial, WithTimeout } from '@/src/lib';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { mkCollectionSerDes } from '@/src/documents/collections/ser-des';
 import { $CustomInspect } from '@/src/lib/constants';
 
 /**
- * Represents the interface to a collection in the database.
+ * #### Overview
  *
- * **Shouldn't be directly instantiated, but rather created via {@link Db.createCollection},
- * or connected to using {@link Db.collection}**.
+ * Represents the interface to a collection in a Data-API-enabled database.
  *
- * Typed as `Collection<Schema>` where `Schema` is the type of the documents in the collection.
- * Operations on the collection will be strongly typed if a specific schema is provided, otherwise
- * remained largely weakly typed if no type is provided, which may be preferred for dynamic data
- * access & operations.
+ * **This shouldn't be directly instantiated, but rather created via {@link Db.createCollection} or {@link Db.collection}**.
+ *
+ * #### Typing
+ *
+ * Collections are inherently untyped, but you can provide your own client-side compile-time schema for type inference
+ * and early-bug-catching purposes.
+ *
+ * A `Collection` is typed as `Collection<Schema extends SomeDoc = SomeDoc>`, where:
+ * - `Schema` is the user-intended type of the documents in the collection.
+ * - `SomeDoc` is set to `Record<string, any>`, representing any valid JSON object.
+ *
+ * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
+ *
+ * For example:
+ * - `$date` is represented by a native JS `Date`
+ * - `$uuid` is represented by a `UUID` class provided by `astra-db-ts`
+ * - `$vector` is represented by a `DataAPIVector` class provided by `astra-db-ts`
+ *
+ * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
  *
  * @example
- * ```typescript
- * interface PersonSchema {
- *   name: string,
- *   age?: number,
+ * ```ts
+ * interface User {
+ *   _id: string,
+ *   dob: Date,
+ *   friends?: Record<string, UUID>, // UUID is also `astra-db-ts` provided
+ *   vector: DataAPIVector,
  * }
  *
- * const collection = await db.createCollection<PersonSchema>('my_collection');
- * await collection.insertOne({ _id: '1', name: 'John Doe' });
- * await collection.drop();
+ * await db.collection<User>('users').insertOne({
+ *   _id: '123',
+ *   dob: new Date(),
+ *   vector: new DataAPIVector([1, 2, 3]), // This can also be passed as a plain number[]
+ * });
  * ```
+ *
+ * ###### Typing the `_id`
+ *
+ * The `_id` field of the document may be any valid JSON scalar (including {@link Date}s, {@link UUID}s, and {@link ObjectId}s)
+ *
+ * See {@link CollectionDefaultIdOptions} for more info on setting default `_id`s
+ *
+ * @example
+ * ```ts
+ * interface User {
+ *   _id: UUID,
+ *   name: string,
+ * }
+ *
+ * const coll = await db.createCollection<User>('users', {
+ *   defaultId: { type: 'uuid' },
+ * });
+ *
+ * const resp = await coll.insertOne({ name: 'Alice' });
+ * console.log(resp.insertedId.version) // 4
+ * ```
+ *
+ * ###### Custom datatypes
+ *
+ * You can plug in your own custom datatypes by providing some custom serialization/deserialization logic through the `serdes` option in {@link CollectionSpawnOptions}, {@link DbSpawnOptions} & {@link DataAPIClientOptions.dbOptions}.
+ *
+ * See {@link CollectionSerDesConfig} for much more information, but here's a quick example:
+ *
+ * @example
+ * ```ts
+ * import { $SerializeForCollections, ... } from '@datastax/astra-db-ts';
+ *
+ * // Custom datatype
+ * class UserID {
+ *   constructor(public readonly unwrap: string) {}
+ *   [$SerializeForCollections] = () => this.unwrap; // Serializer checks for this symbol
+ * }
+ *
+ * // Schema type of the collection, using the custom datatype
+ * interface User {
+ *   _id: UserID,
+ *   name: string,
+ * }
+ *
+ * const collection = db.collection<User>('users', {
+ *   serdes: { // Serializer not necessary here since `$SerializeForCollections` is used
+ *     deserialize(key, value) {
+ *       if (key === '_id') return new UserID(value);
+ *     },
+ *   },
+ * });
+ *
+ * const inserted = await collection.insertOne({
+ *   _id: new UserID('123'), // will be stored in db as '123'
+ *   name: 'Alice',
+ * });
+ *
+ * console.log(inserted.insertedId.unwrap); // '123'
+ * ```
+ *
+ * ###### Disclaimer
+ *
+ * **Collections are inherently untyped**
+ *
+ * **It is on the user to ensure that the TS type of the `Collection` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.**
+ *
+ * **There is no runtime type validation or enforcement of the schema.**
  *
  * @see SomeDoc
  * @see Db.createCollection
  * @see Db.collection
+ * @see CollectionDefaultIdOptions
+ * @see CollectionSerDesConfig
+ * @see CollectionSpawnOptions
  *
  * @public
  */
@@ -122,32 +208,50 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Inserts a single document into the collection.
+   * ##### Overview
    *
-   * If the document does not contain an `_id` field, the server will generate an id for the document. The type of the
-   * id may be specified in {@link CollectionOptions.defaultId} at collection creation, otherwise it'll just be a raw
-   * UUID string. This generation does not mutate the document.
-   *
-   * If an `_id` is provided which corresponds to a document that already exists in the collection, an error is raised,
-   * and the insertion fails.
+   * Atomically inserts a single document into the collection.
    *
    * @example
-   * ```typescript
+   * ```ts
+   * import { UUID, ObjectId, ... } from '@datastax/astra-db-ts';
+   *
    * // Insert a document with a specific ID
    * await collection.insertOne({ _id: '1', name: 'John Doe' });
    * await collection.insertOne({ _id: new ObjectID(), name: 'Jane Doe' });
    * await collection.insertOne({ _id: UUID.v7(), name: 'Dane Joe' });
    *
+   * // Insert a document with a vector (if enabled on the collection)
+   * await collection.insertOne({ _id: 1, name: 'Jane Doe', $vector: [.12, .52, .32] });
+   *
+   * // or if vectorize (auto-embedding-generation) is enabled
+   * await collection.insertOne({ _id: 1, name: 'Jane Doe', $vectorize: "Hey there!" });
+   * ```
+   *
+   * ##### The `_id` field
+   *
+   * If the document does not contain an `_id` field, the server will generate an id for the document. The type of the id may be specified in {@link CollectionOptions.defaultId} at collection creation, otherwise it'll just be a raw UUID string. This generation does not mutate the document.
+   *
+   * If an `_id` is provided which corresponds to a document that already exists in the collection, a {@link DataAPIResponseError} is raised, and the insertion fails.
+   *
+   * If you prefer to upsert instead, see {@link Collection.replaceOne}.
+   *
+   * @example
+   * ```typescript
    * // Insert a document with an autogenerated ID
    * await collection.insertOne({ name: 'Jane Doe' });
-   *
-   * // Insert a document with a vector (if enabled on the collection)
-   * await collection.insertOne({ name: 'Jane Doe', $vector: [.12, .52, .32] });
-   * await collection.insertOne({ name: 'Jane Doe', $vectorize: "Hey there!" });
    *
    * // Use the inserted ID (generated or not)
    * const resp = await collection.insertOne({ name: 'Lemmy' });
    * console.log(resp.insertedId);
+   *
+   * // Or if the collection has a default ID
+   * const collection = db.createCollection('users', {
+   *   defaultId: { type: 'uuid' },
+   * });
+   *
+   * const resp = await collection.insertOne({ name: 'Lemmy' });
+   * console.log(resp.insertedId.version); // 4
    * ```
    *
    * @param document - The document to insert.
@@ -156,72 +260,100 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @returns The ID of the inserted document.
    */
   public async insertOne(document: MaybeId<Schema>, options?: WithTimeout): Promise<CollectionInsertOneResult<Schema>> {
-    return this.#commands.insertOne(document, options, constantly);
+    return this.#commands.insertOne(document, options);
   }
 
   /**
+   * ##### Overview
+   *
    * Inserts many documents into the collection.
    *
-   * **NB. This function paginates the insertion of documents in chunks to avoid running into insertion limits. This
-   * means multiple requests may be made to the server, and the operation may not be atomic.**
+   * @example
+   * ```ts
+   * await collection.insertMany([
+   *   { _id: '1', name: 'John Doe' },
+   *   { name: 'Jane Doe' },
+   * ]);
+   * ```
    *
-   * If any document does not contain an `_id` field, the server will generate an id for the document. The type of the
-   * id may be specified in {@link CollectionOptions.defaultId} at creation, otherwise it'll just be a UUID string. This
-   * generation will not mutate the documents.
+   * ##### Chunking
    *
-   * If any `_id` is provided which corresponds to a document that already exists in the collection, an error is raised,
-   * and the insertion (partially) fails.
+   * **NOTE: This function paginates the insertion of documents in chunks to avoid running into insertion limits.** This means multiple requests may be made to the server.
    *
-   * You may set the `ordered` option to `true` to stop the operation after the first error; otherwise all documents
-   * may be parallelized and processed in arbitrary order, improving, perhaps vastly, performance.
+   * This operation is **not necessarily atomic**. Depending on the amount of inserted documents, and if it's ordered or not, it can keep running (in a blocking manner) for a macroscopic amount of time. In that case, new documents that are inserted from another concurrent process/application may be inserted during the execution of this method call, and if there are duplicate keys, it's not easy to predict which application will win the race.
    *
-   * You can set the `concurrency` option to control how many network requests are made in parallel on unordered
-   * insertions. Defaults to `8`.
+   * By default, it inserts documents in chunks of 50 at a time. You can fine-tune the parameter through the `chunkSize` option. Note that increasing chunk size won't necessarily increase performance depending on document size. Instead, increasing concurrency may help.
    *
-   * If a 2XX insertion error occurs, the operation will throw an {@link InsertManyError} containing the partial result.
+   * You can set the `concurrency` option to control how many network requests are made in parallel on unordered insertions. Defaults to `8`.
    *
-   * See {@link CollectionInsertManyOptions} for complete information about the options available for this operation.
+   * @example
+   * ```ts
+   * const docs = Array.from({ length: 100 }, (_, i) => ({ _id: i }));
+   * await collection.insertMany(docs, { batchSize: 100 });
+   * ```
+   *
+   * ##### The ordered flag
+   *
+   * You may set the `ordered` option to `true` to stop the operation after the first error; otherwise all documents may be parallelized and processed in arbitrary order, improving, perhaps vastly, performance.
+   *
+   * Setting the `ordered` operation disables any parallelization so insertions truly are stopped after the very first error.
+   *
+   * @example
+   * ```ts
+   * // will throw an InsertManyError after the 2nd doc is inserted with a duplicate key
+   * // the 3rd doc will never attempt to be inserted
+   * await collection.insertMany([
+   *   { _id: '1', name: 'John Doe' },
+   *   { _id: '1', name: 'John Doe' },
+   *   { _id: '2', name: 'Jane Doe' },
+   * ], {
+   *   ordered: true,
+   * });
+   * ```
+   *
+   * ##### The `_id` field
+   *
+   * If any document does not contain an `_id` field, the server will generate an id for the document. The type of the id may be specified in {@link CollectionOptions.defaultId} at creation, otherwise it'll just be a UUID string. This generation will not mutate the documents.
+   *
+   * If any `_id` is provided which corresponds to a document that already exists in the collection, an {@link InsertManyError} is raised, and the insertion (partially) fails.
+   *
+   * If you prefer to upsert instead, see {@link Collection.replaceOne}.
    *
    * @example
    * ```typescript
-   * try {
-   *   await collection.insertMany([
-   *     { _id: '1', name: 'John Doe' },
-   *     { name: 'Jane Doe' },
-   *   ]);
+   * // Insert documents with autogenerated IDs
+   * await collection.insertMany([
+   *   { name: 'John Doe' },
+   *   { name: 'Jane Doe' },
+   * ]);
    *
-   *   await collection.insertMany([
-   *     { _id: '1', name: 'John Doe', $vector: [.12, .52, .32] },
-   *     { name: 'Jane Doe', $vectorize: "The Ace of Spades" },
-   *   ], {
-   *     ordered: true,
-   *   });
+   * // Use the inserted IDs (generated or not)
+   * const resp = await collection.insertMany([
+   *   { name: 'Lemmy' },
+   *   { name: 'Kilmister' },
+   * ]);
+   * console.log(resp.insertedIds);
    *
-   *   const batch = Array.from({ length: 500 }, (_, i) => ({
-   *     name: 'Thing #' + i,
-   *   }));
-   *   await collection.insertMany(batch, { concurrency: 10 });
-   * } catch (e) {
-   *   if (e instanceof InsertManyError) {
-   *     console.log(e.insertedIds);
-   *   }
-   * }
+   * // Or if the collection has a default ID
+   * const collection = db.createCollection('users', {
+   *   defaultId: { type: 'objectId' },
+   * });
+   *
+   * const resp = await collection.insertMany([
+   *   { name: 'Lynyrd' },
+   *   { name: 'Skynyrd' },
+   * ]);
+   *
+   * console.log(resp.insertedIds[0].getTimestamp());
    * ```
    *
-   * @remarks
-   * This operation is not atomic. Depending on the amount of inserted documents, and if it's ordered or not, it can
-   * keep running (in a blocking way) for a macroscopic amount of time. In that case, new documents that are inserted
-   * from another concurrent process/application may be inserted during the execution of this method call, and if there
-   * are duplicate keys, it's not easy to predict which application will win the race.
+   * ##### `InsertManyError`
    *
-   * --
+   * If any 2XX insertion error occurs, the operation will throw an {@link InsertManyError} containing the partial result.
    *
-   * *If a thrown exception is not due to an insertion error, e.g. a `5xx` error or network error, the operation will throw the
-   * underlying error.*
+   * If a thrown exception is not due to an insertion error, e.g. a `5xx` error or network error, the operation will throw the underlying error.
    *
-   * *In case of an unordered request, if the error was a simple insertion error, a `InsertManyError` will be thrown
-   * after every document has been attempted to be inserted. If it was a `5xx` or similar, the error will be thrown
-   * immediately.*
+   * In case of an unordered request, if the error was a simple insertion error, a `InsertManyError` will be thrown after every document has been attempted to be inserted. If it was a `5xx` or similar, the error will be thrown immediately.
    *
    * @param documents - The documents to insert.
    * @param options - The options for this operation.
@@ -231,35 +363,64 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @throws InsertManyError - If the operation fails.
    */
   public async insertMany(documents: MaybeId<Schema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<Schema>> {
-    return this.#commands.insertMany(documents, options, constantly);
+    return this.#commands.insertMany(documents, options);
   }
 
   /**
+   * ##### Overview
+   *
    * Atomically updates a single document in the collection.
    *
-   * If `upsert` is set to true, it will insert the document if no match is found.
+   * @example
+   * ```ts
+   * await collection.insertOne({ _id: '1', name: 'John Doe' });
+   * await collection.updateOne({ _id: '1' }, { $set: { name: 'Jane Doe' } });
+   * ```
    *
-   * You can also specify a sort option to determine which document to update if multiple documents match the filter.
+   * ##### Upserting
    *
-   * See {@link CollectionUpdateOneOptions} for complete information about the options available for this operation.
+   * If `upsert` is set to true, it will insert the document reconstructed from the filter & the update filter if no match is found.
    *
    * @example
-   * ```typescript
-   * // Update by ID
-   * await collection.insertOne({ _id: '1', name: 'John Doe' });
+   * ```ts
+   * const resp = await collection.updateOne(
+   *   { _id: 42 },
+   *   { $set: { age: 27 }, $setOnInsert: { name: 'Kasabian' } },
+   *   { upsert: true },
+   * );
    *
-   * await collection.updateOne(
-   *   { _id: '1' },
-   *   { $set: { name: 'Jane Doe' }
-   * });
+   * if (resp.upsertedCount) {
+   *   console.log(resp.upsertedId); // 42
+   * }
+   * ```
    *
+   * ##### Filtering
+   *
+   * The filter can contain a variety of operators & combinators to select the document. See {@link Filter} & {@link StrictFilter} for much more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   *
+   * Just keep in mind that if the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
+   *
+   * ##### Update operators
+   *
+   * The update filter can contain a variety of operators to modify the document. See {@link UpdateFilter} for more information & examples.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available update operators.
+   *
+   * ##### Update by vector search
+   *
+   * If the collection has vector search enabled, you can update the most relevant document by providing a vector in the sort option.
+   *
+   * @example
+   * ```ts
    * // Update by vector search
    * await collection.insertOne({ name: 'John Doe', $vector: [.12, .52, .32] });
    *
    * await collection.updateOne(
    *   { name: 'John Doe' },
    *   { $set: { name: 'Jane Doe', $vectorize: "Ooh, she's a little runaway" } },
-   *   { sort: { $vector: [.09, .58, .21] } }
+   *   { sort: { $vector: [.09, .58, .21] } },
    * );
    * ```
    *
@@ -278,47 +439,66 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
+   * ##### Overview
+   *
    * Updates many documents in the collection.
    *
-   * **NB. This function paginates the updating of documents in chunks to avoid running into insertion limits. This
-   * means multiple requests may be made to the server, and the operation may not be atomic.**
+   * ##### Pagination
    *
-   * If `upsert` is set to true, it will insert a document if no match is found.
+   * **NOTE: This function paginates the updating of documents in batches due to server update limits.** The limit is set on the server-side, and not changeable via the client side. This means multiple requests may be made to the server.
    *
-   * You can also specify a sort option to determine which documents to update if multiple documents match the filter.
+   * This operation is **not necessarily atomic**. Depending on the amount of matching documents, it can keep running (in a blocking manner) for a macroscopic amount of time. In that case, documents that are modified/inserted from another concurrent process/application may be modified/inserted during the execution of this method call.
    *
-   * See {@link CollectionUpdateManyOptions} for complete information about the options available for this operation.
+   * ##### Upserting
+   *
+   * If `upsert` is set to true, it will insert the document reconstructed from the filter & the update filter if no match is found.
+   *
+   * Only one document may be upserted per command.
    *
    * @example
-   * ```typescript
-   * await collection.insertMany([
-   *   { _id: '1', name: 'John Doe', car: 'Renault Twizy' },
-   *   { _id: UUID.v4(), name: 'Jane Doe' },
-   *   { name: 'Dane Joe' },
-   * ]);
+   * ```ts
+   * const resp = await collection.updateMany(
+   *   { name: 'Kasabian' },
+   *   { $set: { age: 27 }, $setOnInsert: { _id: 42 } },
+   *   { upsert: true },
+   * );
    *
-   * // Will give 'Jane' and 'Dane' a car 'unknown'
-   * await collection.updateMany({
-   *   car: { $exists: false },
-   * }, {
-   *   $set: { car: 'unknown' },
-   * });
-   *
-   * // Will upsert a document with name 'Anette' and car 'Volvo v90'
-   * await collection.updateMany({
-   *   name: 'Anette',
-   * }, {
-   *   $set: { car: 'Volvo v90' },
-   * }, {
-   *   upsert: true,
-   * });
+   * if (resp.upsertedCount) {
+   *   console.log(resp.upsertedId); // 42
+   * }
    * ```
    *
-   * @remarks
-   * This operation is not atomic. Depending on the amount of matching documents, it can keep running (in a blocking
-   * way) for a macroscopic amount of time. In that case, new documents that are inserted from another concurrent process/
-   * application at the same time may be updated during the execution of this method call. In other words, it cannot
-   * easily be predicted whether a given newly-inserted document will be picked up by the updateMany command or not.
+   * ##### Filtering
+   *
+   * The filter can contain a variety of operators & combinators to select the document. See {@link Filter} & {@link StrictFilter} for much more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   *
+   * Just keep in mind that if the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
+   *
+   * ##### Update operators
+   *
+   * The update filter can contain a variety of operators to modify the document. See {@link UpdateFilter} for more information & examples.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available update operators.
+   *
+   * {@link Collection.updateOne} also contains some examples of basic update filter usage.
+   *
+   * ##### Update by vector search
+   *
+   * If the collection has vector search enabled, you can update the most relevant document by providing a vector in the sort option.
+   *
+   * @example
+   * ```ts
+   * // Update by vector search
+   * await collection.insertOne({ name: 'John Doe', $vector: [.12, .52, .32] });
+   *
+   * await collection.updateMany(
+   *   { name: 'John Doe' },
+   *   { $set: { name: 'Jane Doe', $vectorize: "Ooh, she's a little runaway" } },
+   *   { sort: { $vector: [.09, .58, .21] } },
+   * );
+   * ```
    *
    * @param filter - A filter to select the documents to update.
    * @param update - The update to apply to the selected documents.
@@ -334,46 +514,54 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
+   * ##### Overview
+   *
    * Replaces a single document in the collection.
-   *
-   * If `upsert` is set to true, it will insert the replacement regardless of if no match is found.
-   *
-   * See {@link CollectionReplaceOneOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
-   * await collection.insertOne({
-   *   _id: '1',
-   *   name: 'John Doe',
-   *   $vector: [.12, .52, .32],
-   * });
+   * await collection.insertOne({ _id: '1', name: 'John Doe' });
+   * await collection.replaceOne({ _id: '1' }, { name: 'Dohn Joe' });
+   * ```
    *
-   * // Replace by ID
-   * await collection.replaceOne({ _id: '1' }, { name: 'Jane Doe' });
+   * ##### Upserting
    *
-   * // Replace by name
-   * await collection.replaceOne({
-   *   name: 'John Doe',
-   * }, {
-   *   name: 'Jane Doe',
-   *   $vector: [.08, .57, .23],
-   * });
+   * If `upsert` is set to true, it will insert the document reconstructed from the filter & the update filter if no match is found.
    *
-   * // Replace by vector
-   * await collection.replaceOne({}, {
-   *   name: 'Jane Doe'
-   * }, {
-   *   sort: { $vector: [.09, .58, .22] },
-   * });
+   * @example
+   * ```ts
+   * const resp = await collection.replaceOne(
+   *   { _id: 42 },
+   *   { name: 'Jessica' },
+   *   { upsert: true },
+   * );
    *
-   * // Upsert if no match
-   * await collection.replaceOne({
-   *   name: 'Lynyrd Skynyrd',
-   * }, {
-   *   name: 'Lenerd Skinerd',
-   * }, {
-   *   upsert: true,
-   * });
+   * if (resp.upsertedCount) {
+   *   console.log(resp.upsertedId); // 42
+   * }
+   * ```
+   *
+   * ##### Filtering
+   *
+   * The filter can contain a variety of operators & combinators to select the document. See {@link Filter} & {@link StrictFilter} for much more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   *
+   * Just keep in mind that if the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
+   *
+   * ##### Replace by vector search
+   *
+   * If the collection has vector search enabled, you can replace the most relevant document by providing a vector in the sort option.
+   *
+   * @example
+   * ```ts
+   * await collection.insertOne({ name: 'John Doe', $vector: [.12, .52, .32] });
+   *
+   * await collection.replaceOne(
+   *   { name: 'John Doe' },
+   *   { name: 'Jane Doe', $vectorize: "Ooh, she's a little runaway" },
+   *   { sort: { $vector: [.09, .58, .21] } },
+   * );
    * ```
    *
    * @param filter - A filter to select the document to replace.
@@ -390,25 +578,31 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
+   * ##### Overview
+   *
    * Atomically deletes a single document from the collection.
    *
-   * You can specify a `sort` option to determine which document to delete if multiple documents match the filter.
+   * @example
+   * ```ts
+   * await collection.insertOne({ _id: '1', name: 'John Doe' });
+   * await collection.deleteOne({ name: 'John Doe' });
+   * ```
    *
-   * See {@link CollectionDeleteOneOptions} for complete information about the options available for this operation.
+   * ##### Filtering
+   *
+   * The filter can contain a variety of operators & combinators to select the document. See {@link Filter} & {@link StrictFilter} for much more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   *
+   * Just keep in mind that if the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
+   *
+   * ##### Delete by vector search
+   *
+   * If the collection has vector search enabled, you can delete the most relevant document by providing a vector in the sort option.
    *
    * @example
-   * ```typescript
-   * // Delete by _id
-   * await collection.insertOne({ _id: '1', name: 'John Doe' });
-   * await collection.deleteOne({ _id: '1' });
-   *
-   * // Delete by name
-   * await collection.insertOne({ name: 'Jane Doe', age: 25 });
-   * await collection.insertOne({ name: 'Jane Doe', age: 33 });
-   * await collection.deleteOne({ name: 'Jane Doe' }, { sort: { age: -1 } });
-   *
-   * // Delete by vector search
-   * await collection.insertOne({ name: 'Jane Doe', $vector: [.12, .52, .32] });
+   * ```ts
+   * await collection.insertOne({ name: 'John Doe', $vector: [.12, .52, .32] });
    * await collection.deleteOne({}, { sort: { $vector: [.09, .58, .42] }});
    * ```
    *
@@ -425,35 +619,48 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
+   * ##### Overview
+   *
    * Deletes many documents from the collection.
    *
-   * **NB. This function paginates the deletion of documents in chunks to avoid running into insertion limits. This
-   * means multiple requests may be made to the server, and the operation may not be atomic.**
-   *
-   * **If an empty filter is passed, all documents in the collection will atomically be deleted in a single API call. Proceed with caution.**
-   *
    * @example
-   * ```typescript
+   * ```ts
    * await collection.insertMany([
-   *   { _id: '1', name: 'John Doe' },
-   *   { name: 'John Doe' },
+   *   { name: 'John Doe', age: 1 },
+   *   { name: 'John Doe', age: 2 },
    * ]);
-   *
    * await collection.deleteMany({ name: 'John Doe' });
    * ```
    *
-   * @remarks
-   * This operation is not atomic. Depending on the amount of matching documents, it can keep running (in a blocking
-   * way) for a macroscopic amount of time. In that case, new documents that are inserted from another concurrent process/
-   * application at the same time may be deleted during the execution of this method call. In other words, it cannot
-   * easily be predicted whether a given newly-inserted document will be picked up by the deleteMany command or not.
+   * ##### Pagination
+   *
+   * **NOTE: This function paginates the deletion of documents in batches due to server deletion limits.** The limit is set on the server-side, and not changeable via the client side. This means multiple requests may be made to the server.
+   *
+   * This operation is **not necessarily atomic**. Depending on the amount of matching documents, it can keep running (in a blocking manner) for a macroscopic amount of time. In that case, documents that are modified/inserted from another concurrent process/application may be modified/inserted during the execution of this method call.
+   *
+   * ##### Filtering
+   *
+   * **If an empty filter is passed, all documents in the collection will atomically be deleted in a single API call. Proceed with caution.**
+   *
+   * The filter can contain a variety of operators & combinators to select the documents. See {@link Filter} & {@link StrictFilter} for much more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   *
+   * @example
+   * ```ts
+   * await collection.insertMany([
+   *   { name: 'John Doe' },
+   *   { name: 'Jane Doe' },
+   * ]);
+   *
+   * const resp = await collection.deleteMany({});
+   * console.log(resp.deletedCount); // -1
+   * ```
    *
    * @param filter - A filter to select the documents to delete.
    * @param options - The options for this operation.
    *
    * @returns How many documents were deleted.
-   *
-   * @throws Error - If an empty filter is passed.
    *
    * @see StrictFilter
    */
@@ -462,69 +669,100 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * Find documents on the collection, optionally matching the provided filter.
+   * ##### Overview
    *
-   * Also accepts `sort`, `limit`, `skip`, `includeSimilarity`, and `projection` options.
-   *
-   * The method returns a {@link FindCursor} that can then be iterated over.
-   *
-   * **NB. If a *non-vector-sort* `sort` option is provided, the iteration of all documents may not be atomic**—it will
-   * iterate over cursors in an approximate way, exhibiting occasional skipped or duplicate documents, with real-time
-   * collection insertions/mutations being displayed.
-   *
-   * See {@link CollectionFindOptions} and {@link FindCursor} for complete information about the options available for this operation.
+   * Find documents in the collection, optionally matching the provided filter.
    *
    * @example
-   * ```typescript
+   * ```ts
+   * const cursor = await collection.find({ name: 'John Doe' });
+   * const docs = await cursor.toArray();
+   * ```
+   *
+   * ##### Projection
+   *
+   * This overload of {@link Collection.find} is used for when no projection is provided, and it is safe to assume the returned documents are going to be of type `Schema`.
+   *
+   * If it can not be inferred that a projection is definitely not provided, the `Schema` is forced to be `DeepPartial<Schema>` if the user does not provide their own, in order to prevent type errors and ensure the user is aware that the document may not be of the same type as `Schema`.
+   *
+   * ##### Filtering
+   *
+   * The filter can contain a variety of operators & combinators to select the documents. See {@link Filter} & {@link StrictFilter} for much more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   *
+   * If the filter is empty, all documents in the collection will be returned (up to any provided/implied limit).
+   *
+   * ##### Find by vector search
+   *
+   * If the collection has vector search enabled, you can find the most relevant documents by providing a vector in the sort option.
+   *
+   * Vector ANN searches cannot return more than a set number of documents, which, at the time of writing, is 1000 items.
+   *
+   * @example
+   * ```ts
    * await collection.insertMany([
    *   { name: 'John Doe', $vector: [.12, .52, .32] },
    *   { name: 'Jane Doe', $vector: [.32, .52, .12] },
    *   { name: 'Dane Joe', $vector: [.52, .32, .12] },
    * ]);
    *
-   * // Find by name
-   * const cursor1 = collection.find({ name: 'John Doe' });
-   *
-   * // Returns ['John Doe']
-   * console.log(await cursor1.toArray());
-   *
-   * // Match all docs, sorting by name
-   * const cursor2 = collection.find({}, {
-   *   sort: { name: 1 },
-   * });
-   *
-   * // Returns 'Dane Joe', 'Jane Doe', 'John Doe'
-   * for await (const doc of cursor2) {
-   *   console.log(doc);
-   * }
-   *
-   * // Find by vector
-   * const cursor3 = collection.find({}, {
+   * const cursor = collection.find({}, {
    *   sort: { $vector: [.12, .52, .32] },
    * });
    *
    * // Returns 'John Doe'
-   * console.log(await cursor3.next());
+   * console.log(await cursor.next());
+   * ```
+   *
+   * ##### Sorting
+   *
+   * The sort option can be used to sort the documents returned by the cursor. See {@link Sort} & {@link StrictSort} for more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available sort operators.
+   *
+   * If the sort option is not provided, there is no guarantee as to the order of the documents returned.
+   *
+   * When providing a non-vector sort, the Data API will return a smaller number of documents, set to 20 at the time of writing, and stop there. The returned documents are the top results across the whole collection according to the requested criterion.
+   *
+   * @example
+   * ```ts
+   * await collection.insertMany([
+   *   { name: 'John Doe', age: 1, height: 168 },
+   *   { name: 'John Doe', age: 2, height: 42 },
+   * ]);
+   *
+   * const cursor = collection.find({}, {
+   *   sort: { age: 1, height: -1 },
+   * });
+   *
+   * // Returns 'John Doe' (age 2, height 42), 'John Doe' (age 1, height 168)
+   * console.log(await cursor.toArray());
+   * ```
+   *
+   * ##### Other options
+   *
+   * Other available options include `skip`, `limit`, `includeSimilarity`, and `includeSortVector`. See {@link CollectionFindOptions} and {@link FindCursor} for more information.
+   *
+   * If you prefer, you may also set these options using a fluent interface on the {@link FindCursor} itself.
+   *
+   * @example
+   * ```ts
+   * // cursor :: FindCursor<string>
+   * const cursor = collection.find({})
+   *   .sort({ $vector: [.12, .52, .32] })
+   *   .projection<{ name: string, age: number }>({ name: 1, age: 1 })
+   *   .includeSimilarity(true)
+   *   .map(doc => `${doc.name} (${doc.age})`);
    * ```
    *
    * @remarks
-   * Some combinations of arguments impose an implicit upper bound on the number of documents that are returned by the
-   * Data API. Namely:
-   *
-   * (a) Vector ANN searches cannot return more than a number of documents
-   * that at the time of writing is set to 1000 items.
-   *
-   * (b) When using a sort criterion of the ascending/descending type,
-   * the Data API will return a smaller number of documents, set to 20
-   * at the time of writing, and stop there. The returned documents are
-   * the top results across the whole collection according to the requested
-   * criterion.
-   *
-   * --
-   *
    * When not specifying sorting criteria at all (by vector or otherwise),
    * the cursor can scroll through an arbitrary number of documents as
    * the Data API and the client periodically exchange new chunks of documents.
+   *
+   * --
+   *
    * It should be noted that the behavior of the cursor in the case documents
    * have been added/removed after the `find` was started depends on database
    * internals, and it is not guaranteed, nor excluded, that such "real-time"
@@ -533,71 +771,407 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param filter - A filter to select the documents to find. If not provided, all documents will be returned.
    * @param options - The options for this operation.
    *
-   * @returns A FindCursor which can be iterated over.
+   * @returns A {@link FindCursor} which can be iterated over.
    *
    * @see StrictFilter
    * @see StrictSort
    * @see StrictProjection
    */
-  public find(filter: Filter<Schema>, options?: CollectionFindOptions): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>> {
+  public find(filter: Filter<Schema>, options?: CollectionFindOptions & { projection?: never }): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>>
+
+  /**
+   * ##### Overview
+   *
+   * Find documents in the collection, optionally matching the provided filter.
+   *
+   * @example
+   * ```ts
+   * const cursor = await collection.find({ name: 'John Doe' });
+   * const docs = await cursor.toArray();
+   * ```
+   *
+   * ##### Projection
+   *
+   * This overload of {@link Collection.find} is used for when a projection is provided (or at the very least, it can not be inferred that a projection is NOT provided).
+   *
+   * In this case, the user must provide an explicit projection type, or the type of the documents will be `DeepPartial<Schema>`, to prevent type-mismatches when the schema is strictly provided.
+   *
+   * @example
+   * ```ts
+   * interface User {
+   *   name: string,
+   *   car: { make: string, model: string },
+   * }
+   *
+   * const collection = db.collection<User>('users');
+   *
+   * // Defaulting to `DeepPartial<User>` when projection is not provided
+   * const cursor = await collection.find({}, {
+   *   projection: { car: 1 },
+   * });
+   *
+   * // next :: { car?: { make?: string, model?: string } }
+   * const next = await cursor.next();
+   * console.log(next.car?.make);
+   *
+   * // Explicitly providing the projection type
+   * const cursor = await collection.find<Pick<User, 'car'>>({}, {
+   *   projection: { car: 1 },
+   * });
+   *
+   * // next :: { car: { make: string, model: string } }
+   * const next = await cursor.next();
+   * console.log(next.car.make);
+   *
+   * // Projection existence can not be inferred
+   * function mkFind(projection?: Projection) {
+   *   return collection.find({}, { projection });
+   * }
+   *
+   * // next :: DeepPartial<User>
+   * const next = await mkFind({ car: 1 }).next();
+   * console.log(next.car?.make);
+   * ```
+   *
+   * ##### Filtering
+   *
+   * The filter can contain a variety of operators & combinators to select the documents. See {@link Filter} & {@link StrictFilter} for much more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   *
+   * If the filter is empty, all documents in the collection will be returned (up to any provided/implied limit).
+   *
+   * ##### Find by vector search
+   *
+   * If the collection has vector search enabled, you can find the most relevant documents by providing a vector in the sort option.
+   *
+   * Vector ANN searches cannot return more than a set number of documents, which, at the time of writing, is 1000 items.
+   *
+   * @example
+   * ```ts
+   * await collection.insertMany([
+   *   { name: 'John Doe', $vector: [.12, .52, .32] },
+   *   { name: 'Jane Doe', $vector: [.32, .52, .12] },
+   *   { name: 'Dane Joe', $vector: [.52, .32, .12] },
+   * ]);
+   *
+   * const cursor = collection.find({}, {
+   *   sort: { $vector: [.12, .52, .32] },
+   * });
+   *
+   * // Returns 'John Doe'
+   * console.log(await cursor.next());
+   * ```
+   *
+   * ##### Sorting
+   *
+   * The sort option can be used to sort the documents returned by the cursor. See {@link Sort} & {@link StrictSort} for more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available sort operators.
+   *
+   * If the sort option is not provided, there is no guarantee as to the order of the documents returned.
+   *
+   * When providing a non-vector sort, the Data API will return a smaller number of documents, set to 20 at the time of writing, and stop there. The returned documents are the top results across the whole collection according to the requested criterion.
+   *
+   * @example
+   * ```ts
+   * await collection.insertMany([
+   *   { name: 'John Doe', age: 1, height: 168 },
+   *   { name: 'John Doe', age: 2, height: 42 },
+   * ]);
+   *
+   * const cursor = collection.find({}, {
+   *   sort: { age: 1, height: -1 },
+   * });
+   *
+   * // Returns 'John Doe' (age 2, height 42), 'John Doe' (age 1, height 168)
+   * console.log(await cursor.toArray());
+   * ```
+   *
+   * ##### Other options
+   *
+   * Other available options include `skip`, `limit`, `includeSimilarity`, and `includeSortVector`. See {@link CollectionFindOptions} and {@link FindCursor} for more information.
+   *
+   * If you prefer, you may also set these options using a fluent interface on the {@link FindCursor} itself.
+   *
+   * @example
+   * ```ts
+   * // cursor :: FindCursor<string>
+   * const cursor = collection.find({})
+   *   .sort({ $vector: [.12, .52, .32] })
+   *   .projection<{ name: string, age: number }>({ name: 1, age: 1 })
+   *   .includeSimilarity(true)
+   *   .map(doc => `${doc.name} (${doc.age})`);
+   * ```
+   *
+   * @remarks
+   * When not specifying sorting criteria at all (by vector or otherwise),
+   * the cursor can scroll through an arbitrary number of documents as
+   * the Data API and the client periodically exchange new chunks of documents.
+   *
+   * --
+   *
+   * It should be noted that the behavior of the cursor in the case documents
+   * have been added/removed after the `find` was started depends on database
+   * internals, and it is not guaranteed, nor excluded, that such "real-time"
+   * changes in the data would be picked up by the cursor.
+   *
+   * @param filter - A filter to select the documents to find. If not provided, all documents will be returned.
+   * @param options - The options for this operation.
+   *
+   * @returns A {@link FindCursor} which can be iterated over.
+   *
+   * @see StrictFilter
+   * @see StrictSort
+   * @see StrictProjection
+   */
+  public find<TRaw extends SomeDoc = DeepPartial<Schema>>(filter: Filter<Schema>, options: CollectionFindOptions): FindCursor<FoundDoc<TRaw>, FoundDoc<TRaw>>
+
+  public find(filter: Filter<Schema>, options?: CollectionFindOptions): FindCursor<SomeDoc> {
     return this.#commands.find(this.keyspace, filter, options);
   }
 
   /**
-   * Finds a single document in the collection, if it exists.
+   * ##### Overview
    *
-   * You can specify a `sort` option to determine which document to find if multiple documents match the filter.
-   *
-   * You can also specify a `projection` option to determine which fields to include in the returned document.
-   *
-   * If performing a vector search, you can set the `includeSimilarity` option to `true` to include the similarity score
-   * in the returned document as `$similarity: number`.
-   *
-   * See {@link CollectionFindOneOptions} for complete information about the options available for this operation.
+   * Find a single document in the collection, optionally matching the provided filter.
    *
    * @example
-   * ```typescript
-   * const doc1 = await collection.findOne({
-   *   name: 'John Doe',
-   * });
-   *
-   * // Will be undefined
-   * console.log(doc1?.$similarity);
-   *
-   * const doc2 = await collection.findOne({}, {
-   *   sort: {
-   *     $vector: [.12, .52, .32],
-   *   },
-   *   includeSimilarity: true,
-   * });
-   *
-   * // Will be a number
-   * console.log(doc2?.$similarity);
+   * ```ts
+   * const doc = await collection.findOne({ name: 'John Doe' });
    * ```
    *
-   * @remarks
-   * If you really need `skip` or `includeSortVector`, prefer using the {@link Collection.find} method instead with `limit: 1`.
+   * ##### Projection
    *
-   * @param filter - A filter to select the document to find.
+   * This overload of {@link Collection.findOne} is used for when no projection is provided, and it is safe to assume the returned document is going to be of type `Schema`.
+   *
+   * If it can not be inferred that a projection is definitely not provided, the `Schema` is forced to be `DeepPartial<Schema>` if the user does not provide their own, in order to prevent type errors and ensure the user is aware that the document may not be of the same type as `Schema`.
+   *
+   * ##### Filtering
+   *
+   * The filter can contain a variety of operators & combinators to select the document. See {@link Filter} & {@link StrictFilter} for much more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   *
+   * If the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
+   *
+   * ##### Find by vector search
+   *
+   * If the collection has vector search enabled, you can find the most relevant document by providing a vector in the sort option.
+   *
+   * @example
+   * ```ts
+   * await collection.insertMany([
+   *   { name: 'John Doe', $vector: [.12, .52, .32] },
+   *   { name: 'Jane Doe', $vector: [.32, .52, .12] },
+   *   { name: 'Dane Joe', $vector: [.52, .32, .12] },
+   * ]);
+   *
+   * const doc = collection.findOne({}, {
+   *   sort: { $vector: [.12, .52, .32] },
+   * });
+   *
+   * // 'John Doe'
+   * console.log(doc.name);
+   * ```
+   *
+   * ##### Sorting
+   *
+   * The sort option can be used to pick the most relevant document. See {@link Sort} & {@link StrictSort} for more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available sort operators.
+   *
+   * If the sort option is not provided, there is no guarantee as to which of the documents which matches the filter is returned.
+   *
+   * @example
+   * ```ts
+   * await collection.insertMany([
+   *   { name: 'John Doe', age: 1, height: 168 },
+   *   { name: 'John Doe', age: 2, height: 42 },
+   * ]);
+   *
+   * const doc = collection.findOne({}, {
+   *   sort: { age: 1, height: -1 },
+   * });
+   *
+   * // 'John Doe' (age 2, height 42)
+   * console.log(doc.name);
+   * ```
+   *
+   * ##### Other options
+   *
+   * Other available options include `includeSimilarity`. See {@link CollectionFindOneOptions} for more information.
+   *
+   * If you want to get `skip` or `includeSortVector` as well, use {@link Collection.find} with a `limit: 1` instead.
+   *
+   * @example
+   * ```ts
+   * const doc = await cursor.findOne({}, {
+   *   sort: { $vector: [.12, .52, .32] },
+   *   includeSimilarity: true,
+   * });
+   * ```
+   *
+   * @param filter - A filter to select the documents to find. If not provided, all documents will be returned.
    * @param options - The options for this operation.
    *
-   * @returns The found document, or `null` if no document was found.
+   * @returns A document matching the criterion, or `null` if no such document exists.
    *
    * @see StrictFilter
    * @see StrictSort
    * @see StrictProjection
    */
-  public async findOne(filter: Filter<Schema>, options?: CollectionFindOneOptions): Promise<FoundDoc<Schema> | null> {
+  public async findOne(filter: Filter<Schema>, options?: CollectionFindOneOptions & { projection?: never }): Promise<FoundDoc<Schema> | null>
+
+  /**
+   * ##### Overview
+   *
+   * Find a single document in the collection, optionally matching the provided filter.
+   *
+   * @example
+   * ```ts
+   * const doc = await collection.findOne({ name: 'John Doe' });
+   * ```
+   *
+   * ##### Projection
+   *
+   * This overload of {@link Collection.findOne} is used for when a projection is provided (or at the very least, it can not be inferred that a projection is NOT provided).
+   *
+   * In this case, the user must provide an explicit projection type, or the type of the returned document will be as `DeepPartial<Schema>`, to prevent type-mismatches when the schema is strictly provided.
+   *
+   * @example
+   * ```ts
+   * interface User {
+   *   name: string,
+   *   car: { make: string, model: string },
+   * }
+   *
+   * const collection = db.collection<User>('users');
+   *
+   * // Defaulting to `DeepPartial<User>` when projection is not provided
+   * const doc = await collection.findOne({}, {
+   *   projection: { car: 1 },
+   * });
+   *
+   * // doc :: { car?: { make?: string, model?: string } }
+   * console.log(doc.car?.make);
+   *
+   * // Explicitly providing the projection type
+   * const doc = await collection.findOne<Pick<User, 'car'>>({}, {
+   *   projection: { car: 1 },
+   * });
+   *
+   * // doc :: { car: { make: string, model: string } }
+   * console.log(doc.car.make);
+   *
+   * // Projection existence can not be inferred
+   * function findOne(projection?: Projection) {
+   *   return collection.findOne({}, { projection });
+   * }
+   *
+   * // doc :: DeepPartial<User>
+   * const doc = await findOne({ car: 1 }).next();
+   * console.log(doc.car?.make);
+   * ```
+   *
+   * ##### Filtering
+   *
+   * The filter can contain a variety of operators & combinators to select the document. See {@link Filter} & {@link StrictFilter} for much more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   *
+   * If the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
+   *
+   * ##### Find by vector search
+   *
+   * If the collection has vector search enabled, you can find the most relevant document by providing a vector in the sort option.
+   *
+   * @example
+   * ```ts
+   * await collection.insertMany([
+   *   { name: 'John Doe', $vector: [.12, .52, .32] },
+   *   { name: 'Jane Doe', $vector: [.32, .52, .12] },
+   *   { name: 'Dane Joe', $vector: [.52, .32, .12] },
+   * ]);
+   *
+   * const doc = collection.findOne({}, {
+   *   sort: { $vector: [.12, .52, .32] },
+   * });
+   *
+   * // 'John Doe'
+   * console.log(doc.name);
+   * ```
+   *
+   * ##### Sorting
+   *
+   * The sort option can be used to pick the most relevant document. See {@link Sort} & {@link StrictSort} for more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available sort operators.
+   *
+   * If the sort option is not provided, there is no guarantee as to which of the documents which matches the filter is returned.
+   *
+   * @example
+   * ```ts
+   * await collection.insertMany([
+   *   { name: 'John Doe', age: 1, height: 168 },
+   *   { name: 'John Doe', age: 2, height: 42 },
+   * ]);
+   *
+   * const doc = collection.findOne({}, {
+   *   sort: { age: 1, height: -1 },
+   * });
+   *
+   * // 'John Doe' (age 2, height 42)
+   * console.log(doc.name);
+   * ```
+   *
+   * ##### Other options
+   *
+   * Other available options include `includeSimilarity`. See {@link CollectionFindOneOptions} for more information.
+   *
+   * If you want to get `skip` or `includeSortVector` as well, use {@link Collection.find} with a `limit: 1` instead.
+   *
+   * @example
+   * ```ts
+   * const doc = await cursor.findOne({}, {
+   *   sort: { $vector: [.12, .52, .32] },
+   *   includeSimilarity: true,
+   * });
+   * ```
+   *
+   * @param filter - A filter to select the documents to find. If not provided, all documents will be returned.
+   * @param options - The options for this operation.
+   *
+   * @returns A document matching the criterion, or `null` if no such document exists.
+   *
+   * @see StrictFilter
+   * @see StrictSort
+   * @see StrictProjection
+   */
+  public async findOne<TRaw extends SomeDoc = DeepPartial<Schema>>(filter: Filter<Schema>, options: CollectionFindOneOptions): Promise<FoundDoc<TRaw> | null>
+
+  public async findOne(filter: Filter<Schema>, options?: CollectionFindOneOptions): Promise<SomeDoc | null> {
     return this.#commands.findOne(filter, options);
   }
 
   /**
+   * ##### Overview
+   *
    * Return a list of the unique values of `key` across the documents in the collection that match the provided filter.
    *
-   * **NB. This is a *client-side* operation**—this effectively browses all matching documents (albeit with a
+   * @example
+   * ```ts
+   * const docs = await collection.distinct('name');
+   * ```
+   *
+   * ##### Major disclaimer
+   *
+   * **NOTE: This is a *client-side* operation**—this effectively browses all matching documents (albeit with a
    * projection) using the logic of the {@link Collection.find} method, and collects the unique value for the
    * given `key` manually. As such, there may be performance, latency and ultimately billing implications if the
    * amount of matching documents is large.
+   *
+   * ##### Usage
    *
    * The key may use dot-notation to access nested fields, such as `'field'`, `'field.subfield'`, `'field.3'`,
    * `'field.3.subfield'`, etc. If lists are encountered and no numeric index is specified, all items in the list are
@@ -649,12 +1223,21 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  public async distinct<Key extends string>(key: Key, filter: Filter<Schema> = {}): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]> {
+  public async distinct<Key extends string>(key: Key, filter: Filter<Schema>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]> {
     return this.#commands.distinct(this.keyspace, key, filter);
   }
 
   /**
+   * ##### Overview
+   *
    * Counts the number of documents in the collection, optionally with a filter.
+   *
+   * @example
+   * ```ts
+   * const count = await collection.countDocuments({ name: 'John Doe' }, 1000);
+   * ```
+   *
+   * ##### The `limit` parameter
    *
    * Takes in a `limit` option which dictates the maximum number of documents that may be present before a
    * {@link TooManyDocumentsToCountError} is thrown. If the limit is higher than the highest limit accepted by the
@@ -663,15 +1246,15 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @example
    * ```typescript
    * await collection.insertMany([
-   *   { _id: '1', name: 'John Doe' },
+   *   { name: 'John Doe' },
    *   { name: 'Jane Doe' },
    * ]);
    *
-   * const count = await collection.countDocuments({ name: 'John Doe' }, 1000);
+   * const count = await collection.countDocuments({}, 1000);
    * console.log(count); // 1
    *
-   * // Will throw a TooManyDocumentsToCountError as it counts 1, but the limit is 0
-   * const count = await collection.countDocuments({ name: 'John Doe' }, 0);
+   * // Will throw a TooManyDocumentsToCountError as it counts 2, but the limit is 1
+   * const count = await collection.countDocuments({}, 1);
    * ```
    *
    * @remarks
@@ -696,14 +1279,21 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
+   * ##### Overview
+   *
    * Gets an estimate of the count of documents in a collection.
    *
-   * This operation is faster than {@link Collection.countDocuments} but may not be as accurate, and doesn't
-   * accept a filter. Unlike the former, **It can handle more than 1000 documents.**
-   *
-   * @remarks
    * This gives a very rough estimate of the number of documents in the collection. It is not guaranteed to be
    * accurate, and should not be used as a source of truth for the number of documents in the collection.
+   *
+   * But this operation is faster than {@link Collection.countDocuments}, and while it doesn't
+   * accept a filter, **it can handle more than 1000 documents.**
+   *
+   * @example
+   * ```ts
+   * const count = await collection.estimatedDocumentCount();
+   * console.log(count); // Hard to predict exact number
+   * ```
    *
    * @param options - The options for this operation.
    *
@@ -714,81 +1304,79 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
+   * ##### Overview
+   *
    * Atomically finds a single document in the collection and replaces it.
-   *
-   * If `upsert` is set to true, it will insert the replacement regardless of if no match is found.
-   *
-   * Set `returnDocument` to `'after'` to return the document as it is after the replacement, or `'before'` to return the
-   * document as it was before the replacement.
-   *
-   * You can specify a `sort` option to determine which document to find if multiple documents match the filter.
-   *
-   * You can also set `projection` to determine which fields to include in the returned document.
-   *
-   * If you just want the document, either omit `includeResultMetadata`, or set it to `false`.
-   *
-   * See {@link CollectionFindOneAndReplaceOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
-   * await collection.insertOne({ _id: '1', band: 'ZZ Top' });
-   *
-   * const result = await collection.findOneAndReplace(
-   *   { _id: '1' },
-   *   { name: 'John Doe' },
-   *   { returnDocument: 'after', includeResultMetadata: true },
-   * );
-   *
-   * // Prints { _id: '1', name: 'John Doe' }
-   * console.log(result.value);
-   *
-   * // Prints 1
-   * console.log(result.ok);
+   * await collection.insertOne({ _id: '1', name: 'John Doe' });
+   * await collection.findOneAndReplace({ _id: '1' }, { name: 'Dohn Joe' });
    * ```
    *
-   * @param filter - A filter to select the document to find.
-   * @param replacement - The replacement document, which contains no `_id` field.
-   * @param options - The options for this operation.
+   * ##### Projection
    *
-   * @returns The result of the operation
+   * You can set `projection` to determine which fields to include in the returned document.
    *
-   * @see StrictFilter
-   */
-  public async findOneAndReplace(
-    filter: Filter<Schema>,
-    replacement: NoId<Schema>,
-    options: CollectionFindOneAndReplaceOptions & { includeResultMetadata: true },
-  ): Promise<CollectionModifyResult<Schema>>
-
-  /**
-   * Atomically finds a single document in the collection and replaces it.
+   * For type-safety reasons, this function allows you to pass in your own projection type, or defaults to `WithId<Schema>` if not provided.
    *
-   * If `upsert` is set to true, it will insert the replacement regardless of if no match is found.
-   *
-   * Set `returnDocument` to `'after'` to return the document as it is after the replacement, or `'before'` to return the
-   * document as it was before the replacement.
-   *
-   * You can specify a `sort` option to determine which document to find if multiple documents match the filter.
-   *
-   * You can also set `projection` to determine which fields to include in the returned document.
-   *
-   * If you want the ok status along with the document, set `includeResultMetadata` to `true`.
-   *
-   * See {@link CollectionFindOneAndReplaceOptions} for complete information about the options available for this operation.
+   * If you use a projection and do not pass in the appropriate type, you may very well run into runtime type errors not caught by the compiler.
    *
    * @example
-   * ```typescript
-   * await collection.insertOne({ _id: '1', band: 'ZZ Top' });
+   * ```ts
+   * await collection.insertOne({ _id: '1', name: 'John Doe', age: 3 });
    *
-   * const doc = await collection.findOneAndReplace(
+   * const doc = await collection.findOneAndReplace<{ name: string }>(
    *   { _id: '1' },
-   *   { name: 'John Doe' },
-   *   { returnDocument: 'after', includeResultMetadata: true },
+   *   { name: 'Dohn Joe' },
+   *   { projection: { name: 1, _id: 0 } },
    * );
    *
-   * // Prints { _id: '1', name: 'John Doe' }
+   * // Prints { name: 'Dohn Joe' }
    * console.log(doc);
    * ```
+   *
+   * ##### Upserting
+   *
+   * If `upsert` is set to true, it will insert the document reconstructed from the filter & the update filter if no match is found.
+   *
+   * @example
+   * ```ts
+   * const resp = await collection.findOneAndReplace(
+   *   { _id: 42 },
+   *   { name: 'Jessica' },
+   *   { upsert: true },
+   * );
+   *
+   * console.log(resp); // null, b/c no previous document was found
+   * ```
+   *
+   * ##### `returnDocument`
+   *
+   * `returnDocument` (default `'before'`) controls whether the original or the updated document is returned.
+   * - `'before'`: Returns the document as it was before the update, or `null` if the document was upserted.
+   * - `'after'`: Returns the document as it is after the update.
+   *
+   * @example
+   * ```ts
+   * await collection.insertOne({ _id: '1', name: 'John Doe' });
+   *
+   * const after = await collection.findOneAndReplace(
+   *   { _id: '1' },
+   *   { name: 'Jane Doe' },
+   *   { returnDocument: 'after' },
+   * );
+   *
+   * // Prints { _id: '1', name: 'Jane Doe' }
+   * console.log(after);
+   *
+   * ##### Filtering
+   *
+   * The filter can contain a variety of operators & combinators to select the document. See {@link Filter} & {@link StrictFilter} for much more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   *
+   * Just keep in mind that if the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
    *
    * @param filter - A filter to select the document to find.
    * @param replacement - The replacement document, which contains no `_id` field.
@@ -798,74 +1386,49 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  public async findOneAndReplace(
-    filter: Filter<Schema>,
-    replacement: NoId<Schema>,
-    options?: CollectionFindOneAndReplaceOptions & { includeResultMetadata?: false },
-  ): Promise<WithId<Schema> | null>
-
-  public async findOneAndReplace(filter: Filter<Schema>, replacement: NoId<Schema>, options?: CollectionFindOneAndReplaceOptions): Promise<CollectionModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndReplace<TRaw extends SomeDoc = WithId<Schema>>(filter: Filter<Schema>, replacement: NoId<Schema>, options?: CollectionFindOneAndReplaceOptions): Promise<TRaw | null> {
     return this.#commands.findOneAndReplace(filter, replacement, options);
   }
 
   /**
+   * ##### Overview
+   *
    * Atomically finds a single document in the collection and deletes it.
    *
-   * You can specify a `sort` option to determine which document to find if multiple documents match the filter.
+   * @example
+   * ```ts
+   * await collection.insertOne({ _id: '1', name: 'John Doe' });
+   * await collection.findOneAndDelete({ _id: '1' });
+   * ```
    *
-   * You can also set `projection` to determine which fields to include in the returned document.
+   * ##### Projection
    *
-   * If you just want the document, either omit `includeResultMetadata`, or set it to `false`.
+   * You can set `projection` to determine which fields to include in the returned document.
    *
-   * See {@link CollectionFindOneAndDeleteOptions} for complete information about the options available for this operation.
+   * For type-safety reasons, this function allows you to pass in your own projection type, or defaults to `WithId<Schema>` if not provided.
+   *
+   * If you use a projection and do not pass in the appropriate type, you may very well run into runtime type errors not caught by the compiler.
    *
    * @example
-   * ```typescript
-   * await collection.insertOne({ _id: '1', name: 'John Doe' });
+   * ```ts
+   * await collection.insertOne({ _id: '1', name: 'John Doe', age: 3 });
    *
-   * const result = await collection.findOneAndDelete(
+   * const doc = await collection.findOneAndDelete<{ name: string }>(
    *   { _id: '1' },
-   *   { includeResultMetadata: true, }
+   *   { projection: { name: 1, _id: 0 } },
    * );
    *
-   * // Prints { _id: '1', name: 'John Doe' }
-   * console.log(result.value);
-   *
-   * // Prints 1
-   * console.log(result.ok);
-   * ```
-   *
-   * @param filter - A filter to select the document to find.
-   * @param options - The options for this operation.
-   *
-   * @returns The result of the operation
-   *
-   * @see StrictFilter
-   */
-  public async findOneAndDelete(
-    filter: Filter<Schema>,
-    options: CollectionFindOneAndDeleteOptions & { includeResultMetadata: true },
-  ): Promise<CollectionModifyResult<Schema>>
-
-  /**
-   * Atomically finds a single document in the collection and deletes it.
-   *
-   * You can specify a `sort` option to determine which document to find if multiple documents match the filter.
-   *
-   * You can also set `projection` to determine which fields to include in the returned document.
-   *
-   * If you want the ok status along with the document, set `includeResultMetadata` to `true`.
-   *
-   * See {@link CollectionFindOneAndDeleteOptions} for complete information about the options available for this operation.
-   *
-   * @example
-   * ```typescript
-   * await collection.insertOne({ _id: '1', name: 'John Doe' });
-   * const doc = await collection.findOneAndDelete({ _id: '1' });
-   *
-   * // Prints { _id: '1', name: 'John Doe' }
+   * // Prints { name: 'John Doe' }
    * console.log(doc);
    * ```
+   *
+   * ##### Filtering
+   *
+   * The filter can contain a variety of operators & combinators to select the document. See {@link Filter} & {@link StrictFilter} for much more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   *
+   * Just keep in mind that if the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
    *
    * @param filter - A filter to select the document to find.
    * @param options - The options for this operation.
@@ -874,84 +1437,85 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  public async findOneAndDelete(
-    filter: Filter<Schema>,
-    options?: CollectionFindOneAndDeleteOptions & { includeResultMetadata?: false },
-  ): Promise<WithId<Schema> | null>
-
-  public async findOneAndDelete(filter: Filter<Schema>, options?: CollectionFindOneAndDeleteOptions): Promise<CollectionModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndDelete<TRaw extends SomeDoc = WithId<Schema>>(filter: Filter<Schema>, options?: CollectionFindOneAndDeleteOptions): Promise<TRaw | null> {
     return this.#commands.findOneAndDelete(filter, options);
   }
 
   /**
+   * ##### Overview
+   *
    * Atomically finds a single document in the collection and updates it.
    *
-   * Set `returnDocument` to `'after'` to return the document as it is after the update, or `'before'` to return the
-   * document as it was before the update.
-   *
-   * You can specify a `sort` option to determine which document to find if multiple documents match the filter.
-   *
-   * You can also set `upsert` to `true` to insert a new document if no document matches the filter.
-   *
-   * If you just want the document, either omit `includeResultMetadata`, or set it to `false`.
-   *
-   * See {@link CollectionFindOneAndUpdateOptions} for complete information about the options available for this operation.
-   *
    * @example
-   * ```typescript
-   * const result = await collection.findOneAndUpdate(
-   *   { _id: '1' },
-   *   { $set: { name: 'Jane Doe' } },
-   *   { returnDocument: 'after', includeResultMetadata: true },
-   * );
-   *
-   * // Prints { _id: '1', name: 'Jane Doe' }
-   * console.log(result.value);
-   *
-   * // Prints 1
-   * console.log(result.ok);
+   * ```ts
+   * await collection.insertOne({ _id: '1', name: 'John Doe' });
+   * await collection.findOneAndUpdate({ _id: '1' }, { $set: { name: 'Jane Doe' } });
    * ```
    *
-   * @param filter - A filter to select the document to find.
-   * @param update - The update to apply to the selected document.
-   * @param options - The options for this operation.
+   * ##### Projection
    *
-   * @returns The result of the operation
+   * You can set `projection` to determine which fields to include in the returned document.
    *
-   * @see StrictFilter
-   * @see StrictUpdateFilter
-   */
-  public async findOneAndUpdate(
-    filter: Filter<Schema>,
-    update: UpdateFilter<Schema>,
-    options: CollectionFindOneAndUpdateOptions & { includeResultMetadata: true },
-  ): Promise<CollectionModifyResult<Schema>>
-
-  /**
-   * Atomically finds a single document in the collection and updates it.
+   * For type-safety reasons, this function allows you to pass in your own projection type, or defaults to `WithId<Schema>` if not provided.
    *
-   * Set `returnDocument` to `'after'` to return the document as it is after the update, or `'before'` to return the
-   * document as it was before the update.
-   *
-   * You can specify a `sort` option to determine which document to find if multiple documents match the filter.
-   *
-   * You can also set `upsert` to `true` to insert a new document if no document matches the filter.
-   *
-   * If you want the ok status along with the document, set `includeResultMetadata` to `true`.
-   *
-   * See {@link CollectionFindOneAndUpdateOptions} for complete information about the options available for this operation.
+   * If you use a projection and do not pass in the appropriate type, you may very well run into runtime type errors not caught by the compiler.
    *
    * @example
-   * ```typescript
-   * const doc = await collection.findOneAndUpdate(
+   * ```ts
+   * await collection.insertOne({ _id: '1', name: 'John Doe', age: 3 });
+   *
+   * const doc = await collection.findOneAndUpdate<{ name: string }>(
    *   { _id: '1' },
    *   { $set: { name: 'Jane Doe' } },
-   *   { returnDocument: 'after'},
+   *   { projection: { name: 1, _id: 0 } },
    * );
    *
-   * // Prints { _id: '1', name: 'Jane Doe' }
+   * // Prints { name: 'John Doe' }
    * console.log(doc);
    * ```
+   *
+   * ##### Upserting
+   *
+   * If `upsert` is set to true, it will insert the document reconstructed from the filter & the update filter if no match is found.
+   *
+   * @example
+   * ```ts
+   * const resp = await collection.findOneAndUpdate(
+   *   { _id: 42 },
+   *   { $set: { name: 'Jessica' } },
+   *   { upsert: true },
+   * );
+   *
+   * console.log(resp); // null, b/c no previous document was found
+   * ```
+   *
+   * ##### `returnDocument`
+   *
+   * `returnDocument` (default `'before'`) controls whether the original or the updated document is returned.
+   * - `'before'`: Returns the document as it was before the update, or `null` if the document was upserted.
+   * - `'after'`: Returns the document as it is after the update.
+   *
+   * @example
+   * ```ts
+   * await collection.insertOne({ _id: '1', name: 'John Doe' });
+   *
+   * const after = await collection.findOneAndUpdate(
+   *   { _id: '1' },
+   *   { $set: { name: 'Jane Doe' } },
+   *   { returnDocument: 'after' },
+   * );
+   *
+   * // Prints { _id: '1', name: 'Jane Doe' }
+   * console.log(after);
+   * ```
+   *
+   * ##### Filtering
+   *
+   * The filter can contain a variety of operators & combinators to select the document. See {@link Filter} & {@link StrictFilter} for much more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   *
+   * Just keep in mind that if the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
    *
    * @param filter - A filter to select the document to find.
    * @param update - The update to apply to the selected document.
@@ -962,24 +1526,20 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    * @see StrictUpdateFilter
    */
-  public async findOneAndUpdate(
-    filter: Filter<Schema>,
-    update: UpdateFilter<Schema>,
-    options?: CollectionFindOneAndUpdateOptions & { includeResultMetadata?: false },
-  ): Promise<WithId<Schema> | null>
-
-  public async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: CollectionFindOneAndUpdateOptions): Promise<CollectionModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: CollectionFindOneAndUpdateOptions): Promise<WithId<Schema> | null> {
     return this.#commands.findOneAndUpdate(filter, update, options);
   }
 
   /**
+   * ##### Overview
+   *
    * Get the collection options, i.e. its configuration as read from the database.
    *
    * The method issues a request to the Data API each time it is invoked, without caching mechanisms;
    * this ensures up-to-date information for usages such as real-time collection validation by the application.
    *
    * @example
-   * ```typescript
+   * ```ts
    * const options = await collection.info();
    * console.log(options.vector);
    * ```
@@ -1001,21 +1561,25 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
   }
 
   /**
+   * ##### Overview
+   *
    * Drops the collection from the database, including all the documents it contains.
+   *
+   * @example
+   * ```typescript
+   * const collection = await db.collection('my_collection');
+   * await collection.drop();
+   * ```
+   *
+   * ##### Disclaimer
    *
    * Once the collection is dropped, this object is still technically "usable", but any further operations on it
    * will fail at the Data API level; thus, it's the user's responsibility to make sure that the collection object
    * is no longer used.
    *
-   * @example
-   * ```typescript
-   * const collection = await db.createCollection('my_collection');
-   * await collection.drop();
-   * ```
-   *
    * @param options - The options for this operation.
    *
-   * @returns `true` if the collection was dropped okay.
+   * @returns A promise which resolves when the collection has been dropped.
    *
    * @remarks Use with caution. Wear your safety goggles. Don't say I didn't warn you.
    */
@@ -1023,6 +1587,9 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     await this.#db.dropCollection(this.name, { keyspace: this.keyspace, ...options });
   }
 
+  /**
+   * Backdoor to the HTTP client for if it's absolutely necessary. Which it almost never (if even ever) is.
+   */
   public get _httpClient() {
     return this.#httpClient;
   }

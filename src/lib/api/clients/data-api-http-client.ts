@@ -85,6 +85,9 @@ const adaptInfo4Devops = (info: DataAPIRequestInfo) => (<const>{
   params: {},
 });
 
+/**
+ * @internal
+ */
 interface DataAPIHttpClientOpts extends HTTPClientOptions {
   keyspace: KeyspaceRef,
   emissionStrategy: EmissionStrategy,
@@ -103,7 +106,7 @@ export class DataAPIHttpClient extends HttpClient {
   readonly #props: DataAPIHttpClientOpts;
 
   constructor(props: DataAPIHttpClientOpts) {
-    super(props, [mkAuthHeaderProvider(props.tokenProvider), props.embeddingHeaders.getHeaders.bind(props.embeddingHeaders)]);
+    super(props, [mkAuthHeaderProvider(props.tokenProvider), () => props.embeddingHeaders.getHeaders()]);
     this.keyspace = props.keyspace;
     this.#props = props;
     this.maxTimeMS = this.fetchCtx.maxTimeMS ?? DEFAULT_TIMEOUT;

@@ -14,7 +14,8 @@
 
 import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client';
 import type { DataAPIErrorDescriptor } from '@/src/documents';
-import { DataAPIClientEvent } from '@/src/lib';
+// import { DataAPIClientEvent } from '@/src/lib/logging/events'; needs to be like this or it errors
+import { DataAPIClientEvent } from '@/src/lib/logging/events';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the

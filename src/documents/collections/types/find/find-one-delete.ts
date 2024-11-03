@@ -20,7 +20,6 @@ import { WithTimeout } from '@/src/lib/types';
  *
  * @field sort - The sort order to pick which document to delete if the filter selects multiple documents.
  * @field projection - Specifies which fields should be included/excluded in the returned documents.
- * @field includeResultMetadata - When true, returns alongside the document, an `ok` field with a value of 1 if the command executed successfully.
  * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
  *
  * @see Collection.findOneAndDelete
@@ -74,13 +73,4 @@ export interface CollectionFindOneAndDeleteOptions extends WithTimeout {
    * ```
    */
   projection?: Projection,
-  /**
-   * When true, returns alongside the document, an `ok` field with a value of 1 if the command executed successfully.
-   *
-   * Otherwise, returns the document result directly.
-   *
-   * Defaults to false.
-   * @defaultValue false
-   */
-  includeResultMetadata?: boolean,
 }

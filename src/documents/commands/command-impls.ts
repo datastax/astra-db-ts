@@ -16,7 +16,6 @@ import { DataAPIHttpClient } from '@/src/lib/api/clients';
 import { DataAPISerDes } from '@/src/lib/api/ser-des';
 import {
   CollectionInsertManyOptions,
-  CollectionModifyResult,
   DataAPIResponseError,
   DeleteManyError,
   FindCursor,
@@ -24,7 +23,8 @@ import {
   GenericDeleteOneOptions,
   GenericDeleteOneResult,
   GenericFindOneAndDeleteOptions,
-  GenericFindOneAndReplaceOptions, GenericFindOneAndUpdateOptions,
+  GenericFindOneAndReplaceOptions,
+  GenericFindOneAndUpdateOptions,
   GenericFindOneOptions,
   GenericFindOptions,
   GenericInsertManyResult,
@@ -36,14 +36,12 @@ import {
   SomeDoc,
   TooManyDocumentsToCountError,
   UpdateManyError,
-  WithId,
 } from '@/src/documents';
 import { nullish, WithTimeout } from '@/src/lib';
-import { insertManyOrdered, insertManyUnordered, MkID } from '@/src/documents/commands/helpers/insertion';
+import { insertManyOrdered, insertManyUnordered } from '@/src/documents/commands/helpers/insertion';
 import { coalesceUpsertIntoUpdateResult, mkUpdateResult } from '@/src/documents/commands/helpers/updates';
 import { mkRespErrorFromResponse } from '@/src/documents/errors';
 import { normalizedSort } from '@/src/documents/utils';
-import { runFindOneAnd } from '@/src/documents/commands/helpers/modify';
 import { mkDistinctPathExtractor, pullSafeProjection4Distinct } from '@/src/documents/commands/helpers/distinct';
 import stableStringify from 'safe-stable-stringify';
 
@@ -58,7 +56,7 @@ export class CommandImpls<ID> {
     this.#name = name;
   }
 
-  public async insertOne(document: SomeDoc, options: WithTimeout | nullish, mkID: MkID<ID>): Promise<GenericInsertOneResult<ID>> {
+  public async insertOne(document: SomeDoc, options: WithTimeout | nullish): Promise<GenericInsertOneResult<ID>> {
     const command = mkBasicCmd('insertOne', {
       document: this.#serdes.serializeRecord(document),
     });
@@ -66,21 +64,21 @@ export class CommandImpls<ID> {
     const raw = await this.#httpClient.executeCommand(command, options);
 
     return {
-      insertedId: mkID(this.#serdes.deserializeRecord(raw.status!.insertedIds[0], raw), raw.status!),
+      insertedId: this.#serdes.deserializeRecord(raw.status!.insertedIds[0], raw.status!) as ID,
     };
   }
 
-  public async insertMany(docs: SomeDoc[], options: CollectionInsertManyOptions | nullish, mkID: MkID<ID>): Promise<GenericInsertManyResult<ID>> {
+  public async insertMany(docs: SomeDoc[], options: CollectionInsertManyOptions | nullish): Promise<GenericInsertManyResult<ID>> {
     const chunkSize = options?.chunkSize ?? 50;
     const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
 
     const insertedIds = (options?.ordered)
-      ? await insertManyOrdered(this.#httpClient, this.#serdes, docs, chunkSize, timeoutManager, mkID)
-      : await insertManyUnordered(this.#httpClient, this.#serdes, docs, options?.concurrency ?? 8, chunkSize, timeoutManager, mkID);
+      ? await insertManyOrdered(this.#httpClient, this.#serdes, docs, chunkSize, timeoutManager)
+      : await insertManyUnordered(this.#httpClient, this.#serdes, docs, options?.concurrency ?? 8, chunkSize, timeoutManager);
 
     return {
       insertedCount: insertedIds.length,
-      insertedIds: insertedIds,
+      insertedIds: insertedIds as ID[],
     };
   }
 
@@ -213,7 +211,7 @@ export class CommandImpls<ID> {
     return this.#serdes.deserializeRecord(resp.data?.document, resp) as any;
   }
 
-  public async findOneAndReplace<Schema extends SomeDoc>(filter: SomeDoc, replacement: SomeDoc, options?: GenericFindOneAndReplaceOptions): Promise<CollectionModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndReplace<Schema extends SomeDoc>(filter: SomeDoc, replacement: SomeDoc, options?: GenericFindOneAndReplaceOptions): Promise<Schema | null> {
     const command = mkCmdWithSortProj('findOneAndReplace', options, {
       filter: this.#serdes.serializeRecord(filter),
       replacement: this.#serdes.serializeRecord(replacement),
@@ -222,17 +220,21 @@ export class CommandImpls<ID> {
         upsert: options?.upsert,
       },
     });
-    return runFindOneAnd(this.#httpClient, command, options);
+
+    const resp = await this.#httpClient.executeCommand(command, options);
+    return resp.data?.document || null;
   }
 
-  public async findOneAndDelete<Schema extends SomeDoc>(filter: SomeDoc, options?: GenericFindOneAndDeleteOptions): Promise<CollectionModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndDelete<Schema extends SomeDoc>(filter: SomeDoc, options?: GenericFindOneAndDeleteOptions): Promise<Schema | null> {
     const command = mkCmdWithSortProj('findOneAndDelete', options, {
       filter: this.#serdes.serializeRecord(filter),
     });
-    return runFindOneAnd(this.#httpClient, command, options);
+
+    const resp = await this.#httpClient.executeCommand(command, options);
+    return resp.data?.document || null;
   }
 
-  public async findOneAndUpdate<Schema extends SomeDoc>(filter: SomeDoc, update: SomeDoc, options?: GenericFindOneAndUpdateOptions): Promise<CollectionModifyResult<Schema> | WithId<Schema> | null> {
+  public async findOneAndUpdate<Schema extends SomeDoc>(filter: SomeDoc, update: SomeDoc, options?: GenericFindOneAndUpdateOptions): Promise<Schema | null> {
     const command = mkCmdWithSortProj('findOneAndUpdate', options, {
       filter: this.#serdes.serializeRecord(filter),
       update: this.#serdes.serializeRecord(update),
@@ -241,7 +243,9 @@ export class CommandImpls<ID> {
         upsert: options?.upsert,
       },
     });
-    return runFindOneAnd(this.#httpClient, command, options);
+
+    const resp = await this.#httpClient.executeCommand(command, options);
+    return resp.data?.document || null;
   }
 
   public async distinct(keyspace: string, key: string, filter: SomeDoc): Promise<any[]> {

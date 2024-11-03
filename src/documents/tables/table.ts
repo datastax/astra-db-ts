@@ -15,7 +15,6 @@
 import {
   $PrimaryKeyType,
   CreateTableIndexOptions,
-  CreateTableTextIndexOptions,
   CreateTableVectorIndexOptions,
   Filter,
   FindCursor,
@@ -29,8 +28,6 @@ import {
   TableInsertManyOptions,
   TableInsertManyResult,
   TableInsertOneResult,
-  TableUpdateManyOptions,
-  TableUpdateManyResult,
   TableUpdateOneOptions,
   TableUpdateOneResult,
   UpdateFilter,
@@ -39,7 +36,6 @@ import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { AlterTableOptions, AlterTableSchema, Db, TableSpawnOptions } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
-import { constantly } from '@/src/lib/utils';
 import { $CustomInspect } from '@/src/lib/constants';
 import { mkTableSerDes } from '@/src/documents/tables/ser-des';
 
@@ -73,8 +69,8 @@ export type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$Primary
  *
  * #### Typing
  *
- * A `Table` is typed as `Table<Schema extends SomeRow>`, where:
- *  - `Schema` is the type of the documents in the collection.
+ * A `Table` is typed as `Table<Schema extends SomeRow = SomeRow>`, where:
+ *  - `Schema` is the type of the rows in the table (the table schema).
  *  - `SomeRow` is set to `Record<string, any>`, representing any valid JSON object.
  *
  * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
@@ -83,6 +79,8 @@ export type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$Primary
  *  - `'map<k, v>'` is represented by a native JS `Map<K, V>`
  *  - `'vector'` is represented by an `astra-db-ts` provided `DataAPIVector`
  *  - `'date'` is represented by an `astra-db-ts` provided `CqlDate`
+ *
+ * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
  *
  * @example
  * ```ts
@@ -98,8 +96,6 @@ export type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$Primary
  *   vector: new DataAPIVector([1, 2, 3]),
  * });
  * ```
- *
- * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
  *
  * ###### Typing the key
  *
@@ -141,7 +137,7 @@ export type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$Primary
  * }
  * ```
  *
- * ###### Type inference
+ * ###### `db.createTable` type inference
  *
  * When creating a table through {@link Db.createTable}, and not using any custom datatypes (see next session), you can actually use the {@link InferTableSchema} or {@link InferTableSchemaFromDefinition} utility types to infer the schema of the table from the table creation.
  *
@@ -219,16 +215,16 @@ export type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$Primary
  *
  * ###### Disclaimer
  *
- * It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.
+ * **It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.**
  *
- * See {@link Db.createTable}, {@link Db.table}, and {@link InferTableSchema} for much more information
- * about typing.
+ * See {@link Db.createTable}, {@link Db.table}, and {@link InferTableSchema} for much more information about typing.
  *
  * @see SomeRow
  * @see Db.createTable
  * @see Db.table
  * @see InferTableSchema
  * @see TableSerDesConfig
+ * @see TableSpawnOptions
  *
  * @public
  */
@@ -270,12 +266,57 @@ export class Table<Schema extends SomeRow = SomeRow> {
     });
   }
 
-  public async insertOne(document: Schema, options?: WithTimeout): Promise<TableInsertOneResult<Schema>> {
-    return this.#commands.insertOne(document, options, constantly);
+  /**
+   * ##### Overview
+   *
+   * Atomically upserts a single row into the table.
+   *
+   * @example
+   * ```ts
+   * import { UUID, ObjectId, ... } from '@datastax/astra-db-ts';
+   *
+   * // Insert a row with a specific ID
+   * await table.insertOne({ id: 'text-id', name: 'John Doe' });
+   * await table.insertOne({ id: UUID.v7(), name: 'Dane Joe' });
+   *
+   * // Insert a row with a vector (if enabled on the collection)
+   * const vector = new DataAPIVector([.12, .52, .32]); // class enables faster encoding
+   * await table.insertOne({ id: 1, name: 'Jane Doe', vector });
+   *
+   * // or if vectorize (auto-embedding-generation) is enabled for the column
+   * await table.insertOne({ id: 1, name: 'Jane Doe', vector: "Hey there!" });
+   * ```
+   *
+   * ##### The primary key
+   *
+   * The columns that compose the primary key themselves must all be present in the row object; all other fields are technically optional/nullable.
+   *
+   * The type of the primary key of the table (for the `insertedId`) is inferred from the {@link $PrimaryKeyType} symbol in the schema. If it's not present, it will default to {@link SomeTableKey} (See {@link Table}, {@link $PrimaryKeyType} for more info).
+   *
+   * @example
+   * ```ts
+   * interface User extends Row<User, 'id'> {
+   *   id: string,
+   *   name: string,
+   *   dob?: CqlDate,
+   * }
+   *
+   * // res.insertedId is of type { id: string }
+   * const res = await table.insertOne({ id: '123', name: 'Alice' });
+   * console.log(res.insertedId.id); // '123'
+   * ```
+   *
+   * @param row - The row to insert.
+   * @param options - The options for this operation.
+   *
+   * @returns The ID of the inserted row.
+   */
+  public async insertOne(row: Schema, options?: WithTimeout): Promise<TableInsertOneResult<Schema>> {
+    return this.#commands.insertOne(row, options);
   }
 
   public async insertMany(document: Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>> {
-    return this.#commands.insertMany(document, options, constantly);
+    return this.#commands.insertMany(document, options);
   }
 
   public async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: TableUpdateOneOptions): Promise<TableUpdateOneResult<Schema>> {
@@ -323,13 +364,6 @@ export class Table<Schema extends SomeRow = SomeRow> {
   }
 
   public async createIndex(name: string, column: Cols<Schema> | string, options?: CreateTableIndexOptions): Promise<void> {
-    await this.#runDbCommand('addIndex', {
-      name: name,
-      column: column,
-    }, options);
-  }
-
-  public async createTextIndex(name: string, column: Cols<Schema> | string, options?: CreateTableTextIndexOptions): Promise<void> {
     await this.#runDbCommand('addIndex', {
       name: name,
       column: column,
