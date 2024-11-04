@@ -17,7 +17,9 @@ import { WithTimeout } from '@/src/lib/types';
 import { CollectionOptions, CollectionSpawnOptions } from '@/src/db';
 
 /**
- * Options for creating a new collections.
+ * Options for creating a new collection (via {@link Db.createCollection}).
+ *
+ * See {@link Db.createCollection} & {@link Collection} for more information.
  *
  * @field vector - The vector configuration for the collections.
  * @field indexing - The indexing configuration for the collections.

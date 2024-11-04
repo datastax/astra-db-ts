@@ -14,16 +14,23 @@
 // noinspection DuplicatedCode
 
 import { DataAPIClient } from '@/src/client';
-import { ObjectId, UUID, VectorDoc } from '@/src/documents';
+import { ObjectId, UUID } from '@/src/documents';
 import { DEFAULT_KEYSPACE } from '@/src/lib/api';
-import { it, parallel } from '@/tests/testlib';
+import {
+  ENVIRONMENT,
+  it,
+  OTHER_KEYSPACE,
+  parallel,
+  TEST_APPLICATION_TOKEN,
+  TEST_APPLICATION_URI,
+} from '@/tests/testlib';
 import assert from 'assert';
-import { ENVIRONMENT, OTHER_KEYSPACE, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/testlib';
 
 parallel('integration.misc.quickstart', { dropEphemeral: 'colls:after' }, () => {
   it('(LONG) works for the quickstart', async () => {
-    interface Idea extends VectorDoc {
+    interface Idea {
       idea: string,
+      $vector?: number[],
     }
 
     const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });

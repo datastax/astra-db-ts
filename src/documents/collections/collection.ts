@@ -57,7 +57,7 @@ import { $CustomInspect } from '@/src/lib/constants';
  *
  * **This shouldn't be directly instantiated, but rather created via {@link Db.createCollection} or {@link Db.collection}**.
  *
- * #### Typing
+ * #### Typing & Types
  *
  * Collections are inherently untyped, but you can provide your own client-side compile-time schema for type inference
  * and early-bug-catching purposes.
@@ -87,7 +87,7 @@ import { $CustomInspect } from '@/src/lib/constants';
  * await db.collection<User>('users').insertOne({
  *   _id: '123',
  *   dob: new Date(),
- *   vector: new DataAPIVector([1, 2, 3]), // This can also be passed as a plain number[]
+ *   vector: new DataAPIVector([1, 2, 3]), // This can also be passed as a number[]
  * });
  * ```
  *

@@ -26,6 +26,13 @@ export type DefaultAdminSpawnOptions = Omit<AdminSpawnOptions, 'logging'>;
  * @public
  */
 export interface AdminSpawnOptions {
+  /**
+   * The configuration for logging events emitted by the {@link DataAPIClient}.
+   *
+   * This can be set at any level of the major class hierarchy, and will be inherited by all child classes.
+   *
+   * See {@link DataAPILoggingConfig} for *much* more information on configuration, outputs, and inheritance.
+   */
   logging?: DataAPILoggingConfig,
   /**
    * The access token for the DevOps API, typically of the format `'AstraCS:...'`.
@@ -53,5 +60,13 @@ export interface AdminSpawnOptions {
    * ```
    */
   endpointUrl?: string,
+  /**
+   * Additional headers to include in the HTTP requests to the DevOps API.
+   *
+   * @remarks
+   * There are more than likely more official/structured ways to set any desired headers, such as through
+   * {@link TokenProvider}s or {@link EmbeddingHeadersProvider}s. This is more of a last-resort option, such
+   * as for enabling feature-flags or other non-standard headers.
+   */
   additionalHeaders?: Record<string, string>,
 }

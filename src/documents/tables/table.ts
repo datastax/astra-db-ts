@@ -67,7 +67,7 @@ export type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$Primary
  *
  * **This shouldn't be directly instantiated, but rather created via {@link Db.createTable} or {@link Db.table}**.
  *
- * #### Typing
+ * #### Typing & Types
  *
  * A `Table` is typed as `Table<Schema extends SomeRow = SomeRow>`, where:
  *  - `Schema` is the type of the rows in the table (the table schema).
@@ -215,7 +215,7 @@ export type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$Primary
  *
  * ###### Disclaimer
  *
- * **It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.**
+ * *It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.*
  *
  * See {@link Db.createTable}, {@link Db.table}, and {@link InferTableSchema} for much more information about typing.
  *
@@ -225,6 +225,7 @@ export type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$Primary
  * @see InferTableSchema
  * @see TableSerDesConfig
  * @see TableSpawnOptions
+ * @see $PrimaryKeyType
  *
  * @public
  */

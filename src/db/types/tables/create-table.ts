@@ -17,8 +17,25 @@ import { WithTimeout } from '@/src/lib';
 import { TableSpawnOptions } from '@/src/db/types/tables/spawn-table';
 import { SomeRow } from '@/src/documents';
 
+/**
+ * Options for creating a new table (via {@link Db.createTable}).
+ *
+ * See {@link Db.createTable} & {@link Table} for more information.
+ *
+ * @field definition - The bespoke columns/primary-key definition for the table.
+ * @field ifNotExists - Makes operation a no-op if the table already exists.
+ * @field keyspace - Overrides the keyspace for the table (from the `Db`'s working keyspace).
+ * @field embeddingApiKey - The embedding service's API-key/headers (for $vectorize)
+ * @field defaultMaxTimeMS - Default `maxTimeMS` for all table operations
+ * @field logging - Logging configuration overrides
+ * @field serdes - Additional serialization/deserialization configuration
+ * @field maxTimeMS - The maximum time to allow the operation to run.
+ *
+ * @public
+ */
 export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout, TableSpawnOptions<Schema> {
   definition: Def,
+  ifNotExists?: boolean,
 }
 
 export interface CreateTableDefinition {

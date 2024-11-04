@@ -47,6 +47,13 @@ export function extractDbIdFromUrl(uri: string): string | undefined {
 /**
  * @internal
  */
+export function extractRegionFromUrl(uri: string): string | undefined {
+  return new URL(uri).hostname.split('-').slice(5).join('-').split('.')[0];
+}
+
+/**
+ * @internal
+ */
 export function replaceAstraUrlIdAndRegion(uri: string, id: string, region: string): string {
   const url = new URL(uri);
   const parts = url.hostname.split('.');

@@ -23,6 +23,15 @@ import { OneOrMany } from '@/src/lib/types';
  * @public
  */
 export interface DataAPIClientOptions {
+  /**
+   * The configuration for logging events emitted by the {@link DataAPIClient}.
+   *
+   * This can be set at any level of the major class hierarchy, and will be inherited by all child classes.
+   *
+   * See {@link DataAPILoggingConfig} for *much* more information on configuration, outputs, and inheritance.
+   *
+   * **TL;DR: Set `logging: 'all'` for a sane default.**
+   */
   logging?: DataAPILoggingConfig,
   /**
    * Sets the Data API "backend" that is being used (e.g. 'dse', 'hcd', 'cassandra', or 'other'). Defaults to 'astra'.
