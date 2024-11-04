@@ -15,43 +15,27 @@
 import { $SerializeForTables } from '@/src/documents/tables/ser-des';
 import { $CustomInspect } from '@/src/lib/constants';
 
-type CqlBlobLike = ArrayBuffer | Buffer | string;
+export type CqlBlobLike = CqlBlob | ArrayBuffer | Buffer | string;
 
 export class CqlBlob {
-  readonly #raw: CqlBlobLike;
+  readonly #raw: Exclude<CqlBlobLike, CqlBlob>;
 
   public [$SerializeForTables] = () => ({ $binary: this.asBase64() });
 
-  public constructor(blob: CqlBlobLike) {
-    this.#raw = blob;
+  public constructor(blob: CqlBlobLike, validate = true) {
+    if (validate) {
+      if (typeof blob !== 'string' && !(blob instanceof ArrayBuffer) && !(blob instanceof Buffer) && !(blob instanceof CqlBlob)) {
+        throw new TypeError(`Expected blob to be a string, ArrayBuffer, or Buffer (got '${blob}')`);
+      }
+    }
+
+    this.#raw = (blob instanceof CqlBlob)
+      ? blob.#raw
+      : blob;
 
     Object.defineProperty(this, $CustomInspect, {
       value: this.toString,
     });
-  }
-
-  public static fromArrayBuffer(buffer: ArrayBuffer): CqlBlob {
-    if (!(<any>buffer instanceof ArrayBuffer)) {
-      throw new TypeError("Expected buffer to be an ArrayBuffer (got '${buffer}'");
-    }
-    return new CqlBlob(buffer);
-  }
-
-  public static fromBuffer(buffer: Buffer): CqlBlob {
-    if (typeof Buffer === 'undefined') {
-      throw new Error("Buffer is not available in this environment");
-    }
-    if (!(buffer instanceof Buffer)) {
-      throw new TypeError(`Expected buffer to be a Buffer (got '${buffer}'`);
-    }
-    return new CqlBlob(buffer);
-  }
-
-  public static fromBase64(base64: string): CqlBlob {
-    if (typeof <any>base64 !== 'string') {
-      throw new TypeError(`Expected base64 to be a string (got '${base64}')`);
-    }
-    return new CqlBlob(base64);
   }
 
   public get byteLength(): number {
@@ -64,6 +48,10 @@ export class CqlBlob {
     }
 
     return ~~((this.#raw.replace(/=+$/, '').length * 3) / 4);
+  }
+
+  public raw(): Exclude<CqlBlobLike, CqlBlob> {
+    return this.#raw;
   }
 
   public asArrayBuffer(): ArrayBuffer {
