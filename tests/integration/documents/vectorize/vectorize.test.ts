@@ -131,7 +131,7 @@ describe('(VECTORIZE) (LONG) integration.documents.vectorize', ({ db }) => {
   const groups = createTestGroups(tests);
 
   for (let i = 0, n = groups.length; i < n; i += 6) {
-    parallel('(VECTORIZE) generated tests', { dropEphemeral: 'after' }, () => {
+    parallel('(VECTORIZE) generated tests', { dropEphemeral: 'colls:after' }, () => {
       groups.slice(i, i + 6).forEach(createVectorizeProvidersTest(db, i));
     });
   }

@@ -17,7 +17,7 @@ import { DataAPIError, DataAPITimeoutError, InsertManyError, ObjectId, UUID } fr
 import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.documents.collections.insert-many', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.insert-many', { truncate: 'colls:before' }, ({ collection }) => {
   it('should insertMany documents', async () => {
     const docs = [{ name: 'Inis Mona' }, { name: 'Helvetios' }, { name: 'Epona' }];
     const res = await collection.insertMany(docs);

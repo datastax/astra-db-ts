@@ -20,11 +20,13 @@
 import { DataAPIClient } from '@/src/client';
 import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import {
-  DEFAULT_COLLECTION_NAME, DEFAULT_TABLE_NAME,
+  DEFAULT_COLLECTION_NAME,
+  DEFAULT_TABLE_NAME,
   ENVIRONMENT,
   OTHER_KEYSPACE,
   TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI, TEST_HTTP_CLIENT,
+  TEST_APPLICATION_URI,
+  TEST_HTTP_CLIENT,
 } from '@/tests/testlib/config';
 import { DataAPILoggingConfig } from '@/src/lib';
 

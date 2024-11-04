@@ -20,7 +20,7 @@ import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 import { ENVIRONMENT, OTHER_KEYSPACE, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/testlib';
 
-parallel('integration.misc.quickstart', { dropEphemeral: 'after' }, () => {
+parallel('integration.misc.quickstart', { dropEphemeral: 'colls:after' }, () => {
   it('(LONG) works for the quickstart', async () => {
     interface Idea extends VectorDoc {
       idea: string,

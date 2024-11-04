@@ -17,7 +17,7 @@ import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 import { DataAPIError, DeleteManyError } from '@/src/documents';
 
-parallel('integration.documents.collections.delete-many', { truncateColls: 'both:before' }, ({ collection, collection_ }) => {
+parallel('integration.documents.collections.delete-many', { truncate: 'colls:before' }, ({ collection, collection_ }) => {
   before(async () => {
     await collection.insertMany(Array.from({ length: 50 }, (_, i) => ({ age: i })));
     await collection_.insertMany(Array.from({ length: 100 }, () => ({})));

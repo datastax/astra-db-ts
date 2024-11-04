@@ -13,12 +13,17 @@
 // limitations under the License.
 
 import { DEFAULT_KEYSPACE } from '@/src/lib/api';
-import { DEFAULT_COLLECTION_NAME, OTHER_KEYSPACE } from '@/tests/testlib/config';
-import { GLOBAL_FIXTURES } from '@/tests/testlib';
+import { DEFAULT_COLLECTION_NAME, DEFAULT_TABLE_NAME, OTHER_KEYSPACE } from '@/tests/testlib/config';
+import { FILTER_COMBINATOR, GLOBAL_FIXTURES, RAW_FILTERS } from '@/tests/testlib';
 
 const TEST_KEYSPACES = [DEFAULT_KEYSPACE, OTHER_KEYSPACE];
 
 before(async () => {
+  if (RAW_FILTERS.some(f => f.type.startsWith('unit.') && !f.inverted) && FILTER_COMBINATOR === 'and') {
+    console.warn('Skipping prelude.test.ts due to detection of only unit tests being run');
+    return;
+  }
+
   const { db, dbAdmin } = GLOBAL_FIXTURES;
   const allKeyspaces = await dbAdmin.listKeyspaces();
 
@@ -34,33 +39,62 @@ before(async () => {
     }
   }
 
-  const createCollPromises = TEST_KEYSPACES
+  const allTables = await TEST_KEYSPACES
+    .map(async (keyspace) => {
+      const colls = await db.listTables({ keyspace: keyspace, nameOnly: true });
+      return [keyspace, colls] as const;
+    })
+    .awaitAll();
+
+  await allTables
+    .map(async ([keyspace, colls]) => {
+      await colls
+        .tap(c => console.log(`deleting table '${keyspace}.${c}'`))
+        .map(c => db.dropTable(c, { keyspace: keyspace }))
+        .awaitAll();
+    })
+    .awaitAll();
+
+  const createTCPromises = TEST_KEYSPACES
     .map(async (keyspace) => {
       await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, keyspace })
         .then(c => c.deleteMany({}));
 
-      // const table = await db.createTable(DEFAULT_TABLE_NAME, {
-      //   definition: {
-      //     columns: {
-      //       id: { type: 'text' },
-      //       name: { type: 'text' },
-      //       age: { type: 'int' },
-      //       // vector: { type: 'vector', valueType: 'float', dimension: 5 },
-      //     },
-      //     primaryKey: {
-      //       partitionBy: ['id'],
-      //       partitionSort: { age: 1 },
-      //     },
-      //   },
-      //   checkExists: false,
-      // });
-      //
-      // await table.deleteMany({});
-
-      // await table.createIndex('id_idx', 'id');
-      // await table.createIndex('name_idx', 'name');
-      // await table.createIndex('age_idx', 'age');
-      // await table.createVectorIndex('vector_idx', 'vector', { similarityFunction: 'dot_product' });
+      const table = await db.createTable(DEFAULT_TABLE_NAME, {
+        definition: {
+          columns: {
+            ascii: 'ascii',
+            bigint: 'bigint',
+            blob: 'blob',
+            boolean: 'boolean',
+            date: 'date',
+            decimal: 'decimal',
+            double: 'double',
+            duration: 'duration',
+            float: 'float',
+            int: 'int',
+            inet: 'inet',
+            smallint: 'smallint',
+            text: 'text',
+            time: 'time',
+            timestamp: 'timestamp',
+            tinyint: 'tinyint',
+            uuid: 'uuid',
+            varchar: 'varchar',
+            varint: 'varint',
+            map: { type: 'map', keyType: 'text', valueType: 'uuid' },
+            set: { type: 'set', valueType: 'uuid' },
+            list: { type: 'list', valueType: 'uuid' },
+            vector: { type: 'vector', dimension: 5 },
+          },
+          primaryKey: {
+            partitionBy: ['text'],
+            partitionSort: { int: 1 },
+          },
+        },
+      });
+      await table.createIndex('text_idx', 'text');
+      await table.createVectorIndex('vector_idx', 'vector', { similarityFunction: 'dot_product' });
     })
     .awaitAll();
 
@@ -81,5 +115,5 @@ before(async () => {
     })
     .awaitAll();
 
-  await createCollPromises;
+  await createTCPromises;
 });

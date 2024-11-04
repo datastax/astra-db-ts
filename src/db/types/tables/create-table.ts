@@ -82,7 +82,6 @@ export interface SetCreateTableColumnDefinition {
 
 export interface VectorCreateTableColumnDefinition {
   type: 'vector',
-  valueType: TableScalarType,
   dimension?: number,
   service?: VectorizeServiceOptions,
 }

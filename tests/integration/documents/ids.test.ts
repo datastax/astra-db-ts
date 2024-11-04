@@ -15,10 +15,10 @@
 
 import assert from 'assert';
 import { ObjectId, UUID } from '@/src/documents';
-import { createCollections, DEFAULT_COLLECTION_NAME, it, parallel } from '@/tests/testlib';
+import { useSuiteResources, DEFAULT_COLLECTION_NAME, it, parallel } from '@/tests/testlib';
 
-parallel('(LONG) integration.documents.ids', { dropEphemeral: 'after' }, ({ db }) => {
-  const collections = createCollections(() => ({
+parallel('(LONG) integration.documents.ids', { dropEphemeral: 'colls:after' }, ({ db }) => {
+  const collections = useSuiteResources(() => ({
     default: db.collection(DEFAULT_COLLECTION_NAME).deleteMany({}).then(_ => db.collection(DEFAULT_COLLECTION_NAME)),
     uuid: db.createCollection(`${DEFAULT_COLLECTION_NAME}_uuid`, { defaultId: { type: 'uuid' } }),
     uuidv6: db.createCollection(`${DEFAULT_COLLECTION_NAME}_uuidv6`, { defaultId: { type: 'uuidv6' } }),

@@ -17,7 +17,7 @@ import { SomeDoc } from '@/src/documents';
 import { describe, initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ collection, collection_ }) => {
+describe('integration.documents.cursor', { truncate: 'colls:before' }, ({ collection, collection_ }) => {
   const sortById = (a: SomeDoc, b: SomeDoc) => parseInt(a._id) - parseInt(b._id);
   const sortByAge = (a: SomeDoc, b: SomeDoc) => a.age - b.age;
 
