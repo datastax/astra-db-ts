@@ -123,7 +123,7 @@ export class DataAPIVector {
         buffer.writeFloatBE(vector[i], i * 4);
       }
 
-      return { $binary: buffer.toString('base64')};
+      return { $binary: buffer.toString('base64') };
     }
 
     if (typeof window !== 'undefined' && window.btoa) {

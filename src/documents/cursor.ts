@@ -20,6 +20,17 @@ import type { DeepPartial, nullish } from '@/src/lib';
 import { normalizedSort } from '@/src/documents/utils';
 import { $CustomInspect } from '@/src/lib/constants';
 import { DataAPISerDes } from '@/src/lib/api/ser-des';
+import { DataAPIError } from '@/src/documents/errors';
+
+export class CursorError extends DataAPIError {
+  public readonly cursor: FindCursor<unknown>;
+
+  constructor(message: string, cursor: FindCursor<unknown>) {
+    super(message);
+    this.name = 'CursorError';
+    this.cursor = cursor;
+  }
+}
 
 /**
  * Represents the status of a cursor.
@@ -297,7 +308,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    */
   public project<RRaw extends SomeDoc = DeepPartial<TRaw>>(projection: Projection): FindCursor<RRaw,  RRaw> {
     if (this.#mapping) {
-      throw new Error('Cannot set a projection after already using cursor.map(...)');
+      throw new CursorError('Cannot set a projection after already using cursor.map(...)', this);
     }
     const options = { ...this.#options, projection: structuredClone(projection) };
     return this.#clone(this.#filter as Filter<RRaw>, options, this.#mapping);

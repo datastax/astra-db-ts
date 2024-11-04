@@ -364,7 +364,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
   }
 
   public async createIndex(name: string, column: Cols<Schema> | string, options?: CreateTableIndexOptions): Promise<void> {
-    await this.#runDbCommand('addIndex', {
+    await this.#runDbCommand('createIndex', {
       name: name,
       column: column,
       options: { caseSensitive: options?.caseSensitive, normalize: options?.normalize, ascii: options?.ascii },
@@ -372,7 +372,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
   }
 
   public async createVectorIndex(name: string, column: Cols<Schema> | string, options?: CreateTableVectorIndexOptions): Promise<void> {
-    await this.#runDbCommand('addVectorIndex', {
+    await this.#runDbCommand('createVectorIndex', {
       name: name,
       column: column,
       options: { similarityFunction: options?.similarityFunction, sourceModel: options?.sourceModel },
