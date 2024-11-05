@@ -21,14 +21,12 @@ export type DataAPIVectorLike = number[] | string | Float32Array | DataAPIVector
 export class DataAPIVector {
   readonly #vector: Exclude<DataAPIVectorLike, DataAPIVector>;
 
-  public [$SerializeForTables] = () => DataAPIVector.#serialize(this.#vector);
+  public [$SerializeForTables] = () => serialize(this.#vector);
   public [$SerializeForCollections] = this[$SerializeForTables];
 
   public constructor(vector: DataAPIVectorLike, validate = true) {
-    if (validate) {
-      if (!Array.isArray(vector) && !(<any>vector instanceof DataAPIVector) && typeof vector !== 'string' && !(vector instanceof Float32Array)) {
-        throw new Error(`Invalid vector type; expected number[], base64 string, Float32Array, or DataAPIVector; got '${vector}'`);
-      }
+    if (validate && !DataAPIVector.isVectorLike(vector)) {
+      throw new Error(`Invalid vector type; expected number[], base64 string, Float32Array, or DataAPIVector; got '${vector}'`);
     }
 
     this.#vector = (vector instanceof DataAPIVector)
@@ -57,7 +55,7 @@ export class DataAPIVector {
     }
 
     if (typeof this.#vector === 'string') {
-      const deserialized = DataAPIVector.#deserializeToNumberArray(this.#vector);
+      const deserialized = deserializeToNumberArray(this.#vector);
 
       if (!deserialized) {
         throw new Error('Could not to deserialize vector from base64 => number[]; unknown environment. Please manually deserialize the binary from `vector.getAsBase64()`');
@@ -75,7 +73,7 @@ export class DataAPIVector {
     }
 
     if (typeof this.#vector === 'string') {
-      const deserialized =  DataAPIVector.#deserializeToF32Array(this.#vector);
+      const deserialized =  deserializeToF32Array(this.#vector);
 
       if (!deserialized) {
         throw new Error('Could not to deserialize vector from base64 => Float32Array; unknown environment. Please manually deserialize the binary from `vector.getAsBase64()`');
@@ -88,7 +86,7 @@ export class DataAPIVector {
   }
 
   public asBase64(): string {
-    const serialized = DataAPIVector.#serialize(this.#vector);
+    const serialized = serialize(this.#vector);
 
     if (!('$binary' in serialized)) {
       if (Array.isArray(this.#vector)) {
@@ -111,88 +109,92 @@ export class DataAPIVector {
     return `DataAPIVector<${this.length}>(typeof raw=${type}, preview=${partial})`;
   }
 
-  static #serialize(vector: Exclude<DataAPIVectorLike, DataAPIVector>): { $binary: string } | number[] {
-    if (typeof vector === 'string') {
-      return { $binary: vector };
+  public static isVectorLike(value: unknown): value is DataAPIVectorLike {
+    return Array.isArray(value) || value instanceof Float32Array || typeof value === 'string' || value instanceof DataAPIVector;
+  }
+}
+
+const serialize = (vector: Exclude<DataAPIVectorLike, DataAPIVector>): { $binary: string } | number[] => {
+  if (typeof vector === 'string') {
+    return { $binary: vector };
+  }
+
+  if (typeof Buffer !== 'undefined') {
+    const buffer = Buffer.allocUnsafe(vector.length * 4);
+
+    for (let i = 0; i < vector.length; i++) {
+      buffer.writeFloatBE(vector[i], i * 4);
     }
 
-    if (typeof Buffer !== 'undefined') {
-      const buffer = Buffer.allocUnsafe(vector.length * 4);
+    return { $binary: buffer.toString('base64') };
+  }
 
-      for (let i = 0; i < vector.length; i++) {
-        buffer.writeFloatBE(vector[i], i * 4);
-      }
+  if (typeof window !== 'undefined' && window.btoa) {
+    const buffer = new Uint8Array(vector.length * 4);
+    const view = new DataView(buffer.buffer);
 
-      return { $binary: buffer.toString('base64') };
+    for (let i = 0; i < vector.length; i++) {
+      view.setFloat32(i * 4, vector[i], false);
     }
 
-    if (typeof window !== 'undefined' && window.btoa) {
-      const buffer = new Uint8Array(vector.length * 4);
-      const view = new DataView(buffer.buffer);
-
-      for (let i = 0; i < vector.length; i++) {
-        view.setFloat32(i * 4, vector[i], false);
-      }
-
-      let binary = '';
-      for (let i = 0; i < buffer.length; i++) {
-        binary += String.fromCharCode(buffer[i]);
-      }
-
-      return { $binary: window.btoa(binary) };
+    let binary = '';
+    for (let i = 0; i < buffer.length; i++) {
+      binary += String.fromCharCode(buffer[i]);
     }
 
-    if (vector instanceof Float32Array) {
-      return Array.from(vector);
+    return { $binary: window.btoa(binary) };
+  }
+
+  if (vector instanceof Float32Array) {
+    return Array.from(vector);
+  }
+
+  return vector;
+};
+
+const deserializeToNumberArray = (serialized: string): number[] | undefined => {
+  if (typeof Buffer !== 'undefined') {
+    const buffer = Buffer.from(serialized, 'base64');
+    const vector = Array.from<number>({ length: buffer.length / 4 });
+
+    for (let i = 0; i < vector.length; i++) {
+      vector[i] = buffer.readFloatBE(i * 4);
     }
 
     return vector;
   }
 
-  static #deserializeToNumberArray(serialized: string): number[] | undefined {
-    if (typeof Buffer !== 'undefined') {
-      const buffer = Buffer.from(serialized, 'base64');
-      const vector = Array.from<number>({ length: buffer.length / 4 });
+  const deserialized = deserializeToF32Array(serialized);
 
-      for (let i = 0; i < vector.length; i++) {
-        vector[i] = buffer.readFloatBE(i * 4);
-      }
-
-      return vector;
-    }
-
-    const deserialized = DataAPIVector.#deserializeToF32Array(serialized);
-
-    if (deserialized) {
-      return Array.from(deserialized);
-    }
-
-    return undefined;
+  if (deserialized) {
+    return Array.from(deserialized);
   }
 
-  static #deserializeToF32Array(serialized: string): Float32Array | undefined {
-    if (typeof Buffer !== 'undefined') {
-      const buffer = Buffer.from(serialized, 'base64');
-      const vector = new Float32Array(buffer.length / 4);
+  return undefined;
+};
 
-      for (let i = 0; i < vector.length; i++) {
-        vector[i] = buffer.readFloatBE(i * 4);
-      }
+const deserializeToF32Array = (serialized: string): Float32Array | undefined => {
+  if (typeof Buffer !== 'undefined') {
+    const buffer = Buffer.from(serialized, 'base64');
+    const vector = new Float32Array(buffer.length / 4);
 
-      return vector;
+    for (let i = 0; i < vector.length; i++) {
+      vector[i] = buffer.readFloatBE(i * 4);
     }
 
-    if (typeof window !== 'undefined') {
-      const binary = window.atob(serialized);
-      const buffer = new Uint8Array(binary.length);
-
-      for (let i = 0; i < binary.length; i++) {
-        buffer[i] = binary.charCodeAt(i);
-      }
-
-      return new Float32Array(buffer.buffer);
-    }
-
-    return undefined;
+    return vector;
   }
-}
+
+  if (typeof window !== 'undefined') {
+    const binary = window.atob(serialized);
+    const buffer = new Uint8Array(binary.length);
+
+    for (let i = 0; i < binary.length; i++) {
+      buffer[i] = binary.charCodeAt(i);
+    }
+
+    return new Float32Array(buffer.buffer);
+  }
+
+  return undefined;
+};

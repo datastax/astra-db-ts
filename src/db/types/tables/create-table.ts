@@ -63,7 +63,6 @@ export type TableScalarType =
   | 'timestamp'
   | 'tinyint'
   | 'uuid'
-  | 'varchar'
   | 'varint';
 
 export type LooseCreateTableColumnDefinition =

@@ -23,10 +23,8 @@ export class CqlBlob {
   public [$SerializeForTables] = () => ({ $binary: this.asBase64() });
 
   public constructor(blob: CqlBlobLike, validate = true) {
-    if (validate) {
-      if (typeof blob !== 'string' && !(blob instanceof ArrayBuffer) && !(blob instanceof Buffer) && !(blob instanceof CqlBlob)) {
-        throw new TypeError(`Expected blob to be a string, ArrayBuffer, or Buffer (got '${blob}')`);
-      }
+    if (validate && !CqlBlob.isBlobLike(blob)) {
+      throw new TypeError(`Expected blob to be a string, ArrayBuffer, or Buffer (got '${blob}')`);
     }
 
     this.#raw = (blob instanceof CqlBlob)
@@ -97,6 +95,10 @@ export class CqlBlob {
   public toString() {
     const type = (this.#raw instanceof ArrayBuffer && 'ArrayBuffer') || (this.#raw instanceof Buffer && 'Buffer') || 'base64';
     return `CqlBlob(typeof raw=${type}, byteLength=${this.byteLength})`;
+  }
+
+  public static isBlobLike(blob: unknown): blob is CqlBlobLike {
+    return blob instanceof CqlBlob || typeof blob === 'string' || blob instanceof ArrayBuffer || blob instanceof Buffer;
   }
 }
 

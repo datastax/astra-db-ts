@@ -56,3 +56,5 @@ export const TEST_APPLICATION_URI = process.env.CLIENT_DB_URL;
 export const DEMO_APPLICATION_URI = 'https://12341234-1234-1234-1234-123412341234-us-west-2.apps.astra.datastax.com';
 
 export const DEFAULT_TEST_TIMEOUT = +process.env.CLIENT_TESTS_TIMEOUT! || 90000;
+
+export const LOG_ALL_TO_STDOUT = !!process.env.LOG_ALL_TO_STDOUT || false;

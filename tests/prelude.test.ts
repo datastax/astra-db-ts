@@ -19,7 +19,10 @@ import { FILTER_COMBINATOR, GLOBAL_FIXTURES, RAW_FILTERS } from '@/tests/testlib
 const TEST_KEYSPACES = [DEFAULT_KEYSPACE, OTHER_KEYSPACE];
 
 before(async () => {
-  if (RAW_FILTERS.some(f => f.type.startsWith('unit.') && !f.inverted) && FILTER_COMBINATOR === 'and') {
+  if (
+    (FILTER_COMBINATOR === 'and' && RAW_FILTERS.some(f => f.filter.startsWith('unit.') && !f.inverted)) ||
+    (FILTER_COMBINATOR === 'or' && RAW_FILTERS.every(f => f.filter.startsWith('unit.') && !f.inverted))
+  ) {
     console.warn('Skipping prelude.test.ts due to detection of only unit tests being run');
     return;
   }
@@ -80,7 +83,6 @@ before(async () => {
             timestamp: 'timestamp',
             tinyint: 'tinyint',
             uuid: 'uuid',
-            varchar: 'varchar',
             varint: 'varint',
             map: { type: 'map', keyType: 'text', valueType: 'uuid' },
             set: { type: 'set', valueType: 'uuid' },
@@ -92,9 +94,9 @@ before(async () => {
             partitionSort: { int: 1 },
           },
         },
+        ifNotExists: true,
       });
-      await table.createIndex('text_idx', 'text');
-      await table.createVectorIndex('vector_idx', 'vector', { similarityFunction: 'dot_product' });
+      await table.createVectorIndex('vector_idx', 'vector', { metric: 'dot_product', ifNotExists: true });
     })
     .awaitAll();
 

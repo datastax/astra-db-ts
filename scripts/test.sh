@@ -80,6 +80,9 @@ while [ $# -gt 0 ]; do
       shift
       environment="$1"
       ;;
+    "-L" | "-logging")
+      logging=1
+      ;;
     "-stargate")
       stargate=1
       ;;
@@ -87,7 +90,7 @@ while [ $# -gt 0 ]; do
       echo "Invalid flag $1"
       echo ""
       echo "Usage:"
-      echo "scripts/test.sh [-all | -light | -coverage] [-for] [-f/F <filter>]+ [-g/G <regex>]+ [-w/W <vectorize_whitelist>] [-b | -bail] [-R | -no-report] [-c <http_client>] [-e <environment>] [-stargate]"
+      echo "scripts/test.sh [-all | -light | -coverage] [-for] [-f/F <filter>]+ [-g/G <regex>]+ [-w/W <vectorize_whitelist>] [-b | -bail] [-R | -no-report] [-c <http_client>] [-e <environment>] [-stargate] [-L | -logging]"
       echo "or"
       echo "scripts/test.sh [-lint] [-tc]"
       exit
@@ -97,7 +100,7 @@ while [ $# -gt 0 ]; do
 done
 
 # Ensure the flags are compatible with each other
-if [ "$test_type" = "code" ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$filter_combinator" ] || [ -n "$whitelist" ] || [ -n "$no_err_report" ] || [ -n "$http_client" ] || [ -n "$environment" ]; }; then
+if [ "$test_type" = "code" ] && { [ -n "$bail_early" ] || [ -n "$filter" ] || [ -n "$filter_combinator" ] || [ -n "$whitelist" ] || [ -n "$no_err_report" ] || [ -n "$http_client" ] || [ -n "$environment" ] || [ -n "$logging" ]; }; then
   echo "Can't use a filter, bail, whitelist flags when typechecking/linting"
   exit 1
 fi
@@ -164,6 +167,10 @@ fi
 
 if [ -n "$stargate" ]; then
   export USING_LOCAL_STARGATE=1
+fi
+
+if [ -n "$logging" ]; then
+  export LOG_ALL_TO_STDOUT=1
 fi
 
 # Get embedding providers, if desired, to build the vectorize part of the command

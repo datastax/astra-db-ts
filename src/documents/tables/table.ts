@@ -37,7 +37,7 @@ import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { AlterTableOptions, AlterTableSchema, Db, TableSpawnOptions } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
 import { $CustomInspect } from '@/src/lib/constants';
-import { mkTableSerDes } from '@/src/documents/tables/ser-des';
+import { mkTableSerDes, tableParseJson } from '@/src/documents/tables/ser-des';
 
 /**
  * Represents the columns of a table row, excluding the primary key columns.
@@ -258,7 +258,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
       value: opts?.keyspace ?? db.keyspace,
     });
 
-    this.#httpClient = httpClient.forCollection(this.keyspace, this.name, opts);
+    this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, tableParseJson);
     this.#commands = new CommandImpls(this.name, this.#httpClient, mkTableSerDes(opts?.serdes));
     this.#db = db;
 
@@ -367,7 +367,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
   public async createIndex(name: string, column: Cols<Schema> | string, options?: CreateTableIndexOptions): Promise<void> {
     await this.#runDbCommand('createIndex', {
       name: name,
-      column: column,
+      definition: { column },
       options: { caseSensitive: options?.caseSensitive, normalize: options?.normalize, ascii: options?.ascii },
     }, options);
   }
@@ -375,8 +375,16 @@ export class Table<Schema extends SomeRow = SomeRow> {
   public async createVectorIndex(name: string, column: Cols<Schema> | string, options?: CreateTableVectorIndexOptions): Promise<void> {
     await this.#runDbCommand('createVectorIndex', {
       name: name,
-      column: column,
-      options: { similarityFunction: options?.similarityFunction, sourceModel: options?.sourceModel },
+      definition: {
+        column: column,
+        options: {
+          sourceModel: options?.sourceModel,
+          metric: options?.metric,
+        },
+      },
+      options: {
+        ifNotExists: options?.ifNotExists,
+      },
     }, options);
   }
 

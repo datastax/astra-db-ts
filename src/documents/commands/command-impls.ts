@@ -64,7 +64,7 @@ export class CommandImpls<ID> {
     const raw = await this.#httpClient.executeCommand(command, options);
 
     return {
-      insertedId: this.#serdes.deserializeRecord(raw.status!.insertedIds[0], raw.status!) as ID,
+      insertedId: (<ID[]>this.#serdes.deserializeRecord(raw.status!.insertedIds, raw.status!))[0],
     };
   }
 

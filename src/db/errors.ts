@@ -52,7 +52,7 @@ export class CollectionNotFoundError extends DataAPIError {
  * @field currentEnvironment - The environment that was attempted to be used
  * @field expectedEnvironments - The environments that are valid for the operation
  */
-export class InvalidEnvironmentError extends DataAPIError {
+export class InvalidEnvironmentError extends Error {
   /**
    * The environment that was attempted to be used.
    */
@@ -69,7 +69,7 @@ export class InvalidEnvironmentError extends DataAPIError {
    * @internal
    */
   constructor(operation: string, currentEnvironment: string, expectedEnvironments: string[], extra = '') {
-    super(`Invalid environment '${currentEnvironment}' for operation '${operation}' ${extra ? `(${extra})` : ''}.,. Expected environment(s): ${expectedEnvironments.map(e => `'${e}'`).join(', ')}`);
+    super(`Invalid environment '${currentEnvironment}' for operation '${operation}' ${extra ? `(${extra})` : ''}; expected environment(s): ${expectedEnvironments.map(e => `'${e}'`).join(', ')}`);
     this.currentEnvironment = currentEnvironment;
     this.expectedEnvironments = expectedEnvironments;
     this.name = 'InvalidEnvironmentError';

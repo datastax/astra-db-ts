@@ -32,6 +32,8 @@ import {
 import { OneOrMany } from '@/src/lib/types';
 import { toArray } from '@/src/lib/utils';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
+import JBI from 'json-bigint';
+import BigNumber from 'bignumber.js';
 
 export const $SerializeForTables = Symbol.for('astra-db-ts.serialize.table');
 export const $DeserializeForTables = Symbol.for('astra-db-ts.deserialize.table');
@@ -81,6 +83,15 @@ export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Sc
   });
 };
 
+const jbi = JBI({ storeAsString: true });
+
+export const tableParseJson = (json: string) => {
+  if (json.includes('{"type":"bigint"}') || json.includes('{"type":"decimal"}')) {
+    return jbi.parse(json);
+  }
+  return JSON.parse(json);
+};
+
 const DefaultTableSerDesCfg = {
   serialize(_, value) {
     if (typeof value === 'object' && value !== null) {
@@ -95,6 +106,12 @@ const DefaultTableSerDesCfg = {
       if (value instanceof Set) {
         return [[...value]];
       }
+
+      if (value instanceof BigNumber) {
+        return [{ $decimal: value.toString() }];
+      }
+    } else if (typeof value === 'bigint') {
+      return [{ $varint: value.toString() }];
     }
   },
   deserialize(key, _, ctx) {
@@ -104,16 +121,20 @@ const DefaultTableSerDesCfg = {
     return true;
   },
   parsers: {
-    blob: (blob) => new CqlBlob(blob),
+    bigint: (n) => parseInt(n),
+    blob: (blob) => new CqlBlob(blob, false),
     date: (date) => new CqlDate(date),
-    double: parseIEE754,
+    double: parseFloat,
     duration: (duration) => new CqlDuration(duration),
-    float: parseIEE754,
+    float: parseFloat,
+    int: (n) => parseInt(n),
     inet: (inet) => new InetAddress(inet, null, false),
+    smallint: (n) => parseInt(n),
     time: (time) => new CqlTime(time),
     timestamp: (timestamp) => new CqlTimestamp(timestamp),
-    uuid: (uuid) => new UUID(uuid, false),
     timeuuid: (uuid) => new UUID(uuid, false),
+    tinyint: (n) => parseInt(n),
+    uuid: (uuid) => new UUID(uuid, false),
     vector: (vector) => new DataAPIVector(vector, false),
     varint: BigInt,
     map(map, ctx, def) {
@@ -150,18 +171,5 @@ function deserializeObj(ctx: TableDesCtx, obj: SomeRow, key: string, column: Lis
 
   if (parser) {
     obj[key] = parser(obj[key], ctx, column);
-  }
-}
-
-function parseIEE754(val: number | 'NaN' | 'Infinity' | '-Infinity'): number {
-  switch (val) {
-    case 'NaN':
-      return NaN;
-    case 'Infinity':
-      return Infinity;
-    case '-Infinity':
-      return -Infinity;
-    default:
-      return val;
   }
 }

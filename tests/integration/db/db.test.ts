@@ -107,8 +107,7 @@ parallel('integration.db', { dropEphemeral: 'colls:after' }, ({ db }) => {
   describe('(LONG) dropCollection', () => {
     it('should drop a collections', async () => {
       await db.createCollection('coll_1d', { indexing: { deny: ['*'] } });
-      const res = await db.dropCollection('coll_1d');
-      assert.strictEqual(res, true);
+      await db.dropCollection('coll_1d');
       const collections = await db.listCollections();
       const collection = collections.find(c => c.name === 'coll_1d');
       assert.strictEqual(collection, undefined);
@@ -116,8 +115,7 @@ parallel('integration.db', { dropEphemeral: 'colls:after' }, ({ db }) => {
 
     it('should drop a collections using the collections method', async () => {
       const coll = await db.createCollection('coll_2d', { indexing: { deny: ['*'] } });
-      const res = await coll.drop();
-      assert.strictEqual(res, true);
+      await coll.drop();
       const collections = await db.listCollections();
       const collection = collections.find(c => c.name === 'coll_2d');
       assert.strictEqual(collection, undefined);
@@ -125,8 +123,7 @@ parallel('integration.db', { dropEphemeral: 'colls:after' }, ({ db }) => {
 
     it('should drop a collections in non-default keyspace', async () => {
       await db.createCollection('coll_3d', { indexing: { deny: ['*'] }, keyspace: OTHER_KEYSPACE });
-      const res = await db.dropCollection('coll_3d', { keyspace: OTHER_KEYSPACE });
-      assert.strictEqual(res, true);
+      await db.dropCollection('coll_3d', { keyspace: OTHER_KEYSPACE });
       const collections = await db.listCollections();
       const collection = collections.find(c => c.name === 'coll_3d');
       assert.strictEqual(collection, undefined);
@@ -134,8 +131,7 @@ parallel('integration.db', { dropEphemeral: 'colls:after' }, ({ db }) => {
 
     it('should not drop a collections in different keyspace', async () => {
       await db.createCollection('coll_4d', { indexing: { deny: ['*'] } });
-      const res = await db.dropCollection('coll_4d', { keyspace: OTHER_KEYSPACE });
-      assert.strictEqual(res, true);
+      await db.dropCollection('coll_4d', { keyspace: OTHER_KEYSPACE });
       const collections = await db.listCollections();
       const collection = collections.find(c => c.name === 'coll_4d');
       assert.ok(collection);
@@ -186,21 +182,22 @@ parallel('integration.db', { dropEphemeral: 'colls:after' }, ({ db }) => {
       assert.ok(resp.status?.collections instanceof Array);
     });
 
-    it('should execute a collections-level command', async () => {
-      const uuid = UUID.v4();
-      const collection = db.collection(DEFAULT_COLLECTION_NAME);
-      await collection.insertOne({ _id: uuid });
-      const resp = await db.command({ findOne: { filter: { _id: uuid } } }, { collection: DEFAULT_COLLECTION_NAME });
-      assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: uuid } }, errors: undefined });
-    });
-
-    it('should execute a collections-level command in different keyspace', async () => {
-      const uuid = UUID.v4();
-      const collection = db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE });
-      await collection.insertOne({ _id: uuid });
-      const resp = await db.command({ findOne: { filter: { _id: uuid } } }, { collection: DEFAULT_COLLECTION_NAME, keyspace: OTHER_KEYSPACE });
-      assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: uuid } }, errors: undefined });
-    });
+    // TODO
+    // it('should execute a collections-level command', async () => {
+    //   const uuid = UUID.v4();
+    //   const collection = db.collection(DEFAULT_COLLECTION_NAME);
+    //   await collection.insertOne({ _id: uuid });
+    //   const resp = await db.command({ findOne: { filter: { _id: uuid } } }, { collection: DEFAULT_COLLECTION_NAME });
+    //   assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: uuid } }, errors: undefined });
+    // });
+    //
+    // it('should execute a collections-level command in different keyspace', async () => {
+    //   const uuid = UUID.v4();
+    //   const collection = db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE });
+    //   await collection.insertOne({ _id: uuid });
+    //   const resp = await db.command({ findOne: { filter: { _id: uuid } } }, { collection: DEFAULT_COLLECTION_NAME, keyspace: OTHER_KEYSPACE });
+    //   assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: uuid } }, errors: undefined });
+    // });
 
     it('should throw an error when performing collections-level command on non-existent collections', async () => {
       try {

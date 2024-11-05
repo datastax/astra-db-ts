@@ -24,6 +24,7 @@ import { EmptyObj } from '@/src/lib/types';
 import { UUID, InetAddress, CqlDate, CqlDuration, CqlTime, CqlTimestamp, CqlBlob } from '@/src/documents';
 import { TypeErr } from '@/src/documents/utils';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
+import BigNumber from 'bignumber.js';
 
 /**
  * The different possible types that a Table's schema may be inferred from using the {@link InferTableSchema} type,
@@ -258,7 +259,7 @@ interface CqlNonGenericType2TSTypeDict {
   blob: CqlBlob,
   boolean: boolean,
   date: CqlDate,
-  decimal: string,
+  decimal: BigNumber,
   double: number,
   duration: CqlDuration,
   float: number,

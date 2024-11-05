@@ -198,7 +198,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       writable: false,
     });
 
-    this.#httpClient = httpClient.forCollection(this.keyspace, this.name, opts);
+    this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts);
     this.#commands = new CommandImpls(this.name, this.#httpClient, mkCollectionSerDes(opts?.serdes));
     this.#db = db;
 

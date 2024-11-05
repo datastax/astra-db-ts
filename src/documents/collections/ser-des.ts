@@ -36,45 +36,45 @@ export const mkCollectionSerDes = <Schema extends SomeDoc>(cfg?: CollectionSerDe
 
 const DefaultCollectionSerDesCfg = {
   serialize(key, value) {
-    if (typeof value === 'object' && value !== null) {
-      if (value instanceof Date) {
-        if (key === '$date') {
-          return [value.valueOf(), true];
-        } else {
-          return [{ $date: value.valueOf() }, true];
-        }
-      }
+    if (typeof value !== 'object' || value === null) {
+      return;
+    }
 
-      if (key === '$vector') {
-        value = new DataAPIVector(value);
+    if (value instanceof Date) {
+      if (key === '$date') {
+        return [value.valueOf(), true];
+      } else {
+        return [{ $date: value.valueOf() }, true];
       }
+    }
 
-      if ($SerializeForCollections in value) {
-        return [value[$SerializeForCollections](), true];
-      }
+    if (key === '$vector' && DataAPIVector.isVectorLike(value)) {
+      value = new DataAPIVector(value);
+    }
+
+    if ($SerializeForCollections in value) {
+      return [value[$SerializeForCollections](), true];
     }
   },
   deserialize(key, value) {
-    if (typeof value === 'object' && value !== null) {
-      if ($SerializeForCollections in value || value instanceof Date) {
-        return;
-      }
+    if (typeof value !== 'object' || value === null || $SerializeForCollections in value || value instanceof Date) {
+      return;
+    }
 
-      if (value.$date) {
-        this[key] = new Date(value.$date);
-      }
+    if (value.$date) {
+      this[key] = new Date(value.$date);
+    }
 
-      if (value.$objectId) {
-        this[key] = new ObjectId(value.$objectId);
-      }
+    if (value.$objectId) {
+      this[key] = new ObjectId(value.$objectId, false);
+    }
 
-      if (value.$uuid) {
-        this[key] = new UUID(value.$uuid);
-      }
+    if (value.$uuid) {
+      this[key] = new UUID(value.$uuid, false);
+    }
 
-      if (key === '$vector') {
-        this[key] = new DataAPIVector(value, false).asArray();
-      }
+    if (key === '$vector') {
+      this[key] = new DataAPIVector(value, false);
     }
   },
 } satisfies CollectionSerDesConfig<SomeDoc>;

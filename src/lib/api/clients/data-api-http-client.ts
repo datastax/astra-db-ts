@@ -23,7 +23,6 @@ import {
   DataAPIResponseError,
   DataAPITimeoutError,
   EmbeddingHeadersProvider,
-  SomeDoc,
 } from '@/src/documents';
 import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
 import { HttpClient } from '@/src/lib/api/clients/http-client';
@@ -103,6 +102,7 @@ export class DataAPIHttpClient extends HttpClient {
   public keyspace: KeyspaceRef;
   public maxTimeMS: number;
   public emissionStrategy: ReturnType<EmissionStrategy>;
+  public parseJSON?: (json: string) => object;
   readonly #props: DataAPIHttpClientOpts;
 
   constructor(props: DataAPIHttpClientOpts) {
@@ -113,7 +113,7 @@ export class DataAPIHttpClient extends HttpClient {
     this.emissionStrategy = props.emissionStrategy(this.logger);
   }
 
-  public forCollection<Schema extends SomeDoc>(keyspace: string, collection: string, opts: CollectionSpawnOptions<Schema> | TableSpawnOptions<Schema> | undefined): DataAPIHttpClient {
+  public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(keyspace: string, collection: string, opts: CollectionSpawnOptions<any> | TableSpawnOptions<any> | undefined, parseJSON?: typeof this.parseJSON): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(opts?.embeddingApiKey),
@@ -123,6 +123,7 @@ export class DataAPIHttpClient extends HttpClient {
 
     clone.collection = collection;
     clone.maxTimeMS = opts?.defaultMaxTimeMS ?? this.maxTimeMS;
+    clone.parseJSON = parseJSON;
 
     return clone;
   }
@@ -192,7 +193,7 @@ export class DataAPIHttpClient extends HttpClient {
         throw new DataAPIHttpError(resp);
       }
 
-      const data: RawDataAPIResponse = resp.body ? JSON.parse(resp.body) : {};
+      const data: RawDataAPIResponse = resp.body ? (this.parseJSON ?? JSON.parse)(resp.body) : {};
 
       const warnings = data?.status?.warnings ?? [];
       if (warnings.length) {

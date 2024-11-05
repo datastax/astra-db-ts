@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIResponseError, ObjectId, UUID } from '@/src/documents';
+import { DataAPIResponseError, DataAPIVector, ObjectId, UUID } from '@/src/documents';
 import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
@@ -71,14 +71,15 @@ parallel('integration.documents.collections.insert-one', { truncate: 'colls:befo
     assert.strictEqual(found.foreignId.toString(), id.toString());
   });
 
-  it('should insertOne with vector', async (key) => {
+  it('should insertOne with a vector', async (key) => {
     const res = await collection.insertOne({ name: key, $vector: [1, 1, 1, 1, 1] });
     assert.ok(res);
     const found = await collection.findOne({ name: key }, { projection: { '*': 1 } });
-    assert.deepStrictEqual(found?.$vector, [1, 1, 1, 1, 1]);
+    assert.ok(found?.$vector instanceof DataAPIVector);
+    assert.deepStrictEqual(found?.$vector.asArray(), [1, 1, 1, 1, 1]);
   });
 
-  it('should insertOne with date', async (key) => {
+  it('should insertOne with a date', async (key) => {
     const timestamp = new Date();
     const res = await collection.insertOne({ name: key, date: timestamp });
     assert.ok(res);
@@ -87,7 +88,7 @@ parallel('integration.documents.collections.insert-one', { truncate: 'colls:befo
     assert.strictEqual(found.date.toISOString(), timestamp.toISOString());
   });
 
-  it('should insertOne with $date', async (key) => {
+  it('should insertOne with a $date', async (key) => {
     const timestamp = new Date();
     const res = await collection.insertOne({ name: key, date: { $date: timestamp } });
     assert.ok(res);
@@ -96,14 +97,11 @@ parallel('integration.documents.collections.insert-one', { truncate: 'colls:befo
     assert.strictEqual(found.date.toISOString(), timestamp.toISOString());
   });
 
-  it('should store bigint as number', async (key) => {
-    await collection.insertOne({
+  it('should throw error on serializing bigint', async (key) => {
+    await assert.rejects(() => collection.insertOne({
       _id: key,
       answer: 42n,
-    });
-
-    const res = await collection.findOne({ _id: key });
-    assert.strictEqual(res?.answer, 42);
+    }));
   });
 
   it('should fail insert of doc over size 1 MB', async () => {

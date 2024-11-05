@@ -22,7 +22,7 @@ import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import {
   DEFAULT_COLLECTION_NAME,
   DEFAULT_TABLE_NAME,
-  ENVIRONMENT,
+  ENVIRONMENT, LOG_ALL_TO_STDOUT,
   OTHER_KEYSPACE,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
@@ -37,7 +37,11 @@ export interface TestObjectsOptions {
 }
 
 export const initTestObjects = (opts?: TestObjectsOptions) => {
-  const { httpClient = TEST_HTTP_CLIENT, env = ENVIRONMENT, logging = [{ events: 'all', emits: 'event' }] } = opts ?? {};
+  const {
+    httpClient = TEST_HTTP_CLIENT,
+    env = ENVIRONMENT,
+    logging = LOG_ALL_TO_STDOUT ? [{ events: 'all', emits: ['event', 'stdout'] }] : [{ events: 'all', emits: 'event' }],
+  } = opts ?? {};
 
   const preferHttp2 = httpClient === 'default:http2';
   const clientType = httpClient.split(':')[0];

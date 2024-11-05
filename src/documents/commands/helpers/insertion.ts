@@ -120,8 +120,7 @@ const insertMany = async <ID>(httpClient: DataAPIHttpClient, serdes: DataAPISerD
   const insertedIds: ID[] = [];
 
   for (let i = 0, n = documentResponses.length; i < n; i++) {
-    const docResp = documentResponses[i];
-    docResp.document = serdes.deserializeRecord(docResp.document, raw);
+    const docResp = serdes.deserializeRecord(documentResponses[i], raw)!;
 
     if (docResp.status === "OK") {
       insertedIds.push(docResp._id);
