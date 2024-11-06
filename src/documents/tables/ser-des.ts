@@ -86,7 +86,7 @@ export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Sc
 const jbi = JBI({ storeAsString: true });
 
 export const tableParseJson = (json: string) => {
-  if (json.includes('{"type":"bigint"}') || json.includes('{"type":"decimal"}')) {
+  if (json.includes('{"type":"varint"}') || json.includes('{"type":"decimal"}')) {
     return jbi.parse(json);
   }
   return JSON.parse(json);

@@ -353,50 +353,40 @@ export class Table<Schema extends SomeRow = SomeRow> {
   public async alter<NewSchema extends SomeRow>(options: AlterTableOptions<Schema>): Promise<Table<NewSchema>>
 
   public async alter(options: AlterTableOptions<Schema>): Promise<unknown> {
-    const command = {
+    await this.#httpClient.executeCommand({
       alterTable: {
         name: this.name,
         operation: options.operation,
       },
-    };
-
-    await this.#db.command(command, { keyspace: this.keyspace, table: this.name, maxTimeMS: options.maxTimeMS });
+    }, options);
     return this;
   }
 
   public async createIndex(name: string, column: Cols<Schema> | string, options?: CreateTableIndexOptions): Promise<void> {
-    await this.#runDbCommand('createIndex', {
-      name: name,
-      definition: { column },
-      options: { caseSensitive: options?.caseSensitive, normalize: options?.normalize, ascii: options?.ascii },
+    await this.#httpClient.executeCommand({
+      createIndex: {
+        name: name,
+        definition: { column },
+        options: { caseSensitive: options?.caseSensitive, normalize: options?.normalize, ascii: options?.ascii },
+      },
     }, options);
   }
 
   public async createVectorIndex(name: string, column: Cols<Schema> | string, options?: CreateTableVectorIndexOptions): Promise<void> {
-    await this.#runDbCommand('createVectorIndex', {
-      name: name,
-      definition: {
-        column: column,
+    await this.#httpClient.executeCommand({
+      createVectorIndex: {
+        name: name,
+        definition: { column },
         options: {
           sourceModel: options?.sourceModel,
           metric: options?.metric,
+          ifNotExists: options?.ifNotExists,
         },
-      },
-      options: {
-        ifNotExists: options?.ifNotExists,
       },
     }, options);
   }
 
-  public async dropIndex(name: string, options?: WithTimeout): Promise<void> {
-    await this.#runDbCommand('dropIndex', { name }, options);
-  }
-
   public get _httpClient() {
     return this.#httpClient;
-  }
-
-  async #runDbCommand(name: string, command: SomeDoc, timeout?: WithTimeout) {
-    return await this.#db.command({ [name]: command }, { keyspace: this.keyspace, table: this.name, maxTimeMS: timeout?.maxTimeMS });
   }
 }

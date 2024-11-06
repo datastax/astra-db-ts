@@ -997,6 +997,10 @@ export class Db {
     await this.#httpClient.executeCommand({ dropTable: { name } }, options);
   }
 
+  public async dropTableIndex(name: string, options?: WithTimeout): Promise<void> {
+    await this.#httpClient.executeCommand({ dropIndex: { name } }, options);
+  }
+
   /**
    * Lists the collection names in the database.
    *
