@@ -119,7 +119,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   readonly #serdes: DataAPISerDes;
 
   readonly #options: GenericFindOptions;
-  readonly #filter: Filter<TRaw>;
+  readonly #filter: [Filter<TRaw>, boolean];
   readonly #mapping?: (doc: any) => T;
 
   #buffer: TRaw[] = [];
@@ -133,7 +133,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(keyspace: string, parent: string, httpClient: DataAPIHttpClient, serdes: DataAPISerDes, filter: Filter<TRaw>, options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
+  constructor(keyspace: string, parent: string, httpClient: DataAPIHttpClient, serdes: DataAPISerDes, filter: [Filter<TRaw>, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
     this.#keyspace = keyspace;
     this.#parent = parent;
     this.#httpClient = httpClient;
@@ -328,7 +328,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
       throw new CursorError('Cannot set a new projection on a running/closed cursor', this);
     }
     const options = { ...this.#options, projection: structuredClone(projection) };
-    return this.#clone(this.#filter as Filter<RRaw>, options, this.#mapping);
+    return this.#clone(this.#filter as any, options, this.#mapping);
   }
 
   /**
@@ -569,7 +569,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this.#buffer.length = 0;
   }
 
-  #clone<R, RRaw extends SomeDoc>(filter: Filter<RRaw>, options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
+  #clone<R, RRaw extends SomeDoc>(filter: [Filter<RRaw>, boolean], options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
     return new FindCursor(this.#keyspace, this.#parent, this.#httpClient, this.#serdes, filter, options, mapping);
   }
 
@@ -626,7 +626,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     }
 
     const command: InternalGetMoreCommand = {
-      find: { filter: this.#filter },
+      find: { filter: this.#filter[0] },
     };
 
     if (this.#options.sort) {
@@ -639,7 +639,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
       command.find.options = options;
     }
 
-    const raw = await this.#httpClient.executeCommand(command, {});
+    const raw = await this.#httpClient.executeCommand(command, { bigNumsPresent: this.#filter[1] });
 
     this.#nextPageState = raw.data?.nextPageState || null;
     this.#buffer = raw.data?.documents ?? [];

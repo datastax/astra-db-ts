@@ -32,18 +32,24 @@ import {
 import { OneOrMany } from '@/src/lib/types';
 import { toArray } from '@/src/lib/utils';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
-import JBI from 'json-bigint';
 import BigNumber from 'bignumber.js';
 
 export const $SerializeForTables = Symbol.for('astra-db-ts.serialize.table');
 export const $DeserializeForTables = Symbol.for('astra-db-ts.deserialize.table');
 
-export type TableDesCtx = DataAPIDesCtx & { tableSchema: ListTableColumnDefinitions, parsers: Record<string, TableColumnTypeParser> };
+export interface TableSerCtx<Schema extends SomeDoc> extends DataAPISerCtx<Schema> {
+  bigNumsPresent: boolean;
+}
+
+export interface TableDesCtx extends DataAPIDesCtx {
+  tableSchema: ListTableColumnDefinitions,
+  parsers: Record<string, TableColumnTypeParser>,
+}
 
 export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: SomeDoc) => any;
 
 export interface TableSerDesConfig<Schema extends SomeRow> {
-  serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>,
+  serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: TableSerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>,
   deserialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: TableDesCtx) => [any, boolean?] | boolean | undefined | void>,
   parsers?: Record<string, TableColumnTypeParser | { [$DeserializeForTables]: TableColumnTypeParser }>,
   mutateInPlace?: boolean,
@@ -63,7 +69,11 @@ export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Sc
   return mkSerDes({
     serializer: [...toArray(cfg?.serialize ?? []), DefaultTableSerDesCfg.serialize],
     deserializer: [...toArray(cfg?.deserialize ?? []), DefaultTableSerDesCfg.deserialize],
-    adaptSerCtx: (ctx) => ctx,
+    adaptSerCtx: (_ctx) => {
+      const ctx = _ctx as TableSerCtx<Schema>;
+      ctx.bigNumsPresent = false;
+      return ctx;
+    },
     adaptDesCtx: (_ctx) => {
       const ctx = _ctx as TableDesCtx;
       const tableSchema = ctx.rawDataApiResp.status?.primaryKeySchema ?? ctx.rawDataApiResp.status!.projectionSchema;
@@ -79,21 +89,13 @@ export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Sc
 
       return ctx;
     },
+    bigNumsPresent: (ctx) => ctx.bigNumsPresent,
     mutateInPlace: cfg?.mutateInPlace,
   });
 };
 
-const jbi = JBI({ storeAsString: true });
-
-export const tableParseJson = (json: string) => {
-  if (json.includes('{"type":"varint"}') || json.includes('{"type":"decimal"}')) {
-    return jbi.parse(json);
-  }
-  return JSON.parse(json);
-};
-
 const DefaultTableSerDesCfg = {
-  serialize(_, value) {
+  serialize(_, value, ctx) {
     if (typeof value === 'object' && value !== null) {
       if ($SerializeForTables in value) {
         return [value[$SerializeForTables](), true];
@@ -107,11 +109,11 @@ const DefaultTableSerDesCfg = {
         return [[...value]];
       }
 
-      if (value instanceof BigNumber) {
-        return [{ $decimal: value.toString() }];
+      if (!ctx.bigNumsPresent && value instanceof BigNumber) {
+        ctx.bigNumsPresent = true;
       }
-    } else if (typeof value === 'bigint') {
-      return [{ $varint: value.toString() }];
+    } else if (!ctx.bigNumsPresent && typeof value === 'bigint') {
+      ctx.bigNumsPresent = true;
     }
   },
   deserialize(key, _, ctx) {

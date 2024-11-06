@@ -23,14 +23,16 @@ export const $SerializeForCollections = Symbol.for('astra-db-ts.serialize.collec
 export interface CollectionSerDesConfig<Schema extends SomeDoc> {
   serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>,
   deserialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPIDesCtx) => [any, boolean?] | boolean | undefined | void>,
+  enableBigNumbers?: boolean,
   mutateInPlace?: boolean,
 }
 
-export const mkCollectionSerDes = <Schema extends SomeDoc>(cfg?: CollectionSerDesConfig<Schema>) => mkSerDes({
+export const mkCollectionSerDes = <Schema extends SomeDoc>(cfg: CollectionSerDesConfig<Schema> | undefined, enableBigNums: boolean) => mkSerDes({
   serializer: [...toArray(cfg?.serialize ?? []), DefaultCollectionSerDesCfg.serialize],
   deserializer: [...toArray(cfg?.deserialize ?? []), DefaultCollectionSerDesCfg.deserialize],
   adaptSerCtx: (ctx) => ctx,
   adaptDesCtx: (ctx) => ctx,
+  bigNumsPresent: () => enableBigNums,
   mutateInPlace: cfg?.mutateInPlace,
 });
 

@@ -20,7 +20,6 @@ import {
   FindCursor,
   FoundRow,
   KeyOf,
-  SomeDoc,
   SomeRow,
   TableDeleteOneOptions,
   TableFindOneOptions,
@@ -32,12 +31,12 @@ import {
   TableUpdateOneResult,
   UpdateFilter,
 } from '@/src/documents';
-import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
+import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { AlterTableOptions, AlterTableSchema, Db, TableSpawnOptions } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
 import { $CustomInspect } from '@/src/lib/constants';
-import { mkTableSerDes, tableParseJson } from '@/src/documents/tables/ser-des';
+import { mkTableSerDes } from '@/src/documents/tables/ser-des';
 
 /**
  * Represents the columns of a table row, excluding the primary key columns.
@@ -258,7 +257,13 @@ export class Table<Schema extends SomeRow = SomeRow> {
       value: opts?.keyspace ?? db.keyspace,
     });
 
-    this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, tableParseJson);
+    const hack: BigNumberHack = {
+      parseWithBigNumbers(json: string) {
+        return json.includes('{"type":"varint"}') || json.includes('{"type":"decimal"}');
+      },
+    };
+
+    this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
     this.#commands = new CommandImpls(this.name, this.#httpClient, mkTableSerDes(opts?.serdes));
     this.#db = db;
 

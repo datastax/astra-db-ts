@@ -44,7 +44,7 @@ import type {
 } from '@/src/documents/collections/types';
 import { CollectionNotFoundError } from '@/src/db/errors';
 import { CollectionOptions, CollectionSpawnOptions, Db } from '@/src/db';
-import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
+import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { DeepPartial, WithTimeout } from '@/src/lib';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { mkCollectionSerDes } from '@/src/documents/collections/ser-des';
@@ -198,8 +198,14 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       writable: false,
     });
 
-    this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts);
-    this.#commands = new CommandImpls(this.name, this.#httpClient, mkCollectionSerDes(opts?.serdes));
+    const enableBigNumbers = !!opts?.serdes?.enableBigNumbers;
+
+    const hack: BigNumberHack = {
+      parseWithBigNumbers: () => enableBigNumbers,
+    };
+
+    this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
+    this.#commands = new CommandImpls(this.name, this.#httpClient, mkCollectionSerDes(opts?.serdes, enableBigNumbers));
     this.#db = db;
 
     Object.defineProperty(this, $CustomInspect, {

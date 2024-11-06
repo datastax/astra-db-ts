@@ -31,6 +31,15 @@ import { CollectionNotFoundError, CollectionSpawnOptions, TableSpawnOptions } fr
 import type { AdminSpawnOptions } from '@/src/client';
 import { isNullish } from '@/src/lib/utils';
 import { mkRespErrorFromResponse } from '@/src/documents/errors';
+import JBI from 'json-bigint';
+
+/**
+ * @internal
+ */
+type ExecuteCommandOptions = TimeoutOptions & WithNullableKeyspace & {
+  bigNumsPresent?: boolean,
+  collection?: string,
+}
 
 /**
  * @internal
@@ -41,10 +50,7 @@ export interface DataAPIRequestInfo {
   keyspace?: string | null,
   command: Record<string, any>,
   timeoutManager: TimeoutManager,
-}
-
-interface ExecuteCommandOptions extends WithNullableKeyspace {
-  collection?: string,
+  bigNumsPresent: boolean | undefined,
 }
 
 type EmissionStrategy = (logger: Logger) => {
@@ -94,6 +100,12 @@ interface DataAPIHttpClientOpts extends HTTPClientOptions {
   tokenProvider: TokenProvider | undefined,
 }
 
+export interface BigNumberHack {
+  parseWithBigNumbers(json: string): boolean,
+}
+
+const jbi = JBI({ storeAsString: true });
+
 /**
  * @internal
  */
@@ -102,7 +114,7 @@ export class DataAPIHttpClient extends HttpClient {
   public keyspace: KeyspaceRef;
   public maxTimeMS: number;
   public emissionStrategy: ReturnType<EmissionStrategy>;
-  public parseJSON?: (json: string) => object;
+  public bigNumHack?: BigNumberHack;
   readonly #props: DataAPIHttpClientOpts;
 
   constructor(props: DataAPIHttpClientOpts) {
@@ -113,7 +125,7 @@ export class DataAPIHttpClient extends HttpClient {
     this.emissionStrategy = props.emissionStrategy(this.logger);
   }
 
-  public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(keyspace: string, collection: string, opts: CollectionSpawnOptions<any> | TableSpawnOptions<any> | undefined, parseJSON?: typeof this.parseJSON): DataAPIHttpClient {
+  public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(keyspace: string, collection: string, opts: CollectionSpawnOptions<any> | TableSpawnOptions<any> | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(opts?.embeddingApiKey),
@@ -123,7 +135,7 @@ export class DataAPIHttpClient extends HttpClient {
 
     clone.collection = collection;
     clone.maxTimeMS = opts?.defaultMaxTimeMS ?? this.maxTimeMS;
-    clone.parseJSON = parseJSON;
+    clone.bigNumHack = bigNumHack;
 
     return clone;
   }
@@ -149,7 +161,7 @@ export class DataAPIHttpClient extends HttpClient {
     return new TimeoutManager(timeout, () => new DataAPITimeoutError(timeout));
   }
 
-  public async executeCommand(command: Record<string, any>, options: TimeoutOptions & ExecuteCommandOptions | nullish) {
+  public async executeCommand(command: Record<string, any>, options: ExecuteCommandOptions | nullish) {
     const timeoutManager = options?.timeoutManager ?? this.timeoutManager(options?.maxTimeMS);
 
     return await this._requestDataAPI({
@@ -158,6 +170,7 @@ export class DataAPIHttpClient extends HttpClient {
       collection: options?.collection,
       keyspace: options?.keyspace,
       command: command,
+      bigNumsPresent: options?.bigNumsPresent,
     });
   }
 
@@ -182,9 +195,13 @@ export class DataAPIHttpClient extends HttpClient {
       started = performance.now();
       this.emissionStrategy.emitCommandStarted?.(info);
 
+      const command = (info.bigNumsPresent)
+        ? jbi.stringify(info.command)
+        : JSON.stringify(info.command);
+
       const resp = await this._request({
         url: info.url,
-        data: JSON.stringify(info.command),
+        data: command,
         timeoutManager: info.timeoutManager,
         method: HttpMethods.Post,
       });
@@ -193,7 +210,12 @@ export class DataAPIHttpClient extends HttpClient {
         throw new DataAPIHttpError(resp);
       }
 
-      const data: RawDataAPIResponse = resp.body ? (this.parseJSON ?? JSON.parse)(resp.body) : {};
+      const data: RawDataAPIResponse =
+        (resp.body)
+          ? (this.bigNumHack?.parseWithBigNumbers(resp.body))
+            ? jbi.parse(resp.body)
+            : JSON.parse(resp.body)
+          : {};
 
       const warnings = data?.status?.warnings ?? [];
       if (warnings.length) {

@@ -55,7 +55,7 @@ export const insertManyUnordered = async <ID>(httpClient: DataAPIHttpClient, ser
   const failRaw = [] as Record<string, any>[];
   const docResps = [] as GenericInsertManyDocumentResponse<SomeDoc>[];
 
-  const workers = Array.from({ length: concurrency }, async () => {
+  Array.from({ length: concurrency }, async () => {
     while (masterIndex < documents.length) {
       const localI = masterIndex;
       const endIdx = Math.min(localI + chunkSize, documents.length);
@@ -77,7 +77,6 @@ export const insertManyUnordered = async <ID>(httpClient: DataAPIHttpClient, ser
       }
     }
   });
-  await Promise.all(workers);
 
   if (failCommands.length > 0) {
     throw mkRespErrorFromResponses(InsertManyError, failCommands, failRaw, {
@@ -97,15 +96,17 @@ const insertMany = async <ID>(httpClient: DataAPIHttpClient, serdes: DataAPISerD
   let raw, err: DataAPIResponseError | undefined;
 
   try {
+    const [docs, bigNumsPresent] = serdes.serializeRecord(documents);
+
     raw = await httpClient.executeCommand({
       insertMany: {
-        documents: serdes.serializeRecord(documents),
+        documents: docs,
         options: {
           returnDocumentResponses: true,
           ordered,
         },
       },
-    }, { timeoutManager });
+    }, { timeoutManager, bigNumsPresent });
   } catch (e) {
     if (!(e instanceof DataAPIResponseError)) {
       throw e;

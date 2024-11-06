@@ -17,7 +17,7 @@ import { DbSerDesConfig, DbSpawnOptions } from '@/src/client';
 import { TokenProvider } from '@/src/lib';
 import { isNullish } from '@/src/lib/utils';
 import { Logger } from '@/src/lib/logging/logger';
-import { SomeDoc, TableColumnTypeParser, TableSerDesConfig } from '@/src/documents';
+import { CollectionSerDesConfig, SomeDoc, TableColumnTypeParser, TableSerDesConfig } from '@/src/documents';
 
 export const parseDbSpawnOpts: Parser<DbSpawnOptions | undefined, unknown> = (raw, field) => {
   const opts = p.parse('object?')<DbSpawnOptions>(raw, field);
@@ -49,10 +49,11 @@ const parseTableSerDes: Parser<TableSerDesConfig<SomeDoc>> = (cfg, field) => ({
   mutateInPlace: p.parse('boolean?')(cfg.mutateInPlace, `${field}.mutateInPlace`),
 });
 
-const parseCollectionSerDes: Parser<TableSerDesConfig<SomeDoc>> = (cfg, field) => ({
+const parseCollectionSerDes: Parser<CollectionSerDesConfig<SomeDoc>> = (cfg, field) => ({
   serialize: p.parse('function?')(cfg.serialize, `${field}.serialize`),
   deserialize: p.parse('function?')(cfg.deserialize, `${field}.deserialize`),
   mutateInPlace: p.parse('boolean?')(cfg.mutateInPlace, `${field}.mutateInPlace`),
+  enableBigNumbers: p.parse('boolean?')(cfg.enableBigNumbers, `${field}.enableBigNumbers`),
 });
 
 const parseTableColumnTypeParser: Parser<Record<string, TableColumnTypeParser>, Record<string, unknown>> = (raw, field) => {

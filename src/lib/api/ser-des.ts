@@ -34,18 +34,19 @@ interface DataAPISerDesConfig<Schema extends SomeDoc, SerCtx extends DataAPISerC
   deserializer: DataAPIDesFn<DesCtx>[],
   adaptSerCtx: (ctx: DataAPISerCtx<Schema>) => SerCtx,
   adaptDesCtx: (ctx: DataAPIDesCtx) => DesCtx,
+  bigNumsPresent: (ctx: SerCtx) => boolean,
   mutateInPlace?: boolean,
 }
 
 export type DataAPISerDes = ReturnType<typeof mkSerDes>;
 
 export const mkSerDes = <Schema extends SomeDoc>(cfg: DataAPISerDesConfig<Schema, any, any>) => ({
-  serializeRecord<S extends Schema | nullish>(obj: S): S {
+  serializeRecord<S extends Schema | nullish>(obj: S): [S, boolean] {
     if (obj === null || obj === undefined) {
-      return obj;
+      return [obj, false];
     }
     const ctx = cfg.adaptSerCtx({ rootObj: obj, mutatingInPlace: cfg.mutateInPlace || false });
-    return _serializeRecord(ctx.rootObj, 0, ctx, cfg.serializer) as S;
+    return [_serializeRecord(ctx.rootObj, 0, ctx, cfg.serializer) as S, cfg.bigNumsPresent(ctx)];
   },
   deserializeRecord<S extends Schema | nullish>(obj: SomeDoc | nullish, raw: RawDataAPIResponse): S {
     if (obj === null || obj === undefined) {

@@ -527,6 +527,7 @@ export class Db {
     return new Collection<Schema>(this, this.#httpClient, name, {
       ...options,
       serdes: {
+        ...options?.serdes,
         serialize: [...toArray(options?.serdes?.serialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.collection?.serialize ?? [])],
         deserialize: [...toArray(options?.serdes?.deserialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.collection?.deserialize ?? [])],
         mutateInPlace: options?.serdes?.mutateInPlace ?? this.#defaultOpts.dbOptions.serdes?.mutateInPlace,
