@@ -121,7 +121,7 @@ type MySchema = InferTableSchema<typeof mkTable>;
 type _Proof = Expect<Equal<MySchema, {
   key: string,
   age: number,
-  car?: Map<string, number>,
+  car?: Map<string, number> | null,
   [$PrimaryKeyType]?: {
     key: string,
     bad: TypeErr<'Field `bad` not found as property in table definition'>,
@@ -167,7 +167,7 @@ type _Proof = Expect<Equal<MySchema, {
   type _1 = Expect<Equal<typeof _altered1, Table<{
     key: string,
     age: number,
-    car?: Map<string, number>,
+    car?: Map<string, number> | null,
     [$PrimaryKeyType]?: {
       key: string,
       bad: TypeErr<'Field `bad` not found as property in table definition'>,
@@ -182,8 +182,8 @@ type _Proof = Expect<Equal<MySchema, {
   type _2 = Expect<Equal<typeof _altered2, Table<{
     key: string,
     age: number,
-    car?: Map<string, number>,
-    new?: string,
+    car?: Map<string, number> | null,
+    new?: string | null,
     [$PrimaryKeyType]?: {
       key: string,
       bad: TypeErr<'Field `bad` not found as property in table definition'>,

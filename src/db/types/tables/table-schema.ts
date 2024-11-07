@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $PrimaryKeyType } from '@/src/documents/tables/types/row';
+import { type $PrimaryKeyType } from '@/src/documents';
 import { Table } from '@/src/documents/tables/table';
 import {
   CreateTableColumnDefinitions,
@@ -35,6 +35,7 @@ import BigNumber from 'bignumber.js';
  * @public
  */
 export type InferrableTable =
+  | CreateTableDefinition
   | ((..._: any[]) => Promise<Table>)
   | ((..._: any[]) => Table)
   | Promise<Table>
@@ -109,6 +110,8 @@ export type InferrableTable =
  * @public
  */
 export type InferTableSchema<T extends InferrableTable> =
+  T extends CreateTableDefinition
+    ? InferTableSchemaFromDefinition<T> :
   T extends (..._: any[]) => Promise<Table<infer Schema>>
     ? Schema :
   T extends (..._: any[]) => Table<infer Schema>
@@ -188,7 +191,7 @@ export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition
 type MkColumnTypes<Cols extends CreateTableColumnDefinitions, PK extends Record<string, any>> = {
   -readonly [P in keyof Cols as P extends keyof PK ? P : never]-?: CqlType2TSType<PickCqlType<Cols[P]>, Cols[P]>;
 } & {
-  -readonly [P in keyof Cols as P extends keyof PK ? never : P]+?: CqlType2TSType<PickCqlType<Cols[P]>, Cols[P]>;
+  -readonly [P in keyof Cols as P extends keyof PK ? never : P]+?: CqlType2TSType<PickCqlType<Cols[P]>, Cols[P]> | null;
 }
 
 type MkPrimaryKeyType<FullDef extends CreateTableDefinition, Schema, PK extends FullCreateTablePrimaryKeyDefinition = NormalizePK<FullDef['primaryKey']>> = Normalize<

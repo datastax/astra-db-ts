@@ -27,17 +27,17 @@ export class CqlDate {
 
   public [$SerializeForTables] = this.toString;
 
-  public constructor(input?: string | Date | Partial<CqlDateComponents>) {
+  public constructor(input?: string | Date | CqlDateComponents) {
     if (typeof input === 'string') {
       this.#date = input;
     } else if (input instanceof Date || isNullish(input)) {
       input ||= new Date();
-      this.#date = `${input.getFullYear()}-${input.getMonth() + 1}-${input.getDate()}`;
+      this.#date = `${input.getFullYear().toString().padStart(4, '0')}-${(input.getMonth() + 1).toString().padStart(2, '0')}-${input.getDate().toString().padStart(2, '0')}`;
     } else {
-      if (input.month && (input.month < 1 || input.month > 12)) {
+      if (input.month < 1 || input.month > 12) {
         throw new RangeError('Month must be between 1 and 12 (CqlDate month is NOT zero-indexed)');
       }
-      this.#date = `${input.year ?? '0000'}-${input.month ?? '00'}-${input.date ?? '00'}`;
+      this.#date = `${input.year.toString().padStart(4, '0') ?? '0000'}-${input.month.toString().padStart(2, '0') ?? '00'}-${input.date.toString().padStart(2, '0') ?? '00'}`;
     }
 
     Object.defineProperty(this, $CustomInspect, {
@@ -156,7 +156,7 @@ export class CqlTime {
 
   public [$SerializeForTables] = this.toString;
 
-  public constructor(input?: string | Date | Partial<CqlTimeComponents>) {
+  public constructor(input?: string | Date | (CqlTimeComponents & { nanoseconds?: number })) {
     input ||= new Date();
 
     if (typeof input === 'string') {
@@ -172,8 +172,8 @@ export class CqlTime {
     });
   }
 
-  static #initTime(hours?: number, minutes?: number, seconds?: number, fractional?: unknown): string {
-    return `${!hours || hours < 10 ? '0' : ''}${hours}:${!minutes || minutes < 10 ? '0' : ''}${minutes}:${!seconds || seconds < 10 ? '0' : ''}${seconds}${fractional ? `.${fractional}` : ''}`;
+  static #initTime(hours: number, minutes: number, seconds: number, fractional?: unknown): string {
+    return `${hours < 10 ? '0' : ''}${hours}:${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}${fractional ? `.${fractional}` : ''}`;
   }
 
   public components(): CqlTimeComponents {
@@ -241,7 +241,7 @@ export class CqlTimestamp {
       this.#timestamp = new Date(input.year ?? 0, input.month ?? 1 - 1, input.date, input.hours, input.minutes, input.seconds, input.nanoseconds ?? 0 / 1_000_000).toISOString();
     }
 
-    Object.defineProperty(this, $SerializeForTables, {
+    Object.defineProperty(this, $CustomInspect, {
       value: () => `CqlTimestamp("${this.#timestamp}")`,
     });
   }

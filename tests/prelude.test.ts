@@ -14,7 +14,7 @@
 
 import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import { DEFAULT_COLLECTION_NAME, DEFAULT_TABLE_NAME, OTHER_KEYSPACE } from '@/tests/testlib/config';
-import { FILTER_COMBINATOR, GLOBAL_FIXTURES, RAW_FILTERS } from '@/tests/testlib';
+import { EverythingTableSchema, FILTER_COMBINATOR, GLOBAL_FIXTURES, RAW_FILTERS } from '@/tests/testlib';
 
 const TEST_KEYSPACES = [DEFAULT_KEYSPACE, OTHER_KEYSPACE];
 
@@ -64,36 +64,7 @@ before(async () => {
         .then(c => c.deleteMany({}));
 
       const table = await db.createTable(DEFAULT_TABLE_NAME, {
-        definition: {
-          columns: {
-            ascii: 'ascii',
-            bigint: 'bigint',
-            blob: 'blob',
-            boolean: 'boolean',
-            date: 'date',
-            decimal: 'decimal',
-            double: 'double',
-            duration: 'duration',
-            float: 'float',
-            int: 'int',
-            inet: 'inet',
-            smallint: 'smallint',
-            text: 'text',
-            time: 'time',
-            timestamp: 'timestamp',
-            tinyint: 'tinyint',
-            uuid: 'uuid',
-            varint: 'varint',
-            map: { type: 'map', keyType: 'text', valueType: 'uuid' },
-            set: { type: 'set', valueType: 'uuid' },
-            list: { type: 'list', valueType: 'uuid' },
-            vector: { type: 'vector', dimension: 5 },
-          },
-          primaryKey: {
-            partitionBy: ['text'],
-            partitionSort: { int: 1 },
-          },
-        },
+        definition: EverythingTableSchema,
         ifNotExists: true,
       });
       await table.createVectorIndex('vector_idx', 'vector', { metric: 'dot_product', ifNotExists: true });

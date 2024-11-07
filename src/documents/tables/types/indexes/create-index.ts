@@ -18,4 +18,5 @@ export interface CreateTableIndexOptions extends WithTimeout {
   caseSensitive?: boolean,
   normalize?: boolean,
   ascii?: boolean,
+  ifNotExists?: boolean,
 }

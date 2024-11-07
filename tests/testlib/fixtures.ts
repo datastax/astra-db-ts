@@ -22,13 +22,17 @@ import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import {
   DEFAULT_COLLECTION_NAME,
   DEFAULT_TABLE_NAME,
-  ENVIRONMENT, LOG_ALL_TO_STDOUT,
+  ENVIRONMENT,
+  LOG_ALL_TO_STDOUT,
   OTHER_KEYSPACE,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
   TEST_HTTP_CLIENT,
 } from '@/tests/testlib/config';
 import { DataAPILoggingConfig } from '@/src/lib';
+import { Db, InferTableSchema } from '@/src/db';
+import { Collection, Table } from '@/src/documents';
+import { DbAdmin } from '@/src/administration';
 
 export interface TestObjectsOptions {
   httpClient?: typeof TEST_HTTP_CLIENT,
@@ -36,7 +40,50 @@ export interface TestObjectsOptions {
   logging?: DataAPILoggingConfig,
 }
 
-export const initTestObjects = (opts?: TestObjectsOptions) => {
+export type EverythingTableSchema = InferTableSchema<typeof EverythingTableSchema>;
+
+export const EverythingTableSchema = <const>{
+  columns: {
+    ascii: 'ascii',
+    bigint: 'bigint',
+    blob: 'blob',
+    boolean: 'boolean',
+    date: 'date',
+    decimal: 'decimal',
+    double: 'double',
+    duration: 'duration',
+    float: 'float',
+    int: 'int',
+    inet: 'inet',
+    smallint: 'smallint',
+    text: 'text',
+    time: 'time',
+    timestamp: 'timestamp',
+    tinyint: 'tinyint',
+    uuid: 'uuid',
+    varint: 'varint',
+    map: { type: 'map', keyType: 'text', valueType: 'uuid' },
+    set: { type: 'set', valueType: 'uuid' },
+    list: { type: 'list', valueType: 'uuid' },
+    vector: { type: 'vector', dimension: 5 },
+  },
+  primaryKey: {
+    partitionBy: ['text'],
+    partitionSort: { int: 1 },
+  },
+};
+
+interface TestObjects {
+  client: DataAPIClient,
+  collection: Collection,
+  collection_: Collection,
+  table: Table<EverythingTableSchema>
+  table_: Table<EverythingTableSchema>,
+  dbAdmin: DbAdmin,
+  db: Db,
+}
+
+export const initTestObjects = (opts?: TestObjectsOptions): TestObjects => {
   const {
     httpClient = TEST_HTTP_CLIENT,
     env = ENVIRONMENT,
@@ -58,8 +105,8 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
   const collection = db.collection(DEFAULT_COLLECTION_NAME);
   const collection_ = db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE });
 
-  const table = db.table(DEFAULT_TABLE_NAME);
-  const table_ = db.table(DEFAULT_TABLE_NAME, { keyspace: OTHER_KEYSPACE });
+  const table = db.table<EverythingTableSchema>(DEFAULT_TABLE_NAME);
+  const table_ = db.table<EverythingTableSchema>(DEFAULT_TABLE_NAME, { keyspace: OTHER_KEYSPACE });
 
   const dbAdmin = (ENVIRONMENT === 'astra')
     ? db.admin({ environment: ENVIRONMENT })

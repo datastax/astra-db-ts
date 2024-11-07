@@ -371,8 +371,17 @@ export class Table<Schema extends SomeRow = SomeRow> {
     await this.#httpClient.executeCommand({
       createIndex: {
         name: name,
-        definition: { column },
-        options: { caseSensitive: options?.caseSensitive, normalize: options?.normalize, ascii: options?.ascii },
+        definition: {
+          column,
+          options: {
+            caseSensitive: options?.caseSensitive,
+            normalize: options?.normalize,
+            ascii: options?.ascii,
+          },
+        },
+        options: {
+          ifNotExists: options?.ifNotExists,
+        },
       },
     }, options);
   }
@@ -381,10 +390,14 @@ export class Table<Schema extends SomeRow = SomeRow> {
     await this.#httpClient.executeCommand({
       createVectorIndex: {
         name: name,
-        definition: { column },
+        definition: {
+          column,
+          options: {
+            sourceModel: options?.sourceModel,
+            metric: options?.metric,
+          },
+        },
         options: {
-          sourceModel: options?.sourceModel,
-          metric: options?.metric,
           ifNotExists: options?.ifNotExists,
         },
       },
