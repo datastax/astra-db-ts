@@ -115,7 +115,7 @@ export type SomeRow = Record<string, any>;
  *
  * @public
  */
-export declare const $PrimaryKeyType: unique symbol;
+export declare const $PrimaryKeyType: '$PrimaryKeyType';
 
 /**
  * ##### Overview

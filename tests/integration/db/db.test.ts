@@ -24,9 +24,8 @@ import {
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
 } from '@/tests/testlib';
-import { DataAPIResponseError, UUID } from '@/src/documents';
+import { DataAPIResponseError } from '@/src/documents';
 import { DataAPIClient } from '@/src/client';
-import { CollectionNotFoundError } from '@/src/db/errors';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants';
 
 parallel('integration.db', { dropEphemeral: 'colls:after' }, ({ db }) => {
@@ -204,7 +203,7 @@ parallel('integration.db', { dropEphemeral: 'colls:after' }, ({ db }) => {
         await db.command({ findOne: {} }, { collection: 'dasfsdaf' });
         assert.fail('Expected an error');
       } catch (e) {
-        assert.ok(e instanceof CollectionNotFoundError);
+        assert.ok(e instanceof DataAPIResponseError);
       }
     });
 

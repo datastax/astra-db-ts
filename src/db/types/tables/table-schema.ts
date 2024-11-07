@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { type $PrimaryKeyType } from '@/src/documents';
+import type { $PrimaryKeyType } from '@/src/documents';
 import { Table } from '@/src/documents/tables/table';
 import {
   CreateTableColumnDefinitions,
@@ -59,6 +59,8 @@ export type InferrableTable =
  *
  * @example
  * ```ts
+ * import { $PrimaryKeyType, ... } from '@datastax/astra-db-ts';
+ *
  * const mkUserTable = () => db.createTable('users', {
  *   definition: {
  *     columns: {
@@ -85,8 +87,8 @@ export type InferrableTable =
  * type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends (<T>() => T extends Y ? 1 : 2) ? true : false;
  * type Expect<T extends true> = T;
  *
- * // User evaluates to this object representing its TS representation, and a $PrimaryKeyType for type inferrence
- * // purposes for `insert*` operations
+ * // User evaluates to this object representing its TS representation, and a `'$PrimaryKeyType'` key
+ * // for type inference purposes for `insert*` operations
  * type _Proof = Equal<User, {
  *   name: string,
  *   dob: CqlTimestamp,
@@ -135,6 +137,8 @@ export type Normalize<T> = { [K in keyof T]: T[K] } & EmptyObj;
  *
  * @example
  * ```ts
+ * import { $PrimaryKeyType, ... } from '@datastax/astra-db-ts';
+ *
  * // The <const> cast is important here
  * const UserTableDefinition = <const>{
  *   columns: {
@@ -160,8 +164,8 @@ export type Normalize<T> = { [K in keyof T]: T[K] } & EmptyObj;
  * type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends (<T>() => T extends Y ? 1 : 2) ? true : false;
  * type Expect<T extends true> = T;
  *
- * // User evaluates to this object representing its TS representation, and a $PrimaryKeyType for type inferrence
- * // purposes for `insert*` operations
+ * // User evaluates to this object representing its TS representation, and a `'$PrimaryKeyType'` key
+ * // for type inference purposes for `insert*` operations
  * type _Proof = Equal<User, {
  *   name: string,
  *   dob: CqlTimestamp,

@@ -30,9 +30,7 @@ import {
   TEST_HTTP_CLIENT,
 } from '@/tests/testlib/config';
 import { DataAPILoggingConfig } from '@/src/lib';
-import { Db, InferTableSchema } from '@/src/db';
-import { Collection, Table } from '@/src/documents';
-import { DbAdmin } from '@/src/administration';
+import { InferTableSchema } from '@/src/db';
 
 export interface TestObjectsOptions {
   httpClient?: typeof TEST_HTTP_CLIENT,
@@ -73,17 +71,7 @@ export const EverythingTableSchema = <const>{
   },
 };
 
-interface TestObjects {
-  client: DataAPIClient,
-  collection: Collection,
-  collection_: Collection,
-  table: Table<EverythingTableSchema>
-  table_: Table<EverythingTableSchema>,
-  dbAdmin: DbAdmin,
-  db: Db,
-}
-
-export const initTestObjects = (opts?: TestObjectsOptions): TestObjects => {
+export const initTestObjects = (opts?: TestObjectsOptions) => {
   const {
     httpClient = TEST_HTTP_CLIENT,
     env = ENVIRONMENT,

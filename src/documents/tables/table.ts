@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import {
-  $PrimaryKeyType,
   CreateTableIndexOptions,
   CreateTableVectorIndexOptions,
   Filter,
@@ -46,7 +45,7 @@ const jbi = JBI({ storeAsString: true });
 /**
  * Represents the columns of a table row, excluding the primary key columns.
  *
- * Useful for when you want to do `keyof Schema`, but you're getting {@link $PrimaryKeyType} as well in the
+ * Useful for when you want to do `keyof Schema`, but you're getting `'$PrimaryKeyType'` as well in the
  * resulting union (which you don't want).
  *
  * @example
@@ -56,13 +55,16 @@ const jbi = JBI({ storeAsString: true });
  *   friends: Map<string, UUID>,
  * }
  *
- * type Crying = keyof User; // 'id' | 'friends' | typeof $PrimaryKeyType
+ * type Crying = keyof User; // 'id' | 'friends' | '$PrimaryKeyType'
  * type Happy = Cols<User>; // 'id' | 'friends'
  * ```
  *
+ * @see Table
+ * @see $PrimaryKeyType
+ *
  * @public
  */
-export type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$PrimaryKeyType'>;
+export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
 
 /**
  * #### Overview
@@ -107,7 +109,7 @@ export type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$Primary
  *
  * ###### Typing the key
  *
- * The primary key of the table should be provided via the {@link $PrimaryKeyType} symbol in the schema.
+ * The primary key of the table should be provided via the `$PrimaryKeyType` key in the schema.
  *
  * This is a special type that is used to reconstruct the TS type of the primary key in insert operations. It should be an optional object with the same keys as the primary key columns, and the same types as the schema. Note that there is no distinction between partition and clustering keys in this type.
  *
@@ -307,7 +309,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
    *
    * The columns that compose the primary key themselves must all be present in the row object; all other fields are technically optional/nullable.
    *
-   * The type of the primary key of the table (for the `insertedId`) is inferred from the {@link $PrimaryKeyType} symbol in the schema. If it's not present, it will default to {@link SomeTableKey} (See {@link Table}, {@link $PrimaryKeyType} for more info).
+   * The type of the primary key of the table (for the `insertedId`) is inferred from the `$PrimaryKeyType` key in the schema. If it's not present, it will default to {@link SomeTableKey} (See {@link Table}, {@link $PrimaryKeyType} for more info).
    *
    * @example
    * ```ts

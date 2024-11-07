@@ -424,7 +424,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The next record, or `null` if there are no more records.
    */
-  public async next(): Promise<T> {
+  public async next(): Promise<T | null> {
     return this.#next(false);
   }
 
