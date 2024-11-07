@@ -12,40 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIError } from '@/src/documents/errors';
-
-/**
- * An exception thrown when certain operations are attempted on a collection that does not exist.
- *
- * @field keyspace - The keyspace that the collection was not found in
- * @field collectionName - The name of the collection that was not found
- *
- * @public
- */
-export class CollectionNotFoundError extends DataAPIError {
-  /**
-   * The keyspace where the collection is not found.
-   */
-  public readonly keyspace: string;
-
-  /**
-   * The name of the collection that is not found.
-   */
-  public readonly collectionName: string;
-
-  /**
-   * Should not be instantiated by the user.
-   *
-   * @internal
-   */
-  constructor(keyspace: string, collectionName: string) {
-    super(`Collection '${keyspace}.${collectionName}' not found`);
-    this.keyspace = keyspace;
-    this.collectionName = collectionName;
-    this.name = 'CollectionNotFoundError';
-  }
-}
-
 /**
  * An exception thrown when certain operations are attempted in a {@link DataAPIEnvironment} that is not valid.
  *

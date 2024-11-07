@@ -42,7 +42,6 @@ import type {
   UpdateFilter,
   WithId,
 } from '@/src/documents/collections/types';
-import { CollectionNotFoundError } from '@/src/db/errors';
 import { CollectionOptions, CollectionSpawnOptions, Db } from '@/src/db';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { DeepPartial, WithTimeout } from '@/src/lib';
@@ -1555,12 +1554,12 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @returns The options that the collection was created with (i.e. the `vector` and `indexing` operations).
    */
   public async options(options?: WithTimeout): Promise<CollectionOptions<SomeDoc>> {
-    const results = await this.#db.listCollections({ nameOnly: false, maxTimeMS: options?.maxTimeMS });
+    const results = await this.#db.listCollections({ nameOnly: false, maxTimeMS: options?.maxTimeMS, keyspace: this.keyspace });
 
     const collection = results.find((c) => c.name === this.name);
 
     if (!collection) {
-      throw new CollectionNotFoundError(this.keyspace, this.name);
+      throw new Error(`Can not get options for collection '${this.keyspace}.${this.name}'; collection not found. Did you use the right keyspace?`);
     }
 
     return collection.options;

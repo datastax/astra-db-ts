@@ -27,7 +27,7 @@ import {
 import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
 import { HttpClient } from '@/src/lib/api/clients/http-client';
 import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_TIMEOUT, HttpMethods } from '@/src/lib/api/constants';
-import { CollectionNotFoundError, CollectionSpawnOptions, TableSpawnOptions } from '@/src/db';
+import { CollectionSpawnOptions, TableSpawnOptions } from '@/src/db';
 import type { AdminSpawnOptions } from '@/src/client';
 import { isNullish } from '@/src/lib/utils';
 import { mkRespErrorFromResponse } from '@/src/documents/errors';
@@ -222,11 +222,6 @@ export class DataAPIHttpClient extends HttpClient {
         this.emissionStrategy.emitCommandWarnings?.(info, warnings);
       }
       delete data?.status?.warnings;
-
-      if (data.errors && data.errors.length > 0 && data.errors[0]?.errorCode === 'COLLECTION_NOT_EXIST') {
-        const name = data.errors[0]?.message.split(': ')[1];
-        throw new CollectionNotFoundError(info.keyspace ?? '<unknown>', name);
-      }
 
       if (data.errors && data.errors.length > 0) {
         throw mkRespErrorFromResponse(DataAPIResponseError, info.command, data, warnings);
