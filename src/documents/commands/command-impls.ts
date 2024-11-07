@@ -69,7 +69,7 @@ export class CommandImpls<ID> {
     });
 
     return {
-      insertedId: (<ID[]>this.#serdes.deserializeRecord(raw.status!.insertedIds, raw.status!))[0],
+      insertedId: this.#serdes.deserializeRecord(raw.status!.insertedIds[0], raw) as ID,
     };
   }
 

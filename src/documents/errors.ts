@@ -320,7 +320,7 @@ export class DataAPIResponseError extends DataAPIError {
  *
  * @public
  */
-export abstract class CumulativeDataAPIError extends DataAPIResponseError {
+export abstract class CumulativeOperationError extends DataAPIResponseError {
   /**
    * The partial result of the operation that was performed. This is *always* defined, and is
    * the result of the operation up to the point of the first error. For example, if you're inserting 100 documents
@@ -346,7 +346,7 @@ export abstract class CumulativeDataAPIError extends DataAPIResponseError {
  *
  * @public
  */
-export class InsertManyError extends CumulativeDataAPIError {
+export class InsertManyError extends CumulativeOperationError {
   /**
    * The name of the error. This is always 'InsertManyError'.
    */
@@ -385,7 +385,7 @@ export class InsertManyError extends CumulativeDataAPIError {
  *
  * @public
  */
-export class DeleteManyError extends CumulativeDataAPIError {
+export class DeleteManyError extends CumulativeOperationError {
   /**
    * The name of the error. This is always 'DeleteManyError'.
    */
@@ -411,7 +411,7 @@ export class DeleteManyError extends CumulativeDataAPIError {
  *
  * @public
  */
-export class UpdateManyError extends CumulativeDataAPIError {
+export class UpdateManyError extends CumulativeOperationError {
   /**
    * The name of the error. This is always 'UpdateManyError'.
    */

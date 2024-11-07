@@ -76,17 +76,20 @@ export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Sc
     },
     adaptDesCtx: (_ctx) => {
       const ctx = _ctx as TableDesCtx;
-      const tableSchema = ctx.rawDataApiResp.status?.primaryKeySchema ?? ctx.rawDataApiResp.status!.projectionSchema;
+      const status = ctx.rawDataApiResp.status;
 
-      if (Array.isArray(ctx.rootObj)) {
-        ctx.rootObj = Object.fromEntries(Object.entries(tableSchema).map(([key], i) => {
-          return [key, ctx.rootObj[i]];
+      if (status?.primaryKeySchema) {
+        ctx.rootObj = Object.fromEntries(Object.entries(status.primaryKeySchema).map(([key], j) => {
+          return [key, ctx.rootObj[j]];
         }));
+        ctx.tableSchema = status.primaryKeySchema;
+      } else if (status?.projectionSchema) {
+        ctx.tableSchema = status.projectionSchema;
+      } else {
+        throw new Error('No schema found in response');
       }
 
-      ctx.tableSchema = tableSchema;
       ctx.parsers = parsers;
-
       return ctx;
     },
     bigNumsPresent: (ctx) => ctx.bigNumsPresent,
@@ -171,7 +174,7 @@ function deserializeObj(ctx: TableDesCtx, obj: SomeRow, key: string, column: Lis
 
   const parser = ctx.parsers[type];
 
-  if (parser) {
+  if (parser && obj[key] !== null) {
     obj[key] = parser(obj[key], ctx, column);
   }
 }

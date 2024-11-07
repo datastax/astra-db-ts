@@ -19,7 +19,7 @@ import {
   Filter,
   FindCursor,
   FoundRow,
-  KeyOf, type SomeDoc,
+  KeyOf,
   SomeRow,
   TableDeleteOneOptions,
   TableFindOneOptions,
@@ -33,15 +33,7 @@ import {
 } from '@/src/documents';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
-import {
-  AlterTableOptions,
-  AlterTableSchema,
-  CollectionOptions,
-  Db,
-  FullTableInfo,
-  ListTableDefinition,
-  TableSpawnOptions,
-} from '@/src/db';
+import { AlterTableOptions, AlterTableSchema, Db, ListTableDefinition, TableSpawnOptions } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
 import { $CustomInspect } from '@/src/lib/constants';
 import { mkTableSerDes } from '@/src/documents/tables/ser-des';

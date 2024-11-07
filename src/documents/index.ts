@@ -26,7 +26,7 @@ export {
   DataAPIResponseError,
   DataAPIHttpError,
   DataAPITimeoutError,
-  CumulativeDataAPIError,
+  CumulativeOperationError,
   DataAPIDetailedErrorDescriptor,
   DataAPIError,
   DataAPIErrorDescriptor,
