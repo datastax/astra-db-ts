@@ -16,14 +16,21 @@ import { DataAPIHttpClient } from '@/src/lib/api/clients';
 import { DataAPISerDes } from '@/src/lib/api/ser-des';
 import { TimeoutManager } from '@/src/lib/api/timeout-managers';
 import {
-  DataAPIDetailedErrorDescriptor, DataAPIResponseError,
-  InsertManyError,
+  DataAPIDetailedErrorDescriptor,
+  DataAPIResponseError,
   mkRespErrorFromResponse,
   mkRespErrorFromResponses,
 } from '@/src/documents/errors';
 import { GenericInsertManyDocumentResponse, SomeDoc, SomeId } from '@/src/documents';
 
-export const insertManyOrdered = async <ID>(httpClient: DataAPIHttpClient, serdes: DataAPISerDes, documents: unknown[], chunkSize: number, timeoutManager: TimeoutManager): Promise<ID[]> => {
+export const insertManyOrdered = async <ID>(
+  httpClient: DataAPIHttpClient,
+  serdes: DataAPISerDes,
+  documents: unknown[],
+  chunkSize: number,
+  timeoutManager: TimeoutManager,
+  err: new (descs: DataAPIDetailedErrorDescriptor[]) => DataAPIResponseError,
+): Promise<ID[]> => {
   const insertedIds: any = [];
 
   for (let i = 0, n = documents.length; i < n; i += chunkSize) {
@@ -33,7 +40,7 @@ export const insertManyOrdered = async <ID>(httpClient: DataAPIHttpClient, serde
     insertedIds.push(...inserted);
 
     if (errDesc) {
-      throw mkRespErrorFromResponse(InsertManyError, errDesc.command, errDesc.rawResponse, {
+      throw mkRespErrorFromResponse(err, errDesc.command, errDesc.rawResponse, {
         partialResult: {
           insertedIds: insertedIds as SomeId[],
           insertedCount: insertedIds.length,
@@ -47,7 +54,15 @@ export const insertManyOrdered = async <ID>(httpClient: DataAPIHttpClient, serde
   return insertedIds;
 };
 
-export const insertManyUnordered = async <ID>(httpClient: DataAPIHttpClient, serdes: DataAPISerDes, documents: unknown[], concurrency: number, chunkSize: number, timeoutManager: TimeoutManager): Promise<ID[]> => {
+export const insertManyUnordered = async <ID>(
+  httpClient: DataAPIHttpClient,
+  serdes: DataAPISerDes,
+  documents: unknown[],
+  concurrency: number,
+  chunkSize: number,
+  timeoutManager: TimeoutManager,
+  err: new (descs: DataAPIDetailedErrorDescriptor[]) => DataAPIResponseError,
+): Promise<ID[]> => {
   const insertedIds: any = [];
   let masterIndex = 0;
 
@@ -79,7 +94,7 @@ export const insertManyUnordered = async <ID>(httpClient: DataAPIHttpClient, ser
   });
 
   if (failCommands.length > 0) {
-    throw mkRespErrorFromResponses(InsertManyError, failCommands, failRaw, {
+    throw mkRespErrorFromResponses(err, failCommands, failRaw, {
       partialResult: {
         insertedIds: insertedIds as SomeId[],
         insertedCount: insertedIds.length,
@@ -92,7 +107,13 @@ export const insertManyUnordered = async <ID>(httpClient: DataAPIHttpClient, ser
   return insertedIds;
 };
 
-const insertMany = async <ID>(httpClient: DataAPIHttpClient, serdes: DataAPISerDes, documents: unknown[], ordered: boolean, timeoutManager: TimeoutManager): Promise<[GenericInsertManyDocumentResponse<ID>[], ID[], DataAPIDetailedErrorDescriptor | undefined]> => {
+const insertMany = async <ID>(
+  httpClient: DataAPIHttpClient,
+  serdes: DataAPISerDes,
+  documents: unknown[],
+  ordered: boolean,
+  timeoutManager: TimeoutManager,
+): Promise<[GenericInsertManyDocumentResponse<ID>[], ID[], DataAPIDetailedErrorDescriptor | undefined]> => {
   let raw, err: DataAPIResponseError | undefined;
 
   try {

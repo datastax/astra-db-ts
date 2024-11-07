@@ -25,7 +25,7 @@ import { LIB_NAME } from '@/src/version';
 import type { InternalRootClientOpts } from '@/src/client/types/internal';
 import { type DataAPIClientEvents, type Fetcher, FetchH2, FetchNative, type nullish, TokenProvider } from '@/src/lib';
 import { buildUserAgent } from '@/src/lib/api/clients/http-client';
-import { Db } from '@/src/db';
+import { Db, InvalidEnvironmentError } from '@/src/db';
 import { AstraAdmin } from '@/src/administration';
 import type { FetchCtx } from '@/src/lib/api/fetch/types';
 import { isNullish } from '@/src/lib/utils';
@@ -245,6 +245,9 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * @returns A new {@link AstraAdmin} instance.
    */
   public admin(options?: AdminSpawnOptions): AstraAdmin {
+    if (this.#options.environment !== 'astra') {
+      throw new InvalidEnvironmentError('admin', this.#options.environment, ['astra'], 'AstraAdmin is only available for Astra databases');
+    }
     return new AstraAdmin(this.#options, options);
   }
 

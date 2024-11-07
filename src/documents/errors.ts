@@ -19,6 +19,7 @@ import type {
   CollectionUpdateManyResult,
   SomeDoc,
 } from '@/src/documents/collections';
+import { TableInsertManyResult } from '@/src/documents/tables';
 
 /**
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a
@@ -382,13 +383,37 @@ export abstract class CumulativeOperationError extends DataAPIResponseError {
 }
 
 /**
- * Represents an error that occurred during an `insertMany` operation (which is, generally, paginated).
+ * ##### Overview
+ *
+ * Represents an error that occurred during an `insertMany` operation (which may be paginated).
  *
  * Contains the inserted IDs of the documents that were successfully inserted, as well as the cumulative errors
  * that occurred during the operation.
  *
  * If the operation was ordered, the `insertedIds` will be in the same order as the documents that were attempted to
  * be inserted.
+ *
+ * @example
+ * ```ts
+ * try {
+ *   await collection.insertMany([
+ *     { _id: 'id1', desc: 'An innocent little document' },
+ *     { _id: 'id2', name: 'Another little document minding its own business' },
+ *     { _id: 'id2', name: 'A mean document commiting _identity theft' },
+ *     { _id: 'id3', name: 'A document that will never see the light of day-tabase' },
+ *   ], { ordered: true });
+ * } catch (e) {
+ *   if (e instanceof CollectionInsertManyError) {
+ *     console.log(e.message); // "Document already exists with the given _id"
+ *     console.log(e.partialResult.insertedIds); // ['id1', 'id2']
+ *   }
+ * }
+ * ```
+ *
+ * ##### Collections vs Tables
+ *
+ * There is a sister {@link TableInsertManyError} class that is used for `insertMany` operations on tables. It's
+ * identical in structure, but just uses the appropriate {@link TableInsertManyResult} type.
  *
  * @field message - A human-readable message describing the *first* error
  * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
@@ -397,11 +422,11 @@ export abstract class CumulativeOperationError extends DataAPIResponseError {
  *
  * @public
  */
-export class InsertManyError extends CumulativeOperationError {
+export class CollectionInsertManyError extends CumulativeOperationError {
   /**
    * The name of the error. This is always 'InsertManyError'.
    */
-  name = 'InsertManyError';
+  name = 'CollectionInsertManyError';
 
   /**
    * The partial result of the `InsertMany` operation that was performed. This is *always* defined, and is the result
@@ -424,6 +449,35 @@ export class InsertManyError extends CumulativeOperationError {
 }
 
 /**
+ * Represents an error that occurred during an `insertMany` operation (which is, generally, paginated).
+ *
+ * Contains the inserted IDs of the documents that were successfully inserted, as well as the cumulative errors
+ * that occurred during the operation.
+ *
+ * If the operation was ordered, the `insertedIds` will be in the same order as the documents that were attempted to
+ * be inserted.
+ *
+ * @field message - A human-readable message describing the *first* error
+ * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
+ * @field detailedErrorDescriptors - A list of errors 1:1 with the number of errorful API requests made to the server.
+ * @field partialResult - The partial result of the `InsertMany` operation that was performed
+ *
+ * @public
+ */
+export class TableInsertManyError extends CumulativeOperationError {
+  /**
+   * The name of the error. This is always 'InsertManyError'.
+   */
+  name = 'TableInsertManyError';
+
+  /**
+   * The partial result of the `InsertMany` operation that was performed. This is *always* defined, and is the result
+   * of all successful insertions.
+   */
+  declare public readonly partialResult: TableInsertManyResult<SomeDoc>;
+}
+
+/**
  * Represents an error that occurred during a `deleteMany` operation (which is, generally, paginated).
  *
  * Contains the number of documents that were successfully deleted, as well as the cumulative errors that occurred
@@ -436,11 +490,11 @@ export class InsertManyError extends CumulativeOperationError {
  *
  * @public
  */
-export class DeleteManyError extends CumulativeOperationError {
+export class CollectionDeleteManyError extends CumulativeOperationError {
   /**
    * The name of the error. This is always 'DeleteManyError'.
    */
-  name = 'DeleteManyError';
+  name = 'CollectionDeleteManyError';
 
   /**
    * The partial result of the `DeleteMany` operation that was performed. This is *always* defined, and is the result
@@ -462,11 +516,11 @@ export class DeleteManyError extends CumulativeOperationError {
  *
  * @public
  */
-export class UpdateManyError extends CumulativeOperationError {
+export class CollectionUpdateManyError extends CumulativeOperationError {
   /**
    * The name of the error. This is always 'UpdateManyError'.
    */
-  name = 'UpdateManyError';
+  name = 'CollectionUpdateManyError';
 
   /**
    * The partial result of the `UpdateMany` operation that was performed. This is *always* defined, and is the result

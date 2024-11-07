@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIError, DataAPITimeoutError, DataAPIVector, InsertManyError, ObjectId, UUID } from '@/src/documents';
+import { DataAPIError, DataAPITimeoutError, DataAPIVector, CollectionInsertManyError, ObjectId, UUID } from '@/src/documents';
 import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
@@ -118,7 +118,7 @@ parallel('integration.documents.collections.insert-many', { truncate: 'colls:bef
       error = e;
     }
     assert.ok(error);
-    assert.ok(error instanceof InsertManyError);
+    assert.ok(error instanceof CollectionInsertManyError);
     assert.strictEqual(error.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
     assert.strictEqual(error.partialResult.insertedCount, 10);
     // assert.strictEqual(error.failedCount, 10); TODO
@@ -137,7 +137,7 @@ parallel('integration.documents.collections.insert-many', { truncate: 'colls:bef
       error = e;
     }
     assert.ok(error);
-    assert.ok(error instanceof InsertManyError);
+    assert.ok(error instanceof CollectionInsertManyError);
     assert.strictEqual(error.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
     assert.strictEqual(error.partialResult.insertedCount, 19);
     // assert.strictEqual(error.failedCount, 1); TODO

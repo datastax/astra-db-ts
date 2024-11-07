@@ -15,9 +15,11 @@
 import { DataAPIHttpClient } from '@/src/lib/api/clients';
 import { DataAPISerDes } from '@/src/lib/api/ser-des';
 import {
+  CollectionDeleteManyError,
   CollectionInsertManyOptions,
+  CollectionUpdateManyError,
+  DataAPIDetailedErrorDescriptor,
   DataAPIResponseError,
-  DeleteManyError,
   FindCursor,
   GenericDeleteManyResult,
   GenericDeleteOneOptions,
@@ -34,7 +36,6 @@ import {
   GenericUpdateOneOptions,
   GenericUpdateResult,
   SomeDoc,
-  UpdateManyError,
 } from '@/src/documents';
 import { nullish, WithTimeout } from '@/src/lib';
 import { insertManyOrdered, insertManyUnordered } from '@/src/documents/commands/helpers/insertion';
@@ -72,13 +73,13 @@ export class CommandImpls<ID> {
     };
   }
 
-  public async insertMany(docs: SomeDoc[], options: CollectionInsertManyOptions | nullish): Promise<GenericInsertManyResult<ID>> {
+  public async insertMany(docs: SomeDoc[], options: CollectionInsertManyOptions | nullish, err: new (descs: DataAPIDetailedErrorDescriptor[]) => DataAPIResponseError): Promise<GenericInsertManyResult<ID>> {
     const chunkSize = options?.chunkSize ?? 50;
     const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
 
     const insertedIds = (options?.ordered)
-      ? await insertManyOrdered(this.#httpClient, this.#serdes, docs, chunkSize, timeoutManager)
-      : await insertManyUnordered(this.#httpClient, this.#serdes, docs, options?.concurrency ?? 8, chunkSize, timeoutManager);
+      ? await insertManyOrdered(this.#httpClient, this.#serdes, docs, chunkSize, timeoutManager, err)
+      : await insertManyUnordered(this.#httpClient, this.#serdes, docs, options?.concurrency ?? 8, chunkSize, timeoutManager, err);
 
     return {
       insertedCount: insertedIds.length,
@@ -143,7 +144,7 @@ export class CommandImpls<ID> {
       commonResult.modifiedCount += raw.status?.modifiedCount ?? 0;
       commonResult.matchedCount += raw.status?.matchedCount ?? 0;
 
-      throw mkRespErrorFromResponse(UpdateManyError, command, raw, {
+      throw mkRespErrorFromResponse(CollectionUpdateManyError, command, raw, {
         partialResult: { ...commonResult, upsertedCount: raw.status?.upsertedCount ?? 0 },
       });
     }
@@ -212,7 +213,7 @@ export class CommandImpls<ID> {
 
       const desc = e.detailedErrorDescriptors[0];
 
-      throw mkRespErrorFromResponse(DeleteManyError, command, desc.rawResponse, {
+      throw mkRespErrorFromResponse(CollectionDeleteManyError, command, desc.rawResponse, {
         partialResult: {
           deletedCount: numDeleted + (desc.rawResponse.status?.deletedCount ?? 0),
         },

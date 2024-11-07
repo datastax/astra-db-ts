@@ -30,9 +30,10 @@ export {
   DataAPIDetailedErrorDescriptor,
   DataAPIError,
   DataAPIErrorDescriptor,
-  DeleteManyError,
-  InsertManyError,
+  CollectionDeleteManyError,
+  CollectionInsertManyError,
+  TableInsertManyError,
   TooManyDocumentsToCountError,
   TooManyRowsToCountError,
-  UpdateManyError,
+  CollectionUpdateManyError,
 } from './errors';

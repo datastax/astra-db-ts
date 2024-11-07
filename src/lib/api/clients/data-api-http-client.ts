@@ -23,6 +23,7 @@ import {
   DataAPIResponseError,
   DataAPITimeoutError,
   EmbeddingHeadersProvider,
+  SomeDoc,
 } from '@/src/documents';
 import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
 import { HttpClient } from '@/src/lib/api/clients/http-client';
@@ -31,7 +32,6 @@ import { CollectionSpawnOptions, TableSpawnOptions } from '@/src/db';
 import type { AdminSpawnOptions } from '@/src/client';
 import { isNullish } from '@/src/lib/utils';
 import { mkRespErrorFromResponse } from '@/src/documents/errors';
-import JBI from 'json-bigint';
 
 /**
  * @internal
@@ -102,9 +102,11 @@ interface DataAPIHttpClientOpts extends HTTPClientOptions {
 
 export interface BigNumberHack {
   parseWithBigNumbers(json: string): boolean,
+  parser: {
+    parse: (json: string) => SomeDoc,
+    stringify: (obj: SomeDoc) => string,
+  },
 }
-
-const jbi = JBI({ storeAsString: true });
 
 /**
  * @internal
@@ -196,7 +198,7 @@ export class DataAPIHttpClient extends HttpClient {
       this.emissionStrategy.emitCommandStarted?.(info);
 
       const command = (info.bigNumsPresent)
-        ? jbi.stringify(info.command)
+        ? this.bigNumHack?.parser.stringify(info.command)
         : JSON.stringify(info.command);
 
       const resp = await this._request({
@@ -213,7 +215,7 @@ export class DataAPIHttpClient extends HttpClient {
       const data: RawDataAPIResponse =
         (resp.body)
           ? (this.bigNumHack?.parseWithBigNumbers(resp.body))
-            ? jbi.parse(resp.body)
+            ? this.bigNumHack?.parser.parse(resp.body)
             : JSON.parse(resp.body)
           : {};
 

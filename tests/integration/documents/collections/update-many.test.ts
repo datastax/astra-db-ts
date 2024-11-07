@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIError, UpdateManyError } from '@/src/documents';
+import { DataAPIError, CollectionUpdateManyError } from '@/src/documents';
 import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
@@ -773,7 +773,7 @@ parallel('integration.documents.collections.update-many', { truncate: 'colls:bef
       await collection.updateMany({ key }, { $invalidOperator: 1 });
       assert.fail('Expected error');
     } catch (e) {
-      assert.ok(e instanceof UpdateManyError);
+      assert.ok(e instanceof CollectionUpdateManyError);
       assert.strictEqual(e.errorDescriptors[0].errorCode, 'UNSUPPORTED_UPDATE_OPERATION');
       assert.strictEqual(e.detailedErrorDescriptors[0].errorDescriptors[0].errorCode, 'UNSUPPORTED_UPDATE_OPERATION');
       assert.strictEqual(e.errorDescriptors.length, 1);

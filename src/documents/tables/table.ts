@@ -24,11 +24,13 @@ import {
   TableDeleteOneOptions,
   TableFindOneOptions,
   TableFindOptions,
+  TableInsertManyError,
   TableInsertManyOptions,
   TableInsertManyResult,
   TableInsertOneResult,
   TableUpdateOneOptions,
-  TableUpdateOneResult, TooManyRowsToCountError,
+  TableUpdateOneResult,
+  TooManyRowsToCountError,
   UpdateFilter,
 } from '@/src/documents';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
@@ -37,6 +39,9 @@ import { AlterTableOptions, AlterTableSchema, Db, ListTableDefinition, TableSpaw
 import { WithTimeout } from '@/src/lib';
 import { $CustomInspect } from '@/src/lib/constants';
 import { mkTableSerDes } from '@/src/documents/tables/ser-des';
+import JBI from 'json-bigint';
+
+const jbi = JBI({ storeAsString: true });
 
 /**
  * Represents the columns of a table row, excluding the primary key columns.
@@ -265,6 +270,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
       parseWithBigNumbers(json: string) {
         return json.includes('{"type":"varint"}') || json.includes('{"type":"decimal"}');
       },
+      parser: jbi,
     };
 
     this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
@@ -326,7 +332,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
   }
 
   public async insertMany(document: Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>> {
-    return this.#commands.insertMany(document, options);
+    return this.#commands.insertMany(document, options, TableInsertManyError);
   }
 
   public async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: TableUpdateOneOptions): Promise<TableUpdateOneResult<Schema>> {

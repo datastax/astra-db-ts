@@ -48,7 +48,10 @@ import { DeepPartial, WithTimeout } from '@/src/lib';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { mkCollectionSerDes } from '@/src/documents/collections/ser-des';
 import { $CustomInspect } from '@/src/lib/constants';
-import { TooManyDocumentsToCountError } from '@/src/documents';
+import { CollectionInsertManyError, TooManyDocumentsToCountError } from '@/src/documents';
+import JBI from 'json-bigint';
+
+const jbi = JBI({ storeAsString: true });
 
 /**
  * #### Overview
@@ -208,6 +211,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     const hack: BigNumberHack = {
       parseWithBigNumbers: () => enableBigNumbers,
+      parser: jbi,
     };
 
     this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
@@ -375,7 +379,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @throws InsertManyError - If the operation fails.
    */
   public async insertMany(documents: MaybeId<Schema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<Schema>> {
-    return this.#commands.insertMany(documents, options);
+    return this.#commands.insertMany(documents, options, CollectionInsertManyError);
   }
 
   /**

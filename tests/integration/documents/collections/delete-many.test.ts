@@ -15,7 +15,7 @@
 
 import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
-import { DataAPIError, DeleteManyError } from '@/src/documents';
+import { DataAPIError, CollectionDeleteManyError } from '@/src/documents';
 
 parallel('integration.documents.collections.delete-many', { truncate: 'colls:before' }, ({ collection, collection_ }) => {
   before(async () => {
@@ -44,7 +44,7 @@ parallel('integration.documents.collections.delete-many', { truncate: 'colls:bef
       await collection.deleteMany({ $invalidOperator: 1 });
       assert.fail('Expected error');
     } catch (e) {
-      assert.ok(e instanceof DeleteManyError);
+      assert.ok(e instanceof CollectionDeleteManyError);
       assert.strictEqual(e.errorDescriptors[0].errorCode, 'INVALID_FILTER_EXPRESSION');
       assert.strictEqual(e.detailedErrorDescriptors[0].errorDescriptors[0].errorCode, 'INVALID_FILTER_EXPRESSION');
       assert.strictEqual(e.errorDescriptors.length, 1);
