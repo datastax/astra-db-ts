@@ -28,7 +28,7 @@ import assert from 'assert';
 import BigNumber from 'bignumber.js';
 
 parallel('integration.documents.tables.insert-one', { truncate: 'colls:before' }, ({ table }) => {
-  it('should insertOne partial row', async (key) => {
+  it('should insert one partial row', async (key) => {
     const inserted = await table.insertOne({
       text: key,
       int: 0,
@@ -40,7 +40,7 @@ parallel('integration.documents.tables.insert-one', { truncate: 'colls:before' }
     });
   });
 
-  it('should insertOne full row', async (key) => {
+  it('should insert one full row', async (key) => {
     const inserted = await table.insertOne({
       text: key,
       int: 0,

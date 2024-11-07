@@ -44,6 +44,7 @@ export interface TableSerCtx<Schema extends SomeDoc> extends DataAPISerCtx<Schem
 export interface TableDesCtx extends DataAPIDesCtx {
   tableSchema: ListTableColumnDefinitions,
   parsers: Record<string, TableColumnTypeParser>,
+  parsingPrimaryKey: boolean,
 }
 
 export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: SomeDoc) => any;
@@ -83,8 +84,10 @@ export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Sc
           return [key, ctx.rootObj[j]];
         }));
         ctx.tableSchema = status.primaryKeySchema;
+        ctx.parsingPrimaryKey = true;
       } else if (status?.projectionSchema) {
         ctx.tableSchema = status.projectionSchema;
+        ctx.parsingPrimaryKey = false;
       } else {
         throw new Error('No schema found in response');
       }
@@ -127,7 +130,7 @@ const DefaultTableSerDesCfg = {
   },
   parsers: {
     bigint: (n) => parseInt(n),
-    blob: (blob) => new CqlBlob(blob, false),
+    blob: (blob, ctx) => ctx.parsingPrimaryKey ? new CqlBlob(blob, false) : new CqlBlob(blob.$binary, false),
     date: (date) => new CqlDate(date),
     double: parseFloat,
     duration: (duration) => new CqlDuration(duration),

@@ -22,7 +22,7 @@ export class InetAddress {
 
   public [$SerializeForTables] = () => this.#raw;
 
-  public constructor(address: string, version?: 4 | 6 | null, validate = true) {
+  public constructor(address: string, version?: 4 | 6 | null, validate = true) { // ::1 => 0:0:0:0:0:0:0:1
     if (validate) {
       switch (version) {
         case 4:
