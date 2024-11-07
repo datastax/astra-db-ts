@@ -19,6 +19,7 @@ export {
   TableColumnTypeParser,
   TableSerDesConfig,
   TableDesCtx,
-  $SerializeForTables,
-  $DeserializeForTables,
+  TableSerCtx,
+  $SerializeForTable,
+  $DeserializeTableDatatype,
 } from './ser-des';

@@ -18,7 +18,7 @@ import { OneOrMany } from '@/src/lib/types';
 import { toArray } from '@/src/lib/utils';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
 
-export const $SerializeForCollections = Symbol.for('astra-db-ts.serialize.collection');
+export const $SerializeForCollection = Symbol.for('astra-db-ts.serialize.collection');
 
 export interface CollectionSerDesConfig<Schema extends SomeDoc> {
   serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>,
@@ -27,6 +27,9 @@ export interface CollectionSerDesConfig<Schema extends SomeDoc> {
   mutateInPlace?: boolean,
 }
 
+/**
+ * @internal
+ */
 export const mkCollectionSerDes = <Schema extends SomeDoc>(cfg: CollectionSerDesConfig<Schema> | undefined, enableBigNums: boolean) => mkSerDes({
   serializer: [...toArray(cfg?.serialize ?? []), DefaultCollectionSerDesCfg.serialize],
   deserializer: [...toArray(cfg?.deserialize ?? []), DefaultCollectionSerDesCfg.deserialize],
@@ -54,12 +57,12 @@ const DefaultCollectionSerDesCfg = {
       value = new DataAPIVector(value);
     }
 
-    if ($SerializeForCollections in value) {
-      return [value[$SerializeForCollections](), true];
+    if ($SerializeForCollection in value) {
+      return [value[$SerializeForCollection](), true];
     }
   },
   deserialize(key, value) {
-    if (typeof value !== 'object' || value === null || $SerializeForCollections in value || value instanceof Date) {
+    if (typeof value !== 'object' || value === null || $SerializeForCollection in value || value instanceof Date) {
       return;
     }
 

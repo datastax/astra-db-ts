@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $SerializeForCollections } from '@/src/documents/collections/ser-des';
-import { $SerializeForTables } from '@/src/documents/tables/ser-des';
+import { $SerializeForCollection } from '@/src/documents/collections/ser-des';
+import { $SerializeForTable } from '@/src/documents/tables/ser-des';
 import { $CustomInspect } from '@/src/lib/constants';
 
 export type DataAPIVectorLike = number[] | string | Float32Array | DataAPIVector;
@@ -21,8 +21,8 @@ export type DataAPIVectorLike = number[] | string | Float32Array | DataAPIVector
 export class DataAPIVector {
   readonly #vector: Exclude<DataAPIVectorLike, DataAPIVector>;
 
-  public [$SerializeForTables] = () => serialize(this.#vector);
-  public [$SerializeForCollections] = this[$SerializeForTables];
+  public [$SerializeForTable] = () => serialize(this.#vector);
+  public [$SerializeForCollection] = this[$SerializeForTable];
 
   public constructor(vector: DataAPIVectorLike, validate = true) {
     if (validate && !DataAPIVector.isVectorLike(vector)) {

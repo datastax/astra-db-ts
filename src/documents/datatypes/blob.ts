@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $SerializeForTables } from '@/src/documents/tables/ser-des';
+import { $SerializeForTable } from '@/src/documents/tables/ser-des';
 import { $CustomInspect } from '@/src/lib/constants';
 
 export type CqlBlobLike = CqlBlob | ArrayBuffer | Buffer | string;
@@ -20,7 +20,7 @@ export type CqlBlobLike = CqlBlob | ArrayBuffer | Buffer | string;
 export class CqlBlob {
   readonly #raw: Exclude<CqlBlobLike, CqlBlob>;
 
-  public [$SerializeForTables] = () => ({ $binary: this.asBase64() });
+  public [$SerializeForTable] = () => ({ $binary: this.asBase64() });
 
   public constructor(blob: CqlBlobLike, validate = true) {
     if (validate && !CqlBlob.isBlobLike(blob)) {

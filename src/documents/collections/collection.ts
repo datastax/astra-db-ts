@@ -112,6 +112,12 @@ import { TooManyDocumentsToCountError } from '@/src/documents';
  * console.log(resp.insertedId.version) // 4
  * ```
  *
+ * ###### Big numbers
+ *
+ * By default, big numbers (`bigint`s and {@link BigNumber}s from `bignumber.js`) are disabled, and will error when attempted to be serialized, and will lose precision when deserialized.
+ *
+ * See {@link CollectionSerDesConfig.enableBigNumbers} for more information on enabling big numbers in collections.
+ *
  * ###### Custom datatypes
  *
  * You can plug in your own custom datatypes by providing some custom serialization/deserialization logic through the `serdes` option in {@link CollectionSpawnOptions}, {@link DbSpawnOptions} & {@link DataAPIClientOptions.dbOptions}.
@@ -137,7 +143,7 @@ import { TooManyDocumentsToCountError } from '@/src/documents';
  * const collection = db.collection<User>('users', {
  *   serdes: { // Serializer not necessary here since `$SerializeForCollections` is used
  *     deserialize(key, value) {
- *       if (key === '_id') return new UserID(value);
+ *       if (key === '_id') return [new UserID(value)]; // [X] specifies a new value
  *     },
  *   },
  * });

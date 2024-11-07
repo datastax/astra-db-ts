@@ -18,5 +18,5 @@ export type * from './types';
 
 export {
   CollectionSerDesConfig,
-  $SerializeForCollections,
+  $SerializeForCollection,
 } from './ser-des';

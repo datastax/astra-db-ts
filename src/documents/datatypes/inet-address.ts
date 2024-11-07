@@ -13,14 +13,14 @@
 // limitations under the License.
 
 import { $CustomInspect } from '@/src/lib/constants';
-import { $SerializeForTables } from '@/src/documents/tables/ser-des';
+import { $SerializeForTable } from '@/src/documents/tables/ser-des';
 import { nullish } from '@/src/lib';
 
 export class InetAddress {
   readonly #raw: string;
   #version: 4 | 6 | nullish;
 
-  public [$SerializeForTables] = () => this.#raw;
+  public [$SerializeForTable] = () => this.#raw;
 
   public constructor(address: string, version?: 4 | 6 | null, validate = true) { // ::1 => 0:0:0:0:0:0:0:1
     if (validate) {

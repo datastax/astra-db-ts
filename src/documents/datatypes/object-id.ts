@@ -14,7 +14,7 @@
 
 import { isNullish } from '@/src/lib/utils';
 import { $CustomInspect } from '@/src/lib/constants';
-import { $SerializeForCollections } from '@/src/documents/collections/ser-des';
+import { $SerializeForCollection } from '@/src/documents/collections/ser-des';
 
 const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
 
@@ -60,7 +60,7 @@ const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
 export class ObjectId {
   readonly #raw: string;
 
-  public [$SerializeForCollections] = () => ({ $objectId: this.#raw });
+  public [$SerializeForCollection] = () => ({ $objectId: this.#raw });
 
   /**
    * Creates a new ObjectId instance.

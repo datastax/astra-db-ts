@@ -34,8 +34,8 @@ import { toArray } from '@/src/lib/utils';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
 import BigNumber from 'bignumber.js';
 
-export const $SerializeForTables = Symbol.for('astra-db-ts.serialize.table');
-export const $DeserializeForTables = Symbol.for('astra-db-ts.deserialize.table');
+export const $SerializeForTable = Symbol.for('astra-db-ts.serialize.table');
+export const $DeserializeTableDatatype = Symbol.for('astra-db-ts.deserialize.table.datatype');
 
 export interface TableSerCtx<Schema extends SomeDoc> extends DataAPISerCtx<Schema> {
   bigNumsPresent: boolean;
@@ -52,16 +52,19 @@ export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: Som
 export interface TableSerDesConfig<Schema extends SomeRow> {
   serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: TableSerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>,
   deserialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: TableDesCtx) => [any, boolean?] | boolean | undefined | void>,
-  parsers?: Record<string, TableColumnTypeParser | { [$DeserializeForTables]: TableColumnTypeParser }>,
+  parsers?: Record<string, TableColumnTypeParser | { [$DeserializeTableDatatype]: TableColumnTypeParser }>,
   mutateInPlace?: boolean,
 }
 
+/**
+ * @internal
+ */
 export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Schema>) => {
   const customParsers = { ...cfg?.parsers };
 
   for (const [key, parser] of Object.entries(customParsers)) {
-    if (typeof parser === 'object' && $DeserializeForTables in parser) {
-      customParsers[key] = parser[$DeserializeForTables];
+    if (typeof parser === 'object' && $DeserializeTableDatatype in parser) {
+      customParsers[key] = parser[$DeserializeTableDatatype];
     }
   }
 
@@ -103,8 +106,8 @@ export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Sc
 const DefaultTableSerDesCfg = {
   serialize(_, value, ctx) {
     if (typeof value === 'object' && value !== null) {
-      if ($SerializeForTables in value) {
-        return [value[$SerializeForTables](), true];
+      if ($SerializeForTable in value) {
+        return [value[$SerializeForTable](), true];
       }
 
       if (value instanceof Map) {

@@ -96,6 +96,10 @@ export type Cols<Schema> = keyof Omit<Schema, typeof $PrimaryKeyType | '$Primary
  * });
  * ```
  *
+ * ###### Big numbers disclaimer
+ *
+ * When `varint`s or `decimal`s are present in the schema, and when you're serializing `bigint`s and {@link BigNumber}s, it will automatically enable usage of a bignumber-friendly JSON library which is capable of serializing/deserializing these numbers without loss of precision, but is much slower than the native JSON library (but, realistically, the difference is likely negligible).
+ *
  * ###### Typing the key
  *
  * The primary key of the table should be provided via the {@link $PrimaryKeyType} symbol in the schema.

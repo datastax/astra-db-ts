@@ -14,8 +14,8 @@
 
 import { UUID as UUIDv7, uuidv4, uuidv7 } from 'uuidv7';
 import { $CustomInspect } from '@/src/lib/constants';
-import { $SerializeForCollections } from '@/src/documents/collections/ser-des';
-import { $SerializeForTables } from '@/src/documents/tables/ser-des';
+import { $SerializeForCollection } from '@/src/documents/collections/ser-des';
+import { $SerializeForTable } from '@/src/documents/tables/ser-des';
 
 const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
 
@@ -68,8 +68,8 @@ export class UUID {
 
   readonly #raw: string;
 
-  public [$SerializeForCollections] = () => ({ $uuid: this.#raw });
-  public [$SerializeForTables] = this.toString;
+  public [$SerializeForCollection] = () => ({ $uuid: this.#raw });
+  public [$SerializeForTable] = this.toString;
 
   /**
    * Creates a new UUID instance.

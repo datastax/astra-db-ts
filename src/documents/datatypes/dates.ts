@@ -14,7 +14,7 @@
 
 import { isNullish } from '@/src/lib/utils';
 import { $CustomInspect } from '@/src/lib/constants';
-import { $SerializeForTables } from '@/src/documents/tables/ser-des';
+import { $SerializeForTable } from '@/src/documents/tables/ser-des';
 
 export interface CqlDateComponents {
   year: number,
@@ -25,7 +25,7 @@ export interface CqlDateComponents {
 export class CqlDate {
   readonly #date: string;
 
-  public [$SerializeForTables] = this.toString;
+  public [$SerializeForTable] = this.toString;
 
   public constructor(input?: string | Date | CqlDateComponents) {
     if (typeof input === 'string') {
@@ -92,7 +92,7 @@ export interface CqlDurationComponents {
 export class CqlDuration {
   readonly #duration: string;
 
-  public [$SerializeForTables] = this.toString;
+  public [$SerializeForTable] = this.toString;
 
   constructor(input: string | Partial<CqlDurationComponents> | [Date | CqlTimestamp, Date | CqlTimestamp]) {
     if (typeof input === 'string') {
@@ -154,7 +154,7 @@ export interface CqlTimeComponents {
 export class CqlTime {
   readonly #time: string;
 
-  public [$SerializeForTables] = this.toString;
+  public [$SerializeForTable] = this.toString;
 
   public constructor(input?: string | Date | (CqlTimeComponents & { nanoseconds?: number })) {
     input ||= new Date();
@@ -228,7 +228,7 @@ export interface CqlTimestampComponents {
 export class CqlTimestamp {
   readonly #timestamp: string;
 
-  public [$SerializeForTables] = this.toString;
+  public [$SerializeForTable] = this.toString;
 
   public constructor(input?: string | Date | Partial<CqlTimestampComponents>) {
     input ||= new Date();
