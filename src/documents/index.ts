@@ -33,5 +33,6 @@ export {
   DeleteManyError,
   InsertManyError,
   TooManyDocumentsToCountError,
+  TooManyRowsToCountError,
   UpdateManyError,
 } from './errors';

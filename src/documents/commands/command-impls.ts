@@ -34,7 +34,6 @@ import {
   GenericUpdateOneOptions,
   GenericUpdateResult,
   SomeDoc,
-  TooManyDocumentsToCountError,
   UpdateManyError,
 } from '@/src/documents';
 import { nullish, WithTimeout } from '@/src/lib';
@@ -333,7 +332,7 @@ export class CommandImpls<ID> {
     return ret;
   }
 
-  public async countDocuments(_filter: SomeDoc, upperBound: number, options?: WithTimeout): Promise<number> {
+  public async countDocuments(_filter: SomeDoc, upperBound: number, options: WithTimeout | undefined, error: new (count: number, hitLimit: boolean) => Error): Promise<number> {
     if (!upperBound) {
       throw new Error('upperBound is required');
     }
@@ -354,11 +353,11 @@ export class CommandImpls<ID> {
     });
 
     if (resp.status?.moreData) {
-      throw new TooManyDocumentsToCountError(resp.status.count, true);
+      throw new error(resp.status.count, true);
     }
 
     if (resp.status?.count > upperBound) {
-      throw new TooManyDocumentsToCountError(upperBound, false);
+      throw new error(upperBound, false);
     }
 
     return resp.status?.count;

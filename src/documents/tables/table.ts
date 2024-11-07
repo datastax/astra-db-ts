@@ -28,7 +28,7 @@ import {
   TableInsertManyResult,
   TableInsertOneResult,
   TableUpdateOneOptions,
-  TableUpdateOneResult,
+  TableUpdateOneResult, TooManyRowsToCountError,
   UpdateFilter,
 } from '@/src/documents';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
@@ -346,7 +346,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
   }
 
   public async countRows(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number> {
-    return this.#commands.countDocuments(filter, upperBound, options);
+    return this.#commands.countDocuments(filter, upperBound, options, TooManyRowsToCountError);
   }
 
   public async drop(options?: WithTimeout): Promise<void> {

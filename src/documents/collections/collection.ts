@@ -48,6 +48,7 @@ import { DeepPartial, WithTimeout } from '@/src/lib';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { mkCollectionSerDes } from '@/src/documents/collections/ser-des';
 import { $CustomInspect } from '@/src/lib/constants';
+import { TooManyDocumentsToCountError } from '@/src/documents';
 
 /**
  * #### Overview
@@ -1280,7 +1281,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    */
   public async countDocuments(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number> {
-    return this.#commands.countDocuments(filter, upperBound, options);
+    return this.#commands.countDocuments(filter, upperBound, options, TooManyDocumentsToCountError);
   }
 
   /**
