@@ -21,7 +21,7 @@ export interface ListTablesOptions extends WithTimeout, WithKeyspace {
 
 export interface FullTableInfo {
   name: string,
-  definition: ListTableDefinition[],
+  definition: ListTableDefinition,
 }
 
 export interface ListTableDefinition {

@@ -19,7 +19,7 @@ import {
   Filter,
   FindCursor,
   FoundRow,
-  KeyOf,
+  KeyOf, type SomeDoc,
   SomeRow,
   TableDeleteOneOptions,
   TableFindOneOptions,
@@ -33,7 +33,15 @@ import {
 } from '@/src/documents';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
-import { AlterTableOptions, AlterTableSchema, Db, TableSpawnOptions } from '@/src/db';
+import {
+  AlterTableOptions,
+  AlterTableSchema,
+  CollectionOptions,
+  Db,
+  FullTableInfo,
+  ListTableDefinition,
+  TableSpawnOptions,
+} from '@/src/db';
 import { WithTimeout } from '@/src/lib';
 import { $CustomInspect } from '@/src/lib/constants';
 import { mkTableSerDes } from '@/src/documents/tables/ser-des';
@@ -389,6 +397,18 @@ export class Table<Schema extends SomeRow = SomeRow> {
         },
       },
     }, options);
+  }
+
+  public async definition(options?: WithTimeout): Promise<ListTableDefinition> {
+    const results = await this.#db.listTables({ maxTimeMS: options?.maxTimeMS, keyspace: this.keyspace });
+
+    const table = results.find((t) => t.name === this.name);
+
+    if (!table) {
+      throw new Error(`Can not get definition for table '${this.keyspace}.${this.name}'; table not found. Did you use the right keyspace?`);
+    }
+
+    return table.definition;
   }
 
   public get _httpClient() {

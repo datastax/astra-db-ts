@@ -1554,7 +1554,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @returns The options that the collection was created with (i.e. the `vector` and `indexing` operations).
    */
   public async options(options?: WithTimeout): Promise<CollectionOptions<SomeDoc>> {
-    const results = await this.#db.listCollections({ nameOnly: false, maxTimeMS: options?.maxTimeMS, keyspace: this.keyspace });
+    const results = await this.#db.listCollections({ maxTimeMS: options?.maxTimeMS, keyspace: this.keyspace });
 
     const collection = results.find((c) => c.name === this.name);
 
