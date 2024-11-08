@@ -35,7 +35,6 @@ import { DataAPIVector } from '@/src/documents/datatypes/vector';
 import BigNumber from 'bignumber.js';
 
 export const $SerializeForTable = Symbol.for('astra-db-ts.serialize.table');
-export const $DeserializeTableDatatype = Symbol.for('astra-db-ts.deserialize.table.datatype');
 
 export interface TableSerCtx<Schema extends SomeDoc> extends DataAPISerCtx<Schema> {
   bigNumsPresent: boolean;
@@ -45,6 +44,7 @@ export interface TableDesCtx extends DataAPIDesCtx {
   tableSchema: ListTableColumnDefinitions,
   parsers: Record<string, TableColumnTypeParser>,
   parsingPrimaryKey: boolean,
+  sparseData: boolean,
 }
 
 export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: SomeDoc) => any;
@@ -52,56 +52,46 @@ export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: Som
 export interface TableSerDesConfig<Schema extends SomeRow> {
   serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: TableSerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>,
   deserialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: TableDesCtx) => [any, boolean?] | boolean | undefined | void>,
-  parsers?: Record<string, TableColumnTypeParser | { [$DeserializeTableDatatype]: TableColumnTypeParser }>,
+  parsers?: Record<string, TableColumnTypeParser>,
   mutateInPlace?: boolean,
+  sparseData?: boolean,
 }
 
 /**
  * @internal
  */
-export const mkTableSerDes = <Schema extends SomeRow>(cfg?: TableSerDesConfig<Schema>) => {
-  const customParsers = { ...cfg?.parsers };
+export const mkTableSerDes = <Schema extends SomeRow>(cfg: TableSerDesConfig<Schema> | undefined) => mkSerDes({
+  serializer: [...toArray(cfg?.serialize ?? []), DefaultTableSerDesCfg.serialize],
+  deserializer: [...toArray(cfg?.deserialize ?? []), DefaultTableSerDesCfg.deserialize],
+  adaptSerCtx: (_ctx) => {
+    const ctx = _ctx as TableSerCtx<Schema>;
+    ctx.bigNumsPresent = false;
+    return ctx;
+  },
+  adaptDesCtx: (_ctx) => {
+    const ctx = _ctx as TableDesCtx;
+    const status = ctx.rawDataApiResp.status;
 
-  for (const [key, parser] of Object.entries(customParsers)) {
-    if (typeof parser === 'object' && $DeserializeTableDatatype in parser) {
-      customParsers[key] = parser[$DeserializeTableDatatype];
+    if (status?.primaryKeySchema) {
+      ctx.rootObj = Object.fromEntries(Object.entries(status.primaryKeySchema).map(([key], j) => {
+        return [key, ctx.rootObj[j]];
+      }));
+      ctx.tableSchema = status.primaryKeySchema;
+      ctx.parsingPrimaryKey = true;
+    } else if (status?.projectionSchema) {
+      ctx.tableSchema = status.projectionSchema;
+      ctx.parsingPrimaryKey = false;
+    } else {
+      throw new Error('No schema found in response');
     }
-  }
 
-  const parsers = { ...DefaultTableSerDesCfg.parsers, ...customParsers };
-
-  return mkSerDes({
-    serializer: [...toArray(cfg?.serialize ?? []), DefaultTableSerDesCfg.serialize],
-    deserializer: [...toArray(cfg?.deserialize ?? []), DefaultTableSerDesCfg.deserialize],
-    adaptSerCtx: (_ctx) => {
-      const ctx = _ctx as TableSerCtx<Schema>;
-      ctx.bigNumsPresent = false;
-      return ctx;
-    },
-    adaptDesCtx: (_ctx) => {
-      const ctx = _ctx as TableDesCtx;
-      const status = ctx.rawDataApiResp.status;
-
-      if (status?.primaryKeySchema) {
-        ctx.rootObj = Object.fromEntries(Object.entries(status.primaryKeySchema).map(([key], j) => {
-          return [key, ctx.rootObj[j]];
-        }));
-        ctx.tableSchema = status.primaryKeySchema;
-        ctx.parsingPrimaryKey = true;
-      } else if (status?.projectionSchema) {
-        ctx.tableSchema = status.projectionSchema;
-        ctx.parsingPrimaryKey = false;
-      } else {
-        throw new Error('No schema found in response');
-      }
-
-      ctx.parsers = parsers;
-      return ctx;
-    },
-    bigNumsPresent: (ctx) => ctx.bigNumsPresent,
-    mutateInPlace: cfg?.mutateInPlace,
-  });
-};
+    ctx.sparseData = cfg?.sparseData ?? false;
+    ctx.parsers = { ...DefaultTableSerDesCfg.parsers, ...cfg?.parsers };
+    return ctx;
+  },
+  bigNumsPresent: (ctx) => ctx.bigNumsPresent,
+  mutateInPlace: cfg?.mutateInPlace,
+});
 
 const DefaultTableSerDesCfg = {
   serialize(_, value, ctx) {
@@ -128,6 +118,14 @@ const DefaultTableSerDesCfg = {
   deserialize(key, _, ctx) {
     if (this && this === ctx.rootObj) {
       deserializeObj(ctx, ctx.rootObj, key, ctx.tableSchema[key]);
+
+      if (!ctx.sparseData) {
+        for (const key in ctx.tableSchema) {
+          if (!(key in ctx.rootObj)) {
+            ctx.rootObj[key] = null;
+          }
+        }
+      }
     }
     return true;
   },
@@ -135,6 +133,7 @@ const DefaultTableSerDesCfg = {
     bigint: (n) => parseInt(n),
     blob: (blob, ctx) => ctx.parsingPrimaryKey ? new CqlBlob(blob, false) : new CqlBlob(blob.$binary, false),
     date: (date) => new CqlDate(date),
+    decimal: (decimal) => decimal instanceof BigNumber ? decimal : new BigNumber(decimal),
     double: parseFloat,
     duration: (duration) => new CqlDuration(duration),
     float: parseFloat,
@@ -171,7 +170,7 @@ const DefaultTableSerDesCfg = {
       return new Set(ctx.parsers.list(set, ctx, def));
     },
   },
-} satisfies Omit<Required<TableSerDesConfig<SomeRow>>, 'mutateInPlace'>;
+} satisfies Pick<TableSerDesConfig<SomeRow>, 'parsers' | 'serialize' | 'deserialize'>;
 
 function deserializeObj(ctx: TableDesCtx, obj: SomeRow, key: string, column: ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition) {
   const type = (column.type === 'UNSUPPORTED')

@@ -208,7 +208,6 @@ export interface DbSpawnOptions {
  * @see TableSerDesConfig
  * @see $SerializeForCollections
  * @see $SerializeForTables
- * @see $DeserializeTableDatatype
  *
  * @public
  */

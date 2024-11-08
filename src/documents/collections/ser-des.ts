@@ -30,12 +30,12 @@ export interface CollectionSerDesConfig<Schema extends SomeDoc> {
 /**
  * @internal
  */
-export const mkCollectionSerDes = <Schema extends SomeDoc>(cfg: CollectionSerDesConfig<Schema> | undefined, enableBigNums: boolean) => mkSerDes({
+export const mkCollectionSerDes = <Schema extends SomeDoc>(cfg: CollectionSerDesConfig<Schema> | undefined) => mkSerDes({
   serializer: [...toArray(cfg?.serialize ?? []), DefaultCollectionSerDesCfg.serialize],
   deserializer: [...toArray(cfg?.deserialize ?? []), DefaultCollectionSerDesCfg.deserialize],
   adaptSerCtx: (ctx) => ctx,
   adaptDesCtx: (ctx) => ctx,
-  bigNumsPresent: () => enableBigNums,
+  bigNumsPresent: () => !!cfg?.enableBigNumbers,
   mutateInPlace: cfg?.mutateInPlace,
 });
 

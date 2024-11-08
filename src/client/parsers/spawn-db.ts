@@ -47,6 +47,7 @@ const parseTableSerDes: Parser<TableSerDesConfig<SomeDoc>> = (cfg, field) => ({
   deserialize: p.parse('function?')(cfg.deserialize, `${field}.deserialize`),
   parsers: p.parse('object?', parseTableColumnTypeParser)(cfg.parsers, `${field}.parsers`),
   mutateInPlace: p.parse('boolean?')(cfg.mutateInPlace, `${field}.mutateInPlace`),
+  sparseData: p.parse('boolean?')(cfg.sparseData, `${field}.sparseData`),
 });
 
 const parseCollectionSerDes: Parser<CollectionSerDesConfig<SomeDoc>> = (cfg, field) => ({

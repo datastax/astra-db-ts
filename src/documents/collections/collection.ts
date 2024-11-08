@@ -207,15 +207,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       writable: false,
     });
 
-    const enableBigNumbers = !!opts?.serdes?.enableBigNumbers;
-
     const hack: BigNumberHack = {
-      parseWithBigNumbers: () => enableBigNumbers,
+      parseWithBigNumbers: () => !!opts?.serdes?.enableBigNumbers,
       parser: jbi,
     };
 
     this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
-    this.#commands = new CommandImpls(this.name, this.#httpClient, mkCollectionSerDes(opts?.serdes, enableBigNumbers));
+    this.#commands = new CommandImpls(this.name, this.#httpClient, mkCollectionSerDes(opts?.serdes));
     this.#db = db;
 
     Object.defineProperty(this, $CustomInspect, {

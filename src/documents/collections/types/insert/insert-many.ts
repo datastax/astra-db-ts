@@ -54,8 +54,8 @@ export interface CollectionInsertManyResult<Schema extends SomeDoc> {
   insertedCount: number,
 }
 
-export type InsertManyDocumentResponse<_T> = any;
-
+// export type InsertManyDocumentResponse<_T> = any;
+//
 // /**
 //  * Represents the specific status and id for a document present in the `insertMany` command. Present when an
 //  * {@link InsertManyError} is thrown.

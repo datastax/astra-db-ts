@@ -121,7 +121,7 @@ type MySchema = InferTableSchema<typeof mkTable>;
 type _Proof = Expect<Equal<MySchema, {
   key: string,
   age: number,
-  car?: Map<string, number> | null,
+  car?: Map<string, number>,
   [$PrimaryKeyType]?: {
     key: string,
     bad: TypeErr<'Field `bad` not found as property in table definition'>,
@@ -167,7 +167,7 @@ type _Proof = Expect<Equal<MySchema, {
   type _1 = Expect<Equal<typeof _altered1, Table<{
     key: string,
     age: number,
-    car?: Map<string, number> | null,
+    car?: Map<string, number>,
     [$PrimaryKeyType]?: {
       key: string,
       bad: TypeErr<'Field `bad` not found as property in table definition'>,
@@ -182,7 +182,7 @@ type _Proof = Expect<Equal<MySchema, {
   type _2 = Expect<Equal<typeof _altered2, Table<{
     key: string,
     age: number,
-    car?: Map<string, number> | null,
+    car?: Map<string, number>,
     new?: string | null,
     [$PrimaryKeyType]?: {
       key: string,
@@ -192,10 +192,26 @@ type _Proof = Expect<Equal<MySchema, {
   }>>>;
 
   const _altered3 = await myTable.alter({
-    operation: { drop: { columns: ['car'] } },
+    operation: { add: { columns: { new: { type: 'list', valueType: 'boolean' } } } },
   });
 
   type _3 = Expect<Equal<typeof _altered3, Table<{
+    key: string,
+    age: number,
+    car?: Map<string, number>,
+    new?: boolean[],
+    [$PrimaryKeyType]?: {
+      key: string,
+      bad: TypeErr<'Field `bad` not found as property in table definition'>,
+      age: number,
+    },
+  }>>>;
+
+  const _altered4 = await myTable.alter({
+    operation: { drop: { columns: ['car'] } },
+  });
+
+  type _4 = Expect<Equal<typeof _altered4, Table<{
     key: string,
     age: number,
     [$PrimaryKeyType]?: {
@@ -205,11 +221,11 @@ type _Proof = Expect<Equal<MySchema, {
     },
   }>>>;
 
-  const _altered4 = await myTable.alter<{ a: 4 }>({
+  const _altered5 = await myTable.alter<{ a: 4 }>({
     operation: { drop: { columns: ['car'] } },
   });
 
-  type _4 = Expect<Equal<typeof _altered4, Table<{ a: 4 }>>>;
+  type _5 = Expect<Equal<typeof _altered5, Table<{ a: 4 }>>>;
 })();
 
 // ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------

@@ -144,11 +144,13 @@ export class Db {
           collection: {
             serialize: [...toArray(dbOpts?.serdes?.collection?.serialize ?? []), ...toArray(rootOpts.dbOptions.serdes?.collection?.serialize ?? [])],
             deserialize: [...toArray(dbOpts?.serdes?.collection?.deserialize ?? []), ...toArray(rootOpts.dbOptions.serdes?.collection?.deserialize ?? [])],
+            enableBigNumbers: dbOpts?.serdes?.collection?.enableBigNumbers ?? rootOpts.dbOptions.serdes?.collection?.enableBigNumbers,
           },
           table: {
             serialize: [...toArray(dbOpts?.serdes?.table?.serialize ?? []), ...toArray(rootOpts.dbOptions.serdes?.table?.serialize ?? [])],
             deserialize: [...toArray(dbOpts?.serdes?.table?.deserialize ?? []), ...toArray(rootOpts.dbOptions.serdes?.table?.deserialize ?? [])],
             parsers: { ...rootOpts.dbOptions.serdes?.table?.parsers, ...dbOpts?.serdes?.table?.parsers },
+            sparseData: dbOpts?.serdes?.table?.sparseData ?? rootOpts.dbOptions.serdes?.table?.sparseData,
           },
           mutateInPlace: dbOpts?.serdes?.mutateInPlace ?? rootOpts.dbOptions.serdes?.mutateInPlace,
         },
@@ -531,6 +533,7 @@ export class Db {
         serialize: [...toArray(options?.serdes?.serialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.collection?.serialize ?? [])],
         deserialize: [...toArray(options?.serdes?.deserialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.collection?.deserialize ?? [])],
         mutateInPlace: options?.serdes?.mutateInPlace ?? this.#defaultOpts.dbOptions.serdes?.mutateInPlace,
+        enableBigNumbers: options?.serdes?.enableBigNumbers ?? this.#defaultOpts.dbOptions.serdes?.collection?.enableBigNumbers,
       },
     });
   }
@@ -625,6 +628,7 @@ export class Db {
         deserialize: [...toArray(options?.serdes?.deserialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.table?.deserialize ?? [])],
         mutateInPlace: options?.serdes?.mutateInPlace ?? this.#defaultOpts.dbOptions.serdes?.mutateInPlace,
         parsers: { ...this.#defaultOpts.dbOptions.serdes?.table?.parsers, ...options?.serdes?.parsers },
+        sparseData: options?.serdes?.sparseData ?? this.#defaultOpts.dbOptions.serdes?.table?.sparseData,
       },
     });
   }

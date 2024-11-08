@@ -61,7 +61,7 @@ import { $PrimaryKeyType } from '@/src/documents';
  */
 export type SomeTableKey = Record<string, any>;
 
-export type FoundRow<Doc> = Omit<Doc, '$similarity'> & { $similarity?: number }
+export type FoundRow<Doc> = Omit<Required<Doc>, '$similarity'> & { $similarity?: number }
 
 /**
  * ##### Overview

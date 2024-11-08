@@ -28,7 +28,6 @@ import {
   TableInsertManyResult,
   TableInsertOneResult,
   TableUpdateOneOptions,
-  TableUpdateOneResult,
   TooManyRowsToCountError,
   UpdateFilter,
 } from '@/src/documents';
@@ -337,8 +336,8 @@ export class Table<Schema extends SomeRow = SomeRow> {
     return this.#commands.insertMany(document, options, TableInsertManyError);
   }
 
-  public async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: TableUpdateOneOptions): Promise<TableUpdateOneResult<Schema>> {
-    return this.#commands.updateOne(filter, update, options);
+  public async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: TableUpdateOneOptions): Promise<void> {
+    await this.#commands.updateOne(filter, update, options);
   }
 
   public async deleteOne(filter: Filter<Schema>, options?: TableDeleteOneOptions): Promise<void> {

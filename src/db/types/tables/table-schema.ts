@@ -193,18 +193,18 @@ export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition
 }>
 
 type MkColumnTypes<Cols extends CreateTableColumnDefinitions, PK extends Record<string, any>> = {
-  -readonly [P in keyof Cols as P extends keyof PK ? P : never]-?: CqlType2TSType<PickCqlType<Cols[P]>, Cols[P]>;
+  -readonly [P in keyof Cols as P extends keyof PK ? P : never]-?: CqlType2TSType<PickCqlType<Cols[P]>, Cols[P]> & {};
 } & {
-  -readonly [P in keyof Cols as P extends keyof PK ? never : P]+?: CqlType2TSType<PickCqlType<Cols[P]>, Cols[P]> | null;
+  -readonly [P in keyof Cols as P extends keyof PK ? never : P]+?: CqlType2TSType<PickCqlType<Cols[P]>, Cols[P]>;
 }
 
 type MkPrimaryKeyType<FullDef extends CreateTableDefinition, Schema, PK extends FullCreateTablePrimaryKeyDefinition = NormalizePK<FullDef['primaryKey']>> = Normalize<
   {
-    -readonly [P in PK['partitionBy'][number]]: P extends keyof Schema ? Schema[P] : TypeErr<`Field \`${P}\` not found as property in table definition`>;
+    -readonly [P in PK['partitionBy'][number]]: P extends keyof Schema ? Schema[P] & {} : TypeErr<`Field \`${P}\` not found as property in table definition`>;
   }
   & (PK['partitionSort'] extends object
     ? {
-      -readonly [P in keyof PK['partitionSort']]: P extends keyof Schema ? Schema[P] : TypeErr<`Field \`${P & string}\` not found as property in table definition`>;
+      -readonly [P in keyof PK['partitionSort']]: P extends keyof Schema ? Schema[P] & {} : TypeErr<`Field \`${P & string}\` not found as property in table definition`>;
     }
     : EmptyObj)
 >
@@ -261,26 +261,26 @@ export type CqlType2TSType<T extends string, Def> =
     : unknown;
 
 interface CqlNonGenericType2TSTypeDict {
-  ascii: string,
-  bigint: number,
-  blob: CqlBlob,
-  boolean: boolean,
-  date: CqlDate,
-  decimal: BigNumber,
-  double: number,
-  duration: CqlDuration,
-  float: number,
-  int: number,
-  inet: InetAddress,
-  smallint: number,
-  text: string;
-  time: CqlTime,
-  timestamp: CqlTimestamp,
-  tinyint: number,
-  uuid: UUID,
-  varchar: string,
-  varint: bigint,
-  vector: DataAPIVector,
+  ascii: string | null,
+  bigint: number | null,
+  blob: CqlBlob | null,
+  boolean: boolean | null,
+  date: CqlDate | null,
+  decimal: BigNumber | null,
+  double: number | null,
+  duration: CqlDuration | null,
+  float: number | null,
+  int: number | null,
+  inet: InetAddress | null,
+  smallint: number | null,
+  text: string | null;
+  time: CqlTime | null,
+  timestamp: CqlTimestamp | null,
+  tinyint: number | null,
+  uuid: UUID | null,
+  varchar: string | null,
+  varint: bigint | null,
+  vector: DataAPIVector | null,
 }
 
 interface CqlGenericType2TSTypeDict<Def> {
@@ -291,15 +291,15 @@ interface CqlGenericType2TSTypeDict<Def> {
 
 type CqlMapType2TsType<Def> =
   Def extends { keyType: infer KeyType extends string, valueType: infer ValueType extends string }
-    ? Map<CqlType2TSType<KeyType, never>, CqlType2TSType<ValueType, never>>
+    ? Map<CqlType2TSType<KeyType, never> & {}, CqlType2TSType<ValueType, never> & {}>
     : TypeErr<'Invalid generics definition for \'map\'; should have keyType and valueType set as scalar CQL types (e.g. \'text\')'>;
 
 type CqlListType2TsType<Def> =
   Def extends { valueType: infer ValueType extends string }
-    ? Array<CqlType2TSType<ValueType, never>>
+    ? Array<CqlType2TSType<ValueType, never> & {}>
     : TypeErr<'Invalid generics definition for \'list\'; should have valueType set as scalar CQL types (e.g. \'text\')'>;
 
 type CqlSetType2TsType<Def> =
   Def extends { valueType: infer ValueType extends string }
-    ? Set<CqlType2TSType<ValueType, never>>
+    ? Set<CqlType2TSType<ValueType, never> & {}>
     : TypeErr<'Invalid generics definition for \'set\'; should have valueType set as scalar CQL types (e.g. \'text\')'>;

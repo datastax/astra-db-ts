@@ -21,5 +21,4 @@ export {
   TableDesCtx,
   TableSerCtx,
   $SerializeForTable,
-  $DeserializeTableDatatype,
 } from './ser-des';
