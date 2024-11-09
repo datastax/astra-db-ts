@@ -95,7 +95,7 @@ export class AstraAdmin {
 
     this.#httpClient = new DevOpsAPIHttpClient({
       logging: this.#defaultOpts.adminOptions.logging,
-      baseUrl: DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
+      baseUrl: this.#defaultOpts.adminOptions.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
       emitter: rootOpts.emitter,
       fetchCtx: rootOpts.fetchCtx,
       userAgent: rootOpts.userAgent,
