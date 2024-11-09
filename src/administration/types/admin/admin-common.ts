@@ -22,25 +22,11 @@ import { WithTimeout } from '@/src/lib/types';
 export type AstraDbCloudProvider = 'AWS' | 'GCP' | 'AZURE';
 
 /**
- * Defines all possible compute powers (vertical scaling) for a database.
- *
- * @public
- */
-export type AstraDbTier = 'developer' | 'A5' | 'A10' | 'A20' | 'A40' | 'C10' | 'C20' | 'C40' | 'D10' | 'D20' | 'D40' | 'serverless';
-
-/**
  * Represents all possible statuses of a database.
  *
  * @public
  */
 export type AstraDbStatus = 'ACTIVE' | 'ERROR' | 'DECOMMISSIONING' | 'DEGRADED' | 'HIBERNATED' | 'HIBERNATING' | 'INITIALIZING' | 'MAINTENANCE' | 'PARKED' | 'PARKING' | 'PENDING' | 'PREPARED' | 'PREPARING' | 'RESIZING' | 'RESUMING' | 'TERMINATED' | 'TERMINATING' | 'UNKNOWN' | 'UNPARKING' | 'SYNCHRONIZING';
-
-/**
- * List of actions that can be performed on a database.
- *
- * @public
- */
-export type AstraDbAction = 'park' | 'unpark' | 'resize' | 'resetPassword' | 'addKeyspace' | 'addDatacenters' | 'terminateDatacenter' | 'getCreds' | 'terminate' | 'removeKeyspace' | 'removeMigrationProxy' | 'launchMigrationProxy';
 
 /**
  * The options representing the blocking behavior of many admin operations.

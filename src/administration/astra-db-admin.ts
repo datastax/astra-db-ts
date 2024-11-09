@@ -17,7 +17,6 @@ import {
   AdminSpawnOptions,
   AstraAdminBlockingOptions,
   AstraCreateKeyspaceOptions,
-  RawAstraDbAdminInfo,
 } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
 import { WithTimeout } from '@/src/lib/types';
@@ -179,7 +178,7 @@ export class AstraDbAdmin extends DbAdmin {
       path: `/databases/${this.#db.id}`,
     }, options);
 
-    return buildAstraDatabaseAdminInfo(resp.data as RawAstraDbAdminInfo, this.#environment);
+    return buildAstraDatabaseAdminInfo(resp.data!, this.#environment);
   }
 
   /**

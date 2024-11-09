@@ -19,7 +19,6 @@ import {
   AstraDatabaseConfig,
   CreateAstraDatabaseOptions,
   ListAstraDatabasesOptions,
-  RawAstraDbAdminInfo,
 } from '@/src/administration/types';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { Db } from '@/src/db/db';
@@ -34,6 +33,7 @@ import { buildAstraEndpoint } from '@/src/lib/utils';
 import { Logger } from '@/src/lib/logging/logger';
 import { DbSpawnOptions } from '@/src/client';
 import { $CustomInspect } from '@/src/lib/constants';
+import { SomeDoc } from '@/src/documents';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -289,7 +289,7 @@ export class AstraAdmin {
       path: `/databases/${id}`,
     }, options);
 
-    return buildAstraDatabaseAdminInfo(resp.data as RawAstraDbAdminInfo, this.#environment);
+    return buildAstraDatabaseAdminInfo(resp.data!, this.#environment);
   }
 
   /**
@@ -343,7 +343,7 @@ export class AstraAdmin {
       params: params,
     }, options);
 
-    return resp.data!.map((d: RawAstraDbAdminInfo) => buildAstraDatabaseAdminInfo(d, this.#environment));
+    return resp.data!.map((d: SomeDoc) => buildAstraDatabaseAdminInfo(d, this.#environment));
   }
 
   /**
