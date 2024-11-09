@@ -13,7 +13,6 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { AstraAdminBlockingOptions, AstraCreateKeyspaceOptions } from '@/src/administration/types';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { WithTimeout } from '@/src/lib';
 import { Db } from '@/src/db';
@@ -112,7 +111,7 @@ export abstract class DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  abstract createKeyspace(keyspace: string, options?: AstraCreateKeyspaceOptions): Promise<void>;
+  abstract createKeyspace(keyspace: string, options?: WithTimeout): Promise<void>;
   /**
    * Drops a keyspace from this database.
    *
@@ -144,5 +143,5 @@ export abstract class DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  abstract dropKeyspace(keyspace: string, options?: AstraAdminBlockingOptions): Promise<void>;
+  abstract dropKeyspace(keyspace: string, options?: WithTimeout): Promise<void>;
 }

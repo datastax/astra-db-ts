@@ -14,32 +14,97 @@
 
 import { AstraDbCloudProvider, AstraDbStatus } from '@/src/administration/types';
 
+/**
+ * Information about a region where an Astra database is hosted.
+ *
+ * @public
+ */
 export interface AstraDbRegionInfo {
+  /**
+   * The name of the region.
+   */
   name: string,
+  /**
+   * The API endpoint for the region.
+   */
   apiEndpoint: string,
+  /**
+   * When the region was created.
+   */
   createdAt: Date,
 }
 
+/**
+ * The database information returned from {@link AstraDbAdmin.info} & {@link AstraAdmin.dbInfo}.
+ *
+ * @public
+ */
 export interface AstraDbAdminInfo extends BaseAstraDbInfo {
+  /**
+   * When the database was created.
+   */
   createdAt: Date,
+  /**
+   * When the database was last used.
+   */
   lastUsed: Date,
+  /**
+   * The regions info for the database.
+   */
   regions: AstraDbRegionInfo[],
+  /**
+   * The organization ID that owns the database.
+   */
   orgId: string,
+  /**
+   * The ID of the owner of the database.
+   */
   ownerId: string,
 }
 
+/**
+ * The database information returned from {@link Db.info}.
+ *
+ * @public
+ */
 export interface AstraDbInfo extends BaseAstraDbInfo {
   region: string,
   apiEndpoint: string,
 }
 
+/**
+ * Represents the base information about a database, which is common in both {@link AstraDbAdminInfo} and {@link AstraDbInfo}.
+ *
+ * @public
+ */
 export interface BaseAstraDbInfo {
+  /**
+   * The ID of the database.
+   */
   id: string,
+  /**
+   * The user-given name of the database.
+   */
   name: string,
+  /**
+   * The databases's keyspaces; the list may be empty.
+   */
   keyspaces: string[],
+  /**
+   * The current status of the daatbase.
+   */
   status: AstraDbStatus,
-  environment: 'dev' | 'test' | 'prod',
+  /**
+   * The cloud provided where the database is hosted.
+   */
   cloudProvider: AstraDbCloudProvider,
+  /**
+   * The Astra environment in which the database is running.
+   */
+  environment: 'dev' | 'test' | 'prod',
+  /**
+   * The raw response from the DevOps API for the database information.
+   */
   raw: Record<string, any>,
 }
 

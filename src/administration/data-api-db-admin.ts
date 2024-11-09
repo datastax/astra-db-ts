@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { AstraAdminBlockingOptions, AdminSpawnOptions, LocalCreateKeyspaceOptions } from '@/src/administration/types';
+import { AdminSpawnOptions, LocalCreateKeyspaceOptions } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
 import { WithTimeout } from '@/src/lib/types';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
@@ -202,7 +202,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async dropKeyspace(keyspace: string, options?: AstraAdminBlockingOptions): Promise<void> {
+  public override async dropKeyspace(keyspace: string, options?: WithTimeout): Promise<void> {
     await this.#httpClient.executeCommand({ dropKeyspace: { name: keyspace } }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
   }
 
