@@ -70,7 +70,7 @@ export const insertManyUnordered = async <ID>(
   const failRaw = [] as Record<string, any>[];
   const docResps = [] as GenericInsertManyDocumentResponse<SomeDoc>[];
 
-  Array.from({ length: concurrency }, async () => {
+  const promises = Array.from({ length: concurrency }, async () => {
     while (masterIndex < documents.length) {
       const localI = masterIndex;
       const endIdx = Math.min(localI + chunkSize, documents.length);
@@ -92,6 +92,7 @@ export const insertManyUnordered = async <ID>(
       }
     }
   });
+  await Promise.all(promises);
 
   if (failCommands.length > 0) {
     throw mkRespErrorFromResponses(err, failCommands, failRaw, {

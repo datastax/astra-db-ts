@@ -29,7 +29,7 @@ import {
   TEST_APPLICATION_URI,
   TEST_HTTP_CLIENT,
 } from '@/tests/testlib/config';
-import { DataAPILoggingConfig } from '@/src/lib';
+import { DataAPIClientEvents, DataAPILoggingConfig } from '@/src/lib';
 import { InferTableSchema } from '@/src/db';
 
 export interface TestObjectsOptions {
@@ -75,7 +75,7 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
   const {
     httpClient = TEST_HTTP_CLIENT,
     env = ENVIRONMENT,
-    logging = LOG_ALL_TO_STDOUT ? [{ events: 'all', emits: ['event', 'stdout'] }] : [{ events: 'all', emits: 'event' }],
+    logging = [{ events: 'all', emits: 'event' }],
   } = opts ?? {};
 
   const preferHttp2 = httpClient === 'default:http2';
@@ -87,6 +87,12 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
     environment: env,
     logging,
   });
+
+  if (LOG_ALL_TO_STDOUT) {
+    for (const event of ['commandStarted', 'adminCommandStarted', 'commandFailed', 'adminCommandFailed'] as (keyof DataAPIClientEvents)[]) {
+      client.on(event, (e: unknown) => console.dir(e, { depth: null }));
+    }
+  }
 
   const db = client.db(TEST_APPLICATION_URI);
 

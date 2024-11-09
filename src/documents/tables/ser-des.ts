@@ -116,14 +116,16 @@ const DefaultTableSerDesCfg = {
     }
   },
   deserialize(key, _, ctx) {
-    if (this && this === ctx.rootObj) {
-      deserializeObj(ctx, ctx.rootObj, key, ctx.tableSchema[key]);
+    if (key === '') {
+      return false;
+    }
 
-      if (!ctx.sparseData) {
-        for (const key in ctx.tableSchema) {
-          if (!(key in ctx.rootObj)) {
-            ctx.rootObj[key] = null;
-          }
+    deserializeObj(ctx, ctx.rootObj, key, ctx.tableSchema[key]);
+
+    if (!ctx.sparseData) {
+      for (const key in ctx.tableSchema) {
+        if (!(key in ctx.rootObj)) {
+          ctx.rootObj[key] = null;
         }
       }
     }

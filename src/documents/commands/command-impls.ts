@@ -57,15 +57,15 @@ export class CommandImpls<ID> {
   }
 
   public async insertOne(_document: SomeDoc, options: WithTimeout | nullish): Promise<GenericInsertOneResult<ID>> {
-    const [document, bigNumsPresent] = this.#serdes.serializeRecord(_document);
+    const document = this.#serdes.serializeRecord(_document);
 
     const command = mkBasicCmd('insertOne', {
-      document: document,
+      document: document[0],
     });
 
     const raw = await this.#httpClient.executeCommand(command, {
       maxTimeMS: options?.maxTimeMS,
-      bigNumsPresent,
+      bigNumsPresent: document[1],
     });
 
     return {
@@ -92,8 +92,8 @@ export class CommandImpls<ID> {
     const update = this.#serdes.serializeRecord(_update);
 
     const command = mkCmdWithSortProj('updateOne', options, {
-      filter: this.#serdes.serializeRecord(filter[0]),
-      update: this.#serdes.serializeRecord(update[0]),
+      filter: filter[0],
+      update: update[0],
       options: {
         upsert: options?.upsert,
       },
@@ -112,8 +112,8 @@ export class CommandImpls<ID> {
     const update = this.#serdes.serializeRecord(_update);
 
     const command = mkBasicCmd('updateMany', {
-      filter: this.#serdes.serializeRecord(filter[0]),
-      update: this.#serdes.serializeRecord(update[0]),
+      filter: filter[0],
+      update: update[0],
       options: {
         pageState: undefined as string | undefined,
         upsert: options?.upsert,
@@ -157,8 +157,8 @@ export class CommandImpls<ID> {
     const replacement = this.#serdes.serializeRecord(_replacement);
 
     const command = mkCmdWithSortProj('findOneAndReplace', options, {
-      filter: filter,
-      replacement: replacement,
+      filter: filter[0],
+      replacement: replacement[0],
       options: {
         returnDocument: 'before',
         upsert: options?.upsert,
@@ -175,15 +175,15 @@ export class CommandImpls<ID> {
   }
 
   public async deleteOne(_filter: SomeDoc, options?: GenericDeleteOneOptions): Promise<GenericDeleteOneResult> {
-    const [filter, bigNumsPresent] = this.#serdes.serializeRecord(_filter);
+    const filter = this.#serdes.serializeRecord(_filter);
 
     const command = mkCmdWithSortProj('deleteOne', options, {
-      filter: filter,
+      filter: filter[0],
     });
 
     const deleteOneResp = await this.#httpClient.executeCommand(command, {
       maxTimeMS: options?.maxTimeMS,
-      bigNumsPresent,
+      bigNumsPresent: filter[1],
     });
 
     return {
@@ -192,10 +192,10 @@ export class CommandImpls<ID> {
   }
 
   public async deleteMany(_filter: SomeDoc, options?: WithTimeout): Promise<GenericDeleteManyResult> {
-    const [filter, bigNumsPresent] = this.#serdes.serializeRecord(_filter);
+    const filter = this.#serdes.serializeRecord(_filter);
 
     const command = mkBasicCmd('deleteMany', {
-      filter: filter,
+      filter: filter[0],
     });
 
     const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
@@ -203,7 +203,7 @@ export class CommandImpls<ID> {
 
     try {
       while (!resp || resp.status?.moreData) {
-        resp = await this.#httpClient.executeCommand(command, { timeoutManager, bigNumsPresent });
+        resp = await this.#httpClient.executeCommand(command, { timeoutManager, bigNumsPresent: filter[1] });
         numDeleted += resp.status?.deletedCount ?? 0;
       }
     } catch (e) {
@@ -233,10 +233,10 @@ export class CommandImpls<ID> {
   }
 
   public async findOne<Schema>(_filter: SomeDoc, options?: GenericFindOneOptions): Promise<Schema | null> {
-    const [filter, bigNumsPresent] = this.#serdes.serializeRecord(_filter);
+    const filter = this.#serdes.serializeRecord(_filter);
 
     const command = mkCmdWithSortProj('findOne', options, {
-      filter: filter,
+      filter: filter[0],
       options: {
         includeSimilarity: options?.includeSimilarity,
       },
@@ -244,7 +244,7 @@ export class CommandImpls<ID> {
 
     const resp = await this.#httpClient.executeCommand(command, {
       maxTimeMS: options?.maxTimeMS,
-      bigNumsPresent,
+      bigNumsPresent: filter[1],
     });
 
     return this.#serdes.deserializeRecord(resp.data?.document, resp) as any;
@@ -255,8 +255,8 @@ export class CommandImpls<ID> {
     const replacement = this.#serdes.serializeRecord(_replacement);
 
     const command = mkCmdWithSortProj('findOneAndReplace', options, {
-      filter: filter,
-      replacement: replacement,
+      filter: filter[0],
+      replacement: replacement[0],
       options: {
         returnDocument: options?.returnDocument,
         upsert: options?.upsert,
@@ -271,15 +271,15 @@ export class CommandImpls<ID> {
   }
 
   public async findOneAndDelete<Schema extends SomeDoc>(_filter: SomeDoc, options?: GenericFindOneAndDeleteOptions): Promise<Schema | null> {
-    const [filter, bigNumsPresent] = this.#serdes.serializeRecord(_filter);
+    const filter = this.#serdes.serializeRecord(_filter);
 
     const command = mkCmdWithSortProj('findOneAndDelete', options, {
-      filter: filter,
+      filter: filter[0],
     });
 
     const resp = await this.#httpClient.executeCommand(command, {
       maxTimeMS: options?.maxTimeMS,
-      bigNumsPresent,
+      bigNumsPresent: filter[1],
     });
     return resp.data?.document || null;
   }
@@ -289,8 +289,8 @@ export class CommandImpls<ID> {
     const update = this.#serdes.serializeRecord(_update);
 
     const command = mkCmdWithSortProj('findOneAndUpdate', options, {
-      filter: filter,
-      update: update,
+      filter: filter[0],
+      update: update[0],
       options: {
         returnDocument: options?.returnDocument,
         upsert: options?.upsert,

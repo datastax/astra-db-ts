@@ -13,12 +13,17 @@
 // limitations under the License.
 
 import { DEFAULT_KEYSPACE } from '@/src/lib/api';
-import { DEFAULT_COLLECTION_NAME, DEFAULT_TABLE_NAME, OTHER_KEYSPACE } from '@/tests/testlib/config';
+import { DEFAULT_COLLECTION_NAME, DEFAULT_TABLE_NAME, OTHER_KEYSPACE, SKIP_PRELUDE } from '@/tests/testlib/config';
 import { EverythingTableSchema, FILTER_COMBINATOR, GLOBAL_FIXTURES, RAW_FILTERS } from '@/tests/testlib';
 
 const TEST_KEYSPACES = [DEFAULT_KEYSPACE, OTHER_KEYSPACE];
 
 before(async () => {
+  if (SKIP_PRELUDE) {
+    console.warn('Skipping prelude.test.ts due to SKIP_PRELUDE being set');
+    return;
+  }
+
   if (
     (FILTER_COMBINATOR === 'and' && RAW_FILTERS.some(f => f.filter.startsWith('unit.') && !f.inverted)) ||
     (FILTER_COMBINATOR === 'or' && RAW_FILTERS.every(f => f.filter.startsWith('unit.') && !f.inverted))

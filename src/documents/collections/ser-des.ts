@@ -68,14 +68,17 @@ const DefaultCollectionSerDesCfg = {
 
     if (value.$date) {
       this[key] = new Date(value.$date);
+      return;
     }
 
     if (value.$objectId) {
       this[key] = new ObjectId(value.$objectId, false);
+      return;
     }
 
     if (value.$uuid) {
       this[key] = new UUID(value.$uuid, false);
+      return;
     }
 
     if (key === '$vector') {

@@ -46,14 +46,14 @@ export const mkSerDes = <Schema extends SomeDoc>(cfg: DataAPISerDesConfig<Schema
       return [obj, false];
     }
     const ctx = cfg.adaptSerCtx({ rootObj: obj, mutatingInPlace: cfg.mutateInPlace || false });
-    return [_serializeRecord(ctx.rootObj, 0, ctx, cfg.serializer) as S, cfg.bigNumsPresent(ctx)];
+    return [_serializeRecord({ ['']: ctx.rootObj }, 0, ctx, cfg.serializer)[''] as S, cfg.bigNumsPresent(ctx)];
   },
   deserializeRecord<S extends Schema | nullish>(obj: SomeDoc | nullish, raw: RawDataAPIResponse): S {
     if (obj === null || obj === undefined) {
       return obj as S;
     }
     const ctx = cfg.adaptDesCtx({ rootObj: obj, rawDataApiResp: raw, depth: 0 });
-    return _deserializeRecord(ctx.rootObj, 0, ctx, cfg.deserializer) as S;
+    return _deserializeRecord({ ['']: ctx.rootObj }, 0, ctx, cfg.deserializer)[''] as S;
   },
 });
 
