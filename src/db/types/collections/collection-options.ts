@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/documents/collections';
-import { DefaultIdOptions, IndexingOptions, VectorOptions } from '@/src/db';
+import { CollectionDefaultIdOptions, CollectionIndexingOptions, CollectionVectorOptions } from '@/src/db';
 
 /**
  * Represents the options for the createCollection command.
@@ -28,13 +28,13 @@ export interface CollectionOptions<Schema extends SomeDoc> {
   /**
    * Options related to vector search.
    */
-  vector?: VectorOptions,
+  vector?: CollectionVectorOptions,
   /**
    * Options related to indexing.
    */
-  indexing?: IndexingOptions<Schema>,
+  indexing?: CollectionIndexingOptions<Schema>,
   /**
    * Options related to the default ID.
    */
-  defaultId?: DefaultIdOptions,
+  defaultId?: CollectionDefaultIdOptions,
 }

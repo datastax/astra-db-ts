@@ -18,7 +18,7 @@ type DescribeImpl = (name: string, suite: SuiteBlock, opts: SuiteOptions | undef
 
 type ItImpl = (name: string, testFn: TestFn, skipped: boolean) => void;
 
-export interface GlobalAsyncSuiteSpec {
+export interface GlobalAsyncSuitesSpec {
   inBlock: boolean,
   suites: AsyncSuiteSpec[],
   describe: DescribeImpl,

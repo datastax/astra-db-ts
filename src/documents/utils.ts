@@ -15,7 +15,7 @@
 import { SomeDoc } from '@/src/documents/collections';
 import { Sort } from '@/src/documents/types';
 
-declare const __error: unique symbol;
+declare const $ERROR: unique symbol;
 
 /**
  * Represents some type-level error which forces immediate attention rather than failing at runtime.
@@ -35,7 +35,7 @@ declare const __error: unique symbol;
  *
  * @public
  */
-export type TypeErr<S> = { [__error]: S };
+export type TypeErr<S> = { [$ERROR]: S };
 
 /**
  * @internal
@@ -47,34 +47,19 @@ export function extractDbIdFromUrl(uri: string): string | undefined {
 /**
  * @internal
  */
+export function extractRegionFromUrl(uri: string): string | undefined {
+  return new URL(uri).hostname.split('-').slice(5).join('-').split('.')[0];
+}
+
+/**
+ * @internal
+ */
 export function replaceAstraUrlIdAndRegion(uri: string, id: string, region: string): string {
   const url = new URL(uri);
   const parts = url.hostname.split('.');
   parts[0] = id + '-' + region;
   url.hostname = parts.join('.');
   return url.toString().slice(0, -1);
-}
-
-/**
- * @internal
- */
-export function validateOption<T>(name: string, obj: T, types: string | string[], require: boolean = false, test?: (obj: NonNullable<T>) => void): void {
-  types = Array.isArray(types) ? types : [types];
-
-  const typesString = `[${types.join(', ')}]`;
-
-  if (obj === null || obj === undefined) {
-    if (require) {
-      throw new Error(`Missing required ${name}; expected a value of some type in ${typesString}`);
-    }
-    return;
-  }
-
-  if (!types.some(t => t === typeof obj)) {
-    throw new TypeError(`Invalid ${name}; expected a value of some type in ${typesString}, or undefined/null`);
-  }
-
-  test?.(obj);
 }
 
 /**

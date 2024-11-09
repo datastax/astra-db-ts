@@ -15,22 +15,24 @@
 import { GenericUpdateManyOptions, GenericUpdateResult, IdOf, SomeDoc } from '@/src/documents';
 
 /**
- * Represents the options for the updateMany command.
+ Options for an `updateMany` command on a collection.
  *
  * @field upsert - If true, perform an insert if no documents match the filter.
  * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
+ *
+ * @see Collection.updateMany
  *
  * @public
  */
 export type CollectionUpdateManyOptions = GenericUpdateManyOptions;
 
 /**
- * Represents the result of an updateMany operation.
+ * Represents the result of an `updateMany` command on a collection.
  *
  * @example
  * ```typescript
- * const result = await collections.updateOne({
- *   _id: 'abc'
+ * const result = await collections.updateMany({
+ *   name: 'Jane',
  * }, {
  *   $set: { name: 'John' }
  * }, {
@@ -38,7 +40,7 @@ export type CollectionUpdateManyOptions = GenericUpdateManyOptions;
  * });
  *
  * if (result.upsertedCount) {
- *   console.log(`Document with ID ${result.upsertedId} was upserted`);
+ *   console.log(`Document with ID ${JSON.stringify(result.upsertedId)} was upserted`);
  * }
  * ```
  *
@@ -46,6 +48,8 @@ export type CollectionUpdateManyOptions = GenericUpdateManyOptions;
  * @field modifiedCount - The number of documents that were actually modified.
  * @field upsertedCount - The number of documents that were upserted.
  * @field upsertedId - The identifier of the upserted document if `upsertedCount > 0`.
+ *
+ * @see Collection.updateMany
  *
  * @public
  */

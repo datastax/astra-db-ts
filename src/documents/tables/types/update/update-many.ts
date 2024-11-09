@@ -14,6 +14,16 @@
 
 import { GenericUpdateManyOptions, GenericUpdateResult, KeyOf, SomeRow } from '@/src/documents';
 
+/**
+ Options for an `updateMany` command on a table.
+ *
+ * @field upsert - If true, perform an insert if no rows match the filter.
+ * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
+ *
+ * @see Table.updateMany
+ *
+ * @public
+ */
 export type TableUpdateManyOptions = GenericUpdateManyOptions;
 
 export type TableUpdateManyResult<Schema extends SomeRow> = GenericUpdateResult<KeyOf<Schema>, number>;

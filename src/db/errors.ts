@@ -12,69 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIError } from '@/src/documents';
-
 /**
- * An exception thrown when certain operations are attempted on a collection that does not exist.
+ * An exception thrown when certain operations are attempted in a {@link DataAPIEnvironment} that is not valid.
  *
- * @field keyspace - The keyspace that the collection was not found in
- * @field collectionName - The name of the collection that was not found
- *
- * @public
+ * @field currentEnvironment - The environment that was attempted to be used
+ * @field expectedEnvironments - The environments that are valid for the operation
  */
-export class CollectionNotFoundError extends DataAPIError {
+export class InvalidEnvironmentError extends Error {
   /**
-   * The keyspace where the collection is not found.
+   * The environment that was attempted to be used.
    */
-  public readonly keyspace: string;
+  public readonly currentEnvironment: string;
 
   /**
-   * The name of the collection that is not found.
+   * The environments that are valid for the operation.
    */
-  public readonly collectionName: string;
+  public readonly expectedEnvironments: string[];
 
   /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  constructor(keyspace: string, collectionName: string) {
-    super(`Collection '${keyspace}.${collectionName}' not found`);
-    this.keyspace = keyspace;
-    this.collectionName = collectionName;
-    this.name = 'CollectionNotFoundError';
-  }
-}
-
-/**
- * An exception thrown when an operation that expects a collection not to exist is attempted on a collection that
- * already exists.
- *
- * @field keyspace - The keyspace where the collection already exists
- * @field collectionName - The name of the collection that already exists
- *
- * @public
- */
-export class CollectionAlreadyExistsError extends DataAPIError {
-  /**
-   * The keyspace where the collection already exists
-   */
-  public readonly keyspace: string;
-
-  /**
-   * The name of the collection that already exists
-   */
-  public readonly collectionName: string;
-
-  /**
-   * Should not be instantiated by the user.
-   *
-   * @internal
-   */
-  constructor(keyspace: string, collectionName: string) {
-    super(`Collection '${keyspace}.${collectionName}' already exists`);
-    this.keyspace = keyspace;
-    this.collectionName = collectionName;
-    this.name = 'CollectionAlreadyExistsError';
+  constructor(operation: string, currentEnvironment: string, expectedEnvironments: string[], extra = '') {
+    super(`Invalid environment '${currentEnvironment}' for operation '${operation}' ${extra ? `(${extra})` : ''}; expected environment(s): ${expectedEnvironments.map(e => `'${e}'`).join(', ')}`);
+    this.currentEnvironment = currentEnvironment;
+    this.expectedEnvironments = expectedEnvironments;
+    this.name = 'InvalidEnvironmentError';
   }
 }

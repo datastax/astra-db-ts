@@ -12,8 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { GenericUpdateOneOptions, GenericUpdateResult, KeyOf, SomeRow } from '@/src/documents';
+import { GenericUpdateOneOptions } from '@/src/documents';
 
+/**
+ * Options for an `updateOne` command on a table.
+ *
+ * @field upsert - If true, perform an insert if no rows match the filter.
+ * @field sort - The sort order to pick which row to update if the filter selects multiple rows.
+ * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
+ *
+ * @see Table.updateOne
+ *
+ * @public
+ */
 export type TableUpdateOneOptions = GenericUpdateOneOptions;
-
-export type TableUpdateOneResult<Schema extends SomeRow> = GenericUpdateResult<KeyOf<Schema>, 0 | 1>;

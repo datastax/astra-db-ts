@@ -26,3 +26,8 @@ export type {
   RawDataAPIResponse,
   CuratedAPIResponse,
 } from './types';
+
+export type {
+  DataAPISerCtx,
+  DataAPIDesCtx,
+} from './ser-des';

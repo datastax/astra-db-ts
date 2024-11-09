@@ -12,6 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/**
+ * Shouldn't be used by the user directly.
+ *
+ * @internal
+ */
 export interface GenericInsertOneResult<ID> {
   insertedId: ID,
 }

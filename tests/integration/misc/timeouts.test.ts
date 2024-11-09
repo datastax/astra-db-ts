@@ -32,7 +32,7 @@ import { HttpMethods } from '@/src/lib/api/constants';
 parallel('integration.misc.timeouts', ({ collection, dbAdmin }) => {
   describe('in data-api', () => {
     it('should timeout @ the http-client level', async () => {
-      const httpClient = collection['_httpClient'];
+      const httpClient = collection._httpClient;
 
       await assert.rejects(async () => {
         await httpClient.executeCommand({ findOne: { filter: {} } }, { maxTimeMS: 5 });
@@ -40,7 +40,7 @@ parallel('integration.misc.timeouts', ({ collection, dbAdmin }) => {
     });
 
     it('should timeout @ the http-client level if timeout is negative', async () => {
-      const httpClient = collection['_httpClient'];
+      const httpClient = collection._httpClient;
 
       await assert.rejects(async () => {
         await httpClient.executeCommand({ findOne: { filter: {} } }, { maxTimeMS: -1 });
@@ -80,7 +80,7 @@ parallel('integration.misc.timeouts', ({ collection, dbAdmin }) => {
 
   describe('(ASTRA) in devops', () => {
     it('should timeout @ the http-client level', async () => {
-      const httpClient = (<any>dbAdmin)['_httpClient'];
+      const httpClient = (<any>dbAdmin)._httpClient;
 
       await assert.rejects(async () => {
         await httpClient.request({ method: HttpMethods.Get, path: '/databases' }, { maxTimeMS: 5 });

@@ -15,7 +15,49 @@
 import { SomeDoc, ToDotNotation } from '@/src/documents';
 import { TypeErr } from '@/src/documents/utils';
 import { IsDate, IsNum } from '@/src/documents/types/utils';
-
+// The following is some basic usage of the update operators, but please view the above resources for more comprehensive usage (such a pushing multiple docs to an array)
+//
+// @example
+//   ```ts
+// // Set the value of a field (or create it if it doesn't exist)
+// await collection.updateOne({ name: 'John Doe' }, { $set: { name: 'Jane Doe' } });
+//
+// // Set the value of a field if an upsert is performed
+// await collection.updateOne({ a: 0 }, { $setOnInsert: { b: 1 } }, { upsert: true });
+//
+// // Remove a field from the document (if it exists)
+// await collection.updateOne({ name: 'John Doe' }, { $unset: { name: '' } });
+//
+// // Increment the value of a field
+// await collection.updateOne({ name: 'John Doe' }, { $inc: { age: 1 } });
+//
+// // Decrement the value of a field
+// await collection.updateOne({ name: 'John Doe' }, { $inc: { age: -1 } });
+//
+// // Add an element to an array field
+// await collection.updateOne({ name: 'John Doe' }, { $push: { friends: 'Emily' } });
+//
+// // Remove an element from an array field
+// await collection.updateOne({ name: 'John Doe' }, { $pop: { friends: 1 } });
+//
+// // Rename a field in the document
+// await collection.updateOne({ name: 'John Doe' }, { $rename: { name: 'fullName' } });
+//
+// // Set the value of a field to the current date
+// await collection.updateOne({ name: 'John Doe' }, { $currentDate: { now: true } });
+//
+// // Set the field to the min of the specified value and the existing value
+// await collection.updateOne({ name: 'John Doe' }, { $min: { age: 21 } });
+//
+// // Set the field to the max of the specified value and the existing value
+// await collection.updateOne({ name: 'John Doe' }, { $max: { age: 21 } });
+//
+// // Multiply the value of a field by some number
+// await collection.updateOne({ name: 'John Doe' }, { $mul: { age: 2 } });
+//
+// // Add an element to an array field if it does not already exist
+// await collection.updateOne({ name: 'John Doe' }, { $addToSet: { fields: 'Me' } });
+// ```
 /**
  * Represents the update filter to specify how to update a document.
  *

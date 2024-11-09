@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPILoggingConfig, TokenProvider } from '@/src/lib';
+import { DataAPILoggingConfig, TokenProvider } from '@/src/lib';
+import { CollectionSerDesConfig, SomeDoc, SomeRow, TableSerDesConfig } from '@/src/documents';
 
 export type DefaultDbSpawnOptions = Omit<DbSpawnOptions, 'logging'>;
 
@@ -24,6 +25,13 @@ export type DefaultDbSpawnOptions = Omit<DbSpawnOptions, 'logging'>;
  * @public
  */
 export interface DbSpawnOptions {
+  /**
+   * The configuration for logging events emitted by the {@link DataAPIClient}.
+   *
+   * This can be set at any level of the major class hierarchy, and will be inherited by all child classes.
+   *
+   * See {@link DataAPILoggingConfig} for *much* more information on configuration, outputs, and inheritance.
+   */
   logging?: DataAPILoggingConfig,
   /**
    * The keyspace to use for the database.
@@ -93,4 +101,171 @@ export interface DbSpawnOptions {
    * @defaultValue 'api/json/v1'
    */
   dataApiPath?: string,
+  serdes?: DbSerDesConfig,
+  /**
+   * Additional headers to include in the HTTP requests to the DevOps API.
+   *
+   * @remarks
+   * There are more than likely more official/structured ways to set any desired headers, such as through
+   * {@link TokenProvider}s or {@link EmbeddingHeadersProvider}s. This is more of a last-resort option, such
+   * as for enabling feature-flags or other non-standard headers.
+   */
+  additionalHeaders?: Record<string, string>,
+}
+
+/**
+ * ##### Overview
+ *
+ * The config for common table/collection serialization/deserialization logic.
+ *
+ * Such custom logic may be used for various purposes, such as:
+ * - Integrating your own custom data types
+ * - Validating data before it's sent to the database, or after it's received
+ * - Adding support for datatypes not yet supported by the client
+ *
+ * ##### Disclaimer
+ *
+ * This is an advanced, somewhat backdoor-y feature, and should be used with caution, and heavily tested. Buggy logic could
+ * lead to data loss/corruption, or other unexpected behavior.
+ *
+ * This is also a very `astra-db-ts`-specific feature, and may not be supported by other clients.
+ *
+ * ##### Table/Collection-specific configuration
+ *
+ * This object is used for config you'd want to use across all of your spawned tables/collections; if you want to configure
+ * `serdes` for a specific {@link Table}/{@link Collection}, you can do so in their respective options objects.
+ *
+ * See {@link CollectionSerDesConfig} and {@link TableSerDesConfig} for information on how to implement your own ser/des logic.
+ *
+ * The `serdes` config in each child object is deep-merged with the config of its parent, with the child's config taking precedence.
+ *
+ * @example
+ * ```ts
+ * const client = new DataAPIClient('*TOKEN*', {
+ *   dbOptions: {
+ *     serdes: {
+ *       table { serialize() {} }, // serializer1
+ *     },
+ *   },
+ * });
+ *
+ * const db = client.db('*ENDPOINT*', {
+ *   serdes: {
+ *     table: { serialize() {} }, // serializer2
+ *   },
+ * });
+ *
+ * // table will use all serializers, in this order:
+ * // [serializer3, serializer2, serializer1, DefaultSerializer]
+ * const table = client.table('*NAME*', {
+ *   serdes: {
+ *     table: { serialize() {} }, // serializer3
+ *   },
+ * });
+ * ```
+ *
+ * ##### Example
+ *
+ * See {@link CollectionSerDesConfig} & {@link TableSerDesConfig} for more examples & much more information, but here's a quick example:
+ *
+ * @example
+ * ```ts
+ * import { $SerializeForCollections, ... } from '@datastax/astra-db-ts';
+ *
+ * // Custom datatype
+ * class UserID {
+ *   constructor(public readonly unwrap: string) {}
+ *   [$SerializeForCollections] = () => this.unwrap; // Serializer checks for this symbol
+ * }
+ *
+ * // Schema type of the collection, using the custom datatype
+ * interface User {
+ *   _id: UserID,
+ *   name: string,
+ * }
+ *
+ * const collection = db.collection<User>('users', {
+ *   serdes: { // Serializer not necessary here since `$SerializeForCollections` is used
+ *     deserialize(key, value) {
+ *       if (key === '_id') return [new UserID(value)]; // [X] specifies a new value
+ *     },
+ *   },
+ * });
+ *
+ * const inserted = await collection.insertOne({
+ *   _id: new UserID('123'), // will be stored in db as '123'
+ *   name: 'Alice',
+ * });
+ *
+ * console.log(inserted.insertedId.unwrap); // '123'
+ * ```
+ *
+ * @field table - Default configuration for table serialization/deserialization.
+ * @field collection - Default configuration for collection serialization/deserialization.
+ * @field mutateInPlace - An optimization for inserted records to be mutated in-place when serializing.
+ *
+ * @see CollectionSerDesConfig
+ * @see TableSerDesConfig
+ * @see $SerializeForCollections
+ * @see $SerializeForTables
+ *
+ * @public
+ */
+export interface DbSerDesConfig {
+  table?: Omit<TableSerDesConfig<SomeRow>, 'mutateInPlace'>,
+  collection?: Omit<CollectionSerDesConfig<SomeDoc>, 'mutateInPlace'>,
+  /**
+   * ##### Overview
+   *
+   * Enables an optimization which allows inserted rows/documents to be mutated in-place when serializing.
+   *
+   * ##### Context
+   *
+   * For example, when you insert a record like so:
+   * ```ts
+   * import { UUID } from '@datastax/astra-db-ts';
+   * await collection.insertOne({ name: 'Alice', friends: { john: new UUID('...') } });
+   * ```
+   *
+   * The document is internally serialized as such:
+   * ```ts
+   * { name: 'Alice', friends: { john: { $uuid: '...' } } }
+   * ```
+   *
+   * To avoid mutating a user-provided object, the client will be forced to clone any objects that contain
+   * a custom datatype, as well as their parents (which looks something like this):
+   * ```ts
+   * { ...original, friends: { ...original.friends, john: { $uuid: '...' } } }
+   * ```
+   *
+   * ##### Enabling this option
+   *
+   * This can be a minor performance hit, especially for large objects, so if you're confident that you won't be
+   * needing the object after it's inserted, you can enable this option to avoid the cloning, and instead mutate
+   * the object in-place.
+   *
+   * @example
+   * ```ts
+   * // Before
+   * const collection = db.collection<User>('users');
+   *
+   * const doc = { name: 'Alice', friends: { john: UUID.v4() } };
+   * await collection.insertOne(doc);
+   *
+   * console.log(doc); // { name: 'Alice', friends: { john: UUID<4>('...') } }
+   *
+   * // After
+   * const collection = db.collection<User>('users', {
+   *   serdes: { mutateInPlace: true },
+   * });
+   *
+   * const doc = { name: 'Alice', friends: { john: UUID.v4() } };
+   * await collection.insertOne(doc);
+   *
+   * console.log(doc); // { name: 'Alice', friends: { john: { $uuid: '...' } } }
+   * ```
+   *
+   * @defaultValue false
+   */
+  mutateInPlace?: boolean,
 }

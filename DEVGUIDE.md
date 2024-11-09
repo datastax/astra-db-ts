@@ -68,6 +68,9 @@ The API for the test script is as the following:
 6.  [-R | -no-report]
 7.  [-c <http_client>] 
 8.  [-e <environment>]
+9.  [-stargate]
+10. [-l | -logging]
+11. [-P | -skip-prelude]
 ```
 
 #### 1. The test file (`scripts/test.sh`)
@@ -155,6 +158,20 @@ is one of `default:http1`, `default:http2`, or `fetch`.
 By default, `astra-db-ts` assumes you're running on Astra, but you can specify the Data API environment through this
 flag. It should be one of `dse`, `hcd`, `cassandra`, or `other`. You can also provide `astra`, but it wouldn't really
 do anything. But I'm not the boss of you; you can make your own big-boy/girl/other decisions.
+
+#### 9. Running the tests on Stargate (`[-stargate]`)
+
+If you're running the tests on a local Stargate instance, you can use this flag to set the `CLIENT_DB_URL` to
+`http://localhost:8080` and the `CLIENT_DB_TOKEN` to `cassandra:cassandra` without needing to modify your `.env` file.
+
+#### 10. Logging (`[-l | -logging]`)
+
+Logs all `[admin]CommandStarted` & `[admin]CommandFailed` events to the console. Useful for debugging.
+
+#### 11. Skipping the prelude (`[-P | -skip-prelude]`)
+
+By default, the test script will run a "prelude" script that sets up the database for the tests. This can be skipped
+to save some time, using this flag, if the DB is already setup (enough), and you just want to run a test really quickly.
 
 ### Test tags
 

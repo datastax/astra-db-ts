@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIClientEvents, DataAPIEnvironment, DataAPILoggingOutput, TokenProvider } from '@/src/lib';
-import TypedEmitter from 'typed-emitter';
-import { FetchCtx } from '@/src/lib/api/fetch/types';
-import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
-import { NormalizedLoggingConfig } from '@/src/lib/logging/types';
+import type { DataAPIClientEvents, DataAPIEnvironment, DataAPILoggingOutput, TokenProvider } from '@/src/lib';
+import type TypedEmitter from 'typed-emitter';
+import type { FetchCtx } from '@/src/lib/api/fetch/types';
+import type { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
+import type { NormalizedLoggingConfig } from '@/src/lib/logging/types';
 
 /**
  * @internal

@@ -25,7 +25,7 @@ import { nullish } from '@/src/lib';
  *
  * @public
  */
-export interface VectorOptions {
+export interface CollectionVectorOptions {
   /**
    * The dimension of the vectors stored in the collections.
    *
@@ -133,7 +133,7 @@ export interface VectorizeServiceOptions {
  *
  * @public
  */
-export type IndexingOptions<Schema extends SomeDoc> =
+export type CollectionIndexingOptions<Schema extends SomeDoc> =
   | { allow: (keyof ToDotNotation<Schema>)[] | ['*'], deny?:  never }
   | { deny:  (keyof ToDotNotation<Schema>)[] | ['*'], allow?: never }
 
@@ -146,7 +146,7 @@ export type IndexingOptions<Schema extends SomeDoc> =
  *
  * @public
  */
-export interface DefaultIdOptions {
+export interface CollectionDefaultIdOptions {
   /**
    * The type of the default ID that the API should generate if no ID is provided in the inserted document.
    *

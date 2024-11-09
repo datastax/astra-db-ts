@@ -22,8 +22,8 @@ import { backgroundTestState, TEST_FILTER } from '@/tests/testlib';
 
 export type TestFn = SyncTestFn | AsyncTestFn;
 
-type SyncTestFn = (key: string) => void;
-type AsyncTestFn = (key: string) => Promise<void>;
+type SyncTestFn = (...keys: string[]) => void;
+type AsyncTestFn = (...keys: string[]) => Promise<void>;
 
 interface TaggableTestFunction {
   (name: string, fn: SyncTestFn): Mocha.Test | null;
@@ -55,7 +55,9 @@ it = function (name: string, testFn: TestFn) {
       this.skip();
     }
     this.timeout(DEFAULT_TEST_TIMEOUT);
-    return testFn(UUID.v4().toString());
+
+    const keys = Array.from({ length: testFn.length }, () => UUID.v4().toString());
+    return testFn(...keys);
   }
 
   return global.it(name, modifiedFn);
