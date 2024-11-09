@@ -13,9 +13,9 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { InternalLoggingConfig } from '@/src/client/types/internal';
-import { DataAPIClientEvents, DataAPILoggingConfig, NormalizedLoggingConfig } from '@/src/lib/logging/types';
-import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents';
+import type { InternalLoggingConfig } from '@/src/client/types/internal';
+import type { DataAPIClientEvents, DataAPILoggingConfig, NormalizedLoggingConfig } from '@/src/lib/logging/types';
+import type { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents';
 import type {
   AdminCommandFailedEvent,
   AdminCommandPollingEvent,
@@ -31,9 +31,9 @@ import {
   LoggingEventsWithoutAll,
 } from '@/src/lib/logging/constants';
 import { buildOutputsMap } from '@/src/lib/logging/util';
-import TypedEventEmitter from 'typed-emitter';
+import type TypedEventEmitter from 'typed-emitter';
 import { parseLoggingConfig } from '@/src/lib/logging/parser';
-import { DataAPIClientEvent } from '@/src/lib/logging/events';
+import type { DataAPIClientEvent } from '@/src/lib';
 
 interface ConsoleLike {
   log: (...args: any[]) => void;

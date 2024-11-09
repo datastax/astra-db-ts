@@ -15,17 +15,15 @@
 import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.documents.collections.find-one-and-delete', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.find-one-and-delete', { truncate: 'colls:before' }, ({ collection }) => {
   it('should findOneAndDelete', async () => {
     const res = await collection.insertOne({ name: 'kamelot' });
     const docId = res.insertedId;
     const resp = await collection.findOneAndDelete(
       { '_id': docId },
-      { includeResultMetadata: true },
     );
-    assert.strictEqual(resp.ok, 1);
-    assert.strictEqual(resp.value?._id, docId);
-    assert.strictEqual(resp.value.name, 'kamelot');
+    assert.strictEqual(resp?._id, docId);
+    assert.strictEqual(resp.name, 'kamelot');
   });
 
   it('should findOneAndDelete with a projection', async (key) => {
@@ -37,10 +35,10 @@ parallel('integration.documents.collections.find-one-and-delete', { truncateColl
 
     const res = await collection.findOneAndDelete(
       { name: 'a', key },
-      { projection: { name: 1 }, includeResultMetadata: true },
+      { projection: { name: 1 } },
     );
-    assert.strictEqual(res.value?.name, 'a');
-    assert.strictEqual(res.value.age, undefined);
+    assert.strictEqual(res?.name, 'a');
+    assert.strictEqual(res.age, undefined);
   });
 
   it('should findOneAndDelete with sort', async (key) => {
@@ -52,15 +50,15 @@ parallel('integration.documents.collections.find-one-and-delete', { truncateColl
 
     const res1 = await collection.findOneAndDelete(
       { key },
-      { sort: { name: 1 }, includeResultMetadata: true },
+      { sort: { name: 1 } },
     );
-    assert.strictEqual(res1.value?.name, 'a');
+    assert.strictEqual(res1?.name, 'a');
 
     const res2 = await collection.findOneAndDelete(
       { key },
-      { sort: { name: -1 }, includeResultMetadata: true },
+      { sort: { name: -1 } },
     );
-    assert.deepStrictEqual(res2.value?.name, 'c');
+    assert.deepStrictEqual(res2?.name, 'c');
   });
 
   it('should not return metadata when includeResultMetadata is false', async (key) => {
@@ -68,7 +66,6 @@ parallel('integration.documents.collections.find-one-and-delete', { truncateColl
 
     const res = await collection.findOneAndDelete(
       { name: 'a', key },
-      { includeResultMetadata: false },
     );
 
     assert.deepStrictEqual(res, { _id: res?._id, name: 'a', key });
@@ -93,8 +90,8 @@ parallel('integration.documents.collections.find-one-and-delete', { truncateColl
 
     const res = await collection.findOneAndDelete(
       { key },
-      { sort: { $vector: [1, 1, 1, 1, 1] }, includeResultMetadata: true },
+      { sort: { $vector: [1, 1, 1, 1, 1] } },
     );
-    assert.strictEqual(res.value?.name, 'a');
+    assert.strictEqual(res?.name, 'a');
   });
 });

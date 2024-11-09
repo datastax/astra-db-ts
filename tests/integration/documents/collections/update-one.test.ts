@@ -15,7 +15,7 @@
 import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.documents.collections.update-one', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.update-one', { truncate: 'colls:before' }, ({ collection }) => {
   it('should updateOne document by id', async (key) => {
     const insertDocResp = await collection.insertOne({ age: 3, key });
     const idToCheck = insertDocResp.insertedId;

@@ -13,6 +13,16 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
+/**
+ * The base class of all events that may be emitted/logged by the {@link DataAPIClient}.
+ *
+ * See {@link DataAPIClientEvents} & {@link DataAPILoggingConfig} for much more info.
+ *
+ * @public
+ */
 export abstract class DataAPIClientEvent {
+  /**
+   * Returns the event in a formatted string, as it would be logged to stdout/stderr (if enabled).
+   */
   public abstract formatted(): string;
 }

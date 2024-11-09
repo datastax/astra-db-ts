@@ -13,8 +13,8 @@
 // limitations under the License.
 // noinspection JSDeprecatedSymbols
 
-import TypedEmitter from 'typed-emitter';
-import {
+import type TypedEmitter from 'typed-emitter';
+import type {
   AdminSpawnOptions,
   CustomHttpClientOptions,
   DataAPIClientOptions,
@@ -22,20 +22,21 @@ import {
   DefaultHttpClientOptions,
 } from '@/src/client/types';
 import { LIB_NAME } from '@/src/version';
-import { InternalRootClientOpts } from '@/src/client/types/internal';
-import { DataAPIClientEvents, Fetcher, FetchH2, FetchNative, nullish, TokenProvider } from '@/src/lib';
+import type { InternalRootClientOpts } from '@/src/client/types/internal';
+import { type DataAPIClientEvents, type Fetcher, FetchH2, FetchNative, type nullish, TokenProvider } from '@/src/lib';
 import { buildUserAgent } from '@/src/lib/api/clients/http-client';
-import { Db } from '@/src/db';
+import { Db, InvalidEnvironmentError } from '@/src/db';
 import { AstraAdmin } from '@/src/administration';
-import { FetchCtx } from '@/src/lib/api/fetch/types';
+import type { FetchCtx } from '@/src/lib/api/fetch/types';
 import { isNullish } from '@/src/lib/utils';
-import { p, Parser } from '@/src/lib/validation';
+import { p, type Parser } from '@/src/lib/validation';
 import { parseCaller } from '@/src/client/parsers/caller';
 import { Logger } from '@/src/lib/logging/logger';
 import { parseEnvironment } from '@/src/client/parsers/environment';
 import { parseHttpOpts } from '@/src/client/parsers/http-opts';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
+import { $CustomInspect } from '@/src/lib/constants';
 
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
@@ -175,6 +176,10 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
     if (Symbol.asyncDispose) {
       this[Symbol.asyncDispose] = () => this.close();
     }
+
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `DataAPIClient(env="${this.#options.environment}")`,
+    });
   }
 
   /**
@@ -240,6 +245,9 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * @returns A new {@link AstraAdmin} instance.
    */
   public admin(options?: AdminSpawnOptions): AstraAdmin {
+    if (this.#options.environment !== 'astra') {
+      throw new InvalidEnvironmentError('admin', this.#options.environment, ['astra'], 'AstraAdmin is only available for Astra databases');
+    }
     return new AstraAdmin(this.#options, options);
   }
 
@@ -300,7 +308,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
 
 function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
   const clientType = (options?.httpOptions)
-    ? options?.httpOptions?.client ?? 'default'
+    ? options.httpOptions?.client ?? 'default'
     : undefined;
 
   const ctx =

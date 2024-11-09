@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { isNonEmpty, p, Parser } from '@/src/lib/validation';
-import {
+import type {
   DataAPIExplicitLoggingConfig,
   DataAPILoggingConfig,
   DataAPILoggingEvent,

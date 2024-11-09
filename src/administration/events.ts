@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client';
-import { DataAPIErrorDescriptor } from '@/src/documents';
+import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client';
+import type { DataAPIErrorDescriptor } from '@/src/documents';
+// import { DataAPIClientEvent } from '@/src/lib/logging/events'; needs to be like this or it errors
 import { DataAPIClientEvent } from '@/src/lib/logging/events';
 
 /**
@@ -86,10 +87,6 @@ export abstract class AdminCommandEvent extends DataAPIClientEvent {
     this.params = info.params;
     this.longRunning = longRunning;
   }
-
-  formatted(): string {
-    return JSON.stringify(this);
-  }
 }
 
 /**
@@ -115,8 +112,8 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
     this.timeout = timeout;
   }
 
-  formatted(): string {
-    return JSON.stringify(this);
+  public formatted(): string {
+    return `[AdminCommandStartedEvent]: ${this.method} ${this.path}${this.params ? '?' : ''}${new URLSearchParams(this.params).toString()} ${this.longRunning ? '(blocking)' : ''} ${this.reqBody ? JSON.stringify(this.reqBody) : ''}`;
   }
 }
 
@@ -141,18 +138,24 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
   public readonly interval: number;
 
   /**
+   * The number of times polled so far
+   */
+  public readonly pollCount: number;
+
+  /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  constructor(info: DevOpsAPIRequestInfo, started: number, interval: number) {
+  constructor(info: DevOpsAPIRequestInfo, started: number, interval: number, pollCount: number) {
     super(info, true);
     this.elapsed = performance.now() - started;
     this.interval = interval;
+    this.pollCount = pollCount;
   }
 
-  formatted(): string {
-    return JSON.stringify(this);
+  public formatted(): string {
+    return `[AdminCommandPollingEvent]: ${this.method} ${this.path}${this.params ? '?' : ''}${new URLSearchParams(this.params).toString()} (poll #${this.pollCount}; ${this.elapsed}ms elapsed)`;
   }
 }
 
@@ -185,8 +188,8 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
     this.resBody = data || undefined;
   }
 
-  formatted(): string {
-    return JSON.stringify(this);
+  public formatted(): string {
+    return `[AdminCommandSucceededEvent]: ${this.method} ${this.path}${this.params ? '?' : ''}${new URLSearchParams(this.params).toString()}} ${this.reqBody ? JSON.stringify(this.reqBody) : ''} (took ${this.duration}ms)`;
   }
 }
 
@@ -222,8 +225,8 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
     this.error = error;
   }
 
-  formatted(): string {
-    return JSON.stringify(this);
+  public formatted(): string {
+    return `[AdminCommandFailedEvent]: ${this.method} ${this.path}${this.params ? '?' : ''}${new URLSearchParams(this.params).toString()} ${this.reqBody ? JSON.stringify(this.reqBody) : ''} (took ${this.duration}ms) - '${this.error.message}'`;
   }
 }
 
@@ -236,6 +239,6 @@ export class AdminCommandWarningsEvent extends AdminCommandEvent {
   }
 
   formatted(): string {
-    return JSON.stringify(this);
+    return `[AdminCommandWarningsEvent]: ${this.method} ${this.path}${this.params ? '?' : ''}${new URLSearchParams(this.params).toString()} ${this.reqBody ? JSON.stringify(this.reqBody) : ''} - '${this.warnings.map(w => w.message).join(', ')}'`;
   }
 }

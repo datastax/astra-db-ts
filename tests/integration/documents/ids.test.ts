@@ -15,15 +15,15 @@
 
 import assert from 'assert';
 import { ObjectId, UUID } from '@/src/documents';
-import { createCollections, DEFAULT_COLLECTION_NAME, EPHEMERAL_COLLECTION_NAME, it, parallel } from '@/tests/testlib';
+import { useSuiteResources, DEFAULT_COLLECTION_NAME, it, parallel } from '@/tests/testlib';
 
-parallel('(LONG) integration.documents.ids', { dropEphemeral: 'after' }, ({ db }) => {
-  const collections = createCollections(() => ({
+parallel('(LONG) integration.documents.ids', { dropEphemeral: 'colls:after' }, ({ db }) => {
+  const collections = useSuiteResources(() => ({
     default: db.collection(DEFAULT_COLLECTION_NAME).deleteMany({}).then(_ => db.collection(DEFAULT_COLLECTION_NAME)),
-    uuid: db.createCollection(`${EPHEMERAL_COLLECTION_NAME}_uuid`, { checkExists: false, defaultId: { type: 'uuid' } }),
-    uuidv6: db.createCollection(`${EPHEMERAL_COLLECTION_NAME}_uuidv6`, { checkExists: false, defaultId: { type: 'uuidv6' } }),
-    uuidv7: db.createCollection(`${EPHEMERAL_COLLECTION_NAME}_uuidv7`, { checkExists: false, defaultId: { type: 'uuidv7' } }),
-    objectId: db.createCollection(`${EPHEMERAL_COLLECTION_NAME}_objectId`, { checkExists: false, defaultId: { type: 'objectId' } }),
+    uuid: db.createCollection(`${DEFAULT_COLLECTION_NAME}_uuid`, { defaultId: { type: 'uuid' } }),
+    uuidv6: db.createCollection(`${DEFAULT_COLLECTION_NAME}_uuidv6`, { defaultId: { type: 'uuidv6' } }),
+    uuidv7: db.createCollection(`${DEFAULT_COLLECTION_NAME}_uuidv7`, { defaultId: { type: 'uuidv7' } }),
+    objectId: db.createCollection(`${DEFAULT_COLLECTION_NAME}_objectId`, { defaultId: { type: 'objectId' } }),
   }));
 
   it('default id is not in listCollections', async () => {
@@ -44,7 +44,7 @@ parallel('(LONG) integration.documents.ids', { dropEphemeral: 'after' }, ({ db }
 
   it('uuid is set in listCollections', async () => {
     const collections = await db.listCollections();
-    const collection = collections.find(c => c.name === `${EPHEMERAL_COLLECTION_NAME}_uuid`);
+    const collection = collections.find(c => c.name === `${DEFAULT_COLLECTION_NAME}_uuid`);
     assert.ok(collection);
     assert.deepStrictEqual(collection.options, { defaultId: { type: 'uuid' } });
   });
@@ -62,7 +62,7 @@ parallel('(LONG) integration.documents.ids', { dropEphemeral: 'after' }, ({ db }
 
   it('uuidv6 is set in listCollections', async () => {
     const collections = await db.listCollections();
-    const collection = collections.find(c => c.name === `${EPHEMERAL_COLLECTION_NAME}_uuidv6`);
+    const collection = collections.find(c => c.name === `${DEFAULT_COLLECTION_NAME}_uuidv6`);
     assert.ok(collection);
     assert.deepStrictEqual(collection.options, { defaultId: { type: 'uuidv6' } });
   });
@@ -80,7 +80,7 @@ parallel('(LONG) integration.documents.ids', { dropEphemeral: 'after' }, ({ db }
 
   it('uuidv7 is set in listCollections', async () => {
     const collections = await db.listCollections();
-    const collection = collections.find(c => c.name === `${EPHEMERAL_COLLECTION_NAME}_uuidv7`);
+    const collection = collections.find(c => c.name === `${DEFAULT_COLLECTION_NAME}_uuidv7`);
     assert.ok(collection);
     assert.deepStrictEqual(collection.options, { defaultId: { type: 'uuidv7' } });
   });
@@ -98,7 +98,7 @@ parallel('(LONG) integration.documents.ids', { dropEphemeral: 'after' }, ({ db }
 
   it('objectId is set in listCollections', async () => {
     const collections = await db.listCollections();
-    const collection = collections.find(c => c.name === `${EPHEMERAL_COLLECTION_NAME}_objectId`);
+    const collection = collections.find(c => c.name === `${DEFAULT_COLLECTION_NAME}_objectId`);
     assert.ok(collection);
     assert.deepStrictEqual(collection.options, { defaultId: { type: 'objectId' } });
   });

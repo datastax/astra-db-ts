@@ -24,11 +24,11 @@ import {
   TEST_FILTER,
 } from '@/tests/testlib';
 import { UUID } from '@/src/documents';
-import { AsyncSuiteResult, GlobalAsyncSuiteSpec } from '@/tests/testlib/test-fns/types';
+import { AsyncSuiteResult, GlobalAsyncSuitesSpec } from '@/tests/testlib/test-fns/types';
 
 const mkDefaultSuite = () => ({ name: undefined, skipped: false, tests: [] });
 
-export const parallelTestState: GlobalAsyncSuiteSpec  = {
+export const parallelTestState: GlobalAsyncSuitesSpec  = {
   suites: [mkDefaultSuite()],
   inBlock: false,
   describe(name, fn, opts, skipped, fixtures) {
@@ -101,9 +101,10 @@ parallel = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
           }
 
           const startTime = performance.now();
+          const uuids = Array.from({ length: test.testFn.length }, () => UUID.v4().toString());
 
           return {
-            error: await tryCatchErr(() => test.testFn(UUID.v4().toString())),
+            error: await tryCatchErr(() => test.testFn(...uuids)),
             ms: performance.now() - startTime,
           };
         });

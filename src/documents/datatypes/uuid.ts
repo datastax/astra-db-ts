@@ -13,6 +13,9 @@
 // limitations under the License.
 
 import { UUID as UUIDv7, uuidv4, uuidv7 } from 'uuidv7';
+import { $CustomInspect } from '@/src/lib/constants';
+import { $SerializeForCollection } from '@/src/documents/collections/ser-des';
+import { $SerializeForTable } from '@/src/documents/tables/ser-des';
 
 const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
 
@@ -63,7 +66,10 @@ export class UUID {
    */
   public readonly version!: number;
 
-  private readonly _raw!: string;
+  readonly #raw: string;
+
+  public [$SerializeForCollection] = () => ({ $uuid: this.#raw });
+  public [$SerializeForTable] = this.toString;
 
   /**
    * Creates a new UUID instance.
@@ -84,14 +90,14 @@ export class UUID {
       }
     }
 
-    Object.defineProperty(this, '_raw', {
-      value: uuid.toLowerCase(),
-      writable: false,
-    });
+    this.#raw = uuid.toLowerCase();
 
     Object.defineProperty(this, 'version', {
-      value: parseInt(this._raw[14], 16),
-      writable: false,
+      value: parseInt(this.#raw[14], 16),
+    });
+
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `UUID<${this.version}>("${this.#raw}")`,
     });
   }
 
@@ -108,10 +114,10 @@ export class UUID {
    */
   public equals(other: unknown): boolean {
     if (typeof other === 'string') {
-      return this._raw === other;
+      return this.#raw === other.toLowerCase();
     }
     if (other instanceof UUID) {
-      return this._raw === other._raw;
+      return this.#raw === other.#raw;
     }
     return false;
   }
@@ -129,7 +135,7 @@ export class UUID {
    * Returns the string representation of the UUID in lowercase.
    */
   public toString(): string {
-    return this._raw;
+    return this.#raw;
   }
 
   /**
@@ -144,15 +150,6 @@ export class UUID {
    */
   public static v7(): UUID {
     return new UUID(uuidv7(), false);
-  }
-
-  /**
-   * Converts the UUID to a JSON representation.
-   *
-   * Serializes to `{ $uuid: 'uuid' }`.
-   */
-  public toJSON() {
-    return { $uuid: this.toString() };
   }
 }
 

@@ -15,7 +15,7 @@
 import { GenericUpdateOneOptions, GenericUpdateResult, IdOf, SomeDoc } from '@/src/documents';
 
 /**
- * Represents the options for the updateOne command.
+ * Options for an `updateOne` command on a collection.
  *
  * @field upsert - If true, perform an insert if no documents match the filter.
  * @field sort - The sort order to pick which document to update if the filter selects multiple documents.
@@ -28,7 +28,7 @@ import { GenericUpdateOneOptions, GenericUpdateResult, IdOf, SomeDoc } from '@/s
 export type CollectionUpdateOneOptions = GenericUpdateOneOptions;
 
 /**
- * Represents the result of an updateOne operation.
+ * Represents the result of an `updateOne` command on a collection.
  *
  * @example
  * ```typescript
@@ -41,7 +41,7 @@ export type CollectionUpdateOneOptions = GenericUpdateOneOptions;
  * });
  *
  * if (result.upsertedCount) {
- *   console.log(`Document with ID ${result.upsertedId} was upserted`);
+ *   console.log(`Document with ID ${JSON.stringify(result.upsertedId)} was upserted`);
  * }
  * ```
  *

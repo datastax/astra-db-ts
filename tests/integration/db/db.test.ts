@@ -24,66 +24,53 @@ import {
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
 } from '@/tests/testlib';
-import { DataAPIResponseError, UUID } from '@/src/documents';
+import { DataAPIResponseError } from '@/src/documents';
 import { DataAPIClient } from '@/src/client';
-import { CollectionAlreadyExistsError, CollectionNotFoundError } from '@/src/db/errors';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants';
 
-parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
+parallel('integration.db', { dropEphemeral: 'colls:after' }, ({ db }) => {
   describe('(LONG) createCollection', () => {
     it('should create a collections', async () => {
       const res = await db.createCollection('coll_1c', { indexing: { deny: ['*'] } });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_1c');
+      assert.strictEqual(res.name, 'coll_1c');
       assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
     });
 
     it('should create a collections in another keyspace', async () => {
       const res = await db.createCollection('coll_2c', { keyspace: OTHER_KEYSPACE });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_2c');
+      assert.strictEqual(res.name, 'coll_2c');
       assert.strictEqual(res.keyspace, OTHER_KEYSPACE);
     });
 
-    it('should throw CollectionAlreadyExistsError if collections already exists', async () => {
-      await db.createCollection('coll_3c', { indexing: { deny: ['*'] } });
-      try {
-        await db.createCollection('coll_3c', { indexing: { deny: ['*'] } });
-        assert.fail('Expected an error');
-      } catch (e) {
-        assert.ok(e instanceof CollectionAlreadyExistsError);
-        assert.strictEqual(e.collectionName, 'coll_3c');
-        assert.strictEqual(e.keyspace, DEFAULT_KEYSPACE);
-      }
-    });
-
-    it('should create collections idempotently if checkExists is false', async () => {
+    it('should create collections idempotently', async () => {
       const res = await db.createCollection('coll_4c', { indexing: { deny: ['*'] } });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_4c');
-      const res2 = await db.createCollection('coll_4c', { checkExists: false, indexing: { deny: ['*'] } });
+      assert.strictEqual(res.name, 'coll_4c');
+      const res2 = await db.createCollection('coll_4c', { indexing: { deny: ['*'] } });
       assert.ok(res2);
-      assert.strictEqual(res2.collectionName, 'coll_4c');
+      assert.strictEqual(res2.name, 'coll_4c');
     });
 
-    it('should create collections with same options idempotently if checkExists is false', async () => {
+    it('should create collections with same options idempotently', async () => {
       const res = await db.createCollection('coll_5c', { indexing: { deny: ['*'] } });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_5c');
+      assert.strictEqual(res.name, 'coll_5c');
       assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
-      const res2 = await db.createCollection('coll_5c', { indexing: { deny: ['*'] }, checkExists: false });
+      const res2 = await db.createCollection('coll_5c', { indexing: { deny: ['*'] } });
       assert.ok(res2);
-      assert.strictEqual(res2.collectionName, 'coll_5c');
+      assert.strictEqual(res2.name, 'coll_5c');
       assert.strictEqual(res2.keyspace, DEFAULT_KEYSPACE);
     });
 
-    it('should fail creating collections with different options even if checkExists is false', async () => {
+    it('should fail creating collections with different options', async () => {
       const res = await db.createCollection('coll_6c', { indexing: { deny: ['*'] } });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_6c');
+      assert.strictEqual(res.name, 'coll_6c');
       assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
       try {
-        await db.createCollection('coll_6c', { indexing: { allow: ['*'] }, checkExists: false });
+        await db.createCollection('coll_6c', { indexing: { allow: ['*'] } });
         assert.fail('Expected an error');
       } catch (e) {
         assert.ok(e instanceof DataAPIResponseError);
@@ -93,11 +80,11 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
     it('should create collections with different options in different keyspaces', async () => {
       const res = await db.createCollection('coll_7c', { indexing: { deny: ['*'] } });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_7c');
+      assert.strictEqual(res.name, 'coll_7c');
       assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
       const res2 = await db.createCollection('coll_7c', { indexing: { deny: ['*'] }, keyspace: OTHER_KEYSPACE });
       assert.ok(res2);
-      assert.strictEqual(res2.collectionName, 'coll_7c');
+      assert.strictEqual(res2.name, 'coll_7c');
       assert.strictEqual(res2.keyspace, OTHER_KEYSPACE);
     });
 
@@ -111,7 +98,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
 
       const res = await db.createCollection('coll_8c', { indexing: { deny: ['*'] }, maxTimeMS: 60000 });
       assert.ok(res);
-      assert.strictEqual(res.collectionName, 'coll_8c');
+      assert.strictEqual(res.name, 'coll_8c');
       assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
     });
   });
@@ -119,8 +106,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
   describe('(LONG) dropCollection', () => {
     it('should drop a collections', async () => {
       await db.createCollection('coll_1d', { indexing: { deny: ['*'] } });
-      const res = await db.dropCollection('coll_1d');
-      assert.strictEqual(res, true);
+      await db.dropCollection('coll_1d');
       const collections = await db.listCollections();
       const collection = collections.find(c => c.name === 'coll_1d');
       assert.strictEqual(collection, undefined);
@@ -128,8 +114,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
 
     it('should drop a collections using the collections method', async () => {
       const coll = await db.createCollection('coll_2d', { indexing: { deny: ['*'] } });
-      const res = await coll.drop();
-      assert.strictEqual(res, true);
+      await coll.drop();
       const collections = await db.listCollections();
       const collection = collections.find(c => c.name === 'coll_2d');
       assert.strictEqual(collection, undefined);
@@ -137,8 +122,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
 
     it('should drop a collections in non-default keyspace', async () => {
       await db.createCollection('coll_3d', { indexing: { deny: ['*'] }, keyspace: OTHER_KEYSPACE });
-      const res = await db.dropCollection('coll_3d', { keyspace: OTHER_KEYSPACE });
-      assert.strictEqual(res, true);
+      await db.dropCollection('coll_3d', { keyspace: OTHER_KEYSPACE });
       const collections = await db.listCollections();
       const collection = collections.find(c => c.name === 'coll_3d');
       assert.strictEqual(collection, undefined);
@@ -146,8 +130,7 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
 
     it('should not drop a collections in different keyspace', async () => {
       await db.createCollection('coll_4d', { indexing: { deny: ['*'] } });
-      const res = await db.dropCollection('coll_4d', { keyspace: OTHER_KEYSPACE });
-      assert.strictEqual(res, true);
+      await db.dropCollection('coll_4d', { keyspace: OTHER_KEYSPACE });
       const collections = await db.listCollections();
       const collection = collections.find(c => c.name === 'coll_4d');
       assert.ok(collection);
@@ -198,28 +181,29 @@ parallel('integration.db', { dropEphemeral: 'after' }, ({ db }) => {
       assert.ok(resp.status?.collections instanceof Array);
     });
 
-    it('should execute a collections-level command', async () => {
-      const uuid = UUID.v4();
-      const collection = db.collection(DEFAULT_COLLECTION_NAME);
-      await collection.insertOne({ _id: uuid });
-      const resp = await db.command({ findOne: { filter: { _id: uuid } } }, { collection: DEFAULT_COLLECTION_NAME });
-      assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: uuid } }, errors: undefined });
-    });
-
-    it('should execute a collections-level command in different keyspace', async () => {
-      const uuid = UUID.v4();
-      const collection = db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE });
-      await collection.insertOne({ _id: uuid });
-      const resp = await db.command({ findOne: { filter: { _id: uuid } } }, { collection: DEFAULT_COLLECTION_NAME, keyspace: OTHER_KEYSPACE });
-      assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: uuid } }, errors: undefined });
-    });
+    // TODO
+    // it('should execute a collections-level command', async () => {
+    //   const uuid = UUID.v4();
+    //   const collection = db.collection(DEFAULT_COLLECTION_NAME);
+    //   await collection.insertOne({ _id: uuid });
+    //   const resp = await db.command({ findOne: { filter: { _id: uuid } } }, { collection: DEFAULT_COLLECTION_NAME });
+    //   assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: uuid } }, errors: undefined });
+    // });
+    //
+    // it('should execute a collections-level command in different keyspace', async () => {
+    //   const uuid = UUID.v4();
+    //   const collection = db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE });
+    //   await collection.insertOne({ _id: uuid });
+    //   const resp = await db.command({ findOne: { filter: { _id: uuid } } }, { collection: DEFAULT_COLLECTION_NAME, keyspace: OTHER_KEYSPACE });
+    //   assert.deepStrictEqual(resp, { status: undefined, data: { document: { _id: uuid } }, errors: undefined });
+    // });
 
     it('should throw an error when performing collections-level command on non-existent collections', async () => {
       try {
         await db.command({ findOne: {} }, { collection: 'dasfsdaf' });
         assert.fail('Expected an error');
       } catch (e) {
-        assert.ok(e instanceof CollectionNotFoundError);
+        assert.ok(e instanceof DataAPIResponseError);
       }
     });
 

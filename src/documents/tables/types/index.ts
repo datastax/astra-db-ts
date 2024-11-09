@@ -16,7 +16,6 @@ export type * from './delete/delete-one';
 export type * from './find/find';
 export type * from './find/find-one';
 export type * from './indexes/create-index';
-export type * from './indexes/create-text-index';
 export type * from './indexes/create-vector-index';
 export type * from './insert/insert-many';
 export type * from './insert/insert-one';
