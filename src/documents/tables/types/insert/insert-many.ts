@@ -12,12 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { GenericInsertManyOptions } from '@/src/documents/commands/types';
-import { KeyOf, SomeRow } from '@/src/documents';
+import type { GenericInsertManyOptions, KeyOf, SomeRow } from '@/src/documents';
 
+/**
+ * Options for an `insertMany` command on a table.
+ *
+ * The parameters depend on the `ordered` option. If `ordered` is `true`, the `parallel` option is not allowed.
+ *
+ * @field ordered - If `true`, the rows are inserted sequentially; else, they're arbitrary inserted in parallel.
+ * @field concurrency - The maximum number of concurrent requests to make at once.
+ * @field chunkSize - The number of rows to upload per request. Defaults to 50.
+ * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
+ *
+ * @see Table.insertMany
+ *
+ * @public
+ */
 export type TableInsertManyOptions = GenericInsertManyOptions;
 
+/**
+ * Represents the result of an `insertMany` command on a table.
+ *
+ * @field insertedIds - The primary keys of the inserted rows.
+ * @field insertedCount - The number of inserted rows.
+ *
+ * @see Table.insertMany
+ *
+ * @public
+ */
 export interface TableInsertManyResult<Schema extends SomeRow> {
-  insertedIds: KeyOf<Schema>[];
-  insertedCount: number;
+  /**
+   * The primary keys of the inserted rows.
+   */
+  insertedIds: KeyOf<Schema>[],
+  /**
+   * The number of inserted rows (equals `insertedIds.length`).
+   */
+  insertedCount: number,
 }

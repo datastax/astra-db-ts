@@ -13,12 +13,6 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-export type {
-  DataAPILoggingOutput,
-  DataAPILoggingEvent,
-  DataAPIClientEvents,
-  DataAPIExplicitLoggingConfig,
-  DataAPILoggingConfig,
-} from './types';
-
+export type * from './types';
+export { EventLoggingDefaults } from './constants';
 export * from './events';

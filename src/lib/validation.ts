@@ -57,13 +57,13 @@ export const p = {
   },
   parse: <U extends TypeOfAble, X = TypeOf<U>>(expected: U, parser: Parser<X, TypeOf<U>> = x => x) => <Cast = ParseRes<U, X>>(x: unknown, field: string): Cast => {
     if (expected.at(-1) === '!' && isNullish(x)) {
-      throw new TypeError('');
+      throw new TypeError(`Expected ${field} to be of type ${expected} (non-null), but got null or undefined`);
     } else if (isNullish(x)) {
       return undefined!;
     }
 
     if (typeof x !== expected.slice(0, -1)) {
-      throw new TypeError('');
+      throw new TypeError(`Expected ${field} to be of type ${expected} (or nullish), but got ${typeof x}`);
     }
 
     return parser(x as any, field) as any;

@@ -14,17 +14,14 @@
 // noinspection DuplicatedCode
 
 import { DataAPIClient } from '@/src/client';
-import {
-  DEFAULT_KEYSPACE,
-  FetchNative,
-} from '@/src/lib/api';
+import { FetchNative } from '@/src/lib/api';
 import assert from 'assert';
 import {
   DEFAULT_COLLECTION_NAME,
+  describe,
   ENVIRONMENT,
   it,
   parallel,
-  describe,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
 } from '@/tests/testlib';
@@ -46,9 +43,6 @@ parallel('integration.misc.headers', () => {
           return fetchNative.fetch(info);
         },
       },
-    },
-    dbOptions: {
-      keyspace: DEFAULT_KEYSPACE,
     },
   });
 
@@ -121,6 +115,7 @@ parallel('integration.misc.headers', () => {
 
       await assert.rejects(() => dbAdmin.listKeyspaces());
       assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], 'Bearer of');
+
 
       await assert.rejects(() => dbAdmin.listKeyspaces());
       assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], 'Bearer ages');

@@ -124,7 +124,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     }
 
     {
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['PENDING', 'INITIALIZING'],
         defaultPollInterval: 10000,
@@ -146,7 +146,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
       const collection = await db.createCollection('test_collection');
       assert.ok(collection, `in ${dbType}`);
-      assert.strictEqual(collection.collectionName, 'test_collection', `in ${dbType}`);
+      assert.strictEqual(collection.name, 'test_collection', `in ${dbType}`);
       assert.deepStrictEqual(await collection.options(), {}, `in ${dbType}`);
 
       const collections2 = await db.listCollections({ nameOnly: true });
@@ -173,7 +173,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
     {
       await syncDbAdmin.createKeyspace('other_keyspace');
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
         defaultPollInterval: 1000,
@@ -198,7 +198,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
     {
       await syncDbAdmin.dropKeyspace('other_keyspace', { blocking: true });
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
         defaultPollInterval: 1000,
@@ -225,7 +225,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
     {
       await admin.dropDatabase(syncDb, { maxTimeMS: 720000 });
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'TERMINATED',
         legalStates: ['TERMINATING'],
         defaultPollInterval: 10000,

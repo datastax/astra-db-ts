@@ -17,7 +17,7 @@ import assert from 'assert';
 import { ObjectId, UUID } from '@/src/documents';
 import { describe, it, parallel } from '@/tests/testlib';
 
-describe('integration.misc.code-samples', { truncateColls: 'default:before' }, ({ collection }) => {
+describe('integration.misc.code-samples', { truncate: 'colls:before' }, ({ collection }) => {
   parallel('documents', () => {
     it('works for dates', async (key) => {
       await collection.insertOne({ dateOfBirth: new Date(1394104654000), key });

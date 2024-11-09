@@ -11,6 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+/* eslint-disable @typescript-eslint/no-empty-object-type -- Used for when intersection w/ {} is a "noop" */
 
 import { DataAPIEnvironments } from '@/src/lib/constants';
 
@@ -31,7 +32,7 @@ export interface WithTimeout {
 }
 
 /**
- * Shorthand type to represent some nullish value. Generally meant for internal use.
+ * Shorthand type to represent some nullish value.
  *
  * @public
  */
@@ -47,16 +48,28 @@ export type nullish = null | undefined;
  */
 export type DataAPIEnvironment = typeof DataAPIEnvironments[number];
 
+/**
+ * @internal
+ */
 export type Ref<T> = { ref: T }
 
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type -- Used for when intersection w/ {} is a "noop"
+/**
+ * @internal
+ */
 export type EmptyObj = {};
 
 /**
- * Recursively makes all properties of a type optional.
+ * Utility type to recursively makes all properties of a type optional.
  *
  * @public
  */
 export type DeepPartial<T> = T extends object ? {
   [P in keyof T]?: DeepPartial<T[P]>;
 } : T;
+
+/**
+ * Utility type to represent a value that can be either a single value or an array of values.
+ *
+ * @public
+ */
+export type OneOrMany<T> = T | readonly T[];

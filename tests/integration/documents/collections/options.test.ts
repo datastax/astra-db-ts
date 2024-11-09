@@ -15,7 +15,7 @@
 import { DEFAULT_COLLECTION_NAME, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.documents.collections.options', { dropEphemeral: 'after' }, ({ db }) => {
+parallel('integration.documents.collections.options', { dropEphemeral: 'colls:after' }, ({ db }) => {
   it('lists its own options', async () => {
     const coll = db.collection(DEFAULT_COLLECTION_NAME);
     const res = await coll.options();

@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { GenericInsertManyOptions, IdOf, SomeDoc } from '@/src/documents';
+import type { GenericInsertManyOptions, IdOf, SomeDoc } from '@/src/documents';
 
 /**
- * Options for insertMany.
+ * Options for an `insertMany` command on a collection.
  *
  * The parameters depend on the `ordered` option. If `ordered` is `true`, the `parallel` option is not allowed.
  *
  * @field ordered - If `true`, the docs are inserted sequentially; else, they're arbitrary inserted in parallel.
  * @field concurrency - The maximum number of concurrent requests to make at once.
- * @field chunkSize - The number of documents to upload per request. Defaults to 20.
+ * @field chunkSize - The number of documents to upload per request. Defaults to 50.
  * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
  *
  * @see Collection.insertMany
@@ -31,7 +31,7 @@ import { GenericInsertManyOptions, IdOf, SomeDoc } from '@/src/documents';
 export type CollectionInsertManyOptions = GenericInsertManyOptions;
 
 /**
- * Represents the result of an insertMany command.
+ * Represents the result of an `insertMany` command on a collection.
  *
  * @field insertedIds - The IDs of the inserted documents.
  * @field insertedCount - The number of inserted documents.
@@ -47,15 +47,15 @@ export interface CollectionInsertManyResult<Schema extends SomeDoc> {
    * Note that it is up to the user that the IDs cover all possible types of IDs that the collection may have,
    * keeping in mind the type of the auto-generated IDs, as well as any the user may provide.
    */
-  insertedIds: IdOf<Schema>[];
+  insertedIds: IdOf<Schema>[],
   /**
    * The number of inserted documents (equals `insertedIds.length`).
    */
-  insertedCount: number;
+  insertedCount: number,
 }
 
-export type InsertManyDocumentResponse<_T> = any;
-
+// export type InsertManyDocumentResponse<_T> = any;
+//
 // /**
 //  * Represents the specific status and id for a document present in the `insertMany` command. Present when an
 //  * {@link InsertManyError} is thrown.

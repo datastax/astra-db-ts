@@ -14,25 +14,32 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import { TimeoutManager, TimeoutOptions } from '@/src/lib/api/timeout-managers';
+import type { WithNullableKeyspace } from '@/src/db/types/common';
+import { Logger } from '@/src/lib/logging/logger';
+import { nullish, RawDataAPIResponse, TokenProvider } from '@/src/lib';
 import {
   DataAPIErrorDescriptor,
   DataAPIHttpError,
   DataAPIResponseError,
   DataAPITimeoutError,
-  mkRespErrorFromResponse,
-} from '@/src/documents/errors';
-import { AdminSpawnOptions } from '@/src/administration';
-import { CollectionNotFoundError } from '@/src/db/errors';
-import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_TIMEOUT, HttpMethods } from '@/src/lib/api/constants';
-import { RawDataAPIResponse } from '@/src/lib/api';
-import { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
-import { nullish, TokenProvider } from '@/src/lib';
+  EmbeddingHeadersProvider,
+  SomeDoc,
+} from '@/src/documents';
+import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
 import { HttpClient } from '@/src/lib/api/clients/http-client';
-import { CollectionSpawnOptions } from '@/src/db';
+import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_TIMEOUT, HttpMethods } from '@/src/lib/api/constants';
+import { CollectionSpawnOptions, TableSpawnOptions } from '@/src/db';
+import type { AdminSpawnOptions } from '@/src/client';
 import { isNullish } from '@/src/lib/utils';
-import { EmbeddingHeadersProvider, ObjectId, UUID } from '@/src/documents';
-import { WithNullableKeyspace } from '@/src/db/types/common';
-import { Logger } from '@/src/lib/logging/logger';
+import { mkRespErrorFromResponse } from '@/src/documents/errors';
+
+/**
+ * @internal
+ */
+type ExecuteCommandOptions = TimeoutOptions & WithNullableKeyspace & {
+  bigNumsPresent?: boolean,
+  collection?: string,
+}
 
 /**
  * @internal
@@ -43,10 +50,7 @@ export interface DataAPIRequestInfo {
   keyspace?: string | null,
   command: Record<string, any>,
   timeoutManager: TimeoutManager,
-}
-
-interface ExecuteCommandOptions extends WithNullableKeyspace {
-  collection?: string,
+  bigNumsPresent: boolean | undefined,
 }
 
 type EmissionStrategy = (logger: Logger) => {
@@ -86,11 +90,22 @@ const adaptInfo4Devops = (info: DataAPIRequestInfo) => (<const>{
   params: {},
 });
 
+/**
+ * @internal
+ */
 interface DataAPIHttpClientOpts extends HTTPClientOptions {
   keyspace: KeyspaceRef,
   emissionStrategy: EmissionStrategy,
   embeddingHeaders: EmbeddingHeadersProvider,
   tokenProvider: TokenProvider | undefined,
+}
+
+export interface BigNumberHack {
+  parseWithBigNumbers(json: string): boolean,
+  parser: {
+    parse: (json: string) => SomeDoc,
+    stringify: (obj: SomeDoc) => string,
+  },
 }
 
 /**
@@ -101,17 +116,18 @@ export class DataAPIHttpClient extends HttpClient {
   public keyspace: KeyspaceRef;
   public maxTimeMS: number;
   public emissionStrategy: ReturnType<EmissionStrategy>;
+  public bigNumHack?: BigNumberHack;
   readonly #props: DataAPIHttpClientOpts;
 
   constructor(props: DataAPIHttpClientOpts) {
-    super(props, [mkAuthHeaderProvider(props.tokenProvider), props.embeddingHeaders.getHeaders.bind(props.embeddingHeaders)]);
+    super(props, [mkAuthHeaderProvider(props.tokenProvider), () => props.embeddingHeaders.getHeaders()]);
     this.keyspace = props.keyspace;
     this.#props = props;
     this.maxTimeMS = this.fetchCtx.maxTimeMS ?? DEFAULT_TIMEOUT;
     this.emissionStrategy = props.emissionStrategy(this.logger);
   }
 
-  public forCollection(keyspace: string, collection: string, opts: CollectionSpawnOptions | undefined): DataAPIHttpClient {
+  public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(keyspace: string, collection: string, opts: CollectionSpawnOptions<any> | TableSpawnOptions<any> | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(opts?.embeddingApiKey),
@@ -121,6 +137,7 @@ export class DataAPIHttpClient extends HttpClient {
 
     clone.collection = collection;
     clone.maxTimeMS = opts?.defaultMaxTimeMS ?? this.maxTimeMS;
+    clone.bigNumHack = bigNumHack;
 
     return clone;
   }
@@ -132,6 +149,7 @@ export class DataAPIHttpClient extends HttpClient {
       logging: Logger.advanceConfig(this.#props.logging, opts?.logging),
       baseUrl: opts?.endpointUrl ?? this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
+      additionalHeaders: { ...this.#props.additionalHeaders, ...opts?.additionalHeaders },
     });
 
     clone.emissionStrategy = EmissionStrategy.Admin(clone.logger);
@@ -145,7 +163,7 @@ export class DataAPIHttpClient extends HttpClient {
     return new TimeoutManager(timeout, () => new DataAPITimeoutError(timeout));
   }
 
-  public async executeCommand(command: Record<string, any>, options: TimeoutOptions & ExecuteCommandOptions | nullish) {
+  public async executeCommand(command: Record<string, any>, options: ExecuteCommandOptions | nullish) {
     const timeoutManager = options?.timeoutManager ?? this.timeoutManager(options?.maxTimeMS);
 
     return await this._requestDataAPI({
@@ -154,6 +172,7 @@ export class DataAPIHttpClient extends HttpClient {
       collection: options?.collection,
       keyspace: options?.keyspace,
       command: command,
+      bigNumsPresent: options?.bigNumsPresent,
     });
   }
 
@@ -178,9 +197,13 @@ export class DataAPIHttpClient extends HttpClient {
       started = performance.now();
       this.emissionStrategy.emitCommandStarted?.(info);
 
+      const command = (info.bigNumsPresent)
+        ? this.bigNumHack?.parser.stringify(info.command)
+        : JSON.stringify(info.command);
+
       const resp = await this._request({
         url: info.url,
-        data: JSON.stringify(info.command, replacer),
+        data: command,
         timeoutManager: info.timeoutManager,
         method: HttpMethods.Post,
       });
@@ -189,18 +212,18 @@ export class DataAPIHttpClient extends HttpClient {
         throw new DataAPIHttpError(resp);
       }
 
-      const data: RawDataAPIResponse = resp.body ? JSON.parse(resp.body, reviver) : {};
+      const data: RawDataAPIResponse =
+        (resp.body)
+          ? (this.bigNumHack?.parseWithBigNumbers(resp.body))
+            ? this.bigNumHack?.parser.parse(resp.body)
+            : JSON.parse(resp.body)
+          : {};
 
       const warnings = data?.status?.warnings ?? [];
       if (warnings.length) {
         this.emissionStrategy.emitCommandWarnings?.(info, warnings);
       }
       delete data?.status?.warnings;
-
-      if (data.errors && data.errors.length > 0 && data.errors[0]?.errorCode === 'COLLECTION_NOT_EXIST') {
-        const name = data.errors[0]?.message.split(': ')[1];
-        throw new CollectionNotFoundError(info.keyspace ?? '<unknown>', name);
-      }
 
       if (data.errors && data.errors.length > 0) {
         throw mkRespErrorFromResponse(DataAPIResponseError, info.command, data, warnings);
@@ -219,46 +242,6 @@ export class DataAPIHttpClient extends HttpClient {
       throw e;
     }
   }
-}
-
-/**
- * @internal
- */
-export function replacer(this: any, key: string, value: any): any {
-  if (typeof value === 'bigint') {
-    return Number(value);
-  }
-
-  if (typeof this[key] === 'object') {
-    if (key === '$date') {
-      return new Date(value).valueOf();
-    }
-
-    if (this[key] instanceof Date) {
-      return { $date: this[key].valueOf() };
-    }
-  }
-
-  return value;
-}
-
-/**
- * @internal
- */
-export function reviver(_: string, value: any): any {
-  if (!value) {
-    return value;
-  }
-  if (value.$date) {
-    return new Date(value.$date);
-  }
-  if (value.$objectId) {
-    return new ObjectId(value.$objectId);
-  }
-  if (value.$uuid) {
-    return new UUID(value.$uuid);
-  }
-  return value;
 }
 
 const mkAuthHeaderProvider = (tp: TokenProvider | undefined): HeaderProvider => (tp)

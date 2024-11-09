@@ -129,21 +129,21 @@ describe('unit.client.documents-client', () => {
   describe('using fetch-h2', () => {
     it('uses http2 by default', function () {
       const client = new DataAPIClient('dummy-token', { httpOptions: {} });
-      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
+      const httpClient = client.db(TEST_APPLICATION_URI)._httpClient;
       assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
       assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
     });
 
     it('uses http2 when forced', function () {
       const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'default', preferHttp2: true } });
-      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
+      const httpClient = client.db(TEST_APPLICATION_URI)._httpClient;
       assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
       assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
     });
 
     it('uses http1.1 when forced', () => {
       const client = new DataAPIClient('dummy-token', { httpOptions: { preferHttp2: false } });
-      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
+      const httpClient = client.db(TEST_APPLICATION_URI)._httpClient;
       assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
       assert.ok(httpClient.fetchCtx.ctx['_http1'] === httpClient.fetchCtx.ctx['_preferred']);
     });
@@ -161,7 +161,7 @@ describe('unit.client.documents-client', () => {
         httpOptions: { client: 'custom', fetcher: new CustomFetcher() },
       });
 
-      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
+      const httpClient = client.db(TEST_APPLICATION_URI)._httpClient;
       assert.strictEqual(await httpClient.fetchCtx.ctx.fetch(null!), 3);
       assert.strictEqual(httpClient.fetchCtx.ctx.close, undefined);
     });

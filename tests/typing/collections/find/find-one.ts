@@ -121,13 +121,13 @@ void dummyCollection<TestSchema>().findOne({}, {
   },
 });
 
+// @ts-expect-error - Must be a number
 void dummyCollection<TestSchema>().findOne({}, {
   projection: {
     // Technically not valid, but it's just for type testing
     $vector: {
       $slice: [
         1,
-        // @ts-expect-error - Must be a number
         '2',
       ],
     },

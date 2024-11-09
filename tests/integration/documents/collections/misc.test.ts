@@ -12,11 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPITimeoutError } from '@/src/documents';
+import { DataAPIResponseError, DataAPITimeoutError } from '@/src/documents';
 import { DEFAULT_COLLECTION_NAME, initTestObjects, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
-import { CollectionNotFoundError } from '@/src/db/errors';
-import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 
 parallel('integration.documents.collections.misc', ({ db }) => {
   it('times out on http2', async () => {
@@ -41,27 +39,23 @@ parallel('integration.documents.collections.misc', ({ db }) => {
     }
   });
 
-  it('CollectionNotFoundError is thrown when doing data api operation on non-existent collections', async () => {
+  it('DataAPIResponseError is thrown when doing data api operation on non-existent collections', async () => {
     const collection = db.collection('non_existent_collection');
 
     try {
       await collection.insertOne({ username: 'test' });
     } catch (e) {
-      assert.ok(e instanceof CollectionNotFoundError);
-      assert.strictEqual(e.keyspace, DEFAULT_KEYSPACE);
-      assert.strictEqual(e.collectionName, 'non_existent_collection');
+      assert.ok(e instanceof DataAPIResponseError);
     }
   });
 
-  it('CollectionNotFoundError is thrown when doing .options() on non-existent collections', async () => {
+  it('Error is thrown when doing .options() on non-existent collections', async () => {
     const collection = db.collection('non_existent_collection');
 
     try {
       await collection.options();
     } catch (e) {
-      assert.ok(e instanceof CollectionNotFoundError);
-      assert.strictEqual(e.keyspace, DEFAULT_KEYSPACE);
-      assert.strictEqual(e.collectionName, 'non_existent_collection');
+      assert.ok(e instanceof Error);
     }
   });
 });

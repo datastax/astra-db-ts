@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { EqualityProof, p, Parser } from '@/src/lib/validation';
-import {
+import type {
   CustomHttpClientOptions,
   DataAPIHttpOptions,
   DefaultHttpClientOptions,

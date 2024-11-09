@@ -17,15 +17,14 @@ import { DEFAULT_KEYSPACE, RawDataAPIResponse } from '@/src/lib/api';
 import { DatabaseInfo } from '@/src/administration/types/admin/database-info';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { DataAPIEnvironment, nullish, WithTimeout } from '@/src/lib/types';
-import { extractDbIdFromUrl } from '@/src/documents/utils';
+import { extractDbIdFromUrl, extractRegionFromUrl } from '@/src/documents/utils';
 import { AdminSpawnOptions, DbAdmin } from '@/src/administration';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin';
-import { CollectionAlreadyExistsError } from '@/src/db/errors';
 import { CreateCollectionOptions } from '@/src/db/types/collections/create-collection';
 import { TokenProvider } from '@/src/lib';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client';
 import { KeyspaceRef } from '@/src/lib/api/clients/types';
-import { validateDataAPIEnv } from '@/src/lib/utils';
+import { toArray, validateDataAPIEnv } from '@/src/lib/utils';
 import { EmbeddingHeadersProvider, SomeRow, Table } from '@/src/documents';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
 import { CollectionSpawnOptions } from '@/src/db/types/collections/spawn-collection';
@@ -41,38 +40,76 @@ import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
 import { DbSpawnOptions } from '@/src/client/types';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { Logger } from '@/src/lib/logging/logger';
+import { $CustomInspect } from '@/src/lib/constants';
+import { InvalidEnvironmentError } from '@/src/db/errors';
 
 /**
- * Represents an interface to some Astra database instance. This is the entrypoint for database-level DML, such as
- * creating/deleting collections, connecting to collections, and executing arbitrary commands.
+ * #### Overview
+ *
+ * Represents an interface to some Data-API-enabled database instance. This is the entrypoint for database-level DML, such as
+ * creating/deleting collections/tables, connecting to collections/tables, and executing arbitrary commands.
  *
  * **Shouldn't be instantiated directly; use {@link DataAPIClient.db} to obtain an instance of this class.**
  *
  * Note that creating an instance of a `Db` doesn't trigger actual database creation; the database must have already
  * existed beforehand. If you need to create a new database, use the {@link AstraAdmin} class.
  *
- * Db spawning methods let you pass in the default keyspace for the database, which is used for all subsequent db
- * operations in that object, but each method lets you override the keyspace if necessary in its options.
- *
  * @example
- * ```typescript
- * const client = new DataAPIClient('AstraCS:...');
- *
+ * ```ts
  * // Connect to a database using a direct endpoint
- * const db1 = client.db('https://<db_id>-<region>.apps.astra.datastax.com');
+ * const db = client.db('*ENDPOINT*');
  *
  * // Overrides default options from the DataAPIClient
- * const db2 = client.db('https://<db_id>-<region>.apps.astra.datastax.com', {
+ * const db = client.db('*ENDPOINT*', {
  *   keyspace: 'my_keyspace',
  *   useHttp2: false,
  * });
- *
- * // Lets you connect using a database ID and region
- * const db3 = client.db('a6a1d8d6-31bc-4af8-be57-377566f345bf', 'us-east1');
  * ```
+ *
+ * ###### The "working keyspace"
+ *
+ * The `Db` class has a concept of a "working keyspace", which is the default keyspace used for all operations in the database. This can be overridden in each method call, but if not, the default keyspace is used.
+ *
+ * If no explicit keyspace is provided when creating the `Db` instance, it will default to:
+ * - On DataStax Astra dbs: `default_keyspace`
+ * - On all other dbs, it will remain undefined
+ *   - In this case, the keyspace must be set using either:
+ *     - The `db.useKeyspace()` mutator method
+ *     - The `updateDbKeyspace` parameter in `dbAdmin.createKeyspace()`
+ *
+ * Changing the working namespaces does NOT retroactively update any collections/tables spawned from this `Db` instance.
+ *
+ * See {@link Db.useKeyspace} and {@link DbAdmin.createKeyspace} for more information.
+ *
+ * @example
+ * ```ts
+ * // Method 1:
+ * db.useKeyspace('my_keyspace');
+ *
+ * // Method 2:
+ * // (If using non-astra, this may be a common idiom)
+ * await db.admin().createKeyspace('my_keyspace', {
+ *   updateDbKeyspace: true,
+ * });
+ * ```
+ *
+ * ###### Astra vs. non-Astra
+ *
+ * The `Db` class is designed to work with both Astra and non-Astra databases. However, there are some differences in behaviour between the two:
+ * - Astra DBs have an ID & region, which can be accessed using `db.id` and `db.region` respectively
+ * - Astra DBs have a `db.info()` method, which provides detailed information about the database
+ * - The `db.admin()` method will return differently depending on the environment
+ *   - For Astra DBs, it will return an {@link AstraDbAdmin} instance
+ *   - For non-Astra DBs, it will return a {@link DataAPIDbAdmin} instance
+ *   - (The `environment` option must also be set in the `admin()` method)
+ * - As aforementioned, the default keyspace is different between Astra and non-Astra databases
+ *   - See the previous section for more information
  *
  * @see DataAPIClient.db
  * @see AstraAdmin.db
+ * @see Table
+ * @see Collection
+ * @see DbAdmin
  *
  * @public
  */
@@ -81,8 +118,9 @@ export class Db {
   readonly #httpClient: DataAPIHttpClient;
   readonly #endpoint?: string;
 
-  private readonly _keyspace: KeyspaceRef;
-  private readonly _id?: string;
+  readonly _keyspace: KeyspaceRef;
+  readonly #id?: string;
+  readonly #region?: string;
 
   /**
    * Use {@link DataAPIClient.db} to obtain an instance of this class.
@@ -101,6 +139,21 @@ export class Db {
         dataApiPath: dbOpts?.dataApiPath ?? rootOpts.dbOptions.dataApiPath,
         token: token,
         logging: Logger.advanceConfig(rootOpts.dbOptions.logging, dbOpts?.logging),
+        additionalHeaders: { ...rootOpts.dbOptions.additionalHeaders, ...dbOpts?.additionalHeaders },
+        serdes: {
+          collection: {
+            serialize: [...toArray(dbOpts?.serdes?.collection?.serialize ?? []), ...toArray(rootOpts.dbOptions.serdes?.collection?.serialize ?? [])],
+            deserialize: [...toArray(dbOpts?.serdes?.collection?.deserialize ?? []), ...toArray(rootOpts.dbOptions.serdes?.collection?.deserialize ?? [])],
+            enableBigNumbers: dbOpts?.serdes?.collection?.enableBigNumbers ?? rootOpts.dbOptions.serdes?.collection?.enableBigNumbers,
+          },
+          table: {
+            serialize: [...toArray(dbOpts?.serdes?.table?.serialize ?? []), ...toArray(rootOpts.dbOptions.serdes?.table?.serialize ?? [])],
+            deserialize: [...toArray(dbOpts?.serdes?.table?.deserialize ?? []), ...toArray(rootOpts.dbOptions.serdes?.table?.deserialize ?? [])],
+            parsers: { ...rootOpts.dbOptions.serdes?.table?.parsers, ...dbOpts?.serdes?.table?.parsers },
+            sparseData: dbOpts?.serdes?.table?.sparseData ?? rootOpts.dbOptions.serdes?.table?.sparseData,
+          },
+          mutateInPlace: dbOpts?.serdes?.mutateInPlace ?? rootOpts.dbOptions.serdes?.mutateInPlace,
+        },
       },
       adminOptions: {
         ...rootOpts.adminOptions,
@@ -125,10 +178,16 @@ export class Db {
       keyspace: this._keyspace,
       userAgent: rootOpts.userAgent,
       emissionStrategy: EmissionStrategy.Normal,
+      additionalHeaders: this.#defaultOpts.dbOptions.additionalHeaders,
     });
 
-    this._id = extractDbIdFromUrl(endpoint);
+    this.#id = extractDbIdFromUrl(endpoint);
+    this.#region = extractRegionFromUrl(endpoint);
     this.#endpoint = endpoint;
+
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `Db(endpoint="${this.#endpoint}",keyspace="${this.keyspace}")`,
+    });
   }
 
   /**
@@ -169,20 +228,46 @@ export class Db {
   }
 
   /**
-   * The ID of the database, if it's an Astra database. If it's not an Astra database, this will throw an error.
+   * The ID of the database (UUID), if it's an Astra database.
    *
-   * @throws Error - if the database is not an Astra database.
+   * If it's not an Astra database, this will throw an error, as they have no applicable/appropriate ID.
+   *
+   * @throws InvalidEnvironmentError - if the database is not an Astra database.
    */
   public get id(): string {
-    if (!this._id) {
-      throw new Error('Non-Astra databases do not have an appropriate ID');
+    if (this.#defaultOpts.environment !== 'astra') {
+      throw new InvalidEnvironmentError('db.id', this.#defaultOpts.environment, ['astra'], 'non-Astra databases have no appropriate ID');
     }
-    return this._id;
+    if (!this.#id) {
+      throw new Error(`Malformed AstraDB endpoint URL '${this.#endpoint}'—database ID unable to be parsed`);
+    }
+    return this.#id;
   }
 
   /**
+   * The region of the database (e.g. `'us-east-1'`), if it's an Astra database.
+   *
+   * If it's not an Astra database, this will throw an error, as they have no applicable/appropriate region.
+   *
+   * @throws InvalidEnvironmentError - if the database is not an Astra database.
+   */
+  public get region(): string {
+    if (this.#defaultOpts.environment !== 'astra') {
+      throw new InvalidEnvironmentError('db.region', this.#defaultOpts.environment, ['astra'], 'non-Astra databases have no appropriate region');
+    }
+    if (!this.#region) {
+      throw new Error(`Malformed AstraDB endpoint URL '${this.#endpoint}'—database region unable to be parsed`);
+    }
+    return this.#region;
+  }
+
+  /**
+   * ##### Overview
+   *
    * Sets the default working keyspace of the `Db` instance. Does not retroactively update any previous collections
    * spawned from this `Db` to use the new keyspace.
+   *
+   * See {@link Db} for more info on "working keyspaces".
    *
    * @example
    * ```typescript
@@ -204,9 +289,14 @@ export class Db {
    * const coll3 = db.collection('my_coll', { keyspace: 'my_keyspace' });
    * ```
    *
+   * ##### `updateDbKeyspace` in `DbAdmin.createKeyspace`
+   *
+   * If you want to create a `Db` in a not-yet-existing keyspace, you can use the `updateDbKeyspace` option in {@link DbAdmin.createKeyspace} to set the default keyspace of the `Db` instance to the new keyspace.
+   *
+   * This may be a common idiom when working with non-Astra databases.
+   *
    * @example
    * ```typescript
-   * // If using non-astra, this may be a common idiom:
    * const client = new DataAPIClient({ environment: 'dse' });
    * const db = client.db('<endpoint>', { token: '<token>' });
    *
@@ -226,13 +316,13 @@ export class Db {
   }
 
   /**
+   * ##### Overview
+   *
    * Spawns a new {@link AstraDbAdmin} instance for this database, used for performing administrative operations
    * on the database, such as managing keyspaces, or getting database information.
    *
    * The given options will override any default options set when creating the {@link DataAPIClient} through
    * a deep merge (i.e. unset properties in the options object will just default to the default options).
-   *
-   * **If using a non-Astra backend, the `environment` option MUST be set as it is on the `DataAPIClient`**
    *
    * @example
    * ```typescript
@@ -243,15 +333,24 @@ export class Db {
    * console.log(keyspaces);
    * ```
    *
+   * ##### Astra vs. non-Astra
+   *
+   * **If using a non-Astra backend, the `environment` option MUST be set as it is on the `DataAPIClient`**
+   *
+   * If on Astra, this method will return a new {@link AstraDbAdmin} instance, which provides a few extra methods
+   * for Astra databases, such as {@link AstraDbAdmin.info} or {@link AstraDbAdmin.drop}.
+   *
    * @param options - Any options to override the default options set when creating the {@link DataAPIClient}.
    *
    * @returns A new {@link AstraDbAdmin} instance for this database instance.
    *
-   * @throws Error - if the database is not an Astra database.
+   * @throws InvalidEnvironmentError - if the database is not an Astra database.
    */
   public admin(options?: AdminSpawnOptions & { environment?: 'astra' }): AstraDbAdmin
 
   /**
+   * ##### Overview
+   *
    * Spawns a new {@link DataAPIDbAdmin} instance for this database, used for performing administrative operations
    * on the database, such as managing keyspaces, or getting database information.
    *
@@ -275,11 +374,19 @@ export class Db {
    * console.log(keyspaces);
    * ```
    *
+   * ##### Astra vs. non-Astra
+   *
+   * **If using a non-Astra backend, the `environment` option MUST be set as it is on the `DataAPIClient`**
+   *
+   * If on non-Astra, this method will return a new {@link DataAPIDbAdmin} instance, which conforms strictly to the
+   * {@link DbAdmin} interface, with the {@link DataAPIDbAdmin.createKeyspace} method being the only method that
+   * differs slightly from the interface version.
+   *
    * @param options - Any options to override the default options set when creating the {@link DataAPIClient}.
    *
    * @returns A new {@link AstraDbAdmin} instance for this database instance.
    *
-   * @throws Error - if the database is not an Astra database.
+   * @throws InvalidEnvironmentError - if the database is not an Astra database.
    */
   public admin(options: AdminSpawnOptions & { environment: Exclude<DataAPIEnvironment, 'astra'> }): DataAPIDbAdmin
 
@@ -289,7 +396,7 @@ export class Db {
     validateDataAPIEnv(environment);
 
     if (this.#defaultOpts.environment !== environment) {
-      throw new Error('Mismatching environment—environment option is not the same as set in the DataAPIClient');
+      throw new InvalidEnvironmentError('db.admin()', this.#defaultOpts.environment, [environment], 'environment option is not the same as set in the DataAPIClient');
     }
 
     if (environment === 'astra') {
@@ -300,9 +407,11 @@ export class Db {
   }
 
   /**
+   * ##### Overview
+   *
    * Fetches information about the database, such as the database name, region, and other metadata.
    *
-   * **NB. Only available for Astra databases.**
+   * **NOTE: Only available for Astra databases.**
    *
    * For the full, complete, information, see {@link AstraDbAdmin.info}.
    *
@@ -315,102 +424,310 @@ export class Db {
    * console.log(info.name);
    * ```
    *
+   * ##### On non-Astra
+   *
+   * This operation requires a call to the DevOps API, which is only available on Astra databases. As such, this method
+   * will throw an error if the database is not an Astra database.
+   *
    * @returns A promise that resolves to the database information.
    *
    * @throws Error - if the database is not an Astra database.
    */
   public async info(options?: WithTimeout): Promise<DatabaseInfo> {
+    if (this.#defaultOpts.environment !== 'astra') {
+      throw new InvalidEnvironmentError('db.info()', this.#defaultOpts.environment, ['astra'], 'info() is only available for Astra databases');
+    }
     return await this.admin().info(options).then(i => i.info);
   }
 
   /**
+   * ##### Overview
+   *
    * Establishes a reference to a collection in the database. This method does not perform any I/O.
    *
-   * **NB. This method does not validate the existence of the collection—it simply creates a reference.**
-   *
-   * **Unlike the MongoDB driver, this method does not create a collection if it doesn't exist.**
-   *
-   * Use {@link Db.createCollection} to create a new collection instead.
-   *
-   * Typed as `Collection<SomeDoc>` by default, but you can specify a schema type to get a typed collection. If left
-   * as `SomeDoc`, the collection will be untyped.
-   *
-   * You can also specify a keyspace in the options parameter, which will override the default keyspace for this database.
+   * **NOTE: This method does not validate the existence of the collection—it simply creates a reference.**
    *
    * @example
-   * ```typescript
+   * ```ts
    * interface User {
    *   name: string,
    *   age?: number,
    * }
    *
-   * const users1 = db.collection<User>("users");
-   * users1.insertOne({ name: "John" });
+   * // Basic usage
+   * const users1 = db.collection<User>('users');
+   * users1.insertOne({ name: 'John' });
    *
    * // Untyped collection from different keyspace
-   * const users2 = db.collection("users", {
-   *   keyspace: "my_keyspace",
+   * const users2 = db.collection('users', {
+   *   keyspace: 'my_keyspace',
    * });
-   * users2.insertOne({ nam3: "John" });
+   * users2.insertOne({ 'anything[you]$want': 'John' }); // Dangerous
    * ```
    *
+   * ##### No I/O
+   *
+   * **Unlike the MongoDB Node.js driver, this method does not create a collection if it doesn't exist.**
+   *
+   * Use {@link Db.createCollection} to create a new collection instead.
+   *
+   * ##### Typing & Types
+   *
+   * Collections are inherently untyped, but you can provide your own client-side compile-time schema for type inference and early-bug-catching purposes.
+   *
+   * A `Collection` is typed as `Collection<Schema extends SomeDoc = SomeDoc>`, where:
+   * - `Schema` is the user-intended type of the documents in the collection.
+   * - `SomeDoc` is set to `Record<string, any>`, representing any valid JSON object.
+   *
+   * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
+   *
+   * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
+   *
+   * Please see {@link Collection} for *much* more info on typing them, and more.
+   *
+   * @example
+   * ```ts
+   * import { UUID, DataAPIVector, ... } from 'astra-db-ts';
+   *
+   * interface User {
+   *   _id: string,
+   *   dob: Date,
+   *   friends?: Record<string, UUID>, // UUID is also `astra-db-ts` provided
+   *   vector: DataAPIVector,
+   * }
+   *
+   * const collection = db.collection<User>('users');
+   *
+   * // res.insertedId is of type string
+   * const res = await collection.insertOne({
+   *   _id: '123',
+   *   dob: new Date(),
+   *   friends: { 'Alice': UUID.random() },
+   *   vector: new DataAPIVector([1, 2, 3]), // This can also be passed as a number[]
+   * });
+   * ```
+   *
+   * ###### Disclaimer
+   *
+   * **Collections are inherently untyped**
+   *
+   * **It is on the user to ensure that the TS type of the `Collection` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.**
+   *
+   * **There is no runtime type validation or enforcement of the schema.**
+   *
    * @param name - The name of the collection.
-   * @param options - Options for the connection.
+   * @param options - Options for spawning the collection.
    *
    * @returns A new, unvalidated, reference to the collection.
    *
    * @see SomeDoc
    * @see VectorDoc
+   * @see VectorizeDoc
+   * @see db.createCollection
    */
-  public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions): Collection<Schema> {
-    return new Collection<Schema>(this, this.#httpClient, name, options);
-  }
-
-  public table<Schema extends SomeRow = SomeRow>(name: string, options?: TableSpawnOptions): Table<Schema> {
-    return new Table<Schema>(this, this.#httpClient, name, options);
+  public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions<Schema>): Collection<Schema> {
+    return new Collection<Schema>(this, this.#httpClient, name, {
+      ...options,
+      serdes: {
+        ...options?.serdes,
+        serialize: [...toArray(options?.serdes?.serialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.collection?.serialize ?? [])],
+        deserialize: [...toArray(options?.serdes?.deserialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.collection?.deserialize ?? [])],
+        mutateInPlace: options?.serdes?.mutateInPlace ?? this.#defaultOpts.dbOptions.serdes?.mutateInPlace,
+        enableBigNumbers: options?.serdes?.enableBigNumbers ?? this.#defaultOpts.dbOptions.serdes?.collection?.enableBigNumbers,
+      },
+    });
   }
 
   /**
-   * Creates a new collection in the database, and establishes a reference to it.
+   * ##### Overview
    *
-   * **NB. You are limited in the amount of collections you can create, so be wary when using this command.**
+   * Establishes a reference to a table in the database. This method does not perform any I/O.
    *
-   * This is a blocking command which performs actual I/O unlike {@link Db.collection}, which simply creates an
-   * unvalidated reference to a collection.
-   *
-   * If `checkExists: false`, creation is idempotent, so if the collection already exists with the same options,
-   * this method will not throw an error. If the options mismatch, it will throw a {@link DataAPIResponseError}.
-   *
-   * Typed as `Collection<SomeDoc>` by default, but you can specify a schema type to get a typed collection. If left
-   * as `SomeDoc`, the collection will be untyped.
-   *
-   * *If vector options are not specified, the collection will not support vector search.*
-   *
-   * You can also specify a keyspace in the options parameter, which will override the default keyspace for this database.
-   *
-   * See {@link CreateCollectionOptions} for *much* more information on the options available.
+   * **NOTE: This method does not validate the existence of the table—it simply creates a reference.**
    *
    * @example
-   * ```typescript
+   * ```ts
    * interface User {
    *   name: string,
    *   age?: number,
    * }
    *
-   * const users = await db.createCollection<User>("users");
-   * users.insertOne({ name: "John" });
+   * // Basic usage
+   * const users1 = db.table<User>('users');
+   * users1.insertOne({ name: 'John' });
    *
-   * // Untyped collection with custom options in a different keyspace
-   * const users2 = await db.createCollection("users", {
-   *   keyspace: "my_keyspace",
-   *   defaultId: {
-   *     type: "objectId",
-   *   },
-   *   checkExists: false,
+   * // Untyped table from different keyspace
+   * const users2 = db.table('users', {
+   *   keyspace: 'my_keyspace',
+   * });
+   * users2.insertOne({ 'anything[you]$want': 'John' }); // Dangerous
+   * ```
+   *
+   * ##### No I/O
+   *
+   * **This method does not create a table if it doesn't exist.**
+   *
+   * Use {@link Db.createTable} to create a new table instead.
+   *
+   * ##### Typing & Types
+   *
+   * A `Table` is typed as `Table<Schema extends SomeRow = SomeRow>`, where:
+   *  - `Schema` is the type of the rows in the table (the table schema).
+   *  - `SomeRow` is set to `Record<string, any>`, representing any valid JSON object.
+   *
+   * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
+   *
+   * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
+   *
+   * ***Please see {@link Table} for *much* more info on typing them, and more.***
+   *
+   * @example
+   * ```ts
+   * import { CqlDate, UUID, Row, DataAPIVector, ... } from 'astra-db-ts';
+   *
+   * interface User extends Row<User, 'id' | 'dob'> {
+   *   id: string,   // Partition key
+   *   dob: CqlDate, // Clustering (partition sort) key
+   *   friends: Map<string, UUID>,
+   *   vector: DataAPIVector,
+   * }
+   *
+   * const table = db.table<User>('users');
+   *
+   * // res.insertedId is of type { id: string }
+   * const res = await table.insertOne({
+   *   id: '123',
+   *   dob: new CqlDate(new Date()),
+   *   friends: new Map([['Alice', UUID.random()]]),
+   *   vector: new DataAPIVector([1, 2, 3]), // Class enables encoding optimization
    * });
    * ```
    *
-   * @param collectionName - The name of the collection to create.
+   * ###### Disclaimer
+   *
+   * *It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.*
+   *
+   * See {@link Db.createTable}, {@link Db.table}, and {@link InferTableSchema} for much more information about typing.
+   *
+   * @param name - The name of the table.
+   * @param options - Options for spawning the table.
+   *
+   * @returns A new, unvalidated, reference to the table.
+   *
+   * @see SomeRow
+   * @see db.createTable
+   * @see InferTableSchema
+   * @see Row
+   * @see $PrimaryKeyType
+   */
+  public table<Schema extends SomeRow = SomeRow>(name: string, options?: TableSpawnOptions<Schema>): Table<Schema> {
+    return new Table<Schema>(this, this.#httpClient, name, {
+      ...options,
+      serdes: {
+        serialize: [...toArray(options?.serdes?.serialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.table?.serialize ?? [])],
+        deserialize: [...toArray(options?.serdes?.deserialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.table?.deserialize ?? [])],
+        mutateInPlace: options?.serdes?.mutateInPlace ?? this.#defaultOpts.dbOptions.serdes?.mutateInPlace,
+        parsers: { ...this.#defaultOpts.dbOptions.serdes?.table?.parsers, ...options?.serdes?.parsers },
+        sparseData: options?.serdes?.sparseData ?? this.#defaultOpts.dbOptions.serdes?.table?.sparseData,
+      },
+    });
+  }
+
+  /**
+   * ##### Overview
+   *
+   * Creates a new collection in the database, and establishes a reference to it.
+   *
+   * This is a *blocking* command which performs actual I/O (unlike {@link Db.collection}, which simply creates an
+   * unvalidated reference to a collection).
+   *
+   * @example
+   * ```ts
+   * // Most basic usage
+   * const users = await db.createCollection('users');
+   *
+   * // With custom options in a different keyspace
+   * const users2 = await db.createCollection('users', {
+   *   keyspace: 'my_keyspace',
+   *   defaultId: {
+   *     type: 'objectId',
+   *   },
+   * });
+   * ```
+   *
+   * ##### Idempotency
+   *
+   * Creating a collection is idempotent as long as the options remain the same; if the collection already exists with the same options, a {@link DataAPIResponseError} will be thrown.
+   *
+   * ("options" mean the `createCollection` options actually sent to the server, not things like `maxTimeMS` which are just client-side).
+   *
+   * ##### Enabling vector search
+   *
+   * *If vector options are not specified, the collection will not support vector search.*
+   *
+   * You can enable it by providing a `vector` option with the desired configuration, optionally with a `vector.service` block to enable vectorize (auto-embedding-generation).
+   *
+   * @example
+   * ```ts
+   * const users = await db.createCollection('users', {
+   *   vector: {
+   *     service: {
+   *       provider: 'nvidia',
+   *       modelName: 'NV-Embed-QA',
+   *     },
+   *   },
+   * });
+   *
+   * // Now, `users` supports vector search
+   * await users.insertOne({ $vectorize: 'I like cars!!!' });
+   * await users.fineOne({}, { sort: { $vectorize: 'I like cars!!!' } });
+   * ```
+   *
+   * ##### Typing & Types
+   *
+   * Collections are inherently untyped, but you can provide your own client-side compile-time schema for type inference and early-bug-catching purposes.
+   *
+   * A `Collection` is typed as `Collection<Schema extends SomeDoc = SomeDoc>`, where:
+   * - `Schema` is the user-intended type of the documents in the collection.
+   * - `SomeDoc` is set to `Record<string, any>`, representing any valid JSON object.
+   *
+   * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
+   *
+   * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
+   *
+   * Please see {@link Collection} for *much* more info on typing them, and more.
+   *
+   * @example
+   * ```ts
+   * import { UUID, DataAPIVector, ... } from 'astra-db-ts';
+   *
+   * interface User {
+   *   _id: string,
+   *   dob: Date,
+   *   friends?: Record<string, UUID>, // UUID is also `astra-db-ts` provided
+   *   vector: DataAPIVector,
+   * }
+   *
+   * const collection = await db.createCollection<User>('users');
+   *
+   * // res.insertedId is of type string
+   * const res = await collection.insertOne({
+   *   _id: '123',
+   *   dob: new Date(),
+   *   friends: { 'Alice': UUID.random() },
+   *   vector: new DataAPIVector([1, 2, 3]), // This can also be passed as a number[]
+   * });
+   * ```
+   *
+   * ##### Disclaimer
+   *
+   * **Collections are inherently untyped**
+   *
+   * **It is on the user to ensure that the TS type of the `Collection` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.**
+   *
+   * **There is no runtime type validation or enforcement of the schema.**
+   *
+   * @param name - The name of the collection to create.
    * @param options - Options for the collection.
    *
    * @returns A promised reference to the newly created collection.
@@ -418,12 +735,12 @@ export class Db {
    * @throws CollectionAlreadyExistsError - if the collection already exists and `checkExists` is `true` or unset.
    *
    * @see SomeDoc
-   * @see VectorDoc
+   * @see db.collection
    */
-  public async createCollection<Schema extends SomeDoc = SomeDoc>(collectionName: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>> {
+  public async createCollection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>> {
     const command = {
       createCollection: {
-        name: collectionName,
+        name: name,
         options: {
           defaultId: options?.defaultId,
           indexing: options?.indexing as any,
@@ -432,62 +749,214 @@ export class Db {
       },
     };
 
-    const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
-    const keyspace = options?.keyspace ?? this.keyspace;
+    await this.#httpClient.executeCommand(command, {
+      keyspace: options?.keyspace ?? this.keyspace,
+      maxTimeMS: options?.maxTimeMS,
+    });
 
-    if (options?.checkExists !== false) {
-      const collections = await this.listCollections({ keyspace: keyspace, maxTimeMS: timeoutManager.msRemaining() });
-
-      if (collections.some(c => c.name === collectionName)) {
-        throw new CollectionAlreadyExistsError(keyspace, collectionName);
-      }
-    }
-
-    await this.#httpClient.executeCommand(command, { keyspace: keyspace, timeoutManager });
-    return this.collection(collectionName, options);
+    return this.collection(name, options);
   }
 
-  public async createTable<const Def extends CreateTableDefinition>(tableName: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchemaFromDefinition<Def>>>
+  /**
+   * ##### Overview
+   *
+   * Creates a new table in the database, and establishes a reference to it.
+   *
+   * This is a *blocking* command which performs actual I/O (unlike {@link Db.table}, which simply creates an
+   * unvalidated reference to a table).
+   *
+   * ##### Overloads
+   *
+   * *This overload of `createTable` infers the TS-equivalent schema of the table from the provided `CreateTableDefinition`.*
+   *
+   * *Provide an explicit `Schema` type to disable this (e.g. `db.createTable<SomeRow>(...)`).*
+   *
+   * @example
+   * ```ts
+   * // Function to create the actual table
+   * const mkUserTable = () => db.createTable('users', {
+   *   definition: {
+   *     columns: {
+   *       name: 'text',
+   *       dob: {
+   *         type: 'timestamp',
+   *       },
+   *       friends: {
+   *         type: 'set',
+   *         valueType: 'text',
+   *       },
+   *     },
+   *     primaryKey: {
+   *       partitionBy: ['name', 'height'],
+   *       partitionSort: { dob: 1 },
+   *     },
+   *   },
+   * });
+   *
+   * // Type inference is as simple as that
+   * type User = InferTableSchema<typeof mkUserTable>;
+   *
+   * // And now `User` can be used wherever.
+   * const main = async () => {
+   *   const table = await mkUserTable();
+   *   const found: User | null = await table.findOne({});
+   * };
+   * ```
+   *
+   * ##### Idempotency
+   *
+   * Creating a table is idempotent if the `ifNotExists` option is set to `true`. Otherwise, an error will be thrown if a table with the same name is thrown.
+   *
+   * If a table is "recreated" with the same name & `ifNotExists` is set to `true`, but the columns definition differ, the operation will silently succeed, **but the original table schema will be retained**.
+   *
+   * ##### Typing & Types
+   *
+   * A `Table` is typed as `Table<Schema extends SomeRow = SomeRow>`, where:
+   *  - `Schema` is the type of the rows in the table (the table schema).
+   *  - `SomeRow` is set to `Record<string, any>`, representing any valid JSON object.
+   *
+   * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
+   *
+   * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
+   *
+   * ***Please see {@link Table} for *much* more info on typing them, and more.***
+   *
+   * ##### Disclaimer
+   *
+   * *It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.*
+   *
+   * See {@link Db.createTable}, {@link Db.table}, and {@link InferTableSchema} for much more information about typing.
+   *
+   * @param name - The name of the table to create.
+   * @param options - Options for the table.
+   *
+   * @returns A promised reference to the newly created table.
+   *
+   * @see SomeRow
+   * @see db.table
+   * @see InferTableSchema
+   * @see Row
+   * @see $PrimaryKeyType
+   * @see CreateTableDefinition
+   */
+  public async createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<InferTableSchemaFromDefinition<Def>, Def>): Promise<Table<InferTableSchemaFromDefinition<Def>>>
 
-  public async createTable<Schema extends SomeRow>(tableName: string, options: CreateTableOptions): Promise<Table<Schema>>
+  /**
+   * ##### Overview
+   *
+   * Creates a new table in the database, and establishes a reference to it.
+   *
+   * This is a *blocking* command which performs actual I/O (unlike {@link Db.table}, which simply creates an
+   * unvalidated reference to a table).
+   *
+   * ##### Overloads
+   *
+   * *This overload of `createTable` uses the provided `Schema` type to type the Table.*
+   *
+   * *Don't provide a `Schema` type if you want to infer it from the `CreateTableDefinition` via {@link InferTableSchema}.*
+   *
+   * @example
+   * ```ts
+   * interface User extends Row<User, 'name' | 'dob'> {
+   *   name: string,
+   *   dob: CqlDate,
+   *   friends?: Set<string>,
+   * }
+   *
+   * const table = await db.createTable<User>('users', {
+   *   definition: {
+   *     columns: {
+   *       name: 'text',
+   *       dob: {
+   *         type: 'timestamp',
+   *       },
+   *       friends: {
+   *         type: 'set',
+   *         valueType: 'text',
+   *       },
+   *     },
+   *     primaryKey: {
+   *       partitionBy: ['name'],
+   *       partitionSort: { dob: 1 },
+   *     },
+   *   },
+   * });
+   *
+   * const found: User | null = await table.findOne({});
+   * ```
+   *
+   * ##### Idempotency
+   *
+   * Creating a table is idempotent if the `ifNotExists` option is set to `true`. Otherwise, an error will be thrown if a table with the same name is thrown.
+   *
+   * If a table is "recreated" with the same name & `ifNotExists` is set to `true`, but the columns definition differ, the operation will silently succeed, **but the original table schema will be retained**.
+   *
+   * ##### Typing & Types
+   *
+   * A `Table` is typed as `Table<Schema extends SomeRow = SomeRow>`, where:
+   *  - `Schema` is the type of the rows in the table (the table schema).
+   *  - `SomeRow` is set to `Record<string, any>`, representing any valid JSON object.
+   *
+   * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
+   *
+   * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
+   *
+   * ***Please see {@link Table} for *much* more info on typing them, and more.***
+   *
+   * ##### Disclaimer
+   *
+   * *It is on the user to ensure that the TS type of the `Table` corresponds with the actual CQL table schema, in its TS-deserialized form. Incorrect or dynamic tying could lead to surprising behaviours and easily-preventable errors.*
+   *
+   * See {@link Db.createTable}, {@link Db.table}, and {@link InferTableSchema} for much more information about typing.
+   *
+   * @param name - The name of the table to create.
+   * @param options - Options for the table.
+   *
+   * @returns A promised reference to the newly created table.
+   *
+   * @see SomeRow
+   * @see db.table
+   * @see InferTableSchema
+   * @see Row
+   * @see $PrimaryKeyType
+   * @see CreateTableDefinition
+   */
+  public async createTable<Schema extends SomeRow>(name: string, options: CreateTableOptions<Schema>): Promise<Table<Schema>>
 
-  public async createTable(tableName: string, options: CreateTableOptions): Promise<Table> {
+  public async createTable(name: string, options: CreateTableOptions<SomeRow>): Promise<Table> {
     const command = {
       createTable: {
-        name: tableName,
+        name: name,
         definition: options.definition,
+        options: {
+          ifNotExists: options.ifNotExists ?? false,
+        },
       },
     };
 
-    const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
-    const keyspace = options?.keyspace ?? this.keyspace;
+    await this.#httpClient.executeCommand(command, {
+      keyspace: options?.keyspace ?? this.keyspace,
+      maxTimeMS: options?.maxTimeMS,
+    });
 
-    if (options?.checkExists !== false) {
-      const tables = await this.listCollections({ keyspace: keyspace, maxTimeMS: timeoutManager.msRemaining() });
-
-      if (tables.some(c => c.name === tableName)) {
-        throw new CollectionAlreadyExistsError(keyspace, tableName);
-      }
-    }
-
-    await this.#httpClient.executeCommand(command, { keyspace: keyspace, timeoutManager });
-    return this.table(tableName, options);
+    return this.table(name, options);
   }
 
   /**
    * Drops a collection from the database, including all the contained documents.
    *
-   * You can also specify a keyspace in the options parameter, which will override the default keyspace for this database.
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
    *
    * @example
    * ```typescript
-   * // Uses db's default keyspace
-   * const success1 = await db.dropCollection("users");
+   * // Uses db's working keyspace
+   * const success1 = await db.dropCollection('users');
    * console.log(success1); // true
    *
-   * // Overrides db's default keyspace
-   * const success2 = await db.dropCollection("users", {
-   *   keyspace: "my_keyspace"
+   * // Overrides db's working keyspace
+   * const success2 = await db.dropCollection('users', {
+   *   keyspace: 'my_keyspace'
    * });
    * console.log(success2); // true
    * ```
@@ -499,36 +968,56 @@ export class Db {
    *
    * @remarks Use with caution. Have steel-toe boots on. Don't say I didn't warn you.
    */
-  public async dropCollection(name: string, options?: DropCollectionOptions): Promise<boolean> {
-    const command = {
-      deleteCollection: { name },
-    };
-
-    const resp = await this.#httpClient.executeCommand(command, options);
-
-    return resp.status?.ok === 1;
+  public async dropCollection(name: string, options?: DropCollectionOptions): Promise<void> {
+    await this.#httpClient.executeCommand({ deleteCollection: { name } }, options);
   }
 
-  public async dropTable(name: string, options?: DropTableOptions): Promise<boolean> {
-    const command = {
-      deleteTable: { name },
-    };
+  /**
+   * Drops a table from the database, including all the contained rows.
+   *
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
+   *
+   * @example
+   * ```typescript
+   * // Uses db's working keyspace
+   * const success1 = await db.dropTable('users');
+   * console.log(success1); // true
+   *
+   * // Overrides db's working keyspace
+   * const success2 = await db.dropTable('users', {
+   *   keyspace: 'my_keyspace'
+   * });
+   * console.log(success2); // true
+   * ```
+   *
+   * @param name - The name of the table to drop.
+   * @param options - Options for this operation.
+   *
+   * @returns A promise that resolves to `true` if the table was dropped successfully.
+   *
+   * @remarks Use with caution. Wear a mask. Don't say I didn't warn you.
+   */
+  public async dropTable(name: string, options?: DropTableOptions): Promise<void> {
+    await this.#httpClient.executeCommand({ dropTable: { name } }, options);
+  }
 
-    const resp = await this.#httpClient.executeCommand(command, options);
-
-    return resp.status?.ok === 1;
+  public async dropTableIndex(name: string, options?: WithTimeout): Promise<void> {
+    await this.#httpClient.executeCommand({ dropIndex: { name } }, options);
   }
 
   /**
    * Lists the collection names in the database.
    *
-   * If you want to include the collection options in the response, set `nameOnly` to `false`, using the other overload.
+   * If you want to include the collection options in the response, set `nameOnly` to `false` (or omit it completely),
+   * using the other overload.
    *
-   * You can also specify a keyspace in the options parameter, which will override the default keyspace for this database.
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
    *
    * @example
    * ```typescript
-   * // [{ name: "users" }, { name: "posts" }]
+   * // ['users', 'posts']
    * console.log(await db.listCollections({ nameOnly: true }));
    * ```
    *
@@ -543,13 +1032,14 @@ export class Db {
   /**
    * Lists the collections in the database.
    *
-   * If you want to use only the collection names, set `nameOnly` to `true` (or omit it completely), using the other overload.
+   * If you want to use only the collection names, set `nameOnly` to `true`, using the other overload.
    *
-   * You can also specify a keyspace in the options parameter, which will override the default keyspace for this database.
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
    *
    * @example
    * ```typescript
-   * // [{ name: "users" }, { name: "posts", options: { ... } }]
+   * // [{ name: 'users' }, { name: 'posts', options: { ... } }]
    * console.log(await db.listCollections());
    * ```
    *
@@ -574,13 +1064,54 @@ export class Db {
     return resp.status!.collections;
   }
 
+  /**
+   * Lists the table names in the database.
+   *
+   * If you want to include the table options in the response, set `nameOnly` to `false` (or omit it completely),
+   * using the other overload.
+   *
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
+   *
+   * @example
+   * ```typescript
+   * // ['users', 'posts']
+   * console.log(await db.listTables({ nameOnly: true }));
+   * ```
+   *
+   * @param options - Options for this operation.
+   *
+   * @returns A promise that resolves to an array of table names.
+   *
+   * @see CollectionOptions
+   */
   public async listTables(options: ListTablesOptions & { nameOnly: true }): Promise<string[]>
 
+  /**
+   * Lists the tables in the database.
+   *
+   * If you want to use only the table names, set `nameOnly` to `true`, using the other overload.
+   *
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
+   *
+   * @example
+   * ```typescript
+   * // [{ name: 'users' }, { name: 'posts', definition: { ... } }]
+   * console.log(await db.listTables());
+   * ```
+   *
+   * @param options - Options for this operation.
+   *
+   * @returns A promise that resolves to an array of table info.
+   *
+   * @see CollectionOptions
+   */
   public async listTables(options?: ListTablesOptions & { nameOnly?: false }): Promise<FullTableInfo[]>
 
   public async listTables(options?: ListTablesOptions): Promise<string[] | FullTableInfo[]> {
     const command = {
-      findTables: {
+      listTables: {
         options: {
           explain: options?.nameOnly !== true,
         },
@@ -594,21 +1125,26 @@ export class Db {
   /**
    * Send a POST request to the Data API for this database with an arbitrary, caller-provided payload.
    *
-   * You can specify a collection to target in the options parameter, thereby allowing you to perform
-   * arbitrary collection-level operations as well.
+   * You can specify a table/collection to target in the options parameter, thereby allowing you to perform
+   * arbitrary table/collection-level operations as well.
    *
-   * You're also able to specify a keyspace in the options parameter, which will override the default keyspace
-   * for this database.
+   * If the keyspace is set to `null`, the command will be run at the database level.
    *
-   * If no collection is specified, the command will be executed at the database level.
+   * If no collection is specified, the command will be executed at the keyspace level.
+   *
+   * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
+   * instance.
    *
    * @example
    * ```typescript
    * const colls = await db.command({ findCollections: {} });
    * console.log(colls); // { status: { collections: [] } }
    *
-   * const users = await db.command({ findOne: {} }, { collection: 'users' });
-   * console.log(users); // { data: { document: null } }
+   * const user = await db.command({ findOne: {} }, { collection: 'users' });
+   * console.log(user); // { data: { document: null } }
+   *
+   * const post = await db.command({ findOne: {} }, { table: 'posts' });
+   * console.log(post); // { data: { document: null } }
    * ```
    *
    * @param command - The command to send to the Data API.

@@ -20,5 +20,4 @@ export interface GenericFindOneAndUpdateOptions extends WithTimeout {
   upsert?: boolean,
   sort?: Sort,
   projection?: Projection,
-  includeResultMetadata?: boolean,
 }

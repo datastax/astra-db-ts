@@ -15,7 +15,7 @@
 import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.documents.collections.find-one-and-update', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.find-one-and-update', { truncate: 'colls:before' }, ({ collection }) => {
   it('should findOneAndUpdate', async () => {
     const res = await collection.insertOne({ name: 'old', age: 0 });
     const docId = res.insertedId;
@@ -33,13 +33,11 @@ parallel('integration.documents.collections.find-one-and-update', { truncateColl
       },
       {
         returnDocument: 'after',
-        includeResultMetadata: true,
       },
     );
-    assert.strictEqual(resp.ok, 1);
-    assert.strictEqual(resp.value?._id, docId);
-    assert.strictEqual(resp.value.name, 'new');
-    assert.strictEqual(resp.value.age, undefined);
+    assert.strictEqual(resp?._id, docId);
+    assert.strictEqual(resp.name, 'new');
+    assert.strictEqual(resp.age, undefined);
   });
 
   it('should findOneAndUpdate with returnDocument before', async () => {
@@ -59,13 +57,11 @@ parallel('integration.documents.collections.find-one-and-update', { truncateColl
       },
       {
         returnDocument: 'before',
-        includeResultMetadata: true,
       },
     );
-    assert.strictEqual(resp.ok, 1);
-    assert.strictEqual(resp.value?._id, docId);
-    assert.strictEqual(resp.value.name, 'old');
-    assert.strictEqual(resp.value.age, 0);
+    assert.strictEqual(resp?._id, docId);
+    assert.strictEqual(resp.name, 'old');
+    assert.strictEqual(resp.age, 0);
   });
 
   it('should findOneAndUpdate with upsert true', async (key) => {
@@ -83,15 +79,13 @@ parallel('integration.documents.collections.find-one-and-update', { truncateColl
         },
       },
       {
-        includeResultMetadata: true,
         returnDocument: 'after',
         upsert: true,
       },
     );
-    assert.strictEqual(resp.ok, 1);
-    assert.strictEqual(resp.value?._id, _id);
-    assert.strictEqual(resp.value.name, 'new');
-    assert.strictEqual(resp.value.address, undefined);
+    assert.strictEqual(resp?._id, _id);
+    assert.strictEqual(resp.name, 'new');
+    assert.strictEqual(resp.address, undefined);
   });
 
   it('should findOneAndUpdate with upsert true and returnDocument before', async (key) => {
@@ -108,13 +102,11 @@ parallel('integration.documents.collections.find-one-and-update', { truncateColl
         },
       },
       {
-        includeResultMetadata: true,
         returnDocument: 'before',
         upsert: true,
       },
     );
-    assert.strictEqual(resp.ok, 1);
-    assert.strictEqual(resp.value, null);
+    assert.strictEqual(resp, null);
   });
 
   it('should findOneAndUpdate without any updates to apply', async (key) => {
@@ -125,9 +117,9 @@ parallel('integration.documents.collections.find-one-and-update', { truncateColl
     const res = await collection.findOneAndUpdate(
       { key },
       { $set: { name: 'a' } },
-      { sort: { name: 1 }, includeResultMetadata: true },
+      { sort: { name: 1 } },
     );
-    assert.strictEqual(res.value?.name, 'a');
+    assert.strictEqual(res?.name, 'a');
   });
 
   it('should findOneAndUpdate with a projection', async (key) => {
@@ -140,10 +132,10 @@ parallel('integration.documents.collections.find-one-and-update', { truncateColl
     const res = await collection.findOneAndUpdate(
       { name: 'a', key },
       { $set: { name: 'b' } },
-      { projection: { name: 1 }, returnDocument: 'after', includeResultMetadata: true },
+      { projection: { name: 1 }, returnDocument: 'after' },
     );
-    assert.strictEqual(res.value?.name, 'b');
-    assert.strictEqual(res.value.age, undefined);
+    assert.strictEqual(res?.name, 'b');
+    assert.strictEqual(res.age, undefined);
   });
 
   it('should findOneAndUpdate with sort', async (key) => {
@@ -156,16 +148,16 @@ parallel('integration.documents.collections.find-one-and-update', { truncateColl
     const res1 = await collection.findOneAndUpdate(
       { key },
       { $set: { name: 'aaa' } },
-      { sort: { name: 1 }, includeResultMetadata: true },
+      { sort: { name: 1 } },
     );
-    assert.strictEqual(res1.value?.name, 'a');
+    assert.strictEqual(res1?.name, 'a');
 
     const res2 = await collection.findOneAndUpdate(
       { key },
       { $set: { name: 'ccc' } },
-      { sort: { name: -1 }, includeResultMetadata: true },
+      { sort: { name: -1 } },
     );
-    assert.deepStrictEqual(res2.value?.name, 'c');
+    assert.deepStrictEqual(res2?.name, 'c');
   });
 
   it('should not return metadata when includeResultMetadata is false', async (key) => {
@@ -174,7 +166,7 @@ parallel('integration.documents.collections.find-one-and-update', { truncateColl
     const res = await collection.findOneAndUpdate(
       { name: 'a', key },
       { $set: { name: 'b' } },
-      { returnDocument: 'after', includeResultMetadata: false },
+      { returnDocument: 'after' },
     );
 
     assert.deepStrictEqual(res, { _id: res?._id, name: 'b', key });
@@ -202,8 +194,8 @@ parallel('integration.documents.collections.find-one-and-update', { truncateColl
     const res = await collection.findOneAndUpdate(
       { key },
       { $set: { name: 'aaa' } },
-      { sort: { $vector: [1, 1, 1, 1, 1] }, includeResultMetadata: true },
+      { sort: { $vector: [1, 1, 1, 1, 1] } },
     );
-    assert.strictEqual(res.value?.name, 'a');
+    assert.strictEqual(res?.name, 'a');
   });
 });

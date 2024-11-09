@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CLIENT_USER_AGENT, RAGSTACK_REQUESTED_WITH } from '@/src/lib/api/constants';
-import { Caller, Logger } from '@/src/client';
-import TypedEmitter from 'typed-emitter';
-import { FetchCtx, FetcherResponseInfo } from '@/src/lib/api/fetch/types';
-import { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/lib/api/clients/types';
-import { DataAPIClientEvents } from '@/src/lib/logging';
+import { CLIENT_USER_AGENT } from '@/src/lib/api/constants';
+import type { Caller } from '@/src/client';
+import type TypedEmitter from 'typed-emitter';
+import type { FetchCtx, FetcherResponseInfo } from '@/src/lib/api/fetch/types';
+import type { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/lib/api/clients';
+import type { DataAPIClientEvents } from '@/src/lib/logging';
+import { Logger } from '@/src/lib/logging/logger';
+import { OneOrMany } from '@/src/lib/types';
 
 /**
  * @internal
@@ -40,9 +42,10 @@ export abstract class HttpClient {
       this.baseUrl += '/' + options.baseApiPath;
     }
 
-    this.baseHeaders = {};
+    this.baseHeaders = { ...options.additionalHeaders };
     this.baseHeaders['User-Agent'] = options.userAgent;
     this.baseHeaders['Content-Type'] = 'application/json';
+    this.baseHeaders['Feature-Flag-tables'] = 'true';
 
     this.headerProviders = headerProviders;
   }
@@ -91,7 +94,7 @@ export abstract class HttpClient {
 /**
  * @internal
  */
-export function buildUserAgent(caller: Caller | Caller[] | undefined): string {
+export function buildUserAgent(caller: OneOrMany<Caller> | undefined): string {
   const callers = (
     (!caller)
       ? [] :
@@ -104,5 +107,5 @@ export function buildUserAgent(caller: Caller | Caller[] | undefined): string {
     return c[1] ? `${c[0]}/${c[1]}` : c[0];
   }).join(' ');
 
-  return `${RAGSTACK_REQUESTED_WITH} ${callerString} ${CLIENT_USER_AGENT}`.trim();
+  return `${callerString} ${CLIENT_USER_AGENT}`.trim();
 }

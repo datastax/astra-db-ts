@@ -12,13 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type {
-  Caller,
-  DataAPIHttpOptions,
-  DefaultAdminSpawnOptions,
-  DefaultDbSpawnOptions,
-} from '@/src/client';
 import type { DataAPIEnvironment, DataAPILoggingConfig } from '@/src/lib';
+import type { Caller, DataAPIHttpOptions, DefaultAdminSpawnOptions, DefaultDbSpawnOptions } from '@/src/client';
+import { OneOrMany } from '@/src/lib/types';
 
 /**
  * The default options for the {@link DataAPIClient}. The Data API & DevOps specific options may be overridden
@@ -27,6 +23,15 @@ import type { DataAPIEnvironment, DataAPILoggingConfig } from '@/src/lib';
  * @public
  */
 export interface DataAPIClientOptions {
+  /**
+   * The configuration for logging events emitted by the {@link DataAPIClient}.
+   *
+   * This can be set at any level of the major class hierarchy, and will be inherited by all child classes.
+   *
+   * See {@link DataAPILoggingConfig} for *much* more information on configuration, outputs, and inheritance.
+   *
+   * **TL;DR: Set `logging: 'all'` for a sane default.**
+   */
   logging?: DataAPILoggingConfig,
   /**
    * Sets the Data API "backend" that is being used (e.g. 'dse', 'hcd', 'cassandra', or 'other'). Defaults to 'astra'.
@@ -109,5 +114,5 @@ export interface DataAPIClientOptions {
    * });
    * ```
    */
-  caller?: Caller | Caller[],
+  caller?: OneOrMany<Caller>,
 }

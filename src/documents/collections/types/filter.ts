@@ -17,6 +17,42 @@ import type { IdOf, NoId, ToDotNotation } from '@/src/documents';
 import { EmptyObj } from '@/src/lib/types';
 import { IsDate, IsNum } from '@/src/documents/types/utils';
 
+// @example
+//   ```ts
+// // Get all documents
+// const cursor = await collection.find({}, { limit: 10 });
+//
+// // Get documents by field equality
+// const cursor = await collection.find({ name: 'John Doe' });
+//
+// // Get documents by field inequality
+// const cursor = await collection.find({ name: { $ne: 'John Doe' } });
+//
+// // Get documents by field existence
+// const cursor = await collection.find({ name: { $exists: true } });
+//
+// // Get documents by matching a field in a list
+// const cursor = await collection.find({ name: { $in: ['John Doe', 'Jane Doe'] } });
+//
+// // Get documents by field numerical comparison
+// const cursor = await collection.find({ age: { $gte: 21 } });
+// const cursor = await collection.find({ age: { $lt: new Date() } });
+//
+// // Get documents by combining filters
+// const cursor = await collection.find({ name: 'John Doe', age: { $gte: 21 } });
+//
+// // Get documents by complex filters combinators
+// const cursor = await collection.find({
+//   $not: {
+//     $or: [
+//       { name: 'John Doe' },
+//       { age: { $gte: 21 } },
+//     ],
+//     friends: { $size: 5 },
+//   },
+// });
+// ```
+
 /**
  * Represents some filter operation for a given document schema.
  *

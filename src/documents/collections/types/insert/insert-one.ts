@@ -15,7 +15,7 @@
 import type { IdOf } from '@/src/documents';
 
 /**
- * Represents the result of an insertOne command.
+ * Represents the result of an `insertOne` command on collection.
  *
  * @field insertedId - The ID of the inserted document.
  *

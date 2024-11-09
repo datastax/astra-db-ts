@@ -15,6 +15,4 @@
 
 export * from './data-api-client';
 export * from './errors';
-export * from './types';
-export * from '../lib/logging/logger';
-export { DataAPIClientEvent } from '@/src/lib/logging/events';
+export type * from './types';

@@ -24,7 +24,7 @@
 export type SomeDoc = Record<string, any>;
 
 /**
- * Base type for a document that wishes to leverage raw vector capabilities.
+ * Utility type for a document that wishes to leverage raw vector capabilities.
  * 
  * @example
  * ```typescript
@@ -50,7 +50,7 @@ export interface VectorDoc {
 }
 
 /**
- * Base type for a document that wishes to leverage automatic vectorization (assuming the collections is vectorize-enabled).
+ * Utility type for a document that wishes to leverage automatic vectorization (assuming the collections is vectorize-enabled).
  *
  * @example
  * ```typescript
@@ -70,5 +70,5 @@ export interface VectorizeDoc {
   /**
    * A string field to be automatically vectorized
    */
-  $vectorize: string,
+  $vectorize?: string,
 }

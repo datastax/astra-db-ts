@@ -15,74 +15,91 @@
 import { VectorizeServiceOptions } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
 import { TableSpawnOptions } from '@/src/db/types/tables/spawn-table';
+import { SomeRow } from '@/src/documents';
 
-export interface CreateTableOptions<Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout, TableSpawnOptions {
+/**
+ * Options for creating a new table (via {@link Db.createTable}).
+ *
+ * See {@link Db.createTable} & {@link Table} for more information.
+ *
+ * @field definition - The bespoke columns/primary-key definition for the table.
+ * @field ifNotExists - Makes operation a no-op if the table already exists.
+ * @field keyspace - Overrides the keyspace for the table (from the `Db`'s working keyspace).
+ * @field embeddingApiKey - The embedding service's API-key/headers (for $vectorize)
+ * @field defaultMaxTimeMS - Default `maxTimeMS` for all table operations
+ * @field logging - Logging configuration overrides
+ * @field serdes - Additional serialization/deserialization configuration
+ * @field maxTimeMS - The maximum time to allow the operation to run.
+ *
+ * @public
+ */
+export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout, TableSpawnOptions<Schema> {
   definition: Def,
-  checkExists?: boolean,
+  ifNotExists?: boolean,
 }
 
 export interface CreateTableDefinition {
-  columns: CreateTableColumnDefinitions,
-  primaryKey: CreateTablePrimaryKeyDefinition,
+  readonly columns: CreateTableColumnDefinitions,
+  readonly primaryKey: CreateTablePrimaryKeyDefinition,
 }
 
 export type CreateTableColumnDefinitions = Record<string, LooseCreateTableColumnDefinition | StrictCreateTableColumnDefinition>;
 
-type TableScalarType =
-  | 'text'
-  | 'int'
-  | 'double'
-  | 'float'
+export type TableScalarType =
   | 'ascii'
-  | 'smallint'
-  | 'tinyint'
-  | 'varchar'
-  | 'varint'
+  | 'bigint'
+  | 'blob'
   | 'boolean'
-  | 'inet'
-  | 'uuid'
-  | 'timeuuid'
   | 'date'
+  | 'decimal'
+  | 'double'
   | 'duration'
+  | 'float'
+  | 'int'
+  | 'inet'
+  | 'smallint'
+  | 'text'
   | 'time'
-  | 'timestamp';
+  | 'timestamp'
+  | 'tinyint'
+  | 'uuid'
+  | 'varint';
 
-type LooseCreateTableColumnDefinition =
+export type LooseCreateTableColumnDefinition =
   | TableScalarType
   | string;
 
-type StrictCreateTableColumnDefinition =
+export type StrictCreateTableColumnDefinition =
   | ScalarCreateTableColumnDefinition
   | MapCreateTableColumnDefinition
   | ListCreateTableColumnDefinition
   | SetCreateTableColumnDefinition
   | VectorCreateTableColumnDefinition;
 
-interface ScalarCreateTableColumnDefinition {
+export interface ScalarCreateTableColumnDefinition {
   type: TableScalarType,
 }
 
-interface MapCreateTableColumnDefinition {
+export interface MapCreateTableColumnDefinition {
   type: 'map',
   keyType: TableScalarType,
   valueType: TableScalarType,
 }
 
-interface ListCreateTableColumnDefinition {
+export interface ListCreateTableColumnDefinition {
   type: 'list',
   valueType: TableScalarType,
 }
 
-interface SetCreateTableColumnDefinition {
+export interface SetCreateTableColumnDefinition {
   type: 'set',
   valueType: TableScalarType,
 }
 
-interface VectorCreateTableColumnDefinition {
+export interface VectorCreateTableColumnDefinition {
   type: 'vector',
-  valueType: TableScalarType,
-  dimensions?: number[],
-  service: VectorizeServiceOptions,
+  dimension?: number,
+  service?: VectorizeServiceOptions,
 }
 
 export type CreateTablePrimaryKeyDefinition =
@@ -92,6 +109,6 @@ export type CreateTablePrimaryKeyDefinition =
 export type ShortCreateTablePrimaryKeyDefinition = string;
 
 export interface FullCreateTablePrimaryKeyDefinition {
-  partitionKey: string[],
-  partitionSort?: Record<string, 1 | -1>,
+  readonly partitionBy: readonly string[],
+  readonly partitionSort?: Record<string, 1 | -1>,
 }

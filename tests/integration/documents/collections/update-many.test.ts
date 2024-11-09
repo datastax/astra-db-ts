@@ -13,11 +13,11 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIError, UpdateManyError } from '@/src/documents';
+import { DataAPIError, CollectionUpdateManyError } from '@/src/documents';
 import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.documents.collections.update-many', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.update-many', { truncate: 'colls:before' }, ({ collection }) => {
   it('should updateMany documents with ids', async (key) => {
     const docs = [{ _id: `${key}1`, age: 1, key }, { _id: `${key}2`, age: 2, key }, { _id: `${key}3`, age: 3, key }];
     const res = await collection.insertMany(docs);
@@ -773,7 +773,7 @@ parallel('integration.documents.collections.update-many', { truncateColls: 'defa
       await collection.updateMany({ key }, { $invalidOperator: 1 });
       assert.fail('Expected error');
     } catch (e) {
-      assert.ok(e instanceof UpdateManyError);
+      assert.ok(e instanceof CollectionUpdateManyError);
       assert.strictEqual(e.errorDescriptors[0].errorCode, 'UNSUPPORTED_UPDATE_OPERATION');
       assert.strictEqual(e.detailedErrorDescriptors[0].errorDescriptors[0].errorCode, 'UNSUPPORTED_UPDATE_OPERATION');
       assert.strictEqual(e.errorDescriptors.length, 1);

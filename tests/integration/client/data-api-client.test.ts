@@ -159,10 +159,10 @@ describe('integration.client.documents-client', () => {
       assert.strictEqual(startedEvents[1].keyspace, OTHER_KEYSPACE);
       assert.strictEqual(succeededEvents[1].keyspace, OTHER_KEYSPACE);
 
-      assert.strictEqual(startedEvents[0].collection, DEFAULT_COLLECTION_NAME);
-      assert.strictEqual(succeededEvents[0].collection, DEFAULT_COLLECTION_NAME);
-      assert.strictEqual(startedEvents[1].collection, DEFAULT_COLLECTION_NAME);
-      assert.strictEqual(succeededEvents[1].collection, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(startedEvents[0].source, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(succeededEvents[0].source, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(startedEvents[1].source, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(succeededEvents[1].source, DEFAULT_COLLECTION_NAME);
 
       assert.strictEqual(startedEvents[0].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
       assert.strictEqual(succeededEvents[0].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
@@ -227,8 +227,8 @@ describe('integration.client.documents-client', () => {
       assert.strictEqual(startedEvent.keyspace, DEFAULT_KEYSPACE);
       assert.strictEqual(failedEvent.keyspace, DEFAULT_KEYSPACE);
 
-      assert.strictEqual(startedEvent.collection, DEFAULT_COLLECTION_NAME);
-      assert.strictEqual(failedEvent.collection, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(startedEvent.source, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(failedEvent.source, DEFAULT_COLLECTION_NAME);
 
       assert.strictEqual(startedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
       assert.strictEqual(failedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
@@ -280,8 +280,8 @@ describe('integration.client.documents-client', () => {
       assert.strictEqual(startedEvent.keyspace, DEFAULT_KEYSPACE);
       assert.strictEqual(failedEvent.keyspace, DEFAULT_KEYSPACE);
 
-      assert.strictEqual(startedEvent.collection, DEFAULT_COLLECTION_NAME);
-      assert.strictEqual(failedEvent.collection, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(startedEvent.source, DEFAULT_COLLECTION_NAME);
+      assert.strictEqual(failedEvent.source, DEFAULT_COLLECTION_NAME);
 
       assert.strictEqual(startedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
       assert.strictEqual(failedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);

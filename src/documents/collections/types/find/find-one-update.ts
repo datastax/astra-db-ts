@@ -97,13 +97,4 @@ export interface CollectionFindOneAndUpdateOptions extends WithTimeout {
    * ```
    */
   projection?: Projection,
-  /**
-   * When true, returns alongside the document, an `ok` field with a value of 1 if the command executed successfully.
-   *
-   * Otherwise, returns the document result directly.
-   *
-   * Defaults to false.
-   * @defaultValue false
-   */
-  includeResultMetadata?: boolean,
 }

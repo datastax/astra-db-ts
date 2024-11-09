@@ -12,38 +12,49 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeRow } from '@/src/documents';
-import { Cols2CqlTypes, CreateTableColumnDefinitions } from '@/src/db';
+import { Cols, SomeRow } from '@/src/documents';
+import { Cols2CqlTypes, CreateTableColumnDefinitions, Normalize, VectorizeServiceOptions } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
 import { EmptyObj } from '@/src/lib/types';
 
 export interface AlterTableOptions<Schema extends SomeRow> extends WithTimeout {
   operation: AlterTableOperations<Schema>,
-  ifExists?: boolean,
+  // ifExists?: boolean,
 }
 
 export interface AlterTableOperations<Schema extends SomeRow> {
   add?: AddColumnOperation,
   drop?: DropColumnOperation<Schema>,
+  addVectorize?: AddVectorizeOperation<Schema>,
+  dropVectorize?: DropVectorizeOperation<Schema>,
 }
 
 export interface AddColumnOperation {
   columns: CreateTableColumnDefinitions
-  ifExists?: boolean,
+  // ifNotExists?: boolean,
 }
 
 export interface DropColumnOperation<Schema extends SomeRow> {
-  columns: (keyof Schema)[];
-  ifExists?: boolean,
+  columns: Cols<Schema>[];
+  // ifExists?: boolean,
 }
 
-export type AlterTableSchema<Schema extends SomeRow, Alter extends AlterTableOptions<Schema>> = Omit<
+export interface AddVectorizeOperation<Schema extends SomeRow> {
+  columns: Record<Cols<Schema>, VectorizeServiceOptions>
+}
+
+export interface DropVectorizeOperation<Schema extends SomeRow> {
+  columns: Cols<Schema>[];
+  // ifExists?: boolean,
+}
+
+export type AlterTableSchema<Schema extends SomeRow, Alter extends AlterTableOptions<Schema>> = Normalize<Omit<
   Schema & Cols2Add<Alter['operation']['add']>,
   Cols2Drop<Alter['operation']['drop']>
->;
+>>;
 
 export type Cols2Add<Op extends AddColumnOperation | undefined> = Op extends AddColumnOperation
-  ? Cols2CqlTypes<Op["columns"]>
+  ? { [P in keyof Cols2CqlTypes<Op["columns"]>]?: Cols2CqlTypes<Op["columns"]>[P] }
   : EmptyObj;
 
 export type Cols2Drop<Op> = Op extends { columns: (infer U)[] }

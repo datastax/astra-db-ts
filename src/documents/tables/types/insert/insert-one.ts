@@ -12,8 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { KeyOf, SomeRow } from '@/src/documents';
+import type { KeyOf, SomeRow } from '@/src/documents';
 
+/**
+ * Represents the result of an `insertOne` command on a table.
+ *
+ * @field insertedId - The ID of the inserted document.
+ *
+ * @see Table.insertOne
+ *
+ * @public
+ */
 export interface TableInsertOneResult<Schema extends SomeRow> {
   insertedId: KeyOf<Schema>;
 }

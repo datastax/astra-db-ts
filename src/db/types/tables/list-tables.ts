@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { WithTimeout } from '@/src/lib/types';
-import { CreateTableDefinition, WithKeyspace } from '@/src/db';
+import { FullCreateTablePrimaryKeyDefinition, StrictCreateTableColumnDefinition, WithKeyspace } from '@/src/db';
 
 export interface ListTablesOptions extends WithTimeout, WithKeyspace {
   nameOnly?: boolean,
@@ -21,5 +21,28 @@ export interface ListTablesOptions extends WithTimeout, WithKeyspace {
 
 export interface FullTableInfo {
   name: string,
-  definition: CreateTableDefinition,
+  definition: ListTableDefinition,
 }
+
+export interface ListTableDefinition {
+  columns: ListTableColumnDefinitions,
+  primaryKey: ListTablePrimaryKeyDefinition,
+}
+
+export type ListTableColumnDefinitions = Record<string, ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition>;
+
+export type ListTableKnownColumnDefinition = StrictCreateTableColumnDefinition;
+
+export interface ListTableUnsupportedColumnDefinition {
+  type: 'UNSUPPORTED',
+  apiSupport: ListTableUnsupportedColumnApiSupport,
+}
+
+export interface ListTableUnsupportedColumnApiSupport {
+  createTable: boolean,
+  insert: boolean,
+  read: boolean,
+  cqlDefinition: string,
+}
+
+export type ListTablePrimaryKeyDefinition = Required<FullCreateTablePrimaryKeyDefinition>;

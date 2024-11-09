@@ -15,13 +15,14 @@
 
 import { CollectionDeleteManyResult, CollectionInsertManyResult, SomeDoc, CollectionUpdateManyResult } from '@/src/documents/collections/types';
 import {
-  DataAPIResponseError, DeleteManyError,
-  InsertManyError,
+  DataAPIResponseError, CollectionDeleteManyError,
+  CollectionInsertManyError,
   mkRespErrorFromResponse,
-  mkRespErrorFromResponses, UpdateManyError,
+  mkRespErrorFromResponses, CollectionUpdateManyError, TableInsertManyError,
 } from '@/src/documents/errors';
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
+import { TableInsertManyResult } from '@/src/documents';
 
 describe('unit.documents.errors', () => {
   const commands = [
@@ -62,22 +63,22 @@ describe('unit.documents.errors', () => {
     });
   });
 
-  describe('InsertManyError construction', () => {
+  describe('CollectionInsertManyError construction', () => {
     const partialResult: CollectionInsertManyResult<SomeDoc> = { insertedIds: ['1', '2'], insertedCount: 2 };
 
-    it('should properly construct a single-response InsertManyError', () => {
-      const err = mkRespErrorFromResponse(InsertManyError, commands[0], raws[0], <any>{ partialResult });
+    it('should properly construct a single-response CollectionInsertManyError', () => {
+      const err = mkRespErrorFromResponse(CollectionInsertManyError, commands[0], raws[0], <any>{ partialResult });
       assert.strictEqual(err.message, raws[0].errors[0].message);
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
         { command: commands[0], rawResponse: raws[0], errorDescriptors: [descriptions[0]] },
       ]);
       assert.strictEqual(err.partialResult, partialResult);
-      assert.strictEqual(err.name, 'InsertManyError');
+      assert.strictEqual(err.name, 'CollectionInsertManyError');
     });
 
-    it('should properly construct a multi-response InsertManyError', () => {
-      const err = mkRespErrorFromResponses(InsertManyError, commands, raws, <any>{ partialResult });
+    it('should properly construct a multi-response CollectionInsertManyError', () => {
+      const err = mkRespErrorFromResponses(CollectionInsertManyError, commands, raws, <any>{ partialResult });
       assert.strictEqual(err.message, raws[0].errors[0].message + ' (+ 1 more errors)');
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0], descriptions[1]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
@@ -85,26 +86,53 @@ describe('unit.documents.errors', () => {
         { command: commands[1], rawResponse: raws[1], errorDescriptors: [descriptions[1]] },
       ]);
       assert.strictEqual(err.partialResult, partialResult);
-      assert.strictEqual(err.name, 'InsertManyError');
+      assert.strictEqual(err.name, 'CollectionInsertManyError');
     });
   });
 
-  describe('DeleteManyError construction', () => {
+  describe('TableInsertManyError construction', () => {
+    const partialResult: TableInsertManyResult<SomeDoc> = { insertedIds: [{ key: '1' }, { key: '2' }], insertedCount: 2 };
+
+    it('should properly construct a single-response TableInsertManyError', () => {
+      const err = mkRespErrorFromResponse(TableInsertManyError, commands[0], raws[0], <any>{ partialResult });
+      assert.strictEqual(err.message, raws[0].errors[0].message);
+      assert.deepStrictEqual(err.errorDescriptors, [descriptions[0]]);
+      assert.deepStrictEqual(err.detailedErrorDescriptors, [
+        { command: commands[0], rawResponse: raws[0], errorDescriptors: [descriptions[0]] },
+      ]);
+      assert.deepStrictEqual(err.partialResult, partialResult);
+      assert.strictEqual(err.name, 'TableInsertManyError');
+    });
+
+    it('should properly construct a multi-response TableInsertManyError', () => {
+      const err = mkRespErrorFromResponses(TableInsertManyError, commands, raws, <any>{ partialResult });
+      assert.strictEqual(err.message, raws[0].errors[0].message + ' (+ 1 more errors)');
+      assert.deepStrictEqual(err.errorDescriptors, [descriptions[0], descriptions[1]]);
+      assert.deepStrictEqual(err.detailedErrorDescriptors, [
+        { command: commands[0], rawResponse: raws[0], errorDescriptors: [descriptions[0]] },
+        { command: commands[1], rawResponse: raws[1], errorDescriptors: [descriptions[1]] },
+      ]);
+      assert.deepStrictEqual(err.partialResult, partialResult);
+      assert.strictEqual(err.name, 'TableInsertManyError');
+    });
+  });
+
+  describe('CollectionDeleteManyError construction', () => {
     const partialResult: CollectionDeleteManyResult = { deletedCount: 2 };
 
-    it('should properly construct a single-response DeleteManyError', () => {
-      const err = mkRespErrorFromResponse(DeleteManyError, commands[0], raws[0], { partialResult });
+    it('should properly construct a single-response CollectionDeleteManyError', () => {
+      const err = mkRespErrorFromResponse(CollectionDeleteManyError, commands[0], raws[0], { partialResult });
       assert.strictEqual(err.message, raws[0].errors[0].message);
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
         { command: commands[0], rawResponse: raws[0], errorDescriptors: [descriptions[0]] },
       ]);
       assert.strictEqual(err.partialResult, partialResult);
-      assert.strictEqual(err.name, 'DeleteManyError');
+      assert.strictEqual(err.name, 'CollectionDeleteManyError');
     });
 
-    it('should properly construct a multi-response DeleteManyError', () => {
-      const err = mkRespErrorFromResponses(DeleteManyError, commands, raws, { partialResult });
+    it('should properly construct a multi-response CollectionDeleteManyError', () => {
+      const err = mkRespErrorFromResponses(CollectionDeleteManyError, commands, raws, { partialResult });
       assert.strictEqual(err.message, raws[0].errors[0].message + ' (+ 1 more errors)');
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0], descriptions[1]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
@@ -112,26 +140,26 @@ describe('unit.documents.errors', () => {
         { command: commands[1], rawResponse: raws[1], errorDescriptors: [descriptions[1]] },
       ]);
       assert.strictEqual(err.partialResult, partialResult);
-      assert.strictEqual(err.name, 'DeleteManyError');
+      assert.strictEqual(err.name, 'CollectionDeleteManyError');
     });
   });
 
-  describe('UpdateManyError construction', () => {
+  describe('CollectionUpdateManyError construction', () => {
     const partialResult: CollectionUpdateManyResult<SomeDoc> = { matchedCount: 2, modifiedCount: 2, upsertedCount: 0 };
 
-    it('should properly construct a single-response UpdateManyError', () => {
-      const err = mkRespErrorFromResponse(UpdateManyError, commands[0], raws[0], { partialResult });
+    it('should properly construct a single-response CollectionUpdateManyError', () => {
+      const err = mkRespErrorFromResponse(CollectionUpdateManyError, commands[0], raws[0], { partialResult });
       assert.strictEqual(err.message, raws[0].errors[0].message);
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
         { command: commands[0], rawResponse: raws[0], errorDescriptors: [descriptions[0]] },
       ]);
       assert.strictEqual(err.partialResult, partialResult);
-      assert.strictEqual(err.name, 'UpdateManyError');
+      assert.strictEqual(err.name, 'CollectionUpdateManyError');
     });
 
-    it('should properly construct a multi-response UpdateManyError', () => {
-      const err = mkRespErrorFromResponses(UpdateManyError, commands, raws, { partialResult });
+    it('should properly construct a multi-response CollectionUpdateManyError', () => {
+      const err = mkRespErrorFromResponses(CollectionUpdateManyError, commands, raws, { partialResult });
       assert.strictEqual(err.message, raws[0].errors[0].message + ' (+ 1 more errors)');
       assert.deepStrictEqual(err.errorDescriptors, [descriptions[0], descriptions[1]]);
       assert.deepStrictEqual(err.detailedErrorDescriptors, [
@@ -139,7 +167,7 @@ describe('unit.documents.errors', () => {
         { command: commands[1], rawResponse: raws[1], errorDescriptors: [descriptions[1]] },
       ]);
       assert.strictEqual(err.partialResult, partialResult);
-      assert.strictEqual(err.name, 'UpdateManyError');
+      assert.strictEqual(err.name, 'CollectionUpdateManyError');
     });
   });
 });

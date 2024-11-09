@@ -12,11 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { CollectionInsertManyResult } from '@/src/documents/collections/types/insert/insert-many';
-import type { CollectionDeleteManyResult } from '@/src/documents/collections/types/delete/delete-many';
-import type { CollectionUpdateManyResult } from '@/src/documents/collections/types/update/update-many';
-import type { FetcherResponseInfo, RawDataAPIResponse } from '@/src/lib/api';
-import type { SomeDoc } from '@/src/documents/collections/types/document';
+import type { FetcherResponseInfo, RawDataAPIResponse } from '@/src/lib';
+import type {
+  CollectionDeleteManyResult,
+  CollectionInsertManyResult,
+  CollectionUpdateManyResult,
+  SomeDoc,
+} from '@/src/documents/collections';
+import { TableInsertManyResult } from '@/src/documents/tables';
 
 /**
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a
@@ -241,6 +244,57 @@ export class TooManyDocumentsToCountError extends DataAPIError {
 }
 
 /**
+ * Caused by a `countRows` operation that failed because the resulting number of documents exceeded *either*
+ * the upper bound set by the caller, or the hard limit imposed by the Data API.
+ *
+ * @example
+ * ```typescript
+ * await table.insertMany('<100_length_array>');
+ *
+ * try {
+ *   await table.countRows({}, 50);
+ * } catch (e) {
+ *   if (e instanceof TooManyRowsToCountError) {
+ *     console.log(e.limit); // 50
+ *     console.log(e.hitServerLimit); // false
+ *   }
+ * }
+ * ```
+ *
+ * @field limit - The limit that was set by the caller
+ * @field hitServerLimit - Whether the server-imposed limit was hit
+ *
+ * @public
+ */
+export class TooManyRowsToCountError extends DataAPIError {
+  /**
+   * The limit that was specified by the caller, or the server-imposed limit if the caller's limit was too high.
+   */
+  public readonly limit: number;
+
+  /**
+   * Specifies if the server-imposed limit was hit. If this is `true`, the `limit` field will contain the server's
+   * limit; otherwise it will contain the caller's limit.
+   */
+  public readonly hitServerLimit: boolean;
+
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
+  constructor(limit: number, hitServerLimit: boolean) {
+    const message = (hitServerLimit)
+      ? `Too many rows to count (server limit of ${limit} reached)`
+      : `Too many rows to count (provided limit is ${limit})`;
+    super(message);
+    this.limit = limit;
+    this.hitServerLimit = hitServerLimit;
+    this.name = 'TooManyRowsToCountError';
+  }
+}
+
+/**
  * An error representing the *complete* errors for an operation. This is a cohesive error that represents all the
  * errors that occurred during a single operation, and should not be thought of as *always* 1:1 with the number of
  * API requests—rather it's 1:1 with the number of *logical* operations performed by the user (i.e. the methods
@@ -318,7 +372,7 @@ export class DataAPIResponseError extends DataAPIError {
  *
  * @public
  */
-export abstract class CumulativeDataAPIError extends DataAPIResponseError {
+export abstract class CumulativeOperationError extends DataAPIResponseError {
   /**
    * The partial result of the operation that was performed. This is *always* defined, and is
    * the result of the operation up to the point of the first error. For example, if you're inserting 100 documents
@@ -329,13 +383,37 @@ export abstract class CumulativeDataAPIError extends DataAPIResponseError {
 }
 
 /**
- * Represents an error that occurred during an `insertMany` operation (which is, generally, paginated).
+ * ##### Overview
+ *
+ * Represents an error that occurred during an `insertMany` operation (which may be paginated).
  *
  * Contains the inserted IDs of the documents that were successfully inserted, as well as the cumulative errors
  * that occurred during the operation.
  *
  * If the operation was ordered, the `insertedIds` will be in the same order as the documents that were attempted to
  * be inserted.
+ *
+ * @example
+ * ```ts
+ * try {
+ *   await collection.insertMany([
+ *     { _id: 'id1', desc: 'An innocent little document' },
+ *     { _id: 'id2', name: 'Another little document minding its own business' },
+ *     { _id: 'id2', name: 'A mean document commiting _identity theft' },
+ *     { _id: 'id3', name: 'A document that will never see the light of day-tabase' },
+ *   ], { ordered: true });
+ * } catch (e) {
+ *   if (e instanceof CollectionInsertManyError) {
+ *     console.log(e.message); // "Document already exists with the given _id"
+ *     console.log(e.partialResult.insertedIds); // ['id1', 'id2']
+ *   }
+ * }
+ * ```
+ *
+ * ##### Collections vs Tables
+ *
+ * There is a sister {@link TableInsertManyError} class that is used for `insertMany` operations on tables. It's
+ * identical in structure, but just uses the appropriate {@link TableInsertManyResult} type.
  *
  * @field message - A human-readable message describing the *first* error
  * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
@@ -344,11 +422,11 @@ export abstract class CumulativeDataAPIError extends DataAPIResponseError {
  *
  * @public
  */
-export class InsertManyError extends CumulativeDataAPIError {
+export class CollectionInsertManyError extends CumulativeOperationError {
   /**
    * The name of the error. This is always 'InsertManyError'.
    */
-  name = 'InsertManyError';
+  name = 'CollectionInsertManyError';
 
   /**
    * The partial result of the `InsertMany` operation that was performed. This is *always* defined, and is the result
@@ -371,6 +449,35 @@ export class InsertManyError extends CumulativeDataAPIError {
 }
 
 /**
+ * Represents an error that occurred during an `insertMany` operation (which is, generally, paginated).
+ *
+ * Contains the inserted IDs of the documents that were successfully inserted, as well as the cumulative errors
+ * that occurred during the operation.
+ *
+ * If the operation was ordered, the `insertedIds` will be in the same order as the documents that were attempted to
+ * be inserted.
+ *
+ * @field message - A human-readable message describing the *first* error
+ * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
+ * @field detailedErrorDescriptors - A list of errors 1:1 with the number of errorful API requests made to the server.
+ * @field partialResult - The partial result of the `InsertMany` operation that was performed
+ *
+ * @public
+ */
+export class TableInsertManyError extends CumulativeOperationError {
+  /**
+   * The name of the error. This is always 'InsertManyError'.
+   */
+  name = 'TableInsertManyError';
+
+  /**
+   * The partial result of the `InsertMany` operation that was performed. This is *always* defined, and is the result
+   * of all successful insertions.
+   */
+  declare public readonly partialResult: TableInsertManyResult<SomeDoc>;
+}
+
+/**
  * Represents an error that occurred during a `deleteMany` operation (which is, generally, paginated).
  *
  * Contains the number of documents that were successfully deleted, as well as the cumulative errors that occurred
@@ -383,11 +490,11 @@ export class InsertManyError extends CumulativeDataAPIError {
  *
  * @public
  */
-export class DeleteManyError extends CumulativeDataAPIError {
+export class CollectionDeleteManyError extends CumulativeOperationError {
   /**
    * The name of the error. This is always 'DeleteManyError'.
    */
-  name = 'DeleteManyError';
+  name = 'CollectionDeleteManyError';
 
   /**
    * The partial result of the `DeleteMany` operation that was performed. This is *always* defined, and is the result
@@ -409,11 +516,11 @@ export class DeleteManyError extends CumulativeDataAPIError {
  *
  * @public
  */
-export class UpdateManyError extends CumulativeDataAPIError {
+export class CollectionUpdateManyError extends CumulativeOperationError {
   /**
    * The name of the error. This is always 'UpdateManyError'.
    */
-  name = 'UpdateManyError';
+  name = 'CollectionUpdateManyError';
 
   /**
    * The partial result of the `UpdateMany` operation that was performed. This is *always* defined, and is the result

@@ -20,4 +20,4 @@ export * from './filter';
 export * from './global';
 export * from './test-fns/it';
 export * from './test-fns/parallel';
-export { createCollections } from './utils';
+export { useSuiteResources } from './utils';

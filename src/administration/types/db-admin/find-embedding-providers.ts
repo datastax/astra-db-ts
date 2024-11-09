@@ -87,12 +87,14 @@ export interface EmbeddingProviderInfo {
    * See {@link EmbeddingHeadersProvider} for more info.
    * ```typescript
    * const collections = await db.createCollection('my_coll', {
-   *   service: {
-   *     provider: 'openai',
-   *     modelName: 'text-embedding-3-small',
-   *     authentication: {
-   *       // Name of the key in Astra portal's OpenAI integration (KMS).
-   *       providerKey: '*KEY_NAME*',
+   *   vector: {
+   *     service: {
+   *       provider: 'openai',
+   *       modelName: 'text-embedding-3-small',
+   *       authentication: {
+   *         // Name of the key in Astra portal's OpenAI integration (KMS).
+   *         providerKey: '*KEY_NAME*',
+   *       },
    *     },
    *   },
    * });
@@ -109,9 +111,11 @@ export interface EmbeddingProviderInfo {
    * - `NONE`: For when a client doesn't need authentication to use (e.g. nvidia).
    * ```typescript
    * const collections = await db.createCollection('my_coll', {
-   *   service: {
-   *     provider: 'nvidia',
-   *     modelName: 'NV-Embed-QA',
+   *   vector: {
+   *     service: {
+   *       provider: 'nvidia',
+   *       modelName: 'NV-Embed-QA',
+   *     },
    *   },
    * });
    * ```

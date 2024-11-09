@@ -34,7 +34,6 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
   type _id_is_expected = Expect<Equal<IdOf<GetTOfCursor<typeof cursor>>, string>>;
 
   void cursor.next().then((doc) => {
-    // type doc_type_is_expected = Expect<Equal<TestSchema & { $similarity?: never } | null, typeof doc>>;
     type doc_type_is_expected = Expect<Equal<WithId<TestSchema & { $similarity?: number }> | null, typeof doc>>;
   });
 

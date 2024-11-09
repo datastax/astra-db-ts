@@ -12,12 +12,27 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Filter, SomeDoc } from '@/src/documents/collections';
-import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
+import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
+import type { Filter, SomeDoc } from '@/src/documents/collections';
+import type { GenericFindOptions } from '@/src/documents/commands';
+import type { Projection, Sort } from '@/src/documents/types';
+import type { DeepPartial, nullish } from '@/src/lib';
 import { normalizedSort } from '@/src/documents/utils';
-import { Projection, Sort } from '@/src/documents/types';
-import { GenericFindOptions } from '@/src/documents/commands';
-import { DeepPartial, nullish } from '@/src/lib';
+import { $CustomInspect } from '@/src/lib/constants';
+import { DataAPISerDes } from '@/src/lib/api/ser-des';
+import { DataAPIError } from '@/src/documents/errors';
+
+export class CursorError extends DataAPIError {
+  public readonly cursor: FindCursor<unknown>;
+  public readonly state: CursorStatus;
+
+  constructor(message: string, cursor: FindCursor<unknown>) {
+    super(message);
+    this.name = 'CursorError';
+    this.cursor = cursor;
+    this.state = cursor.state;
+  }
+}
 
 /**
  * Represents the status of a cursor.
@@ -99,11 +114,13 @@ interface InternalGetMoreCommand {
  */
 export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   readonly #keyspace: string;
+  readonly #parent: string;
   readonly #httpClient: DataAPIHttpClient;
+  readonly #serdes: DataAPISerDes;
 
   readonly #options: GenericFindOptions;
-  readonly #filter: Filter<TRaw>;
-  readonly #mapping?: (doc: TRaw) => T;
+  readonly #filter: [Filter<TRaw>, boolean];
+  readonly #mapping?: (doc: any) => T;
 
   #buffer: TRaw[] = [];
   #nextPageState?: string | null;
@@ -116,12 +133,18 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(keyspace: string, httpClient: DataAPIHttpClient, filter: Filter<TRaw>, options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
+  constructor(keyspace: string, parent: string, httpClient: DataAPIHttpClient, serdes: DataAPISerDes, filter: [Filter<TRaw>, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
     this.#keyspace = keyspace;
+    this.#parent = parent;
     this.#httpClient = httpClient;
+    this.#serdes = serdes;
     this.#filter = filter;
     this.#options = options ?? {};
     this.#mapping = mapping;
+
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `FindCursor(source="${this.#keyspace}.${this.#parent}",state="${this.#state}",consumed=${this.#consumed},buffered=${this.#buffer.length})`,
+    });
   }
 
   /**
@@ -192,7 +215,10 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    */
   public filter(filter: Filter<TRaw>): FindCursor<T,  TRaw> {
-    return this.#clone(structuredClone(filter), this.#options, this.#mapping);
+    if (this.#state !== 'idle') {
+      throw new CursorError('Cannot set a new filter on a running/closed cursor', this);
+    }
+    return this.#clone(this.#serdes.serializeRecord(structuredClone(filter)), this.#options, this.#mapping);
   }
 
   /**
@@ -208,6 +234,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @see StrictSort
    */
   public sort(sort: Sort): FindCursor<T,  TRaw> {
+    if (this.#state !== 'idle') {
+      throw new CursorError('Cannot set a new sort on a running/closed cursor', this);
+    }
     const options = { ...this.#options, sort: normalizedSort(sort) };
     return this.#clone(this.#filter, options, this.#mapping);
   }
@@ -225,6 +254,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns A new cursor with the new limit set.
    */
   public limit(limit: number): FindCursor<T,  TRaw> {
+    if (this.#state !== 'idle') {
+      throw new CursorError('Cannot set a new limit on a running/closed cursor', this);
+    }
     const options = { ...this.#options, limit: limit || Infinity };
     return this.#clone(this.#filter, options, this.#mapping);
   }
@@ -240,6 +272,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns A new cursor with the new skip set.
    */
   public skip(skip: number): FindCursor<T,  TRaw> {
+    if (this.#state !== 'idle') {
+      throw new CursorError('Cannot set a new skip on a running/closed cursor', this);
+    }
     const options = { ...this.#options, skip };
     return this.#clone(this.#filter, options, this.#mapping);
   }
@@ -287,10 +322,13 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    */
   public project<RRaw extends SomeDoc = DeepPartial<TRaw>>(projection: Projection): FindCursor<RRaw,  RRaw> {
     if (this.#mapping) {
-      throw new Error('Cannot set a projection after already using cursor.map(...)');
+      throw new CursorError('Cannot set a projection after already using cursor.map(...)', this);
+    }
+    if (this.#state !== 'idle') {
+      throw new CursorError('Cannot set a new projection on a running/closed cursor', this);
     }
     const options = { ...this.#options, projection: structuredClone(projection) };
-    return this.#clone(this.#filter as Filter<RRaw>, options, this.#mapping);
+    return this.#clone(this.#filter as any, options, this.#mapping);
   }
 
   /**
@@ -304,6 +342,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns A new cursor with the new similarity setting.
    */
   public includeSimilarity(includeSimilarity: boolean = true): FindCursor<T,  TRaw> {
+    if (this.#state !== 'idle') {
+      throw new CursorError('Cannot set a new similarity on a running/closed cursor', this);
+    }
     const options = { ...this.#options, includeSimilarity };
     return this.#clone(this.#filter, options, this.#mapping);
   }
@@ -320,6 +361,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns A new cursor with the new sort vector inclusion setting.
    */
   public includeSortVector(includeSortVector: boolean = true): FindCursor<T,  TRaw> {
+    if (this.#state !== 'idle') {
+      throw new CursorError('Cannot set a new sort vector on a running/closed cursor', this);
+    }
     const options = { ...this.#options, includeSortVector };
     return this.#clone(this.#filter, options, this.#mapping);
   }
@@ -340,6 +384,9 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns A new cursor with the new mapping set.
    */
   public map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw> {
+    if (this.#state !== 'idle') {
+      throw new CursorError('Cannot set a new mapping on a running/closed cursor', this);
+    }
     if (this.#mapping) {
       return this.#clone(this.#filter, this.#options, (doc: TRaw) => mapping(this.#mapping!(doc)));
     } else {
@@ -356,7 +403,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns A behavioral clone of this cursor.
    */
   public clone(): FindCursor<TRaw, TRaw> {
-    return new FindCursor(this.#keyspace, this.#httpClient, this.#filter, this.#options);
+    return new FindCursor(this.#keyspace, this.#parent, this.#httpClient, this.#serdes, this.#filter, this.#options);
   }
 
   /**
@@ -378,7 +425,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns The next record, or `null` if there are no more records.
    */
   public async next(): Promise<T | null> {
-    return await this.#next(false) ?? null;
+    return this.#next(false);
   }
 
   /**
@@ -444,6 +491,10 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * ```
    */
   public async *[Symbol.asyncIterator](): AsyncGenerator<T, void, void> {
+    if (this.state === 'closed') {
+      throw new CursorError('Cannot iterate over a closed cursor', this);
+    }
+
     try {
       while (true) {
         const doc = await this.next();
@@ -476,6 +527,10 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns A promise that resolves when iteration is complete.
    */
   public async forEach(consumer: ((doc: T) => boolean) | ((doc: T) => void)): Promise<void> {
+    if (this.state === 'closed') {
+      throw new CursorError('Cannot iterate over a closed cursor', this);
+    }
+
     for await (const doc of this) {
       if (consumer(doc) === false) {
         break;
@@ -495,6 +550,10 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns An array of all records in the cursor.
    */
   public async toArray(): Promise<T[]> {
+    if (this.state === 'closed') {
+      throw new CursorError('Cannot convert a closed cursor to an array', this);
+    }
+
     const docs: T[] = [];
     for await (const doc of this) {
       docs.push(doc);
@@ -510,12 +569,12 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this.#buffer.length = 0;
   }
 
-  #clone<R, RRaw extends SomeDoc>(filter: Filter<RRaw>, options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
-    return new FindCursor(this.#keyspace, this.#httpClient, filter, options, mapping);
+  #clone<R, RRaw extends SomeDoc>(filter: [Filter<RRaw>, boolean], options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
+    return new FindCursor(this.#keyspace, this.#parent, this.#httpClient, this.#serdes, filter, options, mapping);
   }
 
   async #next(peek: true): Promise<TRaw | nullish>
-  async #next(peek: false): Promise<T | nullish>
+  async #next(peek: false): Promise<T>
   async #next(peek: boolean): Promise<T | TRaw | nullish> {
     if (this.#state === 'closed') {
       return null;
@@ -523,7 +582,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this.#state = 'started';
 
     try {
-      if (this.#buffer.length === 0) {
+      while (this.#buffer.length === 0) {
         if (this.#nextPageState === null) {
           this.close();
           return null;
@@ -567,7 +626,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     }
 
     const command: InternalGetMoreCommand = {
-      find: { filter: this.#filter },
+      find: { filter: this.#filter[0] },
     };
 
     if (this.#options.sort) {
@@ -580,12 +639,16 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
       command.find.options = options;
     }
 
-    const resp = await this.#httpClient.executeCommand(command, {});
+    const raw = await this.#httpClient.executeCommand(command, { bigNumsPresent: this.#filter[1] });
 
-    this.#nextPageState = resp.data?.nextPageState || null;
-    this.#buffer = resp.data?.documents ?? [];
+    this.#nextPageState = raw.data?.nextPageState || null;
+    this.#buffer = raw.data?.documents ?? [];
 
-    this.#sortVector ??= resp.status?.sortVector;
+    for (let i = 0, n = this.#buffer.length; i < n; i++) {
+      this.#buffer[i] = this.#serdes.deserializeRecord(this.#buffer[i], raw) as TRaw;
+    }
+
+    this.#sortVector ??= raw.status?.sortVector;
     this.#options.includeSortVector = false;
   }
 }

@@ -31,6 +31,7 @@ import { isNullish } from '@/src/lib/utils';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { Logger } from '@/src/lib/logging/logger';
+import { $CustomInspect } from '@/src/lib/constants';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting keyspaces.
@@ -94,9 +95,14 @@ export class AstraDbAdmin extends DbAdmin {
       emitter: rootOpts.emitter,
       userAgent: rootOpts.userAgent,
       tokenProvider: adminToken,
+      additionalHeaders: { ...rootOpts.adminOptions.additionalHeaders, ...adminOpts?.additionalHeaders },
     });
 
     this.#db = db;
+
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `AstraDbAdmin()`,
+    });
   }
 
   /**

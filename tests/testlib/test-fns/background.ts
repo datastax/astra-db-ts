@@ -16,10 +16,10 @@
 import { initTestObjects } from '@/tests/testlib/fixtures';
 import { checkTestsEnabled, tryCatchErr } from '@/tests/testlib/utils';
 import { SuiteBlock, TEST_FILTER } from '@/tests/testlib';
-import { AsyncSuiteResult, AsyncSuiteSpec, GlobalAsyncSuiteSpec } from '@/tests/testlib/test-fns/types';
+import { AsyncSuiteResult, AsyncSuiteSpec, GlobalAsyncSuitesSpec } from '@/tests/testlib/test-fns/types';
 import { UUID } from '@/src/documents';
 
-export const backgroundTestState: GlobalAsyncSuiteSpec = {
+export const backgroundTestState: GlobalAsyncSuitesSpec = {
   inBlock: false,
   suites: [],
   describe() {
@@ -74,9 +74,10 @@ background = function (name: string, suiteFn: SuiteBlock) {
         }
 
         const startTime = performance.now();
+        const uuids = Array.from({ length: test.testFn.length }, () => UUID.v4().toString());
 
         arr.push({
-          error: await tryCatchErr(() => test.testFn(UUID.v4().toString())),
+          error: await tryCatchErr(() => test.testFn(...uuids)),
           ms: performance.now() - startTime,
         });
 

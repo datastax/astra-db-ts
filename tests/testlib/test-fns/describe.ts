@@ -14,17 +14,15 @@
 /* eslint-disable prefer-const */
 
 import { initTestObjects } from '@/tests/testlib/fixtures';
-import { DEFAULT_COLLECTION_NAME, OTHER_KEYSPACE } from '@/tests/testlib/config';
-import { afterEach } from 'mocha';
-import { checkTestsEnabled, dropEphemeralColls } from '@/tests/testlib/utils';
+import { checkTestsEnabled, dropEphemeralColls, dropEphemeralTables } from '@/tests/testlib/utils';
 import { parallelTestState } from '@/tests/testlib/test-fns/parallel';
 import { backgroundTestState, CURRENT_DESCRIBE_NAMES, GLOBAL_FIXTURES } from '@/tests/testlib';
 
 export type SuiteBlock = (fixtures: ReturnType<typeof initTestObjects>) => void;
 
 export interface SuiteOptions {
-  truncateColls?: `${'default' | 'both'}:${'before' | 'beforeEach'}`,
-  dropEphemeral?: 'after' | 'afterEach',
+  truncate?: `${'colls' | 'tables'}:${'before' | 'beforeEach'}`,
+  dropEphemeral?: `${'colls' | 'tables'}:${'after' | 'afterEach'}`,
 }
 
 interface TaggableSuiteFunction {
@@ -60,22 +58,30 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
       }
     });
 
-    if (opts?.truncateColls?.includes(':')) {
-      global[opts.truncateColls.split(':')[1] as keyof typeof globalThis](async () => {
-        await GLOBAL_FIXTURES.collection.deleteMany({});
-
-        if (opts?.truncateColls?.startsWith('both')) {
-          await GLOBAL_FIXTURES.db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE }).deleteMany({});
+    if (opts?.truncate?.includes(':')) {
+      global[opts?.truncate.split(':')[1] as keyof typeof globalThis](async () => {
+        if (opts?.truncate?.startsWith('colls')) {
+          await Promise.all([
+            GLOBAL_FIXTURES.collection.deleteMany({}),
+            GLOBAL_FIXTURES.collection_.deleteMany({}),
+          ]);
+        }
+        if (opts?.truncate?.startsWith('tables')) {
+          await Promise.all([
+            GLOBAL_FIXTURES.table.deleteMany({}),
+            GLOBAL_FIXTURES.table_.deleteMany({}),
+          ]);
         }
       });
     }
 
-    if (opts?.dropEphemeral === 'after') {
-      after(dropEphemeralColls);
-    }
-
-    if (opts?.dropEphemeral === 'afterEach') {
-      afterEach(dropEphemeralColls);
+    if (opts?.dropEphemeral?.includes(':')) {
+      if (opts?.dropEphemeral.startsWith('colls')) {
+        global[opts?.dropEphemeral.split(':')[1] as keyof typeof globalThis](dropEphemeralColls);
+      }
+      if (opts?.dropEphemeral.startsWith('tables')) {
+        global[opts?.dropEphemeral.split(':')[1] as keyof typeof globalThis](dropEphemeralTables);
+      }
     }
 
     CURRENT_DESCRIBE_NAMES.push(name);

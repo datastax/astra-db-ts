@@ -28,5 +28,6 @@ export const parseAdminSpawnOpts: Parser<AdminSpawnOptions | undefined, unknown>
     logging: Logger.parseConfig(opts.logging, `${field}.logging`),
     endpointUrl: p.parse('string?')(opts.endpointUrl, `${field}.endpointUrl`),
     adminToken: TokenProvider.parseToken([opts.adminToken], `${field}.adminToken`),
+    additionalHeaders: p.parse('object?')(opts.additionalHeaders, `${field}.additionalHeaders`),
   };
 };

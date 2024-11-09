@@ -19,6 +19,7 @@ export type * from './collections/list-collections';
 export type * from './collections/drop-collection';
 export type * from './collections/spawn-collection';
 
+export type * from './tables/alter-table';
 export type * from './tables/create-table';
 export type * from './tables/table-schema';
 export type * from './tables/drop-table';

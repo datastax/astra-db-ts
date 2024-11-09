@@ -17,7 +17,7 @@ import { SomeDoc } from '@/src/documents';
 import { describe, initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ collection, collection_ }) => {
+describe('integration.documents.cursor', { truncate: 'colls:before' }, ({ collection, collection_ }) => {
   const sortById = (a: SomeDoc, b: SomeDoc) => parseInt(a._id) - parseInt(b._id);
   const sortByAge = (a: SomeDoc, b: SomeDoc) => a.age - b.age;
 
@@ -36,8 +36,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       const cursor = collection.find({});
       cursor.close();
       assert.equal(cursor.state, 'closed');
-      const res = await cursor.toArray();
-      assert.deepStrictEqual(res, []);
+      await assert.rejects(() => cursor.toArray());
     });
 
     it('should not copy the mapping function', async () => {
@@ -61,8 +60,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
     it('should allow cloned cursor to re-fetch all data', async () => {
       const cursor = collection.find({});
       cursor.close();
-      const res = await cursor.toArray();
-      assert.deepStrictEqual(res, []);
+      await assert.rejects(() => cursor.toArray());
       assert.deepStrictEqual(cursor.buffered(), 0);
 
       const clone = cursor.clone();
@@ -73,8 +71,7 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
     it('should allow cloned cursor with mapping function to re-fetch all data without mapping', async () => {
       const cursor = collection.find({}).map(ageToString);
       cursor.close();
-      const res = await cursor.toArray();
-      assert.deepStrictEqual(res, []);
+      await assert.rejects(() => cursor.toArray());
       assert.deepStrictEqual(cursor.buffered(), 0);
 
       const clone = cursor.clone();
@@ -84,9 +81,8 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
 
     it('should allow rewind-ed cursor to re-fetch all data', async () => {
       const cursor = collection.find({});
-      cursor.close();
       const res = await cursor.toArray();
-      assert.deepStrictEqual(res, []);
+      assert.deepStrictEqual(res.sort(sortById), docs);
       assert.deepStrictEqual(cursor.buffered(), 0);
 
       cursor.rewind();
@@ -96,9 +92,8 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
 
     it('should allow rewind-ed cursor with mapping function to re-fetch all data with mapping', async () => {
       const cursor = collection.find({}).map(ageToString);
-      cursor.close();
       const res = await cursor.toArray();
-      assert.deepStrictEqual(res, []);
+      assert.deepStrictEqual(res.sort(sortById), docs.map(ageToString));
       assert.deepStrictEqual(cursor.buffered(), 0);
 
       cursor.rewind();
@@ -115,8 +110,9 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       filter._id = '2';
       cursor1.rewind();
       assert.deepStrictEqual(await cursor1.next(), docs[1]);
-      const cursor2 = cursor1.filter(filter);
+      assert.throws(() => cursor1.filter(filter));
       cursor1.rewind();
+      const cursor2 = cursor1.filter(filter);
       assert.deepStrictEqual(await cursor1.next(), docs[1]);
       assert.deepStrictEqual(await cursor2.next(), docs[2]);
     });
@@ -129,8 +125,9 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       projection.age = 0;
       cursor1.rewind();
       assert.deepStrictEqual(await cursor1.next(), { age: 0 });
-      const cursor2 = cursor1.project(projection);
+      assert.throws(() => cursor1.project(projection));
       cursor1.rewind();
+      const cursor2 = cursor1.project(projection);
       assert.deepStrictEqual(await cursor1.next(), { age: 0 });
       assert.deepStrictEqual(await cursor2.next(), { _id: '0' });
     });
@@ -142,8 +139,9 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       sort.age = -1;
       cursor1.rewind();
       assert.deepStrictEqual(await cursor1.next(), docs[0]);
-      const cursor2 = cursor1.sort(sort);
+      assert.throws(() => cursor1.sort(sort));
       cursor1.rewind();
+      const cursor2 = cursor1.sort(sort);
       assert.deepStrictEqual(await cursor1.next(), docs[0]);
       assert.deepStrictEqual(await cursor2.next(), docs[2]);
     });
@@ -151,8 +149,9 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
     it('should immutably set a limit', async () => {
       const cursor1 = collection.find({}, { limit: 1 });
       assert.deepStrictEqual((await cursor1.toArray()).length, 1);
-      const cursor2 = cursor1.limit(2);
+      assert.throws(() => cursor1.limit(2));
       cursor1.rewind();
+      const cursor2 = cursor1.limit(2);
       assert.deepStrictEqual((await cursor1.toArray()).length, 1);
       assert.deepStrictEqual((await cursor2.toArray()).length, 2);
     });
@@ -160,8 +159,9 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
     it('should immutably set a skip', async () => {
       const cursor1 = collection.find({}, { skip: 1, sort: { age: 1 } });
       assert.deepStrictEqual((await cursor1.toArray()).length, 2);
-      const cursor2 = cursor1.skip(2);
+      assert.throws(() => cursor1.skip(2));
       cursor1.rewind();
+      const cursor2 = cursor1.skip(2);
       assert.deepStrictEqual((await cursor1.toArray()).length, 2);
       assert.deepStrictEqual((await cursor2.toArray()).length, 1);
     });
@@ -169,8 +169,9 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
     it('should immutably set a mapping function', async () => {
       const cursor1 = collection.find({}).map(ageToString);
       assert.deepStrictEqual(await cursor1.next(), { age: '0' });
-      const cursor2 = cursor1.map(doc => ({ age: `${doc.age}!` }));
+      assert.throws(() => cursor1.map(doc => ({ age: `${doc.age}!` })));
       cursor1.rewind();
+      const cursor2 = cursor1.map(doc => ({ age: `${doc.age}!` }));
       assert.deepStrictEqual(await cursor1.next(), { age: '0' });
       assert.deepStrictEqual(await cursor2.next(), { age: '0!' });
     });
@@ -329,11 +330,9 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       assert.equal(cursor.state, 'closed');
       assert.strictEqual(cursor.buffered(), 0);
       assert.equal(cursor.state, 'closed');
-      const res2: any[] = [];
-      for await (const doc of cursor) {
-        res2.push(doc);
-      }
-      assert.deepStrictEqual(res2, []);
+      await assert.rejects(async () => {
+        for await (const _ of cursor) { /* ... */ }
+      });
       assert.equal(cursor.state, 'closed');
     });
 
@@ -380,15 +379,14 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
       assert.equal(cursor.state, 'closed');
     });
 
-    it('should return an empty array when called a second time', async () => {
+    it('should throw an error when toArray() called a second time', async () => {
       const cursor = collection.find({});
       const res = await cursor.toArray();
       assert.deepStrictEqual(res.sort(sortById), docs);
       assert.equal(cursor.state, 'closed');
       assert.strictEqual(cursor.buffered(), 0);
       assert.equal(cursor.state, 'closed');
-      const res2 = await cursor.toArray();
-      assert.deepStrictEqual(res2, []);
+      await assert.rejects(() => cursor.toArray());
       assert.equal(cursor.state, 'closed');
     });
   });
@@ -419,7 +417,6 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
     it('should iterate over all documents with no documents', async () => {
       const cursor = collection.find({ _id: 'Styx' }, {});
       const res: any[] = [];
-      // noinspection JSDeprecatedSymbols
       await cursor.forEach(doc => { res.push(doc); });
       assert.deepStrictEqual(res, []);
       assert.equal(cursor.state, 'closed');
@@ -430,23 +427,18 @@ describe('integration.documents.cursor', { truncateColls: 'both:before' }, ({ co
     it('should not iterate when called a second time', async () => {
       const cursor = collection.find({});
       const res: any[] = [];
-      // noinspection JSDeprecatedSymbols
       await cursor.forEach(doc => { res.push(doc); });
       assert.deepStrictEqual(res.sort(sortById), docs);
       assert.equal(cursor.state, 'closed');
       assert.strictEqual(cursor.buffered(), 0);
       assert.equal(cursor.state, 'closed');
-      const res2: any[] = [];
-      // noinspection JSDeprecatedSymbols
-      await cursor.forEach(doc => { res.push(doc); });
-      assert.deepStrictEqual(res2, []);
+      await assert.rejects(() => cursor.forEach(_ => {}));
       assert.equal(cursor.state, 'closed');
     });
 
     it('should close cursor after returning false', async () => {
       const cursor = collection.find({});
       const res: any[] = [];
-      // noinspection JSDeprecatedSymbols
       await cursor.forEach(doc => {
         res.push(doc);
         return false;

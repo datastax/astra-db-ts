@@ -34,13 +34,13 @@ describe('unit.administration.admin', () => {
     it('should properly construct an AstraAdmin object', () => {
       const admin = new AstraAdmin(internalOps());
       assert.ok(admin);
-      assert.strictEqual(admin['_httpClient'].baseUrl, DEFAULT_DEVOPS_API_ENDPOINTS.prod);
+      assert.strictEqual(admin._httpClient.baseUrl, DEFAULT_DEVOPS_API_ENDPOINTS.prod);
     });
 
     it('should properly construct an AstraAdmin object with a custom base URL', () => {
       const admin = new AstraAdmin(internalOps({}, { endpointUrl: 'https://api.astra.datastax.com/v1' }));
       assert.ok(admin);
-      assert.strictEqual(admin['_httpClient'].baseUrl, 'https://api.astra.datastax.com/v1');
+      assert.strictEqual(admin._httpClient.baseUrl, 'https://api.astra.datastax.com/v1');
     });
 
     it('should not throw on missing token', () => {
@@ -51,7 +51,7 @@ describe('unit.administration.admin', () => {
     it('should allow admin construction using default options', () => {
       const admin = new AstraAdmin(internalOps({}, { endpointUrl: 'https://api.astra.datastax.com/v1' }), {});
       assert.ok(admin);
-      assert.strictEqual(admin['_httpClient'].baseUrl, 'https://api.astra.datastax.com/v1');
+      assert.strictEqual(admin._httpClient.baseUrl, 'https://api.astra.datastax.com/v1');
     });
 
     it('should allow admin construction, overwriting options', () => {
@@ -60,7 +60,7 @@ describe('unit.administration.admin', () => {
         endpointUrl: 'https://api.astra.datastax.com/new',
       });
       assert.ok(admin);
-      assert.strictEqual(admin['_httpClient'].baseUrl, 'https://api.astra.datastax.com/new');
+      assert.strictEqual(admin._httpClient.baseUrl, 'https://api.astra.datastax.com/new');
     });
   });
 });

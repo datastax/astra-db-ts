@@ -21,12 +21,16 @@ import { DataAPIClient } from '@/src/client';
 import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import {
   DEFAULT_COLLECTION_NAME,
+  DEFAULT_TABLE_NAME,
   ENVIRONMENT,
+  LOG_ALL_TO_STDOUT,
   OTHER_KEYSPACE,
   TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI, TEST_HTTP_CLIENT,
+  TEST_APPLICATION_URI,
+  TEST_HTTP_CLIENT,
 } from '@/tests/testlib/config';
-import { DataAPILoggingConfig } from '@/src/lib';
+import { DataAPIClientEvents, DataAPILoggingConfig } from '@/src/lib';
+import { InferTableSchema } from '@/src/db';
 
 export interface TestObjectsOptions {
   httpClient?: typeof TEST_HTTP_CLIENT,
@@ -34,8 +38,45 @@ export interface TestObjectsOptions {
   logging?: DataAPILoggingConfig,
 }
 
+export type EverythingTableSchema = InferTableSchema<typeof EverythingTableSchema>;
+
+export const EverythingTableSchema = <const>{
+  columns: {
+    ascii: 'ascii',
+    bigint: 'bigint',
+    blob: 'blob',
+    boolean: 'boolean',
+    date: 'date',
+    decimal: 'decimal',
+    double: 'double',
+    duration: 'duration',
+    float: 'float',
+    int: 'int',
+    inet: 'inet',
+    smallint: 'smallint',
+    text: 'text',
+    time: 'time',
+    timestamp: 'timestamp',
+    tinyint: 'tinyint',
+    uuid: 'uuid',
+    varint: 'varint',
+    map: { type: 'map', keyType: 'text', valueType: 'uuid' },
+    set: { type: 'set', valueType: 'uuid' },
+    list: { type: 'list', valueType: 'uuid' },
+    vector: { type: 'vector', dimension: 5 },
+  },
+  primaryKey: {
+    partitionBy: ['text'],
+    partitionSort: { int: 1 },
+  },
+};
+
 export const initTestObjects = (opts?: TestObjectsOptions) => {
-  const { httpClient = TEST_HTTP_CLIENT, env = ENVIRONMENT, logging = [{ events: 'all', emits: 'event' }] } = opts ?? {};
+  const {
+    httpClient = TEST_HTTP_CLIENT,
+    env = ENVIRONMENT,
+    logging = [{ events: 'all', emits: 'event' }],
+  } = opts ?? {};
 
   const preferHttp2 = httpClient === 'default:http2';
   const clientType = httpClient.split(':')[0];
@@ -47,21 +88,30 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
     logging,
   });
 
+  if (LOG_ALL_TO_STDOUT) {
+    for (const event of ['commandStarted', 'adminCommandStarted', 'commandFailed', 'adminCommandFailed'] as (keyof DataAPIClientEvents)[]) {
+      client.on(event, (e: unknown) => console.dir(e, { depth: null }));
+    }
+  }
+
   const db = client.db(TEST_APPLICATION_URI);
 
   const collection = db.collection(DEFAULT_COLLECTION_NAME);
   const collection_ = db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE });
 
+  const table = db.table<EverythingTableSchema>(DEFAULT_TABLE_NAME);
+  const table_ = db.table<EverythingTableSchema>(DEFAULT_TABLE_NAME, { keyspace: OTHER_KEYSPACE });
+
   const dbAdmin = (ENVIRONMENT === 'astra')
     ? db.admin({ environment: ENVIRONMENT })
     : db.admin({ environment: ENVIRONMENT });
 
-  return { client, db, collection, collection_, dbAdmin };
+  return { client, db, collection, collection_, dbAdmin, table, table_ };
 };
 
 export const initCollectionWithFailingClient = () => {
   const { collection } = initTestObjects();
-  collection['_httpClient'].executeCommand = () => { throw new Error('failing_client'); };
+  collection._httpClient.executeCommand = () => { throw new Error('failing_client'); };
   return collection;
 };
 

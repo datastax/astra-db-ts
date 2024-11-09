@@ -13,11 +13,11 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIError, DataAPITimeoutError, InsertManyError, ObjectId, UUID } from '@/src/documents';
+import { DataAPIError, DataAPITimeoutError, DataAPIVector, CollectionInsertManyError, ObjectId, UUID } from '@/src/documents';
 import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.documents.collections.insert-many', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.insert-many', { truncate: 'colls:before' }, ({ collection }) => {
   it('should insertMany documents', async () => {
     const docs = [{ name: 'Inis Mona' }, { name: 'Helvetios' }, { name: 'Epona' }];
     const res = await collection.insertMany(docs);
@@ -83,7 +83,7 @@ parallel('integration.documents.collections.insert-many', { truncateColls: 'defa
     assert.strictEqual(Object.keys(res.insertedIds).length, docs.length);
   });
 
-  it('should insertOne with vectors', async (key) => {
+  it('should insertMany with vectors', async (key) => {
     const res = await collection.insertMany([
       { name: 'a', key, $vector: [1, 1, 1, 1, 1] },
       { name: 'b', key },
@@ -92,7 +92,8 @@ parallel('integration.documents.collections.insert-many', { truncateColls: 'defa
     assert.ok(res);
 
     const res1 = await collection.findOne({ name: 'a', key }, { projection: { $vector: 1 } });
-    assert.deepStrictEqual(res1?.$vector, [1, 1, 1, 1, 1]);
+    assert.ok(res1?.$vector instanceof DataAPIVector);
+    assert.deepStrictEqual(res1?.$vector.asArray(), [1, 1, 1, 1, 1]);
 
     const res2 = await collection.findOne({ name: 'b', key });
     assert.strictEqual(res2?.$vector, undefined);
@@ -117,10 +118,10 @@ parallel('integration.documents.collections.insert-many', { truncateColls: 'defa
       error = e;
     }
     assert.ok(error);
-    assert.ok(error instanceof InsertManyError);
+    assert.ok(error instanceof CollectionInsertManyError);
     assert.strictEqual(error.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
     assert.strictEqual(error.partialResult.insertedCount, 10);
-    // assert.strictEqual(error.failedCount, 10);
+    // assert.strictEqual(error.failedCount, 10); TODO
     docs.slice(0, 10).forEach((doc, index) => {
       assert.strictEqual(error.partialResult.insertedIds[index], doc._id);
     });
@@ -136,10 +137,10 @@ parallel('integration.documents.collections.insert-many', { truncateColls: 'defa
       error = e;
     }
     assert.ok(error);
-    assert.ok(error instanceof InsertManyError);
+    assert.ok(error instanceof CollectionInsertManyError);
     assert.strictEqual(error.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
     assert.strictEqual(error.partialResult.insertedCount, 19);
-    // assert.strictEqual(error.failedCount, 1);
+    // assert.strictEqual(error.failedCount, 1); TODO
     docs.slice(0, 9).concat(docs.slice(10)).forEach((doc) => {
       assert.ok(error.partialResult.insertedIds.includes(doc._id));
     });

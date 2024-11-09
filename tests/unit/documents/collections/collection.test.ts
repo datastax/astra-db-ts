@@ -14,24 +14,31 @@
 
 import { Collection } from '@/src/documents/collections';
 import { DEFAULT_KEYSPACE } from '@/src/lib/api';
-import { DEFAULT_COLLECTION_NAME, describe, it } from '@/tests/testlib';
+import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('unit.documents.collections', ({ db, collection }) => {
+describe('unit.documents.collections', ({ db }) => {
   describe('initialization', () => {
     it('should initialize a Collection', () => {
-      const collection = new Collection(db, db['_httpClient'], 'new_collection', undefined);
+      const collection = new Collection(db, db._httpClient, 'new_collection', undefined);
       assert.ok(collection);
     });
   });
 
   describe('accessors', () => {
-    it('returns the keyspace', () => {
+    it('returns the given keyspace', () => {
+      const collection = new Collection(db, db._httpClient, 'new_collection', { keyspace: 'hello' });
+      assert.strictEqual(collection.keyspace, "hello");
+    });
+
+    it('returns the default keyspace if not set', () => {
+      const collection = new Collection(db, db._httpClient, 'new_collection', undefined);
       assert.strictEqual(collection.keyspace, DEFAULT_KEYSPACE);
     });
 
     it('returns the name', () => {
-      assert.strictEqual(collection.collectionName, DEFAULT_COLLECTION_NAME);
+      const collection = new Collection(db, db._httpClient, 'new_collection', undefined);
+      assert.strictEqual(collection.name, 'new_collection');
     });
   });
 });

@@ -31,10 +31,10 @@
  * });
  *
  * // Finds 'my_collection' in 'default_keyspace'
- * const coll1 = db1.collections('my_collection');
+ * const coll1 = db1.collection('my_collection');
  *
  * // Finds 'my_collection' in 'my_keyspace'
- * const coll2 = db1.collections('my_collection', {
+ * const coll2 = db1.collection('my_collection', {
  *   keyspace: 'my_keyspace',
  * });
  * ```

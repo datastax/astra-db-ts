@@ -36,7 +36,7 @@ describe('unit.db', () => {
     it('should allow db construction from endpoint', () => {
       const db = new Db(internalOps(), 'https://id-region.apps.astra.datastax.com', null);
       assert.ok(db);
-      assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
+      assert.strictEqual(db._httpClient.baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
     });
 
     it('should not throw on missing token', () => {
@@ -49,13 +49,13 @@ describe('unit.db', () => {
     it('should allow db construction from endpoint, using default options', () => {
       const db = new Db(internalOps(), 'https://id-region.apps.astra.datastax.com', null);
       assert.ok(db);
-      assert.strictEqual(db['_httpClient'].baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
+      assert.strictEqual(db._httpClient.baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
     });
 
     it('should allow db construction from endpoint, overwriting options', () => {
       const db = new Db(internalOps({ dataApiPath: 'old', keyspace: 'old' }), 'https://id-region.apps.astra.datastax.com', { dataApiPath: 'new', keyspace: 'new' });
       assert.ok(db);
-      assert.strictEqual(db['_httpClient'].baseUrl, 'https://id-region.apps.astra.datastax.com/new');
+      assert.strictEqual(db._httpClient.baseUrl, 'https://id-region.apps.astra.datastax.com/new');
       assert.strictEqual(db.keyspace, 'new');
     });
 
@@ -88,12 +88,12 @@ describe('unit.db', () => {
 
     it('handles different dataApiPath', () => {
       const db = new Db(internalOps({ dataApiPath: 'api/json/v2' }), TEST_APPLICATION_URI, null);
-      assert.strictEqual(db['_httpClient'].baseUrl, `${TEST_APPLICATION_URI}/api/json/v2`);
+      assert.strictEqual(db._httpClient.baseUrl, `${TEST_APPLICATION_URI}/api/json/v2`);
     });
 
     it('handles different dataApiPath when overridden', () => {
       const db = new Db(internalOps({ dataApiPath: 'api/json/v2' }), TEST_APPLICATION_URI, { dataApiPath: 'api/json/v3' });
-      assert.strictEqual(db['_httpClient'].baseUrl, `${TEST_APPLICATION_URI}/api/json/v3`);
+      assert.strictEqual(db._httpClient.baseUrl, `${TEST_APPLICATION_URI}/api/json/v3`);
     });
 
     it('should accept valid logging', () => {
@@ -192,19 +192,19 @@ describe('unit.db', () => {
       });
     });
 
-    it('should throw on mismatching environments', () => {
+    it('cshould throw on mismatching environments', () => {
       assert.throws(() => {
         const db = new DataAPIClient('dummy_token').db(DEMO_APPLICATION_URI);
         db.admin({ environment: 'dse' });
-      }, { message: 'Mismatching environment—environment option is not the same as set in the DataAPIClient' });
+      }, { message: 'Invalid environment \'astra\' for operation \'db.admin()\' (environment option is not the same as set in the DataAPIClient); expected environment(s): \'dse\'' });
       assert.throws(() => {
         const db = new DataAPIClient('dummy_token', { environment: 'dse' }).db(DEMO_APPLICATION_URI);
         db.admin();
-      }, { message: 'Mismatching environment—environment option is not the same as set in the DataAPIClient' });
+      }, { message: 'Invalid environment \'dse\' for operation \'db.admin()\' (environment option is not the same as set in the DataAPIClient); expected environment(s): \'astra\'' });
       assert.throws(() => {
         const db = new DataAPIClient('dummy_token', { environment: 'dse' }).db(DEMO_APPLICATION_URI);
         db.admin({ environment: 'hcd' });
-      }, { message: 'Mismatching environment—environment option is not the same as set in the DataAPIClient' });
+      }, { message: 'Invalid environment \'dse\' for operation \'db.admin()\' (environment option is not the same as set in the DataAPIClient); expected environment(s): \'hcd\'' });
     });
 
     it('should return the admin if on astra db', () => {

@@ -18,5 +18,4 @@ import { WithTimeout } from '@/src/lib';
 export interface GenericFindOneAndDeleteOptions extends WithTimeout {
   sort?: Sort,
   projection?: Projection,
-  includeResultMetadata?: boolean,
 }

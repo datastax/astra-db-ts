@@ -30,7 +30,7 @@ describe('integration.lib.api.clients.documents-http-client', ({ db }) => {
   let httpClient: DataAPIHttpClient;
 
   before(async () => {
-    httpClient = db['_httpClient'];
+    httpClient = db._httpClient;
   });
 
   parallel('executeCommand tests', () => {
@@ -61,7 +61,7 @@ describe('integration.lib.api.clients.documents-http-client', ({ db }) => {
 
     it('should error on DataAPIResponseError token', async () => {
       const { client } = initTestObjects();
-      const httpClient = client.db(TEST_APPLICATION_URI, { token: 'invalid-token' })['_httpClient'];
+      const httpClient = client.db(TEST_APPLICATION_URI, { token: 'invalid-token' })._httpClient;
 
       try {
         await httpClient.executeCommand({ findCollections: {} }, {});
@@ -76,7 +76,7 @@ describe('integration.lib.api.clients.documents-http-client', ({ db }) => {
 
     it('should throw DataAPIHttpError on invalid url', async () => {
       const { client } = initTestObjects();
-      const httpClient = client.db(TEST_APPLICATION_URI + '/invalid_path')['_httpClient'];
+      const httpClient = client.db(TEST_APPLICATION_URI + '/invalid_path')._httpClient;
 
       try {
         await httpClient.executeCommand({ findCollections: {} }, {});
