@@ -18,13 +18,14 @@ import { DevOpsAPIResponseError } from '@/src/administration';
 import { TimeoutManager } from '@/src/lib/api/timeout-managers';
 import { background, it, TEMP_DB_NAME } from '@/tests/testlib';
 import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
+import { buildAstraEndpoint } from '@/src/lib/utils';
 
 background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycle', ({ client }) => {
   it('works', async () => {
     const admin = client.admin();
 
     for (const db of await admin.listDatabases()) {
-      if (db.info.name === TEMP_DB_NAME && db.status !== 'TERMINATING') {
+      if (db.name === TEMP_DB_NAME && db.status !== 'TERMINATING') {
         void admin.dropDatabase(db.id, { maxTimeMS: 720000 });
       }
     }
@@ -49,14 +50,14 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     {
       const dbInfo1 = await asyncDbAdmin.info();
       assert.ok(['PENDING', 'INITIALIZING'].includes(dbInfo1.status));
-      assert.strictEqual(dbInfo1.info.name, TEMP_DB_NAME);
-      assert.strictEqual(dbInfo1.info.cloudProvider, 'GCP');
-      assert.strictEqual(dbInfo1.info.region, 'us-east1');
-      assert.strictEqual(dbInfo1.info.keyspace, 'my_keyspace');
+      assert.strictEqual(dbInfo1.name, TEMP_DB_NAME);
+      assert.strictEqual(dbInfo1.cloudProvider, 'GCP');
+      assert.deepStrictEqual(dbInfo1.regions, [{ name: 'us-east1', apiEndpoint: buildAstraEndpoint(dbInfo1.id, 'us-east1') }]);
+      assert.deepStrictEqual(dbInfo1.keyspaces, ['my_keyspace']);
 
       const dbInfo2 = await admin.dbInfo(asyncDb.id);
-      assert.deepStrictEqual(dbInfo1.info.name, dbInfo2.info.name);
-      assert.deepStrictEqual(dbInfo1.info.keyspaces, dbInfo2.info.keyspaces);
+      assert.deepStrictEqual(dbInfo1.name, dbInfo2.name);
+      assert.deepStrictEqual(dbInfo1.keyspaces, dbInfo2.keyspaces);
       assert.ok(['PENDING', 'INITIALIZING'].includes(dbInfo2.status));
     }
 
@@ -120,7 +121,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
       assert.strictEqual(dbInfo.name, TEMP_DB_NAME);
       assert.strictEqual(dbInfo.cloudProvider, 'GCP');
       assert.strictEqual(dbInfo.region, 'us-east1');
-      assert.strictEqual(dbInfo.keyspace, DEFAULT_KEYSPACE);
+      assert.deepStrictEqual(dbInfo.keyspaces, [DEFAULT_KEYSPACE]);
     }
 
     {
@@ -136,10 +137,10 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
       const dbInfo = await dbAdmin.info();
       assert.strictEqual(dbInfo.status, 'ACTIVE');
-      assert.strictEqual(dbInfo.info.name, TEMP_DB_NAME);
-      assert.strictEqual(dbInfo.info.cloudProvider, 'GCP');
-      assert.strictEqual(dbInfo.info.region, 'us-east1');
-      assert.strictEqual(dbInfo.info.keyspace, db.keyspace);
+      assert.strictEqual(dbInfo.name, TEMP_DB_NAME);
+      assert.strictEqual(dbInfo.cloudProvider, 'GCP');
+      assert.deepStrictEqual(dbInfo.regions, [{ name: 'us-east1', apiEndpoint: buildAstraEndpoint(dbInfo.id, 'us-east1') }]);
+      assert.deepStrictEqual(dbInfo.keyspaces, [db.keyspace]);
 
       const collections1 = await db.listCollections({ nameOnly: true });
       assert.deepStrictEqual(collections1, [], `in ${dbType}`);
@@ -167,8 +168,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
       const fullDbInfo3 = await asyncDbAdmin.info();
       assert.strictEqual(fullDbInfo3.status, 'MAINTENANCE');
-      assert.strictEqual(fullDbInfo3.info.keyspace, 'my_keyspace');
-      assert.strictEqual(fullDbInfo3.info.additionalKeyspaces, undefined);
+      assert.deepStrictEqual(fullDbInfo3.keyspaces, ['my_keyspace']);
     }
 
     {
@@ -192,8 +192,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
       const fullDbInfo4 = await asyncDbAdmin.info();
       assert.strictEqual(fullDbInfo4.status, 'MAINTENANCE');
-      assert.strictEqual(fullDbInfo4.info.keyspace, 'my_keyspace');
-      assert.deepStrictEqual(fullDbInfo4.info.additionalKeyspaces, ['other_keyspace']);
+      assert.deepStrictEqual(fullDbInfo4.keyspaces, ['my_keyspace', 'other_keyspace']);
     }
 
     {
@@ -210,8 +209,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
       const dbInfo = await dbAdmin.info();
       assert.strictEqual(dbInfo.status, 'ACTIVE');
-      assert.strictEqual(dbInfo.info.keyspace, db.keyspace);
-      assert.strictEqual(dbInfo.info.additionalKeyspaces, undefined);
+      assert.deepStrictEqual(dbInfo.keyspaces, [db.keyspace]);
 
       const keyspaces3 = await dbAdmin.listKeyspaces();
       assert.deepStrictEqual(keyspaces3, [db.keyspace], `in ${dbType}`);

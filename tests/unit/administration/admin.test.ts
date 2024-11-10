@@ -37,10 +37,10 @@ describe('unit.administration.admin', () => {
       assert.strictEqual(admin._httpClient.baseUrl, DEFAULT_DEVOPS_API_ENDPOINTS.prod);
     });
 
-    it('should properly construct an AstraAdmin object with a custom base URL', () => {
-      const admin = new AstraAdmin(internalOps({}, { endpointUrl: 'https://api.astra.datastax.com/v1' }));
+    it('should properly construct an AstraAdmin object with a custom astra environment', () => {
+      const admin = new AstraAdmin(internalOps({}, { astraEnv: 'dev' }));
       assert.ok(admin);
-      assert.strictEqual(admin._httpClient.baseUrl, 'https://api.astra.datastax.com/v1');
+      assert.strictEqual(admin._httpClient.baseUrl, 'https://api.dev.cloud.datastax.com/v2');
     });
 
     it('should not throw on missing token', () => {
@@ -55,12 +55,12 @@ describe('unit.administration.admin', () => {
     });
 
     it('should allow admin construction, overwriting options', () => {
-      const admin = new AstraAdmin(internalOps({}, { endpointUrl: 'https://api.astra.datastax.com/old' }), {
+      const admin = new AstraAdmin(internalOps({}, {}), {
         adminToken: 'new-admin',
-        endpointUrl: 'https://api.astra.datastax.com/new',
+        astraEnv: 'dev',
       });
       assert.ok(admin);
-      assert.strictEqual(admin._httpClient.baseUrl, 'https://api.astra.datastax.com/new');
+      assert.strictEqual(admin._httpClient.baseUrl, 'https://api.dev.cloud.datastax.com/v2');
     });
   });
 });

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CreateKeyspaceOptions } from '@/src/administration';
+import { WithTimeout } from '@/src/lib';
 
 /**
  * Represents the options for creating a keyspace on a non-Astra database (i.e. blocking options + keyspace creation options).
@@ -42,7 +42,10 @@ import { CreateKeyspaceOptions } from '@/src/administration';
  *
  * @public
  */
-export type LocalCreateKeyspaceOptions = CreateKeyspaceOptions & { replication?: KeyspaceReplicationOptions };
+export interface LocalCreateKeyspaceOptions extends WithTimeout {
+  replication?: KeyspaceReplicationOptions,
+  updateDbKeyspace?: boolean,
+}
 
 /**
  * Represents the replication options for a keyspace.

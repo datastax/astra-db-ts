@@ -93,7 +93,7 @@ parallel('integration.db', { dropEphemeral: 'colls:after' }, ({ db }) => {
         .admin({ adminToken: 'dummy-token' })
         .dbAdmin(TEST_APPLICATION_URI, { dataApiPath: DEFAULT_DATA_API_PATHS['astra'], keyspace: DEFAULT_KEYSPACE })
         .db()
-        .admin({ adminToken: 'tummy-token', endpointUrl: 'Memento Mori' })
+        .admin({ adminToken: 'tummy-token', astraEnv: 'dev' })
         .db();
 
       const res = await db.createCollection('coll_8c', { indexing: { deny: ['*'] }, maxTimeMS: 60000 });
