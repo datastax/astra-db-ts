@@ -13,33 +13,29 @@
 // limitations under the License.
 
 export type {
-  AdminBlockingOptions,
-  DatabaseAction,
-  DatabaseCloudProvider,
-  DatabaseStatus,
-  DatabaseTier,
-  PollBlockingOptions,
-  NoBlockingOptions,
+  AstraAdminBlockingOptions,
+  AstraDbCloudProvider,
+  AstraDbStatus,
+  AstraPollBlockingOptions,
+  AstraNoBlockingOptions,
 } from './admin/admin-common';
 
 export type {
-  CreateDatabaseOptions,
-  DatabaseConfig,
+  CreateAstraDatabaseOptions,
+  AstraDatabaseConfig,
 } from './admin/create-database';
 
 export type {
-  DatabaseInfo,
-  CostInfo,
-  DatabaseStorageInfo,
-  DatacenterInfo,
-  DbMetricsInfo,
-  FullDatabaseInfo,
+  AstraDbRegionInfo,
+  AstraDbInfo,
+  AstraDbAdminInfo,
+  BaseAstraDbInfo,
 } from './admin/database-info';
 
 export type {
-  DatabaseCloudProviderFilter,
-  DatabaseStatusFilter,
-  ListDatabasesOptions,
+  AstraDbCloudProviderFilter,
+  AstraDbStatusFilter,
+  ListAstraDatabasesOptions,
 } from './admin/list-databases';
 
 export type {
@@ -47,8 +43,8 @@ export type {
 } from '../../client/types/spawn-admin';
 
 export type {
-  CreateKeyspaceOptions,
-} from './db-admin/create-keyspace';
+  AstraCreateKeyspaceOptions,
+} from './db-admin/astra-create-keyspace';
 
 export type {
   KeyspaceReplicationOptions,

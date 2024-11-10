@@ -70,7 +70,7 @@ parallel('(ASTRA) integration.misc.hierarchy-traversal', ({ client, db }) => {
       const dbAdmin2 = client.db(TEST_APPLICATION_URI).admin();
       const info1 = await dbAdmin1.info();
       const info2 = await dbAdmin2.info();
-      assert.deepStrictEqual(info1.info.name, info2.info.name);
+      assert.deepStrictEqual(info1.name, info2.name);
       assert.deepStrictEqual(info1.id, info2.id);
     });
 
@@ -79,7 +79,7 @@ parallel('(ASTRA) integration.misc.hierarchy-traversal', ({ client, db }) => {
       const dbAdmin2 = client.db(TEST_APPLICATION_URI).admin();
       const info1 = await dbAdmin1.info();
       const info2 = await dbAdmin2.info();
-      assert.deepStrictEqual(info1.info.name, info2.info.name);
+      assert.deepStrictEqual(info1.name, info2.name);
       assert.deepStrictEqual(info1.id, info2.id);
     });
   });

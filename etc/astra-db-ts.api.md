@@ -30,9 +30,6 @@ export interface AddVectorizeOperation<Schema extends SomeRow> {
 }
 
 // @public
-export type AdminBlockingOptions = PollBlockingOptions | NoBlockingOptions;
-
-// @public
 export abstract class AdminCommandEvent extends DataAPIClientEvent {
     // Warning: (ae-forgotten-export) The symbol "DevOpsAPIRequestInfo" needs to be exported by the entry point index.d.ts
     //
@@ -107,6 +104,7 @@ export class AdminCommandWarningsEvent extends AdminCommandEvent {
 export interface AdminSpawnOptions {
     additionalHeaders?: Record<string, string>;
     adminToken?: string | TokenProvider | null;
+    astraEnv?: 'dev' | 'prod' | 'test';
     endpointUrl?: string;
     logging?: DataAPILoggingConfig;
 }
@@ -151,40 +149,129 @@ export class AstraAdmin {
     //
     // @internal
     constructor(rootOpts: InternalRootClientOpts, rawAdminOpts?: AdminSpawnOptions);
-    createDatabase(config: DatabaseConfig, options?: CreateDatabaseOptions): Promise<AstraDbAdmin>;
+    createDatabase(config: AstraDatabaseConfig, options?: CreateAstraDatabaseOptions): Promise<AstraDbAdmin>;
     db(endpoint: string, options?: DbSpawnOptions): Db;
     db(id: string, region: string, options?: DbSpawnOptions): Db;
     dbAdmin(endpoint: string, options?: DbSpawnOptions): AstraDbAdmin;
     dbAdmin(id: string, region: string, options?: DbSpawnOptions): AstraDbAdmin;
-    dbInfo(id: string, options?: WithTimeout): Promise<FullDatabaseInfo>;
-    dropDatabase(db: Db | string, options?: AdminBlockingOptions): Promise<void>;
+    dbInfo(id: string, options?: WithTimeout): Promise<AstraDbAdminInfo>;
+    dropDatabase(db: Db | string, options?: AstraAdminBlockingOptions): Promise<void>;
     // Warning: (ae-forgotten-export) The symbol "DevOpsAPIHttpClient" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
     get _httpClient(): DevOpsAPIHttpClient;
-    listDatabases(options?: ListDatabasesOptions): Promise<FullDatabaseInfo[]>;
+    listDatabases(options?: ListAstraDatabasesOptions): Promise<AstraDbAdminInfo[]>;
+}
+
+// @public
+export type AstraAdminBlockingOptions = AstraPollBlockingOptions | AstraNoBlockingOptions;
+
+// @public
+export type AstraCreateKeyspaceOptions = AstraAdminBlockingOptions & {
+    updateDbKeyspace?: boolean;
+};
+
+// @public
+export interface AstraDatabaseConfig {
+    cloudProvider?: AstraDbCloudProvider;
+    keyspace?: string;
+    name: string;
+    region: string;
 }
 
 // @public
 export class AstraDbAdmin extends DbAdmin {
     // @internal
     constructor(db: Db, rootOpts: InternalRootClientOpts, rawAdminOpts: AdminSpawnOptions | undefined, dbToken: TokenProvider | undefined, endpoint: string);
-    createKeyspace(keyspace: string, options?: CreateKeyspaceOptions): Promise<void>;
+    createKeyspace(keyspace: string, options?: AstraCreateKeyspaceOptions): Promise<void>;
     db(): Db;
-    drop(options?: AdminBlockingOptions): Promise<void>;
-    dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
+    drop(options?: AstraAdminBlockingOptions): Promise<void>;
+    dropKeyspace(keyspace: string, options?: AstraAdminBlockingOptions): Promise<void>;
     findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
     // (undocumented)
     get _httpClient(): DevOpsAPIHttpClient;
     get id(): string;
-    info(options?: WithTimeout): Promise<FullDatabaseInfo>;
+    info(options?: WithTimeout): Promise<AstraDbAdminInfo>;
     listKeyspaces(options?: WithTimeout): Promise<string[]>;
+}
+
+// @public (undocumented)
+export interface AstraDbAdminInfo extends BaseAstraDbInfo {
+    // (undocumented)
+    createdAt: Date;
+    // (undocumented)
+    lastUsed: Date;
+    // (undocumented)
+    orgId: string;
+    // (undocumented)
+    ownerId: string;
+    // (undocumented)
+    regions: AstraDbRegionInfo[];
+}
+
+// @public
+export type AstraDbCloudProvider = 'AWS' | 'GCP' | 'AZURE';
+
+// @public
+export type AstraDbCloudProviderFilter = AstraDbCloudProvider | 'ALL';
+
+// @public (undocumented)
+export interface AstraDbInfo extends BaseAstraDbInfo {
+    // (undocumented)
+    apiEndpoint: string;
+    // (undocumented)
+    region: string;
+}
+
+// @public (undocumented)
+export interface AstraDbRegionInfo {
+    // (undocumented)
+    apiEndpoint: string;
+    // (undocumented)
+    createdAt: Date;
+    // (undocumented)
+    name: string;
+}
+
+// @public
+export type AstraDbStatus = 'ACTIVE' | 'ERROR' | 'DECOMMISSIONING' | 'DEGRADED' | 'HIBERNATED' | 'HIBERNATING' | 'INITIALIZING' | 'MAINTENANCE' | 'PARKED' | 'PARKING' | 'PENDING' | 'PREPARED' | 'PREPARING' | 'RESIZING' | 'RESUMING' | 'TERMINATED' | 'TERMINATING' | 'UNKNOWN' | 'UNPARKING' | 'SYNCHRONIZING';
+
+// @public
+export type AstraDbStatusFilter = AstraDbStatus | 'ALL' | 'NONTERMINATED';
+
+// @public
+export interface AstraNoBlockingOptions extends WithTimeout {
+    blocking: false;
+}
+
+// @public
+export interface AstraPollBlockingOptions extends WithTimeout {
+    blocking?: true;
+    pollInterval?: number;
 }
 
 // @public
 export class AWSEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
     constructor(accessKeyId: string, secretAccessKey: string);
     getHeaders(): Record<string, string>;
+}
+
+// @public (undocumented)
+export interface BaseAstraDbInfo {
+    // (undocumented)
+    cloudProvider: AstraDbCloudProvider;
+    // (undocumented)
+    environment: 'dev' | 'test' | 'prod';
+    // (undocumented)
+    id: string;
+    // (undocumented)
+    keyspaces: string[];
+    // (undocumented)
+    name: string;
+    // (undocumented)
+    raw: Record<string, any>;
+    // (undocumented)
+    status: AstraDbStatus;
 }
 
 // @public
@@ -439,25 +526,6 @@ export class CommandWarningsEvent extends CommandEvent {
     readonly warnings: DataAPIErrorDescriptor[];
 }
 
-// @public
-export interface CostInfo {
-    costPerDayCents: number;
-    costPerDayMRCents: number;
-    costPerDayParkedCents: number;
-    costPerHourCents: number;
-    costPerHourMRCents: number;
-    costPerHourParkedCents: number;
-    costPerMinCents: number;
-    costPerMinMRCents: number;
-    costPerMinParkedCents: number;
-    costPerMonthCents: number;
-    costPerMonthMRCents: number;
-    costPerMonthParkedCents: number;
-    costPerNetworkGbCents: number;
-    costPerReadGbCents: number;
-    costPerWrittenGbCents: number;
-}
-
 // @public (undocumented)
 export class CqlBlob {
     // (undocumented)
@@ -595,18 +663,13 @@ export interface CqlTimestampComponents {
 export type CqlType2TSType<T extends string, Def> = T extends keyof CqlNonGenericType2TSTypeDict ? CqlNonGenericType2TSTypeDict[T] : T extends keyof CqlGenericType2TSTypeDict<Def> ? CqlGenericType2TSTypeDict<Def>[T] : unknown;
 
 // @public
-export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, CollectionSpawnOptions<Schema> {
-}
-
-// @public
-export type CreateDatabaseOptions = AdminBlockingOptions & {
+export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & {
     dbOptions?: DbSpawnOptions;
 };
 
 // @public
-export type CreateKeyspaceOptions = AdminBlockingOptions & {
-    updateDbKeyspace?: boolean;
-};
+export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, CollectionSpawnOptions<Schema> {
+}
 
 // @public (undocumented)
 export type CreateTableColumnDefinitions = Record<string, LooseCreateTableColumnDefinition | StrictCreateTableColumnDefinition>;
@@ -731,7 +794,7 @@ export class DataAPIDbAdmin extends DbAdmin {
     constructor(db: Db, httpClient: DataAPIHttpClient, rawAdminOpts?: AdminSpawnOptions);
     createKeyspace(keyspace: string, options?: LocalCreateKeyspaceOptions): Promise<void>;
     db(): Db;
-    dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
+    dropKeyspace(keyspace: string, options?: AstraAdminBlockingOptions): Promise<void>;
     findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
     // (undocumented)
     get _httpClient(): DataAPIHttpClient;
@@ -856,72 +919,6 @@ export class DataAPIVector {
 export type DataAPIVectorLike = number[] | string | Float32Array | DataAPIVector;
 
 // @public
-export type DatabaseAction = 'park' | 'unpark' | 'resize' | 'resetPassword' | 'addKeyspace' | 'addDatacenters' | 'terminateDatacenter' | 'getCreds' | 'terminate' | 'removeKeyspace' | 'removeMigrationProxy' | 'launchMigrationProxy';
-
-// @public
-export type DatabaseCloudProvider = 'AWS' | 'GCP' | 'AZURE';
-
-// @public
-export type DatabaseCloudProviderFilter = DatabaseCloudProvider | 'ALL';
-
-// @public
-export interface DatabaseConfig {
-    cloudProvider?: DatabaseCloudProvider;
-    keyspace?: string;
-    name: string;
-    region: string;
-}
-
-// @public
-export interface DatabaseInfo {
-    additionalKeyspaces?: string[];
-    capacityUnits: number;
-    cloudProvider?: DatabaseCloudProvider;
-    datacenters?: DatacenterInfo[];
-    dbType?: 'vector';
-    keyspace?: string;
-    keyspaces?: string[];
-    name: string;
-    password?: string;
-    region: string;
-    tier: DatabaseTier;
-    user?: string;
-}
-
-// @public
-export type DatabaseStatus = 'ACTIVE' | 'ERROR' | 'DECOMMISSIONING' | 'DEGRADED' | 'HIBERNATED' | 'HIBERNATING' | 'INITIALIZING' | 'MAINTENANCE' | 'PARKED' | 'PARKING' | 'PENDING' | 'PREPARED' | 'PREPARING' | 'RESIZING' | 'RESUMING' | 'TERMINATED' | 'TERMINATING' | 'UNKNOWN' | 'UNPARKING' | 'SYNCHRONIZING';
-
-// @public
-export type DatabaseStatusFilter = DatabaseStatus | 'ALL' | 'NONTERMINATED';
-
-// @public
-export interface DatabaseStorageInfo {
-    nodeCount: number;
-    replicationFactor: number;
-    totalStorage: number;
-    usedStorage?: number;
-}
-
-// @public
-export type DatabaseTier = 'developer' | 'A5' | 'A10' | 'A20' | 'A40' | 'C10' | 'C20' | 'C40' | 'D10' | 'D20' | 'D40' | 'serverless';
-
-// @public
-export interface DatacenterInfo {
-    capacityUnits: number;
-    cloudProvider: DatabaseCloudProvider;
-    dateCreated: string;
-    id: string;
-    isPrimary: boolean;
-    name: string;
-    region: string;
-    regionClassification: string;
-    regionZone: string;
-    secureBundleUrl: string;
-    status: string;
-    tier: DatabaseTier;
-}
-
-// @public
 export interface DateFilterOps {
     $gt?: Date;
     $gte?: Date;
@@ -960,7 +957,7 @@ export class Db {
     // (undocumented)
     get _httpClient(): DataAPIHttpClient;
     get id(): string;
-    info(options?: WithTimeout): Promise<DatabaseInfo>;
+    info(options?: WithTimeout): Promise<AstraDbInfo>;
     get keyspace(): string;
     // Warning: (ae-forgotten-export) The symbol "KeyspaceRef" needs to be exported by the entry point index.d.ts
     //
@@ -985,19 +982,11 @@ export class Db {
 
 // @public
 export abstract class DbAdmin {
-    abstract createKeyspace(keyspace: string, options?: CreateKeyspaceOptions): Promise<void>;
+    abstract createKeyspace(keyspace: string, options?: AstraCreateKeyspaceOptions): Promise<void>;
     abstract db(): Db;
-    abstract dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
+    abstract dropKeyspace(keyspace: string, options?: AstraAdminBlockingOptions): Promise<void>;
     abstract findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
     abstract listKeyspaces(): Promise<string[]>;
-}
-
-// @public
-export interface DbMetricsInfo {
-    errorsTotalCount: number;
-    liveDataSizeBytes: number;
-    readRequestsTotalCount: number;
-    writeRequestsTotalCount: number;
 }
 
 // @public
@@ -1074,7 +1063,7 @@ export class DevOpsAPITimeoutError extends DevOpsAPIError {
 export class DevOpsUnexpectedStateError extends DevOpsAPIError {
     // @internal
     constructor(message: string, expected: string[], data: Record<string, any> | undefined);
-    readonly dbInfo?: FullDatabaseInfo;
+    readonly dbInfo?: Record<string, any>;
     readonly expected: string[];
 }
 
@@ -1303,28 +1292,6 @@ export interface FullCreateTablePrimaryKeyDefinition {
     readonly partitionSort?: Record<string, 1 | -1>;
 }
 
-// @public
-export interface FullDatabaseInfo {
-    availableActions?: DatabaseAction[];
-    cost?: CostInfo;
-    cqlshUrl?: string;
-    creationTime?: string;
-    dataEndpointUrl?: string;
-    grafanaUrl?: string;
-    graphqlUrl?: string;
-    id: string;
-    info: DatabaseInfo;
-    lastUsageTime?: string;
-    message?: string;
-    metrics?: DbMetricsInfo;
-    observedStatus: DatabaseStatus;
-    orgId: string;
-    ownerId: string;
-    status: DatabaseStatus;
-    storage?: DatabaseStorageInfo;
-    terminationTime?: string;
-}
-
 // @public (undocumented)
 export interface FullTableInfo {
     // (undocumented)
@@ -1549,6 +1516,14 @@ export type KeyspaceReplicationOptions = {
 };
 
 // @public
+export interface ListAstraDatabasesOptions extends WithTimeout {
+    include?: AstraDbStatusFilter;
+    limit?: number;
+    provider?: AstraDbCloudProviderFilter;
+    skip?: number;
+}
+
+// @public
 export interface ListCollectionsOptions extends WithTimeout, WithKeyspace {
     nameOnly?: boolean;
 }
@@ -1559,14 +1534,6 @@ export interface ListCreateTableColumnDefinition {
     type: 'list';
     // (undocumented)
     valueType: TableScalarType;
-}
-
-// @public
-export interface ListDatabasesOptions extends WithTimeout {
-    include?: DatabaseStatusFilter;
-    limit?: number;
-    provider?: DatabaseCloudProviderFilter;
-    skip?: number;
 }
 
 // @public (undocumented)
@@ -1613,9 +1580,12 @@ export interface ListTableUnsupportedColumnDefinition {
 }
 
 // @public
-export type LocalCreateKeyspaceOptions = CreateKeyspaceOptions & {
+export interface LocalCreateKeyspaceOptions extends WithTimeout {
+    // (undocumented)
     replication?: KeyspaceReplicationOptions;
-};
+    // (undocumented)
+    updateDbKeyspace?: boolean;
+}
 
 // @public (undocumented)
 export type LooseCreateTableColumnDefinition = TableScalarType | string;
@@ -1634,11 +1604,6 @@ export interface MapCreateTableColumnDefinition {
 export type MaybeId<T> = NoId<T> & {
     _id?: IdOf<T>;
 };
-
-// @public
-export interface NoBlockingOptions extends WithTimeout {
-    blocking: false;
-}
 
 // @public
 export type NoId<Doc> = Omit<Doc, '_id'>;
@@ -1694,12 +1659,6 @@ export class ObjectId {
 
 // @public
 export type OneOrMany<T> = T | readonly T[];
-
-// @public
-export interface PollBlockingOptions extends WithTimeout {
-    blocking?: true;
-    pollInterval?: number;
-}
 
 // @public
 export type Pop<Schema> = {
