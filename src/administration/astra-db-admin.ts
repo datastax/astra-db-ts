@@ -14,14 +14,13 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import {
-  AdminBlockingOptions,
   AdminSpawnOptions,
-  CreateKeyspaceOptions,
-  FullDatabaseInfo,
+  AstraAdminBlockingOptions,
+  AstraCreateKeyspaceOptions,
 } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
 import { WithTimeout } from '@/src/lib/types';
-import { extractAstraEnvironment } from '@/src/administration/utils';
+import { buildAstraDatabaseAdminInfo, extractAstraEnvironment } from '@/src/administration/utils';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, HttpMethods } from '@/src/lib/api/constants';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
@@ -30,8 +29,9 @@ import { StaticTokenProvider, TokenProvider } from '@/src/lib';
 import { isNullish } from '@/src/lib/utils';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
-import { Logger } from '@/src/lib/logging/logger';
 import { $CustomInspect } from '@/src/lib/constants';
+import { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info';
+import { Logger } from '@/src/lib/logging/logger';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting keyspaces.
@@ -69,6 +69,7 @@ import { $CustomInspect } from '@/src/lib/constants';
 export class AstraDbAdmin extends DbAdmin {
   readonly #httpClient: DevOpsAPIHttpClient;
   readonly #db: Db;
+  readonly #environment: 'dev' | 'test' | 'prod';
 
   /**
    * Use {@link Db.admin} or {@link AstraAdmin.dbAdmin} to obtain an instance of this class.
@@ -86,10 +87,10 @@ export class AstraDbAdmin extends DbAdmin {
       ? dbToken
       : _adminToken;
 
-    const environment = extractAstraEnvironment(endpoint);
+    this.#environment = adminOpts?.astraEnv ?? rootOpts.adminOptions.astraEnv ?? extractAstraEnvironment(endpoint);
 
     this.#httpClient = new DevOpsAPIHttpClient({
-      baseUrl: adminOpts?.endpointUrl ?? rootOpts.adminOptions.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINTS[environment],
+      baseUrl: DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
       logging: Logger.advanceConfig(rootOpts.adminOptions.logging, adminOpts?.logging),
       fetchCtx: rootOpts.fetchCtx,
       emitter: rootOpts.emitter,
@@ -171,13 +172,13 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves to the complete database information.
    */
-  public async info(options?: WithTimeout): Promise<FullDatabaseInfo> {
+  public async info(options?: WithTimeout): Promise<AstraDbAdminInfo> {
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases/${this.#db.id}`,
     }, options);
 
-    return resp.data as FullDatabaseInfo;
+    return buildAstraDatabaseAdminInfo(resp.data!, this.#environment);
   }
 
   /**
@@ -197,13 +198,13 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns A promise that resolves to list of all the keyspaces in the database.
    */
   public override async listKeyspaces(options?: WithTimeout): Promise<string[]> {
-    return this.info(options).then(i => [i.info.keyspace!, ...i.info.additionalKeyspaces ?? []].filter(Boolean));
+    return this.info(options).then(i => i.keyspaces);
   }
 
   /**
    * Creates a new, additional, keyspace for this database.
    *
-   * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * **NB. this is a "long-running" operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 1 second. Expect it to take roughly 8-10 seconds to complete.
    *
    * @example
@@ -230,7 +231,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async createKeyspace(keyspace: string, options?: CreateKeyspaceOptions): Promise<void> {
+  public override async createKeyspace(keyspace: string, options?: AstraCreateKeyspaceOptions): Promise<void> {
     if (options?.updateDbKeyspace) {
       this.#db.useKeyspace(keyspace);
     }
@@ -250,7 +251,7 @@ export class AstraDbAdmin extends DbAdmin {
   /**
    * Drops a keyspace from this database.
    *
-   * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * **NB. this is a "long-running" operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 1 second. Expect it to take roughly 8-10 seconds to complete.
    *
    * @example
@@ -278,7 +279,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void> {
+  public override async dropKeyspace(keyspace: string, options?: AstraAdminBlockingOptions): Promise<void> {
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Delete,
       path: `/databases/${this.#db.id}/keyspaces/${keyspace}`,
@@ -294,7 +295,7 @@ export class AstraDbAdmin extends DbAdmin {
   /**
    * Drops the database.
    *
-   * **NB. this is a long-running operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * **NB. this is a long-running operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 10 seconds. Expect it to take roughly 6-7 min to complete.
    *
    * The database info will still be accessible by ID, or by using the {@link AstraAdmin.listDatabases} method with the filter
@@ -312,7 +313,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @remarks Use with caution. Use a surge protector. Don't say I didn't warn you.
    */
-  public async drop(options?: AdminBlockingOptions): Promise<void> {
+  public async drop(options?: AstraAdminBlockingOptions): Promise<void> {
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: `/databases/${this.#db.id}/terminate`,

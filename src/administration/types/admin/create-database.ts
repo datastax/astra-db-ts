@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AdminBlockingOptions, DatabaseCloudProvider } from '@/src/administration/types';
+import { AstraAdminBlockingOptions, AstraDbCloudProvider } from '@/src/administration/types';
 
 
 import { DbSpawnOptions } from '@/src/client';
@@ -26,7 +26,7 @@ import { DbSpawnOptions } from '@/src/client';
  *
  * @public
  */
-export interface DatabaseConfig {
+export interface AstraDatabaseConfig {
   /**
    * Name of the database (user-friendly identifier)
    */
@@ -34,7 +34,7 @@ export interface DatabaseConfig {
   /**
    * Cloud provider where the database lives
    */
-  cloudProvider?: DatabaseCloudProvider,
+  cloudProvider?: AstraDbCloudProvider,
   /**
    * The cloud region where the database is located.
    */
@@ -50,7 +50,7 @@ export interface DatabaseConfig {
  *
  * @public
  */
-export type CreateDatabaseOptions = AdminBlockingOptions & {
+export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & {
   /**
    * Any options to override the default options set when creating the root {@link DataAPIClient}.
    */

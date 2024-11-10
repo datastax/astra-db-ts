@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AdminBlockingOptions } from '@/src/administration/types';
+import { AstraAdminBlockingOptions } from '@/src/administration/types';
 
 /**
  * Represents the common options for creating a keyspace through the `astra-db-ts` client.
  *
- * See {@link AdminBlockingOptions} for more options about blocking behavior.
+ * See {@link AstraAdminBlockingOptions} for more options about blocking behavior.
  *
  * If `updateDbKeyspace` is set to true, the underlying `Db` instance used to create the `DbAdmin` will have its
  * current working keyspace set to the newly created keyspace immediately (even if the keyspace isn't technically
@@ -42,4 +42,4 @@ import { AdminBlockingOptions } from '@/src/administration/types';
  *
  * @public
  */
-export type CreateKeyspaceOptions = AdminBlockingOptions & { updateDbKeyspace?: boolean };
+export type AstraCreateKeyspaceOptions = AstraAdminBlockingOptions & { updateDbKeyspace?: boolean };
