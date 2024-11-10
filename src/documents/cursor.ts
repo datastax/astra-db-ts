@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import type { Filter, SomeDoc } from '@/src/documents/collections';
+import { Collection, Filter, SomeDoc } from '@/src/documents/collections';
 import type { GenericFindOptions } from '@/src/documents/commands';
 import type { Projection, Sort } from '@/src/documents/types';
 import type { DeepPartial, nullish } from '@/src/lib';
@@ -21,6 +21,7 @@ import { normalizedSort } from '@/src/documents/utils';
 import { $CustomInspect } from '@/src/lib/constants';
 import { DataAPISerDes } from '@/src/lib/api/ser-des';
 import { DataAPIError } from '@/src/documents/errors';
+import { Table } from '@/src/documents/tables';
 
 export class CursorError extends DataAPIError {
   public readonly cursor: FindCursor<unknown>;
@@ -112,9 +113,8 @@ interface InternalGetMoreCommand {
  *
  * @public
  */
-export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
-  readonly #keyspace: string;
-  readonly #parent: string;
+export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
+  readonly #parent: Table | Collection;
   readonly #httpClient: DataAPIHttpClient;
   readonly #serdes: DataAPISerDes;
 
@@ -133,8 +133,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(keyspace: string, parent: string, httpClient: DataAPIHttpClient, serdes: DataAPISerDes, filter: [Filter<TRaw>, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
-    this.#keyspace = keyspace;
+  constructor(parent: Table | Collection, httpClient: DataAPIHttpClient, serdes: DataAPISerDes, filter: [Filter<TRaw>, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
     this.#parent = parent;
     this.#httpClient = httpClient;
     this.#serdes = serdes;
@@ -143,7 +142,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this.#mapping = mapping;
 
     Object.defineProperty(this, $CustomInspect, {
-      value: () => `FindCursor(source="${this.#keyspace}.${this.#parent}",state="${this.#state}",consumed=${this.#consumed},buffered=${this.#buffer.length})`,
+      value: () => `FindCursor(source="${this.#parent.keyspace}.${this.#parent.name}",state="${this.#state}",consumed=${this.#consumed},buffered=${this.#buffer.length})`,
     });
   }
 
@@ -153,7 +152,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns The keyspace of the collection that's being iterated over.
    */
   public get keyspace(): string {
-    return this.#keyspace;
+    return this.#parent.keyspace;
   }
 
   /**
@@ -403,7 +402,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns A behavioral clone of this cursor.
    */
   public clone(): FindCursor<TRaw, TRaw> {
-    return new FindCursor(this.#keyspace, this.#parent, this.#httpClient, this.#serdes, this.#filter, this.#options);
+    return new (<any>this.constructor)(this.#parent, this.#httpClient, this.#serdes, this.#filter, this.#options);
   }
 
   /**
@@ -570,7 +569,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   #clone<R, RRaw extends SomeDoc>(filter: [Filter<RRaw>, boolean], options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
-    return new FindCursor(this.#keyspace, this.#parent, this.#httpClient, this.#serdes, filter, options, mapping);
+    return new (<any>this.constructor)(this.#parent, this.#httpClient, this.#serdes, filter, options, mapping);
   }
 
   async #next(peek: true): Promise<TRaw | nullish>

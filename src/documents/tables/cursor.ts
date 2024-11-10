@@ -12,14 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './cursor';
-export type * from './types';
-export * from './table';
+import { FindCursor, SomeDoc } from '@/src/documents';
 
-export {
-  TableColumnTypeParser,
-  TableSerDesConfig,
-  TableDesCtx,
-  TableSerCtx,
-  $SerializeForTable,
-} from './ser-des';
+export class TableFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {}

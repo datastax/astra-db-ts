@@ -20,12 +20,12 @@ export function isNullish(t: unknown): t is nullish {
 }
 
 export function validateDataAPIEnv(env: unknown): asserts env is DataAPIEnvironment | nullish {
-  if (!isNullish(env) && !DataAPIEnvironments.includes(env as any)) {
+  if (!isNullish(env) && !(<readonly unknown[]>DataAPIEnvironments).includes(env)) {
     throw new Error(`Given environment is invalid (must be ${DataAPIEnvironments.map(e => `"${e}"`).join(', ')}, or nullish to default to "astra".`);
   }
 }
 
-export function jsonTryParse<T>(json: string, otherwise: T, reviver?: (this: any, key: string, value: any) => any): T {
+export function jsonTryParse<T>(json: string, otherwise: T, reviver?: (this: unknown, key: string, value: unknown) => unknown): T {
   try {
     return JSON.parse(json, reviver);
   } catch (_) {

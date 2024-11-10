@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { FetcherResponseInfo } from '@/src/lib/api';
+import { SomeDoc } from '@/src/documents';
 
 /**
  * A representation of what went wrong when interacting with the DevOps API.
@@ -108,7 +109,7 @@ export class DevOpsAPIResponseError extends DevOpsAPIError {
    *
    * @internal
    */
-  constructor(resp: FetcherResponseInfo, data: Record<string, any> | undefined) {
+  constructor(resp: FetcherResponseInfo, data: SomeDoc | undefined) {
     const errors = data?.errors ?? [];
     const maybeMsg = errors.find((e: any) => e.message)?.message;
 
@@ -149,7 +150,7 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
    *
    * @internal
    */
-  constructor(message: string, expected: string[], data: Record<string, any> | undefined) {
+  constructor(message: string, expected: string[], data: SomeDoc | undefined) {
     super(message);
     this.expected = expected;
     this.dbInfo = data;
