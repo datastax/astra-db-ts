@@ -356,10 +356,6 @@ export class Table<Schema extends SomeRow = SomeRow> {
     return this.#commands.findOne(filter, options);
   }
 
-  public async countRows(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number> {
-    return this.#commands.countDocuments(filter, upperBound, options, TooManyRowsToCountError);
-  }
-
   public async drop(options?: WithTimeout): Promise<void> {
     await this.#db.dropCollection(this.name, { keyspace: this.keyspace, ...options });
   }

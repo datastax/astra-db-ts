@@ -26,7 +26,7 @@ parallel('integration.documents.collections.count-documents', { truncate: 'colls
 
   before(async () => {
     await collection.insertMany(docs);
-    await collection_.insertMany(Array.from({ length: 1001 }, () => ({})));
+    await collection_.insertMany(Array.from({ length: 1001 }, () => ({})), { ordered: true, chunkSize: 100 });
   });
 
   it('should return a single doc for an _id filter', async () => {
