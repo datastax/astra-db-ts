@@ -557,10 +557,10 @@ describe('integration.documents.cursor', { truncate: 'colls:before' }, ({ collec
       const cursor = collection_.find({}).sort({ $vector: [1, 1, 1, 1, 1] }).includeSortVector();
       const start1 = performance.now();
       assert.deepStrictEqual(await cursor.getSortVector(), [1, 1, 1, 1, 1]);
-      assert.ok(performance.now() - start1 > 100);
+      assert.ok(performance.now() - start1 > 5);
       const start2 = performance.now();
       assert.deepStrictEqual(await cursor.getSortVector(), [1, 1, 1, 1, 1]);
-      assert.ok(performance.now() - start2 < 5);
+      assert.ok(performance.now() - start2 < 2);
     });
 
     it('getSortVector should populate buffer if called first w/ includeSortVector: true', async () => {

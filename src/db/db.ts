@@ -116,9 +116,9 @@ import { AstraDbInfo } from '@/src/administration/types/admin/database-info';
 export class Db {
   readonly #defaultOpts: InternalRootClientOpts;
   readonly #httpClient: DataAPIHttpClient;
-  readonly #endpoint: string;
 
-  readonly _keyspace: KeyspaceRef;
+  readonly #endpoint: string;
+  readonly #keyspace: KeyspaceRef;
   readonly #id?: string;
   readonly #region?: string;
 
@@ -161,7 +161,7 @@ export class Db {
       },
     };
 
-    this._keyspace = {
+    this.#keyspace = {
       ref: (rootOpts.environment === 'astra')
         ? this.#defaultOpts.dbOptions.keyspace ?? DEFAULT_KEYSPACE
         : this.#defaultOpts.dbOptions.keyspace ?? undefined,
@@ -175,7 +175,7 @@ export class Db {
       emitter: rootOpts.emitter,
       logging: this.#defaultOpts.dbOptions.logging,
       fetchCtx: rootOpts.fetchCtx,
-      keyspace: this._keyspace,
+      keyspace: this.#keyspace,
       userAgent: rootOpts.userAgent,
       emissionStrategy: EmissionStrategy.Normal,
       additionalHeaders: this.#defaultOpts.dbOptions.additionalHeaders,
@@ -221,10 +221,10 @@ export class Db {
    * ```
    */
   public get keyspace(): string {
-    if (!this._keyspace.ref) {
+    if (!this.#keyspace.ref) {
       throw new Error('No keyspace set for DB (can\'t do db.keyspace, or perform any operation requiring it). Use `db.useKeyspace`, or pass the keyspace as an option parameter explicitly.');
     }
-    return this._keyspace.ref;
+    return this.#keyspace.ref;
   }
 
   /**
@@ -312,7 +312,7 @@ export class Db {
    * @param keyspace - The keyspace to use
    */
   public useKeyspace(keyspace: string) {
-    this._keyspace.ref = keyspace;
+    this.#keyspace.ref = keyspace;
   }
 
   /**

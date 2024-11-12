@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { SomeDoc, WithId } from '@/src/documents/collections';
-import type { ToDotNotation } from '@/src/documents';
+import { DataAPIVector, ToDotNotation } from '@/src/documents';
 
 /**
  * Allowed types to specify an ascending or descending sort.
@@ -52,10 +52,7 @@ export type SortDirection = 1 | -1 | 'asc' | 'desc' | 'ascending' | 'descending'
  *
  * @public
  */
-export type Sort =
-  | Record<string, SortDirection>
-  | { $vector: number[] }
-  | { $vectorize: string };
+export type Sort = Record<string, SortDirection | number[] | DataAPIVector>;
 
 /**
  * Specifies which fields should be included/excluded in the returned documents.

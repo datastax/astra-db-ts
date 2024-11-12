@@ -152,9 +152,9 @@ describe('integration.misc.code-samples', { truncate: 'colls:before' }, ({ colle
     it('works for example sort operations', async (key) => {
       // Insert some documents
       await collection.insertMany([
-        { name: 'Jane', age: 25, $vector: [1.0, 1.0, 1.0, 1.0, 1.0], key },
-        { name: 'Dave', age: 40, $vector: [0.4, 0.5, 0.6, 0.7, 0.8], key },
-        { name: 'Jack', age: 40, $vector: [0.1, 0.9, 0.0, 0.5, 0.7], key },
+        { name: 'Jane', age: 25, $vector: [1.0, +1.0, 1.0, 1.0, 1.0], key },
+        { name: 'Dave', age: 40, $vector: [0.4, -0.4, 0.6, 0.7, 0.8], key },
+        { name: 'Jack', age: 40, $vector: [0.1, -0.6, 0.0, 0.5, 0.7], key },
       ]);
 
       // Sort by age ascending, then by name descending (Jane, Jack, Dave)

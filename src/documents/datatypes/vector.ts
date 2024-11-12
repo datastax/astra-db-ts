@@ -21,8 +21,8 @@ export type DataAPIVectorLike = number[] | string | Float32Array | DataAPIVector
 export class DataAPIVector {
   readonly #vector: Exclude<DataAPIVectorLike, DataAPIVector>;
 
-  public [$SerializeForTable] = () => serialize(this.#vector);
-  public [$SerializeForCollection] = this[$SerializeForTable];
+  public [$SerializeForTable]: () => { $binary: string } | number[];
+  public [$SerializeForCollection]: () => { $binary: string } | number[];
 
   public constructor(vector: DataAPIVectorLike, validate = true) {
     if (validate && !DataAPIVector.isVectorLike(vector)) {
@@ -32,6 +32,9 @@ export class DataAPIVector {
     this.#vector = (vector instanceof DataAPIVector)
       ? vector.raw()
       : vector;
+
+    this[$SerializeForTable] = () => serialize(this.#vector);
+    this[$SerializeForCollection] = this[$SerializeForTable];
 
     Object.defineProperty(this, $CustomInspect, {
       value: this.toString,

@@ -14,6 +14,8 @@
 
 import { SomeDoc } from '@/src/documents/collections';
 import { Sort } from '@/src/documents/types';
+import { DataAPIVector } from '@/src/documents/datatypes';
+import { $SerializeForTable } from '@/src/documents/tables';
 
 declare const $ERROR: unique symbol;
 
@@ -69,14 +71,18 @@ export const normalizedSort = (sort: SomeDoc): Sort => {
   const ret: Sort = {};
 
   for (const key in sort) {
-    if (typeof sort[key] === 'string') {
-      if (sort[key][0] === 'a') {
+    const val = sort[key];
+    
+    if (typeof val === 'string') {
+      if (val[0] === 'a') {
         ret[key] = 1;
-      } else if (sort[key][0] === 'd') {
+      } else if (val[0] === 'd') {
         ret[key] = -1;
       }
+    } if (val instanceof DataAPIVector) {
+      ret[key] = val[$SerializeForTable]() as Sort[string];
     } else {
-      ret[key] = sort[key];
+      ret[key] = val;
     }
   }
 
