@@ -13,15 +13,15 @@
 // limitations under the License.
 
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import { Collection, Filter, SomeDoc } from '@/src/documents/collections';
+import type { Collection, Filter, SomeDoc } from '@/src/documents/collections';
 import type { GenericFindOptions } from '@/src/documents/commands';
 import type { Projection, Sort } from '@/src/documents/types';
 import type { DeepPartial, nullish } from '@/src/lib';
 import { normalizedSort } from '@/src/documents/utils';
 import { $CustomInspect } from '@/src/lib/constants';
-import { DataAPISerDes } from '@/src/lib/api/ser-des';
+import type { DataAPISerDes } from '@/src/lib/api/ser-des';
 import { DataAPIError } from '@/src/documents/errors';
-import { Table } from '@/src/documents/tables';
+import type { Table } from '@/src/documents/tables';
 
 export class CursorError extends DataAPIError {
   public readonly cursor: FindCursor<unknown>;
@@ -51,19 +51,19 @@ export class CursorError extends DataAPIError {
 export type CursorStatus = 'idle' | 'started' | 'closed';
 
 interface InternalFindOptions {
-  pageState?: string,
-  limit?: number,
-  skip?: number,
-  includeSimilarity?: boolean,
-  includeSortVector?: boolean,
+  limit: number | undefined,
+  skip: number | undefined,
+  includeSimilarity: boolean | undefined,
+  includeSortVector: boolean | undefined,
+  pageState: string | undefined,
 }
 
 interface InternalGetMoreCommand {
   find: {
-    filter?: Record<string, unknown>,
-    options?: InternalFindOptions,
-    sort?: Record<string, unknown>,
-    projection?: Record<string, unknown>,
+    filter: Record<string, unknown> | undefined,
+    sort: Record<string, unknown> | undefined,
+    projection: Record<string, unknown> | undefined,
+    options: InternalFindOptions | undefined,
   },
 }
 
@@ -606,37 +606,20 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   async #getMore(): Promise<void> {
-    const options: InternalFindOptions = {};
-
-    if (this.#options.limit !== Infinity) {
-      options.limit = this.#options.limit;
-    }
-    if (this.#nextPageState) {
-      options.pageState = this.#nextPageState;
-    }
-    if (this.#options.skip) {
-      options.skip = this.#options.skip;
-    }
-    if (this.#options.includeSimilarity) {
-      options.includeSimilarity = this.#options.includeSimilarity;
-    }
-    if (this.#options.includeSortVector) {
-      options.includeSortVector = this.#options.includeSortVector;
-    }
-
     const command: InternalGetMoreCommand = {
-      find: { filter: this.#filter[0] },
+      find: {
+        filter: this.#filter[0],
+        projection: this.#options.projection,
+        sort: this.#options.sort,
+        options: {
+          includeSimilarity: this.#options.includeSimilarity,
+          includeSortVector: this.#options.includeSortVector,
+          limit: this.#options.limit,
+          skip: this.#options.skip,
+          pageState: this.#nextPageState ?? undefined,
+        },
+      },
     };
-
-    if (this.#options.sort) {
-      command.find.sort = this.#options.sort;
-    }
-    if (this.#options.projection) {
-      command.find.projection = this.#options.projection;
-    }
-    if (Object.keys(options).length > 0) {
-      command.find.options = options;
-    }
 
     const raw = await this.#httpClient.executeCommand(command, { bigNumsPresent: this.#filter[1] });
 

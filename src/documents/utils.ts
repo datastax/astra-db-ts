@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/documents/collections';
-import { Sort } from '@/src/documents/types';
+import type { SomeDoc } from '@/src/documents/collections';
+import type { Sort } from '@/src/documents/types';
 import { DataAPIVector } from '@/src/documents/datatypes';
-import { $SerializeForTable } from '@/src/documents/tables';
+import { $SerializeForTable } from '@/src/documents/tables/ser-des';
 
 declare const $ERROR: unique symbol;
 
