@@ -13,13 +13,21 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEMO_APPLICATION_URI, it, parallel, TEST_APPLICATION_TOKEN, TEST_APPLICATION_URI } from '@/tests/testlib';
+import {
+  DEMO_APPLICATION_URI,
+  ENVIRONMENT,
+  it,
+  parallel,
+  TEST_APPLICATION_TOKEN,
+  TEST_APPLICATION_URI,
+} from '@/tests/testlib';
 import { DEFAULT_KEYSPACE, FetchH2 } from '@/src/lib/api';
 import assert from 'assert';
+import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
 
 parallel('integration.lib.api.fetch.fetch-h2', () => {
   const genericOptions = <const>{
-    url: `${TEST_APPLICATION_URI}/api/json/v1/${DEFAULT_KEYSPACE}`,
+    url: `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}`,
     method: 'POST',
     body: JSON.stringify({ findCollections: {} }),
     headers: { Token: TEST_APPLICATION_TOKEN },

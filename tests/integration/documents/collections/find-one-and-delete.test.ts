@@ -83,8 +83,8 @@ parallel('integration.documents.collections.find-one-and-delete', { truncate: 'c
 
   it('should findOneAndDelete with $vector sort', async (key) => {
     await collection.insertMany([
-      { name: 'a', $vector: [1.0, 1.0, 1.0, 1.0, 1.0], key },
-      { name: 'c', $vector: [-.1, -.2, -.3, -.4, -.5], key },
+      { name: 'a', $vector: [1.0, 1.0, 0.9, 1.0, 1.0], key },
+      { name: 'c', $vector: [-.4, -.2, -.3, -.4, -.1], key },
       { name: 'b', $vector: [-.1, -.2, -.3, -.4, -.5], key },
     ]);
 

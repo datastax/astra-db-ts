@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import { DataAPIClient } from '@/src/client';
-import { FetchNative } from '@/src/lib/api';
+import { DEFAULT_KEYSPACE, FetchNative } from '@/src/lib/api';
 import assert from 'assert';
 import {
   DEFAULT_COLLECTION_NAME,
@@ -43,6 +43,9 @@ parallel('integration.misc.headers', () => {
           return fetchNative.fetch(info);
         },
       },
+    },
+    dbOptions: {
+      keyspace: DEFAULT_KEYSPACE,
     },
   });
 

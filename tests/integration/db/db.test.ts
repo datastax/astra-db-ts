@@ -38,7 +38,7 @@ parallel('integration.db', { dropEphemeral: 'colls:after' }, ({ db }) => {
     });
 
     it('should create a collections in another keyspace', async () => {
-      const res = await db.createCollection('coll_2c', { keyspace: OTHER_KEYSPACE });
+      const res = await db.createCollection('coll_2c', { keyspace: OTHER_KEYSPACE, indexing: { deny: ['*'] } });
       assert.ok(res);
       assert.strictEqual(res.name, 'coll_2c');
       assert.strictEqual(res.keyspace, OTHER_KEYSPACE);
@@ -65,12 +65,12 @@ parallel('integration.db', { dropEphemeral: 'colls:after' }, ({ db }) => {
     });
 
     it('should fail creating collections with different options', async () => {
-      const res = await db.createCollection('coll_6c', { indexing: { deny: ['*'] } });
+      const res = await db.createCollection('coll_6c', { indexing: { deny: ['*'] }, defaultId: { type: 'uuid' }  });
       assert.ok(res);
       assert.strictEqual(res.name, 'coll_6c');
       assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);
       try {
-        await db.createCollection('coll_6c', { indexing: { allow: ['*'] } });
+        await db.createCollection('coll_6c', { indexing: { deny: ['*'] }, defaultId: { type: 'uuidv6' } });
         assert.fail('Expected an error');
       } catch (e) {
         assert.ok(e instanceof DataAPIResponseError);

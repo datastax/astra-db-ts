@@ -120,7 +120,11 @@ const DefaultTableSerDesCfg = {
       return false;
     }
 
-    deserializeObj(ctx, ctx.rootObj, key, ctx.tableSchema[key]);
+    const schema = ctx.tableSchema[key];
+
+    if (schema) {
+      deserializeObj(ctx, ctx.rootObj, key, schema);
+    }
 
     if (!ctx.sparseData) {
       for (const key in ctx.tableSchema) {
