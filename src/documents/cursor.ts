@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import type { Collection, Filter, SomeDoc } from '@/src/documents/collections';
 import type { GenericFindOptions } from '@/src/documents/commands';
 import type { Projection, Sort } from '@/src/documents/types';
@@ -115,7 +114,6 @@ interface InternalGetMoreCommand {
  */
 export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   readonly #parent: Table | Collection;
-  readonly #httpClient: DataAPIHttpClient;
   readonly #serdes: DataAPISerDes;
 
   readonly #options: GenericFindOptions;
@@ -133,9 +131,8 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(parent: Table | Collection, httpClient: DataAPIHttpClient, serdes: DataAPISerDes, filter: [Filter<TRaw>, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
+  constructor(parent: Table | Collection, serdes: DataAPISerDes, filter: [Filter<TRaw>, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
     this.#parent = parent;
-    this.#httpClient = httpClient;
     this.#serdes = serdes;
     this.#filter = filter;
     this.#options = options ?? {};
@@ -402,7 +399,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns A behavioral clone of this cursor.
    */
   public clone(): FindCursor<TRaw, TRaw> {
-    return new (<any>this.constructor)(this.#parent, this.#httpClient, this.#serdes, this.#filter, this.#options);
+    return new (<any>this.constructor)(this.#parent, this.#serdes, this.#filter, this.#options);
   }
 
   /**
@@ -569,7 +566,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   #clone<R, RRaw extends SomeDoc>(filter: [Filter<RRaw>, boolean], options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
-    return new (<any>this.constructor)(this.#parent, this.#httpClient, this.#serdes, filter, options, mapping);
+    return new (<any>this.constructor)(this.#parent, this.#serdes, filter, options, mapping);
   }
 
   async #next(peek: true): Promise<TRaw | nullish>
@@ -621,7 +618,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
       },
     };
 
-    const raw = await this.#httpClient.executeCommand(command, { bigNumsPresent: this.#filter[1] });
+    const raw = await this.#parent._httpClient.executeCommand(command, { bigNumsPresent: this.#filter[1] });
 
     this.#nextPageState = raw.data?.nextPageState || null;
     this.#buffer = raw.data?.documents ?? [];
