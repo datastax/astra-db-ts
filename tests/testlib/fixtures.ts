@@ -89,7 +89,7 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
   });
 
   if (LOG_ALL_TO_STDOUT) {
-    for (const event of ['commandStarted', 'adminCommandStarted', 'commandFailed', 'adminCommandFailed'] as (keyof DataAPIClientEvents)[]) {
+    for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed'] as (keyof DataAPIClientEvents)[]) {
       client.on(event, (e: unknown) => console.dir(e, { depth: null }));
     }
   }

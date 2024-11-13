@@ -12,6 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FindCursor, type SomeDoc } from '@/src/documents';
+import { Collection, FindCursor, type SomeDoc } from '@/src/documents';
 
-export class CollectionFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {}
+export class CollectionFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {
+  public override get dataSource(): Collection {
+    return super.dataSource as Collection;
+  }
+}

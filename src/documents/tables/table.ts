@@ -28,7 +28,6 @@ import {
   TableInsertManyResult,
   TableInsertOneResult,
   TableUpdateOneOptions,
-  TooManyRowsToCountError,
   UpdateFilter,
 } from '@/src/documents';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';

@@ -147,12 +147,12 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   /**
-   * The keyspace of the collection that's being iterated over.
+   * The table/collection which spawned this cursor.
    *
-   * @returns The keyspace of the collection that's being iterated over.
+   * @returns The table/collection which spawned this cursor.
    */
-  public get keyspace(): string {
-    return this.#parent.keyspace;
+  public get dataSource(): Table | Collection {
+    return this.#parent;
   }
 
   /**

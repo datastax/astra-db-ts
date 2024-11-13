@@ -79,7 +79,7 @@ export const normalizedSort = (sort: SomeDoc): Sort => {
       } else if (val[0] === 'd') {
         ret[key] = -1;
       }
-    } if (val instanceof DataAPIVector) {
+    } else if (val instanceof DataAPIVector) {
       ret[key] = val[$SerializeForTable]() as Sort[string];
     } else {
       ret[key] = val;

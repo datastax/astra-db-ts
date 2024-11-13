@@ -137,9 +137,9 @@ const DefaultTableSerDesCfg = {
   },
   parsers: {
     bigint: (n) => parseInt(n),
-    blob: (blob, ctx) => ctx.parsingPrimaryKey ? new CqlBlob(blob, false) : new CqlBlob(blob.$binary, false),
+    blob: (blob, ctx) => new CqlBlob((ctx.parsingPrimaryKey) ? { $binary: blob } : blob, false),
     date: (date) => new CqlDate(date),
-    decimal: (decimal) => decimal instanceof BigNumber ? decimal : new BigNumber(decimal),
+    decimal: (decimal) => (decimal instanceof BigNumber) ? decimal : new BigNumber(decimal),
     double: parseFloat,
     duration: (duration) => new CqlDuration(duration),
     float: parseFloat,
