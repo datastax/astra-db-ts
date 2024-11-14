@@ -36,13 +36,13 @@ before(async () => {
   const allKeyspaces = await dbAdmin.listKeyspaces();
 
   if (allKeyspaces.includes('slania')) {
-    console.log(`deleting keyspace 'slania'`);
+    console.warn(`deleting keyspace 'slania'`);
     await dbAdmin.dropKeyspace('slania');
   }
 
   for (const keyspace of TEST_KEYSPACES) {
     if (!allKeyspaces.includes(keyspace)) {
-      console.log(`creating keyspace '${keyspace}'`);
+      console.warn(`creating keyspace '${keyspace}'`);
       await dbAdmin.createKeyspace(keyspace);
     }
   }
@@ -57,8 +57,8 @@ before(async () => {
   await allTables
     .map(async ([keyspace, colls]) => {
       await colls
-        .tap(c => console.log(`deleting table '${keyspace}.${c}'`))
-        .map(c => db.dropTable(c, { keyspace: keyspace }))
+        .tap(c => console.warn(`deleting table '${keyspace}.${c}'`))
+        .map(c => db.dropTable(c, { keyspace }))
         .awaitAll();
     })
     .awaitAll();
@@ -71,8 +71,9 @@ before(async () => {
       const table = await db.createTable(DEFAULT_TABLE_NAME, {
         definition: EverythingTableSchema,
         ifNotExists: true,
+        keyspace,
       });
-      await table.createVectorIndex('vector_idx', 'vector', { metric: 'dot_product', ifNotExists: true });
+      await table.createVectorIndex(`vector_idx_${keyspace}`, 'vector', { metric: 'dot_product', ifNotExists: true });
     })
     .awaitAll();
 
@@ -87,7 +88,7 @@ before(async () => {
     .map(async ([keyspace, colls]) => {
       await colls
         .filter(c => TEST_KEYSPACES.includes(keyspace) ? c !== DEFAULT_COLLECTION_NAME : true)
-        .tap(c => console.log(`deleting collection '${keyspace}.${c}'`))
+        .tap(c => console.warn(`deleting collection '${keyspace}.${c}'`))
         .map(c => db.dropCollection(c, { keyspace: keyspace }))
         .awaitAll();
     })

@@ -19,7 +19,7 @@ import type {
   CollectionUpdateManyResult,
   SomeDoc,
 } from '@/src/documents/collections';
-import { TableInsertManyResult } from '@/src/documents/tables';
+import type { TableInsertManyResult } from '@/src/documents/tables';
 
 /**
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a

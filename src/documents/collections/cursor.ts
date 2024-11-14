@@ -12,14 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './cursor';
-export type * from './types';
-export * from './table';
+import { Collection, FindCursor, type SomeDoc } from '@/src/documents';
 
-export {
-  TableColumnTypeParser,
-  TableSerDesConfig,
-  TableDesCtx,
-  TableSerCtx,
-  $SerializeForTable,
-} from './ser-des';
+export class CollectionFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {
+  public override get dataSource(): Collection {
+    return super.dataSource as Collection;
+  }
+}

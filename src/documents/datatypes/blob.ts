@@ -15,7 +15,7 @@
 import { $SerializeForTable } from '@/src/documents/tables/ser-des';
 import { $CustomInspect } from '@/src/lib/constants';
 
-export type CqlBlobLike = CqlBlob | ArrayBuffer | Buffer | string;
+export type CqlBlobLike = CqlBlob | ArrayBuffer | Buffer | { $binary: string };
 
 export class CqlBlob {
   readonly #raw: Exclude<CqlBlobLike, CqlBlob>;
@@ -45,7 +45,7 @@ export class CqlBlob {
       return this.#raw.length;
     }
 
-    return ~~((this.#raw.replace(/=+$/, '').length * 3) / 4);
+    return ~~((this.#raw.$binary.replace(/=+$/, '').length * 3) / 4);
   }
 
   public raw(): Exclude<CqlBlobLike, CqlBlob> {
@@ -61,7 +61,7 @@ export class CqlBlob {
       return bufferToArrayBuffer(this.#raw);
     }
 
-    return base64ToArrayBuffer(this.#raw);
+    return base64ToArrayBuffer(this.#raw.$binary);
   }
 
   public asBuffer(): Buffer {
@@ -77,7 +77,7 @@ export class CqlBlob {
       return Buffer.from(this.#raw);
     }
 
-    return Buffer.from(this.#raw, 'base64');
+    return Buffer.from(this.#raw.$binary, 'base64');
   }
 
   public asBase64(): string {
@@ -89,7 +89,7 @@ export class CqlBlob {
       return this.#raw.toString('base64');
     }
 
-    return this.#raw;
+    return this.#raw.$binary;
   }
 
   public toString() {
@@ -97,8 +97,8 @@ export class CqlBlob {
     return `CqlBlob(typeof raw=${type}, byteLength=${this.byteLength})`;
   }
 
-  public static isBlobLike(blob: unknown): blob is CqlBlobLike {
-    return blob instanceof CqlBlob || typeof blob === 'string' || blob instanceof ArrayBuffer || blob instanceof Buffer;
+  public static isBlobLike(value: unknown): value is CqlBlobLike {
+    return !!value && typeof value === 'object' && (value instanceof CqlBlob || '$binary' in value || value instanceof ArrayBuffer || value instanceof Buffer);
   }
 }
 

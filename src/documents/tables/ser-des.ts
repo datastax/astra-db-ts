@@ -44,7 +44,7 @@ export interface TableDesCtx extends DataAPIDesCtx {
   tableSchema: ListTableColumnDefinitions,
   parsers: Record<string, TableColumnTypeParser>,
   parsingPrimaryKey: boolean,
-  sparseData: boolean,
+  populateSparseData: boolean,
 }
 
 export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: SomeDoc) => any;
@@ -85,7 +85,7 @@ export const mkTableSerDes = <Schema extends SomeRow>(cfg: TableSerDesConfig<Sch
       throw new Error('No schema found in response');
     }
 
-    ctx.sparseData = cfg?.sparseData ?? false;
+    ctx.populateSparseData = cfg?.sparseData !== true;
     ctx.parsers = { ...DefaultTableSerDesCfg.parsers, ...cfg?.parsers };
     return ctx;
   },
@@ -117,7 +117,15 @@ const DefaultTableSerDesCfg = {
   },
   deserialize(key, _, ctx) {
     if (key === '') {
+      if (Object.keys(ctx.rootObj).length === 0 && ctx.populateSparseData) {
+        populateSparseData(ctx); // populate sparse data for empty objects
+      }
       return false;
+    }
+
+    if (ctx.populateSparseData) { // do at this level to avoid looping on newly-populated fields if done at the top level
+      populateSparseData(ctx);
+      ctx.populateSparseData = false;
     }
 
     const schema = ctx.tableSchema[key];
@@ -125,21 +133,13 @@ const DefaultTableSerDesCfg = {
     if (schema) {
       deserializeObj(ctx, ctx.rootObj, key, schema);
     }
-
-    if (!ctx.sparseData) {
-      for (const key in ctx.tableSchema) {
-        if (!(key in ctx.rootObj)) {
-          ctx.rootObj[key] = null;
-        }
-      }
-    }
     return true;
   },
   parsers: {
     bigint: (n) => parseInt(n),
-    blob: (blob, ctx) => ctx.parsingPrimaryKey ? new CqlBlob(blob, false) : new CqlBlob(blob.$binary, false),
+    blob: (blob, ctx) => new CqlBlob((ctx.parsingPrimaryKey) ? { $binary: blob } : blob, false),
     date: (date) => new CqlDate(date),
-    decimal: (decimal) => decimal instanceof BigNumber ? decimal : new BigNumber(decimal),
+    decimal: (decimal) => (decimal instanceof BigNumber) ? decimal : new BigNumber(decimal),
     double: parseFloat,
     duration: (duration) => new CqlDuration(duration),
     float: parseFloat,
@@ -178,14 +178,37 @@ const DefaultTableSerDesCfg = {
   },
 } satisfies Pick<TableSerDesConfig<SomeRow>, 'parsers' | 'serialize' | 'deserialize'>;
 
-function deserializeObj(ctx: TableDesCtx, obj: SomeRow, key: string, column: ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition) {
-  const type = (column.type === 'UNSUPPORTED')
-    ? column.apiSupport.cqlDefinition
-    : column.type;
+function populateSparseData(ctx: TableDesCtx) {
+  for (const key in ctx.tableSchema) {
+    if (key in ctx.rootObj) {
+      continue;
+    }
 
+    const type = resolveType(ctx.tableSchema[key]);
+
+    if (type === 'map') {
+      ctx.rootObj[key] = new Map();
+    } else if (type === 'set') {
+      ctx.rootObj[key] = new Set();
+    } else if (type === 'list') {
+      ctx.rootObj[key] = [];
+    } else {
+      ctx.rootObj[key] = null;
+    }
+  }
+}
+
+function deserializeObj(ctx: TableDesCtx, obj: SomeRow, key: string, column: ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition) {
+  const type = resolveType(column);
   const parser = ctx.parsers[type];
 
   if (parser && obj[key] !== null) {
     obj[key] = parser(obj[key], ctx, column);
   }
+}
+
+function resolveType(column: ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition) {
+  return (column.type === 'UNSUPPORTED')
+    ? column.apiSupport.cqlDefinition
+    : column.type;
 }

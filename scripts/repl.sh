@@ -14,11 +14,19 @@ fi
 # Rebuild the client (without types or any extra processing for speed)
 sh scripts/build.sh -light || exit 2
 
-if [ "$1" = "-stargate" ]; then
-  export CLIENT_DB_ENVIRONMENT='dse'
-  export CLIENT_DB_TOKEN='Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh'
-  export CLIENT_DB_URL='http://localhost:8181'
-fi
+while [ $# -gt 0 ]; do
+  case "$1" in
+    "-local")
+      export CLIENT_DB_ENVIRONMENT='dse'
+      export CLIENT_DB_TOKEN='Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh'
+      export CLIENT_DB_URL='http://localhost:8181'
+      ;;
+    "-l" | "-logging")
+      export LOG_ALL_TO_STDOUT=true
+      ;;
+  esac
+  shift
+done
 
 # Start the REPL w/ some utility stuff and stuff
 node -i -e "
@@ -27,7 +35,7 @@ node -i -e "
   const $ = require('./dist');
   require('util').inspect.defaultOptions.depth = null;
 
-  let client = new $.DataAPIClient(process.env.CLIENT_DB_TOKEN, { environment: process.env.CLIENT_DB_ENVIRONMENT });
+  let client = new $.DataAPIClient(process.env.CLIENT_DB_TOKEN, { environment: process.env.CLIENT_DB_ENVIRONMENT, logging: [{ events: 'all', emits: 'event' }] });
   let db = client.db(process.env.CLIENT_DB_URL);
   let dbAdmin = db.admin({ environment: process.env.CLIENT_DB_ENVIRONMENT });
 
@@ -43,6 +51,12 @@ node -i -e "
 
   let coll = db.collection('test_coll');
   let table = db.table('test_table');
+
+  if (process.env.LOG_ALL_TO_STDOUT) {
+    for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed']) {
+      client.on(event, (e) => console.dir(e, { depth: null }));
+    }
+  }
 
   Object.defineProperty(this, 'cl', {
     get() {

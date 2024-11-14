@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { FindCursor } from '@/src/documents/cursor';
 import type {
   CollectionDeleteManyResult,
   CollectionDeleteOneOptions,
@@ -50,6 +49,8 @@ import { mkCollectionSerDes } from '@/src/documents/collections/ser-des';
 import { $CustomInspect } from '@/src/lib/constants';
 import { CollectionInsertManyError, TooManyDocumentsToCountError } from '@/src/documents';
 import JBI from 'json-bigint';
+import { CollectionFindCursor } from '@/src/documents/collections/cursor';
+import { withJbiNullProtoFix } from '@/src/lib/utils';
 
 const jbi = JBI({ storeAsString: true });
 
@@ -178,7 +179,7 @@ const jbi = JBI({ storeAsString: true });
  */
 export class Collection<Schema extends SomeDoc = SomeDoc> {
   readonly #httpClient: DataAPIHttpClient;
-  readonly #commands: CommandImpls<IdOf<Schema>>;
+  readonly #commands: CommandImpls<Schema, IdOf<Schema>>;
   readonly #db: Db;
 
   /**
@@ -209,11 +210,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     const hack: BigNumberHack = {
       parseWithBigNumbers: () => !!opts?.serdes?.enableBigNumbers,
-      parser: jbi,
+      parser: withJbiNullProtoFix(jbi),
     };
 
     this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
-    this.#commands = new CommandImpls(this.name, this.#httpClient, mkCollectionSerDes(opts?.serdes));
+    this.#commands = new CommandImpls(this, this.#httpClient, mkCollectionSerDes(opts?.serdes));
     this.#db = db;
 
     Object.defineProperty(this, $CustomInspect, {
@@ -329,7 +330,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * If any document does not contain an `_id` field, the server will generate an id for the document. The type of the id may be specified in {@link CollectionOptions.defaultId} at creation, otherwise it'll just be a UUID string. This generation will not mutate the documents.
    *
-   * If any `_id` is provided which corresponds to a document that already exists in the collection, an {@link InsertManyError} is raised, and the insertion (partially) fails.
+   * If any `_id` is provided which corresponds to a document that already exists in the collection, an {@link CollectionInsertManyError} is raised, and the insertion (partially) fails.
    *
    * If you prefer to upsert instead, see {@link Collection.replaceOne}.
    *
@@ -363,7 +364,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * ##### `InsertManyError`
    *
-   * If any 2XX insertion error occurs, the operation will throw an {@link InsertManyError} containing the partial result.
+   * If any 2XX insertion error occurs, the operation will throw an {@link CollectionInsertManyError} containing the partial result.
    *
    * If a thrown exception is not due to an insertion error, e.g. a `5xx` error or network error, the operation will throw the underlying error.
    *
@@ -376,7 +377,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @throws InsertManyError - If the operation fails.
    */
-  public async insertMany(documents: MaybeId<Schema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<Schema>> {
+  public async insertMany(documents: readonly MaybeId<Schema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<Schema>> {
     return this.#commands.insertMany(documents, options, CollectionInsertManyError);
   }
 
@@ -791,7 +792,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictSort
    * @see StrictProjection
    */
-  public find(filter: Filter<Schema>, options?: CollectionFindOptions & { projection?: never }): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>>
+  public find(filter: Filter<Schema>, options?: CollectionFindOptions & { projection?: never }): CollectionFindCursor<FoundDoc<Schema>, FoundDoc<Schema>>
 
   /**
    * ##### Overview
@@ -939,10 +940,10 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictSort
    * @see StrictProjection
    */
-  public find<TRaw extends SomeDoc = DeepPartial<Schema>>(filter: Filter<Schema>, options: CollectionFindOptions): FindCursor<FoundDoc<TRaw>, FoundDoc<TRaw>>
+  public find<TRaw extends SomeDoc = DeepPartial<Schema>>(filter: Filter<Schema>, options: CollectionFindOptions): CollectionFindCursor<FoundDoc<TRaw>, FoundDoc<TRaw>>
 
-  public find(filter: Filter<Schema>, options?: CollectionFindOptions): FindCursor<SomeDoc> {
-    return this.#commands.find(this.keyspace, filter, options);
+  public find(filter: Filter<Schema>, options?: CollectionFindOptions): CollectionFindCursor<SomeDoc> {
+    return this.#commands.find(filter, options, CollectionFindCursor);
   }
 
   /**
@@ -1238,7 +1239,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictFilter
    */
   public async distinct<Key extends string>(key: Key, filter: Filter<Schema>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]> {
-    return this.#commands.distinct(this.keyspace, key, filter);
+    return this.#commands.distinct(key, filter, CollectionFindCursor);
   }
 
   /**

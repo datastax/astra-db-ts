@@ -68,7 +68,7 @@ The API for the test script is as the following:
 6.  [-R | -no-report]
 7.  [-c <http_client>] 
 8.  [-e <environment>]
-9.  [-stargate]
+9.  [-local]
 10. [-l | -logging]
 11. [-P | -skip-prelude]
 ```
@@ -159,7 +159,7 @@ By default, `astra-db-ts` assumes you're running on Astra, but you can specify t
 flag. It should be one of `dse`, `hcd`, `cassandra`, or `other`. You can also provide `astra`, but it wouldn't really
 do anything. But I'm not the boss of you; you can make your own big-boy/girl/other decisions.
 
-#### 9. Running the tests on Stargate (`[-stargate]`)
+#### 9. Running the tests on Stargate (`[-local]`)
 
 If you're running the tests on a local Stargate instance, you can use this flag to set the `CLIENT_DB_URL` to
 `http://localhost:8080` and the `CLIENT_DB_TOKEN` to `cassandra:cassandra` without needing to modify your `.env` file.

@@ -15,7 +15,7 @@
 import * as process from 'node:process';
 import dotenv from 'dotenv';
 import { DataAPIEnvironments } from '@/src/lib/constants';
-import { DataAPIEnvironment } from '@/src/lib';
+import { DataAPIClientEvent, DataAPIEnvironment } from '@/src/lib';
 
 dotenv.config();
 
@@ -57,6 +57,8 @@ export const DEMO_APPLICATION_URI = 'https://12341234-1234-1234-1234-12341234123
 
 export const DEFAULT_TEST_TIMEOUT = +process.env.CLIENT_TESTS_TIMEOUT! || 90000;
 
-export const LOG_ALL_TO_STDOUT = !!process.env.LOG_ALL_TO_STDOUT || false;
+export const LOGGING_PRED: (e: DataAPIClientEvent, isGlobal: boolean) => boolean = process.env.LOGGING_PRED
+  ? new Function("e", "isGlobal", "return " + process.env.LOGGING_PRED) as any
+  : () => false;
 
 export const SKIP_PRELUDE = !!process.env.SKIP_PRELUDE || false;

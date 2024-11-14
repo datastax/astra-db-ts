@@ -61,7 +61,7 @@ export abstract class TokenProvider {
       return new StaticTokenProvider(first);
     }
 
-    if (!(<any>first instanceof TokenProvider) && !isNullish(first)) {
+    if (!(<unknown>first instanceof TokenProvider) && !isNullish(first)) {
       throw new TypeError(`Expected ${field} to be of type string | TokenProvider | nullish; got ${first} (${first})`);
     }
 

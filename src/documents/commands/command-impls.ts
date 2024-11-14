@@ -15,6 +15,7 @@
 import { DataAPIHttpClient } from '@/src/lib/api/clients';
 import { DataAPISerDes } from '@/src/lib/api/ser-des';
 import {
+  Collection,
   CollectionDeleteManyError,
   CollectionInsertManyOptions,
   CollectionUpdateManyError,
@@ -35,7 +36,7 @@ import {
   GenericUpdateManyOptions,
   GenericUpdateOneOptions,
   GenericUpdateResult,
-  SomeDoc,
+  SomeDoc, Table,
 } from '@/src/documents';
 import { nullish, WithTimeout } from '@/src/lib';
 import { insertManyOrdered, insertManyUnordered } from '@/src/documents/commands/helpers/insertion';
@@ -45,15 +46,15 @@ import { normalizedSort } from '@/src/documents/utils';
 import { mkDistinctPathExtractor, pullSafeProjection4Distinct } from '@/src/documents/commands/helpers/distinct';
 import stableStringify from 'safe-stable-stringify';
 
-export class CommandImpls<ID> {
+export class CommandImpls<Schema extends SomeDoc, ID> {
   readonly #httpClient: DataAPIHttpClient;
   readonly #serdes: DataAPISerDes;
-  readonly #name: string;
+  readonly #tOrC: Table<Schema> | Collection<Schema>;
 
-  constructor(name: string, httpClient: DataAPIHttpClient, serdes: DataAPISerDes) {
+  constructor(tOrC: Table<Schema> | Collection<Schema>, httpClient: DataAPIHttpClient, serdes: DataAPISerDes) {
     this.#httpClient = httpClient;
     this.#serdes = serdes;
-    this.#name = name;
+    this.#tOrC = tOrC;
   }
 
   public async insertOne(_document: SomeDoc, options: WithTimeout | nullish): Promise<GenericInsertOneResult<ID>> {
@@ -73,7 +74,7 @@ export class CommandImpls<ID> {
     };
   }
 
-  public async insertMany(docs: SomeDoc[], options: CollectionInsertManyOptions | nullish, err: new (descs: DataAPIDetailedErrorDescriptor[]) => DataAPIResponseError): Promise<GenericInsertManyResult<ID>> {
+  public async insertMany(docs: readonly SomeDoc[], options: CollectionInsertManyOptions | nullish, err: new (descs: DataAPIDetailedErrorDescriptor[]) => DataAPIResponseError): Promise<GenericInsertManyResult<ID>> {
     const chunkSize = options?.chunkSize ?? 50;
     const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
 
@@ -225,11 +226,11 @@ export class CommandImpls<ID> {
     };
   }
 
-  public find<Schema extends SomeDoc>(keyspace: string, filter: SomeDoc, options?: GenericFindOptions): FindCursor<Schema, Schema> {
+  public find<Cursor extends FindCursor<SomeDoc>>(filter: SomeDoc, options: GenericFindOptions | undefined, cursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => Cursor): Cursor {
     if (options?.sort) {
       options.sort = normalizedSort(options.sort);
     }
-    return new FindCursor(keyspace, this.#name, this.#httpClient, this.#serdes, this.#serdes.serializeRecord(structuredClone(filter)), structuredClone(options));
+    return new cursor(this.#tOrC as any, this.#serdes, this.#serdes.serializeRecord(structuredClone(filter)), structuredClone(options));
   }
 
   public async findOne<Schema>(_filter: SomeDoc, options?: GenericFindOneOptions): Promise<Schema | null> {
@@ -304,9 +305,9 @@ export class CommandImpls<ID> {
     return resp.data?.document || null;
   }
 
-  public async distinct(keyspace: string, key: string, filter: SomeDoc): Promise<any[]> {
+  public async distinct(key: string, filter: SomeDoc, mkCursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => FindCursor<SomeDoc>): Promise<any[]> {
     const projection = pullSafeProjection4Distinct(key);
-    const cursor = this.find(keyspace, filter, { projection: { _id: 0, [projection]: 1 } });
+    const cursor = this.find(filter, { projection: { _id: 0, [projection]: 1 } }, mkCursor);
 
     const seen = new Set<unknown>();
     const ret = [];

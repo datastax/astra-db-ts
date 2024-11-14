@@ -13,6 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
+export * from './cursor';
 export * from './collection';
 export type * from './types';
 
