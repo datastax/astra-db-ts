@@ -16,7 +16,7 @@ import { $SerializeForCollection } from '@/src/documents/collections/ser-des';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des';
 import { $CustomInspect } from '@/src/lib/constants';
 
-export type DataAPIVectorLike = number[] | string | Float32Array | DataAPIVector;
+export type DataAPIVectorLike = number[] | { $binary: string } | Float32Array | DataAPIVector;
 
 export class DataAPIVector {
   readonly #vector: Exclude<DataAPIVectorLike, DataAPIVector>;
@@ -42,8 +42,8 @@ export class DataAPIVector {
   }
 
   public get length(): number {
-    if (typeof this.#vector === 'string') {
-      return ~~((this.#vector.replace(/=+$/, "").length * 3) / 4 / 4);
+    if ('$binary' in this.#vector) {
+      return ~~((this.#vector.$binary.replace(/=+$/, "").length * 3) / 4 / 4);
     }
     return this.#vector.length;
   }
@@ -57,8 +57,8 @@ export class DataAPIVector {
       return Array.from(this.#vector);
     }
 
-    if (typeof this.#vector === 'string') {
-      const deserialized = deserializeToNumberArray(this.#vector);
+    if ('$binary' in this.#vector) {
+      const deserialized = deserializeToNumberArray(this.#vector.$binary);
 
       if (!deserialized) {
         throw new Error('Could not to deserialize vector from base64 => number[]; unknown environment. Please manually deserialize the binary from `vector.getAsBase64()`');
@@ -75,8 +75,8 @@ export class DataAPIVector {
       return this.#vector;
     }
 
-    if (typeof this.#vector === 'string') {
-      const deserialized =  deserializeToF32Array(this.#vector);
+    if ('$binary' in this.#vector) {
+      const deserialized =  deserializeToF32Array(this.#vector.$binary);
 
       if (!deserialized) {
         throw new Error('Could not to deserialize vector from base64 => Float32Array; unknown environment. Please manually deserialize the binary from `vector.getAsBase64()`');
@@ -103,23 +103,23 @@ export class DataAPIVector {
   }
 
   public toString(): string {
-    const type = (typeof this.#vector === 'string' && 'string') || (this.#vector instanceof Float32Array && 'Float32Array') || 'number[]';
+    const type = ('$binary' in this.#vector && 'base64') || (this.#vector instanceof Float32Array && 'Float32Array') || 'number[]';
 
-    const partial = (typeof this.#vector === 'string')
-      ? `'${this.#vector.slice(0, 12)}${this.#vector.length > 12 ? '...' : ''}'`
+    const partial = ('$binary' in this.#vector)
+      ? `'${this.#vector.$binary.slice(0, 12)}${this.#vector.$binary.length > 12 ? '...' : ''}'`
       : `[${this.#vector.slice(0, 2).join(', ')}${this.#vector.length > 2 ? ', ...' : ''}]`;
 
     return `DataAPIVector<${this.length}>(typeof raw=${type}, preview=${partial})`;
   }
 
   public static isVectorLike(value: unknown): value is DataAPIVectorLike {
-    return Array.isArray(value) || value instanceof Float32Array || typeof value === 'string' || value instanceof DataAPIVector;
+    return !!value && typeof value === 'object' && (Array.isArray(value) || value instanceof Float32Array || '$binary' in value || value instanceof DataAPIVector);
   }
 }
 
 const serialize = (vector: Exclude<DataAPIVectorLike, DataAPIVector>): { $binary: string } | number[] => {
-  if (typeof vector === 'string') {
-    return { $binary: vector };
+  if ('$binary' in vector) {
+    return vector;
   }
 
   if (typeof Buffer !== 'undefined') {

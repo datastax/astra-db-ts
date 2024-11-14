@@ -23,19 +23,21 @@ import {
   DEFAULT_COLLECTION_NAME,
   DEFAULT_TABLE_NAME,
   ENVIRONMENT,
-  LOG_ALL_TO_STDOUT,
+  LOGGING_PRED,
   OTHER_KEYSPACE,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
   TEST_HTTP_CLIENT,
 } from '@/tests/testlib/config';
-import { DataAPIClientEvents, DataAPILoggingConfig } from '@/src/lib';
+import { DataAPIClientEvent, DataAPIClientEvents, DataAPILoggingConfig } from '@/src/lib';
 import { InferTableSchema } from '@/src/db';
+import * as util from 'node:util';
 
 export interface TestObjectsOptions {
   httpClient?: typeof TEST_HTTP_CLIENT,
   env?: typeof ENVIRONMENT,
   logging?: DataAPILoggingConfig,
+  isGlobal?: boolean,
 }
 
 export type EverythingTableSchema = InferTableSchema<typeof EverythingTableSchema>;
@@ -76,6 +78,7 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
     httpClient = TEST_HTTP_CLIENT,
     env = ENVIRONMENT,
     logging = [{ events: 'all', emits: 'event' }],
+    isGlobal = false,
   } = opts ?? {};
 
   const preferHttp2 = httpClient === 'default:http2';
@@ -88,10 +91,8 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
     logging,
   });
 
-  if (LOG_ALL_TO_STDOUT) {
-    for (const event of ['commandStarted', 'adminCommandStarted', 'commandFailed', 'adminCommandFailed'] as (keyof DataAPIClientEvents)[]) {
-      client.on(event, (e: unknown) => console.dir(e, { depth: null }));
-    }
+  for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed'] as (keyof DataAPIClientEvents)[]) {
+    client.on(event, (e: DataAPIClientEvent) => LOGGING_PRED(e, isGlobal) && console.log((isGlobal ? '[Global] ' : '') + util.inspect(e, { depth: null, colors: true })));
   }
 
   const db = client.db(TEST_APPLICATION_URI);

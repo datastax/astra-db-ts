@@ -16,9 +16,9 @@ import {
   CreateTableIndexOptions,
   CreateTableVectorIndexOptions,
   Filter,
-  FindCursor,
   FoundRow,
   KeyOf,
+  SomeDoc,
   SomeRow,
   TableDeleteOneOptions,
   TableFindOneOptions,
@@ -28,16 +28,17 @@ import {
   TableInsertManyResult,
   TableInsertOneResult,
   TableUpdateOneOptions,
-  TooManyRowsToCountError,
   UpdateFilter,
 } from '@/src/documents';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { AlterTableOptions, AlterTableSchema, Db, ListTableDefinition, TableSpawnOptions } from '@/src/db';
-import { WithTimeout } from '@/src/lib';
+import { DeepPartial, WithTimeout } from '@/src/lib';
 import { $CustomInspect } from '@/src/lib/constants';
 import { mkTableSerDes } from '@/src/documents/tables/ser-des';
 import JBI from 'json-bigint';
+import { TableFindCursor } from '@/src/documents/tables/cursor';
+import { withJbiNullProtoFix } from '@/src/lib/utils';
 
 const jbi = JBI({ storeAsString: true });
 
@@ -240,7 +241,7 @@ export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
  */
 export class Table<Schema extends SomeRow = SomeRow> {
   readonly #httpClient: DataAPIHttpClient;
-  readonly #commands: CommandImpls<KeyOf<Schema>>;
+  readonly #commands: CommandImpls<Schema, KeyOf<Schema>>;
   readonly #db: Db;
 
   /**
@@ -271,11 +272,11 @@ export class Table<Schema extends SomeRow = SomeRow> {
       parseWithBigNumbers(json: string) {
         return json.includes('{"type":"varint"}') || json.includes('{"type":"decimal"}');
       },
-      parser: jbi,
+      parser: withJbiNullProtoFix(jbi),
     };
 
     this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
-    this.#commands = new CommandImpls(this.name, this.#httpClient, mkTableSerDes(opts?.serdes));
+    this.#commands = new CommandImpls(this, this.#httpClient, mkTableSerDes(opts?.serdes));
     this.#db = db;
 
     Object.defineProperty(this, $CustomInspect, {
@@ -332,7 +333,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
     return this.#commands.insertOne(row, options);
   }
 
-  public async insertMany(document: Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>> {
+  public async insertMany(document: readonly Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>> {
     return this.#commands.insertMany(document, options, TableInsertManyError);
   }
 
@@ -345,11 +346,15 @@ export class Table<Schema extends SomeRow = SomeRow> {
   }
 
   public async deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<void> {
-    void this.#commands.deleteMany(filter, options);
+    await this.#commands.deleteMany(filter, options);
   }
 
-  public find(filter: Filter<Schema>, options?: TableFindOptions): FindCursor<FoundRow<Schema>, FoundRow<Schema>> {
-    return this.#commands.find(this.keyspace, filter, options);
+  public find(filter: Filter<Schema>, options?: TableFindOptions & { projection?: never }): TableFindCursor<FoundRow<Schema>, FoundRow<Schema>>
+
+  public find<TRaw extends SomeRow = DeepPartial<Schema>>(filter: Filter<Schema>, options: TableFindOptions): TableFindCursor<FoundRow<TRaw>, FoundRow<TRaw>>
+
+  public find(filter: Filter<Schema>, options?: TableFindOptions): TableFindCursor<SomeDoc> {
+    return this.#commands.find(filter, options, TableFindCursor);
   }
 
   public async findOne(filter: Filter<Schema>, options?: TableFindOneOptions): Promise<FoundRow<Schema> | null> {
