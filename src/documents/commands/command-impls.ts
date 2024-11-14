@@ -74,7 +74,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     };
   }
 
-  public async insertMany(docs: SomeDoc[], options: CollectionInsertManyOptions | nullish, err: new (descs: DataAPIDetailedErrorDescriptor[]) => DataAPIResponseError): Promise<GenericInsertManyResult<ID>> {
+  public async insertMany(docs: readonly SomeDoc[], options: CollectionInsertManyOptions | nullish, err: new (descs: DataAPIDetailedErrorDescriptor[]) => DataAPIResponseError): Promise<GenericInsertManyResult<ID>> {
     const chunkSize = options?.chunkSize ?? 50;
     const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
 
@@ -230,7 +230,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     if (options?.sort) {
       options.sort = normalizedSort(options.sort);
     }
-    return new cursor(this.#tOrC as any, this.#httpClient, this.#serdes, this.#serdes.serializeRecord(structuredClone(filter)), structuredClone(options));
+    return new cursor(this.#tOrC as any, this.#serdes, this.#serdes.serializeRecord(structuredClone(filter)), structuredClone(options));
   }
 
   public async findOne<Schema>(_filter: SomeDoc, options?: GenericFindOneOptions): Promise<Schema | null> {

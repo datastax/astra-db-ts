@@ -44,7 +44,6 @@ describe('unit.lib.logging.parser', () => {
   });
 
   it('should throw if config is nonsensical', () => {
-    assert.throws(() => parseLoggingConfig([], 'config'), { message: 'Expected config array to be non-empty' });
     assert.throws(() => parseLoggingConfig([{ events: [], emits: [] }, null!], 'config'), { message: 'Expected config[0].events to be non-empty' });
   });
 

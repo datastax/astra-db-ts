@@ -38,6 +38,7 @@ import { $CustomInspect } from '@/src/lib/constants';
 import { mkTableSerDes } from '@/src/documents/tables/ser-des';
 import JBI from 'json-bigint';
 import { TableFindCursor } from '@/src/documents/tables/cursor';
+import { withJbiNullProtoFix } from '@/src/lib/utils';
 
 const jbi = JBI({ storeAsString: true });
 
@@ -271,7 +272,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
       parseWithBigNumbers(json: string) {
         return json.includes('{"type":"varint"}') || json.includes('{"type":"decimal"}');
       },
-      parser: jbi,
+      parser: withJbiNullProtoFix(jbi),
     };
 
     this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
@@ -332,7 +333,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
     return this.#commands.insertOne(row, options);
   }
 
-  public async insertMany(document: Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>> {
+  public async insertMany(document: readonly Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>> {
     return this.#commands.insertMany(document, options, TableInsertManyError);
   }
 
@@ -345,7 +346,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
   }
 
   public async deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<void> {
-    void this.#commands.deleteMany(filter, options);
+    await this.#commands.deleteMany(filter, options);
   }
 
   public find(filter: Filter<Schema>, options?: TableFindOptions & { projection?: never }): TableFindCursor<FoundRow<Schema>, FoundRow<Schema>>

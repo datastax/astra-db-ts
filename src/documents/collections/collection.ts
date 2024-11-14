@@ -50,6 +50,7 @@ import { $CustomInspect } from '@/src/lib/constants';
 import { CollectionInsertManyError, TooManyDocumentsToCountError } from '@/src/documents';
 import JBI from 'json-bigint';
 import { CollectionFindCursor } from '@/src/documents/collections/cursor';
+import { withJbiNullProtoFix } from '@/src/lib/utils';
 
 const jbi = JBI({ storeAsString: true });
 
@@ -209,7 +210,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
 
     const hack: BigNumberHack = {
       parseWithBigNumbers: () => !!opts?.serdes?.enableBigNumbers,
-      parser: jbi,
+      parser: withJbiNullProtoFix(jbi),
     };
 
     this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
@@ -376,7 +377,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @throws InsertManyError - If the operation fails.
    */
-  public async insertMany(documents: MaybeId<Schema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<Schema>> {
+  public async insertMany(documents: readonly MaybeId<Schema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<Schema>> {
     return this.#commands.insertMany(documents, options, CollectionInsertManyError);
   }
 
