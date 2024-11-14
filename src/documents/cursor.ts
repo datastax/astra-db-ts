@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import type { Filter, SomeDoc } from '@/src/documents/collections';
+import type { Collection, Filter, SomeDoc } from '@/src/documents/collections';
 import type { GenericFindOptions } from '@/src/documents/commands';
 import type { Projection, Sort } from '@/src/documents/types';
 import type { DeepPartial, nullish } from '@/src/lib';
 import { normalizedSort } from '@/src/documents/utils';
 import { $CustomInspect } from '@/src/lib/constants';
-import { DataAPISerDes } from '@/src/lib/api/ser-des';
+import type { DataAPISerDes } from '@/src/lib/api/ser-des';
 import { DataAPIError } from '@/src/documents/errors';
+import type { Table } from '@/src/documents/tables';
 
 export class CursorError extends DataAPIError {
   public readonly cursor: FindCursor<unknown>;
@@ -50,19 +50,19 @@ export class CursorError extends DataAPIError {
 export type CursorStatus = 'idle' | 'started' | 'closed';
 
 interface InternalFindOptions {
-  pageState?: string,
-  limit?: number,
-  skip?: number,
-  includeSimilarity?: boolean,
-  includeSortVector?: boolean,
+  limit: number | undefined,
+  skip: number | undefined,
+  includeSimilarity: boolean | undefined,
+  includeSortVector: boolean | undefined,
+  pageState: string | undefined,
 }
 
 interface InternalGetMoreCommand {
   find: {
-    filter?: Record<string, unknown>,
-    options?: InternalFindOptions,
-    sort?: Record<string, unknown>,
-    projection?: Record<string, unknown>,
+    filter: Record<string, unknown> | undefined,
+    sort: Record<string, unknown> | undefined,
+    projection: Record<string, unknown> | undefined,
+    options: InternalFindOptions | undefined,
   },
 }
 
@@ -112,10 +112,8 @@ interface InternalGetMoreCommand {
  *
  * @public
  */
-export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
-  readonly #keyspace: string;
-  readonly #parent: string;
-  readonly #httpClient: DataAPIHttpClient;
+export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
+  readonly #parent: Table | Collection;
   readonly #serdes: DataAPISerDes;
 
   readonly #options: GenericFindOptions;
@@ -133,27 +131,25 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(keyspace: string, parent: string, httpClient: DataAPIHttpClient, serdes: DataAPISerDes, filter: [Filter<TRaw>, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
-    this.#keyspace = keyspace;
+  constructor(parent: Table | Collection, serdes: DataAPISerDes, filter: [Filter<TRaw>, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
     this.#parent = parent;
-    this.#httpClient = httpClient;
     this.#serdes = serdes;
     this.#filter = filter;
     this.#options = options ?? {};
     this.#mapping = mapping;
 
     Object.defineProperty(this, $CustomInspect, {
-      value: () => `FindCursor(source="${this.#keyspace}.${this.#parent}",state="${this.#state}",consumed=${this.#consumed},buffered=${this.#buffer.length})`,
+      value: () => `FindCursor(source="${this.#parent.keyspace}.${this.#parent.name}",state="${this.#state}",consumed=${this.#consumed},buffered=${this.#buffer.length})`,
     });
   }
 
   /**
-   * The keyspace of the collection that's being iterated over.
+   * The table/collection which spawned this cursor.
    *
-   * @returns The keyspace of the collection that's being iterated over.
+   * @returns The table/collection which spawned this cursor.
    */
-  public get keyspace(): string {
-    return this.#keyspace;
+  public get dataSource(): Table | Collection {
+    return this.#parent;
   }
 
   /**
@@ -403,7 +399,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns A behavioral clone of this cursor.
    */
   public clone(): FindCursor<TRaw, TRaw> {
-    return new FindCursor(this.#keyspace, this.#parent, this.#httpClient, this.#serdes, this.#filter, this.#options);
+    return new (<any>this.constructor)(this.#parent, this.#serdes, this.#filter, this.#options);
   }
 
   /**
@@ -570,7 +566,7 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   #clone<R, RRaw extends SomeDoc>(filter: [Filter<RRaw>, boolean], options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
-    return new FindCursor(this.#keyspace, this.#parent, this.#httpClient, this.#serdes, filter, options, mapping);
+    return new (<any>this.constructor)(this.#parent, this.#serdes, filter, options, mapping);
   }
 
   async #next(peek: true): Promise<TRaw | nullish>
@@ -607,39 +603,22 @@ export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   }
 
   async #getMore(): Promise<void> {
-    const options: InternalFindOptions = {};
-
-    if (this.#options.limit !== Infinity) {
-      options.limit = this.#options.limit;
-    }
-    if (this.#nextPageState) {
-      options.pageState = this.#nextPageState;
-    }
-    if (this.#options.skip) {
-      options.skip = this.#options.skip;
-    }
-    if (this.#options.includeSimilarity) {
-      options.includeSimilarity = this.#options.includeSimilarity;
-    }
-    if (this.#options.includeSortVector) {
-      options.includeSortVector = this.#options.includeSortVector;
-    }
-
     const command: InternalGetMoreCommand = {
-      find: { filter: this.#filter[0] },
+      find: {
+        filter: this.#filter[0],
+        projection: this.#options.projection,
+        sort: this.#options.sort,
+        options: {
+          includeSimilarity: this.#options.includeSimilarity,
+          includeSortVector: this.#options.includeSortVector,
+          limit: this.#options.limit,
+          skip: this.#options.skip,
+          pageState: this.#nextPageState ?? undefined,
+        },
+      },
     };
 
-    if (this.#options.sort) {
-      command.find.sort = this.#options.sort;
-    }
-    if (this.#options.projection) {
-      command.find.projection = this.#options.projection;
-    }
-    if (Object.keys(options).length > 0) {
-      command.find.options = options;
-    }
-
-    const raw = await this.#httpClient.executeCommand(command, { bigNumsPresent: this.#filter[1] });
+    const raw = await this.#parent._httpClient.executeCommand(command, { bigNumsPresent: this.#filter[1] });
 
     this.#nextPageState = raw.data?.nextPageState || null;
     this.#buffer = raw.data?.documents ?? [];

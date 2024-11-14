@@ -81,19 +81,23 @@ while [ $# -gt 0 ]; do
       environment="$1"
       ;;
     "-l" | "-logging")
-      logging=1
+      logging="!isGlobal"
+      ;;
+    "-L" | "-logging-pred")
+      shift
+      logging="$1"
       ;;
     "-P" | "-skip-prelude")
       skip_prelude=1
       ;;
-    "-stargate")
-      stargate=1
+    "-local")
+      local=1
       ;;
     *)
       echo "Invalid flag $1"
       echo ""
       echo "Usage:"
-      echo "scripts/test.sh [-all | -light | -coverage] [-for] [-f/F <filter>]+ [-g/G <regex>]+ [-w/W <vectorize_whitelist>] [-b | -bail] [-R | -no-report] [-c <http_client>] [-e <environment>] [-stargate] [-l | -logging] [-P | -skip-prelude]"
+      echo "scripts/test.sh [-all | -light | -coverage] [-for] [-f/F <filter>]+ [-g/G <regex>]+ [-w/W <vectorize_whitelist>] [-b | -bail] [-R | -no-report] [-c <http_client>] [-e <environment>] [-local] ([-l | -logging] | [-L | -logging-pred]) [-P | -skip-prelude]"
       echo "or"
       echo "scripts/test.sh [-lint] [-tc]"
       exit
@@ -168,11 +172,11 @@ if [ -n "$environment" ]; then
   export CLIENT_DB_ENVIRONMENT="$environment"
 fi
 
-if [ -n "$stargate" ]; then
+if [ -n "$local" ]; then
   export USING_LOCAL_STARGATE=1
 fi
 if [ -n "$logging" ]; then
-  export LOG_ALL_TO_STDOUT=1
+  export LOGGING_PRED="$logging"
 fi
 
 if [ -n "$skip_prelude" ]; then

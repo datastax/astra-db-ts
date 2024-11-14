@@ -54,7 +54,7 @@ const DefaultCollectionSerDesCfg = {
     }
 
     if (key === '$vector' && DataAPIVector.isVectorLike(value)) {
-      value = new DataAPIVector(value);
+      value = new DataAPIVector(value, false);
     }
 
     if ($SerializeForCollection in value) {

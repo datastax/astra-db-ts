@@ -26,7 +26,7 @@ import { GenericInsertManyDocumentResponse, SomeDoc, SomeId } from '@/src/docume
 export const insertManyOrdered = async <ID>(
   httpClient: DataAPIHttpClient,
   serdes: DataAPISerDes,
-  documents: unknown[],
+  documents: readonly unknown[],
   chunkSize: number,
   timeoutManager: TimeoutManager,
   err: new (descs: DataAPIDetailedErrorDescriptor[]) => DataAPIResponseError,
@@ -57,7 +57,7 @@ export const insertManyOrdered = async <ID>(
 export const insertManyUnordered = async <ID>(
   httpClient: DataAPIHttpClient,
   serdes: DataAPISerDes,
-  documents: unknown[],
+  documents: readonly unknown[],
   concurrency: number,
   chunkSize: number,
   timeoutManager: TimeoutManager,
@@ -111,7 +111,7 @@ export const insertManyUnordered = async <ID>(
 const insertMany = async <ID>(
   httpClient: DataAPIHttpClient,
   serdes: DataAPISerDes,
-  documents: unknown[],
+  documents: readonly unknown[],
   ordered: boolean,
   timeoutManager: TimeoutManager,
 ): Promise<[GenericInsertManyDocumentResponse<ID>[], ID[], DataAPIDetailedErrorDescriptor | undefined]> => {

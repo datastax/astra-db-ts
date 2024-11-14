@@ -154,7 +154,7 @@ type _Proof = Expect<Equal<MySchema, {
     insertedCount: number,
   }>>;
 
-  console.log(insertManyResult.insertedIds[1].age);
+  void insertManyResult.insertedIds[1].age;
 })();
 
 (async () => {

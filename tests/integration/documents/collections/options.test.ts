@@ -19,7 +19,7 @@ parallel('integration.documents.collections.options', { dropEphemeral: 'colls:af
   it('lists its own options', async () => {
     const coll = db.collection(DEFAULT_COLLECTION_NAME);
     const res = await coll.options();
-    assert.deepStrictEqual(res, { vector: { dimension: 5, metric: 'cosine' } });
+    assert.deepStrictEqual(res, { vector: { dimension: 5, metric: 'cosine', sourceModel: 'other' } });
   });
 
   it('(LONG) lists its own empty options', async () => {

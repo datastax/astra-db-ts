@@ -38,10 +38,6 @@ export const parseLoggingConfig: Parser<DataAPILoggingConfig | undefined> = (con
     throw new TypeError(`Expected ${field} to be of type string | (string | object[]); got ${typeof config}`);
   }
 
-  if (!isNonEmpty(config)) {
-    throw new Error(`Expected ${field} array to be non-empty`);
-  }
-
   return config.map((c, i) => {
     if (c === null || c === undefined) {
       throw new TypeError(`Expected ${field}[${i}] to be non-null`);

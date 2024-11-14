@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/documents/collections';
-import { Sort } from '@/src/documents/types';
+import type { SomeDoc } from '@/src/documents/collections';
+import type { Sort } from '@/src/documents/types';
 import { DataAPIVector } from '@/src/documents/datatypes';
-import { $SerializeForTable } from '@/src/documents/tables';
+import { $SerializeForTable } from '@/src/documents/tables/ser-des';
 
 declare const $ERROR: unique symbol;
 
@@ -79,7 +79,7 @@ export const normalizedSort = (sort: SomeDoc): Sort => {
       } else if (val[0] === 'd') {
         ret[key] = -1;
       }
-    } if (val instanceof DataAPIVector) {
+    } else if (val instanceof DataAPIVector) {
       ret[key] = val[$SerializeForTable]() as Sort[string];
     } else {
       ret[key] = val;

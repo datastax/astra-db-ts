@@ -66,6 +66,7 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
             GLOBAL_FIXTURES.collection_.deleteMany({}),
           ]);
         }
+        console.log(opts);
         if (opts?.truncate?.startsWith('tables')) {
           await Promise.all([
             GLOBAL_FIXTURES.table.deleteMany({}),
