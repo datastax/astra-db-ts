@@ -277,8 +277,8 @@ The most prominent changes are the introduction of 5 new Mocha-API-esque functio
    - Some suite options to reduce boilerplate
       - `truncateColls: 'default'` - Does `deleteMany({})` on the default collection in the default namespace after each test case
       - `truncateColls: 'both'` - Does `deleteMany({})` on the default collection in both test namespaces after each test case
-      - `dropEphemeral: 'after'` - Drops all non-default collections in both test namespaces after all the test cases in the suite
-      - `dropEphemeral: 'afterEach'` - Drops all non-default collections in both test namespaces each test case
+      - `drop: 'after'` - Drops all non-default collections in both test namespaces after all the test cases in the suite
+      - `drop: 'afterEach'` - Drops all non-default collections in both test namespaces each test case
 - [`it`](https://github.com/datastax/astra-db-ts/blob/60fa445192b6a648b7a139a45986af8525a37ffb/tests/testlib/it.ts) - An overhaul to the existing `it` block
    - Performs "tag filtering" on the test names
    - Provides unique string keys for every test case

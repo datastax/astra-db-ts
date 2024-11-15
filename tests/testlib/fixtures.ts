@@ -30,7 +30,7 @@ import {
   TEST_HTTP_CLIENT,
 } from '@/tests/testlib/config';
 import { DataAPIClientEvent, DataAPIClientEvents, DataAPILoggingConfig } from '@/src/lib';
-import { InferTableSchema } from '@/src/db';
+import { CreateTableDefinition, InferTableSchema } from '@/src/db';
 import * as util from 'node:util';
 
 export interface TestObjectsOptions {
@@ -41,6 +41,7 @@ export interface TestObjectsOptions {
 }
 
 export type EverythingTableSchema = InferTableSchema<typeof EverythingTableSchema>;
+export type EverythingTableSchemaWithVectorize = InferTableSchema<typeof EverythingTableSchemaWithVectorize>;
 
 export const EverythingTableSchema = <const>{
   columns: {
@@ -71,7 +72,39 @@ export const EverythingTableSchema = <const>{
     partitionBy: ['text'],
     partitionSort: { int: 1 },
   },
-};
+} satisfies CreateTableDefinition;
+
+export const EverythingTableSchemaWithVectorize = <const>{
+  columns: {
+    ascii: 'ascii',
+    bigint: 'bigint',
+    blob: 'blob',
+    boolean: 'boolean',
+    date: 'date',
+    decimal: 'decimal',
+    double: 'double',
+    duration: 'duration',
+    float: 'float',
+    int: 'int',
+    inet: 'inet',
+    smallint: 'smallint',
+    text: 'text',
+    time: 'time',
+    timestamp: 'timestamp',
+    tinyint: 'tinyint',
+    uuid: 'uuid',
+    varint: 'varint',
+    map: { type: 'map', keyType: 'text', valueType: 'uuid' },
+    set: { type: 'set', valueType: 'uuid' },
+    list: { type: 'list', valueType: 'uuid' },
+    vector1: { type: 'vector', dimension: 1024, service: { provider: 'nvidia', modelName: 'NV-Embed-QA' } },
+    vector2: { type: 'vector', dimension: 1024, service: { provider: 'nvidia', modelName: 'NV-Embed-QA' } },
+  },
+  primaryKey: {
+    partitionBy: ['text'],
+    partitionSort: { int: 1 },
+  },
+} satisfies CreateTableDefinition;
 
 export const initTestObjects = (opts?: TestObjectsOptions) => {
   const {
@@ -101,7 +134,7 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
   const collection_ = db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE });
 
   const table = db.table<EverythingTableSchema>(DEFAULT_TABLE_NAME);
-  const table_ = db.table<EverythingTableSchema>(DEFAULT_TABLE_NAME, { keyspace: OTHER_KEYSPACE });
+  const table_ = db.table<EverythingTableSchemaWithVectorize>(DEFAULT_TABLE_NAME, { keyspace: OTHER_KEYSPACE });
 
   const dbAdmin = (ENVIRONMENT === 'astra')
     ? db.admin({ environment: ENVIRONMENT })

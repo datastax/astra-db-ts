@@ -90,7 +90,7 @@ describe('integration.documents.table.cursor', { truncate: 'tables:before' }, ({
 
       assert.ok(doc, 'Doc is not the 21st in the collections');
       assert.equal(cursor.state, 'started');
-      // assert.strictEqual(cursor.buffered(), 19);
+      assert.strictEqual(cursor.buffered(), 19);
     });
 
     it('should return null if there are no more documents with next()', async () => {
