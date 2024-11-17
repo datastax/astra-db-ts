@@ -130,7 +130,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
         defaultPollInterval: 10000,
         id: null!,
         options: undefined,
-        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeout', { timeout: 0 }),
+        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
       }, 0);
     }
 
@@ -179,7 +179,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
         defaultPollInterval: 1000,
         id: null!,
         options: undefined,
-        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeout', { timeout: 0 }),
+        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
       }, 0);
     }
 
@@ -204,7 +204,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
         defaultPollInterval: 1000,
         id: null!,
         options: undefined,
-        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeout', { timeout: 0 }),
+        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
       }, 0);
     }
 
@@ -231,7 +231,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
         defaultPollInterval: 10000,
         id: null!,
         options: undefined,
-        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeout', { timeout: 0 }),
+        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
       }, 0);
     }
 

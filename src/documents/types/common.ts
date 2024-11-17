@@ -20,7 +20,7 @@ import { DataAPIVector, ToDotNotation } from '@/src/documents';
  *
  * @public
  */
-export type SortDirection = 1 | -1 | 'asc' | 'desc' | 'ascending' | 'descending';
+export type SortDirection = 1 | -1;
 
 /**
  * Specifies the sort criteria for selecting documents.

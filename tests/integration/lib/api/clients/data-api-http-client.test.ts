@@ -38,7 +38,7 @@ describe('integration.lib.api.clients.documents-http-client', ({ db }) => {
       const resp = await httpClient.executeCommand({
         findCollections: {},
       }, {
-        timeoutManager: httpClient.tm.single('generalMethodTimeout', {}),
+        timeoutManager: httpClient.tm.single('generalMethodTimeoutMs', {}),
       });
       assert.strictEqual(typeof resp.status?.collections.length, 'number');
     });
@@ -47,7 +47,7 @@ describe('integration.lib.api.clients.documents-http-client', ({ db }) => {
       const resp = await httpClient.executeCommand({
         findCollections: {},
       }, {
-        timeoutManager: httpClient.tm.single('generalMethodTimeout', {}),
+        timeoutManager: httpClient.tm.single('generalMethodTimeoutMs', {}),
         keyspace: OTHER_KEYSPACE,
       });
       assert.strictEqual(resp.status?.collections.length, 1);
@@ -57,7 +57,7 @@ describe('integration.lib.api.clients.documents-http-client', ({ db }) => {
       const resp = await httpClient.executeCommand({
         insertOne: { document: { name: 'John' } },
       }, {
-        timeoutManager: httpClient.tm.single('generalMethodTimeout', {}),
+        timeoutManager: httpClient.tm.single('generalMethodTimeoutMs', {}),
         collection: DEFAULT_COLLECTION_NAME,
       });
       assert.ok(resp.status?.insertedIds[0]);
@@ -69,7 +69,7 @@ describe('integration.lib.api.clients.documents-http-client', ({ db }) => {
 
       try {
         await httpClient.executeCommand({ findCollections: {} }, {
-          timeoutManager: httpClient.tm.single('generalMethodTimeout', {}),
+          timeoutManager: httpClient.tm.single('generalMethodTimeoutMs', {}),
         });
         assert.fail('Expected error');
       } catch (e) {
@@ -86,7 +86,7 @@ describe('integration.lib.api.clients.documents-http-client', ({ db }) => {
 
       try {
         await httpClient.executeCommand({ findCollections: {} }, {
-          timeoutManager: httpClient.tm.single('generalMethodTimeout', {}),
+          timeoutManager: httpClient.tm.single('generalMethodTimeoutMs', {}),
         });
         assert.fail('Expected error');
       } catch (e) {

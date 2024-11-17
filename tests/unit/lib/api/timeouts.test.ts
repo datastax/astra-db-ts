@@ -30,25 +30,25 @@ describe('unit.lib.api.timeouts', () => {
 
   describe('single', () => {
     it('works w/ no override', () => {
-      const tm = timeouts.single('generalMethodTimeout', null);
+      const tm = timeouts.single('generalMethodTimeoutMs', null);
       const [timeout, mkError] = tm.advance(info(tm));
 
-      assert.strictEqual(timeout, Timeouts.Default.requestTimeout);
+      assert.strictEqual(timeout, Timeouts.Default.requestTimeoutMs);
 
       const e = mkError();
       assert.ok(e instanceof TimeoutError);
       assert.deepStrictEqual(e.info, info(tm));
-      assert.strictEqual(e.timeoutType, 'requestTimeout');
-      assert.strictEqual(e.message, `Command timed out after ${Timeouts.Default.requestTimeout}ms (requestTimeout timed out)`);
+      assert.strictEqual(e.timeoutType, 'requestTimeoutMs');
+      assert.strictEqual(e.message, `Command timed out after ${Timeouts.Default.requestTimeoutMs}ms (requestTimeout timed out)`);
 
       assert.deepStrictEqual(tm.initial(), {
-        generalMethodTimeout: Timeouts.Default.generalMethodTimeout,
-        requestTimeout: Timeouts.Default.requestTimeout,
+        generalMethodTimeoutMs: Timeouts.Default.generalMethodTimeoutMs,
+        requestTimeoutMs: Timeouts.Default.requestTimeoutMs,
       });
     });
 
     it('works w/ override number', () => {
-      const tm = timeouts.single('generalMethodTimeout', { timeout: 100 });
+      const tm = timeouts.single('generalMethodTimeoutMs', { timeout: 100 });
       const [timeout, mkError] = tm.advance(info(tm));
 
       assert.strictEqual(timeout, 100);
@@ -60,13 +60,13 @@ describe('unit.lib.api.timeouts', () => {
       assert.strictEqual(e.message, 'Command timed out after 100ms (The timeout provided via `{ timeout: <number> }` timed out)');
 
       assert.deepStrictEqual(tm.initial(), {
-        generalMethodTimeout: 100,
-        requestTimeout: 100,
+        generalMethodTimeoutMs: 100,
+        requestTimeoutMs: 100,
       });
     });
 
     it('works w/ partial override object', () => {
-      const tm = timeouts.single('databaseAdminTimeout', { timeout: { generalMethodTimeout: 100, databaseAdminTimeout: 50 } });
+      const tm = timeouts.single('databaseAdminTimeoutMs', { timeout: { generalMethodTimeoutMs: 100, databaseAdminTimeoutMs: 50 } });
       const [timeout, mkError] = tm.advance(info(tm));
 
       assert.strictEqual(timeout, 50);
@@ -78,13 +78,13 @@ describe('unit.lib.api.timeouts', () => {
       assert.strictEqual(e.message, 'Command timed out after 50ms (databaseAdminTimeout timed out)');
 
       assert.deepStrictEqual(tm.initial(), {
-        requestTimeout: Timeouts.Default.requestTimeout,
-        databaseAdminTimeout: 50,
+        requestTimeoutMs: Timeouts.Default.requestTimeoutMs,
+        databaseAdminTimeoutMs: 50,
       });
     });
 
     it('works w/ full override object', () => {
-      const tm = timeouts.single('databaseAdminTimeout', { timeout: { generalMethodTimeout: 100, requestTimeout: 10, databaseAdminTimeout: 50 } });
+      const tm = timeouts.single('databaseAdminTimeoutMs', { timeout: { generalMethodTimeoutMs: 100, requestTimeoutMs: 10, databaseAdminTimeoutMs: 50 } });
       const [timeout, mkError] = tm.advance(info(tm));
 
       assert.strictEqual(timeout, 10);
@@ -92,49 +92,49 @@ describe('unit.lib.api.timeouts', () => {
       const e = mkError();
       assert.ok(e instanceof TimeoutError);
       assert.deepStrictEqual(e.info, info(tm));
-      assert.strictEqual(e.timeoutType, 'requestTimeout');
+      assert.strictEqual(e.timeoutType, 'requestTimeoutMs');
       assert.strictEqual(e.message, 'Command timed out after 10ms (requestTimeout timed out)');
 
       assert.deepStrictEqual(tm.initial(), {
-        databaseAdminTimeout: 50,
-        requestTimeout: 10,
+        databaseAdminTimeoutMs: 50,
+        requestTimeoutMs: 10,
       });
     });
 
     it('works w/ uniform full override object', () => {
-      const tm = timeouts.single('keyspaceAdminTimeout', { timeout: { keyspaceAdminTimeout: Timeouts.Default.requestTimeout } });
+      const tm = timeouts.single('keyspaceAdminTimeoutMs', { timeout: { keyspaceAdminTimeoutMs: Timeouts.Default.requestTimeoutMs } });
       const [timeout, mkError] = tm.advance(info(tm));
 
-      assert.strictEqual(timeout, Timeouts.Default.requestTimeout);
+      assert.strictEqual(timeout, Timeouts.Default.requestTimeoutMs);
 
       const e = mkError();
       assert.ok(e instanceof TimeoutError);
       assert.deepStrictEqual(e.info, info(tm));
-      assert.deepStrictEqual(e.timeoutType, ['requestTimeout', 'keyspaceAdminTimeout']);
-      assert.strictEqual(e.message, `Command timed out after ${Timeouts.Default.requestTimeout}ms (requestTimeout and keyspaceAdminTimeout simultaneously timed out)`);
+      assert.deepStrictEqual(e.timeoutType, ['requestTimeoutMs', 'keyspaceAdminTimeout']);
+      assert.strictEqual(e.message, `Command timed out after ${Timeouts.Default.requestTimeoutMs}ms (requestTimeout and keyspaceAdminTimeout simultaneously timed out)`);
 
       assert.deepStrictEqual(tm.initial(), {
-        keyspaceAdminTimeout: Timeouts.Default.requestTimeout,
-        requestTimeout: Timeouts.Default.requestTimeout,
+        keyspaceAdminTimeoutMs: Timeouts.Default.requestTimeoutMs,
+        requestTimeoutMs: Timeouts.Default.requestTimeoutMs,
       });
     });
   });
 
   parallel('multipart', () => {
     it('works w/ override number', async () => {
-      const tm = timeouts.multipart('generalMethodTimeout', { timeout: 10001 });
+      const tm = timeouts.multipart('generalMethodTimeoutMs', { timeout: 10001 });
       let [timeout, mkError] = tm.advance(info(tm));
-      assert.strictEqual(timeout, Timeouts.Default.requestTimeout);
+      assert.strictEqual(timeout, Timeouts.Default.requestTimeoutMs);
 
       const e = mkError();
       assert.ok(e instanceof TimeoutError);
       assert.deepStrictEqual(e.info, info(tm));
-      assert.strictEqual(e.timeoutType, 'requestTimeout');
-      assert.strictEqual(e.message, `Command timed out after ${Timeouts.Default.requestTimeout}ms (requestTimeout timed out)`);
+      assert.strictEqual(e.timeoutType, 'requestTimeoutMs');
+      assert.strictEqual(e.message, `Command timed out after ${Timeouts.Default.requestTimeoutMs}ms (requestTimeout timed out)`);
 
       assert.deepStrictEqual(tm.initial(), {
-        requestTimeout: Timeouts.Default.requestTimeout,
-        generalMethodTimeout: 10001,
+        requestTimeoutMs: Timeouts.Default.requestTimeoutMs,
+        generalMethodTimeoutMs: 10001,
       });
 
       await new Promise(resolve => setTimeout(resolve, 5001));
@@ -148,24 +148,24 @@ describe('unit.lib.api.timeouts', () => {
       const e2 = mkError();
       assert.ok(e2 instanceof TimeoutError);
       assert.deepStrictEqual(e2.info, info(tm));
-      assert.strictEqual(e2.timeoutType, 'generalMethodTimeout');
+      assert.strictEqual(e2.timeoutType, 'generalMethodTimeoutMs');
       assert.strictEqual(e2.message, 'Command timed out after 10001ms (generalMethodTimeout timed out)');
     });
 
     it('works w/ partial override object', async () => {
-      const tm = timeouts.multipart('tableAdminTimeout', { timeout: { requestTimeout: 10 } });
+      const tm = timeouts.multipart('tableAdminTimeoutMs', { timeout: { requestTimeoutMs: 10 } });
       let [timeout, mkError] = tm.advance(info(tm));
       assert.strictEqual(timeout, 10);
 
       const e = mkError();
       assert.ok(e instanceof TimeoutError);
       assert.deepStrictEqual(e.info, info(tm));
-      assert.strictEqual(e.timeoutType, 'requestTimeout');
+      assert.strictEqual(e.timeoutType, 'requestTimeoutMs');
       assert.strictEqual(e.message, 'Command timed out after 10ms (requestTimeout timed out)');
 
       assert.deepStrictEqual(tm.initial(), {
-        tableAdminTimeout: Timeouts.Default.tableAdminTimeout,
-        requestTimeout: 10,
+        tableAdminTimeoutMs: Timeouts.Default.tableAdminTimeoutMs,
+        requestTimeoutMs: 10,
       });
 
       await new Promise(resolve => setTimeout(resolve, 5));
@@ -179,24 +179,24 @@ describe('unit.lib.api.timeouts', () => {
       const e2 = mkError();
       assert.ok(e2 instanceof TimeoutError);
       assert.deepStrictEqual(e2.info, info(tm));
-      assert.strictEqual(e2.timeoutType, 'requestTimeout');
+      assert.strictEqual(e2.timeoutType, 'requestTimeoutMs');
       assert.strictEqual(e2.message, 'Command timed out after 10ms (requestTimeout timed out)');
     });
 
     it('works w/ full override object', async () => {
-      const tm = timeouts.multipart('tableAdminTimeout', { timeout: { requestTimeout: 10, tableAdminTimeout: 100 } });
+      const tm = timeouts.multipart('tableAdminTimeoutMs', { timeout: { requestTimeoutMs: 10, tableAdminTimeoutMs: 100 } });
       let [timeout, mkError] = tm.advance(info(tm));
       assert.strictEqual(timeout, 10);
 
       const e = mkError();
       assert.ok(e instanceof TimeoutError);
       assert.deepStrictEqual(e.info, info(tm));
-      assert.strictEqual(e.timeoutType, 'requestTimeout');
+      assert.strictEqual(e.timeoutType, 'requestTimeoutMs');
       assert.strictEqual(e.message, 'Command timed out after 10ms (requestTimeout timed out)');
 
       assert.deepStrictEqual(tm.initial(), {
-        tableAdminTimeout: 100,
-        requestTimeout: 10,
+        tableAdminTimeoutMs: 100,
+        requestTimeoutMs: 10,
       });
 
       await new Promise(resolve => setTimeout(resolve, 5));
@@ -206,7 +206,7 @@ describe('unit.lib.api.timeouts', () => {
       const e2 = mkError();
       assert.ok(e2 instanceof TimeoutError);
       assert.deepStrictEqual(e2.info, info(tm));
-      assert.strictEqual(e2.timeoutType, 'requestTimeout');
+      assert.strictEqual(e2.timeoutType, 'requestTimeoutMs');
       assert.strictEqual(e2.message, 'Command timed out after 10ms (requestTimeout timed out)');
 
       await new Promise(resolve => setTimeout(resolve, 100));
@@ -221,19 +221,19 @@ describe('unit.lib.api.timeouts', () => {
     });
 
     it('works w/ uniform full override object', async () => {
-      const tm = timeouts.multipart('keyspaceAdminTimeout', { timeout: { requestTimeout: 100, keyspaceAdminTimeout: 100 } });
+      const tm = timeouts.multipart('keyspaceAdminTimeoutMs', { timeout: { requestTimeoutMs: 100, keyspaceAdminTimeoutMs: 100 } });
       let [timeout, mkError] = tm.advance(info(tm));
       assert.strictEqual(timeout, 100);
 
       const e = mkError();
       assert.ok(e instanceof TimeoutError);
       assert.deepStrictEqual(e.info, info(tm));
-      assert.deepStrictEqual(e.timeoutType, ['requestTimeout', 'keyspaceAdminTimeout']);
+      assert.deepStrictEqual(e.timeoutType, ['requestTimeoutMs', 'keyspaceAdminTimeout']);
       assert.strictEqual(e.message, 'Command timed out after 100ms (requestTimeout and keyspaceAdminTimeout simultaneously timed out)');
 
       assert.deepStrictEqual(tm.initial(), {
-        keyspaceAdminTimeout: 100,
-        requestTimeout: 100,
+        keyspaceAdminTimeoutMs: 100,
+        requestTimeoutMs: 100,
       });
 
       await new Promise(resolve => setTimeout(resolve, 51));

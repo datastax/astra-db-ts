@@ -114,7 +114,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    */
   public override async findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult> {
     const resp = await this.#httpClient.executeCommand({ findEmbeddingProviders: {} }, {
-      timeoutManager: this.#httpClient.tm.single('databaseAdminTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('databaseAdminTimeoutMs', options),
       keyspace: null,
     });
     return resp.status as FindEmbeddingProvidersResult;
@@ -138,7 +138,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    */
   public override async listKeyspaces(options?: WithTimeout): Promise<string[]> {
     const resp = await this.#httpClient.executeCommand({ findKeyspaces: {} }, {
-      timeoutManager: this.#httpClient.tm.single('keyspaceAdminTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('keyspaceAdminTimeoutMs', options),
       keyspace: null,
     });
     return resp.status!.keyspaces;
@@ -185,7 +185,7 @@ export class DataAPIDbAdmin extends DbAdmin {
     };
 
     await this.#httpClient.executeCommand({ createKeyspace: { name: keyspace, options: { replication } } }, {
-      timeoutManager: this.#httpClient.tm.single('keyspaceAdminTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('keyspaceAdminTimeoutMs', options),
       keyspace: null,
     });
   }
@@ -213,7 +213,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    */
   public override async dropKeyspace(keyspace: string, options?: WithTimeout): Promise<void> {
     await this.#httpClient.executeCommand({ dropKeyspace: { name: keyspace } }, {
-      timeoutManager: this.#httpClient.tm.single('keyspaceAdminTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('keyspaceAdminTimeoutMs', options),
       keyspace: null,
     });
   }

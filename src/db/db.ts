@@ -773,7 +773,7 @@ export class Db {
     };
 
     await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.custom({}, () => [720000, 'collectionAdminTimeout']),
+      timeoutManager: this.#httpClient.tm.custom({}, () => [720000, 'collectionAdminTimeoutMs']),
       keyspace: options?.keyspace,
     });
 
@@ -958,7 +958,7 @@ export class Db {
     };
 
     await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('tableAdminTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
       keyspace: options?.keyspace,
     });
 
@@ -993,7 +993,7 @@ export class Db {
    */
   public async dropCollection(name: string, options?: DropCollectionOptions): Promise<void> {
     await this.#httpClient.executeCommand({ deleteCollection: { name } }, {
-      timeoutManager: this.#httpClient.tm.single('collectionAdminTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('collectionAdminTimeoutMs', options),
       keyspace: options?.keyspace,
     });
   }
@@ -1026,14 +1026,14 @@ export class Db {
    */
   public async dropTable(name: string, options?: DropTableOptions): Promise<void> {
     await this.#httpClient.executeCommand({ dropTable: { name } }, {
-      timeoutManager: this.#httpClient.tm.single('tableAdminTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
       keyspace: options?.keyspace,
     });
   }
 
   public async dropTableIndex(name: string, options?: WithTimeout): Promise<void> {
     await this.#httpClient.executeCommand({ dropIndex: { name } }, {
-      timeoutManager: this.#httpClient.tm.single('tableAdminTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
     });
   }
 
@@ -1092,7 +1092,7 @@ export class Db {
     };
 
     const resp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('collectionAdminTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('collectionAdminTimeoutMs', options),
       keyspace: options?.keyspace,
     });
     return resp.status!.collections;
@@ -1153,7 +1153,7 @@ export class Db {
     };
 
     const resp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('tableAdminTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
       keyspace: options?.keyspace,
     });
     return resp.status!.tables;
@@ -1195,7 +1195,7 @@ export class Db {
     }
 
     return await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       collection: options?.collection ?? options?.table,
       keyspace: options?.keyspace,
     });

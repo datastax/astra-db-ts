@@ -287,7 +287,7 @@ export class AstraAdmin {
    * @returns A promise that resolves to the complete database information.
    */
   public async dbInfo(id: string, options?: WithTimeout): Promise<AstraDbAdminInfo> {
-    const tm = this.#httpClient.tm.single('databaseAdminTimeout', options);
+    const tm = this.#httpClient.tm.single('databaseAdminTimeoutMs', options);
 
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
@@ -342,7 +342,7 @@ export class AstraAdmin {
       params['starting_after'] = String(options.skip);
     }
 
-    const tm = this.#httpClient.tm.single('databaseAdminTimeout', options);
+    const tm = this.#httpClient.tm.single('databaseAdminTimeoutMs', options);
 
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
@@ -414,7 +414,7 @@ export class AstraAdmin {
       ...config,
     };
 
-    const tm = this.#httpClient.tm.multipart('databaseAdminTimeout', options);
+    const tm = this.#httpClient.tm.multipart('databaseAdminTimeoutMs', options);
 
     const resp = await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
@@ -462,7 +462,7 @@ export class AstraAdmin {
   public async dropDatabase(db: Db | string, options?: AstraAdminBlockingOptions): Promise<void> {
     const id = typeof db === 'string' ? db : db.id;
 
-    const tm = this.#httpClient.tm.multipart('databaseAdminTimeout', options);
+    const tm = this.#httpClient.tm.multipart('databaseAdminTimeoutMs', options);
 
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,

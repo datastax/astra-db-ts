@@ -65,7 +65,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     });
 
     const raw = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: document[1],
     });
 
@@ -76,7 +76,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
 
   public async insertMany(docs: readonly SomeDoc[], options: CollectionInsertManyOptions | nullish, err: new (descs: DataAPIDetailedErrorDescriptor[]) => DataAPIResponseError): Promise<GenericInsertManyResult<ID>> {
     const chunkSize = options?.chunkSize ?? 50;
-    const timeoutManager = this.#httpClient.tm.multipart('generalMethodTimeout', options);
+    const timeoutManager = this.#httpClient.tm.multipart('generalMethodTimeoutMs', options);
 
     const insertedIds = (options?.ordered)
       ? await insertManyOrdered(this.#httpClient, this.#serdes, docs, chunkSize, timeoutManager, err)
@@ -101,7 +101,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     });
 
     const resp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1] || update[1],
     });
 
@@ -121,7 +121,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
       },
     });
 
-    const timeoutManager = this.#httpClient.tm.multipart('generalMethodTimeout', options);
+    const timeoutManager = this.#httpClient.tm.multipart('generalMethodTimeoutMs', options);
     const commonResult = mkUpdateResult<number>();
     let resp;
 
@@ -168,7 +168,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     });
 
     const resp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1] || replacement[1],
     });
 
@@ -183,7 +183,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     });
 
     const deleteOneResp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1],
     });
 
@@ -199,7 +199,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
       filter: filter[0],
     });
 
-    const timeoutManager = this.#httpClient.tm.multipart('generalMethodTimeout', options);
+    const timeoutManager = this.#httpClient.tm.multipart('generalMethodTimeoutMs', options);
     let resp, numDeleted = 0;
 
     try {
@@ -244,7 +244,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     });
 
     const resp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1],
     });
 
@@ -265,7 +265,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     });
 
     const resp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1] || replacement[1],
     });
     return resp.data?.document || null;
@@ -279,7 +279,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     });
 
     const resp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1],
     });
     return resp.data?.document || null;
@@ -299,7 +299,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     });
 
     const resp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1] || update[1],
     });
     return resp.data?.document || null;
@@ -350,7 +350,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     });
 
     const resp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent,
     });
 
@@ -369,7 +369,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     const command = mkBasicCmd('estimatedDocumentCount', {});
 
     const resp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
     });
 
     return resp.status?.count;

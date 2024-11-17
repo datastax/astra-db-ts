@@ -178,7 +178,7 @@ parallel('integration.documents.collections.insert-many', { truncate: 'colls:bef
       assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof DataAPITimeoutError);
-      assert.deepStrictEqual(e.timeout, { generalMethodTimeout: 500, requestTimeout: Timeouts.Default.requestTimeout });
+      assert.deepStrictEqual(e.timeout, { generalMethodTimeoutMs: 500, requestTimeoutMs: Timeouts.Default.requestTimeoutMs });
       const found = await collection.find({ key }).toArray();
       assert.ok(found.length > 0);
       assert.ok(found.length < 1000);

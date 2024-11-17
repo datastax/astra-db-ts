@@ -170,9 +170,9 @@ describe('integration.client.data-api-client', () => {
       assert.strictEqual(startedEvents[1].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${OTHER_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
       assert.strictEqual(succeededEvents[1].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${OTHER_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
 
-      assert.deepStrictEqual(startedEvents[0].timeout, { generalMethodTimeout: Timeouts.Default.generalMethodTimeout, requestTimeout: Timeouts.Default.requestTimeout });
+      assert.deepStrictEqual(startedEvents[0].timeout, { generalMethodTimeoutMs: Timeouts.Default.generalMethodTimeoutMs, requestTimeoutMs: Timeouts.Default.requestTimeoutMs });
       assert.ok(succeededEvents[0].duration > 0);
-      assert.deepStrictEqual(startedEvents[1].timeout, { requestTimeout: 10000, generalMethodTimeout: 10000 });
+      assert.deepStrictEqual(startedEvents[1].timeout, { requestTimeoutMs: 10000, generalMethodTimeoutMs: 10000 });
       assert.ok(succeededEvents[1].duration > 0);
 
       assert.deepStrictEqual(startedEvents[0].command, { insertOne: { document: { name: 'Chthonic' } } });
@@ -234,7 +234,7 @@ describe('integration.client.data-api-client', () => {
       assert.strictEqual(startedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
       assert.strictEqual(failedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
 
-      assert.deepStrictEqual(startedEvent.timeout, { generalMethodTimeout: Timeouts.Default.generalMethodTimeout, requestTimeout: Timeouts.Default.requestTimeout });
+      assert.deepStrictEqual(startedEvent.timeout, { generalMethodTimeoutMs: Timeouts.Default.generalMethodTimeoutMs, requestTimeoutMs: Timeouts.Default.requestTimeoutMs });
       assert.ok(failedEvent.duration > 0);
 
       assert.deepStrictEqual(startedEvent.command, { insertOne: { document: { _id: 0, name: 'Oasis' } } });
@@ -287,14 +287,14 @@ describe('integration.client.data-api-client', () => {
       assert.strictEqual(startedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
       assert.strictEqual(failedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
 
-      assert.deepStrictEqual(startedEvent.timeout, { generalMethodTimeout: 1, requestTimeout: 1 });
+      assert.deepStrictEqual(startedEvent.timeout, { generalMethodTimeoutMs: 1, requestTimeoutMs: 1 });
       assert.ok(failedEvent.duration > 0);
 
       assert.deepStrictEqual(startedEvent.command, { insertOne: { document: { name: 'Xandria' } } });
       assert.deepStrictEqual(failedEvent.command, { insertOne: { document: { name: 'Xandria' } } });
 
       assert.ok(failedEvent.error instanceof DataAPITimeoutError);
-      assert.deepStrictEqual(failedEvent.error.timeout, { generalMethodTimeout: 1, requestTimeout: 1 });
+      assert.deepStrictEqual(failedEvent.error.timeout, { generalMethodTimeoutMs: 1, requestTimeoutMs: 1 });
 
       assert.deepStrictEqual(stdout, []);
       assert.deepStrictEqual(stderr[0], startedEvent.formatted());

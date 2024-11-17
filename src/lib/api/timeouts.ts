@@ -19,15 +19,15 @@ import { toArray } from '@/src/lib/utils';
 export type TimedOutTypes = OneOrMany<keyof TimeoutDescriptor> | 'provided';
 
 export interface TimeoutDescriptor {
-  requestTimeout: number,
-  generalMethodTimeout: number,
-  collectionAdminTimeout: number,
-  tableAdminTimeout: number,
-  databaseAdminTimeout: number,
-  keyspaceAdminTimeout: number,
+  requestTimeoutMs: number,
+  generalMethodTimeoutMs: number,
+  collectionAdminTimeoutMs: number,
+  tableAdminTimeoutMs: number,
+  databaseAdminTimeoutMs: number,
+  keyspaceAdminTimeoutMs: number,
 }
 
-export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor = 'generalMethodTimeout' | 'requestTimeout'> {
+export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor = 'generalMethodTimeoutMs' | 'requestTimeoutMs'> {
   timeout?: number | Pick<Partial<TimeoutDescriptor>, Timeouts>;
 }
 
@@ -46,12 +46,12 @@ export class Timeouts {
     public readonly baseTimeouts: TimeoutDescriptor,
   ) {}
 
-  public single(key: Exclude<keyof TimeoutDescriptor, 'requestTimeout'>, override: WithTimeout<keyof TimeoutDescriptor> | nullish): TimeoutManager {
+  public single(key: Exclude<keyof TimeoutDescriptor, 'requestTimeoutMs'>, override: WithTimeout<keyof TimeoutDescriptor> | nullish): TimeoutManager {
     if (typeof override?.timeout === 'number') {
       const timeout = override.timeout;
 
       const initial = {
-        requestTimeout: timeout,
+        requestTimeoutMs: timeout,
         [key]: timeout,
       };
 
@@ -61,7 +61,7 @@ export class Timeouts {
     }
 
     const timeouts = {
-      requestTimeout: (override?.timeout?.requestTimeout ?? this.baseTimeouts.requestTimeout) || EffectivelyInfinity,
+      requestTimeoutMs: (override?.timeout?.requestTimeoutMs ?? this.baseTimeouts.requestTimeoutMs) || EffectivelyInfinity,
       [key]: (override?.timeout?.[key] ?? this.baseTimeouts[key]) || EffectivelyInfinity,
     };
 
@@ -69,9 +69,9 @@ export class Timeouts {
 
     const type =
       (timeouts.requestTimeout === timeouts[key])
-        ? <const>['requestTimeout', key] :
+        ? <const>['requestTimeoutMs', key] :
       (timeouts.requestTimeout < timeouts[key])
-        ? 'requestTimeout'
+        ? 'requestTimeoutMs'
         : key;
 
     return this.custom(timeouts, () => {
@@ -79,10 +79,10 @@ export class Timeouts {
     });
   }
 
-  public multipart(key: Exclude<keyof TimeoutDescriptor, 'requestTimeout'>, override: WithTimeout<keyof TimeoutDescriptor> | nullish): TimeoutManager {
+  public multipart(key: Exclude<keyof TimeoutDescriptor, 'requestTimeoutMs'>, override: WithTimeout<keyof TimeoutDescriptor> | nullish): TimeoutManager {
     const requestTimeout = (typeof override?.timeout === 'object')
-      ? override.timeout?.requestTimeout ?? this.baseTimeouts.requestTimeout
-      : this.baseTimeouts.requestTimeout;
+      ? override.timeout?.requestTimeoutMs ?? this.baseTimeouts.requestTimeoutMs
+      : this.baseTimeouts.requestTimeoutMs;
 
     const overallTimeout =
       (typeof override?.timeout === 'object')
@@ -92,7 +92,7 @@ export class Timeouts {
         : this.baseTimeouts[key];
 
     const initial = {
-      requestTimeout,
+      requestTimeoutMs: requestTimeout,
       [key]: overallTimeout,
     };
 
@@ -108,9 +108,9 @@ export class Timeouts {
       if (overallLeft < requestTimeout) {
         return [overallLeft, key];
       } else if (overallLeft > requestTimeout) {
-        return [requestTimeout, 'requestTimeout'];
+        return [requestTimeout, 'requestTimeoutMs'];
       } else {
-        return [overallLeft, ['requestTimeout', key]];
+        return [overallLeft, ['requestTimeoutMs', key]];
       }
     });
   }
@@ -130,12 +130,12 @@ export class Timeouts {
   }
 
   public static Default: TimeoutDescriptor = {
-    requestTimeout: 10000,
-    generalMethodTimeout: 30000,
-    collectionAdminTimeout: 60000,
-    tableAdminTimeout: 30000,
-    databaseAdminTimeout: 600000,
-    keyspaceAdminTimeout: 30000,
+    requestTimeoutMs: 10000,
+    generalMethodTimeoutMs: 30000,
+    collectionAdminTimeoutMs: 60000,
+    tableAdminTimeoutMs: 30000,
+    databaseAdminTimeoutMs: 600000,
+    keyspaceAdminTimeoutMs: 30000,
   };
 
   public static merge(base: TimeoutDescriptor, custom: Partial<TimeoutDescriptor> | nullish): TimeoutDescriptor {
@@ -144,12 +144,12 @@ export class Timeouts {
     }
 
     return {
-      requestTimeout: custom.requestTimeout ?? base.requestTimeout,
-      generalMethodTimeout: custom.generalMethodTimeout ?? base.generalMethodTimeout,
-      collectionAdminTimeout: custom.collectionAdminTimeout ?? base.collectionAdminTimeout,
-      tableAdminTimeout: custom.tableAdminTimeout ?? base.tableAdminTimeout,
-      databaseAdminTimeout: custom.databaseAdminTimeout ?? base.databaseAdminTimeout,
-      keyspaceAdminTimeout: custom.keyspaceAdminTimeout ?? base.keyspaceAdminTimeout,
+      requestTimeoutMs: custom.requestTimeoutMs ?? base.requestTimeoutMs,
+      generalMethodTimeoutMs: custom.generalMethodTimeoutMs ?? base.generalMethodTimeoutMs,
+      collectionAdminTimeoutMs: custom.collectionAdminTimeoutMs ?? base.collectionAdminTimeoutMs,
+      tableAdminTimeoutMs: custom.tableAdminTimeoutMs ?? base.tableAdminTimeoutMs,
+      databaseAdminTimeoutMs: custom.databaseAdminTimeoutMs ?? base.databaseAdminTimeoutMs,
+      keyspaceAdminTimeoutMs: custom.keyspaceAdminTimeoutMs ?? base.keyspaceAdminTimeoutMs,
     };
   }
 

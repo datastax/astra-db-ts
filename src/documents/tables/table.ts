@@ -376,7 +376,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
         operation: options.operation,
       },
     }, {
-      timeoutManager: this.#httpClient.tm.single('tableAdminTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
     });
     return this;
   }
@@ -398,7 +398,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
         },
       },
     }, {
-      timeoutManager: this.#httpClient.tm.single('tableAdminTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
     });
   }
 
@@ -418,7 +418,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
         },
       },
     }, {
-      timeoutManager: this.#httpClient.tm.single('tableAdminTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
     });
   }
 

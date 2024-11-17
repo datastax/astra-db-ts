@@ -156,7 +156,7 @@ export class AstraDbAdmin extends DbAdmin {
    */
   public override async findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult> {
     const resp = await this.#db._httpClient.executeCommand({ findEmbeddingProviders: {} }, {
-      timeoutManager: this.#httpClient.tm.single('databaseAdminTimeout', options),
+      timeoutManager: this.#httpClient.tm.single('databaseAdminTimeoutMs', options),
       keyspace: null,
     });
     return resp.status as FindEmbeddingProvidersResult;
@@ -178,7 +178,7 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns A promise that resolves to the complete database information.
    */
   public async info(options?: WithTimeout): Promise<AstraDbAdminInfo> {
-    const tm = this.#httpClient.tm.single('databaseAdminTimeout', options);
+    const tm = this.#httpClient.tm.single('databaseAdminTimeoutMs', options);
     return this.#info(options, tm);
   }
 
@@ -199,7 +199,7 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns A promise that resolves to list of all the keyspaces in the database.
    */
   public override async listKeyspaces(options?: WithTimeout): Promise<string[]> {
-    const tm = this.#httpClient.tm.single('keyspaceAdminTimeout', options);
+    const tm = this.#httpClient.tm.single('keyspaceAdminTimeoutMs', options);
     return this.#info(options, tm).then(i => i.keyspaces);
   }
 
@@ -238,7 +238,7 @@ export class AstraDbAdmin extends DbAdmin {
       this.#db.useKeyspace(keyspace);
     }
 
-    const tm = this.#httpClient.tm.multipart('keyspaceAdminTimeout', options);
+    const tm = this.#httpClient.tm.multipart('keyspaceAdminTimeoutMs', options);
 
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
@@ -285,7 +285,7 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns A promise that resolves when the operation completes.
    */
   public override async dropKeyspace(keyspace: string, options?: AstraAdminBlockingOptions): Promise<void> {
-    const tm = this.#httpClient.tm.multipart('keyspaceAdminTimeout', options);
+    const tm = this.#httpClient.tm.multipart('keyspaceAdminTimeoutMs', options);
 
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Delete,
@@ -322,7 +322,7 @@ export class AstraDbAdmin extends DbAdmin {
    * @remarks Use with caution. Use a surge protector. Don't say I didn't warn you.
    */
   public async drop(options?: AstraAdminBlockingOptions): Promise<void> {
-    const tm = this.#httpClient.tm.multipart('databaseAdminTimeout', options);
+    const tm = this.#httpClient.tm.multipart('databaseAdminTimeoutMs', options);
 
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
