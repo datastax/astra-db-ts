@@ -57,7 +57,7 @@ describe('unit.lib.api.timeouts', () => {
       assert.ok(e instanceof TimeoutError);
       assert.deepStrictEqual(e.info, info(tm));
       assert.strictEqual(e.timeoutType, 'provided');
-      assert.strictEqual(e.message, 'Command timed out after 100ms (The timeout provided via `{ timeout: 100 }` timed out)');
+      assert.strictEqual(e.message, 'Command timed out after 100ms (The timeout provided via `{ timeout: <number> }` timed out)');
 
       assert.deepStrictEqual(tm.initial(), {
         generalMethodTimeout: 100,

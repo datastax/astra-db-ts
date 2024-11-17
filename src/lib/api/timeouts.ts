@@ -160,7 +160,7 @@ export class Timeouts {
 
     const types =
       (timeoutTypes === 'provided')
-        ? `The timeout provided via \`{ timeout: ${timeout} }\` timed out` :
+        ? `The timeout provided via \`{ timeout: <number> }\` timed out` :
       (Array.isArray(timeoutTypes))
         ? timeoutTypes.join(' and ') + ' simultaneously timed out'
         : `${timeoutTypes} timed out`;

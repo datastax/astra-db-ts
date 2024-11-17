@@ -24,7 +24,7 @@ parallel('integration.documents.collections.misc', ({ db }) => {
       await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { timeout: 10 });
     } catch (e) {
       assert.ok(e instanceof DataAPITimeoutError);
-      assert.strictEqual(e.message, 'Command timed out after 10ms (provided timed out)');
+      assert.strictEqual(e.message, 'Command timed out after 10ms (The timeout provided via `{ timeout: <number> }` timed out)');
     }
   });
 
@@ -32,10 +32,10 @@ parallel('integration.documents.collections.misc', ({ db }) => {
     const { db: newDb } = initTestObjects({ httpClient: 'default:http1' });
 
     try {
-      await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { timeout: 10 });
+      await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { timeout: 11 });
     } catch (e) {
       assert.ok(e instanceof DataAPITimeoutError);
-      assert.strictEqual(e.message, 'Command timed out after 10ms (provided timed out)');
+      assert.strictEqual(e.message, 'Command timed out after 11ms (The timeout provided via `{ timeout: <number> }` timed out)');
     }
   });
 
@@ -49,7 +49,7 @@ parallel('integration.documents.collections.misc', ({ db }) => {
     }
   });
 
-  it('Error is thrown when doing .options() on non-existent collections', async () => {
+  it('error is thrown when doing .options() on non-existent collections', async () => {
     const collection = db.collection('non_existent_collection');
 
     try {
