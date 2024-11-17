@@ -773,7 +773,12 @@ export class Db {
     };
 
     await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.custom({}, () => [720000, 'collectionAdminTimeoutMs']),
+      timeoutManager: this.#httpClient.tm.single('collectionAdminTimeoutMs', {
+        timeout: {
+          collectionAdminTimeoutMs: (typeof options?.timeout === 'number') ? options.timeout : options?.timeout?.collectionAdminTimeoutMs,
+          requestTimeoutMs: 0,
+        },
+      }),
       keyspace: options?.keyspace,
     });
 
