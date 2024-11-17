@@ -65,12 +65,12 @@ export class Timeouts {
       [key]: (override?.timeout?.[key] ?? this.baseTimeouts[key]) || EffectivelyInfinity,
     };
 
-    const timeout = Math.min(timeouts.requestTimeout, timeouts[key]);
+    const timeout = Math.min(timeouts.requestTimeoutMs, timeouts[key]);
 
     const type =
-      (timeouts.requestTimeout === timeouts[key])
+      (timeouts.requestTimeoutMs === timeouts[key])
         ? <const>['requestTimeoutMs', key] :
-      (timeouts.requestTimeout < timeouts[key])
+      (timeouts.requestTimeoutMs < timeouts[key])
         ? 'requestTimeoutMs'
         : key;
 
@@ -80,16 +80,18 @@ export class Timeouts {
   }
 
   public multipart(key: Exclude<keyof TimeoutDescriptor, 'requestTimeoutMs'>, override: WithTimeout<keyof TimeoutDescriptor> | nullish): TimeoutManager {
-    const requestTimeout = (typeof override?.timeout === 'object')
+    const requestTimeout = ((typeof override?.timeout === 'object')
       ? override.timeout?.requestTimeoutMs ?? this.baseTimeouts.requestTimeoutMs
-      : this.baseTimeouts.requestTimeoutMs;
+      : this.baseTimeouts.requestTimeoutMs)
+        || EffectivelyInfinity;
 
     const overallTimeout =
-      (typeof override?.timeout === 'object')
+      ((typeof override?.timeout === 'object')
         ? override.timeout?.[key] ?? this.baseTimeouts[key] :
       (typeof override?.timeout === 'number')
         ? override.timeout
-        : this.baseTimeouts[key];
+        : this.baseTimeouts[key])
+          || EffectivelyInfinity;
 
     const initial = {
       requestTimeoutMs: requestTimeout,
