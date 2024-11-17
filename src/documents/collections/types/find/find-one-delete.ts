@@ -26,7 +26,7 @@ import type { WithTimeout } from '@/src/lib';
  *
  * @public
  */
-export interface CollectionFindOneAndDeleteOptions extends WithTimeout {
+export interface CollectionFindOneAndDeleteOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   /**
    * The order in which to apply the update if the filter selects multiple documents.
    *

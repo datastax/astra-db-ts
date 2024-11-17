@@ -15,7 +15,7 @@
 import type { WithTimeout } from '@/src/lib';
 import { Sort } from '@/src/documents';
 
-export interface GenericReplaceOneOptions extends WithTimeout {
+export interface GenericReplaceOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   upsert?: boolean,
   sort?: Sort,
 }

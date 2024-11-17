@@ -41,7 +41,7 @@ export type GenericInsertManyOptions =
  *
  * @public
  */
-export interface GenericInsertManyOrderedOptions extends WithTimeout {
+export interface GenericInsertManyOrderedOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   /**
    * If `true`, the records are inserted in the order provided. If an error occurs, the operation stops and the
    * remaining records are not inserted.
@@ -70,7 +70,7 @@ export interface GenericInsertManyOrderedOptions extends WithTimeout {
  *
  * @public
  */
-export interface GenericInsertManyUnorderedOptions extends WithTimeout {
+export interface GenericInsertManyUnorderedOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   /**
    * If `false`, the records are inserted in an arbitrary order. If an error occurs, the operation does not stop
    * and the remaining records are inserted. This allows the operation to be parallelized for better performance.

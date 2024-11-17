@@ -39,7 +39,7 @@ export type AstraDbCloudProviderFilter = AstraDbCloudProvider | 'ALL';
  *
  * @public
  */
-export interface ListAstraDatabasesOptions extends WithTimeout {
+export interface ListAstraDatabasesOptions extends WithTimeout<'databaseAdminTimeoutMs'> {
   /**
    * Allows filtering so that databases in listed states are returned.
    */

@@ -27,7 +27,7 @@ import { SomeDoc } from '@/src/documents';
  *
  * @public
  */
-export interface ListCollectionsOptions extends WithTimeout, WithKeyspace {
+export interface ListCollectionsOptions extends WithTimeout<'collectionAdminTimeoutMs'>, WithKeyspace {
   /**
    * If true, only the name of the collections is returned.
    *

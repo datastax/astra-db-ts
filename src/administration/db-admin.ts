@@ -63,7 +63,7 @@ export abstract class DbAdmin {
    *
    * @returns The available embedding providers.
    */
-  abstract findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
+  abstract findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult>;
   /**
    * Retrieves a list of all the keyspaces in the database.
    *
@@ -80,7 +80,7 @@ export abstract class DbAdmin {
    *
    * @returns A promise that resolves to list of all the keyspaces in the database.
    */
-  abstract listKeyspaces(): Promise<string[]>;
+  abstract listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]>;
   /**
    * Creates a new, additional, keyspace for this database.
    *
@@ -111,7 +111,7 @@ export abstract class DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  abstract createKeyspace(keyspace: string, options?: WithTimeout): Promise<void>;
+  abstract createKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
   /**
    * Drops a keyspace from this database.
    *
@@ -143,5 +143,5 @@ export abstract class DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  abstract dropKeyspace(keyspace: string, options?: WithTimeout): Promise<void>;
+  abstract dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
 }

@@ -329,7 +329,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
    *
    * @returns The ID of the inserted row.
    */
-  public async insertOne(row: Schema, options?: WithTimeout): Promise<TableInsertOneResult<Schema>> {
+  public async insertOne(row: Schema, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<Schema>> {
     return this.#commands.insertOne(row, options);
   }
 
@@ -345,7 +345,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
     await this.#commands.deleteOne(filter, options);
   }
 
-  public async deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<void> {
+  public async deleteMany(filter: Filter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
     await this.#commands.deleteMany(filter, options);
   }
 
@@ -359,10 +359,6 @@ export class Table<Schema extends SomeRow = SomeRow> {
 
   public async findOne(filter: Filter<Schema>, options?: TableFindOneOptions): Promise<FoundRow<Schema> | null> {
     return this.#commands.findOne(filter, options);
-  }
-
-  public async drop(options?: WithTimeout): Promise<void> {
-    await this.#db.dropCollection(this.name, { keyspace: this.keyspace, ...options });
   }
 
   public async alter<const Spec extends AlterTableOptions<Schema>>(options: Spec): Promise<Table<AlterTableSchema<Schema, Spec>>>
@@ -422,7 +418,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
     });
   }
 
-  public async definition(options?: WithTimeout): Promise<ListTableDefinition> {
+  public async definition(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<ListTableDefinition> {
     const results = await this.#db.listTables({
       timeout: options?.timeout,
       keyspace: this.keyspace,
@@ -435,6 +431,10 @@ export class Table<Schema extends SomeRow = SomeRow> {
     }
 
     return table.definition;
+  }
+
+  public async drop(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<void> {
+    await this.#db.dropTable(this.name, { keyspace: this.keyspace, ...options });
   }
 
   public get _httpClient() {

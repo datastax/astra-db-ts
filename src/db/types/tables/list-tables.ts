@@ -15,7 +15,7 @@
 import type { WithTimeout } from '@/src/lib';
 import { FullCreateTablePrimaryKeyDefinition, StrictCreateTableColumnDefinition, WithKeyspace } from '@/src/db';
 
-export interface ListTablesOptions extends WithTimeout, WithKeyspace {
+export interface ListTablesOptions extends WithTimeout<'tableAdminTimeoutMs'>, WithKeyspace {
   nameOnly?: boolean,
 }
 

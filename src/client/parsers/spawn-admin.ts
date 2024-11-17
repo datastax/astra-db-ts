@@ -14,8 +14,8 @@
 
 import { p, Parser } from '@/src/lib/validation';
 import { TokenProvider } from '@/src/lib';
-import { AdminSpawnOptions } from '@/src/administration';
 import { Logger } from '@/src/lib/logging/logger';
+import { AdminSpawnOptions } from '@/src/client';
 
 export const parseAdminSpawnOpts: Parser<AdminSpawnOptions | undefined, unknown> = (raw, field) => {
   const opts = p.parse('object?')<AdminSpawnOptions>(raw, field);

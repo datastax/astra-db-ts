@@ -57,7 +57,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     this.#tOrC = tOrC;
   }
 
-  public async insertOne(_document: SomeDoc, options: WithTimeout | nullish): Promise<GenericInsertOneResult<ID>> {
+  public async insertOne(_document: SomeDoc, options: WithTimeout<'generalMethodTimeoutMs'> | nullish): Promise<GenericInsertOneResult<ID>> {
     const document = this.#serdes.serializeRecord(_document);
 
     const command = mkBasicCmd('insertOne', {
@@ -192,7 +192,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     };
   }
 
-  public async deleteMany(_filter: SomeDoc, options?: WithTimeout): Promise<GenericDeleteManyResult> {
+  public async deleteMany(_filter: SomeDoc, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<GenericDeleteManyResult> {
     const filter = this.#serdes.serializeRecord(_filter);
 
     const command = mkBasicCmd('deleteMany', {
@@ -334,7 +334,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     return ret;
   }
 
-  public async countDocuments(_filter: SomeDoc, upperBound: number, options: WithTimeout | undefined, error: new (count: number, hitLimit: boolean) => Error): Promise<number> {
+  public async countDocuments(_filter: SomeDoc, upperBound: number, options: WithTimeout<'generalMethodTimeoutMs'> | undefined, error: new (count: number, hitLimit: boolean) => Error): Promise<number> {
     if (!upperBound) {
       throw new Error('upperBound is required');
     }
@@ -365,7 +365,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     return resp.status?.count;
   }
 
-  public async estimatedDocumentCount(options?: WithTimeout): Promise<number> {
+  public async estimatedDocumentCount(options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number> {
     const command = mkBasicCmd('estimatedDocumentCount', {});
 
     const resp = await this.#httpClient.executeCommand(command, {

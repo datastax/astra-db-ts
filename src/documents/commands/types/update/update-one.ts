@@ -24,7 +24,7 @@ import type { Sort } from '@/src/documents';
  *
  * @public
  */
-export interface GenericUpdateOneOptions extends WithTimeout {
+export interface GenericUpdateOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   /**
    * If true, perform an insert if no documents match the filter.
    *

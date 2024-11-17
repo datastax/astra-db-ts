@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib';
-
 /**
  * Represents the available cloud providers that Astra offers.
  *
@@ -89,7 +87,7 @@ export type AstraAdminBlockingOptions =
  *
  * @public
  */
-export interface AstraPollBlockingOptions extends WithTimeout {
+export interface AstraPollBlockingOptions {
   /**
    * True or omitted to block until the operation is complete.
    */
@@ -111,7 +109,7 @@ export interface AstraPollBlockingOptions extends WithTimeout {
  *
  * @public
  */
-export interface AstraNoBlockingOptions extends WithTimeout {
+export interface AstraNoBlockingOptions {
   /**
    * False to not block until the operation is complete.
    */

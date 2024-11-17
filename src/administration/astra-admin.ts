@@ -14,8 +14,6 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import {
-  AdminSpawnOptions,
-  AstraAdminBlockingOptions,
   AstraDatabaseConfig,
   CreateAstraDatabaseOptions,
   ListAstraDatabasesOptions,
@@ -31,10 +29,11 @@ import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { buildAstraEndpoint } from '@/src/lib/utils';
 import { Logger } from '@/src/lib/logging/logger';
-import { DbSpawnOptions } from '@/src/client';
+import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
 import { $CustomInspect } from '@/src/lib/constants';
 import { SomeDoc } from '@/src/documents';
 import { Timeouts } from '@/src/lib/api/timeouts';
+import { DropAstraDatabaseOptions } from '@/src/administration/types/admin/drop-database';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -286,7 +285,7 @@ export class AstraAdmin {
    *
    * @returns A promise that resolves to the complete database information.
    */
-  public async dbInfo(id: string, options?: WithTimeout): Promise<AstraDbAdminInfo> {
+  public async dbInfo(id: string, options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbAdminInfo> {
     const tm = this.#httpClient.tm.single('databaseAdminTimeoutMs', options);
 
     const resp = await this.#httpClient.request({
@@ -459,7 +458,7 @@ export class AstraAdmin {
    *
    * @remarks Use with caution. Wear a harness. Don't say I didn't warn you.
    */
-  public async dropDatabase(db: Db | string, options?: AstraAdminBlockingOptions): Promise<void> {
+  public async dropDatabase(db: Db | string, options?: DropAstraDatabaseOptions): Promise<void> {
     const id = typeof db === 'string' ? db : db.id;
 
     const tm = this.#httpClient.tm.multipart('databaseAdminTimeoutMs', options);

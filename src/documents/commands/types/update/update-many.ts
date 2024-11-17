@@ -14,6 +14,6 @@
 
 import type { WithTimeout } from '@/src/lib';
 
-export interface GenericUpdateManyOptions extends WithTimeout {
+export interface GenericUpdateManyOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   upsert?: boolean,
 }

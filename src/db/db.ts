@@ -17,7 +17,7 @@ import { DEFAULT_KEYSPACE, RawDataAPIResponse, WithTimeout } from '@/src/lib/api
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { DataAPIEnvironment, nullish } from '@/src/lib/types';
 import { extractDbIdFromUrl, extractRegionFromUrl } from '@/src/documents/utils';
-import { AdminSpawnOptions, DbAdmin } from '@/src/administration';
+import { DbAdmin } from '@/src/administration';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin';
 import { CreateCollectionOptions } from '@/src/db/types/collections/create-collection';
 import { TokenProvider } from '@/src/lib';
@@ -36,7 +36,7 @@ import { InferTableSchemaFromDefinition } from '@/src/db/types/tables/table-sche
 import { DropTableOptions } from '@/src/db/types/tables/drop-table';
 import { FullTableInfo, ListTablesOptions } from '@/src/db/types/tables/list-tables';
 import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
-import { DbSpawnOptions } from '@/src/client/types';
+import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client/types';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { Logger } from '@/src/lib/logging/logger';
 import { $CustomInspect } from '@/src/lib/constants';
@@ -436,7 +436,7 @@ export class Db {
    *
    * @throws Error - if the database is not an Astra database.
    */
-  public async info(options?: WithTimeout): Promise<AstraDbInfo> {
+  public async info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbInfo> {
     if (this.#defaultOpts.environment !== 'astra') {
       throw new InvalidEnvironmentError('db.info()', this.#defaultOpts.environment, ['astra'], 'info() is only available for Astra databases');
     }
@@ -1031,7 +1031,7 @@ export class Db {
     });
   }
 
-  public async dropTableIndex(name: string, options?: WithTimeout): Promise<void> {
+  public async dropTableIndex(name: string, options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<void> {
     await this.#httpClient.executeCommand({ dropIndex: { name } }, {
       timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
     });

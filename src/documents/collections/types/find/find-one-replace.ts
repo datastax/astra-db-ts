@@ -28,7 +28,7 @@ import type { WithTimeout } from '@/src/lib';
  *
  * @public
  */
-export interface CollectionFindOneAndReplaceOptions extends WithTimeout {
+export interface CollectionFindOneAndReplaceOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   /**
    * Specifies whether to return the document before or after the update.
    *

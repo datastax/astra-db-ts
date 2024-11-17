@@ -16,8 +16,14 @@ import { nullish, OneOrMany } from '@/src/lib';
 import { HTTPRequestInfo } from '@/src/lib/api/clients';
 import { toArray } from '@/src/lib/utils';
 
+/**
+ * @public
+ */
 export type TimedOutTypes = OneOrMany<keyof TimeoutDescriptor> | 'provided';
 
+/**
+ * @public
+ */
 export interface TimeoutDescriptor {
   requestTimeoutMs: number,
   generalMethodTimeoutMs: number,
@@ -27,26 +33,41 @@ export interface TimeoutDescriptor {
   keyspaceAdminTimeoutMs: number,
 }
 
-export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor = 'generalMethodTimeoutMs' | 'requestTimeoutMs'> {
-  timeout?: number | Pick<Partial<TimeoutDescriptor>, Timeouts>;
+/**
+ * @public
+ */
+export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor> {
+  timeout?: number | Pick<Partial<TimeoutDescriptor>, 'requestTimeoutMs' | Timeouts>;
 }
 
+/**
+ * @internal
+ */
 export type MkTimeoutError = (info: HTTPRequestInfo, timeoutType: TimedOutTypes) => Error;
 
+/**
+ * @internal
+ */
 export interface TimeoutManager {
   initial(): Partial<TimeoutDescriptor>,
   advance(info: HTTPRequestInfo): [number, () => Error],
 }
 
+/**
+ * @internal
+ */
 export const EffectivelyInfinity = 2 ** 31 - 1;
 
+/**
+ * @internal
+ */
 export class Timeouts {
   constructor(
     private readonly _mkTimeoutError: MkTimeoutError,
     public readonly baseTimeouts: TimeoutDescriptor,
   ) {}
 
-  public single(key: Exclude<keyof TimeoutDescriptor, 'requestTimeoutMs'>, override: WithTimeout<keyof TimeoutDescriptor> | nullish): TimeoutManager {
+  public single(key: Exclude<keyof TimeoutDescriptor, 'requestTimeoutMs'>, override: WithTimeout<any> | nullish): TimeoutManager {
     if (typeof override?.timeout === 'number') {
       const timeout = override.timeout;
 
@@ -79,7 +100,7 @@ export class Timeouts {
     });
   }
 
-  public multipart(key: Exclude<keyof TimeoutDescriptor, 'requestTimeoutMs'>, override: WithTimeout<keyof TimeoutDescriptor> | nullish): TimeoutManager {
+  public multipart(key: Exclude<keyof TimeoutDescriptor, 'requestTimeoutMs'>, override: WithTimeout<any> | nullish): TimeoutManager {
     const requestTimeout = ((typeof override?.timeout === 'object')
       ? override.timeout?.requestTimeoutMs ?? this.baseTimeouts.requestTimeoutMs
       : this.baseTimeouts.requestTimeoutMs)

@@ -25,4 +25,4 @@ import { WithKeyspace } from '@/src/db';
  *
  * @public
  */
-export interface DropCollectionOptions extends WithTimeout, WithKeyspace {}
+export interface DropCollectionOptions extends WithTimeout<'collectionAdminTimeoutMs'>, WithKeyspace {}
