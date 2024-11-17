@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib/types';
+import type { WithTimeout } from '@/src/lib';
 
 /**
  * Options for a generic `insertMany` command using the Data API.

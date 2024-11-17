@@ -16,6 +16,7 @@ import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http
 import type { DataAPIErrorDescriptor } from '@/src/documents';
 // import { DataAPIClientEvent } from '@/src/lib/logging/events'; needs to be like this or it errors
 import { DataAPIClientEvent } from '@/src/lib/logging/events';
+import { TimeoutDescriptor } from '@/src/lib/api/timeouts';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -100,14 +101,14 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
   /**
    * The timeout for the request, in milliseconds.
    */
-  public readonly timeout: number;
+  public readonly timeout: Partial<TimeoutDescriptor>;
 
   /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: number) {
+  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: Partial<TimeoutDescriptor>) {
     super(info, longRunning);
     this.timeout = timeout;
   }

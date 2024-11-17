@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPILoggingConfig, TokenProvider } from '@/src/lib';
+import { DataAPILoggingConfig, type TimeoutDescriptor, TokenProvider } from '@/src/lib';
 import { CollectionSerDesConfig, SomeDoc, SomeRow, TableSerDesConfig } from '@/src/documents';
 
-export type DefaultDbSpawnOptions = Omit<DbSpawnOptions, 'logging'>;
+export type DefaultDbSpawnOptions = Omit<DbSpawnOptions, 'logging' | 'timeoutDefaults'>;
 
 /**
  * The options available spawning a new {@link Db} instance.
@@ -111,6 +111,7 @@ export interface DbSpawnOptions {
    * as for enabling feature-flags or other non-standard headers.
    */
   additionalHeaders?: Record<string, string>,
+  timeoutDefaults?: Partial<TimeoutDescriptor>,
 }
 
 /**

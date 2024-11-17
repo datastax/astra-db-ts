@@ -212,7 +212,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       parseWithBigNumbers: () => !!opts?.serdes?.enableBigNumbers,
       parser: withJbiNullProtoFix(jbi),
     };
-
     this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
     this.#commands = new CommandImpls(this, this.#httpClient, mkCollectionSerDes(opts?.serdes));
     this.#db = db;
@@ -1564,7 +1563,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @returns The options that the collection was created with (i.e. the `vector` and `indexing` operations).
    */
   public async options(options?: WithTimeout): Promise<CollectionOptions<SomeDoc>> {
-    const results = await this.#db.listCollections({ maxTimeMS: options?.maxTimeMS, keyspace: this.keyspace });
+    const results = await this.#db.listCollections({ timeout: options?.timeout, keyspace: this.keyspace });
 
     const collection = results.find((c) => c.name === this.name);
 

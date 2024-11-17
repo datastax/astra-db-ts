@@ -31,3 +31,8 @@ export type {
   DataAPISerCtx,
   DataAPIDesCtx,
 } from './ser-des';
+
+export type {
+  TimeoutDescriptor,
+  WithTimeout,
+} from './timeouts';

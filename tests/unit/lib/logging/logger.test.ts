@@ -23,7 +23,6 @@ import { beforeEach } from 'mocha';
 import TypedEmitter from 'typed-emitter';
 import { CommandStartedEvent } from '@/src/documents';
 import { AdminCommandStartedEvent } from '@/src/administration';
-import { TimeoutManager } from '@/src/lib/api/timeout-managers';
 
 describe('unit.lib.logging.logger', () => {
   describe('parseConfig', () => {
@@ -137,10 +136,10 @@ describe('unit.lib.logging.logger', () => {
 
     it('should handle default logging behavior', () => {
       const logger = new Logger(EventLoggingDefaults, emitter, console);
-      logger.commandStarted?.({ timeoutManager: new TimeoutManager(0, null!), command: {} } as any);
+      logger.commandStarted?.({ timeoutManager: { initial: () => ({}) }, command: {} } as any);
       assert.strictEqual(events.at(-1)?.[0], 'commandStarted');
       assert.ok(events.at(-1)?.[1] instanceof CommandStartedEvent);
-      logger.adminCommandStarted?.({} as any, true, 1000);
+      logger.adminCommandStarted?.({} as any, true, {});
       assert.strictEqual(events.at(-1)?.[0], 'adminCommandStarted');
       assert.ok(events.at(-1)?.[1] instanceof AdminCommandStartedEvent);
       assert.strictEqual(stdout.at(-1), (<any>events.at(-1)?.[1]).formatted());

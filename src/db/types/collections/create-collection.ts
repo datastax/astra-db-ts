@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { SomeDoc } from '@/src/documents/collections';
-import { WithTimeout } from '@/src/lib/types';
+import type { WithTimeout } from '@/src/lib';
 import { CollectionOptions, CollectionSpawnOptions } from '@/src/db';
 
 /**

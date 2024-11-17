@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { Projection, Sort } from '@/src/documents';
-import { WithTimeout } from '@/src/lib/types';
+import type { WithTimeout } from '@/src/lib';
 
 /**
  * Represents the options for the `findOneAndDelete` command.

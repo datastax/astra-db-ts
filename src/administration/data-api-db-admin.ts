@@ -15,7 +15,7 @@
 
 import { AdminSpawnOptions, LocalCreateKeyspaceOptions } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
-import { WithTimeout } from '@/src/lib/types';
+import type { WithTimeout } from '@/src/lib';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { Db } from '@/src/db';
@@ -113,7 +113,10 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @returns The available embedding providers.
    */
   public override async findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult> {
-    const resp = await this.#httpClient.executeCommand({ findEmbeddingProviders: {} }, { keyspace: null, maxTimeMS: options?.maxTimeMS });
+    const resp = await this.#httpClient.executeCommand({ findEmbeddingProviders: {} }, {
+      timeoutManager: this.#httpClient.tm.single('databaseAdminTimeout', options),
+      keyspace: null,
+    });
     return resp.status as FindEmbeddingProvidersResult;
   }
 
@@ -134,7 +137,10 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @returns A promise that resolves to list of all the keyspaces in the database.
    */
   public override async listKeyspaces(options?: WithTimeout): Promise<string[]> {
-    const resp = await this.#httpClient.executeCommand({ findKeyspaces: {} }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
+    const resp = await this.#httpClient.executeCommand({ findKeyspaces: {} }, {
+      timeoutManager: this.#httpClient.tm.single('keyspaceAdminTimeout', options),
+      keyspace: null,
+    });
     return resp.status!.keyspaces;
   }
 
@@ -178,7 +184,10 @@ export class DataAPIDbAdmin extends DbAdmin {
       replicationFactor: 1,
     };
 
-    await this.#httpClient.executeCommand({ createKeyspace: { name: keyspace, options: { replication } } }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
+    await this.#httpClient.executeCommand({ createKeyspace: { name: keyspace, options: { replication } } }, {
+      timeoutManager: this.#httpClient.tm.single('keyspaceAdminTimeout', options),
+      keyspace: null,
+    });
   }
 
   /**
@@ -203,7 +212,10 @@ export class DataAPIDbAdmin extends DbAdmin {
    * @returns A promise that resolves when the operation completes.
    */
   public override async dropKeyspace(keyspace: string, options?: WithTimeout): Promise<void> {
-    await this.#httpClient.executeCommand({ dropKeyspace: { name: keyspace } }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
+    await this.#httpClient.executeCommand({ dropKeyspace: { name: keyspace } }, {
+      timeoutManager: this.#httpClient.tm.single('keyspaceAdminTimeout', options),
+      keyspace: null,
+    });
   }
 
   public get _httpClient() {

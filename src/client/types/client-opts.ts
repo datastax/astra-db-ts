@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPIEnvironment, DataAPILoggingConfig } from '@/src/lib';
+import type { DataAPIEnvironment, DataAPILoggingConfig, TimeoutDescriptor } from '@/src/lib';
 import type { Caller, DataAPIHttpOptions, DefaultAdminSpawnOptions, DefaultDbSpawnOptions } from '@/src/client';
 import { OneOrMany } from '@/src/lib/types';
 
@@ -115,4 +115,5 @@ export interface DataAPIClientOptions {
    * ```
    */
   caller?: OneOrMany<Caller>,
+  timeoutDefaults?: Partial<TimeoutDescriptor>,
 }

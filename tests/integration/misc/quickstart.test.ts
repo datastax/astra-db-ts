@@ -36,7 +36,7 @@ parallel('integration.misc.quickstart', { dropEphemeral: 'colls:after' }, () => 
     const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
     const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
 
-    const collection = await db.createCollection<Idea>('vector_5_collection', { vector: { dimension: 5, metric: 'cosine' }, maxTimeMS: 60000 });
+    const collection = await db.createCollection<Idea>('vector_5_collection', { vector: { dimension: 5, metric: 'cosine' }, timeout: 60000 });
 
     const ideas = [
       {
@@ -115,7 +115,7 @@ parallel('integration.misc.quickstart', { dropEphemeral: 'colls:after' }, () => 
     const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
     const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
 
-    const collection = await db.createCollection<Person>('my_collection', { defaultId: { type: 'uuidv7' }, maxTimeMS: 60000 });
+    const collection = await db.createCollection<Person>('my_collection', { defaultId: { type: 'uuidv7' }, timeout: 60000 });
 
     await collection.insertOne({ _id: new ObjectId("65fd9b52d7fabba03349d013"), name: 'John' });
 

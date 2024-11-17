@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import { Collection, SomeDoc } from '@/src/documents/collections';
-import { DEFAULT_KEYSPACE, RawDataAPIResponse } from '@/src/lib/api';
+import { DEFAULT_KEYSPACE, RawDataAPIResponse, WithTimeout } from '@/src/lib/api';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
-import { DataAPIEnvironment, nullish, WithTimeout } from '@/src/lib/types';
+import { DataAPIEnvironment, nullish } from '@/src/lib/types';
 import { extractDbIdFromUrl, extractRegionFromUrl } from '@/src/documents/utils';
 import { AdminSpawnOptions, DbAdmin } from '@/src/administration';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin';
@@ -42,6 +42,7 @@ import { Logger } from '@/src/lib/logging/logger';
 import { $CustomInspect } from '@/src/lib/constants';
 import { InvalidEnvironmentError } from '@/src/db/errors';
 import { AstraDbInfo } from '@/src/administration/types/admin/database-info';
+import { Timeouts } from '@/src/lib/api/timeouts';
 
 /**
  * #### Overview
@@ -140,6 +141,7 @@ export class Db {
         token: token,
         logging: Logger.advanceConfig(rootOpts.dbOptions.logging, dbOpts?.logging),
         additionalHeaders: { ...rootOpts.dbOptions.additionalHeaders, ...dbOpts?.additionalHeaders },
+        timeoutDefaults: Timeouts.merge(rootOpts.dbOptions.timeoutDefaults, dbOpts?.timeoutDefaults),
         serdes: {
           collection: {
             serialize: [...toArray(dbOpts?.serdes?.collection?.serialize ?? []), ...toArray(rootOpts.dbOptions.serdes?.collection?.serialize ?? [])],
@@ -179,6 +181,7 @@ export class Db {
       userAgent: rootOpts.userAgent,
       emissionStrategy: EmissionStrategy.Normal,
       additionalHeaders: this.#defaultOpts.dbOptions.additionalHeaders,
+      timeoutDefaults: this.#defaultOpts.dbOptions.timeoutDefaults,
     });
 
     this.#id = extractDbIdFromUrl(endpoint);
@@ -770,8 +773,8 @@ export class Db {
     };
 
     await this.#httpClient.executeCommand(command, {
-      keyspace: options?.keyspace ?? this.keyspace,
-      maxTimeMS: options?.maxTimeMS,
+      timeoutManager: this.#httpClient.tm.custom({}, () => [720000, 'collectionAdminTimeout']),
+      keyspace: options?.keyspace,
     });
 
     return this.collection(name, options);
@@ -955,8 +958,8 @@ export class Db {
     };
 
     await this.#httpClient.executeCommand(command, {
-      keyspace: options?.keyspace ?? this.keyspace,
-      maxTimeMS: options?.maxTimeMS,
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeout', options),
+      keyspace: options?.keyspace,
     });
 
     return this.table(name, options);
@@ -989,7 +992,10 @@ export class Db {
    * @remarks Use with caution. Have steel-toe boots on. Don't say I didn't warn you.
    */
   public async dropCollection(name: string, options?: DropCollectionOptions): Promise<void> {
-    await this.#httpClient.executeCommand({ deleteCollection: { name } }, options);
+    await this.#httpClient.executeCommand({ deleteCollection: { name } }, {
+      timeoutManager: this.#httpClient.tm.single('collectionAdminTimeout', options),
+      keyspace: options?.keyspace,
+    });
   }
 
   /**
@@ -1019,11 +1025,16 @@ export class Db {
    * @remarks Use with caution. Wear a mask. Don't say I didn't warn you.
    */
   public async dropTable(name: string, options?: DropTableOptions): Promise<void> {
-    await this.#httpClient.executeCommand({ dropTable: { name } }, options);
+    await this.#httpClient.executeCommand({ dropTable: { name } }, {
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeout', options),
+      keyspace: options?.keyspace,
+    });
   }
 
   public async dropTableIndex(name: string, options?: WithTimeout): Promise<void> {
-    await this.#httpClient.executeCommand({ dropIndex: { name } }, options);
+    await this.#httpClient.executeCommand({ dropIndex: { name } }, {
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeout', options),
+    });
   }
 
   /**
@@ -1080,7 +1091,10 @@ export class Db {
       },
     };
 
-    const resp = await this.#httpClient.executeCommand(command, options);
+    const resp = await this.#httpClient.executeCommand(command, {
+      timeoutManager: this.#httpClient.tm.single('collectionAdminTimeout', options),
+      keyspace: options?.keyspace,
+    });
     return resp.status!.collections;
   }
 
@@ -1138,7 +1152,10 @@ export class Db {
       },
     };
 
-    const resp = await this.#httpClient.executeCommand(command, options);
+    const resp = await this.#httpClient.executeCommand(command, {
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeout', options),
+      keyspace: options?.keyspace,
+    });
     return resp.status!.tables;
   }
 
@@ -1178,9 +1195,9 @@ export class Db {
     }
 
     return await this.#httpClient.executeCommand(command, {
-      keyspace: options?.keyspace,
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeout', options),
       collection: options?.collection ?? options?.table,
-      maxTimeMS: options?.maxTimeMS,
+      keyspace: options?.keyspace,
     });
   }
 

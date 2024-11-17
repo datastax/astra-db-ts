@@ -375,7 +375,9 @@ export class Table<Schema extends SomeRow = SomeRow> {
         name: this.name,
         operation: options.operation,
       },
-    }, options);
+    }, {
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeout', options),
+    });
     return this;
   }
 
@@ -395,7 +397,9 @@ export class Table<Schema extends SomeRow = SomeRow> {
           ifNotExists: options?.ifNotExists,
         },
       },
-    }, options);
+    }, {
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeout', options),
+    });
   }
 
   public async createVectorIndex(name: string, column: Cols<Schema> | string, options?: CreateTableVectorIndexOptions): Promise<void> {
@@ -413,11 +417,16 @@ export class Table<Schema extends SomeRow = SomeRow> {
           ifNotExists: options?.ifNotExists,
         },
       },
-    }, options);
+    }, {
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeout', options),
+    });
   }
 
   public async definition(options?: WithTimeout): Promise<ListTableDefinition> {
-    const results = await this.#db.listTables({ maxTimeMS: options?.maxTimeMS, keyspace: this.keyspace });
+    const results = await this.#db.listTables({
+      timeout: options?.timeout,
+      keyspace: this.keyspace,
+    });
 
     const table = results.find((t) => t.name === this.name);
 

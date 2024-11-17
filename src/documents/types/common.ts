@@ -52,7 +52,7 @@ export type SortDirection = 1 | -1 | 'asc' | 'desc' | 'ascending' | 'descending'
  *
  * @public
  */
-export type Sort = Record<string, SortDirection | number[] | DataAPIVector>;
+export type Sort = Record<string, SortDirection | number[] | DataAPIVector | string>;
 
 /**
  * Specifies which fields should be included/excluded in the returned documents.

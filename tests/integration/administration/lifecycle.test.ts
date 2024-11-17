@@ -15,7 +15,6 @@
 
 import assert from 'assert';
 import { DevOpsAPIResponseError } from '@/src/administration';
-import { TimeoutManager } from '@/src/lib/api/timeout-managers';
 import { background, it, TEMP_DB_NAME } from '@/tests/testlib';
 import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
 import { buildAstraEndpoint } from '@/src/lib/utils';
@@ -26,7 +25,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
     for (const db of await admin.listDatabases()) {
       if (db.name === TEMP_DB_NAME && db.status !== 'TERMINATING') {
-        void admin.dropDatabase(db.id, { maxTimeMS: 720000 });
+        void admin.dropDatabase(db.id, { timeout: 720000 });
       }
     }
 
@@ -37,7 +36,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
       keyspace: 'my_keyspace',
     }, {
       blocking: false,
-      maxTimeMS: 720000,
+      timeout: 720000,
     });
     const asyncDb = asyncDbAdmin.db();
 
@@ -100,7 +99,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
       name: TEMP_DB_NAME,
       cloudProvider: 'GCP',
       region: 'us-east1',
-    }, { maxTimeMS: 720000 });
+    }, { timeout: 720000 });
     const syncDb = syncDbAdmin.db();
 
     {
@@ -131,7 +130,8 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
         defaultPollInterval: 10000,
         id: null!,
         options: undefined,
-      }, new TimeoutManager(0, () => new Error('Timeout')), 0);
+        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeout', { timeout: 0 }),
+      }, 0);
     }
 
     for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -179,7 +179,8 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
         defaultPollInterval: 1000,
         id: null!,
         options: undefined,
-      }, new TimeoutManager(0, () => new Error('Timeout')), 0);
+        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeout', { timeout: 0 }),
+      }, 0);
     }
 
     for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -203,7 +204,8 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
         defaultPollInterval: 1000,
         id: null!,
         options: undefined,
-      }, new TimeoutManager(0, () => new Error('Timeout')), 0);
+        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeout', { timeout: 0 }),
+      }, 0);
     }
 
     for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -222,14 +224,15 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     }
 
     {
-      await admin.dropDatabase(syncDb, { maxTimeMS: 720000 });
+      await admin.dropDatabase(syncDb, { timeout: 720000 });
       await asyncDbAdmin._httpClient['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'TERMINATED',
         legalStates: ['TERMINATING'],
         defaultPollInterval: 10000,
         id: null!,
         options: undefined,
-      }, new TimeoutManager(0, () => new Error('Timeout')), 0);
+        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeout', { timeout: 0 }),
+      }, 0);
     }
 
     for (const [dbAdmin, dbType] of [[syncDbAdmin, 'sync'], [asyncDbAdmin, 'async']] as const) {
@@ -238,10 +241,10 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     }
 
     {
-      await assert.rejects(async () => { await admin.dropDatabase(syncDb.id, { maxTimeMS: 720000 }); }, DevOpsAPIResponseError);
-      await assert.rejects(async () => { await admin.dropDatabase(syncDb.id, { blocking: false, maxTimeMS: 720000 }); }, DevOpsAPIResponseError);
-      await assert.rejects(async () => { await admin.dropDatabase(syncDb, { maxTimeMS: 720000 }); }, DevOpsAPIResponseError);
-      await assert.rejects(async () => { await admin.dropDatabase(syncDb, { blocking: false, maxTimeMS: 720000 }); }, DevOpsAPIResponseError);
+      await assert.rejects(async () => { await admin.dropDatabase(syncDb.id, { timeout: 720000 }); }, DevOpsAPIResponseError);
+      await assert.rejects(async () => { await admin.dropDatabase(syncDb.id, { blocking: false, timeout: 720000 }); }, DevOpsAPIResponseError);
+      await assert.rejects(async () => { await admin.dropDatabase(syncDb, { timeout: 720000 }); }, DevOpsAPIResponseError);
+      await assert.rejects(async () => { await admin.dropDatabase(syncDb, { blocking: false, timeout: 720000 }); }, DevOpsAPIResponseError);
       await assert.rejects(async () => { await syncDbAdmin.drop(); }, DevOpsAPIResponseError);
       await assert.rejects(async () => { await syncDbAdmin.drop({ blocking: false }); }, DevOpsAPIResponseError);
     }

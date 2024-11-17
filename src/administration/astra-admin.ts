@@ -34,6 +34,7 @@ import { Logger } from '@/src/lib/logging/logger';
 import { DbSpawnOptions } from '@/src/client';
 import { $CustomInspect } from '@/src/lib/constants';
 import { SomeDoc } from '@/src/documents';
+import { Timeouts } from '@/src/lib/api/timeouts';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -84,6 +85,7 @@ export class AstraAdmin {
         logging: Logger.advanceConfig(rootOpts.adminOptions.logging, adminOpts?.logging),
         additionalHeaders: { ...rootOpts.adminOptions.additionalHeaders, ...adminOpts?.additionalHeaders },
         astraEnv: adminOpts?.astraEnv ?? rootOpts.adminOptions.astraEnv,
+        timeoutDefaults: Timeouts.merge(rootOpts.adminOptions.timeoutDefaults, adminOpts?.timeoutDefaults),
       },
       dbOptions: {
         ...rootOpts.dbOptions,
@@ -101,6 +103,7 @@ export class AstraAdmin {
       userAgent: rootOpts.userAgent,
       tokenProvider: this.#defaultOpts.adminOptions.adminToken,
       additionalHeaders: this.#defaultOpts.adminOptions.additionalHeaders,
+      timeoutDefaults: Timeouts.merge(rootOpts.adminOptions.timeoutDefaults, this.#defaultOpts.adminOptions.timeoutDefaults),
     });
 
     Object.defineProperty(this, $CustomInspect, {
@@ -284,10 +287,12 @@ export class AstraAdmin {
    * @returns A promise that resolves to the complete database information.
    */
   public async dbInfo(id: string, options?: WithTimeout): Promise<AstraDbAdminInfo> {
+    const tm = this.#httpClient.tm.single('databaseAdminTimeout', options);
+
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases/${id}`,
-    }, options);
+    }, tm);
 
     return buildAstraDatabaseAdminInfo(resp.data!, this.#environment);
   }
@@ -337,11 +342,13 @@ export class AstraAdmin {
       params['starting_after'] = String(options.skip);
     }
 
+    const tm = this.#httpClient.tm.single('databaseAdminTimeout', options);
+
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases`,
       params: params,
-    }, options);
+    }, tm);
 
     return resp.data!.map((d: SomeDoc) => buildAstraDatabaseAdminInfo(d, this.#environment));
   }
@@ -407,6 +414,8 @@ export class AstraAdmin {
       ...config,
     };
 
+    const tm = this.#httpClient.tm.multipart('databaseAdminTimeout', options);
+
     const resp = await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: '/databases',
@@ -416,6 +425,7 @@ export class AstraAdmin {
       target: 'ACTIVE',
       legalStates: ['INITIALIZING', 'PENDING'],
       defaultPollInterval: 10000,
+      timeoutManager: tm,
       options,
     });
 
@@ -452,6 +462,8 @@ export class AstraAdmin {
   public async dropDatabase(db: Db | string, options?: AstraAdminBlockingOptions): Promise<void> {
     const id = typeof db === 'string' ? db : db.id;
 
+    const tm = this.#httpClient.tm.multipart('databaseAdminTimeout', options);
+
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: `/databases/${id}/terminate`,
@@ -460,6 +472,7 @@ export class AstraAdmin {
       target: 'TERMINATED',
       legalStates: ['TERMINATING'],
       defaultPollInterval: 10000,
+      timeoutManager: tm,
       options,
     });
   }

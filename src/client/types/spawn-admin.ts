@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPILoggingConfig, TokenProvider } from '@/src/lib';
+import type { DataAPILoggingConfig, TimeoutDescriptor, TokenProvider } from '@/src/lib';
 
-export type DefaultAdminSpawnOptions = Omit<AdminSpawnOptions, 'logging'>;
+export type DefaultAdminSpawnOptions = Omit<AdminSpawnOptions, 'logging' | 'timeoutDefaults'>;
 
 /**
  * The options available spawning a new {@link AstraAdmin} instance.
@@ -78,4 +78,5 @@ export interface AdminSpawnOptions {
    * In the case of {@link DataAPIDbAdmin}, it will simply ignore this value.
    */
   astraEnv?: 'dev' | 'prod' | 'test',
+  timeoutDefaults?: Partial<TimeoutDescriptor>,
 }

@@ -21,6 +21,7 @@ import { $CustomInspect } from '@/src/lib/constants';
 import type { DataAPISerDes } from '@/src/lib/api/ser-des';
 import { DataAPIError } from '@/src/documents/errors';
 import type { Table } from '@/src/documents/tables';
+import { TimeoutManager } from '@/src/lib/api/timeouts';
 
 export class CursorError extends DataAPIError {
   public readonly cursor: FindCursor<unknown>;
@@ -120,6 +121,8 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   readonly #filter: [Filter<TRaw>, boolean];
   readonly #mapping?: (doc: any) => T;
 
+  readonly #timeoutManager: TimeoutManager;
+
   #buffer: TRaw[] = [];
   #nextPageState?: string | null;
   #state = 'idle' as CursorStatus;
@@ -137,6 +140,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this.#filter = filter;
     this.#options = options ?? {};
     this.#mapping = mapping;
+    this.#timeoutManager = parent._httpClient.tm.multipart('generalMethodTimeout', options);
 
     Object.defineProperty(this, $CustomInspect, {
       value: () => `FindCursor(source="${this.#parent.keyspace}.${this.#parent.name}",state="${this.#state}",consumed=${this.#consumed},buffered=${this.#buffer.length})`,
@@ -618,7 +622,10 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
       },
     };
 
-    const raw = await this.#parent._httpClient.executeCommand(command, { bigNumsPresent: this.#filter[1] });
+    const raw = await this.#parent._httpClient.executeCommand(command, {
+      timeoutManager: this.#timeoutManager,
+      bigNumsPresent: this.#filter[1],
+    });
 
     this.#nextPageState = raw.data?.nextPageState || null;
     this.#buffer = raw.data?.documents ?? [];

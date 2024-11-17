@@ -21,10 +21,10 @@ parallel('integration.documents.collections.misc', ({ db }) => {
     const { db: newDb } = initTestObjects({ httpClient: 'default:http2' });
 
     try {
-      await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });
+      await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { timeout: 10 });
     } catch (e) {
       assert.ok(e instanceof DataAPITimeoutError);
-      assert.strictEqual(e.message, 'Command timed out after 10ms');
+      assert.strictEqual(e.message, 'Command timed out after 10ms (provided timed out)');
     }
   });
 
@@ -32,10 +32,10 @@ parallel('integration.documents.collections.misc', ({ db }) => {
     const { db: newDb } = initTestObjects({ httpClient: 'default:http1' });
 
     try {
-      await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { maxTimeMS: 10 });
+      await newDb.collection(DEFAULT_COLLECTION_NAME).insertOne({ username: 'test' }, { timeout: 10 });
     } catch (e) {
       assert.ok(e instanceof DataAPITimeoutError);
-      assert.strictEqual(e.message, 'Command timed out after 10ms');
+      assert.strictEqual(e.message, 'Command timed out after 10ms (provided timed out)');
     }
   });
 

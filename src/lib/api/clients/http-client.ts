@@ -20,6 +20,7 @@ import type { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/l
 import type { DataAPIClientEvents } from '@/src/lib/logging';
 import { Logger } from '@/src/lib/logging/logger';
 import { OneOrMany } from '@/src/lib/types';
+import { MkTimeoutError, Timeouts } from '@/src/lib/api/timeouts';
 
 /**
  * @internal
@@ -31,8 +32,9 @@ export abstract class HttpClient {
   readonly fetchCtx: FetchCtx;
   readonly baseHeaders: Record<string, any>;
   readonly headerProviders: HeaderProvider[];
+  tm: Timeouts;
 
-  protected constructor(options: HTTPClientOptions, headerProviders: HeaderProvider[]) {
+  protected constructor(options: HTTPClientOptions, headerProviders: HeaderProvider[], mkTimeoutError: MkTimeoutError) {
     this.baseUrl = options.baseUrl;
     this.emitter = options.emitter;
     this.logger = new Logger(options.logging, options.emitter, console);
@@ -48,6 +50,7 @@ export abstract class HttpClient {
     this.baseHeaders['Feature-Flag-tables'] = 'true';
 
     this.headerProviders = headerProviders;
+    this.tm = new Timeouts(mkTimeoutError, options.timeoutDefaults);
   }
 
   protected async _request(info: HTTPRequestInfo): Promise<FetcherResponseInfo> {
@@ -55,10 +58,10 @@ export abstract class HttpClient {
       throw new Error('Can\'t make requests on a closed client');
     }
 
-    const msRemaining = info.timeoutManager.msRemaining();
+    const [msRemaining, mkTimeoutError] = info.timeoutManager.advance(info);
 
     if (msRemaining <= 0) {
-      throw info.timeoutManager.mkTimeoutError(info);
+      throw mkTimeoutError();
     }
 
     const params = info.params ?? {};
@@ -86,7 +89,7 @@ export abstract class HttpClient {
       headers: reqHeaders,
       forceHttp1: info.forceHttp1,
       timeout: msRemaining,
-      mkTimeoutError: () => info.timeoutManager.mkTimeoutError(info),
+      mkTimeoutError,
     });
   }
 }

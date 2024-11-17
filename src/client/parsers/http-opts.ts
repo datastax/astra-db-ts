@@ -44,7 +44,6 @@ export const parseHttpOpts: Parser<DataAPIHttpOptions | undefined> = (raw, field
 
 const parseDefaultHttpOpts: Parser<DefaultHttpClientOptions> = (opts, field) => {
   const preferHttp2 = p.parse('boolean?')(opts.preferHttp2, `${field}.preferHttp2`) ?? true;
-  const maxTimeMS = p.parse('number?')(opts.maxTimeMS, `${field}.maxTimeMS`);
 
   const http1 = p.parse('object?', (http1, field) => {
     return {
@@ -62,17 +61,14 @@ const parseDefaultHttpOpts: Parser<DefaultHttpClientOptions> = (opts, field) => 
     };
   })(opts.fetchH2, `${field}.fetchH2`);
 
-  return { client: 'default', preferHttp2, maxTimeMS, http1, fetchH2 };
+  return { client: 'default', preferHttp2, http1, fetchH2 };
 };
 
-const parseFetchHttpOpts: Parser<FetchHttpClientOptions> = (opts, field) => {
-  const maxTimeMS = p.parse('number?')(opts.maxTimeMS, `${field}.maxTimeMS`);
-  return { client: 'fetch', maxTimeMS };
+const parseFetchHttpOpts: Parser<FetchHttpClientOptions> = () => {
+  return { client: 'fetch' };
 };
 
 const parseCustomHttpOpts: Parser<CustomHttpClientOptions> = (opts, field) => {
-  const maxTimeMS = p.parse('number?')(opts.maxTimeMS, `${field}.maxTimeMS`);
-
   const fetcher = p.parse('object!', (fetcher, field) => {
     return {
       close: p.parse('function?')(fetcher.close, `${field}.close`),
@@ -80,5 +76,5 @@ const parseCustomHttpOpts: Parser<CustomHttpClientOptions> = (opts, field) => {
     };
   })(opts.fetcher, `${field}.fetcher`);
 
-  return { client: 'custom', maxTimeMS, fetcher };
+  return { client: 'custom', fetcher };
 };
