@@ -151,7 +151,11 @@ export interface TimeoutDescriptor {
   /**
    * The overall method timeout for methods that don't have a specific overall method timeout.
    *
-   * (mostly applies to document/row-level operations)
+   * Mostly applies to document/row-level operations. DDL-esque operations (working with collections, tables, databases, keyspaces, indexes, etc.) have their own overall method timeouts.
+   *
+   * In single-call methods, such as `insertOne`, the minimum of `requestTimeoutMs` and `generalMethodTimeoutMs` is used as the timeout.
+   *
+   * In multi-call methods, such as `insertMany`, the `requestTimeoutMs` is used as the timeout for each individual call, and the `generalMethodTimeoutMs` is used as the timeout for the entire method.
    *
    * Default: 30 seconds
    */
@@ -159,7 +163,11 @@ export interface TimeoutDescriptor {
   /**
    * The overall method timeout for collection admin operations.
    *
-   * (create, drop, list, etc.)
+   * Such methods include (but may not be limited to):
+   * - `db.createCollection()`
+   * - `db.dropCollection()`
+   * - `db.listCollections()`
+   * - `collection.options()`
    *
    * Default: 1 minute
    */
@@ -167,7 +175,15 @@ export interface TimeoutDescriptor {
   /**
    * The overall method timeout for table admin operations.
    *
-   * (create, drop, list, alter, create/dropIndex, etc.)
+   * Such methods include (but may not be limited to):
+   * - `db.createTable()`
+   * - `db.dropTable()`
+   * - `db.listTables()`
+   * - `table.alter()`
+   * - `table.createIndex()`
+   * - `db.dropTableIndex()`
+   * - `table.definition()`
+   *
    *
    * Default: 30 seconds
    */
@@ -175,7 +191,12 @@ export interface TimeoutDescriptor {
   /**
    * The overall method timeout for database admin operations.
    *
-   * (create, drop, list, info, findEmbeddingProviders, etc.)
+   * Such methods include (but may not be limited to):
+   * - `admin.createDatabase()`
+   * - `admin.dropDatabase()`
+   * - `admin.listDatabases()`
+   * - `dbAdmin.info()`
+   * - `dbAdmin.findEmbeddingProviders()`
    *
    * Default: 10 minutes
    */
@@ -183,7 +204,10 @@ export interface TimeoutDescriptor {
   /**
    * The overall method timeout for keyspace admin operations.
    *
-   * (create, drop, list)
+   * Such methods include (but may not be limited to):
+   * - `admin.createKeyspace()`
+   * - `admin.dropKeyspace()`
+   * - `admin.listKeyspaces()`
    *
    * Default: 30 seconds
    */
@@ -227,11 +251,18 @@ export interface TimeoutDescriptor {
  * });
  * ```
  *
+ * See {@link TimeoutDescriptor} for much more information.
+ *
  * @see TimeoutDescriptor
  *
  * @public
  */
 export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor> {
+  /**
+   * The method timeout override.
+   *
+   * See {@link TimeoutDescriptor} for much more information.
+   */
   timeout?: number | Pick<Partial<TimeoutDescriptor>, 'requestTimeoutMs' | Timeouts>;
 }
 

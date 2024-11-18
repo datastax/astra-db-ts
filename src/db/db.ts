@@ -1030,7 +1030,7 @@ export class Db {
    * @remarks Use with caution. Wear a mask. Don't say I didn't warn you.
    */
   public async dropTable(name: string, options?: DropTableOptions): Promise<void> {
-    await this.#httpClient.executeCommand({ dropTable: { name } }, {
+    await this.#httpClient.executeCommand({ dropTable: { name, options: { ifExists: options?.ifExists } } }, {
       timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
       keyspace: options?.keyspace,
     });

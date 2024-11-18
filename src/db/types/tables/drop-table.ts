@@ -15,4 +15,6 @@
 import type { WithTimeout } from '@/src/lib';
 import { WithKeyspace } from '@/src/db';
 
-export interface DropTableOptions extends WithTimeout<'tableAdminTimeoutMs'>, WithKeyspace {}
+export interface DropTableOptions extends WithTimeout<'tableAdminTimeoutMs'>, WithKeyspace {
+  ifExists?: boolean;
+}
