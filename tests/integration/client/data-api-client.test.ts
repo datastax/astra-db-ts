@@ -28,10 +28,11 @@ import {
 } from '@/tests/testlib';
 import { DataAPIResponseError, DataAPITimeoutError, UUID } from '@/src/documents';
 import { DEFAULT_KEYSPACE } from '@/src/lib/api';
-import { DEFAULT_DATA_API_PATHS, DEFAULT_TIMEOUT } from '@/src/lib/api/constants';
+import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
 import { before } from 'mocha';
+import { Timeouts } from '@/src/lib/api/timeouts';
 
-describe('integration.client.documents-client', () => {
+describe('integration.client.data-api-client', () => {
   parallel('db', () => {
     it('properly connects to a db by endpoint', async () => {
       const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
@@ -142,7 +143,7 @@ describe('integration.client.documents-client', () => {
       });
 
       await collection1.insertOne({ name: 'Chthonic' });
-      await collection2.deleteOne({ name: 'Chthonic' }, { maxTimeMS: 10000 });
+      await collection2.deleteOne({ name: 'Chthonic' }, { timeout: 10000 });
 
       assert.ok(startedEvents[0] instanceof CommandStartedEvent);
       assert.ok(succeededEvents[0] instanceof CommandSucceededEvent);
@@ -169,9 +170,9 @@ describe('integration.client.documents-client', () => {
       assert.strictEqual(startedEvents[1].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${OTHER_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
       assert.strictEqual(succeededEvents[1].url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${OTHER_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
 
-      assert.strictEqual(startedEvents[0].timeout, DEFAULT_TIMEOUT);
+      assert.deepStrictEqual(startedEvents[0].timeout, { generalMethodTimeoutMs: Timeouts.Default.generalMethodTimeoutMs, requestTimeoutMs: Timeouts.Default.requestTimeoutMs });
       assert.ok(succeededEvents[0].duration > 0);
-      assert.strictEqual(startedEvents[1].timeout, 10000);
+      assert.deepStrictEqual(startedEvents[1].timeout, { requestTimeoutMs: 10000, generalMethodTimeoutMs: 10000 });
       assert.ok(succeededEvents[1].duration > 0);
 
       assert.deepStrictEqual(startedEvents[0].command, { insertOne: { document: { name: 'Chthonic' } } });
@@ -233,7 +234,7 @@ describe('integration.client.documents-client', () => {
       assert.strictEqual(startedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
       assert.strictEqual(failedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
 
-      assert.strictEqual(startedEvent.timeout, DEFAULT_TIMEOUT);
+      assert.deepStrictEqual(startedEvent.timeout, { generalMethodTimeoutMs: Timeouts.Default.generalMethodTimeoutMs, requestTimeoutMs: Timeouts.Default.requestTimeoutMs });
       assert.ok(failedEvent.duration > 0);
 
       assert.deepStrictEqual(startedEvent.command, { insertOne: { document: { _id: 0, name: 'Oasis' } } });
@@ -269,7 +270,7 @@ describe('integration.client.documents-client', () => {
         failedEvent = event;
       });
 
-      await assert.rejects(() => collection.insertOne({ name: 'Xandria' }, { maxTimeMS: 1 }));
+      await assert.rejects(() => collection.insertOne({ name: 'Xandria' }, { timeout: 1 }));
 
       assert.ok(startedEvent instanceof CommandStartedEvent);
       assert.ok(failedEvent instanceof CommandFailedEvent);
@@ -286,14 +287,14 @@ describe('integration.client.documents-client', () => {
       assert.strictEqual(startedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
       assert.strictEqual(failedEvent.url, `${TEST_APPLICATION_URI}/${DEFAULT_DATA_API_PATHS[ENVIRONMENT]}/${DEFAULT_KEYSPACE}/${DEFAULT_COLLECTION_NAME}`);
 
-      assert.strictEqual(startedEvent.timeout, 1);
+      assert.deepStrictEqual(startedEvent.timeout, { generalMethodTimeoutMs: 1, requestTimeoutMs: 1 });
       assert.ok(failedEvent.duration > 0);
 
       assert.deepStrictEqual(startedEvent.command, { insertOne: { document: { name: 'Xandria' } } });
       assert.deepStrictEqual(failedEvent.command, { insertOne: { document: { name: 'Xandria' } } });
 
       assert.ok(failedEvent.error instanceof DataAPITimeoutError);
-      assert.strictEqual(failedEvent.error.timeout, 1);
+      assert.deepStrictEqual(failedEvent.error.timeout, { generalMethodTimeoutMs: 1, requestTimeoutMs: 1 });
 
       assert.deepStrictEqual(stdout, []);
       assert.deepStrictEqual(stderr[0], startedEvent.formatted());

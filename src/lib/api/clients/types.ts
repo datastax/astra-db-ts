@@ -17,8 +17,8 @@ import type { DataAPICommandEvents } from '@/src/documents';
 import type { FetchCtx } from '@/src/lib/api/fetch/types';
 import type { HttpMethods } from '@/src/lib/api/constants';
 import type { Ref } from '@/src/lib/types';
-import type { TimeoutManager } from '@/src/lib/api/timeout-managers';
 import type { NormalizedLoggingConfig } from '@/src/lib/logging/types';
+import { TimeoutDescriptor, TimeoutManager } from '@/src/lib/api/timeouts';
 
 /**
  * @internal
@@ -31,6 +31,7 @@ export interface HTTPClientOptions {
   fetchCtx: FetchCtx,
   userAgent: string,
   additionalHeaders: Record<string, string> | undefined,
+  timeoutDefaults: TimeoutDescriptor,
 }
 
 /**

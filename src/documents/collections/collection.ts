@@ -212,7 +212,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       parseWithBigNumbers: () => !!opts?.serdes?.enableBigNumbers,
       parser: withJbiNullProtoFix(jbi),
     };
-
     this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
     this.#commands = new CommandImpls(this, this.#httpClient, mkCollectionSerDes(opts?.serdes));
     this.#db = db;
@@ -274,7 +273,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns The ID of the inserted document.
    */
-  public async insertOne(document: MaybeId<Schema>, options?: WithTimeout): Promise<CollectionInsertOneResult<Schema>> {
+  public async insertOne(document: MaybeId<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionInsertOneResult<Schema>> {
     return this.#commands.insertOne(document, options);
   }
 
@@ -679,7 +678,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  public async deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<CollectionDeleteManyResult> {
+  public async deleteMany(filter: Filter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionDeleteManyResult> {
     return this.#commands.deleteMany(filter, options);
   }
 
@@ -1289,7 +1288,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  public async countDocuments(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number> {
+  public async countDocuments(filter: Filter<Schema>, upperBound: number, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number> {
     return this.#commands.countDocuments(filter, upperBound, options, TooManyDocumentsToCountError);
   }
 
@@ -1314,7 +1313,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns The estimated number of documents in the collection
    */
-  public async estimatedDocumentCount(options?: WithTimeout): Promise<number> {
+  public async estimatedDocumentCount(options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number> {
     return this.#commands.estimatedDocumentCount(options);
   }
 
@@ -1563,8 +1562,8 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns The options that the collection was created with (i.e. the `vector` and `indexing` operations).
    */
-  public async options(options?: WithTimeout): Promise<CollectionOptions<SomeDoc>> {
-    const results = await this.#db.listCollections({ maxTimeMS: options?.maxTimeMS, keyspace: this.keyspace });
+  public async options(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<CollectionOptions<SomeDoc>> {
+    const results = await this.#db.listCollections({ timeout: options?.timeout, keyspace: this.keyspace });
 
     const collection = results.find((c) => c.name === this.name);
 
@@ -1598,7 +1597,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @remarks Use with caution. Wear your safety goggles. Don't say I didn't warn you.
    */
-  public async drop(options?: WithTimeout): Promise<void> {
+  public async drop(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<void> {
     await this.#db.dropCollection(this.name, { keyspace: this.keyspace, ...options });
   }
 

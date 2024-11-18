@@ -20,7 +20,7 @@ import { DataAPIVector, ToDotNotation } from '@/src/documents';
  *
  * @public
  */
-export type SortDirection = 1 | -1 | 'asc' | 'desc' | 'ascending' | 'descending';
+export type SortDirection = 1 | -1;
 
 /**
  * Specifies the sort criteria for selecting documents.
@@ -52,7 +52,7 @@ export type SortDirection = 1 | -1 | 'asc' | 'desc' | 'ascending' | 'descending'
  *
  * @public
  */
-export type Sort = Record<string, SortDirection | number[] | DataAPIVector>;
+export type Sort = Record<string, SortDirection | number[] | DataAPIVector | string>;
 
 /**
  * Specifies which fields should be included/excluded in the returned documents.

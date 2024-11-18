@@ -14,7 +14,6 @@
 
 import { DataAPIHttpClient } from '@/src/lib/api/clients';
 import { DataAPISerDes } from '@/src/lib/api/ser-des';
-import { TimeoutManager } from '@/src/lib/api/timeout-managers';
 import {
   DataAPIDetailedErrorDescriptor,
   DataAPIResponseError,
@@ -22,6 +21,7 @@ import {
   mkRespErrorFromResponses,
 } from '@/src/documents/errors';
 import { GenericInsertManyDocumentResponse, SomeDoc, SomeId } from '@/src/documents';
+import { TimeoutManager } from '@/src/lib/api/timeouts';
 
 export const insertManyOrdered = async <ID>(
   httpClient: DataAPIHttpClient,

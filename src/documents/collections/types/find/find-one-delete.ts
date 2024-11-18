@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { Projection, Sort } from '@/src/documents';
-import { WithTimeout } from '@/src/lib/types';
+import type { WithTimeout } from '@/src/lib';
 
 /**
  * Represents the options for the `findOneAndDelete` command.
@@ -26,7 +26,7 @@ import { WithTimeout } from '@/src/lib/types';
  *
  * @public
  */
-export interface CollectionFindOneAndDeleteOptions extends WithTimeout {
+export interface CollectionFindOneAndDeleteOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   /**
    * The order in which to apply the update if the filter selects multiple documents.
    *

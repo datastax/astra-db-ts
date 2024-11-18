@@ -26,6 +26,10 @@ export type {
 } from './admin/create-database';
 
 export type {
+  DropAstraDatabaseOptions,
+} from './admin/drop-database';
+
+export type {
   AstraDbRegionInfo,
   AstraDbInfo,
   AstraDbAdminInfo,
@@ -39,12 +43,12 @@ export type {
 } from './admin/list-databases';
 
 export type {
-  AdminSpawnOptions,
-} from '../../client/types/spawn-admin';
-
-export type {
   AstraCreateKeyspaceOptions,
 } from './db-admin/astra-create-keyspace';
+
+export type {
+  AstraDropKeyspaceOptions,
+} from './db-admin/astra-drop-keyspace';
 
 export type {
   KeyspaceReplicationOptions,

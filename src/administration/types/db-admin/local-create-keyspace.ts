@@ -19,7 +19,7 @@ import { WithTimeout } from '@/src/lib';
  *
  * If no replication options are provided, it will default to `'SimpleStrategy'` with a replication factor of `1`.
  *
- * See {@link AdminBlockingOptions} for more options about blocking behavior.
+ * See {@link AstraAdminBlockingOptions} for more options about blocking behavior.
  *
  * If `updateDbKeyspace` is set to true, the underlying `Db` instance used to create the `DbAdmin` will have its
  * current working keyspace set to the newly created keyspace immediately (even if the keyspace isn't technically
@@ -42,7 +42,7 @@ import { WithTimeout } from '@/src/lib';
  *
  * @public
  */
-export interface LocalCreateKeyspaceOptions extends WithTimeout {
+export interface LocalCreateKeyspaceOptions extends WithTimeout<'keyspaceAdminTimeoutMs'> {
   replication?: KeyspaceReplicationOptions,
   updateDbKeyspace?: boolean,
 }

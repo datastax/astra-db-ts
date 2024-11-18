@@ -12,13 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib';
-import { Sort } from '@/src/documents';
+import { AstraAdminBlockingOptions } from '@/src/administration/types';
+import { WithTimeout } from '@/src/lib';
 
-export interface GenericDeleteOneResult {
-  deletedCount: 0 | 1;
-}
-
-export interface GenericDeleteOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
-  sort?: Sort,
-}
+/**
+ * @public
+ */
+export type AstraDropKeyspaceOptions = AstraAdminBlockingOptions & WithTimeout<'keyspaceAdminTimeoutMs'>;

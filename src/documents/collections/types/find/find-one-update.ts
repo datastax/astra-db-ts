@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { Projection, Sort } from '@/src/documents';
-import { WithTimeout } from '@/src/lib/types';
+import type { WithTimeout } from '@/src/lib';
 
 /**
  * Represents the options for the `findOneAndUpdate` command.
@@ -29,7 +29,7 @@ import { WithTimeout } from '@/src/lib/types';
  *
  * @public
  */
-export interface CollectionFindOneAndUpdateOptions extends WithTimeout {
+export interface CollectionFindOneAndUpdateOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   /**
    * Specifies whether to return the document before or after the update.
    *

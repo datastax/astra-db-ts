@@ -15,12 +15,12 @@
 
 import { HttpClient } from '@/src/lib/api/clients';
 import { DevOpsAPIResponseError, DevOpsAPITimeoutError, DevOpsUnexpectedStateError } from '@/src/administration/errors';
-import { TimeoutManager, type TimeoutOptions } from '@/src/lib/api/timeout-managers';
 import { AstraAdminBlockingOptions } from '@/src/administration/types';
 import { DEFAULT_DEVOPS_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants';
 import type { HeaderProvider, HTTPClientOptions, HttpMethodStrings } from '@/src/lib/api/clients/types';
 import type { nullish, TokenProvider } from '@/src/lib';
 import { jsonTryParse } from '@/src/lib/utils';
+import { TimeoutManager } from '@/src/lib/api/timeouts';
 
 /**
  * @internal
@@ -38,6 +38,7 @@ interface LongRunningRequestInfo {
   legalStates: string[],
   defaultPollInterval: number,
   options: AstraAdminBlockingOptions | undefined,
+  timeoutManager: TimeoutManager,
 }
 
 interface DevopsAPIResponse {
@@ -55,18 +56,17 @@ interface DevOpsAPIHttpClientOpts extends HTTPClientOptions {
  */
 export class DevOpsAPIHttpClient extends HttpClient {
   constructor(opts: DevOpsAPIHttpClientOpts) {
-    super(opts, [mkAuthHeaderProvider(opts.tokenProvider)]);
+    super(opts, [mkAuthHeaderProvider(opts.tokenProvider)], DevOpsAPITimeoutError.mk);
   }
 
-  public async request(req: DevOpsAPIRequestInfo, options: TimeoutOptions | undefined, started: number = 0): Promise<DevopsAPIResponse> {
+  public async request(req: DevOpsAPIRequestInfo, timeoutManager: TimeoutManager, started: number = 0): Promise<DevopsAPIResponse> {
     const isLongRunning = started !== 0;
 
     try {
-      const timeoutManager = options?.timeoutManager ?? this._timeoutManager(options?.maxTimeMS);
       const url = this.baseUrl + req.path;
 
       if (!isLongRunning) {
-        this.logger.adminCommandStarted?.(req, isLongRunning, timeoutManager.ms);
+        this.logger.adminCommandStarted?.(req, isLongRunning, timeoutManager.initial());
       }
 
       started ||= performance.now();
@@ -105,31 +105,26 @@ export class DevOpsAPIHttpClient extends HttpClient {
   }
 
   public async requestLongRunning(req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo): Promise<DevopsAPIResponse> {
-    const timeoutManager = this._timeoutManager(info.options?.maxTimeMS);
     const isLongRunning = info.options?.blocking !== false;
+    const timeoutManager = info.timeoutManager;
 
-    this.logger.adminCommandStarted?.(req, isLongRunning, timeoutManager.ms);
+    this.logger.adminCommandStarted?.(req, isLongRunning, timeoutManager.initial());
 
     const started = performance.now();
-    const resp = await this.request(req, { timeoutManager }, started);
+    const resp = await this.request(req, timeoutManager, started);
 
     const id = (typeof info.id === 'function')
       ? info.id(resp)
       : info.id;
 
-    await this._awaitStatus(id, req, info, timeoutManager, started);
+    await this._awaitStatus(id, req, info, started);
 
     this.logger.adminCommandSucceeded?.(req, isLongRunning, resp, started);
 
     return resp;
   }
 
-  private _timeoutManager(timeout: number | undefined) {
-    timeout ??= this.fetchCtx.maxTimeMS ?? (12 * 60 * 1000);
-    return new TimeoutManager(timeout, (info) => new DevOpsAPITimeoutError(info.url, timeout));
-  }
-
-  private async _awaitStatus(id: string, req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo, timeoutManager: TimeoutManager, started: number): Promise<void> {
+  private async _awaitStatus(id: string, req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo, started: number): Promise<void> {
     if (info.options?.blocking === false) {
       return;
     }
@@ -148,9 +143,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
       const resp = await this.request({
         method: HttpMethods.Get,
         path: `/databases/${id}`,
-      }, {
-        timeoutManager: timeoutManager,
-      }, started);
+      }, info.timeoutManager, started);
 
       if (resp.data?.status === info.target) {
         break;

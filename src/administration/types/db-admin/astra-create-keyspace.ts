@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { AstraAdminBlockingOptions } from '@/src/administration/types';
+import { WithTimeout } from '@/src/lib';
 
 /**
  * Represents the common options for creating a keyspace through the `astra-db-ts` client.
@@ -42,4 +43,4 @@ import { AstraAdminBlockingOptions } from '@/src/administration/types';
  *
  * @public
  */
-export type AstraCreateKeyspaceOptions = AstraAdminBlockingOptions & { updateDbKeyspace?: boolean };
+export type AstraCreateKeyspaceOptions = AstraAdminBlockingOptions & WithTimeout<'keyspaceAdminTimeoutMs'> & { updateDbKeyspace?: boolean };

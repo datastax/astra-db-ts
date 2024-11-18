@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { FetcherResponseInfo, RawDataAPIResponse } from '@/src/lib';
+import { FetcherResponseInfo, RawDataAPIResponse, TimeoutDescriptor } from '@/src/lib';
 import type {
   CollectionDeleteManyResult,
   CollectionInsertManyResult,
@@ -20,6 +20,8 @@ import type {
   SomeDoc,
 } from '@/src/documents/collections';
 import type { TableInsertManyResult } from '@/src/documents/tables';
+import { HTTPRequestInfo } from '@/src/lib/api/clients';
+import { TimedOutCategories, Timeouts } from '@/src/lib/api/timeouts';
 
 /**
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a
@@ -178,17 +180,24 @@ export class DataAPITimeoutError extends DataAPIError {
   /**
    * The timeout that was set for the operation, in milliseconds.
    */
-  public readonly timeout: number;
+  public readonly timeout: Partial<TimeoutDescriptor>;
+
+  public readonly timedOutTypes: TimedOutCategories;
 
   /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  constructor(timeout: number) {
-    super(`Command timed out after ${timeout}ms`);
-    this.timeout = timeout;
+  constructor(info: HTTPRequestInfo, types: TimedOutCategories) {
+    super(Timeouts.fmtTimeoutMsg(info.timeoutManager, types));
+    this.timeout = info.timeoutManager.initial();
+    this.timedOutTypes = types;
     this.name = 'DataAPITimeoutError';
+  }
+
+  public static mk(info: HTTPRequestInfo, types: TimedOutCategories): DataAPITimeoutError {
+    return new DataAPITimeoutError(info, types);
   }
 }
 

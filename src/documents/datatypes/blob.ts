@@ -98,7 +98,7 @@ export class CqlBlob {
   }
 
   public static isBlobLike(value: unknown): value is CqlBlobLike {
-    return !!value && typeof value === 'object' && (value instanceof CqlBlob || '$binary' in value || value instanceof ArrayBuffer || value instanceof Buffer);
+    return !!value && typeof value === 'object' && (value instanceof CqlBlob || ('$binary' in value && typeof value.$binary === 'string') || value instanceof ArrayBuffer || value instanceof Buffer);
   }
 }
 

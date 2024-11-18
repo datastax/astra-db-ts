@@ -79,15 +79,6 @@ export interface DefaultHttpClientOptions {
    */
   preferHttp2?: boolean,
   /**
-   * The default maximum time in milliseconds to wait for a response from the server.
-   *
-   * This does *not* mean the request will be cancelled after this time, but rather that the client will wait
-   * for this time before considering the request to have timed out.
-   *
-   * The request may or may not still be running on the server after this time.
-   */
-  maxTimeMS?: number,
-  /**
    * Options specific to HTTP/1.1 requests.
    */
   http1?: Http1Options,
@@ -115,15 +106,6 @@ export interface FetchHttpClientOptions {
    * Use the native fetch API for making HTTP requests.
    */
   client: 'fetch',
-  /**
-   * The default maximum time in milliseconds to wait for a response from the server.
-   *
-   * This does *not* mean the request will be cancelled after this time, but rather that the client will wait
-   * for this time before considering the request to have timed out.
-   *
-   * The request may or may not still be running on the server after this time.
-   */
-  maxTimeMS?: number,
 }
 
 /**
@@ -146,15 +128,6 @@ export interface CustomHttpClientOptions {
    * The custom "fetcher" to use.
    */
   fetcher: Fetcher,
-  /**
-   * The default maximum time in milliseconds to wait for a response from the server.
-   *
-   * This does *not* mean the request will be cancelled after this time, but rather that the client will wait
-   * for this time before considering the request to have timed out.
-   *
-   * The request may or may not still be running on the server after this time.
-   */
-  maxTimeMS?: number,
 }
 
 /**
