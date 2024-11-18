@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FetcherResponseInfo } from '@/src/lib/api';
+import { FetcherResponseInfo, type TimeoutDescriptor } from '@/src/lib/api';
 import { SomeDoc } from '@/src/documents';
+import { HTTPRequestInfo } from '@/src/lib/api/clients';
+import { TimedOutCategories, Timeouts } from '@/src/lib/api/timeouts';
 
 /**
  * A representation of what went wrong when interacting with the DevOps API.
@@ -64,18 +66,25 @@ export class DevOpsAPITimeoutError extends DevOpsAPIError {
   /**
    The timeout that was set for the operation, in milliseconds.
    */
-  public readonly timeout: number;
+  public readonly timeout: Partial<TimeoutDescriptor>;
+
+  public readonly timedOutTypes: TimedOutCategories;
 
   /**
    * Shouldn't be instantiated directly.
    *
    * @internal
    */
-  constructor(url: string, timeout: number) {
-    super(`Command timed out after ${timeout}ms`);
-    this.url = url;
-    this.timeout = timeout;
+  constructor(info: HTTPRequestInfo, types: TimedOutCategories) {
+    super(Timeouts.fmtTimeoutMsg(info.timeoutManager, types));
+    this.url = info.url;
+    this.timeout = info.timeoutManager.initial();
+    this.timedOutTypes = types;
     this.name = 'DevOpsAPITimeoutError';
+  }
+
+  public static mk(info: HTTPRequestInfo, types: TimedOutCategories): DevOpsAPITimeoutError {
+    return new DevOpsAPITimeoutError(info, types);
   }
 }
 

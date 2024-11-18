@@ -22,7 +22,7 @@ import { describe, it, TEST_APPLICATION_URI } from '@/tests/testlib';
 import assert from 'assert';
 import { DataAPIEnvironments } from '@/src/lib/constants';
 
-describe('unit.client.documents-client', () => {
+describe('unit.client.data-api-client', () => {
   it('should accept valid tokens', () => {
     assert.doesNotThrow(() => new DataAPIClient());
     assert.doesNotThrow(() => new DataAPIClient('token'));
@@ -104,10 +104,6 @@ describe('unit.client.documents-client', () => {
   });
 
   it('validates options properly', () => {
-    assert.throws(() => new DataAPIClient('dummy-token', {
-      // @ts-expect-error - testing invalid input
-      httpOptions: { maxTimeMS: '3' },
-    }));
     assert.throws(() => new DataAPIClient('dummy-token', {
       // @ts-expect-error - testing invalid input
       httpOptions: { preferHttp2: 3 },

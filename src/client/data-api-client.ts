@@ -37,6 +37,7 @@ import { parseHttpOpts } from '@/src/client/parsers/http-opts';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
 import { $CustomInspect } from '@/src/lib/constants';
+import { Timeouts } from '@/src/lib/api/timeouts';
 
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
@@ -162,11 +163,13 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
       dbOptions: {
         ...options?.dbOptions,
         token: TokenProvider.parseToken([options?.dbOptions?.token, token], 'provided token'),
+        timeoutDefaults: Timeouts.merge(Timeouts.Default, options?.timeoutDefaults),
         logging,
       },
       adminOptions: {
         ...options?.adminOptions,
         adminToken: TokenProvider.parseToken([options?.adminOptions?.adminToken, token], 'provided token'),
+        timeoutDefaults: Timeouts.merge(Timeouts.Default, options?.timeoutDefaults),
         logging,
       },
       emitter: this,
@@ -321,7 +324,6 @@ function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
   return {
     ctx: ctx,
     closed: { ref: false },
-    maxTimeMS: options?.httpOptions?.maxTimeMS,
   };
 }
 
@@ -353,5 +355,6 @@ const parseClientOpts: Parser<DataAPIClientOptions | nullish> = (raw, field) => 
     adminOptions: parseAdminSpawnOpts(opts.adminOptions, `${field}.adminOptions`),
     caller: parseCaller(opts.caller, `${field}.caller`),
     httpOptions: parseHttpOpts(opts.httpOptions, `${field}.httpOptions`),
+    timeoutDefaults: Timeouts.parseConfig(opts.timeoutDefaults, `${field}.timeoutDefaults`),
   };
 };

@@ -14,7 +14,7 @@
 
 import { WithTimeout } from '@/src/lib';
 
-export interface CreateTableIndexOptions extends WithTimeout {
+export interface CreateTableIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
   caseSensitive?: boolean,
   normalize?: boolean,
   ascii?: boolean,

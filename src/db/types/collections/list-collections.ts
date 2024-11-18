@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { WithTimeout } from '@/src/lib/types';
+import type { WithTimeout } from '@/src/lib';
 import { CollectionOptions, WithKeyspace } from '@/src/db';
 import { SomeDoc } from '@/src/documents';
 
@@ -27,7 +27,7 @@ import { SomeDoc } from '@/src/documents';
  *
  * @public
  */
-export interface ListCollectionsOptions extends WithTimeout, WithKeyspace {
+export interface ListCollectionsOptions extends WithTimeout<'collectionAdminTimeoutMs'>, WithKeyspace {
   /**
    * If true, only the name of the collections is returned.
    *

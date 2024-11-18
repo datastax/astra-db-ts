@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPILoggingConfig, TokenProvider } from '@/src/lib';
+import { DataAPILoggingConfig, type TimeoutDescriptor, TokenProvider } from '@/src/lib';
 import { CollectionSerDesConfig, SomeDoc, SomeRow, TableSerDesConfig } from '@/src/documents';
 
-export type DefaultDbSpawnOptions = Omit<DbSpawnOptions, 'logging'>;
+export type DefaultDbSpawnOptions = Omit<DbSpawnOptions, 'logging' | 'timeoutDefaults'>;
 
 /**
  * The options available spawning a new {@link Db} instance.
@@ -111,6 +111,45 @@ export interface DbSpawnOptions {
    * as for enabling feature-flags or other non-standard headers.
    */
   additionalHeaders?: Record<string, string>,
+  /**
+   * ##### Overview
+   *
+   * The default timeout options for anything spawned by this {@link Db} instance.
+   *
+   * See {@link TimeoutDescriptor} for much more information about timeouts.
+   *
+   * @example
+   * ```ts
+   * // The request timeout for all operations is set to 1000ms.
+   * const client = new DataAPIClient('...', {
+   *   timeoutDefaults: { requestTimeoutMs: 1000 },
+   * });
+   *
+   * // The request timeout for all operations borne from this Db is set to 2000ms.
+   * const db = client.db('...', {
+   *   timeoutDefaults: { requestTimeoutMs: 2000 },
+   * });
+   * ```
+   *
+   * ##### Inheritance
+   *
+   * The timeout options are inherited by all child classes, and can be overridden at any level, including the individual method level.
+   *
+   * Individual-method-level overrides can vary in behavior depending on the method; again, see {@link TimeoutDescriptor}.
+   *
+   * ##### Defaults
+   *
+   * The default timeout options are as follows:
+   * - `requestTimeoutMs`: 10000
+   * - `generalMethodTimeoutMs`: 30000
+   * - `collectionAdminTimeoutMs`: 60000
+   * - `tableAdminTimeoutMs`: 30000
+   * - `databaseAdminTimeoutMs`: 600000
+   * - `keyspaceAdminTimeoutMs`: 30000
+   *
+   * @see TimeoutDescriptor
+   */
+  timeoutDefaults?: Partial<TimeoutDescriptor>,
 }
 
 /**

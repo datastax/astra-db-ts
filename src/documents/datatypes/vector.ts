@@ -113,7 +113,7 @@ export class DataAPIVector {
   }
 
   public static isVectorLike(value: unknown): value is DataAPIVectorLike {
-    return !!value && typeof value === 'object' && (Array.isArray(value) || value instanceof Float32Array || '$binary' in value || value instanceof DataAPIVector);
+    return !!value && typeof value === 'object' && (Array.isArray(value) || value instanceof Float32Array || ('$binary' in value && typeof value.$binary === 'string') || value instanceof DataAPIVector);
   }
 }
 

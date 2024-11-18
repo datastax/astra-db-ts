@@ -38,11 +38,6 @@ export const DEFAULT_KEYSPACE = 'default_keyspace';
 /**
  * @internal
  */
-export const DEFAULT_TIMEOUT = 30000;
-
-/**
- * @internal
- */
 export const DEFAULT_DATA_API_AUTH_HEADER = 'Token';
 
 /**

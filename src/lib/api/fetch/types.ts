@@ -123,5 +123,4 @@ export interface FetcherResponseInfo {
 export interface FetchCtx {
   ctx: Fetcher,
   closed: Ref<boolean>,
-  maxTimeMS: number | undefined,
 }
