@@ -15,12 +15,12 @@
 
 import assert from 'assert';
 import { describe, it, parallel } from '@/tests/testlib';
-import { TimedOutTypes, TimeoutManager, Timeouts } from '@/src/lib/api/timeouts';
+import { TimedOutCategories, TimeoutManager, Timeouts } from '@/src/lib/api/timeouts';
 import { HTTPRequestInfo } from '@/src/lib/api/clients';
 
 describe('unit.lib.api.timeouts', () => {
   class TimeoutError extends Error {
-    constructor(public readonly info: HTTPRequestInfo, public readonly timeoutType: TimedOutTypes) {
+    constructor(public readonly info: HTTPRequestInfo, public readonly timeoutType: TimedOutCategories) {
       super(Timeouts.fmtTimeoutMsg(info.timeoutManager, timeoutType));
     }
   }

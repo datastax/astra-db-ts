@@ -21,7 +21,7 @@ import type {
 } from '@/src/documents/collections';
 import type { TableInsertManyResult } from '@/src/documents/tables';
 import { HTTPRequestInfo } from '@/src/lib/api/clients';
-import { TimedOutTypes, Timeouts } from '@/src/lib/api/timeouts';
+import { TimedOutCategories, Timeouts } from '@/src/lib/api/timeouts';
 
 /**
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a
@@ -182,21 +182,21 @@ export class DataAPITimeoutError extends DataAPIError {
    */
   public readonly timeout: Partial<TimeoutDescriptor>;
 
-  public readonly timedOutTypes: TimedOutTypes;
+  public readonly timedOutTypes: TimedOutCategories;
 
   /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  constructor(info: HTTPRequestInfo, types: TimedOutTypes) {
+  constructor(info: HTTPRequestInfo, types: TimedOutCategories) {
     super(Timeouts.fmtTimeoutMsg(info.timeoutManager, types));
     this.timeout = info.timeoutManager.initial();
     this.timedOutTypes = types;
     this.name = 'DataAPITimeoutError';
   }
 
-  public static mk(info: HTTPRequestInfo, types: TimedOutTypes): DataAPITimeoutError {
+  public static mk(info: HTTPRequestInfo, types: TimedOutCategories): DataAPITimeoutError {
     return new DataAPITimeoutError(info, types);
   }
 }

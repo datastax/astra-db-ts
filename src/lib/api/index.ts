@@ -35,5 +35,5 @@ export type {
 export type {
   TimeoutDescriptor,
   WithTimeout,
-  TimedOutTypes,
+  TimedOutCategories,
 } from './timeouts';

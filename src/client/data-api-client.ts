@@ -355,5 +355,6 @@ const parseClientOpts: Parser<DataAPIClientOptions | nullish> = (raw, field) => 
     adminOptions: parseAdminSpawnOpts(opts.adminOptions, `${field}.adminOptions`),
     caller: parseCaller(opts.caller, `${field}.caller`),
     httpOptions: parseHttpOpts(opts.httpOptions, `${field}.httpOptions`),
+    timeoutDefaults: Timeouts.parseConfig(opts.timeoutDefaults, `${field}.timeoutDefaults`),
   };
 };

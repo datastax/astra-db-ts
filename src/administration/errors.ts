@@ -15,7 +15,7 @@
 import { FetcherResponseInfo, type TimeoutDescriptor } from '@/src/lib/api';
 import { SomeDoc } from '@/src/documents';
 import { HTTPRequestInfo } from '@/src/lib/api/clients';
-import { TimedOutTypes, Timeouts } from '@/src/lib/api/timeouts';
+import { TimedOutCategories, Timeouts } from '@/src/lib/api/timeouts';
 
 /**
  * A representation of what went wrong when interacting with the DevOps API.
@@ -68,14 +68,14 @@ export class DevOpsAPITimeoutError extends DevOpsAPIError {
    */
   public readonly timeout: Partial<TimeoutDescriptor>;
 
-  public readonly timedOutTypes: TimedOutTypes;
+  public readonly timedOutTypes: TimedOutCategories;
 
   /**
    * Shouldn't be instantiated directly.
    *
    * @internal
    */
-  constructor(info: HTTPRequestInfo, types: TimedOutTypes) {
+  constructor(info: HTTPRequestInfo, types: TimedOutCategories) {
     super(Timeouts.fmtTimeoutMsg(info.timeoutManager, types));
     this.url = info.url;
     this.timeout = info.timeoutManager.initial();
@@ -83,7 +83,7 @@ export class DevOpsAPITimeoutError extends DevOpsAPIError {
     this.name = 'DevOpsAPITimeoutError';
   }
 
-  public static mk(info: HTTPRequestInfo, types: TimedOutTypes): DevOpsAPITimeoutError {
+  public static mk(info: HTTPRequestInfo, types: TimedOutCategories): DevOpsAPITimeoutError {
     return new DevOpsAPITimeoutError(info, types);
   }
 }

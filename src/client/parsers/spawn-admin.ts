@@ -16,6 +16,7 @@ import { p, Parser } from '@/src/lib/validation';
 import { TokenProvider } from '@/src/lib';
 import { Logger } from '@/src/lib/logging/logger';
 import { AdminSpawnOptions } from '@/src/client';
+import { Timeouts } from '@/src/lib/api/timeouts';
 
 export const parseAdminSpawnOpts: Parser<AdminSpawnOptions | undefined, unknown> = (raw, field) => {
   const opts = p.parse('object?')<AdminSpawnOptions>(raw, field);
@@ -30,5 +31,6 @@ export const parseAdminSpawnOpts: Parser<AdminSpawnOptions | undefined, unknown>
     adminToken: TokenProvider.parseToken([opts.adminToken], `${field}.adminToken`),
     additionalHeaders: p.parse('object?')(opts.additionalHeaders, `${field}.additionalHeaders`),
     astraEnv: p.parse('string?')(opts.astraEnv, `${field}.astraEnv`),
+    timeoutDefaults: Timeouts.parseConfig(opts.timeoutDefaults, `${field}.timeoutDefaults`),
   };
 };
