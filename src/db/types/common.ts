@@ -49,10 +49,3 @@ export interface WithKeyspace {
    */
   keyspace?: string;
 }
-
-/**
- * @internal
- */
-export interface WithNullableKeyspace {
-  keyspace?: string | null;
-}

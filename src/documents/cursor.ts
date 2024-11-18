@@ -618,7 +618,10 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
       },
     };
 
-    const raw = await this.#parent._httpClient.executeCommand(command, { bigNumsPresent: this.#filter[1] });
+    const raw = await this.#parent._httpClient.executeCommand(command, {
+      timeoutManager: this.#parent._httpClient.tm.multipart('generalMethodTimeoutMs', this.#options),
+      bigNumsPresent: this.#filter[1],
+    });
 
     this.#nextPageState = raw.data?.nextPageState || null;
     this.#buffer = raw.data?.documents ?? [];

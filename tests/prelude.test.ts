@@ -49,7 +49,7 @@ before(async () => {
 
   const allTables = await TEST_KEYSPACES
     .map(async (keyspace) => {
-      const colls = await db.listTables({ keyspace: keyspace, nameOnly: true });
+      const colls = await db.listTables({ keyspace, nameOnly: true });
       return [keyspace, colls] as const;
     })
     .awaitAll();
@@ -73,6 +73,7 @@ before(async () => {
         ifNotExists: true,
         keyspace,
       });
+
       await table.createVectorIndex(`vector_idx_${keyspace}`, 'vector', { metric: 'dot_product', ifNotExists: true });
     })
     .awaitAll();

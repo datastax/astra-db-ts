@@ -12,7 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPIClientEvents, DataAPIEnvironment, DataAPILoggingOutput, TokenProvider } from '@/src/lib';
+import type {
+  DataAPIClientEvents,
+  DataAPIEnvironment,
+  DataAPILoggingOutput,
+  TimeoutDescriptor,
+  TokenProvider,
+} from '@/src/lib';
 import type TypedEmitter from 'typed-emitter';
 import type { FetchCtx } from '@/src/lib/api/fetch/types';
 import type { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
@@ -34,9 +40,11 @@ export interface InternalRootClientOpts {
   dbOptions: Omit<DbSpawnOptions, 'token' | 'logging'> & {
     token: TokenProvider | undefined,
     logging: NormalizedLoggingConfig[] | undefined,
+    timeoutDefaults: TimeoutDescriptor,
   },
   adminOptions: Omit<AdminSpawnOptions, 'adminToken' | 'logging'> & {
     adminToken: TokenProvider | undefined,
     logging: NormalizedLoggingConfig[] | undefined,
+    timeoutDefaults: TimeoutDescriptor,
   },
 }

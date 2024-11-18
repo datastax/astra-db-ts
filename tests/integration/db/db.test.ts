@@ -96,7 +96,7 @@ parallel('integration.db', { dropEphemeral: 'colls:after' }, ({ db }) => {
         .admin({ adminToken: 'tummy-token', astraEnv: 'dev' })
         .db();
 
-      const res = await db.createCollection('coll_8c', { indexing: { deny: ['*'] }, maxTimeMS: 60000 });
+      const res = await db.createCollection('coll_8c', { indexing: { deny: ['*'] }, timeout: 60000 });
       assert.ok(res);
       assert.strictEqual(res.name, 'coll_8c');
       assert.strictEqual(res.keyspace, DEFAULT_KEYSPACE);

@@ -57,7 +57,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     this.#tOrC = tOrC;
   }
 
-  public async insertOne(_document: SomeDoc, options: WithTimeout | nullish): Promise<GenericInsertOneResult<ID>> {
+  public async insertOne(_document: SomeDoc, options: WithTimeout<'generalMethodTimeoutMs'> | nullish): Promise<GenericInsertOneResult<ID>> {
     const document = this.#serdes.serializeRecord(_document);
 
     const command = mkBasicCmd('insertOne', {
@@ -65,7 +65,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     });
 
     const raw = await this.#httpClient.executeCommand(command, {
-      maxTimeMS: options?.maxTimeMS,
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: document[1],
     });
 
@@ -76,7 +76,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
 
   public async insertMany(docs: readonly SomeDoc[], options: CollectionInsertManyOptions | nullish, err: new (descs: DataAPIDetailedErrorDescriptor[]) => DataAPIResponseError): Promise<GenericInsertManyResult<ID>> {
     const chunkSize = options?.chunkSize ?? 50;
-    const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
+    const timeoutManager = this.#httpClient.tm.multipart('generalMethodTimeoutMs', options);
 
     const insertedIds = (options?.ordered)
       ? await insertManyOrdered(this.#httpClient, this.#serdes, docs, chunkSize, timeoutManager, err)
@@ -101,8 +101,8 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     });
 
     const resp = await this.#httpClient.executeCommand(command, {
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1] || update[1],
-      maxTimeMS: options?.maxTimeMS,
     });
 
     return coalesceUpsertIntoUpdateResult(mkUpdateResult(resp), resp);
@@ -121,7 +121,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
       },
     });
 
-    const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
+    const timeoutManager = this.#httpClient.tm.multipart('generalMethodTimeoutMs', options);
     const commonResult = mkUpdateResult<number>();
     let resp;
 
@@ -168,8 +168,8 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     });
 
     const resp = await this.#httpClient.executeCommand(command, {
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1] || replacement[1],
-      maxTimeMS: options?.maxTimeMS,
     });
 
     return coalesceUpsertIntoUpdateResult(mkUpdateResult(resp), resp);
@@ -183,7 +183,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     });
 
     const deleteOneResp = await this.#httpClient.executeCommand(command, {
-      maxTimeMS: options?.maxTimeMS,
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1],
     });
 
@@ -192,14 +192,14 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     };
   }
 
-  public async deleteMany(_filter: SomeDoc, options?: WithTimeout): Promise<GenericDeleteManyResult> {
+  public async deleteMany(_filter: SomeDoc, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<GenericDeleteManyResult> {
     const filter = this.#serdes.serializeRecord(_filter);
 
     const command = mkBasicCmd('deleteMany', {
       filter: filter[0],
     });
 
-    const timeoutManager = this.#httpClient.timeoutManager(options?.maxTimeMS);
+    const timeoutManager = this.#httpClient.tm.multipart('generalMethodTimeoutMs', options);
     let resp, numDeleted = 0;
 
     try {
@@ -244,7 +244,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     });
 
     const resp = await this.#httpClient.executeCommand(command, {
-      maxTimeMS: options?.maxTimeMS,
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1],
     });
 
@@ -265,8 +265,8 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     });
 
     const resp = await this.#httpClient.executeCommand(command, {
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1] || replacement[1],
-      maxTimeMS: options?.maxTimeMS,
     });
     return resp.data?.document || null;
   }
@@ -279,7 +279,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     });
 
     const resp = await this.#httpClient.executeCommand(command, {
-      maxTimeMS: options?.maxTimeMS,
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1],
     });
     return resp.data?.document || null;
@@ -299,8 +299,8 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     });
 
     const resp = await this.#httpClient.executeCommand(command, {
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1] || update[1],
-      maxTimeMS: options?.maxTimeMS,
     });
     return resp.data?.document || null;
   }
@@ -334,7 +334,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     return ret;
   }
 
-  public async countDocuments(_filter: SomeDoc, upperBound: number, options: WithTimeout | undefined, error: new (count: number, hitLimit: boolean) => Error): Promise<number> {
+  public async countDocuments(_filter: SomeDoc, upperBound: number, options: WithTimeout<'generalMethodTimeoutMs'> | undefined, error: new (count: number, hitLimit: boolean) => Error): Promise<number> {
     if (!upperBound) {
       throw new Error('upperBound is required');
     }
@@ -350,7 +350,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     });
 
     const resp = await this.#httpClient.executeCommand(command, {
-      maxTimeMS: options?.maxTimeMS,
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent,
     });
 
@@ -365,9 +365,13 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     return resp.status?.count;
   }
 
-  public async estimatedDocumentCount(options?: WithTimeout): Promise<number> {
+  public async estimatedDocumentCount(options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number> {
     const command = mkBasicCmd('estimatedDocumentCount', {});
-    const resp = await this.#httpClient.executeCommand(command, options);
+
+    const resp = await this.#httpClient.executeCommand(command, {
+      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
+    });
+
     return resp.status?.count;
   }
 }

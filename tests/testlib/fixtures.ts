@@ -85,7 +85,7 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
   const clientType = httpClient.split(':')[0];
 
   const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {
-    httpOptions: { preferHttp2, client: <any>clientType, maxTimeMS: 60000 },
+    httpOptions: { preferHttp2, client: <any>clientType },
     dbOptions: { keyspace: DEFAULT_KEYSPACE },
     environment: env,
     logging,

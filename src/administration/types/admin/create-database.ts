@@ -16,6 +16,7 @@ import { AstraAdminBlockingOptions, AstraDbCloudProvider } from '@/src/administr
 
 
 import { DbSpawnOptions } from '@/src/client';
+import { WithTimeout } from '@/src/lib';
 
 /**
  * Represents the options for creating a database.
@@ -46,11 +47,11 @@ export interface AstraDatabaseConfig {
 }
 
 /**
- * Represents the options for creating a database (i.e. blocking options + database spawn options).
+ * Represents the options for creating a database (i.e. blocking options + timeout options + database spawn options).
  *
  * @public
  */
-export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & {
+export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & WithTimeout<'databaseAdminTimeoutMs'> & {
   /**
    * Any options to override the default options set when creating the root {@link DataAPIClient}.
    */

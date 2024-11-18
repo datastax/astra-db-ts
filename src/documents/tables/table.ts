@@ -329,7 +329,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
    *
    * @returns The ID of the inserted row.
    */
-  public async insertOne(row: Schema, options?: WithTimeout): Promise<TableInsertOneResult<Schema>> {
+  public async insertOne(row: Schema, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<Schema>> {
     return this.#commands.insertOne(row, options);
   }
 
@@ -345,7 +345,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
     await this.#commands.deleteOne(filter, options);
   }
 
-  public async deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<void> {
+  public async deleteMany(filter: Filter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
     await this.#commands.deleteMany(filter, options);
   }
 
@@ -361,10 +361,6 @@ export class Table<Schema extends SomeRow = SomeRow> {
     return this.#commands.findOne(filter, options);
   }
 
-  public async drop(options?: WithTimeout): Promise<void> {
-    await this.#db.dropCollection(this.name, { keyspace: this.keyspace, ...options });
-  }
-
   public async alter<const Spec extends AlterTableOptions<Schema>>(options: Spec): Promise<Table<AlterTableSchema<Schema, Spec>>>
 
   public async alter<NewSchema extends SomeRow>(options: AlterTableOptions<Schema>): Promise<Table<NewSchema>>
@@ -375,7 +371,9 @@ export class Table<Schema extends SomeRow = SomeRow> {
         name: this.name,
         operation: options.operation,
       },
-    }, options);
+    }, {
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
+    });
     return this;
   }
 
@@ -395,7 +393,9 @@ export class Table<Schema extends SomeRow = SomeRow> {
           ifNotExists: options?.ifNotExists,
         },
       },
-    }, options);
+    }, {
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
+    });
   }
 
   public async createVectorIndex(name: string, column: Cols<Schema> | string, options?: CreateTableVectorIndexOptions): Promise<void> {
@@ -413,11 +413,16 @@ export class Table<Schema extends SomeRow = SomeRow> {
           ifNotExists: options?.ifNotExists,
         },
       },
-    }, options);
+    }, {
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
+    });
   }
 
-  public async definition(options?: WithTimeout): Promise<ListTableDefinition> {
-    const results = await this.#db.listTables({ maxTimeMS: options?.maxTimeMS, keyspace: this.keyspace });
+  public async definition(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<ListTableDefinition> {
+    const results = await this.#db.listTables({
+      timeout: options?.timeout,
+      keyspace: this.keyspace,
+    });
 
     const table = results.find((t) => t.name === this.name);
 
@@ -426,6 +431,10 @@ export class Table<Schema extends SomeRow = SomeRow> {
     }
 
     return table.definition;
+  }
+
+  public async drop(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<void> {
+    await this.#db.dropTable(this.name, { keyspace: this.keyspace, ...options });
   }
 
   public get _httpClient() {

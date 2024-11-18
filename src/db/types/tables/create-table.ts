@@ -33,7 +33,7 @@ import { SomeRow } from '@/src/documents';
  *
  * @public
  */
-export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout, TableSpawnOptions<Schema> {
+export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout<'tableAdminTimeoutMs'>, TableSpawnOptions<Schema> {
   definition: Def,
   ifNotExists?: boolean,
 }

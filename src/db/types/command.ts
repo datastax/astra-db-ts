@@ -24,7 +24,7 @@ import { WithTimeout } from '@/src/lib';
  *
  * @public
  */
-export interface RunCommandOptions extends WithTimeout {
+export interface RunCommandOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   /**
    * The collections to run the command on. If not provided, the command is run on the database.
    */

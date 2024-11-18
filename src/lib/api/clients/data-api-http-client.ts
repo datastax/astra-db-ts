@@ -13,8 +13,6 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { TimeoutManager, TimeoutOptions } from '@/src/lib/api/timeout-managers';
-import type { WithNullableKeyspace } from '@/src/db/types/common';
 import { Logger } from '@/src/lib/logging/logger';
 import { nullish, RawDataAPIResponse, TokenProvider } from '@/src/lib';
 import {
@@ -27,16 +25,19 @@ import {
 } from '@/src/documents';
 import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
 import { HttpClient } from '@/src/lib/api/clients/http-client';
-import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_TIMEOUT, HttpMethods } from '@/src/lib/api/constants';
+import { DEFAULT_DATA_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants';
 import { CollectionSpawnOptions, TableSpawnOptions } from '@/src/db';
 import type { AdminSpawnOptions } from '@/src/client';
 import { isNullish } from '@/src/lib/utils';
 import { mkRespErrorFromResponse } from '@/src/documents/errors';
+import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts';
 
 /**
  * @internal
  */
-type ExecuteCommandOptions = TimeoutOptions & WithNullableKeyspace & {
+type ExecuteCommandOptions = {
+  keyspace?: string | null,
+  timeoutManager: TimeoutManager,
   bigNumsPresent?: boolean,
   collection?: string,
 }
@@ -69,7 +70,7 @@ export const EmissionStrategy: Record<'Normal' | 'Admin', EmissionStrategy> = {
   }),
   Admin: (logger) => ({
     emitCommandStarted(info) {
-      logger.adminCommandStarted?.(adaptInfo4Devops(info), true, info.timeoutManager.msRemaining());
+      logger.adminCommandStarted?.(adaptInfo4Devops(info), true, null!); // TODO
     },
     emitCommandFailed(info, error, started) {
       logger.adminCommandFailed?.(adaptInfo4Devops(info), true, error, started);
@@ -114,16 +115,14 @@ export interface BigNumberHack {
 export class DataAPIHttpClient extends HttpClient {
   public collection?: string;
   public keyspace: KeyspaceRef;
-  public maxTimeMS: number;
   public emissionStrategy: ReturnType<EmissionStrategy>;
   public bigNumHack?: BigNumberHack;
   readonly #props: DataAPIHttpClientOpts;
 
   constructor(props: DataAPIHttpClientOpts) {
-    super(props, [mkAuthHeaderProvider(props.tokenProvider), () => props.embeddingHeaders.getHeaders()]);
+    super(props, [mkAuthHeaderProvider(props.tokenProvider), () => props.embeddingHeaders.getHeaders()], DataAPITimeoutError.mk);
     this.keyspace = props.keyspace;
     this.#props = props;
-    this.maxTimeMS = this.fetchCtx.maxTimeMS ?? DEFAULT_TIMEOUT;
     this.emissionStrategy = props.emissionStrategy(this.logger);
   }
 
@@ -136,8 +135,8 @@ export class DataAPIHttpClient extends HttpClient {
     });
 
     clone.collection = collection;
-    clone.maxTimeMS = opts?.defaultMaxTimeMS ?? this.maxTimeMS;
     clone.bigNumHack = bigNumHack;
+    clone.tm = new Timeouts(DataAPITimeoutError.mk, { ...this.tm.baseTimeouts, ...opts?.timeoutDefaults });
 
     return clone;
   }
@@ -152,23 +151,17 @@ export class DataAPIHttpClient extends HttpClient {
       additionalHeaders: { ...this.#props.additionalHeaders, ...opts?.additionalHeaders },
     });
 
-    clone.emissionStrategy = EmissionStrategy.Admin(clone.logger);
     clone.collection = undefined;
+    clone.emissionStrategy = EmissionStrategy.Admin(clone.logger);
+    clone.tm = new Timeouts(DataAPITimeoutError.mk, { ...this.tm.baseTimeouts, ...opts?.timeoutDefaults });
 
     return clone;
   }
 
-  public timeoutManager(timeout: number | undefined) {
-    timeout ??= this.maxTimeMS;
-    return new TimeoutManager(timeout, () => new DataAPITimeoutError(timeout));
-  }
-
-  public async executeCommand(command: Record<string, any>, options: ExecuteCommandOptions | nullish) {
-    const timeoutManager = options?.timeoutManager ?? this.timeoutManager(options?.maxTimeMS);
-
+  public async executeCommand(command: Record<string, any>, options: ExecuteCommandOptions) {
     return await this._requestDataAPI({
       url: this.baseUrl,
-      timeoutManager: timeoutManager,
+      timeoutManager: options.timeoutManager,
       collection: options?.collection,
       keyspace: options?.keyspace,
       command: command,

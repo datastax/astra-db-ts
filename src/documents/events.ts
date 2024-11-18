@@ -17,6 +17,7 @@ import { DEFAULT_KEYSPACE, type RawDataAPIResponse } from '@/src/lib';
 import { DataAPIClientEvent } from '@/src/lib/logging/events';
 import type { DataAPIRequestInfo } from '@/src/lib/api/clients/data-api-http-client';
 import type { DataAPIErrorDescriptor } from '@/src/documents/errors';
+import { TimeoutDescriptor } from '@/src/lib/api/timeouts';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -118,7 +119,7 @@ export class CommandStartedEvent extends CommandEvent {
   /**
    * The timeout for the command, in milliseconds.
    */
-  public readonly timeout: number;
+  public readonly timeout: Partial<TimeoutDescriptor>;
 
   /**
    * Should not be instantiated by the user.
@@ -127,7 +128,7 @@ export class CommandStartedEvent extends CommandEvent {
    */
   constructor(info: DataAPIRequestInfo) {
     super(info);
-    this.timeout = info.timeoutManager.ms;
+    this.timeout = info.timeoutManager.initial();
   }
 
   public formatted(): string {

@@ -15,21 +15,21 @@
 
 import { DataAPIEnvironments } from '@/src/lib/constants';
 
-/**
- * Represents options related to timeouts. Note that this means "the max time the client will wait for a response
- * from the server"—**an operation timing out does not necessarily mean the operation failed on the server**.
- *
- * On paginated operations, the timeout applies across all network requests. For example, if you set a timeout of 5
- * seconds and the operation requires 3 network requests, each request must complete in less than 5 seconds total.
- *
- * @public
- */
-export interface WithTimeout {
-  /**
-   * The maximum time to wait for a response from the server, in milliseconds.
-   */
-  maxTimeMS?: number;
-}
+// /**
+//  * Represents options related to timeouts. Note that this means "the max time the client will wait for a response
+//  * from the server"—**an operation timing out does not necessarily mean the operation failed on the server**.
+//  *
+//  * On paginated operations, the timeout applies across all network requests. For example, if you set a timeout of 5
+//  * seconds and the operation requires 3 network requests, each request must complete in less than 5 seconds total.
+//  *
+//  * @public
+//  */
+// export interface WithTimeout {
+//   /**
+//    * The maximum time to wait for a response from the server, in milliseconds.
+//    */
+//   maxTimeMS?: number;
+// }
 
 /**
  * Shorthand type to represent some nullish value.

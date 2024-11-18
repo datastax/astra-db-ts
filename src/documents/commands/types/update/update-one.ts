@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib/types';
+import type { WithTimeout } from '@/src/lib';
 import type { Sort } from '@/src/documents';
 
 /**
@@ -24,7 +24,7 @@ import type { Sort } from '@/src/documents';
  *
  * @public
  */
-export interface GenericUpdateOneOptions extends WithTimeout {
+export interface GenericUpdateOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   /**
    * If true, perform an insert if no documents match the filter.
    *

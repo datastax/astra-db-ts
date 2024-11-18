@@ -110,7 +110,7 @@ class HeaderKMSTestGroup implements VectorizeTestGroup {
       },
     },
     embeddingApiKey: branch.header,
-    maxTimeMS: 0,
+    timeout: 0,
   });
 
   private _useColl = (branch: FinalVectorizeTestBranch) => (db: Db) => Promise.resolve(

@@ -15,7 +15,7 @@
 import { Projection, Sort } from '@/src/documents';
 import { WithTimeout } from '@/src/lib';
 
-export interface GenericFindOneAndUpdateOptions extends WithTimeout {
+export interface GenericFindOneAndUpdateOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   returnDocument?: 'before' | 'after',
   upsert?: boolean,
   sort?: Sort,

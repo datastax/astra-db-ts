@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPIEnvironment, DataAPILoggingConfig } from '@/src/lib';
+import type { DataAPIEnvironment, DataAPILoggingConfig, TimeoutDescriptor } from '@/src/lib';
 import type { Caller, DataAPIHttpOptions, DefaultAdminSpawnOptions, DefaultDbSpawnOptions } from '@/src/client';
 import { OneOrMany } from '@/src/lib/types';
 
@@ -115,4 +115,43 @@ export interface DataAPIClientOptions {
    * ```
    */
   caller?: OneOrMany<Caller>,
+  /**
+   * ##### Overview
+   *
+   * The default timeout options for anything spawned by this {@link DataAPIClient} instance.
+   *
+   * See {@link TimeoutDescriptor} for much more information about timeouts.
+   *
+   * @example
+   * ```ts
+   * // The request timeout for all operations is set to 1000ms.
+   * const client = new DataAPIClient('...', {
+   *   timeoutDefaults: { requestTimeoutMs: 1000 },
+   * });
+   *
+   * // The request timeout for all operations borne from this Db is set to 2000ms.
+   * const db = client.db('...', {
+   *   timeoutDefaults: { requestTimeoutMs: 2000 },
+   * });
+   * ```
+   *
+   * ##### Inheritance
+   *
+   * The timeout options are inherited by all child classes, and can be overridden at any level, including the individual method level.
+   *
+   * Individual-method-level overrides can vary in behavior depending on the method; again, see {@link TimeoutDescriptor}.
+   *
+   * ##### Defaults
+   *
+   * The default timeout options are as follows:
+   * - `requestTimeoutMs`: 10000
+   * - `generalMethodTimeoutMs`: 30000
+   * - `collectionAdminTimeoutMs`: 60000
+   * - `tableAdminTimeoutMs`: 30000
+   * - `databaseAdminTimeoutMs`: 600000
+   * - `keyspaceAdminTimeoutMs`: 30000
+   *
+   * @see TimeoutDescriptor
+   */
+  timeoutDefaults?: Partial<TimeoutDescriptor>,
 }

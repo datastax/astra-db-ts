@@ -13,8 +13,9 @@
 // limitations under the License.
 
 import { Projection, Sort } from '@/src/documents';
+import { WithTimeout } from '@/src/lib';
 
-export interface GenericFindOptions {
+export interface GenericFindOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   sort?: Sort,
   projection?: Projection,
   limit?: number,

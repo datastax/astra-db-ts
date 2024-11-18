@@ -72,14 +72,8 @@ export const normalizedSort = (sort: SomeDoc): Sort => {
 
   for (const key in sort) {
     const val = sort[key];
-    
-    if (typeof val === 'string') {
-      if (val[0] === 'a') {
-        ret[key] = 1;
-      } else if (val[0] === 'd') {
-        ret[key] = -1;
-      }
-    } else if (val instanceof DataAPIVector) {
+
+    if (val instanceof DataAPIVector) {
       ret[key] = val[$SerializeForTable]() as Sort[string];
     } else {
       ret[key] = val;

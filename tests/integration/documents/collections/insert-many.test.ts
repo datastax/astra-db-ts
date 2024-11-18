@@ -16,6 +16,7 @@
 import { DataAPIError, DataAPITimeoutError, DataAPIVector, CollectionInsertManyError, ObjectId, UUID } from '@/src/documents';
 import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
+import { Timeouts } from '@/src/lib/api/timeouts';
 
 parallel('integration.documents.collections.insert-many', { truncate: 'colls:before' }, ({ collection }) => {
   it('should insertMany documents', async () => {
@@ -173,11 +174,11 @@ parallel('integration.documents.collections.insert-many', { truncate: 'colls:bef
   it('times out properly', async (key) => {
     try {
       const docs = Array.from({ length: 1000 }, () => ({ key }));
-      await collection.insertMany(docs, { ordered: true, maxTimeMS: 500, chunkSize: 10 });
+      await collection.insertMany(docs, { ordered: true, timeout: 500, chunkSize: 10 });
       assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof DataAPITimeoutError);
-      assert.strictEqual(e.timeout, 500);
+      assert.deepStrictEqual(e.timeout, { generalMethodTimeoutMs: 500, requestTimeoutMs: Timeouts.Default.requestTimeoutMs });
       const found = await collection.find({ key }).toArray();
       assert.ok(found.length > 0);
       assert.ok(found.length < 1000);

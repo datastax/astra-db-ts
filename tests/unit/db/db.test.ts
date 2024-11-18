@@ -21,11 +21,12 @@ import { DEMO_APPLICATION_URI, describe, it, TEST_APPLICATION_URI } from '@/test
 import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants';
 import { buildAstraEndpoint } from '@/src/lib/utils';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
+import { Timeouts } from '@/src/lib/api/timeouts';
 
 describe('unit.db', () => {
   const internalOps = (db?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({
-    dbOptions: { token: new StaticTokenProvider('old'), logging: undefined, ...db },
-    adminOptions: { adminToken: new StaticTokenProvider('old-admin'), logging: undefined, ...devops },
+    dbOptions: { token: new StaticTokenProvider('old'), logging: undefined, timeoutDefaults: Timeouts.Default, ...db },
+    adminOptions: { adminToken: new StaticTokenProvider('old-admin'), logging: undefined, timeoutDefaults: Timeouts.Default, ...devops },
     emitter: null!,
     fetchCtx: { preferredType } as any,
     userAgent: '',

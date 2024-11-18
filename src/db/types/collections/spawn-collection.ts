@@ -14,7 +14,7 @@
 
 import { WithKeyspace } from '@/src/db';
 import { CollectionSerDesConfig, EmbeddingHeadersProvider, SomeDoc } from '@/src/documents';
-import { DataAPILoggingConfig } from '@/src/lib';
+import { DataAPILoggingConfig, type TimeoutDescriptor } from '@/src/lib';
 
 /**
  * Options for spawning a new `Collection` instance through {@link db.collection} or {@link db.createCollection}.
@@ -35,16 +35,6 @@ export interface CollectionSpawnOptions<Schema extends SomeDoc> extends WithKeys
    */
   embeddingApiKey?: string | EmbeddingHeadersProvider | null,
   /**
-   * The default `maxTimeMS` for all operations on the collection. Will override the maxTimeMS set in the DataAPIClient
-   * options; it can be overridden on a per-operation basis.
-   *
-   * This does *not* mean the request will be cancelled after this time, but rather that the client will wait
-   * for this time before considering the request to have timed out.
-   *
-   * The request may or may not still be running on the server after this time.
-   */
-  defaultMaxTimeMS?: number | null,
-  /**
    * The configuration for logging events emitted by the {@link DataAPIClient}.
    *
    * This can be set at any level of the major class hierarchy, and will be inherited by all child classes.
@@ -53,4 +43,43 @@ export interface CollectionSpawnOptions<Schema extends SomeDoc> extends WithKeys
    */
   logging?: DataAPILoggingConfig,
   serdes?: CollectionSerDesConfig<Schema>,
+  /**
+   * ##### Overview
+   *
+   * The default timeout options for any operation performed on this {@link Collection} instance.
+   *
+   * See {@link TimeoutDescriptor} for much more information about timeouts.
+   *
+   * @example
+   * ```ts
+   * // The request timeout for all operations is set to 1000ms.
+   * const client = new DataAPIClient('...', {
+   *   timeoutDefaults: { requestTimeoutMs: 1000 },
+   * });
+   *
+   * // The request timeout for all operations borne from this Db is set to 2000ms.
+   * const db = client.db('...', {
+   *   timeoutDefaults: { requestTimeoutMs: 2000 },
+   * });
+   * ```
+   *
+   * ##### Inheritance
+   *
+   * The timeout options are inherited by all child classes, and can be overridden at any level, including the individual method level.
+   *
+   * Individual-method-level overrides can vary in behavior depending on the method; again, see {@link TimeoutDescriptor}.
+   *
+   * ##### Defaults
+   *
+   * The default timeout options are as follows:
+   * - `requestTimeoutMs`: 10000
+   * - `generalMethodTimeoutMs`: 30000
+   * - `collectionAdminTimeoutMs`: 60000
+   * - `tableAdminTimeoutMs`: 30000
+   * - `databaseAdminTimeoutMs`: 600000
+   * - `keyspaceAdminTimeoutMs`: 30000
+   *
+   * @see TimeoutDescriptor
+   */
+  timeoutDefaults?: Partial<TimeoutDescriptor>,
 }

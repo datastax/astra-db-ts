@@ -17,7 +17,7 @@ import { Cols2CqlTypes, CreateTableColumnDefinitions, Normalize, VectorizeServic
 import { WithTimeout } from '@/src/lib';
 import { EmptyObj } from '@/src/lib/types';
 
-export interface AlterTableOptions<Schema extends SomeRow> extends WithTimeout {
+export interface AlterTableOptions<Schema extends SomeRow> extends WithTimeout<'tableAdminTimeoutMs'> {
   operation: AlterTableOperations<Schema>,
   // ifExists?: boolean,
 }

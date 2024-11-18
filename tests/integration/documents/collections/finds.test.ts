@@ -91,13 +91,13 @@ parallel('integration.documents.collections.finds', { truncate: 'colls:before' }
     let docs = await collection.find({ key }, { sort: { username: 1, age: 1 }, limit: 20 }).toArray();
     assert.deepStrictEqual(docs.map(doc => doc.age), [1, 2, 3]);
 
-    docs = await collection.find({ key }, { sort: { username: "asc", age: "desc" }, limit: 20 }).toArray();
+    docs = await collection.find({ key }, { sort: { username: 1, age: -1 }, limit: 20 }).toArray();
     assert.deepStrictEqual(docs.map(doc => doc.age), [3, 2, 1]);
 
-    docs = await collection.find({ key }, { sort: { username: -1, age: "ascending" }, limit: 20 }).toArray();
+    docs = await collection.find({ key }, { sort: { username: -1, age: 1 }, limit: 20 }).toArray();
     assert.deepStrictEqual(docs.map(doc => doc.age), [1, 2, 3]);
 
-    docs = await collection.find({ key }, { sort: { username: -1, age: "descending" }, limit: 20 }).toArray();
+    docs = await collection.find({ key }, { sort: { username: -1, age: -1 }, limit: 20 }).toArray();
     assert.deepStrictEqual(docs.map(doc => doc.age), [3, 2, 1]);
   });
 

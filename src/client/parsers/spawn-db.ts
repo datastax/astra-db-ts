@@ -18,6 +18,7 @@ import { TokenProvider } from '@/src/lib';
 import { isNullish } from '@/src/lib/utils';
 import { Logger } from '@/src/lib/logging/logger';
 import { CollectionSerDesConfig, SomeDoc, TableColumnTypeParser, TableSerDesConfig } from '@/src/documents';
+import { Timeouts } from '@/src/lib/api/timeouts';
 
 export const parseDbSpawnOpts: Parser<DbSpawnOptions | undefined, unknown> = (raw, field) => {
   const opts = p.parse('object?')<DbSpawnOptions>(raw, field);
@@ -31,8 +32,9 @@ export const parseDbSpawnOpts: Parser<DbSpawnOptions | undefined, unknown> = (ra
     keyspace: p.parse('string?', validateKeyspace)(opts.keyspace, `${field}.keyspace`),
     dataApiPath: p.parse('string?')(opts.dataApiPath, `${field}.dataApiPath`),
     token: TokenProvider.parseToken([opts.token], `${field}.token`),
-    serDes: p.parse('object?', parseSerDes)(opts.serdes, `${field}.serDes`),
+    serdes: p.parse('object?', parseSerDes)(opts.serdes, `${field}.serDes`),
     additionalHeaders: p.parse('object?')(opts.additionalHeaders, `${field}.additionalHeaders`),
+    timeoutDefaults: Timeouts.parseConfig(opts.timeoutDefaults, `${field}.timeoutDefaults`),
   };
 };
 
