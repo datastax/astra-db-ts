@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import {
-  CreateTableIndexOptions,
-  CreateTableVectorIndexOptions,
+  TableCreateIndexOptions,
+  TableCreateVectorIndexOptions,
   FoundRow,
   KeyOf,
   SomeDoc,
@@ -375,7 +375,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
     return this;
   }
 
-  public async createIndex(name: string, column: Cols<Schema> | string, options?: CreateTableIndexOptions): Promise<void> {
+  public async createIndex(name: string, column: Cols<Schema> | string, options?: TableCreateIndexOptions): Promise<void> {
     await this.#httpClient.executeCommand({
       createIndex: {
         name: name,
@@ -396,7 +396,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
     });
   }
 
-  public async createVectorIndex(name: string, column: Cols<Schema> | string, options?: CreateTableVectorIndexOptions): Promise<void> {
+  public async createVectorIndex(name: string, column: Cols<Schema> | string, options?: TableCreateVectorIndexOptions): Promise<void> {
     await this.#httpClient.executeCommand({
       createVectorIndex: {
         name: name,

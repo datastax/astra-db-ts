@@ -14,6 +14,6 @@
 
 import { WithTimeout } from '@/src/lib';
 
-export interface DropTableIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+export interface TableDropIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
   ifExists?: boolean,
 }
