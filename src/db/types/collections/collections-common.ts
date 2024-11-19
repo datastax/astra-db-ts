@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { SomeDoc } from '@/src/documents/collections';
-import { ToDotNotation } from '@/src/documents/collections/types/dot-notation';
+import { ToDotNotation } from '@/src/documents/types/dot-notation';
 import { nullish } from '@/src/lib';
 
 /**

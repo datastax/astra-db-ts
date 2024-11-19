@@ -24,3 +24,5 @@ export type * from './update/update-many';
 export type * from './update/update-one';
 export type * from './row';
 export type * from './utils';
+export type * from './filter';
+export type * from './update-filter';

@@ -24,7 +24,7 @@ export type * from './insert/insert-one';
 export type * from './update/update-many';
 export type * from './update/update-one';
 export type * from './update/replace-one';
-export type * from './dot-notation';
+export type * from '../../types/dot-notation';
 export type * from './filter';
 export type * from './update-filter';
 export type * from './document';

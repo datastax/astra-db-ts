@@ -95,7 +95,7 @@ export abstract class AdminCommandEvent extends DataAPIClientEvent {
     this.reqBody = info.data;
     this.params = info.params;
     this.longRunning = longRunning;
-    this.methodName = info.methodName
+    this.methodName = info.methodName;
   }
 
   /**

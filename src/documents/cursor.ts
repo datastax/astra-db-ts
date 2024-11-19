@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Collection, Filter, SomeDoc } from '@/src/documents/collections';
+import type { Collection, SomeDoc } from '@/src/documents/collections';
 import type { GenericFindOptions } from '@/src/documents/commands';
-import type { Projection, Sort } from '@/src/documents/types';
+import type { Filter, Projection, Sort } from '@/src/documents/types';
 import type { DeepPartial, nullish } from '@/src/lib';
 import { normalizedSort } from '@/src/documents/utils';
 import { $CustomInspect } from '@/src/lib/constants';
@@ -117,7 +117,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   readonly #serdes: DataAPISerDes;
 
   readonly #options: GenericFindOptions;
-  readonly #filter: [Filter<TRaw>, boolean];
+  readonly #filter: [Filter, boolean];
   readonly #mapping?: (doc: any) => T;
 
   #buffer: TRaw[] = [];
@@ -131,7 +131,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(parent: Table | Collection, serdes: DataAPISerDes, filter: [Filter<TRaw>, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
+  constructor(parent: Table | Collection, serdes: DataAPISerDes, filter: [Filter, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
     this.#parent = parent;
     this.#serdes = serdes;
     this.#filter = filter;
@@ -210,7 +210,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  public filter(filter: Filter<TRaw>): FindCursor<T,  TRaw> {
+  public filter(filter: Filter): FindCursor<T,  TRaw> {
     if (this.#state !== 'idle') {
       throw new CursorError('Cannot set a new filter on a running/closed cursor', this);
     }
@@ -565,7 +565,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this.#buffer.length = 0;
   }
 
-  #clone<R, RRaw extends SomeDoc>(filter: [Filter<RRaw>, boolean], options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
+  #clone<R, RRaw extends SomeDoc>(filter: [Filter, boolean], options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
     return new (<any>this.constructor)(this.#parent, this.#serdes, filter, options, mapping);
   }
 

@@ -15,20 +15,18 @@
 import {
   CreateTableIndexOptions,
   CreateTableVectorIndexOptions,
-  Filter,
   FoundRow,
   KeyOf,
   SomeDoc,
   SomeRow,
-  TableDeleteOneOptions,
+  TableDeleteOneOptions, TableFilter,
   TableFindOneOptions,
   TableFindOptions,
   TableInsertManyError,
   TableInsertManyOptions,
   TableInsertManyResult,
-  TableInsertOneResult,
+  TableInsertOneResult, TableUpdateFilter,
   TableUpdateOneOptions,
-  UpdateFilter,
 } from '@/src/documents';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
@@ -337,27 +335,27 @@ export class Table<Schema extends SomeRow = SomeRow> {
     return this.#commands.insertMany(document, options, TableInsertManyError);
   }
 
-  public async updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: TableUpdateOneOptions): Promise<void> {
+  public async updateOne(filter: TableFilter<Schema>, update: TableUpdateFilter<Schema>, options?: TableUpdateOneOptions): Promise<void> {
     await this.#commands.updateOne(filter, update, options);
   }
 
-  public async deleteOne(filter: Filter<Schema>, options?: TableDeleteOneOptions): Promise<void> {
+  public async deleteOne(filter: TableFilter<Schema>, options?: TableDeleteOneOptions): Promise<void> {
     await this.#commands.deleteOne(filter, options);
   }
 
-  public async deleteMany(filter: Filter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
+  public async deleteMany(filter: TableFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
     await this.#commands.deleteMany(filter, options);
   }
 
-  public find(filter: Filter<Schema>, options?: TableFindOptions & { projection?: never }): TableFindCursor<FoundRow<Schema>, FoundRow<Schema>>
+  public find(filter: TableFilter<Schema>, options?: TableFindOptions & { projection?: never }): TableFindCursor<FoundRow<Schema>, FoundRow<Schema>>
 
-  public find<TRaw extends SomeRow = DeepPartial<Schema>>(filter: Filter<Schema>, options: TableFindOptions): TableFindCursor<FoundRow<TRaw>, FoundRow<TRaw>>
+  public find<TRaw extends SomeRow = DeepPartial<Schema>>(filter: TableFilter<Schema>, options: TableFindOptions): TableFindCursor<FoundRow<TRaw>, FoundRow<TRaw>>
 
-  public find(filter: Filter<Schema>, options?: TableFindOptions): TableFindCursor<SomeDoc> {
+  public find(filter: TableFilter<Schema>, options?: TableFindOptions): TableFindCursor<SomeDoc> {
     return this.#commands.find(filter, options, TableFindCursor);
   }
 
-  public async findOne(filter: Filter<Schema>, options?: TableFindOneOptions): Promise<FoundRow<Schema> | null> {
+  public async findOne(filter: TableFilter<Schema>, options?: TableFindOneOptions): Promise<FoundRow<Schema> | null> {
     return this.#commands.findOne(filter, options);
   }
 

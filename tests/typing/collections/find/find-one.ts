@@ -16,7 +16,7 @@
 
 import { dummyCollection, DynamicSchema, TestSchema } from '@/tests/typing/collections/prelude';
 import { Equal, Expect } from '@/tests/typing/prelude';
-import { StrictFilter } from '@/src/documents/collections/types/filter';
+import { StrictCollectionFilter } from '@/src/documents/collections/types/filter';
 import { StrictProjection } from '@/src/documents';
 
 void dummyCollection<TestSchema>().findOne({}, {}).then((a) => {
@@ -66,7 +66,7 @@ void dummyCollection<TestSchema>().findOne({
   'purchase_date': { $gte: new Date(123) },
   'items': { $gte: new Date(123) },
   'arr.0': { age: 3 },
-} satisfies StrictFilter<TestSchema>, {
+} satisfies StrictCollectionFilter<TestSchema>, {
   sort: {
     'customer.address.address_line': 1,
   },
@@ -83,12 +83,12 @@ void dummyCollection<TestSchema>().findOne({
     $date: 700,
   },
   'customer.name': {
-    $eq: 18,
+    $eq: '18',
   },
   'customer.age': {
     $in: [
       102,
-      '1',
+      1,
     ],
   },
   'arr.0': ['123'],
@@ -112,7 +112,7 @@ void dummyCollection<TestSchema>().findOne({
   },
   // @ts-expect-error - Type mismatch
   'arr.0': ['123'],
-} satisfies StrictFilter<TestSchema>);
+} satisfies StrictCollectionFilter<TestSchema>);
 
 void dummyCollection<TestSchema>().findOne({}, {
   sort: {
