@@ -108,11 +108,18 @@ const DefaultTableSerDesCfg = {
         return [[...value]];
       }
 
-      if (!ctx.bigNumsPresent && value instanceof BigNumber) {
+      if (value instanceof BigNumber) {
         ctx.bigNumsPresent = true;
+        return true;
       }
     } else if (!ctx.bigNumsPresent && typeof value === 'bigint') {
       ctx.bigNumsPresent = true;
+      return true;
+    } else if (typeof value === 'number') {
+      if (!isFinite(value)) {
+        return [value.toString(), true];
+      }
+      return [value, true];
     }
   },
   deserialize(key, _, ctx) {

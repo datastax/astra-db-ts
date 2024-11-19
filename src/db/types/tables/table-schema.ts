@@ -280,13 +280,13 @@ interface CqlNonGenericType2TSTypeDict {
   uuid: UUID | null,
   varchar: string | null,
   varint: bigint | null,
-  vector: DataAPIVector | null,
 }
 
 interface CqlGenericType2TSTypeDict<Def> {
   map: CqlMapType2TsType<Def>,
   list: CqlListType2TsType<Def>,
   set: CqlSetType2TsType<Def>,
+  vector: CqlVectorType2TsType<Def> | null,
 }
 
 type CqlMapType2TsType<Def> =
@@ -303,3 +303,8 @@ type CqlSetType2TsType<Def> =
   Def extends { valueType: infer ValueType extends string }
     ? Set<CqlType2TSType<ValueType, never> & {}>
     : TypeErr<'Invalid generics definition for \'set\'; should have valueType set as scalar CQL types (e.g. \'text\')'>;
+
+type CqlVectorType2TsType<Def> =
+  Def extends { service: unknown }
+    ? DataAPIVector | string
+    : DataAPIVector;

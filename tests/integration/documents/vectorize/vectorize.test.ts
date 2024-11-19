@@ -48,6 +48,10 @@ const createTestBranches = (): FinalVectorizeTestBranch[] => {
 
   const spec = JSON.parse(fs.readFileSync('vectorize_test_spec.json', 'utf8')) as VectorizeTestSpec;
 
+  if (Object.entries(spec).length === 0) {
+    return [];
+  }
+
   const embeddingProviders = JSON.parse(process.env.CLIENT_VECTORIZE_PROVIDERS) as Record<string, EmbeddingProviderInfo>;
 
   const whitelist = whitelistImplFor(process.env.CLIENT_VECTORIZE_WHITELIST ?? '$model-limit:1');
@@ -131,7 +135,7 @@ describe('(VECTORIZE) (LONG) integration.documents.vectorize', ({ db }) => {
   const groups = createTestGroups(tests);
 
   for (let i = 0, n = groups.length; i < n; i += 6) {
-    parallel('(VECTORIZE) generated tests', { dropEphemeral: 'colls:after' }, () => {
+    parallel('(VECTORIZE) generated tests', { drop: 'colls:after' }, () => {
       groups.slice(i, i + 6).forEach(createVectorizeProvidersTest(db, i));
     });
   }
