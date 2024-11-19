@@ -24,7 +24,7 @@ import { TokenProvider } from '@/src/lib';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client';
 import { KeyspaceRef } from '@/src/lib/api/clients/types';
 import { toArray, validateDataAPIEnv } from '@/src/lib/utils';
-import { EmbeddingHeadersProvider, SomeRow, Table } from '@/src/documents';
+import { DropTableIndexOptions, EmbeddingHeadersProvider, SomeRow, Table } from '@/src/documents';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
 import { CollectionSpawnOptions } from '@/src/db/types/collections/spawn-collection';
 import { DropCollectionOptions } from '@/src/db/types/collections/drop-collection';
@@ -1036,8 +1036,8 @@ export class Db {
     });
   }
 
-  public async dropTableIndex(name: string, options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<void> {
-    await this.#httpClient.executeCommand({ dropIndex: { name } }, {
+  public async dropTableIndex(name: string, options?: DropTableIndexOptions): Promise<void> {
+    await this.#httpClient.executeCommand({ dropIndex: { name, options: { ifExists: options?.ifExists } } }, {
       timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
     });
   }

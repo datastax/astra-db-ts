@@ -95,7 +95,12 @@ export const mkTableSerDes = <Schema extends SomeRow>(cfg: TableSerDesConfig<Sch
 
 const DefaultTableSerDesCfg = {
   serialize(_, value, ctx) {
-    if (typeof value === 'object' && value !== null) {
+    if (typeof value === 'number') {
+      if (!isFinite(value)) {
+        return [value.toString(), true];
+      }
+      return true;
+    } else if (typeof value === 'object' && value !== null) {
       if ($SerializeForTable in value) {
         return [value[$SerializeForTable](), true];
       }
@@ -115,11 +120,6 @@ const DefaultTableSerDesCfg = {
     } else if (!ctx.bigNumsPresent && typeof value === 'bigint') {
       ctx.bigNumsPresent = true;
       return true;
-    } else if (typeof value === 'number') {
-      if (!isFinite(value)) {
-        return [value.toString(), true];
-      }
-      return [value, true];
     }
   },
   deserialize(key, _, ctx) {
