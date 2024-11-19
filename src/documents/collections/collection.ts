@@ -1232,13 +1232,14 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @param key - The dot-notation key to pick which values to retrieve unique
    * @param filter - A filter to select the documents to find. If not provided, all documents will be matched.
+   * @param options - The options for this operation.
    *
    * @returns A list of all the unique values selected by the given `key`
    *
    * @see StrictFilter
    */
-  public async distinct<Key extends string>(key: Key, filter: CollectionFilter<Schema>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]> {
-    return this.#commands.distinct(key, filter, CollectionFindCursor);
+  public async distinct<Key extends string>(key: Key, filter: CollectionFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]> {
+    return this.#commands.distinct(key, filter, options, CollectionFindCursor);
   }
 
   /**

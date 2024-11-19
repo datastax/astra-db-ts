@@ -306,9 +306,9 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     return resp.data?.document || null;
   }
 
-  public async distinct(key: string, filter: SomeDoc, mkCursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => FindCursor<SomeDoc>): Promise<any[]> {
+  public async distinct(key: string, filter: SomeDoc, options: WithTimeout<'generalMethodTimeoutMs'> | undefined, mkCursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => FindCursor<SomeDoc>): Promise<any[]> {
     const projection = pullSafeProjection4Distinct(key);
-    const cursor = this.find(filter, { projection: { _id: 0, [projection]: 1 } }, mkCursor);
+    const cursor = this.find(filter, { projection: { _id: 0, [projection]: 1 }, timeout: options?.timeout }, mkCursor);
 
     const seen = new Set<unknown>();
     const ret = [];
