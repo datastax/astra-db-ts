@@ -179,7 +179,7 @@ export class AstraDbAdmin extends DbAdmin {
    */
   public async info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbAdminInfo> {
     const tm = this.#httpClient.tm.single('databaseAdminTimeoutMs', options);
-    return this.#info(tm);
+    return this.#info('info', tm);
   }
 
   /**
@@ -200,7 +200,7 @@ export class AstraDbAdmin extends DbAdmin {
    */
   public override async listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]> {
     const tm = this.#httpClient.tm.single('keyspaceAdminTimeoutMs', options);
-    return this.#info(tm).then(i => i.keyspaces);
+    return this.#info('listKeyspaces', tm).then(i => i.keyspaces);
   }
 
   /**
@@ -243,6 +243,7 @@ export class AstraDbAdmin extends DbAdmin {
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: `/databases/${this.#db.id}/keyspaces/${keyspace}`,
+      methodName: 'createKeyspace',
     }, {
       id: this.#db.id,
       target: 'ACTIVE',
@@ -290,6 +291,7 @@ export class AstraDbAdmin extends DbAdmin {
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Delete,
       path: `/databases/${this.#db.id}/keyspaces/${keyspace}`,
+      methodName: 'dropKeyspace',
     }, {
       id: this.#db.id,
       target: 'ACTIVE',
@@ -327,6 +329,7 @@ export class AstraDbAdmin extends DbAdmin {
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: `/databases/${this.#db.id}/terminate`,
+      methodName: 'dropDatabase',
     }, {
       id: this.#db.id,
       target: 'TERMINATED',
@@ -341,10 +344,11 @@ export class AstraDbAdmin extends DbAdmin {
     return this.#httpClient;
   }
 
-  async #info(tm: TimeoutManager): Promise<AstraDbAdminInfo> {
+  async #info(methodName: string, tm: TimeoutManager): Promise<AstraDbAdminInfo> {
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases/${this.#db.id}`,
+      methodName,
     }, tm);
 
     return buildAstraDatabaseAdminInfo(resp.data!, this.#environment);

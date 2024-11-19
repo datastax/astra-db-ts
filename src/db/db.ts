@@ -399,7 +399,7 @@ export class Db {
     validateDataAPIEnv(environment);
 
     if (this.#defaultOpts.environment !== environment) {
-      throw new InvalidEnvironmentError('db.admin()', this.#defaultOpts.environment, [environment], 'environment option is not the same as set in the DataAPIClient');
+      throw new InvalidEnvironmentError('db.admin()', environment, [this.#defaultOpts.environment], 'environment option is not the same as set in the DataAPIClient');
     }
 
     if (environment === 'astra') {

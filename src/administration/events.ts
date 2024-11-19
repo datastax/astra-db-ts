@@ -41,6 +41,9 @@ export type AdminCommandEventMap = {
    * Emitted when an admin command has errored.
    */
   adminCommandFailed: (event: AdminCommandFailedEvent) => void,
+  /**
+   * Emitted when an admin command has warnings.
+   */
   adminCommandWarnings: (event: AdminCommandWarningsEvent) => void,
 }
 
@@ -76,17 +79,31 @@ export abstract class AdminCommandEvent extends DataAPIClientEvent {
   public readonly longRunning: boolean;
 
   /**
+   * The method which invoked the request
+   */
+  public readonly methodName: string;
+
+  /**
    * Should not be instantiated directly.
    *
    * @internal
    */
-  protected constructor(info: DevOpsAPIRequestInfo, longRunning: boolean) {
-    super();
+  protected constructor(name: string, info: DevOpsAPIRequestInfo, longRunning: boolean) {
+    super(name);
     this.path = info.path;
     this.method = info.method;
     this.reqBody = info.data;
     this.params = info.params;
     this.longRunning = longRunning;
+    this.methodName = info.methodName
+  }
+
+  /**
+   * @internal
+   * @protected
+   */
+  protected _desc() {
+    return `(${this.methodName}) ${this.method} ${this.path}${this.params ? '?' : ''}${new URLSearchParams(this.params).toString()}`;
   }
 }
 
@@ -109,12 +126,12 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
    * @internal
    */
   constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: Partial<TimeoutDescriptor>) {
-    super(info, longRunning);
+    super('AdminCommandStarted', info, longRunning);
     this.timeout = timeout;
   }
 
   public formatted(): string {
-    return `[AdminCommandStartedEvent]: ${this.method} ${this.path}${this.params ? '?' : ''}${new URLSearchParams(this.params).toString()} ${this.longRunning ? '(blocking)' : ''} ${this.reqBody ? JSON.stringify(this.reqBody) : ''}`;
+    return `${super.formatted()}: ${this._desc()} ${this.longRunning ? '(blocking) ' : ' '}${this.reqBody ? JSON.stringify(this.reqBody) : ''}`;
   }
 }
 
@@ -149,14 +166,14 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
    * @internal
    */
   constructor(info: DevOpsAPIRequestInfo, started: number, interval: number, pollCount: number) {
-    super(info, true);
+    super('AdminCommandPolling', info, true);
     this.elapsed = performance.now() - started;
     this.interval = interval;
     this.pollCount = pollCount;
   }
 
   public formatted(): string {
-    return `[AdminCommandPollingEvent]: ${this.method} ${this.path}${this.params ? '?' : ''}${new URLSearchParams(this.params).toString()} (poll #${this.pollCount}; ${this.elapsed}ms elapsed)`;
+    return `${super.formatted()}: ${this._desc()} (poll #${this.pollCount}; ${~~this.elapsed}ms elapsed)`;
   }
 }
 
@@ -184,13 +201,13 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
    * @internal
    */
   constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number) {
-    super(info, longRunning);
+    super('AdminCommandSucceeded', info, longRunning);
     this.duration = performance.now() - started;
     this.resBody = data || undefined;
   }
 
   public formatted(): string {
-    return `[AdminCommandSucceededEvent]: ${this.method} ${this.path}${this.params ? '?' : ''}${new URLSearchParams(this.params).toString()}} ${this.reqBody ? JSON.stringify(this.reqBody) : ''} (took ${this.duration}ms)`;
+    return `${super.formatted()}: ${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms)`;
   }
 }
 
@@ -221,13 +238,13 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
    * @internal
    */
   constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number) {
-    super(info, longRunning);
+    super('AdminCommandFailed', info, longRunning);
     this.duration = performance.now() - started;
     this.error = error;
   }
 
   public formatted(): string {
-    return `[AdminCommandFailedEvent]: ${this.method} ${this.path}${this.params ? '?' : ''}${new URLSearchParams(this.params).toString()} ${this.reqBody ? JSON.stringify(this.reqBody) : ''} (took ${this.duration}ms) - '${this.error.message}'`;
+    return `${super.formatted()}: ${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms) - '${this.error.message}'`;
   }
 }
 
@@ -235,11 +252,11 @@ export class AdminCommandWarningsEvent extends AdminCommandEvent {
   public readonly warnings: DataAPIErrorDescriptor[];
 
   constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: DataAPIErrorDescriptor[]) {
-    super(info, longRunning);
+    super('AdminCommandWarnings', info, longRunning);
     this.warnings = warnings;
   }
 
-  formatted(): string {
-    return `[AdminCommandWarningsEvent]: ${this.method} ${this.path}${this.params ? '?' : ''}${new URLSearchParams(this.params).toString()} ${this.reqBody ? JSON.stringify(this.reqBody) : ''} - '${this.warnings.map(w => w.message).join(', ')}'`;
+  public formatted(): string {
+    return `${super.formatted()}: ${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}- '${this.warnings.map(w => w.message).join(', ')}'`;
   }
 }

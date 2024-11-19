@@ -31,11 +31,14 @@ import type { AdminSpawnOptions } from '@/src/client';
 import { isNullish } from '@/src/lib/utils';
 import { mkRespErrorFromResponse } from '@/src/documents/errors';
 import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts';
+import { EmptyObj } from '@/src/lib/types';
+
+type ClientKind = 'admin' | 'normal';
 
 /**
  * @internal
  */
-type ExecuteCommandOptions = {
+type ExecCmdOpts<Kind extends ClientKind> = (Kind extends 'admin' ? { methodName: string } : EmptyObj) & {
   keyspace?: string | null,
   timeoutManager: TimeoutManager,
   bigNumsPresent?: boolean,
@@ -54,14 +57,19 @@ export interface DataAPIRequestInfo {
   bigNumsPresent: boolean | undefined,
 }
 
-type EmissionStrategy = (logger: Logger) => {
-  emitCommandStarted?(info: DataAPIRequestInfo): void,
-  emitCommandFailed?(info: DataAPIRequestInfo, error: Error, started: number): void,
-  emitCommandSucceeded?(info: DataAPIRequestInfo, resp: RawDataAPIResponse, started: number): void,
-  emitCommandWarnings?(info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[]): void,
+type EmissionStrategy<Kind extends ClientKind> = (logger: Logger) => {
+  emitCommandStarted?(info: DataAPIRequestInfo, opts: ExecCmdOpts<Kind>): void,
+  emitCommandFailed?(info: DataAPIRequestInfo, error: Error, started: number, opts: ExecCmdOpts<Kind>): void,
+  emitCommandSucceeded?(info: DataAPIRequestInfo, resp: RawDataAPIResponse, started: number, opts: ExecCmdOpts<Kind>): void,
+  emitCommandWarnings?(info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[], opts: ExecCmdOpts<Kind>): void,
 }
 
-export const EmissionStrategy: Record<'Normal' | 'Admin', EmissionStrategy> = {
+type EmissionStrategies = {
+  Normal: EmissionStrategy<'normal'>,
+  Admin: EmissionStrategy<'admin'>,
+}
+
+export const EmissionStrategy: EmissionStrategies = {
   Normal: (logger) => ({
     emitCommandStarted: logger.commandStarted,
     emitCommandFailed: logger.commandFailed,
@@ -69,34 +77,34 @@ export const EmissionStrategy: Record<'Normal' | 'Admin', EmissionStrategy> = {
     emitCommandWarnings: logger.commandWarnings,
   }),
   Admin: (logger) => ({
-    emitCommandStarted(info) {
-      logger.adminCommandStarted?.(adaptInfo4Devops(info), true, null!); // TODO
+    emitCommandStarted(info, opts) {
+      logger.adminCommandStarted?.(adaptInfo4Devops(info, opts.methodName), true, null!); // TODO
     },
-    emitCommandFailed(info, error, started) {
-      logger.adminCommandFailed?.(adaptInfo4Devops(info), true, error, started);
+    emitCommandFailed(info, error, started, opts) {
+      logger.adminCommandFailed?.(adaptInfo4Devops(info, opts.methodName), true, error, started);
     },
-    emitCommandSucceeded(info, resp, started) {
-      logger.adminCommandSucceeded?.(adaptInfo4Devops(info), true, resp, started);
+    emitCommandSucceeded(info, resp, started, opts) {
+      logger.adminCommandSucceeded?.(adaptInfo4Devops(info, opts.methodName), true, resp, started);
     },
-    emitCommandWarnings(info, warnings) {
-      logger.adminCommandWarnings?.(adaptInfo4Devops(info), true, warnings);
+    emitCommandWarnings(info, warnings, opts) {
+      logger.adminCommandWarnings?.(adaptInfo4Devops(info, opts.methodName), true, warnings);
     },
   }),
 };
 
-const adaptInfo4Devops = (info: DataAPIRequestInfo) => (<const>{
+const adaptInfo4Devops = (info: DataAPIRequestInfo, methodName: string) => (<const>{
   method: 'POST',
   data: info.command,
   path: info.url,
-  params: {},
+  methodName,
 });
 
 /**
  * @internal
  */
-interface DataAPIHttpClientOpts extends HTTPClientOptions {
+interface DataAPIHttpClientOpts<Kind extends ClientKind> extends HTTPClientOptions {
   keyspace: KeyspaceRef,
-  emissionStrategy: EmissionStrategy,
+  emissionStrategy: EmissionStrategy<Kind>,
   embeddingHeaders: EmbeddingHeadersProvider,
   tokenProvider: TokenProvider | undefined,
 }
@@ -112,14 +120,14 @@ export interface BigNumberHack {
 /**
  * @internal
  */
-export class DataAPIHttpClient extends HttpClient {
+export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpClient {
   public collection?: string;
   public keyspace: KeyspaceRef;
-  public emissionStrategy: ReturnType<EmissionStrategy>;
+  public emissionStrategy: ReturnType<EmissionStrategy<Kind>>;
   public bigNumHack?: BigNumberHack;
-  readonly #props: DataAPIHttpClientOpts;
+  readonly #props: DataAPIHttpClientOpts<Kind>;
 
-  constructor(props: DataAPIHttpClientOpts) {
+  constructor(props: DataAPIHttpClientOpts<Kind>) {
     super(props, [mkAuthHeaderProvider(props.tokenProvider), () => props.embeddingHeaders.getHeaders()], DataAPITimeoutError.mk);
     this.keyspace = props.keyspace;
     this.#props = props;
@@ -131,6 +139,7 @@ export class DataAPIHttpClient extends HttpClient {
       ...this.#props,
       embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(opts?.embeddingApiKey),
       logging: Logger.advanceConfig(this.#props.logging, opts?.logging),
+      emissionStrategy: EmissionStrategy.Normal,
       keyspace: { ref: keyspace },
     });
 
@@ -141,7 +150,7 @@ export class DataAPIHttpClient extends HttpClient {
     return clone;
   }
 
-  public forDbAdmin(opts: AdminSpawnOptions | undefined): DataAPIHttpClient {
+  public forDbAdmin(opts: AdminSpawnOptions | undefined): DataAPIHttpClient<'admin'> {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       tokenProvider: TokenProvider.parseToken([opts?.adminToken, this.#props.tokenProvider], 'admin token'),
@@ -149,28 +158,26 @@ export class DataAPIHttpClient extends HttpClient {
       baseUrl: opts?.endpointUrl ?? this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
       additionalHeaders: { ...this.#props.additionalHeaders, ...opts?.additionalHeaders },
+      emissionStrategy: EmissionStrategy.Admin,
     });
 
     clone.collection = undefined;
-    clone.emissionStrategy = EmissionStrategy.Admin(clone.logger);
     clone.tm = new Timeouts(DataAPITimeoutError.mk, { ...this.tm.baseTimeouts, ...opts?.timeoutDefaults });
 
     return clone;
   }
 
-  public async executeCommand(command: Record<string, any>, options: ExecuteCommandOptions) {
-    return await this._requestDataAPI({
-      url: this.baseUrl,
-      timeoutManager: options.timeoutManager,
-      collection: options?.collection,
-      keyspace: options?.keyspace,
-      command: command,
-      bigNumsPresent: options?.bigNumsPresent,
-    });
-  }
-
-  private async _requestDataAPI(info: DataAPIRequestInfo): Promise<RawDataAPIResponse> {
+  public async executeCommand(command: Record<string, any>, options: ExecCmdOpts<Kind>): Promise<RawDataAPIResponse> {
     let started = 0;
+
+    const info: DataAPIRequestInfo = {
+      url: this.baseUrl,
+      collection: options.collection,
+      keyspace: options.keyspace,
+      command: command,
+      timeoutManager: options.timeoutManager,
+      bigNumsPresent: options.bigNumsPresent,
+    };
 
     try {
       info.collection ||= this.collection;
@@ -188,15 +195,15 @@ export class DataAPIHttpClient extends HttpClient {
       info.url += keyspacePath + collectionPath;
 
       started = performance.now();
-      this.emissionStrategy.emitCommandStarted?.(info);
+      this.emissionStrategy.emitCommandStarted?.(info, options);
 
-      const command = (info.bigNumsPresent)
+      const serialized = (info.bigNumsPresent)
         ? this.bigNumHack?.parser.stringify(info.command)
         : JSON.stringify(info.command);
 
       const resp = await this._request({
         url: info.url,
-        data: command,
+        data: serialized,
         timeoutManager: info.timeoutManager,
         method: HttpMethods.Post,
       });
@@ -214,7 +221,7 @@ export class DataAPIHttpClient extends HttpClient {
 
       const warnings = data?.status?.warnings ?? [];
       if (warnings.length) {
-        this.emissionStrategy.emitCommandWarnings?.(info, warnings);
+        this.emissionStrategy.emitCommandWarnings?.(info, warnings, options);
       }
       delete data?.status?.warnings;
 
@@ -228,10 +235,10 @@ export class DataAPIHttpClient extends HttpClient {
         errors: data.errors,
       };
 
-      this.emissionStrategy.emitCommandSucceeded?.(info, respData, started);
+      this.emissionStrategy.emitCommandSucceeded?.(info, respData, started, options);
       return respData;
     } catch (e: any) {
-      this.emissionStrategy.emitCommandFailed?.(info, e, started);
+      this.emissionStrategy.emitCommandFailed?.(info, e, started, options);
       throw e;
     }
   }
