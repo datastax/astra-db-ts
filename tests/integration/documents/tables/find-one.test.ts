@@ -27,7 +27,7 @@ import { EverythingTableSchema, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 import BigNumber from 'bignumber.js';
 
-parallel('integration.documents.tables.find-one', { truncate: 'colls:before' }, ({ table }) => {
+parallel('integration.documents.tables.find-one', { truncate: 'colls:before', drop: 'tables:after' }, ({ table }) => {
   it('should find one partial row', async (key) => {
     const uuid = UUID.v4();
 

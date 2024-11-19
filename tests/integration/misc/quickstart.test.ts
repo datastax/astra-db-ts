@@ -26,7 +26,7 @@ import {
 } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.misc.quickstart', { dropEphemeral: 'colls:after' }, () => {
+parallel('integration.misc.quickstart', { drop: 'colls:after' }, () => {
   it('(LONG) works for the quickstart', async () => {
     interface Idea {
       idea: string,

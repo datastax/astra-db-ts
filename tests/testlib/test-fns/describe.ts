@@ -22,7 +22,7 @@ export type SuiteBlock = (fixtures: ReturnType<typeof initTestObjects>) => void;
 
 export interface SuiteOptions {
   truncate?: `${'colls' | 'tables'}:${'before' | 'beforeEach'}`,
-  dropEphemeral?: `${'colls' | 'tables'}:${'after' | 'afterEach'}`,
+  drop?: `${'colls' | 'tables'}:${'after' | 'afterEach'}`,
 }
 
 interface TaggableSuiteFunction {
@@ -75,12 +75,12 @@ describe = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
       });
     }
 
-    if (opts?.dropEphemeral?.includes(':')) {
-      if (opts?.dropEphemeral.startsWith('colls')) {
-        global[opts?.dropEphemeral.split(':')[1] as keyof typeof globalThis](dropEphemeralColls);
+    if (opts?.drop?.includes(':')) {
+      if (opts?.drop.startsWith('colls')) {
+        global[opts?.drop.split(':')[1] as keyof typeof globalThis](dropEphemeralColls);
       }
-      if (opts?.dropEphemeral.startsWith('tables')) {
-        global[opts?.dropEphemeral.split(':')[1] as keyof typeof globalThis](dropEphemeralTables);
+      if (opts?.drop.startsWith('tables')) {
+        global[opts?.drop.split(':')[1] as keyof typeof globalThis](dropEphemeralTables);
       }
     }
 

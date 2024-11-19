@@ -14,7 +14,13 @@
 
 import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import { DEFAULT_COLLECTION_NAME, DEFAULT_TABLE_NAME, OTHER_KEYSPACE, SKIP_PRELUDE } from '@/tests/testlib/config';
-import { EverythingTableSchema, FILTER_COMBINATOR, GLOBAL_FIXTURES, RAW_FILTERS } from '@/tests/testlib';
+import {
+  EverythingTableSchema,
+  EverythingTableSchemaWithVectorize,
+  FILTER_COMBINATOR,
+  GLOBAL_FIXTURES,
+  RAW_FILTERS,
+} from '@/tests/testlib';
 
 const TEST_KEYSPACES = [DEFAULT_KEYSPACE, OTHER_KEYSPACE];
 
@@ -69,12 +75,15 @@ before(async () => {
         .then(c => c.deleteMany({}));
 
       const table = await db.createTable(DEFAULT_TABLE_NAME, {
-        definition: EverythingTableSchema,
+        definition: (keyspace === DEFAULT_KEYSPACE) ? EverythingTableSchema : EverythingTableSchemaWithVectorize,
         ifNotExists: true,
         keyspace,
       });
 
-      await table.createVectorIndex(`vector_idx_${keyspace}`, 'vector', { metric: 'dot_product', ifNotExists: true });
+      if (keyspace === DEFAULT_KEYSPACE) {
+        await table.createVectorIndex(`vector_idx_${keyspace}`, 'vector', { metric: 'dot_product' });
+      }
+      await table.createIndex(`bigint_idx_${keyspace}`, 'bigint');
     })
     .awaitAll();
 
