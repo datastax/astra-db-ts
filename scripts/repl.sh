@@ -13,7 +13,7 @@ fi
 
 # Rebuild the client (without types or any extra processing for speed)
 sh scripts/build.sh -light || exit 2
-i
+
 while [ $# -gt 0 ]; do
   case "$1" in
     "-local")
