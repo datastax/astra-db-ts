@@ -16,11 +16,12 @@
 import { DataAPIVector, SomeDoc } from '@/src/documents';
 import {
   DEFAULT_TABLE_NAME,
-  parallel, EverythingTableSchema,
+  describe,
+  EverythingTableSchema,
   initCollectionWithFailingClient,
   it,
   OTHER_KEYSPACE,
-  describe,
+  parallel,
 } from '@/tests/testlib';
 import assert from 'assert';
 
@@ -251,7 +252,7 @@ describe('integration.documents.table.cursor', { truncate: 'tables:before' }, ({
     });
 
     it('should return sort vector on only first API call if includeSortVector: true', async () => {
-      const cursor = table_.find({}).sort({ vector: [1, 1, 1, 1, 1] }).includeSortVector();
+      const cursor = table.find({}).sort({ vector: [1, 1, 1, 1, 1] }).includeSortVector();
       const start1 = performance.now();
       assert.deepStrictEqual(await cursor.getSortVector(), [1, 1, 1, 1, 1]);
       assert.ok(performance.now() - start1 > 5);
@@ -267,7 +268,7 @@ describe('integration.documents.table.cursor', { truncate: 'tables:before' }, ({
     });
 
     it('should return null in getSortVector if includeSortVector: false', async () => {
-      const cursor = table_.find({}).sort({ vector: [1, 1, 1, 1, 1] });
+      const cursor = table.find({}).sort({ vector: [1, 1, 1, 1, 1] });
       await cursor.hasNext();
       assert.deepStrictEqual(await cursor.getSortVector(), null);
     });

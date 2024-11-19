@@ -81,7 +81,7 @@ before(async () => {
       });
 
       if (keyspace === DEFAULT_KEYSPACE) {
-        await table.createVectorIndex(`vector_idx_${keyspace}`, 'vector', { metric: 'dot_product', ifNotExists: true });
+        await table.createVectorIndex(`vector_idx_${keyspace}`, 'vector', { metric: 'dot_product' });
       }
       await table.createIndex(`bigint_idx_${keyspace}`, 'bigint');
     })
