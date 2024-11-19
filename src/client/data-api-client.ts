@@ -309,7 +309,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
   public [Symbol.asyncDispose]!: () => Promise<void>;
 }
 
-function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
+const buildFetchCtx = (options: DataAPIClientOptions | undefined): FetchCtx => {
   const clientType = (options?.httpOptions)
     ? options.httpOptions?.client ?? 'default'
     : undefined;
@@ -325,9 +325,9 @@ function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
     ctx: ctx,
     closed: { ref: false },
   };
-}
+};
 
-function tryLoadFetchH2(clientType: string | nullish, options: DataAPIClientOptions | undefined): Fetcher {
+const tryLoadFetchH2 = (clientType: string | nullish, options: DataAPIClientOptions | undefined): Fetcher => {
   try {
     const httpOptions = options?.httpOptions as DefaultHttpClientOptions | undefined;
     const preferHttp2 = httpOptions?.preferHttp2 ?? true;
@@ -339,7 +339,7 @@ function tryLoadFetchH2(clientType: string | nullish, options: DataAPIClientOpti
       throw e;
     }
   }
-}
+};
 
 const parseClientOpts: Parser<DataAPIClientOptions | nullish> = (raw, field) => {
   const opts = p.parse('object?')<DataAPIClientOptions>(raw, field);

@@ -16,18 +16,18 @@ import { isNullish } from '@/src/lib/utils';
 import { $CustomInspect } from '@/src/lib/constants';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des';
 
-export interface CqlDateComponents {
+export interface DataAPIDateComponents {
   year: number,
   month: number,
   date: number
 }
 
-export class CqlDate {
+export class DataAPIDate {
   readonly #date: string;
 
   public [$SerializeForTable] = this.toString;
 
-  public constructor(input?: string | Date | CqlDateComponents) {
+  public constructor(input?: string | Date | DataAPIDateComponents) {
     if (typeof input === 'string') {
       this.#date = input;
     } else if (input instanceof Date || isNullish(input)) {
@@ -35,17 +35,17 @@ export class CqlDate {
       this.#date = `${input.getFullYear().toString().padStart(4, '0')}-${(input.getMonth() + 1).toString().padStart(2, '0')}-${input.getDate().toString().padStart(2, '0')}`;
     } else {
       if (input.month < 1 || input.month > 12) {
-        throw new RangeError('Month must be between 1 and 12 (CqlDate month is NOT zero-indexed)');
+        throw new RangeError('Month must be between 1 and 12 (DataAPIDate month is NOT zero-indexed)');
       }
       this.#date = `${input.year.toString().padStart(4, '0') ?? '0000'}-${input.month.toString().padStart(2, '0') ?? '00'}-${input.date.toString().padStart(2, '0') ?? '00'}`;
     }
 
     Object.defineProperty(this, $CustomInspect, {
-      value: () => `CqlDate("${this.#date}")`,
+      value: () => `DataAPIDate("${this.#date}")`,
     });
   }
 
-  public components(): CqlDateComponents {
+  public components(): DataAPIDateComponents {
     const signum = this.#date.startsWith('-') ? -1 : 1;
     const date = this.#date.split('-');
 
@@ -56,8 +56,8 @@ export class CqlDate {
     return { year: +date[0], month: +date[1], date: +date[2] };
   }
 
-  public toDate(base?: Date | CqlTime | CqlTimestamp): Date {
-    if (base instanceof CqlTimestamp) {
+  public toDate(base?: Date | DataAPITime | DataAPITimestamp): Date {
+    if (base instanceof DataAPITimestamp) {
       base = base.toDate();
     }
 
@@ -83,25 +83,25 @@ export class CqlDate {
   }
 }
 
-export interface CqlDurationComponents {
+export interface DataAPIDurationComponents {
   months: number,
   days: number,
   nanoseconds: number,
 }
 
-export class CqlDuration {
+export class DataAPIDuration {
   readonly #duration: string;
 
   public [$SerializeForTable] = this.toString;
 
-  constructor(input: string | Partial<CqlDurationComponents> | [Date | CqlTimestamp, Date | CqlTimestamp]) {
+  constructor(input: string | Partial<DataAPIDurationComponents> | [Date | DataAPITimestamp, Date | DataAPITimestamp]) {
     if (typeof input === 'string') {
       this.#duration = input;
     } else if (Array.isArray(input)) {
-      if (input[0] instanceof CqlTimestamp) {
+      if (input[0] instanceof DataAPITimestamp) {
         input[0] = input[0].toDate();
       }
-      if (input[1] instanceof CqlTimestamp) {
+      if (input[1] instanceof DataAPITimestamp) {
         input[1] = input[1].toDate();
       }
       const [start, end] = input;
@@ -112,20 +112,20 @@ export class CqlDuration {
     }
 
     Object.defineProperty(this, $CustomInspect, {
-      value: () => `CqlDuration("${this.#duration}")`,
+      value: () => `DataAPIDuration("${this.#duration}")`,
     });
   }
 
-  public components(): CqlDurationComponents {
+  public components(): DataAPIDurationComponents {
     throw 'stub';
   }
 
-  public toDates(reference: Date | CqlTimestamp): [Date, Date] {
+  public toDates(reference: Date | DataAPITimestamp): [Date, Date] {
     if (!reference) {
       throw new Error('Base date is required to convert duration to date ranges');
     }
 
-    if (reference instanceof CqlTimestamp) {
+    if (reference instanceof DataAPITimestamp) {
       reference = reference.toDate();
     }
 
@@ -144,31 +144,31 @@ export class CqlDuration {
   }
 }
 
-export interface CqlTimeComponents {
+export interface DataAPITimeComponents {
   hours: number,
   minutes: number,
   seconds: number,
   nanoseconds: number
 }
 
-export class CqlTime {
+export class DataAPITime {
   readonly #time: string;
 
   public [$SerializeForTable] = this.toString;
 
-  public constructor(input?: string | Date | (CqlTimeComponents & { nanoseconds?: number })) {
+  public constructor(input?: string | Date | (DataAPITimeComponents & { nanoseconds?: number })) {
     input ||= new Date();
 
     if (typeof input === 'string') {
       this.#time = input;
     } else if (input instanceof Date) {
-      this.#time = CqlTime.#initTime(input.getHours(), input.getMinutes(), input.getSeconds(), input.getMilliseconds());
+      this.#time = DataAPITime.#initTime(input.getHours(), input.getMinutes(), input.getSeconds(), input.getMilliseconds());
     } else {
-      this.#time = CqlTime.#initTime(input.hours, input.minutes, input.seconds, input.nanoseconds ? input.nanoseconds.toString().padStart(9, '0') : '');
+      this.#time = DataAPITime.#initTime(input.hours, input.minutes, input.seconds, input.nanoseconds ? input.nanoseconds.toString().padStart(9, '0') : '');
     }
 
     Object.defineProperty(this, $CustomInspect, {
-      value: () => `CqlTime("${this.#time}")`,
+      value: () => `DataAPITime("${this.#time}")`,
     });
   }
 
@@ -176,7 +176,7 @@ export class CqlTime {
     return `${hours < 10 ? '0' : ''}${hours}:${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}${fractional ? `.${fractional}` : ''}`;
   }
 
-  public components(): CqlTimeComponents {
+  public components(): DataAPITimeComponents {
     const [timePart, fractionPart] = this.#time.split('.');
     const [hours, mins, secs] = timePart.split(':');
 
@@ -188,8 +188,8 @@ export class CqlTime {
     };
   }
 
-  public toDate(base?: Date | CqlDate | CqlTimestamp): Date {
-    if (base instanceof CqlTimestamp) {
+  public toDate(base?: Date | DataAPIDate | DataAPITimestamp): Date {
+    if (base instanceof DataAPITimestamp) {
       base = base.toDate();
     }
 
@@ -215,7 +215,7 @@ export class CqlTime {
   }
 }
 
-export interface CqlTimestampComponents {
+export interface DataAPITimestampComponents {
   year: number,
   month: number,
   date: number,
@@ -225,12 +225,12 @@ export interface CqlTimestampComponents {
   nanoseconds: number
 }
 
-export class CqlTimestamp {
+export class DataAPITimestamp {
   readonly #timestamp: string;
 
   public [$SerializeForTable] = this.toString;
 
-  public constructor(input?: string | Date | Partial<CqlTimestampComponents>) {
+  public constructor(input?: string | Date | Partial<DataAPITimestampComponents>) {
     input ||= new Date();
 
     if (typeof input === 'string') {
@@ -242,11 +242,11 @@ export class CqlTimestamp {
     }
 
     Object.defineProperty(this, $CustomInspect, {
-      value: () => `CqlTimestamp("${this.#timestamp}")`,
+      value: () => `DataAPITimestamp("${this.#timestamp}")`,
     });
   }
 
-  public components(): CqlTimestampComponents {
+  public components(): DataAPITimestampComponents {
     const date = this.toDate();
     return {
       year: date.getFullYear(),

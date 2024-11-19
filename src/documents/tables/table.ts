@@ -82,7 +82,7 @@ export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
  * For example:
  *  - `'map<k, v>'` is represented by a native JS `Map<K, V>`
  *  - `'vector'` is represented by an `astra-db-ts` provided `DataAPIVector`
- *  - `'date'` is represented by an `astra-db-ts` provided `CqlDate`
+ *  - `'date'` is represented by an `astra-db-ts` provided `DataAPIDate`
  *
  * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
  *
@@ -117,18 +117,18 @@ export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
  * ```ts
  * interface User {
  *   id: string,   // Partition key
- *   dob: CqlDate, // Clustering (partition sort) key
+ *   dob: DataAPIDate, // Clustering (partition sort) key
  *   friends: Map<string, UUID>,
  *   [$PrimaryKeyType]?: {
  *     id: string,
- *     dob: CqlDate,
+ *     dob: DataAPIDate,
  *   },
  * }
  *
  * // res.insertedId is of type { id: string }
  * const res = await db.table<User>('users').insertOne({
  *   id: '123',
- *   dob: new CqlDate(new Date()),
+ *   dob: new DataAPIDate(new Date()),
  *   friends: new Map([['Alice', UUID.random()]]),
  * });
  * ```
@@ -140,7 +140,7 @@ export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
  * // equivalent to the above
  * interface User extends Row<User, 'id' | 'dob'> {
  *   id: string,   // Partition key
- *   dob: CqlDate, // Clustering (partition sort) key
+ *   dob: DataAPIDate, // Clustering (partition sort) key
  *   friends: Map<string, UUID>,
  * }
  * ```
@@ -154,11 +154,11 @@ export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
  * // equivalent to:
  * // type User = {
  * //   id: string,
- * //   dob: CqlDate,
+ * //   dob: DataAPIDate,
  * //   friends?: Map<string, UUID>, // Optional since it's not in the primary key
  * //   [$PrimaryKeyType]?: {
  * //     id: string,
- * //     dob: CqlDate,
+ * //     dob: DataAPIDate,
  * //   },
  * // }
  * type User = InferTableSchema<typeof mkTable>;
@@ -314,7 +314,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
    * interface User extends Row<User, 'id'> {
    *   id: string,
    *   name: string,
-   *   dob?: CqlDate,
+   *   dob?: DataAPIDate,
    * }
    *
    * // res.insertedId is of type { id: string }

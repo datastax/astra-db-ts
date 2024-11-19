@@ -82,15 +82,15 @@ export type SomeRow = Record<string, any>;
  *
  * @example
  * ```ts
- * import { $PrimaryKeyType, CqlDate, UUID } from '@datastax/astra-db-ts';
+ * import { $PrimaryKeyType, DataAPIDate, UUID } from '@datastax/astra-db-ts';
  *
  * interface User {
  *   id: string,   // Partition key
- *   dob: CqlDate, // Clustering (partition sort) key
+ *   dob: DataAPIDate, // Clustering (partition sort) key
  *   friends: Map<string, UUID>,
  *   [$PrimaryKeyType]?: {
  *     id: string,
- *     dob: CqlDate,
+ *     dob: DataAPIDate,
  *   },
  * }
  *
@@ -98,12 +98,12 @@ export type SomeRow = Record<string, any>;
  *
  * const resp = await table.insertOne({
  *   id: 'user1',
- *   dob: new CqlDate('1990-01-01'),
+ *   dob: new DataAPIDate('1990-01-01'),
  *   friends: new Map(), // he's a loner :(
  * });
  *
  * console.log(resp.insertedId.id); // 'user1'
- * console.log(resp.insertedId.dob); // CqlDate("1990-01-01")
+ * console.log(resp.insertedId.dob); // DataAPIDate("1990-01-01")
  * ```
  *
  * @see Row
@@ -141,21 +141,21 @@ export declare const $PrimaryKeyType: '$PrimaryKeyType';
  *
  * @example
  * ```ts
- * import { Row, CqlDate, UUID } from '@datastax/astra-db-ts';
+ * import { Row, DataAPIDate, UUID } from '@datastax/astra-db-ts';
  *
  * // equivalent to:
  * // interface User {
  * //   id: string,   // Partition key
- * //   dob: CqlDate, // Clustering (partition sort) key
+ * //   dob: DataAPIDate, // Clustering (partition sort) key
  * //   friends: Map<string, UUID>,
  * //   [$PrimaryKeyType]?: {
  * //     id: string,
- * //     dob: CqlDate,
+ * //     dob: DataAPIDate,
  * //   },
  * // }
  * interface User extends Row<User, 'id' | 'dob'> {
  *   id: string,   // Partition key
- *   dob: CqlDate, // Clustering (partition sort) key
+ *   dob: DataAPIDate, // Clustering (partition sort) key
  *   friends: Map<string, UUID>,
  * }
  *
@@ -163,12 +163,12 @@ export declare const $PrimaryKeyType: '$PrimaryKeyType';
  *
  * const resp = await table.insertOne({
  *   id: 'user1',
- *   dob: new CqlDate('1990-01-01'),
+ *   dob: new DataAPIDate('1990-01-01'),
  *   friends: new Map(), // he's a loner :(
  * });
  *
  * console.log(resp.insertedId.id); // 'user1'
- * console.log(resp.insertedId.dob); // CqlDate("1990-01-01")
+ * console.log(resp.insertedId.dob); // DataAPIDate("1990-01-01")
  * ```
  *
  * @see Table

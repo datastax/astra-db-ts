@@ -606,11 +606,11 @@ export class Db {
    *
    * @example
    * ```ts
-   * import { CqlDate, UUID, Row, DataAPIVector, ... } from 'astra-db-ts';
+   * import { DataAPIDate, UUID, Row, DataAPIVector, ... } from 'astra-db-ts';
    *
    * interface User extends Row<User, 'id' | 'dob'> {
    *   id: string,   // Partition key
-   *   dob: CqlDate, // Clustering (partition sort) key
+   *   dob: DataAPIDate, // Clustering (partition sort) key
    *   friends: Map<string, UUID>,
    *   vector: DataAPIVector,
    * }
@@ -620,7 +620,7 @@ export class Db {
    * // res.insertedId is of type { id: string }
    * const res = await table.insertOne({
    *   id: '123',
-   *   dob: new CqlDate(new Date()),
+   *   dob: new DataAPIDate(new Date()),
    *   friends: new Map([['Alice', UUID.random()]]),
    *   vector: new DataAPIVector([1, 2, 3]), // Class enables encoding optimization
    * });
@@ -887,7 +887,7 @@ export class Db {
    * ```ts
    * interface User extends Row<User, 'name' | 'dob'> {
    *   name: string,
-   *   dob: CqlDate,
+   *   dob: DataAPIDate,
    *   friends?: Set<string>,
    * }
    *
