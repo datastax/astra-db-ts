@@ -34,16 +34,19 @@ export abstract class AdminCommandEvent extends DataAPIClientEvent {
     // Warning: (ae-forgotten-export) The symbol "DevOpsAPIRequestInfo" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    protected constructor(info: DevOpsAPIRequestInfo, longRunning: boolean);
+    protected constructor(name: string, info: DevOpsAPIRequestInfo, longRunning: boolean);
+    // @internal (undocumented)
+    protected _desc(): string;
     readonly longRunning: boolean;
     readonly method: 'GET' | 'POST' | 'DELETE';
+    readonly methodName: string;
     readonly params?: Record<string, any>;
     readonly path: string;
     readonly reqBody?: Record<string, any>;
 }
 
 // @public
-export type AdminCommandEvents = {
+export type AdminCommandEventMap = {
     adminCommandStarted: (event: AdminCommandStartedEvent) => void;
     adminCommandPolling: (event: AdminCommandPollingEvent) => void;
     adminCommandSucceeded: (event: AdminCommandSucceededEvent) => void;
@@ -75,10 +78,10 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
 // @public
 export class AdminCommandStartedEvent extends AdminCommandEvent {
     // @internal
-    constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: number);
+    constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: Partial<TimeoutDescriptor>);
     // (undocumented)
     formatted(): string;
-    readonly timeout: number;
+    readonly timeout: Partial<TimeoutDescriptor>;
 }
 
 // @public
@@ -107,6 +110,7 @@ export interface AdminSpawnOptions {
     astraEnv?: 'dev' | 'prod' | 'test';
     endpointUrl?: string;
     logging?: DataAPILoggingConfig;
+    timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
 
 // @public (undocumented)
@@ -122,7 +126,7 @@ export interface AlterTableOperations<Schema extends SomeRow> {
 }
 
 // @public (undocumented)
-export interface AlterTableOptions<Schema extends SomeRow> extends WithTimeout {
+export interface AlterTableOptions<Schema extends SomeRow> extends WithTimeout<'tableAdminTimeoutMs'> {
     // (undocumented)
     operation: AlterTableOperations<Schema>;
 }
@@ -154,8 +158,8 @@ export class AstraAdmin {
     db(id: string, region: string, options?: DbSpawnOptions): Db;
     dbAdmin(endpoint: string, options?: DbSpawnOptions): AstraDbAdmin;
     dbAdmin(id: string, region: string, options?: DbSpawnOptions): AstraDbAdmin;
-    dbInfo(id: string, options?: WithTimeout): Promise<AstraDbAdminInfo>;
-    dropDatabase(db: Db | string, options?: AstraAdminBlockingOptions): Promise<void>;
+    dbInfo(id: string, options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbAdminInfo>;
+    dropDatabase(db: Db | string, options?: DropAstraDatabaseOptions): Promise<void>;
     // Warning: (ae-forgotten-export) The symbol "DevOpsAPIHttpClient" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
@@ -167,7 +171,7 @@ export class AstraAdmin {
 export type AstraAdminBlockingOptions = AstraPollBlockingOptions | AstraNoBlockingOptions;
 
 // @public
-export type AstraCreateKeyspaceOptions = AstraAdminBlockingOptions & {
+export type AstraCreateKeyspaceOptions = AstraAdminBlockingOptions & WithTimeout<'keyspaceAdminTimeoutMs'> & {
     updateDbKeyspace?: boolean;
 };
 
@@ -185,27 +189,22 @@ export class AstraDbAdmin extends DbAdmin {
     constructor(db: Db, rootOpts: InternalRootClientOpts, rawAdminOpts: AdminSpawnOptions | undefined, dbToken: TokenProvider | undefined, endpoint: string);
     createKeyspace(keyspace: string, options?: AstraCreateKeyspaceOptions): Promise<void>;
     db(): Db;
-    drop(options?: AstraAdminBlockingOptions): Promise<void>;
-    dropKeyspace(keyspace: string, options?: AstraAdminBlockingOptions): Promise<void>;
-    findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
+    drop(options?: AstraDropKeyspaceOptions): Promise<void>;
+    dropKeyspace(keyspace: string, options?: AstraDropKeyspaceOptions): Promise<void>;
+    findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult>;
     // (undocumented)
     get _httpClient(): DevOpsAPIHttpClient;
     get id(): string;
-    info(options?: WithTimeout): Promise<AstraDbAdminInfo>;
-    listKeyspaces(options?: WithTimeout): Promise<string[]>;
+    info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbAdminInfo>;
+    listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]>;
 }
 
-// @public (undocumented)
+// @public
 export interface AstraDbAdminInfo extends BaseAstraDbInfo {
-    // (undocumented)
     createdAt: Date;
-    // (undocumented)
     lastUsed: Date;
-    // (undocumented)
     orgId: string;
-    // (undocumented)
     ownerId: string;
-    // (undocumented)
     regions: AstraDbRegionInfo[];
 }
 
@@ -215,7 +214,7 @@ export type AstraDbCloudProvider = 'AWS' | 'GCP' | 'AZURE';
 // @public
 export type AstraDbCloudProviderFilter = AstraDbCloudProvider | 'ALL';
 
-// @public (undocumented)
+// @public
 export interface AstraDbInfo extends BaseAstraDbInfo {
     // (undocumented)
     apiEndpoint: string;
@@ -223,13 +222,10 @@ export interface AstraDbInfo extends BaseAstraDbInfo {
     region: string;
 }
 
-// @public (undocumented)
+// @public
 export interface AstraDbRegionInfo {
-    // (undocumented)
     apiEndpoint: string;
-    // (undocumented)
     createdAt: Date;
-    // (undocumented)
     name: string;
 }
 
@@ -239,13 +235,16 @@ export type AstraDbStatus = 'ACTIVE' | 'ERROR' | 'DECOMMISSIONING' | 'DEGRADED' 
 // @public
 export type AstraDbStatusFilter = AstraDbStatus | 'ALL' | 'NONTERMINATED';
 
+// @public (undocumented)
+export type AstraDropKeyspaceOptions = AstraAdminBlockingOptions & WithTimeout<'keyspaceAdminTimeoutMs'>;
+
 // @public
-export interface AstraNoBlockingOptions extends WithTimeout {
+export interface AstraNoBlockingOptions {
     blocking: false;
 }
 
 // @public
-export interface AstraPollBlockingOptions extends WithTimeout {
+export interface AstraPollBlockingOptions {
     blocking?: true;
     pollInterval?: number;
 }
@@ -256,21 +255,14 @@ export class AWSEmbeddingHeadersProvider extends EmbeddingHeadersProvider {
     getHeaders(): Record<string, string>;
 }
 
-// @public (undocumented)
+// @public
 export interface BaseAstraDbInfo {
-    // (undocumented)
     cloudProvider: AstraDbCloudProvider;
-    // (undocumented)
     environment: 'dev' | 'test' | 'prod';
-    // (undocumented)
     id: string;
-    // (undocumented)
     keyspaces: string[];
-    // (undocumented)
     name: string;
-    // (undocumented)
     raw: Record<string, any>;
-    // (undocumented)
     status: AstraDbStatus;
 }
 
@@ -283,16 +275,16 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     //
     // @internal
     constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions<Schema> | undefined);
-    countDocuments(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number>;
-    deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<CollectionDeleteManyResult>;
+    countDocuments(filter: Filter<Schema>, upperBound: number, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number>;
+    deleteMany(filter: Filter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionDeleteManyResult>;
     deleteOne(filter: Filter<Schema>, options?: CollectionDeleteOneOptions): Promise<CollectionDeleteOneResult>;
     distinct<Key extends string>(key: Key, filter: Filter<Schema>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]>;
-    drop(options?: WithTimeout): Promise<void>;
-    estimatedDocumentCount(options?: WithTimeout): Promise<number>;
+    drop(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<void>;
+    estimatedDocumentCount(options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number>;
     find(filter: Filter<Schema>, options?: CollectionFindOptions & {
         projection?: never;
-    }): FindCursor<FoundDoc<Schema>, FoundDoc<Schema>>;
-    find<TRaw extends SomeDoc = DeepPartial<Schema>>(filter: Filter<Schema>, options: CollectionFindOptions): FindCursor<FoundDoc<TRaw>, FoundDoc<TRaw>>;
+    }): CollectionFindCursor<FoundDoc<Schema>, FoundDoc<Schema>>;
+    find<TRaw extends SomeDoc = DeepPartial<Schema>>(filter: Filter<Schema>, options: CollectionFindOptions): CollectionFindCursor<FoundDoc<TRaw>, FoundDoc<TRaw>>;
     findOne(filter: Filter<Schema>, options?: CollectionFindOneOptions & {
         projection?: never;
     }): Promise<FoundDoc<Schema> | null>;
@@ -300,12 +292,12 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     findOneAndDelete<TRaw extends SomeDoc = WithId<Schema>>(filter: Filter<Schema>, options?: CollectionFindOneAndDeleteOptions): Promise<TRaw | null>;
     findOneAndReplace<TRaw extends SomeDoc = WithId<Schema>>(filter: Filter<Schema>, replacement: NoId<Schema>, options?: CollectionFindOneAndReplaceOptions): Promise<TRaw | null>;
     findOneAndUpdate(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: CollectionFindOneAndUpdateOptions): Promise<WithId<Schema> | null>;
-    get _httpClient(): DataAPIHttpClient;
-    insertMany(documents: MaybeId<Schema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<Schema>>;
-    insertOne(document: MaybeId<Schema>, options?: WithTimeout): Promise<CollectionInsertOneResult<Schema>>;
+    get _httpClient(): DataAPIHttpClient<"normal">;
+    insertMany(documents: readonly MaybeId<Schema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<Schema>>;
+    insertOne(document: MaybeId<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionInsertOneResult<Schema>>;
     readonly keyspace: string;
     readonly name: string;
-    options(options?: WithTimeout): Promise<CollectionOptions<SomeDoc>>;
+    options(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<CollectionOptions<SomeDoc>>;
     replaceOne(filter: Filter<Schema>, replacement: NoId<Schema>, options?: CollectionReplaceOneOptions): Promise<CollectionReplaceOneResult<Schema>>;
     updateMany(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: CollectionUpdateManyOptions): Promise<CollectionUpdateManyResult<Schema>>;
     updateOne(filter: Filter<Schema>, update: UpdateFilter<Schema>, options?: CollectionUpdateOneOptions): Promise<CollectionUpdateOneResult<Schema>>;
@@ -335,14 +327,20 @@ export interface CollectionDeleteOneResult {
     deletedCount: 0 | 1;
 }
 
+// @public (undocumented)
+export class CollectionFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {
+    // (undocumented)
+    get dataSource(): Collection;
+}
+
 // @public
-export interface CollectionFindOneAndDeleteOptions extends WithTimeout {
+export interface CollectionFindOneAndDeleteOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     projection?: Projection;
     sort?: Sort;
 }
 
 // @public
-export interface CollectionFindOneAndReplaceOptions extends WithTimeout {
+export interface CollectionFindOneAndReplaceOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     projection?: Projection;
     returnDocument?: 'before' | 'after';
     sort?: Sort;
@@ -350,7 +348,7 @@ export interface CollectionFindOneAndReplaceOptions extends WithTimeout {
 }
 
 // @public
-export interface CollectionFindOneAndUpdateOptions extends WithTimeout {
+export interface CollectionFindOneAndUpdateOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     projection?: Projection;
     returnDocument?: 'before' | 'after';
     sort?: Sort;
@@ -419,11 +417,11 @@ export interface CollectionSerDesConfig<Schema extends SomeDoc> {
 
 // @public
 export interface CollectionSpawnOptions<Schema extends SomeDoc> extends WithKeyspace {
-    defaultMaxTimeMS?: number | null;
     embeddingApiKey?: string | EmbeddingHeadersProvider | null;
     logging?: DataAPILoggingConfig;
     // (undocumented)
     serdes?: CollectionSerDesConfig<Schema>;
+    timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
 
 // @public
@@ -480,13 +478,23 @@ export abstract class CommandEvent extends DataAPIClientEvent {
     // Warning: (ae-forgotten-export) The symbol "DataAPIRequestInfo" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    protected constructor(info: DataAPIRequestInfo);
+    protected constructor(name: string, info: DataAPIRequestInfo);
     readonly command: Record<string, any>;
     readonly commandName: string;
+    // @internal (undocumented)
+    protected _desc(): string;
     readonly keyspace: string;
     readonly source?: string;
     readonly url: string;
 }
+
+// @public
+export type CommandEventMap = {
+    commandStarted: (event: CommandStartedEvent) => void;
+    commandSucceeded: (event: CommandSucceededEvent) => void;
+    commandFailed: (event: CommandFailedEvent) => void;
+    commandWarnings: (event: CommandWarningsEvent) => void;
+};
 
 // @public
 export class CommandFailedEvent extends CommandEvent {
@@ -504,7 +512,7 @@ export class CommandStartedEvent extends CommandEvent {
     constructor(info: DataAPIRequestInfo);
     // (undocumented)
     formatted(): string;
-    readonly timeout: number;
+    readonly timeout: Partial<TimeoutDescriptor>;
 }
 
 // @public
@@ -542,7 +550,7 @@ export class CqlBlob {
     // (undocumented)
     get byteLength(): number;
     // (undocumented)
-    static isBlobLike(blob: unknown): blob is CqlBlobLike;
+    static isBlobLike(value: unknown): value is CqlBlobLike;
     // (undocumented)
     raw(): Exclude<CqlBlobLike, CqlBlob>;
     // (undocumented)
@@ -550,7 +558,9 @@ export class CqlBlob {
 }
 
 // @public (undocumented)
-export type CqlBlobLike = CqlBlob | ArrayBuffer | Buffer | string;
+export type CqlBlobLike = CqlBlob | ArrayBuffer | Buffer | {
+    $binary: string;
+};
 
 // @public (undocumented)
 export class CqlDate {
@@ -663,12 +673,14 @@ export interface CqlTimestampComponents {
 export type CqlType2TSType<T extends string, Def> = T extends keyof CqlNonGenericType2TSTypeDict ? CqlNonGenericType2TSTypeDict[T] : T extends keyof CqlGenericType2TSTypeDict<Def> ? CqlGenericType2TSTypeDict<Def>[T] : unknown;
 
 // @public
-export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & {
+export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & WithTimeout<'databaseAdminTimeoutMs'> & {
     dbOptions?: DbSpawnOptions;
 };
 
 // @public
-export interface CreateCollectionOptions<Schema extends SomeDoc> extends WithTimeout, CollectionOptions<Schema>, CollectionSpawnOptions<Schema> {
+export interface CreateCollectionOptions<Schema extends SomeDoc> extends CollectionOptions<Schema>, CollectionSpawnOptions<Schema> {
+    // (undocumented)
+    timeout?: number | Pick<Partial<TimeoutDescriptor>, 'collectionAdminTimeoutMs'>;
 }
 
 // @public (undocumented)
@@ -683,7 +695,7 @@ export interface CreateTableDefinition {
 }
 
 // @public (undocumented)
-export interface CreateTableIndexOptions extends WithTimeout {
+export interface CreateTableIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
     // (undocumented)
     ascii?: boolean;
     // (undocumented)
@@ -695,7 +707,7 @@ export interface CreateTableIndexOptions extends WithTimeout {
 }
 
 // @public
-export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout, TableSpawnOptions<Schema> {
+export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout<'tableAdminTimeoutMs'>, TableSpawnOptions<Schema> {
     // (undocumented)
     definition: Def;
     // (undocumented)
@@ -706,7 +718,7 @@ export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTa
 export type CreateTablePrimaryKeyDefinition = ShortCreateTablePrimaryKeyDefinition | FullCreateTablePrimaryKeyDefinition;
 
 // @public (undocumented)
-export interface CreateTableVectorIndexOptions extends WithTimeout {
+export interface CreateTableVectorIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
     // (undocumented)
     ifNotExists?: boolean;
     // (undocumented)
@@ -746,7 +758,6 @@ export type CursorStatus = 'idle' | 'started' | 'closed';
 export interface CustomHttpClientOptions {
     client: 'custom';
     fetcher: Fetcher;
-    maxTimeMS?: number;
 }
 
 // @public
@@ -761,14 +772,19 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
 
 // @public
 export abstract class DataAPIClientEvent {
-    abstract formatted(): string;
+    // @internal
+    protected constructor(name: string);
+    formatted(): string;
+    // (undocumented)
+    static formattedPrefix(): string;
+    readonly name: string;
 }
 
 // @public
-export const DataAPIClientEventEmitterBase: new () => TypedEmitter<DataAPIClientEvents>;
+export const DataAPIClientEventEmitterBase: new () => TypedEmitter<DataAPIClientEventMap>;
 
 // @public
-export type DataAPIClientEvents = DataAPICommandEvents & AdminCommandEvents;
+export type DataAPIClientEventMap = AdminCommandEventMap & CommandEventMap;
 
 // @public
 export interface DataAPIClientOptions {
@@ -778,15 +794,8 @@ export interface DataAPIClientOptions {
     environment?: DataAPIEnvironment;
     httpOptions?: DataAPIHttpOptions;
     logging?: DataAPILoggingConfig;
+    timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
-
-// @public
-export type DataAPICommandEvents = {
-    commandStarted: (event: CommandStartedEvent) => void;
-    commandSucceeded: (event: CommandSucceededEvent) => void;
-    commandFailed: (event: CommandFailedEvent) => void;
-    commandWarnings: (event: CommandWarningsEvent) => void;
-};
 
 // @public
 export class DataAPIDbAdmin extends DbAdmin {
@@ -794,11 +803,11 @@ export class DataAPIDbAdmin extends DbAdmin {
     constructor(db: Db, httpClient: DataAPIHttpClient, rawAdminOpts?: AdminSpawnOptions);
     createKeyspace(keyspace: string, options?: LocalCreateKeyspaceOptions): Promise<void>;
     db(): Db;
-    dropKeyspace(keyspace: string, options?: AstraAdminBlockingOptions): Promise<void>;
-    findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
+    dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
+    findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult>;
     // (undocumented)
-    get _httpClient(): DataAPIHttpClient;
-    listKeyspaces(options?: WithTimeout): Promise<string[]>;
+    get _httpClient(): DataAPIHttpClient<"admin">;
+    listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]>;
 }
 
 // @public (undocumented)
@@ -858,8 +867,13 @@ export type DataAPIHttpOptions = DefaultHttpClientOptions | FetchHttpClientOptio
 // @public
 export type DataAPILoggingConfig = DataAPILoggingEvent | readonly (DataAPILoggingEvent | DataAPIExplicitLoggingConfig)[];
 
+// Warning: (ae-incompatible-release-tags) The symbol "DataAPILoggingDefaults" is marked as @public, but its signature references "NormalizedLoggingConfig" which is marked as @internal
+//
+// @public (undocumented)
+export const DataAPILoggingDefaults: NormalizedLoggingConfig[];
+
 // @public
-export type DataAPILoggingEvent = 'all' | keyof DataAPIClientEvents;
+export type DataAPILoggingEvent = 'all' | keyof DataAPIClientEventMap;
 
 // @public
 export type DataAPILoggingOutput = 'event' | 'stdout' | 'stderr';
@@ -883,21 +897,27 @@ export interface DataAPISerCtx<Schema extends SomeDoc> {
 
 // @public
 export class DataAPITimeoutError extends DataAPIError {
+    // Warning: (ae-forgotten-export) The symbol "HTTPRequestInfo" needs to be exported by the entry point index.d.ts
+    //
     // @internal
-    constructor(timeout: number);
-    readonly timeout: number;
+    constructor(info: HTTPRequestInfo, types: TimedOutCategories);
+    // (undocumented)
+    static mk(info: HTTPRequestInfo, types: TimedOutCategories): DataAPITimeoutError;
+    // (undocumented)
+    readonly timedOutTypes: TimedOutCategories;
+    readonly timeout: Partial<TimeoutDescriptor>;
 }
 
 // @public (undocumented)
 export class DataAPIVector {
     // (undocumented)
-    [$SerializeForCollection]: () => number[] | {
+    [$SerializeForCollection]: () => {
         $binary: string;
-    };
+    } | number[];
     // (undocumented)
-    [$SerializeForTable]: () => number[] | {
+    [$SerializeForTable]: () => {
         $binary: string;
-    };
+    } | number[];
     constructor(vector: DataAPIVectorLike, validate?: boolean);
     // (undocumented)
     asArray(): number[];
@@ -916,7 +936,9 @@ export class DataAPIVector {
 }
 
 // @public (undocumented)
-export type DataAPIVectorLike = number[] | string | Float32Array | DataAPIVector;
+export type DataAPIVectorLike = number[] | {
+    $binary: string;
+} | Float32Array | DataAPIVector;
 
 // @public
 export interface DateFilterOps {
@@ -953,16 +975,12 @@ export class Db {
     dropCollection(name: string, options?: DropCollectionOptions): Promise<void>;
     dropTable(name: string, options?: DropTableOptions): Promise<void>;
     // (undocumented)
-    dropTableIndex(name: string, options?: WithTimeout): Promise<void>;
+    dropTableIndex(name: string, options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<void>;
     // (undocumented)
-    get _httpClient(): DataAPIHttpClient;
+    get _httpClient(): DataAPIHttpClient<"normal">;
     get id(): string;
-    info(options?: WithTimeout): Promise<AstraDbInfo>;
+    info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbInfo>;
     get keyspace(): string;
-    // Warning: (ae-forgotten-export) The symbol "KeyspaceRef" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    readonly _keyspace: KeyspaceRef;
     listCollections(options: ListCollectionsOptions & {
         nameOnly: true;
     }): Promise<string[]>;
@@ -982,11 +1000,11 @@ export class Db {
 
 // @public
 export abstract class DbAdmin {
-    abstract createKeyspace(keyspace: string, options?: AstraCreateKeyspaceOptions): Promise<void>;
+    abstract createKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
     abstract db(): Db;
-    abstract dropKeyspace(keyspace: string, options?: AstraAdminBlockingOptions): Promise<void>;
-    abstract findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
-    abstract listKeyspaces(): Promise<string[]>;
+    abstract dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
+    abstract findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult>;
+    abstract listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]>;
 }
 
 // @public
@@ -1006,6 +1024,7 @@ export interface DbSpawnOptions {
     logging?: DataAPILoggingConfig;
     // (undocumented)
     serdes?: DbSerDesConfig;
+    timeoutDefaults?: Partial<TimeoutDescriptor>;
     token?: string | TokenProvider | null;
 }
 
@@ -1018,17 +1037,16 @@ export type DeepPartial<T> = T extends object ? {
 export const DEFAULT_KEYSPACE = "default_keyspace";
 
 // @public (undocumented)
-export type DefaultAdminSpawnOptions = Omit<AdminSpawnOptions, 'logging'>;
+export type DefaultAdminSpawnOptions = Omit<AdminSpawnOptions, 'logging' | 'timeoutDefaults'>;
 
 // @public (undocumented)
-export type DefaultDbSpawnOptions = Omit<DbSpawnOptions, 'logging'>;
+export type DefaultDbSpawnOptions = Omit<DbSpawnOptions, 'logging' | 'timeoutDefaults'>;
 
 // @public
 export interface DefaultHttpClientOptions {
     client?: 'default';
     fetchH2?: unknown;
     http1?: Http1Options;
-    maxTimeMS?: number;
     preferHttp2?: boolean;
 }
 
@@ -1045,7 +1063,7 @@ export interface DevOpsAPIErrorDescriptor {
 // @public
 export class DevOpsAPIResponseError extends DevOpsAPIError {
     // @internal
-    constructor(resp: FetcherResponseInfo, data: Record<string, any> | undefined);
+    constructor(resp: FetcherResponseInfo, data: SomeDoc | undefined);
     readonly errors: DevOpsAPIErrorDescriptor[];
     readonly raw: FetcherResponseInfo;
     readonly status: number;
@@ -1054,21 +1072,28 @@ export class DevOpsAPIResponseError extends DevOpsAPIError {
 // @public
 export class DevOpsAPITimeoutError extends DevOpsAPIError {
     // @internal
-    constructor(url: string, timeout: number);
-    readonly timeout: number;
+    constructor(info: HTTPRequestInfo, types: TimedOutCategories);
+    // (undocumented)
+    static mk(info: HTTPRequestInfo, types: TimedOutCategories): DevOpsAPITimeoutError;
+    // (undocumented)
+    readonly timedOutTypes: TimedOutCategories;
+    readonly timeout: Partial<TimeoutDescriptor>;
     readonly url: string;
 }
 
 // @public
 export class DevOpsUnexpectedStateError extends DevOpsAPIError {
     // @internal
-    constructor(message: string, expected: string[], data: Record<string, any> | undefined);
+    constructor(message: string, expected: string[], data: SomeDoc | undefined);
     readonly dbInfo?: Record<string, any>;
     readonly expected: string[];
 }
 
 // @public
-export interface DropCollectionOptions extends WithTimeout, WithKeyspace {
+export type DropAstraDatabaseOptions = AstraAdminBlockingOptions & WithTimeout<'databaseAdminTimeoutMs'>;
+
+// @public
+export interface DropCollectionOptions extends WithTimeout<'collectionAdminTimeoutMs'>, WithKeyspace {
 }
 
 // @public (undocumented)
@@ -1078,7 +1103,9 @@ export interface DropColumnOperation<Schema extends SomeRow> {
 }
 
 // @public (undocumented)
-export interface DropTableOptions extends WithTimeout, WithKeyspace {
+export interface DropTableOptions extends WithTimeout<'tableAdminTimeoutMs'>, WithKeyspace {
+    // (undocumented)
+    ifExists?: boolean;
 }
 
 // @public (undocumented)
@@ -1144,11 +1171,6 @@ export interface EmbeddingProviderTokenInfo {
     forwarded: string;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "EventLoggingDefaults" is marked as @public, but its signature references "NormalizedLoggingConfig" which is marked as @internal
-//
-// @public (undocumented)
-export const EventLoggingDefaults: NormalizedLoggingConfig[];
-
 // @public
 export class FailedToLoadDefaultClientError extends Error {
     // @internal
@@ -1194,7 +1216,6 @@ export class FetchH2 implements Fetcher {
 // @public
 export interface FetchHttpClientOptions {
     client: 'fetch';
-    maxTimeMS?: number;
 }
 
 // @public
@@ -1231,24 +1252,24 @@ export type FilterOps<Elem> = {
 } & (IsNum<Elem> extends false ? EmptyObj : NumFilterOps) & (IsDate<Elem> extends false ? EmptyObj : (DateFilterOps | Date)) & (any[] extends Elem ? ArrayFilterOps<Elem> : EmptyObj);
 
 // @public
-export class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
+export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     [Symbol.asyncIterator](): AsyncGenerator<T, void, void>;
     // Warning: (ae-forgotten-export) The symbol "DataAPISerDes" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(keyspace: string, parent: string, httpClient: DataAPIHttpClient, serdes: DataAPISerDes, filter: [Filter<TRaw>, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T);
+    constructor(parent: Table | Collection, serdes: DataAPISerDes, filter: [Filter<TRaw>, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T);
     buffered(): number;
     clone(): FindCursor<TRaw, TRaw>;
     close(): void;
     consumeBuffer(max?: number): TRaw[];
     consumed(): number;
+    get dataSource(): Table | Collection;
     filter(filter: Filter<TRaw>): FindCursor<T, TRaw>;
     forEach(consumer: ((doc: T) => boolean) | ((doc: T) => void)): Promise<void>;
     getSortVector(): Promise<number[] | null>;
     hasNext(): Promise<boolean>;
     includeSimilarity(includeSimilarity?: boolean): FindCursor<T, TRaw>;
     includeSortVector(includeSortVector?: boolean): FindCursor<T, TRaw>;
-    get keyspace(): string;
     limit(limit: number): FindCursor<T, TRaw>;
     map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw>;
     next(): Promise<T | null>;
@@ -1307,7 +1328,7 @@ export interface GenericDeleteManyResult {
 }
 
 // @public (undocumented)
-export interface GenericDeleteOneOptions extends WithTimeout {
+export interface GenericDeleteOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     // (undocumented)
     sort?: Sort;
 }
@@ -1319,7 +1340,7 @@ export interface GenericDeleteOneResult {
 }
 
 // @public (undocumented)
-export interface GenericFindOneAndDeleteOptions extends WithTimeout {
+export interface GenericFindOneAndDeleteOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     // (undocumented)
     projection?: Projection;
     // (undocumented)
@@ -1327,19 +1348,7 @@ export interface GenericFindOneAndDeleteOptions extends WithTimeout {
 }
 
 // @public (undocumented)
-export interface GenericFindOneAndReplaceOptions extends WithTimeout {
-    // (undocumented)
-    projection?: Projection;
-    // (undocumented)
-    returnDocument?: 'before' | 'after';
-    // (undocumented)
-    sort?: Sort;
-    // (undocumented)
-    upsert?: boolean;
-}
-
-// @public (undocumented)
-export interface GenericFindOneAndUpdateOptions extends WithTimeout {
+export interface GenericFindOneAndReplaceOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     // (undocumented)
     projection?: Projection;
     // (undocumented)
@@ -1351,7 +1360,19 @@ export interface GenericFindOneAndUpdateOptions extends WithTimeout {
 }
 
 // @public (undocumented)
-export interface GenericFindOneOptions extends WithTimeout {
+export interface GenericFindOneAndUpdateOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+    // (undocumented)
+    projection?: Projection;
+    // (undocumented)
+    returnDocument?: 'before' | 'after';
+    // (undocumented)
+    sort?: Sort;
+    // (undocumented)
+    upsert?: boolean;
+}
+
+// @public (undocumented)
+export interface GenericFindOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     // (undocumented)
     includeSimilarity?: boolean;
     // (undocumented)
@@ -1361,7 +1382,7 @@ export interface GenericFindOneOptions extends WithTimeout {
 }
 
 // @public (undocumented)
-export interface GenericFindOptions {
+export interface GenericFindOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     // (undocumented)
     includeSimilarity?: boolean;
     // (undocumented)
@@ -1385,7 +1406,7 @@ export type GenericInsertManyDocumentResponse<_T> = any;
 export type GenericInsertManyOptions = GenericInsertManyUnorderedOptions | GenericInsertManyOrderedOptions;
 
 // @public
-export interface GenericInsertManyOrderedOptions extends WithTimeout {
+export interface GenericInsertManyOrderedOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     chunkSize?: number;
     ordered: true;
 }
@@ -1401,7 +1422,7 @@ export interface GenericInsertManyResult<ID> {
 }
 
 // @public
-export interface GenericInsertManyUnorderedOptions extends WithTimeout {
+export interface GenericInsertManyUnorderedOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     chunkSize?: number;
     concurrency?: number;
     ordered?: false;
@@ -1424,7 +1445,7 @@ export interface GenericModifyResult<ID> {
 }
 
 // @public (undocumented)
-export interface GenericReplaceOneOptions extends WithTimeout {
+export interface GenericReplaceOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     // (undocumented)
     sort?: Sort;
     // (undocumented)
@@ -1432,13 +1453,13 @@ export interface GenericReplaceOneOptions extends WithTimeout {
 }
 
 // @public (undocumented)
-export interface GenericUpdateManyOptions extends WithTimeout {
+export interface GenericUpdateManyOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     // (undocumented)
     upsert?: boolean;
 }
 
 // @public
-export interface GenericUpdateOneOptions extends WithTimeout {
+export interface GenericUpdateOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     sort?: Sort;
     upsert?: boolean;
 }
@@ -1516,7 +1537,7 @@ export type KeyspaceReplicationOptions = {
 };
 
 // @public
-export interface ListAstraDatabasesOptions extends WithTimeout {
+export interface ListAstraDatabasesOptions extends WithTimeout<'databaseAdminTimeoutMs'> {
     include?: AstraDbStatusFilter;
     limit?: number;
     provider?: AstraDbCloudProviderFilter;
@@ -1524,7 +1545,7 @@ export interface ListAstraDatabasesOptions extends WithTimeout {
 }
 
 // @public
-export interface ListCollectionsOptions extends WithTimeout, WithKeyspace {
+export interface ListCollectionsOptions extends WithTimeout<'collectionAdminTimeoutMs'>, WithKeyspace {
     nameOnly?: boolean;
 }
 
@@ -1554,7 +1575,7 @@ export type ListTableKnownColumnDefinition = StrictCreateTableColumnDefinition;
 export type ListTablePrimaryKeyDefinition = Required<FullCreateTablePrimaryKeyDefinition>;
 
 // @public (undocumented)
-export interface ListTablesOptions extends WithTimeout, WithKeyspace {
+export interface ListTablesOptions extends WithTimeout<'tableAdminTimeoutMs'>, WithKeyspace {
     // (undocumented)
     nameOnly?: boolean;
 }
@@ -1580,7 +1601,7 @@ export interface ListTableUnsupportedColumnDefinition {
 }
 
 // @public
-export interface LocalCreateKeyspaceOptions extends WithTimeout {
+export interface LocalCreateKeyspaceOptions extends WithTimeout<'keyspaceAdminTimeoutMs'> {
     // (undocumented)
     replication?: KeyspaceReplicationOptions;
     // (undocumented)
@@ -1697,7 +1718,7 @@ export interface Row<Schema extends SomeRow, Columns extends keyof Schema> {
 }
 
 // @public
-export interface RunCommandOptions extends WithTimeout {
+export interface RunCommandOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     collection?: string;
     keyspace?: string | null;
     // (undocumented)
@@ -1734,14 +1755,10 @@ export type SomeRow = Record<string, any>;
 export type SomeTableKey = Record<string, any>;
 
 // @public
-export type Sort = Record<string, SortDirection> | {
-    $vector: number[];
-} | {
-    $vectorize: string;
-};
+export type Sort = Record<string, SortDirection | number[] | DataAPIVector | string>;
 
 // @public
-export type SortDirection = 1 | -1 | 'asc' | 'desc' | 'ascending' | 'descending';
+export type SortDirection = 1 | -1;
 
 // @public
 export class StaticTokenProvider extends TokenProvider {
@@ -1844,28 +1861,30 @@ export class Table<Schema extends SomeRow = SomeRow> {
     // (undocumented)
     alter<NewSchema extends SomeRow>(options: AlterTableOptions<Schema>): Promise<Table<NewSchema>>;
     // (undocumented)
-    countRows(filter: Filter<Schema>, upperBound: number, options?: WithTimeout): Promise<number>;
-    // (undocumented)
     createIndex(name: string, column: Cols<Schema> | string, options?: CreateTableIndexOptions): Promise<void>;
     // (undocumented)
     createVectorIndex(name: string, column: Cols<Schema> | string, options?: CreateTableVectorIndexOptions): Promise<void>;
     // (undocumented)
-    definition(options?: WithTimeout): Promise<ListTableDefinition>;
+    definition(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<ListTableDefinition>;
     // (undocumented)
-    deleteMany(filter: Filter<Schema>, options?: WithTimeout): Promise<void>;
+    deleteMany(filter: Filter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
     // (undocumented)
     deleteOne(filter: Filter<Schema>, options?: TableDeleteOneOptions): Promise<void>;
     // (undocumented)
-    drop(options?: WithTimeout): Promise<void>;
+    drop(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<void>;
     // (undocumented)
-    find(filter: Filter<Schema>, options?: TableFindOptions): FindCursor<FoundRow<Schema>, FoundRow<Schema>>;
+    find(filter: Filter<Schema>, options?: TableFindOptions & {
+        projection?: never;
+    }): TableFindCursor<FoundRow<Schema>, FoundRow<Schema>>;
+    // (undocumented)
+    find<TRaw extends SomeRow = DeepPartial<Schema>>(filter: Filter<Schema>, options: TableFindOptions): TableFindCursor<FoundRow<TRaw>, FoundRow<TRaw>>;
     // (undocumented)
     findOne(filter: Filter<Schema>, options?: TableFindOneOptions): Promise<FoundRow<Schema> | null>;
     // (undocumented)
-    get _httpClient(): DataAPIHttpClient;
+    get _httpClient(): DataAPIHttpClient<"normal">;
     // (undocumented)
-    insertMany(document: Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>>;
-    insertOne(row: Schema, options?: WithTimeout): Promise<TableInsertOneResult<Schema>>;
+    insertMany(document: readonly Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>>;
+    insertOne(row: Schema, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<Schema>>;
     readonly keyspace: string;
     readonly name: string;
     // (undocumented)
@@ -1885,9 +1904,15 @@ export interface TableDesCtx extends DataAPIDesCtx {
     // (undocumented)
     parsingPrimaryKey: boolean;
     // (undocumented)
-    sparseData: boolean;
+    populateSparseData: boolean;
     // (undocumented)
     tableSchema: ListTableColumnDefinitions;
+}
+
+// @public (undocumented)
+export class TableFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {
+    // (undocumented)
+    get dataSource(): Table;
 }
 
 // @public (undocumented)
@@ -1942,11 +1967,11 @@ export interface TableSerDesConfig<Schema extends SomeRow> {
 
 // @public
 export interface TableSpawnOptions<Schema extends SomeDoc> extends WithKeyspace {
-    defaultMaxTimeMS?: number | null;
     embeddingApiKey?: string | EmbeddingHeadersProvider | null;
     logging?: DataAPILoggingConfig;
     // (undocumented)
     serdes?: TableSerDesConfig<Schema>;
+    timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
 
 // @public
@@ -1957,6 +1982,19 @@ export type TableUpdateManyResult<Schema extends SomeRow> = GenericUpdateResult<
 
 // @public
 export type TableUpdateOneOptions = GenericUpdateOneOptions;
+
+// @public
+export type TimedOutCategories = OneOrMany<keyof TimeoutDescriptor> | 'provided';
+
+// @public
+export interface TimeoutDescriptor {
+    collectionAdminTimeoutMs: number;
+    databaseAdminTimeoutMs: number;
+    generalMethodTimeoutMs: number;
+    keyspaceAdminTimeoutMs: number;
+    requestTimeoutMs: number;
+    tableAdminTimeoutMs: number;
+}
 
 // Warning: (ae-forgotten-export) The symbol "Merge" needs to be exported by the entry point index.d.ts
 // Warning: (ae-forgotten-export) The symbol "_ToDotNotation" needs to be exported by the entry point index.d.ts
@@ -2075,8 +2113,8 @@ export interface WithKeyspace {
 }
 
 // @public
-export interface WithTimeout {
-    maxTimeMS?: number;
+export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor> {
+    timeout?: number | Pick<Partial<TimeoutDescriptor>, 'requestTimeoutMs' | Timeouts>;
 }
 
 // (No @packageDocumentation comment for this package)
