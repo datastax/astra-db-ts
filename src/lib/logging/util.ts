@@ -15,6 +15,9 @@
 
 import { DataAPILoggingOutput } from '@/src/lib/logging/types';
 
+/**
+ * @internal
+ */
 export const buildOutputsMap = (emits: readonly DataAPILoggingOutput[]) => (emits.length === 0)
   ? undefined
   : ({

@@ -17,7 +17,7 @@ import type { Caller } from '@/src/client';
 import type TypedEmitter from 'typed-emitter';
 import type { FetchCtx, FetcherResponseInfo } from '@/src/lib/api/fetch/types';
 import type { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/lib/api/clients';
-import type { DataAPIClientEvents } from '@/src/lib/logging';
+import type { DataAPIClientEventMap } from '@/src/lib/logging';
 import { Logger } from '@/src/lib/logging/logger';
 import { OneOrMany } from '@/src/lib/types';
 import { MkTimeoutError, Timeouts } from '@/src/lib/api/timeouts';
@@ -27,7 +27,7 @@ import { MkTimeoutError, Timeouts } from '@/src/lib/api/timeouts';
  */
 export abstract class HttpClient {
   readonly baseUrl: string;
-  readonly emitter: TypedEmitter<DataAPIClientEvents>;
+  readonly emitter: TypedEmitter<DataAPIClientEventMap>;
   readonly logger: Logger;
   readonly fetchCtx: FetchCtx;
   readonly baseHeaders: Record<string, any>;

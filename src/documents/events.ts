@@ -28,7 +28,7 @@ import { TimeoutDescriptor } from '@/src/lib/api/timeouts';
  *
  * @public
  */
-export type DataAPICommandEvents = {
+export type CommandEventMap = {
   /**
    * Emitted when a command is started, before the initial HTTP request is made.
    */

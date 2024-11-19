@@ -23,7 +23,7 @@ import type {
 } from '@/src/client/types';
 import { LIB_NAME } from '@/src/version';
 import type { InternalRootClientOpts } from '@/src/client/types/internal';
-import { type DataAPIClientEvents, type Fetcher, FetchH2, FetchNative, type nullish, TokenProvider } from '@/src/lib';
+import { type DataAPIClientEventMap, type Fetcher, FetchH2, FetchNative, type nullish, TokenProvider } from '@/src/lib';
 import { buildUserAgent } from '@/src/lib/api/clients/http-client';
 import { Db, InvalidEnvironmentError } from '@/src/db';
 import { AstraAdmin } from '@/src/administration';
@@ -48,7 +48,7 @@ import { Timeouts } from '@/src/lib/api/timeouts';
  */
 export const DataAPIClientEventEmitterBase = (() => {
   try {
-    return (require('events') as { EventEmitter: (new () => TypedEmitter<DataAPIClientEvents>) }).EventEmitter;
+    return (require('events') as { EventEmitter: (new () => TypedEmitter<DataAPIClientEventMap>) }).EventEmitter;
   } catch (_) {
     throw new Error(`\`${LIB_NAME}\` requires the \`events\` module to be available for usage. Please provide a polyfill (e.g. the \`events\` package) or use a compatible environment.`);
   }

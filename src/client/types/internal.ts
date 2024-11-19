@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type {
-  DataAPIClientEvents,
+  DataAPIClientEventMap,
   DataAPIEnvironment,
   DataAPILoggingOutput,
   TimeoutDescriptor,
@@ -27,14 +27,14 @@ import type { NormalizedLoggingConfig } from '@/src/lib/logging/types';
 /**
  * @internal
  */
-export type InternalLoggingConfig = Readonly<Record<keyof DataAPIClientEvents, Readonly<Record<DataAPILoggingOutput, boolean>> | undefined>>
+export type InternalLoggingConfig = Readonly<Record<keyof DataAPIClientEventMap, Readonly<Record<DataAPILoggingOutput, boolean>> | undefined>>
 
 /**
  * @internal
  */
 export interface InternalRootClientOpts {
   environment: DataAPIEnvironment,
-  emitter: TypedEmitter<DataAPIClientEvents>,
+  emitter: TypedEmitter<DataAPIClientEventMap>,
   fetchCtx: FetchCtx,
   userAgent: string,
   dbOptions: Omit<DbSpawnOptions, 'token' | 'logging'> & {

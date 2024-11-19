@@ -25,6 +25,9 @@ import { LoggingEvents, LoggingOutputs } from '@/src/lib/logging/constants';
 const parseLoggingEvent = p.mkStrEnumParser<DataAPILoggingEvent, true>('DataAPILoggingEvent', LoggingEvents, true);
 const parseLoggingOutput = p.mkStrEnumParser<DataAPILoggingOutput, true>('DataAPILoggingOutput', LoggingOutputs, true);
 
+/**
+ * @internal
+ */
 export const parseLoggingConfig: Parser<DataAPILoggingConfig | undefined> = (config, field) => {
   if (isNullish(config)) {
     return undefined;
