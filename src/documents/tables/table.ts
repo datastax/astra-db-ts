@@ -384,9 +384,9 @@ export class Table<Schema extends SomeRow = SomeRow> {
         definition: {
           column,
           options: {
-            caseSensitive: options?.caseSensitive,
-            normalize: options?.normalize,
-            ascii: options?.ascii,
+            caseSensitive: options?.options?.caseSensitive,
+            normalize: options?.options?.normalize,
+            ascii: options?.options?.ascii,
           },
         },
         options: {
@@ -405,8 +405,8 @@ export class Table<Schema extends SomeRow = SomeRow> {
         definition: {
           column,
           options: {
-            sourceModel: options?.sourceModel,
-            metric: options?.metric,
+            sourceModel: options?.options?.sourceModel,
+            metric: options?.options?.metric,
           },
         },
         options: {

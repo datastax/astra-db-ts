@@ -15,7 +15,9 @@
 import { WithTimeout } from '@/src/lib';
 
 export interface CreateTableVectorIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
-  metric: 'cosine' | 'euclidean' | 'dot_product',
-  sourceModel?: string,
+  options?: {
+    metric: 'cosine' | 'euclidean' | 'dot_product',
+    sourceModel?: string,
+  }
   ifNotExists?: boolean,
 }
