@@ -25,9 +25,6 @@ export interface CollectionSerDesConfig<Schema extends SomeDoc> extends DataAPIS
   enableBigNumbers?: boolean,
 }
 
-/**
- * @internal
- */
 export class CollectionSerDes<Schema extends SomeRow> extends DataAPISerDes<Schema, CollSerCtx<Schema>, CollDesCtx> {
   declare protected readonly _cfg: CollectionSerDesConfig<Schema>;
 
@@ -36,10 +33,6 @@ export class CollectionSerDes<Schema extends SomeRow> extends DataAPISerDes<Sche
   }
 
   public override adaptSerCtx(ctx: CollSerCtx<Schema>): CollSerCtx<Schema> {
-    return ctx;
-  }
-
-  public override adaptDesCtx(ctx: CollDesCtx): CollDesCtx {
     return ctx;
   }
 
