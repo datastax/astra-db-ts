@@ -29,7 +29,7 @@ import {
   TEST_APPLICATION_URI,
   TEST_HTTP_CLIENT,
 } from '@/tests/testlib/config';
-import { DataAPIClientEvent, DataAPIClientEvents, DataAPILoggingConfig } from '@/src/lib';
+import { DataAPIClientEvent, DataAPIClientEventMap, DataAPILoggingConfig } from '@/src/lib';
 import { CreateTableDefinition, InferTableSchema } from '@/src/db';
 import * as util from 'node:util';
 
@@ -124,7 +124,7 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
     logging,
   });
 
-  for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed'] as (keyof DataAPIClientEvents)[]) {
+  for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed'] as (keyof DataAPIClientEventMap)[]) {
     client.on(event, (e: DataAPIClientEvent) => LOGGING_PRED(e, isGlobal) && console.log((isGlobal ? '[Global] ' : '') + util.inspect(e, { depth: null, colors: true })));
   }
 

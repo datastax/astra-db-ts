@@ -83,12 +83,12 @@ export type FoundRow<Doc> = Omit<Required<Doc>, '$similarity'> & { $similarity?:
  * ```ts
  * interface User extends Row<User, 'id' | 'dob'> {
  *   id: string,   // Partition key
- *   dob: CqlDate, // Clustering (partition sort) key
+ *   dob: DataAPIDate, // Clustering (partition sort) key
  *   friends: Map<string, UUID>,
  * }
  *
  * // equivalent to:
- * // type UserKey = { id: string, dob: CqlDate };
+ * // type UserKey = { id: string, dob: DataAPIDate };
  * type UserKey = KeyOf<User>;
  * ```
  *

@@ -29,7 +29,7 @@ import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { buildAstraEndpoint } from '@/src/lib/utils';
 import { Logger } from '@/src/lib/logging/logger';
-import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
+import { AdminOptions, DbOptions } from '@/src/client';
 import { $CustomInspect } from '@/src/lib/constants';
 import { SomeDoc } from '@/src/documents';
 import { Timeouts } from '@/src/lib/api/timeouts';
@@ -71,7 +71,7 @@ export class AstraAdmin {
    *
    * @internal
    */
-  constructor(rootOpts: InternalRootClientOpts, rawAdminOpts?: AdminSpawnOptions) {
+  constructor(rootOpts: InternalRootClientOpts, rawAdminOpts?: AdminOptions) {
     const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options');
 
     const token = TokenProvider.parseToken([adminOpts?.adminToken, rootOpts.adminOptions.adminToken], 'admin token');
@@ -142,7 +142,7 @@ export class AstraAdmin {
    *
    * @returns A new {@link Db} instance.
    */
-  public db(endpoint: string, options?: DbSpawnOptions): Db;
+  public db(endpoint: string, options?: DbOptions): Db;
 
   /**
    * Spawns a new {@link Db} instance using a direct endpoint and given options.
@@ -176,9 +176,9 @@ export class AstraAdmin {
    *
    * @returns A new {@link Db} instance.
    */
-  public db(id: string, region: string, options?: DbSpawnOptions): Db;
+  public db(id: string, region: string, options?: DbOptions): Db;
 
-  public db(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): Db {
+  public db(endpointOrId: string, regionOrOptions?: string | DbOptions, maybeOptions?: DbOptions): Db {
     const dbOpts = (typeof regionOrOptions === 'string')
       ? maybeOptions
       : regionOrOptions;
@@ -229,7 +229,7 @@ export class AstraAdmin {
    *
    * @returns A new {@link Db} instance.
    */
-  public dbAdmin(endpoint: string, options?: DbSpawnOptions): AstraDbAdmin;
+  public dbAdmin(endpoint: string, options?: DbOptions): AstraDbAdmin;
 
   /**
    * Spawns a new {@link Db} instance using a direct endpoint and given options.
@@ -266,9 +266,9 @@ export class AstraAdmin {
    *
    * @returns A new {@link Db} instance.
    */
-  public dbAdmin(id: string, region: string, options?: DbSpawnOptions): AstraDbAdmin;
+  public dbAdmin(id: string, region: string, options?: DbOptions): AstraDbAdmin;
 
-  public dbAdmin(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): AstraDbAdmin {
+  public dbAdmin(endpointOrId: string, regionOrOptions?: string | DbOptions, maybeOptions?: DbOptions): AstraDbAdmin {
     /* @ts-expect-error - calls internal representation of method */
     return this.db(endpointOrId, regionOrOptions, maybeOptions).admin(this.#defaultOpts.adminOptions);
   }
@@ -291,6 +291,7 @@ export class AstraAdmin {
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases/${id}`,
+      methodName: 'admin.dbInfo',
     }, tm);
 
     return buildAstraDatabaseAdminInfo(resp.data!, this.#environment);
@@ -347,6 +348,7 @@ export class AstraAdmin {
       method: HttpMethods.Get,
       path: `/databases`,
       params: params,
+      methodName: 'admin.listDatabases',
     }, tm);
 
     return resp.data!.map((d: SomeDoc) => buildAstraDatabaseAdminInfo(d, this.#environment));
@@ -419,6 +421,7 @@ export class AstraAdmin {
       method: HttpMethods.Post,
       path: '/databases',
       data: definition,
+      methodName: 'admin.createDatabase',
     }, {
       id: (resp) => resp.headers.location,
       target: 'ACTIVE',
@@ -466,6 +469,7 @@ export class AstraAdmin {
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: `/databases/${id}/terminate`,
+      methodName: 'admin.dropDatabase',
     }, {
       id: id,
       target: 'TERMINATED',

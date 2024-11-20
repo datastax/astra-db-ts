@@ -32,7 +32,8 @@ import { $CustomInspect } from '@/src/lib/constants';
 import { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info';
 import { Logger } from '@/src/lib/logging/logger';
 import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts';
-import { AdminSpawnOptions } from '@/src/client';
+import { AdminOptions } from '@/src/client';
+import { DataAPIHttpClient } from '@/src/lib/api/clients';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting keyspaces.
@@ -69,6 +70,7 @@ import { AdminSpawnOptions } from '@/src/client';
  */
 export class AstraDbAdmin extends DbAdmin {
   readonly #httpClient: DevOpsAPIHttpClient;
+  readonly #dataApiHttpClient: DataAPIHttpClient<'admin'>;
   readonly #db: Db;
   readonly #environment: 'dev' | 'test' | 'prod';
 
@@ -77,7 +79,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(db: Db, rootOpts: InternalRootClientOpts, rawAdminOpts: AdminSpawnOptions | undefined, dbToken: TokenProvider | undefined, endpoint: string) {
+  constructor(db: Db, rootOpts: InternalRootClientOpts, rawAdminOpts: AdminOptions | undefined, dbToken: TokenProvider | undefined, endpoint: string) {
     super();
 
     const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options');
@@ -101,6 +103,7 @@ export class AstraDbAdmin extends DbAdmin {
       timeoutDefaults: Timeouts.merge(rootOpts.adminOptions.timeoutDefaults, adminOpts?.timeoutDefaults),
     });
 
+    this.#dataApiHttpClient = db._httpClient.forDbAdmin(adminOpts);
     this.#db = db;
 
     Object.defineProperty(this, $CustomInspect, {
@@ -155,8 +158,9 @@ export class AstraDbAdmin extends DbAdmin {
    * @returns The available embedding providers.
    */
   public override async findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult> {
-    const resp = await this.#db._httpClient.executeCommand({ findEmbeddingProviders: {} }, {
+    const resp = await this.#dataApiHttpClient.executeCommand({ findEmbeddingProviders: {} }, {
       timeoutManager: this.#httpClient.tm.single('databaseAdminTimeoutMs', options),
+      methodName: 'dbAdmin.findEmbeddingProviders',
       keyspace: null,
     });
     return resp.status as FindEmbeddingProvidersResult;
@@ -179,7 +183,7 @@ export class AstraDbAdmin extends DbAdmin {
    */
   public async info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbAdminInfo> {
     const tm = this.#httpClient.tm.single('databaseAdminTimeoutMs', options);
-    return this.#info(tm);
+    return this.#info('dbAdmin.info', tm);
   }
 
   /**
@@ -200,7 +204,7 @@ export class AstraDbAdmin extends DbAdmin {
    */
   public override async listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]> {
     const tm = this.#httpClient.tm.single('keyspaceAdminTimeoutMs', options);
-    return this.#info(tm).then(i => i.keyspaces);
+    return this.#info('dbAdmin.listKeyspaces', tm).then(i => i.keyspaces);
   }
 
   /**
@@ -243,6 +247,7 @@ export class AstraDbAdmin extends DbAdmin {
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: `/databases/${this.#db.id}/keyspaces/${keyspace}`,
+      methodName: 'dmAdmin.createKeyspace',
     }, {
       id: this.#db.id,
       target: 'ACTIVE',
@@ -290,6 +295,7 @@ export class AstraDbAdmin extends DbAdmin {
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Delete,
       path: `/databases/${this.#db.id}/keyspaces/${keyspace}`,
+      methodName: 'dbAdmin.dropKeyspace',
     }, {
       id: this.#db.id,
       target: 'ACTIVE',
@@ -327,6 +333,7 @@ export class AstraDbAdmin extends DbAdmin {
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: `/databases/${this.#db.id}/terminate`,
+      methodName: 'dbAdmin.drop',
     }, {
       id: this.#db.id,
       target: 'TERMINATED',
@@ -341,10 +348,11 @@ export class AstraDbAdmin extends DbAdmin {
     return this.#httpClient;
   }
 
-  async #info(tm: TimeoutManager): Promise<AstraDbAdminInfo> {
+  async #info(methodName: string, tm: TimeoutManager): Promise<AstraDbAdminInfo> {
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases/${this.#db.id}`,
+      methodName,
     }, tm);
 
     return buildAstraDatabaseAdminInfo(resp.data!, this.#environment);

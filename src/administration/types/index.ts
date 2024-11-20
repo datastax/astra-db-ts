@@ -52,7 +52,7 @@ export type {
 
 export type {
   KeyspaceReplicationOptions,
-  LocalCreateKeyspaceOptions,
+  DataAPICreateKeyspaceOptions,
 } from './db-admin/local-create-keyspace';
 
 export type {

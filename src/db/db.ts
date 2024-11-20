@@ -24,19 +24,19 @@ import { TokenProvider } from '@/src/lib';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client';
 import { KeyspaceRef } from '@/src/lib/api/clients/types';
 import { toArray, validateDataAPIEnv } from '@/src/lib/utils';
-import { EmbeddingHeadersProvider, SomeRow, Table } from '@/src/documents';
+import { TableDropIndexOptions, EmbeddingHeadersProvider, SomeRow, Table } from '@/src/documents';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
-import { CollectionSpawnOptions } from '@/src/db/types/collections/spawn-collection';
+import { CollectionOptions } from '@/src/db/types/collections/collection-options';
 import { DropCollectionOptions } from '@/src/db/types/collections/drop-collection';
 import { FullCollectionInfo, ListCollectionsOptions } from '@/src/db/types/collections/list-collections';
 import { RunCommandOptions } from '@/src/db/types/command';
-import { TableSpawnOptions } from '@/src/db/types/tables/spawn-table';
+import { TableOptions } from '@/src/db/types/tables/spawn-table';
 import { CreateTableDefinition, CreateTableOptions } from '@/src/db/types/tables/create-table';
 import { InferTableSchemaFromDefinition } from '@/src/db/types/tables/table-schema';
 import { DropTableOptions } from '@/src/db/types/tables/drop-table';
 import { FullTableInfo, ListTablesOptions } from '@/src/db/types/tables/list-tables';
 import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
-import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client/types';
+import { AdminOptions, DbOptions } from '@/src/client/types';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { Logger } from '@/src/lib/logging/logger';
 import { $CustomInspect } from '@/src/lib/constants';
@@ -128,17 +128,15 @@ export class Db {
    *
    * @internal
    */
-  constructor(rootOpts: InternalRootClientOpts, endpoint: string, rawDbOpts: DbSpawnOptions | nullish) {
+  constructor(rootOpts: InternalRootClientOpts, endpoint: string, rawDbOpts: DbOptions | nullish) {
     const dbOpts = parseDbSpawnOpts(rawDbOpts, 'options');
-
-    const token = TokenProvider.parseToken([dbOpts?.token, rootOpts.dbOptions.token], 'token');
 
     this.#defaultOpts = {
       ...rootOpts,
       dbOptions: {
         keyspace: dbOpts?.keyspace ?? rootOpts.dbOptions.keyspace,
         dataApiPath: dbOpts?.dataApiPath ?? rootOpts.dbOptions.dataApiPath,
-        token: token,
+        token: TokenProvider.parseToken([dbOpts?.token, rootOpts.dbOptions.token], 'token'),
         logging: Logger.advanceConfig(rootOpts.dbOptions.logging, dbOpts?.logging),
         additionalHeaders: { ...rootOpts.dbOptions.additionalHeaders, ...dbOpts?.additionalHeaders },
         timeoutDefaults: Timeouts.merge(rootOpts.dbOptions.timeoutDefaults, dbOpts?.timeoutDefaults),
@@ -159,7 +157,7 @@ export class Db {
       },
       adminOptions: {
         ...rootOpts.adminOptions,
-        adminToken: TokenProvider.parseToken([rootOpts.adminOptions.adminToken, token], 'token'),
+        adminToken: TokenProvider.parseToken([rootOpts.adminOptions.adminToken, rootOpts.dbOptions.token], 'token'),
       },
     };
 
@@ -349,7 +347,7 @@ export class Db {
    *
    * @throws InvalidEnvironmentError - if the database is not an Astra database.
    */
-  public admin(options?: AdminSpawnOptions & { environment?: 'astra' }): AstraDbAdmin
+  public admin(options?: AdminOptions & { environment?: 'astra' }): AstraDbAdmin
 
   /**
    * ##### Overview
@@ -391,15 +389,15 @@ export class Db {
    *
    * @throws InvalidEnvironmentError - if the database is not an Astra database.
    */
-  public admin(options: AdminSpawnOptions & { environment: Exclude<DataAPIEnvironment, 'astra'> }): DataAPIDbAdmin
+  public admin(options: AdminOptions & { environment: Exclude<DataAPIEnvironment, 'astra'> }): DataAPIDbAdmin
 
-  public admin(options?: AdminSpawnOptions & { environment?: DataAPIEnvironment }): DbAdmin {
+  public admin(options?: AdminOptions & { environment?: DataAPIEnvironment }): DbAdmin {
     const environment = options?.environment ?? 'astra';
 
     validateDataAPIEnv(environment);
 
     if (this.#defaultOpts.environment !== environment) {
-      throw new InvalidEnvironmentError('db.admin()', this.#defaultOpts.environment, [environment], 'environment option is not the same as set in the DataAPIClient');
+      throw new InvalidEnvironmentError('db.admin()', environment, [this.#defaultOpts.environment], 'environment option is not the same as set in the DataAPIClient');
     }
 
     if (environment === 'astra') {
@@ -548,11 +546,10 @@ export class Db {
    * @see VectorizeDoc
    * @see db.createCollection
    */
-  public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions<Schema>): Collection<Schema> {
+  public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionOptions<Schema>): Collection<Schema> {
     return new Collection<Schema>(this, this.#httpClient, name, {
       ...options,
       serdes: {
-        ...options?.serdes,
         serialize: [...toArray(options?.serdes?.serialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.collection?.serialize ?? [])],
         deserialize: [...toArray(options?.serdes?.deserialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.collection?.deserialize ?? [])],
         mutateInPlace: options?.serdes?.mutateInPlace ?? this.#defaultOpts.dbOptions.serdes?.mutateInPlace,
@@ -606,11 +603,11 @@ export class Db {
    *
    * @example
    * ```ts
-   * import { CqlDate, UUID, Row, DataAPIVector, ... } from 'astra-db-ts';
+   * import { DataAPIDate, UUID, Row, DataAPIVector, ... } from 'astra-db-ts';
    *
    * interface User extends Row<User, 'id' | 'dob'> {
    *   id: string,   // Partition key
-   *   dob: CqlDate, // Clustering (partition sort) key
+   *   dob: DataAPIDate, // Clustering (partition sort) key
    *   friends: Map<string, UUID>,
    *   vector: DataAPIVector,
    * }
@@ -620,7 +617,7 @@ export class Db {
    * // res.insertedId is of type { id: string }
    * const res = await table.insertOne({
    *   id: '123',
-   *   dob: new CqlDate(new Date()),
+   *   dob: new DataAPIDate(new Date()),
    *   friends: new Map([['Alice', UUID.random()]]),
    *   vector: new DataAPIVector([1, 2, 3]), // Class enables encoding optimization
    * });
@@ -643,7 +640,7 @@ export class Db {
    * @see Row
    * @see $PrimaryKeyType
    */
-  public table<Schema extends SomeRow = SomeRow>(name: string, options?: TableSpawnOptions<Schema>): Table<Schema> {
+  public table<Schema extends SomeRow = SomeRow>(name: string, options?: TableOptions<Schema>): Table<Schema> {
     return new Table<Schema>(this, this.#httpClient, name, {
       ...options,
       serdes: {
@@ -887,7 +884,7 @@ export class Db {
    * ```ts
    * interface User extends Row<User, 'name' | 'dob'> {
    *   name: string,
-   *   dob: CqlDate,
+   *   dob: DataAPIDate,
    *   friends?: Set<string>,
    * }
    *
@@ -1036,8 +1033,8 @@ export class Db {
     });
   }
 
-  public async dropTableIndex(name: string, options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<void> {
-    await this.#httpClient.executeCommand({ dropIndex: { name } }, {
+  public async dropTableIndex(name: string, options?: TableDropIndexOptions): Promise<void> {
+    await this.#httpClient.executeCommand({ dropIndex: { name, options: { ifExists: options?.ifExists } } }, {
       timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
     });
   }

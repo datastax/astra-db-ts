@@ -183,8 +183,8 @@ describe('integration.client.data-api-client', () => {
       assert.ok(succeededEvents[0].resp?.status?.insertedIds instanceof Array);
       assert.ok(typeof succeededEvents[1].resp?.status?.deletedCount === 'number');
 
-      assert.deepStrictEqual(stdout[0], succeededEvents[0].formatted());
-      assert.deepStrictEqual(stdout[1], succeededEvents[1].formatted());
+      assert.deepStrictEqual(stdout[0].substring(19), succeededEvents[0].formatted().substring(19)); // chops off timestamp
+      assert.deepStrictEqual(stdout[1].substring(19), succeededEvents[1].formatted().substring(19));
       assert.deepStrictEqual(stderr, []);
     });
 
@@ -245,7 +245,7 @@ describe('integration.client.data-api-client', () => {
       assert.strictEqual(failedEvent.error.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
 
       assert.deepStrictEqual(stdout, []);
-      assert.deepStrictEqual(stderr[0], failedEvent.formatted());
+      assert.deepStrictEqual(stderr[0].substring(19), failedEvent.formatted().substring(19)); // chops off timestamp
     });
 
     it('should allow monitoring of timed-out commands when enabled', async () => {
@@ -297,8 +297,8 @@ describe('integration.client.data-api-client', () => {
       assert.deepStrictEqual(failedEvent.error.timeout, { generalMethodTimeoutMs: 1, requestTimeoutMs: 1 });
 
       assert.deepStrictEqual(stdout, []);
-      assert.deepStrictEqual(stderr[0], startedEvent.formatted());
-      assert.deepStrictEqual(stderr[1], failedEvent.formatted());
+      assert.deepStrictEqual(stderr[0].substring(19), startedEvent.formatted().substring(19)); // chops off timestamp
+      assert.deepStrictEqual(stderr[1].substring(19), failedEvent.formatted().substring(19));
     });
   });
 });

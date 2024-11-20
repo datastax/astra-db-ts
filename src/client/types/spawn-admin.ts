@@ -14,7 +14,7 @@
 
 import type { DataAPILoggingConfig, TimeoutDescriptor, TokenProvider } from '@/src/lib';
 
-export type DefaultAdminSpawnOptions = Omit<AdminSpawnOptions, 'logging' | 'timeoutDefaults'>;
+export type RootAdminOptions = Omit<AdminOptions, 'logging' | 'timeoutDefaults'>;
 
 /**
  * The options available spawning a new {@link AstraAdmin} instance.
@@ -25,7 +25,7 @@ export type DefaultAdminSpawnOptions = Omit<AdminSpawnOptions, 'logging' | 'time
  *
  * @public
  */
-export interface AdminSpawnOptions {
+export interface AdminOptions {
   /**
    * The configuration for logging events emitted by the {@link DataAPIClient}.
    *

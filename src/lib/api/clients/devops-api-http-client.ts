@@ -30,6 +30,7 @@ export interface DevOpsAPIRequestInfo {
   method: HttpMethodStrings,
   data?: Record<string, any>,
   params?: Record<string, string>,
+  methodName: string,
 }
 
 interface LongRunningRequestInfo {
@@ -143,6 +144,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
       const resp = await this.request({
         method: HttpMethods.Get,
         path: `/databases/${id}`,
+        methodName: req.methodName,
       }, info.timeoutManager, started);
 
       if (resp.data?.status === info.target) {
