@@ -30,7 +30,7 @@ import {
 } from '@/src/documents';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
-import { AlterTableOptions, AlterTableSchema, Db, ListTableDefinition, TableSpawnOptions } from '@/src/db';
+import { AlterTableOptions, AlterTableSchema, Db, ListTableDefinition, TableOptions } from '@/src/db';
 import { DeepPartial, WithTimeout } from '@/src/lib';
 import { $CustomInspect } from '@/src/lib/constants';
 import { mkTableSerDes } from '@/src/documents/tables/ser-des';
@@ -185,7 +185,7 @@ export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
  *
  * ###### Custom datatypes
  *
- * You can plug in your own custom datatypes by providing some custom serialization/deserialization logic through the `serdes` option in {@link TableSpawnOptions}, {@link DbSpawnOptions} & {@link DataAPIClientOptions.dbOptions}.
+ * You can plug in your own custom datatypes by providing some custom serialization/deserialization logic through the `serdes` option in {@link TableOptions}, {@link DbOptions} & {@link DataAPIClientOptions.dbOptions}.
  *
  * See {@link TableSerDesConfig} for much more information, but here's a quick example:
  *
@@ -232,7 +232,7 @@ export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
  * @see Db.table
  * @see InferTableSchema
  * @see TableSerDesConfig
- * @see TableSpawnOptions
+ * @see TableOptions
  * @see $PrimaryKeyType
  *
  * @public
@@ -257,7 +257,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableSpawnOptions<Schema> | undefined) {
+  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableOptions<Schema> | undefined) {
     Object.defineProperty(this, 'name', {
       value: name,
     });

@@ -26,17 +26,17 @@ import { KeyspaceRef } from '@/src/lib/api/clients/types';
 import { toArray, validateDataAPIEnv } from '@/src/lib/utils';
 import { TableDropIndexOptions, EmbeddingHeadersProvider, SomeRow, Table } from '@/src/documents';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
-import { CollectionSpawnOptions } from '@/src/db/types/collections/spawn-collection';
+import { CollectionOptions } from '@/src/db/types/collections/collection-options';
 import { DropCollectionOptions } from '@/src/db/types/collections/drop-collection';
 import { FullCollectionInfo, ListCollectionsOptions } from '@/src/db/types/collections/list-collections';
 import { RunCommandOptions } from '@/src/db/types/command';
-import { TableSpawnOptions } from '@/src/db/types/tables/spawn-table';
+import { TableOptions } from '@/src/db/types/tables/spawn-table';
 import { CreateTableDefinition, CreateTableOptions } from '@/src/db/types/tables/create-table';
 import { InferTableSchemaFromDefinition } from '@/src/db/types/tables/table-schema';
 import { DropTableOptions } from '@/src/db/types/tables/drop-table';
 import { FullTableInfo, ListTablesOptions } from '@/src/db/types/tables/list-tables';
 import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
-import { AdminSpawnOptions, DbSpawnOptions } from '@/src/client/types';
+import { AdminOptions, DbOptions } from '@/src/client/types';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { Logger } from '@/src/lib/logging/logger';
 import { $CustomInspect } from '@/src/lib/constants';
@@ -128,7 +128,7 @@ export class Db {
    *
    * @internal
    */
-  constructor(rootOpts: InternalRootClientOpts, endpoint: string, rawDbOpts: DbSpawnOptions | nullish) {
+  constructor(rootOpts: InternalRootClientOpts, endpoint: string, rawDbOpts: DbOptions | nullish) {
     const dbOpts = parseDbSpawnOpts(rawDbOpts, 'options');
 
     const token = TokenProvider.parseToken([dbOpts?.token, rootOpts.dbOptions.token], 'token');
@@ -349,7 +349,7 @@ export class Db {
    *
    * @throws InvalidEnvironmentError - if the database is not an Astra database.
    */
-  public admin(options?: AdminSpawnOptions & { environment?: 'astra' }): AstraDbAdmin
+  public admin(options?: AdminOptions & { environment?: 'astra' }): AstraDbAdmin
 
   /**
    * ##### Overview
@@ -391,9 +391,9 @@ export class Db {
    *
    * @throws InvalidEnvironmentError - if the database is not an Astra database.
    */
-  public admin(options: AdminSpawnOptions & { environment: Exclude<DataAPIEnvironment, 'astra'> }): DataAPIDbAdmin
+  public admin(options: AdminOptions & { environment: Exclude<DataAPIEnvironment, 'astra'> }): DataAPIDbAdmin
 
-  public admin(options?: AdminSpawnOptions & { environment?: DataAPIEnvironment }): DbAdmin {
+  public admin(options?: AdminOptions & { environment?: DataAPIEnvironment }): DbAdmin {
     const environment = options?.environment ?? 'astra';
 
     validateDataAPIEnv(environment);
@@ -548,7 +548,7 @@ export class Db {
    * @see VectorizeDoc
    * @see db.createCollection
    */
-  public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions<Schema>): Collection<Schema> {
+  public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionOptions<Schema>): Collection<Schema> {
     return new Collection<Schema>(this, this.#httpClient, name, {
       ...options,
       serdes: {
@@ -643,7 +643,7 @@ export class Db {
    * @see Row
    * @see $PrimaryKeyType
    */
-  public table<Schema extends SomeRow = SomeRow>(name: string, options?: TableSpawnOptions<Schema>): Table<Schema> {
+  public table<Schema extends SomeRow = SomeRow>(name: string, options?: TableOptions<Schema>): Table<Schema> {
     return new Table<Schema>(this, this.#httpClient, name, {
       ...options,
       serdes: {

@@ -15,10 +15,10 @@
 
 import type TypedEmitter from 'typed-emitter';
 import type {
-  AdminSpawnOptions,
+  AdminOptions,
   CustomHttpClientOptions,
   DataAPIClientOptions,
-  DbSpawnOptions,
+  DbOptions,
   DefaultHttpClientOptions,
 } from '@/src/client/types';
 import { LIB_NAME } from '@/src/version';
@@ -221,7 +221,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    *
    * @returns A new {@link Db} instance.
    */
-  public db(endpoint: string, options?: DbSpawnOptions): Db {
+  public db(endpoint: string, options?: DbOptions): Db {
     return new Db(this.#options, endpoint, options);
   }
 
@@ -247,7 +247,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    *
    * @returns A new {@link AstraAdmin} instance.
    */
-  public admin(options?: AdminSpawnOptions): AstraAdmin {
+  public admin(options?: AdminOptions): AstraAdmin {
     if (this.#options.environment !== 'astra') {
       throw new InvalidEnvironmentError('admin', this.#options.environment, ['astra'], 'AstraAdmin is only available for Astra databases');
     }

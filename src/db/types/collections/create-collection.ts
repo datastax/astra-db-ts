@@ -14,7 +14,7 @@
 
 import { SomeDoc } from '@/src/documents/collections';
 import { TimeoutDescriptor } from '@/src/lib';
-import { CollectionOptions, CollectionSpawnOptions } from '@/src/db';
+import { CollectionDefinition, CollectionOptions } from '@/src/db';
 
 /**
  * Options for creating a new collection (via {@link Db.createCollection}).
@@ -31,6 +31,6 @@ import { CollectionOptions, CollectionSpawnOptions } from '@/src/db';
  *
  * @public
  */
-export interface CreateCollectionOptions<Schema extends SomeDoc> extends CollectionOptions<Schema>, CollectionSpawnOptions<Schema> {
+export interface CreateCollectionOptions<Schema extends SomeDoc> extends CollectionDefinition<Schema>, CollectionOptions<Schema> {
   timeout?: number | Pick<Partial<TimeoutDescriptor>, 'collectionAdminTimeoutMs'>;
 }

@@ -41,7 +41,7 @@ import type {
   CollectionUpdateFilter,
   WithId,
 } from '@/src/documents/collections/types';
-import { CollectionOptions, CollectionSpawnOptions, Db } from '@/src/db';
+import { CollectionDefinition, CollectionOptions, Db } from '@/src/db';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { DeepPartial, WithTimeout } from '@/src/lib';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
@@ -124,7 +124,7 @@ const jbi = JBI({ storeAsString: true });
  *
  * ###### Custom datatypes
  *
- * You can plug in your own custom datatypes by providing some custom serialization/deserialization logic through the `serdes` option in {@link CollectionSpawnOptions}, {@link DbSpawnOptions} & {@link DataAPIClientOptions.dbOptions}.
+ * You can plug in your own custom datatypes by providing some custom serialization/deserialization logic through the `serdes` option in {@link CollectionOptions}, {@link DbOptions} & {@link DataAPIClientOptions.dbOptions}.
  *
  * See {@link CollectionSerDesConfig} for much more information, but here's a quick example:
  *
@@ -173,7 +173,7 @@ const jbi = JBI({ storeAsString: true });
  * @see Db.collection
  * @see CollectionDefaultIdOptions
  * @see CollectionSerDesConfig
- * @see CollectionSpawnOptions
+ * @see CollectionOptions
  *
  * @public
  */
@@ -197,7 +197,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions<Schema> | undefined) {
+  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionOptions<Schema> | undefined) {
     Object.defineProperty(this, 'name', {
       value: name,
       writable: false,
@@ -244,7 +244,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * ##### The `_id` field
    *
-   * If the document does not contain an `_id` field, the server will generate an id for the document. The type of the id may be specified in {@link CollectionOptions.defaultId} at collection creation, otherwise it'll just be a raw UUID string. This generation does not mutate the document.
+   * If the document does not contain an `_id` field, the server will generate an id for the document. The type of the id may be specified in {@link CollectionDefinition.defaultId} at collection creation, otherwise it'll just be a raw UUID string. This generation does not mutate the document.
    *
    * If an `_id` is provided which corresponds to a document that already exists in the collection, a {@link DataAPIResponseError} is raised, and the insertion fails.
    *
@@ -327,7 +327,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * ##### The `_id` field
    *
-   * If any document does not contain an `_id` field, the server will generate an id for the document. The type of the id may be specified in {@link CollectionOptions.defaultId} at creation, otherwise it'll just be a UUID string. This generation will not mutate the documents.
+   * If any document does not contain an `_id` field, the server will generate an id for the document. The type of the id may be specified in {@link CollectionDefinition.defaultId} at creation, otherwise it'll just be a UUID string. This generation will not mutate the documents.
    *
    * If any `_id` is provided which corresponds to a document that already exists in the collection, an {@link CollectionInsertManyError} is raised, and the insertion (partially) fails.
    *
@@ -1563,7 +1563,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns The options that the collection was created with (i.e. the `vector` and `indexing` operations).
    */
-  public async options(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<CollectionOptions<SomeDoc>> {
+  public async options(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<CollectionDefinition<SomeDoc>> {
     const results = await this.#db.listCollections({ timeout: options?.timeout, keyspace: this.keyspace });
 
     const collection = results.find((c) => c.name === this.name);

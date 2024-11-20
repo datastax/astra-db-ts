@@ -21,7 +21,7 @@ import type {
 } from '@/src/lib';
 import type TypedEmitter from 'typed-emitter';
 import type { FetchCtx } from '@/src/lib/api/fetch/types';
-import type { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
+import type { AdminOptions, DbOptions } from '@/src/client';
 import type { NormalizedLoggingConfig } from '@/src/lib/logging/types';
 
 /**
@@ -37,12 +37,12 @@ export interface InternalRootClientOpts {
   emitter: TypedEmitter<DataAPIClientEventMap>,
   fetchCtx: FetchCtx,
   userAgent: string,
-  dbOptions: Omit<DbSpawnOptions, 'token' | 'logging'> & {
+  dbOptions: Omit<DbOptions, 'token' | 'logging'> & {
     token: TokenProvider | undefined,
     logging: NormalizedLoggingConfig[] | undefined,
     timeoutDefaults: TimeoutDescriptor,
   },
-  adminOptions: Omit<AdminSpawnOptions, 'adminToken' | 'logging'> & {
+  adminOptions: Omit<AdminOptions, 'adminToken' | 'logging'> & {
     adminToken: TokenProvider | undefined,
     logging: NormalizedLoggingConfig[] | undefined,
     timeoutDefaults: TimeoutDescriptor,

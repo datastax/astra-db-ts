@@ -32,7 +32,7 @@ import { $CustomInspect } from '@/src/lib/constants';
 import { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info';
 import { Logger } from '@/src/lib/logging/logger';
 import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts';
-import { AdminSpawnOptions } from '@/src/client';
+import { AdminOptions } from '@/src/client';
 import { DataAPIHttpClient } from '@/src/lib/api/clients';
 
 /**
@@ -79,7 +79,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(db: Db, rootOpts: InternalRootClientOpts, rawAdminOpts: AdminSpawnOptions | undefined, dbToken: TokenProvider | undefined, endpoint: string) {
+  constructor(db: Db, rootOpts: InternalRootClientOpts, rawAdminOpts: AdminOptions | undefined, dbToken: TokenProvider | undefined, endpoint: string) {
     super();
 
     const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options');

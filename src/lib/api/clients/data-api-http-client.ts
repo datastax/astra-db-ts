@@ -26,8 +26,8 @@ import {
 import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
 import { HttpClient } from '@/src/lib/api/clients/http-client';
 import { DEFAULT_DATA_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants';
-import { CollectionSpawnOptions, TableSpawnOptions } from '@/src/db';
-import type { AdminSpawnOptions } from '@/src/client';
+import { CollectionOptions, TableOptions } from '@/src/db';
+import type { AdminOptions } from '@/src/client';
 import { isNullish } from '@/src/lib/utils';
 import { mkRespErrorFromResponse } from '@/src/documents/errors';
 import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts';
@@ -134,7 +134,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     this.emissionStrategy = props.emissionStrategy(this.logger);
   }
 
-  public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(keyspace: string, collection: string, opts: CollectionSpawnOptions<any> | TableSpawnOptions<any> | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
+  public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(keyspace: string, collection: string, opts: CollectionOptions<any> | TableOptions<any> | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(opts?.embeddingApiKey),
@@ -150,7 +150,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     return clone;
   }
 
-  public forDbAdmin(opts: AdminSpawnOptions | undefined): DataAPIHttpClient<'admin'> {
+  public forDbAdmin(opts: AdminOptions | undefined): DataAPIHttpClient<'admin'> {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       tokenProvider: TokenProvider.parseToken([opts?.adminToken, this.#props.tokenProvider], 'admin token'),

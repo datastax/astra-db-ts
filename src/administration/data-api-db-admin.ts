@@ -21,7 +21,7 @@ import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { Db } from '@/src/db';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { $CustomInspect } from '@/src/lib/constants';
-import { AdminSpawnOptions } from '@/src/client';
+import { AdminOptions } from '@/src/client';
 
 /**
  * An administrative class for managing non-Astra databases, including creating, listing, and deleting keyspaces.
@@ -65,7 +65,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, rawAdminOpts?: AdminSpawnOptions) {
+  constructor(db: Db, httpClient: DataAPIHttpClient, rawAdminOpts?: AdminOptions) {
     super();
     const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options');
     this.#httpClient = httpClient.forDbAdmin(adminOpts);

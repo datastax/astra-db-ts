@@ -15,7 +15,7 @@
 import { DataAPILoggingConfig, type TimeoutDescriptor, TokenProvider } from '@/src/lib';
 import { CollectionSerDesConfig, SomeDoc, SomeRow, TableSerDesConfig } from '@/src/documents';
 
-export type DefaultDbSpawnOptions = Omit<DbSpawnOptions, 'logging' | 'timeoutDefaults'>;
+export type RootDbOptions = Omit<DbOptions, 'logging' | 'timeoutDefaults'>;
 
 /**
  * The options available spawning a new {@link Db} instance.
@@ -24,7 +24,7 @@ export type DefaultDbSpawnOptions = Omit<DbSpawnOptions, 'logging' | 'timeoutDef
  *
  * @public
  */
-export interface DbSpawnOptions {
+export interface DbOptions {
   /**
    * The configuration for logging events emitted by the {@link DataAPIClient}.
    *
