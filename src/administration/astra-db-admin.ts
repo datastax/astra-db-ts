@@ -83,12 +83,7 @@ export class AstraDbAdmin extends DbAdmin {
     super();
 
     const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options');
-
-    const _adminToken = TokenProvider.parseToken([adminOpts?.adminToken, rootOpts.adminOptions.adminToken], 'admin token');
-
-    const adminToken = (_adminToken instanceof StaticTokenProvider && isNullish(_adminToken.getToken()))
-      ? dbToken
-      : _adminToken;
+    const adminToken = TokenProvider.mergeTokens(adminOpts?.adminToken, rootOpts.adminOptions.adminToken, dbToken);
 
     this.#environment = adminOpts?.astraEnv ?? rootOpts.adminOptions.astraEnv ?? extractAstraEnvironment(endpoint);
 

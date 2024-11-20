@@ -153,7 +153,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
   public forDbAdmin(opts: AdminOptions | undefined): DataAPIHttpClient<'admin'> {
     const clone = new DataAPIHttpClient({
       ...this.#props,
-      tokenProvider: TokenProvider.parseToken([opts?.adminToken, this.#props.tokenProvider], 'admin token'),
+      tokenProvider: TokenProvider.mergeTokens(opts?.adminToken, this.#props.tokenProvider),
       logging: Logger.advanceConfig(this.#props.logging, opts?.logging),
       baseUrl: opts?.endpointUrl ?? this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,

@@ -138,7 +138,7 @@ export class Db {
       dbOptions: {
         keyspace: dbOpts?.keyspace ?? rootOpts.dbOptions.keyspace,
         dataApiPath: dbOpts?.dataApiPath ?? rootOpts.dbOptions.dataApiPath,
-        token: TokenProvider.parseToken([dbOpts?.token, rootOpts.dbOptions.token], 'token'),
+        token: TokenProvider.mergeTokens(dbOpts?.token, rootOpts.dbOptions.token),
         logging: Logger.advanceConfig(rootOpts.dbOptions.logging, dbOpts?.logging),
         additionalHeaders: { ...rootOpts.dbOptions.additionalHeaders, ...dbOpts?.additionalHeaders },
         timeoutDefaults: Timeouts.merge(rootOpts.dbOptions.timeoutDefaults, dbOpts?.timeoutDefaults),
@@ -149,7 +149,7 @@ export class Db {
       },
       adminOptions: {
         ...rootOpts.adminOptions,
-        adminToken: TokenProvider.parseToken([rootOpts.adminOptions.adminToken, rootOpts.dbOptions.token], 'token'),
+        adminToken: TokenProvider.mergeTokens(rootOpts.adminOptions.adminToken, rootOpts.dbOptions.token),
       },
     };
 
