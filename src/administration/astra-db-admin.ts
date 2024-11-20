@@ -13,19 +13,15 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import {
-  AstraCreateKeyspaceOptions,
-  AstraDropKeyspaceOptions,
-} from '@/src/administration/types';
+import { AstraCreateKeyspaceOptions, AstraDropKeyspaceOptions } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
 import type { WithTimeout } from '@/src/lib';
-import { StaticTokenProvider, TokenProvider } from '@/src/lib';
+import { TokenProvider } from '@/src/lib';
 import { buildAstraDatabaseAdminInfo, extractAstraEnvironment } from '@/src/administration/utils';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, HttpMethods } from '@/src/lib/api/constants';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
 import { Db } from '@/src/db';
-import { isNullish } from '@/src/lib/utils';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { $CustomInspect } from '@/src/lib/constants';
