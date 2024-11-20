@@ -131,14 +131,12 @@ export class Db {
   constructor(rootOpts: InternalRootClientOpts, endpoint: string, rawDbOpts: DbOptions | nullish) {
     const dbOpts = parseDbSpawnOpts(rawDbOpts, 'options');
 
-    const token = TokenProvider.parseToken([dbOpts?.token, rootOpts.dbOptions.token], 'token');
-
     this.#defaultOpts = {
       ...rootOpts,
       dbOptions: {
         keyspace: dbOpts?.keyspace ?? rootOpts.dbOptions.keyspace,
         dataApiPath: dbOpts?.dataApiPath ?? rootOpts.dbOptions.dataApiPath,
-        token: token,
+        token: TokenProvider.parseToken([dbOpts?.token, rootOpts.dbOptions.token], 'token'),
         logging: Logger.advanceConfig(rootOpts.dbOptions.logging, dbOpts?.logging),
         additionalHeaders: { ...rootOpts.dbOptions.additionalHeaders, ...dbOpts?.additionalHeaders },
         timeoutDefaults: Timeouts.merge(rootOpts.dbOptions.timeoutDefaults, dbOpts?.timeoutDefaults),
@@ -159,7 +157,7 @@ export class Db {
       },
       adminOptions: {
         ...rootOpts.adminOptions,
-        adminToken: TokenProvider.parseToken([rootOpts.adminOptions.adminToken, token], 'token'),
+        adminToken: TokenProvider.parseToken([rootOpts.adminOptions.adminToken, rootOpts.dbOptions.token], 'token'),
       },
     };
 
@@ -552,7 +550,6 @@ export class Db {
     return new Collection<Schema>(this, this.#httpClient, name, {
       ...options,
       serdes: {
-        ...options?.serdes,
         serialize: [...toArray(options?.serdes?.serialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.collection?.serialize ?? [])],
         deserialize: [...toArray(options?.serdes?.deserialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.collection?.deserialize ?? [])],
         mutateInPlace: options?.serdes?.mutateInPlace ?? this.#defaultOpts.dbOptions.serdes?.mutateInPlace,

@@ -104,7 +104,7 @@ export class AdminCommandWarningsEvent extends AdminCommandEvent {
 }
 
 // @public
-export interface AdminSpawnOptions {
+export interface AdminOptions {
     additionalHeaders?: Record<string, string>;
     adminToken?: string | TokenProvider | null;
     astraEnv?: 'dev' | 'prod' | 'test';
@@ -139,12 +139,12 @@ export class AstraAdmin {
     // Warning: (ae-forgotten-export) The symbol "InternalRootClientOpts" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(rootOpts: InternalRootClientOpts, rawAdminOpts?: AdminSpawnOptions);
+    constructor(rootOpts: InternalRootClientOpts, rawAdminOpts?: AdminOptions);
     createDatabase(config: AstraDatabaseConfig, options?: CreateAstraDatabaseOptions): Promise<AstraDbAdmin>;
-    db(endpoint: string, options?: DbSpawnOptions): Db;
-    db(id: string, region: string, options?: DbSpawnOptions): Db;
-    dbAdmin(endpoint: string, options?: DbSpawnOptions): AstraDbAdmin;
-    dbAdmin(id: string, region: string, options?: DbSpawnOptions): AstraDbAdmin;
+    db(endpoint: string, options?: DbOptions): Db;
+    db(id: string, region: string, options?: DbOptions): Db;
+    dbAdmin(endpoint: string, options?: DbOptions): AstraDbAdmin;
+    dbAdmin(id: string, region: string, options?: DbOptions): AstraDbAdmin;
     dbInfo(id: string, options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbAdminInfo>;
     dropDatabase(db: Db | string, options?: DropAstraDatabaseOptions): Promise<void>;
     // Warning: (ae-forgotten-export) The symbol "DevOpsAPIHttpClient" needs to be exported by the entry point index.d.ts
@@ -173,7 +173,7 @@ export interface AstraDatabaseConfig {
 // @public
 export class AstraDbAdmin extends DbAdmin {
     // @internal
-    constructor(db: Db, rootOpts: InternalRootClientOpts, rawAdminOpts: AdminSpawnOptions | undefined, dbToken: TokenProvider | undefined, endpoint: string);
+    constructor(db: Db, rootOpts: InternalRootClientOpts, rawAdminOpts: AdminOptions | undefined, dbToken: TokenProvider | undefined, endpoint: string);
     createKeyspace(keyspace: string, options?: AstraCreateKeyspaceOptions): Promise<void>;
     db(): Db;
     drop(options?: AstraDropKeyspaceOptions): Promise<void>;
@@ -261,11 +261,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     // Warning: (ae-forgotten-export) The symbol "DataAPIHttpClient" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionSpawnOptions<Schema> | undefined);
+    constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionOptions<Schema> | undefined);
     countDocuments(filter: CollectionFilter<Schema>, upperBound: number, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number>;
     deleteMany(filter: CollectionFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionDeleteManyResult>;
     deleteOne(filter: CollectionFilter<Schema>, options?: CollectionDeleteOneOptions): Promise<CollectionDeleteOneResult>;
-    distinct<Key extends string>(key: Key, filter: CollectionFilter<Schema>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]>;
+    distinct<Key extends string>(key: Key, filter: CollectionFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]>;
     drop(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<void>;
     estimatedDocumentCount(options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number>;
     find(filter: CollectionFilter<Schema>, options?: CollectionFindOptions & {
@@ -284,7 +284,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     insertOne(document: MaybeId<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionInsertOneResult<Schema>>;
     readonly keyspace: string;
     readonly name: string;
-    options(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<CollectionOptions<SomeDoc>>;
+    options(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<CollectionDefinition<SomeDoc>>;
     replaceOne(filter: CollectionFilter<Schema>, replacement: NoId<Schema>, options?: CollectionReplaceOneOptions): Promise<CollectionReplaceOneResult<Schema>>;
     updateMany(filter: CollectionFilter<Schema>, update: CollectionUpdateFilter<Schema>, options?: CollectionUpdateManyOptions): Promise<CollectionUpdateManyResult<Schema>>;
     updateOne(filter: CollectionFilter<Schema>, update: CollectionUpdateFilter<Schema>, options?: CollectionUpdateOneOptions): Promise<CollectionUpdateOneResult<Schema>>;
@@ -330,6 +330,13 @@ export type CollectionDateUpdate<Schema> = {
 // @public
 export interface CollectionDefaultIdOptions {
     type: 'uuid' | 'uuidv6' | 'uuidv7' | 'objectId';
+}
+
+// @public
+export interface CollectionDefinition<Schema extends SomeDoc> {
+    defaultId?: CollectionDefaultIdOptions;
+    indexing?: CollectionIndexingOptions<Schema>;
+    vector?: CollectionVectorOptions;
 }
 
 // @public
@@ -390,26 +397,13 @@ export class CollectionFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends Fin
 }
 
 // @public
-export interface CollectionFindOneAndDeleteOptions extends WithTimeout<'generalMethodTimeoutMs'> {
-    projection?: Projection;
-    sort?: Sort;
-}
+export type CollectionFindOneAndDeleteOptions = GenericFindOneAndDeleteOptions;
 
 // @public
-export interface CollectionFindOneAndReplaceOptions extends WithTimeout<'generalMethodTimeoutMs'> {
-    projection?: Projection;
-    returnDocument?: 'before' | 'after';
-    sort?: Sort;
-    upsert?: boolean;
-}
+export type CollectionFindOneAndReplaceOptions = GenericFindOneAndReplaceOptions;
 
 // @public
-export interface CollectionFindOneAndUpdateOptions extends WithTimeout<'generalMethodTimeoutMs'> {
-    projection?: Projection;
-    returnDocument?: 'before' | 'after';
-    sort?: Sort;
-    upsert?: boolean;
-}
+export type CollectionFindOneAndUpdateOptions = GenericFindOneAndUpdateOptions;
 
 // @public
 export type CollectionFindOneOptions = GenericFindOneOptions;
@@ -460,10 +454,12 @@ export interface CollectionNumFilterOps {
 }
 
 // @public
-export interface CollectionOptions<Schema extends SomeDoc> {
-    defaultId?: CollectionDefaultIdOptions;
-    indexing?: CollectionIndexingOptions<Schema>;
-    vector?: CollectionVectorOptions;
+export interface CollectionOptions<Schema extends SomeDoc> extends WithKeyspace {
+    embeddingApiKey?: string | EmbeddingHeadersProvider | null;
+    logging?: DataAPILoggingConfig;
+    // (undocumented)
+    serdes?: CollectionSerDesConfig<Schema>;
+    timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
 
 // @public
@@ -495,15 +491,6 @@ export interface CollectionSerDesConfig<Schema extends SomeDoc> {
     mutateInPlace?: boolean;
     // (undocumented)
     serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>;
-}
-
-// @public
-export interface CollectionSpawnOptions<Schema extends SomeDoc> extends WithKeyspace {
-    embeddingApiKey?: string | EmbeddingHeadersProvider | null;
-    logging?: DataAPILoggingConfig;
-    // (undocumented)
-    serdes?: CollectionSerDesConfig<Schema>;
-    timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
 
 // @public
@@ -636,138 +623,6 @@ export class CommandWarningsEvent extends CommandEvent {
     readonly warnings: DataAPIErrorDescriptor[];
 }
 
-// @public (undocumented)
-export class CqlBlob {
-    // (undocumented)
-    [$SerializeForTable]: () => {
-        $binary: string;
-    };
-    constructor(blob: CqlBlobLike, validate?: boolean);
-    // (undocumented)
-    asArrayBuffer(): ArrayBuffer;
-    // (undocumented)
-    asBase64(): string;
-    // (undocumented)
-    asBuffer(): Buffer;
-    // (undocumented)
-    get byteLength(): number;
-    // (undocumented)
-    static isBlobLike(value: unknown): value is CqlBlobLike;
-    // (undocumented)
-    raw(): Exclude<CqlBlobLike, CqlBlob>;
-    // (undocumented)
-    toString(): string;
-}
-
-// @public (undocumented)
-export type CqlBlobLike = CqlBlob | ArrayBuffer | Buffer | {
-    $binary: string;
-};
-
-// @public (undocumented)
-export class CqlDate {
-    // (undocumented)
-    [$SerializeForTable]: () => string;
-    constructor(input?: string | Date | CqlDateComponents);
-    // (undocumented)
-    components(): CqlDateComponents;
-    // (undocumented)
-    toDate(base?: Date | CqlTime | CqlTimestamp): Date;
-    // (undocumented)
-    toString(): string;
-}
-
-// @public (undocumented)
-export interface CqlDateComponents {
-    // (undocumented)
-    date: number;
-    // (undocumented)
-    month: number;
-    // (undocumented)
-    year: number;
-}
-
-// @public (undocumented)
-export class CqlDuration {
-    // (undocumented)
-    [$SerializeForTable]: () => string;
-    constructor(input: string | Partial<CqlDurationComponents> | [Date | CqlTimestamp, Date | CqlTimestamp]);
-    // (undocumented)
-    components(): CqlDurationComponents;
-    // (undocumented)
-    toDates(reference: Date | CqlTimestamp): [Date, Date];
-    // (undocumented)
-    toString(): string;
-}
-
-// @public (undocumented)
-export interface CqlDurationComponents {
-    // (undocumented)
-    days: number;
-    // (undocumented)
-    months: number;
-    // (undocumented)
-    nanoseconds: number;
-}
-
-// @public (undocumented)
-export class CqlTime {
-    // (undocumented)
-    [$SerializeForTable]: () => string;
-    constructor(input?: string | Date | (CqlTimeComponents & {
-        nanoseconds?: number;
-    }));
-    // (undocumented)
-    components(): CqlTimeComponents;
-    // (undocumented)
-    toDate(base?: Date | CqlDate | CqlTimestamp): Date;
-    // (undocumented)
-    toString(): string;
-}
-
-// @public (undocumented)
-export interface CqlTimeComponents {
-    // (undocumented)
-    hours: number;
-    // (undocumented)
-    minutes: number;
-    // (undocumented)
-    nanoseconds: number;
-    // (undocumented)
-    seconds: number;
-}
-
-// @public (undocumented)
-export class CqlTimestamp {
-    // (undocumented)
-    [$SerializeForTable]: () => string;
-    constructor(input?: string | Date | Partial<CqlTimestampComponents>);
-    // (undocumented)
-    components(): CqlTimestampComponents;
-    // (undocumented)
-    toDate(): Date;
-    // (undocumented)
-    toString(): string;
-}
-
-// @public (undocumented)
-export interface CqlTimestampComponents {
-    // (undocumented)
-    date: number;
-    // (undocumented)
-    hours: number;
-    // (undocumented)
-    minutes: number;
-    // (undocumented)
-    month: number;
-    // (undocumented)
-    nanoseconds: number;
-    // (undocumented)
-    seconds: number;
-    // (undocumented)
-    year: number;
-}
-
 // Warning: (ae-forgotten-export) The symbol "CqlNonGenericType2TSTypeDict" needs to be exported by the entry point index.d.ts
 // Warning: (ae-forgotten-export) The symbol "CqlGenericType2TSTypeDict" needs to be exported by the entry point index.d.ts
 //
@@ -776,11 +631,11 @@ export type CqlType2TSType<T extends string, Def> = T extends keyof CqlNonGeneri
 
 // @public
 export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & WithTimeout<'databaseAdminTimeoutMs'> & {
-    dbOptions?: DbSpawnOptions;
+    dbOptions?: DbOptions;
 };
 
 // @public
-export interface CreateCollectionOptions<Schema extends SomeDoc> extends CollectionOptions<Schema>, CollectionSpawnOptions<Schema> {
+export interface CreateCollectionOptions<Schema extends SomeDoc> extends CollectionDefinition<Schema>, CollectionOptions<Schema> {
     // (undocumented)
     timeout?: number | Pick<Partial<TimeoutDescriptor>, 'collectionAdminTimeoutMs'>;
 }
@@ -796,20 +651,8 @@ export interface CreateTableDefinition {
     readonly primaryKey: CreateTablePrimaryKeyDefinition;
 }
 
-// @public (undocumented)
-export interface CreateTableIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
-    // (undocumented)
-    ifNotExists?: boolean;
-    // (undocumented)
-    options?: {
-        caseSensitive?: boolean;
-        normalize?: boolean;
-        ascii?: boolean;
-    };
-}
-
 // @public
-export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout<'tableAdminTimeoutMs'>, TableSpawnOptions<Schema> {
+export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions<Schema> {
     // (undocumented)
     definition: Def;
     // (undocumented)
@@ -818,17 +661,6 @@ export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTa
 
 // @public (undocumented)
 export type CreateTablePrimaryKeyDefinition = ShortCreateTablePrimaryKeyDefinition | FullCreateTablePrimaryKeyDefinition;
-
-// @public (undocumented)
-export interface CreateTableVectorIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
-    // (undocumented)
-    ifNotExists?: boolean;
-    // (undocumented)
-    options?: {
-        metric: 'cosine' | 'euclidean' | 'dot_product';
-        sourceModel?: string;
-    };
-}
 
 // @public
 export abstract class CumulativeOperationError extends DataAPIResponseError {
@@ -856,14 +688,42 @@ export interface CustomHttpClientOptions {
     fetcher: Fetcher;
 }
 
+// @public (undocumented)
+export class DataAPIBlob {
+    // (undocumented)
+    [$SerializeForTable]: () => {
+        $binary: string;
+    };
+    constructor(blob: DataAPIBlobLike, validate?: boolean);
+    // (undocumented)
+    asArrayBuffer(): ArrayBuffer;
+    // (undocumented)
+    asBase64(): string;
+    // (undocumented)
+    asBuffer(): Buffer;
+    // (undocumented)
+    get byteLength(): number;
+    // (undocumented)
+    static isBlobLike(value: unknown): value is DataAPIBlobLike;
+    // (undocumented)
+    raw(): Exclude<DataAPIBlobLike, DataAPIBlob>;
+    // (undocumented)
+    toString(): string;
+}
+
+// @public (undocumented)
+export type DataAPIBlobLike = DataAPIBlob | ArrayBuffer | Buffer | {
+    $binary: string;
+};
+
 // @public
 export class DataAPIClient extends DataAPIClientEventEmitterBase {
     [Symbol.asyncDispose]: () => Promise<void>;
     constructor(options?: DataAPIClientOptions | nullish);
     constructor(token: string | TokenProvider | nullish, options?: DataAPIClientOptions | nullish);
-    admin(options?: AdminSpawnOptions): AstraAdmin;
+    admin(options?: AdminOptions): AstraAdmin;
     close(): Promise<void>;
-    db(endpoint: string, options?: DbSpawnOptions): Db;
+    db(endpoint: string, options?: DbOptions): Db;
 }
 
 // @public
@@ -884,9 +744,9 @@ export type DataAPIClientEventMap = AdminCommandEventMap & CommandEventMap;
 
 // @public
 export interface DataAPIClientOptions {
-    adminOptions?: DefaultAdminSpawnOptions;
+    adminOptions?: RootAdminOptions;
     caller?: OneOrMany<Caller>;
-    dbOptions?: DefaultDbSpawnOptions;
+    dbOptions?: RootDbOptions;
     environment?: DataAPIEnvironment;
     httpOptions?: DataAPIHttpOptions;
     logging?: DataAPILoggingConfig;
@@ -894,10 +754,41 @@ export interface DataAPIClientOptions {
 }
 
 // @public
+export interface DataAPICreateKeyspaceOptions extends WithTimeout<'keyspaceAdminTimeoutMs'> {
+    // (undocumented)
+    replication?: KeyspaceReplicationOptions;
+    // (undocumented)
+    updateDbKeyspace?: boolean;
+}
+
+// @public (undocumented)
+export class DataAPIDate {
+    // (undocumented)
+    [$SerializeForTable]: () => string;
+    constructor(input?: string | Date | DataAPIDateComponents);
+    // (undocumented)
+    components(): DataAPIDateComponents;
+    // (undocumented)
+    toDate(base?: Date | DataAPITime | DataAPITimestamp): Date;
+    // (undocumented)
+    toString(): string;
+}
+
+// @public (undocumented)
+export interface DataAPIDateComponents {
+    // (undocumented)
+    date: number;
+    // (undocumented)
+    month: number;
+    // (undocumented)
+    year: number;
+}
+
+// @public
 export class DataAPIDbAdmin extends DbAdmin {
     // @internal
-    constructor(db: Db, httpClient: DataAPIHttpClient, rawAdminOpts?: AdminSpawnOptions);
-    createKeyspace(keyspace: string, options?: LocalCreateKeyspaceOptions): Promise<void>;
+    constructor(db: Db, httpClient: DataAPIHttpClient, rawAdminOpts?: AdminOptions);
+    createKeyspace(keyspace: string, options?: DataAPICreateKeyspaceOptions): Promise<void>;
     db(): Db;
     dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
     findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult>;
@@ -921,6 +812,29 @@ export interface DataAPIDetailedErrorDescriptor {
     readonly command: Record<string, any>;
     readonly errorDescriptors: DataAPIErrorDescriptor[];
     readonly rawResponse: RawDataAPIResponse;
+}
+
+// @public (undocumented)
+export class DataAPIDuration {
+    // (undocumented)
+    [$SerializeForTable]: () => string;
+    constructor(input: string | Partial<DataAPIDurationComponents> | [Date | DataAPITimestamp, Date | DataAPITimestamp]);
+    // (undocumented)
+    components(): DataAPIDurationComponents;
+    // (undocumented)
+    toDates(reference: Date | DataAPITimestamp): [Date, Date];
+    // (undocumented)
+    toString(): string;
+}
+
+// @public (undocumented)
+export interface DataAPIDurationComponents {
+    // (undocumented)
+    days: number;
+    // (undocumented)
+    months: number;
+    // (undocumented)
+    nanoseconds: number;
 }
 
 // @public
@@ -991,6 +905,33 @@ export interface DataAPISerCtx<Schema extends SomeDoc> {
     rootObj: Schema;
 }
 
+// @public (undocumented)
+export class DataAPITime {
+    // (undocumented)
+    [$SerializeForTable]: () => string;
+    constructor(input?: string | Date | (DataAPITimeComponents & {
+        nanoseconds?: number;
+    }));
+    // (undocumented)
+    components(): DataAPITimeComponents;
+    // (undocumented)
+    toDate(base?: Date | DataAPIDate | DataAPITimestamp): Date;
+    // (undocumented)
+    toString(): string;
+}
+
+// @public (undocumented)
+export interface DataAPITimeComponents {
+    // (undocumented)
+    hours: number;
+    // (undocumented)
+    minutes: number;
+    // (undocumented)
+    nanoseconds: number;
+    // (undocumented)
+    seconds: number;
+}
+
 // @public
 export class DataAPITimeoutError extends DataAPIError {
     // Warning: (ae-forgotten-export) The symbol "HTTPRequestInfo" needs to be exported by the entry point index.d.ts
@@ -1002,6 +943,37 @@ export class DataAPITimeoutError extends DataAPIError {
     // (undocumented)
     readonly timedOutTypes: TimedOutCategories;
     readonly timeout: Partial<TimeoutDescriptor>;
+}
+
+// @public (undocumented)
+export class DataAPITimestamp {
+    // (undocumented)
+    [$SerializeForTable]: () => string;
+    constructor(input?: string | Date | Partial<DataAPITimestampComponents>);
+    // (undocumented)
+    components(): DataAPITimestampComponents;
+    // (undocumented)
+    toDate(): Date;
+    // (undocumented)
+    toString(): string;
+}
+
+// @public (undocumented)
+export interface DataAPITimestampComponents {
+    // (undocumented)
+    date: number;
+    // (undocumented)
+    hours: number;
+    // (undocumented)
+    minutes: number;
+    // (undocumented)
+    month: number;
+    // (undocumented)
+    nanoseconds: number;
+    // (undocumented)
+    seconds: number;
+    // (undocumented)
+    year: number;
 }
 
 // @public (undocumented)
@@ -1039,14 +1011,14 @@ export type DataAPIVectorLike = number[] | {
 // @public
 export class Db {
     // @internal
-    constructor(rootOpts: InternalRootClientOpts, endpoint: string, rawDbOpts: DbSpawnOptions | nullish);
-    admin(options?: AdminSpawnOptions & {
+    constructor(rootOpts: InternalRootClientOpts, endpoint: string, rawDbOpts: DbOptions | nullish);
+    admin(options?: AdminOptions & {
         environment?: 'astra';
     }): AstraDbAdmin;
-    admin(options: AdminSpawnOptions & {
+    admin(options: AdminOptions & {
         environment: Exclude<DataAPIEnvironment, 'astra'>;
     }): DataAPIDbAdmin;
-    collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionSpawnOptions<Schema>): Collection<Schema>;
+    collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionOptions<Schema>): Collection<Schema>;
     command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse>;
     createCollection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>>;
     createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<InferTableSchemaFromDefinition<Def>, Def>): Promise<Table<InferTableSchemaFromDefinition<Def>>>;
@@ -1054,7 +1026,7 @@ export class Db {
     dropCollection(name: string, options?: DropCollectionOptions): Promise<void>;
     dropTable(name: string, options?: DropTableOptions): Promise<void>;
     // (undocumented)
-    dropTableIndex(name: string, options?: DropTableIndexOptions): Promise<void>;
+    dropTableIndex(name: string, options?: TableDropIndexOptions): Promise<void>;
     // (undocumented)
     get _httpClient(): DataAPIHttpClient<"normal">;
     get id(): string;
@@ -1073,7 +1045,7 @@ export class Db {
         nameOnly?: false;
     }): Promise<FullTableInfo[]>;
     get region(): string;
-    table<Schema extends SomeRow = SomeRow>(name: string, options?: TableSpawnOptions<Schema>): Table<Schema>;
+    table<Schema extends SomeRow = SomeRow>(name: string, options?: TableOptions<Schema>): Table<Schema>;
     useKeyspace(keyspace: string): void;
 }
 
@@ -1087,16 +1059,7 @@ export abstract class DbAdmin {
 }
 
 // @public
-export interface DbSerDesConfig {
-    // (undocumented)
-    collection?: Omit<CollectionSerDesConfig<SomeDoc>, 'mutateInPlace'>;
-    mutateInPlace?: boolean;
-    // (undocumented)
-    table?: Omit<TableSerDesConfig<SomeRow>, 'mutateInPlace'>;
-}
-
-// @public
-export interface DbSpawnOptions {
+export interface DbOptions {
     additionalHeaders?: Record<string, string>;
     dataApiPath?: string;
     keyspace?: string | null;
@@ -1108,18 +1071,21 @@ export interface DbSpawnOptions {
 }
 
 // @public
+export interface DbSerDesConfig {
+    // (undocumented)
+    collection?: Omit<CollectionSerDesConfig<SomeDoc>, 'mutateInPlace'>;
+    mutateInPlace?: boolean;
+    // (undocumented)
+    table?: Omit<TableSerDesConfig<SomeRow>, 'mutateInPlace'>;
+}
+
+// @public
 export type DeepPartial<T> = T extends object ? {
     [P in keyof T]?: DeepPartial<T[P]>;
 } : T;
 
 // @public
 export const DEFAULT_KEYSPACE = "default_keyspace";
-
-// @public (undocumented)
-export type DefaultAdminSpawnOptions = Omit<AdminSpawnOptions, 'logging' | 'timeoutDefaults'>;
-
-// @public (undocumented)
-export type DefaultDbSpawnOptions = Omit<DbSpawnOptions, 'logging' | 'timeoutDefaults'>;
 
 // @public
 export interface DefaultHttpClientOptions {
@@ -1179,12 +1145,6 @@ export interface DropCollectionOptions extends WithTimeout<'collectionAdminTimeo
 export interface DropColumnOperation<Schema extends SomeRow> {
     // (undocumented)
     columns: Cols<Schema>[];
-}
-
-// @public (undocumented)
-export interface DropTableIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
-    // (undocumented)
-    ifExists?: boolean;
 }
 
 // @public (undocumented)
@@ -1363,7 +1323,7 @@ export type FoundRow<Doc> = Omit<Required<Doc>, '$similarity'> & {
 // @public
 export interface FullCollectionInfo {
     name: string;
-    options: CollectionOptions<SomeDoc>;
+    options: CollectionDefinition<SomeDoc>;
 }
 
 // @public (undocumented)
@@ -1400,35 +1360,25 @@ export interface GenericDeleteOneResult {
     deletedCount: 0 | 1;
 }
 
-// @public (undocumented)
+// @public
 export interface GenericFindOneAndDeleteOptions extends WithTimeout<'generalMethodTimeoutMs'> {
-    // (undocumented)
     projection?: Projection;
-    // (undocumented)
     sort?: Sort;
 }
 
-// @public (undocumented)
+// @public
 export interface GenericFindOneAndReplaceOptions extends WithTimeout<'generalMethodTimeoutMs'> {
-    // (undocumented)
     projection?: Projection;
-    // (undocumented)
     returnDocument?: 'before' | 'after';
-    // (undocumented)
     sort?: Sort;
-    // (undocumented)
     upsert?: boolean;
 }
 
-// @public (undocumented)
+// @public
 export interface GenericFindOneAndUpdateOptions extends WithTimeout<'generalMethodTimeoutMs'> {
-    // (undocumented)
     projection?: Projection;
-    // (undocumented)
     returnDocument?: 'before' | 'after';
-    // (undocumented)
     sort?: Sort;
-    // (undocumented)
     upsert?: boolean;
 }
 
@@ -1661,14 +1611,6 @@ export interface ListTableUnsupportedColumnDefinition {
     type: 'UNSUPPORTED';
 }
 
-// @public
-export interface LocalCreateKeyspaceOptions extends WithTimeout<'keyspaceAdminTimeoutMs'> {
-    // (undocumented)
-    replication?: KeyspaceReplicationOptions;
-    // (undocumented)
-    updateDbKeyspace?: boolean;
-}
-
 // @public (undocumented)
 export type LooseCreateTableColumnDefinition = TableScalarType | string;
 
@@ -1743,6 +1685,12 @@ export interface RawDataAPIResponse {
     errors?: any[];
     status?: Record<string, any>;
 }
+
+// @public (undocumented)
+export type RootAdminOptions = Omit<AdminOptions, 'logging' | 'timeoutDefaults'>;
+
+// @public (undocumented)
+export type RootDbOptions = Omit<DbOptions, 'logging' | 'timeoutDefaults'>;
 
 // @public
 export interface Row<Schema extends SomeRow, Columns extends keyof Schema> {
@@ -1893,15 +1841,15 @@ export type StrictSort<Schema extends SomeDoc> = {
 // @public
 export class Table<Schema extends SomeRow = SomeRow> {
     // @internal
-    constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableSpawnOptions<Schema> | undefined);
+    constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableOptions<Schema> | undefined);
     // (undocumented)
     alter<const Spec extends AlterTableOptions<Schema>>(options: Spec): Promise<Table<AlterTableSchema<Schema, Spec>>>;
     // (undocumented)
     alter<NewSchema extends SomeRow>(options: AlterTableOptions<Schema>): Promise<Table<NewSchema>>;
     // (undocumented)
-    createIndex(name: string, column: Cols<Schema> | string, options?: CreateTableIndexOptions): Promise<void>;
+    createIndex(name: string, column: Cols<Schema> | string, options?: TableCreateIndexOptions): Promise<void>;
     // (undocumented)
-    createVectorIndex(name: string, column: Cols<Schema> | string, options?: CreateTableVectorIndexOptions): Promise<void>;
+    createVectorIndex(name: string, column: Cols<Schema> | string, options?: TableCreateVectorIndexOptions): Promise<void>;
     // (undocumented)
     definition(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<ListTableDefinition>;
     // (undocumented)
@@ -1933,6 +1881,29 @@ export class Table<Schema extends SomeRow = SomeRow> {
 export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: SomeDoc) => any;
 
 // @public (undocumented)
+export interface TableCreateIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+    // (undocumented)
+    ifNotExists?: boolean;
+    // (undocumented)
+    options?: {
+        caseSensitive?: boolean;
+        normalize?: boolean;
+        ascii?: boolean;
+    };
+}
+
+// @public (undocumented)
+export interface TableCreateVectorIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+    // (undocumented)
+    ifNotExists?: boolean;
+    // (undocumented)
+    options?: {
+        metric: 'cosine' | 'euclidean' | 'dot_product';
+        sourceModel?: string;
+    };
+}
+
+// @public (undocumented)
 export type TableDeleteOneOptions = GenericDeleteOneOptions;
 
 // @public (undocumented)
@@ -1945,6 +1916,12 @@ export interface TableDesCtx extends DataAPIDesCtx {
     populateSparseData: boolean;
     // (undocumented)
     tableSchema: ListTableColumnDefinitions;
+}
+
+// @public (undocumented)
+export interface TableDropIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+    // (undocumented)
+    ifExists?: boolean;
 }
 
 // @public
@@ -2010,6 +1987,15 @@ export interface TableInsertOneResult<Schema extends SomeRow> {
     insertedId: KeyOf<Schema>;
 }
 
+// @public
+export interface TableOptions<Schema extends SomeDoc> extends WithKeyspace {
+    embeddingApiKey?: string | EmbeddingHeadersProvider | null;
+    logging?: DataAPILoggingConfig;
+    // (undocumented)
+    serdes?: TableSerDesConfig<Schema>;
+    timeoutDefaults?: Partial<TimeoutDescriptor>;
+}
+
 // @public (undocumented)
 export type TableScalarType = 'ascii' | 'bigint' | 'blob' | 'boolean' | 'date' | 'decimal' | 'double' | 'duration' | 'float' | 'int' | 'inet' | 'smallint' | 'text' | 'time' | 'timestamp' | 'tinyint' | 'uuid' | 'varint';
 
@@ -2031,15 +2017,6 @@ export interface TableSerDesConfig<Schema extends SomeRow> {
     serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: TableSerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>;
     // (undocumented)
     sparseData?: boolean;
-}
-
-// @public
-export interface TableSpawnOptions<Schema extends SomeDoc> extends WithKeyspace {
-    embeddingApiKey?: string | EmbeddingHeadersProvider | null;
-    logging?: DataAPILoggingConfig;
-    // (undocumented)
-    serdes?: TableSerDesConfig<Schema>;
-    timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
 
 // @public
