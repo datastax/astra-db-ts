@@ -14,10 +14,11 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import type { SomeDoc, SomeId, StrictFilter } from '@/src/documents';
+import type { SomeDoc, SomeId, StrictCollectionFilter } from '@/src/documents';
 import type { ConvolutedSchema2, Equal, Expect, Schema, SuperBasicSchema } from '@/tests/typing/prelude';
+import BigNumber from 'bignumber.js';
 
-type test1 = Expect<Equal<StrictFilter<SuperBasicSchema>, {
+type test1 = Expect<Equal<StrictCollectionFilter<SuperBasicSchema>, {
   num?: number | {
     $eq?: number,
     $ne?: number,
@@ -25,10 +26,10 @@ type test1 = Expect<Equal<StrictFilter<SuperBasicSchema>, {
     $nin?: number[],
     $exists?: boolean,
   } & {
-    $lt?: number | bigint,
-    $lte?: number | bigint,
-    $gt?: number | bigint,
-    $gte?: number | bigint,
+    $lt?: number | bigint | BigNumber,
+    $lte?: number | bigint | BigNumber,
+    $gt?: number | bigint | BigNumber,
+    $gte?: number | bigint | BigNumber,
   },
   obj?: { str: string } | {
     $eq?: { str: string },
@@ -52,22 +53,22 @@ type test1 = Expect<Equal<StrictFilter<SuperBasicSchema>, {
     $nin?: SomeId[],
     $exists?: boolean,
   } & {
-    $lt?: number | bigint,
-    $lte?: number | bigint,
-    $gt?: number | bigint,
-    $gte?: number | bigint,
+    $lt?: number | bigint | BigNumber,
+    $lte?: number | bigint | BigNumber,
+    $gt?: number | bigint | BigNumber,
+    $gte?: number | bigint | BigNumber,
   } & ({
     $lt?: Date,
     $lte?: Date,
     $gt?: Date,
     $gte?: Date,
   } | Date)
-  $and?: StrictFilter<SuperBasicSchema>[],
-  $or?: StrictFilter<SuperBasicSchema>[],
-  $not?: StrictFilter<SuperBasicSchema>,
+  $and?: StrictCollectionFilter<SuperBasicSchema>[],
+  $or?: StrictCollectionFilter<SuperBasicSchema>[],
+  $not?: StrictCollectionFilter<SuperBasicSchema>,
 }>>;
 
-const test2: StrictFilter<Schema> = {
+const test2: StrictCollectionFilter<Schema> = {
   num1: 1,
   num2: { $in: [1, 2, 3] },
   'obj.obj.num': 3,
@@ -84,7 +85,7 @@ const test2: StrictFilter<Schema> = {
   ],
 };
 
-const test3: StrictFilter<Schema> = {
+const test3: StrictCollectionFilter<Schema> = {
   // @ts-expect-error - Invalid type
   num1: '1',
   num2: {
@@ -130,7 +131,7 @@ const test3: StrictFilter<Schema> = {
   ],
 };
 
-const test4: StrictFilter<SomeDoc> = {
+const test4: StrictCollectionFilter<SomeDoc> = {
   num1: '1',
   num2: { $in: [1, 2, '3'] },
   'obj.obj.num': '3',
@@ -146,12 +147,12 @@ const test4: StrictFilter<SomeDoc> = {
   ],
 };
 
-const test5: StrictFilter<Schema> = {
+const test5: StrictCollectionFilter<Schema> = {
   // @ts-expect-error - Invalid path
   'obj.obj.xyz': null!,
 };
 
-const test6: StrictFilter<ConvolutedSchema2> = {
+const test6: StrictCollectionFilter<ConvolutedSchema2> = {
   $or: [
     { numOrArray: { $in: [['1'], 2] } },
     { numOrArray: { $gte: 3 } },
@@ -159,7 +160,7 @@ const test6: StrictFilter<ConvolutedSchema2> = {
   ],
 };
 
-const test7: StrictFilter<any> = {
+const test7: StrictCollectionFilter<any> = {
   $and: [
     { $or: [] },
     { $not: { $and: [{ 'some_random_key': Symbol.for('123') }] } },
@@ -167,7 +168,7 @@ const test7: StrictFilter<any> = {
   '123123123': 123123,
 };
 
-const test8: StrictFilter<any> = {
+const test8: StrictCollectionFilter<any> = {
   // @ts-expect-error - Invalid type
   $and: 3,
 };

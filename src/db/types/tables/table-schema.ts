@@ -21,7 +21,7 @@ import {
   FullCreateTablePrimaryKeyDefinition,
 } from '@/src/db/types/tables/create-table';
 import { EmptyObj } from '@/src/lib/types';
-import { UUID, InetAddress, CqlDate, CqlDuration, CqlTime, CqlTimestamp, CqlBlob } from '@/src/documents';
+import { UUID, InetAddress, DataAPIDate, DataAPIDuration, DataAPITime, DataAPITimestamp, DataAPIBlob } from '@/src/documents';
 import { TypeErr } from '@/src/documents/utils';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
 import BigNumber from 'bignumber.js';
@@ -91,12 +91,12 @@ export type InferrableTable =
  * // for type inference purposes for `insert*` operations
  * type _Proof = Equal<User, {
  *   name: string,
- *   dob: CqlTimestamp,
+ *   dob: DataAPITimestamp,
  *   friends: Set<string>,
  *   [$PrimaryKeyType]?: {
  *     name: string,
  *     height: TypeErr<'Field `height` not found as property in table definition'>,
- *     dob: CqlTimestamp,
+ *     dob: DataAPITimestamp,
  *   }
  * }>;
  *
@@ -168,12 +168,12 @@ export type Normalize<T> = { [K in keyof T]: T[K] } & EmptyObj;
  * // for type inference purposes for `insert*` operations
  * type _Proof = Equal<User, {
  *   name: string,
- *   dob: CqlTimestamp,
+ *   dob: DataAPITimestamp,
  *   friends: Set<string>,
  *   [$PrimaryKeyType]?: {
  *     name: string,
  *     height: TypeErr<'Field `height` not found as property in table definition'>,
- *     dob: CqlTimestamp,
+ *     dob: DataAPITimestamp,
  *   }
  * }>;
  *
@@ -235,7 +235,7 @@ type PickCqlType<Def> =
  * // number
  * CqlType2TSType<'int', ...>
  *
- * // CqlDuration
+ * // DataAPIDuration
  * CqlType2TSType<'duration', ...>
  *
  * // Map<string, number>
@@ -263,19 +263,19 @@ export type CqlType2TSType<T extends string, Def> =
 interface CqlNonGenericType2TSTypeDict {
   ascii: string | null,
   bigint: number | null,
-  blob: CqlBlob | null,
+  blob: DataAPIBlob | null,
   boolean: boolean | null,
-  date: CqlDate | null,
+  date: DataAPIDate | null,
   decimal: BigNumber | null,
   double: number | null,
-  duration: CqlDuration | null,
+  duration: DataAPIDuration | null,
   float: number | null,
   int: number | null,
   inet: InetAddress | null,
   smallint: number | null,
   text: string | null;
-  time: CqlTime | null,
-  timestamp: CqlTimestamp | null,
+  time: DataAPITime | null,
+  timestamp: DataAPITimestamp | null,
   tinyint: number | null,
   uuid: UUID | null,
   varchar: string | null,

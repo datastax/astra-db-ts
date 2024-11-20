@@ -17,7 +17,7 @@ sh scripts/build.sh -light || exit 2
 while [ $# -gt 0 ]; do
   case "$1" in
     "-local")
-      export CLIENT_DB_ENVIRONMENT='dse'
+      export CLIENT_DB_ENVIRONMENT='hcd'
       export CLIENT_DB_TOKEN='Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh'
       export CLIENT_DB_URL='http://localhost:8181'
       ;;

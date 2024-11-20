@@ -15,7 +15,7 @@
 import { AstraAdminBlockingOptions, AstraDbCloudProvider } from '@/src/administration/types';
 
 
-import { DbSpawnOptions } from '@/src/client';
+import { DbOptions } from '@/src/client';
 import { WithTimeout } from '@/src/lib';
 
 /**
@@ -55,5 +55,5 @@ export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & WithTimeout
   /**
    * Any options to override the default options set when creating the root {@link DataAPIClient}.
    */
-  dbOptions?: DbSpawnOptions,
+  dbOptions?: DbOptions,
 }

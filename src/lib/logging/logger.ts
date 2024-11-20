@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import type { InternalLoggingConfig } from '@/src/client/types/internal';
-import type { DataAPIClientEvents, DataAPILoggingConfig, NormalizedLoggingConfig } from '@/src/lib/logging/types';
+import type { DataAPIClientEventMap, DataAPILoggingConfig, NormalizedLoggingConfig } from '@/src/lib/logging/types';
 import type { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents';
 import type {
   AdminCommandFailedEvent,
@@ -26,8 +26,8 @@ import type {
 import {
   EmptyInternalLoggingConfig,
   EventConstructors,
-  EventLoggingDefaults,
-  EventLoggingOutputDefaults,
+  DataAPILoggingDefaults,
+  DataAPILoggingDefaultOutputs,
   LoggingEventsWithoutAll,
 } from '@/src/lib/logging/constants';
 import { buildOutputsMap } from '@/src/lib/logging/util';
@@ -40,7 +40,10 @@ interface ConsoleLike {
   error: (...args: any[]) => void;
 }
 
-export class Logger implements Partial<Record<keyof DataAPIClientEvents, unknown>> {
+/**
+ * @internal
+ */
+export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unknown>> {
   public commandStarted?:        (...args: ConstructorParameters<typeof CommandStartedEvent>       ) => void;
   public commandFailed?:         (...args: ConstructorParameters<typeof CommandFailedEvent>        ) => void;
   public commandWarnings?:       (...args: ConstructorParameters<typeof CommandWarningsEvent>      ) => void;
@@ -51,11 +54,11 @@ export class Logger implements Partial<Record<keyof DataAPIClientEvents, unknown
   public adminCommandWarnings?:  (...args: ConstructorParameters<typeof AdminCommandWarningsEvent> ) => void;
   public adminCommandSucceeded?: (...args: ConstructorParameters<typeof AdminCommandSucceededEvent>) => void;
 
-  constructor(_config: NormalizedLoggingConfig[] | undefined, private emitter: TypedEventEmitter<DataAPIClientEvents>, private console: ConsoleLike) {
+  constructor(_config: NormalizedLoggingConfig[] | undefined, private emitter: TypedEventEmitter<DataAPIClientEventMap>, private console: ConsoleLike) {
     const config = Logger.buildInternalConfig(_config);
 
     for (const [_event, outputs] of Object.entries(config)) if (outputs) {
-      const event = _event as keyof DataAPIClientEvents;
+      const event = _event as keyof DataAPIClientEventMap;
 
       this[event] = (...args: any[]) => {
         const eventClass = new (<any>EventConstructors[event])(...args) as DataAPIClientEvent;
@@ -91,20 +94,20 @@ export class Logger implements Partial<Record<keyof DataAPIClientEvents, unknown
     }
 
     if (config === 'all') {
-      return EventLoggingDefaults;
+      return DataAPILoggingDefaults;
     }
 
     if (typeof config === 'string') {
-      return [{ events: [config], emits: EventLoggingOutputDefaults[config] }];
+      return [{ events: [config], emits: DataAPILoggingDefaultOutputs[config] }];
     }
 
     return config.flatMap((c, i) => {
       if (c === 'all') {
-        return EventLoggingDefaults;
+        return DataAPILoggingDefaults;
       }
 
       if (typeof c === 'string') {
-        return [{ events: [c], emits: EventLoggingOutputDefaults[c] }];
+        return [{ events: [c], emits: DataAPILoggingDefaultOutputs[c] }];
       }
 
       if (c.events === 'all' || Array.isArray(c.events) && c.events.includes('all')) {
@@ -125,7 +128,7 @@ export class Logger implements Partial<Record<keyof DataAPIClientEvents, unknown
     const newConfig = { ...EmptyInternalLoggingConfig };
 
     for (const layer of config ?? []) {
-      for (const event of (layer.events as (keyof DataAPIClientEvents)[])) {
+      for (const event of (layer.events as (keyof DataAPIClientEventMap)[])) {
         newConfig[event] = buildOutputsMap(layer.emits);
 
         if (newConfig[event]?.stdout && newConfig[event].stderr) {

@@ -15,10 +15,10 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import type { SomeDoc } from '@/src/documents/collections';
-import type { UpdateFilter } from '@/src/documents/collections/types';
+import type { CollectionUpdateFilter } from '@/src/documents/collections/types';
 import type { BasicSchema, ConvolutedSchema1, ConvolutedSchema2, Schema } from '@/tests/typing/prelude';
 
-const test2: UpdateFilter<BasicSchema> = {
+const test2: CollectionUpdateFilter<BasicSchema> = {
   $set: {
     num: 1,
     str: '1',
@@ -88,7 +88,7 @@ const test2: UpdateFilter<BasicSchema> = {
   },
 };
 
-const test3: UpdateFilter<Schema> = {
+const test3: CollectionUpdateFilter<Schema> = {
   $set: {
     // @ts-expect-error - Invalid type
     num1: 'a',
@@ -142,7 +142,7 @@ const test3: UpdateFilter<Schema> = {
   },
 };
 
-const test4: UpdateFilter<SomeDoc> = {
+const test4: CollectionUpdateFilter<SomeDoc> = {
   $set: {
     num1: 'a',
     arr: [
@@ -190,7 +190,7 @@ const test4: UpdateFilter<SomeDoc> = {
   },
 };
 
-const test5: UpdateFilter<Schema> = {
+const test5: CollectionUpdateFilter<Schema> = {
   $set: {
     'obj.obj.xyz': '',
   },
@@ -216,7 +216,7 @@ const test5: UpdateFilter<Schema> = {
   },
 };
 
-const test6: UpdateFilter<SomeDoc> = {
+const test6: CollectionUpdateFilter<SomeDoc> = {
   $set: {
     'obj.obj.xyz': '',
   },
@@ -240,7 +240,7 @@ const test6: UpdateFilter<SomeDoc> = {
   },
 };
 
-const test7: UpdateFilter<ConvolutedSchema1> = {
+const test7: CollectionUpdateFilter<ConvolutedSchema1> = {
   $set: {
     numOrBigInt: 1,
     numOrString: 1,
@@ -263,7 +263,7 @@ const test7: UpdateFilter<ConvolutedSchema1> = {
   },
 };
 
-const test8: UpdateFilter<ConvolutedSchema1> = {
+const test8: CollectionUpdateFilter<ConvolutedSchema1> = {
   $set: {
     numOrBigInt: 1,
     numOrString: 1,
@@ -286,7 +286,7 @@ const test8: UpdateFilter<ConvolutedSchema1> = {
   },
 };
 
-const test9: UpdateFilter<ConvolutedSchema1> = {
+const test9: CollectionUpdateFilter<ConvolutedSchema1> = {
   $set: {
     // @ts-expect-error - Invalid type
     numOrBigInt: '',
@@ -306,7 +306,7 @@ const test9: UpdateFilter<ConvolutedSchema1> = {
   },
 };
 
-const test10: UpdateFilter<SomeDoc> = {
+const test10: CollectionUpdateFilter<SomeDoc> = {
   $set: {
     numOrBigInt: '',
     numOrString: 1n,
@@ -324,7 +324,7 @@ const test10: UpdateFilter<SomeDoc> = {
   },
 };
 
-const test11: UpdateFilter<ConvolutedSchema2> = {
+const test11: CollectionUpdateFilter<ConvolutedSchema2> = {
   $set: {
     numOrArray: 1,
   },
@@ -351,7 +351,7 @@ const test11: UpdateFilter<ConvolutedSchema2> = {
   },
 };
 
-const test12: UpdateFilter<ConvolutedSchema2> = {
+const test12: CollectionUpdateFilter<ConvolutedSchema2> = {
   $set: {
     numOrArray: [
       // @ts-expect-error - Invalid type
@@ -376,7 +376,7 @@ const test12: UpdateFilter<ConvolutedSchema2> = {
   },
 };
 
-const test13: UpdateFilter<SomeDoc> = {
+const test13: CollectionUpdateFilter<SomeDoc> = {
   $set: {
     numOrArray: [1],
   },

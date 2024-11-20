@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { LocalCreateKeyspaceOptions } from '@/src/administration/types';
+import { DataAPICreateKeyspaceOptions } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
 import type { WithTimeout } from '@/src/lib';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
@@ -21,7 +21,7 @@ import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { Db } from '@/src/db';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { $CustomInspect } from '@/src/lib/constants';
-import { AdminSpawnOptions } from '@/src/client';
+import { AdminOptions } from '@/src/client';
 
 /**
  * An administrative class for managing non-Astra databases, including creating, listing, and deleting keyspaces.
@@ -57,7 +57,7 @@ import { AdminSpawnOptions } from '@/src/client';
  * @public
  */
 export class DataAPIDbAdmin extends DbAdmin {
-  readonly #httpClient: DataAPIHttpClient;
+  readonly #httpClient: DataAPIHttpClient<'admin'>;
   readonly #db: Db;
 
   /**
@@ -65,7 +65,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, rawAdminOpts?: AdminSpawnOptions) {
+  constructor(db: Db, httpClient: DataAPIHttpClient, rawAdminOpts?: AdminOptions) {
     super();
     const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options');
     this.#httpClient = httpClient.forDbAdmin(adminOpts);
@@ -116,6 +116,7 @@ export class DataAPIDbAdmin extends DbAdmin {
   public override async findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult> {
     const resp = await this.#httpClient.executeCommand({ findEmbeddingProviders: {} }, {
       timeoutManager: this.#httpClient.tm.single('databaseAdminTimeoutMs', options),
+      methodName: 'dbAdmin.findEmbeddingProviders',
       keyspace: null,
     });
     return resp.status as FindEmbeddingProvidersResult;
@@ -140,6 +141,7 @@ export class DataAPIDbAdmin extends DbAdmin {
   public override async listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]> {
     const resp = await this.#httpClient.executeCommand({ findKeyspaces: {} }, {
       timeoutManager: this.#httpClient.tm.single('keyspaceAdminTimeoutMs', options),
+      methodName: 'dbAdmin.listKeyspaces',
       keyspace: null,
     });
     return resp.status!.keyspaces;
@@ -175,7 +177,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async createKeyspace(keyspace: string, options?: LocalCreateKeyspaceOptions): Promise<void> {
+  public override async createKeyspace(keyspace: string, options?: DataAPICreateKeyspaceOptions): Promise<void> {
     if (options?.updateDbKeyspace) {
       this.#db.useKeyspace(keyspace);
     }
@@ -187,6 +189,7 @@ export class DataAPIDbAdmin extends DbAdmin {
 
     await this.#httpClient.executeCommand({ createKeyspace: { name: keyspace, options: { replication } } }, {
       timeoutManager: this.#httpClient.tm.single('keyspaceAdminTimeoutMs', options),
+      methodName: 'dbAdmin.createKeyspace',
       keyspace: null,
     });
   }
@@ -215,6 +218,7 @@ export class DataAPIDbAdmin extends DbAdmin {
   public override async dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void> {
     await this.#httpClient.executeCommand({ dropKeyspace: { name: keyspace } }, {
       timeoutManager: this.#httpClient.tm.single('keyspaceAdminTimeoutMs', options),
+      methodName: 'dbAdmin.dropKeyspace',
       keyspace: null,
     });
   }
