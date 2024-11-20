@@ -12,15 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Collection, Filter, SomeDoc } from '@/src/documents/collections';
+import type { Collection, SomeDoc } from '@/src/documents/collections';
 import type { GenericFindOptions } from '@/src/documents/commands';
-import type { Projection, Sort } from '@/src/documents/types';
+import type { Filter, Projection, Sort } from '@/src/documents/types';
 import type { DeepPartial, nullish } from '@/src/lib';
 import { normalizedSort } from '@/src/documents/utils';
 import { $CustomInspect } from '@/src/lib/constants';
 import type { DataAPISerDes } from '@/src/lib/api/ser-des';
 import { DataAPIError } from '@/src/documents/errors';
 import type { Table } from '@/src/documents/tables';
+import { TimeoutManager } from '@/src/lib/api/timeouts';
 
 export class CursorError extends DataAPIError {
   public readonly cursor: FindCursor<unknown>;
@@ -117,7 +118,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   readonly #serdes: DataAPISerDes;
 
   readonly #options: GenericFindOptions;
-  readonly #filter: [Filter<TRaw>, boolean];
+  readonly #filter: [Filter, boolean];
   readonly #mapping?: (doc: any) => T;
 
   #buffer: TRaw[] = [];
@@ -131,7 +132,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(parent: Table | Collection, serdes: DataAPISerDes, filter: [Filter<TRaw>, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
+  constructor(parent: Table | Collection, serdes: DataAPISerDes, filter: [Filter, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
     this.#parent = parent;
     this.#serdes = serdes;
     this.#filter = filter;
@@ -210,7 +211,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @see StrictFilter
    */
-  public filter(filter: Filter<TRaw>): FindCursor<T,  TRaw> {
+  public filter(filter: Filter): FindCursor<T,  TRaw> {
     if (this.#state !== 'idle') {
       throw new CursorError('Cannot set a new filter on a running/closed cursor', this);
     }
@@ -492,13 +493,8 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     }
 
     try {
-      while (true) {
-        const doc = await this.next();
-
-        if (doc === null) {
-          break;
-        }
-
+      let doc: T | null;
+      while ((doc = await this.#next(false))) {
         yield doc;
       }
     } finally {
@@ -551,9 +547,17 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     }
 
     const docs: T[] = [];
-    for await (const doc of this) {
-      docs.push(doc);
+    const tm = this.#parent._httpClient.tm.multipart('generalMethodTimeoutMs', this.#options);
+
+    try {
+      let doc: T | null;
+      while ((doc = await this.#next(false, tm))) {
+        docs.push(doc);
+      }
+    } finally {
+      this.close();
     }
+
     return docs;
   }
 
@@ -565,13 +569,13 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this.#buffer.length = 0;
   }
 
-  #clone<R, RRaw extends SomeDoc>(filter: [Filter<RRaw>, boolean], options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
+  #clone<R, RRaw extends SomeDoc>(filter: [Filter, boolean], options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
     return new (<any>this.constructor)(this.#parent, this.#serdes, filter, options, mapping);
   }
 
-  async #next(peek: true): Promise<TRaw | nullish>
-  async #next(peek: false): Promise<T>
-  async #next(peek: boolean): Promise<T | TRaw | nullish> {
+  async #next(peek: true, tm?: TimeoutManager): Promise<TRaw | nullish>
+  async #next(peek: false, tm?: TimeoutManager): Promise<T>
+  async #next(peek: boolean, tm?: TimeoutManager): Promise<T | TRaw | nullish> {
     if (this.#state === 'closed') {
       return null;
     }
@@ -583,7 +587,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
           this.close();
           return null;
         }
-        await this.#getMore();
+        await this.#getMore(tm);
       }
 
       if (peek) {
@@ -602,7 +606,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     }
   }
 
-  async #getMore(): Promise<void> {
+  async #getMore(tm?: TimeoutManager): Promise<void> {
     const command: InternalGetMoreCommand = {
       find: {
         filter: this.#filter[0],
@@ -619,7 +623,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     };
 
     const raw = await this.#parent._httpClient.executeCommand(command, {
-      timeoutManager: this.#parent._httpClient.tm.multipart('generalMethodTimeoutMs', this.#options),
+      timeoutManager: tm ?? this.#parent._httpClient.tm.single('generalMethodTimeoutMs', this.#options),
       bigNumsPresent: this.#filter[1],
     });
 

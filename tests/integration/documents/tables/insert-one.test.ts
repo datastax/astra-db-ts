@@ -14,11 +14,11 @@
 // noinspection DuplicatedCode
 
 import {
-  CqlBlob,
-  CqlDate,
-  CqlDuration,
-  CqlTime,
-  CqlTimestamp, DataAPIHttpError, DataAPIResponseError,
+  DataAPIBlob,
+  DataAPIDate,
+  DataAPIDuration,
+  DataAPITime,
+  DataAPITimestamp, DataAPIHttpError, DataAPIResponseError,
   DataAPIVector,
   InetAddress,
   UUID,
@@ -46,19 +46,19 @@ parallel('integration.documents.tables.insert-one', { truncate: 'colls:before' }
       int: 0,
       map: new Map([[key, UUID.v4()]]),
       ascii: 'highway_star',
-      blob: new CqlBlob(Buffer.from('smoke_on_the_water')),
+      blob: new DataAPIBlob(Buffer.from('smoke_on_the_water')),
       bigint: 1231233,
-      date: new CqlDate(),
+      date: new DataAPIDate(),
       decimal: BigNumber('12.34567890123456789012345678901234567890'),
       double: 123.456,
-      duration: new CqlDuration('1d'),
+      duration: new DataAPIDuration('1d'),
       float: 123.456,
       inet: new InetAddress('::1'),
       list: [UUID.v4(), UUID.v7()],
       set: new Set([UUID.v4(), UUID.v7(), UUID.v7()]),
       smallint: 123,
-      time: new CqlTime(),
-      timestamp: new CqlTimestamp(),
+      time: new DataAPITime(),
+      timestamp: new DataAPITimestamp(),
       tinyint: 123,
       uuid: UUID.v4(),
       varint: 12312312312312312312312312312312n,
@@ -217,7 +217,7 @@ parallel('integration.documents.tables.insert-one', { truncate: 'colls:before' }
       );
 
       assert.deepStrictEqual(
-        (await table.insertOne({ blob: new CqlBlob(buffer) })).insertedId.blob.asBase64(),
+        (await table.insertOne({ blob: new DataAPIBlob(buffer) })).insertedId.blob.asBase64(),
         base64,
       );
 
@@ -246,14 +246,14 @@ parallel('integration.documents.tables.insert-one', { truncate: 'colls:before' }
     it('should handle different date insertion cases', async () => {
       const table = await db.createTable('temp_date', { definition: { columns: { date: 'date' }, primaryKey: 'date' } });
 
-      await assert.rejects(() => table.insertOne({ date: new CqlDate('2000-00-06') }), DataAPIResponseError);
-      await assert.rejects(() => table.insertOne({ date: new CqlDate('2000-01-00') }), DataAPIResponseError);
-      await assert.rejects(() => table.insertOne({ date: new CqlDate('2000/01/01') }), DataAPIResponseError);
-      await assert.rejects(() => table.insertOne({ date: new CqlDate('2000-01-32') }), DataAPIResponseError);
-      await assert.rejects(() => table.insertOne({ date: new CqlDate('2000-02-30') }), DataAPIResponseError);
-      await assert.rejects(() => table.insertOne({ date: new CqlDate('+2000-00-06') }), DataAPIResponseError);
-      await assert.rejects(() => table.insertOne({ date: new CqlDate('-0000-00-06') }), DataAPIResponseError);
-      await assert.rejects(() => table.insertOne({ date: new CqlDate('10000-00-06') }), DataAPIResponseError);
+      await assert.rejects(() => table.insertOne({ date: new DataAPIDate('2000-00-06') }), DataAPIResponseError);
+      await assert.rejects(() => table.insertOne({ date: new DataAPIDate('2000-01-00') }), DataAPIResponseError);
+      await assert.rejects(() => table.insertOne({ date: new DataAPIDate('2000/01/01') }), DataAPIResponseError);
+      await assert.rejects(() => table.insertOne({ date: new DataAPIDate('2000-01-32') }), DataAPIResponseError);
+      await assert.rejects(() => table.insertOne({ date: new DataAPIDate('2000-02-30') }), DataAPIResponseError);
+      await assert.rejects(() => table.insertOne({ date: new DataAPIDate('+2000-00-06') }), DataAPIResponseError);
+      await assert.rejects(() => table.insertOne({ date: new DataAPIDate('-0000-00-06') }), DataAPIResponseError);
+      await assert.rejects(() => table.insertOne({ date: new DataAPIDate('10000-00-06') }), DataAPIResponseError);
 
       assert.deepStrictEqual(
         (await table.insertOne({ date: '1970-01-01' as any })).insertedId.date.toString(),
@@ -261,22 +261,22 @@ parallel('integration.documents.tables.insert-one', { truncate: 'colls:before' }
       );
 
       assert.deepStrictEqual(
-        (await table.insertOne({ date: new CqlDate('-0001-01-01') })).insertedId.date.toString(),
+        (await table.insertOne({ date: new DataAPIDate('-0001-01-01') })).insertedId.date.toString(),
         '-0001-01-01',
       );
 
       assert.deepStrictEqual(
-        (await table.insertOne({ date: new CqlDate('9999-12-31') })).insertedId.date.toString(),
+        (await table.insertOne({ date: new DataAPIDate('9999-12-31') })).insertedId.date.toString(),
         '9999-12-31',
       );
 
       assert.deepStrictEqual(
-        (await table.insertOne({ date: new CqlDate('+10000-12-31') })).insertedId.date.toString(),
+        (await table.insertOne({ date: new DataAPIDate('+10000-12-31') })).insertedId.date.toString(),
         '+10000-12-31',
       );
 
       assert.deepStrictEqual(
-        (await table.insertOne({ date: new CqlDate('-10000-12-31') })).insertedId.date.toString(),
+        (await table.insertOne({ date: new DataAPIDate('-10000-12-31') })).insertedId.date.toString(),
         '-10000-12-31',
       );
 

@@ -13,11 +13,11 @@
 // limitations under the License.
 
 import {
-  CqlBlob,
-  CqlDate,
-  CqlDuration,
-  CqlTime,
-  CqlTimestamp,
+  DataAPIBlob,
+  DataAPIDate,
+  DataAPIDuration,
+  DataAPITime,
+  DataAPITimestamp,
   InetAddress,
   SomeDoc,
   SomeRow,
@@ -95,7 +95,12 @@ export const mkTableSerDes = <Schema extends SomeRow>(cfg: TableSerDesConfig<Sch
 
 const DefaultTableSerDesCfg = {
   serialize(_, value, ctx) {
-    if (typeof value === 'object' && value !== null) {
+    if (typeof value === 'number') {
+      if (!isFinite(value)) {
+        return [value.toString(), true];
+      }
+      return true;
+    } else if (typeof value === 'object' && value !== null) {
       if ($SerializeForTable in value) {
         return [value[$SerializeForTable](), true];
       }
@@ -115,11 +120,6 @@ const DefaultTableSerDesCfg = {
     } else if (!ctx.bigNumsPresent && typeof value === 'bigint') {
       ctx.bigNumsPresent = true;
       return true;
-    } else if (typeof value === 'number') {
-      if (!isFinite(value)) {
-        return [value.toString(), true];
-      }
-      return [value, true];
     }
   },
   deserialize(key, _, ctx) {
@@ -144,17 +144,17 @@ const DefaultTableSerDesCfg = {
   },
   parsers: {
     bigint: (n) => parseInt(n),
-    blob: (blob, ctx) => new CqlBlob((ctx.parsingPrimaryKey) ? { $binary: blob } : blob, false),
-    date: (date) => new CqlDate(date),
+    blob: (blob, ctx) => new DataAPIBlob((ctx.parsingPrimaryKey) ? { $binary: blob } : blob, false),
+    date: (date) => new DataAPIDate(date),
     decimal: (decimal) => (decimal instanceof BigNumber) ? decimal : new BigNumber(decimal),
     double: parseFloat,
-    duration: (duration) => new CqlDuration(duration),
+    duration: (duration) => new DataAPIDuration(duration),
     float: parseFloat,
     int: (n) => parseInt(n),
     inet: (inet) => new InetAddress(inet, null, false),
     smallint: (n) => parseInt(n),
-    time: (time) => new CqlTime(time),
-    timestamp: (timestamp) => new CqlTimestamp(timestamp),
+    time: (time) => new DataAPITime(time),
+    timestamp: (timestamp) => new DataAPITimestamp(timestamp),
     timeuuid: (uuid) => new UUID(uuid, false),
     tinyint: (n) => parseInt(n),
     uuid: (uuid) => new UUID(uuid, false),

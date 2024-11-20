@@ -87,7 +87,7 @@ export type Sort = Record<string, SortDirection | number[] | DataAPIVector | str
  *
  * @public
  */
-export type Projection = Record<string, 1 | 0 | true | false | ProjectionSlice>;
+export type Projection = Record<string, 1 | 0 | boolean | ProjectionSlice>;
 
 /**
  * Specifies the sort criteria for selecting documents.

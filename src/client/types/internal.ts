@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type {
-  DataAPIClientEvents,
+  DataAPIClientEventMap,
   DataAPIEnvironment,
   DataAPILoggingOutput,
   TimeoutDescriptor,
@@ -21,28 +21,28 @@ import type {
 } from '@/src/lib';
 import type TypedEmitter from 'typed-emitter';
 import type { FetchCtx } from '@/src/lib/api/fetch/types';
-import type { AdminSpawnOptions, DbSpawnOptions } from '@/src/client';
+import type { AdminOptions, DbOptions } from '@/src/client';
 import type { NormalizedLoggingConfig } from '@/src/lib/logging/types';
 
 /**
  * @internal
  */
-export type InternalLoggingConfig = Readonly<Record<keyof DataAPIClientEvents, Readonly<Record<DataAPILoggingOutput, boolean>> | undefined>>
+export type InternalLoggingConfig = Readonly<Record<keyof DataAPIClientEventMap, Readonly<Record<DataAPILoggingOutput, boolean>> | undefined>>
 
 /**
  * @internal
  */
 export interface InternalRootClientOpts {
   environment: DataAPIEnvironment,
-  emitter: TypedEmitter<DataAPIClientEvents>,
+  emitter: TypedEmitter<DataAPIClientEventMap>,
   fetchCtx: FetchCtx,
   userAgent: string,
-  dbOptions: Omit<DbSpawnOptions, 'token' | 'logging'> & {
+  dbOptions: Omit<DbOptions, 'token' | 'logging'> & {
     token: TokenProvider | undefined,
     logging: NormalizedLoggingConfig[] | undefined,
     timeoutDefaults: TimeoutDescriptor,
   },
-  adminOptions: Omit<AdminSpawnOptions, 'adminToken' | 'logging'> & {
+  adminOptions: Omit<AdminOptions, 'adminToken' | 'logging'> & {
     adminToken: TokenProvider | undefined,
     logging: NormalizedLoggingConfig[] | undefined,
     timeoutDefaults: TimeoutDescriptor,

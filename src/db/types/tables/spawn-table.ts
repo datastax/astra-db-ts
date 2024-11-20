@@ -28,7 +28,7 @@ import { DataAPILoggingConfig, type TimeoutDescriptor } from '@/src/lib';
  *
  * @public
  */
-export interface TableSpawnOptions<Schema extends SomeDoc> extends WithKeyspace {
+export interface TableOptions<Schema extends SomeDoc> extends WithKeyspace {
   /**
    * The API key for the embedding service to use, or the {@link EmbeddingHeadersProvider} if using
    * a provider that requires it (e.g. AWS bedrock).

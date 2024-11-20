@@ -12,29 +12,74 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeDoc } from '@/src/documents/collections';
-import { CollectionDefaultIdOptions, CollectionIndexingOptions, CollectionVectorOptions } from '@/src/db';
+import { WithKeyspace } from '@/src/db';
+import { CollectionSerDesConfig, EmbeddingHeadersProvider, SomeDoc } from '@/src/documents';
+import { DataAPILoggingConfig, type TimeoutDescriptor } from '@/src/lib';
 
 /**
- * Represents the options for the createCollection command.
+ * Options for spawning a new `Collection` instance through {@link db.collection} or {@link db.createCollection}.
  *
- * @field vector - Options related to vector search.
- * @field indexing - Options related to indexing.
- * @field defaultId - Options related to the default ID.
+ * Note that these are not all the options available for when you're actually creating a table—see {@link CreateCollectionOptions} for that.
+ *
+ * @field embeddingApiKey - The embedding service's API-key/headers (for $vectorize)
+ * @field defaultMaxTimeMS - Default `maxTimeMS` for all collection operations
+ * @field logging - Logging configuration overrides
+ * @field serdes - Additional serialization/deserialization configuration
  *
  * @public
  */
-export interface CollectionOptions<Schema extends SomeDoc> {
+export interface CollectionOptions<Schema extends SomeDoc> extends WithKeyspace {
   /**
-   * Options related to vector search.
+   * The API key for the embedding service to use, or the {@link EmbeddingHeadersProvider} if using
+   * a provider that requires it (e.g. AWS bedrock).
    */
-  vector?: CollectionVectorOptions,
+  embeddingApiKey?: string | EmbeddingHeadersProvider | null,
   /**
-   * Options related to indexing.
+   * The configuration for logging events emitted by the {@link DataAPIClient}.
+   *
+   * This can be set at any level of the major class hierarchy, and will be inherited by all child classes.
+   *
+   * See {@link DataAPILoggingConfig} for *much* more information on configuration, outputs, and inheritance.
    */
-  indexing?: CollectionIndexingOptions<Schema>,
+  logging?: DataAPILoggingConfig,
+  serdes?: CollectionSerDesConfig<Schema>,
   /**
-   * Options related to the default ID.
+   * ##### Overview
+   *
+   * The default timeout options for any operation performed on this {@link Collection} instance.
+   *
+   * See {@link TimeoutDescriptor} for much more information about timeouts.
+   *
+   * @example
+   * ```ts
+   * // The request timeout for all operations is set to 1000ms.
+   * const client = new DataAPIClient('...', {
+   *   timeoutDefaults: { requestTimeoutMs: 1000 },
+   * });
+   *
+   * // The request timeout for all operations borne from this Db is set to 2000ms.
+   * const db = client.db('...', {
+   *   timeoutDefaults: { requestTimeoutMs: 2000 },
+   * });
+   * ```
+   *
+   * ##### Inheritance
+   *
+   * The timeout options are inherited by all child classes, and can be overridden at any level, including the individual method level.
+   *
+   * Individual-method-level overrides can vary in behavior depending on the method; again, see {@link TimeoutDescriptor}.
+   *
+   * ##### Defaults
+   *
+   * The default timeout options are as follows:
+   * - `requestTimeoutMs`: 10000
+   * - `generalMethodTimeoutMs`: 30000
+   * - `collectionAdminTimeoutMs`: 60000
+   * - `tableAdminTimeoutMs`: 30000
+   * - `databaseAdminTimeoutMs`: 600000
+   * - `keyspaceAdminTimeoutMs`: 30000
+   *
+   * @see TimeoutDescriptor
    */
-  defaultId?: CollectionDefaultIdOptions,
+  timeoutDefaults?: Partial<TimeoutDescriptor>,
 }

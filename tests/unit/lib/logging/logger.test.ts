@@ -16,8 +16,8 @@ import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { parseLoggingConfig } from '@/src/lib/logging/parser';
 import { Logger } from '@/src/lib/logging/logger';
-import { EventLoggingDefaults, LoggingEventsWithoutAll } from '@/src/lib/logging/constants';
-import { DataAPIClientEvents, DataAPILoggingConfig } from '@/src/lib';
+import { DataAPILoggingDefaults, LoggingEventsWithoutAll } from '@/src/lib/logging/constants';
+import { DataAPIClientEventMap, DataAPILoggingConfig } from '@/src/lib';
 import { NormalizedLoggingConfig } from '@/src/lib/logging/types';
 import { beforeEach } from 'mocha';
 import TypedEmitter from 'typed-emitter';
@@ -46,15 +46,15 @@ describe('unit.lib.logging.logger', () => {
     });
 
     it('should return EventLoggingDefaults if config is just \'all\'', () => {
-      assert.deepStrictEqual(Logger.advanceConfig([3 as any], 'all'), [3, ...EventLoggingDefaults]);
+      assert.deepStrictEqual(Logger.advanceConfig([3 as any], 'all'), [3, ...DataAPILoggingDefaults]);
     });
 
     it('should return EventLoggingDefaults if config is just [\'all\']', () => {
-      assert.deepStrictEqual(Logger.advanceConfig([3 as any], ['all']), [3, ...EventLoggingDefaults]);
+      assert.deepStrictEqual(Logger.advanceConfig([3 as any], ['all']), [3, ...DataAPILoggingDefaults]);
     });
 
     it('should return EventLoggingDefaults alongside overrides if config contains [\'all\']', () => {
-      assert.deepStrictEqual(Logger.advanceConfig([3 as any], ['all', { events: 'commandSucceeded', emits: [] }]), [3, ...EventLoggingDefaults, { events: ['commandSucceeded'], emits: [] }]);
+      assert.deepStrictEqual(Logger.advanceConfig([3 as any], ['all', { events: 'commandSucceeded', emits: [] }]), [3, ...DataAPILoggingDefaults, { events: ['commandSucceeded'], emits: [] }]);
     });
 
     it('should return normalized layer if config contains [\'all\'] w/ explicit emits', () => {
@@ -92,7 +92,7 @@ describe('unit.lib.logging.logger', () => {
         { events: ['commandFailed'], emits: ['event', 'stderr'] },
         { events: ['commandFailed', 'commandSucceeded'], emits: [] },
         { events: ['commandSucceeded', 'commandFailed'], emits: ['event', 'stderr'] },
-        ...EventLoggingDefaults,
+        ...DataAPILoggingDefaults,
         { events: ['commandSucceeded'], emits: ['event'] },
       ];
       assert.deepStrictEqual(Logger.advanceConfig([3 as any], config), expected);
@@ -115,7 +115,7 @@ describe('unit.lib.logging.logger', () => {
       emit(name, thing) {
         events.push([name, thing]);
       },
-    } as TypedEmitter<DataAPIClientEvents>;
+    } as TypedEmitter<DataAPIClientEventMap>;
 
     beforeEach(() => {
       stdout = [];
@@ -135,7 +135,7 @@ describe('unit.lib.logging.logger', () => {
     });
 
     it('should handle default logging behavior', () => {
-      const logger = new Logger(EventLoggingDefaults, emitter, console);
+      const logger = new Logger(DataAPILoggingDefaults, emitter, console);
       logger.commandStarted?.({ timeoutManager: { initial: () => ({}) }, command: {} } as any);
       assert.strictEqual(events.at(-1)?.[0], 'commandStarted');
       assert.ok(events.at(-1)?.[1] instanceof CommandStartedEvent);

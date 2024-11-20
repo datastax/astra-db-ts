@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { SomeDoc } from '@/src/documents/collections';
-import { ToDotNotation } from '@/src/documents/collections/types/dot-notation';
+import { ToDotNotation } from '@/src/documents/types/dot-notation';
 import { nullish } from '@/src/lib';
 
 /**
@@ -53,6 +53,14 @@ export interface CollectionVectorOptions {
    * or through {@link DbAdmin.findEmbeddingProviders}.
    */
   service?: VectorizeServiceOptions,
+  /**
+   * Configures the index with the fastest settings for a given source of embeddings vectors.
+   *
+   * As of time of writing, example `sourceModel`s include `'openai-v3-large'`, `'cohere-v3'`, `'bert'`, and a handful of others.
+   *
+   * If no source model if provided, this setting will default to `'other'`.
+   */
+  sourceModel?: string,
 }
 
 /**

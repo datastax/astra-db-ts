@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import { EqualityProof } from '@/src/lib/validation';
-import type { DataAPIClientEvents, DataAPILoggingEvent, DataAPILoggingOutput } from '@/src/lib';
+import type { DataAPIClientEventMap, DataAPILoggingEvent, DataAPILoggingOutput } from '@/src/lib';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents';
 import {
   AdminCommandFailedEvent,
@@ -27,13 +27,26 @@ import { buildOutputsMap } from '@/src/lib/logging/util';
 import type { InternalLoggingConfig } from '@/src/client/types/internal';
 import type { NormalizedLoggingConfig } from '@/src/lib/logging/types';
 
+/**
+ * @internal
+ */
 export const LoggingEvents = <const>['all', 'adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded', 'adminCommandFailed', 'adminCommandWarnings', 'commandStarted', 'commandFailed', 'commandSucceeded', 'commandWarnings'];
+
+/**
+ * @internal
+ */
 export const LoggingEventsWithoutAll = LoggingEvents.filter((e) => e !== 'all');
 void EqualityProof<typeof LoggingEvents[number], DataAPILoggingEvent, true>;
 
+/**
+ * @internal
+ */
 export const LoggingOutputs = <const>['event', 'stdout', 'stderr'];
 void EqualityProof<typeof LoggingOutputs[number], DataAPILoggingOutput, true>;
 
+/**
+ * @internal
+ */
 export const EventConstructors = <const>{
   commandFailed:         CommandFailedEvent,
   commandStarted:        CommandStartedEvent,
@@ -44,11 +57,17 @@ export const EventConstructors = <const>{
   adminCommandPolling:   AdminCommandPollingEvent,
   adminCommandWarnings:  AdminCommandWarningsEvent,
   adminCommandSucceeded: AdminCommandSucceededEvent,
-} satisfies Record<keyof DataAPIClientEvents, unknown>;
+} satisfies Record<keyof DataAPIClientEventMap, unknown>;
 
+/**
+ * @internal
+ */
 export const EmptyInternalLoggingConfig = Object.fromEntries(LoggingEventsWithoutAll.map((e) => [e, buildOutputsMap([])])) as InternalLoggingConfig;
 
-export const EventLoggingOutputDefaults = <const>{
+/**
+ * @internal
+ */
+export const DataAPILoggingDefaultOutputs = <const>{
   adminCommandStarted:   ['event', 'stdout'],
   adminCommandPolling:   ['event', 'stdout'],
   adminCommandSucceeded: ['event', 'stdout'],
@@ -60,7 +79,7 @@ export const EventLoggingOutputDefaults = <const>{
   commandWarnings:       ['event', 'stderr'],
 };
 
-export const EventLoggingDefaults: NormalizedLoggingConfig[] = [{
+export const DataAPILoggingDefaults: NormalizedLoggingConfig[] = [{
   events: ['adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded'],
   emits: ['event', 'stdout'],
 }, {

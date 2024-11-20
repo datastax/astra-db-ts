@@ -16,7 +16,7 @@
 
 import { dummyCollection, TestSchema } from '@/tests/typing/collections/prelude';
 import { Equal, Expect } from '@/tests/typing/prelude';
-import { IdOf, SomeDoc, StrictFilter, WithId } from '@/src/documents/collections/types';
+import { IdOf, SomeDoc, StrictCollectionFilter, WithId } from '@/src/documents/collections/types';
 import { FindCursor } from '@/src/documents';
 import { DeepPartial } from '@/src/lib';
 
@@ -48,10 +48,10 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
     type docs_type_is_expected = Expect<Equal<WithId<TestSchema & { $similarity?: number }>[], typeof docs>>;
   });
 
-  cursor.filter({ amount: { $gt: 5 } } satisfies StrictFilter<GetTRawOfCursor<typeof cursor>>);
+  cursor.filter({ amount: { $gt: 5 } } satisfies StrictCollectionFilter<GetTRawOfCursor<typeof cursor>>);
 
   // @ts-expect-error - am0unt is not a valid field
-  cursor.filter({ am0unt: { $gt: 5 } } satisfies StrictFilter<GetTRawOfCursor<typeof cursor>>);
+  cursor.filter({ am0unt: { $gt: 5 } } satisfies StrictCollectionFilter<GetTRawOfCursor<typeof cursor>>);
 }
 
 {
@@ -72,10 +72,10 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
     type mappedDoc_type_is_expected = Expect<Equal<string | null, typeof mappedDoc>>;
   });
 
-  mapped.filter({ amount: { $gt: 5 } } satisfies StrictFilter<GetTRawOfCursor<typeof mapped>>);
+  mapped.filter({ amount: { $gt: 5 } } satisfies StrictCollectionFilter<GetTRawOfCursor<typeof mapped>>);
 
   // @ts-expect-error - am0unt is not a valid field
-  mapped.filter({ am0unt: { $gt: 5 } } satisfies StrictFilter<GetTRawOfCursor<typeof mapped>>);
+  mapped.filter({ am0unt: { $gt: 5 } } satisfies StrictCollectionFilter<GetTRawOfCursor<typeof mapped>>);
 }
 
 {
@@ -103,5 +103,5 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
     type doc_type_is_expected = Expect<Equal<{ amount: number } | null, typeof doc>>;
   });
 
-  cursor.filter({ amount: { $gt: 5 } } satisfies StrictFilter<GetTRawOfCursor<typeof projected>>);
+  cursor.filter({ amount: { $gt: 5 } } satisfies StrictCollectionFilter<GetTRawOfCursor<typeof projected>>);
 }

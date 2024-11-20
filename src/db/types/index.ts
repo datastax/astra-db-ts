@@ -13,11 +13,11 @@
 // limitations under the License.
 
 export type * from './collections/collections-common';
-export type * from './collections/collection-options';
+export type * from './collections/collection-definition';
 export type * from './collections/create-collection';
 export type * from './collections/list-collections';
 export type * from './collections/drop-collection';
-export type * from './collections/spawn-collection';
+export type * from './collections/collection-options';
 
 export type * from './tables/alter-table';
 export type * from './tables/create-table';

@@ -22,7 +22,28 @@
  */
 export abstract class DataAPIClientEvent {
   /**
+   * The name of the event.
+   */
+  public readonly name: string;
+
+  /**
+   * Should not be instantiated directly.
+   *
+   * @internal
+   */
+  protected constructor(name: string) {
+    this.name = name;
+  }
+
+  /**
    * Returns the event in a formatted string, as it would be logged to stdout/stderr (if enabled).
    */
-  public abstract formatted(): string;
+  public formatted(): string {
+    return `${DataAPIClientEvent.formattedPrefix()}[${this.name}]`;
+  }
+
+  public static formattedPrefix(): string {
+    const date = new Date();
+    return `${date.getUTCFullYear()}-${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-${date.getUTCDate().toString().padStart(2, '0')} ${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')}:${date.getUTCSeconds().toString().padStart(2, '0')}Z `;
+  }
 }

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { DataAPIEnvironment, DataAPILoggingConfig, TimeoutDescriptor } from '@/src/lib';
-import type { Caller, DataAPIHttpOptions, DefaultAdminSpawnOptions, DefaultDbSpawnOptions } from '@/src/client';
+import type { Caller, DataAPIHttpOptions, RootAdminOptions, RootDbOptions } from '@/src/client';
 import { OneOrMany } from '@/src/lib/types';
 
 /**
@@ -81,11 +81,11 @@ export interface DataAPIClientOptions {
   /**
    * The default options when spawning a {@link Db} instance.
    */
-  dbOptions?: DefaultDbSpawnOptions,
+  dbOptions?: RootDbOptions,
   /**
    * The default options when spawning an {@link AstraAdmin} instance.
    */
-  adminOptions?: DefaultAdminSpawnOptions,
+  adminOptions?: RootAdminOptions,
   /**
    * The caller information to send with requests, of the form `[name, version?]`, or an array of such.
    *

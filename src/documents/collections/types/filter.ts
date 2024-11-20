@@ -16,49 +16,14 @@ import type { SomeDoc } from '@/src/documents/collections';
 import type { IdOf, NoId, ToDotNotation } from '@/src/documents';
 import { EmptyObj } from '@/src/lib/types';
 import { IsDate, IsNum } from '@/src/documents/types/utils';
-
-// @example
-//   ```ts
-// // Get all documents
-// const cursor = await collection.find({}, { limit: 10 });
-//
-// // Get documents by field equality
-// const cursor = await collection.find({ name: 'John Doe' });
-//
-// // Get documents by field inequality
-// const cursor = await collection.find({ name: { $ne: 'John Doe' } });
-//
-// // Get documents by field existence
-// const cursor = await collection.find({ name: { $exists: true } });
-//
-// // Get documents by matching a field in a list
-// const cursor = await collection.find({ name: { $in: ['John Doe', 'Jane Doe'] } });
-//
-// // Get documents by field numerical comparison
-// const cursor = await collection.find({ age: { $gte: 21 } });
-// const cursor = await collection.find({ age: { $lt: new Date() } });
-//
-// // Get documents by combining filters
-// const cursor = await collection.find({ name: 'John Doe', age: { $gte: 21 } });
-//
-// // Get documents by complex filters combinators
-// const cursor = await collection.find({
-//   $not: {
-//     $or: [
-//       { name: 'John Doe' },
-//       { age: { $gte: 21 } },
-//     ],
-//     friends: { $size: 5 },
-//   },
-// });
-// ```
+import BigNumber from 'bignumber.js';
 
 /**
  * Represents some filter operation for a given document schema.
  *
- * **If you want stricter type-checking and full auto-complete, see {@link StrictFilter}.**
+ * **If you want stricter type-checking and full auto-complete, see {@link StrictCollectionFilter}.**
  *
- * This is a more relaxed version of {@link StrictFilter} that doesn't type-check nested fields.
+ * This is a more relaxed version of {@link StrictCollectionFilter} that doesn't type-check nested fields.
  *
  * @example
  * ```typescript
@@ -71,21 +36,21 @@ import { IsDate, IsNum } from '@/src/documents/types/utils';
  *   $and: [
  *     { _id: { $in: ['abc', 'def'] } },
  *     { $not: { arr: { $size: 0 } } },
- *   ]
+ *   ],
  * });
  * ```
  *
- * @see StrictFilter
+ * @see StrictCollectionFilter
  *
  * @public
  */
-export type Filter<Schema extends SomeDoc> = {
-  [K in keyof NoId<Schema>]?: FilterExpr<NoId<Schema>[K]>
+export type CollectionFilter<Schema extends SomeDoc> = {
+  [K in keyof ToDotNotation<NoId<Schema>>]?: CollectionFilterExpr<ToDotNotation<NoId<Schema>>[K]>
 } & {
-  _id?: FilterExpr<IdOf<Schema>>,
-  $and?: Filter<Schema>[],
-  $or?: Filter<Schema>[],
-  $not?: Filter<Schema>,
+  _id?: CollectionFilterExpr<IdOf<Schema>>,
+  $and?: CollectionFilter<Schema>[],
+  $or?: CollectionFilter<Schema>[],
+  $not?: CollectionFilter<Schema>,
 } & {
   [key: string]: any,
 }
@@ -93,9 +58,9 @@ export type Filter<Schema extends SomeDoc> = {
 /**
  * Represents some filter operation for a given document schema.
  *
- * **If you want relaxed type-checking, see {@link Filter}.**
+ * **If you want relaxed type-checking, see {@link CollectionFilter}.**
  *
- * This is a stricter version of {@link Filter} that type-checks nested fields.
+ * This is a stricter version of {@link CollectionFilter} that type-checks nested fields.
  *
  * You can use it anywhere by using the `satisfies` keyword, or by creating a temporary const with the StrictFilter type.
  *
@@ -114,17 +79,17 @@ export type Filter<Schema extends SomeDoc> = {
  * } satisfies StrictFilter<BasicSchema>);
  * ```
  *
- * @see Filter
+ * @see CollectionFilter
  *
  * @public
  */
-export type StrictFilter<Schema extends SomeDoc> = {
-  [K in keyof ToDotNotation<NoId<Schema>>]?: FilterExpr<ToDotNotation<NoId<Schema>>[K]>
+export type StrictCollectionFilter<Schema extends SomeDoc> = {
+  [K in keyof ToDotNotation<NoId<Schema>>]?: StrictCollectionFilterExpr<ToDotNotation<NoId<Schema>>[K]>
 } & {
-  _id?: FilterExpr<IdOf<Schema>>,
-  $and?: StrictFilter<Schema>[],
-  $or?: StrictFilter<Schema>[],
-  $not?: StrictFilter<Schema>,
+  _id?: StrictCollectionFilterExpr<IdOf<Schema>>,
+  $and?: StrictCollectionFilter<Schema>[],
+  $or?: StrictCollectionFilter<Schema>[],
+  $not?: StrictCollectionFilter<Schema>,
 }
 
 /**
@@ -132,25 +97,32 @@ export type StrictFilter<Schema extends SomeDoc> = {
  *
  * @public
  */
-export type FilterExpr<Elem> = Elem | FilterOps<Elem>;
+export type CollectionFilterExpr<Elem> = Elem | (CollectionFilterOps<Elem> & { [key: string]: any });
+
+/**
+ * Represents an expression in a filter statement, such as an exact value, or a filter operator
+ *
+ * @public
+ */
+export type StrictCollectionFilterExpr<Elem> = Elem | CollectionFilterOps<Elem>;
 
 /**
  * Represents filter operators such as `$eq` and `$in` (but not statements like `$and`)
  *
  * @public
  */
-export type FilterOps<Elem> = {
+export type CollectionFilterOps<Elem> = {
   $eq?: Elem,
   $ne?: Elem,
   $in?: Elem[],
   $nin?: Elem[] /* I can't un-see this as 'Nine-Inch Nails'... */,
   $exists?: boolean,
 } & (
-  IsNum<Elem> extends false ? EmptyObj : NumFilterOps
+  IsNum<Elem> extends false ? EmptyObj : CollectionNumFilterOps
 ) & (
-  IsDate<Elem> extends false ? EmptyObj : (DateFilterOps | Date)
+  IsDate<Elem> extends false ? EmptyObj : (CollectionDateFilterOps | Date)
 ) & (
-  any[] extends Elem ? ArrayFilterOps<Elem> : EmptyObj
+  any[] extends Elem ? CollectionArrayFilterOps<Elem> : EmptyObj
 )
 
 /**
@@ -158,23 +130,23 @@ export type FilterOps<Elem> = {
  *
  * @public
  */
-export interface NumFilterOps {
+export interface CollectionNumFilterOps {
   /**
    * Less than (exclusive) some number
    */
-  $lt?: number | bigint,
+  $lt?: number | bigint | BigNumber,
   /**
    * Less than or equal to some number
    */
-  $lte?: number | bigint,
+  $lte?: number | bigint | BigNumber,
   /**
    * Greater than (exclusive) some number
    */
-  $gt?: number | bigint,
+  $gt?: number | bigint | BigNumber,
   /**
    * Greater than or equal to some number
    */
-  $gte?: number | bigint,
+  $gte?: number | bigint | BigNumber,
 }
 
 /**
@@ -182,7 +154,7 @@ export interface NumFilterOps {
  *
  * @public
  */
-export interface DateFilterOps {
+export interface CollectionDateFilterOps {
   /**
    * Less than (exclusive) some date.
    *
@@ -214,7 +186,7 @@ export interface DateFilterOps {
  *
  * @public
  */
-export interface ArrayFilterOps<Elem> {
+export interface CollectionArrayFilterOps<Elem> {
   /**
    * Checks if the array is of a certain size.
    */

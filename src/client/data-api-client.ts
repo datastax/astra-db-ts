@@ -15,15 +15,15 @@
 
 import type TypedEmitter from 'typed-emitter';
 import type {
-  AdminSpawnOptions,
+  AdminOptions,
   CustomHttpClientOptions,
   DataAPIClientOptions,
-  DbSpawnOptions,
+  DbOptions,
   DefaultHttpClientOptions,
 } from '@/src/client/types';
 import { LIB_NAME } from '@/src/version';
 import type { InternalRootClientOpts } from '@/src/client/types/internal';
-import { type DataAPIClientEvents, type Fetcher, FetchH2, FetchNative, type nullish, TokenProvider } from '@/src/lib';
+import { type DataAPIClientEventMap, type Fetcher, FetchH2, FetchNative, type nullish, TokenProvider } from '@/src/lib';
 import { buildUserAgent } from '@/src/lib/api/clients/http-client';
 import { Db, InvalidEnvironmentError } from '@/src/db';
 import { AstraAdmin } from '@/src/administration';
@@ -48,7 +48,7 @@ import { Timeouts } from '@/src/lib/api/timeouts';
  */
 export const DataAPIClientEventEmitterBase = (() => {
   try {
-    return (require('events') as { EventEmitter: (new () => TypedEmitter<DataAPIClientEvents>) }).EventEmitter;
+    return (require('events') as { EventEmitter: (new () => TypedEmitter<DataAPIClientEventMap>) }).EventEmitter;
   } catch (_) {
     throw new Error(`\`${LIB_NAME}\` requires the \`events\` module to be available for usage. Please provide a polyfill (e.g. the \`events\` package) or use a compatible environment.`);
   }
@@ -221,7 +221,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    *
    * @returns A new {@link Db} instance.
    */
-  public db(endpoint: string, options?: DbSpawnOptions): Db {
+  public db(endpoint: string, options?: DbOptions): Db {
     return new Db(this.#options, endpoint, options);
   }
 
@@ -247,7 +247,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    *
    * @returns A new {@link AstraAdmin} instance.
    */
-  public admin(options?: AdminSpawnOptions): AstraAdmin {
+  public admin(options?: AdminOptions): AstraAdmin {
     if (this.#options.environment !== 'astra') {
       throw new InvalidEnvironmentError('admin', this.#options.environment, ['astra'], 'AstraAdmin is only available for Astra databases');
     }
@@ -309,7 +309,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
   public [Symbol.asyncDispose]!: () => Promise<void>;
 }
 
-function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
+const buildFetchCtx = (options: DataAPIClientOptions | undefined): FetchCtx => {
   const clientType = (options?.httpOptions)
     ? options.httpOptions?.client ?? 'default'
     : undefined;
@@ -325,9 +325,9 @@ function buildFetchCtx(options: DataAPIClientOptions | undefined): FetchCtx {
     ctx: ctx,
     closed: { ref: false },
   };
-}
+};
 
-function tryLoadFetchH2(clientType: string | nullish, options: DataAPIClientOptions | undefined): Fetcher {
+const tryLoadFetchH2 = (clientType: string | nullish, options: DataAPIClientOptions | undefined): Fetcher => {
   try {
     const httpOptions = options?.httpOptions as DefaultHttpClientOptions | undefined;
     const preferHttp2 = httpOptions?.preferHttp2 ?? true;
@@ -339,7 +339,7 @@ function tryLoadFetchH2(clientType: string | nullish, options: DataAPIClientOpti
       throw e;
     }
   }
-}
+};
 
 const parseClientOpts: Parser<DataAPIClientOptions | nullish> = (raw, field) => {
   const opts = p.parse('object?')<DataAPIClientOptions>(raw, field);

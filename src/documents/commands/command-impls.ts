@@ -20,7 +20,7 @@ import {
   CollectionInsertManyOptions,
   CollectionUpdateManyError,
   DataAPIDetailedErrorDescriptor,
-  DataAPIResponseError,
+  DataAPIResponseError, Filter,
   FindCursor,
   GenericDeleteManyResult,
   GenericDeleteOneOptions,
@@ -36,7 +36,8 @@ import {
   GenericUpdateManyOptions,
   GenericUpdateOneOptions,
   GenericUpdateResult,
-  SomeDoc, Table,
+  SomeDoc,
+  Table, UpdateFilter,
 } from '@/src/documents';
 import { nullish, WithTimeout } from '@/src/lib';
 import { insertManyOrdered, insertManyUnordered } from '@/src/documents/commands/helpers/insertion';
@@ -88,7 +89,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     };
   }
 
-  public async updateOne(_filter: SomeDoc, _update: SomeDoc, options?: GenericUpdateOneOptions): Promise<GenericUpdateResult<ID, 0 | 1>> {
+  public async updateOne(_filter: Filter, _update: UpdateFilter, options?: GenericUpdateOneOptions): Promise<GenericUpdateResult<ID, 0 | 1>> {
     const filter = this.#serdes.serializeRecord(_filter);
     const update = this.#serdes.serializeRecord(_update);
 
@@ -108,7 +109,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     return coalesceUpsertIntoUpdateResult(mkUpdateResult(resp), resp);
   }
 
-  public async updateMany(_filter: SomeDoc, _update: SomeDoc, options?: GenericUpdateManyOptions): Promise<GenericUpdateResult<ID, number>> {
+  public async updateMany(_filter: Filter, _update: UpdateFilter, options?: GenericUpdateManyOptions): Promise<GenericUpdateResult<ID, number>> {
     const filter = this.#serdes.serializeRecord(_filter);
     const update = this.#serdes.serializeRecord(_update);
 
@@ -153,7 +154,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     return coalesceUpsertIntoUpdateResult(commonResult, resp);
   }
 
-  public async replaceOne(_filter: SomeDoc, _replacement: SomeDoc, options?: GenericReplaceOneOptions): Promise<GenericUpdateResult<ID, 0 | 1>> {
+  public async replaceOne(_filter: Filter, _replacement: SomeDoc, options?: GenericReplaceOneOptions): Promise<GenericUpdateResult<ID, 0 | 1>> {
     const filter = this.#serdes.serializeRecord(_filter);
     const replacement = this.#serdes.serializeRecord(_replacement);
 
@@ -175,7 +176,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     return coalesceUpsertIntoUpdateResult(mkUpdateResult(resp), resp);
   }
 
-  public async deleteOne(_filter: SomeDoc, options?: GenericDeleteOneOptions): Promise<GenericDeleteOneResult> {
+  public async deleteOne(_filter: Filter, options?: GenericDeleteOneOptions): Promise<GenericDeleteOneResult> {
     const filter = this.#serdes.serializeRecord(_filter);
 
     const command = mkCmdWithSortProj('deleteOne', options, {
@@ -192,7 +193,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     };
   }
 
-  public async deleteMany(_filter: SomeDoc, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<GenericDeleteManyResult> {
+  public async deleteMany(_filter: Filter, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<GenericDeleteManyResult> {
     const filter = this.#serdes.serializeRecord(_filter);
 
     const command = mkBasicCmd('deleteMany', {
@@ -226,14 +227,14 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     };
   }
 
-  public find<Cursor extends FindCursor<SomeDoc>>(filter: SomeDoc, options: GenericFindOptions | undefined, cursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => Cursor): Cursor {
+  public find<Cursor extends FindCursor<SomeDoc>>(filter: Filter, options: GenericFindOptions | undefined, cursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => Cursor): Cursor {
     if (options?.sort) {
       options.sort = normalizedSort(options.sort);
     }
     return new cursor(this.#tOrC as any, this.#serdes, this.#serdes.serializeRecord(structuredClone(filter)), structuredClone(options));
   }
 
-  public async findOne<Schema>(_filter: SomeDoc, options?: GenericFindOneOptions): Promise<Schema | null> {
+  public async findOne<Schema>(_filter: Filter, options?: GenericFindOneOptions): Promise<Schema | null> {
     const filter = this.#serdes.serializeRecord(_filter);
 
     const command = mkCmdWithSortProj('findOne', options, {
@@ -251,7 +252,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     return this.#serdes.deserializeRecord(resp.data?.document, resp) as any;
   }
 
-  public async findOneAndReplace<Schema extends SomeDoc>(_filter: SomeDoc, _replacement: SomeDoc, options?: GenericFindOneAndReplaceOptions): Promise<Schema | null> {
+  public async findOneAndReplace<Schema extends SomeDoc>(_filter: Filter, _replacement: SomeDoc, options?: GenericFindOneAndReplaceOptions): Promise<Schema | null> {
     const filter = this.#serdes.serializeRecord(_filter);
     const replacement = this.#serdes.serializeRecord(_replacement);
 
@@ -271,7 +272,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     return resp.data?.document || null;
   }
 
-  public async findOneAndDelete<Schema extends SomeDoc>(_filter: SomeDoc, options?: GenericFindOneAndDeleteOptions): Promise<Schema | null> {
+  public async findOneAndDelete<Schema extends SomeDoc>(_filter: Filter, options?: GenericFindOneAndDeleteOptions): Promise<Schema | null> {
     const filter = this.#serdes.serializeRecord(_filter);
 
     const command = mkCmdWithSortProj('findOneAndDelete', options, {
@@ -285,7 +286,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     return resp.data?.document || null;
   }
 
-  public async findOneAndUpdate<Schema extends SomeDoc>(_filter: SomeDoc, _update: SomeDoc, options?: GenericFindOneAndUpdateOptions): Promise<Schema | null> {
+  public async findOneAndUpdate<Schema extends SomeDoc>(_filter: Filter, _update: SomeDoc, options?: GenericFindOneAndUpdateOptions): Promise<Schema | null> {
     const filter = this.#serdes.serializeRecord(_filter);
     const update = this.#serdes.serializeRecord(_update);
 
@@ -305,9 +306,9 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     return resp.data?.document || null;
   }
 
-  public async distinct(key: string, filter: SomeDoc, mkCursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => FindCursor<SomeDoc>): Promise<any[]> {
+  public async distinct(key: string, filter: SomeDoc, options: WithTimeout<'generalMethodTimeoutMs'> | undefined, mkCursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => FindCursor<SomeDoc>): Promise<any[]> {
     const projection = pullSafeProjection4Distinct(key);
-    const cursor = this.find(filter, { projection: { _id: 0, [projection]: 1 } }, mkCursor);
+    const cursor = this.find(filter, { projection: { _id: 0, [projection]: 1 }, timeout: options?.timeout }, mkCursor);
 
     const seen = new Set<unknown>();
     const ret = [];
@@ -334,7 +335,7 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     return ret;
   }
 
-  public async countDocuments(_filter: SomeDoc, upperBound: number, options: WithTimeout<'generalMethodTimeoutMs'> | undefined, error: new (count: number, hitLimit: boolean) => Error): Promise<number> {
+  public async countDocuments(_filter: Filter, upperBound: number, options: WithTimeout<'generalMethodTimeoutMs'> | undefined, error: new (count: number, hitLimit: boolean) => Error): Promise<number> {
     if (!upperBound) {
       throw new Error('upperBound is required');
     }

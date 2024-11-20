@@ -42,7 +42,7 @@ import { WithTimeout } from '@/src/lib';
  *
  * @public
  */
-export interface LocalCreateKeyspaceOptions extends WithTimeout<'keyspaceAdminTimeoutMs'> {
+export interface DataAPICreateKeyspaceOptions extends WithTimeout<'keyspaceAdminTimeoutMs'> {
   replication?: KeyspaceReplicationOptions,
   updateDbKeyspace?: boolean,
 }

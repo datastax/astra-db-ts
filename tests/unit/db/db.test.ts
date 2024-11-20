@@ -193,19 +193,19 @@ describe('unit.db', () => {
       });
     });
 
-    it('cshould throw on mismatching environments', () => {
+    it('should throw on mismatching environments', () => {
       assert.throws(() => {
         const db = new DataAPIClient('dummy_token').db(DEMO_APPLICATION_URI);
         db.admin({ environment: 'dse' });
-      }, { message: 'Invalid environment \'astra\' for operation \'db.admin()\' (environment option is not the same as set in the DataAPIClient); expected environment(s): \'dse\'' });
-      assert.throws(() => {
-        const db = new DataAPIClient('dummy_token', { environment: 'dse' }).db(DEMO_APPLICATION_URI);
-        db.admin();
       }, { message: 'Invalid environment \'dse\' for operation \'db.admin()\' (environment option is not the same as set in the DataAPIClient); expected environment(s): \'astra\'' });
       assert.throws(() => {
         const db = new DataAPIClient('dummy_token', { environment: 'dse' }).db(DEMO_APPLICATION_URI);
+        db.admin();
+      }, { message: 'Invalid environment \'astra\' for operation \'db.admin()\' (environment option is not the same as set in the DataAPIClient); expected environment(s): \'dse\'' });
+      assert.throws(() => {
+        const db = new DataAPIClient('dummy_token', { environment: 'dse' }).db(DEMO_APPLICATION_URI);
         db.admin({ environment: 'hcd' });
-      }, { message: 'Invalid environment \'dse\' for operation \'db.admin()\' (environment option is not the same as set in the DataAPIClient); expected environment(s): \'hcd\'' });
+      }, { message: 'Invalid environment \'hcd\' for operation \'db.admin()\' (environment option is not the same as set in the DataAPIClient); expected environment(s): \'dse\'' });
     });
 
     it('should return the admin if on astra db', () => {

@@ -15,11 +15,11 @@
 import { p, Parser } from '@/src/lib/validation';
 import { TokenProvider } from '@/src/lib';
 import { Logger } from '@/src/lib/logging/logger';
-import { AdminSpawnOptions } from '@/src/client';
+import { AdminOptions } from '@/src/client';
 import { Timeouts } from '@/src/lib/api/timeouts';
 
-export const parseAdminSpawnOpts: Parser<AdminSpawnOptions | undefined, unknown> = (raw, field) => {
-  const opts = p.parse('object?')<AdminSpawnOptions>(raw, field);
+export const parseAdminSpawnOpts: Parser<AdminOptions | undefined, unknown> = (raw, field) => {
+  const opts = p.parse('object?')<AdminOptions>(raw, field);
 
   if (!opts) {
     return undefined;

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type TypedEmitter from 'typed-emitter';
-import type { DataAPICommandEvents } from '@/src/documents';
+import type { CommandEventMap } from '@/src/documents';
 import type { FetchCtx } from '@/src/lib/api/fetch/types';
 import type { HttpMethods } from '@/src/lib/api/constants';
 import type { Ref } from '@/src/lib/types';
@@ -26,7 +26,7 @@ import { TimeoutDescriptor, TimeoutManager } from '@/src/lib/api/timeouts';
 export interface HTTPClientOptions {
   baseUrl: string,
   baseApiPath?: string | null,
-  emitter: TypedEmitter<DataAPICommandEvents>,
+  emitter: TypedEmitter<CommandEventMap>,
   logging: NormalizedLoggingConfig[] | undefined,
   fetchCtx: FetchCtx,
   userAgent: string,

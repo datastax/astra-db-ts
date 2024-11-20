@@ -14,7 +14,7 @@
 
 import { VectorizeServiceOptions } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
-import { TableSpawnOptions } from '@/src/db/types/tables/spawn-table';
+import { TableOptions } from '@/src/db/types/tables/spawn-table';
 import { SomeRow } from '@/src/documents';
 
 /**
@@ -33,7 +33,7 @@ import { SomeRow } from '@/src/documents';
  *
  * @public
  */
-export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout<'tableAdminTimeoutMs'>, TableSpawnOptions<Schema> {
+export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions<Schema> {
   definition: Def,
   ifNotExists?: boolean,
 }

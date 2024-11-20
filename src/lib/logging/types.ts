@@ -13,8 +13,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPICommandEvents } from '@/src/documents';
-import { AdminCommandEvents } from '@/src/administration';
+import { CommandEventMap } from '@/src/documents';
+import { AdminCommandEventMap } from '@/src/administration';
 import { OneOrMany } from '@/src/lib/types';
 // noinspection ES6UnusedImports
 import TypedEventEmitter from 'typed-emitter';
@@ -41,7 +41,7 @@ import TypedEventEmitter from 'typed-emitter';
  * - You can't programmatically interact with the logs/data
  * - You can't easily filter or format the logs
  *
- * {@link DataAPIClientEvents} are a more flexible way to interact with the logs, allowing you to basically plug in, or
+ * {@link DataAPIClientEventMap} are a more flexible way to interact with the logs, allowing you to basically plug in, or
  * even build, your own logging system around them.
  *
  * And of course, you're free to use both events and console logging in tandem, if you so choose.
@@ -56,9 +56,9 @@ import TypedEventEmitter from 'typed-emitter';
  * #### Event types
  *
  * There are two major categories of events emitted by the {@link DataAPIClient}:
- * - {@link DataAPICommandEvents} - Events related to the execution of a command
+ * - {@link CommandEventMap} - Events related to the execution of a command
  *   - i.e. `Db`, `Collection`, `Table` operations
- * - {@link AdminCommandEvents} - Events related to the execution of an admin command
+ * - {@link AdminCommandEventMap} - Events related to the execution of an admin command
  *   - i.e. `AstraAdmin`, `DbAdmin` operations
  *
  * Every event may be enabled/disabled individually, independent of one another.
@@ -173,14 +173,14 @@ import TypedEventEmitter from 'typed-emitter';
  * ```
  *
  * @see DataAPILoggingConfig
- * @see DataAPICommandEvents
- * @see AdminCommandEvents
+ * @see CommandEventMap
+ * @see AdminCommandEventMap
  *
  * @public
  */
-export type DataAPIClientEvents =
-  & DataAPICommandEvents
-  & AdminCommandEvents;
+export type DataAPIClientEventMap =
+  & AdminCommandEventMap
+  & CommandEventMap;
 
 /**
  * #### Overview
@@ -219,7 +219,7 @@ export type DataAPIClientEvents =
  *
  * #### Event types
  *
- * See {@link DataAPIClientEvents} for more information on the types of events emitted.
+ * See {@link DataAPIClientEventMap} for more information on the types of events emitted.
  *
  * #### Output types
  *
@@ -233,7 +233,7 @@ export type DataAPIClientEvents =
  *
  * ```ts
  * const client = new DataAPIClient('*TOKEN*', {
- *  logging: [{ events: 'all', emit: 'stdout' }],
+ *  logging: [{ events: 'all', emits: 'stdout' }],
  * });
  * const db = client.db('*ENDPOINT*');
  *
@@ -243,7 +243,7 @@ export type DataAPIClientEvents =
  * await db.createCollection('my_collection');
  * ```
  *
- * @see DataAPIClientEvents
+ * @see DataAPIClientEventMap
  * @see DataAPILoggingEvent
  * @see DataAPILoggingOutput
  *
@@ -255,11 +255,11 @@ export type DataAPILoggingConfig = DataAPILoggingEvent | readonly (DataAPILoggin
  * Represents the different events that can be emitted/logged by the {@link DataAPIClient}, as well as the convenient
  * shorthand 'all' to configure all events at once.
  *
- * See {@link DataAPIClientEvents} & {@link DataAPILoggingConfig} for much more info.
+ * See {@link DataAPIClientEventMap} & {@link DataAPILoggingConfig} for much more info.
  *
  * @public
  */
-export type DataAPILoggingEvent = 'all' | keyof DataAPIClientEvents;
+export type DataAPILoggingEvent = 'all' | keyof DataAPIClientEventMap;
 
 /**
  * Represents the different outputs that can be emitted/logged to by the {@link DataAPIClient}.
@@ -267,7 +267,7 @@ export type DataAPILoggingEvent = 'all' | keyof DataAPIClientEvents;
  * This can be set to either 'event', 'stdout', or 'stderr'. However, attempting to set both 'stdout' and 'stderr'
  * as an output for a single event will result in an error.
  *
- * See {@link DataAPIClientEvents} & {@link DataAPILoggingConfig} for much more info.
+ * See {@link DataAPIClientEventMap} & {@link DataAPILoggingConfig} for much more info.
  *
  * @public
  */
@@ -278,7 +278,7 @@ export type DataAPILoggingOutput = 'event' | 'stdout' | 'stderr';
  *
  * Settings the `emits` field to `[]` will disable logging for the specified events.
  *
- * See {@link DataAPIClientEvents} & {@link DataAPILoggingConfig} for much more info.
+ * See {@link DataAPIClientEventMap} & {@link DataAPILoggingConfig} for much more info.
  *
  * @public
  */

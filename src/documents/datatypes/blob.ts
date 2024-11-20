@@ -15,19 +15,19 @@
 import { $SerializeForTable } from '@/src/documents/tables/ser-des';
 import { $CustomInspect } from '@/src/lib/constants';
 
-export type CqlBlobLike = CqlBlob | ArrayBuffer | Buffer | { $binary: string };
+export type DataAPIBlobLike = DataAPIBlob | ArrayBuffer | Buffer | { $binary: string };
 
-export class CqlBlob {
-  readonly #raw: Exclude<CqlBlobLike, CqlBlob>;
+export class DataAPIBlob {
+  readonly #raw: Exclude<DataAPIBlobLike, DataAPIBlob>;
 
   public [$SerializeForTable] = () => ({ $binary: this.asBase64() });
 
-  public constructor(blob: CqlBlobLike, validate = true) {
-    if (validate && !CqlBlob.isBlobLike(blob)) {
+  public constructor(blob: DataAPIBlobLike, validate = true) {
+    if (validate && !DataAPIBlob.isBlobLike(blob)) {
       throw new TypeError(`Expected blob to be a string, ArrayBuffer, or Buffer (got '${blob}')`);
     }
 
-    this.#raw = (blob instanceof CqlBlob)
+    this.#raw = (blob instanceof DataAPIBlob)
       ? blob.#raw
       : blob;
 
@@ -48,7 +48,7 @@ export class CqlBlob {
     return ~~((this.#raw.$binary.replace(/=+$/, '').length * 3) / 4);
   }
 
-  public raw(): Exclude<CqlBlobLike, CqlBlob> {
+  public raw(): Exclude<DataAPIBlobLike, DataAPIBlob> {
     return this.#raw;
   }
 
@@ -94,11 +94,11 @@ export class CqlBlob {
 
   public toString() {
     const type = (this.#raw instanceof ArrayBuffer && 'ArrayBuffer') || (this.#raw instanceof Buffer && 'Buffer') || 'base64';
-    return `CqlBlob(typeof raw=${type}, byteLength=${this.byteLength})`;
+    return `DataAPIBlob(typeof raw=${type}, byteLength=${this.byteLength})`;
   }
 
-  public static isBlobLike(value: unknown): value is CqlBlobLike {
-    return !!value && typeof value === 'object' && (value instanceof CqlBlob || ('$binary' in value && typeof value.$binary === 'string') || value instanceof ArrayBuffer || value instanceof Buffer);
+  public static isBlobLike(value: unknown): value is DataAPIBlobLike {
+    return !!value && typeof value === 'object' && (value instanceof DataAPIBlob || ('$binary' in value && typeof value.$binary === 'string') || value instanceof ArrayBuffer || value instanceof Buffer);
   }
 }
 

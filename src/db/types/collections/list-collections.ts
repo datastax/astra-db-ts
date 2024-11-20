@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { WithTimeout } from '@/src/lib';
-import { CollectionOptions, WithKeyspace } from '@/src/db';
+import { CollectionDefinition, WithKeyspace } from '@/src/db';
 import { SomeDoc } from '@/src/documents';
 
 /**
@@ -68,5 +68,5 @@ export interface FullCollectionInfo {
   /**
    * The creation options for the collections (i.e. the `vector`, `indexing`, and `defaultId` fields).
    */
-  options: CollectionOptions<SomeDoc>,
+  options: CollectionDefinition<SomeDoc>,
 }

@@ -12,5 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type * from './common';
-export type * from './filters';
+export type Filter = Record<string, any>;
+export type UpdateFilter = Record<string, any>;

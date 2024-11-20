@@ -15,55 +15,13 @@
 import { SomeDoc, ToDotNotation } from '@/src/documents';
 import { TypeErr } from '@/src/documents/utils';
 import { IsDate, IsNum } from '@/src/documents/types/utils';
-// The following is some basic usage of the update operators, but please view the above resources for more comprehensive usage (such a pushing multiple docs to an array)
-//
-// @example
-//   ```ts
-// // Set the value of a field (or create it if it doesn't exist)
-// await collection.updateOne({ name: 'John Doe' }, { $set: { name: 'Jane Doe' } });
-//
-// // Set the value of a field if an upsert is performed
-// await collection.updateOne({ a: 0 }, { $setOnInsert: { b: 1 } }, { upsert: true });
-//
-// // Remove a field from the document (if it exists)
-// await collection.updateOne({ name: 'John Doe' }, { $unset: { name: '' } });
-//
-// // Increment the value of a field
-// await collection.updateOne({ name: 'John Doe' }, { $inc: { age: 1 } });
-//
-// // Decrement the value of a field
-// await collection.updateOne({ name: 'John Doe' }, { $inc: { age: -1 } });
-//
-// // Add an element to an array field
-// await collection.updateOne({ name: 'John Doe' }, { $push: { friends: 'Emily' } });
-//
-// // Remove an element from an array field
-// await collection.updateOne({ name: 'John Doe' }, { $pop: { friends: 1 } });
-//
-// // Rename a field in the document
-// await collection.updateOne({ name: 'John Doe' }, { $rename: { name: 'fullName' } });
-//
-// // Set the value of a field to the current date
-// await collection.updateOne({ name: 'John Doe' }, { $currentDate: { now: true } });
-//
-// // Set the field to the min of the specified value and the existing value
-// await collection.updateOne({ name: 'John Doe' }, { $min: { age: 21 } });
-//
-// // Set the field to the max of the specified value and the existing value
-// await collection.updateOne({ name: 'John Doe' }, { $max: { age: 21 } });
-//
-// // Multiply the value of a field by some number
-// await collection.updateOne({ name: 'John Doe' }, { $mul: { age: 2 } });
-//
-// // Add an element to an array field if it does not already exist
-// await collection.updateOne({ name: 'John Doe' }, { $addToSet: { fields: 'Me' } });
-// ```
+
 /**
  * Represents the update filter to specify how to update a document.
  *
- * **If you want stricter type-checking and full auto-complete, see {@link StrictUpdateFilter}.**
+ * **If you want stricter type-checking and full auto-complete, see {@link StrictCollectionUpdateFilter}.**
  *
- * This is a more relaxed version of {@link StrictUpdateFilter} that doesn't type-check nested fields.
+ * This is a more relaxed version of {@link StrictCollectionUpdateFilter} that doesn't type-check nested fields.
  *
  * @example
  * ```typescript
@@ -93,11 +51,11 @@ import { IsDate, IsNum } from '@/src/documents/types/utils';
  * @field $mul - Multiply the value of a field in the document.
  * @field $addToSet - Add an element to an array field in the document if it does not already exist.
  *
- * @see StrictUpdateFilter
+ * @see StrictCollectionUpdateFilter
  *
  * @public
  */
-export interface UpdateFilter<Schema extends SomeDoc> {
+export interface CollectionUpdateFilter<Schema extends SomeDoc> {
   /**
    * Set the value of a field in the document.
    *
@@ -149,7 +107,7 @@ export interface UpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $inc?: NumberUpdate<Schema> & Record<string, number>,
+  $inc?: CollectionNumberUpdate<Schema> & Record<string, number>,
   /**
    * Add an element to an array field in the document.
    *
@@ -162,7 +120,7 @@ export interface UpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $push?: Push<Schema> & SomeDoc,
+  $push?: CollectionPush<Schema> & SomeDoc,
   /**
    * Remove an element from an array field in the document.
    *
@@ -175,7 +133,7 @@ export interface UpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $pop?: Pop<Schema> & Record<string, number>,
+  $pop?: CollectionPop<Schema> & Record<string, number>,
   /**
    * Rename a field in the document.
    *
@@ -201,7 +159,7 @@ export interface UpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $currentDate?: CurrentDate<Schema> & Record<string, boolean>,
+  $currentDate?: CollectionCurrentDate<Schema> & Record<string, boolean>,
   /**
    * Only update the field if the specified value is less than the existing value.
    *
@@ -214,7 +172,7 @@ export interface UpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $min?: (NumberUpdate<Schema> | DateUpdate<Schema>) & Record<string, number | bigint | Date | { $date: number }>,
+  $min?: (CollectionNumberUpdate<Schema> | CollectionDateUpdate<Schema>) & Record<string, number | bigint | Date | { $date: number }>,
   /**
    * Only update the field if the specified value is greater than the existing value.
    *
@@ -227,7 +185,7 @@ export interface UpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $max?: (NumberUpdate<Schema> | DateUpdate<Schema>) & Record<string, number | bigint | Date | { $date: number }>,
+  $max?: (CollectionNumberUpdate<Schema> | CollectionDateUpdate<Schema>) & Record<string, number | bigint | Date | { $date: number }>,
   /**
    * Multiply the value of a field in the document.
    *
@@ -240,7 +198,7 @@ export interface UpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $mul?: StrictNumberUpdate<Schema> & Record<string, number>,
+  $mul?: StrictCollectionNumberUpdate<Schema> & Record<string, number>,
   /**
    * Add an element to an array field in the document if it does not already exist.
    *
@@ -253,15 +211,15 @@ export interface UpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $addToSet?: Push<Schema> & SomeDoc,
+  $addToSet?: CollectionPush<Schema> & SomeDoc,
 }
 
 /**
  * Represents the update filter to specify how to update a document.
  *
- * **If you want relaxed type-checking, see {@link UpdateFilter}.**
+ * **If you want relaxed type-checking, see {@link CollectionUpdateFilter}.**
  *
- * This is a stricter version of {@link UpdateFilter} that type-checks nested fields.
+ * This is a stricter version of {@link CollectionUpdateFilter} that type-checks nested fields.
  *
  * You can use it anywhere by using the `satisfies` keyword, or by creating a temporary const with the StrictUpdateFilter type.
  *
@@ -293,11 +251,11 @@ export interface UpdateFilter<Schema extends SomeDoc> {
  * @field $mul - Multiply the value of a field in the document.
  * @field $addToSet - Add an element to an array field in the document if it does not already exist.
  *
- * @see UpdateFilter
+ * @see CollectionUpdateFilter
  *
  * @public
  */
-export interface StrictUpdateFilter<Schema extends SomeDoc> {
+export interface StrictCollectionUpdateFilter<Schema extends SomeDoc> {
   /**
    * Set the value of a field in the document.
    *
@@ -336,7 +294,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $unset?: StrictUnset<Schema>,
+  $unset?: StrictCollectionUnset<Schema>,
   /**
    * Increment the value of a field in the document if it's potentially a `number`.
    *
@@ -349,7 +307,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $inc?: StrictNumberUpdate<Schema>,
+  $inc?: StrictCollectionNumberUpdate<Schema>,
   /**
    * Add an element to an array field in the document.
    *
@@ -362,7 +320,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $push?: StrictPush<Schema>,
+  $push?: StrictCollectionPush<Schema>,
   /**
    * Remove an element from an array field in the document.
    *
@@ -375,7 +333,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $pop?: StrictPop<Schema>,
+  $pop?: StrictCollectionPop<Schema>,
   /**
    * Rename a field in the document.
    *
@@ -388,7 +346,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $rename?: StrictRename<Schema>,
+  $rename?: StrictCollectionRename<Schema>,
   /**
    * Set the value of a field to the current date.
    *
@@ -401,7 +359,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $currentDate?: CurrentDate<ToDotNotation<Schema>>,
+  $currentDate?: CollectionCurrentDate<ToDotNotation<Schema>>,
   /**
    * Only update the field if the specified value is less than the existing value.
    *
@@ -414,7 +372,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $min?: StrictNumberUpdate<Schema> | StrictDateUpdate<Schema>,
+  $min?: StrictCollectionNumberUpdate<Schema> | StrictCollectionDateUpdate<Schema>,
   /**
    * Only update the field if the specified value is greater than the existing value.
    *
@@ -427,7 +385,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $max?: StrictNumberUpdate<Schema> | StrictDateUpdate<Schema>,
+  $max?: StrictCollectionNumberUpdate<Schema> | StrictCollectionDateUpdate<Schema>,
   /**
    * Multiply the value of a field in the document.
    *
@@ -440,7 +398,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $mul?: StrictNumberUpdate<Schema>,
+  $mul?: StrictCollectionNumberUpdate<Schema>,
   /**
    * Add an element to an array field in the document if it does not already exist.
    *
@@ -453,7 +411,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc> {
    * }
    * ```
    */
-  $addToSet?: StrictPush<Schema>,
+  $addToSet?: StrictCollectionPush<Schema>,
 }
 
 /**
@@ -461,7 +419,7 @@ export interface StrictUpdateFilter<Schema extends SomeDoc> {
  *
  * @public
  */
-export type StrictUnset<Schema extends SomeDoc> = {
+export type StrictCollectionUnset<Schema extends SomeDoc> = {
   [K in keyof ToDotNotation<Schema>]?: '' | true | 1
 }
 
@@ -470,8 +428,8 @@ export type StrictUnset<Schema extends SomeDoc> = {
  *
  * @public
  */
-export type Pop<Schema> ={
-  [K in keyof ArrayUpdate<Schema>]?: number
+export type CollectionPop<Schema> = {
+  [K in keyof CollectionArrayUpdate<Schema>]?: number
 }
 
 /**
@@ -479,8 +437,8 @@ export type Pop<Schema> ={
  *
  * @public
  */
-export type StrictPop<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsArr<InNotation> extends true ? {
-  [K in keyof ArrayUpdate<InNotation>]?: number
+export type StrictCollectionPop<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsArr<InNotation> extends true ? {
+  [K in keyof CollectionArrayUpdate<InNotation>]?: number
 } : TypeErr<'Can not pop on a schema with no arrays'>
 
 /**
@@ -488,10 +446,10 @@ export type StrictPop<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>
  *
  * @public
  */
-export type Push<Schema> = {
-  [K in keyof ArrayUpdate<Schema>]?: (
-    | ArrayUpdate<Schema>[K]
-    | { $each: ArrayUpdate<Schema>[K][], $position?: number }
+export type CollectionPush<Schema> = {
+  [K in keyof CollectionArrayUpdate<Schema>]?: (
+    | CollectionArrayUpdate<Schema>[K]
+    | { $each: CollectionArrayUpdate<Schema>[K][], $position?: number }
   )
 }
 
@@ -500,10 +458,10 @@ export type Push<Schema> = {
  *
  * @public
  */
-export type StrictPush<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsArr<InNotation> extends true ? {
-  [K in keyof ArrayUpdate<InNotation>]?: (
-    | ArrayUpdate<InNotation>[K]
-    | { $each: ArrayUpdate<InNotation>[K][], $position?: number }
+export type StrictCollectionPush<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsArr<InNotation> extends true ? {
+  [K in keyof CollectionArrayUpdate<InNotation>]?: (
+    | CollectionArrayUpdate<InNotation>[K]
+    | { $each: CollectionArrayUpdate<InNotation>[K][], $position?: number }
   )
 } : TypeErr<'Can not perform array operation on a schema with no arrays'>
 
@@ -512,7 +470,7 @@ export type StrictPush<Schema extends SomeDoc, InNotation = ToDotNotation<Schema
  *
  * @public
  */
-export type StrictRename<Schema extends SomeDoc> = {
+export type StrictCollectionRename<Schema extends SomeDoc> = {
   [K in keyof ToDotNotation<Schema>]?: string
 }
 
@@ -521,7 +479,7 @@ export type StrictRename<Schema extends SomeDoc> = {
  *
  * @public
  */
-export type NumberUpdate<Schema> = {
+export type CollectionNumberUpdate<Schema> = {
   [K in keyof Schema as IsNum<Schema[K]> extends true ? K : never]?: number | bigint
 }
 
@@ -530,7 +488,7 @@ export type NumberUpdate<Schema> = {
  *
  * @public
  */
-export type StrictNumberUpdate<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsNum<InNotation> extends true ? {
+export type StrictCollectionNumberUpdate<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsNum<InNotation> extends true ? {
   [K in keyof InNotation as IsNum<InNotation[K]> extends true ? K : never]?: number | bigint
 } : TypeErr<'Can not perform a number operation on a schema with no numbers'>;
 
@@ -539,7 +497,7 @@ export type StrictNumberUpdate<Schema extends SomeDoc, InNotation = ToDotNotatio
  *
  * @public
  */
-export type DateUpdate<Schema> = {
+export type CollectionDateUpdate<Schema> = {
   [K in keyof Schema as ContainsDate<Schema[K]> extends true ? K : never]?: Date | { $date: number }
 };
 
@@ -548,7 +506,7 @@ export type DateUpdate<Schema> = {
  *
  * @public
  */
-export type StrictDateUpdate<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsDate<InNotation> extends true ? {
+export type StrictCollectionDateUpdate<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsDate<InNotation> extends true ? {
   [K in keyof InNotation as ContainsDate<InNotation[K]> extends true ? K : never]?: Date | { $date: number }
 } : TypeErr<'Can not perform a date operation on a schema with no dates'>;
 
@@ -557,7 +515,7 @@ export type StrictDateUpdate<Schema extends SomeDoc, InNotation = ToDotNotation<
  *
  * @public
  */
-export type ArrayUpdate<Schema> = {
+export type CollectionArrayUpdate<Schema> = {
   [K in keyof Schema as any[] extends Schema[K] ? K : never]?: PickArrayTypes<Schema[K]>
 };
 
@@ -566,7 +524,7 @@ export type ArrayUpdate<Schema> = {
  *
  * @public
  */
-export type CurrentDate<Schema> =  {
+export type CollectionCurrentDate<Schema> =  {
   [K in keyof Schema as Schema[K] extends Date | { $date: number } ? K : never]?: boolean
 };
 

@@ -28,7 +28,7 @@ import { TimeoutDescriptor } from '@/src/lib/api/timeouts';
  *
  * @public
  */
-export type DataAPICommandEvents = {
+export type CommandEventMap = {
   /**
    * Emitted when a command is started, before the initial HTTP request is made.
    */
@@ -41,6 +41,9 @@ export type DataAPICommandEvents = {
    * Emitted when a command has errored.
    */
   commandFailed: (event: CommandFailedEvent) => void,
+  /**
+   * Emitted when a command has warnings.
+   */
   commandWarnings: (event: CommandWarningsEvent) => void,
 }
 
@@ -95,13 +98,21 @@ export abstract class CommandEvent extends DataAPIClientEvent {
    *
    * @internal
    */
-  protected constructor(info: DataAPIRequestInfo) {
-    super();
+  protected constructor(name: string, info: DataAPIRequestInfo) {
+    super(name);
     this.command = info.command;
     this.keyspace = info.keyspace || DEFAULT_KEYSPACE;
     this.source = info.collection;
     this.commandName = Object.keys(info.command)[0];
     this.url = info.url;
+  }
+
+  /**
+   * @internal
+   * @protected
+   */
+  protected _desc() {
+    return `(${this.keyspace}${this.source ? `.${this.source}` : ''}) ${this.commandName}`;
   }
 }
 
@@ -127,12 +138,13 @@ export class CommandStartedEvent extends CommandEvent {
    * @internal
    */
   constructor(info: DataAPIRequestInfo) {
-    super(info);
+    super('CommandStarted', info);
     this.timeout = info.timeoutManager.initial();
   }
 
   public formatted(): string {
-    return `[CommandStartedEvent] ${this.commandName} in ${this.keyspace}${this.source ? `.${this.source}` : ''}`;
+    // return `${super.formatted()}: ${this.commandName} in ${this.keyspace}${this.source ? `.${this.source}` : ''}`;
+    return `${super.formatted()}: ${this._desc()}`;
   }
 }
 
@@ -163,13 +175,13 @@ export class CommandSucceededEvent extends CommandEvent {
    * @internal
    */
   constructor(info: DataAPIRequestInfo, reply: RawDataAPIResponse, started: number) {
-    super(info);
+    super('CommandSucceeded', info);
     this.duration = performance.now() - started;
     this.resp = reply;
   }
 
   public formatted(): string {
-    return `[CommandSucceededEvent] ${this.commandName} in ${this.keyspace}${this.source ? `.${this.source}` : ''} (took ${this.duration}ms)`;
+    return `${super.formatted()}: ${this._desc()} (took ${~~this.duration}ms)`;
   }
 }
 
@@ -202,13 +214,13 @@ export class CommandFailedEvent extends CommandEvent {
    * @internal
    */
   constructor(info: DataAPIRequestInfo, error: Error, started: number) {
-    super(info);
+    super('CommandFailed', info);
     this.duration = performance.now() - started;
     this.error = error;
   }
 
   public formatted(): string {
-    return `[CommandFailedEvent] ${this.commandName} in ${this.keyspace}${this.source ? `.${this.source}` : ''} (took ${this.duration}ms) - '${this.error.message}'`;
+    return `${super.formatted()}: ${this._desc()} (took ${~~this.duration}ms) - '${this.error.message}'`;
   }
 }
 
@@ -216,11 +228,11 @@ export class CommandWarningsEvent extends CommandEvent {
   public readonly warnings: DataAPIErrorDescriptor[];
 
   constructor(info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[]) {
-    super(info);
+    super('CommandWarnings', info);
     this.warnings = warnings;
   }
 
   public formatted(): string {
-    return `[CommandWarningsEvent] ${this.commandName} in ${this.keyspace}${this.source ? `.${this.source}` : ''} '${this.warnings.map(w => w.message).join(', ')}'`;
+    return `${super.formatted()}: ${this._desc()} '${this.warnings.map(w => w.message).join(', ')}'`;
   }
 }
