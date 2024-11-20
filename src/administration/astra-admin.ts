@@ -291,7 +291,7 @@ export class AstraAdmin {
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases/${id}`,
-      methodName: 'dbInfo',
+      methodName: 'admin.dbInfo',
     }, tm);
 
     return buildAstraDatabaseAdminInfo(resp.data!, this.#environment);
@@ -348,7 +348,7 @@ export class AstraAdmin {
       method: HttpMethods.Get,
       path: `/databases`,
       params: params,
-      methodName: 'listDatabases',
+      methodName: 'admin.listDatabases',
     }, tm);
 
     return resp.data!.map((d: SomeDoc) => buildAstraDatabaseAdminInfo(d, this.#environment));
@@ -421,7 +421,7 @@ export class AstraAdmin {
       method: HttpMethods.Post,
       path: '/databases',
       data: definition,
-      methodName: 'createDatabase',
+      methodName: 'admin.createDatabase',
     }, {
       id: (resp) => resp.headers.location,
       target: 'ACTIVE',
@@ -469,7 +469,7 @@ export class AstraAdmin {
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: `/databases/${id}/terminate`,
-      methodName: 'dropDatabase',
+      methodName: 'admin.dropDatabase',
     }, {
       id: id,
       target: 'TERMINATED',
