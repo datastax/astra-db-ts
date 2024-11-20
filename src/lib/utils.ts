@@ -39,6 +39,8 @@ export function buildAstraEndpoint(id: string, region: string, env: 'dev' | 'tes
   return 'https://' + id + '-' + region + `.apps${env === 'prod' ? '' : `-${env}`}.astra.datastax.com`;
 }
 
+export function toArray<T>(t: T | T[]): T[]
+export function toArray<T>(t: T | readonly T[]): readonly T[]
 export function toArray<T>(t: T | readonly T[]): readonly T[] {
   return Array.isArray(t) ? t : [t] as readonly [T];
 }

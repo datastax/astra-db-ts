@@ -221,7 +221,7 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
  *
  * This is a stricter version of {@link CollectionUpdateFilter} that type-checks nested fields.
  *
- * You can use it anywhere by using the `satisfies` keyword, or by creating a temporary const with the StrictUpdateFilter type.
+ * You can use it anywhere by using the `satisfies` keyword, or by creating a temporary const with the StrictCollectionUpdateFilter type.
  *
  * @example
  * ```typescript
@@ -235,7 +235,7 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
  *   $inc: {
  *     'customer.age': 1
  *   },
- * } satisfies StrictUpdateFilter<SomeDoc>
+ * } satisfies StrictCollectionUpdateFilter<SomeDoc>
  * ```
  *
  * @field $set - Set the value of a field in the document.

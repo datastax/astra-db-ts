@@ -33,10 +33,10 @@ import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { AlterTableOptions, AlterTableSchema, Db, ListTableDefinition, TableOptions } from '@/src/db';
 import { DeepPartial, WithTimeout } from '@/src/lib';
 import { $CustomInspect } from '@/src/lib/constants';
-import { mkTableSerDes } from '@/src/documents/tables/ser-des';
 import JBI from 'json-bigint';
 import { TableFindCursor } from '@/src/documents/tables/cursor';
 import { withJbiNullProtoFix } from '@/src/lib/utils';
+import { TableSerDes } from '@/src/documents/tables/ser-des';
 
 const jbi = JBI({ storeAsString: true });
 
@@ -274,7 +274,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
     };
 
     this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
-    this.#commands = new CommandImpls(this, this.#httpClient, mkTableSerDes(opts?.serdes));
+    this.#commands = new CommandImpls(this, this.#httpClient, new TableSerDes(opts?.serdes));
     this.#db = db;
 
     Object.defineProperty(this, $CustomInspect, {

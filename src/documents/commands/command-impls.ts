@@ -13,14 +13,15 @@
 // limitations under the License.
 
 import { DataAPIHttpClient } from '@/src/lib/api/clients';
-import { DataAPISerDes } from '@/src/lib/api/ser-des';
+import { SomeSerDes } from '@/src/lib/api/ser-des';
 import {
   Collection,
   CollectionDeleteManyError,
   CollectionInsertManyOptions,
   CollectionUpdateManyError,
   DataAPIDetailedErrorDescriptor,
-  DataAPIResponseError, Filter,
+  DataAPIResponseError,
+  Filter,
   FindCursor,
   GenericDeleteManyResult,
   GenericDeleteOneOptions,
@@ -37,7 +38,8 @@ import {
   GenericUpdateOneOptions,
   GenericUpdateResult,
   SomeDoc,
-  Table, UpdateFilter,
+  Table,
+  UpdateFilter,
 } from '@/src/documents';
 import { nullish, WithTimeout } from '@/src/lib';
 import { insertManyOrdered, insertManyUnordered } from '@/src/documents/commands/helpers/insertion';
@@ -49,10 +51,10 @@ import stableStringify from 'safe-stable-stringify';
 
 export class CommandImpls<Schema extends SomeDoc, ID> {
   readonly #httpClient: DataAPIHttpClient;
-  readonly #serdes: DataAPISerDes;
+  readonly #serdes: SomeSerDes;
   readonly #tOrC: Table<Schema> | Collection<Schema>;
 
-  constructor(tOrC: Table<Schema> | Collection<Schema>, httpClient: DataAPIHttpClient, serdes: DataAPISerDes) {
+  constructor(tOrC: Table<Schema> | Collection<Schema>, httpClient: DataAPIHttpClient, serdes: SomeSerDes) {
     this.#httpClient = httpClient;
     this.#serdes = serdes;
     this.#tOrC = tOrC;

@@ -62,7 +62,7 @@ export type CollectionFilter<Schema extends SomeDoc> = {
  *
  * This is a stricter version of {@link CollectionFilter} that type-checks nested fields.
  *
- * You can use it anywhere by using the `satisfies` keyword, or by creating a temporary const with the StrictFilter type.
+ * You can use it anywhere by using the `satisfies` keyword, or by creating a temporary const with the StrictCollectionFilter type.
  *
  * @example
  * ```typescript
@@ -76,7 +76,7 @@ export type CollectionFilter<Schema extends SomeDoc> = {
  *     { _id: { $in: ['abc', 'def'] } },
  *     { $not: { arr: { $size: 0 } } },
  *   ]
- * } satisfies StrictFilter<BasicSchema>);
+ * } satisfies StrictCollectionFilter<BasicSchema>);
  * ```
  *
  * @see CollectionFilter

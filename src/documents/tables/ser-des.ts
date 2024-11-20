@@ -23,14 +23,12 @@ import {
   SomeRow,
   UUID,
 } from '@/src/documents';
-import { DataAPIDesCtx, DataAPISerCtx, mkSerDes } from '@/src/lib/api/ser-des';
+import { DataAPIDesCtx, DataAPISerCtx, DataAPISerDes, DataAPISerDesConfig } from '@/src/lib/api/ser-des';
 import {
   ListTableColumnDefinitions,
   ListTableKnownColumnDefinition,
   ListTableUnsupportedColumnDefinition,
 } from '@/src/db';
-import { OneOrMany } from '@/src/lib/types';
-import { toArray } from '@/src/lib/utils';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
 import BigNumber from 'bignumber.js';
 
@@ -49,27 +47,24 @@ export interface TableDesCtx extends DataAPIDesCtx {
 
 export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: SomeDoc) => any;
 
-export interface TableSerDesConfig<Schema extends SomeRow> {
-  serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: TableSerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>,
-  deserialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: TableDesCtx) => [any, boolean?] | boolean | undefined | void>,
+export interface TableSerDesConfig<Schema extends SomeRow> extends DataAPISerDesConfig<Schema, TableSerCtx<Schema>, TableDesCtx> {
   parsers?: Record<string, TableColumnTypeParser>,
-  mutateInPlace?: boolean,
   sparseData?: boolean,
 }
 
-/**
- * @internal
- */
-export const mkTableSerDes = <Schema extends SomeRow>(cfg: TableSerDesConfig<Schema> | undefined) => mkSerDes({
-  serializer: [...toArray(cfg?.serialize ?? []), DefaultTableSerDesCfg.serialize],
-  deserializer: [...toArray(cfg?.deserialize ?? []), DefaultTableSerDesCfg.deserialize],
-  adaptSerCtx: (_ctx) => {
-    const ctx = _ctx as TableSerCtx<Schema>;
+export class TableSerDes<Schema extends SomeRow> extends DataAPISerDes<Schema, TableSerCtx<Schema>, TableDesCtx> {
+  declare protected readonly _cfg: TableSerDesConfig<Schema>;
+
+  public constructor(cfg?: TableSerDesConfig<Schema>) {
+    super(TableSerDes.mergeConfig(DefaultTableSerDesCfg, cfg));
+  }
+
+  public override adaptSerCtx(ctx: TableSerCtx<Schema>): TableSerCtx<Schema> {
     ctx.bigNumsPresent = false;
     return ctx;
-  },
-  adaptDesCtx: (_ctx) => {
-    const ctx = _ctx as TableDesCtx;
+  }
+
+  public override adaptDesCtx(ctx: TableDesCtx): TableDesCtx {
     const status = ctx.rawDataApiResp.status;
 
     if (status?.primaryKeySchema) {
@@ -85,13 +80,23 @@ export const mkTableSerDes = <Schema extends SomeRow>(cfg: TableSerDesConfig<Sch
       throw new Error('No schema found in response');
     }
 
-    ctx.populateSparseData = cfg?.sparseData !== true;
-    ctx.parsers = { ...DefaultTableSerDesCfg.parsers, ...cfg?.parsers };
+    ctx.populateSparseData = this._cfg?.sparseData !== true;
+    ctx.parsers = { ...this._cfg?.parsers };
     return ctx;
-  },
-  bigNumsPresent: (ctx) => ctx.bigNumsPresent,
-  mutateInPlace: cfg?.mutateInPlace,
-});
+  }
+
+  public override bigNumsPresent(ctx: TableSerCtx<Schema>): boolean {
+    return ctx.bigNumsPresent;
+  }
+
+  public static mergeConfig<Schema extends SomeDoc>(...cfg: (TableSerDesConfig<Schema> | undefined)[]): TableSerDesConfig<Schema> {
+    return {
+      sparseData: cfg.reduce<boolean | undefined>((acc, c) => c?.sparseData ?? acc, undefined),
+      parsers: cfg.reduce<Record<string, TableColumnTypeParser>>((acc, c) => ({ ...acc, ...c?.parsers }), {}),
+      ...super._mergeConfig(...cfg),
+    };
+  }
+}
 
 const DefaultTableSerDesCfg = {
   serialize(_, value, ctx) {

@@ -44,7 +44,7 @@ const parseSerDes: Parser<DbSerDesConfig> = (cfg, field) => ({
   mutateInPlace: p.parse('boolean?')(cfg.mutateInPlace, `${field}.mutateInPlace`),
 });
 
-const parseTableSerDes: Parser<TableSerDesConfig<SomeDoc>> = (cfg, field) => ({
+const parseTableSerDes: Parser<TableSerDesConfig<SomeDoc>, SomeDoc> = (cfg, field) => ({
   serialize: p.parse('function?')(cfg.serialize, `${field}.serialize`),
   deserialize: p.parse('function?')(cfg.deserialize, `${field}.deserialize`),
   parsers: p.parse('object?', parseTableColumnTypeParser)(cfg.parsers, `${field}.parsers`),
@@ -52,7 +52,7 @@ const parseTableSerDes: Parser<TableSerDesConfig<SomeDoc>> = (cfg, field) => ({
   sparseData: p.parse('boolean?')(cfg.sparseData, `${field}.sparseData`),
 });
 
-const parseCollectionSerDes: Parser<CollectionSerDesConfig<SomeDoc>> = (cfg, field) => ({
+const parseCollectionSerDes: Parser<CollectionSerDesConfig<SomeDoc>, SomeDoc> = (cfg, field) => ({
   serialize: p.parse('function?')(cfg.serialize, `${field}.serialize`),
   deserialize: p.parse('function?')(cfg.deserialize, `${field}.deserialize`),
   mutateInPlace: p.parse('boolean?')(cfg.mutateInPlace, `${field}.mutateInPlace`),

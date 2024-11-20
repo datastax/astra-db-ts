@@ -30,6 +30,9 @@ export type {
 export type {
   DataAPISerCtx,
   DataAPIDesCtx,
+  DataAPISerDesConfig,
+  DataAPIDesFn,
+  DataAPISerFn,
 } from './ser-des';
 
 export type {

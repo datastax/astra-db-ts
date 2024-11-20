@@ -18,7 +18,7 @@ import type { Filter, Projection, Sort } from '@/src/documents/types';
 import type { DeepPartial, nullish } from '@/src/lib';
 import { normalizedSort } from '@/src/documents/utils';
 import { $CustomInspect } from '@/src/lib/constants';
-import type { DataAPISerDes } from '@/src/lib/api/ser-des';
+import { SomeSerDes } from '@/src/lib/api/ser-des';
 import { DataAPIError } from '@/src/documents/errors';
 import type { Table } from '@/src/documents/tables';
 import { TimeoutManager } from '@/src/lib/api/timeouts';
@@ -115,7 +115,7 @@ interface InternalGetMoreCommand {
  */
 export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   readonly #parent: Table | Collection;
-  readonly #serdes: DataAPISerDes;
+  readonly #serdes: SomeSerDes;
 
   readonly #options: GenericFindOptions;
   readonly #filter: [Filter, boolean];
@@ -132,7 +132,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(parent: Table | Collection, serdes: DataAPISerDes, filter: [Filter, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
+  constructor(parent: Table | Collection, serdes: SomeSerDes, filter: [Filter, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
     this.#parent = parent;
     this.#serdes = serdes;
     this.#filter = filter;
@@ -209,7 +209,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns A new cursor with the new filter set.
    *
-   * @see StrictFilter
+   * @see StrictCollectionFilter
    */
   public filter(filter: Filter): FindCursor<T,  TRaw> {
     if (this.#state !== 'idle') {
