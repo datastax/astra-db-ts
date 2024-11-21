@@ -25,6 +25,9 @@ export interface CollectionSerDesConfig<Schema extends SomeDoc> extends DataAPIS
   enableBigNumbers?: boolean,
 }
 
+/**
+ * @internal
+ */
 export class CollectionSerDes<Schema extends SomeRow> extends DataAPISerDes<Schema, CollSerCtx<Schema>, CollDesCtx> {
   declare protected readonly _cfg: CollectionSerDesConfig<Schema>;
 
