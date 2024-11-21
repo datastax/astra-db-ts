@@ -23,6 +23,9 @@ import {
 import { GenericInsertManyDocumentResponse, SomeDoc, SomeId } from '@/src/documents';
 import { TimeoutManager } from '@/src/lib/api/timeouts';
 
+/**
+ * @internal
+ */
 export const insertManyOrdered = async <ID>(
   httpClient: DataAPIHttpClient,
   serdes: SomeSerDes,
@@ -54,6 +57,9 @@ export const insertManyOrdered = async <ID>(
   return insertedIds;
 };
 
+/**
+ * @internal
+ */
 export const insertManyUnordered = async <ID>(
   httpClient: DataAPIHttpClient,
   serdes: SomeSerDes,

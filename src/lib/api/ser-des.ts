@@ -27,7 +27,6 @@ export interface DataAPIDesCtx {
   depth: number,
 }
 
-
 export type DataAPISerFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | void;
 
 export type DataAPIDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | void;

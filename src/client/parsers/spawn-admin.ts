@@ -18,6 +18,9 @@ import { Logger } from '@/src/lib/logging/logger';
 import { AdminOptions } from '@/src/client';
 import { Timeouts } from '@/src/lib/api/timeouts';
 
+/**
+ * @internal
+ */
 export const parseAdminSpawnOpts: Parser<AdminOptions | undefined, unknown> = (raw, field) => {
   const opts = p.parse('object?')<AdminOptions>(raw, field);
 

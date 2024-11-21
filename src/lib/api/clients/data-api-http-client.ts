@@ -69,6 +69,9 @@ type EmissionStrategies = {
   Admin: EmissionStrategy<'admin'>,
 }
 
+/**
+ * @internal
+ */
 export const EmissionStrategy: EmissionStrategies = {
   Normal: (logger) => ({
     emitCommandStarted: logger.commandStarted,
@@ -109,6 +112,9 @@ interface DataAPIHttpClientOpts<Kind extends ClientKind> extends HTTPClientOptio
   tokenProvider: TokenProvider | undefined,
 }
 
+/**
+ * @internal
+ */
 export interface BigNumberHack {
   parseWithBigNumbers(json: string): boolean,
   parser: {

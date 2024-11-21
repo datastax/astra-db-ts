@@ -24,7 +24,6 @@ export type {
 
 export type {
   RawDataAPIResponse,
-  CuratedAPIResponse,
 } from './types';
 
 export type {

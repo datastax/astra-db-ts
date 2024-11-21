@@ -52,6 +52,9 @@ export interface TableSerDesConfig<Schema extends SomeRow> extends DataAPISerDes
   sparseData?: boolean,
 }
 
+/**
+ * @internal
+ */
 export class TableSerDes<Schema extends SomeRow> extends DataAPISerDes<Schema, TableSerCtx<Schema>, TableDesCtx> {
   declare protected readonly _cfg: TableSerDesConfig<Schema>;
 

@@ -14,11 +14,24 @@
 
 import { isNullish } from '@/src/lib/utils';
 
+/**
+ * @internal
+ */
 export type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends (<T>() => T extends Y ? 1 : 2) ? true : false;
+
+/**
+ * @internal
+ */
 export const EqualityProof = <X, Y, _ extends Equal<X, Y>>() => {};
 
+/**
+ * @internal
+ */
 export type Parser<A, R = A> = (input: R, field: string) => A;
 
+/**
+ * @internal
+ */
 export const isNonEmpty = <A>(xs: A[]): xs is [A, ...A[]] => {
   return xs.length !== 0;
 };
@@ -42,6 +55,9 @@ type LitTypeOf<T extends string> =
 
 type ParseRes<T extends string, X> = T extends `${string}?` ? X | undefined : X;
 
+/**
+ * @internal
+ */
 export const p = {
   includes<X>(xs: readonly X[], x: unknown): x is X {
     return (xs as readonly X[]).includes(x as X);

@@ -20,6 +20,9 @@ import { Logger } from '@/src/lib/logging/logger';
 import { CollectionSerDesConfig, SomeDoc, TableColumnTypeParser, TableSerDesConfig } from '@/src/documents';
 import { Timeouts } from '@/src/lib/api/timeouts';
 
+/**
+ * @internal
+ */
 export const parseDbSpawnOpts: Parser<DbOptions | undefined, unknown> = (raw, field) => {
   const opts = p.parse('object?')<DbOptions>(raw, field);
 
