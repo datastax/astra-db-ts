@@ -26,10 +26,6 @@ export class DataAPIVector {
   public [$SerializeForTable]: () => { $binary: string } | number[];
   public [$SerializeForCollection]: () => { $binary: string } | number[];
 
-  public static of(vector: DataAPIVectorLike): DataAPIVector {
-    return new DataAPIVector(vector);
-  }
-
   public constructor(vector: DataAPIVectorLike, validate = true) {
     if (validate && !DataAPIVector.isVectorLike(vector)) {
       throw new Error(`Invalid vector type; expected number[], base64 string, Float32Array, or DataAPIVector; got '${vector}'`);
