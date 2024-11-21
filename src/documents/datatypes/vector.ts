@@ -18,15 +18,13 @@ import { $CustomInspect } from '@/src/lib/constants';
 
 export type DataAPIVectorLike = number[] | { $binary: string } | Float32Array | DataAPIVector;
 
+export const vector = (v: DataAPIVectorLike) => new DataAPIVector(v);
+
 export class DataAPIVector {
   readonly #vector: Exclude<DataAPIVectorLike, DataAPIVector>;
 
   public [$SerializeForTable]: () => { $binary: string } | number[];
   public [$SerializeForCollection]: () => { $binary: string } | number[];
-
-  public static of(vector: DataAPIVectorLike): DataAPIVector {
-    return new DataAPIVector(vector);
-  }
 
   public constructor(vector: DataAPIVectorLike, validate = true) {
     if (validate && !DataAPIVector.isVectorLike(vector)) {

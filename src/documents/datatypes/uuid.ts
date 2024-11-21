@@ -19,6 +19,8 @@ import { $SerializeForTable } from '@/src/documents/tables/ser-des';
 
 const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
 
+export const uuid = (uuid: string) => new UUID(uuid);
+
 /**
  * Represents a UUID that can be used as an _id in the DataAPI.
  *

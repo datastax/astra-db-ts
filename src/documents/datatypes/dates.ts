@@ -16,6 +16,8 @@ import { isNullish } from '@/src/lib/utils';
 import { $CustomInspect } from '@/src/lib/constants';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des';
 
+export const date = (date: string | Date | DataAPIDateComponents) => new DataAPIDate(date);
+
 export interface DataAPIDateComponents {
   year: number,
   month: number,
@@ -83,6 +85,8 @@ export class DataAPIDate {
   }
 }
 
+export const duration = (duration: string | Partial<DataAPIDurationComponents> | [Date | DataAPITimestamp, Date | DataAPITimestamp]) => new DataAPIDuration(duration);
+
 export interface DataAPIDurationComponents {
   months: number,
   days: number,
@@ -143,6 +147,8 @@ export class DataAPIDuration {
     return this.#duration;
   }
 }
+
+export const time = (time: string | Date | DataAPITimeComponents) => new DataAPITime(time);
 
 export interface DataAPITimeComponents {
   hours: number,
@@ -214,6 +220,8 @@ export class DataAPITime {
     return this.#time;
   }
 }
+
+export const timestamp = (timestamp: string | Date | DataAPITimestampComponents) => new DataAPITimestamp(timestamp);
 
 export interface DataAPITimestampComponents {
   year: number,

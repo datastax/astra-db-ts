@@ -2039,6 +2039,11 @@ export type TableUpdateManyResult<Schema extends SomeRow> = GenericUpdateResult<
 // @public
 export type TableUpdateOneOptions = GenericUpdateOneOptions;
 
+// Warning: (ae-forgotten-export) The symbol "Tense_2" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export function Tense(this: Tense_2): Tense_2;
+
 // @public
 export type TimedOutCategories = OneOrMany<keyof TimeoutDescriptor> | 'provided';
 
