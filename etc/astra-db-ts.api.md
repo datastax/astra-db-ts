@@ -259,6 +259,9 @@ export const blob: (blob: DataAPIBlobLike) => DataAPIBlob;
 // @public
 export type Caller = readonly [name: string, version?: string];
 
+// @public (undocumented)
+export type CollDesCtx = DataAPIDesCtx;
+
 // @public
 export class Collection<Schema extends SomeDoc = SomeDoc> {
     // Warning: (ae-forgotten-export) The symbol "DataAPIHttpClient" needs to be exported by the entry point index.d.ts
@@ -379,7 +382,6 @@ export type CollectionFilterExpr<Elem> = Elem | (CollectionFilterOps<Elem> & {
 });
 
 // Warning: (ae-forgotten-export) The symbol "IsNum" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "EmptyObj" needs to be exported by the entry point index.d.ts
 // Warning: (ae-forgotten-export) The symbol "IsDate" needs to be exported by the entry point index.d.ts
 //
 // @public
@@ -484,9 +486,6 @@ export type CollectionReplaceOneOptions = GenericReplaceOneOptions;
 // @public
 export type CollectionReplaceOneResult<Schema extends SomeDoc> = GenericUpdateResult<IdOf<Schema>, 0 | 1>;
 
-// Warning: (ae-forgotten-export) The symbol "CollSerCtx" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "CollDesCtx" needs to be exported by the entry point index.d.ts
-//
 // @public (undocumented)
 export interface CollectionSerDesConfig<Schema extends SomeDoc> extends DataAPISerDesConfig<Schema, CollSerCtx<Schema>, CollDesCtx> {
     // (undocumented)
@@ -538,6 +537,9 @@ export interface CollectionVectorOptions {
     service?: VectorizeServiceOptions;
     sourceModel?: string;
 }
+
+// @public (undocumented)
+export type CollSerCtx<Schema extends SomeDoc> = DataAPISerCtx<Schema>;
 
 // @public
 export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
@@ -663,9 +665,6 @@ export type CreateTablePrimaryKeyDefinition = ShortCreateTablePrimaryKeyDefiniti
 export abstract class CumulativeOperationError extends DataAPIResponseError {
     readonly partialResult: unknown;
 }
-
-// @public @deprecated
-export type CuratedAPIResponse = FetcherResponseInfo;
 
 // @public (undocumented)
 export class CursorError extends DataAPIError {
@@ -1234,6 +1233,9 @@ export interface EmbeddingProviderTokenInfo {
     accepted: string;
     forwarded: string;
 }
+
+// @public
+export type EmptyObj = {};
 
 // @public
 export class FailedToLoadDefaultClientError extends Error {
