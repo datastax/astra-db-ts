@@ -253,6 +253,9 @@ export interface BaseAstraDbInfo {
     status: AstraDbStatus;
 }
 
+// @public (undocumented)
+export const blob: (blob: DataAPIBlobLike) => DataAPIBlob;
+
 // @public
 export type Caller = readonly [name: string, version?: string];
 
@@ -1008,8 +1011,6 @@ export class DataAPIVector {
     // (undocumented)
     get length(): number;
     // (undocumented)
-    static of(vector: DataAPIVectorLike): DataAPIVector;
-    // (undocumented)
     raw(): Exclude<DataAPIVectorLike, DataAPIVector>;
     // (undocumented)
     toString(): string;
@@ -1019,6 +1020,9 @@ export class DataAPIVector {
 export type DataAPIVectorLike = number[] | {
     $binary: string;
 } | Float32Array | DataAPIVector;
+
+// @public (undocumented)
+export const date: (date?: string | Date | DataAPIDateComponents) => DataAPIDate;
 
 // @public
 export class Db {
@@ -1170,6 +1174,9 @@ export interface DropVectorizeOperation<Schema extends SomeRow> {
     // (undocumented)
     columns: Cols<Schema>[];
 }
+
+// @public (undocumented)
+export const duration: (duration: string | Partial<DataAPIDurationComponents> | [Date | DataAPITimestamp, Date | DataAPITimestamp]) => DataAPIDuration;
 
 // @public
 export class EmbeddingAPIKeyHeaderProvider extends EmbeddingHeadersProvider {
@@ -1512,6 +1519,9 @@ export type IdOf<Doc> = Doc extends {
 } ? Id : SomeId;
 
 // @public (undocumented)
+export const inet: (address: string, version?: 4 | 6) => InetAddress;
+
+// @public (undocumented)
 export class InetAddress {
     // (undocumented)
     [$SerializeForTable]: () => string;
@@ -1678,6 +1688,9 @@ export class ObjectId {
     getTimestamp(): Date;
     toString(): string;
 }
+
+// @public (undocumented)
+export const objectId: (id: string | number | null) => ObjectId;
 
 // @public
 export type OneOrMany<T> = T | readonly T[];
@@ -2039,10 +2052,8 @@ export type TableUpdateManyResult<Schema extends SomeRow> = GenericUpdateResult<
 // @public
 export type TableUpdateOneOptions = GenericUpdateOneOptions;
 
-// Warning: (ae-forgotten-export) The symbol "Tense_2" needs to be exported by the entry point index.d.ts
-//
 // @public (undocumented)
-export function Tense(this: Tense_2): Tense_2;
+export const time: (time?: string | Date | DataAPITimeComponents) => DataAPITime;
 
 // @public
 export type TimedOutCategories = OneOrMany<keyof TimeoutDescriptor> | 'provided';
@@ -2056,6 +2067,9 @@ export interface TimeoutDescriptor {
     requestTimeoutMs: number;
     tableAdminTimeoutMs: number;
 }
+
+// @public (undocumented)
+export const timestamp: (timestamp?: string | Date | DataAPITimestampComponents) => DataAPITimestamp;
 
 // Warning: (ae-forgotten-export) The symbol "Merge" needs to be exported by the entry point index.d.ts
 // Warning: (ae-forgotten-export) The symbol "_ToDotNotation" needs to be exported by the entry point index.d.ts
@@ -2117,6 +2131,12 @@ export class UUID {
     static v7(): UUID;
     readonly version: number;
 }
+
+// @public (undocumented)
+export const uuid: (uuid: string | 4 | 7) => UUID;
+
+// @public (undocumented)
+export const vector: (v: DataAPIVectorLike) => DataAPIVector;
 
 // @public (undocumented)
 export interface VectorCreateTableColumnDefinition {

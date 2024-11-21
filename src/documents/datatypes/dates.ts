@@ -19,7 +19,7 @@ import { $SerializeForCollection } from '@/src/documents';
 
 export const date = (date?: string | Date | DataAPIDateComponents) => new DataAPIDate(date);
 
-export const date = (date: string | Date | DataAPIDateComponents) => new DataAPIDate(date);
+export const date = (date?: string | Date | DataAPIDateComponents) => new DataAPIDate(date);
 
 export interface DataAPIDateComponents {
   year: number,
