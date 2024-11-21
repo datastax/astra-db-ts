@@ -22,7 +22,7 @@ Use your preferred package manager to install `@datastax/astra-db-ts`. Note that
 
 Get the *API endpoint* and your *application token* for your Astra DB instance @ [astra.datastax.com](https://astra.datastax.com).
 
-Try the following code after setting the following environment variables:
+### Collections
 
 ```typescript
 import { DataAPIClient, VectorDoc, UUID, ObjectId } from '@datastax/astra-db-ts';
@@ -37,68 +37,146 @@ const client = new DataAPIClient('*TOKEN*');
 const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
 
 (async () => {
-  try {
-    // Creates collections, or gets it if it already exists with same options
-    const collection = await db.createCollection<Idea>('vector_5_collection', {
-      vector: {
-        dimension: 5,
-        metric: 'cosine',
-      },
-      checkExists: false,
-    });
+  // Creates collections, or gets it if it already exists with same options
+  const collection = await db.createCollection<Idea>('vector_5_collection', {
+    vector: {
+      dimension: 5,
+      metric: 'cosine',
+    },
+    checkExists: false,
+  });
 
-    // Insert many ideas into the collections
-    const ideas = [
-      {
-        idea: 'An AI quilt to help you sleep forever',
-        $vector: [0.1, 0.15, 0.3, 0.12, 0.05],
-      },
-      {
-        _id: new UUID('e7f1f3a0-7e3d-11eb-9439-0242ac130002'),
-        idea: 'Vision Vector Frame—A deep learning display that controls your mood',
-        $vector: [0.1, 0.05, 0.08, 0.3, 0.6],
-      },
-      {
-        idea: 'A smartwatch that tells you what to eat based on your mood',
-        $vector: [0.2, 0.3, 0.1, 0.4, 0.15],
-      },
-    ];
-    await collection.insertMany(ideas);
+  // Insert many ideas into the collections
+  const ideas = [
+    {
+      idea: 'An AI quilt to help you sleep forever',
+      $vector: [0.1, 0.15, 0.3, 0.12, 0.05],
+    },
+    {
+      _id: new UUID('e7f1f3a0-7e3d-11eb-9439-0242ac130002'),
+      idea: 'Vision Vector Frame—A deep learning display that controls your mood',
+      $vector: [0.1, 0.05, 0.08, 0.3, 0.6],
+    },
+    {
+      idea: 'A smartwatch that tells you what to eat based on your mood',
+      $vector: [0.2, 0.3, 0.1, 0.4, 0.15],
+    },
+  ];
+  await collection.insertMany(ideas);
 
-    // Insert a specific idea into the collections
-    const sneakersIdea = {
-      _id: new ObjectId('507f191e810c19729de860ea'),
-      idea: 'ChatGPT-integrated sneakers that talk to you',
-      $vector: [0.45, 0.09, 0.01, 0.2, 0.11],
-    }
-    await collection.insertOne(sneakersIdea);
-
-    // Actually, let's change that idea
-    await collection.updateOne(
-      { _id: sneakersIdea._id },
-      { $set: { idea: 'Gemini-integrated sneakers that talk to you' } },
-    );
-
-    // Get similar results as desired
-    const cursor = collection.find({}, {
-      vector: [0.1, 0.15, 0.3, 0.12, 0.05],
-      includeSimilarity: true,
-      limit: 2,
-    });
-
-    for await (const doc of cursor) {
-      // Prints the following:
-      // - An AI quilt to help you sleep forever: 1
-      // - A smartwatch that tells you what to eat based on your mood: 0.85490346
-      console.log(`${doc.idea}: ${doc.$similarity}`);
-    }
-
-    // Cleanup (if desired)
-    await collection.drop();
-  } finally {
-    // Cleans up all open http sessions
-    await client.close();
+  // Insert a specific idea into the collections
+  const sneakersIdea = {
+    _id: new ObjectId('507f191e810c19729de860ea'),
+    idea: 'ChatGPT-integrated sneakers that talk to you',
+    $vector: [0.45, 0.09, 0.01, 0.2, 0.11],
   }
+  await collection.insertOne(sneakersIdea);
+
+  // Actually, let's change that idea
+  await collection.updateOne(
+    { _id: sneakersIdea._id },
+    { $set: { idea: 'Gemini-integrated sneakers that talk to you' } },
+  );
+
+  // Get similar results as desired
+  const cursor = collection.find({}, {
+    vector: [0.1, 0.15, 0.3, 0.12, 0.05],
+    includeSimilarity: true,
+    limit: 2,
+  });
+
+  for await (const doc of cursor) {
+    // Prints the following:
+    // - An AI quilt to help you sleep forever: 1
+    // - A smartwatch that tells you what to eat based on your mood: 0.85490346
+    console.log(`${doc.idea}: ${doc.$similarity}`);
+  }
+
+  // Cleanup (if desired)
+  await collection.drop();
+})();
+```
+
+### Tables
+
+```typescript
+import { CreateTableDefinition, DataAPIClient, DataAPIVector, InferTableSchema } from '@datastax/astra-db-ts';
+
+// Connect to the db
+const client = new DataAPIClient();
+const db = client.db('*DB_ENDPOINT*', { token: '*TOKEN*' });
+
+// Example table schema using bespoke Data API table definition syntax
+const TableDefinition = <const>{
+  columns: {
+    id: 'int',
+    summary: 'text',
+    tags: { type: 'set', valueType: 'text' },
+    vector: { type: 'vector', dimension: 3 },
+  },
+  primaryKey: {
+    partitionBy: ['id'],
+  },
+} satisfies CreateTableDefinition;
+
+// Infer the TS-equivalent type from the table definition (like zod or arktype). Equivalent to:
+//
+// interface TableSchema extends Row<'id'> { // Types 'id' as a primary key for insertion command return types
+//   summary?: string | null;                // Not a primary key, so it's optional and may return as null when found
+//   tags?: Set<string>;                     // Sets/maps/lists are optional to insert, but will actually be returned as empty collections instead of null
+//   vector?: DataAPIVector | null;          // Vectors, however, may be null.
+// }
+type TableSchema = InferTableSchema<typeof TableDefinition>;
+
+(async () => {
+  // Create the table if it doesn't alredy exist
+  const table = await db.createTable('dreams', {
+    definition: TableDefinition,
+    ifNotExists: true,
+  });
+
+  // Enables vector search on the table (on the 'vector' column)
+  await table.createVectorIndex('dreams_vector_idx', 'vector', {
+    options: { metric: 'cosine' },
+    ifNotExists: true,
+  });
+
+  // Insert some rows into the table
+  const rows: TableSchema[] = [{
+    id: 102,
+    summary: 'A dinner on the Moon',
+    vector: DataAPIVector.of([0.2, -0.3, -0.5]),
+  }, {
+    id: 103,
+    summary: 'Riding the waves',
+    tags: new Set(['sport']),
+    vector: DataAPIVector.of([0, 0.2, 1]),
+  }, {
+    id: 37,
+    summary: 'Meeting Beethoven at the dentist',
+    vector: DataAPIVector.of([0.2, 0.6, 0]),
+  }];
+  await table.insertMany(rows);
+
+  // Hm, changed my mind
+  await table.updateOne({ id: 103 }, { $set: { summary: 'Surfers\' paradise' } });
+
+  // Let's see what we've got
+  const cursor = table.find({}, {
+    sort: { vector: DataAPIVector.of([0, 0.2, 0.4]) },
+    includeSimilarity: true,
+    limit: 2,
+  });
+
+  // This would print:
+  // - Surfers' paradise: 0.98238194
+  // - Friendly aliens in town: 0.91873914
+  for await (const result of cursor) {
+    console.log(`${result.summary}: ${result.$similarity}`);
+  }
+  
+  // Cleanup (if desired)
+  await table.drop();
 })();
 ```
 

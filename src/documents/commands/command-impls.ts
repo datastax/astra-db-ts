@@ -49,41 +49,44 @@ import { normalizedSort } from '@/src/documents/utils';
 import { mkDistinctPathExtractor, pullSafeProjection4Distinct } from '@/src/documents/commands/helpers/distinct';
 import stableStringify from 'safe-stable-stringify';
 
-export class CommandImpls<Schema extends SomeDoc, ID> {
-  readonly #httpClient: DataAPIHttpClient;
-  readonly #serdes: SomeSerDes;
-  readonly #tOrC: Table<Schema> | Collection<Schema>;
+/**
+ * @internal
+ */
+export class CommandImpls<ID> {
+  private readonly _httpClient: DataAPIHttpClient;
+  private readonly _serdes: SomeSerDes;
+  private readonly _tOrC: Table | Collection;
 
-  constructor(tOrC: Table<Schema> | Collection<Schema>, httpClient: DataAPIHttpClient, serdes: SomeSerDes) {
-    this.#httpClient = httpClient;
-    this.#serdes = serdes;
-    this.#tOrC = tOrC;
+  constructor(tOrC: Table | Collection, httpClient: DataAPIHttpClient, serdes: SomeSerDes) {
+    this._httpClient = httpClient;
+    this._serdes = serdes;
+    this._tOrC = tOrC;
   }
 
   public async insertOne(_document: SomeDoc, options: WithTimeout<'generalMethodTimeoutMs'> | nullish): Promise<GenericInsertOneResult<ID>> {
-    const document = this.#serdes.serializeRecord(_document);
+    const document = this._serdes.serializeRecord(_document);
 
     const command = mkBasicCmd('insertOne', {
       document: document[0],
     });
 
-    const raw = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
+    const raw = await this._httpClient.executeCommand(command, {
+      timeoutManager: this._httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: document[1],
     });
 
     return {
-      insertedId: this.#serdes.deserializeRecord(raw.status!.insertedIds[0], raw) as ID,
+      insertedId: this._serdes.deserializeRecord(raw.status!.insertedIds[0], raw) as ID,
     };
   }
 
   public async insertMany(docs: readonly SomeDoc[], options: CollectionInsertManyOptions | nullish, err: new (descs: DataAPIDetailedErrorDescriptor[]) => DataAPIResponseError): Promise<GenericInsertManyResult<ID>> {
     const chunkSize = options?.chunkSize ?? 50;
-    const timeoutManager = this.#httpClient.tm.multipart('generalMethodTimeoutMs', options);
+    const timeoutManager = this._httpClient.tm.multipart('generalMethodTimeoutMs', options);
 
     const insertedIds = (options?.ordered)
-      ? await insertManyOrdered(this.#httpClient, this.#serdes, docs, chunkSize, timeoutManager, err)
-      : await insertManyUnordered(this.#httpClient, this.#serdes, docs, options?.concurrency ?? 8, chunkSize, timeoutManager, err);
+      ? await insertManyOrdered(this._httpClient, this._serdes, docs, chunkSize, timeoutManager, err)
+      : await insertManyUnordered(this._httpClient, this._serdes, docs, options?.concurrency ?? 8, chunkSize, timeoutManager, err);
 
     return {
       insertedCount: insertedIds.length,
@@ -92,8 +95,8 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
   }
 
   public async updateOne(_filter: Filter, _update: UpdateFilter, options?: GenericUpdateOneOptions): Promise<GenericUpdateResult<ID, 0 | 1>> {
-    const filter = this.#serdes.serializeRecord(_filter);
-    const update = this.#serdes.serializeRecord(_update);
+    const filter = this._serdes.serializeRecord(_filter);
+    const update = this._serdes.serializeRecord(_update);
 
     const command = mkCmdWithSortProj('updateOne', options, {
       filter: filter[0],
@@ -103,8 +106,8 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
       },
     });
 
-    const resp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
+    const resp = await this._httpClient.executeCommand(command, {
+      timeoutManager: this._httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1] || update[1],
     });
 
@@ -112,8 +115,8 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
   }
 
   public async updateMany(_filter: Filter, _update: UpdateFilter, options?: GenericUpdateManyOptions): Promise<GenericUpdateResult<ID, number>> {
-    const filter = this.#serdes.serializeRecord(_filter);
-    const update = this.#serdes.serializeRecord(_update);
+    const filter = this._serdes.serializeRecord(_filter);
+    const update = this._serdes.serializeRecord(_update);
 
     const command = mkBasicCmd('updateMany', {
       filter: filter[0],
@@ -124,13 +127,13 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
       },
     });
 
-    const timeoutManager = this.#httpClient.tm.multipart('generalMethodTimeoutMs', options);
+    const timeoutManager = this._httpClient.tm.multipart('generalMethodTimeoutMs', options);
     const commonResult = mkUpdateResult<number>();
     let resp;
 
     try {
       while (!resp || resp.status?.nextPageState) {
-        resp = await this.#httpClient.executeCommand(command, {
+        resp = await this._httpClient.executeCommand(command, {
           bigNumsPresent: filter[1] || update[1],
           timeoutManager,
         });
@@ -157,8 +160,8 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
   }
 
   public async replaceOne(_filter: Filter, _replacement: SomeDoc, options?: GenericReplaceOneOptions): Promise<GenericUpdateResult<ID, 0 | 1>> {
-    const filter = this.#serdes.serializeRecord(_filter);
-    const replacement = this.#serdes.serializeRecord(_replacement);
+    const filter = this._serdes.serializeRecord(_filter);
+    const replacement = this._serdes.serializeRecord(_replacement);
 
     const command = mkCmdWithSortProj('findOneAndReplace', options, {
       filter: filter[0],
@@ -170,8 +173,8 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
       projection: { '*': 0 },
     });
 
-    const resp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
+    const resp = await this._httpClient.executeCommand(command, {
+      timeoutManager: this._httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1] || replacement[1],
     });
 
@@ -179,14 +182,14 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
   }
 
   public async deleteOne(_filter: Filter, options?: GenericDeleteOneOptions): Promise<GenericDeleteOneResult> {
-    const filter = this.#serdes.serializeRecord(_filter);
+    const filter = this._serdes.serializeRecord(_filter);
 
     const command = mkCmdWithSortProj('deleteOne', options, {
       filter: filter[0],
     });
 
-    const deleteOneResp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
+    const deleteOneResp = await this._httpClient.executeCommand(command, {
+      timeoutManager: this._httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1],
     });
 
@@ -196,18 +199,18 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
   }
 
   public async deleteMany(_filter: Filter, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<GenericDeleteManyResult> {
-    const filter = this.#serdes.serializeRecord(_filter);
+    const filter = this._serdes.serializeRecord(_filter);
 
     const command = mkBasicCmd('deleteMany', {
       filter: filter[0],
     });
 
-    const timeoutManager = this.#httpClient.tm.multipart('generalMethodTimeoutMs', options);
+    const timeoutManager = this._httpClient.tm.multipart('generalMethodTimeoutMs', options);
     let resp, numDeleted = 0;
 
     try {
       while (!resp || resp.status?.moreData) {
-        resp = await this.#httpClient.executeCommand(command, { timeoutManager, bigNumsPresent: filter[1] });
+        resp = await this._httpClient.executeCommand(command, { timeoutManager, bigNumsPresent: filter[1] });
         numDeleted += resp.status?.deletedCount ?? 0;
       }
     } catch (e) {
@@ -233,11 +236,11 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
     if (options?.sort) {
       options.sort = normalizedSort(options.sort);
     }
-    return new cursor(this.#tOrC as any, this.#serdes, this.#serdes.serializeRecord(structuredClone(filter)), structuredClone(options));
+    return new cursor(this._tOrC, this._serdes, this._serdes.serializeRecord(structuredClone(filter)), structuredClone(options));
   }
 
   public async findOne<Schema>(_filter: Filter, options?: GenericFindOneOptions): Promise<Schema | null> {
-    const filter = this.#serdes.serializeRecord(_filter);
+    const filter = this._serdes.serializeRecord(_filter);
 
     const command = mkCmdWithSortProj('findOne', options, {
       filter: filter[0],
@@ -246,17 +249,17 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
       },
     });
 
-    const resp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
+    const resp = await this._httpClient.executeCommand(command, {
+      timeoutManager: this._httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1],
     });
 
-    return this.#serdes.deserializeRecord(resp.data?.document, resp) as any;
+    return this._serdes.deserializeRecord(resp.data?.document, resp) as any;
   }
 
   public async findOneAndReplace<Schema extends SomeDoc>(_filter: Filter, _replacement: SomeDoc, options?: GenericFindOneAndReplaceOptions): Promise<Schema | null> {
-    const filter = this.#serdes.serializeRecord(_filter);
-    const replacement = this.#serdes.serializeRecord(_replacement);
+    const filter = this._serdes.serializeRecord(_filter);
+    const replacement = this._serdes.serializeRecord(_replacement);
 
     const command = mkCmdWithSortProj('findOneAndReplace', options, {
       filter: filter[0],
@@ -267,30 +270,30 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
       },
     });
 
-    const resp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
+    const resp = await this._httpClient.executeCommand(command, {
+      timeoutManager: this._httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1] || replacement[1],
     });
     return resp.data?.document || null;
   }
 
   public async findOneAndDelete<Schema extends SomeDoc>(_filter: Filter, options?: GenericFindOneAndDeleteOptions): Promise<Schema | null> {
-    const filter = this.#serdes.serializeRecord(_filter);
+    const filter = this._serdes.serializeRecord(_filter);
 
     const command = mkCmdWithSortProj('findOneAndDelete', options, {
       filter: filter[0],
     });
 
-    const resp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
+    const resp = await this._httpClient.executeCommand(command, {
+      timeoutManager: this._httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1],
     });
     return resp.data?.document || null;
   }
 
   public async findOneAndUpdate<Schema extends SomeDoc>(_filter: Filter, _update: SomeDoc, options?: GenericFindOneAndUpdateOptions): Promise<Schema | null> {
-    const filter = this.#serdes.serializeRecord(_filter);
-    const update = this.#serdes.serializeRecord(_update);
+    const filter = this._serdes.serializeRecord(_filter);
+    const update = this._serdes.serializeRecord(_update);
 
     const command = mkCmdWithSortProj('findOneAndUpdate', options, {
       filter: filter[0],
@@ -301,8 +304,8 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
       },
     });
 
-    const resp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
+    const resp = await this._httpClient.executeCommand(command, {
+      timeoutManager: this._httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1] || update[1],
     });
     return resp.data?.document || null;
@@ -346,14 +349,14 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
       throw new Error('upperBound must be >= 0');
     }
 
-    const [filter, bigNumsPresent] = this.#serdes.serializeRecord(_filter);
+    const [filter, bigNumsPresent] = this._serdes.serializeRecord(_filter);
 
     const command = mkBasicCmd('countDocuments', {
       filter: filter,
     });
 
-    const resp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
+    const resp = await this._httpClient.executeCommand(command, {
+      timeoutManager: this._httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent,
     });
 
@@ -371,8 +374,8 @@ export class CommandImpls<Schema extends SomeDoc, ID> {
   public async estimatedDocumentCount(options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number> {
     const command = mkBasicCmd('estimatedDocumentCount', {});
 
-    const resp = await this.#httpClient.executeCommand(command, {
-      timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
+    const resp = await this._httpClient.executeCommand(command, {
+      timeoutManager: this._httpClient.tm.single('generalMethodTimeoutMs', options),
     });
 
     return resp.status?.count;

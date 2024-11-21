@@ -239,7 +239,7 @@ export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
  */
 export class Table<Schema extends SomeRow = SomeRow> {
   readonly #httpClient: DataAPIHttpClient;
-  readonly #commands: CommandImpls<Schema, KeyOf<Schema>>;
+  readonly #commands: CommandImpls<KeyOf<Schema>>;
   readonly #db: Db;
 
   /**

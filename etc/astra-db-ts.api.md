@@ -481,16 +481,13 @@ export type CollectionReplaceOneOptions = GenericReplaceOneOptions;
 // @public
 export type CollectionReplaceOneResult<Schema extends SomeDoc> = GenericUpdateResult<IdOf<Schema>, 0 | 1>;
 
+// Warning: (ae-forgotten-export) The symbol "CollSerCtx" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "CollDesCtx" needs to be exported by the entry point index.d.ts
+//
 // @public (undocumented)
-export interface CollectionSerDesConfig<Schema extends SomeDoc> {
-    // (undocumented)
-    deserialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPIDesCtx) => [any, boolean?] | boolean | undefined | void>;
+export interface CollectionSerDesConfig<Schema extends SomeDoc> extends DataAPISerDesConfig<Schema, CollSerCtx<Schema>, CollDesCtx> {
     // (undocumented)
     enableBigNumbers?: boolean;
-    // (undocumented)
-    mutateInPlace?: boolean;
-    // (undocumented)
-    serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>;
 }
 
 // @public
@@ -542,17 +539,14 @@ export interface CollectionVectorOptions {
 // @public
 export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
 
-// Warning: (ae-incompatible-release-tags) The symbol "Cols2Add" is marked as @public, but its signature references "Cols2CqlTypes" which is marked as @internal
-//
 // @public (undocumented)
 export type Cols2Add<Op extends AddColumnOperation | undefined> = Op extends AddColumnOperation ? {
     [P in keyof Cols2CqlTypes<Op["columns"]>]?: Cols2CqlTypes<Op["columns"]>[P];
 } : EmptyObj;
 
 // Warning: (ae-forgotten-export) The symbol "PickCqlType" needs to be exported by the entry point index.d.ts
-// Warning: (ae-internal-missing-underscore) The name "Cols2CqlTypes" should be prefixed with an underscore because the declaration is marked as @internal
 //
-// @internal (undocumented)
+// @public (undocumented)
 export type Cols2CqlTypes<Columns extends CreateTableColumnDefinitions> = {
     -readonly [P in keyof Columns]: CqlType2TSType<PickCqlType<Columns[P]>, Columns[P]>;
 };
@@ -807,6 +801,9 @@ export interface DataAPIDesCtx {
     rootObj: SomeDoc;
 }
 
+// @public (undocumented)
+export type DataAPIDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | void;
+
 // @public
 export interface DataAPIDetailedErrorDescriptor {
     readonly command: Record<string, any>;
@@ -906,6 +903,19 @@ export interface DataAPISerCtx<Schema extends SomeDoc> {
 }
 
 // @public (undocumented)
+export interface DataAPISerDesConfig<Schema extends SomeDoc, SerCtx extends DataAPISerCtx<Schema>, DesCtx extends DataAPIDesCtx> {
+    // (undocumented)
+    deserialize?: OneOrMany<DataAPIDesFn<DesCtx>>;
+    // (undocumented)
+    mutateInPlace?: boolean;
+    // (undocumented)
+    serialize?: OneOrMany<DataAPISerFn<SerCtx>>;
+}
+
+// @public (undocumented)
+export type DataAPISerFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | void;
+
+// @public (undocumented)
 export class DataAPITime {
     // (undocumented)
     [$SerializeForTable]: () => string;
@@ -997,6 +1007,8 @@ export class DataAPIVector {
     static isVectorLike(value: unknown): value is DataAPIVectorLike;
     // (undocumented)
     get length(): number;
+    // (undocumented)
+    static of(vector: DataAPIVectorLike): DataAPIVector;
     // (undocumented)
     raw(): Exclude<DataAPIVectorLike, DataAPIVector>;
     // (undocumented)
@@ -1275,10 +1287,10 @@ export type Filter = Record<string, any>;
 // @public
 export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     [Symbol.asyncIterator](): AsyncGenerator<T, void, void>;
-    // Warning: (ae-forgotten-export) The symbol "DataAPISerDes" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "SomeSerDes" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(parent: Table | Collection, serdes: DataAPISerDes, filter: [Filter, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T);
+    constructor(parent: Table | Collection, serdes: SomeSerDes, filter: [Filter, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T);
     buffered(): number;
     clone(): FindCursor<TRaw, TRaw>;
     close(): void;
@@ -1494,10 +1506,10 @@ export interface Http1Options {
 
 // @public
 export type IdOf<Doc> = Doc extends {
-    _id: infer Id;
+    _id: infer Id extends SomeId;
 } ? Id : Doc extends {
-    _id?: infer Id;
-} ? unknown extends Id ? SomeId : Id : SomeId;
+    _id?: infer Id extends SomeId;
+} ? Id : SomeId;
 
 // @public (undocumented)
 export class InetAddress {
@@ -1518,7 +1530,6 @@ export type InferTableSchema<T extends InferrableTable> = T extends CreateTableD
 
 // Warning: (ae-forgotten-export) The symbol "MkColumnTypes" needs to be exported by the entry point index.d.ts
 // Warning: (ae-forgotten-export) The symbol "MkPrimaryKeyType" needs to be exported by the entry point index.d.ts
-// Warning: (ae-incompatible-release-tags) The symbol "InferTableSchemaFromDefinition" is marked as @public, but its signature references "Cols2CqlTypes" which is marked as @internal
 //
 // @public
 export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition> = Normalize<MkColumnTypes<FullDef['columns'], MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>> & {
@@ -1745,8 +1756,8 @@ export type SortDirection = 1 | -1;
 
 // @public
 export class StaticTokenProvider extends TokenProvider {
-    constructor(token: string | nullish);
-    getToken(): string | nullish;
+    constructor(token: string);
+    getToken(): string;
 }
 
 // Warning: (ae-forgotten-export) The symbol "TypeErr" needs to be exported by the entry point index.d.ts
@@ -2006,15 +2017,9 @@ export interface TableSerCtx<Schema extends SomeDoc> extends DataAPISerCtx<Schem
 }
 
 // @public (undocumented)
-export interface TableSerDesConfig<Schema extends SomeRow> {
-    // (undocumented)
-    deserialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: TableDesCtx) => [any, boolean?] | boolean | undefined | void>;
-    // (undocumented)
-    mutateInPlace?: boolean;
+export interface TableSerDesConfig<Schema extends SomeRow> extends DataAPISerDesConfig<Schema, TableSerCtx<Schema>, TableDesCtx> {
     // (undocumented)
     parsers?: Record<string, TableColumnTypeParser>;
-    // (undocumented)
-    serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: TableSerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>;
     // (undocumented)
     sparseData?: boolean;
 }
@@ -2057,7 +2062,7 @@ export type ToDotNotation<Schema extends SomeDoc> = Merge<_ToDotNotation<Schema,
 export abstract class TokenProvider {
     abstract getToken(): string | nullish | Promise<string | nullish>;
     // @internal
-    static parseToken(raw: (string | TokenProvider | nullish)[], field: string): TokenProvider | undefined;
+    static mergeTokens(...raw: (string | TokenProvider | nullish)[]): TokenProvider | undefined;
 }
 
 // @public

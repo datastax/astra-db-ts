@@ -54,7 +54,9 @@ export type DataAPIEnvironment = typeof DataAPIEnvironments[number];
 export type Ref<T> = { ref: T }
 
 /**
- * @internal
+ * Utility type to represent an empty object without eslint complaining.
+ *
+ * @public
  */
 export type EmptyObj = {};
 

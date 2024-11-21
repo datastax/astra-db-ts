@@ -179,7 +179,7 @@ const jbi = JBI({ storeAsString: true });
  */
 export class Collection<Schema extends SomeDoc = SomeDoc> {
   readonly #httpClient: DataAPIHttpClient;
-  readonly #commands: CommandImpls<Schema, IdOf<Schema>>;
+  readonly #commands: CommandImpls<IdOf<Schema>>;
   readonly #db: Db;
 
   /**
