@@ -100,11 +100,11 @@ const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
 ### Tables
 
 ```typescript
-import { CreateTableDefinition, DataAPIClient, DataAPIVector, InferTableSchema } from '@datastax/astra-db-ts';
+import { CreateTableDefinition, DataAPIClient, InferTableSchema, vector } from '@datastax/astra-db-ts';
 
 // Connect to the db
 const client = new DataAPIClient();
-const db = client.db('*DB_ENDPOINT*', { token: '*TOKEN*' });
+const db = client.db('https://178cf75b-ec19-4d13-9ca7-b6dcfa613157-us-west-2.apps.astra-dev.datastax.com', { token: 'AstraCS:EFZEBUXuMzwyFntFYcroNsWQ:e473c9b244253e3c873346cc8584d4767789d93e54c6c5453c996fbd5ab4605d' });
 
 // Example table schema using bespoke Data API table definition syntax
 const TableDefinition = <const>{
@@ -145,16 +145,16 @@ type TableSchema = InferTableSchema<typeof TableDefinition>;
   const rows: TableSchema[] = [{
     id: 102,
     summary: 'A dinner on the Moon',
-    vector: DataAPIVector.of([0.2, -0.3, -0.5]),
+    vector: vector([0.2, -0.3, -0.5]), // Shorthand for `new DataAPIVector([0.2, -0.3, -0.5])`
   }, {
     id: 103,
     summary: 'Riding the waves',
     tags: new Set(['sport']),
-    vector: DataAPIVector.of([0, 0.2, 1]),
+    vector: vector([0, 0.2, 1]),
   }, {
     id: 37,
     summary: 'Meeting Beethoven at the dentist',
-    vector: DataAPIVector.of([0.2, 0.6, 0]),
+    vector: vector([0.2, 0.6, 0]),
   }];
   await table.insertMany(rows);
 
@@ -163,7 +163,7 @@ type TableSchema = InferTableSchema<typeof TableDefinition>;
 
   // Let's see what we've got
   const cursor = table.find({}, {
-    sort: { vector: DataAPIVector.of([0, 0.2, 0.4]) },
+    sort: { vector: vector([0, 0.2, 0.4]) },
     includeSimilarity: true,
     limit: 2,
   });
@@ -174,7 +174,7 @@ type TableSchema = InferTableSchema<typeof TableDefinition>;
   for await (const result of cursor) {
     console.log(`${result.summary}: ${result.$similarity}`);
   }
-  
+
   // Cleanup (if desired)
   await table.drop();
 })();
