@@ -15,9 +15,6 @@
 import { isNullish } from '@/src/lib/utils';
 import { $CustomInspect } from '@/src/lib/constants';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des';
-import { $SerializeForCollection } from '@/src/documents';
-
-export const date = (date?: string | Date | DataAPIDateComponents) => new DataAPIDate(date);
 
 export const date = (date?: string | Date | DataAPIDateComponents) => new DataAPIDate(date);
 

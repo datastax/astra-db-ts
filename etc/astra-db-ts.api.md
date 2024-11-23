@@ -316,14 +316,6 @@ export type CollectionCurrentDate<Schema> = {
     } ? K : never]?: boolean;
 };
 
-// @public
-export interface CollectionDateFilterOps {
-    $gt?: Date;
-    $gte?: Date;
-    $lt?: Date;
-    $lte?: Date;
-}
-
 // Warning: (ae-forgotten-export) The symbol "ContainsDate" needs to be exported by the entry point index.d.ts
 //
 // @public
@@ -372,7 +364,6 @@ export type CollectionFilter<Schema extends SomeDoc> = {
     $and?: CollectionFilter<Schema>[];
     $or?: CollectionFilter<Schema>[];
     $not?: CollectionFilter<Schema>;
-} & {
     [key: string]: any;
 };
 
@@ -381,9 +372,6 @@ export type CollectionFilterExpr<Elem> = Elem | (CollectionFilterOps<Elem> & {
     [key: string]: any;
 });
 
-// Warning: (ae-forgotten-export) The symbol "IsNum" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "IsDate" needs to be exported by the entry point index.d.ts
-//
 // @public
 export type CollectionFilterOps<Elem> = {
     $eq?: Elem;
@@ -391,7 +379,11 @@ export type CollectionFilterOps<Elem> = {
     $in?: Elem[];
     $nin?: Elem[];
     $exists?: boolean;
-} & (IsNum<Elem> extends false ? EmptyObj : CollectionNumFilterOps) & (IsDate<Elem> extends false ? EmptyObj : (CollectionDateFilterOps | Date)) & (any[] extends Elem ? CollectionArrayFilterOps<Elem> : EmptyObj);
+    $lt?: Elem;
+    $lte?: Elem;
+    $gt?: Elem;
+    $gte?: Elem;
+} & (any[] extends Elem ? CollectionArrayFilterOps<Elem> : EmptyObj);
 
 // @public (undocumented)
 export class CollectionFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {
@@ -445,18 +437,12 @@ export interface CollectionInsertOneResult<Schema> {
     insertedId: IdOf<Schema>;
 }
 
+// Warning: (ae-forgotten-export) The symbol "IsNum" needs to be exported by the entry point index.d.ts
+//
 // @public
 export type CollectionNumberUpdate<Schema> = {
     [K in keyof Schema as IsNum<Schema[K]> extends true ? K : never]?: number | bigint;
 };
-
-// @public
-export interface CollectionNumFilterOps {
-    $gt?: number | bigint | BigNumber;
-    $gte?: number | bigint | BigNumber;
-    $lt?: number | bigint | BigNumber;
-    $lte?: number | bigint | BigNumber;
-}
 
 // @public
 export interface CollectionOptions<Schema extends SomeDoc> extends WithKeyspace {
@@ -817,23 +803,9 @@ export interface DataAPIDetailedErrorDescriptor {
 export class DataAPIDuration {
     // (undocumented)
     [$SerializeForTable]: () => string;
-    constructor(input: string | Partial<DataAPIDurationComponents> | [Date | DataAPITimestamp, Date | DataAPITimestamp]);
-    // (undocumented)
-    components(): DataAPIDurationComponents;
-    // (undocumented)
-    toDates(reference: Date | DataAPITimestamp): [Date, Date];
+    constructor(input: string);
     // (undocumented)
     toString(): string;
-}
-
-// @public (undocumented)
-export interface DataAPIDurationComponents {
-    // (undocumented)
-    days: number;
-    // (undocumented)
-    months: number;
-    // (undocumented)
-    nanoseconds: number;
 }
 
 // @public
@@ -959,6 +931,10 @@ export class DataAPITimeoutError extends DataAPIError {
 
 // @public (undocumented)
 export class DataAPITimestamp {
+    // (undocumented)
+    [$SerializeForCollection]: () => {
+        $date: string;
+    };
     // (undocumented)
     [$SerializeForTable]: () => string;
     constructor(input?: string | Date | Partial<DataAPITimestampComponents>);
@@ -1175,7 +1151,7 @@ export interface DropVectorizeOperation<Schema extends SomeRow> {
 }
 
 // @public (undocumented)
-export const duration: (duration: string | Partial<DataAPIDurationComponents> | [Date | DataAPITimestamp, Date | DataAPITimestamp]) => DataAPIDuration;
+export const duration: (duration: string) => DataAPIDuration;
 
 // @public
 export class EmbeddingAPIKeyHeaderProvider extends EmbeddingHeadersProvider {
@@ -1784,19 +1760,6 @@ export type StrictCollectionDateUpdate<Schema extends SomeDoc, InNotation = ToDo
     };
 } : TypeErr<'Can not perform a date operation on a schema with no dates'>;
 
-// @public
-export type StrictCollectionFilter<Schema extends SomeDoc> = {
-    [K in keyof ToDotNotation<NoId<Schema>>]?: StrictCollectionFilterExpr<ToDotNotation<NoId<Schema>>[K]>;
-} & {
-    _id?: StrictCollectionFilterExpr<IdOf<Schema>>;
-    $and?: StrictCollectionFilter<Schema>[];
-    $or?: StrictCollectionFilter<Schema>[];
-    $not?: StrictCollectionFilter<Schema>;
-};
-
-// @public
-export type StrictCollectionFilterExpr<Elem> = Elem | CollectionFilterOps<Elem>;
-
 // Warning: (ae-forgotten-export) The symbol "ContainsNum" needs to be exported by the entry point index.d.ts
 //
 // @public
@@ -1957,7 +1920,6 @@ export type TableFilter<Schema extends SomeRow> = {
     $and?: TableFilter<Schema>[];
     $or?: TableFilter<Schema>[];
     $not?: TableFilter<Schema>;
-} & {
     [key: string]: any;
 };
 
@@ -1975,7 +1937,6 @@ export type TableFilterOps<Elem> = {
     $lte?: Elem;
     $gt?: Elem;
     $gte?: Elem;
-    [key: string]: any;
 };
 
 // @public (undocumented)
