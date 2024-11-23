@@ -306,7 +306,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * await collection.insertMany(docs, { batchSize: 100 });
    * ```
    *
-   * ##### The ordered flag
+   * ##### Ordered insertion
    *
    * You may set the `ordered` option to `true` to stop the operation after the first error; otherwise all documents may be parallelized and processed in arbitrary order, improving, perhaps vastly, performance.
    *
@@ -367,14 +367,14 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * If a thrown exception is not due to an insertion error, e.g. a `5xx` error or network error, the operation will throw the underlying error.
    *
-   * In case of an unordered request, if the error was a simple insertion error, a `InsertManyError` will be thrown after every document has been attempted to be inserted. If it was a `5xx` or similar, the error will be thrown immediately.
+   * In case of an unordered request, if the error was a simple insertion error, the {@link CollectionInsertManyError} will be thrown after every document has been attempted to be inserted. If it was a `5xx` or similar, the error will be thrown immediately.
    *
    * @param documents - The documents to insert.
    * @param options - The options for this operation.
    *
    * @returns The IDs of the inserted documents (and the count)
    *
-   * @throws InsertManyError - If the operation fails.
+   * @throws CollectionInsertManyError - If the operation fails.
    */
   public async insertMany(documents: readonly MaybeId<Schema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<Schema>> {
     return this.#commands.insertMany(documents, options, CollectionInsertManyError);

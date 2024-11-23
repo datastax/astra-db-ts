@@ -73,6 +73,25 @@ export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
  *
  * **This shouldn't be directly instantiated, but rather created via {@link Db.createTable} or {@link Db.table}**.
  *
+ * @example
+ * ```ts
+ * // Basic creation of a dynamically typed table
+ * // (If you don't provide `SomeRow` explicitly, it will
+ * // attempt to infer the Table's type from the definition)
+ * const table = await db.createTable<SomeRow>('users', {
+ *   definition: {
+ *      columns: {
+ *        id: 'text',
+ *        name: 'text',
+ *      },
+ *      primaryKey: 'id',
+ *   },
+ * });
+ *
+ * // or (also dynamically typed)
+ * const table = db.table('users');
+ * ```
+ *
  * #### Typing & Types
  *
  * A `Table` is typed as `Table<Schema extends SomeRow = SomeRow>`, where:
@@ -98,8 +117,8 @@ export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
  *
  * await db.table<User>('users').insertOne({
  *   id: '123',
- *   friends: new Map([['Alice', UUID.random()]]),
- *   vector: new DataAPIVector([1, 2, 3]),
+ *   friends: new Map([['Alice', uuid(4)]]), // or UUID.v4()
+ *   vector: vector([1, 2, 3]), // or new DataAPIVector([...])
  * });
  * ```
  *
@@ -130,8 +149,8 @@ export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
  * // res.insertedId is of type { id: string }
  * const res = await db.table<User>('users').insertOne({
  *   id: '123',
- *   dob: new DataAPIDate(new Date()),
- *   friends: new Map([['Alice', UUID.random()]]),
+ *   dob: date(), // or new DataAPIDate(new Date())
+ *   friends: new Map([['Alice', uuid(4)]]), // or UUID.v4()
  * });
  * ```
  *
@@ -291,25 +310,47 @@ export class Table<Schema extends SomeRow = SomeRow> {
    *
    * @example
    * ```ts
-   * import { UUID, ObjectId, ... } from '@datastax/astra-db-ts';
+   * import { UUID, vector, ... } from '@datastax/astra-db-ts';
    *
    * // Insert a row with a specific ID
    * await table.insertOne({ id: 'text-id', name: 'John Doe' });
-   * await table.insertOne({ id: UUID.v7(), name: 'Dane Joe' });
+   * await table.insertOne({ id: UUID.v7(), name: 'Dane Joe' }); // or uuid(7)
    *
-   * // Insert a row with a vector (if enabled on the collection)
-   * const vector = new DataAPIVector([.12, .52, .32]); // class enables faster encoding
-   * await table.insertOne({ id: 1, name: 'Jane Doe', vector });
+   * // Insert a row with a vector
+   * // DataAPIVector class enables faster ser/des
+   * const vec = vector([.12, .52, .32]); // or new DataAPIVector([.12, .52, .32])
+   * await table.insertOne({ id: 1, name: 'Jane Doe', vector: vec });
    *
    * // or if vectorize (auto-embedding-generation) is enabled for the column
    * await table.insertOne({ id: 1, name: 'Jane Doe', vector: "Hey there!" });
+   * ```
+   *
+   * ##### Upsert behavior
+   *
+   * When inserting a row with a primary key that already exists, the new row will be merged with the existing row, with the new values taking precedence.
+   *
+   * If you want to delete old values, you must explicitly set them to `null` (not `undefined`).
+   *
+   * @example
+   * ```ts
+   * await table.insertOne({ id: '123', col1: 'i exist' });
+   * await table.findOne({ id: '123' }); // { id: '123', col1: 'i exist' }
+   *
+   * await table.insertOne({ id: '123', col1: 'i am new' });
+   * await table.findOne({ id: '123' }); // { id: '123', col1: 'i am new' }
+   *
+   * await table.insertOne({ id: '123', col2: 'me2' });
+   * await table.findOne({ id: '123' }); // { id: '123', col1: 'i am new', col2: 'me2' }
+   *
+   * await table.insertOne({ id: '123', col1: null });
+   * await table.findOne({ id: '123' }); // { id: '123', col2: 'me2' }
    * ```
    *
    * ##### The primary key
    *
    * The columns that compose the primary key themselves must all be present in the row object; all other fields are technically optional/nullable.
    *
-   * The type of the primary key of the table (for the `insertedId`) is inferred from the `$PrimaryKeyType` key in the schema. If it's not present, it will default to {@link SomeTableKey} (See {@link Table}, {@link $PrimaryKeyType} for more info).
+   * The type of the primary key of the table (for the `insertedId`) is inferred from the type-level `$PrimaryKeyType` key in the schema. If it's not present, it will default to {@link SomeTableKey} (see {@link Table}, {@link $PrimaryKeyType} for more info).
    *
    * @example
    * ```ts
@@ -325,16 +366,133 @@ export class Table<Schema extends SomeRow = SomeRow> {
    * ```
    *
    * @param row - The row to insert.
-   * @param options - The options for this operation.
+   * @param timeout - The timeout for this operation.
    *
-   * @returns The ID of the inserted row.
+   * @returns The primary key of the inserted row.
    */
-  public async insertOne(row: Schema, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<Schema>> {
-    return this.#commands.insertOne(row, options);
+  public async insertOne(row: Schema, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<Schema>> {
+    return this.#commands.insertOne(row, timeout);
   }
 
-  public async insertMany(document: readonly Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>> {
-    return this.#commands.insertMany(document, options, TableInsertManyError);
+  /**
+   * ##### Overview
+   *
+   * Upserts many rows into the table.
+   *
+   * @example
+   * ```ts
+   * import { uuid, vector, ... } from '@datastax/astra-db-ts';
+   *
+   * await table1.insertMany([
+   *   { id: uuid(4), name: 'John Doe' }, // or UUID.v4()
+   *   { id: uuid(7), name: 'Jane Doe' },
+   * ]);
+   *
+   * // Insert a row with a vector
+   * // DataAPIVector class enables faster ser/des
+   * await table2.insertMany([
+   *   { name: 'bob', vector: vector([.12, .52, .32]) }, // or new DataAPIVector([...])
+   *   { name: 'alice', vector: vector([.12, .52, .32]), tags: new Set(['cool']) },
+   * ], { ordered: true });
+   * ```
+   *
+   * ##### Chunking
+   *
+   * **NOTE: This function paginates the insertion of rows in chunks to avoid running into insertion limits.** This means multiple requests may be made to the server.
+   *
+   * This operation is **not necessarily atomic**. Depending on the amount of inserted rows, and if it's ordered or not, it can keep running (in a blocking manner) for a macroscopic amount of time. In that case, new rows that are inserted from another concurrent process/application may be inserted during the execution of this method call, and if there are duplicate keys, it's not easy to predict which application will win the race.
+   *
+   * By default, it inserts rows in chunks of 50 at a time. You can fine-tune the parameter through the `chunkSize` option. Note that increasing chunk size won't necessarily increase performance depending on document size. Instead, increasing concurrency may help.
+   *
+   * You can set the `concurrency` option to control how many network requests are made in parallel on unordered insertions. Defaults to `8`.
+   *
+   * @example
+   * ```ts
+   * const rows = Array.from({ length: 100 }, (_, i) => ({ id: i }));
+   * await table.insertMany(rows, { batchSize: 100 });
+   * ```
+   *
+   * ##### Upsert behavior
+   *
+   * When inserting a row with a primary key that already exists, the new row will be merged with the existing row, with the new values taking precedence.
+   *
+   * If you want to delete old values, you must explicitly set them to `null` (not `undefined`).
+   *
+   * @example
+   * ```ts
+   * // Since insertion is ordered, the last unique value for each
+   * // primary key will be the one that remains in the table.
+   * await table.insertMany([
+   *   { id: '123', col1: 'i exist' },
+   *   { id: '123', col1: 'i am new' },
+   *   { id: '123', col2: 'me2' },
+   * ], { ordered: true });
+   *
+   * await table.findOne({ id: '123' }); // { id: '123', col1: 'i am new', col2: 'me2' }
+   *
+   * // Since insertion is unordered, it can not be 100% guaranteed
+   * // which value will remain in the table for each primary key,
+   * // as concurrent insertions may occur.
+   * await table.insertMany([
+   *   { id: '123', col1: null },
+   *   { id: '123', col1: 'hi' },
+   * ]);
+   *
+   * // coll1 may technically be either 'hi' or null
+   * await table.findOne({ id: '123' }); // { id: '123', col1: ? }
+   * ```
+   *
+   * ##### Ordered insertions
+   *
+   * You may set the `ordered` option to `true` to stop the operation after the first error; otherwise all rows may be parallelized and processed in arbitrary order, improving, perhaps vastly, performance.
+   *
+   * Setting the `ordered` operation disables any parallelization so insertions truly are stopped after the very first error.
+   *
+   * Setting `ordered` also guarantees the order of upsert behavior, as described above.
+   *
+   * ##### The primary key
+   *
+   * The columns that compose the primary key themselves must all be present in the row object; all other fields are technically optional/nullable.
+   *
+   * The type of the primary key of the table (for the `insertedId`) is inferred from the type-level `$PrimaryKeyType` key in the schema. If it's not present, it will default to {@link SomeTableKey} (see {@link Table}, {@link $PrimaryKeyType} for more info).
+   *
+   * @example
+   * ```ts
+   * interface User extends Row<User, 'id'> {
+   *   id: string,
+   *   name: string,
+   *   dob?: DataAPIDate,
+   * }
+   *
+   * // res.insertedIds is of type { id: string }[]
+   * const res = await table.insertMany([
+   *   { id: '123', thing: 'Sunrise' },
+   *   { id: '456', thing: 'Miso soup' },
+   * ]);
+   * console.log(res.insertedIds[0].id); // '123'
+   * ```
+   *
+   * ##### `InsertManyError`
+   *
+   * If some rows can't be inserted, (e.g. they have the wrong data type for a column or lack the primary key), the Data API validation check will fail for those entire specific requests containing the faulty rows.
+   *
+   * Depending on concurrency & the `ordered` parameter, some rows may still have been inserted.
+   *
+   * In such cases, the operation will throw a {@link TableInsertManyError} containing the partial result.
+   *
+   * If a thrown exception is not due to an insertion error, e.g. a `5xx` error or network error, the operation will throw the underlying error.
+   *
+   * In case of an unordered request, if the error was a simple insertion error, the {@link TableInsertManyError} will be thrown after every document has been attempted to be inserted. If it was a `5xx` or similar, the error will be thrown immediately.
+   *
+   * @param rows - The rows to insert.
+   * @param options - The options for this operation.
+   *
+   * @returns The primary keys of the inserted documents (and the count)
+   *
+   * @throws TableInsertManyError - If the operation fails.
+   */
+  public async insertMany(rows: readonly Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>> {
+    return this.#commands.insertMany(rows, options, TableInsertManyError);
   }
 
   public async updateOne(filter: TableFilter<Schema>, update: TableUpdateFilter<Schema>, options?: TableUpdateOneOptions): Promise<void> {
