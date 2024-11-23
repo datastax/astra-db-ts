@@ -13,10 +13,8 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/documents/collections';
-import type { IdOf, NoId, ToDotNotation } from '@/src/documents';
+import { IdOf, NoId, ToDotNotation } from '@/src/documents';
 import { EmptyObj } from '@/src/lib/types';
-import { IsDate, IsNum } from '@/src/documents/types/utils';
-import BigNumber from 'bignumber.js';
 
 /**
  * Represents some filter operation for a given document schema.
@@ -51,45 +49,7 @@ export type CollectionFilter<Schema extends SomeDoc> = {
   $and?: CollectionFilter<Schema>[],
   $or?: CollectionFilter<Schema>[],
   $not?: CollectionFilter<Schema>,
-} & {
   [key: string]: any,
-}
-
-/**
- * Represents some filter operation for a given document schema.
- *
- * **If you want relaxed type-checking, see {@link CollectionFilter}.**
- *
- * This is a stricter version of {@link CollectionFilter} that type-checks nested fields.
- *
- * You can use it anywhere by using the `satisfies` keyword, or by creating a temporary const with the StrictCollectionFilter type.
- *
- * @example
- * ```typescript
- * interface BasicSchema {
- *   arr: string[],
- *   num: number,
- * }
- *
- * db.collections<BasicSchema>('coll_name').findOne({
- *   $and: [
- *     { _id: { $in: ['abc', 'def'] } },
- *     { $not: { arr: { $size: 0 } } },
- *   ]
- * } satisfies StrictCollectionFilter<BasicSchema>);
- * ```
- *
- * @see CollectionFilter
- *
- * @public
- */
-export type StrictCollectionFilter<Schema extends SomeDoc> = {
-  [K in keyof ToDotNotation<NoId<Schema>>]?: StrictCollectionFilterExpr<ToDotNotation<NoId<Schema>>[K]>
-} & {
-  _id?: StrictCollectionFilterExpr<IdOf<Schema>>,
-  $and?: StrictCollectionFilter<Schema>[],
-  $or?: StrictCollectionFilter<Schema>[],
-  $not?: StrictCollectionFilter<Schema>,
 }
 
 /**
@@ -98,13 +58,6 @@ export type StrictCollectionFilter<Schema extends SomeDoc> = {
  * @public
  */
 export type CollectionFilterExpr<Elem> = Elem | (CollectionFilterOps<Elem> & { [key: string]: any });
-
-/**
- * Represents an expression in a filter statement, such as an exact value, or a filter operator
- *
- * @public
- */
-export type StrictCollectionFilterExpr<Elem> = Elem | CollectionFilterOps<Elem>;
 
 /**
  * Represents filter operators such as `$eq` and `$in` (but not statements like `$and`)
@@ -117,69 +70,13 @@ export type CollectionFilterOps<Elem> = {
   $in?: Elem[],
   $nin?: Elem[] /* I can't un-see this as 'Nine-Inch Nails'... */,
   $exists?: boolean,
+  $lt?: Elem,
+  $lte?: Elem,
+  $gt?: Elem,
+  $gte?: Elem,
 } & (
-  IsNum<Elem> extends false ? EmptyObj : CollectionNumFilterOps
-) & (
-  IsDate<Elem> extends false ? EmptyObj : (CollectionDateFilterOps | Date)
-) & (
   any[] extends Elem ? CollectionArrayFilterOps<Elem> : EmptyObj
 )
-
-/**
- * Represents filter operations exclusive to number (or dynamically typed) fields
- *
- * @public
- */
-export interface CollectionNumFilterOps {
-  /**
-   * Less than (exclusive) some number
-   */
-  $lt?: number | bigint | BigNumber,
-  /**
-   * Less than or equal to some number
-   */
-  $lte?: number | bigint | BigNumber,
-  /**
-   * Greater than (exclusive) some number
-   */
-  $gt?: number | bigint | BigNumber,
-  /**
-   * Greater than or equal to some number
-   */
-  $gte?: number | bigint | BigNumber,
-}
-
-/**
- * Represents filter operations exclusive to Dates (or dynamically typed) fields
- *
- * @public
- */
-export interface CollectionDateFilterOps {
-  /**
-   * Less than (exclusive) some date.
-   *
-   * `{ $date: number }` can be replaced with `new Date(number)`.
-   */
-  $lt?: Date,
-  /**
-   * Less than or equal to some date.
-   *
-   * `{ $date: number }` can be replaced with `new Date(number)`.
-   */
-  $lte?: Date,
-  /**
-   * Greater than (exclusive) some date.
-   *
-   * `{ $date: number }` can be replaced with `new Date(number)`.
-   */
-  $gt?: Date,
-  /**
-   * Greater than or equal to some date.
-   *
-   * `{ $date: number }` can be replaced with `new Date(number)`.
-   */
-  $gte?: Date,
-}
 
 /**
  * Represents filter operations exclusive to array (or dynamically typed) fields

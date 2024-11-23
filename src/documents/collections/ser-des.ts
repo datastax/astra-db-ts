@@ -62,11 +62,7 @@ const DefaultCollectionSerDesCfg = {
     }
 
     if (value instanceof Date) {
-      if (key === '$date') {
-        return [value.valueOf(), true];
-      } else {
-        return [{ $date: value.valueOf() }, true];
-      }
+      return [{ $date: value.valueOf() }, true];
     }
 
     if (key === '$vector' && DataAPIVector.isVectorLike(value)) {
