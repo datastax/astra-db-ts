@@ -1843,10 +1843,9 @@ export class Table<Schema extends SomeRow = SomeRow> {
     definition(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<ListTableDefinition>;
     // (undocumented)
     deleteMany(filter: TableFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
+    deleteOne(filter: TableFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
     // (undocumented)
-    deleteOne(filter: TableFilter<Schema>, options?: TableDeleteOneOptions): Promise<void>;
-    // (undocumented)
-    drop(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<void>;
+    drop(options?: Omit<DropTableOptions, 'keyspace'>): Promise<void>;
     // (undocumented)
     find(filter: TableFilter<Schema>, options?: TableFindOptions & {
         projection?: never;
@@ -1857,13 +1856,11 @@ export class Table<Schema extends SomeRow = SomeRow> {
     findOne(filter: TableFilter<Schema>, options?: TableFindOneOptions): Promise<FoundRow<Schema> | null>;
     // (undocumented)
     get _httpClient(): DataAPIHttpClient<"normal">;
-    // (undocumented)
-    insertMany(document: readonly Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>>;
-    insertOne(row: Schema, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<Schema>>;
+    insertMany(rows: readonly Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>>;
+    insertOne(row: Schema, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<Schema>>;
     readonly keyspace: string;
     readonly name: string;
-    // (undocumented)
-    updateOne(filter: TableFilter<Schema>, update: TableUpdateFilter<Schema>, options?: TableUpdateOneOptions): Promise<void>;
+    updateOne(filter: TableFilter<Schema>, update: TableUpdateFilter<Schema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
 }
 
 // @public (undocumented)
@@ -1891,9 +1888,6 @@ export interface TableCreateVectorIndexOptions extends WithTimeout<'tableAdminTi
         sourceModel?: string;
     };
 }
-
-// @public (undocumented)
-export type TableDeleteOneOptions = GenericDeleteOneOptions;
 
 // @public (undocumented)
 export interface TableDesCtx extends DataAPIDesCtx {
@@ -1970,7 +1964,6 @@ export interface TableInsertManyResult<Schema extends SomeRow> {
 
 // @public
 export interface TableInsertOneResult<Schema extends SomeRow> {
-    // (undocumented)
     insertedId: KeyOf<Schema>;
 }
 
@@ -2011,9 +2004,6 @@ export type TableUpdateManyOptions = GenericUpdateManyOptions;
 
 // @public (undocumented)
 export type TableUpdateManyResult<Schema extends SomeRow> = GenericUpdateResult<KeyOf<Schema>, number>;
-
-// @public
-export type TableUpdateOneOptions = GenericUpdateOneOptions;
 
 // @public (undocumented)
 export const time: (time?: string | Date | DataAPITimeComponents) => DataAPITime;

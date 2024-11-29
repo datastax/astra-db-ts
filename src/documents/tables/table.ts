@@ -19,7 +19,6 @@ import {
   SomeRow,
   TableCreateIndexOptions,
   TableCreateVectorIndexOptions,
-  TableDeleteOneOptions,
   TableFilter,
   TableFindOneOptions,
   TableFindOptions,
@@ -28,11 +27,10 @@ import {
   TableInsertManyResult,
   TableInsertOneResult,
   TableUpdateFilter,
-  TableUpdateOneOptions,
 } from '@/src/documents';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
-import { AlterTableOptions, AlterTableSchema, Db, ListTableDefinition, TableOptions } from '@/src/db';
+import { AlterTableOptions, AlterTableSchema, Db, DropTableOptions, ListTableDefinition, TableOptions } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
 import { $CustomInspect } from '@/src/lib/constants';
 import JBI from 'json-bigint';
@@ -495,11 +493,91 @@ export class Table<Schema extends SomeRow = SomeRow> {
     return this.#commands.insertMany(rows, options, TableInsertManyError);
   }
 
-  public async updateOne(filter: TableFilter<Schema>, update: TableUpdateFilter<Schema>, options?: TableUpdateOneOptions): Promise<void> {
-    await this.#commands.updateOne(filter, update, options);
+  /**
+   * ##### Overview
+   *
+   * Updates a single row in the table. Under certain conditions, it may insert or delete a row as well.
+   *
+   * @example
+   * ```ts
+   * await table.insertOne({ key: '123', name: 'Jerry' });
+   * await table.updateOne({ key: '123' }, { $set: { name: 'Geraldine' } });
+   * ```
+   *
+   * ##### Upserting
+   *
+   * If the row doesn't exist, *and you're `$set`-ing at least one row to a non-null value,* an upsert will occur.
+   *
+   * @example
+   * ```ts
+   * // No upsert will occur here since only nulls are being set
+   * // (this is equivalent to `{ $unset: { name: '' } }`)
+   * await table.updateOne({ key: '123' }, { $set: { name: null } });
+   *
+   * // An upsert will occur here since at least one non-null value is being set
+   * await table.updateOne({ key: '123' }, { $set: { name: 'Eleanor', age: null } });
+   * ```
+   *
+   * ##### Deleting
+   *
+   * If all (non-primary) rows are set to null (or unset), the row will be deleted.
+   *
+   * Note that `$set`-ing a row to `null` is equivalent to `$unset`-ing it. The following example would be the exact same using `$unset`s.
+   *
+   * @example
+   * ```ts
+   * // Upserts row { key: '123', name: 'Michael', age: 3 } into the table
+   * await table.updateOne({ key: '123' }, { $set: { name: 'Michael', age: 3 } });
+   *
+   * // Sets row to { key: '123', name: 'Michael', age: null }
+   * await table.updateOne({ key: '123' }, { $set: { age: null } });
+   *
+   * // Deletes row from the table as all non-primary keys are set to null
+   * await table.updateOne({ key: '123' }, { $set: { name: null } });
+   * ```
+   *
+   * ##### Filtering
+   *
+   * The filter must contain an exact primary key to update just one row.
+   *
+   * Attempting to pass an empty filter, filtering by only part of the primary key, or filtering by a non-primary key column will result in an error.
+   *
+   * ##### Update operators
+   *
+   * Updates may perform either `$set` or`$unset` operations on the row. (`$set`-ing a row to `null` is equivalent to `$unset`-ing it.)
+   *
+   * ##### On returning `void`
+   *
+   * The `updateOne` operation, as returned from the Data API, is always `{ matchedCount: 1, modifiedCount: 1 }`, regardless of how many things are actually matched/modified, and if a row is upserted or not.
+   *
+   * In that sense, returning constantly that one type is isomorphic to just returning `void`, as both realistically contain the same amount of information (i.e. none)
+   *
+   * @param filter - A filter to select the document to update.
+   * @param update - The update to apply to the selected document.
+   * @param timeout - The timeout for this operation.
+   *
+   * @returns A promise which resolves once the operation is completed.
+   */
+  public async updateOne(filter: TableFilter<Schema>, update: TableUpdateFilter<Schema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
+    await this.#commands.updateOne(filter, update, timeout);
   }
 
-  public async deleteOne(filter: TableFilter<Schema>, options?: TableDeleteOneOptions): Promise<void> {
+  /**
+   * ##### Overview
+   *
+   * Deletes a single row from the table.
+   *
+   * @example
+   * ```ts
+   * await table.insertOne({ pk: 'abc', ck: 3 });
+   * await table.deleteOne({ pk: 'abc', ck: { $gt: 2 } });
+   * ```
+   *
+   * ##### Filtering
+   *
+   *
+   */
+  public async deleteOne(filter: TableFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
     await this.#commands.deleteOne(filter, options);
   }
 
@@ -591,8 +669,8 @@ export class Table<Schema extends SomeRow = SomeRow> {
     return table.definition;
   }
 
-  public async drop(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<void> {
-    await this.#db.dropTable(this.name, { keyspace: this.keyspace, ...options });
+  public async drop(options?: Omit<DropTableOptions, 'keyspace'>): Promise<void> {
+    await this.#db.dropTable(this.name, { ...options, keyspace: this.keyspace });
   }
 
   public get _httpClient() {

@@ -1015,7 +1015,11 @@ export class Db {
   }
 
   public async dropTableIndex(name: string, options?: TableDropIndexOptions): Promise<void> {
-    await this.#httpClient.executeCommand({ dropIndex: { name, options: { ifExists: options?.ifExists } } }, {
+    const dropOpts = (options?.ifExists)
+      ? { ifExists: true }
+      : undefined;
+
+    await this.#httpClient.executeCommand({ dropIndex: { name, options: dropOpts } }, {
       timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
     });
   }
