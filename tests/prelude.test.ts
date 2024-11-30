@@ -52,23 +52,7 @@ before(async () => {
       await dbAdmin.createKeyspace(keyspace);
     }
   }
-
-  const allTables = await TEST_KEYSPACES
-    .map(async (keyspace) => {
-      const colls = await db.listTables({ keyspace, nameOnly: true });
-      return [keyspace, colls] as const;
-    })
-    .awaitAll();
-
-  await allTables
-    .map(async ([keyspace, colls]) => {
-      await colls
-        .tap(c => console.warn(`deleting table '${keyspace}.${c}'`))
-        .map(c => db.dropTable(c, { keyspace }))
-        .awaitAll();
-    })
-    .awaitAll();
-
+  
   const createTCPromises = TEST_KEYSPACES
     .map(async (keyspace) => {
       await db.createCollection(DEFAULT_COLLECTION_NAME, { vector: { dimension: 5, metric: 'cosine' }, keyspace })
@@ -81,28 +65,47 @@ before(async () => {
       });
 
       if (keyspace === DEFAULT_KEYSPACE) {
-        await table.createVectorIndex(`vector_idx_${keyspace}`, 'vector', { options: { metric: 'dot_product' } });
+        await table.createVectorIndex(`vector_idx_${keyspace}`, 'vector', { options: { metric: 'dot_product' }, ifNotExists: true });
       }
-      await table.createIndex(`bigint_idx_${keyspace}`, 'bigint');
+      await table.createIndex(`bigint_idx_${keyspace}`, 'bigint', { ifNotExists: true });
     })
     .awaitAll();
 
   const allCollections = await TEST_KEYSPACES
     .map(async (keyspace) => {
-      const colls = await db.listCollections({ keyspace: keyspace, nameOnly: true });
+      const colls = await db.listCollections({ keyspace, nameOnly: true });
       return [keyspace, colls] as const;
     })
     .awaitAll();
 
-  await allCollections
+  const allTables = await TEST_KEYSPACES
+    .map(async (keyspace) => {
+      const tables = await db.listTables({ keyspace, nameOnly: true });
+      return [keyspace, tables] as const;
+    })
+    .awaitAll();
+
+  const delCollections = allCollections
     .map(async ([keyspace, colls]) => {
       await colls
         .filter(c => TEST_KEYSPACES.includes(keyspace) ? c !== DEFAULT_COLLECTION_NAME : true)
         .tap(c => console.warn(`deleting collection '${keyspace}.${c}'`))
-        .map(c => db.dropCollection(c, { keyspace: keyspace }))
+        .map(c => db.dropCollection(c, { keyspace }))
         .awaitAll();
     })
     .awaitAll();
 
+  const delTables = allTables
+    .map(async ([keyspace, tables]) => {
+      await tables
+        .filter(t => TEST_KEYSPACES.includes(keyspace) ? t !== DEFAULT_TABLE_NAME : true)
+        .tap(t => console.warn(`deleting table '${keyspace}.${t}'`))
+        .map(t => db.dropTable(t, { keyspace }))
+        .awaitAll();
+    })
+    .awaitAll();
+
+  await delCollections;
+  await delTables;
   await createTCPromises;
 });

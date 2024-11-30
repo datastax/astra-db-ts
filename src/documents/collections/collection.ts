@@ -1496,9 +1496,9 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @returns The options that the collection was created with (i.e. the `vector` and `indexing` operations).
    */
   public async options(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<CollectionDefinition<SomeDoc>> {
-    const results = await this.#db.listCollections({ timeout: options?.timeout, keyspace: this.keyspace });
+    const resp = await this.#db.listCollections({ timeout: options?.timeout, keyspace: this.keyspace });
 
-    const collection = results.find((c) => c.name === this.name);
+    const collection = resp.find((c) => c.name === this.name);
 
     if (!collection) {
       throw new Error(`Can not get options for collection '${this.keyspace}.${this.name}'; collection not found. Did you use the right keyspace?`);

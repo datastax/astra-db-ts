@@ -1070,11 +1070,11 @@ export class Db {
   public async listCollections(options?: ListCollectionsOptions & { nameOnly?: false }): Promise<CollectionDescriptor[]>
 
   public async listCollections(options?: ListCollectionsOptions): Promise<string[] | CollectionDescriptor[]> {
+    const explain = options?.nameOnly !== true;
+
     const command = {
       findCollections: {
-        options: {
-          explain: options?.nameOnly !== true,
-        },
+        options: { explain },
       },
     };
 
@@ -1082,7 +1082,17 @@ export class Db {
       timeoutManager: this.#httpClient.tm.single('collectionAdminTimeoutMs', options),
       keyspace: options?.keyspace,
     });
-    return resp.status!.collections;
+
+    const colls = resp.status!.collections;
+
+    if (explain) {
+      for (let i = 0, n = colls.length; i < n; i++) {
+        colls[i].definition = colls[i].options;
+        delete colls[i].options;
+      }
+    }
+
+    return colls;
   }
 
   /**

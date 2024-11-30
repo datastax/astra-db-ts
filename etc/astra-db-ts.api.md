@@ -277,11 +277,11 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
     find(filter: CollectionFilter<Schema>, options?: CollectionFindOptions & {
         projection?: never;
     }): CollectionFindCursor<FoundDoc<Schema>, FoundDoc<Schema>>;
-    find<TRaw extends SomeDoc = DeepPartial<Schema>>(filter: CollectionFilter<Schema>, options: CollectionFindOptions): CollectionFindCursor<FoundDoc<TRaw>, FoundDoc<TRaw>>;
+    find<TRaw extends SomeDoc = Partial<Schema>>(filter: CollectionFilter<Schema>, options: CollectionFindOptions): CollectionFindCursor<FoundDoc<TRaw>, FoundDoc<TRaw>>;
     findOne(filter: CollectionFilter<Schema>, options?: CollectionFindOneOptions & {
         projection?: never;
     }): Promise<FoundDoc<Schema> | null>;
-    findOne<TRaw extends SomeDoc = DeepPartial<Schema>>(filter: CollectionFilter<Schema>, options: CollectionFindOneOptions): Promise<FoundDoc<TRaw> | null>;
+    findOne<TRaw extends SomeDoc = Partial<Schema>>(filter: CollectionFilter<Schema>, options: CollectionFindOneOptions): Promise<FoundDoc<TRaw> | null>;
     findOneAndDelete<TRaw extends SomeDoc = WithId<Schema>>(filter: CollectionFilter<Schema>, options?: CollectionFindOneAndDeleteOptions): Promise<TRaw | null>;
     findOneAndReplace<TRaw extends SomeDoc = WithId<Schema>>(filter: CollectionFilter<Schema>, replacement: NoId<Schema>, options?: CollectionFindOneAndReplaceOptions): Promise<TRaw | null>;
     findOneAndUpdate(filter: CollectionFilter<Schema>, update: CollectionUpdateFilter<Schema>, options?: CollectionFindOneAndUpdateOptions): Promise<WithId<Schema> | null>;
@@ -354,6 +354,12 @@ export type CollectionDeleteOneOptions = GenericDeleteOneOptions;
 // @public
 export interface CollectionDeleteOneResult {
     deletedCount: 0 | 1;
+}
+
+// @public
+export interface CollectionDescriptor {
+    definition: CollectionDefinition<SomeDoc>;
+    name: string;
 }
 
 // @public
@@ -489,7 +495,7 @@ export interface CollectionUpdateFilter<Schema extends SomeDoc> {
     $min?: (CollectionNumberUpdate<Schema> | CollectionDateUpdate<Schema>) & Record<string, number | bigint | Date | {
         $date: number;
     }>;
-    $mul?: StrictCollectionNumberUpdate<Schema> & Record<string, number>;
+    $mul?: CollectionNumberUpdate<Schema> & Record<string, number>;
     $pop?: CollectionPop<Schema> & Record<string, number>;
     $push?: CollectionPush<Schema> & SomeDoc;
     $rename?: Record<string, string>;
@@ -636,6 +642,14 @@ export interface CreateTableDefinition {
     readonly primaryKey: CreateTablePrimaryKeyDefinition;
 }
 
+// @public (undocumented)
+export interface CreateTableIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+    // (undocumented)
+    ifNotExists?: boolean;
+    // (undocumented)
+    options?: TableIndexOptions;
+}
+
 // @public
 export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions<Schema> {
     // (undocumented)
@@ -646,6 +660,14 @@ export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTa
 
 // @public (undocumented)
 export type CreateTablePrimaryKeyDefinition = ShortCreateTablePrimaryKeyDefinition | FullCreateTablePrimaryKeyDefinition;
+
+// @public (undocumented)
+export interface CreateTableVectorIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+    // (undocumented)
+    ifNotExists?: boolean;
+    // (undocumented)
+    options?: TableVectorIndexOptions;
+}
 
 // @public
 export abstract class CumulativeOperationError extends DataAPIResponseError {
@@ -1028,13 +1050,13 @@ export class Db {
     }): Promise<string[]>;
     listCollections(options?: ListCollectionsOptions & {
         nameOnly?: false;
-    }): Promise<FullCollectionInfo[]>;
+    }): Promise<CollectionDescriptor[]>;
     listTables(options: ListTablesOptions & {
         nameOnly: true;
     }): Promise<string[]>;
     listTables(options?: ListTablesOptions & {
         nameOnly?: false;
-    }): Promise<FullTableInfo[]>;
+    }): Promise<TableDescriptor[]>;
     get region(): string;
     table<Schema extends SomeRow = SomeRow>(name: string, options?: TableOptions<Schema>): Table<Schema>;
     useKeyspace(keyspace: string): void;
@@ -1069,11 +1091,6 @@ export interface DbSerDesConfig {
     // (undocumented)
     table?: Omit<TableSerDesConfig<SomeRow>, 'mutateInPlace'>;
 }
-
-// @public
-export type DeepPartial<T> = T extends object ? {
-    [P in keyof T]?: DeepPartial<T[P]>;
-} : T;
 
 // @public
 export const DEFAULT_KEYSPACE = "default_keyspace";
@@ -1291,7 +1308,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     limit(limit: number): FindCursor<T, TRaw>;
     map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw>;
     next(): Promise<T | null>;
-    project<RRaw extends SomeDoc = DeepPartial<TRaw>>(projection: Projection): FindCursor<RRaw, RRaw>;
+    project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindCursor<RRaw, RRaw>;
     rewind(): void;
     skip(skip: number): FindCursor<T, TRaw>;
     sort(sort: Sort): FindCursor<T, TRaw>;
@@ -1317,26 +1334,12 @@ export type FoundRow<Doc> = Omit<Required<Doc>, '$similarity'> & {
     $similarity?: number;
 };
 
-// @public
-export interface FullCollectionInfo {
-    name: string;
-    options: CollectionDefinition<SomeDoc>;
-}
-
 // @public (undocumented)
 export interface FullCreateTablePrimaryKeyDefinition {
     // (undocumented)
     readonly partitionBy: readonly string[];
     // (undocumented)
     readonly partitionSort?: Record<string, 1 | -1>;
-}
-
-// @public (undocumented)
-export interface FullTableInfo {
-    // (undocumented)
-    definition: ListTableDefinition;
-    // (undocumented)
-    name: string;
 }
 
 // @public (undocumented)
@@ -1751,81 +1754,8 @@ export class StaticTokenProvider extends TokenProvider {
     getToken(): string;
 }
 
-// Warning: (ae-forgotten-export) The symbol "TypeErr" needs to be exported by the entry point index.d.ts
-//
-// @public
-export type StrictCollectionDateUpdate<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsDate<InNotation> extends true ? {
-    [K in keyof InNotation as ContainsDate<InNotation[K]> extends true ? K : never]?: Date | {
-        $date: number;
-    };
-} : TypeErr<'Can not perform a date operation on a schema with no dates'>;
-
-// Warning: (ae-forgotten-export) The symbol "ContainsNum" needs to be exported by the entry point index.d.ts
-//
-// @public
-export type StrictCollectionNumberUpdate<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsNum<InNotation> extends true ? {
-    [K in keyof InNotation as IsNum<InNotation[K]> extends true ? K : never]?: number | bigint;
-} : TypeErr<'Can not perform a number operation on a schema with no numbers'>;
-
-// Warning: (ae-forgotten-export) The symbol "ContainsArr" needs to be exported by the entry point index.d.ts
-//
-// @public
-export type StrictCollectionPop<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsArr<InNotation> extends true ? {
-    [K in keyof CollectionArrayUpdate<InNotation>]?: number;
-} : TypeErr<'Can not pop on a schema with no arrays'>;
-
-// @public
-export type StrictCollectionPush<Schema extends SomeDoc, InNotation = ToDotNotation<Schema>> = ContainsArr<InNotation> extends true ? {
-    [K in keyof CollectionArrayUpdate<InNotation>]?: (CollectionArrayUpdate<InNotation>[K] | {
-        $each: CollectionArrayUpdate<InNotation>[K][];
-        $position?: number;
-    });
-} : TypeErr<'Can not perform array operation on a schema with no arrays'>;
-
-// @public
-export type StrictCollectionRename<Schema extends SomeDoc> = {
-    [K in keyof ToDotNotation<Schema>]?: string;
-};
-
-// @public
-export type StrictCollectionUnset<Schema extends SomeDoc> = {
-    [K in keyof ToDotNotation<Schema>]?: '' | true | 1;
-};
-
-// @public
-export interface StrictCollectionUpdateFilter<Schema extends SomeDoc> {
-    $addToSet?: StrictCollectionPush<Schema>;
-    $currentDate?: CollectionCurrentDate<ToDotNotation<Schema>>;
-    $inc?: StrictCollectionNumberUpdate<Schema>;
-    $max?: StrictCollectionNumberUpdate<Schema> | StrictCollectionDateUpdate<Schema>;
-    $min?: StrictCollectionNumberUpdate<Schema> | StrictCollectionDateUpdate<Schema>;
-    $mul?: StrictCollectionNumberUpdate<Schema>;
-    $pop?: StrictCollectionPop<Schema>;
-    $push?: StrictCollectionPush<Schema>;
-    $rename?: StrictCollectionRename<Schema>;
-    $set?: Partial<ToDotNotation<Schema>>;
-    $setOnInsert?: Partial<ToDotNotation<Schema>>;
-    $unset?: StrictCollectionUnset<Schema>;
-}
-
 // @public (undocumented)
 export type StrictCreateTableColumnDefinition = ScalarCreateTableColumnDefinition | MapCreateTableColumnDefinition | ListCreateTableColumnDefinition | SetCreateTableColumnDefinition | VectorCreateTableColumnDefinition;
-
-// @public
-export type StrictProjection<Schema extends SomeDoc> = {
-    [K in keyof ToDotNotation<WithId<Schema>>]?: any[] extends (ToDotNotation<WithId<Schema>>)[K] ? 1 | 0 | true | false | ProjectionSlice : 1 | 0 | true | false;
-} & {
-    '*'?: 1 | 0 | true | false;
-};
-
-// @public
-export type StrictSort<Schema extends SomeDoc> = {
-    [K in keyof ToDotNotation<WithId<Schema>>]?: SortDirection;
-} | {
-    $vector: number[];
-} | {
-    $vectorize: string;
-};
 
 // @public
 export class Table<Schema extends SomeRow = SomeRow> {
@@ -1836,9 +1766,9 @@ export class Table<Schema extends SomeRow = SomeRow> {
     // (undocumented)
     alter<NewSchema extends SomeRow>(options: AlterTableOptions<Schema>): Promise<Table<NewSchema>>;
     // (undocumented)
-    createIndex(name: string, column: Cols<Schema> | string, options?: TableCreateIndexOptions): Promise<void>;
+    createIndex(name: string, column: Cols<Schema> | string, options?: CreateTableIndexOptions): Promise<void>;
     // (undocumented)
-    createVectorIndex(name: string, column: Cols<Schema> | string, options?: TableCreateVectorIndexOptions): Promise<void>;
+    createVectorIndex(name: string, column: Cols<Schema> | string, options?: CreateTableVectorIndexOptions): Promise<void>;
     // (undocumented)
     definition(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<ListTableDefinition>;
     // (undocumented)
@@ -1851,7 +1781,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
         projection?: never;
     }): TableFindCursor<FoundRow<Schema>, FoundRow<Schema>>;
     // (undocumented)
-    find<TRaw extends SomeRow = DeepPartial<Schema>>(filter: TableFilter<Schema>, options: TableFindOptions): TableFindCursor<FoundRow<TRaw>, FoundRow<TRaw>>;
+    find<TRaw extends SomeRow = Partial<Schema>>(filter: TableFilter<Schema>, options: TableFindOptions): TableFindCursor<FoundRow<TRaw>, FoundRow<TRaw>>;
     // (undocumented)
     findOne(filter: TableFilter<Schema>, options?: TableFindOneOptions): Promise<FoundRow<Schema> | null>;
     // (undocumented)
@@ -1859,6 +1789,18 @@ export class Table<Schema extends SomeRow = SomeRow> {
     insertMany(rows: readonly Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>>;
     insertOne(row: Schema, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<Schema>>;
     readonly keyspace: string;
+    // Warning: (ae-forgotten-export) The symbol "ListIndexOptions" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    listIndexes(options?: ListIndexOptions & {
+        nameOnly: true;
+    }): Promise<string[]>;
+    // Warning: (ae-forgotten-export) The symbol "TableIndexDescriptor" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    listIndexes(options?: ListIndexOptions & {
+        nameOnly?: false;
+    }): Promise<TableIndexDescriptor[]>;
     readonly name: string;
     updateOne(filter: TableFilter<Schema>, update: TableUpdateFilter<Schema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
 }
@@ -1867,26 +1809,11 @@ export class Table<Schema extends SomeRow = SomeRow> {
 export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: SomeDoc) => any;
 
 // @public (undocumented)
-export interface TableCreateIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+export interface TableDescriptor {
     // (undocumented)
-    ifNotExists?: boolean;
+    definition: ListTableDefinition;
     // (undocumented)
-    options?: {
-        caseSensitive?: boolean;
-        normalize?: boolean;
-        ascii?: boolean;
-    };
-}
-
-// @public (undocumented)
-export interface TableCreateVectorIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
-    // (undocumented)
-    ifNotExists?: boolean;
-    // (undocumented)
-    options?: {
-        metric: 'cosine' | 'euclidean' | 'dot_product';
-        sourceModel?: string;
-    };
+    name: string;
 }
 
 // @public (undocumented)
@@ -1947,6 +1874,16 @@ export type TableFindOneOptions = GenericFindOneOptions;
 // @public (undocumented)
 export type TableFindOptions = GenericFindOptions;
 
+// @public (undocumented)
+export interface TableIndexOptions {
+    // (undocumented)
+    ascii?: boolean;
+    // (undocumented)
+    caseSensitive?: boolean;
+    // (undocumented)
+    normalize?: boolean;
+}
+
 // @public
 export class TableInsertManyError extends CumulativeOperationError {
     name: string;
@@ -2004,6 +1941,14 @@ export type TableUpdateManyOptions = GenericUpdateManyOptions;
 
 // @public (undocumented)
 export type TableUpdateManyResult<Schema extends SomeRow> = GenericUpdateResult<KeyOf<Schema>, number>;
+
+// @public (undocumented)
+export interface TableVectorIndexOptions {
+    // (undocumented)
+    metric: 'cosine' | 'euclidean' | 'dot_product';
+    // (undocumented)
+    sourceModel?: string;
+}
 
 // @public (undocumented)
 export const time: (time?: string | Date | DataAPITimeComponents) => DataAPITime;

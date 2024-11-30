@@ -13,12 +13,12 @@
 // limitations under the License.
 
 import {
+  CreateTableIndexOptions,
+  CreateTableVectorIndexOptions,
   FoundRow,
   KeyOf,
   SomeDoc,
   SomeRow,
-  TableCreateIndexOptions,
-  TableCreateVectorIndexOptions,
   TableFilter,
   TableFindOneOptions,
   TableFindOptions,
@@ -30,13 +30,21 @@ import {
 } from '@/src/documents';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
-import { AlterTableOptions, AlterTableSchema, Db, DropTableOptions, ListTableDefinition, TableOptions } from '@/src/db';
+import {
+  AlterTableOptions,
+  AlterTableSchema,
+  Db,
+  DropTableOptions,
+  ListTableDefinition,
+  TableOptions,
+} from '@/src/db';
 import { WithTimeout } from '@/src/lib';
 import { $CustomInspect } from '@/src/lib/constants';
 import JBI from 'json-bigint';
 import { TableFindCursor } from '@/src/documents/tables/cursor';
 import { withJbiNullProtoFix } from '@/src/lib/utils';
 import { TableSerDes } from '@/src/documents/tables/ser-des';
+import { ListIndexOptions, TableIndexDescriptor } from '@/src/db/types/tables/list-indexes';
 
 const jbi = JBI({ storeAsString: true });
 
@@ -613,7 +621,24 @@ export class Table<Schema extends SomeRow = SomeRow> {
     return this;
   }
 
-  public async createIndex(name: string, column: Cols<Schema> | string, options?: TableCreateIndexOptions): Promise<void> {
+  public async listIndexes(options?: ListIndexOptions & { nameOnly: true }): Promise<string[]>
+
+  public async listIndexes(options?: ListIndexOptions & { nameOnly?: false }): Promise<TableIndexDescriptor[]>
+
+  public async listIndexes(options?: ListIndexOptions): Promise<string[] | TableIndexDescriptor[]> {
+    const resp = await this.#httpClient.executeCommand({
+      listIndexes: {
+        options: {
+          explain: options?.nameOnly !== true,
+        },
+      },
+    }, {
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
+    });
+    return resp.status!.indexes;
+  }
+
+  public async createIndex(name: string, column: Cols<Schema> | string, options?: CreateTableIndexOptions): Promise<void> {
     await this.#httpClient.executeCommand({
       createIndex: {
         name: name,
@@ -634,7 +659,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
     });
   }
 
-  public async createVectorIndex(name: string, column: Cols<Schema> | string, options?: TableCreateVectorIndexOptions): Promise<void> {
+  public async createVectorIndex(name: string, column: Cols<Schema> | string, options?: CreateTableVectorIndexOptions): Promise<void> {
     await this.#httpClient.executeCommand({
       createVectorIndex: {
         name: name,
@@ -655,12 +680,12 @@ export class Table<Schema extends SomeRow = SomeRow> {
   }
 
   public async definition(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<ListTableDefinition> {
-    const results = await this.#db.listTables({
+    const resp = await this.#db.listTables({
       timeout: options?.timeout,
       keyspace: this.keyspace,
     });
 
-    const table = results.find((t) => t.name === this.name);
+    const table = resp.find((t) => t.name === this.name);
 
     if (!table) {
       throw new Error(`Can not get definition for table '${this.keyspace}.${this.name}'; table not found. Did you use the right keyspace?`);
