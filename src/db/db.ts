@@ -28,13 +28,13 @@ import { EmbeddingHeadersProvider, SomeRow, Table, TableDropIndexOptions } from 
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
 import { CollectionOptions } from '@/src/db/types/collections/collection-options';
 import { DropCollectionOptions } from '@/src/db/types/collections/drop-collection';
-import { FullCollectionInfo, ListCollectionsOptions } from '@/src/db/types/collections/list-collections';
+import { CollectionDescriptor, ListCollectionsOptions } from '@/src/db/types/collections/list-collections';
 import { RunCommandOptions } from '@/src/db/types/command';
 import { TableOptions } from '@/src/db/types/tables/spawn-table';
 import { CreateTableDefinition, CreateTableOptions } from '@/src/db/types/tables/create-table';
 import { InferTableSchemaFromDefinition } from '@/src/db/types/tables/table-schema';
 import { DropTableOptions } from '@/src/db/types/tables/drop-table';
-import { FullTableInfo, ListTablesOptions } from '@/src/db/types/tables/list-tables';
+import { TableDescriptor, ListTablesOptions } from '@/src/db/types/tables/list-tables';
 import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
 import { AdminOptions, DbOptions } from '@/src/client/types';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
@@ -1063,9 +1063,9 @@ export class Db {
    *
    * @see CollectionOptions
    */
-  public async listCollections(options?: ListCollectionsOptions & { nameOnly?: false }): Promise<FullCollectionInfo[]>
+  public async listCollections(options?: ListCollectionsOptions & { nameOnly?: false }): Promise<CollectionDescriptor[]>
 
-  public async listCollections(options?: ListCollectionsOptions): Promise<string[] | FullCollectionInfo[]> {
+  public async listCollections(options?: ListCollectionsOptions): Promise<string[] | CollectionDescriptor[]> {
     const command = {
       findCollections: {
         options: {
@@ -1124,9 +1124,9 @@ export class Db {
    *
    * @see CollectionOptions
    */
-  public async listTables(options?: ListTablesOptions & { nameOnly?: false }): Promise<FullTableInfo[]>
+  public async listTables(options?: ListTablesOptions & { nameOnly?: false }): Promise<TableDescriptor[]>
 
-  public async listTables(options?: ListTablesOptions): Promise<string[] | FullTableInfo[]> {
+  public async listTables(options?: ListTablesOptions): Promise<string[] | TableDescriptor[]> {
     const command = {
       listTables: {
         options: {

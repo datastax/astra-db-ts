@@ -1572,7 +1572,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
       throw new Error(`Can not get options for collection '${this.keyspace}.${this.name}'; collection not found. Did you use the right keyspace?`);
     }
 
-    return collection.options;
+    return collection.definition;
   }
 
   /**
