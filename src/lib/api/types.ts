@@ -12,17 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FetcherResponseInfo } from '@/src/lib/api/fetch/types';
-
-/**
- * Response object from an API call
- *
- * @deprecated - Use {@link FetcherResponseInfo} instead (synonymous type)
- *
- * @public
- */
-export type CuratedAPIResponse = FetcherResponseInfo;
-
 /**
  * The response format of a 2XX-status Data API call
  *

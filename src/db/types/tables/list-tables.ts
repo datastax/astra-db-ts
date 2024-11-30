@@ -19,7 +19,7 @@ export interface ListTablesOptions extends WithTimeout<'tableAdminTimeoutMs'>, W
   nameOnly?: boolean,
 }
 
-export interface FullTableInfo {
+export interface TableDescriptor {
   name: string,
   definition: ListTableDefinition,
 }

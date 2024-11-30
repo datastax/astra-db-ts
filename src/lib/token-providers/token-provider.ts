@@ -54,7 +54,7 @@ export abstract class TokenProvider {
    *
    * @internal
    */
-  static parseToken(raw: (string | TokenProvider | nullish)[], field: string): TokenProvider | undefined {
+  static mergeTokens(...raw: (string | TokenProvider | nullish)[]): TokenProvider | undefined {
     const first = raw.find((r) => !isNullish(r));
 
     if (typeof first === 'string') {
@@ -62,7 +62,7 @@ export abstract class TokenProvider {
     }
 
     if (!(<unknown>first instanceof TokenProvider) && !isNullish(first)) {
-      throw new TypeError(`Expected ${field} to be of type string | TokenProvider | nullish; got ${first} (${first})`);
+      throw new TypeError(`Expected token to be of type string | TokenProvider | nullish; got ${typeof first} (${first})`);
     }
 
     return first;

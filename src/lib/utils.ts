@@ -17,16 +17,25 @@ import { DataAPIEnvironments } from '@/src/lib/constants';
 import JBI from 'json-bigint';
 import { SomeDoc } from '@/src/documents';
 
+/**
+ * @internal
+ */
 export function isNullish(t: unknown): t is nullish {
   return t === null || t === undefined;
 }
 
+/**
+ * @internal
+ */
 export function validateDataAPIEnv(env: unknown): asserts env is DataAPIEnvironment | nullish {
   if (!isNullish(env) && !(<readonly unknown[]>DataAPIEnvironments).includes(env)) {
     throw new Error(`Given environment is invalid (must be ${DataAPIEnvironments.map(e => `"${e}"`).join(', ')}, or nullish to default to "astra".`);
   }
 }
 
+/**
+ * @internal
+ */
 export function jsonTryParse<T>(json: string, otherwise: T, reviver?: (this: unknown, key: string, value: unknown) => unknown): T {
   try {
     return JSON.parse(json, reviver);
@@ -35,14 +44,23 @@ export function jsonTryParse<T>(json: string, otherwise: T, reviver?: (this: unk
   }
 }
 
+/**
+ * @internal
+ */
 export function buildAstraEndpoint(id: string, region: string, env: 'dev' | 'test' | 'prod' = 'prod') {
   return 'https://' + id + '-' + region + `.apps${env === 'prod' ? '' : `-${env}`}.astra.datastax.com`;
 }
 
+/**
+ * @internal
+ */
 export function toArray<T>(t: T | readonly T[]): readonly T[] {
   return Array.isArray(t) ? t : [t] as readonly [T];
 }
 
+/**
+ * @internal
+ */
 export function withJbiNullProtoFix(jbi: { parse: typeof JBI['parse']; stringify: typeof JBI['stringify'] }) {
   return {
     parse: (str: string) => nullProtoFix(jbi.parse(str)),

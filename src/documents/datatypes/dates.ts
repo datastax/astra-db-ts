@@ -15,6 +15,9 @@
 import { isNullish } from '@/src/lib/utils';
 import { $CustomInspect } from '@/src/lib/constants';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des';
+import { $SerializeForCollection } from '@/src/documents';
+
+export const date = (date?: string | Date | DataAPIDateComponents) => new DataAPIDate(date);
 
 export interface DataAPIDateComponents {
   year: number,
@@ -83,66 +86,27 @@ export class DataAPIDate {
   }
 }
 
-export interface DataAPIDurationComponents {
-  months: number,
-  days: number,
-  nanoseconds: number,
-}
+export const duration = (duration: string) => new DataAPIDuration(duration);
 
 export class DataAPIDuration {
   readonly #duration: string;
 
   public [$SerializeForTable] = this.toString;
 
-  constructor(input: string | Partial<DataAPIDurationComponents> | [Date | DataAPITimestamp, Date | DataAPITimestamp]) {
-    if (typeof input === 'string') {
-      this.#duration = input;
-    } else if (Array.isArray(input)) {
-      if (input[0] instanceof DataAPITimestamp) {
-        input[0] = input[0].toDate();
-      }
-      if (input[1] instanceof DataAPITimestamp) {
-        input[1] = input[1].toDate();
-      }
-      const [start, end] = input;
-      const ns = (end.getTime() - start.getTime()) * 1_000_000;
-      this.#duration = `0mo0d${ns}ns`;
-    } else {
-      this.#duration = `${input.months}mo${input.days}d${input.nanoseconds}ns`;
-    }
+  constructor(input: string) {
+    this.#duration = input;
 
     Object.defineProperty(this, $CustomInspect, {
       value: () => `DataAPIDuration("${this.#duration}")`,
     });
   }
 
-  public components(): DataAPIDurationComponents {
-    throw 'stub';
-  }
-
-  public toDates(reference: Date | DataAPITimestamp): [Date, Date] {
-    if (!reference) {
-      throw new Error('Base date is required to convert duration to date ranges');
-    }
-
-    if (reference instanceof DataAPITimestamp) {
-      reference = reference.toDate();
-    }
-
-    const components = this.components();
-    const end = new Date(reference);
-
-    end.setMonth(end.getMonth() + components.months);
-    end.setDate(end.getDate() + components.days);
-    end.setMilliseconds(end.getMilliseconds() + components.nanoseconds / 1_000_000);
-
-    return [new Date(reference), end];
-  }
-
   public toString() {
     return this.#duration;
   }
 }
+
+export const time = (time?: string | Date | DataAPITimeComponents) => new DataAPITime(time);
 
 export interface DataAPITimeComponents {
   hours: number,
@@ -215,6 +179,8 @@ export class DataAPITime {
   }
 }
 
+export const timestamp = (timestamp?: string | Date | DataAPITimestampComponents) => new DataAPITimestamp(timestamp);
+
 export interface DataAPITimestampComponents {
   year: number,
   month: number,
@@ -229,6 +195,7 @@ export class DataAPITimestamp {
   readonly #timestamp: string;
 
   public [$SerializeForTable] = this.toString;
+  public [$SerializeForCollection] = () => ({ $date: this.toString() });
 
   public constructor(input?: string | Date | Partial<DataAPITimestampComponents>) {
     input ||= new Date();

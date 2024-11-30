@@ -13,30 +13,32 @@
 // limitations under the License.
 
 import {
-  TableCreateIndexOptions,
-  TableCreateVectorIndexOptions,
   FoundRow,
   KeyOf,
   SomeDoc,
   SomeRow,
-  TableDeleteOneOptions, TableFilter,
+  TableCreateIndexOptions,
+  TableCreateVectorIndexOptions,
+  TableDeleteOneOptions,
+  TableFilter,
   TableFindOneOptions,
   TableFindOptions,
   TableInsertManyError,
   TableInsertManyOptions,
   TableInsertManyResult,
-  TableInsertOneResult, TableUpdateFilter,
+  TableInsertOneResult,
+  TableUpdateFilter,
   TableUpdateOneOptions,
 } from '@/src/documents';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { AlterTableOptions, AlterTableSchema, Db, ListTableDefinition, TableOptions } from '@/src/db';
-import { DeepPartial, WithTimeout } from '@/src/lib';
+import { WithTimeout } from '@/src/lib';
 import { $CustomInspect } from '@/src/lib/constants';
-import { mkTableSerDes } from '@/src/documents/tables/ser-des';
 import JBI from 'json-bigint';
 import { TableFindCursor } from '@/src/documents/tables/cursor';
 import { withJbiNullProtoFix } from '@/src/lib/utils';
+import { TableSerDes } from '@/src/documents/tables/ser-des';
 
 const jbi = JBI({ storeAsString: true });
 
@@ -239,7 +241,7 @@ export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
  */
 export class Table<Schema extends SomeRow = SomeRow> {
   readonly #httpClient: DataAPIHttpClient;
-  readonly #commands: CommandImpls<Schema, KeyOf<Schema>>;
+  readonly #commands: CommandImpls<KeyOf<Schema>>;
   readonly #db: Db;
 
   /**
@@ -274,7 +276,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
     };
 
     this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
-    this.#commands = new CommandImpls(this, this.#httpClient, mkTableSerDes(opts?.serdes));
+    this.#commands = new CommandImpls(this, this.#httpClient, new TableSerDes(opts?.serdes));
     this.#db = db;
 
     Object.defineProperty(this, $CustomInspect, {
@@ -349,7 +351,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
 
   public find(filter: TableFilter<Schema>, options?: TableFindOptions & { projection?: never }): TableFindCursor<FoundRow<Schema>, FoundRow<Schema>>
 
-  public find<TRaw extends SomeRow = DeepPartial<Schema>>(filter: TableFilter<Schema>, options: TableFindOptions): TableFindCursor<FoundRow<TRaw>, FoundRow<TRaw>>
+  public find<TRaw extends SomeRow = Partial<Schema>>(filter: TableFilter<Schema>, options: TableFindOptions): TableFindCursor<FoundRow<TRaw>, FoundRow<TRaw>>
 
   public find(filter: TableFilter<Schema>, options?: TableFindOptions): TableFindCursor<SomeDoc> {
     return this.#commands.find(filter, options, TableFindCursor);

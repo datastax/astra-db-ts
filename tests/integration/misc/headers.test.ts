@@ -111,7 +111,7 @@ parallel('integration.misc.headers', () => {
       const latestHeaders: Ref<Record<string, string>> = { ref: {} };
       const client = mkClient(latestHeaders);
       const db = client.db(TEST_APPLICATION_URI, { token: new CyclingTokenProvider() });
-      const dbAdmin = db.admin({ environment: ENVIRONMENT as 'astra' });
+      const dbAdmin = db.admin();
 
       await assert.rejects(() => dbAdmin.listKeyspaces());
       assert.strictEqual(latestHeaders.ref[DEFAULT_DEVOPS_API_AUTH_HEADER], 'Bearer tree');

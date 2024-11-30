@@ -15,11 +15,17 @@
 import { GuaranteedUpdateResult, GenericUpdateResult } from '@/src/documents/commands/types/update/update-common';
 import { RawDataAPIResponse } from '@/src/lib';
 
+/**
+ * @internal
+ */
 export const mkUpdateResult = <N extends number>(resp?: RawDataAPIResponse) => ({
   modifiedCount: resp?.status?.modifiedCount ?? 0 as N,
   matchedCount: resp?.status?.matchedCount ?? 0 as N,
 });
 
+/**
+ * @internal
+ */
 export const coalesceUpsertIntoUpdateResult = <ID, N extends number>(commonResult: GuaranteedUpdateResult<N>, resp: RawDataAPIResponse): GenericUpdateResult<ID, N> =>
   (resp.status?.upsertedId)
     ? {

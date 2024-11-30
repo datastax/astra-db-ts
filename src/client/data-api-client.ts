@@ -162,13 +162,13 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
       fetchCtx: buildFetchCtx(options || undefined),
       dbOptions: {
         ...options?.dbOptions,
-        token: TokenProvider.parseToken([options?.dbOptions?.token, token], 'provided token'),
+        token: TokenProvider.mergeTokens(options?.dbOptions?.token, token),
         timeoutDefaults: Timeouts.merge(Timeouts.Default, options?.timeoutDefaults),
         logging,
       },
       adminOptions: {
         ...options?.adminOptions,
-        adminToken: TokenProvider.parseToken([options?.adminOptions?.adminToken, token], 'provided token'),
+        adminToken: TokenProvider.mergeTokens(options?.adminOptions?.adminToken, token),
         timeoutDefaults: Timeouts.merge(Timeouts.Default, options?.timeoutDefaults),
         logging,
       },
