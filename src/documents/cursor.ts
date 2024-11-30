@@ -15,7 +15,7 @@
 import type { Collection, SomeDoc } from '@/src/documents/collections';
 import type { GenericFindOptions } from '@/src/documents/commands';
 import type { Filter, Projection, Sort } from '@/src/documents/types';
-import type { DeepPartial, nullish } from '@/src/lib';
+import type { nullish } from '@/src/lib';
 import { normalizedSort } from '@/src/documents/utils';
 import { $CustomInspect } from '@/src/lib/constants';
 import { SomeSerDes } from '@/src/lib/api/ser-des';
@@ -317,7 +317,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @see StrictProjection
    */
-  public project<RRaw extends SomeDoc = DeepPartial<TRaw>>(projection: Projection): FindCursor<RRaw,  RRaw> {
+  public project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindCursor<RRaw,  RRaw> {
     if (this.#mapping) {
       throw new CursorError('Cannot set a projection after already using cursor.map(...)', this);
     }

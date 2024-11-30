@@ -45,15 +45,6 @@ export type Ref<T> = { ref: T }
 export type EmptyObj = {};
 
 /**
- * Utility type to recursively makes all properties of a type optional.
- *
- * @public
- */
-export type DeepPartial<T> = T extends object ? {
-  [P in keyof T]?: DeepPartial<T[P]>;
-} : T;
-
-/**
  * Utility type to represent a value that can be either a single value or an array of values.
  *
  * @public

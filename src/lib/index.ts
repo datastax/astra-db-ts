@@ -16,4 +16,4 @@ export * from './api';
 export * from './token-providers';
 export * from './logging';
 export { DataAPIEnvironments } from './constants';
-export type { nullish, DataAPIEnvironment, DeepPartial, OneOrMany, EmptyObj } from './types';
+export type { nullish, DataAPIEnvironment, OneOrMany, EmptyObj } from './types';

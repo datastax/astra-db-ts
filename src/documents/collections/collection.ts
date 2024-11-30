@@ -16,6 +16,7 @@ import type {
   CollectionDeleteManyResult,
   CollectionDeleteOneOptions,
   CollectionDeleteOneResult,
+  CollectionFilter,
   CollectionFindOneAndDeleteOptions,
   CollectionFindOneAndReplaceOptions,
   CollectionFindOneAndUpdateOptions,
@@ -26,11 +27,11 @@ import type {
   CollectionInsertOneResult,
   CollectionReplaceOneOptions,
   CollectionReplaceOneResult,
+  CollectionUpdateFilter,
   CollectionUpdateManyOptions,
   CollectionUpdateManyResult,
   CollectionUpdateOneOptions,
   CollectionUpdateOneResult,
-  CollectionFilter,
   Flatten,
   FoundDoc,
   IdOf,
@@ -38,12 +39,11 @@ import type {
   NoId,
   SomeDoc,
   ToDotNotation,
-  CollectionUpdateFilter,
   WithId,
 } from '@/src/documents/collections/types';
 import { CollectionDefinition, CollectionOptions, Db } from '@/src/db';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import { DeepPartial, WithTimeout } from '@/src/lib';
+import { WithTimeout } from '@/src/lib';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { $CustomInspect } from '@/src/lib/constants';
 import { CollectionInsertManyError, TooManyDocumentsToCountError } from '@/src/documents';
@@ -697,7 +697,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * This overload of {@link Collection.find} is used for when no projection is provided, and it is safe to assume the returned documents are going to be of type `Schema`.
    *
-   * If it can not be inferred that a projection is definitely not provided, the `Schema` is forced to be `DeepPartial<Schema>` if the user does not provide their own, in order to prevent type errors and ensure the user is aware that the document may not be of the same type as `Schema`.
+   * If it can not be inferred that a projection is definitely not provided, the `Schema` is forced to be `Partial<Schema>` if the user does not provide their own, in order to prevent type errors and ensure the user is aware that the document may not be of the same type as `Schema`.
    *
    * ##### Filtering
    *
@@ -808,7 +808,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * This overload of {@link Collection.find} is used for when a projection is provided (or at the very least, it can not be inferred that a projection is NOT provided).
    *
-   * In this case, the user must provide an explicit projection type, or the type of the documents will be `DeepPartial<Schema>`, to prevent type-mismatches when the schema is strictly provided.
+   * In this case, the user must provide an explicit projection type, or the type of the documents will be `Partial<Schema>`, to prevent type-mismatches when the schema is strictly provided.
    *
    * @example
    * ```ts
@@ -819,7 +819,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * const collection = db.collection<User>('users');
    *
-   * // Defaulting to `DeepPartial<User>` when projection is not provided
+   * // Defaulting to `Partial<User>` when projection is not provided
    * const cursor = await collection.find({}, {
    *   projection: { car: 1 },
    * });
@@ -842,7 +842,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *   return collection.find({}, { projection });
    * }
    *
-   * // next :: DeepPartial<User>
+   * // next :: Partial<User>
    * const next = await mkFind({ car: 1 }).next();
    * console.log(next.car?.make);
    * ```
@@ -939,7 +939,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictSort
    * @see StrictProjection
    */
-  public find<TRaw extends SomeDoc = DeepPartial<Schema>>(filter: CollectionFilter<Schema>, options: CollectionFindOptions): CollectionFindCursor<FoundDoc<TRaw>, FoundDoc<TRaw>>
+  public find<TRaw extends SomeDoc = Partial<Schema>>(filter: CollectionFilter<Schema>, options: CollectionFindOptions): CollectionFindCursor<FoundDoc<TRaw>, FoundDoc<TRaw>>
 
   public find(filter: CollectionFilter<Schema>, options?: CollectionFindOptions): CollectionFindCursor<SomeDoc, any> {
     return this.#commands.find(filter, options, CollectionFindCursor);
@@ -959,7 +959,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * This overload of {@link Collection.findOne} is used for when no projection is provided, and it is safe to assume the returned document is going to be of type `Schema`.
    *
-   * If it can not be inferred that a projection is definitely not provided, the `Schema` is forced to be `DeepPartial<Schema>` if the user does not provide their own, in order to prevent type errors and ensure the user is aware that the document may not be of the same type as `Schema`.
+   * If it can not be inferred that a projection is definitely not provided, the `Schema` is forced to be `Partial<Schema>` if the user does not provide their own, in order to prevent type errors and ensure the user is aware that the document may not be of the same type as `Schema`.
    *
    * ##### Filtering
    *
@@ -1051,7 +1051,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * This overload of {@link Collection.findOne} is used for when a projection is provided (or at the very least, it can not be inferred that a projection is NOT provided).
    *
-   * In this case, the user must provide an explicit projection type, or the type of the returned document will be as `DeepPartial<Schema>`, to prevent type-mismatches when the schema is strictly provided.
+   * In this case, the user must provide an explicit projection type, or the type of the returned document will be as `Partial<Schema>`, to prevent type-mismatches when the schema is strictly provided.
    *
    * @example
    * ```ts
@@ -1062,7 +1062,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * const collection = db.collection<User>('users');
    *
-   * // Defaulting to `DeepPartial<User>` when projection is not provided
+   * // Defaulting to `Partial<User>` when projection is not provided
    * const doc = await collection.findOne({}, {
    *   projection: { car: 1 },
    * });
@@ -1083,7 +1083,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *   return collection.findOne({}, { projection });
    * }
    *
-   * // doc :: DeepPartial<User>
+   * // doc :: Partial<User>
    * const doc = await findOne({ car: 1 }).next();
    * console.log(doc.car?.make);
    * ```
@@ -1162,7 +1162,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @see StrictSort
    * @see StrictProjection
    */
-  public async findOne<TRaw extends SomeDoc = DeepPartial<Schema>>(filter: CollectionFilter<Schema>, options: CollectionFindOneOptions): Promise<FoundDoc<TRaw> | null>
+  public async findOne<TRaw extends SomeDoc = Partial<Schema>>(filter: CollectionFilter<Schema>, options: CollectionFindOneOptions): Promise<FoundDoc<TRaw> | null>
 
   public async findOne(filter: CollectionFilter<Schema>, options?: CollectionFindOneOptions): Promise<SomeDoc | null> {
     return this.#commands.findOne(filter, options);

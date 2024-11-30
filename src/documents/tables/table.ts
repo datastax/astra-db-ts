@@ -13,25 +13,27 @@
 // limitations under the License.
 
 import {
-  TableCreateIndexOptions,
-  TableCreateVectorIndexOptions,
   FoundRow,
   KeyOf,
   SomeDoc,
   SomeRow,
-  TableDeleteOneOptions, TableFilter,
+  TableCreateIndexOptions,
+  TableCreateVectorIndexOptions,
+  TableDeleteOneOptions,
+  TableFilter,
   TableFindOneOptions,
   TableFindOptions,
   TableInsertManyError,
   TableInsertManyOptions,
   TableInsertManyResult,
-  TableInsertOneResult, TableUpdateFilter,
+  TableInsertOneResult,
+  TableUpdateFilter,
   TableUpdateOneOptions,
 } from '@/src/documents';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { AlterTableOptions, AlterTableSchema, Db, ListTableDefinition, TableOptions } from '@/src/db';
-import { DeepPartial, WithTimeout } from '@/src/lib';
+import { WithTimeout } from '@/src/lib';
 import { $CustomInspect } from '@/src/lib/constants';
 import JBI from 'json-bigint';
 import { TableFindCursor } from '@/src/documents/tables/cursor';
@@ -349,7 +351,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
 
   public find(filter: TableFilter<Schema>, options?: TableFindOptions & { projection?: never }): TableFindCursor<FoundRow<Schema>, FoundRow<Schema>>
 
-  public find<TRaw extends SomeRow = DeepPartial<Schema>>(filter: TableFilter<Schema>, options: TableFindOptions): TableFindCursor<FoundRow<TRaw>, FoundRow<TRaw>>
+  public find<TRaw extends SomeRow = Partial<Schema>>(filter: TableFilter<Schema>, options: TableFindOptions): TableFindCursor<FoundRow<TRaw>, FoundRow<TRaw>>
 
   public find(filter: TableFilter<Schema>, options?: TableFindOptions): TableFindCursor<SomeDoc> {
     return this.#commands.find(filter, options, TableFindCursor);
