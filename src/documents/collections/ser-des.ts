@@ -39,6 +39,10 @@ export class CollectionSerDes<Schema extends SomeRow> extends DataAPISerDes<Sche
     return ctx;
   }
 
+  public override adaptDesCtx(ctx: CollDesCtx): CollDesCtx {
+    return ctx;
+  }
+
   public override bigNumsPresent(): boolean {
     return this._cfg?.enableBigNumbers === true;
   }
