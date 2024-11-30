@@ -40,7 +40,6 @@ export type TableFilter<Schema extends SomeRow> = {
   $and?: TableFilter<Schema>[],
   $or?: TableFilter<Schema>[],
   $not?: TableFilter<Schema>,
-} & {
   [key: string]: any,
 }
 
@@ -66,5 +65,4 @@ export type TableFilterOps<Elem> = {
   $lte?: Elem,
   $gt?: Elem,
   $gte?: Elem,
-  [key: string]: any,
 }

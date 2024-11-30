@@ -60,7 +60,7 @@ export interface ListCollectionsOptions extends WithTimeout<'collectionAdminTime
  *
  * @public
  */
-export interface FullCollectionInfo {
+export interface CollectionDescriptor {
   /**
    * The name of the collections.
    */
@@ -68,5 +68,5 @@ export interface FullCollectionInfo {
   /**
    * The creation options for the collections (i.e. the `vector`, `indexing`, and `defaultId` fields).
    */
-  options: CollectionDefinition<SomeDoc>,
+  definition: CollectionDefinition<SomeDoc>,
 }

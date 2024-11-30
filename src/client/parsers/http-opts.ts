@@ -24,6 +24,9 @@ const HttpClients = <const>['default', 'fetch', 'custom'];
 void EqualityProof<typeof HttpClients[number], DataAPIHttpOptions['client'] & {}, true>;
 const parseHttpClient = p.mkStrEnumParser('DataAPILoggingOutput', HttpClients, false);
 
+/**
+ * @internal
+ */
 export const parseHttpOpts: Parser<DataAPIHttpOptions | undefined> = (raw, field) =>  {
   const opts = p.parse('object?')<DataAPIHttpOptions>(raw, field);
 

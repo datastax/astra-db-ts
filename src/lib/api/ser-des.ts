@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import { SomeDoc } from '@/src/documents';
-import type { nullish, RawDataAPIResponse } from '@/src/lib';
+import type { nullish, OneOrMany, RawDataAPIResponse } from '@/src/lib';
+import { toArray } from '@/src/lib/utils';
 
 export interface DataAPISerCtx<Schema extends SomeDoc> {
   rootObj: Schema,
@@ -26,38 +27,57 @@ export interface DataAPIDesCtx {
   depth: number,
 }
 
-type DataAPISerFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | void;
-type DataAPIDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | void;
+export type DataAPISerFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | void;
 
-interface DataAPISerDesConfig<Schema extends SomeDoc, SerCtx extends DataAPISerCtx<Schema>, DesCtx extends DataAPIDesCtx> {
-  serializer: DataAPISerFn<SerCtx>[],
-  deserializer: DataAPIDesFn<DesCtx>[],
-  adaptSerCtx: (ctx: DataAPISerCtx<Schema>) => SerCtx,
-  adaptDesCtx: (ctx: DataAPIDesCtx) => DesCtx,
-  bigNumsPresent: (ctx: SerCtx) => boolean,
+export type DataAPIDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | void;
+
+export interface DataAPISerDesConfig<Schema extends SomeDoc, SerCtx extends DataAPISerCtx<Schema>, DesCtx extends DataAPIDesCtx> {
+  serialize?: OneOrMany<DataAPISerFn<SerCtx>>,
+  deserialize?: OneOrMany<DataAPIDesFn<DesCtx>>,
   mutateInPlace?: boolean,
 }
 
-export type DataAPISerDes = ReturnType<typeof mkSerDes>;
+/**
+ * @internal
+ */
+export type SomeSerDes = DataAPISerDes<SomeDoc, any, any>;
 
-export const mkSerDes = <Schema extends SomeDoc>(cfg: DataAPISerDesConfig<Schema, any, any>) => ({
-  serializeRecord<S extends Schema | nullish>(obj: S): [S, boolean] {
+/**
+ * @internal
+ */
+export abstract class DataAPISerDes<Schema extends SomeDoc, SerCtx extends DataAPISerCtx<Schema>, DesCtx extends DataAPIDesCtx> {
+  protected constructor(protected readonly _cfg: DataAPISerDesConfig<Schema, SerCtx, DesCtx>) {}
+
+  public serializeRecord<S extends Schema | nullish>(obj: S): [S, boolean] {
     if (obj === null || obj === undefined) {
       return [obj, false];
     }
-    const ctx = cfg.adaptSerCtx({ rootObj: obj, mutatingInPlace: cfg.mutateInPlace || false });
-    return [_serializeRecord({ ['']: ctx.rootObj }, 0, ctx, cfg.serializer)[''] as S, cfg.bigNumsPresent(ctx)];
-  },
-  deserializeRecord<S extends Schema | nullish>(obj: SomeDoc | nullish, raw: RawDataAPIResponse): S {
+    const ctx = this.adaptSerCtx({ rootObj: obj, mutatingInPlace: this._cfg.mutateInPlace === true });
+    return [_serializeRecord({ ['']: ctx.rootObj }, 0, ctx, toArray(this._cfg.serialize!))[''] as S, this.bigNumsPresent(ctx)];
+  }
+
+  public deserializeRecord<S extends Schema | nullish>(obj: SomeDoc | nullish, raw: RawDataAPIResponse): S {
     if (obj === null || obj === undefined) {
       return obj as S;
     }
-    const ctx = cfg.adaptDesCtx({ rootObj: obj, rawDataApiResp: raw, depth: 0 });
-    return _deserializeRecord({ ['']: ctx.rootObj }, 0, ctx, cfg.deserializer)[''] as S;
-  },
-});
+    const ctx = this.adaptDesCtx({ rootObj: obj, rawDataApiResp: raw, depth: 0 });
+    return _deserializeRecord({ ['']: ctx.rootObj }, 0, ctx, toArray(this._cfg.deserialize!))[''] as S;
+  }
 
-const _serializeRecord = <Ctx extends DataAPISerCtx<SomeDoc>>(obj: SomeDoc, depth: number, ctx: Ctx, fns: DataAPISerFn<Ctx>[]) => {
+  protected abstract adaptSerCtx(ctx: DataAPISerCtx<Schema>): SerCtx;
+  protected abstract adaptDesCtx(ctx: DataAPIDesCtx): DesCtx;
+  protected abstract bigNumsPresent(ctx: SerCtx): boolean;
+
+  protected static _mergeConfig<Schema extends SomeDoc, SerCtx extends DataAPISerCtx<Schema>, DesCtx extends DataAPIDesCtx>(...cfg: (DataAPISerDesConfig<Schema, SerCtx, DesCtx> | undefined)[]): DataAPISerDesConfig<Schema, SerCtx, DesCtx> {
+    return cfg.reduce<DataAPISerDesConfig<Schema, SerCtx, DesCtx>>((acc, cfg) => ({
+      serialize: [...toArray(cfg?.serialize ?? []), ...toArray(acc.serialize ?? [])],
+      deserialize: [...toArray(cfg?.deserialize ?? []), ...toArray(acc.deserialize ?? [])],
+      mutateInPlace: cfg?.mutateInPlace ?? acc.mutateInPlace,
+    }), { serialize: [], deserialize: [], mutateInPlace: false });
+  }
+}
+
+const _serializeRecord = <Ctx extends DataAPISerCtx<SomeDoc>>(obj: SomeDoc, depth: number, ctx: Ctx, fns: readonly DataAPISerFn<Ctx>[]) => {
   let ret = obj;
 
   for (let keys = Object.keys(obj), i = keys.length; i--;) {
@@ -94,7 +114,7 @@ const _serializeRecord = <Ctx extends DataAPISerCtx<SomeDoc>>(obj: SomeDoc, dept
   return ret;
 };
 
-const _deserializeRecord = <Ctx>(obj: SomeDoc, depth: number, ctx: Ctx, fns: DataAPIDesFn<Ctx>[]) => {
+const _deserializeRecord = <Ctx>(obj: SomeDoc, depth: number, ctx: Ctx, fns: readonly DataAPIDesFn<Ctx>[]) => {
   for (let keys = Object.keys(obj), i = keys.length; i--;) {
     const key = keys[i];
 

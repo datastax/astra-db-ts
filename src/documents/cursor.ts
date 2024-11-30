@@ -15,10 +15,10 @@
 import type { Collection, SomeDoc } from '@/src/documents/collections';
 import type { GenericFindOptions } from '@/src/documents/commands';
 import type { Filter, Projection, Sort } from '@/src/documents/types';
-import type { DeepPartial, nullish } from '@/src/lib';
+import type { nullish } from '@/src/lib';
 import { normalizedSort } from '@/src/documents/utils';
 import { $CustomInspect } from '@/src/lib/constants';
-import type { DataAPISerDes } from '@/src/lib/api/ser-des';
+import { SomeSerDes } from '@/src/lib/api/ser-des';
 import { DataAPIError } from '@/src/documents/errors';
 import type { Table } from '@/src/documents/tables';
 import { TimeoutManager } from '@/src/lib/api/timeouts';
@@ -115,7 +115,7 @@ interface InternalGetMoreCommand {
  */
 export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   readonly #parent: Table | Collection;
-  readonly #serdes: DataAPISerDes;
+  readonly #serdes: SomeSerDes;
 
   readonly #options: GenericFindOptions;
   readonly #filter: [Filter, boolean];
@@ -132,7 +132,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(parent: Table | Collection, serdes: DataAPISerDes, filter: [Filter, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
+  constructor(parent: Table | Collection, serdes: SomeSerDes, filter: [Filter, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
     this.#parent = parent;
     this.#serdes = serdes;
     this.#filter = filter;
@@ -209,9 +209,9 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns A new cursor with the new filter set.
    *
-   * @see StrictFilter
+   * @see StrictCollectionFilter
    */
-  public filter(filter: Filter): FindCursor<T,  TRaw> {
+  public filter(filter: Filter): FindCursor<T, TRaw> {
     if (this.#state !== 'idle') {
       throw new CursorError('Cannot set a new filter on a running/closed cursor', this);
     }
@@ -230,7 +230,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @see StrictSort
    */
-  public sort(sort: Sort): FindCursor<T,  TRaw> {
+  public sort(sort: Sort): FindCursor<T, TRaw> {
     if (this.#state !== 'idle') {
       throw new CursorError('Cannot set a new sort on a running/closed cursor', this);
     }
@@ -250,7 +250,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns A new cursor with the new limit set.
    */
-  public limit(limit: number): FindCursor<T,  TRaw> {
+  public limit(limit: number): FindCursor<T, TRaw> {
     if (this.#state !== 'idle') {
       throw new CursorError('Cannot set a new limit on a running/closed cursor', this);
     }
@@ -268,7 +268,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns A new cursor with the new skip set.
    */
-  public skip(skip: number): FindCursor<T,  TRaw> {
+  public skip(skip: number): FindCursor<T, TRaw> {
     if (this.#state !== 'idle') {
       throw new CursorError('Cannot set a new skip on a running/closed cursor', this);
     }
@@ -317,7 +317,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @see StrictProjection
    */
-  public project<RRaw extends SomeDoc = DeepPartial<TRaw>>(projection: Projection): FindCursor<RRaw,  RRaw> {
+  public project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindCursor<RRaw, RRaw> {
     if (this.#mapping) {
       throw new CursorError('Cannot set a projection after already using cursor.map(...)', this);
     }
@@ -338,7 +338,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns A new cursor with the new similarity setting.
    */
-  public includeSimilarity(includeSimilarity: boolean = true): FindCursor<T,  TRaw> {
+  public includeSimilarity(includeSimilarity: boolean = true): FindCursor<T, TRaw> {
     if (this.#state !== 'idle') {
       throw new CursorError('Cannot set a new similarity on a running/closed cursor', this);
     }
@@ -357,7 +357,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns A new cursor with the new sort vector inclusion setting.
    */
-  public includeSortVector(includeSortVector: boolean = true): FindCursor<T,  TRaw> {
+  public includeSortVector(includeSortVector: boolean = true): FindCursor<T, TRaw> {
     if (this.#state !== 'idle') {
       throw new CursorError('Cannot set a new sort vector on a running/closed cursor', this);
     }

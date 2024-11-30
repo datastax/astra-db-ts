@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeDoc, WithId } from '@/src/documents/collections';
-import { DataAPIVector, ToDotNotation } from '@/src/documents';
+import { DataAPIVector } from '@/src/documents';
 
 /**
  * Allowed types to specify an ascending or descending sort.
@@ -88,85 +87,6 @@ export type Sort = Record<string, SortDirection | number[] | DataAPIVector | str
  * @public
  */
 export type Projection = Record<string, 1 | 0 | boolean | ProjectionSlice>;
-
-/**
- * Specifies the sort criteria for selecting documents.
- *
- * Can use `1`/`-1` for ascending/descending, or `$vector` for sorting by vector distance.
- *
- * See {@link SortDirection} for all possible sort values.
- *
- * **NB. The order of the fields in the sort option is significant—fields are sorted in the order they are listed.**
- *
- * @example
- * ```typescript
- * // Sort by name in ascending order, then by age in descending order
- * await collections.findOne({}, {
- *   sort: {
- *     name: 1,
- *     age: -1,
- *   } satisfies StrictSort<SomeDoc>,
- * });
- *
- * // Sort by vector distance
- * await collections.findOne({}, {
- *   sort: {
- *     $vector: [0.23, 0.38, 0.27, 0.91, 0.21],
- *   } satisfies StrictSort<SomeDoc>,
- * });
- * ```
- *
- * @see Sort
- * @see SortDirection
- *
- * @public
- */
-export type StrictSort<Schema extends SomeDoc> =
-  | { [K in keyof ToDotNotation<WithId<Schema>>]?: SortDirection }
-  | { $vector: number[] }
-  | { $vectorize: string };
-
-/**
- * Specifies which fields should be included/excluded in the returned documents.
- *
- * Can use `1`/`0`, or `true`/`false`.
- *
- * There's a special field `'*'` that can be used to include/exclude all fields.
- *
- * @example
- * ```typescript
- * await collections.findOne({}, {
- *   projection: {
- *     _id: 0,
- *     name: 1,
- *     'address.state': 1,
- *   } satisfies StrictProjection<SomeDoc>,
- * });
- *
- * await collections.findOne({}, {
- *   projection: {
- *     $vector: 0,
- *   } satisfies StrictProjection<SomeDoc>,
- * });
- *
- * await collections.findOne({}, {
- *   projection: {
- *     test_scores: { $slice: [2, 4] },
- *   } satisfies StrictProjection<SomeDoc>,
- * });
- * ```
- *
- * @see Projection
- *
- * @public
- */
-export type StrictProjection<Schema extends SomeDoc> = {
-  [K in keyof ToDotNotation<WithId<Schema>>]?: any[] extends (ToDotNotation<WithId<Schema>>)[K]
-    ? 1 | 0 | true | false | ProjectionSlice
-    : 1 | 0 | true | false;
-} & {
-  '*'?: 1 | 0 | true | false;
-};
 
 /**
  * Specifies the number of elements in an array to return in the query result.

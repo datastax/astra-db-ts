@@ -16,6 +16,8 @@ import { $CustomInspect } from '@/src/lib/constants';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des';
 import { nullish } from '@/src/lib';
 
+export const inet = (address: string, version?: 4 | 6) => new InetAddress(address, version);
+
 export class InetAddress {
   readonly #raw: string;
   #version: 4 | 6 | nullish;

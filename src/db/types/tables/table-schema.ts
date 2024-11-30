@@ -214,9 +214,6 @@ type NormalizePK<PK extends CreateTablePrimaryKeyDefinition> =
     ? { partitionBy: [PK] }
     : PK;
 
-/**
- * @internal
- */
 export type Cols2CqlTypes<Columns extends CreateTableColumnDefinitions> = {
   -readonly [P in keyof Columns]: CqlType2TSType<PickCqlType<Columns[P]>, Columns[P]>;
 };

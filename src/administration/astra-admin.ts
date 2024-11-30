@@ -74,7 +74,7 @@ export class AstraAdmin {
   constructor(rootOpts: InternalRootClientOpts, rawAdminOpts?: AdminOptions) {
     const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options');
 
-    const token = TokenProvider.parseToken([adminOpts?.adminToken, rootOpts.adminOptions.adminToken], 'admin token');
+    const token = TokenProvider.mergeTokens(adminOpts?.adminToken, rootOpts.adminOptions.adminToken);
 
     this.#defaultOpts = {
       ...rootOpts,
@@ -88,7 +88,7 @@ export class AstraAdmin {
       },
       dbOptions: {
         ...rootOpts.dbOptions,
-        token: TokenProvider.parseToken([rootOpts.dbOptions.token, token], 'admin token'),
+        token: TokenProvider.mergeTokens(rootOpts.dbOptions.token, token),
       },
     };
 

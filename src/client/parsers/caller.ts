@@ -16,6 +16,9 @@ import { DataAPIClientOptions } from '@/src/client';
 import { isNullish } from '@/src/lib/utils';
 import { Parser } from '@/src/lib/validation';
 
+/**
+ * @internal
+ */
 export const parseCaller: Parser<DataAPIClientOptions['caller']> = (caller, field) => {
   if (isNullish(caller)) {
     return undefined;

@@ -12,32 +12,48 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ObjectId, SomeDoc, UUID } from '@/src/documents';
-import { DataAPIDesCtx, DataAPISerCtx, mkSerDes } from '@/src/lib/api/ser-des';
-import { OneOrMany } from '@/src/lib/types';
-import { toArray } from '@/src/lib/utils';
+import { ObjectId, SomeDoc, SomeRow, UUID } from '@/src/documents';
+import { DataAPIDesCtx, DataAPISerCtx, DataAPISerDes, DataAPISerDesConfig } from '@/src/lib/api/ser-des';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
 
 export const $SerializeForCollection = Symbol.for('astra-db-ts.serialize.collection');
 
-export interface CollectionSerDesConfig<Schema extends SomeDoc> {
-  serialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPISerCtx<Schema>) => [any, boolean?] | boolean | undefined | void>,
-  deserialize?: OneOrMany<(this: SomeDoc, key: string, value: any, ctx: DataAPIDesCtx) => [any, boolean?] | boolean | undefined | void>,
+export type CollSerCtx<Schema extends SomeDoc> = DataAPISerCtx<Schema>;
+export type CollDesCtx = DataAPIDesCtx;
+
+export interface CollectionSerDesConfig<Schema extends SomeDoc> extends DataAPISerDesConfig<Schema, CollSerCtx<Schema>, CollDesCtx> {
   enableBigNumbers?: boolean,
-  mutateInPlace?: boolean,
 }
 
 /**
  * @internal
  */
-export const mkCollectionSerDes = <Schema extends SomeDoc>(cfg: CollectionSerDesConfig<Schema> | undefined) => mkSerDes({
-  serializer: [...toArray(cfg?.serialize ?? []), DefaultCollectionSerDesCfg.serialize],
-  deserializer: [...toArray(cfg?.deserialize ?? []), DefaultCollectionSerDesCfg.deserialize],
-  adaptSerCtx: (ctx) => ctx,
-  adaptDesCtx: (ctx) => ctx,
-  bigNumsPresent: () => !!cfg?.enableBigNumbers,
-  mutateInPlace: cfg?.mutateInPlace,
-});
+export class CollectionSerDes<Schema extends SomeRow> extends DataAPISerDes<Schema, CollSerCtx<Schema>, CollDesCtx> {
+  declare protected readonly _cfg: CollectionSerDesConfig<Schema>;
+
+  public constructor(cfg?: CollectionSerDesConfig<Schema>) {
+    super(CollectionSerDes.mergeConfig(DefaultCollectionSerDesCfg, cfg));
+  }
+
+  public override adaptSerCtx(ctx: CollSerCtx<Schema>): CollSerCtx<Schema> {
+    return ctx;
+  }
+
+  public override adaptDesCtx(ctx: CollDesCtx): CollDesCtx {
+    return ctx;
+  }
+
+  public override bigNumsPresent(): boolean {
+    return this._cfg?.enableBigNumbers === true;
+  }
+
+  public static mergeConfig<Schema extends SomeDoc>(...cfg: (CollectionSerDesConfig<Schema> | undefined)[]): CollectionSerDesConfig<Schema> {
+    return {
+      enableBigNumbers: cfg.reduce<boolean | undefined>((acc, c) => c?.enableBigNumbers ?? acc, undefined),
+      ...super._mergeConfig(...cfg),
+    };
+  }
+}
 
 const DefaultCollectionSerDesCfg = {
   serialize(key, value) {
@@ -46,11 +62,7 @@ const DefaultCollectionSerDesCfg = {
     }
 
     if (value instanceof Date) {
-      if (key === '$date') {
-        return [value.valueOf(), true];
-      } else {
-        return [{ $date: value.valueOf() }, true];
-      }
+      return [{ $date: value.valueOf() }, true];
     }
 
     if (key === '$vector' && DataAPIVector.isVectorLike(value)) {

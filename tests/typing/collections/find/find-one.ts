@@ -16,8 +16,6 @@
 
 import { dummyCollection, DynamicSchema, TestSchema } from '@/tests/typing/collections/prelude';
 import { Equal, Expect } from '@/tests/typing/prelude';
-import { StrictCollectionFilter } from '@/src/documents/collections/types/filter';
-import { StrictProjection } from '@/src/documents';
 
 void dummyCollection<TestSchema>().findOne({}, {}).then((a) => {
   type b = Expect<Equal<undefined | number, NonNullable<typeof a>['$similarity']>>
@@ -66,7 +64,7 @@ void dummyCollection<TestSchema>().findOne({
   'purchase_date': { $gte: new Date(123) },
   'items': { $gte: new Date(123) },
   'arr.0': { age: 3 },
-} satisfies StrictCollectionFilter<TestSchema>, {
+}, {
   sort: {
     'customer.address.address_line': 1,
   },
@@ -94,26 +92,6 @@ void dummyCollection<TestSchema>().findOne({
   'arr.0': ['123'],
 });
 
-void dummyCollection<TestSchema>().findOne({
-  'customer.credit_score': {
-    // @ts-expect-error - Can't use $date with non-date fields
-    $date: 700,
-  },
-  'customer.name': {
-    // @ts-expect-error - Type mismatch
-    $eq: 18,
-  },
-  'customer.age': {
-    $in: [
-      102,
-      // @ts-expect-error - Type mismatch
-      '1',
-    ],
-  },
-  // @ts-expect-error - Type mismatch
-  'arr.0': ['123'],
-} satisfies StrictCollectionFilter<TestSchema>);
-
 void dummyCollection<TestSchema>().findOne({}, {
   sort: {
     $vector: [1, 2, 3],
@@ -132,13 +110,6 @@ void dummyCollection<TestSchema>().findOne({}, {
       ],
     },
   },
-});
-
-void dummyCollection<TestSchema>().findOne({}, {
-  projection: {
-    // @ts-expect-error - Can't use $slice with non-array fields
-    'customer.address.city': { $slice: 1 },
-  } satisfies StrictProjection<TestSchema>,
 });
 
 void dummyCollection<DynamicSchema>().findOne({

@@ -14,3 +14,4 @@
 
 export type * from './common';
 export type * from './filters';
+export type * from './dot-notation';

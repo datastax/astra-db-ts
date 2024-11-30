@@ -18,6 +18,8 @@ import { $CustomInspect } from '@/src/lib/constants';
 
 export type DataAPIVectorLike = number[] | { $binary: string } | Float32Array | DataAPIVector;
 
+export const vector = (v: DataAPIVectorLike) => new DataAPIVector(v);
+
 export class DataAPIVector {
   readonly #vector: Exclude<DataAPIVectorLike, DataAPIVector>;
 

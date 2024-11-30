@@ -15,5 +15,8 @@
 import { EqualityProof, p } from '@/src/lib/validation';
 import { DataAPIEnvironment, DataAPIEnvironments } from '@/src/lib';
 
-void EqualityProof<typeof DataAPIEnvironments[number], DataAPIEnvironment, true>;
+/**
+ * @internal
+ */
 export const parseEnvironment = p.mkStrEnumParser('DataAPIEnvironments', DataAPIEnvironments, false);
+void EqualityProof<typeof DataAPIEnvironments[number], DataAPIEnvironment, true>;

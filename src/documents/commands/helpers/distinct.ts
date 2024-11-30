@@ -14,6 +14,9 @@
 
 import { SomeDoc } from '@/src/documents';
 
+/**
+ * @internal
+ */
 export const pullSafeProjection4Distinct = (path: string): string => {
   const split = path.split('.');
 
@@ -28,6 +31,9 @@ export const pullSafeProjection4Distinct = (path: string): string => {
   return split.join('.');
 };
 
+/**
+ * @internal
+ */
 export const mkDistinctPathExtractor = (path: string): (doc: SomeDoc) => any[] => {
   const values = [] as any[];
 

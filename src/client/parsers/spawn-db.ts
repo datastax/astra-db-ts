@@ -20,6 +20,9 @@ import { Logger } from '@/src/lib/logging/logger';
 import { CollectionSerDesConfig, SomeDoc, TableColumnTypeParser, TableSerDesConfig } from '@/src/documents';
 import { Timeouts } from '@/src/lib/api/timeouts';
 
+/**
+ * @internal
+ */
 export const parseDbSpawnOpts: Parser<DbOptions | undefined, unknown> = (raw, field) => {
   const opts = p.parse('object?')<DbOptions>(raw, field);
 
@@ -31,7 +34,7 @@ export const parseDbSpawnOpts: Parser<DbOptions | undefined, unknown> = (raw, fi
     logging: Logger.parseConfig(opts.logging, `${field}.logging`),
     keyspace: p.parse('string?', validateKeyspace)(opts.keyspace, `${field}.keyspace`),
     dataApiPath: p.parse('string?')(opts.dataApiPath, `${field}.dataApiPath`),
-    token: TokenProvider.parseToken([opts.token], `${field}.token`),
+    token: TokenProvider.mergeTokens(opts.token),
     serdes: p.parse('object?', parseSerDes)(opts.serdes, `${field}.serDes`),
     additionalHeaders: p.parse('object?')(opts.additionalHeaders, `${field}.additionalHeaders`),
     timeoutDefaults: Timeouts.parseConfig(opts.timeoutDefaults, `${field}.timeoutDefaults`),
@@ -44,7 +47,7 @@ const parseSerDes: Parser<DbSerDesConfig> = (cfg, field) => ({
   mutateInPlace: p.parse('boolean?')(cfg.mutateInPlace, `${field}.mutateInPlace`),
 });
 
-const parseTableSerDes: Parser<TableSerDesConfig<SomeDoc>> = (cfg, field) => ({
+const parseTableSerDes: Parser<TableSerDesConfig<SomeDoc>, SomeDoc> = (cfg, field) => ({
   serialize: p.parse('function?')(cfg.serialize, `${field}.serialize`),
   deserialize: p.parse('function?')(cfg.deserialize, `${field}.deserialize`),
   parsers: p.parse('object?', parseTableColumnTypeParser)(cfg.parsers, `${field}.parsers`),
@@ -52,7 +55,7 @@ const parseTableSerDes: Parser<TableSerDesConfig<SomeDoc>> = (cfg, field) => ({
   sparseData: p.parse('boolean?')(cfg.sparseData, `${field}.sparseData`),
 });
 
-const parseCollectionSerDes: Parser<CollectionSerDesConfig<SomeDoc>> = (cfg, field) => ({
+const parseCollectionSerDes: Parser<CollectionSerDesConfig<SomeDoc>, SomeDoc> = (cfg, field) => ({
   serialize: p.parse('function?')(cfg.serialize, `${field}.serialize`),
   deserialize: p.parse('function?')(cfg.deserialize, `${field}.deserialize`),
   mutateInPlace: p.parse('boolean?')(cfg.mutateInPlace, `${field}.mutateInPlace`),

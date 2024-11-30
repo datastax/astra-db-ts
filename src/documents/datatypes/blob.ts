@@ -17,6 +17,8 @@ import { $CustomInspect } from '@/src/lib/constants';
 
 export type DataAPIBlobLike = DataAPIBlob | ArrayBuffer | Buffer | { $binary: string };
 
+export const blob = (blob: DataAPIBlobLike) => new DataAPIBlob(blob);
+
 export class DataAPIBlob {
   readonly #raw: Exclude<DataAPIBlobLike, DataAPIBlob>;
 

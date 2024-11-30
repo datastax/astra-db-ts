@@ -69,10 +69,8 @@ export type Flatten<Type> = Type extends (infer Item)[]
  * @public
  */
 export type IdOf<Doc> =
-  Doc extends { _id: infer Id }
+  Doc extends { _id: infer Id extends SomeId }
     ? Id :
-  Doc extends { _id?: infer Id }
-    ? unknown extends Id
-      ? SomeId
-      : Id
+  Doc extends { _id?: infer Id extends SomeId }
+    ? Id
     : SomeId
