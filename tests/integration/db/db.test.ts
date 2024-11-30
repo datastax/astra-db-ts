@@ -148,16 +148,16 @@ parallel('integration.db', { drop: 'colls:after' }, ({ db }) => {
       const res = await db.listCollections({ nameOnly: false });
       const found = res.find((collection) => collection.name === DEFAULT_COLLECTION_NAME);
       assert.ok(found);
-      assert.strictEqual(found.options.vector?.dimension, 5);
-      assert.strictEqual(found.options.vector.metric, 'cosine');
+      assert.strictEqual(found.definition.vector?.dimension, 5);
+      assert.strictEqual(found.definition.vector.metric, 'cosine');
     });
 
     it('should return a list of collections infos with nameOnly not set', async () => {
       const res = await db.listCollections();
       const found = res.find((collection) => collection.name === DEFAULT_COLLECTION_NAME);
       assert.ok(found);
-      assert.strictEqual(found.options.vector?.dimension, 5);
-      assert.strictEqual(found.options.vector.metric, 'cosine');
+      assert.strictEqual(found.definition.vector?.dimension, 5);
+      assert.strictEqual(found.definition.vector.metric, 'cosine');
     });
 
     it('should not list collections in another keyspace', async () => {

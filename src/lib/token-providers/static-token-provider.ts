@@ -13,7 +13,6 @@
 // limitations under the License.
 
 import { TokenProvider } from '@/src/lib/token-providers/token-provider';
-import { nullish } from '@/src/lib';
 
 /**
  * The most basic token provider, which simply returns the token it was instantiated with.
@@ -36,14 +35,14 @@ import { nullish } from '@/src/lib';
  * @public
  */
 export class StaticTokenProvider extends TokenProvider {
-  readonly #token: string | nullish;
+  readonly #token: string;
 
   /**
    * Constructs an instead of the {@link StaticTokenProvider}.
    *
    * @param token - The token to regurgitate in `getTokenAsString`
    */
-  constructor(token: string | nullish) {
+  constructor(token: string) {
     super();
     this.#token = token;
   }
@@ -53,7 +52,7 @@ export class StaticTokenProvider extends TokenProvider {
    *
    * @returns the string the token provider was instantiated with.
    */
-  override getToken(): string | nullish {
+  override getToken(): string {
     return this.#token;
   }
 }

@@ -16,9 +16,8 @@
 
 import { dummyCollection, TestSchema } from '@/tests/typing/collections/prelude';
 import { Equal, Expect } from '@/tests/typing/prelude';
-import { IdOf, SomeDoc, StrictCollectionFilter, WithId } from '@/src/documents/collections/types';
+import { IdOf, WithId } from '@/src/documents/collections/types';
 import { FindCursor } from '@/src/documents';
-import { DeepPartial } from '@/src/lib';
 
 type GetTOfCursor<Cursor> = Cursor extends FindCursor<infer T, any> ? T : never;
 type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw : never;
@@ -47,11 +46,6 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
   void cursor.toArray().then((docs) => {
     type docs_type_is_expected = Expect<Equal<WithId<TestSchema & { $similarity?: number }>[], typeof docs>>;
   });
-
-  cursor.filter({ amount: { $gt: 5 } } satisfies StrictCollectionFilter<GetTRawOfCursor<typeof cursor>>);
-
-  // @ts-expect-error - am0unt is not a valid field
-  cursor.filter({ am0unt: { $gt: 5 } } satisfies StrictCollectionFilter<GetTRawOfCursor<typeof cursor>>);
 }
 
 {
@@ -71,11 +65,6 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
   void mapped.next().then((mappedDoc) => {
     type mappedDoc_type_is_expected = Expect<Equal<string | null, typeof mappedDoc>>;
   });
-
-  mapped.filter({ amount: { $gt: 5 } } satisfies StrictCollectionFilter<GetTRawOfCursor<typeof mapped>>);
-
-  // @ts-expect-error - am0unt is not a valid field
-  mapped.filter({ am0unt: { $gt: 5 } } satisfies StrictCollectionFilter<GetTRawOfCursor<typeof mapped>>);
 }
 
 {
@@ -89,10 +78,10 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
 
   const rawProjected = cursor.project({ _id: 0, amount: 1 });
 
-  type rawProjected_T_and_TRaw_are_expected = Expect<Equal<typeof rawProjected, FindCursor<DeepPartial<TestSchema & { $similarity?: number }>, DeepPartial<TestSchema & { $similarity?: number }>>>>;
+  type rawProjected_T_and_TRaw_are_expected = Expect<Equal<typeof rawProjected, FindCursor<Partial<TestSchema & { $similarity?: number }>, Partial<TestSchema & { $similarity?: number }>>>>;
 
   void rawProjected.next().then((doc) => {
-    type doc_type_is_expected = Expect<Equal<DeepPartial<TestSchema & { $similarity?: number }> | null, typeof doc>>;
+    type doc_type_is_expected = Expect<Equal<Partial<TestSchema & { $similarity?: number }> | null, typeof doc>>;
   });
 
   const projected = cursor.project<{ amount: number }>({ _id: 0, amount: 1 });
@@ -102,6 +91,4 @@ type GetTRawOfCursor<Cursor> = Cursor extends FindCursor<any, infer TRaw> ? TRaw
   void projected.next().then((doc) => {
     type doc_type_is_expected = Expect<Equal<{ amount: number } | null, typeof doc>>;
   });
-
-  cursor.filter({ amount: { $gt: 5 } } satisfies StrictCollectionFilter<GetTRawOfCursor<typeof projected>>);
 }

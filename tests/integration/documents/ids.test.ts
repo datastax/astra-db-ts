@@ -30,7 +30,7 @@ parallel('(LONG) integration.documents.ids', { drop: 'colls:after' }, ({ db }) =
     const collections = await db.listCollections();
     const collection = collections.find(c => c.name === DEFAULT_COLLECTION_NAME);
     assert.ok(collection);
-    assert.strictEqual(collection.options.defaultId, undefined);
+    assert.strictEqual(collection.definition.defaultId, undefined);
   });
 
   it('default id is set as the default id', async () => {
@@ -46,7 +46,7 @@ parallel('(LONG) integration.documents.ids', { drop: 'colls:after' }, ({ db }) =
     const collections = await db.listCollections();
     const collection = collections.find(c => c.name === `${DEFAULT_COLLECTION_NAME}_uuid`);
     assert.ok(collection);
-    assert.deepStrictEqual(collection.options, { defaultId: { type: 'uuid' } });
+    assert.deepStrictEqual(collection.definition, { defaultId: { type: 'uuid' } });
   });
 
   it('uuid sets it as the default id', async () => {
@@ -64,7 +64,7 @@ parallel('(LONG) integration.documents.ids', { drop: 'colls:after' }, ({ db }) =
     const collections = await db.listCollections();
     const collection = collections.find(c => c.name === `${DEFAULT_COLLECTION_NAME}_uuidv6`);
     assert.ok(collection);
-    assert.deepStrictEqual(collection.options, { defaultId: { type: 'uuidv6' } });
+    assert.deepStrictEqual(collection.definition, { defaultId: { type: 'uuidv6' } });
   });
 
   it('uuidv6 sets it as the default id', async () => {
@@ -82,7 +82,7 @@ parallel('(LONG) integration.documents.ids', { drop: 'colls:after' }, ({ db }) =
     const collections = await db.listCollections();
     const collection = collections.find(c => c.name === `${DEFAULT_COLLECTION_NAME}_uuidv7`);
     assert.ok(collection);
-    assert.deepStrictEqual(collection.options, { defaultId: { type: 'uuidv7' } });
+    assert.deepStrictEqual(collection.definition, { defaultId: { type: 'uuidv7' } });
   });
 
   it('uuidv7 sets it as the default id', async () => {
@@ -100,7 +100,7 @@ parallel('(LONG) integration.documents.ids', { drop: 'colls:after' }, ({ db }) =
     const collections = await db.listCollections();
     const collection = collections.find(c => c.name === `${DEFAULT_COLLECTION_NAME}_objectId`);
     assert.ok(collection);
-    assert.deepStrictEqual(collection.options, { defaultId: { type: 'objectId' } });
+    assert.deepStrictEqual(collection.definition, { defaultId: { type: 'objectId' } });
   });
 
   it('objectId sets it as the default id', async () => {

@@ -23,18 +23,18 @@ import { CreateCollectionOptions } from '@/src/db/types/collections/create-colle
 import { TokenProvider } from '@/src/lib';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client';
 import { KeyspaceRef } from '@/src/lib/api/clients/types';
-import { toArray, validateDataAPIEnv } from '@/src/lib/utils';
-import { TableDropIndexOptions, EmbeddingHeadersProvider, SomeRow, Table } from '@/src/documents';
+import { validateDataAPIEnv } from '@/src/lib/utils';
+import { EmbeddingHeadersProvider, SomeRow, Table, TableDropIndexOptions } from '@/src/documents';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
 import { CollectionOptions } from '@/src/db/types/collections/collection-options';
 import { DropCollectionOptions } from '@/src/db/types/collections/drop-collection';
-import { FullCollectionInfo, ListCollectionsOptions } from '@/src/db/types/collections/list-collections';
+import { CollectionDescriptor, ListCollectionsOptions } from '@/src/db/types/collections/list-collections';
 import { RunCommandOptions } from '@/src/db/types/command';
 import { TableOptions } from '@/src/db/types/tables/spawn-table';
 import { CreateTableDefinition, CreateTableOptions } from '@/src/db/types/tables/create-table';
 import { InferTableSchemaFromDefinition } from '@/src/db/types/tables/table-schema';
 import { DropTableOptions } from '@/src/db/types/tables/drop-table';
-import { FullTableInfo, ListTablesOptions } from '@/src/db/types/tables/list-tables';
+import { TableDescriptor, ListTablesOptions } from '@/src/db/types/tables/list-tables';
 import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
 import { AdminOptions, DbOptions } from '@/src/client/types';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
@@ -43,6 +43,8 @@ import { $CustomInspect } from '@/src/lib/constants';
 import { InvalidEnvironmentError } from '@/src/db/errors';
 import { AstraDbInfo } from '@/src/administration/types/admin/database-info';
 import { Timeouts } from '@/src/lib/api/timeouts';
+import { CollectionSerDes } from '@/src/documents/collections/ser-des';
+import { TableSerDes } from '@/src/documents/tables/ser-des';
 
 /**
  * #### Overview
@@ -136,28 +138,18 @@ export class Db {
       dbOptions: {
         keyspace: dbOpts?.keyspace ?? rootOpts.dbOptions.keyspace,
         dataApiPath: dbOpts?.dataApiPath ?? rootOpts.dbOptions.dataApiPath,
-        token: TokenProvider.parseToken([dbOpts?.token, rootOpts.dbOptions.token], 'token'),
+        token: TokenProvider.mergeTokens(dbOpts?.token, rootOpts.dbOptions.token),
         logging: Logger.advanceConfig(rootOpts.dbOptions.logging, dbOpts?.logging),
         additionalHeaders: { ...rootOpts.dbOptions.additionalHeaders, ...dbOpts?.additionalHeaders },
         timeoutDefaults: Timeouts.merge(rootOpts.dbOptions.timeoutDefaults, dbOpts?.timeoutDefaults),
         serdes: {
-          collection: {
-            serialize: [...toArray(dbOpts?.serdes?.collection?.serialize ?? []), ...toArray(rootOpts.dbOptions.serdes?.collection?.serialize ?? [])],
-            deserialize: [...toArray(dbOpts?.serdes?.collection?.deserialize ?? []), ...toArray(rootOpts.dbOptions.serdes?.collection?.deserialize ?? [])],
-            enableBigNumbers: dbOpts?.serdes?.collection?.enableBigNumbers ?? rootOpts.dbOptions.serdes?.collection?.enableBigNumbers,
-          },
-          table: {
-            serialize: [...toArray(dbOpts?.serdes?.table?.serialize ?? []), ...toArray(rootOpts.dbOptions.serdes?.table?.serialize ?? [])],
-            deserialize: [...toArray(dbOpts?.serdes?.table?.deserialize ?? []), ...toArray(rootOpts.dbOptions.serdes?.table?.deserialize ?? [])],
-            parsers: { ...rootOpts.dbOptions.serdes?.table?.parsers, ...dbOpts?.serdes?.table?.parsers },
-            sparseData: dbOpts?.serdes?.table?.sparseData ?? rootOpts.dbOptions.serdes?.table?.sparseData,
-          },
-          mutateInPlace: dbOpts?.serdes?.mutateInPlace ?? rootOpts.dbOptions.serdes?.mutateInPlace,
+          collection: CollectionSerDes.mergeConfig(rootOpts.dbOptions.serdes?.collection, dbOpts?.serdes?.collection, dbOpts?.serdes),
+          table: TableSerDes.mergeConfig(rootOpts.dbOptions.serdes?.table, dbOpts?.serdes?.table, dbOpts?.serdes),
         },
       },
       adminOptions: {
         ...rootOpts.adminOptions,
-        adminToken: TokenProvider.parseToken([rootOpts.adminOptions.adminToken, rootOpts.dbOptions.token], 'token'),
+        adminToken: TokenProvider.mergeTokens(rootOpts.adminOptions.adminToken, rootOpts.dbOptions.token),
       },
     };
 
@@ -549,12 +541,7 @@ export class Db {
   public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionOptions<Schema>): Collection<Schema> {
     return new Collection<Schema>(this, this.#httpClient, name, {
       ...options,
-      serdes: {
-        serialize: [...toArray(options?.serdes?.serialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.collection?.serialize ?? [])],
-        deserialize: [...toArray(options?.serdes?.deserialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.collection?.deserialize ?? [])],
-        mutateInPlace: options?.serdes?.mutateInPlace ?? this.#defaultOpts.dbOptions.serdes?.mutateInPlace,
-        enableBigNumbers: options?.serdes?.enableBigNumbers ?? this.#defaultOpts.dbOptions.serdes?.collection?.enableBigNumbers,
-      },
+      serdes: CollectionSerDes.mergeConfig(options?.serdes, this.#defaultOpts.dbOptions.serdes?.collection),
     });
   }
 
@@ -643,13 +630,7 @@ export class Db {
   public table<Schema extends SomeRow = SomeRow>(name: string, options?: TableOptions<Schema>): Table<Schema> {
     return new Table<Schema>(this, this.#httpClient, name, {
       ...options,
-      serdes: {
-        serialize: [...toArray(options?.serdes?.serialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.table?.serialize ?? [])],
-        deserialize: [...toArray(options?.serdes?.deserialize ?? []), ...toArray(this.#defaultOpts.dbOptions?.serdes?.table?.deserialize ?? [])],
-        mutateInPlace: options?.serdes?.mutateInPlace ?? this.#defaultOpts.dbOptions.serdes?.mutateInPlace,
-        parsers: { ...this.#defaultOpts.dbOptions.serdes?.table?.parsers, ...options?.serdes?.parsers },
-        sparseData: options?.serdes?.sparseData ?? this.#defaultOpts.dbOptions.serdes?.table?.sparseData,
-      },
+      serdes: TableSerDes.mergeConfig(options?.serdes, this.#defaultOpts.dbOptions.serdes?.table),
     });
   }
 
@@ -1082,9 +1063,9 @@ export class Db {
    *
    * @see CollectionOptions
    */
-  public async listCollections(options?: ListCollectionsOptions & { nameOnly?: false }): Promise<FullCollectionInfo[]>
+  public async listCollections(options?: ListCollectionsOptions & { nameOnly?: false }): Promise<CollectionDescriptor[]>
 
-  public async listCollections(options?: ListCollectionsOptions): Promise<string[] | FullCollectionInfo[]> {
+  public async listCollections(options?: ListCollectionsOptions): Promise<string[] | CollectionDescriptor[]> {
     const command = {
       findCollections: {
         options: {
@@ -1143,9 +1124,9 @@ export class Db {
    *
    * @see CollectionOptions
    */
-  public async listTables(options?: ListTablesOptions & { nameOnly?: false }): Promise<FullTableInfo[]>
+  public async listTables(options?: ListTablesOptions & { nameOnly?: false }): Promise<TableDescriptor[]>
 
-  public async listTables(options?: ListTablesOptions): Promise<string[] | FullTableInfo[]> {
+  public async listTables(options?: ListTablesOptions): Promise<string[] | TableDescriptor[]> {
     const command = {
       listTables: {
         options: {

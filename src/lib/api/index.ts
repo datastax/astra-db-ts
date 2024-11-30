@@ -24,12 +24,14 @@ export type {
 
 export type {
   RawDataAPIResponse,
-  CuratedAPIResponse,
 } from './types';
 
 export type {
   DataAPISerCtx,
   DataAPIDesCtx,
+  DataAPISerDesConfig,
+  DataAPIDesFn,
+  DataAPISerFn,
 } from './ser-des';
 
 export type {
