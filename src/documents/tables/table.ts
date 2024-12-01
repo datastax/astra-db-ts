@@ -612,7 +612,6 @@ export class Table<Schema extends SomeRow = SomeRow> {
   public async alter(options: AlterTableOptions<Schema>): Promise<unknown> {
     await this.#httpClient.executeCommand({
       alterTable: {
-        name: this.name,
         operation: options.operation,
       },
     }, {

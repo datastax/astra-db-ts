@@ -26,7 +26,7 @@ export interface AddColumnOperation {
 // @public (undocumented)
 export interface AddVectorizeOperation<Schema extends SomeRow> {
     // (undocumented)
-    columns: Record<Cols<Schema>, VectorizeServiceOptions>;
+    columns: Partial<Record<Cols<Schema>, VectorizeServiceOptions>>;
 }
 
 // @public
