@@ -40,7 +40,7 @@ export interface DropColumnOperation<Schema extends SomeRow> {
 }
 
 export interface AddVectorizeOperation<Schema extends SomeRow> {
-  columns: Record<Cols<Schema>, VectorizeServiceOptions>
+  columns: Partial<Record<Cols<Schema>, VectorizeServiceOptions>>,
 }
 
 export interface DropVectorizeOperation<Schema extends SomeRow> {

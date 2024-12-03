@@ -14,11 +14,13 @@
 
 import { WithTimeout } from '@/src/lib';
 
-export interface TableCreateIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
-  options?: {
-    caseSensitive?: boolean,
-    normalize?: boolean,
-    ascii?: boolean,
-  };
+export interface CreateTableIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+  options?: TableIndexOptions;
   ifNotExists?: boolean,
+}
+
+export interface TableIndexOptions {
+  caseSensitive?: boolean,
+  normalize?: boolean,
+  ascii?: boolean,
 }

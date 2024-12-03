@@ -13,13 +13,12 @@
 // limitations under the License.
 
 import {
+  CreateTableIndexOptions,
+  CreateTableVectorIndexOptions,
   FoundRow,
   KeyOf,
   SomeDoc,
   SomeRow,
-  TableCreateIndexOptions,
-  TableCreateVectorIndexOptions,
-  TableDeleteOneOptions,
   TableFilter,
   TableFindOneOptions,
   TableFindOptions,
@@ -28,17 +27,24 @@ import {
   TableInsertManyResult,
   TableInsertOneResult,
   TableUpdateFilter,
-  TableUpdateOneOptions,
 } from '@/src/documents';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
-import { AlterTableOptions, AlterTableSchema, Db, ListTableDefinition, TableOptions } from '@/src/db';
+import {
+  AlterTableOptions,
+  AlterTableSchema,
+  Db,
+  DropTableOptions,
+  ListTableDefinition,
+  TableOptions,
+} from '@/src/db';
 import { WithTimeout } from '@/src/lib';
 import { $CustomInspect } from '@/src/lib/constants';
 import JBI from 'json-bigint';
 import { TableFindCursor } from '@/src/documents/tables/cursor';
 import { withJbiNullProtoFix } from '@/src/lib/utils';
 import { TableSerDes } from '@/src/documents/tables/ser-des';
+import { ListIndexOptions, TableIndexDescriptor } from '@/src/db/types/tables/list-indexes';
 
 const jbi = JBI({ storeAsString: true });
 
@@ -73,6 +79,25 @@ export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
  *
  * **This shouldn't be directly instantiated, but rather created via {@link Db.createTable} or {@link Db.table}**.
  *
+ * @example
+ * ```ts
+ * // Basic creation of a dynamically typed table
+ * // (If you don't provide `SomeRow` explicitly, it will
+ * // attempt to infer the Table's type from the definition)
+ * const table = await db.createTable<SomeRow>('users', {
+ *   definition: {
+ *      columns: {
+ *        id: 'text',
+ *        name: 'text',
+ *      },
+ *      primaryKey: 'id',
+ *   },
+ * });
+ *
+ * // or (also dynamically typed)
+ * const table = db.table('users');
+ * ```
+ *
  * #### Typing & Types
  *
  * A `Table` is typed as `Table<Schema extends SomeRow = SomeRow>`, where:
@@ -98,8 +123,8 @@ export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
  *
  * await db.table<User>('users').insertOne({
  *   id: '123',
- *   friends: new Map([['Alice', UUID.random()]]),
- *   vector: new DataAPIVector([1, 2, 3]),
+ *   friends: new Map([['Alice', uuid(4)]]), // or UUID.v4()
+ *   vector: vector([1, 2, 3]), // or new DataAPIVector([...])
  * });
  * ```
  *
@@ -130,8 +155,8 @@ export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
  * // res.insertedId is of type { id: string }
  * const res = await db.table<User>('users').insertOne({
  *   id: '123',
- *   dob: new DataAPIDate(new Date()),
- *   friends: new Map([['Alice', UUID.random()]]),
+ *   dob: date(), // or new DataAPIDate(new Date())
+ *   friends: new Map([['Alice', uuid(4)]]), // or UUID.v4()
  * });
  * ```
  *
@@ -291,25 +316,47 @@ export class Table<Schema extends SomeRow = SomeRow> {
    *
    * @example
    * ```ts
-   * import { UUID, ObjectId, ... } from '@datastax/astra-db-ts';
+   * import { UUID, vector, ... } from '@datastax/astra-db-ts';
    *
    * // Insert a row with a specific ID
    * await table.insertOne({ id: 'text-id', name: 'John Doe' });
-   * await table.insertOne({ id: UUID.v7(), name: 'Dane Joe' });
+   * await table.insertOne({ id: UUID.v7(), name: 'Dane Joe' }); // or uuid(7)
    *
-   * // Insert a row with a vector (if enabled on the collection)
-   * const vector = new DataAPIVector([.12, .52, .32]); // class enables faster encoding
-   * await table.insertOne({ id: 1, name: 'Jane Doe', vector });
+   * // Insert a row with a vector
+   * // DataAPIVector class enables faster ser/des
+   * const vec = vector([.12, .52, .32]); // or new DataAPIVector([.12, .52, .32])
+   * await table.insertOne({ id: 1, name: 'Jane Doe', vector: vec });
    *
    * // or if vectorize (auto-embedding-generation) is enabled for the column
    * await table.insertOne({ id: 1, name: 'Jane Doe', vector: "Hey there!" });
+   * ```
+   *
+   * ##### Upsert behavior
+   *
+   * When inserting a row with a primary key that already exists, the new row will be merged with the existing row, with the new values taking precedence.
+   *
+   * If you want to delete old values, you must explicitly set them to `null` (not `undefined`).
+   *
+   * @example
+   * ```ts
+   * await table.insertOne({ id: '123', col1: 'i exist' });
+   * await table.findOne({ id: '123' }); // { id: '123', col1: 'i exist' }
+   *
+   * await table.insertOne({ id: '123', col1: 'i am new' });
+   * await table.findOne({ id: '123' }); // { id: '123', col1: 'i am new' }
+   *
+   * await table.insertOne({ id: '123', col2: 'me2' });
+   * await table.findOne({ id: '123' }); // { id: '123', col1: 'i am new', col2: 'me2' }
+   *
+   * await table.insertOne({ id: '123', col1: null });
+   * await table.findOne({ id: '123' }); // { id: '123', col2: 'me2' }
    * ```
    *
    * ##### The primary key
    *
    * The columns that compose the primary key themselves must all be present in the row object; all other fields are technically optional/nullable.
    *
-   * The type of the primary key of the table (for the `insertedId`) is inferred from the `$PrimaryKeyType` key in the schema. If it's not present, it will default to {@link SomeTableKey} (See {@link Table}, {@link $PrimaryKeyType} for more info).
+   * The type of the primary key of the table (for the `insertedId`) is inferred from the type-level `$PrimaryKeyType` key in the schema. If it's not present, it will default to {@link SomeTableKey} (see {@link Table}, {@link $PrimaryKeyType} for more info).
    *
    * @example
    * ```ts
@@ -325,23 +372,220 @@ export class Table<Schema extends SomeRow = SomeRow> {
    * ```
    *
    * @param row - The row to insert.
+   * @param timeout - The timeout for this operation.
+   *
+   * @returns The primary key of the inserted row.
+   */
+  public async insertOne(row: Schema, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<Schema>> {
+    return this.#commands.insertOne(row, timeout);
+  }
+
+  /**
+   * ##### Overview
+   *
+   * Upserts many rows into the table.
+   *
+   * @example
+   * ```ts
+   * import { uuid, vector, ... } from '@datastax/astra-db-ts';
+   *
+   * await table1.insertMany([
+   *   { id: uuid(4), name: 'John Doe' }, // or UUID.v4()
+   *   { id: uuid(7), name: 'Jane Doe' },
+   * ]);
+   *
+   * // Insert a row with a vector
+   * // DataAPIVector class enables faster ser/des
+   * await table2.insertMany([
+   *   { name: 'bob', vector: vector([.12, .52, .32]) }, // or new DataAPIVector([...])
+   *   { name: 'alice', vector: vector([.12, .52, .32]), tags: new Set(['cool']) },
+   * ], { ordered: true });
+   * ```
+   *
+   * ##### Chunking
+   *
+   * **NOTE: This function paginates the insertion of rows in chunks to avoid running into insertion limits.** This means multiple requests may be made to the server.
+   *
+   * This operation is **not necessarily atomic**. Depending on the amount of inserted rows, and if it's ordered or not, it can keep running (in a blocking manner) for a macroscopic amount of time. In that case, new rows that are inserted from another concurrent process/application may be inserted during the execution of this method call, and if there are duplicate keys, it's not easy to predict which application will win the race.
+   *
+   * By default, it inserts rows in chunks of 50 at a time. You can fine-tune the parameter through the `chunkSize` option. Note that increasing chunk size won't necessarily increase performance depending on document size. Instead, increasing concurrency may help.
+   *
+   * You can set the `concurrency` option to control how many network requests are made in parallel on unordered insertions. Defaults to `8`.
+   *
+   * @example
+   * ```ts
+   * const rows = Array.from({ length: 100 }, (_, i) => ({ id: i }));
+   * await table.insertMany(rows, { batchSize: 100 });
+   * ```
+   *
+   * ##### Upsert behavior
+   *
+   * When inserting a row with a primary key that already exists, the new row will be merged with the existing row, with the new values taking precedence.
+   *
+   * If you want to delete old values, you must explicitly set them to `null` (not `undefined`).
+   *
+   * @example
+   * ```ts
+   * // Since insertion is ordered, the last unique value for each
+   * // primary key will be the one that remains in the table.
+   * await table.insertMany([
+   *   { id: '123', col1: 'i exist' },
+   *   { id: '123', col1: 'i am new' },
+   *   { id: '123', col2: 'me2' },
+   * ], { ordered: true });
+   *
+   * await table.findOne({ id: '123' }); // { id: '123', col1: 'i am new', col2: 'me2' }
+   *
+   * // Since insertion is unordered, it can not be 100% guaranteed
+   * // which value will remain in the table for each primary key,
+   * // as concurrent insertions may occur.
+   * await table.insertMany([
+   *   { id: '123', col1: null },
+   *   { id: '123', col1: 'hi' },
+   * ]);
+   *
+   * // coll1 may technically be either 'hi' or null
+   * await table.findOne({ id: '123' }); // { id: '123', col1: ? }
+   * ```
+   *
+   * ##### Ordered insertions
+   *
+   * You may set the `ordered` option to `true` to stop the operation after the first error; otherwise all rows may be parallelized and processed in arbitrary order, improving, perhaps vastly, performance.
+   *
+   * Setting the `ordered` operation disables any parallelization so insertions truly are stopped after the very first error.
+   *
+   * Setting `ordered` also guarantees the order of upsert behavior, as described above.
+   *
+   * ##### The primary key
+   *
+   * The columns that compose the primary key themselves must all be present in the row object; all other fields are technically optional/nullable.
+   *
+   * The type of the primary key of the table (for the `insertedId`) is inferred from the type-level `$PrimaryKeyType` key in the schema. If it's not present, it will default to {@link SomeTableKey} (see {@link Table}, {@link $PrimaryKeyType} for more info).
+   *
+   * @example
+   * ```ts
+   * interface User extends Row<User, 'id'> {
+   *   id: string,
+   *   name: string,
+   *   dob?: DataAPIDate,
+   * }
+   *
+   * // res.insertedIds is of type { id: string }[]
+   * const res = await table.insertMany([
+   *   { id: '123', thing: 'Sunrise' },
+   *   { id: '456', thing: 'Miso soup' },
+   * ]);
+   * console.log(res.insertedIds[0].id); // '123'
+   * ```
+   *
+   * ##### `InsertManyError`
+   *
+   * If some rows can't be inserted, (e.g. they have the wrong data type for a column or lack the primary key), the Data API validation check will fail for those entire specific requests containing the faulty rows.
+   *
+   * Depending on concurrency & the `ordered` parameter, some rows may still have been inserted.
+   *
+   * In such cases, the operation will throw a {@link TableInsertManyError} containing the partial result.
+   *
+   * If a thrown exception is not due to an insertion error, e.g. a `5xx` error or network error, the operation will throw the underlying error.
+   *
+   * In case of an unordered request, if the error was a simple insertion error, the {@link TableInsertManyError} will be thrown after every document has been attempted to be inserted. If it was a `5xx` or similar, the error will be thrown immediately.
+   *
+   * @param rows - The rows to insert.
    * @param options - The options for this operation.
    *
-   * @returns The ID of the inserted row.
+   * @returns The primary keys of the inserted documents (and the count)
+   *
+   * @throws TableInsertManyError - If the operation fails.
    */
-  public async insertOne(row: Schema, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<Schema>> {
-    return this.#commands.insertOne(row, options);
+  public async insertMany(rows: readonly Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>> {
+    return this.#commands.insertMany(rows, options, TableInsertManyError);
   }
 
-  public async insertMany(document: readonly Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>> {
-    return this.#commands.insertMany(document, options, TableInsertManyError);
+  /**
+   * ##### Overview
+   *
+   * Updates a single row in the table. Under certain conditions, it may insert or delete a row as well.
+   *
+   * @example
+   * ```ts
+   * await table.insertOne({ key: '123', name: 'Jerry' });
+   * await table.updateOne({ key: '123' }, { $set: { name: 'Geraldine' } });
+   * ```
+   *
+   * ##### Upserting
+   *
+   * If the row doesn't exist, *and you're `$set`-ing at least one row to a non-null value,* an upsert will occur.
+   *
+   * @example
+   * ```ts
+   * // No upsert will occur here since only nulls are being set
+   * // (this is equivalent to `{ $unset: { name: '' } }`)
+   * await table.updateOne({ key: '123' }, { $set: { name: null } });
+   *
+   * // An upsert will occur here since at least one non-null value is being set
+   * await table.updateOne({ key: '123' }, { $set: { name: 'Eleanor', age: null } });
+   * ```
+   *
+   * ##### Deleting
+   *
+   * If all (non-primary) rows are set to null (or unset), the row will be deleted.
+   *
+   * Note that `$set`-ing a row to `null` is equivalent to `$unset`-ing it. The following example would be the exact same using `$unset`s.
+   *
+   * @example
+   * ```ts
+   * // Upserts row { key: '123', name: 'Michael', age: 3 } into the table
+   * await table.updateOne({ key: '123' }, { $set: { name: 'Michael', age: 3 } });
+   *
+   * // Sets row to { key: '123', name: 'Michael', age: null }
+   * await table.updateOne({ key: '123' }, { $set: { age: null } });
+   *
+   * // Deletes row from the table as all non-primary keys are set to null
+   * await table.updateOne({ key: '123' }, { $set: { name: null } });
+   * ```
+   *
+   * ##### Filtering
+   *
+   * The filter must contain an exact primary key to update just one row.
+   *
+   * Attempting to pass an empty filter, filtering by only part of the primary key, or filtering by a non-primary key column will result in an error.
+   *
+   * ##### Update operators
+   *
+   * Updates may perform either `$set` or`$unset` operations on the row. (`$set`-ing a row to `null` is equivalent to `$unset`-ing it.)
+   *
+   * ##### On returning `void`
+   *
+   * The `updateOne` operation, as returned from the Data API, is always `{ matchedCount: 1, modifiedCount: 1 }`, regardless of how many things are actually matched/modified, and if a row is upserted or not.
+   *
+   * In that sense, returning constantly that one type is isomorphic to just returning `void`, as both realistically contain the same amount of information (i.e. none)
+   *
+   * @param filter - A filter to select the document to update.
+   * @param update - The update to apply to the selected document.
+   * @param timeout - The timeout for this operation.
+   *
+   * @returns A promise which resolves once the operation is completed.
+   */
+  public async updateOne(filter: TableFilter<Schema>, update: TableUpdateFilter<Schema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
+    await this.#commands.updateOne(filter, update, timeout);
   }
 
-  public async updateOne(filter: TableFilter<Schema>, update: TableUpdateFilter<Schema>, options?: TableUpdateOneOptions): Promise<void> {
-    await this.#commands.updateOne(filter, update, options);
-  }
-
-  public async deleteOne(filter: TableFilter<Schema>, options?: TableDeleteOneOptions): Promise<void> {
+  /**
+   * ##### Overview
+   *
+   * Deletes a single row from the table.
+   *
+   * @example
+   * ```ts
+   * await table.insertOne({ pk: 'abc', ck: 3 });
+   * await table.deleteOne({ pk: 'abc', ck: { $gt: 2 } });
+   * ```
+   *
+   * ##### Filtering
+   *
+   *
+   */
+  public async deleteOne(filter: TableFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
     await this.#commands.deleteOne(filter, options);
   }
 
@@ -368,7 +612,6 @@ export class Table<Schema extends SomeRow = SomeRow> {
   public async alter(options: AlterTableOptions<Schema>): Promise<unknown> {
     await this.#httpClient.executeCommand({
       alterTable: {
-        name: this.name,
         operation: options.operation,
       },
     }, {
@@ -377,7 +620,24 @@ export class Table<Schema extends SomeRow = SomeRow> {
     return this;
   }
 
-  public async createIndex(name: string, column: Cols<Schema> | string, options?: TableCreateIndexOptions): Promise<void> {
+  public async listIndexes(options?: ListIndexOptions & { nameOnly: true }): Promise<string[]>
+
+  public async listIndexes(options?: ListIndexOptions & { nameOnly?: false }): Promise<TableIndexDescriptor[]>
+
+  public async listIndexes(options?: ListIndexOptions): Promise<string[] | TableIndexDescriptor[]> {
+    const resp = await this.#httpClient.executeCommand({
+      listIndexes: {
+        options: {
+          explain: options?.nameOnly !== true,
+        },
+      },
+    }, {
+      timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
+    });
+    return resp.status!.indexes;
+  }
+
+  public async createIndex(name: string, column: Cols<Schema> | string, options?: CreateTableIndexOptions): Promise<void> {
     await this.#httpClient.executeCommand({
       createIndex: {
         name: name,
@@ -398,7 +658,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
     });
   }
 
-  public async createVectorIndex(name: string, column: Cols<Schema> | string, options?: TableCreateVectorIndexOptions): Promise<void> {
+  public async createVectorIndex(name: string, column: Cols<Schema> | string, options?: CreateTableVectorIndexOptions): Promise<void> {
     await this.#httpClient.executeCommand({
       createVectorIndex: {
         name: name,
@@ -419,12 +679,12 @@ export class Table<Schema extends SomeRow = SomeRow> {
   }
 
   public async definition(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<ListTableDefinition> {
-    const results = await this.#db.listTables({
+    const resp = await this.#db.listTables({
       timeout: options?.timeout,
       keyspace: this.keyspace,
     });
 
-    const table = results.find((t) => t.name === this.name);
+    const table = resp.find((t) => t.name === this.name);
 
     if (!table) {
       throw new Error(`Can not get definition for table '${this.keyspace}.${this.name}'; table not found. Did you use the right keyspace?`);
@@ -433,8 +693,8 @@ export class Table<Schema extends SomeRow = SomeRow> {
     return table.definition;
   }
 
-  public async drop(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<void> {
-    await this.#db.dropTable(this.name, { keyspace: this.keyspace, ...options });
+  public async drop(options?: Omit<DropTableOptions, 'keyspace'>): Promise<void> {
+    await this.#db.dropTable(this.name, { ...options, keyspace: this.keyspace });
   }
 
   public get _httpClient() {
