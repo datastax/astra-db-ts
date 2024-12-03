@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { GenericFindOptions } from '@/src/documents';
+import { nullish } from '@/src/lib';
 
 /**
  * Options for the `find` method.
@@ -27,4 +28,4 @@ import { GenericFindOptions } from '@/src/documents';
  *
  * @public
  */
-export type CollectionFindOptions = GenericFindOptions;
+export type CollectionFindOptions<IncSim extends boolean | nullish = undefined> = GenericFindOptions<IncSim>;

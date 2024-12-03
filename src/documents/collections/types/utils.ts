@@ -45,7 +45,7 @@ export type MaybeId<T> = NoId<T> & { _id?: IdOf<T> }
  *
  * @public
  */
-export type FoundDoc<Doc> = WithId<Omit<Doc, '$similarity'> & { $similarity?: number }>
+export type FoundDoc<Doc> = Doc & { _id: IdOf<Doc>, $vector?: never, $vectorize?: never };
 
 /**
  * Represents a doc that doesn't have an `_id`
@@ -69,8 +69,6 @@ export type Flatten<Type> = Type extends (infer Item)[]
  * @public
  */
 export type IdOf<Doc> =
-  Doc extends { _id: infer Id extends SomeId }
-    ? Id :
   Doc extends { _id?: infer Id extends SomeId }
     ? Id
     : SomeId

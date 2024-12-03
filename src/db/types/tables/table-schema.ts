@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { $PrimaryKeyType } from '@/src/documents';
 import { Table } from '@/src/documents/tables/table';
 import {
   CreateTableColumnDefinitions,
@@ -21,7 +20,16 @@ import {
   FullCreateTablePrimaryKeyDefinition,
 } from '@/src/db/types/tables/create-table';
 import { EmptyObj } from '@/src/lib/types';
-import { UUID, InetAddress, DataAPIDate, DataAPIDuration, DataAPITime, DataAPITimestamp, DataAPIBlob } from '@/src/documents';
+import {
+  DataAPIBlob,
+  DataAPIDate,
+  DataAPIDuration,
+  DataAPITime,
+  DataAPITimestamp,
+  InetAddress,
+  SomeRow,
+  UUID,
+} from '@/src/documents';
 import { TypeErr } from '@/src/documents/utils';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
 import BigNumber from 'bignumber.js';
@@ -36,10 +44,10 @@ import BigNumber from 'bignumber.js';
  */
 export type InferrableTable =
   | CreateTableDefinition
-  | ((..._: any[]) => Promise<Table>)
-  | ((..._: any[]) => Table)
-  | Promise<Table>
-  | Table;
+  | ((..._: any[]) => Promise<Table<SomeRow>>)
+  | ((..._: any[]) => Table<SomeRow>)
+  | Promise<Table<SomeRow>>
+  | Table<SomeRow>;
 
 /**
  * Automagically extracts a table's schema from some Table<Schema>-like type, most useful when performing a
@@ -124,6 +132,19 @@ export type InferTableSchema<T extends InferrableTable> =
     ? Schema
     : never;
 
+export type InferTablePrimaryKey<T extends InferrableTable> =
+  T extends CreateTableDefinition
+    ? InferTablePKFromDefinition<T> :
+  T extends (..._: any[]) => Promise<Table<any, infer PKey>>
+    ? PKey :
+  T extends (..._: any[]) => Table<any, infer PKey>
+    ? PKey :
+  T extends Promise<Table<any, infer PKey>>
+    ? PKey :
+  T extends Table<any, infer PKey>
+    ? PKey
+    : never;
+
 export type Normalize<T> = { [K in keyof T]: T[K] } & EmptyObj;
 
 /**
@@ -188,9 +209,9 @@ export type Normalize<T> = { [K in keyof T]: T[K] } & EmptyObj;
  *
  * @public
  */
-export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition> = Normalize<MkColumnTypes<FullDef['columns'], MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>> & {
-  [$PrimaryKeyType]?: MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>,
-}>
+type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition> = Normalize<MkColumnTypes<FullDef['columns'], MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>>>;
+
+type InferTablePKFromDefinition<FullDef extends CreateTableDefinition> = Normalize<MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>>;
 
 type MkColumnTypes<Cols extends CreateTableColumnDefinitions, PK extends Record<string, any>> = {
   -readonly [P in keyof Cols as P extends keyof PK ? P : never]-?: CqlType2TSType<PickCqlType<Cols[P]>, Cols[P]> & {};

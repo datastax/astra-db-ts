@@ -8,9 +8,6 @@ import BigNumber from 'bignumber.js';
 import type TypedEmitter from 'typed-emitter';
 import type TypedEventEmitter from 'typed-emitter';
 
-// @public
-export const $PrimaryKeyType: '$PrimaryKeyType';
-
 // @public (undocumented)
 export const $SerializeForCollection: unique symbol;
 
@@ -130,9 +127,6 @@ export interface AlterTableOptions<Schema extends SomeRow> extends WithTimeout<'
     // (undocumented)
     operation: AlterTableOperations<Schema>;
 }
-
-// @public (undocumented)
-export type AlterTableSchema<Schema extends SomeRow, Alter extends AlterTableOptions<Schema>> = Normalize<Omit<Schema & Cols2Add<Alter['operation']['add']>, Cols2Drop<Alter['operation']['drop']>>>;
 
 // @public
 export class AstraAdmin {
@@ -263,37 +257,37 @@ export type Caller = readonly [name: string, version?: string];
 export type CollDesCtx = DataAPIDesCtx;
 
 // @public
-export class Collection<Schema extends SomeDoc = SomeDoc> {
+export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends Record<keyof WSchema | '_id', any> = FoundDoc<WSchema>> {
     // Warning: (ae-forgotten-export) The symbol "DataAPIHttpClient" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionOptions<Schema> | undefined);
-    countDocuments(filter: CollectionFilter<Schema>, upperBound: number, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number>;
-    deleteMany(filter: CollectionFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionDeleteManyResult>;
-    deleteOne(filter: CollectionFilter<Schema>, options?: CollectionDeleteOneOptions): Promise<CollectionDeleteOneResult>;
-    distinct<Key extends string>(key: Key, filter: CollectionFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]>;
+    constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionOptions<WSchema> | undefined);
+    countDocuments(filter: CollectionFilter<WSchema>, upperBound: number, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number>;
+    deleteMany(filter: CollectionFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionDeleteManyResult>;
+    deleteOne(filter: CollectionFilter<WSchema>, options?: CollectionDeleteOneOptions): Promise<CollectionDeleteOneResult>;
+    distinct<Key extends string>(key: Key, filter: CollectionFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<RSchema>>)[Key]>[]>;
     drop(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<void>;
     estimatedDocumentCount(options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number>;
-    find(filter: CollectionFilter<Schema>, options?: CollectionFindOptions & {
+    find<IncSim extends boolean | nullish = false>(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions<IncSim> & {
         projection?: never;
-    }): CollectionFindCursor<FoundDoc<Schema>, FoundDoc<Schema>>;
-    find<TRaw extends SomeDoc = Partial<Schema>>(filter: CollectionFilter<Schema>, options: CollectionFindOptions): CollectionFindCursor<FoundDoc<TRaw>, FoundDoc<TRaw>>;
-    findOne(filter: CollectionFilter<Schema>, options?: CollectionFindOneOptions & {
+    }): CollectionFindCursor<WithSim<RSchema, IncSim>, WithSim<RSchema, IncSim>>;
+    find<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindOptions): CollectionFindCursor<TRaw, TRaw>;
+    findOne<IncSim extends boolean | nullish>(filter: CollectionFilter<WSchema>, options?: CollectionFindOneOptions<IncSim> & {
         projection?: never;
-    }): Promise<FoundDoc<Schema> | null>;
-    findOne<TRaw extends SomeDoc = Partial<Schema>>(filter: CollectionFilter<Schema>, options: CollectionFindOneOptions): Promise<FoundDoc<TRaw> | null>;
-    findOneAndDelete<TRaw extends SomeDoc = WithId<Schema>>(filter: CollectionFilter<Schema>, options?: CollectionFindOneAndDeleteOptions): Promise<TRaw | null>;
-    findOneAndReplace<TRaw extends SomeDoc = WithId<Schema>>(filter: CollectionFilter<Schema>, replacement: NoId<Schema>, options?: CollectionFindOneAndReplaceOptions): Promise<TRaw | null>;
-    findOneAndUpdate(filter: CollectionFilter<Schema>, update: CollectionUpdateFilter<Schema>, options?: CollectionFindOneAndUpdateOptions): Promise<WithId<Schema> | null>;
+    }): Promise<WithSim<RSchema, IncSim> | null>;
+    findOne<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindOneOptions): Promise<TRaw | null>;
+    findOneAndDelete<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, options?: CollectionFindOneAndDeleteOptions): Promise<TRaw | null>;
+    findOneAndReplace<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, replacement: NoId<WSchema>, options?: CollectionFindOneAndReplaceOptions): Promise<TRaw | null>;
+    findOneAndUpdate(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionFindOneAndUpdateOptions): Promise<RSchema | null>;
     get _httpClient(): DataAPIHttpClient<"normal">;
-    insertMany(documents: readonly MaybeId<Schema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<Schema>>;
-    insertOne(document: MaybeId<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionInsertOneResult<Schema>>;
+    insertMany(documents: readonly MaybeId<WSchema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<RSchema>>;
+    insertOne(document: MaybeId<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionInsertOneResult<RSchema>>;
     readonly keyspace: string;
     readonly name: string;
     options(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<CollectionDefinition<SomeDoc>>;
-    replaceOne(filter: CollectionFilter<Schema>, replacement: NoId<Schema>, options?: CollectionReplaceOneOptions): Promise<CollectionReplaceOneResult<Schema>>;
-    updateMany(filter: CollectionFilter<Schema>, update: CollectionUpdateFilter<Schema>, options?: CollectionUpdateManyOptions): Promise<CollectionUpdateManyResult<Schema>>;
-    updateOne(filter: CollectionFilter<Schema>, update: CollectionUpdateFilter<Schema>, options?: CollectionUpdateOneOptions): Promise<CollectionUpdateOneResult<Schema>>;
+    replaceOne(filter: CollectionFilter<WSchema>, replacement: NoId<WSchema>, options?: CollectionReplaceOneOptions): Promise<CollectionReplaceOneResult<RSchema>>;
+    updateMany(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionUpdateManyOptions): Promise<CollectionUpdateManyResult<RSchema>>;
+    updateOne(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionUpdateOneOptions): Promise<CollectionUpdateOneResult<RSchema>>;
 }
 
 // @public
@@ -409,10 +403,10 @@ export type CollectionFindOneAndReplaceOptions = GenericFindOneAndReplaceOptions
 export type CollectionFindOneAndUpdateOptions = GenericFindOneAndUpdateOptions;
 
 // @public
-export type CollectionFindOneOptions = GenericFindOneOptions;
+export type CollectionFindOneOptions<IncSim extends boolean | nullish = undefined> = GenericFindOneOptions<IncSim>;
 
 // @public
-export type CollectionFindOptions = GenericFindOptions;
+export type CollectionFindOptions<IncSim extends boolean | nullish = undefined> = GenericFindOptions<IncSim>;
 
 // @public
 export type CollectionIndexingOptions<Schema extends SomeDoc> = {
@@ -451,11 +445,11 @@ export type CollectionNumberUpdate<Schema> = {
 };
 
 // @public
-export interface CollectionOptions<Schema extends SomeDoc> extends WithKeyspace {
+export interface CollectionOptions<WSchema extends SomeDoc> extends WithKeyspace {
     embeddingApiKey?: string | EmbeddingHeadersProvider | null;
     logging?: DataAPILoggingConfig;
     // (undocumented)
-    serdes?: CollectionSerDesConfig<Schema>;
+    serdes?: CollectionSerDesConfig<WSchema>;
     timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
 
@@ -479,7 +473,7 @@ export type CollectionReplaceOneOptions = GenericReplaceOneOptions;
 export type CollectionReplaceOneResult<Schema extends SomeDoc> = GenericUpdateResult<IdOf<Schema>, 0 | 1>;
 
 // @public (undocumented)
-export interface CollectionSerDesConfig<Schema extends SomeDoc> extends DataAPISerDesConfig<Schema, CollSerCtx<Schema>, CollDesCtx> {
+export interface CollectionSerDesConfig<WSchema extends SomeDoc> extends DataAPISerDesConfig<WSchema, CollSerCtx<WSchema>, CollDesCtx> {
     // (undocumented)
     enableBigNumbers?: boolean;
 }
@@ -531,15 +525,10 @@ export interface CollectionVectorOptions {
 }
 
 // @public (undocumented)
-export type CollSerCtx<Schema extends SomeDoc> = DataAPISerCtx<Schema>;
+export type CollSerCtx<WSchema extends SomeDoc> = DataAPISerCtx<WSchema>;
 
 // @public
 export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
-
-// @public (undocumented)
-export type Cols2Add<Op extends AddColumnOperation | undefined> = Op extends AddColumnOperation ? {
-    [P in keyof Cols2CqlTypes<Op["columns"]>]?: Cols2CqlTypes<Op["columns"]>[P];
-} : EmptyObj;
 
 // Warning: (ae-forgotten-export) The symbol "PickCqlType" needs to be exported by the entry point index.d.ts
 //
@@ -547,11 +536,6 @@ export type Cols2Add<Op extends AddColumnOperation | undefined> = Op extends Add
 export type Cols2CqlTypes<Columns extends CreateTableColumnDefinitions> = {
     -readonly [P in keyof Columns]: CqlType2TSType<PickCqlType<Columns[P]>, Columns[P]>;
 };
-
-// @public (undocumented)
-export type Cols2Drop<Op> = Op extends {
-    columns: (infer U)[];
-} ? U : never;
 
 // @public
 export abstract class CommandEvent extends DataAPIClientEvent {
@@ -891,15 +875,15 @@ export class DataAPIResponseError extends DataAPIError {
 }
 
 // @public (undocumented)
-export interface DataAPISerCtx<Schema extends SomeDoc> {
+export interface DataAPISerCtx<WSchema extends SomeDoc> {
     // (undocumented)
     mutatingInPlace: boolean;
     // (undocumented)
-    rootObj: Schema;
+    rootObj: WSchema;
 }
 
 // @public (undocumented)
-export interface DataAPISerDesConfig<Schema extends SomeDoc, SerCtx extends DataAPISerCtx<Schema>, DesCtx extends DataAPIDesCtx> {
+export interface DataAPISerDesConfig<WSchema extends SomeRow, SerCtx extends DataAPISerCtx<WSchema>, DesCtx extends DataAPIDesCtx> {
     // (undocumented)
     deserialize?: OneOrMany<DataAPIDesFn<DesCtx>>;
     // (undocumented)
@@ -1034,8 +1018,8 @@ export class Db {
     collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionOptions<Schema>): Collection<Schema>;
     command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse>;
     createCollection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>>;
-    createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<InferTableSchemaFromDefinition<Def>, Def>): Promise<Table<InferTableSchemaFromDefinition<Def>>>;
-    createTable<Schema extends SomeRow>(name: string, options: CreateTableOptions<Schema>): Promise<Table<Schema>>;
+    createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<InferTableSchema<Def>, Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>;
+    createTable<Schema extends SomeRow, PKeys extends keyof Schema = keyof Schema>(name: string, options: CreateTableOptions<Schema>): Promise<Table<Schema, Schema[PKeys]>>;
     dropCollection(name: string, options?: DropCollectionOptions): Promise<void>;
     dropTable(name: string, options?: DropTableOptions): Promise<void>;
     // (undocumented)
@@ -1289,21 +1273,21 @@ export type Filter = Record<string, any>;
 // @public
 export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     [Symbol.asyncIterator](): AsyncGenerator<T, void, void>;
-    // Warning: (ae-forgotten-export) The symbol "SomeSerDes" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "DataAPISerDes" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(parent: Table | Collection, serdes: SomeSerDes, filter: [Filter, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T);
+    constructor(parent: Table<SomeRow> | Collection, serdes: DataAPISerDes, filter: [Filter, boolean], options?: GenericFindOptions<any>, mapping?: (doc: TRaw) => T);
     buffered(): number;
     clone(): FindCursor<TRaw, TRaw>;
     close(): void;
     consumeBuffer(max?: number): TRaw[];
     consumed(): number;
-    get dataSource(): Table | Collection;
+    get dataSource(): Table<SomeRow> | Collection;
     filter(filter: Filter): FindCursor<T, TRaw>;
     forEach(consumer: ((doc: T) => boolean) | ((doc: T) => void)): Promise<void>;
     getSortVector(): Promise<number[] | null>;
     hasNext(): Promise<boolean>;
-    includeSimilarity(includeSimilarity?: boolean): FindCursor<T, TRaw>;
+    includeSimilarity<IncSim extends true | string = true>(includeSimilarity?: IncSim): FindCursor<WithSim<TRaw, IncSim>, WithSim<TRaw, IncSim>>;
     includeSortVector(includeSortVector?: boolean): FindCursor<T, TRaw>;
     limit(limit: number): FindCursor<T, TRaw>;
     map<R>(mapping: (doc: T) => R): FindCursor<R, TRaw>;
@@ -1325,13 +1309,15 @@ export interface FindEmbeddingProvidersResult {
 export type Flatten<Type> = Type extends (infer Item)[] ? Item : Type;
 
 // @public
-export type FoundDoc<Doc> = WithId<Omit<Doc, '$similarity'> & {
-    $similarity?: number;
-}>;
+export type FoundDoc<Doc> = Doc & {
+    _id: IdOf<Doc>;
+    $vector?: never;
+    $vectorize?: never;
+};
 
 // @public (undocumented)
-export type FoundRow<Doc> = Omit<Required<Doc>, '$similarity'> & {
-    $similarity?: number;
+export type FoundRow<Doc> = {
+    [K in keyof Doc]-?: DataAPIVector extends Doc[K] ? Exclude<Doc[K], string> : Doc[K];
 };
 
 // @public (undocumented)
@@ -1383,9 +1369,9 @@ export interface GenericFindOneAndUpdateOptions extends WithTimeout<'generalMeth
 }
 
 // @public (undocumented)
-export interface GenericFindOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericFindOneOptions<IncSim extends boolean | string | nullish = undefined> extends WithTimeout<'generalMethodTimeoutMs'> {
     // (undocumented)
-    includeSimilarity?: boolean;
+    includeSimilarity?: IncSim;
     // (undocumented)
     projection?: Projection;
     // (undocumented)
@@ -1393,9 +1379,9 @@ export interface GenericFindOneOptions extends WithTimeout<'generalMethodTimeout
 }
 
 // @public (undocumented)
-export interface GenericFindOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericFindOptions<IncSim extends boolean | string | nullish = undefined> extends WithTimeout<'generalMethodTimeoutMs'> {
     // (undocumented)
-    includeSimilarity?: boolean;
+    includeSimilarity?: IncSim;
     // (undocumented)
     includeSortVector?: boolean;
     // (undocumented)
@@ -1494,8 +1480,6 @@ export interface Http1Options {
 
 // @public
 export type IdOf<Doc> = Doc extends {
-    _id: infer Id extends SomeId;
-} ? Id : Doc extends {
     _id?: infer Id extends SomeId;
 } ? Id : SomeId;
 
@@ -1514,18 +1498,17 @@ export class InetAddress {
 }
 
 // @public
-export type InferrableTable = CreateTableDefinition | ((..._: any[]) => Promise<Table>) | ((..._: any[]) => Table) | Promise<Table> | Table;
+export type InferrableTable = CreateTableDefinition | ((..._: any[]) => Promise<Table<SomeRow>>) | ((..._: any[]) => Table<SomeRow>) | Promise<Table<SomeRow>> | Table<SomeRow>;
 
-// @public
-export type InferTableSchema<T extends InferrableTable> = T extends CreateTableDefinition ? InferTableSchemaFromDefinition<T> : T extends (..._: any[]) => Promise<Table<infer Schema>> ? Schema : T extends (..._: any[]) => Table<infer Schema> ? Schema : T extends Promise<Table<infer Schema>> ? Schema : T extends Table<infer Schema> ? Schema : never;
+// Warning: (ae-forgotten-export) The symbol "InferTablePKFromDefinition" needs to be exported by the entry point index.d.ts
+//
+// @public (undocumented)
+export type InferTablePrimaryKey<T extends InferrableTable> = T extends CreateTableDefinition ? InferTablePKFromDefinition<T> : T extends (..._: any[]) => Promise<Table<any, infer PKey>> ? PKey : T extends (..._: any[]) => Table<any, infer PKey> ? PKey : T extends Promise<Table<any, infer PKey>> ? PKey : T extends Table<any, infer PKey> ? PKey : never;
 
-// Warning: (ae-forgotten-export) The symbol "MkColumnTypes" needs to be exported by the entry point index.d.ts
-// Warning: (ae-forgotten-export) The symbol "MkPrimaryKeyType" needs to be exported by the entry point index.d.ts
+// Warning: (ae-forgotten-export) The symbol "InferTableSchemaFromDefinition" needs to be exported by the entry point index.d.ts
 //
 // @public
-export type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition> = Normalize<MkColumnTypes<FullDef['columns'], MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>> & {
-    [$PrimaryKeyType]?: MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>;
-}>;
+export type InferTableSchema<T extends InferrableTable> = T extends CreateTableDefinition ? InferTableSchemaFromDefinition<T> : T extends (..._: any[]) => Promise<Table<infer Schema>> ? Schema : T extends (..._: any[]) => Table<infer Schema> ? Schema : T extends Promise<Table<infer Schema>> ? Schema : T extends Table<infer Schema> ? Schema : never;
 
 // @public
 export class InvalidEnvironmentError extends Error {
@@ -1534,11 +1517,6 @@ export class InvalidEnvironmentError extends Error {
     readonly currentEnvironment: string;
     readonly expectedEnvironments: string[];
 }
-
-// @public
-export type KeyOf<Schema> = Schema extends {
-    [$PrimaryKeyType]?: infer PrimaryKey | undefined;
-} ? PrimaryKey extends SomeTableKey ? PrimaryKey : SomeTableKey : SomeTableKey;
 
 // @public
 export type KeyspaceReplicationOptions = {
@@ -1671,7 +1649,7 @@ export class ObjectId {
 }
 
 // @public (undocumented)
-export const objectId: (id: string | number | null) => ObjectId;
+export const oid: (id?: string | number | null) => ObjectId;
 
 // @public
 export type OneOrMany<T> = T | readonly T[];
@@ -1696,14 +1674,6 @@ export type RootAdminOptions = Omit<AdminOptions, 'logging' | 'timeoutDefaults'>
 
 // @public (undocumented)
 export type RootDbOptions = Omit<DbOptions, 'logging' | 'timeoutDefaults'>;
-
-// @public
-export interface Row<Schema extends SomeRow, Columns extends keyof Schema> {
-    // (undocumented)
-    [$PrimaryKeyType]?: {
-        [P in Columns]: Schema[P];
-    };
-}
 
 // @public
 export interface RunCommandOptions extends WithTimeout<'generalMethodTimeoutMs'> {
@@ -1740,9 +1710,6 @@ export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId
 export type SomeRow = Record<string, any>;
 
 // @public
-export type SomeTableKey = Record<string, any>;
-
-// @public
 export type Sort = Record<string, SortDirection | number[] | DataAPIVector | string>;
 
 // @public
@@ -1758,36 +1725,38 @@ export class StaticTokenProvider extends TokenProvider {
 export type StrictCreateTableColumnDefinition = ScalarCreateTableColumnDefinition | MapCreateTableColumnDefinition | ListCreateTableColumnDefinition | SetCreateTableColumnDefinition | VectorCreateTableColumnDefinition;
 
 // @public
-export class Table<Schema extends SomeRow = SomeRow> {
+export class Table<WSchema extends SomeRow, PKey extends SomeRow = Record<string, unknown>, RSchema extends Record<keyof WSchema, any> = FoundRow<WSchema>> {
     // @internal
-    constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableOptions<Schema> | undefined);
+    constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableOptions<WSchema> | undefined);
     // (undocumented)
-    alter<const Spec extends AlterTableOptions<Schema>>(options: Spec): Promise<Table<AlterTableSchema<Schema, Spec>>>;
+    alter<NewWSchema extends SomeRow, NewRSchema extends Record<keyof NewWSchema, any> = FoundRow<NewWSchema>>(options: AlterTableOptions<SomeRow>): Promise<Table<NewWSchema, PKey, NewRSchema>>;
     // (undocumented)
-    alter<NewSchema extends SomeRow>(options: AlterTableOptions<Schema>): Promise<Table<NewSchema>>;
+    createIndex(name: string, column: Cols<WSchema> | string, options?: CreateTableIndexOptions): Promise<void>;
     // (undocumented)
-    createIndex(name: string, column: Cols<Schema> | string, options?: CreateTableIndexOptions): Promise<void>;
-    // (undocumented)
-    createVectorIndex(name: string, column: Cols<Schema> | string, options?: CreateTableVectorIndexOptions): Promise<void>;
+    createVectorIndex(name: string, column: Cols<WSchema> | string, options?: CreateTableVectorIndexOptions): Promise<void>;
     // (undocumented)
     definition(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<ListTableDefinition>;
     // (undocumented)
-    deleteMany(filter: TableFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
-    deleteOne(filter: TableFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
+    deleteMany(filter: TableFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
+    deleteOne(filter: TableFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
     // (undocumented)
     drop(options?: Omit<DropTableOptions, 'keyspace'>): Promise<void>;
     // (undocumented)
-    find(filter: TableFilter<Schema>, options?: TableFindOptions & {
+    find<IncSim extends boolean | string | nullish>(filter: TableFilter<WSchema>, options?: TableFindOptions<IncSim> & {
         projection?: never;
-    }): TableFindCursor<FoundRow<Schema>, FoundRow<Schema>>;
+    }): TableFindCursor<WithSim<RSchema, IncSim>, WithSim<RSchema, IncSim>>;
     // (undocumented)
-    find<TRaw extends SomeRow = Partial<Schema>>(filter: TableFilter<Schema>, options: TableFindOptions): TableFindCursor<FoundRow<TRaw>, FoundRow<TRaw>>;
+    find<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOptions): TableFindCursor<TRaw, TRaw>;
     // (undocumented)
-    findOne(filter: TableFilter<Schema>, options?: TableFindOneOptions): Promise<FoundRow<Schema> | null>;
+    findOne<IncSim extends boolean | string | nullish>(filter: TableFilter<WSchema>, options?: TableFindOneOptions<IncSim> & {
+        projection?: never;
+    }): Promise<WithSim<RSchema, IncSim> | null>;
+    // (undocumented)
+    findOne<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOneOptions): Promise<TRaw | null>;
     // (undocumented)
     get _httpClient(): DataAPIHttpClient<"normal">;
-    insertMany(rows: readonly Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>>;
-    insertOne(row: Schema, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<Schema>>;
+    insertMany(rows: readonly WSchema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<PKey>>;
+    insertOne(row: WSchema, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<PKey>>;
     readonly keyspace: string;
     // Warning: (ae-forgotten-export) The symbol "ListIndexOptions" needs to be exported by the entry point index.d.ts
     //
@@ -1802,7 +1771,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
         nameOnly?: false;
     }): Promise<TableIndexDescriptor[]>;
     readonly name: string;
-    updateOne(filter: TableFilter<Schema>, update: TableUpdateFilter<Schema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
+    updateOne(filter: TableFilter<WSchema>, update: TableUpdateFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
 }
 
 // @public (undocumented)
@@ -1863,16 +1832,16 @@ export type TableFilterOps<Elem> = {
 // @public (undocumented)
 export class TableFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {
     // (undocumented)
-    get dataSource(): Table;
+    get dataSource(): Table<SomeRow>;
     // (undocumented)
     filter(filter: TableFilter<TRaw>): FindCursor<T, TRaw>;
 }
 
 // @public (undocumented)
-export type TableFindOneOptions = GenericFindOneOptions;
+export type TableFindOneOptions<IncSim extends boolean | string | nullish = undefined> = GenericFindOneOptions<IncSim>;
 
 // @public (undocumented)
-export type TableFindOptions = GenericFindOptions;
+export type TableFindOptions<IncSim extends boolean | string | nullish = undefined> = GenericFindOptions<IncSim>;
 
 // @public (undocumented)
 export interface TableIndexOptions {
@@ -1894,22 +1863,22 @@ export class TableInsertManyError extends CumulativeOperationError {
 export type TableInsertManyOptions = GenericInsertManyOptions;
 
 // @public
-export interface TableInsertManyResult<Schema extends SomeRow> {
+export interface TableInsertManyResult<PKey extends SomeRow> {
     insertedCount: number;
-    insertedIds: KeyOf<Schema>[];
+    insertedIds: PKey[];
 }
 
 // @public
-export interface TableInsertOneResult<Schema extends SomeRow> {
-    insertedId: KeyOf<Schema>;
+export interface TableInsertOneResult<PKey extends SomeRow> {
+    insertedId: PKey;
 }
 
 // @public
-export interface TableOptions<Schema extends SomeDoc> extends WithKeyspace {
+export interface TableOptions<WSchema extends SomeRow> extends WithKeyspace {
     embeddingApiKey?: string | EmbeddingHeadersProvider | null;
     logging?: DataAPILoggingConfig;
     // (undocumented)
-    serdes?: TableSerDesConfig<Schema>;
+    serdes?: TableSerDesConfig<WSchema>;
     timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
 
@@ -1917,13 +1886,13 @@ export interface TableOptions<Schema extends SomeDoc> extends WithKeyspace {
 export type TableScalarType = 'ascii' | 'bigint' | 'blob' | 'boolean' | 'date' | 'decimal' | 'double' | 'duration' | 'float' | 'int' | 'inet' | 'smallint' | 'text' | 'time' | 'timestamp' | 'tinyint' | 'uuid' | 'varint';
 
 // @public (undocumented)
-export interface TableSerCtx<Schema extends SomeDoc> extends DataAPISerCtx<Schema> {
+export interface TableSerCtx<WSchema extends SomeDoc> extends DataAPISerCtx<WSchema> {
     // (undocumented)
     bigNumsPresent: boolean;
 }
 
 // @public (undocumented)
-export interface TableSerDesConfig<Schema extends SomeRow> extends DataAPISerDesConfig<Schema, TableSerCtx<Schema>, TableDesCtx> {
+export interface TableSerDesConfig<WSchema extends SomeRow> extends DataAPISerDesConfig<WSchema, TableSerCtx<WSchema>, TableDesCtx> {
     // (undocumented)
     parsers?: Record<string, TableColumnTypeParser>;
     // (undocumented)
@@ -1935,12 +1904,6 @@ export interface TableUpdateFilter<Schema extends SomeRow> {
     $set?: Partial<Schema> & SomeRow;
     $unset?: Record<string, '' | true | 1>;
 }
-
-// @public
-export type TableUpdateManyOptions = GenericUpdateManyOptions;
-
-// @public (undocumented)
-export type TableUpdateManyResult<Schema extends SomeRow> = GenericUpdateResult<KeyOf<Schema>, number>;
 
 // @public (undocumented)
 export interface TableVectorIndexOptions {
@@ -2048,11 +2011,11 @@ export interface VectorCreateTableColumnDefinition {
 
 // @public
 export interface VectorDoc {
-    $vector?: number[];
+    $vector?: DataAPIVector;
 }
 
 // @public
-export interface VectorizeDoc {
+export interface VectorizeDoc extends VectorDoc {
     $vectorize?: string;
 }
 
@@ -2073,6 +2036,11 @@ export type WithId<T> = NoId<T> & {
 export interface WithKeyspace {
     keyspace?: string;
 }
+
+// @public (undocumented)
+export type WithSim<Schema extends SomeRow, IncSim extends boolean | string | nullish> = IncSim extends true ? Schema & {
+    $similarity: number;
+} : IncSim extends string ? Schema & Record<IncSim, number> : Schema;
 
 // @public
 export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor> {

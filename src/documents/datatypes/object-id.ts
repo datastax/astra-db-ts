@@ -18,7 +18,7 @@ import { $SerializeForCollection } from '@/src/documents/collections/ser-des';
 
 const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
 
-export const objectId = (id: string | number | null) => new ObjectId(id);
+export const oid = (id?: string | number | null) => new ObjectId(id);
 
 /**
  * Represents an ObjectId that can be used as an _id in the DataAPI.

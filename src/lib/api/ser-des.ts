@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/documents';
+import { SomeDoc, SomeRow } from '@/src/documents';
 import type { nullish, OneOrMany, RawDataAPIResponse } from '@/src/lib';
 import { toArray } from '@/src/lib/utils';
 
-export interface DataAPISerCtx<Schema extends SomeDoc> {
-  rootObj: Schema,
+export interface DataAPISerCtx<WSchema extends SomeDoc> {
+  rootObj: WSchema,
   mutatingInPlace: boolean,
 }
 
@@ -31,7 +31,7 @@ export type DataAPISerFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ct
 
 export type DataAPIDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean?] | boolean | void;
 
-export interface DataAPISerDesConfig<Schema extends SomeDoc, SerCtx extends DataAPISerCtx<Schema>, DesCtx extends DataAPIDesCtx> {
+export interface DataAPISerDesConfig<WSchema extends SomeRow, SerCtx extends DataAPISerCtx<WSchema>, DesCtx extends DataAPIDesCtx> {
   serialize?: OneOrMany<DataAPISerFn<SerCtx>>,
   deserialize?: OneOrMany<DataAPIDesFn<DesCtx>>,
   mutateInPlace?: boolean,
@@ -40,15 +40,10 @@ export interface DataAPISerDesConfig<Schema extends SomeDoc, SerCtx extends Data
 /**
  * @internal
  */
-export type SomeSerDes = DataAPISerDes<SomeDoc, any, any>;
+export abstract class DataAPISerDes<SerCtx extends DataAPISerCtx<SomeDoc> = any, DesCtx extends DataAPIDesCtx = any> {
+  protected constructor(protected readonly _cfg: DataAPISerDesConfig<SomeDoc, SerCtx, DesCtx>) {}
 
-/**
- * @internal
- */
-export abstract class DataAPISerDes<Schema extends SomeDoc, SerCtx extends DataAPISerCtx<Schema>, DesCtx extends DataAPIDesCtx> {
-  protected constructor(protected readonly _cfg: DataAPISerDesConfig<Schema, SerCtx, DesCtx>) {}
-
-  public serializeRecord<S extends Schema | nullish>(obj: S): [S, boolean] {
+  public serializeRecord<S extends SomeDoc | nullish>(obj: S): [S, boolean] {
     if (obj === null || obj === undefined) {
       return [obj, false];
     }
@@ -56,7 +51,7 @@ export abstract class DataAPISerDes<Schema extends SomeDoc, SerCtx extends DataA
     return [_serializeRecord({ ['']: ctx.rootObj }, 0, ctx, toArray(this._cfg.serialize!))[''] as S, this.bigNumsPresent(ctx)];
   }
 
-  public deserializeRecord<S extends Schema | nullish>(obj: SomeDoc | nullish, raw: RawDataAPIResponse): S {
+  public deserializeRecord<S extends SomeDoc | nullish>(obj: SomeDoc | nullish, raw: RawDataAPIResponse): S {
     if (obj === null || obj === undefined) {
       return obj as S;
     }
@@ -64,12 +59,12 @@ export abstract class DataAPISerDes<Schema extends SomeDoc, SerCtx extends DataA
     return _deserializeRecord({ ['']: ctx.rootObj }, 0, ctx, toArray(this._cfg.deserialize!))[''] as S;
   }
 
-  protected abstract adaptSerCtx(ctx: DataAPISerCtx<Schema>): SerCtx;
+  protected abstract adaptSerCtx(ctx: DataAPISerCtx<SomeDoc>): SerCtx;
   protected abstract adaptDesCtx(ctx: DataAPIDesCtx): DesCtx;
   protected abstract bigNumsPresent(ctx: SerCtx): boolean;
 
-  protected static _mergeConfig<Schema extends SomeDoc, SerCtx extends DataAPISerCtx<Schema>, DesCtx extends DataAPIDesCtx>(...cfg: (DataAPISerDesConfig<Schema, SerCtx, DesCtx> | undefined)[]): DataAPISerDesConfig<Schema, SerCtx, DesCtx> {
-    return cfg.reduce<DataAPISerDesConfig<Schema, SerCtx, DesCtx>>((acc, cfg) => ({
+  protected static _mergeConfig<WSchema extends SomeDoc, SerCtx extends DataAPISerCtx<WSchema>, DesCtx extends DataAPIDesCtx>(...cfg: (DataAPISerDesConfig<WSchema, SerCtx, DesCtx> | undefined)[]): DataAPISerDesConfig<WSchema, SerCtx, DesCtx> {
+    return cfg.reduce<DataAPISerDesConfig<WSchema, SerCtx, DesCtx>>((acc, cfg) => ({
       serialize: [...toArray(cfg?.serialize ?? []), ...toArray(acc.serialize ?? [])],
       deserialize: [...toArray(cfg?.deserialize ?? []), ...toArray(acc.deserialize ?? [])],
       mutateInPlace: cfg?.mutateInPlace ?? acc.mutateInPlace,

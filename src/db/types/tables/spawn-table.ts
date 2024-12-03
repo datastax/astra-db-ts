@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { WithKeyspace } from '@/src/db';
-import { EmbeddingHeadersProvider, SomeDoc, TableSerDesConfig } from '@/src/documents';
+import { EmbeddingHeadersProvider, SomeRow, TableSerDesConfig } from '@/src/documents';
 import { DataAPILoggingConfig, type TimeoutDescriptor } from '@/src/lib';
 
 /**
@@ -28,7 +28,7 @@ import { DataAPILoggingConfig, type TimeoutDescriptor } from '@/src/lib';
  *
  * @public
  */
-export interface TableOptions<Schema extends SomeDoc> extends WithKeyspace {
+export interface TableOptions<WSchema extends SomeRow> extends WithKeyspace {
   /**
    * The API key for the embedding service to use, or the {@link EmbeddingHeadersProvider} if using
    * a provider that requires it (e.g. AWS bedrock).
@@ -42,7 +42,7 @@ export interface TableOptions<Schema extends SomeDoc> extends WithKeyspace {
    * See {@link DataAPILoggingConfig} for *much* more information on configuration, outputs, and inheritance.
    */
   logging?: DataAPILoggingConfig,
-  serdes?: TableSerDesConfig<Schema>,
+  serdes?: TableSerDesConfig<WSchema>,
   /**
    * ##### Overview
    *

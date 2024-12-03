@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIVector } from '@/src/documents';
+import { DataAPIVector, SomeRow } from '@/src/documents';
+import { nullish } from '@/src/lib';
 
 /**
  * Allowed types to specify an ascending or descending sort.
@@ -136,3 +137,10 @@ export interface ProjectionSlice {
    */
   $slice: number | [number, number];
 }
+
+export type WithSim<Schema extends SomeRow, IncSim extends boolean | string | nullish> =
+  IncSim extends true
+    ? Schema & { $similarity: number } :
+  IncSim extends string
+    ? Schema & Record<IncSim, number>
+    : Schema;

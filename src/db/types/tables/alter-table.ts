@@ -13,9 +13,8 @@
 // limitations under the License.
 
 import { Cols, SomeRow } from '@/src/documents';
-import { Cols2CqlTypes, CreateTableColumnDefinitions, Normalize, VectorizeServiceOptions } from '@/src/db';
+import { CreateTableColumnDefinitions, VectorizeServiceOptions } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
-import { EmptyObj } from '@/src/lib/types';
 
 export interface AlterTableOptions<Schema extends SomeRow> extends WithTimeout<'tableAdminTimeoutMs'> {
   operation: AlterTableOperations<Schema>,
@@ -47,16 +46,3 @@ export interface DropVectorizeOperation<Schema extends SomeRow> {
   columns: Cols<Schema>[];
   // ifExists?: boolean,
 }
-
-export type AlterTableSchema<Schema extends SomeRow, Alter extends AlterTableOptions<Schema>> = Normalize<Omit<
-  Schema & Cols2Add<Alter['operation']['add']>,
-  Cols2Drop<Alter['operation']['drop']>
->>;
-
-export type Cols2Add<Op extends AddColumnOperation | undefined> = Op extends AddColumnOperation
-  ? { [P in keyof Cols2CqlTypes<Op["columns"]>]?: Cols2CqlTypes<Op["columns"]>[P] }
-  : EmptyObj;
-
-export type Cols2Drop<Op> = Op extends { columns: (infer U)[] }
-  ? U
-  : never;

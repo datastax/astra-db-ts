@@ -32,9 +32,9 @@ import { CollectionDescriptor, ListCollectionsOptions } from '@/src/db/types/col
 import { RunCommandOptions } from '@/src/db/types/command';
 import { TableOptions } from '@/src/db/types/tables/spawn-table';
 import { CreateTableDefinition, CreateTableOptions } from '@/src/db/types/tables/create-table';
-import { InferTableSchemaFromDefinition } from '@/src/db/types/tables/table-schema';
+import { InferTablePrimaryKey, InferTableSchema } from '@/src/db/types/tables/table-schema';
 import { DropTableOptions } from '@/src/db/types/tables/drop-table';
-import { TableDescriptor, ListTablesOptions } from '@/src/db/types/tables/list-tables';
+import { ListTablesOptions, TableDescriptor } from '@/src/db/types/tables/list-tables';
 import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
 import { AdminOptions, DbOptions } from '@/src/client/types';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
@@ -845,7 +845,7 @@ export class Db {
    * @see $PrimaryKeyType
    * @see CreateTableDefinition
    */
-  public async createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<InferTableSchemaFromDefinition<Def>, Def>): Promise<Table<InferTableSchemaFromDefinition<Def>>>
+  public async createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<InferTableSchema<Def>, Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>
 
   /**
    * ##### Overview
@@ -927,9 +927,9 @@ export class Db {
    * @see $PrimaryKeyType
    * @see CreateTableDefinition
    */
-  public async createTable<Schema extends SomeRow>(name: string, options: CreateTableOptions<Schema>): Promise<Table<Schema>>
+  public async createTable<Schema extends SomeRow, PKeys extends keyof Schema = keyof Schema>(name: string, options: CreateTableOptions<Schema>): Promise<Table<Schema, Schema[PKeys]>>
 
-  public async createTable(name: string, options: CreateTableOptions<SomeRow>): Promise<Table> {
+  public async createTable(name: string, options: CreateTableOptions<SomeRow>): Promise<Table<SomeRow>> {
     const command = {
       createTable: {
         name: name,

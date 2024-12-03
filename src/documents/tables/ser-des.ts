@@ -34,7 +34,7 @@ import BigNumber from 'bignumber.js';
 
 export const $SerializeForTable = Symbol.for('astra-db-ts.serialize.table');
 
-export interface TableSerCtx<Schema extends SomeDoc> extends DataAPISerCtx<Schema> {
+export interface TableSerCtx<WSchema extends SomeDoc> extends DataAPISerCtx<WSchema> {
   bigNumsPresent: boolean;
 }
 
@@ -47,7 +47,7 @@ export interface TableDesCtx extends DataAPIDesCtx {
 
 export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: SomeDoc) => any;
 
-export interface TableSerDesConfig<Schema extends SomeRow> extends DataAPISerDesConfig<Schema, TableSerCtx<Schema>, TableDesCtx> {
+export interface TableSerDesConfig<WSchema extends SomeRow> extends DataAPISerDesConfig<WSchema, TableSerCtx<WSchema>, TableDesCtx> {
   parsers?: Record<string, TableColumnTypeParser>,
   sparseData?: boolean,
 }
@@ -55,14 +55,14 @@ export interface TableSerDesConfig<Schema extends SomeRow> extends DataAPISerDes
 /**
  * @internal
  */
-export class TableSerDes<Schema extends SomeRow> extends DataAPISerDes<Schema, TableSerCtx<Schema>, TableDesCtx> {
-  declare protected readonly _cfg: TableSerDesConfig<Schema>;
+export class TableSerDes<WSchema extends SomeRow> extends DataAPISerDes<TableSerCtx<WSchema>, TableDesCtx> {
+  declare protected readonly _cfg: TableSerDesConfig<WSchema>;
 
-  public constructor(cfg?: TableSerDesConfig<Schema>) {
+  public constructor(cfg?: TableSerDesConfig<WSchema>) {
     super(TableSerDes.mergeConfig(DefaultTableSerDesCfg, cfg));
   }
 
-  public override adaptSerCtx(ctx: TableSerCtx<Schema>): TableSerCtx<Schema> {
+  public override adaptSerCtx(ctx: TableSerCtx<WSchema>): TableSerCtx<WSchema> {
     ctx.bigNumsPresent = false;
     return ctx;
   }
@@ -88,11 +88,11 @@ export class TableSerDes<Schema extends SomeRow> extends DataAPISerDes<Schema, T
     return ctx;
   }
 
-  public override bigNumsPresent(ctx: TableSerCtx<Schema>): boolean {
+  public override bigNumsPresent(ctx: TableSerCtx<WSchema>): boolean {
     return ctx.bigNumsPresent;
   }
 
-  public static mergeConfig<Schema extends SomeDoc>(...cfg: (TableSerDesConfig<Schema> | undefined)[]): TableSerDesConfig<Schema> {
+  public static mergeConfig<WSchema extends SomeDoc>(...cfg: (TableSerDesConfig<WSchema> | undefined)[]): TableSerDesConfig<WSchema> {
     return {
       sparseData: cfg.reduce<boolean | undefined>((acc, c) => c?.sparseData ?? acc, undefined),
       parsers: cfg.reduce<Record<string, TableColumnTypeParser>>((acc, c) => ({ ...acc, ...c?.parsers }), {}),

@@ -34,19 +34,17 @@ import type {
   CollectionUpdateOneResult,
   Flatten,
   FoundDoc,
-  IdOf,
-  MaybeId,
+  IdOf, MaybeId,
   NoId,
   SomeDoc,
   ToDotNotation,
-  WithId,
 } from '@/src/documents/collections/types';
 import { CollectionDefinition, CollectionOptions, Db } from '@/src/db';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import { WithTimeout } from '@/src/lib';
+import { nullish, WithTimeout } from '@/src/lib';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { $CustomInspect } from '@/src/lib/constants';
-import { CollectionInsertManyError, TooManyDocumentsToCountError } from '@/src/documents';
+import { CollectionInsertManyError, TooManyDocumentsToCountError, WithSim } from '@/src/documents';
 import JBI from 'json-bigint';
 import { CollectionFindCursor } from '@/src/documents/collections/cursor';
 import { withJbiNullProtoFix } from '@/src/lib/utils';
@@ -177,9 +175,9 @@ const jbi = JBI({ storeAsString: true });
  *
  * @public
  */
-export class Collection<Schema extends SomeDoc = SomeDoc> {
+export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends Record<keyof WSchema | '_id', any> = FoundDoc<WSchema>> {
   readonly #httpClient: DataAPIHttpClient;
-  readonly #commands: CommandImpls<IdOf<Schema>>;
+  readonly #commands: CommandImpls<IdOf<RSchema>>;
   readonly #db: Db;
 
   /**
@@ -197,7 +195,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionOptions<Schema> | undefined) {
+  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionOptions<WSchema> | undefined) {
     Object.defineProperty(this, 'name', {
       value: name,
       writable: false,
@@ -273,7 +271,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns The ID of the inserted document.
    */
-  public async insertOne(document: MaybeId<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionInsertOneResult<Schema>> {
+  public async insertOne(document: MaybeId<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionInsertOneResult<RSchema>> {
     return this.#commands.insertOne(document, options);
   }
 
@@ -376,7 +374,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @throws CollectionInsertManyError - If the operation fails.
    */
-  public async insertMany(documents: readonly MaybeId<Schema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<Schema>> {
+  public async insertMany(documents: readonly MaybeId<WSchema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<RSchema>> {
     return this.#commands.insertMany(documents, options, CollectionInsertManyError);
   }
 
@@ -442,7 +440,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @see StrictSort
    */
-  public async updateOne(filter: CollectionFilter<Schema>, update: CollectionUpdateFilter<Schema>, options?: CollectionUpdateOneOptions): Promise<CollectionUpdateOneResult<Schema>> {
+  public async updateOne(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionUpdateOneOptions): Promise<CollectionUpdateOneResult<RSchema>> {
     return this.#commands.updateOne(filter, update, options);
   }
 
@@ -510,7 +508,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns A summary of what changed.
    */
-  public async updateMany(filter: CollectionFilter<Schema>, update: CollectionUpdateFilter<Schema>, options?: CollectionUpdateManyOptions): Promise<CollectionUpdateManyResult<Schema>> {
+  public async updateMany(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionUpdateManyOptions): Promise<CollectionUpdateManyResult<RSchema>> {
     return this.#commands.updateMany(filter, update, options);
   }
 
@@ -569,7 +567,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns A summary of what changed.
    */
-  public async replaceOne(filter: CollectionFilter<Schema>, replacement: NoId<Schema>, options?: CollectionReplaceOneOptions): Promise<CollectionReplaceOneResult<Schema>> {
+  public async replaceOne(filter: CollectionFilter<WSchema>, replacement: NoId<WSchema>, options?: CollectionReplaceOneOptions): Promise<CollectionReplaceOneResult<RSchema>> {
     return this.#commands.replaceOne(filter, replacement, options);
   }
 
@@ -605,7 +603,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns How many documents were deleted.
    */
-  public async deleteOne(filter: CollectionFilter<Schema>, options?: CollectionDeleteOneOptions): Promise<CollectionDeleteOneResult> {
+  public async deleteOne(filter: CollectionFilter<WSchema>, options?: CollectionDeleteOneOptions): Promise<CollectionDeleteOneResult> {
     return this.#commands.deleteOne(filter, options);
   }
 
@@ -651,7 +649,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns How many documents were deleted.
    */
-  public async deleteMany(filter: CollectionFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionDeleteManyResult> {
+  public async deleteMany(filter: CollectionFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionDeleteManyResult> {
     return this.#commands.deleteMany(filter, options);
   }
 
@@ -758,7 +756,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns A {@link FindCursor} which can be iterated over.
    */
-  public find(filter: CollectionFilter<Schema>, options?: CollectionFindOptions & { projection?: never }): CollectionFindCursor<FoundDoc<Schema>, FoundDoc<Schema>>
+  public find<IncSim extends boolean | nullish = false>(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions<IncSim> & { projection?: never }): CollectionFindCursor<WithSim<RSchema, IncSim>, WithSim<RSchema, IncSim>>
 
   /**
    * ##### Overview
@@ -900,9 +898,9 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns A {@link FindCursor} which can be iterated over.
    */
-  public find<TRaw extends SomeDoc = Partial<Schema>>(filter: CollectionFilter<Schema>, options: CollectionFindOptions): CollectionFindCursor<FoundDoc<TRaw>, FoundDoc<TRaw>>
+  public find<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindOptions): CollectionFindCursor<TRaw, TRaw>
 
-  public find(filter: CollectionFilter<Schema>, options?: CollectionFindOptions): CollectionFindCursor<SomeDoc, any> {
+  public find(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions): CollectionFindCursor<SomeDoc, any> {
     return this.#commands.find(filter, options, CollectionFindCursor);
   }
 
@@ -990,7 +988,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns A document matching the criterion, or `null` if no such document exists.
    */
-  public async findOne(filter: CollectionFilter<Schema>, options?: CollectionFindOneOptions & { projection?: never }): Promise<FoundDoc<Schema> | null>
+  public async findOne<IncSim extends boolean | nullish>(filter: CollectionFilter<WSchema>, options?: CollectionFindOneOptions<IncSim> & { projection?: never }): Promise<WithSim<RSchema, IncSim> | null>
 
   /**
    * ##### Overview
@@ -1111,9 +1109,9 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns A document matching the criterion, or `null` if no such document exists.
    */
-  public async findOne<TRaw extends SomeDoc = Partial<Schema>>(filter: CollectionFilter<Schema>, options: CollectionFindOneOptions): Promise<FoundDoc<TRaw> | null>
+  public async findOne<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindOneOptions): Promise<TRaw | null>
 
-  public async findOne(filter: CollectionFilter<Schema>, options?: CollectionFindOneOptions): Promise<SomeDoc | null> {
+  public async findOne(filter: CollectionFilter<WSchema>, options?: CollectionFindOneOptions): Promise<SomeDoc | null> {
     return this.#commands.findOne(filter, options);
   }
 
@@ -1185,7 +1183,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns A list of all the unique values selected by the given `key`
    */
-  public async distinct<Key extends string>(key: Key, filter: CollectionFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]> {
+  public async distinct<Key extends string>(key: Key, filter: CollectionFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<RSchema>>)[Key]>[]> {
     return this.#commands.distinct(key, filter, options, CollectionFindCursor);
   }
 
@@ -1234,7 +1232,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @throws TooManyDocumentsToCountError - If the number of documents counted exceeds the provided limit.
    */
-  public async countDocuments(filter: CollectionFilter<Schema>, upperBound: number, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number> {
+  public async countDocuments(filter: CollectionFilter<WSchema>, upperBound: number, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number> {
     return this.#commands.countDocuments(filter, upperBound, options, TooManyDocumentsToCountError);
   }
 
@@ -1342,7 +1340,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns The document before/after replacement, depending on the type of `returnDocument`
    */
-  public async findOneAndReplace<TRaw extends SomeDoc = WithId<Schema>>(filter: CollectionFilter<Schema>, replacement: NoId<Schema>, options?: CollectionFindOneAndReplaceOptions): Promise<TRaw | null> {
+  public async findOneAndReplace<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, replacement: NoId<WSchema>, options?: CollectionFindOneAndReplaceOptions): Promise<TRaw | null> {
     return this.#commands.findOneAndReplace(filter, replacement, options);
   }
 
@@ -1389,7 +1387,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns The deleted document, or `null` if no document was found.
    */
-  public async findOneAndDelete<TRaw extends SomeDoc = WithId<Schema>>(filter: CollectionFilter<Schema>, options?: CollectionFindOneAndDeleteOptions): Promise<TRaw | null> {
+  public async findOneAndDelete<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, options?: CollectionFindOneAndDeleteOptions): Promise<TRaw | null> {
     return this.#commands.findOneAndDelete(filter, options);
   }
 
@@ -1473,7 +1471,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns The document before/after the update, depending on the type of `returnDocument`
    */
-  public async findOneAndUpdate(filter: CollectionFilter<Schema>, update: CollectionUpdateFilter<Schema>, options?: CollectionFindOneAndUpdateOptions): Promise<WithId<Schema> | null> {
+  public async findOneAndUpdate(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionFindOneAndUpdateOptions): Promise<RSchema | null> {
     return this.#commands.findOneAndUpdate(filter, update, options);
   }
 

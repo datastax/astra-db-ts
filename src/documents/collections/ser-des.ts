@@ -18,24 +18,24 @@ import { DataAPIVector } from '@/src/documents/datatypes/vector';
 
 export const $SerializeForCollection = Symbol.for('astra-db-ts.serialize.collection');
 
-export type CollSerCtx<Schema extends SomeDoc> = DataAPISerCtx<Schema>;
+export type CollSerCtx<WSchema extends SomeDoc> = DataAPISerCtx<WSchema>;
 export type CollDesCtx = DataAPIDesCtx;
 
-export interface CollectionSerDesConfig<Schema extends SomeDoc> extends DataAPISerDesConfig<Schema, CollSerCtx<Schema>, CollDesCtx> {
+export interface CollectionSerDesConfig<WSchema extends SomeDoc> extends DataAPISerDesConfig<WSchema, CollSerCtx<WSchema>, CollDesCtx> {
   enableBigNumbers?: boolean,
 }
 
 /**
  * @internal
  */
-export class CollectionSerDes<Schema extends SomeRow> extends DataAPISerDes<Schema, CollSerCtx<Schema>, CollDesCtx> {
-  declare protected readonly _cfg: CollectionSerDesConfig<Schema>;
+export class CollectionSerDes<WSchema extends SomeRow> extends DataAPISerDes<CollSerCtx<WSchema>, CollDesCtx> {
+  declare protected readonly _cfg: CollectionSerDesConfig<WSchema>;
 
-  public constructor(cfg?: CollectionSerDesConfig<Schema>) {
+  public constructor(cfg?: CollectionSerDesConfig<WSchema>) {
     super(CollectionSerDes.mergeConfig(DefaultCollectionSerDesCfg, cfg));
   }
 
-  public override adaptSerCtx(ctx: CollSerCtx<Schema>): CollSerCtx<Schema> {
+  public override adaptSerCtx(ctx: CollSerCtx<WSchema>): CollSerCtx<WSchema> {
     return ctx;
   }
 
@@ -47,7 +47,7 @@ export class CollectionSerDes<Schema extends SomeRow> extends DataAPISerDes<Sche
     return this._cfg?.enableBigNumbers === true;
   }
 
-  public static mergeConfig<Schema extends SomeDoc>(...cfg: (CollectionSerDesConfig<Schema> | undefined)[]): CollectionSerDesConfig<Schema> {
+  public static mergeConfig<WSchema extends SomeDoc>(...cfg: (CollectionSerDesConfig<WSchema> | undefined)[]): CollectionSerDesConfig<WSchema> {
     return {
       enableBigNumbers: cfg.reduce<boolean | undefined>((acc, c) => c?.enableBigNumbers ?? acc, undefined),
       ...super._mergeConfig(...cfg),

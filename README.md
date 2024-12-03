@@ -27,71 +27,55 @@ Get the *API endpoint* and your *application token* for your Astra DB instance @
 ### Collections
 
 ```typescript
-import { DataAPIClient, VectorDoc, UUID, ObjectId } from '@datastax/astra-db-ts';
-
-// Schema for the collections (VectorDoc adds the $vector field)
-interface Idea extends VectorDoc {
-  idea: string,
-}
+import { DataAPIClient, ObjectId, vector, VectorDoc, oid } from '@datastax/astra-db-ts';
 
 // Connect to the db
-const client = new DataAPIClient('*TOKEN*');
-const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
+const client = new DataAPIClient({ logging: 'all' });
+const db = client.db(process.env.CLIENT_DB_URL!, { token: process.env.CLIENT_DB_TOKEN! });
+
+// The `VectorDoc` interface adds `$vector?: DataAPIVector` as a field to the collection type
+interface Dream extends VectorDoc {
+  _id: ObjectId,   // Uses an `astra-db-ts` provided type here (NOT the `bson` version)
+  summary: string,
+  tags?: string[], // No sets/maps available without creating custom ser/des rules
+}
 
 (async () => {
-  // Creates collections, or gets it if it already exists with same options
-  const collection = await db.createCollection<Idea>('vector_5_collection', {
-    vector: {
-      dimension: 5,
-      metric: 'cosine',
-    },
-    checkExists: false,
+  // Create the table using our helper function.
+  // The _id should be an `ObjectId` type, as specified by `defaultId.type`
+  const collection = await db.createCollection<Dream>('dreams', {
+    defaultId: { type: 'objectId' },
   });
 
-  // Insert many ideas into the collections
-  const ideas = [
-    {
-      idea: 'An AI quilt to help you sleep forever',
-      $vector: [0.1, 0.15, 0.3, 0.12, 0.05],
-    },
-    {
-      _id: new UUID('e7f1f3a0-7e3d-11eb-9439-0242ac130002'),
-      idea: 'Vision Vector Frame—A deep learning display that controls your mood',
-      $vector: [0.1, 0.05, 0.08, 0.3, 0.6],
-    },
-    {
-      idea: 'A smartwatch that tells you what to eat based on your mood',
-      $vector: [0.2, 0.3, 0.1, 0.4, 0.15],
-    },
-  ];
-  await collection.insertMany(ideas);
+  // Batch-insert some rows into the table
+  // _id can be optionally provided, or be auto-generated @ the server side
+  await collection.insertMany([{
+    summary: 'A dinner on the Moon',
+    $vector: vector([0.2, -0.3, -0.5]),   // Shorthand for `new DataAPIVector([0.2, -0.3, -0.5])`
+  }, {
+    summary: 'Riding the waves',
+    $vector: vector([0, 0.2, 1]),
+    tags: ['sport'],
+  }, {
+    _id: oid('674f0f5c1c162131319fa09e'), // Shorthand for `new ObjectId('674f0f5c1c162131319fa09e')`
+    summary: 'Meeting Beethoven at the dentist',
+    $vector: vector([0.2, 0.6, 0]),
+  }]);
 
-  // Insert a specific idea into the collections
-  const sneakersIdea = {
-    _id: new ObjectId('507f191e810c19729de860ea'),
-    idea: 'ChatGPT-integrated sneakers that talk to you',
-    $vector: [0.45, 0.09, 0.01, 0.2, 0.11],
-  }
-  await collection.insertOne(sneakersIdea);
+  // Hm, changed my mind
+  await collection.updateOne({ id: 103 }, { $set: { summary: 'Surfers\' paradise' } });
 
-  // Actually, let's change that idea
-  await collection.updateOne(
-    { _id: sneakersIdea._id },
-    { $set: { idea: 'Gemini-integrated sneakers that talk to you' } },
-  );
+  // Let's see what we've got
+  const cursor = collection.find({})
+          .sort({ vector: vector([0, 0.2, 0.4]) }) // Performing a vector search
+          .includeSimilarity(true)                 // The found doc is inferred to have `$similarity` as a property now
+          .limit(2);
 
-  // Get similar results as desired
-  const cursor = collection.find({}, {
-    vector: [0.1, 0.15, 0.3, 0.12, 0.05],
-    includeSimilarity: true,
-    limit: 2,
-  });
-
-  for await (const doc of cursor) {
-    // Prints the following:
-    // - An AI quilt to help you sleep forever: 1
-    // - A smartwatch that tells you what to eat based on your mood: 0.85490346
-    console.log(`${doc.idea}: ${doc.$similarity}`);
+  // This would print:
+  // - Surfers' paradise: 0.98238194
+  // - Friendly aliens in town: 0.91873914
+  for await (const result of cursor) {
+    console.log(`${result.summary}: ${result.$similarity}`);
   }
 
   // Cleanup (if desired)
@@ -102,40 +86,42 @@ const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
 ### Tables
 
 ```typescript
-import { CreateTableDefinition, DataAPIClient, InferTableSchema, vector } from '@datastax/astra-db-ts';
+import { DataAPIClient, InferTableSchema, vector } from '@datastax/astra-db-ts';
 
 // Connect to the db
-const client = new DataAPIClient();
-const db = client.db('https://178cf75b-ec19-4d13-9ca7-b6dcfa613157-us-west-2.apps.astra-dev.datastax.com', { token: 'AstraCS:EFZEBUXuMzwyFntFYcroNsWQ:e473c9b244253e3c873346cc8584d4767789d93e54c6c5453c996fbd5ab4605d' });
+const client = new DataAPIClient({ logging: 'all' });
+const db = client.db(process.env.CLIENT_DB_URL!, { token: process.env.CLIENT_DB_TOKEN! });
 
-// Example table schema using bespoke Data API table definition syntax
-const TableDefinition = <const>{
-  columns: {
-    id: 'int',
-    summary: 'text',
-    tags: { type: 'set', valueType: 'text' },
-    vector: { type: 'vector', dimension: 3 },
+// Create a table through the Data API if it does not yet exist.
+// Returns the created table through a function so we can use the inferred type of the table ourselves
+// (instead of having to manually define it)
+const mkDreamsTable = async () => await db.createTable('dreams', {
+  definition: {
+    columns: {
+      id: 'int',                                // Shorthand notation for { type: 'int' }
+      summary: 'text',
+      tags: { type: 'set', valueType: 'text' }, // Collection types require additional type information
+      vector: { type: 'vector', dimension: 3 }, // Auto-embedding-generation can be enabled through a `service` block
+    },
+    primaryKey: 'id',                           // Shorthand for { partitionBy: ['id'] }
   },
-  primaryKey: {
-    partitionBy: ['id'],
-  },
-} satisfies CreateTableDefinition;
+  ifNotExists: true,                            // If any table with the same name exists, do nothing
+});                                             // (note that this does not check if the tables are the same)
 
 // Infer the TS-equivalent type from the table definition (like zod or arktype). Equivalent to:
 //
-// interface TableSchema extends Row<'id'> { // Types 'id' as a primary key for insertion command return types
-//   summary?: string | null;                // Not a primary key, so it's optional and may return as null when found
-//   tags?: Set<string>;                     // Sets/maps/lists are optional to insert, but will actually be returned as empty collections instead of null
-//   vector?: DataAPIVector | null;          // Vectors, however, may be null.
+// interface TableSchema extends Row<'id'> {
+//   id: number,                     --  A primary key component, so it's required
+//   summary?: string | null,        --  Not a primary key, so it's optional and may return as null when found
+//   tags?: Set<string>,             --  Sets/maps/lists are optional to insert, but will actually be returned as empty collections instead of null
+//   vector?: DataAPIVector | null,  --  Vectors, however, may be null.
 // }
-type TableSchema = InferTableSchema<typeof TableDefinition>;
+type Dream = InferTableSchema<typeof mkDreamsTable>;
 
 (async () => {
-  // Create the table if it doesn't alredy exist
-  const table = await db.createTable('dreams', {
-    definition: TableDefinition,
-    ifNotExists: true,
-  });
+  // Create the table using our helper function.
+  // Table will be typed as `Table<Dream, { id: number }>`, where the former is the schema, and the latter is the primary key
+  const table = await mkDreamsTable();
 
   // Enables vector search on the table (on the 'vector' column)
   await table.createVectorIndex('dreams_vector_idx', 'vector', {
@@ -143,16 +129,16 @@ type TableSchema = InferTableSchema<typeof TableDefinition>;
     ifNotExists: true,
   });
 
-  // Insert some rows into the table
-  const rows: TableSchema[] = [{
+  // Batch-insert some rows into the table
+  const rows: Dream[] = [{
     id: 102,
     summary: 'A dinner on the Moon',
     vector: vector([0.2, -0.3, -0.5]), // Shorthand for `new DataAPIVector([0.2, -0.3, -0.5])`
   }, {
     id: 103,
     summary: 'Riding the waves',
-    tags: new Set(['sport']),
     vector: vector([0, 0.2, 1]),
+    tags: new Set(['sport']),          // Collection types use native JS collections
   }, {
     id: 37,
     summary: 'Meeting Beethoven at the dentist',
@@ -164,11 +150,10 @@ type TableSchema = InferTableSchema<typeof TableDefinition>;
   await table.updateOne({ id: 103 }, { $set: { summary: 'Surfers\' paradise' } });
 
   // Let's see what we've got
-  const cursor = table.find({}, {
-    sort: { vector: vector([0, 0.2, 0.4]) },
-    includeSimilarity: true,
-    limit: 2,
-  });
+  const cursor = table.find({})
+    .sort({ vector: vector([0, 0.2, 0.4]) }) // Performing a vector search
+    .includeSimilarity(true)                 // The found doc is inferred to have `$similarity` as a property now
+    .limit(2);
 
   // This would print:
   // - Surfers' paradise: 0.98238194
