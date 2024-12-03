@@ -19,7 +19,9 @@ import assert from 'assert';
 
 parallel('integration.documents.tables.delete-one', { truncate: 'colls:before' }, ({ table }) => {
   it('should error on sort being set', async (key) => {
+    // @ts-expect-error - sort is not a valid option
     await assert.rejects(() => table.deleteOne({ text: key, int: 0 }, { sort: { int: 1 } }), DataAPIResponseError);
+    // @ts-expect-error - sort is not a valid option
     await assert.rejects(() => table.deleteOne({ text: key, int: 0 }, { sort: { vector: [.1, .2, .3, .4, .5] } }), DataAPIResponseError);
   });
 

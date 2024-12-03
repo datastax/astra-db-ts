@@ -26,7 +26,7 @@ export interface AddColumnOperation {
 // @public (undocumented)
 export interface AddVectorizeOperation<Schema extends SomeRow> {
     // (undocumented)
-    columns: Record<Cols<Schema>, VectorizeServiceOptions>;
+    columns: Partial<Record<Cols<Schema>, VectorizeServiceOptions>>;
 }
 
 // @public
@@ -642,6 +642,14 @@ export interface CreateTableDefinition {
     readonly primaryKey: CreateTablePrimaryKeyDefinition;
 }
 
+// @public (undocumented)
+export interface CreateTableIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+    // (undocumented)
+    ifNotExists?: boolean;
+    // (undocumented)
+    options?: TableIndexOptions;
+}
+
 // @public
 export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions<Schema> {
     // (undocumented)
@@ -652,6 +660,14 @@ export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTa
 
 // @public (undocumented)
 export type CreateTablePrimaryKeyDefinition = ShortCreateTablePrimaryKeyDefinition | FullCreateTablePrimaryKeyDefinition;
+
+// @public (undocumented)
+export interface CreateTableVectorIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+    // (undocumented)
+    ifNotExists?: boolean;
+    // (undocumented)
+    options?: TableVectorIndexOptions;
+}
 
 // @public
 export abstract class CumulativeOperationError extends DataAPIResponseError {
@@ -1750,17 +1766,16 @@ export class Table<Schema extends SomeRow = SomeRow> {
     // (undocumented)
     alter<NewSchema extends SomeRow>(options: AlterTableOptions<Schema>): Promise<Table<NewSchema>>;
     // (undocumented)
-    createIndex(name: string, column: Cols<Schema> | string, options?: TableCreateIndexOptions): Promise<void>;
+    createIndex(name: string, column: Cols<Schema> | string, options?: CreateTableIndexOptions): Promise<void>;
     // (undocumented)
-    createVectorIndex(name: string, column: Cols<Schema> | string, options?: TableCreateVectorIndexOptions): Promise<void>;
+    createVectorIndex(name: string, column: Cols<Schema> | string, options?: CreateTableVectorIndexOptions): Promise<void>;
     // (undocumented)
     definition(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<ListTableDefinition>;
     // (undocumented)
     deleteMany(filter: TableFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
+    deleteOne(filter: TableFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
     // (undocumented)
-    deleteOne(filter: TableFilter<Schema>, options?: TableDeleteOneOptions): Promise<void>;
-    // (undocumented)
-    drop(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<void>;
+    drop(options?: Omit<DropTableOptions, 'keyspace'>): Promise<void>;
     // (undocumented)
     find(filter: TableFilter<Schema>, options?: TableFindOptions & {
         projection?: never;
@@ -1771,43 +1786,27 @@ export class Table<Schema extends SomeRow = SomeRow> {
     findOne(filter: TableFilter<Schema>, options?: TableFindOneOptions): Promise<FoundRow<Schema> | null>;
     // (undocumented)
     get _httpClient(): DataAPIHttpClient<"normal">;
-    // (undocumented)
-    insertMany(document: readonly Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>>;
-    insertOne(row: Schema, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<Schema>>;
+    insertMany(rows: readonly Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>>;
+    insertOne(row: Schema, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<Schema>>;
     readonly keyspace: string;
-    readonly name: string;
+    // Warning: (ae-forgotten-export) The symbol "ListIndexOptions" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    updateOne(filter: TableFilter<Schema>, update: TableUpdateFilter<Schema>, options?: TableUpdateOneOptions): Promise<void>;
+    listIndexes(options?: ListIndexOptions & {
+        nameOnly: true;
+    }): Promise<string[]>;
+    // Warning: (ae-forgotten-export) The symbol "TableIndexDescriptor" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    listIndexes(options?: ListIndexOptions & {
+        nameOnly?: false;
+    }): Promise<TableIndexDescriptor[]>;
+    readonly name: string;
+    updateOne(filter: TableFilter<Schema>, update: TableUpdateFilter<Schema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
 }
 
 // @public (undocumented)
 export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: SomeDoc) => any;
-
-// @public (undocumented)
-export interface TableCreateIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
-    // (undocumented)
-    ifNotExists?: boolean;
-    // (undocumented)
-    options?: {
-        caseSensitive?: boolean;
-        normalize?: boolean;
-        ascii?: boolean;
-    };
-}
-
-// @public (undocumented)
-export interface TableCreateVectorIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
-    // (undocumented)
-    ifNotExists?: boolean;
-    // (undocumented)
-    options?: {
-        metric: 'cosine' | 'euclidean' | 'dot_product';
-        sourceModel?: string;
-    };
-}
-
-// @public (undocumented)
-export type TableDeleteOneOptions = GenericDeleteOneOptions;
 
 // @public (undocumented)
 export interface TableDescriptor {
@@ -1875,6 +1874,16 @@ export type TableFindOneOptions = GenericFindOneOptions;
 // @public (undocumented)
 export type TableFindOptions = GenericFindOptions;
 
+// @public (undocumented)
+export interface TableIndexOptions {
+    // (undocumented)
+    ascii?: boolean;
+    // (undocumented)
+    caseSensitive?: boolean;
+    // (undocumented)
+    normalize?: boolean;
+}
+
 // @public
 export class TableInsertManyError extends CumulativeOperationError {
     name: string;
@@ -1892,7 +1901,6 @@ export interface TableInsertManyResult<Schema extends SomeRow> {
 
 // @public
 export interface TableInsertOneResult<Schema extends SomeRow> {
-    // (undocumented)
     insertedId: KeyOf<Schema>;
 }
 
@@ -1934,8 +1942,13 @@ export type TableUpdateManyOptions = GenericUpdateManyOptions;
 // @public (undocumented)
 export type TableUpdateManyResult<Schema extends SomeRow> = GenericUpdateResult<KeyOf<Schema>, number>;
 
-// @public
-export type TableUpdateOneOptions = GenericUpdateOneOptions;
+// @public (undocumented)
+export interface TableVectorIndexOptions {
+    // (undocumented)
+    metric: 'cosine' | 'euclidean' | 'dot_product';
+    // (undocumented)
+    sourceModel?: string;
+}
 
 // @public (undocumented)
 export const time: (time?: string | Date | DataAPITimeComponents) => DataAPITime;

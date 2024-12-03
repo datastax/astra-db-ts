@@ -149,10 +149,9 @@ const insertMany = async <ID>(
   const insertedIds: ID[] = [];
 
   for (let i = 0, n = documentResponses.length; i < n; i++) {
-    const docResp = serdes.deserializeRecord(documentResponses[i], raw)!;
-
+    const docResp = documentResponses[i];
     if (docResp.status === "OK") {
-      insertedIds.push(docResp._id);
+      insertedIds.push(serdes.deserializeRecord(docResp._id, raw) as ID);
     } else if (docResp.errorIdx) {
       docResp.error = errors![docResp.errorIdx];
       delete docResp.errorIdx;
