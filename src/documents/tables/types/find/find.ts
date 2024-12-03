@@ -13,5 +13,6 @@
 // limitations under the License.
 
 import { GenericFindOptions } from '@/src/documents';
+import { nullish } from '@/src/lib';
 
-export type TableFindOptions = GenericFindOptions;
+export type TableFindOptions<IncSim extends boolean | string | nullish = undefined> = GenericFindOptions<IncSim>;

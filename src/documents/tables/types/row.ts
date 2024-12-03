@@ -50,138 +50,138 @@
  */
 export type SomeRow = Record<string, any>;
 
-/**
- * ##### Overview
- *
- * A phantom type used to represent the primary key columns of a table row. This is used to help with type inference on
- * insertion operations, where the `insertedId(s)` are returned.
- *
- * You may want to use the {@link Row} utility type to avoid having to manually specify the primary key columns' types.
- *
- * ##### Formatting
- *
- * The value of this symbol should be an object with the primary key columns as keys, and their respective types as values.
- *
- * Note that there is no distinction between partition and clustering keys; they are all considered as part of the overall primary key.
- *
- * This may be also used with custom datatypes (see {@link TableSerDesConfig} for more info about them) as well.
- *
- * ##### Getting the schema's keys
- *
- * You may attempt to do `keyof Schema`, but run into an issue where the {@link $PrimaryKeyType} is included in the resulting
- * union (which you don't want). To avoid this, there is a custom utility type exposed, {@link Cols}, which will return
- * the keys of the schema without the {@link $PrimaryKeyType} in them.
- *
- * ##### Disclaimer
- *
- * **Note that the value of this symbol should never actually be set at runtime**; it is simply a phantom type (of sorts) to
- * help with type inference on insertion operations, where the `insertedId(s)` are returned.
- *
- * If `Row` is not extended, and `$PrimaryKeyType` is not used, the primary key columns will be inferred as a
- * dynamic (untyped) {@link SomeTableKey}.
- *
- * @example
- * ```ts
- * import { $PrimaryKeyType, DataAPIDate, UUID } from '@datastax/astra-db-ts';
- *
- * interface User {
- *   id: string,   // Partition key
- *   dob: DataAPIDate, // Clustering (partition sort) key
- *   friends: Map<string, UUID>,
- *   [$PrimaryKeyType]?: {
- *     id: string,
- *     dob: DataAPIDate,
- *   },
- * }
- *
- * const table = db.table<User>('users');
- *
- * const resp = await table.insertOne({
- *   id: 'user1',
- *   dob: new DataAPIDate('1990-01-01'),
- *   friends: new Map(), // he's a loner :(
- * });
- *
- * console.log(resp.insertedId.id); // 'user1'
- * console.log(resp.insertedId.dob); // DataAPIDate("1990-01-01")
- * ```
- *
- * @see Row
- * @see Cols
- * @see Table
- * @see TableSerDesConfig
- * @see SomeTableKey
- * @see SomeRow
- *
- * @public
- */
-export declare const $PrimaryKeyType: '$PrimaryKeyType';
+// /**
+//  * ##### Overview
+//  *
+//  * A phantom type used to represent the primary key columns of a table row. This is used to help with type inference on
+//  * insertion operations, where the `insertedId(s)` are returned.
+//  *
+//  * You may want to use the {@link Row} utility type to avoid having to manually specify the primary key columns' types.
+//  *
+//  * ##### Formatting
+//  *
+//  * The value of this symbol should be an object with the primary key columns as keys, and their respective types as values.
+//  *
+//  * Note that there is no distinction between partition and clustering keys; they are all considered as part of the overall primary key.
+//  *
+//  * This may be also used with custom datatypes (see {@link TableSerDesConfig} for more info about them) as well.
+//  *
+//  * ##### Getting the schema's keys
+//  *
+//  * You may attempt to do `keyof Schema`, but run into an issue where the {@link $PrimaryKeyType} is included in the resulting
+//  * union (which you don't want). To avoid this, there is a custom utility type exposed, {@link Cols}, which will return
+//  * the keys of the schema without the {@link $PrimaryKeyType} in them.
+//  *
+//  * ##### Disclaimer
+//  *
+//  * **Note that the value of this symbol should never actually be set at runtime**; it is simply a phantom type (of sorts) to
+//  * help with type inference on insertion operations, where the `insertedId(s)` are returned.
+//  *
+//  * If `Row` is not extended, and `$PrimaryKeyType` is not used, the primary key columns will be inferred as a
+//  * dynamic (untyped) {@link SomeTableKey}.
+//  *
+//  * @example
+//  * ```ts
+//  * import { $PrimaryKeyType, DataAPIDate, UUID } from '@datastax/astra-db-ts';
+//  *
+//  * interface User {
+//  *   id: string,   // Partition key
+//  *   dob: DataAPIDate, // Clustering (partition sort) key
+//  *   friends: Map<string, UUID>,
+//  *   [$PrimaryKeyType]?: {
+//  *     id: string,
+//  *     dob: DataAPIDate,
+//  *   },
+//  * }
+//  *
+//  * const table = db.table<User>('users');
+//  *
+//  * const resp = await table.insertOne({
+//  *   id: 'user1',
+//  *   dob: new DataAPIDate('1990-01-01'),
+//  *   friends: new Map(), // he's a loner :(
+//  * });
+//  *
+//  * console.log(resp.insertedId.id); // 'user1'
+//  * console.log(resp.insertedId.dob); // DataAPIDate("1990-01-01")
+//  * ```
+//  *
+//  * @see Row
+//  * @see Cols
+//  * @see Table
+//  * @see TableSerDesConfig
+//  * @see SomeTableKey
+//  * @see SomeRow
+//  *
+//  * @public
+//  */
+// export declare const $PrimaryKeyType: '$PrimaryKeyType';
 
-/**
- * ##### Overview
- *
- * A utility type to represent a table row's primary key, without needing to manually specify the primary key columns'
- * types through {@link $PrimaryKeyType} (which you can see for more info).
- *
- * This may be also used with custom datatypes (see {@link TableSerDesConfig} for more info about them) as well.
- *
- * ##### Getting the schema's keys
- *
- * You may attempt to do `keyof Schema`, but run into an issue where the {@link $PrimaryKeyType} is included in the resulting
- * union (which you don't want). To avoid this, there is a custom utility type exposed, {@link Cols}, which will return
- * the keys of the schema without the {@link $PrimaryKeyType} in them.
- *
- * ##### Disclaimer
- *
- * **Note that the value of this symbol should never actually be set at runtime**; it is simply a phantom type (of sorts) to
- * help with type inference on insertion operations, where the `insertedId(s)` are returned.
- *
- * If `Row` is not extended, and `$PrimaryKeyType` is not used, the primary key columns will be inferred as a
- * dynamic (untyped) {@link SomeTableKey}.
- *
- * @example
- * ```ts
- * import { Row, DataAPIDate, UUID } from '@datastax/astra-db-ts';
- *
- * // equivalent to:
- * // interface User {
- * //   id: string,   // Partition key
- * //   dob: DataAPIDate, // Clustering (partition sort) key
- * //   friends: Map<string, UUID>,
- * //   [$PrimaryKeyType]?: {
- * //     id: string,
- * //     dob: DataAPIDate,
- * //   },
- * // }
- * interface User extends Row<User, 'id' | 'dob'> {
- *   id: string,   // Partition key
- *   dob: DataAPIDate, // Clustering (partition sort) key
- *   friends: Map<string, UUID>,
- * }
- *
- * const table = db.table<User>('users');
- *
- * const resp = await table.insertOne({
- *   id: 'user1',
- *   dob: new DataAPIDate('1990-01-01'),
- *   friends: new Map(), // he's a loner :(
- * });
- *
- * console.log(resp.insertedId.id); // 'user1'
- * console.log(resp.insertedId.dob); // DataAPIDate("1990-01-01")
- * ```
- *
- * @see Table
- * @see Cols
- * @see $PrimaryKeyType
- * @see TableSerDesConfig
- * @see SomeRow
- * @see SomeTableKey
- *
- * @public
- */
-export interface Row<Schema extends SomeRow, Columns extends keyof Schema> {
-  [$PrimaryKeyType]?: {
-    [P in Columns]: Schema[P];
-  },
-}
+// /**
+//  * ##### Overview
+//  *
+//  * A utility type to represent a table row's primary key, without needing to manually specify the primary key columns'
+//  * types through {@link $PrimaryKeyType} (which you can see for more info).
+//  *
+//  * This may be also used with custom datatypes (see {@link TableSerDesConfig} for more info about them) as well.
+//  *
+//  * ##### Getting the schema's keys
+//  *
+//  * You may attempt to do `keyof Schema`, but run into an issue where the {@link $PrimaryKeyType} is included in the resulting
+//  * union (which you don't want). To avoid this, there is a custom utility type exposed, {@link Cols}, which will return
+//  * the keys of the schema without the {@link $PrimaryKeyType} in them.
+//  *
+//  * ##### Disclaimer
+//  *
+//  * **Note that the value of this symbol should never actually be set at runtime**; it is simply a phantom type (of sorts) to
+//  * help with type inference on insertion operations, where the `insertedId(s)` are returned.
+//  *
+//  * If `Row` is not extended, and `$PrimaryKeyType` is not used, the primary key columns will be inferred as a
+//  * dynamic (untyped) {@link SomeTableKey}.
+//  *
+//  * @example
+//  * ```ts
+//  * import { Row, DataAPIDate, UUID } from '@datastax/astra-db-ts';
+//  *
+//  * // equivalent to:
+//  * // interface User {
+//  * //   id: string,   // Partition key
+//  * //   dob: DataAPIDate, // Clustering (partition sort) key
+//  * //   friends: Map<string, UUID>,
+//  * //   [$PrimaryKeyType]?: {
+//  * //     id: string,
+//  * //     dob: DataAPIDate,
+//  * //   },
+//  * // }
+//  * interface User extends Row<User, 'id' | 'dob'> {
+//  *   id: string,   // Partition key
+//  *   dob: DataAPIDate, // Clustering (partition sort) key
+//  *   friends: Map<string, UUID>,
+//  * }
+//  *
+//  * const table = db.table<User>('users');
+//  *
+//  * const resp = await table.insertOne({
+//  *   id: 'user1',
+//  *   dob: new DataAPIDate('1990-01-01'),
+//  *   friends: new Map(), // he's a loner :(
+//  * });
+//  *
+//  * console.log(resp.insertedId.id); // 'user1'
+//  * console.log(resp.insertedId.dob); // DataAPIDate("1990-01-01")
+//  * ```
+//  *
+//  * @see Table
+//  * @see Cols
+//  * @see $PrimaryKeyType
+//  * @see TableSerDesConfig
+//  * @see SomeRow
+//  * @see SomeTableKey
+//  *
+//  * @public
+//  */
+// export interface Row<Schema extends SomeRow, Columns extends keyof Schema> {
+//   [$PrimaryKeyType]?: {
+//     [P in Columns]: Schema[P];
+//   },
+// }

@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FindCursor, SomeDoc, Table, TableFilter } from '@/src/documents';
+import { FindCursor, SomeDoc, SomeRow, Table, TableFilter } from '@/src/documents';
 
 export class TableFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {
-  public override get dataSource(): Table {
-    return super.dataSource as Table;
+  public override get dataSource(): Table<SomeRow> {
+    return super.dataSource as Table<SomeRow>;
   }
 
   public override filter(filter: TableFilter<TRaw>): FindCursor<T, TRaw> {

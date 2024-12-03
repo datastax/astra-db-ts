@@ -14,9 +14,7 @@
 
 import {
   CreateTableIndexOptions,
-  CreateTableVectorIndexOptions,
-  FoundRow,
-  KeyOf,
+  CreateTableVectorIndexOptions, FoundRow,
   SomeDoc,
   SomeRow,
   TableFilter,
@@ -26,19 +24,12 @@ import {
   TableInsertManyOptions,
   TableInsertManyResult,
   TableInsertOneResult,
-  TableUpdateFilter,
+  TableUpdateFilter, WithSim,
 } from '@/src/documents';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
-import {
-  AlterTableOptions,
-  AlterTableSchema,
-  Db,
-  DropTableOptions,
-  ListTableDefinition,
-  TableOptions,
-} from '@/src/db';
-import { WithTimeout } from '@/src/lib';
+import { AlterTableOptions, Db, DropTableOptions, ListTableDefinition, TableOptions } from '@/src/db';
+import { nullish, WithTimeout } from '@/src/lib';
 import { $CustomInspect } from '@/src/lib/constants';
 import JBI from 'json-bigint';
 import { TableFindCursor } from '@/src/documents/tables/cursor';
@@ -264,9 +255,9 @@ export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
  *
  * @public
  */
-export class Table<Schema extends SomeRow = SomeRow> {
+export class Table<WSchema extends SomeRow, PKey extends SomeRow = Record<string, unknown>, RSchema extends Record<keyof WSchema, any> = FoundRow<WSchema>> {
   readonly #httpClient: DataAPIHttpClient;
-  readonly #commands: CommandImpls<KeyOf<Schema>>;
+  readonly #commands: CommandImpls<PKey>;
   readonly #db: Db;
 
   /**
@@ -284,7 +275,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableOptions<Schema> | undefined) {
+  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableOptions<WSchema> | undefined) {
     Object.defineProperty(this, 'name', {
       value: name,
     });
@@ -376,7 +367,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
    *
    * @returns The primary key of the inserted row.
    */
-  public async insertOne(row: Schema, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<Schema>> {
+  public async insertOne(row: WSchema, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<PKey>> {
     return this.#commands.insertOne(row, timeout);
   }
 
@@ -497,7 +488,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
    *
    * @throws TableInsertManyError - If the operation fails.
    */
-  public async insertMany(rows: readonly Schema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<Schema>> {
+  public async insertMany(rows: readonly WSchema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<PKey>> {
     return this.#commands.insertMany(rows, options, TableInsertManyError);
   }
 
@@ -566,7 +557,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
    *
    * @returns A promise which resolves once the operation is completed.
    */
-  public async updateOne(filter: TableFilter<Schema>, update: TableUpdateFilter<Schema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
+  public async updateOne(filter: TableFilter<WSchema>, update: TableUpdateFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
     await this.#commands.updateOne(filter, update, timeout);
   }
 
@@ -585,31 +576,31 @@ export class Table<Schema extends SomeRow = SomeRow> {
    *
    *
    */
-  public async deleteOne(filter: TableFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
+  public async deleteOne(filter: TableFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
     await this.#commands.deleteOne(filter, options);
   }
 
-  public async deleteMany(filter: TableFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
+  public async deleteMany(filter: TableFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
     await this.#commands.deleteMany(filter, options);
   }
 
-  public find(filter: TableFilter<Schema>, options?: TableFindOptions & { projection?: never }): TableFindCursor<FoundRow<Schema>, FoundRow<Schema>>
+  public find<IncSim extends boolean | string | nullish>(filter: TableFilter<WSchema>, options?: TableFindOptions<IncSim> & { projection?: never }): TableFindCursor<WithSim<RSchema, IncSim>, WithSim<RSchema, IncSim>>;
 
-  public find<TRaw extends SomeRow = Partial<Schema>>(filter: TableFilter<Schema>, options: TableFindOptions): TableFindCursor<FoundRow<TRaw>, FoundRow<TRaw>>
+  public find<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOptions): TableFindCursor<TRaw, TRaw>;
 
-  public find(filter: TableFilter<Schema>, options?: TableFindOptions): TableFindCursor<SomeDoc> {
+  public find(filter: TableFilter<WSchema>, options?: TableFindOptions): TableFindCursor<SomeDoc> {
     return this.#commands.find(filter, options, TableFindCursor);
   }
 
-  public async findOne(filter: TableFilter<Schema>, options?: TableFindOneOptions): Promise<FoundRow<Schema> | null> {
+  public async findOne<IncSim extends boolean | string | nullish>(filter: TableFilter<WSchema>, options?: TableFindOneOptions<IncSim> & { projection?: never }): Promise<WithSim<RSchema, IncSim> | null>;
+
+  public async findOne<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOneOptions): Promise<TRaw | null>;
+
+  public async findOne(filter: TableFilter<WSchema>, options?: TableFindOneOptions): Promise<SomeDoc | null> {
     return this.#commands.findOne(filter, options);
   }
 
-  public async alter<const Spec extends AlterTableOptions<Schema>>(options: Spec): Promise<Table<AlterTableSchema<Schema, Spec>>>
-
-  public async alter<NewSchema extends SomeRow>(options: AlterTableOptions<Schema>): Promise<Table<NewSchema>>
-
-  public async alter(options: AlterTableOptions<Schema>): Promise<unknown> {
+  public async alter<NewWSchema extends SomeRow, NewRSchema extends Record<keyof NewWSchema, any> = FoundRow<NewWSchema>>(options: AlterTableOptions<SomeRow>): Promise<Table<NewWSchema, PKey, NewRSchema>> {
     await this.#httpClient.executeCommand({
       alterTable: {
         operation: options.operation,
@@ -617,7 +608,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
     }, {
       timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
     });
-    return this;
+    return this as any;
   }
 
   public async listIndexes(options?: ListIndexOptions & { nameOnly: true }): Promise<string[]>
@@ -637,7 +628,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
     return resp.status!.indexes;
   }
 
-  public async createIndex(name: string, column: Cols<Schema> | string, options?: CreateTableIndexOptions): Promise<void> {
+  public async createIndex(name: string, column: Cols<WSchema> | string, options?: CreateTableIndexOptions): Promise<void> {
     await this.#httpClient.executeCommand({
       createIndex: {
         name: name,
@@ -658,7 +649,7 @@ export class Table<Schema extends SomeRow = SomeRow> {
     });
   }
 
-  public async createVectorIndex(name: string, column: Cols<Schema> | string, options?: CreateTableVectorIndexOptions): Promise<void> {
+  public async createVectorIndex(name: string, column: Cols<WSchema> | string, options?: CreateTableVectorIndexOptions): Promise<void> {
     await this.#httpClient.executeCommand({
       createVectorIndex: {
         name: name,

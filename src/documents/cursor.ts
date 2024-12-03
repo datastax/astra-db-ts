@@ -14,13 +14,13 @@
 
 import type { Collection, SomeDoc } from '@/src/documents/collections';
 import type { GenericFindOptions } from '@/src/documents/commands';
-import type { Filter, Projection, Sort } from '@/src/documents/types';
+import type { Filter, Projection, Sort, WithSim } from '@/src/documents/types';
 import type { nullish } from '@/src/lib';
 import { normalizedSort } from '@/src/documents/utils';
 import { $CustomInspect } from '@/src/lib/constants';
-import { SomeSerDes } from '@/src/lib/api/ser-des';
+import { DataAPISerDes } from '@/src/lib/api/ser-des';
 import { DataAPIError } from '@/src/documents/errors';
-import type { Table } from '@/src/documents/tables';
+import { SomeRow, Table } from '@/src/documents/tables';
 import { TimeoutManager } from '@/src/lib/api/timeouts';
 
 export class CursorError extends DataAPIError {
@@ -114,10 +114,10 @@ interface InternalGetMoreCommand {
  * @public
  */
 export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
-  readonly #parent: Table | Collection;
-  readonly #serdes: SomeSerDes;
+  readonly #parent: Table<SomeRow> | Collection;
+  readonly #serdes: DataAPISerDes;
 
-  readonly #options: GenericFindOptions;
+  readonly #options: GenericFindOptions<any>;
   readonly #filter: [Filter, boolean];
   readonly #mapping?: (doc: any) => T;
 
@@ -132,7 +132,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(parent: Table | Collection, serdes: SomeSerDes, filter: [Filter, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
+  constructor(parent: Table<SomeRow> | Collection, serdes: DataAPISerDes, filter: [Filter, boolean], options?: GenericFindOptions<any>, mapping?: (doc: TRaw) => T) {
     this.#parent = parent;
     this.#serdes = serdes;
     this.#filter = filter;
@@ -149,7 +149,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The table/collection which spawned this cursor.
    */
-  public get dataSource(): Table | Collection {
+  public get dataSource(): Table<SomeRow> | Collection {
     return this.#parent;
   }
 
@@ -338,12 +338,15 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns A new cursor with the new similarity setting.
    */
-  public includeSimilarity(includeSimilarity: boolean = true): FindCursor<T, TRaw> {
+  public includeSimilarity<IncSim extends true | string = true>(includeSimilarity?: IncSim): FindCursor<WithSim<TRaw, IncSim>, WithSim<TRaw, IncSim>> {
+    if (this.#mapping) {
+      throw new CursorError('Cannot set include similarity after already using cursor.map(...)', this);
+    }
     if (this.#state !== 'idle') {
       throw new CursorError('Cannot set a new similarity on a running/closed cursor', this);
     }
-    const options = { ...this.#options, includeSimilarity };
-    return this.#clone(this.#filter, options, this.#mapping);
+    const options = { ...this.#options, includeSimilarity: includeSimilarity ?? true };
+    return this.#clone(this.#filter, options as any, this.#mapping);
   }
 
   /**

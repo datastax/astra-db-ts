@@ -18,15 +18,15 @@ import { dummyCollection, DynamicSchema, TestSchema } from '@/tests/typing/colle
 import { Equal, Expect } from '@/tests/typing/prelude';
 
 void dummyCollection<TestSchema>().findOne({}, {}).then((a) => {
-  type b = Expect<Equal<undefined | number, NonNullable<typeof a>['$similarity']>>
+  type b = Expect<Equal<false, NonNullable<typeof a> extends { $similarity: any } ? true : false>>
 });
 
 void dummyCollection<TestSchema>().findOne({}, { includeSimilarity: true }).then((a) => {
-  type b = Expect<Equal<undefined | number, NonNullable<typeof a>['$similarity']>>
+  type b = Expect<Equal<number, NonNullable<typeof a>['$similarity']>>
 });
 
 void dummyCollection<TestSchema>().findOne({}, { includeSimilarity: !!Math.random() }).then((a) => {
-  type b = Expect<Equal<undefined | number, NonNullable<typeof a>['$similarity']>>
+  type b = Expect<Equal<false, NonNullable<typeof a> extends { $similarity: any } ? true : false>>
 });
 
 void dummyCollection<TestSchema>().findOne({

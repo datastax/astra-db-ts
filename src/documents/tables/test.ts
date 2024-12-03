@@ -12,32 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $PrimaryKeyType, Row, SomeRow } from '@/src/documents/tables/types/row';
-import { InferTableSchema } from '@/src/db/types/tables/table-schema';
+import { SomeRow } from '@/src/documents/tables/types/row';
+import { InferTablePrimaryKey, InferTableSchema } from '@/src/db/types/tables/table-schema';
 import { Table } from '@/src/documents/tables/table';
-import { KeyOf } from '@/src/documents/tables/types/utils';
 import { Db } from '@/src/db';
 import { TypeErr } from '@/src/documents/utils';
 
 const db = null! as Db;
-
-// Demo of automagically creating a primary key type for your manually created schema
-interface Users extends Row<Users, 'key' | 'age'> {
-  key: string,
-  age: number,
-  car: string,
-}
-
-const _a: KeyOf<Users> = {
-  key: 'abc',
-  age: 31,
-};
-
-// Demo of the lawless world of weak typing
-const _b: KeyOf<SomeRow> = {
-  some: 'thing',
-  any: 'thing',
-};
 
 // Demo of automagically inferring your table schema's type
 const _c = db.createTable('my_table', {
@@ -61,13 +42,14 @@ const _d: InferTableSchema<typeof _c> = {
   key: 'a',
   age: 3,
   car: new Map(),
-  [$PrimaryKeyType]: {
-    key: '1',
-  },
+};
+
+const _e: InferTablePrimaryKey<typeof _c> = {
+  key: '1',
 };
 
 // Demo of type errors that we can provide if you screw something up
-const _e = db.createTable('my_table', {
+const _f = db.createTable('my_table', {
   definition: {
     columns: {
       key: 'int',
@@ -76,22 +58,23 @@ const _e = db.createTable('my_table', {
   },
 });
 
-const _f: InferTableSchema<typeof _e> = {
+const _g: InferTableSchema<typeof _f> = {
   key: 1,
-  [$PrimaryKeyType]: {
-    id: {} as TypeErr<'Field `id` not found as property in table definition'>,
-  },
+};
+
+const _h: InferTablePrimaryKey<typeof _f> = {
+  id: {} as TypeErr<'Field `id` not found as property in table definition'>,
 };
 
 // Demo of manually providing your own table schema
-const _g = db.createTable<SomeRow>('my_table', {
+const _i = db.createTable<SomeRow>('my_table', {
   definition: {
     columns: {},
     primaryKey: 'id',
   },
 });
 
-const _h: InferTableSchema<typeof _g> = {
+const _j: InferTableSchema<typeof _i> = {
   whatever: 'I want',
 };
 
@@ -118,19 +101,22 @@ const mkTable = () => db.createTable('my_table', {
 
 type MySchema = InferTableSchema<typeof mkTable>;
 
-type _Proof = Expect<Equal<MySchema, {
+type _Proof1 = Expect<Equal<MySchema, {
   key: string,
   age: number,
   car?: Map<string, number>,
-  [$PrimaryKeyType]?: {
-    key: string,
-    bad: TypeErr<'Field `bad` not found as property in table definition'>,
-    age: number,
-  },
+}>>;
+
+type MyPK = InferTablePrimaryKey<typeof mkTable>;
+
+type _Proof2 = Expect<Equal<MyPK, {
+  key: string,
+  bad: TypeErr<'Field `bad` not found as property in table definition'>,
+  age: number,
 }>>;
 
 (async () => {
-  const myTable = await mkTable();
+  const myTable: Table<MySchema, MyPK> = await mkTable();
 
   const insertManyResult = await myTable.insertMany([
     {
@@ -156,101 +142,6 @@ type _Proof = Expect<Equal<MySchema, {
 
   void insertManyResult.insertedIds[1].age;
 })();
-
-(async () => {
-  const myTable = await mkTable();
-
-  const _altered1 = await myTable.alter({
-    operation: {},
-  });
-
-  type _1 = Expect<Equal<typeof _altered1, Table<{
-    key: string,
-    age: number,
-    car?: Map<string, number>,
-    [$PrimaryKeyType]?: {
-      key: string,
-      bad: TypeErr<'Field `bad` not found as property in table definition'>,
-      age: number,
-    },
-  }>>>;
-
-  const _altered2 = await myTable.alter({
-    operation: { add: { columns: { new: 'varchar' } } },
-  });
-
-  type _2 = Expect<Equal<typeof _altered2, Table<{
-    key: string,
-    age: number,
-    car?: Map<string, number>,
-    new?: string | null,
-    [$PrimaryKeyType]?: {
-      key: string,
-      bad: TypeErr<'Field `bad` not found as property in table definition'>,
-      age: number,
-    },
-  }>>>;
-
-  const _altered3 = await myTable.alter({
-    operation: { add: { columns: { new: { type: 'list', valueType: 'boolean' } } } },
-  });
-
-  type _3 = Expect<Equal<typeof _altered3, Table<{
-    key: string,
-    age: number,
-    car?: Map<string, number>,
-    new?: boolean[],
-    [$PrimaryKeyType]?: {
-      key: string,
-      bad: TypeErr<'Field `bad` not found as property in table definition'>,
-      age: number,
-    },
-  }>>>;
-
-  const _altered4 = await myTable.alter({
-    operation: { drop: { columns: ['car'] } },
-  });
-
-  type _4 = Expect<Equal<typeof _altered4, Table<{
-    key: string,
-    age: number,
-    [$PrimaryKeyType]?: {
-      key: string,
-      bad: TypeErr<'Field `bad` not found as property in table definition'>,
-      age: number,
-    },
-  }>>>;
-
-  const _altered5 = await myTable.alter<{ a: 4 }>({
-    operation: { drop: { columns: ['car'] } },
-  });
-
-  type _5 = Expect<Equal<typeof _altered5, Table<{ a: 4 }>>>;
-})();
-
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
-// ------------------------------------------ WARNING: DARK MAGIC BELOW ------------------------------------------------
 
 export type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends (<T>() => T extends Y ? 1 : 2) ? true : false;
 export type Expect<T extends true> = T;
