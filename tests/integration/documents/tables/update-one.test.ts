@@ -44,7 +44,9 @@ parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }
   // });
 
   it('should error on sort being set', async (key) => {
+    // @ts-expect-error - sort is not a valid option
     await assert.rejects(() => table.updateOne({ text: key, int: 0 }, { $set: { tinyint: 3 } }, { sort: { int: 1 } }), DataAPIResponseError);
+    // @ts-expect-error - sort is not a valid option
     await assert.rejects(() => table.updateOne({ text: key, int: 0 }, { $set: { tinyint: 3 } }, { sort: { vector: [.1, .2, .3, .4, .5] } }), DataAPIResponseError);
   });
 

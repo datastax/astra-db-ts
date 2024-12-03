@@ -15,14 +15,51 @@
 import type { KeyOf, SomeRow } from '@/src/documents';
 
 /**
+ * ##### Overview
+ *
  * Represents the result of an `insertOne` command on a table.
  *
- * @field insertedId - The ID of the inserted document.
+ * ##### Primary Key Inference
+ *
+ * The type of the primary key of the table (for the `insertedId`) is inferred from the type-level `$PrimaryKeyType` key in the schema.
+ *
+ * If it's not present, it will default to {@link SomeTableKey} (see {@link Table}, {@link $PrimaryKeyType} for more info).
+ *
+ * @example
+ * ```ts
+ * interface User extends Row<User, 'id'> {
+ *   id: string,
+ *   name: string,
+ *   dob?: DataAPIDate,
+ * }
+ * const table = db.table<User>('table');
+ *
+ * // res.insertedId is of type { id: string }
+ * const res = await table.insertOne({ id: '123', name: 'Alice' });
+ * console.log(res.insertedId.id); // '123'
+ * ```
+ *
+ * @example
+ * ```ts
+ * const table = db.table<SomeRow>('table');
+ *
+ * // res.insertedId is of type Record<string, any>
+ * const res = await table.insertOne({ id: '123', name: 'Alice' });
+ * console.log(res.insertedId.id); // '123'
+ * console.log(res.insertedId.key); // undefined
+ * ```
+ *
+ * @field insertedId - The primary key of the inserted document.
  *
  * @see Table.insertOne
  *
  * @public
  */
 export interface TableInsertOneResult<Schema extends SomeRow> {
+  /**
+   * The primary key of the inserted document.
+   *
+   * See {@link TableInsertOneResult} for more info about this type and how it's inferred.
+   */
   insertedId: KeyOf<Schema>;
 }

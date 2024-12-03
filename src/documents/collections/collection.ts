@@ -306,7 +306,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * await collection.insertMany(docs, { batchSize: 100 });
    * ```
    *
-   * ##### The ordered flag
+   * ##### Ordered insertion
    *
    * You may set the `ordered` option to `true` to stop the operation after the first error; otherwise all documents may be parallelized and processed in arbitrary order, improving, perhaps vastly, performance.
    *
@@ -367,14 +367,14 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * If a thrown exception is not due to an insertion error, e.g. a `5xx` error or network error, the operation will throw the underlying error.
    *
-   * In case of an unordered request, if the error was a simple insertion error, a `InsertManyError` will be thrown after every document has been attempted to be inserted. If it was a `5xx` or similar, the error will be thrown immediately.
+   * In case of an unordered request, if the error was a simple insertion error, the {@link CollectionInsertManyError} will be thrown after every document has been attempted to be inserted. If it was a `5xx` or similar, the error will be thrown immediately.
    *
    * @param documents - The documents to insert.
    * @param options - The options for this operation.
    *
    * @returns The IDs of the inserted documents (and the count)
    *
-   * @throws InsertManyError - If the operation fails.
+   * @throws CollectionInsertManyError - If the operation fails.
    */
   public async insertMany(documents: readonly MaybeId<Schema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<Schema>> {
     return this.#commands.insertMany(documents, options, CollectionInsertManyError);
@@ -410,17 +410,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * ##### Filtering
    *
-   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter} & {@link StrictCollectionFilter} for much more information.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter}` for much more information.
    *
    * Just keep in mind that if the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
    *
    * ##### Update operators
    *
    * The update filter can contain a variety of operators to modify the document. See {@link CollectionUpdateFilter} for more information & examples.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available update operators.
    *
    * ##### Update by vector search
    *
@@ -444,8 +440,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * @returns A summary of what changed.
    *
-   * @see StrictCollectionFilter
-   * @see StrictCollectionUpdateFilter
    * @see StrictSort
    */
   public async updateOne(filter: CollectionFilter<Schema>, update: CollectionUpdateFilter<Schema>, options?: CollectionUpdateOneOptions): Promise<CollectionUpdateOneResult<Schema>> {
@@ -484,17 +478,13 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * ##### Filtering
    *
-   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter} & {@link StrictCollectionFilter} for much more information.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter} for much more information.
    *
    * Just keep in mind that if the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
    *
    * ##### Update operators
    *
    * The update filter can contain a variety of operators to modify the document. See {@link CollectionUpdateFilter} for more information & examples.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available update operators.
    *
    * {@link Collection.updateOne} also contains some examples of basic update filter usage.
    *
@@ -519,9 +509,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param options - The options for this operation.
    *
    * @returns A summary of what changed.
-   *
-   * @see StrictCollectionFilter
-   * @see StrictCollectionUpdateFilter
    */
   public async updateMany(filter: CollectionFilter<Schema>, update: CollectionUpdateFilter<Schema>, options?: CollectionUpdateManyOptions): Promise<CollectionUpdateManyResult<Schema>> {
     return this.#commands.updateMany(filter, update, options);
@@ -557,9 +544,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * ##### Filtering
    *
-   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter} & {@link StrictCollectionFilter} for much more information.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter} for much more information.
    *
    * Just keep in mind that if the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
    *
@@ -583,9 +568,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param options - The options for this operation.
    *
    * @returns A summary of what changed.
-   *
-   * @see StrictCollectionFilter
-   * @see StrictSort
    */
   public async replaceOne(filter: CollectionFilter<Schema>, replacement: NoId<Schema>, options?: CollectionReplaceOneOptions): Promise<CollectionReplaceOneResult<Schema>> {
     return this.#commands.replaceOne(filter, replacement, options);
@@ -604,9 +586,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * ##### Filtering
    *
-   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter} & {@link StrictCollectionFilter} for much more information.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter} for much more information.
    *
    * Just keep in mind that if the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
    *
@@ -624,9 +604,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param options - The options for this operation.
    *
    * @returns How many documents were deleted.
-   *
-   * @see StrictCollectionFilter
-   * @see StrictSort
    */
   public async deleteOne(filter: CollectionFilter<Schema>, options?: CollectionDeleteOneOptions): Promise<CollectionDeleteOneResult> {
     return this.#commands.deleteOne(filter, options);
@@ -656,9 +633,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * **If an empty filter is passed, all documents in the collection will atomically be deleted in a single API call. Proceed with caution.**
    *
-   * The filter can contain a variety of operators & combinators to select the documents. See {@link CollectionFilter} & {@link StrictCollectionFilter} for much more information.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   * The filter can contain a variety of operators & combinators to select the documents. See {@link CollectionFilter} for much more information.
    *
    * @example
    * ```ts
@@ -675,8 +650,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param options - The options for this operation.
    *
    * @returns How many documents were deleted.
-   *
-   * @see StrictCollectionFilter
    */
   public async deleteMany(filter: CollectionFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionDeleteManyResult> {
     return this.#commands.deleteMany(filter, options);
@@ -701,9 +674,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * ##### Filtering
    *
-   * The filter can contain a variety of operators & combinators to select the documents. See {@link CollectionFilter} & {@link StrictCollectionFilter} for much more information.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   * The filter can contain a variety of operators & combinators to select the documents. See {@link CollectionFilter} for much more information.
    *
    * If the filter is empty, all documents in the collection will be returned (up to any provided/implied limit).
    *
@@ -786,10 +757,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param options - The options for this operation.
    *
    * @returns A {@link FindCursor} which can be iterated over.
-   *
-   * @see StrictCollectionFilter
-   * @see StrictSort
-   * @see StrictProjection
    */
   public find(filter: CollectionFilter<Schema>, options?: CollectionFindOptions & { projection?: never }): CollectionFindCursor<FoundDoc<Schema>, FoundDoc<Schema>>
 
@@ -849,9 +816,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * ##### Filtering
    *
-   * The filter can contain a variety of operators & combinators to select the documents. See {@link CollectionFilter} & {@link StrictCollectionFilter} for much more information.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   * The filter can contain a variety of operators & combinators to select the documents. See {@link CollectionFilter} for much more information.
    *
    * If the filter is empty, all documents in the collection will be returned (up to any provided/implied limit).
    *
@@ -934,10 +899,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param options - The options for this operation.
    *
    * @returns A {@link FindCursor} which can be iterated over.
-   *
-   * @see StrictCollectionFilter
-   * @see StrictSort
-   * @see StrictProjection
    */
   public find<TRaw extends SomeDoc = Partial<Schema>>(filter: CollectionFilter<Schema>, options: CollectionFindOptions): CollectionFindCursor<FoundDoc<TRaw>, FoundDoc<TRaw>>
 
@@ -963,9 +924,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * ##### Filtering
    *
-   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter} & {@link StrictCollectionFilter} for much more information.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter} for much more information.
    *
    * If the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
    *
@@ -1030,10 +989,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param options - The options for this operation.
    *
    * @returns A document matching the criterion, or `null` if no such document exists.
-   *
-   * @see StrictCollectionFilter
-   * @see StrictSort
-   * @see StrictProjection
    */
   public async findOne(filter: CollectionFilter<Schema>, options?: CollectionFindOneOptions & { projection?: never }): Promise<FoundDoc<Schema> | null>
 
@@ -1090,9 +1045,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * ##### Filtering
    *
-   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter} & {@link StrictCollectionFilter} for much more information.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter} for much more information.
    *
    * If the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
    *
@@ -1157,10 +1110,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param options - The options for this operation.
    *
    * @returns A document matching the criterion, or `null` if no such document exists.
-   *
-   * @see StrictCollectionFilter
-   * @see StrictSort
-   * @see StrictProjection
    */
   public async findOne<TRaw extends SomeDoc = Partial<Schema>>(filter: CollectionFilter<Schema>, options: CollectionFindOneOptions): Promise<FoundDoc<TRaw> | null>
 
@@ -1235,8 +1184,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param options - The options for this operation.
    *
    * @returns A list of all the unique values selected by the given `key`
-   *
-   * @see StrictCollectionFilter
    */
   public async distinct<Key extends string>(key: Key, filter: CollectionFilter<Schema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<Schema>>)[Key]>[]> {
     return this.#commands.distinct(key, filter, options, CollectionFindCursor);
@@ -1286,8 +1233,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @returns The number of counted documents, if below the provided limit
    *
    * @throws TooManyDocumentsToCountError - If the number of documents counted exceeds the provided limit.
-   *
-   * @see StrictCollectionFilter
    */
   public async countDocuments(filter: CollectionFilter<Schema>, upperBound: number, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<number> {
     return this.#commands.countDocuments(filter, upperBound, options, TooManyDocumentsToCountError);
@@ -1387,9 +1332,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * ##### Filtering
    *
-   * The filter can contain a variety of operators & combinators to select the document. See {@link Filter} & {@link StrictCollectionFilter} for much more information.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   * The filter can contain a variety of operators & combinators to select the document. See {@link Filter} for much more information.
    *
    * Just keep in mind that if the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
    *
@@ -1398,8 +1341,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param options - The options for this operation.
    *
    * @returns The document before/after replacement, depending on the type of `returnDocument`
-   *
-   * @see StrictCollectionFilter
    */
   public async findOneAndReplace<TRaw extends SomeDoc = WithId<Schema>>(filter: CollectionFilter<Schema>, replacement: NoId<Schema>, options?: CollectionFindOneAndReplaceOptions): Promise<TRaw | null> {
     return this.#commands.findOneAndReplace(filter, replacement, options);
@@ -1439,9 +1380,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * ##### Filtering
    *
-   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter} & {@link StrictCollectionFilter} for much more information.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter} for much more information.
    *
    * Just keep in mind that if the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
    *
@@ -1449,8 +1388,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param options - The options for this operation.
    *
    * @returns The deleted document, or `null` if no document was found.
-   *
-   * @see StrictCollectionFilter
    */
   public async findOneAndDelete<TRaw extends SomeDoc = WithId<Schema>>(filter: CollectionFilter<Schema>, options?: CollectionFindOneAndDeleteOptions): Promise<TRaw | null> {
     return this.#commands.findOneAndDelete(filter, options);
@@ -1526,9 +1463,7 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    *
    * ##### Filtering
    *
-   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter} & {@link StrictCollectionFilter} for much more information.
-   *
-   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available filter operators.
+   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter} for much more information.
    *
    * Just keep in mind that if the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
    *
@@ -1537,9 +1472,6 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @param options - The options for this operation.
    *
    * @returns The document before/after the update, depending on the type of `returnDocument`
-   *
-   * @see StrictCollectionFilter
-   * @see StrictCollectionUpdateFilter
    */
   public async findOneAndUpdate(filter: CollectionFilter<Schema>, update: CollectionUpdateFilter<Schema>, options?: CollectionFindOneAndUpdateOptions): Promise<WithId<Schema> | null> {
     return this.#commands.findOneAndUpdate(filter, update, options);
@@ -1564,9 +1496,9 @@ export class Collection<Schema extends SomeDoc = SomeDoc> {
    * @returns The options that the collection was created with (i.e. the `vector` and `indexing` operations).
    */
   public async options(options?: WithTimeout<'collectionAdminTimeoutMs'>): Promise<CollectionDefinition<SomeDoc>> {
-    const results = await this.#db.listCollections({ timeout: options?.timeout, keyspace: this.keyspace });
+    const resp = await this.#db.listCollections({ timeout: options?.timeout, keyspace: this.keyspace });
 
-    const collection = results.find((c) => c.name === this.name);
+    const collection = resp.find((c) => c.name === this.name);
 
     if (!collection) {
       throw new Error(`Can not get options for collection '${this.keyspace}.${this.name}'; collection not found. Did you use the right keyspace?`);
