@@ -13,13 +13,13 @@
 // limitations under the License.
 
 import { Projection, Sort } from '@/src/documents';
-import { WithTimeout } from '@/src/lib';
+import { nullish, WithTimeout } from '@/src/lib';
 
-export interface GenericFindOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+export interface GenericFindOptions<IncSim extends boolean | string | nullish = undefined> extends WithTimeout<'generalMethodTimeoutMs'> {
   sort?: Sort,
   projection?: Projection,
   limit?: number,
   skip?: number,
-  includeSimilarity?: boolean;
+  includeSimilarity?: IncSim;
   includeSortVector?: boolean,
 }
