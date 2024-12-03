@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { GenericFindOneOptions } from '@/src/documents';
+import { nullish } from '@/src/lib';
 
 /**
  * Represents the options for the `findOne` command.
@@ -24,4 +25,4 @@ import { GenericFindOneOptions } from '@/src/documents';
  *
  * @public
  */
-export type CollectionFindOneOptions = GenericFindOneOptions;
+export type CollectionFindOneOptions<IncSim extends boolean | nullish = undefined> = GenericFindOneOptions<IncSim>;

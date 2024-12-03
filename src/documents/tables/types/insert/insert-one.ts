@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { KeyOf, SomeRow } from '@/src/documents';
+import type { SomeRow } from '@/src/documents';
 
 /**
  * ##### Overview
@@ -55,11 +55,11 @@ import type { KeyOf, SomeRow } from '@/src/documents';
  *
  * @public
  */
-export interface TableInsertOneResult<Schema extends SomeRow> {
+export interface TableInsertOneResult<PKey extends SomeRow> {
   /**
    * The primary key of the inserted document.
    *
    * See {@link TableInsertOneResult} for more info about this type and how it's inferred.
    */
-  insertedId: KeyOf<Schema>;
+  insertedId: PKey;
 }

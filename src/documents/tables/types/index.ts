@@ -19,7 +19,6 @@ export type * from './indexes/create-vector-index';
 export type * from './indexes/drop-index';
 export type * from './insert/insert-many';
 export type * from './insert/insert-one';
-export type * from './update/update-many';
 export type * from './row';
 export type * from './utils';
 export type * from './filter';

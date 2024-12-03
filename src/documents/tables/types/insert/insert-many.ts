@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { GenericInsertManyOptions, KeyOf, SomeRow } from '@/src/documents';
+import type { GenericInsertManyOptions, SomeRow } from '@/src/documents';
 
 /**
  * Options for an `insertMany` command on a table.
@@ -40,11 +40,11 @@ export type TableInsertManyOptions = GenericInsertManyOptions;
  *
  * @public
  */
-export interface TableInsertManyResult<Schema extends SomeRow> {
+export interface TableInsertManyResult<PKey extends SomeRow> {
   /**
    * The primary keys of the inserted rows.
    */
-  insertedIds: KeyOf<Schema>[],
+  insertedIds: PKey[],
   /**
    * The number of inserted rows (equals `insertedIds.length`).
    */
