@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { DataAPIVector } from '@/src/documents';
+
 /**
  * Represents *some document*. It's not a base type, but rather more of a
  * bottom type which can represent any legal document, to give more dynamic
@@ -46,7 +48,7 @@ export interface VectorDoc {
   /**
    * A raw vector
    */
-  $vector?: number[],
+  $vector?: DataAPIVector,
 }
 
 /**
@@ -66,7 +68,7 @@ export interface VectorDoc {
  *
  * @public
  */
-export interface VectorizeDoc {
+export interface VectorizeDoc extends VectorDoc {
   /**
    * A string field to be automatically vectorized
    */

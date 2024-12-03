@@ -45,7 +45,7 @@ export type MaybeId<T> = NoId<T> & { _id?: IdOf<T> }
  *
  * @public
  */
-export type FoundDoc<Doc> = Doc & { _id: IdOf<Doc> };
+export type FoundDoc<Doc> = Doc & { _id: IdOf<Doc>, $vector?: never, $vectorize?: never };
 
 /**
  * Represents a doc that doesn't have an `_id`
