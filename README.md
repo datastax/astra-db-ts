@@ -6,6 +6,8 @@
 
 ## Table of contents
 - [Quickstart](#quickstart)
+  - [Collections](#collections)
+  - [Tables](#tables)
 - [High-level architecture](#high-level-architecture)
 - [Getting the most out of the typing](#getting-the-most-out-of-the-typing)
 - [Working with Dates](#working-with-dates)
