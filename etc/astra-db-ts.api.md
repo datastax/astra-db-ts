@@ -2015,7 +2015,7 @@ export interface VectorDoc {
 }
 
 // @public
-export interface VectorizeDoc {
+export interface VectorizeDoc extends VectorDoc {
     $vectorize?: string;
 }
 
