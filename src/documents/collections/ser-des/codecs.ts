@@ -16,6 +16,7 @@
 import { UUID } from '@/src/documents/datatypes/uuid';
 import { ObjectId } from '@/src/documents/datatypes/object-id';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
+import { DataAPITimestamp } from '@/src/documents/datatypes/dates';
 import { CollDesCtx, CollSerCtx, TableSerCtx } from '@/src/documents';
 import { CodecHolder } from '@/src/lib/api/ser-des/codecs';
 import { EmptyObj, SerDesFn } from '@/src/lib';
@@ -65,7 +66,8 @@ export class CollCodecs implements CodecHolder<CollCodecSerDesFns> {
   };
 
   public static Overrides = {
-    // USE_DATA_API_TIMESTAMPS_OVER_DATES: CollCodecs.forType('$date', DataAPITimestamp),
+    USE_DATA_API_TIMESTAMPS_OVER_DATES: CollCodecs.forType('$date', DataAPITimestamp),
+    // USE_NUMBER_ARRAYS_FOR_VECTORS:
   };
 
   public static forName(name: string, clazz: CollCodecClass): CollCodecs

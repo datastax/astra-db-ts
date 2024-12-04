@@ -541,7 +541,7 @@ export class Db {
   public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionOptions<Schema>): Collection<Schema> {
     return new Collection<Schema>(this, this.#httpClient, name, {
       ...options,
-      serdes: CollectionSerDes.mergeConfig(options?.serdes, this.#defaultOpts.dbOptions.serdes?.collection),
+      serdes: CollectionSerDes.mergeConfig(this.#defaultOpts.dbOptions.serdes?.collection, options?.serdes),
     });
   }
 
@@ -630,7 +630,7 @@ export class Db {
   public table<Schema extends SomeRow = SomeRow>(name: string, options?: TableOptions<Schema>): Table<Schema> {
     return new Table<Schema>(this, this.#httpClient, name, {
       ...options,
-      serdes: TableSerDes.mergeConfig(options?.serdes, this.#defaultOpts.dbOptions.serdes?.table),
+      serdes: TableSerDes.mergeConfig(this.#defaultOpts.dbOptions.serdes?.table, options?.serdes),
     });
   }
 

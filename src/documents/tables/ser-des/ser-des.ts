@@ -32,8 +32,8 @@ export interface TableDesCtx extends BaseDesCtx<TableCodecSerDesFns> {
   tableSchema: ListTableColumnDefinitions,
   parsingPrimaryKey: boolean,
   populateSparseData: boolean,
-  done: never,
   continue: never,
+  done: never,
 }
 
 export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: SomeDoc) => any;

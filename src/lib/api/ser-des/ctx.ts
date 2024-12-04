@@ -32,17 +32,32 @@ export interface BaseDesCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fn
 
 export interface BaseSerDesCtx<Fns extends CodecSerDesFns> {
   done<T>(obj?: T): [T, true] | true,
+  done<T>(key?: string, obj?: T): [string, T, true],
   continue<T>(obj?: T): [T, false] | false,
+  continue<T>(key?: string, obj?: T): [string, T, false],
   nameCodecs: Record<string, NameCodec<Fns>>;
   typeCodecs: Record<string, TypeCodec<Fns>>;
   classGuardCodecs: ClassGuardCodec<Fns>[];
   customGuardCodecs: CustomGuardCodec<Fns>[];
+  customState: Record<string, any>,
 }
 
-export function ctxDone<T>(obj?: T): [T, true] | true {
-  return arguments.length === 1 ? [obj!, true] : true;
+export function ctxDone<T>(obj?: T): [T, true] | true
+export function ctxDone<T>(key?: string, obj?: T): [string, T, true]
+export function ctxDone<T>(objOrKey?: string | T, obj?: T): [string, T, true] | [T, true] | true {
+  switch (arguments.length) {
+    case 1: return [objOrKey as T, true];
+    case 2: return [objOrKey as string, obj!, true];
+    default: return true;
+  }
 }
 
-export function ctxContinue<T>(obj?: T): [T, false] | false {
-  return arguments.length === 1 ? [obj!, false] : false;
+export function ctxContinue<T>(obj?: T): [T, false] | false
+export function ctxContinue<T>(key?: string, obj?: T): [string, T, false]
+export function ctxContinue<T>(objOrKey?: string | T, obj?: T): [string, T, false] | [T, false] | false {
+  switch (arguments.length) {
+    case 1: return [objOrKey as T, false];
+    case 2: return [objOrKey as string, obj!, false];
+    default: return false;
+  }
 }
