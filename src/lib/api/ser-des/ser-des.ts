@@ -57,8 +57,8 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
       }
     }
 
-    this._customGuardCodecs = Object.values(codecs).filter((codec) => 'guard' in codec);
-    this._classGuardCodecs = Object.values(codecs).filter((codec) => 'class' in codec);
+    this._customGuardCodecs = Object.values(codecs).filter((codec) => 'serializeGuard' in codec);
+    this._classGuardCodecs = Object.values(codecs).filter((codec) => 'serializeClass' in codec);
   }
 
   public serializeRecord<S extends SomeDoc | nullish>(obj: S): [S, boolean] {

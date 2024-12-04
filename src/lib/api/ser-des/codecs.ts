@@ -37,7 +37,7 @@ export type TypeCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'deserialize'> & {
 export type CustomGuardCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'serialize'> & {
   codecType: 'type',
   type: string,
-  guard: (value: unknown, ctx: BaseSerCtx<Fns>) => boolean,
+  serializeGuard: (value: unknown, ctx: BaseSerCtx<Fns>) => boolean,
 }
 
 /**
@@ -46,7 +46,7 @@ export type CustomGuardCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'serialize'
 export type ClassGuardCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'serialize'> & {
   codecType: 'type',
   type: string,
-  class: new (...args: any[]) => any,
+  serializeClass: new (...args: any[]) => any,
 }
 
 export type CodecSerDesFns = Record<'serialize' | 'deserialize', (...args: any[]) => ReturnType<SerDesFn<any>>>;

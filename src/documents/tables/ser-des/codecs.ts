@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// Important to import from specific paths here to avoid circular dependencies
 import { DataAPIBlob } from '@/src/documents/datatypes/blob';
 import { DataAPIDate, DataAPIDuration, DataAPITime, DataAPITimestamp } from '@/src/documents/datatypes/dates';
 import { InetAddress } from '@/src/documents/datatypes/inet-address';
@@ -94,7 +95,7 @@ export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
       deserialize: (value) => BigInt(value),
     }),
     map: TableCodecs.forType('map', {
-      class: Map,
+      serializeClass: Map,
       serialize: (_, value, ctx) => {
         return ctx.continue(Object.fromEntries(value));
       },
@@ -117,10 +118,7 @@ export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
       },
     }),
     list: TableCodecs.forType('list', {
-      class: Array,
-      serialize: (_, value, ctx) => {
-        return ctx.continue([...value]);
-      },
+      deserializeOnly: true,
       deserialize(list, ctx, def) {
         for (let i = 0, n = list.length; i < n; i++) {
           const elemParser = ctx.typeCodecs[def.valueType];
@@ -130,7 +128,7 @@ export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
       },
     }),
     set: TableCodecs.forType('set', {
-      class: Set,
+      serializeClass: Set,
       serialize: (_, value, ctx) => {
         return ctx.continue([...value]);
       },
@@ -161,9 +159,9 @@ export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
 
   public static forType(type: string, clazz: TableCodecClass): TableCodecs;
 
-  public static forType(type: string, opts: TableCodecSerDesFns & { guard: (value: unknown, ctx: TableSerCtx) => boolean }): TableCodecs;
+  public static forType(type: string, opts: TableCodecSerDesFns & { serializeGuard: (value: unknown, ctx: TableSerCtx) => boolean }): TableCodecs;
 
-  public static forType(type: string, opts: TableCodecSerDesFns & { class: new (...args: any[]) => any }): TableCodecs;
+  public static forType(type: string, opts: TableCodecSerDesFns & { serializeClass: new (...args: any[]) => any }): TableCodecs;
 
   public static forType(type: string, opts: Pick<TableCodecSerDesFns, 'deserialize'> & { deserializeOnly: true }): TableCodecs;
 

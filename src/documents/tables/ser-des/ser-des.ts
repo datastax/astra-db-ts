@@ -22,6 +22,7 @@ import {
 import { TableCodecs, TableCodecSerDesFns } from '@/src/documents/tables/ser-des/codecs';
 import { BaseDesCtx, BaseSerCtx } from '@/src/lib/api/ser-des/ctx';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
+import BigNumber from 'bignumber.js';
 
 export interface TableSerCtx extends BaseSerCtx<TableCodecSerDesFns> {
   bigNumsPresent: boolean;
@@ -97,25 +98,38 @@ const DefaultTableSerDesCfg = {
       return ctx.nameCodecs[key].serialize?.(key, value, ctx) ?? true;
     }
 
-    if (typeof value === 'object' && value !== null) {
+    if (typeof value === 'number') {
+      if (!isFinite(value)) {
+        return ctx.done(value.toString());
+      }
+      return ctx.done();
+    } else if (typeof value === 'object' && value !== null) {
       if (value[$SerializeForTable]) {
         return value[$SerializeForTable](ctx);
       }
 
       for (const codec of ctx.classGuardCodecs) {
-        if (value instanceof codec.class) {
+        if (value instanceof codec.serializeClass) {
           return codec.serialize(key, value, ctx);
         }
       }
+
+      if (value instanceof BigNumber) {
+        ctx.bigNumsPresent = true;
+        return ctx.done();
+      }
+    } else if (typeof value === 'bigint') {
+      ctx.bigNumsPresent = true;
+      return ctx.done();
     }
 
     for (const codec of ctx.customGuardCodecs) {
-      if (codec.guard(value, ctx)) {
+      if (codec.serializeGuard(value, ctx)) {
         return codec.serialize(key, value, ctx);
       }
     }
   },
-  deserialize(key, value, ctx) {
+  deserialize(key, _, ctx) {
     if (key === '') {
       if (Object.keys(ctx.rootObj).length === 0 && ctx.populateSparseData) {
         populateSparseData(ctx); // populate sparse data for empty objects
@@ -136,69 +150,6 @@ const DefaultTableSerDesCfg = {
   },
   codecs: Object.values(TableCodecs.Defaults),
 } satisfies Pick<TableSerDesConfig, 'codecs' | 'serialize' | 'deserialize'>;
-
-// const _DefaultTableSerDesCfg = {
-//   serialize(_, value, ctx) {
-//     if (typeof value === 'number') {
-//       if (!isFinite(value)) {
-//         return [value.toString(), true];
-//       }
-//       return true;
-//     } else if (typeof value === 'object' && value !== null) {
-//       if ($SerializeForTable in value) {
-//         return [value[$SerializeForTable](), true];
-//       }
-//
-//       if (value instanceof Map) {
-//         return [Object.fromEntries(value), false];
-//       }
-//
-//       if (value instanceof Set) {
-//         return [[...value], false];
-//       }
-//
-//       if (value instanceof BigNumber) {
-//         ctx.bigNumsPresent = true;
-//         return true;
-//       }
-//     } else if (!ctx.bigNumsPresent && typeof value === 'bigint') {
-//       ctx.bigNumsPresent = true;
-//       return true;
-//     }
-//   },
-//   deserialize(key, _, ctx) {
-//     if (key === '') {
-//       if (Object.keys(ctx.rootObj).length === 0 && ctx.populateSparseData) {
-//         populateSparseData(ctx); // populate sparse data for empty objects
-//       }
-//       return false;
-//     }
-//
-//     if (ctx.populateSparseData) { // do at this level to avoid looping on newly-populated fields if done at the top level
-//       populateSparseData(ctx);
-//       ctx.populateSparseData = false;
-//     }
-//
-//     const schema = ctx.tableSchema[key];
-//
-//     if (schema) {
-//       deserializeObj(ctx, ctx.rootObj, key, schema);
-//     }
-//     return true;
-//   },
-//   parsers: {
-//     list(values, ctx, def) {
-//       for (let i = 0, n = values.length; i < n; i++) {
-//         const elemParser = ctx.parsers[def.valueType];
-//         values[i] = elemParser ? elemParser(values[i], ctx, def) : values[i];
-//       }
-//       return values;
-//     },
-//     set(set, ctx, def) {
-//       return new Set(ctx.parsers.list(set, ctx, def));
-//     },
-//   },
-// } satisfies Pick<TableSerDesConfig, 'codecs' | 'serialize' | 'deserialize'>;
 
 function populateSparseData(ctx: TableDesCtx) {
   for (const key in ctx.tableSchema) {

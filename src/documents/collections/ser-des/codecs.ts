@@ -51,7 +51,7 @@ export class CollCodecs implements CodecHolder<CollCodecSerDesFns> {
 
   public static Defaults = {
     $date: CollCodecs.forType('$date', {
-      class: Date,
+      serializeClass: Date,
       serialize(_, value, ctx) {
         return ctx.done({ $date: value.valueOf() });
       },
@@ -81,9 +81,9 @@ export class CollCodecs implements CodecHolder<CollCodecSerDesFns> {
 
   public static forType(type: string, clazz: CollCodecClass): CollCodecs;
 
-  public static forType(type: string, opts: CollCodecSerDesFns & { guard: (value: unknown, ctx: TableSerCtx) => boolean }): CollCodecs;
+  public static forType(type: string, opts: CollCodecSerDesFns & { serializeGuard: (value: unknown, ctx: TableSerCtx) => boolean }): CollCodecs;
 
-  public static forType(type: string, opts: CollCodecSerDesFns & { class: new (...args: any[]) => any }): CollCodecs;
+  public static forType(type: string, opts: CollCodecSerDesFns & { serializeClass: new (...args: any[]) => any }): CollCodecs;
 
   public static forType(type: string, opts: CollCodecSerDesFns & { deserializeOnly: true }): CollCodecs;
 

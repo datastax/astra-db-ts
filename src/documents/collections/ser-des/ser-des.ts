@@ -67,14 +67,14 @@ const DefaultCollectionSerDesCfg = {
       }
 
       for (const codec of ctx.classGuardCodecs) {
-        if (value instanceof codec.class) {
+        if (value instanceof codec.serializeClass) {
           return codec.serialize(key, value, ctx);
         }
       }
     }
 
     for (const codec of ctx.customGuardCodecs) {
-      if (codec.guard(value, ctx)) {
+      if (codec.serializeGuard(value, ctx)) {
         return codec.serialize(key, value, ctx);
       }
     }
