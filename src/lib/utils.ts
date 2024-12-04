@@ -92,14 +92,18 @@ export function camelToSnakeCase(camel: string, cache: Record<string, string>): 
   if (cache[camel]) {
     return cache[camel];
   }
-
-  return cache[camel] = camel.replace(/[A-Z]/g, (letter, index) => `${index ? '_' : ''}${letter.toLowerCase()}`);
+  if (!camel) {
+    return '';
+  }
+  return cache[camel] = camel[0] + camel.slice(1).replace(/[A-Z]/g, (letter, index) => `${index ? '_' : ''}${letter.toLowerCase()}`);
 }
 
 export function snakeToCamelCase(snake: string, cache: Record<string, string>): string {
   if (cache[snake]) {
     return cache[snake];
   }
-
-  return cache[snake] = snake.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+  if (!snake) {
+    return '';
+  }
+  return cache[snake] = snake[0] + snake.slice(1).replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
 }

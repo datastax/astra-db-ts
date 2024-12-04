@@ -111,7 +111,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
 }
 
 const serializeRecord = <Ctx extends BaseSerCtx<any>>(obj: SomeDoc, depth: number, ctx: Ctx, fns: readonly SerDesFn<Ctx>[], snake: boolean) => {
-  const ret: SomeDoc = (!ctx.mutatingInPlace)
+  obj = (!ctx.mutatingInPlace)
     ? (Array.isArray(obj) ? [...obj] : { ...obj })
     : obj;
 
@@ -122,11 +122,14 @@ const serializeRecord = <Ctx extends BaseSerCtx<any>>(obj: SomeDoc, depth: numbe
 
     ctx.depth = depth;
 
-    if (snake) {
+    if (depth && snake) {
       const oldKey = key;
       key = camelToSnakeCase(key, ctx.customState.camelSnakeCache);
-      obj[key] = value;
-      delete obj[oldKey];
+
+      if (key !== oldKey) {
+        obj[key] = value;
+        delete obj[oldKey];
+      }
     }
 
     for (let f = 0; f < fns.length && !stop; f++) {
@@ -138,7 +141,7 @@ const serializeRecord = <Ctx extends BaseSerCtx<any>>(obj: SomeDoc, depth: numbe
 
       if (typeof res === 'object') {
         if (res.length === 2) {
-          ret[key] = res[0];
+          obj[key] = res[0];
           stop = res[1];
         } else {
           const oldKey = key;
@@ -152,12 +155,12 @@ const serializeRecord = <Ctx extends BaseSerCtx<any>>(obj: SomeDoc, depth: numbe
       }
     }
 
-    if (!stop && depth < 250 && typeof ret[key] === 'object' && ret[key] !== null) {
-      ret[key] = serializeRecord(ret[key], depth + 1, ctx, fns, snake);
+    if (!stop && depth < 250 && typeof obj[key] === 'object' && obj[key] !== null) {
+      obj[key] = serializeRecord(obj[key], depth + 1, ctx, fns, snake);
     }
   }
 
-  return ret;
+  return obj;
 };
 
 const deserializeRecord = <Ctx extends BaseDesCtx<any>>(keys: string[], obj: SomeDoc, depth: number, ctx: Ctx, fns: readonly SerDesFn<Ctx>[], snake: boolean) => {
@@ -172,11 +175,14 @@ const deserializeRecord = <Ctx extends BaseDesCtx<any>>(keys: string[], obj: Som
 
     ctx.depth = depth;
 
-    if (snake) {
+    if (depth && snake) {
       const oldKey = key;
       key = snakeToCamelCase(key, ctx.customState.camelSnakeCache);
-      obj[key] = value;
-      delete obj[oldKey];
+
+      if (key !== oldKey) {
+        obj[key] = value;
+        delete obj[oldKey];
+      }
     }
 
     for (let f = 0; f < fns.length && !stop; f++) {

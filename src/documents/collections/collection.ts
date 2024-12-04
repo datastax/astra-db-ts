@@ -206,11 +206,6 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends Recor
       writable: false,
     });
 
-    Object.defineProperty(this, 'sd', {
-      value: new CollectionSerDes(opts?.serdes),
-      writable: false,
-    });
-
     const hack: BigNumberHack = {
       parseWithBigNumbers: () => !!opts?.serdes?.enableBigNumbers,
       parser: withJbiNullProtoFix(jbi),
