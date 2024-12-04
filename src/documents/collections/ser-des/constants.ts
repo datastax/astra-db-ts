@@ -12,23 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './cursor';
-export type * from './types';
-export * from './table';
-
-export {
-  TableColumnTypeParser,
-  TableSerDesConfig,
-  TableDesCtx,
-  TableSerCtx,
-} from './ser-des/ser-des';
-
-export {
-  TableCodecSerDesFns,
-  TableCodecs,
-  TableCodec,
-
-
-} from './ser-des/codecs';
-export { $DeserializeForTable } from '@/src/documents/tables/ser-des/constants';
-export { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
+export const $SerializeForCollection = Symbol.for('astra-db-ts.serialize.collection');
+export const $DeserializeForCollection = Symbol.for('astra-db-ts.deserialize.collection');

@@ -14,16 +14,14 @@
 
 import { $CustomInspect } from '@/src/lib/constants';
 import {
-  $DeserializeForCollection,
-  $DeserializeForTable,
-  $SerializeForCollection,
-  $SerializeForTable,
   CollCodec,
   type CollDesCtx,
   type CollSerCtx,
   TableCodec,
   TableSerCtx,
 } from '@/src/documents';
+import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
+import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 
 export type DataAPIVectorLike = number[] | { $binary: string } | Float32Array | DataAPIVector;
 

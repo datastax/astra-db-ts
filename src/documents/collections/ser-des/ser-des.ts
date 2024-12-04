@@ -14,7 +14,8 @@
 
 import { SerDes, SerDesConfig } from '@/src/lib/api/ser-des/ser-des';
 import { BaseDesCtx, BaseSerCtx } from '@/src/lib/api/ser-des/ctx';
-import { $SerializeForCollection, CollCodecs, CollCodecSerDesFns } from '@/src/documents/collections/ser-des/codecs';
+import { CollCodecs, CollCodecSerDesFns } from '@/src/documents/collections/ser-des/codecs';
+import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 
 export type CollSerCtx = BaseSerCtx<CollCodecSerDesFns>
 export type CollDesCtx = BaseDesCtx<CollCodecSerDesFns>

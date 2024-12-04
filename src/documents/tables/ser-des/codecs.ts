@@ -21,6 +21,7 @@ import { SomeDoc, TableDesCtx, TableSerCtx } from '@/src/documents';
 import { CodecHolder } from '@/src/lib/api/ser-des/codecs';
 import { EmptyObj, SerDesFn } from '@/src/lib';
 import BigNumber from 'bignumber.js';
+import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 
 /**
  * @internal
@@ -29,9 +30,6 @@ export interface TableCodecSerDesFns {
   serialize: SerDesFn<TableSerCtx>,
   deserialize: (val: any, ctx: TableDesCtx, definition: SomeDoc) => any,
 }
-
-export const $SerializeForTable = Symbol.for('astra-db-ts.serialize.table');
-export const $DeserializeForTable = Symbol.for('astra-db-ts.deserialize.table');
 
 interface TableCodecClass {
   new (...args: any[]): { [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>> };

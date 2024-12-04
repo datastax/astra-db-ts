@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import { $CustomInspect } from '@/src/lib/constants';
-import { $DeserializeForTable, $SerializeForTable, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
+import { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
+import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 
 export type DataAPIBlobLike = DataAPIBlob | ArrayBuffer | Buffer | { $binary: string };
 

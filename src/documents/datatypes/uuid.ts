@@ -15,16 +15,14 @@
 import { UUID as UUIDv7, uuidv4, uuidv7 } from 'uuidv7';
 import { $CustomInspect } from '@/src/lib/constants';
 import {
-  $SerializeForCollection,
-  $DeserializeForCollection,
-  $DeserializeForTable,
-  $SerializeForTable,
   CollCodec,
   type CollDesCtx,
   type CollSerCtx,
   TableCodec,
   TableSerCtx,
 } from '@/src/documents';
+import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
+import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 
 const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
 

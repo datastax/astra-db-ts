@@ -19,8 +19,9 @@ import {
   ListTableKnownColumnDefinition,
   ListTableUnsupportedColumnDefinition,
 } from '@/src/db';
-import { $SerializeForTable, TableCodecs, TableCodecSerDesFns } from '@/src/documents/tables/ser-des/codecs';
+import { TableCodecs, TableCodecSerDesFns } from '@/src/documents/tables/ser-des/codecs';
 import { BaseDesCtx, BaseSerCtx } from '@/src/lib/api/ser-des/ctx';
+import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 
 export interface TableSerCtx extends BaseSerCtx<TableCodecSerDesFns> {
   bigNumsPresent: boolean;

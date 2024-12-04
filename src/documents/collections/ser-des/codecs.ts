@@ -19,6 +19,7 @@ import { DataAPIVector } from '@/src/documents/datatypes/vector';
 import { CollDesCtx, CollSerCtx, TableSerCtx } from '@/src/documents';
 import { CodecHolder } from '@/src/lib/api/ser-des/codecs';
 import { EmptyObj, SerDesFn } from '@/src/lib';
+import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 
 /**
  * @internal
@@ -27,9 +28,6 @@ export interface CollCodecSerDesFns {
   serialize: SerDesFn<CollSerCtx>,
   deserialize: SerDesFn<CollDesCtx>,
 }
-
-export const $SerializeForCollection = Symbol.for('astra-db-ts.serialize.collection');
-export const $DeserializeForCollection = Symbol.for('astra-db-ts.deserialize.collection');
 
 export interface CollCodecClass {
   new (...args: any[]): { [$SerializeForCollection]: (ctx: CollSerCtx) => ReturnType<SerDesFn<any>> };

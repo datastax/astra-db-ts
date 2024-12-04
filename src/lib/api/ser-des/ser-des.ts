@@ -37,7 +37,7 @@ export interface SerDesConfig<Codec extends CodecHolder, Fns extends CodecSerDes
 /**
  * @internal
  */
-export abstract class SerDes<Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns> = any, DesCtx extends BaseDesCtx<Fns> = any> {
+export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends BaseSerCtx<Fns> = any, DesCtx extends BaseDesCtx<Fns> = any> {
   protected readonly _nameCodecs: Record<string, NameCodec<Fns>>;
   protected readonly _typeCodecs: Record<string, TypeCodec<Fns>>;
   protected readonly _customGuardCodecs: CustomGuardCodec<Fns>[];

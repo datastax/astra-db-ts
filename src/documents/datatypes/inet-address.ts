@@ -14,7 +14,8 @@
 
 import { $CustomInspect } from '@/src/lib/constants';
 import { nullish } from '@/src/lib';
-import { $DeserializeForTable, $SerializeForTable, TableCodec, TableSerCtx } from '@/src/documents';
+import { TableCodec, TableSerCtx } from '@/src/documents';
+import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 
 export const inet = (address: string, version?: 4 | 6) => new InetAddress(address, version);
 

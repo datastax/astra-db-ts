@@ -15,16 +15,14 @@
 import { isNullish } from '@/src/lib/utils';
 import { $CustomInspect } from '@/src/lib/constants';
 import {
-  $DeserializeForCollection,
-  $DeserializeForTable,
-  $SerializeForCollection,
-  $SerializeForTable,
   CollCodec,
   CollDesCtx,
   CollSerCtx,
   TableCodec,
   TableSerCtx,
 } from '@/src/documents';
+import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
+import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 
 export const date = (date?: string | Date | DataAPIDateComponents) => new DataAPIDate(date);
 
