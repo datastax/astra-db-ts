@@ -34,7 +34,7 @@ import { $CustomInspect } from '@/src/lib/constants';
 import JBI from 'json-bigint';
 import { TableFindCursor } from '@/src/documents/tables/cursor';
 import { withJbiNullProtoFix } from '@/src/lib/utils';
-import { TableSerDes } from '@/src/documents/tables/ser-des';
+import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
 import { ListIndexOptions, TableIndexDescriptor } from '@/src/db/types/tables/list-indexes';
 
 const jbi = JBI({ storeAsString: true });

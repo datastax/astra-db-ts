@@ -19,7 +19,15 @@ export type * from './types';
 
 export {
   CollectionSerDesConfig,
-  $SerializeForCollection,
   CollDesCtx,
   CollSerCtx,
-} from './ser-des';
+} from './ser-des/ser-des';
+
+export {
+  CollCodecSerDesFns,
+  CollCodecs,
+  CollCodecClass,
+  CollCodec,
+  $SerializeForCollection,
+  $DeserializeForCollection,
+} from './ser-des/codecs';

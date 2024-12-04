@@ -43,8 +43,8 @@ import { $CustomInspect } from '@/src/lib/constants';
 import { InvalidEnvironmentError } from '@/src/db/errors';
 import { AstraDbInfo } from '@/src/administration/types/admin/database-info';
 import { Timeouts } from '@/src/lib/api/timeouts';
-import { CollectionSerDes } from '@/src/documents/collections/ser-des';
-import { TableSerDes } from '@/src/documents/tables/ser-des';
+import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
+import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
 
 /**
  * #### Overview

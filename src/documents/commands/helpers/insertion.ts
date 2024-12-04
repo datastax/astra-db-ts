@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { DataAPIHttpClient } from '@/src/lib/api/clients';
-import { DataAPISerDes } from '@/src/lib/api/ser-des';
+import { SerDes } from '@/src/lib/api/ser-des/ser-des';
 import {
   DataAPIDetailedErrorDescriptor,
   DataAPIResponseError,
@@ -28,7 +28,7 @@ import { TimeoutManager } from '@/src/lib/api/timeouts';
  */
 export const insertManyOrdered = async <ID>(
   httpClient: DataAPIHttpClient,
-  serdes: DataAPISerDes,
+  serdes: SerDes,
   documents: readonly unknown[],
   chunkSize: number,
   timeoutManager: TimeoutManager,
@@ -62,7 +62,7 @@ export const insertManyOrdered = async <ID>(
  */
 export const insertManyUnordered = async <ID>(
   httpClient: DataAPIHttpClient,
-  serdes: DataAPISerDes,
+  serdes: SerDes,
   documents: readonly unknown[],
   concurrency: number,
   chunkSize: number,
@@ -116,7 +116,7 @@ export const insertManyUnordered = async <ID>(
 
 const insertMany = async <ID>(
   httpClient: DataAPIHttpClient,
-  serdes: DataAPISerDes,
+  serdes: SerDes,
   documents: readonly unknown[],
   ordered: boolean,
   timeoutManager: TimeoutManager,

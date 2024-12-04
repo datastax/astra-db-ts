@@ -14,8 +14,17 @@
 
 import { UUID as UUIDv7, uuidv4, uuidv7 } from 'uuidv7';
 import { $CustomInspect } from '@/src/lib/constants';
-import { $SerializeForCollection } from '@/src/documents/collections/ser-des';
-import { $SerializeForTable } from '@/src/documents/tables/ser-des';
+import {
+  $SerializeForCollection,
+  $DeserializeForCollection,
+  $DeserializeForTable,
+  $SerializeForTable,
+  CollCodec,
+  type CollDesCtx,
+  type CollSerCtx,
+  TableCodec,
+  TableSerCtx,
+} from '@/src/documents';
 
 const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
 
@@ -67,7 +76,7 @@ export const uuid = (uuid: string | 4 | 7) =>
  *
  * @public
  */
-export class UUID {
+export class UUID implements CollCodec<typeof UUID>, TableCodec<typeof UUID> {
   /**
    * The version of the UUID.
    */
@@ -75,8 +84,21 @@ export class UUID {
 
   readonly #raw: string;
 
-  public [$SerializeForCollection] = () => ({ $uuid: this.#raw });
-  public [$SerializeForTable] = this.toString;
+  public [$SerializeForTable](ctx: TableSerCtx) {
+    return ctx.done(this.#raw);
+  };
+
+  public [$SerializeForCollection](ctx: CollSerCtx) {
+    return ctx.done({ $uuid: this.#raw });
+  };
+
+  public static [$DeserializeForTable](value: any) {
+    return new UUID(value, false);
+  }
+
+  public static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx) {
+    return ctx.done(new UUID(value.$uuid, false));
+  }
 
   /**
    * Creates a new UUID instance.

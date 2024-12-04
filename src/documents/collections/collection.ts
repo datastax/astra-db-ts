@@ -48,7 +48,7 @@ import { CollectionInsertManyError, TooManyDocumentsToCountError, WithSim } from
 import JBI from 'json-bigint';
 import { CollectionFindCursor } from '@/src/documents/collections/cursor';
 import { withJbiNullProtoFix } from '@/src/lib/utils';
-import { CollectionSerDes } from '@/src/documents/collections/ser-des';
+import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
 
 const jbi = JBI({ storeAsString: true });
 
@@ -203,6 +203,11 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends Recor
 
     Object.defineProperty(this, 'keyspace', {
       value: opts?.keyspace ?? db.keyspace,
+      writable: false,
+    });
+
+    Object.defineProperty(this, 'sd', {
+      value: new CollectionSerDes(opts?.serdes),
       writable: false,
     });
 

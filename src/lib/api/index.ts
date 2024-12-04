@@ -27,12 +27,12 @@ export type {
 } from './types';
 
 export type {
-  DataAPISerCtx,
-  DataAPIDesCtx,
-  DataAPISerDesConfig,
+  BaseSerCtx,
+  BaseDesCtx,
+  SerDesConfig,
   DataAPIDesFn,
-  DataAPISerFn,
-} from './ser-des';
+  SerDesFn,
+} from './ser-des/ser-des';
 
 export type {
   TimeoutDescriptor,

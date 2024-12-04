@@ -21,5 +21,12 @@ export {
   TableSerDesConfig,
   TableDesCtx,
   TableSerCtx,
+} from './ser-des/ser-des';
+
+export {
+  TableCodecSerDesFns,
+  TableCodecs,
+  TableCodec,
   $SerializeForTable,
-} from './ser-des';
+  $DeserializeForTable,
+} from './ser-des/codecs';

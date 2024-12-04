@@ -12,19 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $SerializeForCollection } from '@/src/documents/collections/ser-des';
-import { $SerializeForTable } from '@/src/documents/tables/ser-des';
 import { $CustomInspect } from '@/src/lib/constants';
+import {
+  $DeserializeForCollection,
+  $DeserializeForTable,
+  $SerializeForCollection,
+  $SerializeForTable,
+  CollCodec,
+  type CollDesCtx,
+  type CollSerCtx,
+  TableCodec,
+  TableSerCtx,
+} from '@/src/documents';
 
 export type DataAPIVectorLike = number[] | { $binary: string } | Float32Array | DataAPIVector;
 
 export const vector = (v: DataAPIVectorLike) => new DataAPIVector(v);
 
-export class DataAPIVector {
+export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCodec<typeof DataAPIVector> {
   readonly #vector: Exclude<DataAPIVectorLike, DataAPIVector>;
 
-  public [$SerializeForTable]: () => { $binary: string } | number[];
-  public [$SerializeForCollection]: () => { $binary: string } | number[];
+  public [$SerializeForTable](ctx: TableSerCtx) {
+    return ctx.done(serialize(this.#vector));
+  };
+
+  public [$SerializeForCollection](ctx: CollSerCtx) {
+    return ctx.done(serialize(this.#vector));
+  };
+
+  public static [$DeserializeForTable](value: any) {
+    return new DataAPIVector(value, false);
+  }
+
+  public static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx) {
+    return ctx.done(new DataAPIVector(value, false));
+  }
 
   public constructor(vector: DataAPIVectorLike, validate = true) {
     if (validate && !DataAPIVector.isVectorLike(vector)) {
@@ -35,8 +57,8 @@ export class DataAPIVector {
       ? vector.raw()
       : vector;
 
-    this[$SerializeForTable] = () => serialize(this.#vector);
-    this[$SerializeForCollection] = this[$SerializeForTable];
+    // this[$SerializeForTable] = () => serialize(this.#vector);
+    // this[$SerializeForCollection] = this[$SerializeForTable];
 
     Object.defineProperty(this, $CustomInspect, {
       value: this.toString,

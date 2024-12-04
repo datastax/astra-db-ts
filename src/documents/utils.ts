@@ -15,7 +15,9 @@
 import type { SomeDoc } from '@/src/documents/collections';
 import type { Sort } from '@/src/documents/types';
 import { DataAPIVector } from '@/src/documents/datatypes';
-import { $SerializeForTable } from '@/src/documents/tables/ser-des';
+
+
+import { $SerializeForTable } from '@/src/documents/tables';
 
 declare const $ERROR: unique symbol;
 

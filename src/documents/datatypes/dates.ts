@@ -14,8 +14,17 @@
 
 import { isNullish } from '@/src/lib/utils';
 import { $CustomInspect } from '@/src/lib/constants';
-import { $SerializeForTable } from '@/src/documents/tables/ser-des';
-import { $SerializeForCollection } from '@/src/documents';
+import {
+  $DeserializeForCollection,
+  $DeserializeForTable,
+  $SerializeForCollection,
+  $SerializeForTable,
+  CollCodec,
+  CollDesCtx,
+  CollSerCtx,
+  TableCodec,
+  TableSerCtx,
+} from '@/src/documents';
 
 export const date = (date?: string | Date | DataAPIDateComponents) => new DataAPIDate(date);
 
@@ -25,10 +34,16 @@ export interface DataAPIDateComponents {
   date: number
 }
 
-export class DataAPIDate {
+export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
   readonly #date: string;
 
-  public [$SerializeForTable] = this.toString;
+  public [$SerializeForTable](ctx: TableSerCtx) {
+    return ctx.done(this.toString());
+  };
+
+  public static [$DeserializeForTable](value: any) {
+    return new DataAPIDate(value);
+  }
 
   public constructor(input?: string | Date | DataAPIDateComponents) {
     if (typeof input === 'string') {
@@ -88,10 +103,16 @@ export class DataAPIDate {
 
 export const duration = (duration: string) => new DataAPIDuration(duration);
 
-export class DataAPIDuration {
+export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
   readonly #duration: string;
 
-  public [$SerializeForTable] = this.toString;
+  public [$SerializeForTable](ctx: TableSerCtx) {
+    return ctx.done(this.toString());
+  };
+
+  public static [$DeserializeForTable](value: any) {
+    return new DataAPIDuration(value);
+  }
 
   constructor(input: string) {
     this.#duration = input;
@@ -115,10 +136,16 @@ export interface DataAPITimeComponents {
   nanoseconds: number
 }
 
-export class DataAPITime {
+export class DataAPITime implements TableCodec<typeof DataAPITime> {
   readonly #time: string;
 
-  public [$SerializeForTable] = this.toString;
+  public [$SerializeForTable](ctx: TableSerCtx) {
+    return ctx.done(this.toString());
+  };
+
+  public static [$DeserializeForTable](value: any) {
+    return new DataAPITime(value);
+  }
 
   public constructor(input?: string | Date | (DataAPITimeComponents & { nanoseconds?: number })) {
     input ||= new Date();
@@ -190,12 +217,24 @@ export interface DataAPITimestampComponents {
   seconds: number
   nanoseconds: number
 }
-
-export class DataAPITimestamp {
+export class DataAPITimestamp implements CollCodec<typeof DataAPITimestamp>, TableCodec<typeof DataAPITimestamp> {
   readonly #timestamp: string;
 
-  public [$SerializeForTable] = this.toString;
-  public [$SerializeForCollection] = () => ({ $date: this.toString() });
+  public [$SerializeForTable](ctx: TableSerCtx) {
+    return ctx.done(this.toString());
+  };
+
+  public [$SerializeForCollection](ctx: CollSerCtx) {
+    return ctx.done({ $date: this.toString() });
+  };
+
+  public static [$DeserializeForTable](value: any) {
+    return new DataAPITimestamp(value);
+  }
+
+  public static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx) {
+    return ctx.done(new DataAPITimestamp(value.$date));
+  }
 
   public constructor(input?: string | Date | Partial<DataAPITimestampComponents>) {
     input ||= new Date();

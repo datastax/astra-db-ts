@@ -13,16 +13,22 @@
 // limitations under the License.
 
 import { $CustomInspect } from '@/src/lib/constants';
-import { $SerializeForTable } from '@/src/documents/tables/ser-des';
 import { nullish } from '@/src/lib';
+import { $DeserializeForTable, $SerializeForTable, TableCodec, TableSerCtx } from '@/src/documents';
 
 export const inet = (address: string, version?: 4 | 6) => new InetAddress(address, version);
 
-export class InetAddress {
+export class InetAddress implements TableCodec<typeof InetAddress> {
   readonly #raw: string;
   #version: 4 | 6 | nullish;
 
-  public [$SerializeForTable] = () => this.#raw;
+  public [$SerializeForTable](ctx: TableSerCtx) {
+    return ctx.done(this.#raw);
+  };
+
+  public static [$DeserializeForTable](value: any) {
+    return new InetAddress(value, null, false);
+  }
 
   public constructor(address: string, version?: 4 | 6 | null, validate = true) { // ::1 => 0:0:0:0:0:0:0:1
     if (validate) {
