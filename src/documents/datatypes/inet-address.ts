@@ -14,7 +14,7 @@
 
 import { $CustomInspect } from '@/src/lib/constants';
 import { nullish } from '@/src/lib';
-import { TableCodec, TableSerCtx } from '@/src/documents';
+import { TableCodec, TableSerCtx, TableDesCtx } from '@/src/documents';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 
 export const inet = (address: string, version?: 4 | 6) => new InetAddress(address, version);
@@ -27,8 +27,8 @@ export class InetAddress implements TableCodec<typeof InetAddress> {
     return ctx.done(this.#raw);
   };
 
-  public static [$DeserializeForTable](value: any) {
-    return new InetAddress(value, null, false);
+  public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
+    return ctx.done(new InetAddress(value, null, false));
   }
 
   public constructor(address: string, version?: 4 | 6 | null, validate = true) { // ::1 => 0:0:0:0:0:0:0:1

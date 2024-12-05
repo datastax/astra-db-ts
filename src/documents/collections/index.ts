@@ -28,8 +28,6 @@ export {
   CollCodecs,
   CollCodecClass,
   CollCodec,
-
-
 } from './ser-des/codecs';
 export { $DeserializeForCollection } from '@/src/documents/collections/ser-des/constants';
 export { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';

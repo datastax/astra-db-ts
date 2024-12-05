@@ -13,4 +13,4 @@
 // limitations under the License.
 
 export const LIB_NAME = 'astra-db-ts';
-export const LIB_VERSION = '1.5.0';
+export const LIB_VERSION = '2.0.0-prerelease';

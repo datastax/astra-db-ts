@@ -18,7 +18,7 @@ import {
   CollCodec,
   type CollDesCtx,
   type CollSerCtx,
-  TableCodec,
+  TableCodec, TableDesCtx,
   TableSerCtx,
 } from '@/src/documents';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
@@ -90,8 +90,8 @@ export class UUID implements CollCodec<typeof UUID>, TableCodec<typeof UUID> {
     return ctx.done({ $uuid: this.#raw });
   };
 
-  public static [$DeserializeForTable](value: any) {
-    return new UUID(value, false);
+  public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
+    return ctx.done(new UUID(value, false));
   }
 
   public static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx) {

@@ -27,8 +27,6 @@ export {
   TableCodecSerDesFns,
   TableCodecs,
   TableCodec,
-
-
 } from './ser-des/codecs';
 export { $DeserializeForTable } from '@/src/documents/tables/ser-des/constants';
 export { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';

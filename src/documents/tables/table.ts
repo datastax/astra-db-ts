@@ -275,7 +275,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Record<string
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableOptions<WSchema> | undefined) {
+  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableOptions | undefined) {
     Object.defineProperty(this, 'name', {
       value: name,
     });

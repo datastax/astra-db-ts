@@ -24,12 +24,9 @@ import { EmptyObj, SerDesFn } from '@/src/lib';
 import BigNumber from 'bignumber.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 
-/**
- * @internal
- */
 export interface TableCodecSerDesFns {
   serialize: SerDesFn<TableSerCtx>,
-  deserialize: (val: any, ctx: TableDesCtx, definition: SomeDoc) => any,
+  deserialize: (val: any, ctx: TableDesCtx, definition: SomeDoc) => ReturnType<SerDesFn<any>>,
 }
 
 interface TableCodecClass {
@@ -55,49 +52,49 @@ export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
   public static Defaults = {
     bigint: TableCodecs.forType('bigint', {
       deserializeOnly: true,
-      deserialize: (value) => parseInt(value),
+      deserialize: (value, ctx) => ctx.done(parseInt(value)),
     }),
     blob: TableCodecs.forType('blob', DataAPIBlob),
     date: TableCodecs.forType('date', DataAPIDate),
     decimal: TableCodecs.forType('decimal', {
       deserializeOnly: true,
-      deserialize: (value) => (value instanceof BigNumber) ? value : new BigNumber(value),
+      deserialize: (value, ctx) => ctx.done((value instanceof BigNumber) ? value : new BigNumber(value)),
     }),
     double: TableCodecs.forType('double', {
       deserializeOnly: true,
-      deserialize: (value) => parseFloat(value),
+      deserialize: (value, ctx) => ctx.done(parseFloat(value)),
     }),
     duration: TableCodecs.forType('duration', DataAPIDuration),
     float: TableCodecs.forType('float', {
       deserializeOnly: true,
-      deserialize: (value) => parseFloat(value),
+      deserialize: (value, ctx) => ctx.done(parseFloat(value)),
     }),
     int: TableCodecs.forType('int', {
       deserializeOnly: true,
-      deserialize: (value) => parseInt(value),
+      deserialize: (value, ctx) => ctx.done(parseInt(value)),
     }),
     inet: TableCodecs.forType('inet', InetAddress),
     smallint: TableCodecs.forType('smallint', {
       deserializeOnly: true,
-      deserialize: (value) => parseInt(value),
+      deserialize: (value, ctx) => ctx.done(parseInt(value)),
     }),
     time: TableCodecs.forType('time', DataAPITime),
     timestamp: TableCodecs.forType('timestamp', DataAPITimestamp),
     timeuuid: TableCodecs.forType('timeuuid', UUID),
     tinyint: TableCodecs.forType('tinyint', {
       deserializeOnly: true,
-      deserialize: (value) => parseInt(value),
+      deserialize: (value, ctx) => ctx.done(parseInt(value)),
     }),
     uuid: TableCodecs.forType('uuid', UUID),
     vector: TableCodecs.forType('vector', DataAPIVector),
     varint: TableCodecs.forType('varint', {
       deserializeOnly: true,
-      deserialize: (value) => BigInt(value),
+      deserialize: (value, ctx) => ctx.done(BigInt(value)),
     }),
     map: TableCodecs.forType('map', {
       serializeClass: Map,
       serialize: (_, value, ctx) => {
-        return ctx.continue(Object.fromEntries(value));
+        return ctx.recurse(Object.fromEntries(value));
       },
       deserialize(map, ctx, def) {
         const entries = Array.isArray(map) ? map : Object.entries(map);
@@ -114,7 +111,7 @@ export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
           ];
         }
 
-        return new Map(entries);
+        return ctx.done(new Map(entries));
       },
     }),
     list: TableCodecs.forType('list', {
@@ -124,20 +121,20 @@ export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
           const elemParser = ctx.typeCodecs[def.valueType];
           list[i] = elemParser ? elemParser.deserialize(list[i], ctx, def) : list[i];
         }
-        return list;
+        return ctx.done(list);
       },
     }),
     set: TableCodecs.forType('set', {
       serializeClass: Set,
       serialize: (_, value, ctx) => {
-        return ctx.continue([...value]);
+        return ctx.recurse([...value]);
       },
       deserialize(list, ctx, def) {
         for (let i = 0, n = list.length; i < n; i++) {
           const elemParser = ctx.typeCodecs[def.valueType];
           list[i] = elemParser ? elemParser.deserialize(list[i], ctx, def) : list[i];
         }
-        return new Set(list);
+        return ctx.done(new Set(list));
       },
     }),
   };

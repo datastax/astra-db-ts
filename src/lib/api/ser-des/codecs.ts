@@ -49,6 +49,9 @@ export type ClassGuardCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'serialize'>
   serializeClass: new (...args: any[]) => any,
 }
 
+/**
+ * @internal
+ */
 export type CodecSerDesFns = Record<'serialize' | 'deserialize', (...args: any[]) => ReturnType<SerDesFn<any>>>;
 
 /**

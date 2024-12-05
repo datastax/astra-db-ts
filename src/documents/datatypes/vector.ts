@@ -17,7 +17,7 @@ import {
   CollCodec,
   type CollDesCtx,
   type CollSerCtx,
-  TableCodec,
+  TableCodec, TableDesCtx,
   TableSerCtx,
 } from '@/src/documents';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
@@ -38,8 +38,8 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
     return ctx.done(serialize(this.#vector));
   };
 
-  public static [$DeserializeForTable](value: any) {
-    return new DataAPIVector(value, false);
+  public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
+    return ctx.done(new DataAPIVector(value, false));
   }
 
   public static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx) {

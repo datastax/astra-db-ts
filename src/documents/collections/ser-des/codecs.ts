@@ -22,9 +22,6 @@ import { CodecHolder } from '@/src/lib/api/ser-des/codecs';
 import { EmptyObj, SerDesFn } from '@/src/lib';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 
-/**
- * @internal
- */
 export interface CollCodecSerDesFns {
   serialize: SerDesFn<CollSerCtx>,
   deserialize: SerDesFn<CollDesCtx>,

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { SerDes, SerDesConfig } from '@/src/lib/api/ser-des/ser-des';
-import { BaseDesCtx, BaseSerCtx } from '@/src/lib/api/ser-des/ctx';
+import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
 import { CollCodecs, CollCodecSerDesFns } from '@/src/documents/collections/ser-des/codecs';
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 
@@ -57,36 +57,54 @@ export class CollectionSerDes extends SerDes<CollCodecSerDesFns, CollSerCtx, Col
 
 const DefaultCollectionSerDesCfg = {
   serialize(key, value, ctx) {
+    let resp;
+
     if (key in ctx.nameCodecs) {
-      return ctx.nameCodecs[key].serialize?.(key, value, ctx) ?? true;
+      if ((resp = ctx.nameCodecs[key].serialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
+        return resp;
+      }
     }
 
     if (typeof value === 'object' && value !== null) {
       if (value[$SerializeForCollection]) {
-        return value[$SerializeForCollection](ctx);
+        if ((resp = value[$SerializeForCollection](ctx))[0] !== CONTINUE) {
+          return resp;
+        }
       }
 
       for (const codec of ctx.classGuardCodecs) {
         if (value instanceof codec.serializeClass) {
-          return codec.serialize(key, value, ctx);
+          if ((resp = codec.serialize(key, value, ctx))[0] !== CONTINUE) {
+            return resp;
+          }
         }
       }
     }
 
     for (const codec of ctx.customGuardCodecs) {
       if (codec.serializeGuard(value, ctx)) {
-        return codec.serialize(key, value, ctx);
+        if ((resp = codec.serialize(key, value, ctx))[0] !== CONTINUE) {
+          return resp;
+        }
       }
     }
+    return ctx.continue();
   },
   deserialize(key, value, ctx) {
+    let resp;
+
     if (key in ctx.nameCodecs) {
-      return ctx.nameCodecs[key].deserialize(key, value, ctx);
+      if ((resp = ctx.nameCodecs[key].deserialize(key, value, ctx))[0] !== CONTINUE) {
+        return resp;
+      }
     }
 
     if (ctx.keys?.length === 1 && (ctx.keys[0] in ctx.typeCodecs)) {
-      return ctx.typeCodecs[ctx.keys[0]].deserialize!(key, value, ctx);
+      if ((resp = ctx.typeCodecs[ctx.keys[0]].deserialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
+        return resp;
+      }
     }
+    return ctx.continue();
   },
   codecs: Object.values(CollCodecs.Defaults),
 } satisfies CollectionSerDesConfig;

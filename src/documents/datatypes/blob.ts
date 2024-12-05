@@ -28,7 +28,7 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
   };
 
   public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
-    return new DataAPIBlob((ctx.parsingPrimaryKey) ? { $binary: value } : value, false);
+    return ctx.done(new DataAPIBlob((ctx.parsingPrimaryKey) ? { $binary: value } : value, false));
   }
 
   public constructor(blob: DataAPIBlobLike, validate = true) {

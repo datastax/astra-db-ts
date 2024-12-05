@@ -14,13 +14,7 @@
 
 import { isNullish } from '@/src/lib/utils';
 import { $CustomInspect } from '@/src/lib/constants';
-import {
-  CollCodec,
-  CollDesCtx,
-  CollSerCtx,
-  TableCodec,
-  TableSerCtx,
-} from '@/src/documents';
+import { CollCodec, CollDesCtx, CollSerCtx, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 
@@ -39,8 +33,8 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
     return ctx.done(this.toString());
   };
 
-  public static [$DeserializeForTable](value: any) {
-    return new DataAPIDate(value);
+  public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
+    return ctx.done(new DataAPIDate(value));
   }
 
   public constructor(input?: string | Date | DataAPIDateComponents) {
@@ -108,8 +102,8 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
     return ctx.done(this.toString());
   };
 
-  public static [$DeserializeForTable](value: any) {
-    return new DataAPIDuration(value);
+  public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
+    return ctx.done(new DataAPIDuration(value));
   }
 
   constructor(input: string) {
@@ -141,8 +135,8 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
     return ctx.done(this.toString());
   };
 
-  public static [$DeserializeForTable](value: any) {
-    return new DataAPITime(value);
+  public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
+    return ctx.done(new DataAPITime(value));
   }
 
   public constructor(input?: string | Date | (DataAPITimeComponents & { nanoseconds?: number })) {
@@ -226,8 +220,8 @@ export class DataAPITimestamp implements CollCodec<typeof DataAPITimestamp>, Tab
     return ctx.done({ $date: this.toString() });
   };
 
-  public static [$DeserializeForTable](value: any) {
-    return new DataAPITimestamp(value);
+  public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
+    return ctx.done(new DataAPITimestamp(value));
   }
 
   public static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx) {

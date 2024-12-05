@@ -23,9 +23,17 @@ import {
   NameCodec,
   TypeCodec,
 } from '@/src/lib/api/ser-des/codecs';
-import { BaseDesCtx, BaseSerCtx, BaseSerDesCtx, ctxDone, ctxContinue } from '@/src/lib/api/ser-des/ctx';
+import {
+  BaseDesCtx,
+  BaseSerCtx,
+  BaseSerDesCtx,
+  ctxDone,
+  ctxContinue,
+  ctxRecurse,
+  DONE,
+} from '@/src/lib/api/ser-des/ctx';
 
-export type SerDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => [any, boolean] | boolean | void | 'Return ctx.done(val?), ctx.continue(val?), or void';
+export type SerDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?, string?] | 'Return ctx.done(val?), ctx.continue(val?), ctx.recurse(val?), or void';
 
 export interface SerDesConfig<Codec extends CodecHolder, Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>> {
   serialize?: OneOrMany<SerDesFn<SerCtx>>,
@@ -44,6 +52,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
   protected readonly _customGuardCodecs: CustomGuardCodec<Fns>[];
   protected readonly _classGuardCodecs: ClassGuardCodec<Fns>[];
   protected readonly _customState: Record<string, any> = {};
+  protected readonly _camelSnakeCache?: Record<string, any>;
 
   protected constructor(protected readonly _cfg: SerDesConfig<any, Fns, SerCtx, DesCtx>) {
     this._nameCodecs = {};
@@ -62,7 +71,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
     this._classGuardCodecs = Object.values(codecs).filter((codec) => 'serializeClass' in codec);
 
     if (this._cfg.snakeCaseInterop) {
-      this._customState.camelSnakeCache = {};
+      this._camelSnakeCache = {};
     }
   }
 
@@ -71,7 +80,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
       return [obj, false];
     }
     const ctx = this.adaptSerCtx(this._mkCtx({ rootObj: obj, depth: 0, mutatingInPlace: this._cfg.mutateInPlace === true }));
-    return [serializeRecord({ ['']: ctx.rootObj }, 0, ctx, toArray(this._cfg.serialize!), !!this._cfg.snakeCaseInterop)[''] as S, this.bigNumsPresent(ctx)];
+    return [serializeRecord({ ['']: ctx.rootObj }, 0, ctx, toArray(this._cfg.serialize!))[''] as S, this.bigNumsPresent(ctx)];
   }
 
   public deserializeRecord<S extends SomeDoc | nullish>(obj: SomeDoc | nullish, raw: RawDataAPIResponse): S {
@@ -79,7 +88,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
       return obj as S;
     }
     const ctx = this.adaptDesCtx(this._mkCtx({ rootObj: obj, rawDataApiResp: raw, depth: 0, numKeysInValue: 0, keys: [] }));
-    return deserializeRecord([''], { ['']: ctx.rootObj }, 0, ctx, toArray(this._cfg.deserialize!), !!this._cfg.snakeCaseInterop)[''] as S;
+    return deserializeRecord([''], { ['']: ctx.rootObj }, 0, ctx, toArray(this._cfg.deserialize!))[''] as S;
   }
 
   protected abstract adaptSerCtx(ctx: BaseSerCtx<Fns>): SerCtx;
@@ -99,71 +108,69 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
   private _mkCtx<Ctx>(ctx: Ctx): Ctx & BaseSerDesCtx<Fns> {
     return {
       done: ctxDone,
+      recurse: ctxRecurse,
       continue: ctxContinue,
       nameCodecs: this._nameCodecs,
       typeCodecs: this._typeCodecs,
       classGuardCodecs: this._classGuardCodecs,
       customGuardCodecs: this._customGuardCodecs,
       customState: this._customState,
+      camelSnakeCache: this._camelSnakeCache,
       ...ctx,
     };
   }
 }
 
-const serializeRecord = <Ctx extends BaseSerCtx<any>>(obj: SomeDoc, depth: number, ctx: Ctx, fns: readonly SerDesFn<Ctx>[], snake: boolean) => {
+const serializeRecord = <Ctx extends BaseSerCtx<any>>(obj: SomeDoc, depth: number, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) => {
   obj = (!ctx.mutatingInPlace)
     ? (Array.isArray(obj) ? [...obj] : { ...obj })
     : obj;
 
   for (let keys = Object.keys(obj), i = keys.length; i--;) {
     let key = keys[i];
-    const value = obj[key];
     let stop;
 
     ctx.depth = depth;
 
-    if (depth && snake) {
-      const oldKey = key;
-      key = camelToSnakeCase(key, ctx.customState.camelSnakeCache);
-
-      if (key !== oldKey) {
-        obj[key] = value;
-        delete obj[oldKey];
-      }
-    }
-
     for (let f = 0; f < fns.length && !stop; f++) {
-      const res = fns[f].call(obj, key, value, ctx);
+      const res = fns[f].call(obj, key, obj[key], ctx) as [number] | [number, any] | [number, any, string];
 
-      if (!res) {
-        continue;
-      }
+      stop = res?.[0] === DONE;
 
-      if (typeof res === 'object') {
-        if (res.length === 2) {
-          obj[key] = res[0];
-          stop = res[1];
-        } else {
+      switch (res.length) {
+        case 1:
+          continue;
+        case 2:
+          obj[key] = res[1];
+          break;
+        case 3: {
           const oldKey = key;
-          key = res[0];
+          key = res[2];
           obj[key] = res[1];
           delete obj[oldKey];
-          stop = res[2];
         }
-      } else {
-        stop = res;
       }
     }
 
     if (!stop && depth < 250 && typeof obj[key] === 'object' && obj[key] !== null) {
-      obj[key] = serializeRecord(obj[key], depth + 1, ctx, fns, snake);
+      obj[key] = serializeRecord(obj[key], depth + 1, ctx, fns);
+    }
+
+    if (depth && ctx.camelSnakeCache) {
+      const oldKey = key;
+      key = camelToSnakeCase(key, ctx.camelSnakeCache);
+
+      if (key !== oldKey) {
+        obj[key] = obj[oldKey];
+        delete obj[oldKey];
+      }
     }
   }
 
   return obj;
 };
 
-const deserializeRecord = <Ctx extends BaseDesCtx<any>>(keys: string[], obj: SomeDoc, depth: number, ctx: Ctx, fns: readonly SerDesFn<Ctx>[], snake: boolean) => {
+const deserializeRecord = <Ctx extends BaseDesCtx<any>>(keys: string[], obj: SomeDoc, depth: number, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) => {
   for (let i = keys.length; i--;) {
     let key = keys[i];
     const value = obj[key];
@@ -175,9 +182,9 @@ const deserializeRecord = <Ctx extends BaseDesCtx<any>>(keys: string[], obj: Som
 
     ctx.depth = depth;
 
-    if (depth && snake) {
+    if (depth && ctx.camelSnakeCache) {
       const oldKey = key;
-      key = snakeToCamelCase(key, ctx.customState.camelSnakeCache);
+      key = snakeToCamelCase(key, ctx.camelSnakeCache);
 
       if (key !== oldKey) {
         obj[key] = value;
@@ -186,33 +193,30 @@ const deserializeRecord = <Ctx extends BaseDesCtx<any>>(keys: string[], obj: Som
     }
 
     for (let f = 0; f < fns.length && !stop; f++) {
-      const res = fns[f].call(obj, key, value, ctx);
+      const res = fns[f].call(obj, key, value, ctx) as [number] | [number, any] | [number, any, string];
 
-      if (!res) {
-        continue;
-      }
+      stop = res?.[0] === DONE;
 
-      if (typeof res === 'object') {
-        if (res.length === 2) {
-          obj[key] = res[0];
-          stop = res[1];
-        } else {
+      switch (res.length) {
+        case 1:
+          continue;
+        case 2:
+          obj[key] = res[1];
+          break;
+        case 3: {
           const oldKey = key;
-          key = res[0];
+          key = res[2];
           obj[key] = res[1];
           delete obj[oldKey];
-          stop = res[2];
         }
-      } else {
-        stop = res;
       }
     }
 
     if (!stop && depth < 250) {
       if (obj[key] === value) {
-        deserializeRecord(ctx.keys, value, depth + 1, ctx, fns, snake);
+        deserializeRecord(ctx.keys, value, depth + 1, ctx, fns);
       } else {
-        deserializeRecord(Object.keys(obj[key]), obj[key], depth + 1, ctx, fns, snake);
+        deserializeRecord(Object.keys(obj[key]), obj[key], depth + 1, ctx, fns);
       }
     }
   }
