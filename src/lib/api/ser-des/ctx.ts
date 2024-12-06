@@ -29,11 +29,8 @@ export interface BaseSerDesCtx<Fns extends CodecSerDesFns> {
   rootObj: SomeDoc,
   path: string[],
   done<T>(obj?: T): readonly [0, T?],
-  done<T>(key?: string, obj?: T): readonly [0, T, string],
   recurse<T>(obj?: T): readonly [1, T?],
-  recurse<T>(key?: string, obj?: T): readonly [1, T, string],
   continue<T>(obj?: T): readonly [2, T?],
-  continue<T>(key?: string, obj?: T): readonly [2, T, string],
   nameCodecs: Record<string, NameCodec<Fns>>;
   typeCodecs: Record<string, TypeCodec<Fns>>;
   classGuardCodecs: ClassGuardCodec<Fns>[];
@@ -53,53 +50,29 @@ const CONTINUE_ARR = [CONTINUE] as const;
 /**
  * @internal
  */
-export function ctxDone<T>(obj?: T): readonly [0, T?];
-
-/**
- * @internal
- */
-export function ctxDone<T>(key?: string, obj?: T): readonly [0, T, string];
-
-export function ctxDone<T>(objOrKey?: string | T, obj?: T): readonly [0, T, string] | readonly [0, T?] {
-  switch (arguments.length) {
-    case 1: return [DONE, objOrKey as T];
-    case 2: return [DONE, obj as T, objOrKey as string];
-    default: return DONE_ARR;
+export function ctxDone<T>(obj?: T): readonly [0, T?] {
+  if (arguments.length === 1) {
+    return [DONE, obj];
   }
+  return DONE_ARR;
 }
 
 /**
  * @internal
  */
-export function ctxRecurse<T>(obj?: T): readonly [1, T?];
-
-/**
- * @internal
- */
-export function ctxRecurse<T>(key?: string, obj?: T): readonly [1, T, string];
-
-export function ctxRecurse<T>(objOrKey?: string | T, obj?: T): readonly [1, T, string] | readonly [1, T?] {
-  switch (arguments.length) {
-    case 1: return [RECURSE, objOrKey as T];
-    case 2: return [RECURSE, obj as T, objOrKey as string];
-    default: return RECURSE_ARR;
+export function ctxRecurse<T>(obj?: T): readonly [1, T?] {
+  if (arguments.length === 1) {
+    return [RECURSE, obj];
   }
+  return RECURSE_ARR;
 }
 
 /**
  * @internal
  */
-export function ctxContinue<T>(obj?: T): readonly [2, T?];
-
-/**
- * @internal
- */
-export function ctxContinue<T>(key?: string, obj?: T): readonly [2, T, string];
-
-export function ctxContinue<T>(objOrKey?: string | T, obj?: T): readonly [2, T, string] | readonly [2, T?] {
-  switch (arguments.length) {
-    case 1: return [CONTINUE, objOrKey as T];
-    case 2: return [CONTINUE, obj as T, objOrKey as string];
-    default: return CONTINUE_ARR;
+export function ctxContinue<T>(obj?: T): readonly [2, T?] {
+  if (arguments.length === 1) {
+    return [CONTINUE, obj];
   }
+  return CONTINUE_ARR;
 }

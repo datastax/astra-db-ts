@@ -33,7 +33,7 @@ import {
   DONE,
 } from '@/src/lib/api/ser-des/ctx';
 
-export type SerDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?, string?] | 'Return ctx.done(val?), ctx.continue(val?), ctx.recurse(val?), or void';
+export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?, string?] | 'Return ctx.done(val?), ctx.continue(val?), ctx.recurse(val?), or void';
 
 export interface SerDesConfig<Codec extends CodecHolder, Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>> {
   serialize?: OneOrMany<SerDesFn<SerCtx>>,
@@ -80,7 +80,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
       return [obj, false];
     }
     const ctx = this.adaptSerCtx(this._mkCtx(obj, { mutatingInPlace: this._cfg.mutateInPlace === true }));
-    return [serializeRecord({ ['']: ctx.rootObj }, ctx, toArray(this._cfg.serialize!))[''] as S, this.bigNumsPresent(ctx)];
+    return [serializeRecord('', { ['']: ctx.rootObj }, ctx, toArray(this._cfg.serialize!))[''] as S, this.bigNumsPresent(ctx)];
   }
 
   public deserializeRecord<S extends SomeDoc | nullish>(obj: SomeDoc | nullish, raw: RawDataAPIResponse): S {
@@ -88,7 +88,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
       return obj as S;
     }
     const ctx = this.adaptDesCtx(this._mkCtx(obj, { rawDataApiResp: raw, keys: [] }));
-    return deserializeRecord([''], { ['']: ctx.rootObj }, ctx, toArray(this._cfg.deserialize!))[''] as S;
+    return deserializeRecord('', { ['']: ctx.rootObj }, ctx, toArray(this._cfg.deserialize!))[''] as S;
   }
 
   protected abstract adaptSerCtx(ctx: BaseSerCtx<Fns>): SerCtx;
@@ -123,7 +123,17 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
   }
 }
 
-const serializeRecord = <Ctx extends BaseSerCtx<any>>(obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) => {
+function serializeRecord<Ctx extends BaseSerCtx<any>>(key: string, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
+  const stop = serdesLoop(fns, key, obj, ctx);
+
+  if (!stop && ctx.path.length < 250 && typeof obj[key] === 'object' && obj[key] !== null) {
+    obj[key] = serializeRecordHelper(obj[key], ctx, fns);
+  }
+
+  return obj;
+}
+
+function serializeRecordHelper<Ctx extends BaseSerCtx<any>>(obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
   obj = (!ctx.mutatingInPlace)
     ? (Array.isArray(obj) ? [...obj] : { ...obj })
     : obj;
@@ -133,34 +143,10 @@ const serializeRecord = <Ctx extends BaseSerCtx<any>>(obj: SomeDoc, ctx: Ctx, fn
 
   for (let keys = Object.keys(obj), i = keys.length; i--;) {
     let key = keys[i];
-    let stop;
 
     path[path.length - 1] = key;
 
-    for (let f = 0; f < fns.length && !stop; f++) {
-      const res = fns[f].call(obj, key, obj[key], ctx) as [number] | [number, any] | [number, any, string];
-
-      stop = res?.[0] === DONE;
-
-      switch (res.length) {
-        case 1:
-          continue;
-        case 2:
-          obj[key] = res[1];
-          break;
-        case 3: {
-          const oldKey = key;
-          key = res[2];
-          obj[key] = res[1];
-          delete obj[oldKey];
-          path[path.length - 1] = key;
-        }
-      }
-    }
-
-    if (!stop && path.length < 250 && typeof obj[key] === 'object' && obj[key] !== null) {
-      obj[key] = serializeRecord(obj[key], ctx, fns);
-    }
+    serializeRecord(key, obj, ctx, fns);
 
     if (ctx.camelSnakeCache) {
       const oldKey = key;
@@ -175,20 +161,34 @@ const serializeRecord = <Ctx extends BaseSerCtx<any>>(obj: SomeDoc, ctx: Ctx, fn
 
   path.pop();
   return obj;
-};
+}
 
-const deserializeRecord = <Ctx extends BaseDesCtx<any>>(keys: string[], obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) => {
+function deserializeRecord<Ctx extends BaseDesCtx<any>>(key: string, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
+  const value = obj[key];
+
+  ctx.keys = (typeof value === 'object' && value !== null)
+    ? Object.keys(value)
+    : [];
+
+  const stop = serdesLoop(fns, key, obj, ctx);
+
+  if (!stop && ctx.path.length < 250) {
+    if (obj[key] === value) {
+      deserializeRecordHelper(ctx.keys, value, ctx, fns);
+    } else {
+      deserializeRecordHelper(Object.keys(obj[key]), obj[key], ctx, fns);
+    }
+  }
+
+  return obj;
+}
+
+function deserializeRecordHelper<Ctx extends BaseDesCtx<any>>(keys: string[], obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
   const path = ctx.path;
   path.push('<temp>');
 
   for (let i = keys.length; i--;) {
     let key = keys[i];
-    const value = obj[key];
-    let stop;
-
-    ctx.keys = (typeof value === 'object' && value !== null)
-      ? Object.keys(value)
-      : [];
 
     path[path.length - 1] = key;
 
@@ -197,42 +197,30 @@ const deserializeRecord = <Ctx extends BaseDesCtx<any>>(keys: string[], obj: Som
       key = snakeToCamelCase(key, ctx.camelSnakeCache);
 
       if (key !== oldKey) {
-        obj[key] = value;
+        obj[key] = obj[oldKey];
         delete obj[oldKey];
         path[path.length - 1] = key;
       }
     }
 
-    for (let f = 0; f < fns.length && !stop; f++) {
-      const res = fns[f].call(obj, key, obj[key], ctx) as [number] | [number, any] | [number, any, string];
-
-      stop = res?.[0] === DONE;
-
-      switch (res.length) {
-        case 1:
-          continue;
-        case 2:
-          obj[key] = res[1];
-          break;
-        case 3: {
-          const oldKey = key;
-          key = res[2];
-          obj[key] = res[1];
-          delete obj[oldKey];
-          path[path.length - 1] = key;
-        }
-      }
-    }
-
-    if (!stop && path.length < 250) {
-      if (obj[key] === value) {
-        deserializeRecord(ctx.keys, value, ctx, fns);
-      } else {
-        deserializeRecord(Object.keys(obj[key]), obj[key], ctx, fns);
-      }
-    }
+    deserializeRecord(key, obj, ctx, fns);
   }
 
   path.pop();
-  return obj;
-};
+}
+
+function serdesLoop<Ctx>(fns: readonly SerDesFn<Ctx>[], key: string, obj: SomeDoc, ctx: Ctx): boolean {
+  let stop: unknown;
+
+  for (let f = 0; f < fns.length && !stop; f++) {
+    const res = fns[f](key, obj[key], ctx) as [number] | [number, any];
+
+    stop = res?.[0] === DONE;
+
+    if (res.length === 2) {
+      obj[key] = res[1];
+    }
+  }
+
+  return !!stop;
+}
