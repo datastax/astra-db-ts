@@ -107,3 +107,17 @@ export function snakeToCamelCase(snake: string, cache: Record<string, string>): 
   }
   return cache[snake] = snake[0] + snake.slice(1).replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
 }
+
+export function stringArraysEqual(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}

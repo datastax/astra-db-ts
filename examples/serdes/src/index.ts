@@ -11,6 +11,7 @@ const cleanup = () => db.dropCollection(NAME);
 (async () => {
   await cleanup();
   await using _ = { [Symbol.asyncDispose]: cleanup };
-  const example = await import('./tables/everything');
+  // const example = await import('./tables/custom-datatypes');
+  const example = await import('./collections/class-mapping');
   await example.default(NAME, db);
 })();

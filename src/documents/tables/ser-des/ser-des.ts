@@ -23,7 +23,7 @@ import { TableCodecs, TableCodecSerDesFns } from '@/src/documents/tables/ser-des
 import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import BigNumber from 'bignumber.js';
-import { snakeToCamelCase } from '@/src/lib/utils';
+import { snakeToCamelCase, stringArraysEqual } from '@/src/lib/utils';
 
 export interface TableSerCtx extends BaseSerCtx<TableCodecSerDesFns> {
   bigNumsPresent: boolean,
@@ -31,8 +31,8 @@ export interface TableSerCtx extends BaseSerCtx<TableCodecSerDesFns> {
 
 export interface TableDesCtx extends BaseDesCtx<TableCodecSerDesFns> {
   tableSchema: ListTableColumnDefinitions,
-  parsingPrimaryKey: boolean,
   populateSparseData: boolean,
+  recurse: never;
 }
 
 export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: SomeDoc) => any;
@@ -57,16 +57,12 @@ export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableD
   }
 
   public override adaptDesCtx(ctx: TableDesCtx): TableDesCtx {
-    const status = ctx.rawDataApiResp.status;
+    const status = ctx.rawDataApiResp.status!;
 
-    if (status?.primaryKeySchema) {
+    if (ctx.parsingInsertedId) {
       ctx.tableSchema = status.primaryKeySchema;
-      ctx.parsingPrimaryKey = true;
-    } else if (status?.projectionSchema) {
-      ctx.tableSchema = status.projectionSchema;
-      ctx.parsingPrimaryKey = false;
     } else {
-      throw new Error('No schema found in response');
+      ctx.tableSchema = status.projectionSchema;
     }
 
     if (ctx.camelSnakeCache) {
@@ -75,11 +71,13 @@ export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableD
       }));
     }
 
-    if (ctx.parsingPrimaryKey) {
+    if (ctx.parsingInsertedId) {
       ctx.rootObj = Object.fromEntries(Object.entries(status.primaryKeySchema).map(([key], j) => {
         return [key, ctx.rootObj[j]];
       }));
     }
+
+    (<any>ctx).recurse = () => { throw new Error('Table deserialization does not recurse normally; please call any necessary codecs manually'); };
 
     ctx.populateSparseData = this._cfg?.sparseData !== true;
     return ctx;
@@ -99,10 +97,21 @@ export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableD
 
 const DefaultTableSerDesCfg = {
   serialize(key, value, ctx) {
+    const codecs = ctx.codecs;
     let resp;
 
-    if (ctx.path.length === 1 && key in ctx.nameCodecs) {
-      if ((resp = ctx.nameCodecs[key].serialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
+    for (let i = 0, n = codecs.path.length; i < n; i++) {
+      const path = codecs.path[i].path;
+
+      if (stringArraysEqual(path, ctx.path)) {
+        if ((resp = codecs.path[i].serialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
+          return resp;
+        }
+      }
+    }
+
+    if (ctx.path.length === 1 && key in codecs.name) {
+      if ((resp = codecs.name[key].serialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
         return resp;
       }
     }
@@ -118,7 +127,7 @@ const DefaultTableSerDesCfg = {
         }
       }
 
-      for (const codec of ctx.classGuardCodecs) {
+      for (const codec of codecs.classGuard) {
         if (value instanceof codec.serializeClass) {
           if ((resp = codec.serialize(key, value, ctx))[0] !== CONTINUE) {
             return resp;
@@ -134,7 +143,7 @@ const DefaultTableSerDesCfg = {
       ctx.bigNumsPresent = true;
     }
 
-    for (const codec of ctx.customGuardCodecs) {
+    for (const codec of codecs.customGuard) {
       if (codec.serializeGuard(value, ctx)) {
         if ((resp = codec.serialize(key, value, ctx))[0] !== CONTINUE) {
           return resp;
@@ -143,13 +152,25 @@ const DefaultTableSerDesCfg = {
     }
     return ctx.continue();
   },
-  deserialize(key, _, ctx) {
+  deserialize(key, value, ctx) {
+    const codecs = ctx.codecs;
     let resp;
 
-    if (key === '') {
-      if (Object.keys(ctx.rootObj).length === 0 && ctx.populateSparseData) {
-        populateSparseData(ctx); // populate sparse data for empty objects
+    if (key === '' && Object.keys(ctx.rootObj).length === 0 && ctx.populateSparseData) {
+      populateSparseData(ctx); // populate sparse data for empty objects
+    }
+
+    for (let i = 0, n = codecs.path.length; i < n; i++) {
+      const path = codecs.path[i].path;
+
+      if (stringArraysEqual(path, ctx.path)) {
+        if ((resp = codecs.path[i].deserialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
+          return resp;
+        }
       }
+    }
+
+    if (key === '') {
       return ctx.continue();
     }
 
@@ -164,14 +185,14 @@ const DefaultTableSerDesCfg = {
       const type = resolveType(column);
       const obj = ctx.rootObj;
 
-      if (key in ctx.nameCodecs) {
-        if ((resp = ctx.nameCodecs[key].deserialize(obj[key], ctx, column))[0] !== CONTINUE) {
+      if (key in codecs.name) {
+        if ((resp = codecs.name[key].deserialize(obj[key], ctx, column))[0] !== CONTINUE) {
           return resp;
         }
       }
 
-      if (type in ctx.typeCodecs) {
-        if ((resp = ctx.typeCodecs[type].deserialize(obj[key], ctx, column))[0] !== CONTINUE) {
+      if (type in codecs.type) {
+        if ((resp = codecs.type[type].deserialize(obj[key], ctx, column))[0] !== CONTINUE) {
           return resp;
         }
       }
@@ -179,7 +200,7 @@ const DefaultTableSerDesCfg = {
     return ctx.done();
   },
   codecs: Object.values(TableCodecs.Defaults),
-} satisfies Pick<TableSerDesConfig, 'codecs' | 'serialize' | 'deserialize'>;
+} satisfies TableSerDesConfig;
 
 function populateSparseData(ctx: TableDesCtx) {
   for (const key in ctx.tableSchema) {

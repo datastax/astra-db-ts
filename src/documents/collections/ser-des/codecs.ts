@@ -67,6 +67,17 @@ export class CollCodecs implements CodecHolder<CollCodecSerDesFns> {
     // USE_NUMBER_ARRAYS_FOR_VECTORS:
   };
 
+  public static forPath(path: string[], clazz: CollCodecClass): CollCodecs
+
+  public static forPath(path: string[], opts: CollCodecSerDesFns): CollCodecs
+
+  public static forPath(path: string[], clazzOrOpts: CollCodecClass | CollCodecSerDesFns): CollCodecs {
+    if ($DeserializeForCollection in clazzOrOpts) {
+      return new CollCodecs({ codecType: 'path', path, deserialize: clazzOrOpts[$DeserializeForCollection] });
+    }
+    return new CollCodecs({ codecType: 'path', path, ...clazzOrOpts });
+  }
+
   public static forName(name: string, clazz: CollCodecClass): CollCodecs
 
   public static forName(name: string, opts: CollCodecSerDesFns): CollCodecs

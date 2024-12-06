@@ -253,64 +253,42 @@ export interface BaseAstraDbInfo {
     status: AstraDbStatus;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "BaseDesCtx" is marked as @public, but its signature references "CodecSerDesFns" which is marked as @internal
-//
 // @public (undocumented)
 export interface BaseDesCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fns> {
     // (undocumented)
     keys: string[] | null;
     // (undocumented)
+    parsingInsertedId: boolean;
+    // (undocumented)
     rawDataApiResp: RawDataAPIResponse;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "BaseSerCtx" is marked as @public, but its signature references "CodecSerDesFns" which is marked as @internal
-//
 // @public (undocumented)
 export interface BaseSerCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fns> {
     // (undocumented)
     mutatingInPlace: boolean;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "BaseSerDesCtx" is marked as @public, but its signature references "CodecSerDesFns" which is marked as @internal
-//
 // @public (undocumented)
 export interface BaseSerDesCtx<Fns extends CodecSerDesFns> {
     // (undocumented)
     camelSnakeCache?: Record<string, string>;
-    // Warning: (ae-forgotten-export) The symbol "ClassGuardCodec" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "Codecs" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
-    classGuardCodecs: ClassGuardCodec<Fns>[];
+    codecs: Codecs<Fns>;
     // (undocumented)
-    continue<T>(obj?: T): readonly [2, T?];
-    // (undocumented)
-    continue<T>(key?: string, obj?: T): readonly [2, T, string];
-    // Warning: (ae-forgotten-export) The symbol "CustomGuardCodec" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    customGuardCodecs: CustomGuardCodec<Fns>[];
+    continue(): readonly [2];
     // (undocumented)
     customState: Record<string, any>;
     // (undocumented)
     done<T>(obj?: T): readonly [0, T?];
     // (undocumented)
-    done<T>(key?: string, obj?: T): readonly [0, T, string];
-    // Warning: (ae-forgotten-export) The symbol "NameCodec" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    nameCodecs: Record<string, NameCodec<Fns>>;
-    // (undocumented)
     path: string[];
     // (undocumented)
     recurse<T>(obj?: T): readonly [1, T?];
     // (undocumented)
-    recurse<T>(key?: string, obj?: T): readonly [1, T, string];
-    // (undocumented)
     rootObj: SomeDoc;
-    // Warning: (ae-forgotten-export) The symbol "TypeCodec" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    typeCodecs: Record<string, TypeCodec<Fns>>;
 }
 
 // @public (undocumented)
@@ -319,9 +297,7 @@ export const blob: (blob: DataAPIBlobLike) => DataAPIBlob;
 // @public
 export type Caller = readonly [name: string, version?: string];
 
-// Warning: (ae-internal-missing-underscore) The name "CodecSerDesFns" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
+// @public (undocumented)
 export type CodecSerDesFns = Record<'serialize' | 'deserialize', (...args: any[]) => ReturnType<SerDesFn<any>>>;
 
 // @public (undocumented)
@@ -354,6 +330,10 @@ export class CollCodecs implements CodecHolder<CollCodecSerDesFns> {
     static forName(name: string, clazz: CollCodecClass): CollCodecs;
     // (undocumented)
     static forName(name: string, opts: CollCodecSerDesFns): CollCodecs;
+    // (undocumented)
+    static forPath(path: string[], clazz: CollCodecClass): CollCodecs;
+    // (undocumented)
+    static forPath(path: string[], opts: CollCodecSerDesFns): CollCodecs;
     // (undocumented)
     static forType(type: string, clazz: CollCodecClass): CollCodecs;
     // (undocumented)
@@ -1808,10 +1788,8 @@ export interface ScalarCreateTableColumnDefinition {
     type: TableScalarType;
 }
 
-// Warning: (ae-incompatible-release-tags) The symbol "SerDesConfig" is marked as @public, but its signature references "CodecSerDesFns" which is marked as @internal
-//
 // @public (undocumented)
-export interface SerDesConfig<Codec extends CodecHolder, Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>> {
+export interface SerDesConfig<Codec extends CodecHolder<Fns>, Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>> {
     // (undocumented)
     codecs?: Codec[];
     // (undocumented)
@@ -1825,7 +1803,7 @@ export interface SerDesConfig<Codec extends CodecHolder, Fns extends CodecSerDes
 }
 
 // @public (undocumented)
-export type SerDesFn<Ctx> = (this: SomeDoc, key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?, string?] | 'Return ctx.done(val?), ctx.continue(val?), ctx.recurse(val?), or void';
+export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?, string?] | 'Return ctx.done(val?), ctx.recurse(val?), ctx.continue(), or void';
 
 // @public (undocumented)
 export interface SetCreateTableColumnDefinition {
@@ -1949,6 +1927,10 @@ export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
     // (undocumented)
     static forName(name: string, opts: TableCodecSerDesFns): TableCodecs;
     // (undocumented)
+    static forPath(path: string[], clazz: TableCodecClass): TableCodecs;
+    // (undocumented)
+    static forPath(path: string[], opts: TableCodecSerDesFns): TableCodecs;
+    // (undocumented)
     static forType(type: string, clazz: TableCodecClass): TableCodecs;
     // (undocumented)
     static forType(type: string, opts: TableCodecSerDesFns & {
@@ -1990,9 +1972,9 @@ export interface TableDescriptor {
 // @public (undocumented)
 export interface TableDesCtx extends BaseDesCtx<TableCodecSerDesFns> {
     // (undocumented)
-    parsingPrimaryKey: boolean;
-    // (undocumented)
     populateSparseData: boolean;
+    // (undocumented)
+    recurse: never;
     // (undocumented)
     tableSchema: ListTableColumnDefinitions;
 }

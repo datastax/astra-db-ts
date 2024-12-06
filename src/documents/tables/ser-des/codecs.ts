@@ -102,8 +102,8 @@ export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
         for (let i = 0, n = entries.length; i < n; i++) {
           const [key, value] = entries[i];
 
-          const keyParser = ctx.typeCodecs[def.keyType];
-          const valueParser = ctx.typeCodecs[def.valueType];
+          const keyParser = ctx.codecs.type[def.keyType];
+          const valueParser = ctx.codecs.type[def.valueType];
 
           entries[i] = [
             keyParser ? keyParser.deserialize(key, ctx, def) : key,
@@ -118,7 +118,7 @@ export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
       deserializeOnly: true,
       deserialize(list, ctx, def) {
         for (let i = 0, n = list.length; i < n; i++) {
-          const elemParser = ctx.typeCodecs[def.valueType];
+          const elemParser = ctx.codecs.type[def.valueType];
           list[i] = elemParser ? elemParser.deserialize(list[i], ctx, def) : list[i];
         }
         return ctx.done(list);
@@ -131,7 +131,7 @@ export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
       },
       deserialize(list, ctx, def) {
         for (let i = 0, n = list.length; i < n; i++) {
-          const elemParser = ctx.typeCodecs[def.valueType];
+          const elemParser = ctx.codecs.type[def.valueType];
           list[i] = elemParser ? elemParser.deserialize(list[i], ctx, def) : list[i];
         }
         return ctx.done(new Set(list));
@@ -142,6 +142,17 @@ export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
   public static Overrides = {
 
   };
+
+  public static forPath(path: string[], clazz: TableCodecClass): TableCodecs
+
+  public static forPath(path: string[], opts: TableCodecSerDesFns): TableCodecs
+
+  public static forPath(path: string[], clazzOrOpts: TableCodecClass | TableCodecSerDesFns): TableCodecs {
+    if ($DeserializeForTable in clazzOrOpts) {
+      return new TableCodecs({ codecType: 'path', path, deserialize: clazzOrOpts[$DeserializeForTable] });
+    }
+    return new TableCodecs({ codecType: 'path', path, ...clazzOrOpts });
+  }
 
   public static forName(name: string, clazz: TableCodecClass): TableCodecs
 

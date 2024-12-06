@@ -16,7 +16,7 @@ interface User {
   milestones: AssocList<string, Date>,
 }
 
-export default async function TableCustomDatatypeExample(name: string, db: Db) {
+export default async function TableCustomDatatypesExample(name: string, db: Db) {
   const table = await db.createTable<User>(name, {
     definition: {
       columns: {
@@ -100,8 +100,8 @@ class AssocList<K, V> implements TableCodec<typeof AssocList> {
     const values = Object.entries(obj);
 
     for (let i = 0; i < values.length; i++) {
-      values[i][0] = ctx.typeCodecs[def.keyType]?.deserialize(values[i][0], ctx, def)[1] ?? values[i][0];
-      values[i][1] = ctx.typeCodecs[def.valueType]?.deserialize(values[i][1], ctx, def)[1] ?? values[i][1];
+      values[i][0] = ctx.codecs.type[def.keyType]?.deserialize(values[i][0], ctx, def)[1] ?? values[i][0];
+      values[i][1] = ctx.codecs.type[def.valueType]?.deserialize(values[i][1], ctx, def)[1] ?? values[i][1];
     }
 
     return ctx.done(new AssocList(values));

@@ -15,27 +15,20 @@
 import { SomeDoc } from '@/src/documents';
 import type { nullish, OneOrMany, RawDataAPIResponse } from '@/src/lib';
 import { camelToSnakeCase, snakeToCamelCase, toArray } from '@/src/lib/utils';
-import {
-  ClassGuardCodec,
-  CodecHolder,
-  CodecSerDesFns,
-  CustomGuardCodec,
-  NameCodec,
-  TypeCodec,
-} from '@/src/lib/api/ser-des/codecs';
+import { CodecHolder, Codecs, CodecSerDesFns, initCodecs } from '@/src/lib/api/ser-des/codecs';
 import {
   BaseDesCtx,
   BaseSerCtx,
   BaseSerDesCtx,
-  ctxDone,
   ctxContinue,
+  ctxDone,
   ctxRecurse,
   DONE,
 } from '@/src/lib/api/ser-des/ctx';
 
-export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?, string?] | 'Return ctx.done(val?), ctx.continue(val?), ctx.recurse(val?), or void';
+export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?, string?] | 'Return ctx.done(val?), ctx.recurse(val?), ctx.continue(), or void';
 
-export interface SerDesConfig<Codec extends CodecHolder, Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>> {
+export interface SerDesConfig<Codec extends CodecHolder<Fns>, Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>> {
   serialize?: OneOrMany<SerDesFn<SerCtx>>,
   deserialize?: OneOrMany<SerDesFn<DesCtx>>,
   mutateInPlace?: boolean,
@@ -47,28 +40,12 @@ export interface SerDesConfig<Codec extends CodecHolder, Fns extends CodecSerDes
  * @internal
  */
 export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends BaseSerCtx<Fns> = any, DesCtx extends BaseDesCtx<Fns> = any> {
-  protected readonly _nameCodecs: Record<string, NameCodec<Fns>>;
-  protected readonly _typeCodecs: Record<string, TypeCodec<Fns>>;
-  protected readonly _customGuardCodecs: CustomGuardCodec<Fns>[];
-  protected readonly _classGuardCodecs: ClassGuardCodec<Fns>[];
+  protected readonly _codecs: Codecs<Fns>;
   protected readonly _customState: Record<string, any> = {};
   protected readonly _camelSnakeCache?: Record<string, any>;
 
   protected constructor(protected readonly _cfg: SerDesConfig<any, Fns, SerCtx, DesCtx>) {
-    this._nameCodecs = {};
-    this._typeCodecs = {};
-    const codecs = this._cfg?.codecs?.map(c => c.get) ?? [];
-
-    for (const codec of codecs) {
-      if (codec.codecType === 'name') {
-        this._nameCodecs[codec.name] = codec;
-      } else {
-        this._typeCodecs[codec.type] = codec;
-      }
-    }
-
-    this._customGuardCodecs = Object.values(codecs).filter((codec) => 'serializeGuard' in codec);
-    this._classGuardCodecs = Object.values(codecs).filter((codec) => 'serializeClass' in codec);
+    this._codecs = initCodecs(_cfg.codecs ?? []);
 
     if (this._cfg.snakeCaseInterop) {
       this._camelSnakeCache = {};
@@ -83,11 +60,11 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
     return [serializeRecord('', { ['']: ctx.rootObj }, ctx, toArray(this._cfg.serialize!))[''] as S, this.bigNumsPresent(ctx)];
   }
 
-  public deserializeRecord<S extends SomeDoc | nullish>(obj: SomeDoc | nullish, raw: RawDataAPIResponse): S {
+  public deserializeRecord<S extends SomeDoc | nullish>(obj: SomeDoc | nullish, raw: RawDataAPIResponse, parsingId = false): S {
     if (obj === null || obj === undefined) {
       return obj as S;
     }
-    const ctx = this.adaptDesCtx(this._mkCtx(obj, { rawDataApiResp: raw, keys: [] }));
+    const ctx = this.adaptDesCtx(this._mkCtx(obj, { rawDataApiResp: raw, keys: [], parsingInsertedId: parsingId }));
     return deserializeRecord('', { ['']: ctx.rootObj }, ctx, toArray(this._cfg.deserialize!))[''] as S;
   }
 
@@ -95,7 +72,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
   protected abstract adaptDesCtx(ctx: BaseDesCtx<Fns>): DesCtx;
   protected abstract bigNumsPresent(ctx: SerCtx): boolean;
 
-  protected static _mergeConfig<Codec extends CodecHolder, Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>>(...cfg: (SerDesConfig<Codec, Fns, SerCtx, DesCtx> | undefined)[]): SerDesConfig<Codec, Fns, SerCtx, DesCtx> {
+  protected static _mergeConfig<Codec extends CodecHolder<Fns>, Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>>(...cfg: (SerDesConfig<Codec, Fns, SerCtx, DesCtx> | undefined)[]): SerDesConfig<Codec, Fns, SerCtx, DesCtx> {
     return cfg.reduce<SerDesConfig<Codec, Fns, SerCtx, DesCtx>>((acc, cfg) => ({
       serialize: [...toArray(cfg?.serialize ?? []), ...toArray(acc.serialize ?? [])],
       deserialize: [...toArray(cfg?.deserialize ?? []), ...toArray(acc.deserialize ?? [])],
@@ -110,10 +87,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
       done: ctxDone,
       recurse: ctxRecurse,
       continue: ctxContinue,
-      nameCodecs: this._nameCodecs,
-      typeCodecs: this._typeCodecs,
-      classGuardCodecs: this._classGuardCodecs,
-      customGuardCodecs: this._customGuardCodecs,
+      codecs: this._codecs,
       customState: this._customState,
       camelSnakeCache: this._camelSnakeCache,
       rootObj: obj,
@@ -124,7 +98,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
 }
 
 function serializeRecord<Ctx extends BaseSerCtx<any>>(key: string, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
-  const stop = serdesLoop(fns, key, obj, ctx);
+  const stop = applySerdesFns(fns, key, obj, ctx);
 
   if (!stop && ctx.path.length < 250 && typeof obj[key] === 'object' && obj[key] !== null) {
     obj[key] = serializeRecordHelper(obj[key], ctx, fns);
@@ -170,7 +144,7 @@ function deserializeRecord<Ctx extends BaseDesCtx<any>>(key: string, obj: SomeDo
     ? Object.keys(value)
     : [];
 
-  const stop = serdesLoop(fns, key, obj, ctx);
+  const stop = applySerdesFns(fns, key, obj, ctx);
 
   if (!stop && ctx.path.length < 250) {
     if (obj[key] === value) {
@@ -209,7 +183,7 @@ function deserializeRecordHelper<Ctx extends BaseDesCtx<any>>(keys: string[], ob
   path.pop();
 }
 
-function serdesLoop<Ctx>(fns: readonly SerDesFn<Ctx>[], key: string, obj: SomeDoc, ctx: Ctx): boolean {
+function applySerdesFns<Ctx>(fns: readonly SerDesFn<Ctx>[], key: string, obj: SomeDoc, ctx: Ctx): boolean {
   let stop: unknown;
 
   for (let f = 0; f < fns.length && !stop; f++) {

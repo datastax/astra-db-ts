@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ClassGuardCodec, CodecSerDesFns, CustomGuardCodec, NameCodec, TypeCodec } from '@/src/lib/api/ser-des/codecs';
+import { Codecs, CodecSerDesFns } from '@/src/lib/api/ser-des/codecs';
 import { SomeDoc } from '@/src/documents';
 import type { RawDataAPIResponse } from '@/src/lib';
 
@@ -22,6 +22,7 @@ export interface BaseSerCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fn
 
 export interface BaseDesCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fns> {
   rawDataApiResp: RawDataAPIResponse,
+  parsingInsertedId: boolean,
   keys: string[] | null,
 }
 
@@ -30,11 +31,8 @@ export interface BaseSerDesCtx<Fns extends CodecSerDesFns> {
   path: string[],
   done<T>(obj?: T): readonly [0, T?],
   recurse<T>(obj?: T): readonly [1, T?],
-  continue<T>(obj?: T): readonly [2, T?],
-  nameCodecs: Record<string, NameCodec<Fns>>;
-  typeCodecs: Record<string, TypeCodec<Fns>>;
-  classGuardCodecs: ClassGuardCodec<Fns>[];
-  customGuardCodecs: CustomGuardCodec<Fns>[];
+  continue(): readonly [2],
+  codecs: Codecs<Fns>,
   customState: Record<string, any>,
   camelSnakeCache?: Record<string, string>,
 }
@@ -70,9 +68,6 @@ export function ctxRecurse<T>(obj?: T): readonly [1, T?] {
 /**
  * @internal
  */
-export function ctxContinue<T>(obj?: T): readonly [2, T?] {
-  if (arguments.length === 1) {
-    return [CONTINUE, obj];
-  }
+export function ctxContinue(): readonly [2] {
   return CONTINUE_ARR;
 }

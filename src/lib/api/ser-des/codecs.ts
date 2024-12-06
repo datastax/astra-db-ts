@@ -26,6 +26,14 @@ export type NameCodec<Fns extends CodecSerDesFns> = { serialize?: Fns['serialize
 /**
  * @internal
  */
+export type PathCodec<Fns extends CodecSerDesFns> = { serialize?: Fns['serialize'], deserialize: Fns['deserialize'] } & {
+  codecType: 'path',
+  path: string[],
+}
+
+/**
+ * @internal
+ */
 export type TypeCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'deserialize'> & {
   codecType: 'type',
   type: string,
@@ -34,7 +42,7 @@ export type TypeCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'deserialize'> & {
 /**
  * @internal
  */
-export type CustomGuardCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'serialize'> & {
+export type CustomGuardCodec<Fns extends CodecSerDesFns> = Fns & {
   codecType: 'type',
   type: string,
   serializeGuard: (value: unknown, ctx: BaseSerCtx<Fns>) => boolean,
@@ -43,7 +51,7 @@ export type CustomGuardCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'serialize'
 /**
  * @internal
  */
-export type ClassGuardCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'serialize'> & {
+export type ClassGuardCodec<Fns extends CodecSerDesFns> = Fns & {
   codecType: 'type',
   type: string,
   serializeClass: new (...args: any[]) => any,
@@ -52,15 +60,52 @@ export type ClassGuardCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'serialize'>
 /**
  * @internal
  */
+export interface Codecs<Fns extends CodecSerDesFns> {
+  name: Record<string, NameCodec<Fns>>;
+  path: PathCodec<Fns>[];
+  type: Record<string, TypeCodec<Fns>>;
+  classGuard: ClassGuardCodec<Fns>[];
+  customGuard: CustomGuardCodec<Fns>[];
+}
+
 export type CodecSerDesFns = Record<'serialize' | 'deserialize', (...args: any[]) => ReturnType<SerDesFn<any>>>;
 
-/**
- * @internal
- */
-export interface CodecHolder<Fns extends CodecSerDesFns = any> {
+export interface CodecHolder<Fns extends CodecSerDesFns> {
   get:
     | NameCodec<Fns>
+    | PathCodec<Fns>
     | TypeCodec<Fns>
     | CustomGuardCodec<Fns>
     | ClassGuardCodec<Fns>
 }
+
+/**
+ * @internal
+ */
+export const initCodecs = <Fns extends CodecSerDesFns>(chs: CodecHolder<Fns>[]): Codecs<Fns> => {
+  const codecs: Codecs<Fns> = { name: {}, path: [], type: {}, classGuard: [], customGuard: [] };
+  const rawCodecs = chs.map(ch => ch.get);
+
+  for (const codec of rawCodecs) {
+    switch (codec.codecType) {
+      case 'name':
+        codecs.name[codec.name] = codec;
+        break;
+      case 'path':
+        codecs.path.push(codec);
+        break;
+      case 'type':
+        codecs.type[codec.type] = codec;
+
+        if ('serializeClass' in codec) {
+          codecs.classGuard.push(codec);
+        } else if ('serializeGuard' in codec) {
+          codecs.customGuard.push(codec);
+        }
+
+        break;
+    }
+  }
+
+  return codecs;
+};

@@ -16,6 +16,7 @@ import { SerDes, SerDesConfig } from '@/src/lib/api/ser-des/ser-des';
 import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
 import { CollCodecs, CollCodecSerDesFns } from '@/src/documents/collections/ser-des/codecs';
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
+import { stringArraysEqual } from '@/src/lib/utils';
 
 export type CollSerCtx = BaseSerCtx<CollCodecSerDesFns>
 export type CollDesCtx = BaseDesCtx<CollCodecSerDesFns>
@@ -57,10 +58,21 @@ export class CollectionSerDes extends SerDes<CollCodecSerDesFns, CollSerCtx, Col
 
 const DefaultCollectionSerDesCfg = {
   serialize(key, value, ctx) {
+    const codecs = ctx.codecs;
     let resp;
 
-    if (key in ctx.nameCodecs) {
-      if ((resp = ctx.nameCodecs[key].serialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
+    for (let i = 0, n = codecs.path.length; i < n; i++) {
+      const path = codecs.path[i].path;
+
+      if (stringArraysEqual(path, ctx.path)) {
+        if ((resp = codecs.path[i].serialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
+          return resp;
+        }
+      }
+    }
+
+    if (key in codecs.name) {
+      if ((resp = codecs.name[key].serialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
         return resp;
       }
     }
@@ -72,7 +84,7 @@ const DefaultCollectionSerDesCfg = {
         }
       }
 
-      for (const codec of ctx.classGuardCodecs) {
+      for (const codec of codecs.classGuard) {
         if (value instanceof codec.serializeClass) {
           if ((resp = codec.serialize(key, value, ctx))[0] !== CONTINUE) {
             return resp;
@@ -81,7 +93,7 @@ const DefaultCollectionSerDesCfg = {
       }
     }
 
-    for (const codec of ctx.customGuardCodecs) {
+    for (const codec of codecs.customGuard) {
       if (codec.serializeGuard(value, ctx)) {
         if ((resp = codec.serialize(key, value, ctx))[0] !== CONTINUE) {
           return resp;
@@ -91,16 +103,27 @@ const DefaultCollectionSerDesCfg = {
     return ctx.continue();
   },
   deserialize(key, value, ctx) {
+    const codecs = ctx.codecs;
     let resp;
 
-    if (key in ctx.nameCodecs) {
-      if ((resp = ctx.nameCodecs[key].deserialize(key, value, ctx))[0] !== CONTINUE) {
+    for (let i = 0, n = codecs.path.length; i < n; i++) {
+      const path = codecs.path[i].path;
+
+      if (stringArraysEqual(path, ctx.path)) {
+        if ((resp = codecs.path[i].deserialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
+          return resp;
+        }
+      }
+    }
+
+    if (key in codecs.name) {
+      if ((resp = codecs.name[key].deserialize(key, value, ctx))[0] !== CONTINUE) {
         return resp;
       }
     }
 
-    if (ctx.keys?.length === 1 && (ctx.keys[0] in ctx.typeCodecs)) {
-      if ((resp = ctx.typeCodecs[ctx.keys[0]].deserialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
+    if (ctx.keys?.length === 1 && (ctx.keys[0] in codecs.type)) {
+      if ((resp = codecs.type[ctx.keys[0]].deserialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
         return resp;
       }
     }
