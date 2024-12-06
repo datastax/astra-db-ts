@@ -18,7 +18,7 @@ import type { Filter, Projection, Sort, WithSim } from '@/src/documents/types';
 import type { nullish } from '@/src/lib';
 import { normalizedSort } from '@/src/documents/utils';
 import { $CustomInspect } from '@/src/lib/constants';
-import { DataAPISerDes } from '@/src/lib/api/ser-des';
+import { SerDes } from '@/src/lib/api/ser-des/ser-des';
 import { DataAPIError } from '@/src/documents/errors';
 import { SomeRow, Table } from '@/src/documents/tables';
 import { TimeoutManager } from '@/src/lib/api/timeouts';
@@ -115,7 +115,7 @@ interface InternalGetMoreCommand {
  */
 export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   readonly #parent: Table<SomeRow> | Collection;
-  readonly #serdes: DataAPISerDes;
+  readonly #serdes: SerDes;
 
   readonly #options: GenericFindOptions<any>;
   readonly #filter: [Filter, boolean];
@@ -132,7 +132,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(parent: Table<SomeRow> | Collection, serdes: DataAPISerDes, filter: [Filter, boolean], options?: GenericFindOptions<any>, mapping?: (doc: TRaw) => T) {
+  constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: [Filter, boolean], options?: GenericFindOptions<any>, mapping?: (doc: TRaw) => T) {
     this.#parent = parent;
     this.#serdes = serdes;
     this.#filter = filter;

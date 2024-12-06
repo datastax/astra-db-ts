@@ -251,8 +251,8 @@ export interface DbOptions {
  * @public
  */
 export interface DbSerDesConfig {
-  table?: Omit<TableSerDesConfig<SomeRow>, 'mutateInPlace'>,
-  collection?: Omit<CollectionSerDesConfig<SomeDoc>, 'mutateInPlace'>,
+  table?: Omit<TableSerDesConfig, 'mutateInPlace'>,
+  collection?: Omit<CollectionSerDesConfig, 'mutateInPlace'>,
   /**
    * ##### Overview
    *
