@@ -87,3 +87,37 @@ function nullProtoFix(doc: SomeDoc): SomeDoc {
 
   return doc;
 }
+
+export function camelToSnakeCase(camel: string, cache: Record<string, string>): string {
+  if (cache[camel]) {
+    return cache[camel];
+  }
+  if (!camel) {
+    return '';
+  }
+  return cache[camel] = camel[0] + camel.slice(1).replace(/[A-Z]/g, (letter, index) => `${index ? '_' : ''}${letter.toLowerCase()}`);
+}
+
+export function snakeToCamelCase(snake: string, cache: Record<string, string>): string {
+  if (cache[snake]) {
+    return cache[snake];
+  }
+  if (!snake) {
+    return '';
+  }
+  return cache[snake] = snake[0] + snake.slice(1).replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+}
+
+export function stringArraysEqual(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
