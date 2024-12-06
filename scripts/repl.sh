@@ -35,39 +35,28 @@ node -i -e "
   const $ = require('./dist');
   require('util').inspect.defaultOptions.depth = null;
 
-  (async () => {
-    try {
-      let client = new $.DataAPIClient(process.env.CLIENT_DB_TOKEN, { environment: process.env.CLIENT_DB_ENVIRONMENT, logging: [{ events: 'all', emits: 'event' }] });
-      let db = client.db(process.env.CLIENT_DB_URL);
-      let dbAdmin = db.admin({ environment: process.env.CLIENT_DB_ENVIRONMENT });
+  let client = new $.DataAPIClient(process.env.CLIENT_DB_TOKEN, { environment: process.env.CLIENT_DB_ENVIRONMENT, logging: [{ events: 'all', emits: 'event' }] });
+  let db = client.db(process.env.CLIENT_DB_URL);
+  let dbAdmin = db.admin({ environment: process.env.CLIENT_DB_ENVIRONMENT });
 
-      const isAstra = process.env.CLIENT_DB_ENVIRONMENT === 'astra';
+  const isAstra = process.env.CLIENT_DB_ENVIRONMENT === 'astra';
 
-      if (!isAstra) {
-        await dbAdmin.createKeyspace('default_keyspace', { updateDbKeyspace: true });
-      }
+  // if (!isAstra) {
+  //   await dbAdmin.createKeyspace('default_keyspace', { updateDbKeyspace: true });
+  // }
 
-      let admin = (isAstra)
-        ? client.admin()
-        : null;
+  let admin = (isAstra)
+    ? client.admin()
+    : null;
 
-      let coll = db.collection('test_coll');
-      let table = db.table('test_table');
+  let coll = db.collection('test_coll');
+  let table = db.table('test_table');
 
-      if (process.env.LOG_ALL_TO_STDOUT) {
-        for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed']) {
-          client.on(event, (e) => console.dir(e, { depth: null }));
-        }
-      }
-    } catch (e) {
-      console.error(e);
-      console.error('Failed to initialize client');
-      console.error('...');
-      console.error('...');
-      console.error('...');
-      console.error('Running in fallback mode');
+  if (process.env.LOG_ALL_TO_STDOUT) {
+    for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed']) {
+      client.on(event, (e) => console.dir(e, { depth: null }));
     }
-  })();
+  }
 
   Object.defineProperty(this, 'cl', {
     get() {

@@ -12,5 +12,5 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export const LIB_NAME = 'astra-db-ts';
-export const LIB_VERSION = '2.0.0-prerelease';
+export const $SerializeForTable = Symbol.for('astra-db-ts.serialize.table');
+export const $DeserializeForTable = Symbol.for('astra-db-ts.deserialize.table');

@@ -12,17 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $SerializeForTable } from '@/src/documents/tables/ser-des';
 import { $CustomInspect } from '@/src/lib/constants';
+import { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
+import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 
 export type DataAPIBlobLike = DataAPIBlob | ArrayBuffer | Buffer | { $binary: string };
 
 export const blob = (blob: DataAPIBlobLike) => new DataAPIBlob(blob);
 
-export class DataAPIBlob {
+export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
   readonly #raw: Exclude<DataAPIBlobLike, DataAPIBlob>;
 
-  public [$SerializeForTable] = () => ({ $binary: this.asBase64() });
+  public [$SerializeForTable](ctx: TableSerCtx) {
+    return ctx.done({ $binary: this.asBase64() });
+  };
+
+  public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
+    return ctx.done(new DataAPIBlob((ctx.parsingInsertedId) ? { $binary: value } : value, false));
+  }
 
   public constructor(blob: DataAPIBlobLike, validate = true) {
     if (validate && !DataAPIBlob.isBlobLike(blob)) {

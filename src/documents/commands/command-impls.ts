@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { DataAPIHttpClient } from '@/src/lib/api/clients';
-import { DataAPISerDes } from '@/src/lib/api/ser-des';
+import { SerDes } from '@/src/lib/api/ser-des/ser-des';
 import {
   Collection,
   CollectionDeleteManyError,
@@ -54,10 +54,10 @@ import stableStringify from 'safe-stable-stringify';
  */
 export class CommandImpls<ID> {
   private readonly _httpClient: DataAPIHttpClient;
-  private readonly _serdes: DataAPISerDes;
+  private readonly _serdes: SerDes;
   private readonly _tOrC: Table<SomeRow> | Collection;
 
-  constructor(tOrC: Table<SomeRow> | Collection, httpClient: DataAPIHttpClient, serdes: DataAPISerDes) {
+  constructor(tOrC: Table<SomeRow> | Collection, httpClient: DataAPIHttpClient, serdes: SerDes) {
     this._httpClient = httpClient;
     this._serdes = serdes;
     this._tOrC = tOrC;

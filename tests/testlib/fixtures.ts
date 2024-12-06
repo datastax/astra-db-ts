@@ -119,6 +119,7 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
 
   const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {
     httpOptions: { preferHttp2, client: <any>clientType },
+    timeoutDefaults: { requestTimeoutMs: 60000 },
     dbOptions: { keyspace: DEFAULT_KEYSPACE },
     environment: env,
     logging,

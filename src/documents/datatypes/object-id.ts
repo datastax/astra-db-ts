@@ -14,7 +14,8 @@
 
 import { isNullish } from '@/src/lib/utils';
 import { $CustomInspect } from '@/src/lib/constants';
-import { $SerializeForCollection } from '@/src/documents/collections/ser-des';
+import { CollCodec, CollDesCtx, CollSerCtx } from '@/src/documents';
+import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 
 const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
 
@@ -59,10 +60,16 @@ export const oid = (id?: string | number | null) => new ObjectId(id);
  *
  * @public
  */
-export class ObjectId {
+export class ObjectId implements CollCodec<typeof ObjectId> {
   readonly #raw: string;
 
-  public [$SerializeForCollection] = () => ({ $objectId: this.#raw });
+  public [$SerializeForCollection](ctx: CollSerCtx) {
+    return ctx.done({ $objectId: this.#raw });
+  };
+
+  public static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx) {
+    return ctx.done(new ObjectId(value.$objectId, false));
+  }
 
   /**
    * Creates a new ObjectId instance.

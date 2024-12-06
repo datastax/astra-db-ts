@@ -1,16 +1,18 @@
 {
-  "name": "non-astra-backends",
+  "name": "logging",
   "version": "1.0.0",
-  "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "tsc --project tsconfig.json && node dist/index.js"
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "description": "",
   "devDependencies": {
-    "typescript": "^5.5.2"
+    "dotenv": "^16.4.5",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.3"
   },
   "dependencies": {
     "@datastax/astra-db-ts": "file:../../datastax-astra-db-ts-2.0.0-prerelease.tgz"

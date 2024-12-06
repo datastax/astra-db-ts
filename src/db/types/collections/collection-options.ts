@@ -28,7 +28,7 @@ import { DataAPILoggingConfig, type TimeoutDescriptor } from '@/src/lib';
  *
  * @public
  */
-export interface CollectionOptions<WSchema extends SomeDoc> extends WithKeyspace {
+export interface CollectionOptions extends WithKeyspace {
   /**
    * The API key for the embedding service to use, or the {@link EmbeddingHeadersProvider} if using
    * a provider that requires it (e.g. AWS bedrock).
@@ -42,7 +42,7 @@ export interface CollectionOptions<WSchema extends SomeDoc> extends WithKeyspace
    * See {@link DataAPILoggingConfig} for *much* more information on configuration, outputs, and inheritance.
    */
   logging?: DataAPILoggingConfig,
-  serdes?: CollectionSerDesConfig<WSchema>,
+  serdes?: CollectionSerDesConfig,
   /**
    * ##### Overview
    *

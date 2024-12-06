@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { DataAPIHttpClient } from '@/src/lib/api/clients';
-import { DataAPISerDes } from '@/src/lib/api/ser-des';
+import { SerDes } from '@/src/lib/api/ser-des/ser-des';
 import {
   DataAPIDetailedErrorDescriptor,
   DataAPIResponseError,
@@ -28,8 +28,8 @@ import { TimeoutManager } from '@/src/lib/api/timeouts';
  */
 export const insertManyOrdered = async <ID>(
   httpClient: DataAPIHttpClient,
-  serdes: DataAPISerDes,
-  documents: readonly unknown[],
+  serdes: SerDes,
+  documents: readonly SomeDoc[],
   chunkSize: number,
   timeoutManager: TimeoutManager,
   err: new (descs: DataAPIDetailedErrorDescriptor[]) => DataAPIResponseError,
@@ -62,8 +62,8 @@ export const insertManyOrdered = async <ID>(
  */
 export const insertManyUnordered = async <ID>(
   httpClient: DataAPIHttpClient,
-  serdes: DataAPISerDes,
-  documents: readonly unknown[],
+  serdes: SerDes,
+  documents: readonly SomeDoc[],
   concurrency: number,
   chunkSize: number,
   timeoutManager: TimeoutManager,
@@ -116,19 +116,26 @@ export const insertManyUnordered = async <ID>(
 
 const insertMany = async <ID>(
   httpClient: DataAPIHttpClient,
-  serdes: DataAPISerDes,
-  documents: readonly unknown[],
+  serdes: SerDes,
+  documents: readonly SomeDoc[],
   ordered: boolean,
   timeoutManager: TimeoutManager,
 ): Promise<[GenericInsertManyDocumentResponse<ID>[], ID[], DataAPIDetailedErrorDescriptor | undefined]> => {
   let raw, err: DataAPIResponseError | undefined;
 
   try {
-    const [docs, bigNumsPresent] = serdes.serializeRecord(documents);
+    const serialized = [];
+    let bigNumsPresent = false;
+
+    for (let i = 0, n = documents.length; i < n; i++) {
+      const resp = serdes.serializeRecord(documents[i]);
+      serialized.push(resp[0]);
+      bigNumsPresent ||= resp[1];
+    }
 
     raw = await httpClient.executeCommand({
       insertMany: {
-        documents: docs,
+        documents: serialized,
         options: {
           returnDocumentResponses: true,
           ordered,
@@ -151,7 +158,7 @@ const insertMany = async <ID>(
   for (let i = 0, n = documentResponses.length; i < n; i++) {
     const docResp = documentResponses[i];
     if (docResp.status === "OK") {
-      insertedIds.push(serdes.deserializeRecord(docResp._id, raw) as ID);
+      insertedIds.push(serdes.deserializeRecord(docResp._id, raw, true) as ID);
     } else if (docResp.errorIdx) {
       docResp.error = errors![docResp.errorIdx];
       delete docResp.errorIdx;

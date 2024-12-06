@@ -13,10 +13,16 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIError, DataAPITimeoutError, DataAPIVector, CollectionInsertManyError, ObjectId, UUID } from '@/src/documents';
+import {
+  CollectionInsertManyError,
+  DataAPIError,
+  DataAPITimeoutError,
+  DataAPIVector,
+  ObjectId,
+  UUID,
+} from '@/src/documents';
 import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
-import { Timeouts } from '@/src/lib/api/timeouts';
 
 parallel('integration.documents.collections.insert-many', { truncate: 'colls:before' }, ({ collection }) => {
   it('should insertMany documents', async () => {
@@ -92,7 +98,7 @@ parallel('integration.documents.collections.insert-many', { truncate: 'colls:bef
     ]);
     assert.ok(res);
 
-    const res1 = await collection.findOne({ name: 'a', key }, { projection: { $vector: 1 } });
+    const res1 = await collection.findOne<{ $vector: DataAPIVector }>({ name: 'a', key }, { projection: { $vector: 1 } });
     assert.ok(res1?.$vector instanceof DataAPIVector);
     assert.deepStrictEqual(res1?.$vector.asArray(), [1, 1, 1, 1, 1]);
 
@@ -178,7 +184,7 @@ parallel('integration.documents.collections.insert-many', { truncate: 'colls:bef
       assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof DataAPITimeoutError);
-      assert.deepStrictEqual(e.timeout, { generalMethodTimeoutMs: 500, requestTimeoutMs: Timeouts.Default.requestTimeoutMs });
+      assert.deepStrictEqual(e.timeout, { generalMethodTimeoutMs: 500, requestTimeoutMs: 60000 /* Changed in test fixtures */ });
       const found = await collection.find({ key }).toArray();
       assert.ok(found.length > 0);
       assert.ok(found.length < 1000);

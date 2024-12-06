@@ -43,8 +43,8 @@ import { $CustomInspect } from '@/src/lib/constants';
 import { InvalidEnvironmentError } from '@/src/db/errors';
 import { AstraDbInfo } from '@/src/administration/types/admin/database-info';
 import { Timeouts } from '@/src/lib/api/timeouts';
-import { CollectionSerDes } from '@/src/documents/collections/ser-des';
-import { TableSerDes } from '@/src/documents/tables/ser-des';
+import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
+import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
 
 /**
  * #### Overview
@@ -538,10 +538,10 @@ export class Db {
    * @see VectorizeDoc
    * @see db.createCollection
    */
-  public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionOptions<Schema>): Collection<Schema> {
+  public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionOptions): Collection<Schema> {
     return new Collection<Schema>(this, this.#httpClient, name, {
       ...options,
-      serdes: CollectionSerDes.mergeConfig(options?.serdes, this.#defaultOpts.dbOptions.serdes?.collection),
+      serdes: CollectionSerDes.mergeConfig(this.#defaultOpts.dbOptions.serdes?.collection, options?.serdes),
     });
   }
 
@@ -627,10 +627,10 @@ export class Db {
    * @see Row
    * @see $PrimaryKeyType
    */
-  public table<Schema extends SomeRow = SomeRow>(name: string, options?: TableOptions<Schema>): Table<Schema> {
+  public table<Schema extends SomeRow = SomeRow>(name: string, options?: TableOptions): Table<Schema> {
     return new Table<Schema>(this, this.#httpClient, name, {
       ...options,
-      serdes: TableSerDes.mergeConfig(options?.serdes, this.#defaultOpts.dbOptions.serdes?.table),
+      serdes: TableSerDes.mergeConfig(this.#defaultOpts.dbOptions.serdes?.table, options?.serdes),
     });
   }
 
@@ -927,7 +927,7 @@ export class Db {
    * @see $PrimaryKeyType
    * @see CreateTableDefinition
    */
-  public async createTable<Schema extends SomeRow, PKeys extends keyof Schema = keyof Schema>(name: string, options: CreateTableOptions<Schema>): Promise<Table<Schema, Schema[PKeys]>>
+  public async createTable<Schema extends SomeRow, PKeys extends keyof Schema = keyof Schema>(name: string, options: CreateTableOptions<Schema>): Promise<Table<Schema, Pick<Schema, PKeys>>>
 
   public async createTable(name: string, options: CreateTableOptions<SomeRow>): Promise<Table<SomeRow>> {
     const command = {

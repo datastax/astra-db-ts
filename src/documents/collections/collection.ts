@@ -48,7 +48,7 @@ import { CollectionInsertManyError, TooManyDocumentsToCountError, WithSim } from
 import JBI from 'json-bigint';
 import { CollectionFindCursor } from '@/src/documents/collections/cursor';
 import { withJbiNullProtoFix } from '@/src/lib/utils';
-import { CollectionSerDes } from '@/src/documents/collections/ser-des';
+import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
 
 const jbi = JBI({ storeAsString: true });
 
@@ -195,7 +195,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends Recor
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionOptions<WSchema> | undefined) {
+  constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionOptions | undefined) {
     Object.defineProperty(this, 'name', {
       value: name,
       writable: false,
