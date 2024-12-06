@@ -28,13 +28,13 @@ export default async function TableCustomDatatypeExample(name: string, db: Db) {
       primaryKey: 'user_id',
     },
     serdes: {
-      mutateInPlace: true,
-      snakeCaseInterop: true,
+      mutateInPlace: true,    // Optimization for serialization if you don't need to use the doc again once you pass it in
+      snakeCaseInterop: true, // Convert camelCase to/from snake_case for column names
       codecs: [
         DateCodec,
         UserIDCodec,
         FullNameCodec,
-        AssocListCodec, // Codec[] should extend
+        AssocListCodec,
       ],
     },
   });

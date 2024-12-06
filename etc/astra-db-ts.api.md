@@ -258,15 +258,9 @@ export interface BaseAstraDbInfo {
 // @public (undocumented)
 export interface BaseDesCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fns> {
     // (undocumented)
-    depth: number;
-    // (undocumented)
     keys: string[] | null;
     // (undocumented)
-    numKeysInValue: number;
-    // (undocumented)
     rawDataApiResp: RawDataAPIResponse;
-    // (undocumented)
-    rootObj: SomeDoc;
 }
 
 // Warning: (ae-incompatible-release-tags) The symbol "BaseSerCtx" is marked as @public, but its signature references "CodecSerDesFns" which is marked as @internal
@@ -274,11 +268,7 @@ export interface BaseDesCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fn
 // @public (undocumented)
 export interface BaseSerCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fns> {
     // (undocumented)
-    depth: number;
-    // (undocumented)
     mutatingInPlace: boolean;
-    // (undocumented)
-    rootObj: SomeDoc;
 }
 
 // Warning: (ae-incompatible-release-tags) The symbol "BaseSerDesCtx" is marked as @public, but its signature references "CodecSerDesFns" which is marked as @internal
@@ -310,9 +300,13 @@ export interface BaseSerDesCtx<Fns extends CodecSerDesFns> {
     // (undocumented)
     nameCodecs: Record<string, NameCodec<Fns>>;
     // (undocumented)
+    path: string[];
+    // (undocumented)
     recurse<T>(obj?: T): readonly [1, T?];
     // (undocumented)
     recurse<T>(key?: string, obj?: T): readonly [1, T, string];
+    // (undocumented)
+    rootObj: SomeDoc;
     // Warning: (ae-forgotten-export) The symbol "TypeCodec" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)

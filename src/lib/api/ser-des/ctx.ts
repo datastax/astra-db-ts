@@ -17,20 +17,17 @@ import { SomeDoc } from '@/src/documents';
 import type { RawDataAPIResponse } from '@/src/lib';
 
 export interface BaseSerCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fns> {
-  rootObj: SomeDoc,
   mutatingInPlace: boolean,
-  depth: number,
 }
 
 export interface BaseDesCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fns> {
-  rootObj: SomeDoc,
   rawDataApiResp: RawDataAPIResponse,
-  depth: number,
-  numKeysInValue: number,
   keys: string[] | null,
 }
 
 export interface BaseSerDesCtx<Fns extends CodecSerDesFns> {
+  rootObj: SomeDoc,
+  path: string[],
   done<T>(obj?: T): readonly [0, T?],
   done<T>(key?: string, obj?: T): readonly [0, T, string],
   recurse<T>(obj?: T): readonly [1, T?],

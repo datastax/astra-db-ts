@@ -26,7 +26,7 @@ import BigNumber from 'bignumber.js';
 import { snakeToCamelCase } from '@/src/lib/utils';
 
 export interface TableSerCtx extends BaseSerCtx<TableCodecSerDesFns> {
-  bigNumsPresent: boolean;
+  bigNumsPresent: boolean,
 }
 
 export interface TableDesCtx extends BaseDesCtx<TableCodecSerDesFns> {
@@ -101,7 +101,7 @@ const DefaultTableSerDesCfg = {
   serialize(key, value, ctx) {
     let resp;
 
-    if (ctx.depth === 1 && key in ctx.nameCodecs) {
+    if (ctx.path.length === 1 && key in ctx.nameCodecs) {
       if ((resp = ctx.nameCodecs[key].serialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
         return resp;
       }
