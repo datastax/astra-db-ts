@@ -538,8 +538,8 @@ export class Db {
    * @see VectorizeDoc
    * @see db.createCollection
    */
-  public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionOptions): Collection<Schema> {
-    return new Collection<Schema>(this, this.#httpClient, name, {
+  public collection<Schema extends SomeDoc>(name: string, options?: CollectionOptions): Collection<Schema> {
+    return new Collection(this, this.#httpClient, name, {
       ...options,
       serdes: CollectionSerDes.mergeConfig(this.#defaultOpts.dbOptions.serdes?.collection, options?.serdes),
     });
@@ -627,8 +627,8 @@ export class Db {
    * @see Row
    * @see $PrimaryKeyType
    */
-  public table<Schema extends SomeRow>(name: string, options?: TableOptions): Table<Schema> {
-    return new Table<Schema>(this, this.#httpClient, name, {
+  public table<WSchema extends SomeRow, PKeys extends Partial<RSchema>, RSchema extends Partial<Record<keyof WSchema, any>> = FoundRow<WSchema>>(name: string, options?: TableOptions): Table<WSchema, PKeys, RSchema> {
+    return new Table(this, this.#httpClient, name, {
       ...options,
       serdes: TableSerDes.mergeConfig(this.#defaultOpts.dbOptions.serdes?.table, options?.serdes),
     });
@@ -738,7 +738,7 @@ export class Db {
    * @see SomeDoc
    * @see db.collection
    */
-  public async createCollection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>> {
+  public async createCollection<Schema extends SomeDoc>(name: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>> {
     const command = {
       createCollection: {
         name: name,
@@ -927,7 +927,7 @@ export class Db {
    * @see $PrimaryKeyType
    * @see CreateTableDefinition
    */
-  public async createTable<WSchema extends SomeRow, PKeys extends keyof WSchema = string, RSchema extends Partial<Record<keyof WSchema, any>> = FoundRow<WSchema>>(name: string, options: CreateTableOptions): Promise<Table<WSchema, Pick<WSchema, PKeys>, RSchema>>
+  public async createTable<WSchema extends SomeRow, PKeys extends Partial<RSchema>, RSchema extends Partial<Record<keyof WSchema, any>> = FoundRow<WSchema>>(name: string, options: CreateTableOptions): Promise<Table<WSchema, PKeys, RSchema>>
 
   public async createTable(name: string, options: CreateTableOptions): Promise<Table<SomeRow>> {
     const command = {

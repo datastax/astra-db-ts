@@ -242,7 +242,7 @@ const jbi = JBI({ storeAsString: true });
  *
  * @public
  */
-export class Table<WSchema extends SomeRow, PKey extends SomeRow = Record<string, unknown>, RSchema extends Partial<Record<keyof WSchema, any>> = FoundRow<WSchema>> {
+export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends Partial<Record<keyof WSchema, any>> = FoundRow<WSchema>> {
   readonly #httpClient: DataAPIHttpClient;
   readonly #commands: CommandImpls<PKey>;
   readonly #db: Db;
