@@ -24,7 +24,7 @@ import { TokenProvider } from '@/src/lib';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client';
 import { KeyspaceRef } from '@/src/lib/api/clients/types';
 import { validateDataAPIEnv } from '@/src/lib/utils';
-import { EmbeddingHeadersProvider, SomeRow, Table, TableDropIndexOptions } from '@/src/documents';
+import { EmbeddingHeadersProvider, FoundRow, SomeRow, Table, TableDropIndexOptions } from '@/src/documents';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
 import { CollectionOptions } from '@/src/db/types/collections/collection-options';
 import { DropCollectionOptions } from '@/src/db/types/collections/drop-collection';
@@ -627,7 +627,7 @@ export class Db {
    * @see Row
    * @see $PrimaryKeyType
    */
-  public table<Schema extends SomeRow = SomeRow>(name: string, options?: TableOptions): Table<Schema> {
+  public table<Schema extends SomeRow>(name: string, options?: TableOptions): Table<Schema> {
     return new Table<Schema>(this, this.#httpClient, name, {
       ...options,
       serdes: TableSerDes.mergeConfig(this.#defaultOpts.dbOptions.serdes?.table, options?.serdes),
@@ -845,7 +845,7 @@ export class Db {
    * @see $PrimaryKeyType
    * @see CreateTableDefinition
    */
-  public async createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<InferTableSchema<Def>, Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>
+  public async createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>
 
   /**
    * ##### Overview
@@ -927,9 +927,9 @@ export class Db {
    * @see $PrimaryKeyType
    * @see CreateTableDefinition
    */
-  public async createTable<Schema extends SomeRow, PKeys extends keyof Schema = keyof Schema>(name: string, options: CreateTableOptions<Schema>): Promise<Table<Schema, Pick<Schema, PKeys>>>
+  public async createTable<WSchema extends SomeRow, PKeys extends keyof WSchema = string, RSchema extends Partial<Record<keyof WSchema, any>> = FoundRow<WSchema>>(name: string, options: CreateTableOptions): Promise<Table<WSchema, Pick<WSchema, PKeys>, RSchema>>
 
-  public async createTable(name: string, options: CreateTableOptions<SomeRow>): Promise<Table<SomeRow>> {
+  public async createTable(name: string, options: CreateTableOptions): Promise<Table<SomeRow>> {
     const command = {
       createTable: {
         name: name,

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Cols, SomeRow } from '@/src/documents';
+import { SomeRow } from '@/src/documents';
 import { CreateTableColumnDefinitions, VectorizeServiceOptions } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
 
@@ -34,15 +34,15 @@ export interface AddColumnOperation {
 }
 
 export interface DropColumnOperation<Schema extends SomeRow> {
-  columns: Cols<Schema>[];
+  columns: (keyof Schema)[];
   // ifExists?: boolean,
 }
 
 export interface AddVectorizeOperation<Schema extends SomeRow> {
-  columns: Partial<Record<Cols<Schema>, VectorizeServiceOptions>>,
+  columns: Partial<Record<keyof Schema, VectorizeServiceOptions>>,
 }
 
 export interface DropVectorizeOperation<Schema extends SomeRow> {
-  columns: Cols<Schema>[];
+  columns: (keyof Schema)[];
   // ifExists?: boolean,
 }

@@ -29,7 +29,7 @@ export interface AddColumnOperation {
 // @public (undocumented)
 export interface AddVectorizeOperation<Schema extends SomeRow> {
     // (undocumented)
-    columns: Partial<Record<Cols<Schema>, VectorizeServiceOptions>>;
+    columns: Partial<Record<keyof Schema, VectorizeServiceOptions>>;
 }
 
 // @public
@@ -640,9 +640,6 @@ export interface CollectionVectorOptions {
 // @public (undocumented)
 export type CollSerCtx = BaseSerCtx<CollCodecSerDesFns>;
 
-// @public
-export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
-
 // Warning: (ae-forgotten-export) The symbol "PickCqlType" needs to be exported by the entry point index.d.ts
 //
 // @public (undocumented)
@@ -748,7 +745,7 @@ export interface CreateTableIndexOptions extends WithTimeout<'tableAdminTimeoutM
 }
 
 // @public
-export interface CreateTableOptions<Schema extends SomeRow, Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions {
+export interface CreateTableOptions<Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions {
     // (undocumented)
     definition: Def;
     // (undocumented)
@@ -1113,8 +1110,8 @@ export class Db {
     collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionOptions): Collection<Schema>;
     command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse>;
     createCollection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>>;
-    createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<InferTableSchema<Def>, Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>;
-    createTable<Schema extends SomeRow, PKeys extends keyof Schema = keyof Schema>(name: string, options: CreateTableOptions<Schema>): Promise<Table<Schema, Pick<Schema, PKeys>>>;
+    createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>;
+    createTable<WSchema extends SomeRow, PKeys extends keyof WSchema = string, RSchema extends Partial<Record<keyof WSchema, any>> = FoundRow<WSchema>>(name: string, options: CreateTableOptions): Promise<Table<WSchema, Pick<WSchema, PKeys>, RSchema>>;
     dropCollection(name: string, options?: DropCollectionOptions): Promise<void>;
     dropTable(name: string, options?: DropTableOptions): Promise<void>;
     // (undocumented)
@@ -1137,7 +1134,7 @@ export class Db {
         nameOnly?: false;
     }): Promise<TableDescriptor[]>;
     get region(): string;
-    table<Schema extends SomeRow = SomeRow>(name: string, options?: TableOptions): Table<Schema>;
+    table<Schema extends SomeRow>(name: string, options?: TableOptions): Table<Schema>;
     useKeyspace(keyspace: string): void;
 }
 
@@ -1231,7 +1228,7 @@ export interface DropCollectionOptions extends WithTimeout<'collectionAdminTimeo
 // @public (undocumented)
 export interface DropColumnOperation<Schema extends SomeRow> {
     // (undocumented)
-    columns: Cols<Schema>[];
+    columns: (keyof Schema)[];
 }
 
 // @public (undocumented)
@@ -1243,7 +1240,7 @@ export interface DropTableOptions extends WithTimeout<'tableAdminTimeoutMs'>, Wi
 // @public (undocumented)
 export interface DropVectorizeOperation<Schema extends SomeRow> {
     // (undocumented)
-    columns: Cols<Schema>[];
+    columns: (keyof Schema)[];
 }
 
 // @public (undocumented)
@@ -1841,15 +1838,15 @@ export class StaticTokenProvider extends TokenProvider {
 export type StrictCreateTableColumnDefinition = ScalarCreateTableColumnDefinition | MapCreateTableColumnDefinition | ListCreateTableColumnDefinition | SetCreateTableColumnDefinition | VectorCreateTableColumnDefinition;
 
 // @public
-export class Table<WSchema extends SomeRow, PKey extends SomeRow = Record<string, unknown>, RSchema extends Record<keyof WSchema, any> = FoundRow<WSchema>> {
+export class Table<WSchema extends SomeRow, PKey extends SomeRow = Record<string, unknown>, RSchema extends Partial<Record<keyof WSchema, any>> = FoundRow<WSchema>> {
     // @internal
     constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableOptions | undefined);
     // (undocumented)
     alter<NewWSchema extends SomeRow, NewRSchema extends Record<keyof NewWSchema, any> = FoundRow<NewWSchema>>(options: AlterTableOptions<SomeRow>): Promise<Table<NewWSchema, PKey, NewRSchema>>;
     // (undocumented)
-    createIndex(name: string, column: Cols<WSchema> | string, options?: CreateTableIndexOptions): Promise<void>;
+    createIndex(name: string, column: WSchema | string, options?: CreateTableIndexOptions): Promise<void>;
     // (undocumented)
-    createVectorIndex(name: string, column: Cols<WSchema> | string, options?: CreateTableVectorIndexOptions): Promise<void>;
+    createVectorIndex(name: string, column: WSchema | string, options?: CreateTableVectorIndexOptions): Promise<void>;
     // (undocumented)
     definition(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<ListTableDefinition>;
     // (undocumented)

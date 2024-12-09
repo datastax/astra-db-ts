@@ -40,30 +40,6 @@ import { ListIndexOptions, TableIndexDescriptor } from '@/src/db/types/tables/li
 const jbi = JBI({ storeAsString: true });
 
 /**
- * Represents the columns of a table row, excluding the primary key columns.
- *
- * Useful for when you want to do `keyof Schema`, but you're getting `'$PrimaryKeyType'` as well in the
- * resulting union (which you don't want).
- *
- * @example
- * ```ts
- * interface User extends Row<User, 'id'> {
- *   id: string,
- *   friends: Map<string, UUID>,
- * }
- *
- * type Crying = keyof User; // 'id' | 'friends' | '$PrimaryKeyType'
- * type Happy = Cols<User>; // 'id' | 'friends'
- * ```
- *
- * @see Table
- * @see $PrimaryKeyType
- *
- * @public
- */
-export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
-
-/**
  * #### Overview
  *
  * Represents the interface to a table in a Data-API-enabled database.
@@ -91,9 +67,20 @@ export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
  *
  * #### Typing & Types
  *
- * A `Table` is typed as `Table<Schema extends SomeRow = SomeRow>`, where:
- *  - `Schema` is the type of the rows in the table (the table schema).
- *  - `SomeRow` is set to `Record<string, any>`, representing any valid JSON object.
+ * **NOTE: For most intents & purposes (unless you're using custom ser/des), you can ignore the (generally negligible) difference between `WSchema` and `RSchema`, and treat `Table` as if it were typed as `Table<Schema, PKey>`**.
+ *
+ * A `Table` is typed as `Table<WSchema, PKey, RSchema>`, where:
+ *  - `WSchema` is the type of the row as it's written to the table (the "write" schema)
+ *    - This includes inserts, filters, sorts, etc.
+ *  - `PKey` (optional) is the type of the primary key of the table as it's returned
+ *  - `RSchema` is the type of the row as it's read from the table (the "read" schema)
+ *    - This includes finds
+ *    - Unless custom ser/des is used, it is nearly exactly the same as `WSchema`
+ *    - It defaults to `FoundRow<WSchema>` (see {@link FoundRow})
+ *
+ * See {@link FoundRow} for more info about the differences, but again, for most intents & purposes, you can ignore this, and pretend they were
+ *
+ * ###### Custom datatypes
  *
  * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
  *
@@ -255,7 +242,7 @@ export type Cols<Schema> = keyof Omit<Schema, '$PrimaryKeyType'>;
  *
  * @public
  */
-export class Table<WSchema extends SomeRow, PKey extends SomeRow = Record<string, unknown>, RSchema extends Record<keyof WSchema, any> = FoundRow<WSchema>> {
+export class Table<WSchema extends SomeRow, PKey extends SomeRow = Record<string, unknown>, RSchema extends Partial<Record<keyof WSchema, any>> = FoundRow<WSchema>> {
   readonly #httpClient: DataAPIHttpClient;
   readonly #commands: CommandImpls<PKey>;
   readonly #db: Db;
@@ -628,7 +615,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Record<string
     return resp.status!.indexes;
   }
 
-  public async createIndex(name: string, column: Cols<WSchema> | string, options?: CreateTableIndexOptions): Promise<void> {
+  public async createIndex(name: string, column: WSchema | string, options?: CreateTableIndexOptions): Promise<void> {
     await this.#httpClient.executeCommand({
       createIndex: {
         name: name,
@@ -649,7 +636,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Record<string
     });
   }
 
-  public async createVectorIndex(name: string, column: Cols<WSchema> | string, options?: CreateTableVectorIndexOptions): Promise<void> {
+  public async createVectorIndex(name: string, column: WSchema | string, options?: CreateTableVectorIndexOptions): Promise<void> {
     await this.#httpClient.executeCommand({
       createVectorIndex: {
         name: name,
