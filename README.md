@@ -2,7 +2,10 @@
 
 `astra-db-ts` is a TypeScript client for interacting with [DataStax Astra DB](https://astra.datastax.com/signup).
 
-*This README targets v1.0.0+, which introduces a whole new API. Click [here](https://github.com/datastax/astra-db-ts/tree/90ebeac6fec53fd951126c2bcc010c87f7f678f8?tab=readme-ov-file#datastaxastra-db-ts) for the pre-existing client readme.*
+> **Warning**
+> This README is still under construction; parts of it may be incomplete or outdated.
+
+*This README targets v2.0.0+, which introduces a whole new API. Click [here](https://github.com/datastax/astra-db-ts/tree/v1.x?tab=readme-ov-file#datastaxastra-db-ts) for the pre-existing client readme.*
 
 ## Table of contents
 - [Quickstart](#quickstart)
@@ -243,18 +246,6 @@ interface Person {
     // @ts-expect-error - 'eyeColor' does not exist in type MaybeId<Person>
     eyeColor: 'blue',
   });
-
-  // You can use the 'Strict*' version of Sort/Projection/Filter/UpdateFilter for proper type-checking and autocomplete
-  await collection.findOne({
-    // @ts-expect-error - Type number is not assignable to type FilterExpr<UUID | undefined>
-    'interests.friend': 3,
-  } satisfies StrictFilter<Person>, {
-    sort: {
-      name: 1,
-      // @ts-expect-error - 'interests.favoriteColor' does not exist in type StrictProjection<Person>
-      'interests.favoriteColor': 1 as const,
-    } satisfies StrictSort<Person>,
-  });
 })();
 ```
 
@@ -343,59 +334,6 @@ const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
   console.log(jane?.name, jane?.friendId?.toString(), friendId.equals(jane?.friendId));
   
   // Cleanup (if desired)
-  await collection.drop();
-})();
-```
-
-## Monitoring/logging
-
-[Like Mongo](https://www.mongodb.com/docs/drivers/node/current/fundamentals/logging/), `astra-db-ts` doesn't provide a
-traditional logging system—instead, it uses a "monitoring" system based on event emitters, which allow you to listen to
-events and log them as you see fit.
-
-Supported events include `commandStarted`, `commandSucceeded`, `commandFailed`, and `adminCommandStarted`,
-`adminCommandPolling`, `adminCommandSucceeded`, `adminCommandFailed`.
-
-Note that it's disabled by default, and it can be enabled by passing `monitorCommands: true` option to the root options'
-`dbOptions` and `adminOptions`.
-
-```typescript
-import { DataAPIClient } from '@datastax/astra-db-ts';
-
-const client = new DataAPIClient('*TOKEN*', {
-  dbOptions: {
-    monitorCommands: true,
-  },
-});
-const db = client.db('*ENDPOINT*');
-
-client.on('commandStarted', (event) => {
-  console.log(`Running command ${event.commandName}`);
-});
-
-client.on('commandSucceeded', (event) => {
-  console.log(`Command ${event.commandName} succeeded in ${event.duration}ms`);
-});
-
-client.on('commandFailed', (event) => {
-  console.error(`Command ${event.commandName} failed w/ error ${event.error}`);
-});
-
-(async () => {
-  // Should log
-  // - "Running command createCollection"
-  // - "Command createCollection succeeded in <time>ms"
-  const collection = await db.createCollection('my_collection', { checkExists: false });
-
-  // Should log
-  // - "Running command insertOne"
-  // - "Command insertOne succeeded in <time>ms"
-  await collection.insertOne({ name: 'Queen' });
-
-  // Remove all monitoring listeners
-  client.removeAllListeners();
-
-  // Cleanup (if desired) (with no logging)
   await collection.drop();
 })();
 ```
