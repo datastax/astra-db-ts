@@ -21,7 +21,7 @@ import { SomeDoc } from '@/src/documents';
  *
  * @field nameOnly - If true, only the name of the collections is returned. If false, the full collections info is returned. Defaults to true.
  * @field keyspace - Overrides the keyspace to list collections from. If not provided, the default keyspace is used.
- * @field maxTimeMS - The maximum amount of time to allow the operation to run.
+ * @field timeout - The timeout override for this method
  *
  * @see Db.listCollections
  *
@@ -38,10 +38,10 @@ export interface ListCollectionsOptions extends WithTimeout<'collectionAdminTime
    * @example
    * ```typescript
    * const names = await db.listCollections({ nameOnly: true });
-   * console.log(names); // [{ name: 'my-coll' }]
+   * console.log(names); // [{ name: 'my_coll' }]
    *
    * const info = await db.listCollections({ nameOnly: false });
-   * console.log(info); // [{ name: 'my-coll', options: { ... } }]
+   * console.log(info); // [{ name: 'my_coll', options: { ... } }]
    * ```
    *
    * @defaultValue true
@@ -50,7 +50,7 @@ export interface ListCollectionsOptions extends WithTimeout<'collectionAdminTime
 }
 
 /**
- * Information about a collections, used when `nameOnly` is false in {@link ListCollectionsOptions}.
+ * Information about a collection, used when `nameOnly` is false in {@link ListCollectionsOptions}.
  *
  * @field name - The name of the collections.
  * @field options - The creation options for the collections.

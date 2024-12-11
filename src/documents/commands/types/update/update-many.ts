@@ -14,6 +14,14 @@
 
 import type { WithTimeout } from '@/src/lib';
 
+/**
+ Options for some generic `updateMany` command
+ *
+ * @field upsert - If true, perform an insert if no documents match the filter.
+ * @field timeout - The timeout override for this method
+ *
+ * @public
+ */
 export interface GenericUpdateManyOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   upsert?: boolean,
 }

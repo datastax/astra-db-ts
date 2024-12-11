@@ -109,7 +109,6 @@ export abstract class CommandEvent extends DataAPIClientEvent {
 
   /**
    * @internal
-   * @protected
    */
   protected _desc() {
     return `(${this.keyspace}${this.source ? `.${this.source}` : ''}) ${this.commandName}`;
@@ -142,6 +141,9 @@ export class CommandStartedEvent extends CommandEvent {
     this.timeout = info.timeoutManager.initial();
   }
 
+  /**
+   * Formats the warnings into a human-readable string.
+   */
   public formatted(): string {
     // return `${super.formatted()}: ${this.commandName} in ${this.keyspace}${this.source ? `.${this.source}` : ''}`;
     return `${super.formatted()}: ${this._desc()}`;
@@ -180,6 +182,9 @@ export class CommandSucceededEvent extends CommandEvent {
     this.resp = reply;
   }
 
+  /**
+   * Formats the warnings into a human-readable string.
+   */
   public formatted(): string {
     return `${super.formatted()}: ${this._desc()} (took ${~~this.duration}ms)`;
   }
@@ -219,19 +224,40 @@ export class CommandFailedEvent extends CommandEvent {
     this.error = error;
   }
 
+  /**
+   * Formats the warnings into a human-readable string.
+   */
   public formatted(): string {
     return `${super.formatted()}: ${this._desc()} (took ${~~this.duration}ms) - '${this.error.message}'`;
   }
 }
 
+/**
+ * Event emitted when the Data API returned a warning for some command.
+ *
+ * See {@link CommandEvent} for more information about all the common properties available on this event.
+ *
+ * @public
+ */
 export class CommandWarningsEvent extends CommandEvent {
+  /**
+   * The warnings that occurred.
+   */
   public readonly warnings: DataAPIErrorDescriptor[];
 
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
   constructor(info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[]) {
     super('CommandWarnings', info);
     this.warnings = warnings;
   }
 
+  /**
+   * Formats the warnings into a human-readable string.
+   */
   public formatted(): string {
     return `${super.formatted()}: ${this._desc()} '${this.warnings.map(w => w.message).join(', ')}'`;
   }

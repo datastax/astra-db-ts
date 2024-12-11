@@ -16,7 +16,6 @@ export type * from './delete/delete-many';
 export type * from './delete/delete-one';
 export type * from './find/find';
 export type * from './find/find-one';
-export type * from './find/find-common';
 export type * from './find/find-one-delete';
 export type * from './find/find-one-replace';
 export type * from './find/find-one-update';

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { WithKeyspace } from '@/src/db';
-import { EmbeddingHeadersProvider, SomeRow, TableSerDesConfig } from '@/src/documents';
+import { EmbeddingHeadersProvider, TableSerDesConfig } from '@/src/documents';
 import { DataAPILoggingConfig, type TimeoutDescriptor } from '@/src/lib';
 
 /**
@@ -22,7 +22,7 @@ import { DataAPILoggingConfig, type TimeoutDescriptor } from '@/src/lib';
  * Note that these are not all the options available for when you're actually creating a table—see {@link CreateTableOptions} for that.
  *
  * @field embeddingApiKey - The embedding service's API-key/headers (for $vectorize)
- * @field defaultMaxTimeMS - Default `maxTimeMS` for all table operations
+ * @field timeoutDefaults - Default timeouts for all table operations
  * @field logging - Logging configuration overrides
  * @field serdes - Additional serialization/deserialization configuration
  *
@@ -42,6 +42,13 @@ export interface TableOptions extends WithKeyspace {
    * See {@link DataAPILoggingConfig} for *much* more information on configuration, outputs, and inheritance.
    */
   logging?: DataAPILoggingConfig,
+  /**
+   * Advanced & currently somewhat unstable features related to customizing the table's ser/des behavior at a lower level.
+   *
+   * Use with caution. See official DataStax documentation for more info.
+   *
+   * @beta
+   */
   serdes?: TableSerDesConfig,
   /**
    * ##### Overview

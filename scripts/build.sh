@@ -31,7 +31,7 @@ if [ "$1" != "-light" ]; then
 
   # Removes all .d.ts files except the main rollup .d.ts
   cd dist || return 1
-  find . -type f -name '*.d.ts' ! -name 'astra-db-ts.d.ts' -exec rm {} +
+#  find . -type f -name '*.d.ts' ! -name 'astra-db-ts.d.ts' -exec rm {} +
   cd ..
 
   # Delete any empty leftover directories

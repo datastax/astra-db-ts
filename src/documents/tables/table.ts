@@ -14,7 +14,8 @@
 
 import {
   CreateTableIndexOptions,
-  CreateTableVectorIndexOptions, FoundRow,
+  CreateTableVectorIndexOptions,
+  FoundRow,
   SomeDoc,
   SomeRow,
   TableFilter,
@@ -24,12 +25,13 @@ import {
   TableInsertManyOptions,
   TableInsertManyResult,
   TableInsertOneResult,
-  TableUpdateFilter, WithSim,
+  TableUpdateFilter,
+  WithSim,
 } from '@/src/documents';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { AlterTableOptions, Db, DropTableOptions, ListTableDefinition, TableOptions } from '@/src/db';
-import { nullish, WithTimeout } from '@/src/lib';
+import { WithTimeout } from '@/src/lib';
 import { $CustomInspect } from '@/src/lib/constants';
 import JBI from 'json-bigint';
 import { TableFindCursor } from '@/src/documents/tables/cursor';
@@ -112,11 +114,9 @@ const jbi = JBI({ storeAsString: true });
  *
  * ###### Typing the key
  *
- * The primary key of the table should be provided via the `$PrimaryKeyType` key in the schema.
+ * The primary key of the table should be provided as a second type parameter to `Table`.
  *
- * This is a special type that is used to reconstruct the TS type of the primary key in insert operations. It should be an optional object with the same keys as the primary key columns, and the same types as the schema. Note that there is no distinction between partition and clustering keys in this type.
- *
- * **Note that this symbol is never present in the actually runtime object. It is effectively just a phantom type for type-inference purposes**
+ * This is a special type that is used to reconstruct the TS type of the primary key in insert operations. It should be an object with the same keys as the primary key columns, and the same types as the schema. Note that there is no distinction between partition and clustering keys in this type.
  *
  * @example
  * ```ts
@@ -124,35 +124,21 @@ const jbi = JBI({ storeAsString: true });
  *   id: string,   // Partition key
  *   dob: DataAPIDate, // Clustering (partition sort) key
  *   friends: Map<string, UUID>,
- *   [$PrimaryKeyType]?: {
- *     id: string,
- *     dob: DataAPIDate,
- *   },
  * }
  *
+ * type UserPK = Pick<User, 'id' | 'dob'>;
+ *
  * // res.insertedId is of type { id: string }
- * const res = await db.table<User>('users').insertOne({
+ * const res = await db.table<User, UserPK>('users').insertOne({
  *   id: '123',
  *   dob: date(), // or new DataAPIDate(new Date())
  *   friends: new Map([['Alice', uuid(4)]]), // or UUID.v4()
  * });
  * ```
  *
- * A convenient shorthand exists for this, by extending the {@link Row} type. Simply provide the schema as the first argument, and the keys of the primary key (both partition & clustering/sort) as the second argument.
- *
- * @example
- * ```ts
- * // equivalent to the above
- * interface User extends Row<User, 'id' | 'dob'> {
- *   id: string,   // Partition key
- *   dob: DataAPIDate, // Clustering (partition sort) key
- *   friends: Map<string, UUID>,
- * }
- * ```
- *
  * ###### `db.createTable` type inference
  *
- * When creating a table through {@link Db.createTable}, and not using any custom datatypes (see next session), you can actually use the {@link InferTableSchema} or {@link InferTableSchemaFromDefinition} utility types to infer the schema of the table from the table creation.
+ * When creating a table through {@link Db.createTable}, and not using any custom datatypes (see next session), you can actually use the {@link InferTableSchema} & {@link InferTablePrimaryKey} utility types to infer the schema of the table from the table creation.
  *
  * @example
  * ```ts
@@ -161,12 +147,12 @@ const jbi = JBI({ storeAsString: true });
  * //   id: string,
  * //   dob: DataAPIDate,
  * //   friends?: Map<string, UUID>, // Optional since it's not in the primary key
- * //   [$PrimaryKeyType]?: {
- * //     id: string,
- * //     dob: DataAPIDate,
- * //   },
  * // }
  * type User = InferTableSchema<typeof mkTable>;
+ *
+ * // equivalent to:
+ * // type UserPK = Pick<User, 'id' | 'dob'>;
+ * type UserPK = InferTablePrimaryKey<typeof mkTable>;
  *
  * const mkTable = () => db.createTable('users', {
  *   definition: {
@@ -183,48 +169,18 @@ const jbi = JBI({ storeAsString: true });
  * });
  *
  * async function main() {
- *   const table = await mkTable();
+ *   const table: Table<User, UserPK> = await mkTable();
  *   // ... use table
  * }
  * ```
  *
  * ###### Custom datatypes
  *
- * You can plug in your own custom datatypes by providing some custom serialization/deserialization logic through the `serdes` option in {@link TableOptions}, {@link DbOptions} & {@link DataAPIClientOptions.dbOptions}.
+ * You can plug in your own custom datatypes, as well as enable many other features by providing some custom serialization/deserialization logic through the `serdes` option in {@link TableOptions}, {@link DbOptions}, and/or {@link DataAPIClientOptions.dbOptions}.
  *
- * See {@link TableSerDesConfig} for much more information, but here's a quick example:
+ * Note however that this is currently not entirely stable, and should be used with caution.
  *
- * @example
- * ```ts
- * import { $SerializeForTables, ... } from '@datastax/astra-db-ts';
- *
- * // Custom datatype
- * class UserID {
- *   constructor(public readonly unwrap: string) {}
- *   [$SerializeForTables] = () => this.unwrap; // Serializer checks for this symbol
- * }
- *
- * // Schema type of the table, using the custom datatype
- * interface User extends Row<User, 'id'> {
- *   id: UserID,
- *   name: string,
- * }
- *
- * const table = db.table('users', {
- *   serdes: { // Serializer not necessary here since `$SerializeForTables` is used
- *     deserialize(key, value) {
- *       if (key === 'id') return [new UserID(value)]; // [X] specifies a new value
- *     },
- *   },
- * });
- *
- * const inserted = await table.insertOne({
- *   id: new UserID('123'), // will be stored in db as '123'
- *   name: 'Alice',
- * });
- *
- * console.log(inserted.insertedId.unwrap); // '123'
- * ```
+ * See the official DataStax documentation for more info.
  *
  * ###### Disclaimer
  *
@@ -236,13 +192,13 @@ const jbi = JBI({ storeAsString: true });
  * @see Db.createTable
  * @see Db.table
  * @see InferTableSchema
+ * @see InferTablePrimaryKey
  * @see TableSerDesConfig
  * @see TableOptions
- * @see $PrimaryKeyType
  *
  * @public
  */
-export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends Partial<Record<keyof WSchema, any>> = FoundRow<WSchema>> {
+export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>> {
   readonly #httpClient: DataAPIHttpClient;
   readonly #commands: CommandImpls<PKey>;
   readonly #db: Db;
@@ -332,17 +288,21 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * ##### The primary key
    *
-   * The columns that compose the primary key themselves must all be present in the row object; all other fields are technically optional/nullable.
+   * The type of the primary key of the table is inferred from the second `PKey` type-param of the table.
    *
-   * The type of the primary key of the table (for the `insertedId`) is inferred from the type-level `$PrimaryKeyType` key in the schema. If it's not present, it will default to {@link SomeTableKey} (see {@link Table}, {@link $PrimaryKeyType} for more info).
+   * If not present, it defaults to `Partial<RSchema>` to keep the result type consistent.
    *
    * @example
    * ```ts
-   * interface User extends Row<User, 'id'> {
+   * interface User {
    *   id: string,
    *   name: string,
    *   dob?: DataAPIDate,
    * }
+   *
+   * type UserPKey = Pick<User, 'id'>;
+   *
+   * const table = db.table<User, UserPKey>('table');
    *
    * // res.insertedId is of type { id: string }
    * const res = await table.insertOne({ id: '123', name: 'Alice' });
@@ -386,7 +346,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * This operation is **not necessarily atomic**. Depending on the amount of inserted rows, and if it's ordered or not, it can keep running (in a blocking manner) for a macroscopic amount of time. In that case, new rows that are inserted from another concurrent process/application may be inserted during the execution of this method call, and if there are duplicate keys, it's not easy to predict which application will win the race.
    *
-   * By default, it inserts rows in chunks of 50 at a time. You can fine-tune the parameter through the `chunkSize` option. Note that increasing chunk size won't necessarily increase performance depending on document size. Instead, increasing concurrency may help.
+   * By default, it inserts rows in chunks of 50 at a time. You can fine-tune the parameter through the `chunkSize` option. Note that increasing chunk size won't necessarily increase performance depending on row size. Instead, increasing concurrency may help.
    *
    * You can set the `concurrency` option to control how many network requests are made in parallel on unordered insertions. Defaults to `8`.
    *
@@ -436,17 +396,21 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * ##### The primary key
    *
-   * The columns that compose the primary key themselves must all be present in the row object; all other fields are technically optional/nullable.
+   * The type of the primary key of the table is inferred from the second `PKey` type-param of the table.
    *
-   * The type of the primary key of the table (for the `insertedId`) is inferred from the type-level `$PrimaryKeyType` key in the schema. If it's not present, it will default to {@link SomeTableKey} (see {@link Table}, {@link $PrimaryKeyType} for more info).
+   * If not present, it defaults to `Partial<RSchema>` to keep the result type consistent.
    *
    * @example
    * ```ts
-   * interface User extends Row<User, 'id'> {
+   * interface User {
    *   id: string,
    *   name: string,
    *   dob?: DataAPIDate,
    * }
+   *
+   * type UserPKey = Pick<User, 'id'>;
+   *
+   * const table = db.table<User, UserPKey>('table');
    *
    * // res.insertedIds is of type { id: string }[]
    * const res = await table.insertMany([
@@ -466,12 +430,12 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * If a thrown exception is not due to an insertion error, e.g. a `5xx` error or network error, the operation will throw the underlying error.
    *
-   * In case of an unordered request, if the error was a simple insertion error, the {@link TableInsertManyError} will be thrown after every document has been attempted to be inserted. If it was a `5xx` or similar, the error will be thrown immediately.
+   * In case of an unordered request, if the error was a simple insertion error, the {@link TableInsertManyError} will be thrown after every row has been attempted to be inserted. If it was a `5xx` or similar, the error will be thrown immediately.
    *
    * @param rows - The rows to insert.
    * @param options - The options for this operation.
    *
-   * @returns The primary keys of the inserted documents (and the count)
+   * @returns The primary keys of the inserted rows (and the count)
    *
    * @throws TableInsertManyError - If the operation fails.
    */
@@ -506,7 +470,9 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * ##### Deleting
    *
-   * If all (non-primary) rows are set to null (or unset), the row will be deleted.
+   * If the row was only upserted in the first place, and now all (non-primary) rows are set to null (or unset), the row will be deleted.
+   *
+   * _If the row was inserted on, even if it was upserted first, it will not be deleted._
    *
    * Note that `$set`-ing a row to `null` is equivalent to `$unset`-ing it. The following example would be the exact same using `$unset`s.
    *
@@ -538,8 +504,8 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * In that sense, returning constantly that one type is isomorphic to just returning `void`, as both realistically contain the same amount of information (i.e. none)
    *
-   * @param filter - A filter to select the document to update.
-   * @param update - The update to apply to the selected document.
+   * @param filter - A filter to select the row to update.
+   * @param update - The update to apply to the selected row.
    * @param timeout - The timeout for this operation.
    *
    * @returns A promise which resolves once the operation is completed.
@@ -556,38 +522,578 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * @example
    * ```ts
    * await table.insertOne({ pk: 'abc', ck: 3 });
-   * await table.deleteOne({ pk: 'abc', ck: { $gt: 2 } });
+   * await table.deleteOne({ pk: 'abc', ck: 3 });
    * ```
    *
    * ##### Filtering
    *
+   * The filter must contain an exact primary key to delete just one row.
    *
+   * Attempting to pass an empty filter, filtering by only part of the primary key, or filtering by a non-primary key column will result in an error.
+   *
+   * ##### On returning `void`
+   *
+   * The `deleteOne` operation, as returned from the Data API, is always `{ deletedCount: -1 }`, regardless of how many things are actually matched/modified.
+   *
+   * In that sense, returning constantly that one type is isomorphic to just returning `void`, as both realistically contain the same amount of information (i.e. none)
+   *
+   * @param filter - A filter to select the row to delete.
+   * @param timeout - The timeout for this operation.
+   *
+   * @returns A promise which resolves once the operation is completed.
    */
-  public async deleteOne(filter: TableFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
-    await this.#commands.deleteOne(filter, options);
+  public async deleteOne(filter: TableFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
+    await this.#commands.deleteOne(filter, timeout);
   }
 
-  public async deleteMany(filter: TableFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
-    await this.#commands.deleteMany(filter, options);
+  /**
+   * ##### Overview
+   *
+   * Deletes many rows from the table.
+   *
+   * @example
+   * ```ts
+   * await table.insertOne({ pk: 'abc', ck: 3 });
+   * await table.insertOne({ pk: 'abc', ck: 4 });
+   * await table.deleteMany({ pk: 'abc' });
+   * ```
+   *
+   * ##### Filtering
+   *
+   * There are different forms of accepted filters:
+   * - Providing the full primary key to delete a single row
+   * - With some or all of the `partitionSort` columns not provided
+   *   - The least significant of them can also use an inequality/range predicate
+   * - Using an empty filter to truncate the entire table
+   *
+   * ##### On returning `void`
+   *
+   * The `deleteMany` operation, as returned from the Data API, is always `{ deletedCount: -1 }`, regardless of how many things are actually matched/modified.
+   *
+   * In that sense, returning constantly that one type is isomorphic to just returning `void`, as both realistically contain the same amount of information (i.e. none)
+   *
+   * @param filter - A filter to select the row(s) to delete.
+   * @param timeout - The timeout for this operation.
+   *
+   * @returns A promise which resolves once the operation is completed.
+   */
+  public async deleteMany(filter: TableFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void> {
+    await this.#commands.deleteMany(filter, timeout);
   }
 
-  public find<IncSim extends boolean | string | nullish>(filter: TableFilter<WSchema>, options?: TableFindOptions<IncSim> & { projection?: never }): TableFindCursor<WithSim<RSchema, IncSim>, WithSim<RSchema, IncSim>>;
+  /**
+   * ##### Overview
+   *
+   * Find rows in the table, optionally matching the provided filter.
+   *
+   * @example
+   * ```ts
+   * const cursor = await table.find({ name: 'John Doe' });
+   * const docs = await cursor.toArray();
+   * ```
+   *
+   * ##### Projection
+   *
+   * This overload of {@link Table.find} is used for when no projection is provided, and it is safe to assume the returned rows are going to be of type `Schema`.
+   *
+   * If it can not be inferred that a projection is definitely not provided, the `Schema` is forced to be `Partial<Schema>` if the user does not provide their own, in order to prevent type errors and ensure the user is aware that the row may not be of the same type as `Schema`.
+   *
+   * ##### Filtering
+   *
+   * The filter can contain a variety of operators & combinators to select the rows. See {@link TableFilter} for much more information.
+   *
+   * If the filter is empty, all rows in the table will be returned (up to any provided/implied limit).
+   *
+   * ##### Find by vector search
+   *
+   * If the table has vector search enabled, you can find the most relevant rows by providing a vector in the sort option.
+   *
+   * Vector ANN searches cannot return more than a set number of rows, which, at the time of writing, is 1000 items.
+   *
+   * @example
+   * ```ts
+   * await table.insertMany([
+   *   { name: 'John Doe', vector: [.12, .52, .32] },
+   *   { name: 'Jane Doe', vector: [.32, .52, .12] },
+   *   { name: 'Dane Joe', vector: [.52, .32, .12] },
+   * ]);
+   *
+   * const cursor = table.find({}, {
+   *   sort: { vector: [.12, .52, .32] },
+   * });
+   *
+   * // Returns 'John Doe'
+   * console.log(await cursor.next());
+   * ```
+   *
+   * ##### Sorting
+   *
+   * The sort option can be used to sort the rows returned by the cursor. See {@link Sort} for more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available sort operators.
+   *
+   * If the sort option is not provided, there is no guarantee as to the order of the rows returned.
+   *
+   * When providing a non-vector sort, the Data API will return a smaller number of rows, set to 20 at the time of writing, and stop there. The returned rows are the top results across the whole table according to the requested criterion.
+   *
+   * @example
+   * ```ts
+   * await table.insertMany([
+   *   { name: 'John Doe', age: 1, height: 168 },
+   *   { name: 'John Doe', age: 2, height: 42 },
+   * ]);
+   *
+   * const cursor = table.find({}, {
+   *   sort: { age: 1, height: -1 },
+   * });
+   *
+   * // Returns 'John Doe' (age 2, height 42), 'John Doe' (age 1, height 168)
+   * console.log(await cursor.toArray());
+   * ```
+   *
+   * ##### Other options
+   *
+   * Other available options include `skip`, `limit`, `includeSimilarity`, and `includeSortVector`. See {@link TableFindOptions} and {@link FindCursor} for more information.
+   *
+   * If you prefer, you may also set these options using a fluent interface on the {@link FindCursor} itself.
+   *
+   * @example
+   * ```ts
+   * // cursor :: FindCursor<string>
+   * const cursor = table.find({})
+   *   .sort({ vector: [.12, .52, .32] })
+   *   .projection<{ name: string, age: number }>({ name: 1, age: 1 })
+   *   .includeSimilarity(true)
+   *   .map(doc => `${doc.name} (${doc.age})`);
+   * ```
+   *
+   * @remarks
+   * When not specifying sorting criteria at all (by vector or otherwise),
+   * the cursor can scroll through an arbitrary number of rows as
+   * the Data API and the client periodically exchange new chunks of rows.
+   *
+   * --
+   *
+   * It should be noted that the behavior of the cursor in the case rows
+   * have been added/removed after the `find` was started depends on database
+   * internals, and it is not guaranteed, nor excluded, that such "real-time"
+   * changes in the data would be picked up by the cursor.
+   *
+   * @param filter - A filter to select the rows to find. If not provided, all rows will be returned.
+   * @param options - The options for this operation.
+   *
+   * @returns a {@link FindCursor} which can be iterated over.
+   */
+  public find(filter: TableFilter<WSchema>, options?: TableFindOptions & { projection?: never }): TableFindCursor<WithSim<RSchema>, WithSim<RSchema>>;
 
+  /**
+   * ##### Overview
+   *
+   * Find rows in the table, optionally matching the provided filter.
+   *
+   * @example
+   * ```ts
+   * const cursor = await table.find({ name: 'John Doe' });
+   * const docs = await cursor.toArray();
+   * ```
+   *
+   * ##### Projection
+   *
+   * This overload of {@link Table.find} is used for when a projection is provided (or at the very least, it can not be inferred that a projection is NOT provided).
+   *
+   * In this case, the user must provide an explicit projection type, or the type of the rows will be `Partial<Schema>`, to prevent type-mismatches when the schema is strictly provided.
+   *
+   * @example
+   * ```ts
+   * interface User {
+   *   name: string,
+   *   car: { make: string, model: string },
+   * }
+   *
+   * const table = db.table<User>('users');
+   *
+   * // Defaulting to `Partial<User>` when projection is not provided
+   * const cursor = await table.find({}, {
+   *   projection: { car: 1 },
+   * });
+   *
+   * // next :: { car?: { make?: string, model?: string } }
+   * const next = await cursor.next();
+   * console.log(next.car?.make);
+   *
+   * // Explicitly providing the projection type
+   * const cursor = await table.find<Pick<User, 'car'>>({}, {
+   *   projection: { car: 1 },
+   * });
+   *
+   * // next :: { car: { make: string, model: string } }
+   * const next = await cursor.next();
+   * console.log(next.car.make);
+   *
+   * // Projection existence can not be inferred
+   * function mkFind(projection?: Projection) {
+   *   return table.find({}, { projection });
+   * }
+   *
+   * // next :: Partial<User>
+   * const next = await mkFind({ car: 1 }).next();
+   * console.log(next.car?.make);
+   * ```
+   *
+   * ##### Filtering
+   *
+   * The filter can contain a variety of operators & combinators to select the rows. See {@link TableFilter} for much more information.
+   *
+   * If the filter is empty, all rows in the table will be returned (up to any provided/implied limit).
+   *
+   * ##### Find by vector search
+   *
+   * If the table has vector search enabled, you can find the most relevant rows by providing a vector in the sort option.
+   *
+   * Vector ANN searches cannot return more than a set number of rows, which, at the time of writing, is 1000 items.
+   *
+   * @example
+   * ```ts
+   * await table.insertMany([
+   *   { name: 'John Doe', vector: [.12, .52, .32] },
+   *   { name: 'Jane Doe', vector: [.32, .52, .12] },
+   *   { name: 'Dane Joe', vector: [.52, .32, .12] },
+   * ]);
+   *
+   * const cursor = table.find({}, {
+   *   sort: { vector: [.12, .52, .32] },
+   * });
+   *
+   * // Returns 'John Doe'
+   * console.log(await cursor.next());
+   * ```
+   *
+   * ##### Sorting
+   *
+   * The sort option can be used to sort the rows returned by the cursor. See {@link Sort} for more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available sort operators.
+   *
+   * If the sort option is not provided, there is no guarantee as to the order of the rows returned.
+   *
+   * When providing a non-vector sort, the Data API will return a smaller number of rows, set to 20 at the time of writing, and stop there. The returned rows are the top results across the whole table according to the requested criterion.
+   *
+   * @example
+   * ```ts
+   * await table.insertMany([
+   *   { name: 'John Doe', age: 1, height: 168 },
+   *   { name: 'John Doe', age: 2, height: 42 },
+   * ]);
+   *
+   * const cursor = table.find({}, {
+   *   sort: { age: 1, height: -1 },
+   * });
+   *
+   * // Returns 'John Doe' (age 2, height 42), 'John Doe' (age 1, height 168)
+   * console.log(await cursor.toArray());
+   * ```
+   *
+   * ##### Other options
+   *
+   * Other available options include `skip`, `limit`, `includeSimilarity`, and `includeSortVector`. See {@link TableFindOptions} and {@link FindCursor} for more information.
+   *
+   * If you prefer, you may also set these options using a fluent interface on the {@link FindCursor} itself.
+   *
+   * @example
+   * ```ts
+   * // cursor :: FindCursor<string>
+   * const cursor = table.find({})
+   *   .sort({ vector: [.12, .52, .32] })
+   *   .projection<{ name: string, age: number }>({ name: 1, age: 1 })
+   *   .includeSimilarity(true)
+   *   .map(doc => `${doc.name} (${doc.age})`);
+   * ```
+   *
+   * @remarks
+   * When not specifying sorting criteria at all (by vector or otherwise),
+   * the cursor can scroll through an arbitrary number of rows as
+   * the Data API and the client periodically exchange new chunks of rows.
+   *
+   * --
+   *
+   * It should be noted that the behavior of the cursor in the case rows
+   * have been added/removed after the `find` was started depends on database
+   * internals, and it is not guaranteed, nor excluded, that such "real-time"
+   * changes in the data would be picked up by the cursor.
+   *
+   * @param filter - A filter to select the rows to find. If not provided, all rows will be returned.
+   * @param options - The options for this operation.
+   *
+   * @returns a {@link FindCursor} which can be iterated over.
+   */
   public find<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOptions): TableFindCursor<TRaw, TRaw>;
 
   public find(filter: TableFilter<WSchema>, options?: TableFindOptions): TableFindCursor<SomeDoc> {
     return this.#commands.find(filter, options, TableFindCursor);
   }
+  
+  /**
+   * ##### Overview
+   *
+   * Find a single row in the table, optionally matching the provided filter.
+   *
+   * @example
+   * ```ts
+   * const doc = await table.findOne({ name: 'John Doe' });
+   * ```
+   *
+   * ##### Projection
+   *
+   * This overload of {@link Table.findOne} is used for when no projection is provided, and it is safe to assume the returned row is going to be of type `Schema`.
+   *
+   * If it can not be inferred that a projection is definitely not provided, the `Schema` is forced to be `Partial<Schema>` if the user does not provide their own, in order to prevent type errors and ensure the user is aware that the row may not be of the same type as `Schema`.
+   *
+   * ##### Filtering
+   *
+   * The filter can contain a variety of operators & combinators to select the row. See {@link TableFilter} for much more information.
+   *
+   * If the filter is empty, and no {@link Sort} is present, it's undefined as to which row is selected.
+   *
+   * ##### Find by vector search
+   *
+   * If the table has vector search enabled, you can find the most relevant row by providing a vector in the sort option.
+   *
+   * @example
+   * ```ts
+   * await table.insertMany([
+   *   { name: 'John Doe', vector: [.12, .52, .32] },
+   *   { name: 'Jane Doe', vector: [.32, .52, .12] },
+   *   { name: 'Dane Joe', vector: [.52, .32, .12] },
+   * ]);
+   *
+   * const doc = table.findOne({}, {
+   *   sort: { vector: [.12, .52, .32] },
+   * });
+   *
+   * // 'John Doe'
+   * console.log(doc.name);
+   * ```
+   *
+   * ##### Sorting
+   *
+   * The sort option can be used to pick the most relevant row. See {@link Sort} for more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available sort operators.
+   *
+   * If the sort option is not provided, there is no guarantee as to which of the rows which matches the filter is returned.
+   *
+   * @example
+   * ```ts
+   * await table.insertMany([
+   *   { name: 'John Doe', age: 1, height: 168 },
+   *   { name: 'John Doe', age: 2, height: 42 },
+   * ]);
+   *
+   * const doc = table.findOne({}, {
+   *   sort: { age: 1, height: -1 },
+   * });
+   *
+   * // 'John Doe' (age 2, height 42)
+   * console.log(doc.name);
+   * ```
+   *
+   * ##### Other options
+   *
+   * Other available options include `includeSimilarity`. See {@link TableFindOneOptions} for more information.
+   *
+   * If you want to get `skip` or `includeSortVector` as well, use {@link Table.find} with a `limit: 1` instead.
+   *
+   * @example
+   * ```ts
+   * const doc = await cursor.findOne({}, {
+   *   sort: { vector: [.12, .52, .32] },
+   *   includeSimilarity: true,
+   * });
+   * ```
+   *
+   * @param filter - A filter to select the rows to find. If not provided, all rows will be returned.
+   * @param options - The options for this operation.
+   *
+   * @returns A row matching the criterion, or `null` if no such row exists.
+   */
+  public async findOne(filter: TableFilter<WSchema>, options?: TableFindOneOptions & { projection?: never }): Promise<WithSim<RSchema> | null>;
 
-  public async findOne<IncSim extends boolean | string | nullish>(filter: TableFilter<WSchema>, options?: TableFindOneOptions<IncSim> & { projection?: never }): Promise<WithSim<RSchema, IncSim> | null>;
-
+  /**
+   * ##### Overview
+   *
+   * Find a single row in the table, optionally matching the provided filter.
+   *
+   * @example
+   * ```ts
+   * const doc = await table.findOne({ name: 'John Doe' });
+   * ```
+   *
+   * ##### Projection
+   *
+   * This overload of {@link Table.findOne} is used for when a projection is provided (or at the very least, it can not be inferred that a projection is NOT provided).
+   *
+   * In this case, the user must provide an explicit projection type, or the type of the returned row will be as `Partial<Schema>`, to prevent type-mismatches when the schema is strictly provided.
+   *
+   * @example
+   * ```ts
+   * interface User {
+   *   name: string,
+   *   car: { make: string, model: string },
+   * }
+   *
+   * const table = db.table<User>('users');
+   *
+   * // Defaulting to `Partial<User>` when projection is not provided
+   * const doc = await table.findOne({}, {
+   *   projection: { car: 1 },
+   * });
+   *
+   * // doc :: { car?: { make?: string, model?: string } }
+   * console.log(doc.car?.make);
+   *
+   * // Explicitly providing the projection type
+   * const doc = await table.findOne<Pick<User, 'car'>>({}, {
+   *   projection: { car: 1 },
+   * });
+   *
+   * // doc :: { car: { make: string, model: string } }
+   * console.log(doc.car.make);
+   *
+   * // Projection existence can not be inferred
+   * function findOne(projection?: Projection) {
+   *   return table.findOne({}, { projection });
+   * }
+   *
+   * // doc :: Partial<User>
+   * const doc = await findOne({ car: 1 }).next();
+   * console.log(doc.car?.make);
+   * ```
+   *
+   * ##### Filtering
+   *
+   * The filter can contain a variety of operators & combinators to select the row. See {@link TableFilter} for much more information.
+   *
+   * If the filter is empty, and no {@link Sort} is present, it's undefined as to which row is selected.
+   *
+   * ##### Find by vector search
+   *
+   * If the table has vector search enabled, you can find the most relevant row by providing a vector in the sort option.
+   *
+   * @example
+   * ```ts
+   * await table.insertMany([
+   *   { name: 'John Doe', vector: [.12, .52, .32] },
+   *   { name: 'Jane Doe', vector: [.32, .52, .12] },
+   *   { name: 'Dane Joe', vector: [.52, .32, .12] },
+   * ]);
+   *
+   * const doc = table.findOne({}, {
+   *   sort: { vector: [.12, .52, .32] },
+   * });
+   *
+   * // 'John Doe'
+   * console.log(doc.name);
+   * ```
+   *
+   * ##### Sorting
+   *
+   * The sort option can be used to pick the most relevant row. See {@link Sort} for more information.
+   *
+   * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available sort operators.
+   *
+   * If the sort option is not provided, there is no guarantee as to which of the rows which matches the filter is returned.
+   *
+   * @example
+   * ```ts
+   * await table.insertMany([
+   *   { name: 'John Doe', age: 1, height: 168 },
+   *   { name: 'John Doe', age: 2, height: 42 },
+   * ]);
+   *
+   * const doc = table.findOne({}, {
+   *   sort: { age: 1, height: -1 },
+   * });
+   *
+   * // 'John Doe' (age 2, height 42)
+   * console.log(doc.name);
+   * ```
+   *
+   * ##### Other options
+   *
+   * Other available options include `includeSimilarity`. See {@link TableFindOneOptions} for more information.
+   *
+   * If you want to get `skip` or `includeSortVector` as well, use {@link Table.find} with a `limit: 1` instead.
+   *
+   * @example
+   * ```ts
+   * const doc = await cursor.findOne({}, {
+   *   sort: { vector: [.12, .52, .32] },
+   *   includeSimilarity: true,
+   * });
+   * ```
+   *
+   * @param filter - A filter to select the rows to find. If not provided, all rows will be returned.
+   * @param options - The options for this operation.
+   *
+   * @returns A row matching the criterion, or `null` if no such row exists.
+   */
   public async findOne<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOneOptions): Promise<TRaw | null>;
 
   public async findOne(filter: TableFilter<WSchema>, options?: TableFindOneOptions): Promise<SomeDoc | null> {
     return this.#commands.findOne(filter, options);
   }
 
-  public async alter<NewWSchema extends SomeRow, NewRSchema extends Record<keyof NewWSchema, any> = FoundRow<NewWSchema>>(options: AlterTableOptions<SomeRow>): Promise<Table<NewWSchema, PKey, NewRSchema>> {
+  /**
+   * ##### Overview
+   *
+   * Performs one of the four available table-alteration operations:
+   * - `add` (adds columns to the table)
+   * - `drop` (removes columns from the table)
+   * - `addVectorize` (enabled auto-embedding-generation on existing vector columns)
+   * - `dropVectorize` (disables vectorize on existing enabled columns)
+   *
+   * @example
+   * ```ts
+   * interface User {
+   *   id: UUID,
+   *   vector: DataAPIVector,
+   * }
+   * const table = db.table<User>('users');
+   *
+   * // Add a column to the table
+   * type NewUser = User & { name: string };
+   *
+   * const newTable = await table.alter<NewUser>({
+   *  operation: {
+   *    add: {
+   *      columns: { name: 'text' },
+   *    },
+   *  },
+   * });
+   *
+   * // Drop a column from the table (resets it to how it was originally)
+   * const oldTable = await newTable.alter<User>({
+   *   operation: {
+   *     drop: {
+   *       columns: ['name'],
+   *     },
+   *   },
+   * });
+   * ```
+   *
+   * ##### On returning `Table`
+   *
+   * The `alter` operation returns the table itself, with the new schema type.
+   *
+   * It is heavily recommended to store the result of the `alter` operation in a new variable, as the old table will not have the new schema type.
+   *
+   * You should provide the exact new type of the schema, or it'll just default to `SomeRow`.
+   *
+   * @param options - The options for this operation.
+   *
+   * @returns The table with the new schema type.
+   */
+  public async alter<NewWSchema extends SomeRow, NewRSchema extends SomeRow = FoundRow<NewWSchema>>(options: AlterTableOptions<SomeRow>): Promise<Table<NewWSchema, PKey, NewRSchema>> {
     await this.#httpClient.executeCommand({
       alterTable: {
         operation: options.operation,
@@ -595,11 +1101,42 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     }, {
       timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
     });
-    return this as any;
+    return this as unknown as Table<NewWSchema, PKey, NewRSchema>;
   }
 
+  /**
+   * Lists the index names for this table.
+   *
+   * If you want to include the index definitions in the response, set `nameOnly` to `false` (or omit it completely),
+   * using the other overload.
+   *
+   * @example
+   * ```typescript
+   * // ['my_vector_index', ...]
+   * console.log(await table.listIndexes({ nameOnly: true }));
+   * ```
+   *
+   * @param options - Options for this operation.
+   *
+   * @returns A promise that resolves to an array of index names.
+   */
   public async listIndexes(options?: ListIndexOptions & { nameOnly: true }): Promise<string[]>
 
+  /**
+   * Lists the indexes for this table.
+   *
+   * If you want to use only the index names, set `nameOnly` to `true`, using the other overload.
+   *
+   * @example
+   * ```typescript
+   * // [{ name: 'm_vector_index', definition: { ... } }, ...]
+   * console.log(await db.listTables());
+   * ```
+   *
+   * @param options - Options for this operation.
+   *
+   * @returns A promise that resolves to an array of index info.
+   */
   public async listIndexes(options?: ListIndexOptions & { nameOnly?: false }): Promise<TableIndexDescriptor[]>
 
   public async listIndexes(options?: ListIndexOptions): Promise<string[] | TableIndexDescriptor[]> {
@@ -615,6 +1152,31 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     return resp.status!.indexes;
   }
 
+  /**
+   * ##### Overview
+   *
+   * Creates a secondary non-vector index on the table.
+   *
+   * The operation blocks until the index is created and ready to use.
+   *
+   * See {@link Table.createVectorIndex} for creating vector indexes.
+   *
+   * ##### Text indexes
+   *
+   * `text` and `ascii`-based indexes have access to a few additional options:
+   * - `caseSensitive` (default: `true`)
+   *   - Allows searches to be case-insensitive, if false
+   * - `normalize` (default: `true`)
+   *   - Normalize Unicode characters and diacritics before indexing, if true
+   * - `ascii` (default: `false`)
+   *   - Converts non-ASCII characters to their US-ASCII equivalent before indexing, if true
+   *
+   * @param name - The name of the index
+   * @param column - The column to index
+   * @param options - Options for this operation
+   *
+   * @returns A promise which resolves once the index is created.
+   */
   public async createIndex(name: string, column: WSchema | string, options?: CreateTableIndexOptions): Promise<void> {
     await this.#httpClient.executeCommand({
       createIndex: {
@@ -636,6 +1198,19 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     });
   }
 
+  /**
+   * Creates an index on an existing vector column in the table.
+   *
+   * The operation blocks until the index is created and ready to use.
+   *
+   * See {@link Table.createIndex} for creating non-vector indexes.
+   *
+   * @param name - The name of the index
+   * @param column - The vector column to index
+   * @param options - Options for this operation
+   *
+   * @returns A promise which resolves once the index is created.
+   */
   public async createVectorIndex(name: string, column: WSchema | string, options?: CreateTableVectorIndexOptions): Promise<void> {
     await this.#httpClient.executeCommand({
       createVectorIndex: {
@@ -656,6 +1231,24 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     });
   }
 
+  /**
+   * ##### Overview
+   *
+   * Get the table definition, i.e. it's columns and primary key definition.
+   *
+   * The method issues a request to the Data API each time it is invoked, without caching mechanisms;
+   * this ensures up-to-date information for usages such as real-time collection validation by the application.
+   *
+   * @example
+   * ```ts
+   * const definition = await table.definition();
+   * console.log(definition.columns);
+   * ```
+   *
+   * @param options - The options for this operation.
+   *
+   * @returns The definition of the table.
+   */
   public async definition(options?: WithTimeout<'tableAdminTimeoutMs'>): Promise<ListTableDefinition> {
     const resp = await this.#db.listTables({
       timeout: options?.timeout,
@@ -671,10 +1264,36 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     return table.definition;
   }
 
+  /**
+   * ##### Overview
+   *
+   * Drops the table from the database, including all the rows it contains.
+   *
+   * @example
+   * ```typescript
+   * const table = await db.table('my_table');
+   * await table.drop();
+   * ```
+   *
+   * ##### Disclaimer
+   *
+   * Once the table is dropped, this object is still technically "usable", but any further operations on it
+   * will fail at the Data API level; thus, it's the user's responsibility to make sure that the table object
+   * is no longer used.
+   *
+   * @param options - The options for this operation.
+   *
+   * @returns A promise which resolves when the table has been dropped.
+   *
+   * @remarks Use with caution. Wear your safety goggles. Don't say I didn't warn you.
+   */
   public async drop(options?: Omit<DropTableOptions, 'keyspace'>): Promise<void> {
     await this.#db.dropTable(this.name, { ...options, keyspace: this.keyspace });
   }
 
+  /**
+   * Backdoor to the HTTP client for if it's absolutely necessary. Which it almost never (if even ever) is.
+   */
   public get _httpClient() {
     return this.#httpClient;
   }

@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { GenericReplaceOneOptions, GenericUpdateResult, IdOf, SomeDoc } from '@/src/documents';
+import { GenericReplaceOneOptions, GenericUpdateResult, IdOf } from '@/src/documents';
 
 /**
  * Represents the options for the `replaceOne` command.
  *
  * @field upsert - If true, perform an insert if no documents match the filter.
  * @field sort - The sort order to pick which document to replace if the filter selects multiple documents.
- * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
+ * @field timeout - The timeout override for this method
  *
  * @see Collection.replaceOne
  *
@@ -54,4 +54,4 @@ export type CollectionReplaceOneOptions = GenericReplaceOneOptions;
  *
  * @public
  */
-export type CollectionReplaceOneResult<Schema extends SomeDoc> = GenericUpdateResult<IdOf<Schema>, 0 | 1>;
+export type CollectionReplaceOneResult<RSchema> = GenericUpdateResult<IdOf<RSchema>, 0 | 1>;

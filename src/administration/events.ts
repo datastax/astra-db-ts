@@ -100,7 +100,6 @@ export abstract class AdminCommandEvent extends DataAPIClientEvent {
 
   /**
    * @internal
-   * @protected
    */
   protected _desc() {
     return `(${this.methodName}) ${this.method} ${this.path}${this.params ? '?' : ''}${new URLSearchParams(this.params).toString()}`;
@@ -130,6 +129,9 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
     this.timeout = timeout;
   }
 
+  /**
+   * Formats the warnings into a human-readable string.
+   */
   public formatted(): string {
     return `${super.formatted()}: ${this._desc()} ${this.longRunning ? '(blocking) ' : ' '}${this.reqBody ? JSON.stringify(this.reqBody) : ''}`;
   }
@@ -172,6 +174,9 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
     this.pollCount = pollCount;
   }
 
+  /**
+   * Formats the warnings into a human-readable string.
+   */
   public formatted(): string {
     return `${super.formatted()}: ${this._desc()} (poll #${this.pollCount}; ${~~this.elapsed}ms elapsed)`;
   }
@@ -206,6 +211,9 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
     this.resBody = data || undefined;
   }
 
+  /**
+   * Formats the warnings into a human-readable string.
+   */
   public formatted(): string {
     return `${super.formatted()}: ${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms)`;
   }
@@ -243,19 +251,40 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
     this.error = error;
   }
 
+  /**
+   * Formats the warnings into a human-readable string.
+   */
   public formatted(): string {
     return `${super.formatted()}: ${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms) - '${this.error.message}'`;
   }
 }
 
+/**
+ * Event emitted when the Data API returned a warning for an admin command.
+ *
+ * See {@link AdminCommandEvent} for more information about all the common properties available on this event.
+ *
+ * @public
+ */
 export class AdminCommandWarningsEvent extends AdminCommandEvent {
+  /**
+   * The warnings that occurred.
+   */
   public readonly warnings: DataAPIErrorDescriptor[];
 
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
   constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: DataAPIErrorDescriptor[]) {
     super('AdminCommandWarnings', info, longRunning);
     this.warnings = warnings;
   }
 
+  /**
+   * Formats the warnings into a human-readable string.
+   */
   public formatted(): string {
     return `${super.formatted()}: ${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}- '${this.warnings.map(w => w.message).join(', ')}'`;
   }

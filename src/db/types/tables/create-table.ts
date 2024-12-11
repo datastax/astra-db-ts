@@ -25,10 +25,10 @@ import { TableOptions } from '@/src/db/types/tables/spawn-table';
  * @field ifNotExists - Makes operation a no-op if the table already exists.
  * @field keyspace - Overrides the keyspace for the table (from the `Db`'s working keyspace).
  * @field embeddingApiKey - The embedding service's API-key/headers (for $vectorize)
- * @field defaultMaxTimeMS - Default `maxTimeMS` for all table operations
+ * @field timeoutDefaults - Default timeouts for all table operations
  * @field logging - Logging configuration overrides
  * @field serdes - Additional serialization/deserialization configuration
- * @field maxTimeMS - The maximum time to allow the operation to run.
+ * @field timeout - The timeout override for this method
  *
  * @public
  */
@@ -37,13 +37,32 @@ export interface CreateTableOptions<Def extends CreateTableDefinition = CreateTa
   ifNotExists?: boolean,
 }
 
+/**
+ * The definition for creating a new table through the Data API, using a bespoke schema definition syntax.
+ *
+ * See {@link Db.createTable} for more info.
+ *
+ * @public
+ */
 export interface CreateTableDefinition {
+  /**
+   * The columns to create in the table.
+   */
   readonly columns: CreateTableColumnDefinitions,
+  /**
+   * The primary key definition for the table.
+   */
   readonly primaryKey: CreateTablePrimaryKeyDefinition,
 }
 
+/**
+ * @public
+ */
 export type CreateTableColumnDefinitions = Record<string, LooseCreateTableColumnDefinition | StrictCreateTableColumnDefinition>;
 
+/**
+ * @public
+ */
 export type TableScalarType =
   | 'ascii'
   | 'bigint'
@@ -64,10 +83,16 @@ export type TableScalarType =
   | 'uuid'
   | 'varint';
 
+/**
+ * @public
+ */
 export type LooseCreateTableColumnDefinition =
   | TableScalarType
   | string;
 
+/**
+ * @public
+ */
 export type StrictCreateTableColumnDefinition =
   | ScalarCreateTableColumnDefinition
   | MapCreateTableColumnDefinition
@@ -75,38 +100,62 @@ export type StrictCreateTableColumnDefinition =
   | SetCreateTableColumnDefinition
   | VectorCreateTableColumnDefinition;
 
+/**
+ * @public
+ */
 export interface ScalarCreateTableColumnDefinition {
   type: TableScalarType,
 }
 
+/**
+ * @public
+ */
 export interface MapCreateTableColumnDefinition {
   type: 'map',
   keyType: TableScalarType,
   valueType: TableScalarType,
 }
 
+/**
+ * @public
+ */
 export interface ListCreateTableColumnDefinition {
   type: 'list',
   valueType: TableScalarType,
 }
 
+/**
+ * @public
+ */
 export interface SetCreateTableColumnDefinition {
   type: 'set',
   valueType: TableScalarType,
 }
 
+/**
+ * @public
+ */
 export interface VectorCreateTableColumnDefinition {
   type: 'vector',
   dimension?: number,
   service?: VectorizeServiceOptions,
 }
 
+/**
+ * @public
+ */
 export type CreateTablePrimaryKeyDefinition =
   | ShortCreateTablePrimaryKeyDefinition
   | FullCreateTablePrimaryKeyDefinition;
 
+/**
+ * @public
+ */
 export type ShortCreateTablePrimaryKeyDefinition = string;
 
+/**
+ * @public
+ */
 export interface FullCreateTablePrimaryKeyDefinition {
   readonly partitionBy: readonly string[],
   readonly partitionSort?: Record<string, 1 | -1>,

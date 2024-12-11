@@ -45,5 +45,5 @@ let
 in
 
 pkgs.mkShell {
-  packages = [ pkgs.nodejs_20 pkgs.jq astra ];
+  packages = [ pkgs.nodejs_20 pkgs.jq astra pkgs.nodePackages.np ];
 }

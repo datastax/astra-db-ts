@@ -27,13 +27,6 @@ import { ObjectId, UUID } from '@/src/documents';
 export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId | null;
 
 /**
- * Forces the given type to include an `_id`
- *
- * @public
- */
-export type WithId<T> = NoId<T> & { _id: IdOf<T> }
-
-/**
  * Allows the given type to include an `_id` or not, even if it's not declared in the type
  *
  * @public
@@ -41,11 +34,20 @@ export type WithId<T> = NoId<T> & { _id: IdOf<T> }
 export type MaybeId<T> = NoId<T> & { _id?: IdOf<T> }
 
 /**
- * Shorthand type for `WithSim` & `WithId`
+ * Includes an `_id` in the given type, even if it's not declared in the type
  *
  * @public
  */
-export type FoundDoc<Doc> = Doc & { _id: IdOf<Doc>, $vector?: never, $vectorize?: never };
+export type WithId<T> = T & { _id: IdOf<T> }
+
+/**
+ * Represents a document as it's returned by the database by default.
+ *
+ * Shorthand type for `WithSim` & `WithId`.
+ *
+ * @public
+ */
+export type FoundDoc<Doc> = WithId<Omit<Doc, '$vector' | '$vectorize'>>;
 
 /**
  * Represents a doc that doesn't have an `_id`

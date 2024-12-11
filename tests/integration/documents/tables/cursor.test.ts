@@ -254,16 +254,16 @@ describe('integration.documents.table.cursor', { truncate: 'tables:before' }, ({
     it('should return sort vector on only first API call if includeSortVector: true', async () => {
       const cursor = table.find({}).sort({ vector: [1, 1, 1, 1, 1] }).includeSortVector();
       const start1 = performance.now();
-      assert.deepStrictEqual(await cursor.getSortVector(), [1, 1, 1, 1, 1]);
+      assert.deepStrictEqual((await cursor.getSortVector())?.asArray(), [1, 1, 1, 1, 1]);
       assert.ok(performance.now() - start1 > 5);
       const start2 = performance.now();
-      assert.deepStrictEqual(await cursor.getSortVector(), [1, 1, 1, 1, 1]);
+      assert.deepStrictEqual((await cursor.getSortVector())?.asArray(), [1, 1, 1, 1, 1]);
       assert.ok(performance.now() - start2 < 2);
     });
 
     it('getSortVector should populate buffer if called first w/ includeSortVector: true', async () => {
       const cursor = table.find({}).sort({ vector: [1, 1, 1, 1, 1] }).includeSortVector();
-      assert.deepStrictEqual(await cursor.getSortVector(), [1, 1, 1, 1, 1]);
+      assert.deepStrictEqual((await cursor.getSortVector())?.asArray(), [1, 1, 1, 1, 1]);
       assert.strictEqual(cursor.consumeBuffer().length, 3);
     });
 

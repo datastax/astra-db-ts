@@ -24,18 +24,30 @@ import { EmptyObj, SerDesFn } from '@/src/lib';
 import BigNumber from 'bignumber.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 
+/**
+ * @public
+ */
 export interface TableCodecSerDesFns {
   serialize: SerDesFn<TableSerCtx>,
   deserialize: (val: any, ctx: TableDesCtx, definition: SomeDoc) => ReturnType<SerDesFn<any>>,
 }
 
-interface TableCodecClass {
+/**
+ * @public
+ */
+export interface TableCodecClass {
   new (...args: any[]): { [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>> };
   [$DeserializeForTable]: TableCodecSerDesFns['deserialize'];
 }
 
+/**
+ * @public
+ */
 export type TableCodec<_Class extends TableCodecClass> = EmptyObj;
 
+/**
+ * @public
+ */
 export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
   /**
    * @internal
