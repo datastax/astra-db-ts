@@ -19,6 +19,11 @@ import { $DeserializeForCollection, $SerializeForCollection } from '@/src/docume
 
 const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
 
+/**
+ * A shorthand function for `new ObjectId(oid?)`
+ *
+ * @public
+ */
 export const oid = (id?: string | number | null) => new ObjectId(id);
 
 /**
@@ -63,10 +68,16 @@ export const oid = (id?: string | number | null) => new ObjectId(id);
 export class ObjectId implements CollCodec<typeof ObjectId> {
   readonly #raw: string;
 
+  /**
+   * Implementation of `$SerializeForCollection` for {@link TableCodec}
+   */
   public [$SerializeForCollection](ctx: CollSerCtx) {
     return ctx.done({ $objectId: this.#raw });
   };
 
+  /**
+   * Implementation of `$DeserializeForCollection` for {@link TableCodec}
+   */
   public static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx) {
     return ctx.done(new ObjectId(value.$objectId, false));
   }

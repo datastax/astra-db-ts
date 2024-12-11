@@ -23,7 +23,7 @@ import { WithTimeout } from '@/src/lib';
  * @field sort - The sort order to pick which document to replace if the filter selects multiple documents.
  * @field projection - Specifies which fields should be included/excluded in the returned documents.
  * @field includeResultMetadata - When true, returns alongside the document, an `ok` field with a value of 1 if the command executed successfully.
- * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
+ * @field timeout - The timeout override for this method
  *
  * @see Collection.findOneAndUpdate
  *

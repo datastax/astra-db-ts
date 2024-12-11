@@ -12,16 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SerDes, SerDesConfig } from '@/src/lib/api/ser-des/ser-des';
+import { SerDes, BaseSerDesConfig } from '@/src/lib/api/ser-des/ser-des';
 import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
 import { CollCodecs, CollCodecSerDesFns } from '@/src/documents/collections/ser-des/codecs';
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 import { stringArraysEqual } from '@/src/lib/utils';
 
+/**
+ * @public
+ */
 export type CollSerCtx = BaseSerCtx<CollCodecSerDesFns>
+
+/**
+ * @public
+ */
 export type CollDesCtx = BaseDesCtx<CollCodecSerDesFns>
 
-export interface CollectionSerDesConfig extends SerDesConfig<CollCodecs, CollCodecSerDesFns, CollSerCtx, CollDesCtx> {
+/**
+ * @public
+ */
+export interface CollectionSerDesConfig extends BaseSerDesConfig<CollCodecs, CollCodecSerDesFns, CollSerCtx, CollDesCtx> {
   enableBigNumbers?: boolean,
   codecs?: CollCodecs[],
 }

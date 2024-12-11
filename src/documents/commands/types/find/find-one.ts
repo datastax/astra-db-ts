@@ -13,10 +13,33 @@
 // limitations under the License.
 
 import type { Projection, Sort } from '@/src/documents';
-import { nullish, WithTimeout } from '@/src/lib';
+import { WithTimeout } from '@/src/lib';
 
-export interface GenericFindOneOptions<IncSim extends boolean | string | nullish = undefined> extends WithTimeout<'generalMethodTimeoutMs'> {
+/**
+ * Represents the options for some generic `findOne` command.
+ *
+ * @field sort - The sort order to pick which document to return if the filter selects multiple documents.
+ * @field projection - Specifies which fields should be included/excluded in the returned documents.
+ * @field includeSimilarity - If true, include the similarity score in the result via the `$similarity` field.
+ * @field timeout - The timeout override for this method
+ *
+ * @public
+ */
+export interface GenericFindOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
+  /**
+   * The order in which to apply the update if the filter selects multiple records.
+   *
+   * Defaults to `null`, where the order is not guaranteed.
+   */
   sort?: Sort,
+  /**
+   * The projection to apply to the returned records, to specify only a select set of fields to return.
+   *
+   * If using a projection, it is heavily recommended to provide a custom type for the returned records as a generic typeparam to the `find` method.
+   */
   projection?: Projection,
-  includeSimilarity?: IncSim,
+  /**
+   * If true, include the similarity score in the result via the `$similarity` field.
+   */
+  includeSimilarity?: boolean,
 }

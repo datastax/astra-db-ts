@@ -15,6 +15,15 @@
 import type { WithTimeout } from '@/src/lib';
 import { Sort } from '@/src/documents';
 
+/**
+ * Represents the options for some generic `replaceOne` command.
+ *
+ * @field upsert - If true, perform an insert if no documents match the filter.
+ * @field sort - The sort order to pick which document to replace if the filter selects multiple documents.
+ * @field timeout - The timeout override for this method
+ *
+ * @public
+ */
 export interface GenericReplaceOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   upsert?: boolean,
   sort?: Sort,

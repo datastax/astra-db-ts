@@ -22,7 +22,7 @@ import type { GenericInsertManyOptions, SomeRow } from '@/src/documents';
  * @field ordered - If `true`, the rows are inserted sequentially; else, they're arbitrary inserted in parallel.
  * @field concurrency - The maximum number of concurrent requests to make at once.
  * @field chunkSize - The number of rows to upload per request. Defaults to 50.
- * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
+ * @field timeout - The timeout override for this method
  *
  * @see Table.insertMany
  *

@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import { GenericDeleteManyResult } from '@/src/documents';
+
 /**
  * Represents the result of a delete command.
  *
@@ -21,9 +23,4 @@
  *
  * @public
  */
-export interface CollectionDeleteManyResult {
-  /**
-   * The number of deleted documents.
-   */
-  deletedCount: number;
-}
+export type CollectionDeleteManyResult = GenericDeleteManyResult;

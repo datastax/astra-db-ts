@@ -12,6 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/**
+ * Represents the result of some generic `deleteMany` command.
+ *
+ * @field deletedCount - The number of deleted documents. Can be any non-negative integer.
+ *
+ * @public
+ */
 export interface GenericDeleteManyResult {
-  deletedCount: number;
+  /**
+   * The number of deleted documents.
+   */
+  deletedCount: number,
 }

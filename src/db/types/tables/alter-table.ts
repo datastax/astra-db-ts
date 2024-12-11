@@ -12,15 +12,28 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Cols, SomeRow } from '@/src/documents';
+import { SomeRow } from '@/src/documents';
 import { CreateTableColumnDefinitions, VectorizeServiceOptions } from '@/src/db';
 import { WithTimeout } from '@/src/lib';
 
+/**
+ * Options for altering a table.
+ *
+ * @public
+ */
 export interface AlterTableOptions<Schema extends SomeRow> extends WithTimeout<'tableAdminTimeoutMs'> {
+  /**
+   * The operations to perform on the table. Must pick just one of `add`, `drop`, `addVectorize`, or `dropVectorize`.
+   */
   operation: AlterTableOperations<Schema>,
   // ifExists?: boolean,
 }
 
+/**
+ * The possible alterations that may be performed on the table. Only one out of the four may be used at a time.
+ *
+ * @public
+ */
 export interface AlterTableOperations<Schema extends SomeRow> {
   add?: AddColumnOperation,
   drop?: DropColumnOperation<Schema>,
@@ -28,21 +41,54 @@ export interface AlterTableOperations<Schema extends SomeRow> {
   dropVectorize?: DropVectorizeOperation<Schema>,
 }
 
+/**
+ * An operation to add columns to the table.
+ *
+ * @public
+ */
 export interface AddColumnOperation {
-  columns: CreateTableColumnDefinitions
+  /**
+   * The columns to add to the table, of the same format as in `createTable`
+   */
+  columns: CreateTableColumnDefinitions,
+
   // ifNotExists?: boolean,
 }
 
+/**
+ * An operation to drop columns from the table.
+ *
+ * @public
+ */
 export interface DropColumnOperation<Schema extends SomeRow> {
-  columns: Cols<Schema>[];
+  /**
+   * The columns to drop from the table.
+   */
+  columns: (keyof Schema)[],
   // ifExists?: boolean,
 }
 
+/**
+ * An operation to enable vectorize (auto-embedding-generation) on existing vector columns on the table.
+ *
+ * @public
+ */
 export interface AddVectorizeOperation<Schema extends SomeRow> {
-  columns: Partial<Record<Cols<Schema>, VectorizeServiceOptions>>,
+  /**
+   * The options for vectorize-ing each column.
+   */
+  columns: Partial<Record<keyof Schema, VectorizeServiceOptions>>,
 }
 
+/**
+ * An operation to disable vectorize (auto-embedding-generation) on existing vector columns on the table.
+ *
+ * @public
+ */
 export interface DropVectorizeOperation<Schema extends SomeRow> {
-  columns: Cols<Schema>[];
+  /**
+   * The columns to disable vectorize on.
+   */
+  columns: (keyof Schema)[],
   // ifExists?: boolean,
 }

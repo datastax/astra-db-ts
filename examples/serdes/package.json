@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "tsx src/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -15,6 +16,6 @@
     "typescript": "^5.6.3"
   },
   "dependencies": {
-    "@datastax/astra-db-ts": "file:../../datastax-astra-db-ts-2.0.0-prerelease.tgz"
+    "@datastax/astra-db-ts": "^1.5.0"
   }
 }

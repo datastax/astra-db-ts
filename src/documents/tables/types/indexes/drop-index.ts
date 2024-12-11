@@ -13,7 +13,16 @@
 // limitations under the License.
 
 import { WithTimeout } from '@/src/lib';
+import { WithKeyspace } from '@/src/db';
 
-export interface TableDropIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+/**
+ * Options for dropping an index via {@link Table.dropIndex}
+ *
+ * @public
+ */
+export interface TableDropIndexOptions extends WithKeyspace, WithTimeout<'tableAdminTimeoutMs'> {
+  /**
+   * If `true`, an error will not be thrown if the index attempting to be dropped does not exist.
+   */
   ifExists?: boolean,
 }

@@ -13,8 +13,15 @@
 // limitations under the License.
 
 import { DataAPILoggingConfig, type TimeoutDescriptor, TokenProvider } from '@/src/lib';
-import { CollectionSerDesConfig, SomeDoc, SomeRow, TableSerDesConfig } from '@/src/documents';
+import { CollectionSerDesConfig, TableSerDesConfig } from '@/src/documents';
 
+/**
+ * The default db options as can be specified in the {@link DataAPIClientOptions}.
+ *
+ * See {@link DbOptions} for more information on the available options.
+ *
+ * @public
+ */
 export type RootDbOptions = Omit<DbOptions, 'logging' | 'timeoutDefaults'>;
 
 /**
@@ -101,6 +108,13 @@ export interface DbOptions {
    * @defaultValue 'api/json/v1'
    */
   dataApiPath?: string,
+  /**
+   * Advanced & currently somewhat unstable features related to customizing the client's ser/des behavior at a lower level.
+   *
+   * Use with caution. See official DataStax documentation for more info.
+   *
+   * @beta
+   */
   serdes?: DbSerDesConfig,
   /**
    * Additional headers to include in the HTTP requests to the DevOps API.
@@ -164,94 +178,35 @@ export interface DbOptions {
  *
  * ##### Disclaimer
  *
- * This is an advanced, somewhat backdoor-y feature, and should be used with caution, and heavily tested. Buggy logic could
- * lead to data loss/corruption, or other unexpected behavior.
+ * This is an advanced feature, and should be used with caution. It's possible to break the client's behavior by using this feature incorrectly.
  *
- * This is also a very `astra-db-ts`-specific feature, and may not be supported by other clients.
+ * These features are currently generally unstable, and should generally not be used in production (except for a couple, such as `mutateInPlace` or `enableBigNumbers`).
  *
- * ##### Table/Collection-specific configuration
- *
- * This object is used for config you'd want to use across all of your spawned tables/collections; if you want to configure
- * `serdes` for a specific {@link Table}/{@link Collection}, you can do so in their respective options objects.
- *
- * See {@link CollectionSerDesConfig} and {@link TableSerDesConfig} for information on how to implement your own ser/des logic.
- *
- * The `serdes` config in each child object is deep-merged with the config of its parent, with the child's config taking precedence.
- *
- * @example
- * ```ts
- * const client = new DataAPIClient('*TOKEN*', {
- *   dbOptions: {
- *     serdes: {
- *       table { serialize() {} }, // serializer1
- *     },
- *   },
- * });
- *
- * const db = client.db('*ENDPOINT*', {
- *   serdes: {
- *     table: { serialize() {} }, // serializer2
- *   },
- * });
- *
- * // table will use all serializers, in this order:
- * // [serializer3, serializer2, serializer1, DefaultSerializer]
- * const table = client.table('*NAME*', {
- *   serdes: {
- *     table: { serialize() {} }, // serializer3
- *   },
- * });
- * ```
- *
- * ##### Example
- *
- * See {@link CollectionSerDesConfig} & {@link TableSerDesConfig} for more examples & much more information, but here's a quick example:
- *
- * @example
- * ```ts
- * import { $SerializeForCollections, ... } from '@datastax/astra-db-ts';
- *
- * // Custom datatype
- * class UserID {
- *   constructor(public readonly unwrap: string) {}
- *   [$SerializeForCollections] = () => this.unwrap; // Serializer checks for this symbol
- * }
- *
- * // Schema type of the collection, using the custom datatype
- * interface User {
- *   _id: UserID,
- *   name: string,
- * }
- *
- * const collection = db.collection<User>('users', {
- *   serdes: { // Serializer not necessary here since `$SerializeForCollections` is used
- *     deserialize(key, value) {
- *       if (key === '_id') return [new UserID(value)]; // [X] specifies a new value
- *     },
- *   },
- * });
- *
- * const inserted = await collection.insertOne({
- *   _id: new UserID('123'), // will be stored in db as '123'
- *   name: 'Alice',
- * });
- *
- * console.log(inserted.insertedId.unwrap); // '123'
- * ```
- *
- * @field table - Default configuration for table serialization/deserialization.
- * @field collection - Default configuration for collection serialization/deserialization.
- * @field mutateInPlace - An optimization for inserted records to be mutated in-place when serializing.
+ * See the official DataStax documentation for more info.
  *
  * @see CollectionSerDesConfig
  * @see TableSerDesConfig
  * @see $SerializeForCollections
  * @see $SerializeForTables
  *
- * @public
+ * @beta
  */
 export interface DbSerDesConfig {
+  /**
+   * Advanced & currently somewhat unstable features related to customizing spawned tables' ser/des behavior at a lower level.
+   *
+   * Use with caution. See official DataStax documentation for more info.
+   *
+   * @beta
+   */
   table?: Omit<TableSerDesConfig, 'mutateInPlace'>,
+  /**
+   * Advanced & currently somewhat unstable features related to customizing spawned collections' ser/des behavior at a lower level.
+   *
+   * Use with caution. See official DataStax documentation for more info.
+   *
+   * @beta
+   */
   collection?: Omit<CollectionSerDesConfig, 'mutateInPlace'>,
   /**
    * ##### Overview
@@ -262,8 +217,8 @@ export interface DbSerDesConfig {
    *
    * For example, when you insert a record like so:
    * ```ts
-   * import { UUID } from '@datastax/astra-db-ts';
-   * await collection.insertOne({ name: 'Alice', friends: { john: new UUID('...') } });
+   * import { uuid } from '@datastax/astra-db-ts';
+   * await collection.insertOne({ name: 'Alice', friends: { john: uuid('...') } });
    * ```
    *
    * The document is internally serialized as such:
@@ -288,7 +243,7 @@ export interface DbSerDesConfig {
    * // Before
    * const collection = db.collection<User>('users');
    *
-   * const doc = { name: 'Alice', friends: { john: UUID.v4() } };
+   * const doc = { name: 'Alice', friends: { john: uuid(4) } };
    * await collection.insertOne(doc);
    *
    * console.log(doc); // { name: 'Alice', friends: { john: UUID<4>('...') } }

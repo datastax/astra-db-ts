@@ -14,11 +14,34 @@
 
 import { FindCursor, SomeDoc, SomeRow, Table, TableFilter } from '@/src/documents';
 
+/**
+ * A subclass of `FindCursor` which is identical to its parent; it just adds some more specific typing for
+ * a couple of properties/functions.
+ *
+ * See {@link FindCursor} directly for information on the cursor itself.
+ *
+ * @public
+ */
 export class TableFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {
+  /**
+   * The table which spawned this cursor.
+   *
+   * @returns The table which spawned this cursor.
+   */
   public override get dataSource(): Table<SomeRow> {
     return super.dataSource as Table<SomeRow>;
   }
 
+  /**
+   * Sets the filter for the cursor, overwriting any previous filter.
+   *
+   * *NB. This method does **NOT** mutate the cursor, and may be called even after the cursor is started; it simply
+   * returns a new, uninitialized cursor with the given new filter set.*
+   *
+   * @param filter - A filter to select which records to return.
+   *
+   * @returns A new cursor with the new filter set.
+   */
   public override filter(filter: TableFilter<TRaw>): FindCursor<T, TRaw> {
     return super.filter(filter);
   }
