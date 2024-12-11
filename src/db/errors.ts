@@ -17,6 +17,8 @@
  *
  * @field currentEnvironment - The environment that was attempted to be used
  * @field expectedEnvironments - The environments that are valid for the operation
+ *
+ * @public
  */
 export class InvalidEnvironmentError extends Error {
   /**

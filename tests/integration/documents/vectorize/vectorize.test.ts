@@ -111,7 +111,7 @@ const createVectorizeProvidersTest = (db: Db, batchIdx: number) => (group: Vecto
 
       assert.ok(findOneResult);
       assert.strictEqual(findOneResult._id, insertManyResult.insertedIds[0]);
-      assert.ok(findOneResult.$similarity > 0.8);
+      assert.ok(findOneResult.$similarity! > 0.8);
 
       const deleteResult = await collection.deleteOne({ key }, {
         sort: { $vectorize: 'Alice likes big red cars' },

@@ -13,6 +13,18 @@
 // limitations under the License.
 
 import { GenericFindOptions } from '@/src/documents';
-import { nullish } from '@/src/lib';
 
-export type TableFindOptions<IncSim extends boolean | string | nullish = undefined> = GenericFindOptions<IncSim>;
+/**
+ * Options for the table `find` method.
+ *
+ * @field sort - The sort order to pick which document to return if the filter selects multiple documents.
+ * @field projection - Specifies which fields should be included/excluded in the returned documents.
+ * @field limit - Max number of documents to return in the lifetime of the cursor.
+ * @field skip - Number of documents to skip if using a sort.
+ * @field includeSimilarity - If true, include the similarity score in the result via the `$similarity` field.
+ *
+ * @see Table.find
+ *
+ * @public
+ */
+export type TableFindOptions = GenericFindOptions;

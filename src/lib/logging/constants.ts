@@ -79,6 +79,9 @@ export const DataAPILoggingDefaultOutputs = <const>{
   commandWarnings:       ['event', 'stderr'],
 };
 
+/**
+ * @public
+ */
 export const DataAPILoggingDefaults: NormalizedLoggingConfig[] = [{
   events: ['adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded'],
   emits: ['event', 'stdout'],

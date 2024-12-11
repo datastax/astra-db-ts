@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, SomeDoc } from '@/src/documents/collections';
+import { Collection, FoundDoc, SomeDoc, WithId } from '@/src/documents/collections';
 import { DEFAULT_KEYSPACE, RawDataAPIResponse, WithTimeout } from '@/src/lib/api';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { DataAPIEnvironment, nullish } from '@/src/lib/types';
@@ -24,7 +24,7 @@ import { TokenProvider } from '@/src/lib';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client';
 import { KeyspaceRef } from '@/src/lib/api/clients/types';
 import { validateDataAPIEnv } from '@/src/lib/utils';
-import { EmbeddingHeadersProvider, SomeRow, Table, TableDropIndexOptions } from '@/src/documents';
+import { EmbeddingHeadersProvider, FoundRow, SomeRow, Table, TableDropIndexOptions } from '@/src/documents';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
 import { CollectionOptions } from '@/src/db/types/collections/collection-options';
 import { DropCollectionOptions } from '@/src/db/types/collections/drop-collection';
@@ -538,8 +538,8 @@ export class Db {
    * @see VectorizeDoc
    * @see db.createCollection
    */
-  public collection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CollectionOptions): Collection<Schema> {
-    return new Collection<Schema>(this, this.#httpClient, name, {
+  public collection<WSchema extends SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>>(name: string, options?: CollectionOptions): Collection<WSchema, RSchema> {
+    return new Collection(this, this.#httpClient, name, {
       ...options,
       serdes: CollectionSerDes.mergeConfig(this.#defaultOpts.dbOptions.serdes?.collection, options?.serdes),
     });
@@ -590,16 +590,18 @@ export class Db {
    *
    * @example
    * ```ts
-   * import { DataAPIDate, UUID, Row, DataAPIVector, ... } from 'astra-db-ts';
+   * import { DataAPIDate, UUID, DataAPIVector, ... } from 'astra-db-ts';
    *
-   * interface User extends Row<User, 'id' | 'dob'> {
-   *   id: string,   // Partition key
+   * interface User {
+   *   id: string,       // Partition key
    *   dob: DataAPIDate, // Clustering (partition sort) key
    *   friends: Map<string, UUID>,
    *   vector: DataAPIVector,
    * }
    *
-   * const table = db.table<User>('users');
+   * type UserPK = Pick<User, 'id' | 'dob'>;
+   *
+   * const table = db.table<User, UserPK>('users');
    *
    * // res.insertedId is of type { id: string }
    * const res = await table.insertOne({
@@ -624,11 +626,10 @@ export class Db {
    * @see SomeRow
    * @see db.createTable
    * @see InferTableSchema
-   * @see Row
-   * @see $PrimaryKeyType
+   * @see InferTablePrimaryKey
    */
-  public table<Schema extends SomeRow = SomeRow>(name: string, options?: TableOptions): Table<Schema> {
-    return new Table<Schema>(this, this.#httpClient, name, {
+  public table<WSchema extends SomeRow, PKeys extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options?: TableOptions): Table<WSchema, PKeys, RSchema> {
+    return new Table(this, this.#httpClient, name, {
       ...options,
       serdes: TableSerDes.mergeConfig(this.#defaultOpts.dbOptions.serdes?.table, options?.serdes),
     });
@@ -660,7 +661,7 @@ export class Db {
    *
    * Creating a collection is idempotent as long as the options remain the same; if the collection already exists with the same options, a {@link DataAPIResponseError} will be thrown.
    *
-   * ("options" mean the `createCollection` options actually sent to the server, not things like `maxTimeMS` which are just client-side).
+   * ("options" mean the `createCollection` options actually sent to the server, not things like `timeout` which are just client-side).
    *
    * ##### Enabling vector search
    *
@@ -738,7 +739,7 @@ export class Db {
    * @see SomeDoc
    * @see db.collection
    */
-  public async createCollection<Schema extends SomeDoc = SomeDoc>(name: string, options?: CreateCollectionOptions<Schema>): Promise<Collection<Schema>> {
+  public async createCollection<WSchema extends SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>>(name: string, options?: CreateCollectionOptions<WSchema>): Promise<Collection<WSchema, RSchema>> {
     const command = {
       createCollection: {
         name: name,
@@ -841,11 +842,10 @@ export class Db {
    * @see SomeRow
    * @see db.table
    * @see InferTableSchema
-   * @see Row
-   * @see $PrimaryKeyType
+   * @see InferTablePrimaryKey
    * @see CreateTableDefinition
    */
-  public async createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<InferTableSchema<Def>, Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>
+  public async createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>
 
   /**
    * ##### Overview
@@ -863,13 +863,15 @@ export class Db {
    *
    * @example
    * ```ts
-   * interface User extends Row<User, 'name' | 'dob'> {
+   * interface User {
    *   name: string,
    *   dob: DataAPIDate,
    *   friends?: Set<string>,
    * }
    *
-   * const table = await db.createTable<User>('users', {
+   * type UserPK = Pick<User, 'name' | 'dob'>;
+   *
+   * const table = await db.createTable<User, UserPK>('users', {
    *   definition: {
    *     columns: {
    *       name: 'text',
@@ -923,13 +925,12 @@ export class Db {
    * @see SomeRow
    * @see db.table
    * @see InferTableSchema
-   * @see Row
-   * @see $PrimaryKeyType
+   * @see InferTablePrimaryKey
    * @see CreateTableDefinition
    */
-  public async createTable<Schema extends SomeRow, PKeys extends keyof Schema = keyof Schema>(name: string, options: CreateTableOptions<Schema>): Promise<Table<Schema, Pick<Schema, PKeys>>>
+  public async createTable<WSchema extends SomeRow, PKeys extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options: CreateTableOptions): Promise<Table<WSchema, PKeys, RSchema>>
 
-  public async createTable(name: string, options: CreateTableOptions<SomeRow>): Promise<Table<SomeRow>> {
+  public async createTable(name: string, options: CreateTableOptions): Promise<Table<SomeRow>> {
     const command = {
       createTable: {
         name: name,
@@ -949,6 +950,8 @@ export class Db {
   }
 
   /**
+   * ##### Overview
+   *
    * Drops a collection from the database, including all the contained documents.
    *
    * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
@@ -982,6 +985,8 @@ export class Db {
   }
 
   /**
+   * ##### Overview
+   *
    * Drops a table from the database, including all the contained rows.
    *
    * You can also specify a keyspace in the options parameter, which will override the working keyspace for this `Db`
@@ -1014,6 +1019,24 @@ export class Db {
     });
   }
 
+  /**
+   * ##### Overview
+   *
+   * Drops an index from the database.
+   *
+   * This operation is idempotent if `ifExists` is set to `true`.
+   *
+   * See {@link Table.createIndex} & {@link Table.createVectorIndex}
+   *
+   * ##### Name uniqueness
+   *
+   * The name of the index is must actually be unique per keyspace, which is why this is a database-level command: to make it clear that the index is being dropped from the keyspace, not a specific table.
+   *
+   * @param name - The name of the index to drop.
+   * @param options - The options for this operation.
+   *
+   * @returns A promise that resolves when the index is dropped.
+   */
   public async dropTableIndex(name: string, options?: TableDropIndexOptions): Promise<void> {
     const dropOpts = (options?.ifExists)
       ? { ifExists: true }
@@ -1021,6 +1044,7 @@ export class Db {
 
     await this.#httpClient.executeCommand({ dropIndex: { name, options: dropOpts } }, {
       timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
+      keyspace: options?.keyspace,
     });
   }
 
@@ -1042,8 +1066,6 @@ export class Db {
    * @param options - Options for this operation.
    *
    * @returns A promise that resolves to an array of collection names.
-   *
-   * @see CollectionOptions
    */
   public async listCollections(options: ListCollectionsOptions & { nameOnly: true }): Promise<string[]>
 
@@ -1064,8 +1086,6 @@ export class Db {
    * @param options - Options for this operation.
    *
    * @returns A promise that resolves to an array of collection info.
-   *
-   * @see CollectionOptions
    */
   public async listCollections(options?: ListCollectionsOptions & { nameOnly?: false }): Promise<CollectionDescriptor[]>
 
@@ -1113,8 +1133,6 @@ export class Db {
    * @param options - Options for this operation.
    *
    * @returns A promise that resolves to an array of table names.
-   *
-   * @see CollectionOptions
    */
   public async listTables(options: ListTablesOptions & { nameOnly: true }): Promise<string[]>
 
@@ -1135,8 +1153,6 @@ export class Db {
    * @param options - Options for this operation.
    *
    * @returns A promise that resolves to an array of table info.
-   *
-   * @see CollectionOptions
    */
   public async listTables(options?: ListTablesOptions & { nameOnly?: false }): Promise<TableDescriptor[]>
 

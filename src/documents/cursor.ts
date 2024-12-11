@@ -22,11 +22,29 @@ import { SerDes } from '@/src/lib/api/ser-des/ser-des';
 import { DataAPIError } from '@/src/documents/errors';
 import { SomeRow, Table } from '@/src/documents/tables';
 import { TimeoutManager } from '@/src/lib/api/timeouts';
+import { DataAPIVector, vector } from '@/src/documents/datatypes';
 
+/**
+ * An exception that may be thrown whenever something goes wrong with a cursor.
+ *
+ * @public
+ */
 export class CursorError extends DataAPIError {
+  /**
+   * The underlying cursor which caused this error.
+   */
   public readonly cursor: FindCursor<unknown>;
-  public readonly state: CursorStatus;
 
+  /**
+   * The state of the cursor when the error occurred.
+   */
+  public readonly state: FindCursorStatus;
+
+  /**
+   * Should not be instantiated directly.
+   *
+   * @internal
+   */
   constructor(message: string, cursor: FindCursor<unknown>) {
     super(message);
     this.name = 'CursorError';
@@ -48,7 +66,7 @@ export class CursorError extends DataAPIError {
  *
  * @see FindCursor.state
  */
-export type CursorStatus = 'idle' | 'started' | 'closed';
+export type FindCursorStatus = 'idle' | 'started' | 'closed';
 
 interface InternalFindOptions {
   limit: number | undefined,
@@ -117,14 +135,14 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   readonly #parent: Table<SomeRow> | Collection;
   readonly #serdes: SerDes;
 
-  readonly #options: GenericFindOptions<any>;
+  readonly #options: GenericFindOptions;
   readonly #filter: [Filter, boolean];
   readonly #mapping?: (doc: any) => T;
 
   #buffer: TRaw[] = [];
   #nextPageState?: string | null;
-  #state = 'idle' as CursorStatus;
-  #sortVector?: number[] | null;
+  #state = 'idle' as FindCursorStatus;
+  #sortVector?: DataAPIVector | null;
   #consumed: number = 0;
 
   /**
@@ -132,7 +150,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: [Filter, boolean], options?: GenericFindOptions<any>, mapping?: (doc: TRaw) => T) {
+  constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: [Filter, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
     this.#parent = parent;
     this.#serdes = serdes;
     this.#filter = filter;
@@ -158,12 +176,12 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns Whether or not the cursor is closed.
    */
-  public get state(): CursorStatus {
+  public get state(): FindCursorStatus {
     return this.#state;
   }
 
   /**
-   * Returns the number of raw records in the buffer. If the cursor is unused, it'll return 0.
+   * Returns the number of raw records in the buffer.
    *
    * Unless the cursor was closed before the buffer was completely read, the total number of records retrieved from the
    * server is equal to ({@link FindCursor.consumed} + {@link FindCursor.buffered}).
@@ -208,8 +226,6 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @param filter - A filter to select which records to return.
    *
    * @returns A new cursor with the new filter set.
-   *
-   * @see StrictCollectionFilter
    */
   public filter(filter: Filter): FindCursor<T, TRaw> {
     if (this.#state !== 'idle') {
@@ -227,8 +243,6 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @param sort - The sort order to prioritize which records are returned.
    *
    * @returns A new cursor with the new sort set.
-   *
-   * @see StrictSort
    */
   public sort(sort: Sort): FindCursor<T, TRaw> {
     if (this.#state !== 'idle') {
@@ -314,8 +328,6 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @param projection - Specifies which fields should be included/excluded in the returned records.
    *
    * @returns A new cursor with the new projection set.
-   *
-   * @see StrictProjection
    */
   public project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindCursor<RRaw, RRaw> {
     if (this.#mapping) {
@@ -338,7 +350,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns A new cursor with the new similarity setting.
    */
-  public includeSimilarity<IncSim extends true | string = true>(includeSimilarity?: IncSim): FindCursor<WithSim<TRaw, IncSim>, WithSim<TRaw, IncSim>> {
+  public includeSimilarity(includeSimilarity?: boolean): FindCursor<WithSim<TRaw>, WithSim<TRaw>> {
     if (this.#mapping) {
       throw new CursorError('Cannot set include similarity after already using cursor.map(...)', this);
     }
@@ -436,7 +448,14 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns Whether or not there is a next record.
    */
   public async hasNext(): Promise<boolean> {
-    return await this.#next(true) !== null;
+    const reset2idle = this.#state === 'idle';
+    const res = await this.#next(true) !== null;
+
+    if (reset2idle) {
+      this.#state = 'idle';
+    }
+
+    return res;
   }
 
   /**
@@ -462,15 +481,22 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns The sort vector, or `null` if none was used (or if `includeSortVector !== true`).
    */
-  public async getSortVector(): Promise<number[] | null> {
-    if (this.#sortVector === undefined) {
-      if (this.#options.includeSortVector) {
-        void await this.hasNext();
-      } else {
-        return null;
-      }
+  public async getSortVector(): Promise<DataAPIVector | null> {
+    if (!this.#options.includeSortVector) {
+      return this.#sortVector ?? null;
     }
-    return this.#sortVector!;
+
+    const reset2idle = this.#state === 'idle';
+
+    if (this.#sortVector === undefined) {
+      await this.hasNext();
+    }
+
+    if (reset2idle) {
+      this.#state = 'idle';
+    }
+
+    return this.#sortVector ?? null;
   }
 
   /**
@@ -637,7 +663,8 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
       this.#buffer[i] = this.#serdes.deserializeRecord(this.#buffer[i], raw) as TRaw;
     }
 
-    this.#sortVector ??= raw.status?.sortVector;
+    const sortVector = raw.status?.sortVector;
+    this.#sortVector ??= sortVector ? vector(sortVector) : sortVector;
     this.#options.includeSortVector = false;
   }
 }

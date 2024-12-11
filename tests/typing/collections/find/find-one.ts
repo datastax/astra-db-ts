@@ -22,7 +22,7 @@ void dummyCollection<TestSchema>().findOne({}, {}).then((a) => {
 });
 
 void dummyCollection<TestSchema>().findOne({}, { includeSimilarity: true }).then((a) => {
-  type b = Expect<Equal<number, NonNullable<typeof a>['$similarity']>>
+  type b = Expect<Equal<number | undefined, NonNullable<typeof a>['$similarity']>>
 });
 
 void dummyCollection<TestSchema>().findOne({}, { includeSimilarity: !!Math.random() }).then((a) => {

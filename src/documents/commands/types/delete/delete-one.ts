@@ -15,10 +15,25 @@
 import type { WithTimeout } from '@/src/lib';
 import { Sort } from '@/src/documents';
 
+/**
+ * Represents the result of some generic `deleteOne` command.
+ *
+ * @field deletedCount - The number of deleted documents. Can be either 0 or 1.
+ *
+ * @public
+ */
 export interface GenericDeleteOneResult {
-  deletedCount: 0 | 1;
+  deletedCount: 0 | 1,
 }
 
+/**
+ * Represents the options for some generic `deleteOne` command.
+ *
+ * @field sort - The sort order to pick which document to delete if the filter selects multiple documents.
+ * @field timeout - The timeout override for this method
+ *
+ * @public
+ */
 export interface GenericDeleteOneOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   sort?: Sort,
 }

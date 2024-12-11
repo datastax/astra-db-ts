@@ -12,8 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIVector, SomeRow } from '@/src/documents';
-import { nullish } from '@/src/lib';
+import { DataAPIVector, SomeDoc } from '@/src/documents';
 
 /**
  * Allowed types to specify an ascending or descending sort.
@@ -47,7 +46,6 @@ export type SortDirection = 1 | -1;
  * }
  * ```
  *
- * @see StrictSort
  * @see SortDirection
  *
  * @public
@@ -82,8 +80,6 @@ export type Sort = Record<string, SortDirection | number[] | DataAPIVector | str
  *   test_scores: { $slice: [2, 4] },
  * }
  * ```
- *
- * @see StrictProjection
  *
  * @public
  */
@@ -138,9 +134,9 @@ export interface ProjectionSlice {
   $slice: number | [number, number];
 }
 
-export type WithSim<Schema extends SomeRow, IncSim extends boolean | string | nullish> =
-  IncSim extends true
-    ? Schema & { $similarity: number } :
-  IncSim extends string
-    ? Schema & Record<IncSim, number>
-    : Schema;
+/**
+ * Adds `$similarity?: number` to the given type, representing the vector similarity score of the document if a vector search was performed.
+ *
+ * @public
+ */
+export type WithSim<Schema extends SomeDoc> = Schema & { $similarity?: number };

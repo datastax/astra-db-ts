@@ -10,8 +10,16 @@ const cleanup = () => db.dropCollection(NAME);
 
 (async () => {
   await cleanup();
-  await using _ = { [Symbol.asyncDispose]: cleanup };
-  // const example = await import('./tables/custom-datatypes');
-  const example = await import('./collections/class-mapping');
-  await example.default(NAME, db);
+
+  const files = [
+    './tables/custom-datatypes',
+    './collections/class-mapping',
+  ];
+
+  for (const file of files) {
+    await using _ = { [Symbol.asyncDispose]: cleanup };
+    const example = await import(file);
+    console.log(`Running ${file}...`);
+    await example.default(NAME, db);
+  }
 })();

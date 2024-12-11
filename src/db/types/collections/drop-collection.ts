@@ -19,7 +19,7 @@ import { WithKeyspace } from '@/src/db';
  * Options for dropping a collections.
  *
  * @field keyspace - Overrides the keyspace for the collections.
- * @field maxTimeMS - The maximum time to allow the operation to run.
+ * @field timeout - The timeout override for this method
  *
  * @see Db.dropCollection
  *

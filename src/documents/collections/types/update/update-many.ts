@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { GenericUpdateManyOptions, GenericUpdateResult, IdOf, SomeDoc } from '@/src/documents';
+import { GenericUpdateManyOptions, GenericUpdateResult, IdOf } from '@/src/documents';
 
 /**
  Options for an `updateMany` command on a collection.
  *
  * @field upsert - If true, perform an insert if no documents match the filter.
- * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
+ * @field timeout - The timeout override for this method
  *
  * @see Collection.updateMany
  *
@@ -53,4 +53,4 @@ export type CollectionUpdateManyOptions = GenericUpdateManyOptions;
  *
  * @public
  */
-export type CollectionUpdateManyResult<Schema extends SomeDoc> = GenericUpdateResult<IdOf<Schema>, number>;
+export type CollectionUpdateManyResult<RSchema> = GenericUpdateResult<IdOf<RSchema>, number>;

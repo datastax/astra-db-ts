@@ -27,18 +27,25 @@ export type {
 } from './types';
 
 export type {
-  SerDesConfig,
+  BaseSerDesConfig,
   SerDesFn,
 } from './ser-des/ser-des';
 
 export type {
+  Codecs,
   CodecSerDesFns,
+  CodecHolder,
+  TypeCodec,
+  ClassGuardCodec,
+  NameCodec,
+  PathCodec,
+  CustomGuardCodec,
 } from './ser-des/codecs';
 
 export type {
+  BaseSerDesCtx,
   BaseSerCtx,
   BaseDesCtx,
-  BaseSerDesCtx,
 } from './ser-des/ctx';
 
 export type {

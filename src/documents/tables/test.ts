@@ -58,9 +58,9 @@ const _f = db.createTable('my_table', {
   },
 });
 
-const _g: InferTableSchema<typeof _f> = {
-  key: 1,
-};
+// const _g: InferTableSchema<typeof _f> = {
+//   key: 1,
+// };
 
 const _h: InferTablePrimaryKey<typeof _f> = {
   id: {} as TypeErr<'Field `id` not found as property in table definition'>,

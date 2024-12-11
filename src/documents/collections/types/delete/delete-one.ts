@@ -18,7 +18,7 @@ import { GenericDeleteOneOptions } from '@/src/documents';
  * Represents the options for the deleteOne command.
  *
  * @field sort - The sort order to pick which document to delete if the filter selects multiple documents.
- * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
+ * @field timeout - The timeout override for this method
  *
  * @see Collection.deleteOne
  *

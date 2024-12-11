@@ -31,16 +31,6 @@ void dummyDB().createCollection<TestSchema>('ASTRA_DB_COLLECTION', {
 });
 
 void dummyDB().createCollection<TestSchema>('ASTRA_DB_COLLECTION', {
-  indexing: {
-    allow: [
-      'customer.credit_score',
-      // @ts-expect-error - Can't wildcard and specify fields at the same time
-      '*',
-    ],
-  },
-});
-
-void dummyDB().createCollection<TestSchema>('ASTRA_DB_COLLECTION', {
   // @ts-expect-error - Need to specify either allow or deny
   indexing: {},
 });

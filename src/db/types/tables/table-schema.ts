@@ -25,7 +25,7 @@ import {
   DataAPIDate,
   DataAPIDuration,
   DataAPITime,
-  DataAPITimestamp,
+  DataAPITimestamp, FoundRow,
   InetAddress,
   SomeRow,
   UUID,
@@ -35,10 +35,11 @@ import { DataAPIVector } from '@/src/documents/datatypes/vector';
 import BigNumber from 'bignumber.js';
 
 /**
- * The different possible types that a Table's schema may be inferred from using the {@link InferTableSchema} type,
+ * The different possible types that a Table's schema may be inferred from using the {@link InferTableSchema}-like types,
  * when using {@link Db.createTable} or {@link Table.alter}.
  *
  * @see InferTableSchema
+ * @see InferTablePrimaryKey
  *
  * @public
  */
@@ -56,19 +57,18 @@ export type InferrableTable =
  * You can think of it as similar to Zod or arktype's `infer<Schema>` types.
  *
  * Accepts various different (contextually) isomorphic types to account for differences in instantiation & usage:
+ * - `CreateTableDefinition`
  * - `(...) => Promise<Table<infer Schema>>`
  * - `(...) => Table<infer Schema>`
  * - `Promise<Table<infer Schema>>`
  * - `Table<infer Schema>`
  *
- * **NOTE:** A DB's type information is encoded by `db.createTable` & `table.alter` by default. To override this
+ * A DB's type information is inferred by `db.createTable` by default. To override this
  * behavior, please provide the table's type explicitly to help with transpilation times (e.g.
- * `db.createTable<SomeRow>(...)` or `table.alter<MyNewSchema>()`).
+ * `db.createTable<SomeRow>(...)`).
  *
  * @example
  * ```ts
- * import { $PrimaryKeyType, ... } from '@datastax/astra-db-ts';
- *
  * const mkUserTable = () => db.createTable('users', {
  *   definition: {
  *     columns: {
@@ -90,22 +90,26 @@ export type InferrableTable =
  *
  * // Type inference is as simple as that
  * type User = InferTableSchema<typeof mkUserTable>;
+ * type UserPK = InferTablePrimaryKey<typeof mkUserTable>;
  *
  * // Utility types for demonstration purposes
  * type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends (<T>() => T extends Y ? 1 : 2) ? true : false;
  * type Expect<T extends true> = T;
  *
- * // User evaluates to this object representing its TS representation, and a `'$PrimaryKeyType'` key
- * // for type inference purposes for `insert*` operations
+ * // User evaluates to this object representing its TS representation
+ * // for the table's schema
  * type _Proof = Equal<User, {
  *   name: string,
  *   dob: DataAPITimestamp,
  *   friends: Set<string>,
- *   [$PrimaryKeyType]?: {
- *     name: string,
- *     height: TypeErr<'Field `height` not found as property in table definition'>,
- *     dob: DataAPITimestamp,
- *   }
+ * }>;
+ *
+ * // UserPK evaluates to this object representing its TS representation
+ * // for `insert*` operations' return types
+ * type _ProofPK = Equal<UserPK, {
+ *   name: string,
+ *   height: TypeErr<'Field `height` not found as property in table definition'>,
+ *   dob: DataAPITimestamp,
  * }>;
  *
  * // And now `User` can be used wherever.
@@ -115,100 +119,70 @@ export type InferrableTable =
  * };
  * ```
  *
- * @see InferTableSchemaFromDefinition
- *
  * @public
  */
 export type InferTableSchema<T extends InferrableTable> =
   T extends CreateTableDefinition
     ? InferTableSchemaFromDefinition<T> :
-  T extends (..._: any[]) => Promise<Table<infer Schema>>
+  T extends (..._: any[]) => Promise<Table<infer Schema, any, any>>
     ? Schema :
-  T extends (..._: any[]) => Table<infer Schema>
+  T extends (..._: any[]) => Table<infer Schema, any, any>
     ? Schema :
-  T extends Promise<Table<infer Schema>>
+  T extends Promise<Table<infer Schema, any, any>>
     ? Schema :
-  T extends Table<infer Schema>
+  T extends Table<infer Schema, any, any>
     ? Schema
     : never;
 
-export type InferTablePrimaryKey<T extends InferrableTable> =
-  T extends CreateTableDefinition
-    ? InferTablePKFromDefinition<T> :
-  T extends (..._: any[]) => Promise<Table<any, infer PKey>>
-    ? PKey :
-  T extends (..._: any[]) => Table<any, infer PKey>
-    ? PKey :
-  T extends Promise<Table<any, infer PKey>>
-    ? PKey :
-  T extends Table<any, infer PKey>
-    ? PKey
-    : never;
-
-export type Normalize<T> = { [K in keyof T]: T[K] } & EmptyObj;
-
 /**
- * Automagically infers a table's schema and primary keys from the bespoke table definition given in
- * {@link Db.createTable} (or {@link Table.alter}).
+ * Automagically extracts a table's primary key from some Table<Schema>-like type, most useful when performing a
+ * {@link Db.createTable} (or {@link Table.alter}) operation.
  *
- * You can think of it as similar to Zod or arktype's `infer<Schema>` types.
- *
- * Likely, you're looking for the {@link InferTableSchema} type for use in your own codebase, as this infers the schema
- * directly from a `CreateTableDefinition` rather than from the`Table<Schema>` itself.
- *
- * @example
- * ```ts
- * import { $PrimaryKeyType, ... } from '@datastax/astra-db-ts';
- *
- * // The <const> cast is important here
- * const UserTableDefinition = <const>{
- *   columns: {
- *     name: 'text',
- *     dob: {
- *       type: 'timestamp',
- *     },
- *     friends: {
- *       type: 'set',
- *       valueType: 'text',
- *     },
- *   },
- *   primaryKey: {
- *     partitionBy: ['name', 'height'],
- *     partitionSort: { dob: 1 },
- *   },
- * };
- *
- * // Type inference is as simple as that
- * type User = InferTableSchemaFromDefinition<typeof UserTableDefinition>;
- *
- * // Utility types for demonstration purposes
- * type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends (<T>() => T extends Y ? 1 : 2) ? true : false;
- * type Expect<T extends true> = T;
- *
- * // User evaluates to this object representing its TS representation, and a `'$PrimaryKeyType'` key
- * // for type inference purposes for `insert*` operations
- * type _Proof = Equal<User, {
- *   name: string,
- *   dob: DataAPITimestamp,
- *   friends: Set<string>,
- *   [$PrimaryKeyType]?: {
- *     name: string,
- *     height: TypeErr<'Field `height` not found as property in table definition'>,
- *     dob: DataAPITimestamp,
- *   }
- * }>;
- *
- * // And now `User` can be used wherever.
- * const main = async () => {
- *   const table: Table<User> = await db.createTable('users', { definition: UserTableDefinition });
- *   const found: User | null = await table.findOne({});
- * };
- * ```
- *
- * @see InferTableSchema
+ * See {@link InferTableSchema} for more information & examples.
  *
  * @public
  */
+export type InferTablePrimaryKey<T extends InferrableTable> =
+  T extends CreateTableDefinition
+    ? InferTablePKFromDefinition<T> :
+  T extends (..._: any[]) => Promise<Table<any, infer PKey, any>>
+    ? PKey :
+  T extends (..._: any[]) => Table<any, infer PKey, any>
+    ? PKey :
+  T extends Promise<Table<any, infer PKey, any>>
+    ? PKey :
+  T extends Table<any, infer PKey, any>
+    ? PKey
+    : never;
+
+/**
+ * Automagically extracts a table's read-schema from some Table<Schema>-like type, most useful when performing a
+ * {@link Db.createTable} (or {@link Table.alter}) operation.
+ *
+ * See {@link InferTableSchema} for more information & examples.
+ *
+ * @public
+ */
+export type InferTableReadSchema<T extends InferrableTable> =
+  T extends CreateTableDefinition
+    ? FoundRow<InferTableSchemaFromDefinition<T>> :
+  T extends (..._: any[]) => Promise<Table<any, any, infer Schema>>
+    ? Schema :
+  T extends (..._: any[]) => Table<any, any, infer Schema>
+    ? Schema :
+  T extends Promise<Table<any, any, infer Schema>>
+    ? Schema :
+  T extends Table<any, any, infer Schema>
+    ? Schema
+    : never;
+
+/**
+ * A utility type to expand a type.
+ *
+ * @public
+ */
+export type Normalize<T> = { [K in keyof T]: T[K] } & EmptyObj;
+
 type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition> = Normalize<MkColumnTypes<FullDef['columns'], MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>>>;
 
 type InferTablePKFromDefinition<FullDef extends CreateTableDefinition> = Normalize<MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>>;
@@ -235,7 +209,7 @@ type NormalizePK<PK extends CreateTablePrimaryKeyDefinition> =
     ? { partitionBy: [PK] }
     : PK;
 
-export type Cols2CqlTypes<Columns extends CreateTableColumnDefinitions> = {
+type Cols2CqlTypes<Columns extends CreateTableColumnDefinitions> = {
   -readonly [P in keyof Columns]: CqlType2TSType<PickCqlType<Columns[P]>, Columns[P]>;
 };
 
@@ -267,7 +241,7 @@ type PickCqlType<Def> =
  * ```
  *
  * @see InferTableSchema
- * @see InferTableSchemaFromDefinition
+ * @see InferTablePrimaryKey
  *
  * @public
  */

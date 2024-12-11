@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type {
+import {
   CollectionDeleteManyResult,
   CollectionDeleteOneOptions,
   CollectionDeleteOneResult,
@@ -34,14 +34,16 @@ import type {
   CollectionUpdateOneResult,
   Flatten,
   FoundDoc,
-  IdOf, MaybeId,
+  IdOf,
+  MaybeId,
   NoId,
   SomeDoc,
   ToDotNotation,
+  WithId,
 } from '@/src/documents/collections/types';
 import { CollectionDefinition, CollectionOptions, Db } from '@/src/db';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import { nullish, WithTimeout } from '@/src/lib';
+import { WithTimeout } from '@/src/lib';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { $CustomInspect } from '@/src/lib/constants';
 import { CollectionInsertManyError, TooManyDocumentsToCountError, WithSim } from '@/src/documents';
@@ -122,41 +124,11 @@ const jbi = JBI({ storeAsString: true });
  *
  * ###### Custom datatypes
  *
- * You can plug in your own custom datatypes by providing some custom serialization/deserialization logic through the `serdes` option in {@link CollectionOptions}, {@link DbOptions} & {@link DataAPIClientOptions.dbOptions}.
+ * You can plug in your own custom datatypes, as well as enable many other features by providing some custom serialization/deserialization logic through the `serdes` option in {@link CollectionOptions}, {@link DbOptions}, and/or {@link DataAPIClientOptions.dbOptions}.
  *
- * See {@link CollectionSerDesConfig} for much more information, but here's a quick example:
+ * Note however that this is currently not entirely stable, and should be used with caution.
  *
- * @example
- * ```ts
- * import { $SerializeForCollections, ... } from '@datastax/astra-db-ts';
- *
- * // Custom datatype
- * class UserID {
- *   constructor(public readonly unwrap: string) {}
- *   [$SerializeForCollections] = () => this.unwrap; // Serializer checks for this symbol
- * }
- *
- * // Schema type of the collection, using the custom datatype
- * interface User {
- *   _id: UserID,
- *   name: string,
- * }
- *
- * const collection = db.collection<User>('users', {
- *   serdes: { // Serializer not necessary here since `$SerializeForCollections` is used
- *     deserialize(key, value) {
- *       if (key === '_id') return [new UserID(value)]; // [X] specifies a new value
- *     },
- *   },
- * });
- *
- * const inserted = await collection.insertOne({
- *   _id: new UserID('123'), // will be stored in db as '123'
- *   name: 'Alice',
- * });
- *
- * console.log(inserted.insertedId.unwrap); // '123'
- * ```
+ * See the official DataStax documentation for more info.
  *
  * ###### Disclaimer
  *
@@ -175,7 +147,7 @@ const jbi = JBI({ storeAsString: true });
  *
  * @public
  */
-export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends Record<keyof WSchema | '_id', any> = FoundDoc<WSchema>> {
+export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>> {
   readonly #httpClient: DataAPIHttpClient;
   readonly #commands: CommandImpls<IdOf<RSchema>>;
   readonly #db: Db;
@@ -210,6 +182,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends Recor
       parseWithBigNumbers: () => !!opts?.serdes?.enableBigNumbers,
       parser: withJbiNullProtoFix(jbi),
     };
+
     this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
     this.#commands = new CommandImpls(this, this.#httpClient, new CollectionSerDes(opts?.serdes));
     this.#db = db;
@@ -408,7 +381,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends Recor
    *
    * ##### Filtering
    *
-   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter}` for much more information.
+   * The filter can contain a variety of operators & combinators to select the document. See {@link CollectionFilter} for much more information.
    *
    * Just keep in mind that if the filter is empty, and no {@link Sort} is present, it's undefined as to which document is selected.
    *
@@ -437,8 +410,6 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends Recor
    * @param options - The options for this operation.
    *
    * @returns A summary of what changed.
-   *
-   * @see StrictSort
    */
   public async updateOne(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionUpdateOneOptions): Promise<CollectionUpdateOneResult<RSchema>> {
     return this.#commands.updateOne(filter, update, options);
@@ -700,7 +671,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends Recor
    *
    * ##### Sorting
    *
-   * The sort option can be used to sort the documents returned by the cursor. See {@link Sort} & {@link StrictSort} for more information.
+   * The sort option can be used to sort the documents returned by the cursor. See {@link Sort} for more information.
    *
    * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available sort operators.
    *
@@ -754,9 +725,9 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends Recor
    * @param filter - A filter to select the documents to find. If not provided, all documents will be returned.
    * @param options - The options for this operation.
    *
-   * @returns A {@link FindCursor} which can be iterated over.
+   * @returns a {@link FindCursor} which can be iterated over.
    */
-  public find<IncSim extends boolean | nullish = false>(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions<IncSim> & { projection?: never }): CollectionFindCursor<WithSim<RSchema, IncSim>, WithSim<RSchema, IncSim>>
+  public find(filter: CollectionFilter<WSchema>, options?: CollectionFindOptions & { projection?: never }): CollectionFindCursor<WithSim<RSchema>, WithSim<RSchema>>
 
   /**
    * ##### Overview
@@ -842,7 +813,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends Recor
    *
    * ##### Sorting
    *
-   * The sort option can be used to sort the documents returned by the cursor. See {@link Sort} & {@link StrictSort} for more information.
+   * The sort option can be used to sort the documents returned by the cursor. See {@link Sort} for more information.
    *
    * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available sort operators.
    *
@@ -896,7 +867,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends Recor
    * @param filter - A filter to select the documents to find. If not provided, all documents will be returned.
    * @param options - The options for this operation.
    *
-   * @returns A {@link FindCursor} which can be iterated over.
+   * @returns a {@link FindCursor} which can be iterated over.
    */
   public find<TRaw extends SomeDoc = Partial<RSchema>>(filter: CollectionFilter<WSchema>, options: CollectionFindOptions): CollectionFindCursor<TRaw, TRaw>
 
@@ -948,7 +919,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends Recor
    *
    * ##### Sorting
    *
-   * The sort option can be used to pick the most relevant document. See {@link Sort} & {@link StrictSort} for more information.
+   * The sort option can be used to pick the most relevant document. See {@link Sort} for more information.
    *
    * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available sort operators.
    *
@@ -988,7 +959,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends Recor
    *
    * @returns A document matching the criterion, or `null` if no such document exists.
    */
-  public async findOne<IncSim extends boolean | nullish>(filter: CollectionFilter<WSchema>, options?: CollectionFindOneOptions<IncSim> & { projection?: never }): Promise<WithSim<RSchema, IncSim> | null>
+  public async findOne(filter: CollectionFilter<WSchema>, options?: CollectionFindOneOptions & { projection?: never }): Promise<WithSim<RSchema> | null>
 
   /**
    * ##### Overview
@@ -1069,7 +1040,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends Recor
    *
    * ##### Sorting
    *
-   * The sort option can be used to pick the most relevant document. See {@link Sort} & {@link StrictSort} for more information.
+   * The sort option can be used to pick the most relevant document. See {@link Sort} for more information.
    *
    * The [DataStax documentation site](https://docs.datastax.com/en/astra-db-serverless/index.html) also contains further information on the available sort operators.
    *
@@ -1183,7 +1154,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends Recor
    *
    * @returns A list of all the unique values selected by the given `key`
    */
-  public async distinct<Key extends string>(key: Key, filter: CollectionFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<Flatten<(SomeDoc & ToDotNotation<FoundDoc<RSchema>>)[Key]>[]> {
+  public async distinct<Key extends string>(key: Key, filter: CollectionFilter<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<Flatten<(SomeDoc & ToDotNotation<RSchema>)[Key]>[]> {
     return this.#commands.distinct(key, filter, options, CollectionFindCursor);
   }
 
@@ -1327,6 +1298,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends Recor
    *
    * // Prints { _id: '1', name: 'Jane Doe' }
    * console.log(after);
+   * ```
    *
    * ##### Filtering
    *

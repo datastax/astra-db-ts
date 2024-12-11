@@ -12,5 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/**
+ * Represents a generic filter type.
+ *
+ * See {@link CollectionFilter} & {@link TableFilter} for the more specific filter types.
+ *
+ * @public
+ */
 export type Filter = Record<string, any>;
+
+/**
+ * Represents a generic update filter type.
+ *
+ * See {@link CollectionUpdateFilter} & {@link TableUpdateFilter} for the more specific filter types.
+ *
+ * @public
+ */
 export type UpdateFilter = Record<string, any>;

@@ -14,12 +14,37 @@
 
 import { WithTimeout } from '@/src/lib';
 
+/**
+ * Options for creating a new index via {@link Table.createVectorIndex}
+ *
+ * @public
+ */
 export interface CreateTableVectorIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+  /**
+   * Options available for the vector index.
+   */
   options?: TableVectorIndexOptions,
+  /**
+   * If `true`, no error will be thrown if the index already exists.
+   *
+   * Note that this does not check if the existing index is the same as the one attempting to be created; it simply
+   * checks if the name is already in use.
+   */
   ifNotExists?: boolean,
 }
 
+/**
+ * Options aviailable for the vector index
+ *
+ * @public
+ */
 export interface TableVectorIndexOptions {
-  metric: 'cosine' | 'euclidean' | 'dot_product',
-  sourceModel?: string,
+  /**
+   * The similarity metric to use for the index.
+   */
+  metric?: 'cosine' | 'euclidean' | 'dot_product',
+  /**
+   * Enable certain vector optimizations on the index by specifying the source model for your vectors, such as (not exhaustive) `'openai_v3_large'`, `'openai_v3_small'`, `'ada002'`, `'gecko'`, `'bert'`, or `'other'` (default).
+   */
+  sourceModel?: string | 'other',
 }

@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { SomeDoc } from '@/src/documents';
+import { SomeDoc, vector } from '@/src/documents';
 import { describe, initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
@@ -48,9 +48,9 @@ describe('integration.documents.collection.cursor', { truncate: 'colls:before' }
 
     it('should rewind cursor', async () => {
       const cursor = collection.find({});
-      await cursor.hasNext();
+      await cursor.next();
       assert.equal(cursor.state, 'started');
-      assert.strictEqual(cursor.buffered(), 3);
+      assert.strictEqual(cursor.buffered(), 2);
 
       cursor.rewind();
       assert.equal(cursor.state, 'idle');
@@ -207,7 +207,7 @@ describe('integration.documents.collection.cursor', { truncate: 'colls:before' }
     it('should read all raw buffered documents', async () => {
       const cursor = collection.find({});
       await cursor.hasNext();
-      assert.equal(cursor.state, 'started');
+      assert.equal(cursor.state, 'idle');
       assert.strictEqual(cursor.buffered(), 3);
 
       const raw = cursor.consumeBuffer();
@@ -219,7 +219,7 @@ describe('integration.documents.collection.cursor', { truncate: 'colls:before' }
     it('should read all raw buffered documents with a max', async () => {
       const cursor = collection.find({});
       await cursor.hasNext();
-      assert.equal(cursor.state, 'started');
+      assert.equal(cursor.state, 'idle');
       assert.strictEqual(cursor.buffered(), 3);
       const raw = cursor.consumeBuffer(2);
       assert.strictEqual(raw.length, 2);
@@ -230,7 +230,7 @@ describe('integration.documents.collection.cursor', { truncate: 'colls:before' }
     it('should read all raw buffered documents even with transformation', async () => {
       const cursor = collection.find({}).map(() => ({ _id: 0 }));
       await cursor.hasNext();
-      assert.equal(cursor.state, 'started');
+      assert.equal(cursor.state, 'idle');
       assert.strictEqual(cursor.buffered(), 3);
 
       const raw = cursor.consumeBuffer();
@@ -546,7 +546,7 @@ describe('integration.documents.collection.cursor', { truncate: 'colls:before' }
 
   parallel('sort vector tests', () => {
     before(async () => {
-      await collection.insertMany([{ $vector: [1, 1, 1, 1, 1] }, { $vector: [1, 1, 1, 1, 1] }, { $vector: [1, 1, 1, 1, 1] }]);
+      await collection.insertMany([{ $vector: vector([1, 1, 1, 1, 1]) }, { $vector: [1, 1, 1, 1, 1] }, { $vector: [1, 1, 1, 1, 1] }]);
     });
 
     after(async () => {
@@ -556,16 +556,16 @@ describe('integration.documents.collection.cursor', { truncate: 'colls:before' }
     it('should return sort vector on only first API call if includeSortVector: true', async () => {
       const cursor = collection_.find({}).sort({ $vector: [1, 1, 1, 1, 1] }).includeSortVector();
       const start1 = performance.now();
-      assert.deepStrictEqual(await cursor.getSortVector(), [1, 1, 1, 1, 1]);
+      assert.deepStrictEqual((await cursor.getSortVector())?.asArray(), [1, 1, 1, 1, 1]);
       assert.ok(performance.now() - start1 > 5);
       const start2 = performance.now();
-      assert.deepStrictEqual(await cursor.getSortVector(), [1, 1, 1, 1, 1]);
+      assert.deepStrictEqual((await cursor.getSortVector())?.asArray(), [1, 1, 1, 1, 1]);
       assert.ok(performance.now() - start2 < 2);
     });
 
     it('getSortVector should populate buffer if called first w/ includeSortVector: true', async () => {
       const cursor = collection.find({}).sort({ $vector: [1, 1, 1, 1, 1] }).includeSortVector();
-      assert.deepStrictEqual(await cursor.getSortVector(), [1, 1, 1, 1, 1]);
+      assert.deepStrictEqual((await cursor.getSortVector())?.asArray(), [1, 1, 1, 1, 1]);
       assert.strictEqual(cursor.consumeBuffer().length, 3);
     });
 

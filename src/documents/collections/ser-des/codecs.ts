@@ -22,18 +22,30 @@ import { CodecHolder } from '@/src/lib/api/ser-des/codecs';
 import { EmptyObj, SerDesFn } from '@/src/lib';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 
+/**
+ * @public
+ */
 export interface CollCodecSerDesFns {
   serialize: SerDesFn<CollSerCtx>,
   deserialize: SerDesFn<CollDesCtx>,
 }
 
+/**
+ * @public
+ */
 export interface CollCodecClass {
   new (...args: any[]): { [$SerializeForCollection]: (ctx: CollSerCtx) => ReturnType<SerDesFn<any>> };
   [$DeserializeForCollection]: CollCodecSerDesFns['deserialize'];
 }
 
+/**
+ * @public
+ */
 export type CollCodec<_Class extends CollCodecClass> = EmptyObj;
 
+/**
+ * @public
+ */
 export class CollCodecs implements CodecHolder<CollCodecSerDesFns> {
   /**
    * @internal

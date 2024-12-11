@@ -14,6 +14,13 @@
 
 import type { DataAPILoggingConfig, TimeoutDescriptor, TokenProvider } from '@/src/lib';
 
+/**
+ * The default admin options as can be specified in the {@link DataAPIClientOptions}.
+ *
+ * See {@link AdminOptions} for more information on the available options.
+ *
+ * @public
+ */
 export type RootAdminOptions = Omit<AdminOptions, 'logging' | 'timeoutDefaults'>;
 
 /**

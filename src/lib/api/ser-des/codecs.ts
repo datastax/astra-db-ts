@@ -16,7 +16,7 @@ import { SerDesFn } from '@/src/lib';
 import { BaseSerCtx } from '@/src/lib/api/ser-des/ctx';
 
 /**
- * @internal
+ * @public
  */
 export type NameCodec<Fns extends CodecSerDesFns> = { serialize?: Fns['serialize'], deserialize: Fns['deserialize'] } & {
   codecType: 'name',
@@ -24,7 +24,7 @@ export type NameCodec<Fns extends CodecSerDesFns> = { serialize?: Fns['serialize
 }
 
 /**
- * @internal
+ * @public
  */
 export type PathCodec<Fns extends CodecSerDesFns> = { serialize?: Fns['serialize'], deserialize: Fns['deserialize'] } & {
   codecType: 'path',
@@ -32,7 +32,7 @@ export type PathCodec<Fns extends CodecSerDesFns> = { serialize?: Fns['serialize
 }
 
 /**
- * @internal
+ * @public
  */
 export type TypeCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'deserialize'> & {
   codecType: 'type',
@@ -40,7 +40,7 @@ export type TypeCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'deserialize'> & {
 }
 
 /**
- * @internal
+ * @public
  */
 export type CustomGuardCodec<Fns extends CodecSerDesFns> = Fns & {
   codecType: 'type',
@@ -49,7 +49,7 @@ export type CustomGuardCodec<Fns extends CodecSerDesFns> = Fns & {
 }
 
 /**
- * @internal
+ * @public
  */
 export type ClassGuardCodec<Fns extends CodecSerDesFns> = Fns & {
   codecType: 'type',
@@ -58,7 +58,7 @@ export type ClassGuardCodec<Fns extends CodecSerDesFns> = Fns & {
 }
 
 /**
- * @internal
+ * @public
  */
 export interface Codecs<Fns extends CodecSerDesFns> {
   name: Record<string, NameCodec<Fns>>;
@@ -68,8 +68,14 @@ export interface Codecs<Fns extends CodecSerDesFns> {
   customGuard: CustomGuardCodec<Fns>[];
 }
 
+/**
+ * @public
+ */
 export type CodecSerDesFns = Record<'serialize' | 'deserialize', (...args: any[]) => ReturnType<SerDesFn<any>>>;
 
+/**
+ * @public
+ */
 export interface CodecHolder<Fns extends CodecSerDesFns> {
   get:
     | NameCodec<Fns>

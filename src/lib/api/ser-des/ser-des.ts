@@ -26,9 +26,15 @@ import {
   DONE,
 } from '@/src/lib/api/ser-des/ctx';
 
+/**
+ * @public
+ */
 export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?, string?] | 'Return ctx.done(val?), ctx.recurse(val?), ctx.continue(), or void';
 
-export interface SerDesConfig<Codec extends CodecHolder<Fns>, Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>> {
+/**
+ * @public
+ */
+export interface BaseSerDesConfig<Codec extends CodecHolder<Fns>, Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>> {
   serialize?: OneOrMany<SerDesFn<SerCtx>>,
   deserialize?: OneOrMany<SerDesFn<DesCtx>>,
   mutateInPlace?: boolean,
@@ -44,7 +50,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
   protected readonly _customState: Record<string, any> = {};
   protected readonly _camelSnakeCache?: Record<string, any>;
 
-  protected constructor(protected readonly _cfg: SerDesConfig<any, Fns, SerCtx, DesCtx>) {
+  protected constructor(protected readonly _cfg: BaseSerDesConfig<any, Fns, SerCtx, DesCtx>) {
     this._codecs = initCodecs(_cfg.codecs ?? []);
 
     if (this._cfg.snakeCaseInterop) {
@@ -72,8 +78,8 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
   protected abstract adaptDesCtx(ctx: BaseDesCtx<Fns>): DesCtx;
   protected abstract bigNumsPresent(ctx: SerCtx): boolean;
 
-  protected static _mergeConfig<Codec extends CodecHolder<Fns>, Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>>(...cfg: (SerDesConfig<Codec, Fns, SerCtx, DesCtx> | undefined)[]): SerDesConfig<Codec, Fns, SerCtx, DesCtx> {
-    return cfg.reduce<SerDesConfig<Codec, Fns, SerCtx, DesCtx>>((acc, cfg) => ({
+  protected static _mergeConfig<Codec extends CodecHolder<Fns>, Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>>(...cfg: (BaseSerDesConfig<Codec, Fns, SerCtx, DesCtx> | undefined)[]): BaseSerDesConfig<Codec, Fns, SerCtx, DesCtx> {
+    return cfg.reduce<BaseSerDesConfig<Codec, Fns, SerCtx, DesCtx>>((acc, cfg) => ({
       serialize: [...toArray(cfg?.serialize ?? []), ...toArray(acc.serialize ?? [])],
       deserialize: [...toArray(cfg?.deserialize ?? []), ...toArray(acc.deserialize ?? [])],
       mutateInPlace: !!(cfg?.mutateInPlace ?? acc.mutateInPlace),

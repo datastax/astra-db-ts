@@ -16,7 +16,7 @@
 /**
  * The base class of all events that may be emitted/logged by the {@link DataAPIClient}.
  *
- * See {@link DataAPIClientEvents} & {@link DataAPILoggingConfig} for much more info.
+ * See {@link DataAPIClientEventMap} & {@link DataAPILoggingConfig} for much more info.
  *
  * @public
  */
@@ -42,6 +42,11 @@ export abstract class DataAPIClientEvent {
     return `${DataAPIClientEvent.formattedPrefix()}[${this.name}]`;
   }
 
+  /**
+   * Formats the current date in a way that is suitable for logging.
+   *
+   * @internal
+   */
   public static formattedPrefix(): string {
     const date = new Date();
     return `${date.getUTCFullYear()}-${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-${date.getUTCDate().toString().padStart(2, '0')} ${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')}:${date.getUTCSeconds().toString().padStart(2, '0')}Z `;

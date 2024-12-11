@@ -12,5 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/**
+ * @public
+ */
 export const $SerializeForCollection = Symbol.for('astra-db-ts.serialize.collection');
+
+/**
+ * @public
+ */
 export const $DeserializeForCollection = Symbol.for('astra-db-ts.deserialize.collection');

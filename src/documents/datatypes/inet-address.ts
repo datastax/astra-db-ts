@@ -17,20 +17,54 @@ import { nullish } from '@/src/lib';
 import { TableCodec, TableSerCtx, TableDesCtx } from '@/src/documents';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 
+/**
+ * A shorthand function for `new InetAddress(addr, version?)`
+ *
+ * @public
+ */
 export const inet = (address: string, version?: 4 | 6) => new InetAddress(address, version);
 
+/**
+ * Represents an `inet` column for Data API tables.
+ *
+ * You may use the {@link inet} function as a shorthand for creating a new `InetAddress`.
+ *
+ * See the official DataStax documentation for more information.
+ *
+ * @public
+ */
 export class InetAddress implements TableCodec<typeof InetAddress> {
   readonly #raw: string;
   #version: 4 | 6 | nullish;
 
+  /**
+   * Implementation of `$SerializeForTable` for {@link TableCodec}
+   */
   public [$SerializeForTable](ctx: TableSerCtx) {
     return ctx.done(this.#raw);
   };
 
+  /**
+   * Implementation of `$DeserializeForTable` for {@link TableCodec}
+   */
   public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
     return ctx.done(new InetAddress(value, null, false));
   }
 
+  /**
+   * Creates a new `InetAddress` instance from a vector-like value.
+   *
+   * If you pass a `version`, the value will be validated as an IPv4 or IPv6 address; otherwise, it'll be validated as
+   * either, and the version will be inferred from the value.
+   *
+   * You can set `validate` to `false` to bypass any validation if you're confident the value is a valid inet address.
+   *
+   * @param address - The address to create the `InetAddress` from
+   * @param version - The IP version to validate the address as
+   * @param validate - Whether to actually validate the address
+   *
+   * @throws TypeError If the address is not a valid IPv4 or IPv6 address
+   */
   public constructor(address: string, version?: 4 | 6 | null, validate = true) { // ::1 => 0:0:0:0:0:0:0:1
     if (validate) {
       switch (version) {
@@ -59,6 +93,11 @@ export class InetAddress implements TableCodec<typeof InetAddress> {
     });
   }
 
+  /**
+   * Returns the IP version of the inet address.
+   *
+   * @returns The IP version of the inet address
+   */
   public get version(): 4 | 6 {
     if (!this.#version) {
       this.#version = isIPv4(this.#raw) ? 4 : 6;
@@ -66,6 +105,11 @@ export class InetAddress implements TableCodec<typeof InetAddress> {
     return this.#version;
   }
 
+  /**
+   * Returns the string representation of the inet address.
+   *
+   * @returns The string representation of the inet address
+   */
   public toString(): string {
     return this.#raw;
   }

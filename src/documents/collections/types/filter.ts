@@ -38,8 +38,6 @@ import { EmptyObj } from '@/src/lib/types';
  * });
  * ```
  *
- * @see StrictCollectionFilter
- *
  * @public
  */
 export type CollectionFilter<Schema extends SomeDoc> = {

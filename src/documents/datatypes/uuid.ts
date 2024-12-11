@@ -26,12 +26,19 @@ import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables
 
 const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
 
+/**
+ * A shorthand function for `new UUID(uuid)`
+ *
+ * `uuid(4)` and `uuid(7)` are equivalent to `UUID.v4()` and `UUID.v7()`, respectively.
+ *
+ * @public
+ */
 export const uuid = (uuid: string | 4 | 7) =>
   (typeof uuid === 'string')
     ? new UUID(uuid) :
-  (uuid === 4)
-    ? UUID.v4()
-    : UUID.v7();
+  (uuid === 7)
+    ? UUID.v7()
+    : UUID.v4();
 
 /**
  * Represents a UUID that can be used as an _id in the DataAPI.
@@ -82,18 +89,30 @@ export class UUID implements CollCodec<typeof UUID>, TableCodec<typeof UUID> {
 
   readonly #raw: string;
 
+  /**
+   * Implementation of `$SerializeForTable` for {@link TableCodec}
+   */
   public [$SerializeForTable](ctx: TableSerCtx) {
     return ctx.done(this.#raw);
   };
 
+  /**
+   * Implementation of `$SerializeForCollection` for {@link TableCodec}
+   */
   public [$SerializeForCollection](ctx: CollSerCtx) {
     return ctx.done({ $uuid: this.#raw });
   };
 
+  /**
+   * Implementation of `$DeserializeForTable` for {@link TableCodec}
+   */
   public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
     return ctx.done(new UUID(value, false));
   }
 
+  /**
+   * Implementation of `$DeserializeForCollection` for {@link TableCodec}
+   */
   public static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx) {
     return ctx.done(new UUID(value.$uuid, false));
   }

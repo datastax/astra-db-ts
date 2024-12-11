@@ -15,6 +15,16 @@
 import type { WithTimeout } from '@/src/lib';
 import { WithKeyspace } from '@/src/db';
 
+/**
+ * The options for dropping a table (via {@link Db.dropTable}).
+ *
+ * @public
+ */
 export interface DropTableOptions extends WithTimeout<'tableAdminTimeoutMs'>, WithKeyspace {
+  /**
+   * If `true`, no error will be thrown if the table does not exist.
+   *
+   * Defaults to `false`.
+   */
   ifExists?: boolean;
 }

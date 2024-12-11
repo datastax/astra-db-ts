@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { GenericUpdateOneOptions, GenericUpdateResult, IdOf, SomeDoc } from '@/src/documents';
+import { GenericUpdateOneOptions, GenericUpdateResult, IdOf } from '@/src/documents';
 
 /**
  * Options for an `updateOne` command on a collection.
  *
  * @field upsert - If true, perform an insert if no documents match the filter.
  * @field sort - The sort order to pick which document to update if the filter selects multiple documents.
- * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
+ * @field timeout - The timeout override for this method
  *
  * @see Collection.updateOne
  *
@@ -54,4 +54,4 @@ export type CollectionUpdateOneOptions = GenericUpdateOneOptions;
  *
  * @public
  */
-export type CollectionUpdateOneResult<Schema extends SomeDoc> = GenericUpdateResult<IdOf<Schema>, 0 | 1>;
+export type CollectionUpdateOneResult<RSchema> = GenericUpdateResult<IdOf<RSchema>, 0 | 1>;

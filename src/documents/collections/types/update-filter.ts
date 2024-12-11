@@ -50,8 +50,6 @@ import { IsDate, IsNum } from '@/src/documents/types/utils';
  * @field $mul - Multiply the value of a field in the document.
  * @field $addToSet - Add an element to an array field in the document if it does not already exist.
  *
- * @see StrictCollectionUpdateFilter
- *
  * @public
  */
 export interface CollectionUpdateFilter<Schema extends SomeDoc> {
