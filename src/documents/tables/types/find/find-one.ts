@@ -13,6 +13,15 @@
 // limitations under the License.
 
 import { GenericFindOneOptions } from '@/src/documents';
-import { nullish } from '@/src/lib';
 
-export type TableFindOneOptions<IncSim extends boolean | string | nullish = undefined> = GenericFindOneOptions<IncSim>;
+/**
+ * Represents the options for the table `findOne` command.
+ *
+ * @field sort - The sort order to pick which document to return if the filter selects multiple documents.
+ * @field projection - Specifies which fields should be included/excluded in the returned documents.
+ * @field includeSimilarity - If true, include the similarity score in the result via the `$similarity` field.
+ * @field timeout - The timeout override for this method
+ *
+ * @public
+ */
+export type TableFindOneOptions = GenericFindOneOptions;

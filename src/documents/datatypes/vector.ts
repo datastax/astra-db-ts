@@ -23,29 +23,72 @@ import {
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 
+/**
+ * Represents any type that can be converted into a {@link DataAPIVector}
+ *
+ * @public
+ */
 export type DataAPIVectorLike = number[] | { $binary: string } | Float32Array | DataAPIVector;
 
+/**
+ * A shorthand function for `new DataAPIVector(vector)`
+ *
+ * @public
+ */
 export const vector = (v: DataAPIVectorLike) => new DataAPIVector(v);
 
+/**
+ * Represents a `vector` column for Data API tables.
+ *
+ * See {@link DataAPIVectorLike} for the types that can be converted into a `DataAPIVector`.
+ *
+ * You may use the {@link vector} function as a shorthand for creating a new `DataAPIVector`.
+ *
+ * See the official DataStax documentation for more information.
+ *
+ * @public
+ */
 export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCodec<typeof DataAPIVector> {
   readonly #vector: Exclude<DataAPIVectorLike, DataAPIVector>;
 
+  /**
+   * Implementation of `$SerializeForTable` for {@link TableCodec}
+   */
   public [$SerializeForTable](ctx: TableSerCtx) {
     return ctx.done(serialize(this.#vector));
   };
-
+  
+  /**
+   * Implementation of `$SerializeForCollection` for {@link TableCodec}
+   */
   public [$SerializeForCollection](ctx: CollSerCtx) {
     return ctx.done(serialize(this.#vector));
   };
 
+  /**
+   * Implementation of `$DeserializeForTable` for {@link TableCodec}
+   */
   public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
     return ctx.done(new DataAPIVector(value, false));
   }
 
+  /**
+   * Implementation of `$DeserializeForCollection` for {@link TableCodec}
+   */
   public static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx) {
     return ctx.done(new DataAPIVector(value, false));
   }
 
+  /**
+   * Creates a new `DataAPIVector` instance from a vector-like value.
+   *
+   * You can set `validate` to `false` to bypass any validation if you're confident the value is a valid vector.
+   *
+   * @param vector - The vector-like value to convert to a `DataAPIVector`
+   * @param validate - Whether to validate the vector-like value (default: `true`)
+   *
+   * @throws TypeError If `vector` is not a valid vector-like value
+   */
   public constructor(vector: DataAPIVectorLike, validate = true) {
     if (validate && !DataAPIVector.isVectorLike(vector)) {
       throw new Error(`Invalid vector type; expected number[], base64 string, Float32Array, or DataAPIVector; got '${vector}'`);
@@ -63,6 +106,11 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
     });
   }
 
+  /**
+   * Returns the length of the vector (# of floats), agnostic of the underlying type.
+   *
+   * @returns The length of the vector
+   */
   public get length(): number {
     if ('$binary' in this.#vector) {
       return ~~((this.#vector.$binary.replace(/=+$/, "").length * 3) / 4 / 4);
@@ -70,10 +118,20 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
     return this.#vector.length;
   }
 
+  /**
+   * Gets the raw underlying implementation of the vector.
+   *
+   * @returns The raw vector
+   */
   public raw(): Exclude<DataAPIVectorLike, DataAPIVector> {
     return this.#vector;
   }
-
+  
+  /**
+   * Returns the vector as a `number[]`, converting between types if necessary.
+   *
+   * @returns The vector as a `number[]`
+   */
   public asArray(): number[] {
     if (this.#vector instanceof Float32Array) {
       return Array.from(this.#vector);
@@ -92,6 +150,11 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
     return this.#vector;
   }
 
+  /**
+   * Returns the vector as a `Float32Array`, converting between types if necessary.
+   * 
+   * @returns The vector as a `Float32Array`
+   */
   public asFloat32Array(): Float32Array {
     if (this.#vector instanceof Float32Array) {
       return this.#vector;
@@ -110,6 +173,11 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
     return new Float32Array(this.#vector);
   }
 
+  /**
+   * Returns the vector as a base64 string, converting between types if necessary.
+   * 
+   * @returns The vector as a base64 string
+   */
   public asBase64(): string {
     const serialized = serialize(this.#vector);
 
@@ -124,6 +192,9 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
     return serialized.$binary;
   }
 
+  /**
+   * Returns a pretty string representation of the `DataAPIVector`.
+   */
   public toString(): string {
     const type = ('$binary' in this.#vector && 'base64') || (this.#vector instanceof Float32Array && 'Float32Array') || 'number[]';
 
@@ -133,7 +204,14 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
 
     return `DataAPIVector<${this.length}>(typeof raw=${type}, preview=${partial})`;
   }
-
+  
+  /**
+   * Determines whether the given value is a vector-like value (i.e. it's {@link DataAPIVectorLike}.
+   *
+   * @param value - The value to check
+   *
+   * @returns `true` if the value is a vector-like value; `false` otherwise
+   */
   public static isVectorLike(value: unknown): value is DataAPIVectorLike {
     return !!value && typeof value === 'object' && (Array.isArray(value) || value instanceof Float32Array || ('$binary' in value && typeof value.$binary === 'string') || value instanceof DataAPIVector);
   }

@@ -22,7 +22,7 @@ import type { WithTimeout } from '@/src/lib';
  * @field ordered - If `true`, the records are inserted sequentially; else, they're arbitrary inserted in parallel.
  * @field concurrency - The maximum number of concurrent requests to make at once.
  * @field chunkSize - The number of records to upload per request. Defaults to 20.
- * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
+ * @field timeout - The timeout override for this method
  *
  * @public
  */
@@ -35,7 +35,7 @@ export type GenericInsertManyOptions =
  *
  * @field ordered - If `true`, the records are inserted sequentially in the order provided.
  * @field chunkSize - The number of records to upload per request. Defaults to 50.
- * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
+ * @field timeout - The timeout override for this method
  *
  * @see GenericInsertManyOptions
  *
@@ -64,7 +64,7 @@ export interface GenericInsertManyOrderedOptions extends WithTimeout<'generalMet
  * @field ordered - If `false` or unset, the records are inserted in an arbitrary, parallelized order.
  * @field concurrency - The maximum number of concurrent requests to make at once.
  * @field chunkSize - The number of records to upload per request. Defaults to 50.
- * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
+ * @field timeout - The timeout override for this method
  *
  * @see Collection.insertMany
  *

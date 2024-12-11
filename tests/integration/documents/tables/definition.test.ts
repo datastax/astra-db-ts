@@ -12,7 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export interface GenericModifyResult<ID> {
-  value: ID | null,
-  ok: number,
-}
+import { it, parallel } from '@/tests/testlib';
+import assert from 'assert';
+
+parallel('integration.documents.tables.definition', ({ table }) => {
+  it('lists its own definition', async () => {
+    const res = await table.definition();
+    assert.ok(res.columns);
+    assert.ok(res.primaryKey);
+  });
+});

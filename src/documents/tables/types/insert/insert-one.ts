@@ -21,18 +21,21 @@ import type { SomeRow } from '@/src/documents';
  *
  * ##### Primary Key Inference
  *
- * The type of the primary key of the table (for the `insertedId`) is inferred from the type-level `$PrimaryKeyType` key in the schema.
+ * The type of the primary key of the table is inferred from the second `PKey` type-param of the table.
  *
- * If it's not present, it will default to {@link SomeTableKey} (see {@link Table}, {@link $PrimaryKeyType} for more info).
+ * If not present, it defaults to `Partial<RSchema>` to keep the result type consistent.
  *
  * @example
  * ```ts
- * interface User extends Row<User, 'id'> {
+ * interface User {
  *   id: string,
  *   name: string,
  *   dob?: DataAPIDate,
  * }
- * const table = db.table<User>('table');
+ *
+ * type UserPKey = Pick<User, 'id'>;
+ *
+ * const table = db.table<User, UserPKey>('table');
  *
  * // res.insertedId is of type { id: string }
  * const res = await table.insertOne({ id: '123', name: 'Alice' });
@@ -41,9 +44,9 @@ import type { SomeRow } from '@/src/documents';
  *
  * @example
  * ```ts
- * const table = db.table<SomeRow>('table');
+ * const table = db.table<User>('table');
  *
- * // res.insertedId is of type Record<string, any>
+ * // res.insertedId is of type Partial<User>
  * const res = await table.insertOne({ id: '123', name: 'Alice' });
  * console.log(res.insertedId.id); // '123'
  * console.log(res.insertedId.key); // undefined

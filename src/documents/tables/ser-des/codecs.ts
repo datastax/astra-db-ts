@@ -24,18 +24,30 @@ import { EmptyObj, SerDesFn } from '@/src/lib';
 import BigNumber from 'bignumber.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 
+/**
+ * @public
+ */
 export interface TableCodecSerDesFns {
   serialize: SerDesFn<TableSerCtx>,
   deserialize: (val: any, ctx: TableDesCtx, definition: SomeDoc) => ReturnType<SerDesFn<any>>,
 }
 
-interface TableCodecClass {
+/**
+ * @public
+ */
+export interface TableCodecClass {
   new (...args: any[]): { [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>> };
   [$DeserializeForTable]: TableCodecSerDesFns['deserialize'];
 }
 
+/**
+ * @public
+ */
 export type TableCodec<_Class extends TableCodecClass> = EmptyObj;
 
+/**
+ * @public
+ */
 export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
   /**
    * @internal
@@ -106,8 +118,8 @@ export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
           const valueParser = ctx.codecs.type[def.valueType];
 
           entries[i] = [
-            keyParser ? keyParser.deserialize(key, ctx, def) : key,
-            valueParser ? valueParser.deserialize(value, ctx, def) : value,
+            keyParser ? keyParser.deserialize(key, ctx, def)[1] : key,
+            valueParser ? valueParser.deserialize(value, ctx, def)[1] : value,
           ];
         }
 
@@ -119,7 +131,7 @@ export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
       deserialize(list, ctx, def) {
         for (let i = 0, n = list.length; i < n; i++) {
           const elemParser = ctx.codecs.type[def.valueType];
-          list[i] = elemParser ? elemParser.deserialize(list[i], ctx, def) : list[i];
+          list[i] = elemParser ? elemParser.deserialize(list[i], ctx, def)[1] : list[i];
         }
         return ctx.done(list);
       },
@@ -132,7 +144,7 @@ export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
       deserialize(list, ctx, def) {
         for (let i = 0, n = list.length; i < n; i++) {
           const elemParser = ctx.codecs.type[def.valueType];
-          list[i] = elemParser ? elemParser.deserialize(list[i], ctx, def) : list[i];
+          list[i] = elemParser ? elemParser.deserialize(list[i], ctx, def)[1] : list[i];
         }
         return ctx.done(new Set(list));
       },

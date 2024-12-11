@@ -13,10 +13,9 @@
 // limitations under the License.
 
 import { GenericFindOptions } from '@/src/documents';
-import { nullish } from '@/src/lib';
 
 /**
- * Options for the `find` method.
+ * Options for the collection `find` method.
  *
  * @field sort - The sort order to pick which document to return if the filter selects multiple documents.
  * @field projection - Specifies which fields should be included/excluded in the returned documents.
@@ -28,4 +27,4 @@ import { nullish } from '@/src/lib';
  *
  * @public
  */
-export type CollectionFindOptions<IncSim extends boolean | nullish = undefined> = GenericFindOptions<IncSim>;
+export type CollectionFindOptions = GenericFindOptions;

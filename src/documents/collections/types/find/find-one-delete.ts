@@ -19,7 +19,7 @@ import type { GenericFindOneAndDeleteOptions } from '@/src/documents';
  *
  * @field sort - The sort order to pick which document to delete if the filter selects multiple documents.
  * @field projection - Specifies which fields should be included/excluded in the returned documents.
- * @field maxTimeMS - The maximum time to wait for a response from the server, in milliseconds.
+ * @field timeout - The timeout override for this method
  *
  * @see Collection.findOneAndDelete
  *

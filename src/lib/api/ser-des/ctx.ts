@@ -16,16 +16,25 @@ import { Codecs, CodecSerDesFns } from '@/src/lib/api/ser-des/codecs';
 import { SomeDoc } from '@/src/documents';
 import type { RawDataAPIResponse } from '@/src/lib';
 
+/**
+ * @public
+ */
 export interface BaseSerCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fns> {
   mutatingInPlace: boolean,
 }
 
+/**
+ * @public
+ */
 export interface BaseDesCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fns> {
   rawDataApiResp: RawDataAPIResponse,
   parsingInsertedId: boolean,
   keys: string[] | null,
 }
 
+/**
+ * @public
+ */
 export interface BaseSerDesCtx<Fns extends CodecSerDesFns> {
   rootObj: SomeDoc,
   path: string[],

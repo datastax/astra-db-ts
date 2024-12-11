@@ -25,7 +25,7 @@ import { CollectionDefinition, CollectionOptions } from '@/src/db';
  * @field indexing - The indexing configuration for the collections.
  * @field defaultId - The default ID for the collections.
  * @field keyspace - Overrides the keyspace for the collections.
- * @field maxTimeMS - The maximum time to allow the operation to run.
+ * @field timeout - The timeout override for this method
  *
  * @see Db.createCollection
  *
