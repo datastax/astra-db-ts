@@ -1120,7 +1120,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * @returns A promise that resolves to an array of index names.
    */
-  public async listIndexes(options?: ListIndexOptions & { nameOnly: true }): Promise<string[]>
+  public async listIndexes(options: ListIndexOptions & { nameOnly: true }): Promise<string[]>
 
   /**
    * Lists the indexes for this table.
