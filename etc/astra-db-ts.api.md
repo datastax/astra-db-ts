@@ -1793,7 +1793,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     insertOne(row: WSchema, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<PKey>>;
     readonly keyspace: string;
     // Warning: (ae-forgotten-export) The symbol "ListIndexOptions" needs to be exported by the entry point index.d.ts
-    listIndexes(options?: ListIndexOptions & {
+    listIndexes(options: ListIndexOptions & {
         nameOnly: true;
     }): Promise<string[]>;
     // Warning: (ae-forgotten-export) The symbol "TableIndexDescriptor" needs to be exported by the entry point index.d.ts
