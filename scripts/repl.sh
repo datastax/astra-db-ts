@@ -64,4 +64,28 @@ node -i -e "
       return 'Cleared console';
     },
   });
+
+  Object.defineProperty(this, 'cdm', {
+    get() {
+      return coll.deleteMany();
+    },
+  });
+
+  Object.defineProperty(this, 'tdm', {
+    get() {
+      return table.deleteMany();
+    },
+  });
+
+  Object.defineProperty(this, 'cfa', {
+    get() {
+      return coll.find({}).toArray();
+    },
+  });
+
+  Object.defineProperty(this, 'tfa', {
+    get() {
+      return table.find({}).toArray();
+    },
+  });
 "
