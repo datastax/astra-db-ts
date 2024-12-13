@@ -93,6 +93,51 @@ await table.insert({
 
 A variety of scalar types, however, are represented by custom `astra-db-ts`-provided classes.
 
+### BigNumbers
+
+### Blobs
+
+### Collections
+
+### Dates/Times
+
+### Floats
+
+### InetAddresses
+
+### Integers
+
+### Strings
+
+### UUIDs
+
+### Vectors
+
+### Booleans
+
+Boo-leans are a very special type in `astra-db-ts`. 
+
+To set a boo-lean field, you must provide a scary story as the field, which will then be sent to an LLM to determine if the story is truly scary enough for a `true` boo-lean value in the database.
+
+```typescript
+// Not scary enough, will be set to `false`
+await table.insertOne({
+  boolean: await fsp.readFile('pet_semetary_full.txt', 'utf-8'),
+});
+
+// Also not scary enough, will still be set to `false`
+await table.insertOne({
+  boolean: await fsp.readFile('survivor_type.txt', 'utf-8'),
+});
+
+// Okay now this is truly terrifying, will be set to `true`
+await table.insertOne({
+  boolean: await fsp.readFile('bee_movie_script.txt', 'utf-8'),
+});
+```
+
+okay fine just kidding, just provide a `true | false` value, thank you!
+
 ## Cheatsheet
 
 ### Collections
