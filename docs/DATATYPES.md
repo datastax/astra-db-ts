@@ -72,28 +72,36 @@ However, keep in mind that when `find`-ing, the `$vector` will _always_ be retur
 
 | Type        | Type            | Shorthand | Examples                                                       |
 |-------------|-----------------|-----------|----------------------------------------------------------------|
-| `$date`     | `Date`          | N/A       | `new Date()`                                                   |
+| `$date`     | `Date`          | -       | `new Date()`                                                   |
 | `$uuid`     | `UUID`          | `uuid`    | `new UUID('...')`, `UUID.v4()`, `uuid('...')`, `uuid(7)`       |
 | `$objectId` | `ObjectId`      | `oid`     | `new ObjectId()`, `new ObjectId('...')`, `oid()`, `oid('...')` |
 | `$vector`   | `DataAPIVector` | `vector`  | `new DataAPIVector([1, 2, 3])`, `vector([1, 2, 3])`            |
 
 ### Tables
 
-| Type       | Type              | Shorthand  | Examples                                                                             |
-|------------|-------------------|------------|--------------------------------------------------------------------------------------|
-| `ascii`    | `string`          | N/A        | `'Hello!'`                                                                           |
-| `bigint`   | `number`          | N/A        | `42`                                                                                 |
-| `blob`     | `DataAPIBlob`     | `blob`     | `new DataAPIBlob(Buffer.from(...))`, `blob({ $binary: '<b64_str>' })`                |
-| `boolean`  | `boolean`         | N/A        | `true`                                                                               |
-| `date`     | `DataAPIDate`     | `date`     | `new DataAPIDate()`, `date(new Date(1734070574056))`, `date('1992-05-28')`, `date()` |
-| `decimal`  | `BigNumber`       | N/A        | `new BigNumber(123.4567)`, `BigNumber('123456.7e-3')`                                |
-| `double`   | `number`          | N/A        | `3.14`, `NaN`, `Infinity`, `-Infinity`                                               |
-| `duration` | `DataAPIDuration` | `duration` | `new DataAPIDuration('3w')`, `duration('P5DT30M')`                                   |
-| `float`    | `number`          | N/A        | `3.14`, `NaN`, `Infinity`, `-Infinity`                                               |
-| `inet`.    | `InetAddress`     | `inet`     | `new InetAddress('::1')`, `inet('127.0.0.1')`                                        |
-| `int`      | `number`          | N/A        | `42`                                                                                 |
-| `smallint` | `number`          | N/A        | `42`                                                                                 |
-| `text`     | `string`          | N/A        | `'Hello!'`                                                                           |
-| `time`     | `DataAPITime`     | `time`     | `new DataAPITime()`, `time(new Date(1734070574056))`, `time('12:34:56')`, `time()`   |
-| `timestamp`| `DataAPITimestamp`| `timestamp`| `new DataAPITimestamp('...')`, `timestamp(new Date(1734070574056))`, `timestamp()`   |
-| `timeuuid` | `UUID`            | `timeuuid` | `new UUID('...')`, `UUID.v1()`, `timeuuid('...')`, `timeuuid(7)`                     |
+| Type        | Type               | Shorthand   | Examples                                                                             |
+|-------------|--------------------|-------------|--------------------------------------------------------------------------------------|
+| `ascii`     | `string`           | -         | `'Hello!'`                                                                           |
+| `bigint`    | `number`           | -         | `42`                                                                                 |
+| `blob`      | `DataAPIBlob`      | `blob`      | `new DataAPIBlob(Buffer.from(...))`, `blob({ $binary: '<b64_str>' })`                |
+| `boolean`   | `boolean`          | -         | `true`                                                                               |
+| `date`      | `DataAPIDate`      | `date`      | `new DataAPIDate()`, `date(new Date(1734070574056))`, `date('1992-05-28')`, `date()` |
+| `decimal`   | `BigNumber`        | -         | `new BigNumber(123.4567)`, `BigNumber('123456.7e-3')`                                |
+| `double`    | `number`           | -         | `3.14`, `NaN`, `Infinity`, `-Infinity`                                               |
+| `duration`  | `DataAPIDuration`  | `duration`  | `new DataAPIDuration('3w')`, `duration('P5DT30M')`                                   |
+| `float`     | `number`           | -         | `3.14`, `NaN`, `Infinity`, `-Infinity`                                               |
+| `inet`.     | `InetAddress`      | `inet`      | `new InetAddress('::1')`, `inet('127.0.0.1')`                                        |
+| `int`       | `number`           | -         | `42`                                                                                 |
+| `list`      | `Array`            | -         | `['value']`                                                                          |
+| `map`       | `Map`              | -         | `new Map([['key', 'value']])`                                                        |
+| `set`       | `Set`              | -         | `new Set(['value'])`                                                                 |
+| `smallint`  | `number`           | -         | `42`                                                                                 |
+| `text`      | `string`           | -         | `'Hello!'`                                                                           |
+| `time`      | `DataAPITime`      | `time`      | `new DataAPITime()`, `time(new Date(1734070574056))`, `time('12:34:56')`, `time()`   |
+| `timestamp` | `DataAPITimestamp` | `timestamp` | `new DataAPITimestamp('...')`, `timestamp(new Date(1734070574056))`, `timestamp()`   |
+| `timeuuid`  | `UUID`             | `timeuuid`  | `new UUID('...')`, `UUID.v1()`, `uuid('...')`, `uuid(1)`                             |
+| `tinyint`   | `number`           | -         | `42`                                                                                 |
+| `uuid`      | `UUID`             | `uuid`      | `new UUID('...')`, `UUID.v4()`, `uuid('...')`, `uuid(7)`                             |
+| `varchar`   | `string`           | -         | `'Hello!'`                                                                           |
+| `varint`    | `bigint`           | -         | `BigInt('42')`, `42n`                                                                |
+| `vector`    | `DataAPIVector`    | `vector`    | `new DataAPIVector([1, 2, 3])`, `vector([1, 2, 3])`                                  |
