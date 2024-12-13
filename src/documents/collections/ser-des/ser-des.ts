@@ -17,16 +17,21 @@ import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
 import { CollCodecs, CollCodecSerDesFns } from '@/src/documents/collections/ser-des/codecs';
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 import { stringArraysEqual } from '@/src/lib/utils';
+import BigNumber from 'bignumber.js';
 
 /**
  * @public
  */
-export type CollSerCtx = BaseSerCtx<CollCodecSerDesFns>
+export interface CollSerCtx extends BaseSerCtx<CollCodecSerDesFns> {
+  bigNumsEnabled: boolean,
+}
 
 /**
  * @public
  */
-export type CollDesCtx = BaseDesCtx<CollCodecSerDesFns>
+export interface CollDesCtx extends BaseDesCtx<CollCodecSerDesFns> {
+  bigNumsEnabled: boolean,
+}
 
 /**
  * @public
@@ -47,10 +52,12 @@ export class CollectionSerDes extends SerDes<CollCodecSerDesFns, CollSerCtx, Col
   }
 
   public override adaptSerCtx(ctx: CollSerCtx): CollSerCtx {
+    ctx.bigNumsEnabled = this._cfg?.enableBigNumbers === true;
     return ctx;
   }
 
   public override adaptDesCtx(ctx: CollDesCtx): CollDesCtx {
+    ctx.bigNumsEnabled = this._cfg?.enableBigNumbers === true;
     return ctx;
   }
 
@@ -100,6 +107,10 @@ const DefaultCollectionSerDesCfg = {
             return resp;
           }
         }
+      }
+g
+      if (ctx.bigNumsEnabled && value instanceof BigNumber) {
+        return ctx.done();
       }
     }
 
