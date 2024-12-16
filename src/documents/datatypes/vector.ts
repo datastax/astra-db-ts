@@ -98,9 +98,6 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
       ? vector.raw()
       : vector;
 
-    // this[$SerializeForTable] = () => serialize(this.#vector);
-    // this[$SerializeForCollection] = this[$SerializeForTable];
-
     Object.defineProperty(this, $CustomInspect, {
       value: this.toString,
     });

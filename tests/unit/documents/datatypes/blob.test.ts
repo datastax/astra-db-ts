@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DataAPIBlob, blob, UUID, uuid } from '@/src/documents';
+import { blob, DataAPIBlob } from '@/src/documents';
 import { describe, it } from '@/tests/testlib';
 
 describe('unit.documents.datatypes.blob', () => {
@@ -47,9 +47,82 @@ describe('unit.documents.datatypes.blob', () => {
       const blb2 = new DataAPIBlob(blb);
       assert.strictEqual(blb2.asBase64(), 'AAEC');
     });
+
+    it('should error on invalid type', () => {
+      assert.throws(() => new DataAPIBlob({} as any));
+    });
+
+    it('should allow on invalid type on validation: false', () => {
+      const blb = new DataAPIBlob({} as any, false);
+      assert.deepStrictEqual(blb.raw(), {});
+    });
+  });
+
+  describe('byteLength', () => {
+    it('should return the byte length of the buffer from Buffer', () => {
+      const buff = Buffer.from([0x0, 0x1, 0x2]);
+      const blb = new DataAPIBlob(buff);
+      assert.strictEqual(blb.byteLength, 3);
+    });
+
+    it('should return the byte length of the buffer from ArrayBuffer', () => {
+      const buff = new ArrayBuffer(3);
+      const blb = new DataAPIBlob(buff);
+      assert.strictEqual(blb.byteLength, 3);
+    });
+
+    it('should return the byte length of the buffer from $binary', () => {
+      const blb = new DataAPIBlob({ $binary: 'AAEC' });
+      assert.strictEqual(blb.byteLength, 3);
+    });
   });
 
   describe('coercion', () => {
+    it('should return Buffer as ArrayBuffer', () => {
+      const buff = Buffer.from([0x0, 0x1, 0x2]);
+      const blb = new DataAPIBlob(buff);
+      assert.ok(blb.asArrayBuffer() instanceof ArrayBuffer);
+      assert.deepStrictEqual(new Uint8Array(blb.asArrayBuffer()), new Uint8Array([0x0, 0x1, 0x2]));
+    });
 
+    it('should return $binary as ArrayBuffer', () => {
+      const blb = new DataAPIBlob({ $binary: 'AAEC' });
+      assert.ok(blb.asArrayBuffer() instanceof ArrayBuffer);
+      assert.deepStrictEqual(new Uint8Array(blb.asArrayBuffer()), new Uint8Array([0x0, 0x1, 0x2]));
+    });
+
+    it('should return ArrayBuffer as Buffer', () => {
+      const buff = new Uint8Array([0x0, 0x1, 0x2]).buffer;
+      const blb = new DataAPIBlob(buff);
+      assert.ok(blb.asBuffer() instanceof Buffer);
+      assert.deepStrictEqual(blb.asBuffer(), Buffer.from([0x0, 0x1, 0x2]));
+    });
+
+    it('should return $binary as Buffer', () => {
+      const blb = new DataAPIBlob({ $binary: 'AAEC' });
+      assert.ok(blb.asBuffer() instanceof Buffer);
+      assert.deepStrictEqual(blb.asBuffer(), Buffer.from([0x0, 0x1, 0x2]));
+    });
+
+    it('should throw on Buffer not available', () => {
+      const buff = Buffer.from([0x0, 0x1, 0x2]);
+      const blb = new DataAPIBlob(buff);
+      const origBuffer = globalThis.Buffer;
+      delete (<any>globalThis).Buffer;
+      assert.throws(() => blb.asBuffer());
+      globalThis.Buffer = origBuffer;
+    });
+
+    it('should return Buffer as $binary', () => {
+      const buff = Buffer.from([0x0, 0x1, 0x2]);
+      const blb = new DataAPIBlob(buff);
+      assert.strictEqual(blb.asBase64(), 'AAEC');
+    });
+
+    it('should return ArrayBuffer as $binary', () => {
+      const buff = new Uint8Array([0x0, 0x1, 0x2]).buffer;
+      const blb = new DataAPIBlob(buff);
+      assert.strictEqual(blb.asBase64(), 'AAEC');
+    });
   });
 });

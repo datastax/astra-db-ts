@@ -108,7 +108,7 @@ const DefaultCollectionSerDesCfg = {
           }
         }
       }
-g
+
       if (ctx.bigNumsEnabled && value instanceof BigNumber) {
         return ctx.done();
       }
