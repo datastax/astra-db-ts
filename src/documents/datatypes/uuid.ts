@@ -12,19 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { UUID as UUIDv7, uuidv4, uuidv7 } from 'uuidv7';
+import * as _uuid from 'uuid';
 import { $CustomInspect } from '@/src/lib/constants';
-import {
-  CollCodec,
-  type CollDesCtx,
-  type CollSerCtx,
-  TableCodec, TableDesCtx,
-  TableSerCtx,
-} from '@/src/documents';
+import { CollCodec, type CollDesCtx, type CollSerCtx, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
-
-const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
 
 /**
  * A shorthand function for `new UUID(uuid)`
@@ -33,12 +25,20 @@ const uuidRegex = new RegExp('^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9
  *
  * @public
  */
-export const uuid = (uuid: string | 4 | 7) =>
-  (typeof uuid === 'string')
-    ? new UUID(uuid) :
-  (uuid === 7)
-    ? UUID.v7()
-    : UUID.v4();
+export const uuid = (uuid: string | 1 | 4 | 6 | 7) => {
+  switch (uuid) {
+    case 1:
+      return UUID.v1();
+    case 4:
+      return UUID.v4();
+    case 6:
+      return UUID.v6();
+    case 7:
+      return UUID.v7();
+    default:
+      return new UUID(uuid);
+  }
+};
 
 /**
  * Represents a UUID that can be used as an _id in the DataAPI.
@@ -124,22 +124,23 @@ export class UUID implements CollCodec<typeof UUID>, TableCodec<typeof UUID> {
    *
    * @param uuid - The UUID string.
    * @param validate - Whether to validate the UUID string. Defaults to `true`.
+   * @param version - The version of the UUID. If not provided, it is inferred from the UUID string.
    */
-  constructor(uuid: string, validate = true) {
+  constructor(uuid: string, validate = true, version = 0) {
     if (validate) {
       if (typeof <unknown>uuid !== 'string') {
-        throw new Error('UUID must be a string');
+        throw new Error(`UUID '${uuid}' must be a string`);
       }
 
-      if (uuid.length !== 36 || !uuidRegex.test(uuid)) {
-        throw new Error('UUID must be a 36-character hex string');
+      if (!_uuid.validate(uuid)) {
+        throw new Error(`UUID '${uuid}' is not valid`);
       }
     }
 
     this.#raw = uuid.toLowerCase();
 
     Object.defineProperty(this, 'version', {
-      value: parseInt(this.#raw[14], 16),
+      value: version || parseInt(this.#raw[14], 16),
     });
 
     Object.defineProperty(this, $CustomInspect, {
@@ -169,12 +170,19 @@ export class UUID implements CollCodec<typeof UUID>, TableCodec<typeof UUID> {
   }
 
   /**
-   * Returns the timestamp of a v7 UUID. If the UUID is not a v7 UUID, this method returns `undefined`.
+   * Returns the timestamp of a v1 or v7 UUID. If the UUID is not a v1 or v7 UUID, this method returns `undefined`.
    *
-   * @returns The timestamp of the UUID, or `undefined` if the UUID is not a v7 UUID.
+   * @returns The timestamp of the UUID, or `undefined` if the UUID is not a v1 or v7 UUID.
    */
   public getTimestamp(): Date | undefined {
-    return timestampFromUUID(this);
+    switch (this.version) {
+      case 1:
+        return uuidV1Timestamp(this);
+      case 7:
+        return uuidV7Timestamp(this);
+      default:
+        return undefined;
+    }
   }
 
   /**
@@ -185,28 +193,46 @@ export class UUID implements CollCodec<typeof UUID>, TableCodec<typeof UUID> {
   }
 
   /**
+   * Creates a new v1 UUID.
+   */
+  public static v1(msecs?: number, nsecs?: number): UUID {
+    return new UUID(_uuid.v1({ msecs, nsecs }), false, 1);
+  }
+
+  /**
    * Creates a new v4 UUID.
    */
   public static v4(): UUID {
-    return new UUID(uuidv4(), false);
+    return new UUID(_uuid.v4(), false, 4);
+  }
+
+  /**
+   * Creates a new v6 UUID.
+   */
+  public static v6(msecs?: number, nsecs?: number): UUID {
+    return new UUID(_uuid.v6({ msecs, nsecs }), false, 6);
   }
 
   /**
    * Creates a new v7 UUID.
    */
-  public static v7(): UUID {
-    return new UUID(uuidv7(), false);
+  public static v7(msecs?: number): UUID {
+    return new UUID(_uuid.v7({ msecs }), false, 7);
   }
 }
 
-function timestampFromUUID(uuid: UUID): Date | undefined {
-  if (uuid.version !== 7) {
-    return undefined;
-  }
+const MAGIC_NUMBER = 1221929280000000 * 100;
 
+function uuidV1Timestamp(uuid: UUID): Date | undefined {
+  const arr = uuid.toString().split('-');
+  const timeStr = [arr[2].substring(1), arr[1], arr[0]].join('');
+  const timeInt = parseInt(timeStr, 16);
+  return new Date(~~((timeInt - MAGIC_NUMBER) / 10000));
+}
+
+function uuidV7Timestamp(uuid: UUID): Date | undefined {
   const timestampBytes = new Uint8Array(8);
-  timestampBytes.set(new Uint8Array(UUIDv7.parse(uuid.toString()).bytes.buffer.slice(0, 6)), 2);
+  timestampBytes.set(new Uint8Array(_uuid.parse(uuid.toString()).buffer.slice(0, 6)), 2);
   const timestampMs = new DataView(timestampBytes.buffer).getBigUint64(0);
-
   return new Date(Number(timestampMs));
 }

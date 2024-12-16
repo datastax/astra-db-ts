@@ -73,7 +73,7 @@
     "json-bigint": "^1.0.0",
     "safe-stable-stringify": "^2.4.3",
     "typed-emitter": "^2.1.0",
-    "uuidv7": "^0.6.3"
+    "uuid": "^11.0.3"
   },
   "engines": {
     "node": ">=18.0.0"
