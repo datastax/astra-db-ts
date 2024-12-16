@@ -394,7 +394,10 @@ export interface CollCodecSerDesFns {
 }
 
 // @public (undocumented)
-export type CollDesCtx = BaseDesCtx<CollCodecSerDesFns>;
+export interface CollDesCtx extends BaseDesCtx<CollCodecSerDesFns> {
+    // (undocumented)
+    bigNumsEnabled: boolean;
+}
 
 // @public
 export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>> {
@@ -663,7 +666,10 @@ export interface CollectionVectorOptions {
 }
 
 // @public (undocumented)
-export type CollSerCtx = BaseSerCtx<CollCodecSerDesFns>;
+export interface CollSerCtx extends BaseSerCtx<CollCodecSerDesFns> {
+    // (undocumented)
+    bigNumsEnabled: boolean;
+}
 
 // @public
 export abstract class CommandEvent extends DataAPIClientEvent {
@@ -2084,17 +2090,19 @@ export class UUID implements CollCodec<typeof UUID>, TableCodec<typeof UUID> {
         $uuid: string;
     } | undefined)?];
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
-    constructor(uuid: string, validate?: boolean);
+    constructor(uuid: string, validate?: boolean, version?: number);
     equals(other: unknown): boolean;
     getTimestamp(): Date | undefined;
     toString(): string;
+    static v1(msecs?: number, nsecs?: number): UUID;
     static v4(): UUID;
-    static v7(): UUID;
+    static v6(msecs?: number, nsecs?: number): UUID;
+    static v7(msecs?: number): UUID;
     readonly version: number;
 }
 
 // @public
-export const uuid: (uuid: string | 4 | 7) => UUID;
+export const uuid: (uuid: string | 1 | 4 | 6 | 7) => UUID;
 
 // @public
 export const vector: (v: DataAPIVectorLike) => DataAPIVector;
@@ -2146,6 +2154,9 @@ export type WithSim<Schema extends SomeDoc> = Schema & {
 export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor> {
     timeout?: number | Pick<Partial<TimeoutDescriptor>, 'requestTimeoutMs' | Timeouts>;
 }
+
+
+export * from "bignumber.js";
 
 // (No @packageDocumentation comment for this package)
 
