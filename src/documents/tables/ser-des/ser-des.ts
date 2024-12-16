@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { SomeDoc } from '@/src/documents';
-import { SerDes, BaseSerDesConfig } from '@/src/lib/api/ser-des/ser-des';
+import { BaseSerDesConfig, SerDes } from '@/src/lib/api/ser-des/ser-des';
 import {
   ListTableColumnDefinitions,
   ListTableKnownColumnDefinition,
@@ -24,6 +24,7 @@ import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import BigNumber from 'bignumber.js';
 import { snakeToCamelCase, stringArraysEqual } from '@/src/lib/utils';
+import { RawCodec } from '@/src/lib/api/ser-des/codecs';
 
 /**
  * @public
@@ -49,8 +50,8 @@ export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: Som
 /**
  * @public
  */
-export interface TableSerDesConfig extends BaseSerDesConfig<TableCodecs, TableCodecSerDesFns, TableSerCtx, TableDesCtx> {
-  codecs?: TableCodecs[],
+export interface TableSerDesConfig extends BaseSerDesConfig<TableCodecSerDesFns, TableSerCtx, TableDesCtx> {
+  codecs?: RawCodec<TableCodecSerDesFns>[],
   sparseData?: boolean,
 }
 

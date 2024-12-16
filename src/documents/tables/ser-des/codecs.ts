@@ -19,10 +19,10 @@ import { InetAddress } from '@/src/documents/datatypes/inet-address';
 import { UUID } from '@/src/documents/datatypes/uuid';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
 import { SomeDoc, TableDesCtx, TableSerCtx } from '@/src/documents';
-import { CodecHolder } from '@/src/lib/api/ser-des/codecs';
 import { EmptyObj, SerDesFn } from '@/src/lib';
 import BigNumber from 'bignumber.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
+import { CodecOpts, RawCodec } from '@/src/lib/api/ser-des/codecs';
 
 /**
  * @public
@@ -32,10 +32,11 @@ export interface TableCodecSerDesFns {
   deserialize: (val: any, ctx: TableDesCtx, definition: SomeDoc) => ReturnType<SerDesFn<any>>,
 }
 
+
 /**
  * @public
  */
-export interface TableCodecClass {
+export type TableCodecClass = {
   new (...args: any[]): { [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>> };
   [$DeserializeForTable]: TableCodecSerDesFns['deserialize'];
 }
@@ -48,59 +49,39 @@ export type TableCodec<_Class extends TableCodecClass> = EmptyObj;
 /**
  * @public
  */
-export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
-  /**
-   * @internal
-   */
-  public readonly get: CodecHolder<TableCodecSerDesFns>['get'];
-
-  /**
-   * @internal
-   */
-  public constructor(state: typeof this.get) {
-    this.get = state;
-  }
-
+export class TableCodecs {
   public static Defaults = {
     bigint: TableCodecs.forType('bigint', {
-      deserializeOnly: true,
       deserialize: (value, ctx) => ctx.done(parseInt(value)),
     }),
     blob: TableCodecs.forType('blob', DataAPIBlob),
     date: TableCodecs.forType('date', DataAPIDate),
     decimal: TableCodecs.forType('decimal', {
-      deserializeOnly: true,
       deserialize: (value, ctx) => ctx.done((value instanceof BigNumber) ? value : new BigNumber(value)),
     }),
     double: TableCodecs.forType('double', {
-      deserializeOnly: true,
       deserialize: (value, ctx) => ctx.done(parseFloat(value)),
     }),
     duration: TableCodecs.forType('duration', DataAPIDuration),
     float: TableCodecs.forType('float', {
-      deserializeOnly: true,
       deserialize: (value, ctx) => ctx.done(parseFloat(value)),
     }),
     int: TableCodecs.forType('int', {
-      deserializeOnly: true,
       deserialize: (value, ctx) => ctx.done(parseInt(value)),
     }),
     inet: TableCodecs.forType('inet', InetAddress),
     smallint: TableCodecs.forType('smallint', {
-      deserializeOnly: true,
       deserialize: (value, ctx) => ctx.done(parseInt(value)),
     }),
     time: TableCodecs.forType('time', DataAPITime),
     timestamp: TableCodecs.forType('timestamp', DataAPITimestamp),
     timeuuid: TableCodecs.forType('timeuuid', UUID),
     tinyint: TableCodecs.forType('tinyint', {
-      deserializeOnly: true,
       deserialize: (value, ctx) => ctx.done(parseInt(value)),
     }),
     uuid: TableCodecs.forType('uuid', UUID),
     vector: TableCodecs.forType('vector', DataAPIVector),
     varint: TableCodecs.forType('varint', {
-      deserializeOnly: true,
       deserialize: (value, ctx) => ctx.done(BigInt(value)),
     }),
     map: TableCodecs.forType('map', {
@@ -127,7 +108,6 @@ export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
       },
     }),
     list: TableCodecs.forType('list', {
-      deserializeOnly: true,
       deserialize(list, ctx, def) {
         for (let i = 0, n = list.length; i < n; i++) {
           const elemParser = ctx.codecs.type[def.valueType];
@@ -151,44 +131,30 @@ export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
     }),
   };
 
-  public static Overrides = {
-
-  };
-
-  public static forPath(path: string[], clazz: TableCodecClass): TableCodecs
-
-  public static forPath(path: string[], opts: TableCodecSerDesFns): TableCodecs
-
-  public static forPath(path: string[], clazzOrOpts: TableCodecClass | TableCodecSerDesFns): TableCodecs {
-    if ($DeserializeForTable in clazzOrOpts) {
-      return new TableCodecs({ codecType: 'path', path, deserialize: clazzOrOpts[$DeserializeForTable] });
-    }
-    return new TableCodecs({ codecType: 'path', path, ...clazzOrOpts });
+  public static forPath(path: string[], optsOrClass: CodecOpts<TableCodecSerDesFns, TableSerCtx, TableDesCtx> | TableCodecClass): RawCodec<TableCodecSerDesFns> {
+    return {
+      path,
+      ...($DeserializeForTable in optsOrClass)
+        ? { deserialize: optsOrClass[$DeserializeForTable] }
+        : optsOrClass,
+    };
   }
 
-  public static forName(name: string, clazz: TableCodecClass): TableCodecs
-
-  public static forName(name: string, opts: TableCodecSerDesFns): TableCodecs
-
-  public static forName(name: string, clazzOrOpts: TableCodecClass | TableCodecSerDesFns): TableCodecs {
-    if ($DeserializeForTable in clazzOrOpts) {
-      return new TableCodecs({ codecType: 'name', name, deserialize: clazzOrOpts[$DeserializeForTable] });
-    }
-    return new TableCodecs({ codecType: 'name', name, ...clazzOrOpts });
+  public static forName(name: string, optsOrClass: CodecOpts<TableCodecSerDesFns, TableSerCtx, TableDesCtx> | TableCodecClass): RawCodec<TableCodecSerDesFns> {
+    return {
+      name,
+      ...($DeserializeForTable in optsOrClass)
+        ? { deserialize: optsOrClass[$DeserializeForTable] }
+        : optsOrClass,
+    };
   }
 
-  public static forType(type: string, clazz: TableCodecClass): TableCodecs;
-
-  public static forType(type: string, opts: TableCodecSerDesFns & { serializeGuard: (value: unknown, ctx: TableSerCtx) => boolean }): TableCodecs;
-
-  public static forType(type: string, opts: TableCodecSerDesFns & { serializeClass: new (...args: any[]) => any }): TableCodecs;
-
-  public static forType(type: string, opts: Pick<TableCodecSerDesFns, 'deserialize'> & { deserializeOnly: true }): TableCodecs;
-
-  public static forType(type: string, clazzOrOpts: any): TableCodecs {
-    if ($DeserializeForTable in clazzOrOpts) {
-      return new TableCodecs({ codecType: 'type', type, deserialize: clazzOrOpts[$DeserializeForTable] });
-    }
-    return new TableCodecs({ codecType: 'type', type, ...clazzOrOpts });
+  public static forType(type: string, optsOrClass: CodecOpts<TableCodecSerDesFns, TableSerCtx, TableDesCtx> | TableCodecClass): RawCodec<TableCodecSerDesFns> {
+    return {
+      type,
+      ...($DeserializeForTable in optsOrClass)
+        ? { deserialize: optsOrClass[$DeserializeForTable] }
+        : optsOrClass,
+    };
   }
 }

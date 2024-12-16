@@ -17,9 +17,9 @@ import { UUID } from '@/src/documents/datatypes/uuid';
 import { ObjectId } from '@/src/documents/datatypes/object-id';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
 import { DataAPITimestamp } from '@/src/documents/datatypes/dates';
-import { CollDesCtx, CollSerCtx, TableSerCtx } from '@/src/documents';
-import { CodecHolder } from '@/src/lib/api/ser-des/codecs';
+import { CollDesCtx, CollSerCtx } from '@/src/documents';
 import { EmptyObj, SerDesFn } from '@/src/lib';
+import { CodecOpts, RawCodec } from '@/src/lib/api/ser-des/codecs';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 
 /**
@@ -46,19 +46,7 @@ export type CollCodec<_Class extends CollCodecClass> = EmptyObj;
 /**
  * @public
  */
-export class CollCodecs implements CodecHolder<CollCodecSerDesFns> {
-  /**
-   * @internal
-   */
-  public readonly get: CodecHolder<CollCodecSerDesFns>['get'];
-
-  /**
-   * @internal
-   */
-  public constructor(state: typeof this.get) {
-    this.get = state;
-  }
-
+export class CollCodecs {
   public static Defaults = {
     $date: CollCodecs.forType('$date', {
       serializeClass: Date,
@@ -75,44 +63,33 @@ export class CollCodecs implements CodecHolder<CollCodecSerDesFns> {
   };
 
   public static Overrides = {
-    USE_DATA_API_TIMESTAMPS_OVER_DATES: CollCodecs.forType('$date', DataAPITimestamp),
-    // USE_NUMBER_ARRAYS_FOR_VECTORS:
+    USE_DATA_API_TIMESTAMPS_FOR_DATES: CollCodecs.forType('$date', DataAPITimestamp),
   };
 
-  public static forPath(path: string[], clazz: CollCodecClass): CollCodecs
-
-  public static forPath(path: string[], opts: CollCodecSerDesFns): CollCodecs
-
-  public static forPath(path: string[], clazzOrOpts: CollCodecClass | CollCodecSerDesFns): CollCodecs {
-    if ($DeserializeForCollection in clazzOrOpts) {
-      return new CollCodecs({ codecType: 'path', path, deserialize: clazzOrOpts[$DeserializeForCollection] });
-    }
-    return new CollCodecs({ codecType: 'path', path, ...clazzOrOpts });
+  public static forPath(path: string[], optsOrClass: CodecOpts<CollCodecSerDesFns, CollSerCtx, CollDesCtx> | CollCodecClass): RawCodec<CollCodecSerDesFns> {
+    return {
+      path,
+      ...($DeserializeForCollection in optsOrClass)
+        ? { deserialize: optsOrClass[$DeserializeForCollection] }
+        : optsOrClass,
+    };
   }
 
-  public static forName(name: string, clazz: CollCodecClass): CollCodecs
-
-  public static forName(name: string, opts: CollCodecSerDesFns): CollCodecs
-
-  public static forName(name: string, clazzOrOpts: CollCodecClass | CollCodecSerDesFns): CollCodecs {
-    if ($DeserializeForCollection in clazzOrOpts) {
-      return new CollCodecs({ codecType: 'name', name, deserialize: clazzOrOpts[$DeserializeForCollection] });
-    }
-    return new CollCodecs({ codecType: 'name', name, ...clazzOrOpts });
+  public static forName(name: string, optsOrClass: CodecOpts<CollCodecSerDesFns, CollSerCtx, CollDesCtx> | CollCodecClass): RawCodec<CollCodecSerDesFns> {
+    return {
+      name,
+      ...($DeserializeForCollection in optsOrClass)
+        ? { deserialize: optsOrClass[$DeserializeForCollection] }
+        : optsOrClass,
+    };
   }
 
-  public static forType(type: string, clazz: CollCodecClass): CollCodecs;
-
-  public static forType(type: string, opts: CollCodecSerDesFns & { serializeGuard: (value: unknown, ctx: TableSerCtx) => boolean }): CollCodecs;
-
-  public static forType(type: string, opts: CollCodecSerDesFns & { serializeClass: new (...args: any[]) => any }): CollCodecs;
-
-  public static forType(type: string, opts: CollCodecSerDesFns & { deserializeOnly: true }): CollCodecs;
-
-  public static forType(type: string, clazzOrOpts: CollCodecClass | CollCodecSerDesFns): CollCodecs {
-    if ($DeserializeForCollection in clazzOrOpts) {
-      return new CollCodecs({ codecType: 'type', type, deserialize: clazzOrOpts[$DeserializeForCollection] });
-    }
-    return new CollCodecs({ codecType: 'type', type, ...clazzOrOpts });
+  public static forType(type: string, optsOrClass: CodecOpts<CollCodecSerDesFns, CollSerCtx, CollDesCtx> | CollCodecClass): RawCodec<CollCodecSerDesFns> {
+    return {
+      type,
+      ...($DeserializeForCollection in optsOrClass)
+        ? { deserialize: optsOrClass[$DeserializeForCollection] }
+        : optsOrClass,
+    };
   }
 }

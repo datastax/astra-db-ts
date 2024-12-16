@@ -15,7 +15,7 @@
 import { SomeDoc } from '@/src/documents';
 import type { nullish, OneOrMany, RawDataAPIResponse } from '@/src/lib';
 import { camelToSnakeCase, snakeToCamelCase, toArray } from '@/src/lib/utils';
-import { CodecHolder, Codecs, CodecSerDesFns, initCodecs } from '@/src/lib/api/ser-des/codecs';
+import { Codecs, CodecSerDesFns, initCodecs, RawCodec } from '@/src/lib/api/ser-des/codecs';
 import {
   BaseDesCtx,
   BaseSerCtx,
@@ -34,12 +34,12 @@ export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => readonly [0 |
 /**
  * @public
  */
-export interface BaseSerDesConfig<Codec extends CodecHolder<Fns>, Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>> {
+export interface BaseSerDesConfig<Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>> {
   serialize?: OneOrMany<SerDesFn<SerCtx>>,
   deserialize?: OneOrMany<SerDesFn<DesCtx>>,
   mutateInPlace?: boolean,
   snakeCaseInterop?: boolean,
-  codecs?: Codec[],
+  codecs?: RawCodec<Fns>[],
 }
 
 /**
@@ -50,7 +50,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
   protected readonly _customState: Record<string, any> = {};
   protected readonly _camelSnakeCache?: Record<string, any>;
 
-  protected constructor(protected readonly _cfg: BaseSerDesConfig<any, Fns, SerCtx, DesCtx>) {
+  protected constructor(protected readonly _cfg: BaseSerDesConfig<Fns, SerCtx, DesCtx>) {
     this._codecs = initCodecs(_cfg.codecs ?? []);
 
     if (this._cfg.snakeCaseInterop) {
@@ -78,13 +78,12 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
   protected abstract adaptDesCtx(ctx: BaseDesCtx<Fns>): DesCtx;
   protected abstract bigNumsPresent(ctx: SerCtx): boolean;
 
-  protected static _mergeConfig<Codec extends CodecHolder<Fns>, Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>>(...cfg: (BaseSerDesConfig<Codec, Fns, SerCtx, DesCtx> | undefined)[]): BaseSerDesConfig<Codec, Fns, SerCtx, DesCtx> {
-    return cfg.reduce<BaseSerDesConfig<Codec, Fns, SerCtx, DesCtx>>((acc, cfg) => ({
+  protected static _mergeConfig<Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>>(...cfg: (BaseSerDesConfig<Fns, SerCtx, DesCtx> | undefined)[]): BaseSerDesConfig<Fns, SerCtx, DesCtx> {
+    return cfg.reduce<BaseSerDesConfig<Fns, SerCtx, DesCtx>>((acc, cfg) => ({
       serialize: [...toArray(cfg?.serialize ?? []), ...toArray(acc.serialize ?? [])],
       deserialize: [...toArray(cfg?.deserialize ?? []), ...toArray(acc.deserialize ?? [])],
       mutateInPlace: !!(cfg?.mutateInPlace ?? acc.mutateInPlace),
       snakeCaseInterop: !!(cfg?.snakeCaseInterop ?? acc.snakeCaseInterop),
-      codecs: [...acc.codecs ?? [], ...cfg?.codecs ?? []],
     }), {});
   }
 

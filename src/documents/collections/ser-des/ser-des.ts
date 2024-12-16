@@ -36,9 +36,8 @@ export interface CollDesCtx extends BaseDesCtx<CollCodecSerDesFns> {
 /**
  * @public
  */
-export interface CollectionSerDesConfig extends BaseSerDesConfig<CollCodecs, CollCodecSerDesFns, CollSerCtx, CollDesCtx> {
+export interface CollectionSerDesConfig extends BaseSerDesConfig<CollCodecSerDesFns, CollSerCtx, CollDesCtx> {
   enableBigNumbers?: boolean,
-  codecs?: CollCodecs[],
 }
 
 /**

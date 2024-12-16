@@ -34,12 +34,14 @@ export type {
 export type {
   Codecs,
   CodecSerDesFns,
-  CodecHolder,
   TypeCodec,
   ClassGuardCodec,
   NameCodec,
   PathCodec,
   CustomGuardCodec,
+  SomeCodec,
+  RawCodec,
+  CodecOpts,
 } from './ser-des/codecs';
 
 export type {
