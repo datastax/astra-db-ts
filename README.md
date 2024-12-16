@@ -12,11 +12,9 @@
   - [Collections](#collections)
   - [Tables](#tables)
 - [High-level architecture](#high-level-architecture)
-- [Getting the most out of the typing](#getting-the-most-out-of-the-typing)
-- [Working with Dates](#working-with-dates)
-- [Working with ObjectIds and UUIDs](#working-with-objectids-and-uuids)
-- [Monitoring/logging](#monitoringlogging)
-- [Non-astra support](#non-astra-support)
+  - [Options hierarchy](#options-hierarchy)
+- [Datatypes](#datatypes)
+[Non-astra support](#non-astra-support)
 - [Non-standard environment support](#non-standard-environment-support)
   - [HTTP/2 with minification](#http2-with-minification)
   - [Browser support](#browser-support)
@@ -70,9 +68,9 @@ interface Dream extends VectorDoc {
 
   // Let's see what we've got
   const cursor = collection.find({})
-          .sort({ vector: vector([0, 0.2, 0.4]) }) // Performing a vector search
-          .includeSimilarity(true)                 // The found doc is inferred to have `$similarity` as a property now
-          .limit(2);
+    .sort({ vector: vector([0, 0.2, 0.4]) }) // Performing a vector search
+    .includeSimilarity(true)                 // The found doc is inferred to have `$similarity` as a property now
+    .limit(2);
 
   // This would print:
   // - Surfers' paradise: 0.98238194
@@ -113,11 +111,11 @@ const mkDreamsTable = async () => await db.createTable('dreams', {
 
 // Infer the TS-equivalent type from the table definition (like zod or arktype). Equivalent to:
 //
-// interface TableSchema extends Row<'id'> {
-//   id: number,                     --  A primary key component, so it's required
-//   summary?: string | null,        --  Not a primary key, so it's optional and may return as null when found
-//   tags?: Set<string>,             --  Sets/maps/lists are optional to insert, but will actually be returned as empty collections instead of null
-//   vector?: DataAPIVector | null,  --  Vectors, however, may be null.
+// interface TableSchema {
+//   id: number,                    -- A primary key component, so it's required
+//   summary?: string | null,       -- Not a primary key, so it's optional and may return as null when found
+//   tags?: Set<string>,            -- Sets/maps/lists are optional to insert, but will actually be returned as empty collections instead of null
+//   vector?: DataAPIVector | null, -- Vectors, however, may be null.
 // }
 type Dream = InferTableSchema<typeof mkDreamsTable>;
 
@@ -181,7 +179,23 @@ type Dream = InferTableSchema<typeof mkDreamsTable>;
 
 `astra-db-ts`'s abstractions for working at the data and admin layers are structured as depicted by this diagram:
 
-![Class hierarchy diagram](etc/imgs/class-hierarchy.png)
+```mermaid
+flowchart TD
+  DataAPIClient -->|".db(endpoint)"| Db
+  DataAPIClient -->|".admin()"| AstraAdmin
+
+  Db --->|".collection(name)
+  .createCollection(name)"| Collection
+
+  Db --->|".table(name)
+  .createTable(name)"| Table
+
+  AstraAdmin -->|".dbAdmin(endpoint)
+  .dbAdmin(id, region)"| DbAdmin
+
+  Db -->|".admin()"| DbAdmin
+  DbAdmin -->|".db()"| Db
+```
 
 Here's a small admin-oriented example:
 
@@ -204,139 +218,23 @@ const admin = client.admin();
 })();
 ```
 
-## Getting the most out of the typing
+### Options hierarchy
 
-`astra-db-ts` is a typescript-first library, performing minimal runtime type-checking. As such, it provides
-a rich set of types to help you write type-safe code.
+Like the client hierarchy, the options for each class also exist in a hierarchy.
 
-Here are some examples of how you can properly leverage types to make your code more robust:
+The general options for parent classes are deeply merged with the options for child classes.
 
-```typescript
-// First of all:
-// I *highly* recommend writing your query objects & filter objects and such inline with the methods
-// to get the best possible type-checking and autocomplete
-
-import { DataAPIClient, StrictFilter, StrictSort, UUID } from '@datastax/astra-db-ts';
-
-const client = new DataAPIClient('*TOKEN*');
-const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
-
-// You can strictly type your collections for proper type-checking
-interface Person {
-  _id: UUID,
-  name: string,
-  interests: {
-    favoriteBand?: string,
-    friend?: UUID,
-  }
-}
-
-(async () => {
-  // Create your collections with a defaultId type to enforce the type of the _id field
-  // (Otherwise it'll default to a string UUID that wouldn't be deserialized as a UUID by the client)
-  const collection = await db.createCollection<Person>('my_collection', { defaultId: { type: 'uuidv7' } });
-
-  // Now it'll raise type-errors if you try to insert a document with the wrong shape
-  await collection.insertOne({
-    _id: new UUID('e7f1f3a0-7e3d-11eb-9439-0242ac130002'),
-    name: 'John',
-    interests: {
-      favoriteBand: 'Nightwish',
-    },
-    // @ts-expect-error - 'eyeColor' does not exist in type MaybeId<Person>
-    eyeColor: 'blue',
-  });
-})();
+```mermaid
+graph TD
+  DataAPIClientOptions --> AdminOptions
+  DataAPIClientOptions --> DbOptions
+  DbOptions --> CollectionOptions
+  DbOptions --> TableOptions
 ```
 
-## Working with Dates
+## Datatypes
 
-Native JS `Date` objects can be used anywhere in documents to represent dates and times.
-
-Document fields stored using the `{ $date: number }` will also be returned as Date objects when read.
-
-```typescript
-import { DataAPIClient } from '@datastax/astra-db-ts';
-
-// Reference an untyped collections
-const client = new DataAPIClient('*TOKEN*');
-const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
-
-(async () => {
-  const collection = await db.createCollection('dates_test');
-  
-  // Insert documents with some dates
-  await collection.insertOne({ dateOfBirth: new Date(1394104654000) });
-  await collection.insertOne({ dateOfBirth: new Date('1863-05-28') });
-
-  // Update a document with a date and setting lastModified to now
-  await collection.updateOne(
-    {
-      dateOfBirth: new Date('1863-05-28'),
-    },
-    {
-      $set: { message: 'Happy Birthday!' },
-      $currentDate: { lastModified: true },
-    },
-  );
-
-  // Will print *around* `new Date()` (i.e. when server processed the request)
-  const found = await collection.findOne({ dateOfBirth: { $lt: new Date('1900-01-01') } });
-  console.log(found?.lastModified);
-  
-  // Cleanup (if desired)
-  await collection.drop();
-})();
-```
-
-## Working with ObjectIds and UUIDs
-
-`astra-db-ts` exports an `ObjectId` and `UUID` class for working with these types in the database.
-
-Note that these are custom classes, and *not* the ones from the `bson` package. Make sure you're using the right one!
-
-```typescript
-import { DataAPIClient, ObjectId, UUID } from '@datastax/astra-db-ts';
-
-interface Person {
-  _id: ObjectId | UUID,
-  name: string,
-  friendId?: ObjectId | UUID,
-}
-
-// Connect to the db
-const client = new DataAPIClient('*TOKEN*');
-const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
-
-(async () => {
-  // Create a collections with a UUIDv7 as the default ID
-  const collection = await db.createCollection<Person>('ids_test', { defaultId: { type: 'uuidv7' } });
-  
-  // You can manually set whatever ID you want
-  await collection.insertOne({ _id: new ObjectId("65fd9b52d7fabba03349d013"), name: 'John' });
-  
-  // Or use the default ID
-  await collection.insertOne({ name: 'Jane' });
-  
-  // Let's give Jane a friend with a UUIDv4 
-  const friendId = UUID.v4();
-
-  await collection.insertOne({ name: 'Alice', _id: friendId });
-  
-  await collection.updateOne(
-    { name: 'Jane' },
-    { $set: { friendId } },
-  );
-  
-  // And let's get Jane as a document
-  // (Prints "Jane", the generated UUIDv4, and true)
-  const jane = await collection.findOne({ name: 'Jane' });
-  console.log(jane?.name, jane?.friendId?.toString(), friendId.equals(jane?.friendId));
-  
-  // Cleanup (if desired)
-  await collection.drop();
-})();
-```
+See [DATATYPES.md](etc/docs/DATATYPES.md) for a full list of supported datatypes and their TypeScript equivalents.
 
 ## Non-astra support
 
@@ -354,8 +252,9 @@ const db = client.db('*ENDPOINT*');
 
 // You'll also need to pass it to db.admin() when not using Astra for typing purposes
 // If the environment does not match, an error will be thrown as a reminder
-const dbAdmin: DataAPIDbAdmin = db.admin({ environment: 'dse' });
-dbAdmin.createNamespace(...);
+// `environment: 'dse'` makes the return type be `DataAPIDbAdmin`
+const dbAdmin = db.admin({ environment: 'dse' });
+dbAdmin.createNamespace('...');
 ```
 
 The `TokenProvider` class is an extensible concept to allow you to create or even refresh your tokens
