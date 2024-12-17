@@ -128,7 +128,7 @@ const insertMany = async <ID>(
     let bigNumsPresent = false;
 
     for (let i = 0, n = documents.length; i < n; i++) {
-      const resp = serdes.serializeRecord(documents[i]);
+      const resp = serdes.serialize(documents[i]);
       serialized.push(resp[0]);
       bigNumsPresent ||= resp[1];
     }
@@ -158,7 +158,7 @@ const insertMany = async <ID>(
   for (let i = 0, n = documentResponses.length; i < n; i++) {
     const docResp = documentResponses[i];
     if (docResp.status === "OK") {
-      insertedIds.push(serdes.deserializeRecord(docResp._id, raw, true) as ID);
+      insertedIds.push(serdes.deserialize(docResp._id, raw, true) as ID);
     } else if (docResp.errorIdx) {
       docResp.error = errors![docResp.errorIdx];
       delete docResp.errorIdx;

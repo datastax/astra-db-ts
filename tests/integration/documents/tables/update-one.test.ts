@@ -16,10 +16,12 @@
 import {
   DataAPIBlob,
   DataAPIDate,
-  DataAPIDuration, DataAPITime, DataAPITimestamp,
-  DataAPIHttpError,
+  DataAPIDuration,
   DataAPIResponseError,
-  DataAPIVector, InetAddress,
+  DataAPITime,
+  DataAPITimestamp,
+  DataAPIVector,
+  InetAddress,
   UUID,
 } from '@/src/documents';
 import { EverythingTableSchema, it, parallel } from '@/tests/testlib';
@@ -27,9 +29,9 @@ import assert from 'assert';
 import BigNumber from 'bignumber.js';
 
 parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }, ({ table, table_ }) => {
-  it('should 500 on empty $set/$unset', async () => {
-    await assert.rejects(() => table.updateOne({}, { $set: {} }), DataAPIHttpError);
-    await assert.rejects(() => table.updateOne({}, { $unset: {} }), DataAPIHttpError);
+  it('should error on empty $set/$unset', async () => {
+    await assert.rejects(() => table.updateOne({}, { $set: {} }), DataAPIResponseError);
+    await assert.rejects(() => table.updateOne({}, { $unset: {} }), DataAPIResponseError);
   });
 
   it('should error when trying to change pk', async (key) => {

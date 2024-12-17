@@ -231,7 +231,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     if (this.#state !== 'idle') {
       throw new CursorError('Cannot set a new filter on a running/closed cursor', this);
     }
-    return this.#clone(this.#serdes.serializeRecord(structuredClone(filter)), this.#options, this.#mapping);
+    return this.#clone(this.#serdes.serialize(structuredClone(filter)), this.#options, this.#mapping);
   }
 
   /**
@@ -660,7 +660,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this.#buffer = raw.data?.documents ?? [];
 
     for (let i = 0, n = this.#buffer.length; i < n; i++) {
-      this.#buffer[i] = this.#serdes.deserializeRecord(this.#buffer[i], raw) as TRaw;
+      this.#buffer[i] = this.#serdes.deserialize(this.#buffer[i], raw) as TRaw;
     }
 
     const sortVector = raw.status?.sortVector;

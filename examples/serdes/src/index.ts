@@ -1,5 +1,7 @@
 import { DataAPIClient } from '@datastax/astra-db-ts';
 import 'dotenv/config';
+import { TableCustomDatatypesExample } from '@/src/tables/custom-datatypes';
+import { CollectionClassMappingExample } from '@/src/collections/class-mapping';
 
 const client = new DataAPIClient(process.env.CLIENT_DB_TOKEN);
 const db = client.db(process.env.CLIENT_DB_URL!);
@@ -11,15 +13,14 @@ const cleanup = () => db.dropCollection(NAME);
 (async () => {
   await cleanup();
 
-  const files = [
-    './tables/custom-datatypes',
-    './collections/class-mapping',
+  const functions = [
+    TableCustomDatatypesExample,
+    CollectionClassMappingExample,
   ];
 
-  for (const file of files) {
+  for (const func of functions) {
     await using _ = { [Symbol.asyncDispose]: cleanup };
-    const example = await import(file);
-    console.log(`Running ${file}...`);
-    await example.default(NAME, db);
+    console.log(`Running ${func.name}...`);
+    await func(NAME, db);
   }
 })();

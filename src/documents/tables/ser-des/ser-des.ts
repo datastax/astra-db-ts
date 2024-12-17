@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { SomeDoc } from '@/src/documents';
-import { SerDes, BaseSerDesConfig } from '@/src/lib/api/ser-des/ser-des';
+import { BaseSerDesConfig, SerDes } from '@/src/lib/api/ser-des/ser-des';
 import {
   ListTableColumnDefinitions,
   ListTableKnownColumnDefinition,
@@ -23,7 +23,8 @@ import { TableCodecs, TableCodecSerDesFns } from '@/src/documents/tables/ser-des
 import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import BigNumber from 'bignumber.js';
-import { snakeToCamelCase, stringArraysEqual } from '@/src/lib/utils';
+import { stringArraysEqual } from '@/src/lib/utils';
+import { RawCodec } from '@/src/lib/api/ser-des/codecs';
 
 /**
  * @public
@@ -49,8 +50,8 @@ export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: Som
 /**
  * @public
  */
-export interface TableSerDesConfig extends BaseSerDesConfig<TableCodecs, TableCodecSerDesFns, TableSerCtx, TableDesCtx> {
-  codecs?: TableCodecs[],
+export interface TableSerDesConfig extends BaseSerDesConfig<TableCodecSerDesFns, TableSerCtx, TableDesCtx> {
+  codecs?: RawCodec<TableCodecSerDesFns>[],
   sparseData?: boolean,
 }
 
@@ -64,12 +65,12 @@ export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableD
     super(TableSerDes.mergeConfig(DefaultTableSerDesCfg, cfg));
   }
 
-  public override adaptSerCtx(ctx: TableSerCtx): TableSerCtx {
+  protected override adaptSerCtx(ctx: TableSerCtx): TableSerCtx {
     ctx.bigNumsPresent = false;
     return ctx;
   }
 
-  public override adaptDesCtx(ctx: TableDesCtx): TableDesCtx {
+  protected override adaptDesCtx(ctx: TableDesCtx): TableDesCtx {
     const status = ctx.rawDataApiResp.status!;
 
     if (ctx.parsingInsertedId) {
@@ -78,9 +79,9 @@ export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableD
       ctx.tableSchema = status.projectionSchema;
     }
 
-    if (ctx.camelSnakeCache) {
+    if (ctx.keyTransformer) {
       ctx.tableSchema = Object.fromEntries(Object.entries(ctx.tableSchema).map(([key, value]) => {
-        return [snakeToCamelCase(key, ctx.camelSnakeCache!), value];
+        return [ctx.keyTransformer!.deserializeKey(key, ctx), value];
       }));
     }
 
@@ -96,7 +97,7 @@ export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableD
     return ctx;
   }
 
-  public override bigNumsPresent(ctx: TableSerCtx): boolean {
+  protected override bigNumsPresent(ctx: TableSerCtx): boolean {
     return ctx.bigNumsPresent;
   }
 
@@ -165,7 +166,7 @@ const DefaultTableSerDesCfg = {
     }
     return ctx.continue();
   },
-  deserialize(key, value, ctx) {
+  deserialize(key, _, ctx) {
     const codecs = ctx.codecs;
     let resp;
 
@@ -173,11 +174,13 @@ const DefaultTableSerDesCfg = {
       populateSparseData(ctx); // populate sparse data for empty objects
     }
 
+    const column = ctx.tableSchema[key];
+
     for (let i = 0, n = codecs.path.length; i < n; i++) {
       const path = codecs.path[i].path;
 
       if (stringArraysEqual(path, ctx.path)) {
-        if ((resp = codecs.path[i].deserialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
+        if ((resp = codecs.path[i].deserialize?.(key, ctx.rootObj[key], ctx, column) ?? ctx.continue())[0] !== CONTINUE) {
           return resp;
         }
       }
@@ -192,24 +195,20 @@ const DefaultTableSerDesCfg = {
       ctx.populateSparseData = false;
     }
 
-    const column = ctx.tableSchema[key];
+    const type = resolveType(column);
 
-    if (column) {
-      const type = resolveType(column);
-      const obj = ctx.rootObj;
-
-      if (key in codecs.name) {
-        if ((resp = codecs.name[key].deserialize(obj[key], ctx, column))[0] !== CONTINUE) {
-          return resp;
-        }
-      }
-
-      if (type in codecs.type) {
-        if ((resp = codecs.type[type].deserialize(obj[key], ctx, column))[0] !== CONTINUE) {
-          return resp;
-        }
+    if (key in codecs.name) {
+      if ((resp = codecs.name[key].deserialize(key, ctx.rootObj[key], ctx, column))[0] !== CONTINUE) {
+        return resp;
       }
     }
+
+    if (type in codecs.type) {
+      if ((resp = codecs.type[type].deserialize(key, ctx.rootObj[key], ctx, column))[0] !== CONTINUE) {
+        return resp;
+      }
+    }
+
     return ctx.done();
   },
   codecs: Object.values(TableCodecs.Defaults),

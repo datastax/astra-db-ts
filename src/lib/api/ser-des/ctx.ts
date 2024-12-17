@@ -14,7 +14,7 @@
 
 import { Codecs, CodecSerDesFns } from '@/src/lib/api/ser-des/codecs';
 import { SomeDoc } from '@/src/documents';
-import type { RawDataAPIResponse } from '@/src/lib';
+import { KeyTransformer, RawDataAPIResponse } from '@/src/lib';
 
 /**
  * @public
@@ -42,8 +42,7 @@ export interface BaseSerDesCtx<Fns extends CodecSerDesFns> {
   recurse<T>(obj?: T): readonly [1, T?],
   continue(): readonly [2],
   codecs: Codecs<Fns>,
-  customState: Record<string, any>,
-  camelSnakeCache?: Record<string, string>,
+  keyTransformer?: KeyTransformer,
 }
 
 export const DONE = 0 as const;

@@ -25,26 +25,17 @@ parallel('integration.documents.tables.delete-one', { truncate: 'colls:before' }
     await assert.rejects(() => table.deleteOne({ text: key, int: 0 }, { sort: { vector: [.1, .2, .3, .4, .5] } }), DataAPIResponseError);
   });
 
-  it('should delete one document with various filters', async (key1, key2) => {
+  it('should delete one document with given pk', async (key1, key2) => {
     await table.insertOne({ text: key1, int: 0 });
-    await table.deleteOne({ text: key1, int: { $gt: 0 } });
-    assert.deepStrictEqual((await table.findOne({ text: key1, int: 0 }))?.int, 0);
+    await table.deleteOne({ text: key1, int: 0 });
+    assert.deepStrictEqual(await table.findOne({ text: key1, int: 0 }), null);
 
     await table.insertOne({ text: key2, int: 1 });
-    await table.deleteOne({ text: key2, int: { $gt: 0 } });
+    await table.deleteOne({ text: key2, int: 1 });
     assert.deepStrictEqual(await table.findOne({ text: key2, int: 1 }), null);
   });
 
-  it('should delete many documents with $ne', async (key) => {
-    await table.insertMany(Array.from({ length: 10 }, (_, i) => ({ text: key, int: i })));
-    await table.deleteOne({ text: key, int: { $ne: 5 } });
-
-    for (let i = 0; i < 10; i++) {
-      if (i === 5) {
-        assert.deepStrictEqual(await table.findOne({ text: key, int: i }, { projection: { text: 1, int: 1 } }), { text: key, int: i });
-      } else {
-        assert.deepStrictEqual(await table.findOne({ text: key, int: i }), null);
-      }
-    }
+  it('should error when trying to delete many documents with $ne', async (key) => {
+    await assert.rejects(() => table.deleteOne({ text: key, int: { $ne: 5 } }));
   });
 });

@@ -34,12 +34,14 @@ export type {
 export type {
   Codecs,
   CodecSerDesFns,
-  CodecHolder,
   TypeCodec,
   ClassGuardCodec,
   NameCodec,
   PathCodec,
   CustomGuardCodec,
+  SomeCodec,
+  RawCodec,
+  CodecOpts,
 } from './ser-des/codecs';
 
 export type {
@@ -53,3 +55,8 @@ export type {
   WithTimeout,
   TimedOutCategories,
 } from './timeouts';
+
+export {
+  Camel2SnakeCase,
+  KeyTransformer,
+} from './ser-des/key-transformer';

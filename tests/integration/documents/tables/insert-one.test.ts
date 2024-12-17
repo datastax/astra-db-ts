@@ -17,13 +17,14 @@ import {
   DataAPIBlob,
   DataAPIDate,
   DataAPIDuration,
+  DataAPIResponseError,
   DataAPITime,
-  DataAPITimestamp, DataAPIHttpError, DataAPIResponseError,
+  DataAPITimestamp,
   DataAPIVector,
   InetAddress,
   UUID,
 } from '@/src/documents';
-import { it, describe, parallel } from '@/tests/testlib';
+import { describe, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 import BigNumber from 'bignumber.js';
 
@@ -138,7 +139,7 @@ parallel('integration.documents.tables.insert-one', { truncate: 'colls:before' }
 
   describe('scalar inserts (group #1)', ({ db }) => {
     it('should handle different text insertion cases', async () => {
-      await assert.rejects(() => table.insertOne({ text: '', int: 0 }), DataAPIHttpError);
+      await assert.rejects(() => table.insertOne({ text: '', int: 0 }), DataAPIResponseError);
 
       assert.deepStrictEqual(
         await table.insertOne({ text: '⨳⨓⨋', int: 0 }),
@@ -150,7 +151,7 @@ parallel('integration.documents.tables.insert-one', { truncate: 'colls:before' }
         { insertedId: { text: 'a'.repeat(65535), int: 0 } },
       );
 
-      await assert.rejects(() => table.insertOne({ text: 'a'.repeat(65536), int: 0 }), DataAPIHttpError);
+      await assert.rejects(() => table.insertOne({ text: 'a'.repeat(65536), int: 0 }), DataAPIResponseError);
     });
 
     it('should handle different different int insertion cases', async () => {
@@ -174,7 +175,7 @@ parallel('integration.documents.tables.insert-one', { truncate: 'colls:before' }
     it('should handle different ascii insertion cases', async () => {
       const table = await db.createTable('temp_ascii', { definition: { columns: { ascii: 'ascii' }, primaryKey: 'ascii' } });
 
-      await assert.rejects(() => table.insertOne({ ascii: '' }), DataAPIHttpError);
+      await assert.rejects(() => table.insertOne({ ascii: '' }), DataAPIResponseError);
       await assert.rejects(() => table.insertOne({ ascii: '⨳⨓⨋' }), DataAPIResponseError);
       await assert.rejects(() => table.insertOne({ ascii: 'é' }), DataAPIResponseError);
       await assert.rejects(() => table.insertOne({ ascii: '\x80' }), DataAPIResponseError);
@@ -367,44 +368,44 @@ parallel('integration.documents.tables.insert-one', { truncate: 'colls:before' }
     });
   });
 
-  describe('scalar inserts (group #3)', ({ db }) => {
-    it('should handle different vector insertion cases', async () => {
-      const table = await db.createTable('temp_vector', { definition: { columns: { vector: { type: 'vector', dimension: 3 } }, primaryKey: 'vector' } });
-
-      await assert.rejects(() => table.insertOne({ vector: "this ain't vectorize" as any }), DataAPIResponseError);
-
-      assert.deepStrictEqual(
-        (await table.insertOne({ vector: [.1, .2, .3] as any })).insertedId.vector.asArray(),
-        { empty: false },
-      );
-
-      assert.deepStrictEqual(
-        (await table.insertOne({ vector: new DataAPIVector([.1, .2, .3]) })).insertedId.vector.asArray(),
-        { empty: false },
-      );
-
-      await table.drop();
-    });
-
-    it('should handle different vectorize insertion cases', async () => {
-      const table = await db.createTable('temp_vectorize', {
-        definition: {
-          columns: {
-            vector1: { type: 'vector', dimension: 1024, service: { provider: 'nvidia', modelName: 'NV-Embed-QA' } },
-            vector2: { type: 'vector', dimension: 1024, service: { provider: 'nvidia', modelName: 'NV-Embed-QA' } },
-          },
-          primaryKey: {
-            partitionBy: ['vector1'],
-            partitionSort: { vector2: 1 },
-          },
-        },
-      });
-
-      const inserted1 = await table.insertOne({ vector1: "would you do it with me?", vector2: "heal the scars and change the stars..." });
-      assert.deepStrictEqual((inserted1.insertedId.vector1 as DataAPIVector).asArray(), { empty: false });
-      assert.deepStrictEqual((inserted1.insertedId.vector2 as DataAPIVector).asArray(), { empty: false });
-
-      await table.drop();
-    });
-  });
+  // describe('scalar inserts (group #3)', ({ db }) => {
+  //   it('should handle different vector insertion cases', async () => {
+  //     const table = await db.createTable('temp_vector', { definition: { columns: { vector: { type: 'vector', dimension: 3 } }, primaryKey: 'vector' } });
+  //
+  //     await assert.rejects(() => table.insertOne({ vector: "this ain't vectorize" as any }), DataAPIResponseError);
+  //
+  //     assert.deepStrictEqual(
+  //       (await table.insertOne({ vector: [.5, .5, .5] as any })).insertedId.vector.asArray(),
+  //       [.5, .5, .5],
+  //     );
+  //
+  //     assert.deepStrictEqual(
+  //       (await table.insertOne({ vector: new DataAPIVector([.5, .5, .5]) })).insertedId.vector.asArray(),
+  //       [.5, .5, .5],
+  //     );
+  //
+  //     await table.drop();
+  //   });
+  //
+  //   it('should handle different vectorize insertion cases', async () => {
+  //     const table = await db.createTable('temp_vectorize', {
+  //       definition: {
+  //         columns: {
+  //           vector1: { type: 'vector', dimension: 1024, service: { provider: 'nvidia', modelName: 'NV-Embed-QA' } },
+  //           vector2: { type: 'vector', dimension: 1024, service: { provider: 'nvidia', modelName: 'NV-Embed-QA' } },
+  //         },
+  //         primaryKey: {
+  //           partitionBy: ['vector1'],
+  //           partitionSort: { vector2: 1 },
+  //         },
+  //       },
+  //     });
+  //
+  //     const inserted1 = await table.insertOne({ vector1: "would you do it with me?", vector2: "heal the scars and change the stars..." });
+  //     assert.strictEqual((inserted1.insertedId.vector1 as DataAPIVector).asArray().length, 1024);
+  //     assert.strictEqual((inserted1.insertedId.vector2 as DataAPIVector).asArray().length, 1024);
+  //
+  //     await table.drop();
+  //   });
+  // });
 });

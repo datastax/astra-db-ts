@@ -68,7 +68,7 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
   /**
    * Implementation of `$DeserializeForTable` for {@link TableCodec}
    */
-  public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
+  public static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx) {
     return ctx.done(new DataAPIVector(value, false));
   }
 
