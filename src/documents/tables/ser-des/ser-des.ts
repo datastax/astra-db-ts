@@ -78,6 +78,7 @@ export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableD
     } else {
       ctx.tableSchema = status.projectionSchema;
     }
+
     if (ctx.keyTransformer) {
       ctx.tableSchema = Object.fromEntries(Object.entries(ctx.tableSchema).map(([key, value]) => {
         return [ctx.keyTransformer!.deserializeKey(key, ctx), value];
