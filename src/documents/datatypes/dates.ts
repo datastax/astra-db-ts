@@ -69,7 +69,7 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
   /**
    * Implementation of `$DeserializeForTable` for {@link TableCodec}
    */
-  public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
+  public static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx) {
     return ctx.done(new DataAPIDate(value));
   }
 
@@ -182,7 +182,7 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
   /**
    * Implementation of `$DeserializeForTable` for {@link TableCodec}
    */
-  public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
+  public static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx) {
     return ctx.done(new DataAPIDuration(value));
   }
 
@@ -264,7 +264,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
   /**
    * Implementation of `$DeserializeForTable` for {@link TableCodec}
    */
-  public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
+  public static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx) {
     return ctx.done(new DataAPITime(value));
   }
 
@@ -425,7 +425,7 @@ export class DataAPITimestamp implements CollCodec<typeof DataAPITimestamp>, Tab
   /**
    * Implementation of `$DeserializeForTable` for {@link TableCodec}
    */
-  public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
+  public static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx) {
     return ctx.done(new DataAPITimestamp(value));
   }
 

@@ -19,7 +19,6 @@ import { BaseSerCtx } from '@/src/lib/api/ser-des/ctx';
  * @public
  */
 export type NameCodec<Fns extends CodecSerDesFns> = { serialize?: Fns['serialize'], deserialize: Fns['deserialize'] } & {
-  codecType: 'name',
   name: string,
 }
 
@@ -27,7 +26,6 @@ export type NameCodec<Fns extends CodecSerDesFns> = { serialize?: Fns['serialize
  * @public
  */
 export type PathCodec<Fns extends CodecSerDesFns> = { serialize?: Fns['serialize'], deserialize: Fns['deserialize'] } & {
-  codecType: 'path',
   path: string[],
 }
 
@@ -35,7 +33,6 @@ export type PathCodec<Fns extends CodecSerDesFns> = { serialize?: Fns['serialize
  * @public
  */
 export type TypeCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'deserialize'> & {
-  codecType: 'type',
   type: string,
 }
 
@@ -43,7 +40,6 @@ export type TypeCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'deserialize'> & {
  * @public
  */
 export type CustomGuardCodec<Fns extends CodecSerDesFns> = Fns & {
-  codecType: 'type',
   type: string,
   serializeGuard: (value: unknown, ctx: BaseSerCtx<Fns>) => boolean,
 }
@@ -52,7 +48,6 @@ export type CustomGuardCodec<Fns extends CodecSerDesFns> = Fns & {
  * @public
  */
 export type ClassGuardCodec<Fns extends CodecSerDesFns> = Fns & {
-  codecType: 'type',
   type: string,
   serializeClass: new (...args: any[]) => any,
 }
@@ -76,31 +71,48 @@ export type CodecSerDesFns = Record<'serialize' | 'deserialize', (...args: any[]
 /**
  * @public
  */
-export interface CodecHolder<Fns extends CodecSerDesFns> {
-  get:
-    | NameCodec<Fns>
-    | PathCodec<Fns>
-    | TypeCodec<Fns>
-    | CustomGuardCodec<Fns>
-    | ClassGuardCodec<Fns>
-}
+export type SomeCodec<Fns extends CodecSerDesFns> =
+  | NameCodec<Fns>
+  | PathCodec<Fns>
+  | TypeCodec<Fns>
+  | CustomGuardCodec<Fns>
+  | ClassGuardCodec<Fns>;
+
+/**
+ * @public
+ */
+export type CodecOpts<Fns extends CodecSerDesFns, SerCtx, DesCtx> =
+  | Fns & { serializeGuard: (value: unknown, ctx: SerCtx) => boolean, deserializeGuard?: (value: unknown, ctx: DesCtx) => boolean }
+  | Fns & { serializeClass: new (...args: any[]) => any,              deserializeGuard?: (value: unknown, ctx: DesCtx) => boolean }
+  | Pick<Fns, 'deserialize'>;
+
+/**
+ * @public
+ */
+export type RawCodec<Fns extends CodecSerDesFns> =
+  & ({ path: string[] } | { name: string } | { type: string })
+  & CodecOpts<Fns, unknown, unknown>;
 
 /**
  * @internal
  */
-export const initCodecs = <Fns extends CodecSerDesFns>(chs: CodecHolder<Fns>[]): Codecs<Fns> => {
+export const initCodecs = <Fns extends CodecSerDesFns>(rawCodecs: RawCodec<Fns>[]): Codecs<Fns> => {
   const codecs: Codecs<Fns> = { name: {}, path: [], type: {}, classGuard: [], customGuard: [] };
-  const rawCodecs = chs.map(ch => ch.get);
 
-  for (const codec of rawCodecs) {
-    switch (codec.codecType) {
-      case 'name':
+  for (let codec of rawCodecs) {
+    codec = prependAnyDeserializeGuard(codec);
+    codec = prependAnySerializeGuard(codec);
+
+    switch (true) {
+      case 'name' in codec: {
         codecs.name[codec.name] = codec;
         break;
-      case 'path':
+      }
+      case 'path' in codec: {
         codecs.path.push(codec);
         break;
-      case 'type':
+      }
+      case 'type' in codec: {
         codecs.type[codec.type] = codec;
 
         if ('serializeClass' in codec) {
@@ -108,10 +120,54 @@ export const initCodecs = <Fns extends CodecSerDesFns>(chs: CodecHolder<Fns>[]):
         } else if ('serializeGuard' in codec) {
           codecs.customGuard.push(codec);
         }
-
         break;
+      }
     }
   }
 
   return codecs;
+};
+
+const prependAnyDeserializeGuard = <Fns extends CodecSerDesFns>(codec: RawCodec<Fns>): RawCodec<Fns> => {
+  if (!('deserializeGuard' in codec && codec.deserializeGuard)) {
+    return codec;
+  }
+
+  const guard = codec.deserializeGuard;
+
+  return {
+    ...codec,
+    deserialize: (key, value, ctx) => {
+      if (!guard(value, ctx)) {
+        return ctx.continue();
+      }
+      return codec.deserialize(key, value, ctx);
+    },
+  };
+};
+
+const prependAnySerializeGuard = <Fns extends CodecSerDesFns>(codec: RawCodec<Fns>): RawCodec<Fns> => {
+  if ('type' in codec || !('serializeGuard' in codec || 'serializeClass' in codec)) {
+    return codec;
+  }
+
+  const serializeClass = ('serializeClass' in codec)
+    ? codec.serializeClass
+    : undefined;
+
+  const guard = ('serializeClass' in codec)
+    ? (value: unknown) => value instanceof serializeClass!
+    : codec.serializeGuard;
+
+  const _codec = codec;
+
+  return {
+    ...codec,
+    serialize: (key: string, value: any, ctx: BaseSerCtx<never>) => {
+      if (!guard(value, ctx)) {
+        return ctx.continue();
+      }
+      return _codec.serialize(key, value, ctx);
+    },
+  };
 };
