@@ -79,13 +79,6 @@ Proper big-number support is still under works in `astra-db-ts`, but a rough ver
 
 You **must** set `serdes.enableBigNumbers: true` somewhere along the options hierarchy for collections to be able to work with `bigint`s & `BigNumber`s.
 
-Under the current rough support, > **NOTE**
-> Enabling BigNumbers support for a collection will force a slower, bignum-friendly JSON library to be used for all documents in that collection. The difference should be negligible for most use-cases.
-
-Proper big-number support is still under works in `astra-db-ts`, but a rough version is out currently.
-
-You **must** set `serdes.enableBigNumbers: true` somewhere along the options hierarchy for collections to be able to work with `bigint`s & `BigNumber`s.
-
 Under the current rough support, you may pass any of `number`, `bigint`, or `BigNumber` to the database (in any field), and it'll be stored as a `decimal` in the database.
 
 When reading back, the `decimal` will be returned as a `number` if it's within the safe `number` range, and as a `string` otherwise; currently, it's on the user to handle the conversion to `bigint` or `BigNumber` as desired.
@@ -107,7 +100,7 @@ await collection.insertOne({
 
 const doc = await collection.findOne();
 
-console.log(doc.bigint1.toString());  // Will be returned as a `string`
+console.log(doc.bigint1.toString()); // Will be returned as a `string`
 console.log(doc.bigint2.toString()); // Will just be a normal `number` as it's within the safe `number` range
 console.log(doc.decimal.toString()); // Will be returned as a `string`
 ```
@@ -123,13 +116,13 @@ const collection = db.collection('my_coll', {
 });
 
 await collection.insertOne({
-  bigint:  1234567890123456789012345672321312312890n,
+  bigint1: 1234567890123456789012345672321312312890n,
   bigint2: 10n,
   decmial: new BigNumber('12345678901234567890123456.72321312312890'),
 });
 
 const doc = await collection.findOne();
-console.log(doc.bigint.toString());  // Will be returned as a `string`
+console.log(doc.bigint1.toString()); // Will be returned as a `string`
 console.log(doc.bigint2.toString()); // Will just be a normal `number` as it's within the safe `number` range
 console.log(doc.decimal.toString()); // Will be returned as a `string`
 ```
@@ -290,7 +283,7 @@ await table.insertOne({
 });
 
 const row = await table.findOne();
-console.log(row.bigint1.toString());  // Will be returned as a `bigint`
+console.log(row.bigint1.toString()); // Will be returned as a `bigint`
 console.log(row.bigint2.toString()); // Will be returned as a `bigint`
 console.log(row.decimal.toString()); // Will be returned as a `BigNumber`
 ```
