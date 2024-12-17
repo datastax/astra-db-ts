@@ -268,25 +268,23 @@ export interface BaseSerDesConfig<Fns extends CodecSerDesFns, SerCtx extends Bas
     // (undocumented)
     deserialize?: OneOrMany<SerDesFn<DesCtx>>;
     // (undocumented)
+    keyTransformer?: KeyTransformer;
+    // (undocumented)
     mutateInPlace?: boolean;
     // (undocumented)
     serialize?: OneOrMany<SerDesFn<SerCtx>>;
-    // (undocumented)
-    snakeCaseInterop?: boolean;
 }
 
 // @public (undocumented)
 export interface BaseSerDesCtx<Fns extends CodecSerDesFns> {
     // (undocumented)
-    camelSnakeCache?: Record<string, string>;
-    // (undocumented)
     codecs: Codecs<Fns>;
     // (undocumented)
     continue(): readonly [2];
     // (undocumented)
-    customState: Record<string, any>;
-    // (undocumented)
     done<T>(obj?: T): readonly [0, T?];
+    // (undocumented)
+    keyTransformer?: KeyTransformer;
     // (undocumented)
     path: string[];
     // (undocumented)
@@ -362,9 +360,7 @@ export class CollCodecs {
     // (undocumented)
     static forType(type: string, optsOrClass: CodecOpts<CollCodecSerDesFns, CollSerCtx, CollDesCtx> | CollCodecClass): RawCodec<CollCodecSerDesFns>;
     // (undocumented)
-    static Overrides: {
-        USE_DATA_API_TIMESTAMPS_FOR_DATES: RawCodec<CollCodecSerDesFns>;
-    };
+    static USE_DATA_API_TIMESTAMPS_FOR_DATES: RawCodec<CollCodecSerDesFns>;
 }
 
 // @public (undocumented)
@@ -1537,6 +1533,14 @@ export type KeyspaceReplicationOptions = {
     [datacenter: string]: number | 'NetworkTopologyStrategy';
 };
 
+// @public (undocumented)
+export abstract class KeyTransformer {
+    // (undocumented)
+    abstract deserializedKey(key: string, ctx: BaseDesCtx<CodecSerDesFns>): string;
+    // (undocumented)
+    abstract serializedKey(key: string, ctx: BaseSerCtx<CodecSerDesFns>): string;
+}
+
 // @public
 export interface ListAstraDatabasesOptions extends WithTimeout<'databaseAdminTimeoutMs'> {
     include?: AstraDbStatusFilter;
@@ -1736,6 +1740,14 @@ export interface SetCreateTableColumnDefinition {
 
 // @public (undocumented)
 export type ShortCreateTablePrimaryKeyDefinition = string;
+
+// @public (undocumented)
+export class SnakeCaseInterop extends KeyTransformer {
+    // (undocumented)
+    deserializedKey(snake: string): string;
+    // (undocumented)
+    serializedKey(camel: string): string;
+}
 
 // @public (undocumented)
 export type SomeCodec<Fns extends CodecSerDesFns> = NameCodec<Fns> | PathCodec<Fns> | TypeCodec<Fns> | CustomGuardCodec<Fns> | ClassGuardCodec<Fns>;

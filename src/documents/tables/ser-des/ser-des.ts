@@ -23,7 +23,7 @@ import { TableCodecs, TableCodecSerDesFns } from '@/src/documents/tables/ser-des
 import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import BigNumber from 'bignumber.js';
-import { snakeToCamelCase, stringArraysEqual } from '@/src/lib/utils';
+import { stringArraysEqual } from '@/src/lib/utils';
 import { RawCodec } from '@/src/lib/api/ser-des/codecs';
 
 /**
@@ -79,9 +79,9 @@ export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableD
       ctx.tableSchema = status.projectionSchema;
     }
 
-    if (ctx.camelSnakeCache) {
+    if (ctx.keyTransformer) {
       ctx.tableSchema = Object.fromEntries(Object.entries(ctx.tableSchema).map(([key, value]) => {
-        return [snakeToCamelCase(key, ctx.camelSnakeCache!), value];
+        return [ctx.keyTransformer!.deserializeKey(key, ctx!), value];
       }));
     }
 

@@ -62,9 +62,7 @@ export class CollCodecs {
     $objectId: CollCodecs.forType('$objectId', ObjectId),
   };
 
-  public static Overrides = {
-    USE_DATA_API_TIMESTAMPS_FOR_DATES: CollCodecs.forType('$date', DataAPITimestamp),
-  };
+  public static USE_DATA_API_TIMESTAMPS_FOR_DATES = CollCodecs.forType('$date', DataAPITimestamp);
 
   public static forPath(path: string[], optsOrClass: CodecOpts<CollCodecSerDesFns, CollSerCtx, CollDesCtx> | CollCodecClass): RawCodec<CollCodecSerDesFns> {
     return {

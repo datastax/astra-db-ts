@@ -2,6 +2,7 @@ import {
   $DeserializeForTable,
   $SerializeForTable,
   Db,
+  SnakeCaseInterop,
   SomeDoc,
   TableCodec,
   TableCodecs,
@@ -28,8 +29,8 @@ export async function TableCustomDatatypesExample(name: string, db: Db) {
       primaryKey: 'user_id',
     },
     serdes: {
-      mutateInPlace: true,    // Optimization for serialization if you don't need to use the doc again once you pass it in
-      snakeCaseInterop: true, // Convert camelCase to/from snake_case for column names
+      mutateInPlace: true, // Optimization for serialization if you don't need to use the doc again once you pass it in
+      keyTransformer: new SnakeCaseInterop(), // Convert camelCase to/from snake_case for column names
       codecs: [
         DateCodec,
         UserIDCodec,

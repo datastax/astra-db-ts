@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import { SomeDoc } from '@/src/documents';
-import type { nullish, OneOrMany, RawDataAPIResponse } from '@/src/lib';
-import { camelToSnakeCase, snakeToCamelCase, toArray } from '@/src/lib/utils';
+import { KeyTransformer, nullish, OneOrMany, RawDataAPIResponse } from '@/src/lib';
+import { toArray } from '@/src/lib/utils';
 import { Codecs, CodecSerDesFns, initCodecs, RawCodec } from '@/src/lib/api/ser-des/codecs';
 import {
   BaseDesCtx,
@@ -38,7 +38,7 @@ export interface BaseSerDesConfig<Fns extends CodecSerDesFns, SerCtx extends Bas
   serialize?: OneOrMany<SerDesFn<SerCtx>>,
   deserialize?: OneOrMany<SerDesFn<DesCtx>>,
   mutateInPlace?: boolean,
-  snakeCaseInterop?: boolean,
+  keyTransformer?: KeyTransformer,
   codecs?: RawCodec<Fns>[],
 }
 
@@ -47,15 +47,9 @@ export interface BaseSerDesConfig<Fns extends CodecSerDesFns, SerCtx extends Bas
  */
 export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends BaseSerCtx<Fns> = any, DesCtx extends BaseDesCtx<Fns> = any> {
   protected readonly _codecs: Codecs<Fns>;
-  protected readonly _customState: Record<string, any> = {};
-  protected readonly _camelSnakeCache?: Record<string, any>;
 
   protected constructor(protected readonly _cfg: BaseSerDesConfig<Fns, SerCtx, DesCtx>) {
     this._codecs = initCodecs(_cfg.codecs ?? []);
-
-    if (this._cfg.snakeCaseInterop) {
-      this._camelSnakeCache = {};
-    }
   }
 
   public serialize<S extends SomeDoc | nullish>(obj: S): [S, boolean] {
@@ -83,7 +77,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
       serialize: [...toArray(cfg?.serialize ?? []), ...toArray(acc.serialize ?? [])],
       deserialize: [...toArray(cfg?.deserialize ?? []), ...toArray(acc.deserialize ?? [])],
       mutateInPlace: !!(cfg?.mutateInPlace ?? acc.mutateInPlace),
-      snakeCaseInterop: !!(cfg?.snakeCaseInterop ?? acc.snakeCaseInterop),
+      keyTransformer: cfg?.keyTransformer ?? acc.keyTransformer,
       codecs: [...acc.codecs ?? [], ...cfg?.codecs ?? []],
     }), {});
   }
@@ -94,8 +88,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
       recurse: ctxRecurse,
       continue: ctxContinue,
       codecs: this._codecs,
-      customState: this._customState,
-      camelSnakeCache: this._camelSnakeCache,
+      keyTransformer: this._cfg.keyTransformer,
       rootObj: obj,
       path: [],
       ...ctx,
@@ -123,14 +116,13 @@ function serializeRecordHelper<Ctx extends BaseSerCtx<any>>(obj: SomeDoc, ctx: C
 
   for (let keys = Object.keys(obj), i = keys.length; i--;) {
     let key = keys[i];
-
     path[path.length - 1] = key;
 
     serializeRecord(key, obj, ctx, fns);
 
-    if (ctx.camelSnakeCache && key) {
+    if (ctx.keyTransformer) {
       const oldKey = key;
-      key = camelToSnakeCase(key, ctx.camelSnakeCache);
+      key = ctx.keyTransformer.serializeKey(key, ctx);
 
       if (key !== oldKey) {
         obj[key] = obj[oldKey];
@@ -169,12 +161,11 @@ function deserializeRecordHelper<Ctx extends BaseDesCtx<any>>(keys: string[], ob
 
   for (let i = keys.length; i--;) {
     let key = keys[i];
-
     path[path.length - 1] = key;
 
-    if (ctx.camelSnakeCache && key) {
+    if (ctx.keyTransformer) {
       const oldKey = key;
-      key = snakeToCamelCase(key, ctx.camelSnakeCache);
+      key = ctx.keyTransformer.deserializeKey(key, ctx);
 
       if (key !== oldKey) {
         obj[key] = obj[oldKey];
