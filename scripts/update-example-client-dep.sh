@@ -37,6 +37,7 @@ local)
     cd "$cwd/$dir" || exit 1
     npm i "${tarball_dir}"/datastax-astra-db-ts-*.tgz
     npm i @datastax/astra-db-ts
+    cd "$cwd" || exit 1
   done
 
   # Cleanup (tarball no longer required)

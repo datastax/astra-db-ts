@@ -29,7 +29,7 @@ export class Camel2SnakeCase extends KeyTransformer {
   private _cache: Record<string, string> = {};
 
   public override serializeKey(camel: string, ctx: BaseSerCtx<CodecSerDesFns>): string {
-    if (ctx.path.length !== 1) {
+    if (ctx.path.length > 1 || !camel) {
       return camel;
     }
     if (this._cache[camel]) {
@@ -39,7 +39,7 @@ export class Camel2SnakeCase extends KeyTransformer {
   }
 
   public override deserializeKey(snake: string, ctx: BaseDesCtx<CodecSerDesFns>): string {
-    if (ctx.path.length !== 1) {
+    if (ctx.path.length > 1 || !snake) {
       return snake;
     }
     if (this._cache[snake]) {
