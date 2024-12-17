@@ -66,7 +66,7 @@ await collection.insertOne({
   date: new Date(),
   uuid: uuid(4),
   oid: oid(),
-  vector: vector([.1, .2, .3]),
+  $vector: vector([.1, .2, .3]),
 });
 ```
 
