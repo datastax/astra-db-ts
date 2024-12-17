@@ -430,10 +430,10 @@ await table.insertOne({
 ```
 
 Using `DataAPIVector` for insertion isn't strictly necessary; neither `astra-db-ts`, nor the server, will complain if the vector is inserted in any of the following ways:
-- `$vector: [.1, .2, .3]`
-- `$vector: { $binary: '<b64_str>' }`
-- `$vector: new DataAPIVector([.1, .2, .3])`
-- `$vector: vector([.1, .2, .3])`
+- `vector: [.1, .2, .3]`
+- `vector: { $binary: '<b64_str>' }`
+- `vector: new DataAPIVector([.1, .2, .3])`
+- `vector: vector([.1, .2, .3])`
 
 However, keep in mind that when `find`-ing, the `$vector` will _always_ be returned as a `DataAPIVector`, to smooth the difference between the underlying representations.
 
