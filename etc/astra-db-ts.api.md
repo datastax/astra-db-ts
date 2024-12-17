@@ -300,6 +300,14 @@ export const blob: (blob: DataAPIBlobLike) => DataAPIBlob;
 export type Caller = readonly [name: string, version?: string];
 
 // @public (undocumented)
+export class Camel2SnakeCase extends KeyTransformer {
+    // (undocumented)
+    deserializeKey(snake: string, ctx: BaseDesCtx<CodecSerDesFns>): string;
+    // (undocumented)
+    serializeKey(camel: string, ctx: BaseSerCtx<CodecSerDesFns>): string;
+}
+
+// @public (undocumented)
 export type ClassGuardCodec<Fns extends CodecSerDesFns> = Fns & {
     type: string;
     serializeClass: new (...args: any[]) => any;
@@ -1536,9 +1544,9 @@ export type KeyspaceReplicationOptions = {
 // @public (undocumented)
 export abstract class KeyTransformer {
     // (undocumented)
-    abstract deserializedKey(key: string, ctx: BaseDesCtx<CodecSerDesFns>): string;
+    abstract deserializeKey(key: string, ctx: BaseDesCtx<CodecSerDesFns>): string;
     // (undocumented)
-    abstract serializedKey(key: string, ctx: BaseSerCtx<CodecSerDesFns>): string;
+    abstract serializeKey(key: string, ctx: BaseSerCtx<CodecSerDesFns>): string;
 }
 
 // @public
@@ -1740,14 +1748,6 @@ export interface SetCreateTableColumnDefinition {
 
 // @public (undocumented)
 export type ShortCreateTablePrimaryKeyDefinition = string;
-
-// @public (undocumented)
-export class SnakeCaseInterop extends KeyTransformer {
-    // (undocumented)
-    deserializedKey(snake: string): string;
-    // (undocumented)
-    serializedKey(camel: string): string;
-}
 
 // @public (undocumented)
 export type SomeCodec<Fns extends CodecSerDesFns> = NameCodec<Fns> | PathCodec<Fns> | TypeCodec<Fns> | CustomGuardCodec<Fns> | ClassGuardCodec<Fns>;
