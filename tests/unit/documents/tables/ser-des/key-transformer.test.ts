@@ -74,14 +74,42 @@ describe('unit.documents.table.ser-des.key-transformer', () => {
       }, {
         status: {
           projectionSchema: {
-            camelCaseName: { type: 'text' },
-            CamelCaseName: { type: 'list', valueType: 'text' },
-            _CamelCaseName: { type: 'map', keyType: 'text', valueType: 'text' },
-            camelCaseName_: { type: 'varint' },
+            camel_case_name: { type: 'text' },
+            __camel_case_name: { type: 'map', keyType: 'text', valueType: 'text' },
+            _camel_case_name: { type: 'list', valueType: 'text' },
+            camel_case_name_: { type: 'varint' },
             car: { type: 'set', valueType: 'text' },
           },
         },
       });
+
+      assert.deepStrictEqual(obj, {
+        camelCaseName: 'dontChangeMe',
+        CamelCaseName: ['dontChangeMe'],
+        _CamelCaseName: new Map([['dontChangeMe', 'dontChangeMe']]),
+        camelCaseName_: 1n,
+        car: new Set(['dontChangeMe']),
+      });
+    });
+
+    it('should deserialize top-level keys to camelCase for tables for primary keys', () => {
+      const obj = tableSerdes.deserialize([
+        'dontChangeMe',
+        { dontChangeMe: 'dontChangeMe' },
+        ['dontChangeMe'],
+        1n,
+        ['dontChangeMe'],
+      ], {
+        status: {
+          primaryKeySchema: {
+            camel_case_name: { type: 'text' },
+            __camel_case_name: { type: 'map', keyType: 'text', valueType: 'text' },
+            _camel_case_name: { type: 'list', valueType: 'text' },
+            camel_case_name_: { type: 'varint' },
+            car: { type: 'set', valueType: 'text' },
+          },
+        },
+      }, true);
 
       assert.deepStrictEqual(obj, {
         camelCaseName: 'dontChangeMe',
