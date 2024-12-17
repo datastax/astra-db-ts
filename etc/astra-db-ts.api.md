@@ -138,7 +138,7 @@ export class AstraAdmin {
     dbAdmin(endpoint: string, options?: DbOptions): AstraDbAdmin;
     dbAdmin(id: string, region: string, options?: DbOptions): AstraDbAdmin;
     dbInfo(id: string, options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbAdminInfo>;
-    dropDatabase(db: Db | string, options?: DropAstraDatabaseOptions): Promise<void>;
+    dropDatabase(db: Db | string, options?: AstraDropDatabaseOptions): Promise<void>;
     // Warning: (ae-forgotten-export) The symbol "DevOpsAPIHttpClient" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
@@ -214,7 +214,10 @@ export type AstraDbStatus = 'ACTIVE' | 'ERROR' | 'DECOMMISSIONING' | 'DEGRADED' 
 // @public
 export type AstraDbStatusFilter = AstraDbStatus | 'ALL' | 'NONTERMINATED';
 
-// @public (undocumented)
+// @public
+export type AstraDropDatabaseOptions = AstraAdminBlockingOptions & WithTimeout<'databaseAdminTimeoutMs'>;
+
+// @public
 export type AstraDropKeyspaceOptions = AstraAdminBlockingOptions & WithTimeout<'keyspaceAdminTimeoutMs'>;
 
 // @public
@@ -729,7 +732,7 @@ export interface CreateCollectionOptions<Schema extends SomeDoc> extends Collect
     timeout?: number | Pick<Partial<TimeoutDescriptor>, 'collectionAdminTimeoutMs'>;
 }
 
-// @public (undocumented)
+// @public
 export type CreateTableColumnDefinitions = Record<string, LooseCreateTableColumnDefinition | StrictCreateTableColumnDefinition>;
 
 // @public
@@ -752,8 +755,8 @@ export interface CreateTableOptions<Def extends CreateTableDefinition = CreateTa
     ifNotExists?: boolean;
 }
 
-// @public (undocumented)
-export type CreateTablePrimaryKeyDefinition = ShortCreateTablePrimaryKeyDefinition | FullCreateTablePrimaryKeyDefinition;
+// @public
+export type CreateTablePrimaryKeyDefinition = string | FullCreateTablePrimaryKeyDefinition;
 
 // @public
 export interface CreateTableVectorIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
@@ -939,7 +942,7 @@ export type DataAPILoggingConfig = DataAPILoggingEvent | readonly (DataAPILoggin
 
 // Warning: (ae-incompatible-release-tags) The symbol "DataAPILoggingDefaults" is marked as @public, but its signature references "NormalizedLoggingConfig" which is marked as @internal
 //
-// @public (undocumented)
+// @public
 export const DataAPILoggingDefaults: NormalizedLoggingConfig[];
 
 // @public
@@ -1162,9 +1165,6 @@ export class DevOpsUnexpectedStateError extends DevOpsAPIError {
 }
 
 // @public
-export type DropAstraDatabaseOptions = AstraAdminBlockingOptions & WithTimeout<'databaseAdminTimeoutMs'>;
-
-// @public
 export interface DropCollectionOptions extends WithTimeout<'collectionAdminTimeoutMs'>, WithKeyspace {
 }
 
@@ -1351,7 +1351,7 @@ export type FoundRow<Doc> = {
     [K in keyof Doc]-?: DataAPIVector extends Doc[K] ? Exclude<Doc[K], string> : Doc[K];
 };
 
-// @public (undocumented)
+// @public
 export interface FullCreateTablePrimaryKeyDefinition {
     // (undocumented)
     readonly partitionBy: readonly string[];
@@ -1562,7 +1562,7 @@ export interface ListCollectionsOptions extends WithTimeout<'collectionAdminTime
     nameOnly?: boolean;
 }
 
-// @public (undocumented)
+// @public
 export interface ListCreateTableColumnDefinition {
     // (undocumented)
     type: 'list';
@@ -1612,13 +1612,13 @@ export interface ListTableUnsupportedColumnDefinition {
     type: 'UNSUPPORTED';
 }
 
-// @public (undocumented)
+// @public
 export type LooseCreateTableColumnDefinition = TableScalarType | string;
 
-// @public (undocumented)
+// @public
 export interface MapCreateTableColumnDefinition {
     // (undocumented)
-    keyType: TableScalarType;
+    keyType: 'text' | 'ascii';
     // (undocumented)
     type: 'map';
     // (undocumented)
@@ -1729,7 +1729,7 @@ export interface RunCommandOptions extends WithTimeout<'generalMethodTimeoutMs'>
     table?: string;
 }
 
-// @public (undocumented)
+// @public
 export interface ScalarCreateTableColumnDefinition {
     // (undocumented)
     type: TableScalarType;
@@ -1738,16 +1738,13 @@ export interface ScalarCreateTableColumnDefinition {
 // @public (undocumented)
 export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?, string?] | 'Return ctx.done(val?), ctx.recurse(val?), ctx.continue(), or void';
 
-// @public (undocumented)
+// @public
 export interface SetCreateTableColumnDefinition {
     // (undocumented)
     type: 'set';
     // (undocumented)
     valueType: TableScalarType;
 }
-
-// @public (undocumented)
-export type ShortCreateTablePrimaryKeyDefinition = string;
 
 // @public (undocumented)
 export type SomeCodec<Fns extends CodecSerDesFns> = NameCodec<Fns> | PathCodec<Fns> | TypeCodec<Fns> | CustomGuardCodec<Fns> | ClassGuardCodec<Fns>;
@@ -1773,7 +1770,7 @@ export class StaticTokenProvider extends TokenProvider {
     getToken(): string;
 }
 
-// @public (undocumented)
+// @public
 export type StrictCreateTableColumnDefinition = ScalarCreateTableColumnDefinition | MapCreateTableColumnDefinition | ListCreateTableColumnDefinition | SetCreateTableColumnDefinition | VectorCreateTableColumnDefinition;
 
 // @public
@@ -1955,7 +1952,7 @@ export interface TableOptions extends WithKeyspace {
     timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
 
-// @public (undocumented)
+// @public
 export type TableScalarType = 'ascii' | 'bigint' | 'blob' | 'boolean' | 'date' | 'decimal' | 'double' | 'duration' | 'float' | 'int' | 'inet' | 'smallint' | 'text' | 'time' | 'timestamp' | 'tinyint' | 'uuid' | 'varint';
 
 // @public (undocumented)
@@ -2077,10 +2074,10 @@ export const uuid: (uuid: string | 1 | 4 | 6 | 7) => UUID;
 // @public
 export const vector: (v: DataAPIVectorLike) => DataAPIVector;
 
-// @public (undocumented)
+// @public
 export interface VectorCreateTableColumnDefinition {
     // (undocumented)
-    dimension?: number;
+    dimension: number;
     // (undocumented)
     service?: VectorizeServiceOptions;
     // (undocumented)
