@@ -93,6 +93,7 @@ const DefaultCollectionSerDesCfg = {
       }
     }
 
+
     if (typeof value === 'object' && value !== null) {
       if (value[$SerializeForCollection]) {
         if ((resp = value[$SerializeForCollection](ctx))[0] !== CONTINUE) {
@@ -142,7 +143,7 @@ const DefaultCollectionSerDesCfg = {
       }
     }
 
-    if (ctx.keys?.length === 1 && (ctx.keys[0] in codecs.type)) {
+    if (ctx.keys?.length === 1 && ctx.keys[0] in codecs.type) {
       if ((resp = codecs.type[ctx.keys[0]].deserialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
         return resp;
       }

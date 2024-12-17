@@ -58,7 +58,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
     }
   }
 
-  public serializeRecord<S extends SomeDoc | nullish>(obj: S): [S, boolean] {
+  public serialize<S extends SomeDoc | nullish>(obj: S): [S, boolean] {
     if (obj === null || obj === undefined) {
       return [obj, false];
     }
@@ -66,7 +66,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
     return [serializeRecord('', { ['']: ctx.rootObj }, ctx, toArray(this._cfg.serialize!))[''] as S, this.bigNumsPresent(ctx)];
   }
 
-  public deserializeRecord<S extends SomeDoc | nullish>(obj: SomeDoc | nullish, raw: RawDataAPIResponse, parsingId = false): S {
+  public deserialize<S extends SomeDoc | nullish>(obj: SomeDoc | nullish, raw: RawDataAPIResponse, parsingId = false): S {
     if (obj === null || obj === undefined) {
       return obj as S;
     }
@@ -84,6 +84,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
       deserialize: [...toArray(cfg?.deserialize ?? []), ...toArray(acc.deserialize ?? [])],
       mutateInPlace: !!(cfg?.mutateInPlace ?? acc.mutateInPlace),
       snakeCaseInterop: !!(cfg?.snakeCaseInterop ?? acc.snakeCaseInterop),
+      codecs: [...acc.codecs ?? [], ...cfg?.codecs ?? []],
     }), {});
   }
 
@@ -127,7 +128,7 @@ function serializeRecordHelper<Ctx extends BaseSerCtx<any>>(obj: SomeDoc, ctx: C
 
     serializeRecord(key, obj, ctx, fns);
 
-    if (ctx.camelSnakeCache) {
+    if (ctx.camelSnakeCache && key) {
       const oldKey = key;
       key = camelToSnakeCase(key, ctx.camelSnakeCache);
 
@@ -171,7 +172,7 @@ function deserializeRecordHelper<Ctx extends BaseDesCtx<any>>(keys: string[], ob
 
     path[path.length - 1] = key;
 
-    if (ctx.camelSnakeCache) {
+    if (ctx.camelSnakeCache && key) {
       const oldKey = key;
       key = snakeToCamelCase(key, ctx.camelSnakeCache);
 

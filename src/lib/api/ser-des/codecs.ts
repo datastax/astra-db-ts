@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { BaseDesCtx, SerDesFn } from '@/src/lib';
+import { SerDesFn } from '@/src/lib';
 import { BaseSerCtx } from '@/src/lib/api/ser-des/ctx';
 
 /**
@@ -137,11 +137,11 @@ const prependAnyDeserializeGuard = <Fns extends CodecSerDesFns>(codec: RawCodec<
 
   return {
     ...codec,
-    deserialize: (value: unknown, ctx: BaseDesCtx<never>) => {
+    deserialize: (key, value, ctx) => {
       if (!guard(value, ctx)) {
         return ctx.continue();
       }
-      return codec.deserialize(value, ctx);
+      return codec.deserialize(key, value, ctx);
     },
   };
 };

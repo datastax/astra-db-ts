@@ -8,7 +8,7 @@ class Author {
   constructor(public fullName: string, public birthdate: Date) {}
 }
 
-export default async function CollClassMappingExample(name: string, db: Db) {
+export async function CollectionClassMappingExample(name: string, db: Db) {
   const coll = await db.createCollection<Book>(name, {
     serdes: {
       mutateInPlace: true,
@@ -26,13 +26,16 @@ export default async function CollClassMappingExample(name: string, db: Db) {
   console.log(inserted);
 
   // Find a document
-  const found = await coll.findOne({ _id: '123-4-567-89012-3' });
+  const found = await coll.findOne({ isbn: '123-4-567-89012-3' });
   console.dir(found, { depth: null });
 }
 
 const BookCodec = CollCodecs.forPath([], {
   serialize: (_, value: unknown, ctx) => {
     if (!(value instanceof Book)) {
+      if (value && typeof value === 'object' && 'isbn' in value) {
+        return ctx.recurse({ ...value, _id: value.isbn, isbn: undefined });
+      }
       return ctx.continue();
     }
 
@@ -46,15 +49,15 @@ const BookCodec = CollCodecs.forPath([], {
       },
     })
   },
+  deserializeGuard(_, ctx) {
+    return !ctx.parsingInsertedId;
+  },
   deserialize: (_, value: SomeDoc, ctx) => {
-    if (ctx.parsingInsertedId) {
-      return ctx.continue();
-    }
-
-    return ctx.done(new Book(
+    const book = new Book(
       value.title,
       new Author(`${value.author.lastName}, ${value.author.firstName}`, new Date(value.author.birthdate)),
       value._id,
-    ));
+    );
+    return ctx.done(book);
   },
 });

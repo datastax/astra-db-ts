@@ -262,9 +262,9 @@ export interface BaseSerCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fn
 }
 
 // @public (undocumented)
-export interface BaseSerDesConfig<Codec extends CodecHolder<Fns>, Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>> {
+export interface BaseSerDesConfig<Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>> {
     // (undocumented)
-    codecs?: Codec[];
+    codecs?: RawCodec<Fns>[];
     // (undocumented)
     deserialize?: OneOrMany<SerDesFn<DesCtx>>;
     // (undocumented)
@@ -303,16 +303,18 @@ export type Caller = readonly [name: string, version?: string];
 
 // @public (undocumented)
 export type ClassGuardCodec<Fns extends CodecSerDesFns> = Fns & {
-    codecType: 'type';
     type: string;
     serializeClass: new (...args: any[]) => any;
 };
 
 // @public (undocumented)
-export interface CodecHolder<Fns extends CodecSerDesFns> {
-    // (undocumented)
-    get: NameCodec<Fns> | PathCodec<Fns> | TypeCodec<Fns> | CustomGuardCodec<Fns> | ClassGuardCodec<Fns>;
-}
+export type CodecOpts<Fns extends CodecSerDesFns, SerCtx, DesCtx> = (Fns & {
+    serializeGuard: (value: unknown, ctx: SerCtx) => boolean;
+    deserializeGuard?: (value: unknown, ctx: DesCtx) => boolean;
+}) | (Fns & {
+    serializeClass: new (...args: any[]) => any;
+    deserializeGuard?: (value: unknown, ctx: DesCtx) => boolean;
+}) | Pick<Fns, 'deserialize'>;
 
 // @public (undocumented)
 export interface Codecs<Fns extends CodecSerDesFns> {
@@ -345,43 +347,23 @@ export interface CollCodecClass {
 }
 
 // @public (undocumented)
-export class CollCodecs implements CodecHolder<CollCodecSerDesFns> {
-    // @internal
-    constructor(state: typeof CollCodecs.get);
+export class CollCodecs {
     // (undocumented)
     static Defaults: {
-        $date: CollCodecs;
-        $vector: CollCodecs;
-        $uuid: CollCodecs;
-        $objectId: CollCodecs;
+        $date: RawCodec<CollCodecSerDesFns>;
+        $vector: RawCodec<CollCodecSerDesFns>;
+        $uuid: RawCodec<CollCodecSerDesFns>;
+        $objectId: RawCodec<CollCodecSerDesFns>;
     };
     // (undocumented)
-    static forName(name: string, clazz: CollCodecClass): CollCodecs;
+    static forName(name: string, optsOrClass: CodecOpts<CollCodecSerDesFns, CollSerCtx, CollDesCtx> | CollCodecClass): RawCodec<CollCodecSerDesFns>;
     // (undocumented)
-    static forName(name: string, opts: CollCodecSerDesFns): CollCodecs;
+    static forPath(path: string[], optsOrClass: CodecOpts<CollCodecSerDesFns, CollSerCtx, CollDesCtx> | CollCodecClass): RawCodec<CollCodecSerDesFns>;
     // (undocumented)
-    static forPath(path: string[], clazz: CollCodecClass): CollCodecs;
-    // (undocumented)
-    static forPath(path: string[], opts: CollCodecSerDesFns): CollCodecs;
-    // (undocumented)
-    static forType(type: string, clazz: CollCodecClass): CollCodecs;
-    // (undocumented)
-    static forType(type: string, opts: CollCodecSerDesFns & {
-        serializeGuard: (value: unknown, ctx: TableSerCtx) => boolean;
-    }): CollCodecs;
-    // (undocumented)
-    static forType(type: string, opts: CollCodecSerDesFns & {
-        serializeClass: new (...args: any[]) => any;
-    }): CollCodecs;
-    // (undocumented)
-    static forType(type: string, opts: CollCodecSerDesFns & {
-        deserializeOnly: true;
-    }): CollCodecs;
-    // @internal (undocumented)
-    readonly get: CodecHolder<CollCodecSerDesFns>['get'];
+    static forType(type: string, optsOrClass: CodecOpts<CollCodecSerDesFns, CollSerCtx, CollDesCtx> | CollCodecClass): RawCodec<CollCodecSerDesFns>;
     // (undocumented)
     static Overrides: {
-        USE_DATA_API_TIMESTAMPS_OVER_DATES: CollCodecs;
+        USE_DATA_API_TIMESTAMPS_FOR_DATES: RawCodec<CollCodecSerDesFns>;
     };
 }
 
@@ -612,9 +594,7 @@ export type CollectionReplaceOneOptions = GenericReplaceOneOptions;
 export type CollectionReplaceOneResult<RSchema> = GenericUpdateResult<IdOf<RSchema>, 0 | 1>;
 
 // @public (undocumented)
-export interface CollectionSerDesConfig extends BaseSerDesConfig<CollCodecs, CollCodecSerDesFns, CollSerCtx, CollDesCtx> {
-    // (undocumented)
-    codecs?: CollCodecs[];
+export interface CollectionSerDesConfig extends BaseSerDesConfig<CollCodecSerDesFns, CollSerCtx, CollDesCtx> {
     // (undocumented)
     enableBigNumbers?: boolean;
 }
@@ -792,7 +772,6 @@ export class CursorError extends DataAPIError {
 
 // @public (undocumented)
 export type CustomGuardCodec<Fns extends CodecSerDesFns> = Fns & {
-    codecType: 'type';
     type: string;
     serializeGuard: (value: unknown, ctx: BaseSerCtx<Fns>) => boolean;
 };
@@ -805,7 +784,7 @@ export interface CustomHttpClientOptions {
 
 // @public
 export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
-    static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (DataAPIBlob | undefined)?];
+    static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx): readonly [0, (DataAPIBlob | undefined)?];
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, ({
         $binary: string;
     } | undefined)?];
@@ -871,7 +850,7 @@ export interface DataAPICreateKeyspaceOptions extends WithTimeout<'keyspaceAdmin
 
 // @public
 export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
-    static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (DataAPIDate | undefined)?];
+    static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx): readonly [0, (DataAPIDate | undefined)?];
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
     constructor(input?: string | Date | DataAPIDateComponents);
     components(): DataAPIDateComponents;
@@ -908,7 +887,7 @@ export interface DataAPIDetailedErrorDescriptor {
 
 // @public
 export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
-    static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (DataAPIDuration | undefined)?];
+    static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx): readonly [0, (DataAPIDuration | undefined)?];
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
     constructor(input: string);
     toString(): string;
@@ -976,7 +955,7 @@ export class DataAPIResponseError extends DataAPIError {
 
 // @public
 export class DataAPITime implements TableCodec<typeof DataAPITime> {
-    static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (DataAPITime | undefined)?];
+    static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx): readonly [0, (DataAPITime | undefined)?];
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
     constructor(input?: string | Date | (DataAPITimeComponents & {
         nanoseconds?: number;
@@ -1010,7 +989,7 @@ export class DataAPITimeoutError extends DataAPIError {
 // @public
 export class DataAPITimestamp implements CollCodec<typeof DataAPITimestamp>, TableCodec<typeof DataAPITimestamp> {
     static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx): readonly [0, (DataAPITimestamp | undefined)?];
-    static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (DataAPITimestamp | undefined)?];
+    static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx): readonly [0, (DataAPITimestamp | undefined)?];
     [$SerializeForCollection](ctx: CollSerCtx): readonly [0, ({
         $date: string;
     } | undefined)?];
@@ -1035,7 +1014,7 @@ export interface DataAPITimestampComponents {
 // @public
 export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCodec<typeof DataAPIVector> {
     static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx): readonly [0, (DataAPIVector | undefined)?];
-    static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (DataAPIVector | undefined)?];
+    static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx): readonly [0, (DataAPIVector | undefined)?];
     [$SerializeForCollection](ctx: CollSerCtx): readonly [0, (number[] | {
         $binary: string;
     } | undefined)?];
@@ -1518,7 +1497,7 @@ export const inet: (address: string, version?: 4 | 6) => InetAddress;
 
 // @public
 export class InetAddress implements TableCodec<typeof InetAddress> {
-    static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (InetAddress | undefined)?];
+    static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx): readonly [0, (InetAddress | undefined)?];
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
     constructor(address: string, version?: 4 | 6 | null, validate?: boolean);
     toString(): string;
@@ -1644,7 +1623,6 @@ export type NameCodec<Fns extends CodecSerDesFns> = {
     serialize?: Fns['serialize'];
     deserialize: Fns['deserialize'];
 } & {
-    codecType: 'name';
     name: string;
 };
 
@@ -1698,7 +1676,6 @@ export type PathCodec<Fns extends CodecSerDesFns> = {
     serialize?: Fns['serialize'];
     deserialize: Fns['deserialize'];
 } & {
-    codecType: 'path';
     path: string[];
 };
 
@@ -1709,6 +1686,15 @@ export type Projection = Record<string, 1 | 0 | boolean | ProjectionSlice>;
 export interface ProjectionSlice {
     $slice: number | [number, number];
 }
+
+// @public (undocumented)
+export type RawCodec<Fns extends CodecSerDesFns> = ({
+    path: string[];
+} | {
+    name: string;
+} | {
+    type: string;
+}) & CodecOpts<Fns, unknown, unknown>;
 
 // @public
 export interface RawDataAPIResponse {
@@ -1750,6 +1736,9 @@ export interface SetCreateTableColumnDefinition {
 
 // @public (undocumented)
 export type ShortCreateTablePrimaryKeyDefinition = string;
+
+// @public (undocumented)
+export type SomeCodec<Fns extends CodecSerDesFns> = NameCodec<Fns> | PathCodec<Fns> | TypeCodec<Fns> | CustomGuardCodec<Fns> | ClassGuardCodec<Fns>;
 
 // @public
 export type SomeDoc = Record<string, any>;
@@ -1810,78 +1799,48 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     updateOne(filter: TableFilter<WSchema>, update: TableUpdateFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
 }
 
+// Warning: (ae-forgotten-export) The symbol "TableCodecClass" needs to be exported by the entry point index.d.ts
+//
 // @public (undocumented)
 export type TableCodec<_Class extends TableCodecClass> = EmptyObj;
 
 // @public (undocumented)
-export interface TableCodecClass {
-    // (undocumented)
-    [$DeserializeForTable]: TableCodecSerDesFns['deserialize'];
-    // (undocumented)
-    new (...args: any[]): {
-        [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>>;
-    };
-}
-
-// @public (undocumented)
-export class TableCodecs implements CodecHolder<TableCodecSerDesFns> {
-    // @internal
-    constructor(state: typeof TableCodecs.get);
+export class TableCodecs {
     // (undocumented)
     static Defaults: {
-        bigint: TableCodecs;
-        blob: TableCodecs;
-        date: TableCodecs;
-        decimal: TableCodecs;
-        double: TableCodecs;
-        duration: TableCodecs;
-        float: TableCodecs;
-        int: TableCodecs;
-        inet: TableCodecs;
-        smallint: TableCodecs;
-        time: TableCodecs;
-        timestamp: TableCodecs;
-        timeuuid: TableCodecs;
-        tinyint: TableCodecs;
-        uuid: TableCodecs;
-        vector: TableCodecs;
-        varint: TableCodecs;
-        map: TableCodecs;
-        list: TableCodecs;
-        set: TableCodecs;
+        bigint: RawCodec<TableCodecSerDesFns>;
+        blob: RawCodec<TableCodecSerDesFns>;
+        date: RawCodec<TableCodecSerDesFns>;
+        decimal: RawCodec<TableCodecSerDesFns>;
+        double: RawCodec<TableCodecSerDesFns>;
+        duration: RawCodec<TableCodecSerDesFns>;
+        float: RawCodec<TableCodecSerDesFns>;
+        int: RawCodec<TableCodecSerDesFns>;
+        inet: RawCodec<TableCodecSerDesFns>;
+        smallint: RawCodec<TableCodecSerDesFns>;
+        time: RawCodec<TableCodecSerDesFns>;
+        timestamp: RawCodec<TableCodecSerDesFns>;
+        timeuuid: RawCodec<TableCodecSerDesFns>;
+        tinyint: RawCodec<TableCodecSerDesFns>;
+        uuid: RawCodec<TableCodecSerDesFns>;
+        vector: RawCodec<TableCodecSerDesFns>;
+        varint: RawCodec<TableCodecSerDesFns>;
+        map: RawCodec<TableCodecSerDesFns>;
+        list: RawCodec<TableCodecSerDesFns>;
+        set: RawCodec<TableCodecSerDesFns>;
     };
     // (undocumented)
-    static forName(name: string, clazz: TableCodecClass): TableCodecs;
+    static forName(name: string, optsOrClass: CodecOpts<TableCodecSerDesFns, TableSerCtx, TableDesCtx> | TableCodecClass): RawCodec<TableCodecSerDesFns>;
     // (undocumented)
-    static forName(name: string, opts: TableCodecSerDesFns): TableCodecs;
+    static forPath(path: string[], optsOrClass: CodecOpts<TableCodecSerDesFns, TableSerCtx, TableDesCtx> | TableCodecClass): RawCodec<TableCodecSerDesFns>;
     // (undocumented)
-    static forPath(path: string[], clazz: TableCodecClass): TableCodecs;
-    // (undocumented)
-    static forPath(path: string[], opts: TableCodecSerDesFns): TableCodecs;
-    // (undocumented)
-    static forType(type: string, clazz: TableCodecClass): TableCodecs;
-    // (undocumented)
-    static forType(type: string, opts: TableCodecSerDesFns & {
-        serializeGuard: (value: unknown, ctx: TableSerCtx) => boolean;
-    }): TableCodecs;
-    // (undocumented)
-    static forType(type: string, opts: TableCodecSerDesFns & {
-        serializeClass: new (...args: any[]) => any;
-    }): TableCodecs;
-    // (undocumented)
-    static forType(type: string, opts: Pick<TableCodecSerDesFns, 'deserialize'> & {
-        deserializeOnly: true;
-    }): TableCodecs;
-    // @internal (undocumented)
-    readonly get: CodecHolder<TableCodecSerDesFns>['get'];
-    // (undocumented)
-    static Overrides: {};
+    static forType(type: string, optsOrClass: CodecOpts<TableCodecSerDesFns, TableSerCtx, TableDesCtx> | TableCodecClass): RawCodec<TableCodecSerDesFns>;
 }
 
 // @public (undocumented)
 export interface TableCodecSerDesFns {
     // (undocumented)
-    deserialize: (val: any, ctx: TableDesCtx, definition: SomeDoc) => ReturnType<SerDesFn<any>>;
+    deserialize: (key: string | undefined, val: any, ctx: TableDesCtx, definition: SomeDoc) => ReturnType<SerDesFn<any>>;
     // (undocumented)
     serialize: SerDesFn<TableSerCtx>;
 }
@@ -1994,9 +1953,9 @@ export interface TableSerCtx extends BaseSerCtx<TableCodecSerDesFns> {
 }
 
 // @public (undocumented)
-export interface TableSerDesConfig extends BaseSerDesConfig<TableCodecs, TableCodecSerDesFns, TableSerCtx, TableDesCtx> {
+export interface TableSerDesConfig extends BaseSerDesConfig<TableCodecSerDesFns, TableSerCtx, TableDesCtx> {
     // (undocumented)
-    codecs?: TableCodecs[];
+    codecs?: RawCodec<TableCodecSerDesFns>[];
     // (undocumented)
     sparseData?: boolean;
 }
@@ -2063,7 +2022,6 @@ export class TooManyRowsToCountError extends DataAPIError {
 
 // @public (undocumented)
 export type TypeCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'deserialize'> & {
-    codecType: 'type';
     type: string;
 };
 
@@ -2085,7 +2043,7 @@ export class UsernamePasswordTokenProvider extends TokenProvider {
 // @public
 export class UUID implements CollCodec<typeof UUID>, TableCodec<typeof UUID> {
     static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx): readonly [0, (UUID | undefined)?];
-    static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (UUID | undefined)?];
+    static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx): readonly [0, (UUID | undefined)?];
     [$SerializeForCollection](ctx: CollSerCtx): readonly [0, ({
         $uuid: string;
     } | undefined)?];

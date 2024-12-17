@@ -65,12 +65,12 @@ export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableD
     super(TableSerDes.mergeConfig(DefaultTableSerDesCfg, cfg));
   }
 
-  public override adaptSerCtx(ctx: TableSerCtx): TableSerCtx {
+  protected override adaptSerCtx(ctx: TableSerCtx): TableSerCtx {
     ctx.bigNumsPresent = false;
     return ctx;
   }
 
-  public override adaptDesCtx(ctx: TableDesCtx): TableDesCtx {
+  protected override adaptDesCtx(ctx: TableDesCtx): TableDesCtx {
     const status = ctx.rawDataApiResp.status!;
 
     if (ctx.parsingInsertedId) {
@@ -97,7 +97,7 @@ export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableD
     return ctx;
   }
 
-  public override bigNumsPresent(ctx: TableSerCtx): boolean {
+  protected override bigNumsPresent(ctx: TableSerCtx): boolean {
     return ctx.bigNumsPresent;
   }
 
@@ -166,7 +166,7 @@ const DefaultTableSerDesCfg = {
     }
     return ctx.continue();
   },
-  deserialize(key, value, ctx) {
+  deserialize(key, _, ctx) {
     const codecs = ctx.codecs;
     let resp;
 
@@ -174,11 +174,13 @@ const DefaultTableSerDesCfg = {
       populateSparseData(ctx); // populate sparse data for empty objects
     }
 
+    const column = ctx.tableSchema[key];
+
     for (let i = 0, n = codecs.path.length; i < n; i++) {
       const path = codecs.path[i].path;
 
       if (stringArraysEqual(path, ctx.path)) {
-        if ((resp = codecs.path[i].deserialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
+        if ((resp = codecs.path[i].deserialize?.(key, ctx.rootObj[key], ctx, column) ?? ctx.continue())[0] !== CONTINUE) {
           return resp;
         }
       }
@@ -193,24 +195,20 @@ const DefaultTableSerDesCfg = {
       ctx.populateSparseData = false;
     }
 
-    const column = ctx.tableSchema[key];
+    const type = resolveType(column);
 
-    if (column) {
-      const type = resolveType(column);
-      const obj = ctx.rootObj;
-
-      if (key in codecs.name) {
-        if ((resp = codecs.name[key].deserialize(obj[key], ctx, column))[0] !== CONTINUE) {
-          return resp;
-        }
-      }
-
-      if (type in codecs.type) {
-        if ((resp = codecs.type[type].deserialize(obj[key], ctx, column))[0] !== CONTINUE) {
-          return resp;
-        }
+    if (key in codecs.name) {
+      if ((resp = codecs.name[key].deserialize(key, ctx.rootObj[key], ctx, column))[0] !== CONTINUE) {
+        return resp;
       }
     }
+
+    if (type in codecs.type) {
+      if ((resp = codecs.type[type].deserialize(key, ctx.rootObj[key], ctx, column))[0] !== CONTINUE) {
+        return resp;
+      }
+    }
+
     return ctx.done();
   },
   codecs: Object.values(TableCodecs.Defaults),

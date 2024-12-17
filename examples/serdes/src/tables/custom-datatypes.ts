@@ -16,7 +16,7 @@ interface User {
   milestones: AssocList<string, Date>,
 }
 
-export default async function TableCustomDatatypesExample(name: string, db: Db) {
+export async function TableCustomDatatypesExample(name: string, db: Db) {
   const table = await db.createTable<User>(name, {
     definition: {
       columns: {
@@ -64,7 +64,7 @@ class UserID {
 
 const UserIDCodec = TableCodecs.forName('userId', {
   serialize: (_, value: UserID, ctx) =>  ctx.done(value.uuid),
-  deserialize: (value: string, ctx) => ctx.done(new UserID(value)),
+  deserialize: (_, value: string, ctx) => ctx.done(new UserID(value)),
 });
 
 // Demonstrates validation logic through codecs
@@ -76,7 +76,7 @@ const FullNameCodec = TableCodecs.forName('fullName', {
     }
     return ctx.done(value);
   },
-  deserialize: (value: string, ctx) => ctx.done(value),
+  deserialize: (_, value: string, ctx) => ctx.done(value),
 });
 
 // Example of retrofitting a type you don't own (or don't want to pollute with serdes logic)
@@ -84,7 +84,7 @@ const FullNameCodec = TableCodecs.forName('fullName', {
 const DateCodec = TableCodecs.forType('timestamp', {
   serializeClass: Date,
   serialize: (_, value: Date, ctx) => ctx.done(value.toISOString()),
-  deserialize: (value: string, ctx) => ctx.done(new Date(value)),
+  deserialize: (_, value: string, ctx) => ctx.done(new Date(value)),
 });
 
 // Association list for demonstrating codec composition
@@ -96,12 +96,12 @@ class AssocList<K, V> implements TableCodec<typeof AssocList> {
     return ctx.recurse(Object.fromEntries(this.unwrap));
   }
 
-  public static [$DeserializeForTable](obj: Record<string, unknown>[], ctx: TableDesCtx, def: SomeDoc) {
+  public static [$DeserializeForTable](_: unknown, obj: Record<string, unknown>[], ctx: TableDesCtx, def: SomeDoc) {
     const values = Object.entries(obj);
 
     for (let i = 0; i < values.length; i++) {
-      values[i][0] = ctx.codecs.type[def.keyType]?.deserialize(values[i][0], ctx, def)[1] ?? values[i][0];
-      values[i][1] = ctx.codecs.type[def.valueType]?.deserialize(values[i][1], ctx, def)[1] ?? values[i][1];
+      values[i][0] = ctx.codecs.type[def.keyType]?.deserialize(undefined, values[i][0], ctx, def)[1] ?? values[i][0];
+      values[i][1] = ctx.codecs.type[def.valueType]?.deserialize(undefined, values[i][1], ctx, def)[1] ?? values[i][1];
     }
 
     return ctx.done(new AssocList(values));
