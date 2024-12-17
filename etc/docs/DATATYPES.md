@@ -481,7 +481,7 @@ await collection.insertOne({
 
 However, it's generally recommended to use the provided classes for better type-safety and ease of use.
 
-Beyond, when reading back, the each datatype will be deserialized into their respective classes, regardless of how they were inserted.
+Plus, importantly, when reading back, each datatype will be deserialized into their respective classes, regardless of how they were inserted.
 
 If you really want to change the behavior of how a certain type is deserialized, you'll need to implement some custom ser/des logic for that type.
 
