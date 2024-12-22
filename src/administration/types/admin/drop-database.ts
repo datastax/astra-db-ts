@@ -20,4 +20,4 @@ import { WithTimeout } from '@/src/lib';
  *
  * @public
  */
-export type DropAstraDatabaseOptions = AstraAdminBlockingOptions & WithTimeout<'databaseAdminTimeoutMs'>;
+export type AstraDropDatabaseOptions = AstraAdminBlockingOptions & WithTimeout<'databaseAdminTimeoutMs'>;

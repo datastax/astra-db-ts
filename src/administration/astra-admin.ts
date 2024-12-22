@@ -33,7 +33,7 @@ import { AdminOptions, DbOptions } from '@/src/client';
 import { $CustomInspect } from '@/src/lib/constants';
 import { SomeDoc } from '@/src/documents';
 import { Timeouts } from '@/src/lib/api/timeouts';
-import { DropAstraDatabaseOptions } from '@/src/administration/types/admin/drop-database';
+import { AstraDropDatabaseOptions } from '@/src/administration/types/admin/drop-database';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -461,7 +461,7 @@ export class AstraAdmin {
    *
    * @remarks Use with caution. Wear a harness. Don't say I didn't warn you.
    */
-  public async dropDatabase(db: Db | string, options?: DropAstraDatabaseOptions): Promise<void> {
+  public async dropDatabase(db: Db | string, options?: AstraDropDatabaseOptions): Promise<void> {
     const id = typeof db === 'string' ? db : db.id;
 
     const tm = this.#httpClient.tm.multipart('databaseAdminTimeoutMs', options);
