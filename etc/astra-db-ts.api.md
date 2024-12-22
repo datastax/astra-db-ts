@@ -1570,10 +1570,10 @@ export interface ListCreateTableColumnDefinition {
     valueType: TableScalarType;
 }
 
-// @public (undocumented)
+// @public
 export type ListTableColumnDefinitions = Record<string, ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition>;
 
-// @public (undocumented)
+// @public
 export interface ListTableDefinition {
     // (undocumented)
     columns: ListTableColumnDefinitions;
@@ -1581,10 +1581,12 @@ export interface ListTableDefinition {
     primaryKey: ListTablePrimaryKeyDefinition;
 }
 
-// @public (undocumented)
-export type ListTableKnownColumnDefinition = StrictCreateTableColumnDefinition;
+// @public
+export type ListTableKnownColumnDefinition = StrictCreateTableColumnDefinition & {
+    apiSupport?: ListTableUnsupportedColumnApiSupport;
+};
 
-// @public (undocumented)
+// @public
 export type ListTablePrimaryKeyDefinition = Required<FullCreateTablePrimaryKeyDefinition>;
 
 // @public
@@ -1592,19 +1594,21 @@ export interface ListTablesOptions extends WithTimeout<'tableAdminTimeoutMs'>, W
     nameOnly?: boolean;
 }
 
-// @public (undocumented)
+// @public
 export interface ListTableUnsupportedColumnApiSupport {
     // (undocumented)
     cqlDefinition: string;
     // (undocumented)
     createTable: boolean;
     // (undocumented)
+    filter: boolean;
+    // (undocumented)
     insert: boolean;
     // (undocumented)
     read: boolean;
 }
 
-// @public (undocumented)
+// @public
 export interface ListTableUnsupportedColumnDefinition {
     // (undocumented)
     apiSupport: ListTableUnsupportedColumnApiSupport;

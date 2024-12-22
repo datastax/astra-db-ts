@@ -27,7 +27,7 @@ import { FullCreateTablePrimaryKeyDefinition, StrictCreateTableColumnDefinition,
  * @public
  */
 export interface ListTablesOptions extends WithTimeout<'tableAdminTimeoutMs'>, WithKeyspace {
-l  /**
+  /**
    * If true, only the name of the tables is returned.
    *
    * If false, the full tables info is returned.
