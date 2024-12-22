@@ -16,6 +16,8 @@ import { AstraAdminBlockingOptions } from '@/src/administration/types';
 import { WithTimeout } from '@/src/lib';
 
 /**
+ * Represents the options for dropping an astra keyspace (i.e. blocking options + timeout options).
+ *
  * @public
  */
 export type AstraDropKeyspaceOptions = AstraAdminBlockingOptions & WithTimeout<'keyspaceAdminTimeoutMs'>;

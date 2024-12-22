@@ -13,7 +13,7 @@ npm)
   for dir in examples/*; do
     cd "$cwd/$dir" || exit 1
     npm rm @datastax/astra-db-ts
-    npm i @datastax/astra-db-ts
+    npm i @datastax/astra-db-ts@next
   done
   ;;
 local)

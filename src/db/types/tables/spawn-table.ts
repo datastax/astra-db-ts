@@ -25,6 +25,7 @@ import { DataAPILoggingConfig, type TimeoutDescriptor } from '@/src/lib';
  * @field timeoutDefaults - Default timeouts for all table operations
  * @field logging - Logging configuration overrides
  * @field serdes - Additional serialization/deserialization configuration
+ * @field keyspace - Overrides the keyspace for the table (from the `Db`'s working keyspace).
  *
  * @public
  */

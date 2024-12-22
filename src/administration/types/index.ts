@@ -26,7 +26,7 @@ export type {
 } from './admin/create-database';
 
 export type {
-  DropAstraDatabaseOptions,
+  AstraDropDatabaseOptions,
 } from './admin/drop-database';
 
 export type {
