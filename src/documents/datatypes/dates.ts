@@ -412,14 +412,14 @@ export class DataAPITimestamp implements CollCodec<typeof DataAPITimestamp>, Tab
    * Implementation of `$SerializeForTable` for {@link TableCodec}
    */
   public [$SerializeForTable](ctx: TableSerCtx) {
-    return ctx.done(this.toString());
+    return ctx.done(this.#timestamp);
   };
 
   /**
    * Implementation of `$SerializeForCollection` for {@link TableCodec}
    */
   public [$SerializeForCollection](ctx: CollSerCtx) {
-    return ctx.done({ $date: this.toString() });
+    return ctx.done({ $date: new Date(this.#timestamp).valueOf() });
   };
 
   /**
@@ -433,7 +433,7 @@ export class DataAPITimestamp implements CollCodec<typeof DataAPITimestamp>, Tab
    * Implementation of `$DeserializeForCollection` for {@link TableCodec}
    */
   public static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx) {
-    return ctx.done(new DataAPITimestamp(value.$date));
+    return ctx.done(new DataAPITimestamp(new Date(value.$date).toISOString()));
   }
 
   /**
