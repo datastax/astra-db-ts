@@ -195,15 +195,15 @@ const DefaultTableSerDesCfg = {
       ctx.populateSparseData = false;
     }
 
-    const type = resolveType(column);
-
     if (key in codecs.name) {
       if ((resp = codecs.name[key].deserialize(key, ctx.rootObj[key], ctx, column))[0] !== CONTINUE) {
         return resp;
       }
     }
 
-    if (type in codecs.type) {
+    const type = resolveType(column);
+
+    if (type && type in codecs.type) {
       if ((resp = codecs.type[type].deserialize(key, ctx.rootObj[key], ctx, column))[0] !== CONTINUE) {
         return resp;
       }

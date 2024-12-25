@@ -29,7 +29,7 @@ import { CodecOpts, RawCodec } from '@/src/lib/api/ser-des/codecs';
  */
 export interface TableCodecSerDesFns {
   serialize: SerDesFn<TableSerCtx>,
-  deserialize: (key: string | undefined, val: any, ctx: TableDesCtx, definition: SomeDoc) => ReturnType<SerDesFn<any>>,
+  deserialize: (key: string | undefined, val: any, ctx: TableDesCtx, definition?: SomeDoc) => ReturnType<SerDesFn<any>>,
 }
 
 /**
@@ -94,8 +94,8 @@ export class TableCodecs {
         for (let i = 0, n = entries.length; i < n; i++) {
           const [key, value] = entries[i];
 
-          const keyParser = ctx.codecs.type[def.keyType];
-          const valueParser = ctx.codecs.type[def.valueType];
+          const keyParser = ctx.codecs.type[def!.keyType];
+          const valueParser = ctx.codecs.type[def!.valueType];
 
           entries[i] = [
             keyParser ? keyParser.deserialize(undefined, key, ctx, def)[1] : key,
@@ -109,7 +109,7 @@ export class TableCodecs {
     list: TableCodecs.forType('list', {
       deserialize(_, list, ctx, def) {
         for (let i = 0, n = list.length; i < n; i++) {
-          const elemParser = ctx.codecs.type[def.valueType];
+          const elemParser = ctx.codecs.type[def!.valueType];
           list[i] = elemParser ? elemParser.deserialize(undefined, list[i], ctx, def)[1] : list[i];
         }
         return ctx.done(list);
@@ -122,7 +122,7 @@ export class TableCodecs {
       },
       deserialize(_, list, ctx, def) {
         for (let i = 0, n = list.length; i < n; i++) {
-          const elemParser = ctx.codecs.type[def.valueType];
+          const elemParser = ctx.codecs.type[def!.valueType];
           list[i] = elemParser ? elemParser.deserialize(undefined, list[i], ctx, def)[1] : list[i];
         }
         return ctx.done(new Set(list));
