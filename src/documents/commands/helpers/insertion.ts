@@ -22,6 +22,7 @@ import {
 } from '@/src/documents/errors';
 import { GenericInsertManyDocumentResponse, SomeDoc, SomeId } from '@/src/documents';
 import { TimeoutManager } from '@/src/lib/api/timeouts';
+import { RawDataAPIResponse } from '@/src/lib';
 
 /**
  * @internal
@@ -34,7 +35,7 @@ export const insertManyOrdered = async <ID>(
   timeoutManager: TimeoutManager,
   err: new (descs: DataAPIDetailedErrorDescriptor[]) => DataAPIResponseError,
 ): Promise<ID[]> => {
-  const insertedIds: any = [];
+  const insertedIds: ID[] = [];
 
   for (let i = 0, n = documents.length; i < n; i += chunkSize) {
     const slice = documents.slice(i, i + chunkSize);
@@ -69,11 +70,11 @@ export const insertManyUnordered = async <ID>(
   timeoutManager: TimeoutManager,
   err: new (descs: DataAPIDetailedErrorDescriptor[]) => DataAPIResponseError,
 ): Promise<ID[]> => {
-  const insertedIds: any = [];
+  const insertedIds: ID[] = [];
   let masterIndex = 0;
 
-  const failCommands = [] as Record<string, any>[];
-  const failRaw = [] as Record<string, any>[];
+  const failCommands = [] as Record<string, unknown>[];
+  const failRaw = [] as RawDataAPIResponse[];
   const docResps = [] as GenericInsertManyDocumentResponse<SomeDoc>[];
 
   const promises = Array.from({ length: concurrency }, async () => {

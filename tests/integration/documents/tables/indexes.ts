@@ -55,7 +55,7 @@ parallel('integration.documents.tables.indexes', { drop: 'colls:after' }, ({ db 
       definition: {
         columns: {
           pkey: 'text',
-          vec: { type: 'vector' },
+          vec: { type: 'vector', dimension: 3 },
         },
         primaryKey: 'pkey',
       },
