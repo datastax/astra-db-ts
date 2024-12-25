@@ -35,3 +35,55 @@ export class FailedToLoadDefaultClientError extends Error {
     this.name = 'FailedToLoadDefaultClientError';
   }
 }
+
+/**
+ * ##### Overview
+ *
+ * Error thrown when the Data API response is not as expected. Should never be thrown in normal operation.
+ *
+ * ##### Possible causes
+ *
+ * 1. A `Collection` was used on a table, or vice versa.
+ *
+ * 2. New Data API changes occurred that are not yet supported by the client.
+ *
+ * 3. There is a bug in the Data API or the client.
+ *
+ * ##### Possible solutions
+ *
+ * For #1, ensure that you're using the right `Table` or `Collection` class.
+ *
+ * If #2 or #3, upgrade your client, and/or open an issue on the [`astra-db-ts` GitHub repository](https://github.com/datastax/astra-db-ts/issues).
+ *  - If you open an issue, please include the full error message and any relevant context.
+ *  - Please do not hesitate to do so, as there is likely a bug somewhere.
+ *
+ * @public
+ */
+export class UnexpectedDataAPIResponseError extends Error {
+  /**
+   * The response that was unexpected.
+   */
+  public readonly rawDataAPIResponse?: unknown;
+
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
+  constructor(message: string, rawDataAPIResponse: unknown) {
+    try {
+      super(`${message}\n\nRaw Data API response: ${JSON.stringify(rawDataAPIResponse, null, 2)}`);
+    } catch (_) {
+      super(`${message}\n\nRaw Data API response: ${rawDataAPIResponse}`);
+    }
+    this.rawDataAPIResponse = rawDataAPIResponse;
+    this.name = 'UnexpectedDataAPIResponseError';
+  }
+
+  public static require<T>(val: T | null | undefined, message: string, rawDataAPIResponse?: unknown): T {
+    if (val === null || val === undefined) {
+      throw new UnexpectedDataAPIResponseError(message, rawDataAPIResponse);
+    }
+    return val;
+  }
+}

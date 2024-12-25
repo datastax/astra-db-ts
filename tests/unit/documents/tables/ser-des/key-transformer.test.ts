@@ -17,35 +17,13 @@ import { describe, it } from '@/tests/testlib';
 import { Camel2SnakeCase } from '@/src/lib';
 import assert from 'assert';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
-import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
 
-describe('unit.lib.api.ser-des.key-transformer', () => {
-  const ctx = { path: [''] } as any;
-
+describe('unit.documents.tables.ser-des.key-transformer', () => {
   describe('Camel2SnakeCase', () => {
-    const snakeCase = new Camel2SnakeCase();
-    const tableSerdes = new TableSerDes({ keyTransformer: snakeCase });
-    const collSerdes = new CollectionSerDes({ keyTransformer: snakeCase });
-
-    it('should serialize strings to snake_case', () => {
-      assert.strictEqual(snakeCase.serializeKey('camelCaseName', ctx), 'camel_case_name');
-      assert.strictEqual(snakeCase.serializeKey('CamelCaseName', ctx), '_camel_case_name');
-      assert.strictEqual(snakeCase.serializeKey('_camelCaseName', ctx), '_camel_case_name');
-      assert.strictEqual(snakeCase.serializeKey('_CamelCaseName', ctx), '__camel_case_name');
-      assert.strictEqual(snakeCase.serializeKey('camelCaseName_', ctx), 'camel_case_name_');
-      assert.strictEqual(snakeCase.serializeKey('car', ctx), 'car');
-    });
-
-    it('should deserialize strings to camelCase', () => {
-      assert.strictEqual(snakeCase.deserializeKey('snake_case_name', ctx), 'snakeCaseName');
-      assert.strictEqual(snakeCase.deserializeKey('_snake_case_name', ctx), 'SnakeCaseName');
-      assert.strictEqual(snakeCase.deserializeKey('__snake_case_name', ctx), '_SnakeCaseName');
-      assert.strictEqual(snakeCase.deserializeKey('snake_case_name_', ctx), 'snakeCaseName_');
-      assert.strictEqual(snakeCase.deserializeKey('car', ctx), 'car');
-    });
+    const serdes = new TableSerDes({ keyTransformer: new Camel2SnakeCase() });
 
     it('should serialize top-level keys to snake_case for tables', () => {
-      const [obj, bigNumPresent] = tableSerdes.serialize({
+      const [obj, bigNumPresent] = serdes.serialize({
         camelCaseName1: 'dontChangeMe',
         CamelCaseName2: ['dontChangeMe'],
         _camelCaseName3: { dontChangeMe: 'dontChangeMe' },
@@ -66,7 +44,7 @@ describe('unit.lib.api.ser-des.key-transformer', () => {
     });
 
     it('should deserialize top-level keys to camelCase for tables', () => {
-      const obj = tableSerdes.deserialize({
+      const obj = serdes.deserialize({
         camel_case_name1: 'dontChangeMe',
         __camel_case_name2: { dontChangeMe: 'dontChangeMe' },
         _camel_case_name3: ['dontChangeMe'],
@@ -94,7 +72,7 @@ describe('unit.lib.api.ser-des.key-transformer', () => {
     });
 
     it('should deserialize top-level keys to camelCase for tables for primary keys', () => {
-      const obj = tableSerdes.deserialize([
+      const obj = serdes.deserialize([
         'dontChangeMe',
         { dontChangeMe: 'dontChangeMe' },
         ['dontChangeMe'],
@@ -118,44 +96,6 @@ describe('unit.lib.api.ser-des.key-transformer', () => {
         CamelCaseName3: ['dontChangeMe'],
         camelCaseName_4: 1n,
         car: new Set(['dontChangeMe']),
-      });
-    });
-
-    it('should serialize top-level keys to snake_case for collections', () => {
-      const [obj] = collSerdes.serialize({
-        camelCaseName1: 'dontChangeMe',
-        CamelCaseName2: ['dontChangeMe'],
-        _camelCaseName3: { dontChangeMe: 'dontChangeMe' },
-        _CamelCaseName4: { dontChangeMe: 'dontChangeMe' },
-        camelCaseName_5: 1n,
-        car: ['dontChangeMe'],
-      });
-
-      assert.deepStrictEqual(obj, {
-        camel_case_name1: 'dontChangeMe',
-        _camel_case_name2: ['dontChangeMe'],
-        _camel_case_name3: { dontChangeMe: 'dontChangeMe' },
-        __camel_case_name4: { dontChangeMe: 'dontChangeMe' },
-        camel_case_name_5: 1n,
-        car: ['dontChangeMe'],
-      });
-    });
-
-    it('should deserialize top-level keys to camelCase for collections', () => {
-      const obj = collSerdes.deserialize({
-        camel_case_name1: 'dontChangeMe',
-        __camel_case_name2: { dontChangeMe: 'dontChangeMe' },
-        _camel_case_name3: ['dontChangeMe'],
-        camel_case_name_4: 1n,
-        car: [['dontChangeMe']],
-      }, {});
-
-      assert.deepStrictEqual(obj, {
-        camelCaseName1: 'dontChangeMe',
-        _CamelCaseName2: { dontChangeMe: 'dontChangeMe' },
-        CamelCaseName3: ['dontChangeMe'],
-        camelCaseName_4: 1n,
-        car: [['dontChangeMe']],
       });
     });
   });

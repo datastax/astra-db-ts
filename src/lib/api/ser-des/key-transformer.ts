@@ -45,6 +45,9 @@ export class Camel2SnakeCase extends KeyTransformer {
     if (this._cache[snake]) {
       return this._cache[snake];
     }
+    if (snake === '_id') {
+      return snake;
+    }
     return this._cache[snake] = snake.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
   }
 }

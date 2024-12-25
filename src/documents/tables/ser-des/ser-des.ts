@@ -25,6 +25,7 @@ import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import BigNumber from 'bignumber.js';
 import { stringArraysEqual } from '@/src/lib/utils';
 import { RawCodec } from '@/src/lib/api/ser-des/codecs';
+import { UnexpectedDataAPIResponseError } from '@/src/client';
 
 /**
  * @public
@@ -71,23 +72,22 @@ export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableD
   }
 
   protected override adaptDesCtx(ctx: TableDesCtx): TableDesCtx {
-    const status = ctx.rawDataApiResp.status!;
+    const rawDataApiResp = ctx.rawDataApiResp;
+    const status = UnexpectedDataAPIResponseError.require(rawDataApiResp.status, 'No `status` found in response.', rawDataApiResp);
 
     if (ctx.parsingInsertedId) {
-      ctx.tableSchema = status.primaryKeySchema;
+      ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.primaryKeySchema, 'No `status.primaryKeySchema` found in response.\n\n**Did you accidentally use a `Table` object on a collection?** If so, your document was successfully inserted, but the client cannot properly deserialize the response. Please use a `Collection` object instead.', rawDataApiResp);
+
+      ctx.rootObj = Object.fromEntries(Object.keys(ctx.tableSchema).map((key, i) => {
+        return [key, ctx.rootObj[i]];
+      }));
     } else {
-      ctx.tableSchema = status.projectionSchema;
+      ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.projectionSchema, 'No `status.projectionSchema` found in response.\n\n**Did you accidentally use a `Table` object on a collection?** If so, documents may\'ve been found, but the client cannot properly deserialize the response. Please use a `Collection` object instead.', rawDataApiResp);
     }
 
     if (ctx.keyTransformer) {
       ctx.tableSchema = Object.fromEntries(Object.entries(ctx.tableSchema).map(([key, value]) => {
         return [ctx.keyTransformer!.deserializeKey(key, ctx), value];
-      }));
-    }
-
-    if (ctx.parsingInsertedId) {
-      ctx.rootObj = Object.fromEntries(Object.entries(status.primaryKeySchema).map(([key], j) => {
-        return [key, ctx.rootObj[j]];
       }));
     }
 
