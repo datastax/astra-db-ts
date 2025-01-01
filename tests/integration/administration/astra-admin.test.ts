@@ -11,14 +11,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+// noinspection DuplicatedCode
 
-import { DataAPIResponseError } from '@/src/documents';
-import { it, parallel } from '@/tests/testlib';
+import { describe, it } from '@/tests/testlib';
+import { DataAPIClient, DevOpsAPIResponseError } from '@/src//index';
 import assert from 'assert';
 
-parallel('integration.documents.collections.misc', ({ db }) => {
-  it('DataAPIResponseError is thrown when doing data api operation on non-existent collections', async () => {
-    const collection = db.collection('non_existent_collection');
-    await assert.rejects(() => collection.insertOne({ username: 'test' }), DataAPIResponseError);
+describe('integration.administration.astra-admin', () => {
+  it('should not stop you from creating an AstraAdmin without a token', async () => {
+    const client = new DataAPIClient();
+    const admin = client.admin();
+    await assert.rejects(() => admin.listDatabases(), DevOpsAPIResponseError);
   });
 });

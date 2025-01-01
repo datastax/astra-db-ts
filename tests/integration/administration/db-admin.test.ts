@@ -53,7 +53,7 @@ describe('integration.administration.db-admin', ({ client, dbAdmin }) => {
     assert.strictEqual(succeeded, 5);
     assert.strictEqual(warnings, 0);
   });
-  
+
   it('should findEmbeddingProviders', async () => {
     const { embeddingProviders } = await dbAdmin.findEmbeddingProviders();
     assert.ok(typeof embeddingProviders === 'object');

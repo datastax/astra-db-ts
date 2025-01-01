@@ -24,6 +24,7 @@ describe('unit.documents.collections.ser-des.key-transformer', () => {
 
     it('should serialize top-level keys to snake_case for collections', () => {
       const [obj] = serdes.serialize({
+        _id: 'dontChangeMe',
         camelCaseName1: 'dontChangeMe',
         CamelCaseName2: ['dontChangeMe'],
         _camelCaseName3: { dontChangeMe: 'dontChangeMe' },
@@ -33,6 +34,7 @@ describe('unit.documents.collections.ser-des.key-transformer', () => {
       });
 
       assert.deepStrictEqual(obj, {
+        _id: 'dontChangeMe',
         camel_case_name1: 'dontChangeMe',
         _camel_case_name2: ['dontChangeMe'],
         _camel_case_name3: { dontChangeMe: 'dontChangeMe' },
@@ -44,6 +46,7 @@ describe('unit.documents.collections.ser-des.key-transformer', () => {
 
     it('should deserialize top-level keys to camelCase for collections', () => {
       const obj = serdes.deserialize({
+        _id: 'dontChangeMe',
         camel_case_name1: 'dontChangeMe',
         __camel_case_name2: { dontChangeMe: 'dontChangeMe' },
         _camel_case_name3: ['dontChangeMe'],
@@ -52,6 +55,7 @@ describe('unit.documents.collections.ser-des.key-transformer', () => {
       }, {});
 
       assert.deepStrictEqual(obj, {
+        _id: 'dontChangeMe',
         camelCaseName1: 'dontChangeMe',
         _CamelCaseName2: { dontChangeMe: 'dontChangeMe' },
         CamelCaseName3: ['dontChangeMe'],

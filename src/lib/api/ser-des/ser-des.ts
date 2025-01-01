@@ -53,7 +53,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
   }
 
   public serialize<S extends SomeDoc | nullish>(obj: S): [S, boolean] {
-    if (obj === null || obj === undefined) {
+    if (!obj) {
       return [obj, false];
     }
     const ctx = this.adaptSerCtx(this._mkCtx(obj, { mutatingInPlace: this._cfg.mutateInPlace === true }));

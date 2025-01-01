@@ -26,7 +26,7 @@ export abstract class KeyTransformer {
  * @public
  */
 export class Camel2SnakeCase extends KeyTransformer {
-  private _cache: Record<string, string> = {};
+  private _cache: Record<string, string> = { _id: '_id' };
 
   public override serializeKey(camel: string, ctx: BaseSerCtx<CodecSerDesFns>): string {
     if (ctx.path.length > 1 || !camel) {
@@ -44,9 +44,6 @@ export class Camel2SnakeCase extends KeyTransformer {
     }
     if (this._cache[snake]) {
       return this._cache[snake];
-    }
-    if (snake === '_id') {
-      return snake;
     }
     return this._cache[snake] = snake.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
   }

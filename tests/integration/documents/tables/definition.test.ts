@@ -15,10 +15,15 @@
 import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.documents.tables.definition', ({ table }) => {
+parallel('integration.documents.tables.definition', ({ db, table }) => {
   it('lists its own definition', async () => {
     const res = await table.definition();
     assert.ok(res.columns);
     assert.ok(res.primaryKey);
+  });
+
+  it('error is thrown when doing .definition() on non-existent tables', async () => {
+    const table = db.table('non_existent_collection');
+    await assert.rejects(() => table.definition(), Error);
   });
 });

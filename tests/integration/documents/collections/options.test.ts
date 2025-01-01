@@ -28,4 +28,9 @@ parallel('integration.documents.collections.options', { drop: 'colls:after' }, (
     assert.deepStrictEqual(res, {});
     await db.dropCollection('test_db_collection_empty_opts');
   });
+
+  it('error is thrown when doing .options() on non-existent collections', async () => {
+    const collection = db.collection('non_existent_collection');
+    await assert.rejects(() => collection.options(), Error);
+  });
 });
