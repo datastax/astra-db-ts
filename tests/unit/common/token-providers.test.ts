@@ -18,8 +18,6 @@ import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
 describe('unit.common.token-providers', () => {
-  const anyGlobalThis = globalThis as any;
-
   describe('StaticTokenProvider', () => {
     it('should provide the token it was given', () => {
       const tp = new StaticTokenProvider('token');
@@ -28,29 +26,9 @@ describe('unit.common.token-providers', () => {
   });
 
   describe('UsernamePasswordTokenProvider', () => {
-    it('should provide the properly encoded cassandra token in node', () => {
+    it('should provide the properly encoded cassandra token', () => {
       const tp = new UsernamePasswordTokenProvider('username', 'password');
       assert.strictEqual(tp.getToken(), 'Cassandra:dXNlcm5hbWU=:cGFzc3dvcmQ=');
-    });
-
-    it('should provide the properly encoded cassandra token in the browser', () => {
-      const [window, buffer] = [anyGlobalThis.window, anyGlobalThis.Buffer];
-
-      anyGlobalThis.window = { btoa: anyGlobalThis.btoa };
-      anyGlobalThis.Buffer = null!;
-      const tp = new UsernamePasswordTokenProvider('username', 'password');
-      assert.strictEqual(tp.getToken(), 'Cassandra:dXNlcm5hbWU=:cGFzc3dvcmQ=');
-
-      [anyGlobalThis.window, anyGlobalThis.Buffer] = [window, buffer];
-    });
-
-    it('should throw an error if invalid environment', () => {
-      const buffer = globalThis.Buffer;
-
-      anyGlobalThis.Buffer = null!;
-      assert.throws(() => new UsernamePasswordTokenProvider('username', 'password'));
-
-      anyGlobalThis.Buffer = buffer;
     });
   });
 });

@@ -101,3 +101,20 @@ export function stringArraysEqual(a: readonly string[], b: readonly string[]): b
 
   return true;
 }
+
+interface JSEnvs<T> {
+  server: T,
+  browser: T,
+  unknown: T,
+}
+
+export function forJSEnv<F extends (...args: any[]) => any>(fns: JSEnvs<F>) {
+  const env =
+    (typeof globalThis.Buffer !== 'undefined')
+      ? 'server' :
+    (typeof globalThis.window !== 'undefined')
+      ? 'browser'
+      : 'unknown';
+
+  return fns[env];
+}

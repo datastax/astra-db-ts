@@ -22,6 +22,7 @@ import {
 } from '@/src/documents';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
+import { forJSEnv } from '@/src/lib/utils';
 
 /**
  * Represents any type that can be converted into a {@link DataAPIVector}
@@ -57,7 +58,7 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
   public [$SerializeForTable](ctx: TableSerCtx) {
     return ctx.done(serialize(this.#vector));
   };
-  
+
   /**
    * Implementation of `$SerializeForCollection` for {@link TableCodec}
    */
@@ -110,7 +111,7 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
    */
   public get length(): number {
     if ('$binary' in this.#vector) {
-      return ~~((this.#vector.$binary.replace(/=+$/, "").length * 3) / 4 / 4);
+      return ~~((this.#vector.$binary.replace(/=+$/, '').length * 3) / 4 / 4);
     }
     return this.#vector.length;
   }
@@ -123,7 +124,7 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
   public raw(): Exclude<DataAPIVectorLike, DataAPIVector> {
     return this.#vector;
   }
-  
+
   /**
    * Returns the vector as a `number[]`, converting between types if necessary.
    *
@@ -149,7 +150,7 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
 
   /**
    * Returns the vector as a `Float32Array`, converting between types if necessary.
-   * 
+   *
    * @returns The vector as a `Float32Array`
    */
   public asFloat32Array(): Float32Array {
@@ -158,7 +159,7 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
     }
 
     if ('$binary' in this.#vector) {
-      const deserialized =  deserializeToF32Array(this.#vector.$binary);
+      const deserialized = deserializeToF32Array(this.#vector.$binary);
 
       if (!deserialized) {
         throw new Error('Could not to deserialize vector from base64 => Float32Array; unknown environment. Please manually deserialize the binary from `vector.getAsBase64()`');
@@ -172,7 +173,7 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
 
   /**
    * Returns the vector as a base64 string, converting between types if necessary.
-   * 
+   *
    * @returns The vector as a base64 string
    */
   public asBase64(): string {
@@ -180,9 +181,9 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
 
     if (!('$binary' in serialized)) {
       if (Array.isArray(this.#vector)) {
-        throw new Error('Could not serialize vector from number[] => base64; unknown environment. Please manually serialize the binary from `vector.getRaw()`/`vector.getAsArray()`');
+        throw new Error('Could not convert vector from number[] => base64; unknown environment. Please manually serialize the binary from `vector.raw()`/`vector.getAsArray()`');
       } else {
-        throw new Error('Could not serialize vector from Float32Array => base64; unknown environment. Please manually serialize the binary from `vector.getRaw()`/`vector.getAsFloat32Array()`');
+        throw new Error('Could not convert vector from Float32Array => base64; unknown environment. Please manually serialize the binary from `vector.raw()`/`vector.getAsFloat32Array()`');
       }
     }
 
@@ -201,7 +202,7 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
 
     return `DataAPIVector<${this.length}>(typeof raw=${type}, preview=${partial})`;
   }
-  
+
   /**
    * Determines whether the given value is a vector-like value (i.e. it's {@link DataAPIVectorLike}.
    *
@@ -214,12 +215,15 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
   }
 }
 
-const serialize = (vector: Exclude<DataAPIVectorLike, DataAPIVector>): { $binary: string } | number[] => {
+const serialize = (vector: Exclude<DataAPIVectorLike, DataAPIVector>) => {
   if ('$binary' in vector) {
     return vector;
   }
+  return serializeFromArray(vector);
+};
 
-  if (typeof Buffer !== 'undefined') {
+const serializeFromArray = forJSEnv<(vector: number[] | Float32Array) => number[] | { $binary: string }>({
+  server: (vector) => {
     const buffer = Buffer.allocUnsafe(vector.length * 4);
 
     for (let i = 0; i < vector.length; i++) {
@@ -227,9 +231,8 @@ const serialize = (vector: Exclude<DataAPIVectorLike, DataAPIVector>): { $binary
     }
 
     return { $binary: buffer.toString('base64') };
-  }
-
-  if (typeof window !== 'undefined' && window.btoa) {
+  },
+  browser: (vector) => {
     const buffer = new Uint8Array(vector.length * 4);
     const view = new DataView(buffer.buffer);
 
@@ -243,17 +246,17 @@ const serialize = (vector: Exclude<DataAPIVectorLike, DataAPIVector>): { $binary
     }
 
     return { $binary: window.btoa(binary) };
-  }
+  },
+  unknown: (vector) => {
+    if (vector instanceof Float32Array) {
+      return Array.from(vector);
+    }
+    return vector;
+  },
+});
 
-  if (vector instanceof Float32Array) {
-    return Array.from(vector);
-  }
-
-  return vector;
-};
-
-const deserializeToNumberArray = (serialized: string): number[] | undefined => {
-  if (typeof Buffer !== 'undefined') {
+const deserializeToNumberArray = forJSEnv<(serialized: string) => number[] | undefined>({
+  server: (serialized) => {
     const buffer = Buffer.from(serialized, 'base64');
     const vector = Array.from<number>({ length: buffer.length / 4 });
 
@@ -262,19 +265,21 @@ const deserializeToNumberArray = (serialized: string): number[] | undefined => {
     }
 
     return vector;
-  }
+  },
+  browser: (serialized) => {
+    const deserialized = deserializeToF32Array(serialized);
 
-  const deserialized = deserializeToF32Array(serialized);
+    if (deserialized) {
+      return Array.from(deserialized);
+    }
+  },
+  unknown: () => {
+    return undefined;
+  },
+});
 
-  if (deserialized) {
-    return Array.from(deserialized);
-  }
-
-  return undefined;
-};
-
-const deserializeToF32Array = (serialized: string): Float32Array | undefined => {
-  if (typeof Buffer !== 'undefined') {
+const deserializeToF32Array = forJSEnv<(serialized: string) => Float32Array | undefined>({
+  server: (serialized) => {
     const buffer = Buffer.from(serialized, 'base64');
     const vector = new Float32Array(buffer.length / 4);
 
@@ -283,9 +288,8 @@ const deserializeToF32Array = (serialized: string): Float32Array | undefined => 
     }
 
     return vector;
-  }
-
-  if (typeof window !== 'undefined') {
+  },
+  browser: (serialized) => {
     const binary = window.atob(serialized);
     const buffer = new Uint8Array(binary.length);
 
@@ -294,7 +298,8 @@ const deserializeToF32Array = (serialized: string): Float32Array | undefined => 
     }
 
     return new Float32Array(buffer.buffer);
-  }
-
-  return undefined;
-};
+  },
+  unknown: () => {
+    return undefined;
+  },
+});

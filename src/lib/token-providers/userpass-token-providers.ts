@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { TokenProvider } from '@/src/lib/token-providers/token-provider';
+import { forJSEnv } from '@/src/lib/utils';
 
 /**
  * A token provider which translates a username-password pair into the appropriate authentication token for DSE, HCD.
@@ -40,7 +41,7 @@ export class UsernamePasswordTokenProvider extends TokenProvider {
    */
   constructor(username: string, password: string) {
     super();
-    this.#token = `Cassandra:${this.#encodeB64(username)}:${this.#encodeB64(password)}`;
+    this.#token = `Cassandra:${encodeB64(username)}:${encodeB64(password)}`;
   }
 
   /**
@@ -51,14 +52,16 @@ export class UsernamePasswordTokenProvider extends TokenProvider {
   override getToken(): string {
     return this.#token;
   }
-
-  #encodeB64(input: string) {
-    if (typeof window !== 'undefined' && typeof window.btoa === 'function') {
-      return window.btoa(input);
-    } else if (typeof Buffer === 'function') {
-      return Buffer.from(input, 'utf-8').toString('base64');
-    } else {
-      throw new Error('Unable to encode username/password to base64... please provide the "Cassandra:[username_b64]:[password_b64]" token manually');
-    }
-  }
 }
+
+const encodeB64 = forJSEnv<(input: string) => string>({
+  server: (input) => {
+    return Buffer.from(input, 'utf-8').toString('base64');
+  },
+  browser: (input) => {
+    return window.btoa(input);
+  },
+  unknown: () => {
+    throw new Error('Unable to encode username/password to base64... please provide the "Cassandra:[username_b64]:[password_b64]" token manually');
+  },
+});

@@ -15,6 +15,7 @@
 import { $CustomInspect } from '@/src/lib/constants';
 import { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
+import { forJSEnv } from '@/src/lib/utils';
 
 /**
  * Represents any type that can be converted into a {@link DataAPIBlob}
@@ -183,54 +184,40 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
   }
 }
 
-const base64ToArrayBuffer =
-  (typeof Buffer !== 'undefined')
-    ? nodeBase64ToArrayBuffer :
-  (typeof window !== 'undefined')
-    ? webBase64ToArrayBuffer
-    : panicBase64ToBuffer;
+const base64ToArrayBuffer = forJSEnv<(base64: string) => ArrayBuffer>({
+  server: (base64) => {
+    return bufferToArrayBuffer(Buffer.from(base64, 'base64'));
+  },
+  browser: (base64) => {
+    const binaryString = window.atob(base64);
+    const len = binaryString.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i);
+    }
+    return bytes.buffer;
+  },
+  unknown: () => {
+    throw new Error("Cannot convert base64 to Buffer/ArrayBuffer in this environment; please do so manually");
+  },
+});
 
-function webBase64ToArrayBuffer(base64: string): ArrayBuffer {
-  const binaryString = window.atob(base64);
-  const len = binaryString.length;
-  const bytes = new Uint8Array(len);
-  for (let i = 0; i < len; i++) {
-    bytes[i] = binaryString.charCodeAt(i);
-  }
-  return bytes.buffer;
-}
-
-function nodeBase64ToArrayBuffer(base64: string): ArrayBuffer {
-  return bufferToArrayBuffer(Buffer.from(base64, 'base64'));
-}
-
-function panicBase64ToBuffer(): ArrayBuffer {
-  throw new Error("Cannot convert base64 to Buffer/ArrayBuffer in this environment; please do so manually");
-}
-
-const arrayBufferToBase64 =
-  (typeof Buffer !== 'undefined')
-    ? nodeArrayBufferToBase64 :
-  (typeof window !== 'undefined')
-    ? webArrayBufferToBase64
-    : panicBufferToBase64;
-
-function webArrayBufferToBase64(buffer: ArrayBuffer): string {
-  let binary = '';
-  const bytes = new Uint8Array(buffer);
-  for (let i = 0; i < bytes.length; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return window.btoa(binary);
-}
-
-function nodeArrayBufferToBase64(buffer: ArrayBuffer): string {
-  return Buffer.from(buffer).toString('base64');
-}
-
-function panicBufferToBase64(): string {
-  throw new Error("Cannot convert Buffer/ArrayBuffer to base64 in this environment; please do so manually");
-}
+const arrayBufferToBase64 = forJSEnv<(buffer: ArrayBuffer) => string>({
+  server: (buffer) => {
+    return Buffer.from(buffer).toString('base64');
+  },
+  browser: (buffer) => {
+    let binary = '';
+    const bytes = new Uint8Array(buffer);
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return window.btoa(binary);
+  },
+  unknown: () => {
+    throw new Error("Cannot convert Buffer/ArrayBuffer to base64 in this environment; please do so manually");
+  },
+});
 
 function bufferToArrayBuffer(b: Buffer): ArrayBuffer {
   return b.buffer.slice(b.byteOffset, b.byteOffset + b.byteLength);

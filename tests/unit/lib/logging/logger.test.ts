@@ -151,5 +151,13 @@ describe('unit.lib.logging.logger', () => {
       assert.strictEqual(stdout.length, 1);
       assert.strictEqual(stderr.length, 0);
     });
+
+    it('should not log events if not enabled', () => {
+      const logger = new Logger([{ events: ['commandStarted'], emits: ['stdout'] }], emitter, console);
+      logger.commandStarted?.({ timeoutManager: { initial: () => ({}) }, command: {} } as any);
+      assert.strictEqual(events.length, 0);
+      assert.strictEqual(stdout.length, 1);
+      assert.strictEqual(stderr.length, 0);
+    });
   });
 });
