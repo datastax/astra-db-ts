@@ -254,9 +254,10 @@ export type CqlType2TSType<T extends string, Def> =
 
 interface CqlNonGenericType2TSTypeDict {
   ascii: string | null,
-  bigint: number | null,
+  bigint: bigint | null,
   blob: DataAPIBlob | null,
   boolean: boolean | null,
+  counter: bigint | null,
   date: DataAPIDate | null,
   decimal: BigNumber | null,
   double: number | null,
@@ -268,6 +269,7 @@ interface CqlNonGenericType2TSTypeDict {
   text: string | null;
   time: DataAPITime | null,
   timestamp: Date | null,
+  timeuuid: UUID | null,
   tinyint: number | null,
   uuid: UUID | null,
   varchar: string | null,

@@ -92,6 +92,14 @@ const DefaultCollectionSerDesCfg = {
       }
     }
 
+    for (const codec of codecs.customGuard) {
+      if (codec.serializeGuard(value, ctx)) {
+        if ((resp = codec.serialize(key, value, ctx))[0] !== CONTINUE) {
+          return resp;
+        }
+      }
+    }
+
     if (typeof value === 'object' && value !== null) {
       if (value[$SerializeForCollection]) {
         if ((resp = value[$SerializeForCollection](ctx))[0] !== CONTINUE) {
@@ -119,13 +127,6 @@ const DefaultCollectionSerDesCfg = {
       }
     }
 
-    for (const codec of codecs.customGuard) {
-      if (codec.serializeGuard(value, ctx)) {
-        if ((resp = codec.serialize(key, value, ctx))[0] !== CONTINUE) {
-          return resp;
-        }
-      }
-    }
     return ctx.continue();
   },
   deserialize(key, value, ctx) {
@@ -153,6 +154,7 @@ const DefaultCollectionSerDesCfg = {
         return resp;
       }
     }
+
     return ctx.continue();
   },
   codecs: Object.values(CollCodecs.Defaults),

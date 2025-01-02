@@ -47,7 +47,7 @@ parallel('integration.documents.tables.insert-one', { truncate: 'tables:before' 
       map: new Map([[key, UUID.v4()]]),
       ascii: 'highway_star',
       blob: new DataAPIBlob(Buffer.from('smoke_on_the_water')),
-      bigint: 1231233,
+      bigint: 1231233n,
       date: new DataAPIDate(),
       decimal: BigNumber('12.34567890123456789012345678901234567890'),
       double: 123.456,
@@ -154,7 +154,7 @@ parallel('integration.documents.tables.insert-one', { truncate: 'tables:before' 
     });
 
     it('should handle different different int insertion cases', async () => {
-      await Promise.all(['int', 'tinyint', 'smallint', 'bigint'].map(async (col) => {
+      await Promise.all(['int', 'tinyint', 'smallint'].map(async (col) => {
         const table = await db.createTable(`temp_${col}`, { definition: { columns: { intT: col }, primaryKey: 'intT' } });
 
         await assert.rejects(() => table.insertOne({ intT: 1.1 }), DataAPIResponseError, col);

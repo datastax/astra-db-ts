@@ -51,9 +51,12 @@ export type TableCodec<_Class extends TableCodecClass> = EmptyObj;
 export class TableCodecs {
   public static Defaults = {
     bigint: TableCodecs.forType('bigint', {
-      deserialize: (_, value, ctx) => ctx.done(parseInt(value)),
+      deserialize: (_, value, ctx) => ctx.done(BigInt(value)),
     }),
     blob: TableCodecs.forType('blob', DataAPIBlob),
+    counter: TableCodecs.forType('counter', {
+      deserialize: (_, value, ctx) => ctx.done(BigInt(value)),
+    }),
     date: TableCodecs.forType('date', DataAPIDate),
     decimal: TableCodecs.forType('decimal', {
       deserialize: (_, value, ctx) => ctx.done((value instanceof BigNumber) ? value : new BigNumber(value)),

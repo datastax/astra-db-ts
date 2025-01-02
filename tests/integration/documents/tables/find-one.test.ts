@@ -78,7 +78,7 @@ parallel('integration.documents.tables.find-one', { truncate: 'colls:before', dr
       map: new Map([]),
       ascii: 'highway_star',
       blob: new DataAPIBlob(Buffer.from('smoke_on_the_water')),
-      bigint: 1231233,
+      bigint: 1231233n,
       date: new DataAPIDate(),
       decimal: BigNumber('12.34567890123456789012345678901234567890'),
       double: 123.456,
