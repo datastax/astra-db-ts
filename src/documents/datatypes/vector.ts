@@ -268,7 +268,6 @@ const deserializeToNumberArray = forJSEnv<(serialized: string) => number[] | und
   },
   browser: (serialized) => {
     const deserialized = deserializeToF32Array(serialized);
-
     if (deserialized) {
       return Array.from(deserialized);
     }
@@ -297,7 +296,14 @@ const deserializeToF32Array = forJSEnv<(serialized: string) => Float32Array | un
       buffer[i] = binary.charCodeAt(i);
     }
 
-    return new Float32Array(buffer.buffer);
+    const vector = new Float32Array(buffer.buffer);
+    const view = new DataView(buffer.buffer);
+
+    for (let i = 0; i < vector.length; i++) {
+      vector[i] = view.getFloat32(i * 4, false);
+    }
+
+    return vector;
   },
   unknown: () => {
     return undefined;

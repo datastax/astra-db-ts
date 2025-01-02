@@ -157,11 +157,11 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
       return arrayBufferToBase64(this.#raw);
     }
 
-    if (this.#raw instanceof Buffer) {
-      return this.#raw.toString('base64');
+    if ('$binary' in this.#raw) {
+      return this.#raw.$binary;
     }
 
-    return this.#raw.$binary;
+    return this.#raw.toString('base64');
   }
 
   /**

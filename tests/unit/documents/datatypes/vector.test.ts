@@ -63,7 +63,7 @@ describe('unit.documents.datatypes.vector', () => {
     }
   });
 
-  it('should convert between all types', () => {
+  it('should convert between all types on the server', () => {
     const vectors = [vector(ARR), vector(F32ARR), vector(BINARY), vector(vector(ARR))];
 
     for (const vec of vectors) {
@@ -71,5 +71,33 @@ describe('unit.documents.datatypes.vector', () => {
       assert.deepStrictEqual(vec.asArray(), ARR);
       assert.deepStrictEqual(vec.asFloat32Array(), F32ARR);
     }
+  });
+
+  it('should convert between all types in the browser', { pretendEnv: 'browser' }, () => {
+    const vectors = [vector(ARR), vector(F32ARR), vector(BINARY), vector(vector(ARR))];
+
+    for (const vec of vectors) {
+      assert.strictEqual(vec.asBase64(), BINARY.$binary);
+      assert.deepStrictEqual(vec.asArray(), ARR);
+      assert.deepStrictEqual(vec.asFloat32Array(), F32ARR);
+    }
+  });
+
+  it('should throw various conversion errors in unknown environments', { pretendEnv: 'unknown' }, () => {
+    assert.throws(() => vector(ARR).asBase64());
+    assert.ok(vector(ARR).asArray());
+    assert.ok(vector(ARR).asFloat32Array());
+
+    assert.throws(() => vector(F32ARR).asBase64());
+    assert.ok(vector(F32ARR).asArray());
+    assert.ok(vector(F32ARR).asFloat32Array());
+
+    assert.ok(vector(BINARY).asBase64());
+    assert.throws(() => vector(BINARY).asArray());
+    assert.throws(() => vector(BINARY).asFloat32Array());
+
+    assert.throws(() => vector(vector(ARR)).asBase64());
+    assert.ok(vector(vector(ARR)).asArray());
+    assert.ok(vector(vector(ARR)).asFloat32Array());
   });
 });

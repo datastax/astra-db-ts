@@ -63,7 +63,7 @@ describe('unit.documents.datatypes.blob', () => {
     }
   });
 
-  it('should convert between all types', () => {
+  it('should convert between all types on the server', () => {
     const blobs = [blob(BUFF), blob(ARR_BUFF), blob(BINARY), blob(blob(BUFF))];
 
     for (const blb of blobs) {
@@ -71,6 +71,32 @@ describe('unit.documents.datatypes.blob', () => {
       assert.deepStrictEqual(blb.asBuffer(), BUFF);
       assert.deepStrictEqual(blb.asArrayBuffer(), ARR_BUFF);
     }
+  });
+
+  // Technically the browser doesn't have the Buffer, but the "absent Buffer" case is tested in the next test anyways
+  it('should convert between compatible types in the browser', { pretendEnv: 'browser' }, () => {
+    const blobs = [blob(BUFF), blob(ARR_BUFF), blob(BINARY), blob(blob(ARR_BUFF))];
+
+    for (const blb of blobs) {
+      assert.strictEqual(blb.asBase64(), BINARY.$binary);
+      assert.deepStrictEqual(blb.asBuffer(), BUFF);
+      assert.deepStrictEqual(blb.asArrayBuffer(), ARR_BUFF);
+    }
+  });
+
+  // This is mainly just testing to see what happens if both Buffer and window are undefined
+  it('should throw various conversion errors in unknown environments', { pretendEnv: 'unknown' }, () => {
+    assert.throws(() => blob(BUFF).asBase64());
+    assert.throws(() => blob(BUFF).asBuffer());
+    assert.throws(() => blob(BUFF).asArrayBuffer());
+
+    assert.throws(() => blob(ARR_BUFF).asBase64());
+    assert.throws(() => blob(ARR_BUFF).asBuffer());
+    assert.ok(blob(ARR_BUFF).asArrayBuffer());
+
+    assert.ok(blob(BINARY).asBase64());
+    assert.throws(() => blob(BINARY).asBuffer());
+    assert.throws(() => blob(BINARY).asArrayBuffer());
   });
 
   it('should throw on Buffer not available', () => {

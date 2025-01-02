@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { UsernamePasswordTokenProvider, StaticTokenProvider } from '@/src/lib';
+import { StaticTokenProvider, UsernamePasswordTokenProvider } from '@/src/lib';
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 
@@ -26,9 +26,18 @@ describe('unit.common.token-providers', () => {
   });
 
   describe('UsernamePasswordTokenProvider', () => {
-    it('should provide the properly encoded cassandra token', () => {
+    it('should provide the properly encoded cassandra token on the server', () => {
       const tp = new UsernamePasswordTokenProvider('username', 'password');
       assert.strictEqual(tp.getToken(), 'Cassandra:dXNlcm5hbWU=:cGFzc3dvcmQ=');
+    });
+
+    it('should provide the properly encoded cassandra token in the browser', { pretendEnv: 'browser' }, () => {
+      const tp = new UsernamePasswordTokenProvider('username', 'password');
+      assert.strictEqual(tp.getToken(), 'Cassandra:dXNlcm5hbWU=:cGFzc3dvcmQ=');
+    });
+
+    it('should error in unknown environment', { pretendEnv: 'unknown' }, () => {
+      assert.throws(() => new UsernamePasswordTokenProvider('username', 'password'), { message: 'Unable to encode username/password to base64... please provide the "Cassandra:[username_b64]:[password_b64]" token manually' });
     });
   });
 });

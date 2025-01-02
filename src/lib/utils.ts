@@ -16,6 +16,7 @@ import { DataAPIEnvironment, nullish } from '@/src/lib/types';
 import { DataAPIEnvironments } from '@/src/lib/constants';
 import JBI from 'json-bigint';
 import { SomeDoc } from '@/src/documents';
+import process from 'node:process';
 
 /**
  * @internal
@@ -108,13 +109,20 @@ interface JSEnvs<T> {
   unknown: T,
 }
 
-export function forJSEnv<F extends (...args: any[]) => any>(fns: JSEnvs<F>) {
-  const env =
-    (typeof globalThis.Buffer !== 'undefined')
-      ? 'server' :
-    (typeof globalThis.window !== 'undefined')
-      ? 'browser'
-      : 'unknown';
+const getJSEnv = () =>
+  (typeof globalThis.window !== 'undefined')
+    ? 'browser' :
+  (typeof globalThis.Buffer !== 'undefined')
+    ? 'server'
+    : 'unknown';
 
+const env = getJSEnv();
+
+export function forJSEnv<F extends (...args: any[]) => any>(fns: JSEnvs<F>) {
+  if (process.env.CLIENT_DYNAMIC_JS_ENV_CHECK) {
+    return (...args: Parameters<F>) => {
+      return fns[getJSEnv()](...args);
+    };
+  }
   return fns[env];
 }

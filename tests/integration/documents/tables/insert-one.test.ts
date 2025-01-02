@@ -24,11 +24,11 @@ import {
   InetAddress,
   UUID,
 } from '@/src/documents';
-import { describe, it, parallel } from '@/tests/testlib';
+import { it, parallel, describe } from '@/tests/testlib';
 import assert from 'assert';
 import BigNumber from 'bignumber.js';
 
-parallel('integration.documents.tables.insert-one', { truncate: 'colls:before' }, ({ table, table_ }) => {
+parallel('integration.documents.tables.insert-one', { truncate: 'tables:before' }, ({ table, table_ }) => {
   it('should insert one partial row', async (key) => {
     const inserted = await table.insertOne({
       text: key,
@@ -171,7 +171,9 @@ parallel('integration.documents.tables.insert-one', { truncate: 'colls:before' }
         await table.drop();
       }));
     });
+  });
 
+  describe('scalar inserts (group #2)', ({ db }) => {
     it('should handle different ascii insertion cases', async () => {
       const table = await db.createTable('temp_ascii', { definition: { columns: { ascii: 'ascii' }, primaryKey: 'ascii' } });
 
@@ -202,9 +204,7 @@ parallel('integration.documents.tables.insert-one', { truncate: 'colls:before' }
 
       await table.drop();
     });
-  });
 
-  describe('scalar inserts (group #2)', ({ db }) => {
     it('should handle different blob insertion cases', async () => {
       const table = await db.createTable('temp_blob', { definition: { columns: { blob: 'blob' }, primaryKey: 'blob' } });
       const buffer = Buffer.from([0x0, 0x1]);
@@ -366,6 +366,11 @@ parallel('integration.documents.tables.insert-one', { truncate: 'colls:before' }
         await table.drop();
       }));
     });
+
+    // it('should handle different duration insertion cases', () => {
+    //   const table = db.createTable('temp_duration', { definition: { columns: { duration: 'duration' }, primaryKey: 'duration' } });
+    //
+    // });
   });
 
   // describe('scalar inserts (group #3)', ({ db }) => {
