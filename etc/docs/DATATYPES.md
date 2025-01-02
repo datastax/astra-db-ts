@@ -140,25 +140,6 @@ const doc = await collection.findOne();
 console.log(doc.date instanceof Date); // true
 ```
 
-If you prefer to use `DataAPITimestamp`s for interop with tables, that's also allowed, though you'll need to enable a certain codec if you want to read the date back as a `DataAPITimestamp`.
-
-- `DataAPITimestamp`s will still serialize to a `$date` by default, even if you don't set the necessary codec.
-
-```typescript
-import { CollCodecs, DataAPITimestamp, timestamp } from '@datastax/astra-db-ts';
-
-const collection = db.collection('my_coll', {
-  serdes: { codecs: [CollCodecs.USE_DATA_API_TIMESTAMPS_FOR_DATES] },
-});
-
-await collection.insertOne({
-  date: timestamp(), // Equivalent to `new DataAPITimestamp()`
-});
-
-const doc = await collection.findOne();
-console.log(doc.date instanceof DataAPITimestamp); // true
-```
-
 ### ObjectIds
 
 You can use objectIds in collections using the `ObjectId` class (or the `oid` shorthand). Make sure you're importing this from `'@datastax/astra-db-ts'`, and _not_ from `'bson'`.
@@ -336,32 +317,34 @@ console.log(row.list[0]); // 'value'
 
 ### Dates & times
 
-Due to the variety of date & time classes available through the Data API, four custom classes are provided to represent them in the client.
+Due to the variety of date & time classes available through the Data API, some custom classes are provided to represent them in the client.
+
+Only the `timestamp` type is represented by the native JavaScript `Date` object.
 
 ```typescript
-import { date, duration, time, timestamp, ... } from '@datastax/astra-db-ts';
+import { date, duration, time, ...g } from '@datastax/astra-db-ts';
 
 await table.insertOne({
   date: date(), // Equivalent to `new DataAPIDate()`
   time: time(), // Equivalent to `new DataAPITime()`
-  timestamp: timestamp(), // Equivalent to `new DataAPITimestamp()`
+  timestamp: new Date(), // Uses the native `Date` object
   duration: duration('P5DT30M'), // Equivalent to `new DataAPIDuration(...)`
 });
 
 const row = await table.findOne();
 console.log(row.date instanceof DataAPIDate); // true
 console.log(row.time instanceof DataAPITime); // true
-console.log(row.timestamp instanceof DataAPITimestamp); // true
+console.log(row.timestamp instanceof Date); // true
 console.log(row.duration instanceof DataAPIDuration); // true
 ```
 
-You can create these classes through the constructor function, or through the respective shorthand, by providing the date/time/duration in a few different ways:
+You can create the custom classes through the constructor function, or through their respective shorthands, by providing the date/time/duration in a few different ways:
 1. As a raw string formatted as it would be stored in the database (`'1992-05-28'`, `'12:34:56'`, `'2021-09-30T12:34:56.789Z'`, `'P5DT30M'`)
 2. As a `Date` object (`new Date(1734070574056)`)
-   - Durations are the exception here, as they doesn't have a direct `Date` equivalent
+   - Durations are the exception here, as they don't have a direct `Date` equivalent
 3. As the `*Components` object for that respective class (e.g. `{ year: 1992, month: 5, day: 28 }`)
 
-From each class, you can generally:
+From each custom class, you can generally:
 - Get the string representation of the date/time/duration using `.toString()`
 - Get the date/time as a `Date` object using `.toDate()`
 - Get the individual components of the date/time using `.components()`
@@ -498,29 +481,29 @@ If you really want to change the behavior of how a certain type is deserialized,
 
 ### Tables
 
-| Type        | Type               | Shorthand   | Examples                                                                             |
-|-------------|--------------------|-------------|--------------------------------------------------------------------------------------|
-| `ascii`     | `string`           | -           | `'Hello!'`                                                                           |
-| `bigint`    | `number`           | -           | `42`                                                                                 |
-| `blob`      | `DataAPIBlob`      | `blob`      | `new DataAPIBlob(Buffer.from(...))`, `blob({ $binary: '<b64_str>' })`                |
-| `boolean`   | `boolean`          | -           | `true`                                                                               |
-| `date`      | `DataAPIDate`      | `date`      | `new DataAPIDate()`, `date(new Date(1734070574056))`, `date('1992-05-28')`, `date()` |
-| `decimal`   | `BigNumber`        | -           | `new BigNumber(123.4567)`, `BigNumber('123456.7e-3')`                                |
-| `double`    | `number`           | -           | `3.14`, `NaN`, `Infinity`, `-Infinity`                                               |
-| `duration`  | `DataAPIDuration`  | `duration`  | `new DataAPIDuration('3w')`, `duration('P5DT30M')`                                   |
-| `float`     | `number`           | -           | `3.14`, `NaN`, `Infinity`, `-Infinity`                                               |
-| `inet`.     | `InetAddress`      | `inet`      | `new InetAddress('::1')`, `inet('127.0.0.1')`                                        |
-| `int`       | `number`           | -           | `42`                                                                                 |
-| `list`      | `Array`            | -           | `['value']`                                                                          |
-| `map`       | `Map`              | -           | `new Map([['key', 'value']])`                                                        |
-| `set`       | `Set`              | -           | `new Set(['value'])`                                                                 |
-| `smallint`  | `number`           | -           | `42`                                                                                 |
-| `text`      | `string`           | -           | `'Hello!'`                                                                           |
-| `time`      | `DataAPITime`      | `time`      | `new DataAPITime()`, `time(new Date(1734070574056))`, `time('12:34:56')`, `time()`   |
-| `timestamp` | `DataAPITimestamp` | `timestamp` | `new DataAPITimestamp('...')`, `timestamp(new Date(1734070574056))`, `timestamp()`   |
-| `timeuuid`  | `UUID`             | `timeuuid`  | `new UUID('...')`, `UUID.v1()`, `uuid('...')`, `uuid(1)`                             |
-| `tinyint`   | `number`           | -           | `42`                                                                                 |
-| `uuid`      | `UUID`             | `uuid`      | `new UUID('...')`, `UUID.v4()`, `uuid('...')`, `uuid(7)`                             |
-| `varchar`   | `string`           | -           | `'Hello!'`                                                                           |
-| `varint`    | `bigint`           | -           | `BigInt('42')`, `42n`                                                                |
-| `vector`    | `DataAPIVector`    | `vector`    | `new DataAPIVector([.1, .2, .3])`, `vector([.1, .2, .3])`                            |
+| Type        | Type              | Shorthand  | Examples                                                                             |
+|-------------|-------------------|------------|--------------------------------------------------------------------------------------|
+| `ascii`     | `string`          | -          | `'Hello!'`                                                                           |
+| `bigint`    | `number`          | -          | `42`                                                                                 |
+| `blob`      | `DataAPIBlob`     | `blob`     | `new DataAPIBlob(Buffer.from(...))`, `blob({ $binary: '<b64_str>' })`                |
+| `boolean`   | `boolean`         | -          | `true`                                                                               |
+| `date`      | `DataAPIDate`     | `date`     | `new DataAPIDate()`, `date(new Date(1734070574056))`, `date('1992-05-28')`, `date()` |
+| `decimal`   | `BigNumber`       | -          | `new BigNumber(123.4567)`, `BigNumber('123456.7e-3')`                                |
+| `double`    | `number`          | -          | `3.14`, `NaN`, `Infinity`, `-Infinity`                                               |
+| `duration`  | `DataAPIDuration` | `duration` | `new DataAPIDuration('3w')`, `duration('P5DT30M')`                                   |
+| `float`     | `number`          | -          | `3.14`, `NaN`, `Infinity`, `-Infinity`                                               |
+| `inet`.     | `InetAddress`     | `inet`     | `new InetAddress('::1')`, `inet('127.0.0.1')`                                        |
+| `int`       | `number`          | -          | `42`                                                                                 |
+| `list`      | `Array`           | -          | `['value']`                                                                          |
+| `map`       | `Map`             | -          | `new Map([['key', 'value']])`                                                        |
+| `set`       | `Set`             | -          | `new Set(['value'])`                                                                 |
+| `smallint`  | `number`          | -          | `42`                                                                                 |
+| `text`      | `string`          | -          | `'Hello!'`                                                                           |
+| `time`      | `DataAPITime`     | `time`     | `new DataAPITime()`, `time(new Date(1734070574056))`, `time('12:34:56')`, `time()`   |
+| `timestamp` | `Date`            | -          | `new Date()`, `new Date(1734070574056)`, `new Date('...')`                           |
+| `timeuuid`  | `UUID`            | `timeuuid` | `new UUID('...')`, `UUID.v1()`, `uuid('...')`, `uuid(1)`                             |
+| `tinyint`   | `number`          | -          | `42`                                                                                 |
+| `uuid`      | `UUID`            | `uuid`     | `new UUID('...')`, `UUID.v4()`, `uuid('...')`, `uuid(7)`                             |
+| `varchar`   | `string`          | -          | `'Hello!'`                                                                           |
+| `varint`    | `bigint`          | -          | `BigInt('42')`, `42n`                                                                |
+| `vector`    | `DataAPIVector`   | `vector`   | `new DataAPIVector([.1, .2, .3])`, `vector([.1, .2, .3])`                            |

@@ -16,7 +16,6 @@
 import { UUID } from '@/src/documents/datatypes/uuid';
 import { ObjectId } from '@/src/documents/datatypes/object-id';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
-import { DataAPITimestamp } from '@/src/documents/datatypes/dates';
 import { CollDesCtx, CollSerCtx } from '@/src/documents';
 import { EmptyObj, SerDesFn } from '@/src/lib';
 import { CodecOpts, RawCodec } from '@/src/lib/api/ser-des/codecs';
@@ -61,8 +60,6 @@ export class CollCodecs {
     $uuid: CollCodecs.forType('$uuid', UUID),
     $objectId: CollCodecs.forType('$objectId', ObjectId),
   };
-
-  public static USE_DATA_API_TIMESTAMPS_FOR_DATES = CollCodecs.forType('$date', DataAPITimestamp);
 
   public static forPath(path: string[], optsOrClass: CodecOpts<CollCodecSerDesFns, CollSerCtx, CollDesCtx> | CollCodecClass): RawCodec<CollCodecSerDesFns> {
     return {

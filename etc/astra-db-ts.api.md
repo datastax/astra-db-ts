@@ -370,8 +370,6 @@ export class CollCodecs {
     static forPath(path: string[], optsOrClass: CodecOpts<CollCodecSerDesFns, CollSerCtx, CollDesCtx> | CollCodecClass): RawCodec<CollCodecSerDesFns>;
     // (undocumented)
     static forType(type: string, optsOrClass: CodecOpts<CollCodecSerDesFns, CollSerCtx, CollDesCtx> | CollCodecClass): RawCodec<CollCodecSerDesFns>;
-    // (undocumented)
-    static USE_DATA_API_TIMESTAMPS_FOR_DATES: RawCodec<CollCodecSerDesFns>;
 }
 
 // @public (undocumented)
@@ -861,7 +859,7 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
     constructor(input?: string | Date | DataAPIDateComponents);
     components(): DataAPIDateComponents;
-    toDate(base?: Date | DataAPITime | DataAPITimestamp): Date;
+    toDate(base?: Date | DataAPITime): Date;
     toString(): string;
 }
 
@@ -968,7 +966,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
         nanoseconds?: number;
     }));
     components(): DataAPITimeComponents;
-    toDate(base?: Date | DataAPIDate | DataAPITimestamp): Date;
+    toDate(base?: Date | DataAPIDate): Date;
     toString(): string;
 }
 
@@ -994,40 +992,11 @@ export class DataAPITimeoutError extends DataAPIError {
 }
 
 // @public
-export class DataAPITimestamp implements CollCodec<typeof DataAPITimestamp>, TableCodec<typeof DataAPITimestamp> {
-    static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx): readonly [0, (DataAPITimestamp | undefined)?];
-    static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx): readonly [0, (DataAPITimestamp | undefined)?];
-    [$SerializeForCollection](ctx: CollSerCtx): readonly [0, ({
-        $date: string;
-    } | undefined)?];
-    [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
-    constructor(input?: string | Date | Partial<DataAPITimestampComponents>);
-    components(): DataAPITimestampComponents;
-    toDate(): Date;
-    toString(): string;
-}
-
-// @public
-export interface DataAPITimestampComponents {
-    date: number;
-    hours: number;
-    minutes: number;
-    month: number;
-    nanoseconds: number;
-    seconds: number;
-    year: number;
-}
-
-// @public
 export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCodec<typeof DataAPIVector> {
     static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx): readonly [0, (DataAPIVector | undefined)?];
     static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx): readonly [0, (DataAPIVector | undefined)?];
-    [$SerializeForCollection](ctx: CollSerCtx): readonly [0, (number[] | {
-        $binary: string;
-    } | undefined)?];
-    [$SerializeForTable](ctx: TableSerCtx): readonly [0, (number[] | {
-        $binary: string;
-    } | undefined)?];
+    [$SerializeForCollection](ctx: CollSerCtx): readonly [0, any?];
+    [$SerializeForTable](ctx: TableSerCtx): readonly [0, any?];
     constructor(vector: DataAPIVectorLike, validate?: boolean);
     asArray(): number[];
     asBase64(): string;
@@ -1853,7 +1822,7 @@ export class TableCodecs {
 // @public (undocumented)
 export interface TableCodecSerDesFns {
     // (undocumented)
-    deserialize: (key: string | undefined, val: any, ctx: TableDesCtx, definition: SomeDoc) => ReturnType<SerDesFn<any>>;
+    deserialize: (key: string | undefined, val: any, ctx: TableDesCtx, definition?: SomeDoc) => ReturnType<SerDesFn<any>>;
     // (undocumented)
     serialize: SerDesFn<TableSerCtx>;
 }
@@ -2001,9 +1970,6 @@ export interface TimeoutDescriptor {
     tableAdminTimeoutMs: number;
 }
 
-// @public
-export const timestamp: (timestamp?: string | Date | DataAPITimestampComponents) => DataAPITimestamp;
-
 // Warning: (ae-forgotten-export) The symbol "Merge" needs to be exported by the entry point index.d.ts
 // Warning: (ae-forgotten-export) The symbol "_ToDotNotation" needs to be exported by the entry point index.d.ts
 //
@@ -2037,6 +2003,15 @@ export class TooManyRowsToCountError extends DataAPIError {
 export type TypeCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'deserialize'> & {
     type: string;
 };
+
+// @public
+export class UnexpectedDataAPIResponseError extends Error {
+    // @internal
+    constructor(message: string, rawDataAPIResponse: unknown);
+    readonly rawDataAPIResponse?: unknown;
+    // (undocumented)
+    static require<T>(val: T | null | undefined, message: string, rawDataAPIResponse?: unknown): T;
+}
 
 // @public
 export type UpdateFilter = Record<string, any>;

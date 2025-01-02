@@ -12,27 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIResponseError, timestamp } from '@/src/documents';
+import { DataAPIResponseError } from '@/src/documents';
 import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.documents.tables.misc', ({ db, table }) => {
+parallel('integration.documents.tables.misc', ({ db }) => {
   it('DataAPIResponseError is thrown when doing data api operation on non-existent tables', async () => {
     const table = db.table('non_existent_collection');
     await assert.rejects(() => table.insertOne({ text: 'test' }), DataAPIResponseError);
-  });
-
-  it('handles timestamps properly', async () => {
-    const ts1 = timestamp();
-    await table.insertOne({ text: '123', int: 0, timestamp: ts1 });
-    const row1 = await table.findOne({ text: '123' });
-    assert.deepStrictEqual(row1?.timestamp, ts1);
-
-    const ts2 = timestamp(new Date('2021-01-01'));
-    await table.insertOne({ text: '123', int: 0, timestamp: ts2 });
-    const row2 = await table.findOne({ text: '123' });
-    assert.deepStrictEqual(row2?.timestamp, ts2);
-
-    console.log(row1.timestamp, row2.timestamp);
   });
 });

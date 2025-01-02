@@ -14,8 +14,7 @@
 
 import { isNullish } from '@/src/lib/utils';
 import { $CustomInspect } from '@/src/lib/constants';
-import { CollCodec, CollDesCtx, CollSerCtx, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
-import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
+import { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 
 /**
@@ -121,11 +120,7 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
    *
    * @returns The `Date` object representing this `DataAPIDate`
    */
-  public toDate(base?: Date | DataAPITime | DataAPITimestamp): Date {
-    if (base instanceof DataAPITimestamp) {
-      base = base.toDate();
-    }
-
+  public toDate(base?: Date | DataAPITime): Date {
     if (!base) {
       base = new Date();
     }
@@ -319,11 +314,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
    *
    * @returns The `Date` object representing this `DataAPITime`
    */
-  public toDate(base?: Date | DataAPIDate | DataAPITimestamp): Date {
-    if (base instanceof DataAPITimestamp) {
-      base = base.toDate();
-    }
-
+  public toDate(base?: Date | DataAPIDate): Date {
     if (!base) {
       base = new Date();
     }
@@ -348,148 +339,5 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
    */
   public toString() {
     return this.#time;
-  }
-}
-
-/**
- * A shorthand function for `new DataAPITimestamp(timestamp?)`
- *
- * If no timestamp is provided, it defaults to the current timestamp.
- *
- * @public
- */
-export const timestamp = (timestamp?: string | Date | DataAPITimestampComponents) => new DataAPITimestamp(timestamp);
-
-/**
- * Represents the time components that make up a `DataAPITimestamp`
- *
- * @public
- */
-export interface DataAPITimestampComponents {
-  /**
-   * The year of the timestamp
-   */
-  year: number,
-  /**
-   * The month of the timestamp (should be between 1 and 12)
-   */
-  month: number,
-  /**
-   * The day of the month
-   */
-  date: number,
-  /**
-   * The hour of the timestamp
-   */
-  hours: number,
-  /**
-   * The minute of the timestamp
-   */
-  minutes: number,
-  /**
-   * The second of the timestamp
-   */
-  seconds: number,
-  /**
-   * The nanosecond of the timestamp
-   */
-  nanoseconds: number,
-}
-
-/**
- * Represents a `timestamp` column for Data API tables.
- *
- * You may use the {@link timestamp} function as a shorthand for creating a new `DataAPITimestamp`.
- *
- * See the official DataStax documentation for more information.
- *
- * @public
- */
-export class DataAPITimestamp implements CollCodec<typeof DataAPITimestamp>, TableCodec<typeof DataAPITimestamp> {
-  readonly #timestamp: string;
-
-  /**
-   * Implementation of `$SerializeForTable` for {@link TableCodec}
-   */
-  public [$SerializeForTable](ctx: TableSerCtx) {
-    return ctx.done(this.#timestamp);
-  };
-
-  /**
-   * Implementation of `$SerializeForCollection` for {@link TableCodec}
-   */
-  public [$SerializeForCollection](ctx: CollSerCtx) {
-    return ctx.done({ $date: new Date(this.#timestamp).valueOf() });
-  };
-
-  /**
-   * Implementation of `$DeserializeForTable` for {@link TableCodec}
-   */
-  public static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx) {
-    return ctx.done(new DataAPITimestamp(value));
-  }
-
-  /**
-   * Implementation of `$DeserializeForCollection` for {@link TableCodec}
-   */
-  public static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx) {
-    return ctx.done(new DataAPITimestamp(new Date(value.$date).toISOString()));
-  }
-
-  /**
-   * Creates a new `DataAPITimestamp` instance from various formats.
-   *
-   * @param input - The input to create the `DataAPITimestamp` from
-   */
-  public constructor(input?: string | Date | Partial<DataAPITimestampComponents>) {
-    input ||= new Date();
-
-    if (typeof input === 'string') {
-      this.#timestamp = input;
-    } else if (input instanceof Date) {
-      this.#timestamp = input.toISOString();
-    } else {
-      this.#timestamp = new Date(input.year ?? 0, input.month ?? 1 - 1, input.date, input.hours, input.minutes, input.seconds, input.nanoseconds ?? 0 / 1_000_000).toISOString();
-    }
-
-    Object.defineProperty(this, $CustomInspect, {
-      value: () => `DataAPITimestamp("${this.#timestamp}")`,
-    });
-  }
-
-  /**
-   * Returns the {@link DataAPITimestampComponents} that make up this `DataAPITimestamp`
-   *
-   * @returns The components of the timestamp
-   */
-  public components(): DataAPITimestampComponents {
-    const date = this.toDate();
-    return {
-      year: date.getFullYear(),
-      month: date.getMonth() + 1,
-      date: date.getDate(),
-      hours: date.getHours(),
-      minutes: date.getMinutes(),
-      seconds: date.getSeconds(),
-      nanoseconds: date.getMilliseconds() * 1_000_000,
-    };
-  }
-
-  /**
-   * Converts this `DataAPITimestamp` to a `Date` object
-   *
-   * @returns The `Date` object representing this `DataAPITimestamp`
-   */
-  public toDate(): Date {
-    return new Date(this.#timestamp);
-  }
-
-  /**
-   * Returns the string representation of this `DataAPITimestamp`
-   *
-   * @returns The string representation of this `DataAPITimestamp`
-   */
-  public toString() {
-    return this.#timestamp;
   }
 }

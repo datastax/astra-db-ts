@@ -25,7 +25,7 @@ import {
   DataAPIDate,
   DataAPIDuration,
   DataAPITime,
-  DataAPITimestamp, FoundRow,
+  FoundRow,
   InetAddress,
   SomeRow,
   UUID,
@@ -100,7 +100,7 @@ export type InferrableTable =
  * // for the table's schema
  * type _Proof = Equal<User, {
  *   name: string,
- *   dob: DataAPITimestamp,
+ *   dob: Date,
  *   friends: Set<string>,
  * }>;
  *
@@ -109,7 +109,7 @@ export type InferrableTable =
  * type _ProofPK = Equal<UserPK, {
  *   name: string,
  *   height: TypeErr<'Field `height` not found as property in table definition'>,
- *   dob: DataAPITimestamp,
+ *   dob: Date,
  * }>;
  *
  * // And now `User` can be used wherever.
@@ -267,7 +267,7 @@ interface CqlNonGenericType2TSTypeDict {
   smallint: number | null,
   text: string | null;
   time: DataAPITime | null,
-  timestamp: DataAPITimestamp | null,
+  timestamp: Date | null,
   tinyint: number | null,
   uuid: UUID | null,
   varchar: string | null,

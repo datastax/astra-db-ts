@@ -14,7 +14,7 @@
 
 // Important to import from specific paths here to avoid circular dependencies
 import { DataAPIBlob } from '@/src/documents/datatypes/blob';
-import { DataAPIDate, DataAPIDuration, DataAPITime, DataAPITimestamp } from '@/src/documents/datatypes/dates';
+import { DataAPIDate, DataAPIDuration, DataAPITime } from '@/src/documents/datatypes/dates';
 import { InetAddress } from '@/src/documents/datatypes/inet-address';
 import { UUID } from '@/src/documents/datatypes/uuid';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
@@ -73,7 +73,15 @@ export class TableCodecs {
       deserialize: (_, value, ctx) => ctx.done(parseInt(value)),
     }),
     time: TableCodecs.forType('time', DataAPITime),
-    timestamp: TableCodecs.forType('timestamp', DataAPITimestamp),
+    timestamp: TableCodecs.forType('timestamp', {
+      serializeClass: Date,
+      serialize(_, value, ctx) {
+        return ctx.done(value.toISOString());
+      },
+      deserialize(_, value, ctx) {
+        return ctx.done(new Date(value));
+      },
+    }),
     timeuuid: TableCodecs.forType('timeuuid', UUID),
     tinyint: TableCodecs.forType('tinyint', {
       deserialize: (_, value, ctx) => ctx.done(parseInt(value)),

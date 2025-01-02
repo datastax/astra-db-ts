@@ -19,7 +19,6 @@ import {
   DataAPIDuration,
   DataAPIResponseError,
   DataAPITime,
-  DataAPITimestamp,
   DataAPIVector,
   InetAddress,
   UUID,
@@ -74,7 +73,7 @@ parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }
       set: new Set([uuid, uuid, uuid]),
       smallint: 123,
       time: new DataAPITime(),
-      timestamp: new DataAPITimestamp(),
+      timestamp: new Date(),
       tinyint: 123,
       uuid: UUID.v4(),
       varint: 12312312312312312312312312312312n,
@@ -131,7 +130,7 @@ parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }
     assert.deepStrictEqual(found.time.components(), doc.time.components());
 
     assert.ok(found.timestamp);
-    assert.deepStrictEqual(found.timestamp.components(), doc.timestamp.components());
+    assert.deepStrictEqual(found.timestamp, doc.timestamp);
 
     assert.ok(found.uuid);
     assert.ok(found.uuid.equals(doc.uuid));
