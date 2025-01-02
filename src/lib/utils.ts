@@ -17,6 +17,7 @@ import { DataAPIEnvironments } from '@/src/lib/constants';
 import JBI from 'json-bigint';
 import { SomeDoc } from '@/src/documents';
 import process from 'node:process';
+import BigNumber from 'bignumber.js';
 
 /**
  * @internal
@@ -125,4 +126,8 @@ export function forJSEnv<F extends (...args: any[]) => any>(fns: JSEnvs<F>) {
     };
   }
   return fns[env];
+}
+
+export function isBigNumber(value: object): value is BigNumber {
+  return BigNumber.isBigNumber(value) && value.constructor?.name === 'BigNumber';
 }

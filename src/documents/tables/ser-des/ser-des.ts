@@ -22,8 +22,7 @@ import {
 import { TableCodecs, TableCodecSerDesFns } from '@/src/documents/tables/ser-des/codecs';
 import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
-import BigNumber from 'bignumber.js';
-import { stringArraysEqual } from '@/src/lib/utils';
+import { isBigNumber, stringArraysEqual } from '@/src/lib/utils';
 import { RawCodec } from '@/src/lib/api/ser-des/codecs';
 import { UnexpectedDataAPIResponseError } from '@/src/client';
 
@@ -149,7 +148,7 @@ const DefaultTableSerDesCfg = {
         }
       }
 
-      if (value instanceof BigNumber) {
+      if (isBigNumber(value)) {
         ctx.bigNumsPresent = true;
         return ctx.done();
       }

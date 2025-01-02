@@ -16,8 +16,7 @@ import { SerDes, BaseSerDesConfig } from '@/src/lib/api/ser-des/ser-des';
 import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
 import { CollCodecs, CollCodecSerDesFns } from '@/src/documents/collections/ser-des/codecs';
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
-import { stringArraysEqual } from '@/src/lib/utils';
-import BigNumber from 'bignumber.js';
+import { isBigNumber, stringArraysEqual } from '@/src/lib/utils';
 
 /**
  * @public
@@ -93,7 +92,6 @@ const DefaultCollectionSerDesCfg = {
       }
     }
 
-
     if (typeof value === 'object' && value !== null) {
       if (value[$SerializeForCollection]) {
         if ((resp = value[$SerializeForCollection](ctx))[0] !== CONTINUE) {
@@ -109,8 +107,15 @@ const DefaultCollectionSerDesCfg = {
         }
       }
 
-      if (ctx.bigNumsEnabled && value instanceof BigNumber) {
+      if (isBigNumber(value)) {
+        if (!ctx.bigNumsEnabled) {
+          throw new Error('BigNumber serialization must be enabled through serdes.enableBigNumbers in CollectionSerDesConfig');
+        }
         return ctx.done();
+      }
+    } else if (typeof value === 'bigint') {
+      if (!ctx.bigNumsEnabled) {
+        throw new Error('BigNumber serialization must be enabled through serdes.enableBigNumbers in CollectionSerDesConfig');
       }
     }
 
