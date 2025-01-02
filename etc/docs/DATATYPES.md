@@ -73,7 +73,7 @@ await collection.insertOne({
 ### BigNumbers
 
 > **NOTE**
-> Enabling BigNumbers support for a collection will force a slower, bignum-friendly JSON library to be used for all documents in that collection. The difference should be negligible for most use-cases.
+> Enabling bigints/BigNumbers support for a collection will force a slower, bignum-friendly JSON library to be used for all documents in that collection. The difference should be negligible for most use-cases.
 
 Proper big-number support is still under works in `astra-db-ts`, but a rough version is out currently.
 
@@ -244,28 +244,28 @@ A variety of scalar types, however, are represented by custom `astra-db-ts`-prov
 ### BigNumbers
 
 > **NOTE**
-> Enabling BigNumbers support for a collection will force a slower, bignum-friendly JSON library to be used for all documents in that collection. The difference should be negligible for most use-cases.
+> Using bigints/BigNumbers in a table will force a slower, bignum-friendly JSON library to be used for all documents in that collection. The difference should be negligible for most use-cases.
 
 Unlike collections, `bigint`s & `BigNumber`s are supported completely and natively in tables; you don't need to enable any special options to use them.
 
 The performance penalty still applies, however, but it's only in play when there's actually a `bigint` or `BigNumber` present in the object.
 
 While you may technically pass any of `number`, `bigint`, or `BigNumber` to the database, it'll be read back as:
-- a `bigint` if the column is a `varint`
+- a `bigint` if the column is a `varint`, `bigint`, or `counter`
 - a `BigNumber` if the column is a `decimal`
 
 ```typescript
 import { BigNumber } from '@datastax/astra-db-ts';
 
 await table.insertOne({
-  bigint1: 1234567890123456789012345672321312312890n,
-  bigint2: 10n,
+  varint: 1234567890123456789012345672321312312890n,
+  bigint: 18446744073709551615n,
   decmial: new BigNumber('12345678901234567890123456.72321312312890'),
 });
 
 const row = await table.findOne();
-console.log(row.bigint1.toString()); // Will be returned as a `bigint`
-console.log(row.bigint2.toString()); // Will be returned as a `bigint`
+console.log(row.varint.toString()); // Will be returned as a `bigint`
+console.log(row.bigint.toString()); // Will be returned as a `bigint`
 console.log(row.decimal.toString()); // Will be returned as a `BigNumber`
 ```
 
@@ -322,7 +322,7 @@ Due to the variety of date & time classes available through the Data API, some c
 Only the `timestamp` type is represented by the native JavaScript `Date` object.
 
 ```typescript
-import { date, duration, time, ...g } from '@datastax/astra-db-ts';
+import { date, duration, time, ... } from '@datastax/astra-db-ts';
 
 await table.insertOne({
   date: date(), // Equivalent to `new DataAPIDate()`
@@ -484,9 +484,10 @@ If you really want to change the behavior of how a certain type is deserialized,
 | Type        | Type              | Shorthand  | Examples                                                                             |
 |-------------|-------------------|------------|--------------------------------------------------------------------------------------|
 | `ascii`     | `string`          | -          | `'Hello!'`                                                                           |
-| `bigint`    | `number`          | -          | `42`                                                                                 |
+| `bigint`    | `bigint`          | -          | `BigInt('42')`, `42n`                                                                |
 | `blob`      | `DataAPIBlob`     | `blob`     | `new DataAPIBlob(Buffer.from(...))`, `blob({ $binary: '<b64_str>' })`                |
 | `boolean`   | `boolean`         | -          | `true`                                                                               |
+| `counter`   | `bigint`          | -          | `BigInt('42')`, `42n`                                                                |
 | `date`      | `DataAPIDate`     | `date`     | `new DataAPIDate()`, `date(new Date(1734070574056))`, `date('1992-05-28')`, `date()` |
 | `decimal`   | `BigNumber`       | -          | `new BigNumber(123.4567)`, `BigNumber('123456.7e-3')`                                |
 | `double`    | `number`          | -          | `3.14`, `NaN`, `Infinity`, `-Infinity`                                               |
