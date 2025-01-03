@@ -130,7 +130,7 @@ parallel('integration.documents.collections.bulk-write', { truncateColls: 'defau
 
       assert.strictEqual(e.detailedErrorDescriptors.length, 2);
       assert.strictEqual(e.errorDescriptors.length, 2);
-      assert.strictEqual(e.message, 'Failed to insert document with _id \'1\': Document already exists with the given _id (+ 1 more errors)');
+      assert.strictEqual(e.message, 'Document already exists with the given _id (+ 1 more errors)');
 
       assert.strictEqual(e.partialResult.insertedCount, 5);
       assert.strictEqual(e.partialResult.getRawResponse().length, 7);
