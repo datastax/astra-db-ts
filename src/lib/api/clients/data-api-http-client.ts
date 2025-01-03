@@ -51,16 +51,25 @@ export interface DataAPIRequestInfo {
   timeoutManager: TimeoutManager,
 }
 
+/**
+ * @internal
+ */
 interface ExecuteCommandOptions extends WithNullableKeyspace {
   collection?: string,
 }
 
+/**
+ * @internal
+ */
 type EmissionStrategy = (emitter: TypedEmitter<DataAPIClientEvents>) => {
   emitCommandStarted(info: DataAPIRequestInfo): void,
   emitCommandFailed(info: DataAPIRequestInfo, error: Error, started: number): void,
   emitCommandSucceeded(info: DataAPIRequestInfo, resp: RawDataAPIResponse, warnings: string[], started: number): void,
 }
 
+/**
+ * @internal
+ */
 export const EmissionStrategy: Record<'Normal' | 'Admin', EmissionStrategy> = {
   Normal: (emitter) => ({
     emitCommandStarted(info) {
@@ -93,6 +102,9 @@ const adaptInfo4Devops = (info: DataAPIRequestInfo) => (<const>{
   params: {},
 });
 
+/**
+ * @internal
+ */
 interface DataAPIHttpClientOpts extends HTTPClientOptions {
   keyspace: KeyspaceRef,
   emissionStrategy: EmissionStrategy,
