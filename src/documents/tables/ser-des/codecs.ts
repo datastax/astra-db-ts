@@ -68,13 +68,7 @@ export class TableCodecs {
     float: TableCodecs.forType('float', {
       deserialize: (_, value, ctx) => ctx.done(parseFloat(value)),
     }),
-    int: TableCodecs.forType('int', {
-      deserialize: (_, value, ctx) => ctx.done(parseInt(value)),
-    }),
     inet: TableCodecs.forType('inet', InetAddress),
-    smallint: TableCodecs.forType('smallint', {
-      deserialize: (_, value, ctx) => ctx.done(parseInt(value)),
-    }),
     time: TableCodecs.forType('time', DataAPITime),
     timestamp: TableCodecs.forType('timestamp', {
       serializeClass: Date,
@@ -86,9 +80,6 @@ export class TableCodecs {
       },
     }),
     timeuuid: TableCodecs.forType('timeuuid', UUID),
-    tinyint: TableCodecs.forType('tinyint', {
-      deserialize: (_, value, ctx) => ctx.done(parseInt(value)),
-    }),
     uuid: TableCodecs.forType('uuid', UUID),
     vector: TableCodecs.forType('vector', DataAPIVector),
     varint: TableCodecs.forType('varint', {

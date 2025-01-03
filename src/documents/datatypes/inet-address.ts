@@ -34,14 +34,14 @@ export const inet = (address: string, version?: 4 | 6) => new InetAddress(addres
  * @public
  */
 export class InetAddress implements TableCodec<typeof InetAddress> {
-  readonly #raw: string;
-  #version: 4 | 6 | nullish;
+  private readonly _raw!: string;
+  private _version!: 4 | 6 | nullish;
 
   /**
    * Implementation of `$SerializeForTable` for {@link TableCodec}
    */
   public [$SerializeForTable](ctx: TableSerCtx) {
-    return ctx.done(this.#raw);
+    return ctx.done(this._raw);
   };
 
   /**
@@ -85,11 +85,17 @@ export class InetAddress implements TableCodec<typeof InetAddress> {
       }
     }
 
-    this.#raw = address.toLowerCase();
-    this.#version = version;
+    Object.defineProperty(this, '_raw', {
+      value: address.toLowerCase(),
+    });
+
+    Object.defineProperty(this, '_version', {
+      value: version,
+      writable: true,
+    });
 
     Object.defineProperty(this, $CustomInspect, {
-      value: () => `InetAddress<${this.version}>("${this.#raw}")`,
+      value: () => `InetAddress<${this.version}>("${this._raw}")`,
     });
   }
 
@@ -99,10 +105,10 @@ export class InetAddress implements TableCodec<typeof InetAddress> {
    * @returns The IP version of the inet address
    */
   public get version(): 4 | 6 {
-    if (!this.#version) {
-      this.#version = isIPv4(this.#raw) ? 4 : 6;
+    if (!this._version) {
+      this._version = isIPv4(this._raw) ? 4 : 6;
     }
-    return this.#version;
+    return this._version;
   }
 
   /**
@@ -111,7 +117,7 @@ export class InetAddress implements TableCodec<typeof InetAddress> {
    * @returns The string representation of the inet address
    */
   public toString(): string {
-    return this.#raw;
+    return this._raw;
   }
 }
 

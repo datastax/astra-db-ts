@@ -232,7 +232,7 @@ export class Db {
       throw new InvalidEnvironmentError('db.id', this.#defaultOpts.environment, ['astra'], 'non-Astra databases have no appropriate ID');
     }
     if (!this.#id) {
-      throw new Error(`Malformed AstraDB endpoint URL '${this.#endpoint}'—database ID unable to be parsed`);
+      throw new Error(`Unexpected AstraDB endpoint URL '${this.#endpoint}'—database ID unable to be parsed`);
     }
     return this.#id;
   }
@@ -249,7 +249,7 @@ export class Db {
       throw new InvalidEnvironmentError('db.region', this.#defaultOpts.environment, ['astra'], 'non-Astra databases have no appropriate region');
     }
     if (!this.#region) {
-      throw new Error(`Malformed AstraDB endpoint URL '${this.#endpoint}'—database region unable to be parsed`);
+      throw new Error(`Unexpected AstraDB endpoint URL '${this.#endpoint}'—database region unable to be parsed`);
     }
     return this.#region;
   }
@@ -393,7 +393,7 @@ export class Db {
     }
 
     if (environment === 'astra') {
-      return new AstraDbAdmin(this, this.#defaultOpts, options, this.#defaultOpts.dbOptions.token, this.#endpoint!);
+      return new AstraDbAdmin(this, this.#defaultOpts, options, this.#defaultOpts.dbOptions.token, this.#endpoint);
     }
 
     return new DataAPIDbAdmin(this, this.#httpClient, options);

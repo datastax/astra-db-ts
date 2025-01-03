@@ -43,7 +43,7 @@ export const blob = (blob: DataAPIBlobLike) => new DataAPIBlob(blob);
  * @public
  */
 export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
-  readonly #raw: Exclude<DataAPIBlobLike, DataAPIBlob>;
+  private readonly _raw!: Exclude<DataAPIBlobLike, DataAPIBlob>;
 
   /**
    * Implementation of `$SerializeForTable` for {@link TableCodec}
@@ -74,9 +74,11 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
       throw new TypeError(`Expected blob to be a string, ArrayBuffer, or Buffer (got '${blob}')`);
     }
 
-    this.#raw = (blob instanceof DataAPIBlob)
-      ? blob.#raw
-      : blob;
+    Object.defineProperty(this, '_raw', {
+      value: (blob instanceof DataAPIBlob)
+        ? blob._raw
+        : blob,
+    });
 
     Object.defineProperty(this, $CustomInspect, {
       value: this.toString,
@@ -89,15 +91,15 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
    * @returns The byte length of the blob
    */
   public get byteLength(): number {
-    if (this.#raw instanceof ArrayBuffer) {
-      return this.#raw.byteLength;
+    if (this._raw instanceof ArrayBuffer) {
+      return this._raw.byteLength;
     }
 
-    if (this.#raw instanceof Buffer) {
-      return this.#raw.length;
+    if (this._raw instanceof Buffer) {
+      return this._raw.length;
     }
 
-    return ~~((this.#raw.$binary.replace(/=+$/, '').length * 3) / 4);
+    return ~~((this._raw.$binary.replace(/=+$/, '').length * 3) / 4);
   }
 
   /**
@@ -106,7 +108,7 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
    * @returns The raw blob
    */
   public raw(): Exclude<DataAPIBlobLike, DataAPIBlob> {
-    return this.#raw;
+    return this._raw;
   }
 
   /**
@@ -115,15 +117,15 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
    * @returns The blob as an `ArrayBuffer`
    */
   public asArrayBuffer(): ArrayBuffer {
-    if (this.#raw instanceof ArrayBuffer) {
-      return this.#raw;
+    if (this._raw instanceof ArrayBuffer) {
+      return this._raw;
     }
 
-    if (this.#raw instanceof Buffer) {
-      return bufferToArrayBuffer(this.#raw);
+    if (this._raw instanceof Buffer) {
+      return bufferToArrayBuffer(this._raw);
     }
 
-    return base64ToArrayBuffer(this.#raw.$binary);
+    return base64ToArrayBuffer(this._raw.$binary);
   }
 
   /**
@@ -136,15 +138,15 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
       throw new Error("Buffer is not available in this environment");
     }
 
-    if (this.#raw instanceof Buffer) {
-      return this.#raw;
+    if (this._raw instanceof Buffer) {
+      return this._raw;
     }
 
-    if (this.#raw instanceof ArrayBuffer) {
-      return Buffer.from(this.#raw);
+    if (this._raw instanceof ArrayBuffer) {
+      return Buffer.from(this._raw);
     }
 
-    return Buffer.from(this.#raw.$binary, 'base64');
+    return Buffer.from(this._raw.$binary, 'base64');
   }
 
   /**
@@ -153,22 +155,22 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
    * @returns The blob as a base64 string
    */
   public asBase64(): string {
-    if (this.#raw instanceof ArrayBuffer) {
-      return arrayBufferToBase64(this.#raw);
+    if (this._raw instanceof ArrayBuffer) {
+      return arrayBufferToBase64(this._raw);
     }
 
-    if ('$binary' in this.#raw) {
-      return this.#raw.$binary;
+    if ('$binary' in this._raw) {
+      return this._raw.$binary;
     }
 
-    return this.#raw.toString('base64');
+    return this._raw.toString('base64');
   }
 
   /**
    * Returns a pretty string representation of the `DataAPIBlob`.
    */
   public toString() {
-    const type = (this.#raw instanceof ArrayBuffer && 'ArrayBuffer') || (this.#raw instanceof Buffer && 'Buffer') || 'base64';
+    const type = (this._raw instanceof ArrayBuffer && 'ArrayBuffer') || (this._raw instanceof Buffer && 'Buffer') || 'base64';
     return `DataAPIBlob(typeof raw=${type}, byteLength=${this.byteLength})`;
   }
 
