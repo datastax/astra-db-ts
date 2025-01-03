@@ -15,14 +15,4 @@
 
 export * from './data-api-client';
 export * from './errors';
-
-export type {
-  DataAPIClientOptions,
-  Caller,
-  DefaultHttpClientOptions,
-  Http1Options,
-  DataAPIHttpOptions,
-  FetchHttpClientOptions,
-  CustomHttpClientOptions,
-} from './types';
-export { DbSpawnOptions } from '@/src/client/types';
+export type * from './types';

@@ -15,9 +15,9 @@
 
 import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
-import { DataAPIError, DeleteManyError } from '@/src/documents';
+import { DataAPIError, CollectionDeleteManyError } from '@/src/documents';
 
-parallel('integration.documents.collections.delete-many', { truncateColls: 'both:before' }, ({ collection, collection_ }) => {
+parallel('integration.documents.collections.delete-many', { truncate: 'colls:before' }, ({ collection, collection_ }) => {
   before(async () => {
     await collection.insertMany(Array.from({ length: 50 }, (_, i) => ({ age: i })));
     await collection_.insertMany(Array.from({ length: 100 }, () => ({})));
@@ -44,7 +44,7 @@ parallel('integration.documents.collections.delete-many', { truncateColls: 'both
       await collection.deleteMany({ $invalidOperator: 1 });
       assert.fail('Expected error');
     } catch (e) {
-      assert.ok(e instanceof DeleteManyError);
+      assert.ok(e instanceof CollectionDeleteManyError);
       assert.strictEqual(e.errorDescriptors[0].errorCode, 'INVALID_FILTER_EXPRESSION');
       assert.strictEqual(e.detailedErrorDescriptors[0].errorDescriptors[0].errorCode, 'INVALID_FILTER_EXPRESSION');
       assert.strictEqual(e.errorDescriptors.length, 1);
@@ -61,7 +61,7 @@ parallel('integration.documents.collections.delete-many', { truncateColls: 'both
     } catch (e) {
       assert.ok(e instanceof Error);
       assert.ok(!(e instanceof DataAPIError));
-      assert.strictEqual(e.message, 'test');
+      assert.strictEqual(e.message, 'failing_client');
     }
   });
 });

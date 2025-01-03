@@ -13,18 +13,15 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import {
-  AdminBlockingOptions,
-  AdminSpawnOptions,
-  LocalCreateKeyspaceOptions,
-  LocalCreateNamespaceOptions,
-} from '@/src/administration/types';
+import { DataAPICreateKeyspaceOptions } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
-import { WithTimeout } from '@/src/lib/types';
-import { validateAdminOpts } from '@/src/administration/utils';
+import type { WithTimeout } from '@/src/lib';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { Db } from '@/src/db';
+import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
+import { $CustomInspect } from '@/src/lib/constants';
+import { AdminOptions } from '@/src/client';
 
 /**
  * An administrative class for managing non-Astra databases, including creating, listing, and deleting keyspaces.
@@ -39,7 +36,7 @@ import { Db } from '@/src/db';
  *
  * // Create an admin instance through a Db
  * const db = client.db('*ENDPOINT*');
- * const dbAdmin1 = db.admin({ environment: 'dse' );
+ * const dbAdmin1 = db.admin({ environment: 'dse' });
  * const dbAdmin2 = db.admin({ environment: 'dse', adminToken: 'stronger-token' });
  *
  * await admin1.createKeyspace({
@@ -60,20 +57,23 @@ import { Db } from '@/src/db';
  * @public
  */
 export class DataAPIDbAdmin extends DbAdmin {
-  readonly #httpClient!: DataAPIHttpClient;
-  readonly #db!: Db;
+  readonly #httpClient: DataAPIHttpClient<'admin'>;
+  readonly #db: Db;
 
   /**
    * Use {@link Db.admin} to obtain an instance of this class.
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, adminOpts?: AdminSpawnOptions) {
+  constructor(db: Db, httpClient: DataAPIHttpClient, rawAdminOpts?: AdminOptions) {
     super();
-    validateAdminOpts(adminOpts);
-
+    const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options');
     this.#httpClient = httpClient.forDbAdmin(adminOpts);
     this.#db = db;
+
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `DataAPIDbAdmin()`,
+    });
   }
 
   /**
@@ -113,8 +113,12 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @returns The available embedding providers.
    */
-  public override async findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult> {
-    const resp = await this.#httpClient.executeCommand({ findEmbeddingProviders: {} }, { keyspace: null, maxTimeMS: options?.maxTimeMS });
+  public override async findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult> {
+    const resp = await this.#httpClient.executeCommand({ findEmbeddingProviders: {} }, {
+      timeoutManager: this.#httpClient.tm.single('databaseAdminTimeoutMs', options),
+      methodName: 'dbAdmin.findEmbeddingProviders',
+      keyspace: null,
+    });
     return resp.status as FindEmbeddingProvidersResult;
   }
 
@@ -134,28 +138,19 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves to list of all the keyspaces in the database.
    */
-  public override async listKeyspaces(options?: WithTimeout): Promise<string[]> {
-    const resp = await this.#httpClient.executeCommand({ findKeyspaces: {} }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
+  public override async listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]> {
+    const resp = await this.#httpClient.executeCommand({ findKeyspaces: {} }, {
+      timeoutManager: this.#httpClient.tm.single('keyspaceAdminTimeoutMs', options),
+      methodName: 'dbAdmin.listKeyspaces',
+      keyspace: null,
+    });
     return resp.status!.keyspaces;
-  }
-
-  /**
-   * Lists the keyspaces in the database.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link DataAPIDbAdmin.listKeyspaces}, and will be removed
-   * in an upcoming major version.
-   *
-   * @deprecated - Prefer {@link DataAPIDbAdmin.listKeyspaces} instead.
-   */
-  public override async listNamespaces(options?: WithTimeout): Promise<string[]> {
-    const resp = await this.#httpClient.executeCommand({ findNamespaces: {} }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
-    return resp.status!.namespaces;
   }
 
   /**
    * Creates a new, additional, keyspace for this database.
    *
-   * **NB. The operation will always wait for the operation to complete, regardless of the {@link AdminBlockingOptions}. Expect it to take roughly 8-10 seconds.**
+   * **NB. The operation will always wait for the operation to complete, regardless of the {@link AstraAdminBlockingOptions}. Expect it to take roughly 8-10 seconds.**
    *
    * @example
    * ```typescript
@@ -164,7 +159,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    * await dbAdmin.createKeyspace('my_keyspace', {
    *   replication: {
    *     class: 'SimpleStrategy',
-   *     replicatonFactor: 3,
+   *     replicationFactor: 3,
    *   },
    * });
    *
@@ -182,7 +177,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async createKeyspace(keyspace: string, options?: LocalCreateKeyspaceOptions): Promise<void> {
+  public override async createKeyspace(keyspace: string, options?: DataAPICreateKeyspaceOptions): Promise<void> {
     if (options?.updateDbKeyspace) {
       this.#db.useKeyspace(keyspace);
     }
@@ -192,36 +187,17 @@ export class DataAPIDbAdmin extends DbAdmin {
       replicationFactor: 1,
     };
 
-    await this.#httpClient.executeCommand({ createKeyspace: { name: keyspace, options: { replication } } }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
-  }
-
-  /**
-   * Creates a new, additional, keyspace for this database.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link DataAPIDbAdmin.createKeyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link DataAPIDbAdmin.createKeyspace} instead.
-   */
-  public override async createNamespace(keyspace: string, options?: LocalCreateNamespaceOptions): Promise<void> {
-    if (options?.updateDbNamespace) {
-      this.#db.useKeyspace(keyspace);
-    }
-
-    const replication = options?.replication ?? {
-      class: 'SimpleStrategy',
-      replicationFactor: 1,
-    };
-
-    await this.#httpClient.executeCommand({ createNamespace: { name: keyspace, options: { replication } } }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
+    await this.#httpClient.executeCommand({ createKeyspace: { name: keyspace, options: { replication } } }, {
+      timeoutManager: this.#httpClient.tm.single('keyspaceAdminTimeoutMs', options),
+      methodName: 'dbAdmin.createKeyspace',
+      keyspace: null,
+    });
   }
 
   /**
    * Drops a keyspace from this database.
    *
-   * **NB. The operation will always wait for the operation to complete, regardless of the {@link AdminBlockingOptions}. Expect it to take roughly 8-10 seconds.**
+   * **NB. The operation will always wait for the operation to complete, regardless of the {@link AstraAdminBlockingOptions}. Expect it to take roughly 8-10 seconds.**
    *
    * @example
    * ```typescript
@@ -239,25 +215,15 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void> {
-    await this.#httpClient.executeCommand({ dropKeyspace: { name: keyspace } }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
+  public override async dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void> {
+    await this.#httpClient.executeCommand({ dropKeyspace: { name: keyspace } }, {
+      timeoutManager: this.#httpClient.tm.single('keyspaceAdminTimeoutMs', options),
+      methodName: 'dbAdmin.dropKeyspace',
+      keyspace: null,
+    });
   }
 
-  /**
-   Drops a keyspace from this database.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link DataAPIDbAdmin.dropKeyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link DataAPIDbAdmin.dropKeyspace} instead.
-   */
-  public override async dropNamespace(keyspace: string, options?: AdminBlockingOptions): Promise<void> {
-    await this.#httpClient.executeCommand({ dropNamespace: { name: keyspace } }, { maxTimeMS: options?.maxTimeMS, keyspace: null });
-  }
-
-  private get _httpClient() {
+  public get _httpClient() {
     return this.#httpClient;
   }
 }

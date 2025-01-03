@@ -40,7 +40,7 @@ export class UsernamePasswordTokenProvider extends TokenProvider {
    */
   constructor(username: string, password: string) {
     super();
-    this.#token = `Cassandra:${this._encodeB64(username)}:${this._encodeB64(password)}`;
+    this.#token = `Cassandra:${this.#encodeB64(username)}:${this.#encodeB64(password)}`;
   }
 
   /**
@@ -52,7 +52,7 @@ export class UsernamePasswordTokenProvider extends TokenProvider {
     return this.#token;
   }
 
-  private _encodeB64(input: string) {
+  #encodeB64(input: string) {
     if (typeof window !== 'undefined' && typeof window.btoa === 'function') {
       return window.btoa(input);
     } else if (typeof Buffer === 'function') {

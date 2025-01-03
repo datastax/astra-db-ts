@@ -15,18 +15,17 @@
 
 import assert from 'assert';
 import { DevOpsAPIResponseError } from '@/src/administration';
-import { TimeoutManager } from '@/src/lib/api/timeout-managers';
-import { background, initTestObjects, it, TEMP_DB_NAME } from '@/tests/testlib';
+import { background, it, TEMP_DB_NAME } from '@/tests/testlib';
 import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
+import { buildAstraEndpoint } from '@/src/lib/utils';
 
-background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycle', () => {
+background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycle', ({ client }) => {
   it('works', async () => {
-    const { client } = initTestObjects({ monitoring: true });
     const admin = client.admin();
 
     for (const db of await admin.listDatabases()) {
-      if (db.info.name === TEMP_DB_NAME && db.status !== 'TERMINATING') {
-        void admin.dropDatabase(db.id, { maxTimeMS: 720000 });
+      if (db.name === TEMP_DB_NAME && db.status !== 'TERMINATING') {
+        void admin.dropDatabase(db.id, { timeout: 720000 });
       }
     }
 
@@ -37,7 +36,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
       keyspace: 'my_keyspace',
     }, {
       blocking: false,
-      maxTimeMS: 720000,
+      timeout: 720000,
     });
     const asyncDb = asyncDbAdmin.db();
 
@@ -50,18 +49,18 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     {
       const dbInfo1 = await asyncDbAdmin.info();
       assert.ok(['PENDING', 'INITIALIZING'].includes(dbInfo1.status));
-      assert.strictEqual(dbInfo1.info.name, TEMP_DB_NAME);
-      assert.strictEqual(dbInfo1.info.cloudProvider, 'GCP');
-      assert.strictEqual(dbInfo1.info.region, 'us-east1');
-      assert.strictEqual(dbInfo1.info.keyspace, 'my_keyspace');
+      assert.strictEqual(dbInfo1.name, TEMP_DB_NAME);
+      assert.strictEqual(dbInfo1.cloudProvider, 'GCP');
+      assert.deepStrictEqual(dbInfo1.regions, [{ name: 'us-east1', apiEndpoint: buildAstraEndpoint(dbInfo1.id, 'us-east1') }]);
+      assert.deepStrictEqual(dbInfo1.keyspaces, ['my_keyspace']);
 
       const dbInfo2 = await admin.dbInfo(asyncDb.id);
-      assert.deepStrictEqual(dbInfo1.info.name, dbInfo2.info.name);
-      assert.deepStrictEqual(dbInfo1.info.keyspaces, dbInfo2.info.keyspaces);
+      assert.deepStrictEqual(dbInfo1.name, dbInfo2.name);
+      assert.deepStrictEqual(dbInfo1.keyspaces, dbInfo2.keyspaces);
       assert.ok(['PENDING', 'INITIALIZING'].includes(dbInfo2.status));
     }
 
-    const monitoringAdmin = client.admin({ monitorCommands: true });
+    const monitoringAdmin = client.admin();
     let commandStartedEvent = false;
     let commandPollingEvent = false;
     let commandSucceededEvent = false;
@@ -100,7 +99,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
       name: TEMP_DB_NAME,
       cloudProvider: 'GCP',
       region: 'us-east1',
-    }, { maxTimeMS: 720000 });
+    }, { timeout: 720000 });
     const syncDb = syncDbAdmin.db();
 
     {
@@ -121,33 +120,34 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
       assert.strictEqual(dbInfo.name, TEMP_DB_NAME);
       assert.strictEqual(dbInfo.cloudProvider, 'GCP');
       assert.strictEqual(dbInfo.region, 'us-east1');
-      assert.strictEqual(dbInfo.keyspace, DEFAULT_KEYSPACE);
+      assert.deepStrictEqual(dbInfo.keyspaces, [DEFAULT_KEYSPACE]);
     }
 
     {
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['PENDING', 'INITIALIZING'],
         defaultPollInterval: 10000,
         id: null!,
         options: undefined,
-      }, new TimeoutManager(0, () => new Error('Timeout')), 0);
+        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
+      }, 0);
     }
 
     for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
       const dbInfo = await dbAdmin.info();
       assert.strictEqual(dbInfo.status, 'ACTIVE');
-      assert.strictEqual(dbInfo.info.name, TEMP_DB_NAME);
-      assert.strictEqual(dbInfo.info.cloudProvider, 'GCP');
-      assert.strictEqual(dbInfo.info.region, 'us-east1');
-      assert.strictEqual(dbInfo.info.keyspace, db.keyspace);
+      assert.strictEqual(dbInfo.name, TEMP_DB_NAME);
+      assert.strictEqual(dbInfo.cloudProvider, 'GCP');
+      assert.deepStrictEqual(dbInfo.regions, [{ name: 'us-east1', apiEndpoint: buildAstraEndpoint(dbInfo.id, 'us-east1') }]);
+      assert.deepStrictEqual(dbInfo.keyspaces, [db.keyspace]);
 
       const collections1 = await db.listCollections({ nameOnly: true });
       assert.deepStrictEqual(collections1, [], `in ${dbType}`);
 
       const collection = await db.createCollection('test_collection');
       assert.ok(collection, `in ${dbType}`);
-      assert.strictEqual(collection.collectionName, 'test_collection', `in ${dbType}`);
+      assert.strictEqual(collection.name, 'test_collection', `in ${dbType}`);
       assert.deepStrictEqual(await collection.options(), {}, `in ${dbType}`);
 
       const collections2 = await db.listCollections({ nameOnly: true });
@@ -168,19 +168,19 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
       const fullDbInfo3 = await asyncDbAdmin.info();
       assert.strictEqual(fullDbInfo3.status, 'MAINTENANCE');
-      assert.strictEqual(fullDbInfo3.info.keyspace, 'my_keyspace');
-      assert.strictEqual(fullDbInfo3.info.additionalKeyspaces, undefined);
+      assert.deepStrictEqual(fullDbInfo3.keyspaces, ['my_keyspace']);
     }
 
     {
       await syncDbAdmin.createKeyspace('other_keyspace');
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
         defaultPollInterval: 1000,
         id: null!,
         options: undefined,
-      }, new TimeoutManager(0, () => new Error('Timeout')), 0);
+        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
+      }, 0);
     }
 
     for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
@@ -193,26 +193,25 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
       const fullDbInfo4 = await asyncDbAdmin.info();
       assert.strictEqual(fullDbInfo4.status, 'MAINTENANCE');
-      assert.strictEqual(fullDbInfo4.info.keyspace, 'my_keyspace');
-      assert.deepStrictEqual(fullDbInfo4.info.additionalKeyspaces, ['other_keyspace']);
+      assert.deepStrictEqual(fullDbInfo4.keyspaces, ['my_keyspace', 'other_keyspace']);
     }
 
     {
       await syncDbAdmin.dropKeyspace('other_keyspace', { blocking: true });
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
         defaultPollInterval: 1000,
         id: null!,
         options: undefined,
-      }, new TimeoutManager(0, () => new Error('Timeout')), 0);
+        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
+      }, 0);
     }
 
     for (const [dbAdmin, db, dbType] of [[syncDbAdmin, syncDb, 'sync'], [asyncDbAdmin, asyncDb, 'async']] as const) {
       const dbInfo = await dbAdmin.info();
       assert.strictEqual(dbInfo.status, 'ACTIVE');
-      assert.strictEqual(dbInfo.info.keyspace, db.keyspace);
-      assert.strictEqual(dbInfo.info.additionalKeyspaces, undefined);
+      assert.deepStrictEqual(dbInfo.keyspaces, [db.keyspace]);
 
       const keyspaces3 = await dbAdmin.listKeyspaces();
       assert.deepStrictEqual(keyspaces3, [db.keyspace], `in ${dbType}`);
@@ -225,14 +224,15 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     }
 
     {
-      await admin.dropDatabase(syncDb, { maxTimeMS: 720000 });
-      await asyncDbAdmin['_httpClient']['_awaitStatus'](asyncDb.id, {} as any, {
+      await admin.dropDatabase(syncDb, { timeout: 720000 });
+      await asyncDbAdmin._httpClient['_awaitStatus'](asyncDb.id, {} as any, {
         target: 'TERMINATED',
         legalStates: ['TERMINATING'],
         defaultPollInterval: 10000,
         id: null!,
         options: undefined,
-      }, new TimeoutManager(0, () => new Error('Timeout')), 0);
+        timeoutManager: asyncDbAdmin._httpClient.tm.multipart('generalMethodTimeoutMs', { timeout: 0 }),
+      }, 0);
     }
 
     for (const [dbAdmin, dbType] of [[syncDbAdmin, 'sync'], [asyncDbAdmin, 'async']] as const) {
@@ -241,10 +241,10 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     }
 
     {
-      await assert.rejects(async () => { await admin.dropDatabase(syncDb.id, { maxTimeMS: 720000 }); }, DevOpsAPIResponseError);
-      await assert.rejects(async () => { await admin.dropDatabase(syncDb.id, { blocking: false, maxTimeMS: 720000 }); }, DevOpsAPIResponseError);
-      await assert.rejects(async () => { await admin.dropDatabase(syncDb, { maxTimeMS: 720000 }); }, DevOpsAPIResponseError);
-      await assert.rejects(async () => { await admin.dropDatabase(syncDb, { blocking: false, maxTimeMS: 720000 }); }, DevOpsAPIResponseError);
+      await assert.rejects(async () => { await admin.dropDatabase(syncDb.id, { timeout: 720000 }); }, DevOpsAPIResponseError);
+      await assert.rejects(async () => { await admin.dropDatabase(syncDb.id, { blocking: false, timeout: 720000 }); }, DevOpsAPIResponseError);
+      await assert.rejects(async () => { await admin.dropDatabase(syncDb, { timeout: 720000 }); }, DevOpsAPIResponseError);
+      await assert.rejects(async () => { await admin.dropDatabase(syncDb, { blocking: false, timeout: 720000 }); }, DevOpsAPIResponseError);
       await assert.rejects(async () => { await syncDbAdmin.drop(); }, DevOpsAPIResponseError);
       await assert.rejects(async () => { await syncDbAdmin.drop({ blocking: false }); }, DevOpsAPIResponseError);
     }

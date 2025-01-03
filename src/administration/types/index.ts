@@ -13,48 +13,46 @@
 // limitations under the License.
 
 export type {
-  AdminBlockingOptions,
-  DatabaseAction,
-  DatabaseCloudProvider,
-  DatabaseStatus,
-  DatabaseTier,
-  PollBlockingOptions,
-  NoBlockingOptions,
+  AstraAdminBlockingOptions,
+  AstraDbCloudProvider,
+  AstraDbStatus,
+  AstraPollBlockingOptions,
+  AstraNoBlockingOptions,
 } from './admin/admin-common';
 
 export type {
-  CreateDatabaseOptions,
-  DatabaseConfig,
+  CreateAstraDatabaseOptions,
+  AstraDatabaseConfig,
 } from './admin/create-database';
 
 export type {
-  DatabaseInfo,
-  CostInfo,
-  DatabaseStorageInfo,
-  DatacenterInfo,
-  DbMetricsInfo,
-  FullDatabaseInfo,
+  AstraDropDatabaseOptions,
+} from './admin/drop-database';
+
+export type {
+  AstraDbRegionInfo,
+  AstraDbInfo,
+  AstraDbAdminInfo,
+  BaseAstraDbInfo,
 } from './admin/database-info';
 
 export type {
-  DatabaseCloudProviderFilter,
-  DatabaseStatusFilter,
-  ListDatabasesOptions,
+  AstraDbCloudProviderFilter,
+  AstraDbStatusFilter,
+  ListAstraDatabasesOptions,
 } from './admin/list-databases';
 
 export type {
-  AdminSpawnOptions,
-} from './admin/spawn-admin';
+  AstraCreateKeyspaceOptions,
+} from './db-admin/astra-create-keyspace';
 
 export type {
-  CreateKeyspaceOptions,
-  CreateNamespaceOptions,
-} from './db-admin/create-keyspace';
+  AstraDropKeyspaceOptions,
+} from './db-admin/astra-drop-keyspace';
 
 export type {
   KeyspaceReplicationOptions,
-  LocalCreateKeyspaceOptions,
-  LocalCreateNamespaceOptions,
+  DataAPICreateKeyspaceOptions,
 } from './db-admin/local-create-keyspace';
 
 export type {

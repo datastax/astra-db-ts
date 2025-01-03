@@ -23,7 +23,7 @@ import { EmbeddingHeadersProvider } from '@/src/documents/embedding-providers/em
  * @example
  * ```typescript
  * const provider = new AWSEmbeddingHeadersProvider('access-key-id', 'secret-access-key');
- * const collection = await db.collection('my_coll', { embeddingApiKey: provider });
+ * const collections = await db.collections('my_coll', { embeddingApiKey: provider });
  * ```
  *
  * @see EmbeddingHeadersProvider

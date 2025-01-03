@@ -13,8 +13,12 @@
 // limitations under the License.
 
 import { DEFAULT_KEYSPACE } from '@/src/lib/api';
-import { DEFAULT_COLLECTION_NAME, OTHER_KEYSPACE, TEST_APPLICATION_URI } from '@/tests/testlib/config';
-import { Collection } from '@/src/documents/collections';
+import {
+  DEFAULT_COLLECTION_NAME,
+  DEFAULT_TABLE_NAME,
+  OTHER_KEYSPACE,
+  TEST_APPLICATION_URI,
+} from '@/tests/testlib/config';
 import { GLOBAL_FIXTURES } from '@/tests/testlib/global';
 
 export async function tryCatchErr(fn: () => void | Promise<void>) {
@@ -26,14 +30,29 @@ export async function tryCatchErr(fn: () => void | Promise<void>) {
 }
 
 export async function dropEphemeralColls() {
-  const promises: Promise<boolean>[] = [];
+  const promises: Promise<unknown>[] = [];
 
   for (const keyspace of [DEFAULT_KEYSPACE, OTHER_KEYSPACE]) {
-    const collections = await GLOBAL_FIXTURES.db.listCollections({ keyspace });
+    const collections = await GLOBAL_FIXTURES.db.listCollections({ keyspace, nameOnly: true });
 
     collections
-      .filter(c => c.name !== DEFAULT_COLLECTION_NAME)
-      .forEach(c => promises.push(GLOBAL_FIXTURES.db.dropCollection(c.name, { keyspace })));
+      .filter(c => c !== DEFAULT_COLLECTION_NAME)
+      .forEach(c => promises.push(GLOBAL_FIXTURES.db.dropCollection(c, { keyspace })));
+  }
+
+  await Promise.all(promises);
+  await new Promise((resolve) => setTimeout(resolve, 100));
+}
+
+export async function dropEphemeralTables() {
+  const promises: Promise<unknown>[] = [];
+
+  for (const keyspace of [DEFAULT_KEYSPACE, OTHER_KEYSPACE]) {
+    const tables = await GLOBAL_FIXTURES.db.listTables({ keyspace, nameOnly: true });
+
+    tables
+      .filter(t => t !== DEFAULT_TABLE_NAME)
+      .forEach(t => promises.push(GLOBAL_FIXTURES.db.dropTable(t, { keyspace })));
   }
 
   await Promise.all(promises);
@@ -90,20 +109,20 @@ Array.prototype.awaitAll = function () {
   return Promise.all(this);
 };
 
-export function createCollections<Keys extends string>(colls: () => Record<Keys, Promise<Collection>>): Record<Keys, Collection> {
-  const collections: Record<string, Collection> = {};
+export function useSuiteResources<Keys extends string, T>(mkResources: () => Record<Keys, Promise<T>>): Record<Keys, T> {
+  const resources: Record<string, T> = {};
 
   before(async () => {
-    const promises = Object.entries(colls()).map(([name, promise]) => (<Promise<Collection>>promise).then(coll => <const>[name, coll]));
+    const promises = Object.entries(mkResources()).map(([name, promise]) => (<Promise<T>>promise).then(resource => <const>[name, resource]));
 
     const entries = await Promise.all(promises);
 
     for (const [name, coll] of entries) {
-      collections[name] = coll;
+      resources[name] = coll;
     }
   });
 
-  return collections;
+  return resources;
 }
 
 export function negate<T extends any[]>(fn: (...args: T) => boolean): (...args: T) => boolean {

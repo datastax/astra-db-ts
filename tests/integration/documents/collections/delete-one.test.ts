@@ -15,7 +15,7 @@
 import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.documents.collections.delete-one', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.delete-one', { truncate: 'colls:before' }, ({ collection }) => {
   it('should deleteOne document', async () => {
     const res = await collection.insertOne({});
     const deleteOneResp = await collection.deleteOne({ _id: res.insertedId });

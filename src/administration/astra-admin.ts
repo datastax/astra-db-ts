@@ -14,21 +14,26 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import {
-  AdminBlockingOptions,
-  AdminSpawnOptions,
-  CreateDatabaseOptions,
-  DatabaseConfig,
-  FullDatabaseInfo,
-  ListDatabasesOptions,
+  AstraDatabaseConfig,
+  CreateAstraDatabaseOptions,
+  ListAstraDatabasesOptions,
 } from '@/src/administration/types';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
-import { DbSpawnOptions, InternalRootClientOpts } from '@/src/client/types';
-import { Db, mkDb } from '@/src/db/db';
-import { validateAdminOpts } from '@/src/administration/utils';
+import { Db } from '@/src/db/db';
+import { buildAstraDatabaseAdminInfo } from '@/src/administration/utils';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
 import { TokenProvider, WithTimeout } from '@/src/lib';
-import { resolveKeyspace } from '@/src/lib/utils';
+import { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info';
+import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
+import { InternalRootClientOpts } from '@/src/client/types/internal';
+import { buildAstraEndpoint } from '@/src/lib/utils';
+import { Logger } from '@/src/lib/logging/logger';
+import { AdminOptions, DbOptions } from '@/src/client';
+import { $CustomInspect } from '@/src/lib/constants';
+import { SomeDoc } from '@/src/documents';
+import { Timeouts } from '@/src/lib/api/timeouts';
+import { AstraDropDatabaseOptions } from '@/src/administration/types/admin/drop-database';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -59,30 +64,49 @@ import { resolveKeyspace } from '@/src/lib/utils';
 export class AstraAdmin {
   readonly #defaultOpts: InternalRootClientOpts;
   readonly #httpClient: DevOpsAPIHttpClient;
+  readonly #environment: 'dev' | 'test' | 'prod';
 
   /**
    * Use {@link DataAPIClient.admin} to obtain an instance of this class.
    *
    * @internal
    */
-  constructor(rootOpts: InternalRootClientOpts, adminOpts?: AdminSpawnOptions) {
-    validateAdminOpts(adminOpts);
+  constructor(rootOpts: InternalRootClientOpts, rawAdminOpts?: AdminOptions) {
+    const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options');
 
-    this.#defaultOpts = rootOpts;
+    const token = TokenProvider.mergeTokens(adminOpts?.adminToken, rootOpts.adminOptions.adminToken);
 
-    const combinedAdminOpts = {
-      ...rootOpts.adminOptions,
-      ...adminOpts,
-      adminToken: TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken),
+    this.#defaultOpts = {
+      ...rootOpts,
+      adminOptions: {
+        endpointUrl: adminOpts?.endpointUrl || rootOpts.adminOptions.endpointUrl,
+        adminToken: token,
+        logging: Logger.advanceConfig(rootOpts.adminOptions.logging, adminOpts?.logging),
+        additionalHeaders: { ...rootOpts.adminOptions.additionalHeaders, ...adminOpts?.additionalHeaders },
+        astraEnv: adminOpts?.astraEnv ?? rootOpts.adminOptions.astraEnv,
+        timeoutDefaults: Timeouts.merge(rootOpts.adminOptions.timeoutDefaults, adminOpts?.timeoutDefaults),
+      },
+      dbOptions: {
+        ...rootOpts.dbOptions,
+        token: TokenProvider.mergeTokens(rootOpts.dbOptions.token, token),
+      },
     };
 
+    this.#environment = this.#defaultOpts.adminOptions.astraEnv ?? 'prod';
+
     this.#httpClient = new DevOpsAPIHttpClient({
-      baseUrl: combinedAdminOpts.endpointUrl || DEFAULT_DEVOPS_API_ENDPOINTS.prod,
-      monitorCommands: combinedAdminOpts.monitorCommands,
+      logging: this.#defaultOpts.adminOptions.logging,
+      baseUrl: this.#defaultOpts.adminOptions.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
       emitter: rootOpts.emitter,
       fetchCtx: rootOpts.fetchCtx,
       userAgent: rootOpts.userAgent,
-      tokenProvider: combinedAdminOpts.adminToken,
+      tokenProvider: this.#defaultOpts.adminOptions.adminToken,
+      additionalHeaders: this.#defaultOpts.adminOptions.additionalHeaders,
+      timeoutDefaults: Timeouts.merge(rootOpts.adminOptions.timeoutDefaults, this.#defaultOpts.adminOptions.timeoutDefaults),
+    });
+
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `AstraAdmin()`,
     });
   }
 
@@ -118,7 +142,7 @@ export class AstraAdmin {
    *
    * @returns A new {@link Db} instance.
    */
-  public db(endpoint: string, options?: DbSpawnOptions): Db;
+  public db(endpoint: string, options?: DbOptions): Db;
 
   /**
    * Spawns a new {@link Db} instance using a direct endpoint and given options.
@@ -152,10 +176,22 @@ export class AstraAdmin {
    *
    * @returns A new {@link Db} instance.
    */
-  public db(id: string, region: string, options?: DbSpawnOptions): Db;
+  public db(id: string, region: string, options?: DbOptions): Db;
 
-  public db(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): Db {
-    return mkDb(this.#defaultOpts, endpointOrId, regionOrOptions, maybeOptions);
+  public db(endpointOrId: string, regionOrOptions?: string | DbOptions, maybeOptions?: DbOptions): Db {
+    const dbOpts = (typeof regionOrOptions === 'string')
+      ? maybeOptions
+      : regionOrOptions;
+
+    if (typeof regionOrOptions === 'string' && (endpointOrId.startsWith('https://') || endpointOrId.startsWith('http://'))) {
+      throw new Error('Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { keyspace })`?');
+    }
+
+    const endpoint = (typeof regionOrOptions === 'string')
+      ? 'https://' + endpointOrId + '-' + regionOrOptions + '.apps.astra.datastax.com'
+      : endpointOrId;
+
+    return new Db(this.#defaultOpts, endpoint, dbOpts);
   }
 
   /**
@@ -193,7 +229,7 @@ export class AstraAdmin {
    *
    * @returns A new {@link Db} instance.
    */
-  public dbAdmin(endpoint: string, options?: DbSpawnOptions): AstraDbAdmin;
+  public dbAdmin(endpoint: string, options?: DbOptions): AstraDbAdmin;
 
   /**
    * Spawns a new {@link Db} instance using a direct endpoint and given options.
@@ -230,9 +266,9 @@ export class AstraAdmin {
    *
    * @returns A new {@link Db} instance.
    */
-  public dbAdmin(id: string, region: string, options?: DbSpawnOptions): AstraDbAdmin;
+  public dbAdmin(id: string, region: string, options?: DbOptions): AstraDbAdmin;
 
-  public dbAdmin(endpointOrId: string, regionOrOptions?: string | DbSpawnOptions, maybeOptions?: DbSpawnOptions): AstraDbAdmin {
+  public dbAdmin(endpointOrId: string, regionOrOptions?: string | DbOptions, maybeOptions?: DbOptions): AstraDbAdmin {
     /* @ts-expect-error - calls internal representation of method */
     return this.db(endpointOrId, regionOrOptions, maybeOptions).admin(this.#defaultOpts.adminOptions);
   }
@@ -249,13 +285,16 @@ export class AstraAdmin {
    *
    * @returns A promise that resolves to the complete database information.
    */
-  public async dbInfo(id: string, options?: WithTimeout): Promise<FullDatabaseInfo> {
+  public async dbInfo(id: string, options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbAdminInfo> {
+    const tm = this.#httpClient.tm.single('databaseAdminTimeoutMs', options);
+
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases/${id}`,
-    }, options);
+      methodName: 'admin.dbInfo',
+    }, tm);
 
-    return resp.data as FullDatabaseInfo;
+    return buildAstraDatabaseAdminInfo(resp.data!, this.#environment);
   }
 
   /**
@@ -268,7 +307,7 @@ export class AstraAdmin {
    * You can also filter by the database status using the `include` option, and by the database provider using the
    * `provider` option.
    *
-   * See {@link ListDatabasesOptions} for complete information about the options available for this operation.
+   * See {@link ListAstraDatabasesOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
@@ -284,38 +323,41 @@ export class AstraAdmin {
    * @param options - The options to filter the databases by.
    * @returns A list of the complete information for all the databases matching the given filter.
    */
-  public async listDatabases(options?: ListDatabasesOptions): Promise<FullDatabaseInfo[]> {
+  public async listDatabases(options?: ListAstraDatabasesOptions): Promise<AstraDbAdminInfo[]> {
     const params = {} as Record<string, string>;
 
     if (typeof options?.include === 'string') {
-      (params['include'] = options.include);
+      params['include'] = options.include;
     }
 
     if (typeof options?.provider === 'string') {
-      (params['provider'] = options.provider);
+      params['provider'] = options.provider;
     }
 
     if (typeof options?.limit === 'number') {
-      (params['limit'] = String(options.skip));
+      params['limit'] = String(options.skip);
     }
 
     if (typeof options?.skip === 'number') {
-      (params['starting_after'] = String(options.skip));
+      params['starting_after'] = String(options.skip);
     }
+
+    const tm = this.#httpClient.tm.single('databaseAdminTimeoutMs', options);
 
     const resp = await this.#httpClient.request({
       method: HttpMethods.Get,
       path: `/databases`,
       params: params,
-    }, options);
+      methodName: 'admin.listDatabases',
+    }, tm);
 
-    return resp.data as FullDatabaseInfo[];
+    return resp.data!.map((d: SomeDoc) => buildAstraDatabaseAdminInfo(d, this.#environment));
   }
 
   /**
    * Creates a new database with the given configuration.
    *
-   * **NB. this is a long-running operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * **NB. this is a long-running operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 10 seconds. Expect it to take roughly 2 min to complete.
    *
    * Note that **the `name` field is non-unique** and thus creating a database, even with the same options, is **not
@@ -325,7 +367,7 @@ export class AstraAdmin {
    * will override any default options set when creating the {@link DataAPIClient} through a deep merge (i.e. unset
    * properties in the options object will just default to the default options).
    *
-   * See {@link CreateDatabaseOptions} for complete information about the options available for this operation.
+   * See {@link CreateAstraDatabaseOptions} for complete information about the options available for this operation.
    *
    * @example
    * ```typescript
@@ -364,35 +406,40 @@ export class AstraAdmin {
    *
    * @returns The AstraDbAdmin instance for the newly created database.
    */
-  public async createDatabase(config: DatabaseConfig, options?: CreateDatabaseOptions): Promise<AstraDbAdmin> {
+  public async createDatabase(config: AstraDatabaseConfig, options?: CreateAstraDatabaseOptions): Promise<AstraDbAdmin> {
     const definition = {
       capacityUnits: 1,
       tier: 'serverless',
       dbType: 'vector',
-      keyspace: resolveKeyspace(config) || DEFAULT_KEYSPACE,
+      keyspace: config.keyspace || DEFAULT_KEYSPACE,
       ...config,
     };
+
+    const tm = this.#httpClient.tm.multipart('databaseAdminTimeoutMs', options);
 
     const resp = await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: '/databases',
       data: definition,
+      methodName: 'admin.createDatabase',
     }, {
       id: (resp) => resp.headers.location,
       target: 'ACTIVE',
       legalStates: ['INITIALIZING', 'PENDING'],
       defaultPollInterval: 10000,
+      timeoutManager: tm,
       options,
     });
 
-    const db = mkDb(this.#defaultOpts, resp.headers.location, definition.region, { ...options?.dbOptions, keyspace: definition.keyspace });
-    return db.admin(this.#defaultOpts.adminOptions);
+    const endpoint = buildAstraEndpoint(resp.headers.location, definition.region);
+    const db = this.db(endpoint, { ...options?.dbOptions, keyspace: definition.keyspace });
+    return new AstraDbAdmin(db, this.#defaultOpts, {}, this.#defaultOpts.adminOptions.adminToken, endpoint);
   }
 
   /**
    * Terminates a database by ID or by a given {@link Db} instance.
    *
-   * **NB. this is a long-running operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * **NB. this is a long-running operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 10 seconds. Expect it to take roughly 6-7 min to complete.
    *
    * The database info will still be accessible by ID, or by using the {@link AstraAdmin.listDatabases} method with the filter
@@ -414,22 +461,26 @@ export class AstraAdmin {
    *
    * @remarks Use with caution. Wear a harness. Don't say I didn't warn you.
    */
-  async dropDatabase(db: Db | string, options?: AdminBlockingOptions): Promise<void> {
+  public async dropDatabase(db: Db | string, options?: AstraDropDatabaseOptions): Promise<void> {
     const id = typeof db === 'string' ? db : db.id;
+
+    const tm = this.#httpClient.tm.multipart('databaseAdminTimeoutMs', options);
 
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: `/databases/${id}/terminate`,
+      methodName: 'admin.dropDatabase',
     }, {
       id: id,
       target: 'TERMINATED',
       legalStates: ['TERMINATING'],
       defaultPollInterval: 10000,
+      timeoutManager: tm,
       options,
     });
   }
 
-  private get _httpClient() {
+  public get _httpClient() {
     return this.#httpClient;
   }
 }

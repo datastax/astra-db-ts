@@ -12,22 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { WithKeyspace } from '@/src/db';
-import { WithNullableKeyspace } from '@/src/db/types/collections-common';
 import { DataAPIEnvironment, nullish } from '@/src/lib/types';
 import { DataAPIEnvironments } from '@/src/lib/constants';
+import JBI from 'json-bigint';
+import { SomeDoc } from '@/src/documents';
 
+/**
+ * @internal
+ */
 export function isNullish(t: unknown): t is nullish {
   return t === null || t === undefined;
 }
 
+/**
+ * @internal
+ */
 export function validateDataAPIEnv(env: unknown): asserts env is DataAPIEnvironment | nullish {
-  if (!isNullish(env) && !DataAPIEnvironments.includes(env as any)) {
+  if (!isNullish(env) && !(<readonly unknown[]>DataAPIEnvironments).includes(env)) {
     throw new Error(`Given environment is invalid (must be ${DataAPIEnvironments.map(e => `"${e}"`).join(', ')}, or nullish to default to "astra".`);
   }
 }
 
-export function jsonTryParse<T>(json: string, otherwise: T, reviver?: (this: any, key: string, value: any) => any): T {
+/**
+ * @internal
+ */
+export function jsonTryParse<T>(json: string, otherwise: T, reviver?: (this: unknown, key: string, value: unknown) => unknown): T {
   try {
     return JSON.parse(json, reviver);
   } catch (_) {
@@ -35,12 +44,60 @@ export function jsonTryParse<T>(json: string, otherwise: T, reviver?: (this: any
   }
 }
 
-export function resolveKeyspace(obj: WithKeyspace | nullish, nullBypass?: false): string | undefined
+/**
+ * @internal
+ */
+export function buildAstraEndpoint(id: string, region: string, env: 'dev' | 'test' | 'prod' = 'prod') {
+  return 'https://' + id + '-' + region + `.apps${env === 'prod' ? '' : `-${env}`}.astra.datastax.com`;
+}
 
-export function resolveKeyspace(obj: WithNullableKeyspace | nullish, nullBypass: true): string | nullish
+/**
+ * @internal
+ */
+export function toArray<T>(t: T | readonly T[]): readonly T[] {
+  return Array.isArray(t) ? t : [t] as readonly [T];
+}
 
-export function resolveKeyspace(obj: WithNullableKeyspace | nullish, nullBypass?: boolean): string | nullish {
-  return (nullBypass)
-    ? (obj?.keyspace !== undefined) ? obj?.keyspace: (<any>obj)?.namespace
-    : obj?.keyspace ?? (<any>obj)?.namespace ?? undefined;
+/**
+ * @internal
+ */
+export function withJbiNullProtoFix(jbi: { parse: typeof JBI['parse']; stringify: typeof JBI['stringify'] }) {
+  return {
+    parse: (str: string) => nullProtoFix(jbi.parse(str)),
+    stringify: jbi.stringify,
+  };
+}
+
+function nullProtoFix(doc: SomeDoc): SomeDoc {
+  if (Array.isArray(doc)) {
+    for (let i = 0; i < doc.length; i++) {
+      if (typeof doc[i] === 'object' && doc[i] !== null) {
+        doc[i] = nullProtoFix(doc[i]);
+      }
+    }
+  } else {
+    doc = Object.assign({}, doc);
+
+    for (const key of Object.keys(doc)) {
+      if (typeof doc[key] === 'object' && doc[key] !== null) {
+        doc[key] = nullProtoFix(doc[key]);
+      }
+    }
+  }
+
+  return doc;
+}
+
+export function stringArraysEqual(a: readonly string[], b: readonly string[]): boolean {
+  if (a.length !== b.length) {
+    return false;
+  }
+
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) {
+      return false;
+    }
+  }
+
+  return true;
 }

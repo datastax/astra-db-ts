@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CreateKeyspaceOptions, CreateNamespaceOptions } from '@/src/administration';
+import { WithTimeout } from '@/src/lib';
 
 /**
  * Represents the options for creating a keyspace on a non-Astra database (i.e. blocking options + keyspace creation options).
  *
  * If no replication options are provided, it will default to `'SimpleStrategy'` with a replication factor of `1`.
  *
- * See {@link AdminBlockingOptions} for more options about blocking behavior.
+ * See {@link AstraAdminBlockingOptions} for more options about blocking behavior.
  *
  * If `updateDbKeyspace` is set to true, the underlying `Db` instance used to create the `DbAdmin` will have its
  * current working keyspace set to the newly created keyspace immediately (even if the keyspace isn't technically
@@ -36,25 +36,16 @@ import { CreateKeyspaceOptions, CreateNamespaceOptions } from '@/src/administrat
  *   updateDbKeyspace: true,
  * });
  *
- * // Creates collection in keyspace `new_keyspace` by default now
+ * // Creates collections in keyspace `new_keyspace` by default now
  * const coll = db.createCollection('my_coll');
  * ```
  *
  * @public
  */
-export type LocalCreateKeyspaceOptions = CreateKeyspaceOptions & { replication?: KeyspaceReplicationOptions };
-
-/**
- * Represents the options for creating a keyspace on a non-Astra database (i.e. blocking options + keyspace creation options).
- *
- * This is now a deprecated alias for the strictly equivalent {@link LocalCreateKeyspaceOptions}, and will be removed
- * in an upcoming major version.
- *
- * @deprecated - Prefer {@link LocalCreateKeyspaceOptions} instead.
- *
- * @public
- */
-export type LocalCreateNamespaceOptions = CreateNamespaceOptions & { replication?: KeyspaceReplicationOptions };
+export interface DataAPICreateKeyspaceOptions extends WithTimeout<'keyspaceAdminTimeoutMs'> {
+  replication?: KeyspaceReplicationOptions,
+  updateDbKeyspace?: boolean,
+}
 
 /**
  * Represents the replication options for a keyspace.

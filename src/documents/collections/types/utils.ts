@@ -12,45 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeId } from '@/src/documents';
+import { ObjectId, UUID } from '@/src/documents';
 
 /**
- * Checks if a type can possibly be some number
+ * All possible types for a document ID. JSON scalar types, `Date`, `UUID`, and `ObjectId`.
  *
- * @example
- * ```typescript
- * IsNum<string | number> === true
- * ```
+ * Note that the `_id` *can* technically be `null`. Trying to set the `_id` to `null` doesn't mean "auto-generate
+ * an ID" like it may in some other databases; it quite literally means "set the ID to `null`".
+ *
+ * It's heavily recommended to properly type this in your Schema, so you know what to expect for your `_id` field.
  *
  * @public
  */
-export type IsNum<T> = number extends T ? true : bigint extends T ? true : false
-
-/**
- * Checks if a type can possibly be a date
- *
- * @example
- * ```typescript
- * IsDate<string | Date> === boolean
- * ```
- *
- * @public
- */
-export type IsDate<T> = IsAny<T> extends true ? true : T extends Date | { $date: number } ? true : false
-
-/**
- * Checks if a type is any
- *
- * @public
- */
-export type IsAny<T> = true extends false & T ? true : false
-
-/**
- * Forces the given type to include an `_id`
- *
- * @public
- */
-export type WithId<T> = NoId<T> & { _id: IdOf<T> }
+export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId | null;
 
 /**
  * Allows the given type to include an `_id` or not, even if it's not declared in the type
@@ -60,11 +34,20 @@ export type WithId<T> = NoId<T> & { _id: IdOf<T> }
 export type MaybeId<T> = NoId<T> & { _id?: IdOf<T> }
 
 /**
- * Shorthand type for `WithSim` & `WithId`
+ * Includes an `_id` in the given type, even if it's not declared in the type
  *
  * @public
  */
-export type FoundDoc<Doc> = WithId<Omit<Doc, '$similarity'> & { $similarity?: number }>
+export type WithId<T> = T & { _id: IdOf<T> }
+
+/**
+ * Represents a document as it's returned by the database by default.
+ *
+ * Shorthand type for `WithSim` & `WithId`.
+ *
+ * @public
+ */
+export type FoundDoc<Doc> = WithId<Omit<Doc, '$vector' | '$vectorize'>>;
 
 /**
  * Represents a doc that doesn't have an `_id`
@@ -87,20 +70,7 @@ export type Flatten<Type> = Type extends (infer Item)[]
  *
  * @public
  */
-export type IdOf<TSchema> =
-  TSchema extends { _id: infer Id }
-    ? Id :
-  TSchema extends { _id?: infer Id }
-    ? unknown extends Id
-      ? SomeId
-      : Id
+export type IdOf<Doc> =
+  Doc extends { _id?: infer Id extends SomeId }
+    ? Id
     : SomeId
-
-/**
- * Makes all fields in a type mutable
- *
- * @internal
- */
-export type Mutable<T> = {
-  -readonly [P in keyof T]: T[P];
-};

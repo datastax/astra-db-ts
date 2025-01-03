@@ -15,7 +15,7 @@
 import * as process from 'node:process';
 import dotenv from 'dotenv';
 import { DataAPIEnvironments } from '@/src/lib/constants';
-import { DataAPIEnvironment } from '@/src/lib';
+import { DataAPIClientEvent, DataAPIEnvironment } from '@/src/lib';
 
 dotenv.config();
 
@@ -45,7 +45,7 @@ export const ENVIRONMENT = environment as DataAPIEnvironment;
 export const TEMP_DB_NAME = 'astra-test-db-plus-random-name-1284';
 
 export const DEFAULT_COLLECTION_NAME = 'test_coll';
-export const EPHEMERAL_COLLECTION_NAME = 'temp_coll';
+export const DEFAULT_TABLE_NAME = 'test_table';
 
 export const OTHER_KEYSPACE = 'other_keyspace';
 
@@ -56,3 +56,9 @@ export const TEST_APPLICATION_URI = process.env.CLIENT_DB_URL;
 export const DEMO_APPLICATION_URI = 'https://12341234-1234-1234-1234-123412341234-us-west-2.apps.astra.datastax.com';
 
 export const DEFAULT_TEST_TIMEOUT = +process.env.CLIENT_TESTS_TIMEOUT! || 90000;
+
+export const LOGGING_PRED: (e: DataAPIClientEvent, isGlobal: boolean) => boolean = process.env.LOGGING_PRED
+  ? new Function("e", "isGlobal", "return " + process.env.LOGGING_PRED) as any
+  : () => false;
+
+export const SKIP_PRELUDE = !!process.env.SKIP_PRELUDE || false;

@@ -18,18 +18,11 @@ import { FetcherResponseInfo } from '@/src/lib/api';
 import { FetchH2 } from '@/src/lib/api/fetch/fetch-h2';
 import { FetcherRequestInfo } from '@/src/lib/api/fetch/types';
 import { UsernamePasswordTokenProvider } from '@/src/lib';
-import {
-  DEMO_APPLICATION_URI,
-  describe,
-  it,
-  OTHER_KEYSPACE,
-  TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI,
-} from '@/tests/testlib';
+import { describe, it, TEST_APPLICATION_URI } from '@/tests/testlib';
 import assert from 'assert';
 import { DataAPIEnvironments } from '@/src/lib/constants';
 
-describe('unit.client.documents-client', () => {
+describe('unit.client.data-api-client', () => {
   it('should accept valid tokens', () => {
     assert.doesNotThrow(() => new DataAPIClient());
     assert.doesNotThrow(() => new DataAPIClient('token'));
@@ -113,10 +106,6 @@ describe('unit.client.documents-client', () => {
   it('validates options properly', () => {
     assert.throws(() => new DataAPIClient('dummy-token', {
       // @ts-expect-error - testing invalid input
-      httpOptions: { maxTimeMS: '3' },
-    }));
-    assert.throws(() => new DataAPIClient('dummy-token', {
-      // @ts-expect-error - testing invalid input
       httpOptions: { preferHttp2: 3 },
     }));
     assert.throws(() => new DataAPIClient('dummy-token', {
@@ -133,68 +122,44 @@ describe('unit.client.documents-client', () => {
     }));
   });
 
-  it('throws an error if passing in endpoint and keyspace name as a string', () => {
-    const client = new DataAPIClient(TEST_APPLICATION_TOKEN);
-    assert.throws(
-      () => client.db(DEMO_APPLICATION_URI, OTHER_KEYSPACE),
-      { message: 'Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { keyspace })`?' },
-    );
-  });
-
   describe('using fetch-h2', () => {
     it('uses http2 by default', function () {
       const client = new DataAPIClient('dummy-token', { httpOptions: {} });
-      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
+      const httpClient = client.db(TEST_APPLICATION_URI)._httpClient;
       assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
       assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
     });
 
     it('uses http2 when forced', function () {
       const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'default', preferHttp2: true } });
-      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
+      const httpClient = client.db(TEST_APPLICATION_URI)._httpClient;
       assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
       assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
     });
 
     it('uses http1.1 when forced', () => {
       const client = new DataAPIClient('dummy-token', { httpOptions: { preferHttp2: false } });
-      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
-      assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
-      assert.ok(httpClient.fetchCtx.ctx['_http1'] === httpClient.fetchCtx.ctx['_preferred']);
-    });
-
-    it('uses http2 when forced (deprecated version)', function () {
-      const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'default' }, preferHttp2: true });
-      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
-      assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
-      assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
-    });
-
-    it('uses http1.1 when forced (deprecated version)', () => {
-      const client = new DataAPIClient('dummy-token', { preferHttp2: false });
-      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
+      const httpClient = client.db(TEST_APPLICATION_URI)._httpClient;
       assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
       assert.ok(httpClient.fetchCtx.ctx['_http1'] === httpClient.fetchCtx.ctx['_preferred']);
     });
   });
 
   describe('using custom http client', () => {
-    it('should allow custom http client', () => {
+    it('should allow custom http client', async () => {
       class CustomFetcher {
-        fetch(_: FetcherRequestInfo): Promise<FetcherResponseInfo> {
-          return Promise.resolve(<FetcherResponseInfo>{});
+        async fetch(_: FetcherRequestInfo): Promise<FetcherResponseInfo> {
+          return 3 as any;
         }
       }
 
       const client = new DataAPIClient('dummy-token', {
-        httpOptions: {
-          client: 'custom',
-          fetcher: new CustomFetcher(),
-        },
+        httpOptions: { client: 'custom', fetcher: new CustomFetcher() },
       });
 
-      const httpClient = client.db(TEST_APPLICATION_URI)['_httpClient'];
-      assert.ok(httpClient.fetchCtx.ctx instanceof CustomFetcher);
+      const httpClient = client.db(TEST_APPLICATION_URI)._httpClient;
+      assert.strictEqual(await httpClient.fetchCtx.ctx.fetch(null!), 3);
+      assert.strictEqual(httpClient.fetchCtx.ctx.close, undefined);
     });
 
     it('should throw if fetcher not properly implemented', () => {

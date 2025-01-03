@@ -12,11 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, VectorDoc } from '@/src/documents/collections';
+import { Collection } from '@/src/documents/collections';
 import { SomeDoc } from '@/src/documents/collections/types/document';
 import { Db } from '@/src/db/db';
 
-export interface TestSchema extends VectorDoc {
+export interface TestSchema {
+  $vector?: number[];
   _id: string;
   purchase_type: string;
   customer: {

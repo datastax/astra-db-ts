@@ -13,32 +13,37 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { TimeoutManager, TimeoutOptions } from '@/src/lib/api/timeout-managers';
-import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/documents/events';
+import { Logger } from '@/src/lib/logging/logger';
+import { nullish, RawDataAPIResponse, TokenProvider } from '@/src/lib';
 import {
+  DataAPIErrorDescriptor,
   DataAPIHttpError,
   DataAPIResponseError,
   DataAPITimeoutError,
-  mkRespErrorFromResponse,
-} from '@/src/documents/errors';
-import TypedEmitter from 'typed-emitter';
-import { DataAPIClientEvents } from '@/src/client';
-import {
-  AdminCommandFailedEvent,
-  AdminCommandStartedEvent,
-  AdminCommandSucceededEvent,
-  AdminSpawnOptions,
-} from '@/src/administration';
-import { CollectionNotFoundError } from '@/src/db/errors';
-import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_TIMEOUT, HttpMethods } from '@/src/lib/api/constants';
-import { WithNullableKeyspace } from '@/src/db/types/collections-common';
-import { RawDataAPIResponse } from '@/src/lib/api';
-import { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
-import { nullish, TokenProvider } from '@/src/lib';
-import { hrTimeMs, HttpClient } from '@/src/lib/api/clients/http-client';
-import { CollectionSpawnOptions } from '@/src/db';
-import { isNullish, resolveKeyspace } from '@/src/lib/utils';
-import { EmbeddingHeadersProvider, ObjectId, UUID } from '@/src/documents';
+  EmbeddingHeadersProvider,
+  SomeDoc,
+} from '@/src/documents';
+import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
+import { HttpClient } from '@/src/lib/api/clients/http-client';
+import { DEFAULT_DATA_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants';
+import { CollectionOptions, TableOptions } from '@/src/db';
+import type { AdminOptions } from '@/src/client';
+import { isNullish } from '@/src/lib/utils';
+import { mkRespErrorFromResponse } from '@/src/documents/errors';
+import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts';
+import { EmptyObj } from '@/src/lib/types';
+
+type ClientKind = 'admin' | 'normal';
+
+/**
+ * @internal
+ */
+type ExecCmdOpts<Kind extends ClientKind> = (Kind extends 'admin' ? { methodName: string } : EmptyObj) & {
+  keyspace?: string | null,
+  timeoutManager: TimeoutManager,
+  bigNumsPresent?: boolean,
+  collection?: string,
+}
 
 /**
  * @internal
@@ -49,134 +54,136 @@ export interface DataAPIRequestInfo {
   keyspace?: string | null,
   command: Record<string, any>,
   timeoutManager: TimeoutManager,
+  bigNumsPresent: boolean | undefined,
+}
+
+type EmissionStrategy<Kind extends ClientKind> = (logger: Logger) => {
+  emitCommandStarted?(info: DataAPIRequestInfo, opts: ExecCmdOpts<Kind>): void,
+  emitCommandFailed?(info: DataAPIRequestInfo, error: Error, started: number, opts: ExecCmdOpts<Kind>): void,
+  emitCommandSucceeded?(info: DataAPIRequestInfo, resp: RawDataAPIResponse, started: number, opts: ExecCmdOpts<Kind>): void,
+  emitCommandWarnings?(info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[], opts: ExecCmdOpts<Kind>): void,
+}
+
+type EmissionStrategies = {
+  Normal: EmissionStrategy<'normal'>,
+  Admin: EmissionStrategy<'admin'>,
 }
 
 /**
  * @internal
  */
-interface ExecuteCommandOptions extends WithNullableKeyspace {
-  collection?: string,
-}
-
-/**
- * @internal
- */
-type EmissionStrategy = (emitter: TypedEmitter<DataAPIClientEvents>) => {
-  emitCommandStarted(info: DataAPIRequestInfo): void,
-  emitCommandFailed(info: DataAPIRequestInfo, error: Error, started: number): void,
-  emitCommandSucceeded(info: DataAPIRequestInfo, resp: RawDataAPIResponse, warnings: string[], started: number): void,
-}
-
-/**
- * @internal
- */
-export const EmissionStrategy: Record<'Normal' | 'Admin', EmissionStrategy> = {
-  Normal: (emitter) => ({
-    emitCommandStarted(info) {
-      emitter.emit('commandStarted', new CommandStartedEvent(info));
-    },
-    emitCommandFailed(info, error, started) {
-      emitter.emit('commandFailed', new CommandFailedEvent(info, error, started));
-    },
-    emitCommandSucceeded(info, resp, warnings, started) {
-      emitter.emit('commandSucceeded', new CommandSucceededEvent(info, resp, warnings, started));
-    },
+export const EmissionStrategy: EmissionStrategies = {
+  Normal: (logger) => ({
+    emitCommandStarted: logger.commandStarted,
+    emitCommandFailed: logger.commandFailed,
+    emitCommandSucceeded: logger.commandSucceeded,
+    emitCommandWarnings: logger.commandWarnings,
   }),
-  Admin: (emitter) => ({
-    emitCommandStarted(info) {
-      emitter.emit('adminCommandStarted', new AdminCommandStartedEvent(adaptInfo4Devops(info), true, info.timeoutManager.msRemaining()));
+  Admin: (logger) => ({
+    emitCommandStarted(info, opts) {
+      logger.adminCommandStarted?.(adaptInfo4Devops(info, opts.methodName), true, null!); // TODO
     },
-    emitCommandFailed(info, error, started) {
-      emitter.emit('adminCommandFailed', new AdminCommandFailedEvent(adaptInfo4Devops(info), true, error, started));
+    emitCommandFailed(info, error, started, opts) {
+      logger.adminCommandFailed?.(adaptInfo4Devops(info, opts.methodName), true, error, started);
     },
-    emitCommandSucceeded(info, resp, warnings, started) {
-      emitter.emit('adminCommandSucceeded', new AdminCommandSucceededEvent(adaptInfo4Devops(info), true, resp, warnings, started));
+    emitCommandSucceeded(info, resp, started, opts) {
+      logger.adminCommandSucceeded?.(adaptInfo4Devops(info, opts.methodName), true, resp, started);
+    },
+    emitCommandWarnings(info, warnings, opts) {
+      logger.adminCommandWarnings?.(adaptInfo4Devops(info, opts.methodName), true, warnings);
     },
   }),
 };
 
-const adaptInfo4Devops = (info: DataAPIRequestInfo) => (<const>{
+const adaptInfo4Devops = (info: DataAPIRequestInfo, methodName: string) => (<const>{
   method: 'POST',
   data: info.command,
   path: info.url,
-  params: {},
+  methodName,
 });
 
 /**
  * @internal
  */
-interface DataAPIHttpClientOpts extends HTTPClientOptions {
+interface DataAPIHttpClientOpts<Kind extends ClientKind> extends HTTPClientOptions {
   keyspace: KeyspaceRef,
-  emissionStrategy: EmissionStrategy,
+  emissionStrategy: EmissionStrategy<Kind>,
   embeddingHeaders: EmbeddingHeadersProvider,
-  tokenProvider: TokenProvider,
+  tokenProvider: TokenProvider | undefined,
 }
 
 /**
  * @internal
  */
-export class DataAPIHttpClient extends HttpClient {
+export interface BigNumberHack {
+  parseWithBigNumbers(json: string): boolean,
+  parser: {
+    parse: (json: string) => SomeDoc,
+    stringify: (obj: SomeDoc) => string,
+  },
+}
+
+/**
+ * @internal
+ */
+export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpClient {
   public collection?: string;
   public keyspace: KeyspaceRef;
-  public maxTimeMS: number;
-  public emissionStrategy: ReturnType<EmissionStrategy>;
-  readonly #props: DataAPIHttpClientOpts;
+  public emissionStrategy: ReturnType<EmissionStrategy<Kind>>;
+  public bigNumHack?: BigNumberHack;
+  readonly #props: DataAPIHttpClientOpts<Kind>;
 
-  constructor(props: DataAPIHttpClientOpts) {
-    super(props, [mkAuthHeaderProvider(props.tokenProvider), props.embeddingHeaders.getHeaders.bind(props.embeddingHeaders)]);
+  constructor(props: DataAPIHttpClientOpts<Kind>) {
+    super(props, [mkAuthHeaderProvider(props.tokenProvider), () => props.embeddingHeaders.getHeaders()], DataAPITimeoutError.mk);
     this.keyspace = props.keyspace;
     this.#props = props;
-    this.maxTimeMS = this.fetchCtx.maxTimeMS ?? DEFAULT_TIMEOUT;
-    this.emissionStrategy = props.emissionStrategy(props.emitter);
+    this.emissionStrategy = props.emissionStrategy(this.logger);
   }
 
-  public forCollection(keyspace: string, collection: string, opts: CollectionSpawnOptions | undefined): DataAPIHttpClient {
+  public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(keyspace: string, collection: string, opts: CollectionOptions | TableOptions | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(opts?.embeddingApiKey),
+      logging: Logger.advanceConfig(this.#props.logging, opts?.logging),
+      emissionStrategy: EmissionStrategy.Normal,
       keyspace: { ref: keyspace },
     });
 
     clone.collection = collection;
-    clone.maxTimeMS = opts?.defaultMaxTimeMS ?? this.maxTimeMS;
+    clone.bigNumHack = bigNumHack;
+    clone.tm = new Timeouts(DataAPITimeoutError.mk, { ...this.tm.baseTimeouts, ...opts?.timeoutDefaults });
 
     return clone;
   }
 
-  public forDbAdmin(opts: AdminSpawnOptions | undefined): DataAPIHttpClient {
+  public forDbAdmin(opts: AdminOptions | undefined): DataAPIHttpClient<'admin'> {
     const clone = new DataAPIHttpClient({
       ...this.#props,
-      tokenProvider: opts?.adminToken ? TokenProvider.parseToken(opts?.adminToken) : this.#props.tokenProvider,
-      monitorCommands: opts?.monitorCommands || this.#props.monitorCommands,
-      baseUrl: opts?.endpointUrl || this.#props.baseUrl,
+      tokenProvider: TokenProvider.mergeTokens(opts?.adminToken, this.#props.tokenProvider),
+      logging: Logger.advanceConfig(this.#props.logging, opts?.logging),
+      baseUrl: opts?.endpointUrl ?? this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
+      additionalHeaders: { ...this.#props.additionalHeaders, ...opts?.additionalHeaders },
+      emissionStrategy: EmissionStrategy.Admin,
     });
 
-    clone.emissionStrategy = EmissionStrategy.Admin(this.emitter);
     clone.collection = undefined;
+    clone.tm = new Timeouts(DataAPITimeoutError.mk, { ...this.tm.baseTimeouts, ...opts?.timeoutDefaults });
 
     return clone;
   }
 
-  public timeoutManager(timeout: number | undefined) {
-    timeout ??= this.maxTimeMS;
-    return new TimeoutManager(timeout, () => new DataAPITimeoutError(timeout));
-  }
-
-  public async executeCommand(command: Record<string, any>, options: TimeoutOptions & ExecuteCommandOptions | undefined) {
-    const timeoutManager = options?.timeoutManager ?? this.timeoutManager(options?.maxTimeMS);
-
-    return await this._requestDataAPI({
-      url: this.baseUrl,
-      timeoutManager: timeoutManager,
-      collection: options?.collection,
-      keyspace: resolveKeyspace(options, true),
-      command: command,
-    });
-  }
-
-  private async _requestDataAPI(info: DataAPIRequestInfo): Promise<RawDataAPIResponse> {
+  public async executeCommand(command: Record<string, any>, options: ExecCmdOpts<Kind>): Promise<RawDataAPIResponse> {
     let started = 0;
+
+    const info: DataAPIRequestInfo = {
+      url: this.baseUrl,
+      collection: options.collection,
+      keyspace: options.keyspace,
+      command: command,
+      timeoutManager: options.timeoutManager,
+      bigNumsPresent: options.bigNumsPresent,
+    };
 
     try {
       info.collection ||= this.collection;
@@ -193,14 +200,16 @@ export class DataAPIHttpClient extends HttpClient {
       const collectionPath = info.collection ? `/${info.collection}` : '';
       info.url += keyspacePath + collectionPath;
 
-      if (this.monitorCommands) {
-        started = hrTimeMs();
-        this.emissionStrategy.emitCommandStarted(info);
-      }
+      started = performance.now();
+      this.emissionStrategy.emitCommandStarted?.(info, options);
+
+      const serialized = (info.bigNumsPresent)
+        ? this.bigNumHack?.parser.stringify(info.command)
+        : JSON.stringify(info.command);
 
       const resp = await this._request({
         url: info.url,
-        data: JSON.stringify(info.command, replacer),
+        data: serialized,
         timeoutManager: info.timeoutManager,
         method: HttpMethods.Post,
       });
@@ -209,15 +218,18 @@ export class DataAPIHttpClient extends HttpClient {
         throw new DataAPIHttpError(resp);
       }
 
-      const data: RawDataAPIResponse = resp.body ? JSON.parse(resp.body, reviver) : {};
+      const data: RawDataAPIResponse =
+        (resp.body)
+          ? (this.bigNumHack?.parseWithBigNumbers(resp.body))
+            ? this.bigNumHack?.parser.parse(resp.body)
+            : JSON.parse(resp.body)
+          : {};
 
       const warnings = data?.status?.warnings ?? [];
-      delete data?.status?.warnings;
-
-      if (data.errors && data.errors.length > 0 && data.errors[0]?.errorCode === 'COLLECTION_NOT_EXIST') {
-        const name = data.errors[0]?.message.split(': ')[1];
-        throw new CollectionNotFoundError(info.keyspace ?? '<unknown>', name);
+      if (warnings.length) {
+        this.emissionStrategy.emitCommandWarnings?.(info, warnings, options);
       }
+      delete data?.status?.warnings;
 
       if (data.errors && data.errors.length > 0) {
         throw mkRespErrorFromResponse(DataAPIResponseError, info.command, data, warnings);
@@ -229,67 +241,23 @@ export class DataAPIHttpClient extends HttpClient {
         errors: data.errors,
       };
 
-      if (this.monitorCommands) {
-        this.emissionStrategy.emitCommandSucceeded(info, respData, warnings, started);
-      }
-
+      this.emissionStrategy.emitCommandSucceeded?.(info, respData, started, options);
       return respData;
     } catch (e: any) {
-      if (this.monitorCommands) {
-        this.emissionStrategy.emitCommandFailed(info, e, started);
-      }
+      this.emissionStrategy.emitCommandFailed?.(info, e, started, options);
       throw e;
     }
   }
 }
 
-/**
- * @internal
- */
-export function replacer(this: any, key: string, value: any): any {
-  if (typeof value === 'bigint') {
-    return Number(value);
-  }
+const mkAuthHeaderProvider = (tp: TokenProvider | undefined): HeaderProvider => (tp)
+  ? () => {
+    const token = tp.getToken();
 
-  if (typeof this[key] === 'object') {
-    if (key === '$date') {
-      return new Date(value).valueOf();
-    }
-
-    if (this[key] instanceof Date) {
-      return { $date: this[key].valueOf() };
-    }
-  }
-
-  return value;
-}
-
-/**
- * @internal
- */
-export function reviver(_: string, value: any): any {
-  if (!value) {
-    return value;
-  }
-  if (value.$date) {
-    return new Date(value.$date);
-  }
-  if (value.$objectId) {
-    return new ObjectId(value.$objectId);
-  }
-  if (value.$uuid) {
-    return new UUID(value.$uuid);
-  }
-  return value;
-}
-
-const mkAuthHeaderProvider = (tp: TokenProvider): HeaderProvider => () => {
-  const token = tp.getToken();
-
-  return (token instanceof Promise)
-    ? token.then(mkAuthHeader)
-    : mkAuthHeader(token);
-};
+    return (token instanceof Promise)
+      ? token.then(mkAuthHeader)
+      : mkAuthHeader(token);
+  } : () => ({});
 
 const mkAuthHeader = (token: string | nullish): Record<string, string> => (token)
   ? { [DEFAULT_DATA_API_AUTH_HEADER]: token }

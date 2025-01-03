@@ -13,20 +13,14 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { hrTimeMs, HttpClient } from '@/src/lib/api/clients/http-client';
+import { HttpClient } from '@/src/lib/api/clients';
 import { DevOpsAPIResponseError, DevOpsAPITimeoutError, DevOpsUnexpectedStateError } from '@/src/administration/errors';
-import { AdminBlockingOptions } from '@/src/administration/types';
-import { TimeoutManager, TimeoutOptions } from '@/src/lib/api/timeout-managers';
+import { AstraAdminBlockingOptions } from '@/src/administration/types';
 import { DEFAULT_DEVOPS_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants';
-import {
-  AdminCommandFailedEvent,
-  AdminCommandPollingEvent,
-  AdminCommandStartedEvent,
-  AdminCommandSucceededEvent,
-} from '@/src/administration';
-import { HeaderProvider, HTTPClientOptions, HttpMethodStrings } from '@/src/lib/api/clients/types';
-import { nullish, TokenProvider } from '@/src/lib';
+import type { HeaderProvider, HTTPClientOptions, HttpMethodStrings } from '@/src/lib/api/clients/types';
+import type { nullish, TokenProvider } from '@/src/lib';
 import { jsonTryParse } from '@/src/lib/utils';
+import { TimeoutManager } from '@/src/lib/api/timeouts';
 
 /**
  * @internal
@@ -36,6 +30,7 @@ export interface DevOpsAPIRequestInfo {
   method: HttpMethodStrings,
   data?: Record<string, any>,
   params?: Record<string, string>,
+  methodName: string,
 }
 
 interface LongRunningRequestInfo {
@@ -43,7 +38,8 @@ interface LongRunningRequestInfo {
   target: string,
   legalStates: string[],
   defaultPollInterval: number,
-  options: AdminBlockingOptions | undefined,
+  options: AstraAdminBlockingOptions | undefined,
+  timeoutManager: TimeoutManager,
 }
 
 interface DevopsAPIResponse {
@@ -53,7 +49,7 @@ interface DevopsAPIResponse {
 }
 
 interface DevOpsAPIHttpClientOpts extends HTTPClientOptions {
-  tokenProvider: TokenProvider,
+  tokenProvider: TokenProvider | undefined,
 }
 
 /**
@@ -61,21 +57,20 @@ interface DevOpsAPIHttpClientOpts extends HTTPClientOptions {
  */
 export class DevOpsAPIHttpClient extends HttpClient {
   constructor(opts: DevOpsAPIHttpClientOpts) {
-    super(opts, [mkAuthHeaderProvider(opts.tokenProvider)]);
+    super(opts, [mkAuthHeaderProvider(opts.tokenProvider)], DevOpsAPITimeoutError.mk);
   }
 
-  public async request(req: DevOpsAPIRequestInfo, options: TimeoutOptions | undefined, started: number = 0): Promise<DevopsAPIResponse> {
+  public async request(req: DevOpsAPIRequestInfo, timeoutManager: TimeoutManager, started: number = 0): Promise<DevopsAPIResponse> {
     const isLongRunning = started !== 0;
 
     try {
-      const timeoutManager = options?.timeoutManager ?? this._timeoutManager(options?.maxTimeMS);
       const url = this.baseUrl + req.path;
 
-      if (this.monitorCommands && !isLongRunning) {
-        this.emitter.emit('adminCommandStarted', new AdminCommandStartedEvent(req, isLongRunning, timeoutManager.ms));
+      if (!isLongRunning) {
+        this.logger.adminCommandStarted?.(req, isLongRunning, timeoutManager.initial());
       }
 
-      started ||= hrTimeMs();
+      started ||= performance.now();
 
       const resp = await this._request({
         url: url,
@@ -92,8 +87,8 @@ export class DevOpsAPIHttpClient extends HttpClient {
         throw new DevOpsAPIResponseError(resp, data);
       }
 
-      if (this.monitorCommands && !isLongRunning) {
-        this.emitter.emit('adminCommandSucceeded', new AdminCommandSucceededEvent(req, false, data, [], started));
+      if (!isLongRunning) {
+        this.logger.adminCommandSucceeded?.(req, false, data, started);
       }
 
       return {
@@ -105,45 +100,32 @@ export class DevOpsAPIHttpClient extends HttpClient {
       if (!(e instanceof Error)) {
         throw e;
       }
-
-      if (this.monitorCommands) {
-        this.emitter.emit('adminCommandFailed', new AdminCommandFailedEvent(req, isLongRunning, e, started));
-      }
-
+      this.logger.adminCommandFailed?.(req, isLongRunning, e, started);
       throw e;
     }
   }
 
   public async requestLongRunning(req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo): Promise<DevopsAPIResponse> {
-    const timeoutManager = this._timeoutManager(info.options?.maxTimeMS);
     const isLongRunning = info.options?.blocking !== false;
+    const timeoutManager = info.timeoutManager;
 
-    if (this.monitorCommands) {
-      this.emitter.emit('adminCommandStarted', new AdminCommandStartedEvent(req, isLongRunning, timeoutManager.ms));
-    }
+    this.logger.adminCommandStarted?.(req, isLongRunning, timeoutManager.initial());
 
-    const started = hrTimeMs();
-    const resp = await this.request(req, { timeoutManager }, started);
+    const started = performance.now();
+    const resp = await this.request(req, timeoutManager, started);
 
     const id = (typeof info.id === 'function')
       ? info.id(resp)
       : info.id;
 
-    await this._awaitStatus(id, req, info, timeoutManager, started);
+    await this._awaitStatus(id, req, info, started);
 
-    if (this.monitorCommands && isLongRunning) {
-      this.emitter.emit('adminCommandSucceeded', new AdminCommandSucceededEvent(req, true, resp, [], started));
-    }
+    this.logger.adminCommandSucceeded?.(req, isLongRunning, resp, started);
 
     return resp;
   }
 
-  private _timeoutManager(timeout: number | undefined) {
-    timeout ??= this.fetchCtx.maxTimeMS ?? (12 * 60 * 1000);
-    return new TimeoutManager(timeout, (info) => new DevOpsAPITimeoutError(info.url, timeout));
-  }
-
-  private async _awaitStatus(id: string, req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo, timeoutManager: TimeoutManager, started: number): Promise<void> {
+  private async _awaitStatus(id: string, req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo, started: number): Promise<void> {
     if (info.options?.blocking === false) {
       return;
     }
@@ -151,22 +133,19 @@ export class DevOpsAPIHttpClient extends HttpClient {
     const pollInterval = info.options?.pollInterval || info.defaultPollInterval;
     let waiting = false;
 
-    for (;;) {
+    for (let i = 1; i++;) {
       if (waiting) {
         continue;
       }
       waiting = true;
 
-      if (this.monitorCommands) {
-        this.emitter.emit('adminCommandPolling', new AdminCommandPollingEvent(req, started, pollInterval));
-      }
+      this.logger.adminCommandPolling?.(req, started, pollInterval, i);
 
       const resp = await this.request({
         method: HttpMethods.Get,
         path: `/databases/${id}`,
-      }, {
-        timeoutManager: timeoutManager,
-      }, started);
+        methodName: req.methodName,
+      }, info.timeoutManager, started);
 
       if (resp.data?.status === info.target) {
         break;
@@ -176,10 +155,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
         const okStates = [info.target, ...info.legalStates];
         const error = new DevOpsUnexpectedStateError(`Created database is not in any legal state [${okStates.join(',')}]`, okStates, resp.data);
 
-        if (this.monitorCommands) {
-          this.emitter.emit('adminCommandFailed', new AdminCommandFailedEvent(req, true, error, started));
-        }
-
+        this.logger.adminCommandFailed?.(req, true, error, started);
         throw error;
       }
 
@@ -193,13 +169,14 @@ export class DevOpsAPIHttpClient extends HttpClient {
   }
 }
 
-const mkAuthHeaderProvider = (tp: TokenProvider): HeaderProvider => () => {
-  const token = tp.getToken();
+const mkAuthHeaderProvider = (tp: TokenProvider | undefined): HeaderProvider => (tp)
+  ? () => {
+    const token = tp.getToken();
 
-  return (token instanceof Promise)
-    ? token.then(mkAuthHeader)
-    : mkAuthHeader(token);
-};
+    return (token instanceof Promise)
+      ? token.then(mkAuthHeader)
+      : mkAuthHeader(token);
+  } : () => ({});
 
 const mkAuthHeader = (token: string | nullish): Record<string, string> => (token)
   ? { [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` }

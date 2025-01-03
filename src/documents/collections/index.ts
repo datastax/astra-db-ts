@@ -13,6 +13,21 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
+export * from './cursor';
 export * from './collection';
-export type { TypeErr } from '../utils';
-export * from './types';
+export type * from './types';
+
+export {
+  CollectionSerDesConfig,
+  CollDesCtx,
+  CollSerCtx,
+} from './ser-des/ser-des';
+
+export {
+  CollCodecSerDesFns,
+  CollCodecs,
+  CollCodecClass,
+  CollCodec,
+} from './ser-des/codecs';
+export { $DeserializeForCollection } from '@/src/documents/collections/ser-des/constants';
+export { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';

@@ -86,32 +86,36 @@ export interface EmbeddingProviderInfo {
    * - `HEADER`: Authentication using direct API keys passed through headers on every Data API call.
    * See {@link EmbeddingHeadersProvider} for more info.
    * ```typescript
-   * const collection = await db.createCollection('my_coll', {
-   *   service: {
-   *     provider: 'openai',
-   *     modelName: 'text-embedding-3-small',
-   *     authentication: {
-   *       // Name of the key in Astra portal's OpenAI integration (KMS).
-   *       providerKey: '*KEY_NAME*',
+   * const collections = await db.createCollection('my_coll', {
+   *   vector: {
+   *     service: {
+   *       provider: 'openai',
+   *       modelName: 'text-embedding-3-small',
+   *       authentication: {
+   *         // Name of the key in Astra portal's OpenAI integration (KMS).
+   *         providerKey: '*KEY_NAME*',
+   *       },
    *     },
    *   },
    * });
    * ```
    *
-   * - `SHARED_SECRET`: Authentication tied to a collection at collection creation time using the Astra KMS.
+   * - `SHARED_SECRET`: Authentication tied to a collections at collections creation time using the Astra KMS.
    * ```typescript
-   * const collection = await db.collection('my_coll', {
-   *   // Not tied to the collection; can be different every time.
+   * const collections = await db.collections('my_coll', {
+   *   // Not tied to the collections; can be different every time.
    *   embeddingApiKey: 'sk-...',
    * });
    * ```
    *
    * - `NONE`: For when a client doesn't need authentication to use (e.g. nvidia).
    * ```typescript
-   * const collection = await db.createCollection('my_coll', {
-   *   service: {
-   *     provider: 'nvidia',
-   *     modelName: 'NV-Embed-QA',
+   * const collections = await db.createCollection('my_coll', {
+   *   vector: {
+   *     service: {
+   *       provider: 'nvidia',
+   *       modelName: 'NV-Embed-QA',
+   *     },
    *   },
    * });
    * ```

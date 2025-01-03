@@ -17,31 +17,21 @@ import { WithTimeout } from '@/src/lib';
 /**
  * Options for executing some arbitrary command.
  *
- * @field collection - The collection to run the command on. If not provided, the command is run on the database.
+ * @field collections - The collections to run the command on. If not provided, the command is run on the database.
  * @field keyspace - Overrides the keyspace to run the command in. If not provided, the default keyspace is used.
  *
  * @see Db.command
  *
  * @public
  */
-export interface RunCommandOptions extends WithTimeout {
+export interface RunCommandOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   /**
-   * The collection to run the command on. If not provided, the command is run on the database.
+   * The collections to run the command on. If not provided, the command is run on the database.
    */
   collection?: string,
+  table?: string,
   /**
    * The keyspace to use for the db operation.
    */
   keyspace?: string | null,
-  /**
-   * The keyspace to use for the db operation.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link RunCommandOptions.keyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link RunCommandOptions.keyspace} instead.
-   */
-  namespace?: string | null,
 }

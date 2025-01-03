@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AdminBlockingOptions, DatabaseCloudProvider } from '@/src/administration/types';
+import { AstraAdminBlockingOptions, AstraDbCloudProvider } from '@/src/administration/types';
 
 
-import { DbSpawnOptions } from '@/src/client';
+import { DbOptions } from '@/src/client';
+import { WithTimeout } from '@/src/lib';
 
 /**
  * Represents the options for creating a database.
@@ -26,7 +27,7 @@ import { DbSpawnOptions } from '@/src/client';
  *
  * @public
  */
-export interface DatabaseConfig {
+export interface AstraDatabaseConfig {
   /**
    * Name of the database (user-friendly identifier)
    */
@@ -34,7 +35,7 @@ export interface DatabaseConfig {
   /**
    * Cloud provider where the database lives
    */
-  cloudProvider?: DatabaseCloudProvider,
+  cloudProvider?: AstraDbCloudProvider,
   /**
    * The cloud region where the database is located.
    */
@@ -43,27 +44,16 @@ export interface DatabaseConfig {
    * The default keyspace to use for the database.
    */
   keyspace?: string,
-  /**
-   * The default keyspace to use for the database.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link DatabaseConfig.keyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link DatabaseConfig.keyspace} instead.
-   */
-  namespace?: string,
 }
 
 /**
- * Represents the options for creating a database (i.e. blocking options + database spawn options).
+ * Represents the options for creating a database (i.e. blocking options + timeout options + database spawn options).
  *
  * @public
  */
-export type CreateDatabaseOptions = AdminBlockingOptions & {
+export type CreateAstraDatabaseOptions = AstraAdminBlockingOptions & WithTimeout<'databaseAdminTimeoutMs'> & {
   /**
    * Any options to override the default options set when creating the root {@link DataAPIClient}.
    */
-  dbOptions?: DbSpawnOptions,
+  dbOptions?: DbOptions,
 }

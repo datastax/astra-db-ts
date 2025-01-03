@@ -16,19 +16,17 @@
 
 import { dummyCollection, DynamicSchema, TestSchema } from '@/tests/typing/collections/prelude';
 import { Equal, Expect } from '@/tests/typing/prelude';
-import { StrictFilter } from '@/src/documents/collections/types/filter';
-import { StrictProjection } from '@/src/documents/collections';
 
 void dummyCollection<TestSchema>().findOne({}, {}).then((a) => {
-  type b = Expect<Equal<undefined | number, NonNullable<typeof a>['$similarity']>>
+  type b = Expect<Equal<false, NonNullable<typeof a> extends { $similarity: any } ? true : false>>
 });
 
 void dummyCollection<TestSchema>().findOne({}, { includeSimilarity: true }).then((a) => {
-  type b = Expect<Equal<undefined | number, NonNullable<typeof a>['$similarity']>>
+  type b = Expect<Equal<number | undefined, NonNullable<typeof a>['$similarity']>>
 });
 
 void dummyCollection<TestSchema>().findOne({}, { includeSimilarity: !!Math.random() }).then((a) => {
-  type b = Expect<Equal<undefined | number, NonNullable<typeof a>['$similarity']>>
+  type b = Expect<Equal<false, NonNullable<typeof a> extends { $similarity: any } ? true : false>>
 });
 
 void dummyCollection<TestSchema>().findOne({
@@ -66,7 +64,7 @@ void dummyCollection<TestSchema>().findOne({
   'purchase_date': { $gte: new Date(123) },
   'items': { $gte: new Date(123) },
   'arr.0': { age: 3 },
-} satisfies StrictFilter<TestSchema>, {
+}, {
   sort: {
     'customer.address.address_line': 1,
   },
@@ -83,36 +81,16 @@ void dummyCollection<TestSchema>().findOne({
     $date: 700,
   },
   'customer.name': {
-    $eq: 18,
+    $eq: '18',
   },
   'customer.age': {
     $in: [
       102,
-      '1',
+      1,
     ],
   },
   'arr.0': ['123'],
 });
-
-void dummyCollection<TestSchema>().findOne({
-  'customer.credit_score': {
-    // @ts-expect-error - Can't use $date with non-date fields
-    $date: 700,
-  },
-  'customer.name': {
-    // @ts-expect-error - Type mismatch
-    $eq: 18,
-  },
-  'customer.age': {
-    $in: [
-      102,
-      // @ts-expect-error - Type mismatch
-      '1',
-    ],
-  },
-  // @ts-expect-error - Type mismatch
-  'arr.0': ['123'],
-} satisfies StrictFilter<TestSchema>);
 
 void dummyCollection<TestSchema>().findOne({}, {
   sort: {
@@ -121,24 +99,17 @@ void dummyCollection<TestSchema>().findOne({}, {
   },
 });
 
+// @ts-expect-error - Must be a number
 void dummyCollection<TestSchema>().findOne({}, {
   projection: {
     // Technically not valid, but it's just for type testing
     $vector: {
       $slice: [
         1,
-        // @ts-expect-error - Must be a number
         '2',
       ],
     },
   },
-});
-
-void dummyCollection<TestSchema>().findOne({}, {
-  projection: {
-    // @ts-expect-error - Can't use $slice with non-array fields
-    'customer.address.city': { $slice: 1 },
-  } satisfies StrictProjection<TestSchema>,
 });
 
 void dummyCollection<DynamicSchema>().findOne({

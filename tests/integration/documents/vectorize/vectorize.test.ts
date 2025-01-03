@@ -48,6 +48,10 @@ const createTestBranches = (): FinalVectorizeTestBranch[] => {
 
   const spec = JSON.parse(fs.readFileSync('vectorize_test_spec.json', 'utf8')) as VectorizeTestSpec;
 
+  if (Object.entries(spec).length === 0) {
+    return [];
+  }
+
   const embeddingProviders = JSON.parse(process.env.CLIENT_VECTORIZE_PROVIDERS) as Record<string, EmbeddingProviderInfo>;
 
   const whitelist = whitelistImplFor(process.env.CLIENT_VECTORIZE_WHITELIST ?? '$model-limit:1');
@@ -107,7 +111,7 @@ const createVectorizeProvidersTest = (db: Db, batchIdx: number) => (group: Vecto
 
       assert.ok(findOneResult);
       assert.strictEqual(findOneResult._id, insertManyResult.insertedIds[0]);
-      assert.ok(findOneResult.$similarity > 0.8);
+      assert.ok(findOneResult.$similarity! > 0.8);
 
       const deleteResult = await collection.deleteOne({ key }, {
         sort: { $vectorize: 'Alice likes big red cars' },
@@ -130,9 +134,9 @@ describe('(VECTORIZE) (LONG) integration.documents.vectorize', ({ db }) => {
   const tests = createTestBranches();
   const groups = createTestGroups(tests);
 
-  for (let i = 0, n = groups.length; i < n; i += 7) {
-    parallel('(VECTORIZE) generated tests', { dropEphemeral: 'after' }, () => {
-      groups.slice(i, i + 7).forEach(createVectorizeProvidersTest(db, i));
+  for (let i = 0, n = groups.length; i < n; i += 6) {
+    parallel('(VECTORIZE) generated tests', { drop: 'colls:after' }, () => {
+      groups.slice(i, i + 6).forEach(createVectorizeProvidersTest(db, i));
     });
   }
 });

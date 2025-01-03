@@ -12,35 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { WithTimeout } from '@/src/lib/types';
-
 /**
  * Represents the available cloud providers that Astra offers.
  *
  * @public
  */
-export type DatabaseCloudProvider = 'AWS' | 'GCP' | 'AZURE';
-
-/**
- * Defines all possible compute powers (vertical scaling) for a database.
- *
- * @public
- */
-export type DatabaseTier = 'developer' | 'A5' | 'A10' | 'A20' | 'A40' | 'C10' | 'C20' | 'C40' | 'D10' | 'D20' | 'D40' | 'serverless';
+export type AstraDbCloudProvider = 'AWS' | 'GCP' | 'AZURE';
 
 /**
  * Represents all possible statuses of a database.
  *
  * @public
  */
-export type DatabaseStatus = 'ACTIVE' | 'ERROR' | 'DECOMMISSIONING' | 'DEGRADED' | 'HIBERNATED' | 'HIBERNATING' | 'INITIALIZING' | 'MAINTENANCE' | 'PARKED' | 'PARKING' | 'PENDING' | 'PREPARED' | 'PREPARING' | 'RESIZING' | 'RESUMING' | 'TERMINATED' | 'TERMINATING' | 'UNKNOWN' | 'UNPARKING' | 'SYNCHRONIZING';
-
-/**
- * List of actions that can be performed on a database.
- *
- * @public
- */
-export type DatabaseAction = 'park' | 'unpark' | 'resize' | 'resetPassword' | 'addKeyspace' | 'addDatacenters' | 'terminateDatacenter' | 'getCreds' | 'terminate' | 'removeKeyspace' | 'removeMigrationProxy' | 'launchMigrationProxy';
+export type AstraDbStatus = 'ACTIVE' | 'ERROR' | 'DECOMMISSIONING' | 'DEGRADED' | 'HIBERNATED' | 'HIBERNATING' | 'INITIALIZING' | 'MAINTENANCE' | 'PARKED' | 'PARKING' | 'PENDING' | 'PREPARED' | 'PREPARING' | 'RESIZING' | 'RESUMING' | 'TERMINATED' | 'TERMINATING' | 'UNKNOWN' | 'UNPARKING' | 'SYNCHRONIZING';
 
 /**
  * The options representing the blocking behavior of many admin operations.
@@ -89,9 +73,9 @@ export type DatabaseAction = 'park' | 'unpark' | 'resize' | 'resetPassword' | 'a
  *
  * @public
  */
-export type AdminBlockingOptions =
-  | PollBlockingOptions
-  | NoBlockingOptions
+export type AstraAdminBlockingOptions =
+  | AstraPollBlockingOptions
+  | AstraNoBlockingOptions;
 
 /**
  * The options representing the blocking behavior of many admin operations.
@@ -99,11 +83,11 @@ export type AdminBlockingOptions =
  * @field blocking - True or omitted to block until the operation is complete.
  * @field pollInterval - The interval (in MS) at which to poll the operation for completion.
  *
- * @see AdminBlockingOptions
+ * @see AstraAdminBlockingOptions
  *
  * @public
  */
-export interface PollBlockingOptions extends WithTimeout {
+export interface AstraPollBlockingOptions {
   /**
    * True or omitted to block until the operation is complete.
    */
@@ -121,11 +105,11 @@ export interface PollBlockingOptions extends WithTimeout {
  *
  * @field blocking - False to not block until the operation is complete.
  *
- * @see AdminBlockingOptions
+ * @see AstraAdminBlockingOptions
  *
  * @public
  */
-export interface NoBlockingOptions extends WithTimeout {
+export interface AstraNoBlockingOptions {
   /**
    * False to not block until the operation is complete.
    */

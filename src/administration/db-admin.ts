@@ -13,7 +13,6 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { AdminBlockingOptions, CreateKeyspaceOptions, CreateNamespaceOptions } from '@/src/administration/types';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { WithTimeout } from '@/src/lib';
 import { Db } from '@/src/db';
@@ -64,7 +63,7 @@ export abstract class DbAdmin {
    *
    * @returns The available embedding providers.
    */
-  abstract findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult>;
+  abstract findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult>;
   /**
    * Retrieves a list of all the keyspaces in the database.
    *
@@ -81,22 +80,11 @@ export abstract class DbAdmin {
    *
    * @returns A promise that resolves to list of all the keyspaces in the database.
    */
-  abstract listKeyspaces(): Promise<string[]>;
-  /**
-   * Retrieves a list of all the keyspaces in the database.
-   *
-   * Creates a new, additional, keyspace for this database.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link DbAdmin.listKeyspaces}, and will be removed
-   * in an upcoming major version.
-   *
-   * @deprecated - Prefer {@link DbAdmin.listKeyspaces} instead.
-   */
-  abstract listNamespaces(): Promise<string[]>;
+  abstract listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]>;
   /**
    * Creates a new, additional, keyspace for this database.
    *
-   * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * **NB. this is a "long-running" operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 1 second. Expect it to take roughly 8-10 seconds to complete.
    *
    * @example
@@ -123,22 +111,11 @@ export abstract class DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  abstract createKeyspace(keyspace: string, options?: CreateKeyspaceOptions): Promise<void>;
-  /**
-   * Creates a new, additional, keyspace for this database.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link DbAdmin.createKeyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link DbAdmin.createKeyspace} instead.
-   */
-  abstract createNamespace(keyspace: string, options?: CreateNamespaceOptions): Promise<void>;
+  abstract createKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
   /**
    * Drops a keyspace from this database.
    *
-   * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * **NB. this is a "long-running" operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 1 second. Expect it to take roughly 8-10 seconds to complete.
    *
    * @example
@@ -166,16 +143,5 @@ export abstract class DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  abstract dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
-  /**
-   * Drops a keyspace from this database.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link DbAdmin.dropKeyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link DbAdmin.dropKeyspace} instead.
-   */
-  abstract dropNamespace(keyspace: string, options?: AdminBlockingOptions): Promise<void>;
+  abstract dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
 }

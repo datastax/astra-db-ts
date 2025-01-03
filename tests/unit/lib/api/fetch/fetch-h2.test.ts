@@ -13,12 +13,12 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { it, parallel } from '@/tests/testlib';
+import { describe, it } from '@/tests/testlib';
 import { FetchH2 } from '@/src/lib/api';
 import assert from 'assert';
 import { FailedToLoadDefaultClientError } from '@/src/client';
 
-parallel('unit.lib.api.fetch.fetch-h2', () => {
+describe('unit.lib.api.fetch.fetch-h2', () => {
   it('should error if non-module explicit fetchH2 passed', async () => {
     try {
       new FetchH2({ fetchH2: 3 }, false);

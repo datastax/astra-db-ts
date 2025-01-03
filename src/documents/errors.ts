@@ -12,12 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { InsertManyResult } from '@/src/documents/collections/types/insert/insert-many';
-import type { DeleteManyResult } from '@/src/documents/collections/types/delete/delete-many';
-import type { UpdateManyResult } from '@/src/documents/collections/types/update/update-many';
-import type { BulkWriteResult } from '@/src/documents/collections/types/misc/bulk-write';
-import type { FetcherResponseInfo, RawDataAPIResponse } from '@/src/lib/api';
-import type { SomeDoc } from '@/src/documents/collections/types/document';
+import { FetcherResponseInfo, RawDataAPIResponse, TimeoutDescriptor } from '@/src/lib';
+import type {
+  CollectionDeleteManyResult,
+  CollectionInsertManyResult,
+  CollectionUpdateManyResult,
+  SomeDoc,
+} from '@/src/documents/collections';
+import type { TableInsertManyResult } from '@/src/documents/tables';
+import { HTTPRequestInfo } from '@/src/lib/api/clients';
+import { TimedOutCategories, Timeouts } from '@/src/lib/api/timeouts';
 
 /**
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a
@@ -81,7 +85,7 @@ export interface DataAPIDetailedErrorDescriptor {
   readonly errorDescriptors: DataAPIErrorDescriptor[],
   /**
    * The original command that was sent to the API, as a plain object. This is the *raw* command, not necessarily in
-   * the exact format the client may use, even with `bulkWrite`.
+   * the exact format the client may use, in some rare cases.
    *
    * @example
    * ```typescript
@@ -121,7 +125,7 @@ export interface DataAPIDetailedErrorDescriptor {
  *
  * Useful for `instanceof` checks.
  *
- * This is *only* for Data API related errors, such as a non-existent collection, or a duplicate key error. It
+ * This is *only* for Data API related errors, such as a non-existent collections, or a duplicate key error. It
  * is *not*, however, for errors such as an HTTP network error, or a malformed request. The exception being timeouts,
  * which are represented by the {@link DataAPITimeoutError} class.
  *
@@ -176,17 +180,24 @@ export class DataAPITimeoutError extends DataAPIError {
   /**
    * The timeout that was set for the operation, in milliseconds.
    */
-  public readonly timeout: number;
+  public readonly timeout: Partial<TimeoutDescriptor>;
+
+  public readonly timedOutTypes: TimedOutCategories;
 
   /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  constructor(timeout: number) {
-    super(`Command timed out after ${timeout}ms`);
-    this.timeout = timeout;
+  constructor(info: HTTPRequestInfo, types: TimedOutCategories) {
+    super(Timeouts.fmtTimeoutMsg(info.timeoutManager, types));
+    this.timeout = info.timeoutManager.initial();
+    this.timedOutTypes = types;
     this.name = 'DataAPITimeoutError';
+  }
+
+  public static mk(info: HTTPRequestInfo, types: TimedOutCategories): DataAPITimeoutError {
+    return new DataAPITimeoutError(info, types);
   }
 }
 
@@ -196,10 +207,10 @@ export class DataAPITimeoutError extends DataAPIError {
  *
  * @example
  * ```typescript
- * await collection.insertMany('<100_length_array>');
+ * await collections.insertMany('<100_length_array>');
  *
  * try {
- *   await collection.countDocuments({}, 50);
+ *   await collections.countDocuments({}, 50);
  * } catch (e) {
  *   if (e instanceof TooManyDocumentsToCountError) {
  *     console.log(e.limit); // 50
@@ -242,36 +253,53 @@ export class TooManyDocumentsToCountError extends DataAPIError {
 }
 
 /**
- * Caused by trying to perform an operation on an already-initialized {@link FindCursor} that requires it to be
- * uninitialized.
- *
- * If you run into this error, and you really do need to change an option on the cursor, you can rewind the cursor
- * using {@link FindCursor.rewind}, or clone it using {@link FindCursor.clone}.
+ * Caused by a `countRows` operation that failed because the resulting number of documents exceeded *either*
+ * the upper bound set by the caller, or the hard limit imposed by the Data API.
  *
  * @example
  * ```typescript
- * await collection.find({}).toArray();
+ * await table.insertMany('<100_length_array>');
  *
  * try {
- *   await cursor.limit(10);
+ *   await table.countRows({}, 50);
  * } catch (e) {
- *   if (e instanceof CursorIsStartedError) {
- *     console.log(e.message); // "Cursor is already initialized..."
+ *   if (e instanceof TooManyRowsToCountError) {
+ *     console.log(e.limit); // 50
+ *     console.log(e.hitServerLimit); // false
  *   }
  * }
  * ```
  *
+ * @field limit - The limit that was set by the caller
+ * @field hitServerLimit - Whether the server-imposed limit was hit
+ *
  * @public
  */
-export class CursorIsStartedError extends DataAPIError {
+export class TooManyRowsToCountError extends DataAPIError {
+  /**
+   * The limit that was specified by the caller, or the server-imposed limit if the caller's limit was too high.
+   */
+  public readonly limit: number;
+
+  /**
+   * Specifies if the server-imposed limit was hit. If this is `true`, the `limit` field will contain the server's
+   * limit; otherwise it will contain the caller's limit.
+   */
+  public readonly hitServerLimit: boolean;
+
   /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  constructor(message: string) {
+  constructor(limit: number, hitServerLimit: boolean) {
+    const message = (hitServerLimit)
+      ? `Too many rows to count (server limit of ${limit} reached)`
+      : `Too many rows to count (provided limit is ${limit})`;
     super(message);
-    this.name = 'CursorIsStartedError';
+    this.limit = limit;
+    this.hitServerLimit = hitServerLimit;
+    this.name = 'TooManyRowsToCountError';
   }
 }
 
@@ -337,12 +365,12 @@ export class DataAPIResponseError extends DataAPIError {
 
 /**
  * An abstract class representing an exception that occurred due to a *cumulative* operation on the Data API. This is
- * the base class for all Data API errors that represent a paginated operation, such as `insertMany`, `deleteMany`,
- * `updateMany`, and `bulkWrite`, and will never be thrown directly.
+ * the base class for all Data API errors that represent a paginated operation, such as `insertMany`, `deleteMany`, and
+ * `updateMany`, and will never be thrown directly.
  *
  * Useful for `instanceof` checks.
  *
- * This is *only* for Data API related errors, such as a non-existent collection, or a duplicate key error. It
+ * This is *only* for Data API related errors, such as a non-existent collections, or a duplicate key error. It
  * is *not*, however, for errors such as an HTTP network error, or a malformed request. The exception being timeouts,
  * which are represented by the {@link DataAPITimeoutError} class.
  *
@@ -353,7 +381,7 @@ export class DataAPIResponseError extends DataAPIError {
  *
  * @public
  */
-export abstract class CumulativeDataAPIError extends DataAPIResponseError {
+export abstract class CumulativeOperationError extends DataAPIResponseError {
   /**
    * The partial result of the operation that was performed. This is *always* defined, and is
    * the result of the operation up to the point of the first error. For example, if you're inserting 100 documents
@@ -361,6 +389,72 @@ export abstract class CumulativeDataAPIError extends DataAPIResponseError {
    * successfully inserted.
    */
   public readonly partialResult!: unknown;
+}
+
+/**
+ * ##### Overview
+ *
+ * Represents an error that occurred during an `insertMany` operation (which may be paginated).
+ *
+ * Contains the inserted IDs of the documents that were successfully inserted, as well as the cumulative errors
+ * that occurred during the operation.
+ *
+ * If the operation was ordered, the `insertedIds` will be in the same order as the documents that were attempted to
+ * be inserted.
+ *
+ * @example
+ * ```ts
+ * try {
+ *   await collection.insertMany([
+ *     { _id: 'id1', desc: 'An innocent little document' },
+ *     { _id: 'id2', name: 'Another little document minding its own business' },
+ *     { _id: 'id2', name: 'A mean document commiting _identity theft' },
+ *     { _id: 'id3', name: 'A document that will never see the light of day-tabase' },
+ *   ], { ordered: true });
+ * } catch (e) {
+ *   if (e instanceof CollectionInsertManyError) {
+ *     console.log(e.message); // "Document already exists with the given _id"
+ *     console.log(e.partialResult.insertedIds); // ['id1', 'id2']
+ *   }
+ * }
+ * ```
+ *
+ * ##### Collections vs Tables
+ *
+ * There is a sister {@link TableInsertManyError} class that is used for `insertMany` operations on tables. It's
+ * identical in structure, but just uses the appropriate {@link TableInsertManyResult} type.
+ *
+ * @field message - A human-readable message describing the *first* error
+ * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
+ * @field detailedErrorDescriptors - A list of errors 1:1 with the number of errorful API requests made to the server.
+ * @field partialResult - The partial result of the `InsertMany` operation that was performed
+ *
+ * @public
+ */
+export class CollectionInsertManyError extends CumulativeOperationError {
+  /**
+   * The name of the error. This is always 'InsertManyError'.
+   */
+  name = 'CollectionInsertManyError';
+
+  /**
+   * The partial result of the `InsertMany` operation that was performed. This is *always* defined, and is the result
+   * of all successful insertions.
+   */
+  declare public readonly partialResult: CollectionInsertManyResult<SomeDoc>;
+  //
+  // /**
+  //  * The specific statuses and ids for each document present in the `insertMany` command
+  //  *
+  //  * The position of each document response is the same as its corresponding document in the input `documents` array
+  //  */
+  // declare public readonly documentResponses: InsertManyDocumentResponse<SomeDoc>[];
+  //
+  // /**
+  //  * The number of documents which failed insertion (i.e. their status in {@link InsertManyError.documentResponses} was
+  //  * `'ERROR'` or `'SKIPPED'`)
+  //  */
+  // declare public readonly failedCount: number;
 }
 
 /**
@@ -379,30 +473,17 @@ export abstract class CumulativeDataAPIError extends DataAPIResponseError {
  *
  * @public
  */
-export class InsertManyError extends CumulativeDataAPIError {
+export class TableInsertManyError extends CumulativeOperationError {
   /**
    * The name of the error. This is always 'InsertManyError'.
    */
-  name = 'InsertManyError';
+  name = 'TableInsertManyError';
 
   /**
    * The partial result of the `InsertMany` operation that was performed. This is *always* defined, and is the result
    * of all successful insertions.
    */
-  declare public readonly partialResult: InsertManyResult<SomeDoc>;
-  //
-  // /**
-  //  * The specific statuses and ids for each document present in the `insertMany` command
-  //  *
-  //  * The position of each document response is the same as its corresponding document in the input `documents` array
-  //  */
-  // declare public readonly documentResponses: InsertManyDocumentResponse<SomeDoc>[];
-  //
-  // /**
-  //  * The number of documents which failed insertion (i.e. their status in {@link InsertManyError.documentResponses} was
-  //  * `'ERROR'` or `'SKIPPED'`)
-  //  */
-  // declare public readonly failedCount: number;
+  declare public readonly partialResult: TableInsertManyResult<SomeDoc>;
 }
 
 /**
@@ -418,17 +499,17 @@ export class InsertManyError extends CumulativeDataAPIError {
  *
  * @public
  */
-export class DeleteManyError extends CumulativeDataAPIError {
+export class CollectionDeleteManyError extends CumulativeOperationError {
   /**
    * The name of the error. This is always 'DeleteManyError'.
    */
-  name = 'DeleteManyError';
+  name = 'CollectionDeleteManyError';
 
   /**
    * The partial result of the `DeleteMany` operation that was performed. This is *always* defined, and is the result
    * of the operation up to the point of the first error.
    */
-  declare public readonly partialResult: DeleteManyResult;
+  declare public readonly partialResult: CollectionDeleteManyResult;
 }
 
 /**
@@ -444,46 +525,17 @@ export class DeleteManyError extends CumulativeDataAPIError {
  *
  * @public
  */
-export class UpdateManyError extends CumulativeDataAPIError {
+export class CollectionUpdateManyError extends CumulativeOperationError {
   /**
    * The name of the error. This is always 'UpdateManyError'.
    */
-  name = 'UpdateManyError';
+  name = 'CollectionUpdateManyError';
 
   /**
    * The partial result of the `UpdateMany` operation that was performed. This is *always* defined, and is the result
    * of the operation up to the point of the first error.
    */
-  declare public readonly partialResult: UpdateManyResult<SomeDoc>;
-}
-
-/**
- * Represents an error that occurred during a `bulkWrite` operation (which is, generally, paginated).
- *
- * Contains the number of documents that were successfully inserted, updated, deleted, etc., as well as the cumulative
- * errors that occurred during the operation.
- *
- * If the operation was ordered, the results will be in the same order as the operations that were attempted to be
- * performed.
- *
- * @field message - A human-readable message describing the *first* error
- * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
- * @field detailedErrorDescriptors - A list of errors 1:1 with the number of errorful API requests made to the server.
- * @field partialResult - The partial result of the `BulkWrite` operation that was performed
- *
- * @public
- */
-export class BulkWriteError extends CumulativeDataAPIError {
-  /**
-   * The name of the error. This is always 'BulkWriteError'.
-   */
-  name = 'BulkWriteError';
-
-  /**
-   * The partial result of the `BulkWrite` operation that was performed. This is *always* defined, and is the result
-   * of all successful operations.
-   */
-  declare public readonly partialResult: BulkWriteResult<SomeDoc>;
+  declare public readonly partialResult: CollectionUpdateManyResult<SomeDoc>;
 }
 
 /**

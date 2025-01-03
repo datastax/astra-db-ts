@@ -13,23 +13,23 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import {
-  AdminBlockingOptions,
-  AdminSpawnOptions,
-  CreateKeyspaceOptions,
-  CreateNamespaceOptions,
-  FullDatabaseInfo,
-} from '@/src/administration/types';
+import { AstraCreateKeyspaceOptions, AstraDropKeyspaceOptions } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
-import { WithTimeout } from '@/src/lib/types';
-import { InternalRootClientOpts } from '@/src/client/types';
-import { extractAstraEnvironment, validateAdminOpts } from '@/src/administration/utils';
+import type { WithTimeout } from '@/src/lib';
+import { TokenProvider } from '@/src/lib';
+import { buildAstraDatabaseAdminInfo, extractAstraEnvironment } from '@/src/administration/utils';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, HttpMethods } from '@/src/lib/api/constants';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
 import { Db } from '@/src/db';
-import { StaticTokenProvider, TokenProvider } from '@/src/lib';
-import { isNullish } from '@/src/lib/utils';
+import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
+import { InternalRootClientOpts } from '@/src/client/types/internal';
+import { $CustomInspect } from '@/src/lib/constants';
+import { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info';
+import { Logger } from '@/src/lib/logging/logger';
+import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts';
+import { AdminOptions } from '@/src/client';
+import { DataAPIHttpClient } from '@/src/lib/api/clients';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting keyspaces.
@@ -66,41 +66,40 @@ import { isNullish } from '@/src/lib/utils';
  */
 export class AstraDbAdmin extends DbAdmin {
   readonly #httpClient: DevOpsAPIHttpClient;
+  readonly #dataApiHttpClient: DataAPIHttpClient<'admin'>;
   readonly #db: Db;
+  readonly #environment: 'dev' | 'test' | 'prod';
 
   /**
    * Use {@link Db.admin} or {@link AstraAdmin.dbAdmin} to obtain an instance of this class.
    *
    * @internal
    */
-  constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts: AdminSpawnOptions | undefined, dbToken: TokenProvider, endpoint: string) {
+  constructor(db: Db, rootOpts: InternalRootClientOpts, rawAdminOpts: AdminOptions | undefined, dbToken: TokenProvider | undefined, endpoint: string) {
     super();
 
-    validateAdminOpts(adminOpts);
+    const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options');
+    const adminToken = TokenProvider.mergeTokens(adminOpts?.adminToken, rootOpts.adminOptions.adminToken, dbToken);
 
-    const combinedAdminOpts = {
-      ...rootOpts.adminOptions,
-      ...adminOpts,
-    };
-
-    const _adminToken = TokenProvider.parseToken(adminOpts?.adminToken ?? rootOpts.adminOptions.adminToken);
-
-    const adminToken = (_adminToken instanceof StaticTokenProvider && isNullish(_adminToken.getToken()))
-      ? dbToken
-      : _adminToken;
-
-    const environment = extractAstraEnvironment(endpoint);
+    this.#environment = adminOpts?.astraEnv ?? rootOpts.adminOptions.astraEnv ?? extractAstraEnvironment(endpoint);
 
     this.#httpClient = new DevOpsAPIHttpClient({
-      baseUrl: combinedAdminOpts.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINTS[environment],
-      monitorCommands: combinedAdminOpts.monitorCommands,
+      baseUrl: DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
+      logging: Logger.advanceConfig(rootOpts.adminOptions.logging, adminOpts?.logging),
       fetchCtx: rootOpts.fetchCtx,
       emitter: rootOpts.emitter,
       userAgent: rootOpts.userAgent,
       tokenProvider: adminToken,
+      additionalHeaders: { ...rootOpts.adminOptions.additionalHeaders, ...adminOpts?.additionalHeaders },
+      timeoutDefaults: Timeouts.merge(rootOpts.adminOptions.timeoutDefaults, adminOpts?.timeoutDefaults),
     });
 
+    this.#dataApiHttpClient = db._httpClient.forDbAdmin(adminOpts);
     this.#db = db;
+
+    Object.defineProperty(this, $CustomInspect, {
+      value: () => `AstraDbAdmin()`,
+    });
   }
 
   /**
@@ -149,8 +148,12 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns The available embedding providers.
    */
-  public override async findEmbeddingProviders(options?: WithTimeout): Promise<FindEmbeddingProvidersResult> {
-    const resp = await this.#db.command({ findEmbeddingProviders: {} }, { keyspace: null, maxTimeMS: options?.maxTimeMS });
+  public override async findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult> {
+    const resp = await this.#dataApiHttpClient.executeCommand({ findEmbeddingProviders: {} }, {
+      timeoutManager: this.#httpClient.tm.single('databaseAdminTimeoutMs', options),
+      methodName: 'dbAdmin.findEmbeddingProviders',
+      keyspace: null,
+    });
     return resp.status as FindEmbeddingProvidersResult;
   }
 
@@ -159,7 +162,7 @@ export class AstraDbAdmin extends DbAdmin {
    * other metadata.
    *
    * The method issues a request to the DevOps API each time it is invoked, without caching mechanisms;
-   * this ensures up-to-date information for usages such as real-time collection validation by the application.
+   * this ensures up-to-date information for usages such as real-time collections validation by the application.
    *
    * @example
    * ```typescript
@@ -169,13 +172,9 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves to the complete database information.
    */
-  public async info(options?: WithTimeout): Promise<FullDatabaseInfo> {
-    const resp = await this.#httpClient.request({
-      method: HttpMethods.Get,
-      path: `/databases/${this.#db.id}`,
-    }, options);
-
-    return resp.data as FullDatabaseInfo;
+  public async info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbAdminInfo> {
+    const tm = this.#httpClient.tm.single('databaseAdminTimeoutMs', options);
+    return this.#info('dbAdmin.info', tm);
   }
 
   /**
@@ -194,26 +193,15 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves to list of all the keyspaces in the database.
    */
-  public override async listKeyspaces(options?: WithTimeout): Promise<string[]> {
-    return this.info(options).then(i => [i.info.keyspace!, ...i.info.additionalKeyspaces ?? []].filter(Boolean));
-  }
-
-  /**
-   * Lists the keyspaces in the database.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link AstraDbAdmin.listKeyspaces}, and will be removed
-   * in an upcoming major version.
-   *
-   * @deprecated - Prefer {@link AstraDbAdmin.listKeyspaces} instead.
-   */
-  public override async listNamespaces(options?: WithTimeout): Promise<string[]> {
-    return this.listKeyspaces(options);
+  public override async listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]> {
+    const tm = this.#httpClient.tm.single('keyspaceAdminTimeoutMs', options);
+    return this.#info('dbAdmin.listKeyspaces', tm).then(i => i.keyspaces);
   }
 
   /**
    * Creates a new, additional, keyspace for this database.
    *
-   * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * **NB. this is a "long-running" operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 1 second. Expect it to take roughly 8-10 seconds to complete.
    *
    * @example
@@ -240,41 +228,31 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async createKeyspace(keyspace: string, options?: CreateKeyspaceOptions): Promise<void> {
+  public override async createKeyspace(keyspace: string, options?: AstraCreateKeyspaceOptions): Promise<void> {
     if (options?.updateDbKeyspace) {
       this.#db.useKeyspace(keyspace);
     }
 
+    const tm = this.#httpClient.tm.multipart('keyspaceAdminTimeoutMs', options);
+
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: `/databases/${this.#db.id}/keyspaces/${keyspace}`,
+      methodName: 'dmAdmin.createKeyspace',
     }, {
       id: this.#db.id,
       target: 'ACTIVE',
       legalStates: ['MAINTENANCE'],
       defaultPollInterval: 1000,
+      timeoutManager: tm,
       options,
     });
   }
 
   /**
-   * Creates a new, additional, keyspace for this database.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link AstraDbAdmin.createKeyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link AstraDbAdmin.createKeyspace} instead.
-   */
-  public override async createNamespace(keyspace: string, options?: CreateNamespaceOptions): Promise<void> {
-    return this.createKeyspace(keyspace, { ...options, updateDbKeyspace: options?.updateDbNamespace });
-  }
-
-  /**
    * Drops a keyspace from this database.
    *
-   * **NB. this is a "long-running" operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * **NB. this is a "long-running" operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 1 second. Expect it to take roughly 8-10 seconds to complete.
    *
    * @example
@@ -302,37 +280,27 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @returns A promise that resolves when the operation completes.
    */
-  public override async dropKeyspace(keyspace: string, options?: AdminBlockingOptions): Promise<void> {
+  public override async dropKeyspace(keyspace: string, options?: AstraDropKeyspaceOptions): Promise<void> {
+    const tm = this.#httpClient.tm.multipart('keyspaceAdminTimeoutMs', options);
+
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Delete,
       path: `/databases/${this.#db.id}/keyspaces/${keyspace}`,
+      methodName: 'dbAdmin.dropKeyspace',
     }, {
       id: this.#db.id,
       target: 'ACTIVE',
       legalStates: ['MAINTENANCE'],
       defaultPollInterval: 1000,
+      timeoutManager: tm,
       options,
     });
   }
 
   /**
-   Drops a keyspace from this database.
-   *
-   * This is now a deprecated alias for the strictly equivalent {@link AstraDbAdmin.dropKeyspace}, and will be removed
-   * in an upcoming major version.
-   *
-   * https://docs.datastax.com/en/astra-db-serverless/api-reference/client-versions.html#version-1-5
-   *
-   * @deprecated - Prefer {@link AstraDbAdmin.dropKeyspace} instead.
-   */
-  public override async dropNamespace(keyspace: string, options?: AdminBlockingOptions): Promise<void> {
-    return this.dropKeyspace(keyspace, options);
-  }
-
-  /**
    * Drops the database.
    *
-   * **NB. this is a long-running operation. See {@link AdminBlockingOptions} about such blocking operations.** The
+   * **NB. this is a long-running operation. See {@link AstraAdminBlockingOptions} about such blocking operations.** The
    * default polling interval is 10 seconds. Expect it to take roughly 6-7 min to complete.
    *
    * The database info will still be accessible by ID, or by using the {@link AstraAdmin.listDatabases} method with the filter
@@ -350,20 +318,34 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @remarks Use with caution. Use a surge protector. Don't say I didn't warn you.
    */
-  public async drop(options?: AdminBlockingOptions): Promise<void> {
+  public async drop(options?: AstraDropKeyspaceOptions): Promise<void> {
+    const tm = this.#httpClient.tm.multipart('databaseAdminTimeoutMs', options);
+
     await this.#httpClient.requestLongRunning({
       method: HttpMethods.Post,
       path: `/databases/${this.#db.id}/terminate`,
+      methodName: 'dbAdmin.drop',
     }, {
       id: this.#db.id,
       target: 'TERMINATED',
       legalStates: ['TERMINATING'],
       defaultPollInterval: 10000,
+      timeoutManager: tm,
       options,
     });
   }
 
-  private get _httpClient() {
+  public get _httpClient() {
     return this.#httpClient;
+  }
+
+  async #info(methodName: string, tm: TimeoutManager): Promise<AstraDbAdminInfo> {
+    const resp = await this.#httpClient.request({
+      method: HttpMethods.Get,
+      path: `/databases/${this.#db.id}`,
+      methodName,
+    }, tm);
+
+    return buildAstraDatabaseAdminInfo(resp.data!, this.#environment);
   }
 }

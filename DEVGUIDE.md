@@ -68,6 +68,9 @@ The API for the test script is as the following:
 6.  [-R | -no-report]
 7.  [-c <http_client>] 
 8.  [-e <environment>]
+9.  [-local]
+10. [-l | -logging]
+11. [-P | -skip-prelude]
 ```
 
 #### 1. The test file (`scripts/test.sh`)
@@ -155,6 +158,20 @@ is one of `default:http1`, `default:http2`, or `fetch`.
 By default, `astra-db-ts` assumes you're running on Astra, but you can specify the Data API environment through this
 flag. It should be one of `dse`, `hcd`, `cassandra`, or `other`. You can also provide `astra`, but it wouldn't really
 do anything. But I'm not the boss of you; you can make your own big-boy/girl/other decisions.
+
+#### 9. Running the tests on Stargate (`[-local]`)
+
+If you're running the tests on a local Stargate instance, you can use this flag to set the `CLIENT_DB_URL` to
+`http://localhost:8080` and the `CLIENT_DB_TOKEN` to `cassandra:cassandra` without needing to modify your `.env` file.
+
+#### 10. Logging (`[-l | -logging]`)
+
+Logs all `[admin]CommandStarted` & `[admin]CommandFailed` events to the console. Useful for debugging.
+
+#### 11. Skipping the prelude (`[-P | -skip-prelude]`)
+
+By default, the test script will run a "prelude" script that sets up the database for the tests. This can be skipped
+to save some time, using this flag, if the DB is already setup (enough), and you just want to run a test really quickly.
 
 ### Test tags
 
@@ -260,8 +277,8 @@ The most prominent changes are the introduction of 5 new Mocha-API-esque functio
    - Some suite options to reduce boilerplate
       - `truncateColls: 'default'` - Does `deleteMany({})` on the default collection in the default namespace after each test case
       - `truncateColls: 'both'` - Does `deleteMany({})` on the default collection in both test namespaces after each test case
-      - `dropEphemeral: 'after'` - Drops all non-default collections in both test namespaces after all the test cases in the suite
-      - `dropEphemeral: 'afterEach'` - Drops all non-default collections in both test namespaces each test case
+      - `drop: 'after'` - Drops all non-default collections in both test namespaces after all the test cases in the suite
+      - `drop: 'afterEach'` - Drops all non-default collections in both test namespaces each test case
 - [`it`](https://github.com/datastax/astra-db-ts/blob/60fa445192b6a648b7a139a45986af8525a37ffb/tests/testlib/it.ts) - An overhaul to the existing `it` block
    - Performs "tag filtering" on the test names
    - Provides unique string keys for every test case

@@ -13,11 +13,18 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIError, DataAPITimeoutError, InsertManyError, ObjectId, UUID } from '@/src/documents';
+import {
+  CollectionInsertManyError,
+  DataAPIError,
+  DataAPITimeoutError,
+  DataAPIVector,
+  ObjectId,
+  UUID,
+} from '@/src/documents';
 import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 
-parallel('integration.documents.collections.insert-many', { truncateColls: 'default:before' }, ({ collection }) => {
+parallel('integration.documents.collections.insert-many', { truncate: 'colls:before' }, ({ collection }) => {
   it('should insertMany documents', async () => {
     const docs = [{ name: 'Inis Mona' }, { name: 'Helvetios' }, { name: 'Epona' }];
     const res = await collection.insertMany(docs);
@@ -83,72 +90,20 @@ parallel('integration.documents.collections.insert-many', { truncateColls: 'defa
     assert.strictEqual(Object.keys(res.insertedIds).length, docs.length);
   });
 
-  it('should insertOne with vectors', async (key) => {
+  it('should insertMany with vectors', async (key) => {
     const res = await collection.insertMany([
-      { name: 'a', key },
+      { name: 'a', key, $vector: [1, 1, 1, 1, 1] },
       { name: 'b', key },
-      { name: 'c', key },
-    ], {
-      vectors: [
-        [1, 1, 1, 1, 1],
-        undefined,
-        [1, 1, 1, 1, 1],
-      ],
-    });
+      { name: 'c', key, $vector: [1, 1, 1, 1, 1] },
+    ]);
     assert.ok(res);
 
-    const res1 = await collection.findOne({ name: 'a', key }, { projection: { $vector: 1 } });
-    assert.deepStrictEqual(res1?.$vector, [1, 1, 1, 1, 1]);
+    const res1 = await collection.findOne<{ $vector: DataAPIVector }>({ name: 'a', key }, { projection: { $vector: 1 } });
+    assert.ok(res1?.$vector instanceof DataAPIVector);
+    assert.deepStrictEqual(res1?.$vector.asArray(), [1, 1, 1, 1, 1]);
 
     const res2 = await collection.findOne({ name: 'b', key });
     assert.strictEqual(res2?.$vector, undefined);
-  });
-
-  it('should error out when inserting with mis-matched vectors', async () => {
-    await assert.rejects(async () => {
-      await collection.insertMany([
-        { name: 'a' },
-        { name: 'b' },
-        { name: 'c' },
-      ], {
-        vectors: [
-          [1, 1, 1, 1, 1],
-          undefined,
-          [1, 1, 1, 1, 1],
-          [1, 1, 1, 1, 1],
-        ],
-      });
-    }, Error);
-  });
-
-  it('should error out when inserting with mis-matched vectorize', async () => {
-    await assert.rejects(async () => {
-      await collection.insertMany([
-        { name: 'a' },
-        { name: 'b' },
-        { name: 'c' },
-      ], {
-        vectorize: [
-          'Arch Enemy is a Swedish melodic death metal band, originally a supergroup from Halmstad, formed in 1995.',
-          'Equilibrium is a German symphonic metal band',
-          undefined,
-          'Green Day is an American rock band formed in 1986 by lead vocalist and guitarist Billie Joe Armstrong and bassist Mike Dirnt',
-        ],
-      });
-    }, Error);
-  });
-
-  it('should fail when inserting with both vector and vectorize', async () => {
-    await assert.rejects(async () => {
-      await collection.insertMany([
-        { name: 'a' },
-        { name: 'b' },
-        { name: 'c' },
-      ], {
-        vectors: [[1, 1, 1, 1, 1]],
-        vectorize: ['Hello there.'],
-      });
-    }, Error);
   });
 
   it('should insertMany documents ordered', async () => {
@@ -170,10 +125,10 @@ parallel('integration.documents.collections.insert-many', { truncateColls: 'defa
       error = e;
     }
     assert.ok(error);
-    assert.ok(error instanceof InsertManyError);
+    assert.ok(error instanceof CollectionInsertManyError);
     assert.strictEqual(error.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
     assert.strictEqual(error.partialResult.insertedCount, 10);
-    // assert.strictEqual(error.failedCount, 10);
+    // assert.strictEqual(error.failedCount, 10); TODO
     docs.slice(0, 10).forEach((doc, index) => {
       assert.strictEqual(error.partialResult.insertedIds[index], doc._id);
     });
@@ -189,10 +144,10 @@ parallel('integration.documents.collections.insert-many', { truncateColls: 'defa
       error = e;
     }
     assert.ok(error);
-    assert.ok(error instanceof InsertManyError);
+    assert.ok(error instanceof CollectionInsertManyError);
     assert.strictEqual(error.errorDescriptors[0].errorCode, 'DOCUMENT_ALREADY_EXISTS');
     assert.strictEqual(error.partialResult.insertedCount, 19);
-    // assert.strictEqual(error.failedCount, 1);
+    // assert.strictEqual(error.failedCount, 1); TODO
     docs.slice(0, 9).concat(docs.slice(10)).forEach((doc) => {
       assert.ok(error.partialResult.insertedIds.includes(doc._id));
     });
@@ -206,7 +161,7 @@ parallel('integration.documents.collections.insert-many', { truncateColls: 'defa
     } catch (e) {
       assert.ok(e instanceof Error);
       assert.ok(!(e instanceof DataAPIError));
-      assert.strictEqual(e.message, 'test');
+      assert.strictEqual(e.message, 'failing_client');
     }
   });
 
@@ -218,18 +173,18 @@ parallel('integration.documents.collections.insert-many', { truncateColls: 'defa
     } catch (e) {
       assert.ok(e instanceof Error);
       assert.ok(!(e instanceof DataAPIError));
-      assert.strictEqual(e.message, 'test');
+      assert.strictEqual(e.message, 'failing_client');
     }
   });
 
   it('times out properly', async (key) => {
     try {
       const docs = Array.from({ length: 1000 }, () => ({ key }));
-      await collection.insertMany(docs, { ordered: true, maxTimeMS: 500, chunkSize: 10 });
+      await collection.insertMany(docs, { ordered: true, timeout: 500, chunkSize: 10 });
       assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof DataAPITimeoutError);
-      assert.strictEqual(e.timeout, 500);
+      assert.deepStrictEqual(e.timeout, { generalMethodTimeoutMs: 500, requestTimeoutMs: 60000 /* Changed in test fixtures */ });
       const found = await collection.find({ key }).toArray();
       assert.ok(found.length > 0);
       assert.ok(found.length < 1000);

@@ -14,21 +14,78 @@ fi
 # Rebuild the client (without types or any extra processing for speed)
 sh scripts/build.sh -light || exit 2
 
+while [ $# -gt 0 ]; do
+  case "$1" in
+    "-local")
+      export CLIENT_DB_ENVIRONMENT='hcd'
+      export CLIENT_DB_TOKEN='Cassandra:Y2Fzc2FuZHJh:Y2Fzc2FuZHJh'
+      export CLIENT_DB_URL='http://localhost:8181'
+      ;;
+    "-l" | "-logging")
+      export LOG_ALL_TO_STDOUT=true
+      ;;
+  esac
+  shift
+done
+
 # Start the REPL w/ some utility stuff and stuff
 node -i -e "
   require('./node_modules/dotenv/config');
 
   const $ = require('./dist');
+  require('util').inspect.defaultOptions.depth = null;
 
-  let client = new $.DataAPIClient(process.env.CLIENT_DB_TOKEN, { environment: process.env.CLIENT_DB_ENVIRONMENT });
+  let client = new $.DataAPIClient(process.env.CLIENT_DB_TOKEN, { environment: process.env.CLIENT_DB_ENVIRONMENT, logging: [{ events: 'all', emits: 'event' }] });
   let db = client.db(process.env.CLIENT_DB_URL);
-  let admin = client.admin();
   let dbAdmin = db.admin({ environment: process.env.CLIENT_DB_ENVIRONMENT });
+
+  const isAstra = process.env.CLIENT_DB_ENVIRONMENT === 'astra';
+
+  // if (!isAstra) {
+  //   await dbAdmin.createKeyspace('default_keyspace', { updateDbKeyspace: true });
+  // }
+
+  let admin = (isAstra)
+    ? client.admin()
+    : null;
+
+  let coll = db.collection('test_coll');
+  let table = db.table('test_table');
+
+  if (process.env.LOG_ALL_TO_STDOUT) {
+    for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed']) {
+      client.on(event, (e) => console.dir(e, { depth: null }));
+    }
+  }
 
   Object.defineProperty(this, 'cl', {
     get() {
       console.clear();
       return 'Cleared console';
+    },
+  });
+
+  Object.defineProperty(this, 'cdm', {
+    get() {
+      return coll.deleteMany();
+    },
+  });
+
+  Object.defineProperty(this, 'tdm', {
+    get() {
+      return table.deleteMany();
+    },
+  });
+
+  Object.defineProperty(this, 'cfa', {
+    get() {
+      return coll.find({}).toArray();
+    },
+  });
+
+  Object.defineProperty(this, 'tfa', {
+    get() {
+      return table.find({}).toArray();
     },
   });
 "

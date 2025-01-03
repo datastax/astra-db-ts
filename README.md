@@ -2,16 +2,19 @@
 
 `astra-db-ts` is a TypeScript client for interacting with [DataStax Astra DB](https://astra.datastax.com/signup).
 
-*This README targets v1.0.0+, which introduces a whole new API. Click [here](https://github.com/datastax/astra-db-ts/tree/90ebeac6fec53fd951126c2bcc010c87f7f678f8?tab=readme-ov-file#datastaxastra-db-ts) for the pre-existing client readme.*
+> **Warning**
+> This README is still under construction; parts of it may be incomplete or outdated.
+
+*This README targets v2.0.0+, which expands on the previous 1.x API. Click [here](https://github.com/datastax/astra-db-ts/tree/v1.x?tab=readme-ov-file#datastaxastra-db-ts) for the pre-existing client readme.*
 
 ## Table of contents
 - [Quickstart](#quickstart)
+  - [Collections](#collections)
+  - [Tables](#tables)
 - [High-level architecture](#high-level-architecture)
-- [Getting the most out of the typing](#getting-the-most-out-of-the-typing)
-- [Working with Dates](#working-with-dates)
-- [Working with ObjectIds and UUIDs](#working-with-objectids-and-uuids)
-- [Monitoring/logging](#monitoringlogging)
-- [Non-astra support](#non-astra-support)
+  - [Options hierarchy](#options-hierarchy)
+- [Datatypes](#datatypes)
+[Non-astra support](#non-astra-support)
 - [Non-standard environment support](#non-standard-environment-support)
   - [HTTP/2 with minification](#http2-with-minification)
   - [Browser support](#browser-support)
@@ -22,83 +25,146 @@ Use your preferred package manager to install `@datastax/astra-db-ts`. Note that
 
 Get the *API endpoint* and your *application token* for your Astra DB instance @ [astra.datastax.com](https://astra.datastax.com).
 
-Try the following code after setting the following environment variables:
+### Collections
 
 ```typescript
-import { DataAPIClient, VectorDoc, UUID, ObjectId } from '@datastax/astra-db-ts';
-
-// Schema for the collection (VectorDoc adds the $vector field)
-interface Idea extends VectorDoc {
-  idea: string,
-}
+import { DataAPIClient, ObjectId, vector, VectorDoc, oid } from '@datastax/astra-db-ts';
 
 // Connect to the db
-const client = new DataAPIClient('*TOKEN*');
-const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
+const client = new DataAPIClient({ logging: 'all' });
+const db = client.db(process.env.CLIENT_DB_URL!, { token: process.env.CLIENT_DB_TOKEN! });
+
+// The `VectorDoc` interface adds `$vector?: DataAPIVector` as a field to the collection type
+interface Dream extends VectorDoc {
+  _id: ObjectId,   // Uses an `astra-db-ts` provided type here (NOT the `bson` version)
+  summary: string,
+  tags?: string[], // No sets/maps available without creating custom ser/des rules
+}
 
 (async () => {
-  try {
-    // Creates collection, or gets it if it already exists with same options
-    const collection = await db.createCollection<Idea>('vector_5_collection', {
-      vector: {
-        dimension: 5,
-        metric: 'cosine',
-      },
-      checkExists: false,
-    });
+  // Create the table using our helper function.
+  // The _id should be an `ObjectId` type, as specified by `defaultId.type`
+  const collection = await db.createCollection<Dream>('dreams', {
+    defaultId: { type: 'objectId' },
+  });
 
-    // Insert many ideas into the collection
-    const ideas = [
-      {
-        idea: 'An AI quilt to help you sleep forever',
-        $vector: [0.1, 0.15, 0.3, 0.12, 0.05],
-      },
-      {
-        _id: new UUID('e7f1f3a0-7e3d-11eb-9439-0242ac130002'),
-        idea: 'Vision Vector Frame—A deep learning display that controls your mood',
-        $vector: [0.1, 0.05, 0.08, 0.3, 0.6],
-      },
-      {
-        idea: 'A smartwatch that tells you what to eat based on your mood',
-        $vector: [0.2, 0.3, 0.1, 0.4, 0.15],
-      },
-    ];
-    await collection.insertMany(ideas);
+  // Batch-insert some rows into the table
+  // _id can be optionally provided, or be auto-generated @ the server side
+  await collection.insertMany([{
+    summary: 'A dinner on the Moon',
+    $vector: vector([0.2, -0.3, -0.5]),   // Shorthand for `new DataAPIVector([0.2, -0.3, -0.5])`
+  }, {
+    summary: 'Riding the waves',
+    $vector: vector([0, 0.2, 1]),
+    tags: ['sport'],
+  }, {
+    _id: oid('674f0f5c1c162131319fa09e'), // Shorthand for `new ObjectId('674f0f5c1c162131319fa09e')`
+    summary: 'Meeting Beethoven at the dentist',
+    $vector: vector([0.2, 0.6, 0]),
+  }]);
 
-    // Insert a specific idea into the collection
-    const sneakersIdea = {
-      _id: new ObjectId('507f191e810c19729de860ea'),
-      idea: 'ChatGPT-integrated sneakers that talk to you',
-      $vector: [0.45, 0.09, 0.01, 0.2, 0.11],
-    }
-    await collection.insertOne(sneakersIdea);
+  // Hm, changed my mind
+  await collection.updateOne({ id: 103 }, { $set: { summary: 'Surfers\' paradise' } });
 
-    // Actually, let's change that idea
-    await collection.updateOne(
-      { _id: sneakersIdea._id },
-      { $set: { idea: 'Gemini-integrated sneakers that talk to you' } },
-    );
+  // Let's see what we've got
+  const cursor = collection.find({})
+    .sort({ vector: vector([0, 0.2, 0.4]) }) // Performing a vector search
+    .includeSimilarity(true)                 // The found doc is inferred to have `$similarity` as a property now
+    .limit(2);
 
-    // Get similar results as desired
-    const cursor = collection.find({}, {
-      vector: [0.1, 0.15, 0.3, 0.12, 0.05],
-      includeSimilarity: true,
-      limit: 2,
-    });
-
-    for await (const doc of cursor) {
-      // Prints the following:
-      // - An AI quilt to help you sleep forever: 1
-      // - A smartwatch that tells you what to eat based on your mood: 0.85490346
-      console.log(`${doc.idea}: ${doc.$similarity}`);
-    }
-
-    // Cleanup (if desired)
-    await collection.drop();
-  } finally {
-    // Cleans up all open http sessions
-    await client.close();
+  // This would print:
+  // - Surfers' paradise: 0.98238194
+  // - Friendly aliens in town: 0.91873914
+  for await (const result of cursor) {
+    console.log(`${result.summary}: ${result.$similarity}`);
   }
+
+  // Cleanup (if desired)
+  await collection.drop();
+})();
+```
+
+### Tables
+
+```typescript
+import { DataAPIClient, InferTableSchema, vector } from '@datastax/astra-db-ts';
+
+// Connect to the db
+const client = new DataAPIClient({ logging: 'all' });
+const db = client.db(process.env.CLIENT_DB_URL!, { token: process.env.CLIENT_DB_TOKEN! });
+
+// Create a table through the Data API if it does not yet exist.
+// Returns the created table through a function so we can use the inferred type of the table ourselves
+// (instead of having to manually define it)
+const mkDreamsTable = async () => await db.createTable('dreams', {
+  definition: {
+    columns: {
+      id: 'int',                                // Shorthand notation for { type: 'int' }
+      summary: 'text',
+      tags: { type: 'set', valueType: 'text' }, // Collection types require additional type information
+      vector: { type: 'vector', dimension: 3 }, // Auto-embedding-generation can be enabled through a `service` block
+    },
+    primaryKey: 'id',                           // Shorthand for { partitionBy: ['id'] }
+  },
+  ifNotExists: true,                            // If any table with the same name exists, do nothing
+});                                             // (note that this does not check if the tables are the same)
+
+// Infer the TS-equivalent type from the table definition (like zod or arktype). Equivalent to:
+//
+// interface TableSchema {
+//   id: number,                    -- A primary key component, so it's required
+//   summary?: string | null,       -- Not a primary key, so it's optional and may return as null when found
+//   tags?: Set<string>,            -- Sets/maps/lists are optional to insert, but will actually be returned as empty collections instead of null
+//   vector?: DataAPIVector | null, -- Vectors, however, may be null.
+// }
+type Dream = InferTableSchema<typeof mkDreamsTable>;
+
+(async () => {
+  // Create the table using our helper function.
+  // Table will be typed as `Table<Dream, { id: number }>`, where the former is the schema, and the latter is the primary key
+  const table = await mkDreamsTable();
+
+  // Enables vector search on the table (on the 'vector' column)
+  await table.createVectorIndex('dreams_vector_idx', 'vector', {
+    options: { metric: 'cosine' },
+    ifNotExists: true,
+  });
+
+  // Batch-insert some rows into the table
+  const rows: Dream[] = [{
+    id: 102,
+    summary: 'A dinner on the Moon',
+    vector: vector([0.2, -0.3, -0.5]), // Shorthand for `new DataAPIVector([0.2, -0.3, -0.5])`
+  }, {
+    id: 103,
+    summary: 'Riding the waves',
+    vector: vector([0, 0.2, 1]),
+    tags: new Set(['sport']),          // Collection types use native JS collections
+  }, {
+    id: 37,
+    summary: 'Meeting Beethoven at the dentist',
+    vector: vector([0.2, 0.6, 0]),
+  }];
+  await table.insertMany(rows);
+
+  // Hm, changed my mind
+  await table.updateOne({ id: 103 }, { $set: { summary: 'Surfers\' paradise' } });
+
+  // Let's see what we've got
+  const cursor = table.find({})
+    .sort({ vector: vector([0, 0.2, 0.4]) }) // Performing a vector search
+    .includeSimilarity(true)                 // The found doc is inferred to have `$similarity` as a property now
+    .limit(2);
+
+  // This would print:
+  // - Surfers' paradise: 0.98238194
+  // - Friendly aliens in town: 0.91873914
+  for await (const result of cursor) {
+    console.log(`${result.summary}: ${result.$similarity}`);
+  }
+
+  // Cleanup (if desired)
+  await table.drop();
 })();
 ```
 
@@ -113,7 +179,23 @@ const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
 
 `astra-db-ts`'s abstractions for working at the data and admin layers are structured as depicted by this diagram:
 
-![Class hierarchy diagram](etc/imgs/class-hierarchy.png)
+```mermaid
+flowchart TD
+  DataAPIClient -->|".db(endpoint)"| Db
+  DataAPIClient -->|".admin()"| AstraAdmin
+
+  Db --->|".collection(name)
+  .createCollection(name)"| Collection
+
+  Db --->|".table(name)
+  .createTable(name)"| Table
+
+  AstraAdmin -->|".dbAdmin(endpoint)
+  .dbAdmin(id, region)"| DbAdmin
+
+  Db -->|".admin()"| DbAdmin
+  DbAdmin -->|".db()"| Db
+```
 
 Here's a small admin-oriented example:
 
@@ -136,204 +218,23 @@ const admin = client.admin();
 })();
 ```
 
-## Getting the most out of the typing
+### Options hierarchy
 
-`astra-db-ts` is a typescript-first library, performing minimal runtime type-checking. As such, it provides
-a rich set of types to help you write type-safe code.
+Like the client hierarchy, the options for each class also exist in a hierarchy.
 
-Here are some examples of how you can properly leverage types to make your code more robust:
+The general options for parent classes are deeply merged with the options for child classes.
 
-```typescript
-// First of all:
-// I *highly* recommend writing your query objects & filter objects and such inline with the methods
-// to get the best possible type-checking and autocomplete
-
-import { DataAPIClient, StrictFilter, StrictSort, UUID } from '@datastax/astra-db-ts';
-
-const client = new DataAPIClient('*TOKEN*');
-const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
-
-// You can strictly type your collections for proper type-checking
-interface Person {
-  _id: UUID,
-  name: string,
-  interests: {
-    favoriteBand?: string,
-    friend?: UUID,
-  }
-}
-
-(async () => {
-  // Create your collections with a defaultId type to enforce the type of the _id field
-  // (Otherwise it'll default to a string UUID that wouldn't be deserialized as a UUID by the client)
-  const collection = await db.createCollection<Person>('my_collection', { defaultId: { type: 'uuidv7' } });
-
-  // Now it'll raise type-errors if you try to insert a document with the wrong shape
-  await collection.insertOne({
-    _id: new UUID('e7f1f3a0-7e3d-11eb-9439-0242ac130002'),
-    name: 'John',
-    interests: {
-      favoriteBand: 'Nightwish',
-    },
-    // @ts-expect-error - 'eyeColor' does not exist in type MaybeId<Person>
-    eyeColor: 'blue',
-  });
-
-  // You can use the 'Strict*' version of Sort/Projection/Filter/UpdateFilter for proper type-checking and autocomplete
-  await collection.findOne({
-    // @ts-expect-error - Type number is not assignable to type FilterExpr<UUID | undefined>
-    'interests.friend': 3,
-  } satisfies StrictFilter<Person>, {
-    sort: {
-      name: 1,
-      // @ts-expect-error - 'interests.favoriteColor' does not exist in type StrictProjection<Person>
-      'interests.favoriteColor': 1 as const,
-    } satisfies StrictSort<Person>,
-  });
-})();
+```mermaid
+graph TD
+  DataAPIClientOptions --> AdminOptions
+  DataAPIClientOptions --> DbOptions
+  DbOptions --> CollectionOptions
+  DbOptions --> TableOptions
 ```
 
-## Working with Dates
+## Datatypes
 
-Native JS `Date` objects can be used anywhere in documents to represent dates and times.
-
-Document fields stored using the `{ $date: number }` will also be returned as Date objects when read.
-
-```typescript
-import { DataAPIClient } from '@datastax/astra-db-ts';
-
-// Reference an untyped collection
-const client = new DataAPIClient('*TOKEN*');
-const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
-
-(async () => {
-  const collection = await db.createCollection('dates_test');
-  
-  // Insert documents with some dates
-  await collection.insertOne({ dateOfBirth: new Date(1394104654000) });
-  await collection.insertOne({ dateOfBirth: new Date('1863-05-28') });
-
-  // Update a document with a date and setting lastModified to now
-  await collection.updateOne(
-    {
-      dateOfBirth: new Date('1863-05-28'),
-    },
-    {
-      $set: { message: 'Happy Birthday!' },
-      $currentDate: { lastModified: true },
-    },
-  );
-
-  // Will print *around* `new Date()` (i.e. when server processed the request)
-  const found = await collection.findOne({ dateOfBirth: { $lt: new Date('1900-01-01') } });
-  console.log(found?.lastModified);
-  
-  // Cleanup (if desired)
-  await collection.drop();
-})();
-```
-
-## Working with ObjectIds and UUIDs
-
-`astra-db-ts` exports an `ObjectId` and `UUID` class for working with these types in the database.
-
-Note that these are custom classes, and *not* the ones from the `bson` package. Make sure you're using the right one!
-
-```typescript
-import { DataAPIClient, ObjectId, UUID } from '@datastax/astra-db-ts';
-
-interface Person {
-  _id: ObjectId | UUID,
-  name: string,
-  friendId?: ObjectId | UUID,
-}
-
-// Connect to the db
-const client = new DataAPIClient('*TOKEN*');
-const db = client.db('*ENDPOINT*', { namespace: '*NAMESPACE*' });
-
-(async () => {
-  // Create a collection with a UUIDv7 as the default ID
-  const collection = await db.createCollection<Person>('ids_test', { defaultId: { type: 'uuidv7' } });
-  
-  // You can manually set whatever ID you want
-  await collection.insertOne({ _id: new ObjectId("65fd9b52d7fabba03349d013"), name: 'John' });
-  
-  // Or use the default ID
-  await collection.insertOne({ name: 'Jane' });
-  
-  // Let's give Jane a friend with a UUIDv4 
-  const friendId = UUID.v4();
-
-  await collection.insertOne({ name: 'Alice', _id: friendId });
-  
-  await collection.updateOne(
-    { name: 'Jane' },
-    { $set: { friendId } },
-  );
-  
-  // And let's get Jane as a document
-  // (Prints "Jane", the generated UUIDv4, and true)
-  const jane = await collection.findOne({ name: 'Jane' });
-  console.log(jane?.name, jane?.friendId?.toString(), friendId.equals(jane?.friendId));
-  
-  // Cleanup (if desired)
-  await collection.drop();
-})();
-```
-
-## Monitoring/logging
-
-[Like Mongo](https://www.mongodb.com/docs/drivers/node/current/fundamentals/logging/), `astra-db-ts` doesn't provide a
-traditional logging system—instead, it uses a "monitoring" system based on event emitters, which allow you to listen to
-events and log them as you see fit.
-
-Supported events include `commandStarted`, `commandSucceeded`, `commandFailed`, and `adminCommandStarted`,
-`adminCommandPolling`, `adminCommandSucceeded`, `adminCommandFailed`.
-
-Note that it's disabled by default, and it can be enabled by passing `monitorCommands: true` option to the root options'
-`dbOptions` and `adminOptions`.
-
-```typescript
-import { DataAPIClient } from '@datastax/astra-db-ts';
-
-const client = new DataAPIClient('*TOKEN*', {
-  dbOptions: {
-    monitorCommands: true,
-  },
-});
-const db = client.db('*ENDPOINT*');
-
-client.on('commandStarted', (event) => {
-  console.log(`Running command ${event.commandName}`);
-});
-
-client.on('commandSucceeded', (event) => {
-  console.log(`Command ${event.commandName} succeeded in ${event.duration}ms`);
-});
-
-client.on('commandFailed', (event) => {
-  console.error(`Command ${event.commandName} failed w/ error ${event.error}`);
-});
-
-(async () => {
-  // Should log
-  // - "Running command createCollection"
-  // - "Command createCollection succeeded in <time>ms"
-  const collection = await db.createCollection('my_collection', { checkExists: false });
-
-  // Should log
-  // - "Running command insertOne"
-  // - "Command insertOne succeeded in <time>ms"
-  await collection.insertOne({ name: 'Queen' });
-
-  // Remove all monitoring listeners
-  client.removeAllListeners();
-
-  // Cleanup (if desired) (with no logging)
-  await collection.drop();
-})();
-```
+See [DATATYPES.md](etc/docs/DATATYPES.md) for a full list of supported datatypes and their TypeScript equivalents.
 
 ## Non-astra support
 
@@ -351,8 +252,9 @@ const db = client.db('*ENDPOINT*');
 
 // You'll also need to pass it to db.admin() when not using Astra for typing purposes
 // If the environment does not match, an error will be thrown as a reminder
-const dbAdmin: DataAPIDbAdmin = db.admin({ environment: 'dse' });
-dbAdmin.createNamespace(...);
+// `environment: 'dse'` makes the return type be `DataAPIDbAdmin`
+const dbAdmin = db.admin({ environment: 'dse' });
+dbAdmin.createNamespace('...');
 ```
 
 The `TokenProvider` class is an extensible concept to allow you to create or even refresh your tokens

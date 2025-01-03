@@ -24,5 +24,39 @@ export type {
 
 export type {
   RawDataAPIResponse,
-  CuratedAPIResponse,
 } from './types';
+
+export type {
+  BaseSerDesConfig,
+  SerDesFn,
+} from './ser-des/ser-des';
+
+export type {
+  Codecs,
+  CodecSerDesFns,
+  TypeCodec,
+  ClassGuardCodec,
+  NameCodec,
+  PathCodec,
+  CustomGuardCodec,
+  SomeCodec,
+  RawCodec,
+  CodecOpts,
+} from './ser-des/codecs';
+
+export type {
+  BaseSerDesCtx,
+  BaseSerCtx,
+  BaseDesCtx,
+} from './ser-des/ctx';
+
+export type {
+  TimeoutDescriptor,
+  WithTimeout,
+  TimedOutCategories,
+} from './timeouts';
+
+export {
+  Camel2SnakeCase,
+  KeyTransformer,
+} from './ser-des/key-transformer';

@@ -31,7 +31,7 @@ export class FetchH2 implements Fetcher {
 
   constructor(options: DefaultHttpClientOptions | undefined, preferHttp2: boolean) {
     try {
-      /* Complicated expression to stop Next.js and such from tracing require and trying to load the fetch-h2 client */
+      // Complicated expression to stop Next.js and such from tracing require and trying to load the fetch-h2 client
       const [indirectRequire] = [require].map(x => isNaN(Math.random()) ? null! : x);
 
       const fetchH2 = validateFetchH2(options?.fetchH2) ?? indirectRequire('fetch-h2') as typeof import('fetch-h2');

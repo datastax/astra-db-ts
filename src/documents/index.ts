@@ -14,22 +14,26 @@
 
 export * from './cursor';
 export * from './events';
-export * from './ids';
+export * from './datatypes/object-id';
 export * from './collections';
+export * from './tables';
 export * from './embedding-providers';
+export * from './datatypes';
+export type * from './commands';
+export type * from './types';
 
 export {
   DataAPIResponseError,
   DataAPIHttpError,
-  BulkWriteError,
   DataAPITimeoutError,
-  CumulativeDataAPIError,
-  CursorIsStartedError,
+  CumulativeOperationError,
   DataAPIDetailedErrorDescriptor,
   DataAPIError,
   DataAPIErrorDescriptor,
-  DeleteManyError,
-  InsertManyError,
+  CollectionDeleteManyError,
+  CollectionInsertManyError,
+  TableInsertManyError,
   TooManyDocumentsToCountError,
-  UpdateManyError,
+  TooManyRowsToCountError,
+  CollectionUpdateManyError,
 } from './errors';

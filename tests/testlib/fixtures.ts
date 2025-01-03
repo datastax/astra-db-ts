@@ -21,46 +21,132 @@ import { DataAPIClient } from '@/src/client';
 import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import {
   DEFAULT_COLLECTION_NAME,
+  DEFAULT_TABLE_NAME,
   ENVIRONMENT,
+  LOGGING_PRED,
   OTHER_KEYSPACE,
   TEST_APPLICATION_TOKEN,
-  TEST_APPLICATION_URI, TEST_HTTP_CLIENT,
+  TEST_APPLICATION_URI,
+  TEST_HTTP_CLIENT,
 } from '@/tests/testlib/config';
+import { DataAPIClientEvent, DataAPIClientEventMap, DataAPILoggingConfig } from '@/src/lib';
+import { CreateTableDefinition, InferTableSchema } from '@/src/db';
+import * as util from 'node:util';
 
 export interface TestObjectsOptions {
   httpClient?: typeof TEST_HTTP_CLIENT,
   env?: typeof ENVIRONMENT,
-  monitoring?: boolean,
+  logging?: DataAPILoggingConfig,
+  isGlobal?: boolean,
 }
 
+export type EverythingTableSchema = InferTableSchema<typeof EverythingTableSchema>;
+export type EverythingTableSchemaWithVectorize = InferTableSchema<typeof EverythingTableSchemaWithVectorize>;
+
+export const EverythingTableSchema = <const>{
+  columns: {
+    ascii: 'ascii',
+    bigint: 'bigint',
+    blob: 'blob',
+    boolean: 'boolean',
+    date: 'date',
+    decimal: 'decimal',
+    double: 'double',
+    duration: 'duration',
+    float: 'float',
+    int: 'int',
+    inet: 'inet',
+    smallint: 'smallint',
+    text: 'text',
+    time: 'time',
+    timestamp: 'timestamp',
+    tinyint: 'tinyint',
+    uuid: 'uuid',
+    varint: 'varint',
+    map: { type: 'map', keyType: 'text', valueType: 'uuid' },
+    set: { type: 'set', valueType: 'uuid' },
+    list: { type: 'list', valueType: 'uuid' },
+    vector: { type: 'vector', dimension: 5 },
+  },
+  primaryKey: {
+    partitionBy: ['text'],
+    partitionSort: { int: 1 },
+  },
+} satisfies CreateTableDefinition;
+
+export const EverythingTableSchemaWithVectorize = <const>{
+  columns: {
+    ascii: 'ascii',
+    bigint: 'bigint',
+    blob: 'blob',
+    boolean: 'boolean',
+    date: 'date',
+    decimal: 'decimal',
+    double: 'double',
+    duration: 'duration',
+    float: 'float',
+    int: 'int',
+    inet: 'inet',
+    smallint: 'smallint',
+    text: 'text',
+    time: 'time',
+    timestamp: 'timestamp',
+    tinyint: 'tinyint',
+    uuid: 'uuid',
+    varint: 'varint',
+    map: { type: 'map', keyType: 'text', valueType: 'uuid' },
+    set: { type: 'set', valueType: 'uuid' },
+    list: { type: 'list', valueType: 'uuid' },
+    vector1: { type: 'vector', dimension: 1024, service: { provider: 'nvidia', modelName: 'NV-Embed-QA' } },
+    vector2: { type: 'vector', dimension: 1024, service: { provider: 'nvidia', modelName: 'NV-Embed-QA' } },
+  },
+  primaryKey: {
+    partitionBy: ['text'],
+    partitionSort: { int: 1 },
+  },
+} satisfies CreateTableDefinition;
+
 export const initTestObjects = (opts?: TestObjectsOptions) => {
-  const { httpClient = TEST_HTTP_CLIENT, env = ENVIRONMENT, monitoring = false } = opts ?? {};
+  const {
+    httpClient = TEST_HTTP_CLIENT,
+    env = ENVIRONMENT,
+    logging = [{ events: 'all', emits: 'event' }],
+    isGlobal = false,
+  } = opts ?? {};
 
   const preferHttp2 = httpClient === 'default:http2';
   const clientType = httpClient.split(':')[0];
 
   const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {
-    httpOptions: { preferHttp2, client: <any>clientType, maxTimeMS: 60000 },
-    dbOptions: { keyspace: DEFAULT_KEYSPACE, monitorCommands: monitoring },
-    adminOptions: { monitorCommands: monitoring },
+    httpOptions: { preferHttp2, client: <any>clientType },
+    timeoutDefaults: { requestTimeoutMs: 60000 },
+    dbOptions: { keyspace: DEFAULT_KEYSPACE },
     environment: env,
+    logging,
   });
+
+  for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed'] as (keyof DataAPIClientEventMap)[]) {
+    client.on(event, (e: DataAPIClientEvent) => LOGGING_PRED(e, isGlobal) && console.log((isGlobal ? '[Global] ' : '') + util.inspect(e, { depth: null, colors: true })));
+  }
 
   const db = client.db(TEST_APPLICATION_URI);
 
   const collection = db.collection(DEFAULT_COLLECTION_NAME);
   const collection_ = db.collection(DEFAULT_COLLECTION_NAME, { keyspace: OTHER_KEYSPACE });
 
+  const table = db.table<EverythingTableSchema>(DEFAULT_TABLE_NAME);
+  const table_ = db.table<EverythingTableSchemaWithVectorize>(DEFAULT_TABLE_NAME, { keyspace: OTHER_KEYSPACE });
+
   const dbAdmin = (ENVIRONMENT === 'astra')
     ? db.admin({ environment: ENVIRONMENT })
     : db.admin({ environment: ENVIRONMENT });
 
-  return { client, db, collection, collection_, dbAdmin };
+  return { client, db, collection, collection_, dbAdmin, table, table_ };
 };
 
 export const initCollectionWithFailingClient = () => {
   const { collection } = initTestObjects();
-  collection['_httpClient'].executeCommand = () => { throw new Error('test'); };
+  collection._httpClient.executeCommand = () => { throw new Error('failing_client'); };
   return collection;
 };
 
