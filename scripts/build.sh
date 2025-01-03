@@ -26,6 +26,9 @@ if [ "$1" != "-light" ]; then
   # Adds the missing license notice to the rollup .d.ts
   node scripts/utils/add-license-bumf.js dist/astra-db-ts.d.ts
 
+  # Protects against Symbol.asyncDispose not found
+  sed -i -E '/^(\s+)\[Symbol\.(asyncD|d)ispose\]/i\// @ts-ignore-error - May or may not be found depending on TS version & esnext.disposable in lib' dist/astra-db-ts.d.ts
+
   # Delete the "empty" files where only types were declared
   node scripts/utils/del-empty-dist-files.js
 
