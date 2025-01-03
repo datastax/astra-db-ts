@@ -26,7 +26,6 @@ import {
   DataAPIDuration,
   DataAPITime,
   FoundRow,
-  InetAddress,
   SomeRow,
   UUID,
 } from '@/src/documents';
@@ -264,7 +263,7 @@ interface CqlNonGenericType2TSTypeDict {
   duration: DataAPIDuration | null,
   float: number | null,
   int: number | null,
-  inet: InetAddress | null,
+  inet: string | null,
   smallint: number | null,
   text: string | null;
   time: DataAPITime | null,

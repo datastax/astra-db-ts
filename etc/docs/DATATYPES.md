@@ -19,7 +19,6 @@ Some types are strictly meant for tables; others for collections. And a couple, 
   - [Blobs](#blobs)
   - [Collections](#collections-1)
   - [Dates/Times](#dates--times)
-  - [InetAddresses](#inetaddresses)
   - [UUIDs](#uuids-1)
   - [Vectors](#vectors-1)
 - [Inserting native representations](#inserting-native-representations)
@@ -349,30 +348,6 @@ From each custom class, you can generally:
 - Get the date/time as a `Date` object using `.toDate()`
 - Get the individual components of the date/time using `.components()`
 
-### InetAddresses
-
-You can use inets in collections using the `InetAddress` class (or the `inet` shorthand). 
-
-```typescript
-import { InetAddress, inet } from '@datastax/astra-db-ts';
-
-await table.insertOne({
-  inet: inet('::1'), // Equivalent to `new InetAddress('::1')`
-});
-
-const row = await table.findOne();
-console.log(row.inet instanceof InetAddress); // true
-```
-
-You can create a `InetAddress` through the class, or through the `inet` shorthand, in a few different ways:
-1. By passing the inet string to `new InetAddress()` or `inet()`, and having the version be inferred
-2. By passing the inet string to `new InetAddress()` or `inet()`, and specifying the version explicitly (validating as that version)
-   - e.g. `inet('::1', 6)`
-
-From the `InetAddress` class, you can either:
-- Get the string representation of the `InetAddress` using `.toString()`
-- Get the version of the `InetAddress` using `.version`
-
 ### UUIDs
 
 You can use UUIDs in collections using the `UUID` class (or the `uuid` shorthand). Make sure you're importing this from `'@datastax/astra-db-ts'`, and _not_ from `'uuid'` or `'bson'`.
@@ -493,7 +468,7 @@ If you really want to change the behavior of how a certain type is deserialized,
 | `double`    | `number`          | -          | `3.14`, `NaN`, `Infinity`, `-Infinity`                                               |
 | `duration`  | `DataAPIDuration` | `duration` | `new DataAPIDuration('3w')`, `duration('P5DT30M')`                                   |
 | `float`     | `number`          | -          | `3.14`, `NaN`, `Infinity`, `-Infinity`                                               |
-| `inet`.     | `InetAddress`     | `inet`     | `new InetAddress('::1')`, `inet('127.0.0.1')`                                        |
+| `inet`.     | `string`          | -          | `'::1'`, `'127.0.0.1'`, `'localhost'`                                                |
 | `int`       | `number`          | -          | `42`                                                                                 |
 | `list`      | `Array`           | -          | `['value']`                                                                          |
 | `map`       | `Map`             | -          | `new Map([['key', 'value']])`                                                        |
@@ -502,7 +477,7 @@ If you really want to change the behavior of how a certain type is deserialized,
 | `text`      | `string`          | -          | `'Hello!'`                                                                           |
 | `time`      | `DataAPITime`     | `time`     | `new DataAPITime()`, `time(new Date(1734070574056))`, `time('12:34:56')`, `time()`   |
 | `timestamp` | `Date`            | -          | `new Date()`, `new Date(1734070574056)`, `new Date('...')`                           |
-| `timeuuid`  | `UUID`            | `timeuuid` | `new UUID('...')`, `UUID.v1()`, `uuid('...')`, `uuid(1)`                             |
+| `timeuuid`  | `UUID`            | `uuid`     | `new UUID('...')`, `UUID.v1()`, `uuid('...')`, `uuid(1)`                             |
 | `tinyint`   | `number`          | -          | `42`                                                                                 |
 | `uuid`      | `UUID`            | `uuid`     | `new UUID('...')`, `UUID.v4()`, `uuid('...')`, `uuid(7)`                             |
 | `varchar`   | `string`          | -          | `'Hello!'`                                                                           |

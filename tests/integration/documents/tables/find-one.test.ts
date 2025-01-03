@@ -19,7 +19,6 @@ import {
   DataAPIDuration,
   DataAPITime,
   DataAPIVector,
-  InetAddress,
   UUID,
 } from '@/src/documents';
 import { EverythingTableSchema, it, parallel } from '@/tests/testlib';
@@ -84,7 +83,7 @@ parallel('integration.documents.tables.find-one', { truncate: 'colls:before', dr
       double: 123.456,
       duration: new DataAPIDuration('P1D'),
       float: 123.456,
-      inet: new InetAddress('0:0:0:0:0:0:0:1'),
+      inet: '0:0:0:0:0:0:0:1',
       list: [uuid, uuid],
       set: new Set([uuid, uuid, uuid]),
       smallint: 123,

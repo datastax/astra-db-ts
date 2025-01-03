@@ -19,7 +19,6 @@ import {
   DataAPIDuration,
   DataAPITime,
   DataAPIVector,
-  InetAddress,
   UUID,
 } from '@/src/documents';
 import { it, parallel } from '@/tests/testlib';
@@ -52,7 +51,7 @@ parallel('integration.documents.tables.insert-one', { truncate: 'tables:before' 
       double: 123.456,
       duration: new DataAPIDuration('1d'),
       float: 123.456,
-      inet: new InetAddress('::1'),
+      inet: '::1',
       list: [UUID.v4(), UUID.v7()],
       set: new Set([UUID.v4(), UUID.v7(), UUID.v7()]),
       smallint: 123,

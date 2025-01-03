@@ -14,7 +14,6 @@
 
 export * from './blob';
 export * from './dates';
-export * from './inet-address';
 export * from './object-id';
 export * from './uuid';
 export * from './vector';

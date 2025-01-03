@@ -15,7 +15,6 @@
 // Important to import from specific paths here to avoid circular dependencies
 import { DataAPIBlob } from '@/src/documents/datatypes/blob';
 import { DataAPIDate, DataAPIDuration, DataAPITime } from '@/src/documents/datatypes/dates';
-import { InetAddress } from '@/src/documents/datatypes/inet-address';
 import { UUID } from '@/src/documents/datatypes/uuid';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
 import { SomeDoc, TableDesCtx, TableSerCtx } from '@/src/documents';
@@ -68,7 +67,6 @@ export class TableCodecs {
     float: TableCodecs.forType('float', {
       deserialize: (_, value, ctx) => ctx.done(parseFloat(value)),
     }),
-    inet: TableCodecs.forType('inet', InetAddress),
     time: TableCodecs.forType('time', DataAPITime),
     timestamp: TableCodecs.forType('timestamp', {
       serializeClass: Date,
