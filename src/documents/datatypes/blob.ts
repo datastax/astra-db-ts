@@ -17,12 +17,14 @@ import { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { forJSEnv } from '@/src/lib/utils';
 
+type MaybeBuffer = typeof globalThis extends { Buffer: infer B extends abstract new (...args: any) => any } ? InstanceType<B> : never;
+
 /**
  * Represents any type that can be converted into a {@link DataAPIBlob}
  *
  * @public
  */
-export type DataAPIBlobLike = DataAPIBlob | ArrayBuffer | Buffer | { $binary: string };
+export type DataAPIBlobLike = DataAPIBlob | ArrayBuffer | MaybeBuffer | { $binary: string };
 
 /**
  * A shorthand function for `new DataAPIBlob(blob)`
@@ -133,7 +135,7 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
    *
    * @returns The blob as a `Buffer`
    */
-  public asBuffer(): Buffer {
+  public asBuffer(): MaybeBuffer {
     if (typeof Buffer === 'undefined') {
       throw new Error("Buffer is not available in this environment");
     }

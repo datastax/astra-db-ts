@@ -139,10 +139,8 @@ export class AstraAdmin {
     dbAdmin(id: string, region: string, options?: DbOptions): AstraDbAdmin;
     dbInfo(id: string, options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbAdminInfo>;
     dropDatabase(db: Db | string, options?: AstraDropDatabaseOptions): Promise<void>;
-    // Warning: (ae-forgotten-export) The symbol "DevOpsAPIHttpClient" needs to be exported by the entry point index.d.ts
-    //
     // (undocumented)
-    get _httpClient(): DevOpsAPIHttpClient;
+    get _httpClient(): unknown;
     listDatabases(options?: ListAstraDatabasesOptions): Promise<AstraDbAdminInfo[]>;
 }
 
@@ -172,7 +170,7 @@ export class AstraDbAdmin extends DbAdmin {
     dropKeyspace(keyspace: string, options?: AstraDropKeyspaceOptions): Promise<void>;
     findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult>;
     // (undocumented)
-    get _httpClient(): DevOpsAPIHttpClient;
+    get _httpClient(): unknown;
     get id(): string;
     info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbAdminInfo>;
     listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]>;
@@ -409,7 +407,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
     findOneAndDelete<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, options?: CollectionFindOneAndDeleteOptions): Promise<TRaw | null>;
     findOneAndReplace<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, replacement: NoId<WSchema>, options?: CollectionFindOneAndReplaceOptions): Promise<TRaw | null>;
     findOneAndUpdate(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionFindOneAndUpdateOptions): Promise<RSchema | null>;
-    get _httpClient(): DataAPIHttpClient<"normal">;
+    get _httpClient(): unknown;
     insertMany(documents: readonly MaybeId<WSchema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<RSchema>>;
     insertOne(document: MaybeId<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionInsertOneResult<RSchema>>;
     readonly keyspace: string;
@@ -796,7 +794,8 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
     constructor(blob: DataAPIBlobLike, validate?: boolean);
     asArrayBuffer(): ArrayBuffer;
     asBase64(): string;
-    asBuffer(): Buffer;
+    // Warning: (ae-forgotten-export) The symbol "MaybeBuffer" needs to be exported by the entry point index.d.ts
+    asBuffer(): MaybeBuffer;
     get byteLength(): number;
     static isBlobLike(value: unknown): value is DataAPIBlobLike;
     raw(): Exclude<DataAPIBlobLike, DataAPIBlob>;
@@ -804,13 +803,12 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
 }
 
 // @public
-export type DataAPIBlobLike = DataAPIBlob | ArrayBuffer | Buffer | {
+export type DataAPIBlobLike = DataAPIBlob | ArrayBuffer | MaybeBuffer | {
     $binary: string;
 };
 
 // @public
 export class DataAPIClient extends DataAPIClientEventEmitterBase {
-    [Symbol.asyncDispose]: () => Promise<void>;
     constructor(options?: DataAPIClientOptions | nullish);
     constructor(token: string | TokenProvider | nullish, options?: DataAPIClientOptions | nullish);
     admin(options?: AdminOptions): AstraAdmin;
@@ -879,7 +877,7 @@ export class DataAPIDbAdmin extends DbAdmin {
     dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
     findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult>;
     // (undocumented)
-    get _httpClient(): DataAPIHttpClient<"admin">;
+    get _httpClient(): unknown;
     listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]>;
 }
 
@@ -938,8 +936,6 @@ export type DataAPIHttpOptions = DefaultHttpClientOptions | FetchHttpClientOptio
 // @public
 export type DataAPILoggingConfig = DataAPILoggingEvent | readonly (DataAPILoggingEvent | DataAPIExplicitLoggingConfig)[];
 
-// Warning: (ae-incompatible-release-tags) The symbol "DataAPILoggingDefaults" is marked as @public, but its signature references "NormalizedLoggingConfig" which is marked as @internal
-//
 // @public
 export const DataAPILoggingDefaults: NormalizedLoggingConfig[];
 
@@ -984,7 +980,7 @@ export class DataAPITimeoutError extends DataAPIError {
     //
     // @internal
     constructor(info: HTTPRequestInfo, types: TimedOutCategories);
-    // (undocumented)
+    // @internal (undocumented)
     static mk(info: HTTPRequestInfo, types: TimedOutCategories): DataAPITimeoutError;
     // (undocumented)
     readonly timedOutTypes: TimedOutCategories;
@@ -1034,7 +1030,7 @@ export class Db {
     dropTable(name: string, options?: DropTableOptions): Promise<void>;
     dropTableIndex(name: string, options?: TableDropIndexOptions): Promise<void>;
     // (undocumented)
-    get _httpClient(): DataAPIHttpClient<"normal">;
+    get _httpClient(): unknown;
     get id(): string;
     info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbInfo>;
     get keyspace(): string;
@@ -1117,7 +1113,7 @@ export class DevOpsAPIResponseError extends DevOpsAPIError {
 export class DevOpsAPITimeoutError extends DevOpsAPIError {
     // @internal
     constructor(info: HTTPRequestInfo, types: TimedOutCategories);
-    // (undocumented)
+    // @internal (undocumented)
     static mk(info: HTTPRequestInfo, types: TimedOutCategories): DevOpsAPITimeoutError;
     // (undocumented)
     readonly timedOutTypes: TimedOutCategories;
@@ -1607,9 +1603,7 @@ export type Normalize<T> = {
     [K in keyof T]: T[K];
 } & EmptyObj;
 
-// Warning: (ae-internal-missing-underscore) The name "NormalizedLoggingConfig" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
+// @public (undocumented)
 export interface NormalizedLoggingConfig {
     // (undocumented)
     emits: readonly DataAPILoggingOutput[];
@@ -1753,7 +1747,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
         projection?: never;
     }): Promise<WithSim<RSchema> | null>;
     findOne<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOneOptions): Promise<TRaw | null>;
-    get _httpClient(): DataAPIHttpClient<"normal">;
+    get _httpClient(): unknown;
     insertMany(rows: readonly WSchema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<PKey>>;
     insertOne(row: WSchema, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<PKey>>;
     readonly keyspace: string;

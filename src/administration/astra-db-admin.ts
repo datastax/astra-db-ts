@@ -94,7 +94,7 @@ export class AstraDbAdmin extends DbAdmin {
       timeoutDefaults: Timeouts.merge(rootOpts.adminOptions.timeoutDefaults, adminOpts?.timeoutDefaults),
     });
 
-    this.#dataApiHttpClient = db._httpClient.forDbAdmin(adminOpts);
+    this.#dataApiHttpClient = (db._httpClient as DataAPIHttpClient).forDbAdmin(adminOpts);
     this.#db = db;
 
     Object.defineProperty(this, $CustomInspect, {
@@ -335,7 +335,7 @@ export class AstraDbAdmin extends DbAdmin {
     });
   }
 
-  public get _httpClient() {
+  public get _httpClient(): unknown {
     return this.#httpClient;
   }
 

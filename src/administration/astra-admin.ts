@@ -480,7 +480,7 @@ export class AstraAdmin {
     });
   }
 
-  public get _httpClient() {
+  public get _httpClient(): unknown {
     return this.#httpClient;
   }
 }

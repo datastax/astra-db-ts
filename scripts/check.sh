@@ -68,7 +68,7 @@ for check_type in $check_types; do
       tmp_dir="tmp-lib-check"
       rm -rf "$tmp_dir"
 
-      (scripts/build.sh > /dev/null \
+      (scripts/build.sh \
         && mkdir "$tmp_dir" \
         && cd "$tmp_dir" \
         && npm init -y \

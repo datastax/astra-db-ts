@@ -1507,7 +1507,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
   /**
    * Backdoor to the HTTP client for if it's absolutely necessary. Which it almost never (if even ever) is.
    */
-  public get _httpClient() {
+  public get _httpClient(): unknown {
     return this.#httpClient;
   }
 }

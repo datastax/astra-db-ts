@@ -1294,7 +1294,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
   /**
    * Backdoor to the HTTP client for if it's absolutely necessary. Which it almost never (if even ever) is.
    */
-  public get _httpClient() {
+  public get _httpClient(): unknown {
     return this.#httpClient;
   }
 }

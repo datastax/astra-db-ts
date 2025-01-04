@@ -223,7 +223,7 @@ export class DataAPIDbAdmin extends DbAdmin {
     });
   }
 
-  public get _httpClient() {
+  public get _httpClient(): unknown {
     return this.#httpClient;
   }
 }

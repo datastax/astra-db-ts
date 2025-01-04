@@ -19,7 +19,6 @@
     },
     "lib": [
       "es2020",
-      "esnext.disposable",
       "dom"
     ]
   },
