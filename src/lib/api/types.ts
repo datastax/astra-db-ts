@@ -13,6 +13,13 @@
 // limitations under the License.
 
 /**
+ * Unstable backdoor to some class's internal HTTP client. No guarantees are made about this type.
+ *
+ * @public
+ */
+export type OpaqueHttpClient = any;
+
+/**
  * The response format of a 2XX-status Data API call
  *
  * @public

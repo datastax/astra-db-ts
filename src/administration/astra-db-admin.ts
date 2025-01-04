@@ -15,7 +15,7 @@
 
 import { AstraCreateKeyspaceOptions, AstraDropKeyspaceOptions } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
-import type { WithTimeout } from '@/src/lib';
+import { OpaqueHttpClient, WithTimeout } from '@/src/lib';
 import { TokenProvider } from '@/src/lib';
 import { buildAstraDatabaseAdminInfo, extractAstraEnvironment } from '@/src/administration/utils';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
@@ -335,7 +335,7 @@ export class AstraDbAdmin extends DbAdmin {
     });
   }
 
-  public get _httpClient(): unknown {
+  public get _httpClient(): OpaqueHttpClient {
     return this.#httpClient;
   }
 

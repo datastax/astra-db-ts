@@ -24,6 +24,7 @@ export type {
 
 export type {
   RawDataAPIResponse,
+  OpaqueHttpClient,
 } from './types';
 
 export type {

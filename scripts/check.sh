@@ -66,9 +66,9 @@ for check_type in $check_types; do
       echo "Checking library compiles..."
 
       tmp_dir="tmp-lib-check"
-      rm -rf "$tmp_dir"
+      rm -rf "$tmp_dir" "$main_dir/dist"
 
-      (scripts/build.sh \
+      (scripts/build.sh -no-report \
         && mkdir "$tmp_dir" \
         && cd "$tmp_dir" \
         && npm init -y \

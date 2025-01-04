@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { Collection, FoundDoc, SomeDoc, WithId } from '@/src/documents/collections';
-import { DEFAULT_KEYSPACE, RawDataAPIResponse, WithTimeout } from '@/src/lib/api';
+import { DEFAULT_KEYSPACE, type OpaqueHttpClient, RawDataAPIResponse, WithTimeout } from '@/src/lib/api';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { DataAPIEnvironment, nullish } from '@/src/lib/types';
 import { extractDbIdFromUrl, extractRegionFromUrl } from '@/src/documents/utils';
@@ -1214,7 +1214,7 @@ export class Db {
     });
   }
 
-  public get _httpClient(): unknown {
+  public get _httpClient(): OpaqueHttpClient {
     return this.#httpClient;
   }
 }

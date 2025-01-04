@@ -140,7 +140,7 @@ export class AstraAdmin {
     dbInfo(id: string, options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbAdminInfo>;
     dropDatabase(db: Db | string, options?: AstraDropDatabaseOptions): Promise<void>;
     // (undocumented)
-    get _httpClient(): unknown;
+    get _httpClient(): OpaqueHttpClient;
     listDatabases(options?: ListAstraDatabasesOptions): Promise<AstraDbAdminInfo[]>;
 }
 
@@ -170,7 +170,7 @@ export class AstraDbAdmin extends DbAdmin {
     dropKeyspace(keyspace: string, options?: AstraDropKeyspaceOptions): Promise<void>;
     findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult>;
     // (undocumented)
-    get _httpClient(): unknown;
+    get _httpClient(): OpaqueHttpClient;
     get id(): string;
     info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbAdminInfo>;
     listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]>;
@@ -407,7 +407,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
     findOneAndDelete<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, options?: CollectionFindOneAndDeleteOptions): Promise<TRaw | null>;
     findOneAndReplace<TRaw extends SomeDoc = RSchema>(filter: CollectionFilter<WSchema>, replacement: NoId<WSchema>, options?: CollectionFindOneAndReplaceOptions): Promise<TRaw | null>;
     findOneAndUpdate(filter: CollectionFilter<WSchema>, update: CollectionUpdateFilter<WSchema>, options?: CollectionFindOneAndUpdateOptions): Promise<RSchema | null>;
-    get _httpClient(): unknown;
+    get _httpClient(): OpaqueHttpClient;
     insertMany(documents: readonly MaybeId<WSchema>[], options?: CollectionInsertManyOptions): Promise<CollectionInsertManyResult<RSchema>>;
     insertOne(document: MaybeId<WSchema>, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<CollectionInsertOneResult<RSchema>>;
     readonly keyspace: string;
@@ -877,7 +877,7 @@ export class DataAPIDbAdmin extends DbAdmin {
     dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
     findEmbeddingProviders(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<FindEmbeddingProvidersResult>;
     // (undocumented)
-    get _httpClient(): unknown;
+    get _httpClient(): OpaqueHttpClient;
     listKeyspaces(options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<string[]>;
 }
 
@@ -1030,7 +1030,7 @@ export class Db {
     dropTable(name: string, options?: DropTableOptions): Promise<void>;
     dropTableIndex(name: string, options?: TableDropIndexOptions): Promise<void>;
     // (undocumented)
-    get _httpClient(): unknown;
+    get _httpClient(): OpaqueHttpClient;
     get id(): string;
     info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbInfo>;
     get keyspace(): string;
@@ -1638,6 +1638,9 @@ export const oid: (id?: string | number | null) => ObjectId;
 // @public
 export type OneOrMany<T> = T | readonly T[];
 
+// @public
+export type OpaqueHttpClient = any;
+
 // @public (undocumented)
 export type PathCodec<Fns extends CodecSerDesFns> = {
     serialize?: Fns['serialize'];
@@ -1747,7 +1750,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
         projection?: never;
     }): Promise<WithSim<RSchema> | null>;
     findOne<TRaw extends SomeRow = Partial<RSchema>>(filter: TableFilter<WSchema>, options: TableFindOneOptions): Promise<TRaw | null>;
-    get _httpClient(): unknown;
+    get _httpClient(): OpaqueHttpClient;
     insertMany(rows: readonly WSchema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<PKey>>;
     insertOne(row: WSchema, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<PKey>>;
     readonly keyspace: string;
