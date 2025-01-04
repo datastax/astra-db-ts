@@ -25,8 +25,8 @@ export {
 
 export {
   CollCodecSerDesFns,
-  CollCodecs,
   CollCodecClass,
+  CollCodecs,
   CollCodec,
 } from './ser-des/codecs';
 export { $DeserializeForCollection } from '@/src/documents/collections/ser-des/constants';

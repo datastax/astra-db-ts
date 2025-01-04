@@ -794,7 +794,6 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
     constructor(blob: DataAPIBlobLike, validate?: boolean);
     asArrayBuffer(): ArrayBuffer;
     asBase64(): string;
-    // Warning: (ae-forgotten-export) The symbol "MaybeBuffer" needs to be exported by the entry point index.d.ts
     asBuffer(): MaybeBuffer;
     get byteLength(): number;
     static isBlobLike(value: unknown): value is DataAPIBlobLike;
@@ -1380,11 +1379,6 @@ export interface GenericFindOptions extends WithTimeout<'generalMethodTimeoutMs'
     sort?: Sort;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "GenericInsertManyDocumentResponse" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export type GenericInsertManyDocumentResponse<_T> = any;
-
 // @public
 export type GenericInsertManyOptions = GenericInsertManyUnorderedOptions | GenericInsertManyOrderedOptions;
 
@@ -1394,29 +1388,11 @@ export interface GenericInsertManyOrderedOptions extends WithTimeout<'generalMet
     ordered: true;
 }
 
-// Warning: (ae-internal-missing-underscore) The name "GenericInsertManyResult" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export interface GenericInsertManyResult<ID> {
-    // (undocumented)
-    insertedCount: number;
-    // (undocumented)
-    insertedIds: ID[];
-}
-
 // @public
 export interface GenericInsertManyUnorderedOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     chunkSize?: number;
     concurrency?: number;
     ordered?: false;
-}
-
-// Warning: (ae-internal-missing-underscore) The name "GenericInsertOneResult" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal
-export interface GenericInsertOneResult<ID> {
-    // (undocumented)
-    insertedId: ID;
 }
 
 // @public
@@ -1503,6 +1479,12 @@ export abstract class KeyTransformer {
 }
 
 // @public
+export const LIB_NAME = "astra-db-ts";
+
+// @public
+export const LIB_VERSION = "2.0.0-preview.0";
+
+// @public
 export interface ListAstraDatabasesOptions extends WithTimeout<'databaseAdminTimeoutMs'> {
     include?: AstraDbStatusFilter;
     limit?: number;
@@ -1521,6 +1503,12 @@ export interface ListCreateTableColumnDefinition {
     type: 'list';
     // (undocumented)
     valueType: TableScalarType;
+}
+
+// @public
+export interface ListIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
+    // (undocumented)
+    nameOnly?: boolean;
 }
 
 // @public
@@ -1581,6 +1569,11 @@ export interface MapCreateTableColumnDefinition {
     // (undocumented)
     valueType: TableScalarType;
 }
+
+// @public
+export type MaybeBuffer = typeof globalThis extends {
+    Buffer: infer B extends abstract new (...args: any) => any;
+} ? InstanceType<B> : never;
 
 // @public
 export type MaybeId<T> = NoId<T> & {
@@ -1754,11 +1747,9 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     insertMany(rows: readonly WSchema[], options?: TableInsertManyOptions): Promise<TableInsertManyResult<PKey>>;
     insertOne(row: WSchema, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<TableInsertOneResult<PKey>>;
     readonly keyspace: string;
-    // Warning: (ae-forgotten-export) The symbol "ListIndexOptions" needs to be exported by the entry point index.d.ts
     listIndexes(options: ListIndexOptions & {
         nameOnly: true;
     }): Promise<string[]>;
-    // Warning: (ae-forgotten-export) The symbol "TableIndexDescriptor" needs to be exported by the entry point index.d.ts
     listIndexes(options?: ListIndexOptions & {
         nameOnly?: false;
     }): Promise<TableIndexDescriptor[]>;
@@ -1766,10 +1757,16 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     updateOne(filter: TableFilter<WSchema>, update: TableUpdateFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
 }
 
-// Warning: (ae-forgotten-export) The symbol "TableCodecClass" needs to be exported by the entry point index.d.ts
-//
 // @public (undocumented)
 export type TableCodec<_Class extends TableCodecClass> = EmptyObj;
+
+// @public (undocumented)
+export type TableCodecClass = {
+    new (...args: any[]): {
+        [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>>;
+    };
+    [$DeserializeForTable]: TableCodecSerDesFns['deserialize'];
+};
 
 // @public (undocumented)
 export class TableCodecs {
@@ -1872,10 +1869,28 @@ export type TableFindOneOptions = GenericFindOneOptions;
 export type TableFindOptions = GenericFindOptions;
 
 // @public
+export interface TableIndexDescriptor {
+    // (undocumented)
+    definition: TableNormalIndexDescriptor | TableVectorIndexDescriptor | TableUnknownIndex;
+    // (undocumented)
+    name: string;
+}
+
+// @public
 export interface TableIndexOptions {
     ascii?: boolean;
     caseSensitive?: boolean;
     normalize?: boolean;
+}
+
+// @public
+export interface TableIndexUnsupportedColumnApiSupport {
+    // (undocumented)
+    cqlDefinition: string;
+    // (undocumented)
+    createIndex: boolean;
+    // (undocumented)
+    filter: boolean;
 }
 
 // @public
@@ -1896,6 +1911,14 @@ export interface TableInsertManyResult<PKey extends SomeRow> {
 // @public
 export interface TableInsertOneResult<PKey extends SomeRow> {
     insertedId: PKey;
+}
+
+// @public
+export interface TableNormalIndexDescriptor {
+    // (undocumented)
+    column: string;
+    // (undocumented)
+    options: TableIndexOptions;
 }
 
 // @public
@@ -1925,9 +1948,25 @@ export interface TableSerDesConfig extends BaseSerDesConfig<TableCodecSerDesFns,
 }
 
 // @public
+export interface TableUnknownIndex {
+    // (undocumented)
+    apiSupport: TableIndexUnsupportedColumnApiSupport;
+    // (undocumented)
+    column: 'UNKNOWN';
+}
+
+// @public
 export interface TableUpdateFilter<Schema extends SomeRow> {
     $set?: Partial<Schema> & SomeRow;
     $unset?: Record<string, '' | true | 1>;
+}
+
+// @public
+export interface TableVectorIndexDescriptor {
+    // (undocumented)
+    column: string;
+    // (undocumented)
+    options: TableVectorIndexOptions;
 }
 
 // @public

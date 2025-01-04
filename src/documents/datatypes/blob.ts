@@ -17,7 +17,14 @@ import { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { forJSEnv } from '@/src/lib/utils';
 
-type MaybeBuffer = typeof globalThis extends { Buffer: infer B extends abstract new (...args: any) => any } ? InstanceType<B> : never;
+/**
+ * Represents a `Buffer` type, if available.
+ *
+ * @public
+ */
+export type MaybeBuffer = typeof globalThis extends { Buffer: infer B extends abstract new (...args: any) => any }
+  ? InstanceType<B>
+  : never;
 
 /**
  * Represents any type that can be converted into a {@link DataAPIBlob}

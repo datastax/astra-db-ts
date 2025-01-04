@@ -24,6 +24,7 @@ export type * from './tables/create-table';
 export type * from './tables/table-schema';
 export type * from './tables/drop-table';
 export type * from './tables/list-tables';
+export type * from './tables/list-indexes';
 export type * from './tables/spawn-table';
 
 export type { WithKeyspace } from './common';

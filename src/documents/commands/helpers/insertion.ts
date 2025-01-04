@@ -20,9 +20,10 @@ import {
   mkRespErrorFromResponse,
   mkRespErrorFromResponses,
 } from '@/src/documents/errors';
-import { GenericInsertManyDocumentResponse, SomeDoc, SomeId } from '@/src/documents';
+import { SomeDoc, SomeId } from '@/src/documents';
 import { TimeoutManager } from '@/src/lib/api/timeouts';
 import { RawDataAPIResponse } from '@/src/lib';
+import { GenericInsertManyDocumentResponse } from '@/src/documents/commands/types/insert/insert-many';
 
 /**
  * @internal

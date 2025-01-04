@@ -31,8 +31,6 @@ import {
   GenericFindOneAndUpdateOptions,
   GenericFindOneOptions,
   GenericFindOptions,
-  GenericInsertManyResult,
-  GenericInsertOneResult,
   GenericReplaceOneOptions,
   GenericUpdateManyOptions,
   GenericUpdateOneOptions,
@@ -48,6 +46,8 @@ import { mkRespErrorFromResponse } from '@/src/documents/errors';
 import { normalizedSort } from '@/src/documents/utils';
 import { mkDistinctPathExtractor, pullSafeProjection4Distinct } from '@/src/documents/commands/helpers/distinct';
 import stableStringify from 'safe-stable-stringify';
+import { GenericInsertOneResult } from '@/src/documents/commands/types/insert/insert-one';
+import { GenericInsertManyResult } from '@/src/documents/commands/types/insert/insert-many';
 
 /**
  * @internal

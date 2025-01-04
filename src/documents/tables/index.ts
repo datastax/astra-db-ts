@@ -25,6 +25,7 @@ export {
 
 export {
   TableCodecSerDesFns,
+  TableCodecClass,
   TableCodecs,
   TableCodec,
 } from './ser-des/codecs';

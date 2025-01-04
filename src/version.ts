@@ -12,5 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+/**
+ * The name of the library.
+ *
+ * @public
+ */
 export const LIB_NAME = 'astra-db-ts';
+
+/**
+ * The version of the library.
+ *
+ * @public
+ */
 export const LIB_VERSION = '2.0.0-preview.0';
