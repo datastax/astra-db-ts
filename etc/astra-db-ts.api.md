@@ -1466,18 +1466,6 @@ export type IdOf<Doc> = Doc extends {
 } ? Id : SomeId;
 
 // @public
-export const inet: (address: string, version?: 4 | 6) => InetAddress;
-
-// @public
-export class InetAddress implements TableCodec<typeof InetAddress> {
-    static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx): readonly [0, (InetAddress | undefined)?];
-    [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
-    constructor(address: string, version?: 4 | 6 | null, validate?: boolean);
-    toString(): string;
-    get version(): 4 | 6;
-}
-
-// @public
 export type InferrableTable = CreateTableDefinition | ((..._: any[]) => Promise<Table<SomeRow>>) | ((..._: any[]) => Table<SomeRow>) | Promise<Table<SomeRow>> | Table<SomeRow>;
 
 // Warning: (ae-forgotten-export) The symbol "InferTablePKFromDefinition" needs to be exported by the entry point index.d.ts
@@ -1792,18 +1780,15 @@ export class TableCodecs {
     static Defaults: {
         bigint: RawCodec<TableCodecSerDesFns>;
         blob: RawCodec<TableCodecSerDesFns>;
+        counter: RawCodec<TableCodecSerDesFns>;
         date: RawCodec<TableCodecSerDesFns>;
         decimal: RawCodec<TableCodecSerDesFns>;
         double: RawCodec<TableCodecSerDesFns>;
         duration: RawCodec<TableCodecSerDesFns>;
         float: RawCodec<TableCodecSerDesFns>;
-        int: RawCodec<TableCodecSerDesFns>;
-        inet: RawCodec<TableCodecSerDesFns>;
-        smallint: RawCodec<TableCodecSerDesFns>;
         time: RawCodec<TableCodecSerDesFns>;
         timestamp: RawCodec<TableCodecSerDesFns>;
         timeuuid: RawCodec<TableCodecSerDesFns>;
-        tinyint: RawCodec<TableCodecSerDesFns>;
         uuid: RawCodec<TableCodecSerDesFns>;
         vector: RawCodec<TableCodecSerDesFns>;
         varint: RawCodec<TableCodecSerDesFns>;

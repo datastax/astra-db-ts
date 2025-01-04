@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
 
+main_dir=$(pwd)
+
 while [ $# -gt 0 ]; do
   case "$1" in
     "tc")
@@ -11,6 +13,9 @@ while [ $# -gt 0 ]; do
     "licensing")
       check_types="$check_types licensing"
       ;;
+    "lib-check")
+      check_types="$check_types lib-check"
+      ;;
     *)
        if [ "$1" != "--help" ] && [ "$1" != "-help" ] && [ "$1" != "-h" ]; then
          echo "Invalid flag $1"
@@ -18,11 +23,12 @@ while [ $# -gt 0 ]; do
        fi
        echo "Usage:"
        echo
-       echo "$0 [tc] [lint] [licensing]"
+       echo "$0 [tc] [lint] [licensing] [lib-check]"
        echo
        echo "* tc: runs the type-checker"
        echo "* lint: checks for linting errors"
        echo "* licensing: checks for missing licensing headers"
+       echo "* lib-check: ensures library compiles if skipLibCheck: false"
        echo
        echo "Defaults to running all checks if no specific checks are specified."
        exit
@@ -31,22 +37,47 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "$check_types" ]; then
-  check_types="tc lint licensing"
+  check_types="tc lint licensing lib-check"
 fi
+
+failed=false
 
 for check_type in $check_types; do
   case $check_type in
     "tc")
       echo "Running type-checker..."
-      npx tsc --noEmit --skipLibCheck || exit 10
+      npx tsc --noEmit || failed=true
       ;;
     "lint")
       echo "Running linter..."
-      npm run lint -- --no-warn-ignored || exit 20
+      npm run lint -- --no-warn-ignored || failed=true
       ;;
     "licensing")
       echo "Checking for missing licensing headers..."
-      find tests/ src/ -type f -exec grep -L "^// Copyright DataStax, Inc." {} + || exit 30
+      offenders=$(find tests/ src/ -type f -exec grep -L "^// Copyright DataStax, Inc." {} +)
+
+      if [ -n "$offenders" ]; then
+        echo "The following files are missing licensing headers:"
+        echo "$offenders"
+        failed=true
+      fi
+      ;;
+    "lib-check")
+      echo "Checking library compiles..."
+
+      tmp_dir="tmp-lib-check"
+      rm -rf "$tmp_dir"
+
+      (scripts/build.sh > /dev/null \
+        && mkdir "$tmp_dir" \
+        && cd "$tmp_dir" \
+        && npm init -y \
+        && npm install typescript "$main_dir" \
+        && echo "import '@datastax/astra-db-ts'" > src.ts \
+        && npx tsc --init --skipLibCheck false --typeRoots "./node_modules/**" \
+        && npx tsc) || failed=true
+
+      cd "$main_dir" && rm -rf "$tmp_dir"
       ;;
     "*")
       echo "Invalid check type '$check_type'"
@@ -54,3 +85,10 @@ for check_type in $check_types; do
       ;;
   esac
 done
+
+if [ "$failed" = true ]; then
+  echo "Checks failed"
+  exit 1
+else
+  echo "Checks passed"
+fi
