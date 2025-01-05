@@ -97,7 +97,7 @@ parallel('integration.misc.quickstart', { drop: 'colls:after' }, () => {
     assert.strictEqual(dbInfo.id, id);
     assert.strictEqual(dbInfo.regions.length, 1);
     assert.strictEqual(dbInfo.regions[0].name, region);
-    assert.strictEqual(dbInfo.regions[0].apiEndpoint, region);
+    assert.strictEqual(dbInfo.regions[0].apiEndpoint, TEST_APPLICATION_URI);
     assert.ok(dbInfo.regions[0].createdAt as unknown instanceof Date);
 
     const dbAdmin = admin.dbAdmin(dbInfo.id, dbInfo.regions[0].name);

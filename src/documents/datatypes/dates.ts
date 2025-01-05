@@ -211,7 +211,7 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
  *
  * @public
  */
-export const time = (time?: string | Date | DataAPITimeComponents) => new DataAPITime(time);
+export const time = (time?: string | Date | PartialDataAPITimeComponents) => new DataAPITime(time);
 
 /**
  * Represents the time components that make up a `DataAPITime`
@@ -236,6 +236,13 @@ export interface DataAPITimeComponents {
    */
   nanoseconds: number
 }
+
+/**
+ * Represents the time components that make up a `DataAPITime`, with the nanoseconds being optional
+ *
+ * @public
+ */
+export type PartialDataAPITimeComponents = (Omit<DataAPITimeComponents, 'nanoseconds'> & { nanoseconds?: number });
 
 /**
  * Represents a `time` column for Data API tables.
@@ -268,7 +275,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
    *
    * @param input - The input to create the `DataAPITime` from
    */
-  public constructor(input?: string | Date | (DataAPITimeComponents & { nanoseconds?: number })) {
+  public constructor(input?: string | Date | PartialDataAPITimeComponents) {
     input ||= new Date();
 
     if (typeof input === 'string') {

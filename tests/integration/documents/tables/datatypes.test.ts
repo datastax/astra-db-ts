@@ -18,9 +18,10 @@ import {
   DataAPIBlob,
   DataAPIResponseError,
   DataAPIVector,
-  date,
+  date, duration,
   SomeRow,
-  Table,
+  Table, time,
+  uuid,
   vector,
 } from '@/src/documents';
 import { it, parallel } from '@/tests/testlib';
@@ -57,6 +58,7 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
 
     await colAsserter.ok('a'.repeat(65535));
     await colAsserter.ok('A!@#$%^&*()');
+    await colAsserter.ok('⨳⨓⨋');
   });
 
   (['int', 'tinyint', 'smallint'] as const).map((col) =>
@@ -115,25 +117,6 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
 
     await colAsserter.ok(true);
     await colAsserter.ok(false);
-  });
-
-  it('should handle different date insertion cases', async (key) => {
-    const colAsserter = mkColumnAsserter(key, 'date');
-
-    await colAsserter.notOk('2000-00-06');
-    await colAsserter.notOk('2000-01-00');
-    await colAsserter.notOk('2000/01/01');
-    await colAsserter.notOk('2000-01-32');
-    await colAsserter.notOk(date('2000-02-30'));
-    await colAsserter.notOk(date('+2000-00-06'));
-    await colAsserter.notOk(date('-0000-00-06'));
-    await colAsserter.notOk(date('10000-00-06'));
-
-    await colAsserter.ok('1970-01-01', date);
-    await colAsserter.ok('-0001-01-01', date);
-    await colAsserter.ok(date('9999-12-31'));
-    await colAsserter.ok(date('+10000-12-31'));
-    await colAsserter.ok(date('-10000-12-31'));
   });
 
   it('should handle different decimal insertion cases', async (key) => {
@@ -231,5 +214,123 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
 
     await colAsserter.ok('toto, I\'ve a feeling we\'re in vectorize again', _ => dummyVec);
     await colAsserter.ok(dummyVec);
+  });
+
+  it('should handle different map insertion cases', async (key) => {
+    const uuid1 = uuid(1);
+    const uuid4 = uuid(4);
+
+    const colAsserter = mkColumnAsserter(key, 'map');
+
+    await colAsserter.notOk([]);
+    await colAsserter.notOk([['a', uuid(4)]]);
+    await colAsserter.notOk(new Map(<any>[['a', uuid1], ['b', 'uuid4']]));
+
+    for (const val of [null, undefined, {}, new Map()]) {
+      await colAsserter.ok(val, _ => new Map());
+    }
+
+    await colAsserter.ok({ a: uuid1.toString(), b: uuid4 }, _ => new Map([['a', uuid1], ['b', uuid4]]));
+    await colAsserter.ok(new Map(<any>[['a', uuid1.toString()], ['b', uuid4]]), _ => new Map([['a', uuid1], ['b', uuid4]]));
+    await colAsserter.ok(new Map([['⨳⨓⨋', uuid1]]));
+    await colAsserter.ok(new Map([['a'.repeat(50000), uuid1]]));
+    await colAsserter.ok(new Map(Array.from({ length: 1000 }, (_, i) => [i.toString(), uuid(7)])));
+  });
+
+  it('should handle different set insertion cases', async (key) => {
+    const uuid1 = uuid(1);
+    const uuid4 = uuid(4);
+
+    const colAsserter = mkColumnAsserter(key, 'set');
+
+    await colAsserter.notOk({});
+    await colAsserter.notOk(new Set([uuid1, 'uuid4']));
+
+    for (const val of [null, undefined, [], new Set()]) {
+      await colAsserter.ok(val, _ => new Set());
+    }
+
+    await colAsserter.ok([uuid1.toString(), uuid4], _ => new Set([uuid1, uuid4]));
+    await colAsserter.ok(new Set([uuid1.toString(), uuid4]), _ => new Set([uuid1, uuid4]));
+    await colAsserter.ok([uuid1, uuid1, uuid4], _ => new Set([uuid1, uuid4]));
+    await colAsserter.ok(new Set(Array.from({ length: 1000 }, () => uuid(7))));
+  });
+
+  it('should handle different list insertion cases', async (key) => {
+    const uuid1 = uuid(1);
+    const uuid4 = uuid(4);
+
+    const colAsserter = mkColumnAsserter(key, 'list');
+
+    await colAsserter.notOk({});
+    await colAsserter.notOk([uuid1, 'uuid4']);
+
+    for (const val of [null, undefined, []]) {
+      await colAsserter.ok(val, _ => []);
+    }
+
+    await colAsserter.ok([uuid1.toString(), uuid1, uuid1, uuid4], _ => [uuid1, uuid1, uuid1, uuid4]);
+    await colAsserter.ok(new Array(1000).fill(uuid(7)));
+  });
+
+  it('should handle different time insertion cases', async (key) => {
+    const colAsserter = mkColumnAsserter(key, 'time');
+
+    await colAsserter.notOk('24:00:00');
+    await colAsserter.notOk('00:60:00');
+    await colAsserter.notOk('00:00:00.0000000000');
+    await colAsserter.notOk('1:00:00');
+    await colAsserter.notOk('-01:00:00');
+    await colAsserter.notOk('23-59-00');
+    await colAsserter.notOk('12:34:56Z+05:30');
+    await colAsserter.notOk(3123123);
+
+    await colAsserter.ok('23:59:00.',                                _ => time('23:00:00')); // S
+    await colAsserter.ok('23:59',                                    _ => time('23:59:00')); // S
+    await colAsserter.ok('00:00:00.000000000', time);
+    await colAsserter.ok(time('23:59:59.999999999'));
+    await colAsserter.ok(time(new Date('1970-01-01T23:59:59.999Z')), _ => time('23:59:59.999'));
+    await colAsserter.ok(time({ hours: 23, minutes: 59, seconds: 59 }));
+    await colAsserter.ok(time({ hours: 23, minutes: 59, seconds: 59, nanoseconds: 120012 }));
+  });
+
+  it('should handle different date insertion cases', async (key) => {
+    const colAsserter = mkColumnAsserter(key, 'date');
+
+    await colAsserter.notOk('2000-00-01');
+    await colAsserter.notOk('2000-01-00');
+    await colAsserter.notOk('2000/01/01');
+    await colAsserter.notOk('2000-01-32');
+    await colAsserter.notOk('2000-02-30');
+    await colAsserter.notOk('+2000-01-01');
+    await colAsserter.notOk('-0000-01-01');
+    await colAsserter.notOk(3123123);
+
+    await colAsserter.ok('0000-01-01', date);
+    await colAsserter.ok('1970-01-01', date);
+    await colAsserter.ok('-0001-01-01', date);
+    await colAsserter.ok(date('9999-12-31'));
+    await colAsserter.ok(date('+500000-12-31'));
+    await colAsserter.ok(date('-500000-12-31'));
+    await colAsserter.ok(date(new Date('1970-01-01T23:59:59.999Z')), _ => date('1970-01-01'));
+    await colAsserter.ok(date({ year: 1970, month: 1, date: 1 }));
+  });
+
+  it('should handle different timestamp insertion cases', async (key) => {
+    const colAsserter = mkColumnAsserter(key, 'timestamp');
+
+    await colAsserter.notOk(3123123);
+
+    await colAsserter.ok(new Date());
+    await colAsserter.ok(new Date('1970-01-01T00:00:00.000Z'));
+    await colAsserter.ok('1970-01-01T00:00:00.000+07:00', _ => new Date('1970-01-01T00:00:00.000+07:00'));
+  });
+
+  it('should handle different duration insertion cases', async (key) => {
+    const colAsserter = mkColumnAsserter(key, 'duration');
+
+    await colAsserter.notOk(duration('1 hour'));
+
+    await colAsserter.ok('1h', duration);
   });
 });
