@@ -599,7 +599,7 @@ export type CollectionReplaceOneResult<RSchema> = GenericUpdateResult<IdOf<RSche
 // @public (undocumented)
 export interface CollectionSerDesConfig extends BaseSerDesConfig<CollCodecSerDesFns, CollSerCtx, CollDesCtx> {
     // (undocumented)
-    enableBigNumbers?: GetCollNumRepFn;
+    enableBigNumbers?: GetCollNumRepFn | CollNumRepCfg;
 }
 
 // @public
@@ -1622,6 +1622,7 @@ export type nullish = null | undefined;
 
 // @public (undocumented)
 export class NumCoercionError extends Error {
+    // @internal
     constructor(path: string[], value: number | BigNumber, from: 'number' | 'bignumber', to: CollNumRep);
     // (undocumented)
     readonly from: 'number' | 'bignumber';

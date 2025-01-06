@@ -285,8 +285,8 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
     await colAsserter.notOk('12:34:56Z+05:30');
     await colAsserter.notOk(3123123);
 
-    await colAsserter.ok('23:59:00.',                                _ => time('23:00:00')); // S
-    await colAsserter.ok('23:59',                                    _ => time('23:59:00')); // S
+    await colAsserter.ok('23:59:00.', _ => time('23:00:00')); // S
+    await colAsserter.ok('23:59',     _ => time('23:59:00')); // S
     await colAsserter.ok('00:00:00.000000000', time);
     await colAsserter.ok(time('23:59:59.999999999'));
     await colAsserter.ok(time(new Date('1970-01-01T23:59:59.999Z')), _ => time('23:59:59.999'));

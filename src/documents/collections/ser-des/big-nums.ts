@@ -14,6 +14,9 @@
 
 import BigNumber from 'bignumber.js';
 
+/**
+ * @public
+ */
 export type CollNumRep =
   | 'number'
   | 'bigint'
@@ -21,8 +24,14 @@ export type CollNumRep =
   | 'string'
   | 'number_or_string';
 
+/**
+ * @public
+ */
 export type GetCollNumRepFn = (path: string[]) => CollNumRep;
 
+/**
+ * @public
+ */
 export type CollNumRepCfg = Record<string, CollNumRep>;
 
 const $NumRep = Symbol('NumRep');
@@ -75,12 +84,20 @@ const findMatchingPath = (path: string[], tree: NumRepTree | undefined): CollNum
   return findMatchingPath(rest, tree[key]) ?? findMatchingPath(rest, tree['*']) ?? tree['*']?.[$NumRep];
 };
 
+/**
+ * @public
+ */
 export class NumCoercionError extends Error {
   public readonly path: string[];
   public readonly value: number | BigNumber;
   public readonly from: 'number' | 'bignumber';
   public readonly to: CollNumRep;
 
+  /**
+   * Should not be instantiated by the user.
+   *
+   * @internal
+   */
   public constructor(path: string[], value: number | BigNumber, from: 'number' | 'bignumber', to: CollNumRep) {
     super(`Failed to coerce value from ${from} to ${to} at path: ${path.join('.')}`);
     this.path = path;
