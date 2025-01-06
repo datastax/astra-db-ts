@@ -86,7 +86,7 @@ export class TableCodecs {
     map: TableCodecs.forType('map', {
       serializeClass: Map,
       serialize: (_, value, ctx) => {
-        return ctx.recurse(Object.fromEntries(value));
+        return ctx.next(Object.fromEntries(value));
       },
       deserialize(_, map, ctx, def) {
         const entries = Array.isArray(map) ? map : Object.entries(map);
@@ -118,7 +118,7 @@ export class TableCodecs {
     set: TableCodecs.forType('set', {
       serializeClass: Set,
       serialize: (_, value, ctx) => {
-        return ctx.recurse([...value]);
+        return ctx.next([...value]);
       },
       deserialize(_, list, ctx, def) {
         for (let i = 0, n = list.length; i < n; i++) {

@@ -20,7 +20,7 @@ import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
 
 describe('unit.documents.collections.ser-des.key-transformer', () => {
   describe('Camel2SnakeCase', () => {
-    const serdes = new CollectionSerDes({ keyTransformer: new Camel2SnakeCase(), enableBigNumbers: true });
+    const serdes = new CollectionSerDes({ keyTransformer: new Camel2SnakeCase(), enableBigNumbers: () => 'bigint' });
 
     it('should serialize top-level keys to snake_case for collections', () => {
       const [obj] = serdes.serialize({

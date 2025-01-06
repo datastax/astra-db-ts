@@ -78,7 +78,9 @@ function nullProtoFix(doc: SomeDoc): SomeDoc {
       }
     }
   } else {
-    doc = Object.assign({}, doc);
+    if (Object.getPrototypeOf(doc) === null) {
+      Object.setPrototypeOf(doc, {});
+    }
 
     for (const key of Object.keys(doc)) {
       if (typeof doc[key] === 'object' && doc[key] !== null) {

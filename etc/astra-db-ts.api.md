@@ -287,9 +287,9 @@ export interface BaseSerDesCtx<Fns extends CodecSerDesFns> {
     // (undocumented)
     keyTransformer?: KeyTransformer;
     // (undocumented)
-    path: string[];
+    next<T>(obj?: T): readonly [1, T?];
     // (undocumented)
-    recurse<T>(obj?: T): readonly [1, T?];
+    path: string[];
     // (undocumented)
     rootObj: SomeDoc;
 }
@@ -381,7 +381,7 @@ export interface CollCodecSerDesFns {
 // @public (undocumented)
 export interface CollDesCtx extends BaseDesCtx<CollCodecSerDesFns> {
     // (undocumented)
-    bigNumsEnabled: boolean;
+    getNumRepForPath?: GetCollNumRepFn;
 }
 
 // @public
@@ -599,7 +599,7 @@ export type CollectionReplaceOneResult<RSchema> = GenericUpdateResult<IdOf<RSche
 // @public (undocumented)
 export interface CollectionSerDesConfig extends BaseSerDesConfig<CollCodecSerDesFns, CollSerCtx, CollDesCtx> {
     // (undocumented)
-    enableBigNumbers?: boolean;
+    enableBigNumbers?: GetCollNumRepFn;
 }
 
 // @public
@@ -647,6 +647,12 @@ export interface CollectionVectorOptions {
     service?: VectorizeServiceOptions;
     sourceModel?: string;
 }
+
+// @public (undocumented)
+export type CollNumRep = 'number' | 'bigint' | 'bignumber' | 'string' | 'number_or_string';
+
+// @public (undocumented)
+export type CollNumRepCfg = Record<string, CollNumRep>;
 
 // @public (undocumented)
 export interface CollSerCtx extends BaseSerCtx<CollCodecSerDesFns> {
@@ -957,9 +963,7 @@ export class DataAPIResponseError extends DataAPIError {
 export class DataAPITime implements TableCodec<typeof DataAPITime> {
     static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx): readonly [0, (DataAPITime | undefined)?];
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
-    constructor(input?: string | Date | (DataAPITimeComponents & {
-        nanoseconds?: number;
-    }));
+    constructor(input?: string | Date | PartialDataAPITimeComponents);
     components(): DataAPITimeComponents;
     toDate(base?: Date | DataAPIDate): Date;
     toString(): string;
@@ -1418,6 +1422,9 @@ export interface GenericUpdateOneOptions extends WithTimeout<'generalMethodTimeo
 // @public
 export type GenericUpdateResult<ID, N extends number> = (GuaranteedUpdateResult<N> & UpsertedUpdateResult<ID>) | (GuaranteedUpdateResult<N> & NoUpsertUpdateResult);
 
+// @public (undocumented)
+export type GetCollNumRepFn = (path: string[]) => CollNumRep;
+
 // @public
 export interface GuaranteedUpdateResult<N extends number> {
     matchedCount: N;
@@ -1613,6 +1620,19 @@ export interface NoUpsertUpdateResult {
 // @public
 export type nullish = null | undefined;
 
+// @public (undocumented)
+export class NumCoercionError extends Error {
+    constructor(path: string[], value: number | BigNumber, from: 'number' | 'bignumber', to: CollNumRep);
+    // (undocumented)
+    readonly from: 'number' | 'bignumber';
+    // (undocumented)
+    readonly path: string[];
+    // (undocumented)
+    readonly to: CollNumRep;
+    // (undocumented)
+    readonly value: number | BigNumber;
+}
+
 // @public
 export class ObjectId implements CollCodec<typeof ObjectId> {
     static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx): readonly [0, (ObjectId | undefined)?];
@@ -1633,6 +1653,11 @@ export type OneOrMany<T> = T | readonly T[];
 
 // @public
 export type OpaqueHttpClient = any;
+
+// @public
+export type PartialDataAPITimeComponents = (Omit<DataAPITimeComponents, 'nanoseconds'> & {
+    nanoseconds?: number;
+});
 
 // @public (undocumented)
 export type PathCodec<Fns extends CodecSerDesFns> = {
@@ -1818,9 +1843,9 @@ export interface TableDescriptor {
 // @public (undocumented)
 export interface TableDesCtx extends BaseDesCtx<TableCodecSerDesFns> {
     // (undocumented)
-    populateSparseData: boolean;
+    next: never;
     // (undocumented)
-    recurse: never;
+    populateSparseData: boolean;
     // (undocumented)
     tableSchema: ListTableColumnDefinitions;
 }
@@ -1976,7 +2001,7 @@ export interface TableVectorIndexOptions {
 }
 
 // @public
-export const time: (time?: string | Date | DataAPITimeComponents) => DataAPITime;
+export const time: (time?: string | Date | PartialDataAPITimeComponents) => DataAPITime;
 
 // @public
 export type TimedOutCategories = OneOrMany<keyof TimeoutDescriptor> | 'provided';

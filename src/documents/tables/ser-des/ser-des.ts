@@ -39,7 +39,7 @@ export interface TableSerCtx extends BaseSerCtx<TableCodecSerDesFns> {
 export interface TableDesCtx extends BaseDesCtx<TableCodecSerDesFns> {
   tableSchema: ListTableColumnDefinitions,
   populateSparseData: boolean,
-  recurse: never;
+  next: never;
 }
 
 /**

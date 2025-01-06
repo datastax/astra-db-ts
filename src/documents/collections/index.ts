@@ -29,5 +29,13 @@ export {
   CollCodecs,
   CollCodec,
 } from './ser-des/codecs';
+
+export {
+  CollNumRep,
+  GetCollNumRepFn,
+  NumCoercionError,
+  CollNumRepCfg,
+} from './ser-des/big-nums';
+
 export { $DeserializeForCollection } from '@/src/documents/collections/ser-des/constants';
 export { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';

@@ -56,7 +56,7 @@ describe('integration.documents.collections.ser-des.key-transformer', ({ db }) =
         serdes: {
           keyTransformer: new Camel2SnakeCase(),
           codecs: [CollCodecs.forName('camelCaseName2', Newtype)],
-          enableBigNumbers: true,
+          enableBigNumbers: () => 'bigint',
         },
       }),
     }));

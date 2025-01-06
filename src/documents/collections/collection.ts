@@ -52,7 +52,7 @@ import { CollectionFindCursor } from '@/src/documents/collections/cursor';
 import { withJbiNullProtoFix } from '@/src/lib/utils';
 import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
 
-const jbi = JBI({ storeAsString: true });
+const jbi = JBI;
 
 /**
  * #### Overview

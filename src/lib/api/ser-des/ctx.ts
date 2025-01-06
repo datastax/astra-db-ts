@@ -39,18 +39,18 @@ export interface BaseSerDesCtx<Fns extends CodecSerDesFns> {
   rootObj: SomeDoc,
   path: string[],
   done<T>(obj?: T): readonly [0, T?],
-  recurse<T>(obj?: T): readonly [1, T?],
+  next<T>(obj?: T): readonly [1, T?],
   continue(): readonly [2],
   codecs: Codecs<Fns>,
   keyTransformer?: KeyTransformer,
 }
 
 export const DONE = 0 as const;
-export const RECURSE = 1 as const;
+export const NEXT = 1 as const;
 export const CONTINUE = 2 as const;
 
 const DONE_ARR = [DONE] as const;
-const RECURSE_ARR = [RECURSE] as const;
+const RECURSE_ARR = [NEXT] as const;
 const CONTINUE_ARR = [CONTINUE] as const;
 
 /**
@@ -66,9 +66,9 @@ export function ctxDone<T>(obj?: T): readonly [0, T?] {
 /**
  * @internal
  */
-export function ctxRecurse<T>(obj?: T): readonly [1, T?] {
+export function ctxNext<T>(obj?: T): readonly [1, T?] {
   if (arguments.length === 1) {
-    return [RECURSE, obj];
+    return [NEXT, obj];
   }
   return RECURSE_ARR;
 }
