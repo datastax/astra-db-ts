@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { describe, it, useSuiteResources } from '@/tests/testlib';
+import { DEFAULT_COLLECTION_NAME, describe, it, parallel } from '@/tests/testlib';
 import { Camel2SnakeCase } from '@/src/lib';
 import assert from 'assert';
 import {
@@ -26,6 +26,7 @@ import {
   uuid,
   UUID,
 } from '@/src/index';
+import BigNumber from 'bignumber.js';
 
 describe('integration.documents.collections.ser-des.key-transformer', ({ db }) => {
   class Newtype implements CollCodec<typeof Newtype> {
@@ -40,43 +41,41 @@ describe('integration.documents.collections.ser-des.key-transformer', ({ db }) =
     }
   }
 
-  describe('Camel2SnakeCase', { drop: 'colls:after' }, () => {
+  parallel('Camel2SnakeCase', () => {
     interface SnakeCaseTest {
       _id: UUID,
       camelCase1: string,
       camelCaseName2: Newtype,
       CamelCaseName3: string[],
       _CamelCaseName4: Record<string, string>,
-      camelCaseName5_: bigint,
+      camelCaseName5_: BigNumber | number,
       name: string[],
     }
 
-    const coll = useSuiteResources(() => ({
-      ref: db.createCollection<SnakeCaseTest>('test_camel_snake_case_coll', {
-        serdes: {
-          keyTransformer: new Camel2SnakeCase(),
-          codecs: [CollCodecs.forName('camelCaseName2', Newtype)],
-          enableBigNumbers: () => 'bigint',
-        },
-      }),
-    }));
+    const coll = db.collection<SnakeCaseTest>(DEFAULT_COLLECTION_NAME, {
+      serdes: {
+        keyTransformer: new Camel2SnakeCase(),
+        codecs: [CollCodecs.forName('camelCaseName2', Newtype)],
+        enableBigNumbers: () => 'bignumber',
+      },
+    });
 
     it('should work', async () => {
       const id = uuid(4);
 
-      const { insertedId } = await coll.ref.insertOne({
+      const { insertedId } = await coll.insertOne({
         _id: id,
         camelCase1: 'dontChange_me',
         camelCaseName2: new Newtype('dontChange_me'),
         CamelCaseName3: ['dontChange_me'],
         _CamelCaseName4: { dontChange_me: 'dontChange_me' },
-        camelCaseName5_: 123n,
+        camelCaseName5_: 123,
         name: ['dontChange_me'],
       });
 
       assert.deepStrictEqual(insertedId, id);
 
-      const result = await coll.ref.findOne({ _id: insertedId });
+      const result = await coll.findOne({ _id: insertedId });
 
       assert.deepStrictEqual(result, {
         _id: id,
@@ -84,7 +83,7 @@ describe('integration.documents.collections.ser-des.key-transformer', ({ db }) =
         camelCaseName2: new Newtype('dontChange_me'),
         CamelCaseName3: ['dontChange_me'],
         _CamelCaseName4: { dontChange_me: 'dontChange_me' },
-        camelCaseName5_: 123,
+        camelCaseName5_: BigNumber(123),
         name: ['dontChange_me'],
       });
     });

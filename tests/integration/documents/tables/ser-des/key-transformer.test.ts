@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { describe, it, useSuiteResources } from '@/tests/testlib';
+import { describe, it, parallel, useSuiteResources } from '@/tests/testlib';
 import { Camel2SnakeCase } from '@/src/lib';
 import assert from 'assert';
 import {
@@ -38,7 +38,7 @@ describe('integration.documents.tables.ser-des.key-transformer', ({ db }) => {
     }
   }
 
-  describe('Camel2SnakeCase', { drop: 'tables:after' }, () => {
+  parallel('Camel2SnakeCase', { drop: 'tables:after' }, () => {
     interface SnakeCaseTest {
       camelCase1: string,
       camelCaseName2: Newtype,
@@ -68,6 +68,7 @@ describe('integration.documents.tables.ser-des.key-transformer', ({ db }) => {
           keyTransformer: new Camel2SnakeCase(),
           codecs: [TableCodecs.forName('camelCaseName2', Newtype)],
         },
+        ifNotExists: true,
       }),
     }));
 

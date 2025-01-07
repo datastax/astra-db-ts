@@ -79,7 +79,7 @@ function nullProtoFix(doc: SomeDoc): SomeDoc {
     }
   } else {
     if (Object.getPrototypeOf(doc) === null) {
-      Object.setPrototypeOf(doc, {});
+      doc = { ...doc };
     }
 
     for (const key of Object.keys(doc)) {

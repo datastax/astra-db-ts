@@ -28,7 +28,7 @@ export type CollNumRep =
 /**
  * @public
  */
-export type GetCollNumRepFn = (path: string[]) => CollNumRep;
+export type GetCollNumRepFn = (path: readonly string[]) => CollNumRep;
 
 /**
  * @public
@@ -45,7 +45,7 @@ interface NumRepTree {
 export const collNumRepFnFromCfg = (cfg: CollNumRepCfg): GetCollNumRepFn => {
   const tree = buildNumRepTree(cfg);
 
-  return (path: string[]) => {
+  return (path: readonly string[]) => {
     return findMatchingPath(path, tree) ?? 'number';
   };
 };
@@ -71,7 +71,7 @@ const buildNumRepTree = (cfg: CollNumRepCfg): NumRepTree => {
   return result;
 };
 
-const findMatchingPath = (path: string[], tree: NumRepTree | undefined): CollNumRep | undefined => {
+const findMatchingPath = (path: readonly string[], tree: NumRepTree | undefined): CollNumRep | undefined => {
   let rep: CollNumRep | undefined = undefined;
 
   for (let i = 0; tree && i <= path.length; i++) {
