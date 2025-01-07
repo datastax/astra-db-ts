@@ -29,7 +29,7 @@ import {
 /**
  * @public
  */
-export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?, string?] | 'Return ctx.done(val?), ctx.recurse(val?), ctx.continue(), or void';
+export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?] | 'Return ctx.done(val?), ctx.recurse(val?), ctx.continue(), or void';
 
 /**
  * @public

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import BigNumber from 'bignumber.js';
+import { CollDesCtx } from '@/src/documents';
 
 /**
  * @public
@@ -71,17 +72,24 @@ const buildNumRepTree = (cfg: CollNumRepCfg): NumRepTree => {
 };
 
 const findMatchingPath = (path: string[], tree: NumRepTree | undefined): CollNumRep | undefined => {
-  if (!tree) {
-    return undefined;
+  let rep: CollNumRep | undefined = undefined;
+
+  for (let i = 0; tree && i <= path.length; i++) {
+    if (i === path.length) {
+      return tree[$NumRep];
+    }
+
+    const exactMatch = tree[path[i]];
+
+    if (exactMatch) {
+      tree = exactMatch;
+    } else {
+      tree = tree['*'];
+      rep = tree?.[$NumRep] ?? rep;
+    }
   }
 
-  if (path.length === 0) {
-    return tree[$NumRep];
-  }
-
-  const [key, ...rest] = path;
-
-  return findMatchingPath(rest, tree[key]) ?? findMatchingPath(rest, tree['*']) ?? tree['*']?.[$NumRep];
+  return rep;
 };
 
 /**
@@ -106,3 +114,46 @@ export class NumCoercionError extends Error {
     this.to = to;
   }
 }
+
+export const coerceBigNumber = (value: BigNumber, ctx: CollDesCtx): readonly [0 | 1 | 2, unknown?] => {
+  switch (ctx.getNumRepForPath!(ctx.path)) {
+    case 'number': {
+      const asNum = value.toNumber();
+
+      if (!value.isEqualTo(asNum)) {
+        throw new NumCoercionError(ctx.path, value, 'bignumber', 'number');
+      }
+
+      return ctx.next(asNum);
+    }
+    case 'bigint': {
+      if (!value.isInteger()) {
+        throw new NumCoercionError(ctx.path, value, 'bignumber', 'bigint');
+      }
+      return ctx.next(BigInt(value.toFixed(0)));
+    }
+    case 'bignumber':
+      return ctx.next(value);
+    case 'string':
+    case 'number_or_string':
+      return ctx.next(value.toString());
+  }
+};
+
+export const coerceNumber = (value: number, ctx: CollDesCtx): readonly [0 | 1 | 2, unknown?] => {
+  switch (ctx.getNumRepForPath!(ctx.path)) {
+    case 'bigint': {
+      if (!Number.isInteger(value)) {
+        throw new NumCoercionError(ctx.path, value, 'number', 'bigint');
+      }
+      return ctx.next(BigInt(value));
+    }
+    case 'bignumber':
+      return ctx.next(BigNumber(value));
+    case 'string':
+      return ctx.next(value.toString());
+    case 'number':
+    case 'number_or_string':
+      return ctx.next(value);
+  }
+};

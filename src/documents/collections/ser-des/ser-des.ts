@@ -18,8 +18,7 @@ import { CollCodecs, CollCodecSerDesFns } from '@/src/documents/collections/ser-
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 import { isBigNumber, stringArraysEqual } from '@/src/lib/utils';
 import { CollNumRepCfg, GetCollNumRepFn } from '@/src/documents';
-import BigNumber from 'bignumber.js';
-import { collNumRepFnFromCfg, NumCoercionError } from '@/src/documents/collections/ser-des/big-nums';
+import { coerceBigNumber, coerceNumber, collNumRepFnFromCfg } from '@/src/documents/collections/ser-des/big-nums';
 
 /**
  * @public
@@ -81,47 +80,12 @@ export class CollectionSerDes extends SerDes<CollCodecSerDesFns, CollSerCtx, Col
 
 const BigNumCollectionDesCfg: CollectionSerDesConfig = {
   deserialize(_, value, ctx) {
-    if (isBigNumber(value)) {
-      switch (ctx.getNumRepForPath!(ctx.path)) {
-        case 'number': {
-          const asNum = value.toNumber();
-
-          if (!value.isEqualTo(asNum)) {
-            throw new NumCoercionError(ctx.path, value, 'bignumber', 'number');
-          }
-
-          return ctx.next(asNum);
-        }
-        case 'bigint': {
-          if (!value.isInteger()) {
-            throw new NumCoercionError(ctx.path, value, 'bignumber', 'bigint');
-          }
-          return ctx.next(BigInt(value.toFixed(0)));
-        }
-        case 'bignumber':
-          return ctx.next(value);
-        case 'string':
-        case 'number_or_string':
-          return ctx.next(value.toString());
-      }
+    if (typeof value === 'number') {
+      return coerceNumber(value, ctx);
     }
 
-    if (typeof value === 'number') {
-      switch (ctx.getNumRepForPath!(ctx.path)) {
-        case 'bigint': {
-          if (!Number.isInteger(value)) {
-            throw new NumCoercionError(ctx.path, value, 'number', 'bigint');
-          }
-          return ctx.next(BigInt(value));
-        }
-        case 'bignumber':
-          return ctx.next(BigNumber(value));
-        case 'string':
-          return ctx.next(value.toString());
-        case 'number':
-        case 'number_or_string':
-          return ctx.next(value);
-      }
+    if (isBigNumber(value)) {
+      return coerceBigNumber(value, ctx);
     }
 
     return ctx.continue();
