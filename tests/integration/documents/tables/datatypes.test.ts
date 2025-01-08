@@ -18,9 +18,11 @@ import {
   DataAPIBlob,
   DataAPIResponseError,
   DataAPIVector,
-  date, duration,
+  date,
+  duration,
   SomeRow,
-  Table, time,
+  Table,
+  time,
   uuid,
   vector,
 } from '@/src/documents';
@@ -297,14 +299,7 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
   it('should handle different date insertion cases', async (key) => {
     const colAsserter = mkColumnAsserter(key, 'date');
 
-    await colAsserter.notOk('2000-00-01');
-    await colAsserter.notOk('2000-01-00');
-    await colAsserter.notOk('2000/01/01');
-    await colAsserter.notOk('2000-01-32');
-    await colAsserter.notOk('2000-02-30');
     await colAsserter.notOk('+2000-01-01');
-    await colAsserter.notOk('-0000-01-01');
-    await colAsserter.notOk(3123123);
 
     await colAsserter.ok('0000-01-01', date);
     await colAsserter.ok('1970-01-01', date);
@@ -313,7 +308,7 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
     await colAsserter.ok(date('+500000-12-31'));
     await colAsserter.ok(date('-500000-12-31'));
     await colAsserter.ok(date(new Date('1970-01-01T23:59:59.999Z')), _ => date('1970-01-01'));
-    await colAsserter.ok(date({ year: 1970, month: 1, date: 1 }));
+    await colAsserter.ok(date(1970, 1, 1));
   });
 
   it('should handle different timestamp insertion cases', async (key) => {

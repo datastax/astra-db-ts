@@ -62,7 +62,7 @@ parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }
       ascii: 'highway_star',
       blob: new DataAPIBlob(Buffer.from('smoke_on_the_water')),
       bigint: 1231233n,
-      date: new DataAPIDate(),
+      date: DataAPIDate.now(),
       decimal: BigNumber('12.34567890123456789012345678901234567890'),
       double: 123.456,
       duration: new DataAPIDuration('P1D'),
@@ -107,7 +107,7 @@ parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }
     assert.strictEqual(found.blob.asBase64(), doc.blob.asBase64());
 
     assert.ok(found.date);
-    assert.deepStrictEqual(found.date.components(), doc.date.components());
+    assert.deepStrictEqual(found.date, doc.date);
 
     assert.ok(found.decimal);
     assert.strictEqual(found.decimal.toString(), doc.decimal.toString());

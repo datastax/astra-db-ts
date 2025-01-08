@@ -46,7 +46,7 @@ parallel('integration.documents.tables.insert-one', { truncate: 'tables:before' 
       ascii: 'highway_star',
       blob: new DataAPIBlob(Buffer.from('smoke_on_the_water')),
       bigint: 1231233n,
-      date: new DataAPIDate(),
+      date: DataAPIDate.now(),
       decimal: BigNumber('12.34567890123456789012345678901234567890'),
       double: 123.456,
       duration: new DataAPIDuration('1d'),

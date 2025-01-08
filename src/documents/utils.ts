@@ -82,3 +82,27 @@ export const normalizedSort = (sort: SomeDoc): Sort => {
 
   return ret;
 };
+
+/**
+ * @internal
+ */
+export const betterTypeOf = (value: unknown): string => {
+  if (value === null) {
+    return 'null';
+  }
+
+  if (typeof value === 'object') {
+    return value.constructor?.name ?? 'Object';
+  }
+
+  return typeof value;
+};
+
+/**
+ * @internal
+ */
+export const mkInvArgsErr = (exp: string, params: [string, string][], ...got: unknown[]): TypeError => {
+  const names = params.map(([name]) => name).join(', ');
+  const types = params.map(([, type]) => type).join(', ');
+  return new TypeError(`Invalid argument(s) for \`${exp}(${names})\`; expected (${types}), got (${got.map(betterTypeOf).join(' | ')})`);
+};

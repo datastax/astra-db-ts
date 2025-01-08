@@ -146,9 +146,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
       return ret;
     }
 
-    const date = base.components();
-
-    return new Date(date.year, date.month - 1, date.date, time.hours, time.minutes, time.seconds, time.nanoseconds / 1_000_000);
+    return new Date(base.year, base.month - 1, base.date, time.hours, time.minutes, time.seconds, time.nanoseconds / 1_000_000);
   }
 
   /**
