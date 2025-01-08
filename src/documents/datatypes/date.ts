@@ -48,7 +48,7 @@ const MillisecondsPerDay = 1000 * 60 * 60 * 24;
  * new DataAPIDate(new Date('2004-09-14T12:00:00.000Z')) // '2004-09-14'
  *
  * // Parse a date given the above date-string format
- * new DataAPIDate('+2004-09-14)
+ * new DataAPIDate('+2004-09-14')
  *
  * // Create a `DataAPIDate` from a year, a month, and a date
  * new DataAPIDate(2004, 9, 14)
@@ -151,7 +151,7 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
    *
    * Creates a `DataAPIDate` from the number of days since the epoch (may be negative).
    *
-   * The number may be negative, but must be an integer within the range `-100_000_000..=100_000_000`.
+   * The number may be negative, but must be an integer within the range `[-100_000_000, 100_000_000]`.
    *
    * @example
    * ```ts
@@ -290,7 +290,7 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
         break;
       }
       default: {
-        throw RangeError(`Invalid number of arguments; expected 1 or 3, got ${arguments.length}`);
+        throw RangeError(`Invalid number of arguments; expected 1..=3, got ${arguments.length}`);
       }
     }
 
@@ -328,9 +328,7 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
       return ret;
     }
 
-    const time = base.components();
-
-    return new Date(this.year, this.month - 1, this.date, time.hours, time.minutes, time.seconds, time.nanoseconds / 1_000_000);
+    return new Date(this.year, this.month - 1, this.date, base.hours, base.minutes, base.seconds, base.nanoseconds / 1_000_000);
   }
 
   /**
@@ -536,7 +534,7 @@ const ofEpochDay = (epochDays: unknown): Date => {
   const date = new Date(epochDays * MillisecondsPerDay);
 
   if (isNaN(date.getTime())) {
-    throw new RangeError(`Invalid epochDays: ${epochDays}; must be within range -100_000_000..=100_000_000`);
+    throw new RangeError(`Invalid epochDays: ${epochDays}; must be within range [-100_000_000, 100_000_000]`);
   }
 
   return date;

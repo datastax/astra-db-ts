@@ -55,7 +55,7 @@ parallel('integration.documents.tables.insert-one', { truncate: 'tables:before' 
       list: [UUID.v4(), UUID.v7()],
       set: new Set([UUID.v4(), UUID.v7(), UUID.v7()]),
       smallint: 123,
-      time: new DataAPITime(),
+      time: DataAPITime.now(),
       timestamp: new Date(),
       tinyint: 123,
       uuid: UUID.v4(),

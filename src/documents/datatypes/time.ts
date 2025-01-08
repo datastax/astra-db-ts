@@ -15,46 +15,7 @@
 import { $CustomInspect } from '@/src/lib/constants';
 import { DataAPIDate, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
-
-/**
- * A shorthand function for `new DataAPITime(time?)`
- *
- * If no time is provided, it defaults to the current time.
- *
- * @public
- */
-export const time = (time?: string | Date | PartialDataAPITimeComponents) => new DataAPITime(time);
-
-/**
- * Represents the time components that make up a `DataAPITime`
- *
- * @public
- */
-export interface DataAPITimeComponents {
-  /**
-   * The hour of the time
-   */
-  hours: number,
-  /**
-   * The minute of the time
-   */
-  minutes: number,
-  /**
-   * The second of the time
-   */
-  seconds: number,
-  /**
-   * The nanosecond of the time
-   */
-  nanoseconds: number
-}
-
-/**
- * Represents the time components that make up a `DataAPITime`, with the nanoseconds being optional
- *
- * @public
- */
-export type PartialDataAPITimeComponents = (Omit<DataAPITimeComponents, 'nanoseconds'> & { nanoseconds?: number });
+import { mkInvArgsErr } from '@/src/documents/utils';
 
 /**
  * Represents a `time` column for Data API tables.
@@ -66,7 +27,10 @@ export type PartialDataAPITimeComponents = (Omit<DataAPITimeComponents, 'nanosec
  * @public
  */
 export class DataAPITime implements TableCodec<typeof DataAPITime> {
-  readonly #time: string;
+  readonly hours: number;
+  readonly minutes: number;
+  readonly seconds: number;
+  readonly nanoseconds: number;
 
   /**
    * Implementation of `$SerializeForTable` for {@link TableCodec}
@@ -82,46 +46,69 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
     return ctx.done(new DataAPITime(value));
   }
 
-  /**
-   * Creates a new `DataAPITime` instance from various formats.
-   *
-   * @param input - The input to create the `DataAPITime` from
-   */
-  public constructor(input?: string | Date | PartialDataAPITimeComponents) {
-    input ||= new Date();
+  public static now(): DataAPITime {
+    return new DataAPITime(new Date());
+  }
 
-    if (typeof input === 'string') {
-      this.#time = input;
-    } else if (input instanceof Date) {
-      this.#time = DataAPITime.#initTime(input.getHours(), input.getMinutes(), input.getSeconds(), input.getMilliseconds());
-    } else {
-      this.#time = DataAPITime.#initTime(input.hours, input.minutes, input.seconds, input.nanoseconds ? input.nanoseconds.toString().padStart(9, '0') : '');
+  public static utcnow(): DataAPITime {
+    return new DataAPITime(...ofNanoOfDay((Date.now() % 86_400_000) * 1_000_000));
+  }
+
+  public static ofNanoOfDay(nanoOfDay: number): DataAPITime {
+    return new DataAPITime(...ofNanoOfDay(nanoOfDay));
+  }
+
+  public static ofSecondOfDay(secondOfDay: number): DataAPITime {
+    return new DataAPITime(...ofSecondOfDay(secondOfDay));
+  }
+
+  public constructor(time: Date);
+
+  public constructor(time: string, strict?: boolean);
+
+  public constructor(hours: number, minutes: number, seconds?: number, nanoseconds?: number);
+
+  public constructor(i1: Date | string | number, i2?: boolean | number, i3?: number, i4?: number) {
+    switch (arguments.length) {
+      case 1: {
+        if (typeof i1 === 'string') {
+          [this.hours, this.minutes, this.seconds, this.nanoseconds] = parseTimeStr(i1, true);
+        }
+        else if (i1 instanceof Date) {
+          this.hours = i1.getHours();
+          this.minutes = i1.getMinutes();
+          this.seconds = i1.getSeconds();
+          this.nanoseconds = i1.getMilliseconds() * 1_000_000;
+        }
+        else {
+          throw mkInvArgsErr('new DataAPITime', [['time', 'string | Date']], i1);
+        }
+        break;
+      }
+      case 2: case 3: case 4: {
+        if (typeof i1 === 'string') {
+          [this.hours, this.minutes, this.seconds, this.nanoseconds] = parseTimeStr(i1, i2 !== false);
+        }
+        else if (typeof i1 === 'number' && typeof i2 === 'number' && (!i3 || typeof i3 as unknown === 'number') && (!i4 || typeof i4 as unknown === 'number')) {
+          this.hours = i1;
+          this.minutes = i2;
+          this.seconds = i3 || 0;
+          this.nanoseconds = i4 || 0;
+          validateTime(this.hours, this.minutes, this.seconds, this.nanoseconds);
+        }
+        else {
+          throw mkInvArgsErr('new DataAPIDate', [['hour', 'number'], ['minute', 'number'], ['second', 'number?'], ['nanosecond', 'number?']], i1, i2, i3, i4);
+        }
+        break;
+      }
+      default: {
+        throw RangeError(`Invalid number of arguments; expected 1..=4, got ${arguments.length}`);
+      }
     }
 
     Object.defineProperty(this, $CustomInspect, {
-      value: () => `DataAPITime("${this.#time}")`,
+      value: () => `DataAPITime("${this.toString()}")`,
     });
-  }
-
-  static #initTime(hours: number, minutes: number, seconds: number, fractional?: unknown): string {
-    return `${hours < 10 ? '0' : ''}${hours}:${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}${fractional ? `.${fractional}` : ''}`;
-  }
-
-  /**
-   * Returns the {@link DataAPITimeComponents} that make up this `DataAPITime`
-   *
-   * @returns The components of the time
-   */
-  public components(): DataAPITimeComponents {
-    const [timePart, fractionPart] = this.#time.split('.');
-    const [hours, mins, secs] = timePart.split(':');
-
-    return {
-      hours: +hours,
-      minutes: +mins,
-      seconds: +secs,
-      nanoseconds: +fractionPart.padEnd(9, '0'),
-    };
   }
 
   /**
@@ -138,15 +125,13 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
       base = new Date();
     }
 
-    const time = this.components();
-
     if (base instanceof Date) {
       const ret = new Date(base);
-      ret.setHours(time.hours, time.minutes, time.seconds, time.nanoseconds / 1_000_000);
+      ret.setHours(this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000);
       return ret;
     }
 
-    return new Date(base.year, base.month - 1, base.date, time.hours, time.minutes, time.seconds, time.nanoseconds / 1_000_000);
+    return new Date(base.year, base.month - 1, base.date, this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000);
   }
 
   /**
@@ -155,6 +140,108 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
    * @returns The string representation of this `DataAPITime`
    */
   public toString() {
-    return this.#time;
+    return `${this.hours < 10 ? '0' : ''}${this.hours}:${this.minutes < 10 ? '0' : ''}${this.minutes}:${this.seconds < 10 ? '0' : ''}${this.seconds}.${this.nanoseconds.toString().padStart(9, '0')}`;
   }
 }
+
+/**
+ * A shorthand function for `new DataAPITime(time?)`
+ *
+ * If no time is provided, it defaults to the current time.
+ *
+ * @public
+ */
+export const time = Object.assign(
+  (...params: [string] | [Date] | [number, number, number?, number?]) => new DataAPITime(...<[any]>params),
+  {
+    now: DataAPITime.now,
+    utcnow: DataAPITime.utcnow,
+    ofNanoOfDay: DataAPITime.ofNanoOfDay,
+    ofSecondOfDay: DataAPITime.ofSecondOfDay,
+  },
+);
+
+const parseTimeStr = (str: unknown, strict: boolean): [number, number, number, number] => {
+  if (typeof str !== 'string') {
+    throw mkInvArgsErr('DataAPIDate.parse', [['date', 'string']], str);
+  }
+
+  return (strict)
+    ? parseTimeStrict(str)
+    : parseTimeQuick(str);
+};
+
+const parseTimeQuick = (str: string): [number, number, number, number] => {
+  const hour = parseInt(str.slice(0, 2), 10);
+  const minute = parseInt(str.slice(3, 5), 10);
+
+  const second = (str.length > 5)
+    ? parseInt(str.slice(6, 8), 10)
+    : 0;
+
+  const nanoseconds = (str.length > 9)
+    ? parseInt(str.slice(9), 10) * Math.pow(10, 9 - (str.length - 9))
+    : 0;
+
+  return [hour, minute, second, nanoseconds];
+};
+
+const TimeRegex = /^(\d\d):(\d\d)(?::(\d\d(?:\.(\d{0,9}))?))?$/;
+
+const parseTimeStrict = (str: string): [number, number, number, number] => {
+  const match = str.match(TimeRegex);
+
+  if (!match) {
+    throw Error(`Invalid time: '${str}'; must match HH:MM[:SS[.NNNNNNNNN]]`);
+  }
+
+  const time: [number, number, number, number] = [
+    parseInt(match[1], 10),
+    parseInt(match[2], 10),
+    parseInt(match[3] || '0', 10),
+    parseInt(match[4] || '0', 10) * Math.pow(10, 9 - (match[4]?.length ?? 0)),
+  ];
+
+  validateTime(...time);
+  return time;
+};
+
+const validateTime = (hours: number, minutes: number, seconds: number, nanoseconds: number) => {
+  if (!Number.isInteger(hours) || !Number.isInteger(minutes) || !Number.isInteger(seconds) || !Number.isInteger(nanoseconds)) {
+    throw new TypeError(`Invalid hour: ${hours}, minute: ${minutes}, second: ${seconds}, and/or nanosecond: ${nanoseconds}; must be integers`);
+  }
+
+  if (hours < 0 || hours > 23) {
+    throw RangeError(`Invalid hour: ${hours}; must be in range [0, 23]`);
+  }
+
+  if (minutes < 0 || minutes > 59) {
+    throw RangeError(`Invalid minute: ${minutes}; must be in range [0, 59]`);
+  }
+
+  if (seconds < 0 || seconds > 59) {
+    throw RangeError(`Invalid second: ${seconds}; must be in range [0, 59]`);
+  }
+
+  if (nanoseconds < 0 || nanoseconds > 999_999_999) {
+    throw RangeError(`Invalid nanosecond: ${nanoseconds}; must be in range [0, 999,999,999]`);
+  }
+};
+
+const ofSecondOfDay = (s: number): [number, number, number, number] => {
+  const hours = ~~(s / 3_600);
+  s -= hours * 3_600;
+  const minutes = ~~(s / 60);
+  s -= minutes * 60;
+  return [hours, minutes, s, 0];
+};
+
+const ofNanoOfDay = (ns: number): [number, number, number, number] => {
+  const hours = ~~(ns / 3_600_000_000_000);
+  ns -= hours * 3_600_000_000_000;
+  const minutes = ~~(ns / 60_000_000_000);
+  ns -= minutes * 60_000_000_000;
+  const seconds = ~~(ns / 1_000_000_000);
+  ns -= seconds * 1_000_000_000;
+  return [hours, minutes, seconds, ns];
+};

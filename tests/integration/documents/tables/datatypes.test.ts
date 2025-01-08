@@ -287,13 +287,13 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
     await colAsserter.notOk('12:34:56Z+05:30');
     await colAsserter.notOk(3123123);
 
-    await colAsserter.ok('23:59:00.', _ => time('23:00:00')); // S
+    await colAsserter.ok('23:59:00.', _ => time('23:59:00')); // S
     await colAsserter.ok('23:59',     _ => time('23:59:00')); // S
     await colAsserter.ok('00:00:00.000000000', time);
     await colAsserter.ok(time('23:59:59.999999999'));
-    await colAsserter.ok(time(new Date('1970-01-01T23:59:59.999Z')), _ => time('23:59:59.999'));
-    await colAsserter.ok(time({ hours: 23, minutes: 59, seconds: 59 }));
-    await colAsserter.ok(time({ hours: 23, minutes: 59, seconds: 59, nanoseconds: 120012 }));
+    await colAsserter.ok(time(new Date('1970-01-01T23:59:59.999')), _ => time('23:59:59.999'));
+    // await colAsserter.ok(time({ hours: 23, minutes: 59, seconds: 59 }));
+    // await colAsserter.ok(time({ hours: 23, minutes: 59, seconds: 59, nanoseconds: 120012 }));
   });
 
   it('should handle different date insertion cases', async (key) => {
@@ -307,7 +307,7 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
     await colAsserter.ok(date('9999-12-31'));
     await colAsserter.ok(date('+500000-12-31'));
     await colAsserter.ok(date('-500000-12-31'));
-    await colAsserter.ok(date(new Date('1970-01-01T23:59:59.999Z')), _ => date('1970-01-01'));
+    await colAsserter.ok(date(new Date('1970-01-01T23:59:59.999')), _ => date('1970-01-01'));
     await colAsserter.ok(date(1970, 1, 1));
   });
 

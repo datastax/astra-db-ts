@@ -87,7 +87,7 @@ parallel('integration.documents.tables.find-one', { truncate: 'colls:before', dr
       list: [uuid, uuid],
       set: new Set([uuid, uuid, uuid]),
       smallint: 123,
-      time: new DataAPITime(),
+      time: DataAPITime.now(),
       timestamp: new Date(),
       tinyint: 123,
       uuid: UUID.v4(),
@@ -139,7 +139,7 @@ parallel('integration.documents.tables.find-one', { truncate: 'colls:before', dr
     assert.deepStrictEqual([...found.set].map(u => u.toString()), [...doc.set].map(u => u.toString()));
 
     assert.ok(found.time);
-    assert.deepStrictEqual(found.time.components(), doc.time.components());
+    assert.deepStrictEqual(found.time, doc.time);
 
     assert.ok(found.timestamp);
     assert.deepStrictEqual(found.timestamp, doc.timestamp);
