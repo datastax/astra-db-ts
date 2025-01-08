@@ -25,6 +25,10 @@ else
   npx tsc --project tsconfig.production.json
 fi
 
+if [ ! -d ./dist ]; then
+  exit 10
+fi
+
 # Replaces alias paths with relative paths (e.g. `@/src/version` -> `../../src/version`)
 npx tsc-alias -p tsconfig.production.json
 
@@ -51,7 +55,7 @@ if [ "$light" != true ]; then
   node scripts/utils/del-empty-dist-files.js
 
   # Removes all .d.ts files except the main rollup .d.ts
-  cd dist || return 1
+  cd dist || exit 20
   find . -type f -name '*.d.ts' ! -name 'astra-db-ts.d.ts' -exec rm {} +
   cd ..
 

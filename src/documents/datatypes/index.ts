@@ -13,7 +13,9 @@
 // limitations under the License.
 
 export * from './blob';
-export * from './dates';
+export * from './date';
+export * from './duration';
 export * from './object-id';
+export * from './time';
 export * from './uuid';
 export * from './vector';

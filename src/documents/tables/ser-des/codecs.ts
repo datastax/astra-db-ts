@@ -14,7 +14,9 @@
 
 // Important to import from specific paths here to avoid circular dependencies
 import { DataAPIBlob } from '@/src/documents/datatypes/blob';
-import { DataAPIDate, DataAPIDuration, DataAPITime } from '@/src/documents/datatypes/dates';
+import { DataAPIDate } from '@/src/documents/datatypes/date';
+import { DataAPIDuration } from '@/src/documents/datatypes/duration';
+import { DataAPITime } from '@/src/documents/datatypes/time';
 import { UUID } from '@/src/documents/datatypes/uuid';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
 import { SomeDoc, TableDesCtx, TableSerCtx } from '@/src/documents';
