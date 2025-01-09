@@ -44,8 +44,8 @@ const MillisecondsPerDay = 1000 * 60 * 60 * 24;
  *
  * @example
  * ```ts
- * // Convert a native JS `Date` to a `DataAPIDate` (extracting only the date)
- * new DataAPIDate(new Date('2004-09-14T12:00:00.000Z')) // '2004-09-14'
+ * // Convert a native JS `Date` to a `DataAPIDate` (extracting only the local date)
+ * new DataAPIDate(new Date('2004-09-14T12:00:00.000')) // '2004-09-14'
  *
  * // Parse a date given the above date-string format
  * new DataAPIDate('+2004-09-14')
@@ -70,6 +70,7 @@ const MillisecondsPerDay = 1000 * 60 * 60 * 24;
  *
  * You may use the {@link date} shorthand function-object anywhere when creating new `DataAPIDate`s.
  *
+ * @example
  * ```ts
  * // equiv. to `new DataAPIDate('2004-09-14')`
  * date('2004-09-14')
@@ -149,17 +150,17 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
   /**
    * ##### Overview
    *
-   * Creates a `DataAPIDate` from the number of days since the epoch (may be negative).
+   * Creates a `DataAPIDate` from the number of days since the epoch.
    *
    * The number may be negative, but must be an integer within the range `[-100_000_000, 100_000_000]`.
    *
    * @example
    * ```ts
-   * DataAPIDate.ofEpochDay(0) // 1970-01-01
+   * DataAPIDate.ofEpochDay(0) // '1970-01-01'
    *
-   * date.ofEpochDay(12675) // 2004-09-14
+   * date.ofEpochDay(12675) // '2004-09-14'
    *
-   * date.ofEpochDay(0-1) // 1969-12-31
+   * date.ofEpochDay(-1) // '1969-12-31'
    * ```
    *
    * @param epochDays - The number of days since the epoch (may be negative)
@@ -200,16 +201,16 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
   /**
    * ##### Overview
    *
-   * Converts a native JS `Date` to a `DataAPIDate` (extracting only the date).
+   * Converts a native JS `Date` to a `DataAPIDate` (extracting only the local date).
    *
    * @example
    * ```ts
-   * new DataAPIDate(new Date('2004-09-14T12:00:00.000Z')) // '2004-09-14'
+   * new DataAPIDate(new Date('2004-09-14T12:00:00.000')) // '2004-09-14'
    *
    * date(new Date('-200004-09-14')) // '200004-09-14'
    * ```
    *
-   * @param date - The date to convert
+   * @param date - The `Date` object to convert
    */
   public constructor(date: Date);
 
@@ -222,15 +223,15 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
    *
    * @example
    * ```ts
-   * new DataAPIDate('2004-09-14') // 2004-09-14
+   * new DataAPIDate('2004-09-14') // '2004-09-14'
    *
-   * date('-2004-09-14') // -2004-09-14
+   * date('-2004-09-14') // '-2004-09-14'
    *
-   * date('+123456-09-14') // 123456-09-14
+   * date('+123456-09-14') // '123456-09-14'
    * ```
    *
    * @param date - The date to parse
-   * @param strict - Whether to throw an error if the date is invalid
+   * @param strict - Uses a faster parser which doesn't perform any validity or format checks if `false`
    */
   public constructor(date: string, strict?: boolean);
 
@@ -245,9 +246,9 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
    *
    * @example
    * ```ts
-   * new DataAPIDate(2004, 9, 14) // 2004-09-14
+   * new DataAPIDate(2004, 9, 14) // '2004-09-14'
    *
-   * date(-200004, 9, 14) // -200004-09-14
+   * date(-200004, 9, 14) // '-200004-09-14'
    * ```
    *
    * @param year - The year to use
@@ -308,9 +309,9 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
    *
    * @example
    * ```ts
-   * date('1970-01-01').toDate(new Date('12:00:00')) // 1969-12-31T18:30:00.000Z
+   * date('1970-01-01').toDate(new Date('12:00:00')) // '1970-01-01T12:00:00'
    *
-   * date('1970-01-01').toDate() // 1970-01-01T<local_time>Z
+   * date('1970-01-01').toDate() // '1970-01-01T<local_time>'
    * ```
    *
    * @param base - The base date/time to use for the time component
