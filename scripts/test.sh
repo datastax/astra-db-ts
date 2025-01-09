@@ -181,7 +181,6 @@ while [ $# -gt 0 ]; do
       echo "  $(tput setaf 4)(12)$(tput setaf 9) $(tput bold)Skip tests setup to save time (prelude.test.ts)$(tput sgr0)"
       echo
       echo "   By default, the test script will run a \"prelude\" script that sets up the database for the tests. This can be skipped to save some time, using this flag, if the DB is already setup (enough), and you just want to run some tests really quickly."
-      echo
       exit
       ;;
   esac
