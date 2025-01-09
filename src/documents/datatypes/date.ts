@@ -461,7 +461,7 @@ export const date = Object.assign(
 
 const parseDateStr = (str: unknown, strict: boolean): [number, number, number] => {
   if (typeof str !== 'string') {
-    throw mkInvArgsErr('DataAPIDate.parse', [['date', 'string']], str);
+    throw mkInvArgsErr('DataAPIDate', [['date', 'string']], str);
   }
 
   return (strict)

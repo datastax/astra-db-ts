@@ -348,6 +348,8 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
   }
 
   /**
+   * ##### Overview
+   *
    * Returns the string representation of this `DataAPITime`
    *
    * Note that it'll contain the second & nanosecond components, even if they weren't provided.
@@ -459,7 +461,7 @@ export const time = Object.assign(
 
 const parseTimeStr = (str: unknown, strict: boolean): [number, number, number, number] => {
   if (typeof str !== 'string') {
-    throw mkInvArgsErr('DataAPIDate.parse', [['date', 'string']], str);
+    throw mkInvArgsErr('DataAPITime', [['time', 'string']], str);
   }
 
   return (strict)
