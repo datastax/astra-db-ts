@@ -88,9 +88,32 @@ import { mkInvArgsErr } from '@/src/documents/utils';
  * @public
  */
 export class DataAPITime implements TableCodec<typeof DataAPITime> {
+  /**
+   * The hour component of this `DataAPITime`.
+   *
+   * Must be between 0-23.
+   */
   readonly hours: number;
+
+  /**
+   * The minute component of this `DataAPITime`.
+   *
+   * Must be between 0-59.
+   */
   readonly minutes: number;
+
+  /**
+   * The second component of this `DataAPITime`.
+   *
+   * Must be between 0-59.
+   */
   readonly seconds: number;
+
+  /**
+   * The nanosecond component of this `DataAPITime`.
+   *
+   * Must be between 0-999,999,999.
+   */
   readonly nanoseconds: number;
 
   /**

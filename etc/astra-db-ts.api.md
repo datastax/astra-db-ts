@@ -858,19 +858,22 @@ export interface DataAPICreateKeyspaceOptions extends WithTimeout<'keyspaceAdmin
 
 // @public
 export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
-    static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx): readonly [0, (DataAPIDate | undefined)?];
+    static [$DeserializeForTable](_: unknown, value: string, ctx: TableDesCtx): readonly [0, (DataAPIDate | undefined)?];
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
-    constructor(input?: string | Date | DataAPIDateComponents);
-    components(): DataAPIDateComponents;
+    constructor(date: Date);
+    constructor(date: string, strict?: boolean);
+    constructor(year: number, month: number, date: number);
+    compare(other: DataAPIDate): -1 | 0 | 1;
+    readonly date: number;
+    equals(other: DataAPIDate): boolean;
+    readonly month: number;
+    static now(): DataAPIDate;
+    static ofEpochDay(epochDays: number): DataAPIDate;
+    static ofYearDay(year: number, dayOfYear: number): DataAPIDate;
     toDate(base?: Date | DataAPITime): Date;
     toString(): string;
-}
-
-// @public
-export interface DataAPIDateComponents {
-    date: number;
-    month: number;
-    year: number;
+    static utcnow(): DataAPIDate;
+    readonly year: number;
 }
 
 // @public
@@ -963,18 +966,21 @@ export class DataAPIResponseError extends DataAPIError {
 export class DataAPITime implements TableCodec<typeof DataAPITime> {
     static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx): readonly [0, (DataAPITime | undefined)?];
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
-    constructor(input?: string | Date | PartialDataAPITimeComponents);
-    components(): DataAPITimeComponents;
+    constructor(time: Date);
+    constructor(time: string, strict?: boolean);
+    constructor(hours: number, minutes: number, seconds?: number, nanoseconds?: number);
+    compare(other: DataAPITime): -1 | 0 | 1;
+    equals(other: DataAPITime | string): boolean;
+    readonly hours: number;
+    readonly minutes: number;
+    readonly nanoseconds: number;
+    static now(): DataAPITime;
+    static ofNanoOfDay(nanoOfDay: number): DataAPITime;
+    static ofSecondOfDay(secondOfDay: number): DataAPITime;
+    readonly seconds: number;
     toDate(base?: Date | DataAPIDate): Date;
     toString(): string;
-}
-
-// @public
-export interface DataAPITimeComponents {
-    hours: number;
-    minutes: number;
-    nanoseconds: number;
-    seconds: number;
+    static utcnow(): DataAPITime;
 }
 
 // @public
@@ -1012,7 +1018,12 @@ export type DataAPIVectorLike = number[] | {
 } | Float32Array | DataAPIVector;
 
 // @public
-export const date: (date?: string | Date | DataAPIDateComponents) => DataAPIDate;
+export const date: ((...params: [string] | [Date] | [number, number, number]) => DataAPIDate) & {
+    now: typeof DataAPIDate.now;
+    utcnow: typeof DataAPIDate.utcnow;
+    ofEpochDay: typeof DataAPIDate.ofEpochDay;
+    ofYearDay: typeof DataAPIDate.ofYearDay;
+};
 
 // @public
 export class Db {
@@ -1423,7 +1434,7 @@ export interface GenericUpdateOneOptions extends WithTimeout<'generalMethodTimeo
 export type GenericUpdateResult<ID, N extends number> = (GuaranteedUpdateResult<N> & UpsertedUpdateResult<ID>) | (GuaranteedUpdateResult<N> & NoUpsertUpdateResult);
 
 // @public (undocumented)
-export type GetCollNumRepFn = (path: string[]) => CollNumRep;
+export type GetCollNumRepFn = (path: readonly string[]) => CollNumRep;
 
 // @public
 export interface GuaranteedUpdateResult<N extends number> {
@@ -1655,11 +1666,6 @@ export type OneOrMany<T> = T | readonly T[];
 // @public
 export type OpaqueHttpClient = any;
 
-// @public
-export type PartialDataAPITimeComponents = (Omit<DataAPITimeComponents, 'nanoseconds'> & {
-    nanoseconds?: number;
-});
-
 // @public (undocumented)
 export type PathCodec<Fns extends CodecSerDesFns> = {
     serialize?: Fns['serialize'];
@@ -1713,7 +1719,7 @@ export interface ScalarCreateTableColumnDefinition {
 }
 
 // @public (undocumented)
-export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?, string?] | 'Return ctx.done(val?), ctx.recurse(val?), ctx.continue(), or void';
+export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?] | 'Return ctx.done(val?), ctx.recurse(val?), ctx.continue(), or void';
 
 // @public
 export interface SetCreateTableColumnDefinition {
@@ -2002,7 +2008,12 @@ export interface TableVectorIndexOptions {
 }
 
 // @public
-export const time: (time?: string | Date | PartialDataAPITimeComponents) => DataAPITime;
+export const time: ((...params: [string] | [Date] | [number, number, number?, number?]) => DataAPITime) & {
+    now: typeof DataAPITime.now;
+    utcnow: typeof DataAPITime.utcnow;
+    ofNanoOfDay: typeof DataAPITime.ofNanoOfDay;
+    ofSecondOfDay: typeof DataAPITime.ofSecondOfDay;
+};
 
 // @public
 export type TimedOutCategories = OneOrMany<keyof TimeoutDescriptor> | 'provided';

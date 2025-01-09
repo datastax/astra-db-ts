@@ -89,8 +89,25 @@ const MillisecondsPerDay = 1000 * 60 * 60 * 24;
  * @public
  */
 export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
+  /**
+   * The year component of this `DataAPIDate`.
+   *
+   * May be negative.
+   */
   readonly year: number;
+
+  /**
+   * The month component of this `DataAPIDate`.
+   *
+   * Must be between 1-12.
+   */
   readonly month: number;
+
+  /**
+   * The date component of this `DataAPIDate`.
+   *
+   * Must be a valid day for the given month.
+   */
   readonly date: number;
 
   /**
