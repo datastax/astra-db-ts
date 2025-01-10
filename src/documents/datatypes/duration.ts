@@ -18,12 +18,6 @@ import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables
 import { mkInvArgsErr } from '@/src/documents/utils';
 import { Ref } from '@/src/lib/types';
 
-const NS_PER_HOUR = 3_600_000_000_000n;
-const NS_PER_MIN = 60_000_000_000n;
-const NS_PER_SEC = 1_000_000_000n;
-const NS_PER_MS = 1_000_000n;
-const NS_PER_US = 1_000n;
-
 /**
  * #### Overview
  *
@@ -158,6 +152,12 @@ const NS_PER_US = 1_000n;
  * @public
  */
 export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
+  public static readonly NS_PER_HOUR = 3_600_000_000_000n;
+  public static readonly NS_PER_MIN = 60_000_000_000n;
+  public static readonly NS_PER_SEC = 1_000_000_000n;
+  public static readonly NS_PER_MS = 1_000_000n;
+  public static readonly NS_PER_US = 1_000n;
+
   /**
    * The months component of this `DataAPIDuration`.
    *
@@ -356,12 +356,12 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
    *
    * This means that no microseconds or nanoseconds are present.
    *
-   * If `true`, it entails that {@link DataAPIDuration.nanoseconds} & {@link DataAPIDuration.microseconds} may be safely cast to `number`.
+   * If `true`, it entails that {@link DataAPIDuration.nanoseconds} & {@link DataAPIDuration.toMicros} may be safely cast to `number`.
    *
    * @returns `true` if this `DataAPIDuration` has millisecond precision, or `false` otherwise
    */
   public hasMillisecondPrecision(): boolean {
-    return this.nanoseconds % NS_PER_MS === 0n;
+    return this.nanoseconds % DataAPIDuration.NS_PER_MS === 0n;
   }
 
   /**
@@ -507,7 +507,7 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
    * @returns The number of hours in this `DataAPIDuration` derived from the `nanoseconds` component
    */
   public toHours(): number {
-    return Number(this.nanoseconds / NS_PER_HOUR);
+    return Number(this.nanoseconds / DataAPIDuration.NS_PER_HOUR);
   }
 
   /**
@@ -531,7 +531,7 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
    * @returns The number of minutes in this `DataAPIDuration` derived from the `nanoseconds` component
    */
   public toMinutes(): number {
-    return Number(this.nanoseconds / NS_PER_MIN);
+    return Number(this.nanoseconds / DataAPIDuration.NS_PER_MIN);
   }
 
   /**
@@ -555,7 +555,7 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
    * @returns The number of seconds in this `DataAPIDuration` derived from the `nanoseconds` component
    */
   public toSeconds(): number {
-    return Number(this.nanoseconds / NS_PER_SEC);
+    return Number(this.nanoseconds / DataAPIDuration.NS_PER_SEC);
   }
 
   /**
@@ -579,7 +579,7 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
    * @returns The number of milliseconds in this `DataAPIDuration` derived from the `nanoseconds` component
    */
   public toMillis(): number {
-    return Number(this.nanoseconds / NS_PER_MS);
+    return Number(this.nanoseconds / DataAPIDuration.NS_PER_MS);
   }
 
   /**
@@ -603,7 +603,7 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
    * @returns The number of microseconds in this `DataAPIDuration` derived from the `nanoseconds` component
    */
   public toMicros(): bigint {
-    return this.nanoseconds / NS_PER_US;
+    return this.nanoseconds / DataAPIDuration.NS_PER_US;
   }
 
   /**
@@ -649,7 +649,7 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
  * @public
  */
 export const duration = Object.assign(
-  (duration: string) => new DataAPIDuration(duration),
+  (...params: [string] | [number, number, number | bigint]) => new DataAPIDuration(...<[any]>params),
   { builder: DataAPIDuration.builder },
 );
 
@@ -899,8 +899,8 @@ export class DataAPIDurationBuilder {
    */
   public addHours(hours: number | bigint): this {
     this._validateIndex(4);
-    const big = this._validateNanos(hours, NS_PER_HOUR, 'hours');
-    this._nanoseconds += big * NS_PER_HOUR;
+    const big = this._validateNanos(hours, DataAPIDuration.NS_PER_HOUR, 'hours');
+    this._nanoseconds += big * DataAPIDuration.NS_PER_HOUR;
     return this;
   }
 
@@ -932,8 +932,8 @@ export class DataAPIDurationBuilder {
    */
   public addMinutes(minutes: number | bigint): this {
     this._validateIndex(5);
-    const big = this._validateNanos(minutes, NS_PER_MIN, 'minutes');
-    this._nanoseconds += big * NS_PER_MIN;
+    const big = this._validateNanos(minutes, DataAPIDuration.NS_PER_MIN, 'minutes');
+    this._nanoseconds += big * DataAPIDuration.NS_PER_MIN;
     return this;
   }
 
@@ -965,8 +965,8 @@ export class DataAPIDurationBuilder {
    */
   public addSeconds(seconds: number | bigint): this {
     this._validateIndex(6);
-    const big = this._validateNanos(seconds, NS_PER_SEC, 'seconds');
-    this._nanoseconds += big * NS_PER_SEC;
+    const big = this._validateNanos(seconds, DataAPIDuration.NS_PER_SEC, 'seconds');
+    this._nanoseconds += big * DataAPIDuration.NS_PER_SEC;
     return this;
   }
 
@@ -998,8 +998,8 @@ export class DataAPIDurationBuilder {
    */
   public addMillis(milliseconds: number | bigint): this {
     this._validateIndex(7);
-    const big = this._validateNanos(milliseconds, NS_PER_MS, 'milliseconds');
-    this._nanoseconds += big * NS_PER_MS;
+    const big = this._validateNanos(milliseconds, DataAPIDuration.NS_PER_MS, 'milliseconds');
+    this._nanoseconds += big * DataAPIDuration.NS_PER_MS;
     return this;
   }
 
@@ -1031,8 +1031,8 @@ export class DataAPIDurationBuilder {
    */
   public addMicros(microseconds: number | bigint): this {
     this._validateIndex(8);
-    const big = this._validateNanos(microseconds, NS_PER_US, 'microseconds');
-    this._nanoseconds += big * NS_PER_US;
+    const big = this._validateNanos(microseconds, DataAPIDuration.NS_PER_US, 'microseconds');
+    this._nanoseconds += big * DataAPIDuration.NS_PER_US;
     return this;
   }
 
@@ -1208,7 +1208,7 @@ const BuilderAddNamesLUT = ['years', 'months', 'weeks', 'days', 'hours', 'minute
 
 const parseDurationStr = (str: unknown, fromDataAPI: boolean): MDN => {
   if (typeof str !== 'string') {
-    throw mkInvArgsErr('DataAPIDate.parse', [['duration', 'string']], str);
+    throw mkInvArgsErr('DataAPIDuration', [['duration', 'string']], str);
   }
 
   const isNegative = str[0] === '-';
@@ -1242,14 +1242,15 @@ type DurationMethodsLUT = Record<string, (d: MDN, n: number) => void>;
 const DataAPIDurationMethodsLUT1: DurationMethodsLUT = {
   'Y': (d, ys) => d[0] += ys * 12,
   'M': (d, ms) => d[0] += ms,
+  'W': (d, ds) => d[1] += ds * 7,
   'D': (d, ds) => d[1] += ds,
 };
 
 const DataAPIDurationMethodsLUT2: DurationMethodsLUT = {
-  'H': (d, hs) => d[2] += BigInt(hs) * NS_PER_HOUR,
-  'M': (d, ms) => d[2] += BigInt(ms) * NS_PER_MIN,
-  '.': (d, s) => d[2] += BigInt(s) * NS_PER_SEC,
-  'S': (d, s) => d[2] += BigInt(s) * NS_PER_SEC,
+  'H': (d, hs) => d[2] += BigInt(hs) * DataAPIDuration.NS_PER_HOUR,
+  'M': (d, ms) => d[2] += BigInt(ms) * DataAPIDuration.NS_PER_MIN,
+  '.': (d, s) => d[2] += BigInt(s) * DataAPIDuration.NS_PER_SEC,
+  'S': (d, s) => d[2] += BigInt(s) * DataAPIDuration.NS_PER_SEC,
 };
 
 const parseDataAPIDuration = (str: string, negative: boolean): MDN => {
@@ -1423,11 +1424,11 @@ const durationToLongString = (duration: DataAPIDuration): string => {
 
   if (duration.nanoseconds) {
     let remainingNanos = duration.nanoseconds < 0 ? -duration.nanoseconds : duration.nanoseconds;
-    remainingNanos = appendBigIntUnit(res, remainingNanos, NS_PER_HOUR, 'h');
-    remainingNanos = appendBigIntUnit(res, remainingNanos, NS_PER_MIN, 'm');
-    remainingNanos = appendBigIntUnit(res, remainingNanos, NS_PER_SEC, 's');
-    remainingNanos = appendBigIntUnit(res, remainingNanos, NS_PER_MS, 'ms');
-    remainingNanos = appendBigIntUnit(res, remainingNanos, NS_PER_US, 'us');
+    remainingNanos = appendBigIntUnit(res, remainingNanos, DataAPIDuration.NS_PER_HOUR, 'h');
+    remainingNanos = appendBigIntUnit(res, remainingNanos, DataAPIDuration.NS_PER_MIN, 'm');
+    remainingNanos = appendBigIntUnit(res, remainingNanos, DataAPIDuration.NS_PER_SEC, 's');
+    remainingNanos = appendBigIntUnit(res, remainingNanos, DataAPIDuration.NS_PER_MS, 'ms');
+    remainingNanos = appendBigIntUnit(res, remainingNanos, DataAPIDuration.NS_PER_US, 'us');
     appendBigIntUnit(res, remainingNanos, 1n, 'ns');
   }
 

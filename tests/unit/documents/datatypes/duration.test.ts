@@ -335,5 +335,79 @@ describe('unit.documents.datatypes.duration', () => {
       assert.strictEqual(duration('-1d1001us1001ns').nanoseconds, -1002001n);
       assert.strictEqual(duration('1d1000s3ns').nanoseconds, 1000000000003n);
     });
+
+    it('should have working equals()', () => {
+      assert.ok(duration('1y1d').equals(duration('1y1d')));
+      assert.ok(duration('1y7d').equals(duration('12mo1w')));
+      assert.ok(!duration('1y1d').equals(duration('1y1d1ns')));
+      assert.ok(!duration('1y1d').equals(null!));
+      assert.ok(!duration('1y1d').equals('1y1d' as any));
+    });
+  });
+
+  // Tests ripped from https://github.com/apache/cassandra/blob/198df38860d1575b60fbcaf9a8a506d2efd1bb31/test/unit/org/apache/cassandra/cql3/DurationTest.java#L37
+  describe('cql tests', () => {
+    it('should pass testFromStringWithStandardPattern', () => {
+      assert.deepStrictEqual(duration(14, 0, 0), duration('1y2mo'));
+      assert.deepStrictEqual(duration(-14, -0, -0), duration('-1y2mo'));
+      assert.deepStrictEqual(duration(14, 0, 0), duration('1Y2MO'));
+      assert.deepStrictEqual(duration(0, 14, 0), duration('2w'));
+      assert.deepStrictEqual(duration(0, 2, 10n * DataAPIDuration.NS_PER_HOUR), duration('2d10h'));
+      assert.deepStrictEqual(duration(0, 2, 0), duration('2d'));
+      assert.deepStrictEqual(duration(0, 0, 30n * DataAPIDuration.NS_PER_HOUR), duration('30h'));
+      assert.deepStrictEqual(duration(0, 0, 30n * DataAPIDuration.NS_PER_HOUR + 20n * DataAPIDuration.NS_PER_MIN), duration('30h20m'));
+      assert.deepStrictEqual(duration(0, 0, 20n * DataAPIDuration.NS_PER_MIN), duration('20m'));
+      assert.deepStrictEqual(duration(0, 0, 56n * DataAPIDuration.NS_PER_SEC), duration('56s'));
+      assert.deepStrictEqual(duration(0, 0, 567n * DataAPIDuration.NS_PER_MS), duration('567ms'));
+      assert.deepStrictEqual(duration(0, 0, 1950n * DataAPIDuration.NS_PER_US), duration('1950us'));
+      assert.deepStrictEqual(duration(0, 0, 1950n * DataAPIDuration.NS_PER_US), duration('1950µs'));
+      assert.deepStrictEqual(duration(0, 0, 1950000n), duration('1950000ns'));
+      assert.deepStrictEqual(duration(0, 0, 1950000n), duration('1950000NS'));
+      assert.deepStrictEqual(duration(-0, -0, -1950000n), duration('-1950000ns'));
+      assert.deepStrictEqual(duration(15, 0, 130n * DataAPIDuration.NS_PER_MIN), duration('1y3mo2h10m'));
+    });
+
+    it('should pass testFromStringWithIso8601Pattern', () => {
+      for (const bool of [true, false]) {
+        assert.deepStrictEqual(duration(12, 2, 0), new DataAPIDuration('P1Y2D', bool));
+        assert.deepStrictEqual(duration(14, 0, 0), new DataAPIDuration('P1Y2M', bool));
+        assert.deepStrictEqual(duration(0, 14, 0), new DataAPIDuration('P2W', bool));
+        assert.deepStrictEqual(duration(12, 0, 2n * DataAPIDuration.NS_PER_HOUR), new DataAPIDuration('P1YT2H', bool));
+        assert.deepStrictEqual(duration(-14, -0, -0), new DataAPIDuration('-P1Y2M', bool));
+        assert.deepStrictEqual(duration(0, 2, 0), new DataAPIDuration('P2D', bool));
+        assert.deepStrictEqual(duration(0, 0, 30n * DataAPIDuration.NS_PER_HOUR), new DataAPIDuration('PT30H', bool));
+        assert.deepStrictEqual(duration(0, 0, 30n * DataAPIDuration.NS_PER_HOUR + 20n * DataAPIDuration.NS_PER_MIN), new DataAPIDuration('PT30H20M', bool));
+        assert.deepStrictEqual(duration(0, 0, 20n * DataAPIDuration.NS_PER_MIN), new DataAPIDuration('PT20M', bool));
+        assert.deepStrictEqual(duration(0, 0, 56n * DataAPIDuration.NS_PER_SEC), new DataAPIDuration('PT56S', bool));
+        assert.deepStrictEqual(duration(15, 0, 130n * DataAPIDuration.NS_PER_MIN), new DataAPIDuration('P1Y3MT2H10M', bool));
+      }
+    });
+
+    it('should pass testFromStringWithIso8601AlternativePattern', () => {
+      assert.deepStrictEqual(duration(12, 2, 0), duration('P0001-00-02T00:00:00'));
+      assert.deepStrictEqual(duration(14, 0, 0), duration('P0001-02-00T00:00:00'));
+      assert.deepStrictEqual(duration(12, 0, 2n * DataAPIDuration.NS_PER_HOUR), duration('P0001-00-00T02:00:00'));
+      assert.deepStrictEqual(duration(-14, -0, -0), duration('-P0001-02-00T00:00:00'));
+      assert.deepStrictEqual(duration(0, 2, 0), duration('P0000-00-02T00:00:00'));
+      assert.deepStrictEqual(duration(0, 0, 30n * DataAPIDuration.NS_PER_HOUR), duration('P0000-00-00T30:00:00'));
+      assert.deepStrictEqual(duration(0, 0, 30n * DataAPIDuration.NS_PER_HOUR + 20n * DataAPIDuration.NS_PER_MIN), duration('P0000-00-00T30:20:00'));
+      assert.deepStrictEqual(duration(0, 0, 20n * DataAPIDuration.NS_PER_MIN), duration('P0000-00-00T00:20:00'));
+      assert.deepStrictEqual(duration(0, 0, 56n * DataAPIDuration.NS_PER_SEC), duration('P0000-00-00T00:00:56'));
+      assert.deepStrictEqual(duration(15, 0, 130n * DataAPIDuration.NS_PER_MIN), duration('P0001-03-00T02:10:00'));
+    });
+
+    it('should pass testInvalidDurations', () => {
+      assert.throws(() => duration(`${2 ** 63}d`), RangeError);
+      assert.throws(() => duration('2µ'), SyntaxError);
+      assert.throws(() => duration('-2µ'), SyntaxError);
+      assert.throws(() => duration('12.5s'), SyntaxError);
+      assert.throws(() => duration('2m12.5s'), SyntaxError);
+      assert.throws(() => duration('2m-12s'), SyntaxError);
+      assert.throws(() => duration('12s3s'), SyntaxError);
+      assert.throws(() => duration('12s3m'), SyntaxError);
+      assert.throws(() => duration('1Y3M4D'), SyntaxError);
+      assert.throws(() => duration('P2Y3W'), SyntaxError);
+      assert.throws(() => duration('P0002-00-20'), SyntaxError);
+    });
   });
 });
