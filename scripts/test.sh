@@ -83,6 +83,10 @@ while [ $# -gt 0 ]; do
     "-local")
       local=1
       ;;
+    "-watch")
+      skip_prelude=1
+      watch=1
+      ;;
     *)
       if [ "$1" != "--help" ] && [ "$1" != "-help" ] && [ "$1" != "-h" ]; then
         echo "Invalid flag $1"
@@ -238,6 +242,15 @@ fi
 
 if [ -n "$skip_prelude" ]; then
   export SKIP_PRELUDE=1
+fi
+
+if [ -n "$watch" ]; then
+  cmd_to_run="$cmd_to_run --watch --watch-files 'tests/**/*.test.ts'"
+
+  if [ -z "$filter" ]; then
+    echo "A filter must be used with watch mode to prevent running all tests"
+    exit 1
+  fi
 fi
 
 # Get embedding providers, if desired, to build the vectorize part of the command

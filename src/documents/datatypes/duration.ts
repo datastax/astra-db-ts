@@ -29,6 +29,8 @@ const NS_PER_US = 1_000n;
  *
  * Represents a `duration` column for Data API tables.
  *
+ * Internally represented as a number of months, days, and nanoseconds (units which are not directly convertible to each other).
+ *
  * #### Format
  *
  * The duration may be one of four different formats:
@@ -469,17 +471,17 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
    *
    * @example
    * ```ts
-   * duration('1y15mo').years // 2
+   * duration('1y15mo').toYears() // 2
    *
-   * duration('-1y15mo').years // -2
+   * duration('-1y15mo').toYears() // -2
    *
-   * duration('1y800d').years // 1
+   * duration('1y800d').toYears() // 1
    * ```
    *
    * @returns The number of years in this `DataAPIDuration` derived from the `months` component
    */
-  public get years(): number {
-    return Math.floor(this.months / 12);
+  public toYears(): number {
+    return ~~(this.months / 12);
   }
 
   /**
@@ -493,18 +495,18 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
    *
    * @example
    * ```ts
-   * duration('10m').hours // 0
+   * duration('10m').toHours() // 0
    *
-   * duration('-50h150m').hours // -52
+   * duration('-50h150m').toHours() // -52
    *
-   * duration('1y15mo1h').hours // 1
+   * duration('1y15mo1h').toHours() // 1
    *
-   * duration('500d').hours // 0
+   * duration('500d').toHours() // 0
    * ```
    *
    * @returns The number of hours in this `DataAPIDuration` derived from the `nanoseconds` component
    */
-  public get hours(): number {
+  public toHours(): number {
     return Number(this.nanoseconds / NS_PER_HOUR);
   }
 
@@ -519,16 +521,16 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
    *
    * @example
    * ```ts
-   * duration('10ms').minutes // 0
+   * duration('10ms').toMinutes() // 0
    *
-   * duration('2y50h150m').minutes // 3150
+   * duration('2y50h150m').toMinutes() // 3150
    *
-   * duration('-1y15mo1h').minutes // -60
+   * duration('-1y15mo1h').toMinutes() // -60
    * ```
    *
    * @returns The number of minutes in this `DataAPIDuration` derived from the `nanoseconds` component
    */
-  public get minutes(): number {
+  public toMinutes(): number {
     return Number(this.nanoseconds / NS_PER_MIN);
   }
 
@@ -543,16 +545,16 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
    *
    * @example
    * ```ts
-   * duration('10ns').seconds // 0
+   * duration('10ns').toSeconds() // 0
    *
-   * duration('1y50h150m').seconds // 189000
+   * duration('1y50h150m').toSeconds() // 189000
    *
-   * duration('-1y15mo1h').seconds // -3600
+   * duration('-1y15mo1h').toSeconds() // -3600
    * ```
    *
    * @returns The number of seconds in this `DataAPIDuration` derived from the `nanoseconds` component
    */
-  public get seconds(): number {
+  public toSeconds(): number {
     return Number(this.nanoseconds / NS_PER_SEC);
   }
 
@@ -567,16 +569,16 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
    *
    * @example
    * ```ts
-   * duration('10ns').milliseconds // 0
+   * duration('10ns').toMillis() // 0
    *
-   * duration('1y50h150m').milliseconds // 189000000
+   * duration('1y50h150m').toMillis() // 189000000
    *
-   * duration('-1y15mo1h').milliseconds // -3600000
+   * duration('-1y15mo1h').toMillis() // -3600000
    * ```
    *
    * @returns The number of milliseconds in this `DataAPIDuration` derived from the `nanoseconds` component
    */
-  public get milliseconds(): number {
+  public toMillis(): number {
     return Number(this.nanoseconds / NS_PER_MS);
   }
 
@@ -591,16 +593,16 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
    *
    * @example
    * ```ts
-   * duration('1y50us').microseconds // 50n
+   * duration('1y50us').toMicros() // 50n
    *
-   * duration('1y50ns').microseconds // 0n
+   * duration('1y50ns').toMicros() // 0n
    *
-   * duration('1h50ns').microseconds // 3600000000n
+   * duration('1h50ns').toMicros() // 3600000000n
    * ```
    *
    * @returns The number of microseconds in this `DataAPIDuration` derived from the `nanoseconds` component
    */
-  public get microseconds(): bigint {
+  public toMicros(): bigint {
     return this.nanoseconds / NS_PER_US;
   }
 
@@ -897,8 +899,7 @@ export class DataAPIDurationBuilder {
    */
   public addHours(hours: number | bigint): this {
     this._validateIndex(4);
-    const big = BigInt(hours);
-    this._validateNanos(big, NS_PER_HOUR, 'hours');
+    const big = this._validateNanos(hours, NS_PER_HOUR, 'hours');
     this._nanoseconds += big * NS_PER_HOUR;
     return this;
   }
@@ -931,8 +932,7 @@ export class DataAPIDurationBuilder {
    */
   public addMinutes(minutes: number | bigint): this {
     this._validateIndex(5);
-    const big = BigInt(minutes);
-    this._validateNanos(big, NS_PER_MIN, 'minutes');
+    const big = this._validateNanos(minutes, NS_PER_MIN, 'minutes');
     this._nanoseconds += big * NS_PER_MIN;
     return this;
   }
@@ -965,8 +965,7 @@ export class DataAPIDurationBuilder {
    */
   public addSeconds(seconds: number | bigint): this {
     this._validateIndex(6);
-    const big = BigInt(seconds);
-    this._validateNanos(big, NS_PER_SEC, 'seconds');
+    const big = this._validateNanos(seconds, NS_PER_SEC, 'seconds');
     this._nanoseconds += big * NS_PER_SEC;
     return this;
   }
@@ -999,8 +998,7 @@ export class DataAPIDurationBuilder {
    */
   public addMillis(milliseconds: number | bigint): this {
     this._validateIndex(7);
-    const big = BigInt(milliseconds);
-    this._validateNanos(big, NS_PER_MS, 'milliseconds');
+    const big = this._validateNanos(milliseconds, NS_PER_MS, 'milliseconds');
     this._nanoseconds += big * NS_PER_MS;
     return this;
   }
@@ -1033,8 +1031,7 @@ export class DataAPIDurationBuilder {
    */
   public addMicros(microseconds: number | bigint): this {
     this._validateIndex(8);
-    const big = BigInt(microseconds);
-    this._validateNanos(big, NS_PER_US, 'microseconds');
+    const big = this._validateNanos(microseconds, NS_PER_US, 'microseconds');
     this._nanoseconds += big * NS_PER_US;
     return this;
   }
@@ -1065,8 +1062,7 @@ export class DataAPIDurationBuilder {
    */
   public addNanos(nanoseconds: number | bigint): this {
     this._validateIndex(9);
-    const big = BigInt(nanoseconds);
-    this._validateNanos(big, 1n, 'nanoseconds');
+    const big = this._validateNanos(nanoseconds, 1n, 'nanoseconds');
     this._nanoseconds += big;
     return this;
   }
@@ -1144,6 +1140,10 @@ export class DataAPIDurationBuilder {
   }
 
   private _validateMonths(units: number, monthsPerUnit: number, unit: string) {
+    if (!Number.isInteger(units)) {
+      throw new TypeError(`Invalid duration; ${unit} must be an integer; got: ${units}`);
+    }
+
     const exceedsMax = units > (2147483647 - this._months) / monthsPerUnit;
     const becomesNegative = units < 0 && units < -this._months / monthsPerUnit;
 
@@ -1154,6 +1154,10 @@ export class DataAPIDurationBuilder {
   }
 
   private _validateDays(units: number, daysPerUnit: number, unit: string) {
+    if (!Number.isInteger(units)) {
+      throw new TypeError(`Invalid duration; ${unit} must be an integer; got: ${units}`);
+    }
+
     const exceedsMax = units > (2147483647 - this._days) / daysPerUnit;
     const becomesNegative = units < 0 && units < -this._days / daysPerUnit;
 
@@ -1163,14 +1167,22 @@ export class DataAPIDurationBuilder {
     }
   }
 
-  private _validateNanos(units: bigint, nanosPerUnit: bigint, unit: string) {
-    const exceedsMax = units > (9223372036854775807n - this._nanoseconds) / nanosPerUnit;
-    const becomesNegative = units < 0n && units < -this._nanoseconds / nanosPerUnit;
+  private _validateNanos(units: bigint | number, nanosPerUnit: bigint, unit: string): bigint {
+    if (typeof units !== 'bigint' && !Number.isInteger(units)) {
+      throw new TypeError(`Invalid duration; ${unit} must be an integer/bigint; got: ${units}`);
+    }
+
+    const big = BigInt(units);
+
+    const exceedsMax = big > (9223372036854775807n - this._nanoseconds) / nanosPerUnit;
+    const becomesNegative = big < 0n && big < -this._nanoseconds / nanosPerUnit;
 
     if (exceedsMax || becomesNegative) {
-      const actualValue = this._nanoseconds + units * nanosPerUnit;
+      const actualValue = this._nanoseconds + big * nanosPerUnit;
       throw new RangeError(`Invalid duration. The total number of nanoseconds must be in range [0, 9223372036854775807]; got: ${actualValue} (tried to add ${units} ${unit})`);
     }
+
+    return big;
   }
 
   private _validateIndex(index: number) {
@@ -1179,11 +1191,11 @@ export class DataAPIDurationBuilder {
     }
 
     if (this._index === index) {
-      throw new Error(`Invalid builder method call; ${BuilderAddNamesLUT[index]} may not be set multiple times`);
+      throw new SyntaxError(`Invalid duration; ${BuilderAddNamesLUT[index]} may not be set multiple times`);
     }
 
     if (this._index > index) {
-      throw new Error(`Invalid builder method call order; ${BuilderAddNamesLUT[index]} must be set before ${BuilderAddNamesLUT[this._index]}`);
+      throw new SyntaxError(`Invalid duration; ${BuilderAddNamesLUT[index]} must be set before ${BuilderAddNamesLUT[this._index]}`);
     }
 
     this._index = index;
@@ -1201,6 +1213,10 @@ const parseDurationStr = (str: unknown, fromDataAPI: boolean): MDN => {
 
   const isNegative = str[0] === '-';
   const durationStr = isNegative ? str.slice(1) : str;
+
+  if (!durationStr) {
+    throw new SyntaxError('Invalid duration; empty string (or just a sign) is not allowed. To pass a zero-duration, use something like 0s, PT0S, or some other zero-unit.');
+  }
 
   if (fromDataAPI) {
     return parseDataAPIDuration(durationStr, isNegative);
@@ -1366,11 +1382,11 @@ const validateDuration = (months: number, days: number, nanoseconds: bigint): vo
   }
 
   if (!Number.isInteger(months) || !Number.isInteger(days)) {
-    throw new RangeError(`Invalid duration (${months}, ${days}, ${nanoseconds}); all parts (months, days, nanoseconds) must be integer`);
+    throw new TypeError(`Invalid duration (${months}, ${days}, ${nanoseconds}); all parts (months, days, nanoseconds) must be integer`);
   }
 
-  if (months > 2147483647 || days > 2147483647 || nanoseconds > 2147483647n) {
-    throw new RangeError(`Invalid duration (${months}, ${days}, ${nanoseconds}); all parts (months, days, nanoseconds) must be less than or equal to 2147483647`);
+  if (months > 2147483647 || days > 2147483647 || nanoseconds > 9223372036854775807n) {
+    throw new RangeError(`Invalid duration (${months}, ${days}, ${nanoseconds}); months and days must be in range [-2147483647, 2147483647], nanoseconds must be in range [-9223372036854775807, 9223372036854775807]`);
   }
 };
 
