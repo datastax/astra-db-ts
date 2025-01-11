@@ -15,11 +15,11 @@
 
 import {
   blob,
-  DataAPIBlob,
+  DataAPIBlob, DataAPIInet,
   DataAPIResponseError,
   DataAPIVector,
   date,
-  duration,
+  duration, inet,
   SomeRow,
   Table,
   time,
@@ -171,25 +171,27 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
     }));
 
   it('should handle different inet insertion cases', async (key) => {
-    const colAsserter = mkColumnAsserter(key, 'inet');
+    const colAsserter = mkColumnAsserter(key, 'inet', {
+      eqOn: (a: DataAPIInet) => a.toString(),
+    });
 
     await colAsserter.notOk('127.0.0.1/16');
     await colAsserter.notOk('127.0.0.1:80');
     await colAsserter.notOk('6f4e:1900:4545:3:200:f6ff:fe21:645cf');
     await colAsserter.notOk('10.10.10.1000');
 
-    await colAsserter.ok('::ffff:192.168.0.1', _ => '192.168.0.1');
-    await colAsserter.ok('127.1',              _ => '127.0.0.1');
-    await colAsserter.ok('127.0.1',            _ => '127.0.0.1');
-    await colAsserter.ok('localhost',          _ => '127.0.0.1');
-    await colAsserter.ok('192.168.36095',      _ => '192.168.140.255');
-    await colAsserter.ok('192.11046143',       _ => '192.168.140.255');
+    await colAsserter.ok('::ffff:192.168.0.1', _ => inet('192.168.0.1'));
+    await colAsserter.ok('127.1',              _ => inet('127.0.0.1'));
+    await colAsserter.ok('127.0.1',            _ => inet('127.0.0.1'));
+    await colAsserter.ok('localhost',          _ => inet('127.0.0.1'));
+    await colAsserter.ok('192.168.36095',      _ => inet('192.168.140.255'));
+    await colAsserter.ok('192.11046143',       _ => inet('192.168.140.255'));
 
-    await colAsserter.ok('127.0.0.1');
-    await colAsserter.ok('::1',                                     _ => '0:0:0:0:0:0:0:1');
-    await colAsserter.ok('2001:0db8:85a3:0000:0000:8a2e:0370:7334', _ => '2001:db8:85a3:0:0:8a2e:370:7334');
-    await colAsserter.ok('2001:db8:85a3::8a2e:370:7334',            _ => '2001:db8:85a3:0:0:8a2e:370:7334');
-    await colAsserter.ok('168.201.203.205');
+    await colAsserter.ok(inet('127.0.0.1'));
+    await colAsserter.ok(inet('::1'),                                     _ => inet('0:0:0:0:0:0:0:1'));
+    await colAsserter.ok(inet('2001:0db8:85a3:0000:0000:8a2e:0370:7334'), _ => inet('2001:db8:85a3:0:0:8a2e:370:7334'));
+    await colAsserter.ok(inet('2001:db8:85a3::8a2e:370:7334'),            _ => inet('2001:db8:85a3:0:0:8a2e:370:7334'));
+    await colAsserter.ok(inet('168.201.203.205'));
   });
 
   it('should handle different vector insertion cases', async (key) => {
@@ -324,7 +326,7 @@ parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
   it('should handle different duration insertion cases', async (key) => {
     const colAsserter = mkColumnAsserter(key, 'duration');
 
-    await colAsserter.notOk(duration('1 hour'));
+    await colAsserter.notOk('1 hour');
 
     await colAsserter.ok('1h', duration);
   });

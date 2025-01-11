@@ -16,7 +16,7 @@
 import {
   DataAPIBlob,
   DataAPIDate,
-  DataAPIDuration,
+  DataAPIDuration, DataAPIInet,
   DataAPIResponseError,
   DataAPITime,
   DataAPIVector,
@@ -67,7 +67,7 @@ parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }
       double: 123.456,
       duration: new DataAPIDuration('P1D'),
       float: 123.456,
-      inet: '0:0:0:0:0:0:0:1',
+      inet: new DataAPIInet('0:0:0:0:0:0:0:1'),
       list: [uuid, uuid],
       set: new Set([uuid, uuid, uuid]),
       smallint: 123,

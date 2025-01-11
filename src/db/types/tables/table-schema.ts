@@ -23,7 +23,7 @@ import { EmptyObj } from '@/src/lib/types';
 import {
   DataAPIBlob,
   DataAPIDate,
-  DataAPIDuration,
+  DataAPIDuration, DataAPIInet,
   DataAPITime,
   FoundRow,
   SomeRow,
@@ -263,7 +263,7 @@ interface CqlNonGenericType2TSTypeDict {
   duration: DataAPIDuration | null,
   float: number | null,
   int: number | null,
-  inet: string | null,
+  inet: DataAPIInet | null,
   smallint: number | null,
   text: string | null;
   time: DataAPITime | null,

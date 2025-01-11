@@ -15,6 +15,7 @@
 export * from './blob';
 export * from './date';
 export * from './duration';
+export * from './inet';
 export * from './object-id';
 export * from './time';
 export * from './uuid';

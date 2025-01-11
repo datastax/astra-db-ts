@@ -24,6 +24,7 @@ import { EmptyObj, SerDesFn } from '@/src/lib';
 import BigNumber from 'bignumber.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { CodecOpts, RawCodec } from '@/src/lib/api/ser-des/codecs';
+import { DataAPIInet } from '@/src/documents/datatypes/inet';
 
 /**
  * @public
@@ -69,6 +70,13 @@ export class TableCodecs {
     float: TableCodecs.forType('float', {
       deserialize: (_, value, ctx) => ctx.done(parseFloat(value)),
     }),
+    int: TableCodecs.forType('int', {
+      deserialize: (_, value, ctx) => ctx.done(parseInt(value, 10)),
+    }),
+    inet: TableCodecs.forType('inet', DataAPIInet),
+    smallint: TableCodecs.forType('smallint', {
+      deserialize: (_, value, ctx) => ctx.done(parseInt(value, 10)),
+    }),
     time: TableCodecs.forType('time', DataAPITime),
     timestamp: TableCodecs.forType('timestamp', {
       serializeClass: Date,
@@ -80,6 +88,9 @@ export class TableCodecs {
       },
     }),
     timeuuid: TableCodecs.forType('timeuuid', UUID),
+    tinyint: TableCodecs.forType('tinyint', {
+      deserialize: (_, value, ctx) => ctx.done(parseInt(value, 10)),
+    }),
     uuid: TableCodecs.forType('uuid', UUID),
     vector: TableCodecs.forType('vector', DataAPIVector),
     varint: TableCodecs.forType('varint', {

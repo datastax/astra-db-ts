@@ -70,9 +70,7 @@ import { Ref } from '@/src/lib/types';
  *
  * The P delimiter is required, and the T delimiter is only required if `<time>` is present.
  *
- * At least one date or time component must be present, and units must be in the order shown above.
- *
- * Units are case-sensitive in this format.
+ * Units (case-sensitive) must appear in the order shown above.
  *
  * Milli/micro/nanoseconds may be provided as a fractional component of the seconds unit.
  *
