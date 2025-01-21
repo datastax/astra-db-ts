@@ -861,7 +861,9 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
     static [$DeserializeForTable](_: unknown, value: string, ctx: TableDesCtx): readonly [0, (DataAPIDate | undefined)?];
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
     constructor(date: Date);
-    constructor(date: string, strict?: boolean);
+    constructor(date: string);
+    // @internal
+    constructor(time: string, strict: boolean);
     constructor(year: number, month: number, date: number);
     compare(other: DataAPIDate): -1 | 0 | 1;
     readonly date: number;
@@ -870,7 +872,10 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
     static now(): DataAPIDate;
     static ofEpochDay(epochDays: number): DataAPIDate;
     static ofYearDay(year: number, dayOfYear: number): DataAPIDate;
+    // @beta
     toDate(base?: Date | DataAPITime): Date;
+    // @beta
+    toDateUTC(base?: Date | DataAPITime): Date;
     toString(): string;
     static utcnow(): DataAPIDate;
     readonly year: number;
@@ -900,8 +905,62 @@ export interface DataAPIDetailedErrorDescriptor {
 export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
     static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx): readonly [0, (DataAPIDuration | undefined)?];
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
-    constructor(input: string);
+    constructor(duration: string);
+    // @internal
+    constructor(duration: string, fromDataAPI: boolean);
+    constructor(months: number, days: number, nanoseconds: number | bigint);
+    abs(): DataAPIDuration;
+    static builder(base?: DataAPIDuration): DataAPIDurationBuilder;
+    readonly days: number;
+    equals(other: DataAPIDuration): boolean;
+    hasDayPrecision(): boolean;
+    hasMillisecondPrecision(): boolean;
+    isNegative(): boolean;
+    isZero(): boolean;
+    readonly months: number;
+    readonly nanoseconds: bigint;
+    negate(): DataAPIDuration;
+    // (undocumented)
+    static readonly NS_PER_HOUR = 3600000000000n;
+    // (undocumented)
+    static readonly NS_PER_MIN = 60000000000n;
+    // (undocumented)
+    static readonly NS_PER_MS = 1000000n;
+    // (undocumented)
+    static readonly NS_PER_SEC = 1000000000n;
+    // (undocumented)
+    static readonly NS_PER_US = 1000n;
+    plus(other: DataAPIDuration): DataAPIDuration | null;
+    toHours(): number;
+    toMicros(): bigint;
+    toMillis(): number;
+    toMinutes(): number;
+    toSeconds(): number;
     toString(): string;
+    toYears(): number;
+}
+
+// @public
+export class DataAPIDurationBuilder {
+    // @internal
+    constructor(base?: DataAPIDuration, validateOrder?: boolean);
+    addDays(days: number): this;
+    addHours(hours: number | bigint): this;
+    addMicros(microseconds: number | bigint): this;
+    addMillis(milliseconds: number | bigint): this;
+    addMinutes(minutes: number | bigint): this;
+    addMonths(months: number): this;
+    addNanos(nanoseconds: number | bigint): this;
+    addSeconds(seconds: number | bigint): this;
+    addWeeks(weeks: number): this;
+    addYears(years: number): this;
+    build(): DataAPIDuration;
+    clone(): DataAPIDurationBuilder;
+    negate(negative?: boolean): this;
+    // Warning: (ae-forgotten-export) The symbol "MDN" needs to be exported by the entry point index.d.ts
+    //
+    // @internal (undocumented)
+    raw(): MDN;
 }
 
 // @public
@@ -942,6 +1001,19 @@ export class DataAPIHttpError extends DataAPIError {
 export type DataAPIHttpOptions = DefaultHttpClientOptions | FetchHttpClientOptions | CustomHttpClientOptions;
 
 // @public
+export class DataAPIInet implements TableCodec<typeof DataAPIInet> {
+    static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx): readonly [0, (DataAPIInet | undefined)?];
+    [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
+    constructor(address: string, version?: 4 | 6 | null, validate?: boolean);
+    // (undocumented)
+    readonly _raw: string;
+    toString(): string;
+    get version(): 4 | 6;
+    // (undocumented)
+    _version: 4 | 6 | nullish;
+}
+
+// @public
 export type DataAPILoggingConfig = DataAPILoggingEvent | readonly (DataAPILoggingEvent | DataAPIExplicitLoggingConfig)[];
 
 // @public
@@ -967,7 +1039,9 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
     static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx): readonly [0, (DataAPITime | undefined)?];
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
     constructor(time: Date);
-    constructor(time: string, strict?: boolean);
+    constructor(time: string);
+    // @internal
+    constructor(time: string, strict: boolean);
     constructor(hours: number, minutes: number, seconds?: number, nanoseconds?: number);
     compare(other: DataAPITime): -1 | 0 | 1;
     equals(other: DataAPITime | string): boolean;
@@ -978,7 +1052,10 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
     static ofNanoOfDay(nanoOfDay: number): DataAPITime;
     static ofSecondOfDay(secondOfDay: number): DataAPITime;
     readonly seconds: number;
+    // @beta
     toDate(base?: Date | DataAPIDate): Date;
+    // @beta
+    toDateUTC(base?: Date | DataAPIDate): Date;
     toString(): string;
     static utcnow(): DataAPITime;
 }
@@ -1000,8 +1077,12 @@ export class DataAPITimeoutError extends DataAPIError {
 export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCodec<typeof DataAPIVector> {
     static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx): readonly [0, (DataAPIVector | undefined)?];
     static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx): readonly [0, (DataAPIVector | undefined)?];
-    [$SerializeForCollection](ctx: CollSerCtx): readonly [0, any?];
-    [$SerializeForTable](ctx: TableSerCtx): readonly [0, any?];
+    [$SerializeForCollection](ctx: CollSerCtx): readonly [0, (number[] | {
+        $binary: string;
+    } | undefined)?];
+    [$SerializeForTable](ctx: TableSerCtx): readonly [0, (number[] | {
+        $binary: string;
+    } | undefined)?];
     constructor(vector: DataAPIVectorLike, validate?: boolean);
     asArray(): number[];
     asBase64(): string;
@@ -1009,6 +1090,10 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
     static isVectorLike(value: unknown): value is DataAPIVectorLike;
     get length(): number;
     raw(): Exclude<DataAPIVectorLike, DataAPIVector>;
+    // @internal
+    serialize(): number[] | {
+        $binary: string;
+    };
     toString(): string;
 }
 
@@ -1163,7 +1248,9 @@ export interface DropVectorizeOperation<Schema extends SomeRow> {
 }
 
 // @public
-export const duration: (duration: string) => DataAPIDuration;
+export const duration: ((...params: [string] | [number, number, number | bigint]) => DataAPIDuration) & {
+    builder: typeof DataAPIDuration.builder;
+};
 
 // @public
 export class EmbeddingAPIKeyHeaderProvider extends EmbeddingHeadersProvider {
@@ -1456,6 +1543,9 @@ export type IdOf<Doc> = Doc extends {
 } ? Id : SomeId;
 
 // @public
+export const inet: (address: string, version?: 4 | 6) => DataAPIInet;
+
+// @public
 export type InferrableTable = CreateTableDefinition | ((..._: any[]) => Promise<Table<SomeRow>>) | ((..._: any[]) => Table<SomeRow>) | Promise<Table<SomeRow>> | Table<SomeRow>;
 
 // Warning: (ae-forgotten-export) The symbol "InferTablePKFromDefinition" needs to be exported by the entry point index.d.ts
@@ -1742,7 +1832,9 @@ export type SomeId = string | number | bigint | boolean | Date | UUID | ObjectId
 export type SomeRow = Record<string, any>;
 
 // @public
-export type Sort = Record<string, SortDirection | number[] | DataAPIVector | string>;
+export type Sort = Record<string, SortDirection | number[] | DataAPIVector | string | {
+    $binary: string;
+}>;
 
 // @public
 export type SortDirection = 1 | -1;
@@ -1812,9 +1904,13 @@ export class TableCodecs {
         double: RawCodec<TableCodecSerDesFns>;
         duration: RawCodec<TableCodecSerDesFns>;
         float: RawCodec<TableCodecSerDesFns>;
+        int: RawCodec<TableCodecSerDesFns>;
+        inet: RawCodec<TableCodecSerDesFns>;
+        smallint: RawCodec<TableCodecSerDesFns>;
         time: RawCodec<TableCodecSerDesFns>;
         timestamp: RawCodec<TableCodecSerDesFns>;
         timeuuid: RawCodec<TableCodecSerDesFns>;
+        tinyint: RawCodec<TableCodecSerDesFns>;
         uuid: RawCodec<TableCodecSerDesFns>;
         vector: RawCodec<TableCodecSerDesFns>;
         varint: RawCodec<TableCodecSerDesFns>;
