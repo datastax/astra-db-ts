@@ -54,7 +54,7 @@ export class UsernamePasswordTokenProvider extends TokenProvider {
   }
 }
 
-const encodeB64 = forJSEnv<(input: string) => string>({
+const encodeB64 = forJSEnv<[string], string>({
   server: (input) => {
     return Buffer.from(input, 'utf-8').toString('base64');
   },

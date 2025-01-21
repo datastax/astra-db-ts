@@ -104,11 +104,11 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
       return this._raw.byteLength;
     }
 
-    if (this._raw instanceof Buffer) {
-      return this._raw.length;
+    if ('$binary' in this._raw) {
+      return ~~((this._raw.$binary.replace(/=+$/, '').length * 3) / 4);
     }
 
-    return ~~((this._raw.$binary.replace(/=+$/, '').length * 3) / 4);
+    return this._raw.length;
   }
 
   /**
@@ -130,11 +130,11 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
       return this._raw;
     }
 
-    if (this._raw instanceof Buffer) {
-      return bufferToArrayBuffer(this._raw);
+    if ('$binary' in this._raw) {
+      return base64ToArrayBuffer(this._raw.$binary);
     }
 
-    return base64ToArrayBuffer(this._raw.$binary);
+    return bufferToArrayBuffer(this._raw);
   }
 
   /**
@@ -195,7 +195,7 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
   }
 }
 
-const base64ToArrayBuffer = forJSEnv<(base64: string) => ArrayBuffer>({
+const base64ToArrayBuffer = forJSEnv<[string], ArrayBuffer>({
   server: (base64) => {
     return bufferToArrayBuffer(Buffer.from(base64, 'base64'));
   },
@@ -213,7 +213,7 @@ const base64ToArrayBuffer = forJSEnv<(base64: string) => ArrayBuffer>({
   },
 });
 
-const arrayBufferToBase64 = forJSEnv<(buffer: ArrayBuffer) => string>({
+const arrayBufferToBase64 = forJSEnv<[ArrayBuffer], string>({
   server: (buffer) => {
     return Buffer.from(buffer).toString('base64');
   },

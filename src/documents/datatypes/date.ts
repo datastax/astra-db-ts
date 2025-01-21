@@ -248,9 +248,15 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
    * ```
    *
    * @param date - The date to parse
-   * @param strict - Uses a faster parser which doesn't perform any validity or format checks if `false`
    */
-  public constructor(date: string, strict?: boolean);
+  public constructor(date: string);
+
+  /**
+   * Should not be called by user directly.
+   *
+   * @internal
+   */
+  public constructor(time: string, strict: boolean);
 
   /**
    * ##### Overview
@@ -276,9 +282,9 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
 
   public constructor(i1: string | Date | number, i2?: number | boolean, i3?: number) {
     switch (arguments.length) {
-      case 1: {
+      case 1: case 2: {
         if (typeof i1 === 'string') {
-          [this.year, this.month, this.date] = parseDateStr(i1, true);
+          [this.year, this.month, this.date] = parseDateStr(i1, i2 !== false);
         }
         else if (i1 instanceof Date) {
           if (isNaN(i1.getTime())) {
@@ -291,10 +297,6 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
         else {
           throw mkInvArgsErr('new DataAPIDate', [['date', 'string | Date']], i1);
         }
-        break;
-      }
-      case 2: {
-        [this.year, this.month, this.date] = parseDateStr(i1, i2 !== false);
         break;
       }
       case 3: {
@@ -322,31 +324,71 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
    *
    * Converts this `DataAPIDate` to a `Date` object
    *
-   * If no `base` date/time is provided to use the time from, the time component is set to be the current time.
+   * If no `base` date/time is provided to use the time from, the time component is set to be zero.
+   *
+   * ##### Disclaimer
+   *
+   * If the base parameter is a `DataAPITime`, it will be treated as in the local timezone; not UTC. See {@link DataAPIDate.toDateUTC} for UTC conversion.
    *
    * @example
    * ```ts
-   * date('1970-01-01').toDate(new Date('12:00:00')) // '1970-01-01T12:00:00'
+   * // '1970-01-01T12:00:00Z'
+   * date('1970-01-01').toDate(new Date('12:00:00'))
    *
-   * date('1970-01-01').toDate() // '1970-01-01T<local_time>'
+   * // '1970-01-01T(12:00:00 - timezone_offset)Z'
+   * date('1970-01-01').toDate(new DataAPITime('12:00:00'))
+   *
+   * // '1970-01-01T00:00:00Z'
+   * date('1970-01-01').toDate()
    * ```
    *
    * @param base - The base date/time to use for the time component
    *
    * @returns The `Date` object representing this `DataAPIDate`
+   *
+   * @see toDateUTC
+   *
+   * @beta
    */
   public toDate(base?: Date | DataAPITime): Date {
-    if (!base) {
-      base = new Date();
-    }
-
-    if (base instanceof Date) {
-      const ret = new Date(base);
+    if (!base || base instanceof Date) {
+      const ret = new Date(base || 0);
       ret.setFullYear(this.year, this.month - 1, this.date);
       return ret;
     }
-
     return new Date(this.year, this.month - 1, this.date, base.hours, base.minutes, base.seconds, base.nanoseconds / 1_000_000);
+  }
+
+  /**
+   * ##### Overview
+   *
+   * Converts this `DataAPIDate` to a `Date` object in UTC, using a `DataAPITime` as the base time.
+   *
+   * ##### Disclaimer
+   *
+   * The base `DataAPITime` is treated as in the UTC timezone. If you want to use it as if in the local timezone, use {@link DataAPIDate.toDate} instead.
+   *
+   * @example
+   * ```ts
+   * // '2004-09-14T12:34:56Z'
+   * date('2004-09-14').toDateUTC(new DataAPITime('12:34:56'))
+   * ```
+   *
+   * @param base - The base time to use for the time component
+   *
+   * @returns The `Date` object representing this `DataAPIDate` in UTC
+   *
+   * @see toDate
+   *
+   * @beta
+   */
+  public toDateUTC(base?: Date | DataAPITime): Date {
+    if (!base || base instanceof Date) {
+      const ret = new Date(base || 0);
+      ret.setUTCFullYear(this.year, this.month - 1, this.date);
+      return ret;
+    }
+    return new Date(Date.UTC(this.year, this.month - 1, this.date, base.hours, base.minutes, base.seconds, base.nanoseconds / 1_000_000));
   }
 
   /**
@@ -368,7 +410,8 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
    * @returns The string representation of this `DataAPIDate`
    */
   public toString(): string {
-    return `${this.year >= 10000 ? '+' : ''}${this.year.toString().padStart(4, '0')}-${this.month.toString().padStart(2, '0')}-${this.date.toString().padStart(2, '0')}`;
+    const sign = (this.year < 0) ? '-' : (this.year >= 10000) ? '+' : '';
+    return `${sign}${Math.abs(this.year).toString().padStart(4, '0')}-${this.month.toString().padStart(2, '0')}-${this.date.toString().padStart(2, '0')}`;
   }
 
   /**
@@ -459,11 +502,7 @@ export const date = Object.assign(
   },
 );
 
-const parseDateStr = (str: unknown, strict: boolean): [number, number, number] => {
-  if (typeof str !== 'string') {
-    throw mkInvArgsErr('DataAPIDate', [['date', 'string']], str);
-  }
-
+const parseDateStr = (str: string, strict: boolean): [number, number, number] => {
   return (strict)
     ? parseDateStrict(str)
     : parseDateQuick(str);
@@ -531,12 +570,21 @@ const ofYearDay = (year: unknown, dayOfYear: unknown): Date => {
     throw mkInvArgsErr('DataAPIDate.ofYearDay', [['year', 'number'], ['dayOfYear', 'number']], year, dayOfYear);
   }
 
+  if (!Number.isInteger(year) || !Number.isInteger(dayOfYear)) {
+    throw new TypeError(`Invalid year: ${year} and/or dayOfYear: ${dayOfYear}; must be integers`);
+  }
+
   if (dayOfYear < 1 || 365 + (isLeapYear(year) ? 1 : 0) < dayOfYear) {
     throw new RangeError(`Invalid dayOfYear: ${dayOfYear}; must be between 1 and ${365 + (isLeapYear(year) ? 1 : 0)} for year ${year}`);
   }
 
-  const date = new Date();
+  const date = new Date(0);
   date.setUTCFullYear(year, 0, dayOfYear);
+
+  if (isNaN(date.getTime())) {
+    throw new RangeError(`Invalid year: ${year}; must be within range [-271821, 275760] if using date.ofYearDay; use the DataAPIDate constructor directly for larger values`);
+  }
+
   return date;
 };
 
@@ -549,11 +597,9 @@ const ofEpochDay = (epochDays: unknown): Date => {
     throw new TypeError(`Invalid epochDays: ${epochDays}; must be an integer`);
   }
 
-  const date = new Date(epochDays * MillisecondsPerDay);
-
-  if (isNaN(date.getTime())) {
-    throw new RangeError(`Invalid epochDays: ${epochDays}; must be within range [-100_000_000, 100_000_000]`);
+  if (epochDays < -100_000_000 || 100_000_000 < epochDays) {
+    throw new RangeError(`Invalid epochDays: ${epochDays}; must be within range [-100_000_000, 100_000_000] if using date.ofEpochDay; use the DataAPIDate constructor directly for larger values`);
   }
 
-  return date;
+  return new Date(epochDays * MillisecondsPerDay);
 };

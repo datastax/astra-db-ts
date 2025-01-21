@@ -72,7 +72,7 @@ export class UnexpectedDataAPIResponseError extends Error {
    */
   constructor(message: string, rawDataAPIResponse: unknown) {
     try {
-      super(`${message}\n\nRaw Data API response: ${JSON.stringify(rawDataAPIResponse, null, 2)}`);
+      super(`${message}\n\nRaw Data API response: ${JSON.stringify(rawDataAPIResponse)}`);
     } catch (_) {
       super(`${message}\n\nRaw Data API response: ${rawDataAPIResponse}`);
     }

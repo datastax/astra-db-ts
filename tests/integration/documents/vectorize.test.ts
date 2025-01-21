@@ -18,9 +18,9 @@ import * as fs from 'fs';
 import { EmbeddingProviderInfo } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { describe, it, parallel } from '@/tests/testlib';
 import { negate } from '@/tests/testlib/utils';
-import { whitelistImplFor } from '@/tests/integration/documents/vectorize/vec-whitelist-imp';
-import { branchOnModel, FinalVectorizeTestBranch } from '@/tests/integration/documents/vectorize/vec-test-branches';
-import { createTestGroups, VectorizeTestGroup } from '@/tests/integration/documents/vectorize/vec-test-groups';
+import { whitelistImplFor } from '@/tests/testlib/vectorize/vec-whitelist-imp';
+import { branchOnModel, FinalVectorizeTestBranch } from '@/tests/testlib/vectorize/vec-test-branches';
+import { createTestGroups, VectorizeTestGroup } from '@/tests/testlib/vectorize/vec-test-groups';
 import { Db } from '@/src/db';
 
 export interface VectorizeTestSpec {

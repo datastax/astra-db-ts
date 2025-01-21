@@ -121,7 +121,7 @@ describe('unit.lib.api.timeouts', () => {
   });
 
   parallel('multipart', () => {
-    it('works w/ override number', async () => {
+    it('(LONG) works w/ override number', async () => {
       const tm = timeouts.multipart('generalMethodTimeoutMs', { timeout: 10001 });
       let [timeout, mkError] = tm.advance(info(tm));
       assert.strictEqual(timeout, Timeouts.Default.requestTimeoutMs);

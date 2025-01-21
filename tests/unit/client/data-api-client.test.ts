@@ -20,7 +20,8 @@ import { FetcherRequestInfo } from '@/src/lib/api/fetch/types';
 import { UsernamePasswordTokenProvider } from '@/src/lib';
 import { describe, it, TEST_APPLICATION_URI } from '@/tests/testlib';
 import assert from 'assert';
-import { DataAPIEnvironments } from '@/src/lib/constants';
+import { $CustomInspect, DataAPIEnvironments } from '@/src/lib/constants';
+import { InvalidEnvironmentError } from '@/src/db';
 
 describe('unit.client.data-api-client', () => {
   it('should accept valid tokens', () => {
@@ -120,6 +121,20 @@ describe('unit.client.data-api-client', () => {
       // @ts-expect-error - testing invalid input
       dbOptions: { token: 3 },
     }));
+  });
+
+  it('should throw on .admin() if invalid env', () => {
+    for (const env of DataAPIEnvironments.filter(e => e !== 'astra')) {
+      const client = new DataAPIClient('dummy-token', { environment: env });
+      assert.throws(() => client.admin(), InvalidEnvironmentError);
+    }
+  });
+
+  it('should inspect', () => {
+    for (const env of [...DataAPIEnvironments, undefined]) {
+      const client = new DataAPIClient('dummy-token', { environment: env });
+      assert.strictEqual((client as any)[$CustomInspect](), `DataAPIClient(env="${env ?? 'astra'}")`);
+    }
   });
 
   describe('using fetch-h2', () => {

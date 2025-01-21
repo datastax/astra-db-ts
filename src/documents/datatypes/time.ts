@@ -245,9 +245,15 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
    * ```
    *
    * @param time - The time string to parse
-   * @param strict - Uses a faster parser which doesn't perform any validity or format checks if `false`
    */
-  public constructor(time: string, strict?: boolean);
+  public constructor(time: string);
+
+  /**
+   * Should not be called by user directly.
+   *
+   * @internal
+   */
+  public constructor(time: string, strict: boolean);
 
   /**
    * ##### Overview
@@ -318,6 +324,8 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
   }
 
   /**
+   * ##### Overview
+   *
    * Converts this `DataAPITime` to a `Date` object
    *
    * If no `base` date/time is provided to use the date from, the date component is set to be the current date.
@@ -332,15 +340,36 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
    * @param base - The base date/time to use for the date component
    *
    * @returns The `Date` object representing this `DataAPITime`
+   *
+   * @beta
    */
   public toDate(base?: Date | DataAPIDate): Date {
-    if (!base) {
-      base = new Date();
+    if (!base || base instanceof Date) {
+      const ret = new Date(base || 0);
+      ret.setHours(this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000);
+      return ret;
     }
 
-    if (base instanceof Date) {
-      const ret = new Date(base);
-      ret.setHours(this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000);
+    return new Date(base.year, base.month - 1, base.date, this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000);
+  }
+
+  /**
+   * ##### Overview
+   *
+   * Converts this `DataAPITime` to a `Date` object in UTC
+   *
+   * If no `base` date/time is provided to use the date from, the date component is set to be the current date.
+   *
+   * @param base - The base date/time to use for the date component
+   *
+   * @returns The `Date` object representing this `DataAPITime`
+   *
+   * @beta
+   */
+  public toDateUTC(base?: Date | DataAPIDate): Date {
+    if (!base || base instanceof Date) {
+      const ret = new Date(base || 0);
+      ret.setUTCHours(this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000);
       return ret;
     }
 
@@ -364,7 +393,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
    * @returns The string representation of this `DataAPITime`
    */
   public toString() {
-    return `${this.hours < 10 ? '0' : ''}${this.hours}:${this.minutes < 10 ? '0' : ''}${this.minutes}:${this.seconds < 10 ? '0' : ''}${this.seconds}.${this.nanoseconds.toString().padStart(9, '0')}`;
+    return `${this.hours.toString().padStart(2, '0')}:${this.minutes.toString().padStart(2, '0')}:${this.seconds.toString().padStart(2, '0')}.${this.nanoseconds.toString().padStart(9, '0')}`;
   }
 
   /**

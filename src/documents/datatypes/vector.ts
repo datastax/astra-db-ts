@@ -36,7 +36,7 @@ export type DataAPIVectorLike = number[] | { $binary: string } | Float32Array | 
  *
  * @public
  */
-export const vector = (v: DataAPIVectorLike) => new DataAPIVector(v);
+export const vector = (v: DataAPIVectorLike) => (v instanceof DataAPIVector) ? v : new DataAPIVector(v);
 
 /**
  * Represents a `vector` column for Data API tables.
@@ -56,14 +56,14 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
    * Implementation of `$SerializeForTable` for {@link TableCodec}
    */
   public [$SerializeForTable](ctx: TableSerCtx) {
-    return ctx.done(serialize(this._vector));
+    return ctx.done(this.serialize());
   };
 
   /**
    * Implementation of `$SerializeForCollection` for {@link TableCodec}
    */
   public [$SerializeForCollection](ctx: CollSerCtx) {
-    return ctx.done(serialize(this._vector));
+    return ctx.done(this.serialize());
   };
 
   /**
@@ -179,7 +179,7 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
    * @returns The vector as a base64 string
    */
   public asBase64(): string {
-    const serialized = serialize(this._vector);
+    const serialized = this.serialize();
 
     if (!('$binary' in serialized)) {
       if (Array.isArray(this._vector)) {
@@ -206,7 +206,7 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
   }
 
   /**
-   * Determines whether the given value is a vector-like value (i.e. it's {@link DataAPIVectorLike}.
+   * Determines whether the given value is a vector-like value (i.e. it's {@link DataAPIVectorLike}).
    *
    * @param value - The value to check
    *
@@ -215,16 +215,21 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
   public static isVectorLike(value: unknown): value is DataAPIVectorLike {
     return !!value && typeof value === 'object' && (Array.isArray(value) || value instanceof Float32Array || ('$binary' in value && typeof value.$binary === 'string') || value instanceof DataAPIVector);
   }
+
+  /**
+   * Should not be called by user directly
+   *
+   * @internal
+   */
+  public serialize(): number[] | { $binary: string } {
+    if ('$binary' in this._vector) {
+      return this._vector;
+    }
+    return serializeFromArray(this._vector);
+  }
 }
 
-const serialize = (vector: Exclude<DataAPIVectorLike, DataAPIVector>) => {
-  if ('$binary' in vector) {
-    return vector;
-  }
-  return serializeFromArray(vector);
-};
-
-const serializeFromArray = forJSEnv<(vector: number[] | Float32Array) => number[] | { $binary: string }>({
+const serializeFromArray = forJSEnv<[number[] | Float32Array], number[] | { $binary: string }>({
   server: (vector) => {
     const buffer = Buffer.allocUnsafe(vector.length * 4);
 
@@ -257,7 +262,7 @@ const serializeFromArray = forJSEnv<(vector: number[] | Float32Array) => number[
   },
 });
 
-const deserializeToNumberArray = forJSEnv<(serialized: string) => number[] | undefined>({
+const deserializeToNumberArray = forJSEnv<[string], number[] | undefined>({
   server: (serialized) => {
     const buffer = Buffer.from(serialized, 'base64');
     const vector = Array.from<number>({ length: buffer.length / 4 });
@@ -279,7 +284,7 @@ const deserializeToNumberArray = forJSEnv<(serialized: string) => number[] | und
   },
 });
 
-const deserializeToF32Array = forJSEnv<(serialized: string) => Float32Array | undefined>({
+const deserializeToF32Array = forJSEnv<[string], Float32Array | undefined>({
   server: (serialized) => {
     const buffer = Buffer.from(serialized, 'base64');
     const vector = new Float32Array(buffer.length / 4);

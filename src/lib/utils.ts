@@ -31,7 +31,7 @@ export function isNullish(t: unknown): t is nullish {
  */
 export function validateDataAPIEnv(env: unknown): asserts env is DataAPIEnvironment | nullish {
   if (!isNullish(env) && !(<readonly unknown[]>DataAPIEnvironments).includes(env)) {
-    throw new Error(`Given environment is invalid (must be ${DataAPIEnvironments.map(e => `"${e}"`).join(', ')}, or nullish to default to "astra".`);
+    throw new Error(`Given environment is invalid (must be ${DataAPIEnvironments.map(e => `"${e}"`).join(', ')}, or nullish to default to "astra" (got: ${env}).`);
   }
 }
 
@@ -92,6 +92,9 @@ function nullProtoFix(doc: SomeDoc): SomeDoc {
   return doc;
 }
 
+/**
+ * @internal
+ */
 export function stringArraysEqual(a: readonly string[], b: readonly string[]): boolean {
   if (a.length !== b.length) {
     return false;
@@ -106,10 +109,13 @@ export function stringArraysEqual(a: readonly string[], b: readonly string[]): b
   return true;
 }
 
-interface JSEnvs<T> {
-  server: T,
-  browser: T,
-  unknown: T,
+/**
+ * @internal
+ */
+interface JSEnvs<F> {
+  server: F,
+  browser: F,
+  unknown: F,
 }
 
 const getJSEnv = () =>
@@ -121,15 +127,16 @@ const getJSEnv = () =>
 
 const env = getJSEnv();
 
-export function forJSEnv<F extends (...args: any[]) => any>(fns: JSEnvs<F>) {
-  if (process.env.CLIENT_DYNAMIC_JS_ENV_CHECK) {
-    return (...args: Parameters<F>) => {
-      return fns[getJSEnv()](...args);
-    };
-  }
-  return fns[env];
-}
+/**
+ * @internal
+ */
+export const forJSEnv = (process.env.CLIENT_DYNAMIC_JS_ENV_CHECK)
+  ? <Args extends any[], R>(fns: JSEnvs<(...args: Args) => R>): (...args: Args) => R => (...args: Args) => fns[getJSEnv()](...args)
+  : <Args extends any[], R>(fns: JSEnvs<(...args: Args) => R>): (...args: Args) => R => fns[env];
 
+/**
+ * @internal
+ */
 export function isBigNumber(value: object): value is BigNumber {
   return BigNumber.isBigNumber(value) && value.constructor?.name === 'BigNumber';
 }

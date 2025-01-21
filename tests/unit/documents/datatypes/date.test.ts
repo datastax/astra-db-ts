@@ -14,8 +14,9 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DataAPIDate, date } from '@/src/documents';
+import { DataAPIDate, date, time } from '@/src/documents';
 import { describe, it } from '@/tests/testlib';
+import { $CustomInspect } from '@/src/lib/constants';
 
 describe('unit.documents.datatypes.date', () => {
   describe('construction', () => {
@@ -102,6 +103,96 @@ describe('unit.documents.datatypes.date', () => {
 
     it('should get the current utc date', () => {
       assertDateOk(date.utcnow(), [new Date().getUTCFullYear(), new Date().getUTCMonth() + 1, new Date().getUTCDate()]);
+    });
+
+    it('should reject invalid args', () => {
+      assertDateNotOk([2000], TypeError);
+      assertDateNotOk([2000, 1, 2n], TypeError);
+    });
+
+    it('should get date from ofEpochDay', () => {
+      assert.throws(() => date.ofEpochDay(0n as any),    TypeError);
+      assert.throws(() => date.ofEpochDay(123.456),      TypeError);
+      assert.throws(() => date.ofEpochDay(100_000_001),  RangeError);
+      assert.throws(() => date.ofEpochDay(-100_000_001), RangeError);
+
+      assertDateOk(date.ofEpochDay(           0), [  1970,  1,  1]);
+      assertDateOk(date.ofEpochDay(           1), [  1970,  1,  2]);
+      assertDateOk(date.ofEpochDay(          -1), [  1969, 12, 31]);
+      assertDateOk(date.ofEpochDay( 100_000_000), [ 275760, 9, 13]);
+      assertDateOk(date.ofEpochDay(-100_000_000), [-271821, 4, 20]);
+    });
+
+    it('should get date from ofYearDay', () => {
+      assert.throws(() => date.ofYearDay(0n as any,    0), TypeError);
+      assert.throws(() => date.ofYearDay(      123, 45.6), TypeError);
+      assert.throws(() => date.ofYearDay(     2000,    0), RangeError);
+      assert.throws(() => date.ofYearDay(     2001,  366), RangeError);
+      assert.throws(() => date.ofYearDay(     1900,  366), RangeError);
+      assert.throws(() => date.ofYearDay(   275760,  258), RangeError);
+      assert.throws(() => date.ofYearDay(  -271821,  109), RangeError);
+
+      assertDateOk(date.ofYearDay(   2000,   1), [   2000,  1,  1]);
+      assertDateOk(date.ofYearDay(   2000, 366), [   2000, 12, 31]);
+      assertDateOk(date.ofYearDay(   2004, 366), [   2004, 12, 31]);
+      assertDateOk(date.ofYearDay( 275760, 257), [ 275760,  9, 13]);
+      assertDateOk(date.ofYearDay(-271821, 110), [-271821,  4, 20]);
+    });
+  });
+
+  describe('comparison', () => {
+    it('should work', () => {
+      assert.strictEqual(date(2000, 1, 1).compare(date(2000, 1, 1)), 0);
+
+      assert.strictEqual(date(2000, 1, 1).compare(date(2000, 1, 2)), -1);
+      assert.strictEqual(date(2000, 1, 9).compare(date(2000, 2, 1)), -1);
+      assert.strictEqual(date(2000, 9, 9).compare(date(2001, 1, 1)), -1);
+
+      assert.strictEqual(date(2000, 1, 2).compare(date(2000, 1, 1)), 1);
+      assert.strictEqual(date(2000, 2, 1).compare(date(2000, 1, 9)), 1);
+      assert.strictEqual(date(2001, 1, 1).compare(date(2000, 9, 9)), 1);
+    });
+  });
+
+  describe('equality', () => {
+    it('should work', () => {
+      assert.strictEqual(date(2000, 1, 1).equals(date(2000, 1, 1)), true);
+      assert.strictEqual(date(2000, 1, 1).equals(date(2000, 1, 2)), false);
+      assert.strictEqual(date(2000, 1, 1).equals('2000-1-1' as any), false);
+    });
+  });
+
+  describe('toDate', () => {
+    it('should work without a base', () => {
+      assert.deepStrictEqual(date(2000, 1, 1).toDate(), new Date('2000-01-01T00:00:00Z'));
+    });
+
+    it('should work with a base Date', () => {
+      assert.deepStrictEqual(date(2000, 1, 1).toDate(new Date('1970-01-01T12:34:56Z')), new Date('2000-01-01T12:34:56Z'));
+    });
+
+    it('should work with a base DataAPITime', () => {
+      assert.deepStrictEqual(date(2000, 1, 1).toDate(time('12:34:56')), new Date('2000-01-01T12:34:56'));
+    });
+  });
+
+  describe('toDateUTC', () => {
+    it('should work', () => {
+      assert.deepStrictEqual(date(2000, 1, 1).toDateUTC(time('12:34:56')), new Date('2000-01-01T12:34:56Z'));
+    });
+  });
+
+  describe('toString', () => {
+    it('should work', () => {
+      assert.strictEqual(date(9999, 1, 1).toString(), '9999-01-01');
+      assert.strictEqual(date(10000, 12, 31).toString(), '+10000-12-31');
+      assert.strictEqual(date(-1, 1, 1).toString(), '-0001-01-01');
+    });
+  });
+
+  describe('inspect', () => {
+    it('should work', () => {
+      assert.strictEqual((date(10000, 12, 31) as any)[$CustomInspect](), 'DataAPIDate("+10000-12-31")');
     });
   });
 });

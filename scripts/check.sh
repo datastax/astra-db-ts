@@ -13,6 +13,9 @@ while [ $# -gt 0 ]; do
     "licensing")
       check_types="$check_types licensing"
       ;;
+    "test-ext")
+      check_types="$check_types test-ext"
+      ;;
     "lib-check")
       check_types="$check_types lib-check"
       ;;
@@ -29,6 +32,7 @@ while [ $# -gt 0 ]; do
        echo "* lint: checks for linting errors"
        echo "* licensing: checks for missing licensing headers"
        echo "* lib-check: ensures library compiles if skipLibCheck: false"
+       echo "* test-ext: makes sure test files end in .test.ts"
        echo
        echo "Defaults to running all checks if no specific checks are specified."
        exit
@@ -37,7 +41,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "$check_types" ]; then
-  check_types="tc lint licensing lib-check"
+  check_types="tc lint licensing lib-check test-ext"
 fi
 
 failed=false
@@ -74,10 +78,20 @@ for check_type in $check_types; do
         && npm init -y \
         && npm install typescript "$main_dir" \
         && echo "import '@datastax/astra-db-ts'" > src.ts \
-        && npx tsc --init --skipLibCheck false --typeRoots "./node_modules/**" \
+        && npx tsc --init --skipLibCheck false --typeRoots "./node_modules/**" --target es2020 \
         && npx tsc) || failed=true
 
       cd "$main_dir" && rm -rf "$tmp_dir"
+      ;;
+    "test-ext")
+      echo "Checking test file extensions..."
+      offenders=$(find tests/unit tests/integration -type f -not -name "*.test.ts")
+
+      if [ -n "$offenders" ]; then
+        echo "The following test files do not end in '.test.ts':"
+        echo "$offenders"
+        failed=true
+      fi
       ;;
     "*")
       echo "Invalid check type '$check_type'"
