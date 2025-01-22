@@ -50,7 +50,7 @@ export type SortDirection = 1 | -1;
  *
  * @public
  */
-export type Sort = Record<string, SortDirection | number[] | DataAPIVector | string>;
+export type Sort = Record<string, SortDirection | number[] | DataAPIVector | string | { $binary: string }>;
 
 /**
  * Specifies which fields should be included/excluded in the returned documents.

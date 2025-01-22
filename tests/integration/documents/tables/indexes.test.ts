@@ -51,11 +51,11 @@ parallel('integration.documents.tables.indexes', { drop: 'colls:after' }, ({ db 
   });
 
   it('should work when createVector-ing', async () => {
-    const table = await db.createTable('create_index_table', {
+    const table = await db.createTable('create_vector_index_table', {
       definition: {
         columns: {
           pkey: 'text',
-          vec: { type: 'vector' },
+          vec: { type: 'vector', dimension: 3 },
         },
         primaryKey: 'pkey',
       },

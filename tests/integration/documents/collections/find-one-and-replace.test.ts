@@ -161,4 +161,9 @@ parallel('integration.documents.collections.find-one-and-replace', { truncate: '
     );
     assert.strictEqual(res?.name, 'a');
   });
+
+  it('should return null if no document is found', async (key) => {
+    const res = await collection.findOneAndReplace({ key }, { set: { car: 'bus' } });
+    assert.strictEqual(res, null);
+  });
 });

@@ -19,8 +19,7 @@ create)
     exit 1
   fi
 
-  npm run build
-  npm pack
+  scripts/build.sh -no-report
 
   rm -rf etc/playgrounds/"$2"
   mkdir -p etc/playgrounds/"$2"
@@ -30,8 +29,7 @@ create)
   npm i -D typescript tsx dotenv
   cp ../../../tsconfig.json .
 
-  npm i "${tarball_dir}"/datastax-astra-db-ts-*.tgz
-  rm "${tarball_dir}"/datastax-astra-db-ts-*.tgz
+  npm i "$tarball_dir"
 
   echo "import * as $ from '@datastax/astra-db-ts';
 import dotenv from 'dotenv';
@@ -48,25 +46,6 @@ const table = db.table('test_table');
 (async () => {
 
 })();" > index.ts
-  ;;
-update)
-  if [ -z "$2" ]; then
-    echo "Usage: $0 update <name>"
-    exit 1
-  fi
-
-  if [ ! -d etc/playgrounds/"$2" ]; then
-    echo "Playground '$2' not found"
-    exit 1
-  fi
-
-  npm run build
-  npm pack
-
-  cd etc/playgrounds/"$2" || exit 1
-
-  npm i "${tarball_dir}"/datastax-astra-db-ts-*.tgz
-  rm "${tarball_dir}"/datastax-astra-db-ts-*.tgz
   ;;
 destroy)
   if [ -z "$2" ]; then

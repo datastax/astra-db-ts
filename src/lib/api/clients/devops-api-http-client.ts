@@ -33,6 +33,9 @@ export interface DevOpsAPIRequestInfo {
   methodName: string,
 }
 
+/**
+ * @internal
+ */
 interface LongRunningRequestInfo {
   id: string | ((resp: DevopsAPIResponse) => string),
   target: string,
@@ -42,12 +45,18 @@ interface LongRunningRequestInfo {
   timeoutManager: TimeoutManager,
 }
 
+/**
+ * @internal
+ */
 interface DevopsAPIResponse {
   data?: Record<string, any>,
   headers: Record<string, string>,
   status: number,
 }
 
+/**
+ * @internal
+ */
 interface DevOpsAPIHttpClientOpts extends HTTPClientOptions {
   tokenProvider: TokenProvider | undefined,
 }

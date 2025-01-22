@@ -17,4 +17,5 @@ export * from './db';
 export * from './documents';
 export * from './administration';
 export * from './lib';
+export * from './version';
 export * from 'bignumber.js';

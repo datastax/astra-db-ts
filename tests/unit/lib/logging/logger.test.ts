@@ -78,9 +78,11 @@ describe('unit.lib.logging.logger', () => {
     it('should handle absolute madness', () => {
       const config: DataAPILoggingConfig = [
         'commandSucceeded',
-        { events: 'all', emits: 'stdout' },
+        { events: 'all', emits: ['stderr'] },
+        { events: ['all'], emits: 'stdout' },
         'commandFailed',
         { events: ['commandFailed', 'commandSucceeded'], emits: [] },
+        { events: ['commandSucceeded', 'commandFailed'], emits: 'stdout' },
         { events: ['commandSucceeded', 'commandFailed'], emits: ['event', 'stderr'] },
         'all',
         'commandSucceeded',
@@ -88,9 +90,11 @@ describe('unit.lib.logging.logger', () => {
       const expected: NormalizedLoggingConfig[] = [
         3 as any,
         { events: ['commandSucceeded'], emits: ['event'] },
+        { events: LoggingEventsWithoutAll, emits: ['stderr'] },
         { events: LoggingEventsWithoutAll, emits: ['stdout'] },
         { events: ['commandFailed'], emits: ['event', 'stderr'] },
         { events: ['commandFailed', 'commandSucceeded'], emits: [] },
+        { events: ['commandSucceeded', 'commandFailed'], emits: ['stdout'] },
         { events: ['commandSucceeded', 'commandFailed'], emits: ['event', 'stderr'] },
         ...DataAPILoggingDefaults,
         { events: ['commandSucceeded'], emits: ['event'] },
@@ -144,6 +148,14 @@ describe('unit.lib.logging.logger', () => {
       assert.ok(events.at(-1)?.[1] instanceof AdminCommandStartedEvent);
       assert.strictEqual(stdout.at(-1), (<any>events.at(-1)?.[1]).formatted());
       assert.strictEqual(events.length, 2);
+      assert.strictEqual(stdout.length, 1);
+      assert.strictEqual(stderr.length, 0);
+    });
+
+    it('should not log events if not enabled', () => {
+      const logger = new Logger([{ events: ['commandStarted'], emits: ['stdout'] }], emitter, console);
+      logger.commandStarted?.({ timeoutManager: { initial: () => ({}) }, command: {} } as any);
+      assert.strictEqual(events.length, 0);
       assert.strictEqual(stdout.length, 1);
       assert.strictEqual(stderr.length, 0);
     });

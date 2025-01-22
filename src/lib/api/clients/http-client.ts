@@ -47,7 +47,6 @@ export abstract class HttpClient {
     this.baseHeaders = { ...options.additionalHeaders };
     this.baseHeaders['User-Agent'] = options.userAgent;
     this.baseHeaders['Content-Type'] = 'application/json';
-    this.baseHeaders['Feature-Flag-tables'] = 'true';
 
     this.headerProviders = headerProviders;
     this.tm = new Timeouts(mkTimeoutError, options.timeoutDefaults);

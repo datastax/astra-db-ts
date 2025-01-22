@@ -34,6 +34,5 @@ export {
   CollectionInsertManyError,
   TableInsertManyError,
   TooManyDocumentsToCountError,
-  TooManyRowsToCountError,
   CollectionUpdateManyError,
 } from './errors';

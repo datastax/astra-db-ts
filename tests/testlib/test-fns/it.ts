@@ -25,9 +25,15 @@ export type TestFn = SyncTestFn | AsyncTestFn;
 type SyncTestFn = (...keys: string[]) => void;
 type AsyncTestFn = (...keys: string[]) => Promise<void>;
 
+interface TestOptions {
+  pretendEnv?: 'server' | 'browser' | 'unknown';
+}
+
 interface TaggableTestFunction {
   (name: string, fn: SyncTestFn): Mocha.Test | null;
+  (name: string, options: TestOptions, fn: SyncTestFn): Mocha.Test | null;
   (name: string, fn: AsyncTestFn): Mocha.Test | null;
+  (name: string, options: TestOptions, fn: AsyncTestFn): Mocha.Test | null;
 }
 
 export let it: TaggableTestFunction;
@@ -36,7 +42,15 @@ export let it: TaggableTestFunction;
 //   get() { throw new Error('Can not use return type of `it` when in a parallel/background block') },
 // });
 
-it = function (name: string, testFn: TestFn) {
+it = function (name: string, optsOrFn: TestOptions | TestFn, maybeFn?: TestFn) {
+  const testFn = (!maybeFn)
+    ? optsOrFn as TestFn
+    : maybeFn;
+
+  const opts = (maybeFn)
+    ? optsOrFn as TestOptions
+    : undefined;
+
   const skipped = !checkTestsEnabled(name);
 
   for (const asyncTestState of [parallelTestState, backgroundTestState]) {
@@ -57,8 +71,34 @@ it = function (name: string, testFn: TestFn) {
     this.timeout(DEFAULT_TEST_TIMEOUT);
 
     const keys = Array.from({ length: testFn.length }, () => UUID.v4().toString());
-    return testFn(...keys);
+    return pretendingEnv(opts?.pretendEnv ?? 'server', testFn)(...keys);
   }
 
   return global.it(name, modifiedFn);
 };
+
+function pretendingEnv(env: 'server' | 'browser' | 'unknown', fn: TestFn): TestFn {
+  if (env === 'server') {
+    return fn;
+  }
+
+  return (...args: string[]) => {
+    const anyGlobalThis = globalThis as any;
+    const [window, buffer] = [anyGlobalThis.window, anyGlobalThis.Buffer];
+
+    anyGlobalThis.window = env === 'browser' ? globalThis : undefined;
+    anyGlobalThis.Buffer = env === 'unknown' ? undefined : buffer;
+
+    const res = fn(...args);
+
+    if (res instanceof Promise) {
+      res.finally(() => {
+        [anyGlobalThis.window, anyGlobalThis.Buffer] = [window, buffer];
+      });
+    } else {
+      [anyGlobalThis.window, anyGlobalThis.Buffer] = [window, buffer];
+    }
+
+    return res;
+  };
+}

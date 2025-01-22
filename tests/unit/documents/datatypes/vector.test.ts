@@ -16,6 +16,7 @@
 import assert from 'assert';
 import { DataAPIVector, vector } from '@/src/documents';
 import { describe, it } from '@/tests/testlib';
+import { $CustomInspect } from '@/src/lib/constants';
 
 const ARR = [.5, .5, .5];
 const F32ARR = new Float32Array(ARR);
@@ -23,30 +24,26 @@ const BINARY = { $binary: 'PwAAAD8AAAA/AAAA' };
 
 describe('unit.documents.datatypes.vector', () => {
   describe('construction', () => {
-    it('should properly construct a DataAPIVector', () => {
-      const vec = new DataAPIVector(ARR);
-      assert.strictEqual(vec.raw(), ARR);
+    it('should create vectors of each type', () => {
+      const vectorLikes = [ARR, F32ARR, BINARY];
+
+      for (const vectorLike of vectorLikes) {
+        const full = new DataAPIVector(vectorLike);
+        const shorthand = vector(vectorLike);
+        assert.deepStrictEqual(full.raw(), vectorLike);
+        assert.deepStrictEqual(shorthand.raw(), vectorLike);
+        assert.deepStrictEqual(full.raw(), shorthand.raw());
+      }
     });
 
-    it('should properly construct a DataAPIVector using the shorthand', () => {
-      const vec = vector(ARR);
-      assert.strictEqual(vec.raw(), ARR);
-    });
+    it('should create a vector from another vector', () => {
+      const vectorLikes = [ARR, F32ARR, BINARY];
 
-    it('should properly construct a DataAPIVector using a Float32Array', () => {
-      const vec = new DataAPIVector(F32ARR);
-      assert.strictEqual(vec.raw(), F32ARR);
-    });
-
-    it('should properly construct a DataAPIVector using $binary', () => {
-      const vec = new DataAPIVector(BINARY);
-      assert.strictEqual(vec.raw(), BINARY);
-    });
-
-    it('should properly construct a DataAPIVector using another DataAPIVector', () => {
-      const vec = new DataAPIVector(BINARY);
-      const vec2 = new DataAPIVector(vec);
-      assert.strictEqual(vec2.raw(), BINARY);
+      for (const vectorLike of vectorLikes) {
+        const original = new DataAPIVector(vectorLike);
+        const copy = vector(original);
+        assert.deepStrictEqual(original.raw(), copy.raw());
+      }
     });
 
     it('should error on invalid type', () => {
@@ -59,52 +56,65 @@ describe('unit.documents.datatypes.vector', () => {
     });
   });
 
-  describe('length', () => {
-    it('should return the length of the vector from number[]', () => {
-      const vec = new DataAPIVector(ARR);
-      assert.strictEqual(vec.length, 3);
-    });
+  it('should get length of all types', () => {
+    const vectors = [vector(ARR), vector(F32ARR), vector(BINARY), vector(vector(ARR))];
 
-    it('should return the length of the vector from Float32Array', () => {
-      const vec = new DataAPIVector(F32ARR);
+    for (const vec of vectors) {
       assert.strictEqual(vec.length, 3);
-    });
-
-    it('should return the length of the vector from $binary', () => {
-      const vec = new DataAPIVector(BINARY);
-      assert.strictEqual(vec.length, 3);
-    });
+    }
   });
 
-  describe('coercion', () => {
-    it('should return number[] as $binary', () => {
-      const vec = new DataAPIVector(ARR);
-      assert.deepStrictEqual(vec.asBase64(), BINARY.$binary);
-    });
+  it('should convert between all types on the server', () => {
+    const vectors = [vector(ARR), vector(F32ARR), vector(BINARY), vector(vector(ARR))];
 
-    it('should return Float32Array as $binary', () => {
-      const vec = new DataAPIVector(F32ARR);
-      assert.deepStrictEqual(vec.asBase64(), BINARY.$binary);
-    });
-
-    it('should return Float32Array as number[]', () => {
-      const vec = new DataAPIVector(F32ARR);
+    for (const vec of vectors) {
+      assert.strictEqual(vec.asBase64(), BINARY.$binary);
       assert.deepStrictEqual(vec.asArray(), ARR);
-    });
+      assert.deepStrictEqual(vec.asFloat32Array(), F32ARR);
+    }
+  });
 
-    it('should return $binary as number[]', () => {
-      const vec = new DataAPIVector(BINARY);
+  it('should convert between all types in the browser', { pretendEnv: 'browser' }, () => {
+    const vectors = [vector(ARR), vector(F32ARR), vector(BINARY), vector(vector(ARR))];
+
+    for (const vec of vectors) {
+      assert.strictEqual(vec.asBase64(), BINARY.$binary);
       assert.deepStrictEqual(vec.asArray(), ARR);
-    });
-
-    it('should return $binary as Float32Array', () => {
-      const vec = new DataAPIVector(BINARY);
       assert.deepStrictEqual(vec.asFloat32Array(), F32ARR);
-    });
+    }
+  });
 
-    it('should return number[] as Float32Array', () => {
-      const vec = new DataAPIVector(ARR);
-      assert.deepStrictEqual(vec.asFloat32Array(), F32ARR);
-    });
+  it('should throw various conversion errors in unknown environments', { pretendEnv: 'unknown' }, () => {
+    assert.throws(() => vector(ARR).asBase64());
+    assert.ok(vector(ARR).asArray());
+    assert.ok(vector(ARR).asFloat32Array());
+
+    assert.throws(() => vector(F32ARR).asBase64());
+    assert.ok(vector(F32ARR).asArray());
+    assert.ok(vector(F32ARR).asFloat32Array());
+
+    assert.ok(vector(BINARY).asBase64());
+    assert.throws(() => vector(BINARY).asArray());
+    assert.throws(() => vector(BINARY).asFloat32Array());
+
+    assert.throws(() => vector(vector(ARR)).asBase64());
+    assert.ok(vector(vector(ARR)).asArray());
+    assert.ok(vector(vector(ARR)).asFloat32Array());
+  });
+
+  it('has a working toString()', () => {
+    assert.strictEqual(vector(ARR).toString(), 'DataAPIVector<3>(typeof raw=number[], preview=[0.5, 0.5, ...])');
+    assert.strictEqual(vector(F32ARR).toString(), 'DataAPIVector<3>(typeof raw=Float32Array, preview=[0.5, 0.5, ...])');
+    assert.strictEqual(vector(BINARY).toString(), 'DataAPIVector<3>(typeof raw=base64, preview="PwAAAD8AAAA/...")');
+
+    assert.strictEqual(vector([.5]).toString(), 'DataAPIVector<1>(typeof raw=number[], preview=[0.5])');
+    assert.strictEqual(vector(new Float32Array([.5])).toString(), 'DataAPIVector<1>(typeof raw=Float32Array, preview=[0.5])');
+    assert.strictEqual(vector({ $binary: 'PczMzQ==' }).toString(), 'DataAPIVector<1>(typeof raw=base64, preview="PczMzQ==")');
+  });
+
+  it('has a working inspect', () => {
+    assert.strictEqual((vector(ARR) as any)[$CustomInspect](), 'DataAPIVector<3>(typeof raw=number[], preview=[0.5, 0.5, ...])');
+    assert.strictEqual((vector(F32ARR) as any)[$CustomInspect](), 'DataAPIVector<3>(typeof raw=Float32Array, preview=[0.5, 0.5, ...])');
+    assert.strictEqual((vector(BINARY) as any)[$CustomInspect](), 'DataAPIVector<3>(typeof raw=base64, preview="PwAAAD8AAAA/...")');
   });
 });

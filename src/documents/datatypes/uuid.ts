@@ -87,20 +87,20 @@ export class UUID implements CollCodec<typeof UUID>, TableCodec<typeof UUID> {
    */
   public readonly version!: number;
 
-  readonly #raw: string;
+  private readonly _raw!: string;
 
   /**
    * Implementation of `$SerializeForTable` for {@link TableCodec}
    */
   public [$SerializeForTable](ctx: TableSerCtx) {
-    return ctx.done(this.#raw);
+    return ctx.done(this._raw);
   };
 
   /**
    * Implementation of `$SerializeForCollection` for {@link TableCodec}
    */
   public [$SerializeForCollection](ctx: CollSerCtx) {
-    return ctx.done({ $uuid: this.#raw });
+    return ctx.done({ $uuid: this._raw });
   };
 
   /**
@@ -137,14 +137,16 @@ export class UUID implements CollCodec<typeof UUID>, TableCodec<typeof UUID> {
       }
     }
 
-    this.#raw = uuid.toLowerCase();
+    Object.defineProperty(this, '_raw', {
+      value: uuid.toLowerCase(),
+    });
 
     Object.defineProperty(this, 'version', {
-      value: version || parseInt(this.#raw[14], 16),
+      value: version || parseInt(this._raw[14], 16),
     });
 
     Object.defineProperty(this, $CustomInspect, {
-      value: () => `UUID<${this.version}>("${this.#raw}")`,
+      value: () => `UUID<${this.version}>("${this._raw}")`,
     });
   }
 
@@ -161,10 +163,10 @@ export class UUID implements CollCodec<typeof UUID>, TableCodec<typeof UUID> {
    */
   public equals(other: unknown): boolean {
     if (typeof other === 'string') {
-      return this.#raw === other.toLowerCase();
+      return this._raw === other.toLowerCase();
     }
     if (other instanceof UUID) {
-      return this.#raw === other.#raw;
+      return this._raw === other._raw;
     }
     return false;
   }
@@ -189,7 +191,7 @@ export class UUID implements CollCodec<typeof UUID>, TableCodec<typeof UUID> {
    * Returns the string representation of the UUID in lowercase.
    */
   public toString(): string {
-    return this.#raw;
+    return this._raw;
   }
 
   /**

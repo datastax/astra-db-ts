@@ -15,31 +15,61 @@
 import { TableIndexOptions, TableVectorIndexOptions } from '@/src/documents';
 import { WithTimeout } from '@/src/lib';
 
+/**
+ * Options for listing indexes on a table.
+ *
+ * @public
+ */
 export interface ListIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
   nameOnly?: boolean,
 }
 
+/**
+ * A descriptor for an index on a table.
+ *
+ * @public
+ */
 export interface TableIndexDescriptor {
   name: string,
   definition: TableNormalIndexDescriptor | TableVectorIndexDescriptor | TableUnknownIndex,
 }
 
-interface TableNormalIndexDescriptor {
+/**
+ * A descriptor for a normal index on a table.
+ *
+ * @public
+ */
+export interface TableNormalIndexDescriptor {
   column: string,
   options: TableIndexOptions,
 }
 
-interface TableVectorIndexDescriptor {
+/**
+ * A descriptor for a vector index on a table.
+ *
+ * @public
+ */
+export interface TableVectorIndexDescriptor {
   column: string,
   options: TableVectorIndexOptions,
 }
 
-interface TableUnknownIndex {
+/**
+ * A descriptor for an index on a table with an unsupported column type.
+ *
+ * @public
+ */
+export interface TableUnknownIndex {
   column: 'UNKNOWN',
   apiSupport: TableIndexUnsupportedColumnApiSupport,
 }
 
-interface TableIndexUnsupportedColumnApiSupport {
+/**
+ * API support for an index on a table with an unsupported column type.
+ *
+ * @public
+ */
+export interface TableIndexUnsupportedColumnApiSupport {
   createIndex: boolean,
   filter: boolean,
   cqlDefinition: string,

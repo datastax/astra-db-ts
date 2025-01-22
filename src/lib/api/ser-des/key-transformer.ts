@@ -26,7 +26,7 @@ export abstract class KeyTransformer {
  * @public
  */
 export class Camel2SnakeCase extends KeyTransformer {
-  private _cache: Record<string, string> = {};
+  private _cache: Record<string, string> = { _id: '_id' };
 
   public override serializeKey(camel: string, ctx: BaseSerCtx<CodecSerDesFns>): string {
     if (ctx.path.length > 1 || !camel) {

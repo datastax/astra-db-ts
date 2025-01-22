@@ -15,7 +15,7 @@
 
 import { DataAPICreateKeyspaceOptions } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
-import type { WithTimeout } from '@/src/lib';
+import type { OpaqueHttpClient, WithTimeout } from '@/src/lib';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { Db } from '@/src/db';
@@ -223,7 +223,7 @@ export class DataAPIDbAdmin extends DbAdmin {
     });
   }
 
-  public get _httpClient() {
+  public get _httpClient(): OpaqueHttpClient {
     return this.#httpClient;
   }
 }

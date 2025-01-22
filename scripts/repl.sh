@@ -12,7 +12,7 @@ if [ -z "$CLIENT_DB_TOKEN" ] || [ -z "$CLIENT_DB_TOKEN" ]; then
 fi
 
 # Rebuild the client (without types or any extra processing for speed)
-sh scripts/build.sh -light || exit 2
+sh scripts/build.sh -light -no-report || exit 2
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -24,6 +24,26 @@ while [ $# -gt 0 ]; do
     "-l" | "-logging")
       export LOG_ALL_TO_STDOUT=true
       ;;
+    *)
+      if [ "$1" != "--help" ] && [ "$1" != "-help" ] && [ "$1" != "-h" ]; then
+        echo "Invalid flag $1"
+        echo
+      fi
+      echo "Usage: sh scripts/repl.sh [-local] [-l | -logging]"
+      echo
+      echo "* -local: Sets the environment to 'hcd' and attempts to use a locally running stargate instance"
+      echo "* -l | -logging: Logs helpful events to stdout"
+      echo
+      echo "Useful commands:"
+      echo
+      echo "cl: Clears the console"
+      echo "cda: Deletes all documents in the test collection"
+      echo "tda: Deletes all documents in the test table"
+      echo "cfa: Finds all documents in the test collection"
+      echo "tfa: Finds all documents in the test table"
+      echo "cif(doc): Inserts a row into the test collection and returns the inserted document"
+      echo "tif(row): Inserts a row into the test table and returns the inserted document"
+      exit
   esac
   shift
 done
@@ -33,6 +53,7 @@ node -i -e "
   require('./node_modules/dotenv/config');
 
   const $ = require('./dist');
+  const sp = require('synchronized-promise')
   require('util').inspect.defaultOptions.depth = null;
 
   let client = new $.DataAPIClient(process.env.CLIENT_DB_TOKEN, { environment: process.env.CLIENT_DB_ENVIRONMENT, logging: [{ events: 'all', emits: 'event' }] });
@@ -40,10 +61,6 @@ node -i -e "
   let dbAdmin = db.admin({ environment: process.env.CLIENT_DB_ENVIRONMENT });
 
   const isAstra = process.env.CLIENT_DB_ENVIRONMENT === 'astra';
-
-  // if (!isAstra) {
-  //   await dbAdmin.createKeyspace('default_keyspace', { updateDbKeyspace: true });
-  // }
 
   let admin = (isAstra)
     ? client.admin()
@@ -65,27 +82,47 @@ node -i -e "
     },
   });
 
-  Object.defineProperty(this, 'cdm', {
+  Object.defineProperty(this, 'cda', {
     get() {
-      return coll.deleteMany();
+      return sp(() => coll.deleteMany({}))();
     },
   });
 
-  Object.defineProperty(this, 'tdm', {
+  Object.defineProperty(this, 'tda', {
     get() {
-      return table.deleteMany();
+      return sp(() => table.deleteMany({}))();
     },
   });
 
   Object.defineProperty(this, 'cfa', {
     get() {
-      return coll.find({}).toArray();
+      return sp(() => coll.find({}).toArray())();
     },
   });
 
   Object.defineProperty(this, 'tfa', {
     get() {
-      return table.find({}).toArray();
+      return sp(() => table.find({}).toArray())();
     },
   });
+
+  const cif = sp(async (doc) => {
+    const { insertedId } = await coll.insertOne(doc);
+    return await coll.findOne({ _id: insertedId });
+  });
+
+  const tif = sp(async (row) => {
+    row = { text: $.UUID.v4().toString(), int: 0, ...row };
+    await table.insertOne(row);
+    return await table.findOne({ text: row.text, int: row.int });
+  });
+
+  const originalEmit = process.emit;
+
+  process.emit = function (name, data, ...args) {
+    if (name === 'warning' && typeof data === 'object' && data.name === 'DeprecationWarning') {
+      return false;
+    }
+    return originalEmit.apply(process, arguments);
+  };
 "

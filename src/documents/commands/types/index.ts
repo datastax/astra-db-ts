@@ -19,8 +19,9 @@ export type * from './find/find-one';
 export type * from './find/find-one-delete';
 export type * from './find/find-one-replace';
 export type * from './find/find-one-update';
-export type * from './insert/insert-many';
-export type * from './insert/insert-one';
+export type {
+  GenericInsertManyOptions, GenericInsertManyOrderedOptions, GenericInsertManyUnorderedOptions,
+} from './insert/insert-many';
 export type * from './update/update-common';
 export type * from './update/update-many';
 export type * from './update/update-one';

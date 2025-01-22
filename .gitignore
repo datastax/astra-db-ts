@@ -140,5 +140,6 @@ tsdoc-metadata.json
 vectorize_test_spec.json
 etc/test-reports/
 etc/playgrounds/
+tmp-lib-check
 
 .direnv

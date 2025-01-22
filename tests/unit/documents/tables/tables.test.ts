@@ -16,6 +16,7 @@ import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { Table } from '@/src/documents';
+import { $CustomInspect } from '@/src/lib/constants';
 
 describe('unit.documents.tables', ({ db }) => {
   describe('initialization', () => {
@@ -40,5 +41,10 @@ describe('unit.documents.tables', ({ db }) => {
       const table = new Table(db, db._httpClient, 'new_table', undefined);
       assert.strictEqual(table.name, 'new_table');
     });
+  });
+
+  it('should inspect properly', () => {
+    const table = new Table(db, db._httpClient, 'new_table', undefined);
+    assert.strictEqual((table as any)[$CustomInspect](), 'Table(keyspace="default_keyspace",name="new_table")');
   });
 });

@@ -1,6 +1,6 @@
 {
   "name": "@datastax/astra-db-ts",
-  "version": "2.0.0-preview.0",
+  "version": "2.0.0-preview.1",
   "description": "Data API TypeScript client",
   "contributors": [
     "Kavin Gupta (https://github.com/toptobes)",
@@ -62,6 +62,7 @@
     "globals": "^15.9.0",
     "nyc": "^15.1.0",
     "strip-comments": "^2.0.1",
+    "synchronized-promise": "^0.3.1",
     "ts-mocha": "^10.0.0",
     "tsc-alias": "^1.8.8",
     "typescript": "^5.6.2",

@@ -16,6 +16,7 @@
 import assert from 'assert';
 import { uuid, UUID } from '@/src/documents';
 import { describe, it } from '@/tests/testlib';
+import { $CustomInspect } from '@/src/lib/constants';
 
 describe('unit.documents.datatypes.uuid', () => {
   describe('construction', () => {
@@ -152,5 +153,9 @@ describe('unit.documents.datatypes.uuid', () => {
   it('should not equal an invalid type', () => {
     const uuid = new UUID('123e4567-e89b-12d3-a456-426614174000');
     assert(!uuid.equals({}));
+  });
+
+  it('should have a working inspect', () => {
+    assert.strictEqual((uuid('123e4567-E89b-12D3-A456-426614174000') as any)[$CustomInspect](), 'UUID<1>("123e4567-e89b-12d3-a456-426614174000")');
   });
 });

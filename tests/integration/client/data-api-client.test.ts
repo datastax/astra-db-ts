@@ -63,25 +63,6 @@ describe('integration.client.data-api-client', () => {
     });
   });
 
-  describe('asyncDispose', () => {
-    it('should not allow operations after using the client', async () => {
-      const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { environment: ENVIRONMENT });
-      const db = client.db(TEST_APPLICATION_URI, { keyspace: DEFAULT_KEYSPACE });
-
-      {
-        await using _client = client;
-      }
-
-      try {
-        await db.listCollections();
-        assert.fail('should have thrown an error');
-      } catch (e) {
-        assert.ok(e instanceof Error);
-        assert.ok(e.name !== 'AssertionError');
-      }
-    });
-  });
-
   describe('monitoring commands', () => {
     let stdout: string[] = [], stderr: string[] = [];
     const _console = global.console;

@@ -288,7 +288,7 @@ export interface DataAPIExplicitLoggingConfig {
 }
 
 /**
- * @internal
+ * @public
  */
 export interface NormalizedLoggingConfig {
   events: readonly DataAPILoggingEvent[],

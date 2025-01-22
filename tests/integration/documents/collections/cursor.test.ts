@@ -37,6 +37,7 @@ describe('integration.documents.collection.cursor', { truncate: 'colls:before' }
       cursor.close();
       assert.equal(cursor.state, 'closed');
       await assert.rejects(() => cursor.toArray());
+      assert.strictEqual(await cursor.hasNext(), false);
     });
 
     it('should not copy the mapping function', async () => {
