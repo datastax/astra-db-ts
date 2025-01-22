@@ -17,7 +17,7 @@ import assert from 'assert';
 import { describe, it } from '@/tests/testlib';
 import { AWSEmbeddingHeadersProvider, EmbeddingAPIKeyHeaderProvider } from '@/src/documents';
 
-describe('unit.common.embedding-providers', () => {
+describe('unit.documents.embedding-providers', () => {
   describe('EmbeddingAPIKeyHeaderProvider', () => {
     it('should provide the proper header for an api key', () => {
       const ehp = new EmbeddingAPIKeyHeaderProvider('key');

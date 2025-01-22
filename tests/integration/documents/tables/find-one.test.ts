@@ -81,7 +81,7 @@ parallel('integration.documents.tables.find-one', { truncate: 'colls:before', dr
       date: DataAPIDate.now(),
       decimal: BigNumber('12.34567890123456789012345678901234567890'),
       double: 123.456,
-      duration: new DataAPIDuration('P1D'),
+      duration: new DataAPIDuration('1y1mo1d1h1m1s1ms1us1ns'),
       float: 123.456,
       inet: new DataAPIInet('0:0:0:0:0:0:0:1'),
       list: [uuid, uuid],

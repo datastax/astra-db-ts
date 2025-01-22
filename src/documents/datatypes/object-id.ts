@@ -150,7 +150,7 @@ export class ObjectId implements CollCodec<typeof ObjectId> {
 }
 
 const RAND_ID = ~~(Math.random() * 0xFFFFFF);
-const PID = ((typeof process === 'undefined' || typeof process.pid !== 'number') ? ~~(Math.random() * 100000) : process.pid) % 0xFFFF;
+const PID = ~~(Math.random() * 100000) % 0xFFFF;
 
 const HexTable = Array.from({ length: 256 }, (_, i) => {
   return (i <= 15 ? '0' : '') + i.toString(16);

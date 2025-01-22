@@ -35,7 +35,8 @@ import {
   GenericUpdateManyOptions,
   GenericUpdateOneOptions,
   GenericUpdateResult,
-  SomeDoc, SomeRow,
+  SomeDoc,
+  SomeRow,
   Table,
   UpdateFilter,
 } from '@/src/documents';
@@ -274,7 +275,8 @@ export class CommandImpls<ID> {
       timeoutManager: this._httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1] || replacement[1],
     });
-    return resp.data?.document || null;
+
+    return resp.data!.document;
   }
 
   public async findOneAndDelete<Schema extends SomeDoc>(_filter: Filter, options?: GenericFindOneAndDeleteOptions): Promise<Schema | null> {
@@ -288,7 +290,8 @@ export class CommandImpls<ID> {
       timeoutManager: this._httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1],
     });
-    return resp.data?.document || null;
+
+    return resp.data!.document;
   }
 
   public async findOneAndUpdate<Schema extends SomeDoc>(_filter: Filter, _update: SomeDoc, options?: GenericFindOneAndUpdateOptions): Promise<Schema | null> {
@@ -308,7 +311,8 @@ export class CommandImpls<ID> {
       timeoutManager: this._httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent: filter[1] || update[1],
     });
-    return resp.data?.document || null;
+
+    return resp.data!.document;
   }
 
   public async distinct(key: string, filter: SomeDoc, options: WithTimeout<'generalMethodTimeoutMs'> | undefined, mkCursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => FindCursor<SomeDoc>): Promise<any[]> {

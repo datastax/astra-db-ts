@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { $CustomInspect } from '@/src/lib/constants';
-import { DataAPITime, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
+import { DataAPIDuration, DataAPITime, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { mkInvArgsErr } from '@/src/documents/utils';
 
@@ -322,39 +322,44 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
   /**
    * ##### Overview
    *
-   * Converts this `DataAPIDate` to a `Date` object
+   * Converts this `DataAPIDate` to a `Date` object in the local timezone.
    *
-   * If no `base` date/time is provided to use the time from, the time component is set to be zero.
+   * If no `base` date/time is provided, the time component defaults to `00:00:00` (local time).
    *
-   * ##### Disclaimer
+   * If the `base` parameter is a `DataAPITime`, it is interpreted as being in the local timezone, not UTC.
    *
-   * If the base parameter is a `DataAPITime`, it will be treated as in the local timezone; not UTC. See {@link DataAPIDate.toDateUTC} for UTC conversion.
+   * See {@link DataAPIDate.toDateUTC} for a UTC-based alternative to this method.
    *
    * @example
    * ```ts
-   * // '1970-01-01T12:00:00Z'
-   * date('1970-01-01').toDate(new Date('12:00:00'))
+   * // Assuming the local timezone is UTC-6 (CST) //
    *
-   * // '1970-01-01T(12:00:00 - timezone_offset)Z'
-   * date('1970-01-01').toDate(new DataAPITime('12:00:00'))
+   * // Local Time: '2000-01-01T12:00:00'
+   * // UTC Time:   '2000-01-01T18:00:00Z'
+   * date('2000-01-01').toDate(new Date('1970-01-01T12:00:00'));
    *
-   * // '1970-01-01T00:00:00Z'
-   * date('1970-01-01').toDate()
+   * // Local Time: '2000-01-01T06:00:00'
+   * // UTC Time:   '2000-01-01T12:00:00Z'
+   * date('2000-01-01').toDate(new Date('1970-01-01T12:00:00Z'));
+   *
+   * // Local Time: '2000-01-01T12:00:00'
+   * // UTC Time:   '2000-01-01T18:00:00Z'
+   * date('2000-01-01').toDate(new DataAPITime('12:00:00'));
+   *
+   * // Local Time: '2000-01-01T00:00:00'
+   * // UTC Time:   '2000-01-01T06:00:00Z'
+   * date('2000-01-01').toDate();
    * ```
    *
-   * @param base - The base date/time to use for the time component
+   * @param base - The base date/time to use for the time component. If omitted, defaults to `00:00:00` (local time).
    *
-   * @returns The `Date` object representing this `DataAPIDate`
+   * @returns The `Date` object representing this `DataAPIDate` in the local timezone.
    *
-   * @see toDateUTC
-   *
-   * @beta
+   * @see DataAPIDate.toDateUTC
    */
   public toDate(base?: Date | DataAPITime): Date {
     if (!base || base instanceof Date) {
-      const ret = new Date(base || 0);
-      ret.setFullYear(this.year, this.month - 1, this.date);
-      return ret;
+      return new Date(this.year, this.month - 1, this.date, base?.getHours() || 0, base?.getMinutes() || 0, base?.getSeconds() || 0, base?.getMilliseconds() || 0);
     }
     return new Date(this.year, this.month - 1, this.date, base.hours, base.minutes, base.seconds, base.nanoseconds / 1_000_000);
   }
@@ -362,33 +367,86 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
   /**
    * ##### Overview
    *
-   * Converts this `DataAPIDate` to a `Date` object in UTC, using a `DataAPITime` as the base time.
+   * Converts this `DataAPIDate` to a `Date` object in UTC.
    *
-   * ##### Disclaimer
+   * If no `base` date/time is provided, the time component defaults to `00:00:00` (UTC).
    *
-   * The base `DataAPITime` is treated as in the UTC timezone. If you want to use it as if in the local timezone, use {@link DataAPIDate.toDate} instead.
+   * If the `base` parameter is a `DataAPITime`, it is interpreted as being in the UTC timezone.
+   *
+   * See {@link DataAPIDate.toDate} for a local-time-based alternative to this method.
    *
    * @example
    * ```ts
-   * // '2004-09-14T12:34:56Z'
-   * date('2004-09-14').toDateUTC(new DataAPITime('12:34:56'))
+   * // Assuming the local timezone is UTC-6 (CST) //
+   *
+   * // Local Time: '2000-01-01T12:00:00'
+   * // UTC Time:   '2000-01-01T18:00:00Z'
+   * date('2000-01-01').toDateUTC(new Date('1970-01-01T12:00:00'));
+   *
+   * // Local Time: '2000-01-01T06:00:00'
+   * // UTC Time:   '2000-01-01T12:00:00Z'
+   * date('2000-01-01').toDateUTC(new Date('1970-01-01T12:00:00Z'));
+   *
+   * // Local Time: '2000-01-01T12:00:00'
+   * // UTC Time:   '2000-01-01T18:00:00Z'
+   * date('2000-01-01').toDateUTC(new DataAPITime('12:00:00'));
+   *
+   * // Local Time: '1999-12-31T18:00:00'
+   * // UTC Time:   '2000-01-01T00:00:00Z'
+   * date('2000-01-01').toDateUTC();
    * ```
    *
-   * @param base - The base time to use for the time component
+   * @param base - The base time to use for the time component. If omitted, defaults to `00:00:00` UTC.
    *
-   * @returns The `Date` object representing this `DataAPIDate` in UTC
+   * @returns The `Date` object representing this `DataAPIDate` in UTC.
    *
-   * @see toDate
-   *
-   * @beta
+   * @see DataAPIDate.toDate
    */
   public toDateUTC(base?: Date | DataAPITime): Date {
     if (!base || base instanceof Date) {
-      const ret = new Date(base || 0);
-      ret.setUTCFullYear(this.year, this.month - 1, this.date);
-      return ret;
+      return new Date(Date.UTC(this.year, this.month - 1, this.date, base?.getUTCHours() || 0, base?.getUTCMinutes() || 0, base?.getUTCSeconds() || 0, base?.getUTCMilliseconds() || 0));
     }
     return new Date(Date.UTC(this.year, this.month - 1, this.date, base.hours, base.minutes, base.seconds, base.nanoseconds / 1_000_000));
+  }
+
+  /**
+   * ##### Overview
+   *
+   * Adds a {@link DataAPIDuration} or a duration string to this `DataAPIDate`.
+   *
+   * Duration strings will be parsed into a {@link DataAPIDuration} before being added.
+   *
+   * Durations may be negative, in which case the duration will be subtracted from this date.
+   *
+   * @example
+   * ```ts
+   * date('2000-01-01').plus('1y47h59m') // '2001-01-02'
+   *
+   * date('2000-01-01').plus('365d') // '2000-12-31'
+   *
+   * date('2000-01-01').plus('366d') // '2001-01-01'
+   * ```
+   *
+   * @param duration - The duration to add to this `DataAPIDate`
+   *
+   * @returns A new `DataAPIDate` representing the result of adding the duration to this date
+   */
+  public plus(duration: DataAPIDuration | string): DataAPIDate {
+    if (typeof duration === 'string') {
+      duration = new DataAPIDuration(duration);
+    }
+
+    const date = new Date(this.year, this.month - 1, this.date);
+
+    date.setDate(date.getDate() + duration.days);
+    date.setMonth(date.getMonth() + duration.months);
+    date.setMilliseconds(date.getMilliseconds() + duration.toMillis());
+
+    if (isNaN(date.getTime())) {
+      throw new RangeError(`Invalid date resulting from adding duration '${duration.toString()}' to '${this.toString()}'`);
+    }
+
+    return new DataAPIDate(date);
   }
 
   /**

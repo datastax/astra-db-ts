@@ -16,6 +16,7 @@
 import assert from 'assert';
 import { DataAPIVector, vector } from '@/src/documents';
 import { describe, it } from '@/tests/testlib';
+import { $CustomInspect } from '@/src/lib/constants';
 
 const ARR = [.5, .5, .5];
 const F32ARR = new Float32Array(ARR);
@@ -99,5 +100,21 @@ describe('unit.documents.datatypes.vector', () => {
     assert.throws(() => vector(vector(ARR)).asBase64());
     assert.ok(vector(vector(ARR)).asArray());
     assert.ok(vector(vector(ARR)).asFloat32Array());
+  });
+
+  it('has a working toString()', () => {
+    assert.strictEqual(vector(ARR).toString(), 'DataAPIVector<3>(typeof raw=number[], preview=[0.5, 0.5, ...])');
+    assert.strictEqual(vector(F32ARR).toString(), 'DataAPIVector<3>(typeof raw=Float32Array, preview=[0.5, 0.5, ...])');
+    assert.strictEqual(vector(BINARY).toString(), 'DataAPIVector<3>(typeof raw=base64, preview="PwAAAD8AAAA/...")');
+
+    assert.strictEqual(vector([.5]).toString(), 'DataAPIVector<1>(typeof raw=number[], preview=[0.5])');
+    assert.strictEqual(vector(new Float32Array([.5])).toString(), 'DataAPIVector<1>(typeof raw=Float32Array, preview=[0.5])');
+    assert.strictEqual(vector({ $binary: 'PczMzQ==' }).toString(), 'DataAPIVector<1>(typeof raw=base64, preview="PczMzQ==")');
+  });
+
+  it('has a working inspect', () => {
+    assert.strictEqual((vector(ARR) as any)[$CustomInspect](), 'DataAPIVector<3>(typeof raw=number[], preview=[0.5, 0.5, ...])');
+    assert.strictEqual((vector(F32ARR) as any)[$CustomInspect](), 'DataAPIVector<3>(typeof raw=Float32Array, preview=[0.5, 0.5, ...])');
+    assert.strictEqual((vector(BINARY) as any)[$CustomInspect](), 'DataAPIVector<3>(typeof raw=base64, preview="PwAAAD8AAAA/...")');
   });
 });

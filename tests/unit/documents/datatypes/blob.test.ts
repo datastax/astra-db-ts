@@ -99,11 +99,17 @@ describe('unit.documents.datatypes.blob', () => {
     assert.throws(() => blob(BINARY).asArrayBuffer());
   });
 
-  it('should throw on Buffer not available', () => {
+  it('should throw on Buffer not available', { pretendEnv: 'browser' }, () => {
     const blb = new DataAPIBlob(BUFF);
     const origBuffer = globalThis.Buffer;
     delete (<any>globalThis).Buffer;
     assert.throws(() => blb.asBuffer());
     globalThis.Buffer = origBuffer;
+  });
+
+  it('should have a working toString()', () => {
+    assert.strictEqual(blob(BUFF).toString(), 'DataAPIBlob(typeof raw=Buffer, byteLength=3)');
+    assert.strictEqual(blob(ARR_BUFF).toString(), 'DataAPIBlob(typeof raw=ArrayBuffer, byteLength=3)');
+    assert.strictEqual(blob(BINARY).toString(), 'DataAPIBlob(typeof raw=base64, byteLength=3)');
   });
 });

@@ -16,6 +16,7 @@
 import assert from 'assert';
 import { DataAPIDuration, duration } from '@/src/documents';
 import { describe, it } from '@/tests/testlib';
+import { $CustomInspect } from '@/src/lib/constants';
 
 describe('unit.documents.datatypes.duration', () => {
   describe('construction', () => {
@@ -58,16 +59,19 @@ describe('unit.documents.datatypes.duration', () => {
       assertDurationNotOk(['P1Y1M-'], SyntaxError);
       assertDurationNotOk(['P1000000000Y'], RangeError);
 
-      assertDurationOk(['P1Y2M3DT4H5M6.123456789S'], '1y2mo3d4h5m6s123ms456us789ns');
       assertDurationOk(['P001Y'], '1y');
-      assertDurationOk(['P1YT'], '1y');
-      assertDurationOk(['PT1S'], '1s');
-      assertDurationOk(['-P1YT1.01S'], '-1y1s10ms');
-      assertDurationOk(['-PT1H1M1.00001S'], '-1h1m1s10us');
-      assertDurationOk(['-P3MT3.00000001S'], '-3mo3s10ns');
       assertDurationOk(['P00Y000M0DT00H0M000.00S'], '0s');
+      assertDurationOk(['P1YT'], '1y');
       assertDurationOk(['-P'], '0s');
       assertDurationOk(['PT'], '0s');
+
+      for (const bool of [true, false]) {
+        assertDurationOk(['P1Y2M3DT4H5M6.123456789S', bool], '1y2mo3d4h5m6s123ms456us789ns');
+        assertDurationOk(['PT1S', bool], '1s');
+        assertDurationOk(['-P1YT1.01S', bool], '-1y1s10ms');
+        assertDurationOk(['-PT1H1M1.00001S', bool], '-1h1m1s10us');
+        assertDurationOk(['-P3MT3.00000001S', bool], '-3mo3s10ns');
+      }
     });
 
     it('should parse a DataAPIDuration from week ISO format', () => {
@@ -113,6 +117,18 @@ describe('unit.documents.datatypes.duration', () => {
       assertDurationOk([2 ** 31 - 1, 2 ** 31 - 1, 2n ** 63n - 1n], '178956970y7mo2147483647d2562047h47m16s854ms775us807ns');
       assertDurationOk([-(2 ** 31 - 1), -(2 ** 31 - 1), -(2n ** 63n - 1n)], '-178956970y7mo2147483647d2562047h47m16s854ms775us807ns');
     });
+
+    it('should reject invalid args', () => {
+      assertDurationNotOk([], RangeError);
+      assertDurationNotOk([1], TypeError);
+      assertDurationNotOk([1, 2n, 3], TypeError);
+      assertDurationNotOk([1, 2, 3, 4], RangeError);
+      assertDurationNotOk([-1, 2, 3], RangeError);
+      assertDurationNotOk([1.1, 2, 3], TypeError);
+      assertDurationNotOk([2147483648, 3, 3], RangeError);
+      assertDurationNotOk([2, 2147483648, 3], RangeError);
+      assertDurationNotOk([2, 2, 9223372036854775808n], RangeError);
+    });
   });
 
   describe('builder', () => {
@@ -144,14 +160,21 @@ describe('unit.documents.datatypes.duration', () => {
     });
 
     it('should build a DataAPIDuration based on another duration', () => {
-      const orig = duration('-1y1mo1d');
-
-      const span = duration.builder(orig)
+      const orig1 = duration('1y1mo1d1ns');
+      const span1 = duration.builder(orig1)
         .addMonths(12)
         .addYears(1)
         .addSeconds(1)
         .build();
-      assert.strictEqual(span.toString(), '-3y1mo1d1s');
+      assert.strictEqual(span1.toString(), '3y1mo1d1s1ns');
+
+      const orig2 = duration('-1y1mo1d1ns');
+      const span2 = duration.builder(orig2)
+        .addMonths(12)
+        .addYears(1)
+        .addSeconds(1)
+        .build();
+      assert.strictEqual(span2.toString(), '-3y1mo1d1s1ns');
     });
 
     it('should clone a builder', () => {
@@ -215,6 +238,20 @@ describe('unit.documents.datatypes.duration', () => {
         assert.ok((duration.builder() as any)[method](1)[method](-1).build());
         assert.throws(() => (duration.builder() as any)[method](-1), RangeError);
       }
+    });
+
+    it('should reject decimal args', () => {
+      const builder = duration.builder();
+      assert.throws(() => builder.addYears(1.1), TypeError);
+      assert.throws(() => builder.addMonths(1.1), TypeError);
+      assert.throws(() => builder.addWeeks(1.1), TypeError);
+      assert.throws(() => builder.addDays(1.1), TypeError);
+      assert.throws(() => builder.addHours(1.1), TypeError);
+      assert.throws(() => builder.addMinutes(1.1), TypeError);
+      assert.throws(() => builder.addSeconds(1.1), TypeError);
+      assert.throws(() => builder.addMillis(1.1), TypeError);
+      assert.throws(() => builder.addMicros(1.1), TypeError);
+      assert.throws(() => builder.addNanos(1.1), TypeError);
     });
   });
 
@@ -409,5 +446,10 @@ describe('unit.documents.datatypes.duration', () => {
       assert.throws(() => duration('P2Y3W'), SyntaxError);
       assert.throws(() => duration('P0002-00-20'), SyntaxError);
     });
+  });
+
+  it('should inspect properly', () => {
+    assert.strictEqual((duration('02y37mo5d1h') as any)[$CustomInspect](), 'DataAPIDuration("5y1mo5d1h")');
+    assert.strictEqual((duration('-2y37mo5d1h') as any)[$CustomInspect](), 'DataAPIDuration("-5y1mo5d1h")');
   });
 });

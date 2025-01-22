@@ -16,6 +16,7 @@
 import assert from 'assert';
 import { ObjectId, oid } from '@/src/documents';
 import { describe, it } from '@/tests/testlib';
+import { $CustomInspect } from '@/src/lib/constants';
 
 describe('unit.documents.datatypes.object-id', () => {
   it('should properly construct an ObjectId', () => {
@@ -98,5 +99,9 @@ describe('unit.documents.datatypes.object-id', () => {
   it('should not equal an invalid type', () => {
     const objectId = new ObjectId('507f191e810c19729de860ea');
     assert(!objectId.equals({}));
+  });
+
+  it('should have a working inspect', () => {
+    assert.strictEqual((oid('507f191e810c19729de860ea') as any)[$CustomInspect](), 'ObjectId("507f191e810c19729de860ea")');
   });
 });

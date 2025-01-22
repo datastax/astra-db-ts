@@ -150,10 +150,29 @@ import { Ref } from '@/src/lib/types';
  * @public
  */
 export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
+  /**
+   * Nanoseconds per hour.
+   */
   public static readonly NS_PER_HOUR = 3_600_000_000_000n;
+
+  /**
+   * Nanoseconds per minute.
+   */
   public static readonly NS_PER_MIN = 60_000_000_000n;
+
+  /**
+   * Nanoseconds per second.
+   */
   public static readonly NS_PER_SEC = 1_000_000_000n;
+
+  /**
+   * Nanoseconds per millisecond.
+   */
   public static readonly NS_PER_MS = 1_000_000n;
+
+  /**
+   * Nanoseconds per microsecond.
+   */
   public static readonly NS_PER_US = 1_000n;
 
   /**
@@ -286,6 +305,9 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
     switch (arguments.length) {
       case 1:
       case 2:
+        if (typeof i1 !== 'string') {
+          throw mkInvArgsErr('DataAPIDuration', [['duration', 'string']], i1);
+        }
         [this.months, this.days, this.nanoseconds] = parseDurationStr(i1, !!i2);
         break;
       case 3:
@@ -1204,11 +1226,7 @@ type MDN = [number, number, bigint];
 
 const BuilderAddNamesLUT = ['years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds', 'milliseconds', 'microseconds', 'nanoseconds'];
 
-const parseDurationStr = (str: unknown, fromDataAPI: boolean): MDN => {
-  if (typeof str !== 'string') {
-    throw mkInvArgsErr('DataAPIDuration', [['duration', 'string']], str);
-  }
-
+const parseDurationStr = (str: string, fromDataAPI: boolean): MDN => {
   const isNegative = str[0] === '-';
   const durationStr = isNegative ? str.slice(1) : str;
 
@@ -1270,7 +1288,8 @@ const parseDataAPIDuration = (str: string, negative: boolean): MDN => {
     lut[unit](duration, num);
 
     if (unit === '.') {
-      return parseDataAPIDurationNanos(str.slice(index), duration);
+      parseDataAPIDurationNanos(str.slice(index), duration);
+      break;
     }
   }
 
@@ -1283,9 +1302,8 @@ const parseDataAPIDuration = (str: string, negative: boolean): MDN => {
   return duration;
 };
 
-const parseDataAPIDurationNanos = (str: string, duration: MDN): MDN => {
+const parseDataAPIDurationNanos = (str: string, duration: MDN) => {
   duration[2] += BigInt(parseInt(str, 10) * Math.pow(10, 10 - str.length));
-  return duration;
 };
 
 const BasicDurationRegex = /(\d+)(y|mo|w|d|h|s|ms|us|µs|ns|m)/gyi;

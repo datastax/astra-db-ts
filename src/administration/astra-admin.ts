@@ -106,7 +106,7 @@ export class AstraAdmin {
     });
 
     Object.defineProperty(this, $CustomInspect, {
-      value: () => `AstraAdmin()`,
+      value: () => 'AstraAdmin()',
     });
   }
 
@@ -183,7 +183,7 @@ export class AstraAdmin {
       ? maybeOptions
       : regionOrOptions;
 
-    if (typeof regionOrOptions === 'string' && (endpointOrId.startsWith('https://') || endpointOrId.startsWith('http://'))) {
+    if (typeof regionOrOptions === 'string' && (endpointOrId.startsWith('http'))) {
       throw new Error('Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { keyspace })`?');
     }
 

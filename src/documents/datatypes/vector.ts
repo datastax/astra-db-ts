@@ -199,7 +199,7 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
     const type = ('$binary' in this._vector && 'base64') || (this._vector instanceof Float32Array && 'Float32Array') || 'number[]';
 
     const partial = ('$binary' in this._vector)
-      ? `'${this._vector.$binary.slice(0, 12)}${this._vector.$binary.length > 12 ? '...' : ''}'`
+      ? `"${this._vector.$binary.slice(0, 12)}${this._vector.$binary.length > 12 ? '...' : ''}"`
       : `[${this._vector.slice(0, 2).join(', ')}${this._vector.length > 2 ? ', ...' : ''}]`;
 
     return `DataAPIVector<${this.length}>(typeof raw=${type}, preview=${partial})`;
@@ -275,9 +275,7 @@ const deserializeToNumberArray = forJSEnv<[string], number[] | undefined>({
   },
   browser: (serialized) => {
     const deserialized = deserializeToF32Array(serialized);
-    if (deserialized) {
-      return Array.from(deserialized);
-    }
+    return Array.from(deserialized!);
   },
   unknown: () => {
     return undefined;

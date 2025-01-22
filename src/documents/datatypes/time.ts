@@ -287,6 +287,9 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
           [this.hours, this.minutes, this.seconds, this.nanoseconds] = parseTimeStr(i1, true);
         }
         else if (i1 instanceof Date) {
+          if (isNaN(i1.getTime())) {
+            throw new Error(`Invalid date '${i1.toString()}'; must be a valid (non-NaN) date`);
+          }
           this.hours = i1.getHours();
           this.minutes = i1.getMinutes();
           this.seconds = i1.getSeconds();
@@ -326,28 +329,46 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
   /**
    * ##### Overview
    *
-   * Converts this `DataAPITime` to a `Date` object
+   * Converts this `DataAPITime` to a `Date` object in the local timezone.
    *
-   * If no `base` date/time is provided to use the date from, the date component is set to be the current date.
+   * If no `base` date is provided, the time component defaults to the current local date.
+   *
+   * If the `base` parameter is a `DataAPIDate`, it is interpreted as being in the local timezone, not UTC.
+   *
+   * See {@link DataAPITime.toDateUTC} for a UTC-based alternative to this method.
    *
    * @example
    * ```ts
-   * time('12:00:00').toDate(new Date('1970-01-01')) // '1970-01-01T12:00:00.000'
+   * // Assuming the local timezone is UTC-6 (CST) //
    *
-   * time('12:00:00').toDate() // '<local_date>T12:00:00.000'
+   * // Local Time: '2000-01-01T12:00:00'
+   * // UTC Time:   '2000-01-01T18:00:00Z'
+   * time('12:00:00').toDate(new Date('2000-01-01T00:00:00'));
+   *
+   * // Local Time: '1999-12-31T12:00:00'
+   * // UTC Time:   '1999-12-31T18:00:00Z'
+   * time('12:00:00').toDate(new Date('2000-01-01T00:00:00Z'));
+   *
+   * // Local Time: '2000-01-01T12:00:00'
+   * // UTC Time:   '2000-01-01T18:00:00Z'
+   * time('12:00:00').toDate(new DataAPIDate('2000-01-01'));
+   *
+   * // Local Time: '2025-01-22T12:00:00'
+   * // UTC Time:   '2025-01-22T18:00:00Z'
+   * time('12:00:00').toDate();
    * ```
    *
-   * @param base - The base date/time to use for the date component
+   * @param base - The base date to use for the date component. If omitted, defaults to the current local date.
    *
-   * @returns The `Date` object representing this `DataAPITime`
+   * @returns The `Date` object representing this `DataAPITime` in the local timezone.
    *
-   * @beta
+   * @see DataAPITime.toDateUTC
    */
   public toDate(base?: Date | DataAPIDate): Date {
-    if (!base || base instanceof Date) {
-      const ret = new Date(base || 0);
-      ret.setHours(this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000);
-      return ret;
+    base ||= new Date();
+
+    if (base instanceof Date) {
+      return new Date(base?.getFullYear() || 0, base?.getMonth() || 0, base?.getDate() || 0, this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000);
     }
 
     return new Date(base.year, base.month - 1, base.date, this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000);
@@ -356,24 +377,49 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
   /**
    * ##### Overview
    *
-   * Converts this `DataAPITime` to a `Date` object in UTC
+   * Converts this `DataAPITime` to a `Date` object in UTC.
    *
-   * If no `base` date/time is provided to use the date from, the date component is set to be the current date.
+   * If no `base` date is provided, the time component defaults to the current date in UTC.
    *
-   * @param base - The base date/time to use for the date component
+   * If the `base` parameter is a `DataAPIDate`, it is interpreted as being in the UTC timezone.
    *
-   * @returns The `Date` object representing this `DataAPITime`
+   * See {@link DataAPITime.toDate} for a local-date-based alternative to this method.
    *
-   * @beta
+   * @example
+   * ```ts
+   * // Assuming the local timezone is UTC-6 (CST) //
+   *
+   * // Local Time: '2000-01-01T06:00:00'
+   * // UTC Time:   '2000-01-01T12:00:00Z'
+   * time('12:00:00').toDateUTC(new Date('2000-01-01T00:00:00'));
+   *
+   * // Local Time: '2000-01-01T06:00:00Z'
+   * // UTC Time:   '2000-01-01T12:00:00Z'
+   * time('12:00:00').toDateUTC(new Date('2000-01-01T00:00:00Z'));
+   *
+   * // Local Time: '2000-01-01T06:00:00'
+   * // UTC Time:   '2000-01-01T12:00:00Z'
+   * time('12:00:00').toDateUTC(new DataAPIDate('2000-01-01'));
+   *
+   * // Local Time: '2025-01-22T06:00:00'
+   * // UTC Time:   '2025-01-22T12:00:00Z'
+   * time('12:00:00').toDateUTC();
+   * ```
+   *
+   * @param base - The base date to use for the date component. If omitted, defaults to the current date in UTC.
+   *
+   * @returns The `Date` object representing this `DataAPITime` in UTC.
+   *
+   * @see DataAPITime.toDate
    */
   public toDateUTC(base?: Date | DataAPIDate): Date {
-    if (!base || base instanceof Date) {
-      const ret = new Date(base || 0);
-      ret.setUTCHours(this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000);
-      return ret;
+    base ||= new Date();
+
+    if (base instanceof Date) {
+      return new Date(Date.UTC(base.getUTCFullYear(), base.getUTCMonth(), base.getUTCDate(), this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000));
     }
 
-    return new Date(base.year, base.month - 1, base.date, this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000);
+    return new Date(Date.UTC(base.year, base.month - 1, base.date, this.hours, this.minutes, this.seconds, this.nanoseconds / 1_000_000));
   }
 
   /**
@@ -488,11 +534,7 @@ export const time = Object.assign(
   },
 );
 
-const parseTimeStr = (str: unknown, strict: boolean): [number, number, number, number] => {
-  if (typeof str !== 'string') {
-    throw mkInvArgsErr('DataAPITime', [['time', 'string']], str);
-  }
-
+const parseTimeStr = (str: string, strict: boolean): [number, number, number, number] => {
   return (strict)
     ? parseTimeStrict(str)
     : parseTimeQuick(str);
@@ -559,6 +601,10 @@ const ofSecondOfDay = (s: unknown): [number, number, number, number] => {
   if (typeof s !== 'number') {
     throw mkInvArgsErr('DataAPITime.ofSecondOfDay', [['secondOfDay', 'number']], s);
   }
+
+  if (!Number.isInteger(s)) {
+    throw new TypeError(`Invalid number of seconds: ${s}; must be an integer`);
+  }
   
   if (s < 0 || 86_399 < s) {
     throw RangeError(`Invalid number of seconds: ${s}; must be in range [0, 86,399]`);
@@ -575,6 +621,10 @@ const ofSecondOfDay = (s: unknown): [number, number, number, number] => {
 const ofNanoOfDay = (ns: unknown): [number, number, number, number] => {
   if (typeof ns !== 'number') {
     throw mkInvArgsErr('DataAPITime.ofNanoOfDay', [['nanoOfDay', 'number']], ns);
+  }
+
+  if (!Number.isInteger(ns)) {
+    throw new TypeError(`Invalid number of nanoseconds: ${ns}; must be an integer`);
   }
 
   if (ns < 0 || 86_399_999_999_999 < ns) {

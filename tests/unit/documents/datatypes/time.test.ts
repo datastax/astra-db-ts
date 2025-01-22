@@ -14,8 +14,9 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DataAPITime, time } from '@/src/documents';
+import { DataAPITime, date, time } from '@/src/documents';
 import { describe, it } from '@/tests/testlib';
+import { $CustomInspect } from '@/src/lib/constants';
 
 describe('unit.documents.datatypes.time', () => {
   describe('construction', () => {
@@ -38,7 +39,7 @@ describe('unit.documents.datatypes.time', () => {
                   '1:22:33': [Error,      [  1,   2,   3,         0]],
                  '-1:22:33': [Error,      [ -1,  22,  33,         0]],
           '12:34:56Z+05:30': [Error,      [ 12,  34,  56,      5000]],
-                 'asdfdsaf': [Error,      [NaN, NaN, NaN,         0]],
+              'i like cars': [Error,      [NaN, NaN, NaN,       NaN]],
     };
 
     const okStrings = {
@@ -75,14 +76,15 @@ describe('unit.documents.datatypes.time', () => {
     });
 
     it('should create a DataAPITime from hour+month+secs?+ns?', () => {
-      assertTimeNotOk([.002,  1,  1,  1], TypeError);
-      assertTimeNotOk([2000, .1,  1,  1], TypeError);
-      assertTimeNotOk([2000,  1, .1,  1], TypeError);
-      assertTimeNotOk([2000,  1,  1, .1], TypeError);
-      assertTimeNotOk([-200,  1,  1,  1], RangeError);
-      assertTimeNotOk([2000, -1,  1,  1], RangeError);
-      assertTimeNotOk([2000,  1, -1,  1], RangeError);
-      assertTimeNotOk([2000,  1,  1, -1], RangeError);
+      assertTimeNotOk([.2,  1,  1,          1], TypeError);
+      assertTimeNotOk([20, .1,  1,          1], TypeError);
+      assertTimeNotOk([20,  1, .1,          1], TypeError);
+      assertTimeNotOk([20,  1,  1,         .1], TypeError);
+      assertTimeNotOk([-2,  1,  1,          1], RangeError);
+      assertTimeNotOk([20, -1,  1,          1], RangeError);
+      assertTimeNotOk([20,  1, -1,          1], RangeError);
+      assertTimeNotOk([20,  1,  1,         -1], RangeError);
+      assertTimeNotOk([20,  1,  1, 1000000000], RangeError);
 
       assertTimeOk([12, 34        ], [12, 34,  0,  0]);
       assertTimeOk([12, 34, 56    ], [12, 34, 56,  0]);
@@ -95,6 +97,109 @@ describe('unit.documents.datatypes.time', () => {
 
     it('should get the current utc date', () => {
       assert.ok(time.utcnow());
+    });
+
+    it('should reject invalid args', () => {
+      assertTimeNotOk([2000], TypeError);
+      assertTimeNotOk([2000, 1, 2n, 3], TypeError);
+      assertTimeNotOk([], RangeError);
+      assertTimeNotOk([1, 2, 3, 4, 5], RangeError);
+      assertTimeNotOk([new Date('i like cars')], Error);
+    });
+
+    it('should get date from ofSecondOfDay', () => {
+      assert.throws(() => time.ofSecondOfDay(1000n as any), TypeError);
+      assert.throws(() => time.ofSecondOfDay(123.456),      TypeError);
+      assert.throws(() => time.ofSecondOfDay(-1),           RangeError);
+      assert.throws(() => time.ofSecondOfDay(86_400),       RangeError);
+
+      assertTimeOk(time.ofSecondOfDay(     0), [ 0,  0,  0, 0]);
+      assertTimeOk(time.ofSecondOfDay(     1), [ 0,  0,  1, 0]);
+      assertTimeOk(time.ofSecondOfDay(    60), [ 0,  1,  0, 0]);
+      assertTimeOk(time.ofSecondOfDay(    61), [ 0,  1,  1, 0]);
+      assertTimeOk(time.ofSecondOfDay(86_399), [23, 59, 59, 0]);
+    });
+
+    it('should get date from ofNanoOfDay', () => {
+      assert.throws(() => time.ofNanoOfDay(1000n as any),       TypeError);
+      assert.throws(() => time.ofNanoOfDay(123.456),            TypeError);
+      assert.throws(() => time.ofNanoOfDay(-1),                 RangeError);
+      assert.throws(() => time.ofNanoOfDay(86_400_000_000_000), RangeError);
+
+      assertTimeOk(time.ofNanoOfDay(0),                  [ 0,  0,  0,           0]);
+      assertTimeOk(time.ofNanoOfDay(1),                  [ 0,  0,  0,           1]);
+      assertTimeOk(time.ofNanoOfDay(1_000_000_000),      [ 0,  0,  1,           0]);
+      assertTimeOk(time.ofNanoOfDay(1_000_000_001),      [ 0,  0,  1,           1]);
+      assertTimeOk(time.ofNanoOfDay(86_399_999_999_999), [23, 59, 59, 999_999_999]);
+    });
+  });
+
+  describe('comparison', () => {
+    it('should work', () => {
+      assert.strictEqual(time('12:00:00.01').compare(time('12:00:00.01')), 0);
+
+      assert.strictEqual(time('12:00:00.00').compare(time('12:00:00.01')), -1);
+      assert.strictEqual(time('12:00:00.59').compare(time('12:00:01.00')), -1);
+      assert.strictEqual(time('12:00:59.59').compare(time('12:01:00.00')), -1);
+      assert.strictEqual(time('12:59:59.59').compare(time('13:00:00.00')), -1);
+
+      assert.strictEqual(time('12:00:00.01').compare(time('12:00:00.00')), 1);
+      assert.strictEqual(time('12:00:01.00').compare(time('12:00:00.59')), 1);
+      assert.strictEqual(time('12:01:00.00').compare(time('12:00:59.59')), 1);
+      assert.strictEqual(time('13:00:00.00').compare(time('12:59:59.59')), 1);
+    });
+  });
+
+  describe('equality', () => {
+    assert.strictEqual(time('12:00:00').equals(time('12:00:00')), true);
+    assert.strictEqual(time('12:00:00.0123').equals(time('12:00:00.0123')), true);
+    assert.strictEqual(time('12:00:00').equals(time('12:00:00.000000001')), false);
+    assert.strictEqual(time('12:00:00').equals(time('12:00:01')), false);
+    assert.strictEqual(time('12:00:00').equals('12:00:00' as any), false);
+  });
+
+  describe('toDate', () => {
+    it('should work without a base', () => {
+      const date = new Date(`${new Date().toLocaleDateString('sv')}T12:34:56`);
+      assert.ok(Math.abs(time('12:34:56').toDate().getTime() - date.getTime()) < 10);
+    });
+
+    it('should work with a base Date', () => {
+      assert.deepStrictEqual(time('12:34:56').toDate(new Date('2000-01-01T00:00:00')), new Date('2000-01-01T12:34:56'));
+      assert.deepStrictEqual(time('12:34:56').toDate(new Date('2000-01-01T00:00:00Z')), new Date('2000-01-01T12:34:56'));
+    });
+
+    it('should work with a base DataAPITime', () => {
+      assert.deepStrictEqual(time('12:34:56').toDate(date(2000, 1, 1)), new Date('2000-01-01T12:34:56'));
+    });
+  });
+
+  describe('toDateUTC', () => {
+    it('should work without a base', () => {
+      const date = new Date(`${new Date(Date.now()).toLocaleDateString('sv')}T12:34:56Z`);
+      assert.ok(Math.abs(time('12:34:56').toDateUTC().getTime() - date.getTime()) < 10);
+    });
+
+    it('should work with a base Date', () => {
+      assert.deepStrictEqual(time('12:34:56').toDateUTC(new Date('2000-01-01:')), new Date(`${new Date('2000-01-01:').toLocaleDateString('sv', { timeZone: 'utc' })}T12:34:56Z`));
+      assert.deepStrictEqual(time('12:34:56').toDateUTC(new Date('2000-01-01:Z')), new Date('2000-01-01T12:34:56Z'));
+    });
+
+    it('should work with a base DataAPITime', () => {
+      assert.deepStrictEqual(time('12:34:56').toDateUTC(date(2000, 1, 1)), new Date('2000-01-01T12:34:56Z'));
+    });
+  });
+
+  describe('toString', () => {
+    it('should work', () => {
+      assert.strictEqual(time('12:34:56.789').toString(), '12:34:56.789000000');
+      assert.strictEqual(time('12:34:56').toString(), '12:34:56.000000000');
+    });
+  });
+
+  describe('inspect', () => {
+    it('should work', () => {
+      assert.strictEqual((time('12:34:56.789') as any)[$CustomInspect](), 'DataAPITime("12:34:56.789000000")');
     });
   });
 });

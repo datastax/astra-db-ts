@@ -94,4 +94,9 @@ parallel('integration.documents.collections.find-one-and-delete', { truncate: 'c
     );
     assert.strictEqual(res?.name, 'a');
   });
+
+  it('should return null if no document is found', async (key) => {
+    const res = await collection.findOneAndDelete({ key });
+    assert.strictEqual(res, null);
+  });
 });

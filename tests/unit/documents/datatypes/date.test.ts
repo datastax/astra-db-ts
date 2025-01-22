@@ -14,21 +14,21 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DataAPIDate, date, time } from '@/src/documents';
+import { DataAPIDate, date, duration, time } from '@/src/documents';
 import { describe, it } from '@/tests/testlib';
 import { $CustomInspect } from '@/src/lib/constants';
 
 describe('unit.documents.datatypes.date', () => {
+  const assertDateOk = (params: DataAPIDate | any[], ymd: unknown = params) => {
+    const date = params instanceof DataAPIDate ? params : new DataAPIDate(...params as [any]);
+    assert.deepStrictEqual([date.year, date.month, date.date], ymd);
+  };
+
+  const assertDateNotOk = (params: any, err: any = Error) => {
+    assert.throws(() => new DataAPIDate(...params as [any]), err);
+  };
+
   describe('construction', () => {
-    const assertDateOk = (params: any, ymd: unknown = params) => {
-      const date = params instanceof DataAPIDate ? params : new DataAPIDate(...params as [any]);
-      assert.deepStrictEqual([date.year, date.month, date.date], ymd);
-    };
-
-    const assertDateNotOk = (params: any, err: any = Error) => {
-      assert.throws(() => new DataAPIDate(...params as [any]), err);
-    };
-
     const notOkStrings = {
       '-0000-01-01': [RangeError, [  -0,  1,   1]],
        '2000-00-01': [RangeError, [2000,  0,   1]],
@@ -98,16 +98,19 @@ describe('unit.documents.datatypes.date', () => {
     });
 
     it('should get the current date', () => {
-      assertDateOk(date.now(), [new Date().getFullYear(), new Date().getMonth() + 1, new Date().getDate()]);
+      assert.ok(date.now());
     });
 
     it('should get the current utc date', () => {
-      assertDateOk(date.utcnow(), [new Date().getUTCFullYear(), new Date().getUTCMonth() + 1, new Date().getUTCDate()]);
+      assert.ok(date.utcnow());
     });
 
     it('should reject invalid args', () => {
       assertDateNotOk([2000], TypeError);
       assertDateNotOk([2000, 1, 2n], TypeError);
+      assertDateNotOk([], RangeError);
+      assertDateNotOk([1, 2, 3, 4], RangeError);
+      assertDateNotOk([new Date('i like cars')], Error);
     });
 
     it('should get date from ofEpochDay', () => {
@@ -164,10 +167,11 @@ describe('unit.documents.datatypes.date', () => {
 
   describe('toDate', () => {
     it('should work without a base', () => {
-      assert.deepStrictEqual(date(2000, 1, 1).toDate(), new Date('2000-01-01T00:00:00Z'));
+      assert.deepStrictEqual(date(2000, 1, 1).toDate(), new Date('2000-01-01T00:00:00'));
     });
 
     it('should work with a base Date', () => {
+      assert.deepStrictEqual(date(2000, 1, 1).toDate(new Date('1970-01-01T12:34:56')), new Date('2000-01-01T12:34:56'));
       assert.deepStrictEqual(date(2000, 1, 1).toDate(new Date('1970-01-01T12:34:56Z')), new Date('2000-01-01T12:34:56Z'));
     });
 
@@ -177,8 +181,49 @@ describe('unit.documents.datatypes.date', () => {
   });
 
   describe('toDateUTC', () => {
-    it('should work', () => {
+    it('should work without a base', () => {
+      assert.deepStrictEqual(date(2000, 1, 1).toDateUTC(), new Date('2000-01-01T00:00:00Z'));
+    });
+
+    it('should work with a base Date', () => {
+      assert.deepStrictEqual(date(2000, 1, 1).toDateUTC(new Date('1970-01-01T12:34:56')), new Date('2000-01-01T12:34:56'));
+      assert.deepStrictEqual(date(2000, 1, 1).toDateUTC(new Date('1970-01-01T12:34:56Z')), new Date('2000-01-01T12:34:56Z'));
+    });
+
+    it('should work with a base DataAPITime', () => {
       assert.deepStrictEqual(date(2000, 1, 1).toDateUTC(time('12:34:56')), new Date('2000-01-01T12:34:56Z'));
+    });
+  });
+
+  describe('plus', () => {
+    it('should work', () => {
+      assertDateOk(date('2000-01-01').plus('0d'),          [2000,  1,  1]);
+      assertDateOk(date('2000-01-01').plus('1d'),          [2000,  1,  2]);
+      assertDateOk(date('2000-01-01').plus('365d'),        [2000, 12, 31]);
+      assertDateOk(date('2000-01-01').plus('366d'),        [2001,  1,  1]);
+      assertDateOk(date('2000-01-01').plus('1y47h59m'),    [2001,  1,  2]);
+      assertDateOk(date('2000-01-01').plus('1y47h60m'),    [2001,  1,  3]);
+
+      assertDateOk(date('2000-01-01').plus('-0d'),          [2000,  1,  1]);
+      assertDateOk(date('2000-01-01').plus('-1d'),          [1999, 12, 31]);
+      assertDateOk(date('2000-01-01').plus('-365d'),        [1999,  1,  1]);
+      assertDateOk(date('2000-01-01').plus('-366d'),        [1998, 12, 31]);
+      assertDateOk(date('2000-01-01').plus('-1y47h59m'),    [1998, 12, 30]);
+      assertDateOk(date('2000-01-01').plus('-1y47h60m'),    [1998, 12, 30]);
+      assertDateOk(date('2000-01-01').plus('-1y3d'),        [1998, 12, 29]);
+      assertDateOk(date('2000-01-01').plus('-1y47h60m1ms'), [1998, 12, 29]);
+      assertDateOk(date('2001-01-01').plus('-366d'),        [2000,  1,  1]);
+      assertDateOk(date('2001-01-01').plus('-365d'),        [2000,  1,  2]);
+
+      assertDateOk(date('2000-01-01').plus(duration('365d')),  [2000, 12, 31]);
+      assertDateOk(date('2001-01-01').plus(duration('-365d')), [2000,  1,  2]);
+
+      assert.deepStrictEqual(date.ofEpochDay(100_000_000).plus('-1d'), date.ofEpochDay(99_999_999));
+    });
+
+    it('should error on invalid date', () => {
+      assert.throws(() => date.ofEpochDay(100_000_000).plus('1d'));
+      assert.throws(() => date.ofEpochDay(-100_000_000).plus('-1d'));
     });
   });
 

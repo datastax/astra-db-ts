@@ -25,7 +25,7 @@ import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 import BigNumber from 'bignumber.js';
 
-parallel('integration.documents.tables.insert-one', { truncate: 'tables:before' }, ({ table, table_ }) => {
+parallel('integration.documents.tables.insert-one', ({ db, table, table_ }) => {
   it('should insert one partial row', async (key) => {
     const inserted = await table.insertOne({
       text: key,
@@ -49,7 +49,7 @@ parallel('integration.documents.tables.insert-one', { truncate: 'tables:before' 
       date: DataAPIDate.now(),
       decimal: BigNumber('12.34567890123456789012345678901234567890'),
       double: 123.456,
-      duration: new DataAPIDuration('1d'),
+      duration: new DataAPIDuration('1y1mo1d1h1m1s1ms1us1ns'),
       float: 123.456,
       inet: new DataAPIInet('::1'),
       list: [UUID.v4(), UUID.v7()],
@@ -79,7 +79,7 @@ parallel('integration.documents.tables.insert-one', { truncate: 'tables:before' 
       bigint: 1231233,
       date: '2021-01-01',
       double: 123.456,
-      duration: '1d',
+      duration: '1y1mo1d1h1m1s1ms1us1ns',
       float: 123.456,
       inet: '::1',
       list: [UUID.v4(), UUID.v7()],
@@ -131,6 +131,25 @@ parallel('integration.documents.tables.insert-one', { truncate: 'tables:before' 
 
     assert.deepStrictEqual(inserted, {
       insertedId: { text: key, int: 0 },
+    });
+  });
+
+  it('should insert one with a blob pk', async () => {
+    const table = await db.createTable('insert_one_blob_pk', {
+      definition: {
+        columns: {
+          blob: 'blob',
+        },
+        primaryKey: 'blob',
+      },
+    });
+
+    const inserted = await table.insertOne({
+      blob: new DataAPIBlob(Buffer.from('smoke_on_the_water')),
+    });
+
+    assert.deepStrictEqual(inserted, {
+      insertedId: { blob: new DataAPIBlob({ $binary: "c21va2Vfb25fdGhlX3dhdGVy" }) },
     });
   });
 });
