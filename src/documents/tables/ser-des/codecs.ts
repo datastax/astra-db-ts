@@ -162,6 +162,12 @@ export class TableCodecs {
   }
 
   public static forType(type: string, optsOrClass: CodecOpts<TableCodecSerDesFns, TableSerCtx, TableDesCtx> | TableCodecClass): RawCodec<TableCodecSerDesFns> {
+    if (!($DeserializeForTable in optsOrClass) && 'serialize' in optsOrClass && !!optsOrClass.serialize) {
+      if (!('serializeClass' in optsOrClass) && !('serializeGuard' in optsOrClass)) {
+        throw new Error('TableCodecs.forType: serializeClass or serializeGuard must be provided if serialize is present');
+      }
+    }
+
     return {
       type,
       ...($DeserializeForTable in optsOrClass)

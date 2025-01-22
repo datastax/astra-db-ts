@@ -38,7 +38,6 @@ export interface TableSerCtx extends BaseSerCtx<TableCodecSerDesFns> {
  */
 export interface TableDesCtx extends BaseDesCtx<TableCodecSerDesFns> {
   tableSchema: ListTableColumnDefinitions,
-  populateSparseData: boolean,
   next: never;
 }
 
@@ -84,6 +83,10 @@ export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableD
       ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.projectionSchema, 'No `status.projectionSchema` found in response.\n\n**Did you accidentally use a `Table` object on a collection?** If so, documents may\'ve been found, but the client cannot properly deserialize the response. Please use a `Collection` object instead.', rawDataApiResp);
     }
 
+    if (this._cfg?.sparseData !== true) {
+      populateSparseData(ctx);
+    }
+
     if (ctx.keyTransformer) {
       ctx.tableSchema = Object.fromEntries(Object.entries(ctx.tableSchema).map(([key, value]) => {
         return [ctx.keyTransformer!.deserializeKey(key, ctx), value];
@@ -92,7 +95,6 @@ export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableD
 
     (<any>ctx).recurse = () => { throw new Error('Table deserialization does not recurse normally; please call any necessary codecs manually'); };
 
-    ctx.populateSparseData = this._cfg?.sparseData !== true;
     return ctx;
   }
 
@@ -123,7 +125,7 @@ const DefaultTableSerDesCfg = {
       }
     }
 
-    if (ctx.path.length === 1 && key in codecs.name) {
+    if (key in codecs.name) {
       if ((resp = codecs.name[key].serialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
         return resp;
       }
@@ -170,19 +172,22 @@ const DefaultTableSerDesCfg = {
     const codecs = ctx.codecs;
     let resp;
 
-    if (key === '' && Object.keys(ctx.rootObj).length === 0 && ctx.populateSparseData) {
-      populateSparseData(ctx); // populate sparse data for empty objects
-    }
-
     const column = ctx.tableSchema[key];
+    const value = ctx.rootObj[key];
 
     for (let i = 0, n = codecs.path.length; i < n; i++) {
       const path = codecs.path[i].path;
 
       if (stringArraysEqual(path, ctx.path)) {
-        if ((resp = codecs.path[i].deserialize?.(key, ctx.rootObj[key], ctx, column) ?? ctx.continue())[0] !== CONTINUE) {
+        if ((resp = codecs.path[i].deserialize?.(key, value, ctx, column) ?? ctx.continue())[0] !== CONTINUE) {
           return resp;
         }
+      }
+    }
+
+    if (key in codecs.name) {
+      if ((resp = codecs.name[key].deserialize(key, value, ctx, column))[0] !== CONTINUE) {
+        return resp;
       }
     }
 
@@ -190,21 +195,10 @@ const DefaultTableSerDesCfg = {
       return ctx.continue();
     }
 
-    if (ctx.populateSparseData) { // do at this level to avoid looping on newly-populated fields if done at the top level
-      populateSparseData(ctx);
-      ctx.populateSparseData = false;
-    }
-
-    if (key in codecs.name) {
-      if ((resp = codecs.name[key].deserialize(key, ctx.rootObj[key], ctx, column))[0] !== CONTINUE) {
-        return resp;
-      }
-    }
-
     const type = resolveType(column);
 
-    if (type && type in codecs.type) {
-      if ((resp = codecs.type[type].deserialize(key, ctx.rootObj[key], ctx, column))[0] !== CONTINUE) {
+    if (value !== null && type && type in codecs.type) {
+      if ((resp = codecs.type[type].deserialize(key, value, ctx, column))[0] !== CONTINUE) {
         return resp;
       }
     }
