@@ -20,6 +20,7 @@ import { describe, it } from '@/tests/testlib';
 import { DEFAULT_DEVOPS_API_ENDPOINTS } from '@/src/lib/api/constants';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { Timeouts } from '@/src/lib/api/timeouts';
+import { $CustomInspect } from '@/src/lib/constants';
 
 describe('unit.administration.admin', () => {
   const internalOps = (db?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({
@@ -63,5 +64,17 @@ describe('unit.administration.admin', () => {
       assert.ok(admin);
       assert.strictEqual(admin._httpClient.baseUrl, 'https://api.dev.cloud.datastax.com/v2');
     });
+  });
+
+  describe('db', () => {
+    it('throws if detects invalid .db(endpoint, keyspace)', () => {
+      const admin = new AstraAdmin(internalOps());
+      assert.throws(() => admin.db('https://test.com/', 'keyspace'), { message: 'Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { keyspace })`?' });
+    });
+  });
+
+  it('should inspect properly', () => {
+    const admin = new AstraAdmin(internalOps());
+    assert.strictEqual((admin as any)[$CustomInspect](), 'AstraAdmin()');
   });
 });

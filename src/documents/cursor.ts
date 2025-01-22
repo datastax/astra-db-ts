@@ -23,6 +23,7 @@ import { DataAPIError } from '@/src/documents/errors';
 import { SomeRow, Table } from '@/src/documents/tables';
 import { TimeoutManager } from '@/src/lib/api/timeouts';
 import { DataAPIVector, vector } from '@/src/documents/datatypes';
+import { DataAPIHttpClient } from '@/src/lib/api/clients';
 
 /**
  * An exception that may be thrown whenever something goes wrong with a cursor.
@@ -133,6 +134,7 @@ interface InternalGetMoreCommand {
  */
 export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   readonly #parent: Table<SomeRow> | Collection;
+  readonly #httpClient: DataAPIHttpClient;
   readonly #serdes: SerDes;
 
   readonly #options: GenericFindOptions;
@@ -152,6 +154,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    */
   constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: [Filter, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
     this.#parent = parent;
+    this.#httpClient = parent._httpClient as DataAPIHttpClient;
     this.#serdes = serdes;
     this.#filter = filter;
     this.#options = options ?? {};
@@ -576,7 +579,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     }
 
     const docs: T[] = [];
-    const tm = this.#parent._httpClient.tm.multipart('generalMethodTimeoutMs', this.#options);
+    const tm = this.#httpClient.tm.multipart('generalMethodTimeoutMs', this.#options);
 
     try {
       let doc: T | null;
@@ -651,8 +654,8 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
       },
     };
 
-    const raw = await this.#parent._httpClient.executeCommand(command, {
-      timeoutManager: tm ?? this.#parent._httpClient.tm.single('generalMethodTimeoutMs', this.#options),
+    const raw = await this.#httpClient.executeCommand(command, {
+      timeoutManager: tm ?? this.#httpClient.tm.single('generalMethodTimeoutMs', this.#options),
       bigNumsPresent: this.#filter[1],
     });
 

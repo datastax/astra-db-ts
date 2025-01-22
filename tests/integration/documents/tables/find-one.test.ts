@@ -16,11 +16,9 @@
 import {
   DataAPIBlob,
   DataAPIDate,
-  DataAPIDuration,
+  DataAPIDuration, DataAPIInet,
   DataAPITime,
-  DataAPITimestamp,
   DataAPIVector,
-  InetAddress,
   UUID,
 } from '@/src/documents';
 import { EverythingTableSchema, it, parallel } from '@/tests/testlib';
@@ -79,18 +77,18 @@ parallel('integration.documents.tables.find-one', { truncate: 'colls:before', dr
       map: new Map([]),
       ascii: 'highway_star',
       blob: new DataAPIBlob(Buffer.from('smoke_on_the_water')),
-      bigint: 1231233,
-      date: new DataAPIDate(),
+      bigint: 1231233n,
+      date: DataAPIDate.now(),
       decimal: BigNumber('12.34567890123456789012345678901234567890'),
       double: 123.456,
-      duration: new DataAPIDuration('P1D'),
+      duration: new DataAPIDuration('1y1mo1d1h1m1s1ms1us1ns'),
       float: 123.456,
-      inet: new InetAddress('0:0:0:0:0:0:0:1'),
+      inet: new DataAPIInet('0:0:0:0:0:0:0:1'),
       list: [uuid, uuid],
       set: new Set([uuid, uuid, uuid]),
       smallint: 123,
-      time: new DataAPITime(),
-      timestamp: new DataAPITimestamp(),
+      time: DataAPITime.now(),
+      timestamp: new Date(),
       tinyint: 123,
       uuid: UUID.v4(),
       varint: 12312312312312312312312312312312n,
@@ -122,7 +120,7 @@ parallel('integration.documents.tables.find-one', { truncate: 'colls:before', dr
     assert.strictEqual(found.blob.asBase64(), doc.blob.asBase64());
 
     assert.ok(found.date);
-    assert.deepStrictEqual(found.date.components(), doc.date.components());
+    assert.deepStrictEqual(found.date, doc.date);
 
     assert.ok(found.decimal);
     assert.strictEqual(found.decimal.toString(), doc.decimal.toString());
@@ -141,10 +139,10 @@ parallel('integration.documents.tables.find-one', { truncate: 'colls:before', dr
     assert.deepStrictEqual([...found.set].map(u => u.toString()), [...doc.set].map(u => u.toString()));
 
     assert.ok(found.time);
-    assert.deepStrictEqual(found.time.components(), doc.time.components());
+    assert.deepStrictEqual(found.time, doc.time);
 
     assert.ok(found.timestamp);
-    assert.deepStrictEqual(found.timestamp.components(), doc.timestamp.components());
+    assert.deepStrictEqual(found.timestamp, doc.timestamp);
 
     assert.ok(found.uuid);
     assert.ok(found.uuid.equals(doc.uuid));

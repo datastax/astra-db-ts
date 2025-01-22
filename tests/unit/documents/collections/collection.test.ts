@@ -16,6 +16,7 @@ import { Collection } from '@/src/documents/collections';
 import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
+import { $CustomInspect } from '@/src/lib/constants';
 
 describe('unit.documents.collections', ({ db }) => {
   describe('initialization', () => {
@@ -40,5 +41,10 @@ describe('unit.documents.collections', ({ db }) => {
       const collection = new Collection(db, db._httpClient, 'new_collection', undefined);
       assert.strictEqual(collection.name, 'new_collection');
     });
+  });
+
+  it('should inspect properly', () => {
+    const collection = new Collection(db, db._httpClient, 'new_collection', undefined);
+    assert.strictEqual((collection as any)[$CustomInspect](), 'Collection(keyspace="default_keyspace",name="new_collection")');
   });
 });

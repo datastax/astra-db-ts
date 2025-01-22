@@ -15,7 +15,7 @@
 
 import { AstraCreateKeyspaceOptions, AstraDropKeyspaceOptions } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
-import type { WithTimeout } from '@/src/lib';
+import { OpaqueHttpClient, WithTimeout } from '@/src/lib';
 import { TokenProvider } from '@/src/lib';
 import { buildAstraDatabaseAdminInfo, extractAstraEnvironment } from '@/src/administration/utils';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
@@ -94,7 +94,7 @@ export class AstraDbAdmin extends DbAdmin {
       timeoutDefaults: Timeouts.merge(rootOpts.adminOptions.timeoutDefaults, adminOpts?.timeoutDefaults),
     });
 
-    this.#dataApiHttpClient = db._httpClient.forDbAdmin(adminOpts);
+    this.#dataApiHttpClient = (db._httpClient as DataAPIHttpClient).forDbAdmin(adminOpts);
     this.#db = db;
 
     Object.defineProperty(this, $CustomInspect, {
@@ -335,7 +335,7 @@ export class AstraDbAdmin extends DbAdmin {
     });
   }
 
-  public get _httpClient() {
+  public get _httpClient(): OpaqueHttpClient {
     return this.#httpClient;
   }
 

@@ -19,7 +19,6 @@ Some types are strictly meant for tables; others for collections. And a couple, 
   - [Blobs](#blobs)
   - [Collections](#collections-1)
   - [Dates/Times](#dates--times)
-  - [InetAddresses](#inetaddresses)
   - [UUIDs](#uuids-1)
   - [Vectors](#vectors-1)
 - [Inserting native representations](#inserting-native-representations)
@@ -73,7 +72,7 @@ await collection.insertOne({
 ### BigNumbers
 
 > **NOTE**
-> Enabling BigNumbers support for a collection will force a slower, bignum-friendly JSON library to be used for all documents in that collection. The difference should be negligible for most use-cases.
+> Enabling bigints/BigNumbers support for a collection will force a slower, bignum-friendly JSON library to be used for all documents in that collection. The difference should be negligible for most use-cases.
 
 Proper big-number support is still under works in `astra-db-ts`, but a rough version is out currently.
 
@@ -138,25 +137,6 @@ await collection.insertOne({
 
 const doc = await collection.findOne();
 console.log(doc.date instanceof Date); // true
-```
-
-If you prefer to use `DataAPITimestamp`s for interop with tables, that's also allowed, though you'll need to enable a certain codec if you want to read the date back as a `DataAPITimestamp`.
-
-- `DataAPITimestamp`s will still serialize to a `$date` by default, even if you don't set the necessary codec.
-
-```typescript
-import { CollCodecs, DataAPITimestamp, timestamp } from '@datastax/astra-db-ts';
-
-const collection = db.collection('my_coll', {
-  serdes: { codecs: [CollCodecs.USE_DATA_API_TIMESTAMPS_FOR_DATES] },
-});
-
-await collection.insertOne({
-  date: timestamp(), // Equivalent to `new DataAPITimestamp()`
-});
-
-const doc = await collection.findOne();
-console.log(doc.date instanceof DataAPITimestamp); // true
 ```
 
 ### ObjectIds
@@ -263,28 +243,28 @@ A variety of scalar types, however, are represented by custom `astra-db-ts`-prov
 ### BigNumbers
 
 > **NOTE**
-> Enabling BigNumbers support for a collection will force a slower, bignum-friendly JSON library to be used for all documents in that collection. The difference should be negligible for most use-cases.
+> Using bigints/BigNumbers in a table will force a slower, bignum-friendly JSON library to be used for all documents in that collection. The difference should be negligible for most use-cases.
 
 Unlike collections, `bigint`s & `BigNumber`s are supported completely and natively in tables; you don't need to enable any special options to use them.
 
 The performance penalty still applies, however, but it's only in play when there's actually a `bigint` or `BigNumber` present in the object.
 
 While you may technically pass any of `number`, `bigint`, or `BigNumber` to the database, it'll be read back as:
-- a `bigint` if the column is a `varint`
+- a `bigint` if the column is a `varint`, `bigint`, or `counter`
 - a `BigNumber` if the column is a `decimal`
 
 ```typescript
 import { BigNumber } from '@datastax/astra-db-ts';
 
 await table.insertOne({
-  bigint1: 1234567890123456789012345672321312312890n,
-  bigint2: 10n,
+  varint: 1234567890123456789012345672321312312890n,
+  bigint: 18446744073709551615n,
   decmial: new BigNumber('12345678901234567890123456.72321312312890'),
 });
 
 const row = await table.findOne();
-console.log(row.bigint1.toString()); // Will be returned as a `bigint`
-console.log(row.bigint2.toString()); // Will be returned as a `bigint`
+console.log(row.varint.toString()); // Will be returned as a `bigint`
+console.log(row.bigint.toString()); // Will be returned as a `bigint`
 console.log(row.decimal.toString()); // Will be returned as a `BigNumber`
 ```
 
@@ -336,59 +316,37 @@ console.log(row.list[0]); // 'value'
 
 ### Dates & times
 
-Due to the variety of date & time classes available through the Data API, four custom classes are provided to represent them in the client.
+Due to the variety of date & time classes available through the Data API, some custom classes are provided to represent them in the client.
+
+Only the `timestamp` type is represented by the native JavaScript `Date` object.
 
 ```typescript
-import { date, duration, time, timestamp, ... } from '@datastax/astra-db-ts';
+import { date, duration, time, ... } from '@datastax/astra-db-ts';
 
 await table.insertOne({
   date: date(), // Equivalent to `new DataAPIDate()`
   time: time(), // Equivalent to `new DataAPITime()`
-  timestamp: timestamp(), // Equivalent to `new DataAPITimestamp()`
+  timestamp: new Date(), // Uses the native `Date` object
   duration: duration('P5DT30M'), // Equivalent to `new DataAPIDuration(...)`
 });
 
 const row = await table.findOne();
 console.log(row.date instanceof DataAPIDate); // true
 console.log(row.time instanceof DataAPITime); // true
-console.log(row.timestamp instanceof DataAPITimestamp); // true
+console.log(row.timestamp instanceof Date); // true
 console.log(row.duration instanceof DataAPIDuration); // true
 ```
 
-You can create these classes through the constructor function, or through the respective shorthand, by providing the date/time/duration in a few different ways:
+You can create the custom classes through the constructor function, or through their respective shorthands, by providing the date/time/duration in a few different ways:
 1. As a raw string formatted as it would be stored in the database (`'1992-05-28'`, `'12:34:56'`, `'2021-09-30T12:34:56.789Z'`, `'P5DT30M'`)
 2. As a `Date` object (`new Date(1734070574056)`)
-   - Durations are the exception here, as they doesn't have a direct `Date` equivalent
+   - Durations are the exception here, as they don't have a direct `Date` equivalent
 3. As the `*Components` object for that respective class (e.g. `{ year: 1992, month: 5, day: 28 }`)
 
-From each class, you can generally:
+From each custom class, you can generally:
 - Get the string representation of the date/time/duration using `.toString()`
 - Get the date/time as a `Date` object using `.toDate()`
 - Get the individual components of the date/time using `.components()`
-
-### InetAddresses
-
-You can use inets in collections using the `InetAddress` class (or the `inet` shorthand). 
-
-```typescript
-import { InetAddress, inet } from '@datastax/astra-db-ts';
-
-await table.insertOne({
-  inet: inet('::1'), // Equivalent to `new InetAddress('::1')`
-});
-
-const row = await table.findOne();
-console.log(row.inet instanceof InetAddress); // true
-```
-
-You can create a `InetAddress` through the class, or through the `inet` shorthand, in a few different ways:
-1. By passing the inet string to `new InetAddress()` or `inet()`, and having the version be inferred
-2. By passing the inet string to `new InetAddress()` or `inet()`, and specifying the version explicitly (validating as that version)
-   - e.g. `inet('::1', 6)`
-
-From the `InetAddress` class, you can either:
-- Get the string representation of the `InetAddress` using `.toString()`
-- Get the version of the `InetAddress` using `.version`
 
 ### UUIDs
 
@@ -498,29 +456,30 @@ If you really want to change the behavior of how a certain type is deserialized,
 
 ### Tables
 
-| Type        | Type               | Shorthand   | Examples                                                                             |
-|-------------|--------------------|-------------|--------------------------------------------------------------------------------------|
-| `ascii`     | `string`           | -           | `'Hello!'`                                                                           |
-| `bigint`    | `number`           | -           | `42`                                                                                 |
-| `blob`      | `DataAPIBlob`      | `blob`      | `new DataAPIBlob(Buffer.from(...))`, `blob({ $binary: '<b64_str>' })`                |
-| `boolean`   | `boolean`          | -           | `true`                                                                               |
-| `date`      | `DataAPIDate`      | `date`      | `new DataAPIDate()`, `date(new Date(1734070574056))`, `date('1992-05-28')`, `date()` |
-| `decimal`   | `BigNumber`        | -           | `new BigNumber(123.4567)`, `BigNumber('123456.7e-3')`                                |
-| `double`    | `number`           | -           | `3.14`, `NaN`, `Infinity`, `-Infinity`                                               |
-| `duration`  | `DataAPIDuration`  | `duration`  | `new DataAPIDuration('3w')`, `duration('P5DT30M')`                                   |
-| `float`     | `number`           | -           | `3.14`, `NaN`, `Infinity`, `-Infinity`                                               |
-| `inet`.     | `InetAddress`      | `inet`      | `new InetAddress('::1')`, `inet('127.0.0.1')`                                        |
-| `int`       | `number`           | -           | `42`                                                                                 |
-| `list`      | `Array`            | -           | `['value']`                                                                          |
-| `map`       | `Map`              | -           | `new Map([['key', 'value']])`                                                        |
-| `set`       | `Set`              | -           | `new Set(['value'])`                                                                 |
-| `smallint`  | `number`           | -           | `42`                                                                                 |
-| `text`      | `string`           | -           | `'Hello!'`                                                                           |
-| `time`      | `DataAPITime`      | `time`      | `new DataAPITime()`, `time(new Date(1734070574056))`, `time('12:34:56')`, `time()`   |
-| `timestamp` | `DataAPITimestamp` | `timestamp` | `new DataAPITimestamp('...')`, `timestamp(new Date(1734070574056))`, `timestamp()`   |
-| `timeuuid`  | `UUID`             | `timeuuid`  | `new UUID('...')`, `UUID.v1()`, `uuid('...')`, `uuid(1)`                             |
-| `tinyint`   | `number`           | -           | `42`                                                                                 |
-| `uuid`      | `UUID`             | `uuid`      | `new UUID('...')`, `UUID.v4()`, `uuid('...')`, `uuid(7)`                             |
-| `varchar`   | `string`           | -           | `'Hello!'`                                                                           |
-| `varint`    | `bigint`           | -           | `BigInt('42')`, `42n`                                                                |
-| `vector`    | `DataAPIVector`    | `vector`    | `new DataAPIVector([.1, .2, .3])`, `vector([.1, .2, .3])`                            |
+| Type        | Type              | Shorthand  | Examples                                                                             |
+|-------------|-------------------|------------|--------------------------------------------------------------------------------------|
+| `ascii`     | `string`          | -          | `'Hello!'`                                                                           |
+| `bigint`    | `bigint`          | -          | `BigInt('42')`, `42n`                                                                |
+| `blob`      | `DataAPIBlob`     | `blob`     | `new DataAPIBlob(Buffer.from(...))`, `blob({ $binary: '<b64_str>' })`                |
+| `boolean`   | `boolean`         | -          | `true`                                                                               |
+| `counter`   | `bigint`          | -          | `BigInt('42')`, `42n`                                                                |
+| `date`      | `DataAPIDate`     | `date`     | `new DataAPIDate()`, `date(new Date(1734070574056))`, `date('1992-05-28')`, `date()` |
+| `decimal`   | `BigNumber`       | -          | `new BigNumber(123.4567)`, `BigNumber('123456.7e-3')`                                |
+| `double`    | `number`          | -          | `3.14`, `NaN`, `Infinity`, `-Infinity`                                               |
+| `duration`  | `DataAPIDuration` | `duration` | `new DataAPIDuration('3w')`, `duration('P5DT30M')`                                   |
+| `float`     | `number`          | -          | `3.14`, `NaN`, `Infinity`, `-Infinity`                                               |
+| `inet`.     | `string`          | -          | `'::1'`, `'127.0.0.1'`, `'localhost'`                                                |
+| `int`       | `number`          | -          | `42`                                                                                 |
+| `list`      | `Array`           | -          | `['value']`                                                                          |
+| `map`       | `Map`             | -          | `new Map([['key', 'value']])`                                                        |
+| `set`       | `Set`             | -          | `new Set(['value'])`                                                                 |
+| `smallint`  | `number`          | -          | `42`                                                                                 |
+| `text`      | `string`          | -          | `'Hello!'`                                                                           |
+| `time`      | `DataAPITime`     | `time`     | `new DataAPITime()`, `time(new Date(1734070574056))`, `time('12:34:56')`, `time()`   |
+| `timestamp` | `Date`            | -          | `new Date()`, `new Date(1734070574056)`, `new Date('...')`                           |
+| `timeuuid`  | `UUID`            | `uuid`     | `new UUID('...')`, `UUID.v1()`, `uuid('...')`, `uuid(1)`                             |
+| `tinyint`   | `number`          | -          | `42`                                                                                 |
+| `uuid`      | `UUID`            | `uuid`     | `new UUID('...')`, `UUID.v4()`, `uuid('...')`, `uuid(7)`                             |
+| `varchar`   | `string`          | -          | `'Hello!'`                                                                           |
+| `varint`    | `bigint`          | -          | `BigInt('42')`, `42n`                                                                |
+| `vector`    | `DataAPIVector`   | `vector`   | `new DataAPIVector([.1, .2, .3])`, `vector([.1, .2, .3])`                            |

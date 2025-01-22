@@ -13,8 +13,10 @@
 // limitations under the License.
 
 export * from './blob';
-export * from './dates';
-export * from './inet-address';
+export * from './date';
+export * from './duration';
+export * from './inet';
 export * from './object-id';
+export * from './time';
 export * from './uuid';
 export * from './vector';

@@ -43,7 +43,7 @@ import {
 } from '@/src/documents/collections/types';
 import { CollectionDefinition, CollectionOptions, Db } from '@/src/db';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import { WithTimeout } from '@/src/lib';
+import { type OpaqueHttpClient, WithTimeout } from '@/src/lib';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { $CustomInspect } from '@/src/lib/constants';
 import { CollectionInsertManyError, TooManyDocumentsToCountError, WithSim } from '@/src/documents';
@@ -52,7 +52,7 @@ import { CollectionFindCursor } from '@/src/documents/collections/cursor';
 import { withJbiNullProtoFix } from '@/src/lib/utils';
 import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
 
-const jbi = JBI({ storeAsString: true });
+const jbi = JBI;
 
 /**
  * #### Overview
@@ -1507,7 +1507,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
   /**
    * Backdoor to the HTTP client for if it's absolutely necessary. Which it almost never (if even ever) is.
    */
-  public get _httpClient() {
+  public get _httpClient(): OpaqueHttpClient {
     return this.#httpClient;
   }
 }

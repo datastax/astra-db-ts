@@ -198,4 +198,9 @@ parallel('integration.documents.collections.find-one-and-update', { truncate: 'c
     );
     assert.strictEqual(res?.name, 'a');
   });
+
+  it('should return null if no document is found', async (key) => {
+    const res = await collection.findOneAndUpdate({ key }, { $set: { car: 'bus' } });
+    assert.strictEqual(res, null);
+  });
 });

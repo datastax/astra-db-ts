@@ -16,6 +16,8 @@ import { DataAPIEnvironment, nullish } from '@/src/lib/types';
 import { DataAPIEnvironments } from '@/src/lib/constants';
 import JBI from 'json-bigint';
 import { SomeDoc } from '@/src/documents';
+import process from 'node:process';
+import BigNumber from 'bignumber.js';
 
 /**
  * @internal
@@ -29,7 +31,7 @@ export function isNullish(t: unknown): t is nullish {
  */
 export function validateDataAPIEnv(env: unknown): asserts env is DataAPIEnvironment | nullish {
   if (!isNullish(env) && !(<readonly unknown[]>DataAPIEnvironments).includes(env)) {
-    throw new Error(`Given environment is invalid (must be ${DataAPIEnvironments.map(e => `"${e}"`).join(', ')}, or nullish to default to "astra".`);
+    throw new Error(`Given environment is invalid (must be ${DataAPIEnvironments.map(e => `"${e}"`).join(', ')}, or nullish to default to "astra" (got: ${env}).`);
   }
 }
 
@@ -76,7 +78,9 @@ function nullProtoFix(doc: SomeDoc): SomeDoc {
       }
     }
   } else {
-    doc = Object.assign({}, doc);
+    if (Object.getPrototypeOf(doc) === null) {
+      doc = { ...doc };
+    }
 
     for (const key of Object.keys(doc)) {
       if (typeof doc[key] === 'object' && doc[key] !== null) {
@@ -88,6 +92,9 @@ function nullProtoFix(doc: SomeDoc): SomeDoc {
   return doc;
 }
 
+/**
+ * @internal
+ */
 export function stringArraysEqual(a: readonly string[], b: readonly string[]): boolean {
   if (a.length !== b.length) {
     return false;
@@ -100,4 +107,36 @@ export function stringArraysEqual(a: readonly string[], b: readonly string[]): b
   }
 
   return true;
+}
+
+/**
+ * @internal
+ */
+interface JSEnvs<F> {
+  server: F,
+  browser: F,
+  unknown: F,
+}
+
+const getJSEnv = () =>
+  (typeof globalThis.window !== 'undefined')
+    ? 'browser' :
+  (typeof globalThis.Buffer !== 'undefined')
+    ? 'server'
+    : 'unknown';
+
+const env = getJSEnv();
+
+/**
+ * @internal
+ */
+export const forJSEnv = (process.env.CLIENT_DYNAMIC_JS_ENV_CHECK)
+  ? <Args extends any[], R>(fns: JSEnvs<(...args: Args) => R>): (...args: Args) => R => (...args: Args) => fns[getJSEnv()](...args)
+  : <Args extends any[], R>(fns: JSEnvs<(...args: Args) => R>): (...args: Args) => R => fns[env];
+
+/**
+ * @internal
+ */
+export function isBigNumber(value: object): value is BigNumber {
+  return BigNumber.isBigNumber(value) && value.constructor?.name === 'BigNumber';
 }

@@ -15,13 +15,14 @@
 
 import assert from 'assert';
 import { Db } from '@/src/db/db';
-import { StaticTokenProvider } from '@/src/lib';
+import { DataAPIEnvironments, StaticTokenProvider } from '@/src/lib';
 import { DataAPIClient } from '@/src/client';
 import { DEMO_APPLICATION_URI, describe, it, TEST_APPLICATION_URI } from '@/tests/testlib';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants';
 import { buildAstraEndpoint } from '@/src/lib/utils';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { Timeouts } from '@/src/lib/api/timeouts';
+import { $CustomInspect } from '@/src/lib/constants';
 
 describe('unit.db', () => {
   const internalOps = (db?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({
@@ -140,8 +141,30 @@ describe('unit.db', () => {
     });
 
     it('should throw error if attempting to get ID for non-astra db', () => {
+      const db = new Db({ ...internalOps(), environment: 'dse' }, 'https://localhost:3000', null);
+      assert.throws(() => db.id);
+    });
+
+    it('should throw error if attempting to get ID for custom-domain astra db', () => {
       const db = new Db(internalOps(), 'https://localhost:3000', null);
       assert.throws(() => db.id);
+    });
+  });
+
+  describe('region tests', () => {
+    it('should return the region from the endpoint', () => {
+      const db = new Db(internalOps(), buildAstraEndpoint('f1183f14-dc85-4fbf-8aae-f1ca97338bbb', 'us-east1'), null);
+      assert.strictEqual(db.region, 'us-east1');
+    });
+
+    it('should throw error if attempting to get region for non-astra db', () => {
+      const db = new Db({ ...internalOps(), environment: 'dse' }, 'https://localhost:3000', null);
+      assert.throws(() => db.region);
+    });
+
+    it('should throw error if attempting to get region for custom-domain astra db', () => {
+      const db = new Db(internalOps(), 'https://localhost:3000', null);
+      assert.throws(() => db.region);
     });
   });
 
@@ -211,6 +234,28 @@ describe('unit.db', () => {
     it('should return the admin if on astra db', () => {
       const db = new Db(internalOps(), buildAstraEndpoint('f1183f14-dc85-4fbf-8aae-f1ca97338bbb', 'us-east1'), null);
       assert.strictEqual(db.admin().id, 'f1183f14-dc85-4fbf-8aae-f1ca97338bbb');
+    });
+  });
+
+  describe('info tests', () => {
+    it('should error on invalid environment', () => {
+      for (const env of DataAPIEnvironments.filter(e => e !== 'astra')) {
+        const db = new Db({ ...internalOps(), environment: env }, TEST_APPLICATION_URI, {});
+        assert.rejects(() => db.info(), { message: `Invalid environment '${env}' for operation 'db.info()'; expected environment(s): 'astra'` });
+      }
+    });
+  });
+
+  describe('command tests', ({ db }) => {
+    it('should throw if both table & collection passed', async () => {
+      await assert.rejects(() => db.command({}, { collection: 'coll', table: 'table' }), { message: 'Can\'t provide both `table` and `collection` as options to db.command()' });
+    });
+  });
+
+  describe('inspect tests', () => {
+    it('should work', () => {
+      const db = new Db(internalOps(), TEST_APPLICATION_URI, {});
+      assert.strictEqual((db as any)[$CustomInspect](), `Db(endpoint="${TEST_APPLICATION_URI}",keyspace="${DEFAULT_KEYSPACE}")`);
     });
   });
 });

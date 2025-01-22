@@ -95,7 +95,10 @@ parallel('integration.misc.quickstart', { drop: 'colls:after' }, () => {
     const dbInfo = databases.find(db => db.id === id);
     assert.ok(dbInfo?.name);
     assert.strictEqual(dbInfo.id, id);
-    assert.deepStrictEqual(dbInfo.regions, [{ name: region, apiEndpoint: TEST_APPLICATION_URI }]);
+    assert.strictEqual(dbInfo.regions.length, 1);
+    assert.strictEqual(dbInfo.regions[0].name, region);
+    assert.strictEqual(dbInfo.regions[0].apiEndpoint, TEST_APPLICATION_URI);
+    assert.ok(dbInfo.regions[0].createdAt as unknown instanceof Date);
 
     const dbAdmin = admin.dbAdmin(dbInfo.id, dbInfo.regions[0].name);
     const keyspaces = await dbAdmin.listKeyspaces();

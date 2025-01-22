@@ -51,7 +51,9 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
       assert.ok(['PENDING', 'INITIALIZING'].includes(dbInfo1.status));
       assert.strictEqual(dbInfo1.name, TEMP_DB_NAME);
       assert.strictEqual(dbInfo1.cloudProvider, 'GCP');
-      assert.deepStrictEqual(dbInfo1.regions, [{ name: 'us-east1', apiEndpoint: buildAstraEndpoint(dbInfo1.id, 'us-east1') }]);
+      assert.deepStrictEqual(dbInfo1.regions.length, 1);
+      assert.deepStrictEqual({ ...dbInfo1.regions[0], createdAt: 0 }, { name: 'us-east1', apiEndpoint: buildAstraEndpoint(dbInfo1.id, 'us-east1'), createdAt: 0 });
+      assert.ok(dbInfo1.regions[0].createdAt as unknown instanceof Date);
       assert.deepStrictEqual(dbInfo1.keyspaces, ['my_keyspace']);
 
       const dbInfo2 = await admin.dbInfo(asyncDb.id);
@@ -72,7 +74,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
         assert.strictEqual(event.method, HttpMethods.Post);
         assert.strictEqual(event.longRunning, true);
         assert.strictEqual(event.params, undefined);
-        assert.strictEqual(event.timeout, 720000);
+        assert.deepStrictEqual(event.timeout, { databaseAdminTimeoutMs: 720000, requestTimeoutMs: 60000 });
       });
 
       client.on('adminCommandPolling', (event) => {
@@ -139,7 +141,9 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
       assert.strictEqual(dbInfo.status, 'ACTIVE');
       assert.strictEqual(dbInfo.name, TEMP_DB_NAME);
       assert.strictEqual(dbInfo.cloudProvider, 'GCP');
-      assert.deepStrictEqual(dbInfo.regions, [{ name: 'us-east1', apiEndpoint: buildAstraEndpoint(dbInfo.id, 'us-east1') }]);
+      assert.deepStrictEqual(dbInfo.regions.length, 1);
+      assert.deepStrictEqual({ ...dbInfo.regions[0], createdAt: 0 }, { name: 'us-east1', apiEndpoint: buildAstraEndpoint(dbInfo.id, 'us-east1'), createdAt: 0 });
+      assert.ok(dbInfo.regions[0].createdAt as unknown instanceof Date);
       assert.deepStrictEqual(dbInfo.keyspaces, [db.keyspace]);
 
       const collections1 = await db.listCollections({ nameOnly: true });

@@ -16,8 +16,7 @@
 import { UUID } from '@/src/documents/datatypes/uuid';
 import { ObjectId } from '@/src/documents/datatypes/object-id';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
-import { DataAPITimestamp } from '@/src/documents/datatypes/dates';
-import { CollDesCtx, CollSerCtx } from '@/src/documents';
+import { $DeserializeForTable, CollDesCtx, CollSerCtx } from '@/src/documents';
 import { EmptyObj, SerDesFn } from '@/src/lib';
 import { CodecOpts, RawCodec } from '@/src/lib/api/ser-des/codecs';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
@@ -62,8 +61,6 @@ export class CollCodecs {
     $objectId: CollCodecs.forType('$objectId', ObjectId),
   };
 
-  public static USE_DATA_API_TIMESTAMPS_FOR_DATES = CollCodecs.forType('$date', DataAPITimestamp);
-
   public static forPath(path: string[], optsOrClass: CodecOpts<CollCodecSerDesFns, CollSerCtx, CollDesCtx> | CollCodecClass): RawCodec<CollCodecSerDesFns> {
     return {
       path,
@@ -83,6 +80,12 @@ export class CollCodecs {
   }
 
   public static forType(type: string, optsOrClass: CodecOpts<CollCodecSerDesFns, CollSerCtx, CollDesCtx> | CollCodecClass): RawCodec<CollCodecSerDesFns> {
+    if (!($DeserializeForTable in optsOrClass) && 'serialize' in optsOrClass && !!optsOrClass.serialize) {
+      if (!('serializeClass' in optsOrClass) && !('serializeGuard' in optsOrClass)) {
+        throw new Error('CollCodecs.forType: serializeClass or serializeGuard must be provided if serialize is present');
+      }
+    }
+
     return {
       type,
       ...($DeserializeForCollection in optsOrClass)

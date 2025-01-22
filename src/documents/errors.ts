@@ -196,6 +196,9 @@ export class DataAPITimeoutError extends DataAPIError {
     this.name = 'DataAPITimeoutError';
   }
 
+  /**
+   * @internal
+   */
   public static mk(info: HTTPRequestInfo, types: TimedOutCategories): DataAPITimeoutError {
     return new DataAPITimeoutError(info, types);
   }
@@ -249,57 +252,6 @@ export class TooManyDocumentsToCountError extends DataAPIError {
     this.limit = limit;
     this.hitServerLimit = hitServerLimit;
     this.name = 'TooManyDocumentsToCountError';
-  }
-}
-
-/**
- * Caused by a `countRows` operation that failed because the resulting number of documents exceeded *either*
- * the upper bound set by the caller, or the hard limit imposed by the Data API.
- *
- * @example
- * ```typescript
- * await table.insertMany('<100_length_array>');
- *
- * try {
- *   await table.countRows({}, 50);
- * } catch (e) {
- *   if (e instanceof TooManyRowsToCountError) {
- *     console.log(e.limit); // 50
- *     console.log(e.hitServerLimit); // false
- *   }
- * }
- * ```
- *
- * @field limit - The limit that was set by the caller
- * @field hitServerLimit - Whether the server-imposed limit was hit
- *
- * @public
- */
-export class TooManyRowsToCountError extends DataAPIError {
-  /**
-   * The limit that was specified by the caller, or the server-imposed limit if the caller's limit was too high.
-   */
-  public readonly limit: number;
-
-  /**
-   * Specifies if the server-imposed limit was hit. If this is `true`, the `limit` field will contain the server's
-   * limit; otherwise it will contain the caller's limit.
-   */
-  public readonly hitServerLimit: boolean;
-
-  /**
-   * Should not be instantiated by the user.
-   *
-   * @internal
-   */
-  constructor(limit: number, hitServerLimit: boolean) {
-    const message = (hitServerLimit)
-      ? `Too many rows to count (server limit of ${limit} reached)`
-      : `Too many rows to count (provided limit is ${limit})`;
-    super(message);
-    this.limit = limit;
-    this.hitServerLimit = hitServerLimit;
-    this.name = 'TooManyRowsToCountError';
   }
 }
 

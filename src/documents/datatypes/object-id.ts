@@ -66,13 +66,13 @@ export const oid = (id?: string | number | null) => new ObjectId(id);
  * @public
  */
 export class ObjectId implements CollCodec<typeof ObjectId> {
-  readonly #raw: string;
+  private readonly _raw!: string;
 
   /**
    * Implementation of `$SerializeForCollection` for {@link TableCodec}
    */
   public [$SerializeForCollection](ctx: CollSerCtx) {
-    return ctx.done({ $objectId: this.#raw });
+    return ctx.done({ $objectId: this._raw });
   };
 
   /**
@@ -101,10 +101,12 @@ export class ObjectId implements CollCodec<typeof ObjectId> {
       }
     }
 
-    this.#raw = (typeof id === 'string') ? id.toLowerCase() : genObjectId(id);
+    Object.defineProperty(this, '_raw', {
+      value: (typeof id === 'string') ? id.toLowerCase() : genObjectId(id),
+    });
 
     Object.defineProperty(this, $CustomInspect, {
-      value: () => `ObjectId("${this.#raw}")`,
+      value: () => `ObjectId("${this._raw}")`,
     });
   }
 
@@ -121,10 +123,10 @@ export class ObjectId implements CollCodec<typeof ObjectId> {
    */
   public equals(other: unknown): boolean {
     if (typeof other === 'string') {
-      return this.#raw.localeCompare(other, undefined, { sensitivity: 'accent' }) === 0;
+      return this._raw.localeCompare(other, undefined, { sensitivity: 'accent' }) === 0;
     }
     if (other instanceof ObjectId) {
-      return this.#raw.localeCompare(other.#raw, undefined, { sensitivity: 'accent' }) === 0;
+      return this._raw.localeCompare(other._raw, undefined, { sensitivity: 'accent' }) === 0;
     }
     return false;
   }
@@ -135,7 +137,7 @@ export class ObjectId implements CollCodec<typeof ObjectId> {
    * @returns The timestamp of the ObjectId.
    */
   public getTimestamp(): Date {
-    const time = parseInt(this.#raw.slice(0, 8), 16);
+    const time = parseInt(this._raw.slice(0, 8), 16);
     return new Date(~~time * 1000);
   }
 
@@ -143,12 +145,12 @@ export class ObjectId implements CollCodec<typeof ObjectId> {
    * Returns the string representation of the ObjectId.
    */
   public toString(): string {
-    return this.#raw;
+    return this._raw;
   }
 }
 
 const RAND_ID = ~~(Math.random() * 0xFFFFFF);
-const PID = ((typeof process === 'undefined' || typeof process.pid !== 'number') ? ~~(Math.random() * 100000) : process.pid) % 0xFFFF;
+const PID = ~~(Math.random() * 100000) % 0xFFFF;
 
 const HexTable = Array.from({ length: 256 }, (_, i) => {
   return (i <= 15 ? '0' : '') + i.toString(16);

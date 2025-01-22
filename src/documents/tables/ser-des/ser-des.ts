@@ -22,9 +22,9 @@ import {
 import { TableCodecs, TableCodecSerDesFns } from '@/src/documents/tables/ser-des/codecs';
 import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
-import BigNumber from 'bignumber.js';
-import { stringArraysEqual } from '@/src/lib/utils';
+import { isBigNumber, stringArraysEqual } from '@/src/lib/utils';
 import { RawCodec } from '@/src/lib/api/ser-des/codecs';
+import { UnexpectedDataAPIResponseError } from '@/src/client';
 
 /**
  * @public
@@ -38,8 +38,7 @@ export interface TableSerCtx extends BaseSerCtx<TableCodecSerDesFns> {
  */
 export interface TableDesCtx extends BaseDesCtx<TableCodecSerDesFns> {
   tableSchema: ListTableColumnDefinitions,
-  populateSparseData: boolean,
-  recurse: never;
+  next: never;
 }
 
 /**
@@ -71,12 +70,21 @@ export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableD
   }
 
   protected override adaptDesCtx(ctx: TableDesCtx): TableDesCtx {
-    const status = ctx.rawDataApiResp.status!;
+    const rawDataApiResp = ctx.rawDataApiResp;
+    const status = UnexpectedDataAPIResponseError.require(rawDataApiResp.status, 'No `status` found in response.', rawDataApiResp);
 
     if (ctx.parsingInsertedId) {
-      ctx.tableSchema = status.primaryKeySchema;
+      ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.primaryKeySchema, 'No `status.primaryKeySchema` found in response.\n\n**Did you accidentally use a `Table` object on a collection?** If so, your document was successfully inserted, but the client cannot properly deserialize the response. Please use a `Collection` object instead.', rawDataApiResp);
+
+      ctx.rootObj = Object.fromEntries(Object.keys(ctx.tableSchema).map((key, i) => {
+        return [key, ctx.rootObj[i]];
+      }));
     } else {
-      ctx.tableSchema = status.projectionSchema;
+      ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.projectionSchema, 'No `status.projectionSchema` found in response.\n\n**Did you accidentally use a `Table` object on a collection?** If so, documents may\'ve been found, but the client cannot properly deserialize the response. Please use a `Collection` object instead.', rawDataApiResp);
+    }
+
+    if (this._cfg?.sparseData !== true) {
+      populateSparseData(ctx);
     }
 
     if (ctx.keyTransformer) {
@@ -85,15 +93,8 @@ export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableD
       }));
     }
 
-    if (ctx.parsingInsertedId) {
-      ctx.rootObj = Object.fromEntries(Object.entries(status.primaryKeySchema).map(([key], j) => {
-        return [key, ctx.rootObj[j]];
-      }));
-    }
-
     (<any>ctx).recurse = () => { throw new Error('Table deserialization does not recurse normally; please call any necessary codecs manually'); };
 
-    ctx.populateSparseData = this._cfg?.sparseData !== true;
     return ctx;
   }
 
@@ -124,9 +125,17 @@ const DefaultTableSerDesCfg = {
       }
     }
 
-    if (ctx.path.length === 1 && key in codecs.name) {
+    if (key in codecs.name) {
       if ((resp = codecs.name[key].serialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
         return resp;
+      }
+    }
+
+    for (const codec of codecs.customGuard) {
+      if (codec.serializeGuard(value, ctx)) {
+        if ((resp = codec.serialize(key, value, ctx))[0] !== CONTINUE) {
+          return resp;
+        }
       }
     }
 
@@ -149,7 +158,7 @@ const DefaultTableSerDesCfg = {
         }
       }
 
-      if (value instanceof BigNumber) {
+      if (isBigNumber(value)) {
         ctx.bigNumsPresent = true;
         return ctx.done();
       }
@@ -157,32 +166,28 @@ const DefaultTableSerDesCfg = {
       ctx.bigNumsPresent = true;
     }
 
-    for (const codec of codecs.customGuard) {
-      if (codec.serializeGuard(value, ctx)) {
-        if ((resp = codec.serialize(key, value, ctx))[0] !== CONTINUE) {
-          return resp;
-        }
-      }
-    }
     return ctx.continue();
   },
   deserialize(key, _, ctx) {
     const codecs = ctx.codecs;
     let resp;
 
-    if (key === '' && Object.keys(ctx.rootObj).length === 0 && ctx.populateSparseData) {
-      populateSparseData(ctx); // populate sparse data for empty objects
-    }
-
     const column = ctx.tableSchema[key];
+    const value = ctx.rootObj[key];
 
     for (let i = 0, n = codecs.path.length; i < n; i++) {
       const path = codecs.path[i].path;
 
       if (stringArraysEqual(path, ctx.path)) {
-        if ((resp = codecs.path[i].deserialize?.(key, ctx.rootObj[key], ctx, column) ?? ctx.continue())[0] !== CONTINUE) {
+        if ((resp = codecs.path[i].deserialize?.(key, value, ctx, column) ?? ctx.continue())[0] !== CONTINUE) {
           return resp;
         }
+      }
+    }
+
+    if (key in codecs.name) {
+      if ((resp = codecs.name[key].deserialize(key, value, ctx, column))[0] !== CONTINUE) {
+        return resp;
       }
     }
 
@@ -190,21 +195,10 @@ const DefaultTableSerDesCfg = {
       return ctx.continue();
     }
 
-    if (ctx.populateSparseData) { // do at this level to avoid looping on newly-populated fields if done at the top level
-      populateSparseData(ctx);
-      ctx.populateSparseData = false;
-    }
-
     const type = resolveType(column);
 
-    if (key in codecs.name) {
-      if ((resp = codecs.name[key].deserialize(key, ctx.rootObj[key], ctx, column))[0] !== CONTINUE) {
-        return resp;
-      }
-    }
-
-    if (type in codecs.type) {
-      if ((resp = codecs.type[type].deserialize(key, ctx.rootObj[key], ctx, column))[0] !== CONTINUE) {
+    if (value !== null && type && type in codecs.type) {
+      if ((resp = codecs.type[type].deserialize(key, value, ctx, column))[0] !== CONTINUE) {
         return resp;
       }
     }

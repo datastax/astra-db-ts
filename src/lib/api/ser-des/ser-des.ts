@@ -22,14 +22,14 @@ import {
   BaseSerDesCtx,
   ctxContinue,
   ctxDone,
-  ctxRecurse,
+  ctxNext,
   DONE,
 } from '@/src/lib/api/ser-des/ctx';
 
 /**
  * @public
  */
-export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?, string?] | 'Return ctx.done(val?), ctx.recurse(val?), ctx.continue(), or void';
+export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?] | 'Return ctx.done(val?), ctx.recurse(val?), ctx.continue(), or void';
 
 /**
  * @public
@@ -53,18 +53,31 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
   }
 
   public serialize<S extends SomeDoc | nullish>(obj: S): [S, boolean] {
-    if (obj === null || obj === undefined) {
+    if (!obj) {
       return [obj, false];
     }
-    const ctx = this.adaptSerCtx(this._mkCtx(obj, { mutatingInPlace: this._cfg.mutateInPlace === true }));
-    return [serializeRecord('', { ['']: ctx.rootObj }, ctx, toArray(this._cfg.serialize!))[''] as S, this.bigNumsPresent(ctx)];
+
+    const ctx = this.adaptSerCtx(this._mkCtx(obj, {
+      mutatingInPlace: this._cfg.mutateInPlace === true,
+    }));
+
+    return [
+      serializeRecord('', { ['']: ctx.rootObj }, ctx, toArray(this._cfg.serialize!))[''] as S,
+      this.bigNumsPresent(ctx),
+    ];
   }
 
   public deserialize<S extends SomeDoc | nullish>(obj: SomeDoc | nullish, raw: RawDataAPIResponse, parsingId = false): S {
     if (obj === null || obj === undefined) {
       return obj as S;
     }
-    const ctx = this.adaptDesCtx(this._mkCtx(obj, { rawDataApiResp: raw, keys: [], parsingInsertedId: parsingId }));
+
+    const ctx = this.adaptDesCtx(this._mkCtx(obj, {
+      parsingInsertedId: parsingId,
+      rawDataApiResp: raw,
+      keys: [],
+    }));
+
     return deserializeRecord('', { ['']: ctx.rootObj }, ctx, toArray(this._cfg.deserialize!))[''] as S;
   }
 
@@ -85,7 +98,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
   private _mkCtx<Ctx>(obj: SomeDoc, ctx: Ctx): Ctx & BaseSerDesCtx<Fns> {
     return {
       done: ctxDone,
-      recurse: ctxRecurse,
+      next: ctxNext,
       continue: ctxContinue,
       codecs: this._codecs,
       keyTransformer: this._cfg.keyTransformer,
@@ -181,17 +194,17 @@ function deserializeRecordHelper<Ctx extends BaseDesCtx<any>>(keys: string[], ob
 }
 
 function applySerdesFns<Ctx>(fns: readonly SerDesFn<Ctx>[], key: string, obj: SomeDoc, ctx: Ctx): boolean {
-  let stop: unknown;
-
-  for (let f = 0; f < fns.length && !stop; f++) {
-    const res = fns[f](key, obj[key], ctx) as [number] | [number, any];
-
-    stop = res?.[0] === DONE;
+  for (let f = 0; f < fns.length; f++) {
+    const res = fns[f](key, obj[key], ctx) as [number] | [number, unknown];
 
     if (res.length === 2) {
       obj[key] = res[1];
     }
+
+    if (res?.[0] === DONE) {
+      return true;
+    }
   }
 
-  return !!stop;
+  return false;
 }

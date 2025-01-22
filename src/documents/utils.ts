@@ -14,15 +14,14 @@
 
 import type { SomeDoc } from '@/src/documents/collections';
 import type { Sort } from '@/src/documents/types';
-import { DataAPIVector } from '@/src/documents/datatypes';
-import { $SerializeForTable } from '@/src/documents';
+import { DataAPIVector, vector } from '@/src/documents/datatypes';
 
 declare const $ERROR: unique symbol;
 
 /**
  * Represents some type-level error which forces immediate attention rather than failing at runtime.
  *
- * More inflexable type than `never`, and gives contextual error messages.
+ * More inflexible type than `never`, and gives contextual error messages.
  *
  * @example
  * ```typescript
@@ -50,18 +49,7 @@ export function extractDbIdFromUrl(uri: string): string | undefined {
  * @internal
  */
 export function extractRegionFromUrl(uri: string): string | undefined {
-  return new URL(uri).hostname.split('-').slice(5).join('-').split('.')[0];
-}
-
-/**
- * @internal
- */
-export function replaceAstraUrlIdAndRegion(uri: string, id: string, region: string): string {
-  const url = new URL(uri);
-  const parts = url.hostname.split('.');
-  parts[0] = id + '-' + region;
-  url.hostname = parts.join('.');
-  return url.toString().slice(0, -1);
+  return new URL(uri).hostname.split('-').slice(5).join('-').split('.')[0] || undefined;
 }
 
 /**
@@ -73,12 +61,36 @@ export const normalizedSort = (sort: SomeDoc): Sort => {
   for (const key in sort) {
     const val = sort[key];
 
-    if (val instanceof DataAPIVector) {
-      ret[key] = (<any>val[$SerializeForTable]({ done: (x: any) => [x!, true] } as any))[0] as Sort[string];
+    if (val instanceof DataAPIVector || Array.isArray(val)) {
+      ret[key] = vector(val).serialize();
     } else {
       ret[key] = val;
     }
   }
 
   return ret;
+};
+
+/**
+ * @internal
+ */
+export const betterTypeOf = (value: unknown): string => {
+  if (value === null) {
+    return 'null';
+  }
+
+  if (typeof value === 'object') {
+    return value.constructor?.name ?? 'Object';
+  }
+
+  return typeof value;
+};
+
+/**
+ * @internal
+ */
+export const mkInvArgsErr = (exp: string, params: [string, string][], ...got: unknown[]): TypeError => {
+  const names = params.map(([name]) => name).join(', ');
+  const types = params.map(([, type]) => type).join(', ');
+  return new TypeError(`Invalid argument(s) for \`${exp}(${names})\`; expected (${types}), got (${got.map(betterTypeOf).join(', ')})`);
 };

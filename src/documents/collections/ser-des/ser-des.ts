@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SerDes, BaseSerDesConfig } from '@/src/lib/api/ser-des/ser-des';
+import { BaseSerDesConfig, SerDes } from '@/src/lib/api/ser-des/ser-des';
 import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
 import { CollCodecs, CollCodecSerDesFns } from '@/src/documents/collections/ser-des/codecs';
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
-import { stringArraysEqual } from '@/src/lib/utils';
-import BigNumber from 'bignumber.js';
+import { isBigNumber, stringArraysEqual } from '@/src/lib/utils';
+import { CollNumRepCfg, GetCollNumRepFn } from '@/src/documents';
+import { coerceBigNumber, coerceNumber, collNumRepFnFromCfg } from '@/src/documents/collections/ser-des/big-nums';
 
 /**
  * @public
@@ -30,49 +31,68 @@ export interface CollSerCtx extends BaseSerCtx<CollCodecSerDesFns> {
  * @public
  */
 export interface CollDesCtx extends BaseDesCtx<CollCodecSerDesFns> {
-  bigNumsEnabled: boolean,
+  getNumRepForPath?: GetCollNumRepFn,
 }
 
 /**
  * @public
  */
 export interface CollectionSerDesConfig extends BaseSerDesConfig<CollCodecSerDesFns, CollSerCtx, CollDesCtx> {
-  enableBigNumbers?: boolean,
+  enableBigNumbers?: GetCollNumRepFn | CollNumRepCfg,
 }
 
 /**
  * @internal
  */
 export class CollectionSerDes extends SerDes<CollCodecSerDesFns, CollSerCtx, CollDesCtx> {
-  declare protected readonly _cfg: CollectionSerDesConfig;
+  declare protected readonly _cfg: CollectionSerDesConfig & { enableBigNumbers?: GetCollNumRepFn };
+  private readonly _getNumRepForPath: GetCollNumRepFn | undefined;
 
   public constructor(cfg?: CollectionSerDesConfig) {
-    super(CollectionSerDes.mergeConfig(DefaultCollectionSerDesCfg, cfg));
+    super(CollectionSerDes.mergeConfig(DefaultCollectionSerDesCfg, cfg, cfg?.enableBigNumbers ? BigNumCollectionDesCfg : {}));
+
+    this._getNumRepForPath = (typeof cfg?.enableBigNumbers === 'object')
+      ? collNumRepFnFromCfg(cfg.enableBigNumbers)
+      : cfg?.enableBigNumbers;
   }
 
   public override adaptSerCtx(ctx: CollSerCtx): CollSerCtx {
-    ctx.bigNumsEnabled = this._cfg?.enableBigNumbers === true;
+    ctx.bigNumsEnabled = !!this._getNumRepForPath;
     return ctx;
   }
 
   public override adaptDesCtx(ctx: CollDesCtx): CollDesCtx {
-    ctx.bigNumsEnabled = this._cfg?.enableBigNumbers === true;
+    ctx.getNumRepForPath = this._getNumRepForPath;
     return ctx;
   }
 
   public override bigNumsPresent(): boolean {
-    return this._cfg?.enableBigNumbers === true;
+    return !!this._cfg?.enableBigNumbers;
   }
 
   public static mergeConfig(...cfg: (CollectionSerDesConfig | undefined)[]): CollectionSerDesConfig {
     return {
-      enableBigNumbers: cfg.reduce<boolean | undefined>((acc, c) => c?.enableBigNumbers ?? acc, undefined),
+      enableBigNumbers: cfg.reduce<CollectionSerDesConfig['enableBigNumbers']>((acc, c) => c?.enableBigNumbers ?? acc, undefined),
       ...super._mergeConfig(...cfg),
     };
   }
 }
 
-const DefaultCollectionSerDesCfg = {
+const BigNumCollectionDesCfg: CollectionSerDesConfig = {
+  deserialize(_, value, ctx) {
+    if (typeof value === 'number') {
+      return coerceNumber(value, ctx);
+    }
+
+    if (isBigNumber(value)) {
+      return coerceBigNumber(value, ctx);
+    }
+
+    return ctx.continue();
+  },
+};
+
+const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
   serialize(key, value, ctx) {
     const codecs = ctx.codecs;
     let resp;
@@ -93,6 +113,13 @@ const DefaultCollectionSerDesCfg = {
       }
     }
 
+    for (const codec of codecs.customGuard) {
+      if (codec.serializeGuard(value, ctx)) {
+        if ((resp = codec.serialize(key, value, ctx))[0] !== CONTINUE) {
+          return resp;
+        }
+      }
+    }
 
     if (typeof value === 'object' && value !== null) {
       if (value[$SerializeForCollection]) {
@@ -109,18 +136,19 @@ const DefaultCollectionSerDesCfg = {
         }
       }
 
-      if (ctx.bigNumsEnabled && value instanceof BigNumber) {
+      if (isBigNumber(value)) {
+        if (!ctx.bigNumsEnabled) {
+          throw new Error('BigNumber serialization must be enabled through serdes.enableBigNumbers in CollectionSerDesConfig');
+        }
         return ctx.done();
       }
+    } else if (typeof value === 'bigint') {
+      if (!ctx.bigNumsEnabled) {
+        throw new Error('BigNumber serialization must be enabled through serdes.enableBigNumbers in CollectionSerDesConfig');
+      }
+      return ctx.done();
     }
 
-    for (const codec of codecs.customGuard) {
-      if (codec.serializeGuard(value, ctx)) {
-        if ((resp = codec.serialize(key, value, ctx))[0] !== CONTINUE) {
-          return resp;
-        }
-      }
-    }
     return ctx.continue();
   },
   deserialize(key, value, ctx) {
@@ -148,7 +176,12 @@ const DefaultCollectionSerDesCfg = {
         return resp;
       }
     }
+
+    if (typeof value === 'object' && isBigNumber(value) || value instanceof Date) {
+      return ctx.done(value);
+    }
+
     return ctx.continue();
   },
   codecs: Object.values(CollCodecs.Defaults),
-} satisfies CollectionSerDesConfig;
+};

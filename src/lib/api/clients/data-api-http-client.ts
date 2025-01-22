@@ -57,6 +57,9 @@ export interface DataAPIRequestInfo {
   bigNumsPresent: boolean | undefined,
 }
 
+/**
+ * @internal
+ */
 type EmissionStrategy<Kind extends ClientKind> = (logger: Logger) => {
   emitCommandStarted?(info: DataAPIRequestInfo, opts: ExecCmdOpts<Kind>): void,
   emitCommandFailed?(info: DataAPIRequestInfo, error: Error, started: number, opts: ExecCmdOpts<Kind>): void,
@@ -64,6 +67,9 @@ type EmissionStrategy<Kind extends ClientKind> = (logger: Logger) => {
   emitCommandWarnings?(info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[], opts: ExecCmdOpts<Kind>): void,
 }
 
+/**
+ * @internal
+ */
 type EmissionStrategies = {
   Normal: EmissionStrategy<'normal'>,
   Admin: EmissionStrategy<'admin'>,

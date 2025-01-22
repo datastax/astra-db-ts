@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { Collection, FoundDoc, SomeDoc, WithId } from '@/src/documents/collections';
-import { DEFAULT_KEYSPACE, RawDataAPIResponse, WithTimeout } from '@/src/lib/api';
+import { DEFAULT_KEYSPACE, type OpaqueHttpClient, RawDataAPIResponse, WithTimeout } from '@/src/lib/api';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
 import { DataAPIEnvironment, nullish } from '@/src/lib/types';
 import { extractDbIdFromUrl, extractRegionFromUrl } from '@/src/documents/utils';
@@ -232,7 +232,7 @@ export class Db {
       throw new InvalidEnvironmentError('db.id', this.#defaultOpts.environment, ['astra'], 'non-Astra databases have no appropriate ID');
     }
     if (!this.#id) {
-      throw new Error(`Malformed AstraDB endpoint URL '${this.#endpoint}'—database ID unable to be parsed`);
+      throw new Error(`Unexpected AstraDB endpoint URL '${this.#endpoint}'—database ID unable to be parsed`);
     }
     return this.#id;
   }
@@ -249,7 +249,7 @@ export class Db {
       throw new InvalidEnvironmentError('db.region', this.#defaultOpts.environment, ['astra'], 'non-Astra databases have no appropriate region');
     }
     if (!this.#region) {
-      throw new Error(`Malformed AstraDB endpoint URL '${this.#endpoint}'—database region unable to be parsed`);
+      throw new Error(`Unexpected AstraDB endpoint URL '${this.#endpoint}'—database region unable to be parsed`);
     }
     return this.#region;
   }
@@ -393,7 +393,7 @@ export class Db {
     }
 
     if (environment === 'astra') {
-      return new AstraDbAdmin(this, this.#defaultOpts, options, this.#defaultOpts.dbOptions.token, this.#endpoint!);
+      return new AstraDbAdmin(this, this.#defaultOpts, options, this.#defaultOpts.dbOptions.token, this.#endpoint);
     }
 
     return new DataAPIDbAdmin(this, this.#httpClient, options);
@@ -1214,7 +1214,7 @@ export class Db {
     });
   }
 
-  public get _httpClient() {
+  public get _httpClient(): OpaqueHttpClient {
     return this.#httpClient;
   }
 }

@@ -23,7 +23,8 @@ describe('unit.administration.utils', () => {
       assert.strictEqual(extractAstraEnvironment(DEMO_APPLICATION_URI), 'prod');
       assert.strictEqual(extractAstraEnvironment('|apps.astra-dev.datastax.com|'), 'dev');
       assert.strictEqual(extractAstraEnvironment('|apps.astra-test.datastax.com|'), 'test');
-      assert.throws(() => extractAstraEnvironment('castamere'));
+      assert.throws(() => extractAstraEnvironment('|apps.astra-car.datastax.com|'));
+      assert.throws(() => extractAstraEnvironment('astra-dev'));
     });
   });
 });

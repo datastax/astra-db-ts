@@ -23,7 +23,7 @@ import { Db } from '@/src/db/db';
 import { buildAstraDatabaseAdminInfo } from '@/src/administration/utils';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
-import { TokenProvider, WithTimeout } from '@/src/lib';
+import { OpaqueHttpClient, TokenProvider, WithTimeout } from '@/src/lib';
 import { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info';
 import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
@@ -106,7 +106,7 @@ export class AstraAdmin {
     });
 
     Object.defineProperty(this, $CustomInspect, {
-      value: () => `AstraAdmin()`,
+      value: () => 'AstraAdmin()',
     });
   }
 
@@ -183,7 +183,7 @@ export class AstraAdmin {
       ? maybeOptions
       : regionOrOptions;
 
-    if (typeof regionOrOptions === 'string' && (endpointOrId.startsWith('https://') || endpointOrId.startsWith('http://'))) {
+    if (typeof regionOrOptions === 'string' && (endpointOrId.startsWith('http'))) {
       throw new Error('Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { keyspace })`?');
     }
 
@@ -480,7 +480,7 @@ export class AstraAdmin {
     });
   }
 
-  public get _httpClient() {
+  public get _httpClient(): OpaqueHttpClient {
     return this.#httpClient;
   }
 }

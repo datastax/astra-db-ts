@@ -23,10 +23,9 @@ import { EmptyObj } from '@/src/lib/types';
 import {
   DataAPIBlob,
   DataAPIDate,
-  DataAPIDuration,
+  DataAPIDuration, DataAPIInet,
   DataAPITime,
-  DataAPITimestamp, FoundRow,
-  InetAddress,
+  FoundRow,
   SomeRow,
   UUID,
 } from '@/src/documents';
@@ -100,7 +99,7 @@ export type InferrableTable =
  * // for the table's schema
  * type _Proof = Equal<User, {
  *   name: string,
- *   dob: DataAPITimestamp,
+ *   dob: Date,
  *   friends: Set<string>,
  * }>;
  *
@@ -109,7 +108,7 @@ export type InferrableTable =
  * type _ProofPK = Equal<UserPK, {
  *   name: string,
  *   height: TypeErr<'Field `height` not found as property in table definition'>,
- *   dob: DataAPITimestamp,
+ *   dob: Date,
  * }>;
  *
  * // And now `User` can be used wherever.
@@ -254,20 +253,22 @@ export type CqlType2TSType<T extends string, Def> =
 
 interface CqlNonGenericType2TSTypeDict {
   ascii: string | null,
-  bigint: number | null,
+  bigint: bigint | null,
   blob: DataAPIBlob | null,
   boolean: boolean | null,
+  counter: bigint | null,
   date: DataAPIDate | null,
   decimal: BigNumber | null,
   double: number | null,
   duration: DataAPIDuration | null,
   float: number | null,
   int: number | null,
-  inet: InetAddress | null,
+  inet: DataAPIInet | null,
   smallint: number | null,
   text: string | null;
   time: DataAPITime | null,
-  timestamp: DataAPITimestamp | null,
+  timestamp: Date | null,
+  timeuuid: UUID | null,
   tinyint: number | null,
   uuid: UUID | null,
   varchar: string | null,
