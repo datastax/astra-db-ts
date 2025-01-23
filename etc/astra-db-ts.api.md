@@ -1582,7 +1582,7 @@ export abstract class KeyTransformer {
 export const LIB_NAME = "astra-db-ts";
 
 // @public
-export const LIB_VERSION = "2.0.0-preview.1";
+export const LIB_VERSION = "2.0.0-preview.2";
 
 // @public
 export interface ListAstraDatabasesOptions extends WithTimeout<'databaseAdminTimeoutMs'> {
