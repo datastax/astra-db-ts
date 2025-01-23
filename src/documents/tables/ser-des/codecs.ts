@@ -39,17 +39,9 @@ type TableDesFnDef<Type> =
 /**
  * @public
  */
-export interface TableCodecSerDesFns {
-  serialize: TableSerFn,
-  deserialize: TableDesFn,
-}
-
-/**
- * @public
- */
 export type TableCodecClass = {
   new (...args: any[]): { [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>> };
-  [$DeserializeForTable]: TableCodecSerDesFns['deserialize'];
+  [$DeserializeForTable]: TableDesFn;
 }
 
 /**

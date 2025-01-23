@@ -27,17 +27,9 @@ type CollDesFn = SerDesFn<CollDesCtx>;
 /**
  * @public
  */
-export interface CollCodecSerDesFns {
-  serialize: CollSerFn,
-  deserialize: CollDesFn,
-}
-
-/**
- * @public
- */
 export interface CollCodecClass {
   new (...args: any[]): { [$SerializeForCollection]: (ctx: CollSerCtx) => ReturnType<SerDesFn<any>> };
-  [$DeserializeForCollection]: CollCodecSerDesFns['deserialize'];
+  [$DeserializeForCollection]: CollDesFn;
 }
 
 /**
@@ -192,11 +184,3 @@ const findOrInsertClass = <Fn>(arr: { class: SomeConstructor, fns: Fn[] }[], new
   }
   arr.push({ class: newClass, fns: [fn] });
 };
-
-// forName('name', delegate | { serialize?, deserialize? })
-
-// forPath(['path'], delegate | { serialize?, deserialize? })
-
-// forType('name', delegate | { ((serializeGuard | serializeClass) & serialize)?, deserialize? })
-
-// custom({ ((serializeGuard | serializeClass) & serialize)?, (deserializeGuard & deserialize)? })

@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { BaseDesCtx, BaseSerCtx, CodecSerDesFns } from '@/src/lib';
+import { BaseDesCtx, BaseSerCtx } from '@/src/lib';
 
 /**
  * @public
  */
 export abstract class KeyTransformer {
-  public abstract serializeKey(key: string, ctx: BaseSerCtx<CodecSerDesFns>): string;
-  public abstract deserializeKey(key: string, ctx: BaseDesCtx<CodecSerDesFns>): string;
+  public abstract serializeKey(key: string, ctx: BaseSerCtx): string;
+  public abstract deserializeKey(key: string, ctx: BaseDesCtx): string;
 }
 
 /**
@@ -28,7 +28,7 @@ export abstract class KeyTransformer {
 export class Camel2SnakeCase extends KeyTransformer {
   private _cache: Record<string, string> = { _id: '_id' };
 
-  public override serializeKey(camel: string, ctx: BaseSerCtx<CodecSerDesFns>): string {
+  public override serializeKey(camel: string, ctx: BaseSerCtx): string {
     if (ctx.path.length > 1 || !camel) {
       return camel;
     }
@@ -38,7 +38,7 @@ export class Camel2SnakeCase extends KeyTransformer {
     return this._cache[camel] = camel.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
   }
 
-  public override deserializeKey(snake: string, ctx: BaseDesCtx<CodecSerDesFns>): string {
+  public override deserializeKey(snake: string, ctx: BaseDesCtx): string {
     if (ctx.path.length > 1 || !snake) {
       return snake;
     }

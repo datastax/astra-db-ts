@@ -23,7 +23,6 @@ export {
 } from './ser-des/ser-des';
 
 export {
-  TableCodecSerDesFns,
   TableCodecClass,
   TableCodecs,
   TableCodec,

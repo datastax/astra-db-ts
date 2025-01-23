@@ -22,7 +22,6 @@ import {
   processCodecs,
   RawTableCodec,
   TableCodecs,
-  TableCodecSerDesFns,
   TableDeserializers,
   TableSerializers,
 } from '@/src/documents/tables/ser-des/codecs';
@@ -34,7 +33,7 @@ import { UnexpectedDataAPIResponseError } from '@/src/client';
 /**
  * @public
  */
-export interface TableSerCtx extends BaseSerCtx<TableCodecSerDesFns> {
+export interface TableSerCtx extends BaseSerCtx {
   serializers: TableSerializers,
   bigNumsPresent: boolean,
 }
@@ -42,7 +41,7 @@ export interface TableSerCtx extends BaseSerCtx<TableCodecSerDesFns> {
 /**
  * @public
  */
-export interface TableDesCtx extends BaseDesCtx<TableCodecSerDesFns> {
+export interface TableDesCtx extends BaseDesCtx {
   tableSchema: ListTableColumnDefinitions,
   deserializers: TableDeserializers,
   next: never;
@@ -51,7 +50,7 @@ export interface TableDesCtx extends BaseDesCtx<TableCodecSerDesFns> {
 /**
  * @public
  */
-export interface TableSerDesConfig extends BaseSerDesConfig<TableCodecSerDesFns, TableSerCtx, TableDesCtx> {
+export interface TableSerDesConfig extends BaseSerDesConfig<TableSerCtx, TableDesCtx> {
   codecs?: RawTableCodec[],
   sparseData?: boolean,
 }
@@ -59,7 +58,7 @@ export interface TableSerDesConfig extends BaseSerDesConfig<TableCodecSerDesFns,
 /**
  * @internal
  */
-export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableDesCtx> {
+export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
   declare protected readonly _cfg: TableSerDesConfig;
   
   private readonly _serializers: TableSerializers;

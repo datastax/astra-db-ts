@@ -34,15 +34,7 @@ export type {
 } from './ser-des/ser-des';
 
 export type {
-  Codecs,
-  CodecSerDesFns,
-  TypeCodec,
-  ClassGuardCodec,
-  NameCodec,
-  PathCodec,
-  CustomGuardCodec,
-  RawCodec,
-  CodecOpts,
+
 } from './ser-des/codecs';
 
 export type {

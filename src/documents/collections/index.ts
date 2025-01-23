@@ -24,7 +24,6 @@ export {
 } from './ser-des/ser-des';
 
 export {
-  CollCodecSerDesFns,
   CollCodecClass,
   CollCodecs,
   CollCodec,

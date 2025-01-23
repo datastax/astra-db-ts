@@ -12,21 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Codecs, CodecSerDesFns } from '@/src/lib/api/ser-des/codecs';
 import { SomeDoc } from '@/src/documents';
 import { KeyTransformer, RawDataAPIResponse } from '@/src/lib';
 
 /**
  * @public
  */
-export interface BaseSerCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fns> {
+export interface BaseSerCtx extends BaseSerDesCtx {
   mutatingInPlace: boolean,
 }
 
 /**
  * @public
  */
-export interface BaseDesCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fns> {
+export interface BaseDesCtx extends BaseSerDesCtx {
   rawDataApiResp: RawDataAPIResponse,
   parsingInsertedId: boolean,
   keys: string[] | null,
@@ -35,13 +34,12 @@ export interface BaseDesCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fn
 /**
  * @public
  */
-export interface BaseSerDesCtx<Fns extends CodecSerDesFns> {
+export interface BaseSerDesCtx {
   rootObj: SomeDoc,
   path: string[],
   done<T>(obj?: T): readonly [0, T?],
   next<T>(obj?: T): readonly [1, T?],
   continue(): readonly [2],
-  codecs: Codecs<Fns>,
   keyTransformer?: KeyTransformer,
 }
 

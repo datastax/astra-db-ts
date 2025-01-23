@@ -16,7 +16,6 @@ import { BaseSerDesConfig, SerDes, SerDesFn } from '@/src/lib/api/ser-des/ser-de
 import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
 import {
   CollCodecs,
-  CollCodecSerDesFns,
   CollDeserializers,
   CollSerializers, processCodecs, RawCollCodec,
 } from '@/src/documents/collections/ser-des/codecs';
@@ -28,7 +27,7 @@ import { coerceBigNumber, coerceNumber, collNumRepFnFromCfg } from '@/src/docume
 /**
  * @public
  */
-export interface CollSerCtx extends BaseSerCtx<CollCodecSerDesFns> {
+export interface CollSerCtx extends BaseSerCtx {
   serializers: CollSerializers,
   bigNumsEnabled: boolean,
 }
@@ -36,7 +35,7 @@ export interface CollSerCtx extends BaseSerCtx<CollCodecSerDesFns> {
 /**
  * @public
  */
-export interface CollDesCtx extends BaseDesCtx<CollCodecSerDesFns> {
+export interface CollDesCtx extends BaseDesCtx {
   getNumRepForPath?: GetCollNumRepFn,
   deserializers: CollDeserializers,
 }
@@ -44,7 +43,7 @@ export interface CollDesCtx extends BaseDesCtx<CollCodecSerDesFns> {
 /**
  * @public
  */
-export interface CollectionSerDesConfig extends BaseSerDesConfig<CollCodecSerDesFns, CollSerCtx, CollDesCtx> {
+export interface CollectionSerDesConfig extends BaseSerDesConfig<CollSerCtx, CollDesCtx> {
   enableBigNumbers?: GetCollNumRepFn | CollNumRepCfg,
   codecs?: RawCollCodec[],
 }
@@ -52,7 +51,7 @@ export interface CollectionSerDesConfig extends BaseSerDesConfig<CollCodecSerDes
 /**
  * @internal
  */
-export class CollectionSerDes extends SerDes<CollCodecSerDesFns, CollSerCtx, CollDesCtx> {
+export class CollectionSerDes extends SerDes<CollSerCtx, CollDesCtx> {
   declare protected readonly _cfg: CollectionSerDesConfig & { enableBigNumbers?: GetCollNumRepFn };
   private readonly _getNumRepForPath: GetCollNumRepFn | undefined;
 

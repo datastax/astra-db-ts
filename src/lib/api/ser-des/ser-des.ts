@@ -15,7 +15,6 @@
 import { SomeDoc } from '@/src/documents';
 import { KeyTransformer, nullish, OneOrMany, RawDataAPIResponse } from '@/src/lib';
 import { toArray } from '@/src/lib/utils';
-import { CodecSerDesFns } from '@/src/lib/api/ser-des/codecs';
 import { BaseDesCtx, BaseSerCtx, BaseSerDesCtx, ctxContinue, ctxDone, ctxNext, DONE } from '@/src/lib/api/ser-des/ctx';
 
 /**
@@ -26,7 +25,7 @@ export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => readonly [0 |
 /**
  * @public
  */
-export interface BaseSerDesConfig<Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>> {
+export interface BaseSerDesConfig<SerCtx extends BaseSerCtx, DesCtx extends BaseDesCtx> {
   serialize?: OneOrMany<SerDesFn<SerCtx>>,
   deserialize?: OneOrMany<SerDesFn<DesCtx>>,
   mutateInPlace?: boolean,
@@ -36,8 +35,8 @@ export interface BaseSerDesConfig<Fns extends CodecSerDesFns, SerCtx extends Bas
 /**
  * @internal
  */
-export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends BaseSerCtx<Fns> = any, DesCtx extends BaseDesCtx<Fns> = any> {
-  protected constructor(protected readonly _cfg: BaseSerDesConfig<Fns, SerCtx, DesCtx>) {}
+export abstract class SerDes<SerCtx extends BaseSerCtx = any, DesCtx extends BaseDesCtx = any> {
+  protected constructor(protected readonly _cfg: BaseSerDesConfig<SerCtx, DesCtx>) {}
 
   public serialize<S extends SomeDoc | nullish>(obj: S): [S, boolean] {
     if (!obj) {
@@ -68,12 +67,12 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
     return deserializeRecord('', { ['']: ctx.rootObj }, ctx, toArray(this._cfg.deserialize!))[''] as S;
   }
 
-  protected abstract adaptSerCtx(ctx: BaseSerCtx<Fns>): SerCtx;
-  protected abstract adaptDesCtx(ctx: BaseDesCtx<Fns>): DesCtx;
+  protected abstract adaptSerCtx(ctx: BaseSerCtx): SerCtx;
+  protected abstract adaptDesCtx(ctx: BaseDesCtx): DesCtx;
   protected abstract bigNumsPresent(ctx: SerCtx): boolean;
 
-  protected static _mergeConfig<Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>>(...cfg: (BaseSerDesConfig<Fns, SerCtx, DesCtx> | undefined)[]): BaseSerDesConfig<Fns, SerCtx, DesCtx> {
-    return cfg.reduce<BaseSerDesConfig<Fns, SerCtx, DesCtx>>((acc, cfg) => ({
+  protected static _mergeConfig<SerCtx extends BaseSerCtx, DesCtx extends BaseDesCtx>(...cfg: (BaseSerDesConfig<SerCtx, DesCtx> | undefined)[]): BaseSerDesConfig<SerCtx, DesCtx> {
+    return cfg.reduce<BaseSerDesConfig<SerCtx, DesCtx>>((acc, cfg) => ({
       serialize: [...toArray(cfg?.serialize ?? []), ...toArray(acc.serialize ?? [])],
       deserialize: [...toArray(cfg?.deserialize ?? []), ...toArray(acc.deserialize ?? [])],
       mutateInPlace: !!(cfg?.mutateInPlace ?? acc.mutateInPlace),
@@ -81,7 +80,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
     }), {});
   }
 
-  private _mkCtx<Ctx>(obj: SomeDoc, ctx: Ctx): Ctx & BaseSerDesCtx<Fns> {
+  private _mkCtx<Ctx>(obj: SomeDoc, ctx: Ctx): Ctx & BaseSerDesCtx {
     return {
       done: ctxDone,
       next: ctxNext,
@@ -95,7 +94,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
   }
 }
 
-function serializeRecord<Ctx extends BaseSerCtx<any>>(key: string, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
+function serializeRecord<Ctx extends BaseSerCtx>(key: string, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
   const stop = applySerdesFns(fns, key, obj, ctx);
 
   if (!stop && ctx.path.length < 250 && typeof obj[key] === 'object' && obj[key] !== null) {
@@ -105,7 +104,7 @@ function serializeRecord<Ctx extends BaseSerCtx<any>>(key: string, obj: SomeDoc,
   return obj;
 }
 
-function serializeRecordHelper<Ctx extends BaseSerCtx<any>>(obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
+function serializeRecordHelper<Ctx extends BaseSerCtx>(obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
   obj = (!ctx.mutatingInPlace)
     ? (Array.isArray(obj) ? [...obj] : { ...obj })
     : obj;
@@ -134,7 +133,7 @@ function serializeRecordHelper<Ctx extends BaseSerCtx<any>>(obj: SomeDoc, ctx: C
   return obj;
 }
 
-function deserializeRecord<Ctx extends BaseDesCtx<any>>(key: string, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
+function deserializeRecord<Ctx extends BaseDesCtx>(key: string, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
   const value = obj[key];
 
   ctx.keys = (typeof value === 'object' && value !== null)
@@ -154,7 +153,7 @@ function deserializeRecord<Ctx extends BaseDesCtx<any>>(key: string, obj: SomeDo
   return obj;
 }
 
-function deserializeRecordHelper<Ctx extends BaseDesCtx<any>>(keys: string[], obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
+function deserializeRecordHelper<Ctx extends BaseDesCtx>(keys: string[], obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
   const path = ctx.path;
   path.push('<temp>');
 
