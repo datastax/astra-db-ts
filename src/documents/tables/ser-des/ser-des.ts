@@ -18,17 +18,12 @@ import {
   ListTableKnownColumnDefinition,
   ListTableUnsupportedColumnDefinition,
 } from '@/src/db';
-import {
-  processCodecs,
-  RawTableCodec,
-  TableCodecs,
-  TableDeserializers,
-  TableSerializers,
-} from '@/src/documents/tables/ser-des/codecs';
+import { TableCodecs, TableDeserializers, TableSerializers } from '@/src/documents/tables/ser-des/codecs';
 import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { isBigNumber } from '@/src/lib/utils';
 import { UnexpectedDataAPIResponseError } from '@/src/client';
+import { processCodecs, RawCodec } from '@/src/lib';
 
 /**
  * @public
@@ -51,7 +46,7 @@ export interface TableDesCtx extends BaseDesCtx {
  * @public
  */
 export interface TableSerDesConfig extends BaseSerDesConfig<TableSerCtx, TableDesCtx> {
-  codecs?: RawTableCodec[],
+  codecs?: RawCodec<'table'>[],
   sparseData?: boolean,
 }
 

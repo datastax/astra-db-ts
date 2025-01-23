@@ -14,15 +14,12 @@
 
 import { BaseSerDesConfig, SerDes, SerDesFn } from '@/src/lib/api/ser-des/ser-des';
 import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
-import {
-  CollCodecs,
-  CollDeserializers,
-  CollSerializers, processCodecs, RawCollCodec,
-} from '@/src/documents/collections/ser-des/codecs';
+import { CollCodecs, CollDeserializers, CollSerializers } from '@/src/documents/collections/ser-des/codecs';
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 import { isBigNumber, stringArraysEqual } from '@/src/lib/utils';
 import { CollNumRepCfg, GetCollNumRepFn } from '@/src/documents';
 import { coerceBigNumber, coerceNumber, collNumRepFnFromCfg } from '@/src/documents/collections/ser-des/big-nums';
+import { processCodecs, RawCodec } from '@/src/lib';
 
 /**
  * @public
@@ -45,7 +42,7 @@ export interface CollDesCtx extends BaseDesCtx {
  */
 export interface CollectionSerDesConfig extends BaseSerDesConfig<CollSerCtx, CollDesCtx> {
   enableBigNumbers?: GetCollNumRepFn | CollNumRepCfg,
-  codecs?: RawCollCodec[],
+  codecs?: RawCodec<'collection'>[],
 }
 
 /**

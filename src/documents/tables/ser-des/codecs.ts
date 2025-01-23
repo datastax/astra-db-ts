@@ -20,14 +20,20 @@ import { DataAPITime } from '@/src/documents/datatypes/time';
 import { UUID } from '@/src/documents/datatypes/uuid';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
 import { TableDesCtx, TableSerCtx } from '@/src/documents';
-import { EmptyObj, SerDesFn, SomeConstructor } from '@/src/lib';
+import {
+  CustomCodecOpts,
+  Deserializers,
+  EmptyObj,
+  NominalCodecOpts,
+  RawCodec,
+  SerDesFn,
+  Serializers,
+  TypeCodecOpts,
+} from '@/src/lib';
 import BigNumber from 'bignumber.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { DataAPIInet } from '@/src/documents/datatypes/inet';
-import {
-  ListTableKnownColumnDefinition,
-  ListTableUnsupportedColumnDefinition,
-} from '@/src/db';
+import { ListTableKnownColumnDefinition, ListTableUnsupportedColumnDefinition } from '@/src/db';
 
 type TableSerFn = SerDesFn<TableSerCtx>;
 type TableDesFn<Type extends string = string> = (key: Type, val: any, ctx: TableDesCtx, definition: TableDesFnDef<Type>) => ReturnType<SerDesFn<any>>;
@@ -145,7 +151,7 @@ export class TableCodecs {
     }),
   };
 
-  public static forName(name: string, optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodec {
+  public static forName(name: string, optsOrClass: TableNominalCodecOpts | TableCodecClass): RawCodec<'table'> {
     return {
       tag: 'forName',
       name: name,
@@ -153,7 +159,7 @@ export class TableCodecs {
     };
   }
 
-  public static forType<const Type extends string>(type: Type, optsOrClass: TableTypeCodecOpts<Type> | TableCodecClass): RawTableCodec {
+  public static forType<const Type extends string>(type: Type, optsOrClass: TableTypeCodecOpts<Type> | TableCodecClass): RawCodec<'table'> {
     return {
       tag: 'forType',
       type: type,
@@ -161,7 +167,7 @@ export class TableCodecs {
     };
   }
 
-  public static custom(opts: TableCustomCodecOpts): RawTableCodec {
+  public static custom(opts: TableCustomCodecOpts): RawCodec<'table'> {
     return { tag: 'custom', opts: opts };
   }
 }
@@ -169,88 +175,27 @@ export class TableCodecs {
 type TableSerGuard = (value: unknown, ctx: TableSerCtx) => boolean;
 type TableDesGuard = (value: unknown, ctx: TableDesCtx) => boolean;
 
-interface TableNominalCodecOpts {
-  serialize?: TableSerFn,
-  deserialize?: TableDesFn,
-}
-
-type TableTypeCodecOpts<Type extends string> =
-  & (
-    | { serialize: TableSerFn, serializeGuard: TableSerGuard, serializeClass?: 'One (and only one) of `serializeClass` or `serializeGuard` should be present if `serialize` is present.' }
-    | { serialize: TableSerFn, serializeClass: SomeConstructor, serializeGuard?: 'One (and only one) of `serializeClass` or `serializeGuard` should be present if `serialize` is present.', }
-    | { serialize?: never }
-    )
-  & { deserialize?: TableDesFn<Type> }
-
-type TableCustomCodecOpts =
-  & (
-    | { serialize: TableSerFn, serializeGuard: TableSerGuard, serializeClass?: 'One (and only one) of `serializeClass` or `serializeGuard` should be present if `serialize` is present.' }
-    | { serialize: TableSerFn, serializeClass: SomeConstructor, serializeGuard?: 'One (and only one) of `serializeClass` or `serializeGuard` should be present if `serialize` is present.', }
-    | { serialize?: never }
-    )
-  & (
-  | { deserialize: TableDesFn, deserializeGuard: TableDesGuard }
-  | { deserialize?: never }
-  )
-
-export type RawTableCodec =
-  | { tag: 'forName', name: string, opts: TableNominalCodecOpts }
-  | { tag: 'forType', type: string, opts: TableTypeCodecOpts<any> }
-  | { tag: 'custom', opts: TableCustomCodecOpts };
-
-export interface TableSerializers {
-  forName: Record<string, TableSerFn[]>,
-  forClass: { class: SomeConstructor, fns: TableSerFn[] }[],
-  forGuard: { guard: TableSerGuard, fn: TableSerFn }[],
-}
-
-export interface TableDeserializers {
-  forName: Record<string, TableDesFn[]>,
-  forType: Record<string, TableDesFn[]>,
-  forGuard: { guard: TableDesGuard, fn: TableDesFn }[],
-}
+/**
+ * @public
+ */
+export type TableNominalCodecOpts = NominalCodecOpts<TableSerFn, TableDesFn>;
 
 /**
- * @internal
+ * @public
  */
-export const processCodecs = (raw: RawTableCodec[]): [TableSerializers, TableDeserializers] => {
-  const serializers: TableSerializers = { forName: {}, forClass: [], forGuard: [] };
-  const deserializers: TableDeserializers = { forName: {}, forType: {}, forGuard: [] };
+export type TableTypeCodecOpts<Type extends string> = TypeCodecOpts<TableSerFn, TableSerGuard, TableDesFn<Type>>
 
-  for (const codec of raw) {
-    switch (codec.tag) {
-      case 'forName':
-        codec.opts.serialize && (serializers.forName[codec.name] ??= []).push(codec.opts.serialize);
-        codec.opts.deserialize && (deserializers.forName[codec.name] ??= []).push(codec.opts.deserialize);
-        break;
-      case 'forType':
-        ('serializeGuard' in codec.opts && !codec.opts['serializeClass']) && serializers.forGuard.push({ guard: codec.opts.serializeGuard, fn: codec.opts.serialize });
-        ('serializeClass' in codec.opts && !codec.opts['serializeGuard']) && findOrInsertClass(serializers.forClass, codec.opts.serializeClass, codec.opts.serialize);
-        codec.opts.deserialize && (deserializers.forType[codec.type] ??= []).push(codec.opts.deserialize);
-        break;
-      case 'custom':
-        ('serializeGuard' in codec.opts && !codec.opts['serializeClass']) && serializers.forGuard.push({ guard: codec.opts.serializeGuard, fn: codec.opts.serialize });
-        ('serializeClass' in codec.opts && !codec.opts['serializeGuard']) && findOrInsertClass(serializers.forClass, codec.opts.serializeClass, codec.opts.serialize);
-        ('deserializeGuard' in codec.opts) && deserializers.forGuard.push({ guard: codec.opts.deserializeGuard, fn: codec.opts.deserialize });
-        break;
-    }
-  }
+/**
+ * @public
+ */
+export type TableCustomCodecOpts = CustomCodecOpts<TableSerFn, TableSerGuard, TableDesFn, TableDesGuard>;
 
-  return [serializers, deserializers];
-};
+/**
+ * @public
+ */
+export type TableSerializers = Omit<Serializers<TableSerFn, TableSerGuard>, 'forPath'>;
 
-const findOrInsertClass = <Fn>(arr: { class: SomeConstructor, fns: Fn[] }[], newClass: SomeConstructor, fn: Fn) => {
-  for (const { class: clazz, fns } of arr) {
-    if (clazz === newClass) {
-      fns.push(fn);
-      return;
-    }
-  }
-  arr.push({ class: newClass, fns: [fn] });
-};
-
-// forName('name', delegate | { serialize?, deserialize? })
-
-// forType('name', delegate | { ((serializeGuard | serializeClass) & serialize)?, deserialize? })
-
-// custom({ ((serializeGuard | serializeClass) & serialize)?, (deserializeGuard & deserialize)? })
+/**
+ * @public
+ */
+export type TableDeserializers = Omit<Deserializers<TableDesFn, TableDesGuard>, 'forPath'>;

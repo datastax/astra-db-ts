@@ -16,7 +16,7 @@
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { $DeserializeForTable, $SerializeForTable, TableCodec, TableCodecs } from '@/src/documents/tables';
-import { processCodecs, RawTableCodec } from '@/src/documents/tables/ser-des/codecs';
+import { processCodecs, RawCodec } from '@/src/lib';
 
 describe('unit.documents.tables.ser-des.codecs', () => {
   describe('processCodecs', () => {
@@ -30,7 +30,7 @@ describe('unit.documents.tables.ser-des.codecs', () => {
         [$SerializeForTable] = fake('$SerializeForTable');
       }
 
-      const codecs: RawTableCodec[] = [
+      const codecs: RawCodec<'table'>[] = [
         repeat((i) => [
           TableCodecs.forName(`name${i}`, Delegate),
           TableCodecs.forName(`name${i}`, { serialize: fake(`name${i}:ser_fn`) }),
@@ -68,6 +68,7 @@ describe('unit.documents.tables.ser-des.codecs', () => {
             ...repeat((i) => ({ guard: `type${i}:ser_guard`, fn: `type${i}:ser_fn/guard` })),
             ...repeat((i) => ({ guard: `custom${i}:ser_guard`, fn: `custom${i}:ser_fn/guard` })),
           ],
+          forPath: [],
         },
         {
           forName: {
@@ -79,6 +80,7 @@ describe('unit.documents.tables.ser-des.codecs', () => {
           forGuard: [
             ...repeat((i) => ({ guard: `custom${i}:des_guard`, fn: `custom${i}:des_fn` })),
           ],
+          forPath: [],
         },
       ]);
     });

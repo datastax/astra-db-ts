@@ -62,5 +62,3 @@ export const LOGGING_PRED: (e: DataAPIClientEvent, isGlobal: boolean) => boolean
   : () => false;
 
 export const SKIP_PRELUDE = !!process.env.SKIP_PRELUDE || false;
-
-process.env.CLIENT_DYNAMIC_JS_ENV_CHECK = 'true';

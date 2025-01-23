@@ -33,9 +33,7 @@ export type {
   SerDesFn,
 } from './ser-des/ser-des';
 
-export type {
-
-} from './ser-des/codecs';
+export * from './ser-des/codecs';
 
 export type {
   BaseSerDesCtx,
