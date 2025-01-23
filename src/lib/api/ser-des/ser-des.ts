@@ -15,21 +15,13 @@
 import { SomeDoc } from '@/src/documents';
 import { KeyTransformer, nullish, OneOrMany, RawDataAPIResponse } from '@/src/lib';
 import { toArray } from '@/src/lib/utils';
-import { Codecs, CodecSerDesFns, initCodecs, RawCodec } from '@/src/lib/api/ser-des/codecs';
-import {
-  BaseDesCtx,
-  BaseSerCtx,
-  BaseSerDesCtx,
-  ctxContinue,
-  ctxDone,
-  ctxNext,
-  DONE,
-} from '@/src/lib/api/ser-des/ctx';
+import { CodecSerDesFns } from '@/src/lib/api/ser-des/codecs';
+import { BaseDesCtx, BaseSerCtx, BaseSerDesCtx, ctxContinue, ctxDone, ctxNext, DONE } from '@/src/lib/api/ser-des/ctx';
 
 /**
  * @public
  */
-export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?] | 'Return ctx.done(val?), ctx.recurse(val?), ctx.continue(), or void';
+export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?] | 'Return ctx.done(val?), ctx.recurse(val?), or ctx.continue()';
 
 /**
  * @public
@@ -39,18 +31,13 @@ export interface BaseSerDesConfig<Fns extends CodecSerDesFns, SerCtx extends Bas
   deserialize?: OneOrMany<SerDesFn<DesCtx>>,
   mutateInPlace?: boolean,
   keyTransformer?: KeyTransformer,
-  codecs?: RawCodec<Fns>[],
 }
 
 /**
  * @internal
  */
 export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends BaseSerCtx<Fns> = any, DesCtx extends BaseDesCtx<Fns> = any> {
-  protected readonly _codecs: Codecs<Fns>;
-
-  protected constructor(protected readonly _cfg: BaseSerDesConfig<Fns, SerCtx, DesCtx>) {
-    this._codecs = initCodecs(_cfg.codecs ?? []);
-  }
+  protected constructor(protected readonly _cfg: BaseSerDesConfig<Fns, SerCtx, DesCtx>) {}
 
   public serialize<S extends SomeDoc | nullish>(obj: S): [S, boolean] {
     if (!obj) {
@@ -91,7 +78,6 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
       deserialize: [...toArray(cfg?.deserialize ?? []), ...toArray(acc.deserialize ?? [])],
       mutateInPlace: !!(cfg?.mutateInPlace ?? acc.mutateInPlace),
       keyTransformer: cfg?.keyTransformer ?? acc.keyTransformer,
-      codecs: [...acc.codecs ?? [], ...cfg?.codecs ?? []],
     }), {});
   }
 
@@ -100,7 +86,7 @@ export abstract class SerDes<Fns extends CodecSerDesFns = any, SerCtx extends Ba
       done: ctxDone,
       next: ctxNext,
       continue: ctxContinue,
-      codecs: this._codecs,
+      codecs: null!,
       keyTransformer: this._cfg.keyTransformer,
       rootObj: obj,
       path: [],

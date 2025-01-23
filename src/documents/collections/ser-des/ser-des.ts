@@ -12,9 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { BaseSerDesConfig, SerDes } from '@/src/lib/api/ser-des/ser-des';
+import { BaseSerDesConfig, SerDes, SerDesFn } from '@/src/lib/api/ser-des/ser-des';
 import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
-import { CollCodecs, CollCodecSerDesFns } from '@/src/documents/collections/ser-des/codecs';
+import {
+  CollCodecs,
+  CollCodecSerDesFns,
+  CollDeserializers,
+  CollSerializers, processCodecs, RawCollCodec,
+} from '@/src/documents/collections/ser-des/codecs';
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 import { isBigNumber, stringArraysEqual } from '@/src/lib/utils';
 import { CollNumRepCfg, GetCollNumRepFn } from '@/src/documents';
@@ -24,6 +29,7 @@ import { coerceBigNumber, coerceNumber, collNumRepFnFromCfg } from '@/src/docume
  * @public
  */
 export interface CollSerCtx extends BaseSerCtx<CollCodecSerDesFns> {
+  serializers: CollSerializers,
   bigNumsEnabled: boolean,
 }
 
@@ -32,6 +38,7 @@ export interface CollSerCtx extends BaseSerCtx<CollCodecSerDesFns> {
  */
 export interface CollDesCtx extends BaseDesCtx<CollCodecSerDesFns> {
   getNumRepForPath?: GetCollNumRepFn,
+  deserializers: CollDeserializers,
 }
 
 /**
@@ -39,6 +46,7 @@ export interface CollDesCtx extends BaseDesCtx<CollCodecSerDesFns> {
  */
 export interface CollectionSerDesConfig extends BaseSerDesConfig<CollCodecSerDesFns, CollSerCtx, CollDesCtx> {
   enableBigNumbers?: GetCollNumRepFn | CollNumRepCfg,
+  codecs?: RawCollCodec[],
 }
 
 /**
@@ -48,21 +56,28 @@ export class CollectionSerDes extends SerDes<CollCodecSerDesFns, CollSerCtx, Col
   declare protected readonly _cfg: CollectionSerDesConfig & { enableBigNumbers?: GetCollNumRepFn };
   private readonly _getNumRepForPath: GetCollNumRepFn | undefined;
 
+  private readonly _serializers: CollSerializers;
+  private readonly _deserializers: CollDeserializers;
+
   public constructor(cfg?: CollectionSerDesConfig) {
     super(CollectionSerDes.mergeConfig(DefaultCollectionSerDesCfg, cfg, cfg?.enableBigNumbers ? BigNumCollectionDesCfg : {}));
 
     this._getNumRepForPath = (typeof cfg?.enableBigNumbers === 'object')
       ? collNumRepFnFromCfg(cfg.enableBigNumbers)
       : cfg?.enableBigNumbers;
+
+    [this._serializers, this._deserializers] = processCodecs(this._cfg.codecs ?? []);
   }
 
   public override adaptSerCtx(ctx: CollSerCtx): CollSerCtx {
     ctx.bigNumsEnabled = !!this._getNumRepForPath;
+    ctx.serializers = this._serializers;
     return ctx;
   }
 
   public override adaptDesCtx(ctx: CollDesCtx): CollDesCtx {
     ctx.getNumRepForPath = this._getNumRepForPath;
+    ctx.deserializers = this._deserializers;
     return ctx;
   }
 
@@ -73,6 +88,7 @@ export class CollectionSerDes extends SerDes<CollCodecSerDesFns, CollSerCtx, Col
   public static mergeConfig(...cfg: (CollectionSerDesConfig | undefined)[]): CollectionSerDesConfig {
     return {
       enableBigNumbers: cfg.reduce<CollectionSerDesConfig['enableBigNumbers']>((acc, c) => c?.enableBigNumbers ?? acc, undefined),
+      codecs: cfg.reduce<CollectionSerDesConfig['codecs']>((acc, c) => [...c?.codecs ?? [], ...acc!], []),
       ...super._mergeConfig(...cfg),
     };
   }
@@ -94,55 +110,51 @@ const BigNumCollectionDesCfg: CollectionSerDesConfig = {
 
 const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
   serialize(key, value, ctx) {
-    const codecs = ctx.codecs;
-    let resp;
+    let resp: ReturnType<SerDesFn<unknown>> = null!;
 
-    for (let i = 0, n = codecs.path.length; i < n; i++) {
-      const path = codecs.path[i].path;
+    // Path-based serializers
+    const pathSer = ctx.serializers.forPath.find((p) => stringArraysEqual(p.path, ctx.path));
 
-      if (stringArraysEqual(path, ctx.path)) {
-        if ((resp = codecs.path[i].serialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
-          return resp;
-        }
-      }
+    if (pathSer && pathSer.fns.find((ser) => (resp = ser(key, value, ctx))[0] !== CONTINUE)) {
+      return resp;
     }
 
-    if (key in codecs.name) {
-      if ((resp = codecs.name[key].serialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
-        return resp;
-      }
+    // Name-based serializers
+    const nameSer = ctx.serializers.forName[key];
+
+    if (nameSer && nameSer.find((ser) => (resp = ser(key, value, ctx))[0] !== CONTINUE)) {
+      return resp;
     }
 
-    for (const codec of codecs.customGuard) {
-      if (codec.serializeGuard(value, ctx)) {
-        if ((resp = codec.serialize(key, value, ctx))[0] !== CONTINUE) {
-          return resp;
-        }
-      }
+    // Type-based/custom serializers
+    const guardSer = ctx.serializers.forGuard.find((g) => g.guard(value, ctx));
+
+    if (guardSer && (resp = guardSer.fn(key, value, ctx))[0] !== CONTINUE) {
+      return resp;
     }
 
     if (typeof value === 'object' && value !== null) {
-      if (value[$SerializeForCollection]) {
-        if ((resp = value[$SerializeForCollection](ctx))[0] !== CONTINUE) {
-          return resp;
-        }
+      // Delegate serializer
+      if ($SerializeForCollection in value && (resp = value[$SerializeForCollection](ctx))[0] !== CONTINUE) {
+        return resp;
       }
 
-      for (const codec of codecs.classGuard) {
-        if (value instanceof codec.serializeClass) {
-          if ((resp = codec.serialize(key, value, ctx))[0] !== CONTINUE) {
-            return resp;
-          }
-        }
+      // Class-based serializers
+      const classSer = ctx.serializers.forClass.find((c) => value instanceof c.class);
+
+      if (classSer && classSer.fns.find((ser) => (resp = ser(key, value, ctx))[0] !== CONTINUE)) {
+        return resp;
       }
 
+      // Readable err messages for big numbers if not enabled
       if (isBigNumber(value)) {
         if (!ctx.bigNumsEnabled) {
           throw new Error('BigNumber serialization must be enabled through serdes.enableBigNumbers in CollectionSerDesConfig');
         }
         return ctx.done();
       }
-    } else if (typeof value === 'bigint') {
+    }
+    else if (typeof value === 'bigint') {
       if (!ctx.bigNumsEnabled) {
         throw new Error('BigNumber serialization must be enabled through serdes.enableBigNumbers in CollectionSerDesConfig');
       }
@@ -152,31 +164,39 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
     return ctx.continue();
   },
   deserialize(key, value, ctx) {
-    const codecs = ctx.codecs;
-    let resp;
+    let resp: ReturnType<SerDesFn<unknown>> = null!;
 
-    for (let i = 0, n = codecs.path.length; i < n; i++) {
-      const path = codecs.path[i].path;
+    // Path-based deserializers
+    const pathDes = ctx.deserializers.forPath.find((p) => stringArraysEqual(p.path, ctx.path));
 
-      if (stringArraysEqual(path, ctx.path)) {
-        if ((resp = codecs.path[i].deserialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
-          return resp;
-        }
-      }
+    if (pathDes && pathDes.fns.find((des) => (resp = des(key, value, ctx))[0] !== CONTINUE)) {
+      return resp;
     }
 
-    if (key in codecs.name) {
-      if ((resp = codecs.name[key].deserialize(key, value, ctx))[0] !== CONTINUE) {
+    // Name-based deserializers
+    const nameDes = ctx.deserializers.forName[key];
+
+    if (nameDes && nameDes.find((des) => (resp = des(key, value, ctx))[0] !== CONTINUE)) {
+      return resp;
+    }
+
+    // Custom deserializers
+    const guardDes = ctx.deserializers.forGuard.find((g) => g.guard(value, ctx));
+
+    if (guardDes && (resp = guardDes.fn(key, value, ctx))[0] !== CONTINUE) {
+      return resp;
+    }
+
+    // Type-based deserializers
+    if (ctx.keys?.length === 1) {
+      const typeDes = ctx.deserializers.forType[ctx.keys[0]];
+
+      if (typeDes && typeDes.find((des) => (resp = des(key, value, ctx))[0] !== CONTINUE)) {
         return resp;
       }
     }
 
-    if (ctx.keys?.length === 1 && ctx.keys[0] in codecs.type) {
-      if ((resp = codecs.type[ctx.keys[0]].deserialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
-        return resp;
-      }
-    }
-
+    // Insurance
     if (typeof value === 'object' && isBigNumber(value) || value instanceof Date) {
       return ctx.done(value);
     }

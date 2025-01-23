@@ -25,6 +25,7 @@ export type {
 export type {
   RawDataAPIResponse,
   OpaqueHttpClient,
+  SomeConstructor,
 } from './types';
 
 export type {
@@ -40,7 +41,6 @@ export type {
   NameCodec,
   PathCodec,
   CustomGuardCodec,
-  SomeCodec,
   RawCodec,
   CodecOpts,
 } from './ser-des/codecs';

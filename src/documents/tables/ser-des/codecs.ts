@@ -19,19 +19,29 @@ import { DataAPIDuration } from '@/src/documents/datatypes/duration';
 import { DataAPITime } from '@/src/documents/datatypes/time';
 import { UUID } from '@/src/documents/datatypes/uuid';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
-import { SomeDoc, TableDesCtx, TableSerCtx } from '@/src/documents';
-import { EmptyObj, SerDesFn } from '@/src/lib';
+import { TableDesCtx, TableSerCtx } from '@/src/documents';
+import { EmptyObj, SerDesFn, SomeConstructor } from '@/src/lib';
 import BigNumber from 'bignumber.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
-import { CodecOpts, RawCodec } from '@/src/lib/api/ser-des/codecs';
 import { DataAPIInet } from '@/src/documents/datatypes/inet';
+import {
+  ListTableKnownColumnDefinition,
+  ListTableUnsupportedColumnDefinition,
+} from '@/src/db';
+
+type TableSerFn = SerDesFn<TableSerCtx>;
+type TableDesFn<Type extends string = string> = (key: Type, val: any, ctx: TableDesCtx, definition: TableDesFnDef<Type>) => ReturnType<SerDesFn<any>>;
+
+type TableDesFnDef<Type> =
+  | (ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition) & { type: Type }
+  | undefined;
 
 /**
  * @public
  */
 export interface TableCodecSerDesFns {
-  serialize: SerDesFn<TableSerCtx>,
-  deserialize: (key: string | undefined, val: any, ctx: TableDesCtx, definition?: SomeDoc) => ReturnType<SerDesFn<any>>,
+  serialize: TableSerFn,
+  deserialize: TableDesFn,
 }
 
 /**
@@ -107,12 +117,12 @@ export class TableCodecs {
         for (let i = 0, n = entries.length; i < n; i++) {
           const [key, value] = entries[i];
 
-          const keyParser = ctx.codecs.type[def!.keyType];
-          const valueParser = ctx.codecs.type[def!.valueType];
+          const keyParser = ctx.deserializers.forType[def!.keyType]?.[0];
+          const valueParser = ctx.deserializers.forType[def!.valueType]?.[0];
 
           entries[i] = [
-            keyParser ? keyParser.deserialize(undefined, key, ctx, def)[1] : key,
-            valueParser ? valueParser.deserialize(undefined, value, ctx, def)[1] : value,
+            keyParser ? keyParser(i.toString(), key, ctx, def)[1] : key,
+            valueParser ? valueParser(i.toString(), value, ctx, def)[1] : value,
           ];
         }
 
@@ -122,8 +132,8 @@ export class TableCodecs {
     list: TableCodecs.forType('list', {
       deserialize(_, list, ctx, def) {
         for (let i = 0, n = list.length; i < n; i++) {
-          const elemParser = ctx.codecs.type[def!.valueType];
-          list[i] = elemParser ? elemParser.deserialize(undefined, list[i], ctx, def)[1] : list[i];
+          const elemParser = ctx.deserializers.forType[def!.valueType]?.[0];
+          list[i] = elemParser ? elemParser(i.toString(), list[i], ctx, def)[1] : list[i];
         }
         return ctx.done(list);
       },
@@ -135,44 +145,120 @@ export class TableCodecs {
       },
       deserialize(_, list, ctx, def) {
         for (let i = 0, n = list.length; i < n; i++) {
-          const elemParser = ctx.codecs.type[def!.valueType];
-          list[i] = elemParser ? elemParser.deserialize(undefined, list[i], ctx, def)[1] : list[i];
+          const elemParser = ctx.deserializers.forType[def!.valueType]?.[0];
+          list[i] = elemParser ? elemParser(i.toString(), list[i], ctx, def)[1] : list[i];
         }
         return ctx.done(new Set(list));
       },
     }),
   };
 
-  public static forPath(path: string[], optsOrClass: CodecOpts<TableCodecSerDesFns, TableSerCtx, TableDesCtx> | TableCodecClass): RawCodec<TableCodecSerDesFns> {
+  public static forName(name: string, optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodec {
     return {
-      path,
-      ...($DeserializeForTable in optsOrClass)
-        ? { deserialize: optsOrClass[$DeserializeForTable] }
-        : optsOrClass,
+      tag: 'forName',
+      name: name,
+      opts: ($DeserializeForTable in optsOrClass) ? { deserialize: optsOrClass[$DeserializeForTable] } : optsOrClass,
     };
   }
 
-  public static forName(name: string, optsOrClass: CodecOpts<TableCodecSerDesFns, TableSerCtx, TableDesCtx> | TableCodecClass): RawCodec<TableCodecSerDesFns> {
+  public static forType<const Type extends string>(type: Type, optsOrClass: TableTypeCodecOpts<Type> | TableCodecClass): RawTableCodec {
     return {
-      name,
-      ...($DeserializeForTable in optsOrClass)
-        ? { deserialize: optsOrClass[$DeserializeForTable] }
-        : optsOrClass,
+      tag: 'forType',
+      type: type,
+      opts: ($DeserializeForTable in optsOrClass) ? { deserialize: optsOrClass[$DeserializeForTable] } : optsOrClass,
     };
   }
 
-  public static forType(type: string, optsOrClass: CodecOpts<TableCodecSerDesFns, TableSerCtx, TableDesCtx> | TableCodecClass): RawCodec<TableCodecSerDesFns> {
-    if (!($DeserializeForTable in optsOrClass) && 'serialize' in optsOrClass && !!optsOrClass.serialize) {
-      if (!('serializeClass' in optsOrClass) && !('serializeGuard' in optsOrClass)) {
-        throw new Error('TableCodecs.forType: serializeClass or serializeGuard must be provided if serialize is present');
-      }
-    }
-
-    return {
-      type,
-      ...($DeserializeForTable in optsOrClass)
-        ? { deserialize: optsOrClass[$DeserializeForTable] }
-        : optsOrClass,
-    };
+  public static custom(opts: TableCustomCodecOpts): RawTableCodec {
+    return { tag: 'custom', opts: opts };
   }
 }
+
+type TableSerGuard = (value: unknown, ctx: TableSerCtx) => boolean;
+type TableDesGuard = (value: unknown, ctx: TableDesCtx) => boolean;
+
+interface TableNominalCodecOpts {
+  serialize?: TableSerFn,
+  deserialize?: TableDesFn,
+}
+
+type TableTypeCodecOpts<Type extends string> =
+  & (
+    | { serialize: TableSerFn, serializeGuard: TableSerGuard, serializeClass?: 'One (and only one) of `serializeClass` or `serializeGuard` should be present if `serialize` is present.' }
+    | { serialize: TableSerFn, serializeClass: SomeConstructor, serializeGuard?: 'One (and only one) of `serializeClass` or `serializeGuard` should be present if `serialize` is present.', }
+    | { serialize?: never }
+    )
+  & { deserialize?: TableDesFn<Type> }
+
+type TableCustomCodecOpts =
+  & (
+    | { serialize: TableSerFn, serializeGuard: TableSerGuard, serializeClass?: 'One (and only one) of `serializeClass` or `serializeGuard` should be present if `serialize` is present.' }
+    | { serialize: TableSerFn, serializeClass: SomeConstructor, serializeGuard?: 'One (and only one) of `serializeClass` or `serializeGuard` should be present if `serialize` is present.', }
+    | { serialize?: never }
+    )
+  & (
+  | { deserialize: TableDesFn, deserializeGuard: TableDesGuard }
+  | { deserialize?: never }
+  )
+
+export type RawTableCodec =
+  | { tag: 'forName', name: string, opts: TableNominalCodecOpts }
+  | { tag: 'forType', type: string, opts: TableTypeCodecOpts<any> }
+  | { tag: 'custom', opts: TableCustomCodecOpts };
+
+export interface TableSerializers {
+  forName: Record<string, TableSerFn[]>,
+  forClass: { class: SomeConstructor, fns: TableSerFn[] }[],
+  forGuard: { guard: TableSerGuard, fn: TableSerFn }[],
+}
+
+export interface TableDeserializers {
+  forName: Record<string, TableDesFn[]>,
+  forType: Record<string, TableDesFn[]>,
+  forGuard: { guard: TableDesGuard, fn: TableDesFn }[],
+}
+
+/**
+ * @internal
+ */
+export const processCodecs = (raw: RawTableCodec[]): [TableSerializers, TableDeserializers] => {
+  const serializers: TableSerializers = { forName: {}, forClass: [], forGuard: [] };
+  const deserializers: TableDeserializers = { forName: {}, forType: {}, forGuard: [] };
+
+  for (const codec of raw) {
+    switch (codec.tag) {
+      case 'forName':
+        codec.opts.serialize && (serializers.forName[codec.name] ??= []).push(codec.opts.serialize);
+        codec.opts.deserialize && (deserializers.forName[codec.name] ??= []).push(codec.opts.deserialize);
+        break;
+      case 'forType':
+        ('serializeGuard' in codec.opts && !codec.opts['serializeClass']) && serializers.forGuard.push({ guard: codec.opts.serializeGuard, fn: codec.opts.serialize });
+        ('serializeClass' in codec.opts && !codec.opts['serializeGuard']) && findOrInsertClass(serializers.forClass, codec.opts.serializeClass, codec.opts.serialize);
+        codec.opts.deserialize && (deserializers.forType[codec.type] ??= []).push(codec.opts.deserialize);
+        break;
+      case 'custom':
+        ('serializeGuard' in codec.opts && !codec.opts['serializeClass']) && serializers.forGuard.push({ guard: codec.opts.serializeGuard, fn: codec.opts.serialize });
+        ('serializeClass' in codec.opts && !codec.opts['serializeGuard']) && findOrInsertClass(serializers.forClass, codec.opts.serializeClass, codec.opts.serialize);
+        ('deserializeGuard' in codec.opts) && deserializers.forGuard.push({ guard: codec.opts.deserializeGuard, fn: codec.opts.deserialize });
+        break;
+    }
+  }
+
+  return [serializers, deserializers];
+};
+
+const findOrInsertClass = <Fn>(arr: { class: SomeConstructor, fns: Fn[] }[], newClass: SomeConstructor, fn: Fn) => {
+  for (const { class: clazz, fns } of arr) {
+    if (clazz === newClass) {
+      fns.push(fn);
+      return;
+    }
+  }
+  arr.push({ class: newClass, fns: [fn] });
+};
+
+// forName('name', delegate | { serialize?, deserialize? })
+
+// forType('name', delegate | { ((serializeGuard | serializeClass) & serialize)?, deserialize? })
+
+// custom({ ((serializeGuard | serializeClass) & serialize)?, (deserializeGuard & deserialize)? })

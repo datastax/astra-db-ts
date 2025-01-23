@@ -38,3 +38,10 @@ export interface RawDataAPIResponse {
    */
   data?: Record<string, any>,
 }
+
+/**
+ * Represents some, _any_, constructor (e.g. `Error`, `Map`, or `MyCustomClass`).
+ *
+ * @public
+ */
+export type SomeConstructor = abstract new (...args: any[]) => any;

@@ -17,7 +17,6 @@ export type * from './types';
 export * from './table';
 
 export {
-  TableColumnTypeParser,
   TableSerDesConfig,
   TableDesCtx,
   TableSerCtx,
