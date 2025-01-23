@@ -872,9 +872,8 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
     static now(): DataAPIDate;
     static ofEpochDay(epochDays: number): DataAPIDate;
     static ofYearDay(year: number, dayOfYear: number): DataAPIDate;
-    // @beta
+    plus(duration: DataAPIDuration | string): DataAPIDate;
     toDate(base?: Date | DataAPITime): Date;
-    // @beta
     toDateUTC(base?: Date | DataAPITime): Date;
     toString(): string;
     static utcnow(): DataAPIDate;
@@ -920,15 +919,10 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
     readonly months: number;
     readonly nanoseconds: bigint;
     negate(): DataAPIDuration;
-    // (undocumented)
     static readonly NS_PER_HOUR = 3600000000000n;
-    // (undocumented)
     static readonly NS_PER_MIN = 60000000000n;
-    // (undocumented)
     static readonly NS_PER_MS = 1000000n;
-    // (undocumented)
     static readonly NS_PER_SEC = 1000000000n;
-    // (undocumented)
     static readonly NS_PER_US = 1000n;
     plus(other: DataAPIDuration): DataAPIDuration | null;
     toHours(): number;
@@ -1052,9 +1046,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
     static ofNanoOfDay(nanoOfDay: number): DataAPITime;
     static ofSecondOfDay(secondOfDay: number): DataAPITime;
     readonly seconds: number;
-    // @beta
     toDate(base?: Date | DataAPIDate): Date;
-    // @beta
     toDateUTC(base?: Date | DataAPIDate): Date;
     toString(): string;
     static utcnow(): DataAPITime;
@@ -1948,8 +1940,6 @@ export interface TableDesCtx extends BaseDesCtx<TableCodecSerDesFns> {
     // (undocumented)
     next: never;
     // (undocumented)
-    populateSparseData: boolean;
-    // (undocumented)
     tableSchema: ListTableColumnDefinitions;
 }
 
@@ -2139,14 +2129,6 @@ export abstract class TokenProvider {
 
 // @public
 export class TooManyDocumentsToCountError extends DataAPIError {
-    // @internal
-    constructor(limit: number, hitServerLimit: boolean);
-    readonly hitServerLimit: boolean;
-    readonly limit: number;
-}
-
-// @public
-export class TooManyRowsToCountError extends DataAPIError {
     // @internal
     constructor(limit: number, hitServerLimit: boolean);
     readonly hitServerLimit: boolean;
