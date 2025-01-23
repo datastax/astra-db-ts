@@ -16,7 +16,6 @@ import { DataAPIEnvironment, nullish } from '@/src/lib/types';
 import { DataAPIEnvironments } from '@/src/lib/constants';
 import JBI from 'json-bigint';
 import { SomeDoc } from '@/src/documents';
-import process from 'node:process';
 import BigNumber from 'bignumber.js';
 
 /**
@@ -130,7 +129,7 @@ const env = getJSEnv();
 /**
  * @internal
  */
-export const forJSEnv = (process.env.CLIENT_DYNAMIC_JS_ENV_CHECK)
+export const forJSEnv = (typeof process !== 'undefined' && typeof process.env === 'object' && process.env.CLIENT_DYNAMIC_JS_ENV_CHECK)
   ? <Args extends any[], R>(fns: JSEnvs<(...args: Args) => R>): (...args: Args) => R => (...args: Args) => fns[getJSEnv()](...args)
   : <Args extends any[], R>(fns: JSEnvs<(...args: Args) => R>): (...args: Args) => R => fns[env];
 
