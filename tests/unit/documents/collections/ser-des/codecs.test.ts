@@ -69,7 +69,7 @@ describe('unit.documents.collections.ser-des.codecs', () => {
             ...Object.fromEntries(repeat((i) => [`name${i}`, [`name${i}:ser_fn`, `name${i}:serdes_fn`]])),
           },
           forPath: {
-            ['3']: repeat((i) => ({ path: ['pa', 'th', `${i}`], fns: [`path${i}:ser_fn`, `path${i}:serdes_fn`] }))
+            ['3']: repeat((i) => ({ path: ['pa', 'th', `${i}`], fns: [`path${i}:ser_fn`, `path${i}:serdes_fn`] })),
           },
           forClass: [
             { class: Delegate, fns: [...repeat((i) => `type${i}:ser_fn/class`), ...repeat((i) => `custom${i}:ser_fn/class`)] },

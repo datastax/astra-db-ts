@@ -52,8 +52,10 @@ export abstract class SerDes<SerCtx extends BaseSerCtx = any, DesCtx extends Bas
       mutatingInPlace: this._cfg.mutateInPlace === true,
     }));
 
+    const serialized = serializeRecord('', { ['']: ctx.rootObj }, ctx, toArray(this._cfg.serialize!))[''];
+
     return [
-      serializeRecord('', { ['']: ctx.rootObj }, ctx, toArray(this._cfg.serialize!))[''] as S,
+      ctx.keyTransformer?.serialize(serialized, ctx) ?? serialized,
       this.bigNumsPresent(ctx),
     ];
   }
@@ -68,8 +70,12 @@ export abstract class SerDes<SerCtx extends BaseSerCtx = any, DesCtx extends Bas
       rawDataApiResp: raw,
       keys: [],
     }));
+    
+    const rootObj = {
+      ['']: ctx.keyTransformer?.deserialize(obj, ctx) ?? obj,
+    };
 
-    return deserializeRecord('', { ['']: ctx.rootObj }, ctx, toArray(this._cfg.deserialize!))[''] as S;
+    return deserializeRecord('', rootObj, ctx, toArray(this._cfg.deserialize!))[''] as S;
   }
 
   protected abstract adaptSerCtx(ctx: BaseSerCtx): SerCtx;
@@ -123,20 +129,9 @@ function serializeRecordHelper<Ctx extends BaseSerCtx>(obj: SomeDoc, ctx: Ctx, f
   const path = ctx.path;
   path.push('<temp>');
 
-  for (let key of Object.keys(obj)) {
+  for (const key of Object.keys(obj)) {
     path[path.length - 1] = key;
-
     serializeRecord(key, obj, ctx, fns);
-
-    if (ctx.keyTransformer) {
-      const oldKey = key;
-      key = ctx.keyTransformer.serializeKey(key, ctx);
-
-      if (key !== oldKey) {
-        obj[key] = obj[oldKey];
-        delete obj[oldKey];
-      }
-    }
   }
 
   path.pop();
@@ -167,20 +162,8 @@ function deserializeRecordHelper<Ctx extends BaseDesCtx>(keys: string[], obj: So
   const path = ctx.path;
   path.push('<temp>');
 
-  for (let key of keys) {
+  for (const key of keys) {
     path[path.length - 1] = key;
-
-    if (ctx.keyTransformer) {
-      const oldKey = key;
-      key = ctx.keyTransformer.deserializeKey(key, ctx);
-
-      if (key !== oldKey) {
-        obj[key] = obj[oldKey];
-        delete obj[oldKey];
-        path[path.length - 1] = key;
-      }
-    }
-
     deserializeRecord(key, obj, ctx, fns);
   }
 

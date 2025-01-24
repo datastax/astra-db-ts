@@ -50,4 +50,5 @@ export type {
 export {
   Camel2SnakeCase,
   KeyTransformer,
+  Camel2SnakeCaseOptions,
 } from './ser-des/key-transformer';
