@@ -90,8 +90,8 @@ export abstract class SerDes<SerCtx extends BaseSerCtx = any, DesCtx extends Bas
       done: ctxDone,
       continue: ctxContinue,
       nevermind: ctxNevermind,
-      codecs: null!,
       keyTransformer: this._cfg.keyTransformer,
+      postMap: () => { throw new Error('postMap has not been set yet (BUG)'); },
       rootObj: obj,
       path: [],
       ...ctx,
@@ -100,12 +100,18 @@ export abstract class SerDes<SerCtx extends BaseSerCtx = any, DesCtx extends Bas
 }
 
 function serializeRecord<Ctx extends BaseSerCtx>(key: string, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
+  const postMaps: ((v: any) => unknown)[] = [];
+  ctx.postMap = (fn) => postMaps.push(fn);
+
   const stop = applySerdesFns(fns, key, obj, ctx);
 
   if (!stop && ctx.path.length < 250 && typeof obj[key] === 'object' && obj[key] !== null) {
     obj[key] = serializeRecordHelper(obj[key], ctx, fns);
   }
 
+  for (let i = postMaps.length - 1; i >= 0; i--) {
+    obj[key] = postMaps[i](obj[key]);
+  }
   return obj;
 }
 
@@ -140,6 +146,9 @@ function serializeRecordHelper<Ctx extends BaseSerCtx>(obj: SomeDoc, ctx: Ctx, f
 function deserializeRecord<Ctx extends BaseDesCtx>(key: string, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
   const value = obj[key];
 
+  const postMaps: ((v: any) => unknown)[] = [];
+  ctx.postMap = (fn) => postMaps.push(fn);
+
   ctx.keys = (typeof value === 'object' && value !== null)
     ? Object.keys(value)
     : [];
@@ -147,13 +156,12 @@ function deserializeRecord<Ctx extends BaseDesCtx>(key: string, obj: SomeDoc, ct
   const stop = applySerdesFns(fns, key, obj, ctx);
 
   if (!stop && ctx.path.length < 250) {
-    if (obj[key] === value) {
-      deserializeRecordHelper(ctx.keys, value, ctx, fns);
-    } else {
-      deserializeRecordHelper(Object.keys(obj[key]), obj[key], ctx, fns);
-    }
+    deserializeRecordHelper(ctx.keys, value, ctx, fns);
   }
 
+  for (let i = postMaps.length - 1; i >= 0; i--) {
+    obj[key] = postMaps[i](obj[key]);
+  }
   return obj;
 }
 

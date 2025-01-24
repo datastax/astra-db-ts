@@ -52,6 +52,11 @@ describe('unit.documents.collections.ser-des.usecases.object-mapping', () => {
           return ctx.nevermind();
         }
 
+        ctx.postMap((v) => {
+          console.log('post', v);
+          return JSON.stringify(v);
+        });
+
         return ctx.continue({
           title: value.title,
           author: value.author.name,
@@ -90,6 +95,6 @@ describe('unit.documents.collections.ser-des.usecases.object-mapping', () => {
 
     console.dir(serdes.serialize(book), { depth: null });
 
-    console.dir(serdes.deserialize(serdes.serialize(book)[0], {}), { depth: null });
+    // console.dir(serdes.deserialize(serdes.serialize(book)[0], {}), { depth: null });
   });
 });
