@@ -112,8 +112,7 @@ function serializeRecordHelper<Ctx extends BaseSerCtx>(obj: SomeDoc, ctx: Ctx, f
   const path = ctx.path;
   path.push('<temp>');
 
-  for (let keys = Object.keys(obj), i = keys.length; i--;) {
-    let key = keys[i];
+  for (let key of Object.keys(obj)) {
     path[path.length - 1] = key;
 
     serializeRecord(key, obj, ctx, fns);
@@ -157,8 +156,7 @@ function deserializeRecordHelper<Ctx extends BaseDesCtx>(keys: string[], obj: So
   const path = ctx.path;
   path.push('<temp>');
 
-  for (let i = keys.length; i--;) {
-    let key = keys[i];
+  for (let key of keys) {
     path[path.length - 1] = key;
 
     if (ctx.keyTransformer) {

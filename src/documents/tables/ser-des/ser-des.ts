@@ -124,11 +124,11 @@ const DefaultTableSerDesCfg = {
       return resp;
     }
 
-    // Type-based/custom serializers
-    const guardSer = ctx.serializers.forGuard.find((g) => g.guard(value, ctx));
-
-    if (guardSer && (resp = guardSer.fn(key, value, ctx))[0] !== CONTINUE) {
-      return resp;
+    // Type-based & custom serializers
+    for (const guardSer of ctx.serializers.forGuard) {
+      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(key, value, ctx))[0] !== CONTINUE) {
+        return resp;
+      }
     }
 
     if (typeof value === 'number') {
@@ -159,11 +159,11 @@ const DefaultTableSerDesCfg = {
 
     return ctx.continue();
   },
-  deserialize(key, _, ctx) {
+  deserialize(key, value, ctx) {
     let resp: ReturnType<SerDesFn<unknown>> = null!;
 
     const column = ctx.tableSchema[key];
-    const value = ctx.rootObj[key];
+    // const value = ctx.rootObj[key];
 
     // Name-based deserializers
     const nameDes = ctx.deserializers.forName[key];
@@ -173,10 +173,10 @@ const DefaultTableSerDesCfg = {
     }
 
     // Custom deserializers
-    const guardDes = ctx.deserializers.forGuard.find((g) => g.guard(value, ctx));
-
-    if (guardDes && (resp = guardDes.fn(key, value, ctx, column))[0] !== CONTINUE) {
-      return resp;
+    for (const guardSer of ctx.deserializers.forGuard) {
+      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(key, value, ctx, column))[0] !== CONTINUE) {
+        return resp;
+      }
     }
 
     if (key === '') {

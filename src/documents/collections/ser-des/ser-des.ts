@@ -122,11 +122,11 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
       return resp;
     }
 
-    // Type-based/custom serializers
-    const guardSer = ctx.serializers.forGuard.find((g) => g.guard(value, ctx));
-
-    if (guardSer && (resp = guardSer.fn(key, value, ctx))[0] !== CONTINUE) {
-      return resp;
+    // Type-based & custom serializers
+    for (const guardSer of ctx.serializers.forGuard) {
+      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(key, value, ctx))[0] !== CONTINUE) {
+        return resp;
+      }
     }
 
     if (typeof value === 'object' && value !== null) {
@@ -177,10 +177,10 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
     }
 
     // Custom deserializers
-    const guardDes = ctx.deserializers.forGuard.find((g) => g.guard(value, ctx));
-
-    if (guardDes && (resp = guardDes.fn(key, value, ctx))[0] !== CONTINUE) {
-      return resp;
+    for (const guardSer of ctx.deserializers.forGuard) {
+      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(key, value, ctx))[0] !== CONTINUE) {
+        return resp;
+      }
     }
 
     // Type-based deserializers
