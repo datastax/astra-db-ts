@@ -14,6 +14,9 @@
 
 import { SomeDoc } from '@/src/index';
 
+/**
+ * @public
+ */
 export interface KeyTransformerCtx {
   path: string[];
 }
@@ -77,7 +80,7 @@ export class Camel2SnakeCase extends KeyTransformer {
     this._transformNested = opts.transformNested;
   }
 
-  public transformNested(ctx: KeyTransformerCtx): boolean {
+  public override transformNested(ctx: KeyTransformerCtx): boolean {
     return this._transformNested?.(ctx) ?? false;
   }
 

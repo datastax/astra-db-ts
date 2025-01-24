@@ -15,29 +15,47 @@
 import { SomeConstructor } from '@/src/lib';
 import { stringArraysEqual } from '@/src/lib/utils';
 
+/**
+ * @public
+ */
 export interface NominalCodecOpts<SerFn, DesFn> {
   serialize?: SerFn,
   deserialize?: DesFn,
 }
 
+/**
+ * @public
+ */
 export type TypeCodecOpts<SerFn, SerGuard, DesFn> = CustomCodecSerOpts<SerFn, SerGuard> & { deserialize?: DesFn }
 
+/**
+ * @public
+ */
 export type CustomCodecOpts<SerFn, SerGuard, DesFn, DesGuard> = CustomCodecSerOpts<SerFn, SerGuard> & (
   | { deserialize: DesFn, deserializeGuard: DesGuard }
   | { deserialize?: never }
 )
 
+/**
+ * @public
+ */
 export type CustomCodecSerOpts<SerFn, SerGuard> =
   | { serialize: SerFn, serializeGuard: SerGuard, serializeClass?: 'One (and only one) of `serializeClass` or `serializeGuard` should be present if `serialize` is present.' }
   | { serialize: SerFn, serializeClass: SomeConstructor, serializeGuard?: 'One (and only one) of `serializeClass` or `serializeGuard` should be present if `serialize` is present.', }
   | { serialize?: never };
 
+/**
+ * @public
+ */
 export type RawCodec<For extends 'table' | 'collection'> =
   | { phantom?: For, tag: 'forName', name: string, opts: NominalCodecOpts<any, any> }
   | { phantom?: For, tag: 'forPath', path: string[], opts: NominalCodecOpts<any, any> }
   | { phantom?: For, tag: 'forType', type: string, opts: TypeCodecOpts<any, any, any> }
   | { phantom?: For, tag: 'custom',  opts: CustomCodecOpts<any, any, any, any> };
 
+/**
+ * @public
+ */
 export interface Serializers<SerFn, SerGuard> {
   forName: Record<string, SerFn[]>,
   forPath: Record<number, { path: string[], fns: SerFn[] }[]>,
@@ -45,6 +63,9 @@ export interface Serializers<SerFn, SerGuard> {
   forGuard: { guard: SerGuard, fn: SerFn }[],
 }
 
+/**
+ * @public
+ */
 export interface Deserializers<DesFn, DesGuard> {
   forName: Record<string, DesFn[]>,
   forType: Record<string, DesFn[]>,

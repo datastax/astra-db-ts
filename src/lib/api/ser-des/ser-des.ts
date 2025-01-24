@@ -182,6 +182,5 @@ function applySerdesFns<Ctx>(fns: readonly SerDesFn<Ctx>[], key: string, obj: So
       return true;
     }
   }
-
   return false;
 }

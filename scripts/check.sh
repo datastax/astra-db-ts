@@ -98,7 +98,7 @@ for check_type in $check_types; do
       tmp_dir="tmp-lib-check"
       rm -rf "$tmp_dir" "$main_dir/dist"
 
-      scripts/build.sh -no-report > /dev/null \
+      scripts/build.sh -no-report > /dev/null
 
       if [ ! $? ]; then
         print_error "Could not build library for lib-check phase"
