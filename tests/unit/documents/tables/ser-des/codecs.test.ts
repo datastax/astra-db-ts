@@ -68,7 +68,7 @@ describe('unit.documents.tables.ser-des.codecs', () => {
             ...repeat((i) => ({ guard: `type${i}:ser_guard`, fn: `type${i}:ser_fn/guard` })),
             ...repeat((i) => ({ guard: `custom${i}:ser_guard`, fn: `custom${i}:ser_fn/guard` })),
           ],
-          forPath: [],
+          forPath: {},
         },
         {
           forName: {
@@ -80,7 +80,7 @@ describe('unit.documents.tables.ser-des.codecs', () => {
           forGuard: [
             ...repeat((i) => ({ guard: `custom${i}:des_guard`, fn: `custom${i}:des_fn` })),
           ],
-          forPath: [],
+          forPath: {},
         },
       ]);
     });

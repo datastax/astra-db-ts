@@ -15,12 +15,17 @@
 import { SomeDoc } from '@/src/documents';
 import { KeyTransformer, nullish, OneOrMany, RawDataAPIResponse } from '@/src/lib';
 import { toArray } from '@/src/lib/utils';
-import { BaseDesCtx, BaseSerCtx, BaseSerDesCtx, ctxContinue, ctxDone, ctxNext, DONE } from '@/src/lib/api/ser-des/ctx';
+import { BaseDesCtx, BaseSerCtx, BaseSerDesCtx, ctxNevermind, ctxDone, ctxContinue, DONE } from '@/src/lib/api/ser-des/ctx';
 
 /**
  * @public
  */
-export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?] | 'Return ctx.done(val?), ctx.recurse(val?), or ctx.continue()';
+export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => SerDesFnRet | 'Return ctx.done(val?), ctx.continue(val?), or ctx.nevermind()';
+
+/**
+ * @public
+ */
+export type SerDesFnRet = readonly [0 | 1 | 2, any?];
 
 /**
  * @public
@@ -83,8 +88,8 @@ export abstract class SerDes<SerCtx extends BaseSerCtx = any, DesCtx extends Bas
   private _mkCtx<Ctx>(obj: SomeDoc, ctx: Ctx): Ctx & BaseSerDesCtx {
     return {
       done: ctxDone,
-      next: ctxNext,
       continue: ctxContinue,
+      nevermind: ctxNevermind,
       codecs: null!,
       keyTransformer: this._cfg.keyTransformer,
       rootObj: obj,

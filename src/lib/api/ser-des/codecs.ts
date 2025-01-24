@@ -40,7 +40,7 @@ export type RawCodec<For extends 'table' | 'collection'> =
 
 export interface Serializers<SerFn, SerGuard> {
   forName: Record<string, SerFn[]>,
-  forPath:  { path: string[], fns: SerFn[] }[],
+  forPath: Record<number, { path: string[], fns: SerFn[] }[]>,
   forClass: { class: SomeConstructor, fns: SerFn[] }[],
   forGuard: { guard: SerGuard, fn: SerFn }[],
 }
@@ -48,7 +48,7 @@ export interface Serializers<SerFn, SerGuard> {
 export interface Deserializers<DesFn, DesGuard> {
   forName: Record<string, DesFn[]>,
   forType: Record<string, DesFn[]>,
-  forPath:  { path: string[], fns: DesFn[] }[],
+  forPath: Record<number, { path: string[], fns: DesFn[] }[]>,
   forGuard: { guard: DesGuard, fn: DesFn }[],
 }
 
@@ -56,43 +56,68 @@ export interface Deserializers<DesFn, DesGuard> {
  * @internal
  */
 export const processCodecs = <SerFn, SerGuard, DesFn, DesGuard>(raw: RawCodec<any>[]): [Serializers<SerFn, SerGuard>, Deserializers<DesFn, DesGuard>] => {
-  const serializers: Serializers<SerFn, SerGuard> = { forName: {}, forPath: [], forClass: [], forGuard: [] };
-  const deserializers: Deserializers<DesFn, DesGuard> = { forName: {}, forType: {}, forPath: [], forGuard: [] };
+  const serializers: Serializers<SerFn, SerGuard> = { forName: {}, forPath: {}, forClass: [], forGuard: [] };
+  const deserializers: Deserializers<DesFn, DesGuard> = { forName: {}, forPath: {}, forType: {}, forGuard: [] };
 
   for (const codec of raw) {
-    switch (codec.tag) {
-      case 'forName':
-        codec.opts.serialize && (serializers.forName[codec.name] ??= []).push(codec.opts.serialize);
-        codec.opts.deserialize && (deserializers.forName[codec.name] ??= []).push(codec.opts.deserialize);
-        break;
-      case 'forPath':
-        codec.opts.serialize && findOrInsertPath(serializers.forPath, codec.path, codec.opts.serialize);
-        codec.opts.deserialize && findOrInsertPath(deserializers.forPath, codec.path, codec.opts.deserialize);
-        break;
-      case 'forType':
-        ('serializeGuard' in codec.opts) && serializers.forGuard.push({ guard: codec.opts.serializeGuard, fn: codec.opts.serialize });
-        ('serializeClass' in codec.opts) && findOrInsertClass(serializers.forClass, codec.opts.serializeClass as SomeConstructor, codec.opts.serialize);
-        codec.opts.deserialize && (deserializers.forType[codec.type] ??= []).push(codec.opts.deserialize);
-        break;
-      case 'custom':
-        ('serializeGuard' in codec.opts) && serializers.forGuard.push({ guard: codec.opts.serializeGuard, fn: codec.opts.serialize });
-        ('serializeClass' in codec.opts) && findOrInsertClass(serializers.forClass, codec.opts.serializeClass as SomeConstructor, codec.opts.serialize);
-        ('deserializeGuard' in codec.opts) && deserializers.forGuard.push({ guard: codec.opts.deserializeGuard, fn: codec.opts.deserialize });
-        break;
-    }
+    appendCodec[codec.tag](codec as never, serializers, deserializers);
   }
 
   return [serializers, deserializers];
 };
 
-const findOrInsertPath = <Fn>(arr: { path: string[], fns: Fn[] }[], newPath: string[], fn: Fn) => {
-  for (const { path, fns } of arr) {
+const appendCodec = {
+  forName(codec: RawCodec<any> & { tag: 'forName' }, serializers: Serializers<any, any>, deserializers: Deserializers<any, any>) {
+    if (codec.opts.serialize) {
+      (serializers.forName[codec.name] ??= []).push(codec.opts.serialize);
+    }
+    if (codec.opts.deserialize) {
+      (deserializers.forName[codec.name] ??= []).push(codec.opts.deserialize);
+    }
+  },
+  forPath(codec: RawCodec<any> & { tag: 'forPath' }, serializers: Serializers<any, any>, deserializers: Deserializers<any, any>) {
+    if (codec.opts.serialize) {
+      findOrInsertPath(serializers.forPath, codec.path, codec.opts.serialize);
+    }
+    if (codec.opts.deserialize) {
+      findOrInsertPath(deserializers.forPath, codec.path, codec.opts.deserialize);
+    }
+  },
+  forType(codec: RawCodec<any> & { tag: 'forType' }, serializers: Serializers<any, any>, deserializers: Deserializers<any, any>) {
+    appendCodec.customSer(codec, serializers);
+
+    if (codec.opts.deserialize) {
+      (deserializers.forType[codec.type] ??= []).push(codec.opts.deserialize);
+    }
+  },
+  custom(codec: RawCodec<any> & { tag: 'custom' }, serializers: Serializers<any, any>, deserializers: Deserializers<any, any>) {
+    appendCodec.customSer(codec, serializers);
+
+    if ('deserializeGuard' in codec.opts) {
+      deserializers.forGuard.push({ guard: codec.opts.deserializeGuard, fn: codec.opts.deserialize });
+    }
+  },
+  customSer(codec: RawCodec<any> & { tag: 'custom' | 'forType' }, serializers: Serializers<any, any>) {
+    if ('serializeGuard' in codec.opts) {
+      serializers.forGuard.push({ guard: codec.opts.serializeGuard, fn: codec.opts.serialize });
+    }
+    else if ('serializeClass' in codec.opts) {
+      findOrInsertClass(serializers.forClass, codec.opts.serializeClass, codec.opts.serialize);
+    }
+  },
+};
+
+const findOrInsertPath = <Fn>(arr: Record<number, { path: string[], fns: Fn[] }[]>, newPath: string[], fn: Fn) => {
+  const arrForDepth = arr[newPath.length] ??= [];
+
+  for (const { path, fns } of arrForDepth) {
     if (stringArraysEqual(path, newPath)) {
       fns.push(fn);
       return;
     }
   }
-  arr.push({ path: newPath, fns: [fn] });
+
+  arrForDepth.push({ path: newPath, fns: [fn] });
 };
 
 const findOrInsertClass = <Fn>(arr: { class: SomeConstructor, fns: Fn[] }[], newClass: SomeConstructor, fn: Fn) => {

@@ -38,18 +38,18 @@ export interface BaseSerDesCtx {
   rootObj: SomeDoc,
   path: string[],
   done<T>(obj?: T): readonly [0, T?],
-  next<T>(obj?: T): readonly [1, T?],
-  continue(): readonly [2],
+  continue<T>(obj?: T): readonly [1, T?],
+  nevermind(): readonly [2],
   keyTransformer?: KeyTransformer,
 }
 
 export const DONE = 0 as const;
-export const NEXT = 1 as const;
-export const CONTINUE = 2 as const;
+export const CONTINUE = 1 as const;
+export const NEVERMIND = 2 as const;
 
 const DONE_ARR = [DONE] as const;
-const RECURSE_ARR = [NEXT] as const;
 const CONTINUE_ARR = [CONTINUE] as const;
+const NEVERMIND_ARR = [NEVERMIND] as const;
 
 /**
  * @internal
@@ -64,16 +64,16 @@ export function ctxDone<T>(obj?: T): readonly [0, T?] {
 /**
  * @internal
  */
-export function ctxNext<T>(obj?: T): readonly [1, T?] {
+export function ctxContinue<T>(obj?: T): readonly [1, T?] {
   if (arguments.length === 1) {
-    return [NEXT, obj];
+    return [CONTINUE, obj];
   }
-  return RECURSE_ARR;
+  return CONTINUE_ARR;
 }
 
 /**
  * @internal
  */
-export function ctxContinue(): readonly [2] {
-  return CONTINUE_ARR;
+export function ctxNevermind(): readonly [2] {
+  return NEVERMIND_ARR;
 }

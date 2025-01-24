@@ -19,7 +19,7 @@ import {
   ListTableUnsupportedColumnDefinition,
 } from '@/src/db';
 import { TableCodecs, TableDeserializers, TableSerializers } from '@/src/documents/tables/ser-des/codecs';
-import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
+import { BaseDesCtx, BaseSerCtx, NEVERMIND } from '@/src/lib/api/ser-des/ctx';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { isBigNumber } from '@/src/lib/utils';
 import { UnexpectedDataAPIResponseError } from '@/src/client';
@@ -39,7 +39,7 @@ export interface TableSerCtx extends BaseSerCtx {
 export interface TableDesCtx extends BaseDesCtx {
   tableSchema: ListTableColumnDefinitions,
   deserializers: TableDeserializers,
-  next: never;
+  continue: never;
 }
 
 /**
@@ -120,13 +120,13 @@ const DefaultTableSerDesCfg = {
     // Name-based serializers
     const nameSer = ctx.serializers.forName[key];
 
-    if (nameSer && nameSer.find((ser) => (resp = ser(key, value, ctx))[0] !== CONTINUE)) {
+    if (nameSer && nameSer.find((ser) => (resp = ser(key, value, ctx))[0] !== NEVERMIND)) {
       return resp;
     }
 
     // Type-based & custom serializers
     for (const guardSer of ctx.serializers.forGuard) {
-      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(key, value, ctx))[0] !== CONTINUE) {
+      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(key, value, ctx))[0] !== NEVERMIND) {
         return resp;
       }
     }
@@ -137,14 +137,14 @@ const DefaultTableSerDesCfg = {
       }
     } else if (typeof value === 'object' && value !== null) {
       // Delegate serializer
-      if ($SerializeForTable in value && (resp = value[$SerializeForTable](ctx))[0] !== CONTINUE) {
+      if ($SerializeForTable in value && (resp = value[$SerializeForTable](ctx))[0] !== NEVERMIND) {
         return resp;
       }
 
       // Class-based serializers
       const classSer = ctx.serializers.forClass.find((c) => value instanceof c.class);
 
-      if (classSer && classSer.fns.find((ser) => (resp = ser(key, value, ctx))[0] !== CONTINUE)) {
+      if (classSer && classSer.fns.find((ser) => (resp = ser(key, value, ctx))[0] !== NEVERMIND)) {
         return resp;
       }
 
@@ -157,7 +157,7 @@ const DefaultTableSerDesCfg = {
       ctx.bigNumsPresent = true;
     }
 
-    return ctx.continue();
+    return ctx.nevermind();
   },
   deserialize(key, value, ctx) {
     let resp: ReturnType<SerDesFn<unknown>> = null!;
@@ -168,19 +168,19 @@ const DefaultTableSerDesCfg = {
     // Name-based deserializers
     const nameDes = ctx.deserializers.forName[key];
 
-    if (nameDes && nameDes.find((des) => (resp = des(key, value, ctx, column))[0] !== CONTINUE)) {
+    if (nameDes && nameDes.find((des) => (resp = des(key, value, ctx, column))[0] !== NEVERMIND)) {
       return resp;
     }
 
     // Custom deserializers
     for (const guardSer of ctx.deserializers.forGuard) {
-      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(key, value, ctx, column))[0] !== CONTINUE) {
+      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(key, value, ctx, column))[0] !== NEVERMIND) {
         return resp;
       }
     }
 
     if (key === '') {
-      return ctx.continue();
+      return ctx.nevermind();
     }
 
     // Type-based deserializers
@@ -189,7 +189,7 @@ const DefaultTableSerDesCfg = {
     if (value !== null && type) {
       const typeDes = ctx.deserializers.forType[type];
 
-      if (typeDes && typeDes.find((des) => (resp = des(key, value, ctx, column))[0] !== CONTINUE)) {
+      if (typeDes && typeDes.find((des) => (resp = des(key, value, ctx, column))[0] !== NEVERMIND)) {
         return resp;
       }
     }

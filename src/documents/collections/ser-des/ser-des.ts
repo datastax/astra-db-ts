@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { BaseSerDesConfig, SerDes, SerDesFn } from '@/src/lib/api/ser-des/ser-des';
-import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
+import { BaseDesCtx, BaseSerCtx, NEVERMIND } from '@/src/lib/api/ser-des/ctx';
 import { CollCodecs, CollDeserializers, CollSerializers } from '@/src/documents/collections/ser-des/codecs';
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 import { isBigNumber, stringArraysEqual } from '@/src/lib/utils';
@@ -100,7 +100,7 @@ const BigNumCollectionDesCfg: CollectionSerDesConfig = {
       return coerceBigNumber(value, ctx);
     }
 
-    return ctx.continue();
+    return ctx.nevermind();
   },
 };
 
@@ -109,36 +109,36 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
     let resp: ReturnType<SerDesFn<unknown>> = null!;
 
     // Path-based serializers
-    const pathSer = ctx.serializers.forPath.find((p) => stringArraysEqual(p.path, ctx.path));
+    const pathSer = ctx.serializers.forPath[ctx.path.length]?.find((p) => stringArraysEqual(p.path, ctx.path));
 
-    if (pathSer && pathSer.fns.find((ser) => (resp = ser(key, value, ctx))[0] !== CONTINUE)) {
+    if (pathSer && pathSer.fns.find((ser) => (resp = ser(key, value, ctx))[0] !== NEVERMIND)) {
       return resp;
     }
 
     // Name-based serializers
     const nameSer = ctx.serializers.forName[key];
 
-    if (nameSer && nameSer.find((ser) => (resp = ser(key, value, ctx))[0] !== CONTINUE)) {
+    if (nameSer && nameSer.find((ser) => (resp = ser(key, value, ctx))[0] !== NEVERMIND)) {
       return resp;
     }
 
     // Type-based & custom serializers
     for (const guardSer of ctx.serializers.forGuard) {
-      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(key, value, ctx))[0] !== CONTINUE) {
+      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(key, value, ctx))[0] !== NEVERMIND) {
         return resp;
       }
     }
 
     if (typeof value === 'object' && value !== null) {
       // Delegate serializer
-      if ($SerializeForCollection in value && (resp = value[$SerializeForCollection](ctx))[0] !== CONTINUE) {
+      if ($SerializeForCollection in value && (resp = value[$SerializeForCollection](ctx))[0] !== NEVERMIND) {
         return resp;
       }
 
       // Class-based serializers
       const classSer = ctx.serializers.forClass.find((c) => value instanceof c.class);
 
-      if (classSer && classSer.fns.find((ser) => (resp = ser(key, value, ctx))[0] !== CONTINUE)) {
+      if (classSer && classSer.fns.find((ser) => (resp = ser(key, value, ctx))[0] !== NEVERMIND)) {
         return resp;
       }
 
@@ -157,28 +157,28 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
       return ctx.done();
     }
 
-    return ctx.continue();
+    return ctx.nevermind();
   },
   deserialize(key, value, ctx) {
     let resp: ReturnType<SerDesFn<unknown>> = null!;
 
     // Path-based deserializers
-    const pathDes = ctx.deserializers.forPath.find((p) => stringArraysEqual(p.path, ctx.path));
+    const pathDes = ctx.deserializers.forPath[ctx.path.length]?.find((p) => stringArraysEqual(p.path, ctx.path));
 
-    if (pathDes && pathDes.fns.find((des) => (resp = des(key, value, ctx))[0] !== CONTINUE)) {
+    if (pathDes && pathDes.fns.find((des) => (resp = des(key, value, ctx))[0] !== NEVERMIND)) {
       return resp;
     }
 
     // Name-based deserializers
     const nameDes = ctx.deserializers.forName[key];
 
-    if (nameDes && nameDes.find((des) => (resp = des(key, value, ctx))[0] !== CONTINUE)) {
+    if (nameDes && nameDes.find((des) => (resp = des(key, value, ctx))[0] !== NEVERMIND)) {
       return resp;
     }
 
     // Custom deserializers
     for (const guardSer of ctx.deserializers.forGuard) {
-      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(key, value, ctx))[0] !== CONTINUE) {
+      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(key, value, ctx))[0] !== NEVERMIND) {
         return resp;
       }
     }
@@ -187,7 +187,7 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
     if (ctx.keys?.length === 1) {
       const typeDes = ctx.deserializers.forType[ctx.keys[0]];
 
-      if (typeDes && typeDes.find((des) => (resp = des(key, value, ctx))[0] !== CONTINUE)) {
+      if (typeDes && typeDes.find((des) => (resp = des(key, value, ctx))[0] !== NEVERMIND)) {
         return resp;
       }
     }
@@ -197,7 +197,7 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
       return ctx.done(value);
     }
 
-    return ctx.continue();
+    return ctx.nevermind();
   },
   codecs: Object.values(CollCodecs.Defaults),
 };

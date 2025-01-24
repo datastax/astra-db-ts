@@ -17,7 +17,7 @@ import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
 import { CollCodecs } from '@/src/documents/collections';
-import { CONTINUE, ctxContinue, ctxDone, ctxNext } from '@/src/lib/api/ser-des/ctx';
+import { ctxContinue, ctxDone, ctxNevermind } from '@/src/lib/api/ser-des/ctx';
 
 describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
   describe('forPath', () => {
@@ -25,7 +25,7 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
       const serPaths = [] as unknown[];
       const desPaths = [] as unknown[];
 
-      const visit = (arr: unknown[], v: unknown) => (_: unknown, value: unknown) => (arr.push(v ?? value), [CONTINUE] as const);
+      const visit = (arr: unknown[], v: unknown) => (_: unknown, value: unknown) => (arr.push(v ?? value), ctxNevermind());
       const serdesFns = (v: unknown = null) => ({ serialize: visit(serPaths, v), deserialize: visit(desPaths, v) });
 
       const serdes = new CollectionSerDes({
@@ -82,31 +82,31 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
       assert.deepStrictEqual(serPaths, desPaths);
     });
 
-    it('should keep matching the same path til done/next', () => {
+    it('should keep matching the same path til done/continue', () => {
       const repeat = <T>(mk: (n: number) => T) => Array.from({ length: 10 }, (_, i) => mk(i));
 
-      for (const signal of [ctxNext(), ctxDone()] as const) {
+      for (const signal of [ctxContinue(), ctxDone()] as const) {
         let ser = 5, des = 5;
 
         const serdes = new CollectionSerDes({
           codecs: [
             ...repeat(() => CollCodecs.forPath([], {
-              serialize: () => --ser ? ctxContinue() : signal,
-              deserialize: () => --des ? ctxContinue() : signal,
+              serialize: () => --ser ? ctxNevermind() : signal,
+              deserialize: () => --des ? ctxNevermind() : signal,
             })),
             CollCodecs.forPath(['field'], {
-              serialize: () => (--ser, ctxContinue()),
-              deserialize: () => (--des, ctxContinue()),
+              serialize: () => (--ser, ctxNevermind()),
+              deserialize: () => (--des, ctxNevermind()),
             }),
           ],
           mutateInPlace: true,
         });
 
         serdes.serialize({ field: 3 });
-        assert.strictEqual(ser, signal === ctxNext() ? -1 : 0);
+        assert.strictEqual(ser, signal === ctxContinue() ? -1 : 0);
 
         serdes.deserialize({ field: 3 }, {});
-        assert.strictEqual(des, signal === ctxNext() ? -1 : 0);
+        assert.strictEqual(des, signal === ctxContinue() ? -1 : 0);
       }
     });
   });

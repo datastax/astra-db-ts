@@ -68,9 +68,9 @@ describe('unit.documents.collections.ser-des.codecs', () => {
           forName: {
             ...Object.fromEntries(repeat((i) => [`name${i}`, [`name${i}:ser_fn`, `name${i}:serdes_fn`]])),
           },
-          forPath: [
-            ...repeat((i) => ({ path: ['pa', 'th', `${i}`], fns: [`path${i}:ser_fn`, `path${i}:serdes_fn`] })),
-          ],
+          forPath: {
+            ['3']: repeat((i) => ({ path: ['pa', 'th', `${i}`], fns: [`path${i}:ser_fn`, `path${i}:serdes_fn`] }))
+          },
           forClass: [
             { class: Delegate, fns: [...repeat((i) => `type${i}:ser_fn/class`), ...repeat((i) => `custom${i}:ser_fn/class`)] },
           ],
@@ -83,9 +83,9 @@ describe('unit.documents.collections.ser-des.codecs', () => {
           forName: {
             ...Object.fromEntries(repeat((i) => [`name${i}`, ['$DeserializeForCollection', `name${i}:des_fn`, `name${i}:serdes_fn`]])),
           },
-          forPath: [
-            ...repeat((i) => ({ path: ['pa', 'th', `${i}`], fns: ['$DeserializeForCollection', `path${i}:des_fn`, `path${i}:serdes_fn`] })),
-          ],
+          forPath: {
+            ['3']: repeat((i) => ({ path: ['pa', 'th', `${i}`], fns: ['$DeserializeForCollection', `path${i}:des_fn`, `path${i}:serdes_fn`] })),
+          },
           forType: {
             ...Object.fromEntries(repeat((i) => [`type${i}`, ['$DeserializeForCollection', `type${i}:des_fn`]])),
           },
