@@ -70,9 +70,9 @@ export abstract class SerDes<SerCtx extends BaseSerCtx = any, DesCtx extends Bas
       rawDataApiResp: raw,
       keys: [],
     }));
-    
+
     const rootObj = {
-      ['']: ctx.keyTransformer?.deserialize(obj, ctx) ?? obj,
+      ['']: ctx.keyTransformer?.deserialize(ctx.rootObj, ctx) ?? ctx.rootObj,
     };
 
     return deserializeRecord('', rootObj, ctx, toArray(this._cfg.deserialize!))[''] as S;
