@@ -283,11 +283,11 @@ export interface BaseSerDesCtx {
     // (undocumented)
     keyTransformer?: KeyTransformer;
     // (undocumented)
+    mapAfter(map: (v: any) => unknown): void;
+    // (undocumented)
     nevermind(): readonly [2];
     // (undocumented)
     path: string[];
-    // (undocumented)
-    postMap(map: (k: string, v: any) => unknown): void;
     // (undocumented)
     rootObj: SomeDoc;
 }
