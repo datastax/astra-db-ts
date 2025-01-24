@@ -75,13 +75,13 @@ export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
     const status = UnexpectedDataAPIResponseError.require(rawDataApiResp.status, 'No `status` found in response.', rawDataApiResp);
 
     if (ctx.parsingInsertedId) {
-      ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.primaryKeySchema, 'No `status.primaryKeySchema` found in response.\n\n**Did you accidentally use a `Table` object on a Tableection?** If so, your document was successfully inserted, but the client cannot properly deserialize the response. Please use a `Tableection` object instead.', rawDataApiResp);
+      ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.primaryKeySchema, 'No `status.primaryKeySchema` found in response.\n\n**Did you accidentally use a `Table` object on a Collection?** If so, your document was successfully inserted, but the client cannot properly deserialize the response. Please use a `Tableection` object instead.', rawDataApiResp);
 
       ctx.rootObj = Object.fromEntries(Object.keys(ctx.tableSchema).map((key, i) => {
         return [key, ctx.rootObj[i]];
       }));
     } else {
-      ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.projectionSchema, 'No `status.projectionSchema` found in response.\n\n**Did you accidentally use a `Table` object on a Tableection?** If so, documents may\'ve been found, but the client cannot properly deserialize the response. Please use a `Tableection` object instead.', rawDataApiResp);
+      ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.projectionSchema, 'No `status.projectionSchema` found in response.\n\n**Did you accidentally use a `Table` object on a Collection?** If so, documents may\'ve been found, but the client cannot properly deserialize the response. Please use a `Tableection` object instead.', rawDataApiResp);
     }
 
     if (this._cfg?.sparseData !== true) {

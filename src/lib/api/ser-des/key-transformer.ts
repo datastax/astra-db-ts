@@ -24,7 +24,7 @@ export interface KeyTransformerCtx {
 export abstract class KeyTransformer {
   public abstract serializeKey(key: string, ctx: KeyTransformerCtx): string;
   public abstract deserializeKey(key: string, ctx: KeyTransformerCtx): string;
-  public abstract shouldRecurse(ctx: KeyTransformerCtx): boolean;
+  public abstract transformNested(ctx: KeyTransformerCtx): boolean;
 
   public serialize(obj: SomeDoc, ctx: KeyTransformerCtx) {
     return this._immutSerdesHelper(obj, ctx, this.serializeKey.bind(this));
@@ -46,7 +46,7 @@ export abstract class KeyTransformer {
       const newKey = fn(key, ctx);
       ret[newKey] = obj[key];
 
-      if (typeof obj[key] === 'object' && obj[key] !== null && this.shouldRecurse(ctx)) {
+      if (typeof obj[key] === 'object' && obj[key] !== null && this.transformNested(ctx)) {
         ret[newKey] = this._immutSerdesHelper(obj[key], ctx, fn);
       }
     }
@@ -60,78 +60,38 @@ export abstract class KeyTransformer {
  * @public
  */
 export interface Camel2SnakeCaseOptions {
-  cached?: boolean;
   exceptId?: boolean;
-  deep?: boolean;
+  transformNested?: (path: KeyTransformerCtx) => boolean;
 }
 
 /**
  * @public
  */
 export class Camel2SnakeCase extends KeyTransformer {
-  /**
-   * @internal
-   */
-  private readonly _impl: Camel2SnakeCaseImpl;
-
-  private readonly _deep: boolean;
-
+  private readonly _transformNested: Camel2SnakeCaseOptions['transformNested'];
   private readonly _exceptId: boolean;
 
   constructor(opts: Camel2SnakeCaseOptions = {}) {
     super();
-    this._impl = opts.cached ? new CachedCamel2SnakeCase() : UncachedCamel2SnakeCase;
-    this._deep = opts.deep === true;
     this._exceptId = opts.exceptId !== false;
+    this._transformNested = opts.transformNested;
   }
 
-  public shouldRecurse(ctx: KeyTransformerCtx): boolean {
-    return this._deep || ctx.path.length === 0;
+  public transformNested(ctx: KeyTransformerCtx): boolean {
+    return this._transformNested?.(ctx) ?? false;
   }
 
   public override serializeKey(camel: string): string {
     if (!camel || this._exceptId && camel === '_id') {
       return camel;
     }
-    return this._impl.camel2SnakeCase(camel);
+    return camel.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
   }
 
   public override deserializeKey(snake: string): string {
     if (!snake || this._exceptId && snake === '_id') {
       return snake;
     }
-    return this._impl.snake2CamelCase(snake);
-  }
-}
-
-interface Camel2SnakeCaseImpl {
-  snake2CamelCase(snake: string): string;
-  camel2SnakeCase(camel: string): string;
-}
-
-class CachedCamel2SnakeCase implements Camel2SnakeCaseImpl {
-  private _cache: Record<string, string> = {};
-
-  public snake2CamelCase(camel: string): string {
-    if (this._cache[camel]) {
-      return this._cache[camel];
-    }
-    return this._cache[camel] = UncachedCamel2SnakeCase.snake2CamelCase(camel);
-  }
-
-  public camel2SnakeCase(snake: string): string {
-    if (this._cache[snake]) {
-      return this._cache[snake];
-    }
-    return this._cache[snake] = UncachedCamel2SnakeCase.camel2SnakeCase(snake);
-  }
-}
-
-const UncachedCamel2SnakeCase: Camel2SnakeCaseImpl = {
-  snake2CamelCase(snake: string): string {
     return snake.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
-  },
-  camel2SnakeCase(camel: string): string {
-    return camel.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
-  },
-};
+  }
+}

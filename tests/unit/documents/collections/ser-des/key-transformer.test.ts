@@ -63,5 +63,63 @@ describe('unit.documents.collections.ser-des.key-transformer', () => {
         car: [['dontChangeMe']],
       });
     });
+
+    it('should allow for deep transformation', () => {
+      const serdes = new CollectionSerDes({ keyTransformer: new Camel2SnakeCase({ transformNested: () => true }), enableBigNumbers: () => 'bigint' });
+
+      const [obj] = serdes.serialize({
+        camelCaseName1: 'dontChangeMe',
+        camelCaseName2: [{ changeMe: 'dontChangeMe', meToo: { andMe: 'butNotMe' } }],
+        camelCaseName3: { meAsWell: [{ andMe: { andMyAxe: 2n } }] },
+      });
+
+      assert.deepStrictEqual(obj, {
+        camel_case_name1: 'dontChangeMe',
+        camel_case_name2: [{ change_me: 'dontChangeMe', me_too: { and_me: 'butNotMe' } }],
+        camel_case_name3: { me_as_well: [{ and_me: { and_my_axe: 2n } }] },
+      });
+    });
+
+    it('should allow for explicit nested transformation when serializing', () => {
+      const serdes = new CollectionSerDes({ keyTransformer: new Camel2SnakeCase({ transformNested: (ctx) => ctx.path.at(-1) !== '1' }), enableBigNumbers: () => 'bigint' });
+
+      const [obj] = serdes.serialize({
+        camelCaseName1: 'dontChangeMe',
+        camelCaseName2: [{ '1': { butNotMe: 'norMe' }, changeMe: 'dontChangeMe' }],
+        camelCaseName3: { meAsWell: [{ andMe: { andMyAxe: 2n } }, { sadlyNotMe: 'norMe' }] },
+      });
+
+      assert.deepStrictEqual(obj, {
+        camel_case_name1: 'dontChangeMe',
+        camel_case_name2: [{ '1': { butNotMe: 'norMe' }, change_me: 'dontChangeMe' }],
+        camel_case_name3: { me_as_well: [{ and_me: { and_my_axe: 2n } }, { sadlyNotMe: 'norMe' }] },
+      });
+    });
+
+    it('should allow for explicit nested transformation when deserializing', () => {
+      const serdes = new CollectionSerDes({ keyTransformer: new Camel2SnakeCase({ transformNested: (ctx) => ctx.path[0] !== 'camelCaseName3' }), enableBigNumbers: () => 'bigint' });
+
+      const obj = serdes.deserialize({
+        camel_case_name1: 'dontChangeMe',
+        camel_case_name2: [{ '1': { butNotMe: 'norMe' }, change_me: 'dontChangeMe' }],
+        camel_case_name3: { me_as_well: [{ and_me: { and_my_axe: 2n } }, { sadlyNotMe: 'norMe' }] },
+      }, {});
+
+      assert.deepStrictEqual(obj, {
+        camelCaseName1: 'dontChangeMe',
+        camelCaseName2: [{ '1': { butNotMe: 'norMe' }, changeMe: 'dontChangeMe' }],
+        camelCaseName3: { meAsWell: [{ andMe: { andMyAxe: 2n } }, { sadlyNotMe: 'norMe' }] },
+      });
+    });
+
+    it('should allow for transforming _id', () => {
+      const serdes = new CollectionSerDes({ keyTransformer: new Camel2SnakeCase({ exceptId: false }) });
+
+      const [ser] = serdes.serialize({ _id: 'dontChangeMe' });
+      assert.deepStrictEqual(ser, { _id: 'dontChangeMe' });
+
+      const des = serdes.deserialize({ _id: 'dontChangeMe' }, { status: { projectionSchema: { _id: { type: 'ascii' } } } });
+      assert.deepStrictEqual(des, { Id: 'dontChangeMe' });
+    });
   });
 });
