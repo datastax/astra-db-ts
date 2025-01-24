@@ -97,7 +97,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx = any, DesCtx extends Bas
       continue: ctxContinue,
       nevermind: ctxNevermind,
       keyTransformer: this._cfg.keyTransformer,
-      postMap: () => { throw new Error('postMap has not been set yet (BUG)'); },
+      mapAfter: () => { throw new Error('ctx.afterMap() has not been set yet (BUG)'); },
       rootObj: obj,
       path: [],
       ...ctx,
@@ -106,8 +106,8 @@ export abstract class SerDes<SerCtx extends BaseSerCtx = any, DesCtx extends Bas
 }
 
 function serializeRecord<Ctx extends BaseSerCtx>(key: string, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
-  const postMaps: ((k: string, v: any) => unknown)[] = [];
-  ctx.postMap = (fn) => postMaps.push(fn);
+  const postMaps: ((v: any) => unknown)[] = [];
+  ctx.mapAfter = (fn) => postMaps.push(fn);
 
   const stop = applySerdesFns(fns, key, obj, ctx);
 
@@ -116,7 +116,7 @@ function serializeRecord<Ctx extends BaseSerCtx>(key: string, obj: SomeDoc, ctx:
   }
 
   for (let i = postMaps.length - 1; i >= 0; i--) {
-    obj[key] = postMaps[i](key, obj[key]);
+    obj[key] = postMaps[i](obj[key]);
   }
   return obj;
 }
@@ -139,8 +139,8 @@ function serializeRecordHelper<Ctx extends BaseSerCtx>(obj: SomeDoc, ctx: Ctx, f
 }
 
 function deserializeRecord<Ctx extends BaseDesCtx>(key: string, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
-  const postMaps: ((k: string, v: any) => unknown)[] = [];
-  ctx.postMap = (fn) => postMaps.push(fn);
+  const postMaps: ((v: any) => unknown)[] = [];
+  ctx.mapAfter = (fn) => postMaps.push(fn);
 
   ctx.keys = (typeof obj[key] === 'object' && obj[key] !== null)
     ? Object.keys(obj[key])
@@ -153,7 +153,7 @@ function deserializeRecord<Ctx extends BaseDesCtx>(key: string, obj: SomeDoc, ct
   }
 
   for (let i = postMaps.length - 1; i >= 0; i--) {
-    obj[key] = postMaps[i](key, obj[key]);
+    obj[key] = postMaps[i](obj[key]);
   }
   return obj;
 }

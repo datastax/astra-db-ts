@@ -152,7 +152,7 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
     }
     else if (typeof value === 'bigint') {
       if (!ctx.bigNumsEnabled) {
-        throw new Error('BigNumber serialization must be enabled through serdes.enableBigNumbers in CollectionSerDesConfig');
+        throw new Error('Bigint serialization must be enabled through serdes.enableBigNumbers in CollectionSerDesConfig');
       }
       return ctx.done();
     }

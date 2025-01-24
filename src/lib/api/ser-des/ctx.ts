@@ -40,7 +40,7 @@ export interface BaseSerDesCtx {
   done<T>(obj?: T): readonly [0, T?],
   continue<T>(obj?: T): readonly [1, T?],
   nevermind(): readonly [2],
-  postMap(map: (k: string, v: any) => unknown): void,
+  mapAfter(map: (v: any) => unknown): void,
   keyTransformer?: KeyTransformer,
 }
 

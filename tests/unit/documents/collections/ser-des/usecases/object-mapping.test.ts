@@ -67,7 +67,7 @@ describe('unit.documents.collections.ser-des.usecases.object-mapping', () => {
           return ctx.nevermind();
         }
 
-        ctx.postMap((_, value) => new Book(
+        ctx.mapAfter((value) => new Book(
           value.title,
           new Author(value.author),
           value._id,
