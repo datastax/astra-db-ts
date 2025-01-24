@@ -163,7 +163,6 @@ const DefaultTableSerDesCfg = {
     let resp: ReturnType<SerDesFn<unknown>> = null!;
 
     const column = ctx.tableSchema[key];
-    // const value = ctx.rootObj[key];
 
     // Name-based deserializers
     const nameDes = ctx.deserializers.forName[key];

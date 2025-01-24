@@ -46,63 +46,101 @@ fi
 
 failed=false
 
+print_green() {
+  echo "$(tput setaf 2)$(tput bold)$1$(tput sgr0)"
+}
+
+print_green_with_status() {
+  if [ $failed = true ]; then
+    print_green "- $1 :/"
+  else
+    print_green "- $1 :)"
+  fi
+}
+
+print_error() {
+  echo "$(tput setaf 1)$1$(tput sgr0)"
+}
+
 for check_type in $check_types; do
   case $check_type in
     "tc")
-      echo "Running type-checker..."
-      npx tsc --noEmit || failed=true
+      print_green_with_status "Running type-checker..."
+      npx tsc --noEmit > /dev/null
+
+      if [ ! $? ]; then
+        npx tsc --noEmit
+        failed=true
+      fi
       ;;
     "lint")
-      echo "Running linter..."
-      npm run lint -- --no-warn-ignored || failed=true
+      print_green_with_status "Running linter..."
+      npm run lint -- --no-warn-ignored > /dev/null
+
+      if [ ! $? ]; then
+        npm run lint -- --no-warn-ignored
+        failed=true
+      fi
       ;;
     "licensing")
-      echo "Checking for missing licensing headers..."
+      print_green_with_status "Checking for missing licensing headers..."
       offenders=$(find tests/ src/ -type f -exec grep -L "^// Copyright DataStax, Inc." {} +)
 
       if [ -n "$offenders" ]; then
-        echo "The following files are missing licensing headers:"
-        echo "$offenders"
+        print_error "The following files are missing licensing headers:"
+        print_error "$offenders"
         failed=true
       fi
       ;;
     "lib-check")
-      echo "Checking library compiles..."
+      print_green_with_status "Ensuring library compiles with skipLibCheck: false..."
 
       tmp_dir="tmp-lib-check"
       rm -rf "$tmp_dir" "$main_dir/dist"
 
-      (scripts/build.sh -no-report \
-        && mkdir "$tmp_dir" \
-        && cd "$tmp_dir" \
-        && npm init -y \
-        && npm install typescript "$main_dir" \
-        && echo "import '@datastax/astra-db-ts'" > src.ts \
-        && npx tsc --init --skipLibCheck false --typeRoots "./node_modules/**" --target es2020 \
-        && npx tsc) || failed=true
+      scripts/build.sh -no-report > /dev/null \
+
+      if [ ! $? ]; then
+        print_error "Could not build library for lib-check phase"
+        failed=true
+      else
+        mkdir "$tmp_dir" \
+          && cd "$tmp_dir" \
+          && npm init -y > /dev/null \
+          && npm install typescript "$main_dir" > /dev/null \
+          && echo "import '@datastax/astra-db-ts'" > src.ts \
+          && npx tsc --init --skipLibCheck false --typeRoots "./node_modules/**" --target es2020 > /dev/null
+
+        if [ -f tsconfig.json ]; then
+          npx tsc || failed=true
+        else
+          print_error "Could not set up library for lib-check phase"
+          failed=true
+        fi
+      fi
 
       cd "$main_dir" && rm -rf "$tmp_dir"
       ;;
     "test-ext")
-      echo "Checking test file extensions..."
+      print_green_with_status "Checking for test files that do not end in '.test.ts'..."
       offenders=$(find tests/unit tests/integration -type f -not -name "*.test.ts")
 
       if [ -n "$offenders" ]; then
-        echo "The following test files do not end in '.test.ts':"
-        echo "$offenders"
+        print_error "The following test files do not end in '.test.ts':"
+        print_error "$offenders"
         failed=true
       fi
       ;;
     "*")
-      echo "Invalid check type '$check_type'"
+      print_error "Invalid check type '$check_type'"
       exit 1
       ;;
   esac
 done
 
 if [ "$failed" = true ]; then
-  echo "Checks failed"
+  print_error "$(tput bold)Checks failed :("
   exit 1
 else
-  echo "Checks passed"
+  print_green "Checks passed :)"
 fi
