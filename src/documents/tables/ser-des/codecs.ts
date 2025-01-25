@@ -20,33 +20,17 @@ import { DataAPITime } from '@/src/documents/datatypes/time';
 import { UUID } from '@/src/documents/datatypes/uuid';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
 import { TableDesCtx, TableSerCtx } from '@/src/documents';
-import {
-  CustomCodecOpts,
-  Deserializers,
-  NominalCodecOpts,
-  RawCodec,
-  SerDesFn,
-  Serializers,
-  TypeCodecOpts,
-} from '@/src/lib';
+import { CustomCodecOpts, NominalCodecOpts, RawCodec, SerDesFn, TypeCodecOpts } from '@/src/lib';
 import BigNumber from 'bignumber.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { DataAPIInet } from '@/src/documents/datatypes/inet';
-import { ListTableKnownColumnDefinition, ListTableUnsupportedColumnDefinition } from '@/src/db';
-
-type TableSerFn = SerDesFn<TableSerCtx>;
-type TableDesFn<Type extends string = string> = (key: Type, val: any, ctx: TableDesCtx, definition: TableDesFnDef<Type>) => ReturnType<SerDesFn<any>>;
-
-type TableDesFnDef<Type> =
-  | (ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition) & { type: Type }
-  | undefined;
 
 /**
  * @public
  */
 export type TableCodecClass = {
   new (...args: any[]): { [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>> };
-  [$DeserializeForTable]: TableDesFn;
+  [$DeserializeForTable]: SerDesFn<TableDesCtx>;
 }
 
 /**
@@ -57,7 +41,22 @@ export type TableCodec<Class extends TableCodecClass> = InstanceType<Class>;
 /**
  * @public
  */
-export type RawTableCodecs = readonly RawCodec<TableSerFn, TableSerGuard, TableDesFn<any>, TableDesGuard>[] & { phantom?: 'This codec is only valid for collections' };
+export type RawTableCodecs = readonly RawCodec<TableSerCtx, TableDesCtx>[] & { phantom?: 'This codec is only valid for tables' };
+
+/**
+ * @public
+ */
+export type TableNominalCodecOpts = NominalCodecOpts<TableSerCtx, TableDesCtx>;
+
+/**
+ * @public
+ */
+export type TableTypeCodecOpts = TypeCodecOpts<TableSerCtx, TableDesCtx>;
+
+/**
+ * @public
+ */
+export type TableCustomCodecOpts = CustomCodecOpts<TableSerCtx, TableDesCtx>;
 
 /**
  * @public
@@ -65,97 +64,71 @@ export type RawTableCodecs = readonly RawCodec<TableSerFn, TableSerGuard, TableD
 export class TableCodecs {
   public static Defaults = {
     bigint: TableCodecs.forType('bigint', {
-      deserialize: (_, value, ctx) => ctx.done(BigInt(value)),
+      deserialize: (value, ctx) => ctx.done(BigInt(value)),
     }),
     blob: TableCodecs.forType('blob', DataAPIBlob),
     counter: TableCodecs.forType('counter', {
-      deserialize: (_, value, ctx) => ctx.done(BigInt(value)),
+      deserialize: (value, ctx) => ctx.done(BigInt(value)),
     }),
     date: TableCodecs.forType('date', DataAPIDate),
     decimal: TableCodecs.forType('decimal', {
-      deserialize: (_, value, ctx) => ctx.done((value instanceof BigNumber) ? value : new BigNumber(value)),
+      deserialize: (value, ctx) => ctx.done((value instanceof BigNumber) ? value : new BigNumber(value)),
     }),
     double: TableCodecs.forType('double', {
-      deserialize: (_, value, ctx) => ctx.done(parseFloat(value)),
+      deserialize: (value, ctx) => ctx.done(parseFloat(value)),
     }),
     duration: TableCodecs.forType('duration', DataAPIDuration),
     float: TableCodecs.forType('float', {
-      deserialize: (_, value, ctx) => ctx.done(parseFloat(value)),
+      deserialize: (value, ctx) => ctx.done(parseFloat(value)),
     }),
     int: TableCodecs.forType('int', {
-      deserialize: (_, value, ctx) => ctx.done(parseInt(value, 10)),
+      deserialize: (value, ctx) => ctx.done(parseInt(value, 10)),
     }),
     inet: TableCodecs.forType('inet', DataAPIInet),
     smallint: TableCodecs.forType('smallint', {
-      deserialize: (_, value, ctx) => ctx.done(parseInt(value, 10)),
+      deserialize: (value, ctx) => ctx.done(parseInt(value, 10)),
     }),
     time: TableCodecs.forType('time', DataAPITime),
     timestamp: TableCodecs.forType('timestamp', {
       serializeClass: Date,
-      serialize(_, value, ctx) {
+      serialize(value, ctx) {
         return ctx.done(value.toISOString());
       },
-      deserialize(_, value, ctx) {
+      deserialize(value, ctx) {
         return ctx.done(new Date(value));
       },
     }),
     timeuuid: TableCodecs.forType('timeuuid', UUID),
     tinyint: TableCodecs.forType('tinyint', {
-      deserialize: (_, value, ctx) => ctx.done(parseInt(value, 10)),
+      deserialize: (value, ctx) => ctx.done(parseInt(value, 10)),
     }),
     uuid: TableCodecs.forType('uuid', UUID),
     vector: TableCodecs.forType('vector', DataAPIVector),
     varint: TableCodecs.forType('varint', {
-      deserialize: (_, value, ctx) => ctx.done(BigInt(value)),
+      deserialize: (value, ctx) => ctx.done(BigInt(value)),
     }),
     map: TableCodecs.forType('map', {
       serializeClass: Map,
-      serialize: (_, value, ctx) => {
+      serialize: (value, ctx) => {
         return ctx.continue(Object.fromEntries(value));
       },
-      deserialize(_, map, ctx) {
+      deserialize(map, ctx) {
         const entries = Array.isArray(map) ? map : Object.entries(map);
-
-        // for (let i = 0, n = entries.length; i < n; i++) {
-        //   const [key, value] = entries[i];
-        //
-        //   const keyParser = ctx.deserializers.forType[def!.keyType]?.[0];
-        //   const valueParser = ctx.deserializers.forType[def!.valueType]?.[0];
-        //
-        //   entries[i] = [
-        //     keyParser ? keyParser(i.toString(), key, ctx, def)[1] : key,
-        //     valueParser ? valueParser(i.toString(), value, ctx, def)[1] : value,
-        //   ];
-        // }
-        //
-        // return ctx.done(new Map(entries));
         ctx.mapAfter((es) => new Map(es));
         return ctx.continue(entries);
       },
     }),
     list: TableCodecs.forType('list', {
-      deserialize(_, list, ctx) {
-        // for (let i = 0, n = list.length; i < n; i++) {
-        //   const elemParser = ctx.deserializers.forType[def!.valueType]?.[0];
-        //   list[i] = elemParser ? elemParser(i.toString(), list[i], ctx, def)[1] : list[i];
-        // }
-        // return ctx.done(list);
-
+      deserialize(list, ctx) {
         return ctx.continue(list);
       },
     }),
     set: TableCodecs.forType('set', {
       serializeClass: Set,
-      serialize: (_, value, ctx) => {
+      serialize: (value, ctx) => {
         return ctx.continue([...value]);
       },
-      deserialize(_, list, ctx) {
-        // for (let i = 0, n = list.length; i < n; i++) {
-        //   const elemParser = ctx.deserializers.forType[def!.valueType]?.[0];
-        //   list[i] = elemParser ? elemParser(i.toString(), list[i], ctx, def)[1] : list[i];
-        // }
-        // return ctx.done(new Set(list));
-
+      deserialize(list, ctx) {
         ctx.mapAfter((es) => new Set(es));
         return ctx.continue(list);
       },
@@ -170,7 +143,15 @@ export class TableCodecs {
     }];
   }
 
-  public static forType<const Type extends string>(type: Type, optsOrClass: TableTypeCodecOpts<Type> | TableCodecClass): RawTableCodecs {
+  public static forPath(path: string[], optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs {
+    return [{
+      tag: 'forPath',
+      path: path,
+      opts: ($DeserializeForTable in optsOrClass) ? { deserialize: optsOrClass[$DeserializeForTable] } : optsOrClass,
+    }];
+  }
+
+  public static forType<const Type extends string>(type: Type, optsOrClass: TableTypeCodecOpts | TableCodecClass): RawTableCodecs {
     return [{
       tag: 'forType',
       type: type,
@@ -182,31 +163,3 @@ export class TableCodecs {
     return [{ tag: 'custom', opts: opts }];
   }
 }
-
-type TableSerGuard = (value: unknown, ctx: TableSerCtx) => boolean;
-type TableDesGuard = (value: unknown, ctx: TableDesCtx) => boolean;
-
-/**
- * @public
- */
-export type TableNominalCodecOpts = NominalCodecOpts<TableSerFn, TableDesFn>;
-
-/**
- * @public
- */
-export type TableTypeCodecOpts<Type extends string> = TypeCodecOpts<TableSerFn, TableSerGuard, TableDesFn<Type>>
-
-/**
- * @public
- */
-export type TableCustomCodecOpts = CustomCodecOpts<TableSerFn, TableSerGuard, TableDesFn, TableDesGuard>;
-
-/**
- * @public
- */
-export type TableSerializers = Omit<Serializers<TableSerFn, TableSerGuard>, 'forPath'>;
-
-/**
- * @public
- */
-export type TableDeserializers = Omit<Deserializers<TableDesFn, TableDesGuard>, 'forPath'>;

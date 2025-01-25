@@ -64,7 +64,7 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
   /**
    * Implementation of `$DeserializeForTable` for {@link TableCodec}
    */
-  public static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx) {
+  public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
     return ctx.done(new DataAPIBlob((ctx.parsingInsertedId) ? { $binary: value } : value, false));
   }
 

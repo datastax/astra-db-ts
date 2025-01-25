@@ -27,7 +27,7 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
       const res: unknown[] = [];
 
       const serFn = (tag: string): CollNominalCodecOpts => ({
-        serialize: (_, __, ctx) => (ctx.mapAfter((v) => (res.push([tag, v]), v)), ctx.nevermind()),
+        serialize: (_, ctx) => (ctx.mapAfter((v) => (res.push([tag, v]), v)), ctx.nevermind()),
       });
 
       const serdes = new CollectionSerDes({
@@ -44,10 +44,10 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
           repeat(() => CollCodecs.forPath(['root1', 'nested1_obj'], serFn('[root1.obj]'))),
           repeat(() => CollCodecs.forPath([],                       serFn('[]'))),
 
-          CollCodecs.custom({
+          [CollCodecs.custom({
             serializeClass: Map,
-            serialize: (_, map, ctx) => ctx.continue(Object.fromEntries(map)),
-          }),
+            serialize: (map, ctx) => ctx.continue(Object.fromEntries(map)),
+          })],
         ].sort(() => .5 - Math.random()).flat(),
       });
 
@@ -91,7 +91,7 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
       const serdes = new CollectionSerDes({
         keyTransformer: new Camel2SnakeCase(),
         codecs: [
-          CollCodecs.forPath([], { serialize: (_, __, ctx) => (ctx.mapAfter((v) => val = v), ctx.nevermind()) }),
+          CollCodecs.forPath([], { serialize: (_, ctx) => (ctx.mapAfter((v) => val = v), ctx.nevermind()) }),
         ],
       });
 
@@ -105,7 +105,7 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
       const res: unknown[] = [];
 
       const serFn = (tag: string): CollNominalCodecOpts => ({
-        deserialize: (_, __, ctx) => (ctx.mapAfter((v) => (res.push([tag, v]), v)), ctx.nevermind()),
+        deserialize: (_, ctx) => (ctx.mapAfter((v) => (res.push([tag, v]), v)), ctx.nevermind()),
       });
 
       const serdes = new CollectionSerDes({
@@ -122,9 +122,9 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
           repeat(() => CollCodecs.forPath(['root1', 'nested1_obj'], serFn('[root1.obj]'))),
           repeat(() => CollCodecs.forPath([],                       serFn('[]'))),
 
-          CollCodecs.forName('nested1_map', {
-            deserialize: (_, __, ctx) => (ctx.mapAfter((obj) => new Map(Object.entries(obj))), ctx.nevermind()),
-          }),
+          [CollCodecs.forName('nested1_map', {
+            deserialize: (_, ctx) => (ctx.mapAfter((obj) => new Map(Object.entries(obj))), ctx.nevermind()),
+          })],
         ].sort(() => .5 - Math.random()).flat(),
       });
 

@@ -13,19 +13,21 @@
 // limitations under the License.
 
 import { SomeDoc } from '@/src/documents';
-import { KeyTransformer, RawDataAPIResponse } from '@/src/lib';
+import { Deserializers, KeyTransformer, RawDataAPIResponse, Serializers } from '@/src/lib';
 
 /**
  * @public
  */
-export interface BaseSerCtx extends BaseSerDesCtx {
+export interface BaseSerCtx<SerCex> extends BaseSerDesCtx {
+  serializers: Serializers<SerCex>
   mutatingInPlace: boolean,
 }
 
 /**
  * @public
  */
-export interface BaseDesCtx extends BaseSerDesCtx {
+export interface BaseDesCtx<DesCtx> extends BaseSerDesCtx {
+  deserializers: Deserializers<DesCtx>;
   rawDataApiResp: RawDataAPIResponse,
   parsingInsertedId: boolean,
 }

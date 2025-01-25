@@ -64,12 +64,12 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
     const { client, db } = initTestObjects();
 
     const ISBNCodec = CollCodecs.forId({
-      serialize: (_, isbn, ctx) => ctx.done(isbn.unwrap),
-      deserialize: (_, raw, ctx) => ctx.done(new ISBN(raw)),
+      serialize: (isbn, ctx) => ctx.done(isbn.unwrap),
+      deserialize: (raw, ctx) => ctx.done(new ISBN(raw)),
     });
 
     const BookCodec = CollCodecs.forPath([], {
-      serialize: (_, book, ctx) => {
+      serialize: (book, ctx) => {
         if (!(book instanceof Book)) {
           return ctx.nevermind();
         }
@@ -84,7 +84,7 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
           reviews: book.reviews,
         });
       },
-      deserialize: (_, value, ctx) => {
+      deserialize: (value, ctx) => {
         if (ctx.parsingInsertedId || !value) {
           return ctx.nevermind();
         }
@@ -103,20 +103,20 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
     });
 
     const SetCodec = CollCodecs.forPath(['reviews'], {
-      serialize(_, value: Set<Review>, ctx) {
+      serialize(value: Set<Review>, ctx) {
         return ctx.continue([...value]);
       },
-      deserialize(_, __, ctx) {
+      deserialize(_, ctx) {
         ctx.mapAfter((v) => new Set(v));
         return ctx.continue();
       },
     });
 
     const ReviewCodec = CollCodecs.forPath(['reviews', '*'], {
-      serialize: (_, review, ctx) => {
+      serialize: (review, ctx) => {
         return ctx.done({ criticName: review.critic.name, review: review.review });
       },
-      deserialize: (_, raw, ctx) => {
+      deserialize: (raw, ctx) => {
         return ctx.done(new Review(new Person(raw.criticName), raw.review));
       },
     });
@@ -173,7 +173,7 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
         readonly reviews: MySet<Review>,
       ) {}
 
-      static [$DeserializeForCollection](_: string, value: unknown, ctx: CollDesCtx) {
+      static [$DeserializeForCollection](value: unknown, ctx: CollDesCtx) {
         if (ctx.parsingInsertedId || !value) {
           return ctx.nevermind();
         }
@@ -219,7 +219,7 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
     class ISBN implements CollCodec<typeof ISBN> {
       constructor(readonly unwrap: string) {}
 
-      static [$DeserializeForCollection](_: string, raw: string, ctx: CollDesCtx) {
+      static [$DeserializeForCollection](raw: string, ctx: CollDesCtx) {
         return ctx.done(new ISBN(raw));
       }
 
@@ -231,7 +231,7 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
     class Review implements CollCodec<typeof Review> {
       constructor(readonly critic: Person, readonly review: string) {}
 
-      static [$DeserializeForCollection](_: string, raw: any, ctx: CollDesCtx) {
+      static [$DeserializeForCollection](raw: any, ctx: CollDesCtx) {
         return ctx.done(new Review(new Person(raw.criticName), raw.review));
       }
 
@@ -241,7 +241,7 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
     }
 
     class MySet<T> extends Set<T> implements CollCodec<typeof MySet> {
-      static [$DeserializeForCollection](_: string, __: unknown, ctx: CollDesCtx) {
+      static [$DeserializeForCollection](_: unknown, ctx: CollDesCtx) {
         ctx.mapAfter((v) => new MySet(v));
         return ctx.continue();
       }

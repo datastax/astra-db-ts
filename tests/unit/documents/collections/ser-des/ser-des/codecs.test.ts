@@ -25,7 +25,7 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
       const serPaths = [] as unknown[];
       const desPaths = [] as unknown[];
 
-      const visit = (arr: unknown[], v: unknown) => (_: unknown, value: unknown) => (arr.push(v ?? value), ctxNevermind());
+      const visit = (arr: unknown[], v: unknown) => (value: unknown) => (arr.push(v ?? value), ctxNevermind());
       const serdesFns = (v: unknown = null) => ({ serialize: visit(serPaths, v), deserialize: visit(desPaths, v) });
 
       const serdes = new CollectionSerDes({

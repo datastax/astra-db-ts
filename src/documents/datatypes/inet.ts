@@ -47,7 +47,7 @@ export class DataAPIInet implements TableCodec<typeof DataAPIInet> {
   /**
    * Implementation of `$DeserializeForTable` for {@link TableCodec}
    */
-  public static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx) {
+  public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
     return ctx.done(new DataAPIInet(value, null, false));
   }
 

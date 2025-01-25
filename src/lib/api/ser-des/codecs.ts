@@ -12,73 +12,78 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeConstructor } from '@/src/lib';
+import { SerDesFn, SomeConstructor } from '@/src/lib';
 import { stringArraysEqual } from '@/src/lib/utils';
 
 /**
  * @public
  */
-export interface NominalCodecOpts<SerFn, DesFn> {
-  serialize?: SerFn,
-  deserialize?: DesFn,
+export type SerDesGuard<Ctx> = (value: any, ctx: Ctx) => boolean;
+
+/**
+ * @public
+ */
+export interface NominalCodecOpts<SerCtx, DesCtx> {
+  serialize?: SerDesFn<SerCtx>,
+  deserialize?: SerDesFn<DesCtx>,
 }
 
 /**
  * @public
  */
-export type TypeCodecOpts<SerFn, SerGuard, DesFn> = CustomCodecSerOpts<SerFn, SerGuard> & { deserialize?: DesFn }
+export type TypeCodecOpts<SerCtx, DesCtx> = CustomCodecSerOpts<SerCtx> & { deserialize?: SerDesFn<DesCtx> }
 
 /**
  * @public
  */
-export type CustomCodecOpts<SerFn, SerGuard, DesFn, DesGuard> = CustomCodecSerOpts<SerFn, SerGuard> & (
-  | { deserialize: DesFn, deserializeGuard: DesGuard }
+export type CustomCodecOpts<SerCtx, DesCtx> = CustomCodecSerOpts<SerCtx> & (
+  | { deserialize: SerDesFn<DesCtx>, deserializeGuard: SerDesGuard<DesCtx> }
   | { deserialize?: never }
 )
 
 /**
  * @public
  */
-export type CustomCodecSerOpts<SerFn, SerGuard> =
-  | { serialize: SerFn, serializeGuard: SerGuard, serializeClass?: 'One (and only one) of `serializeClass` or `serializeGuard` should be present if `serialize` is present.' }
-  | { serialize: SerFn, serializeClass: SomeConstructor, serializeGuard?: 'One (and only one) of `serializeClass` or `serializeGuard` should be present if `serialize` is present.', }
+export type CustomCodecSerOpts<SerCtx> =
+  | { serialize: SerDesFn<SerCtx>, serializeGuard: SerDesGuard<SerCtx>, serializeClass?: 'One (and only one) of `serializeClass` or `serializeGuard` should be present if `serialize` is present.' }
+  | { serialize: SerDesFn<SerCtx>, serializeClass: SomeConstructor, serializeGuard?: 'One (and only one) of `serializeClass` or `serializeGuard` should be present if `serialize` is present.', }
   | { serialize?: never };
 
 /**
  * @public
  */
-export type RawCodec<SerFn = any, SerGuard = any, DesFn = any, DesGuard = any> =
-  | { tag: 'forName', name: string, opts: NominalCodecOpts<SerFn, DesFn> }
-  | { tag: 'forPath', path: string[], opts: NominalCodecOpts<SerFn, DesFn> }
-  | { tag: 'forType', type: string, opts: TypeCodecOpts<SerFn, SerGuard, DesFn> }
-  | { tag: 'custom',  opts: CustomCodecOpts<SerFn, SerGuard, DesFn, DesGuard> };
+export type RawCodec<SerCtx = any, DesCtx = any> =
+  | { tag: 'forName', name: string, opts: NominalCodecOpts<SerCtx, DesCtx> }
+  | { tag: 'forPath', path: string[], opts: NominalCodecOpts<SerCtx, DesCtx> }
+  | { tag: 'forType', type: string, opts: TypeCodecOpts<SerCtx, DesCtx> }
+  | { tag: 'custom',  opts: CustomCodecOpts<SerCtx, DesCtx> };
 
 /**
  * @public
  */
-export interface Serializers<SerFn, SerGuard> {
-  forName: Record<string, SerFn[]>,
-  forPath: Record<number, { path: string[], fns: SerFn[] }[]>,
-  forClass: { class: SomeConstructor, fns: SerFn[] }[],
-  forGuard: { guard: SerGuard, fn: SerFn }[],
+export interface Serializers<SerCtx> {
+  forName: Record<string, SerDesFn<SerCtx>[]>,
+  forPath: Record<number, { path: string[], fns: SerDesFn<SerCtx>[] }[]>,
+  forClass: { class: SomeConstructor, fns: SerDesFn<SerCtx>[] }[],
+  forGuard: { guard: SerDesGuard<SerCtx>, fn: SerDesFn<SerCtx> }[],
 }
 
 /**
  * @public
  */
-export interface Deserializers<DesFn, DesGuard> {
-  forName: Record<string, DesFn[]>,
-  forType: Record<string, DesFn[]>,
-  forPath: Record<number, { path: string[], fns: DesFn[] }[]>,
-  forGuard: { guard: DesGuard, fn: DesFn }[],
+export interface Deserializers<DesCtx> {
+  forName: Record<string, SerDesFn<DesCtx>[]>,
+  forType: Record<string, SerDesFn<DesCtx>[]>,
+  forPath: Record<number, { path: string[], fns: SerDesFn<DesCtx>[] }[]>,
+  forGuard: { guard: SerDesGuard<DesCtx>, fn: SerDesFn<DesCtx> }[],
 }
 
 /**
  * @internal
  */
-export const processCodecs = <SerFn, SerGuard, DesFn, DesGuard>(raw: readonly RawCodec[]): [Serializers<SerFn, SerGuard>, Deserializers<DesFn, DesGuard>] => {
-  const serializers: Serializers<SerFn, SerGuard> = { forName: {}, forPath: {}, forClass: [], forGuard: [] };
-  const deserializers: Deserializers<DesFn, DesGuard> = { forName: {}, forPath: {}, forType: {}, forGuard: [] };
+export const processCodecs = <SerCtx, DesCtx>(raw: readonly RawCodec[]): [Serializers<SerCtx>, Deserializers<DesCtx>] => {
+  const serializers: Serializers<SerCtx> = { forName: {}, forPath: {}, forClass: [], forGuard: [] };
+  const deserializers: Deserializers<DesCtx> = { forName: {}, forPath: {}, forType: {}, forGuard: [] };
 
   for (const codec of raw) {
     appendCodec[codec.tag](codec as never, serializers, deserializers);
@@ -88,7 +93,7 @@ export const processCodecs = <SerFn, SerGuard, DesFn, DesGuard>(raw: readonly Ra
 };
 
 const appendCodec = {
-  forName(codec: RawCodec & { tag: 'forName' }, serializers: Serializers<any, any>, deserializers: Deserializers<any, any>) {
+  forName(codec: RawCodec & { tag: 'forName' }, serializers: Serializers<any>, deserializers: Deserializers<any>) {
     if (codec.opts.serialize) {
       (serializers.forName[codec.name] ??= []).push(codec.opts.serialize);
     }
@@ -96,7 +101,7 @@ const appendCodec = {
       (deserializers.forName[codec.name] ??= []).push(codec.opts.deserialize);
     }
   },
-  forPath(codec: RawCodec & { tag: 'forPath' }, serializers: Serializers<any, any>, deserializers: Deserializers<any, any>) {
+  forPath(codec: RawCodec & { tag: 'forPath' }, serializers: Serializers<any>, deserializers: Deserializers<any>) {
     if (codec.opts.serialize) {
       findOrInsertPath(serializers.forPath, codec.path, codec.opts.serialize);
     }
@@ -104,25 +109,25 @@ const appendCodec = {
       findOrInsertPath(deserializers.forPath, codec.path, codec.opts.deserialize);
     }
   },
-  forType(codec: RawCodec & { tag: 'forType' }, serializers: Serializers<any, any>, deserializers: Deserializers<any, any>) {
+  forType(codec: RawCodec & { tag: 'forType' }, serializers: Serializers<any>, deserializers: Deserializers<any>) {
     appendCodec.customSer(codec, serializers);
 
     if (codec.opts.deserialize) {
       (deserializers.forType[codec.type] ??= []).push(codec.opts.deserialize);
     }
   },
-  custom(codec: RawCodec & { tag: 'custom' }, serializers: Serializers<any, any>, deserializers: Deserializers<any, any>) {
+  custom(codec: RawCodec & { tag: 'custom' }, serializers: Serializers<any>, deserializers: Deserializers<any>) {
     appendCodec.customSer(codec, serializers);
 
     if ('deserializeGuard' in codec.opts) {
       deserializers.forGuard.push({ guard: codec.opts.deserializeGuard, fn: codec.opts.deserialize });
     }
   },
-  customSer(codec: RawCodec & { tag: 'custom' | 'forType' }, serializers: Serializers<any, any>) {
-    if ('serializeGuard' in codec.opts) {
+  customSer(codec: RawCodec & { tag: 'custom' | 'forType' }, serializers: Serializers<any>) {
+    if ('serializeGuard' in codec.opts && !codec.opts.serializeClass) {
       serializers.forGuard.push({ guard: codec.opts.serializeGuard, fn: codec.opts.serialize });
     }
-    else if ('serializeClass' in codec.opts) {
+    else if ('serializeClass' in codec.opts && !codec.opts.serializeGuard) {
       findOrInsertClass(serializers.forClass, codec.opts.serializeClass, codec.opts.serialize);
     }
   },

@@ -126,7 +126,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
   /**
    * Implementation of `$DeserializeForTable` for {@link TableCodec}
    */
-  public static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx) {
+  public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
     return ctx.done(new DataAPITime(value));
   }
 

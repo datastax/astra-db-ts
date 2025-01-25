@@ -21,30 +21,24 @@ import {
 import {
   RawTableCodecs,
   TableCodecs,
-  TableDeserializers,
-  TableSerializers,
 } from '@/src/documents/tables/ser-des/codecs';
 import { BaseDesCtx, BaseSerCtx, NEVERMIND } from '@/src/lib/api/ser-des/ctx';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
-import { isBigNumber } from '@/src/lib/utils';
+import { isBigNumber, pathMatches } from '@/src/lib/utils';
 import { UnexpectedDataAPIResponseError } from '@/src/client';
-import { processCodecs } from '@/src/lib';
 
 /**
  * @public
  */
-export interface TableSerCtx extends BaseSerCtx {
-  serializers: TableSerializers,
+export interface TableSerCtx extends BaseSerCtx<TableSerCtx> {
   bigNumsPresent: boolean,
 }
 
 /**
  * @public
  */
-export interface TableDesCtx extends BaseDesCtx {
+export interface TableDesCtx extends BaseDesCtx<TableDesCtx> {
   tableSchema: ListTableColumnDefinitions,
-  deserializers: TableDeserializers,
-  // continue: never;
 }
 
 /**
@@ -60,18 +54,13 @@ export interface TableSerDesConfig extends BaseSerDesConfig<TableSerCtx, TableDe
  */
 export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
   declare protected readonly _cfg: TableSerDesConfig;
-  
-  private readonly _serializers: TableSerializers;
-  private readonly _deserializers: TableDeserializers;
 
   public constructor(cfg?: TableSerDesConfig) {
     super(TableSerDes.mergeConfig(DefaultTableSerDesCfg, cfg));
-    [this._serializers, this._deserializers] = processCodecs(this._cfg.codecs?.flat() ?? []);
   }
 
   protected override adaptSerCtx(ctx: TableSerCtx): TableSerCtx {
     ctx.bigNumsPresent = false;
-    ctx.serializers = this._serializers;
     return ctx;
   }
 
@@ -80,13 +69,13 @@ export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
     const status = UnexpectedDataAPIResponseError.require(rawDataApiResp.status, 'No `status` found in response.', rawDataApiResp);
 
     if (ctx.parsingInsertedId) {
-      ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.primaryKeySchema, 'No `status.primaryKeySchema` found in response.\n\n**Did you accidentally use a `Table` object on a Collection?** If so, your document was successfully inserted, but the client cannot properly deserialize the response. Please use a `Tableection` object instead.', rawDataApiResp);
+      ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.primaryKeySchema, 'No `status.primaryKeySchema` found in response.\n\n**Did you accidentally use a `Table` object on a Collection?** If so, your document was successfully inserted, but the client cannot properly deserialize the response. Please use a `Collection` object instead.', rawDataApiResp);
 
       ctx.rootObj = Object.fromEntries(Object.keys(ctx.tableSchema).map((key, i) => {
         return [key, ctx.rootObj[i]];
       }));
     } else {
-      ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.projectionSchema, 'No `status.projectionSchema` found in response.\n\n**Did you accidentally use a `Table` object on a Collection?** If so, documents may\'ve been found, but the client cannot properly deserialize the response. Please use a `Tableection` object instead.', rawDataApiResp);
+      ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.projectionSchema, 'No `status.projectionSchema` found in response.\n\n**Did you accidentally use a `Table` object on a Collection?** If so, documents may\'ve been found, but the client cannot properly deserialize the response. Please use a `Collection` object instead.', rawDataApiResp);
     }
 
     if (this._cfg?.sparseData !== true) {
@@ -99,7 +88,6 @@ export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
       }));
     }
 
-    ctx.deserializers = this._deserializers;
     return ctx;
   }
 
@@ -110,26 +98,33 @@ export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
   public static mergeConfig(...cfg: (TableSerDesConfig | undefined)[]): TableSerDesConfig {
     return {
       sparseData: cfg.reduce<boolean | undefined>((acc, c) => c?.sparseData ?? acc, undefined),
-      codecs: cfg.reduce<TableSerDesConfig['codecs']>((acc, c) => [...c?.codecs ?? [], ...acc!], []),
       ...super._mergeConfig(...cfg),
     };
   }
 }
 
 const DefaultTableSerDesCfg = {
-  serialize(key, value, ctx) {
+  serialize(value, ctx) {
     let resp: ReturnType<SerDesFn<unknown>> = null!;
 
+    // Path-based serializers
+    const pathSer = ctx.serializers.forPath[ctx.path.length]?.find((p) => pathMatches(p.path, ctx.path));
+
+    if (pathSer && pathSer.fns.find((ser) => (resp = ser(value, ctx))[0] !== NEVERMIND)) {
+      return resp;
+    }
+
     // Name-based serializers
+    const key = ctx.path[ctx.path.length - 1] ?? '';
     const nameSer = ctx.serializers.forName[key];
 
-    if (nameSer && nameSer.find((ser) => (resp = ser(key, value, ctx))[0] !== NEVERMIND)) {
+    if (nameSer && nameSer.find((ser) => (resp = ser(value, ctx))[0] !== NEVERMIND)) {
       return resp;
     }
 
     // Type-based & custom serializers
     for (const guardSer of ctx.serializers.forGuard) {
-      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(key, value, ctx))[0] !== NEVERMIND) {
+      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(value, ctx))[0] !== NEVERMIND) {
         return resp;
       }
     }
@@ -147,7 +142,7 @@ const DefaultTableSerDesCfg = {
       // Class-based serializers
       const classSer = ctx.serializers.forClass.find((c) => value instanceof c.class);
 
-      if (classSer && classSer.fns.find((ser) => (resp = ser(key, value, ctx))[0] !== NEVERMIND)) {
+      if (classSer && classSer.fns.find((ser) => (resp = ser(value, ctx))[0] !== NEVERMIND)) {
         return resp;
       }
 
@@ -162,36 +157,41 @@ const DefaultTableSerDesCfg = {
 
     return ctx.nevermind();
   },
-  deserialize(key, value, ctx) {
+  deserialize(value, ctx) {
     let resp: ReturnType<SerDesFn<unknown>> = null!;
 
-    const type = resolveAbsType(ctx);
+    // Path-based deserializers
+    const pathDes = ctx.deserializers.forPath[ctx.path.length]?.find((p) => pathMatches(p.path, ctx.path));
+
+    if (pathDes && pathDes.fns.find((des) => (resp = des(value, ctx))[0] !== NEVERMIND)) {
+      return resp;
+    }
 
     // Name-based deserializers
+    const key = ctx.path[ctx.path.length - 1] ?? '';
     const nameDes = ctx.deserializers.forName[key];
 
-    if (nameDes && nameDes.find((des) => (resp = des(key, value, ctx, undefined))[0] !== NEVERMIND)) {
+    if (nameDes && nameDes.find((des) => (resp = des(value, ctx))[0] !== NEVERMIND)) {
       return resp;
     }
 
     // Custom deserializers
     for (const guardSer of ctx.deserializers.forGuard) {
-      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(key, value, ctx, undefined))[0] !== NEVERMIND) {
+      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(value, ctx))[0] !== NEVERMIND) {
         return resp;
       }
     }
 
-    if (key === '') {
+    if (key === '' || value === null) {
       return ctx.nevermind();
     }
 
     // Type-based deserializers
-    if (value !== null && type) {
-      const typeDes = ctx.deserializers.forType[type];
+    const type = resolveAbsType(ctx);
+    const typeDes = type && ctx.deserializers.forType[type];
 
-      if (typeDes && typeDes.find((des) => (resp = des(key, value, ctx, undefined))[0] !== NEVERMIND)) {
-        return resp;
-      }
+    if (typeDes && typeDes.find((des) => (resp = des(value, ctx))[0] !== NEVERMIND)) {
+      return resp;
     }
 
     return ctx.nevermind();

@@ -132,7 +132,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
       return ctx.done(this.unwrap);
     }
 
-    static [$DeserializeForCollection](_: unknown, value: string, ctx: CollDesCtx) {
+    static [$DeserializeForCollection](value: string, ctx: CollDesCtx) {
       return ctx.done(new Newtype(value));
     }
   }

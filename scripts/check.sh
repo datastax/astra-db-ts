@@ -66,18 +66,16 @@ for check_type in $check_types; do
   case $check_type in
     "tc")
       print_green_with_status "Running type-checker..."
-      npx tsc --noEmit > /dev/null
 
-      if [ ! $? ]; then
+      if ! npx tsc --noEmit > /dev/null; then
         npx tsc --noEmit
         failed=true
       fi
       ;;
     "lint")
       print_green_with_status "Running linter..."
-      npm run lint -- --no-warn-ignored > /dev/null
 
-      if [ ! $? ]; then
+      if ! npm run lint -- --no-warn-ignored > /dev/null; then
         npm run lint -- --no-warn-ignored
         failed=true
       fi

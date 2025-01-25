@@ -111,6 +111,23 @@ export function stringArraysEqual(a: readonly string[], b: readonly string[]): b
 /**
  * @internal
  */
+export function pathMatches(exp: readonly string[], acc: readonly string[]): boolean {
+  if (exp.length !== acc.length) {
+    return false;
+  }
+
+  for (let i = 0; i < acc.length; i++) {
+    if (exp[i] !== '*' && exp[i] !== acc[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * @internal
+ */
 interface JSEnvs<F> {
   server: F,
   browser: F,

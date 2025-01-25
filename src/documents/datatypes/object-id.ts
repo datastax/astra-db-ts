@@ -78,7 +78,7 @@ export class ObjectId implements CollCodec<typeof ObjectId> {
   /**
    * Implementation of `$DeserializeForCollection` for {@link TableCodec}
    */
-  public static [$DeserializeForCollection](_: string, value: any, ctx: CollDesCtx) {
+  public static [$DeserializeForCollection](value: any, ctx: CollDesCtx) {
     return ctx.done(new ObjectId(value.$objectId, false));
   }
 
