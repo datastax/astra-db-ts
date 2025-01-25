@@ -20,11 +20,11 @@ import { CollDesCtx, CollSerCtx } from '@/src/documents';
 import {
   CustomCodecOpts,
   Deserializers,
-  EmptyObj,
   NominalCodecOpts,
   RawCodec,
   SerDesFn,
-  Serializers, SomeConstructor,
+  Serializers,
+  SomeConstructor,
   TypeCodecOpts,
 } from '@/src/lib';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
@@ -43,7 +43,7 @@ export interface CollCodecClass {
 /**
  * @public
  */
-export type CollCodec<_Class extends CollCodecClass> = EmptyObj;
+export type CollCodec<Class extends CollCodecClass> = InstanceType<Class>;
 
 /**
  * @public

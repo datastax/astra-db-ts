@@ -23,7 +23,6 @@ import { TableDesCtx, TableSerCtx } from '@/src/documents';
 import {
   CustomCodecOpts,
   Deserializers,
-  EmptyObj,
   NominalCodecOpts,
   RawCodec,
   SerDesFn,
@@ -53,7 +52,7 @@ export type TableCodecClass = {
 /**
  * @public
  */
-export type TableCodec<_Class extends TableCodecClass> = EmptyObj;
+export type TableCodec<Class extends TableCodecClass> = InstanceType<Class>;
 
 /**
  * @public
