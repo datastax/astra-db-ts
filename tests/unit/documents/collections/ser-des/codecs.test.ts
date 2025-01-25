@@ -16,7 +16,8 @@
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { $DeserializeForCollection, $SerializeForCollection, CollCodec, CollCodecs } from '@/src/documents';
-import { processCodecs, RawCodec } from '@/src/lib';
+import { processCodecs } from '@/src/lib';
+import { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs';
 
 describe('unit.documents.collections.ser-des.codecs', () => {
   describe('processCodecs', () => {
@@ -30,7 +31,7 @@ describe('unit.documents.collections.ser-des.codecs', () => {
         [$SerializeForCollection] = fake('$SerializeForCollection');
       }
 
-      const codecs: RawCodec<'collection'>[] = [
+      const codecs: RawCollCodecs[] = [
         repeat((i) => [
           CollCodecs.forName(`name${i}`, Delegate),
           CollCodecs.forName(`name${i}`, { serialize: fake(`name${i}:ser_fn`) }),
@@ -59,7 +60,7 @@ describe('unit.documents.collections.ser-des.codecs', () => {
         ]).flat(),
       ].flat();
 
-      const processed = processCodecs(codecs);
+      const processed = processCodecs(codecs.flat());
 
       // console.dir(processed, { depth: null });
 

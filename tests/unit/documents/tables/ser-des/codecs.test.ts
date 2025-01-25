@@ -16,7 +16,8 @@
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { $DeserializeForTable, $SerializeForTable, TableCodec, TableCodecs } from '@/src/documents/tables';
-import { processCodecs, RawCodec } from '@/src/lib';
+import { processCodecs } from '@/src/lib';
+import { RawTableCodecs } from '@/src/documents/tables/ser-des/codecs';
 
 describe('unit.documents.tables.ser-des.codecs', () => {
   describe('processCodecs', () => {
@@ -30,7 +31,7 @@ describe('unit.documents.tables.ser-des.codecs', () => {
         [$SerializeForTable] = fake('$SerializeForTable');
       }
 
-      const codecs: RawCodec<'table'>[] = [
+      const codecs: RawTableCodecs[] = [
         repeat((i) => [
           TableCodecs.forName(`name${i}`, Delegate),
           TableCodecs.forName(`name${i}`, { serialize: fake(`name${i}:ser_fn`) }),
@@ -52,7 +53,7 @@ describe('unit.documents.tables.ser-des.codecs', () => {
         ]).flat(),
       ].flat();
 
-      const processed = processCodecs(codecs);
+      const processed = processCodecs(codecs.flat());
 
       // console.dir(processed, { depth: null });
 

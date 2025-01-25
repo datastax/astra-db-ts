@@ -68,7 +68,6 @@ export abstract class SerDes<SerCtx extends BaseSerCtx = any, DesCtx extends Bas
     const ctx = this.adaptDesCtx(this._mkCtx(obj, {
       parsingInsertedId: parsingId,
       rawDataApiResp: raw,
-      keys: [],
     }));
 
     const rootObj = {
@@ -142,14 +141,10 @@ function deserializeRecord<Ctx extends BaseDesCtx>(key: string, obj: SomeDoc, ct
   const postMaps: ((v: any) => unknown)[] = [];
   ctx.mapAfter = (fn) => postMaps.push(fn);
 
-  ctx.keys = (typeof obj[key] === 'object' && obj[key] !== null)
-    ? Object.keys(obj[key])
-    : [];
-
   const stop = applySerdesFns(fns, key, obj, ctx);
 
-  if (!stop && ctx.path.length < 250) {
-    deserializeRecordHelper(ctx.keys, obj[key], ctx, fns);
+  if (!stop && ctx.path.length < 250 && typeof obj[key] === 'object' && obj[key] !== null) {
+    deserializeRecordHelper(obj[key], ctx, fns);
   }
 
   for (let i = postMaps.length - 1; i >= 0; i--) {
@@ -158,11 +153,11 @@ function deserializeRecord<Ctx extends BaseDesCtx>(key: string, obj: SomeDoc, ct
   return obj;
 }
 
-function deserializeRecordHelper<Ctx extends BaseDesCtx>(keys: string[], obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
+function deserializeRecordHelper<Ctx extends BaseDesCtx>(obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
   const path = ctx.path;
   path.push('<temp>');
 
-  for (const key of keys) {
+  for (const key of Object.keys(obj)) {
     path[path.length - 1] = key;
     deserializeRecord(key, obj, ctx, fns);
   }

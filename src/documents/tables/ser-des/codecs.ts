@@ -113,31 +113,35 @@ export class TableCodecs {
       serialize: (_, value, ctx) => {
         return ctx.continue(Object.fromEntries(value));
       },
-      deserialize(_, map, ctx, def) {
+      deserialize(_, map, ctx) {
         const entries = Array.isArray(map) ? map : Object.entries(map);
 
-        for (let i = 0, n = entries.length; i < n; i++) {
-          const [key, value] = entries[i];
-
-          const keyParser = ctx.deserializers.forType[def!.keyType]?.[0];
-          const valueParser = ctx.deserializers.forType[def!.valueType]?.[0];
-
-          entries[i] = [
-            keyParser ? keyParser(i.toString(), key, ctx, def)[1] : key,
-            valueParser ? valueParser(i.toString(), value, ctx, def)[1] : value,
-          ];
-        }
-
-        return ctx.done(new Map(entries));
+        // for (let i = 0, n = entries.length; i < n; i++) {
+        //   const [key, value] = entries[i];
+        //
+        //   const keyParser = ctx.deserializers.forType[def!.keyType]?.[0];
+        //   const valueParser = ctx.deserializers.forType[def!.valueType]?.[0];
+        //
+        //   entries[i] = [
+        //     keyParser ? keyParser(i.toString(), key, ctx, def)[1] : key,
+        //     valueParser ? valueParser(i.toString(), value, ctx, def)[1] : value,
+        //   ];
+        // }
+        //
+        // return ctx.done(new Map(entries));
+        ctx.mapAfter((es) => new Map(es));
+        return ctx.continue(entries);
       },
     }),
     list: TableCodecs.forType('list', {
-      deserialize(_, list, ctx, def) {
-        for (let i = 0, n = list.length; i < n; i++) {
-          const elemParser = ctx.deserializers.forType[def!.valueType]?.[0];
-          list[i] = elemParser ? elemParser(i.toString(), list[i], ctx, def)[1] : list[i];
-        }
-        return ctx.done(list);
+      deserialize(_, list, ctx) {
+        // for (let i = 0, n = list.length; i < n; i++) {
+        //   const elemParser = ctx.deserializers.forType[def!.valueType]?.[0];
+        //   list[i] = elemParser ? elemParser(i.toString(), list[i], ctx, def)[1] : list[i];
+        // }
+        // return ctx.done(list);
+
+        return ctx.continue(list);
       },
     }),
     set: TableCodecs.forType('set', {
@@ -145,12 +149,15 @@ export class TableCodecs {
       serialize: (_, value, ctx) => {
         return ctx.continue([...value]);
       },
-      deserialize(_, list, ctx, def) {
-        for (let i = 0, n = list.length; i < n; i++) {
-          const elemParser = ctx.deserializers.forType[def!.valueType]?.[0];
-          list[i] = elemParser ? elemParser(i.toString(), list[i], ctx, def)[1] : list[i];
-        }
-        return ctx.done(new Set(list));
+      deserialize(_, list, ctx) {
+        // for (let i = 0, n = list.length; i < n; i++) {
+        //   const elemParser = ctx.deserializers.forType[def!.valueType]?.[0];
+        //   list[i] = elemParser ? elemParser(i.toString(), list[i], ctx, def)[1] : list[i];
+        // }
+        // return ctx.done(new Set(list));
+
+        ctx.mapAfter((es) => new Set(es));
+        return ctx.continue(list);
       },
     }),
   };

@@ -28,7 +28,6 @@ export interface BaseSerCtx extends BaseSerDesCtx {
 export interface BaseDesCtx extends BaseSerDesCtx {
   rawDataApiResp: RawDataAPIResponse,
   parsingInsertedId: boolean,
-  keys: string[] | null,
 }
 
 /**

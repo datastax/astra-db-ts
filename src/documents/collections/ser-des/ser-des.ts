@@ -188,18 +188,22 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
       }
     }
 
-    // Type-based deserializers
-    if (ctx.keys?.length === 1) {
-      const typeDes = ctx.deserializers.forType[ctx.keys[0]];
+    if (typeof value === 'object' && value !== null) {
+      // Type-based deserializers
+      const keys = Object.keys(value);
 
-      if (typeDes && typeDes.find((des) => (resp = des(key, value, ctx))[0] !== NEVERMIND)) {
-        return resp;
+      if (keys.length === 1) {
+        const typeDes = ctx.deserializers.forType[keys[0]];
+
+        if (typeDes && typeDes.find((des) => (resp = des(key, value, ctx))[0] !== NEVERMIND)) {
+          return resp;
+        }
       }
-    }
 
-    // Insurance
-    if (typeof value === 'object' && isBigNumber(value) || value instanceof Date) {
-      return ctx.done(value);
+      // Insurance
+      if (isBigNumber(value)) {
+        return ctx.done(value);
+      }
     }
 
     return ctx.nevermind();

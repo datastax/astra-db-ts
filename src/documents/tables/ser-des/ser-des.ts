@@ -44,7 +44,7 @@ export interface TableSerCtx extends BaseSerCtx {
 export interface TableDesCtx extends BaseDesCtx {
   tableSchema: ListTableColumnDefinitions,
   deserializers: TableDeserializers,
-  continue: never;
+  // continue: never;
 }
 
 /**
@@ -98,8 +98,6 @@ export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
         return [ctx.keyTransformer!.deserializeKey(key, ctx), value];
       }));
     }
-
-    (<any>ctx).recurse = () => { throw new Error('Table deserialization does not recurse normally; please call any necessary codecs manually'); };
 
     ctx.deserializers = this._deserializers;
     return ctx;
@@ -167,18 +165,18 @@ const DefaultTableSerDesCfg = {
   deserialize(key, value, ctx) {
     let resp: ReturnType<SerDesFn<unknown>> = null!;
 
-    const column = ctx.tableSchema[key];
+    const type = resolveAbsType(ctx);
 
     // Name-based deserializers
     const nameDes = ctx.deserializers.forName[key];
 
-    if (nameDes && nameDes.find((des) => (resp = des(key, value, ctx, column))[0] !== NEVERMIND)) {
+    if (nameDes && nameDes.find((des) => (resp = des(key, value, ctx, undefined))[0] !== NEVERMIND)) {
       return resp;
     }
 
     // Custom deserializers
     for (const guardSer of ctx.deserializers.forGuard) {
-      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(key, value, ctx, column))[0] !== NEVERMIND) {
+      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(key, value, ctx, undefined))[0] !== NEVERMIND) {
         return resp;
       }
     }
@@ -188,17 +186,15 @@ const DefaultTableSerDesCfg = {
     }
 
     // Type-based deserializers
-    const type = resolveType(column);
-
     if (value !== null && type) {
       const typeDes = ctx.deserializers.forType[type];
 
-      if (typeDes && typeDes.find((des) => (resp = des(key, value, ctx, column))[0] !== NEVERMIND)) {
+      if (typeDes && typeDes.find((des) => (resp = des(key, value, ctx, undefined))[0] !== NEVERMIND)) {
         return resp;
       }
     }
 
-    return ctx.done();
+    return ctx.nevermind();
   },
   codecs: Object.values(TableCodecs.Defaults),
 } satisfies TableSerDesConfig;
@@ -220,6 +216,27 @@ function populateSparseData(ctx: TableDesCtx) {
     } else {
       ctx.rootObj[key] = null;
     }
+  }
+}
+
+function resolveAbsType({ path, tableSchema }: TableDesCtx): string | undefined {
+  if (path.length === 0) {
+    return undefined;
+  }
+
+  const column = tableSchema[path[0]];
+  const type = column ? resolveType(column) : undefined;
+
+  if (path.length === 1 || !column) {
+    return type;
+  }
+
+  if (type === 'map' && path.length === 3) {
+    return (path[2] === '0' ? (column as any).keyType : (column as any).valueType);
+  }
+
+  if ((type === 'set' || type === 'list') && path.length === 2) {
+    return (column as any).valueType;
   }
 }
 
