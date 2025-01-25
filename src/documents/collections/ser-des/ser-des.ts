@@ -14,12 +14,17 @@
 
 import { BaseSerDesConfig, SerDes, SerDesFn } from '@/src/lib/api/ser-des/ser-des';
 import { BaseDesCtx, BaseSerCtx, NEVERMIND } from '@/src/lib/api/ser-des/ctx';
-import { CollCodecs, CollDeserializers, CollSerializers } from '@/src/documents/collections/ser-des/codecs';
+import {
+  CollCodecs,
+  CollDeserializers,
+  CollSerializers,
+  RawCollCodecs,
+} from '@/src/documents/collections/ser-des/codecs';
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
-import { isBigNumber, stringArraysEqual } from '@/src/lib/utils';
+import { isBigNumber } from '@/src/lib/utils';
 import { CollNumRepCfg, GetCollNumRepFn } from '@/src/documents';
 import { coerceBigNumber, coerceNumber, collNumRepFnFromCfg } from '@/src/documents/collections/ser-des/big-nums';
-import { processCodecs, RawCodec } from '@/src/lib';
+import { processCodecs } from '@/src/lib';
 
 /**
  * @public
@@ -42,7 +47,7 @@ export interface CollDesCtx extends BaseDesCtx {
  */
 export interface CollectionSerDesConfig extends BaseSerDesConfig<CollSerCtx, CollDesCtx> {
   enableBigNumbers?: GetCollNumRepFn | CollNumRepCfg,
-  codecs?: RawCodec<'collection'>[],
+  codecs?: RawCollCodecs[],
 }
 
 /**
@@ -62,7 +67,7 @@ export class CollectionSerDes extends SerDes<CollSerCtx, CollDesCtx> {
       ? collNumRepFnFromCfg(cfg.enableBigNumbers)
       : cfg?.enableBigNumbers;
 
-    [this._serializers, this._deserializers] = processCodecs(this._cfg.codecs ?? []);
+    [this._serializers, this._deserializers] = processCodecs(this._cfg.codecs?.flat() ?? []);
   }
 
   public override adaptSerCtx(ctx: CollSerCtx): CollSerCtx {
@@ -109,7 +114,7 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
     let resp: ReturnType<SerDesFn<unknown>> = null!;
 
     // Path-based serializers
-    const pathSer = ctx.serializers.forPath[ctx.path.length]?.find((p) => stringArraysEqual(p.path, ctx.path));
+    const pathSer = ctx.serializers.forPath[ctx.path.length]?.find((p) => pathMatches(p.path, ctx.path));
 
     if (pathSer && pathSer.fns.find((ser) => (resp = ser(key, value, ctx))[0] !== NEVERMIND)) {
       return resp;
@@ -163,7 +168,7 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
     let resp: ReturnType<SerDesFn<unknown>> = null!;
 
     // Path-based deserializers
-    const pathDes = ctx.deserializers.forPath[ctx.path.length]?.find((p) => stringArraysEqual(p.path, ctx.path));
+    const pathDes = ctx.deserializers.forPath[ctx.path.length]?.find((p) => pathMatches(p.path, ctx.path));
 
     if (pathDes && pathDes.fns.find((des) => (resp = des(key, value, ctx))[0] !== NEVERMIND)) {
       return resp;
@@ -201,3 +206,17 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
   },
   codecs: Object.values(CollCodecs.Defaults),
 };
+
+function pathMatches(exp: readonly string[], acc: readonly string[]): boolean {
+  if (exp.length !== acc.length) {
+    return false;
+  }
+
+  for (let i = 0; i < acc.length; i++) {
+    if (exp[i] !== '*' && exp[i] !== acc[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}

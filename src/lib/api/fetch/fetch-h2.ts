@@ -59,13 +59,11 @@ export class FetchH2 implements Fetcher {
   /**
    * Performances the necessary HTTP request using the desired HTTP version.
    */
-  async fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo> {
-    const init = info as Partial<FetchInit>;
-
+  async fetch(info: FetcherRequestInfo & Partial<FetchInit>): Promise<FetcherResponseInfo> {
     try {
       const resp = (info.forceHttp1)
-        ? await this._http1.fetch(info.url, init)
-        : await this._preferred.fetch(info.url, init);
+        ? await this._http1.fetch(info.url, info)
+        : await this._preferred.fetch(info.url, info);
 
       return {
         headers: Object.fromEntries(resp.headers.entries()),

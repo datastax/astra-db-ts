@@ -24,7 +24,7 @@ import {
   NominalCodecOpts,
   RawCodec,
   SerDesFn,
-  Serializers,
+  Serializers, SomeConstructor,
   TypeCodecOpts,
 } from '@/src/lib';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
@@ -48,6 +48,11 @@ export type CollCodec<_Class extends CollCodecClass> = EmptyObj;
 /**
  * @public
  */
+export type RawCollCodecs = readonly RawCodec<CollSerFn, CollSerGuard, CollDesFn, CollDesGuard>[] & { phantom?: 'This codec is only valid for collections' };
+
+/**
+ * @public
+ */
 export class CollCodecs {
   public static Defaults = {
     $date: CollCodecs.forType('$date', {
@@ -64,32 +69,56 @@ export class CollCodecs {
     $objectId: CollCodecs.forType('$objectId', ObjectId),
   };
 
-  public static forName(name: string, optsOrClass: CollNominalCodecOpts | CollCodecClass): RawCodec<'collection'> {
-    return {
+  public static forId(optsOrClass: CollNominalCodecOpts & { class?: SomeConstructor } | CollCodecClass): RawCollCodecs {
+    const mkIdDesCodec = (fn: CollDesFn): RawCollCodecs => [
+      CollCodecs.forName('', {
+        deserialize: (key, val, ctx) => ctx.parsingInsertedId ? fn(key, val, ctx) : ctx.nevermind(),
+      }),
+      CollCodecs.forPath(['_id'], {
+        deserialize: fn,
+      }),
+    ].flat();
+
+    if ($DeserializeForCollection in optsOrClass) {
+      return mkIdDesCodec(optsOrClass[$DeserializeForCollection]);
+    }
+
+    return [
+      (optsOrClass.serialize)
+        ? CollCodecs.forPath(['_id'], { serialize: optsOrClass.serialize })
+        : [],
+      (optsOrClass.deserialize)
+        ? mkIdDesCodec(optsOrClass.deserialize)
+        : [],
+    ].flat();
+  }
+
+  public static forName(name: string, optsOrClass: CollNominalCodecOpts | CollCodecClass): RawCollCodecs {
+    return [{
       tag: 'forName',
       name: name,
       opts: ($DeserializeForCollection in optsOrClass) ? { deserialize: optsOrClass[$DeserializeForCollection] } : optsOrClass,
-    };
+    }];
   }
 
-  public static forPath(path: string[], optsOrClass: CollNominalCodecOpts | CollCodecClass): RawCodec<'collection'> {
-    return {
+  public static forPath(path: string[], optsOrClass: CollNominalCodecOpts | CollCodecClass): RawCollCodecs {
+    return [{
       tag: 'forPath',
       path: path,
       opts: ($DeserializeForCollection in optsOrClass) ? { deserialize: optsOrClass[$DeserializeForCollection] } : optsOrClass,
-    };
+    }];
   }
 
-  public static forType(type: string, optsOrClass: CollTypeCodecOpts | CollCodecClass): RawCodec<'collection'> {
-    return {
+  public static forType(type: string, optsOrClass: CollTypeCodecOpts | CollCodecClass): RawCollCodecs {
+    return [{
       tag: 'forType',
       type: type,
       opts: ($DeserializeForCollection in optsOrClass) ? { deserialize: optsOrClass[$DeserializeForCollection] } : optsOrClass,
-    };
+    }];
   }
 
-  public static custom(opts: CollCustomCodecOpts): RawCodec<'collection'> {
-    return { tag: 'custom', opts: opts };
+  public static custom(opts: CollCustomCodecOpts): RawCollCodecs {
+    return [{ tag: 'custom', opts: opts }];
   }
 }
 

@@ -18,12 +18,17 @@ import {
   ListTableKnownColumnDefinition,
   ListTableUnsupportedColumnDefinition,
 } from '@/src/db';
-import { TableCodecs, TableDeserializers, TableSerializers } from '@/src/documents/tables/ser-des/codecs';
+import {
+  RawTableCodecs,
+  TableCodecs,
+  TableDeserializers,
+  TableSerializers,
+} from '@/src/documents/tables/ser-des/codecs';
 import { BaseDesCtx, BaseSerCtx, NEVERMIND } from '@/src/lib/api/ser-des/ctx';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { isBigNumber } from '@/src/lib/utils';
 import { UnexpectedDataAPIResponseError } from '@/src/client';
-import { processCodecs, RawCodec } from '@/src/lib';
+import { processCodecs } from '@/src/lib';
 
 /**
  * @public
@@ -46,7 +51,7 @@ export interface TableDesCtx extends BaseDesCtx {
  * @public
  */
 export interface TableSerDesConfig extends BaseSerDesConfig<TableSerCtx, TableDesCtx> {
-  codecs?: RawCodec<'table'>[],
+  codecs?: RawTableCodecs[],
   sparseData?: boolean,
 }
 
@@ -61,7 +66,7 @@ export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
 
   public constructor(cfg?: TableSerDesConfig) {
     super(TableSerDes.mergeConfig(DefaultTableSerDesCfg, cfg));
-    [this._serializers, this._deserializers] = processCodecs(this._cfg.codecs ?? []);
+    [this._serializers, this._deserializers] = processCodecs(this._cfg.codecs?.flat() ?? []);
   }
 
   protected override adaptSerCtx(ctx: TableSerCtx): TableSerCtx {

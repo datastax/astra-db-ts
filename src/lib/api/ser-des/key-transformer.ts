@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import { SomeDoc } from '@/src/index';
+import { isBigNumber } from '@/src/lib/utils';
 
 /**
  * @public
@@ -29,11 +30,17 @@ export abstract class KeyTransformer {
   public abstract deserializeKey(key: string, ctx: KeyTransformerCtx): string;
   public abstract transformNested(ctx: KeyTransformerCtx): boolean;
 
-  public serialize(obj: SomeDoc, ctx: KeyTransformerCtx) {
+  public serialize(obj: unknown, ctx: KeyTransformerCtx) {
+    if (!obj || typeof obj !== 'object') {
+      return obj;
+    }
     return this._immutSerdesHelper(obj, ctx, this.serializeKey.bind(this));
   }
 
-  public deserialize(obj: SomeDoc, ctx: KeyTransformerCtx) {
+  public deserialize(obj: unknown, ctx: KeyTransformerCtx) {
+    if (!obj || typeof obj !== 'object') {
+      return obj;
+    }
     return this._immutSerdesHelper(obj, ctx, this.deserializeKey.bind(this));
   }
 
@@ -49,7 +56,10 @@ export abstract class KeyTransformer {
       const newKey = fn(key, ctx);
       ret[newKey] = obj[key];
 
-      if (typeof obj[key] === 'object' && obj[key] !== null && this.transformNested(ctx)) {
+      const isObj = typeof obj[key] === 'object' && obj[key] !== null;
+      const isLegalObj = isObj && !isBigNumber(obj[key]);
+
+      if (isLegalObj && this.transformNested(ctx)) {
         ret[newKey] = this._immutSerdesHelper(obj[key], ctx, fn);
       }
     }
@@ -64,20 +74,24 @@ export abstract class KeyTransformer {
  */
 export interface Camel2SnakeCaseOptions {
   exceptId?: boolean;
-  transformNested?: (path: KeyTransformerCtx) => boolean;
+  transformNested?: boolean | ((path: KeyTransformerCtx) => boolean);
 }
 
 /**
  * @public
  */
 export class Camel2SnakeCase extends KeyTransformer {
-  private readonly _transformNested: Camel2SnakeCaseOptions['transformNested'];
+  private readonly _transformNested?: (path: KeyTransformerCtx) => boolean;
   private readonly _exceptId: boolean;
 
-  constructor(opts: Camel2SnakeCaseOptions = {}) {
+  constructor({ exceptId, transformNested }: Camel2SnakeCaseOptions = {}) {
     super();
-    this._exceptId = opts.exceptId !== false;
-    this._transformNested = opts.transformNested;
+
+    this._exceptId = exceptId !== false;
+
+    this._transformNested = (typeof transformNested === 'boolean')
+      ? () => transformNested
+      : transformNested;
   }
 
   public override transformNested(ctx: KeyTransformerCtx): boolean {

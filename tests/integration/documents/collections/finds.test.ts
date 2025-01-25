@@ -24,7 +24,18 @@ import assert from 'assert';
 
 // I was going to go through split this up but yeah... no
 // Don't want to spend too much time sifting through a thousand lines of intertwined tests
-parallel('integration.documents.collections.finds', { truncate: 'colls:before' }, ({ collection }) => {
+parallel('integration.documents.collections.finds', { truncate: 'colls:before' }, ({ collection, collection_ }) => {
+  it('should find & findOne document with an empty filter', async (key) => {
+    const { insertedId } = await collection_.insertOne({ key });
+
+    for (const filter of [null, undefined, {}]) {
+      const resDoc = await collection_.findOne(filter!);
+      assert.deepStrictEqual(resDoc, { _id: insertedId, key });
+      const resArr = await collection_.find(filter!).toArray();
+      assert.deepStrictEqual(resArr, [{ _id: insertedId, key }]);
+    }
+  });
+
   it('should find & findOne document', async (key) => {
     const insertDocResp = await collection.insertOne(createSampleDocWithMultiLevel(key));
     const idToCheck = insertDocResp.insertedId;

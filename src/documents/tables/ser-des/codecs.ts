@@ -58,6 +58,11 @@ export type TableCodec<_Class extends TableCodecClass> = EmptyObj;
 /**
  * @public
  */
+export type RawTableCodecs = readonly RawCodec<TableSerFn, TableSerGuard, TableDesFn<any>, TableDesGuard>[] & { phantom?: 'This codec is only valid for collections' };
+
+/**
+ * @public
+ */
 export class TableCodecs {
   public static Defaults = {
     bigint: TableCodecs.forType('bigint', {
@@ -151,24 +156,24 @@ export class TableCodecs {
     }),
   };
 
-  public static forName(name: string, optsOrClass: TableNominalCodecOpts | TableCodecClass): RawCodec<'table'> {
-    return {
+  public static forName(name: string, optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs {
+    return [{
       tag: 'forName',
       name: name,
       opts: ($DeserializeForTable in optsOrClass) ? { deserialize: optsOrClass[$DeserializeForTable] } : optsOrClass,
-    };
+    }];
   }
 
-  public static forType<const Type extends string>(type: Type, optsOrClass: TableTypeCodecOpts<Type> | TableCodecClass): RawCodec<'table'> {
-    return {
+  public static forType<const Type extends string>(type: Type, optsOrClass: TableTypeCodecOpts<Type> | TableCodecClass): RawTableCodecs {
+    return [{
       tag: 'forType',
       type: type,
       opts: ($DeserializeForTable in optsOrClass) ? { deserialize: optsOrClass[$DeserializeForTable] } : optsOrClass,
-    };
+    }];
   }
 
-  public static custom(opts: TableCustomCodecOpts): RawCodec<'table'> {
-    return { tag: 'custom', opts: opts };
+  public static custom(opts: TableCustomCodecOpts): RawTableCodecs {
+    return [{ tag: 'custom', opts: opts }];
   }
 }
 

@@ -130,7 +130,9 @@ const env = getJSEnv();
  * @internal
  */
 export const forJSEnv = (typeof process !== 'undefined' && typeof process.env === 'object' && process.env.CLIENT_DYNAMIC_JS_ENV_CHECK)
+  /* Version of forJSEnv which re-checks the env @ every call for testing purposes (allows for "mocking" different js envs) */
   ? <Args extends any[], R>(fns: JSEnvs<(...args: Args) => R>): (...args: Args) => R => (...args: Args) => fns[getJSEnv()](...args)
+  /* istanbul ignore next: same logic as above */
   : <Args extends any[], R>(fns: JSEnvs<(...args: Args) => R>): (...args: Args) => R => fns[env];
 
 /**

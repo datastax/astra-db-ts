@@ -97,7 +97,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx = any, DesCtx extends Bas
       continue: ctxContinue,
       nevermind: ctxNevermind,
       keyTransformer: this._cfg.keyTransformer,
-      mapAfter: () => { throw new Error('ctx.afterMap() has not been set yet (BUG)'); },
+      mapAfter: null!,
       rootObj: obj,
       path: [],
       ...ctx,

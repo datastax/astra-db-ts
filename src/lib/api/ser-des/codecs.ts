@@ -47,11 +47,11 @@ export type CustomCodecSerOpts<SerFn, SerGuard> =
 /**
  * @public
  */
-export type RawCodec<For extends 'table' | 'collection'> =
-  | { phantom?: For, tag: 'forName', name: string, opts: NominalCodecOpts<any, any> }
-  | { phantom?: For, tag: 'forPath', path: string[], opts: NominalCodecOpts<any, any> }
-  | { phantom?: For, tag: 'forType', type: string, opts: TypeCodecOpts<any, any, any> }
-  | { phantom?: For, tag: 'custom',  opts: CustomCodecOpts<any, any, any, any> };
+export type RawCodec<SerFn = any, SerGuard = any, DesFn = any, DesGuard = any> =
+  | { tag: 'forName', name: string, opts: NominalCodecOpts<SerFn, DesFn> }
+  | { tag: 'forPath', path: string[], opts: NominalCodecOpts<SerFn, DesFn> }
+  | { tag: 'forType', type: string, opts: TypeCodecOpts<SerFn, SerGuard, DesFn> }
+  | { tag: 'custom',  opts: CustomCodecOpts<SerFn, SerGuard, DesFn, DesGuard> };
 
 /**
  * @public
@@ -76,7 +76,7 @@ export interface Deserializers<DesFn, DesGuard> {
 /**
  * @internal
  */
-export const processCodecs = <SerFn, SerGuard, DesFn, DesGuard>(raw: RawCodec<any>[]): [Serializers<SerFn, SerGuard>, Deserializers<DesFn, DesGuard>] => {
+export const processCodecs = <SerFn, SerGuard, DesFn, DesGuard>(raw: readonly RawCodec[]): [Serializers<SerFn, SerGuard>, Deserializers<DesFn, DesGuard>] => {
   const serializers: Serializers<SerFn, SerGuard> = { forName: {}, forPath: {}, forClass: [], forGuard: [] };
   const deserializers: Deserializers<DesFn, DesGuard> = { forName: {}, forPath: {}, forType: {}, forGuard: [] };
 
@@ -88,7 +88,7 @@ export const processCodecs = <SerFn, SerGuard, DesFn, DesGuard>(raw: RawCodec<an
 };
 
 const appendCodec = {
-  forName(codec: RawCodec<any> & { tag: 'forName' }, serializers: Serializers<any, any>, deserializers: Deserializers<any, any>) {
+  forName(codec: RawCodec & { tag: 'forName' }, serializers: Serializers<any, any>, deserializers: Deserializers<any, any>) {
     if (codec.opts.serialize) {
       (serializers.forName[codec.name] ??= []).push(codec.opts.serialize);
     }
@@ -96,7 +96,7 @@ const appendCodec = {
       (deserializers.forName[codec.name] ??= []).push(codec.opts.deserialize);
     }
   },
-  forPath(codec: RawCodec<any> & { tag: 'forPath' }, serializers: Serializers<any, any>, deserializers: Deserializers<any, any>) {
+  forPath(codec: RawCodec & { tag: 'forPath' }, serializers: Serializers<any, any>, deserializers: Deserializers<any, any>) {
     if (codec.opts.serialize) {
       findOrInsertPath(serializers.forPath, codec.path, codec.opts.serialize);
     }
@@ -104,21 +104,21 @@ const appendCodec = {
       findOrInsertPath(deserializers.forPath, codec.path, codec.opts.deserialize);
     }
   },
-  forType(codec: RawCodec<any> & { tag: 'forType' }, serializers: Serializers<any, any>, deserializers: Deserializers<any, any>) {
+  forType(codec: RawCodec & { tag: 'forType' }, serializers: Serializers<any, any>, deserializers: Deserializers<any, any>) {
     appendCodec.customSer(codec, serializers);
 
     if (codec.opts.deserialize) {
       (deserializers.forType[codec.type] ??= []).push(codec.opts.deserialize);
     }
   },
-  custom(codec: RawCodec<any> & { tag: 'custom' }, serializers: Serializers<any, any>, deserializers: Deserializers<any, any>) {
+  custom(codec: RawCodec & { tag: 'custom' }, serializers: Serializers<any, any>, deserializers: Deserializers<any, any>) {
     appendCodec.customSer(codec, serializers);
 
     if ('deserializeGuard' in codec.opts) {
       deserializers.forGuard.push({ guard: codec.opts.deserializeGuard, fn: codec.opts.deserialize });
     }
   },
-  customSer(codec: RawCodec<any> & { tag: 'custom' | 'forType' }, serializers: Serializers<any, any>) {
+  customSer(codec: RawCodec & { tag: 'custom' | 'forType' }, serializers: Serializers<any, any>) {
     if ('serializeGuard' in codec.opts) {
       serializers.forGuard.push({ guard: codec.opts.serializeGuard, fn: codec.opts.serialize });
     }
