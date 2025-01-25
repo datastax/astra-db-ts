@@ -98,10 +98,10 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
     let resp: ReturnType<SerDesFn<unknown>> = null!;
 
     // Path-based serializers
-    const pathSer = ctx.serializers.forPath[ctx.path.length]?.find((p) => pathMatches(p.path, ctx.path));
-
-    if (pathSer && pathSer.fns.find((ser) => (resp = ser(value, ctx))[0] !== NEVERMIND)) {
-      return resp;
+    for (const pathSer of ctx.serializers.forPath[ctx.path.length] ?? []) {
+      if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((ser) => (resp = ser(value, ctx))[0] !== NEVERMIND)) {
+        return resp;
+      }
     }
 
     // Name-based serializers
@@ -153,10 +153,10 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
     let resp: ReturnType<SerDesFn<unknown>> = null!;
 
     // Path-based deserializers
-    const pathDes = ctx.deserializers.forPath[ctx.path.length]?.find((p) => pathMatches(p.path, ctx.path));
-
-    if (pathDes && pathDes.fns.find((des) => (resp = des(value, ctx))[0] !== NEVERMIND)) {
-      return resp;
+    for (const pathSer of ctx.deserializers.forPath[ctx.path.length] ?? []) {
+      if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((des) => (resp = des(value, ctx))[0] !== NEVERMIND)) {
+        return resp;
+      }
     }
 
     // Name-based deserializers

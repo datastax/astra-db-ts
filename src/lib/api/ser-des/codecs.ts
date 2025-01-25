@@ -144,6 +144,7 @@ const findOrInsertPath = <Fn>(arr: Record<number, { path: string[], fns: Fn[] }[
   }
 
   arrForDepth.push({ path: newPath, fns: [fn] });
+  arrForDepth.sort((a, b) => a.path.indexOf('*') - b.path.indexOf('*')); // ensures more specific captures always come first
 };
 
 const findOrInsertClass = <Fn>(arr: { class: SomeConstructor, fns: Fn[] }[], newClass: SomeConstructor, fn: Fn) => {

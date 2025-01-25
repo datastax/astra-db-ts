@@ -17,7 +17,7 @@ import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
 import { $DeserializeForTable, $SerializeForTable, TableCodec, TableCodecs } from '@/src/index';
-import { NEVERMIND } from '@/src/lib/api/ser-des/ctx';
+import { ctxNevermind } from '@/src/lib/api/ser-des/ctx';
 
 describe('unit.documents.tables.ser-des.ser-des.order', () => {
   const counters = {
@@ -27,12 +27,12 @@ describe('unit.documents.tables.ser-des.ser-des.order', () => {
 
   const ser = (tag: string, i?: number) => () => {
     counters.ser.push(`${tag}${i ?? ''}`);
-    return [NEVERMIND] as const;
+    return ctxNevermind();
   };
 
   const des = (tag: string, i?: number) => () => {
     counters.des.push(`${tag}${i ?? ''}`);
-    return [NEVERMIND] as const;
+    return ctxNevermind();
   };
 
   class Test implements TableCodec<typeof Test> {
@@ -46,8 +46,18 @@ describe('unit.documents.tables.ser-des.ser-des.order', () => {
     const serdes = new TableSerDes({
       codecs: [
         [
+          repeat((i) => TableCodecs.forPath([], {
+            serialize: ser('forPath:root', i),
+          })),
+        ],
+        [
           repeat((i) => TableCodecs.forName('', {
             serialize: ser('forName:root', i),
+          })),
+        ],
+        [
+          repeat((i) => TableCodecs.forPath(['test'], {
+            serialize: ser('forPath:test', i),
           })),
         ],
         [
@@ -101,14 +111,16 @@ describe('unit.documents.tables.ser-des.ser-des.order', () => {
     serdes.serialize(obj);
 
     assert.deepStrictEqual(counters.ser, [
-      // forName always runs first
+      // forPath always runs before forName
+      repeat((i) => `forPath:root${i}`),
       repeat((i) => `forName:root${i}`),
 
       // Run custom guards now because nothing else matches
       repeat((i) => `custom:guard_any${i}`),
       repeat((i) => `forType:guard_any${i}`),
 
-      // Run forName for the nested object
+      // Run forPath and forName for the nested object
+      repeat((i) => `forPath:test${i}`),
       repeat((i) => `forName:test${i}`),
 
       // All guards run now since they all match
@@ -133,6 +145,13 @@ describe('unit.documents.tables.ser-des.ser-des.order', () => {
     const serdes = new TableSerDes({
       codecs: [
         [
+          repeat((_) => TableCodecs.forPath([], Test)),
+          repeat((i) => TableCodecs.forPath([], {
+            deserialize: des('forPath:root', i),
+          })),
+          repeat((_) => TableCodecs.forPath([], Test)),
+        ],
+        [
           repeat((i) => TableCodecs.forName('', {
             deserialize: des('forName:root', i),
           })),
@@ -140,6 +159,13 @@ describe('unit.documents.tables.ser-des.ser-des.order', () => {
           repeat((i) => TableCodecs.forName('', {
             deserialize: des('forName:root', i),
           })),
+        ],
+        [
+          repeat((_) => TableCodecs.forPath(['test'], Test)),
+          repeat((i) => TableCodecs.forPath(['test'], {
+            deserialize: des('forPath:test', i),
+          })),
+          repeat((_) => TableCodecs.forPath(['test'], Test)),
         ],
         [
           repeat((i) => TableCodecs.forName('test', {
@@ -172,14 +198,24 @@ describe('unit.documents.tables.ser-des.ser-des.order', () => {
     serdes.deserialize(obj, { status: { projectionSchema: { test: { type: 'test' } } } });
 
     assert.deepStrictEqual(counters.des, [
+      // forPath always runs before forName; forPath-delegate-deserialization happen alongside normal forPath-deserialization
+      repeat((_) => '$DeserializeForTable'),
+      repeat((i) => `forPath:root${i}`),
+      repeat((_) => '$DeserializeForTable'),
+
       // forName runs after forPath; forName-delegate-deserialization happen alongside normal forName-deserialization
       repeat((i) => `forName:root${i}`),
       repeat((_) => '$DeserializeForTable'),
       repeat((i) => `forName:root${i}`),
 
-      // Custom deserializers run next (no type deserializers at this level)
+      // Custom deserializers run next (type deserializer doesn't run @ root)
       repeat((i) => `custom:guard_any${i}`),
       repeat((i) => `custom:guard${i}`),
+
+      // forPath in the nested object
+      repeat((_) => '$DeserializeForTable'),
+      repeat((i) => `forPath:test${i}`),
+      repeat((_) => '$DeserializeForTable'),
 
       // forName in the nested object
       repeat((i) => `forName:test${i}`),
