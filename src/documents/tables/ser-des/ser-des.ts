@@ -187,7 +187,7 @@ const DefaultTableSerDesCfg = {
     }
 
     // Type-based deserializers
-    const type = resolveAbsType(ctx);
+    const type = resolveAbsType(value, ctx);
     const typeDes = type && ctx.deserializers.forType[type];
 
     if (typeDes && typeDes.find((des) => (resp = des(value, ctx))[0] !== NEVERMIND)) {
@@ -219,7 +219,7 @@ function populateSparseData(ctx: TableDesCtx) {
   }
 }
 
-function resolveAbsType({ path, tableSchema }: TableDesCtx): string | undefined {
+function resolveAbsType(value: unknown, { path, tableSchema }: TableDesCtx): string | undefined {
   if (path.length === 0) {
     return undefined;
   }
@@ -231,13 +231,20 @@ function resolveAbsType({ path, tableSchema }: TableDesCtx): string | undefined 
     return type;
   }
 
-  if (type === 'map' && path.length === 3) {
-    return (path[2] === '0' ? (column as any).keyType : (column as any).valueType);
+  if (type === 'map') {
+    if (typeof path[1] === 'number') {
+      if (path.length === 3) {
+        return (path[2] === 0 ? (column as any).keyType : (column as any).valueType);
+      }
+    } else if (path.length === 2) {
+      return (column as any).valueType;
+    }
   }
-
-  if ((type === 'set' || type === 'list') && path.length === 2) {
+  else if ((type === 'set' || type === 'list') && path.length === 2) {
     return (column as any).valueType;
   }
+
+  return undefined;
 }
 
 function resolveType(column: ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition) {

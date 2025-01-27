@@ -112,15 +112,14 @@ export class TableCodecs {
       serialize: (value, ctx) => {
         return ctx.continue(Object.fromEntries(value));
       },
-      deserialize(map, ctx) {
-        const entries = Array.isArray(map) ? map : Object.entries(map);
-        ctx.mapAfter((es) => new Map(es));
-        return ctx.continue(entries);
+      deserialize(_, ctx) {
+        ctx.mapAfter((es) => new Map(Array.isArray(es) ? es : Object.entries(es)));
+        return ctx.continue();
       },
     }),
     list: TableCodecs.forType('list', {
-      deserialize(list, ctx) {
-        return ctx.continue(list);
+      deserialize(_, ctx) {
+        return ctx.continue();
       },
     }),
     set: TableCodecs.forType('set', {
@@ -128,9 +127,9 @@ export class TableCodecs {
       serialize: (value, ctx) => {
         return ctx.continue([...value]);
       },
-      deserialize(list, ctx) {
+      deserialize(_, ctx) {
         ctx.mapAfter((es) => new Set(es));
-        return ctx.continue(list);
+        return ctx.continue();
       },
     }),
   };
@@ -143,7 +142,7 @@ export class TableCodecs {
     }];
   }
 
-  public static forPath(path: string[], optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs {
+  public static forPath(path: (string | number)[], optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs {
     return [{
       tag: 'forPath',
       path: path,

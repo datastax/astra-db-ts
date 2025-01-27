@@ -179,7 +179,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
   });
 
   it('should work with a GetCollNumRepFn', async () => {
-    const asserter = mkAsserter((path: readonly string[]) => {
+    const asserter = mkAsserter((path) => {
       if (path[0] !== 'stats') {
         return 'number_or_string';
       }

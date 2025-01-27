@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { SerDesFn, SomeConstructor } from '@/src/lib';
-import { stringArraysEqual } from '@/src/lib/utils';
+import { pathArraysEqual } from '@/src/lib/utils';
 
 /**
  * @public
@@ -54,7 +54,7 @@ export type CustomCodecSerOpts<SerCtx> =
  */
 export type RawCodec<SerCtx = any, DesCtx = any> =
   | { tag: 'forName', name: string, opts: NominalCodecOpts<SerCtx, DesCtx> }
-  | { tag: 'forPath', path: string[], opts: NominalCodecOpts<SerCtx, DesCtx> }
+  | { tag: 'forPath', path: (string | number)[], opts: NominalCodecOpts<SerCtx, DesCtx> }
   | { tag: 'forType', type: string, opts: TypeCodecOpts<SerCtx, DesCtx> }
   | { tag: 'custom',  opts: CustomCodecOpts<SerCtx, DesCtx> };
 
@@ -63,7 +63,7 @@ export type RawCodec<SerCtx = any, DesCtx = any> =
  */
 export interface Serializers<SerCtx> {
   forName: Record<string, SerDesFn<SerCtx>[]>,
-  forPath: Record<number, { path: string[], fns: SerDesFn<SerCtx>[] }[]>,
+  forPath: Record<number, { path: (string | number)[], fns: SerDesFn<SerCtx>[] }[]>,
   forClass: { class: SomeConstructor, fns: SerDesFn<SerCtx>[] }[],
   forGuard: { guard: SerDesGuard<SerCtx>, fn: SerDesFn<SerCtx> }[],
 }
@@ -74,7 +74,7 @@ export interface Serializers<SerCtx> {
 export interface Deserializers<DesCtx> {
   forName: Record<string, SerDesFn<DesCtx>[]>,
   forType: Record<string, SerDesFn<DesCtx>[]>,
-  forPath: Record<number, { path: string[], fns: SerDesFn<DesCtx>[] }[]>,
+  forPath: Record<number, { path: (string | number)[], fns: SerDesFn<DesCtx>[] }[]>,
   forGuard: { guard: SerDesGuard<DesCtx>, fn: SerDesFn<DesCtx> }[],
 }
 
@@ -133,18 +133,29 @@ const appendCodec = {
   },
 };
 
-const findOrInsertPath = <Fn>(arr: Record<number, { path: string[], fns: Fn[] }[]>, newPath: string[], fn: Fn) => {
+const findOrInsertPath = <Fn>(arr: Record<number, { path: (string | number)[], fns: Fn[] }[]>, newPath: (string | number)[], fn: Fn) => {
   const arrForDepth = arr[newPath.length] ??= [];
 
   for (const { path, fns } of arrForDepth) {
-    if (stringArraysEqual(path, newPath)) {
+    if (pathArraysEqual(path, newPath)) {
       fns.push(fn);
       return;
     }
   }
 
   arrForDepth.push({ path: newPath, fns: [fn] });
-  arrForDepth.sort((a, b) => a.path.indexOf('*') - b.path.indexOf('*')); // ensures more specific captures always come first
+  arrForDepth.sort((a, b) => comparePathGeneralities(a.path, b.path));
+};
+
+const comparePathGeneralities = (a: (string | number)[], b: (string | number)[]) => {
+  const aIndex = a.indexOf('*');
+  const diff = aIndex - b.indexOf('*');
+
+  if (diff === 0 && aIndex !== -1 && aIndex + 1 < a.length) {
+    return comparePathGeneralities(a.slice(aIndex + 1), b.slice(aIndex + 1));
+  }
+
+  return diff;
 };
 
 const findOrInsertClass = <Fn>(arr: { class: SomeConstructor, fns: Fn[] }[], newClass: SomeConstructor, fn: Fn) => {

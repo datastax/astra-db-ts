@@ -130,7 +130,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
   }
 }
 
-function serializeRecord<Ctx extends BaseSerCtx<any>>(key: string, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
+function serializeRecord<Ctx extends BaseSerCtx<any>>(key: string | number, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
   const postMaps: ((v: any) => unknown)[] = [];
   ctx.mapAfter = (fn) => postMaps.push(fn);
 
@@ -154,16 +154,23 @@ function serializeRecordHelper<Ctx extends BaseSerCtx<any>>(obj: SomeDoc, ctx: C
   const path = ctx.path;
   path.push('<temp>');
 
-  for (const key of Object.keys(obj)) {
-    path[path.length - 1] = key;
-    serializeRecord(key, obj, ctx, fns);
+  if (Array.isArray(obj)) {
+    for (let i = 0; i < obj.length; i++) {
+      path[path.length - 1] = i;
+      serializeRecord(i, obj, ctx, fns);
+    }
+  } else {
+    for (const key of Object.keys(obj)) {
+      path[path.length - 1] = key;
+      serializeRecord(key, obj, ctx, fns);
+    }
   }
 
   path.pop();
   return obj;
 }
 
-function deserializeRecord<Ctx extends BaseDesCtx<any>>(key: string, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
+function deserializeRecord<Ctx extends BaseDesCtx<any>>(key: string | number, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
   const postMaps: ((v: any) => unknown)[] = [];
   ctx.mapAfter = (fn) => postMaps.push(fn);
 
@@ -183,15 +190,22 @@ function deserializeRecordHelper<Ctx extends BaseDesCtx<any>>(obj: SomeDoc, ctx:
   const path = ctx.path;
   path.push('<temp>');
 
-  for (const key of Object.keys(obj)) {
-    path[path.length - 1] = key;
-    deserializeRecord(key, obj, ctx, fns);
+  if (Array.isArray(obj)) {
+    for (let i = 0; i < obj.length; i++) {
+      path[path.length - 1] = i;
+      deserializeRecord(i, obj, ctx, fns);
+    }
+  } else {
+    for (const key of Object.keys(obj)) {
+      path[path.length - 1] = key;
+      deserializeRecord(key, obj, ctx, fns);
+    }
   }
 
   path.pop();
 }
 
-function applySerdesFns<Ctx>(fns: readonly SerDesFn<Ctx>[], key: string, obj: SomeDoc, ctx: Ctx): boolean {
+function applySerdesFns<Ctx>(fns: readonly SerDesFn<Ctx>[], key: string | number, obj: SomeDoc, ctx: Ctx): boolean {
   for (let f = 0; f < fns.length; f++) {
     const res = fns[f](obj[key], ctx) as [number] | [number, unknown];
 

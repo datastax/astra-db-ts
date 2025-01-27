@@ -37,7 +37,7 @@ export interface BaseDesCtx<DesCtx> extends BaseSerDesCtx {
  */
 export interface BaseSerDesCtx {
   rootObj: SomeDoc,
-  path: string[],
+  path: (string | number)[],
   done<T>(obj?: T): readonly [0, T?],
   continue<T>(obj?: T): readonly [1, T?],
   nevermind(): readonly [2],

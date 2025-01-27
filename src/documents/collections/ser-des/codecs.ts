@@ -105,7 +105,7 @@ export class CollCodecs {
     }];
   }
 
-  public static forPath(path: string[], optsOrClass: CollNominalCodecOpts | CollCodecClass): RawCollCodecs {
+  public static forPath(path: (string | number)[], optsOrClass: CollNominalCodecOpts | CollCodecClass): RawCollCodecs {
     return [{
       tag: 'forPath',
       path: path,

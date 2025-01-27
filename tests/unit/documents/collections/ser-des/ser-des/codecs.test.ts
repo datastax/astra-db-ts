@@ -30,18 +30,18 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
 
       const serdes = new CollectionSerDes({
         codecs: [
-          CollCodecs.forPath(['*'], serdesFns('star:0')),
-          CollCodecs.forPath(['cars', '*', 'name'], serdesFns('star:1')),
-          CollCodecs.forPath(['cars', '0', 'pastOwners', '*'], serdesFns('star:2')),
+          CollCodecs.forPath(['*'], serdesFns('[*]')),
+          CollCodecs.forPath(['cars', '*', 'name'], serdesFns('cars[*][name]')),
+          CollCodecs.forPath(['*', 0, '*', '*'], serdesFns('[*][0][*][*]')),
 
           CollCodecs.forPath([], serdesFns()),
           CollCodecs.forPath(['name'], serdesFns()),
           CollCodecs.forPath(['cars'], serdesFns()),
-          CollCodecs.forPath(['cars', '0'], serdesFns()),
-          CollCodecs.forPath(['cars', '0', 'name'], serdesFns()),
-          CollCodecs.forPath(['cars', '0', 'pastOwners'], serdesFns()),
-          CollCodecs.forPath(['cars', '0', 'pastOwners', '0'], serdesFns()),
-          CollCodecs.forPath(['cars', '0', 'pastOwners', 'one'], serdesFns()),
+          CollCodecs.forPath(['cars', 0], serdesFns()),
+          CollCodecs.forPath(['cars', 0, 'name'], serdesFns()),
+          CollCodecs.forPath(['cars', 0, 'pastOwners'], serdesFns()),
+          CollCodecs.forPath(['cars', 0, 'pastOwners', '0'], serdesFns()),
+          CollCodecs.forPath(['cars', 0, 'pastOwners', 'one'], serdesFns()),
 
           CollCodecs.forPath(['name'], serdesFns('name:1')),
           CollCodecs.forPath(['name'], serdesFns('name:2')),
@@ -50,12 +50,18 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
           CollCodecs.forPath(['Name'], serdesFns()),
           CollCodecs.forPath(['name', ''], serdesFns()),
           CollCodecs.forPath(['name', '0'], serdesFns()),
-          CollCodecs.forPath(['0'], serdesFns()),
+          CollCodecs.forPath([0], serdesFns()),
           CollCodecs.forPath([''], serdesFns()),
           CollCodecs.forPath(['cars', '1'], serdesFns()),
           CollCodecs.forPath(['cars', 'name'], serdesFns()),
-          CollCodecs.forPath(['cars', '0', '0'], serdesFns()),
+          CollCodecs.forPath(['cars', '0', 'name'], serdesFns()),
+          CollCodecs.forPath(['cars', 0, 'pastOwners', 0], serdesFns()),
           CollCodecs.forPath(['pastOwners'], serdesFns()),
+
+          CollCodecs.forPath(['*', '*', '*', '*', '*'], serdesFns()),
+          CollCodecs.forPath(['*', 'name'], serdesFns()),
+          CollCodecs.forPath(['cars', '1', '*'], serdesFns()),
+          CollCodecs.forPath(['*', '0', '*', '*'], serdesFns()),
         ],
       });
 
@@ -66,29 +72,29 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
           pastOwners: { 0: 'brian johnson', 'one': 'angus young' },
         }],
       };
-      serdes.serialize(obj);
 
+      serdes.serialize(obj);
       assert.deepStrictEqual(serPaths, [
         obj,
         'root:0',
         obj.name,
         'name:1',
         'name:2',
-        'star:0',
+        '[*]',
         obj.cars,
-        'star:0',
+        '[*]',
         obj.cars[0],
         obj.cars[0].name,
-        'star:1',
+        'cars[*][name]',
         obj.cars[0].pastOwners,
         obj.cars[0].pastOwners[0],
-        'star:2',
+        '[*][0][*][*]',
         obj.cars[0].pastOwners.one,
-        'star:2',
+        '[*][0][*][*]',
       ]);
 
       serdes.deserialize(obj, {});
-      assert.deepStrictEqual(serPaths, desPaths);
+      assert.deepStrictEqual(desPaths, serPaths);
     });
 
     it('should keep matching the same path til done/continue', () => {

@@ -94,7 +94,7 @@ function nullProtoFix(doc: SomeDoc): SomeDoc {
 /**
  * @internal
  */
-export function stringArraysEqual(a: readonly string[], b: readonly string[]): boolean {
+export function pathArraysEqual(a: readonly (string | number)[], b: readonly (string | number)[]): boolean {
   if (a.length !== b.length) {
     return false;
   }
@@ -111,7 +111,7 @@ export function stringArraysEqual(a: readonly string[], b: readonly string[]): b
 /**
  * @internal
  */
-export function pathMatches(exp: readonly string[], acc: readonly string[]): boolean {
+export function pathMatches(exp: readonly (string | number)[], acc: readonly (string | number)[]): boolean {
   if (exp.length !== acc.length) {
     return false;
   }

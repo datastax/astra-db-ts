@@ -12,15 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/index';
+import { BaseSerDesCtx, SomeDoc } from '@/src/index';
 import { isBigNumber } from '@/src/lib/utils';
 
 /**
  * @public
  */
-export interface KeyTransformerCtx {
-  path: string[];
-}
+export type KeyTransformerCtx = Pick<BaseSerDesCtx, 'path'>;
 
 /**
  * @public
