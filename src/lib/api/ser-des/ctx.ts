@@ -19,15 +19,14 @@ import { Deserializers, KeyTransformer, RawDataAPIResponse, Serializers } from '
  * @public
  */
 export interface BaseSerCtx<SerCex> extends BaseSerDesCtx {
-  serializers: Serializers<SerCex>
-  mutatingInPlace: boolean,
+  serializers: Serializers<SerCex>,
 }
 
 /**
  * @public
  */
 export interface BaseDesCtx<DesCtx> extends BaseSerDesCtx {
-  deserializers: Deserializers<DesCtx>;
+  deserializers: Deserializers<DesCtx>,
   rawDataApiResp: RawDataAPIResponse,
   parsingInsertedId: boolean,
 }
@@ -36,13 +35,14 @@ export interface BaseDesCtx<DesCtx> extends BaseSerDesCtx {
  * @public
  */
 export interface BaseSerDesCtx {
-  rootObj: SomeDoc,
+  rootObj: any,
   path: (string | number)[],
   done<T>(obj?: T): readonly [0, T?],
   continue<T>(obj?: T): readonly [1, T?],
   nevermind(): readonly [2],
   mapAfter(map: (v: any) => unknown): void,
   keyTransformer?: KeyTransformer,
+  mutatingInPlace: boolean,
 }
 
 export const DONE = 0 as const;

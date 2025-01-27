@@ -17,8 +17,7 @@ import {
   Deserializers,
   KeyTransformer,
   nullish,
-  OneOrMany,
-  processCodecs,
+  OneOrMany, processCodecs,
   RawCodec,
   RawDataAPIResponse,
   Serializers,
@@ -66,8 +65,8 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
     [this._serializers, this._deserializers] = processCodecs(this._cfg.codecs?.flat() ?? []);
   }
 
-  public serialize<S extends SomeDoc | nullish>(obj: S): [S, boolean] {
-    if (!obj) {
+  public serialize(obj: unknown): [unknown, boolean] {
+    if (obj === null || obj === undefined) {
       return [obj, false];
     }
 
@@ -76,7 +75,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
       serializers: this._serializers,
     }));
 
-    const serialized = serializeRecord('', { ['']: ctx.rootObj }, ctx, toArray(this._cfg.serialize!))[''];
+    const serialized = serdesRecord('', { ['']: ctx.rootObj }, ctx, toArray(this._cfg.serialize!))[''];
 
     return [
       ctx.keyTransformer?.serialize(serialized, ctx) ?? serialized,
@@ -84,7 +83,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
     ];
   }
 
-  public deserialize<S extends SomeDoc | nullish>(obj: SomeDoc | nullish, raw: RawDataAPIResponse, parsingId = false): S {
+  public deserialize<S extends unknown | nullish>(obj: unknown | nullish, raw: RawDataAPIResponse, parsingId = false): S {
     if (obj === null || obj === undefined) {
       return obj as S;
     }
@@ -99,7 +98,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
       ['']: ctx.keyTransformer?.deserialize(ctx.rootObj, ctx) ?? ctx.rootObj,
     };
 
-    return deserializeRecord('', rootObj, ctx, toArray(this._cfg.deserialize!))[''] as S;
+    return serdesRecord('', rootObj, ctx, toArray(this._cfg.deserialize!))[''] as S;
   }
 
   protected abstract adaptSerCtx(ctx: BaseSerCtx<SerCtx>): SerCtx;
@@ -116,12 +115,13 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
     }), {});
   }
 
-  private _mkCtx<Ctx>(obj: SomeDoc, ctx: Ctx): Ctx & BaseSerDesCtx {
+  private _mkCtx<Ctx>(obj: unknown, ctx: Ctx): Ctx & BaseSerDesCtx {
     return {
       done: ctxDone,
       continue: ctxContinue,
       nevermind: ctxNevermind,
       keyTransformer: this._cfg.keyTransformer,
+      mutatingInPlace: true,
       mapAfter: null!,
       rootObj: obj,
       path: [],
@@ -130,14 +130,14 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
   }
 }
 
-function serializeRecord<Ctx extends BaseSerCtx<any>>(key: string | number, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
+function serdesRecord<Ctx extends BaseSerDesCtx>(key: string | number, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
   const postMaps: ((v: any) => unknown)[] = [];
   ctx.mapAfter = (fn) => postMaps.push(fn);
 
   const stop = applySerdesFns(fns, key, obj, ctx);
 
   if (!stop && ctx.path.length < 250 && typeof obj[key] === 'object' && obj[key] !== null) {
-    obj[key] = serializeRecordHelper(obj[key], ctx, fns);
+    obj[key] = serdesRecordHelper(obj[key], ctx, fns);
   }
 
   for (let i = postMaps.length - 1; i >= 0; i--) {
@@ -146,7 +146,7 @@ function serializeRecord<Ctx extends BaseSerCtx<any>>(key: string | number, obj:
   return obj;
 }
 
-function serializeRecordHelper<Ctx extends BaseSerCtx<any>>(obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
+function serdesRecordHelper<Ctx extends BaseSerDesCtx>(obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
   obj = (!ctx.mutatingInPlace)
     ? (Array.isArray(obj) ? [...obj] : { ...obj })
     : obj;
@@ -157,52 +157,17 @@ function serializeRecordHelper<Ctx extends BaseSerCtx<any>>(obj: SomeDoc, ctx: C
   if (Array.isArray(obj)) {
     for (let i = 0; i < obj.length; i++) {
       path[path.length - 1] = i;
-      serializeRecord(i, obj, ctx, fns);
+      serdesRecord(i, obj, ctx, fns);
     }
   } else {
     for (const key of Object.keys(obj)) {
       path[path.length - 1] = key;
-      serializeRecord(key, obj, ctx, fns);
+      serdesRecord(key, obj, ctx, fns);
     }
   }
 
   path.pop();
   return obj;
-}
-
-function deserializeRecord<Ctx extends BaseDesCtx<any>>(key: string | number, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
-  const postMaps: ((v: any) => unknown)[] = [];
-  ctx.mapAfter = (fn) => postMaps.push(fn);
-
-  const stop = applySerdesFns(fns, key, obj, ctx);
-
-  if (!stop && ctx.path.length < 250 && typeof obj[key] === 'object' && obj[key] !== null) {
-    deserializeRecordHelper(obj[key], ctx, fns);
-  }
-
-  for (let i = postMaps.length - 1; i >= 0; i--) {
-    obj[key] = postMaps[i](obj[key]);
-  }
-  return obj;
-}
-
-function deserializeRecordHelper<Ctx extends BaseDesCtx<any>>(obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
-  const path = ctx.path;
-  path.push('<temp>');
-
-  if (Array.isArray(obj)) {
-    for (let i = 0; i < obj.length; i++) {
-      path[path.length - 1] = i;
-      deserializeRecord(i, obj, ctx, fns);
-    }
-  } else {
-    for (const key of Object.keys(obj)) {
-      path[path.length - 1] = key;
-      deserializeRecord(key, obj, ctx, fns);
-    }
-  }
-
-  path.pop();
 }
 
 function applySerdesFns<Ctx>(fns: readonly SerDesFn<Ctx>[], key: string | number, obj: SomeDoc, ctx: Ctx): boolean {
