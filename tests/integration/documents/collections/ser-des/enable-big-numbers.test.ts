@@ -189,7 +189,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
       }
 
       if (path[1] === 'cars' && path[3] === 'a') {
-        if (path[2] === '0') {
+        if (path[2] === 0) {
           return 'number';
         }
         return 'bignumber';
