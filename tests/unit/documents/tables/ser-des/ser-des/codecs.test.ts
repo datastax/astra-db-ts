@@ -151,4 +151,34 @@ describe('unit.documents.tables.ser-des.ser-des.codecs', () => {
       }
     });
   });
+
+  describe('forName', () => {
+    it('should keep matching the same path til done/continue', () => {
+      const repeat = <T>(mk: (n: number) => T) => Array.from({ length: 10 }, (_, i) => mk(i));
+
+      for (const signal of [ctxContinue(), ctxDone()] as const) {
+        let ser = 5, des = 5;
+
+        const serdes = new TableSerDes({
+          codecs: [
+            ...repeat(() => TableCodecs.forName('', {
+              serialize: () => --ser ? ctxNevermind() : signal,
+              deserialize: () => --des ? ctxNevermind() : signal,
+            })),
+            TableCodecs.forName('field', {
+              serialize: () => (--ser, ctxNevermind()),
+              deserialize: () => (--des, ctxNevermind()),
+            }),
+          ],
+          mutateInPlace: true,
+        });
+
+        serdes.serialize({ field: 3 });
+        assert.strictEqual(ser, signal === ctxContinue() ? -1 : 0);
+
+        serdes.deserialize({ field: 3 }, { status: { projectionSchema: { field: { type: 'int' } } } });
+        assert.strictEqual(des, signal === ctxContinue() ? -1 : 0);
+      }
+    });
+  });
 });

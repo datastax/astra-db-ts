@@ -17,6 +17,7 @@ import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
 import { CollCodecs } from '@/src/documents/collections';
+import { uuid, UUID } from '@/src/documents';
 import { ctxContinue, ctxDone, ctxNevermind } from '@/src/lib/api/ser-des/ctx';
 
 describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
@@ -121,6 +122,66 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
         assert.strictEqual(ser, signal === ctxContinue() ? -1 : 0);
 
         serdes.deserialize({ field: 3 }, {});
+        assert.strictEqual(des, signal === ctxContinue() ? -1 : 0);
+      }
+    });
+  });
+
+  describe('forId', () => {
+    it('should work with explicit serdes', () => {
+      class Id {
+        public readonly brand = 'Id';
+        constructor(public readonly unwrap: UUID) {}
+      }
+
+      const IdCodec = CollCodecs.forId({
+        serialize: (val, ctx) => {
+          return ctx.continue(val.unwrap);
+        },
+        deserialize: (val, ctx) => ctx.continue(new Id(val)),
+      });
+
+      const serdes = new CollectionSerDes({ codecs: [IdCodec], enableBigNumbers: () => 'bigint' });
+
+      const id = new Id(uuid(4));
+      const doc = { _id: id, value: 1n };
+
+      const ser = serdes.serialize(doc);
+      assert.deepStrictEqual(ser, [{ _id: { $uuid: id.unwrap.toString() }, value: 1n }, true]);
+
+      const des = serdes.deserialize(ser, {});
+      assert.deepStrictEqual(des, { _id: id, value: 1n });
+    });
+
+    it('should work with delegate serdes', () => {
+    });
+  });
+
+  describe('forName', () => {
+    it('should keep matching the same path til done/continue', () => {
+      const repeat = <T>(mk: (n: number) => T) => Array.from({ length: 10 }, (_, i) => mk(i));
+
+      for (const signal of [ctxContinue(), ctxDone()] as const) {
+        let ser = 5, des = 5;
+
+        const serdes = new CollectionSerDes({
+          codecs: [
+            ...repeat(() => CollCodecs.forName('', {
+              serialize: () => --ser ? ctxNevermind() : signal,
+              deserialize: () => --des ? ctxNevermind() : signal,
+            })),
+            CollCodecs.forName('field', {
+              serialize: () => (--ser, ctxNevermind()),
+              deserialize: () => (--des, ctxNevermind()),
+            }),
+          ],
+          mutateInPlace: true,
+        });
+
+        serdes.serialize({ field: 3 });
+        assert.strictEqual(ser, signal === ctxContinue() ? -1 : 0);
+
+        serdes.deserialize({ field: 3 }, { status: { projectionSchema: { field: { type: 'int' } } } });
         assert.strictEqual(des, signal === ctxContinue() ? -1 : 0);
       }
     });
