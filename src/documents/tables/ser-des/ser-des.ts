@@ -187,7 +187,7 @@ const DefaultTableSerDesCfg = {
     }
 
     // Type-based deserializers
-    const type = resolveAbsType(value, ctx);
+    const type = resolveAbsType(ctx);
     const typeDes = type && ctx.deserializers.forType[type];
 
     if (typeDes && typeDes.find((des) => (resp = des(value, ctx))[0] !== NEVERMIND)) {
@@ -219,11 +219,7 @@ function populateSparseData(ctx: TableDesCtx) {
   }
 }
 
-function resolveAbsType(value: unknown, { path, tableSchema }: TableDesCtx): string | undefined {
-  if (path.length === 0) {
-    return undefined;
-  }
-
+function resolveAbsType({ path, tableSchema }: TableDesCtx): string | undefined {
   const column = tableSchema[path[0]];
   const type = column ? resolveType(column) : undefined;
 
