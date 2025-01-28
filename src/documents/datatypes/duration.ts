@@ -206,7 +206,7 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
   /**
    * Implementation of `$DeserializeForTable` for {@link TableCodec}
    */
-  public static [$DeserializeForTable](_: unknown, value: any, ctx: TableDesCtx) {
+  public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
     return ctx.done(new DataAPIDuration(value, true));
   }
 

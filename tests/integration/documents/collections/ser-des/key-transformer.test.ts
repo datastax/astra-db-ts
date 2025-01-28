@@ -36,7 +36,7 @@ describe('integration.documents.collections.ser-des.key-transformer', ({ db }) =
       return ctx.done(this.dontChange_me);
     }
 
-    static [$DeserializeForCollection](_: unknown, value: string, ctx: CollDesCtx) {
+    static [$DeserializeForCollection](value: string, ctx: CollDesCtx) {
       return ctx.done(new Newtype(value));
     }
   }

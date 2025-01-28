@@ -16,7 +16,7 @@
 import assert from 'assert';
 import { describe, it, parallel } from '@/tests/testlib';
 import { TimedOutCategories, TimeoutDescriptor, TimeoutManager, Timeouts } from '@/src/lib/api/timeouts';
-import { HTTPRequestInfo } from '@/src/lib/api/clients';
+import { HttpClient, HTTPRequestInfo } from '@/src/lib/api/clients';
 
 describe('unit.lib.api.timeouts', () => {
   class TimeoutError extends Error {
@@ -258,7 +258,7 @@ describe('unit.lib.api.timeouts', () => {
     });
   });
 
-  parallel('custom', () => {
+  parallel('custom', ({ db, dbAdmin }) => {
     it('should return what it was given', () => {
       const tm = timeouts.custom({ databaseAdminTimeoutMs: 3, requestTimeoutMs: 5 }, () => [1, 'requestTimeoutMs']);
       let [timeout, mkError] = tm.advance(info(tm));
@@ -283,6 +283,19 @@ describe('unit.lib.api.timeouts', () => {
       assert.deepStrictEqual(e2.info, info(tm));
       assert.strictEqual(e2.timeoutType, 'requestTimeoutMs');
       assert.strictEqual(e2.message, 'Command timed out after 5ms (requestTimeoutMs timed out)');
+    });
+
+    it('has the httpclient throw early if timeout <= 0', async () => {
+      const httpClient1 = db._httpClient as HttpClient;
+      const httpClient2 = dbAdmin._httpClient as HttpClient;
+
+      const tm1 = <const>[ 0, timeouts.custom({ requestTimeoutMs:  0 }, () => [ 0, 'requestTimeoutMs'])];
+      const tm2 = <const>[-1, timeouts.custom({ requestTimeoutMs: -1 }, () => [-1, 'requestTimeoutMs'])];
+
+      for (const [ms, tm] of [tm1, tm2]) {
+        await assert.rejects(() => httpClient1['_request'](info(tm)), { message: `Command timed out after ${ms}ms (requestTimeoutMs timed out)` });
+        await assert.rejects(() => httpClient2['_request'](info(tm)), { message: `Command timed out after ${ms}ms (requestTimeoutMs timed out)` });
+      }
     });
   });
 

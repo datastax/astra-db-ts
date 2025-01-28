@@ -94,13 +94,30 @@ function nullProtoFix(doc: SomeDoc): SomeDoc {
 /**
  * @internal
  */
-export function stringArraysEqual(a: readonly string[], b: readonly string[]): boolean {
+export function pathArraysEqual(a: readonly (string | number)[], b: readonly (string | number)[]): boolean {
   if (a.length !== b.length) {
     return false;
   }
 
   for (let i = 0; i < a.length; i++) {
     if (a[i] !== b[i]) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * @internal
+ */
+export function pathMatches(exp: readonly (string | number)[], acc: readonly (string | number)[]): boolean {
+  if (exp.length !== acc.length) {
+    return false;
+  }
+
+  for (let i = 0; i < acc.length; i++) {
+    if (exp[i] !== '*' && exp[i] !== acc[i]) {
       return false;
     }
   }
@@ -130,7 +147,9 @@ const env = getJSEnv();
  * @internal
  */
 export const forJSEnv = (typeof process !== 'undefined' && typeof process.env === 'object' && process.env.CLIENT_DYNAMIC_JS_ENV_CHECK)
+  /* Version of forJSEnv which re-checks the env @ every call for testing purposes (allows for "mocking" different js envs) */
   ? <Args extends any[], R>(fns: JSEnvs<(...args: Args) => R>): (...args: Args) => R => (...args: Args) => fns[getJSEnv()](...args)
+  /* istanbul ignore next: same logic as above */
   : <Args extends any[], R>(fns: JSEnvs<(...args: Args) => R>): (...args: Args) => R => fns[env];
 
 /**

@@ -12,162 +12,158 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SerDesFn } from '@/src/lib';
-import { BaseSerCtx } from '@/src/lib/api/ser-des/ctx';
+import { SerDesFn, SomeConstructor } from '@/src/lib';
+import { pathArraysEqual } from '@/src/lib/utils';
 
 /**
  * @public
  */
-export type NameCodec<Fns extends CodecSerDesFns> = { serialize?: Fns['serialize'], deserialize: Fns['deserialize'] } & {
-  name: string,
+export type SerDesGuard<Ctx> = (value: any, ctx: Ctx) => boolean;
+
+/**
+ * @public
+ */
+export interface NominalCodecOpts<SerCtx, DesCtx> {
+  serialize?: SerDesFn<SerCtx>,
+  deserialize?: SerDesFn<DesCtx>,
 }
 
 /**
  * @public
  */
-export type PathCodec<Fns extends CodecSerDesFns> = { serialize?: Fns['serialize'], deserialize: Fns['deserialize'] } & {
-  path: string[],
+export type TypeCodecOpts<SerCtx, DesCtx> = CustomCodecSerOpts<SerCtx> & { deserialize?: SerDesFn<DesCtx> }
+
+/**
+ * @public
+ */
+export type CustomCodecOpts<SerCtx, DesCtx> = CustomCodecSerOpts<SerCtx> & (
+  | { deserialize: SerDesFn<DesCtx>, deserializeGuard: SerDesGuard<DesCtx> }
+  | { deserialize?: never }
+)
+
+/**
+ * @public
+ */
+export type CustomCodecSerOpts<SerCtx> =
+  | { serialize: SerDesFn<SerCtx>, serializeGuard: SerDesGuard<SerCtx>, serializeClass?: 'One (and only one) of `serializeClass` or `serializeGuard` should be present if `serialize` is present.' }
+  | { serialize: SerDesFn<SerCtx>, serializeClass: SomeConstructor, serializeGuard?: 'One (and only one) of `serializeClass` or `serializeGuard` should be present if `serialize` is present.', }
+  | { serialize?: never };
+
+/**
+ * @public
+ */
+export type RawCodec<SerCtx = any, DesCtx = any> =
+  | { tag: 'forName', name: string, opts: NominalCodecOpts<SerCtx, DesCtx> }
+  | { tag: 'forPath', path: (string | number)[], opts: NominalCodecOpts<SerCtx, DesCtx> }
+  | { tag: 'forType', type: string, opts: TypeCodecOpts<SerCtx, DesCtx> }
+  | { tag: 'custom',  opts: CustomCodecOpts<SerCtx, DesCtx> };
+
+/**
+ * @public
+ */
+export interface Serializers<SerCtx> {
+  forName: Record<string, SerDesFn<SerCtx>[]>,
+  forPath: Record<number, { path: (string | number)[], fns: SerDesFn<SerCtx>[] }[]>,
+  forClass: { class: SomeConstructor, fns: SerDesFn<SerCtx>[] }[],
+  forGuard: { guard: SerDesGuard<SerCtx>, fn: SerDesFn<SerCtx> }[],
 }
 
 /**
  * @public
  */
-export type TypeCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'deserialize'> & {
-  type: string,
+export interface Deserializers<DesCtx> {
+  forName: Record<string, SerDesFn<DesCtx>[]>,
+  forType: Record<string, SerDesFn<DesCtx>[]>,
+  forPath: Record<number, { path: (string | number)[], fns: SerDesFn<DesCtx>[] }[]>,
+  forGuard: { guard: SerDesGuard<DesCtx>, fn: SerDesFn<DesCtx> }[],
 }
-
-/**
- * @public
- */
-export type CustomGuardCodec<Fns extends CodecSerDesFns> = Fns & {
-  type: string,
-  serializeGuard: (value: unknown, ctx: BaseSerCtx<Fns>) => boolean,
-}
-
-/**
- * @public
- */
-export type ClassGuardCodec<Fns extends CodecSerDesFns> = Fns & {
-  type: string,
-  serializeClass: new (...args: any[]) => any,
-}
-
-/**
- * @public
- */
-export interface Codecs<Fns extends CodecSerDesFns> {
-  name: Record<string, NameCodec<Fns>>;
-  path: PathCodec<Fns>[];
-  type: Record<string, TypeCodec<Fns>>;
-  classGuard: ClassGuardCodec<Fns>[];
-  customGuard: CustomGuardCodec<Fns>[];
-}
-
-/**
- * @public
- */
-export type CodecSerDesFns = Record<'serialize' | 'deserialize', (...args: any[]) => ReturnType<SerDesFn<any>>>;
-
-/**
- * @public
- */
-export type SomeCodec<Fns extends CodecSerDesFns> =
-  | NameCodec<Fns>
-  | PathCodec<Fns>
-  | TypeCodec<Fns>
-  | CustomGuardCodec<Fns>
-  | ClassGuardCodec<Fns>;
-
-/**
- * @public
- */
-export type CodecOpts<Fns extends CodecSerDesFns, SerCtx, DesCtx> =
-  | Fns & { serializeGuard: (value: unknown, ctx: SerCtx) => boolean, deserializeGuard?: (value: unknown, ctx: DesCtx) => boolean }
-  | Fns & { serializeClass: new (...args: any[]) => any,              deserializeGuard?: (value: unknown, ctx: DesCtx) => boolean }
-  | Pick<Fns, 'deserialize'>;
-
-/**
- * @public
- */
-export type RawCodec<Fns extends CodecSerDesFns> =
-  & ({ path: string[] } | { name: string } | { type: string })
-  & CodecOpts<Fns, unknown, unknown>;
 
 /**
  * @internal
  */
-export const initCodecs = <Fns extends CodecSerDesFns>(rawCodecs: RawCodec<Fns>[]): Codecs<Fns> => {
-  const codecs: Codecs<Fns> = { name: {}, path: [], type: {}, classGuard: [], customGuard: [] };
+export const processCodecs = <SerCtx, DesCtx>(raw: readonly RawCodec[]): [Serializers<SerCtx>, Deserializers<DesCtx>] => {
+  const serializers: Serializers<SerCtx> = { forName: {}, forPath: {}, forClass: [], forGuard: [] };
+  const deserializers: Deserializers<DesCtx> = { forName: {}, forPath: {}, forType: {}, forGuard: [] };
 
-  for (let codec of rawCodecs) {
-    codec = prependAnyDeserializeGuard(codec);
-    codec = prependAnySerializeGuard(codec);
+  for (const codec of raw) {
+    appendCodec[codec.tag](codec as never, serializers, deserializers);
+  }
 
-    switch (true) {
-      case 'name' in codec: {
-        codecs.name[codec.name] = codec;
-        break;
-      }
-      case 'path' in codec: {
-        codecs.path.push(codec);
-        break;
-      }
-      case 'type' in codec: {
-        codecs.type[codec.type] = codec;
+  return [serializers, deserializers];
+};
 
-        if ('serializeClass' in codec) {
-          codecs.classGuard.push(codec);
-        } else if ('serializeGuard' in codec) {
-          codecs.customGuard.push(codec);
-        }
-        break;
-      }
+const appendCodec = {
+  forName(codec: RawCodec & { tag: 'forName' }, serializers: Serializers<any>, deserializers: Deserializers<any>) {
+    if (codec.opts.serialize) {
+      (serializers.forName[codec.name] ??= []).push(codec.opts.serialize);
+    }
+    if (codec.opts.deserialize) {
+      (deserializers.forName[codec.name] ??= []).push(codec.opts.deserialize);
+    }
+  },
+  forPath(codec: RawCodec & { tag: 'forPath' }, serializers: Serializers<any>, deserializers: Deserializers<any>) {
+    if (codec.opts.serialize) {
+      findOrInsertPath(serializers.forPath, codec.path, codec.opts.serialize);
+    }
+    if (codec.opts.deserialize) {
+      findOrInsertPath(deserializers.forPath, codec.path, codec.opts.deserialize);
+    }
+  },
+  forType(codec: RawCodec & { tag: 'forType' }, serializers: Serializers<any>, deserializers: Deserializers<any>) {
+    appendCodec.customSer(codec, serializers);
+
+    if (codec.opts.deserialize) {
+      (deserializers.forType[codec.type] ??= []).push(codec.opts.deserialize);
+    }
+  },
+  custom(codec: RawCodec & { tag: 'custom' }, serializers: Serializers<any>, deserializers: Deserializers<any>) {
+    appendCodec.customSer(codec, serializers);
+
+    if ('deserializeGuard' in codec.opts) {
+      deserializers.forGuard.push({ guard: codec.opts.deserializeGuard, fn: codec.opts.deserialize });
+    }
+  },
+  customSer(codec: RawCodec & { tag: 'custom' | 'forType' }, serializers: Serializers<any>) {
+    if ('serializeGuard' in codec.opts && !codec.opts.serializeClass) {
+      serializers.forGuard.push({ guard: codec.opts.serializeGuard, fn: codec.opts.serialize });
+    }
+    else if ('serializeClass' in codec.opts && !codec.opts.serializeGuard) {
+      findOrInsertClass(serializers.forClass, codec.opts.serializeClass, codec.opts.serialize);
+    }
+  },
+};
+
+const findOrInsertPath = <Fn>(arr: Record<number, { path: (string | number)[], fns: Fn[] }[]>, newPath: (string | number)[], fn: Fn) => {
+  const arrForDepth = arr[newPath.length] ??= [];
+
+  for (const { path, fns } of arrForDepth) {
+    if (pathArraysEqual(path, newPath)) {
+      fns.push(fn);
+      return;
     }
   }
 
-  return codecs;
+  arrForDepth.push({ path: newPath, fns: [fn] });
+  arrForDepth.sort((a, b) => comparePathGeneralities(a.path, b.path));
 };
 
-const prependAnyDeserializeGuard = <Fns extends CodecSerDesFns>(codec: RawCodec<Fns>): RawCodec<Fns> => {
-  if (!('deserializeGuard' in codec && codec.deserializeGuard)) {
-    return codec;
+const comparePathGeneralities = (a: (string | number)[], b: (string | number)[]) => {
+  const aIndex = a.indexOf('*');
+  const diff = aIndex - b.indexOf('*');
+
+  if (diff === 0 && aIndex !== -1 && aIndex + 1 < a.length) {
+    return comparePathGeneralities(a.slice(aIndex + 1), b.slice(aIndex + 1));
   }
 
-  const guard = codec.deserializeGuard;
-
-  return {
-    ...codec,
-    deserialize: (key, value, ctx) => {
-      if (!guard(value, ctx)) {
-        return ctx.continue();
-      }
-      return codec.deserialize(key, value, ctx);
-    },
-  };
+  return diff;
 };
 
-const prependAnySerializeGuard = <Fns extends CodecSerDesFns>(codec: RawCodec<Fns>): RawCodec<Fns> => {
-  if ('type' in codec || !('serializeGuard' in codec || 'serializeClass' in codec)) {
-    return codec;
+const findOrInsertClass = <Fn>(arr: { class: SomeConstructor, fns: Fn[] }[], newClass: SomeConstructor, fn: Fn) => {
+  for (const { class: clazz, fns } of arr) {
+    if (clazz === newClass) {
+      fns.push(fn);
+      return;
+    }
   }
-
-  const serializeClass = ('serializeClass' in codec)
-    ? codec.serializeClass
-    : undefined;
-
-  const guard = ('serializeClass' in codec)
-    ? (value: unknown) => value instanceof serializeClass!
-    : codec.serializeGuard;
-
-  const _codec = codec;
-
-  return {
-    ...codec,
-    serialize: (key: string, value: any, ctx: BaseSerCtx<never>) => {
-      if (!guard(value, ctx)) {
-        return ctx.continue();
-      }
-      return _codec.serialize(key, value, ctx);
-    },
-  };
+  arr.push({ class: newClass, fns: [fn] });
 };

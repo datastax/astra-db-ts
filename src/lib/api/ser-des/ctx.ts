@@ -12,45 +12,44 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Codecs, CodecSerDesFns } from '@/src/lib/api/ser-des/codecs';
-import { SomeDoc } from '@/src/documents';
-import { KeyTransformer, RawDataAPIResponse } from '@/src/lib';
+import { Deserializers, KeyTransformer, RawDataAPIResponse, Serializers } from '@/src/lib';
 
 /**
  * @public
  */
-export interface BaseSerCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fns> {
+export interface BaseSerCtx<SerCex> extends BaseSerDesCtx {
+  serializers: Serializers<SerCex>,
+}
+
+/**
+ * @public
+ */
+export interface BaseDesCtx<DesCtx> extends BaseSerDesCtx {
+  deserializers: Deserializers<DesCtx>,
+  rawDataApiResp: RawDataAPIResponse,
+  parsingInsertedId: boolean,
+}
+
+/**
+ * @public
+ */
+export interface BaseSerDesCtx {
+  rootObj: any,
+  path: (string | number)[],
+  done<T>(obj?: T): readonly [0, T?],
+  recurse<T>(obj?: T): readonly [1, T?],
+  continue<T>(obj?: T): readonly [2, T?],
+  mapAfter(map: (v: any) => unknown): readonly [2],
+  keyTransformer?: KeyTransformer,
   mutatingInPlace: boolean,
 }
 
-/**
- * @public
- */
-export interface BaseDesCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fns> {
-  rawDataApiResp: RawDataAPIResponse,
-  parsingInsertedId: boolean,
-  keys: string[] | null,
-}
-
-/**
- * @public
- */
-export interface BaseSerDesCtx<Fns extends CodecSerDesFns> {
-  rootObj: SomeDoc,
-  path: string[],
-  done<T>(obj?: T): readonly [0, T?],
-  next<T>(obj?: T): readonly [1, T?],
-  continue(): readonly [2],
-  codecs: Codecs<Fns>,
-  keyTransformer?: KeyTransformer,
-}
-
 export const DONE = 0 as const;
-export const NEXT = 1 as const;
+export const RECURSE = 1 as const;
 export const CONTINUE = 2 as const;
 
 const DONE_ARR = [DONE] as const;
-const RECURSE_ARR = [NEXT] as const;
+const RECURSE_ARR = [RECURSE] as const;
 const CONTINUE_ARR = [CONTINUE] as const;
 
 /**
@@ -66,9 +65,9 @@ export function ctxDone<T>(obj?: T): readonly [0, T?] {
 /**
  * @internal
  */
-export function ctxNext<T>(obj?: T): readonly [1, T?] {
+export function ctxRecurse<T>(obj?: T): readonly [1, T?] {
   if (arguments.length === 1) {
-    return [NEXT, obj];
+    return [RECURSE, obj];
   }
   return RECURSE_ARR;
 }
@@ -76,6 +75,9 @@ export function ctxNext<T>(obj?: T): readonly [1, T?] {
 /**
  * @internal
  */
-export function ctxContinue(): readonly [2] {
+export function ctxContinue<T>(obj?: T): readonly [2, T?] {
+  if (arguments.length === 1) {
+    return [CONTINUE, obj];
+  }
   return CONTINUE_ARR;
 }

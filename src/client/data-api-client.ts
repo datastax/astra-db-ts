@@ -47,6 +47,7 @@ import { Timeouts } from '@/src/lib/api/timeouts';
  * @public
  */
 export const DataAPIClientEventEmitterBase = (() => {
+  /* istanbul ignore next: exceptional case that can't be manually reproduced */
   try {
     return (require('events') as { EventEmitter: (new () => TypedEmitter<DataAPIClientEventMap>) }).EventEmitter;
   } catch (_) {
@@ -55,6 +56,8 @@ export const DataAPIClientEventEmitterBase = (() => {
 })();
 
 /**
+ * ##### Overview
+ *
  * The main entrypoint into working with the Data API. It sits at the top of the
  * [conceptual hierarchy](https://github.com/datastax/astra-db-ts/tree/signature-cleanup?tab=readme-ov-file#abstraction-diagram)
  * of the SDK.
@@ -87,7 +90,7 @@ export const DataAPIClientEventEmitterBase = (() => {
  * const admin1 = client1.admin();
  * const admin2 = client1.admin({ adminToken: '<stronger_token>' });
  *
- * console.log(await coll.insertOne({ name: 'RATATATA' }));
+ * console.log(await coll.insertOne({ name: 'John Joe' }));
  * console.log(await admin1.listDatabases());
  * ```
  *

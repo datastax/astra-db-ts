@@ -20,13 +20,9 @@ node scripts/utils/build-version-file.js > src/version.ts
 
 # Transpiles the project
 if [ "$light" = true ]; then
-  npx tsc --project tsconfig.production.json -d false --noCheck
+  npx tsc --project tsconfig.production.json -d false --noCheck || exit 10
 else
-  npx tsc --project tsconfig.production.json
-fi
-
-if [ ! -d ./dist ]; then
-  exit 10
+  npx tsc --project tsconfig.production.json || exit 10
 fi
 
 # Replaces alias paths with relative paths (e.g. `@/src/version` -> `../../src/version`)

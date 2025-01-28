@@ -120,7 +120,7 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
   /**
    * Implementation of `$DeserializeForTable` for {@link TableCodec}
    */
-  public static [$DeserializeForTable](_: unknown, value: string, ctx: TableDesCtx) {
+  public static [$DeserializeForTable](value: string, ctx: TableDesCtx) {
     return ctx.done(new DataAPIDate(value, false));
   }
 

@@ -25,6 +25,7 @@ export type {
 export type {
   RawDataAPIResponse,
   OpaqueHttpClient,
+  SomeConstructor,
 } from './types';
 
 export type {
@@ -32,18 +33,7 @@ export type {
   SerDesFn,
 } from './ser-des/ser-des';
 
-export type {
-  Codecs,
-  CodecSerDesFns,
-  TypeCodec,
-  ClassGuardCodec,
-  NameCodec,
-  PathCodec,
-  CustomGuardCodec,
-  SomeCodec,
-  RawCodec,
-  CodecOpts,
-} from './ser-des/codecs';
+export * from './ser-des/codecs';
 
 export type {
   BaseSerDesCtx,
@@ -60,4 +50,5 @@ export type {
 export {
   Camel2SnakeCase,
   KeyTransformer,
+  Camel2SnakeCaseOptions,
 } from './ser-des/key-transformer';

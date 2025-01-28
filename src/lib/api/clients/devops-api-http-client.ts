@@ -105,10 +105,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
         status: resp.status,
         headers: resp.headers,
       };
-    } catch (e) {
-      if (!(e instanceof Error)) {
-        throw e;
-      }
+    } catch (e: any) {
       this.logger.adminCommandFailed?.(req, isLongRunning, e, started);
       throw e;
     }
@@ -143,6 +140,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
     let waiting = false;
 
     for (let i = 1; i++;) {
+      /* istanbul ignore next: exceptional case that can't be manually reproduced */
       if (waiting) {
         continue;
       }
@@ -160,6 +158,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
         break;
       }
 
+      /* istanbul ignore next: exceptional case that can't be manually reproduced */
       if (!info.legalStates.includes(resp.data?.status)) {
         const okStates = [info.target, ...info.legalStates];
         const error = new DevOpsUnexpectedStateError(`Created database is not in any legal state [${okStates.join(',')}]`, okStates, resp.data);

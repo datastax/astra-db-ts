@@ -247,7 +247,7 @@ export interface BaseAstraDbInfo {
 }
 
 // @public (undocumented)
-export interface BaseDesCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fns> {
+export interface BaseDesCtx extends BaseSerDesCtx {
     // (undocumented)
     keys: string[] | null;
     // (undocumented)
@@ -257,15 +257,13 @@ export interface BaseDesCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fn
 }
 
 // @public (undocumented)
-export interface BaseSerCtx<Fns extends CodecSerDesFns> extends BaseSerDesCtx<Fns> {
+export interface BaseSerCtx extends BaseSerDesCtx {
     // (undocumented)
     mutatingInPlace: boolean;
 }
 
 // @public (undocumented)
-export interface BaseSerDesConfig<Fns extends CodecSerDesFns, SerCtx extends BaseSerCtx<Fns>, DesCtx extends BaseDesCtx<Fns>> {
-    // (undocumented)
-    codecs?: RawCodec<Fns>[];
+export interface BaseSerDesConfig<SerCtx extends BaseSerCtx, DesCtx extends BaseDesCtx> {
     // (undocumented)
     deserialize?: OneOrMany<SerDesFn<DesCtx>>;
     // (undocumented)
@@ -277,17 +275,17 @@ export interface BaseSerDesConfig<Fns extends CodecSerDesFns, SerCtx extends Bas
 }
 
 // @public (undocumented)
-export interface BaseSerDesCtx<Fns extends CodecSerDesFns> {
+export interface BaseSerDesCtx {
     // (undocumented)
-    codecs: Codecs<Fns>;
-    // (undocumented)
-    continue(): readonly [2];
+    continue<T>(obj?: T): readonly [1, T?];
     // (undocumented)
     done<T>(obj?: T): readonly [0, T?];
     // (undocumented)
     keyTransformer?: KeyTransformer;
     // (undocumented)
-    next<T>(obj?: T): readonly [1, T?];
+    mapAfter(map: (v: any) => unknown): void;
+    // (undocumented)
+    nevermind(): readonly [2];
     // (undocumented)
     path: string[];
     // (undocumented)
@@ -302,51 +300,34 @@ export type Caller = readonly [name: string, version?: string];
 
 // @public (undocumented)
 export class Camel2SnakeCase extends KeyTransformer {
+    constructor(opts?: Camel2SnakeCaseOptions);
     // (undocumented)
-    deserializeKey(snake: string, ctx: BaseDesCtx<CodecSerDesFns>): string;
+    deserializeKey(snake: string): string;
     // (undocumented)
-    serializeKey(camel: string, ctx: BaseSerCtx<CodecSerDesFns>): string;
+    serializeKey(camel: string): string;
+    // Warning: (ae-forgotten-export) The symbol "KeyTransformerCtx" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    transformNested(ctx: KeyTransformerCtx): boolean;
 }
 
 // @public (undocumented)
-export type ClassGuardCodec<Fns extends CodecSerDesFns> = Fns & {
-    type: string;
-    serializeClass: new (...args: any[]) => any;
-};
-
-// @public (undocumented)
-export type CodecOpts<Fns extends CodecSerDesFns, SerCtx, DesCtx> = (Fns & {
-    serializeGuard: (value: unknown, ctx: SerCtx) => boolean;
-    deserializeGuard?: (value: unknown, ctx: DesCtx) => boolean;
-}) | (Fns & {
-    serializeClass: new (...args: any[]) => any;
-    deserializeGuard?: (value: unknown, ctx: DesCtx) => boolean;
-}) | Pick<Fns, 'deserialize'>;
-
-// @public (undocumented)
-export interface Codecs<Fns extends CodecSerDesFns> {
+export interface Camel2SnakeCaseOptions {
     // (undocumented)
-    classGuard: ClassGuardCodec<Fns>[];
+    exceptId?: boolean;
     // (undocumented)
-    customGuard: CustomGuardCodec<Fns>[];
-    // (undocumented)
-    name: Record<string, NameCodec<Fns>>;
-    // (undocumented)
-    path: PathCodec<Fns>[];
-    // (undocumented)
-    type: Record<string, TypeCodec<Fns>>;
+    transformNested?: (path: KeyTransformerCtx) => boolean;
 }
-
-// @public (undocumented)
-export type CodecSerDesFns = Record<'serialize' | 'deserialize', (...args: any[]) => ReturnType<SerDesFn<any>>>;
 
 // @public (undocumented)
 export type CollCodec<_Class extends CollCodecClass> = EmptyObj;
 
 // @public (undocumented)
 export interface CollCodecClass {
+    // Warning: (ae-forgotten-export) The symbol "CollDesFn" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    [$DeserializeForCollection]: CollCodecSerDesFns['deserialize'];
+    [$DeserializeForCollection]: CollDesFn;
     // (undocumented)
     new (...args: any[]): {
         [$SerializeForCollection]: (ctx: CollSerCtx) => ReturnType<SerDesFn<any>>;
@@ -355,31 +336,35 @@ export interface CollCodecClass {
 
 // @public (undocumented)
 export class CollCodecs {
+    // Warning: (ae-forgotten-export) The symbol "CollCustomCodecOpts" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    static custom(opts: CollCustomCodecOpts): RawCodec<'collection'>;
     // (undocumented)
     static Defaults: {
-        $date: RawCodec<CollCodecSerDesFns>;
-        $vector: RawCodec<CollCodecSerDesFns>;
-        $uuid: RawCodec<CollCodecSerDesFns>;
-        $objectId: RawCodec<CollCodecSerDesFns>;
+        $date: RawCodec<"collection">;
+        $vector: RawCodec<"collection">;
+        $uuid: RawCodec<"collection">;
+        $objectId: RawCodec<"collection">;
     };
+    // Warning: (ae-forgotten-export) The symbol "CollNominalCodecOpts" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    static forName(name: string, optsOrClass: CodecOpts<CollCodecSerDesFns, CollSerCtx, CollDesCtx> | CollCodecClass): RawCodec<CollCodecSerDesFns>;
+    static forName(name: string, optsOrClass: CollNominalCodecOpts | CollCodecClass): RawCodec<'collection'>;
     // (undocumented)
-    static forPath(path: string[], optsOrClass: CodecOpts<CollCodecSerDesFns, CollSerCtx, CollDesCtx> | CollCodecClass): RawCodec<CollCodecSerDesFns>;
+    static forPath(path: string[], optsOrClass: CollNominalCodecOpts | CollCodecClass): RawCodec<'collection'>;
+    // Warning: (ae-forgotten-export) The symbol "CollTypeCodecOpts" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    static forType(type: string, optsOrClass: CodecOpts<CollCodecSerDesFns, CollSerCtx, CollDesCtx> | CollCodecClass): RawCodec<CollCodecSerDesFns>;
+    static forType(type: string, optsOrClass: CollTypeCodecOpts | CollCodecClass): RawCodec<'collection'>;
 }
 
 // @public (undocumented)
-export interface CollCodecSerDesFns {
+export interface CollDesCtx extends BaseDesCtx {
+    // Warning: (ae-forgotten-export) The symbol "CollDeserializers" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    deserialize: SerDesFn<CollDesCtx>;
-    // (undocumented)
-    serialize: SerDesFn<CollSerCtx>;
-}
-
-// @public (undocumented)
-export interface CollDesCtx extends BaseDesCtx<CollCodecSerDesFns> {
+    deserializers: CollDeserializers;
     // (undocumented)
     getNumRepForPath?: GetCollNumRepFn;
 }
@@ -597,7 +582,9 @@ export type CollectionReplaceOneOptions = GenericReplaceOneOptions;
 export type CollectionReplaceOneResult<RSchema> = GenericUpdateResult<IdOf<RSchema>, 0 | 1>;
 
 // @public (undocumented)
-export interface CollectionSerDesConfig extends BaseSerDesConfig<CollCodecSerDesFns, CollSerCtx, CollDesCtx> {
+export interface CollectionSerDesConfig extends BaseSerDesConfig<CollSerCtx, CollDesCtx> {
+    // (undocumented)
+    codecs?: RawCodec<'collection'>[];
     // (undocumented)
     enableBigNumbers?: GetCollNumRepFn | CollNumRepCfg;
 }
@@ -655,9 +642,13 @@ export type CollNumRep = 'number' | 'bigint' | 'bignumber' | 'string' | 'number_
 export type CollNumRepCfg = Record<string, CollNumRep>;
 
 // @public (undocumented)
-export interface CollSerCtx extends BaseSerCtx<CollCodecSerDesFns> {
+export interface CollSerCtx extends BaseSerCtx {
     // (undocumented)
     bigNumsEnabled: boolean;
+    // Warning: (ae-forgotten-export) The symbol "CollSerializers" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    serializers: CollSerializers;
 }
 
 // @public
@@ -780,9 +771,24 @@ export class CursorError extends DataAPIError {
 }
 
 // @public (undocumented)
-export type CustomGuardCodec<Fns extends CodecSerDesFns> = Fns & {
-    type: string;
-    serializeGuard: (value: unknown, ctx: BaseSerCtx<Fns>) => boolean;
+export type CustomCodecOpts<SerFn, SerGuard, DesFn, DesGuard> = CustomCodecSerOpts<SerFn, SerGuard> & ({
+    deserialize: DesFn;
+    deserializeGuard: DesGuard;
+} | {
+    deserialize?: never;
+});
+
+// @public (undocumented)
+export type CustomCodecSerOpts<SerFn, SerGuard> = {
+    serialize: SerFn;
+    serializeGuard: SerGuard;
+    serializeClass?: 'One (and only one) of `serializeClass` or `serializeGuard` should be present if `serialize` is present.';
+} | {
+    serialize: SerFn;
+    serializeClass: SomeConstructor;
+    serializeGuard?: 'One (and only one) of `serializeClass` or `serializeGuard` should be present if `serialize` is present.';
+} | {
+    serialize?: never;
 };
 
 // @public
@@ -1181,6 +1187,24 @@ export interface DefaultHttpClientOptions {
     preferHttp2?: boolean;
 }
 
+// @public (undocumented)
+export interface Deserializers<DesFn, DesGuard> {
+    // (undocumented)
+    forGuard: {
+        guard: DesGuard;
+        fn: DesFn;
+    }[];
+    // (undocumented)
+    forName: Record<string, DesFn[]>;
+    // (undocumented)
+    forPath: Record<number, {
+        path: string[];
+        fns: DesFn[];
+    }[]>;
+    // (undocumented)
+    forType: Record<string, DesFn[]>;
+}
+
 // @public
 export abstract class DevOpsAPIError extends Error {
 }
@@ -1573,9 +1597,15 @@ export type KeyspaceReplicationOptions = {
 // @public (undocumented)
 export abstract class KeyTransformer {
     // (undocumented)
-    abstract deserializeKey(key: string, ctx: BaseDesCtx<CodecSerDesFns>): string;
+    deserialize(obj: SomeDoc, ctx: KeyTransformerCtx): SomeDoc;
     // (undocumented)
-    abstract serializeKey(key: string, ctx: BaseSerCtx<CodecSerDesFns>): string;
+    abstract deserializeKey(key: string, ctx: KeyTransformerCtx): string;
+    // (undocumented)
+    serialize(obj: SomeDoc, ctx: KeyTransformerCtx): SomeDoc;
+    // (undocumented)
+    abstract serializeKey(key: string, ctx: KeyTransformerCtx): string;
+    // (undocumented)
+    abstract transformNested(ctx: KeyTransformerCtx): boolean;
 }
 
 // @public
@@ -1680,16 +1710,16 @@ export type MaybeId<T> = NoId<T> & {
     _id?: IdOf<T>;
 };
 
-// @public (undocumented)
-export type NameCodec<Fns extends CodecSerDesFns> = {
-    serialize?: Fns['serialize'];
-    deserialize: Fns['deserialize'];
-} & {
-    name: string;
-};
-
 // @public
 export type NoId<Doc> = Omit<Doc, '_id'>;
+
+// @public (undocumented)
+export interface NominalCodecOpts<SerFn, DesFn> {
+    // (undocumented)
+    deserialize?: DesFn;
+    // (undocumented)
+    serialize?: SerFn;
+}
 
 // @public
 export type Normalize<T> = {
@@ -1748,13 +1778,10 @@ export type OneOrMany<T> = T | readonly T[];
 // @public
 export type OpaqueHttpClient = any;
 
-// @public (undocumented)
-export type PathCodec<Fns extends CodecSerDesFns> = {
-    serialize?: Fns['serialize'];
-    deserialize: Fns['deserialize'];
-} & {
-    path: string[];
-};
+// Warning: (ae-internal-missing-underscore) The name "processCodecs" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal (undocumented)
+export const processCodecs: <SerFn, SerGuard, DesFn, DesGuard>(raw: RawCodec<any>[]) => [Serializers<SerFn, SerGuard>, Deserializers<DesFn, DesGuard>];
 
 // @public
 export type Projection = Record<string, 1 | 0 | boolean | ProjectionSlice>;
@@ -1765,19 +1792,32 @@ export interface ProjectionSlice {
 }
 
 // @public (undocumented)
-export type RawCodec<Fns extends CodecSerDesFns> = ({
-    path: string[];
-} | {
+export type RawCodec<For extends 'table' | 'collection'> = {
+    phantom?: For;
+    tag: 'forName';
     name: string;
+    opts: NominalCodecOpts<any, any>;
 } | {
+    phantom?: For;
+    tag: 'forPath';
+    path: string[];
+    opts: NominalCodecOpts<any, any>;
+} | {
+    phantom?: For;
+    tag: 'forType';
     type: string;
-}) & CodecOpts<Fns, unknown, unknown>;
+    opts: TypeCodecOpts<any, any, any>;
+} | {
+    phantom?: For;
+    tag: 'custom';
+    opts: CustomCodecOpts<any, any, any, any>;
+};
 
 // @public
 export interface RawDataAPIResponse {
-    data?: Record<string, any>;
-    errors?: any[];
-    status?: Record<string, any>;
+    readonly data?: Record<string, any>;
+    readonly errors?: any[];
+    readonly status?: Record<string, any>;
 }
 
 // @public
@@ -1800,8 +1840,31 @@ export interface ScalarCreateTableColumnDefinition {
     type: TableScalarType;
 }
 
+// Warning: (ae-forgotten-export) The symbol "SerDesFnRet" needs to be exported by the entry point index.d.ts
+//
 // @public (undocumented)
-export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => readonly [0 | 1 | 2, any?] | 'Return ctx.done(val?), ctx.recurse(val?), ctx.continue(), or void';
+export type SerDesFn<Ctx> = (key: string, value: any, ctx: Ctx) => SerDesFnRet | 'Return ctx.done(val?), ctx.continue(val?), or ctx.nevermind()';
+
+// @public (undocumented)
+export interface Serializers<SerFn, SerGuard> {
+    // (undocumented)
+    forClass: {
+        class: SomeConstructor;
+        fns: SerFn[];
+    }[];
+    // (undocumented)
+    forGuard: {
+        guard: SerGuard;
+        fn: SerFn;
+    }[];
+    // (undocumented)
+    forName: Record<string, SerFn[]>;
+    // (undocumented)
+    forPath: Record<number, {
+        path: string[];
+        fns: SerFn[];
+    }[]>;
+}
 
 // @public
 export interface SetCreateTableColumnDefinition {
@@ -1811,8 +1874,8 @@ export interface SetCreateTableColumnDefinition {
     valueType: TableScalarType;
 }
 
-// @public (undocumented)
-export type SomeCodec<Fns extends CodecSerDesFns> = NameCodec<Fns> | PathCodec<Fns> | TypeCodec<Fns> | CustomGuardCodec<Fns> | ClassGuardCodec<Fns>;
+// @public
+export type SomeConstructor = abstract new (...args: any[]) => any;
 
 // @public
 export type SomeDoc = Record<string, any>;
@@ -1881,53 +1944,48 @@ export type TableCodecClass = {
     new (...args: any[]): {
         [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>>;
     };
-    [$DeserializeForTable]: TableCodecSerDesFns['deserialize'];
+    [$DeserializeForTable]: TableDesFn;
 };
 
 // @public (undocumented)
 export class TableCodecs {
+    // Warning: (ae-forgotten-export) The symbol "TableCustomCodecOpts" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    static custom(opts: TableCustomCodecOpts): RawCodec<'table'>;
     // (undocumented)
     static Defaults: {
-        bigint: RawCodec<TableCodecSerDesFns>;
-        blob: RawCodec<TableCodecSerDesFns>;
-        counter: RawCodec<TableCodecSerDesFns>;
-        date: RawCodec<TableCodecSerDesFns>;
-        decimal: RawCodec<TableCodecSerDesFns>;
-        double: RawCodec<TableCodecSerDesFns>;
-        duration: RawCodec<TableCodecSerDesFns>;
-        float: RawCodec<TableCodecSerDesFns>;
-        int: RawCodec<TableCodecSerDesFns>;
-        inet: RawCodec<TableCodecSerDesFns>;
-        smallint: RawCodec<TableCodecSerDesFns>;
-        time: RawCodec<TableCodecSerDesFns>;
-        timestamp: RawCodec<TableCodecSerDesFns>;
-        timeuuid: RawCodec<TableCodecSerDesFns>;
-        tinyint: RawCodec<TableCodecSerDesFns>;
-        uuid: RawCodec<TableCodecSerDesFns>;
-        vector: RawCodec<TableCodecSerDesFns>;
-        varint: RawCodec<TableCodecSerDesFns>;
-        map: RawCodec<TableCodecSerDesFns>;
-        list: RawCodec<TableCodecSerDesFns>;
-        set: RawCodec<TableCodecSerDesFns>;
+        bigint: RawCodec<"table">;
+        blob: RawCodec<"table">;
+        counter: RawCodec<"table">;
+        date: RawCodec<"table">;
+        decimal: RawCodec<"table">;
+        double: RawCodec<"table">;
+        duration: RawCodec<"table">;
+        float: RawCodec<"table">;
+        int: RawCodec<"table">;
+        inet: RawCodec<"table">;
+        smallint: RawCodec<"table">;
+        time: RawCodec<"table">;
+        timestamp: RawCodec<"table">;
+        timeuuid: RawCodec<"table">;
+        tinyint: RawCodec<"table">;
+        uuid: RawCodec<"table">;
+        vector: RawCodec<"table">;
+        varint: RawCodec<"table">;
+        map: RawCodec<"table">;
+        list: RawCodec<"table">;
+        set: RawCodec<"table">;
     };
+    // Warning: (ae-forgotten-export) The symbol "TableNominalCodecOpts" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    static forName(name: string, optsOrClass: CodecOpts<TableCodecSerDesFns, TableSerCtx, TableDesCtx> | TableCodecClass): RawCodec<TableCodecSerDesFns>;
+    static forName(name: string, optsOrClass: TableNominalCodecOpts | TableCodecClass): RawCodec<'table'>;
+    // Warning: (ae-forgotten-export) The symbol "TableTypeCodecOpts" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    static forPath(path: string[], optsOrClass: CodecOpts<TableCodecSerDesFns, TableSerCtx, TableDesCtx> | TableCodecClass): RawCodec<TableCodecSerDesFns>;
-    // (undocumented)
-    static forType(type: string, optsOrClass: CodecOpts<TableCodecSerDesFns, TableSerCtx, TableDesCtx> | TableCodecClass): RawCodec<TableCodecSerDesFns>;
+    static forType<const Type extends string>(type: Type, optsOrClass: TableTypeCodecOpts<Type> | TableCodecClass): RawCodec<'table'>;
 }
-
-// @public (undocumented)
-export interface TableCodecSerDesFns {
-    // (undocumented)
-    deserialize: (key: string | undefined, val: any, ctx: TableDesCtx, definition?: SomeDoc) => ReturnType<SerDesFn<any>>;
-    // (undocumented)
-    serialize: SerDesFn<TableSerCtx>;
-}
-
-// @public (undocumented)
-export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: SomeDoc) => any;
 
 // @public
 export interface TableDescriptor {
@@ -1936,9 +1994,13 @@ export interface TableDescriptor {
 }
 
 // @public (undocumented)
-export interface TableDesCtx extends BaseDesCtx<TableCodecSerDesFns> {
+export interface TableDesCtx extends BaseDesCtx {
     // (undocumented)
-    next: never;
+    continue: never;
+    // Warning: (ae-forgotten-export) The symbol "TableDeserializers" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    deserializers: TableDeserializers;
     // (undocumented)
     tableSchema: ListTableColumnDefinitions;
 }
@@ -2052,15 +2114,19 @@ export interface TableOptions extends WithKeyspace {
 export type TableScalarType = 'ascii' | 'bigint' | 'blob' | 'boolean' | 'date' | 'decimal' | 'double' | 'duration' | 'float' | 'int' | 'inet' | 'smallint' | 'text' | 'time' | 'timestamp' | 'tinyint' | 'uuid' | 'varint';
 
 // @public (undocumented)
-export interface TableSerCtx extends BaseSerCtx<TableCodecSerDesFns> {
+export interface TableSerCtx extends BaseSerCtx {
     // (undocumented)
     bigNumsPresent: boolean;
+    // Warning: (ae-forgotten-export) The symbol "TableSerializers" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    serializers: TableSerializers;
 }
 
 // @public (undocumented)
-export interface TableSerDesConfig extends BaseSerDesConfig<TableCodecSerDesFns, TableSerCtx, TableDesCtx> {
+export interface TableSerDesConfig extends BaseSerDesConfig<TableSerCtx, TableDesCtx> {
     // (undocumented)
-    codecs?: RawCodec<TableCodecSerDesFns>[];
+    codecs?: RawCodec<'table'>[];
     // (undocumented)
     sparseData?: boolean;
 }
@@ -2136,8 +2202,8 @@ export class TooManyDocumentsToCountError extends DataAPIError {
 }
 
 // @public (undocumented)
-export type TypeCodec<Fns extends CodecSerDesFns> = Pick<Fns, 'deserialize'> & {
-    type: string;
+export type TypeCodecOpts<SerFn, SerGuard, DesFn> = CustomCodecSerOpts<SerFn, SerGuard> & {
+    deserialize?: DesFn;
 };
 
 // @public
@@ -2239,6 +2305,10 @@ export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor> {
 
 
 export * from "bignumber.js";
+
+// Warnings were encountered during analysis:
+//
+// dist/documents/tables/ser-des/codecs.d.ts:17:5 - (ae-forgotten-export) The symbol "TableDesFn" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

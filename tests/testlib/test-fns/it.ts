@@ -15,7 +15,7 @@
 
 import { checkTestsEnabled } from '@/tests/testlib/utils';
 import { parallelTestState } from '@/tests/testlib/test-fns/parallel';
-import { CURRENT_DESCRIBE_NAMES } from '@/tests/testlib/global';
+import { CURRENT_DESCRIBE_NAMES, RUNNING_INT_TESTS } from '@/tests/testlib/global';
 import { DEFAULT_TEST_TIMEOUT } from '@/tests/testlib/config';
 import { UUID } from '@/src/documents';
 import { backgroundTestState, TEST_FILTER } from '@/tests/testlib';
@@ -62,6 +62,10 @@ it = function (name: string, optsOrFn: TestOptions | TestFn, maybeFn?: TestFn) {
 
   if (!TEST_FILTER.test(name, ...CURRENT_DESCRIBE_NAMES)) {
     return null;
+  }
+
+  if (CURRENT_DESCRIBE_NAMES[0].startsWith('integration.') && !skipped) {
+    RUNNING_INT_TESTS.ref = true;
   }
 
   function modifiedFn(this: Mocha.Context) {
