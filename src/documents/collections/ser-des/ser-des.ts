@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { BaseSerDesConfig, SerDes, SerDesFn } from '@/src/lib/api/ser-des/ser-des';
-import { BaseDesCtx, BaseSerCtx, NEVERMIND } from '@/src/lib/api/ser-des/ctx';
+import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
 import { CollCodecs, RawCollCodecs } from '@/src/documents/collections/ser-des/codecs';
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 import { isBigNumber, pathMatches } from '@/src/lib/utils';
@@ -99,7 +99,7 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
 
     // Path-based serializers
     for (const pathSer of ctx.serializers.forPath[ctx.path.length] ?? []) {
-      if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+      if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
         return resp;
       }
     }
@@ -108,7 +108,7 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
     const key = ctx.path[ctx.path.length - 1] ?? '';
     const nameSer = ctx.serializers.forName[key];
 
-    if (nameSer && nameSer.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+    if (nameSer && nameSer.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
       return resp;
     }
 
@@ -118,7 +118,7 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
         const resp = guardSer.fn(value, ctx);
         (resp.length === 2) && (value = resp[1]);
 
-        if (resp[0] !== NEVERMIND) {
+        if (resp[0] !== CONTINUE) {
           return resp;
         }
       }
@@ -126,14 +126,14 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
 
     if (typeof value === 'object' && value !== null) {
       // Delegate serializer
-      if ($SerializeForCollection in value && (resp = value[$SerializeForCollection](ctx))[0] !== NEVERMIND) {
+      if ($SerializeForCollection in value && (resp = value[$SerializeForCollection](ctx))[0] !== CONTINUE) {
         return resp;
       }
 
       // Class-based serializers
       const classSer = ctx.serializers.forClass.find((c) => value instanceof c.class);
 
-      if (classSer && classSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+      if (classSer && classSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
         return resp;
       }
 
@@ -152,14 +152,14 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
       return ctx.done();
     }
 
-    return ctx.continue(value);
+    return ctx.recurse(value);
   },
   deserialize(value, ctx) {
     let resp: ReturnType<SerDesFn<unknown>> = null!;
 
     // Path-based deserializers
     for (const pathDes of ctx.deserializers.forPath[ctx.path.length] ?? []) {
-      if (pathMatches(pathDes.path, ctx.path) && pathDes.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+      if (pathMatches(pathDes.path, ctx.path) && pathDes.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
         return resp;
       }
     }
@@ -168,7 +168,7 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
     const key = ctx.path[ctx.path.length - 1] ?? '';
     const nameDes = ctx.deserializers.forName[key];
 
-    if (nameDes && nameDes.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+    if (nameDes && nameDes.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
       return resp;
     }
 
@@ -178,7 +178,7 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
         const resp = guardDes.fn(value, ctx);
         (resp.length === 2) && (value = resp[1]);
 
-        if (resp[0] !== NEVERMIND) {
+        if (resp[0] !== CONTINUE) {
           return resp;
         }
       }
@@ -191,7 +191,7 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
       if (keys.length === 1) {
         const typeDes = ctx.deserializers.forType[keys[0]];
 
-        if (typeDes && typeDes.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+        if (typeDes && typeDes.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
           return resp;
         }
       }
@@ -202,7 +202,7 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
       }
     }
 
-    return ctx.continue(value);
+    return ctx.recurse(value);
   },
   codecs: Object.values(CollCodecs.Defaults),
 };

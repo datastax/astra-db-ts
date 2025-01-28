@@ -74,7 +74,7 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
           return ctx.nevermind();
         }
 
-        return ctx.continue({
+        return ctx.recurse({
           _id: book.isbn,
           title: book.title,
           author: book.author.name,
@@ -98,17 +98,17 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
           book.reviews,
         ));
 
-        return ctx.continue();
+        return ctx.recurse();
       },
     });
 
     const SetCodec = CollCodecs.forPath(['reviews'], {
       serialize(value: Set<Review>, ctx) {
-        return ctx.continue([...value]);
+        return ctx.recurse([...value]);
       },
       deserialize(_, ctx) {
         ctx.mapAfter((v) => new Set(v));
-        return ctx.continue();
+        return ctx.recurse();
       },
     });
 
@@ -187,11 +187,11 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
           book.reviews,
         ));
 
-        return ctx.continue();
+        return ctx.recurse();
       };
 
       [$SerializeForCollection](ctx: CollSerCtx) {
-        return ctx.continue({
+        return ctx.recurse({
           _id: book.isbn,
           title: book.title,
           author: book.author.name,
@@ -243,11 +243,11 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
     class MySet<T> extends Set<T> implements CollCodec<typeof MySet> {
       static [$DeserializeForCollection](_: unknown, ctx: CollDesCtx) {
         ctx.mapAfter((v) => new MySet(v));
-        return ctx.continue();
+        return ctx.recurse();
       }
 
       [$SerializeForCollection](ctx: CollSerCtx) {
-        return ctx.continue([...this]);
+        return ctx.recurse([...this]);
       }
     }
 

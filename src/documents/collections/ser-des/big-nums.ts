@@ -124,19 +124,19 @@ export const coerceBigNumber = (value: BigNumber, ctx: CollDesCtx): readonly [0 
         throw new NumCoercionError(ctx.path, value, 'bignumber', 'number');
       }
 
-      return ctx.continue(asNum);
+      return ctx.recurse(asNum);
     }
     case 'bigint': {
       if (!value.isInteger()) {
         throw new NumCoercionError(ctx.path, value, 'bignumber', 'bigint');
       }
-      return ctx.continue(BigInt(value.toFixed(0)));
+      return ctx.recurse(BigInt(value.toFixed(0)));
     }
     case 'bignumber':
-      return ctx.continue(value);
+      return ctx.recurse(value);
     case 'string':
     case 'number_or_string':
-      return ctx.continue(value.toString());
+      return ctx.recurse(value.toString());
   }
 };
 
@@ -146,14 +146,14 @@ export const coerceNumber = (value: number, ctx: CollDesCtx): readonly [0 | 1 | 
       if (!Number.isInteger(value)) {
         throw new NumCoercionError(ctx.path, value, 'number', 'bigint');
       }
-      return ctx.continue(BigInt(value));
+      return ctx.recurse(BigInt(value));
     }
     case 'bignumber':
-      return ctx.continue(BigNumber(value));
+      return ctx.recurse(BigNumber(value));
     case 'string':
-      return ctx.continue(value.toString());
+      return ctx.recurse(value.toString());
     case 'number':
     case 'number_or_string':
-      return ctx.continue(value);
+      return ctx.recurse(value);
   }
 };

@@ -37,7 +37,7 @@ export interface BaseSerDesCtx {
   rootObj: any,
   path: (string | number)[],
   done<T>(obj?: T): readonly [0, T?],
-  continue<T>(obj?: T): readonly [1, T?],
+  recurse<T>(obj?: T): readonly [1, T?],
   nevermind<T>(obj?: T): readonly [2, T?],
   mapAfter(map: (v: any) => unknown): readonly [2],
   keyTransformer?: KeyTransformer,
@@ -45,12 +45,12 @@ export interface BaseSerDesCtx {
 }
 
 export const DONE = 0 as const;
-export const CONTINUE = 1 as const;
-export const NEVERMIND = 2 as const;
+export const RECURSE = 1 as const;
+export const CONTINUE = 2 as const;
 
 const DONE_ARR = [DONE] as const;
+const RECURSE_ARR = [RECURSE] as const;
 const CONTINUE_ARR = [CONTINUE] as const;
-const NEVERMIND_ARR = [NEVERMIND] as const;
 
 /**
  * @internal
@@ -65,19 +65,19 @@ export function ctxDone<T>(obj?: T): readonly [0, T?] {
 /**
  * @internal
  */
-export function ctxContinue<T>(obj?: T): readonly [1, T?] {
+export function ctxRecurse<T>(obj?: T): readonly [1, T?] {
   if (arguments.length === 1) {
-    return [CONTINUE, obj];
+    return [RECURSE, obj];
   }
-  return CONTINUE_ARR;
+  return RECURSE_ARR;
 }
 
 /**
  * @internal
  */
-export function ctxNevermind<T>(obj?: T): readonly [2, T?] {
+export function ctxContinue<T>(obj?: T): readonly [2, T?] {
   if (arguments.length === 1) {
-    return [NEVERMIND, obj];
+    return [CONTINUE, obj];
   }
-  return NEVERMIND_ARR;
+  return CONTINUE_ARR;
 }

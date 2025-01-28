@@ -17,7 +17,7 @@ import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
 import { $DeserializeForTable, $SerializeForTable, TableCodec, TableCodecs } from '@/src/index';
-import { ctxNevermind } from '@/src/lib/api/ser-des/ctx';
+import { ctxContinue } from '@/src/lib/api/ser-des/ctx';
 
 describe('unit.documents.tables.ser-des.ser-des.order', () => {
   const counters = {
@@ -27,12 +27,12 @@ describe('unit.documents.tables.ser-des.ser-des.order', () => {
 
   const ser = (tag: string, i?: number) => () => {
     counters.ser.push(`${tag}${i ?? ''}`);
-    return ctxNevermind();
+    return ctxContinue();
   };
 
   const des = (tag: string, i?: number) => () => {
     counters.des.push(`${tag}${i ?? ''}`);
-    return ctxNevermind();
+    return ctxContinue();
   };
 
   class Test implements TableCodec<typeof Test> {

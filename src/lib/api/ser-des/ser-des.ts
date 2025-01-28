@@ -27,16 +27,16 @@ import {
   BaseDesCtx,
   BaseSerCtx,
   BaseSerDesCtx,
-  ctxContinue,
+  ctxRecurse,
   ctxDone,
-  ctxNevermind,
-  DONE, NEVERMIND,
+  ctxContinue,
+  DONE, CONTINUE,
 } from '@/src/lib/api/ser-des/ctx';
 
 /**
  * @public
  */
-export type SerDesFn<Ctx> = (value: any, ctx: Ctx) => SerDesFnRet | 'Return ctx.done(val?), ctx.continue(val?), or ctx.nevermind()';
+export type SerDesFn<Ctx> = (value: any, ctx: Ctx) => SerDesFnRet | 'Return ctx.done(val?), ctx.recurse(val?), or ctx.continue(val?)';
 
 /**
  * @public
@@ -118,8 +118,8 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
   private _mkCtx<Ctx>(obj: unknown, ctx: Ctx): Ctx & BaseSerDesCtx {
     return {
       done: ctxDone,
-      continue: ctxContinue,
-      nevermind: ctxNevermind,
+      recurse: ctxRecurse,
+      nevermind: ctxContinue,
       keyTransformer: this._cfg.keyTransformer,
       mutatingInPlace: true,
       mapAfter: null!,
@@ -132,7 +132,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
 
 function serdesRecord<Ctx extends BaseSerDesCtx>(key: string | number, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
   const postMaps: ((v: any) => unknown)[] = [];
-  ctx.mapAfter = (fn) => { postMaps.push(fn); return [NEVERMIND]; };
+  ctx.mapAfter = (fn) => { postMaps.push(fn); return [CONTINUE]; };
 
   const stop = applySerdesFns(fns, key, obj, ctx);
 

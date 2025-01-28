@@ -110,26 +110,26 @@ export class TableCodecs {
     map: TableCodecs.forType('map', {
       serializeClass: Map,
       serialize: (value, ctx) => {
-        return ctx.continue(Object.fromEntries(value));
+        return ctx.recurse(Object.fromEntries(value));
       },
       deserialize(_, ctx) {
         ctx.mapAfter((es) => new Map(Array.isArray(es) ? es : Object.entries(es)));
-        return ctx.continue();
+        return ctx.recurse();
       },
     }),
     list: TableCodecs.forType('list', {
       deserialize(_, ctx) {
-        return ctx.continue();
+        return ctx.recurse();
       },
     }),
     set: TableCodecs.forType('set', {
       serializeClass: Set,
       serialize: (value, ctx) => {
-        return ctx.continue([...value]);
+        return ctx.recurse([...value]);
       },
       deserialize(_, ctx) {
         ctx.mapAfter((es) => new Set(es));
-        return ctx.continue();
+        return ctx.recurse();
       },
     }),
   };

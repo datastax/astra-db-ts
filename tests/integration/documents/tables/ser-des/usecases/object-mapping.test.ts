@@ -92,7 +92,7 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
           return ctx.nevermind();
         }
 
-        return ctx.continue({
+        return ctx.recurse({
           isbn: book.isbn,
           title: book.title,
           author: book.author.name,
@@ -119,7 +119,7 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
           new Set(reviews),
         ));
 
-        return ctx.continue();
+        return ctx.recurse();
       },
     });
 
@@ -189,11 +189,11 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
           new Set(book.reviewNames.map((name: string, i: number) => new Review(new Person(name), book.reviewReviews[i]))),
         ));
 
-        return ctx.continue();
+        return ctx.recurse();
       };
 
       [$SerializeForTable](ctx: TableSerCtx) {
-        return ctx.continue({
+        return ctx.recurse({
           isbn: book.isbn,
           title: book.title,
           author: book.author.name,

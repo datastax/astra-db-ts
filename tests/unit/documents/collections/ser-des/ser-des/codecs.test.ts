@@ -18,7 +18,7 @@ import assert from 'assert';
 import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
 import { CollCodecs } from '@/src/documents/collections';
 import { uuid, UUID } from '@/src/documents';
-import { ctxContinue, ctxDone, ctxNevermind } from '@/src/lib/api/ser-des/ctx';
+import { ctxRecurse, ctxDone, ctxContinue } from '@/src/lib/api/ser-des/ctx';
 
 describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
   describe('forPath', () => {
@@ -26,7 +26,7 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
       const serPaths = [] as unknown[];
       const desPaths = [] as unknown[];
 
-      const visit = (arr: unknown[], v: unknown) => (value: unknown) => (arr.push(v ?? value), ctxNevermind());
+      const visit = (arr: unknown[], v: unknown) => (value: unknown) => (arr.push(v ?? value), ctxContinue());
       const serdesFns = (v: unknown = null) => ({ serialize: visit(serPaths, v), deserialize: visit(desPaths, v) });
 
       const serdes = new CollectionSerDes({
@@ -101,28 +101,28 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
     it('should keep matching the same path til done/continue', () => {
       const repeat = <T>(mk: (n: number) => T) => Array.from({ length: 10 }, (_, i) => mk(i));
 
-      for (const signal of [ctxContinue(), ctxDone()] as const) {
+      for (const signal of [ctxRecurse(), ctxDone()] as const) {
         let ser = 5, des = 5;
 
         const serdes = new CollectionSerDes({
           codecs: [
             ...repeat(() => CollCodecs.forPath([], {
-              serialize: () => --ser ? ctxNevermind() : signal,
-              deserialize: () => --des ? ctxNevermind() : signal,
+              serialize: () => --ser ? ctxContinue() : signal,
+              deserialize: () => --des ? ctxContinue() : signal,
             })),
             CollCodecs.forPath(['field'], {
-              serialize: () => (--ser, ctxNevermind()),
-              deserialize: () => (--des, ctxNevermind()),
+              serialize: () => (--ser, ctxContinue()),
+              deserialize: () => (--des, ctxContinue()),
             }),
           ],
           mutateInPlace: true,
         });
 
         serdes.serialize({ field: 3 });
-        assert.strictEqual(ser, signal === ctxContinue() ? -1 : 0);
+        assert.strictEqual(ser, signal === ctxRecurse() ? -1 : 0);
 
         serdes.deserialize({ field: 3 }, {});
-        assert.strictEqual(des, signal === ctxContinue() ? -1 : 0);
+        assert.strictEqual(des, signal === ctxRecurse() ? -1 : 0);
       }
     });
   });
@@ -136,7 +136,7 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
 
       const IdCodec = CollCodecs.forId({
         serialize: (val, ctx) => ctx.nevermind(val.unwrap),
-        deserialize: (val, ctx) => ctx.continue(new Id(val)),
+        deserialize: (val, ctx) => ctx.recurse(new Id(val)),
       });
 
       const serdes = new CollectionSerDes({ codecs: [IdCodec], enableBigNumbers: () => 'bigint' });
@@ -159,28 +159,28 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
     it('should keep matching the same path til done/continue', () => {
       const repeat = <T>(mk: (n: number) => T) => Array.from({ length: 10 }, (_, i) => mk(i));
 
-      for (const signal of [ctxContinue(), ctxDone()] as const) {
+      for (const signal of [ctxRecurse(), ctxDone()] as const) {
         let ser = 5, des = 5;
 
         const serdes = new CollectionSerDes({
           codecs: [
             ...repeat(() => CollCodecs.forName('', {
-              serialize: () => --ser ? ctxNevermind() : signal,
-              deserialize: () => --des ? ctxNevermind() : signal,
+              serialize: () => --ser ? ctxContinue() : signal,
+              deserialize: () => --des ? ctxContinue() : signal,
             })),
             CollCodecs.forName('field', {
-              serialize: () => (--ser, ctxNevermind()),
-              deserialize: () => (--des, ctxNevermind()),
+              serialize: () => (--ser, ctxContinue()),
+              deserialize: () => (--des, ctxContinue()),
             }),
           ],
           mutateInPlace: true,
         });
 
         serdes.serialize({ field: 3 });
-        assert.strictEqual(ser, signal === ctxContinue() ? -1 : 0);
+        assert.strictEqual(ser, signal === ctxRecurse() ? -1 : 0);
 
         serdes.deserialize({ field: 3 }, { status: { projectionSchema: { field: { type: 'int' } } } });
-        assert.strictEqual(des, signal === ctxContinue() ? -1 : 0);
+        assert.strictEqual(des, signal === ctxRecurse() ? -1 : 0);
       }
     });
   });

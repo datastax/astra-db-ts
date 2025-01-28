@@ -46,7 +46,7 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
 
           [CollCodecs.custom({
             serializeClass: Map,
-            serialize: (map, ctx) => ctx.continue(Object.fromEntries(map)),
+            serialize: (map, ctx) => ctx.recurse(Object.fromEntries(map)),
           })],
         ].sort(() => .5 - Math.random()).flat(),
       });
