@@ -165,7 +165,7 @@ const DefaultTableSerDesCfg = {
       ctx.bigNumsPresent = true;
     }
 
-    return ctx.continue();
+    return ctx.continue(value);
   },
   deserialize(value, ctx) {
     let resp: ReturnType<SerDesFn<unknown>> = null!;
@@ -198,7 +198,7 @@ const DefaultTableSerDesCfg = {
     }
 
     if (key === '' || value === null) {
-      return ctx.continue();
+      return ctx.continue(value);
     }
 
     // Type-based deserializers
@@ -209,7 +209,7 @@ const DefaultTableSerDesCfg = {
       return resp;
     }
 
-    return ctx.continue();
+    return ctx.continue(value);
   },
   codecs: Object.values(TableCodecs.Defaults),
 } satisfies TableSerDesConfig;

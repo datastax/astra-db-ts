@@ -18,7 +18,7 @@ import assert from 'assert';
 import { CollDesCtx, CollectionSerDes, CollSerCtx } from '@/src/documents/collections/ser-des/ser-des';
 import { $DeserializeForCollection, $SerializeForCollection, CollCodec, CollCodecs } from '@/src/documents/collections';
 import { uuid, UUID } from '@/src/documents';
-import { ctxRecurse, ctxDone, ctxContinue } from '@/src/lib/api/ser-des/ctx';
+import { ctxContinue, ctxDone, ctxRecurse } from '@/src/lib/api/ser-des/ctx';
 
 describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
   describe('forPath', () => {
@@ -202,8 +202,43 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
         serdes.serialize({ field: 3 });
         assert.strictEqual(ser, signal === ctxRecurse() ? -1 : 0);
 
-        serdes.deserialize({ field: 3 }, { status: { projectionSchema: { field: { type: 'int' } } } });
+        serdes.deserialize({ field: 3 }, {});
         assert.strictEqual(des, signal === ctxRecurse() ? -1 : 0);
+      }
+    });
+  });
+
+  describe('forType', () => {
+    class Type {
+      constructor(public readonly unwrap: UUID) {}
+    }
+
+    it('should keep matching the same path til done/continue', () => {
+      const repeat = <T>(mk: (n: number) => T) => Array.from({ length: 10 }, (_, i) => mk(i));
+
+      for (const signal of [ctxRecurse, ctxDone] as const) {
+        let ser = 5, des = 5;
+
+        const serdes = new CollectionSerDes({
+          codecs: [
+            ...repeat(() => CollCodecs.forType('type', {
+              serializeClass: Type,
+              serialize: (v, ctx) => --ser ? ctxContinue() : (ctx.mapAfter((v) => v.id), signal({ id: v.unwrap })),
+              deserialize: (v) => --des ? ctxContinue() : signal(new Type(v.type)),
+            })),
+            CollCodecs.forType('$uuid', {
+              serializeGuard: (v) => v instanceof UUID,
+              serialize: () => (--ser, ctxContinue()),
+              deserialize: () => (--des, ctxContinue()),
+            }),
+          ],
+        });
+
+        serdes.serialize({ type: new Type(uuid(4)) });
+        assert.strictEqual(ser, signal === ctxRecurse ? -1 : 0);
+
+        serdes.deserialize({ type: { $uuid: uuid(4).toString() } }, {});
+        assert.strictEqual(des, signal === ctxRecurse ? -1 : 0);
       }
     });
   });
