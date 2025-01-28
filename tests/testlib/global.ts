@@ -17,3 +17,5 @@ import { initTestObjects } from '@/tests/testlib/fixtures';
 export const GLOBAL_FIXTURES = initTestObjects({ isGlobal: true });
 
 export const CURRENT_DESCRIBE_NAMES: string[] = [];
+
+export const RUNNING_INT_TESTS = { ref: false };

@@ -33,7 +33,7 @@ describe('integration.documents.tables.ser-des.key-transformer', ({ db }) => {
       return ctx.done(this.dontChange_me);
     }
 
-    static [$DeserializeForTable](_: unknown, value: string, ctx: TableDesCtx) {
+    static [$DeserializeForTable](value: string, ctx: TableDesCtx) {
       return ctx.done(new Newtype(value));
     }
   }

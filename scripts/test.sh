@@ -268,5 +268,7 @@ if [ -n "$CLIENT_RUN_VECTORIZE_TESTS" ] && [ "$test_type" != 'code' ]; then
   fi
 fi
 
+export CLIENT_DYNAMIC_JS_ENV_CHECK=1
+
 # Run it
 eval "$cmd_to_run"

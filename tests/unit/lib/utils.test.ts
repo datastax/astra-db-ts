@@ -19,7 +19,7 @@ import {
   buildAstraEndpoint, forJSEnv,
   isBigNumber,
   isNullish,
-  jsonTryParse, stringArraysEqual,
+  jsonTryParse, pathMatches, pathArraysEqual,
   toArray,
   validateDataAPIEnv,
   withJbiNullProtoFix,
@@ -110,13 +110,39 @@ describe('unit.lib.utils', () => {
 
   describe('stringArraysEqual', () => {
     it('works', () => {
-      assert.ok(!stringArraysEqual([], ['']));
-      assert.ok(!stringArraysEqual(['a'], ['b']));
-      assert.ok(!stringArraysEqual(['a'], ['a', 'b']));
-      assert.ok(!stringArraysEqual(['a', 'b'], ['b', 'a']));
-      assert.ok(stringArraysEqual([], []));
-      assert.ok(stringArraysEqual(['a'], ['a']));
-      assert.ok(stringArraysEqual(['a', 'b'], ['a', 'b']));
+      assert.ok(!pathArraysEqual([], ['']));
+      assert.ok(!pathArraysEqual(['a'], ['b']));
+      assert.ok(!pathArraysEqual(['a'], ['a', 'b']));
+      assert.ok(!pathArraysEqual(['a', 'b'], ['b', 'a']));
+
+      assert.ok(pathArraysEqual([], []));
+      assert.ok(pathArraysEqual(['a'], ['a']));
+      assert.ok(pathArraysEqual(['a', 'b'], ['a', 'b']));
+    });
+  });
+
+  describe('pathMatches', () => {
+    it('works', () => {
+      assert.ok(!pathMatches([], ['']));
+      assert.ok(!pathMatches(['a'], ['b']));
+      assert.ok(!pathMatches(['a'], ['a', 'b']));
+      assert.ok(!pathMatches(['a', 'b'], ['b', 'a']));
+
+      assert.ok(pathMatches([], []));
+      assert.ok(pathMatches(['a'], ['a']));
+      assert.ok(pathMatches(['a', 'b'], ['a', 'b']));
+
+      assert.ok(pathMatches(['*'], ['a']));
+      assert.ok(pathMatches(['a', '*'], ['a', 'b']));
+      assert.ok(pathMatches(['a', '*', 'c'], ['a', 'b', 'c']));
+      assert.ok(pathMatches(['*', '*', 'c'], ['a', 'b', 'c']));
+      assert.ok(pathMatches(['*', '*', '*'], ['a', 'b', 'c']));
+      assert.ok(pathMatches(['*', 'b', 'c'], ['a', 'b', 'c']));
+
+      assert.ok(!pathMatches(['*'], ['a', 'b']));
+      assert.ok(!pathMatches(['*', 'a'], ['a', 'b']));
+      assert.ok(!pathMatches(['*', '*'], ['a']));
+      assert.ok(!pathMatches(['a', '*'], ['a']));
     });
   });
 

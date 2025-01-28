@@ -17,9 +17,8 @@ import { DEFAULT_COLLECTION_NAME, DEFAULT_TABLE_NAME, OTHER_KEYSPACE, SKIP_PRELU
 import {
   EverythingTableSchema,
   EverythingTableSchemaWithVectorize,
-  FILTER_COMBINATOR,
   GLOBAL_FIXTURES,
-  RAW_FILTERS,
+  RUNNING_INT_TESTS,
 } from '@/tests/testlib';
 
 const TEST_KEYSPACES = [DEFAULT_KEYSPACE, OTHER_KEYSPACE];
@@ -30,10 +29,7 @@ before(async () => {
     return;
   }
 
-  if (
-    (FILTER_COMBINATOR === 'and' && RAW_FILTERS.some(f => f.filter.startsWith('unit.') && !f.inverted)) ||
-    (FILTER_COMBINATOR === 'or' && RAW_FILTERS.every(f => f.filter.startsWith('unit.') && !f.inverted))
-  ) {
+  if (!RUNNING_INT_TESTS.ref) {
     console.warn('Skipping prelude.test.ts due to detection of only unit tests being run');
     return;
   }

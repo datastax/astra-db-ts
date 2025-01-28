@@ -79,12 +79,14 @@ interface InternalFindOptions {
 
 interface InternalGetMoreCommand {
   find: {
-    filter: Record<string, unknown> | undefined,
+    filter: SerializedFilter | undefined,
     sort: Record<string, unknown> | undefined,
     projection: Record<string, unknown> | undefined,
     options: InternalFindOptions | undefined,
   },
 }
+
+type SerializedFilter = unknown;
 
 /**
  * Lazily iterates over the results of some generic `find` operation using a Data API.
@@ -138,7 +140,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   readonly #serdes: SerDes;
 
   readonly #options: GenericFindOptions;
-  readonly #filter: [Filter, boolean];
+  readonly #filter: [SerializedFilter, boolean];
   readonly #mapping?: (doc: any) => T;
 
   #buffer: TRaw[] = [];
@@ -152,7 +154,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @internal
    */
-  constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: [Filter, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
+  constructor(parent: Table<SomeRow> | Collection, serdes: SerDes, filter: [SerializedFilter, boolean], options?: GenericFindOptions, mapping?: (doc: TRaw) => T) {
     this.#parent = parent;
     this.#httpClient = parent._httpClient as DataAPIHttpClient;
     this.#serdes = serdes;
@@ -601,7 +603,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this.#buffer.length = 0;
   }
 
-  #clone<R, RRaw extends SomeDoc>(filter: [Filter, boolean], options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
+  #clone<R, RRaw extends SomeDoc>(filter: [SerializedFilter, boolean], options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
     return new (<any>this.constructor)(this.#parent, this.#serdes, filter, options, mapping);
   }
 

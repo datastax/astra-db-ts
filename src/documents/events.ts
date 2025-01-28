@@ -169,7 +169,7 @@ export class CommandSucceededEvent extends CommandEvent {
   /**
    * The response object from the Data API.
    */
-  public readonly resp?: RawDataAPIResponse;
+  public readonly resp: RawDataAPIResponse;
 
   /**
    * Should not be instantiated by the user.

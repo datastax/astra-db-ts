@@ -12,52 +12,44 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/documents';
-import { BaseSerDesConfig, SerDes } from '@/src/lib/api/ser-des/ser-des';
+import { BaseSerDesConfig, SerDes, SerDesFn } from '@/src/lib/api/ser-des/ser-des';
 import {
   ListTableColumnDefinitions,
   ListTableKnownColumnDefinition,
   ListTableUnsupportedColumnDefinition,
 } from '@/src/db';
-import { TableCodecs, TableCodecSerDesFns } from '@/src/documents/tables/ser-des/codecs';
+import { RawTableCodecs, TableCodecs } from '@/src/documents/tables/ser-des/codecs';
 import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
-import { isBigNumber, stringArraysEqual } from '@/src/lib/utils';
-import { RawCodec } from '@/src/lib/api/ser-des/codecs';
+import { isBigNumber, pathMatches } from '@/src/lib/utils';
 import { UnexpectedDataAPIResponseError } from '@/src/client';
 
 /**
  * @public
  */
-export interface TableSerCtx extends BaseSerCtx<TableCodecSerDesFns> {
+export interface TableSerCtx extends BaseSerCtx<TableSerCtx> {
   bigNumsPresent: boolean,
 }
 
 /**
  * @public
  */
-export interface TableDesCtx extends BaseDesCtx<TableCodecSerDesFns> {
+export interface TableDesCtx extends BaseDesCtx<TableDesCtx> {
   tableSchema: ListTableColumnDefinitions,
-  next: never;
 }
 
 /**
  * @public
  */
-export type TableColumnTypeParser = (val: any, ctx: TableDesCtx, definition: SomeDoc) => any;
-
-/**
- * @public
- */
-export interface TableSerDesConfig extends BaseSerDesConfig<TableCodecSerDesFns, TableSerCtx, TableDesCtx> {
-  codecs?: RawCodec<TableCodecSerDesFns>[],
+export interface TableSerDesConfig extends BaseSerDesConfig<TableSerCtx, TableDesCtx> {
+  codecs?: RawTableCodecs[],
   sparseData?: boolean,
 }
 
 /**
  * @internal
  */
-export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableDesCtx> {
+export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
   declare protected readonly _cfg: TableSerDesConfig;
 
   public constructor(cfg?: TableSerDesConfig) {
@@ -74,13 +66,13 @@ export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableD
     const status = UnexpectedDataAPIResponseError.require(rawDataApiResp.status, 'No `status` found in response.', rawDataApiResp);
 
     if (ctx.parsingInsertedId) {
-      ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.primaryKeySchema, 'No `status.primaryKeySchema` found in response.\n\n**Did you accidentally use a `Table` object on a collection?** If so, your document was successfully inserted, but the client cannot properly deserialize the response. Please use a `Collection` object instead.', rawDataApiResp);
+      ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.primaryKeySchema, 'No `status.primaryKeySchema` found in response.\n\n**Did you accidentally use a `Table` object on a Collection?** If so, your document was successfully inserted, but the client cannot properly deserialize the response. Please use a `Collection` object instead.', rawDataApiResp);
 
       ctx.rootObj = Object.fromEntries(Object.keys(ctx.tableSchema).map((key, i) => {
         return [key, ctx.rootObj[i]];
       }));
     } else {
-      ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.projectionSchema, 'No `status.projectionSchema` found in response.\n\n**Did you accidentally use a `Table` object on a collection?** If so, documents may\'ve been found, but the client cannot properly deserialize the response. Please use a `Collection` object instead.', rawDataApiResp);
+      ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.projectionSchema, 'No `status.projectionSchema` found in response.\n\n**Did you accidentally use a `Table` object on a Collection?** If so, documents may\'ve been found, but the client cannot properly deserialize the response. Please use a `Collection` object instead.', rawDataApiResp);
     }
 
     if (this._cfg?.sparseData !== true) {
@@ -92,8 +84,6 @@ export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableD
         return [ctx.keyTransformer!.deserializeKey(key, ctx), value];
       }));
     }
-
-    (<any>ctx).recurse = () => { throw new Error('Table deserialization does not recurse normally; please call any necessary codecs manually'); };
 
     return ctx;
   }
@@ -111,29 +101,31 @@ export class TableSerDes extends SerDes<TableCodecSerDesFns, TableSerCtx, TableD
 }
 
 const DefaultTableSerDesCfg = {
-  serialize(key, value, ctx) {
-    const codecs = ctx.codecs;
-    let resp;
+  serialize(value, ctx) {
+    let resp: ReturnType<SerDesFn<unknown>> = null!;
 
-    for (let i = 0, n = codecs.path.length; i < n; i++) {
-      const path = codecs.path[i].path;
-
-      if (stringArraysEqual(path, ctx.path)) {
-        if ((resp = codecs.path[i].serialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
-          return resp;
-        }
-      }
-    }
-
-    if (key in codecs.name) {
-      if ((resp = codecs.name[key].serialize?.(key, value, ctx) ?? ctx.continue())[0] !== CONTINUE) {
+    // Path-based serializers
+    for (const pathSer of ctx.serializers.forPath[ctx.path.length] ?? []) {
+      if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
         return resp;
       }
     }
 
-    for (const codec of codecs.customGuard) {
-      if (codec.serializeGuard(value, ctx)) {
-        if ((resp = codec.serialize(key, value, ctx))[0] !== CONTINUE) {
+    // Name-based serializers
+    const key = ctx.path[ctx.path.length - 1] ?? '';
+    const nameSer = ctx.serializers.forName[key];
+
+    if (nameSer && nameSer.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
+      return resp;
+    }
+
+    // Type-based & custom serializers
+    for (const guardSer of ctx.serializers.forGuard) {
+      if (guardSer.guard(value, ctx)) {
+        const resp = guardSer.fn(value, ctx);
+        (resp.length === 2) && (value = resp[1]);
+
+        if (resp[0] !== CONTINUE) {
           return resp;
         }
       }
@@ -144,20 +136,27 @@ const DefaultTableSerDesCfg = {
         return ctx.done(value.toString());
       }
     } else if (typeof value === 'object' && value !== null) {
-      if (value[$SerializeForTable]) {
-        if ((resp = value[$SerializeForTable](ctx))[0] !== CONTINUE) {
+      // Delegate serializer
+      while ($SerializeForTable in value) {
+        const resp = value[$SerializeForTable](ctx);
+
+        if (resp[0] !== CONTINUE) {
           return resp;
         }
+
+        if (resp.length === 2) {
+          value = resp[1];
+        } else break;
       }
 
-      for (const codec of codecs.classGuard) {
-        if (value instanceof codec.serializeClass) {
-          if ((resp = codec.serialize(key, value, ctx))[0] !== CONTINUE) {
-            return resp;
-          }
-        }
+      // Class-based serializers
+      const classSer = ctx.serializers.forClass.find((c) => value instanceof c.class);
+
+      if (classSer && classSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
+        return resp;
       }
 
+      // Enable using json-bigint
       if (isBigNumber(value)) {
         ctx.bigNumsPresent = true;
         return ctx.done();
@@ -166,44 +165,51 @@ const DefaultTableSerDesCfg = {
       ctx.bigNumsPresent = true;
     }
 
-    return ctx.continue();
+    return ctx.continue(value);
   },
-  deserialize(key, _, ctx) {
-    const codecs = ctx.codecs;
-    let resp;
+  deserialize(value, ctx) {
+    let resp: ReturnType<SerDesFn<unknown>> = null!;
 
-    const column = ctx.tableSchema[key];
-    const value = ctx.rootObj[key];
+    // Path-based deserializers
+    for (const pathSer of ctx.deserializers.forPath[ctx.path.length] ?? []) {
+      if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
+        return resp;
+      }
+    }
 
-    for (let i = 0, n = codecs.path.length; i < n; i++) {
-      const path = codecs.path[i].path;
+    // Name-based deserializers
+    const key = ctx.path[ctx.path.length - 1] ?? '';
+    const nameDes = ctx.deserializers.forName[key];
 
-      if (stringArraysEqual(path, ctx.path)) {
-        if ((resp = codecs.path[i].deserialize?.(key, value, ctx, column) ?? ctx.continue())[0] !== CONTINUE) {
+    if (nameDes && nameDes.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
+      return resp;
+    }
+
+    // Custom deserializers
+    for (const guardDes of ctx.deserializers.forGuard) {
+      if (guardDes.guard(value, ctx)) {
+        const resp = guardDes.fn(value, ctx);
+        (resp.length === 2) && (value = resp[1]);
+
+        if (resp[0] !== CONTINUE) {
           return resp;
         }
       }
     }
 
-    if (key in codecs.name) {
-      if ((resp = codecs.name[key].deserialize(key, value, ctx, column))[0] !== CONTINUE) {
-        return resp;
-      }
+    if (key === '' || value === null) {
+      return ctx.continue(value);
     }
 
-    if (key === '') {
-      return ctx.continue();
+    // Type-based deserializers
+    const type = resolveAbsType(ctx);
+    const typeDes = type && ctx.deserializers.forType[type];
+
+    if (typeDes && typeDes.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
+      return resp;
     }
 
-    const type = resolveType(column);
-
-    if (value !== null && type && type in codecs.type) {
-      if ((resp = codecs.type[type].deserialize(key, value, ctx, column))[0] !== CONTINUE) {
-        return resp;
-      }
-    }
-
-    return ctx.done();
+    return ctx.continue(value);
   },
   codecs: Object.values(TableCodecs.Defaults),
 } satisfies TableSerDesConfig;
@@ -226,6 +232,30 @@ function populateSparseData(ctx: TableDesCtx) {
       ctx.rootObj[key] = null;
     }
   }
+}
+
+function resolveAbsType({ path, tableSchema }: TableDesCtx): string | undefined {
+  const column = tableSchema[path[0]];
+  const type = column ? resolveType(column) : undefined;
+
+  if (path.length === 1 || !column) {
+    return type;
+  }
+
+  if (type === 'map') {
+    if (typeof path[1] === 'number') {
+      if (path.length === 3) {
+        return (path[2] === 0 ? (column as any).keyType : (column as any).valueType);
+      }
+    } else if (path.length === 2) {
+      return (column as any).valueType;
+    }
+  }
+  else if ((type === 'set' || type === 'list') && path.length === 2) {
+    return (column as any).valueType;
+  }
+
+  return undefined;
 }
 
 function resolveType(column: ListTableKnownColumnDefinition | ListTableUnsupportedColumnDefinition) {

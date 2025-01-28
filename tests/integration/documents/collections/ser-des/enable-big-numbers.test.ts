@@ -132,7 +132,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
       return ctx.done(this.unwrap);
     }
 
-    static [$DeserializeForCollection](_: unknown, value: string, ctx: CollDesCtx) {
+    static [$DeserializeForCollection](value: string, ctx: CollDesCtx) {
       return ctx.done(new Newtype(value));
     }
   }
@@ -179,7 +179,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
   });
 
   it('should work with a GetCollNumRepFn', async () => {
-    const asserter = mkAsserter((path: readonly string[]) => {
+    const asserter = mkAsserter((path) => {
       if (path[0] !== 'stats') {
         return 'number_or_string';
       }
@@ -189,7 +189,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
       }
 
       if (path[1] === 'cars' && path[3] === 'a') {
-        if (path[2] === '0') {
+        if (path[2] === 0) {
           return 'number';
         }
         return 'bignumber';

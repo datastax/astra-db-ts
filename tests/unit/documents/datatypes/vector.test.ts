@@ -75,7 +75,7 @@ describe('unit.documents.datatypes.vector', () => {
   });
 
   it('should convert between all types in the browser', { pretendEnv: 'browser' }, () => {
-    const vectors = [vector(ARR), vector(F32ARR), vector(BINARY), vector(vector(ARR))];
+    const vectors = [vector(ARR), vector(F32ARR), vector(BINARY), new DataAPIVector(vector(ARR))];
 
     for (const vec of vectors) {
       assert.strictEqual(vec.asBase64(), BINARY.$binary);

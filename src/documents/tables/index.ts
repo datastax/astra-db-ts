@@ -17,14 +17,12 @@ export type * from './types';
 export * from './table';
 
 export {
-  TableColumnTypeParser,
   TableSerDesConfig,
   TableDesCtx,
   TableSerCtx,
 } from './ser-des/ser-des';
 
 export {
-  TableCodecSerDesFns,
   TableCodecClass,
   TableCodecs,
   TableCodec,

@@ -28,13 +28,20 @@ export interface RawDataAPIResponse {
   /**
    * A response data holding documents that were returned as the result of a command.
    */
-  status?: Record<string, any>,
+  readonly status?: Record<string, any>,
   /**
    * Status objects, generally describe the side effects of commands, such as the number of updated or inserted documents.
    */
-  errors?: any[],
+  readonly errors?: any[],
   /**
    * Array of objects or null (Error)
    */
-  data?: Record<string, any>,
+  readonly data?: Record<string, any>,
 }
+
+/**
+ * Represents some, _any_, constructor (e.g. `Error`, `Map`, or `MyCustomClass`).
+ *
+ * @public
+ */
+export type SomeConstructor = abstract new (...args: any[]) => any;

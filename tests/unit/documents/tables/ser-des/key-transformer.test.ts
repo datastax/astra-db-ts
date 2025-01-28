@@ -98,5 +98,77 @@ describe('unit.documents.tables.ser-des.key-transformer', () => {
         car: new Set(['dontChangeMe']),
       });
     });
+
+    it('should allow for deep transformation', () => {
+      const serdes = new TableSerDes({ keyTransformer: new Camel2SnakeCase({ transformNested: () => true }) });
+
+      const [obj] = serdes.serialize({
+        camelCaseName1: 'dontChangeMe',
+        camelCaseName2: new Map([['changeMe', 'dontChangeMe']]),
+        camelCaseName3: new Set(['dontChangeMe']),
+      });
+
+      assert.deepStrictEqual(obj, {
+        camel_case_name1: 'dontChangeMe',
+        camel_case_name2: {
+          change_me: 'dontChangeMe',
+        },
+        camel_case_name3: ['dontChangeMe'],
+      });
+    });
+
+    it('should allow for explicit nested transformation when serializing', () => {
+      const serdes = new TableSerDes({ keyTransformer: new Camel2SnakeCase({ transformNested: (ctx) => ctx.path[0] !== 'camelCaseName3' }) });
+
+      const [obj] = serdes.serialize({
+        camelCaseName1: 'dontChangeMe',
+        camelCaseName2: new Map([['changeMe', 'dontChangeMe']]),
+        camelCaseName3: new Map([['dontChangeMe', 'dontChangeMe']]),
+      });
+
+      assert.deepStrictEqual(obj, {
+        camel_case_name1: 'dontChangeMe',
+        camel_case_name2: {
+          change_me: 'dontChangeMe',
+        },
+        camel_case_name3: {
+          dontChangeMe: 'dontChangeMe',
+        },
+      });
+    });
+
+    it('should allow for explicit nested transformation when deserializing', () => {
+      const serdes = new TableSerDes({ keyTransformer: new Camel2SnakeCase({ transformNested: (ctx) => ctx.path[0] !== 'camelCaseName3' }) });
+
+      const obj = serdes.deserialize([
+        'dontChangeMe',
+        { changeMe: 'dontChangeMe' },
+        { dontChangeMe: 'dontChangeMe' },
+      ], {
+        status: {
+          primaryKeySchema: {
+            camel_case_name1: { type: 'text' },
+            camel_case_name2: { type: 'map', keyType: 'text', valueType: 'text' },
+            camel_case_name3: { type: 'map', keyType: 'text', valueType: 'text' },
+          },
+        },
+      }, true);
+
+      assert.deepStrictEqual(obj, {
+        camelCaseName1: 'dontChangeMe',
+        camelCaseName2: new Map([['changeMe', 'dontChangeMe']]),
+        camelCaseName3: new Map([['dontChangeMe', 'dontChangeMe']]),
+      });
+    });
+
+    it('should allow for transforming _id', () => {
+      const serdes = new TableSerDes({ keyTransformer: new Camel2SnakeCase({ exceptId: false }) });
+
+      const [ser] = serdes.serialize({ _id: 'dontChangeMe' });
+      assert.deepStrictEqual(ser, { _id: 'dontChangeMe' });
+
+      const des = serdes.deserialize({ _id: 'dontChangeMe' }, { status: { projectionSchema: { _id: { type: 'ascii' } } } });
+      assert.deepStrictEqual(des, { Id: 'dontChangeMe' });
+    });
   });
 });

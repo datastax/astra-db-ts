@@ -28,7 +28,7 @@ export type CollNumRep =
 /**
  * @public
  */
-export type GetCollNumRepFn = (path: readonly string[]) => CollNumRep;
+export type GetCollNumRepFn = (path: readonly (string | number)[]) => CollNumRep;
 
 /**
  * @public
@@ -45,7 +45,7 @@ interface NumRepTree {
 export const collNumRepFnFromCfg = (cfg: CollNumRepCfg): GetCollNumRepFn => {
   const tree = buildNumRepTree(cfg);
 
-  return (path: readonly string[]) => {
+  return (path) => {
     return findMatchingPath(path, tree) ?? 'number';
   };
 };
@@ -71,7 +71,7 @@ const buildNumRepTree = (cfg: CollNumRepCfg): NumRepTree => {
   return result;
 };
 
-const findMatchingPath = (path: readonly string[], tree: NumRepTree | undefined): CollNumRep | undefined => {
+const findMatchingPath = (path: readonly (string | number)[], tree: NumRepTree | undefined): CollNumRep | undefined => {
   let rep: CollNumRep | undefined = undefined;
 
   for (let i = 0; tree && i <= path.length; i++) {
@@ -96,7 +96,7 @@ const findMatchingPath = (path: readonly string[], tree: NumRepTree | undefined)
  * @public
  */
 export class NumCoercionError extends Error {
-  public readonly path: string[];
+  public readonly path: (string | number)[];
   public readonly value: number | BigNumber;
   public readonly from: 'number' | 'bignumber';
   public readonly to: CollNumRep;
@@ -106,7 +106,7 @@ export class NumCoercionError extends Error {
    *
    * @internal
    */
-  public constructor(path: string[], value: number | BigNumber, from: 'number' | 'bignumber', to: CollNumRep) {
+  public constructor(path: (string | number)[], value: number | BigNumber, from: 'number' | 'bignumber', to: CollNumRep) {
     super(`Failed to coerce value from ${from} to ${to} at path: ${path.join('.')}`);
     this.path = path;
     this.value = value;
@@ -124,19 +124,19 @@ export const coerceBigNumber = (value: BigNumber, ctx: CollDesCtx): readonly [0 
         throw new NumCoercionError(ctx.path, value, 'bignumber', 'number');
       }
 
-      return ctx.next(asNum);
+      return ctx.recurse(asNum);
     }
     case 'bigint': {
       if (!value.isInteger()) {
         throw new NumCoercionError(ctx.path, value, 'bignumber', 'bigint');
       }
-      return ctx.next(BigInt(value.toFixed(0)));
+      return ctx.recurse(BigInt(value.toFixed(0)));
     }
     case 'bignumber':
-      return ctx.next(value);
+      return ctx.recurse(value);
     case 'string':
     case 'number_or_string':
-      return ctx.next(value.toString());
+      return ctx.recurse(value.toString());
   }
 };
 
@@ -146,14 +146,14 @@ export const coerceNumber = (value: number, ctx: CollDesCtx): readonly [0 | 1 | 
       if (!Number.isInteger(value)) {
         throw new NumCoercionError(ctx.path, value, 'number', 'bigint');
       }
-      return ctx.next(BigInt(value));
+      return ctx.recurse(BigInt(value));
     }
     case 'bignumber':
-      return ctx.next(BigNumber(value));
+      return ctx.recurse(BigNumber(value));
     case 'string':
-      return ctx.next(value.toString());
+      return ctx.recurse(value.toString());
     case 'number':
     case 'number_or_string':
-      return ctx.next(value);
+      return ctx.recurse(value);
   }
 };

@@ -12,39 +12,101 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { BaseDesCtx, BaseSerCtx, CodecSerDesFns } from '@/src/lib';
+import { BaseSerDesCtx, SomeDoc } from '@/src/index';
+import { isBigNumber } from '@/src/lib/utils';
+
+/**
+ * @public
+ */
+export type KeyTransformerCtx = Pick<BaseSerDesCtx, 'path'>;
 
 /**
  * @public
  */
 export abstract class KeyTransformer {
-  public abstract serializeKey(key: string, ctx: BaseSerCtx<CodecSerDesFns>): string;
-  public abstract deserializeKey(key: string, ctx: BaseDesCtx<CodecSerDesFns>): string;
+  public abstract serializeKey(key: string, ctx: KeyTransformerCtx): string;
+  public abstract deserializeKey(key: string, ctx: KeyTransformerCtx): string;
+  public abstract transformNested(ctx: KeyTransformerCtx): boolean;
+
+  public serialize(obj: unknown, ctx: KeyTransformerCtx) {
+    if (!obj || typeof obj !== 'object') {
+      return obj;
+    }
+    return this._immutSerdesHelper(obj, ctx, this.serializeKey.bind(this));
+  }
+
+  public deserialize(obj: unknown, ctx: KeyTransformerCtx) {
+    if (!obj || typeof obj !== 'object') {
+      return obj;
+    }
+    return this._immutSerdesHelper(obj, ctx, this.deserializeKey.bind(this));
+  }
+
+  private _immutSerdesHelper(obj: SomeDoc, ctx: KeyTransformerCtx, fn: (key: string, ctx: KeyTransformerCtx) => string) {
+    const ret: SomeDoc = Array.isArray(obj) ? [] : {};
+
+    const path = ctx.path;
+    path.push('<temp>');
+
+    for (const key of Object.keys(obj)) {
+      path[path.length - 1] = key;
+
+      const newKey = fn(key, ctx);
+      ret[newKey] = obj[key];
+
+      const isObj = typeof obj[key] === 'object' && obj[key] !== null;
+      const isLegalObj = isObj && !isBigNumber(obj[key]);
+
+      if (isLegalObj && this.transformNested(ctx)) {
+        ret[newKey] = this._immutSerdesHelper(obj[key], ctx, fn);
+      }
+    }
+
+    path.pop();
+    return ret;
+  }
+}
+
+/**
+ * @public
+ */
+export interface Camel2SnakeCaseOptions {
+  exceptId?: boolean;
+  transformNested?: boolean | ((path: KeyTransformerCtx) => boolean);
 }
 
 /**
  * @public
  */
 export class Camel2SnakeCase extends KeyTransformer {
-  private _cache: Record<string, string> = { _id: '_id' };
+  private readonly _transformNested?: (path: KeyTransformerCtx) => boolean;
+  private readonly _exceptId: boolean;
 
-  public override serializeKey(camel: string, ctx: BaseSerCtx<CodecSerDesFns>): string {
-    if (ctx.path.length > 1 || !camel) {
-      return camel;
-    }
-    if (this._cache[camel]) {
-      return this._cache[camel];
-    }
-    return this._cache[camel] = camel.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+  constructor({ exceptId, transformNested }: Camel2SnakeCaseOptions = {}) {
+    super();
+
+    this._exceptId = exceptId !== false;
+
+    this._transformNested = (typeof transformNested === 'boolean')
+      ? () => transformNested
+      : transformNested;
   }
 
-  public override deserializeKey(snake: string, ctx: BaseDesCtx<CodecSerDesFns>): string {
-    if (ctx.path.length > 1 || !snake) {
+  public override transformNested(ctx: KeyTransformerCtx): boolean {
+    return this._transformNested?.(ctx) ?? false;
+  }
+
+  public override serializeKey(camel: string): string {
+    if (!camel || this._exceptId && camel === '_id') {
+      return camel;
+    }
+    return camel.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+  }
+
+  public override deserializeKey(snake: string): string {
+    if (!snake || this._exceptId && snake === '_id') {
       return snake;
     }
-    if (this._cache[snake]) {
-      return this._cache[snake];
-    }
-    return this._cache[snake] = snake.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
+    return snake.replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
   }
 }

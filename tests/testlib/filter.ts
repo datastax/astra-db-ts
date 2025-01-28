@@ -21,7 +21,7 @@ const FILTER_STATE = {
   HARD_NO: 4,
 };
 
-export const RAW_FILTERS = (process.env.CLIENT_TESTS_FILTER ?? '')
+const RAW_FILTERS = (process.env.CLIENT_TESTS_FILTER ?? '')
   .slice(0, -1)
   .split('" ')
   .filter(Boolean)
@@ -31,7 +31,7 @@ export const RAW_FILTERS = (process.env.CLIENT_TESTS_FILTER ?? '')
     filter: rawFilter.split('"')[1],
   }));
 
-export const FILTER_COMBINATOR = (process.env.CLIENT_TESTS_FILTER_COMBINATOR ?? 'and') as 'and' | 'or';
+const FILTER_COMBINATOR = (process.env.CLIENT_TESTS_FILTER_COMBINATOR ?? 'and') as 'and' | 'or';
 
 export const TEST_FILTER = (() => {
   const filters = RAW_FILTERS
