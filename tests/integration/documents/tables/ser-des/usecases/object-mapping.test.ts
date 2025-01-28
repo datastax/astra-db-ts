@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEFAULT_TABLE_NAME, initTestObjects, it, parallel } from '@/tests/testlib';
+import { initTestObjects, it, parallel } from '@/tests/testlib';
 import {
   $DeserializeForTable,
   $SerializeForTable,
@@ -99,7 +99,8 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
           price: book.price,
           publishedAt: book.publishedAt,
           insertedAt: new Date('3000-01-01'),
-          reviews: book.reviews,
+          reviewNames: [...book.reviews].map((r) => r.critic.name),
+          reviewReviews: [...book.reviews].map((r) => r.review),
         });
       },
       deserialize: (value, ctx) => {
@@ -115,35 +116,17 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
           book.isbn,
           book.price,
           book.publishedAt,
-          reviews,
+          new Set(reviews),
         ));
 
         return ctx.continue();
       },
     });
 
-    const ReviewCodec = TableCodecs.forPath([], {
-      serialize: (book, ctx) => {
-        if (!(book instanceof Book)) {
-          return ctx.nevermind();
-        }
-
-        return ctx.continue({
-          ...book,
-          reviews: undefined,
-          reviewNames: [...book.reviews].map((r) => r.critic.name),
-          reviewReviews: [...book.reviews].map((r) => r.review),
-        });
-      },
-      deserialize: (review, ctx) => {
-        return ctx.continue();
-      },
-    });
-
-    const table = db.table(DEFAULT_TABLE_NAME, {
+    const table = db.table('obj_mapping_table', {
       serdes: {
         keyTransformer: new Camel2SnakeCase(),
-        codecs: [ISBNCodec, BookCodec, ReviewCodec],
+        codecs: [ISBNCodec, BookCodec],
       },
     });
 
@@ -153,19 +136,20 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
       new ISBN(`what_does_an_isbn_even_look_like_${key}`),
       BigNumber(-12.50),
       new Date('1970-01-01'),
-      new Map([
-        [new Person('Tow Mater'), new Review('dad gum!')],
+      new Set([
+        new Review(new Person('Tow Mater'), 'dad gum!'),
       ]),
     );
 
     const serialized = {
-      _id: `what_does_an_isbn_even_look_like_${key}`,
+      isbn: `what_does_an_isbn_even_look_like_${key}`,
       title: 'Lord of the Fries',
       author: 'Gilliam Wolding',
       price: BigNumber(-12.50),
       published_at: '1970-01-01T00:00:00.000Z',
       inserted_at: '3000-01-01T00:00:00.000Z',
-      reviews: [{ 'Tow Mater': 'dad gum!' }],
+      review_names: ['Tow Mater'],
+      review_reviews: ['dad gum!'],
     };
 
     let cse!: CommandSucceededEvent;
@@ -173,10 +157,10 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
 
     const { insertedId } = await table.insertOne(book);
     assert.deepStrictEqual(cse.command.insertOne.document, serialized);
-    assert.deepStrictEqual(cse.resp.status?.insertedIds, [book.isbn.unwrap]);
-    assert.deepStrictEqual(insertedId, book.isbn);
+    assert.deepStrictEqual(cse.resp.status?.insertedIds, [[book.isbn.unwrap]]);
+    assert.deepStrictEqual(insertedId, { isbn: book.isbn });
 
-    const found = await table.findOne({ _id: book.isbn });
+    const found = await table.findOne({ isbn: book.isbn });
     assert.deepStrictEqual(found, book);
   });
 
@@ -188,7 +172,7 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
         readonly isbn: ISBN,
         readonly price: BigNumber,
         readonly publishedAt: Date,
-        readonly reviews: MySet<Review>,
+        readonly reviews: Set<Review>,
       ) {}
 
       static [$DeserializeForTable](value: unknown, ctx: TableDesCtx) {
@@ -202,7 +186,7 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
           book.isbn,
           book.price,
           book.publishedAt,
-          book.reviews,
+          new Set(book.reviewNames.map((name: string, i: number) => new Review(new Person(name), book.reviewReviews[i]))),
         ));
 
         return ctx.continue();
@@ -216,7 +200,8 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
           price: book.price,
           publishedAt: book.publishedAt,
           insertedAt: new Date('3000-01-01'),
-          reviews: book.reviews,
+          reviewNames: [...book.reviews].map((r) => r.critic.name),
+          reviewReviews: [...book.reviews].map((r) => r.review),
         });
       }
 
@@ -246,39 +231,18 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
       }
     }
 
-    class Review implements TableCodec<typeof Review> {
+    class Review {
       constructor(readonly critic: Person, readonly review: string) {}
-
-      static [$DeserializeForTable](raw: any, ctx: TableDesCtx) {
-        return ctx.done(new Review(new Person(raw.criticName), raw.review));
-      }
-
-      [$SerializeForTable](ctx: TableSerCtx) {
-        return ctx.done({ criticName: this.critic.name, review: this.review });
-      }
-    }
-
-    class MySet<T> extends Set<T> implements TableCodec<typeof MySet> {
-      static [$DeserializeForTable](_: unknown, ctx: TableDesCtx) {
-        ctx.mapAfter((v) => new MySet(v));
-        return ctx.continue();
-      }
-
-      [$SerializeForTable](ctx: TableSerCtx) {
-        return ctx.continue([...this]);
-      }
     }
 
     const { client, db } = initTestObjects();
 
-    const table = db.table(DEFAULT_TABLE_NAME, {
+    const table = db.table('obj_mapping_table', {
       serdes: {
         keyTransformer: new Camel2SnakeCase({ transformNested: true }),
         codecs: [
           TableCodecs.forName('', Book),
           TableCodecs.forName('isbn', ISBN),
-          TableCodecs.forName('reviews', MySet),
-          TableCodecs.forPath(['reviews', '*'], Review),
         ],
       },
     });
@@ -289,19 +253,20 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
       new ISBN(`what_does_an_isbn_even_look_like_${key}`),
       BigNumber(-12.50),
       new Date('1970-01-01'),
-      new MySet([
+      new Set([
         new Review(new Person('Tow Mater'), 'dad gum!'),
       ]),
     );
 
     const serialized = {
-      _id: `what_does_an_isbn_even_look_like_${key}`,
+      isbn: `what_does_an_isbn_even_look_like_${key}`,
       title: 'Lord of the Fries',
       author: 'Gilliam Wolding',
       price: BigNumber(-12.50),
-      published_at: { '$date': 0 },
-      inserted_at: { '$date': 32503680000000 },
-      reviews: [{ critic_name: 'Tow Mater', review: 'dad gum!' }],
+      published_at: '1970-01-01T00:00:00.000Z',
+      inserted_at: '3000-01-01T00:00:00.000Z',
+      review_names: ['Tow Mater'],
+      review_reviews: ['dad gum!'],
     };
 
     let cse!: CommandSucceededEvent;
@@ -309,10 +274,10 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
 
     const { insertedId } = await table.insertOne(book);
     assert.deepStrictEqual(cse.command.insertOne.document, serialized);
-    assert.deepStrictEqual(cse.resp.status?.insertedIds, [book.isbn.unwrap]);
-    assert.deepStrictEqual(insertedId, book.isbn);
+    assert.deepStrictEqual(cse.resp.status?.insertedIds, [[book.isbn.unwrap]]);
+    assert.deepStrictEqual(insertedId, { isbn: book.isbn });
 
-    const found = await table.findOne({ _id: book.isbn });
+    const found = await table.findOne({ isbn: book.isbn });
     assert.deepStrictEqual(found, book);
   });
 });
