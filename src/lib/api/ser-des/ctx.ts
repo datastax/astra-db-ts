@@ -38,7 +38,7 @@ export interface BaseSerDesCtx {
   path: (string | number)[],
   done<T>(obj?: T): readonly [0, T?],
   recurse<T>(obj?: T): readonly [1, T?],
-  nevermind<T>(obj?: T): readonly [2, T?],
+  continue<T>(obj?: T): readonly [2, T?],
   mapAfter(map: (v: any) => unknown): readonly [2],
   keyTransformer?: KeyTransformer,
   mutatingInPlace: boolean,

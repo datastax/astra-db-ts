@@ -15,8 +15,8 @@
 
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
-import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
-import { CollCodecs } from '@/src/documents/collections';
+import { CollDesCtx, CollectionSerDes, CollSerCtx } from '@/src/documents/collections/ser-des/ser-des';
+import { $DeserializeForCollection, $SerializeForCollection, CollCodec, CollCodecs } from '@/src/documents/collections';
 import { uuid, UUID } from '@/src/documents';
 import { ctxRecurse, ctxDone, ctxContinue } from '@/src/lib/api/ser-des/ctx';
 
@@ -135,10 +135,9 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
       }
 
       const IdCodec = CollCodecs.forId({
-        serialize: (val, ctx) => ctx.nevermind(val.unwrap),
+        serialize: (val, ctx) => ctx.continue(val.unwrap),
         deserialize: (val, ctx) => ctx.recurse(new Id(val)),
       });
-
       const serdes = new CollectionSerDes({ codecs: [IdCodec], enableBigNumbers: () => 'bigint' });
 
       const id = new Id(uuid(4));
@@ -152,6 +151,30 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
     });
 
     it('should work with delegate serdes', () => {
+      class Id implements CollCodec<typeof Id> {
+        public readonly brand = 'Id';
+        constructor(public readonly unwrap: UUID) {}
+
+        static [$DeserializeForCollection](val: any, ctx: CollDesCtx) {
+          return ctx.recurse(new Id(val));
+        }
+
+        [$SerializeForCollection](ctx: CollSerCtx) {
+          return ctx.continue(this.unwrap);
+        }
+      }
+
+      const IdCodec = CollCodecs.forId(Id);
+      const serdes = new CollectionSerDes({ codecs: [IdCodec], enableBigNumbers: () => 'bigint' });
+
+      const id = new Id(uuid(4));
+      const doc = { _id: id, value: 1n };
+
+      const ser = serdes.serialize(doc);
+      assert.deepStrictEqual(ser, [{ _id: { $uuid: id.unwrap.toString() }, value: 1n }, true]);
+
+      const des = serdes.deserialize(ser[0], {});
+      assert.deepStrictEqual(des, { _id: id, value: 1n });
     });
   });
 

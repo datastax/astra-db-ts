@@ -76,7 +76,7 @@ export class CollCodecs {
   public static forId(optsOrClass: CollNominalCodecOpts & { class?: SomeConstructor } | CollCodecClass): RawCollCodecs {
     const mkIdDesCodec = (fn: SerDesFn<CollDesCtx>): RawCollCodecs => [
       CollCodecs.forName('', {
-        deserialize: (val, ctx) => ctx.parsingInsertedId ? fn(val, ctx) : ctx.nevermind(),
+        deserialize: (val, ctx) => ctx.parsingInsertedId ? fn(val, ctx) : ctx.continue(),
       }),
       CollCodecs.forPath(['_id'], {
         deserialize: fn,

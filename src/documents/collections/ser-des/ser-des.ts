@@ -89,7 +89,7 @@ const BigNumCollectionDesCfg: CollectionSerDesConfig = {
       return coerceBigNumber(value, ctx);
     }
 
-    return ctx.nevermind();
+    return ctx.continue();
   },
 };
 
@@ -126,8 +126,16 @@ const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
 
     if (typeof value === 'object' && value !== null) {
       // Delegate serializer
-      if ($SerializeForCollection in value && (resp = value[$SerializeForCollection](ctx))[0] !== CONTINUE) {
-        return resp;
+      while ($SerializeForCollection in value) {
+        const resp = value[$SerializeForCollection](ctx);
+
+        if (resp[0] !== CONTINUE) {
+          return resp;
+        }
+
+        if (resp.length === 2) {
+          value = resp[1];
+        } else break;
       }
 
       // Class-based serializers

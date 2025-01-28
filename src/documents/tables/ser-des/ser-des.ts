@@ -18,10 +18,7 @@ import {
   ListTableKnownColumnDefinition,
   ListTableUnsupportedColumnDefinition,
 } from '@/src/db';
-import {
-  RawTableCodecs,
-  TableCodecs,
-} from '@/src/documents/tables/ser-des/codecs';
+import { RawTableCodecs, TableCodecs } from '@/src/documents/tables/ser-des/codecs';
 import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { isBigNumber, pathMatches } from '@/src/lib/utils';
@@ -140,8 +137,16 @@ const DefaultTableSerDesCfg = {
       }
     } else if (typeof value === 'object' && value !== null) {
       // Delegate serializer
-      if ($SerializeForTable in value && (resp = value[$SerializeForTable](ctx))[0] !== CONTINUE) {
-        return resp;
+      while ($SerializeForTable in value) {
+        const resp = value[$SerializeForTable](ctx);
+
+        if (resp[0] !== CONTINUE) {
+          return resp;
+        }
+
+        if (resp.length === 2) {
+          value = resp[1];
+        } else break;
       }
 
       // Class-based serializers
@@ -160,7 +165,7 @@ const DefaultTableSerDesCfg = {
       ctx.bigNumsPresent = true;
     }
 
-    return ctx.nevermind();
+    return ctx.continue();
   },
   deserialize(value, ctx) {
     let resp: ReturnType<SerDesFn<unknown>> = null!;
@@ -193,7 +198,7 @@ const DefaultTableSerDesCfg = {
     }
 
     if (key === '' || value === null) {
-      return ctx.nevermind();
+      return ctx.continue();
     }
 
     // Type-based deserializers
@@ -204,7 +209,7 @@ const DefaultTableSerDesCfg = {
       return resp;
     }
 
-    return ctx.nevermind();
+    return ctx.continue();
   },
   codecs: Object.values(TableCodecs.Defaults),
 } satisfies TableSerDesConfig;

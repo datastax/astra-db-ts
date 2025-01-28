@@ -89,7 +89,7 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
     const BookCodec = TableCodecs.forPath([], {
       serialize: (book, ctx) => {
         if (!(book instanceof Book)) {
-          return ctx.nevermind();
+          return ctx.continue();
         }
 
         return ctx.recurse({
@@ -105,7 +105,7 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
       },
       deserialize: (value, ctx) => {
         if (ctx.parsingInsertedId || !value) {
-          return ctx.nevermind();
+          return ctx.continue();
         }
 
         const reviews = value.reviewNames.map((name: string, i: number) => new Review(new Person(name), value.reviewReviews[i]));
@@ -177,7 +177,7 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
 
       static [$DeserializeForTable](value: unknown, ctx: TableDesCtx) {
         if (ctx.parsingInsertedId || !value) {
-          return ctx.nevermind();
+          return ctx.continue();
         }
 
         ctx.mapAfter((book) => new Book(

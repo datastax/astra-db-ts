@@ -119,7 +119,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
     return {
       done: ctxDone,
       recurse: ctxRecurse,
-      nevermind: ctxContinue,
+      continue: ctxContinue,
       keyTransformer: this._cfg.keyTransformer,
       mutatingInPlace: true,
       mapAfter: null!,

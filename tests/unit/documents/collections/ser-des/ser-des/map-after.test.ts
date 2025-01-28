@@ -27,7 +27,7 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
       const res: unknown[] = [];
 
       const serFn = (tag: string): CollNominalCodecOpts => ({
-        serialize: (_, ctx) => (ctx.mapAfter((v) => (res.push([tag, v]), v)), ctx.nevermind()),
+        serialize: (_, ctx) => (ctx.mapAfter((v) => (res.push([tag, v]), v)), ctx.continue()),
       });
 
       const serdes = new CollectionSerDes({
@@ -91,7 +91,7 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
       const serdes = new CollectionSerDes({
         keyTransformer: new Camel2SnakeCase(),
         codecs: [
-          CollCodecs.forPath([], { serialize: (_, ctx) => (ctx.mapAfter((v) => val = v), ctx.nevermind()) }),
+          CollCodecs.forPath([], { serialize: (_, ctx) => (ctx.mapAfter((v) => val = v), ctx.continue()) }),
         ],
       });
 
@@ -105,7 +105,7 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
       const res: unknown[] = [];
 
       const serFn = (tag: string): CollNominalCodecOpts => ({
-        deserialize: (_, ctx) => (ctx.mapAfter((v) => (res.push([tag, v]), v)), ctx.nevermind()),
+        deserialize: (_, ctx) => (ctx.mapAfter((v) => (res.push([tag, v]), v)), ctx.continue()),
       });
 
       const serdes = new CollectionSerDes({
@@ -123,7 +123,7 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
           repeat(() => CollCodecs.forPath([],                       serFn('[]'))),
 
           [CollCodecs.forName('nested1_map', {
-            deserialize: (_, ctx) => (ctx.mapAfter((obj) => new Map(Object.entries(obj))), ctx.nevermind()),
+            deserialize: (_, ctx) => (ctx.mapAfter((obj) => new Map(Object.entries(obj))), ctx.continue()),
           })],
         ].sort(() => .5 - Math.random()).flat(),
       });
