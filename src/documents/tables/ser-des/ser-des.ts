@@ -109,7 +109,7 @@ const DefaultTableSerDesCfg = {
 
     // Path-based serializers
     for (const pathSer of ctx.serializers.forPath[ctx.path.length] ?? []) {
-      if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((ser) => (resp = ser(value, ctx))[0] !== NEVERMIND)) {
+      if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
         return resp;
       }
     }
@@ -118,14 +118,19 @@ const DefaultTableSerDesCfg = {
     const key = ctx.path[ctx.path.length - 1] ?? '';
     const nameSer = ctx.serializers.forName[key];
 
-    if (nameSer && nameSer.find((ser) => (resp = ser(value, ctx))[0] !== NEVERMIND)) {
+    if (nameSer && nameSer.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
       return resp;
     }
 
     // Type-based & custom serializers
     for (const guardSer of ctx.serializers.forGuard) {
-      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(value, ctx))[0] !== NEVERMIND) {
-        return resp;
+      if (guardSer.guard(value, ctx)) {
+        const resp = guardSer.fn(value, ctx);
+        (resp.length === 2) && (value = resp[1]);
+
+        if (resp[0] !== NEVERMIND) {
+          return resp;
+        }
       }
     }
 
@@ -142,7 +147,7 @@ const DefaultTableSerDesCfg = {
       // Class-based serializers
       const classSer = ctx.serializers.forClass.find((c) => value instanceof c.class);
 
-      if (classSer && classSer.fns.find((ser) => (resp = ser(value, ctx))[0] !== NEVERMIND)) {
+      if (classSer && classSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
         return resp;
       }
 
@@ -162,7 +167,7 @@ const DefaultTableSerDesCfg = {
 
     // Path-based deserializers
     for (const pathSer of ctx.deserializers.forPath[ctx.path.length] ?? []) {
-      if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((des) => (resp = des(value, ctx))[0] !== NEVERMIND)) {
+      if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
         return resp;
       }
     }
@@ -171,14 +176,19 @@ const DefaultTableSerDesCfg = {
     const key = ctx.path[ctx.path.length - 1] ?? '';
     const nameDes = ctx.deserializers.forName[key];
 
-    if (nameDes && nameDes.find((des) => (resp = des(value, ctx))[0] !== NEVERMIND)) {
+    if (nameDes && nameDes.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
       return resp;
     }
 
     // Custom deserializers
-    for (const guardSer of ctx.deserializers.forGuard) {
-      if (guardSer.guard(value, ctx) && (resp = guardSer.fn(value, ctx))[0] !== NEVERMIND) {
-        return resp;
+    for (const guardDes of ctx.deserializers.forGuard) {
+      if (guardDes.guard(value, ctx)) {
+        const resp = guardDes.fn(value, ctx);
+        (resp.length === 2) && (value = resp[1]);
+
+        if (resp[0] !== NEVERMIND) {
+          return resp;
+        }
       }
     }
 
@@ -190,7 +200,7 @@ const DefaultTableSerDesCfg = {
     const type = resolveAbsType(ctx);
     const typeDes = type && ctx.deserializers.forType[type];
 
-    if (typeDes && typeDes.find((des) => (resp = des(value, ctx))[0] !== NEVERMIND)) {
+    if (typeDes && typeDes.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
       return resp;
     }
 

@@ -38,8 +38,8 @@ export interface BaseSerDesCtx {
   path: (string | number)[],
   done<T>(obj?: T): readonly [0, T?],
   continue<T>(obj?: T): readonly [1, T?],
-  nevermind(): readonly [2],
-  mapAfter(map: (v: any) => unknown): void,
+  nevermind<T>(obj?: T): readonly [2, T?],
+  mapAfter(map: (v: any) => unknown): readonly [2],
   keyTransformer?: KeyTransformer,
   mutatingInPlace: boolean,
 }
@@ -75,6 +75,9 @@ export function ctxContinue<T>(obj?: T): readonly [1, T?] {
 /**
  * @internal
  */
-export function ctxNevermind(): readonly [2] {
+export function ctxNevermind<T>(obj?: T): readonly [2, T?] {
+  if (arguments.length === 1) {
+    return [NEVERMIND, obj];
+  }
   return NEVERMIND_ARR;
 }

@@ -135,9 +135,7 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
       }
 
       const IdCodec = CollCodecs.forId({
-        serialize: (val, ctx) => {
-          return ctx.continue(val.unwrap);
-        },
+        serialize: (val, ctx) => ctx.nevermind(val.unwrap),
         deserialize: (val, ctx) => ctx.continue(new Id(val)),
       });
 
@@ -149,7 +147,7 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
       const ser = serdes.serialize(doc);
       assert.deepStrictEqual(ser, [{ _id: { $uuid: id.unwrap.toString() }, value: 1n }, true]);
 
-      const des = serdes.deserialize(ser, {});
+      const des = serdes.deserialize(ser[0], {});
       assert.deepStrictEqual(des, { _id: id, value: 1n });
     });
 

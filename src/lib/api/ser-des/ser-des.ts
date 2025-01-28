@@ -30,7 +30,7 @@ import {
   ctxContinue,
   ctxDone,
   ctxNevermind,
-  DONE,
+  DONE, NEVERMIND,
 } from '@/src/lib/api/ser-des/ctx';
 
 /**
@@ -132,7 +132,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
 
 function serdesRecord<Ctx extends BaseSerDesCtx>(key: string | number, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
   const postMaps: ((v: any) => unknown)[] = [];
-  ctx.mapAfter = (fn) => postMaps.push(fn);
+  ctx.mapAfter = (fn) => { postMaps.push(fn); return [NEVERMIND]; };
 
   const stop = applySerdesFns(fns, key, obj, ctx);
 
