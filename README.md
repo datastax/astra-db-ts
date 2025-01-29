@@ -63,7 +63,9 @@ interface Dream extends VectorDoc {
   }]);
 
   // Hm, changed my mind
-  await collection.updateOne({ _id: oid('674f0f5c1c162131319fa09e') }, { $set: { summary: 'Surfers\' paradise' } });
+  await collection.updateOne({ _id: oid('674f0f5c1c162131319fa09e') }, {
+    $set: { summary: 'Surfers\' paradise' } 
+  });
 
   // Let's see what we've got, by performing a vector search
   const cursor = collection.find({})
@@ -145,7 +147,9 @@ type Dream = InferTableSchema<typeof DreamsTableSchema>;
   await table.insertMany(rows);
 
   // Hm, changed my mind
-  await table.updateOne({ id: 103 }, { $set: { summary: 'Surfers\' paradise' } });
+  await table.updateOne({ id: 103 }, {
+    $set: { summary: 'Surfers\' paradise' } 
+  });
 
   // Let's see what we've got, by performing a vector search
   const cursor = table.find({})
