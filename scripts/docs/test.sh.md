@@ -81,7 +81,7 @@ The `astra-db-ts` test suite implements fully custom test filtering, inspired by
 
 There are two different mocha-like filters you can use:
 - `-f <match>`: This is a basic filter that acts like Mocha's own `-f` flag. It only needs to match a part of the test name (or its parents' names) to succeed
-- `-g <regex>`: This is like `-f`, but for regex. Each only needs to match a part of the test name (or its parent' names) to succeed, so use `^$` as necessary
+- `-g <regex>`: This is like `-f`, but for regex. Each only needs to match a part of the test name (or its parents' names) to succeed, so use `^$` as necessary
 
 Unlike Mocha, there is no `-i` flag—instead, you can invert filters on a case-by-case basis by using `-F <match>` 
 or `-G <regex>`, so that the test (& its parent describes) need to NOT match that string/regex to run.
@@ -253,10 +253,11 @@ scripts/test.sh -f integration.documents.tables.ser-des.key-transformer
 
 ### Running some tests without the lengthy setup step
 
-If running an integration test file, I'll very commonly pair this with the `-P` flag to skip the prelude, if the DB is
-already setup, to save a lot of time there, and have the test run in (often) just seconds.
+If I'm running some integration tests, I'll very commonly pair this with the `-P` flag to skip the prelude to save a lot of time there, and have the test run in (often) just seconds.
 
 Note that if you're running only unit tests, the prelude will automatically be skipped for you.
+
+Also, you'll probably have a bad time if the DB isn't already set up properly.
 
 ```sh
 scripts/test.sh -f integration.documents.tables.ser-des.key-transformer -P
