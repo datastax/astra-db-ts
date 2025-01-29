@@ -16,7 +16,7 @@
 import { initTestObjects } from '@/tests/testlib/fixtures';
 import { checkTestsEnabled, dropEphemeralColls, dropEphemeralTables } from '@/tests/testlib/utils';
 import { parallelTestState } from '@/tests/testlib/test-fns/parallel';
-import { backgroundTestState, CURRENT_DESCRIBE_NAMES, GLOBAL_FIXTURES, RUNNING_INT_TESTS } from '@/tests/testlib';
+import { backgroundTestState, CURRENT_DESCRIBE_NAMES, GLOBAL_FIXTURES } from '@/tests/testlib';
 
 export type SuiteBlock = (fixtures: ReturnType<typeof initTestObjects>) => void;
 

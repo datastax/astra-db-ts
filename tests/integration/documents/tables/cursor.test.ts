@@ -25,7 +25,7 @@ import {
 } from '@/tests/testlib';
 import assert from 'assert';
 
-describe('integration.documents.table.cursor', { truncate: 'tables:before' }, ({ db }) => {
+describe('integration.documents.tables.cursor', { truncate: 'tables:before' }, ({ db }) => {
   const sortByText = (a: SomeDoc, b: SomeDoc) => parseInt(a.text) - parseInt(b.text);
   const sortByInt = (a: SomeDoc, b: SomeDoc) => a.int - b.int;
 
