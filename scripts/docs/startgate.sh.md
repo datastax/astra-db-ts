@@ -11,3 +11,7 @@ scripts/startgate.sh
 # Main terminal window after waiting for stargate to start-gate (heh)
 scripts/test.sh -local
 ```
+
+## See also
+
+- [The custom test script](./test.sh.md)

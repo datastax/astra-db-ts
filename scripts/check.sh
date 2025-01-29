@@ -29,7 +29,7 @@ while [ $# -gt 0 ]; do
        fi
        echo "Usage:"
        echo
-       echo "$0 [tc] [lint] [licensing] [lib-check]"
+       echo "$0 [tc] [lint] [licensing] [lib-check] [test-exts] [test-names]"
        echo
        echo "* tc: runs the type-checker"
        echo "* lint: checks for linting errors"

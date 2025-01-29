@@ -11,30 +11,31 @@ You can read more about the custom wrapper and why it exists [here](https://gith
 
 ## Contents
 
-1. [Prerequisites](#prerequisites)
-2. [Just give me a TL;DR please](#just-give-me-a-tldr-please)
-3. [Test script usage](#test-script-usage)
-   1. [The test file (`scripts/test.sh`)](#1-the-test-file-scriptstestsh)
-   2. [The test types (`[-all | -light | -coverage]`)](#2-the-test-types--all---light---coverage)
-   3. [The test filters (`[-fand | -for] [-f/F <match>]+ [-g/G <regex>]+`)](#3-the-test-filters--fand---for--ff-match--gg-regex)
-   4. [The vectorize whitelist (`[-w/W <vectorize_whitelist>]`)](#4-the-vectorize-whitelist--ww-vectorize_whitelist)
-   5. [Bailing (`[-b | -bail]`)](#5-bailing--b---bail)
-   6. [Disabling error reporting (`[-R | -no-report]`)](#6-disabling-error-reporting--r---no-report)
-   7. [The HTTP client (`[-c <http_client>]`)](#7-the-http-client--c-http_client)
-   8. [The Data API environment (`[-e <environment>]`)](#8-the-data-api-environment--e-environment)
-   9. [Running the tests on Stargate (`[-local]`)](#9-running-the-tests-on-stargate--local)
-   10. [Enable verbose logging for tests (`[(-l | -logging) | (-L | -logging-with-pred <predicate>)]`)](#10-enable-verbose-logging-for-tests--l---logging---l---logging-with-pred-predicate)
-   11. [Skipping the prelude (`[-P | -skip-prelude]`)](#11-skipping-the-prelude--p---skip-prelude)
-4. [Common test script usages](#common-test-script-usages)
-   1. [Simply running all tests](#simply-running-all-tests)
-   2. [Running all non-long-running tests](#running-all-non-long-running-tests)
-   3. [Running all tests, but with coverage](#running-all-tests-but-with-coverage)
-   4. [Running only unit tests](#running-only-unit-tests)
-   5. [Running a specific test file](#running-a-specific-test-file)
-   6. [Running some tests without the lengthy setup step](#running-some-tests-without-the-lengthy-setup-step)
-   7. [Running tests on local stargate](#running-tests-on-local-stargate)
-   8. [Running tests without a specific test tag](#running-tests-without-a-specific-test-tag)
-   9. [Running tests with logging](#running-tests-with-logging)
+- [Prerequisites](#prerequisites)
+- [Just give me a TL;DR please](#just-give-me-a-tldr-please)
+- [Test script usage](#test-script-usage)
+  - [The test file (`scripts/test.sh`)](#1-the-test-file-scriptstestsh)
+  - [The test types (`[-all | -light | -coverage]`)](#2-the-test-types--all---light---coverage)
+  - [The test filters (`[-fand | -for] [-f/F <match>]+ [-g/G <regex>]+`)](#3-the-test-filters--fand---for--ff-match--gg-regex)
+  - [The vectorize whitelist (`[-w/W <vectorize_whitelist>]`)](#4-the-vectorize-whitelist--ww-vectorize_whitelist)
+  - [Bailing (`[-b | -bail]`)](#5-bailing--b---bail)
+  - [Disabling error reporting (`[-R | -no-report]`)](#6-disabling-error-reporting--r---no-report)
+  - [The HTTP client (`[-c <http_client>]`)](#7-the-http-client--c-http_client)
+  - [The Data API environment (`[-e <environment>]`)](#8-the-data-api-environment--e-environment)
+  - [Running the tests on Stargate (`[-local]`)](#9-running-the-tests-on-stargate--local)
+  - [Enable verbose logging for tests (`[(-l | -logging) | (-L | -logging-with-pred <predicate>)]`)](#10-enable-verbose-logging-for-tests--l---logging---l---logging-with-pred-predicate)
+  - [Skipping the prelude (`[-P | -skip-prelude]`)](#11-skipping-the-prelude--p---skip-prelude)
+- [Common test script usages](#common-test-script-usages)
+  - [Simply running all tests](#simply-running-all-tests)
+  - [Running all non-long-running tests](#running-all-non-long-running-tests)
+  - [Running all tests, but with coverage](#running-all-tests-but-with-coverage)
+  - [Running only unit tests](#running-only-unit-tests)
+  - [Running a specific test file](#running-a-specific-test-file)
+  - [Running some tests without the lengthy setup step](#running-some-tests-without-the-lengthy-setup-step)
+  - [Running tests on local stargate](#running-tests-on-local-stargate)
+  - [Running tests without a specific test tag](#running-tests-without-a-specific-test-tag)
+  - [Running tests with logging](#running-tests-with-logging)
+- [See also](#see-also)
 
 ## Prerequisites
 
@@ -182,7 +183,7 @@ If you're running the tests on a local Stargate instance, you can use this flag 
 
 It'll also automatically set the environment to `dse`.
 
-Note that you'll still need to run stargate yourself. See [startgate.sh.md](./startgate) for more info.
+Note that you'll still need to run stargate yourself. See [startgate.sh.md](./startgate.sh.md) for more info.
 
 ### 10. Enable verbose logging for tests (`[(-l | -logging) | (-L | -logging-with-pred <predicate>)]`)
 
@@ -325,3 +326,8 @@ scripts/test.sh -l
 # Though sometimes I want something more specific
 scripts/test.sh -L '!isGlobal && e.commandName === "find"'
 ```
+
+## See also
+
+- [The custom checker script](./check.sh.md)
+- [Local Data API spawning script](./startgate.sh.md)
