@@ -1931,6 +1931,8 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
         nameOnly?: false;
     }): Promise<TableIndexDescriptor[]>;
     readonly name: string;
+    // (undocumented)
+    static schema<const Def extends CreateTableDefinition>(schema: Def): Def;
     updateOne(filter: TableFilter<WSchema>, update: TableUpdateFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
 }
 
