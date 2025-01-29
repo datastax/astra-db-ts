@@ -11,9 +11,9 @@ You can read more about the custom wrapper and why it exists [here](https://gith
 
 ## Contents
 
-- [Prerequisites](#prerequisites)
-- [Just give me a TL;DR please](#just-give-me-a-tldr-please)
-- [Test script usage](#test-script-usage)
+1. [Prerequisites](#prerequisites)
+2. [Just give me a TL;DR please](#just-give-me-a-tldr-please)
+3. [Test script usage](#test-script-usage)
    1. [The test file (`scripts/test.sh`)](#1-the-test-file-scriptstestsh)
    2. [The test types (`[-all | -light | -coverage]`)](#2-the-test-types--all---light---coverage)
    3. [The test filters (`[-fand | -for] [-f/F <match>]+ [-g/G <regex>]+`)](#3-the-test-filters--fand---for--ff-match--gg-regex)
@@ -25,17 +25,17 @@ You can read more about the custom wrapper and why it exists [here](https://gith
    9. [Running the tests on Stargate (`[-local]`)](#9-running-the-tests-on-stargate--local)
    10. [Enable verbose logging for tests (`[(-l | -logging) | (-L | -logging-with-pred <predicate>)]`)](#10-enable-verbose-logging-for-tests--l---logging---l---logging-with-pred-predicate)
    11. [Skipping the prelude (`[-P | -skip-prelude]`)](#11-skipping-the-prelude--p---skip-prelude)
-- [Common test script usages](#common-test-script-usages)
-   - [Simply running all tests](#simply-running-all-tests)
-   - [Running all non-long-running tests](#running-all-non-long-running-tests)
-   - [Running all tests, but with coverage](#running-all-tests-but-with-coverage)
-   - [Running only unit tests](#running-only-unit-tests)
-   - [Running a specific test file](#running-a-specific-test-file)
-   - [Running some tests without the lengthy setup step](#running-some-tests-without-the-lengthy-setup-step)
-   - [Running tests on local stargate](#running-tests-on-local-stargate)
-   - [Running tests without a specific test tag](#running-tests-without-a-specific-test-tag)
-   - [Running tests with logging](#running-tests-with-logging)
-- [See also](#see-also)
+4. [Common test script usages](#common-test-script-usages)
+   1. [Simply running all tests](#simply-running-all-tests)
+   2. [Running all non-long-running tests](#running-all-non-long-running-tests)
+   3. [Running all tests, but with coverage](#running-all-tests-but-with-coverage)
+   4. [Running only unit tests](#running-only-unit-tests)
+   5. [Running a specific test file](#running-a-specific-test-file)
+   6. [Running some tests without the lengthy setup step](#running-some-tests-without-the-lengthy-setup-step)
+   7. [Running tests on local stargate](#running-tests-on-local-stargate)
+   8. [Running tests without a specific test tag](#running-tests-without-a-specific-test-tag)
+   9. [Running tests with logging](#running-tests-with-logging)
+5. [See also](#see-also)
 
 ## Prerequisites
 

@@ -11,9 +11,15 @@ much more often than just that.
 
 ## Contents
 
-- [Check script usage](#check-script-usage)
-- [Available checks](#available-checks)
-- [See also](#see-also)
+1. [Check script usage](#check-script-usage)
+2. [Available checks](#available-checks)
+   1. [Run type-checker (`tc`)](#run-type-checker-tc)
+   2. [Run linter (`lint`)](#run-linter-lint)
+   3. [Check licensing headers (`licensing`)](#check-licensing-headers-licensing)
+   4. [Ensure library compilation (`lib-check`)](#ensure-library-compilation-lib-check)
+   5. [Check test extension conventions (`test-exts`)](#check-test-extension-conventions-test-exts)
+   6. [Check test naming conventions (`test-names`)](#check-test-naming-conventions-test-names)
+3. [See also](#see-also)
 
 ## Check script usage
 
@@ -57,7 +63,7 @@ If set, the script will check that all files in the `src` and `test` folders hav
 // limitations under the License.
 ```
 
-### Check library compilation (`lib-check`)
+### Ensure library compilation (`lib-check`)
 
 If set, the script will build the library, and set it as the dependency of a newly created TS project with `skipLibCheck: false`
 to ensure that the library compiles correctly, and may be used in other projects without issue.
