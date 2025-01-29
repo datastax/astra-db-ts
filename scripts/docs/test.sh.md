@@ -173,16 +173,16 @@ flag, which should be one of `dse`, `hcd`, `cassandra`, or `other`.
 
 You can also provide `astra`, but it wouldn't really do anything. But I'm not the boss of you; you can make your own big-boy/girl/other decisions.
 
-Not necessary if `-local` is set (it'll automatically set the environment to `hcd`).
+Not necessary if `-local` is set (it'll automatically set the environment to `dse`).
 
 ### 9. Running the tests on Stargate (`[-local]`)
 
 If you're running the tests on a local Stargate instance, you can use this flag to set the `CLIENT_DB_URL` to
 `http://localhost:8080` and the `CLIENT_DB_TOKEN` to `cassandra:cassandra` without needing to modify your `.env` file.
 
-It'll also automatically set the environment to `hcd`.
+It'll also automatically set the environment to `dse`.
 
-Note that you'll still need to run stargate yourself. See [start-stargate-4-tests.sh.md](./start-stargate-4-tests.sh.md) for more info.
+Note that you'll still need to run stargate yourself. See [startgate.sh.md](./startgate) for more info.
 
 ### 10. Enable verbose logging for tests (`[(-l | -logging) | (-L | -logging-with-pred <predicate>)]`)
 
@@ -296,11 +296,11 @@ scripts/test.sh -f integration.documents.tables.ser-des.key-transformer -P
 
 Sets the `CLIENT_DB_URL` to `http://localhost:8080` and the `CLIENT_DB_TOKEN` to `cassandra:cassandra` without needing to modify your `.env` file.
 
-Also sets the environment to `hcd` implicitly.
+Also sets the environment to `dse` implicitly.
 
 ```sh
-# Secondary terminal window
-scripts/start-stargate-4-tests.sh
+# Secondary terminal window to spin up a local stargate data api instance
+scripts/startgate.sh
 
 # Main terminal window after waiting for stargate to start-gate (heh)
 scripts/test.sh -local

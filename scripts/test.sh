@@ -174,7 +174,7 @@ while [ $# -gt 0 ]; do
       echo
       echo "   If you're running the tests on a local Stargate instance, you can use this flag to set the CLIENT_DB_URL to 'http://localhost:8080' and the CLIENT_DB_TOKEN to 'cassandra:cassandra' without needing to modify your .env file."
       echo
-      echo "   Note that you'll still need to run stargate yourself. See \`scripts/start-stargate-4-tests.sh\`."
+      echo "   Note that you'll still need to run stargate yourself. See \`scripts/startgate.sh\`."
       echo
       echo "  $(tput setaf 4)(11)$(tput setaf 9) $(tput bold)Enable verbose logging for tests$(tput sgr0)"
       echo

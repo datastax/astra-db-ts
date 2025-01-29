@@ -249,7 +249,7 @@ potential branch.
 To run *only* the vectorize tests, a common pattern I use is `scripts/test.sh -all -f VECTORIZE [-w <vectorize_whitelist>]`.
 
 ### Running the tests on local Stargate
-In another terminal tab, you can do `sh scripts/start-stargate-4-tests.sh` to spin up an ephemeral Data API on DSE
+In another terminal tab, you can do `sh scripts/startgate.sh` to spin up an ephemeral Data API on DSE
 instance which will destroy itself on script exit. The test suite will set up any keyspaces/collections as necessary.
 
 Then, be sure to set the following vars in `.env` exactly.
