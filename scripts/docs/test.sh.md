@@ -25,7 +25,7 @@ You can read more about the custom wrapper and why it exists [here](https://gith
    9. [Running the tests on Stargate (`[-local]`)](#9-running-the-tests-on-stargate--local)
    10. [Enable verbose logging for tests (`[(-l | -logging) | (-L | -logging-with-pred <predicate>)]`)](#10-enable-verbose-logging-for-tests--l---logging---l---logging-with-pred-predicate)
    11. [Skipping the prelude (`[-P | -skip-prelude]`)](#11-skipping-the-prelude--p---skip-prelude)
-4. [Common test script usages](#common-test-script-usages)
+4. [Examples](#examples)
    1. [Simply running all tests](#simply-running-all-tests)
    2. [Running all non-long-running tests](#running-all-non-long-running-tests)
    3. [Running all tests, but with coverage](#running-all-tests-but-with-coverage)
@@ -41,7 +41,7 @@ You can read more about the custom wrapper and why it exists [here](https://gith
 
 - `npm`/`npx`
 - A running Data API instance
-- A `.env` with the credentials filled out
+- A `.env` with the credentials filled out (unless using `-local`)
 
 <sub>*DISCLAIMER: The test suite will create any necessary namespaces/collections, and any existing collections in
 the database will be deleted.*</sub>
@@ -81,6 +81,8 @@ The API for the test script is as follows:
 10. [(-l | -logging) | (-L | -logging-with-pred <predicate>)]]
 11. [-P | -skip-prelude]
 ```
+
+The test script will return a non-zero exit code if any of the tests fail, and will print out the results of each test as it runs.
 
 ### 1. The test file (`scripts/test.sh`)
 
@@ -221,7 +223,7 @@ to save some time, using this flag, if the DB is already setup (enough), and you
 **Note:** the `astra-db-ts` test suite will automatically skip the prelude if it detects that only unit tests are being run,
 which shouldn't require any database setup in the first place.
 
-## Common test script usages
+## Examples
 
 This is by no means an exhaustive list of all the ways you can use the test script, but these are some ways I commonly use it.
 
