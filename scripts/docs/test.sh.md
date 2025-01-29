@@ -24,6 +24,15 @@ You can read more about the custom wrapper and why it exists [here](https://gith
    10. [Enable verbose logging for tests (`[(-l | -logging) | (-L | -logging-with-pred <predicate>)]`)](#10-enable-verbose-logging-for-tests--l---logging---l---logging-with-pred-predicate)
    11. [Skipping the prelude (`[-P | -skip-prelude]`)](#11-skipping-the-prelude--p---skip-prelude)
 2. [Common test script usages](#common-test-script-usages)
+   1. [Simply running all tests](#simply-running-all-tests)
+   2. [Running all non-long-running tests](#running-all-non-long-running-tests)
+   3. [Running all tests, but with coverage](#running-all-tests-but-with-coverage)
+   4. [Running only unit tests](#running-only-unit-tests)
+   5. [Running a specific test file](#running-a-specific-test-file)
+   6. [Running some tests without the lengthy setup step](#running-some-tests-without-the-lengthy-setup-step)
+   7. [Running tests on stargate](#running-tests-on-stargate)
+   8. [Running tests without a specific test tag](#running-tests-without-a-specific-test-tag)
+   9. [Running tests with logging](#running-tests-with-logging)
 
 ## Test script usage
 
@@ -57,7 +66,7 @@ avoid a headache.
 There are three main test types:
 - `-all`: This is a shorthand for running enabling the `(LONG)`, `(ADMIN)`, and `(VECTORIZE)` tests (alongside all the normal tests that always run)
 - `-light`: This is a shorthand for disabling the aforementioned tests. This runs only the normal tests, which are much quicker to run in comparison
-- `-coverage`: This runs all tests, but uses `nyc` to test for coverage statistics. Enabled the `-b` (bail) flag, as no point continuing if a test fails
+- `-coverage`: This runs all tests, but uses `nyc` to test for coverage statistics. Enables the `-b` (bail) flag, as no point continuing if a test fails
 
 By default, just running `scripts/test.sh` will be like using `-light`, but you can set the default config for which tests
 to enable in your `.env` file, through the `CLIENT_RUN_*_TESTS` env vars.
@@ -184,9 +193,19 @@ which shouldn't require any database setup in the first place.
 
 ## Common test script usages
 
-This is by no means an exhaustive list of all the ways you can use the test script, but here are some ways I commnly use it:
+This is by no means an exhaustive list of all the ways you can use the test script, but these are some ways I commonly use it.
+
+Often, I'll combine these (and more), and end up with a long, useful test command which I could never do with Mocha alone, such as:
+
+```sh
+scripts/test.sh -R -f integration. -f object-mapping -f explicit -P -L '!isGlobal && e.commandName === "findOne"' -local
+```
 
 ### Simply running all tests
+
+Normally takes ~10m + the time it takes to run `prelude.test.ts` if you don't use `-P` (`-skip-prelude`).
+
+If you don't run the `AstraAdmin` lifecycle test (`-F integration.administration.lifecycle`), it'll take ~6m instead (+ prelude time ofc).
 
 ```sh
 scripts/test.sh
@@ -194,13 +213,85 @@ scripts/test.sh
 
 ### Running all non-long-running tests
 
+Runs in ~4m + prelude time.
+
 ```sh
 scripts/test.sh -light
 ```
 
 ### Running all tests, but with coverage
 
+Uses NYC to test for coverage statistics. Enables the `-b` (bail) flag, since there's really no point continuing if a test fails.
+
+Also takes ~10m + prelude time.
+
 ```sh
 scripts/test.sh -coverage
 ```
 
+### Running only unit tests
+
+Takes advantage of the naming convention of root-level `describe`/`parallel` blocks' names to be equivalent to the test file's directory + name, relative to `./tests` (e.g. `unit.documents.tables.ser-des.key-transformer`).
+
+Runs in ~10s, and `prelude.test.ts` is automatically skipped, since no integration tests are detected to be run.
+
+If you append the `-light` option (which skips all `(LONG)`-tagged tests), the unit tests will run in just a single second.
+
+```sh
+scripts/test.sh -f unit.
+```
+
+### Running a specific test file
+
+I use this very frequently.
+
+Takes advantage of the naming convention of root-level `describe`/`parallel` blocks' names to be equivalent to the test file's directory + name, relative to `./tests` (e.g. `unit.documents.tables.ser-des.key-transformer`).
+
+```sh
+scripts/test.sh -f integration.documents.tables.ser-des.key-transformer
+```
+
+### Running some tests without the lengthy setup step
+
+If running an integration test file, I'll very commonly pair this with the `-P` flag to skip the prelude, if the DB is
+already setup, to save a lot of time there, and have the test run in (often) just seconds.
+
+Note that if you're running only unit tests, the prelude will automatically be skipped for you.
+
+```sh
+scripts/test.sh -f integration.documents.tables.ser-des.key-transformer -P
+```
+
+### Running tests on stargate
+
+Sets the `CLIENT_DB_URL` to `http://localhost:8080` and the `CLIENT_DB_TOKEN` to `cassandra:cassandra` without needing to modify your `.env` file.
+
+Also sets the environment to `hcd` implicitly.
+
+```sh
+# Secondary terminal window
+scripts/start-stargate-4-tests.sh
+
+# Main terminal window after waiting for stargate to start-gate (heh)
+scripts/test.sh -local
+```
+
+### Running tests without a specific test tag
+
+Don't use this as often, but it's nice for when I need it.
+
+```sh
+scripts/test.sh -F VECTORIZE
+```
+
+### Running tests with logging
+
+Now this, this is I use _all the time_. It's so useful for debugging requests, and understanding exactly what the Data API is seeing and doing.
+
+```sh
+# Most of the time
+scripts/test.sh -l
+
+# Though sometimes I want something more specific
+scripts/test.sh -L '!isGlobal && e.commandName === "find"'
+```
