@@ -36,29 +36,28 @@ const db = client.db(process.env.CLIENT_DB_URL!, { token: process.env.CLIENT_DB_
 
 // The `VectorDoc` interface adds `$vector?: DataAPIVector` as a field to the collection type
 interface Dream extends VectorDoc {
-  _id: ObjectId,   // Uses an `astra-db-ts` provided type here (NOT the `bson` version)
+  _id: ObjectId,
   summary: string,
-  tags?: string[], // No sets/maps available without creating custom ser/des rules
+  tags?: string[],
 }
 
 (async () => {
-  // Create the table using our helper function.
-  // The _id should be an `ObjectId` type, as specified by `defaultId.type`
+  // Create the collection with a custom default ID type
   const collection = await db.createCollection<Dream>('dreams', {
     defaultId: { type: 'objectId' },
   });
 
-  // Batch-insert some rows into the table
+  // Batch-insert some rows into the table. 
   // _id can be optionally provided, or be auto-generated @ the server side
   await collection.insertMany([{
     summary: 'A dinner on the Moon',
-    $vector: vector([0.2, -0.3, -0.5]),   // Shorthand for `new DataAPIVector([0.2, -0.3, -0.5])`
+    $vector: vector([0.2, -0.3, -0.5]),   // Shorthand for `new DataAPIVector()`
   }, {
     summary: 'Riding the waves',
     $vector: vector([0, 0.2, 1]),
     tags: ['sport'],
   }, {
-    _id: oid('674f0f5c1c162131319fa09e'), // Shorthand for `new ObjectId('674f0f5c1c162131319fa09e')`
+    _id: oid('674f0f5c1c162131319fa09e'), // Shorthand for `new ObjectId()`
     summary: 'Meeting Beethoven at the dentist',
     $vector: vector([0.2, 0.6, 0]),
   }]);
@@ -66,10 +65,10 @@ interface Dream extends VectorDoc {
   // Hm, changed my mind
   await collection.updateOne({ id: 103 }, { $set: { summary: 'Surfers\' paradise' } });
 
-  // Let's see what we've got
+  // Let's see what we've got, by performing a vector search
   const cursor = collection.find({})
-    .sort({ vector: vector([0, 0.2, 0.4]) }) // Performing a vector search
-    .includeSimilarity(true)                 // The found doc is inferred to have `$similarity` as a property now
+    .sort({ vector: vector([0, 0.2, 0.4]) })
+    .includeSimilarity(true)
     .limit(2);
 
   // This would print:
@@ -87,44 +86,42 @@ interface Dream extends VectorDoc {
 ### Tables
 
 ```typescript
-import { DataAPIClient, InferTableSchema, vector } from '@datastax/astra-db-ts';
+import { DataAPIClient, InferTableSchema, Table, vector } from '@datastax/astra-db-ts';
 
 // Connect to the db
 const client = new DataAPIClient({ logging: 'all' });
 const db = client.db(process.env.CLIENT_DB_URL!, { token: process.env.CLIENT_DB_TOKEN! });
 
-// Create a table through the Data API if it does not yet exist.
-// Returns the created table through a function so we can use the inferred type of the table ourselves
-// (instead of having to manually define it)
-const mkDreamsTable = async () => await db.createTable('dreams', {
-  definition: {
-    columns: {
-      id: 'int',                                // Shorthand notation for { type: 'int' }
-      summary: 'text',
-      tags: { type: 'set', valueType: 'text' }, // Collection types require additional type information
-      vector: { type: 'vector', dimension: 3 }, // Auto-embedding-generation can be enabled through a `service` block
-    },
-    primaryKey: 'id',                           // Shorthand for { partitionBy: ['id'] }
+// Define the table's schema so we can infer the type of the table automatically (TS v5.0+)
+const DreamsTableSchema = Table.schema({
+  columns: {
+    id: 'int',
+    summary: 'text',
+    tags: { type: 'set', valueType: 'text' },
+    vector: { type: 'vector', dimension: 3 },
   },
-  ifNotExists: true,                            // If any table with the same name exists, do nothing
-});                                             // (note that this does not check if the tables are the same)
+  primaryKey: 'id',
+});
 
 // Infer the TS-equivalent type from the table definition (like zod or arktype). Equivalent to:
 //
 // interface TableSchema {
-//   id: number,                    -- A primary key component, so it's required
-//   summary?: string | null,       -- Not a primary key, so it's optional and may return as null when found
-//   tags?: Set<string>,            -- Sets/maps/lists are optional to insert, but will actually be returned as empty collections instead of null
-//   vector?: DataAPIVector | null, -- Vectors, however, may be null.
+//   id: number,
+//   summary?: string | null,
+//   tags?: Set<string>,
+//   vector?: DataAPIVector | null,
 // }
-type Dream = InferTableSchema<typeof mkDreamsTable>;
+type Dream = InferTableSchema<typeof DreamsTableSchema>;
 
 (async () => {
-  // Create the table using our helper function.
+  // Create the table if it doesn't already exist
   // Table will be typed as `Table<Dream, { id: number }>`, where the former is the schema, and the latter is the primary key
-  const table = await mkDreamsTable();
+  const table = await db.createTable('dreams', {
+    definition: DreamsTableSchema,
+    ifNotExists: true,
+  });
 
-  // Enables vector search on the table (on the 'vector' column)
+  // Create a vector index on the vector column so we can perform ANN searches on the table
   await table.createVectorIndex('dreams_vector_idx', 'vector', {
     options: { metric: 'cosine' },
     ifNotExists: true,
@@ -134,12 +131,12 @@ type Dream = InferTableSchema<typeof mkDreamsTable>;
   const rows: Dream[] = [{
     id: 102,
     summary: 'A dinner on the Moon',
-    vector: vector([0.2, -0.3, -0.5]), // Shorthand for `new DataAPIVector([0.2, -0.3, -0.5])`
+    vector: vector([0.2, -0.3, -0.5]),
   }, {
     id: 103,
     summary: 'Riding the waves',
     vector: vector([0, 0.2, 1]),
-    tags: new Set(['sport']),          // Collection types use native JS collections
+    tags: new Set(['sport']),
   }, {
     id: 37,
     summary: 'Meeting Beethoven at the dentist',
@@ -150,10 +147,10 @@ type Dream = InferTableSchema<typeof mkDreamsTable>;
   // Hm, changed my mind
   await table.updateOne({ id: 103 }, { $set: { summary: 'Surfers\' paradise' } });
 
-  // Let's see what we've got
+  // Let's see what we've got, by performing a vector search
   const cursor = table.find({})
-    .sort({ vector: vector([0, 0.2, 0.4]) }) // Performing a vector search
-    .includeSimilarity(true)                 // The found doc is inferred to have `$similarity` as a property now
+    .sort({ vector: vector([0, 0.2, 0.4]) })
+    .includeSimilarity(true)
     .limit(2);
 
   // This would print:
@@ -167,6 +164,56 @@ type Dream = InferTableSchema<typeof mkDreamsTable>;
   await table.drop();
 })();
 ```
+
+<details>
+  <summary><i>Inferring the table schema pre-TS v5.0</i></summary>
+
+  Before TypeScript 5.0, there was no support for "const type parameters" (e.g. `f<const T>(t: T)`) which `Table.schema` relies on.
+
+  No worries though—if you're using TypeScript 4.x or below, you can still infer the schema automatically, albeit with less language server support.
+
+  Schema object type errors may be non-local and harder to debug, but the code will still work as expected.
+
+  ```ts
+  const DreamsTableSchema = <const>{
+    columns: {
+      id: 'int',
+      summary: 'text',
+      tags: { type: 'set', valueType: 'text' },
+      vector: { type: 'vector', dimension: 3 },
+    },
+    primaryKey: 'id',
+  };
+
+  // Still works, but you need to ensure DreamsTableSchema is a properly typed const object
+  type Dream = InferTableSchema<typeof DreamsTableSchema>;
+  type DreamPK = InferTablePrimaryKey<typeof DreamsTableSchema>;
+
+  (async () => {
+    // Necessary to explicitly set the type of the table schema and primary key here
+    const table = await db.createTable<Dream, DreamPK>('dreams', {
+      definition: DreamsTableSchema,
+      ifNotExists: true,
+    });
+  })();
+  ```
+
+  If you're using TypeScript 4.9, you can at least use the `satisfies` operator to localize any definition type errors.
+
+  ```ts
+  const DreamsTableSchema = <const>{
+    columns: {
+      id: 'int',
+      summary: 'text',
+      tags: { type: 'set', valueType: 'text' },
+      vector: { type: 'vector', dimension: 3 },
+    },
+    primaryKey: 'id',
+  } satisfies CreateTableDefinition;
+
+  type Dream = InferTableSchema<typeof DreamsTableSchema>;
+  ```
+</details>
 
 ### Next steps
 
@@ -250,11 +297,9 @@ const tp = new UsernamePasswordTokenProvider('*USERNAME*', '*PASSWORD*');
 const client = new DataAPIClient(tp, { environment: 'dse' });
 const db = client.db('*ENDPOINT*');
 
-// You'll also need to pass it to db.admin() when not using Astra for typing purposes
-// If the environment does not match, an error will be thrown as a reminder
-// `environment: 'dse'` makes the return type be `DataAPIDbAdmin`
+// A common idiom may be to use `dbAdmin.createKeyspace` with `updateDbKeyspace` to initialize the keyspace when necessary
 const dbAdmin = db.admin({ environment: 'dse' });
-dbAdmin.createNamespace('...');
+dbAdmin.createKeyspace('...', { updateDbKeyspace: true });
 ```
 
 The `TokenProvider` class is an extensible concept to allow you to create or even refresh your tokens
@@ -268,9 +313,9 @@ as necessary, depending on the Data API backend. Tokens may even be omitted if n
 
 ## Non-standard environment support
 
-`astra-db-ts` is designed foremost to work in Node.js environments. 
+`astra-db-ts` is designed first and foremost to work in Node.js environments. 
 
-It will work in edge runtimes and other non-node environments as well, though it'll use the native `fetch` API for HTTP
+However, it will work in edge runtimes and other non-node environments as well, though it may use the native `fetch` API for HTTP
 requests, as opposed to `fetch-h2` which provides extended HTTP/2 and HTTP/1.1 support for performance.
 
 By default, it'll attempt to use `fetch-h2` if available, and fall back to `fetch` if not available in that environment.
@@ -331,12 +376,13 @@ to the native fetch implementation instead if importing fails.
 
 ### Browser support
 
-The Data API itself does not natively support browsers, so `astra-db-ts` isn't technically supported in browsers either.
+`astra-db-ts` is designed to work in server-side environments, but it can technically work in the browser as well.
 
-However, if, for some reason, you really want to use this in a browser, you can probably do so by installing the 
-`events` polyfill and setting up a [CORS proxy](https://github.com/Rob--W/cors-anywhere) to forward requests to the Data API.
+However, if, for some reason, you really want to use this in a browser, you may need to install the `events` polyfill,
+and possibly set up a CORS proxy (such as https://github.com/Rob--W/cors-anywhere[CORS Anywhere]) to forward requests 
+to the Data API.
 
-But keep in mind that this is not officially supported, and may be very insecure if you're encoding sensitive
-data into the browser client.
+But keep in mind that this may be very insecure, especially if you're hardcoding sensitive data into your client-side
+code, as it's trivial for anyone to inspect the code and extract the token (through XSS attacks or otherwise).
 
-(See `examples/browser` for a full example of this workaround in action.)
+(See `examples/browser` for a full example of browser usage in action.)
