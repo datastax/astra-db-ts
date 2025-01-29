@@ -43,6 +43,12 @@ interface NumRepTree {
 }
 
 export const collNumRepFnFromCfg = (cfg: CollNumRepCfg): GetCollNumRepFn => {
+  // Minor optimization to make `{ '*': 'xyz' }` equal in performance to `() => 'xyz'`
+  if (Object.keys(cfg).length === 1 && cfg['*']) {
+    const rep = cfg['*'];
+    return () => rep;
+  }
+
   const tree = buildNumRepTree(cfg);
 
   return (path) => {
