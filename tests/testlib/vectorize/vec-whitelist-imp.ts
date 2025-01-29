@@ -32,7 +32,13 @@ class LimitWhitelist {
   seen = new Map<string, number>();
 
   constructor(whitelist: string, readonly mkKey: (test: FinalVectorizeTestBranch) => string) {
-    this.limit = +whitelist.split(':')[1];
+    const args = whitelist.split(':')[1].split(',').filter((s) => s.trim() !== '');
+
+    if (args.length !== 1) {
+      throw new Error(`Invalid number of args for whitelist operator ${whitelist.split(':')[0]}; expected 1 arg, got ${args.length} (full whitelist: ${whitelist})`);
+    }
+
+    this.limit = +args[1];
   }
 
   test(test: FinalVectorizeTestBranch) {

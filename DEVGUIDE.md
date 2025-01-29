@@ -73,14 +73,14 @@ The API for the test script is as the following:
 11. [-P | -skip-prelude]
 ```
 
-#### 1. The test file (`scripts/test.sh`)
+``#### 1. The test file (`scripts/test.sh`)
 
 While you can use `npm run test` or `bun run test` if you so desire, attempting to use the test script's flags with it
 may be a bit iffy, as the inputs are first "de-quoted" (evaluated) when you use the shell command, but they're 
 "de-quoted" again when the package manager runs the actual shell command. 
 
 Just use `scripts/test.sh` (or `sh scripts/test.sh`) directly if you're using command-line flags and want to
-avoid a headache.
+avoid a headache.``
 
 #### 2. The test types (`[-all | -light | -coverage]`)
 
