@@ -9,6 +9,22 @@ While this undeniably adds in extra complexity and getting-started overhead:
 
 You can read more about the custom wrapper and why it exists [here](https://github.com/datastax/astra-db-ts/pull/66#issue-2430902926).
 
+## Contents
+
+1. [Test script usage](#test-script-usage)
+   1. [The test file (`scripts/test.sh`)](#1-the-test-file-scriptstestsh)
+   2. [The test types (`[-all | -light | -coverage]`)](#2-the-test-types--all---light---coverage)
+   3. [The test filters (`[-fand | -for] [-f/F <match>]+ [-g/G <regex>]+`)](#3-the-test-filters--fand---for--ff-match--gg-regex)
+   4. [The vectorize whitelist (`[-w/W <vectorize_whitelist>]`)](#4-the-vectorize-whitelist--ww-vectorize_whitelist)
+   5. [Bailing (`[-b | -bail]`)](#5-bailing--b---bail)
+   6. [Disabling error reporting (`[-R | -no-report]`)](#6-disabling-error-reporting--r---no-report)
+   7. [The HTTP client (`[-c <http_client>]`)](#7-the-http-client--c-http_client)
+   8. [The Data API environment (`[-e <environment>]`)](#8-the-data-api-environment--e-environment)
+   9. [Running the tests on Stargate (`[-local]`)](#9-running-the-tests-on-stargate--local)
+   10. [Enable verbose logging for tests (`[(-l | -logging) | (-L | -logging-with-pred <predicate>)]`)](#10-enable-verbose-logging-for-tests--l---logging---l---logging-with-pred-predicate)
+   11. [Skipping the prelude (`[-P | -skip-prelude]`)](#11-skipping-the-prelude--p---skip-prelude)
+2. [Common test script usages](#common-test-script-usages)
+
 ## Test script usage
 
 The API for the test script is as follows:
@@ -17,13 +33,14 @@ The API for the test script is as follows:
 1. scripts/test.sh 
 2.  [-all | -light | -coverage] 
 3.  [-fand | -for] [-f/F <match>]+ [-g/G <regex>]+
-6.  [-w/W <vectorize_whitelist>]
-7.  [-b | -bail]
-8.  [-R | -no-report]
-9.  [-c <http_client>]
-10. [-e <environment>]
-11. [(-l | -logging) | (-L | -logging-with-pred <predicate>)]]
-12. [-P | -skip-prelude]
+4.  [-w/W <vectorize_whitelist>]
+5.  [-b | -bail]
+6.  [-R | -no-report]
+7.  [-c <http_client>]
+8.  [-e <environment>]
+9.  [-local]
+10. [(-l | -logging) | (-L | -logging-with-pred <predicate>)]]
+11. [-P | -skip-prelude]
 ```
 
 ### 1. The test file (`scripts/test.sh`)
@@ -164,3 +181,26 @@ to save some time, using this flag, if the DB is already setup (enough), and you
 
 **Note:** the `astra-db-ts` test suite will automatically skip the prelude if it detects that only unit tests are being run,
 which shouldn't require any database setup in the first place.
+
+## Common test script usages
+
+This is by no means an exhaustive list of all the ways you can use the test script, but here are some ways I commnly use it:
+
+### Simply running all tests
+
+```sh
+scripts/test.sh
+```
+
+### Running all non-long-running tests
+
+```sh
+scripts/test.sh -light
+```
+
+### Running all tests, but with coverage
+
+```sh
+scripts/test.sh -coverage
+```
+
