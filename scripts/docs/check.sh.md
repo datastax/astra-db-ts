@@ -2,8 +2,8 @@
 
 A script that checks various aspects of the project to ensure that it is in a good state, including: 
 - Type-checking,
-- Linting
-- Compilation
+- Linting,
+- Compilation,
 - Enforcement of various project conventions.
 
 This script should be run, at the very least, before merging any changes into the main branch or releasing, but ideally,
