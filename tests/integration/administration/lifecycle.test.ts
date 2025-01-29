@@ -23,6 +23,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
   it('works', async () => {
     const admin = client.admin();
 
+
     for (const db of await admin.listDatabases()) {
       if (db.name === TEMP_DB_NAME && db.status !== 'TERMINATING') {
         void admin.dropDatabase(db.id, { timeout: 720000 });
