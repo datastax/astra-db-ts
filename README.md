@@ -51,13 +51,13 @@ interface Dream extends VectorDoc {
   // _id can be optionally provided, or be auto-generated @ the server side
   await collection.insertMany([{
     summary: 'A dinner on the Moon',
-    $vector: vector([0.2, -0.3, -0.5]),   // Shorthand for `new DataAPIVector()`
+    $vector: vector([0.2, -0.3, -0.5]),
   }, {
     summary: 'Riding the waves',
     $vector: vector([0, 0.2, 1]),
     tags: ['sport'],
   }, {
-    _id: oid('674f0f5c1c162131319fa09e'), // Shorthand for `new ObjectId()`
+    _id: oid('674f0f5c1c162131319fa09e'),
     summary: 'Meeting Beethoven at the dentist',
     $vector: vector([0.2, 0.6, 0]),
   }]);
@@ -168,7 +168,7 @@ type Dream = InferTableSchema<typeof DreamsTableSchema>;
 <details>
   <summary><i>Inferring the table schema pre-TS v5.0</i></summary>
 
-  Before TypeScript 5.0, there was no support for "const type parameters" (e.g. `f<const T>(t: T)`) which `Table.schema` relies on.
+  Before TypeScript 5.0, there was no support for "const type parameters" (e.g. `f<const T>(t: T): T`) which `Table.schema` relies on.
 
   No worries though—if you're using TypeScript 4.x or below, you can still infer the schema automatically, albeit with less language server support.
 
@@ -379,7 +379,7 @@ to the native fetch implementation instead if importing fails.
 `astra-db-ts` is designed to work in server-side environments, but it can technically work in the browser as well.
 
 However, if, for some reason, you really want to use this in a browser, you may need to install the `events` polyfill,
-and possibly set up a CORS proxy (such as https://github.com/Rob--W/cors-anywhere[CORS Anywhere]) to forward requests 
+and possibly set up a CORS proxy (such as [CORS Anywhere](https://github.com/Rob--W/cors-anywhere)) to forward requests 
 to the Data API.
 
 But keep in mind that this may be very insecure, especially if you're hardcoding sensitive data into your client-side
