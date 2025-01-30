@@ -29,9 +29,9 @@ export const parseAdminSpawnOpts: Parser<AdminOptions | undefined, unknown> = (r
   }
 
   return {
-    logging: Logger.parseConfig(opts.logging, `${field}.logging`),
+    logging: Logger.cfg.parseWithin(opts, `${field}.logging`),
     endpointUrl: p.parse('string?')(opts.endpointUrl, `${field}.endpointUrl`),
-    adminToken: TokenProvider.mergeTokens(opts.adminToken),
+    adminToken: TokenProvider.opts.parseWithin(opts, `${field}.adminToken`),
     additionalHeaders: p.parse('object?')(opts.additionalHeaders, `${field}.additionalHeaders`),
     astraEnv: p.parse('string?')(opts.astraEnv, `${field}.astraEnv`),
     timeoutDefaults: Timeouts.parseConfig(opts.timeoutDefaults, `${field}.timeoutDefaults`),

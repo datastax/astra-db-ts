@@ -14,7 +14,12 @@
 // noinspection DuplicatedCode
 
 import { EqualityProof } from '@/src/lib/validation';
-import type { DataAPIClientEventMap, DataAPILoggingEvent, DataAPILoggingOutput } from '@/src/lib';
+import type {
+  DataAPIClientEventMap,
+  DataAPILoggingEvent,
+  DataAPILoggingOutput,
+  InternalLoggingConfig,
+} from '@/src/lib';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents';
 import {
   AdminCommandFailedEvent,
@@ -24,8 +29,7 @@ import {
   AdminCommandWarningsEvent,
 } from '@/src/administration/events';
 import { buildOutputsMap } from '@/src/lib/logging/util';
-import type { InternalLoggingConfig } from '@/src/client/types/internal';
-import type { NormalizedLoggingConfig } from '@/src/lib/logging/types';
+import { InternalLoggingOutputsMap } from '@/src/client/types/internal';
 
 /**
  * @internal
@@ -62,7 +66,7 @@ export const EventConstructors = <const>{
 /**
  * @internal
  */
-export const EmptyInternalLoggingConfig = Object.fromEntries(LoggingEventsWithoutAll.map((e) => [e, buildOutputsMap([])])) as InternalLoggingConfig;
+export const EmptyInternalLoggingConfig = Object.fromEntries(LoggingEventsWithoutAll.map((e) => [e, buildOutputsMap([])])) as InternalLoggingOutputsMap;
 
 /**
  * @internal
@@ -82,7 +86,7 @@ export const DataAPILoggingDefaultOutputs = <const>{
 /**
  * @internal
  */
-export const DataAPILoggingDefaults: NormalizedLoggingConfig[] = [{
+export const DataAPILoggingDefaults: InternalLoggingConfig[] = [{
   events: LoggingEventsWithoutAll,
   emits: ['event', 'stderr'],
 }, {

@@ -124,7 +124,7 @@ export type DataAPIClientEventMap =
  * The logging config, at its core, is just a list of events to enable/disable, and where to emit/log them.
  *
  * When they're inherited by child classes, it's done as a simple list merge, with the child's config taking precedence.
- * (i.e.. `[...parentConfig, ...childConfig]`). Each new layer of config is applied on top of the previous one, overwriting
+ * (i.e. `[...parentConfig, ...childConfig]`). Each new layer of config is applied on top of the previous one, overwriting
  * any previous settings for the same events.
  *
  * #### Configuration & shorthands
@@ -224,12 +224,4 @@ export type DataAPILoggingOutput = 'event' | 'stdout' | 'stderr';
 export interface DataAPIExplicitLoggingConfig {
   readonly events: OneOrMany<DataAPILoggingEvent>,
   readonly emits: OneOrMany<DataAPILoggingOutput>,
-}
-
-/**
- * @internal
- */
-export interface NormalizedLoggingConfig {
-  events: readonly Exclude<DataAPILoggingEvent, 'all'>[],
-  emits: readonly DataAPILoggingOutput[],
 }

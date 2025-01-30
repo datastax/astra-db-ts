@@ -12,8 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { nullish, StaticTokenProvider } from '@/src/lib';
+import { StaticTokenProvider } from '@/src/lib';
 import { isNullish } from '@/src/lib/utils';
+import { OptionsHandler, OptionsHandlerOpts } from '@/src/lib/opts-handler';
+import { DecoderType, either, instanceOf, nullish, string } from 'decoders';
+
 
 /**
  * The base class for some "token provider", a general concept for anything that provides some token to the client,
@@ -44,7 +47,9 @@ export abstract class TokenProvider {
    * The function which provides the token. It may do any I/O as it wishes to obtain/refresh the token, as it's called
    * every time the token is required for use, whether it be for the Data API, or the DevOps API.
    */
-  abstract getToken(): string | nullish | Promise<string | nullish>;
+  abstract getToken(): string | null | undefined | Promise<string | null | undefined>;
+
+  public static declare opts: typeof TokenProviderOptsHandler;
 
   /**
    * Turns a string token into a {@link StaticTokenProvider} if necessary. Throws an error if
@@ -54,7 +59,7 @@ export abstract class TokenProvider {
    *
    * @internal
    */
-  static mergeTokens(...raw: (string | TokenProvider | nullish)[]): TokenProvider | undefined {
+  static mergeTokens(...raw: (string | TokenProvider | null | undefined)[]): TokenProvider | undefined {
     const first = raw.find((r) => !isNullish(r));
 
     if (typeof first === 'string') {
@@ -68,3 +73,52 @@ export abstract class TokenProvider {
     return first;
   };
 }
+
+class UnsetTokenProvider extends TokenProvider {
+  public static INSTANCE = new UnsetTokenProvider();
+
+  private constructor() {
+    super();
+  }
+
+  getToken() {
+    return undefined;
+  }
+}
+
+interface TokenProviderOptsTypes extends OptionsHandlerOpts {
+  Transformed: TokenProvider,
+  Parseable: TokenProvider | string | null | undefined,
+  Parsed: DecoderType<typeof tokenProvider>,
+}
+
+// eslint-disable-next-line
+interface Class<T> extends Function {
+  new (...args: readonly any[]): T;
+}
+
+const tokenProvider = nullish(either(
+  instanceOf(TokenProvider as unknown as Class<TokenProvider>), // Necessary because TokenProvider is abstract
+  string,
+));
+
+export const TokenProviderOptsHandler = new OptionsHandler<TokenProviderOptsTypes>({
+  decoder: tokenProvider,
+  transform(input) {
+    if (typeof input === 'string') {
+      return new StaticTokenProvider(input);
+    }
+
+    if (isNullish(input)) {
+      return UnsetTokenProvider.INSTANCE;
+    }
+
+    return input;
+  },
+  concat(configs) {
+    return configs.find((c) => !(c instanceof UnsetTokenProvider)) ?? this.empty;
+  },
+  empty: UnsetTokenProvider.INSTANCE,
+});
+
+TokenProvider.opts = TokenProviderOptsHandler;

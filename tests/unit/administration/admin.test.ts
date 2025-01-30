@@ -21,11 +21,12 @@ import { DEFAULT_DEVOPS_API_ENDPOINTS } from '@/src/lib/api/constants';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { Timeouts } from '@/src/lib/api/timeouts';
 import { $CustomInspect } from '@/src/lib/constants';
+import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
 
 describe('unit.administration.admin', () => {
   const internalOps = (db?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({
-    dbOptions: { token: new StaticTokenProvider('old'), logging: undefined, timeoutDefaults: Timeouts.Default, ...db },
-    adminOptions: { adminToken: new StaticTokenProvider('old-admin'), logging: undefined, timeoutDefaults: Timeouts.Default, ...devops },
+    dbOptions: { token: new StaticTokenProvider('old'), logging: [], timeoutDefaults: Timeouts.Default, ...db },
+    adminOptions: { adminToken: new StaticTokenProvider('old-admin'), logging: [], timeoutDefaults: Timeouts.Default, ...devops },
     emitter: null!,
     fetchCtx: { preferredType } as any,
     userAgent: '',
@@ -34,13 +35,13 @@ describe('unit.administration.admin', () => {
 
   describe('constructor tests', () => {
     it('should properly construct an AstraAdmin object', () => {
-      const admin = new AstraAdmin(internalOps());
+      const admin = new AstraAdmin(internalOps(), AdminOptsHandler.empty);
       assert.ok(admin);
       assert.strictEqual(admin._httpClient.baseUrl, DEFAULT_DEVOPS_API_ENDPOINTS.prod);
     });
 
     it('should properly construct an AstraAdmin object with a custom astra environment', () => {
-      const admin = new AstraAdmin(internalOps({}, { astraEnv: 'dev' }));
+      const admin = new AstraAdmin(internalOps({}, { astraEnv: 'dev' }), AdminOptsHandler.empty);
       assert.ok(admin);
       assert.strictEqual(admin._httpClient.baseUrl, 'https://api.dev.cloud.datastax.com/v2');
     });
@@ -51,14 +52,15 @@ describe('unit.administration.admin', () => {
     });
 
     it('should allow admin construction using default options', () => {
-      const admin = new AstraAdmin(internalOps({}, { endpointUrl: 'https://api.astra.datastax.com/v1' }), {});
+      const admin = new AstraAdmin(internalOps({}, { endpointUrl: 'https://api.astra.datastax.com/v1' }), AdminOptsHandler.empty);
       assert.ok(admin);
       assert.strictEqual(admin._httpClient.baseUrl, 'https://api.astra.datastax.com/v1');
     });
 
     it('should allow admin construction, overwriting options', () => {
       const admin = new AstraAdmin(internalOps({}, {}), {
-        adminToken: 'new-admin',
+        ...AdminOptsHandler.empty,
+        adminToken: new StaticTokenProvider('new-admin'),
         astraEnv: 'dev',
       });
       assert.ok(admin);
@@ -68,13 +70,13 @@ describe('unit.administration.admin', () => {
 
   describe('db', () => {
     it('throws if detects invalid .db(endpoint, keyspace)', () => {
-      const admin = new AstraAdmin(internalOps());
+      const admin = new AstraAdmin(internalOps(), AdminOptsHandler.empty);
       assert.throws(() => admin.db('https://test.com/', 'keyspace'), { message: 'Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { keyspace })`?' });
     });
   });
 
   it('should inspect properly', () => {
-    const admin = new AstraAdmin(internalOps());
+    const admin = new AstraAdmin(internalOps(), AdminOptsHandler.empty);
     assert.strictEqual((admin as any)[$CustomInspect](), 'AstraAdmin()');
   });
 });

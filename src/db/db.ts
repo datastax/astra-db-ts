@@ -45,6 +45,7 @@ import { AstraDbInfo } from '@/src/administration/types/admin/database-info';
 import { Timeouts } from '@/src/lib/api/timeouts';
 import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
+import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
 
 /**
  * #### Overview
@@ -138,8 +139,8 @@ export class Db {
       dbOptions: {
         keyspace: dbOpts?.keyspace ?? rootOpts.dbOptions.keyspace,
         dataApiPath: dbOpts?.dataApiPath ?? rootOpts.dbOptions.dataApiPath,
-        token: TokenProvider.mergeTokens(dbOpts?.token, rootOpts.dbOptions.token),
-        logging: Logger.advanceConfig(rootOpts.dbOptions.logging, dbOpts?.logging),
+        token: TokenProvider.opts.concatParseWithin([rootOpts.dbOptions.token], dbOpts, 'token'),
+        logging: Logger.cfg.concatParseWithin([rootOpts.dbOptions.logging], dbOpts, 'logging'),
         additionalHeaders: { ...rootOpts.dbOptions.additionalHeaders, ...dbOpts?.additionalHeaders },
         timeoutDefaults: Timeouts.merge(rootOpts.dbOptions.timeoutDefaults, dbOpts?.timeoutDefaults),
         serdes: {
@@ -149,7 +150,7 @@ export class Db {
       },
       adminOptions: {
         ...rootOpts.adminOptions,
-        adminToken: TokenProvider.mergeTokens(rootOpts.adminOptions.adminToken, rootOpts.dbOptions.token),
+        adminToken: TokenProvider.opts.concatParseWithin([rootOpts.adminOptions.adminToken], dbOpts, 'token'),
       },
     };
 
@@ -391,12 +392,13 @@ export class Db {
     if (this.#defaultOpts.environment !== environment) {
       throw new InvalidEnvironmentError('db.admin()', environment, [this.#defaultOpts.environment], 'environment option is not the same as set in the DataAPIClient');
     }
+    const parsedOpts = AdminOptsHandler.parse(options, 'options');
 
     if (environment === 'astra') {
-      return new AstraDbAdmin(this, this.#defaultOpts, options, this.#defaultOpts.dbOptions.token, this.#endpoint);
+      return new AstraDbAdmin(this, this.#defaultOpts, parsedOpts, this.#defaultOpts.dbOptions.token, this.#endpoint);
     }
 
-    return new DataAPIDbAdmin(this, this.#httpClient, options);
+    return new DataAPIDbAdmin(this, this.#httpClient, parsedOpts);
   }
 
   /**

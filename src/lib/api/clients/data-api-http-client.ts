@@ -27,11 +27,11 @@ import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/a
 import { HttpClient } from '@/src/lib/api/clients/http-client';
 import { DEFAULT_DATA_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants';
 import { CollectionOptions, TableOptions } from '@/src/db';
-import type { AdminOptions } from '@/src/client';
 import { isNullish } from '@/src/lib/utils';
 import { mkRespErrorFromResponse } from '@/src/documents/errors';
 import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts';
 import { EmptyObj } from '@/src/lib/types';
+import { InternalAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
 
 type ClientKind = 'admin' | 'normal';
 
@@ -115,7 +115,7 @@ interface DataAPIHttpClientOpts<Kind extends ClientKind> extends HTTPClientOptio
   keyspace: KeyspaceRef,
   emissionStrategy: EmissionStrategy<Kind>,
   embeddingHeaders: EmbeddingHeadersProvider,
-  tokenProvider: TokenProvider | undefined,
+  tokenProvider: TokenProvider,
 }
 
 /**
@@ -150,7 +150,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     const clone = new DataAPIHttpClient({
       ...this.#props,
       embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(opts?.embeddingApiKey),
-      logging: Logger.advanceConfig(this.#props.logging, opts?.logging),
+      logging: Logger.cfg.concatParseWithin([this.#props.logging], opts, 'logging'),
       emissionStrategy: EmissionStrategy.Normal,
       keyspace: { ref: keyspace },
     });
@@ -162,11 +162,11 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     return clone;
   }
 
-  public forDbAdmin(opts: AdminOptions | undefined): DataAPIHttpClient<'admin'> {
+  public forDbAdmin(opts: InternalAdminOptions): DataAPIHttpClient<'admin'> {
     const clone = new DataAPIHttpClient({
       ...this.#props,
-      tokenProvider: TokenProvider.mergeTokens(opts?.adminToken, this.#props.tokenProvider),
-      logging: Logger.advanceConfig(this.#props.logging, opts?.logging),
+      tokenProvider: TokenProvider.opts.concat(opts.adminToken, this.#props.tokenProvider),
+      logging: Logger.cfg.concatParseWithin([this.#props.logging], opts, 'logging'),
       baseUrl: opts?.endpointUrl ?? this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
       additionalHeaders: { ...this.#props.additionalHeaders, ...opts?.additionalHeaders },

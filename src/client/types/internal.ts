@@ -22,12 +22,12 @@ import type {
 import type TypedEmitter from 'typed-emitter';
 import type { FetchCtx } from '@/src/lib/api/fetch/types';
 import type { AdminOptions, DbOptions } from '@/src/client';
-import type { NormalizedLoggingConfig } from '@/src/lib/logging/types';
+import { InternalLoggingConfig } from '@/src/lib/logging/cfg-handler';
 
 /**
  * @internal
  */
-export type InternalLoggingConfig = Readonly<Record<keyof DataAPIClientEventMap, Readonly<Record<DataAPILoggingOutput, boolean>> | undefined>>
+export type InternalLoggingOutputsMap = Readonly<Record<keyof DataAPIClientEventMap, Readonly<Record<DataAPILoggingOutput, boolean>> | undefined>>
 
 /**
  * @internal
@@ -38,13 +38,13 @@ export interface InternalRootClientOpts {
   fetchCtx: FetchCtx,
   userAgent: string,
   dbOptions: Omit<DbOptions, 'token' | 'logging'> & {
-    token: TokenProvider | undefined,
-    logging: NormalizedLoggingConfig[] | undefined,
+    token: TokenProvider,
+    logging: InternalLoggingConfig[],
     timeoutDefaults: TimeoutDescriptor,
   },
   adminOptions: Omit<AdminOptions, 'adminToken' | 'logging'> & {
-    adminToken: TokenProvider | undefined,
-    logging: NormalizedLoggingConfig[] | undefined,
+    adminToken: TokenProvider,
+    logging: InternalLoggingConfig[],
     timeoutDefaults: TimeoutDescriptor,
   },
 }

@@ -30,10 +30,10 @@ export const parseDbSpawnOpts: Parser<DbOptions | undefined, unknown> = (raw, fi
   }
 
   return {
-    logging: Logger.parseConfig(opts.logging, `${field}.logging`),
+    logging: Logger.cfg.parseWithin(opts, `${field}.logging`),
     keyspace: p.parse('string?', validateKeyspace)(opts.keyspace, `${field}.keyspace`),
     dataApiPath: p.parse('string?')(opts.dataApiPath, `${field}.dataApiPath`),
-    token: TokenProvider.mergeTokens(opts.token),
+    token: TokenProvider.opts.parseWithin(opts, `${field}.token`),
     serdes: p.parse('object?', parseSerDes)(opts.serdes, `${field}.serDes`),
     additionalHeaders: p.parse('object?')(opts.additionalHeaders, `${field}.additionalHeaders`),
     timeoutDefaults: Timeouts.parseConfig(opts.timeoutDefaults, `${field}.timeoutDefaults`),

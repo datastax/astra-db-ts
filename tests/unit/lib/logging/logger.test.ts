@@ -18,11 +18,11 @@ import { parseLoggingConfig } from '@/src/lib/logging/parser';
 import { Logger } from '@/src/lib/logging/logger';
 import { DataAPILoggingDefaults, LoggingEventsWithoutAll } from '@/src/lib/logging/constants';
 import { DataAPIClientEventMap, DataAPILoggingConfig } from '@/src/lib';
-import { NormalizedLoggingConfig } from '@/src/lib/logging/types';
 import { beforeEach } from 'mocha';
 import TypedEmitter from 'typed-emitter';
 import { CommandStartedEvent } from '@/src/documents';
 import { AdminCommandStartedEvent } from '@/src/administration';
+import { InternalLoggingConfig } from '@/src/lib/logging/cfg-handler';
 
 describe('unit.lib.logging.logger', () => {
   describe('parseConfig', () => {
@@ -87,7 +87,7 @@ describe('unit.lib.logging.logger', () => {
         'all',
         'commandSucceeded',
       ];
-      const expected: NormalizedLoggingConfig[] = [
+      const expected: InternalLoggingConfig[] = [
         3 as any,
         { events: ['commandSucceeded'], emits: ['event'] },
         { events: LoggingEventsWithoutAll, emits: ['stderr'] },

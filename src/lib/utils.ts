@@ -21,7 +21,7 @@ import BigNumber from 'bignumber.js';
 /**
  * @internal
  */
-export function isNullish(t: unknown): t is nullish {
+export function isNullish(t: unknown): t is null | undefined {
   return t === null || t === undefined;
 }
 

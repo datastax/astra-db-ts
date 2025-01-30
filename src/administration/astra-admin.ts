@@ -25,15 +25,15 @@ import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/s
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
 import { OpaqueHttpClient, TokenProvider, WithTimeout } from '@/src/lib';
 import { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info';
-import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { buildAstraEndpoint } from '@/src/lib/utils';
-import { Logger } from '@/src/lib/logging/logger';
-import { AdminOptions, DbOptions } from '@/src/client';
+import { DbOptions } from '@/src/client';
 import { $CustomInspect } from '@/src/lib/constants';
 import { SomeDoc } from '@/src/documents';
 import { Timeouts } from '@/src/lib/api/timeouts';
 import { AstraDropDatabaseOptions } from '@/src/administration/types/admin/drop-database';
+import { AdminOptsHandler, InternalAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
+import { Logger } from '@/src/lib/logging/logger';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -71,24 +71,22 @@ export class AstraAdmin {
    *
    * @internal
    */
-  constructor(rootOpts: InternalRootClientOpts, rawAdminOpts?: AdminOptions) {
-    const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options');
-
-    const token = TokenProvider.mergeTokens(adminOpts?.adminToken, rootOpts.adminOptions.adminToken);
+  constructor(rootOpts: InternalRootClientOpts, adminOpts: InternalAdminOptions) {
+    const adminToken = TokenProvider.opts.concat(rootOpts.adminOptions.adminToken, adminOpts?.adminToken);
 
     this.#defaultOpts = {
       ...rootOpts,
       adminOptions: {
         endpointUrl: adminOpts?.endpointUrl || rootOpts.adminOptions.endpointUrl,
-        adminToken: token,
-        logging: Logger.advanceConfig(rootOpts.adminOptions.logging, adminOpts?.logging),
+        adminToken: adminToken,
+        logging: Logger.cfg.concatParseWithin([rootOpts.adminOptions.logging], adminOpts, 'logging'),
         additionalHeaders: { ...rootOpts.adminOptions.additionalHeaders, ...adminOpts?.additionalHeaders },
         astraEnv: adminOpts?.astraEnv ?? rootOpts.adminOptions.astraEnv,
         timeoutDefaults: Timeouts.merge(rootOpts.adminOptions.timeoutDefaults, adminOpts?.timeoutDefaults),
       },
       dbOptions: {
         ...rootOpts.dbOptions,
-        token: TokenProvider.mergeTokens(rootOpts.dbOptions.token, token),
+        token: TokenProvider.opts.concat(rootOpts.dbOptions.token, adminToken),
       },
     };
 
@@ -433,7 +431,7 @@ export class AstraAdmin {
 
     const endpoint = buildAstraEndpoint(resp.headers.location, definition.region);
     const db = this.db(endpoint, { ...options?.dbOptions, keyspace: definition.keyspace });
-    return new AstraDbAdmin(db, this.#defaultOpts, {}, this.#defaultOpts.adminOptions.adminToken, endpoint);
+    return new AstraDbAdmin(db, this.#defaultOpts, AdminOptsHandler.empty, this.#defaultOpts.adminOptions.adminToken, endpoint);
   }
 
   /**

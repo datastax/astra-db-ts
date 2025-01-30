@@ -70,6 +70,7 @@
   },
   "dependencies": {
     "bignumber.js": "^9.1.2",
+    "decoders": "^2.5.0",
     "fetch-h2": "^3.0.2",
     "json-bigint": "^1.0.0",
     "safe-stable-stringify": "^2.4.3",

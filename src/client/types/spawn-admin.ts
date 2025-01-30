@@ -59,14 +59,14 @@ export interface AdminOptions {
    * const admin = client.admin({ adminToken: 'strong-token' });
    * ```
    */
-  adminToken?: string | TokenProvider | null,
+  adminToken?: string | TokenProvider,
   /**
    * The base URL for the devops API, which is typically always going to be the following:
    * ```
    * https://api.astra.datastax.com/v2
    * ```
    */
-  endpointUrl?: string,
+  endpointUrl?: string | null,
   /**
    * Additional headers to include in the HTTP requests to the DevOps API.
    *

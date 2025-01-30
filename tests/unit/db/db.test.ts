@@ -26,8 +26,8 @@ import { $CustomInspect } from '@/src/lib/constants';
 
 describe('unit.db.db', () => {
   const internalOps = (db?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({
-    dbOptions: { token: new StaticTokenProvider('old'), logging: undefined, timeoutDefaults: Timeouts.Default, ...db },
-    adminOptions: { adminToken: new StaticTokenProvider('old-admin'), logging: undefined, timeoutDefaults: Timeouts.Default, ...devops },
+    dbOptions: { token: new StaticTokenProvider('old'), logging: [], timeoutDefaults: Timeouts.Default, ...db },
+    adminOptions: { adminToken: new StaticTokenProvider('old-admin'), logging: [], timeoutDefaults: Timeouts.Default, ...devops },
     emitter: null!,
     fetchCtx: { preferredType } as any,
     userAgent: '',

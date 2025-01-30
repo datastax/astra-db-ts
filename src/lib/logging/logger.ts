@@ -13,8 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import type { InternalLoggingConfig } from '@/src/client/types/internal';
-import type { DataAPIClientEventMap, DataAPILoggingConfig, NormalizedLoggingConfig } from '@/src/lib/logging/types';
+import type { DataAPIClientEventMap, DataAPILoggingConfig } from '@/src/lib/logging/types';
 import type { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents';
 import type {
   AdminCommandFailedEvent,
@@ -33,7 +32,9 @@ import {
 import { buildOutputsMap } from '@/src/lib/logging/util';
 import type TypedEventEmitter from 'typed-emitter';
 import { parseLoggingConfig } from '@/src/lib/logging/parser';
-import type { DataAPIClientEvent } from '@/src/lib';
+import type { DataAPIClientEvent, InternalLoggingConfig } from '@/src/lib';
+import { InternalLoggingOutputsMap } from '@/src/client/types/internal';
+import { LoggingCfgHandler } from '@/src/lib/logging/cfg-handler';
 
 interface ConsoleLike {
   log: (...args: any[]) => void;
@@ -54,7 +55,9 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
   public adminCommandWarnings?:  (...args: ConstructorParameters<typeof AdminCommandWarningsEvent> ) => void;
   public adminCommandSucceeded?: (...args: ConstructorParameters<typeof AdminCommandSucceededEvent>) => void;
 
-  constructor(_config: NormalizedLoggingConfig[] | undefined, private emitter: TypedEventEmitter<DataAPIClientEventMap>, private console: ConsoleLike) {
+  public static cfg: typeof LoggingCfgHandler = LoggingCfgHandler;
+
+  constructor(_config: InternalLoggingConfig[] | undefined, private emitter: TypedEventEmitter<DataAPIClientEventMap>, private console: ConsoleLike) {
     const config = Logger.buildInternalConfig(_config);
 
     for (const [_event, outputs] of Object.entries(config)) if (outputs) {
@@ -78,7 +81,7 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
 
   public static parseConfig = parseLoggingConfig;
 
-  public static advanceConfig(config?: NormalizedLoggingConfig[], newConfig?: DataAPILoggingConfig): NormalizedLoggingConfig[] | undefined {
+  public static advanceConfig(config?: InternalLoggingConfig[], newConfig?: DataAPILoggingConfig): InternalLoggingConfig[] | undefined {
     if (!config && !newConfig) {
       return undefined;
     }
@@ -88,7 +91,7 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
     return [...config, ...Logger.normalizeLoggingConfig(newConfig)];
   }
 
-  private static normalizeLoggingConfig(config: DataAPILoggingConfig | undefined): NormalizedLoggingConfig[] {
+  public static normalizeLoggingConfig(config: DataAPILoggingConfig | undefined): InternalLoggingConfig[] {
     if (!config) {
       return [];
     }
@@ -124,11 +127,11 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
     });
   };
 
-  private static buildInternalConfig(config: NormalizedLoggingConfig[] | undefined): InternalLoggingConfig {
+  private static buildInternalConfig(config: InternalLoggingConfig[] | undefined): InternalLoggingOutputsMap {
     const newConfig = { ...EmptyInternalLoggingConfig };
 
     for (const layer of config ?? []) {
-      for (const event of (layer.events as (keyof DataAPIClientEventMap)[])) {
+      for (const event of layer.events) {
         newConfig[event] = buildOutputsMap(layer.emits);
 
         if (newConfig[event]?.stdout && newConfig[event].stderr) {

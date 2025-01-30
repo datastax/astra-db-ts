@@ -21,7 +21,7 @@ import { FailedToLoadDefaultClientError } from '@/src/client';
 describe('unit.lib.api.fetch.fetch-h2', () => {
   it('should error if non-module explicit fetchH2 passed', async () => {
     try {
-      new FetchH2({ fetchH2: 3 }, false);
+      new FetchH2({ client: 'fetch-h2', fetchH2: 3 }, false);
       assert.fail('Expected error');
     } catch (e) {
       assert.ok(e instanceof FailedToLoadDefaultClientError);
@@ -33,7 +33,7 @@ describe('unit.lib.api.fetch.fetch-h2', () => {
 
   it('should error if invalid explicit fetchH2 module passed', async () => {
     try {
-      new FetchH2({ fetchH2: {} }, false);
+      new FetchH2({ client: 'fetch-h2', fetchH2: {} }, false);
       assert.fail('Expected error');
     } catch (e) {
       assert.ok(e instanceof FailedToLoadDefaultClientError);
@@ -44,6 +44,6 @@ describe('unit.lib.api.fetch.fetch-h2', () => {
   });
 
   it('should not error if explicit fetchH2 module passed is very roughly ok', async () => {
-    assert.ok(new FetchH2({ fetchH2: { context: () => {}, TimeoutError: null } }, false));
+    assert.ok(new FetchH2({ client: 'fetch-h2', fetchH2: { context: () => {}, TimeoutError: null } }, false));
   });
 });

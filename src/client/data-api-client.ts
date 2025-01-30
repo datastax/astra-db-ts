@@ -34,10 +34,10 @@ import { parseCaller } from '@/src/client/parsers/caller';
 import { Logger } from '@/src/lib/logging/logger';
 import { parseEnvironment } from '@/src/client/parsers/environment';
 import { parseHttpOpts } from '@/src/client/parsers/http-opts';
-import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
 import { $CustomInspect } from '@/src/lib/constants';
 import { Timeouts } from '@/src/lib/api/timeouts';
+import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
 
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
@@ -157,21 +157,27 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
       ? maybeOptions
       : tokenOrOptions;
 
-    const options = parseClientOpts(rawOptions, 'options.');
-    const logging = Logger.advanceConfig(undefined, options?.logging);
+    const options = parseClientOpts(rawOptions, 'options');
+    const logging = Logger.cfg.parseWithin(options, 'logging');
+
+    const tokens = {
+      default: TokenProvider.opts.parse(token, 'token'),
+      db: TokenProvider.opts.parseWithin<'token'>(options?.dbOptions, 'options.dbOptions.token'),
+      admin: TokenProvider.opts.parseWithin<'adminToken'>(options?.adminOptions, 'options.adminOptions.adminToken'),
+    };
 
     this.#options = {
       environment: options?.environment ?? 'astra',
       fetchCtx: buildFetchCtx(options || undefined),
       dbOptions: {
         ...options?.dbOptions,
-        token: TokenProvider.mergeTokens(options?.dbOptions?.token, token),
+        token: TokenProvider.opts.concat(tokens.default, tokens.db),
         timeoutDefaults: Timeouts.merge(Timeouts.Default, options?.timeoutDefaults),
         logging,
       },
       adminOptions: {
         ...options?.adminOptions,
-        adminToken: TokenProvider.mergeTokens(options?.adminOptions?.adminToken, token),
+        adminToken: TokenProvider.opts.concat(tokens.default, tokens.admin),
         timeoutDefaults: Timeouts.merge(Timeouts.Default, options?.timeoutDefaults),
         logging,
       },
@@ -250,7 +256,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
     if (this.#options.environment !== 'astra') {
       throw new InvalidEnvironmentError('admin', this.#options.environment, ['astra'], 'AstraAdmin is only available for Astra databases');
     }
-    return new AstraAdmin(this.#options, options);
+    return new AstraAdmin(this.#options, AdminOptsHandler.parse(options, 'options'));
   }
 
   /**
@@ -319,10 +325,10 @@ const parseClientOpts: Parser<DataAPIClientOptions | nullish> = (raw, field) => 
   }
 
   return {
-    logging: Logger.parseConfig(opts.logging, `${field}.logging`),
+    logging: Logger.cfg.parseWithin(opts, `${field}.logging`),
     environment: parseEnvironment(opts.environment, `${field}.environment`),
     dbOptions: parseDbSpawnOpts(opts.dbOptions, `${field}.dbOptions`),
-    adminOptions: parseAdminSpawnOpts(opts.adminOptions, `${field}.adminOptions`),
+    adminOptions: AdminOptsHandler.parseWithin(opts, `${field}.adminOptions`),
     caller: parseCaller(opts.caller, `${field}.caller`),
     httpOptions: parseHttpOpts(opts.httpOptions, `${field}.httpOptions`),
     timeoutDefaults: Timeouts.parseConfig(opts.timeoutDefaults, `${field}.timeoutDefaults`),
