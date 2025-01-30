@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import { StaticTokenProvider } from '@/src/lib';
-import { isNullish } from '@/src/lib/utils';
+import { anyInstanceOf, isNullish } from '@/src/lib/utils';
 import { OptionsHandler, OptionsHandlerOpts } from '@/src/lib/opts-handler';
-import { DecoderType, either, instanceOf, nullish, string } from 'decoders';
+import { DecoderType, either, nullish, string } from 'decoders';
 
 
 /**
@@ -92,13 +92,8 @@ interface TokenProviderOptsTypes extends OptionsHandlerOpts {
   Parsed: DecoderType<typeof tokenProvider>,
 }
 
-// eslint-disable-next-line
-interface Class<T> extends Function {
-  new (...args: readonly any[]): T;
-}
-
 const tokenProvider = nullish(either(
-  instanceOf(TokenProvider as unknown as Class<TokenProvider>), // Necessary because TokenProvider is abstract
+  anyInstanceOf(TokenProvider),
   string,
 ));
 

@@ -14,7 +14,7 @@
 
 import { DecoderType, OptionsHandler, OptionsHandlerOpts } from '@/src/lib/opts-handler';
 import { DataAPILoggingConfig, DataAPILoggingEvent, DataAPILoggingOutput } from '@/src/lib';
-import { array, either, nonEmptyArray, nullish, object, oneOf } from 'decoders';
+import { array, either, nonEmptyArray, object, oneOf, optional } from 'decoders';
 import {
   DataAPILoggingDefaultOutputs,
   DataAPILoggingDefaults,
@@ -22,6 +22,7 @@ import {
   LoggingEventsWithoutAll,
   LoggingOutputs,
 } from '@/src/lib/logging/constants';
+import { oneOrMany } from '@/src/lib/utils';
 
 export interface InternalLoggingConfig {
   events: readonly Exclude<DataAPILoggingEvent, 'all'>[],
@@ -33,17 +34,17 @@ export interface InternalLoggingConfig {
  */
 interface LoggingConfigTypes extends OptionsHandlerOpts {
   Transformed: InternalLoggingConfig[],
-  Parseable: DataAPILoggingConfig | null | undefined,
+  Parseable: DataAPILoggingConfig | undefined,
   Parsed: DecoderType<typeof loggingConfig>,
 }
 
-const loggingConfig = nullish(either(
+const loggingConfig = optional(either(
   oneOf(LoggingEvents),
   array(either(
     oneOf(LoggingEvents),
     object({
       events: either(oneOf(LoggingEvents), nonEmptyArray(oneOf(LoggingEventsWithoutAll))),
-      emits: either(oneOf(LoggingOutputs), array(oneOf(LoggingOutputs))),
+      emits: oneOrMany(oneOf(LoggingOutputs)),
     }),
   )),
 ));

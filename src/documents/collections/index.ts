@@ -18,7 +18,7 @@ export * from './collection';
 export type * from './types';
 
 export {
-  CollectionSerDesConfig,
+  CollSerDesConfig,
   CollDesCtx,
   CollSerCtx,
 } from './ser-des/ser-des';

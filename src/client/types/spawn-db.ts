@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { DataAPILoggingConfig, type TimeoutDescriptor, TokenProvider } from '@/src/lib';
-import { CollectionSerDesConfig, TableSerDesConfig } from '@/src/documents';
+import { CollSerDesConfig, TableSerDesConfig } from '@/src/documents';
 
 /**
  * The default db options as can be specified in the {@link DataAPIClientOptions}.
@@ -184,7 +184,7 @@ export interface DbOptions {
  *
  * See the official DataStax documentation for more info.
  *
- * @see CollectionSerDesConfig
+ * @see CollSerDesConfig
  * @see TableSerDesConfig
  * @see $SerializeForCollections
  * @see $SerializeForTables
@@ -207,7 +207,7 @@ export interface DbSerDesConfig {
    *
    * @beta
    */
-  collection?: Omit<CollectionSerDesConfig, 'mutateInPlace'>,
+  collection?: Omit<CollSerDesConfig, 'mutateInPlace'>,
   /**
    * ##### Overview
    *

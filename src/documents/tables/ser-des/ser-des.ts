@@ -23,6 +23,7 @@ import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { isBigNumber, pathMatches } from '@/src/lib/utils';
 import { UnexpectedDataAPIResponseError } from '@/src/client';
+import { TableSerDesCfgHandler } from '@/src/documents/tables/ser-des/cfg-handler';
 
 /**
  * @public
@@ -51,6 +52,8 @@ export interface TableSerDesConfig extends BaseSerDesConfig<TableSerCtx, TableDe
  */
 export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
   declare protected readonly _cfg: TableSerDesConfig;
+
+  public static cfg: typeof TableSerDesCfgHandler = TableSerDesCfgHandler;
 
   public constructor(cfg?: TableSerDesConfig) {
     super(TableSerDes.mergeConfig(DefaultTableSerDesCfg, cfg));

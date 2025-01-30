@@ -17,11 +17,11 @@ import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { uuid } from '@/src/documents';
 import stableStringify from 'safe-stable-stringify';
-import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 
 describe('unit.documents.collections.ser-des.mutate-in-place', () => {
   describe('mutateInPlace: true', () => {
-    const serdes = new CollectionSerDes({ mutateInPlace: true });
+    const serdes = new CollSerDes({ mutateInPlace: true });
 
     it('should mutate the input object in place', () => {
       const id = uuid(4);
@@ -48,7 +48,7 @@ describe('unit.documents.collections.ser-des.mutate-in-place', () => {
   });
 
   describe('mutateInPlace: false', () => {
-    const serdes = new CollectionSerDes({ mutateInPlace: false });
+    const serdes = new CollSerDes({ mutateInPlace: false });
 
     it('should not mutate the input object in place', () => {
       const id = uuid(4);

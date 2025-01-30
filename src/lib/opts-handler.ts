@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Normalize } from '@/src/db';
 import { Decoder } from 'decoders';
 import { nullish } from '@/src/lib/index';
 
@@ -22,12 +21,8 @@ import { nullish } from '@/src/lib/index';
 //   [K in keyof T]: T[K] extends SomeFunc ? SomeFunc : T[K];
 // };
 
-export type Roughly<T> = T extends Record<string, any> ? Normalize<{
-  [K in keyof T]: undefined extends T[K] ? T[K] | null : T[K]
-}> : T;
-
 export interface ConfigHandlerImpl<Opts extends OptionsHandlerOpts> {
-  decoder: Decoder<Roughly<Opts['Parseable']>>,
+  decoder: Decoder<Opts['Parseable']>,
   transform: (input: Opts['Parsed'], field: string) => Opts['Transformed'],
   concat(configs: Opts['Transformed'][]): Opts['Transformed'],
   empty: Opts['Transformed'],
@@ -43,7 +38,7 @@ export type DecoderType<T> = T extends Decoder<infer U> ? U : never;
 
 export class OptionsHandler<Opts extends OptionsHandlerOpts> {
   public readonly empty: Opts['Transformed'];
-  public readonly decoder: Decoder<Roughly<Opts['Parseable']>>;
+  public readonly decoder: Decoder<Opts['Parseable']>;
 
   constructor(private readonly impl: ConfigHandlerImpl<Opts>) {
     this.empty = impl.empty;

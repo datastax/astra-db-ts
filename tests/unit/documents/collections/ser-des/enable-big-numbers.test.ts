@@ -15,21 +15,21 @@
 
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
-import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 import BigNumber from 'bignumber.js';
 import { CollNumRep, NumCoercionError } from '@/src/documents';
 
 describe('unit.documents.collections.ser-des.enable-big-numbers', () => {
   it('should error if big numbers not enabled', () => {
-    const serdes = new CollectionSerDes();
+    const serdes = new CollSerDes();
     assert.throws(() => serdes.serialize({ n: BigNumber(123) }), { message: 'BigNumber serialization must be enabled through serdes.enableBigNumbers in CollectionSerDesConfig' });
     assert.throws(() => serdes.serialize({ n: 123n }), { message: 'Bigint serialization must be enabled through serdes.enableBigNumbers in CollectionSerDesConfig' });
   });
 
   describe('coercions', () => {
     const mkDesAsserter = (type: CollNumRep, coerce: (n: BigNumber | number) => unknown) => ({
-      _serdesFn: new CollectionSerDes({ enableBigNumbers: () => type }),
-      _serdesCfg: new CollectionSerDes({ enableBigNumbers: { '*': type } }),
+      _serdesFn: new CollSerDes({ enableBigNumbers: () => type }),
+      _serdesCfg: new CollSerDes({ enableBigNumbers: { '*': type } }),
       ok(n: BigNumber | number) {
         assert.deepStrictEqual(this._serdesFn.deserialize({ n }, null!), { n: coerce(n) });
         assert.deepStrictEqual(this._serdesCfg.deserialize({ n }, null!), { n: coerce(n) });

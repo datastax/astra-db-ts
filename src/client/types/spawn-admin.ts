@@ -40,7 +40,7 @@ export interface AdminOptions {
    *
    * See {@link DataAPILoggingConfig} for *much* more information on configuration, outputs, and inheritance.
    */
-  logging?: DataAPILoggingConfig,
+  logging?: DataAPILoggingConfig | undefined,
   /**
    * The access token for the DevOps API, typically of the format `'AstraCS:...'`.
    *
@@ -59,14 +59,14 @@ export interface AdminOptions {
    * const admin = client.admin({ adminToken: 'strong-token' });
    * ```
    */
-  adminToken?: string | TokenProvider,
+  adminToken?: string | TokenProvider | null,
   /**
    * The base URL for the devops API, which is typically always going to be the following:
    * ```
    * https://api.astra.datastax.com/v2
    * ```
    */
-  endpointUrl?: string | null,
+  endpointUrl?: string,
   /**
    * Additional headers to include in the HTTP requests to the DevOps API.
    *

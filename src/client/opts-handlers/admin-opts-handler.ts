@@ -15,14 +15,14 @@
 import { DecoderType, OptionsHandler, OptionsHandlerOpts } from '@/src/lib/opts-handler';
 import { AdminOptions } from '@/src/client';
 import { TimeoutDescriptor, TokenProvider } from '@/src/lib';
-import { nullish, number, object, oneOf, record, string } from 'decoders';
+import { nullish, number, object, oneOf, optional, record, string } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts';
 import { Logger } from '@/src/lib/logging/logger';
 
 export interface InternalAdminOptions {
   logging: typeof Logger.cfg.transformed,
   adminToken: typeof TokenProvider.opts.transformed,
-  endpointUrl: string | null | undefined,
+  endpointUrl: string | undefined,
   additionalHeaders: Record<string, string>,
   astraEnv: 'dev' | 'prod' | 'test' | undefined,
   timeoutDefaults: TimeoutDescriptor,
@@ -37,10 +37,10 @@ interface AdminOptsTypes extends OptionsHandlerOpts {
 const adminOpts = nullish(object({
   logging: Logger.cfg.decoder,
   adminToken: TokenProvider.opts.decoder,
-  endpointUrl: nullish(string),
-  additionalHeaders: nullish(record(string)),
-  astraEnv: nullish(oneOf(<const>['dev', 'prod', 'test'])),
-  timeoutDefaults: nullish(record(number)),
+  endpointUrl: optional(string),
+  additionalHeaders: optional(record(string)),
+  astraEnv: optional(oneOf(<const>['dev', 'prod', 'test'])),
+  timeoutDefaults: optional(record(number)),
 }));
 
 export const AdminOptsHandler = new OptionsHandler<AdminOptsTypes>({
@@ -49,7 +49,7 @@ export const AdminOptsHandler = new OptionsHandler<AdminOptsTypes>({
     return {
       logging: Logger.cfg.parseWithin(input, `${field}.logging`),
       adminToken: TokenProvider.opts.parseWithin(input, `${field}.adminToken`),
-      endpointUrl: input?.endpointUrl,
+      endpointUrl: input?.endpointUrl ?? undefined,
       additionalHeaders: input?.additionalHeaders ?? {},
       astraEnv: input?.astraEnv ?? undefined,
       timeoutDefaults: Timeouts.merge(Timeouts.Default, input?.timeoutDefaults),

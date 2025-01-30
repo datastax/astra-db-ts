@@ -15,7 +15,7 @@
 
 import { describe, it } from '@/tests/testlib';
 import { Camel2SnakeCase, CollCodecs, uuid } from '@/src/index';
-import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 import { CollNominalCodecOpts } from '@/src/documents/collections/ser-des/codecs';
 import assert from 'assert';
 
@@ -30,7 +30,7 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
         serialize: (_, ctx) => (ctx.mapAfter((v) => (res.push([tag, v]), v)), ctx.continue()),
       });
 
-      const serdes = new CollectionSerDes({
+      const serdes = new CollSerDes({
         enableBigNumbers: { '*': 'bigint' },
         codecs: [
           repeat(() => CollCodecs.forName('root1',                  serFn('root1'))),
@@ -88,7 +88,7 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
     it('should not capture key transformations', () => {
       let val!: unknown;
 
-      const serdes = new CollectionSerDes({
+      const serdes = new CollSerDes({
         keyTransformer: new Camel2SnakeCase(),
         codecs: [
           CollCodecs.forPath([], { serialize: (_, ctx) => (ctx.mapAfter((v) => val = v), ctx.continue()) }),
@@ -108,7 +108,7 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
         deserialize: (_, ctx) => (ctx.mapAfter((v) => (res.push([tag, v]), v)), ctx.continue()),
       });
 
-      const serdes = new CollectionSerDes({
+      const serdes = new CollSerDes({
         enableBigNumbers: { '*': 'bigint' },
         codecs: [
           repeat(() => CollCodecs.forName('root1',                  serFn('root1'))),

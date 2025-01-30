@@ -15,7 +15,7 @@
 
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
-import { CollDesCtx, CollectionSerDes, CollSerCtx } from '@/src/documents/collections/ser-des/ser-des';
+import { CollDesCtx, CollSerDes, CollSerCtx } from '@/src/documents/collections/ser-des/ser-des';
 import { $DeserializeForCollection, $SerializeForCollection, CollCodec, CollCodecs } from '@/src/documents/collections';
 import { uuid, UUID } from '@/src/documents';
 import { ctxContinue, ctxDone, ctxRecurse } from '@/src/lib/api/ser-des/ctx';
@@ -29,7 +29,7 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
       const visit = (arr: unknown[], v: unknown) => (value: unknown) => (arr.push(v ?? value), ctxContinue());
       const serdesFns = (v: unknown = null) => ({ serialize: visit(serPaths, v), deserialize: visit(desPaths, v) });
 
-      const serdes = new CollectionSerDes({
+      const serdes = new CollSerDes({
         codecs: [
           CollCodecs.forPath(['*'], serdesFns('[*]')),
           CollCodecs.forPath(['cars', '*', 'name'], serdesFns('cars[*][name]')),
@@ -104,7 +104,7 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
       for (const signal of [ctxRecurse(), ctxDone()] as const) {
         let ser = 5, des = 5;
 
-        const serdes = new CollectionSerDes({
+        const serdes = new CollSerDes({
           codecs: [
             ...repeat(() => CollCodecs.forPath([], {
               serialize: () => --ser ? ctxContinue() : signal,
@@ -138,7 +138,7 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
         serialize: (val, ctx) => ctx.continue(val.unwrap),
         deserialize: (val, ctx) => ctx.recurse(new Id(val)),
       });
-      const serdes = new CollectionSerDes({ codecs: [IdCodec], enableBigNumbers: () => 'bigint' });
+      const serdes = new CollSerDes({ codecs: [IdCodec], enableBigNumbers: () => 'bigint' });
 
       const id = new Id(uuid(4));
       const doc = { _id: id, value: 1n };
@@ -165,7 +165,7 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
       }
 
       const IdCodec = CollCodecs.forId(Id);
-      const serdes = new CollectionSerDes({ codecs: [IdCodec], enableBigNumbers: () => 'bigint' });
+      const serdes = new CollSerDes({ codecs: [IdCodec], enableBigNumbers: () => 'bigint' });
 
       const id = new Id(uuid(4));
       const doc = { _id: id, value: 1n };
@@ -185,7 +185,7 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
       for (const signal of [ctxRecurse(), ctxDone()] as const) {
         let ser = 5, des = 5;
 
-        const serdes = new CollectionSerDes({
+        const serdes = new CollSerDes({
           codecs: [
             ...repeat(() => CollCodecs.forName('', {
               serialize: () => --ser ? ctxContinue() : signal,
@@ -219,7 +219,7 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
       for (const signal of [ctxRecurse, ctxDone] as const) {
         let ser = 5, des = 5;
 
-        const serdes = new CollectionSerDes({
+        const serdes = new CollSerDes({
           codecs: [
             ...repeat(() => CollCodecs.forType('type', {
               serializeClass: Type,

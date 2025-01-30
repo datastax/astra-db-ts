@@ -19,6 +19,7 @@ import { $SerializeForCollection } from '@/src/documents/collections/ser-des/con
 import { isBigNumber, pathMatches } from '@/src/lib/utils';
 import { CollNumRepCfg, GetCollNumRepFn } from '@/src/documents';
 import { coerceBigNumber, coerceNumber, collNumRepFnFromCfg } from '@/src/documents/collections/ser-des/big-nums';
+import { CollSerDesCfgHandler } from '@/src/documents/collections/ser-des/cfg-handler';
 
 /**
  * @public
@@ -37,7 +38,7 @@ export interface CollDesCtx extends BaseDesCtx<CollDesCtx> {
 /**
  * @public
  */
-export interface CollectionSerDesConfig extends BaseSerDesConfig<CollSerCtx, CollDesCtx> {
+export interface CollSerDesConfig extends BaseSerDesConfig<CollSerCtx, CollDesCtx> {
   enableBigNumbers?: GetCollNumRepFn | CollNumRepCfg,
   codecs?: RawCollCodecs[],
 }
@@ -45,12 +46,14 @@ export interface CollectionSerDesConfig extends BaseSerDesConfig<CollSerCtx, Col
 /**
  * @internal
  */
-export class CollectionSerDes extends SerDes<CollSerCtx, CollDesCtx> {
-  declare protected readonly _cfg: CollectionSerDesConfig & { enableBigNumbers?: GetCollNumRepFn };
+export class CollSerDes extends SerDes<CollSerCtx, CollDesCtx> {
+  declare protected readonly _cfg: CollSerDesConfig  & { enableBigNumbers?: GetCollNumRepFn };
   private readonly _getNumRepForPath: GetCollNumRepFn | undefined;
 
-  public constructor(cfg?: CollectionSerDesConfig) {
-    super(CollectionSerDes.mergeConfig(DefaultCollectionSerDesCfg, cfg, cfg?.enableBigNumbers ? BigNumCollectionDesCfg : {}));
+  public static cfg: typeof CollSerDesCfgHandler = CollSerDesCfgHandler;
+
+  public constructor(cfg?: CollSerDesConfig) {
+    super(CollSerDes.mergeConfig(DefaultCollectionSerDesCfg, cfg, cfg?.enableBigNumbers ? BigNumCollectionDesCfg : {}));
 
     this._getNumRepForPath = (typeof cfg?.enableBigNumbers === 'object')
       ? collNumRepFnFromCfg(cfg.enableBigNumbers)
@@ -71,15 +74,15 @@ export class CollectionSerDes extends SerDes<CollSerCtx, CollDesCtx> {
     return !!this._cfg?.enableBigNumbers;
   }
 
-  public static mergeConfig(...cfg: (CollectionSerDesConfig | undefined)[]): CollectionSerDesConfig {
+  public static mergeConfig(...cfg: (CollSerDesConfig | undefined)[]): CollSerDesConfig {
     return {
-      enableBigNumbers: cfg.reduce<CollectionSerDesConfig['enableBigNumbers']>((acc, c) => c?.enableBigNumbers ?? acc, undefined),
+      enableBigNumbers: cfg.reduce<CollSerDesConfig['enableBigNumbers']>((acc, c) => c?.enableBigNumbers ?? acc, undefined),
       ...super._mergeConfig(...cfg),
     };
   }
 }
 
-const BigNumCollectionDesCfg: CollectionSerDesConfig = {
+const BigNumCollectionDesCfg: CollSerDesConfig = {
   deserialize(value, ctx) {
     if (typeof value === 'number') {
       return coerceNumber(value, ctx);
@@ -93,7 +96,7 @@ const BigNumCollectionDesCfg: CollectionSerDesConfig = {
   },
 };
 
-const DefaultCollectionSerDesCfg: CollectionSerDesConfig = {
+const DefaultCollectionSerDesCfg: CollSerDesConfig = {
   serialize(value, ctx) {
     let resp: ReturnType<SerDesFn<unknown>> = null!;
 

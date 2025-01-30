@@ -17,6 +17,7 @@ import { DataAPIEnvironments } from '@/src/lib/constants';
 import JBI from 'json-bigint';
 import { SomeDoc } from '@/src/documents';
 import BigNumber from 'bignumber.js';
+import { array, Decoder, define, either, instanceOf } from 'decoders';
 
 /**
  * @internal
@@ -158,3 +159,17 @@ export const forJSEnv = (typeof process !== 'undefined' && typeof process.env ==
 export function isBigNumber(value: object): value is BigNumber {
   return BigNumber.isBigNumber(value) && value.constructor?.name === 'BigNumber';
 }
+
+export const oneOrMany = <T>(decoder: Decoder<T>): Decoder<T | T[]> => {
+  return either(decoder, array(decoder));
+};
+
+export const function_ = define<(...any: any[]) => any>((fn, ok, err) => {
+  if (typeof fn === 'function') {
+    return ok(fn as any);
+  } else {
+    return err('Input must be a function');
+  }
+});
+
+export const anyInstanceOf = <T>(cls: abstract new (...args: any[]) => T) => instanceOf(cls as any) as Decoder<T>;

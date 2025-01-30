@@ -43,7 +43,7 @@ import { $CustomInspect } from '@/src/lib/constants';
 import { InvalidEnvironmentError } from '@/src/db/errors';
 import { AstraDbInfo } from '@/src/administration/types/admin/database-info';
 import { Timeouts } from '@/src/lib/api/timeouts';
-import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
 
@@ -144,7 +144,7 @@ export class Db {
         additionalHeaders: { ...rootOpts.dbOptions.additionalHeaders, ...dbOpts?.additionalHeaders },
         timeoutDefaults: Timeouts.merge(rootOpts.dbOptions.timeoutDefaults, dbOpts?.timeoutDefaults),
         serdes: {
-          collection: CollectionSerDes.mergeConfig(rootOpts.dbOptions.serdes?.collection, dbOpts?.serdes?.collection, dbOpts?.serdes),
+          collection: CollSerDes.mergeConfig(rootOpts.dbOptions.serdes?.collection, dbOpts?.serdes?.collection, dbOpts?.serdes),
           table: TableSerDes.mergeConfig(rootOpts.dbOptions.serdes?.table, dbOpts?.serdes?.table, dbOpts?.serdes),
         },
       },
@@ -543,7 +543,7 @@ export class Db {
   public collection<WSchema extends SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>>(name: string, options?: CollectionOptions): Collection<WSchema, RSchema> {
     return new Collection(this, this.#httpClient, name, {
       ...options,
-      serdes: CollectionSerDes.mergeConfig(this.#defaultOpts.dbOptions.serdes?.collection, options?.serdes),
+      serdes: CollSerDes.mergeConfig(this.#defaultOpts.dbOptions.serdes?.collection, options?.serdes),
     });
   }
 
