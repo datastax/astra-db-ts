@@ -8,7 +8,7 @@ if [ -f .env ]; then
 fi
 
 # Define necessary commands
-test_cmd="ts-mocha --paths --recursive tests/prelude.test.ts tests/unit tests/integration tests/postlude.test.ts --extension .test.ts -t 0 --reporter tests/errors-reporter.cjs"
+test_cmd="ts-mocha --paths --recursive tests/prelude.test.ts tests/unit tests/integration tests/postlude.test.ts --extension .test.ts -t 0 --reporter tests/errors-reporter.cjs --exit "
 
 # Counter to make sure test type isn't set multiple times
 test_type_set=0
@@ -44,6 +44,10 @@ while [ $# -gt 0 ]; do
       [ "$1" = "-G" ] && filter_type='i' || filter_type='n'
       shift
       filter="g$filter_type\"$1\" $filter"
+      ;;
+    "-u")
+      filter="f$filter_type\"unit.\" $filter"
+      test_type="light"
       ;;
     "-fand")
       filter_combinator='and'
@@ -84,7 +88,7 @@ while [ $# -gt 0 ]; do
       local=1
       ;;
     "-watch")
-      skip_prelude=1
+      test_type="light"
       watch=1
       ;;
      *)
@@ -150,7 +154,6 @@ fi
 
 if [ -n "$watch" ]; then
   cmd_to_run="$cmd_to_run --watch --watch-files 'tests/**/*.test.ts,src/**/*.ts'"
-  export CLIENT_RUN_VECTORIZE_TESTS='' CLIENT_RUN_LONG_TESTS='' CLIENT_RUN_ADMIN_TESTS=''
 
   if [ -z "$filter" ]; then
     echo "A filter must be used with watch mode to prevent accidentally running all tests. '-f unit.' at the very least is highly recommended."
@@ -160,7 +163,7 @@ fi
 
 # Get embedding providers, if desired, to build the vectorize part of the command
 if [ -n "$CLIENT_RUN_VECTORIZE_TESTS" ] && [ "$test_type" != 'code' ]; then
-  CLIENT_VECTORIZE_PROVIDERS=$(bash scripts/list-embedding-providers.sh | jq -c)
+  CLIENT_VECTORIZE_PROVIDERS=$(bash scripts/utils/list-embedding-providers.sh | jq -c)
 
   export CLIENT_VECTORIZE_PROVIDERS
 

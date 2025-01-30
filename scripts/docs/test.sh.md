@@ -16,7 +16,7 @@ You can read more about the custom wrapper and why it exists [here](https://gith
 3. [Test script usage](#test-script-usage)
    1. [The test file (`scripts/test.sh`)](#1-the-test-file-scriptstestsh)
    2. [The test types (`[-all | -light | -coverage]`)](#2-the-test-types--all---light---coverage)
-   3. [The test filters (`[-fand | -for] [-f/F <match>]+ [-g/G <regex>]+`)](#3-the-test-filters--fand---for--ff-match--gg-regex)
+   3. [The test filters (`[-fand | -for] [-f/F <match>]+ [-g/G <regex>]+ [-u]`)](#3-the-test-filters--fand---for--ff-match--gg-regex)
    4. [The vectorize whitelist (`[-w/W <vectorize_whitelist>]`)](#4-the-vectorize-whitelist--ww-vectorize_whitelist)
    5. [Bailing (`[-b | -bail]`)](#5-bailing--b---bail)
    6. [Disabling error reporting (`[-R | -no-report]`)](#6-disabling-error-reporting--r---no-report)
@@ -26,7 +26,13 @@ You can read more about the custom wrapper and why it exists [here](https://gith
    10. [Enable verbose logging for tests (`[(-l | -logging) | (-L | -logging-with-pred <predicate>)]`)](#10-enable-verbose-logging-for-tests--l---logging---l---logging-with-pred-predicate)
    11. [Skipping the prelude (`[-P | -skip-prelude]`)](#11-skipping-the-prelude--p---skip-prelude)
    12. [Watching (`[-watch]`)](#12-watching--watch)
-4. [Examples](#examples)
+4. [Misc important stuff](#misc-important-stuff)
+   1. [Test tags](#test-tags)
+   2. [Running vectorize tests](#running-vectorize-tests)
+   3. [The custom Mocha wrapper](#the-custom-mocha-wrapper)
+      1. [The custom test functions](#the-custom-test-functions)
+      2. [Examples](#examples) 
+5. [Examples](#examples-1)
    1. [Simply running all tests](#simply-running-all-tests)
    2. [Running all non-long-running tests](#running-all-non-long-running-tests)
    3. [Running all tests, but with coverage](#running-all-tests-but-with-coverage)
@@ -37,8 +43,8 @@ You can read more about the custom wrapper and why it exists [here](https://gith
    8. [Running tests without a specific test tag](#running-tests-without-a-specific-test-tag)
    9. [Running tests with logging](#running-tests-with-logging)
    10. [Running all unit tests on save](#running-all-unit-tests-on-save)
-5. [See also](#see-also)
-q
+6. [See also](#see-also)
+
 ## Prerequisites
 
 - `npm`/`npx`
@@ -73,7 +79,7 @@ The API for the test script is as follows:
 ```fortran
 1. scripts/test.sh 
 2.  [-all | -light | -coverage] 
-3.  [-fand | -for] [-f/F <match>]+ [-g/G <regex>]+
+3.  [-fand | -for] [-f/F <match>]+ [-g/G <regex>]+ [-u]
 4.  [-w/W <vectorize_whitelist>]
 5.  [-b | -bail]
 6.  [-R | -no-report]
@@ -106,7 +112,7 @@ There are three main test types:
 By default, just running `scripts/test.sh` will be like using `-light`, but you can set the default config for which tests
 to enable in your `.env` file, through the `CLIENT_RUN_*_TESTS` env vars.
 
-### 3. The test filters (`[-fand | -for] [-f/F <match>]+ [-g/G <regex>]+`)
+### 3. The test filters (`[-fand | -for] [-f/F <match>]+ [-g/G <regex>]+ [-u]`)
 
 The `astra-db-ts` test suite implements fully custom test filtering, inspired by Mocha's, but improved upon.
 - `-f` and `-g` are _not_ mutually exclusive, and multiple of each may be used
@@ -127,6 +133,18 @@ it satisfies any one of the filters.
 
 In case filters overlap, an inverted filter always wins over a regular filter, and the conflicted test won't run.
 
+Furthermore, there exists a naming convention for the root-level `describe`/`parallel` blocks' names to be equivalent to the test file's directory + name, relative to `./tests`. For example:
+
+```ts
+// ./tests/unnit/documents/tables/ser-des/key-transformer.test.ts
+
+describe("unit.documents.tables.ser-des.key-transformer", () => {
+  // tests here!
+});
+```
+
+`-u` exits as a shorthand for `-f unit.` for running all unit tests to save you a precious few keystrokes (it also implicitly appends the `-light` flag to exclude a couple of long-running unit tests).
+s
 ### 4. The vectorize whitelist (`[-w/W <vectorize_whitelist>]`)
 
 There's a special filtering system just for vectorize tests, called the "vectorize whitelist", of which there are two
@@ -238,6 +256,130 @@ I don't actually know what happens if you use this flag with integration tests, 
 
 *You should most likely use this in conjunction with `-f unit.` to only run unit tests on save.*
 
+## Misc important stuff
+
+### Test tags
+
+The `astra-db-ts` test suite uses the concept of "test tags" to further advance test filtering. These are tags in
+the names of test blocks, such as `(LONG) createCollection tests` or `(ADMIN) (ASTRA) AstraAdmin tests`.
+
+These tags are automatically parsed and filtered through the custom wrapper our test suite uses, though
+you can still interact with them through test filters as well. For example, I commonly use `-f VECTORIZE` to
+only run the vectorize tests.
+
+Current tags include:
+- `VECTORIZE` - Enabled if `CLIENT_RUN_VECTORIZE_TESTS` is set (or `-all` is set)
+- `LONG` - Enabled if `CLIENT_RUN_LONG_TESTS` is set (or `-all` is set)
+- `ADMIN` - Enabled if `CLIENT_RUN_ADMIN_TESTS` is set (or `-all` is set)
+- `DEV` - Automatically enabled if running on Astra-dev
+- `NOT-DEV` - Automatically enabled if not running on Astra-dev
+- `ASTRA` - Automatically enabled if running on Astra
+
+Attempting to set any other test tag will throw an error. (All test tags must contain only uppercase letters &
+hyphens—any tag not matching `\([A-Za]+?\)` will not be counted.)
+
+### Running vectorize tests
+
+To run vectorize tests, you need to have a vectorize-enabled kube running, with the correct tags enabled.
+
+Ensure `CLIENT_RUN_VECTORIZE_TESTS` and `CLIENT_RUN_LONG_TESTS` are enabled as well (or just pass the `-all` flag to
+the test script).
+
+Lastly, you must create a file, `vectorize_tests.json`, in the root folder, with the following format:
+
+```ts
+type VectorizeTestSpec = {
+  [providerName: string]: {
+    headers?: {
+      [header: `x-${string}`]: string,
+    },
+    sharedSecret?: {
+      providerKey?: string,
+    },
+    dimension?: {
+      [modelNameRegex: string]: number,
+    },
+    parameters?: {
+      [modelNameRegex: string]: Record<string, string>,
+    },
+    warmupErr?: string,
+  },
+}
+```
+
+where:
+- `providerName` is the name of the provider (e.g. `nvidia`, `openai`, etc.) as found in `findEmbeddingProviders`.
+- `headers` sets the embedding headers to be used for header auth.
+   - resolves to an `EmbeddingHeadersProvider` under the hood—throws error if no corresponding one found.
+   - optional if no header auth test wanted.
+- `sharedSecret` is the block for KMS auth (isomorphic to `providerKey`, but it's an object for future-compatability).
+   - `providerKey` is the provider key for the provider (which will be passed in @ collection creation).
+   - optional if no KMS auth test wanted.
+- `parameters` is a mapping of model names to their corresponding parameters. The model name can be some regex that partially matches the full model name.
+   - `"text-embedding-3-small"`, `"3-small"`, and `".*"` will all match `"text-embedding-3-small"`.
+   - optional if not required. `azureOpenAI`, for example, will need this.
+- `dimension` is also a mapping of model name regex to their corresponding dimensions, like the `parameters` field.
+   - optional if not required. `huggingfaceDedicated`, for example, will need this.
+- `warmupErr` may be set if the provider errors on a cold start
+   - if set, the provider will be called in a `while (true)` loop until it stops throwing an error matching this message
+
+This file is .gitignore-d by default and will not be checked into VCS.
+
+See `vectorize_test_spec.example.json` for, guess what, an example.
+
+This spec is cross-referenced with `findEmbeddingProviders` to create a suite of tests branching off each possible
+parameter, with tests names of the format `providerName@modelName@authType@dimension`, where each section is another
+potential branch.
+
+To run *only* the vectorize tests, a common pattern I use is `scripts/test.sh -f VECTORIZE [-w <vectorize_whitelist>]`.
+
+### The custom Mocha wrapper
+
+**Note: this section is not relevant to you if you aren't writing your own tests.**
+
+The `astra-db-ts` test suite is massively IO-bound, and desires a more advanced test filtering system than
+Mocha provides by default. As such, we have written a (relatively) light custom wrapper around Mocha, extending
+it to allow us to squeeze all possible performance out of our tests, and make it easier to write, scale, and work
+with tests in both the present, and the future.
+
+#### The custom test functions
+
+The most prominent changes are the introduction of 5 new Mocha-API-esque functions (two of which are overhauls)
+- [`describe`](https://github.com/datastax/astra-db-ts/blob/60fa445192b6a648b7a139a45986af8525a37ffb/tests/testlib/describe.ts) - An overhaul to the existing `dynamic` block
+   - Provides fresh instances of the "common fixtures" in its callback
+   - Performs "tag filtering" on the suite names
+   - Some suite options to reduce boilerplate
+      - `truncateColls: 'default'` - Does `deleteMany({})` on the default collection in the default namespace after each test case
+      - `truncateColls: 'both'` - Does `deleteMany({})` on the default collection in both test namespaces after each test case
+      - `drop: 'after'` - Drops all non-default collections in both test namespaces after all the test cases in the suite
+      - `drop: 'afterEach'` - Drops all non-default collections in both test namespaces each test case
+- [`it`](https://github.com/datastax/astra-db-ts/blob/60fa445192b6a648b7a139a45986af8525a37ffb/tests/testlib/it.ts) - An overhaul to the existing `it` block
+   - Performs "tag filtering" on the test names
+   - Provides unique string keys for every test case
+- [`parallel`](https://github.com/datastax/astra-db-ts/blob/60fa445192b6a648b7a139a45986af8525a37ffb/tests/testlib/parallel.ts) - A wrapper around `describe` which runs all of its test cases in parallel
+   - Only allows `it`, `before`, `after`, and a single layer of `describe` functions
+   - Will run all tests simultaneously in a `before` hook, capture any exceptions, and rethrow them in reconstructed `it`/`describe` blocks for the most native-like behavior
+   - Performs tag and test filtering as normal
+   - Nearly all integration tests have been made parallel
+- [`background`](https://github.com/datastax/astra-db-ts/blob/60fa445192b6a648b7a139a45986af8525a37ffb/tests/testlib/background.ts) - A version of `describe` which runs in the background while all the other test cases run
+   - Only allows `it` blocks
+   - Will run the test at the very start of the test script, capture any exceptions, and rethrow them in reconstructed `it`/`describe` blocks for the most native-like behavior at the end of the test script
+   - Performs tag and test filtering as normal
+   - Meant for independent tests that take a very long time to execute (such as the `integration.devops.db-admin` lifecycle test)
+
+These are not globals like Mocha's—rather, they are imported, like so:
+
+```ts
+import { background, describe, it, parallel } from '@/tests/testlib';
+```
+
+#### Examples
+
+You can find examples of usages of each in most, if not all, test files, such as:
+- [`./tests/unit/lib/api/timeouts.test.ts`](../../tests/unit/lib/api/timeouts.test.ts) (`describe`, `parallel`, `it`)
+- [`./tests/integration/documents/tables/insert-one.test.ts`](../../tests/integration/documents/tables/insert-one.test.ts) (`parallel`, `it`)
+- [`./tests/integration/administration/lifecycle.test.ts`](../../tests/integration/administration/lifecycle.test.ts) (`background`, `it`)
+
 ## Examples
 
 This is by no means an exhaustive list of all the ways you can use the test script, but these are some ways I commonly use it.
@@ -278,14 +420,14 @@ scripts/test.sh -coverage
 
 ### Running only unit tests
 
+Equivalent to running `scripts/test.sh -f unit. -light`.
+
 Takes advantage of the naming convention of root-level `describe`/`parallel` blocks' names to be equivalent to the test file's directory + name, relative to `./tests` (e.g. `unit.documents.tables.ser-des.key-transformer`).
 
-Runs in ~10s, and `prelude.test.ts` is automatically skipped, since no integration tests are detected to be run.
-
-If you append the `-light` option (which skips all `(LONG)`-tagged tests), the unit tests will run in just a manner of milliseconds.
+Because the `-light` option is implicitly appended, the unit tests will run in just a manner of milliseconds (otherwise, there are a couple of longer-running unit tests that take 10s to complete).
 
 ```sh
-scripts/test.sh -f unit.
+scripts/test.sh -u
 ```
 
 ### Running a specific test file
@@ -356,3 +498,4 @@ scripts/test.sh -f unit. -watch
 
 - [The custom checker script](./check.sh.md)
 - [Local Data API spawning script](./startgate.sh.md)
+- [The all-in-one "premerge" script](./premerge.sh.md)

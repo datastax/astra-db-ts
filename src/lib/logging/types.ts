@@ -230,6 +230,6 @@ export interface DataAPIExplicitLoggingConfig {
  * @internal
  */
 export interface NormalizedLoggingConfig {
-  events: readonly DataAPILoggingEvent[],
+  events: readonly Exclude<DataAPILoggingEvent, 'all'>[],
   emits: readonly DataAPILoggingOutput[],
 }

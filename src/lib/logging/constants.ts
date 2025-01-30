@@ -83,7 +83,7 @@ export const DataAPILoggingDefaultOutputs = <const>{
  * @internal
  */
 export const DataAPILoggingDefaults: NormalizedLoggingConfig[] = [{
-  events: ['all'],
+  events: LoggingEventsWithoutAll,
   emits: ['event', 'stderr'],
 }, {
   events: ['commandStarted', 'commandSucceeded'],

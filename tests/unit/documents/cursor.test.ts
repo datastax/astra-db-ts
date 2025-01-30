@@ -15,7 +15,7 @@
 
 import assert from 'assert';
 import { describe, it } from '@/tests/testlib';
-import { CursorError, FindCursor } from '@/src/documents';
+import { FindCursor } from '@/src/documents';
 import { $CustomInspect } from '@/src/lib/constants';
 
 describe('unit.documents.cursors', ({ collection }) => {

@@ -92,3 +92,4 @@ This works even if the root-level suite is a `parallel` or `background` block.
 ## See also
 
 - [The custom test script](./test.sh.md)
+- [The all-in-one "premerge" script](./premerge.sh.md)

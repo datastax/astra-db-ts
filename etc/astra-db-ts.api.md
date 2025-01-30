@@ -1015,9 +1015,6 @@ export class DataAPIInet implements TableCodec<typeof DataAPIInet> {
 export type DataAPILoggingConfig = DataAPILoggingEvent | readonly (DataAPILoggingEvent | DataAPIExplicitLoggingConfig)[];
 
 // @public
-export const DataAPILoggingDefaults: NormalizedLoggingConfig[];
-
-// @public
 export type DataAPILoggingEvent = 'all' | keyof DataAPIClientEventMap;
 
 // @public
@@ -1725,12 +1722,14 @@ export type Normalize<T> = {
     [K in keyof T]: T[K];
 } & EmptyObj;
 
-// @public (undocumented)
+// Warning: (ae-internal-missing-underscore) The name "NormalizedLoggingConfig" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal (undocumented)
 export interface NormalizedLoggingConfig {
     // (undocumented)
     emits: readonly DataAPILoggingOutput[];
     // (undocumented)
-    events: readonly DataAPILoggingEvent[];
+    events: readonly Exclude<DataAPILoggingEvent, 'all'>[];
 }
 
 // @public

@@ -106,7 +106,7 @@ describe('unit.lib.logging.logger', () => {
   describe('constructor', () => {
     let stdout: string[] = [], stderr: string[] = [], events: [string, unknown][] = [];
 
-    const console = {
+    const fauxConsole = {
       log(msg) {
         stdout.push(msg);
       },
@@ -128,32 +128,32 @@ describe('unit.lib.logging.logger', () => {
     });
 
     it('should error on setting both stdout and stderr for same thing', () => {
-      assert.throws(() => new Logger([{ events: ['commandSucceeded'], emits: ['stdout', 'stderr'] }], emitter, console), { message: 'Nonsensical logging configuration; attempted to set both stdout and stderr outputs for \'commandSucceeded\'' });
+      assert.throws(() => new Logger([{ events: ['commandSucceeded'], emits: ['stdout', 'stderr'] }], emitter, fauxConsole), { message: 'Nonsensical logging configuration; attempted to set both stdout and stderr outputs for \'commandSucceeded\'' });
     });
 
     it('should not log when "off"', () => {
-      const logger = new Logger([], emitter, console);
+      const logger = new Logger([], emitter, fauxConsole);
       assert.strictEqual(logger.commandStarted, undefined);
       assert.strictEqual(logger.adminCommandStarted, undefined);
       assert.strictEqual(logger.adminCommandFailed, undefined);
     });
 
-    // it('should handle default logging behavior', () => {
-    //   const logger = new Logger(DataAPILoggingDefaults, emitter, console);
-    //   logger.commandStarted?.({ timeoutManager: { initial: () => ({}) }, command: {} } as any);
-    //   assert.strictEqual(events.at(-1)?.[0], 'commandStarted');
-    //   assert.ok(events.at(-1)?.[1] instanceof CommandStartedEvent);
-    //   logger.adminCommandStarted?.({} as any, true, {});
-    //   assert.strictEqual(events.at(-1)?.[0], 'adminCommandStarted');
-    //   assert.ok(events.at(-1)?.[1] instanceof AdminCommandStartedEvent);
-    //   assert.strictEqual(stderr.at(-1), (<any>events.at(-1)?.[1]).formatted());
-    //   assert.strictEqual(events.length, 2);
-    //   assert.strictEqual(stdout.length, 0);
-    //   assert.strictEqual(stderr.length, 1);
-    // });
+    it('should handle default logging behavior', () => {
+      const logger = new Logger(DataAPILoggingDefaults, emitter, fauxConsole);
+      logger.commandStarted?.({ timeoutManager: { initial: () => ({}) }, command: {} } as any);
+      assert.strictEqual(events.at(-1)?.[0], 'commandStarted');
+      assert.ok(events.at(-1)?.[1] instanceof CommandStartedEvent);
+      logger.adminCommandStarted?.({} as any, true, {});
+      assert.strictEqual(events.at(-1)?.[0], 'adminCommandStarted');
+      assert.ok(events.at(-1)?.[1] instanceof AdminCommandStartedEvent);
+      assert.strictEqual(stderr.at(-1), (<any>events.at(-1)?.[1]).formatted());
+      assert.strictEqual(events.length, 2);
+      assert.strictEqual(stdout.length, 0);
+      assert.strictEqual(stderr.length, 1);
+    });
 
     it('should not log events if not enabled', () => {
-      const logger = new Logger([{ events: ['commandStarted'], emits: ['stdout'] }], emitter, console);
+      const logger = new Logger([{ events: ['commandStarted'], emits: ['stdout'] }], emitter, fauxConsole);
       logger.commandStarted?.({ timeoutManager: { initial: () => ({}) }, command: {} } as any);
       assert.strictEqual(events.length, 0);
       assert.strictEqual(stdout.length, 1);
