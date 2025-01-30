@@ -16,7 +16,7 @@ You can read more about the custom wrapper and why it exists [here](https://gith
 3. [Test script usage](#test-script-usage)
    1. [The test file (`scripts/test.sh`)](#1-the-test-file-scriptstestsh)
    2. [The test types (`[-all | -light | -coverage]`)](#2-the-test-types--all---light---coverage)
-   3. [The test filters (`[-fand | -for] [-f/F <match>]+ [-g/G <regex>]+ [-u]`)](#3-the-test-filters--fand---for--ff-match--gg-regex)
+   3. [The test filters (`[-fand | -for] [-f/F <match>]+ [-g/G <regex>]+ [-u]`)](#3-the-test-filters--fand---for--ff-match--gg-regex--u)
    4. [The vectorize whitelist (`[-w/W <vectorize_whitelist>]`)](#4-the-vectorize-whitelist--ww-vectorize_whitelist)
    5. [Bailing (`[-b | -bail]`)](#5-bailing--b---bail)
    6. [Disabling error reporting (`[-R | -no-report]`)](#6-disabling-error-reporting--r---no-report)
@@ -27,9 +27,9 @@ You can read more about the custom wrapper and why it exists [here](https://gith
    11. [Skipping the prelude (`[-P | -skip-prelude]`)](#11-skipping-the-prelude--p---skip-prelude)
    12. [Watching (`[-watch]`)](#12-watching--watch)
 4. [Misc important stuff](#misc-important-stuff)
-   1. [Test tags](#test-tags)
-   2. [Running vectorize tests](#running-vectorize-tests)
-   3. [The custom Mocha wrapper](#the-custom-mocha-wrapper)
+   1. [Running vectorize tests](#running-vectorize-tests)
+   2. [Test tags (only important if writing tests)](#test-tags-only-important-if-writing-tests)
+   3. [The custom Mocha wrapper (only important if writing tests)](#the-custom-mocha-wrapper-only-important-if-writing-tests)
       1. [The custom test functions](#the-custom-test-functions)
       2. [Examples](#examples) 
 5. [Examples](#examples-1)
@@ -258,26 +258,6 @@ I don't actually know what happens if you use this flag with integration tests, 
 
 ## Misc important stuff
 
-### Test tags
-
-The `astra-db-ts` test suite uses the concept of "test tags" to further advance test filtering. These are tags in
-the names of test blocks, such as `(LONG) createCollection tests` or `(ADMIN) (ASTRA) AstraAdmin tests`.
-
-These tags are automatically parsed and filtered through the custom wrapper our test suite uses, though
-you can still interact with them through test filters as well. For example, I commonly use `-f VECTORIZE` to
-only run the vectorize tests.
-
-Current tags include:
-- `VECTORIZE` - Enabled if `CLIENT_RUN_VECTORIZE_TESTS` is set (or `-all` is set)
-- `LONG` - Enabled if `CLIENT_RUN_LONG_TESTS` is set (or `-all` is set)
-- `ADMIN` - Enabled if `CLIENT_RUN_ADMIN_TESTS` is set (or `-all` is set)
-- `DEV` - Automatically enabled if running on Astra-dev
-- `NOT-DEV` - Automatically enabled if not running on Astra-dev
-- `ASTRA` - Automatically enabled if running on Astra
-
-Attempting to set any other test tag will throw an error. (All test tags must contain only uppercase letters &
-hyphens—any tag not matching `\([A-Za]+?\)` will not be counted.)
-
 ### Running vectorize tests
 
 To run vectorize tests, you need to have a vectorize-enabled kube running, with the correct tags enabled.
@@ -333,7 +313,29 @@ potential branch.
 
 To run *only* the vectorize tests, a common pattern I use is `scripts/test.sh -f VECTORIZE [-w <vectorize_whitelist>]`.
 
-### The custom Mocha wrapper
+### Test tags (only important if writing tests)
+
+**Note: this section is not relevant to you if you aren't writing your own tests.**
+
+The `astra-db-ts` test suite uses the concept of "test tags" to further advance test filtering. These are tags in
+the names of test blocks, such as `(LONG) createCollection tests` or `(ADMIN) (ASTRA) AstraAdmin tests`.
+
+These tags are automatically parsed and filtered through the custom wrapper our test suite uses, though
+you can still interact with them through test filters as well. For example, I commonly use `-f VECTORIZE` to
+only run the vectorize tests.
+
+Current tags include:
+- `VECTORIZE` - Enabled if `CLIENT_RUN_VECTORIZE_TESTS` is set (or `-all` is set)
+- `LONG` - Enabled if `CLIENT_RUN_LONG_TESTS` is set (or `-all` is set)
+- `ADMIN` - Enabled if `CLIENT_RUN_ADMIN_TESTS` is set (or `-all` is set)
+- `DEV` - Automatically enabled if running on Astra-dev
+- `NOT-DEV` - Automatically enabled if not running on Astra-dev
+- `ASTRA` - Automatically enabled if running on Astra
+
+Attempting to set any other test tag will throw an error. (All test tags must contain only uppercase letters &
+hyphens—any tag not matching `\([A-Za]+?\)` will not be counted.)
+
+### The custom Mocha wrapper (only important if writing tests)
 
 **Note: this section is not relevant to you if you aren't writing your own tests.**
 
