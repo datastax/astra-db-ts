@@ -141,5 +141,6 @@ vectorize_test_spec.json
 etc/test-reports/
 etc/playgrounds/
 tmp-lib-check
+!examples/astra-db-ts.tgz
 
 .direnv

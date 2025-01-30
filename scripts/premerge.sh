@@ -1,6 +1,6 @@
 #!/bin/sh
 
-example_deps_args="npm"
+example_deps_args="tar"
 test_args="-b"
 
 while [ $# -gt 0 ]; do
@@ -43,6 +43,6 @@ print_green "Building the project..." \
   && sh scripts/test.sh $test_args \
   && print_green "Tests passed!" \
   && print_green "Setting example deps to latest npm version..." \
-  && sh scripts/update-example-client-dep.sh $example_deps_args \
+  && sh scripts/set-example-client-deps $example_deps_args \
   && print_green "Example deps set to latest npm version!" \
   || exit 1

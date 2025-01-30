@@ -6,7 +6,7 @@ Pretty much equivalent to:
 sh scripts/build.sh
 sh scripts/check.sh
 sh scripts/test.sh -b
-sh scripts/example-deps.sh npm
+sh scripts/set-example-client-deps.sh tar
 ```
 
 ...but all in one script, so now there's no excuse for me to miss any step.
@@ -19,7 +19,7 @@ You can override the arguments passed to any of the four scripts by providing an
 - `-build-args` (empty by default)
 - `-check-args` (empty by default)
 - `-test-args` (`-b` by default)
-- `-example-deps-args` (`npm` by default)
+- `-example-deps-args` (`tar` by default)
 
 For example:
 

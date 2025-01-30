@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-dirs="examples/*"
+dirs="examples/*/"
 
 lib_dir=$(pwd)
 tar_dir=examples/astra-db-ts.tgz
@@ -40,11 +40,11 @@ for dir in $dirs; do
     echo "Directory must be in the examples/ folder"
     exit 1
   fi
-
-  echo "$dir"
 done
 
-scripts/build -no-report
+if ! scripts/build.sh -no-report; then
+  exit 1
+fi
 
 if [ "$mode" = "tar" ]; then
   npm pack
@@ -66,44 +66,3 @@ for dir in $dirs; do
 
   cd - || exit 1
 done
-
-#case "$1" in
-#tar)
-#  # Change dependencies to use the latest version on npm
-#  for dir in examples/*; do
-#    cd "$cwd/$dir" || exit 1
-#    npm rm @datastax/astra-db-ts
-#    npm i @datastax/astra-db-ts@next
-#  done
-#  ;;
-#sym)
-#  # Creates a single tarball file to install in all of the examples
-#  tarball_dir=$(pwd)
-#  npm run build
-#  npm pack
-#
-#  dirs="$2"
-#
-#  if [ -z "$dirs" ]; then
-#    dirs="examples/*"
-#  fi
-#
-#  # Does said installation
-#  for dir in $dirs; do
-#    if [ ! -d "$dir" ]; then
-#      echo "Directory $dir does not exist"
-#      continue
-#    fi
-#    cd "$cwd/$dir" || exit 1
-#    npm i "${tarball_dir}"/datastax-astra-db-ts-*.tgz
-#    npm i @datastax/astra-db-ts
-#    cd "$cwd" || exit 1
-#  done
-#
-#  # Cleanup (tarball no longer required)
-#  rm "${tarball_dir}"/datastax-astra-db-ts-*.tgz
-#  ;;
-#*)
-#  echo 'Invalid args-must pass either "npm" or "local"'
-#  ;;
-#esac
