@@ -1,23 +1,18 @@
 #!/usr/bin/env sh
 
+set -e
+
 lib_dir=$(pwd)
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    "-c" | "-create")
-      action="create"
+    "create" | "destroy" | "show" | "run")
+      action="$1"
       name="$2"
       shift
       ;;
-    "-d" | "-destroy")
-      action="destroy"
-      name="$2"
-      shift
-      ;;
-    "-r" | "-run")
-      action="run"
-      name="$2"
-      shift
+    "list")
+      action="$1"
       ;;
     *)
       sh scripts/utils/help.sh "$1" playground.sh
@@ -32,10 +27,14 @@ if [ -z "$action" ]; then
   exit 1
 fi
 
+if [ "$action" = "list" ]; then
+  ls -1 etc/playgrounds
+  exit 0
+fi
+
 dir=etc/playgrounds/"$name"
 
-case "$action" in
-create)
+if [ "$action" = "create" ]; then
   if [ -d "$dir" ]; then
     echo "Playground '$name' already exists; do you want to delete and recreate it? [y/N]"
     read -r response
@@ -73,21 +72,39 @@ const table = db.table('test_table');
 (async () => {
 
 })();" > index.ts
-  ;;
-destroy)
-  if [ ! -d "$dir" ]; then
-    echo "Playground '$2' not found"
+fi
+
+if [ ! -d "$dir" ]; then
+  set -- etc/playgrounds/"$name"*
+
+  if [ "$#" -gt 1 ]; then
+    echo "Multiple playgrounds found for '$name'. Please specify one of the following:"
+
+    for d in "$@"; do
+      echo "- $(basename "$d")"
+    done
+
+    exit 1
+  elif [ "$#" -eq 0 ]; then
+    echo "No playground found for '$name'."
     exit 1
   fi
 
+  dir=$1
+fi
+
+case "$action" in
+show)
+  if which bat > /dev/null; then
+    bat "$dir"/*.ts
+  else
+    cat "$dir"/*.ts
+  fi
+  ;;
+destroy)
   rm -rf "$dir"
   ;;
 run)
-  if [ ! -d "$dir" ]; then
-    echo "Playground '$1' not found"
-    exit 1
-  fi
-
   cd etc/playgrounds/"$1" || exit 1
   npx tsx index.ts
 esac
