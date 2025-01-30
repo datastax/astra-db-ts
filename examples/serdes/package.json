@@ -16,6 +16,6 @@
     "typescript": "^5.6.3"
   },
   "dependencies": {
-    "@datastax/astra-db-ts": "^2.0.0-preview.2"
+    "@datastax/astra-db-ts": "^2.0.0-preview.3"
   }
 }
