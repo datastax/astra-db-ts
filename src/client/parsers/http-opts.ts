@@ -20,9 +20,9 @@ import type {
   FetchHttpClientOptions,
 } from '@/src/client';
 
-const HttpClients = <const>['default', 'fetch', 'custom'];
+const HttpClients = <const>['fetch-h2', 'fetch', 'custom'];
 void EqualityProof<typeof HttpClients[number], DataAPIHttpOptions['client'] & {}, true>;
-const parseHttpClient = p.mkStrEnumParser('DataAPILoggingOutput', HttpClients, false);
+const parseHttpClient = p.mkStrEnumParser('DataAPILoggingOutput', HttpClients, true);
 
 /**
  * @internal
@@ -34,18 +34,22 @@ export const parseHttpOpts: Parser<DataAPIHttpOptions | undefined> = (raw, field
     return undefined;
   }
 
-  const client = parseHttpClient(opts.client, `${field}.client`) ?? 'default';
+  if (opts.client as string === 'default') {
+    throw new Error(`${field}.client cannot be 'default' or undefined. Please use 'fetch-h2' instead if you're trying to emulate astra-db-ts 1.x behavior.`);
+  }
+
+  const client = parseHttpClient(opts.client, `${field}.client`);
 
   const parser = {
-    default: parseDefaultHttpOpts,
-    fetch: parseFetchHttpOpts,
-    custom: parseCustomHttpOpts,
+    'fetch-h2': parseFetchH2HttpOpts,
+    'fetch': parseFetchHttpOpts,
+    'custom': parseCustomHttpOpts,
   }[client];
 
   return parser(opts as any, field);
 };
 
-const parseDefaultHttpOpts: Parser<DefaultHttpClientOptions> = (opts, field) => {
+const parseFetchH2HttpOpts: Parser<DefaultHttpClientOptions> = (opts, field) => {
   const preferHttp2 = p.parse('boolean?')(opts.preferHttp2, `${field}.preferHttp2`) ?? true;
 
   const http1 = p.parse('object?', (http1, field) => {
@@ -64,7 +68,7 @@ const parseDefaultHttpOpts: Parser<DefaultHttpClientOptions> = (opts, field) => 
     };
   })(opts.fetchH2, `${field}.fetchH2`);
 
-  return { client: 'default', preferHttp2, http1, fetchH2 };
+  return { client: 'fetch-h2', preferHttp2, http1, fetchH2 };
 };
 
 const parseFetchHttpOpts: Parser<FetchHttpClientOptions> = () => {

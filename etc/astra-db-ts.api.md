@@ -1176,7 +1176,7 @@ export const DEFAULT_KEYSPACE = "default_keyspace";
 
 // @public
 export interface DefaultHttpClientOptions {
-    client?: 'default';
+    client: 'fetch-h2';
     fetchH2?: unknown;
     http1?: Http1Options;
     preferHttp2?: boolean;

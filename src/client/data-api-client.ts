@@ -282,9 +282,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
 }
 
 const buildFetchCtx = (options: DataAPIClientOptions | undefined): FetchCtx => {
-  const clientType = (options?.httpOptions)
-    ? options.httpOptions?.client ?? 'default'
-    : undefined;
+  const clientType = options?.httpOptions?.client;
 
   const ctx =
     (clientType === 'fetch')
@@ -299,7 +297,7 @@ const buildFetchCtx = (options: DataAPIClientOptions | undefined): FetchCtx => {
   };
 };
 
-const tryLoadFetchH2 = (clientType: string | nullish, options: DataAPIClientOptions | undefined): Fetcher => {
+const tryLoadFetchH2 = (clientType: 'fetch-h2' | nullish, options: DataAPIClientOptions | undefined): Fetcher => {
   try {
     const httpOptions = options?.httpOptions as DefaultHttpClientOptions | undefined;
     const preferHttp2 = httpOptions?.preferHttp2 ?? true;

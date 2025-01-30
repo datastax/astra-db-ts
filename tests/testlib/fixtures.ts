@@ -114,11 +114,11 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
     isGlobal = false,
   } = opts ?? {};
 
-  const preferHttp2 = httpClient === 'default:http2';
-  const clientType = httpClient.split(':')[0];
+  const preferHttp2 = httpClient === 'fetch-h2:http2';
+  const clientType = httpClient?.split(':')[0];
 
   const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {
-    httpOptions: { preferHttp2, client: <any>clientType },
+    httpOptions: clientType ? { preferHttp2, client: <any>clientType } : undefined,
     timeoutDefaults: { requestTimeoutMs: 60000 },
     dbOptions: { keyspace: DEFAULT_KEYSPACE },
     environment: env,
