@@ -87,105 +87,9 @@ while [ $# -gt 0 ]; do
       skip_prelude=1
       watch=1
       ;;
-    *)
-      if [ "$1" != "--help" ] && [ "$1" != "-help" ] && [ "$1" != "-h" ]; then
-        echo "Invalid flag $1"
-        echo
-      fi
-      echo "Usage:"
-      echo
-      echo "$0"
-      echo " (1)  [-all | -light | -coverage]"
-      echo " (2)  [-f/F <filter>]+"
-      echo " (3)  [-g/G <regex>]+"
-      echo " (4)  [-for]"
-      echo " (5)  [-w/W <vectorize_whitelist>]"
-      echo " (6)  [-b | -bail]"
-      echo " (7)  [-R | -no-report]"
-      echo " (8)  [-c <http_client>]"
-      echo " (9)  [-e <environment>]"
-      echo " (10) [-local]"
-      echo " (11) [(-l | -logging) | (-L | -logging-with-pred)]"
-      echo " (12) [-P | -skip-prelude]"
-      echo
-      echo "  $(tput setaf 4)(1)$(tput setaf 9) $(tput bold)Either run all tests, light tests, or coverage tests (defaults to 'all')$(tput sgr0)"
-      echo
-      echo "   '-all' runs all tests; '-light' runs tests without the LONG, ADMIN, or VECTORIZE tags; '-coverage' runs all tests with nyc coverage, and with '-bail' enabled."
-      echo
-      echo "  $(tput setaf 4)(2), (3)$(tput setaf 9) $(tput bold)Filter tests by substring or regex match$(tput sgr0)"
-      echo
-      echo "   A custom, more powerful implementation of Mocha's -f & -g flags."
-      echo
-      echo "   Requires a test's name, or any of its parent suites' names, to either contain the given text, or match the given regex (depending on the filter used)."
-      echo
-      echo "   No '-i' flag present; use '-F' or '-R' to invert any individual filter."
-      echo
-      echo "   May use each multiple times, intermixing the two types of filters."
-      echo
-      echo "  $(tput setaf 4)(4)$(tput setaf 9) $(tput bold)Use 'or' instead of 'and' for filter flags$(tput sgr0)"
-      echo
-      echo "   By default, when you run something like '$0 -f unit. -f http-client', it will run tests that match both 'unit.' and 'table.'. Use the '-for' flag to instead run all tests that match *either* filter."
-      echo
-      echo "  $(tput setaf 4)(5)$(tput setaf 9) $(tput bold)Filter which vectorize tests to run (defaults to '\$limit-per-model:1')$(tput sgr0)"
-      echo
-      echo "   There's a special filtering system just for vectorize tests, called the \"vectorize whitelist\", of which there are two different types."
-      echo
-      echo "   $(tput smul)* Regex filtering:$(tput rmul)"
-      echo
-      echo "   Every vectorize test is given a test name representing every branch it took to become that specific test. It is of the following format:"
-      echo
-      echo "   > 'providerName@modelName@authType@dimension'"
-      echo "   > where dimension := 'specified' | 'default' | <some_number>"
-      echo "   > where authType := 'header' | 'providerKey' | 'none'"
-      echo
-      echo "   Again, the regex only needs to match part of each test's name to succeed, so use '^$' as necessary."
-      echo
-      echo "   $(tput smul) Filter operators:$(tput rmul)"
-      echo
-      echo "   The vectorize test suite also defines some custom \"filter operators\" to provide filtering that can't be done through basic regex."
-      echo
-      echo "   They come of the format '-w \$<operator>:<colon_separated_args>':"
-      echo
-      echo "   > '\$limit:<number>' - This is a limit over the total number of vectorize tests, only running up to the specified amount"
-      echo "   > '\$provider-limit:<number>' - This limits the amount of vectorize tests that can be run per provider"
-      echo "   > '\$model-limit:<number>' - Akin to the above, but limits per model."
-      echo
-      echo "  $(tput setaf 4)(6)$(tput setaf 9) $(tput bold)Bail early on first test failure$(tput sgr0)"
-      echo
-      echo "   Simply sets the bail flag, as it does in Mocha. Forces the test script to exit after a single test failure."
-      echo
-      echo "  $(tput setaf 4)(7)$(tput setaf 9) $(tput bold)Disable test error reporting to \`./etc/test-reports$(tput sgr0)\`"
-      echo
-      echo "   By default, the test suite logs the complete error objects of any that may've been thrown during your tests to the \`./etc/test-reports\` directory for greatest debuggability. However, this can be disabled for a single test run using this flag."
-      echo
-      echo "  $(tput setaf 4)(8)$(tput setaf 9) $(tput bold)Set the http client to use for tests (defaults to 'default:http2')$(tput sgr0)"
-      echo
-      echo "   By default, tests are run w/ \`fetch-h2\` using HTTP/2, but you can specify a specific HTTP client, which is one of 'default:http1', 'default:http2', or 'fetch'."
-      echo
-      echo "  $(tput setaf 4)(9)$(tput setaf 9) $(tput bold)Set the database used for tests (defaults to 'astra')$(tput sgr0)"
-      echo
-      echo "   By default, the test suite assumes you're running on Astra, but you can specify the Data API environment through this flag, which should be one of 'dse', 'hcd', 'cassandra', or 'other'."
-      echo
-      echo "   You can also provide 'astra', but it wouldn't really do anything. But I'm not your boss or your mother; you can make your own big-boy/girl/other decisions, if you really want to."
-      echo
-      echo "   Not necessary if '-local' is set."
-      echo
-      echo "  $(tput setaf 4)(10)$(tput setaf 9) $(tput bold)Use local stargate for tests$(tput sgr0)"
-      echo
-      echo "   If you're running the tests on a local Stargate instance, you can use this flag to set the CLIENT_DB_URL to 'http://localhost:8080' and the CLIENT_DB_TOKEN to 'cassandra:cassandra' without needing to modify your .env file."
-      echo
-      echo "   Note that you'll still need to run stargate yourself. See \`scripts/startgate.sh\`."
-      echo
-      echo "  $(tput setaf 4)(11)$(tput setaf 9) $(tput bold)Enable verbose logging for tests$(tput sgr0)"
-      echo
-      echo "   (\`-l\` is equal to \`-L '!isGlobal'\`)"
-      echo
-      echo "   Documentation TODO."
-      echo
-      echo "  $(tput setaf 4)(12)$(tput setaf 9) $(tput bold)Skip tests setup to save time (prelude.test.ts)$(tput sgr0)"
-      echo
-      echo "   By default, the test script will run a \"prelude\" script that sets up the database for the tests. This can be skipped to save some time, using this flag, if the DB is already setup (enough), and you just want to run some tests really quickly."
-      exit
+     *)
+      sh scripts/utils/help.sh "$1" test.sh
+      exit $?
       ;;
   esac
   shift
@@ -245,10 +149,11 @@ if [ -n "$skip_prelude" ]; then
 fi
 
 if [ -n "$watch" ]; then
-  cmd_to_run="$cmd_to_run --watch --watch-files 'tests/**/*.test.ts'"
+  cmd_to_run="$cmd_to_run --watch --watch-files 'tests/**/*.test.ts,src/**/*.ts'"
+  export CLIENT_RUN_VECTORIZE_TESTS='' CLIENT_RUN_LONG_TESTS='' CLIENT_RUN_ADMIN_TESTS=''
 
   if [ -z "$filter" ]; then
-    echo "A filter must be used with watch mode to prevent running all tests"
+    echo "A filter must be used with watch mode to prevent accidentally running all tests. '-f unit.' at the very least is highly recommended."
     exit 1
   fi
 fi

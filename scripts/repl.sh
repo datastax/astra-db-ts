@@ -40,26 +40,10 @@ while [ $# -gt 0 ]; do
       default_keyspace_name="$2"
       shift
       ;;
-    *)
-      if [ "$1" != "--help" ] && [ "$1" != "-help" ] && [ "$1" != "-h" ]; then
-        echo "Invalid flag $1"
-        echo
-      fi
-      echo "Usage: sh scripts/repl.sh [-local] [-l | -logging]"
-      echo
-      echo "* -local: Sets the environment to 'hcd' and attempts to use a locally running stargate instance"
-      echo "* -l | -logging: Logs helpful events to stdout"
-      echo
-      echo "Useful commands:"
-      echo
-      echo "cl: Clears the console"
-      echo "cda: Deletes all documents in the test collection"
-      echo "tda: Deletes all documents in the test table"
-      echo "cfa: Finds all documents in the test collection"
-      echo "tfa: Finds all documents in the test table"
-      echo "cif(doc): Inserts a row into the test collection and returns the inserted document"
-      echo "tif(row): Inserts a row into the test table and returns the inserted document"
-      exit
+     *)
+      sh scripts/utils/help.sh "$1" repl.sh
+      exit $?
+      ;;
   esac
   shift
 done

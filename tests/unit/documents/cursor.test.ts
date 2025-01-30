@@ -65,7 +65,7 @@ describe('unit.documents.cursors', ({ collection }) => {
   it('should error if trying to set .includeSortVector() after starting cursor', () => {
     const cursor = collection.find({}).includeSortVector();
     cursor.close();
-    assert.throws(() => cursor.includeSortVector(), CursorError);
+    assert.throws(() => cursor.includeSortVector(), { name: 'CursorError' });
   });
 
   it('should inspect properly', () => {

@@ -25,6 +25,7 @@ You can read more about the custom wrapper and why it exists [here](https://gith
    9. [Running the tests on Stargate (`[-local]`)](#9-running-the-tests-on-stargate--local)
    10. [Enable verbose logging for tests (`[(-l | -logging) | (-L | -logging-with-pred <predicate>)]`)](#10-enable-verbose-logging-for-tests--l---logging---l---logging-with-pred-predicate)
    11. [Skipping the prelude (`[-P | -skip-prelude]`)](#11-skipping-the-prelude--p---skip-prelude)
+   12. [Watching (`[-watch]`)](#12-watching--watch)
 4. [Examples](#examples)
    1. [Simply running all tests](#simply-running-all-tests)
    2. [Running all non-long-running tests](#running-all-non-long-running-tests)
@@ -35,8 +36,9 @@ You can read more about the custom wrapper and why it exists [here](https://gith
    7. [Running tests on local stargate](#running-tests-on-local-stargate)
    8. [Running tests without a specific test tag](#running-tests-without-a-specific-test-tag)
    9. [Running tests with logging](#running-tests-with-logging)
+   10. [Running all unit tests on save](#running-all-unit-tests-on-save)
 5. [See also](#see-also)
-
+q
 ## Prerequisites
 
 - `npm`/`npx`
@@ -80,6 +82,7 @@ The API for the test script is as follows:
 9.  [-local]
 10. [(-l | -logging) | (-L | -logging-with-pred <predicate>)]]
 11. [-P | -skip-prelude]
+12. [-watch]
 ```
 
 The test script will return a non-zero exit code if any of the tests fail, and will print out the results of each test as it runs.
@@ -223,6 +226,18 @@ to save some time, using this flag, if the DB is already setup (enough), and you
 **Note:** the `astra-db-ts` test suite will automatically skip the prelude if it detects that only unit tests are being run,
 which shouldn't require any database setup in the first place.
 
+## 12. Watching (`[-watch]`)
+
+This flag is used to enable the watch mode for the test script. This will rerun the tests whenever a src or test file changes.
+
+**It is mandatory for a filter to be present when using this flag to avoid accidentally running all tests.**
+
+This also force-enables the `-light` flag for extra insurance.
+
+I don't actually know what happens if you use this flag with integration tests, but I most likely wouldn't recommend it.
+
+*You should most likely use this in conjunction with `-f unit.` to only run unit tests on save.*
+
 ## Examples
 
 This is by no means an exhaustive list of all the ways you can use the test script, but these are some ways I commonly use it.
@@ -267,7 +282,7 @@ Takes advantage of the naming convention of root-level `describe`/`parallel` blo
 
 Runs in ~10s, and `prelude.test.ts` is automatically skipped, since no integration tests are detected to be run.
 
-If you append the `-light` option (which skips all `(LONG)`-tagged tests), the unit tests will run in just a single second.
+If you append the `-light` option (which skips all `(LONG)`-tagged tests), the unit tests will run in just a manner of milliseconds.
 
 ```sh
 scripts/test.sh -f unit.
@@ -327,6 +342,14 @@ scripts/test.sh -l
 
 # Though sometimes I want something more specific
 scripts/test.sh -L '!isGlobal && e.commandName === "find"'
+```
+
+### Running all unit tests on save
+
+Quite helpful when developing unit tests or updating a feature, as it'll rerun the tests whenever you save a file.
+
+```sh
+scripts/test.sh -f unit. -watch
 ```
 
 ## See also

@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-tarball_dir=$(pwd)
+lib_dir=$(pwd)
 
 case "$1" in
 create)
@@ -29,7 +29,7 @@ create)
   npm i -D typescript tsx dotenv
   cp ../../../tsconfig.json .
 
-  npm i "$tarball_dir"
+  npm i "$lib_dir"
 
   echo "import * as $ from '@datastax/astra-db-ts';
 import dotenv from 'dotenv';

@@ -22,24 +22,10 @@ while [ $# -gt 0 ]; do
     "lib-check")
       check_types="$check_types lib-check"
       ;;
-    *)
-       if [ "$1" != "--help" ] && [ "$1" != "-help" ] && [ "$1" != "-h" ]; then
-         echo "Invalid flag $1"
-         echo
-       fi
-       echo "Usage:"
-       echo
-       echo "$0 [tc] [lint] [licensing] [lib-check] [test-exts] [test-names]"
-       echo
-       echo "* tc: runs the type-checker"
-       echo "* lint: checks for linting errors"
-       echo "* licensing: checks for missing licensing headers"
-       echo "* lib-check: ensures library compiles if skipLibCheck: false"
-       echo "* test-exts: makes sure test files end in .test.ts"
-       echo "* test-names: makes sure test suite names match the test dir + file name"
-       echo
-       echo "Defaults to running all checks if no specific checks are specified."
-       exit
+     *)
+      sh scripts/utils/help.sh "$1" check.sh
+      exit $?
+      ;;
   esac
   shift
 done
