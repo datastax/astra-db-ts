@@ -35,3 +35,5 @@ Knock yourself out.
 
 - [The custom test script](./test.sh.md)
 - [The custom check script](./check.sh.md)
+- [The custom build script](./build.sh.md)
+- [Locking example client deps](./set-example-client-deps.sh.md)
