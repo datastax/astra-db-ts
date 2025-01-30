@@ -193,7 +193,7 @@ If using `tif`, it'll default row to `{ text: $.UUID.v4().toString(), int: 0, ..
 
 #### `+<Promise>`
 
-This one is a minor cheat, but if you run `+<Promise>` in the REPL, it'll automatically `await` the promise for you and print out the full (non-truncated) result.
+This one is a minor cheat, but if you run `+<Promise>` in the REPL, it'll print out the full, non-truncated, `await`-ed result.
 
 It'll also return `1` if the promise resolves successfully, and `0` if it rejects.
 

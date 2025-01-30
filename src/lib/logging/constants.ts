@@ -80,36 +80,10 @@ export const DataAPILoggingDefaultOutputs = <const>{
 };
 
 /**
- * ##### Overview
- *
- * The default logging configuration for each of the Data API events.
- *
- * These are used if events are "enabled" without specified outputs being provided; e.g.:
- * - `logging: ['commandStarted', 'commandSucceeded', 'commandFailed']`
- * - `logging: 'all'`
- *
- * ##### Defaults
- *
- * All events are emitted as events by default, through the {@link DataAPIClient}, which is an instance of an {@link EventEmitter}.
- *
- * Beyond that though, certain events are logged to `stdout` by default, others to `stderr`, and others not at all:
- * - `adminCommandStarted`, `adminCommandPolling`, and `adminCommandSucceeded`
- *   - Logged to `stdout`
- * - `adminCommandFailed`, `commandFailed`, `commandWarnings`, and `adminCommandWarnings`
- *   - Logged to `stderr`
- * - `commandStarted` and `commandSucceeded`
- *   - Not logged at all
- *
- * @see DataAPIClientEventMap
- * @see DataAPILoggingConfig
- *
- * @public
+ * @internal
  */
 export const DataAPILoggingDefaults: NormalizedLoggingConfig[] = [{
-  events: ['adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded'],
-  emits: ['event', 'stdout'],
-}, {
-  events: ['adminCommandFailed', 'commandFailed', 'commandWarnings', 'adminCommandWarnings'],
+  events: ['all'],
   emits: ['event', 'stderr'],
 }, {
   events: ['commandStarted', 'commandSucceeded'],
