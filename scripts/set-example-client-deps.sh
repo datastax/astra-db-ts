@@ -42,7 +42,7 @@ for dir in $dirs; do
   fi
 done
 
-if ! scripts/build.sh -no-report; then
+if ! scripts/build.sh; then
   exit 1
 fi
 

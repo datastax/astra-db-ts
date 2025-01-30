@@ -1,5 +1,6 @@
 #!/bin/sh
 
+build_args="-r"
 example_deps_args="tar"
 test_args="-b"
 

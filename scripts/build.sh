@@ -2,11 +2,15 @@
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    "-no-report" | "-R")
-      no_report=true
+    "-update-report" | "-r")
+      update_report=true
       ;;
     "-light" | "-l")
       light=true
+      ;;
+    *)
+      sh scripts/utils/help.sh "$1" build.sh
+      exit $?
       ;;
   esac
   shift
@@ -33,7 +37,7 @@ if [ "$light" != true ]; then
   npx api-extractor run -c ./api-extractor.jsonc --local
 
   # Updates the API report if flag not set
-  if [ "$no_report" != true ]; then
+  if [ "$update_report" = true ]; then
     mv -f ./temp/*.api.md ./etc/
   fi
   rm -r ./temp

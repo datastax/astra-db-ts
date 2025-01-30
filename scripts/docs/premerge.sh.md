@@ -3,9 +3,9 @@
 Pretty much equivalent to:
 
 ```sh
-sh scripts/build.sh
+sh scripts/build.sh -update-report
 sh scripts/check.sh
-sh scripts/test.sh -b
+sh scripts/test.sh -bail
 sh scripts/set-example-client-deps.sh tar
 ```
 

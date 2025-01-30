@@ -12,7 +12,7 @@ if [ -z "$CLIENT_DB_TOKEN" ] || [ -z "$CLIENT_DB_TOKEN" ]; then
 fi
 
 # Rebuild the client (without types or any extra processing for speed)
-sh scripts/build.sh -light -no-report || exit 2
+sh scripts/build.sh -light || exit 2
 
 default_coll_name='test_coll'
 default_table_name='test_table'
