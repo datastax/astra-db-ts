@@ -182,11 +182,11 @@ This one's actually a function that performs two steps:
 If using `tif`, it'll default row to `{ text: $.UUID.v4().toString(), int: 0, ...row }` so you don't need to worry about explicitly setting the PK if you don't want to.
 
 ```ts
-> tif({ int: 3, date: new Date('2024-01-19') })
+> tif({ int: 3, duration: '1w' })
 { 
   text: '7ec78dbf-a96b-4e7a-9d72-20e4db54c164',
   int: 3,
-  date: 2024-01-19T00:00:00.000Z,
+  duration: DataAPIDuration("7d"),
   ...: null,
 }
 ```
