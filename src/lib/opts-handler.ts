@@ -15,6 +15,9 @@
 import { Decoder } from 'decoders';
 import { nullish } from '@/src/lib/index';
 
+/**
+ * @internal
+ */
 declare const __parsed: unique symbol;
 
 /**

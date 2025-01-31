@@ -14,27 +14,19 @@
 // noinspection JSDeprecatedSymbols
 
 import type TypedEmitter from 'typed-emitter';
-import type {
-  AdminOptions,
-  CustomHttpClientOptions,
-  DataAPIClientOptions,
-  DbOptions,
-  DefaultHttpClientOptions,
-} from '@/src/client/types';
+import type { AdminOptions, DataAPIClientOptions, DbOptions } from '@/src/client/types';
 import { LIB_NAME } from '@/src/version';
 import type { InternalRootClientOpts } from '@/src/client/types/internal';
-import { type DataAPIClientEventMap, type Fetcher, FetchH2, FetchNative, type nullish, TokenProvider } from '@/src/lib';
+import { type DataAPIClientEventMap, type nullish, TokenProvider } from '@/src/lib';
 import { Db, InvalidEnvironmentError } from '@/src/db';
 import { AstraAdmin } from '@/src/administration';
-import type { FetchCtx } from '@/src/lib/api/fetch/types';
-import { isNullish } from '@/src/lib/utils';
 import { p, type Parser } from '@/src/lib/validation';
-import { parseHttpOpts } from '@/src/client/parsers/http-opts';
 import { $CustomInspect } from '@/src/lib/constants';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
 import { CallerCfgHandler } from '@/src/client/opts-handlers/caller-cfg-handler';
 import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler';
+import { HttpOptsHandler } from '@/src/client/opts-handlers/http-opts-handler';
 
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
@@ -167,7 +159,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
 
     this.#options = {
       environment: EnvironmentCfgHandler.parseWithin(options, 'environment'),
-      fetchCtx: buildFetchCtx(options || undefined),
+      fetchCtx: HttpOptsHandler.parseWithin(options, 'httpOptions'),
       dbOptions: DbOptsHandler.concatParse([dbOptions], {
         token: TokenProvider.opts.concat(tokens.default, tokens.db),
         timeoutDefaults: options?.timeoutDefaults,
@@ -284,36 +276,6 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
   }
 }
 
-const buildFetchCtx = (options: DataAPIClientOptions | undefined): FetchCtx => {
-  const clientType = options?.httpOptions?.client;
-
-  const ctx =
-    (clientType === 'fetch')
-      ? new FetchNative() :
-    (clientType === 'custom')
-      ? (options!.httpOptions as CustomHttpClientOptions).fetcher
-      : tryLoadFetchH2(clientType, options);
-
-  return {
-    ctx: ctx,
-    closed: { ref: false },
-  };
-};
-
-const tryLoadFetchH2 = (clientType: 'fetch-h2' | nullish, options: DataAPIClientOptions | undefined): Fetcher => {
-  try {
-    const httpOptions = options?.httpOptions as DefaultHttpClientOptions | undefined;
-    const preferHttp2 = httpOptions?.preferHttp2 ?? true;
-    return new FetchH2(httpOptions, preferHttp2);
-  } catch (e) {
-    if (isNullish(clientType)) {
-      return new FetchNative();
-    } else {
-      throw e;
-    }
-  }
-};
-
 const parseClientOpts: Parser<DataAPIClientOptions | nullish> = (raw, field) => {
   const opts = p.parse('object?')<DataAPIClientOptions>(raw, field);
 
@@ -327,7 +289,7 @@ const parseClientOpts: Parser<DataAPIClientOptions | nullish> = (raw, field) => 
     dbOptions: opts.dbOptions,
     adminOptions: opts.adminOptions,
     caller: opts.caller,
-    httpOptions: parseHttpOpts(opts.httpOptions, `${field}.httpOptions`),
+    httpOptions: opts.httpOptions,
     timeoutDefaults: opts.timeoutDefaults,
   };
 };
