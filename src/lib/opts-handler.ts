@@ -39,11 +39,6 @@ export type Unparse<T> = Omit<T, typeof __parsed>;
 /**
  * @internal
  */
-export type DecoderType<T> = T extends Decoder<infer U> ? U : never;
-
-/**
- * @internal
- */
 export interface OptionsHandlerImpl<Types extends OptionsHandlerTypes> {
   decoder: Decoder<Types['Parseable']>,
   refine: (input: Types['Decoded'], field: string | undefined) => Unparse<Types['Parsed']>,

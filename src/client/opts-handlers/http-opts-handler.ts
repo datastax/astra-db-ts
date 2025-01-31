@@ -12,9 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { boolean, constant, either, inexact, object, optional, positiveInteger, taggedUnion } from 'decoders';
+import {
+  boolean,
+  constant,
+  DecoderType,
+  either,
+  inexact,
+  object,
+  optional,
+  positiveInteger,
+  taggedUnion,
+} from 'decoders';
 import { function_, isNullish } from '@/src/lib/utils';
-import { DecoderType, OptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
+import { OptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
 import { DataAPIHttpOptions } from '@/src/client';
 import type { FetchCtx, Fetcher } from '@/src/lib/api/fetch/types';
 import { FetchH2, FetchNative } from '@/src/lib';

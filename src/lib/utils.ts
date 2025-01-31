@@ -12,8 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIEnvironment, nullish } from '@/src/lib/types';
-import { DataAPIEnvironments } from '@/src/lib/constants';
 import JBI from 'json-bigint';
 import { SomeDoc } from '@/src/documents';
 import BigNumber from 'bignumber.js';
@@ -24,15 +22,6 @@ import { array, Decoder, define, either, instanceOf } from 'decoders';
  */
 export function isNullish(t: unknown): t is null | undefined {
   return t === null || t === undefined;
-}
-
-/**
- * @internal
- */
-export function validateDataAPIEnv(env: unknown): asserts env is DataAPIEnvironment | nullish {
-  if (!isNullish(env) && !(<readonly unknown[]>DataAPIEnvironments).includes(env)) {
-    throw new Error(`Given environment is invalid (must be ${DataAPIEnvironments.map(e => `"${e}"`).join(', ')}, or nullish to default to "astra" (got: ${env}).`);
-  }
 }
 
 /**

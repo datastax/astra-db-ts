@@ -30,7 +30,7 @@ import type {
 import { EmptyInternalLoggingConfig, EventConstructors } from '@/src/lib/logging/constants';
 import { buildOutputsMap } from '@/src/lib/logging/util';
 import type TypedEventEmitter from 'typed-emitter';
-import type { DataAPIClientEvent } from '@/src/lib';
+import type { BaseDataAPIClientEvent } from '@/src/lib';
 import { LoggingCfgHandler, ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
 
 /**
@@ -69,7 +69,7 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
       const event = _event as keyof DataAPIClientEventMap;
 
       this[event] = (...args: any[]) => {
-        const eventClass = new (<any>EventConstructors[event])(...args) as DataAPIClientEvent;
+        const eventClass = new (<any>EventConstructors[event])(...args) as BaseDataAPIClientEvent;
 
         if (outputs.event) {
           this.emitter.emit(event, <any>eventClass);

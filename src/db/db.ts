@@ -23,7 +23,6 @@ import { CreateCollectionOptions } from '@/src/db/types/collections/create-colle
 import { TokenProvider } from '@/src/lib';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client';
 import { KeyspaceRef } from '@/src/lib/api/clients/types';
-import { validateDataAPIEnv } from '@/src/lib/utils';
 import { EmbeddingHeadersProvider, FoundRow, SomeRow, Table, TableDropIndexOptions } from '@/src/documents';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
 import { CollectionOptions } from '@/src/db/types/collections/collection-options';
@@ -44,6 +43,7 @@ import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
 import { DbOptsHandler, ParsedDbOptions } from '@/src/client/opts-handlers/db-opts-handler';
 import { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler';
+import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler';
 
 /**
  * #### Overview
@@ -369,9 +369,7 @@ export class Db {
   public admin(options: AdminOptions & { environment: Exclude<DataAPIEnvironment, 'astra'> }): DataAPIDbAdmin
 
   public admin(options?: AdminOptions & { environment?: DataAPIEnvironment }): DbAdmin {
-    const environment = options?.environment ?? 'astra';
-
-    validateDataAPIEnv(environment);
+    const environment = EnvironmentCfgHandler.parseWithin(options, 'environment');
 
     if (this.#defaultOpts.environment !== environment) {
       throw new InvalidEnvironmentError('db.admin()', environment, [this.#defaultOpts.environment], 'environment option is not the same as set in the DataAPIClient');
@@ -1200,6 +1198,9 @@ export class Db {
     });
   }
 
+  /**
+   * Backdoor to the HTTP client for if it's absolutely necessary. Which it almost never (if even ever) is.
+   */
   public get _httpClient(): OpaqueHttpClient {
     return this.#httpClient;
   }

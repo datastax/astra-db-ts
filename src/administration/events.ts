@@ -15,7 +15,7 @@
 
 import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client';
 import type { DataAPIErrorDescriptor } from '@/src/documents';
-import { DataAPIClientEvent } from '@/src/lib/logging/events';
+import { BaseDataAPIClientEvent } from '@/src/lib/logging/events';
 import { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts';
 
 /**
@@ -52,7 +52,7 @@ export type AdminCommandEventMap = {
  *
  * @public
  */
-export abstract class AdminCommandEvent extends DataAPIClientEvent {
+export abstract class AdminCommandEvent extends BaseDataAPIClientEvent {
   /**
    * The path for the request, not including the Base URL.
    */

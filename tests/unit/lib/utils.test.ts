@@ -16,15 +16,16 @@ import assert from 'assert';
 import { describe, it } from '@/tests/testlib';
 import * as bn from 'bignumber.js';
 import {
-  buildAstraEndpoint, forJSEnv,
+  buildAstraEndpoint,
+  forJSEnv,
   isBigNumber,
   isNullish,
-  jsonTryParse, pathMatches, pathArraysEqual,
+  jsonTryParse,
+  pathArraysEqual,
+  pathMatches,
   toArray,
-  validateDataAPIEnv,
   withJbiNullProtoFix,
 } from '@/src/lib/utils';
-import { DataAPIEnvironments } from '@/src/lib';
 import JBI from 'json-bigint';
 
 describe('unit.lib.utils', () => {
@@ -38,17 +39,6 @@ describe('unit.lib.utils', () => {
       assert.strictEqual(isNullish({}), false);
       assert.strictEqual(isNullish([]), false);
       assert.strictEqual(isNullish('hi!'), false);
-    });
-  });
-
-  describe('validateDataAPIEnv', () => {
-    it('works', () => {
-      for (const env of [null, undefined, ...DataAPIEnvironments]) {
-        assert.doesNotThrow(() => validateDataAPIEnv(env));
-      }
-      for (const env of [0, '', 'hi!', {}, [], 'Astra', 'ASTRA']) {
-        assert.throws(() => validateDataAPIEnv(env));
-      }
     });
   });
 

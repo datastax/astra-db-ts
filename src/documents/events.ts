@@ -14,7 +14,7 @@
 
 import { DEFAULT_KEYSPACE, type RawDataAPIResponse } from '@/src/lib';
 // import { DataAPIClientEvent } from '@/src/lib/logging/events'; needs to be like this or it errors
-import { DataAPIClientEvent } from '@/src/lib/logging/events';
+import { BaseDataAPIClientEvent } from '@/src/lib/logging/events';
 import type { DataAPIRequestInfo } from '@/src/lib/api/clients/data-api-http-client';
 import type { DataAPIErrorDescriptor } from '@/src/documents/errors';
 import { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts';
@@ -55,7 +55,7 @@ export type CommandEventMap = {
  *
  * @public
  */
-export abstract class CommandEvent extends DataAPIClientEvent {
+export abstract class CommandEvent extends BaseDataAPIClientEvent {
   /**
    * The command object. Equal to the response body of the HTTP request.
    *

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DecoderType, MonoidalOptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
+import { MonoidalOptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
 import { DataAPILoggingConfig, DataAPILoggingEvent, DataAPILoggingOutput } from '@/src/lib';
-import { array, either, nonEmptyArray, object, oneOf, optional } from 'decoders';
+import { array, DecoderType, either, nonEmptyArray, object, oneOf, optional } from 'decoders';
 import {
   LoggingDefaultOutputs,
   LoggingDefaults,
