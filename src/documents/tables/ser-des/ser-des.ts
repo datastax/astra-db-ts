@@ -79,7 +79,7 @@ export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
       ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.projectionSchema, 'No `status.projectionSchema` found in response.\n\n**Did you accidentally use a `Table` object on a Collection?** If so, documents may\'ve been found, but the client cannot properly deserialize the response. Please use a `Collection` object instead.', rawDataApiResp);
     }
 
-    if (this._cfg?.sparseData !== true) {
+    if (this._cfg.sparseData !== true) {
       populateSparseData(ctx);
     }
 

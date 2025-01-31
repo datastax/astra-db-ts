@@ -50,6 +50,6 @@ export const TableSerDesCfgHandler = new OptionsHandler<SerDesConfigTypes>({
   },
   empty: {
     ...serDesEmpty,
-    sparseData: true,
+    sparseData: undefined,
   },
 });

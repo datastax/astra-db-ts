@@ -105,13 +105,18 @@ export const TokenProviderOptsHandler = new OptionsHandler<TokenProviderOptsType
     }
 
     if (isNullish(input)) {
-      return UnsetTokenProvider.INSTANCE;
+      return this.empty;
     }
 
     return input;
   },
   concat(configs) {
-    return configs.find((c) => !(c instanceof UnsetTokenProvider)) ?? this.empty;
+    for (let i = configs.length - 1; i >= 0; i--) {
+      if (configs[i] !== this.empty) {
+        return configs[i];
+      }
+    }
+    return this.empty;
   },
   empty: UnsetTokenProvider.INSTANCE,
 });
