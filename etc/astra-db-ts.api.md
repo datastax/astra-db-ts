@@ -8,7 +8,6 @@ import BigNumber from 'bignumber.js';
 import { Decoder } from 'decoders';
 import { DecoderType } from 'decoders';
 import type TypedEmitter from 'typed-emitter';
-import type TypedEventEmitter from 'typed-emitter';
 
 // @public (undocumented)
 export const $DeserializeForCollection: unique symbol;
