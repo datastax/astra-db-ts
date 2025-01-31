@@ -16,7 +16,7 @@
 import type TypedEmitter from 'typed-emitter';
 import type { AdminOptions, DataAPIClientOptions, DbOptions } from '@/src/client/types';
 import { LIB_NAME } from '@/src/version';
-import { type DataAPIClientEventMap, type nullish, TokenProvider } from '@/src/lib';
+import { type DataAPIClientEventMap, TokenProvider } from '@/src/lib';
 import { Db, InvalidEnvironmentError } from '@/src/db';
 import { AstraAdmin } from '@/src/administration';
 import { $CustomInspect } from '@/src/lib/constants';
@@ -135,7 +135,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
     const tokenPassed = (typeof tokenOrOptions === 'string' || tokenOrOptions instanceof TokenProvider || arguments.length > 1);
 
     const token = (tokenPassed)
-      ? tokenOrOptions as string | TokenProvider | nullish
+      ? tokenOrOptions as string | TokenProvider | undefined
       : undefined;
 
     const rawOptions = (tokenPassed)

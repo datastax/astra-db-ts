@@ -42,7 +42,7 @@ You can read more about the custom wrapper and why it exists [here](https://gith
    7. [Running tests on local stargate](#running-tests-on-local-stargate)
    8. [Running tests without a specific test tag](#running-tests-without-a-specific-test-tag)
    9. [Running tests with logging](#running-tests-with-logging)
-   10. [Running all unit tests on save](#running-all-unit-tests-on-save)
+   10. [Running unit tests while you write them](#running-unit-tests-while-you-write-them)
 6. [See also](#see-also)
 
 ## Prerequisites
@@ -246,7 +246,7 @@ which shouldn't require any database setup in the first place.
 
 ## 12. Watching (`[-watch]`)
 
-This flag is used to enable the watch mode for the test script. This will rerun the tests whenever a src or test file changes.
+This flag is used to enable the watch mode for the test script. This will rerun the tests whenever a test file changes. Very useful when writing unit tests in bulk.
 
 **It is mandatory for a filter to be present when using this flag to avoid accidentally running all tests.**
 
@@ -488,9 +488,9 @@ scripts/test.sh -l
 scripts/test.sh -L '!isGlobal && e.commandName === "find"'
 ```
 
-### Running all unit tests on save
+### Running unit tests while you write them
 
-Quite helpful when developing unit tests or updating a feature, as it'll rerun the tests whenever you save a file.
+Quite helpful when developing unit tests or updating a feature, as it'll rerun the tests whenever you edit a test file.
 
 ```sh
 scripts/test.sh -f unit. -watch

@@ -15,6 +15,12 @@
 import { Decoder } from 'decoders';
 import { nullish } from '@/src/lib/index';
 
+export class OptionParseError extends Error {
+  constructor(message: string, public readonly field: string | undefined) {
+    super(message);
+  }
+}
+
 /**
  * @internal
  */
@@ -74,13 +80,19 @@ export class OptionsHandler<Types extends OptionsHandlerTypes> {
   }
 
   public parse(input: Types['Parseable'], field?: string): Types['Parsed'] {
-    const decoded = this.impl.decoder.verify(input);
-    return assertParsed(this.impl.refine(decoded, field));
+    try {
+      const decoded = this.impl.decoder.verify(input);
+      return assertParsed(this.impl.refine(decoded, field));
+    } catch (e) {
+      if (!(e instanceof Error) || e.name !== 'Decoding error') {
+        throw e;
+      }
+      throw new OptionParseError(e.message, field);
+    }
   }
 
   public parseWithin<Field extends string>(obj: Partial<Record<Field, Types['Parseable']>> | nullish, field: Field | `${string}.${Field}`): Types['Parsed'] {
-    const decoded = this.impl.decoder.verify(obj?.[field.split('.').at(-1) as Field]);
-    return assertParsed(this.impl.refine(decoded, field));
+    return this.parse(obj?.[field.split('.').at(-1) as Field], field);
   }
 }
 

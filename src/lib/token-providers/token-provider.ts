@@ -15,7 +15,7 @@
 import { StaticTokenProvider } from '@/src/lib';
 import { anyInstanceOf, isNullish } from '@/src/lib/utils';
 import { MonoidalOptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
-import { DecoderType, either, nullish, string } from 'decoders';
+import { DecoderType, either, optional, string } from 'decoders';
 
 
 /**
@@ -99,11 +99,11 @@ export type ParsedTokenProvider = TokenProvider & Parsed<'TokenProvider'>;
  */
 interface TokenProviderOptsTypes extends OptionsHandlerTypes {
   Parsed: ParsedTokenProvider,
-  Parseable: TokenProvider | string | null | undefined,
+  Parseable: TokenProvider | string | undefined,
   Decoded: DecoderType<typeof tokenProvider>,
 }
 
-const tokenProvider = nullish(either(
+const tokenProvider = optional(either(
   anyInstanceOf(TokenProvider),
   string,
 ));

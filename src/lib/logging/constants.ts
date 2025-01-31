@@ -71,7 +71,7 @@ export const EmptyInternalLoggingConfig = Object.fromEntries(LoggingEventsWithou
 /**
  * @internal
  */
-export const DataAPILoggingDefaultOutputs = <const>{
+export const LoggingDefaultOutputs = <const>{
   adminCommandStarted:   ['event', 'stdout'],
   adminCommandPolling:   ['event', 'stdout'],
   adminCommandSucceeded: ['event', 'stdout'],
@@ -86,8 +86,8 @@ export const DataAPILoggingDefaultOutputs = <const>{
 /**
  * @internal
  */
-export const DataAPILoggingDefaults: ParsedLoggingConfig['layers'] = [{
-  events: LoggingEventsWithoutAll,
+export const LoggingDefaults: ParsedLoggingConfig['layers'] = [{
+  events: LoggingEventsWithoutAll.filter((e) => e !== 'commandStarted' && e !== 'commandSucceeded'),
   emits: ['event', 'stderr'],
 }, {
   events: ['commandStarted', 'commandSucceeded'],

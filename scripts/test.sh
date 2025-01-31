@@ -153,7 +153,7 @@ if [ -n "$skip_prelude" ]; then
 fi
 
 if [ -n "$watch" ]; then
-  cmd_to_run="$cmd_to_run --watch --watch-files 'tests/**/*.test.ts,src/**/*.ts'"
+  cmd_to_run="$cmd_to_run --watch --watch-files 'tests/**/*.test.ts'"
 
   if [ -z "$filter" ]; then
     echo "A filter must be used with watch mode to prevent accidentally running all tests. '-f unit.' at the very least is highly recommended."

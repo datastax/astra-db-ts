@@ -16,8 +16,8 @@ import { DecoderType, MonoidalOptionsHandler, OptionsHandlerTypes, Parsed } from
 import { DataAPILoggingConfig, DataAPILoggingEvent, DataAPILoggingOutput } from '@/src/lib';
 import { array, either, nonEmptyArray, object, oneOf, optional } from 'decoders';
 import {
-  DataAPILoggingDefaultOutputs,
-  DataAPILoggingDefaults,
+  LoggingDefaultOutputs,
+  LoggingDefaults,
   LoggingEvents,
   LoggingEventsWithoutAll,
   LoggingOutputs,
@@ -43,12 +43,15 @@ interface LoggingConfigTypes extends OptionsHandlerTypes {
   Decoded: DecoderType<typeof loggingConfig>,
 }
 
+const oneOfLoggingEvents = oneOf(LoggingEvents).describe('one of DataAPILoggingEvent (including "all")');
+const oneOfLoggingEventsWithoutAll = oneOf(LoggingEventsWithoutAll).describe('one of DataAPILoggingEvent (excluding "all")');
+
 const loggingConfig = optional(either(
-  oneOf(LoggingEvents),
+  oneOfLoggingEvents,
   array(either(
-    oneOf(LoggingEvents),
+    oneOfLoggingEvents,
     object({
-      events: either(oneOf(LoggingEvents), nonEmptyArray(oneOf(LoggingEventsWithoutAll))),
+      events: either(oneOfLoggingEvents, nonEmptyArray(oneOfLoggingEventsWithoutAll)),
       emits: oneOrMany(oneOf(LoggingOutputs)),
     }),
   )),
@@ -65,20 +68,20 @@ export const LoggingCfgHandler = new MonoidalOptionsHandler<LoggingConfigTypes>(
     }
 
     if (config === 'all') {
-      return { layers: DataAPILoggingDefaults };
+      return { layers: LoggingDefaults };
     }
 
     if (typeof config === 'string') {
-      return { layers: [{ events: [config], emits: DataAPILoggingDefaultOutputs[config] }] };
+      return { layers: [{ events: [config], emits: LoggingDefaultOutputs[config] }] };
     }
 
     const layers = config.flatMap((c) => {
       if (c === 'all') {
-        return DataAPILoggingDefaults;
+        return LoggingDefaults;
       }
 
       if (typeof c === 'string') {
-        return [{ events: [c], emits: DataAPILoggingDefaultOutputs[c] }];
+        return [{ events: [c], emits: LoggingDefaultOutputs[c] }];
       }
 
       if (c.events === 'all') {
