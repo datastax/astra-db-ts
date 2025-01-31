@@ -32,20 +32,20 @@ const decoder = optional(object({
 }));
 
 interface SerDesConfigTypes extends OptionsHandlerOpts {
-  Transformed: InternalSerDesConfig<CollSerDesConfig>,
+  Refined: InternalSerDesConfig<CollSerDesConfig>,
   Parseable: CollSerDesConfig | null | undefined,
   Parsed: DecoderType<typeof decoder>,
 }
 
 export const CollSerDesCfgHandler = new OptionsHandler<SerDesConfigTypes>({
   decoder: decoder,
-  transform(config) {
+  refine(config) {
     return {
       ...serDesTransform(config),
       enableBigNumbers: config?.enableBigNumbers ?? undefined,
     };
   },
-  concat(configs): SerDesConfigTypes['Transformed'] {
+  concat(configs): SerDesConfigTypes['Refined'] {
     return {
       enableBigNumbers: configs.reduce<CollSerDesConfig['enableBigNumbers']>((acc, next) => next?.enableBigNumbers ?? acc, undefined),
       ...serDesConcat(configs),

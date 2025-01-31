@@ -29,7 +29,7 @@ export interface InternalAdminOptions {
 }
 
 interface AdminOptsTypes extends OptionsHandlerOpts {
-  Transformed: InternalAdminOptions,
+  Refined: InternalAdminOptions,
   Parseable: AdminOptions | null | undefined,
   Parsed: DecoderType<typeof adminOpts>,
 }
@@ -45,7 +45,7 @@ const adminOpts = nullish(object({
 
 export const AdminOptsHandler = new OptionsHandler<AdminOptsTypes>({
   decoder: adminOpts,
-  transform(input, field) {
+  refine(input, field) {
     return {
       logging: Logger.cfg.parseWithin(input, `${field}.logging`),
       adminToken: TokenProvider.opts.parseWithin(input, `${field}.adminToken`),

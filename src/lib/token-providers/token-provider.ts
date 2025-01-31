@@ -87,7 +87,7 @@ class UnsetTokenProvider extends TokenProvider {
 }
 
 interface TokenProviderOptsTypes extends OptionsHandlerOpts {
-  Transformed: TokenProvider,
+  Refined: TokenProvider,
   Parseable: TokenProvider | string | null | undefined,
   Parsed: DecoderType<typeof tokenProvider>,
 }
@@ -99,7 +99,7 @@ const tokenProvider = nullish(either(
 
 export const TokenProviderOptsHandler = new OptionsHandler<TokenProviderOptsTypes>({
   decoder: tokenProvider,
-  transform(input) {
+  refine(input) {
     if (typeof input === 'string') {
       return new StaticTokenProvider(input);
     }

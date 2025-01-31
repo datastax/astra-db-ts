@@ -33,7 +33,7 @@ export interface InternalLoggingConfig {
  * @internal
  */
 interface LoggingConfigTypes extends OptionsHandlerOpts {
-  Transformed: InternalLoggingConfig[],
+  Refined: InternalLoggingConfig[],
   Parseable: DataAPILoggingConfig | undefined,
   Parsed: DecoderType<typeof loggingConfig>,
 }
@@ -54,7 +54,7 @@ const loggingConfig = optional(either(
  */
 export const LoggingCfgHandler = new OptionsHandler<LoggingConfigTypes>({
   decoder: loggingConfig,
-  transform(config) {
+  refine(config) {
     if (!config) {
       return [];
     }

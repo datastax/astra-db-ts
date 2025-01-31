@@ -33,7 +33,7 @@ export interface InternalDbOptions {
 }
 
 interface DbOptsTypes extends OptionsHandlerOpts {
-  Transformed: InternalDbOptions,
+  Refined: InternalDbOptions,
   Parseable: DbOptions | null | undefined,
   Parsed: DecoderType<typeof dbOpts>,
 }
@@ -54,7 +54,7 @@ const dbOpts = nullish(object({
 
 export const DbOptsHandler = new OptionsHandler<DbOptsTypes>({
   decoder: dbOpts,
-  transform(input, field) {
+  refine(input, field) {
     const mutateInPlace = input?.serdes?.mutateInPlace;
 
     const tableSerdes = TableSerDes.cfg.parseWithin<'table'>(input?.serdes, `${field}.serdes.table`);

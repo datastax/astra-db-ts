@@ -17,13 +17,13 @@ import { nullish } from '@/src/lib/index';
 
 export interface ConfigHandlerImpl<Opts extends OptionsHandlerOpts> {
   decoder: Decoder<Opts['Parseable']>,
-  transform: (input: Opts['Parsed'], field: string | undefined) => Opts['Transformed'],
-  concat(configs: Opts['Transformed'][]): Opts['Transformed'],
-  empty: Opts['Transformed'],
+  refine: (input: Opts['Parsed'], field: string | undefined) => Opts['Refined'],
+  concat(configs: Opts['Refined'][]): Opts['Refined'],
+  empty: Opts['Refined'],
 }
 
 export interface OptionsHandlerOpts {
-  Transformed: unknown,
+  Refined: unknown,
   Parseable: unknown,
   Parsed: unknown,
 }
@@ -31,7 +31,7 @@ export interface OptionsHandlerOpts {
 export type DecoderType<T> = T extends Decoder<infer U> ? U : never;
 
 export class OptionsHandler<Opts extends OptionsHandlerOpts> {
-  public readonly empty: Opts['Transformed'];
+  public readonly empty: Opts['Refined'];
   public readonly decoder: Decoder<Opts['Parseable']>;
 
   constructor(private readonly impl: ConfigHandlerImpl<Opts>) {
@@ -39,27 +39,27 @@ export class OptionsHandler<Opts extends OptionsHandlerOpts> {
     this.decoder = impl.decoder;
   }
 
-  declare readonly transformed: Opts['Transformed'];
+  declare readonly transformed: Opts['Refined'];
 
-  public parse(input: Opts['Parseable'], field?: string): Opts['Transformed'] {
+  public parse(input: Opts['Parseable'], field?: string): Opts['Refined'] {
     const decoded = this.impl.decoder.verify(input);
-    return this.impl.transform(decoded, field);
+    return this.impl.refine(decoded, field);
   }
 
-  public parseWithin<Field extends string>(obj: Partial<Record<Field, Opts['Parseable']>> | nullish, field: Field | `${string}.${Field}`): Opts['Transformed'] {
+  public parseWithin<Field extends string>(obj: Partial<Record<Field, Opts['Parseable']>> | nullish, field: Field | `${string}.${Field}`): Opts['Refined'] {
     const decoded = this.impl.decoder.verify(obj?.[field.split('.').at(-1) as Field]);
-    return this.impl.transform(decoded, field);
+    return this.impl.refine(decoded, field);
   }
 
-  public concat(...configs: Opts['Transformed'][]): Opts['Transformed'] {
+  public concat(...configs: Opts['Refined'][]): Opts['Refined'] {
     return this.impl.concat(configs);
   }
 
-  public concatParse(configs: Opts['Transformed'][], raw: Opts['Parseable'], field?: string): Opts['Transformed'] {
+  public concatParse(configs: Opts['Refined'][], raw: Opts['Parseable'], field?: string): Opts['Refined'] {
     return this.concat(...configs, this.parse(raw, field));
   }
 
-  public concatParseWithin<Field extends string>(configs: Opts['Transformed'][], obj: Partial<Record<Field, Opts['Parseable']>> | nullish, field: Field | `${string}.${Field}`): Opts['Transformed'] {
+  public concatParseWithin<Field extends string>(configs: Opts['Refined'][], obj: Partial<Record<Field, Opts['Parseable']>> | nullish, field: Field | `${string}.${Field}`): Opts['Refined'] {
     return this.concat(...configs, this.parseWithin(obj, field));
   }
 

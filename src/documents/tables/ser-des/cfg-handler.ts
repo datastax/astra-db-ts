@@ -29,20 +29,20 @@ const decoder = optional(object({
 }));
 
 interface SerDesConfigTypes extends OptionsHandlerOpts {
-  Transformed: InternalSerDesConfig<TableSerDesConfig>,
+  Refined: InternalSerDesConfig<TableSerDesConfig>,
   Parseable: TableSerDesConfig | null | undefined,
   Parsed: DecoderType<typeof decoder>,
 }
 
 export const TableSerDesCfgHandler = new OptionsHandler<SerDesConfigTypes>({
   decoder: decoder,
-  transform(config) {
+  refine(config) {
     return {
       ...serDesTransform(config),
       sparseData: config?.sparseData ?? undefined,
     };
   },
-  concat(configs): SerDesConfigTypes['Transformed'] {
+  concat(configs): SerDesConfigTypes['Refined'] {
     return {
       sparseData: configs.reduce<boolean | undefined>((acc, next) => next?.sparseData ?? acc, undefined),
       ...serDesConcat(configs),
