@@ -15,7 +15,7 @@
 import { DecoderType, MonoidalOptionsHandler, OptionsHandlerTypes, Parsed, Unparse } from '@/src/lib/opts-handler';
 import { AdminOptions } from '@/src/client';
 import { TokenProvider } from '@/src/lib';
-import { nullish, object, oneOf, optional, record, string } from 'decoders';
+import { object, oneOf, optional, record, string } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { Logger } from '@/src/lib/logging/logger';
 
@@ -36,11 +36,11 @@ export interface ParsedAdminOptions extends Parsed<'AdminOptions'> {
  */
 interface AdminOptsTypes extends OptionsHandlerTypes {
   Parsed: ParsedAdminOptions,
-  Parseable: AdminOptions | null | undefined,
+  Parseable: AdminOptions | undefined,
   Decoded: DecoderType<typeof adminOpts>,
 }
 
-const adminOpts = nullish(object({
+const adminOpts = optional(object({
   logging: Logger.cfg.decoder,
   adminToken: TokenProvider.opts.decoder,
   endpointUrl: optional(string),

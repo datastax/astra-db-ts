@@ -21,7 +21,6 @@ import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admi
 import { DEFAULT_DEVOPS_API_ENDPOINTS, HttpMethods } from '@/src/lib/api/constants';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
 import { Db } from '@/src/db';
-import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { $CustomInspect } from '@/src/lib/constants';
 import { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info';
 import { Logger } from '@/src/lib/logging/logger';
@@ -29,6 +28,7 @@ import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { DataAPIHttpClient } from '@/src/lib/api/clients';
 import { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
 import { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
+import { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting keyspaces.
@@ -74,7 +74,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts: ParsedAdminOptions, dbToken: ParsedTokenProvider, endpoint: string) {
+  constructor(db: Db, rootOpts: ParsedRootClientOpts, adminOpts: ParsedAdminOptions, dbToken: ParsedTokenProvider, endpoint: string) {
     super();
 
     this.#environment = adminOpts?.astraEnv ?? rootOpts.adminOptions.astraEnv ?? extractAstraEnvironment(endpoint);

@@ -40,11 +40,11 @@ export interface ParsedDbOptions extends Parsed<'DbOptions'> {
  */
 interface DbOptsTypes extends OptionsHandlerTypes {
   Parsed: ParsedDbOptions,
-  Parseable: DbOptions | null | undefined,
+  Parseable: DbOptions | undefined,
   Decoded: DecoderType<typeof dbOpts>,
 }
 
-const dbOpts = nullish(object({
+const dbOpts = optional(object({
   logging: Logger.cfg.decoder,
   token: TokenProvider.opts.decoder,
   dataApiPath: optional(string),

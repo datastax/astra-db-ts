@@ -25,7 +25,6 @@ import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/s
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
 import { OpaqueHttpClient, TokenProvider, WithTimeout } from '@/src/lib';
 import { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info';
-import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { buildAstraEndpoint } from '@/src/lib/utils';
 import { DbOptions } from '@/src/client';
 import { $CustomInspect } from '@/src/lib/constants';
@@ -34,6 +33,7 @@ import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { AstraDropDatabaseOptions } from '@/src/administration/types/admin/drop-database';
 import { AdminOptsHandler, ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
+import { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -62,7 +62,7 @@ import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
  * @public
  */
 export class AstraAdmin {
-  readonly #defaultOpts: InternalRootClientOpts;
+  readonly #defaultOpts: ParsedRootClientOpts;
   readonly #httpClient: DevOpsAPIHttpClient;
   readonly #environment: 'dev' | 'test' | 'prod';
 
@@ -71,7 +71,7 @@ export class AstraAdmin {
    *
    * @internal
    */
-  constructor(rootOpts: InternalRootClientOpts, adminOpts: ParsedAdminOptions) {
+  constructor(rootOpts: ParsedRootClientOpts, adminOpts: ParsedAdminOptions) {
     this.#defaultOpts = {
       ...rootOpts,
       adminOptions: AdminOptsHandler.concat(rootOpts.adminOptions, adminOpts),

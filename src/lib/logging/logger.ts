@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import type { DataAPIClientEventMap } from '@/src/lib/logging/types';
+import { DataAPIClientEventMap, DataAPILoggingOutput } from '@/src/lib/logging/types';
 import type {
   CommandFailedEvent,
   CommandStartedEvent,
@@ -31,13 +31,20 @@ import { EmptyInternalLoggingConfig, EventConstructors } from '@/src/lib/logging
 import { buildOutputsMap } from '@/src/lib/logging/util';
 import type TypedEventEmitter from 'typed-emitter';
 import type { DataAPIClientEvent } from '@/src/lib';
-import { InternalLoggingOutputsMap } from '@/src/client/types/internal';
 import { LoggingCfgHandler, ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
 
+/**
+ * @internal
+ */
 interface ConsoleLike {
   log: (...args: any[]) => void;
   error: (...args: any[]) => void;
 }
+
+/**
+ * @internal
+ */
+export type InternalLoggingOutputsMap = Readonly<Record<keyof DataAPIClientEventMap, Readonly<Record<DataAPILoggingOutput, boolean>> | undefined>>
 
 /**
  * @internal

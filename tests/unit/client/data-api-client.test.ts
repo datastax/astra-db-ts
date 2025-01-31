@@ -37,8 +37,7 @@ describe('unit.client.data-api-client', () => {
     assert.throws(() => new DataAPIClient({ logLevel: 'warn' }, {}));
   });
 
-  it('should accept null/undefined/{} for options', () => {
-    assert.doesNotThrow(() => new DataAPIClient('dummy-token', null));
+  it('should accept undefined/{} for options', () => {
     assert.doesNotThrow(() => new DataAPIClient('dummy-token', undefined));
     assert.doesNotThrow(() => new DataAPIClient('dummy-token', {}));
   });

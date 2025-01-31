@@ -15,26 +15,20 @@
 
 import assert from 'assert';
 import { Db } from '@/src/db/db';
-import { DataAPIEnvironments, StaticTokenProvider } from '@/src/lib';
+import { DataAPIEnvironments, StaticTokenProvider, TokenProvider } from '@/src/lib';
 import { AdminOptions, DataAPIClient, DbOptions } from '@/src/client';
 import { DEMO_APPLICATION_URI, describe, it, TEST_APPLICATION_URI } from '@/tests/testlib';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants';
 import { buildAstraEndpoint } from '@/src/lib/utils';
-import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { $CustomInspect } from '@/src/lib/constants';
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
-import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
-import { CallerCfgHandler } from '@/src/client/opts-handlers/caller-cfg-handler';
-import { EnvironmentCfgHandler, ParsedEnvironment } from '@/src/client/opts-handlers/environment-cfg-handler';
+import { ParsedEnvironment } from '@/src/client/opts-handlers/environment-cfg-handler';
+import { RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler';
 
 describe('unit.db.db', () => {
-  const internalOps = (db?: Partial<DbOptions>, devops?: Partial<AdminOptions>, preferredType = 'http2'): InternalRootClientOpts => ({
-    dbOptions: DbOptsHandler.parse({ token: new StaticTokenProvider('old'), ...db }),
-    adminOptions: AdminOptsHandler.parse({ adminToken: new StaticTokenProvider('old-admin'), ...devops }),
-    emitter: null!,
-    fetchCtx: { preferredType } as any,
-    caller: CallerCfgHandler.parse([]),
-    environment: EnvironmentCfgHandler.parse('astra'),
+  const internalOps = (db?: Partial<DbOptions>, devops?: Partial<AdminOptions>) => RootOptsHandler(TokenProvider.opts.empty, null!).parse({
+    dbOptions: { token: new StaticTokenProvider('old'), ...db },
+    adminOptions: { adminToken: new StaticTokenProvider('old-admin'), ...devops },
   });
 
   describe('constructor tests', () => {

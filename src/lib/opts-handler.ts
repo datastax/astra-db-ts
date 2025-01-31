@@ -65,6 +65,8 @@ export interface OptionsHandlerTypes {
  */
 export class OptionsHandler<Types extends OptionsHandlerTypes> {
   public readonly decoder: Decoder<Types['Parseable']>;
+
+  public readonly parseable!: Types['Parseable'];
   public readonly parsed!: Types['Parsed'];
 
   constructor(protected readonly impl: OptionsHandlerImpl<Types>) {

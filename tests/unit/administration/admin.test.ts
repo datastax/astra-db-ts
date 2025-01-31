@@ -14,25 +14,18 @@
 
 import assert from 'assert';
 import { AstraAdmin } from '@/src/administration';
-import { StaticTokenProvider } from '@/src/lib';
+import { StaticTokenProvider, TokenProvider } from '@/src/lib';
 import { AdminOptions, DataAPIClient, DbOptions } from '@/src/client';
 import { describe, it } from '@/tests/testlib';
 import { DEFAULT_DEVOPS_API_ENDPOINTS } from '@/src/lib/api/constants';
-import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { $CustomInspect } from '@/src/lib/constants';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
-import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
-import { CallerCfgHandler } from '@/src/client/opts-handlers/caller-cfg-handler';
-import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler';
+import { RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler';
 
 describe('unit.administration.admin', () => {
-  const internalOps = (db?: Partial<DbOptions>, devops?: Partial<AdminOptions>, preferredType = 'http2'): InternalRootClientOpts => ({
-    dbOptions: DbOptsHandler.parse({ token: new StaticTokenProvider('old'), ...db }),
-    adminOptions: AdminOptsHandler.parse({ adminToken: new StaticTokenProvider('old-admin'), ...devops }),
-    emitter: null!,
-    fetchCtx: { preferredType } as any,
-    caller: CallerCfgHandler.parse([]),
-    environment: EnvironmentCfgHandler.parse('astra'),
+  const internalOps = (db?: Partial<DbOptions>, devops?: Partial<AdminOptions>) => RootOptsHandler(TokenProvider.opts.empty, null!).parse({
+    dbOptions: { token: new StaticTokenProvider('old'), ...db },
+    adminOptions: { adminToken: new StaticTokenProvider('old-admin'), ...devops },
   });
 
   describe('constructor tests', () => {

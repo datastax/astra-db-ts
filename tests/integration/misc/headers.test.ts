@@ -25,7 +25,7 @@ import {
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
 } from '@/tests/testlib';
-import { nullish, Ref } from '@/src/lib/types';
+import { Ref } from '@/src/lib/types';
 import { StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvider } from '@/src/lib';
 import { EmbeddingHeadersProvider } from '@/src/documents';
 import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DEVOPS_API_AUTH_HEADER } from '@/src/lib/api/constants';
@@ -33,7 +33,7 @@ import { DEFAULT_DATA_API_AUTH_HEADER, DEFAULT_DEVOPS_API_AUTH_HEADER } from '@/
 parallel('integration.misc.headers', () => {
   const fetchNative = new FetchNative();
 
-  const mkClient = (latestHeaders: Ref<Record<string, string>>, tp?: string | TokenProvider | nullish) => new DataAPIClient(tp, {
+  const mkClient = (latestHeaders: Ref<Record<string, string>>, tp?: string | TokenProvider) => new DataAPIClient(tp, {
     environment: ENVIRONMENT,
     httpOptions: {
       client: 'custom',

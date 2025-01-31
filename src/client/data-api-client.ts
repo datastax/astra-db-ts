@@ -16,17 +16,13 @@
 import type TypedEmitter from 'typed-emitter';
 import type { AdminOptions, DataAPIClientOptions, DbOptions } from '@/src/client/types';
 import { LIB_NAME } from '@/src/version';
-import type { InternalRootClientOpts } from '@/src/client/types/internal';
 import { type DataAPIClientEventMap, type nullish, TokenProvider } from '@/src/lib';
 import { Db, InvalidEnvironmentError } from '@/src/db';
 import { AstraAdmin } from '@/src/administration';
-import { p, type Parser } from '@/src/lib/validation';
 import { $CustomInspect } from '@/src/lib/constants';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
-import { CallerCfgHandler } from '@/src/client/opts-handlers/caller-cfg-handler';
-import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler';
-import { HttpOptsHandler } from '@/src/client/opts-handlers/http-opts-handler';
+import { ParsedRootClientOpts, RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler';
 
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
@@ -88,7 +84,7 @@ export const DataAPIClientEventEmitterBase = (() => {
  * @see DataAPIEnvironment
  */
 export class DataAPIClient extends DataAPIClientEventEmitterBase {
-  readonly #options: InternalRootClientOpts;
+  readonly #options: ParsedRootClientOpts;
 
   /**
    * Constructs a new instance of the {@link DataAPIClient} without a default token. The token will instead need to
@@ -109,7 +105,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    *
    * @param options - The default options to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    */
-  constructor(options?: DataAPIClientOptions | nullish)
+  constructor(options?: DataAPIClientOptions)
 
   /**
    * Constructs a new instance of the {@link DataAPIClient} with a default token. This token will be used everywhere
@@ -131,9 +127,9 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * @param token - The default token to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    * @param options - The default options to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    */
-  constructor(token: string | TokenProvider | nullish, options?: DataAPIClientOptions | nullish)
+  constructor(token: string | TokenProvider | undefined, options?: DataAPIClientOptions)
 
-  constructor(tokenOrOptions?: string | TokenProvider | DataAPIClientOptions | null, maybeOptions?: DataAPIClientOptions | null) {
+  constructor(tokenOrOptions?: string | TokenProvider | DataAPIClientOptions, maybeOptions?: DataAPIClientOptions) {
     super();
 
     const tokenPassed = (typeof tokenOrOptions === 'string' || tokenOrOptions instanceof TokenProvider || arguments.length > 1);
@@ -146,33 +142,8 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
       ? maybeOptions
       : tokenOrOptions;
 
-    const options = parseClientOpts(rawOptions, 'options');
-
-    const dbOptions = DbOptsHandler.parse(options?.dbOptions);
-    const adminOptions = AdminOptsHandler.parse(options?.adminOptions);
-
-    const tokens = {
-      default: TokenProvider.opts.parse(token, 'token'),
-      db: TokenProvider.opts.parseWithin<'token'>(options?.dbOptions, 'options.dbOptions.token'),
-      admin: TokenProvider.opts.parseWithin<'adminToken'>(options?.adminOptions, 'options.adminOptions.adminToken'),
-    };
-
-    this.#options = {
-      environment: EnvironmentCfgHandler.parseWithin(options, 'environment'),
-      fetchCtx: HttpOptsHandler.parseWithin(options, 'httpOptions'),
-      dbOptions: DbOptsHandler.concatParse([dbOptions], {
-        token: TokenProvider.opts.concat(tokens.default, tokens.db),
-        timeoutDefaults: options?.timeoutDefaults,
-        logging: options?.logging,
-      }),
-      adminOptions: AdminOptsHandler.concatParse([adminOptions], {
-        adminToken: TokenProvider.opts.concat(tokens.default, tokens.admin),
-        timeoutDefaults: options?.timeoutDefaults,
-        logging: options?.logging,
-      }),
-      emitter: this,
-      caller: CallerCfgHandler.parseWithin(options, 'caller'),
-    };
+    const parsedToken = TokenProvider.opts.parse(token, 'token');
+    this.#options = RootOptsHandler(parsedToken, this).parse(rawOptions, 'options');
 
     Object.defineProperty(this, $CustomInspect, {
       value: () => `DataAPIClient(env="${this.#options.environment}")`,
@@ -275,21 +246,3 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
     this.#options.fetchCtx.closed.ref = true;
   }
 }
-
-const parseClientOpts: Parser<DataAPIClientOptions | nullish> = (raw, field) => {
-  const opts = p.parse('object?')<DataAPIClientOptions>(raw, field);
-
-  if (!opts) {
-    return undefined;
-  }
-
-  return {
-    logging: opts.logging,
-    environment: opts.environment,
-    dbOptions: opts.dbOptions,
-    adminOptions: opts.adminOptions,
-    caller: opts.caller,
-    httpOptions: opts.httpOptions,
-    timeoutDefaults: opts.timeoutDefaults,
-  };
-};

@@ -36,7 +36,6 @@ import { InferTablePrimaryKey, InferTableSchema } from '@/src/db/types/tables/ta
 import { DropTableOptions } from '@/src/db/types/tables/drop-table';
 import { ListTablesOptions, TableDescriptor } from '@/src/db/types/tables/list-tables';
 import { AdminOptions } from '@/src/client/types';
-import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { $CustomInspect } from '@/src/lib/constants';
 import { InvalidEnvironmentError } from '@/src/db/errors';
 import { AstraDbInfo } from '@/src/administration/types/admin/database-info';
@@ -44,6 +43,7 @@ import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
 import { DbOptsHandler, ParsedDbOptions } from '@/src/client/opts-handlers/db-opts-handler';
+import { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler';
 
 /**
  * #### Overview
@@ -116,7 +116,7 @@ import { DbOptsHandler, ParsedDbOptions } from '@/src/client/opts-handlers/db-op
  * @public
  */
 export class Db {
-  readonly #defaultOpts: InternalRootClientOpts;
+  readonly #defaultOpts: ParsedRootClientOpts;
   readonly #httpClient: DataAPIHttpClient;
 
   readonly #endpoint: string;
@@ -129,7 +129,7 @@ export class Db {
    *
    * @internal
    */
-  constructor(rootOpts: InternalRootClientOpts, endpoint: string, dbOpts: ParsedDbOptions) {
+  constructor(rootOpts: ParsedRootClientOpts, endpoint: string, dbOpts: ParsedDbOptions) {
     this.#defaultOpts = {
       ...rootOpts,
       dbOptions: DbOptsHandler.concat(rootOpts.dbOptions, dbOpts),
