@@ -45,6 +45,7 @@ describe('unit.documents.collections.ser-des.ser-des.order', () => {
 
   it('should process all of the serialization codecs in the right order', () => {
     const serdes = new CollSerDes({
+      ...CollSerDes.cfg.empty,
       codecs: [
         [
           repeat((i) => CollCodecs.forPath([], {
@@ -143,6 +144,7 @@ describe('unit.documents.collections.ser-des.ser-des.order', () => {
 
   it('should process all of the deserialization codecs in the right order', () => {
     const serdes = new CollSerDes({
+      ...CollSerDes.cfg.empty,
       codecs: [
         [
           repeat((_) => CollCodecs.forPath([], Test)),

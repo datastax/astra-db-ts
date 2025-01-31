@@ -24,6 +24,7 @@ import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { isBigNumber, pathMatches } from '@/src/lib/utils';
 import { UnexpectedDataAPIResponseError } from '@/src/client';
 import { TableSerDesCfgHandler } from '@/src/documents/tables/ser-des/cfg-handler';
+import { InternalSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
 
 /**
  * @public
@@ -51,12 +52,12 @@ export interface TableSerDesConfig extends BaseSerDesConfig<TableSerCtx, TableDe
  * @internal
  */
 export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
-  declare protected readonly _cfg: TableSerDesConfig;
+  declare protected readonly _cfg: InternalSerDesConfig<TableSerDesConfig>;
 
   public static cfg: typeof TableSerDesCfgHandler = TableSerDesCfgHandler;
 
-  public constructor(cfg?: TableSerDesConfig) {
-    super(TableSerDes.mergeConfig(DefaultTableSerDesCfg, cfg));
+  public constructor(cfg: InternalSerDesConfig<TableSerDesConfig>) {
+    super(TableSerDes.cfg.concat(DefaultTableSerDesCfg, cfg));
   }
 
   protected override adaptSerCtx(ctx: TableSerCtx): TableSerCtx {
@@ -94,16 +95,9 @@ export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
   protected override bigNumsPresent(ctx: TableSerCtx): boolean {
     return ctx.bigNumsPresent;
   }
-
-  public static mergeConfig(...cfg: (TableSerDesConfig | undefined)[]): TableSerDesConfig {
-    return {
-      sparseData: cfg.reduce<boolean | undefined>((acc, c) => c?.sparseData ?? acc, undefined),
-      ...super._mergeConfig(...cfg),
-    };
-  }
 }
 
-const DefaultTableSerDesCfg = {
+const DefaultTableSerDesCfg = TableSerDes.cfg.parse({
   serialize(value, ctx) {
     let resp: ReturnType<SerDesFn<unknown>> = null!;
 
@@ -215,7 +209,7 @@ const DefaultTableSerDesCfg = {
     return ctx.continue(value);
   },
   codecs: Object.values(TableCodecs.Defaults),
-} satisfies TableSerDesConfig;
+});
 
 function populateSparseData(ctx: TableDesCtx) {
   for (const key in ctx.tableSchema) {

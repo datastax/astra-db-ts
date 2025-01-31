@@ -290,7 +290,7 @@ export const EffectivelyInfinity = 2 ** 31 - 1;
 export class Timeouts {
   constructor(
     private readonly _mkTimeoutError: MkTimeoutError,
-    public readonly baseTimeouts: TimeoutDescriptor,
+    public readonly baseTimeouts: Partial<TimeoutDescriptor>,
   ) {}
 
   public single(key: Exclude<keyof TimeoutDescriptor, 'requestTimeoutMs'>, override: WithTimeout<any> | nullish): TimeoutManager {
@@ -387,7 +387,7 @@ export class Timeouts {
     keyspaceAdminTimeoutMs: 30000,
   };
 
-  public static merge(base: TimeoutDescriptor, custom: Partial<TimeoutDescriptor> | nullish): TimeoutDescriptor {
+  public static merge(base: Partial<TimeoutDescriptor>, custom: Partial<TimeoutDescriptor> | nullish): Partial<TimeoutDescriptor> {
     if (!custom) {
       return base;
     }

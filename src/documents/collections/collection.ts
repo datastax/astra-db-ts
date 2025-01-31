@@ -184,7 +184,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
     };
 
     this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
-    this.#commands = new CommandImpls(this, this.#httpClient, new CollSerDes(opts?.serdes));
+    this.#commands = new CommandImpls(this, this.#httpClient, new CollSerDes(CollSerDes.cfg.parse(opts?.serdes)));
     this.#db = db;
 
     Object.defineProperty(this, $CustomInspect, {

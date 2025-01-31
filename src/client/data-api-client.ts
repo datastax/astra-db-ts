@@ -34,10 +34,10 @@ import { parseCaller } from '@/src/client/parsers/caller';
 import { Logger } from '@/src/lib/logging/logger';
 import { parseEnvironment } from '@/src/client/parsers/environment';
 import { parseHttpOpts } from '@/src/client/parsers/http-opts';
-import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
 import { $CustomInspect } from '@/src/lib/constants';
 import { Timeouts } from '@/src/lib/api/timeouts';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
+import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
 
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
@@ -158,7 +158,6 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
       : tokenOrOptions;
 
     const options = parseClientOpts(rawOptions, 'options');
-    const logging = Logger.cfg.parseWithin(options, 'logging');
 
     const tokens = {
       default: TokenProvider.opts.parse(token, 'token'),
@@ -169,18 +168,18 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
     this.#options = {
       environment: options?.environment ?? 'astra',
       fetchCtx: buildFetchCtx(options || undefined),
-      dbOptions: {
+      dbOptions: DbOptsHandler.parse({
         ...options?.dbOptions,
         token: TokenProvider.opts.concat(tokens.default, tokens.db),
         timeoutDefaults: Timeouts.merge(Timeouts.Default, options?.timeoutDefaults),
-        logging,
-      },
-      adminOptions: {
+        logging: options?.logging,
+      }),
+      adminOptions: AdminOptsHandler.parse({
         ...options?.adminOptions,
         adminToken: TokenProvider.opts.concat(tokens.default, tokens.admin),
         timeoutDefaults: Timeouts.merge(Timeouts.Default, options?.timeoutDefaults),
-        logging,
-      },
+        logging: options?.logging,
+      }),
       emitter: this,
       userAgent: buildUserAgent(options?.caller),
     };
@@ -227,7 +226,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * @returns A new {@link Db} instance.
    */
   public db(endpoint: string, options?: DbOptions): Db {
-    return new Db(this.#options, endpoint, options);
+    return new Db(this.#options, endpoint, DbOptsHandler.parse(options));
   }
 
   /**
@@ -327,7 +326,7 @@ const parseClientOpts: Parser<DataAPIClientOptions | nullish> = (raw, field) => 
   return {
     logging: Logger.cfg.parseWithin(opts, `${field}.logging`),
     environment: parseEnvironment(opts.environment, `${field}.environment`),
-    dbOptions: parseDbSpawnOpts(opts.dbOptions, `${field}.dbOptions`),
+    dbOptions: DbOptsHandler.parseWithin(opts, `${field}.dbOptions`),
     adminOptions: AdminOptsHandler.parseWithin(opts, `${field}.adminOptions`),
     caller: parseCaller(opts.caller, `${field}.caller`),
     httpOptions: parseHttpOpts(opts.httpOptions, `${field}.httpOptions`),

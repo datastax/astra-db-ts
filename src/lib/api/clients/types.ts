@@ -31,7 +31,7 @@ export interface HTTPClientOptions {
   fetchCtx: FetchCtx,
   userAgent: string,
   additionalHeaders: Record<string, string> | undefined,
-  timeoutDefaults: TimeoutDescriptor,
+  timeoutDefaults: Partial<TimeoutDescriptor>,
 }
 
 /**

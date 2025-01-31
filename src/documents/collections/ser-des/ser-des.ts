@@ -20,6 +20,7 @@ import { isBigNumber, pathMatches } from '@/src/lib/utils';
 import { CollNumRepCfg, GetCollNumRepFn } from '@/src/documents';
 import { coerceBigNumber, coerceNumber, collNumRepFnFromCfg } from '@/src/documents/collections/ser-des/big-nums';
 import { CollSerDesCfgHandler } from '@/src/documents/collections/ser-des/cfg-handler';
+import { InternalSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
 
 /**
  * @public
@@ -47,13 +48,13 @@ export interface CollSerDesConfig extends BaseSerDesConfig<CollSerCtx, CollDesCt
  * @internal
  */
 export class CollSerDes extends SerDes<CollSerCtx, CollDesCtx> {
-  declare protected readonly _cfg: CollSerDesConfig  & { enableBigNumbers?: GetCollNumRepFn };
+  declare protected readonly _cfg: InternalSerDesConfig<CollSerDesConfig> & { enableBigNumbers?: GetCollNumRepFn };
   private readonly _getNumRepForPath: GetCollNumRepFn | undefined;
 
   public static cfg: typeof CollSerDesCfgHandler = CollSerDesCfgHandler;
 
-  public constructor(cfg?: CollSerDesConfig) {
-    super(CollSerDes.mergeConfig(DefaultCollectionSerDesCfg, cfg, cfg?.enableBigNumbers ? BigNumCollectionDesCfg : {}));
+  public constructor(cfg: InternalSerDesConfig<CollSerDesConfig>) {
+    super(CollSerDes.cfg.concat(DefaultCollectionSerDesCfg, cfg, cfg.enableBigNumbers ? BigNumCollectionDesCfg : CollSerDes.cfg.empty));
 
     this._getNumRepForPath = (typeof cfg?.enableBigNumbers === 'object')
       ? collNumRepFnFromCfg(cfg.enableBigNumbers)
@@ -73,16 +74,9 @@ export class CollSerDes extends SerDes<CollSerCtx, CollDesCtx> {
   public override bigNumsPresent(): boolean {
     return !!this._cfg?.enableBigNumbers;
   }
-
-  public static mergeConfig(...cfg: (CollSerDesConfig | undefined)[]): CollSerDesConfig {
-    return {
-      enableBigNumbers: cfg.reduce<CollSerDesConfig['enableBigNumbers']>((acc, c) => c?.enableBigNumbers ?? acc, undefined),
-      ...super._mergeConfig(...cfg),
-    };
-  }
 }
 
-const BigNumCollectionDesCfg: CollSerDesConfig = {
+const BigNumCollectionDesCfg = CollSerDes.cfg.parse({
   deserialize(value, ctx) {
     if (typeof value === 'number') {
       return coerceNumber(value, ctx);
@@ -94,9 +88,9 @@ const BigNumCollectionDesCfg: CollSerDesConfig = {
 
     return ctx.continue();
   },
-};
+});
 
-const DefaultCollectionSerDesCfg: CollSerDesConfig = {
+const DefaultCollectionSerDesCfg = CollSerDes.cfg.parse({
   serialize(value, ctx) {
     let resp: ReturnType<SerDesFn<unknown>> = null!;
 
@@ -216,4 +210,4 @@ const DefaultCollectionSerDesCfg: CollSerDesConfig = {
     return ctx.recurse(value);
   },
   codecs: Object.values(CollCodecs.Defaults),
-};
+});

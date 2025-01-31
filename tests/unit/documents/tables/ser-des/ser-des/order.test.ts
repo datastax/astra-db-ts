@@ -44,6 +44,7 @@ describe('unit.documents.tables.ser-des.ser-des.order', () => {
 
   it('should process all of the serialization codecs in the right order', () => {
     const serdes = new TableSerDes({
+      ...TableSerDes.cfg.empty,
       codecs: [
         [
           repeat((i) => TableCodecs.forPath([], {
@@ -143,6 +144,7 @@ describe('unit.documents.tables.ser-des.ser-des.order', () => {
 
   it('should process all of the deserialization codecs in the right order', () => {
     const serdes = new TableSerDes({
+      ...TableSerDes.cfg.empty,
       codecs: [
         [
           repeat((_) => TableCodecs.forPath([], Test)),

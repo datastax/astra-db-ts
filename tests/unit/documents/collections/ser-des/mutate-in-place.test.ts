@@ -21,7 +21,7 @@ import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 
 describe('unit.documents.collections.ser-des.mutate-in-place', () => {
   describe('mutateInPlace: true', () => {
-    const serdes = new CollSerDes({ mutateInPlace: true });
+    const serdes = new CollSerDes({ ...CollSerDes.cfg.empty, mutateInPlace: true });
 
     it('should mutate the input object in place', () => {
       const id = uuid(4);
@@ -48,7 +48,7 @@ describe('unit.documents.collections.ser-des.mutate-in-place', () => {
   });
 
   describe('mutateInPlace: false', () => {
-    const serdes = new CollSerDes({ mutateInPlace: false });
+    const serdes = new CollSerDes({ ...CollSerDes.cfg.empty, mutateInPlace: false });
 
     it('should not mutate the input object in place', () => {
       const id = uuid(4);

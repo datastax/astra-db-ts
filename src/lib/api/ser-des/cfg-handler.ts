@@ -16,6 +16,8 @@ import { array, boolean, Decoder, inexact, oneOf, optional } from 'decoders';
 import { BaseSerDesConfig, KeyTransformer, RawCodec } from '@/src/lib';
 import { anyInstanceOf, function_, oneOrMany, toArray } from '@/src/lib/utils';
 
+type SomeInternalSerDesConfig = InternalSerDesConfig<BaseSerDesConfig<any, any>>;
+
 export const serDesDecoders = <const>{
   codecs: optional(array(array(inexact({ tag: oneOf(['forName', 'forPath', 'forType', 'custom']) }) as Decoder<RawCodec>))),
   serialize: optional(oneOrMany(function_)),
@@ -24,7 +26,7 @@ export const serDesDecoders = <const>{
   keyTransformer: optional(anyInstanceOf(KeyTransformer)),
 };
 
-export const serDesTransform = (config: BaseSerDesConfig<any, any> | null | undefined): InternalSerDesConfig<BaseSerDesConfig<any, any>> => ({
+export const serDesTransform = (config: BaseSerDesConfig<any, any> | null | undefined): SomeInternalSerDesConfig => ({
   codecs: config?.codecs ?? [],
   serialize: config?.serialize ?? [],
   deserialize: config?.deserialize ?? [],
@@ -32,9 +34,9 @@ export const serDesTransform = (config: BaseSerDesConfig<any, any> | null | unde
   keyTransformer: config?.keyTransformer ?? undefined,
 });
 
-export const serDesConcat = (configs: InternalSerDesConfig<BaseSerDesConfig<any, any>>[]) => {
+export const serDesConcat = (configs: SomeInternalSerDesConfig[]) => {
   return configs.reduce((acc, next) => ({
-    codecs: [...acc.codecs, ...next.codecs],
+    codecs: [...next.codecs, ...acc.codecs],
     serialize: [...toArray(next.serialize), ...toArray(acc.serialize)],
     deserialize: [...toArray(next.deserialize), ...toArray(acc.deserialize)],
     mutateInPlace: next.mutateInPlace ?? acc.mutateInPlace,
@@ -42,7 +44,7 @@ export const serDesConcat = (configs: InternalSerDesConfig<BaseSerDesConfig<any,
   }), serDesEmpty);
 };
 
-export const serDesEmpty: InternalSerDesConfig<BaseSerDesConfig<any, any>> = {
+export const serDesEmpty: SomeInternalSerDesConfig & {} = {
   codecs: [],
   serialize: [],
   deserialize: [],

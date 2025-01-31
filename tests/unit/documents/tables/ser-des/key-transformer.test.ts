@@ -20,7 +20,7 @@ import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
 
 describe('unit.documents.tables.ser-des.key-transformer', () => {
   describe('Camel2SnakeCase', () => {
-    const serdes = new TableSerDes({ keyTransformer: new Camel2SnakeCase() });
+    const serdes = new TableSerDes({ ...TableSerDes.cfg.empty, keyTransformer: new Camel2SnakeCase() });
 
     it('should serialize top-level keys to snake_case for tables', () => {
       const [obj, bigNumPresent] = serdes.serialize({
@@ -100,7 +100,7 @@ describe('unit.documents.tables.ser-des.key-transformer', () => {
     });
 
     it('should allow for deep transformation', () => {
-      const serdes = new TableSerDes({ keyTransformer: new Camel2SnakeCase({ transformNested: () => true }) });
+      const serdes = new TableSerDes({ ...TableSerDes.cfg.empty, keyTransformer: new Camel2SnakeCase({ transformNested: () => true }) });
 
       const [obj] = serdes.serialize({
         camelCaseName1: 'dontChangeMe',
@@ -118,7 +118,7 @@ describe('unit.documents.tables.ser-des.key-transformer', () => {
     });
 
     it('should allow for explicit nested transformation when serializing', () => {
-      const serdes = new TableSerDes({ keyTransformer: new Camel2SnakeCase({ transformNested: (ctx) => ctx.path[0] !== 'camelCaseName3' }) });
+      const serdes = new TableSerDes({ ...TableSerDes.cfg.empty, keyTransformer: new Camel2SnakeCase({ transformNested: (ctx) => ctx.path[0] !== 'camelCaseName3' }) });
 
       const [obj] = serdes.serialize({
         camelCaseName1: 'dontChangeMe',
@@ -138,7 +138,7 @@ describe('unit.documents.tables.ser-des.key-transformer', () => {
     });
 
     it('should allow for explicit nested transformation when deserializing', () => {
-      const serdes = new TableSerDes({ keyTransformer: new Camel2SnakeCase({ transformNested: (ctx) => ctx.path[0] !== 'camelCaseName3' }) });
+      const serdes = new TableSerDes({ ...TableSerDes.cfg.empty, keyTransformer: new Camel2SnakeCase({ transformNested: (ctx) => ctx.path[0] !== 'camelCaseName3' }) });
 
       const obj = serdes.deserialize([
         'dontChangeMe',
@@ -162,7 +162,7 @@ describe('unit.documents.tables.ser-des.key-transformer', () => {
     });
 
     it('should allow for transforming _id', () => {
-      const serdes = new TableSerDes({ keyTransformer: new Camel2SnakeCase({ exceptId: false }) });
+      const serdes = new TableSerDes({ ...TableSerDes.cfg.empty, keyTransformer: new Camel2SnakeCase({ exceptId: false }) });
 
       const [ser] = serdes.serialize({ _id: 'dontChangeMe' });
       assert.deepStrictEqual(ser, { _id: 'dontChangeMe' });

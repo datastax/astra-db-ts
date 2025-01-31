@@ -15,7 +15,7 @@
 import { Collection, FoundDoc, SomeDoc, WithId } from '@/src/documents/collections';
 import { DEFAULT_KEYSPACE, type OpaqueHttpClient, RawDataAPIResponse, WithTimeout } from '@/src/lib/api';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
-import { DataAPIEnvironment, nullish } from '@/src/lib/types';
+import { DataAPIEnvironment } from '@/src/lib/types';
 import { extractDbIdFromUrl, extractRegionFromUrl } from '@/src/documents/utils';
 import { DbAdmin } from '@/src/administration';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin';
@@ -35,17 +35,15 @@ import { CreateTableDefinition, CreateTableOptions } from '@/src/db/types/tables
 import { InferTablePrimaryKey, InferTableSchema } from '@/src/db/types/tables/table-schema';
 import { DropTableOptions } from '@/src/db/types/tables/drop-table';
 import { ListTablesOptions, TableDescriptor } from '@/src/db/types/tables/list-tables';
-import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
-import { AdminOptions, DbOptions } from '@/src/client/types';
+import { AdminOptions } from '@/src/client/types';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
-import { Logger } from '@/src/lib/logging/logger';
 import { $CustomInspect } from '@/src/lib/constants';
 import { InvalidEnvironmentError } from '@/src/db/errors';
 import { AstraDbInfo } from '@/src/administration/types/admin/database-info';
-import { Timeouts } from '@/src/lib/api/timeouts';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
+import { DbOptsHandler, InternalDbOptions } from '@/src/client/opts-handlers/db-opts-handler';
 
 /**
  * #### Overview
@@ -131,27 +129,13 @@ export class Db {
    *
    * @internal
    */
-  constructor(rootOpts: InternalRootClientOpts, endpoint: string, rawDbOpts: DbOptions | nullish) {
-    const dbOpts = parseDbSpawnOpts(rawDbOpts, 'options');
-
+  constructor(rootOpts: InternalRootClientOpts, endpoint: string, dbOpts: InternalDbOptions) {
     this.#defaultOpts = {
       ...rootOpts,
-      dbOptions: {
-        keyspace: dbOpts?.keyspace ?? rootOpts.dbOptions.keyspace,
-        dataApiPath: dbOpts?.dataApiPath ?? rootOpts.dbOptions.dataApiPath,
-        token: TokenProvider.opts.concatParseWithin([rootOpts.dbOptions.token], dbOpts, 'token'),
-        logging: Logger.cfg.concatParseWithin([rootOpts.dbOptions.logging], dbOpts, 'logging'),
-        additionalHeaders: { ...rootOpts.dbOptions.additionalHeaders, ...dbOpts?.additionalHeaders },
-        timeoutDefaults: Timeouts.merge(rootOpts.dbOptions.timeoutDefaults, dbOpts?.timeoutDefaults),
-        serdes: {
-          collection: CollSerDes.mergeConfig(rootOpts.dbOptions.serdes?.collection, dbOpts?.serdes?.collection, dbOpts?.serdes),
-          table: TableSerDes.mergeConfig(rootOpts.dbOptions.serdes?.table, dbOpts?.serdes?.table, dbOpts?.serdes),
-        },
-      },
-      adminOptions: {
-        ...rootOpts.adminOptions,
-        adminToken: TokenProvider.opts.concatParseWithin([rootOpts.adminOptions.adminToken], dbOpts, 'token'),
-      },
+      dbOptions: DbOptsHandler.concat(rootOpts.dbOptions, dbOpts),
+      adminOptions: AdminOptsHandler.concatParse([rootOpts.adminOptions], {
+        adminToken: TokenProvider.opts.parseWithin(dbOpts, 'token'),
+      }),
     };
 
     this.#keyspace = {
@@ -543,7 +527,7 @@ export class Db {
   public collection<WSchema extends SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>>(name: string, options?: CollectionOptions): Collection<WSchema, RSchema> {
     return new Collection(this, this.#httpClient, name, {
       ...options,
-      serdes: CollSerDes.mergeConfig(this.#defaultOpts.dbOptions.serdes?.collection, options?.serdes),
+      serdes: CollSerDes.cfg.concatParse([this.#defaultOpts.dbOptions.collSerdes], options?.serdes),
     });
   }
 
@@ -633,7 +617,7 @@ export class Db {
   public table<WSchema extends SomeRow, PKeys extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options?: TableOptions): Table<WSchema, PKeys, RSchema> {
     return new Table(this, this.#httpClient, name, {
       ...options,
-      serdes: TableSerDes.mergeConfig(this.#defaultOpts.dbOptions.serdes?.table, options?.serdes),
+      serdes: TableSerDes.cfg.concatParse([this.#defaultOpts.dbOptions.tableSerdes], options?.serdes),
     });
   }
 

@@ -15,15 +15,9 @@
 import { Decoder } from 'decoders';
 import { nullish } from '@/src/lib/index';
 
-// type SomeFunc = (...args: any[]) => any;
-//
-// type GeneralizeFns<T extends SomeDoc> = {
-//   [K in keyof T]: T[K] extends SomeFunc ? SomeFunc : T[K];
-// };
-
 export interface ConfigHandlerImpl<Opts extends OptionsHandlerOpts> {
   decoder: Decoder<Opts['Parseable']>,
-  transform: (input: Opts['Parsed'], field: string) => Opts['Transformed'],
+  transform: (input: Opts['Parsed'], field: string | undefined) => Opts['Transformed'],
   concat(configs: Opts['Transformed'][]): Opts['Transformed'],
   empty: Opts['Transformed'],
 }
@@ -47,7 +41,7 @@ export class OptionsHandler<Opts extends OptionsHandlerOpts> {
 
   declare readonly transformed: Opts['Transformed'];
 
-  public parse(input: Opts['Parseable'], field: string): Opts['Transformed'] {
+  public parse(input: Opts['Parseable'], field?: string): Opts['Transformed'] {
     const decoded = this.impl.decoder.verify(input);
     return this.impl.transform(decoded, field);
   }
@@ -61,7 +55,7 @@ export class OptionsHandler<Opts extends OptionsHandlerOpts> {
     return this.impl.concat(configs);
   }
 
-  public concatParse<Field extends string>(configs: Opts['Transformed'][], raw: Record<Field, Opts['Parseable']>, field: Field | `${string}.${Field}`): Opts['Transformed'] {
+  public concatParse(configs: Opts['Transformed'][], raw: Opts['Parseable'], field?: string): Opts['Transformed'] {
     return this.concat(...configs, this.parse(raw, field));
   }
 

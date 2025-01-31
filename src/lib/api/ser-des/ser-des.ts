@@ -17,7 +17,8 @@ import {
   Deserializers,
   KeyTransformer,
   nullish,
-  OneOrMany, processCodecs,
+  OneOrMany,
+  processCodecs,
   RawCodec,
   RawDataAPIResponse,
   Serializers,
@@ -27,11 +28,13 @@ import {
   BaseDesCtx,
   BaseSerCtx,
   BaseSerDesCtx,
-  ctxRecurse,
-  ctxDone,
+  CONTINUE,
   ctxContinue,
-  DONE, CONTINUE,
+  ctxDone,
+  ctxRecurse,
+  DONE,
 } from '@/src/lib/api/ser-des/ctx';
+import { InternalSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
 
 /**
  * @public
@@ -61,7 +64,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
   private readonly _serializers: Serializers<SerCtx>;
   private readonly _deserializers: Deserializers<DesCtx>;
 
-  protected constructor(protected readonly _cfg: BaseSerDesConfig<SerCtx, DesCtx>) {
+  protected constructor(protected readonly _cfg: InternalSerDesConfig<BaseSerDesConfig<SerCtx, DesCtx>> & {}) {
     [this._serializers, this._deserializers] = processCodecs(this._cfg.codecs?.flat() ?? []);
   }
 
@@ -104,16 +107,6 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
   protected abstract adaptSerCtx(ctx: BaseSerCtx<SerCtx>): SerCtx;
   protected abstract adaptDesCtx(ctx: BaseDesCtx<DesCtx>): DesCtx;
   protected abstract bigNumsPresent(ctx: SerCtx): boolean;
-
-  protected static _mergeConfig<SerCtx extends BaseSerCtx<any>, DesCtx extends BaseDesCtx<any>>(...cfg: (BaseSerDesConfig<SerCtx, DesCtx> | undefined)[]): BaseSerDesConfig<SerCtx, DesCtx> {
-    return cfg.reduce<BaseSerDesConfig<SerCtx, DesCtx>>((acc, cfg) => ({
-      serialize: [...toArray(cfg?.serialize ?? []), ...toArray(acc.serialize ?? [])],
-      deserialize: [...toArray(cfg?.deserialize ?? []), ...toArray(acc.deserialize ?? [])],
-      mutateInPlace: !!(cfg?.mutateInPlace ?? acc.mutateInPlace),
-      keyTransformer: cfg?.keyTransformer ?? acc.keyTransformer,
-      codecs: [...(cfg?.codecs ?? []), ...(acc.codecs ?? [])],
-    }), {});
-  }
 
   private _mkCtx<Ctx>(obj: unknown, ctx: Ctx): Ctx & BaseSerDesCtx {
     return {

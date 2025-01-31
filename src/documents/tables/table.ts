@@ -246,7 +246,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     };
 
     this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
-    this.#commands = new CommandImpls(this, this.#httpClient, new TableSerDes(opts?.serdes));
+    this.#commands = new CommandImpls(this, this.#httpClient, new TableSerDes(TableSerDes.cfg.parse(opts?.serdes)));
     this.#db = db;
 
     Object.defineProperty(this, $CustomInspect, {

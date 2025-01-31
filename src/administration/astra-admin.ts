@@ -34,6 +34,7 @@ import { Timeouts } from '@/src/lib/api/timeouts';
 import { AstraDropDatabaseOptions } from '@/src/administration/types/admin/drop-database';
 import { AdminOptsHandler, InternalAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
 import { Logger } from '@/src/lib/logging/logger';
+import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -189,7 +190,7 @@ export class AstraAdmin {
       ? 'https://' + endpointOrId + '-' + regionOrOptions + '.apps.astra.datastax.com'
       : endpointOrId;
 
-    return new Db(this.#defaultOpts, endpoint, dbOpts);
+    return new Db(this.#defaultOpts, endpoint, DbOptsHandler.parse(dbOpts));
   }
 
   /**

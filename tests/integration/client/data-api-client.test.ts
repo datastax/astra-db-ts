@@ -83,7 +83,7 @@ describe('integration.client.data-api-client', () => {
     });
 
     it('should not emit any command events when not enabled', async () => {
-      for (const conf of [undefined, null, [{ events: 'all', emits: [] }]]) {
+      for (const conf of [undefined, [], [{ events: 'all', emits: [] }]]) {
         stdout = []; stderr = [];
 
         const client = new DataAPIClient(TEST_APPLICATION_TOKEN, { logging: conf as any, environment: ENVIRONMENT });

@@ -12,17 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type {
-  DataAPIClientEventMap,
-  DataAPIEnvironment,
-  DataAPILoggingOutput,
-  TimeoutDescriptor,
-  TokenProvider,
-} from '@/src/lib';
+import type { DataAPIClientEventMap, DataAPIEnvironment, DataAPILoggingOutput } from '@/src/lib';
 import type TypedEmitter from 'typed-emitter';
 import type { FetchCtx } from '@/src/lib/api/fetch/types';
-import type { AdminOptions, DbOptions } from '@/src/client';
-import { InternalLoggingConfig } from '@/src/lib/logging/cfg-handler';
+import { InternalDbOptions } from '@/src/client/opts-handlers/db-opts-handler';
+import { InternalAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
 
 /**
  * @internal
@@ -37,14 +31,6 @@ export interface InternalRootClientOpts {
   emitter: TypedEmitter<DataAPIClientEventMap>,
   fetchCtx: FetchCtx,
   userAgent: string,
-  dbOptions: Omit<DbOptions, 'token' | 'logging'> & {
-    token: TokenProvider,
-    logging: InternalLoggingConfig[],
-    timeoutDefaults: TimeoutDescriptor,
-  },
-  adminOptions: Omit<AdminOptions, 'adminToken' | 'logging'> & {
-    adminToken: TokenProvider,
-    logging: InternalLoggingConfig[],
-    timeoutDefaults: TimeoutDescriptor,
-  },
+  dbOptions: InternalDbOptions,
+  adminOptions: InternalAdminOptions,
 }

@@ -25,7 +25,7 @@ export interface InternalAdminOptions {
   endpointUrl: string | undefined,
   additionalHeaders: Record<string, string>,
   astraEnv: 'dev' | 'prod' | 'test' | undefined,
-  timeoutDefaults: TimeoutDescriptor,
+  timeoutDefaults: Partial<TimeoutDescriptor>,
 }
 
 interface AdminOptsTypes extends OptionsHandlerOpts {

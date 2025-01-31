@@ -32,6 +32,7 @@ describe('unit.documents.tables.ser-des.ser-des.codecs', () => {
       const uuid4 = uuid(4);
 
       const serdes = new TableSerDes({
+        ...TableSerDes.cfg.empty,
         codecs: [
           TableCodecs.forPath(['*'], serdesFns('[*]')),
           TableCodecs.forPath(['*', '*'], serdesFns('[*][*]')),
@@ -130,6 +131,7 @@ describe('unit.documents.tables.ser-des.ser-des.codecs', () => {
         let ser = 5, des = 5;
 
         const serdes = new TableSerDes({
+          ...TableSerDes.cfg.empty,
           codecs: [
             ...repeat(() => TableCodecs.forPath([], {
               serialize: () => --ser ? ctxContinue() : signal,
@@ -160,6 +162,7 @@ describe('unit.documents.tables.ser-des.ser-des.codecs', () => {
         let ser = 5, des = 5;
 
         const serdes = new TableSerDes({
+          ...TableSerDes.cfg.empty,
           codecs: [
             ...repeat(() => TableCodecs.forName('', {
               serialize: () => --ser ? ctxContinue() : signal,
@@ -194,6 +197,7 @@ describe('unit.documents.tables.ser-des.ser-des.codecs', () => {
         let ser = 5, des = 5;
 
         const serdes = new TableSerDes({
+          ...TableSerDes.cfg.empty,
           codecs: [
             ...repeat(() => TableCodecs.forType('uuid', {
               serializeClass: Type,

@@ -31,6 +31,7 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
       });
 
       const serdes = new CollSerDes({
+        ...CollSerDes.cfg.empty,
         enableBigNumbers: { '*': 'bigint' },
         codecs: [
           repeat(() => CollCodecs.forName('root1',                  serFn('root1'))),
@@ -89,6 +90,7 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
       let val!: unknown;
 
       const serdes = new CollSerDes({
+        ...CollSerDes.cfg.empty,
         keyTransformer: new Camel2SnakeCase(),
         codecs: [
           CollCodecs.forPath([], { serialize: (_, ctx) => (ctx.mapAfter((v) => val = v), ctx.continue()) }),
@@ -109,6 +111,7 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
       });
 
       const serdes = new CollSerDes({
+        ...CollSerDes.cfg.empty,
         enableBigNumbers: { '*': 'bigint' },
         codecs: [
           repeat(() => CollCodecs.forName('root1',                  serFn('root1'))),

@@ -15,7 +15,7 @@
 import { DecoderType, OptionsHandler, OptionsHandlerOpts } from '@/src/lib/opts-handler';
 import { DbOptions } from '@/src/client';
 import { TimeoutDescriptor, TokenProvider } from '@/src/lib';
-import { Decoder, nullish, number, object, oneOf, optional, record, string, unknown } from 'decoders';
+import { Decoder, nullish, number, object, oneOf, optional, record, regex, string, unknown } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts';
 import { Logger } from '@/src/lib/logging/logger';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
@@ -29,7 +29,7 @@ export interface InternalDbOptions {
   collSerdes: typeof CollSerDes.cfg.transformed,
   tableSerdes: typeof TableSerDes.cfg.transformed,
   additionalHeaders: Record<string, string>,
-  timeoutDefaults: TimeoutDescriptor,
+  timeoutDefaults: Partial<TimeoutDescriptor>,
 }
 
 interface DbOptsTypes extends OptionsHandlerOpts {
@@ -43,7 +43,7 @@ const dbOpts = nullish(object({
   token: TokenProvider.opts.decoder,
   dataApiPath: optional(string),
   additionalHeaders: optional(record(string)),
-  keyspace: nullish(string),
+  keyspace: nullish(regex(/^\w{1,48}$/, 'Expected a string of 1-48 alphanumeric characters')),
   timeoutDefaults: optional(record(number)),
   serdes: optional(object({
     collection: unknown as Decoder<any>,
@@ -68,10 +68,10 @@ export const DbOptsHandler = new OptionsHandler<DbOptsTypes>({
       token: TokenProvider.opts.parseWithin(input, `${field}.token`),
       keyspace: input?.keyspace ?? undefined,
       dataApiPath: input?.dataApiPath ?? undefined,
-      collSerdes: input?.serdes?.collection ?? {},
+      collSerdes: collSerdes,
       tableSerdes: tableSerdes,
       additionalHeaders: input?.additionalHeaders ?? {},
-      timeoutDefaults: Timeouts.merge(Timeouts.Default, input?.timeoutDefaults),
+      timeoutDefaults: input?.timeoutDefaults ?? {},
     };
   },
   concat(configs): InternalDbOptions {
@@ -94,6 +94,6 @@ export const DbOptsHandler = new OptionsHandler<DbOptsTypes>({
     collSerdes: CollSerDes.cfg.empty,
     tableSerdes: TableSerDes.cfg.empty,
     additionalHeaders: {},
-    timeoutDefaults: Timeouts.Default,
+    timeoutDefaults: {},
   },
 });
