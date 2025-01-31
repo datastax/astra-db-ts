@@ -20,6 +20,7 @@ import type { Ref } from '@/src/lib/types';
 import { TimeoutManager } from '@/src/lib/api/timeouts/timeouts';
 import { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
 import { ParsedTimeoutDescriptor } from '@/src/lib/api/timeouts/cfg-handler';
+import { ParsedCaller } from '@/src/client/opts-handlers/caller-cfg-handler';
 
 /**
  * @internal
@@ -30,7 +31,7 @@ export interface HTTPClientOptions {
   emitter: TypedEmitter<CommandEventMap>,
   logging: ParsedLoggingConfig,
   fetchCtx: FetchCtx,
-  userAgent: string,
+  caller: ParsedCaller,
   additionalHeaders: Record<string, string> | undefined,
   timeoutDefaults: ParsedTimeoutDescriptor,
 }

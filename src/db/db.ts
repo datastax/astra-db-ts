@@ -153,7 +153,7 @@ export class Db {
       logging: this.#defaultOpts.dbOptions.logging,
       fetchCtx: rootOpts.fetchCtx,
       keyspace: this.#keyspace,
-      userAgent: rootOpts.userAgent,
+      caller: rootOpts.caller,
       emissionStrategy: EmissionStrategy.Normal,
       additionalHeaders: this.#defaultOpts.dbOptions.additionalHeaders,
       timeoutDefaults: this.#defaultOpts.dbOptions.timeoutDefaults,

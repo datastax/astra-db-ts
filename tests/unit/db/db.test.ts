@@ -24,6 +24,7 @@ import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { $CustomInspect } from '@/src/lib/constants';
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
+import { CallerCfgHandler } from '@/src/client/opts-handlers/caller-cfg-handler';
 
 describe('unit.db.db', () => {
   const internalOps = (db?: Partial<DbOptions>, devops?: Partial<AdminOptions>, preferredType = 'http2'): InternalRootClientOpts => ({
@@ -31,7 +32,7 @@ describe('unit.db.db', () => {
     adminOptions: AdminOptsHandler.parse({ adminToken: new StaticTokenProvider('old-admin'), ...devops }),
     emitter: null!,
     fetchCtx: { preferredType } as any,
-    userAgent: '',
+    caller: CallerCfgHandler.parse([]),
     environment: 'astra',
   });
 

@@ -24,19 +24,17 @@ import type {
 import { LIB_NAME } from '@/src/version';
 import type { InternalRootClientOpts } from '@/src/client/types/internal';
 import { type DataAPIClientEventMap, type Fetcher, FetchH2, FetchNative, type nullish, TokenProvider } from '@/src/lib';
-import { buildUserAgent } from '@/src/lib/api/clients/http-client';
 import { Db, InvalidEnvironmentError } from '@/src/db';
 import { AstraAdmin } from '@/src/administration';
 import type { FetchCtx } from '@/src/lib/api/fetch/types';
 import { isNullish } from '@/src/lib/utils';
 import { p, type Parser } from '@/src/lib/validation';
-import { parseCaller } from '@/src/client/parsers/caller';
 import { parseEnvironment } from '@/src/client/parsers/environment';
 import { parseHttpOpts } from '@/src/client/parsers/http-opts';
 import { $CustomInspect } from '@/src/lib/constants';
-import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
+import { CallerCfgHandler } from '@/src/client/opts-handlers/caller-cfg-handler';
 
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
@@ -158,6 +156,9 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
 
     const options = parseClientOpts(rawOptions, 'options');
 
+    const dbOptions = DbOptsHandler.parse(options?.dbOptions);
+    const adminOptions = AdminOptsHandler.parse(options?.adminOptions);
+
     const tokens = {
       default: TokenProvider.opts.parse(token, 'token'),
       db: TokenProvider.opts.parseWithin<'token'>(options?.dbOptions, 'options.dbOptions.token'),
@@ -167,20 +168,18 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
     this.#options = {
       environment: options?.environment ?? 'astra',
       fetchCtx: buildFetchCtx(options || undefined),
-      dbOptions: DbOptsHandler.parse({
-        ...options?.dbOptions,
+      dbOptions: DbOptsHandler.concatParse([dbOptions], {
         token: TokenProvider.opts.concat(tokens.default, tokens.db),
         timeoutDefaults: options?.timeoutDefaults,
         logging: options?.logging,
       }),
-      adminOptions: AdminOptsHandler.parse({
-        ...options?.adminOptions,
+      adminOptions: AdminOptsHandler.concatParse([adminOptions], {
         adminToken: TokenProvider.opts.concat(tokens.default, tokens.admin),
         timeoutDefaults: options?.timeoutDefaults,
         logging: options?.logging,
       }),
       emitter: this,
-      userAgent: buildUserAgent(options?.caller),
+      caller: CallerCfgHandler.parseWithin(options, 'caller'),
     };
 
     Object.defineProperty(this, $CustomInspect, {
@@ -325,10 +324,10 @@ const parseClientOpts: Parser<DataAPIClientOptions | nullish> = (raw, field) => 
   return {
     logging: opts.logging,
     environment: parseEnvironment(opts.environment, `${field}.environment`),
-    dbOptions: DbOptsHandler.parseWithin(opts, `${field}.dbOptions`),
-    adminOptions: AdminOptsHandler.parseWithin(opts, `${field}.adminOptions`),
-    caller: parseCaller(opts.caller, `${field}.caller`),
+    dbOptions: opts.dbOptions,
+    adminOptions: opts.adminOptions,
+    caller: opts.caller,
     httpOptions: parseHttpOpts(opts.httpOptions, `${field}.httpOptions`),
-    timeoutDefaults: Timeouts.cfg.parseWithin(opts, `${field}.timeoutDefaults`),
+    timeoutDefaults: opts.timeoutDefaults,
   };
 };

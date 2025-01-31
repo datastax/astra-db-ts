@@ -65,15 +65,15 @@ describe('unit.client.data-api-client', () => {
   });
 
   it('should accept valid callers', () => {
-    // @ts-expect-error - null technically allowed
-    assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: null }));
     assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: undefined }));
+    assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: [] }));
     assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: ['a', 'b'] }));
     assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: [['a', 'b'], ['c', 'd']] }));
   });
 
   it('should throw on invalid callers', () => {
-    assert.throws(() => new DataAPIClient('dummy-token', { caller: [] }));
+    // @ts-expect-error - null technically allowed
+    assert.throws(() => new DataAPIClient('dummy-token', { caller: null }));
     // @ts-expect-error - testing invalid input
     assert.throws(() => new DataAPIClient('dummy-token', { caller: 'invalid-type' }));
     // @ts-expect-error - testing invalid input

@@ -72,18 +72,8 @@ export class AstraAdmin {
    * @internal
    */
   constructor(rootOpts: InternalRootClientOpts, adminOpts: ParsedAdminOpts) {
-    // const adminToken = TokenProvider.opts.concat(rootOpts.adminOptions.adminToken, adminOpts?.adminToken);
-
     this.#defaultOpts = {
       ...rootOpts,
-      // adminOptions: {
-      //   endpointUrl: adminOpts?.endpointUrl || rootOpts.adminOptions.endpointUrl,
-      //   adminToken: adminToken,
-      //   logging: Logger.cfg.concat(rootOpts.adminOptions.logging, adminOpts.logging),
-      //   additionalHeaders: { ...rootOpts.adminOptions.additionalHeaders, ...adminOpts?.additionalHeaders },
-      //   astraEnv: adminOpts?.astraEnv ?? rootOpts.adminOptions.astraEnv,
-      //   timeoutDefaults: Timeouts.cfg.concat(rootOpts.adminOptions.timeoutDefaults, adminOpts?.timeoutDefaults),
-      // },
       adminOptions: AdminOptsHandler.concat(rootOpts.adminOptions, adminOpts),
       dbOptions: {
         ...rootOpts.dbOptions,
@@ -98,7 +88,7 @@ export class AstraAdmin {
       baseUrl: this.#defaultOpts.adminOptions.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
       emitter: rootOpts.emitter,
       fetchCtx: rootOpts.fetchCtx,
-      userAgent: rootOpts.userAgent,
+      caller: rootOpts.caller,
       tokenProvider: this.#defaultOpts.adminOptions.adminToken,
       additionalHeaders: this.#defaultOpts.adminOptions.additionalHeaders,
       timeoutDefaults: Timeouts.cfg.concat(rootOpts.adminOptions.timeoutDefaults, this.#defaultOpts.adminOptions.timeoutDefaults),

@@ -45,7 +45,7 @@ export abstract class HttpClient {
     }
 
     this.baseHeaders = { ...options.additionalHeaders };
-    this.baseHeaders['User-Agent'] = options.userAgent;
+    this.baseHeaders['User-Agent'] = options.caller.userAgent;
     this.baseHeaders['Content-Type'] = 'application/json';
 
     this.headerProviders = headerProviders;

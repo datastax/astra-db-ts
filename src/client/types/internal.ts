@@ -17,6 +17,7 @@ import type TypedEmitter from 'typed-emitter';
 import type { FetchCtx } from '@/src/lib/api/fetch/types';
 import { ParsedDbOpts } from '@/src/client/opts-handlers/db-opts-handler';
 import { ParsedAdminOpts } from '@/src/client/opts-handlers/admin-opts-handler';
+import { ParsedCaller } from '@/src/client/opts-handlers/caller-cfg-handler';
 
 /**
  * @internal
@@ -30,7 +31,7 @@ export interface InternalRootClientOpts {
   environment: DataAPIEnvironment,
   emitter: TypedEmitter<DataAPIClientEventMap>,
   fetchCtx: FetchCtx,
-  userAgent: string,
+  caller: ParsedCaller,
   dbOptions: ParsedDbOpts,
   adminOptions: ParsedAdminOpts,
 }
