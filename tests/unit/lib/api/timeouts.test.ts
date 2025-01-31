@@ -15,7 +15,7 @@
 
 import assert from 'assert';
 import { describe, it, parallel } from '@/tests/testlib';
-import { TimedOutCategories, TimeoutDescriptor, TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts';
+import { TimedOutCategories, TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { HttpClient, HTTPRequestInfo } from '@/src/lib/api/clients';
 
 describe('unit.lib.api.timeouts', () => {
@@ -299,47 +299,47 @@ describe('unit.lib.api.timeouts', () => {
     });
   });
 
-  describe('merge', () => {
-    it('should return the base config if new config is nullish', () => {
-      const base = { a: 1, b: 2 } as unknown as TimeoutDescriptor;
-      assert.strictEqual(Timeouts.merge(base, null), base);
-      assert.strictEqual(Timeouts.merge(base, undefined), base);
-    });
-
-    it('should merge the config', () => {
-      const merged = Timeouts.merge(Timeouts.Default, { requestTimeoutMs: 1, databaseAdminTimeoutMs: 3 });
-      assert.deepStrictEqual(merged, {
-        requestTimeoutMs: 1,
-        generalMethodTimeoutMs: Timeouts.Default.generalMethodTimeoutMs,
-        keyspaceAdminTimeoutMs: Timeouts.Default.keyspaceAdminTimeoutMs,
-        tableAdminTimeoutMs: Timeouts.Default.tableAdminTimeoutMs,
-        collectionAdminTimeoutMs: Timeouts.Default.collectionAdminTimeoutMs,
-        databaseAdminTimeoutMs: 3,
-      });
-    });
-  });
-
-  describe('parseConfig', () => {
-    it('should accept a nullish config', () => {
-      assert.strictEqual(Timeouts.parseConfig(null!, ''), undefined);
-      assert.strictEqual(Timeouts.parseConfig(undefined, ''), undefined);
-    });
-
-    it('should error on a non-object config', () => {
-      assert.throws(() => Timeouts.parseConfig(1 as any, 'timeoutDefaults'), { message: 'Expected timeoutDefaults to be of type object? (or nullish), but got number' });
-    });
-
-    it('should parse timeout config', () => {
-      const config = {
-        requestTimeoutMs: -1,
-        generalMethodTimeoutMs: Infinity,
-        keyspaceAdminTimeoutMs: 3,
-        tableAdminTimeoutMs: 4.3,
-        collectionAdminTimeoutMs: undefined,
-        databaseAdminTimeoutMs: undefined,
-      };
-
-      assert.deepStrictEqual(Timeouts.parseConfig(config, 'timeoutDefaults'), config);
-    });
-  });
+  // describe('merge', () => {
+  //   it('should return the base config if new config is nullish', () => {
+  //     const base = { a: 1, b: 2 } as unknown as TimeoutDescriptor;
+  //     assert.strictEqual(Timeouts.merge(base, null), base);
+  //     assert.strictEqual(Timeouts.merge(base, undefined), base);
+  //   });
+  //
+  //   it('should merge the config', () => {
+  //     const merged = Timeouts.merge(Timeouts.Default, { requestTimeoutMs: 1, databaseAdminTimeoutMs: 3 });
+  //     assert.deepStrictEqual(merged, {
+  //       requestTimeoutMs: 1,
+  //       generalMethodTimeoutMs: Timeouts.Default.generalMethodTimeoutMs,
+  //       keyspaceAdminTimeoutMs: Timeouts.Default.keyspaceAdminTimeoutMs,
+  //       tableAdminTimeoutMs: Timeouts.Default.tableAdminTimeoutMs,
+  //       collectionAdminTimeoutMs: Timeouts.Default.collectionAdminTimeoutMs,
+  //       databaseAdminTimeoutMs: 3,
+  //     });
+  //   });
+  // });
+  //
+  // describe('parseConfig', () => {
+  //   it('should accept a nullish config', () => {
+  //     assert.strictEqual(Timeouts.parseConfig(null!, ''), undefined);
+  //     assert.strictEqual(Timeouts.parseConfig(undefined, ''), undefined);
+  //   });
+  //
+  //   it('should error on a non-object config', () => {
+  //     assert.throws(() => Timeouts.parseConfig(1 as any, 'timeoutDefaults'), { message: 'Expected timeoutDefaults to be of type object? (or nullish), but got number' });
+  //   });
+  //
+  //   it('should parse timeout config', () => {
+  //     const config = {
+  //       requestTimeoutMs: -1,
+  //       generalMethodTimeoutMs: Infinity,
+  //       keyspaceAdminTimeoutMs: 3,
+  //       tableAdminTimeoutMs: 4.3,
+  //       collectionAdminTimeoutMs: undefined,
+  //       databaseAdminTimeoutMs: undefined,
+  //     };
+  //
+  //     assert.deepStrictEqual(Timeouts.parseConfig(config, 'timeoutDefaults'), config);
+  //   });
+  // });
 });

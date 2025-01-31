@@ -63,7 +63,7 @@ export const RootOptsHandler = (defaultToken: typeof TokenProvider.opts.parsed, 
   decoder: rootOpts,
   refine(options, field) {
     const dbOptions = DbOptsHandler.parseWithin(options, `${field}.dbOptions`);
-    const adminOptions = AdminOptsHandler.parse(options, `${field}.adminOptions`);
+    const adminOptions = AdminOptsHandler.parseWithin(options, `${field}.adminOptions`);
 
     return {
       environment: EnvironmentCfgHandler.parseWithin(options, `${field}.environment`),

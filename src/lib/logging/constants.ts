@@ -13,7 +13,6 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { EqualityProof } from '@/src/lib/validation';
 import type {
   DataAPIClientEventMap,
   DataAPILoggingEvent,
@@ -30,6 +29,7 @@ import {
 import { buildOutputsMap } from '@/src/lib/logging/util';
 import { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
 import { InternalLoggingOutputsMap } from '@/src/lib/logging/logger';
+import { EqualityProof } from '@/src/lib/utils';
 
 /**
  * @internal

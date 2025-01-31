@@ -15,7 +15,6 @@
 import { nullish, OneOrMany } from '@/src/lib';
 import { HTTPRequestInfo } from '@/src/lib/api/clients';
 import { toArray } from '@/src/lib/utils';
-import { p, Parser } from '@/src/lib/validation';
 import { ParsedTimeoutDescriptor, TimeoutCfgHandler } from '@/src/lib/api/timeouts/cfg-handler';
 
 /**
@@ -391,21 +390,6 @@ export class Timeouts {
     };
   }
 
-  public static merge(base: Partial<TimeoutDescriptor>, custom: Partial<TimeoutDescriptor> | nullish): Partial<TimeoutDescriptor> {
-    if (!custom) {
-      return base;
-    }
-
-    return {
-      requestTimeoutMs: custom.requestTimeoutMs ?? base.requestTimeoutMs,
-      generalMethodTimeoutMs: custom.generalMethodTimeoutMs ?? base.generalMethodTimeoutMs,
-      collectionAdminTimeoutMs: custom.collectionAdminTimeoutMs ?? base.collectionAdminTimeoutMs,
-      tableAdminTimeoutMs: custom.tableAdminTimeoutMs ?? base.tableAdminTimeoutMs,
-      databaseAdminTimeoutMs: custom.databaseAdminTimeoutMs ?? base.databaseAdminTimeoutMs,
-      keyspaceAdminTimeoutMs: custom.keyspaceAdminTimeoutMs ?? base.keyspaceAdminTimeoutMs,
-    };
-  }
-
   public static fmtTimeoutMsg = (tm: TimeoutManager, timeoutTypes: TimedOutCategories) => {
     const timeout = (timeoutTypes === 'provided')
       ? Object.values(tm.initial())[0]!
@@ -419,22 +403,5 @@ export class Timeouts {
         : `${timeoutTypes} timed out`;
 
     return `Command timed out after ${timeout}ms (${types})`;
-  };
-
-  public static parseConfig: Parser<Partial<TimeoutDescriptor> | undefined> = (raw, field) => {
-    const opts = p.parse('object?')<TimeoutDescriptor>(raw, field);
-
-    if (!opts) {
-      return undefined;
-    }
-
-    return {
-      requestTimeoutMs: p.parse('number?')(opts.requestTimeoutMs, `${field}.requestTimeoutMs`),
-      generalMethodTimeoutMs: p.parse('number?')(opts.generalMethodTimeoutMs, `${field}.generalMethodTimeoutMs`),
-      collectionAdminTimeoutMs: p.parse('number?')(opts.collectionAdminTimeoutMs, `${field}.collectionAdminTimeoutMs`),
-      tableAdminTimeoutMs: p.parse('number?')(opts.tableAdminTimeoutMs, `${field}.tableAdminTimeoutMs`),
-      databaseAdminTimeoutMs: p.parse('number?')(opts.databaseAdminTimeoutMs, `${field}.databaseAdminTimeoutMs`),
-      keyspaceAdminTimeoutMs: p.parse('number?')(opts.keyspaceAdminTimeoutMs, `${field}.keyspaceAdminTimeoutMs`),
-    };
   };
 }

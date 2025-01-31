@@ -160,10 +160,26 @@ export function isBigNumber(value: object): value is BigNumber {
   return BigNumber.isBigNumber(value) && value.constructor?.name === 'BigNumber';
 }
 
+/**
+ * @internal
+ */
+export type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends (<T>() => T extends Y ? 1 : 2) ? true : false;
+
+/**
+ * @internal
+ */
+export const EqualityProof = <X, Y, _ extends Equal<X, Y>>() => {};
+
+/**
+ * @internal
+ */
 export const oneOrMany = <T>(decoder: Decoder<T>): Decoder<T | T[]> => {
   return either(decoder, array(decoder));
 };
 
+/**
+ * @internal
+ */
 export const function_ = define<(...any: any[]) => any>((fn, ok, err) => {
   if (typeof fn === 'function') {
     return ok(fn as any);
@@ -172,4 +188,7 @@ export const function_ = define<(...any: any[]) => any>((fn, ok, err) => {
   }
 });
 
+/**
+ * @internal
+ */
 export const anyInstanceOf = <T>(cls: abstract new (...args: any[]) => T) => instanceOf(cls as any) as Decoder<T>;
