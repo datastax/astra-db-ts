@@ -43,7 +43,7 @@ import { AstraDbInfo } from '@/src/administration/types/admin/database-info';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
-import { DbOptsHandler, InternalDbOptions } from '@/src/client/opts-handlers/db-opts-handler';
+import { DbOptsHandler, ParsedDbOpts } from '@/src/client/opts-handlers/db-opts-handler';
 
 /**
  * #### Overview
@@ -129,7 +129,7 @@ export class Db {
    *
    * @internal
    */
-  constructor(rootOpts: InternalRootClientOpts, endpoint: string, dbOpts: InternalDbOptions) {
+  constructor(rootOpts: InternalRootClientOpts, endpoint: string, dbOpts: ParsedDbOpts) {
     this.#defaultOpts = {
       ...rootOpts,
       dbOptions: DbOptsHandler.concat(rootOpts.dbOptions, dbOpts),
@@ -147,7 +147,7 @@ export class Db {
     this.#httpClient = new DataAPIHttpClient({
       baseUrl: endpoint,
       tokenProvider: this.#defaultOpts.dbOptions.token,
-      embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(null),
+      embeddingHeaders: EmbeddingHeadersProvider.parse(null),
       baseApiPath: this.#defaultOpts.dbOptions.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment],
       emitter: rootOpts.emitter,
       logging: this.#defaultOpts.dbOptions.logging,

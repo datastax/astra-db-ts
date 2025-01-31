@@ -15,51 +15,55 @@
 import { Decoder } from 'decoders';
 import { nullish } from '@/src/lib/index';
 
-export interface ConfigHandlerImpl<Opts extends OptionsHandlerOpts> {
+declare const __parsed: unique symbol;
+export type Parsed = { [__parsed]: true };
+export type Unparse<T> = Omit<T, typeof __parsed>;
+
+export interface OptionsHandlerImpl<Opts extends OptionsHandlerOpts> {
   decoder: Decoder<Opts['Parseable']>,
-  refine: (input: Opts['Parsed'], field: string | undefined) => Opts['Refined'],
-  concat(configs: Opts['Refined'][]): Opts['Refined'],
-  empty: Opts['Refined'],
+  refine: (input: Opts['Decoded'], field: string | undefined) => Unparse<Opts['Parsed']>,
+  concat(configs: Opts['Parsed'][]): Unparse<Opts['Parsed']>,
+  empty: Unparse<Opts['Parsed']>,
 }
 
 export interface OptionsHandlerOpts {
-  Refined: unknown,
+  Parsed: Parsed & unknown,
   Parseable: unknown,
-  Parsed: unknown,
+  Decoded: unknown,
 }
 
 export type DecoderType<T> = T extends Decoder<infer U> ? U : never;
 
-export class OptionsHandler<Opts extends OptionsHandlerOpts> {
-  public readonly empty: Opts['Refined'];
+export class MonoidalOptionsHandler<Opts extends OptionsHandlerOpts> {
+  public readonly empty: Opts['Parsed'];
   public readonly decoder: Decoder<Opts['Parseable']>;
 
-  constructor(private readonly impl: ConfigHandlerImpl<Opts>) {
-    this.empty = impl.empty;
+  constructor(private readonly impl: OptionsHandlerImpl<Opts>) {
+    this.empty = assertParsed(impl.empty);
     this.decoder = impl.decoder;
   }
 
-  declare readonly transformed: Opts['Refined'];
+  declare readonly parsed: Opts['Parsed'];
 
-  public parse(input: Opts['Parseable'], field?: string): Opts['Refined'] {
+  public parse(input: Opts['Parseable'], field?: string): Opts['Parsed'] {
     const decoded = this.impl.decoder.verify(input);
-    return this.impl.refine(decoded, field);
+    return assertParsed(this.impl.refine(decoded, field));
   }
 
-  public parseWithin<Field extends string>(obj: Partial<Record<Field, Opts['Parseable']>> | nullish, field: Field | `${string}.${Field}`): Opts['Refined'] {
+  public parseWithin<Field extends string>(obj: Partial<Record<Field, Opts['Parseable']>> | nullish, field: Field | `${string}.${Field}`): Opts['Parsed'] {
     const decoded = this.impl.decoder.verify(obj?.[field.split('.').at(-1) as Field]);
-    return this.impl.refine(decoded, field);
+    return assertParsed(this.impl.refine(decoded, field));
   }
 
-  public concat(...configs: Opts['Refined'][]): Opts['Refined'] {
-    return this.impl.concat(configs);
+  public concat(...configs: Opts['Parsed'][]): Opts['Parsed'] {
+    return assertParsed(this.impl.concat(configs));
   }
 
-  public concatParse(configs: Opts['Refined'][], raw: Opts['Parseable'], field?: string): Opts['Refined'] {
+  public concatParse(configs: Opts['Parsed'][], raw: Opts['Parseable'], field?: string): Opts['Parsed'] {
     return this.concat(...configs, this.parse(raw, field));
   }
 
-  public concatParseWithin<Field extends string>(configs: Opts['Refined'][], obj: Partial<Record<Field, Opts['Parseable']>> | nullish, field: Field | `${string}.${Field}`): Opts['Refined'] {
+  public concatParseWithin<Field extends string>(configs: Opts['Parsed'][], obj: Partial<Record<Field, Opts['Parseable']>> | nullish, field: Field | `${string}.${Field}`): Opts['Parsed'] {
     return this.concat(...configs, this.parseWithin(obj, field));
   }
 
@@ -67,3 +71,5 @@ export class OptionsHandler<Opts extends OptionsHandlerOpts> {
   //   return this.concat([...configs, this.parse(raw, field)]);
   // }
 }
+
+const assertParsed = <T>(input: T): Parsed => input as T & Parsed;

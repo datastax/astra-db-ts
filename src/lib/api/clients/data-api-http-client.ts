@@ -14,7 +14,7 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import { Logger } from '@/src/lib/logging/logger';
-import { nullish, RawDataAPIResponse, TokenProvider } from '@/src/lib';
+import { nullish, ParsedTokenProvider, RawDataAPIResponse, TokenProvider } from '@/src/lib';
 import {
   DataAPIErrorDescriptor,
   DataAPIHttpError,
@@ -29,9 +29,9 @@ import { DEFAULT_DATA_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constan
 import { CollectionOptions, TableOptions } from '@/src/db';
 import { isNullish } from '@/src/lib/utils';
 import { mkRespErrorFromResponse } from '@/src/documents/errors';
-import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts';
+import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { EmptyObj } from '@/src/lib/types';
-import { InternalAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
+import { ParsedAdminOpts } from '@/src/client/opts-handlers/admin-opts-handler';
 
 type ClientKind = 'admin' | 'normal';
 
@@ -115,7 +115,7 @@ interface DataAPIHttpClientOpts<Kind extends ClientKind> extends HTTPClientOptio
   keyspace: KeyspaceRef,
   emissionStrategy: EmissionStrategy<Kind>,
   embeddingHeaders: EmbeddingHeadersProvider,
-  tokenProvider: TokenProvider,
+  tokenProvider: ParsedTokenProvider,
 }
 
 /**
@@ -149,7 +149,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
   public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(keyspace: string, collection: string, opts: CollectionOptions | TableOptions | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
-      embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(opts?.embeddingApiKey),
+      embeddingHeaders: EmbeddingHeadersProvider.parse(opts?.embeddingApiKey),
       logging: Logger.cfg.concatParseWithin([this.#props.logging], opts, 'logging'),
       emissionStrategy: EmissionStrategy.Normal,
       keyspace: { ref: keyspace },
@@ -157,16 +157,16 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
 
     clone.collection = collection;
     clone.bigNumHack = bigNumHack;
-    clone.tm = new Timeouts(DataAPITimeoutError.mk, { ...this.tm.baseTimeouts, ...opts?.timeoutDefaults });
+    clone.tm = new Timeouts(DataAPITimeoutError.mk, Timeouts.cfg.parse({ ...this.tm.baseTimeouts, ...opts?.timeoutDefaults }));
 
     return clone;
   }
 
-  public forDbAdmin(opts: InternalAdminOptions): DataAPIHttpClient<'admin'> {
+  public forDbAdmin(opts: ParsedAdminOpts): DataAPIHttpClient<'admin'> {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       tokenProvider: TokenProvider.opts.concat(opts.adminToken, this.#props.tokenProvider),
-      logging: Logger.cfg.concatParseWithin([this.#props.logging], opts, 'logging'),
+      logging: Logger.cfg.concat(this.#props.logging, opts.logging),
       baseUrl: opts?.endpointUrl ?? this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
       additionalHeaders: { ...this.#props.additionalHeaders, ...opts?.additionalHeaders },

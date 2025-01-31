@@ -34,7 +34,7 @@ import {
   ctxRecurse,
   DONE,
 } from '@/src/lib/api/ser-des/ctx';
-import { InternalSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
+import { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
 
 /**
  * @public
@@ -64,7 +64,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
   private readonly _serializers: Serializers<SerCtx>;
   private readonly _deserializers: Deserializers<DesCtx>;
 
-  protected constructor(protected readonly _cfg: InternalSerDesConfig<BaseSerDesConfig<SerCtx, DesCtx>> & {}) {
+  protected constructor(protected readonly _cfg: ParsedSerDesConfig<BaseSerDesConfig<SerCtx, DesCtx>> & {}) {
     [this._serializers, this._deserializers] = processCodecs(this._cfg.codecs?.flat() ?? []);
   }
 

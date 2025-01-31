@@ -20,7 +20,7 @@ import { DEFAULT_DEVOPS_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/const
 import type { HeaderProvider, HTTPClientOptions, HttpMethodStrings } from '@/src/lib/api/clients/types';
 import type { nullish, TokenProvider } from '@/src/lib';
 import { jsonTryParse } from '@/src/lib/utils';
-import { TimeoutManager } from '@/src/lib/api/timeouts';
+import { TimeoutManager } from '@/src/lib/api/timeouts/timeouts';
 
 /**
  * @internal

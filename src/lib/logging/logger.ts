@@ -13,8 +13,13 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import type { DataAPIClientEventMap, DataAPILoggingConfig } from '@/src/lib/logging/types';
-import type { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents';
+import type { DataAPIClientEventMap } from '@/src/lib/logging/types';
+import type {
+  CommandFailedEvent,
+  CommandStartedEvent,
+  CommandSucceededEvent,
+  CommandWarningsEvent,
+} from '@/src/documents';
 import type {
   AdminCommandFailedEvent,
   AdminCommandPollingEvent,
@@ -22,17 +27,10 @@ import type {
   AdminCommandSucceededEvent,
   AdminCommandWarningsEvent,
 } from '@/src/administration';
-import {
-  EmptyInternalLoggingConfig,
-  EventConstructors,
-  DataAPILoggingDefaults,
-  DataAPILoggingDefaultOutputs,
-  LoggingEventsWithoutAll,
-} from '@/src/lib/logging/constants';
+import { EmptyInternalLoggingConfig, EventConstructors } from '@/src/lib/logging/constants';
 import { buildOutputsMap } from '@/src/lib/logging/util';
 import type TypedEventEmitter from 'typed-emitter';
-import { parseLoggingConfig } from '@/src/lib/logging/parser';
-import type { DataAPIClientEvent, InternalLoggingConfig } from '@/src/lib';
+import type { DataAPIClientEvent, ParsedLoggingConfig } from '@/src/lib';
 import { InternalLoggingOutputsMap } from '@/src/client/types/internal';
 import { LoggingCfgHandler } from '@/src/lib/logging/cfg-handler';
 
@@ -57,7 +55,7 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
 
   public static cfg: typeof LoggingCfgHandler = LoggingCfgHandler;
 
-  constructor(_config: InternalLoggingConfig[] | undefined, private emitter: TypedEventEmitter<DataAPIClientEventMap>, private console: ConsoleLike) {
+  constructor(_config: ParsedLoggingConfig, private emitter: TypedEventEmitter<DataAPIClientEventMap>, private console: ConsoleLike) {
     const config = Logger.buildInternalConfig(_config);
 
     for (const [_event, outputs] of Object.entries(config)) if (outputs) {
@@ -79,58 +77,58 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
     }
   }
 
-  public static parseConfig = parseLoggingConfig;
+  // public static parseConfig = parseLoggingConfig;
 
-  public static advanceConfig(config?: InternalLoggingConfig[], newConfig?: DataAPILoggingConfig): InternalLoggingConfig[] | undefined {
-    if (!config && !newConfig) {
-      return undefined;
-    }
-    if (!config) {
-      return Logger.normalizeLoggingConfig(newConfig);
-    }
-    return [...config, ...Logger.normalizeLoggingConfig(newConfig)];
-  }
+  // public static advanceConfig(config?: ParsedLoggingConfig, newConfig?: DataAPILoggingConfig): ParsedLoggingConfig | undefined {
+  //   if (!config && !newConfig) {
+  //     return undefined;
+  //   }
+  //   if (!config) {
+  //     return Logger.normalizeLoggingConfig(newConfig);
+  //   }
+  //   return [...config, ...Logger.normalizeLoggingConfig(newConfig)];
+  // }
 
-  public static normalizeLoggingConfig(config: DataAPILoggingConfig | undefined): InternalLoggingConfig[] {
-    if (!config) {
-      return [];
-    }
+  // public static normalizeLoggingConfig(config: DataAPILoggingConfig | undefined): ParsedLoggingConfig {
+  //   if (!config) {
+  //     return [];
+  //   }
+  //
+  //   if (config === 'all') {
+  //     return DataAPILoggingDefaults;
+  //   }
+  //
+  //   if (typeof config === 'string') {
+  //     return [{ events: [config], emits: DataAPILoggingDefaultOutputs[config] }];
+  //   }
+  //
+  //   return config.flatMap((c, i) => {
+  //     if (c === 'all') {
+  //       return DataAPILoggingDefaults;
+  //     }
+  //
+  //     if (typeof c === 'string') {
+  //       return [{ events: [c], emits: DataAPILoggingDefaultOutputs[c] }];
+  //     }
+  //
+  //     if (c.events === 'all' || Array.isArray(c.events) && c.events.includes('all')) {
+  //       if (c.events === 'all' || c.events.length === 1 && c.events[0] === 'all') {
+  //         return [{ events: LoggingEventsWithoutAll, emits: Array.isArray(c.emits) ? c.emits : [c.emits] }];
+  //       }
+  //       throw new Error(`Nonsensical logging configuration; can not have 'all' in a multi-element array (@ idx ${i})`);
+  //     }
+  //
+  //     return [{
+  //       events: Array.isArray(c.events) ? c.events : [c.events],
+  //       emits: Array.isArray(c.emits) ? c.emits : [c.emits],
+  //     }];
+  //   });
+  // };
 
-    if (config === 'all') {
-      return DataAPILoggingDefaults;
-    }
-
-    if (typeof config === 'string') {
-      return [{ events: [config], emits: DataAPILoggingDefaultOutputs[config] }];
-    }
-
-    return config.flatMap((c, i) => {
-      if (c === 'all') {
-        return DataAPILoggingDefaults;
-      }
-
-      if (typeof c === 'string') {
-        return [{ events: [c], emits: DataAPILoggingDefaultOutputs[c] }];
-      }
-
-      if (c.events === 'all' || Array.isArray(c.events) && c.events.includes('all')) {
-        if (c.events === 'all' || c.events.length === 1 && c.events[0] === 'all') {
-          return [{ events: LoggingEventsWithoutAll, emits: Array.isArray(c.emits) ? c.emits : [c.emits] }];
-        }
-        throw new Error(`Nonsensical logging configuration; can not have 'all' in a multi-element array (@ idx ${i})`);
-      }
-
-      return [{
-        events: Array.isArray(c.events) ? c.events : [c.events],
-        emits: Array.isArray(c.emits) ? c.emits : [c.emits],
-      }];
-    });
-  };
-
-  private static buildInternalConfig(config: InternalLoggingConfig[] | undefined): InternalLoggingOutputsMap {
+  private static buildInternalConfig(config: ParsedLoggingConfig): InternalLoggingOutputsMap {
     const newConfig = { ...EmptyInternalLoggingConfig };
 
-    for (const layer of config ?? []) {
+    for (const layer of config.layers) {
       for (const event of layer.events) {
         newConfig[event] = buildOutputsMap(layer.emits);
 

@@ -15,7 +15,7 @@
 import assert from 'assert';
 import { AstraAdmin } from '@/src/administration';
 import { StaticTokenProvider } from '@/src/lib';
-import { DataAPIClient } from '@/src/client';
+import { AdminOptions, DataAPIClient, DbOptions } from '@/src/client';
 import { describe, it } from '@/tests/testlib';
 import { DEFAULT_DEVOPS_API_ENDPOINTS } from '@/src/lib/api/constants';
 import { InternalRootClientOpts } from '@/src/client/types/internal';
@@ -24,9 +24,9 @@ import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler'
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
 
 describe('unit.administration.admin', () => {
-  const internalOps = (db?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({
-    dbOptions: { ...DbOptsHandler.empty, token: new StaticTokenProvider('old'), ...db },
-    adminOptions: { ...AdminOptsHandler.empty, adminToken: new StaticTokenProvider('old-admin'), ...devops },
+  const internalOps = (db?: Partial<DbOptions>, devops?: Partial<AdminOptions>, preferredType = 'http2'): InternalRootClientOpts => ({
+    dbOptions: DbOptsHandler.parse({ token: new StaticTokenProvider('old'), ...db }),
+    adminOptions: AdminOptsHandler.parse({ adminToken: new StaticTokenProvider('old-admin'), ...devops }),
     emitter: null!,
     fetchCtx: { preferredType } as any,
     userAgent: '',
@@ -58,11 +58,10 @@ describe('unit.administration.admin', () => {
     });
 
     it('should allow admin construction, overwriting options', () => {
-      const admin = new AstraAdmin(internalOps({}, {}), {
-        ...AdminOptsHandler.empty,
+      const admin = new AstraAdmin(internalOps({}, {}), AdminOptsHandler.parse({
         adminToken: new StaticTokenProvider('new-admin'),
         astraEnv: 'dev',
-      });
+      }));
       assert.ok(admin);
       assert.strictEqual(admin._httpClient.baseUrl, 'https://api.dev.cloud.datastax.com/v2');
     });

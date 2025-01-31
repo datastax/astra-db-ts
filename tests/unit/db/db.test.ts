@@ -16,7 +16,7 @@
 import assert from 'assert';
 import { Db } from '@/src/db/db';
 import { DataAPIEnvironments, StaticTokenProvider } from '@/src/lib';
-import { DataAPIClient } from '@/src/client';
+import { AdminOptions, DataAPIClient, DbOptions } from '@/src/client';
 import { DEMO_APPLICATION_URI, describe, it, TEST_APPLICATION_URI } from '@/tests/testlib';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants';
 import { buildAstraEndpoint } from '@/src/lib/utils';
@@ -26,9 +26,9 @@ import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
 
 describe('unit.db.db', () => {
-  const internalOps = (db?: Partial<InternalRootClientOpts['dbOptions']>, devops?: Partial<InternalRootClientOpts['adminOptions']>, preferredType = 'http2'): InternalRootClientOpts => ({
-    dbOptions: { ...DbOptsHandler.empty, token: new StaticTokenProvider('old'), ...db },
-    adminOptions: { ...AdminOptsHandler.empty, adminToken: new StaticTokenProvider('old-admin'), ...devops },
+  const internalOps = (db?: Partial<DbOptions>, devops?: Partial<AdminOptions>, preferredType = 'http2'): InternalRootClientOpts => ({
+    dbOptions: DbOptsHandler.parse({ token: new StaticTokenProvider('old'), ...db }),
+    adminOptions: AdminOptsHandler.parse({ adminToken: new StaticTokenProvider('old-admin'), ...devops }),
     emitter: null!,
     fetchCtx: { preferredType } as any,
     userAgent: '',

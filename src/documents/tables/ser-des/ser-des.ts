@@ -24,7 +24,7 @@ import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { isBigNumber, pathMatches } from '@/src/lib/utils';
 import { UnexpectedDataAPIResponseError } from '@/src/client';
 import { TableSerDesCfgHandler } from '@/src/documents/tables/ser-des/cfg-handler';
-import { InternalSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
+import { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
 
 /**
  * @public
@@ -52,11 +52,11 @@ export interface TableSerDesConfig extends BaseSerDesConfig<TableSerCtx, TableDe
  * @internal
  */
 export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
-  declare protected readonly _cfg: InternalSerDesConfig<TableSerDesConfig>;
+  declare protected readonly _cfg: ParsedSerDesConfig<TableSerDesConfig>;
 
   public static cfg: typeof TableSerDesCfgHandler = TableSerDesCfgHandler;
 
-  public constructor(cfg: InternalSerDesConfig<TableSerDesConfig>) {
+  public constructor(cfg: ParsedSerDesConfig<TableSerDesConfig>) {
     super(TableSerDes.cfg.concat(DefaultTableSerDesCfg, cfg));
   }
 

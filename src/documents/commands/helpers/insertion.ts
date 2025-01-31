@@ -21,7 +21,7 @@ import {
   mkRespErrorFromResponses,
 } from '@/src/documents/errors';
 import { SomeDoc, SomeId } from '@/src/documents';
-import { TimeoutManager } from '@/src/lib/api/timeouts';
+import { TimeoutManager } from '@/src/lib/api/timeouts/timeouts';
 import { RawDataAPIResponse } from '@/src/lib';
 import { GenericInsertManyDocumentResponse } from '@/src/documents/commands/types/insert/insert-many';
 

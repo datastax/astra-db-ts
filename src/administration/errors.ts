@@ -15,7 +15,7 @@
 import { FetcherResponseInfo, type TimeoutDescriptor } from '@/src/lib/api';
 import { SomeDoc } from '@/src/documents';
 import { HTTPRequestInfo } from '@/src/lib/api/clients';
-import { TimedOutCategories, Timeouts } from '@/src/lib/api/timeouts';
+import { TimedOutCategories, Timeouts } from '@/src/lib/api/timeouts/timeouts';
 
 /**
  * A representation of what went wrong when interacting with the DevOps API.

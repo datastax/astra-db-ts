@@ -14,13 +14,13 @@
 
 import { boolean, DecoderType, object, optional } from 'decoders';
 import {
-  InternalSerDesConfig,
+  ParsedSerDesConfig,
   serDesConcat,
   serDesDecoders,
   serDesEmpty,
   serDesTransform,
 } from '@/src/lib/api/ser-des/cfg-handler';
-import { OptionsHandler, OptionsHandlerOpts } from '@/src/lib/opts-handler';
+import { MonoidalOptionsHandler, OptionsHandlerOpts } from '@/src/lib/opts-handler';
 import { TableSerDesConfig } from '@/src/documents';
 
 const decoder = optional(object({
@@ -29,12 +29,12 @@ const decoder = optional(object({
 }));
 
 interface SerDesConfigTypes extends OptionsHandlerOpts {
-  Refined: InternalSerDesConfig<TableSerDesConfig>,
+  Parsed: ParsedSerDesConfig<TableSerDesConfig>,
   Parseable: TableSerDesConfig | null | undefined,
-  Parsed: DecoderType<typeof decoder>,
+  Decoded: DecoderType<typeof decoder>,
 }
 
-export const TableSerDesCfgHandler = new OptionsHandler<SerDesConfigTypes>({
+export const TableSerDesCfgHandler = new MonoidalOptionsHandler<SerDesConfigTypes>({
   decoder: decoder,
   refine(config) {
     return {
@@ -42,7 +42,7 @@ export const TableSerDesCfgHandler = new OptionsHandler<SerDesConfigTypes>({
       sparseData: config?.sparseData ?? undefined,
     };
   },
-  concat(configs): SerDesConfigTypes['Refined'] {
+  concat(configs) {
     return {
       sparseData: configs.reduce<boolean | undefined>((acc, next) => next?.sparseData ?? acc, undefined),
       ...serDesConcat(configs),

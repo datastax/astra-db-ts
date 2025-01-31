@@ -12,26 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DecoderType, OptionsHandler, OptionsHandlerOpts } from '@/src/lib/opts-handler';
+import { DecoderType, MonoidalOptionsHandler, OptionsHandlerOpts, Parsed, Unparse } from '@/src/lib/opts-handler';
 import { AdminOptions } from '@/src/client';
-import { TimeoutDescriptor, TokenProvider } from '@/src/lib';
-import { nullish, number, object, oneOf, optional, record, string } from 'decoders';
-import { Timeouts } from '@/src/lib/api/timeouts';
+import { TokenProvider } from '@/src/lib';
+import { nullish, object, oneOf, optional, record, string } from 'decoders';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { Logger } from '@/src/lib/logging/logger';
 
-export interface InternalAdminOptions {
-  logging: typeof Logger.cfg.transformed,
-  adminToken: typeof TokenProvider.opts.transformed,
+export interface ParsedAdminOpts extends Parsed {
+  logging: typeof Logger.cfg.parsed,
+  adminToken: typeof TokenProvider.opts.parsed,
   endpointUrl: string | undefined,
   additionalHeaders: Record<string, string>,
   astraEnv: 'dev' | 'prod' | 'test' | undefined,
-  timeoutDefaults: Partial<TimeoutDescriptor>,
+  timeoutDefaults: typeof Timeouts.cfg.parsed,
 }
 
 interface AdminOptsTypes extends OptionsHandlerOpts {
-  Refined: InternalAdminOptions,
+  Parsed: ParsedAdminOpts,
   Parseable: AdminOptions | null | undefined,
-  Parsed: DecoderType<typeof adminOpts>,
+  Decoded: DecoderType<typeof adminOpts>,
 }
 
 const adminOpts = nullish(object({
@@ -40,10 +40,10 @@ const adminOpts = nullish(object({
   endpointUrl: optional(string),
   additionalHeaders: optional(record(string)),
   astraEnv: optional(oneOf(<const>['dev', 'prod', 'test'])),
-  timeoutDefaults: optional(record(number)),
+  timeoutDefaults: Timeouts.cfg.decoder,
 }));
 
-export const AdminOptsHandler = new OptionsHandler<AdminOptsTypes>({
+export const AdminOptsHandler = new MonoidalOptionsHandler<AdminOptsTypes>({
   decoder: adminOpts,
   refine(input, field) {
     return {
@@ -52,17 +52,17 @@ export const AdminOptsHandler = new OptionsHandler<AdminOptsTypes>({
       endpointUrl: input?.endpointUrl ?? undefined,
       additionalHeaders: input?.additionalHeaders ?? {},
       astraEnv: input?.astraEnv ?? undefined,
-      timeoutDefaults: Timeouts.merge(Timeouts.Default, input?.timeoutDefaults),
+      timeoutDefaults: Timeouts.cfg.parseWithin(input, `${field}.timeoutDefaults`),
     };
   },
-  concat(configs): InternalAdminOptions {
-    return configs.reduce((acc, next) => ({
+  concat(configs): Unparse<ParsedAdminOpts> {
+    return configs.reduce<Unparse<ParsedAdminOpts>>((acc, next) => ({
       logging: Logger.cfg.concat(acc.logging, next.logging),
       adminToken: TokenProvider.opts.concat(acc.adminToken, next.adminToken),
       endpointUrl: next.endpointUrl ?? acc.endpointUrl,
       additionalHeaders: { ...acc.additionalHeaders, ...next.additionalHeaders },
       astraEnv: next.astraEnv ?? acc.astraEnv,
-      timeoutDefaults: Timeouts.merge(acc.timeoutDefaults, next.timeoutDefaults),
+      timeoutDefaults: Timeouts.cfg.concat(acc.timeoutDefaults, next.timeoutDefaults),
     }), AdminOptsHandler.empty);
   },
   empty: {

@@ -15,7 +15,7 @@
 
 import assert from 'assert';
 import { describe, it, parallel } from '@/tests/testlib';
-import { TimedOutCategories, TimeoutDescriptor, TimeoutManager, Timeouts } from '@/src/lib/api/timeouts';
+import { TimedOutCategories, TimeoutDescriptor, TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { HttpClient, HTTPRequestInfo } from '@/src/lib/api/clients';
 
 describe('unit.lib.api.timeouts', () => {

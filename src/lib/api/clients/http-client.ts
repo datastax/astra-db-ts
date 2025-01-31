@@ -20,7 +20,7 @@ import type { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/l
 import type { DataAPIClientEventMap } from '@/src/lib/logging';
 import { Logger } from '@/src/lib/logging/logger';
 import { OneOrMany } from '@/src/lib/types';
-import { MkTimeoutError, Timeouts } from '@/src/lib/api/timeouts';
+import { MkTimeoutError, Timeouts } from '@/src/lib/api/timeouts/timeouts';
 
 /**
  * @internal

@@ -14,13 +14,13 @@
 
 import { DecoderType, either, object, oneOf, optional, record } from 'decoders';
 import {
-  InternalSerDesConfig,
+  ParsedSerDesConfig,
   serDesConcat,
   serDesDecoders,
   serDesEmpty,
   serDesTransform,
 } from '@/src/lib/api/ser-des/cfg-handler';
-import { OptionsHandler, OptionsHandlerOpts } from '@/src/lib/opts-handler';
+import { MonoidalOptionsHandler, OptionsHandlerOpts } from '@/src/lib/opts-handler';
 import { CollSerDesConfig } from '@/src/documents';
 import { function_ } from '@/src/lib/utils';
 
@@ -32,12 +32,12 @@ const decoder = optional(object({
 }));
 
 interface SerDesConfigTypes extends OptionsHandlerOpts {
-  Refined: InternalSerDesConfig<CollSerDesConfig>,
+  Parsed: ParsedSerDesConfig<CollSerDesConfig>,
   Parseable: CollSerDesConfig | null | undefined,
-  Parsed: DecoderType<typeof decoder>,
+  Decoded: DecoderType<typeof decoder>,
 }
 
-export const CollSerDesCfgHandler = new OptionsHandler<SerDesConfigTypes>({
+export const CollSerDesCfgHandler = new MonoidalOptionsHandler<SerDesConfigTypes>({
   decoder: decoder,
   refine(config) {
     return {
@@ -45,7 +45,7 @@ export const CollSerDesCfgHandler = new OptionsHandler<SerDesConfigTypes>({
       enableBigNumbers: config?.enableBigNumbers ?? undefined,
     };
   },
-  concat(configs): SerDesConfigTypes['Refined'] {
+  concat(configs) {
     return {
       enableBigNumbers: configs.reduce<CollSerDesConfig['enableBigNumbers']>((acc, next) => next?.enableBigNumbers ?? acc, undefined),
       ...serDesConcat(configs),

@@ -20,7 +20,7 @@ import { isBigNumber, pathMatches } from '@/src/lib/utils';
 import { CollNumRepCfg, GetCollNumRepFn } from '@/src/documents';
 import { coerceBigNumber, coerceNumber, collNumRepFnFromCfg } from '@/src/documents/collections/ser-des/big-nums';
 import { CollSerDesCfgHandler } from '@/src/documents/collections/ser-des/cfg-handler';
-import { InternalSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
+import { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
 
 /**
  * @public
@@ -48,12 +48,12 @@ export interface CollSerDesConfig extends BaseSerDesConfig<CollSerCtx, CollDesCt
  * @internal
  */
 export class CollSerDes extends SerDes<CollSerCtx, CollDesCtx> {
-  declare protected readonly _cfg: InternalSerDesConfig<CollSerDesConfig> & { enableBigNumbers?: GetCollNumRepFn };
+  declare protected readonly _cfg: ParsedSerDesConfig<CollSerDesConfig> & { enableBigNumbers?: GetCollNumRepFn };
   private readonly _getNumRepForPath: GetCollNumRepFn | undefined;
 
   public static cfg: typeof CollSerDesCfgHandler = CollSerDesCfgHandler;
 
-  public constructor(cfg: InternalSerDesConfig<CollSerDesConfig>) {
+  public constructor(cfg: ParsedSerDesConfig<CollSerDesConfig>) {
     super(CollSerDes.cfg.concat(DefaultCollectionSerDesCfg, cfg, cfg.enableBigNumbers ? BigNumCollectionDesCfg : CollSerDes.cfg.empty));
 
     this._getNumRepForPath = (typeof cfg?.enableBigNumbers === 'object')

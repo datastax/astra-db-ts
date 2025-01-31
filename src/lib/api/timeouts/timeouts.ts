@@ -16,6 +16,7 @@ import { nullish, OneOrMany } from '@/src/lib';
 import { HTTPRequestInfo } from '@/src/lib/api/clients';
 import { toArray } from '@/src/lib/utils';
 import { p, Parser } from '@/src/lib/validation';
+import { ParsedTimeoutDescriptor, TimeoutCfgHandler } from '@/src/lib/api/timeouts/cfg-handler';
 
 /**
  * The timeout categories that caused the timeout.
@@ -288,10 +289,22 @@ export const EffectivelyInfinity = 2 ** 31 - 1;
  * @internal
  */
 export class Timeouts {
-  constructor(
-    private readonly _mkTimeoutError: MkTimeoutError,
-    public readonly baseTimeouts: Partial<TimeoutDescriptor>,
-  ) {}
+  public static cfg: typeof TimeoutCfgHandler = TimeoutCfgHandler;
+
+  public static Default = Timeouts.cfg.parse({
+    requestTimeoutMs: 10000,
+    generalMethodTimeoutMs: 30000,
+    collectionAdminTimeoutMs: 60000,
+    tableAdminTimeoutMs: 30000,
+    databaseAdminTimeoutMs: 600000,
+    keyspaceAdminTimeoutMs: 30000,
+  });
+
+  public readonly baseTimeouts: TimeoutDescriptor;
+
+  constructor(private readonly _mkTimeoutError: MkTimeoutError, baseTimeouts: ParsedTimeoutDescriptor) {
+    this.baseTimeouts = TimeoutCfgHandler.concat(Timeouts.Default, baseTimeouts) as TimeoutDescriptor;
+  }
 
   public single(key: Exclude<keyof TimeoutDescriptor, 'requestTimeoutMs'>, override: WithTimeout<any> | nullish): TimeoutManager {
     if (typeof override?.timeout === 'number') {
@@ -377,15 +390,6 @@ export class Timeouts {
       },
     };
   }
-
-  public static Default: TimeoutDescriptor = {
-    requestTimeoutMs: 10000,
-    generalMethodTimeoutMs: 30000,
-    collectionAdminTimeoutMs: 60000,
-    tableAdminTimeoutMs: 30000,
-    databaseAdminTimeoutMs: 600000,
-    keyspaceAdminTimeoutMs: 30000,
-  };
 
   public static merge(base: Partial<TimeoutDescriptor>, custom: Partial<TimeoutDescriptor> | nullish): Partial<TimeoutDescriptor> {
     if (!custom) {

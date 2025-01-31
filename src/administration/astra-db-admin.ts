@@ -15,7 +15,7 @@
 
 import { AstraCreateKeyspaceOptions, AstraDropKeyspaceOptions } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
-import { OpaqueHttpClient, TokenProvider, WithTimeout } from '@/src/lib';
+import { OpaqueHttpClient, ParsedTokenProvider, TokenProvider, WithTimeout } from '@/src/lib';
 import { buildAstraDatabaseAdminInfo, extractAstraEnvironment } from '@/src/administration/utils';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, HttpMethods } from '@/src/lib/api/constants';
@@ -25,9 +25,9 @@ import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { $CustomInspect } from '@/src/lib/constants';
 import { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info';
 import { Logger } from '@/src/lib/logging/logger';
-import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts';
+import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { DataAPIHttpClient } from '@/src/lib/api/clients';
-import { AdminOptsHandler, InternalAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
+import { ParsedAdminOpts } from '@/src/client/opts-handlers/admin-opts-handler';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting keyspaces.
@@ -73,23 +73,20 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(db: Db, rootOpts: InternalRootClientOpts, rawAdminOpts: InternalAdminOptions, dbToken: TokenProvider, endpoint: string) {
+  constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts: ParsedAdminOpts, dbToken: ParsedTokenProvider, endpoint: string) {
     super();
-
-    const adminOpts = AdminOptsHandler.parse(rawAdminOpts, 'options');
-    const adminToken = TokenProvider.opts.concat(dbToken, rootOpts.adminOptions.adminToken, adminOpts.adminToken);
 
     this.#environment = adminOpts?.astraEnv ?? rootOpts.adminOptions.astraEnv ?? extractAstraEnvironment(endpoint);
 
     this.#httpClient = new DevOpsAPIHttpClient({
       baseUrl: DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
-      logging: Logger.cfg.concatParseWithin([rootOpts.adminOptions.logging], adminOpts, 'logging'),
+      logging: Logger.cfg.concat(rootOpts.adminOptions.logging, adminOpts.logging),
       fetchCtx: rootOpts.fetchCtx,
       emitter: rootOpts.emitter,
       userAgent: rootOpts.userAgent,
-      tokenProvider: adminToken,
+      tokenProvider: TokenProvider.opts.concat(dbToken, rootOpts.adminOptions.adminToken, adminOpts.adminToken),
       additionalHeaders: { ...rootOpts.adminOptions.additionalHeaders, ...adminOpts?.additionalHeaders },
-      timeoutDefaults: Timeouts.merge(rootOpts.adminOptions.timeoutDefaults, adminOpts?.timeoutDefaults),
+      timeoutDefaults: Timeouts.cfg.concat(rootOpts.adminOptions.timeoutDefaults, adminOpts.timeoutDefaults),
     });
 
     this.#dataApiHttpClient = (db._httpClient as DataAPIHttpClient).forDbAdmin(adminOpts);

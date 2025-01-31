@@ -12,30 +12,30 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DecoderType, OptionsHandler, OptionsHandlerOpts } from '@/src/lib/opts-handler';
+import { DecoderType, MonoidalOptionsHandler, OptionsHandlerOpts, Parsed, Unparse } from '@/src/lib/opts-handler';
 import { DbOptions } from '@/src/client';
-import { TimeoutDescriptor, TokenProvider } from '@/src/lib';
-import { Decoder, nullish, number, object, oneOf, optional, record, regex, string, unknown } from 'decoders';
-import { Timeouts } from '@/src/lib/api/timeouts';
+import { TokenProvider } from '@/src/lib';
+import { Decoder, nullish, object, oneOf, optional, record, regex, string, unknown } from 'decoders';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { Logger } from '@/src/lib/logging/logger';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 
-export interface InternalDbOptions {
-  logging: typeof Logger.cfg.transformed,
-  token: typeof TokenProvider.opts.transformed,
+export interface ParsedDbOpts extends Parsed {
+  logging: typeof Logger.cfg.parsed,
+  token: typeof TokenProvider.opts.parsed,
   keyspace: string | undefined,
   dataApiPath: string | undefined,
-  collSerdes: typeof CollSerDes.cfg.transformed,
-  tableSerdes: typeof TableSerDes.cfg.transformed,
+  collSerdes: typeof CollSerDes.cfg.parsed,
+  tableSerdes: typeof TableSerDes.cfg.parsed,
   additionalHeaders: Record<string, string>,
-  timeoutDefaults: Partial<TimeoutDescriptor>,
+  timeoutDefaults: typeof Timeouts.cfg.parsed,
 }
 
 interface DbOptsTypes extends OptionsHandlerOpts {
-  Refined: InternalDbOptions,
+  Parsed: ParsedDbOpts,
   Parseable: DbOptions | null | undefined,
-  Parsed: DecoderType<typeof dbOpts>,
+  Decoded: DecoderType<typeof dbOpts>,
 }
 
 const dbOpts = nullish(object({
@@ -44,7 +44,7 @@ const dbOpts = nullish(object({
   dataApiPath: optional(string),
   additionalHeaders: optional(record(string)),
   keyspace: nullish(regex(/^\w{1,48}$/, 'Expected a string of 1-48 alphanumeric characters')),
-  timeoutDefaults: optional(record(number)),
+  timeoutDefaults: Timeouts.cfg.decoder,
   serdes: optional(object({
     collection: unknown as Decoder<any>,
     table: unknown as Decoder<any>,
@@ -52,7 +52,7 @@ const dbOpts = nullish(object({
   })),
 }));
 
-export const DbOptsHandler = new OptionsHandler<DbOptsTypes>({
+export const DbOptsHandler = new MonoidalOptionsHandler<DbOptsTypes>({
   decoder: dbOpts,
   refine(input, field) {
     const mutateInPlace = input?.serdes?.mutateInPlace;
@@ -71,11 +71,11 @@ export const DbOptsHandler = new OptionsHandler<DbOptsTypes>({
       collSerdes: collSerdes,
       tableSerdes: tableSerdes,
       additionalHeaders: input?.additionalHeaders ?? {},
-      timeoutDefaults: input?.timeoutDefaults ?? {},
+      timeoutDefaults: Timeouts.cfg.parseWithin(input, `${field}.timeoutDefaults`),
     };
   },
-  concat(configs): InternalDbOptions {
-    return configs.reduce((acc, next) => ({
+  concat(configs): Unparse<ParsedDbOpts> {
+    return configs.reduce<Unparse<ParsedDbOpts>>((acc, next) => ({
       logging: Logger.cfg.concat(acc.logging, next.logging),
       token: TokenProvider.opts.concat(acc.token, next.token),
       keyspace: next.keyspace ?? acc.keyspace,
@@ -83,7 +83,7 @@ export const DbOptsHandler = new OptionsHandler<DbOptsTypes>({
       collSerdes: CollSerDes.cfg.concat(acc.collSerdes, next.collSerdes),
       tableSerdes: TableSerDes.cfg.concat(acc.tableSerdes, next.tableSerdes),
       additionalHeaders: { ...acc.additionalHeaders, ...next.additionalHeaders },
-      timeoutDefaults: Timeouts.merge(acc.timeoutDefaults, next.timeoutDefaults),
+      timeoutDefaults: Timeouts.cfg.concat(acc.timeoutDefaults, next.timeoutDefaults),
     }), DbOptsHandler.empty);
   },
   empty: {
@@ -94,6 +94,6 @@ export const DbOptsHandler = new OptionsHandler<DbOptsTypes>({
     collSerdes: CollSerDes.cfg.empty,
     tableSerdes: TableSerDes.cfg.empty,
     additionalHeaders: {},
-    timeoutDefaults: {},
+    timeoutDefaults: Timeouts.cfg.empty,
   },
 });

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DecoderType, OptionsHandler, OptionsHandlerOpts } from '@/src/lib/opts-handler';
+import { DecoderType, MonoidalOptionsHandler, OptionsHandlerOpts, Parsed } from '@/src/lib/opts-handler';
 import { DataAPILoggingConfig, DataAPILoggingEvent, DataAPILoggingOutput } from '@/src/lib';
 import { array, either, nonEmptyArray, object, oneOf, optional } from 'decoders';
 import {
@@ -24,18 +24,20 @@ import {
 } from '@/src/lib/logging/constants';
 import { oneOrMany } from '@/src/lib/utils';
 
-export interface InternalLoggingConfig {
-  events: readonly Exclude<DataAPILoggingEvent, 'all'>[],
-  emits: readonly DataAPILoggingOutput[],
+export interface ParsedLoggingConfig extends Parsed {
+  layers: {
+    events: readonly Exclude<DataAPILoggingEvent, 'all'>[],
+    emits: readonly DataAPILoggingOutput[],
+  }[],
 }
 
 /**
  * @internal
  */
 interface LoggingConfigTypes extends OptionsHandlerOpts {
-  Refined: InternalLoggingConfig[],
+  Parsed: ParsedLoggingConfig,
   Parseable: DataAPILoggingConfig | undefined,
-  Parsed: DecoderType<typeof loggingConfig>,
+  Decoded: DecoderType<typeof loggingConfig>,
 }
 
 const loggingConfig = optional(either(
@@ -52,22 +54,22 @@ const loggingConfig = optional(either(
 /**
  * @internal
  */
-export const LoggingCfgHandler = new OptionsHandler<LoggingConfigTypes>({
+export const LoggingCfgHandler = new MonoidalOptionsHandler<LoggingConfigTypes>({
   decoder: loggingConfig,
   refine(config) {
     if (!config) {
-      return [];
+      return this.empty;
     }
 
     if (config === 'all') {
-      return DataAPILoggingDefaults;
+      return { layers: DataAPILoggingDefaults };
     }
 
     if (typeof config === 'string') {
-      return [{ events: [config], emits: DataAPILoggingDefaultOutputs[config] }];
+      return { layers: [{ events: [config], emits: DataAPILoggingDefaultOutputs[config] }] };
     }
 
-    return config.flatMap((c) => {
+    const layers = config.flatMap((c) => {
       if (c === 'all') {
         return DataAPILoggingDefaults;
       }
@@ -85,9 +87,11 @@ export const LoggingCfgHandler = new OptionsHandler<LoggingConfigTypes>({
         emits: Array.isArray(c.emits) ? c.emits : [c.emits],
       }];
     });
+
+    return { layers };
   },
-  concat(configs): InternalLoggingConfig[] {
-    return configs.flat();
+  concat(configs) {
+    return { layers: configs.flatMap(c => c.layers) };
   },
-  empty: [],
+  empty: { layers: [] },
 });

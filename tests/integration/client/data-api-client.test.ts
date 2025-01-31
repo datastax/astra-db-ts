@@ -30,7 +30,7 @@ import { DataAPIResponseError, DataAPITimeoutError, UUID } from '@/src/documents
 import { DEFAULT_KEYSPACE } from '@/src/lib/api';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
 import { before } from 'mocha';
-import { Timeouts } from '@/src/lib/api/timeouts';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 
 describe('integration.client.data-api-client', () => {
   parallel('db', () => {

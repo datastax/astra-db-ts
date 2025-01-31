@@ -31,11 +31,10 @@ import type { FetchCtx } from '@/src/lib/api/fetch/types';
 import { isNullish } from '@/src/lib/utils';
 import { p, type Parser } from '@/src/lib/validation';
 import { parseCaller } from '@/src/client/parsers/caller';
-import { Logger } from '@/src/lib/logging/logger';
 import { parseEnvironment } from '@/src/client/parsers/environment';
 import { parseHttpOpts } from '@/src/client/parsers/http-opts';
 import { $CustomInspect } from '@/src/lib/constants';
-import { Timeouts } from '@/src/lib/api/timeouts';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
 
@@ -171,13 +170,13 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
       dbOptions: DbOptsHandler.parse({
         ...options?.dbOptions,
         token: TokenProvider.opts.concat(tokens.default, tokens.db),
-        timeoutDefaults: Timeouts.merge(Timeouts.Default, options?.timeoutDefaults),
+        timeoutDefaults: options?.timeoutDefaults,
         logging: options?.logging,
       }),
       adminOptions: AdminOptsHandler.parse({
         ...options?.adminOptions,
         adminToken: TokenProvider.opts.concat(tokens.default, tokens.admin),
-        timeoutDefaults: Timeouts.merge(Timeouts.Default, options?.timeoutDefaults),
+        timeoutDefaults: options?.timeoutDefaults,
         logging: options?.logging,
       }),
       emitter: this,
@@ -324,12 +323,12 @@ const parseClientOpts: Parser<DataAPIClientOptions | nullish> = (raw, field) => 
   }
 
   return {
-    logging: Logger.cfg.parseWithin(opts, `${field}.logging`),
+    logging: opts.logging,
     environment: parseEnvironment(opts.environment, `${field}.environment`),
     dbOptions: DbOptsHandler.parseWithin(opts, `${field}.dbOptions`),
     adminOptions: AdminOptsHandler.parseWithin(opts, `${field}.adminOptions`),
     caller: parseCaller(opts.caller, `${field}.caller`),
     httpOptions: parseHttpOpts(opts.httpOptions, `${field}.httpOptions`),
-    timeoutDefaults: Timeouts.parseConfig(opts.timeoutDefaults, `${field}.timeoutDefaults`),
+    timeoutDefaults: Timeouts.cfg.parseWithin(opts, `${field}.timeoutDefaults`),
   };
 };

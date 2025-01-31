@@ -15,4 +15,4 @@
 
 export type * from './types';
 export * from './events';
-export { InternalLoggingConfig } from '@/src/lib/logging/cfg-handler';
+export { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';

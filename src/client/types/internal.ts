@@ -15,8 +15,8 @@
 import type { DataAPIClientEventMap, DataAPIEnvironment, DataAPILoggingOutput } from '@/src/lib';
 import type TypedEmitter from 'typed-emitter';
 import type { FetchCtx } from '@/src/lib/api/fetch/types';
-import { InternalDbOptions } from '@/src/client/opts-handlers/db-opts-handler';
-import { InternalAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
+import { ParsedDbOpts } from '@/src/client/opts-handlers/db-opts-handler';
+import { ParsedAdminOpts } from '@/src/client/opts-handlers/admin-opts-handler';
 
 /**
  * @internal
@@ -31,6 +31,6 @@ export interface InternalRootClientOpts {
   emitter: TypedEmitter<DataAPIClientEventMap>,
   fetchCtx: FetchCtx,
   userAgent: string,
-  dbOptions: InternalDbOptions,
-  adminOptions: InternalAdminOptions,
+  dbOptions: ParsedDbOpts,
+  adminOptions: ParsedAdminOpts,
 }

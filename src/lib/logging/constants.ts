@@ -18,7 +18,7 @@ import type {
   DataAPIClientEventMap,
   DataAPILoggingEvent,
   DataAPILoggingOutput,
-  InternalLoggingConfig,
+  ParsedLoggingConfig,
 } from '@/src/lib';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents';
 import {
@@ -86,7 +86,7 @@ export const DataAPILoggingDefaultOutputs = <const>{
 /**
  * @internal
  */
-export const DataAPILoggingDefaults: InternalLoggingConfig[] = [{
+export const DataAPILoggingDefaults: ParsedLoggingConfig['layers'] = [{
   events: LoggingEventsWithoutAll,
   emits: ['event', 'stderr'],
 }, {
