@@ -22,7 +22,7 @@ import { CLIENT_USER_AGENT } from '@/src/lib/api/constants';
 /**
  * @internal
  */
-export interface ParsedCaller extends Parsed {
+export interface ParsedCaller extends Parsed<'Caller'> {
   userAgent: string,
 }
 
@@ -40,6 +40,9 @@ const caller = optional(oneOrMany(either(
   tuple(string, string),
 )));
 
+/**
+ * @internal
+ */
 export const CallerCfgHandler = new OptionsHandler<CallerConfigTypes>({
   decoder: caller,
   refine(config) {

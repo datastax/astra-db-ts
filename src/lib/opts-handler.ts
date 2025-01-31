@@ -20,7 +20,7 @@ declare const __parsed: unique symbol;
 /**
  * @internal
  */
-export type Parsed = { [__parsed]: true };
+export type Parsed<Brand> = { [__parsed]: Brand };
 
 /**
  * @internal
@@ -52,7 +52,7 @@ export interface MonoidalOptionsHandlerImpl<Types extends OptionsHandlerTypes> e
  * @internal
  */
 export interface OptionsHandlerTypes {
-  Parsed: Parsed & unknown,
+  Parsed: Parsed<string> & unknown,
   Parseable: unknown,
   Decoded: unknown,
 }
@@ -103,4 +103,4 @@ export class MonoidalOptionsHandler<Types extends OptionsHandlerTypes> extends O
   }
 }
 
-const assertParsed = <T>(input: T): Parsed => input as T & Parsed;
+const assertParsed = <T>(input: T): Parsed<string> => input as T & Parsed<string>;

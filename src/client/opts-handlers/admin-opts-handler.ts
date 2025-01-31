@@ -22,7 +22,7 @@ import { Logger } from '@/src/lib/logging/logger';
 /**
  * @internal
  */
-export interface ParsedAdminOpts extends Parsed {
+export interface ParsedAdminOptions extends Parsed<'AdminOptions'> {
   logging: typeof Logger.cfg.parsed,
   adminToken: typeof TokenProvider.opts.parsed,
   endpointUrl: string | undefined,
@@ -35,7 +35,7 @@ export interface ParsedAdminOpts extends Parsed {
  * @internal
  */
 interface AdminOptsTypes extends OptionsHandlerTypes {
-  Parsed: ParsedAdminOpts,
+  Parsed: ParsedAdminOptions,
   Parseable: AdminOptions | null | undefined,
   Decoded: DecoderType<typeof adminOpts>,
 }
@@ -64,8 +64,8 @@ export const AdminOptsHandler = new MonoidalOptionsHandler<AdminOptsTypes>({
       timeoutDefaults: Timeouts.cfg.parseWithin(input, `${field}.timeoutDefaults`),
     };
   },
-  concat(configs): Unparse<ParsedAdminOpts> {
-    return configs.reduce<Unparse<ParsedAdminOpts>>((acc, next) => ({
+  concat(configs): Unparse<ParsedAdminOptions> {
+    return configs.reduce<Unparse<ParsedAdminOptions>>((acc, next) => ({
       logging: Logger.cfg.concat(acc.logging, next.logging),
       adminToken: TokenProvider.opts.concat(acc.adminToken, next.adminToken),
       endpointUrl: next.endpointUrl ?? acc.endpointUrl,

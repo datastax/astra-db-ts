@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPIClientEventMap, DataAPIEnvironment, DataAPILoggingOutput } from '@/src/lib';
+import type { DataAPIClientEventMap, DataAPILoggingOutput } from '@/src/lib';
 import type TypedEmitter from 'typed-emitter';
 import type { FetchCtx } from '@/src/lib/api/fetch/types';
-import { ParsedDbOpts } from '@/src/client/opts-handlers/db-opts-handler';
-import { ParsedAdminOpts } from '@/src/client/opts-handlers/admin-opts-handler';
+import { ParsedDbOptions } from '@/src/client/opts-handlers/db-opts-handler';
+import { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
 import { ParsedCaller } from '@/src/client/opts-handlers/caller-cfg-handler';
+import { ParsedEnvironment } from '@/src/client/opts-handlers/environment-cfg-handler';
 
 /**
  * @internal
@@ -28,10 +29,10 @@ export type InternalLoggingOutputsMap = Readonly<Record<keyof DataAPIClientEvent
  * @internal
  */
 export interface InternalRootClientOpts {
-  environment: DataAPIEnvironment,
+  environment: ParsedEnvironment,
   emitter: TypedEmitter<DataAPIClientEventMap>,
   fetchCtx: FetchCtx,
   caller: ParsedCaller,
-  dbOptions: ParsedDbOpts,
-  adminOptions: ParsedAdminOpts,
+  dbOptions: ParsedDbOptions,
+  adminOptions: ParsedAdminOptions,
 }

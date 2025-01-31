@@ -20,7 +20,7 @@ import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admi
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { Db } from '@/src/db';
 import { $CustomInspect } from '@/src/lib/constants';
-import { ParsedAdminOpts } from '@/src/client/opts-handlers/admin-opts-handler';
+import { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
 
 /**
  * An administrative class for managing non-Astra databases, including creating, listing, and deleting keyspaces.
@@ -64,7 +64,7 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, adminOpts: ParsedAdminOpts) {
+  constructor(db: Db, httpClient: DataAPIHttpClient, adminOpts: ParsedAdminOptions) {
     super();
     this.#httpClient = httpClient.forDbAdmin(adminOpts);
     this.#db = db;

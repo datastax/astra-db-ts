@@ -92,7 +92,7 @@ class UnsetTokenProvider extends TokenProvider {
 /**
  * @internal
  */
-export type ParsedTokenProvider = TokenProvider & Parsed;
+export type ParsedTokenProvider = TokenProvider & Parsed<'TokenProvider'>;
 
 /**
  * @internal

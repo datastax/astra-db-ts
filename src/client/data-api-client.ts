@@ -29,12 +29,12 @@ import { AstraAdmin } from '@/src/administration';
 import type { FetchCtx } from '@/src/lib/api/fetch/types';
 import { isNullish } from '@/src/lib/utils';
 import { p, type Parser } from '@/src/lib/validation';
-import { parseEnvironment } from '@/src/client/parsers/environment';
 import { parseHttpOpts } from '@/src/client/parsers/http-opts';
 import { $CustomInspect } from '@/src/lib/constants';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
 import { CallerCfgHandler } from '@/src/client/opts-handlers/caller-cfg-handler';
+import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler';
 
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
@@ -166,7 +166,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
     };
 
     this.#options = {
-      environment: options?.environment ?? 'astra',
+      environment: EnvironmentCfgHandler.parseWithin(options, 'environment'),
       fetchCtx: buildFetchCtx(options || undefined),
       dbOptions: DbOptsHandler.concatParse([dbOptions], {
         token: TokenProvider.opts.concat(tokens.default, tokens.db),
@@ -323,7 +323,7 @@ const parseClientOpts: Parser<DataAPIClientOptions | nullish> = (raw, field) => 
 
   return {
     logging: opts.logging,
-    environment: parseEnvironment(opts.environment, `${field}.environment`),
+    environment: opts.environment,
     dbOptions: opts.dbOptions,
     adminOptions: opts.adminOptions,
     caller: opts.caller,

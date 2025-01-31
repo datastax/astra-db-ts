@@ -24,7 +24,7 @@ import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 /**
  * @internal
  */
-export interface ParsedDbOpts extends Parsed {
+export interface ParsedDbOptions extends Parsed<'DbOptions'> {
   logging: typeof Logger.cfg.parsed,
   token: typeof TokenProvider.opts.parsed,
   keyspace: string | undefined,
@@ -39,7 +39,7 @@ export interface ParsedDbOpts extends Parsed {
  * @internal
  */
 interface DbOptsTypes extends OptionsHandlerTypes {
-  Parsed: ParsedDbOpts,
+  Parsed: ParsedDbOptions,
   Parseable: DbOptions | null | undefined,
   Decoded: DecoderType<typeof dbOpts>,
 }
@@ -83,8 +83,8 @@ export const DbOptsHandler = new MonoidalOptionsHandler<DbOptsTypes>({
       timeoutDefaults: Timeouts.cfg.parseWithin(input, `${field}.timeoutDefaults`),
     };
   },
-  concat(configs): Unparse<ParsedDbOpts> {
-    return configs.reduce<Unparse<ParsedDbOpts>>((acc, next) => ({
+  concat(configs): Unparse<ParsedDbOptions> {
+    return configs.reduce<Unparse<ParsedDbOptions>>((acc, next) => ({
       logging: Logger.cfg.concat(acc.logging, next.logging),
       token: TokenProvider.opts.concat(acc.token, next.token),
       keyspace: next.keyspace ?? acc.keyspace,

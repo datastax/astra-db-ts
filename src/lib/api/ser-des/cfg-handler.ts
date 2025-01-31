@@ -72,7 +72,7 @@ export const serDesEmpty: SomeInternalSerDesConfig & {} = {
  * @internal
  */
 export type ParsedSerDesConfig<Cfg extends BaseSerDesConfig<any, any>> =
-  & Parsed
+  & Parsed<'SerDes'>
   & Required<Pick<Cfg, 'codecs' | 'serialize' | 'deserialize'>>
   & {
     [K in Exclude<keyof Cfg, 'codecs' | 'serialize' | 'deserialize'>]: Cfg[K] | undefined;

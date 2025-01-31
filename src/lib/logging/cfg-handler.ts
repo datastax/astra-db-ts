@@ -27,7 +27,7 @@ import { oneOrMany } from '@/src/lib/utils';
 /**
  * @internal
  */
-export interface ParsedLoggingConfig extends Parsed {
+export interface ParsedLoggingConfig extends Parsed<'DataAPILoggingConfig'> {
   layers: {
     events: readonly Exclude<DataAPILoggingEvent, 'all'>[],
     emits: readonly DataAPILoggingOutput[],

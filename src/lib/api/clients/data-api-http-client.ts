@@ -31,7 +31,7 @@ import { isNullish } from '@/src/lib/utils';
 import { mkRespErrorFromResponse } from '@/src/documents/errors';
 import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { EmptyObj } from '@/src/lib/types';
-import { ParsedAdminOpts } from '@/src/client/opts-handlers/admin-opts-handler';
+import { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
 import { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
 
 type ClientKind = 'admin' | 'normal';
@@ -163,7 +163,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     return clone;
   }
 
-  public forDbAdmin(opts: ParsedAdminOpts): DataAPIHttpClient<'admin'> {
+  public forDbAdmin(opts: ParsedAdminOptions): DataAPIHttpClient<'admin'> {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       tokenProvider: TokenProvider.opts.concat(opts.adminToken, this.#props.tokenProvider),

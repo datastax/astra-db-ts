@@ -25,6 +25,7 @@ import { $CustomInspect } from '@/src/lib/constants';
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
 import { CallerCfgHandler } from '@/src/client/opts-handlers/caller-cfg-handler';
+import { EnvironmentCfgHandler, ParsedEnvironment } from '@/src/client/opts-handlers/environment-cfg-handler';
 
 describe('unit.db.db', () => {
   const internalOps = (db?: Partial<DbOptions>, devops?: Partial<AdminOptions>, preferredType = 'http2'): InternalRootClientOpts => ({
@@ -33,7 +34,7 @@ describe('unit.db.db', () => {
     emitter: null!,
     fetchCtx: { preferredType } as any,
     caller: CallerCfgHandler.parse([]),
-    environment: 'astra',
+    environment: EnvironmentCfgHandler.parse('astra'),
   });
 
   describe('constructor tests', () => {
@@ -143,7 +144,7 @@ describe('unit.db.db', () => {
     });
 
     it('should throw error if attempting to get ID for non-astra db', () => {
-      const db = new Db({ ...internalOps(), environment: 'dse' }, 'https://localhost:3000', DbOptsHandler.empty);
+      const db = new Db({ ...internalOps(), environment: 'dse' as ParsedEnvironment }, 'https://localhost:3000', DbOptsHandler.empty);
       assert.throws(() => db.id);
     });
 
@@ -160,7 +161,7 @@ describe('unit.db.db', () => {
     });
 
     it('should throw error if attempting to get region for non-astra db', () => {
-      const db = new Db({ ...internalOps(), environment: 'dse' }, 'https://localhost:3000', DbOptsHandler.empty);
+      const db = new Db({ ...internalOps(), environment: 'dse' as ParsedEnvironment }, 'https://localhost:3000', DbOptsHandler.empty);
       assert.throws(() => db.region);
     });
 
@@ -177,7 +178,7 @@ describe('unit.db.db', () => {
     });
 
     it('should throw an error if the keyspace is not set in the keyspace', () => {
-      const db = new Db({ ...internalOps(), environment: 'dse' }, TEST_APPLICATION_URI, DbOptsHandler.empty);
+      const db = new Db({ ...internalOps(), environment: 'dse' as ParsedEnvironment }, TEST_APPLICATION_URI, DbOptsHandler.empty);
       assert.throws(() => db.keyspace);
     });
 
@@ -195,7 +196,7 @@ describe('unit.db.db', () => {
     });
 
     it('should should not throw an error when getting keyspace if keyspace is set later', () => {
-      const db = new Db({ ...internalOps(), environment: 'dse' }, TEST_APPLICATION_URI, DbOptsHandler.empty);
+      const db = new Db({ ...internalOps(), environment: 'dse' as ParsedEnvironment }, TEST_APPLICATION_URI, DbOptsHandler.empty);
       assert.throws(() => db.keyspace);
       db.useKeyspace('other_keyspace');
       assert.strictEqual(db.keyspace, 'other_keyspace');
@@ -242,7 +243,7 @@ describe('unit.db.db', () => {
   describe('info tests', () => {
     it('should error on invalid environment', () => {
       for (const env of DataAPIEnvironments.filter(e => e !== 'astra')) {
-        const db = new Db({ ...internalOps(), environment: env }, TEST_APPLICATION_URI, DbOptsHandler.empty);
+        const db = new Db({ ...internalOps(), environment: env as ParsedEnvironment }, TEST_APPLICATION_URI, DbOptsHandler.empty);
         assert.rejects(() => db.info(), { message: `Invalid environment '${env}' for operation 'db.info()'; expected environment(s): 'astra'` });
       }
     });

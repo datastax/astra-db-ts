@@ -27,7 +27,7 @@ import { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info
 import { Logger } from '@/src/lib/logging/logger';
 import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { DataAPIHttpClient } from '@/src/lib/api/clients';
-import { ParsedAdminOpts } from '@/src/client/opts-handlers/admin-opts-handler';
+import { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
 import { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
 
 /**
@@ -74,7 +74,7 @@ export class AstraDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts: ParsedAdminOpts, dbToken: ParsedTokenProvider, endpoint: string) {
+  constructor(db: Db, rootOpts: InternalRootClientOpts, adminOpts: ParsedAdminOptions, dbToken: ParsedTokenProvider, endpoint: string) {
     super();
 
     this.#environment = adminOpts?.astraEnv ?? rootOpts.adminOptions.astraEnv ?? extractAstraEnvironment(endpoint);

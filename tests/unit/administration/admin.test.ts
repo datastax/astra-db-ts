@@ -23,6 +23,7 @@ import { $CustomInspect } from '@/src/lib/constants';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
 import { CallerCfgHandler } from '@/src/client/opts-handlers/caller-cfg-handler';
+import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler';
 
 describe('unit.administration.admin', () => {
   const internalOps = (db?: Partial<DbOptions>, devops?: Partial<AdminOptions>, preferredType = 'http2'): InternalRootClientOpts => ({
@@ -31,7 +32,7 @@ describe('unit.administration.admin', () => {
     emitter: null!,
     fetchCtx: { preferredType } as any,
     caller: CallerCfgHandler.parse([]),
-    environment: 'astra',
+    environment: EnvironmentCfgHandler.parse('astra'),
   });
 
   describe('constructor tests', () => {

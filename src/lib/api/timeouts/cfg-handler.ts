@@ -19,7 +19,7 @@ import { TimeoutDescriptor } from '@/src/lib';
 /**
  * @internal
  */
-export type ParsedTimeoutDescriptor = Partial<TimeoutDescriptor> & Parsed;
+export type ParsedTimeoutDescriptor = Partial<TimeoutDescriptor> & Parsed<'TimeoutDescriptor'>;
 
 /**
  * @internal

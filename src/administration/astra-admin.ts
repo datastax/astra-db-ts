@@ -32,7 +32,7 @@ import { $CustomInspect } from '@/src/lib/constants';
 import { SomeDoc } from '@/src/documents';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { AstraDropDatabaseOptions } from '@/src/administration/types/admin/drop-database';
-import { AdminOptsHandler, ParsedAdminOpts } from '@/src/client/opts-handlers/admin-opts-handler';
+import { AdminOptsHandler, ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
 
 /**
@@ -71,7 +71,7 @@ export class AstraAdmin {
    *
    * @internal
    */
-  constructor(rootOpts: InternalRootClientOpts, adminOpts: ParsedAdminOpts) {
+  constructor(rootOpts: InternalRootClientOpts, adminOpts: ParsedAdminOptions) {
     this.#defaultOpts = {
       ...rootOpts,
       adminOptions: AdminOptsHandler.concat(rootOpts.adminOptions, adminOpts),

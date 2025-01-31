@@ -16,6 +16,7 @@ import * as process from 'node:process';
 import dotenv from 'dotenv';
 import { DataAPIEnvironments } from '@/src/lib/constants';
 import { DataAPIClientEvent, DataAPIEnvironment } from '@/src/lib';
+import { ParsedEnvironment } from '@/src/client/opts-handlers/environment-cfg-handler';
 
 dotenv.config();
 
