@@ -12,13 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MonoidalOptionsHandler, OptionsHandlerOpts, Parsed } from '@/src/lib/opts-handler';
+import { MonoidalOptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
 import { DecoderType, object, optional, positiveNumber } from 'decoders';
 import { TimeoutDescriptor } from '@/src/lib';
 
+/**
+ * @internal
+ */
 export type ParsedTimeoutDescriptor = Partial<TimeoutDescriptor> & Parsed;
 
-interface TimeoutCfgTypes extends OptionsHandlerOpts {
+/**
+ * @internal
+ */
+interface TimeoutCfgTypes extends OptionsHandlerTypes {
   Parsed: ParsedTimeoutDescriptor,
   Parseable: Partial<TimeoutDescriptor> | undefined,
   Decoded: DecoderType<typeof timeoutDescriptor>,
@@ -33,6 +39,9 @@ const timeoutDescriptor = optional(object({
   keyspaceAdminTimeoutMs: optional(positiveNumber),
 }));
 
+/**
+ * @internal
+ */
 export const TimeoutCfgHandler = new MonoidalOptionsHandler<TimeoutCfgTypes>({
   decoder: timeoutDescriptor,
   refine(input) {

@@ -14,12 +14,7 @@
 // noinspection DuplicatedCode
 
 import { EqualityProof } from '@/src/lib/validation';
-import type {
-  DataAPIClientEventMap,
-  DataAPILoggingEvent,
-  DataAPILoggingOutput,
-  ParsedLoggingConfig,
-} from '@/src/lib';
+import type { DataAPIClientEventMap, DataAPILoggingEvent, DataAPILoggingOutput } from '@/src/lib';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents';
 import {
   AdminCommandFailedEvent,
@@ -30,6 +25,7 @@ import {
 } from '@/src/administration/events';
 import { buildOutputsMap } from '@/src/lib/logging/util';
 import { InternalLoggingOutputsMap } from '@/src/client/types/internal';
+import { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
 
 /**
  * @internal

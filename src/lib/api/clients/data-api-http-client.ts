@@ -14,7 +14,7 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import { Logger } from '@/src/lib/logging/logger';
-import { nullish, ParsedTokenProvider, RawDataAPIResponse, TokenProvider } from '@/src/lib';
+import { nullish, RawDataAPIResponse, TokenProvider } from '@/src/lib';
 import {
   DataAPIErrorDescriptor,
   DataAPIHttpError,
@@ -32,6 +32,7 @@ import { mkRespErrorFromResponse } from '@/src/documents/errors';
 import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { EmptyObj } from '@/src/lib/types';
 import { ParsedAdminOpts } from '@/src/client/opts-handlers/admin-opts-handler';
+import { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
 
 type ClientKind = 'admin' | 'normal';
 

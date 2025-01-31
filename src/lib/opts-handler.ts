@@ -16,60 +16,91 @@ import { Decoder } from 'decoders';
 import { nullish } from '@/src/lib/index';
 
 declare const __parsed: unique symbol;
+
+/**
+ * @internal
+ */
 export type Parsed = { [__parsed]: true };
+
+/**
+ * @internal
+ */
 export type Unparse<T> = Omit<T, typeof __parsed>;
 
-export interface OptionsHandlerImpl<Opts extends OptionsHandlerOpts> {
-  decoder: Decoder<Opts['Parseable']>,
-  refine: (input: Opts['Decoded'], field: string | undefined) => Unparse<Opts['Parsed']>,
-  concat(configs: Opts['Parsed'][]): Unparse<Opts['Parsed']>,
-  empty: Unparse<Opts['Parsed']>,
+/**
+ * @internal
+ */
+export type DecoderType<T> = T extends Decoder<infer U> ? U : never;
+
+/**
+ * @internal
+ */
+export interface OptionsHandlerImpl<Types extends OptionsHandlerTypes> {
+  decoder: Decoder<Types['Parseable']>,
+  refine: (input: Types['Decoded'], field: string | undefined) => Unparse<Types['Parsed']>,
 }
 
-export interface OptionsHandlerOpts {
+/**
+ * @internal
+ */
+export interface MonoidalOptionsHandlerImpl<Types extends OptionsHandlerTypes> extends OptionsHandlerImpl<Types> {
+  concat(configs: Types['Parsed'][]): Unparse<Types['Parsed']>,
+  empty: Unparse<Types['Parsed']>,
+}
+
+/**
+ * @internal
+ */
+export interface OptionsHandlerTypes {
   Parsed: Parsed & unknown,
   Parseable: unknown,
   Decoded: unknown,
 }
 
-export type DecoderType<T> = T extends Decoder<infer U> ? U : never;
+/**
+ * @internal
+ */
+export class OptionsHandler<Types extends OptionsHandlerTypes> {
+  public readonly decoder: Decoder<Types['Parseable']>;
+  public readonly parsed!: Types['Parsed'];
 
-export class MonoidalOptionsHandler<Opts extends OptionsHandlerOpts> {
-  public readonly empty: Opts['Parsed'];
-  public readonly decoder: Decoder<Opts['Parseable']>;
-
-  constructor(private readonly impl: OptionsHandlerImpl<Opts>) {
-    this.empty = assertParsed(impl.empty);
+  constructor(protected readonly impl: OptionsHandlerImpl<Types>) {
     this.decoder = impl.decoder;
   }
 
-  declare readonly parsed: Opts['Parsed'];
-
-  public parse(input: Opts['Parseable'], field?: string): Opts['Parsed'] {
+  public parse(input: Types['Parseable'], field?: string): Types['Parsed'] {
     const decoded = this.impl.decoder.verify(input);
     return assertParsed(this.impl.refine(decoded, field));
   }
 
-  public parseWithin<Field extends string>(obj: Partial<Record<Field, Opts['Parseable']>> | nullish, field: Field | `${string}.${Field}`): Opts['Parsed'] {
+  public parseWithin<Field extends string>(obj: Partial<Record<Field, Types['Parseable']>> | nullish, field: Field | `${string}.${Field}`): Types['Parsed'] {
     const decoded = this.impl.decoder.verify(obj?.[field.split('.').at(-1) as Field]);
     return assertParsed(this.impl.refine(decoded, field));
   }
+}
 
-  public concat(...configs: Opts['Parsed'][]): Opts['Parsed'] {
+/**
+ * @internal
+ */
+export class MonoidalOptionsHandler<Types extends OptionsHandlerTypes> extends OptionsHandler<Types> {
+  public readonly empty: Types['Parsed'];
+
+  constructor(protected readonly impl: MonoidalOptionsHandlerImpl<Types>) {
+    super(impl);
+    this.empty = assertParsed(impl.empty);
+  }
+
+  public concat(...configs: Types['Parsed'][]): Types['Parsed'] {
     return assertParsed(this.impl.concat(configs));
   }
 
-  public concatParse(configs: Opts['Parsed'][], raw: Opts['Parseable'], field?: string): Opts['Parsed'] {
+  public concatParse(configs: Types['Parsed'][], raw: Types['Parseable'], field?: string): Types['Parsed'] {
     return this.concat(...configs, this.parse(raw, field));
   }
 
-  public concatParseWithin<Field extends string>(configs: Opts['Parsed'][], obj: Partial<Record<Field, Opts['Parseable']>> | nullish, field: Field | `${string}.${Field}`): Opts['Parsed'] {
+  public concatParseWithin<Field extends string>(configs: Types['Parsed'][], obj: Partial<Record<Field, Types['Parseable']>> | nullish, field: Field | `${string}.${Field}`): Types['Parsed'] {
     return this.concat(...configs, this.parseWithin(obj, field));
   }
-
-  // public parseConcat<Field extends string>(configs: Opts['ValidatedType'][], raw: Record<Field, Opts['ParseableType']>, field: Field | `${string}.${Field}`): Opts['ValidatedType'] {
-  //   return this.concat([...configs, this.parse(raw, field)]);
-  // }
 }
 
 const assertParsed = <T>(input: T): Parsed => input as T & Parsed;

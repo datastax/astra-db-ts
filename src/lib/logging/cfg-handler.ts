@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DecoderType, MonoidalOptionsHandler, OptionsHandlerOpts, Parsed } from '@/src/lib/opts-handler';
+import { DecoderType, MonoidalOptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
 import { DataAPILoggingConfig, DataAPILoggingEvent, DataAPILoggingOutput } from '@/src/lib';
 import { array, either, nonEmptyArray, object, oneOf, optional } from 'decoders';
 import {
@@ -24,6 +24,9 @@ import {
 } from '@/src/lib/logging/constants';
 import { oneOrMany } from '@/src/lib/utils';
 
+/**
+ * @internal
+ */
 export interface ParsedLoggingConfig extends Parsed {
   layers: {
     events: readonly Exclude<DataAPILoggingEvent, 'all'>[],
@@ -34,7 +37,7 @@ export interface ParsedLoggingConfig extends Parsed {
 /**
  * @internal
  */
-interface LoggingConfigTypes extends OptionsHandlerOpts {
+interface LoggingConfigTypes extends OptionsHandlerTypes {
   Parsed: ParsedLoggingConfig,
   Parseable: DataAPILoggingConfig | undefined,
   Decoded: DecoderType<typeof loggingConfig>,

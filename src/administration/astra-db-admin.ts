@@ -15,7 +15,7 @@
 
 import { AstraCreateKeyspaceOptions, AstraDropKeyspaceOptions } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
-import { OpaqueHttpClient, ParsedTokenProvider, TokenProvider, WithTimeout } from '@/src/lib';
+import { OpaqueHttpClient, TokenProvider, WithTimeout } from '@/src/lib';
 import { buildAstraDatabaseAdminInfo, extractAstraEnvironment } from '@/src/administration/utils';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, HttpMethods } from '@/src/lib/api/constants';
@@ -28,6 +28,7 @@ import { Logger } from '@/src/lib/logging/logger';
 import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { DataAPIHttpClient } from '@/src/lib/api/clients';
 import { ParsedAdminOpts } from '@/src/client/opts-handlers/admin-opts-handler';
+import { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting keyspaces.

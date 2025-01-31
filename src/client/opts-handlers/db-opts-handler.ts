@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DecoderType, MonoidalOptionsHandler, OptionsHandlerOpts, Parsed, Unparse } from '@/src/lib/opts-handler';
+import { DecoderType, MonoidalOptionsHandler, OptionsHandlerTypes, Parsed, Unparse } from '@/src/lib/opts-handler';
 import { DbOptions } from '@/src/client';
 import { TokenProvider } from '@/src/lib';
 import { Decoder, nullish, object, oneOf, optional, record, regex, string, unknown } from 'decoders';
@@ -21,6 +21,9 @@ import { Logger } from '@/src/lib/logging/logger';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 
+/**
+ * @internal
+ */
 export interface ParsedDbOpts extends Parsed {
   logging: typeof Logger.cfg.parsed,
   token: typeof TokenProvider.opts.parsed,
@@ -32,7 +35,10 @@ export interface ParsedDbOpts extends Parsed {
   timeoutDefaults: typeof Timeouts.cfg.parsed,
 }
 
-interface DbOptsTypes extends OptionsHandlerOpts {
+/**
+ * @internal
+ */
+interface DbOptsTypes extends OptionsHandlerTypes {
   Parsed: ParsedDbOpts,
   Parseable: DbOptions | null | undefined,
   Decoded: DecoderType<typeof dbOpts>,
@@ -52,6 +58,9 @@ const dbOpts = nullish(object({
   })),
 }));
 
+/**
+ * @internal
+ */
 export const DbOptsHandler = new MonoidalOptionsHandler<DbOptsTypes>({
   decoder: dbOpts,
   refine(input, field) {

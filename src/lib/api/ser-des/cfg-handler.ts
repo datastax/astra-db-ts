@@ -17,8 +17,14 @@ import { BaseSerDesConfig, KeyTransformer, RawCodec } from '@/src/lib';
 import { anyInstanceOf, function_, oneOrMany, toArray } from '@/src/lib/utils';
 import { Parsed, Unparse } from '@/src/lib/opts-handler';
 
+/**
+ * @internal
+ */
 type SomeInternalSerDesConfig = Unparse<ParsedSerDesConfig<BaseSerDesConfig<any, any>>>;
 
+/**
+ * @internal
+ */
 export const serDesDecoders = <const>{
   codecs: optional(array(array(inexact({ tag: oneOf(['forName', 'forPath', 'forType', 'custom']) }) as Decoder<RawCodec>))),
   serialize: optional(oneOrMany(function_)),
@@ -27,6 +33,9 @@ export const serDesDecoders = <const>{
   keyTransformer: optional(anyInstanceOf(KeyTransformer)),
 };
 
+/**
+ * @internal
+ */
 export const serDesTransform = (config: BaseSerDesConfig<any, any> | null | undefined): SomeInternalSerDesConfig => ({
   codecs: config?.codecs ?? [],
   serialize: config?.serialize ?? [],
@@ -35,6 +44,9 @@ export const serDesTransform = (config: BaseSerDesConfig<any, any> | null | unde
   keyTransformer: config?.keyTransformer ?? undefined,
 });
 
+/**
+ * @internal
+ */
 export const serDesConcat = (configs: SomeInternalSerDesConfig[]) => {
   return configs.reduce((acc, next) => ({
     codecs: [...next.codecs, ...acc.codecs],
@@ -45,6 +57,9 @@ export const serDesConcat = (configs: SomeInternalSerDesConfig[]) => {
   }), serDesEmpty);
 };
 
+/**
+ * @internal
+ */
 export const serDesEmpty: SomeInternalSerDesConfig & {} = {
   codecs: [],
   serialize: [],
@@ -53,6 +68,9 @@ export const serDesEmpty: SomeInternalSerDesConfig & {} = {
   keyTransformer: undefined,
 };
 
+/**
+ * @internal
+ */
 export type ParsedSerDesConfig<Cfg extends BaseSerDesConfig<any, any>> =
   & Parsed
   & Required<Pick<Cfg, 'codecs' | 'serialize' | 'deserialize'>>

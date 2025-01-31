@@ -30,9 +30,9 @@ import type {
 import { EmptyInternalLoggingConfig, EventConstructors } from '@/src/lib/logging/constants';
 import { buildOutputsMap } from '@/src/lib/logging/util';
 import type TypedEventEmitter from 'typed-emitter';
-import type { DataAPIClientEvent, ParsedLoggingConfig } from '@/src/lib';
+import type { DataAPIClientEvent } from '@/src/lib';
 import { InternalLoggingOutputsMap } from '@/src/client/types/internal';
-import { LoggingCfgHandler } from '@/src/lib/logging/cfg-handler';
+import { LoggingCfgHandler, ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
 
 interface ConsoleLike {
   log: (...args: any[]) => void;
@@ -76,54 +76,6 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
       };
     }
   }
-
-  // public static parseConfig = parseLoggingConfig;
-
-  // public static advanceConfig(config?: ParsedLoggingConfig, newConfig?: DataAPILoggingConfig): ParsedLoggingConfig | undefined {
-  //   if (!config && !newConfig) {
-  //     return undefined;
-  //   }
-  //   if (!config) {
-  //     return Logger.normalizeLoggingConfig(newConfig);
-  //   }
-  //   return [...config, ...Logger.normalizeLoggingConfig(newConfig)];
-  // }
-
-  // public static normalizeLoggingConfig(config: DataAPILoggingConfig | undefined): ParsedLoggingConfig {
-  //   if (!config) {
-  //     return [];
-  //   }
-  //
-  //   if (config === 'all') {
-  //     return DataAPILoggingDefaults;
-  //   }
-  //
-  //   if (typeof config === 'string') {
-  //     return [{ events: [config], emits: DataAPILoggingDefaultOutputs[config] }];
-  //   }
-  //
-  //   return config.flatMap((c, i) => {
-  //     if (c === 'all') {
-  //       return DataAPILoggingDefaults;
-  //     }
-  //
-  //     if (typeof c === 'string') {
-  //       return [{ events: [c], emits: DataAPILoggingDefaultOutputs[c] }];
-  //     }
-  //
-  //     if (c.events === 'all' || Array.isArray(c.events) && c.events.includes('all')) {
-  //       if (c.events === 'all' || c.events.length === 1 && c.events[0] === 'all') {
-  //         return [{ events: LoggingEventsWithoutAll, emits: Array.isArray(c.emits) ? c.emits : [c.emits] }];
-  //       }
-  //       throw new Error(`Nonsensical logging configuration; can not have 'all' in a multi-element array (@ idx ${i})`);
-  //     }
-  //
-  //     return [{
-  //       events: Array.isArray(c.events) ? c.events : [c.events],
-  //       emits: Array.isArray(c.emits) ? c.emits : [c.emits],
-  //     }];
-  //   });
-  // };
 
   private static buildInternalConfig(config: ParsedLoggingConfig): InternalLoggingOutputsMap {
     const newConfig = { ...EmptyInternalLoggingConfig };

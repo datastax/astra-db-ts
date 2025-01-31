@@ -20,7 +20,7 @@ import {
   serDesEmpty,
   serDesTransform,
 } from '@/src/lib/api/ser-des/cfg-handler';
-import { MonoidalOptionsHandler, OptionsHandlerOpts } from '@/src/lib/opts-handler';
+import { MonoidalOptionsHandler, OptionsHandlerTypes } from '@/src/lib/opts-handler';
 import { CollSerDesConfig } from '@/src/documents';
 import { function_ } from '@/src/lib/utils';
 
@@ -31,12 +31,18 @@ const decoder = optional(object({
   enableBigNumbers: optional(either(function_, record(oneOf(CollNumReps)))),
 }));
 
-interface SerDesConfigTypes extends OptionsHandlerOpts {
+/**
+ * @internal
+ */
+interface SerDesConfigTypes extends OptionsHandlerTypes {
   Parsed: ParsedSerDesConfig<CollSerDesConfig>,
   Parseable: CollSerDesConfig | null | undefined,
   Decoded: DecoderType<typeof decoder>,
 }
 
+/**
+ * @internal
+ */
 export const CollSerDesCfgHandler = new MonoidalOptionsHandler<SerDesConfigTypes>({
   decoder: decoder,
   refine(config) {

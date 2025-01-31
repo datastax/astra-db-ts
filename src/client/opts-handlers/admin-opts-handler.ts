@@ -12,13 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DecoderType, MonoidalOptionsHandler, OptionsHandlerOpts, Parsed, Unparse } from '@/src/lib/opts-handler';
+import { DecoderType, MonoidalOptionsHandler, OptionsHandlerTypes, Parsed, Unparse } from '@/src/lib/opts-handler';
 import { AdminOptions } from '@/src/client';
 import { TokenProvider } from '@/src/lib';
 import { nullish, object, oneOf, optional, record, string } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { Logger } from '@/src/lib/logging/logger';
 
+/**
+ * @internal
+ */
 export interface ParsedAdminOpts extends Parsed {
   logging: typeof Logger.cfg.parsed,
   adminToken: typeof TokenProvider.opts.parsed,
@@ -28,7 +31,10 @@ export interface ParsedAdminOpts extends Parsed {
   timeoutDefaults: typeof Timeouts.cfg.parsed,
 }
 
-interface AdminOptsTypes extends OptionsHandlerOpts {
+/**
+ * @internal
+ */
+interface AdminOptsTypes extends OptionsHandlerTypes {
   Parsed: ParsedAdminOpts,
   Parseable: AdminOptions | null | undefined,
   Decoded: DecoderType<typeof adminOpts>,
@@ -43,6 +49,9 @@ const adminOpts = nullish(object({
   timeoutDefaults: Timeouts.cfg.decoder,
 }));
 
+/**
+ * @internal
+ */
 export const AdminOptsHandler = new MonoidalOptionsHandler<AdminOptsTypes>({
   decoder: adminOpts,
   refine(input, field) {

@@ -20,7 +20,7 @@ import {
   serDesEmpty,
   serDesTransform,
 } from '@/src/lib/api/ser-des/cfg-handler';
-import { MonoidalOptionsHandler, OptionsHandlerOpts } from '@/src/lib/opts-handler';
+import { MonoidalOptionsHandler, OptionsHandlerTypes } from '@/src/lib/opts-handler';
 import { TableSerDesConfig } from '@/src/documents';
 
 const decoder = optional(object({
@@ -28,12 +28,18 @@ const decoder = optional(object({
   sparseData: optional(boolean),
 }));
 
-interface SerDesConfigTypes extends OptionsHandlerOpts {
+/**
+ * @internal
+ */
+interface SerDesConfigTypes extends OptionsHandlerTypes {
   Parsed: ParsedSerDesConfig<TableSerDesConfig>,
   Parseable: TableSerDesConfig | null | undefined,
   Decoded: DecoderType<typeof decoder>,
 }
 
+/**
+ * @internal
+ */
 export const TableSerDesCfgHandler = new MonoidalOptionsHandler<SerDesConfigTypes>({
   decoder: decoder,
   refine(config) {
