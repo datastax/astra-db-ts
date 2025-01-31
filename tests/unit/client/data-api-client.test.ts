@@ -44,8 +44,6 @@ describe('unit.client.data-api-client', () => {
   });
 
   it('should accept valid environments', () => {
-    // @ts-expect-error - null technically allowed
-    assert.doesNotThrow(() => new DataAPIClient('dummy-token', { environment: null }));
     assert.doesNotThrow(() => new DataAPIClient('dummy-token', { environment: undefined }));
 
     for (const environment of DataAPIEnvironments) {
@@ -54,6 +52,8 @@ describe('unit.client.data-api-client', () => {
   });
 
   it('should throw on invalid environments', () => {
+    // @ts-expect-error - testing invalid input
+    assert.throws(() => new DataAPIClient('dummy-token', { environment: null }));
     // @ts-expect-error - testing invalid input
     assert.throws(() => new DataAPIClient('dummy-token', { environment: [] }));
     // @ts-expect-error - testing invalid input

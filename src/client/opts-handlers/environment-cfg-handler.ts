@@ -19,7 +19,7 @@ import { type DataAPIEnvironment, DataAPIEnvironments } from '@/src/lib';
 /**
  * @internal
  */
-export type ParsedEnvironment = string & Parsed<'DataAPIEnvironment'>;
+export type ParsedEnvironment = (DataAPIEnvironment | (string & Record<never, never>)) & Parsed<'DataAPIEnvironment'>;
 
 /**
  * @internal
