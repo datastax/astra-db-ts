@@ -43,9 +43,19 @@ interface LoggingConfigTypes extends OptionsHandlerTypes {
   Decoded: DecoderType<typeof loggingConfig>,
 }
 
+/**
+ * @internal
+ */
 const oneOfLoggingEvents = oneOf(LoggingEvents).describe('one of DataAPILoggingEvent (including "all")');
+
+/**
+ * @internal
+ */
 const oneOfLoggingEventsWithoutAll = oneOf(LoggingEventsWithoutAll).describe('one of DataAPILoggingEvent (excluding "all")');
 
+/**
+ * @internal
+ */
 const loggingConfig = optional(either(
   oneOfLoggingEvents,
   array(either(

@@ -29,7 +29,7 @@ import type {
 } from '@/src/administration';
 import { EmptyInternalLoggingConfig, EventConstructors } from '@/src/lib/logging/constants';
 import { buildOutputsMap } from '@/src/lib/logging/util';
-import type TypedEventEmitter from 'typed-emitter';
+import type TypedEmitter from 'typed-emitter';
 import type { BaseDataAPIClientEvent } from '@/src/lib';
 import { LoggingCfgHandler, ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
 
@@ -62,7 +62,7 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
 
   public static cfg: typeof LoggingCfgHandler = LoggingCfgHandler;
 
-  constructor(_config: ParsedLoggingConfig, private emitter: TypedEventEmitter<DataAPIClientEventMap>, private console: ConsoleLike) {
+  constructor(_config: ParsedLoggingConfig, private emitter: TypedEmitter<DataAPIClientEventMap>, private console: ConsoleLike) {
     const config = Logger.buildInternalConfig(_config);
 
     for (const [_event, outputs] of Object.entries(config)) if (outputs) {

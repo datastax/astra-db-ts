@@ -35,6 +35,9 @@ interface CallerConfigTypes extends OptionsHandlerTypes {
   Decoded: DecoderType<typeof caller>,
 }
 
+/**
+ * @internal
+ */
 const caller = optional(oneOrMany(either(
   tuple(string),
   tuple(string, string),

@@ -30,6 +30,9 @@ interface EnvironmentConfigTypes extends OptionsHandlerTypes {
   Decoded: DecoderType<typeof environment>,
 }
 
+/**
+ * @internal
+ */
 const environment = optional(oneOf(DataAPIEnvironments));
 
 /**

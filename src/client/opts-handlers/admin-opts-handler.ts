@@ -40,6 +40,9 @@ interface AdminOptsTypes extends OptionsHandlerTypes {
   Decoded: DecoderType<typeof adminOpts>,
 }
 
+/**
+ * @internal
+ */
 const adminOpts = optional(object({
   logging: Logger.cfg.decoder,
   adminToken: TokenProvider.opts.decoder,

@@ -26,6 +26,9 @@ import { function_ } from '@/src/lib/utils';
 
 const CollNumReps = ['number', 'bigint', 'bignumber', 'string', 'number_or_string'] as const;
 
+/**
+ * @internal
+ */
 const decoder = optional(object({
   ...serDesDecoders,
   enableBigNumbers: optional(either(function_, record(oneOf(CollNumReps)))),

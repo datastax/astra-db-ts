@@ -17,12 +17,12 @@ import { CommandEventMap } from '@/src/documents';
 import { AdminCommandEventMap } from '@/src/administration';
 import { OneOrMany } from '@/src/lib/types';
 // noinspection ES6UnusedImports
-import TypedEventEmitter from 'typed-emitter';
+import TypedEmitter from 'typed-emitter';
 
 /**
  * #### Overview
  *
- * The `EventMap` of events the {@link DataAPIClient} emits, which is an instance of {@link TypedEventEmitter}, when
+ * The `EventMap` of events the {@link DataAPIClient} emits, which is an instance of {@link TypedEmitter}, when
  * events logging is enabled (via `logging` options throughout the major class hierarchy).
  *
  * See {@link DataAPILoggingConfig} for more information on how to configure logging, and enable/disable specific events.

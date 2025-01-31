@@ -38,6 +38,9 @@ interface HttpOptsTypes extends OptionsHandlerTypes {
   Decoded: DecoderType<typeof httpOpts>,
 }
 
+/**
+ * @internal
+ */
 const httpOpts = optional(taggedUnion('client', {
   'fetch-h2': object({
     client: constant('fetch-h2'),

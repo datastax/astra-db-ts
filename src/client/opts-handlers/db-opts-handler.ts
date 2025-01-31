@@ -44,6 +44,9 @@ interface DbOptsTypes extends OptionsHandlerTypes {
   Decoded: DecoderType<typeof dbOpts>,
 }
 
+/**
+ * @internal
+ */
 const dbOpts = optional(object({
   logging: Logger.cfg.decoder,
   token: TokenProvider.opts.decoder,

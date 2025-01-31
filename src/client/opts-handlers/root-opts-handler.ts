@@ -46,6 +46,9 @@ interface RootOptsTypes extends OptionsHandlerTypes {
   Decoded: DecoderType<typeof rootOpts>,
 }
 
+/**
+ * @internal
+ */
 const rootOpts = optional(object({
   logging: Logger.cfg.decoder,
   environment: EnvironmentCfgHandler.decoder,

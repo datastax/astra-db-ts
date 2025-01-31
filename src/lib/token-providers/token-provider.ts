@@ -17,7 +17,6 @@ import { anyInstanceOf, isNullish } from '@/src/lib/utils';
 import { MonoidalOptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
 import { DecoderType, either, optional, string } from 'decoders';
 
-
 /**
  * The base class for some "token provider", a general concept for anything that provides some token to the client,
  * whether it be a static token, or if the token is dynamically fetched at runtime, or periodically refreshed.
@@ -55,6 +54,9 @@ export abstract class TokenProvider {
   abstract getToken(): string | null | undefined | Promise<string | null | undefined>;
 }
 
+/**
+ * @internal
+ */
 class UnsetTokenProvider extends TokenProvider {
   public static INSTANCE = new UnsetTokenProvider();
 
@@ -81,6 +83,9 @@ interface TokenProviderOptsTypes extends OptionsHandlerTypes {
   Decoded: DecoderType<typeof tokenProvider>,
 }
 
+/**
+ * @internal
+ */
 const tokenProvider = optional(either(
   anyInstanceOf(TokenProvider),
   string,

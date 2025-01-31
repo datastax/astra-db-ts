@@ -30,6 +30,9 @@ interface TimeoutCfgTypes extends OptionsHandlerTypes {
   Decoded: DecoderType<typeof timeoutDescriptor>,
 }
 
+/**
+ * @internal
+ */
 const timeoutDescriptor = optional(object({
   requestTimeoutMs: optional(positiveNumber),
   generalMethodTimeoutMs: optional(positiveNumber),

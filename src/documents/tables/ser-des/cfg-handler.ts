@@ -23,6 +23,9 @@ import {
 import { MonoidalOptionsHandler, OptionsHandlerTypes } from '@/src/lib/opts-handler';
 import { TableSerDesConfig } from '@/src/documents';
 
+/**
+ * @internal
+ */
 const decoder = optional(object({
   ...serDesDecoders,
   sparseData: optional(boolean),

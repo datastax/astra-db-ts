@@ -5,6 +5,8 @@
 ```ts
 
 import BigNumber from 'bignumber.js';
+import { Decoder } from 'decoders';
+import { DecoderType } from 'decoders';
 import type TypedEmitter from 'typed-emitter';
 import type TypedEventEmitter from 'typed-emitter';
 
@@ -31,7 +33,7 @@ export interface AddVectorizeOperation<Schema extends SomeRow> {
 }
 
 // @public
-export abstract class AdminCommandEvent extends DataAPIClientEvent {
+export abstract class AdminCommandEvent extends BaseDataAPIClientEvent {
     // Warning: (ae-forgotten-export) The symbol "DevOpsAPIRequestInfo" needs to be exported by the entry point index.d.ts
     //
     // @internal
@@ -105,7 +107,7 @@ export interface AdminOptions {
     adminToken?: string | TokenProvider | null;
     astraEnv?: 'dev' | 'prod' | 'test';
     endpointUrl?: string;
-    logging?: DataAPILoggingConfig;
+    logging?: DataAPILoggingConfig | undefined;
     timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
 
@@ -128,10 +130,11 @@ export interface AlterTableOptions<Schema extends SomeRow> extends WithTimeout<'
 
 // @public
 export class AstraAdmin {
-    // Warning: (ae-forgotten-export) The symbol "InternalRootClientOpts" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "ParsedRootClientOpts" needs to be exported by the entry point index.d.ts
+    // Warning: (ae-forgotten-export) The symbol "ParsedAdminOptions" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    constructor(rootOpts: InternalRootClientOpts, rawAdminOpts?: AdminOptions);
+    constructor(rootOpts: ParsedRootClientOpts, adminOpts: ParsedAdminOptions);
     createDatabase(config: AstraDatabaseConfig, options?: CreateAstraDatabaseOptions): Promise<AstraDbAdmin>;
     db(endpoint: string, options?: DbOptions): Db;
     db(id: string, region: string, options?: DbOptions): Db;
@@ -162,8 +165,10 @@ export interface AstraDatabaseConfig {
 
 // @public
 export class AstraDbAdmin extends DbAdmin {
+    // Warning: (ae-forgotten-export) The symbol "ParsedTokenProvider" needs to be exported by the entry point index.d.ts
+    //
     // @internal
-    constructor(db: Db, rootOpts: InternalRootClientOpts, rawAdminOpts: AdminOptions | undefined, dbToken: TokenProvider | undefined, endpoint: string);
+    constructor(db: Db, rootOpts: ParsedRootClientOpts, adminOpts: ParsedAdminOptions, dbToken: ParsedTokenProvider, endpoint: string);
     createKeyspace(keyspace: string, options?: AstraCreateKeyspaceOptions): Promise<void>;
     db(): Db;
     drop(options?: AstraDropKeyspaceOptions): Promise<void>;
@@ -244,6 +249,16 @@ export interface BaseAstraDbInfo {
     name: string;
     raw: Record<string, any>;
     status: AstraDbStatus;
+}
+
+// @public
+export abstract class BaseDataAPIClientEvent {
+    // @internal
+    protected constructor(name: string);
+    formatted(): string;
+    // @internal
+    static formattedPrefix(): string;
+    readonly name: string;
 }
 
 // @public (undocumented)
@@ -560,7 +575,7 @@ export interface CollectionOptions extends WithKeyspace {
     embeddingApiKey?: string | EmbeddingHeadersProvider | null;
     logging?: DataAPILoggingConfig;
     // @beta
-    serdes?: CollectionSerDesConfig;
+    serdes?: CollSerDesConfig;
     timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
 
@@ -582,14 +597,6 @@ export type CollectionReplaceOneOptions = GenericReplaceOneOptions;
 
 // @public
 export type CollectionReplaceOneResult<RSchema> = GenericUpdateResult<IdOf<RSchema>, 0 | 1>;
-
-// @public (undocumented)
-export interface CollectionSerDesConfig extends BaseSerDesConfig<CollSerCtx, CollDesCtx> {
-    // (undocumented)
-    codecs?: RawCollCodecs[];
-    // (undocumented)
-    enableBigNumbers?: GetCollNumRepFn | CollNumRepCfg;
-}
 
 // @public
 export interface CollectionUpdateFilter<Schema extends SomeDoc> {
@@ -649,8 +656,16 @@ export interface CollSerCtx extends BaseSerCtx<CollSerCtx> {
     bigNumsEnabled: boolean;
 }
 
+// @public (undocumented)
+export interface CollSerDesConfig extends BaseSerDesConfig<CollSerCtx, CollDesCtx> {
+    // (undocumented)
+    codecs?: RawCollCodecs[];
+    // (undocumented)
+    enableBigNumbers?: GetCollNumRepFn | CollNumRepCfg;
+}
+
 // @public
-export abstract class CommandEvent extends DataAPIClientEvent {
+export abstract class CommandEvent extends BaseDataAPIClientEvent {
     // Warning: (ae-forgotten-export) The symbol "DataAPIRequestInfo" needs to be exported by the entry point index.d.ts
     //
     // @internal
@@ -818,21 +833,11 @@ export type DataAPIBlobLike = DataAPIBlob | ArrayBuffer | MaybeBuffer | {
 
 // @public
 export class DataAPIClient extends DataAPIClientEventEmitterBase {
-    constructor(options?: DataAPIClientOptions | nullish);
-    constructor(token: string | TokenProvider | nullish, options?: DataAPIClientOptions | nullish);
+    constructor(options?: DataAPIClientOptions);
+    constructor(token: string | TokenProvider | undefined, options?: DataAPIClientOptions);
     admin(options?: AdminOptions): AstraAdmin;
     close(): Promise<void>;
     db(endpoint: string, options?: DbOptions): Db;
-}
-
-// @public
-export abstract class DataAPIClientEvent {
-    // @internal
-    protected constructor(name: string);
-    formatted(): string;
-    // @internal
-    static formattedPrefix(): string;
-    readonly name: string;
 }
 
 // @public
@@ -887,7 +892,7 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
 // @public
 export class DataAPIDbAdmin extends DbAdmin {
     // @internal
-    constructor(db: Db, httpClient: DataAPIHttpClient, rawAdminOpts?: AdminOptions);
+    constructor(db: Db, httpClient: DataAPIHttpClient, adminOpts: ParsedAdminOptions);
     createKeyspace(keyspace: string, options?: DataAPICreateKeyspaceOptions): Promise<void>;
     db(): Db;
     dropKeyspace(keyspace: string, options?: WithTimeout<'keyspaceAdminTimeoutMs'>): Promise<void>;
@@ -1105,8 +1110,10 @@ export const date: ((...params: [string] | [Date] | [number, number, number]) =>
 
 // @public
 export class Db {
+    // Warning: (ae-forgotten-export) The symbol "ParsedDbOptions" needs to be exported by the entry point index.d.ts
+    //
     // @internal
-    constructor(rootOpts: InternalRootClientOpts, endpoint: string, rawDbOpts: DbOptions | nullish);
+    constructor(rootOpts: ParsedRootClientOpts, endpoint: string, dbOpts: ParsedDbOptions);
     admin(options?: AdminOptions & {
         environment?: 'astra';
     }): AstraDbAdmin;
@@ -1121,7 +1128,6 @@ export class Db {
     dropCollection(name: string, options?: DropCollectionOptions): Promise<void>;
     dropTable(name: string, options?: DropTableOptions): Promise<void>;
     dropTableIndex(name: string, options?: TableDropIndexOptions): Promise<void>;
-    // (undocumented)
     get _httpClient(): OpaqueHttpClient;
     get id(): string;
     info(options?: WithTimeout<'databaseAdminTimeoutMs'>): Promise<AstraDbInfo>;
@@ -1166,7 +1172,7 @@ export interface DbOptions {
 
 // @beta
 export interface DbSerDesConfig {
-    collection?: Omit<CollectionSerDesConfig, 'mutateInPlace'>;
+    collection?: Omit<CollSerDesConfig, 'mutateInPlace'>;
     mutateInPlace?: boolean;
     table?: Omit<TableSerDesConfig, 'mutateInPlace'>;
 }
@@ -1273,7 +1279,7 @@ export class EmbeddingAPIKeyHeaderProvider extends EmbeddingHeadersProvider {
 export abstract class EmbeddingHeadersProvider {
     abstract getHeaders(): Promise<Record<string, string>> | Record<string, string>;
     // @internal
-    static parseHeaders(token: unknown): EmbeddingHeadersProvider;
+    static parse(provider: unknown): EmbeddingHeadersProvider;
 }
 
 // @public
@@ -1722,16 +1728,6 @@ export type Normalize<T> = {
     [K in keyof T]: T[K];
 } & EmptyObj;
 
-// Warning: (ae-internal-missing-underscore) The name "NormalizedLoggingConfig" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface NormalizedLoggingConfig {
-    // (undocumented)
-    emits: readonly DataAPILoggingOutput[];
-    // (undocumented)
-    events: readonly Exclude<DataAPILoggingEvent, 'all'>[];
-}
-
 // @public
 export interface NoUpsertUpdateResult {
     upsertedCount: 0;
@@ -2179,9 +2175,11 @@ export type ToDotNotation<Schema extends SomeDoc> = Merge<_ToDotNotation<Schema,
 
 // @public
 export abstract class TokenProvider {
-    abstract getToken(): string | nullish | Promise<string | nullish>;
-    // @internal
-    static mergeTokens(...raw: (string | TokenProvider | nullish)[]): TokenProvider | undefined;
+    abstract getToken(): string | null | undefined | Promise<string | null | undefined>;
+    // Warning: (ae-forgotten-export) The symbol "TokenProviderOptsHandler" needs to be exported by the entry point index.d.ts
+    //
+    // @internal (undocumented)
+    static opts: typeof TokenProviderOptsHandler;
 }
 
 // @public
