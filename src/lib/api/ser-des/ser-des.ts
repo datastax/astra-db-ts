@@ -65,7 +65,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
   private readonly _deserializers: Deserializers<DesCtx>;
 
   protected constructor(protected readonly _cfg: ParsedSerDesConfig<BaseSerDesConfig<SerCtx, DesCtx>> & {}) {
-    [this._serializers, this._deserializers] = processCodecs(this._cfg.codecs?.flat() ?? []);
+    [this._serializers, this._deserializers] = processCodecs(this._cfg.codecs.flat());
   }
 
   public serialize(obj: unknown): [unknown, boolean] {

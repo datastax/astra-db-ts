@@ -150,7 +150,7 @@ const env = getJSEnv();
 export const forJSEnv = (typeof process !== 'undefined' && typeof process.env === 'object' && process.env.CLIENT_DYNAMIC_JS_ENV_CHECK)
   /* Version of forJSEnv which re-checks the env @ every call for testing purposes (allows for "mocking" different js envs) */
   ? <Args extends any[], R>(fns: JSEnvs<(...args: Args) => R>): (...args: Args) => R => (...args: Args) => fns[getJSEnv()](...args)
-  /* istanbul ignore next: same logic as above */
+  /* istanbul ignore else: same logic as above */
   : <Args extends any[], R>(fns: JSEnvs<(...args: Args) => R>): (...args: Args) => R => fns[env];
 
 /**
@@ -192,3 +192,10 @@ export const function_ = define<(...any: any[]) => any>((fn, ok, err) => {
  * @internal
  */
 export const anyInstanceOf = <T>(cls: abstract new (...args: any[]) => T) => instanceOf(cls as any) as Decoder<T>;
+
+/**
+ * @internal
+ */
+export const numDigits = (n: number) => {
+  return (n !== 0) ? Math.floor(Math.log10(Math.abs(n))) + 1 : 1;
+};

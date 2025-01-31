@@ -92,22 +92,3 @@ export abstract class HttpClient {
     });
   }
 }
-
-/**
- * @internal
- */
-export function buildUserAgent(caller: OneOrMany<Caller> | undefined): string {
-  const callers = (
-    (!caller)
-      ? [] :
-    Array.isArray(caller[0])
-      ?  caller
-      : [caller]
-  ) as Caller[];
-
-  const callerString = callers.map((c) => {
-    return c[1] ? `${c[0]}/${c[1]}` : c[0];
-  }).join(' ');
-
-  return `${callerString} ${CLIENT_USER_AGENT}`.trim();
-}

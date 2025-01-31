@@ -21,6 +21,7 @@ import { TimeoutManager } from '@/src/lib/api/timeouts/timeouts';
 import { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
 import { ParsedTimeoutDescriptor } from '@/src/lib/api/timeouts/cfg-handler';
 import { ParsedCaller } from '@/src/client/opts-handlers/caller-cfg-handler';
+import { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
 
 /**
  * @internal
@@ -34,6 +35,7 @@ export interface HTTPClientOptions {
   caller: ParsedCaller,
   additionalHeaders: Record<string, string> | undefined,
   timeoutDefaults: ParsedTimeoutDescriptor,
+  tokenProvider: ParsedTokenProvider,
 }
 
 /**

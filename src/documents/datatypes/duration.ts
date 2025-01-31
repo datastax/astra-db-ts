@@ -17,6 +17,7 @@ import { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { mkInvArgsErr } from '@/src/documents/utils';
 import { Ref } from '@/src/lib/types';
+import { numDigits } from '@/src/lib/utils';
 
 /**
  * #### Overview
@@ -1282,7 +1283,7 @@ const parseDataAPIDuration = (str: string, negative: boolean): MDN => {
     }
 
     const num = parseInt(str.slice(index), 10);
-    index += num === 0 ? 1 : Math.floor(Math.log10(num)) + 1;
+    index += numDigits(num);
 
     const unit = str[index++];
     lut[unit](duration, num);

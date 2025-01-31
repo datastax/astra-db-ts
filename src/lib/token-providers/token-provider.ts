@@ -44,37 +44,15 @@ import { DecoderType, either, optional, string } from 'decoders';
  */
 export abstract class TokenProvider {
   /**
-   * The function which provides the token. It may do any I/O as it wishes to obtain/refresh the token, as it's called
-   * every time the token is required for use, whether it be for the Data API, or the DevOps API.
-   */
-  abstract getToken(): string | null | undefined | Promise<string | null | undefined>;
-
-  /**
    * @internal
    */
   public static opts: typeof TokenProviderOptsHandler;
 
   /**
-   * Turns a string token into a {@link StaticTokenProvider} if necessary. Throws an error if
-   * it's not a string, nullish, or a `TokenProvider` already.
-   *
-   * Not intended for external use.
-   *
-   * @internal
+   * The function which provides the token. It may do any I/O as it wishes to obtain/refresh the token, as it's called
+   * every time the token is required for use, whether it be for the Data API, or the DevOps API.
    */
-  static mergeTokens(...raw: (string | TokenProvider | null | undefined)[]): TokenProvider | undefined {
-    const first = raw.find((r) => !isNullish(r));
-
-    if (typeof first === 'string') {
-      return new StaticTokenProvider(first);
-    }
-
-    if (!(<unknown>first instanceof TokenProvider) && !isNullish(first)) {
-      throw new TypeError(`Expected token to be of type string | TokenProvider | nullish; got ${typeof first} (${first})`);
-    }
-
-    return first;
-  };
+  abstract getToken(): string | null | undefined | Promise<string | null | undefined>;
 }
 
 class UnsetTokenProvider extends TokenProvider {

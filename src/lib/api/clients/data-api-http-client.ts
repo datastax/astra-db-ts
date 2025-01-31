@@ -116,7 +116,6 @@ interface DataAPIHttpClientOpts<Kind extends ClientKind> extends HTTPClientOptio
   keyspace: KeyspaceRef,
   emissionStrategy: EmissionStrategy<Kind>,
   embeddingHeaders: EmbeddingHeadersProvider,
-  tokenProvider: ParsedTokenProvider,
 }
 
 /**
@@ -140,11 +139,11 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
   public bigNumHack?: BigNumberHack;
   readonly #props: DataAPIHttpClientOpts<Kind>;
 
-  constructor(props: DataAPIHttpClientOpts<Kind>) {
-    super(props, [mkAuthHeaderProvider(props.tokenProvider), () => props.embeddingHeaders.getHeaders()], DataAPITimeoutError.mk);
-    this.keyspace = props.keyspace;
-    this.#props = props;
-    this.emissionStrategy = props.emissionStrategy(this.logger);
+  constructor(opts: DataAPIHttpClientOpts<Kind>) {
+    super(opts, [mkAuthHeaderProvider(opts.tokenProvider), () => opts.embeddingHeaders.getHeaders()], DataAPITimeoutError.mk);
+    this.keyspace = opts.keyspace;
+    this.#props = opts;
+    this.emissionStrategy = opts.emissionStrategy(this.logger);
   }
 
   public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(keyspace: string, collection: string, opts: CollectionOptions | TableOptions | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
@@ -257,14 +256,13 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
   }
 }
 
-const mkAuthHeaderProvider = (tp: TokenProvider | undefined): HeaderProvider => (tp)
-  ? () => {
-    const token = tp.getToken();
+const mkAuthHeaderProvider = (tp: ParsedTokenProvider): HeaderProvider => () => {
+  const token = tp.getToken();
 
-    return (token instanceof Promise)
-      ? token.then(mkAuthHeader)
-      : mkAuthHeader(token);
-  } : () => ({});
+  return (token instanceof Promise)
+    ? token.then(mkAuthHeader)
+    : mkAuthHeader(token);
+};
 
 const mkAuthHeader = (token: string | nullish): Record<string, string> => (token)
   ? { [DEFAULT_DATA_API_AUTH_HEADER]: token }
