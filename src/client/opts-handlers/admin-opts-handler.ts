@@ -15,16 +15,17 @@
 import { MonoidalOptionsHandler, monoids, MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
 import { AdminOptions } from '@/src/client';
 import { TokenProvider } from '@/src/lib';
-import { object, oneOf, optional, record, string } from 'decoders';
+import { exact, nullish, oneOf, optional, record, string } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { Logger } from '@/src/lib/logging/logger';
+import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler';
 
 /**
  * @internal
  */
 interface AdminOptsTypes extends OptionsHandlerTypes {
   Parsed: ParsedAdminOptions,
-  Parseable: AdminOptions | undefined,
+  Parseable: AdminOptions | undefined | null,
 }
 
 /**
@@ -47,7 +48,8 @@ const monoid = monoids.object({
 /**
  * @internal
  */
-const decoder = optional(object({
+const decoder = nullish(exact({
+  environment: EnvironmentCfgHandler.decoder,
   logging: Logger.cfg.decoder,
   adminToken: TokenProvider.opts.decoder,
   endpointUrl: optional(string),

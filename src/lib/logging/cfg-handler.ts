@@ -14,7 +14,7 @@
 
 import { MonoidalOptionsHandler, monoids, MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
 import { DataAPILoggingConfig, DataAPILoggingEvent, DataAPILoggingOutput } from '@/src/lib';
-import { array, either, nonEmptyArray, nullish, object, oneOf } from 'decoders';
+import { array, either, exact, nonEmptyArray, nullish, oneOf } from 'decoders';
 import {
   LoggingDefaultOutputs,
   LoggingDefaults,
@@ -64,7 +64,7 @@ const decoder = nullish(either(
   oneOfLoggingEvents,
   array(either(
     oneOfLoggingEvents,
-    object({
+    exact({
       events: either(oneOfLoggingEvents, nonEmptyArray(oneOfLoggingEventsWithoutAll)),
       emits: oneOrMany(oneOf(LoggingOutputs)),
     }),

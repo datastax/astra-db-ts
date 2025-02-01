@@ -15,7 +15,7 @@
 import { OptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
 import { DataAPIClient, DataAPIClientOptions } from '@/src/client';
 import { type DataAPIClientEventMap, TokenProvider } from '@/src/lib';
-import { object } from 'decoders';
+import { exact } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { Logger } from '@/src/lib/logging/logger';
 import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler';
@@ -48,7 +48,7 @@ export interface ParsedRootClientOpts extends Parsed<'DataAPIClientOptions'> {
 /**
  * @internal
  */
-const decoder = object({
+const decoder = exact({
   logging: Logger.cfg.decoder,
   environment: EnvironmentCfgHandler.decoder,
   httpOptions: HttpOptsHandler.decoder,

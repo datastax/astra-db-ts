@@ -68,7 +68,12 @@ export class OptionsHandler<Types extends OptionsHandlerTypes> {
       if (!(e instanceof Error) || e.name !== 'Decoding error') {
         throw e;
       }
-      throw new OptionParseError(e.message, field);
+
+      const message = (field)
+        ? `Error parsing ${field}: ${e.message}`
+        : e.message;
+
+      throw new OptionParseError(message, field);
     }
   }
 

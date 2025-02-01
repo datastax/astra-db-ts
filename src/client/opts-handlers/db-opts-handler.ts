@@ -15,7 +15,7 @@
 import { MonoidalOptionsHandler, monoids, MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
 import { DbOptions } from '@/src/client';
 import { TokenProvider } from '@/src/lib';
-import { nullish, object, oneOf, optional, record, regex, string } from 'decoders';
+import { exact, nullish, oneOf, optional, record, regex, string } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { Logger } from '@/src/lib/logging/logger';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
@@ -51,14 +51,14 @@ const monoid = monoids.object({
 /**
  * @internal
  */
-const decoder = nullish(object({
+const decoder = nullish(exact({
   logging: Logger.cfg.decoder,
   token: TokenProvider.opts.decoder,
   dataApiPath: optional(string),
   additionalHeaders: optional(record(string)),
   keyspace: optional(regex(/^\w{1,48}$/, 'Expected a string of 1-48 alphanumeric characters')),
   timeoutDefaults: Timeouts.cfg.decoder,
-  serdes: optional(object({
+  serdes: optional(exact({
     collection: CollSerDes.cfg.decoder,
     table: TableSerDes.cfg.decoder,
     mutateInPlace: optional(oneOf(<const>[true, false])),

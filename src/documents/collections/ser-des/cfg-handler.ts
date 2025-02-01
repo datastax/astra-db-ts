@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { either, object, oneOf, optional, record } from 'decoders';
+import { either, exact, nullish, oneOf, optional, record } from 'decoders';
 import {
   ParsedSerDesConfig,
   serDesDecoders,
@@ -44,7 +44,7 @@ const monoid = monoids.object({
 /**
  * @internal
  */
-const decoder = optional(object({
+const decoder = nullish(exact({
   ...serDesDecoders,
   enableBigNumbers: optional(either(function_, record(oneOf(CollNumReps)))),
 }));

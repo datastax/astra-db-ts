@@ -369,12 +369,12 @@ export class Db {
   public admin(options: AdminOptions & { environment: Exclude<DataAPIEnvironment, 'astra'> }): DataAPIDbAdmin
 
   public admin(options?: AdminOptions & { environment?: DataAPIEnvironment }): DbAdmin {
-    const environment = EnvironmentCfgHandler.parseWithin(options, 'environment');
+    const environment = EnvironmentCfgHandler.parseWithin(options, 'options.environment');
+    const parsedOpts = AdminOptsHandler.parse(options, 'options');
 
     if (this.#defaultOpts.environment !== environment) {
       throw new InvalidEnvironmentError('db.admin()', environment, [this.#defaultOpts.environment], 'environment option is not the same as set in the DataAPIClient');
     }
-    const parsedOpts = AdminOptsHandler.parse(options, 'options');
 
     if (environment === 'astra') {
       return new AstraDbAdmin(this, this.#defaultOpts, parsedOpts, this.#defaultOpts.dbOptions.token, this.#endpoint);

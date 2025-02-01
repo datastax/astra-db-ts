@@ -33,6 +33,7 @@ describe('unit.lib.token-providers.opts-handler', () => {
     };
 
     it('should return the empty value on undefined', () => {
+      parseEq(null!, TokenProvider.opts.empty);
       parseEq(undefined, TokenProvider.opts.empty);
     });
 
@@ -54,7 +55,6 @@ describe('unit.lib.token-providers.opts-handler', () => {
     });
 
     it('should throw an error on invalid input', () => {
-      parseErr(null);
       parseErr(1);
       parseErr([new StaticTokenProvider('3')]);
       parseErr({ getToken() { return 'raaaaa deeeee ooooo'; } });

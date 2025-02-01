@@ -15,7 +15,7 @@
 import { StaticTokenProvider } from '@/src/lib';
 import { anyInstanceOf, findLast, isNullish } from '@/src/lib/utils';
 import { Monoid, MonoidalOptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
-import { DecoderType, either, optional, string } from 'decoders';
+import { DecoderType, either, nullish, string } from 'decoders';
 
 /**
  * The base class for some "token provider", a general concept for anything that provides some token to the client,
@@ -74,7 +74,7 @@ class UnsetTokenProvider extends TokenProvider {
  */
 interface Types extends OptionsHandlerTypes {
   Parsed: ParsedTokenProvider,
-  Parseable: TokenProvider | string | undefined,
+  Parseable: TokenProvider | string | undefined | null,
   Decoded: DecoderType<typeof decoder>,
 }
 
@@ -94,7 +94,7 @@ const monoid: Monoid<TokenProvider> = {
 /**
  * @internal
  */
-const decoder = optional(either(
+const decoder = nullish(either(
   anyInstanceOf(TokenProvider),
   string,
 ));

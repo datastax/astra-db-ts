@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { MonoidalOptionsHandler, monoids, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
-import { nullish, object, optional, positiveNumber } from 'decoders';
+import { exact, nullish, optional, positiveNumber } from 'decoders';
 import { TimeoutDescriptor } from '@/src/lib';
 
 /**
@@ -41,7 +41,7 @@ const monoid = monoids.object({
 /**
  * @internal
  */
-const decoder = nullish(object({
+const decoder = nullish(exact({
   requestTimeoutMs: optional(positiveNumber),
   generalMethodTimeoutMs: optional(positiveNumber),
   collectionAdminTimeoutMs: optional(positiveNumber),

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { boolean, object, optional } from 'decoders';
+import { boolean, exact, nullish, optional } from 'decoders';
 import {
   ParsedSerDesConfig,
   serDesDecoders,
@@ -41,7 +41,7 @@ const monoid = monoids.object({
 /**
  * @internal
  */
-const decoder = optional(object({
+const decoder = nullish(exact({
   ...serDesDecoders,
   sparseData: optional(boolean),
 }));
