@@ -302,7 +302,7 @@ export class Timeouts {
   public readonly baseTimeouts: TimeoutDescriptor;
 
   constructor(private readonly _mkTimeoutError: MkTimeoutError, baseTimeouts: ParsedTimeoutDescriptor) {
-    this.baseTimeouts = TimeoutCfgHandler.concat(Timeouts.Default, baseTimeouts) as TimeoutDescriptor;
+    this.baseTimeouts = TimeoutCfgHandler.concat([Timeouts.Default, baseTimeouts]) as TimeoutDescriptor;
   }
 
   public single(key: Exclude<keyof TimeoutDescriptor, 'requestTimeoutMs'>, override: WithTimeout<any> | nullish): TimeoutManager {

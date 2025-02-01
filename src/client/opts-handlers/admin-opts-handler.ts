@@ -12,24 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MonoidalOptionsHandler, OptionsHandlerTypes, Parsed, Unparse } from '@/src/lib/opts-handler';
+import { MonoidalOptionsHandler, monoids, MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
 import { AdminOptions } from '@/src/client';
 import { TokenProvider } from '@/src/lib';
-import { DecoderType, object, oneOf, optional, record, string } from 'decoders';
+import { object, oneOf, optional, record, string } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { Logger } from '@/src/lib/logging/logger';
-
-/**
- * @internal
- */
-export interface ParsedAdminOptions extends Parsed<'AdminOptions'> {
-  logging: typeof Logger.cfg.parsed,
-  adminToken: typeof TokenProvider.opts.parsed,
-  endpointUrl: string | undefined,
-  additionalHeaders: Record<string, string>,
-  astraEnv: 'dev' | 'prod' | 'test' | undefined,
-  timeoutDefaults: typeof Timeouts.cfg.parsed,
-}
 
 /**
  * @internal
@@ -37,13 +25,29 @@ export interface ParsedAdminOptions extends Parsed<'AdminOptions'> {
 interface AdminOptsTypes extends OptionsHandlerTypes {
   Parsed: ParsedAdminOptions,
   Parseable: AdminOptions | undefined,
-  Decoded: DecoderType<typeof adminOpts>,
 }
 
 /**
  * @internal
  */
-const adminOpts = optional(object({
+export type ParsedAdminOptions = MonoidType<typeof monoid> & Parsed<'AdminOptions'>;
+
+/**
+ * @internal
+ */
+const monoid = monoids.object({
+  logging: Logger.cfg,
+  adminToken: TokenProvider.opts,
+  endpointUrl: monoids.optional<string>(),
+  additionalHeaders: monoids.record<string>(),
+  astraEnv: monoids.optional<'dev' | 'prod' | 'test'>(),
+  timeoutDefaults: Timeouts.cfg,
+});
+
+/**
+ * @internal
+ */
+const decoder = optional(object({
   logging: Logger.cfg.decoder,
   adminToken: TokenProvider.opts.decoder,
   endpointUrl: optional(string),
@@ -55,34 +59,20 @@ const adminOpts = optional(object({
 /**
  * @internal
  */
-export const AdminOptsHandler = new MonoidalOptionsHandler<AdminOptsTypes>({
-  decoder: adminOpts,
-  refine(input, field) {
-    return {
-      logging: Logger.cfg.parseWithin(input, `${field}.logging`),
-      adminToken: TokenProvider.opts.parseWithin(input, `${field}.adminToken`),
-      endpointUrl: input?.endpointUrl ?? undefined,
-      additionalHeaders: input?.additionalHeaders ?? {},
-      astraEnv: input?.astraEnv ?? undefined,
-      timeoutDefaults: Timeouts.cfg.parseWithin(input, `${field}.timeoutDefaults`),
-    };
-  },
-  concat(configs): Unparse<ParsedAdminOptions> {
-    return configs.reduce<Unparse<ParsedAdminOptions>>((acc, next) => ({
-      logging: Logger.cfg.concat(acc.logging, next.logging),
-      adminToken: TokenProvider.opts.concat(acc.adminToken, next.adminToken),
-      endpointUrl: next.endpointUrl ?? acc.endpointUrl,
-      additionalHeaders: { ...acc.additionalHeaders, ...next.additionalHeaders },
-      astraEnv: next.astraEnv ?? acc.astraEnv,
-      timeoutDefaults: Timeouts.cfg.concat(acc.timeoutDefaults, next.timeoutDefaults),
-    }), AdminOptsHandler.empty);
-  },
-  empty: {
-    logging: Logger.cfg.empty,
-    adminToken: TokenProvider.opts.empty,
-    endpointUrl: undefined,
-    additionalHeaders: {},
-    astraEnv: undefined,
-    timeoutDefaults: Timeouts.Default,
-  },
+const transformer = decoder.transform((input) => {
+  if (!input) {
+    return monoid.empty;
+  }
+
+  return {
+    ...input,
+    endpointUrl: input.endpointUrl,
+    additionalHeaders: input.additionalHeaders ?? {},
+    astraEnv: input.astraEnv,
+  };
 });
+
+/**
+ * @internal
+ */
+export const AdminOptsHandler = new MonoidalOptionsHandler<AdminOptsTypes>(transformer, monoid);

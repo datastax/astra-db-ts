@@ -13,11 +13,19 @@
 // limitations under the License.
 
 import { oneOrMany } from '@/src/lib/utils';
-import { DecoderType, either, optional, string, tuple } from 'decoders';
+import { either, nullish, string, tuple } from 'decoders';
 import { OptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
 import { Caller } from '@/src/client';
 import { OneOrMany } from '@/src/lib';
 import { CLIENT_USER_AGENT } from '@/src/lib/api/constants';
+
+/**
+ * @internal
+ */
+interface Types extends OptionsHandlerTypes {
+  Parsed: ParsedCaller,
+  Parseable: OneOrMany<Caller> | undefined | null,
+}
 
 /**
  * @internal
@@ -29,40 +37,28 @@ export interface ParsedCaller extends Parsed<'Caller'> {
 /**
  * @internal
  */
-interface CallerConfigTypes extends OptionsHandlerTypes {
-  Parsed: ParsedCaller,
-  Parseable: OneOrMany<Caller> | undefined,
-  Decoded: DecoderType<typeof caller>,
-}
-
-/**
- * @internal
- */
-const caller = optional(oneOrMany(either(
+const decoder = nullish(oneOrMany(either(
   tuple(string),
   tuple(string, string),
-)));
+)), []);
+
+const transformer = decoder.transform((config) => {
+  const callers = (
+    (Array.isArray(config[0]))
+      ?  config
+      : [config]
+  );
+
+  const callerString = callers.map((c) => {
+    return (c[1]) ? `${c[0]}/${c[1]}` : c[0];
+  }).join(' ');
+
+  return {
+    userAgent: `${CLIENT_USER_AGENT} ${callerString}`.trim(),
+  };
+});
 
 /**
  * @internal
  */
-export const CallerCfgHandler = new OptionsHandler<CallerConfigTypes>({
-  decoder: caller,
-  refine(config) {
-    const callers = (
-      (!config)
-        ? [] :
-      (Array.isArray(config[0]))
-        ? config
-        : [config]
-    );
-
-    const callerString = callers.map((c) => {
-      return (c[1]) ? `${c[0]}/${c[1]}` : c[0];
-    }).join(' ');
-
-    return {
-      userAgent: `${CLIENT_USER_AGENT} ${callerString}`.trim(),
-    };
-  },
-});
+export const CallerCfgHandler = new OptionsHandler<Types>(transformer);

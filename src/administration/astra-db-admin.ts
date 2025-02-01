@@ -81,13 +81,13 @@ export class AstraDbAdmin extends DbAdmin {
 
     this.#httpClient = new DevOpsAPIHttpClient({
       baseUrl: DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
-      logging: Logger.cfg.concat(rootOpts.adminOptions.logging, adminOpts.logging),
+      logging: Logger.cfg.concat([rootOpts.adminOptions.logging, adminOpts.logging]),
       fetchCtx: rootOpts.fetchCtx,
       emitter: rootOpts.emitter,
       caller: rootOpts.caller,
-      tokenProvider: TokenProvider.opts.concat(dbToken, rootOpts.adminOptions.adminToken, adminOpts.adminToken),
+      tokenProvider: TokenProvider.opts.concat([dbToken, rootOpts.adminOptions.adminToken, adminOpts.adminToken]),
       additionalHeaders: { ...rootOpts.adminOptions.additionalHeaders, ...adminOpts?.additionalHeaders },
-      timeoutDefaults: Timeouts.cfg.concat(rootOpts.adminOptions.timeoutDefaults, adminOpts.timeoutDefaults),
+      timeoutDefaults: Timeouts.cfg.concat([rootOpts.adminOptions.timeoutDefaults, adminOpts.timeoutDefaults]),
     });
 
     this.#dataApiHttpClient = (db._httpClient as DataAPIHttpClient).forDbAdmin(adminOpts);

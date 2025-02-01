@@ -54,7 +54,7 @@ export class CollSerDes extends SerDes<CollSerCtx, CollDesCtx> {
   public static cfg: typeof CollSerDesCfgHandler = CollSerDesCfgHandler;
 
   public constructor(cfg: ParsedSerDesConfig<CollSerDesConfig>) {
-    super(CollSerDes.cfg.concat(DefaultCollectionSerDesCfg, cfg, cfg.enableBigNumbers ? BigNumCollectionDesCfg : CollSerDes.cfg.empty));
+    super(CollSerDes.cfg.concat([DefaultCollectionSerDesCfg, cfg, cfg.enableBigNumbers ? BigNumCollectionDesCfg : CollSerDes.cfg.empty]));
 
     this._getNumRepForPath = (typeof cfg?.enableBigNumbers === 'object')
       ? collNumRepFnFromCfg(cfg.enableBigNumbers)

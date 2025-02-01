@@ -69,11 +69,11 @@ describe('unit.lib.token-providers.opts-handler', () => {
     const emp = TokenProvider.opts.empty;
 
     it('should choose the right-most non-empty token provider', () => {
-      assert.deepStrictEqual(TokenProvider.opts.concat(tp1, tp2, tp3, tp4), tp4);
-      assert.deepStrictEqual(TokenProvider.opts.concat(emp, emp, emp, tp4), tp4);
-      assert.deepStrictEqual(TokenProvider.opts.concat(tp1, tp2, emp, emp), tp2);
-      assert.deepStrictEqual(TokenProvider.opts.concat(emp, emp, emp, emp), emp);
-      assert.deepStrictEqual(TokenProvider.opts.concat(emp, emp, tp3, emp), tp3);
+      assert.deepStrictEqual(TokenProvider.opts.concat([tp1, tp2, tp3, tp4]), tp4);
+      assert.deepStrictEqual(TokenProvider.opts.concat([emp, emp, emp, tp4]), tp4);
+      assert.deepStrictEqual(TokenProvider.opts.concat([tp1, tp2, emp, emp]), tp2);
+      assert.deepStrictEqual(TokenProvider.opts.concat([emp, emp, emp, emp]), emp);
+      assert.deepStrictEqual(TokenProvider.opts.concat([emp, emp, tp3, emp]), tp3);
     });
 
     ensureMonoidalHandlerIsActuallyAMonoid(TokenProvider.opts, [tp1, tp2, tp3, tp4]);

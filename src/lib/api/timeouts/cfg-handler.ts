@@ -12,53 +12,45 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MonoidalOptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
-import { DecoderType, object, optional, positiveNumber } from 'decoders';
+import { MonoidalOptionsHandler, monoids, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
+import { nullish, object, optional, positiveNumber } from 'decoders';
 import { TimeoutDescriptor } from '@/src/lib';
+
+/**
+ * @internal
+ */
+interface Type extends OptionsHandlerTypes {
+  Parsed: ParsedTimeoutDescriptor,
+  Parseable: Partial<TimeoutDescriptor> | undefined | null,
+}
 
 /**
  * @internal
  */
 export type ParsedTimeoutDescriptor = Partial<TimeoutDescriptor> & Parsed<'TimeoutDescriptor'>;
 
-/**
- * @internal
- */
-interface TimeoutCfgTypes extends OptionsHandlerTypes {
-  Parsed: ParsedTimeoutDescriptor,
-  Parseable: Partial<TimeoutDescriptor> | undefined,
-  Decoded: DecoderType<typeof timeoutDescriptor>,
-}
+const monoid = monoids.object({
+  requestTimeoutMs: monoids.optional<number>(),
+  generalMethodTimeoutMs: monoids.optional<number>(),
+  collectionAdminTimeoutMs: monoids.optional<number>(),
+  tableAdminTimeoutMs: monoids.optional<number>(),
+  databaseAdminTimeoutMs: monoids.optional<number>(),
+  keyspaceAdminTimeoutMs: monoids.optional<number>(),
+});
 
 /**
  * @internal
  */
-const timeoutDescriptor = optional(object({
+const decoder = nullish(object({
   requestTimeoutMs: optional(positiveNumber),
   generalMethodTimeoutMs: optional(positiveNumber),
   collectionAdminTimeoutMs: optional(positiveNumber),
   tableAdminTimeoutMs: optional(positiveNumber),
   databaseAdminTimeoutMs: optional(positiveNumber),
   keyspaceAdminTimeoutMs: optional(positiveNumber),
-}));
+}), {});
 
 /**
  * @internal
  */
-export const TimeoutCfgHandler = new MonoidalOptionsHandler<TimeoutCfgTypes>({
-  decoder: timeoutDescriptor,
-  refine(input) {
-    return input ?? this.empty;
-  },
-  concat(configs) {
-    return configs.reduce((acc, next) => ({
-      requestTimeoutMs: next.requestTimeoutMs ?? acc.requestTimeoutMs,
-      generalMethodTimeoutMs: next.generalMethodTimeoutMs ?? acc.generalMethodTimeoutMs,
-      collectionAdminTimeoutMs: next.collectionAdminTimeoutMs ?? acc.collectionAdminTimeoutMs,
-      tableAdminTimeoutMs: next.tableAdminTimeoutMs ?? acc.tableAdminTimeoutMs,
-      databaseAdminTimeoutMs: next.databaseAdminTimeoutMs ?? acc.databaseAdminTimeoutMs,
-      keyspaceAdminTimeoutMs: next.keyspaceAdminTimeoutMs ?? acc.keyspaceAdminTimeoutMs,
-    }), this.empty);
-  },
-  empty: {},
-});
+export const TimeoutCfgHandler = new MonoidalOptionsHandler<Type>(decoder, monoid);

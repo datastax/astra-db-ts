@@ -14,7 +14,11 @@
 
 import { Decoder } from 'decoders';
 import { nullish } from '@/src/lib/index';
+import { findLast } from '@/src/lib/utils';
 
+/**
+ * @public
+ */
 export class OptionParseError extends Error {
   constructor(message: string, public readonly field: string | undefined) {
     super(message);
@@ -39,45 +43,27 @@ export type Unparse<T> = Omit<T, typeof __parsed>;
 /**
  * @internal
  */
-export interface OptionsHandlerImpl<Types extends OptionsHandlerTypes> {
-  decoder: Decoder<Types['Parseable']>,
-  refine: (input: Types['Decoded'], field: string | undefined) => Unparse<Types['Parsed']>,
-}
-
-/**
- * @internal
- */
-export interface MonoidalOptionsHandlerImpl<Types extends OptionsHandlerTypes> extends OptionsHandlerImpl<Types> {
-  concat(configs: Types['Parsed'][]): Unparse<Types['Parsed']>,
-  empty: Unparse<Types['Parsed']>,
-}
-
-/**
- * @internal
- */
 export interface OptionsHandlerTypes {
   Parsed: Parsed<string> & unknown,
   Parseable: unknown,
-  Decoded: unknown,
 }
 
 /**
  * @internal
  */
 export class OptionsHandler<Types extends OptionsHandlerTypes> {
-  public readonly decoder: Decoder<Types['Parseable']>;
+  public readonly decoder: Decoder<Types['Parsed']>;
 
   public readonly parseable!: Types['Parseable'];
   public readonly parsed!: Types['Parsed'];
 
-  constructor(protected readonly impl: OptionsHandlerImpl<Types>) {
-    this.decoder = impl.decoder;
+  constructor(decoder: Decoder<Unparse<Types['Parsed']>>) {
+    this.decoder = decoder as Decoder<Types['Parsed']>;
   }
 
   public parse(input: Types['Parseable'], field?: string): Types['Parsed'] {
     try {
-      const decoded = this.impl.decoder.verify(input);
-      return assertParsed(this.impl.refine(decoded, field));
+      return assertParsed(this.decoder.verify(input));
     } catch (e) {
       if (!(e instanceof Error) || e.name !== 'Decoding error') {
         throw e;
@@ -94,25 +80,86 @@ export class OptionsHandler<Types extends OptionsHandlerTypes> {
 /**
  * @internal
  */
-export class MonoidalOptionsHandler<Types extends OptionsHandlerTypes> extends OptionsHandler<Types> {
+export class MonoidalOptionsHandler<Types extends OptionsHandlerTypes> extends OptionsHandler<Types> implements Monoid<Unparse<Types['Parsed']>> {
   public readonly empty: Types['Parsed'];
 
-  constructor(protected readonly impl: MonoidalOptionsHandlerImpl<Types>) {
-    super(impl);
-    this.empty = assertParsed(impl.empty);
+  constructor(decoder: Decoder<Unparse<Types['Parsed']>>, private readonly monoid: Monoid<Unparse<Types['Parsed']>>) {
+    super(decoder);
+    this.empty = assertParsed(monoid.empty);
   }
 
-  public concat(...configs: Types['Parsed'][]): Types['Parsed'] {
-    return assertParsed(this.impl.concat(configs));
+  public concat(configs: Types['Parsed'][]): Types['Parsed'] {
+    return assertParsed(this.monoid.concat(configs));
   }
 
   public concatParse(configs: Types['Parsed'][], raw: Types['Parseable'], field?: string): Types['Parsed'] {
-    return this.concat(...configs, this.parse(raw, field));
+    return this.concat([...configs, this.parse(raw, field)]);
   }
 
   public concatParseWithin<Field extends string>(configs: Types['Parsed'][], obj: Partial<Record<Field, Types['Parseable']>> | nullish, field: Field | `${string}.${Field}`): Types['Parsed'] {
-    return this.concat(...configs, this.parseWithin(obj, field));
+    return this.concat([...configs, this.parseWithin(obj, field)]);
   }
 }
 
 const assertParsed = <T>(input: T): Parsed<string> => input as T & Parsed<string>;
+
+/**
+ * @internal
+ */
+export interface Monoid<A> {
+  empty: A;
+  concat(as: A[]): A;
+}
+
+/**
+ * @internal
+ */
+type MonoidSchema<T> = {
+  [K in keyof T]: Monoid<T[K]>;
+};
+
+/**
+ * @internal
+ */
+export type MonoidType<T> = T extends Monoid<infer U> ? U : never;
+
+/**
+ * @internal
+ */
+export const monoids = <const>{
+  optional: <T>(): Monoid<T | undefined> => ({
+    empty: undefined,
+    concat: findLast<T | undefined>((a) => a !== undefined && a !== null),
+  }),
+  record: <T>(): Monoid<Record<string, T>> => ({
+    empty: {},
+    concat: (as) => as.reduce((acc, next) => ({ ...acc, ...next }), {}),
+  }),
+  array: <T>(): Monoid<T[]> => ({
+    empty: [],
+    concat: (as) => as.flat(),
+  }),
+  prependingArray: <T>(): Monoid<T[]> => ({
+    empty: [],
+    concat: (as) => as.reduce((acc, next) => [...next, ...acc], []),
+  }),
+  object<const T>(schema: MonoidSchema<T>): Monoid<T> {
+    const schemaEntries = Object.entries(schema) as [keyof typeof schema, Monoid<any>][];
+
+    const empty = Object.fromEntries(schemaEntries.map(([k, v]) => [k, v.empty])) as T;
+
+    const concat = (configs: T[]): T => {
+      const result = { ...empty } as T;
+
+      for (const config of configs) {
+        for (const [key, monoid] of schemaEntries) {
+          result[key] = monoid.concat([result[key], config[key]]);
+        }
+      }
+
+      return result;
+    };
+
+    return { empty, concat };
+  },
+};

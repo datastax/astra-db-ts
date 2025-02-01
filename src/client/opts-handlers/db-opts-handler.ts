@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MonoidalOptionsHandler, OptionsHandlerTypes, Parsed, Unparse } from '@/src/lib/opts-handler';
+import { MonoidalOptionsHandler, monoids, MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
 import { DbOptions } from '@/src/client';
 import { TokenProvider } from '@/src/lib';
-import { Decoder, DecoderType, nullish, object, oneOf, optional, record, regex, string, unknown } from 'decoders';
+import { nullish, object, oneOf, optional, record, regex, string } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { Logger } from '@/src/lib/logging/logger';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
@@ -24,39 +24,43 @@ import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 /**
  * @internal
  */
-export interface ParsedDbOptions extends Parsed<'DbOptions'> {
-  logging: typeof Logger.cfg.parsed,
-  token: typeof TokenProvider.opts.parsed,
-  keyspace: string | undefined,
-  dataApiPath: string | undefined,
-  collSerdes: typeof CollSerDes.cfg.parsed,
-  tableSerdes: typeof TableSerDes.cfg.parsed,
-  additionalHeaders: Record<string, string>,
-  timeoutDefaults: typeof Timeouts.cfg.parsed,
-}
-
-/**
- * @internal
- */
-interface DbOptsTypes extends OptionsHandlerTypes {
+interface Types extends OptionsHandlerTypes {
   Parsed: ParsedDbOptions,
-  Parseable: DbOptions | undefined,
-  Decoded: DecoderType<typeof dbOpts>,
+  Parseable: DbOptions | undefined | null,
 }
 
 /**
  * @internal
  */
-const dbOpts = optional(object({
+export type ParsedDbOptions = MonoidType<typeof monoid> & Parsed<'DbOptions'>;
+
+/**
+ * @internal
+ */
+const monoid = monoids.object({
+  logging: Logger.cfg,
+  token: TokenProvider.opts,
+  keyspace: monoids.optional<string>(),
+  dataApiPath: monoids.optional<string>(),
+  collSerdes: CollSerDes.cfg,
+  tableSerdes: TableSerDes.cfg,
+  additionalHeaders: monoids.record<string>(),
+  timeoutDefaults: Timeouts.cfg,
+});
+
+/**
+ * @internal
+ */
+const decoder = nullish(object({
   logging: Logger.cfg.decoder,
   token: TokenProvider.opts.decoder,
   dataApiPath: optional(string),
   additionalHeaders: optional(record(string)),
-  keyspace: nullish(regex(/^\w{1,48}$/, 'Expected a string of 1-48 alphanumeric characters')),
+  keyspace: optional(regex(/^\w{1,48}$/, 'Expected a string of 1-48 alphanumeric characters')),
   timeoutDefaults: Timeouts.cfg.decoder,
   serdes: optional(object({
-    collection: unknown as Decoder<any>,
-    table: unknown as Decoder<any>,
+    collection: CollSerDes.cfg.decoder,
+    table: TableSerDes.cfg.decoder,
     mutateInPlace: optional(oneOf(<const>[true, false])),
   })),
 }));
@@ -64,48 +68,27 @@ const dbOpts = optional(object({
 /**
  * @internal
  */
-export const DbOptsHandler = new MonoidalOptionsHandler<DbOptsTypes>({
-  decoder: dbOpts,
-  refine(input, field) {
-    const mutateInPlace = input?.serdes?.mutateInPlace;
+const transformer = decoder.transform((input) => {
+  if (!input) {
+    return monoid.empty;
+  }
 
-    const tableSerdes = TableSerDes.cfg.parseWithin<'table'>(input?.serdes, `${field}.serdes.table`);
-    tableSerdes.mutateInPlace = mutateInPlace ?? tableSerdes.mutateInPlace;
+  if (input.serdes) {
+    input.serdes.collection.mutateInPlace ??= input.serdes.mutateInPlace;
+    input.serdes.table.mutateInPlace ??= input.serdes.mutateInPlace;
+  }
 
-    const collSerdes = CollSerDes.cfg.parseWithin<'collection'>(input?.serdes, `${field}.serdes.collection`);
-    collSerdes.mutateInPlace = mutateInPlace ?? collSerdes.mutateInPlace;
-
-    return {
-      logging: Logger.cfg.parseWithin(input, `${field}.logging`),
-      token: TokenProvider.opts.parseWithin(input, `${field}.token`),
-      keyspace: input?.keyspace ?? undefined,
-      dataApiPath: input?.dataApiPath ?? undefined,
-      collSerdes: collSerdes,
-      tableSerdes: tableSerdes,
-      additionalHeaders: input?.additionalHeaders ?? {},
-      timeoutDefaults: Timeouts.cfg.parseWithin(input, `${field}.timeoutDefaults`),
-    };
-  },
-  concat(configs): Unparse<ParsedDbOptions> {
-    return configs.reduce<Unparse<ParsedDbOptions>>((acc, next) => ({
-      logging: Logger.cfg.concat(acc.logging, next.logging),
-      token: TokenProvider.opts.concat(acc.token, next.token),
-      keyspace: next.keyspace ?? acc.keyspace,
-      dataApiPath: next.dataApiPath ?? acc.dataApiPath,
-      collSerdes: CollSerDes.cfg.concat(acc.collSerdes, next.collSerdes),
-      tableSerdes: TableSerDes.cfg.concat(acc.tableSerdes, next.tableSerdes),
-      additionalHeaders: { ...acc.additionalHeaders, ...next.additionalHeaders },
-      timeoutDefaults: Timeouts.cfg.concat(acc.timeoutDefaults, next.timeoutDefaults),
-    }), DbOptsHandler.empty);
-  },
-  empty: {
-    logging: Logger.cfg.empty,
-    token: TokenProvider.opts.empty,
-    keyspace: undefined,
-    dataApiPath: undefined,
-    collSerdes: CollSerDes.cfg.empty,
-    tableSerdes: TableSerDes.cfg.empty,
-    additionalHeaders: {},
-    timeoutDefaults: Timeouts.cfg.empty,
-  },
+  return {
+    ...input,
+    keyspace: input.keyspace,
+    dataApiPath: input.dataApiPath,
+    collSerdes: input.serdes?.collection ?? CollSerDes.cfg.empty,
+    tableSerdes: input.serdes?.table ?? TableSerDes.cfg.empty,
+    additionalHeaders: input.additionalHeaders ?? {},
+  };
 });
+
+/**
+ * @internal
+ */
+export const DbOptsHandler = new MonoidalOptionsHandler<Types>(transformer, monoid);

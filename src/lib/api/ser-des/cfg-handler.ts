@@ -13,9 +13,9 @@
 // limitations under the License.
 
 import { array, boolean, Decoder, inexact, oneOf, optional } from 'decoders';
-import { BaseSerDesConfig, KeyTransformer, RawCodec } from '@/src/lib';
+import { BaseSerDesConfig, KeyTransformer, RawCodec, SerDesFn } from '@/src/lib';
 import { anyInstanceOf, function_, oneOrMany, toArray } from '@/src/lib/utils';
-import { Parsed, Unparse } from '@/src/lib/opts-handler';
+import { monoids, Parsed, Unparse } from '@/src/lib/opts-handler';
 
 /**
  * @internal
@@ -36,44 +36,34 @@ export const serDesDecoders = <const>{
 /**
  * @internal
  */
-export const serDesTransform = (config: BaseSerDesConfig<any, any> | null | undefined): SomeInternalSerDesConfig => ({
-  codecs: config?.codecs ?? [],
-  serialize: config?.serialize ?? [],
-  deserialize: config?.deserialize ?? [],
-  mutateInPlace: config?.mutateInPlace ?? undefined,
-  keyTransformer: config?.keyTransformer ?? undefined,
+export const serdesMonoidSchema = <const>{
+  codecs: monoids.prependingArray<readonly RawCodec[]>(),
+  serialize: monoids.prependingArray<SerDesFn<any>>(),
+  deserialize: monoids.prependingArray<SerDesFn<any>>(),
+  mutateInPlace: monoids.optional<boolean>(),
+  keyTransformer: monoids.optional<KeyTransformer>(),
+};
+
+/**
+ * @internal
+ */
+export const serDesTransform = (input: BaseSerDesConfig<any, any>): SomeInternalSerDesConfig => ({
+  codecs: input.codecs ?? [],
+  serialize: toArray(input.serialize).filter((a): a is typeof a & {} => !!a),
+  deserialize: toArray(input.deserialize).filter((a): a is typeof a & {} => !!a),
+  mutateInPlace: input.mutateInPlace,
+  keyTransformer: input.keyTransformer,
 });
-
-/**
- * @internal
- */
-export const serDesConcat = (configs: SomeInternalSerDesConfig[]) => {
-  return configs.reduce((acc, next) => ({
-    codecs: [...next.codecs, ...acc.codecs],
-    serialize: [...toArray(next.serialize), ...toArray(acc.serialize)],
-    deserialize: [...toArray(next.deserialize), ...toArray(acc.deserialize)],
-    mutateInPlace: next.mutateInPlace ?? acc.mutateInPlace,
-    keyTransformer: next.keyTransformer ?? acc.keyTransformer,
-  }), serDesEmpty);
-};
-
-/**
- * @internal
- */
-export const serDesEmpty: SomeInternalSerDesConfig & {} = {
-  codecs: [],
-  serialize: [],
-  deserialize: [],
-  mutateInPlace: undefined,
-  keyTransformer: undefined,
-};
 
 /**
  * @internal
  */
 export type ParsedSerDesConfig<Cfg extends BaseSerDesConfig<any, any>> =
   & Parsed<'SerDes'>
-  & Required<Pick<Cfg, 'codecs' | 'serialize' | 'deserialize'>>
+  & Required<Pick<Cfg, 'serialize' | 'deserialize'>>
   & {
     [K in Exclude<keyof Cfg, 'codecs' | 'serialize' | 'deserialize'>]: Cfg[K] | undefined;
   }
+  & {
+    codecs: Cfg['codecs'] & {},
+  };

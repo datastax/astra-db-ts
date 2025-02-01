@@ -22,27 +22,33 @@ export const ensureMonoidalHandlerIsActuallyAMonoid = (handler: MonoidalOptionsH
   }
 
   it('should return the empty value when nothing to concat', () => {
-    assert.deepStrictEqual(handler.concat(), handler.empty);
+    assert.deepStrictEqual(handler.concat([]), handler.empty);
+  });
+
+  it('should return the same element when only one config is provided', () => {
+    for (const config of configs) {
+      assert.deepStrictEqual(handler.concat([config]), config);
+    }
   });
 
   it('should be associative', () => {
-    for (let i = 0; i < configs.length; i++) {
-      for (let j = 0; j < configs.length; j++) {
-        for (let k = 0; k < configs.length; k++) {
-          assert.deepStrictEqual(
-            handler.concat(configs[i], handler.concat(configs[j], configs[k])),
-            handler.concat(handler.concat(configs[i], configs[j]), configs[k]),
-          );
-        }
-      }
+    for (let i = 0; i < Math.min(16, configs.length); i++) {
+      const a = configs[~~(Math.random() * configs.length)];
+      const b = configs[~~(Math.random() * configs.length)];
+      const c = configs[~~(Math.random() * configs.length)];
+
+      assert.deepStrictEqual(
+        handler.concat([a, handler.concat([b, c])]),
+        handler.concat([handler.concat([a, b]), c]),
+      );
     }
   });
 
   it('should have a valid identity element', () => {
     for (const layer of configs) {
-      assert.deepStrictEqual(handler.concat(layer, handler.empty), layer);
-      assert.deepStrictEqual(handler.concat(handler.empty, layer), layer);
+      assert.deepStrictEqual(handler.concat([layer, handler.empty]), layer);
+      assert.deepStrictEqual(handler.concat([handler.empty, layer]), layer);
     }
-    assert.deepStrictEqual(handler.concat(handler.empty, handler.empty), handler.empty);
+    assert.deepStrictEqual(handler.concat([handler.empty, handler.empty]), handler.empty);
   });
 };

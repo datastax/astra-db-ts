@@ -57,7 +57,7 @@ export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
   public static cfg: typeof TableSerDesCfgHandler = TableSerDesCfgHandler;
 
   public constructor(cfg: ParsedSerDesConfig<TableSerDesConfig>) {
-    super(TableSerDes.cfg.concat(DefaultTableSerDesCfg, cfg));
+    super(TableSerDes.cfg.concat([DefaultTableSerDesCfg, cfg]));
   }
 
   protected override adaptSerCtx(ctx: TableSerCtx): TableSerCtx {

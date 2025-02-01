@@ -18,12 +18,13 @@ import {
   DecoderType,
   either,
   inexact,
+  nullish,
   object,
   optional,
   positiveInteger,
   taggedUnion,
 } from 'decoders';
-import { function_, isNullish } from '@/src/lib/utils';
+import { function_ } from '@/src/lib/utils';
 import { OptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
 import { DataAPIHttpOptions } from '@/src/client';
 import type { FetchCtx, Fetcher } from '@/src/lib/api/fetch/types';
@@ -32,16 +33,15 @@ import { FetchH2, FetchNative } from '@/src/lib';
 /**
  * @internal
  */
-interface HttpOptsTypes extends OptionsHandlerTypes {
+interface Types extends OptionsHandlerTypes {
   Parsed: FetchCtx & Parsed<'DataAPIHttpOptions'>,
-  Parseable: DataAPIHttpOptions | undefined,
-  Decoded: DecoderType<typeof httpOpts>,
+  Parseable: DataAPIHttpOptions | undefined | null,
 }
 
 /**
  * @internal
  */
-const httpOpts = optional(taggedUnion('client', {
+const decoder = nullish(taggedUnion('client', {
   'fetch-h2': object({
     client: constant('fetch-h2'),
     preferHttp2: optional(boolean),
@@ -71,29 +71,31 @@ const httpOpts = optional(taggedUnion('client', {
 /**
  * @internal
  */
-export const HttpOptsHandler = new OptionsHandler<HttpOptsTypes>({
-  decoder: httpOpts,
-  refine(input) {
-    const ctx =
-      (input?.client === 'fetch')
-        ? new FetchNative() :
-      (input?.client === 'custom')
-        ? input.fetcher
-        : tryLoadFetchH2(input?.client, input);
+const transformer = decoder.transform((input): FetchCtx => {
+  const ctx =
+    (input?.client === 'fetch')
+      ? new FetchNative() :
+    (input?.client === 'custom')
+      ? input.fetcher
+      : tryLoadFetchH2(input?.client, input);
 
-    return {
-      ctx: ctx,
-      closed: { ref: false },
-    };
-  },
+  return {
+    ctx: ctx,
+    closed: { ref: false },
+  };
 });
 
-const tryLoadFetchH2 = (clientType: 'fetch-h2' | undefined, options: HttpOptsTypes['Decoded'] & { client: 'fetch-h2' } | undefined): Fetcher => {
+/**
+ * @internal
+ */
+export const HttpOptsHandler = new OptionsHandler<Types>(transformer);
+
+const tryLoadFetchH2 = (clientType: 'fetch-h2' | undefined, options: DecoderType<typeof decoder> & { client: 'fetch-h2' } | undefined | null): Fetcher => {
   try {
     const preferHttp2 = options?.preferHttp2 ?? true;
     return new FetchH2(options, preferHttp2);
   } catch (e) {
-    if (isNullish(clientType)) {
+    if (!clientType) {
       return new FetchNative();
     } else {
       throw e;

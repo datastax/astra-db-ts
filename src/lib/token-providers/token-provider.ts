@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import { StaticTokenProvider } from '@/src/lib';
-import { anyInstanceOf, isNullish } from '@/src/lib/utils';
-import { MonoidalOptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
+import { anyInstanceOf, findLast, isNullish } from '@/src/lib/utils';
+import { Monoid, MonoidalOptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
 import { DecoderType, either, optional, string } from 'decoders';
 
 /**
@@ -72,21 +72,29 @@ class UnsetTokenProvider extends TokenProvider {
 /**
  * @internal
  */
-export type ParsedTokenProvider = TokenProvider & Parsed<'TokenProvider'>;
-
-/**
- * @internal
- */
-interface TokenProviderOptsTypes extends OptionsHandlerTypes {
+interface Types extends OptionsHandlerTypes {
   Parsed: ParsedTokenProvider,
   Parseable: TokenProvider | string | undefined,
-  Decoded: DecoderType<typeof tokenProvider>,
+  Decoded: DecoderType<typeof decoder>,
 }
 
 /**
  * @internal
  */
-const tokenProvider = optional(either(
+export type ParsedTokenProvider = TokenProvider & Parsed<'TokenProvider'>;
+
+/**
+ * @internal
+ */
+const monoid: Monoid<TokenProvider> = {
+  empty: UnsetTokenProvider.INSTANCE,
+  concat: findLast<TokenProvider>((a) => a !== UnsetTokenProvider.INSTANCE, UnsetTokenProvider.INSTANCE),
+};
+
+/**
+ * @internal
+ */
+const decoder = optional(either(
   anyInstanceOf(TokenProvider),
   string,
 ));
@@ -94,28 +102,20 @@ const tokenProvider = optional(either(
 /**
  * @internal
  */
-const TokenProviderOptsHandler = new MonoidalOptionsHandler<TokenProviderOptsTypes>({
-  decoder: tokenProvider,
-  refine(input) {
-    if (typeof input === 'string') {
-      return new StaticTokenProvider(input);
-    }
+const transformed = decoder.transform((input) => {
+  if (typeof input === 'string') {
+    return new StaticTokenProvider(input);
+  }
 
-    if (isNullish(input)) {
-      return this.empty;
-    }
+  if (isNullish(input)) {
+    return UnsetTokenProvider.INSTANCE;
+  }
 
-    return input;
-  },
-  concat(configs) {
-    for (let i = configs.length - 1; i >= 0; i--) {
-      if (configs[i] !== this.empty) {
-        return configs[i];
-      }
-    }
-    return this.empty;
-  },
-  empty: UnsetTokenProvider.INSTANCE,
+  return input;
 });
 
+/**
+ * @internal
+ */
+const TokenProviderOptsHandler = new MonoidalOptionsHandler<Types>(transformed, monoid);
 TokenProvider.opts = TokenProviderOptsHandler;

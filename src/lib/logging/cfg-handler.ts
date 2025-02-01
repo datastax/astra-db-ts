@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MonoidalOptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
+import { MonoidalOptionsHandler, monoids, MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
 import { DataAPILoggingConfig, DataAPILoggingEvent, DataAPILoggingOutput } from '@/src/lib';
-import { array, DecoderType, either, nonEmptyArray, object, oneOf, optional } from 'decoders';
+import { array, either, nonEmptyArray, nullish, object, oneOf } from 'decoders';
 import {
   LoggingDefaultOutputs,
   LoggingDefaults,
@@ -27,21 +27,25 @@ import { oneOrMany } from '@/src/lib/utils';
 /**
  * @internal
  */
-export interface ParsedLoggingConfig extends Parsed<'DataAPILoggingConfig'> {
-  layers: {
-    events: readonly Exclude<DataAPILoggingEvent, 'all'>[],
-    emits: readonly DataAPILoggingOutput[],
-  }[],
+interface Types extends OptionsHandlerTypes {
+  Parsed: ParsedLoggingConfig,
+  Parseable: DataAPILoggingConfig | undefined | null,
 }
 
 /**
  * @internal
  */
-interface LoggingConfigTypes extends OptionsHandlerTypes {
-  Parsed: ParsedLoggingConfig,
-  Parseable: DataAPILoggingConfig | undefined,
-  Decoded: DecoderType<typeof loggingConfig>,
-}
+const monoid = monoids.object({
+  layers: monoids.array<{
+    events: readonly Exclude<DataAPILoggingEvent, 'all'>[],
+    emits: readonly DataAPILoggingOutput[],
+  }>(),
+});
+
+/**
+ * @internal
+ */
+export type ParsedLoggingConfig = MonoidType<typeof monoid> & Parsed<'DataAPILoggingConfig'>;
 
 /**
  * @internal
@@ -56,7 +60,7 @@ const oneOfLoggingEventsWithoutAll = oneOf(LoggingEventsWithoutAll).describe('on
 /**
  * @internal
  */
-const loggingConfig = optional(either(
+const decoder = nullish(either(
   oneOfLoggingEvents,
   array(either(
     oneOfLoggingEvents,
@@ -70,44 +74,42 @@ const loggingConfig = optional(either(
 /**
  * @internal
  */
-export const LoggingCfgHandler = new MonoidalOptionsHandler<LoggingConfigTypes>({
-  decoder: loggingConfig,
-  refine(config) {
-    if (!config) {
-      return this.empty;
+const transformer = decoder.transform((config) => {
+  if (!config) {
+    return monoid.empty;
+  }
+
+  if (config === 'all') {
+    return { layers: LoggingDefaults };
+  }
+
+  if (typeof config === 'string') {
+    return { layers: [{ events: [config], emits: LoggingDefaultOutputs[config] }] };
+  }
+
+  const layers = config.flatMap((c) => {
+    if (c === 'all') {
+      return LoggingDefaults;
     }
 
-    if (config === 'all') {
-      return { layers: LoggingDefaults };
+    if (typeof c === 'string') {
+      return [{ events: [c], emits: LoggingDefaultOutputs[c] }];
     }
 
-    if (typeof config === 'string') {
-      return { layers: [{ events: [config], emits: LoggingDefaultOutputs[config] }] };
+    if (c.events === 'all') {
+      return [{ events: LoggingEventsWithoutAll, emits: Array.isArray(c.emits) ? c.emits : [c.emits] }];
     }
 
-    const layers = config.flatMap((c) => {
-      if (c === 'all') {
-        return LoggingDefaults;
-      }
+    return [{
+      events: Array.isArray(c.events) ? c.events : [c.events],
+      emits: Array.isArray(c.emits) ? c.emits : [c.emits],
+    }];
+  });
 
-      if (typeof c === 'string') {
-        return [{ events: [c], emits: LoggingDefaultOutputs[c] }];
-      }
-
-      if (c.events === 'all') {
-        return [{ events: LoggingEventsWithoutAll, emits: Array.isArray(c.emits) ? c.emits : [c.emits] }];
-      }
-
-      return [{
-        events: Array.isArray(c.events) ? c.events : [c.events],
-        emits: Array.isArray(c.emits) ? c.emits : [c.emits],
-      }];
-    });
-
-    return { layers };
-  },
-  concat(configs) {
-    return { layers: configs.flatMap(c => c.layers) };
-  },
-  empty: { layers: [] },
+  return { layers };
 });
+
+/**
+ * @internal
+ */
+export const LoggingCfgHandler = new MonoidalOptionsHandler<Types>(transformer, monoid);

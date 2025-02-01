@@ -143,7 +143,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
       : tokenOrOptions;
 
     const parsedToken = TokenProvider.opts.parse(token, 'token');
-    this.#options = RootOptsHandler(parsedToken, this).parse(rawOptions, 'options');
+    this.#options = RootOptsHandler(parsedToken, this).parse(rawOptions ?? {}, 'options');
 
     Object.defineProperty(this, $CustomInspect, {
       value: () => `DataAPIClient(env="${this.#options.environment}")`,

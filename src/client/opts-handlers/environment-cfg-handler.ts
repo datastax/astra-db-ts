@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DecoderType, oneOf, optional } from 'decoders';
+import { nullish, oneOf } from 'decoders';
 import { OptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
 import { type DataAPIEnvironment, DataAPIEnvironments } from '@/src/lib';
 
@@ -24,21 +24,14 @@ export type ParsedEnvironment = (DataAPIEnvironment | (string & Record<never, ne
 /**
  * @internal
  */
-interface EnvironmentConfigTypes extends OptionsHandlerTypes {
+interface Types extends OptionsHandlerTypes {
+  Parseable: DataAPIEnvironment | undefined | null,
   Parsed: ParsedEnvironment,
-  Parseable: DataAPIEnvironment | undefined,
-  Decoded: DecoderType<typeof environment>,
 }
 
 /**
  * @internal
  */
-const environment = optional(oneOf(DataAPIEnvironments));
-
-/**
- * @internal
- */
-export const EnvironmentCfgHandler = new OptionsHandler<EnvironmentConfigTypes>({
-  decoder: environment,
-  refine: (env) => env ?? 'astra',
-});
+export const EnvironmentCfgHandler = new OptionsHandler<Types>(
+  nullish(oneOf(DataAPIEnvironments), 'astra'),
+);

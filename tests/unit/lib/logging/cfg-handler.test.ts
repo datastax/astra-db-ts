@@ -35,7 +35,8 @@ describe('unit.lib.logging.cfg-handler', () => {
       assert.throws(() => Logger.cfg.parse(cfg), OptionParseError);
     };
 
-    it('should return the empty value on undefined', () => {
+    it('should return the empty value on null/undefined', () => {
+      parseEq(null!, Logger.cfg.empty.layers);
       parseEq(undefined, Logger.cfg.empty.layers);
     });
 
@@ -71,7 +72,6 @@ describe('unit.lib.logging.cfg-handler', () => {
 
       // Various disallowed types
       parseErr(3);
-      parseErr(null);
       parseErr(['all', null]);
       parseErr([3, null]);
       parseErr({ events: 'commandSucceeded', emits: [] });
@@ -111,7 +111,7 @@ describe('unit.lib.logging.cfg-handler', () => {
     const layer4 = layer1;
 
     it('should properly concatenate layers from left to right', () => {
-      assert.deepStrictEqual(Logger.cfg.concat(layer1, layer2, layer3, layer4), {
+      assert.deepStrictEqual(Logger.cfg.concat([layer1, layer2, layer3, layer4]), {
         layers: [layer1.layers, layer2.layers, layer3.layers, layer4.layers].flat(),
       });
     });

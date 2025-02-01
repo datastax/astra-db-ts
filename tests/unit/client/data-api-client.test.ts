@@ -43,6 +43,7 @@ describe('unit.client.data-api-client', () => {
   });
 
   it('should accept valid environments', () => {
+    assert.doesNotThrow(() => new DataAPIClient('dummy-token', { environment: null! }));
     assert.doesNotThrow(() => new DataAPIClient('dummy-token', { environment: undefined }));
 
     for (const environment of DataAPIEnvironments) {
@@ -51,8 +52,6 @@ describe('unit.client.data-api-client', () => {
   });
 
   it('should throw on invalid environments', () => {
-    // @ts-expect-error - testing invalid input
-    assert.throws(() => new DataAPIClient('dummy-token', { environment: null }));
     // @ts-expect-error - testing invalid input
     assert.throws(() => new DataAPIClient('dummy-token', { environment: [] }));
     // @ts-expect-error - testing invalid input
@@ -64,6 +63,7 @@ describe('unit.client.data-api-client', () => {
   });
 
   it('should accept valid callers', () => {
+    assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: null! }));
     assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: undefined }));
     assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: [] }));
     assert.doesNotThrow(() => new DataAPIClient('dummy-token', { caller: ['a', 'b'] }));
@@ -71,8 +71,6 @@ describe('unit.client.data-api-client', () => {
   });
 
   it('should throw on invalid callers', () => {
-    // @ts-expect-error - null technically allowed
-    assert.throws(() => new DataAPIClient('dummy-token', { caller: null }));
     // @ts-expect-error - testing invalid input
     assert.throws(() => new DataAPIClient('dummy-token', { caller: 'invalid-type' }));
     // @ts-expect-error - testing invalid input

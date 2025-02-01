@@ -12,16 +12,31 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { boolean, DecoderType, object, optional } from 'decoders';
+import { boolean, object, optional } from 'decoders';
 import {
   ParsedSerDesConfig,
-  serDesConcat,
   serDesDecoders,
-  serDesEmpty,
+  serdesMonoidSchema,
   serDesTransform,
 } from '@/src/lib/api/ser-des/cfg-handler';
-import { MonoidalOptionsHandler, OptionsHandlerTypes } from '@/src/lib/opts-handler';
+import { MonoidalOptionsHandler, monoids, OptionsHandlerTypes } from '@/src/lib/opts-handler';
 import { TableSerDesConfig } from '@/src/documents';
+
+/**
+ * @internal
+ */
+interface SerDesConfigTypes extends OptionsHandlerTypes {
+  Parsed: ParsedSerDesConfig<TableSerDesConfig>,
+  Parseable: TableSerDesConfig | null | undefined,
+}
+
+/**
+ * @internal
+ */
+const monoid = monoids.object({
+  ...serdesMonoidSchema,
+  sparseData: monoids.optional<boolean>(),
+});
 
 /**
  * @internal
@@ -34,31 +49,11 @@ const decoder = optional(object({
 /**
  * @internal
  */
-interface SerDesConfigTypes extends OptionsHandlerTypes {
-  Parsed: ParsedSerDesConfig<TableSerDesConfig>,
-  Parseable: TableSerDesConfig | null | undefined,
-  Decoded: DecoderType<typeof decoder>,
-}
+const transformer = decoder.transform((input) => (input)
+  ? { ...serDesTransform(input), sparseData: input.sparseData }
+  : monoid.empty);
 
 /**
  * @internal
  */
-export const TableSerDesCfgHandler = new MonoidalOptionsHandler<SerDesConfigTypes>({
-  decoder: decoder,
-  refine(config) {
-    return {
-      ...serDesTransform(config),
-      sparseData: config?.sparseData ?? undefined,
-    };
-  },
-  concat(configs) {
-    return {
-      sparseData: configs.reduce<boolean | undefined>((acc, next) => next?.sparseData ?? acc, undefined),
-      ...serDesConcat(configs),
-    };
-  },
-  empty: {
-    ...serDesEmpty,
-    sparseData: undefined,
-  },
-});
+export const TableSerDesCfgHandler = new MonoidalOptionsHandler<SerDesConfigTypes>(transformer, monoid);

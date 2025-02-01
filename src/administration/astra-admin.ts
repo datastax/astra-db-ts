@@ -74,10 +74,10 @@ export class AstraAdmin {
   constructor(rootOpts: ParsedRootClientOpts, adminOpts: ParsedAdminOptions) {
     this.#defaultOpts = {
       ...rootOpts,
-      adminOptions: AdminOptsHandler.concat(rootOpts.adminOptions, adminOpts),
+      adminOptions: AdminOptsHandler.concat([rootOpts.adminOptions, adminOpts]),
       dbOptions: {
         ...rootOpts.dbOptions,
-        token: TokenProvider.opts.concat(rootOpts.adminOptions.adminToken, adminOpts?.adminToken, rootOpts.dbOptions.token),
+        token: TokenProvider.opts.concat([rootOpts.adminOptions.adminToken, adminOpts?.adminToken, rootOpts.dbOptions.token]),
       },
     };
 
@@ -91,7 +91,7 @@ export class AstraAdmin {
       caller: rootOpts.caller,
       tokenProvider: this.#defaultOpts.adminOptions.adminToken,
       additionalHeaders: this.#defaultOpts.adminOptions.additionalHeaders,
-      timeoutDefaults: Timeouts.cfg.concat(rootOpts.adminOptions.timeoutDefaults, this.#defaultOpts.adminOptions.timeoutDefaults),
+      timeoutDefaults: Timeouts.cfg.concat([rootOpts.adminOptions.timeoutDefaults, this.#defaultOpts.adminOptions.timeoutDefaults]),
     });
 
     Object.defineProperty(this, $CustomInspect, {

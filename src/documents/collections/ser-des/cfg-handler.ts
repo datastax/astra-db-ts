@@ -12,19 +12,34 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DecoderType, either, object, oneOf, optional, record } from 'decoders';
+import { either, object, oneOf, optional, record } from 'decoders';
 import {
   ParsedSerDesConfig,
-  serDesConcat,
   serDesDecoders,
-  serDesEmpty,
+  serdesMonoidSchema,
   serDesTransform,
 } from '@/src/lib/api/ser-des/cfg-handler';
-import { MonoidalOptionsHandler, OptionsHandlerTypes } from '@/src/lib/opts-handler';
-import { CollSerDesConfig } from '@/src/documents';
+import { MonoidalOptionsHandler, monoids, OptionsHandlerTypes } from '@/src/lib/opts-handler';
+import { CollNumRepCfg, CollSerDesConfig, GetCollNumRepFn } from '@/src/documents';
 import { function_ } from '@/src/lib/utils';
 
 const CollNumReps = ['number', 'bigint', 'bignumber', 'string', 'number_or_string'] as const;
+
+/**
+ * @internal
+ */
+interface Types extends OptionsHandlerTypes {
+  Parsed: ParsedSerDesConfig<CollSerDesConfig>,
+  Parseable: CollSerDesConfig | null | undefined,
+}
+
+/**
+ * @internal
+ */
+const monoid = monoids.object({
+  ...serdesMonoidSchema,
+  enableBigNumbers: monoids.optional<CollNumRepCfg | GetCollNumRepFn>(),
+});
 
 /**
  * @internal
@@ -37,31 +52,11 @@ const decoder = optional(object({
 /**
  * @internal
  */
-interface SerDesConfigTypes extends OptionsHandlerTypes {
-  Parsed: ParsedSerDesConfig<CollSerDesConfig>,
-  Parseable: CollSerDesConfig | null | undefined,
-  Decoded: DecoderType<typeof decoder>,
-}
+const transformer = decoder.transform((input) => (input)
+  ? { ...serDesTransform(input), enableBigNumbers: input.enableBigNumbers }
+  : monoid.empty);
 
 /**
  * @internal
  */
-export const CollSerDesCfgHandler = new MonoidalOptionsHandler<SerDesConfigTypes>({
-  decoder: decoder,
-  refine(config) {
-    return {
-      ...serDesTransform(config),
-      enableBigNumbers: config?.enableBigNumbers ?? undefined,
-    };
-  },
-  concat(configs) {
-    return {
-      enableBigNumbers: configs.reduce<CollSerDesConfig['enableBigNumbers']>((acc, next) => next?.enableBigNumbers ?? acc, undefined),
-      ...serDesConcat(configs),
-    };
-  },
-  empty: {
-    ...serDesEmpty,
-    enableBigNumbers: undefined,
-  },
-});
+export const CollSerDesCfgHandler = new MonoidalOptionsHandler<Types>(transformer, monoid);

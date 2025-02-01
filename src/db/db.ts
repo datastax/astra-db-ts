@@ -132,7 +132,7 @@ export class Db {
   constructor(rootOpts: ParsedRootClientOpts, endpoint: string, dbOpts: ParsedDbOptions) {
     this.#defaultOpts = {
       ...rootOpts,
-      dbOptions: DbOptsHandler.concat(rootOpts.dbOptions, dbOpts),
+      dbOptions: DbOptsHandler.concat([rootOpts.dbOptions, dbOpts]),
       adminOptions: AdminOptsHandler.concatParse([rootOpts.adminOptions], {
         adminToken: TokenProvider.opts.parseWithin(dbOpts, 'token'),
       }),

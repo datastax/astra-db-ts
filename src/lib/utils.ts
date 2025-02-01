@@ -188,3 +188,16 @@ export const anyInstanceOf = <T>(cls: abstract new (...args: any[]) => T) => ins
 export const numDigits = (n: number) => {
   return (n !== 0) ? Math.floor(Math.log10(Math.abs(n))) + 1 : 1;
 };
+
+export function findLast<T>(predicate: (value: T, index: number) => boolean): (arr: readonly T[]) => T | undefined
+export function findLast<T>(predicate: (value: T, index: number) => boolean, orElse: T): (arr: readonly T[]) => T
+export function findLast<T>(predicate: (value: T, index: number) => boolean, orElse?: T) {
+  return (arr: readonly T[]): T | undefined => {
+    for (let i = arr.length - 1; i >= 0; i--) {
+      if (predicate(arr[i], i)) {
+        return arr[i];
+      }
+    }
+    return orElse;
+  };
+}

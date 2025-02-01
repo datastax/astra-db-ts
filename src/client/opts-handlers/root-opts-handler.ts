@@ -15,7 +15,7 @@
 import { OptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
 import { DataAPIClient, DataAPIClientOptions } from '@/src/client';
 import { type DataAPIClientEventMap, TokenProvider } from '@/src/lib';
-import { DecoderType, object, optional } from 'decoders';
+import { object } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { Logger } from '@/src/lib/logging/logger';
 import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler';
@@ -24,6 +24,14 @@ import { CallerCfgHandler } from '@/src/client/opts-handlers/caller-cfg-handler'
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
 import { HttpOptsHandler } from '@/src/client/opts-handlers/http-opts-handler';
+
+/**
+ * @internal
+ */
+interface Types extends OptionsHandlerTypes {
+  Parsed: ParsedRootClientOpts,
+  Parseable: DataAPIClientOptions,
+}
 
 /**
  * @internal
@@ -40,16 +48,7 @@ export interface ParsedRootClientOpts extends Parsed<'DataAPIClientOptions'> {
 /**
  * @internal
  */
-interface RootOptsTypes extends OptionsHandlerTypes {
-  Parsed: ParsedRootClientOpts,
-  Parseable: DataAPIClientOptions | undefined,
-  Decoded: DecoderType<typeof rootOpts>,
-}
-
-/**
- * @internal
- */
-const rootOpts = optional(object({
+const decoder = object({
   logging: Logger.cfg.decoder,
   environment: EnvironmentCfgHandler.decoder,
   httpOptions: HttpOptsHandler.decoder,
@@ -57,32 +56,35 @@ const rootOpts = optional(object({
   adminOptions: AdminOptsHandler.decoder,
   caller: CallerCfgHandler.decoder,
   timeoutDefaults: Timeouts.cfg.decoder,
-}));
+});
 
 /**
  * @internal
  */
-export const RootOptsHandler = (defaultToken: typeof TokenProvider.opts.parsed, client: DataAPIClient) => new OptionsHandler<RootOptsTypes>({
-  decoder: rootOpts,
-  refine(options, field) {
-    const dbOptions = DbOptsHandler.parseWithin(options, `${field}.dbOptions`);
-    const adminOptions = AdminOptsHandler.parseWithin(options, `${field}.adminOptions`);
+export const RootOptsHandler = (defaultToken: typeof TokenProvider.opts.parsed, client: DataAPIClient) => {
+  const transformer = decoder.transform((input) => {
+    const dbAdminCommon = {
+      timeoutDefaults: input.timeoutDefaults,
+      logging: input.logging,
+    };
 
     return {
-      environment: EnvironmentCfgHandler.parseWithin(options, `${field}.environment`),
-      fetchCtx: HttpOptsHandler.parseWithin(options, `${field}.httpOptions`),
-      dbOptions: DbOptsHandler.concatParse([dbOptions], {
-        token: TokenProvider.opts.concat(defaultToken, dbOptions.token),
-        timeoutDefaults: options?.timeoutDefaults,
-        logging: options?.logging,
-      }),
-      adminOptions: AdminOptsHandler.concatParse([adminOptions], {
-        adminToken: TokenProvider.opts.concat(defaultToken, adminOptions.adminToken),
-        timeoutDefaults: options?.timeoutDefaults,
-        logging: options?.logging,
-      }),
+      environment: input.environment,
+      fetchCtx: input.httpOptions,
+      caller: input.caller,
       emitter: client,
-      caller: CallerCfgHandler.parseWithin(options, 'caller'),
+      dbOptions: DbOptsHandler.concat([input.dbOptions, {
+        ...DbOptsHandler.empty,
+        token: TokenProvider.opts.concat([defaultToken, input.dbOptions.token]),
+        ...dbAdminCommon,
+      }]),
+      adminOptions: AdminOptsHandler.concat([input.adminOptions, {
+        ...AdminOptsHandler.empty,
+        adminToken: TokenProvider.opts.concat([defaultToken, input.adminOptions.adminToken]),
+        ...dbAdminCommon,
+      }]),
     };
-  },
-});
+  });
+
+  return new OptionsHandler<Types>(transformer);
+};
