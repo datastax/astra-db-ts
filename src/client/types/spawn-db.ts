@@ -169,95 +169,51 @@ export interface DbOptions {
 /**
  * ##### Overview
  *
- * The config for common table/collection serialization/deserialization logic.
+ * The config for table/collection serialization/deserialization options.
  *
- * Such custom logic may be used for various purposes, such as:
- * - Integrating your own custom data types
- * - Validating data before it's sent to the database, or after it's received
- * - Adding support for datatypes not yet supported by the client
+ * See {@link TableSerDesConfig} and {@link CollSerDesConfig} for more much information on the available options.
+ *
+ * Such options include:
+ *  - Enabling the `mutateInPlace` optimization for serializing rows/documents
+ *  - Enabling big number support for collections
+ *  - Enabling "sparse data" for tables
+ *  - Plugging in a key transformer to customize how keys are serialized
+ *    - (e.g. camel to snake case)
+ *  - Implementing custom serialization/deserialization logic through codecs
+ *    - (e.g. custom data types, validation, etc.)
  *
  * ##### Disclaimer
  *
- * This is an advanced feature, and should be used with caution. It's possible to break the client's behavior by using this feature incorrectly.
+ * Some of these options are advanced features, and should be used with caution. It's possible to break the client's behavior by using these features incorrectly.
  *
- * These features are currently generally unstable, and should generally not be used in production (except for a couple, such as `mutateInPlace` or `enableBigNumbers`).
- *
- * See the official DataStax documentation for more info.
+ * Unstable features are marked in the documentation as `@alpha` or `@beta`, and may change in the future.
  *
  * @see CollSerDesConfig
  * @see TableSerDesConfig
- * @see $SerializeForCollections
- * @see $SerializeForTables
  *
- * @beta
+ * @public
  */
 export interface DbSerDesConfig {
   /**
    * Advanced & currently somewhat unstable features related to customizing spawned tables' ser/des behavior at a lower level.
    *
    * Use with caution. See official DataStax documentation for more info.
-   *
-   * @beta
    */
   table?: Omit<TableSerDesConfig, 'mutateInPlace'>,
   /**
    * Advanced & currently somewhat unstable features related to customizing spawned collections' ser/des behavior at a lower level.
    *
    * Use with caution. See official DataStax documentation for more info.
-   *
-   * @beta
    */
   collection?: Omit<CollSerDesConfig, 'mutateInPlace'>,
   /**
    * ##### Overview
    *
-   * Enables an optimization which allows inserted rows/documents to be mutated in-place when serializing.
+   * Enables an optimization which allows inserted rows/documents to be mutated in-place when serializing, instead of cloning them before serialization.
    *
-   * ##### Context
+   * Stable. Will mutate filters & update filters as well.
    *
-   * For example, when you insert a record like so:
-   * ```ts
-   * import { uuid } from '@datastax/astra-db-ts';
-   * await collection.insertOne({ name: 'Alice', friends: { john: uuid('...') } });
-   * ```
-   *
-   * The document is internally serialized as such:
-   * ```ts
-   * { name: 'Alice', friends: { john: { $uuid: '...' } } }
-   * ```
-   *
-   * To avoid mutating a user-provided object, the client will be forced to clone any objects that contain
-   * a custom datatype, as well as their parents (which looks something like this):
-   * ```ts
-   * { ...original, friends: { ...original.friends, john: { $uuid: '...' } } }
-   * ```
-   *
-   * ##### Enabling this option
-   *
-   * This can be a minor performance hit, especially for large objects, so if you're confident that you won't be
-   * needing the object after it's inserted, you can enable this option to avoid the cloning, and instead mutate
-   * the object in-place.
-   *
-   * @example
-   * ```ts
-   * // Before
-   * const collection = db.collection<User>('users');
-   *
-   * const doc = { name: 'Alice', friends: { john: uuid(4) } };
-   * await collection.insertOne(doc);
-   *
-   * console.log(doc); // { name: 'Alice', friends: { john: UUID<4>('...') } }
-   *
-   * // After
-   * const collection = db.collection<User>('users', {
-   *   serdes: { mutateInPlace: true },
-   * });
-   *
-   * const doc = { name: 'Alice', friends: { john: UUID.v4() } };
-   * await collection.insertOne(doc);
-   *
-   * console.log(doc); // { name: 'Alice', friends: { john: { $uuid: '...' } } }
-   * ```
+   * See {@link BaseSerDesConfig.mutateInPlace} for more information.
    *
    * @defaultValue false
    */

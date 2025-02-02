@@ -50,8 +50,156 @@ export type SerDesFnRet = readonly [0 | 1 | 2 | 3, any?];
  * @public
  */
 export interface BaseSerDesConfig<SerCtx extends BaseSerCtx<any>, DesCtx extends BaseDesCtx<any>> {
+  /**
+   * ##### Overview (Alpha)
+   *
+   * Provides a structured interface for integrating custom serialization/deserialization logic for documents/rows, filters, ids, etc.
+   *
+   * You may create implementations of these codecs through the {@link TableCodecs} and {@link CollCodecs} classes.
+   *
+   * See {@link TableSerDesConfig.codecs} & {@link CollSerDesConfig.codecs} for much more information.
+   *
+   * ##### Disclaimer
+   *
+   * Codecs are a powerful feature, but should be used with caution. It's possible to break the client's behavior by using the features incorrectly.
+   *
+   * Always test your codecs with a variety of documents to ensure that they behave as expected, before using them on real data.
+   *
+   * @alpha
+   */
   codecs?: (readonly RawCodec<SerCtx, DesCtx>[])[],
+  /**
+   * ##### Overview
+   *
+   * Enables an optimization which allows inserted rows/documents to be mutated in-place when serializing.
+   *
+   * The feature is stable; however, the state of any document after being serialized is not guaranteed.
+   *
+   * This will mutate filters and update filters as well.
+   *
+   * ##### Context
+   *
+   * For example, when you insert a record like so:
+   * ```ts
+   * import { uuid } from '@datastax/astra-db-ts';
+   * await collection.insertOne({ name: 'Alice', friends: { john: uuid('...') } });
+   * ```
+   *
+   * The document is internally serialized as such:
+   * ```ts
+   * { name: 'Alice', friends: { john: { $uuid: '...' } } }
+   * ```
+   *
+   * To avoid mutating a user-provided object, the client will be forced to clone any objects that contain
+   * a custom datatype, as well as their parents (which looks something like this):
+   * ```ts
+   * { ...original, friends: { ...original.friends, john: { $uuid: '...' } } }
+   * ```
+   *
+   * ##### Enabling this option
+   *
+   * This can be a minor performance hit, especially for large objects, so if you're confident that you won't be
+   * needing the object after it's inserted, you can enable this option to avoid the cloning, and instead mutate
+   * the object in-place.
+   *
+   * @example
+   * ```ts
+   * // Before
+   * const collection = db.collection<User>('users');
+   *
+   * const doc = { name: 'Alice', friends: { john: uuid(4) } };
+   * await collection.insertOne(doc);
+   *
+   * console.log(doc); // { name: 'Alice', friends: { john: UUID<4>('...') } }
+   *
+   * // After
+   * const collection = db.collection<User>('users', {
+   *   serdes: { mutateInPlace: true },
+   * });
+   *
+   * const doc = { name: 'Alice', friends: { john: UUID.v4() } };
+   * await collection.insertOne(doc);
+   *
+   * console.log(doc); // { name: 'Alice', friends: { john: { $uuid: '...' } } }
+   * ```
+   *
+   * @defaultValue false
+   */
   mutateInPlace?: boolean,
+  /**
+   * ##### Overview (Beta)
+   *
+   * A key transformer to customize how keys are serialized/deserialized.
+   *
+   * May be most commonly used to convert between camelCase and snake_case, via the {@link Camel2SnakeCase} transformer.
+   *
+   * ##### General usage
+   *
+   * - The key transformer is run immediately before the document is sent to the server, and immediately after the document is received from the server.
+   *   - This means that any custom codecs should treat the document as if the keys are in the format that the client expects (e.g., camelCase).
+   * - The key transformer only affects inserted/read rows/documents, filters, and table primary keys.
+   *   - **Things like table/index definitions are not affected**.
+   *
+   * ##### Camel2SnakeCase-specific usage
+   *
+   * - Nested objects are not affected by the key transformer unless explicitly enabled (see {@link Camel2SnakeCaseOptions.transformNested} for more info).
+   * - `_id` and fields starting with a `$` are excluded by default, but may be un-excluded by setting the appropriate options to `false`.
+   *
+   * See `examples/serdes/.../key-transformer.ts` for complete examples for tables/collections.
+   *
+   * @example
+   * ```ts
+   * // As far as the client is concerned, the keys in the document are in camelCase
+   * interface TableSchema {
+   *   userId: string,
+   *   fullName: string,
+   *   birthday: Date,
+   * }
+   *
+   * // Note that the columns still need to be defined in snake_case
+   * const table = await db.createTable<TableSchema>('users', {
+   *   definition: {
+   *     columns: {
+   *       user_id: 'text',
+   *       full_name: 'text',
+   *       birthday: 'timestamp',
+   *     },
+   *     primaryKey: 'user_id',
+   *   },
+   *   serdes: {
+   *     keyTransformer: new Camel2SnakeCase(),
+   *   },
+   * });
+   *
+   * // Outside of ser/des-ing a document, row, [update] filter, etc.,
+   * // the key transformer will not be used.
+   * await table.createIndex('name_idx', 'full_name');
+   *
+   * // Insert & find the document using camelCase keys
+   * const inserted = await table.insertOne({
+   *   userId: 'alice123',
+   *   fullName: 'Alice W. Land',
+   *   birthday: new Date('1990-01-01'),
+   * });
+   *
+   * // { userId: 'alice123' }
+   * console.log(inserted.insertedId);
+   *
+   * // { userId: 'alice123', fullName: 'Alice W. Land', birthday: Date('1990-01-01') }
+   * const found = await table.findOne({ fullName: 'Alice W. Land' });
+   * console.log(found);
+   * ```
+   *
+   * ##### Disclaimer
+   *
+   * Key transformers are a powerful feature, but should be used with caution. It's possible to break the client's behavior by using the features incorrectly.
+   *
+   * Always test your key transformer with a variety of documents to ensure that it behaves as expected, before using it on real data.
+   *
+   * @see Camel2SnakeCase
+   *
+   * @beta
+   */
   keyTransformer?: KeyTransformer,
 }
 

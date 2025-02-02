@@ -44,8 +44,8 @@ export interface TableDesCtx extends BaseDesCtx<TableDesCtx> {
  * @public
  */
 export interface TableSerDesConfig extends BaseSerDesConfig<TableSerCtx, TableDesCtx> {
-  codecs?: RawTableCodecs[],
   sparseData?: boolean,
+  codecs?: RawTableCodecs[],
 }
 
 /**
