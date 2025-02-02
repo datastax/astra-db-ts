@@ -73,13 +73,13 @@ describe('unit.documents.tables.ser-des.codecs', () => {
         },
         {
           forName: {
-            ...Object.fromEntries(repeat((i) => [`name${i}`, ['$DeserializeForTable', `name${i}:des_fn`, `name${i}:serdes_fn`]])),
+            ...Object.fromEntries(repeat((i) => [`name${i}`, ['$DeserializeForTable', `name${i}:des_fn`, `name${i}:serdes_fn`].reverse()])),
           },
           forType: {
-            ...Object.fromEntries(repeat((i) => [`type${i}`, ['$DeserializeForTable', `type${i}:des_fn`]])),
+            ...Object.fromEntries(repeat((i) => [`type${i}`, ['$DeserializeForTable', `type${i}:des_fn`].reverse()])),
           },
           forGuard: [
-            ...repeat((i) => ({ guard: `custom${i}:des_guard`, fn: `custom${i}:des_fn` })),
+            ...repeat((i) => ({ guard: `custom${i}:des_guard`, fn: `custom${i}:des_fn` })).reverse(),
           ],
           forPath: {},
         },

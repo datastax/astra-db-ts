@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import { array, boolean, Decoder, inexact, oneOf, optional } from 'decoders';
-import { BaseSerDesConfig, KeyTransformer, RawCodec, SerDesFn } from '@/src/lib';
-import { anyInstanceOf, function_, oneOrMany, toArray } from '@/src/lib/utils';
+import { BaseSerDesConfig, KeyTransformer, RawCodec } from '@/src/lib';
+import { anyInstanceOf } from '@/src/lib/utils';
 import { monoids, Parsed, Unparse } from '@/src/lib/opts-handler';
 
 /**
@@ -27,8 +27,6 @@ type SomeInternalSerDesConfig = Unparse<ParsedSerDesConfig<BaseSerDesConfig<any,
  */
 export const serDesDecoders = <const>{
   codecs: optional(array(array(inexact({ tag: oneOf(['forName', 'forPath', 'forType', 'custom']) }) as Decoder<RawCodec>))),
-  serialize: optional(oneOrMany(function_)),
-  deserialize: optional(oneOrMany(function_)),
   mutateInPlace: optional(boolean),
   keyTransformer: optional(anyInstanceOf(KeyTransformer)),
 };
@@ -38,8 +36,6 @@ export const serDesDecoders = <const>{
  */
 export const serdesMonoidSchema = <const>{
   codecs: monoids.prependingArray<readonly RawCodec[]>(),
-  serialize: monoids.prependingArray<SerDesFn<any>>(),
-  deserialize: monoids.prependingArray<SerDesFn<any>>(),
   mutateInPlace: monoids.optional<boolean>(),
   keyTransformer: monoids.optional<KeyTransformer>(),
 };
@@ -49,8 +45,6 @@ export const serdesMonoidSchema = <const>{
  */
 export const serDesTransform = (input: BaseSerDesConfig<any, any>): SomeInternalSerDesConfig => ({
   codecs: input.codecs ?? [],
-  serialize: toArray(input.serialize).filter((a): a is typeof a & {} => !!a),
-  deserialize: toArray(input.deserialize).filter((a): a is typeof a & {} => !!a),
   mutateInPlace: input.mutateInPlace,
   keyTransformer: input.keyTransformer,
 });
@@ -60,9 +54,8 @@ export const serDesTransform = (input: BaseSerDesConfig<any, any>): SomeInternal
  */
 export type ParsedSerDesConfig<Cfg extends BaseSerDesConfig<any, any>> =
   & Parsed<'SerDes'>
-  & Required<Pick<Cfg, 'serialize' | 'deserialize'>>
   & {
-    [K in Exclude<keyof Cfg, 'codecs' | 'serialize' | 'deserialize'>]: Cfg[K] | undefined;
+    [K in Exclude<keyof Cfg, 'codecs'>]: Cfg[K] | undefined;
   }
   & {
     codecs: Cfg['codecs'] & {},

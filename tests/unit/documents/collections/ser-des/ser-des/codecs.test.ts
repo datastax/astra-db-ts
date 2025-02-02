@@ -15,10 +15,10 @@
 
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
-import { CollDesCtx, CollSerDes, CollSerCtx } from '@/src/documents/collections/ser-des/ser-des';
+import { CollDesCtx, CollSerCtx, CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 import { $DeserializeForCollection, $SerializeForCollection, CollCodec, CollCodecs } from '@/src/documents/collections';
 import { uuid, UUID } from '@/src/documents';
-import { ctxContinue, ctxDone, ctxRecurse } from '@/src/lib/api/ser-des/ctx';
+import { ctxDone, ctxNevermind, ctxRecurse } from '@/src/lib/api/ser-des/ctx';
 
 describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
   describe('forPath', () => {
@@ -26,7 +26,7 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
       const serPaths = [] as unknown[];
       const desPaths = [] as unknown[];
 
-      const visit = (arr: unknown[], v: unknown) => (value: unknown) => (arr.push(v ?? value), ctxContinue());
+      const visit = (arr: unknown[], v: unknown) => (value: unknown) => (arr.push(v ?? value), ctxNevermind());
       const serdesFns = (v: unknown = null) => ({ serialize: visit(serPaths, v), deserialize: visit(desPaths, v) });
 
       const serdes = new CollSerDes({
@@ -75,28 +75,22 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
         }],
       };
 
+      const expect = [
+        [obj, 'root:0'],
+        [obj.name, 'name:1', 'name:2', '[*]'],
+        [obj.cars, '[*]'],
+        [obj.cars[0]],
+        [obj.cars[0].name, 'cars[*][name]'],
+        [obj.cars[0].pastOwners],
+        [obj.cars[0].pastOwners[0], '[*][0][*][*]'],
+        [obj.cars[0].pastOwners.one, '[*][0][*][*]'],
+      ];
+
       serdes.serialize(obj);
-      assert.deepStrictEqual(serPaths, [
-        obj,
-        'root:0',
-        obj.name,
-        'name:1',
-        'name:2',
-        '[*]',
-        obj.cars,
-        '[*]',
-        obj.cars[0],
-        obj.cars[0].name,
-        'cars[*][name]',
-        obj.cars[0].pastOwners,
-        obj.cars[0].pastOwners[0],
-        '[*][0][*][*]',
-        obj.cars[0].pastOwners.one,
-        '[*][0][*][*]',
-      ]);
+      assert.deepStrictEqual(serPaths, expect.flat());
 
       serdes.deserialize(obj, {});
-      assert.deepStrictEqual(desPaths, serPaths);
+      assert.deepStrictEqual(desPaths, expect.map((v) => v.reverse()).flat());
     });
 
     it('should keep matching the same path til done/continue', () => {
@@ -109,12 +103,12 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
           ...CollSerDes.cfg.empty,
           codecs: [
             ...repeat(() => CollCodecs.forPath([], {
-              serialize: () => --ser ? ctxContinue() : signal,
-              deserialize: () => --des ? ctxContinue() : signal,
+              serialize: () => --ser ? ctxNevermind() : signal,
+              deserialize: () => --des ? ctxNevermind() : signal,
             })),
             CollCodecs.forPath(['field'], {
-              serialize: () => (--ser, ctxContinue()),
-              deserialize: () => (--des, ctxContinue()),
+              serialize: () => (--ser, ctxNevermind()),
+              deserialize: () => (--des, ctxNevermind()),
             }),
           ],
           mutateInPlace: true,
@@ -137,7 +131,7 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
       }
 
       const IdCodec = CollCodecs.forId({
-        serialize: (val, ctx) => ctx.continue(val.unwrap),
+        serialize: (val, ctx) => ctx.replace(val.unwrap),
         deserialize: (val, ctx) => ctx.recurse(new Id(val)),
       });
       const serdes = new CollSerDes({ ...CollSerDes.cfg.empty, codecs: [IdCodec], enableBigNumbers: () => 'bigint' });
@@ -162,7 +156,7 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
         }
 
         [$SerializeForCollection](ctx: CollSerCtx) {
-          return ctx.continue(this.unwrap);
+          return ctx.replace(this.unwrap);
         }
       }
 
@@ -177,73 +171,6 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
 
       const des = serdes.deserialize(ser[0], {});
       assert.deepStrictEqual(des, { _id: id, value: 1n });
-    });
-  });
-
-  describe('forName', () => {
-    it('should keep matching the same path til done/continue', () => {
-      const repeat = <T>(mk: (n: number) => T) => Array.from({ length: 10 }, (_, i) => mk(i));
-
-      for (const signal of [ctxRecurse(), ctxDone()] as const) {
-        let ser = 5, des = 5;
-
-        const serdes = new CollSerDes({
-          ...CollSerDes.cfg.empty,
-          codecs: [
-            ...repeat(() => CollCodecs.forName('', {
-              serialize: () => --ser ? ctxContinue() : signal,
-              deserialize: () => --des ? ctxContinue() : signal,
-            })),
-            CollCodecs.forName('field', {
-              serialize: () => (--ser, ctxContinue()),
-              deserialize: () => (--des, ctxContinue()),
-            }),
-          ],
-          mutateInPlace: true,
-        });
-
-        serdes.serialize({ field: 3 });
-        assert.strictEqual(ser, signal === ctxRecurse() ? -1 : 0);
-
-        serdes.deserialize({ field: 3 }, {});
-        assert.strictEqual(des, signal === ctxRecurse() ? -1 : 0);
-      }
-    });
-  });
-
-  describe('forType', () => {
-    class Type {
-      constructor(public readonly unwrap: UUID) {}
-    }
-
-    it('should keep matching the same path til done/continue', () => {
-      const repeat = <T>(mk: (n: number) => T) => Array.from({ length: 10 }, (_, i) => mk(i));
-
-      for (const signal of [ctxRecurse, ctxDone] as const) {
-        let ser = 5, des = 5;
-
-        const serdes = new CollSerDes({
-          ...CollSerDes.cfg.empty,
-          codecs: [
-            ...repeat(() => CollCodecs.forType('type', {
-              serializeClass: Type,
-              serialize: (v, ctx) => --ser ? ctxContinue() : (ctx.mapAfter((v) => v.id), signal({ id: v.unwrap })),
-              deserialize: (v) => --des ? ctxContinue() : signal(new Type(v.type)),
-            })),
-            CollCodecs.forType('$uuid', {
-              serializeGuard: (v) => v instanceof UUID,
-              serialize: () => (--ser, ctxContinue()),
-              deserialize: () => (--des, ctxContinue()),
-            }),
-          ],
-        });
-
-        serdes.serialize({ type: new Type(uuid(4)) });
-        assert.strictEqual(ser, signal === ctxRecurse ? -1 : 0);
-
-        serdes.deserialize({ type: { $uuid: uuid(4).toString() } }, {});
-        assert.strictEqual(des, signal === ctxRecurse ? -1 : 0);
-      }
     });
   });
 });

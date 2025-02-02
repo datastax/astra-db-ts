@@ -19,7 +19,7 @@ import {
   ListTableUnsupportedColumnDefinition,
 } from '@/src/db';
 import { RawTableCodecs, TableCodecs } from '@/src/documents/tables/ser-des/codecs';
-import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
+import { BaseDesCtx, BaseSerCtx, NEVERMIND } from '@/src/lib/api/ser-des/ctx';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { isBigNumber, pathMatches } from '@/src/lib/utils';
 import { UnexpectedDataAPIResponseError } from '@/src/client';
@@ -57,7 +57,7 @@ export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
   public static cfg: typeof TableSerDesCfgHandler = TableSerDesCfgHandler;
 
   public constructor(cfg: ParsedSerDesConfig<TableSerDesConfig>) {
-    super(TableSerDes.cfg.concat([DefaultTableSerDesCfg, cfg]));
+    super(TableSerDes.cfg.concat([codecs, cfg]), serialize, deserialize);
   }
 
   protected override adaptSerCtx(ctx: TableSerCtx): TableSerCtx {
@@ -97,119 +97,119 @@ export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
   }
 }
 
-const DefaultTableSerDesCfg = TableSerDes.cfg.parse({
-  serialize(value, ctx) {
-    let resp: ReturnType<SerDesFn<unknown>> = null!;
+const serialize: SerDesFn<TableSerCtx> = (value, ctx) => {
+  let resp: ReturnType<SerDesFn<unknown>> = null!;
 
-    // Path-based serializers
-    for (const pathSer of ctx.serializers.forPath[ctx.path.length] ?? []) {
-      if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
+  // Path-based serializers
+  for (const pathSer of ctx.serializers.forPath[ctx.path.length] ?? []) {
+    if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+      return resp;
+    }
+  }
+
+  // Name-based serializers
+  const key = ctx.path[ctx.path.length - 1] ?? '';
+  const nameSer = ctx.serializers.forName[key];
+
+  if (nameSer && nameSer.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+    return resp;
+  }
+
+  // Type-based & custom serializers
+  for (const guardSer of ctx.serializers.forGuard) {
+    if (guardSer.guard(value, ctx)) {
+      const resp = guardSer.fn(value, ctx);
+      (resp.length === 2) && (value = resp[1]);
+
+      if (resp[0] !== NEVERMIND) {
         return resp;
       }
     }
+  }
 
-    // Name-based serializers
-    const key = ctx.path[ctx.path.length - 1] ?? '';
-    const nameSer = ctx.serializers.forName[key];
+  if (typeof value === 'number') {
+    if (!isFinite(value)) {
+      return ctx.done(value.toString());
+    }
+  } else if (typeof value === 'object' && value !== null) {
+    // Delegate serializer
+    while ($SerializeForTable in value) {
+      const resp = value[$SerializeForTable](ctx);
 
-    if (nameSer && nameSer.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
+      if (resp[0] !== NEVERMIND) {
+        return resp;
+      }
+
+      if (resp.length === 2) {
+        value = resp[1];
+      } else break;
+    }
+
+    // Class-based serializers
+    const classSer = ctx.serializers.forClass.find((c) => value instanceof c.class);
+
+    if (classSer && classSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
       return resp;
     }
 
-    // Type-based & custom serializers
-    for (const guardSer of ctx.serializers.forGuard) {
-      if (guardSer.guard(value, ctx)) {
-        const resp = guardSer.fn(value, ctx);
-        (resp.length === 2) && (value = resp[1]);
-
-        if (resp[0] !== CONTINUE) {
-          return resp;
-        }
-      }
-    }
-
-    if (typeof value === 'number') {
-      if (!isFinite(value)) {
-        return ctx.done(value.toString());
-      }
-    } else if (typeof value === 'object' && value !== null) {
-      // Delegate serializer
-      while ($SerializeForTable in value) {
-        const resp = value[$SerializeForTable](ctx);
-
-        if (resp[0] !== CONTINUE) {
-          return resp;
-        }
-
-        if (resp.length === 2) {
-          value = resp[1];
-        } else break;
-      }
-
-      // Class-based serializers
-      const classSer = ctx.serializers.forClass.find((c) => value instanceof c.class);
-
-      if (classSer && classSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
-        return resp;
-      }
-
-      // Enable using json-bigint
-      if (isBigNumber(value)) {
-        ctx.bigNumsPresent = true;
-        return ctx.done();
-      }
-    } else if (typeof value === 'bigint') {
+    // Enable using json-bigint
+    if (isBigNumber(value)) {
       ctx.bigNumsPresent = true;
+      return ctx.done();
     }
+  } else if (typeof value === 'bigint') {
+    ctx.bigNumsPresent = true;
+  }
 
-    return ctx.continue(value);
-  },
-  deserialize(value, ctx) {
-    let resp: ReturnType<SerDesFn<unknown>> = null!;
+  return ctx.recurse(value);
+};
 
-    // Path-based deserializers
-    for (const pathSer of ctx.deserializers.forPath[ctx.path.length] ?? []) {
-      if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
+const deserialize: SerDesFn<TableDesCtx> = (value, ctx) => {
+  let resp: ReturnType<SerDesFn<unknown>> = null!;
+
+  // Path-based deserializers
+  for (const pathSer of ctx.deserializers.forPath[ctx.path.length] ?? []) {
+    if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+      return resp;
+    }
+  }
+
+  // Name-based deserializers
+  const key = ctx.path[ctx.path.length - 1] ?? '';
+  const nameDes = ctx.deserializers.forName[key];
+
+  if (nameDes && nameDes.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+    return resp;
+  }
+
+  // Custom deserializers
+  for (const guardDes of ctx.deserializers.forGuard) {
+    if (guardDes.guard(value, ctx)) {
+      const resp = guardDes.fn(value, ctx);
+      (resp.length === 2) && (value = resp[1]);
+
+      if (resp[0] !== NEVERMIND) {
         return resp;
       }
     }
+  }
 
-    // Name-based deserializers
-    const key = ctx.path[ctx.path.length - 1] ?? '';
-    const nameDes = ctx.deserializers.forName[key];
+  if (key === '' || value === null) {
+    return ctx.recurse(value);
+  }
 
-    if (nameDes && nameDes.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
-      return resp;
-    }
+  // Type-based deserializers
+  const type = resolveAbsType(ctx);
+  const typeDes = type && ctx.deserializers.forType[type];
 
-    // Custom deserializers
-    for (const guardDes of ctx.deserializers.forGuard) {
-      if (guardDes.guard(value, ctx)) {
-        const resp = guardDes.fn(value, ctx);
-        (resp.length === 2) && (value = resp[1]);
+  if (typeDes && typeDes.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+    return resp;
+  }
 
-        if (resp[0] !== CONTINUE) {
-          return resp;
-        }
-      }
-    }
+  return ctx.recurse(value);
+};
 
-    if (key === '' || value === null) {
-      return ctx.continue(value);
-    }
-
-    // Type-based deserializers
-    const type = resolveAbsType(ctx);
-    const typeDes = type && ctx.deserializers.forType[type];
-
-    if (typeDes && typeDes.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
-      return resp;
-    }
-
-    return ctx.continue(value);
-  },
-  codecs: Object.values(TableCodecs.Defaults),
-});
+const codecs = TableSerDes.cfg.parse({ codecs: Object.values(TableCodecs.Defaults) });
 
 function populateSparseData(ctx: TableDesCtx) {
   for (const key in ctx.tableSchema) {

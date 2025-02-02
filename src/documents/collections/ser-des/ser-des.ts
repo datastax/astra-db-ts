@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { BaseSerDesConfig, SerDes, SerDesFn } from '@/src/lib/api/ser-des/ser-des';
-import { BaseDesCtx, BaseSerCtx, CONTINUE } from '@/src/lib/api/ser-des/ctx';
+import { BaseDesCtx, BaseSerCtx, NEVERMIND } from '@/src/lib/api/ser-des/ctx';
 import { CollCodecs, RawCollCodecs } from '@/src/documents/collections/ser-des/codecs';
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 import { isBigNumber, pathMatches } from '@/src/lib/utils';
@@ -54,7 +54,7 @@ export class CollSerDes extends SerDes<CollSerCtx, CollDesCtx> {
   public static cfg: typeof CollSerDesCfgHandler = CollSerDesCfgHandler;
 
   public constructor(cfg: ParsedSerDesConfig<CollSerDesConfig>) {
-    super(CollSerDes.cfg.concat([DefaultCollectionSerDesCfg, cfg, cfg.enableBigNumbers ? BigNumCollectionDesCfg : CollSerDes.cfg.empty]));
+    super(CollSerDes.cfg.concat([codecs, cfg]), serialize, deserialize);
 
     this._getNumRepForPath = (typeof cfg?.enableBigNumbers === 'object')
       ? collNumRepFnFromCfg(cfg.enableBigNumbers)
@@ -76,138 +76,116 @@ export class CollSerDes extends SerDes<CollSerCtx, CollDesCtx> {
   }
 }
 
-const BigNumCollectionDesCfg = CollSerDes.cfg.parse({
-  deserialize(value, ctx) {
-    if (typeof value === 'number') {
-      return coerceNumber(value, ctx);
+const serialize: SerDesFn<CollSerCtx> = (value, ctx) => {
+  let resp: ReturnType<SerDesFn<unknown>> = null!;
+
+  // Path-based serializers
+  for (const pathSer of ctx.serializers.forPath[ctx.path.length] ?? []) {
+    if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
+      return resp;
     }
+  }
 
-    if (isBigNumber(value)) {
-      return coerceBigNumber(value, ctx);
+  // Name-based serializers
+  const key = ctx.path[ctx.path.length - 1] ?? '';
+  const nameSer = ctx.serializers.forName[key];
+
+  if (nameSer && nameSer.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
+    return resp;
+  }
+
+  // Type-based & custom serializers
+  for (const guardSer of ctx.serializers.forGuard) {
+    if (guardSer.guard(value, ctx) && (resp = guardSer.fn(value, ctx))[0] !== NEVERMIND) {
+      return resp;
     }
+  }
 
-    return ctx.continue();
-  },
-});
-
-const DefaultCollectionSerDesCfg = CollSerDes.cfg.parse({
-  serialize(value, ctx) {
-    let resp: ReturnType<SerDesFn<unknown>> = null!;
-
-    // Path-based serializers
-    for (const pathSer of ctx.serializers.forPath[ctx.path.length] ?? []) {
-      if (pathMatches(pathSer.path, ctx.path) && pathSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
-        return resp;
-      }
-    }
-
-    // Name-based serializers
-    const key = ctx.path[ctx.path.length - 1] ?? '';
-    const nameSer = ctx.serializers.forName[key];
-
-    if (nameSer && nameSer.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
+  if (typeof value === 'object' && value !== null) {
+    // Delegate serializer
+    if (value[$SerializeForCollection] && (resp = value[$SerializeForCollection](ctx))[0] !== NEVERMIND) {
       return resp;
     }
 
-    // Type-based & custom serializers
-    for (const guardSer of ctx.serializers.forGuard) {
-      if (guardSer.guard(value, ctx)) {
-        const resp = guardSer.fn(value, ctx);
-        (resp.length === 2) && (value = resp[1]);
+    // Class-based serializers
+    const classSer = ctx.serializers.forClass.find((c) => value instanceof c.class);
 
-        if (resp[0] !== CONTINUE) {
-          return resp;
-        }
-      }
+    if (classSer && classSer.fns.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
+      return resp;
     }
 
-    if (typeof value === 'object' && value !== null) {
-      // Delegate serializer
-      while ($SerializeForCollection in value) {
-        const resp = value[$SerializeForCollection](ctx);
-
-        if (resp[0] !== CONTINUE) {
-          return resp;
-        }
-
-        if (resp.length === 2) {
-          value = resp[1];
-        } else break;
-      }
-
-      // Class-based serializers
-      const classSer = ctx.serializers.forClass.find((c) => value instanceof c.class);
-
-      if (classSer && classSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
-        return resp;
-      }
-
-      // Readable err messages for big numbers if not enabled
-      if (isBigNumber(value)) {
-        if (!ctx.bigNumsEnabled) {
-          throw new Error('BigNumber serialization must be enabled through serdes.enableBigNumbers in CollectionSerDesConfig');
-        }
-        return ctx.done();
-      }
-    }
-    else if (typeof value === 'bigint') {
+    // Readable err messages for big numbers if not enabled
+    if (isBigNumber(value)) {
       if (!ctx.bigNumsEnabled) {
-        throw new Error('Bigint serialization must be enabled through serdes.enableBigNumbers in CollectionSerDesConfig');
+        throw new Error('BigNumber serialization must be enabled through serdes.enableBigNumbers in CollectionSerDesConfig');
       }
       return ctx.done();
     }
+  }
+  else if (typeof value === 'bigint') {
+    if (!ctx.bigNumsEnabled) {
+      throw new Error('Bigint serialization must be enabled through serdes.enableBigNumbers in CollectionSerDesConfig');
+    }
+    return ctx.done();
+  }
 
-    return ctx.recurse(value);
-  },
-  deserialize(value, ctx) {
-    let resp: ReturnType<SerDesFn<unknown>> = null!;
+  return ctx.recurse();
+};
 
-    // Path-based deserializers
-    for (const pathDes of ctx.deserializers.forPath[ctx.path.length] ?? []) {
-      if (pathMatches(pathDes.path, ctx.path) && pathDes.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
+const deserialize: SerDesFn<CollDesCtx> = (value, ctx) => {
+  let resp: ReturnType<SerDesFn<unknown>> = null!;
+
+  if (ctx.getNumRepForPath) {
+    if (typeof value === 'number') {
+      value = coerceNumber(value, ctx);
+    }
+
+    if (isBigNumber(value)) {
+      value = coerceBigNumber(value, ctx);
+    }
+  }
+
+  // Path-based deserializers
+  for (const pathDes of ctx.deserializers.forPath[ctx.path.length] ?? []) {
+    if (pathMatches(pathDes.path, ctx.path) && pathDes.fns.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
+      return resp;
+    }
+  }
+
+  // Name-based deserializers
+  const key = ctx.path[ctx.path.length - 1] ?? '';
+  const nameDes = ctx.deserializers.forName[key];
+
+  if (nameDes && nameDes.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
+    return resp;
+  }
+
+  // Custom deserializers
+  for (const guardDes of ctx.deserializers.forGuard) {
+    if (guardDes.guard(value, ctx) && (resp = guardDes.fn(value, ctx))[0] !== NEVERMIND) {
+      return resp;
+    }
+  }
+
+  if (typeof value === 'object' && value !== null) {
+    // Type-based deserializers
+    const keys = Object.keys(value);
+
+    if (keys.length === 1) {
+      const typeDes = ctx.deserializers.forType[keys[0]];
+
+      if (typeDes && typeDes.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
         return resp;
       }
     }
 
-    // Name-based deserializers
-    const key = ctx.path[ctx.path.length - 1] ?? '';
-    const nameDes = ctx.deserializers.forName[key];
-
-    if (nameDes && nameDes.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
-      return resp;
+    // Insurance
+    if (isBigNumber(value)) {
+      return ctx.done(value);
     }
+  }
 
-    // Custom deserializers
-    for (const guardDes of ctx.deserializers.forGuard) {
-      if (guardDes.guard(value, ctx)) {
-        const resp = guardDes.fn(value, ctx);
-        (resp.length === 2) && (value = resp[1]);
+  return ctx.recurse(value);
+};
 
-        if (resp[0] !== CONTINUE) {
-          return resp;
-        }
-      }
-    }
-
-    if (typeof value === 'object' && value !== null) {
-      // Type-based deserializers
-      const keys = Object.keys(value);
-
-      if (keys.length === 1) {
-        const typeDes = ctx.deserializers.forType[keys[0]];
-
-        if (typeDes && typeDes.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== CONTINUE; })) {
-          return resp;
-        }
-      }
-
-      // Insurance
-      if (isBigNumber(value)) {
-        return ctx.done(value);
-      }
-    }
-
-    return ctx.recurse(value);
-  },
-  codecs: Object.values(CollCodecs.Defaults),
-});
+const codecs = CollSerDes.cfg.parse({ codecs: Object.values(CollCodecs.Defaults) });

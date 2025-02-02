@@ -17,22 +17,22 @@ import {
   Deserializers,
   KeyTransformer,
   nullish,
-  OneOrMany,
   processCodecs,
   RawCodec,
   RawDataAPIResponse,
   Serializers,
 } from '@/src/lib';
-import { toArray } from '@/src/lib/utils';
 import {
   BaseDesCtx,
   BaseSerCtx,
   BaseSerDesCtx,
-  CONTINUE,
-  ctxContinue,
   ctxDone,
+  ctxNevermind,
   ctxRecurse,
+  ctxReplace,
   DONE,
+  NEVERMIND,
+  REPLACE,
 } from '@/src/lib/api/ser-des/ctx';
 import { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
 
@@ -44,15 +44,13 @@ export type SerDesFn<Ctx> = (value: any, ctx: Ctx) => SerDesFnRet | 'Return ctx.
 /**
  * @public
  */
-export type SerDesFnRet = readonly [0 | 1 | 2, any?];
+export type SerDesFnRet = readonly [0 | 1 | 2 | 3, any?];
 
 /**
  * @public
  */
 export interface BaseSerDesConfig<SerCtx extends BaseSerCtx<any>, DesCtx extends BaseDesCtx<any>> {
   codecs?: (readonly RawCodec<SerCtx, DesCtx>[])[],
-  serialize?: OneOrMany<SerDesFn<SerCtx>>,
-  deserialize?: OneOrMany<SerDesFn<DesCtx>>,
   mutateInPlace?: boolean,
   keyTransformer?: KeyTransformer,
 }
@@ -64,7 +62,11 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
   private readonly _serializers: Serializers<SerCtx>;
   private readonly _deserializers: Deserializers<DesCtx>;
 
-  protected constructor(protected readonly _cfg: ParsedSerDesConfig<BaseSerDesConfig<SerCtx, DesCtx>> & {}) {
+  protected constructor(
+    protected readonly _cfg: ParsedSerDesConfig<BaseSerDesConfig<SerCtx, DesCtx>>,
+    private readonly _serialize: SerDesFn<SerCtx>,
+    private readonly _deserialize: SerDesFn<DesCtx>,
+  ) {
     [this._serializers, this._deserializers] = processCodecs(this._cfg.codecs.flat());
   }
 
@@ -78,7 +80,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
       serializers: this._serializers,
     }));
 
-    const serialized = serdesRecord('', { ['']: ctx.rootObj }, ctx, toArray(this._cfg.serialize!))[''];
+    const serialized = serdesRecord('', { ['']: ctx.rootObj }, ctx, this._serialize)[''];
 
     return [
       ctx.keyTransformer?.serialize(serialized, ctx) ?? serialized,
@@ -101,7 +103,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
       ['']: ctx.keyTransformer?.deserialize(ctx.rootObj, ctx) ?? ctx.rootObj,
     };
 
-    return serdesRecord('', rootObj, ctx, toArray(this._cfg.deserialize!))[''] as S;
+    return serdesRecord('', rootObj, ctx, this._deserialize)[''] as S;
   }
 
   protected abstract adaptSerCtx(ctx: BaseSerCtx<SerCtx>): SerCtx;
@@ -112,25 +114,33 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
     return {
       done: ctxDone,
       recurse: ctxRecurse,
-      continue: ctxContinue,
+      nevermind: ctxNevermind,
+      replace: ctxReplace,
       keyTransformer: this._cfg.keyTransformer,
       mutatingInPlace: true,
       mapAfter: null!,
       rootObj: obj,
       path: [],
+      locals: {},
       ...ctx,
     };
   }
 }
 
-function serdesRecord<Ctx extends BaseSerDesCtx>(key: string | number, obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
+function serdesRecord<Ctx extends BaseSerDesCtx>(key: string | number, obj: SomeDoc, ctx: Ctx, fn: SerDesFn<Ctx>) {
   const postMaps: ((v: any) => unknown)[] = [];
-  ctx.mapAfter = (fn) => { postMaps.push(fn); return [CONTINUE]; };
+  ctx.mapAfter = (fn) => { postMaps.push(fn); return [NEVERMIND]; };
 
-  const stop = applySerdesFns(fns, key, obj, ctx);
+  const stop = applySerdesFn(fn, key, obj, ctx);
 
-  if (!stop && ctx.path.length < 250 && typeof obj[key] === 'object' && obj[key] !== null) {
-    obj[key] = serdesRecordHelper(obj[key], ctx, fns);
+  // console.log(ctx.path, obj);
+
+  if (ctx.path.length >= 250) {
+    throw new Error('Tried to ser/des a document with a depth of over 250. Did you accidentally create a circular reference?');
+  }
+
+  if (!stop && typeof obj[key] === 'object' && obj[key] !== null) {
+    obj[key] = serdesRecordHelper(obj[key], ctx, fn);
   }
 
   for (let i = postMaps.length - 1; i >= 0; i--) {
@@ -139,7 +149,7 @@ function serdesRecord<Ctx extends BaseSerDesCtx>(key: string | number, obj: Some
   return obj;
 }
 
-function serdesRecordHelper<Ctx extends BaseSerDesCtx>(obj: SomeDoc, ctx: Ctx, fns: readonly SerDesFn<Ctx>[]) {
+function serdesRecordHelper<Ctx extends BaseSerDesCtx>(obj: SomeDoc, ctx: Ctx, fn: SerDesFn<Ctx>) {
   obj = (!ctx.mutatingInPlace)
     ? (Array.isArray(obj) ? [...obj] : { ...obj })
     : obj;
@@ -150,12 +160,12 @@ function serdesRecordHelper<Ctx extends BaseSerDesCtx>(obj: SomeDoc, ctx: Ctx, f
   if (Array.isArray(obj)) {
     for (let i = 0; i < obj.length; i++) {
       path[path.length - 1] = i;
-      serdesRecord(i, obj, ctx, fns);
+      serdesRecord(i, obj, ctx, fn);
     }
   } else {
     for (const key of Object.keys(obj)) {
       path[path.length - 1] = key;
-      serdesRecord(key, obj, ctx, fns);
+      serdesRecord(key, obj, ctx, fn);
     }
   }
 
@@ -163,17 +173,21 @@ function serdesRecordHelper<Ctx extends BaseSerDesCtx>(obj: SomeDoc, ctx: Ctx, f
   return obj;
 }
 
-function applySerdesFns<Ctx>(fns: readonly SerDesFn<Ctx>[], key: string | number, obj: SomeDoc, ctx: Ctx): boolean {
-  for (let f = 0; f < fns.length; f++) {
-    const res = fns[f](obj[key], ctx) as [number] | [number, unknown];
+function applySerdesFn<Ctx>(fn: SerDesFn<Ctx>, key: string | number, obj: SomeDoc, ctx: Ctx): boolean {
+  let res: ReturnType<SerDesFn<unknown>> = null!;
+  let loops = 0;
+
+  do {
+    res = fn(obj[key], ctx);
 
     if (res.length === 2) {
       obj[key] = res[1];
     }
 
-    if (res?.[0] === DONE) {
-      return true;
+    if (loops++ > 1000) {
+      throw new Error('Potential infinite loop caused by ctx.replaces detected (>1000 iterations)');
     }
-  }
-  return false;
+  } while (res[0] === REPLACE);
+
+  return res[0] === DONE;
 }

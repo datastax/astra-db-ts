@@ -17,7 +17,7 @@ import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
 import { $DeserializeForTable, $SerializeForTable, TableCodec, TableCodecs } from '@/src/index';
-import { ctxContinue } from '@/src/lib/api/ser-des/ctx';
+import { ctxNevermind } from '@/src/lib/api/ser-des/ctx';
 
 describe('unit.documents.tables.ser-des.ser-des.order', () => {
   const counters = {
@@ -27,12 +27,12 @@ describe('unit.documents.tables.ser-des.ser-des.order', () => {
 
   const ser = (tag: string, i?: number) => () => {
     counters.ser.push(`${tag}${i ?? ''}`);
-    return ctxContinue();
+    return ctxNevermind();
   };
 
   const des = (tag: string, i?: number) => () => {
     counters.des.push(`${tag}${i ?? ''}`);
-    return ctxContinue();
+    return ctxNevermind();
   };
 
   class Test implements TableCodec<typeof Test> {
@@ -202,33 +202,33 @@ describe('unit.documents.tables.ser-des.ser-des.order', () => {
     assert.deepStrictEqual(counters.des, [
       // forPath always runs before forName; forPath-delegate-deserialization happen alongside normal forPath-deserialization
       repeat((_) => '$DeserializeForTable'),
-      repeat((i) => `forPath:root${i}`),
+      repeat((i) => `forPath:root${i}`).reverse(),
       repeat((_) => '$DeserializeForTable'),
 
       // forName runs after forPath; forName-delegate-deserialization happen alongside normal forName-deserialization
-      repeat((i) => `forName:root${i}`),
+      repeat((i) => `forName:root${i}`).reverse(),
       repeat((_) => '$DeserializeForTable'),
-      repeat((i) => `forName:root${i}`),
+      repeat((i) => `forName:root${i}`).reverse(),
 
       // Custom deserializers run next (type deserializer doesn't run @ root)
-      repeat((i) => `custom:guard_any${i}`),
-      repeat((i) => `custom:guard${i}`),
+      repeat((i) => `custom:guard${i}`).reverse(),
+      repeat((i) => `custom:guard_any${i}`).reverse(),
 
       // forPath in the nested object
       repeat((_) => '$DeserializeForTable'),
-      repeat((i) => `forPath:test${i}`),
+      repeat((i) => `forPath:test${i}`).reverse(),
       repeat((_) => '$DeserializeForTable'),
 
       // forName in the nested object
-      repeat((i) => `forName:test${i}`),
+      repeat((i) => `forName:test${i}`).reverse(),
       repeat((_) => '$DeserializeForTable'),
-      repeat((i) => `forName:test${i}`),
+      repeat((i) => `forName:test${i}`).reverse(),
 
       // Only the first custom deserializer matches this time
-      repeat((i) => `custom:guard_any${i}`),
+      repeat((i) => `custom:guard_any${i}`).reverse(),
 
       // Type deserializers after
-      repeat((i) => `forType${i}`),
+      repeat((i) => `forType${i}`).reverse(),
     ].flat());
   });
 });

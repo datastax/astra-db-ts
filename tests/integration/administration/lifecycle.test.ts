@@ -30,12 +30,12 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     }
   }
 
-  process.on('exit', async () => {
-    await dropTestDbs();
-  });
-
   it('works', async () => {
     void dropTestDbs();
+
+    process.on('exit', async () => {
+      await dropTestDbs();
+    });
 
     const asyncDbAdmin = await admin.createDatabase({
       name: TEMP_DB_NAME,

@@ -76,7 +76,7 @@ export class CollCodecs {
   public static forId(optsOrClass: CollNominalCodecOpts & { class?: SomeConstructor } | CollCodecClass): RawCollCodecs {
     const mkIdDesCodec = (fn: SerDesFn<CollDesCtx>): RawCollCodecs => [
       CollCodecs.forName('', {
-        deserialize: (val, ctx) => ctx.parsingInsertedId ? fn(val, ctx) : ctx.continue(),
+        deserialize: (val, ctx) => ctx.parsingInsertedId ? fn(val, ctx) : ctx.nevermind(),
       }),
       CollCodecs.forPath(['_id'], {
         deserialize: fn,
@@ -87,9 +87,19 @@ export class CollCodecs {
       return mkIdDesCodec(optsOrClass[$DeserializeForCollection]);
     }
 
+    const serFn = optsOrClass.serialize;
+
     return [
-      (optsOrClass.serialize)
-        ? CollCodecs.forPath(['_id'], { serialize: optsOrClass.serialize })
+      (serFn)
+        ? CollCodecs.forPath(['_id'], {
+          serialize(val, ctx) {
+            if (ctx.locals.__parsedId) {
+              return ctx.nevermind();
+            }
+            ctx.locals.__parsedId = true;
+            return serFn(val, ctx);
+          },
+        })
         : [],
       (optsOrClass.deserialize)
         ? mkIdDesCodec(optsOrClass.deserialize)

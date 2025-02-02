@@ -43,6 +43,7 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
         },
         primaryKey: 'isbn',
       },
+      ifNotExists: true,
     });
   });
 
@@ -89,10 +90,10 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
     const BookCodec = TableCodecs.forPath([], {
       serialize: (book, ctx) => {
         if (!(book instanceof Book)) {
-          return ctx.continue();
+          return ctx.nevermind();
         }
 
-        return ctx.continue({
+        return ctx.replace({
           isbn: book.isbn,
           title: book.title,
           author: book.author.name,
@@ -104,7 +105,7 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
       },
       deserialize: (value, ctx) => {
         if (ctx.parsingInsertedId || !value) {
-          return ctx.continue();
+          return ctx.nevermind();
         }
 
         return ctx.mapAfter((book) => new Book(
@@ -120,11 +121,11 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
 
     const ReviewCodec = TableCodecs.forPath([], {
       serialize: (book, ctx) => {
-        if (!('reviews' in book)) {
-          return ctx.continue();
+        if (!('reviews' in book) || !(book.reviews !== undefined)) {
+          return ctx.nevermind();
         }
 
-        return ctx.continue({
+        return ctx.replace({
           ...book,
           reviews: undefined,
           reviewNames: [...book.reviews].map((r) => r.critic.name),
@@ -132,14 +133,16 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
         });
       },
       deserialize: (value, ctx) => {
-        if (ctx.parsingInsertedId || !value) {
-          return ctx.continue();
+        if (ctx.parsingInsertedId || value.reviews instanceof Set) {
+          return ctx.nevermind();
         }
 
         const reviews = value.reviewNames.map((name: string, i: number) => new Review(new Person(name), value.reviewReviews[i]));
 
-        return ctx.continue({
+        return ctx.replace({
           ...value,
+          reviewNames: undefined,
+          reviewReviews: undefined,
           reviews: new Set(reviews),
         });
       },
@@ -200,7 +203,7 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
 
       static [$DeserializeForTable](value: unknown, ctx: TableDesCtx) {
         if (ctx.parsingInsertedId || !value) {
-          return ctx.continue();
+          return ctx.nevermind();
         }
 
         ctx.mapAfter((book) => new Book(

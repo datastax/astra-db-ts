@@ -98,29 +98,29 @@ const appendCodec = {
       (serializers.forName[codec.name] ??= []).push(codec.opts.serialize);
     }
     if (codec.opts.deserialize) {
-      (deserializers.forName[codec.name] ??= []).push(codec.opts.deserialize);
+      (deserializers.forName[codec.name] ??= []).unshift(codec.opts.deserialize);
     }
   },
   forPath(codec: RawCodec & { tag: 'forPath' }, serializers: Serializers<any>, deserializers: Deserializers<any>) {
     if (codec.opts.serialize) {
-      findOrInsertPath(serializers.forPath, codec.path, codec.opts.serialize);
+      findOrInsertPath(serializers.forPath, codec.path, codec.opts.serialize, 'push');
     }
     if (codec.opts.deserialize) {
-      findOrInsertPath(deserializers.forPath, codec.path, codec.opts.deserialize);
+      findOrInsertPath(deserializers.forPath, codec.path, codec.opts.deserialize, 'unshift');
     }
   },
   forType(codec: RawCodec & { tag: 'forType' }, serializers: Serializers<any>, deserializers: Deserializers<any>) {
     appendCodec.customSer(codec, serializers);
 
     if (codec.opts.deserialize) {
-      (deserializers.forType[codec.type] ??= []).push(codec.opts.deserialize);
+      (deserializers.forType[codec.type] ??= []).unshift(codec.opts.deserialize);
     }
   },
   custom(codec: RawCodec & { tag: 'custom' }, serializers: Serializers<any>, deserializers: Deserializers<any>) {
     appendCodec.customSer(codec, serializers);
 
     if ('deserializeGuard' in codec.opts) {
-      deserializers.forGuard.push({ guard: codec.opts.deserializeGuard, fn: codec.opts.deserialize });
+      deserializers.forGuard.unshift({ guard: codec.opts.deserializeGuard, fn: codec.opts.deserialize });
     }
   },
   customSer(codec: RawCodec & { tag: 'custom' | 'forType' }, serializers: Serializers<any>) {
@@ -133,18 +133,23 @@ const appendCodec = {
   },
 };
 
-const findOrInsertPath = <Fn>(arr: Record<number, { path: (string | number)[], fns: Fn[] }[]>, newPath: (string | number)[], fn: Fn) => {
+const findOrInsertPath = <Fn>(arr: Record<number, { path: (string | number)[], fns: Fn[] }[]>, newPath: (string | number)[], fn: Fn, mode: 'push' | 'unshift') => {
   const arrForDepth = arr[newPath.length] ??= [];
 
   for (const { path, fns } of arrForDepth) {
     if (pathArraysEqual(path, newPath)) {
-      fns.push(fn);
+      fns[mode](fn);
       return;
     }
   }
 
   arrForDepth.push({ path: newPath, fns: [fn] });
-  arrForDepth.sort((a, b) => comparePathGeneralities(a.path, b.path));
+
+  if (mode === 'push') {
+    arrForDepth.sort((a, b) => comparePathGeneralities(a.path, b.path));
+  } else {
+    arrForDepth.sort((a, b) => comparePathGeneralities(b.path, a.path));
+  }
 };
 
 const comparePathGeneralities = (a: (string | number)[], b: (string | number)[]) => {

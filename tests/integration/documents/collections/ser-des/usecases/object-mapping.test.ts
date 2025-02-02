@@ -71,7 +71,7 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
     const BookCodec = CollCodecs.forPath([], {
       serialize: (book, ctx) => {
         if (!(book instanceof Book)) {
-          return ctx.continue();
+          return ctx.nevermind();
         }
 
         return ctx.recurse({
@@ -86,7 +86,7 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
       },
       deserialize: (value, ctx) => {
         if (ctx.parsingInsertedId || !value) {
-          return ctx.continue();
+          return ctx.nevermind();
         }
 
         ctx.mapAfter((book) => new Book(
@@ -175,7 +175,7 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
 
       static [$DeserializeForCollection](value: unknown, ctx: CollDesCtx) {
         if (ctx.parsingInsertedId || !value) {
-          return ctx.continue();
+          return ctx.nevermind();
         }
 
         ctx.mapAfter((book) => new Book(

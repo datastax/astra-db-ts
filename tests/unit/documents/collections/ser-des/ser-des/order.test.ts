@@ -17,7 +17,7 @@ import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { $DeserializeForCollection, $SerializeForCollection, CollCodecs } from '@/src/documents/collections';
 import { CollCodec } from '@/src/index';
-import { ctxContinue } from '@/src/lib/api/ser-des/ctx';
+import { ctxNevermind } from '@/src/lib/api/ser-des/ctx';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 
 describe('unit.documents.collections.ser-des.ser-des.order', () => {
@@ -28,12 +28,12 @@ describe('unit.documents.collections.ser-des.ser-des.order', () => {
 
   const ser = (tag: string, i?: number) => () => {
     counters.ser.push(`${tag}${i ?? ''}`);
-    return ctxContinue();
+    return ctxNevermind();
   };
 
   const des = (tag: string, i?: number) => () => {
     counters.des.push(`${tag}${i ?? ''}`);
-    return ctxContinue();
+    return ctxNevermind();
   };
 
   class Test implements CollCodec<typeof Test> {
@@ -202,33 +202,33 @@ describe('unit.documents.collections.ser-des.ser-des.order', () => {
     assert.deepStrictEqual(counters.des, [
       // forPath always runs before forName; forPath-delegate-deserialization happen alongside normal forPath-deserialization
       repeat((_) => '$DeserializeForColl'),
-      repeat((i) => `forPath:root${i}`),
+      repeat((i) => `forPath:root${i}`).reverse(),
       repeat((_) => '$DeserializeForColl'),
 
       // forName runs after forPath; forName-delegate-deserialization happen alongside normal forName-deserialization
-      repeat((i) => `forName:root${i}`),
+      repeat((i) => `forName:root${i}`).reverse(),
       repeat((_) => '$DeserializeForColl'),
-      repeat((i) => `forName:root${i}`),
+      repeat((i) => `forName:root${i}`).reverse(),
 
       // Custom deserializers run next
-      repeat((i) => `custom:guard_any${i}`),
-      repeat((i) => `custom:guard${i}`),
+      repeat((i) => `custom:guard${i}`).reverse(),
+      repeat((i) => `custom:guard_any${i}`).reverse(),
 
       // Type deserializers after
-      repeat((i) => `forType${i}`),
+      repeat((i) => `forType${i}`).reverse(),
 
       // forPath in the nested object
       repeat((_) => '$DeserializeForColl'),
-      repeat((i) => `forPath:test${i}`),
+      repeat((i) => `forPath:test${i}`).reverse(),
       repeat((_) => '$DeserializeForColl'),
 
       // forName in the nested object
-      repeat((i) => `forName:test${i}`),
+      repeat((i) => `forName:test${i}`).reverse(),
       repeat((_) => '$DeserializeForColl'),
-      repeat((i) => `forName:test${i}`),
+      repeat((i) => `forName:test${i}`).reverse(),
 
       // Only the first custom deserializer matches this time (type deserializer also doesn't match)
-      repeat((i) => `custom:guard_any${i}`),
+      repeat((i) => `custom:guard_any${i}`).reverse(),
     ].flat());
   });
 });
