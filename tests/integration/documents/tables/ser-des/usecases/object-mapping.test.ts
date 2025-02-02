@@ -100,7 +100,8 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
           price: book.price,
           publishedAt: book.publishedAt,
           insertedAt: new Date('3000-01-01'),
-          reviews: book.reviews,
+          reviewNames: [...book.reviews].map((r) => r.critic.name),
+          reviewReviews: [...book.reviews].map((r) => r.review),
         });
       },
       deserialize: (value, ctx) => {
@@ -108,42 +109,17 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
           return ctx.nevermind();
         }
 
-        return ctx.mapAfter((book) => new Book(
-          book.title,
-          new Person(book.author),
-          book.isbn,
-          book.price,
-          book.publishedAt,
-          book.reviews,
-        ));
-      },
-    });
+        return ctx.mapAfter((book) => {
+          const reviews = book.reviewNames.map((name: string, i: number) => new Review(new Person(name), book.reviewReviews[i]));
 
-    const ReviewCodec = TableCodecs.forPath([], {
-      serialize: (book, ctx) => {
-        if (!('reviews' in book) || !(book.reviews !== undefined)) {
-          return ctx.nevermind();
-        }
-
-        return ctx.replace({
-          ...book,
-          reviews: undefined,
-          reviewNames: [...book.reviews].map((r) => r.critic.name),
-          reviewReviews: [...book.reviews].map((r) => r.review),
-        });
-      },
-      deserialize: (value, ctx) => {
-        if (ctx.parsingInsertedId || value.reviews instanceof Set) {
-          return ctx.nevermind();
-        }
-
-        const reviews = value.reviewNames.map((name: string, i: number) => new Review(new Person(name), value.reviewReviews[i]));
-
-        return ctx.replace({
-          ...value,
-          reviewNames: undefined,
-          reviewReviews: undefined,
-          reviews: new Set(reviews),
+          return new Book(
+            book.title,
+            new Person(book.author),
+            book.isbn,
+            book.price,
+            book.publishedAt,
+            new Set(reviews),
+          );
         });
       },
     });
@@ -151,7 +127,7 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
     const table = db.table('obj_mapping_table', {
       serdes: {
         keyTransformer: new Camel2SnakeCase(),
-        codecs: [ISBNCodec, BookCodec, ReviewCodec],
+        codecs: [ISBNCodec, BookCodec],
       },
     });
 
@@ -173,7 +149,6 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
       price: BigNumber(-12.50),
       published_at: '1970-01-01T00:00:00.000Z',
       inserted_at: '3000-01-01T00:00:00.000Z',
-      reviews: undefined,
       review_names: ['Tow Mater'],
       review_reviews: ['dad gum!'],
     };

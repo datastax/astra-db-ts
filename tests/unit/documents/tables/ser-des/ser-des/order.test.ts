@@ -202,33 +202,33 @@ describe('unit.documents.tables.ser-des.ser-des.order', () => {
     assert.deepStrictEqual(counters.des, [
       // forPath always runs before forName; forPath-delegate-deserialization happen alongside normal forPath-deserialization
       repeat((_) => '$DeserializeForTable'),
-      repeat((i) => `forPath:root${i}`).reverse(),
+      repeat((i) => `forPath:root${i}`),
       repeat((_) => '$DeserializeForTable'),
 
       // forName runs after forPath; forName-delegate-deserialization happen alongside normal forName-deserialization
-      repeat((i) => `forName:root${i}`).reverse(),
+      repeat((i) => `forName:root${i}`),
       repeat((_) => '$DeserializeForTable'),
-      repeat((i) => `forName:root${i}`).reverse(),
+      repeat((i) => `forName:root${i}`),
 
       // Custom deserializers run next (type deserializer doesn't run @ root)
-      repeat((i) => `custom:guard${i}`).reverse(),
-      repeat((i) => `custom:guard_any${i}`).reverse(),
+      repeat((i) => `custom:guard_any${i}`),
+      repeat((i) => `custom:guard${i}`),
 
       // forPath in the nested object
       repeat((_) => '$DeserializeForTable'),
-      repeat((i) => `forPath:test${i}`).reverse(),
+      repeat((i) => `forPath:test${i}`),
       repeat((_) => '$DeserializeForTable'),
 
       // forName in the nested object
-      repeat((i) => `forName:test${i}`).reverse(),
+      repeat((i) => `forName:test${i}`),
       repeat((_) => '$DeserializeForTable'),
-      repeat((i) => `forName:test${i}`).reverse(),
+      repeat((i) => `forName:test${i}`),
 
       // Only the first custom deserializer matches this time
-      repeat((i) => `custom:guard_any${i}`).reverse(),
+      repeat((i) => `custom:guard_any${i}`),
 
       // Type deserializers after
-      repeat((i) => `forType${i}`).reverse(),
+      repeat((i) => `forType${i}`),
     ].flat());
   });
 });

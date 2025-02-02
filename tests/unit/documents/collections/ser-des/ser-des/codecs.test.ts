@@ -15,10 +15,10 @@
 
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
-import { CollDesCtx, CollSerCtx, CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
+import { CollDesCtx, CollSerDes, CollSerCtx } from '@/src/documents/collections/ser-des/ser-des';
 import { $DeserializeForCollection, $SerializeForCollection, CollCodec, CollCodecs } from '@/src/documents/collections';
 import { uuid, UUID } from '@/src/documents';
-import { ctxDone, ctxNevermind, ctxRecurse } from '@/src/lib/api/ser-des/ctx';
+import { ctxNevermind, ctxDone, ctxRecurse } from '@/src/lib/api/ser-des/ctx';
 
 describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
   describe('forPath', () => {
@@ -75,22 +75,28 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
         }],
       };
 
-      const expect = [
-        [obj, 'root:0'],
-        [obj.name, 'name:1', 'name:2', '[*]'],
-        [obj.cars, '[*]'],
-        [obj.cars[0]],
-        [obj.cars[0].name, 'cars[*][name]'],
-        [obj.cars[0].pastOwners],
-        [obj.cars[0].pastOwners[0], '[*][0][*][*]'],
-        [obj.cars[0].pastOwners.one, '[*][0][*][*]'],
-      ];
-
       serdes.serialize(obj);
-      assert.deepStrictEqual(serPaths, expect.flat());
+      assert.deepStrictEqual(serPaths, [
+        obj,
+        'root:0',
+        obj.name,
+        'name:1',
+        'name:2',
+        '[*]',
+        obj.cars,
+        '[*]',
+        obj.cars[0],
+        obj.cars[0].name,
+        'cars[*][name]',
+        obj.cars[0].pastOwners,
+        obj.cars[0].pastOwners[0],
+        '[*][0][*][*]',
+        obj.cars[0].pastOwners.one,
+        '[*][0][*][*]',
+      ]);
 
       serdes.deserialize(obj, {});
-      assert.deepStrictEqual(desPaths, expect.map((v) => v.reverse()).flat());
+      assert.deepStrictEqual(desPaths, serPaths);
     });
 
     it('should keep matching the same path til done/continue', () => {

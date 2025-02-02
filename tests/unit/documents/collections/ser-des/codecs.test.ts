@@ -18,7 +18,7 @@ import assert from 'assert';
 import { $DeserializeForCollection, $SerializeForCollection, CollCodec, CollCodecs } from '@/src/documents';
 import { processCodecs } from '@/src/lib';
 import { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs';
-processCodecs
+
 describe('unit.documents.collections.ser-des.codecs', () => {
   describe('processCodecs', () => {
     it('should properly process raw codecs', () => {
@@ -82,16 +82,16 @@ describe('unit.documents.collections.ser-des.codecs', () => {
         },
         {
           forName: {
-            ...Object.fromEntries(repeat((i) => [`name${i}`, ['$DeserializeForCollection', `name${i}:des_fn`, `name${i}:serdes_fn`].reverse()])),
+            ...Object.fromEntries(repeat((i) => [`name${i}`, ['$DeserializeForCollection', `name${i}:des_fn`, `name${i}:serdes_fn`]])),
           },
           forPath: {
-            ['3']: repeat((i) => ({ path: ['pa', 'th', `${i}`], fns: ['$DeserializeForCollection', `path${i}:des_fn`, `path${i}:serdes_fn`].reverse() })),
+            ['3']: repeat((i) => ({ path: ['pa', 'th', `${i}`], fns: ['$DeserializeForCollection', `path${i}:des_fn`, `path${i}:serdes_fn`] })),
           },
           forType: {
-            ...Object.fromEntries(repeat((i) => [`type${i}`, ['$DeserializeForCollection', `type${i}:des_fn`].reverse()])),
+            ...Object.fromEntries(repeat((i) => [`type${i}`, ['$DeserializeForCollection', `type${i}:des_fn`]])),
           },
           forGuard: [
-            ...repeat((i) => ({ guard: `custom${i}:des_guard`, fn: `custom${i}:des_fn` })).reverse(),
+            ...repeat((i) => ({ guard: `custom${i}:des_guard`, fn: `custom${i}:des_fn` })),
           ],
         },
       ]);

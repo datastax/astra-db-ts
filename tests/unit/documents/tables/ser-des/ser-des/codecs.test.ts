@@ -103,23 +103,23 @@ describe('unit.documents.tables.ser-des.ser-des.codecs', () => {
         },
       }), obj);
       assert.deepStrictEqual(desPaths, [
-        'root:0',
         obj,
-        '[*]',
-        'name:2',
-        'name:1',
+        'root:0',
         obj.name,
+        'name:1',
+        'name:2',
         '[*]',
         Object.fromEntries(obj.cars),
-        '[*][*]',
+        '[*]',
         obj.cars.get('ford capri')!.toString(),
+        '[*][*]',
         '[*][*]',
         '[*]',
         '[*][*]',
         '[*][*]',
-        '[*][*]',
-        '[*][2]',
         3n,
+        '[*][2]',
+        '[*][*]',
       ]);
     });
 

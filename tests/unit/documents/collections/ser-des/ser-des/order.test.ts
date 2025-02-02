@@ -202,33 +202,33 @@ describe('unit.documents.collections.ser-des.ser-des.order', () => {
     assert.deepStrictEqual(counters.des, [
       // forPath always runs before forName; forPath-delegate-deserialization happen alongside normal forPath-deserialization
       repeat((_) => '$DeserializeForColl'),
-      repeat((i) => `forPath:root${i}`).reverse(),
+      repeat((i) => `forPath:root${i}`),
       repeat((_) => '$DeserializeForColl'),
 
       // forName runs after forPath; forName-delegate-deserialization happen alongside normal forName-deserialization
-      repeat((i) => `forName:root${i}`).reverse(),
+      repeat((i) => `forName:root${i}`),
       repeat((_) => '$DeserializeForColl'),
-      repeat((i) => `forName:root${i}`).reverse(),
+      repeat((i) => `forName:root${i}`),
 
       // Custom deserializers run next
-      repeat((i) => `custom:guard${i}`).reverse(),
-      repeat((i) => `custom:guard_any${i}`).reverse(),
+      repeat((i) => `custom:guard_any${i}`),
+      repeat((i) => `custom:guard${i}`),
 
       // Type deserializers after
-      repeat((i) => `forType${i}`).reverse(),
+      repeat((i) => `forType${i}`),
 
       // forPath in the nested object
       repeat((_) => '$DeserializeForColl'),
-      repeat((i) => `forPath:test${i}`).reverse(),
+      repeat((i) => `forPath:test${i}`),
       repeat((_) => '$DeserializeForColl'),
 
       // forName in the nested object
-      repeat((i) => `forName:test${i}`).reverse(),
+      repeat((i) => `forName:test${i}`),
       repeat((_) => '$DeserializeForColl'),
-      repeat((i) => `forName:test${i}`).reverse(),
+      repeat((i) => `forName:test${i}`),
 
       // Only the first custom deserializer matches this time (type deserializer also doesn't match)
-      repeat((i) => `custom:guard_any${i}`).reverse(),
+      repeat((i) => `custom:guard_any${i}`),
     ].flat());
   });
 });
