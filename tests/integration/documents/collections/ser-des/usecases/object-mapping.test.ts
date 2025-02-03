@@ -26,6 +26,7 @@ import {
 } from '@/src/index';
 import BigNumber from 'bignumber.js';
 import assert from 'assert';
+import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
 
 parallel('integration.documents.collections.ser-des.usecases.object-mapping', () => {
   it('should work with explicit serdes', async (key) => {
@@ -85,7 +86,7 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
         });
       },
       deserialize: (value, ctx) => {
-        if (ctx.parsingInsertedId || !value) {
+        if (ctx.target !== SerDesTarget.Record) {
           return ctx.nevermind();
         }
 
@@ -174,7 +175,7 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
       ) {}
 
       static [$DeserializeForCollection](value: unknown, ctx: CollDesCtx) {
-        if (ctx.parsingInsertedId || !value) {
+        if (ctx.target !== SerDesTarget.Record) {
           return ctx.nevermind();
         }
 

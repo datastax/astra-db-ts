@@ -19,6 +19,7 @@ import { DataAPIVector } from '@/src/documents/datatypes/vector';
 import { CollDesCtx, CollSerCtx } from '@/src/documents';
 import { CustomCodecOpts, NominalCodecOpts, RawCodec, SerDesFn, SomeConstructor, TypeCodecOpts } from '@/src/lib';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
+import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
 
 /**
  * @public
@@ -76,7 +77,7 @@ export class CollCodecs {
   public static forId(optsOrClass: CollNominalCodecOpts & { class?: SomeConstructor } | CollCodecClass): RawCollCodecs {
     const mkIdDesCodec = (fn: SerDesFn<CollDesCtx>): RawCollCodecs => [
       CollCodecs.forName('', {
-        deserialize: (val, ctx) => ctx.parsingInsertedId ? fn(val, ctx) : ctx.nevermind(),
+        deserialize: (val, ctx) => ctx.target === SerDesTarget.InsertedId ? fn(val, ctx) : ctx.nevermind(),
       }),
       CollCodecs.forPath(['_id'], {
         deserialize: fn,

@@ -17,6 +17,7 @@ import { describe, it } from '@/tests/testlib';
 import { Camel2SnakeCase } from '@/src/lib';
 import assert from 'assert';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
+import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
 
 describe('unit.documents.tables.ser-des.key-transformer', () => {
   describe('Camel2SnakeCase', () => {
@@ -88,7 +89,7 @@ describe('unit.documents.tables.ser-des.key-transformer', () => {
             car: { type: 'set', valueType: 'text' },
           },
         },
-      }, true);
+      }, SerDesTarget.InsertedId);
 
       assert.deepStrictEqual(obj, {
         camelCaseName1: 'dontChangeMe',
@@ -152,7 +153,7 @@ describe('unit.documents.tables.ser-des.key-transformer', () => {
             camel_case_name3: { type: 'map', keyType: 'text', valueType: 'text' },
           },
         },
-      }, true);
+      }, SerDesTarget.InsertedId);
 
       assert.deepStrictEqual(obj, {
         camelCaseName1: 'dontChangeMe',

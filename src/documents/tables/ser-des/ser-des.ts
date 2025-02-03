@@ -19,7 +19,7 @@ import {
   ListTableUnsupportedColumnDefinition,
 } from '@/src/db';
 import { RawTableCodecs, TableCodecs } from '@/src/documents/tables/ser-des/codecs';
-import { BaseDesCtx, BaseSerCtx, NEVERMIND } from '@/src/lib/api/ser-des/ctx';
+import { BaseDesCtx, BaseSerCtx, NEVERMIND, SerDesTarget } from '@/src/lib/api/ser-des/ctx';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { isBigNumber, pathMatches } from '@/src/lib/utils';
 import { UnexpectedDataAPIResponseError } from '@/src/client';
@@ -69,7 +69,7 @@ export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
     const rawDataApiResp = ctx.rawDataApiResp;
     const status = UnexpectedDataAPIResponseError.require(rawDataApiResp.status, 'No `status` found in response.', rawDataApiResp);
 
-    if (ctx.parsingInsertedId) {
+    if (ctx.target === SerDesTarget.InsertedId) {
       ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.primaryKeySchema, 'No `status.primaryKeySchema` found in response.\n\n**Did you accidentally use a `Table` object on a Collection?** If so, your document was successfully inserted, but the client cannot properly deserialize the response. Please use a `Collection` object instead.', rawDataApiResp);
 
       ctx.rootObj = Object.fromEntries(Object.keys(ctx.tableSchema).map((key, i) => {

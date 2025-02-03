@@ -27,8 +27,24 @@ export interface BaseSerCtx<SerCex> extends BaseSerDesCtx {
 export interface BaseDesCtx<DesCtx> extends BaseSerDesCtx {
   deserializers: Deserializers<DesCtx>,
   rawDataApiResp: RawDataAPIResponse,
-  parsingInsertedId: boolean,
 }
+
+/**
+ * @public
+ */
+export const SerDesTarget = <const>{
+  Record: 0,
+  Filter: 1,
+  Update: 2,
+  Projection: 3,
+  Sort: 4,
+  InsertedId: 5,
+};
+
+/**
+ * @public
+ */
+export type SerDesTarget = typeof SerDesTarget[keyof typeof SerDesTarget];
 
 /**
  * @public
@@ -44,6 +60,7 @@ export interface BaseSerDesCtx {
   keyTransformer?: KeyTransformer,
   mutatingInPlace: boolean,
   locals: Record<string, any>,
+  target: SerDesTarget,
 }
 
 export const DONE = 0 as const;

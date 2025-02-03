@@ -26,6 +26,7 @@ import {
 } from '@/src/index';
 import BigNumber from 'bignumber.js';
 import assert from 'assert';
+import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
 
 parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop: 'tables:after' }, ({ db }) => {
   before(async () => {
@@ -104,8 +105,8 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
           reviewReviews: [...book.reviews].map((r) => r.review),
         });
       },
-      deserialize: (value, ctx) => {
-        if (ctx.parsingInsertedId || !value) {
+      deserialize: (_, ctx) => {
+        if (ctx.target !== SerDesTarget.Record) {
           return ctx.nevermind();
         }
 
@@ -177,7 +178,7 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
       ) {}
 
       static [$DeserializeForTable](value: unknown, ctx: TableDesCtx) {
-        if (ctx.parsingInsertedId || !value) {
+        if (ctx.target !== SerDesTarget.Record) {
           return ctx.nevermind();
         }
 

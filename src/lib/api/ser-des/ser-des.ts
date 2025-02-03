@@ -33,6 +33,7 @@ import {
   DONE,
   NEVERMIND,
   REPLACE,
+  SerDesTarget,
 } from '@/src/lib/api/ser-des/ctx';
 import { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
 
@@ -218,12 +219,12 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
     [this._serializers, this._deserializers] = processCodecs(this._cfg.codecs.flat());
   }
 
-  public serialize(obj: unknown): [unknown, boolean] {
+  public serialize(obj: unknown, target: SerDesTarget = SerDesTarget.Record): [unknown, boolean] {
     if (obj === null || obj === undefined) {
       return [obj, false];
     }
 
-    const ctx = this.adaptSerCtx(this._mkCtx(obj, {
+    const ctx = this.adaptSerCtx(this._mkCtx(obj, target, {
       mutatingInPlace: this._cfg.mutateInPlace === true,
       serializers: this._serializers,
     }));
@@ -236,14 +237,13 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
     ];
   }
 
-  public deserialize<S extends unknown | nullish>(obj: unknown | nullish, raw: RawDataAPIResponse, parsingId = false): S {
+  public deserialize<S extends unknown | nullish>(obj: unknown | nullish, raw: RawDataAPIResponse, target: SerDesTarget = SerDesTarget.Record): S {
     if (obj === null || obj === undefined) {
       return obj as S;
     }
 
-    const ctx = this.adaptDesCtx(this._mkCtx(obj, {
+    const ctx = this.adaptDesCtx(this._mkCtx(obj, target, {
       deserializers: this._deserializers,
-      parsingInsertedId: parsingId,
       rawDataApiResp: raw,
     }));
 
@@ -258,7 +258,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
   protected abstract adaptDesCtx(ctx: BaseDesCtx<DesCtx>): DesCtx;
   protected abstract bigNumsPresent(ctx: SerCtx): boolean;
 
-  private _mkCtx<Ctx>(obj: unknown, ctx: Ctx): Ctx & BaseSerDesCtx {
+  private _mkCtx<Ctx>(obj: unknown, target: SerDesTarget, ctx: Ctx): Ctx & BaseSerDesCtx {
     return {
       done: ctxDone,
       recurse: ctxRecurse,
@@ -267,6 +267,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
       keyTransformer: this._cfg.keyTransformer,
       mutatingInPlace: true,
       mapAfter: null!,
+      target: target,
       rootObj: obj,
       path: [],
       locals: {},
@@ -280,8 +281,6 @@ function serdesRecord<Ctx extends BaseSerDesCtx>(key: string | number, obj: Some
   ctx.mapAfter = (fn) => { postMaps.push(fn); return [NEVERMIND]; };
 
   const stop = applySerdesFn(fn, key, obj, ctx);
-
-  // console.log(ctx.path, obj);
 
   if (ctx.path.length >= 250) {
     throw new Error('Tried to ser/des a document with a depth of over 250. Did you accidentally create a circular reference?');
@@ -332,8 +331,8 @@ function applySerdesFn<Ctx>(fn: SerDesFn<Ctx>, key: string | number, obj: SomeDo
       obj[key] = res[1];
     }
 
-    if (loops++ > 1000) {
-      throw new Error('Potential infinite loop caused by ctx.replaces detected (>1000 iterations)');
+    if (loops++ > 250) {
+      throw new Error('Potential infinite loop caused by ctx.replaces detected (>250 iterations)');
     }
   } while (res[0] === REPLACE);
 
