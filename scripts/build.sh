@@ -28,13 +28,12 @@ if [ "$light" = true ]; then
   npx tsc-alias -p etc/tsconfig.cjs.json
   echo '{"type": "commonjs"}' > dist/cjs/package.json
 else
-  npx tsc -p etc/tsconfig.esm.json || exit 30
-  npx tsc -p etc/tsconfig.cjs.json || exit 30
-
+  npx tsc -p etc/tsconfig.esm.json || exit 20
   npx tsc-alias -p etc/tsconfig.esm.json
-  npx tsc-alias -p etc/tsconfig.cjs.json
-
   echo '{"type": "module"}' > dist/esm/package.json
+
+  npx tsc -p etc/tsconfig.cjs.json || exit 30
+  npx tsc-alias -p etc/tsconfig.cjs.json
   echo '{"type": "commonjs"}' > dist/cjs/package.json
 fi
 

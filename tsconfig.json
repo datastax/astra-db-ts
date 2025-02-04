@@ -9,7 +9,9 @@
     "useDefineForClassFields": true,
     "allowSyntheticDefaultImports": true,
     "strict": true,
+    "importHelpers": true,
     "skipLibCheck": true,
+    "isolatedModules": true,
     "paths": {
       "@/src/*": ["./src/*"],
       "@/tests/*": ["./tests/*"],
