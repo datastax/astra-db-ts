@@ -35,13 +35,14 @@ export type DataAPIEnvironment = typeof DataAPIEnvironments[number];
 /**
  * @internal
  */
-export type Ref<T> = { ref: T }
+export interface Ref<T> { ref: T }
 
 /**
  * Utility type to represent an empty object without eslint complaining.
  *
  * @public
  */
+// eslint-disable-next-line -- Needs to be a type, not an interface
 export type EmptyObj = {};
 
 /**

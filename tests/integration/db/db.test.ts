@@ -91,7 +91,7 @@ parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
     it('(ASTRA) should work even when instantiated weirdly', async () => {
       const db = new DataAPIClient(TEST_APPLICATION_TOKEN, { dbOptions: { keyspace: '123123123', dataApiPath: 'King' } })
         .admin({ adminToken: 'dummy-token' })
-        .dbAdmin(TEST_APPLICATION_URI, { dataApiPath: DEFAULT_DATA_API_PATHS['astra'], keyspace: DEFAULT_KEYSPACE })
+        .dbAdmin(TEST_APPLICATION_URI, { dataApiPath: DEFAULT_DATA_API_PATHS.astra, keyspace: DEFAULT_KEYSPACE })
         .db()
         .admin({ adminToken: 'tummy-token', astraEnv: 'dev' })
         .db();

@@ -23,23 +23,15 @@ import { branchOnModel, FinalVectorizeTestBranch } from '@/tests/testlib/vectori
 import { createTestGroups, VectorizeTestGroup } from '@/tests/testlib/vectorize/vec-test-groups';
 import { Db } from '@/src/db';
 
-export interface VectorizeTestSpec {
-  [providerName: string]: {
-    headers?: {
-      [header: `x-${string}`]: string,
-    }
+export type VectorizeTestSpec = Record<string, {
+    headers?: Record<`x-${string}`, string>
     sharedSecret?: {
       providerKey?: string,
     }
-    dimension?: {
-      [modelNameRegex: string]: number,
-    },
-    parameters?: {
-      [modelNameRegex: string]: Record<string, string>
-    },
+    dimension?: Record<string, number>,
+    parameters?: Record<string, Record<string, string>>,
     warmupErr?: string,
-  },
-}
+  }>;
 
 const createTestBranches = (): FinalVectorizeTestBranch[] => {
   if (!process.env.CLIENT_VECTORIZE_PROVIDERS || process.env.CLIENT_VECTORIZE_PROVIDERS === 'null') {

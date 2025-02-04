@@ -111,7 +111,7 @@ const serialize: SerDesFn<TableSerCtx> = (value, ctx) => {
   const key = ctx.path[ctx.path.length - 1] ?? '';
   const nameSer = ctx.serializers.forName[key];
 
-  if (nameSer && nameSer.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+  if (nameSer?.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
     return resp;
   }
 
@@ -148,7 +148,7 @@ const serialize: SerDesFn<TableSerCtx> = (value, ctx) => {
     // Class-based serializers
     const classSer = ctx.serializers.forClass.find((c) => value instanceof c.class);
 
-    if (classSer && classSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+    if (classSer?.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
       return resp;
     }
 
@@ -178,7 +178,7 @@ const deserialize: SerDesFn<TableDesCtx> = (value, ctx) => {
   const key = ctx.path[ctx.path.length - 1] ?? '';
   const nameDes = ctx.deserializers.forName[key];
 
-  if (nameDes && nameDes.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+  if (nameDes?.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
     return resp;
   }
 

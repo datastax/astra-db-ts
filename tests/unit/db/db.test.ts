@@ -35,7 +35,7 @@ describe('unit.db.db', () => {
     it('should allow db construction from endpoint', () => {
       const db = new Db(internalOps(), 'https://id-region.apps.astra.datastax.com', DbOptsHandler.empty);
       assert.ok(db);
-      assert.strictEqual(db._httpClient.baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
+      assert.strictEqual(db._httpClient.baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS.astra}`);
     });
 
     it('should not throw on missing token', () => {
@@ -48,7 +48,7 @@ describe('unit.db.db', () => {
     it('should allow db construction from endpoint, using default options', () => {
       const db = new Db(internalOps(), 'https://id-region.apps.astra.datastax.com', DbOptsHandler.empty);
       assert.ok(db);
-      assert.strictEqual(db._httpClient.baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
+      assert.strictEqual(db._httpClient.baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS.astra}`);
     });
 
     it('should allow db construction from endpoint, overwriting options', () => {

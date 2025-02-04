@@ -106,7 +106,7 @@ describe('integration.documents.tables.cursor', { truncate: 'tables:before' }, (
       const cursor = table.find({}).map(intToString);
       const doc = await cursor.next();
       assert.ok(doc, 'Doc is null');
-      assert.ok(typeof doc['int'] === 'string');
+      assert.ok(typeof doc.int === 'string');
       assert.equal(cursor.state, 'started');
       assert.strictEqual(cursor.buffered(), 2);
     });

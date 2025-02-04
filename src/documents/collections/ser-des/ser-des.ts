@@ -90,7 +90,7 @@ const serialize: SerDesFn<CollSerCtx> = (value, ctx) => {
   const key = ctx.path[ctx.path.length - 1] ?? '';
   const nameSer = ctx.serializers.forName[key];
 
-  if (nameSer && nameSer.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
+  if (nameSer?.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
     return resp;
   }
 
@@ -110,7 +110,7 @@ const serialize: SerDesFn<CollSerCtx> = (value, ctx) => {
     // Class-based serializers
     const classSer = ctx.serializers.forClass.find((c) => value instanceof c.class);
 
-    if (classSer && classSer.fns.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
+    if (classSer?.fns.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
       return resp;
     }
 
@@ -156,7 +156,7 @@ const deserialize: SerDesFn<CollDesCtx> = (value, ctx) => {
   const key = ctx.path[ctx.path.length - 1] ?? '';
   const nameDes = ctx.deserializers.forName[key];
 
-  if (nameDes && nameDes.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
+  if (nameDes?.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
     return resp;
   }
 
@@ -174,7 +174,7 @@ const deserialize: SerDesFn<CollDesCtx> = (value, ctx) => {
     if (keys.length === 1) {
       const typeDes = ctx.deserializers.forType[keys[0]];
 
-      if (typeDes && typeDes.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
+      if (typeDes?.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
         return resp;
       }
     }

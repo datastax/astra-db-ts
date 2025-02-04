@@ -33,7 +33,7 @@ describe('unit.lib.token-providers.opts-handler', () => {
     };
 
     it('should return the empty value on undefined', () => {
-      parseEq(null!, TokenProvider.opts.empty);
+      parseEq(null, TokenProvider.opts.empty);
       parseEq(undefined, TokenProvider.opts.empty);
     });
 

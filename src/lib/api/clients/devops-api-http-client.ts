@@ -63,7 +63,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
     super(opts, [mkAuthHeaderProvider(opts.tokenProvider)], DevOpsAPITimeoutError.mk);
   }
 
-  public async request(req: DevOpsAPIRequestInfo, timeoutManager: TimeoutManager, started: number = 0): Promise<DevopsAPIResponse> {
+  public async request(req: DevOpsAPIRequestInfo, timeoutManager: TimeoutManager, started = 0): Promise<DevopsAPIResponse> {
     const isLongRunning = started !== 0;
 
     try {

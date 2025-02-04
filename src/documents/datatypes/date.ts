@@ -567,8 +567,8 @@ const parseDateStr = (str: string, strict: boolean): [number, number, number] =>
 };
 
 const parseDateQuick = (str: string): [number, number, number] => {
-  const sign = (str[0] === '-') ? -1 : 1;
-  const startIndex = (str[0] === '+' || str[0] === '-') ? 1 : 0;
+  const sign = (str.startsWith('-')) ? -1 : 1;
+  const startIndex = (str.startsWith('+') || str.startsWith('-')) ? 1 : 0;
 
   const yearStr = str.substring(startIndex, str.indexOf('-', startIndex + 1));
   const yearStrEnd = startIndex + yearStr.length;
@@ -583,7 +583,7 @@ const parseDateQuick = (str: string): [number, number, number] => {
 const DateRegex = /^([-+])?(\d{4,})-(\d{2})-(\d{2})$/;
 
 const parseDateStrict = (str: string): [number, number, number] => {
-  const match = str.match(DateRegex);
+  const match = DateRegex.exec(str);
 
   if (!match) {
     throw new Error(`Invalid date string '${str}'; must be in the format [+-]?YYY(Y+)-MM-DD, with zero-padded numbers as necessary`);

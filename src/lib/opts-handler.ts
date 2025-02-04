@@ -33,7 +33,7 @@ declare const __parsed: unique symbol;
 /**
  * @internal
  */
-export type Parsed<Brand> = { [__parsed]: Brand };
+export interface Parsed<Brand> { [__parsed]: Brand }
 
 /**
  * @internal
@@ -154,7 +154,7 @@ export const monoids = <const>{
     const empty = Object.fromEntries(schemaEntries.map(([k, v]) => [k, v.empty])) as T;
 
     const concat = (configs: T[]): T => {
-      const result = { ...empty } as T;
+      const result = { ...empty };
 
       for (const config of configs) {
         for (const [key, monoid] of schemaEntries) {

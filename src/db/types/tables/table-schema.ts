@@ -289,7 +289,7 @@ type CqlMapType2TsType<Def> =
 
 type CqlListType2TsType<Def> =
   Def extends { valueType: infer ValueType extends string }
-    ? Array<CqlType2TSType<ValueType, never> & {}>
+    ? (CqlType2TSType<ValueType, never> & {})[]
     : TypeErr<'Invalid generics definition for \'list\'; should have valueType set as scalar CQL types (e.g. \'text\')'>;
 
 type CqlSetType2TsType<Def> =

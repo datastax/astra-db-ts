@@ -28,7 +28,7 @@ import { DataAPIInet } from '@/src/documents/datatypes/inet';
 /**
  * @public
  */
-export type TableCodecClass = {
+export interface TableCodecClass {
   new (...args: any[]): { [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>> };
   [$DeserializeForTable]: SerDesFn<TableDesCtx>;
 }

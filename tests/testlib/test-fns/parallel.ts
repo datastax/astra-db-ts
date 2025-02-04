@@ -134,7 +134,7 @@ parallel = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
 
             const result = results[suiteIdx][testIdx]!;
 
-            this.test!.title += ` (${~~result.ms!}ms)`;
+            this.test!.title += ` (${~~result.ms}ms)`;
 
             if (result.error) {
               throw result.error;

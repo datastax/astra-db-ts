@@ -115,7 +115,7 @@ type _Proof2 = Expect<Equal<MyPK, {
   age: number,
 }>>;
 
-(async () => {
+await (async () => {
   const myTable: Table<MySchema, MyPK> = await mkTable();
 
   const insertManyResult = await myTable.insertMany([

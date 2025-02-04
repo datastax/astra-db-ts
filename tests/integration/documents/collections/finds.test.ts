@@ -767,7 +767,7 @@ parallel('integration.documents.collections.finds', { truncate: 'colls:before' }
     assert.strictEqual(res.insertedCount, docList.length);
     assert.strictEqual(Object.keys(res.insertedIds).length, 20);
     let idsArr = [`${key}1`, `${key}2`, `${key}3`];
-    let ids: Set<string> = new Set(idsArr);
+    let ids = new Set<string>(idsArr);
     let filter = { '_id': { '$in': idsArr }, key };
     const findRespDocs = await collection.find(filter).toArray();
     assert.strictEqual(findRespDocs.length, 3);
@@ -970,7 +970,7 @@ parallel('integration.documents.collections.finds', { truncate: 'colls:before' }
     const findRespDocs = await collection.find(filter).toArray();
     assert.strictEqual(findRespDocs.length, 1);
     //check if the doc ids of the returned docs are in the input list
-    const idsToCheck: Set<string> = new Set([`${key}6`]);
+    const idsToCheck = new Set<string>([`${key}6`]);
     findRespDocs.forEach((doc) => {
       assert.ok(doc._id);
       assert.ok(doc.city);

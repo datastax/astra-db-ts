@@ -71,7 +71,7 @@ type EmissionStrategy<Kind extends ClientKind> = (logger: Logger) => {
 /**
  * @internal
  */
-type EmissionStrategies = {
+interface EmissionStrategies {
   Normal: EmissionStrategy<'normal'>,
   Admin: EmissionStrategy<'admin'>,
 }

@@ -558,7 +558,7 @@ const parseTimeQuick = (str: string): [number, number, number, number] => {
 const TimeRegex = /^(\d\d):(\d\d)(?::(\d\d(?:\.(\d{0,9}))?))?$/;
 
 const parseTimeStrict = (str: string): [number, number, number, number] => {
-  const match = str.match(TimeRegex);
+  const match = TimeRegex.exec(str);
 
   if (!match) {
     throw Error(`Invalid time: '${str}'; must match HH:MM[:SS[.NNNNNNNNN]]`);

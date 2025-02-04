@@ -55,7 +55,7 @@ export type CollectionFilter<Schema extends SomeDoc> = {
  *
  * @public
  */
-export type CollectionFilterExpr<Elem> = Elem | (CollectionFilterOps<Elem> & { [key: string]: any });
+export type CollectionFilterExpr<Elem> = Elem | (CollectionFilterOps<Elem> & Record<string, any>);
 
 /**
  * Represents filter operators such as `$eq` and `$in` (but not statements like `$and`)

@@ -78,7 +78,7 @@ export class CommandImpls<ID> {
     });
 
     return {
-      insertedId: this._serdes.deserialize(raw.status!.insertedIds[0], raw, SerDesTarget.InsertedId) as ID,
+      insertedId: this._serdes.deserialize(raw.status!.insertedIds[0], raw, SerDesTarget.InsertedId),
     };
   }
 
@@ -256,7 +256,7 @@ export class CommandImpls<ID> {
       bigNumsPresent: filter[1],
     });
 
-    return this._serdes.deserialize(resp.data?.document, resp, SerDesTarget.Record) as any;
+    return this._serdes.deserialize(resp.data?.document, resp, SerDesTarget.Record);
   }
 
   public async findOneAndReplace<Schema extends SomeDoc>(_filter: Filter, _replacement: SomeDoc, options?: GenericFindOneAndReplaceOptions): Promise<Schema | null> {

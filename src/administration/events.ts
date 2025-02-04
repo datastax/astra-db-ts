@@ -24,6 +24,7 @@ import { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts';
  *
  * @public
  */
+// eslint-disable-next-line -- is type instead of an interface to prevent issues w/ it not extending EventMap
 export type AdminCommandEventMap = {
   /**
    * Emitted when an admin command is started, before the initial HTTP request is made.

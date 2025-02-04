@@ -392,7 +392,7 @@ export class Timeouts {
 
   public static fmtTimeoutMsg = (tm: TimeoutManager, timeoutTypes: TimedOutCategories) => {
     const timeout = (timeoutTypes === 'provided')
-      ? Object.values(tm.initial())[0]!
+      ? Object.values(tm.initial())[0]
       : tm.initial()[toArray(timeoutTypes)[0]];
 
     const types =

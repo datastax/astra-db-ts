@@ -36,13 +36,13 @@ declare const $ERROR: unique symbol;
  *
  * @public
  */
-export type TypeErr<S> = { [$ERROR]: S };
+export interface TypeErr<S> { [$ERROR]: S }
 
 /**
  * @internal
  */
 export function extractDbIdFromUrl(uri: string): string | undefined {
-  return new URL(uri).hostname.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}/)?.[0];
+  return (/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}/.exec(new URL(uri).hostname))?.[0];
 }
 
 /**

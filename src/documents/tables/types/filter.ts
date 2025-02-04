@@ -55,7 +55,7 @@ export type TableFilterExpr<Elem> = Elem | TableFilterOps<Elem>;
  *
  * @public
  */
-export type TableFilterOps<Elem> = {
+export interface TableFilterOps<Elem> {
   $eq?: Elem,
   $ne?: Elem,
   $in?: Elem[],

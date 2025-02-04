@@ -148,7 +148,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
   #nextPageState?: string | null;
   #state = 'idle' as FindCursorStatus;
   #sortVector?: DataAPIVector | null;
-  #consumed: number = 0;
+  #consumed = 0;
 
   /**
    * Should not be instantiated directly.
@@ -378,7 +378,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    *
    * @returns A new cursor with the new sort vector inclusion setting.
    */
-  public includeSortVector(includeSortVector: boolean = true): FindCursor<T, TRaw> {
+  public includeSortVector(includeSortVector = true): FindCursor<T, TRaw> {
     if (this.#state !== 'idle') {
       throw new CursorError('Cannot set a new sort vector on a running/closed cursor', this);
     }
@@ -666,7 +666,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this.#buffer = raw.data?.documents ?? [];
 
     for (let i = 0, n = this.#buffer.length; i < n; i++) {
-      this.#buffer[i] = this.#serdes.deserialize(this.#buffer[i], raw, SerDesTarget.Record) as TRaw;
+      this.#buffer[i] = this.#serdes.deserialize(this.#buffer[i], raw, SerDesTarget.Record);
     }
 
     const sortVector = raw.status?.sortVector;

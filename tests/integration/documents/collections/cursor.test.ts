@@ -278,7 +278,7 @@ describe('integration.documents.collections.cursor', { truncate: 'colls:before' 
       const cursor = collection.find({}).map(ageToString);
       const doc = await cursor.next();
       assert.ok(doc, 'Doc is null');
-      assert.ok(typeof doc['age'] === 'string');
+      assert.ok(typeof doc.age === 'string');
       assert.equal(cursor.state, 'started');
       assert.strictEqual(cursor.buffered(), 2);
     });

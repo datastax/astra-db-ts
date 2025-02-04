@@ -150,7 +150,7 @@ export const initCollectionWithFailingClient = () => {
   return collection;
 };
 
-export type Employee = {
+export interface Employee {
   _id?: string;
   username?: string;
   human?: boolean;
@@ -164,7 +164,7 @@ export type Employee = {
     is_office?: boolean;
     country?: string | null;
   };
-};
+}
 
 export const createSampleDocWithMultiLevel = (key: string) =>
   ({
