@@ -235,10 +235,10 @@ describe('unit.db.db', () => {
   });
 
   describe('info tests', () => {
-    it('should error on invalid environment', () => {
+    it('should error on invalid environment', async () => {
       for (const env of DataAPIEnvironments.filter(e => e !== 'astra')) {
         const db = new Db({ ...internalOps(), environment: env as ParsedEnvironment }, TEST_APPLICATION_URI, DbOptsHandler.empty);
-        assert.rejects(() => db.info(), { message: `Invalid environment '${env}' for operation 'db.info()'; expected environment(s): 'astra'` });
+        await assert.rejects(() => db.info(), { message: `Invalid environment '${env}' for operation 'db.info()' (info() is only available for Astra databases); expected environment(s): 'astra'` });
       }
     });
   });

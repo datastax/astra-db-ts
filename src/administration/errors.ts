@@ -86,7 +86,7 @@ export class DevOpsAPITimeoutError extends DevOpsAPIError {
   /**
    * @internal
    */
-  public static mk(info: HTTPRequestInfo, types: TimedOutCategories): DevOpsAPITimeoutError {
+  public static mk(this: void, info: HTTPRequestInfo, types: TimedOutCategories): DevOpsAPITimeoutError {
     return new DevOpsAPITimeoutError(info, types);
   }
 }

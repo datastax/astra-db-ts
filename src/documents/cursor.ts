@@ -80,7 +80,7 @@ interface InternalFindOptions {
 
 interface InternalGetMoreCommand {
   find: {
-    filter: SerializedFilter | undefined,
+    filter: SerializedFilter,
     sort: Record<string, unknown> | undefined,
     projection: Record<string, unknown> | undefined,
     options: InternalFindOptions | undefined,

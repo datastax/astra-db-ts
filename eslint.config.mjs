@@ -31,9 +31,14 @@ export default ts.config(
       // Only way I can do indentation in ts-doc
       'no-irregular-whitespace': 'off',
 
-      // sorry.
+      // no.
+      '@typescript-eslint/restrict-template-expressions': 'off',
+
+      // sorry :(
       '@typescript-eslint/no-unused-expressions': 'off',
       '@typescript-eslint/consistent-type-assertions': 'off',
+      '@typescript-eslint/prefer-nullish-coalescing': 'off',
+      '@typescript-eslint/no-empty-function': 'off',
 
       // Makes underscore variables not throw a fit
       '@typescript-eslint/no-unused-vars': ['error', {
@@ -62,6 +67,7 @@ export default ts.config(
     rules: {
       '@typescript-eslint/no-magic-numbers': 'off',
       '@typescript-eslint/require-await': 'off',
+      '@typescript-eslint/no-implied-eval': 'off',
     },
   },
   {

@@ -93,10 +93,10 @@ function pretendingEnv(env: 'server' | 'browser' | 'unknown', fn: TestFn): TestF
     anyGlobalThis.window = env === 'browser' ? globalThis : undefined;
     anyGlobalThis.Buffer = env === 'unknown' ? undefined : buffer;
 
-    const res = fn(...args);
+    let res = fn(...args);
 
     if (res instanceof Promise) {
-      res.finally(() => {
+      res = res.finally(() => {
         [anyGlobalThis.window, anyGlobalThis.Buffer] = [window, buffer];
       });
     } else {

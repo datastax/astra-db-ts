@@ -146,7 +146,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
    *
    * @returns The current time in the local timezone
    */
-  public static now(): DataAPITime {
+  public static now(this: void): DataAPITime {
     return new DataAPITime(new Date());
   }
 
@@ -166,7 +166,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
    *
    * @returns The current time in UTC
    */
-  public static utcnow(): DataAPITime {
+  public static utcnow(this: void): DataAPITime {
     return new DataAPITime(...ofNanoOfDay((Date.now() % 86_400_000) * 1_000_000));
   }
 
@@ -188,7 +188,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
    *
    * @returns The `DataAPITime` representing the given number of nanoseconds
    */
-  public static ofNanoOfDay(nanoOfDay: number): DataAPITime {
+  public static ofNanoOfDay(this: void, nanoOfDay: number): DataAPITime {
     return new DataAPITime(...ofNanoOfDay(nanoOfDay));
   }
 
@@ -210,7 +210,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
    *
    * @returns The `DataAPITime` representing the given number of seconds
    */
-  public static ofSecondOfDay(secondOfDay: number): DataAPITime {
+  public static ofSecondOfDay(this: void, secondOfDay: number): DataAPITime {
     return new DataAPITime(...ofSecondOfDay(secondOfDay));
   }
 

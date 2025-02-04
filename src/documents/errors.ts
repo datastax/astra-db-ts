@@ -199,7 +199,7 @@ export class DataAPITimeoutError extends DataAPIError {
   /**
    * @internal
    */
-  public static mk(info: HTTPRequestInfo, types: TimedOutCategories): DataAPITimeoutError {
+  public static mk(this: void, info: HTTPRequestInfo, types: TimedOutCategories): DataAPITimeoutError {
     return new DataAPITimeoutError(info, types);
   }
 }

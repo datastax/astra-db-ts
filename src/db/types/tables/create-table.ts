@@ -177,7 +177,7 @@ export type TableScalarType =
  */
 export type LooseCreateTableColumnDefinition =
   | TableScalarType
-  | string;
+  | (string & Record<never, never>);
 
 /**
  * ##### Overview

@@ -245,7 +245,7 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
    *
    * @see DataAPIDurationBuilder
    */
-  public static builder(base?: DataAPIDuration) {
+  public static builder(this: void, base?: DataAPIDuration) {
     return new DataAPIDurationBuilder(base);
   }
 

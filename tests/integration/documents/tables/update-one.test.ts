@@ -181,7 +181,7 @@ parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }
 
     const found = await table_.findOne({ text: key, int: 0 });
     assert.ok(found?.vector1 instanceof DataAPIVector);
-    assert.deepStrictEqual((found?.vector2!).asArray(), vector);
+    assert.deepStrictEqual(found.vector2?.asArray(), vector);
     assert.strictEqual(found?.text, key);
   });
 

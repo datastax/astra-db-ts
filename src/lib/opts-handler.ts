@@ -44,7 +44,7 @@ export type Unparse<T> = Omit<T, typeof __parsed>;
  * @internal
  */
 export interface OptionsHandlerTypes {
-  Parsed: Parsed<string> & unknown,
+  Parsed: Parsed<string>,
   Parseable: unknown,
 }
 

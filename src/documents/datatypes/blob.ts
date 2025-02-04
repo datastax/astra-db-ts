@@ -17,13 +17,15 @@ import { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { forJSEnv } from '@/src/lib/utils';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
+import { mkInvArgsErr } from '@/src/documents/utils';
+import { SomeConstructor } from '@/src/lib';
 
 /**
  * Represents a `Buffer` type, if available.
  *
  * @public
  */
-export type MaybeBuffer = typeof globalThis extends { Buffer: infer B extends abstract new (...args: any) => any }
+export type MaybeBuffer = typeof globalThis extends { Buffer: infer B extends SomeConstructor }
   ? InstanceType<B>
   : never;
 
@@ -81,7 +83,7 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
    */
   public constructor(blob: DataAPIBlobLike, validate = true) {
     if (validate && !DataAPIBlob.isBlobLike(blob)) {
-      throw new TypeError(`Expected blob to be a string, ArrayBuffer, or Buffer (got '${blob}')`);
+      throw mkInvArgsErr('new DataAPIBlob', [['blob', 'DataAPIBlob | ArrayBuffer | Buffer | { $binary: string }']], blob);
     }
 
     Object.defineProperty(this, '_raw', {
@@ -91,7 +93,7 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
     });
 
     Object.defineProperty(this, $CustomInspect, {
-      value: this.toString,
+      value: this.toString.bind(this),
     });
   }
 
@@ -148,15 +150,15 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
       throw new Error("Buffer is not available in this environment");
     }
 
-    if (this._raw instanceof Buffer) {
-      return this._raw;
+    if (this._raw as unknown instanceof Buffer) {
+      return this._raw as MaybeBuffer;
     }
 
     if (this._raw instanceof ArrayBuffer) {
       return Buffer.from(this._raw);
     }
 
-    return Buffer.from(this._raw.$binary, 'base64');
+    return Buffer.from((this._raw as { $binary: string }).$binary, 'base64');
   }
 
   /**
@@ -180,7 +182,7 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
    * Returns a pretty string representation of the `DataAPIBlob`.
    */
   public toString() {
-    const type = (this._raw instanceof ArrayBuffer && 'ArrayBuffer') || (this._raw instanceof Buffer && 'Buffer') || 'base64';
+    const type = (this._raw instanceof ArrayBuffer && 'ArrayBuffer') || (this._raw as unknown instanceof Buffer && 'Buffer') || 'base64';
     return `DataAPIBlob(typeof raw=${type}, byteLength=${this.byteLength})`;
   }
 
@@ -191,7 +193,7 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
    *
    * @returns `true` if the value is a blob-like value; `false` otherwise
    */
-  public static isBlobLike(value: unknown): value is DataAPIBlobLike {
+  public static isBlobLike(this: void, value: unknown): value is DataAPIBlobLike {
     return !!value && typeof value === 'object' && (value instanceof DataAPIBlob || ('$binary' in value && typeof value.$binary === 'string') || value instanceof ArrayBuffer || value instanceof Buffer);
   }
 }
@@ -221,8 +223,8 @@ const arrayBufferToBase64 = forJSEnv<[ArrayBuffer], string>({
   browser: (buffer) => {
     let binary = '';
     const bytes = new Uint8Array(buffer);
-    for (let i = 0; i < bytes.length; i++) {
-      binary += String.fromCharCode(bytes[i]);
+    for (const byte of bytes) {
+      binary += String.fromCharCode(byte);
     }
     return window.btoa(binary);
   },

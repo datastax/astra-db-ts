@@ -140,7 +140,7 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
    *
    * @returns The current date in the local timezone
    */
-  public static now(): DataAPIDate {
+  public static now(this: void): DataAPIDate {
     return new DataAPIDate(new Date());
   }
 
@@ -160,7 +160,7 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
    *
    * @returns The current date in UTC
    */
-  public static utcnow(): DataAPIDate {
+  public static utcnow(this: void): DataAPIDate {
     return new DataAPIDate(ofEpochDay(Math.floor(Date.now() / MillisecondsPerDay)));
   }
 
@@ -184,7 +184,7 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
    *
    * @returns The date representing the given number of days since the epoch
    */
-  public static ofEpochDay(epochDays: number): DataAPIDate {
+  public static ofEpochDay(this: void, epochDays: number): DataAPIDate {
     return new DataAPIDate(ofEpochDay(epochDays));
   }
 
@@ -211,7 +211,7 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
    *
    * @returns The date representing the given year and day of the year
    */
-  public static ofYearDay(year: number, dayOfYear: number): DataAPIDate {
+  public static ofYearDay(this: void, year: number, dayOfYear: number): DataAPIDate {
     return new DataAPIDate(ofYearDay(year, dayOfYear));
   }
 

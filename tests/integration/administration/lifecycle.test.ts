@@ -33,8 +33,8 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
   it('works', async () => {
     void dropTestDbs();
 
-    process.on('exit', async () => {
-      await dropTestDbs();
+    process.on('exit', () => {
+      void dropTestDbs();
     });
 
     const asyncDbAdmin = await admin.createDatabase({

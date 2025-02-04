@@ -47,7 +47,7 @@ const transformer = decoder.transform((config) => {
     (Array.isArray(config[0]))
       ?  config
       : [config]
-  );
+  ) as string[];
 
   const callerString = callers.map((c) => {
     return (c[1]) ? `${c[0]}/${c[1]}` : c[0];

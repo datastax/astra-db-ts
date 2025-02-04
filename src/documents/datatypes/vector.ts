@@ -102,7 +102,7 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
     });
 
     Object.defineProperty(this, $CustomInspect, {
-      value: this.toString,
+      value: this.toString.bind(this),
     });
   }
 
@@ -248,8 +248,8 @@ const serializeFromArray = forJSEnv<[number[] | Float32Array], number[] | { $bin
     }
 
     let binary = '';
-    for (let i = 0; i < buffer.length; i++) {
-      binary += String.fromCharCode(buffer[i]);
+    for (const byte of buffer) {
+      binary += String.fromCharCode(byte);
     }
 
     return { $binary: window.btoa(binary) };

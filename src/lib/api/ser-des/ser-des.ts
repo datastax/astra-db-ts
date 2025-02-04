@@ -13,15 +13,7 @@
 // limitations under the License.
 
 import { SomeDoc } from '@/src/documents';
-import {
-  Deserializers,
-  KeyTransformer,
-  nullish,
-  processCodecs,
-  RawCodec,
-  RawDataAPIResponse,
-  Serializers,
-} from '@/src/lib';
+import { Deserializers, KeyTransformer, processCodecs, RawCodec, RawDataAPIResponse, Serializers } from '@/src/lib';
 import {
   BaseDesCtx,
   BaseSerCtx,
@@ -237,7 +229,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
     ];
   }
 
-  public deserialize<S extends unknown | nullish>(obj: unknown | nullish, raw: RawDataAPIResponse, target: SerDesTarget = SerDesTarget.Record): S {
+  public deserialize<S>(obj: unknown, raw: RawDataAPIResponse, target: SerDesTarget = SerDesTarget.Record): S {
     if (obj === null || obj === undefined) {
       return obj as S;
     }
