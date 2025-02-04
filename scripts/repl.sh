@@ -12,7 +12,11 @@ if [ -z "$CLIENT_DB_TOKEN" ] || [ -z "$CLIENT_DB_TOKEN" ]; then
 fi
 
 # Rebuild the client (without types or any extra processing for speed)
-sh scripts/build.sh -light -no-report || exit 2
+sh scripts/build.sh -light || exit 2
+
+default_coll_name='test_coll'
+default_table_name='test_table'
+default_keyspace_name='default_keyspace'
 
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -24,26 +28,22 @@ while [ $# -gt 0 ]; do
     "-l" | "-logging")
       export LOG_ALL_TO_STDOUT=true
       ;;
-    *)
-      if [ "$1" != "--help" ] && [ "$1" != "-help" ] && [ "$1" != "-h" ]; then
-        echo "Invalid flag $1"
-        echo
-      fi
-      echo "Usage: sh scripts/repl.sh [-local] [-l | -logging]"
-      echo
-      echo "* -local: Sets the environment to 'hcd' and attempts to use a locally running stargate instance"
-      echo "* -l | -logging: Logs helpful events to stdout"
-      echo
-      echo "Useful commands:"
-      echo
-      echo "cl: Clears the console"
-      echo "cda: Deletes all documents in the test collection"
-      echo "tda: Deletes all documents in the test table"
-      echo "cfa: Finds all documents in the test collection"
-      echo "tfa: Finds all documents in the test table"
-      echo "cif(doc): Inserts a row into the test collection and returns the inserted document"
-      echo "tif(row): Inserts a row into the test table and returns the inserted document"
-      exit
+    "-c" | "-coll-name")
+      default_coll_name="$2"
+      shift
+      ;;
+    "-t" | "-table-name")
+      default_table_name="$2"
+      shift
+      ;;
+    "-k" | "-keyspace-name")
+      default_keyspace_name="$2"
+      shift
+      ;;
+     *)
+      sh scripts/utils/help.sh "$1" repl.sh
+      exit $?
+      ;;
   esac
   shift
 done
@@ -53,21 +53,24 @@ node -i -e "
   require('./node_modules/dotenv/config');
 
   const $ = require('./dist');
-  const sp = require('synchronized-promise')
+  const sp = require('synchronized-promise');
   require('util').inspect.defaultOptions.depth = null;
 
+  const bn = require('bignumber.js');
+  const JBI = require('json-bigint');
+
   let client = new $.DataAPIClient(process.env.CLIENT_DB_TOKEN, { environment: process.env.CLIENT_DB_ENVIRONMENT, logging: [{ events: 'all', emits: 'event' }] });
-  let db = client.db(process.env.CLIENT_DB_URL);
+  let db = client.db(process.env.CLIENT_DB_URL, { keyspace: '$default_keyspace_name' });
   let dbAdmin = db.admin({ environment: process.env.CLIENT_DB_ENVIRONMENT });
 
-  const isAstra = process.env.CLIENT_DB_ENVIRONMENT === 'astra';
+  const isAstra = !process.env.CLIENT_DB_ENVIRONMENT || process.env.CLIENT_DB_ENVIRONMENT === 'astra';
 
   let admin = (isAstra)
     ? client.admin()
     : null;
 
-  let coll = db.collection('test_coll');
-  let table = db.table('test_table');
+  let coll = db.collection('$default_coll_name');
+  let table = db.table('$default_table_name');
 
   if (process.env.LOG_ALL_TO_STDOUT) {
     for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed']) {
@@ -83,27 +86,19 @@ node -i -e "
   });
 
   Object.defineProperty(this, 'cda', {
-    get() {
-      return sp(() => coll.deleteMany({}))();
-    },
+    get: sp(() => coll.deleteMany({})),
   });
 
   Object.defineProperty(this, 'tda', {
-    get() {
-      return sp(() => table.deleteMany({}))();
-    },
+    get: sp(() => table.deleteMany({})),
   });
 
   Object.defineProperty(this, 'cfa', {
-    get() {
-      return sp(() => coll.find({}).toArray())();
-    },
+    get: sp(() => coll.find({}).toArray()),
   });
 
   Object.defineProperty(this, 'tfa', {
-    get() {
-      return sp(() => table.find({}).toArray())();
-    },
+    get: sp(() => table.find({}).toArray()),
   });
 
   const cif = sp(async (doc) => {
@@ -125,4 +120,10 @@ node -i -e "
     }
     return originalEmit.apply(process, arguments);
   };
+
+  Promise.prototype[Symbol.toPrimitive] = function() {
+    let ok = 1;
+    console.dir(sp(() => this.catch(e => (ok = 0, e)))(), { colors: true });
+    return ok;
+  }
 "

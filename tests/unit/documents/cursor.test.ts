@@ -15,7 +15,7 @@
 
 import assert from 'assert';
 import { describe, it } from '@/tests/testlib';
-import { CursorError, FindCursor } from '@/src/documents';
+import { FindCursor } from '@/src/documents';
 import { $CustomInspect } from '@/src/lib/constants';
 
 describe('unit.documents.cursors', ({ collection }) => {
@@ -65,7 +65,7 @@ describe('unit.documents.cursors', ({ collection }) => {
   it('should error if trying to set .includeSortVector() after starting cursor', () => {
     const cursor = collection.find({}).includeSortVector();
     cursor.close();
-    assert.throws(() => cursor.includeSortVector(), CursorError);
+    assert.throws(() => cursor.includeSortVector(), { name: 'CursorError' });
   });
 
   it('should inspect properly', () => {

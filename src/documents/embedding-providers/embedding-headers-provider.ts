@@ -63,13 +63,13 @@ export abstract class EmbeddingHeadersProvider {
    *
    * @internal
    */
-  static parseHeaders(token: unknown): EmbeddingHeadersProvider {
-    if (typeof token === 'string' || isNullish(token)) {
-      return new EmbeddingAPIKeyHeaderProvider(token);
+  static parse(provider: unknown): EmbeddingHeadersProvider {
+    if (typeof provider === 'string' || isNullish(provider)) {
+      return new EmbeddingAPIKeyHeaderProvider(provider);
     }
 
-    if (token instanceof EmbeddingHeadersProvider) {
-      return token;
+    if (provider instanceof EmbeddingHeadersProvider) {
+      return provider;
     }
 
     throw new TypeError('Expected embeddingApiKey to be type string | EmbeddingHeadersProvider | nullish');

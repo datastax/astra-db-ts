@@ -21,7 +21,7 @@ import stableStringify from 'safe-stable-stringify';
 
 describe('unit.documents.tables.ser-des.mutate-in-place', () => {
   describe('mutateInPlace: true', () => {
-    const serdes = new TableSerDes({ mutateInPlace: true });
+    const serdes = new TableSerDes({ ...TableSerDes.cfg.empty, mutateInPlace: true });
 
     it('should mutate the input object in place', () => {
       const id = uuid(4);
@@ -46,7 +46,7 @@ describe('unit.documents.tables.ser-des.mutate-in-place', () => {
   });
 
   describe('mutateInPlace: false', () => {
-    const serdes = new TableSerDes({ mutateInPlace: false });
+    const serdes = new TableSerDes({ ...TableSerDes.cfg.empty, mutateInPlace: false });
 
     it('should not mutate the input object in place', () => {
       const id = uuid(4);

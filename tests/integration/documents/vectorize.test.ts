@@ -46,6 +46,10 @@ const createTestBranches = (): FinalVectorizeTestBranch[] => {
     return [];
   }
 
+  if (!fs.existsSync('vectorize_test_spec.json')) {
+    return [];
+  }
+
   const spec = JSON.parse(fs.readFileSync('vectorize_test_spec.json', 'utf8')) as VectorizeTestSpec;
 
   if (Object.entries(spec).length === 0) {

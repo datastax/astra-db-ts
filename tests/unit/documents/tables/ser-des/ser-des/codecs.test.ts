@@ -16,9 +16,8 @@
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
-import { ctxContinue, ctxDone, ctxRecurse } from '@/src/lib/api/ser-des/ctx';
-import { TableCodecs, UUID, uuid } from '@/src/documents';
-import { pathMatches } from '@/src/lib/utils';
+import { ctxDone, ctxNevermind, ctxRecurse } from '@/src/lib/api/ser-des/ctx';
+import { TableCodecs, uuid } from '@/src/documents';
 
 describe('unit.documents.tables.ser-des.ser-des.codecs', () => {
   describe('forPath', () => {
@@ -26,12 +25,13 @@ describe('unit.documents.tables.ser-des.ser-des.codecs', () => {
       const serPaths = [] as unknown[];
       const desPaths = [] as unknown[];
 
-      const visit = (arr: unknown[], v: unknown) => (value: unknown) => (arr.push(v ?? value), ctxContinue());
+      const visit = (arr: unknown[], v: unknown) => (value: unknown) => (arr.push(v ?? value), ctxNevermind());
       const serdesFns = (v: unknown = null) => ({ serialize: visit(serPaths, v), deserialize: visit(desPaths, v) });
       const uuid1 = uuid(1);
       const uuid4 = uuid(4);
 
       const serdes = new TableSerDes({
+        ...TableSerDes.cfg.empty,
         codecs: [
           TableCodecs.forPath(['*'], serdesFns('[*]')),
           TableCodecs.forPath(['*', '*'], serdesFns('[*][*]')),
@@ -130,14 +130,15 @@ describe('unit.documents.tables.ser-des.ser-des.codecs', () => {
         let ser = 5, des = 5;
 
         const serdes = new TableSerDes({
+          ...TableSerDes.cfg.empty,
           codecs: [
             ...repeat(() => TableCodecs.forPath([], {
-              serialize: () => --ser ? ctxContinue() : signal,
-              deserialize: () => --des ? ctxContinue() : signal,
+              serialize: () => --ser ? ctxNevermind() : signal,
+              deserialize: () => --des ? ctxNevermind() : signal,
             })),
             TableCodecs.forPath(['field'], {
-              serialize: () => (--ser, ctxContinue()),
-              deserialize: () => (--des, ctxContinue()),
+              serialize: () => (--ser, ctxNevermind()),
+              deserialize: () => (--des, ctxNevermind()),
             }),
           ],
           mutateInPlace: true,
@@ -148,74 +149,6 @@ describe('unit.documents.tables.ser-des.ser-des.codecs', () => {
 
         serdes.deserialize({ field: 3 }, { status: { projectionSchema: { field: { type: 'int' } } } });
         assert.strictEqual(des, signal === ctxRecurse() ? -1 : 0);
-      }
-    });
-  });
-
-  describe('forName', () => {
-    it('should keep matching the same path til done/continue', () => {
-      const repeat = <T>(mk: (n: number) => T) => Array.from({ length: 10 }, (_, i) => mk(i));
-
-      for (const signal of [ctxRecurse(), ctxDone()] as const) {
-        let ser = 5, des = 5;
-
-        const serdes = new TableSerDes({
-          codecs: [
-            ...repeat(() => TableCodecs.forName('', {
-              serialize: () => --ser ? ctxContinue() : signal,
-              deserialize: () => --des ? ctxContinue() : signal,
-            })),
-            TableCodecs.forName('field', {
-              serialize: () => (--ser, ctxContinue()),
-              deserialize: () => (--des, ctxContinue()),
-            }),
-          ],
-          mutateInPlace: true,
-        });
-
-        serdes.serialize({ field: 3 });
-        assert.strictEqual(ser, signal === ctxRecurse() ? -1 : 0);
-
-        serdes.deserialize({ field: 3 }, { status: { projectionSchema: { field: { type: 'int' } } } });
-        assert.strictEqual(des, signal === ctxRecurse() ? -1 : 0);
-      }
-    });
-  });
-
-  describe('forType', () => {
-    class Type {
-      constructor(public readonly unwrap: UUID) {}
-    }
-
-    it('should keep matching the same path til done/continue', () => {
-      const repeat = <T>(mk: (n: number) => T) => Array.from({ length: 10 }, (_, i) => mk(i));
-
-      for (const signal of [ctxRecurse, ctxDone] as const) {
-        let ser = 5, des = 5;
-
-        const serdes = new TableSerDes({
-          codecs: [
-            ...repeat(() => TableCodecs.forType('uuid', {
-              serializeClass: Type,
-              serialize: (v, ctx) => --ser ? ctxContinue() : (ctx.mapAfter((v) => v.id), signal({ id: v.unwrap })),
-              deserialize: (v) => --des ? ctxContinue() : signal(new Type(v.type)),
-            })),
-            TableCodecs.custom({
-              serializeGuard: (v) => v instanceof UUID,
-              serialize: () => (--ser, ctxContinue()),
-              deserializeGuard: (_, c) => {
-                return pathMatches(c.path, ['type', 'unwrap']);
-              },
-              deserialize: () => (--des, ctxContinue()),
-            }),
-          ],
-        });
-
-        serdes.serialize({ type: new Type(uuid(4)) });
-        assert.strictEqual(ser, signal === ctxRecurse ? -1 : 0);
-
-        serdes.deserialize({ type: uuid(4).toString() }, { status: { projectionSchema: { type: { type: 'uuid' } } } });
-        assert.strictEqual(des, signal === ctxRecurse ? -1 : 0);
       }
     });
   });

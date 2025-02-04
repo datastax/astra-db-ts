@@ -483,3 +483,56 @@ If you really want to change the behavior of how a certain type is deserialized,
 | `varchar`   | `string`          | -          | `'Hello!'`                                                                           |
 | `varint`    | `bigint`          | -          | `BigInt('42')`, `42n`                                                                |
 | `vector`    | `DataAPIVector`   | `vector`   | `new DataAPIVector([.1, .2, .3])`, `vector([.1, .2, .3])`                            |
+
+[//]: # (###### `adminCommandStarted` ({@link AdminCommandStartedEvent})
+[//]: # (
+[//]: # (Emitted when an admin command is started, before the initial HTTP request is made.
+[//]: # (
+[//]: # (_Default behavior: Emits the event, logs to stderr._
+[//]: # (
+[//]: # (###### `adminCommandPolling` ({@link AdminCommandPollingEvent})
+[//]: # (
+[//]: # (Emitted when a command is polling in a long-running operation (i.e. {@link AstraAdmin.createDatabase}).
+[//]: # (
+[//]: # (**NOTE: this is ONLY emitted when using {@link AstraAdmin} & {@link AstraDbAdmin} methods.** Non-Astra-backends
+[//]: # (do not yet require any command polling.
+[//]: # (
+[//]: # (Frequency of polling depends on the command being run, and whether a custom polling interval was set.
+[//]: # (
+[//]: # (_Default behavior: Emits the event, logs to stderr._
+[//]: # (
+[//]: # (###### `adminCommandSucceeded` ({@link AdminCommandSucceededEvent})
+[//]: # (
+[//]: # (Emitted when an admin command has succeeded, after any necessary polling (i.e. when an HTTP 200 is returned).
+[//]: # (
+[//]: # (_Default behavior: Emits the event, logs to stderr._
+[//]: # (
+[//]: # (###### `adminCommandFailed` ({@link AdminCommandFailedEvent})
+[//]: # (
+[//]: # (Emitted when an admin command has failed (i.e. when an HTTP 4xx/5xx is returned, even if while polling).
+[//]: # (
+[//]: # (_Default behavior: Emits the event, logs to stderr._
+[//]: # (
+[//]: # (###### `adminCommandWarnings` ({@link AdminCommandWarningsEvent})
+[//]: # (
+[//]: # (Emitted when an admin command has warnings (i.e. when the `status.warnings` field is present).
+[//]: # (
+[//]: # (**NOTE: this is ONLY emitted when using {@link DataAPIDbAdmin} methods.** Astra-backends work using the DevOps
+API,
+[//]: # (which does not produce any command warnings.
+[//]: # (
+[//]: # (Warnings may be present even if the command has succeeded.
+[//]: # (
+[//]: # (_Default behavior: Emits the event, logs to stderr._)
+
+| Name                                                              | Description                                                                                                   | Default behavior if enabled     |
+|-------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|---------------------------------|
+| `commandStarted`                                                  | Emitted when a command is started, before the initial HTTP request is made.                                   | Emit as event; does not log     |
+| `commandSucceeded`                                                | Emitted when a command has succeeded (i.e. the status code is 200, and no `errors` are returned).             | Emit as event; does not log     |
+| `commandFailed`                                                   | Emitted when a command has errored (i.e. the status code is not 200, or `errors` are returned).               | Emit as event; logs to stderr   |
+| `commandWarnings`                                                 | Emitted when a command has warnings (i.e. when the `status.warnings` field is present).                       | Emit as event; logs to stderr   |
+| `adminCommandStarted`                                             | Emitted when an admin command is started, before the initial HTTP request is made.                            | Emits the event; logs to stderr |
+| `adminCommandPolling`                                             | Emitted when a command is polling in a long-running operation (i.e. {@link AstraAdmin.createDatabase}).       | Emits the event; logs to stderr |
+| `adminCommandSucceeded`                                           | Emitted when an admin command has succeeded, after any necessary polling (i.e. when an HTTP 200 is returned). | Emits the event; logs to stderr |
+| `adminCommandFailed`                                              | Emitted when an admin command has failed (i.e. when an HTTP 4xx/5xx is returned, even if while polling).      | Emits the event; logs to stderr |
+| `adminCommandWarnings`                                            | Emitted when an admin command has warnings (i.e. when the `status.warnings` field is present).                | Emits the event; logs to stderr |

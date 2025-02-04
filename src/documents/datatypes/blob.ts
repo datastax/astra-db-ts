@@ -16,6 +16,7 @@ import { $CustomInspect } from '@/src/lib/constants';
 import { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { forJSEnv } from '@/src/lib/utils';
+import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
 
 /**
  * Represents a `Buffer` type, if available.
@@ -65,7 +66,7 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
    * Implementation of `$DeserializeForTable` for {@link TableCodec}
    */
   public static [$DeserializeForTable](value: any, ctx: TableDesCtx) {
-    return ctx.done(new DataAPIBlob((ctx.parsingInsertedId) ? { $binary: value } : value, false));
+    return ctx.done(new DataAPIBlob((ctx.target === SerDesTarget.InsertedId) ? { $binary: value } : value, false));
   }
 
   /**

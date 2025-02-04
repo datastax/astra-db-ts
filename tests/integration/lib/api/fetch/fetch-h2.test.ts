@@ -37,7 +37,7 @@ parallel('integration.lib.api.fetch.fetch-h2', () => {
   };
 
   it('should work with http1', async () => {
-    const fetcher = new FetchH2({}, false);
+    const fetcher = new FetchH2({ client: 'fetch-h2' }, false);
     try {
       const resp = await fetcher.fetch(genericOptions);
       assert.strictEqual(resp.url, genericOptions.url);
@@ -53,7 +53,7 @@ parallel('integration.lib.api.fetch.fetch-h2', () => {
   });
 
   it('should work with http2', async () => {
-    const fetcher = new FetchH2({}, true);
+    const fetcher = new FetchH2({ client: 'fetch-h2' }, true);
     try {
       const resp = await fetcher.fetch(genericOptions);
       assert.strictEqual(resp.url, genericOptions.url);
@@ -69,7 +69,7 @@ parallel('integration.lib.api.fetch.fetch-h2', () => {
   });
 
   it('should throw custom timeout error on timeout', async () => {
-    const fetcher = new FetchH2({}, true);
+    const fetcher = new FetchH2({ client: 'fetch-h2' }, true);
     try {
       await fetcher.fetch({ ...genericOptions, timeout: 0 });
       assert.fail('Expected an error');
@@ -82,7 +82,7 @@ parallel('integration.lib.api.fetch.fetch-h2', () => {
   });
 
   it('should rethrow underlying error if not a timeout', async () => {
-    const fetcher = new FetchH2({}, true);
+    const fetcher = new FetchH2({ client: 'fetch-h2' }, true);
     try {
       await fetcher.fetch({ ...genericOptions, url: DEMO_APPLICATION_URI });
       assert.fail('Expected an error');

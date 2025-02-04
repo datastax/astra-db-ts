@@ -17,8 +17,11 @@ import type { CommandEventMap } from '@/src/documents';
 import type { FetchCtx } from '@/src/lib/api/fetch/types';
 import type { HttpMethods } from '@/src/lib/api/constants';
 import type { Ref } from '@/src/lib/types';
-import type { NormalizedLoggingConfig } from '@/src/lib/logging/types';
-import { TimeoutDescriptor, TimeoutManager } from '@/src/lib/api/timeouts';
+import { TimeoutManager } from '@/src/lib/api/timeouts/timeouts';
+import { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
+import { ParsedTimeoutDescriptor } from '@/src/lib/api/timeouts/cfg-handler';
+import { ParsedCaller } from '@/src/client/opts-handlers/caller-cfg-handler';
+import { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
 
 /**
  * @internal
@@ -27,11 +30,12 @@ export interface HTTPClientOptions {
   baseUrl: string,
   baseApiPath?: string | null,
   emitter: TypedEmitter<CommandEventMap>,
-  logging: NormalizedLoggingConfig[] | undefined,
+  logging: ParsedLoggingConfig,
   fetchCtx: FetchCtx,
-  userAgent: string,
+  caller: ParsedCaller,
   additionalHeaders: Record<string, string> | undefined,
-  timeoutDefaults: TimeoutDescriptor,
+  timeoutDefaults: ParsedTimeoutDescriptor,
+  tokenProvider: ParsedTokenProvider,
 }
 
 /**

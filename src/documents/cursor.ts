@@ -21,9 +21,10 @@ import { $CustomInspect } from '@/src/lib/constants';
 import { SerDes } from '@/src/lib/api/ser-des/ser-des';
 import { DataAPIError } from '@/src/documents/errors';
 import { SomeRow, Table } from '@/src/documents/tables';
-import { TimeoutManager } from '@/src/lib/api/timeouts';
+import { TimeoutManager } from '@/src/lib/api/timeouts/timeouts';
 import { DataAPIVector, vector } from '@/src/documents/datatypes';
 import { DataAPIHttpClient } from '@/src/lib/api/clients';
+import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
 
 /**
  * An exception that may be thrown whenever something goes wrong with a cursor.
@@ -236,7 +237,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     if (this.#state !== 'idle') {
       throw new CursorError('Cannot set a new filter on a running/closed cursor', this);
     }
-    return this.#clone(this.#serdes.serialize(structuredClone(filter)), this.#options, this.#mapping);
+    return this.#clone(this.#serdes.serialize(structuredClone(filter), SerDesTarget.Filter), this.#options, this.#mapping);
   }
 
   /**
@@ -665,7 +666,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this.#buffer = raw.data?.documents ?? [];
 
     for (let i = 0, n = this.#buffer.length; i < n; i++) {
-      this.#buffer[i] = this.#serdes.deserialize(this.#buffer[i], raw) as TRaw;
+      this.#buffer[i] = this.#serdes.deserialize(this.#buffer[i], raw, SerDesTarget.Record) as TRaw;
     }
 
     const sortVector = raw.status?.sortVector;

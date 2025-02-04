@@ -27,7 +27,7 @@ describe('unit.documents.tables.ser-des.sparse-data', () => {
   };
 
   describe('sparseData: true', () => {
-    const serdes = new TableSerDes({ sparseData: true });
+    const serdes = new TableSerDes({ ...TableSerDes.cfg.empty, sparseData: true });
 
     it('should leave populated fields populated', () => {
       const resp = serdes.deserialize({
@@ -58,7 +58,7 @@ describe('unit.documents.tables.ser-des.sparse-data', () => {
   });
 
   describe('sparseData: false', () => {
-    const serdes = new TableSerDes({ sparseData: false });
+    const serdes = new TableSerDes({ ...TableSerDes.cfg.empty, sparseData: false });
 
     it('should populate all fields', () => {
       const resp = serdes.deserialize({}, {

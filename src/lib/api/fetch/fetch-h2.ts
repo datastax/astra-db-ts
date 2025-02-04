@@ -29,7 +29,7 @@ export class FetchH2 implements Fetcher {
   private readonly _preferred: ReturnType<typeof context>;
   private readonly _timeoutErrorCls: typeof TimeoutError;
 
-  constructor(options: DefaultHttpClientOptions | undefined, preferHttp2: boolean) {
+  constructor(options: DefaultHttpClientOptions | nullish, preferHttp2: boolean) {
     try {
       // Complicated expression to stop Next.js and such from tracing require and trying to load the fetch-h2 client
       const [indirectRequire] = [require].map(x => x);

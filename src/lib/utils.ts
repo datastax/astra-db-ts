@@ -12,26 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIEnvironment, nullish } from '@/src/lib/types';
-import { DataAPIEnvironments } from '@/src/lib/constants';
 import JBI from 'json-bigint';
 import { SomeDoc } from '@/src/documents';
 import BigNumber from 'bignumber.js';
+import { array, Decoder, define, either, instanceOf } from 'decoders';
 
 /**
  * @internal
  */
-export function isNullish(t: unknown): t is nullish {
+export function isNullish(t: unknown): t is null | undefined {
   return t === null || t === undefined;
-}
-
-/**
- * @internal
- */
-export function validateDataAPIEnv(env: unknown): asserts env is DataAPIEnvironment | nullish {
-  if (!isNullish(env) && !(<readonly unknown[]>DataAPIEnvironments).includes(env)) {
-    throw new Error(`Given environment is invalid (must be ${DataAPIEnvironments.map(e => `"${e}"`).join(', ')}, or nullish to default to "astra" (got: ${env}).`);
-  }
 }
 
 /**
@@ -149,7 +139,7 @@ const env = getJSEnv();
 export const forJSEnv = (typeof process !== 'undefined' && typeof process.env === 'object' && process.env.CLIENT_DYNAMIC_JS_ENV_CHECK)
   /* Version of forJSEnv which re-checks the env @ every call for testing purposes (allows for "mocking" different js envs) */
   ? <Args extends any[], R>(fns: JSEnvs<(...args: Args) => R>): (...args: Args) => R => (...args: Args) => fns[getJSEnv()](...args)
-  /* istanbul ignore next: same logic as above */
+  /* istanbul ignore else: same logic as above */
   : <Args extends any[], R>(fns: JSEnvs<(...args: Args) => R>): (...args: Args) => R => fns[env];
 
 /**
@@ -157,4 +147,57 @@ export const forJSEnv = (typeof process !== 'undefined' && typeof process.env ==
  */
 export function isBigNumber(value: object): value is BigNumber {
   return BigNumber.isBigNumber(value) && value.constructor?.name === 'BigNumber';
+}
+
+/**
+ * @internal
+ */
+export type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends (<T>() => T extends Y ? 1 : 2) ? true : false;
+
+/**
+ * @internal
+ */
+export const EqualityProof = <X, Y, _ extends Equal<X, Y>>() => {};
+
+/**
+ * @internal
+ */
+export const oneOrMany = <T>(decoder: Decoder<T>): Decoder<T | T[]> => {
+  return either(decoder, array(decoder));
+};
+
+/**
+ * @internal
+ */
+export const function_ = define<(...any: any[]) => any>((fn, ok, err) => {
+  if (typeof fn === 'function') {
+    return ok(fn as any);
+  } else {
+    return err('Input must be a function');
+  }
+});
+
+/**
+ * @internal
+ */
+export const anyInstanceOf = <T>(cls: abstract new (...args: any[]) => T) => instanceOf(cls as any) as Decoder<T>;
+
+/**
+ * @internal
+ */
+export const numDigits = (n: number) => {
+  return (n !== 0) ? Math.floor(Math.log10(Math.abs(n))) + 1 : 1;
+};
+
+export function findLast<T>(predicate: (value: T, index: number) => boolean): (arr: readonly T[]) => T | undefined
+export function findLast<T>(predicate: (value: T, index: number) => boolean, orElse: T): (arr: readonly T[]) => T
+export function findLast<T>(predicate: (value: T, index: number) => boolean, orElse?: T) {
+  return (arr: readonly T[]): T | undefined => {
+    for (let i = arr.length - 1; i >= 0; i--) {
+      if (predicate(arr[i], i)) {
+        return arr[i];
+      }
+    }
+    return orElse;
+  };
 }

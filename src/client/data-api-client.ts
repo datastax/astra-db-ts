@@ -14,30 +14,15 @@
 // noinspection JSDeprecatedSymbols
 
 import type TypedEmitter from 'typed-emitter';
-import type {
-  AdminOptions,
-  CustomHttpClientOptions,
-  DataAPIClientOptions,
-  DbOptions,
-  DefaultHttpClientOptions,
-} from '@/src/client/types';
+import type { AdminOptions, DataAPIClientOptions, DbOptions } from '@/src/client/types';
 import { LIB_NAME } from '@/src/version';
-import type { InternalRootClientOpts } from '@/src/client/types/internal';
-import { type DataAPIClientEventMap, type Fetcher, FetchH2, FetchNative, type nullish, TokenProvider } from '@/src/lib';
-import { buildUserAgent } from '@/src/lib/api/clients/http-client';
+import { type DataAPIClientEventMap, TokenProvider } from '@/src/lib';
 import { Db, InvalidEnvironmentError } from '@/src/db';
 import { AstraAdmin } from '@/src/administration';
-import type { FetchCtx } from '@/src/lib/api/fetch/types';
-import { isNullish } from '@/src/lib/utils';
-import { p, type Parser } from '@/src/lib/validation';
-import { parseCaller } from '@/src/client/parsers/caller';
-import { Logger } from '@/src/lib/logging/logger';
-import { parseEnvironment } from '@/src/client/parsers/environment';
-import { parseHttpOpts } from '@/src/client/parsers/http-opts';
-import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
-import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
 import { $CustomInspect } from '@/src/lib/constants';
-import { Timeouts } from '@/src/lib/api/timeouts';
+import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
+import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
+import { ParsedRootClientOpts, RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler';
 
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
@@ -99,7 +84,7 @@ export const DataAPIClientEventEmitterBase = (() => {
  * @see DataAPIEnvironment
  */
 export class DataAPIClient extends DataAPIClientEventEmitterBase {
-  readonly #options: InternalRootClientOpts;
+  readonly #options: ParsedRootClientOpts;
 
   /**
    * Constructs a new instance of the {@link DataAPIClient} without a default token. The token will instead need to
@@ -120,7 +105,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    *
    * @param options - The default options to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    */
-  constructor(options?: DataAPIClientOptions | nullish)
+  constructor(options?: DataAPIClientOptions)
 
   /**
    * Constructs a new instance of the {@link DataAPIClient} with a default token. This token will be used everywhere
@@ -142,42 +127,23 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * @param token - The default token to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    * @param options - The default options to use when spawning new instances of {@link Db} or {@link AstraAdmin}.
    */
-  constructor(token: string | TokenProvider | nullish, options?: DataAPIClientOptions | nullish)
+  constructor(token: string | TokenProvider | undefined, options?: DataAPIClientOptions)
 
-  constructor(tokenOrOptions?: string | TokenProvider | DataAPIClientOptions | null, maybeOptions?: DataAPIClientOptions | null) {
+  constructor(tokenOrOptions?: string | TokenProvider | DataAPIClientOptions, maybeOptions?: DataAPIClientOptions) {
     super();
 
     const tokenPassed = (typeof tokenOrOptions === 'string' || tokenOrOptions instanceof TokenProvider || arguments.length > 1);
 
     const token = (tokenPassed)
-      ? tokenOrOptions as string | TokenProvider | nullish
+      ? tokenOrOptions as string | TokenProvider | undefined
       : undefined;
 
     const rawOptions = (tokenPassed)
       ? maybeOptions
       : tokenOrOptions;
 
-    const options = parseClientOpts(rawOptions, 'options.');
-    const logging = Logger.advanceConfig(undefined, options?.logging);
-
-    this.#options = {
-      environment: options?.environment ?? 'astra',
-      fetchCtx: buildFetchCtx(options || undefined),
-      dbOptions: {
-        ...options?.dbOptions,
-        token: TokenProvider.mergeTokens(options?.dbOptions?.token, token),
-        timeoutDefaults: Timeouts.merge(Timeouts.Default, options?.timeoutDefaults),
-        logging,
-      },
-      adminOptions: {
-        ...options?.adminOptions,
-        adminToken: TokenProvider.mergeTokens(options?.adminOptions?.adminToken, token),
-        timeoutDefaults: Timeouts.merge(Timeouts.Default, options?.timeoutDefaults),
-        logging,
-      },
-      emitter: this,
-      userAgent: buildUserAgent(options?.caller),
-    };
+    const parsedToken = TokenProvider.opts.parse(token, 'token');
+    this.#options = RootOptsHandler(parsedToken, this).parse(rawOptions ?? {}, 'options');
 
     Object.defineProperty(this, $CustomInspect, {
       value: () => `DataAPIClient(env="${this.#options.environment}")`,
@@ -221,7 +187,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
    * @returns A new {@link Db} instance.
    */
   public db(endpoint: string, options?: DbOptions): Db {
-    return new Db(this.#options, endpoint, options);
+    return new Db(this.#options, endpoint, DbOptsHandler.parse(options));
   }
 
   /**
@@ -250,7 +216,7 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
     if (this.#options.environment !== 'astra') {
       throw new InvalidEnvironmentError('admin', this.#options.environment, ['astra'], 'AstraAdmin is only available for Astra databases');
     }
-    return new AstraAdmin(this.#options, options);
+    return new AstraAdmin(this.#options, AdminOptsHandler.parse(options, 'options'));
   }
 
   /**
@@ -280,53 +246,3 @@ export class DataAPIClient extends DataAPIClientEventEmitterBase {
     this.#options.fetchCtx.closed.ref = true;
   }
 }
-
-const buildFetchCtx = (options: DataAPIClientOptions | undefined): FetchCtx => {
-  const clientType = (options?.httpOptions)
-    ? options.httpOptions?.client ?? 'default'
-    : undefined;
-
-  const ctx =
-    (clientType === 'fetch')
-      ? new FetchNative() :
-    (clientType === 'custom')
-      ? (options!.httpOptions as CustomHttpClientOptions).fetcher
-      : tryLoadFetchH2(clientType, options);
-
-  return {
-    ctx: ctx,
-    closed: { ref: false },
-  };
-};
-
-const tryLoadFetchH2 = (clientType: string | nullish, options: DataAPIClientOptions | undefined): Fetcher => {
-  try {
-    const httpOptions = options?.httpOptions as DefaultHttpClientOptions | undefined;
-    const preferHttp2 = httpOptions?.preferHttp2 ?? true;
-    return new FetchH2(httpOptions, preferHttp2);
-  } catch (e) {
-    if (isNullish(clientType)) {
-      return new FetchNative();
-    } else {
-      throw e;
-    }
-  }
-};
-
-const parseClientOpts: Parser<DataAPIClientOptions | nullish> = (raw, field) => {
-  const opts = p.parse('object?')<DataAPIClientOptions>(raw, field);
-
-  if (!opts) {
-    return undefined;
-  }
-
-  return {
-    logging: Logger.parseConfig(opts.logging, `${field}.logging`),
-    environment: parseEnvironment(opts.environment, `${field}.environment`),
-    dbOptions: parseDbSpawnOpts(opts.dbOptions, `${field}.dbOptions`),
-    adminOptions: parseAdminSpawnOpts(opts.adminOptions, `${field}.adminOptions`),
-    caller: parseCaller(opts.caller, `${field}.caller`),
-    httpOptions: parseHttpOpts(opts.httpOptions, `${field}.httpOptions`),
-    timeoutDefaults: Timeouts.parseConfig(opts.timeoutDefaults, `${field}.timeoutDefaults`),
-  };
-};

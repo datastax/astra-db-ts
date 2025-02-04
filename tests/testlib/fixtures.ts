@@ -29,7 +29,7 @@ import {
   TEST_APPLICATION_URI,
   TEST_HTTP_CLIENT,
 } from '@/tests/testlib/config';
-import { DataAPIClientEvent, DataAPIClientEventMap, DataAPILoggingConfig } from '@/src/lib';
+import { BaseDataAPIClientEvent, DataAPIClientEventMap, DataAPILoggingConfig } from '@/src/lib';
 import { CreateTableDefinition, InferTableSchema } from '@/src/db';
 import * as util from 'node:util';
 
@@ -114,11 +114,11 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
     isGlobal = false,
   } = opts ?? {};
 
-  const preferHttp2 = httpClient === 'default:http2';
-  const clientType = httpClient.split(':')[0];
+  const preferHttp2 = httpClient === 'fetch-h2:http2';
+  const clientType = httpClient?.split(':')[0];
 
   const client = new DataAPIClient(TEST_APPLICATION_TOKEN, {
-    httpOptions: { preferHttp2, client: <any>clientType },
+    httpOptions: clientType ? { preferHttp2, client: <any>clientType } : undefined,
     timeoutDefaults: { requestTimeoutMs: 60000 },
     dbOptions: { keyspace: DEFAULT_KEYSPACE },
     environment: env,
@@ -126,7 +126,7 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
   });
 
   for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed'] as (keyof DataAPIClientEventMap)[]) {
-    client.on(event, (e: DataAPIClientEvent) => LOGGING_PRED(e, isGlobal) && console.log((isGlobal ? '[Global] ' : '') + util.inspect(e, { depth: null, colors: true })));
+    client.on(event, (e: BaseDataAPIClientEvent) => LOGGING_PRED(e, isGlobal) && console.log((isGlobal ? '[Global] ' : '') + util.inspect(e, { depth: null, colors: true })));
   }
 
   const db = client.db(TEST_APPLICATION_URI);

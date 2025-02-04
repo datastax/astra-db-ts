@@ -45,7 +45,7 @@ export type {
   TimeoutDescriptor,
   WithTimeout,
   TimedOutCategories,
-} from './timeouts';
+} from './timeouts/timeouts';
 
 export {
   Camel2SnakeCase,

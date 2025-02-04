@@ -27,11 +27,12 @@ import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/a
 import { HttpClient } from '@/src/lib/api/clients/http-client';
 import { DEFAULT_DATA_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants';
 import { CollectionOptions, TableOptions } from '@/src/db';
-import type { AdminOptions } from '@/src/client';
 import { isNullish } from '@/src/lib/utils';
 import { mkRespErrorFromResponse } from '@/src/documents/errors';
-import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts';
+import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { EmptyObj } from '@/src/lib/types';
+import { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
+import { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
 
 type ClientKind = 'admin' | 'normal';
 
@@ -115,7 +116,6 @@ interface DataAPIHttpClientOpts<Kind extends ClientKind> extends HTTPClientOptio
   keyspace: KeyspaceRef,
   emissionStrategy: EmissionStrategy<Kind>,
   embeddingHeaders: EmbeddingHeadersProvider,
-  tokenProvider: TokenProvider | undefined,
 }
 
 /**
@@ -139,34 +139,34 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
   public bigNumHack?: BigNumberHack;
   readonly #props: DataAPIHttpClientOpts<Kind>;
 
-  constructor(props: DataAPIHttpClientOpts<Kind>) {
-    super(props, [mkAuthHeaderProvider(props.tokenProvider), () => props.embeddingHeaders.getHeaders()], DataAPITimeoutError.mk);
-    this.keyspace = props.keyspace;
-    this.#props = props;
-    this.emissionStrategy = props.emissionStrategy(this.logger);
+  constructor(opts: DataAPIHttpClientOpts<Kind>) {
+    super(opts, [mkAuthHeaderProvider(opts.tokenProvider), () => opts.embeddingHeaders.getHeaders()], DataAPITimeoutError.mk);
+    this.keyspace = opts.keyspace;
+    this.#props = opts;
+    this.emissionStrategy = opts.emissionStrategy(this.logger);
   }
 
   public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(keyspace: string, collection: string, opts: CollectionOptions | TableOptions | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
-      embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(opts?.embeddingApiKey),
-      logging: Logger.advanceConfig(this.#props.logging, opts?.logging),
+      embeddingHeaders: EmbeddingHeadersProvider.parse(opts?.embeddingApiKey),
+      logging: Logger.cfg.concatParseWithin([this.#props.logging], opts, 'logging'),
       emissionStrategy: EmissionStrategy.Normal,
       keyspace: { ref: keyspace },
     });
 
     clone.collection = collection;
     clone.bigNumHack = bigNumHack;
-    clone.tm = new Timeouts(DataAPITimeoutError.mk, { ...this.tm.baseTimeouts, ...opts?.timeoutDefaults });
+    clone.tm = new Timeouts(DataAPITimeoutError.mk, Timeouts.cfg.parse({ ...this.tm.baseTimeouts, ...opts?.timeoutDefaults }));
 
     return clone;
   }
 
-  public forDbAdmin(opts: AdminOptions | undefined): DataAPIHttpClient<'admin'> {
+  public forDbAdmin(opts: ParsedAdminOptions): DataAPIHttpClient<'admin'> {
     const clone = new DataAPIHttpClient({
       ...this.#props,
-      tokenProvider: TokenProvider.mergeTokens(opts?.adminToken, this.#props.tokenProvider),
-      logging: Logger.advanceConfig(this.#props.logging, opts?.logging),
+      tokenProvider: TokenProvider.opts.concat([opts.adminToken, this.#props.tokenProvider]),
+      logging: Logger.cfg.concat([this.#props.logging, opts.logging]),
       baseUrl: opts?.endpointUrl ?? this.#props.baseUrl,
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
       additionalHeaders: { ...this.#props.additionalHeaders, ...opts?.additionalHeaders },
@@ -256,14 +256,13 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
   }
 }
 
-const mkAuthHeaderProvider = (tp: TokenProvider | undefined): HeaderProvider => (tp)
-  ? () => {
-    const token = tp.getToken();
+const mkAuthHeaderProvider = (tp: ParsedTokenProvider): HeaderProvider => () => {
+  const token = tp.getToken();
 
-    return (token instanceof Promise)
-      ? token.then(mkAuthHeader)
-      : mkAuthHeader(token);
-  } : () => ({});
+  return (token instanceof Promise)
+    ? token.then(mkAuthHeader)
+    : mkAuthHeader(token);
+};
 
 const mkAuthHeader = (token: string | nullish): Record<string, string> => (token)
   ? { [DEFAULT_DATA_API_AUTH_HEADER]: token }

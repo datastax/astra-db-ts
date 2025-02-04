@@ -16,11 +16,11 @@
 import { describe, it } from '@/tests/testlib';
 import { Camel2SnakeCase } from '@/src/lib';
 import assert from 'assert';
-import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 
 describe('unit.documents.collections.ser-des.key-transformer', () => {
   describe('Camel2SnakeCase', () => {
-    const serdes = new CollectionSerDes({ keyTransformer: new Camel2SnakeCase(), enableBigNumbers: () => 'bigint' });
+    const serdes = new CollSerDes({ ...CollSerDes.cfg.empty, keyTransformer: new Camel2SnakeCase(), enableBigNumbers: () => 'bigint' });
 
     it('should serialize top-level keys to snake_case for collections', () => {
       const [obj] = serdes.serialize({
@@ -65,7 +65,7 @@ describe('unit.documents.collections.ser-des.key-transformer', () => {
     });
 
     it('should allow for deep transformation', () => {
-      const serdes = new CollectionSerDes({ keyTransformer: new Camel2SnakeCase({ transformNested: () => true }), enableBigNumbers: () => 'bigint' });
+      const serdes = new CollSerDes({ ...CollSerDes.cfg.empty, keyTransformer: new Camel2SnakeCase({ transformNested: () => true }), enableBigNumbers: () => 'bigint' });
 
       const [obj] = serdes.serialize({
         camelCaseName1: 'dontChangeMe',
@@ -81,7 +81,7 @@ describe('unit.documents.collections.ser-des.key-transformer', () => {
     });
 
     it('should allow for explicit nested transformation when serializing', () => {
-      const serdes = new CollectionSerDes({ keyTransformer: new Camel2SnakeCase({ transformNested: (ctx) => ctx.path.at(-1) !== '1' }), enableBigNumbers: () => 'bigint' });
+      const serdes = new CollSerDes({ ...CollSerDes.cfg.empty, keyTransformer: new Camel2SnakeCase({ transformNested: (ctx) => ctx.path.at(-1) !== '1' }), enableBigNumbers: () => 'bigint' });
 
       const [obj] = serdes.serialize({
         camelCaseName1: 'dontChangeMe',
@@ -97,7 +97,7 @@ describe('unit.documents.collections.ser-des.key-transformer', () => {
     });
 
     it('should allow for explicit nested transformation when deserializing', () => {
-      const serdes = new CollectionSerDes({ keyTransformer: new Camel2SnakeCase({ transformNested: (ctx) => ctx.path[0] !== 'camelCaseName3' }), enableBigNumbers: () => 'bigint' });
+      const serdes = new CollSerDes({ ...CollSerDes.cfg.empty, keyTransformer: new Camel2SnakeCase({ transformNested: (ctx) => ctx.path[0] !== 'camelCaseName3' }), enableBigNumbers: () => 'bigint' });
 
       const obj = serdes.deserialize({
         camel_case_name1: 'dontChangeMe',
@@ -113,7 +113,7 @@ describe('unit.documents.collections.ser-des.key-transformer', () => {
     });
 
     it('should allow for transforming _id', () => {
-      const serdes = new CollectionSerDes({ keyTransformer: new Camel2SnakeCase({ exceptId: false }) });
+      const serdes = new CollSerDes({ ...CollSerDes.cfg.empty, keyTransformer: new Camel2SnakeCase({ exceptId: false }) });
 
       const [ser] = serdes.serialize({ _id: 'dontChangeMe' });
       assert.deepStrictEqual(ser, { _id: 'dontChangeMe' });

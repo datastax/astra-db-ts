@@ -18,9 +18,10 @@ import { DevOpsAPIResponseError, DevOpsAPITimeoutError, DevOpsUnexpectedStateErr
 import { AstraAdminBlockingOptions } from '@/src/administration/types';
 import { DEFAULT_DEVOPS_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants';
 import type { HeaderProvider, HTTPClientOptions, HttpMethodStrings } from '@/src/lib/api/clients/types';
-import type { nullish, TokenProvider } from '@/src/lib';
+import type { nullish } from '@/src/lib';
 import { jsonTryParse } from '@/src/lib/utils';
-import { TimeoutManager } from '@/src/lib/api/timeouts';
+import { TimeoutManager } from '@/src/lib/api/timeouts/timeouts';
+import { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
 
 /**
  * @internal
@@ -57,15 +58,8 @@ interface DevopsAPIResponse {
 /**
  * @internal
  */
-interface DevOpsAPIHttpClientOpts extends HTTPClientOptions {
-  tokenProvider: TokenProvider | undefined,
-}
-
-/**
- * @internal
- */
 export class DevOpsAPIHttpClient extends HttpClient {
-  constructor(opts: DevOpsAPIHttpClientOpts) {
+  constructor(opts: HTTPClientOptions) {
     super(opts, [mkAuthHeaderProvider(opts.tokenProvider)], DevOpsAPITimeoutError.mk);
   }
 
@@ -177,14 +171,13 @@ export class DevOpsAPIHttpClient extends HttpClient {
   }
 }
 
-const mkAuthHeaderProvider = (tp: TokenProvider | undefined): HeaderProvider => (tp)
-  ? () => {
-    const token = tp.getToken();
+const mkAuthHeaderProvider = (tp: ParsedTokenProvider): HeaderProvider => () => {
+  const token = tp.getToken();
 
-    return (token instanceof Promise)
-      ? token.then(mkAuthHeader)
-      : mkAuthHeader(token);
-  } : () => ({});
+  return (token instanceof Promise)
+    ? token.then(mkAuthHeader)
+    : mkAuthHeader(token);
+};
 
 const mkAuthHeader = (token: string | nullish): Record<string, string> => (token)
   ? { [DEFAULT_DEVOPS_API_AUTH_HEADER]: `Bearer ${token}` }

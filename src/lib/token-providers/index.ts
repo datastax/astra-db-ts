@@ -14,4 +14,4 @@
 
 export * from './userpass-token-providers';
 export * from './static-token-provider';
-export * from './token-provider';
+export { TokenProvider } from './token-provider';

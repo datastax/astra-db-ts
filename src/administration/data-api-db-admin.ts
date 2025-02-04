@@ -19,9 +19,8 @@ import type { OpaqueHttpClient, WithTimeout } from '@/src/lib';
 import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { Db } from '@/src/db';
-import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
 import { $CustomInspect } from '@/src/lib/constants';
-import { AdminOptions } from '@/src/client';
+import { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
 
 /**
  * An administrative class for managing non-Astra databases, including creating, listing, and deleting keyspaces.
@@ -65,9 +64,8 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, rawAdminOpts?: AdminOptions) {
+  constructor(db: Db, httpClient: DataAPIHttpClient, adminOpts: ParsedAdminOptions) {
     super();
-    const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options');
     this.#httpClient = httpClient.forDbAdmin(adminOpts);
     this.#db = db;
 

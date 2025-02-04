@@ -25,15 +25,15 @@ import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/s
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
 import { OpaqueHttpClient, TokenProvider, WithTimeout } from '@/src/lib';
 import { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info';
-import { parseAdminSpawnOpts } from '@/src/client/parsers/spawn-admin';
-import { InternalRootClientOpts } from '@/src/client/types/internal';
 import { buildAstraEndpoint } from '@/src/lib/utils';
-import { Logger } from '@/src/lib/logging/logger';
-import { AdminOptions, DbOptions } from '@/src/client';
+import { DbOptions } from '@/src/client';
 import { $CustomInspect } from '@/src/lib/constants';
 import { SomeDoc } from '@/src/documents';
-import { Timeouts } from '@/src/lib/api/timeouts';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { AstraDropDatabaseOptions } from '@/src/administration/types/admin/drop-database';
+import { AdminOptsHandler, ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
+import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
+import { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -62,7 +62,7 @@ import { AstraDropDatabaseOptions } from '@/src/administration/types/admin/drop-
  * @public
  */
 export class AstraAdmin {
-  readonly #defaultOpts: InternalRootClientOpts;
+  readonly #defaultOpts: ParsedRootClientOpts;
   readonly #httpClient: DevOpsAPIHttpClient;
   readonly #environment: 'dev' | 'test' | 'prod';
 
@@ -71,24 +71,13 @@ export class AstraAdmin {
    *
    * @internal
    */
-  constructor(rootOpts: InternalRootClientOpts, rawAdminOpts?: AdminOptions) {
-    const adminOpts = parseAdminSpawnOpts(rawAdminOpts, 'options');
-
-    const token = TokenProvider.mergeTokens(adminOpts?.adminToken, rootOpts.adminOptions.adminToken);
-
+  constructor(rootOpts: ParsedRootClientOpts, adminOpts: ParsedAdminOptions) {
     this.#defaultOpts = {
       ...rootOpts,
-      adminOptions: {
-        endpointUrl: adminOpts?.endpointUrl || rootOpts.adminOptions.endpointUrl,
-        adminToken: token,
-        logging: Logger.advanceConfig(rootOpts.adminOptions.logging, adminOpts?.logging),
-        additionalHeaders: { ...rootOpts.adminOptions.additionalHeaders, ...adminOpts?.additionalHeaders },
-        astraEnv: adminOpts?.astraEnv ?? rootOpts.adminOptions.astraEnv,
-        timeoutDefaults: Timeouts.merge(rootOpts.adminOptions.timeoutDefaults, adminOpts?.timeoutDefaults),
-      },
+      adminOptions: AdminOptsHandler.concat([rootOpts.adminOptions, adminOpts]),
       dbOptions: {
         ...rootOpts.dbOptions,
-        token: TokenProvider.mergeTokens(rootOpts.dbOptions.token, token),
+        token: TokenProvider.opts.concat([rootOpts.adminOptions.adminToken, adminOpts?.adminToken, rootOpts.dbOptions.token]),
       },
     };
 
@@ -99,10 +88,10 @@ export class AstraAdmin {
       baseUrl: this.#defaultOpts.adminOptions.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
       emitter: rootOpts.emitter,
       fetchCtx: rootOpts.fetchCtx,
-      userAgent: rootOpts.userAgent,
+      caller: rootOpts.caller,
       tokenProvider: this.#defaultOpts.adminOptions.adminToken,
       additionalHeaders: this.#defaultOpts.adminOptions.additionalHeaders,
-      timeoutDefaults: Timeouts.merge(rootOpts.adminOptions.timeoutDefaults, this.#defaultOpts.adminOptions.timeoutDefaults),
+      timeoutDefaults: Timeouts.cfg.concat([rootOpts.adminOptions.timeoutDefaults, this.#defaultOpts.adminOptions.timeoutDefaults]),
     });
 
     Object.defineProperty(this, $CustomInspect, {
@@ -179,19 +168,8 @@ export class AstraAdmin {
   public db(id: string, region: string, options?: DbOptions): Db;
 
   public db(endpointOrId: string, regionOrOptions?: string | DbOptions, maybeOptions?: DbOptions): Db {
-    const dbOpts = (typeof regionOrOptions === 'string')
-      ? maybeOptions
-      : regionOrOptions;
-
-    if (typeof regionOrOptions === 'string' && (endpointOrId.startsWith('http'))) {
-      throw new Error('Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { keyspace })`?');
-    }
-
-    const endpoint = (typeof regionOrOptions === 'string')
-      ? 'https://' + endpointOrId + '-' + regionOrOptions + '.apps.astra.datastax.com'
-      : endpointOrId;
-
-    return new Db(this.#defaultOpts, endpoint, dbOpts);
+    const [endpoint, dbOpts] = resolveEndpointOrIdOverload(endpointOrId, regionOrOptions, maybeOptions);
+    return new Db(this.#defaultOpts, endpoint, DbOptsHandler.parse(dbOpts));
   }
 
   /**
@@ -269,8 +247,15 @@ export class AstraAdmin {
   public dbAdmin(id: string, region: string, options?: DbOptions): AstraDbAdmin;
 
   public dbAdmin(endpointOrId: string, regionOrOptions?: string | DbOptions, maybeOptions?: DbOptions): AstraDbAdmin {
-    /* @ts-expect-error - calls internal representation of method */
-    return this.db(endpointOrId, regionOrOptions, maybeOptions).admin(this.#defaultOpts.adminOptions);
+    const [endpoint, dbOpts] = resolveEndpointOrIdOverload(endpointOrId, regionOrOptions, maybeOptions);
+
+    return new AstraDbAdmin(
+      this.db(endpoint, dbOpts),
+      this.#defaultOpts,
+      AdminOptsHandler.empty,
+      this.#defaultOpts.dbOptions.token,
+      endpoint,
+    );
   }
 
   /**
@@ -433,7 +418,7 @@ export class AstraAdmin {
 
     const endpoint = buildAstraEndpoint(resp.headers.location, definition.region);
     const db = this.db(endpoint, { ...options?.dbOptions, keyspace: definition.keyspace });
-    return new AstraDbAdmin(db, this.#defaultOpts, {}, this.#defaultOpts.adminOptions.adminToken, endpoint);
+    return new AstraDbAdmin(db, this.#defaultOpts, AdminOptsHandler.empty, this.#defaultOpts.adminOptions.adminToken, endpoint);
   }
 
   /**
@@ -484,3 +469,19 @@ export class AstraAdmin {
     return this.#httpClient;
   }
 }
+
+const resolveEndpointOrIdOverload = (endpointOrId: string, regionOrOptions?: string | DbOptions, maybeOptions?: DbOptions): [string, DbOptions?] => {
+  const dbOpts = (typeof regionOrOptions === 'string')
+    ? maybeOptions
+    : regionOrOptions;
+
+  if (typeof regionOrOptions === 'string' && (endpointOrId.startsWith('http'))) {
+    throw new Error('Unexpected db() argument: database id can\'t start with "http(s)://". Did you mean to call `.db(endpoint, { keyspace })`?');
+  }
+
+  const endpoint = (typeof regionOrOptions === 'string')
+    ? 'https://' + endpointOrId + '-' + regionOrOptions + '.apps.astra.datastax.com'
+    : endpointOrId;
+
+  return [endpoint, dbOpts];
+};

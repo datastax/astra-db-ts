@@ -21,7 +21,7 @@ import type {
 } from '@/src/documents/collections';
 import type { TableInsertManyResult } from '@/src/documents/tables';
 import { HTTPRequestInfo } from '@/src/lib/api/clients';
-import { TimedOutCategories, Timeouts } from '@/src/lib/api/timeouts';
+import { TimedOutCategories, Timeouts } from '@/src/lib/api/timeouts/timeouts';
 
 /**
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a

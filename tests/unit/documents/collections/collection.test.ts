@@ -18,7 +18,7 @@ import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { $CustomInspect } from '@/src/lib/constants';
 
-describe('unit.documents.collections', ({ db }) => {
+describe('unit.documents.collections.collection', ({ db }) => {
   describe('initialization', () => {
     it('should initialize a Collection', () => {
       const collection = new Collection(db, db._httpClient, 'new_collection', undefined);

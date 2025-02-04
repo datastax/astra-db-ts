@@ -13,8 +13,11 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { EqualityProof } from '@/src/lib/validation';
-import type { DataAPIClientEventMap, DataAPILoggingEvent, DataAPILoggingOutput } from '@/src/lib';
+import type {
+  DataAPIClientEventMap,
+  DataAPILoggingEvent,
+  DataAPILoggingOutput,
+} from '@/src/lib';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents';
 import {
   AdminCommandFailedEvent,
@@ -24,8 +27,9 @@ import {
   AdminCommandWarningsEvent,
 } from '@/src/administration/events';
 import { buildOutputsMap } from '@/src/lib/logging/util';
-import type { InternalLoggingConfig } from '@/src/client/types/internal';
-import type { NormalizedLoggingConfig } from '@/src/lib/logging/types';
+import { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
+import { InternalLoggingOutputsMap } from '@/src/lib/logging/logger';
+import { EqualityProof } from '@/src/lib/utils';
 
 /**
  * @internal
@@ -62,12 +66,12 @@ export const EventConstructors = <const>{
 /**
  * @internal
  */
-export const EmptyInternalLoggingConfig = Object.fromEntries(LoggingEventsWithoutAll.map((e) => [e, buildOutputsMap([])])) as InternalLoggingConfig;
+export const EmptyInternalLoggingConfig = Object.fromEntries(LoggingEventsWithoutAll.map((e) => [e, buildOutputsMap([])])) as InternalLoggingOutputsMap;
 
 /**
  * @internal
  */
-export const DataAPILoggingDefaultOutputs = <const>{
+export const LoggingDefaultOutputs = <const>{
   adminCommandStarted:   ['event', 'stdout'],
   adminCommandPolling:   ['event', 'stdout'],
   adminCommandSucceeded: ['event', 'stdout'],
@@ -80,36 +84,10 @@ export const DataAPILoggingDefaultOutputs = <const>{
 };
 
 /**
- * ##### Overview
- *
- * The default logging configuration for each of the Data API events.
- *
- * These are used if events are "enabled" without specified outputs being provided; e.g.:
- * - `logging: ['commandStarted', 'commandSucceeded', 'commandFailed']`
- * - `logging: 'all'`
- *
- * ##### Defaults
- *
- * All events are emitted as events by default, through the {@link DataAPIClient}, which is an instance of an {@link EventEmitter}.
- *
- * Beyond that though, certain events are logged to `stdout` by default, others to `stderr`, and others not at all:
- * - `adminCommandStarted`, `adminCommandPolling`, and `adminCommandSucceeded`
- *   - Logged to `stdout`
- * - `adminCommandFailed`, `commandFailed`, `commandWarnings`, and `adminCommandWarnings`
- *   - Logged to `stderr`
- * - `commandStarted` and `commandSucceeded`
- *   - Not logged at all
- *
- * @see DataAPIClientEventMap
- * @see DataAPILoggingConfig
- *
- * @public
+ * @internal
  */
-export const DataAPILoggingDefaults: NormalizedLoggingConfig[] = [{
-  events: ['adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded'],
-  emits: ['event', 'stdout'],
-}, {
-  events: ['adminCommandFailed', 'commandFailed', 'commandWarnings', 'adminCommandWarnings'],
+export const LoggingDefaults: ParsedLoggingConfig['layers'] = [{
+  events: LoggingEventsWithoutAll.filter((e) => e !== 'commandStarted' && e !== 'commandSucceeded'),
   emits: ['event', 'stderr'],
 }, {
   events: ['commandStarted', 'commandSucceeded'],

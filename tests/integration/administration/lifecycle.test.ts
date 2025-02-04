@@ -20,14 +20,22 @@ import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
 import { buildAstraEndpoint } from '@/src/lib/utils';
 
 background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycle', ({ client }) => {
-  it('works', async () => {
-    const admin = client.admin();
+  const admin = client.admin();
 
+  async function dropTestDbs() {
     for (const db of await admin.listDatabases()) {
       if (db.name === TEMP_DB_NAME && db.status !== 'TERMINATING') {
-        void admin.dropDatabase(db.id, { timeout: 720000 });
+        await admin.dropDatabase(db.id, { blocking: false });
       }
     }
+  }
+
+  it('works', async () => {
+    void dropTestDbs();
+
+    process.on('exit', async () => {
+      await dropTestDbs();
+    });
 
     const asyncDbAdmin = await admin.createDatabase({
       name: TEMP_DB_NAME,

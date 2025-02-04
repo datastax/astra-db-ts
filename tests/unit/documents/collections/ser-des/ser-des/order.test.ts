@@ -17,8 +17,8 @@ import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { $DeserializeForCollection, $SerializeForCollection, CollCodecs } from '@/src/documents/collections';
 import { CollCodec } from '@/src/index';
-import { ctxContinue } from '@/src/lib/api/ser-des/ctx';
-import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
+import { ctxNevermind } from '@/src/lib/api/ser-des/ctx';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 
 describe('unit.documents.collections.ser-des.ser-des.order', () => {
   const counters = {
@@ -28,12 +28,12 @@ describe('unit.documents.collections.ser-des.ser-des.order', () => {
 
   const ser = (tag: string, i?: number) => () => {
     counters.ser.push(`${tag}${i ?? ''}`);
-    return ctxContinue();
+    return ctxNevermind();
   };
 
   const des = (tag: string, i?: number) => () => {
     counters.des.push(`${tag}${i ?? ''}`);
-    return ctxContinue();
+    return ctxNevermind();
   };
 
   class Test implements CollCodec<typeof Test> {
@@ -44,7 +44,8 @@ describe('unit.documents.collections.ser-des.ser-des.order', () => {
   const repeat = <T>(mk: (n: number) => T) => Array.from({ length: 3 }, (_, i) => mk(i));
 
   it('should process all of the serialization codecs in the right order', () => {
-    const serdes = new CollectionSerDes({
+    const serdes = new CollSerDes({
+      ...CollSerDes.cfg.empty,
       codecs: [
         [
           repeat((i) => CollCodecs.forPath([], {
@@ -142,7 +143,8 @@ describe('unit.documents.collections.ser-des.ser-des.order', () => {
   });
 
   it('should process all of the deserialization codecs in the right order', () => {
-    const serdes = new CollectionSerDes({
+    const serdes = new CollSerDes({
+      ...CollSerDes.cfg.empty,
       codecs: [
         [
           repeat((_) => CollCodecs.forPath([], Test)),

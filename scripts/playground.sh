@@ -1,35 +1,61 @@
 #!/usr/bin/env sh
 
-tarball_dir=$(pwd)
+set -e
 
-case "$1" in
-create)
-  if [ -d etc/playgrounds/"$2" ]; then
-    echo "Playground '$2' already exists; do you want to delete and recreate it? [y/N]"
+lib_dir=$(pwd)
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    "create" | "destroy" | "show" | "run")
+      action="$1"
+      name="$2"
+      shift
+      ;;
+    "list")
+      action="$1"
+      ;;
+    *)
+      sh scripts/utils/help.sh "$1" playground.sh
+      exit $?
+      ;;
+  esac
+  shift
+done
+
+if [ -z "$action" ]; then
+  echo "Action (-c|-r|-d <playground>) is required. Use -help for more information."
+  exit 1
+fi
+
+if [ "$action" = "list" ]; then
+  ls -1 etc/playgrounds
+  exit 0
+fi
+
+dir=etc/playgrounds/"$name"
+
+if [ "$action" = "create" ]; then
+  if [ -d "$dir" ]; then
+    echo "Playground '$name' already exists; do you want to delete and recreate it? [y/N]"
     read -r response
 
-    if [ "$response" != "y" ]; then
-      echo "You can use 'update' to update the playground instead with the latest local build of \`astra-db-ts\`"
+    if [ "$response" != "y"  ]; then
       exit 1
     fi
+
+    rm -rf "$dir"
   fi
 
-  if [ -z "$2" ]; then
-    echo "Usage: $0 create <name>"
-    exit 1
-  fi
+  scripts/build.sh
 
-  scripts/build.sh -no-report
-
-  rm -rf etc/playgrounds/"$2"
-  mkdir -p etc/playgrounds/"$2"
-  cd etc/playgrounds/"$2" || exit 1
+  mkdir -p "$dir"
+  cd "$dir" || exit 1
 
   npm init -y
   npm i -D typescript tsx dotenv
   cp ../../../tsconfig.json .
 
-  npm i "$tarball_dir"
+  npm i "$lib_dir"
 
   echo "import * as $ from '@datastax/astra-db-ts';
 import dotenv from 'dotenv';
@@ -46,31 +72,39 @@ const table = db.table('test_table');
 (async () => {
 
 })();" > index.ts
+fi
+
+if [ ! -d "$dir" ]; then
+  set -- etc/playgrounds/"$name"*
+
+  if [ "$#" -gt 1 ]; then
+    echo "Multiple playgrounds found for '$name'. Please specify one of the following:"
+
+    for d in "$@"; do
+      echo "- $(basename "$d")"
+    done
+
+    exit 1
+  elif [ "$#" -eq 0 ]; then
+    echo "No playground found for '$name'."
+    exit 1
+  fi
+
+  dir=$1
+fi
+
+case "$action" in
+show)
+  if which bat > /dev/null; then
+    bat "$dir"/*.ts
+  else
+    cat "$dir"/*.ts
+  fi
   ;;
 destroy)
-  if [ -z "$2" ]; then
-    echo "Usage: $0 destroy <name>"
-    exit 1
-  fi
-
-  if [ ! -d etc/playgrounds/"$2" ]; then
-    echo "Playground '$2' not found"
-    exit 1
-  fi
-
-  rm -rf etc/playgrounds/"$2"
+  rm -rf "$dir"
   ;;
-*)
-  if [ -z "$1" ]; then
-    echo "Usage: $0 <name>"
-    exit 1
-  fi
-
-  if [ ! -d etc/playgrounds/"$1" ]; then
-    echo "Playground '$1' not found"
-    exit 1
-  fi
-
+run)
   cd etc/playgrounds/"$1" || exit 1
   npx tsx index.ts
 esac

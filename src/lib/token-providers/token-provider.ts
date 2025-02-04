@@ -12,8 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { nullish, StaticTokenProvider } from '@/src/lib';
-import { isNullish } from '@/src/lib/utils';
+import { StaticTokenProvider } from '@/src/lib';
+import { anyInstanceOf, findLast, isNullish } from '@/src/lib/utils';
+import { Monoid, MonoidalOptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
+import { DecoderType, either, nullish, string } from 'decoders';
 
 /**
  * The base class for some "token provider", a general concept for anything that provides some token to the client,
@@ -41,30 +43,79 @@ import { isNullish } from '@/src/lib/utils';
  */
 export abstract class TokenProvider {
   /**
+   * @internal
+   */
+  public static opts: typeof TokenProviderOptsHandler;
+
+  /**
    * The function which provides the token. It may do any I/O as it wishes to obtain/refresh the token, as it's called
    * every time the token is required for use, whether it be for the Data API, or the DevOps API.
    */
-  abstract getToken(): string | nullish | Promise<string | nullish>;
-
-  /**
-   * Turns a string token into a {@link StaticTokenProvider} if necessary. Throws an error if
-   * it's not a string, nullish, or a `TokenProvider` already.
-   *
-   * Not intended for external use.
-   *
-   * @internal
-   */
-  static mergeTokens(...raw: (string | TokenProvider | nullish)[]): TokenProvider | undefined {
-    const first = raw.find((r) => !isNullish(r));
-
-    if (typeof first === 'string') {
-      return new StaticTokenProvider(first);
-    }
-
-    if (!(<unknown>first instanceof TokenProvider) && !isNullish(first)) {
-      throw new TypeError(`Expected token to be of type string | TokenProvider | nullish; got ${typeof first} (${first})`);
-    }
-
-    return first;
-  };
+  abstract getToken(): string | null | undefined | Promise<string | null | undefined>;
 }
+
+/**
+ * @internal
+ */
+class UnsetTokenProvider extends TokenProvider {
+  public static INSTANCE = new UnsetTokenProvider();
+
+  private constructor() {
+    super();
+  }
+
+  getToken() {
+    return undefined;
+  }
+}
+
+/**
+ * @internal
+ */
+interface Types extends OptionsHandlerTypes {
+  Parsed: ParsedTokenProvider,
+  Parseable: TokenProvider | string | undefined | null,
+  Decoded: DecoderType<typeof decoder>,
+}
+
+/**
+ * @internal
+ */
+export type ParsedTokenProvider = TokenProvider & Parsed<'TokenProvider'>;
+
+/**
+ * @internal
+ */
+const monoid: Monoid<TokenProvider> = {
+  empty: UnsetTokenProvider.INSTANCE,
+  concat: findLast<TokenProvider>((a) => a !== UnsetTokenProvider.INSTANCE, UnsetTokenProvider.INSTANCE),
+};
+
+/**
+ * @internal
+ */
+const decoder = nullish(either(
+  anyInstanceOf(TokenProvider),
+  string,
+));
+
+/**
+ * @internal
+ */
+const transformed = decoder.transform((input) => {
+  if (typeof input === 'string') {
+    return new StaticTokenProvider(input);
+  }
+
+  if (isNullish(input)) {
+    return UnsetTokenProvider.INSTANCE;
+  }
+
+  return input;
+});
+
+/**
+ * @internal
+ */
+const TokenProviderOptsHandler = new MonoidalOptionsHandler<Types>(transformed, monoid);
+TokenProvider.opts = TokenProviderOptsHandler;
