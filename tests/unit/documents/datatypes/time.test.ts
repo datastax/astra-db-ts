@@ -176,7 +176,7 @@ describe('unit.documents.datatypes.time', () => {
 
   describe('toDateUTC', () => {
     it('should work without a base', () => {
-      const date = new Date(`${new Date(Date.now()).toLocaleDateString('sv')}T12:34:56Z`);
+      const date = new Date(`${new Date().toLocaleDateString('sv', { timeZone: 'utc' })}T12:34:56Z`);
       assert.ok(Math.abs(time('12:34:56').toDateUTC().getTime() - date.getTime()) < 10);
     });
 
