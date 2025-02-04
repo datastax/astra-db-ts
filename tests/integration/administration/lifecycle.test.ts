@@ -77,7 +77,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     let commandSucceededEvent = false;
 
     {
-      client.on('adminCommandStarted', (event) => {
+      client.once('adminCommandStarted', (event) => {
         commandStartedEvent = true;
         assert.strictEqual(event.path, '/databases');
         assert.strictEqual(event.method, HttpMethods.Post);
@@ -86,7 +86,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
         assert.deepStrictEqual(event.timeout, { databaseAdminTimeoutMs: 720000, requestTimeoutMs: 60000 });
       });
 
-      client.on('adminCommandPolling', (event) => {
+      client.once('adminCommandPolling', (event) => {
         commandPollingEvent = true;
         assert.strictEqual(event.path, '/databases');
         assert.strictEqual(event.method, HttpMethods.Post);
@@ -96,7 +96,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
         assert.ok(event.elapsed > 0);
       });
 
-      client.on('adminCommandSucceeded', (event) => {
+      client.once('adminCommandSucceeded', (event) => {
         commandSucceededEvent = true;
         assert.strictEqual(event.path, '/databases');
         assert.strictEqual(event.method, HttpMethods.Post);
