@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Fetcher } from '@/src/lib/index.js';
+import type { Fetcher, FetchH2Like } from '@/src/lib/index.js';
 
 /**
  * The options available for the {@link DataAPIClient} related to making HTTP requests.
@@ -57,6 +57,10 @@ export interface DefaultHttpClientOptions {
    */
   client: 'fetch-h2',
   /**
+   * The fetch-h2 module to use for making HTTP requests.
+   */
+  fetchH2: FetchH2Like,
+  /**
    * Whether to prefer HTTP/2 for requests to the Data API; if set to `false`, HTTP/1.1 will be used instead.
    *
    * **Note that this is only available when using the Data API; the DevOps API does not support HTTP/2**
@@ -72,12 +76,6 @@ export interface DefaultHttpClientOptions {
    * Options specific to HTTP/1.1 requests.
    */
   http1?: Http1Options,
-  /**
-   * The fetch-h2 module to use for making HTTP requests.
-   *
-   * Leave undefined to use the default module.
-   */
-  fetchH2?: unknown,
 }
 
 /**

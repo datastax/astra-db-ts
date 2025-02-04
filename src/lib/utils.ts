@@ -60,26 +60,30 @@ export function withJbiNullProtoFix(jbi: { parse: typeof JBI['parse']; stringify
   };
 }
 
-function nullProtoFix(doc: SomeDoc): SomeDoc {
-  if (Array.isArray(doc)) {
-    for (let i = 0; i < doc.length; i++) {
-      if (typeof doc[i] === 'object' && doc[i] !== null) {
-        doc[i] = nullProtoFix(doc[i]);
-      }
+function nullProtoFix(thing: unknown): unknown {
+  if (!thing || typeof thing !== 'object') {
+    return thing;
+  }
+
+  if (isBigNumber(thing)) {
+    return BigNumber(thing);
+  }
+
+  if (Array.isArray(thing)) {
+    for (let i = 0; i < thing.length; i++) {
+      thing[i] = nullProtoFix(thing[i]);
     }
   } else {
-    if (Object.getPrototypeOf(doc) === null) {
-      doc = { ...doc };
-    }
+    const doc = thing as SomeDoc;
+
+    Object.setPrototypeOf(doc, Object.prototype);
 
     for (const key of Object.keys(doc)) {
-      if (typeof doc[key] === 'object' && doc[key] !== null) {
-        doc[key] = nullProtoFix(doc[key]);
-      }
+      doc[key] = nullProtoFix(doc[key]);
     }
   }
 
-  return doc;
+  return thing;
 }
 
 /**

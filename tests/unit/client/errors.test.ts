@@ -14,21 +14,10 @@
 // noinspection JSDeprecatedSymbols
 
 import { describe, it } from '@/tests/testlib/index.js';
-import { FailedToLoadDefaultClientError, UnexpectedDataAPIResponseError } from '@/src/client/index.js';
+import { UnexpectedDataAPIResponseError } from '@/src/client/index.js';
 import assert from 'assert';
 
 describe('unit.client.errors', () => {
-  describe('FailedToLoadDefaultClientError', () => {
-    it('constructors', () => {
-      const cause = new Error('rootCause');
-      const error = new FailedToLoadDefaultClientError(cause);
-
-      assert.strictEqual(error.rootCause, cause);
-      assert.strictEqual(error.message, 'Error loading the fetch-h2 client for the DataAPIClient... please check the "Non-standard environment support" section of https://github.com/datastax/astra-db-ts for more information.');
-      assert.strictEqual(error.name, 'FailedToLoadDefaultClientError');
-    });
-  });
-
   describe('UnexpectedDataAPIResponseError', () => {
     it('constructs', () => {
       const message = 'message';

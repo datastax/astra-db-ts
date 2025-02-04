@@ -13,13 +13,17 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import type { context, FetchInit, TimeoutError } from 'fetch-h2';
+import type { context, FetchInit } from 'fetch-h2';
 import type { DefaultHttpClientOptions } from '@/src/client/index.js';
-import { FailedToLoadDefaultClientError } from '@/src/client/errors.js';
-import type { Fetcher, FetcherRequestInfo, FetcherResponseInfo, nullish } from '@/src/lib/index.js';
+import type { Fetcher, FetcherRequestInfo, FetcherResponseInfo, SomeConstructor } from '@/src/lib/index.js';
 
-// eslint-disable-next-line @typescript-eslint/consistent-type-imports
-type FetchH2Lib = typeof import('fetch-h2');
+/**
+ * @public
+ */
+export interface FetchH2Like {
+  TimeoutError: SomeConstructor,
+  context: (...args: any[]) => any,
+}
 
 /**
  * Fetcher implementation which uses `fetch-h2` to perform HTTP/1.1 or HTTP/2 calls. Generally more performant than
@@ -30,33 +34,26 @@ type FetchH2Lib = typeof import('fetch-h2');
 export class FetchH2 implements Fetcher {
   private readonly _http1: ReturnType<typeof context>;
   private readonly _preferred: ReturnType<typeof context>;
-  private readonly _timeoutErrorCls: typeof TimeoutError;
+  private readonly _timeoutErrorCls: SomeConstructor;
 
-  constructor(options: DefaultHttpClientOptions | nullish, preferHttp2: boolean) {
-    try {
-      // Complicated expression to stop Next.js and such from tracing require and trying to load the fetch-h2 client
-      const [indirectRequire] = [require].map(x => x);
+  constructor(options: DefaultHttpClientOptions) {
+    const fetchH2 = options.fetchH2;
 
-      const fetchH2 = validateFetchH2(options?.fetchH2) ?? indirectRequire('fetch-h2') as FetchH2Lib;
+    this._http1 = fetchH2.context({
+      http1: {
+        keepAlive: options.http1?.keepAlive,
+        keepAliveMsecs: options.http1?.keepAliveMS,
+        maxSockets: options.http1?.maxSockets,
+        maxFreeSockets: options.http1?.maxFreeSockets,
+      },
+      httpsProtocols: ['http1'],
+    });
 
-      this._http1 = fetchH2.context({
-        http1: {
-          keepAlive: options?.http1?.keepAlive,
-          keepAliveMsecs: options?.http1?.keepAliveMS,
-          maxSockets: options?.http1?.maxSockets,
-          maxFreeSockets: options?.http1?.maxFreeSockets,
-        },
-        httpsProtocols: ['http1'],
-      });
+    this._preferred = (options.preferHttp2 ?? true)
+      ? fetchH2.context()
+      : this._http1;
 
-      this._preferred = (preferHttp2)
-        ? fetchH2.context()
-        : this._http1;
-
-      this._timeoutErrorCls = fetchH2.TimeoutError;
-    } catch (e) {
-      throw new FailedToLoadDefaultClientError(e as Error);
-    }
+    this._timeoutErrorCls = fetchH2.TimeoutError;
   }
 
   /**
@@ -93,22 +90,4 @@ export class FetchH2 implements Fetcher {
     await this._preferred.disconnectAll();
     await this._http1.disconnectAll();
   }
-}
-
-function validateFetchH2(fetchH2: unknown): FetchH2Lib | nullish {
-  if (fetchH2 === null || fetchH2 === undefined) {
-    return fetchH2;
-  }
-
-  if (typeof fetchH2 !== 'object') {
-    throw new TypeError('fetchH2 must be an object—did you pass in the module correctly?');
-  }
-
-  for (const prop of ['context', 'TimeoutError']) {
-    if (!(prop in fetchH2)) {
-      throw new TypeError(`fetchH2 missing the required '${prop}' property`);
-    }
-  }
-
-  return fetchH2 as FetchH2Lib;
 }

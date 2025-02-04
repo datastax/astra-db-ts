@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type {
-  DecoderType} from 'decoders';
 import {
   boolean,
   constant,
+  type Decoder,
+  define,
   either,
   inexact,
   nullish,
@@ -29,8 +29,9 @@ import { function_ } from '@/src/lib/utils.js';
 import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
 import { OptionsHandler } from '@/src/lib/opts-handler.js';
 import type { DataAPIHttpOptions } from '@/src/client/index.js';
-import type { FetchCtx, Fetcher } from '@/src/lib/api/fetch/types.js';
-import { FetchH2, FetchNative } from '@/src/lib/index.js';
+import type { FetchCtx } from '@/src/lib/api/fetch/types.js';
+import { FetchH2, type FetchH2Like, FetchNative, type SomeConstructor } from '@/src/lib/index.js';
+import type { SomeDoc } from '@/src/documents/index.js';
 
 /**
  * @internal
@@ -39,6 +40,22 @@ interface Types extends OptionsHandlerTypes {
   Parsed: FetchCtx & Parsed<'DataAPIHttpOptions'>,
   Parseable: DataAPIHttpOptions | undefined | null,
 }
+
+const fetchH2 = define<FetchH2Like>((obj, ok, err) => {
+  if (typeof obj === 'object') {
+    inexact({
+      TimeoutError: function_ as unknown as Decoder<SomeConstructor>,
+      context: function_,
+    }).verify({
+      TimeoutError: (obj as SomeDoc)?.TimeoutError,
+      context: (obj as SomeDoc)?.context,
+    });
+
+    return ok(obj as FetchH2Like);
+  } else {
+    return err('fetchH2 should be set to `import * as fetchH2 from \'fetch-h2\'` or `const fetchH2 = require(\'fetch-h2\')`');
+  }
+});
 
 /**
  * @internal
@@ -53,10 +70,7 @@ const decoder = nullish(taggedUnion('client', {
       maxSockets: optional(positiveInteger),
       maxFreeSockets: optional(either(positiveInteger, constant(Infinity))),
     })),
-    fetchH2: optional(inexact({
-      TimeoutError: function_,
-      context: function_,
-    })),
+    fetchH2: fetchH2,
   }),
   'fetch': object({
     client: constant('fetch'),
@@ -73,13 +87,13 @@ const decoder = nullish(taggedUnion('client', {
 /**
  * @internal
  */
-const transformer = decoder.transform((input): FetchCtx => {
+const transformer = decoder.transform((opts): FetchCtx => {
   const ctx =
-    (input?.client === 'fetch')
-      ? new FetchNative() :
-    (input?.client === 'custom')
-      ? input.fetcher
-      : tryLoadFetchH2(input?.client, input);
+    (opts?.client === 'fetch-h2')
+      ? new FetchH2(opts) :
+    (opts?.client === 'custom')
+      ? opts.fetcher
+      : new FetchNative();
 
   return {
     ctx: ctx,
@@ -91,16 +105,3 @@ const transformer = decoder.transform((input): FetchCtx => {
  * @internal
  */
 export const HttpOptsHandler = new OptionsHandler<Types>(transformer);
-
-const tryLoadFetchH2 = (clientType: 'fetch-h2' | undefined, options: DecoderType<typeof decoder> & { client: 'fetch-h2' } | undefined | null): Fetcher => {
-  try {
-    const preferHttp2 = options?.preferHttp2 ?? true;
-    return new FetchH2(options, preferHttp2);
-  } catch (e) {
-    if (!clientType) {
-      return new FetchNative();
-    } else {
-      throw e;
-    }
-  }
-};

@@ -1,84 +1,84 @@
 {
-	"name": "@datastax/astra-db-ts",
-	"version": "2.0.0-preview.3",
-	"description": "Data API TypeScript client",
-	"contributors": [
-		"Kavin Gupta (https://github.com/toptobes)",
-		"Valeri Karpov (https://github.com/vkarpov15)"
-	],
-	"keywords": [
-		"astra",
-		"cassandra",
-		"dse",
-		"document",
-		"model",
-		"schema",
-		"database",
-		"data",
-		"datastore",
-		"query",
-		"nosql",
-		"orm",
-		"db",
-		"dataapi"
-	],
-	"homepage": "https://github.com/datastax/astra-db-ts",
-	"license": "Apache-2.0",
-	"main": "dist/index.js",
-	"types": "dist/astra-db-ts.d.ts",
-	"directories": {
-		"lib": "src",
-		"test": "tests"
-	},
-	"files": [
-		"dist"
-	],
-	"publishConfig": {
-		"access": "public"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git+https://github.com/datastax/astra-db-ts.git"
-	},
-	"scripts": {
-		"lint": "eslint src/* tests/*",
-		"test": "sh scripts/test.sh",
-		"build": "sh scripts/build.sh",
-		"version": "sh scripts/utils/version.sh"
-	},
-	"bugs": {
-		"url": "https://github.com/datastax/astra-ts-client/issues"
-	},
-	"devDependencies": {
-		"@eslint/eslintrc": "^3.2.0",
-		"@eslint/js": "^9.19.0",
-		"@microsoft/api-extractor": "^7.49.2",
-		"@types/json-bigint": "^1.0.4",
-		"@types/mocha": "^10.0.10",
-		"@types/node": "^17.0.36",
-		"dotenv": "^16.0.1",
-		"eslint": "^9.19.0",
-		"globals": "^15.9.0",
-		"mocha": "^11.1.0",
-		"nyc": "^15.1.0",
-		"strip-comments": "^2.0.1",
-		"synchronized-promise": "^0.3.1",
-		"tsc-alias": "^1.8.10",
-		"tsconfig-paths": "^4.2.0",
-		"tsx": "^4.19.2",
-		"typescript": "^5.6.2",
-		"typescript-eslint": "^8.22.0"
-	},
-	"dependencies": {
-		"bignumber.js": "^9.1.2",
-		"decoders": "^2.5.0",
-		"fetch-h2": "^3.0.2",
-		"json-bigint": "^1.0.0",
-		"safe-stable-stringify": "^2.4.3",
-		"uuid": "^11.0.3"
-	},
-	"engines": {
-		"node": ">=18.0.0"
-	},
-	"type": "module"
+  "name": "@datastax/astra-db-ts",
+  "version": "2.0.0-preview.3",
+  "description": "Data API TypeScript client",
+  "contributors": [
+    "Kavin Gupta (https://github.com/toptobes)",
+    "Valeri Karpov (https://github.com/vkarpov15)"
+  ],
+  "keywords": [
+    "astra",
+    "cassandra",
+    "dse",
+    "document",
+    "model",
+    "schema",
+    "database",
+    "data",
+    "datastore",
+    "query",
+    "nosql",
+    "orm",
+    "db",
+    "dataapi"
+  ],
+  "homepage": "https://github.com/datastax/astra-db-ts",
+  "license": "Apache-2.0",
+  "main": "dist/index.js",
+  "types": "dist/astra-db-ts.d.ts",
+  "directories": {
+    "lib": "src",
+    "test": "tests"
+  },
+  "files": [
+    "dist"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/datastax/astra-db-ts.git"
+  },
+  "scripts": {
+    "lint": "eslint src/* tests/*",
+    "test": "sh scripts/test.sh",
+    "build": "sh scripts/build.sh",
+    "version": "sh scripts/utils/version.sh"
+  },
+  "bugs": {
+    "url": "https://github.com/datastax/astra-ts-client/issues"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3.2.0",
+    "@eslint/js": "^9.19.0",
+    "@microsoft/api-extractor": "^7.49.2",
+    "@types/json-bigint": "^1.0.4",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^17.0.36",
+    "dotenv": "^16.0.1",
+    "eslint": "^9.19.0",
+    "fetch-h2": "^3.0.2",
+    "globals": "^15.9.0",
+    "mocha": "^11.1.0",
+    "nyc": "^15.1.0",
+    "strip-comments": "^2.0.1",
+    "synchronized-promise": "^0.3.1",
+    "tsc-alias": "^1.8.10",
+    "tsconfig-paths": "^4.2.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.6.2",
+    "typescript-eslint": "^8.22.0"
+  },
+  "dependencies": {
+    "bignumber.js": "^9.1.2",
+    "decoders": "^2.5.0",
+    "json-bigint": "^1.0.0",
+    "safe-stable-stringify": "^2.4.3",
+    "uuid": "^11.0.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "type": "module"
 }
