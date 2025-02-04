@@ -24,6 +24,7 @@
   ],
   "homepage": "https://github.com/datastax/astra-db-ts",
   "license": "Apache-2.0",
+  "types": "dist/astra-db-ts.d.ts",
   "exports": {
     ".": {
       "require": {

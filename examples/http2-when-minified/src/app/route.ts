@@ -5,6 +5,7 @@ import * as fetchH2 from 'fetch-h2';
 // conflicts with the importing of our default http client (see http2-when-minified for more info)
 const client = new DataAPIClient(process.env.ASTRA_DB_TOKEN!, {
   httpOptions: {
+    client: 'fetch-h2',
     fetchH2: fetchH2,
   },
 });

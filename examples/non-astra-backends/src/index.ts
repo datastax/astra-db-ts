@@ -17,17 +17,15 @@ const dbAdmin = db.admin({ environment: 'dse' });
 (async () => {
   // Creates the new namespace 'my_keyspace'
   // The Db that spawned the DbAdmin is updated to use the new namespace
-  await dbAdmin.createNamespace('my_keyspace', {
-    updateDbNamespace: true,
+  await dbAdmin.createKeyspace('my_keyspace', {
+    updateDbKeyspace: true,
   });
 
   // The list of namespaces will now include 'my_keyspace'
-  console.log(await dbAdmin.listNamespaces());
+  console.log(await dbAdmin.listKeyspaces());
 
   // Creates a collections in the 'my_keyspace' namespace
-  const collection = await db.createCollection('my_coll', {
-    checkExists: false,
-  });
+  const collection = await db.createCollection('my_coll');
 
   // Example of document manipulation in the newly created namespace
   const _id = UUID.v7();
