@@ -22,17 +22,7 @@ import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler.
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler.js';
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 import { RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler.js';
-import type { TypedEmitter } from '@/src/lib/typed-emitter.js';
-import * as events from 'node:events';
-
-/**
- * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
- *
- * Should never need to be used directly.
- *
- * @public
- */
-export const DataAPIClientEventEmitterBase = (events as { EventEmitter: (new () => TypedEmitter<DataAPIClientEventMap>) }).EventEmitter;
+import { MicroEmitter } from '@/src/lib/micro-emitter.js';
 
 /**
  * ##### Overview
@@ -77,7 +67,7 @@ export const DataAPIClientEventEmitterBase = (events as { EventEmitter: (new () 
  *
  * @see DataAPIEnvironment
  */
-export class DataAPIClient extends DataAPIClientEventEmitterBase {
+export class DataAPIClient extends MicroEmitter<DataAPIClientEventMap> {
   readonly #options: ParsedRootClientOpts;
 
   /**

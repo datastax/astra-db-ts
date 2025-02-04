@@ -15,11 +15,12 @@
 
 import assert from 'assert';
 import { DevOpsAPIResponseError } from '@/src/administration/index.js';
-import { background, it, TEMP_DB_NAME } from '@/tests/testlib/index.js';
+import { background, initTestObjects, it, TEMP_DB_NAME } from '@/tests/testlib/index.js';
 import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants.js';
 import { buildAstraEndpoint } from '@/src/lib/utils.js';
 
-background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycle', ({ client }) => {
+background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycle', () => {
+  const { client } = initTestObjects();
   const admin = client.admin();
 
   async function dropTestDbs() {
@@ -113,7 +114,6 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     const syncDb = syncDbAdmin.db();
 
     {
-      client.removeAllListeners();
       assert.ok(commandStartedEvent);
       assert.ok(commandPollingEvent);
       assert.ok(commandSucceededEvent);

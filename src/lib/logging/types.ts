@@ -19,7 +19,7 @@ import type { OneOrMany } from '@/src/lib/types.js';
 /**
  * #### Overview
  *
- * The `EventMap` of events the {@link DataAPIClient} emits, which is an instance of {@link TypedEmitter}, when
+ * The `EventMap` of events the {@link DataAPIClient} emits, which is an instance of {@link MicroEmitter}, when
  * events logging is enabled (via `logging` options throughout the major class hierarchy).
  *
  * See {@link DataAPILoggingConfig} for more information on how to configure logging, and enable/disable specific events.
