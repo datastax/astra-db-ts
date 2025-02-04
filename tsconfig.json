@@ -22,5 +22,5 @@
       "dom"
     ]
   },
-  "include": ["tests/**/*", "src/**/*"]
+  "include": ["src", "tests"]
 }
