@@ -2,7 +2,7 @@ version: '2'
 
 services:
   coordinator:
-    image: stargateio/coordinator-dse-next:v2.1.0-BETA-16
+    image: stargateio/coordinator-dse-next:v2.1
     networks:
       - stargate
     ports:
@@ -39,6 +39,7 @@ services:
       - STARGATE_JSONAPI_OPERATIONS_VECTORIZE_ENABLED=true
       - STARGATE_DATA_STORE_IGNORE_BRIDGE=true
       - STARGATE_JSONAPI_OPERATIONS_DATABASE_CONFIG_CASSANDRA_END_POINTS=coordinator
+      - STARGATE_FEATURE_FLAGS_TABLES=true
       - QUARKUS_HTTP_ACCESS_LOG_ENABLED=FALSE
       - QUARKUS_LOG_LEVEL=INFO
       - JAVA_MAX_MEM_RATIO=75

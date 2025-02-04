@@ -15,7 +15,7 @@
 import { Collection, FoundDoc, SomeDoc, WithId } from '@/src/documents/collections';
 import { DEFAULT_KEYSPACE, type OpaqueHttpClient, RawDataAPIResponse, WithTimeout } from '@/src/lib/api';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
-import { DataAPIEnvironment, nullish } from '@/src/lib/types';
+import { DataAPIEnvironment } from '@/src/lib/types';
 import { extractDbIdFromUrl, extractRegionFromUrl } from '@/src/documents/utils';
 import { DbAdmin } from '@/src/administration';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin';
@@ -23,7 +23,6 @@ import { CreateCollectionOptions } from '@/src/db/types/collections/create-colle
 import { TokenProvider } from '@/src/lib';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client';
 import { KeyspaceRef } from '@/src/lib/api/clients/types';
-import { validateDataAPIEnv } from '@/src/lib/utils';
 import { EmbeddingHeadersProvider, FoundRow, SomeRow, Table, TableDropIndexOptions } from '@/src/documents';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
 import { CollectionOptions } from '@/src/db/types/collections/collection-options';
@@ -35,16 +34,16 @@ import { CreateTableDefinition, CreateTableOptions } from '@/src/db/types/tables
 import { InferTablePrimaryKey, InferTableSchema } from '@/src/db/types/tables/table-schema';
 import { DropTableOptions } from '@/src/db/types/tables/drop-table';
 import { ListTablesOptions, TableDescriptor } from '@/src/db/types/tables/list-tables';
-import { parseDbSpawnOpts } from '@/src/client/parsers/spawn-db';
-import { AdminOptions, DbOptions } from '@/src/client/types';
-import { InternalRootClientOpts } from '@/src/client/types/internal';
-import { Logger } from '@/src/lib/logging/logger';
+import { AdminOptions } from '@/src/client/types';
 import { $CustomInspect } from '@/src/lib/constants';
 import { InvalidEnvironmentError } from '@/src/db/errors';
 import { AstraDbInfo } from '@/src/administration/types/admin/database-info';
-import { Timeouts } from '@/src/lib/api/timeouts';
-import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
+import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
+import { DbOptsHandler, ParsedDbOptions } from '@/src/client/opts-handlers/db-opts-handler';
+import { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler';
+import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler';
 
 /**
  * #### Overview
@@ -117,7 +116,7 @@ import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
  * @public
  */
 export class Db {
-  readonly #defaultOpts: InternalRootClientOpts;
+  readonly #defaultOpts: ParsedRootClientOpts;
   readonly #httpClient: DataAPIHttpClient;
 
   readonly #endpoint: string;
@@ -130,27 +129,13 @@ export class Db {
    *
    * @internal
    */
-  constructor(rootOpts: InternalRootClientOpts, endpoint: string, rawDbOpts: DbOptions | nullish) {
-    const dbOpts = parseDbSpawnOpts(rawDbOpts, 'options');
-
+  constructor(rootOpts: ParsedRootClientOpts, endpoint: string, dbOpts: ParsedDbOptions) {
     this.#defaultOpts = {
       ...rootOpts,
-      dbOptions: {
-        keyspace: dbOpts?.keyspace ?? rootOpts.dbOptions.keyspace,
-        dataApiPath: dbOpts?.dataApiPath ?? rootOpts.dbOptions.dataApiPath,
-        token: TokenProvider.mergeTokens(dbOpts?.token, rootOpts.dbOptions.token),
-        logging: Logger.advanceConfig(rootOpts.dbOptions.logging, dbOpts?.logging),
-        additionalHeaders: { ...rootOpts.dbOptions.additionalHeaders, ...dbOpts?.additionalHeaders },
-        timeoutDefaults: Timeouts.merge(rootOpts.dbOptions.timeoutDefaults, dbOpts?.timeoutDefaults),
-        serdes: {
-          collection: CollectionSerDes.mergeConfig(rootOpts.dbOptions.serdes?.collection, dbOpts?.serdes?.collection, dbOpts?.serdes),
-          table: TableSerDes.mergeConfig(rootOpts.dbOptions.serdes?.table, dbOpts?.serdes?.table, dbOpts?.serdes),
-        },
-      },
-      adminOptions: {
-        ...rootOpts.adminOptions,
-        adminToken: TokenProvider.mergeTokens(rootOpts.adminOptions.adminToken, rootOpts.dbOptions.token),
-      },
+      dbOptions: DbOptsHandler.concat([rootOpts.dbOptions, dbOpts]),
+      adminOptions: AdminOptsHandler.concatParse([rootOpts.adminOptions], {
+        adminToken: TokenProvider.opts.parseWithin(dbOpts, 'token'),
+      }),
     };
 
     this.#keyspace = {
@@ -162,13 +147,13 @@ export class Db {
     this.#httpClient = new DataAPIHttpClient({
       baseUrl: endpoint,
       tokenProvider: this.#defaultOpts.dbOptions.token,
-      embeddingHeaders: EmbeddingHeadersProvider.parseHeaders(null),
+      embeddingHeaders: EmbeddingHeadersProvider.parse(null),
       baseApiPath: this.#defaultOpts.dbOptions.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment],
       emitter: rootOpts.emitter,
       logging: this.#defaultOpts.dbOptions.logging,
       fetchCtx: rootOpts.fetchCtx,
       keyspace: this.#keyspace,
-      userAgent: rootOpts.userAgent,
+      caller: rootOpts.caller,
       emissionStrategy: EmissionStrategy.Normal,
       additionalHeaders: this.#defaultOpts.dbOptions.additionalHeaders,
       timeoutDefaults: this.#defaultOpts.dbOptions.timeoutDefaults,
@@ -384,19 +369,18 @@ export class Db {
   public admin(options: AdminOptions & { environment: Exclude<DataAPIEnvironment, 'astra'> }): DataAPIDbAdmin
 
   public admin(options?: AdminOptions & { environment?: DataAPIEnvironment }): DbAdmin {
-    const environment = options?.environment ?? 'astra';
-
-    validateDataAPIEnv(environment);
+    const environment = EnvironmentCfgHandler.parseWithin(options, 'options.environment');
+    const parsedOpts = AdminOptsHandler.parse(options, 'options');
 
     if (this.#defaultOpts.environment !== environment) {
       throw new InvalidEnvironmentError('db.admin()', environment, [this.#defaultOpts.environment], 'environment option is not the same as set in the DataAPIClient');
     }
 
     if (environment === 'astra') {
-      return new AstraDbAdmin(this, this.#defaultOpts, options, this.#defaultOpts.dbOptions.token, this.#endpoint);
+      return new AstraDbAdmin(this, this.#defaultOpts, parsedOpts, this.#defaultOpts.dbOptions.token, this.#endpoint);
     }
 
-    return new DataAPIDbAdmin(this, this.#httpClient, options);
+    return new DataAPIDbAdmin(this, this.#httpClient, parsedOpts);
   }
 
   /**
@@ -541,7 +525,7 @@ export class Db {
   public collection<WSchema extends SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>>(name: string, options?: CollectionOptions): Collection<WSchema, RSchema> {
     return new Collection(this, this.#httpClient, name, {
       ...options,
-      serdes: CollectionSerDes.mergeConfig(this.#defaultOpts.dbOptions.serdes?.collection, options?.serdes),
+      serdes: CollSerDes.cfg.concatParse([this.#defaultOpts.dbOptions.collSerdes], options?.serdes),
     });
   }
 
@@ -631,7 +615,7 @@ export class Db {
   public table<WSchema extends SomeRow, PKeys extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options?: TableOptions): Table<WSchema, PKeys, RSchema> {
     return new Table(this, this.#httpClient, name, {
       ...options,
-      serdes: TableSerDes.mergeConfig(this.#defaultOpts.dbOptions.serdes?.table, options?.serdes),
+      serdes: TableSerDes.cfg.concatParse([this.#defaultOpts.dbOptions.tableSerdes], options?.serdes),
     });
   }
 
@@ -1214,6 +1198,9 @@ export class Db {
     });
   }
 
+  /**
+   * Backdoor to the HTTP client for if it's absolutely necessary. Which it almost never (if even ever) is.
+   */
   public get _httpClient(): OpaqueHttpClient {
     return this.#httpClient;
   }

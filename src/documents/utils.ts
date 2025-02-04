@@ -94,3 +94,10 @@ export const mkInvArgsErr = (exp: string, params: [string, string][], ...got: un
   const types = params.map(([, type]) => type).join(', ');
   return new TypeError(`Invalid argument(s) for \`${exp}(${names})\`; expected (${types}), got (${got.map(betterTypeOf).join(', ')})`);
 };
+
+/**
+ * @internal
+ */
+export const wrongTypeErr = (name: string, expected: string, got: unknown): TypeError => {
+  return new TypeError(`Expected '${name}' to be of type '${expected}', but got '${betterTypeOf(got)}' (${got})`);
+};

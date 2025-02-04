@@ -17,7 +17,7 @@ import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
 import { $DeserializeForTable, $SerializeForTable, TableCodec, TableCodecs } from '@/src/index';
-import { ctxContinue } from '@/src/lib/api/ser-des/ctx';
+import { ctxNevermind } from '@/src/lib/api/ser-des/ctx';
 
 describe('unit.documents.tables.ser-des.ser-des.order', () => {
   const counters = {
@@ -27,12 +27,12 @@ describe('unit.documents.tables.ser-des.ser-des.order', () => {
 
   const ser = (tag: string, i?: number) => () => {
     counters.ser.push(`${tag}${i ?? ''}`);
-    return ctxContinue();
+    return ctxNevermind();
   };
 
   const des = (tag: string, i?: number) => () => {
     counters.des.push(`${tag}${i ?? ''}`);
-    return ctxContinue();
+    return ctxNevermind();
   };
 
   class Test implements TableCodec<typeof Test> {
@@ -44,6 +44,7 @@ describe('unit.documents.tables.ser-des.ser-des.order', () => {
 
   it('should process all of the serialization codecs in the right order', () => {
     const serdes = new TableSerDes({
+      ...TableSerDes.cfg.empty,
       codecs: [
         [
           repeat((i) => TableCodecs.forPath([], {
@@ -143,6 +144,7 @@ describe('unit.documents.tables.ser-des.ser-des.order', () => {
 
   it('should process all of the deserialization codecs in the right order', () => {
     const serdes = new TableSerDes({
+      ...TableSerDes.cfg.empty,
       codecs: [
         [
           repeat((_) => TableCodecs.forPath([], Test)),

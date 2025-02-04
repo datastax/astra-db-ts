@@ -28,7 +28,7 @@ import { DataAPIResponseError } from '@/src/documents';
 import { DataAPIClient } from '@/src/client';
 import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants';
 
-parallel('integration.db', { drop: 'colls:after' }, ({ db }) => {
+parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
   describe('(LONG) createCollection', () => {
     it('should create a collections', async () => {
       const res = await db.createCollection('coll_1c', { indexing: { deny: ['*'] } });

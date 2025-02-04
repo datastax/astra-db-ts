@@ -15,7 +15,7 @@
 import { nullish, OneOrMany } from '@/src/lib';
 import { HTTPRequestInfo } from '@/src/lib/api/clients';
 import { toArray } from '@/src/lib/utils';
-import { p, Parser } from '@/src/lib/validation';
+import { ParsedTimeoutDescriptor, TimeoutCfgHandler } from '@/src/lib/api/timeouts/cfg-handler';
 
 /**
  * The timeout categories that caused the timeout.
@@ -288,10 +288,22 @@ export const EffectivelyInfinity = 2 ** 31 - 1;
  * @internal
  */
 export class Timeouts {
-  constructor(
-    private readonly _mkTimeoutError: MkTimeoutError,
-    public readonly baseTimeouts: TimeoutDescriptor,
-  ) {}
+  public static cfg: typeof TimeoutCfgHandler = TimeoutCfgHandler;
+
+  public static Default = Timeouts.cfg.parse({
+    requestTimeoutMs: 10000,
+    generalMethodTimeoutMs: 30000,
+    collectionAdminTimeoutMs: 60000,
+    tableAdminTimeoutMs: 30000,
+    databaseAdminTimeoutMs: 600000,
+    keyspaceAdminTimeoutMs: 30000,
+  });
+
+  public readonly baseTimeouts: TimeoutDescriptor;
+
+  constructor(private readonly _mkTimeoutError: MkTimeoutError, baseTimeouts: ParsedTimeoutDescriptor) {
+    this.baseTimeouts = TimeoutCfgHandler.concat([Timeouts.Default, baseTimeouts]) as TimeoutDescriptor;
+  }
 
   public single(key: Exclude<keyof TimeoutDescriptor, 'requestTimeoutMs'>, override: WithTimeout<any> | nullish): TimeoutManager {
     if (typeof override?.timeout === 'number') {
@@ -378,30 +390,6 @@ export class Timeouts {
     };
   }
 
-  public static Default: TimeoutDescriptor = {
-    requestTimeoutMs: 10000,
-    generalMethodTimeoutMs: 30000,
-    collectionAdminTimeoutMs: 60000,
-    tableAdminTimeoutMs: 30000,
-    databaseAdminTimeoutMs: 600000,
-    keyspaceAdminTimeoutMs: 30000,
-  };
-
-  public static merge(base: TimeoutDescriptor, custom: Partial<TimeoutDescriptor> | nullish): TimeoutDescriptor {
-    if (!custom) {
-      return base;
-    }
-
-    return {
-      requestTimeoutMs: custom.requestTimeoutMs ?? base.requestTimeoutMs,
-      generalMethodTimeoutMs: custom.generalMethodTimeoutMs ?? base.generalMethodTimeoutMs,
-      collectionAdminTimeoutMs: custom.collectionAdminTimeoutMs ?? base.collectionAdminTimeoutMs,
-      tableAdminTimeoutMs: custom.tableAdminTimeoutMs ?? base.tableAdminTimeoutMs,
-      databaseAdminTimeoutMs: custom.databaseAdminTimeoutMs ?? base.databaseAdminTimeoutMs,
-      keyspaceAdminTimeoutMs: custom.keyspaceAdminTimeoutMs ?? base.keyspaceAdminTimeoutMs,
-    };
-  }
-
   public static fmtTimeoutMsg = (tm: TimeoutManager, timeoutTypes: TimedOutCategories) => {
     const timeout = (timeoutTypes === 'provided')
       ? Object.values(tm.initial())[0]!
@@ -415,22 +403,5 @@ export class Timeouts {
         : `${timeoutTypes} timed out`;
 
     return `Command timed out after ${timeout}ms (${types})`;
-  };
-
-  public static parseConfig: Parser<Partial<TimeoutDescriptor> | undefined> = (raw, field) => {
-    const opts = p.parse('object?')<TimeoutDescriptor>(raw, field);
-
-    if (!opts) {
-      return undefined;
-    }
-
-    return {
-      requestTimeoutMs: p.parse('number?')(opts.requestTimeoutMs, `${field}.requestTimeoutMs`),
-      generalMethodTimeoutMs: p.parse('number?')(opts.generalMethodTimeoutMs, `${field}.generalMethodTimeoutMs`),
-      collectionAdminTimeoutMs: p.parse('number?')(opts.collectionAdminTimeoutMs, `${field}.collectionAdminTimeoutMs`),
-      tableAdminTimeoutMs: p.parse('number?')(opts.tableAdminTimeoutMs, `${field}.tableAdminTimeoutMs`),
-      databaseAdminTimeoutMs: p.parse('number?')(opts.databaseAdminTimeoutMs, `${field}.databaseAdminTimeoutMs`),
-      keyspaceAdminTimeoutMs: p.parse('number?')(opts.keyspaceAdminTimeoutMs, `${field}.keyspaceAdminTimeoutMs`),
-    };
   };
 }

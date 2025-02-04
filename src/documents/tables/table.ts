@@ -30,7 +30,14 @@ import {
 } from '@/src/documents';
 import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
-import { AlterTableOptions, Db, DropTableOptions, ListTableDefinition, TableOptions } from '@/src/db';
+import {
+  AlterTableOptions,
+  CreateTableDefinition,
+  Db,
+  DropTableOptions,
+  ListTableDefinition,
+  TableOptions,
+} from '@/src/db';
 import { type OpaqueHttpClient, WithTimeout } from '@/src/lib';
 import { $CustomInspect } from '@/src/lib/constants';
 import JBI from 'json-bigint';
@@ -213,6 +220,10 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    */
   public readonly keyspace!: string;
 
+  public static schema<const Def extends CreateTableDefinition>(schema: Def): Def {
+    return schema;
+  }
+
   /**
    * Use {@link Db.table} to obtain an instance of this class.
    *
@@ -235,7 +246,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
     };
 
     this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
-    this.#commands = new CommandImpls(this, this.#httpClient, new TableSerDes(opts?.serdes));
+    this.#commands = new CommandImpls(this, this.#httpClient, new TableSerDes(TableSerDes.cfg.parse(opts?.serdes)));
     this.#db = db;
 
     Object.defineProperty(this, $CustomInspect, {

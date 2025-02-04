@@ -13,6 +13,8 @@
 // limitations under the License.
 
 import { LIB_NAME, LIB_VERSION } from '@/src/version';
+import { ParsedEnvironment } from '@/src/client/opts-handlers/environment-cfg-handler';
+import { DataAPIEnvironment } from '@/src/lib';
 
 /**
  * @internal
@@ -63,4 +65,4 @@ export const DEFAULT_DATA_API_PATHS = {
   hcd: 'v1',
   cassandra: 'v1',
   other: 'v1',
-};
+} as Record<ParsedEnvironment | DataAPIEnvironment, string>;

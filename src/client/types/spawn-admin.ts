@@ -40,7 +40,7 @@ export interface AdminOptions {
    *
    * See {@link DataAPILoggingConfig} for *much* more information on configuration, outputs, and inheritance.
    */
-  logging?: DataAPILoggingConfig,
+  logging?: DataAPILoggingConfig | undefined,
   /**
    * The access token for the DevOps API, typically of the format `'AstraCS:...'`.
    *

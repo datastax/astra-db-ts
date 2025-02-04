@@ -26,6 +26,7 @@ import {
 } from '@/src/index';
 import BigNumber from 'bignumber.js';
 import assert from 'assert';
+import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
 
 parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop: 'tables:after' }, ({ db }) => {
   before(async () => {
@@ -43,6 +44,7 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
         },
         primaryKey: 'isbn',
       },
+      ifNotExists: true,
     });
   });
 
@@ -89,58 +91,36 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
     const BookCodec = TableCodecs.forPath([], {
       serialize: (book, ctx) => {
         if (!(book instanceof Book)) {
-          return ctx.continue();
+          return ctx.nevermind();
         }
 
-        return ctx.continue({
+        return ctx.replace({
           isbn: book.isbn,
           title: book.title,
           author: book.author.name,
           price: book.price,
           publishedAt: book.publishedAt,
           insertedAt: new Date('3000-01-01'),
-          reviews: book.reviews,
-        });
-      },
-      deserialize: (value, ctx) => {
-        if (ctx.parsingInsertedId || !value) {
-          return ctx.continue();
-        }
-
-        return ctx.mapAfter((book) => new Book(
-          book.title,
-          new Person(book.author),
-          book.isbn,
-          book.price,
-          book.publishedAt,
-          book.reviews,
-        ));
-      },
-    });
-
-    const ReviewCodec = TableCodecs.forPath([], {
-      serialize: (book, ctx) => {
-        if (!('reviews' in book)) {
-          return ctx.continue();
-        }
-
-        return ctx.continue({
-          ...book,
-          reviews: undefined,
           reviewNames: [...book.reviews].map((r) => r.critic.name),
           reviewReviews: [...book.reviews].map((r) => r.review),
         });
       },
-      deserialize: (value, ctx) => {
-        if (ctx.parsingInsertedId || !value) {
-          return ctx.continue();
+      deserialize: (_, ctx) => {
+        if (ctx.target !== SerDesTarget.Record) {
+          return ctx.nevermind();
         }
 
-        const reviews = value.reviewNames.map((name: string, i: number) => new Review(new Person(name), value.reviewReviews[i]));
+        return ctx.mapAfter((book) => {
+          const reviews = book.reviewNames.map((name: string, i: number) => new Review(new Person(name), book.reviewReviews[i]));
 
-        return ctx.continue({
-          ...value,
-          reviews: new Set(reviews),
+          return new Book(
+            book.title,
+            new Person(book.author),
+            book.isbn,
+            book.price,
+            book.publishedAt,
+            new Set(reviews),
+          );
         });
       },
     });
@@ -148,7 +128,7 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
     const table = db.table('obj_mapping_table', {
       serdes: {
         keyTransformer: new Camel2SnakeCase(),
-        codecs: [ISBNCodec, BookCodec, ReviewCodec],
+        codecs: [ISBNCodec, BookCodec],
       },
     });
 
@@ -170,7 +150,6 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
       price: BigNumber(-12.50),
       published_at: '1970-01-01T00:00:00.000Z',
       inserted_at: '3000-01-01T00:00:00.000Z',
-      reviews: undefined,
       review_names: ['Tow Mater'],
       review_reviews: ['dad gum!'],
     };
@@ -199,8 +178,8 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
       ) {}
 
       static [$DeserializeForTable](value: unknown, ctx: TableDesCtx) {
-        if (ctx.parsingInsertedId || !value) {
-          return ctx.continue();
+        if (ctx.target !== SerDesTarget.Record) {
+          return ctx.nevermind();
         }
 
         ctx.mapAfter((book) => new Book(

@@ -21,9 +21,10 @@ import {
   mkRespErrorFromResponses,
 } from '@/src/documents/errors';
 import { SomeDoc, SomeId } from '@/src/documents';
-import { TimeoutManager } from '@/src/lib/api/timeouts';
+import { TimeoutManager } from '@/src/lib/api/timeouts/timeouts';
 import { RawDataAPIResponse } from '@/src/lib';
 import { GenericInsertManyDocumentResponse } from '@/src/documents/commands/types/insert/insert-many';
+import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
 
 /**
  * @internal
@@ -130,7 +131,7 @@ const insertMany = async <ID>(
     let bigNumsPresent = false;
 
     for (let i = 0, n = documents.length; i < n; i++) {
-      const resp = serdes.serialize(documents[i]);
+      const resp = serdes.serialize(documents[i], SerDesTarget.Record);
       serialized.push(resp[0]);
       bigNumsPresent ||= resp[1];
     }
@@ -160,7 +161,7 @@ const insertMany = async <ID>(
   for (let i = 0, n = documentResponses.length; i < n; i++) {
     const docResp = documentResponses[i];
     if (docResp.status === "OK") {
-      insertedIds.push(serdes.deserialize(docResp._id, raw, true) as ID);
+      insertedIds.push(serdes.deserialize(docResp._id, raw, SerDesTarget.InsertedId) as ID);
     } else if (docResp.errorIdx) {
       docResp.error = errors![docResp.errorIdx];
       delete docResp.errorIdx;

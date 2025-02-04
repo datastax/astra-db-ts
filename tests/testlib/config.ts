@@ -15,7 +15,7 @@
 import * as process from 'node:process';
 import dotenv from 'dotenv';
 import { DataAPIEnvironments } from '@/src/lib/constants';
-import { DataAPIClientEvent, DataAPIEnvironment } from '@/src/lib';
+import { BaseDataAPIClientEvent, DataAPIEnvironment } from '@/src/lib';
 
 dotenv.config();
 
@@ -29,10 +29,10 @@ if (!process.env.CLIENT_DB_URL || !process.env.CLIENT_DB_TOKEN) {
   throw new Error('Please ensure the CLIENT_DB_URL and CLIENT_DB_TOKEN env vars are set');
 }
 
-const testHttpClient = process.env.CLIENT_TEST_HTTP_CLIENT ?? 'default:http2';
+const testHttpClient = process.env.CLIENT_TEST_HTTP_CLIENT;
 
-if (testHttpClient !== 'default:http2' && testHttpClient !== 'default:http1' && testHttpClient !== 'fetch') {
-  throw new Error('CLIENT_TEST_HTTP_CLIENT must be one of \'default:http2\', \'default:http1\', \'fetch\', or unset to default to \'default:http2\'');
+if (testHttpClient && testHttpClient !== 'fetch-h2:http2' && testHttpClient !== 'fetch-h2:http1' && testHttpClient !== 'fetch') {
+  throw new Error('CLIENT_TEST_HTTP_CLIENT must be one of \'fetch-h2:http2\', \'fetch-h2:http1\', \'fetch\', or unset to default to the client default');
 }
 
 const environment = (process.env.CLIENT_DB_ENVIRONMENT ?? 'astra');
@@ -57,7 +57,7 @@ export const DEMO_APPLICATION_URI = 'https://12341234-1234-1234-1234-12341234123
 
 export const DEFAULT_TEST_TIMEOUT = +process.env.CLIENT_TESTS_TIMEOUT! || 90000;
 
-export const LOGGING_PRED: (e: DataAPIClientEvent, isGlobal: boolean) => boolean = process.env.LOGGING_PRED
+export const LOGGING_PRED: (e: BaseDataAPIClientEvent, isGlobal: boolean) => boolean = process.env.LOGGING_PRED
   ? new Function("e", "isGlobal", "return " + process.env.LOGGING_PRED) as any
   : () => false;
 

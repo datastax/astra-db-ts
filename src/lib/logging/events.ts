@@ -20,7 +20,7 @@
  *
  * @public
  */
-export abstract class DataAPIClientEvent {
+export abstract class BaseDataAPIClientEvent {
   /**
    * The name of the event.
    */
@@ -39,7 +39,7 @@ export abstract class DataAPIClientEvent {
    * Returns the event in a formatted string, as it would be logged to stdout/stderr (if enabled).
    */
   public formatted(): string {
-    return `${DataAPIClientEvent.formattedPrefix()}[${this.name}]`;
+    return `${BaseDataAPIClientEvent.formattedPrefix()}[${this.name}]`;
   }
 
   /**

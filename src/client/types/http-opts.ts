@@ -20,7 +20,7 @@ import type { Fetcher } from '@/src/lib';
  * There are four different behaviours for setting the client:
  * - Not setting the `httpOptions` at all
  * -- This will attempt to use `fetch-h2` if available, and fall back to `fetch` if not available
- * - `client: 'default'` or `client: undefined` (or unset)
+ * - `client: 'fetch-h2'`
  * -- This will attempt to use `fetch-h2` if available, and throw an error if not available
  * - `client: 'fetch'`
  * -- This will always use the native `fetch` API
@@ -32,10 +32,6 @@ import type { Fetcher } from '@/src/lib';
  * However, it's generally only available by default on node runtimes; on other runtimes, you may need to use the
  * native `fetch` API instead, or pass in the fetch-h2 module manually.
  *
- * See the `astra-db-ts` README for more information on different clients.
- *
- * https://github.com/datastax/astra-db-ts
- *
  * @public
  */
 export type DataAPIHttpOptions =
@@ -44,18 +40,12 @@ export type DataAPIHttpOptions =
   | CustomHttpClientOptions;
 
 /**
- * The options available for the {@link DataAPIClient} related to making HTTP requests using the default http client.
+ * The options available for the {@link DataAPIClient} related to making HTTP requests using the fetch-h2 http client.
  *
- * If loading the default client fails, and httpOptions is set, it'll throw an {@link FailedToLoadDefaultClientError}.
- *
- * If loading the default client fails, and httpOptions is not set, it'll silently fall back to the native fetch API.
+ * If loading the client fails it'll throw an {@link FailedToLoadDefaultClientError}.
  *
  * If you're minifying your code, you'll need to provide the fetch-h2 module manually (see
  * {@link DefaultHttpClientOptions.fetchH2}).
- *
- * See the `astra-db-ts` README for more information on different clients.
- *
- * https://github.com/datastax/astra-db-ts
  *
  * @public
  */
@@ -65,7 +55,7 @@ export interface DefaultHttpClientOptions {
    *
    * Leave undefined to use the default client (you don't need to specify `'default'`).
    */
-  client?: 'default',
+  client: 'fetch-h2',
   /**
    * Whether to prefer HTTP/2 for requests to the Data API; if set to `false`, HTTP/1.1 will be used instead.
    *
@@ -95,10 +85,6 @@ export interface DefaultHttpClientOptions {
  *
  * This will be the fallback client if the default client fails to load/if the default client is not available.
  *
- * See the `astra-db-ts` README for more information on different clients.
- *
- * https://github.com/datastax/astra-db-ts
- *
  * @public
  */
 export interface FetchHttpClientOptions {
@@ -112,10 +98,6 @@ export interface FetchHttpClientOptions {
  * Allows you to use a custom http client for making HTTP requests, rather than the default or fetch API.
  *
  * Just requires the implementation of a simple adapter interface.
- *
- * See the `astra-db-ts` README for more information on different clients.
- *
- * https://github.com/datastax/astra-db-ts
  *
  * @public
  */

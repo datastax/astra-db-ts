@@ -49,6 +49,7 @@ import { mkDistinctPathExtractor, pullSafeProjection4Distinct } from '@/src/docu
 import stableStringify from 'safe-stable-stringify';
 import { GenericInsertOneResult } from '@/src/documents/commands/types/insert/insert-one';
 import { GenericInsertManyResult } from '@/src/documents/commands/types/insert/insert-many';
+import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
 
 /**
  * @internal
@@ -65,7 +66,7 @@ export class CommandImpls<ID> {
   }
 
   public async insertOne(_document: SomeDoc, options: WithTimeout<'generalMethodTimeoutMs'> | nullish): Promise<GenericInsertOneResult<ID>> {
-    const document = this._serdes.serialize(_document);
+    const document = this._serdes.serialize(_document, SerDesTarget.Record);
 
     const command = mkBasicCmd('insertOne', {
       document: document[0],
@@ -77,7 +78,7 @@ export class CommandImpls<ID> {
     });
 
     return {
-      insertedId: this._serdes.deserialize(raw.status!.insertedIds[0], raw, true) as ID,
+      insertedId: this._serdes.deserialize(raw.status!.insertedIds[0], raw, SerDesTarget.InsertedId) as ID,
     };
   }
 
@@ -96,8 +97,8 @@ export class CommandImpls<ID> {
   }
 
   public async updateOne(_filter: Filter, _update: UpdateFilter, options?: GenericUpdateOneOptions): Promise<GenericUpdateResult<ID, 0 | 1>> {
-    const filter = this._serdes.serialize(_filter);
-    const update = this._serdes.serialize(_update);
+    const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
+    const update = this._serdes.serialize(_update, SerDesTarget.Update);
 
     const command = mkCmdWithSortProj('updateOne', options, {
       filter: filter[0],
@@ -116,8 +117,8 @@ export class CommandImpls<ID> {
   }
 
   public async updateMany(_filter: Filter, _update: UpdateFilter, options?: GenericUpdateManyOptions): Promise<GenericUpdateResult<ID, number>> {
-    const filter = this._serdes.serialize(_filter);
-    const update = this._serdes.serialize(_update);
+    const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
+    const update = this._serdes.serialize(_update, SerDesTarget.Update);
 
     const command = mkBasicCmd('updateMany', {
       filter: filter[0],
@@ -161,8 +162,8 @@ export class CommandImpls<ID> {
   }
 
   public async replaceOne(_filter: Filter, _replacement: SomeDoc, options?: GenericReplaceOneOptions): Promise<GenericUpdateResult<ID, 0 | 1>> {
-    const filter = this._serdes.serialize(_filter);
-    const replacement = this._serdes.serialize(_replacement);
+    const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
+    const replacement = this._serdes.serialize(_replacement, SerDesTarget.Record);
 
     const command = mkCmdWithSortProj('findOneAndReplace', options, {
       filter: filter[0],
@@ -183,7 +184,7 @@ export class CommandImpls<ID> {
   }
 
   public async deleteOne(_filter: Filter, options?: GenericDeleteOneOptions): Promise<GenericDeleteOneResult> {
-    const filter = this._serdes.serialize(_filter);
+    const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
 
     const command = mkCmdWithSortProj('deleteOne', options, {
       filter: filter[0],
@@ -200,7 +201,7 @@ export class CommandImpls<ID> {
   }
 
   public async deleteMany(_filter: Filter, options?: WithTimeout<'generalMethodTimeoutMs'>): Promise<GenericDeleteManyResult> {
-    const filter = this._serdes.serialize(_filter);
+    const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
 
     const command = mkBasicCmd('deleteMany', {
       filter: filter[0],
@@ -237,11 +238,11 @@ export class CommandImpls<ID> {
     if (options?.sort) {
       options.sort = normalizedSort(options.sort);
     }
-    return new cursor(this._tOrC, this._serdes, this._serdes.serialize(structuredClone(filter)), structuredClone(options));
+    return new cursor(this._tOrC, this._serdes, this._serdes.serialize(structuredClone(filter), SerDesTarget.Filter), structuredClone(options));
   }
 
   public async findOne<Schema>(_filter: Filter, options?: GenericFindOneOptions): Promise<Schema | null> {
-    const filter = this._serdes.serialize(_filter);
+    const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
 
     const command = mkCmdWithSortProj('findOne', options, {
       filter: filter[0],
@@ -255,12 +256,12 @@ export class CommandImpls<ID> {
       bigNumsPresent: filter[1],
     });
 
-    return this._serdes.deserialize(resp.data?.document, resp) as any;
+    return this._serdes.deserialize(resp.data?.document, resp, SerDesTarget.Record) as any;
   }
 
   public async findOneAndReplace<Schema extends SomeDoc>(_filter: Filter, _replacement: SomeDoc, options?: GenericFindOneAndReplaceOptions): Promise<Schema | null> {
-    const filter = this._serdes.serialize(_filter);
-    const replacement = this._serdes.serialize(_replacement);
+    const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
+    const replacement = this._serdes.serialize(_replacement, SerDesTarget.Record);
 
     const command = mkCmdWithSortProj('findOneAndReplace', options, {
       filter: filter[0],
@@ -280,7 +281,7 @@ export class CommandImpls<ID> {
   }
 
   public async findOneAndDelete<Schema extends SomeDoc>(_filter: Filter, options?: GenericFindOneAndDeleteOptions): Promise<Schema | null> {
-    const filter = this._serdes.serialize(_filter);
+    const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
 
     const command = mkCmdWithSortProj('findOneAndDelete', options, {
       filter: filter[0],
@@ -295,8 +296,8 @@ export class CommandImpls<ID> {
   }
 
   public async findOneAndUpdate<Schema extends SomeDoc>(_filter: Filter, _update: SomeDoc, options?: GenericFindOneAndUpdateOptions): Promise<Schema | null> {
-    const filter = this._serdes.serialize(_filter);
-    const update = this._serdes.serialize(_update);
+    const filter = this._serdes.serialize(_filter, SerDesTarget.Filter);
+    const update = this._serdes.serialize(_update, SerDesTarget.Update);
 
     const command = mkCmdWithSortProj('findOneAndUpdate', options, {
       filter: filter[0],
@@ -353,7 +354,7 @@ export class CommandImpls<ID> {
       throw new Error('upperBound must be >= 0');
     }
 
-    const [filter, bigNumsPresent] = this._serdes.serialize(_filter);
+    const [filter, bigNumsPresent] = this._serdes.serialize(_filter, SerDesTarget.Filter);
 
     const command = mkBasicCmd('countDocuments', {
       filter: filter,

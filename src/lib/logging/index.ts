@@ -14,5 +14,4 @@
 // noinspection DuplicatedCode
 
 export type * from './types';
-export { DataAPILoggingDefaults } from './constants';
 export * from './events';

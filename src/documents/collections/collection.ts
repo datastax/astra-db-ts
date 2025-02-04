@@ -50,7 +50,7 @@ import { CollectionInsertManyError, TooManyDocumentsToCountError, WithSim } from
 import JBI from 'json-bigint';
 import { CollectionFindCursor } from '@/src/documents/collections/cursor';
 import { withJbiNullProtoFix } from '@/src/lib/utils';
-import { CollectionSerDes } from '@/src/documents/collections/ser-des/ser-des';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 
 const jbi = JBI;
 
@@ -184,7 +184,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
     };
 
     this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
-    this.#commands = new CommandImpls(this, this.#httpClient, new CollectionSerDes(opts?.serdes));
+    this.#commands = new CommandImpls(this, this.#httpClient, new CollSerDes(CollSerDes.cfg.parse(opts?.serdes)));
     this.#db = db;
 
     Object.defineProperty(this, $CustomInspect, {

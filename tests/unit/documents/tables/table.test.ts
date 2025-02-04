@@ -18,7 +18,7 @@ import assert from 'assert';
 import { Table } from '@/src/documents';
 import { $CustomInspect } from '@/src/lib/constants';
 
-describe('unit.documents.tables', ({ db }) => {
+describe('unit.documents.tables.table', ({ db }) => {
   describe('initialization', () => {
     it('should initialize a Table', () => {
       const table = new Table(db, db._httpClient, 'new_table', undefined);

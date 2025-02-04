@@ -58,24 +58,7 @@ export interface DataAPIClientOptions {
   /**
    * The client-wide options related to http operations.
    *
-   * There are four different behaviours for setting the client:
-   * - Not setting the `httpOptions` at all
-   * -- This will attempt to use `fetch-h2` if available, and fall back to `fetch` if not available
-   * - `client: 'default'` or `client: undefined` (or unset)
-   * -- This will attempt to use `fetch-h2` if available, and throw an error if not available
-   * - `client: 'fetch'`
-   * -- This will always use the native `fetch` API
-   * - `client: 'custom'`
-   * -- This will allow you to pass a custom `Fetcher` implementation to the client
-   *
-   * `fetch-h2` is a fetch implementation that supports HTTP/2, and is the recommended client for the best performance.
-   *
-   * However, it's generally only available by default on node runtimes; in other environments, you may need to use the
-   * native `fetch` API instead, or pass in the fetch-h2 module manually.
-   *
-   * See the `astra-db-ts` README for more information on different clients.
-   *
-   * https://github.com/datastax/astra-db-ts
+   * Click on {@link DataAPIHttpOptions} for more information.
    */
   httpOptions?: DataAPIHttpOptions,
   /**

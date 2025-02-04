@@ -13,35 +13,25 @@ while [ $# -gt 0 ]; do
     "licensing")
       check_types="$check_types licensing"
       ;;
-    "test-ext")
-      check_types="$check_types test-ext"
+    "test-exts")
+      check_types="$check_types test-exts"
+      ;;
+    "test-names")
+      check_types="$check_types test-names"
       ;;
     "lib-check")
       check_types="$check_types lib-check"
       ;;
-    *)
-       if [ "$1" != "--help" ] && [ "$1" != "-help" ] && [ "$1" != "-h" ]; then
-         echo "Invalid flag $1"
-         echo
-       fi
-       echo "Usage:"
-       echo
-       echo "$0 [tc] [lint] [licensing] [lib-check]"
-       echo
-       echo "* tc: runs the type-checker"
-       echo "* lint: checks for linting errors"
-       echo "* licensing: checks for missing licensing headers"
-       echo "* lib-check: ensures library compiles if skipLibCheck: false"
-       echo "* test-ext: makes sure test files end in .test.ts"
-       echo
-       echo "Defaults to running all checks if no specific checks are specified."
-       exit
+     *)
+      sh scripts/utils/help.sh "$1" check.sh
+      exit $?
+      ;;
   esac
   shift
 done
 
 if [ -z "$check_types" ]; then
-  check_types="tc lint licensing lib-check test-ext"
+  check_types="tc lint licensing lib-check test-exts test-names"
 fi
 
 failed=false
@@ -96,7 +86,7 @@ for check_type in $check_types; do
       tmp_dir="tmp-lib-check"
       rm -rf "$tmp_dir" "$main_dir/dist"
 
-      scripts/build.sh -no-report > /dev/null
+      scripts/build.sh > /dev/null
 
       if [ ! $? ]; then
         print_error "Could not build library for lib-check phase"
@@ -119,12 +109,28 @@ for check_type in $check_types; do
 
       cd "$main_dir" && rm -rf "$tmp_dir"
       ;;
-    "test-ext")
+    "test-exts")
       print_green_with_status "Checking for test files that do not end in '.test.ts'..."
-      offenders=$(find tests/unit tests/integration -type f -not -name "*.test.ts")
+      offenders=$(find tests/unit tests/integration -type f -not -name "*.test.ts" -exec echo "- {}" \;)
 
       if [ -n "$offenders" ]; then
         print_error "The following test files do not end in '.test.ts':"
+        print_error "$offenders"
+        failed=true
+      fi
+      ;;
+    "test-names")
+      print_green_with_status "Checking for test suite names that do not match the test dir + file name..."
+
+      offenders=$(
+        find tests/unit tests/integration -type f -name "*.test.ts" | while read -r file; do
+          expected_name="$(dirname "$file" | sed 's@^tests/@@' | sed 's@/@\\.@g')\.$(basename "$file" .test.ts)"
+          grep -qE "(describe|parallel|background)\\('(\([A-Z-]+\) )*$expected_name" "$file" || echo "- $file"
+        done
+      )
+
+      if [ -n "$offenders" ]; then
+        print_error "The following test suites do not match the test dir + file name:"
         print_error "$offenders"
         failed=true
       fi

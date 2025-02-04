@@ -43,6 +43,12 @@ interface NumRepTree {
 }
 
 export const collNumRepFnFromCfg = (cfg: CollNumRepCfg): GetCollNumRepFn => {
+  // Minor optimization to make `{ '*': 'xyz' }` equal in performance to `() => 'xyz'`
+  if (Object.keys(cfg).length === 1 && cfg['*']) {
+    const rep = cfg['*'];
+    return () => rep;
+  }
+
   const tree = buildNumRepTree(cfg);
 
   return (path) => {
@@ -115,7 +121,7 @@ export class NumCoercionError extends Error {
   }
 }
 
-export const coerceBigNumber = (value: BigNumber, ctx: CollDesCtx): readonly [0 | 1 | 2, unknown?] => {
+export const coerceBigNumber = (value: BigNumber, ctx: CollDesCtx): unknown => {
   switch (ctx.getNumRepForPath!(ctx.path)) {
     case 'number': {
       const asNum = value.toNumber();
@@ -124,36 +130,36 @@ export const coerceBigNumber = (value: BigNumber, ctx: CollDesCtx): readonly [0 
         throw new NumCoercionError(ctx.path, value, 'bignumber', 'number');
       }
 
-      return ctx.recurse(asNum);
+      return asNum;
     }
     case 'bigint': {
       if (!value.isInteger()) {
         throw new NumCoercionError(ctx.path, value, 'bignumber', 'bigint');
       }
-      return ctx.recurse(BigInt(value.toFixed(0)));
+      return BigInt(value.toFixed(0));
     }
     case 'bignumber':
-      return ctx.recurse(value);
+      return value;
     case 'string':
     case 'number_or_string':
-      return ctx.recurse(value.toString());
+      return value.toString();
   }
 };
 
-export const coerceNumber = (value: number, ctx: CollDesCtx): readonly [0 | 1 | 2, unknown?] => {
+export const coerceNumber = (value: number, ctx: CollDesCtx): unknown => {
   switch (ctx.getNumRepForPath!(ctx.path)) {
     case 'bigint': {
       if (!Number.isInteger(value)) {
         throw new NumCoercionError(ctx.path, value, 'number', 'bigint');
       }
-      return ctx.recurse(BigInt(value));
+      return BigInt(value);
     }
     case 'bignumber':
-      return ctx.recurse(BigNumber(value));
+      return BigNumber(value);
     case 'string':
-      return ctx.recurse(value.toString());
+      return value.toString();
     case 'number':
     case 'number_or_string':
-      return ctx.recurse(value);
+      return value;
   }
 };

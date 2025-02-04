@@ -12,15 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CLIENT_USER_AGENT } from '@/src/lib/api/constants';
-import type { Caller } from '@/src/client';
 import type TypedEmitter from 'typed-emitter';
 import type { FetchCtx, FetcherResponseInfo } from '@/src/lib/api/fetch/types';
 import type { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/lib/api/clients';
 import type { DataAPIClientEventMap } from '@/src/lib/logging';
 import { Logger } from '@/src/lib/logging/logger';
-import { OneOrMany } from '@/src/lib/types';
-import { MkTimeoutError, Timeouts } from '@/src/lib/api/timeouts';
+import { MkTimeoutError, Timeouts } from '@/src/lib/api/timeouts/timeouts';
 
 /**
  * @internal
@@ -45,7 +42,7 @@ export abstract class HttpClient {
     }
 
     this.baseHeaders = { ...options.additionalHeaders };
-    this.baseHeaders['User-Agent'] = options.userAgent;
+    this.baseHeaders['User-Agent'] = options.caller.userAgent;
     this.baseHeaders['Content-Type'] = 'application/json';
 
     this.headerProviders = headerProviders;
@@ -91,23 +88,4 @@ export abstract class HttpClient {
       mkTimeoutError,
     });
   }
-}
-
-/**
- * @internal
- */
-export function buildUserAgent(caller: OneOrMany<Caller> | undefined): string {
-  const callers = (
-    (!caller)
-      ? [] :
-    Array.isArray(caller[0])
-      ?  caller
-      : [caller]
-  ) as Caller[];
-
-  const callerString = callers.map((c) => {
-    return c[1] ? `${c[0]}/${c[1]}` : c[0];
-  }).join(' ');
-
-  return `${callerString} ${CLIENT_USER_AGENT}`.trim();
 }
