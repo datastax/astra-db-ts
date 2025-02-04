@@ -13,11 +13,11 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { describe, it } from '@/tests/testlib';
+import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { uuid } from '@/src/documents';
+import { uuid } from '@/src/documents/index.js';
 import stableStringify from 'safe-stable-stringify';
-import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 
 describe('unit.documents.collections.ser-des.mutate-in-place', () => {
   describe('mutateInPlace: true', () => {

@@ -40,19 +40,19 @@ import type {
   SomeDoc,
   ToDotNotation,
   WithId,
-} from '@/src/documents/collections/types';
-import type { CollectionDefinition, CollectionOptions, Db } from '@/src/db';
-import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import type { WithTimeout } from '@/src/lib';
-import { type OpaqueHttpClient } from '@/src/lib';
-import { CommandImpls } from '@/src/documents/commands/command-impls';
-import { $CustomInspect } from '@/src/lib/constants';
-import type { WithSim } from '@/src/documents';
-import { CollectionInsertManyError, TooManyDocumentsToCountError } from '@/src/documents';
+} from '@/src/documents/collections/types/index.js';
+import type { CollectionDefinition, CollectionOptions, Db } from '@/src/db/index.js';
+import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
+import type { WithTimeout } from '@/src/lib/index.js';
+import { type OpaqueHttpClient } from '@/src/lib/index.js';
+import { CommandImpls } from '@/src/documents/commands/command-impls.js';
+import { $CustomInspect } from '@/src/lib/constants.js';
+import type { WithSim } from '@/src/documents/index.js';
+import { CollectionInsertManyError, TooManyDocumentsToCountError } from '@/src/documents/index.js';
 import JBI from 'json-bigint';
-import { CollectionFindCursor } from '@/src/documents/collections/cursor';
-import { withJbiNullProtoFix } from '@/src/lib/utils';
-import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
+import { CollectionFindCursor } from '@/src/documents/collections/cursor.js';
+import { withJbiNullProtoFix } from '@/src/lib/utils.js';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 
 const jbi = JBI;
 

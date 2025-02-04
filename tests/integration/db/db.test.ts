@@ -23,10 +23,10 @@ import {
   parallel,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
-} from '@/tests/testlib';
-import { DataAPIResponseError } from '@/src/documents';
-import { DataAPIClient } from '@/src/client';
-import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants';
+} from '@/tests/testlib/index.js';
+import { DataAPIResponseError } from '@/src/documents/index.js';
+import { DataAPIClient } from '@/src/client/index.js';
+import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants.js';
 
 parallel('integration.db.db', { drop: 'colls:after' }, ({ db }) => {
   describe('(LONG) createCollection', () => {

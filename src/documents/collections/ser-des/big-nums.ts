@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { BigNumber } from 'bignumber.js';
-import type { CollDesCtx } from '@/src/documents';
+import type { CollDesCtx } from '@/src/documents/index.js';
 
 /**
  * @public

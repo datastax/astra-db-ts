@@ -14,9 +14,9 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import type { context, FetchInit, TimeoutError } from 'fetch-h2';
-import type { DefaultHttpClientOptions } from '@/src/client';
-import { FailedToLoadDefaultClientError } from '@/src/client/errors';
-import type { Fetcher, FetcherRequestInfo, FetcherResponseInfo, nullish } from '@/src/lib';
+import type { DefaultHttpClientOptions } from '@/src/client/index.js';
+import { FailedToLoadDefaultClientError } from '@/src/client/errors.js';
+import type { Fetcher, FetcherRequestInfo, FetcherResponseInfo, nullish } from '@/src/lib/index.js';
 
 // eslint-disable-next-line @typescript-eslint/consistent-type-imports
 type FetchH2Lib = typeof import('fetch-h2');

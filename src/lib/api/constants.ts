@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { LIB_NAME, LIB_VERSION } from '@/src/version';
-import type { ParsedEnvironment } from '@/src/client/opts-handlers/environment-cfg-handler';
-import type { DataAPIEnvironment } from '@/src/lib';
+import { LIB_NAME, LIB_VERSION } from '@/src/version.js';
+import type { ParsedEnvironment } from '@/src/client/opts-handlers/environment-cfg-handler.js';
+import type { DataAPIEnvironment } from '@/src/lib/index.js';
 
 /**
  * @internal

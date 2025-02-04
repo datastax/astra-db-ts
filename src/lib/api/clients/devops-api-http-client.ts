@@ -13,15 +13,15 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { HttpClient } from '@/src/lib/api/clients';
-import { DevOpsAPIResponseError, DevOpsAPITimeoutError, DevOpsUnexpectedStateError } from '@/src/administration/errors';
-import type { AstraAdminBlockingOptions } from '@/src/administration/types';
-import { DEFAULT_DEVOPS_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants';
-import type { HeaderProvider, HTTPClientOptions, HttpMethodStrings } from '@/src/lib/api/clients/types';
-import type { nullish } from '@/src/lib';
-import { jsonTryParse } from '@/src/lib/utils';
-import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts';
-import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
+import { HttpClient } from '@/src/lib/api/clients/index.js';
+import { DevOpsAPIResponseError, DevOpsAPITimeoutError, DevOpsUnexpectedStateError } from '@/src/administration/errors.js';
+import type { AstraAdminBlockingOptions } from '@/src/administration/types/index.js';
+import { DEFAULT_DEVOPS_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants.js';
+import type { HeaderProvider, HTTPClientOptions, HttpMethodStrings } from '@/src/lib/api/clients/types.js';
+import type { nullish } from '@/src/lib/index.js';
+import { jsonTryParse } from '@/src/lib/utils.js';
+import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
+import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
 
 /**
  * @internal

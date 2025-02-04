@@ -14,11 +14,11 @@
 
 import type { Decoder} from 'decoders';
 import { array, boolean, inexact, oneOf, optional } from 'decoders';
-import type { BaseSerDesConfig, RawCodec } from '@/src/lib';
-import { KeyTransformer } from '@/src/lib';
-import { anyInstanceOf } from '@/src/lib/utils';
-import type { Parsed, Unparse } from '@/src/lib/opts-handler';
-import { monoids } from '@/src/lib/opts-handler';
+import type { BaseSerDesConfig, RawCodec } from '@/src/lib/index.js';
+import { KeyTransformer } from '@/src/lib/index.js';
+import { anyInstanceOf } from '@/src/lib/utils.js';
+import type { Parsed, Unparse } from '@/src/lib/opts-handler.js';
+import { monoids } from '@/src/lib/opts-handler.js';
 
 /**
  * @internal

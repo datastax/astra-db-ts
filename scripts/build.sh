@@ -20,7 +20,7 @@ done
 rm -rf ./dist
 
 # Creates the version file
-node scripts/utils/build-version-file.js > src/version.ts
+node scripts/utils/build-version-file.cjs > src/version.ts
 
 # Transpiles the project
 if [ "$light" = true ]; then
@@ -42,17 +42,20 @@ if [ "$light" != true ]; then
   fi
   rm -r ./temp
 
+  # For some reason the rollup .d.ts has some random, unused imports that need to be removed
+  node scripts/utils/remove-bad-rollup-imports.cjs dist/astra-db-ts.d.ts
+
   # Uses a more succinct licence notice + removes block comments (the rollup .d.ts file already contains the ts-doc)
-  find ./dist -type f -name '*.js' -exec node scripts/utils/reduce-comments.js {} \;
+  find ./dist -type f -name '*.js' -exec node scripts/utils/reduce-comments.cjs {} \;
 
   # Adds the missing license notice to the rollup .d.ts
-  node scripts/utils/add-license-bumf.js dist/astra-db-ts.d.ts
+  node scripts/utils/add-license-bumf.cjs dist/astra-db-ts.d.ts
 
   # Protects against Symbol.asyncIterator not found
   sed -i -E '/^(\s+)\[Symbol\.asyncIterator\]/i\// @ts-ignore-error - May or may not be found depending on TS version & esnext.disposable in lib' dist/astra-db-ts.d.ts
 
   # Delete the "empty" files where only types were declared
-  node scripts/utils/del-empty-dist-files.js
+  node scripts/utils/del-empty-dist-files.cjs
 
   # Removes all .d.ts files except the main rollup .d.ts
   cd dist || exit 20

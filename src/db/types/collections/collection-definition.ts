@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeDoc } from '@/src/documents/collections';
-import type { CollectionDefaultIdOptions, CollectionIndexingOptions, CollectionVectorOptions } from '@/src/db';
+import type { SomeDoc } from '@/src/documents/collections/index.js';
+import type { CollectionDefaultIdOptions, CollectionIndexingOptions, CollectionVectorOptions } from '@/src/db/index.js';
 
 /**
  * Represents the options for the createCollection command.

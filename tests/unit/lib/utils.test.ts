@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { describe, it } from '@/tests/testlib';
+import { describe, it } from '@/tests/testlib/index.js';
 import * as bn from 'bignumber.js';
 import {
   buildAstraEndpoint,
@@ -25,7 +25,7 @@ import {
   pathMatches,
   toArray,
   withJbiNullProtoFix,
-} from '@/src/lib/utils';
+} from '@/src/lib/utils.js';
 import JBI from 'json-bigint';
 
 describe('unit.lib.utils', () => {

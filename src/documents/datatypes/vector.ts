@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $CustomInspect } from '@/src/lib/constants';
+import { $CustomInspect } from '@/src/lib/constants.js';
 import type {
   CollCodec,
   TableCodec, TableDesCtx,
-  TableSerCtx} from '@/src/documents';
+  TableSerCtx} from '@/src/documents/index.js';
 import {
   type CollDesCtx,
   type CollSerCtx,
-} from '@/src/documents';
-import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
-import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
-import { forJSEnv } from '@/src/lib/utils';
+} from '@/src/documents/index.js';
+import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
+import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
+import { forJSEnv } from '@/src/lib/utils.js';
 
 /**
  * Represents any type that can be converted into a {@link DataAPIVector}

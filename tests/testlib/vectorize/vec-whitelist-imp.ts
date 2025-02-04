@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { FinalVectorizeTestBranch } from '@/tests/testlib/vectorize/vec-test-branches';
+import type { FinalVectorizeTestBranch } from '@/tests/testlib/vectorize/vec-test-branches.js';
 
 export const whitelistImplFor = (whitelist: string) => {
   switch (true) {

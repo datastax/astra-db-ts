@@ -13,9 +13,9 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import type { SomeDoc} from '@/src/documents';
-import { vector } from '@/src/documents';
-import { describe, initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
+import type { SomeDoc} from '@/src/documents/index.js';
+import { vector } from '@/src/documents/index.js';
+import { describe, initCollectionWithFailingClient, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 describe('integration.documents.collections.cursor', { truncate: 'colls:before' }, ({ collection, collection_ }) => {

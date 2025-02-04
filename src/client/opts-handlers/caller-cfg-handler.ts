@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { oneOrMany } from '@/src/lib/utils';
+import { oneOrMany } from '@/src/lib/utils.js';
 import { either, nullish, string, tuple } from 'decoders';
-import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
-import { OptionsHandler } from '@/src/lib/opts-handler';
-import type { Caller } from '@/src/client';
-import type { OneOrMany } from '@/src/lib';
-import { CLIENT_USER_AGENT } from '@/src/lib/api/constants';
+import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
+import { OptionsHandler } from '@/src/lib/opts-handler.js';
+import type { Caller } from '@/src/client/index.js';
+import type { OneOrMany } from '@/src/lib/index.js';
+import { CLIENT_USER_AGENT } from '@/src/lib/api/constants.js';
 
 /**
  * @internal

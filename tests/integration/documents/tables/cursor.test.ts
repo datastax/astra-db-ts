@@ -13,10 +13,10 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import type { SomeDoc } from '@/src/documents';
-import { DataAPIVector } from '@/src/documents';
+import type { SomeDoc } from '@/src/documents/index.js';
+import { DataAPIVector } from '@/src/documents/index.js';
 import type {
-  EverythingTableSchema} from '@/tests/testlib';
+  EverythingTableSchema} from '@/tests/testlib/index.js';
 import {
   DEFAULT_TABLE_NAME,
   describe,
@@ -24,7 +24,7 @@ import {
   it,
   OTHER_KEYSPACE,
   parallel,
-} from '@/tests/testlib';
+} from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 describe('integration.documents.tables.cursor', { truncate: 'tables:before' }, ({ db }) => {

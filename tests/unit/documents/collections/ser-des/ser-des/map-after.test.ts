@@ -13,10 +13,10 @@
 // limitations under the License.
 // noinspection DuplicatedCode,CommaExpressionJS
 
-import { describe, it } from '@/tests/testlib';
-import { Camel2SnakeCase, CollCodecs, uuid } from '@/src/index';
-import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
-import type { CollNominalCodecOpts } from '@/src/documents/collections/ser-des/codecs';
+import { describe, it } from '@/tests/testlib/index.js';
+import { Camel2SnakeCase, CollCodecs, uuid } from '@/src/index.js';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
+import type { CollNominalCodecOpts } from '@/src/documents/collections/ser-des/codecs.js';
 import assert from 'assert';
 
 describe('unit.documents.collections.ser-des.ser-des.map-after', () => {

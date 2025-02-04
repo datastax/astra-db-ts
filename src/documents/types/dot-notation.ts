@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { ObjectId, SomeDoc, UUID } from '@/src/documents';
+import type { ObjectId, SomeDoc, UUID } from '@/src/documents/index.js';
 
 /**
  * Converts some `Schema` into a type representing its dot notation (object paths).

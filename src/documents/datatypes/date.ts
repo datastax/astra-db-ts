@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $CustomInspect } from '@/src/lib/constants';
-import type { DataAPITime, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
-import { DataAPIDuration } from '@/src/documents';
-import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
-import { mkInvArgsErr } from '@/src/documents/utils';
+import { $CustomInspect } from '@/src/lib/constants.js';
+import type { DataAPITime, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
+import { DataAPIDuration } from '@/src/documents/index.js';
+import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
+import { mkInvArgsErr } from '@/src/documents/utils.js';
 
 const MillisecondsPerDay = 1000 * 60 * 60 * 24;
 

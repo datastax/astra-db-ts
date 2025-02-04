@@ -13,10 +13,10 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { describe, it } from '@/tests/testlib';
-import { Camel2SnakeCase } from '@/src/lib';
+import { describe, it } from '@/tests/testlib/index.js';
+import { Camel2SnakeCase } from '@/src/lib/index.js';
 import assert from 'assert';
-import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 
 describe('unit.documents.collections.ser-des.key-transformer', () => {
   describe('Camel2SnakeCase', () => {

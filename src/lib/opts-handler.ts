@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import type { Decoder } from 'decoders';
-import type { nullish } from '@/src/lib/index';
-import { findLast } from '@/src/lib/utils';
+import type { nullish } from '@/src/lib/index.js';
+import { findLast } from '@/src/lib/utils.js';
 
 /**
  * @public

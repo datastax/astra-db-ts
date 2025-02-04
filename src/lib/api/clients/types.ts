@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { TypedEmitter } from '@/src/lib/typed-emitter';
-import type { CommandEventMap } from '@/src/documents';
-import type { FetchCtx } from '@/src/lib/api/fetch/types';
-import type { HttpMethods } from '@/src/lib/api/constants';
-import type { Ref } from '@/src/lib/types';
-import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts';
-import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
-import type { ParsedTimeoutDescriptor } from '@/src/lib/api/timeouts/cfg-handler';
-import type { ParsedCaller } from '@/src/client/opts-handlers/caller-cfg-handler';
-import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
+import type { TypedEmitter } from '@/src/lib/typed-emitter.js';
+import type { CommandEventMap } from '@/src/documents/index.js';
+import type { FetchCtx } from '@/src/lib/api/fetch/types.js';
+import type { HttpMethods } from '@/src/lib/api/constants.js';
+import type { Ref } from '@/src/lib/types.js';
+import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
+import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler.js';
+import type { ParsedTimeoutDescriptor } from '@/src/lib/api/timeouts/cfg-handler.js';
+import type { ParsedCaller } from '@/src/client/opts-handlers/caller-cfg-handler.js';
+import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
 
 /**
  * @internal

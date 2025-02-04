@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Fetcher } from '@/src/lib';
+import type { Fetcher } from '@/src/lib/index.js';
 
 /**
  * The options available for the {@link DataAPIClient} related to making HTTP requests.

@@ -17,19 +17,19 @@ import type {
   DataAPIClientEventMap,
   DataAPILoggingEvent,
   DataAPILoggingOutput,
-} from '@/src/lib';
-import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents';
+} from '@/src/lib/index.js';
+import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents/index.js';
 import {
   AdminCommandFailedEvent,
   AdminCommandPollingEvent,
   AdminCommandStartedEvent,
   AdminCommandSucceededEvent,
   AdminCommandWarningsEvent,
-} from '@/src/administration/events';
-import { buildOutputsMap } from '@/src/lib/logging/util';
-import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
-import type { InternalLoggingOutputsMap } from '@/src/lib/logging/logger';
-import { EqualityProof } from '@/src/lib/utils';
+} from '@/src/administration/events.js';
+import { buildOutputsMap } from '@/src/lib/logging/util.js';
+import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler.js';
+import type { InternalLoggingOutputsMap } from '@/src/lib/logging/logger.js';
+import { EqualityProof } from '@/src/lib/utils.js';
 
 /**
  * @internal

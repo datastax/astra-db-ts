@@ -19,7 +19,7 @@ import {
   createSampleDocWithMultiLevel,
   it,
   parallel,
-} from '@/tests/testlib';
+} from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 // I was going to go through split this up but yeah... no

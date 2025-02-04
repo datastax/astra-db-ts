@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib';
-import type { WithKeyspace } from '@/src/db';
+import type { WithTimeout } from '@/src/lib/index.js';
+import type { WithKeyspace } from '@/src/db/index.js';
 
 /**
  * Options for dropping an index via {@link Table.dropIndex}

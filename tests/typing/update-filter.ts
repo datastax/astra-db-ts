@@ -14,9 +14,9 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import type { SomeDoc } from '@/src/documents/collections';
-import type { CollectionUpdateFilter } from '@/src/documents/collections/types';
-import type { BasicSchema, ConvolutedSchema1, ConvolutedSchema2, Schema } from '@/tests/typing/prelude';
+import type { SomeDoc } from '@/src/documents/collections/index.js';
+import type { CollectionUpdateFilter } from '@/src/documents/collections/types/index.js';
+import type { BasicSchema, ConvolutedSchema1, ConvolutedSchema2, Schema } from '@/tests/typing/prelude.js';
 
 const test2: CollectionUpdateFilter<BasicSchema> = {
   $set: {

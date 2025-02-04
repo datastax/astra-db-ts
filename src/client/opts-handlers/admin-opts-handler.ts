@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
-import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler';
-import type { AdminOptions } from '@/src/client';
-import { TokenProvider } from '@/src/lib';
+import type { MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
+import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler.js';
+import type { AdminOptions } from '@/src/client/index.js';
+import { TokenProvider } from '@/src/lib/index.js';
 import { exact, nullish, oneOf, optional, record, string } from 'decoders';
-import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
-import { Logger } from '@/src/lib/logging/logger';
-import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
+import { Logger } from '@/src/lib/logging/logger.js';
+import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler.js';
 
 /**
  * @internal

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Deserializers, KeyTransformer, RawDataAPIResponse, Serializers } from '@/src/lib';
+import type { Deserializers, KeyTransformer, RawDataAPIResponse, Serializers } from '@/src/lib/index.js';
 
 /**
  * @public

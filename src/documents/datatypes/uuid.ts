@@ -13,11 +13,11 @@
 // limitations under the License.
 
 import * as _uuid from 'uuid';
-import { $CustomInspect } from '@/src/lib/constants';
-import type { CollCodec, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
-import { type CollDesCtx, type CollSerCtx } from '@/src/documents';
-import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
-import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
+import { $CustomInspect } from '@/src/lib/constants.js';
+import type { CollCodec, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
+import { type CollDesCtx, type CollSerCtx } from '@/src/documents/index.js';
+import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
+import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
 
 /**
  * A shorthand function for `new UUID(uuid)`

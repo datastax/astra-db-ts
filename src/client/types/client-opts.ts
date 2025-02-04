@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPIEnvironment, DataAPILoggingConfig, TimeoutDescriptor } from '@/src/lib';
-import type { Caller, DataAPIHttpOptions, RootAdminOptions, RootDbOptions } from '@/src/client';
-import type { OneOrMany } from '@/src/lib/types';
+import type { DataAPIEnvironment, DataAPILoggingConfig, TimeoutDescriptor } from '@/src/lib/index.js';
+import type { Caller, DataAPIHttpOptions, RootAdminOptions, RootDbOptions } from '@/src/client/index.js';
+import type { OneOrMany } from '@/src/lib/types.js';
 
 /**
  * The default options for the {@link DataAPIClient}. The Data API & DevOps specific options may be overridden

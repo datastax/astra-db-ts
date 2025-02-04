@@ -12,19 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
-import { OptionsHandler } from '@/src/lib/opts-handler';
-import type { DataAPIClient, DataAPIClientOptions } from '@/src/client';
-import { type DataAPIClientEventMap, TokenProvider } from '@/src/lib';
+import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
+import { OptionsHandler } from '@/src/lib/opts-handler.js';
+import type { DataAPIClient, DataAPIClientOptions } from '@/src/client/index.js';
+import { type DataAPIClientEventMap, TokenProvider } from '@/src/lib/index.js';
 import { exact } from 'decoders';
-import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
-import { Logger } from '@/src/lib/logging/logger';
-import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler';
-import type { TypedEmitter } from '@/src/lib/typed-emitter';
-import { CallerCfgHandler } from '@/src/client/opts-handlers/caller-cfg-handler';
-import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
-import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
-import { HttpOptsHandler } from '@/src/client/opts-handlers/http-opts-handler';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
+import { Logger } from '@/src/lib/logging/logger.js';
+import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler.js';
+import type { TypedEmitter } from '@/src/lib/typed-emitter.js';
+import { CallerCfgHandler } from '@/src/client/opts-handlers/caller-cfg-handler.js';
+import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler.js';
+import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler.js';
+import { HttpOptsHandler } from '@/src/client/opts-handlers/http-opts-handler.js';
 
 /**
  * @internal

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeDoc } from '@/src/documents/collections';
-import type { ToDotNotation } from '@/src/documents/types/dot-notation';
-import type { nullish } from '@/src/lib';
+import type { SomeDoc } from '@/src/documents/collections/index.js';
+import type { ToDotNotation } from '@/src/documents/types/dot-notation.js';
+import type { nullish } from '@/src/lib/index.js';
 
 /**
  * Represents the options for the vector search.

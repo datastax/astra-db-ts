@@ -13,10 +13,10 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { describe, it } from '@/tests/testlib';
-import { FetchH2 } from '@/src/lib/api';
+import { describe, it } from '@/tests/testlib/index.js';
+import { FetchH2 } from '@/src/lib/api/index.js';
 import assert from 'assert';
-import { FailedToLoadDefaultClientError } from '@/src/client';
+import { FailedToLoadDefaultClientError } from '@/src/client/index.js';
 
 describe('unit.lib.api.fetch.fetch-h2', () => {
   it('should error if non-module explicit fetchH2 passed', async () => {

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPIHttpClient } from '@/src/lib/api/clients';
-import type { SerDes } from '@/src/lib/api/ser-des/ser-des';
+import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
+import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
 import type {
   Collection,
   CollectionInsertManyOptions,
@@ -35,22 +35,22 @@ import type {
   SomeDoc,
   SomeRow,
   Table,
-  UpdateFilter} from '@/src/documents';
+  UpdateFilter} from '@/src/documents/index.js';
 import {
   CollectionDeleteManyError,
   CollectionUpdateManyError,
   DataAPIResponseError,
-} from '@/src/documents';
-import type { nullish, WithTimeout } from '@/src/lib';
-import { insertManyOrdered, insertManyUnordered } from '@/src/documents/commands/helpers/insertion';
-import { coalesceUpsertIntoUpdateResult, mkUpdateResult } from '@/src/documents/commands/helpers/updates';
-import { mkRespErrorFromResponse } from '@/src/documents/errors';
-import { normalizedSort } from '@/src/documents/utils';
-import { mkDistinctPathExtractor, pullSafeProjection4Distinct } from '@/src/documents/commands/helpers/distinct';
+} from '@/src/documents/index.js';
+import type { nullish, WithTimeout } from '@/src/lib/index.js';
+import { insertManyOrdered, insertManyUnordered } from '@/src/documents/commands/helpers/insertion.js';
+import { coalesceUpsertIntoUpdateResult, mkUpdateResult } from '@/src/documents/commands/helpers/updates.js';
+import { mkRespErrorFromResponse } from '@/src/documents/errors.js';
+import { normalizedSort } from '@/src/documents/utils.js';
+import { mkDistinctPathExtractor, pullSafeProjection4Distinct } from '@/src/documents/commands/helpers/distinct.js';
 import stableStringify from 'safe-stable-stringify';
-import type { GenericInsertOneResult } from '@/src/documents/commands/types/insert/insert-one';
-import type { GenericInsertManyResult } from '@/src/documents/commands/types/insert/insert-many';
-import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
+import type { GenericInsertOneResult } from '@/src/documents/commands/types/insert/insert-one.js';
+import type { GenericInsertManyResult } from '@/src/documents/commands/types/insert/insert-many.js';
+import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 
 /**
  * @internal

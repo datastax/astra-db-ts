@@ -25,12 +25,12 @@ import {
   positiveInteger,
   taggedUnion,
 } from 'decoders';
-import { function_ } from '@/src/lib/utils';
-import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
-import { OptionsHandler } from '@/src/lib/opts-handler';
-import type { DataAPIHttpOptions } from '@/src/client';
-import type { FetchCtx, Fetcher } from '@/src/lib/api/fetch/types';
-import { FetchH2, FetchNative } from '@/src/lib';
+import { function_ } from '@/src/lib/utils.js';
+import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
+import { OptionsHandler } from '@/src/lib/opts-handler.js';
+import type { DataAPIHttpOptions } from '@/src/client/index.js';
+import type { FetchCtx, Fetcher } from '@/src/lib/api/fetch/types.js';
+import { FetchH2, FetchNative } from '@/src/lib/index.js';
 
 /**
  * @internal

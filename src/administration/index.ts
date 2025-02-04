@@ -13,10 +13,10 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-export * from './astra-admin';
-export * from './astra-db-admin';
-export * from './data-api-db-admin';
-export * from './db-admin';
-export * from './errors';
-export * from './events';
-export type * from './types';
+export * from './astra-admin.js';
+export * from './astra-db-admin.js';
+export * from './data-api-db-admin.js';
+export * from './db-admin.js';
+export * from './errors.js';
+export * from './events.js';
+export type * from './types/index.js';

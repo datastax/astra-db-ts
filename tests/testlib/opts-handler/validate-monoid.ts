@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { it } from '@/tests/testlib';
+import { it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import type { MonoidalOptionsHandler } from '@/src/lib/opts-handler';
+import type { MonoidalOptionsHandler } from '@/src/lib/opts-handler.js';
 
 export const ensureMonoidalHandlerIsActuallyAMonoid = (handler: MonoidalOptionsHandler<any>, configs: any[]) => {
   if (configs.length < 3) {

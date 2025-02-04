@@ -20,8 +20,8 @@ import {
   DataAPITime,
   DataAPIVector,
   UUID,
-} from '@/src/documents';
-import { it, parallel } from '@/tests/testlib';
+} from '@/src/documents/index.js';
+import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import { BigNumber } from 'bignumber.js';
 

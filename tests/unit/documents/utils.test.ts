@@ -19,9 +19,9 @@ import {
   extractRegionFromUrl,
   mkInvArgsErr,
   normalizedSort,
-} from '@/src/documents/utils';
-import { describe, it } from '@/tests/testlib';
-import { vector } from '@/src/documents';
+} from '@/src/documents/utils.js';
+import { describe, it } from '@/tests/testlib/index.js';
+import { vector } from '@/src/documents/index.js';
 import * as bn from 'bignumber.js';
 
 describe('unit.documents.utils', () => {

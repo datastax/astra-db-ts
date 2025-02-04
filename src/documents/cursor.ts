@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Collection, SomeDoc } from '@/src/documents/collections';
-import type { GenericFindOptions } from '@/src/documents/commands';
-import type { Filter, Projection, Sort, WithSim } from '@/src/documents/types';
-import type { nullish } from '@/src/lib';
-import { normalizedSort } from '@/src/documents/utils';
-import { $CustomInspect } from '@/src/lib/constants';
-import type { SerDes } from '@/src/lib/api/ser-des/ser-des';
-import { DataAPIError } from '@/src/documents/errors';
-import type { SomeRow, Table } from '@/src/documents/tables';
-import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts';
-import type { DataAPIVector} from '@/src/documents/datatypes';
-import { vector } from '@/src/documents/datatypes';
-import type { DataAPIHttpClient } from '@/src/lib/api/clients';
-import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
+import type { Collection, SomeDoc } from '@/src/documents/collections/index.js';
+import type { GenericFindOptions } from '@/src/documents/commands/index.js';
+import type { Filter, Projection, Sort, WithSim } from '@/src/documents/types/index.js';
+import type { nullish } from '@/src/lib/index.js';
+import { normalizedSort } from '@/src/documents/utils.js';
+import { $CustomInspect } from '@/src/lib/constants.js';
+import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
+import { DataAPIError } from '@/src/documents/errors.js';
+import type { SomeRow, Table } from '@/src/documents/tables/index.js';
+import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
+import type { DataAPIVector} from '@/src/documents/datatypes/index.js';
+import { vector } from '@/src/documents/datatypes/index.js';
+import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
+import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 
 /**
  * An exception that may be thrown whenever something goes wrong with a cursor.

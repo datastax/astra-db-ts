@@ -13,8 +13,8 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIError, CollectionUpdateManyError } from '@/src/documents';
-import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
+import { DataAPIError, CollectionUpdateManyError } from '@/src/documents/index.js';
+import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 parallel('integration.documents.collections.update-many', { truncate: 'colls:before' }, ({ collection }) => {

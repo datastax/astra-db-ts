@@ -17,7 +17,7 @@ import type {
   DataAPIBlob, DataAPIInet,
   DataAPIVector,
   SomeRow,
-  Table} from '@/src/documents';
+  Table} from '@/src/documents/index.js';
 import {
   blob,
   DataAPIResponseError,
@@ -26,8 +26,8 @@ import {
   time,
   uuid,
   vector,
-} from '@/src/documents';
-import { it, parallel } from '@/tests/testlib';
+} from '@/src/documents/index.js';
+import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import { BigNumber } from 'bignumber.js';
 

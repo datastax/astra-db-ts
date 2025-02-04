@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
-import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler';
+import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
+import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler.js';
 import { exact, nullish, optional, positiveNumber } from 'decoders';
-import type { TimeoutDescriptor } from '@/src/lib';
+import type { TimeoutDescriptor } from '@/src/lib/index.js';
 
 /**
  * @internal

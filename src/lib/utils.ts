@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type JBI from 'json-bigint';
-import type { SomeDoc } from '@/src/documents';
+import type { SomeDoc } from '@/src/documents/index.js';
 import { BigNumber } from 'bignumber.js';
 import type { Decoder} from 'decoders';
 import { array, define, either, instanceOf } from 'decoders';

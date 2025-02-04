@@ -13,12 +13,12 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { describe, it } from '@/tests/testlib';
+import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import type { CollCodec} from '@/src/documents';
-import { $DeserializeForCollection, $SerializeForCollection, CollCodecs } from '@/src/documents';
-import { processCodecs } from '@/src/lib';
-import type { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs';
+import type { CollCodec} from '@/src/documents/index.js';
+import { $DeserializeForCollection, $SerializeForCollection, CollCodecs } from '@/src/documents/index.js';
+import { processCodecs } from '@/src/lib/index.js';
+import type { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs.js';
 
 describe('unit.documents.collections.ser-des.codecs', () => {
   describe('processCodecs', () => {

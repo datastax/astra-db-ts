@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithKeyspace } from '@/src/db';
-import type { CollSerDesConfig, EmbeddingHeadersProvider } from '@/src/documents';
-import type { DataAPILoggingConfig} from '@/src/lib';
-import { type TimeoutDescriptor } from '@/src/lib';
+import type { WithKeyspace } from '@/src/db/index.js';
+import type { CollSerDesConfig, EmbeddingHeadersProvider } from '@/src/documents/index.js';
+import type { DataAPILoggingConfig} from '@/src/lib/index.js';
+import { type TimeoutDescriptor } from '@/src/lib/index.js';
 
 /**
  * Options for spawning a new `Collection` instance through {@link db.collection} or {@link db.createCollection}.

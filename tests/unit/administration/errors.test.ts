@@ -14,9 +14,9 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DevOpsAPIResponseError } from '@/src/administration';
-import type { FetcherResponseInfo } from '@/src/lib/api';
-import { describe, it } from '@/tests/testlib';
+import { DevOpsAPIResponseError } from '@/src/administration/index.js';
+import type { FetcherResponseInfo } from '@/src/lib/api/index.js';
+import { describe, it } from '@/tests/testlib/index.js';
 
 describe('unit.administration.errors', () => {
   describe('DevOpsAPIResponseError construction', () => {

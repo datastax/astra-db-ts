@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { it, parallel } from '@/tests/testlib';
+import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 parallel('integration.documents.collections.find-one-and-update', { truncate: 'colls:before' }, ({ collection }) => {

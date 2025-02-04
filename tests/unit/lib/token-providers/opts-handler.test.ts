@@ -13,11 +13,11 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { describe, it, TEST_APPLICATION_TOKEN } from '@/tests/testlib';
-import { StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvider } from '@/src/lib';
-import { OptionParseError } from '@/src/lib/opts-handler';
-import { ensureMonoidalHandlerIsActuallyAMonoid } from '@/tests/testlib/opts-handler/validate-monoid';
-import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
+import { describe, it, TEST_APPLICATION_TOKEN } from '@/tests/testlib/index.js';
+import { StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvider } from '@/src/lib/index.js';
+import { OptionParseError } from '@/src/lib/opts-handler.js';
+import { ensureMonoidalHandlerIsActuallyAMonoid } from '@/tests/testlib/opts-handler/validate-monoid.js';
+import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
 
 describe('unit.lib.token-providers.opts-handler', () => {
   describe('parse', () => {

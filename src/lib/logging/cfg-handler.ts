@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
-import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler';
-import type { DataAPILoggingConfig, DataAPILoggingEvent, DataAPILoggingOutput } from '@/src/lib';
+import type { MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
+import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler.js';
+import type { DataAPILoggingConfig, DataAPILoggingEvent, DataAPILoggingOutput } from '@/src/lib/index.js';
 import { array, either, exact, nonEmptyArray, nullish, oneOf } from 'decoders';
 import {
   LoggingDefaultOutputs,
@@ -22,8 +22,8 @@ import {
   LoggingEvents,
   LoggingEventsWithoutAll,
   LoggingOutputs,
-} from '@/src/lib/logging/constants';
-import { oneOrMany } from '@/src/lib/utils';
+} from '@/src/lib/logging/constants.js';
+import { oneOrMany } from '@/src/lib/utils.js';
 
 /**
  * @internal

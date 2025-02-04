@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $CustomInspect } from '@/src/lib/constants';
-import type { DataAPIDate, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
-import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
-import { mkInvArgsErr } from '@/src/documents/utils';
+import { $CustomInspect } from '@/src/lib/constants.js';
+import type { DataAPIDate, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
+import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
+import { mkInvArgsErr } from '@/src/documents/utils.js';
 
 /**
  * ##### Overview

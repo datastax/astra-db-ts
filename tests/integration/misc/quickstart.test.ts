@@ -13,9 +13,9 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIClient } from '@/src/client';
-import { ObjectId, UUID } from '@/src/documents';
-import { DEFAULT_KEYSPACE } from '@/src/lib/api';
+import { DataAPIClient } from '@/src/client/index.js';
+import { ObjectId, UUID } from '@/src/documents/index.js';
+import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
 import {
   ENVIRONMENT,
   it,
@@ -23,7 +23,7 @@ import {
   parallel,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
-} from '@/tests/testlib';
+} from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 parallel('integration.misc.quickstart', { drop: 'colls:after' }, () => {

@@ -13,26 +13,26 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import type { DataAPIClientEventMap, DataAPILoggingOutput } from '@/src/lib/logging/types';
+import type { DataAPIClientEventMap, DataAPILoggingOutput } from '@/src/lib/logging/types.js';
 import type {
   CommandFailedEvent,
   CommandStartedEvent,
   CommandSucceededEvent,
   CommandWarningsEvent,
-} from '@/src/documents';
+} from '@/src/documents/index.js';
 import type {
   AdminCommandFailedEvent,
   AdminCommandPollingEvent,
   AdminCommandStartedEvent,
   AdminCommandSucceededEvent,
   AdminCommandWarningsEvent,
-} from '@/src/administration';
-import { EmptyInternalLoggingConfig, EventConstructors } from '@/src/lib/logging/constants';
-import { buildOutputsMap } from '@/src/lib/logging/util';
-import type { TypedEmitter } from '@/src/lib/typed-emitter';
-import type { BaseDataAPIClientEvent } from '@/src/lib';
-import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
-import { LoggingCfgHandler } from '@/src/lib/logging/cfg-handler';
+} from '@/src/administration/index.js';
+import { EmptyInternalLoggingConfig, EventConstructors } from '@/src/lib/logging/constants.js';
+import { buildOutputsMap } from '@/src/lib/logging/util.js';
+import type { TypedEmitter } from '@/src/lib/typed-emitter.js';
+import type { BaseDataAPIClientEvent } from '@/src/lib/index.js';
+import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler.js';
+import { LoggingCfgHandler } from '@/src/lib/logging/cfg-handler.js';
 
 /**
  * @internal

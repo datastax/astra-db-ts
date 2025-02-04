@@ -13,16 +13,16 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import type { CollectionDeleteManyResult, CollectionInsertManyResult, SomeDoc, CollectionUpdateManyResult } from '@/src/documents/collections/types';
+import type { CollectionDeleteManyResult, CollectionInsertManyResult, SomeDoc, CollectionUpdateManyResult } from '@/src/documents/collections/types/index.js';
 import {
   DataAPIResponseError, CollectionDeleteManyError,
   CollectionInsertManyError,
   mkRespErrorFromResponse,
   mkRespErrorFromResponses, CollectionUpdateManyError, TableInsertManyError,
-} from '@/src/documents/errors';
-import { describe, it } from '@/tests/testlib';
+} from '@/src/documents/errors.js';
+import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import type { TableInsertManyResult } from '@/src/documents';
+import type { TableInsertManyResult } from '@/src/documents/index.js';
 
 describe('unit.documents.errors', () => {
   const commands = [

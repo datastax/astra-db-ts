@@ -14,7 +14,7 @@
 // noinspection ExceptionCaughtLocallyJS
 
 
-import type { Ref } from '@/src/lib/types';
+import type { Ref } from '@/src/lib/types.js';
 
 /**
  * A simple adapter interface that allows you to define a custom http client that `astra-db-ts` may use to make requests.

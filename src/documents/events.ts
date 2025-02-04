@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DEFAULT_KEYSPACE, type RawDataAPIResponse } from '@/src/lib';
+import { DEFAULT_KEYSPACE, type RawDataAPIResponse } from '@/src/lib/index.js';
 // import { DataAPIClientEvent } from '@/src/lib/logging/events'; needs to be like this or it errors
-import { BaseDataAPIClientEvent } from '@/src/lib/logging/events';
-import type { DataAPIRequestInfo } from '@/src/lib/api/clients/data-api-http-client';
-import type { DataAPIErrorDescriptor } from '@/src/documents/errors';
-import type { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts';
+import { BaseDataAPIClientEvent } from '@/src/lib/logging/events.js';
+import type { DataAPIRequestInfo } from '@/src/lib/api/clients/data-api-http-client.js';
+import type { DataAPIErrorDescriptor } from '@/src/documents/errors.js';
+import type { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts.js';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the

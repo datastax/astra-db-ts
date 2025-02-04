@@ -14,10 +14,10 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DevOpsAPIResponseError } from '@/src/administration';
-import { background, it, TEMP_DB_NAME } from '@/tests/testlib';
-import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
-import { buildAstraEndpoint } from '@/src/lib/utils';
+import { DevOpsAPIResponseError } from '@/src/administration/index.js';
+import { background, it, TEMP_DB_NAME } from '@/tests/testlib/index.js';
+import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants.js';
+import { buildAstraEndpoint } from '@/src/lib/utils.js';
 
 background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycle', ({ client }) => {
   const admin = client.admin();

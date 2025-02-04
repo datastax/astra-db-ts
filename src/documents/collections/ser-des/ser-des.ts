@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { BaseSerDesConfig, SerDesFn } from '@/src/lib/api/ser-des/ser-des';
-import { SerDes } from '@/src/lib/api/ser-des/ser-des';
-import type { BaseDesCtx, BaseSerCtx} from '@/src/lib/api/ser-des/ctx';
-import { NEVERMIND } from '@/src/lib/api/ser-des/ctx';
-import type { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs';
-import { CollCodecs } from '@/src/documents/collections/ser-des/codecs';
-import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
-import { isBigNumber, pathMatches } from '@/src/lib/utils';
-import type { CollNumRepCfg, GetCollNumRepFn } from '@/src/documents';
-import { coerceBigNumber, coerceNumber, collNumRepFnFromCfg } from '@/src/documents/collections/ser-des/big-nums';
-import { CollSerDesCfgHandler } from '@/src/documents/collections/ser-des/cfg-handler';
-import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
+import type { BaseSerDesConfig, SerDesFn } from '@/src/lib/api/ser-des/ser-des.js';
+import { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
+import type { BaseDesCtx, BaseSerCtx} from '@/src/lib/api/ser-des/ctx.js';
+import { NEVERMIND } from '@/src/lib/api/ser-des/ctx.js';
+import type { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs.js';
+import { CollCodecs } from '@/src/documents/collections/ser-des/codecs.js';
+import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
+import { isBigNumber, pathMatches } from '@/src/lib/utils.js';
+import type { CollNumRepCfg, GetCollNumRepFn } from '@/src/documents/index.js';
+import { coerceBigNumber, coerceNumber, collNumRepFnFromCfg } from '@/src/documents/collections/ser-des/big-nums.js';
+import { CollSerDesCfgHandler } from '@/src/documents/collections/ser-des/cfg-handler.js';
+import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
 
 /**
  * @public

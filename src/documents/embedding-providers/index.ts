@@ -12,6 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './aws-embedding-headers-provider';
-export * from './embedding-api-key-header-provider';
-export * from './embedding-headers-provider';
+export * from './aws-embedding-headers-provider.js';
+export * from './embedding-api-key-header-provider.js';
+export * from './embedding-headers-provider.js';

@@ -13,21 +13,21 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { initTestObjects, it, parallel } from '@/tests/testlib';
+import { initTestObjects, it, parallel } from '@/tests/testlib/index.js';
 import type {
   CommandSucceededEvent,
   TableCodec,
   TableDesCtx,
-  TableSerCtx} from '@/src/index';
+  TableSerCtx} from '@/src/index.js';
 import {
   $DeserializeForTable,
   $SerializeForTable,
   Camel2SnakeCase,
   TableCodecs,
-} from '@/src/index';
+} from '@/src/index.js';
 import { BigNumber } from 'bignumber.js';
 import assert from 'assert';
-import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
+import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 
 parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop: 'tables:after' }, ({ db }) => {
   before(async () => {

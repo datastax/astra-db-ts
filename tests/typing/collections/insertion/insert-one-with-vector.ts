@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { TestSchema } from '@/tests/typing/collections/prelude';
-import { dummyCollection } from '@/tests/typing/collections/prelude';
+import type { TestSchema } from '@/tests/typing/collections/prelude.js';
+import { dummyCollection } from '@/tests/typing/collections/prelude.js';
 
 void dummyCollection<TestSchema>().insertOne({
   '_id': '1',

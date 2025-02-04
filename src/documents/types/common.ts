@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPIVector, SomeDoc } from '@/src/documents';
+import type { DataAPIVector, SomeDoc } from '@/src/documents/index.js';
 
 /**
  * Allowed types to specify an ascending or descending sort.

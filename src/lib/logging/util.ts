@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import type { DataAPILoggingOutput } from '@/src/lib/logging/types';
+import type { DataAPILoggingOutput } from '@/src/lib/logging/types.js';
 
 /**
  * @internal

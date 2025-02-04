@@ -14,9 +14,9 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import type { DynamicSchema, TestSchema } from '@/tests/typing/collections/prelude';
-import { dummyCollection } from '@/tests/typing/collections/prelude';
-import type { Equal, Expect } from '@/tests/typing/prelude';
+import type { DynamicSchema, TestSchema } from '@/tests/typing/collections/prelude.js';
+import { dummyCollection } from '@/tests/typing/collections/prelude.js';
+import type { Equal, Expect } from '@/tests/typing/prelude.js';
 
 void dummyCollection<TestSchema>().findOne({}, {}).then((a) => {
   type b = Expect<Equal<false, NonNullable<typeof a> extends { $similarity: any } ? true : false>>

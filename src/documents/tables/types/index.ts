@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type * from './find/find';
-export type * from './find/find-one';
-export type * from './indexes/create-index';
-export type * from './indexes/create-vector-index';
-export type * from './indexes/drop-index';
-export type * from './insert/insert-many';
-export type * from './insert/insert-one';
-export type * from './row';
-export type * from './utils';
-export type * from './filter';
-export type * from './update-filter';
+export type * from './find/find.js';
+export type * from './find/find-one.js';
+export type * from './indexes/create-index.js';
+export type * from './indexes/create-vector-index.js';
+export type * from './indexes/drop-index.js';
+export type * from './insert/insert-many.js';
+export type * from './insert/insert-one.js';
+export type * from './row.js';
+export type * from './utils.js';
+export type * from './filter.js';
+export type * from './update-filter.js';

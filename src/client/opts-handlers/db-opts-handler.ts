@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
-import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler';
-import type { DbOptions } from '@/src/client';
-import { TokenProvider } from '@/src/lib';
+import type { MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
+import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler.js';
+import type { DbOptions } from '@/src/client/index.js';
+import { TokenProvider } from '@/src/lib/index.js';
 import { exact, nullish, oneOf, optional, record, regex, string } from 'decoders';
-import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
-import { Logger } from '@/src/lib/logging/logger';
-import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
-import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
+import { Logger } from '@/src/lib/logging/logger.js';
+import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 
 /**
  * @internal

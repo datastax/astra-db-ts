@@ -13,20 +13,20 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEFAULT_COLLECTION_NAME, describe, it, parallel } from '@/tests/testlib';
-import { Camel2SnakeCase } from '@/src/lib';
+import { DEFAULT_COLLECTION_NAME, describe, it, parallel } from '@/tests/testlib/index.js';
+import { Camel2SnakeCase } from '@/src/lib/index.js';
 import assert from 'assert';
 import type {
   CollCodec,
   CollDesCtx,
   CollSerCtx,
-  UUID} from '@/src/index';
+  UUID} from '@/src/index.js';
 import {
   $DeserializeForCollection,
   $SerializeForCollection,
   CollCodecs,
   uuid,
-} from '@/src/index';
+} from '@/src/index.js';
 import { BigNumber } from 'bignumber.js';
 
 describe('integration.documents.collections.ser-des.key-transformer', ({ db }) => {

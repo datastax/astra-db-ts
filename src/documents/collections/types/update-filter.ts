@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeDoc } from '@/src/documents';
-import type { IsDate, IsNum } from '@/src/documents/types/utils';
+import type { SomeDoc } from '@/src/documents/index.js';
+import type { IsDate, IsNum } from '@/src/documents/types/utils.js';
 
 /**
  * Represents the update filter to specify how to update a document.

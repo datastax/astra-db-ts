@@ -13,8 +13,8 @@
 // limitations under the License.
 // noinspection JSDeprecatedSymbols
 
-import { describe, it } from '@/tests/testlib';
-import { FailedToLoadDefaultClientError, UnexpectedDataAPIResponseError } from '@/src/client';
+import { describe, it } from '@/tests/testlib/index.js';
+import { FailedToLoadDefaultClientError, UnexpectedDataAPIResponseError } from '@/src/client/index.js';
 import assert from 'assert';
 
 describe('unit.client.errors', () => {

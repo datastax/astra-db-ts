@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeRow } from '@/src/documents';
-import type { CreateTableColumnDefinitions, VectorizeServiceOptions } from '@/src/db';
-import type { WithTimeout } from '@/src/lib';
+import type { SomeRow } from '@/src/documents/index.js';
+import type { CreateTableColumnDefinitions, VectorizeServiceOptions } from '@/src/db/index.js';
+import type { WithTimeout } from '@/src/lib/index.js';
 
 /**
  * Options for altering a table.

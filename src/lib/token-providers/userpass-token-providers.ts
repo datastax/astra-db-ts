@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TokenProvider } from '@/src/lib/token-providers/token-provider';
-import { forJSEnv } from '@/src/lib/utils';
+import { TokenProvider } from '@/src/lib/token-providers/token-provider.js';
+import { forJSEnv } from '@/src/lib/utils.js';
 
 /**
  * A token provider which translates a username-password pair into the appropriate authentication token for DSE, HCD.

@@ -13,11 +13,11 @@
 // limitations under the License.
 // noinspection DuplicatedCode,CommaExpressionJS
 
-import { describe, it } from '@/tests/testlib';
+import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
-import { ctxDone, ctxNevermind, ctxRecurse } from '@/src/lib/api/ser-des/ctx';
-import { TableCodecs, uuid } from '@/src/documents';
+import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
+import { ctxDone, ctxNevermind, ctxRecurse } from '@/src/lib/api/ser-des/ctx.js';
+import { TableCodecs, uuid } from '@/src/documents/index.js';
 
 describe('unit.documents.tables.ser-des.ser-des.codecs', () => {
   describe('forPath', () => {

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { CommandEventMap } from '@/src/documents';
-import type { AdminCommandEventMap } from '@/src/administration';
-import type { OneOrMany } from '@/src/lib/types';
+import type { CommandEventMap } from '@/src/documents/index.js';
+import type { AdminCommandEventMap } from '@/src/administration/index.js';
+import type { OneOrMany } from '@/src/lib/types.js';
 
 /**
  * #### Overview

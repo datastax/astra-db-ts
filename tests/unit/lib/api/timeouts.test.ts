@@ -14,10 +14,10 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { describe, it, parallel } from '@/tests/testlib';
-import type { TimedOutCategories, TimeoutManager} from '@/src/lib/api/timeouts/timeouts';
-import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
-import type { HttpClient, HTTPRequestInfo } from '@/src/lib/api/clients';
+import { describe, it, parallel } from '@/tests/testlib/index.js';
+import type { TimedOutCategories, TimeoutManager} from '@/src/lib/api/timeouts/timeouts.js';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
+import type { HttpClient, HTTPRequestInfo } from '@/src/lib/api/clients/index.js';
 
 describe('unit.lib.api.timeouts', () => {
   class TimeoutError extends Error {

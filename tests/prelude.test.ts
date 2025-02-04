@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DEFAULT_KEYSPACE } from '@/src/lib/api';
-import { DEFAULT_COLLECTION_NAME, DEFAULT_TABLE_NAME, OTHER_KEYSPACE, SKIP_PRELUDE } from '@/tests/testlib/config';
+import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
+import { DEFAULT_COLLECTION_NAME, DEFAULT_TABLE_NAME, OTHER_KEYSPACE, SKIP_PRELUDE } from '@/tests/testlib/config.js';
 import {
   EverythingTableSchema,
   EverythingTableSchemaWithVectorize,
   GLOBAL_FIXTURES,
   RUNNING_INT_TESTS,
-} from '@/tests/testlib';
+} from '@/tests/testlib/index.js';
 
 const TEST_KEYSPACES = [DEFAULT_KEYSPACE, OTHER_KEYSPACE];
 

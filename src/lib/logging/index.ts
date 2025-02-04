@@ -13,5 +13,5 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-export type * from './types';
-export * from './events';
+export type * from './types.js';
+export * from './events.js';

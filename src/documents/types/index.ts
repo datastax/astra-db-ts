@@ -12,6 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type * from './common';
-export type * from './filters';
-export type * from './dot-notation';
+export type * from './common.js';
+export type * from './filters.js';
+export type * from './dot-notation.js';

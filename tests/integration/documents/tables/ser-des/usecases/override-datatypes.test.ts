@@ -13,8 +13,8 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEFAULT_TABLE_NAME, it, parallel } from '@/tests/testlib';
-import { blob, TableCodecs, uuid } from '@/src/index';
+import { DEFAULT_TABLE_NAME, it, parallel } from '@/tests/testlib/index.js';
+import { blob, TableCodecs, uuid } from '@/src/index.js';
 import assert from 'assert';
 
 parallel('integration.documents.tables.ser-des.usecases.override-datatypes', ({ db }) => {

@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { nullish, OneOrMany } from '@/src/lib';
-import type { HTTPRequestInfo } from '@/src/lib/api/clients';
-import { toArray } from '@/src/lib/utils';
-import type { ParsedTimeoutDescriptor} from '@/src/lib/api/timeouts/cfg-handler';
-import { TimeoutCfgHandler } from '@/src/lib/api/timeouts/cfg-handler';
+import type { nullish, OneOrMany } from '@/src/lib/index.js';
+import type { HTTPRequestInfo } from '@/src/lib/api/clients/index.js';
+import { toArray } from '@/src/lib/utils.js';
+import type { ParsedTimeoutDescriptor} from '@/src/lib/api/timeouts/cfg-handler.js';
+import { TimeoutCfgHandler } from '@/src/lib/api/timeouts/cfg-handler.js';
 
 /**
  * The timeout categories that caused the timeout.

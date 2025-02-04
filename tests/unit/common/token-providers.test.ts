@@ -13,8 +13,8 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { StaticTokenProvider, UsernamePasswordTokenProvider } from '@/src/lib';
-import { describe, it } from '@/tests/testlib';
+import { StaticTokenProvider, UsernamePasswordTokenProvider } from '@/src/lib/index.js';
+import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 describe('unit.common.token-providers', () => {

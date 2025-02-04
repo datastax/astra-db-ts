@@ -13,29 +13,29 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { Logger } from '@/src/lib/logging/logger';
-import type { nullish, RawDataAPIResponse} from '@/src/lib';
-import { TokenProvider } from '@/src/lib';
+import { Logger } from '@/src/lib/logging/logger.js';
+import type { nullish, RawDataAPIResponse} from '@/src/lib/index.js';
+import { TokenProvider } from '@/src/lib/index.js';
 import type {
   DataAPIErrorDescriptor,
-  SomeDoc} from '@/src/documents';
+  SomeDoc} from '@/src/documents/index.js';
 import {
   DataAPIHttpError,
   DataAPIResponseError,
   DataAPITimeoutError,
   EmbeddingHeadersProvider,
-} from '@/src/documents';
-import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
-import { HttpClient } from '@/src/lib/api/clients/http-client';
-import { DEFAULT_DATA_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants';
-import type { CollectionOptions, TableOptions } from '@/src/db';
-import { isNullish } from '@/src/lib/utils';
-import { mkRespErrorFromResponse } from '@/src/documents/errors';
-import type { TimeoutManager} from '@/src/lib/api/timeouts/timeouts';
-import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
-import type { EmptyObj } from '@/src/lib/types';
-import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
-import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
+} from '@/src/documents/index.js';
+import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types.js';
+import { HttpClient } from '@/src/lib/api/clients/http-client.js';
+import { DEFAULT_DATA_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants.js';
+import type { CollectionOptions, TableOptions } from '@/src/db/index.js';
+import { isNullish } from '@/src/lib/utils.js';
+import { mkRespErrorFromResponse } from '@/src/documents/errors.js';
+import type { TimeoutManager} from '@/src/lib/api/timeouts/timeouts.js';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
+import type { EmptyObj } from '@/src/lib/types.js';
+import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler.js';
+import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
 
 type ClientKind = 'admin' | 'normal';
 

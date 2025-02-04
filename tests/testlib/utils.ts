@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DEFAULT_KEYSPACE } from '@/src/lib/api';
+import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
 import {
   DEFAULT_COLLECTION_NAME,
   DEFAULT_TABLE_NAME,
   OTHER_KEYSPACE,
   TEST_APPLICATION_URI,
-} from '@/tests/testlib/config';
-import { GLOBAL_FIXTURES } from '@/tests/testlib/global';
+} from '@/tests/testlib/config.js';
+import { GLOBAL_FIXTURES } from '@/tests/testlib/global.js';
 
 export async function tryCatchErr(fn: () => void | Promise<void>) {
   try {

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib';
+import type { WithTimeout } from '@/src/lib/index.js';
 
 /**
  * Options for executing some arbitrary command.

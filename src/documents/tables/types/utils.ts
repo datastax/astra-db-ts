@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPIVector } from '@/src/documents';
+import type { DataAPIVector } from '@/src/documents/index.js';
 
 /**
  * Represents a row as it's returned by the database by default.

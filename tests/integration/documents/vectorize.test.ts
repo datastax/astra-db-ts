@@ -13,18 +13,18 @@
 // limitations under the License.
 
 import assert from 'assert';
-import type { Collection} from '@/src/documents';
-import { UUID } from '@/src/documents';
+import type { Collection} from '@/src/documents/index.js';
+import { UUID } from '@/src/documents/index.js';
 import * as fs from 'fs';
-import type { EmbeddingProviderInfo } from '@/src/administration/types/db-admin/find-embedding-providers';
-import { describe, it, parallel } from '@/tests/testlib';
-import { negate } from '@/tests/testlib/utils';
-import { whitelistImplFor } from '@/tests/testlib/vectorize/vec-whitelist-imp';
-import type { FinalVectorizeTestBranch } from '@/tests/testlib/vectorize/vec-test-branches';
-import { branchOnModel } from '@/tests/testlib/vectorize/vec-test-branches';
-import type { VectorizeTestGroup } from '@/tests/testlib/vectorize/vec-test-groups';
-import { createTestGroups } from '@/tests/testlib/vectorize/vec-test-groups';
-import type { Db } from '@/src/db';
+import type { EmbeddingProviderInfo } from '@/src/administration/types/db-admin/find-embedding-providers.js';
+import { describe, it, parallel } from '@/tests/testlib/index.js';
+import { negate } from '@/tests/testlib/utils.js';
+import { whitelistImplFor } from '@/tests/testlib/vectorize/vec-whitelist-imp.js';
+import type { FinalVectorizeTestBranch } from '@/tests/testlib/vectorize/vec-test-branches.js';
+import { branchOnModel } from '@/tests/testlib/vectorize/vec-test-branches.js';
+import type { VectorizeTestGroup } from '@/tests/testlib/vectorize/vec-test-groups.js';
+import { createTestGroups } from '@/tests/testlib/vectorize/vec-test-groups.js';
+import type { Db } from '@/src/db/index.js';
 
 export type VectorizeTestSpec = Record<string, {
     headers?: Record<`x-${string}`, string>

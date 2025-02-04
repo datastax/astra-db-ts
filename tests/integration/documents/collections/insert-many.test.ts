@@ -20,8 +20,8 @@ import {
   DataAPIVector,
   ObjectId,
   UUID,
-} from '@/src/documents';
-import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
+} from '@/src/documents/index.js';
+import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 parallel('integration.documents.collections.insert-many', { truncate: 'colls:before' }, ({ collection }) => {

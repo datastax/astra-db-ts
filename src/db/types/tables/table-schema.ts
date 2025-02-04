@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Table } from '@/src/documents/tables/table';
+import type { Table } from '@/src/documents/tables/table.js';
 import type {
   CreateTableColumnDefinitions,
   CreateTableDefinition,
   CreateTablePrimaryKeyDefinition,
   FullCreateTablePrimaryKeyDefinition,
-} from '@/src/db/types/tables/create-table';
-import type { EmptyObj } from '@/src/lib/types';
+} from '@/src/db/types/tables/create-table.js';
+import type { EmptyObj } from '@/src/lib/types.js';
 import type {
   DataAPIBlob,
   DataAPIDate,
@@ -28,9 +28,9 @@ import type {
   FoundRow,
   SomeRow,
   UUID,
-} from '@/src/documents';
-import type { TypeErr } from '@/src/documents/utils';
-import type { DataAPIVector } from '@/src/documents/datatypes/vector';
+} from '@/src/documents/index.js';
+import type { TypeErr } from '@/src/documents/utils.js';
+import type { DataAPIVector } from '@/src/documents/datatypes/vector.js';
 import type { BigNumber } from 'bignumber.js';
 
 /**

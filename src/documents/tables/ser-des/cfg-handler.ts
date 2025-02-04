@@ -14,15 +14,15 @@
 
 import { boolean, exact, nullish, optional } from 'decoders';
 import type {
-  ParsedSerDesConfig} from '@/src/lib/api/ser-des/cfg-handler';
+  ParsedSerDesConfig} from '@/src/lib/api/ser-des/cfg-handler.js';
 import {
   serDesDecoders,
   serdesMonoidSchema,
   serDesTransform,
-} from '@/src/lib/api/ser-des/cfg-handler';
-import type { OptionsHandlerTypes } from '@/src/lib/opts-handler';
-import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler';
-import type { TableSerDesConfig } from '@/src/documents';
+} from '@/src/lib/api/ser-des/cfg-handler.js';
+import type { OptionsHandlerTypes } from '@/src/lib/opts-handler.js';
+import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler.js';
+import type { TableSerDesConfig } from '@/src/documents/index.js';
 
 /**
  * @internal

@@ -13,10 +13,10 @@
 // limitations under the License.
 /* eslint-disable prefer-const */
 
-import { initTestObjects } from '@/tests/testlib/fixtures';
-import { checkTestsEnabled, dropEphemeralColls, dropEphemeralTables } from '@/tests/testlib/utils';
-import { parallelTestState } from '@/tests/testlib/test-fns/parallel';
-import { backgroundTestState, CURRENT_DESCRIBE_NAMES, GLOBAL_FIXTURES } from '@/tests/testlib';
+import { initTestObjects } from '@/tests/testlib/fixtures.js';
+import { checkTestsEnabled, dropEphemeralColls, dropEphemeralTables } from '@/tests/testlib/utils.js';
+import { parallelTestState } from '@/tests/testlib/test-fns/parallel.js';
+import { backgroundTestState, CURRENT_DESCRIBE_NAMES, GLOBAL_FIXTURES } from '@/tests/testlib/index.js';
 
 export type SuiteBlock = (fixtures: ReturnType<typeof initTestObjects>) => void;
 

@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type * from './collections/collections-common';
-export type * from './collections/collection-definition';
-export type * from './collections/create-collection';
-export type * from './collections/list-collections';
-export type * from './collections/drop-collection';
-export type * from './collections/collection-options';
+export type * from './collections/collections-common.js';
+export type * from './collections/collection-definition.js';
+export type * from './collections/create-collection.js';
+export type * from './collections/list-collections.js';
+export type * from './collections/drop-collection.js';
+export type * from './collections/collection-options.js';
 
-export type * from './tables/alter-table';
-export type * from './tables/create-table';
-export type * from './tables/table-schema';
-export type * from './tables/drop-table';
-export type * from './tables/list-tables';
-export type * from './tables/list-indexes';
-export type * from './tables/spawn-table';
+export type * from './tables/alter-table.js';
+export type * from './tables/create-table.js';
+export type * from './tables/table-schema.js';
+export type * from './tables/drop-table.js';
+export type * from './tables/list-tables.js';
+export type * from './tables/list-indexes.js';
+export type * from './tables/spawn-table.js';
 
-export type { WithKeyspace } from './common';
-export type * from './command';
+export type { WithKeyspace } from './common.js';
+export type * from './command.js';

@@ -13,18 +13,18 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { describe, it, parallel, useSuiteResources } from '@/tests/testlib';
-import { Camel2SnakeCase } from '@/src/lib';
+import { describe, it, parallel, useSuiteResources } from '@/tests/testlib/index.js';
+import { Camel2SnakeCase } from '@/src/lib/index.js';
 import assert from 'assert';
 import type {
   TableCodec,
   TableDesCtx,
-  TableSerCtx} from '@/src/index';
+  TableSerCtx} from '@/src/index.js';
 import {
   $DeserializeForTable,
   $SerializeForTable,
   TableCodecs,
-} from '@/src/index';
+} from '@/src/index.js';
 
 describe('integration.documents.tables.ser-des.key-transformer', ({ db }) => {
   class Newtype implements TableCodec<typeof Newtype> {

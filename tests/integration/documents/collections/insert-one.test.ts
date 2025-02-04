@@ -13,8 +13,8 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIResponseError, DataAPIVector, ObjectId, UUID } from '@/src/documents';
-import { it, parallel } from '@/tests/testlib';
+import { DataAPIResponseError, DataAPIVector, ObjectId, UUID } from '@/src/documents/index.js';
+import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 parallel('integration.documents.collections.insert-one', { truncate: 'colls:before' }, ({ collection }) => {

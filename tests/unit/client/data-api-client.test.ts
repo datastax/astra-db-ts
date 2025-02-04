@@ -13,15 +13,15 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIClient } from '@/src/client';
-import type { FetcherResponseInfo } from '@/src/lib/api';
-import { FetchH2 } from '@/src/lib/api/fetch/fetch-h2';
-import type { FetcherRequestInfo } from '@/src/lib/api/fetch/types';
-import { UsernamePasswordTokenProvider } from '@/src/lib';
-import { describe, it, TEST_APPLICATION_URI } from '@/tests/testlib';
+import { DataAPIClient } from '@/src/client/index.js';
+import type { FetcherResponseInfo } from '@/src/lib/api/index.js';
+import { FetchH2 } from '@/src/lib/api/fetch/fetch-h2.js';
+import type { FetcherRequestInfo } from '@/src/lib/api/fetch/types.js';
+import { UsernamePasswordTokenProvider } from '@/src/lib/index.js';
+import { describe, it, TEST_APPLICATION_URI } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { $CustomInspect, DataAPIEnvironments } from '@/src/lib/constants';
-import { InvalidEnvironmentError } from '@/src/db';
+import { $CustomInspect, DataAPIEnvironments } from '@/src/lib/constants.js';
+import { InvalidEnvironmentError } from '@/src/db/index.js';
 
 describe('unit.client.data-api-client', () => {
   it('should accept valid tokens', () => {

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIResponseError } from '@/src/documents';
-import { it, parallel } from '@/tests/testlib';
+import { DataAPIResponseError } from '@/src/documents/index.js';
+import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 parallel('integration.documents.tables.misc', ({ db }) => {

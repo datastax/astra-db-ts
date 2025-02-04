@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { FetcherResponseInfo, RawDataAPIResponse, TimeoutDescriptor } from '@/src/lib';
+import type { FetcherResponseInfo, RawDataAPIResponse, TimeoutDescriptor } from '@/src/lib/index.js';
 import type {
   CollectionDeleteManyResult,
   CollectionInsertManyResult,
   CollectionUpdateManyResult,
   SomeDoc,
-} from '@/src/documents/collections';
-import type { TableInsertManyResult } from '@/src/documents/tables';
-import type { HTTPRequestInfo } from '@/src/lib/api/clients';
-import type { TimedOutCategories} from '@/src/lib/api/timeouts/timeouts';
-import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
+} from '@/src/documents/collections/index.js';
+import type { TableInsertManyResult } from '@/src/documents/tables/index.js';
+import type { HTTPRequestInfo } from '@/src/lib/api/clients/index.js';
+import type { TimedOutCategories} from '@/src/lib/api/timeouts/timeouts.js';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 
 /**
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a

@@ -13,10 +13,10 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { describe, it } from '@/tests/testlib';
+import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
-import { uuid } from '@/src/documents';
+import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
+import { uuid } from '@/src/documents/index.js';
 import stableStringify from 'safe-stable-stringify';
 
 describe('unit.documents.tables.ser-des.mutate-in-place', () => {

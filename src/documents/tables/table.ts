@@ -25,12 +25,12 @@ import type {
   TableInsertManyResult,
   TableInsertOneResult,
   TableUpdateFilter,
-  WithSim} from '@/src/documents';
+  WithSim} from '@/src/documents/index.js';
 import {
   TableInsertManyError,
-} from '@/src/documents';
-import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import { CommandImpls } from '@/src/documents/commands/command-impls';
+} from '@/src/documents/index.js';
+import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
+import { CommandImpls } from '@/src/documents/commands/command-impls.js';
 import type {
   AlterTableOptions,
   CreateTableDefinition,
@@ -38,15 +38,15 @@ import type {
   DropTableOptions,
   ListTableDefinition,
   TableOptions,
-} from '@/src/db';
-import type { WithTimeout } from '@/src/lib';
-import { type OpaqueHttpClient } from '@/src/lib';
-import { $CustomInspect } from '@/src/lib/constants';
+} from '@/src/db/index.js';
+import type { WithTimeout } from '@/src/lib/index.js';
+import { type OpaqueHttpClient } from '@/src/lib/index.js';
+import { $CustomInspect } from '@/src/lib/constants.js';
 import JBI from 'json-bigint';
-import { TableFindCursor } from '@/src/documents/tables/cursor';
-import { withJbiNullProtoFix } from '@/src/lib/utils';
-import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
-import type { ListIndexOptions, TableIndexDescriptor } from '@/src/db/types/tables/list-indexes';
+import { TableFindCursor } from '@/src/documents/tables/cursor.js';
+import { withJbiNullProtoFix } from '@/src/lib/utils.js';
+import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
+import type { ListIndexOptions, TableIndexDescriptor } from '@/src/db/types/tables/list-indexes.js';
 
 const jbi = JBI({ storeAsString: true });
 
