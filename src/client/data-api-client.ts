@@ -13,7 +13,6 @@
 // limitations under the License.
 // noinspection JSDeprecatedSymbols
 
-import type TypedEmitter from 'typed-emitter';
 import type { AdminOptions, DataAPIClientOptions, DbOptions } from '@/src/client/types';
 import { LIB_NAME } from '@/src/version';
 import { type DataAPIClientEventMap, TokenProvider } from '@/src/lib';
@@ -24,6 +23,7 @@ import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler'
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
 import type { ParsedRootClientOpts} from '@/src/client/opts-handlers/root-opts-handler';
 import { RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler';
+import type { TypedEmitter } from '@/src/lib/typed-emitter';
 
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.

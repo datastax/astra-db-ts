@@ -29,7 +29,7 @@ import type {
 } from '@/src/administration';
 import { EmptyInternalLoggingConfig, EventConstructors } from '@/src/lib/logging/constants';
 import { buildOutputsMap } from '@/src/lib/logging/util';
-import type TypedEmitter from 'typed-emitter';
+import type { TypedEmitter } from '@/src/lib/typed-emitter';
 import type { BaseDataAPIClientEvent } from '@/src/lib';
 import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
 import { LoggingCfgHandler } from '@/src/lib/logging/cfg-handler';

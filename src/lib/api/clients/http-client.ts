@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type TypedEmitter from 'typed-emitter';
+import type { TypedEmitter } from '@/src/lib/typed-emitter';
 import type { FetchCtx, FetcherResponseInfo } from '@/src/lib/api/fetch/types';
 import type { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/lib/api/clients';
 import type { DataAPIClientEventMap } from '@/src/lib/logging';

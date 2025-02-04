@@ -20,7 +20,7 @@ import { exact } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 import { Logger } from '@/src/lib/logging/logger';
 import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler';
-import type TypedEmitter from 'typed-emitter';
+import type { TypedEmitter } from '@/src/lib/typed-emitter';
 import { CallerCfgHandler } from '@/src/client/opts-handlers/caller-cfg-handler';
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';

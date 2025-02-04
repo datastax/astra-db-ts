@@ -16,8 +16,7 @@
 import type { CommandEventMap } from '@/src/documents';
 import type { AdminCommandEventMap } from '@/src/administration';
 import type { OneOrMany } from '@/src/lib/types';
-// noinspection ES6UnusedImports
-import TypedEmitter from 'typed-emitter';
+import type { TypedEmitter } from '@/src/lib/typed-emitter';
 
 /**
  * #### Overview
@@ -36,7 +35,7 @@ import TypedEmitter from 'typed-emitter';
  * - You can't programmatically interact with the logs/data
  * - You can't easily filter or format the logs
  *
- * {@link DataAPIClientEvent}s are a more flexible way to interact with the logs, allowing you to basically plug in, or
+ * {@link BaseDataAPIClientEvent}s are a more flexible way to interact with the logs, allowing you to basically plug in, or
  * even build, your own logging system around them.
  *
  * And of course, you're free to use both events and console logging in tandem, if you so choose.
