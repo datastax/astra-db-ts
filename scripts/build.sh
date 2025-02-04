@@ -69,4 +69,9 @@ if [ "$light" != true ]; then
 
   # Delete any empty leftover directories
   find ./dist -type d -empty -delete
+
+  # Create the index.d.ts files
+  # https://github.com/arethetypeswrong/arethetypeswrong.github.io/blob/main/docs/problems/FalseESM.md
+  echo "export * from '../astra-db-ts.d.ts';" > dist/esm/index.d.ts
+  echo "export * from '../astra-db-ts.d.ts';" > dist/cjs/index.d.ts
 fi
