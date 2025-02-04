@@ -14,16 +14,16 @@
 // noinspection JSDeprecatedSymbols
 
 import type { AdminOptions, DataAPIClientOptions, DbOptions } from '@/src/client/types/index.js';
-import { LIB_NAME } from '@/src/version.js';
 import { type DataAPIClientEventMap, TokenProvider } from '@/src/lib/index.js';
 import { Db, InvalidEnvironmentError } from '@/src/db/index.js';
 import { AstraAdmin } from '@/src/administration/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler.js';
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler.js';
-import type { ParsedRootClientOpts} from '@/src/client/opts-handlers/root-opts-handler.js';
+import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 import { RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler.js';
 import type { TypedEmitter } from '@/src/lib/typed-emitter.js';
+import * as events from 'node:events';
 
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
@@ -32,14 +32,7 @@ import type { TypedEmitter } from '@/src/lib/typed-emitter.js';
  *
  * @public
  */
-export const DataAPIClientEventEmitterBase = (() => {
-  /* istanbul ignore next: exceptional case that can't be manually reproduced */
-  try {
-    return (require('events') as { EventEmitter: (new () => TypedEmitter<DataAPIClientEventMap>) }).EventEmitter;
-  } catch (_) {
-    throw new Error(`\`${LIB_NAME}\` requires the \`events\` module to be available for usage. Please provide a polyfill (e.g. the \`events\` package) or use a compatible environment.`);
-  }
-})();
+export const DataAPIClientEventEmitterBase = (events as { EventEmitter: (new () => TypedEmitter<DataAPIClientEventMap>) }).EventEmitter;
 
 /**
  * ##### Overview

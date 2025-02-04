@@ -26,9 +26,16 @@
 	"license": "Apache-2.0",
 	"main": "dist/index.js",
 	"types": "dist/astra-db-ts.d.ts",
-	"directories": {"lib": "src", "test": "tests"},
-	"files": ["dist"],
-	"publishConfig": {"access": "public"},
+	"directories": {
+		"lib": "src",
+		"test": "tests"
+	},
+	"files": [
+		"dist"
+	],
+	"publishConfig": {
+		"access": "public"
+	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/datastax/astra-db-ts.git"
@@ -52,11 +59,13 @@
 		"dotenv": "^16.0.1",
 		"eslint": "^9.19.0",
 		"globals": "^15.9.0",
+		"mocha": "^11.1.0",
 		"nyc": "^15.1.0",
 		"strip-comments": "^2.0.1",
 		"synchronized-promise": "^0.3.1",
-		"ts-mocha": "^10.0.0",
 		"tsc-alias": "^1.8.10",
+		"tsconfig-paths": "^4.2.0",
+		"tsx": "^4.19.2",
 		"typescript": "^5.6.2",
 		"typescript-eslint": "^8.22.0"
 	},
@@ -68,6 +77,8 @@
 		"safe-stable-stringify": "^2.4.3",
 		"uuid": "^11.0.3"
 	},
-	"engines": {"node": ">=18.0.0"},
+	"engines": {
+		"node": ">=18.0.0"
+	},
 	"type": "module"
 }
