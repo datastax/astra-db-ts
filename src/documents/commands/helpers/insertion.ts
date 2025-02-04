@@ -12,18 +12,19 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIHttpClient } from '@/src/lib/api/clients';
-import { SerDes } from '@/src/lib/api/ser-des/ser-des';
+import type { DataAPIHttpClient } from '@/src/lib/api/clients';
+import type { SerDes } from '@/src/lib/api/ser-des/ser-des';
+import type {
+  DataAPIDetailedErrorDescriptor} from '@/src/documents/errors';
 import {
-  DataAPIDetailedErrorDescriptor,
   DataAPIResponseError,
   mkRespErrorFromResponse,
   mkRespErrorFromResponses,
 } from '@/src/documents/errors';
-import { SomeDoc, SomeId } from '@/src/documents';
-import { TimeoutManager } from '@/src/lib/api/timeouts/timeouts';
-import { RawDataAPIResponse } from '@/src/lib';
-import { GenericInsertManyDocumentResponse } from '@/src/documents/commands/types/insert/insert-many';
+import type { SomeDoc, SomeId } from '@/src/documents';
+import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts';
+import type { RawDataAPIResponse } from '@/src/lib';
+import type { GenericInsertManyDocumentResponse } from '@/src/documents/commands/types/insert/insert-many';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
 
 /**

@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FinalVectorizeTestBranch } from '@/tests/testlib/vectorize/vec-test-branches';
+import type { FinalVectorizeTestBranch } from '@/tests/testlib/vectorize/vec-test-branches';
 import crypto from 'node:crypto';
 import * as util from 'node:util';
-import { Db } from '@/src/db';
-import { Collection } from '@/src/documents';
+import type { Db } from '@/src/db';
+import type { Collection } from '@/src/documents';
 
 export interface VectorizeTestGroup {
   groupName: string;

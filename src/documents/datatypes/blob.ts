@@ -13,12 +13,12 @@
 // limitations under the License.
 
 import { $CustomInspect } from '@/src/lib/constants';
-import { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
+import type { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { forJSEnv } from '@/src/lib/utils';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
 import { mkInvArgsErr } from '@/src/documents/utils';
-import { SomeConstructor } from '@/src/lib';
+import type { SomeConstructor } from '@/src/lib';
 
 /**
  * Represents a `Buffer` type, if available.

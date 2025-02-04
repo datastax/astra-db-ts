@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AstraAdminBlockingOptions } from '@/src/administration/types';
-import { WithTimeout } from '@/src/lib';
+import type { AstraAdminBlockingOptions } from '@/src/administration/types';
+import type { WithTimeout } from '@/src/lib';
 
 /**
  * Represents the options for dropping an astra keyspace (i.e. blocking options + timeout options).

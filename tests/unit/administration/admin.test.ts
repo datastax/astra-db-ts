@@ -15,7 +15,8 @@
 import assert from 'assert';
 import { AstraAdmin } from '@/src/administration';
 import { StaticTokenProvider, TokenProvider } from '@/src/lib';
-import { AdminOptions, DataAPIClient, DbOptions } from '@/src/client';
+import type { AdminOptions, DbOptions } from '@/src/client';
+import { DataAPIClient } from '@/src/client';
 import { describe, it } from '@/tests/testlib';
 import { DEFAULT_DEVOPS_API_ENDPOINTS } from '@/src/lib/api/constants';
 import { $CustomInspect } from '@/src/lib/constants';

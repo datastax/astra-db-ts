@@ -13,15 +13,16 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
+import type {
+  DataAPIBlob, DataAPIInet,
+  DataAPIVector,
+  SomeRow,
+  Table} from '@/src/documents';
 import {
   blob,
-  DataAPIBlob, DataAPIInet,
   DataAPIResponseError,
-  DataAPIVector,
   date,
   duration, inet,
-  SomeRow,
-  Table,
   time,
   uuid,
   vector,

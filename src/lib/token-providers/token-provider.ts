@@ -14,8 +14,10 @@
 
 import { StaticTokenProvider } from '@/src/lib';
 import { anyInstanceOf, findLast, isNullish } from '@/src/lib/utils';
-import { Monoid, MonoidalOptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
-import { DecoderType, either, nullish, string } from 'decoders';
+import type { Monoid, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
+import { MonoidalOptionsHandler } from '@/src/lib/opts-handler';
+import type { DecoderType} from 'decoders';
+import { either, nullish, string } from 'decoders';
 
 /**
  * The base class for some "token provider", a general concept for anything that provides some token to the client,

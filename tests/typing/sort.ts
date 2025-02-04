@@ -14,7 +14,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { Sort } from '@/src/documents';
+import type { Sort } from '@/src/documents';
 
 const test1: Sort = {
   'num1': 1,

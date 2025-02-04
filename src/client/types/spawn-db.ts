@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPILoggingConfig, type TimeoutDescriptor, TokenProvider } from '@/src/lib';
-import { CollSerDesConfig, TableSerDesConfig } from '@/src/documents';
+import type { DataAPILoggingConfig, TokenProvider } from '@/src/lib';
+import { type TimeoutDescriptor } from '@/src/lib';
+import type { CollSerDesConfig, TableSerDesConfig } from '@/src/documents';
 
 /**
  * The default db options as can be specified in the {@link DataAPIClientOptions}.

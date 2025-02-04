@@ -14,9 +14,12 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import type { context, FetchInit, TimeoutError } from 'fetch-h2';
-import { DefaultHttpClientOptions } from '@/src/client';
+import type { DefaultHttpClientOptions } from '@/src/client';
 import { FailedToLoadDefaultClientError } from '@/src/client/errors';
-import { Fetcher, FetcherRequestInfo, FetcherResponseInfo, nullish } from '@/src/lib';
+import type { Fetcher, FetcherRequestInfo, FetcherResponseInfo, nullish } from '@/src/lib';
+
+// eslint-disable-next-line @typescript-eslint/consistent-type-imports
+type FetchH2Lib = typeof import('fetch-h2');
 
 /**
  * Fetcher implementation which uses `fetch-h2` to perform HTTP/1.1 or HTTP/2 calls. Generally more performant than
@@ -34,7 +37,7 @@ export class FetchH2 implements Fetcher {
       // Complicated expression to stop Next.js and such from tracing require and trying to load the fetch-h2 client
       const [indirectRequire] = [require].map(x => x);
 
-      const fetchH2 = validateFetchH2(options?.fetchH2) ?? indirectRequire('fetch-h2') as typeof import('fetch-h2');
+      const fetchH2 = validateFetchH2(options?.fetchH2) ?? indirectRequire('fetch-h2') as FetchH2Lib;
 
       this._http1 = fetchH2.context({
         http1: {
@@ -92,7 +95,7 @@ export class FetchH2 implements Fetcher {
   }
 }
 
-function validateFetchH2(fetchH2: unknown): typeof import('fetch-h2') | nullish {
+function validateFetchH2(fetchH2: unknown): FetchH2Lib | nullish {
   if (fetchH2 === null || fetchH2 === undefined) {
     return fetchH2;
   }
@@ -107,5 +110,5 @@ function validateFetchH2(fetchH2: unknown): typeof import('fetch-h2') | nullish 
     }
   }
 
-  return fetchH2 as typeof import('fetch-h2');
+  return fetchH2 as FetchH2Lib;
 }

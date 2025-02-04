@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import { LIB_NAME, LIB_VERSION } from '@/src/version';
-import { ParsedEnvironment } from '@/src/client/opts-handlers/environment-cfg-handler';
-import { DataAPIEnvironment } from '@/src/lib';
+import type { ParsedEnvironment } from '@/src/client/opts-handlers/environment-cfg-handler';
+import type { DataAPIEnvironment } from '@/src/lib';
 
 /**
  * @internal

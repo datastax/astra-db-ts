@@ -17,7 +17,8 @@ import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 import BigNumber from 'bignumber.js';
-import { CollNumRep, NumCoercionError } from '@/src/documents';
+import type { CollNumRep} from '@/src/documents';
+import { NumCoercionError } from '@/src/documents';
 
 describe('unit.documents.collections.ser-des.enable-big-numbers', () => {
   it('should error if big numbers not enabled', () => {

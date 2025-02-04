@@ -13,11 +13,13 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIVector, SomeDoc } from '@/src/documents';
+import type { SomeDoc } from '@/src/documents';
+import { DataAPIVector } from '@/src/documents';
+import type {
+  EverythingTableSchema} from '@/tests/testlib';
 import {
   DEFAULT_TABLE_NAME,
   describe,
-  EverythingTableSchema,
   initCollectionWithFailingClient,
   it,
   OTHER_KEYSPACE,

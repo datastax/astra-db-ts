@@ -12,12 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/documents';
-import { Deserializers, KeyTransformer, processCodecs, RawCodec, RawDataAPIResponse, Serializers } from '@/src/lib';
-import {
+import type { SomeDoc } from '@/src/documents';
+import type { Deserializers, KeyTransformer, RawCodec, RawDataAPIResponse, Serializers } from '@/src/lib';
+import { processCodecs } from '@/src/lib';
+import type {
   BaseDesCtx,
   BaseSerCtx,
-  BaseSerDesCtx,
+  BaseSerDesCtx} from '@/src/lib/api/ser-des/ctx';
+import {
   ctxDone,
   ctxNevermind,
   ctxRecurse,
@@ -27,7 +29,7 @@ import {
   REPLACE,
   SerDesTarget,
 } from '@/src/lib/api/ser-des/ctx';
-import { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
+import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
 
 /**
  * @public

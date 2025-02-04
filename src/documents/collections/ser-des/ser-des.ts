@@ -12,15 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { BaseSerDesConfig, SerDes, SerDesFn } from '@/src/lib/api/ser-des/ser-des';
-import { BaseDesCtx, BaseSerCtx, NEVERMIND } from '@/src/lib/api/ser-des/ctx';
-import { CollCodecs, RawCollCodecs } from '@/src/documents/collections/ser-des/codecs';
+import type { BaseSerDesConfig, SerDesFn } from '@/src/lib/api/ser-des/ser-des';
+import { SerDes } from '@/src/lib/api/ser-des/ser-des';
+import type { BaseDesCtx, BaseSerCtx} from '@/src/lib/api/ser-des/ctx';
+import { NEVERMIND } from '@/src/lib/api/ser-des/ctx';
+import type { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs';
+import { CollCodecs } from '@/src/documents/collections/ser-des/codecs';
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 import { isBigNumber, pathMatches } from '@/src/lib/utils';
-import { CollNumRepCfg, GetCollNumRepFn } from '@/src/documents';
+import type { CollNumRepCfg, GetCollNumRepFn } from '@/src/documents';
 import { coerceBigNumber, coerceNumber, collNumRepFnFromCfg } from '@/src/documents/collections/ser-des/big-nums';
 import { CollSerDesCfgHandler } from '@/src/documents/collections/ser-des/cfg-handler';
-import { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
+import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
 
 /**
  * @public

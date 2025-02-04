@@ -14,15 +14,16 @@
 // noinspection DuplicatedCode
 
 import { DEFAULT_COLLECTION_NAME, initTestObjects, it, parallel } from '@/tests/testlib';
+import type {
+  CollCodec,
+  CollDesCtx,
+  CollSerCtx,
+  CommandSucceededEvent} from '@/src/index';
 import {
   $DeserializeForCollection,
   $SerializeForCollection,
   Camel2SnakeCase,
-  CollCodec,
   CollCodecs,
-  CollDesCtx,
-  CollSerCtx,
-  CommandSucceededEvent,
 } from '@/src/index';
 import BigNumber from 'bignumber.js';
 import assert from 'assert';

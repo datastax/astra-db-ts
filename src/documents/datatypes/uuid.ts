@@ -14,7 +14,8 @@
 
 import * as _uuid from 'uuid';
 import { $CustomInspect } from '@/src/lib/constants';
-import { CollCodec, type CollDesCtx, type CollSerCtx, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
+import type { CollCodec, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
+import { type CollDesCtx, type CollSerCtx } from '@/src/documents';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 

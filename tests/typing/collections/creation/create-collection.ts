@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { dummyDB, TestSchema } from '@/tests/typing/collections/prelude';
+import type { TestSchema } from '@/tests/typing/collections/prelude';
+import { dummyDB } from '@/tests/typing/collections/prelude';
 
 void dummyDB().createCollection<TestSchema>('ASTRA_DB_COLLECTION', {
   indexing: {

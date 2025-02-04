@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { EmbeddingProviderInfo, EmbeddingProviderModelInfo } from '@/src/administration';
+import type { EmbeddingProviderInfo, EmbeddingProviderModelInfo } from '@/src/administration';
 import { EmbeddingHeadersProvider } from '@/src/documents';
 import { ENVIRONMENT } from '@/tests/testlib';
-import { VectorizeTestSpec } from '@/tests/integration/documents/vectorize.test';
+import type { VectorizeTestSpec } from '@/tests/integration/documents/vectorize.test';
 
 interface ModelBranch {
   providerName: string,

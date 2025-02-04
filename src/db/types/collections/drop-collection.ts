@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { WithTimeout } from '@/src/lib';
-import { WithKeyspace } from '@/src/db';
+import type { WithKeyspace } from '@/src/db';
 
 /**
  * Options for dropping a collections.

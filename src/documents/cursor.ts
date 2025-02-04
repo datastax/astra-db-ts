@@ -18,12 +18,13 @@ import type { Filter, Projection, Sort, WithSim } from '@/src/documents/types';
 import type { nullish } from '@/src/lib';
 import { normalizedSort } from '@/src/documents/utils';
 import { $CustomInspect } from '@/src/lib/constants';
-import { SerDes } from '@/src/lib/api/ser-des/ser-des';
+import type { SerDes } from '@/src/lib/api/ser-des/ser-des';
 import { DataAPIError } from '@/src/documents/errors';
-import { SomeRow, Table } from '@/src/documents/tables';
-import { TimeoutManager } from '@/src/lib/api/timeouts/timeouts';
-import { DataAPIVector, vector } from '@/src/documents/datatypes';
-import { DataAPIHttpClient } from '@/src/lib/api/clients';
+import type { SomeRow, Table } from '@/src/documents/tables';
+import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts';
+import type { DataAPIVector} from '@/src/documents/datatypes';
+import { vector } from '@/src/documents/datatypes';
+import type { DataAPIHttpClient } from '@/src/lib/api/clients';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
 
 /**

@@ -14,25 +14,28 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import { Logger } from '@/src/lib/logging/logger';
-import { nullish, RawDataAPIResponse, TokenProvider } from '@/src/lib';
-import {
+import type { nullish, RawDataAPIResponse} from '@/src/lib';
+import { TokenProvider } from '@/src/lib';
+import type {
   DataAPIErrorDescriptor,
+  SomeDoc} from '@/src/documents';
+import {
   DataAPIHttpError,
   DataAPIResponseError,
   DataAPITimeoutError,
   EmbeddingHeadersProvider,
-  SomeDoc,
 } from '@/src/documents';
 import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/api/clients/types';
 import { HttpClient } from '@/src/lib/api/clients/http-client';
 import { DEFAULT_DATA_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants';
-import { CollectionOptions, TableOptions } from '@/src/db';
+import type { CollectionOptions, TableOptions } from '@/src/db';
 import { isNullish } from '@/src/lib/utils';
 import { mkRespErrorFromResponse } from '@/src/documents/errors';
-import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts';
-import { EmptyObj } from '@/src/lib/types';
-import { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
-import { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
+import type { TimeoutManager} from '@/src/lib/api/timeouts/timeouts';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
+import type { EmptyObj } from '@/src/lib/types';
+import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
+import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
 
 type ClientKind = 'admin' | 'normal';
 

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AstraDbAdminInfo, AstraDbRegionInfo } from '@/src/administration/types/admin/database-info';
+import type { AstraDbAdminInfo, AstraDbRegionInfo } from '@/src/administration/types/admin/database-info';
 import { buildAstraEndpoint } from '@/src/lib/utils';
-import { SomeDoc } from '@/src/documents';
+import type { SomeDoc } from '@/src/documents';
 
 /**
  * @internal

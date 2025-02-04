@@ -12,10 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { array, boolean, Decoder, inexact, oneOf, optional } from 'decoders';
-import { BaseSerDesConfig, KeyTransformer, RawCodec } from '@/src/lib';
+import type { Decoder} from 'decoders';
+import { array, boolean, inexact, oneOf, optional } from 'decoders';
+import type { BaseSerDesConfig, RawCodec } from '@/src/lib';
+import { KeyTransformer } from '@/src/lib';
 import { anyInstanceOf } from '@/src/lib/utils';
-import { monoids, Parsed, Unparse } from '@/src/lib/opts-handler';
+import type { Parsed, Unparse } from '@/src/lib/opts-handler';
+import { monoids } from '@/src/lib/opts-handler';
 
 /**
  * @internal

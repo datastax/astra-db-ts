@@ -14,10 +14,11 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { dummyCollection, TestSchema } from '@/tests/typing/collections/prelude';
-import { Equal, Expect } from '@/tests/typing/prelude';
-import { FoundDoc, IdOf } from '@/src/documents/collections/types';
-import { CollectionFindCursor, FindCursor, WithSim } from '@/src/documents';
+import type { TestSchema } from '@/tests/typing/collections/prelude';
+import { dummyCollection } from '@/tests/typing/collections/prelude';
+import type { Equal, Expect } from '@/tests/typing/prelude';
+import type { FoundDoc, IdOf } from '@/src/documents/collections/types';
+import type { CollectionFindCursor, FindCursor, WithSim } from '@/src/documents';
 
 type GetTOfCursor<Cursor> = Cursor extends CollectionFindCursor<infer T, any> ? T : Cursor extends FindCursor<infer T, any> ? T : never;
 type GetTRawOfCursor<Cursor> = Cursor extends CollectionFindCursor<any, infer TRaw> ? TRaw : Cursor extends FindCursor<any, infer TRaw> ? TRaw : never;

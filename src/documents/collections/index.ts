@@ -17,24 +17,17 @@ export * from './cursor';
 export * from './collection';
 export type * from './types';
 
-export {
+export type {
   CollSerDesConfig,
   CollDesCtx,
   CollSerCtx,
 } from './ser-des/ser-des';
 
-export {
-  CollCodecClass,
-  CollCodecs,
-  CollCodec,
-} from './ser-des/codecs';
+export type { CollCodecClass, CollCodec } from './ser-des/codecs';
+export { CollCodecs } from './ser-des/codecs';
 
-export {
-  CollNumRep,
-  GetCollNumRepFn,
-  NumCoercionError,
-  CollNumRepCfg,
-} from './ser-des/big-nums';
+export type { CollNumRep, GetCollNumRepFn, CollNumRepCfg } from './ser-des/big-nums';
+export { NumCoercionError } from './ser-des/big-nums';
 
 export { $DeserializeForCollection } from '@/src/documents/collections/ser-des/constants';
 export { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';

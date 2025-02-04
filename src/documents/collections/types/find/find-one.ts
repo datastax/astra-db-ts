@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { GenericFindOneOptions } from '@/src/documents';
+import type { GenericFindOneOptions } from '@/src/documents';
 
 /**
  * Represents the options for the collection `findOne` command.

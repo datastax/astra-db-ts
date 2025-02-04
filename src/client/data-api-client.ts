@@ -22,7 +22,8 @@ import { AstraAdmin } from '@/src/administration';
 import { $CustomInspect } from '@/src/lib/constants';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
-import { ParsedRootClientOpts, RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler';
+import type { ParsedRootClientOpts} from '@/src/client/opts-handlers/root-opts-handler';
+import { RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler';
 
 /**
  * The base class for the {@link DataAPIClient} event emitter to make it properly typed.

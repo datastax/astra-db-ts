@@ -15,8 +15,9 @@
 
 import { initTestObjects } from '@/tests/testlib/fixtures';
 import { checkTestsEnabled, tryCatchErr } from '@/tests/testlib/utils';
-import { SuiteBlock, TEST_FILTER } from '@/tests/testlib';
-import { AsyncSuiteResult, AsyncSuiteSpec, GlobalAsyncSuitesSpec } from '@/tests/testlib/test-fns/types';
+import type { SuiteBlock} from '@/tests/testlib';
+import { TEST_FILTER } from '@/tests/testlib';
+import type { AsyncSuiteResult, AsyncSuiteSpec, GlobalAsyncSuitesSpec } from '@/tests/testlib/test-fns/types';
 import { UUID } from '@/src/documents';
 
 export const backgroundTestState: GlobalAsyncSuitesSpec = {

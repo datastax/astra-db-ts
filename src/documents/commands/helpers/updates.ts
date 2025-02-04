@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { GuaranteedUpdateResult, GenericUpdateResult } from '@/src/documents/commands/types/update/update-common';
-import { RawDataAPIResponse } from '@/src/lib';
+import type { GuaranteedUpdateResult, GenericUpdateResult } from '@/src/documents/commands/types/update/update-common';
+import type { RawDataAPIResponse } from '@/src/lib';
 
 /**
  * @internal

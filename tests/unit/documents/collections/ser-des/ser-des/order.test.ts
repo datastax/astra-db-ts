@@ -16,7 +16,7 @@
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { $DeserializeForCollection, $SerializeForCollection, CollCodecs } from '@/src/documents/collections';
-import { CollCodec } from '@/src/index';
+import type { CollCodec } from '@/src/index';
 import { ctxNevermind } from '@/src/lib/api/ser-des/ctx';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 

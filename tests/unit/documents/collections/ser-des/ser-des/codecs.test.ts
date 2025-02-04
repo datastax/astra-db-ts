@@ -15,9 +15,12 @@
 
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
-import { CollDesCtx, CollSerDes, CollSerCtx } from '@/src/documents/collections/ser-des/ser-des';
-import { $DeserializeForCollection, $SerializeForCollection, CollCodec, CollCodecs } from '@/src/documents/collections';
-import { uuid, UUID } from '@/src/documents';
+import type { CollDesCtx, CollSerCtx } from '@/src/documents/collections/ser-des/ser-des';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
+import type { CollCodec} from '@/src/documents/collections';
+import { $DeserializeForCollection, $SerializeForCollection, CollCodecs } from '@/src/documents/collections';
+import type { UUID } from '@/src/documents';
+import { uuid } from '@/src/documents';
 import { ctxNevermind, ctxDone, ctxRecurse } from '@/src/lib/api/ser-des/ctx';
 
 describe('unit.documents.collections.ser-des.ser-des.codecs', () => {

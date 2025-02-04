@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Projection, Sort } from '@/src/documents';
-import { WithTimeout } from '@/src/lib';
+import type { Projection, Sort } from '@/src/documents';
+import type { WithTimeout } from '@/src/lib';
 
 /**
  * Represents the options for the `findOneAndUpdate` command.

@@ -16,7 +16,8 @@
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
-import { $DeserializeForTable, $SerializeForTable, TableCodec, TableCodecs } from '@/src/index';
+import type { TableCodec} from '@/src/index';
+import { $DeserializeForTable, $SerializeForTable, TableCodecs } from '@/src/index';
 import { ctxNevermind } from '@/src/lib/api/ser-des/ctx';
 
 describe('unit.documents.tables.ser-des.ser-des.order', () => {

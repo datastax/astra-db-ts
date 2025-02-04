@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeRow } from '@/src/documents/tables/types/row';
-import { InferTablePrimaryKey, InferTableSchema } from '@/src/db/types/tables/table-schema';
-import { Table } from '@/src/documents/tables/table';
-import { Db } from '@/src/db';
-import { TypeErr } from '@/src/documents/utils';
+import type { SomeRow } from '@/src/documents/tables/types/row';
+import type { InferTablePrimaryKey, InferTableSchema } from '@/src/db/types/tables/table-schema';
+import type { Table } from '@/src/documents/tables/table';
+import type { Db } from '@/src/db';
+import type { TypeErr } from '@/src/documents/utils';
 
 const db = null! as Db;
 

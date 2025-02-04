@@ -13,12 +13,13 @@
 // limitations under the License.
 
 import { $CustomInspect } from '@/src/lib/constants';
-import {
+import type {
   CollCodec,
+  TableCodec, TableDesCtx,
+  TableSerCtx} from '@/src/documents';
+import {
   type CollDesCtx,
   type CollSerCtx,
-  TableCodec, TableDesCtx,
-  TableSerCtx,
 } from '@/src/documents';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';

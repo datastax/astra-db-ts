@@ -17,11 +17,11 @@ import type { CommandEventMap } from '@/src/documents';
 import type { FetchCtx } from '@/src/lib/api/fetch/types';
 import type { HttpMethods } from '@/src/lib/api/constants';
 import type { Ref } from '@/src/lib/types';
-import { TimeoutManager } from '@/src/lib/api/timeouts/timeouts';
-import { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
-import { ParsedTimeoutDescriptor } from '@/src/lib/api/timeouts/cfg-handler';
-import { ParsedCaller } from '@/src/client/opts-handlers/caller-cfg-handler';
-import { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
+import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts';
+import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
+import type { ParsedTimeoutDescriptor } from '@/src/lib/api/timeouts/cfg-handler';
+import type { ParsedCaller } from '@/src/client/opts-handlers/caller-cfg-handler';
+import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
 
 /**
  * @internal

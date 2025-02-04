@@ -13,7 +13,7 @@
 // limitations under the License.
 /* eslint-disable @typescript-eslint/no-empty-object-type -- Used for when intersection w/ {} is a "noop" */
 
-import { DataAPIEnvironments } from '@/src/lib/constants';
+import type { DataAPIEnvironments } from '@/src/lib/constants';
 
 /**
  * Shorthand type to represent some nullish value.

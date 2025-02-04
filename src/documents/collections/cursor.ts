@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, CollectionFilter, FindCursor, type SomeDoc } from '@/src/documents';
+import type { Collection, CollectionFilter} from '@/src/documents';
+import { FindCursor, type SomeDoc } from '@/src/documents';
 
 /**
  * A subclass of `FindCursor` which is identical to its parent; it just adds some more specific typing for

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { WithTimeout } from '@/src/lib';
-import { WithKeyspace } from '@/src/db';
+import type { WithKeyspace } from '@/src/db';
 
 /**
  * The options for dropping a table (via {@link Db.dropTable}).

@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIClientEventMap, DataAPILoggingOutput } from '@/src/lib/logging/types';
+import type { DataAPIClientEventMap, DataAPILoggingOutput } from '@/src/lib/logging/types';
 import type {
   CommandFailedEvent,
   CommandStartedEvent,
@@ -31,7 +31,8 @@ import { EmptyInternalLoggingConfig, EventConstructors } from '@/src/lib/logging
 import { buildOutputsMap } from '@/src/lib/logging/util';
 import type TypedEmitter from 'typed-emitter';
 import type { BaseDataAPIClientEvent } from '@/src/lib';
-import { LoggingCfgHandler, ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
+import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
+import { LoggingCfgHandler } from '@/src/lib/logging/cfg-handler';
 
 /**
  * @internal

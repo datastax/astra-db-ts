@@ -15,9 +15,10 @@
 
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
-import { $DeserializeForTable, $SerializeForTable, TableCodec, TableCodecs } from '@/src/documents/tables';
+import type { TableCodec} from '@/src/documents/tables';
+import { $DeserializeForTable, $SerializeForTable, TableCodecs } from '@/src/documents/tables';
 import { processCodecs } from '@/src/lib';
-import { RawTableCodecs } from '@/src/documents/tables/ser-des/codecs';
+import type { RawTableCodecs } from '@/src/documents/tables/ser-des/codecs';
 
 describe('unit.documents.tables.ser-des.codecs', () => {
   describe('processCodecs', () => {

@@ -47,8 +47,5 @@ export type {
   TimedOutCategories,
 } from './timeouts/timeouts';
 
-export {
-  Camel2SnakeCase,
-  KeyTransformer,
-  Camel2SnakeCaseOptions,
-} from './ser-des/key-transformer';
+export type { Camel2SnakeCaseOptions } from './ser-des/key-transformer';
+export { Camel2SnakeCase, KeyTransformer } from './ser-des/key-transformer';

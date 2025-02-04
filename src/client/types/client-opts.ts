@@ -14,7 +14,7 @@
 
 import type { DataAPIEnvironment, DataAPILoggingConfig, TimeoutDescriptor } from '@/src/lib';
 import type { Caller, DataAPIHttpOptions, RootAdminOptions, RootDbOptions } from '@/src/client';
-import { OneOrMany } from '@/src/lib/types';
+import type { OneOrMany } from '@/src/lib/types';
 
 /**
  * The default options for the {@link DataAPIClient}. The Data API & DevOps specific options may be overridden

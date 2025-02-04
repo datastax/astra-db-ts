@@ -13,14 +13,14 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { DataAPICreateKeyspaceOptions } from '@/src/administration/types';
+import type { DataAPICreateKeyspaceOptions } from '@/src/administration/types';
 import { DbAdmin } from '@/src/administration/db-admin';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib';
-import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
-import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import { Db } from '@/src/db';
+import type { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
+import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
+import type { Db } from '@/src/db';
 import { $CustomInspect } from '@/src/lib/constants';
-import { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
+import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
 
 /**
  * An administrative class for managing non-Astra databases, including creating, listing, and deleting keyspaces.

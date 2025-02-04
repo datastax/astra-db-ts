@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { Fetcher, FetcherRequestInfo, FetcherResponseInfo } from '@/src/lib';
+import type { Fetcher, FetcherRequestInfo, FetcherResponseInfo } from '@/src/lib';
 
 /**
  * Fetcher implementation which uses the native fetch API to perform HTTP calls. Much more portable

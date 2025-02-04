@@ -14,9 +14,10 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { BasicSchema, ConvolutedSchema1, ConvolutedSchema3, Equal, Expect, Schema } from '@/tests/typing/prelude';
-import { ToDotNotation } from '@/src/documents/collections/types';
-import { SomeDoc, UUID } from '@/src/documents';
+import type { BasicSchema, ConvolutedSchema1, ConvolutedSchema3, Equal, Expect, Schema } from '@/tests/typing/prelude';
+import type { ToDotNotation } from '@/src/documents/collections/types';
+import type { SomeDoc} from '@/src/documents';
+import { UUID } from '@/src/documents';
 
 type test1 = Expect<Equal<ToDotNotation<BasicSchema>, {
   num: number,

@@ -16,9 +16,10 @@
 import { UUID } from '@/src/documents/datatypes/uuid';
 import { ObjectId } from '@/src/documents/datatypes/object-id';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
-import { CollDesCtx, CollSerCtx } from '@/src/documents';
-import { CustomCodecOpts, NominalCodecOpts, RawCodec, SerDesFn, SomeConstructor, TypeCodecOpts } from '@/src/lib';
-import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
+import type { CollDesCtx, CollSerCtx } from '@/src/documents';
+import type { CustomCodecOpts, NominalCodecOpts, RawCodec, SerDesFn, SomeConstructor, TypeCodecOpts } from '@/src/lib';
+import type { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
+import { $DeserializeForCollection } from '@/src/documents/collections/ser-des/constants';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
 
 /**

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ObjectId, UUID } from '@/src/documents';
+import type { ObjectId, UUID } from '@/src/documents';
 
 /**
  * All possible types for a document ID. JSON scalar types, `Date`, `UUID`, and `ObjectId`.

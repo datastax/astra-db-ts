@@ -15,9 +15,10 @@
 
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
-import { $DeserializeForCollection, $SerializeForCollection, CollCodec, CollCodecs } from '@/src/documents';
+import type { CollCodec} from '@/src/documents';
+import { $DeserializeForCollection, $SerializeForCollection, CollCodecs } from '@/src/documents';
 import { processCodecs } from '@/src/lib';
-import { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs';
+import type { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs';
 
 describe('unit.documents.collections.ser-des.codecs', () => {
   describe('processCodecs', () => {

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { VectorizeServiceOptions } from '@/src/db';
-import { WithTimeout } from '@/src/lib';
-import { TableOptions } from '@/src/db/types/tables/spawn-table';
+import type { VectorizeServiceOptions } from '@/src/db';
+import type { WithTimeout } from '@/src/lib';
+import type { TableOptions } from '@/src/db/types/tables/spawn-table';
 
 /**
  * Options for creating a new table (via {@link Db.createTable}).

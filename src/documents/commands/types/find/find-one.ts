@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { Projection, Sort } from '@/src/documents';
-import { WithTimeout } from '@/src/lib';
+import type { WithTimeout } from '@/src/lib';
 
 /**
  * Represents the options for some generic `findOne` command.

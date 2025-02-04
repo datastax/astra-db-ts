@@ -13,14 +13,16 @@
 // limitations under the License.
 
 import { boolean, exact, nullish, optional } from 'decoders';
+import type {
+  ParsedSerDesConfig} from '@/src/lib/api/ser-des/cfg-handler';
 import {
-  ParsedSerDesConfig,
   serDesDecoders,
   serdesMonoidSchema,
   serDesTransform,
 } from '@/src/lib/api/ser-des/cfg-handler';
-import { MonoidalOptionsHandler, monoids, OptionsHandlerTypes } from '@/src/lib/opts-handler';
-import { TableSerDesConfig } from '@/src/documents';
+import type { OptionsHandlerTypes } from '@/src/lib/opts-handler';
+import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler';
+import type { TableSerDesConfig } from '@/src/documents';
 
 /**
  * @internal

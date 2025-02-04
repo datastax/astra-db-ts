@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { WithTimeout } from '@/src/lib';
-import { Sort } from '@/src/documents';
+import type { Sort } from '@/src/documents';
 
 /**
  * Represents the options for some generic `replaceOne` command.

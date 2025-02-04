@@ -14,9 +14,10 @@
 
 import { oneOrMany } from '@/src/lib/utils';
 import { either, nullish, string, tuple } from 'decoders';
-import { OptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
-import { Caller } from '@/src/client';
-import { OneOrMany } from '@/src/lib';
+import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
+import { OptionsHandler } from '@/src/lib/opts-handler';
+import type { Caller } from '@/src/client';
+import type { OneOrMany } from '@/src/lib';
 import { CLIENT_USER_AGENT } from '@/src/lib/api/constants';
 
 /**

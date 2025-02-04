@@ -12,37 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection, FoundDoc, SomeDoc, WithId } from '@/src/documents/collections';
-import { DEFAULT_KEYSPACE, type OpaqueHttpClient, RawDataAPIResponse, WithTimeout } from '@/src/lib/api';
+import type { FoundDoc, SomeDoc, WithId } from '@/src/documents/collections';
+import { Collection } from '@/src/documents/collections';
+import type { RawDataAPIResponse, WithTimeout } from '@/src/lib/api';
+import { DEFAULT_KEYSPACE, type OpaqueHttpClient } from '@/src/lib/api';
 import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
-import { DataAPIEnvironment } from '@/src/lib/types';
+import type { DataAPIEnvironment } from '@/src/lib/types';
 import { extractDbIdFromUrl, extractRegionFromUrl } from '@/src/documents/utils';
-import { DbAdmin } from '@/src/administration';
+import type { DbAdmin } from '@/src/administration';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin';
-import { CreateCollectionOptions } from '@/src/db/types/collections/create-collection';
+import type { CreateCollectionOptions } from '@/src/db/types/collections/create-collection';
 import { TokenProvider } from '@/src/lib';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client';
-import { KeyspaceRef } from '@/src/lib/api/clients/types';
-import { EmbeddingHeadersProvider, FoundRow, SomeRow, Table, TableDropIndexOptions } from '@/src/documents';
+import type { KeyspaceRef } from '@/src/lib/api/clients/types';
+import type { FoundRow, SomeRow, TableDropIndexOptions } from '@/src/documents';
+import { EmbeddingHeadersProvider, Table } from '@/src/documents';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
-import { CollectionOptions } from '@/src/db/types/collections/collection-options';
-import { DropCollectionOptions } from '@/src/db/types/collections/drop-collection';
-import { CollectionDescriptor, ListCollectionsOptions } from '@/src/db/types/collections/list-collections';
-import { RunCommandOptions } from '@/src/db/types/command';
-import { TableOptions } from '@/src/db/types/tables/spawn-table';
-import { CreateTableDefinition, CreateTableOptions } from '@/src/db/types/tables/create-table';
-import { InferTablePrimaryKey, InferTableSchema } from '@/src/db/types/tables/table-schema';
-import { DropTableOptions } from '@/src/db/types/tables/drop-table';
-import { ListTablesOptions, TableDescriptor } from '@/src/db/types/tables/list-tables';
-import { AdminOptions } from '@/src/client/types';
+import type { CollectionOptions } from '@/src/db/types/collections/collection-options';
+import type { DropCollectionOptions } from '@/src/db/types/collections/drop-collection';
+import type { CollectionDescriptor, ListCollectionsOptions } from '@/src/db/types/collections/list-collections';
+import type { RunCommandOptions } from '@/src/db/types/command';
+import type { TableOptions } from '@/src/db/types/tables/spawn-table';
+import type { CreateTableDefinition, CreateTableOptions } from '@/src/db/types/tables/create-table';
+import type { InferTablePrimaryKey, InferTableSchema } from '@/src/db/types/tables/table-schema';
+import type { DropTableOptions } from '@/src/db/types/tables/drop-table';
+import type { ListTablesOptions, TableDescriptor } from '@/src/db/types/tables/list-tables';
+import type { AdminOptions } from '@/src/client/types';
 import { $CustomInspect } from '@/src/lib/constants';
 import { InvalidEnvironmentError } from '@/src/db/errors';
-import { AstraDbInfo } from '@/src/administration/types/admin/database-info';
+import type { AstraDbInfo } from '@/src/administration/types/admin/database-info';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
-import { DbOptsHandler, ParsedDbOptions } from '@/src/client/opts-handlers/db-opts-handler';
-import { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler';
+import type { ParsedDbOptions } from '@/src/client/opts-handlers/db-opts-handler';
+import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
+import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler';
 import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler';
 
 /**

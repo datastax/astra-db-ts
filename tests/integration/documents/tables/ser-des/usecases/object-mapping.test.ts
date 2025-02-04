@@ -14,15 +14,16 @@
 // noinspection DuplicatedCode
 
 import { initTestObjects, it, parallel } from '@/tests/testlib';
+import type {
+  CommandSucceededEvent,
+  TableCodec,
+  TableDesCtx,
+  TableSerCtx} from '@/src/index';
 import {
   $DeserializeForTable,
   $SerializeForTable,
   Camel2SnakeCase,
-  CommandSucceededEvent,
-  TableCodec,
   TableCodecs,
-  TableDesCtx,
-  TableSerCtx,
 } from '@/src/index';
 import BigNumber from 'bignumber.js';
 import assert from 'assert';

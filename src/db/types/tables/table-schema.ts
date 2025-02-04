@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Table } from '@/src/documents/tables/table';
-import {
+import type { Table } from '@/src/documents/tables/table';
+import type {
   CreateTableColumnDefinitions,
   CreateTableDefinition,
   CreateTablePrimaryKeyDefinition,
   FullCreateTablePrimaryKeyDefinition,
 } from '@/src/db/types/tables/create-table';
-import { EmptyObj } from '@/src/lib/types';
-import {
+import type { EmptyObj } from '@/src/lib/types';
+import type {
   DataAPIBlob,
   DataAPIDate,
   DataAPIDuration, DataAPIInet,
@@ -29,9 +29,9 @@ import {
   SomeRow,
   UUID,
 } from '@/src/documents';
-import { TypeErr } from '@/src/documents/utils';
-import { DataAPIVector } from '@/src/documents/datatypes/vector';
-import BigNumber from 'bignumber.js';
+import type { TypeErr } from '@/src/documents/utils';
+import type { DataAPIVector } from '@/src/documents/datatypes/vector';
+import type BigNumber from 'bignumber.js';
 
 /**
  * The different possible types that a Table's schema may be inferred from using the {@link InferTableSchema}-like types,

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { GenericReplaceOneOptions, GenericUpdateResult, IdOf } from '@/src/documents';
+import type { GenericReplaceOneOptions, GenericUpdateResult, IdOf } from '@/src/documents';
 
 /**
  * Represents the options for the `replaceOne` command.

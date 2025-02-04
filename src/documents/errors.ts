@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FetcherResponseInfo, RawDataAPIResponse, TimeoutDescriptor } from '@/src/lib';
+import type { FetcherResponseInfo, RawDataAPIResponse, TimeoutDescriptor } from '@/src/lib';
 import type {
   CollectionDeleteManyResult,
   CollectionInsertManyResult,
@@ -20,8 +20,9 @@ import type {
   SomeDoc,
 } from '@/src/documents/collections';
 import type { TableInsertManyResult } from '@/src/documents/tables';
-import { HTTPRequestInfo } from '@/src/lib/api/clients';
-import { TimedOutCategories, Timeouts } from '@/src/lib/api/timeouts/timeouts';
+import type { HTTPRequestInfo } from '@/src/lib/api/clients';
+import type { TimedOutCategories} from '@/src/lib/api/timeouts/timeouts';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 
 /**
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a

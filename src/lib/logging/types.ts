@@ -13,9 +13,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CommandEventMap } from '@/src/documents';
-import { AdminCommandEventMap } from '@/src/administration';
-import { OneOrMany } from '@/src/lib/types';
+import type { CommandEventMap } from '@/src/documents';
+import type { AdminCommandEventMap } from '@/src/administration';
+import type { OneOrMany } from '@/src/lib/types';
 // noinspection ES6UnusedImports
 import TypedEmitter from 'typed-emitter';
 

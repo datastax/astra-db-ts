@@ -12,9 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { WithKeyspace } from '@/src/db';
-import { EmbeddingHeadersProvider, TableSerDesConfig } from '@/src/documents';
-import { DataAPILoggingConfig, type TimeoutDescriptor } from '@/src/lib';
+import type { WithKeyspace } from '@/src/db';
+import type { EmbeddingHeadersProvider, TableSerDesConfig } from '@/src/documents';
+import type { DataAPILoggingConfig} from '@/src/lib';
+import { type TimeoutDescriptor } from '@/src/lib';
 
 /**
  * Options for spawning a new `Table` instance through {@link db.table} or {@link db.createTable}.

@@ -13,18 +13,19 @@
 // limitations under the License.
 /* eslint-disable prefer-const */
 
-import { initTestObjects } from '@/tests/testlib/fixtures';
+import type { initTestObjects } from '@/tests/testlib/fixtures';
 import { afterEach } from 'mocha';
 import { tryCatchErr } from '@/tests/testlib/utils';
+import type {
+  SuiteBlock,
+  SuiteOptions} from '@/tests/testlib';
 import {
   CURRENT_DESCRIBE_NAMES,
   describe,
-  SuiteBlock,
-  SuiteOptions,
   TEST_FILTER,
 } from '@/tests/testlib';
 import { UUID } from '@/src/documents';
-import { AsyncSuiteResult, GlobalAsyncSuitesSpec } from '@/tests/testlib/test-fns/types';
+import type { AsyncSuiteResult, GlobalAsyncSuitesSpec } from '@/tests/testlib/test-fns/types';
 
 const mkDefaultSuite = () => ({ name: undefined, skipped: false, tests: [] });
 

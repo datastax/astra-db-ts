@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { WithTimeout } from '@/src/lib';
-import { FullCreateTablePrimaryKeyDefinition, StrictCreateTableColumnDefinition, WithKeyspace } from '@/src/db';
+import type { FullCreateTablePrimaryKeyDefinition, StrictCreateTableColumnDefinition, WithKeyspace } from '@/src/db';
 
 /**
  * Options for listing tables.

@@ -16,7 +16,7 @@
 
 import type { CollectionFilter } from '@/src/documents/collections/types';
 import type { ConvolutedSchema2, Schema } from '@/tests/typing/prelude';
-import { SomeDoc } from '@/src/documents/collections';
+import type { SomeDoc } from '@/src/documents/collections';
 
 const test2: CollectionFilter<Schema> = {
   num1: 1,

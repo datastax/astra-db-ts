@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SerDesFn, SomeConstructor } from '@/src/lib';
+import type { SerDesFn, SomeConstructor } from '@/src/lib';
 import { pathArraysEqual } from '@/src/lib/utils';
 
 /**

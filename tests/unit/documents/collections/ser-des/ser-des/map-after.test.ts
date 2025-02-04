@@ -16,7 +16,7 @@
 import { describe, it } from '@/tests/testlib';
 import { Camel2SnakeCase, CollCodecs, uuid } from '@/src/index';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
-import { CollNominalCodecOpts } from '@/src/documents/collections/ser-des/codecs';
+import type { CollNominalCodecOpts } from '@/src/documents/collections/ser-des/codecs';
 import assert from 'assert';
 
 describe('unit.documents.collections.ser-des.ser-des.map-after', () => {

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { GenericFindOneAndReplaceOptions } from '@/src/documents';
+import type { GenericFindOneAndReplaceOptions } from '@/src/documents';
 
 /**
  * Represents the options for the `findOneAndReplace` command.

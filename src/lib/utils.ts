@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import JBI from 'json-bigint';
-import { SomeDoc } from '@/src/documents';
+import type JBI from 'json-bigint';
+import type { SomeDoc } from '@/src/documents';
 import BigNumber from 'bignumber.js';
-import { array, Decoder, define, either, instanceOf } from 'decoders';
+import type { Decoder} from 'decoders';
+import { array, define, either, instanceOf } from 'decoders';
 
 /**
  * @internal

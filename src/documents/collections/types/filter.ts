@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/documents/collections';
-import { IdOf, NoId, ToDotNotation } from '@/src/documents';
-import { EmptyObj } from '@/src/lib/types';
+import type { IdOf, NoId, ToDotNotation } from '@/src/documents';
+import type { EmptyObj } from '@/src/lib/types';
 
 /**
  * Represents some filter operation for a given document schema.

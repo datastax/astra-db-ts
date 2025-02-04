@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeRow } from '@/src/documents';
+import type { SomeRow } from '@/src/documents';
 
 /**
  * Represents the update filter to specify how to update a document.

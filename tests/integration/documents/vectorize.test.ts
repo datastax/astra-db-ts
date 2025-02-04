@@ -13,15 +13,18 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { Collection, UUID } from '@/src/documents';
+import type { Collection} from '@/src/documents';
+import { UUID } from '@/src/documents';
 import * as fs from 'fs';
-import { EmbeddingProviderInfo } from '@/src/administration/types/db-admin/find-embedding-providers';
+import type { EmbeddingProviderInfo } from '@/src/administration/types/db-admin/find-embedding-providers';
 import { describe, it, parallel } from '@/tests/testlib';
 import { negate } from '@/tests/testlib/utils';
 import { whitelistImplFor } from '@/tests/testlib/vectorize/vec-whitelist-imp';
-import { branchOnModel, FinalVectorizeTestBranch } from '@/tests/testlib/vectorize/vec-test-branches';
-import { createTestGroups, VectorizeTestGroup } from '@/tests/testlib/vectorize/vec-test-groups';
-import { Db } from '@/src/db';
+import type { FinalVectorizeTestBranch } from '@/tests/testlib/vectorize/vec-test-branches';
+import { branchOnModel } from '@/tests/testlib/vectorize/vec-test-branches';
+import type { VectorizeTestGroup } from '@/tests/testlib/vectorize/vec-test-groups';
+import { createTestGroups } from '@/tests/testlib/vectorize/vec-test-groups';
+import type { Db } from '@/src/db';
 
 export type VectorizeTestSpec = Record<string, {
     headers?: Record<`x-${string}`, string>

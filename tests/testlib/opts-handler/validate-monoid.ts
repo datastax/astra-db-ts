@@ -14,7 +14,7 @@
 
 import { it } from '@/tests/testlib';
 import assert from 'assert';
-import { MonoidalOptionsHandler } from '@/src/lib/opts-handler';
+import type { MonoidalOptionsHandler } from '@/src/lib/opts-handler';
 
 export const ensureMonoidalHandlerIsActuallyAMonoid = (handler: MonoidalOptionsHandler<any>, configs: any[]) => {
   if (configs.length < 3) {

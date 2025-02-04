@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/documents/collections';
-import { CollectionDefaultIdOptions, CollectionIndexingOptions, CollectionVectorOptions } from '@/src/db';
+import type { CollectionDefaultIdOptions, CollectionIndexingOptions, CollectionVectorOptions } from '@/src/db';
 
 /**
  * Represents the options for the createCollection command.

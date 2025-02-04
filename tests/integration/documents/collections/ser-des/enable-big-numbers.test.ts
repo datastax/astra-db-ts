@@ -16,15 +16,16 @@
 import { DEFAULT_COLLECTION_NAME, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 import BigNumber from 'bignumber.js';
-import {
-  $DeserializeForCollection,
-  $SerializeForCollection,
+import type {
   CollCodec,
-  CollCodecs,
   CollDesCtx,
   CollNumRepCfg,
   CollSerCtx,
-  GetCollNumRepFn,
+  GetCollNumRepFn} from '@/src/documents';
+import {
+  $DeserializeForCollection,
+  $SerializeForCollection,
+  CollCodecs,
   uuid,
 } from '@/src/documents';
 

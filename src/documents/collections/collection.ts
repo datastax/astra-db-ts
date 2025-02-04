@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
+import type {
   CollectionDeleteManyResult,
   CollectionDeleteOneOptions,
   CollectionDeleteOneResult,
@@ -41,12 +41,14 @@ import {
   ToDotNotation,
   WithId,
 } from '@/src/documents/collections/types';
-import { CollectionDefinition, CollectionOptions, Db } from '@/src/db';
-import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import { type OpaqueHttpClient, WithTimeout } from '@/src/lib';
+import type { CollectionDefinition, CollectionOptions, Db } from '@/src/db';
+import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
+import type { WithTimeout } from '@/src/lib';
+import { type OpaqueHttpClient } from '@/src/lib';
 import { CommandImpls } from '@/src/documents/commands/command-impls';
 import { $CustomInspect } from '@/src/lib/constants';
-import { CollectionInsertManyError, TooManyDocumentsToCountError, WithSim } from '@/src/documents';
+import type { WithSim } from '@/src/documents';
+import { CollectionInsertManyError, TooManyDocumentsToCountError } from '@/src/documents';
 import JBI from 'json-bigint';
 import { CollectionFindCursor } from '@/src/documents/collections/cursor';
 import { withJbiNullProtoFix } from '@/src/lib/utils';

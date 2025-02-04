@@ -16,16 +16,13 @@ export * from './cursor';
 export type * from './types';
 export * from './table';
 
-export {
+export type {
   TableSerDesConfig,
   TableDesCtx,
   TableSerCtx,
 } from './ser-des/ser-des';
 
-export {
-  TableCodecClass,
-  TableCodecs,
-  TableCodec,
-} from './ser-des/codecs';
+export type { TableCodecClass, TableCodec } from './ser-des/codecs';
+export { TableCodecs } from './ser-des/codecs';
 export { $DeserializeForTable } from '@/src/documents/tables/ser-des/constants';
 export { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';

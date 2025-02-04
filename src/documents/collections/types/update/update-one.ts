@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { GenericUpdateOneOptions, GenericUpdateResult, IdOf } from '@/src/documents';
+import type { GenericUpdateOneOptions, GenericUpdateResult, IdOf } from '@/src/documents';
 
 /**
  * Options for an `updateOne` command on a collection.

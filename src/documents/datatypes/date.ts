@@ -13,7 +13,8 @@
 // limitations under the License.
 
 import { $CustomInspect } from '@/src/lib/constants';
-import { DataAPIDuration, DataAPITime, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
+import type { DataAPITime, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
+import { DataAPIDuration } from '@/src/documents';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { mkInvArgsErr } from '@/src/documents/utils';
 

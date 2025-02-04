@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import { $CustomInspect } from '@/src/lib/constants';
-import { nullish } from '@/src/lib';
-import { TableCodec, TableSerCtx, TableDesCtx } from '@/src/documents';
+import type { nullish } from '@/src/lib';
+import type { TableCodec, TableSerCtx, TableDesCtx } from '@/src/documents';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 
 /**

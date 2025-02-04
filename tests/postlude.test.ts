@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { backgroundTestResults, backgroundTestState, describe } from '@/tests/testlib';
-import { AsyncSuiteResult } from '@/tests/testlib/test-fns/types';
+import type { AsyncSuiteResult } from '@/tests/testlib/test-fns/types';
 
 describe('{dummy}', () => {
   before(async () => {

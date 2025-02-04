@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FetcherResponseInfo, type TimeoutDescriptor } from '@/src/lib/api';
-import { SomeDoc } from '@/src/documents';
-import { HTTPRequestInfo } from '@/src/lib/api/clients';
-import { TimedOutCategories, Timeouts } from '@/src/lib/api/timeouts/timeouts';
+import type { FetcherResponseInfo} from '@/src/lib/api';
+import { type TimeoutDescriptor } from '@/src/lib/api';
+import type { SomeDoc } from '@/src/documents';
+import type { HTTPRequestInfo } from '@/src/lib/api/clients';
+import type { TimedOutCategories} from '@/src/lib/api/timeouts/timeouts';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 
 /**
  * A representation of what went wrong when interacting with the DevOps API.

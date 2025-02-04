@@ -17,7 +17,7 @@ import { describe, it, TEST_APPLICATION_TOKEN } from '@/tests/testlib';
 import { StaticTokenProvider, TokenProvider, UsernamePasswordTokenProvider } from '@/src/lib';
 import { OptionParseError } from '@/src/lib/opts-handler';
 import { ensureMonoidalHandlerIsActuallyAMonoid } from '@/tests/testlib/opts-handler/validate-monoid';
-import { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
+import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
 
 describe('unit.lib.token-providers.opts-handler', () => {
   describe('parse', () => {

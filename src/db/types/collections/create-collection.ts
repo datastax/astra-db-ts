@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/documents/collections';
-import { TimeoutDescriptor } from '@/src/lib';
-import { CollectionDefinition, CollectionOptions } from '@/src/db';
+import type { SomeDoc } from '@/src/documents/collections';
+import type { TimeoutDescriptor } from '@/src/lib';
+import type { CollectionDefinition, CollectionOptions } from '@/src/db';
 
 /**
  * Options for creating a new collection (via {@link Db.createCollection}).

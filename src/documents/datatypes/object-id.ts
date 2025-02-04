@@ -14,7 +14,7 @@
 
 import { isNullish } from '@/src/lib/utils';
 import { $CustomInspect } from '@/src/lib/constants';
-import { CollCodec, CollDesCtx, CollSerCtx } from '@/src/documents';
+import type { CollCodec, CollDesCtx, CollSerCtx } from '@/src/documents';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
 
 const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');

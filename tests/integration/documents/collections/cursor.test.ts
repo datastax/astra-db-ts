@@ -13,7 +13,8 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { SomeDoc, vector } from '@/src/documents';
+import type { SomeDoc} from '@/src/documents';
+import { vector } from '@/src/documents';
 import { describe, initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
 

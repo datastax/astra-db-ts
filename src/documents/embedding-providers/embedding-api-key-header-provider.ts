@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { EmbeddingHeadersProvider } from '@/src/documents/embedding-providers/embedding-headers-provider';
-import { nullish } from '@/src/lib';
+import type { nullish } from '@/src/lib';
 
 /**
  * The most basic embedding header provider, used for the vast majority of providers.

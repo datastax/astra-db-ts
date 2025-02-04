@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AstraAdminBlockingOptions, AstraDbCloudProvider } from '@/src/administration/types';
+import type { AstraAdminBlockingOptions, AstraDbCloudProvider } from '@/src/administration/types';
 
 
-import { DbOptions } from '@/src/client';
-import { WithTimeout } from '@/src/lib';
+import type { DbOptions } from '@/src/client';
+import type { WithTimeout } from '@/src/lib';
 
 /**
  * Represents the options for creating a database.

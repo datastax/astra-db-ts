@@ -29,8 +29,8 @@ import {
   TEST_APPLICATION_URI,
   TEST_HTTP_CLIENT,
 } from '@/tests/testlib/config';
-import { BaseDataAPIClientEvent, DataAPIClientEventMap, DataAPILoggingConfig } from '@/src/lib';
-import { CreateTableDefinition, InferTableSchema } from '@/src/db';
+import type { BaseDataAPIClientEvent, DataAPIClientEventMap, DataAPILoggingConfig } from '@/src/lib';
+import type { CreateTableDefinition, InferTableSchema } from '@/src/db';
 import * as util from 'node:util';
 
 export interface TestObjectsOptions {

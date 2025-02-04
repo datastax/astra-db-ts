@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import type { WithTimeout } from '@/src/lib';
-import { CollectionDefinition, WithKeyspace } from '@/src/db';
-import { SomeDoc } from '@/src/documents';
+import type { CollectionDefinition, WithKeyspace } from '@/src/db';
+import type { SomeDoc } from '@/src/documents';
 
 /**
  * Options for listing collections.

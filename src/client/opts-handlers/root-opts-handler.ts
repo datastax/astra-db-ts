@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { OptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
-import { DataAPIClient, DataAPIClientOptions } from '@/src/client';
+import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
+import { OptionsHandler } from '@/src/lib/opts-handler';
+import type { DataAPIClient, DataAPIClientOptions } from '@/src/client';
 import { type DataAPIClientEventMap, TokenProvider } from '@/src/lib';
 import { exact } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts';

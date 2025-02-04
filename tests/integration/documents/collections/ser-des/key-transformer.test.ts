@@ -16,15 +16,16 @@
 import { DEFAULT_COLLECTION_NAME, describe, it, parallel } from '@/tests/testlib';
 import { Camel2SnakeCase } from '@/src/lib';
 import assert from 'assert';
+import type {
+  CollCodec,
+  CollDesCtx,
+  CollSerCtx,
+  UUID} from '@/src/index';
 import {
   $DeserializeForCollection,
   $SerializeForCollection,
-  CollCodec,
   CollCodecs,
-  CollDesCtx,
-  CollSerCtx,
   uuid,
-  UUID,
 } from '@/src/index';
 import BigNumber from 'bignumber.js';
 

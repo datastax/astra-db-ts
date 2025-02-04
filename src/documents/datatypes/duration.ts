@@ -13,10 +13,10 @@
 // limitations under the License.
 
 import { $CustomInspect } from '@/src/lib/constants';
-import { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
+import type { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { mkInvArgsErr } from '@/src/documents/utils';
-import { Ref } from '@/src/lib/types';
+import type { Ref } from '@/src/lib/types';
 import { numDigits } from '@/src/lib/utils';
 
 /**

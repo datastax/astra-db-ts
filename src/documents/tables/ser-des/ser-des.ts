@@ -12,19 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { BaseSerDesConfig, SerDes, SerDesFn } from '@/src/lib/api/ser-des/ser-des';
-import {
+import type { BaseSerDesConfig, SerDesFn } from '@/src/lib/api/ser-des/ser-des';
+import { SerDes } from '@/src/lib/api/ser-des/ser-des';
+import type {
   ListTableColumnDefinitions,
   ListTableKnownColumnDefinition,
   ListTableUnsupportedColumnDefinition,
 } from '@/src/db';
-import { RawTableCodecs, TableCodecs } from '@/src/documents/tables/ser-des/codecs';
-import { BaseDesCtx, BaseSerCtx, NEVERMIND, SerDesTarget } from '@/src/lib/api/ser-des/ctx';
+import type { RawTableCodecs} from '@/src/documents/tables/ser-des/codecs';
+import { TableCodecs } from '@/src/documents/tables/ser-des/codecs';
+import type { BaseDesCtx, BaseSerCtx} from '@/src/lib/api/ser-des/ctx';
+import { NEVERMIND, SerDesTarget } from '@/src/lib/api/ser-des/ctx';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { isBigNumber, pathMatches } from '@/src/lib/utils';
 import { UnexpectedDataAPIResponseError } from '@/src/client';
 import { TableSerDesCfgHandler } from '@/src/documents/tables/ser-des/cfg-handler';
-import { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
+import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
 
 /**
  * @public

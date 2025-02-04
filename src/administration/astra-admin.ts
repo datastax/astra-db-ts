@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import {
+import type {
   AstraDatabaseConfig,
   CreateAstraDatabaseOptions,
   ListAstraDatabasesOptions,
@@ -23,17 +23,19 @@ import { Db } from '@/src/db/db';
 import { buildAstraDatabaseAdminInfo } from '@/src/administration/utils';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
-import { OpaqueHttpClient, TokenProvider, WithTimeout } from '@/src/lib';
-import { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info';
+import type { OpaqueHttpClient, WithTimeout } from '@/src/lib';
+import { TokenProvider } from '@/src/lib';
+import type { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info';
 import { buildAstraEndpoint } from '@/src/lib/utils';
-import { DbOptions } from '@/src/client';
+import type { DbOptions } from '@/src/client';
 import { $CustomInspect } from '@/src/lib/constants';
-import { SomeDoc } from '@/src/documents';
+import type { SomeDoc } from '@/src/documents';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
-import { AstraDropDatabaseOptions } from '@/src/administration/types/admin/drop-database';
-import { AdminOptsHandler, ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
+import type { AstraDropDatabaseOptions } from '@/src/administration/types/admin/drop-database';
+import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
+import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
-import { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler';
+import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.

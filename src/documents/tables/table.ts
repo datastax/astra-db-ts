@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import {
+import type {
   CreateTableIndexOptions,
   CreateTableVectorIndexOptions,
   FoundRow,
@@ -21,16 +21,17 @@ import {
   TableFilter,
   TableFindOneOptions,
   TableFindOptions,
-  TableInsertManyError,
   TableInsertManyOptions,
   TableInsertManyResult,
   TableInsertOneResult,
   TableUpdateFilter,
-  WithSim,
-} from '@/src/documents';
-import { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import { CommandImpls } from '@/src/documents/commands/command-impls';
+  WithSim} from '@/src/documents';
 import {
+  TableInsertManyError,
+} from '@/src/documents';
+import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
+import { CommandImpls } from '@/src/documents/commands/command-impls';
+import type {
   AlterTableOptions,
   CreateTableDefinition,
   Db,
@@ -38,13 +39,14 @@ import {
   ListTableDefinition,
   TableOptions,
 } from '@/src/db';
-import { type OpaqueHttpClient, WithTimeout } from '@/src/lib';
+import type { WithTimeout } from '@/src/lib';
+import { type OpaqueHttpClient } from '@/src/lib';
 import { $CustomInspect } from '@/src/lib/constants';
 import JBI from 'json-bigint';
 import { TableFindCursor } from '@/src/documents/tables/cursor';
 import { withJbiNullProtoFix } from '@/src/lib/utils';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
-import { ListIndexOptions, TableIndexDescriptor } from '@/src/db/types/tables/list-indexes';
+import type { ListIndexOptions, TableIndexDescriptor } from '@/src/db/types/tables/list-indexes';
 
 const jbi = JBI({ storeAsString: true });
 

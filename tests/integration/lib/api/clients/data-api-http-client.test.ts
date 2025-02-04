@@ -23,7 +23,7 @@ import {
   TEST_APPLICATION_URI,
 } from '@/tests/testlib';
 import assert from 'assert';
-import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
+import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
 import { DataAPIHttpError, DataAPIResponseError } from '@/src/documents';
 
 describe('integration.lib.api.clients.data-api-http-client', ({ db }) => {

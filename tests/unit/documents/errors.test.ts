@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { CollectionDeleteManyResult, CollectionInsertManyResult, SomeDoc, CollectionUpdateManyResult } from '@/src/documents/collections/types';
+import type { CollectionDeleteManyResult, CollectionInsertManyResult, SomeDoc, CollectionUpdateManyResult } from '@/src/documents/collections/types';
 import {
   DataAPIResponseError, CollectionDeleteManyError,
   CollectionInsertManyError,
@@ -22,7 +22,7 @@ import {
 } from '@/src/documents/errors';
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
-import { TableInsertManyResult } from '@/src/documents';
+import type { TableInsertManyResult } from '@/src/documents';
 
 describe('unit.documents.errors', () => {
   const commands = [

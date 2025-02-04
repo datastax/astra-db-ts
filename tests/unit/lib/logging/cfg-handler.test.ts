@@ -15,7 +15,7 @@
 import assert from 'assert';
 import { describe, it } from '@/tests/testlib';
 import { Logger } from '@/src/lib/logging/logger';
-import { DataAPILoggingConfig } from '@/src/lib';
+import type { DataAPILoggingConfig } from '@/src/lib';
 import {
   LoggingDefaultOutputs,
   LoggingDefaults,

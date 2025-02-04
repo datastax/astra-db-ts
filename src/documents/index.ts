@@ -22,17 +22,5 @@ export * from './datatypes';
 export type * from './commands';
 export type * from './types';
 
-export {
-  DataAPIResponseError,
-  DataAPIHttpError,
-  DataAPITimeoutError,
-  CumulativeOperationError,
-  DataAPIDetailedErrorDescriptor,
-  DataAPIError,
-  DataAPIErrorDescriptor,
-  CollectionDeleteManyError,
-  CollectionInsertManyError,
-  TableInsertManyError,
-  TooManyDocumentsToCountError,
-  CollectionUpdateManyError,
-} from './errors';
+export type { DataAPIDetailedErrorDescriptor, DataAPIErrorDescriptor } from './errors';
+export { DataAPIResponseError, DataAPIHttpError, DataAPITimeoutError, CumulativeOperationError, DataAPIError, CollectionDeleteManyError, CollectionInsertManyError, TableInsertManyError, TooManyDocumentsToCountError, CollectionUpdateManyError } from './errors';

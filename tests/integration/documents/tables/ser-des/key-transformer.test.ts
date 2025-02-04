@@ -16,13 +16,14 @@
 import { describe, it, parallel, useSuiteResources } from '@/tests/testlib';
 import { Camel2SnakeCase } from '@/src/lib';
 import assert from 'assert';
+import type {
+  TableCodec,
+  TableDesCtx,
+  TableSerCtx} from '@/src/index';
 import {
   $DeserializeForTable,
   $SerializeForTable,
-  TableCodec,
   TableCodecs,
-  TableDesCtx,
-  TableSerCtx,
 } from '@/src/index';
 
 describe('integration.documents.tables.ser-des.key-transformer', ({ db }) => {

@@ -27,8 +27,8 @@ import {
   AdminCommandWarningsEvent,
 } from '@/src/administration/events';
 import { buildOutputsMap } from '@/src/lib/logging/util';
-import { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
-import { InternalLoggingOutputsMap } from '@/src/lib/logging/logger';
+import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
+import type { InternalLoggingOutputsMap } from '@/src/lib/logging/logger';
 import { EqualityProof } from '@/src/lib/utils';
 
 /**

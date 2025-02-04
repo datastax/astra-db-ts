@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { GenericDeleteOneOptions } from '@/src/documents';
+import type { GenericDeleteOneOptions } from '@/src/documents';
 
 /**
  * Represents the options for the deleteOne command.

@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { MonoidalOptionsHandler, monoids, MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
-import { DbOptions } from '@/src/client';
+import type { MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
+import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler';
+import type { DbOptions } from '@/src/client';
 import { TokenProvider } from '@/src/lib';
 import { exact, nullish, oneOf, optional, record, regex, string } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts';

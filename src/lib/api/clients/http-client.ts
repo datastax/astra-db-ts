@@ -17,7 +17,8 @@ import type { FetchCtx, FetcherResponseInfo } from '@/src/lib/api/fetch/types';
 import type { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/lib/api/clients';
 import type { DataAPIClientEventMap } from '@/src/lib/logging';
 import { Logger } from '@/src/lib/logging/logger';
-import { MkTimeoutError, Timeouts } from '@/src/lib/api/timeouts/timeouts';
+import type { MkTimeoutError} from '@/src/lib/api/timeouts/timeouts';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
 
 /**
  * @internal

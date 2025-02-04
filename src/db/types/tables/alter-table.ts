@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeRow } from '@/src/documents';
-import { CreateTableColumnDefinitions, VectorizeServiceOptions } from '@/src/db';
-import { WithTimeout } from '@/src/lib';
+import type { SomeRow } from '@/src/documents';
+import type { CreateTableColumnDefinitions, VectorizeServiceOptions } from '@/src/db';
+import type { WithTimeout } from '@/src/lib';
 
 /**
  * Options for altering a table.

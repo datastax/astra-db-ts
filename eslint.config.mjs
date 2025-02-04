@@ -57,8 +57,8 @@ export default ts.config(
       'semi': 'error',
       'comma-dangle': ['error', 'always-multiline'],
 
-      // '@typescript-eslint/consistent-type-exports': 'error',
-      // '@typescript-eslint/consistent-type-imports': 'error',
+      '@typescript-eslint/consistent-type-exports': 'error',
+      '@typescript-eslint/consistent-type-imports': 'error',
     },
   },
   {

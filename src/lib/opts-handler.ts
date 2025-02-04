@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Decoder } from 'decoders';
-import { nullish } from '@/src/lib/index';
+import type { Decoder } from 'decoders';
+import type { nullish } from '@/src/lib/index';
 import { findLast } from '@/src/lib/utils';
 
 /**
