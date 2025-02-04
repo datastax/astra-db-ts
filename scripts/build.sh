@@ -24,13 +24,21 @@ node scripts/utils/build-version-file.cjs > src/version.ts
 
 # Transpiles the project
 if [ "$light" = true ]; then
-  npx tsc --project tsconfig.production.json -d false --noCheck || exit 10
+  npx tsc -p etc/tsconfig.cjs.json || exit 10
+  npx tsc-alias -p etc/tsconfig.cjs.json
+  echo '{"type": "commonjs"}' > dist/cjs/package.json
 else
-  npx tsc --project tsconfig.production.json || exit 10
+  npx tsc -p etc/tsconfig.esm.json || exit 30
+  npx tsc -p etc/tsconfig.cjs.json || exit 30
+
+  npx tsc-alias -p etc/tsconfig.esm.json
+  npx tsc-alias -p etc/tsconfig.cjs.json
+
+  echo '{"type": "module"}' > dist/esm/package.json
+  echo '{"type": "commonjs"}' > dist/cjs/package.json
 fi
 
 # Replaces alias paths with relative paths (e.g. `@/src/version` -> `../../src/version`)
-npx tsc-alias -p tsconfig.production.json
 
 if [ "$light" != true ]; then
   # Creates the rollup .d.ts, generates an API report in etc/, and cleans up any temp files
@@ -58,9 +66,7 @@ if [ "$light" != true ]; then
   node scripts/utils/del-empty-dist-files.cjs
 
   # Removes all .d.ts files except the main rollup .d.ts
-  cd dist || exit 20
-  find . -type f -name '*.d.ts' ! -name 'astra-db-ts.d.ts' -exec rm {} +
-  cd ..
+  find ./dist/esm -type f -name '*.d.ts' -exec rm {} +
 
   # Delete any empty leftover directories
   find ./dist -type d -empty -delete

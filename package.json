@@ -24,8 +24,18 @@
   ],
   "homepage": "https://github.com/datastax/astra-db-ts",
   "license": "Apache-2.0",
-  "main": "dist/index.js",
-  "types": "dist/astra-db-ts.d.ts",
+  "exports": {
+    ".": {
+      "require": {
+        "default": "./dist/cjs/index.js",
+        "types": "./dist/astra-db-ts.d.ts"
+      },
+      "import": {
+        "default": "./dist/esm/index.js",
+        "types": "./dist/astra-db-ts.d.ts"
+      }
+    }
+  },
   "directories": {
     "lib": "src",
     "test": "tests"
