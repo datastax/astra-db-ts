@@ -28,12 +28,12 @@
   "exports": {
     ".": {
       "require": {
-        "default": "./dist/cjs/index.js",
-        "types": "./dist/astra-db-ts.d.ts"
+        "types": "./dist/astra-db-ts.d.ts",
+        "default": "./dist/cjs/index.js"
       },
       "import": {
-        "default": "./dist/esm/index.js",
-        "types": "./dist/astra-db-ts.d.ts"
+        "types": "./dist/astra-db-ts.d.ts",
+        "default": "./dist/esm/index.js"
       }
     }
   },
