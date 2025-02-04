@@ -9,10 +9,10 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "@datastax/astra-db-ts": "file:../astra-db-ts.tgz"
-  },
   "devDependencies": {
     "tsx": "^4.19.2"
+  },
+  "dependencies": {
+    "@datastax/astra-db-ts": "file:../astra-db-ts.tgz"
   }
 }
