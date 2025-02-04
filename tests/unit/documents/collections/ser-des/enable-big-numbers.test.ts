@@ -16,7 +16,7 @@
 import { describe, it } from '@/tests/testlib';
 import assert from 'assert';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
-import BigNumber from 'bignumber.js';
+import { BigNumber } from 'bignumber.js';
 import type { CollNumRep} from '@/src/documents';
 import { NumCoercionError } from '@/src/documents';
 

@@ -15,7 +15,7 @@
 
 import { DEFAULT_COLLECTION_NAME, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
-import BigNumber from 'bignumber.js';
+import { BigNumber } from 'bignumber.js';
 import type {
   CollCodec,
   CollDesCtx,

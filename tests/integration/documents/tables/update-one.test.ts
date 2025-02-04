@@ -38,7 +38,7 @@ import {
 } from '@/src/documents';
 import { EverythingTableSchema, it, parallel } from '@/tests/testlib';
 import assert from 'assert';
-import BigNumber from 'bignumber.js';
+import { BigNumber } from 'bignumber.js';
 
 parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }, ({ table, table_ }) => {
   it('should error on empty $set/$unset', async () => {

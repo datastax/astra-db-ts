@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 // Copyright DataStax, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -16,7 +15,6 @@
 import type { CommandEventMap } from '@/src/documents';
 import type { AdminCommandEventMap } from '@/src/administration';
 import type { OneOrMany } from '@/src/lib/types';
-import type { TypedEmitter } from '@/src/lib/typed-emitter';
 
 /**
  * #### Overview

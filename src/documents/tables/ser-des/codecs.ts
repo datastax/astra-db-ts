@@ -21,7 +21,7 @@ import { UUID } from '@/src/documents/datatypes/uuid';
 import { DataAPIVector } from '@/src/documents/datatypes/vector';
 import type { TableDesCtx, TableSerCtx } from '@/src/documents';
 import type { CustomCodecOpts, NominalCodecOpts, RawCodec, SerDesFn, TypeCodecOpts } from '@/src/lib';
-import BigNumber from 'bignumber.js';
+import { BigNumber } from 'bignumber.js';
 import type { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { $DeserializeForTable } from '@/src/documents/tables/ser-des/constants';
 import { DataAPIInet } from '@/src/documents/datatypes/inet';

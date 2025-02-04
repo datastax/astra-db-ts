@@ -25,7 +25,7 @@ import {
   Camel2SnakeCase,
   TableCodecs,
 } from '@/src/index';
-import BigNumber from 'bignumber.js';
+import { BigNumber } from 'bignumber.js';
 import assert from 'assert';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
 

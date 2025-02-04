@@ -29,7 +29,7 @@ import {
 } from '@/src/documents';
 import { it, parallel } from '@/tests/testlib';
 import assert from 'assert';
-import BigNumber from 'bignumber.js';
+import { BigNumber } from 'bignumber.js';
 
 parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
   interface ColumnAsserterOpts<T> {

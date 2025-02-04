@@ -31,7 +31,7 @@ import type {
 } from '@/src/documents';
 import type { TypeErr } from '@/src/documents/utils';
 import type { DataAPIVector } from '@/src/documents/datatypes/vector';
-import type BigNumber from 'bignumber.js';
+import type { BigNumber } from 'bignumber.js';
 
 /**
  * The different possible types that a Table's schema may be inferred from using the {@link InferTableSchema}-like types,

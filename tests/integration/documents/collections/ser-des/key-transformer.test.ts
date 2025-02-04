@@ -27,7 +27,7 @@ import {
   CollCodecs,
   uuid,
 } from '@/src/index';
-import BigNumber from 'bignumber.js';
+import { BigNumber } from 'bignumber.js';
 
 describe('integration.documents.collections.ser-des.key-transformer', ({ db }) => {
   class Newtype implements CollCodec<typeof Newtype> {
