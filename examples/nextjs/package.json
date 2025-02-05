@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@datastax/astra-db-ts": "file:../astra-db-ts.tgz",
-    "next": "14.2.3",
+    "next": "^15.1.2",
     "react": "^18",
     "react-dom": "^18"
   },
