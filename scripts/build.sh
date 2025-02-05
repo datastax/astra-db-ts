@@ -72,6 +72,6 @@ if [ "$light" != true ]; then
 
   # Create the index.d.ts files
   # https://github.com/arethetypeswrong/arethetypeswrong.github.io/blob/main/docs/problems/FalseESM.md
-  echo "export * from '../astra-db-ts.d.ts';" > dist/esm/index.d.ts
-  echo "export * from '../astra-db-ts.d.ts';" > dist/cjs/index.d.ts
+  echo "export type * from '../astra-db-ts.d.ts';" > dist/esm/index.d.ts
+  echo "export type * from '../astra-db-ts.d.ts';" > dist/cjs/index.d.ts
 fi

@@ -1008,7 +1008,7 @@ export class DataAPIHttpError extends DataAPIError {
 }
 
 // @public
-export type DataAPIHttpOptions = DefaultHttpClientOptions | FetchHttpClientOptions | CustomHttpClientOptions;
+export type DataAPIHttpOptions = FetchH2HttpClientOptions | FetchHttpClientOptions | CustomHttpClientOptions;
 
 // @public
 export class DataAPIInet implements TableCodec<typeof DataAPIInet> {
@@ -1187,14 +1187,6 @@ export interface DbSerDesConfig {
 // @public
 export const DEFAULT_KEYSPACE = "default_keyspace";
 
-// @public
-export interface DefaultHttpClientOptions {
-    client: 'fetch-h2';
-    fetchH2: FetchH2Like;
-    http1?: Http1Options;
-    preferHttp2?: boolean;
-}
-
 // @public (undocumented)
 export interface Deserializers<DesCtx> {
     // (undocumented)
@@ -1366,9 +1358,25 @@ export interface FetcherResponseInfo {
 
 // @public
 export class FetchH2 implements Fetcher {
-    constructor(options: DefaultHttpClientOptions);
+    constructor(options: FetchH2HttpClientOptions);
     close(): Promise<void>;
     fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo>;
+}
+
+// @public
+export interface FetchH2Http1Options {
+    keepAlive?: boolean;
+    keepAliveMS?: number;
+    maxFreeSockets?: number;
+    maxSockets?: number;
+}
+
+// @public
+export interface FetchH2HttpClientOptions {
+    client: 'fetch-h2';
+    fetchH2: FetchH2Like;
+    http1?: FetchH2Http1Options;
+    preferHttp2?: boolean;
 }
 
 // @public (undocumented)
@@ -1556,14 +1564,6 @@ export interface GuaranteedUpdateResult<N extends number> {
 }
 
 // @public
-export interface Http1Options {
-    keepAlive?: boolean;
-    keepAliveMS?: number;
-    maxFreeSockets?: number;
-    maxSockets?: number;
-}
-
-// @public
 export type IdOf<Doc> = Doc extends {
     _id?: infer Id extends SomeId;
 } ? Id : SomeId;
@@ -1719,13 +1719,9 @@ export type MaybeId<T> = NoId<T> & {
 
 // @public
 export class MicroEmitter<Events extends Record<string, (...args: any[]) => void>> {
-    // (undocumented)
     emit<E extends keyof Events>(event: E, ...args: Parameters<Events[E]>): boolean;
-    // (undocumented)
     off<E extends keyof Events>(event: E, listener: Events[E]): void;
-    // (undocumented)
     on<E extends keyof Events>(event: E, listener: Events[E]): () => void;
-    // (undocumented)
     once<E extends keyof Events>(event: E, listener: Events[E]): () => void;
 }
 

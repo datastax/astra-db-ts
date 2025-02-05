@@ -114,6 +114,8 @@ export interface FetchH2HttpClientOptions {
  * Passing in `httpOptions: { client: 'fetch' }` is equivalent to not setting the `httpOptions` at all.
  *
  * @see DataAPIHttpOptions
+ *
+ * @public
  */
 export interface FetchHttpClientOptions {
   /**
