@@ -13,11 +13,12 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { describe, it } from '@/tests/testlib';
+import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
-import BigNumber from 'bignumber.js';
-import { CollNumRep, NumCoercionError } from '@/src/documents';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
+import { BigNumber } from 'bignumber.js';
+import type { CollNumRep} from '@/src/documents/index.js';
+import { NumCoercionError } from '@/src/documents/index.js';
 
 describe('unit.documents.collections.ser-des.enable-big-numbers', () => {
   it('should error if big numbers not enabled', () => {

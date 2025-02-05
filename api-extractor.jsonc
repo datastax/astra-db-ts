@@ -45,7 +45,7 @@
    *
    * SUPPORTED TOKENS: <projectFolder>, <packageName>, <unscopedPackageName>
    */
-  "mainEntryPointFilePath": "dist/index.d.ts",
+  "mainEntryPointFilePath": "dist/esm/index.d.ts",
 
   /**
    * A list of NPM package names whose exports should be treated as part of this package.
@@ -110,7 +110,7 @@
      * SUPPORTED TOKENS: <projectFolder>, <packageName>, <unscopedPackageName>
      * DEFAULT VALUE: "<projectFolder>/tsconfig.json"
      */
-//     "tsconfigFilePath": "tsconfig.build.json",
+     "tsconfigFilePath": "<projectFolder>/etc/tsconfig.esm.json"
     /**
      * Provides a compiler configuration that will be used instead of reading the tsconfig.json file from disk.
      * The object must conform to the TypeScript tsconfig schema:

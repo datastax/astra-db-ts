@@ -12,15 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIHttpClient } from '@/src/lib/api/clients';
-import { SerDes } from '@/src/lib/api/ser-des/ser-des';
-import {
+import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
+import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
+import type {
   Collection,
-  CollectionDeleteManyError,
   CollectionInsertManyOptions,
-  CollectionUpdateManyError,
   DataAPIDetailedErrorDescriptor,
-  DataAPIResponseError,
   Filter,
   FindCursor,
   GenericDeleteManyResult,
@@ -38,18 +35,22 @@ import {
   SomeDoc,
   SomeRow,
   Table,
-  UpdateFilter,
-} from '@/src/documents';
-import { nullish, WithTimeout } from '@/src/lib';
-import { insertManyOrdered, insertManyUnordered } from '@/src/documents/commands/helpers/insertion';
-import { coalesceUpsertIntoUpdateResult, mkUpdateResult } from '@/src/documents/commands/helpers/updates';
-import { mkRespErrorFromResponse } from '@/src/documents/errors';
-import { normalizedSort } from '@/src/documents/utils';
-import { mkDistinctPathExtractor, pullSafeProjection4Distinct } from '@/src/documents/commands/helpers/distinct';
+  UpdateFilter} from '@/src/documents/index.js';
+import {
+  CollectionDeleteManyError,
+  CollectionUpdateManyError,
+  DataAPIResponseError,
+} from '@/src/documents/index.js';
+import type { nullish, WithTimeout } from '@/src/lib/index.js';
+import { insertManyOrdered, insertManyUnordered } from '@/src/documents/commands/helpers/insertion.js';
+import { coalesceUpsertIntoUpdateResult, mkUpdateResult } from '@/src/documents/commands/helpers/updates.js';
+import { mkRespErrorFromResponse } from '@/src/documents/errors.js';
+import { normalizedSort } from '@/src/documents/utils.js';
+import { mkDistinctPathExtractor, pullSafeProjection4Distinct } from '@/src/documents/commands/helpers/distinct.js';
 import stableStringify from 'safe-stable-stringify';
-import { GenericInsertOneResult } from '@/src/documents/commands/types/insert/insert-one';
-import { GenericInsertManyResult } from '@/src/documents/commands/types/insert/insert-many';
-import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
+import type { GenericInsertOneResult } from '@/src/documents/commands/types/insert/insert-one.js';
+import type { GenericInsertManyResult } from '@/src/documents/commands/types/insert/insert-many.js';
+import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 
 /**
  * @internal
@@ -78,7 +79,7 @@ export class CommandImpls<ID> {
     });
 
     return {
-      insertedId: this._serdes.deserialize(raw.status!.insertedIds[0], raw, SerDesTarget.InsertedId) as ID,
+      insertedId: this._serdes.deserialize(raw.status!.insertedIds[0], raw, SerDesTarget.InsertedId),
     };
   }
 
@@ -256,7 +257,7 @@ export class CommandImpls<ID> {
       bigNumsPresent: filter[1],
     });
 
-    return this._serdes.deserialize(resp.data?.document, resp, SerDesTarget.Record) as any;
+    return this._serdes.deserialize(resp.data?.document, resp, SerDesTarget.Record);
   }
 
   public async findOneAndReplace<Schema extends SomeDoc>(_filter: Filter, _replacement: SomeDoc, options?: GenericFindOneAndReplaceOptions): Promise<Schema | null> {

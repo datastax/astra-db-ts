@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $CustomInspect } from '@/src/lib/constants';
-import { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
-import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
-import { mkInvArgsErr } from '@/src/documents/utils';
-import { Ref } from '@/src/lib/types';
-import { numDigits } from '@/src/lib/utils';
+import { $CustomInspect } from '@/src/lib/constants.js';
+import type { TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
+import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
+import { mkInvArgsErr } from '@/src/documents/utils.js';
+import type { Ref } from '@/src/lib/types.js';
+import { numDigits } from '@/src/lib/utils.js';
 
 /**
  * #### Overview
@@ -245,7 +245,7 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
    *
    * @see DataAPIDurationBuilder
    */
-  public static builder(base?: DataAPIDuration) {
+  public static builder(this: void, base?: DataAPIDuration) {
     return new DataAPIDurationBuilder(base);
   }
 
@@ -760,7 +760,7 @@ export class DataAPIDurationBuilder {
    *
    * @returns The mutated builder instance
    */
-  public negate(negative: boolean = !this._negative): this {
+  public negate(negative = !this._negative): this {
     this._negative = negative;
     return this;
   }
@@ -1228,7 +1228,7 @@ type MDN = [number, number, bigint];
 const BuilderAddNamesLUT = ['years', 'months', 'weeks', 'days', 'hours', 'minutes', 'seconds', 'milliseconds', 'microseconds', 'nanoseconds'];
 
 const parseDurationStr = (str: string, fromDataAPI: boolean): MDN => {
-  const isNegative = str[0] === '-';
+  const isNegative = str.startsWith('-');
   const durationStr = isNegative ? str.slice(1) : str;
 
   if (!durationStr) {
@@ -1241,7 +1241,7 @@ const parseDurationStr = (str: string, fromDataAPI: boolean): MDN => {
 
   const builder = new DataAPIDurationBuilder(undefined, true).negate(isNegative);
 
-  if (durationStr[0] === 'P') {
+  if (durationStr.startsWith('P')) {
     if (durationStr.at(-1) === 'W') {
       return parseISOWeekDuration(durationStr, builder);
     }
@@ -1341,7 +1341,7 @@ const parseBasicDuration = (str: string, builder: DataAPIDurationBuilder): MDN =
 const ISOStandardDurationRegex = /^P(?:(\d+)Y)?(?:(\d+)M)?(?:(\d+)D)?(?:T(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)(?:\.(\d+))?S)?)?$/;
 
 const parseISOStandardDuration = (str: string, builder: DataAPIDurationBuilder): MDN => {
-  const match = str.match(ISOStandardDurationRegex);
+  const match = ISOStandardDurationRegex.exec(str);
 
   if (!match) {
     throw mkSyntaxErr('ISO-8601 standard', str);
@@ -1361,7 +1361,7 @@ const parseISOStandardDuration = (str: string, builder: DataAPIDurationBuilder):
 const ISOWeekDurationRegex = /^P(\d+)W$/;
 
 const parseISOWeekDuration = (str: string, builder: DataAPIDurationBuilder): MDN => {
-  const match = str.match(ISOWeekDurationRegex);
+  const match = ISOWeekDurationRegex.exec(str);
 
   if (!match) {
     throw mkSyntaxErr('ISO-8601 week', str);
@@ -1375,7 +1375,7 @@ const parseISOWeekDuration = (str: string, builder: DataAPIDurationBuilder): MDN
 const ISOAlternateDurationRegex = /^P(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})$/;
 
 const parseISOAlternateDuration = (str: string, builder: DataAPIDurationBuilder): MDN => {
-  const match = str.match(ISOAlternateDurationRegex);
+  const match = ISOAlternateDurationRegex.exec(str);
 
   if (!match) {
     throw mkSyntaxErr('ISO-8601 alternate', str);

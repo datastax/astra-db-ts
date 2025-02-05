@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TokenProvider } from '@/src/lib/token-providers/token-provider';
+import { TokenProvider } from '@/src/lib/token-providers/token-provider.js';
 
 /**
  * The most basic token provider, which simply returns the token it was instantiated with.

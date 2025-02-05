@@ -14,8 +14,8 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { ObjectId, UUID } from '@/src/documents';
-import { useSuiteResources, DEFAULT_COLLECTION_NAME, it, parallel } from '@/tests/testlib';
+import { ObjectId, UUID } from '@/src/documents/index.js';
+import { useSuiteResources, DEFAULT_COLLECTION_NAME, it, parallel } from '@/tests/testlib/index.js';
 
 parallel('(LONG) integration.documents.ids', { drop: 'colls:after' }, ({ db }) => {
   const collections = useSuiteResources(() => ({

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection } from '@/src/documents/collections';
-import { SomeDoc } from '@/src/documents/collections/types/document';
-import { Db } from '@/src/db/db';
+import type { Collection } from '@/src/documents/collections/index.js';
+import type { SomeDoc } from '@/src/documents/collections/types/document.js';
+import type { Db } from '@/src/db/db.js';
 
 export interface TestSchema {
   $vector?: number[];

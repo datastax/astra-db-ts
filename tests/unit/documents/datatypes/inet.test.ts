@@ -14,8 +14,8 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DataAPIInet } from '@/src/documents';
-import { describe, it } from '@/tests/testlib';
+import { DataAPIInet } from '@/src/documents/index.js';
+import { describe, it } from '@/tests/testlib/index.js';
 
 const IPV4 = '127.0.0.1';
 const IPV6 = '2001:0db8:85a3:0000:0000:8a2e:0370:7334';

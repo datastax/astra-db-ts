@@ -52,7 +52,7 @@ done
 node -i -e "
   require('./node_modules/dotenv/config');
 
-  const $ = require('./dist');
+  const $ = require('./dist/cjs/index.js');
   const sp = require('synchronized-promise');
   require('util').inspect.defaultOptions.depth = null;
 

@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { describe, ENVIRONMENT, it, TEST_APPLICATION_URI } from '@/tests/testlib';
+import { describe, ENVIRONMENT, it, TEST_APPLICATION_URI } from '@/tests/testlib/index.js';
 
 describe('integration.administration.db-admin', ({ client, dbAdmin }) => {
   it('(LONG) works', async () => {

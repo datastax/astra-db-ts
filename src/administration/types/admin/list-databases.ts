@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AstraDbCloudProvider, AstraDbStatus } from '@/src/administration/types';
-import type { WithTimeout } from '@/src/lib';
+import type { AstraDbCloudProvider, AstraDbStatus } from '@/src/administration/types/index.js';
+import type { WithTimeout } from '@/src/lib/index.js';
 
 /**
  * Represents all possible statuses of a database that you can filter by.

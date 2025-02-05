@@ -12,19 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type TypedEmitter from 'typed-emitter';
-import type { FetchCtx, FetcherResponseInfo } from '@/src/lib/api/fetch/types';
-import type { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/lib/api/clients';
-import type { DataAPIClientEventMap } from '@/src/lib/logging';
-import { Logger } from '@/src/lib/logging/logger';
-import { MkTimeoutError, Timeouts } from '@/src/lib/api/timeouts/timeouts';
+import type { FetchCtx, FetcherResponseInfo } from '@/src/lib/api/fetch/types.js';
+import type { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/lib/api/clients/index.js';
+import type { DataAPIClientEventMap } from '@/src/lib/logging/index.js';
+import { Logger } from '@/src/lib/logging/logger.js';
+import type { MkTimeoutError } from '@/src/lib/api/timeouts/timeouts.js';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
+import type { MicroEmitter } from '@/src/lib/index.js';
 
 /**
  * @internal
  */
 export abstract class HttpClient {
   readonly baseUrl: string;
-  readonly emitter: TypedEmitter<DataAPIClientEventMap>;
+  readonly emitter: MicroEmitter<DataAPIClientEventMap>;
   readonly logger: Logger;
   readonly fetchCtx: FetchCtx;
   readonly baseHeaders: Record<string, any>;

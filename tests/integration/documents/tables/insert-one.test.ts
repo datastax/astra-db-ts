@@ -20,10 +20,10 @@ import {
   DataAPITime,
   DataAPIVector,
   UUID,
-} from '@/src/documents';
-import { it, parallel } from '@/tests/testlib';
+} from '@/src/documents/index.js';
+import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import BigNumber from 'bignumber.js';
+import { BigNumber } from 'bignumber.js';
 
 parallel('integration.documents.tables.insert-one', ({ db, table, table_ }) => {
   it('should insert one partial row', async (key) => {

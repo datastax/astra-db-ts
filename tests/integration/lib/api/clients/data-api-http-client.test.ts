@@ -21,10 +21,10 @@ import {
   OTHER_KEYSPACE,
   parallel,
   TEST_APPLICATION_URI,
-} from '@/tests/testlib';
+} from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client';
-import { DataAPIHttpError, DataAPIResponseError } from '@/src/documents';
+import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
+import { DataAPIHttpError, DataAPIResponseError } from '@/src/documents/index.js';
 
 describe('integration.lib.api.clients.data-api-http-client', ({ db }) => {
   let httpClient: DataAPIHttpClient;

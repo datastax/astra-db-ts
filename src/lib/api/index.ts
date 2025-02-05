@@ -12,43 +12,40 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './fetch/fetch-h2';
-export * from './fetch/fetch-native';
-export { DEFAULT_KEYSPACE } from './constants';
+export * from './fetch/fetch-h2.js';
+export * from './fetch/fetch-native.js';
+export { DEFAULT_KEYSPACE } from './constants.js';
 
 export type {
   Fetcher,
   FetcherRequestInfo,
   FetcherResponseInfo,
-} from './fetch/types';
+} from './fetch/types.js';
 
 export type {
   RawDataAPIResponse,
   OpaqueHttpClient,
   SomeConstructor,
-} from './types';
+} from './types.js';
 
 export type {
   BaseSerDesConfig,
   SerDesFn,
-} from './ser-des/ser-des';
+} from './ser-des/ser-des.js';
 
-export * from './ser-des/codecs';
+export * from './ser-des/codecs.js';
 
 export type {
   BaseSerDesCtx,
   BaseSerCtx,
   BaseDesCtx,
-} from './ser-des/ctx';
+} from './ser-des/ctx.js';
 
 export type {
   TimeoutDescriptor,
   WithTimeout,
   TimedOutCategories,
-} from './timeouts/timeouts';
+} from './timeouts/timeouts.js';
 
-export {
-  Camel2SnakeCase,
-  KeyTransformer,
-  Camel2SnakeCaseOptions,
-} from './ser-des/key-transformer';
+export type { Camel2SnakeCaseOptions } from './ser-des/key-transformer.js';
+export { Camel2SnakeCase, KeyTransformer } from './ser-des/key-transformer.js';

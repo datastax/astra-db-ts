@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeDoc } from '@/src/documents/collections';
-import type { Sort } from '@/src/documents/types';
-import { DataAPIVector, vector } from '@/src/documents/datatypes';
+import type { SomeDoc } from '@/src/documents/collections/index.js';
+import type { Sort } from '@/src/documents/types/index.js';
+import { DataAPIVector, vector } from '@/src/documents/datatypes/index.js';
 
 declare const $ERROR: unique symbol;
 
@@ -36,13 +36,13 @@ declare const $ERROR: unique symbol;
  *
  * @public
  */
-export type TypeErr<S> = { [$ERROR]: S };
+export interface TypeErr<S> { [$ERROR]: S }
 
 /**
  * @internal
  */
 export function extractDbIdFromUrl(uri: string): string | undefined {
-  return new URL(uri).hostname.match(/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}/)?.[0];
+  return (/^[0-9a-f]{8}-([0-9a-f]{4}-){3}[0-9a-f]{12}/.exec(new URL(uri).hostname))?.[0];
 }
 
 /**

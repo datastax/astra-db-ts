@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $CustomInspect } from '@/src/lib/constants';
-import { nullish } from '@/src/lib';
-import { TableCodec, TableSerCtx, TableDesCtx } from '@/src/documents';
-import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
+import { $CustomInspect } from '@/src/lib/constants.js';
+import type { nullish } from '@/src/lib/index.js';
+import type { TableCodec, TableSerCtx, TableDesCtx } from '@/src/documents/index.js';
+import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
 
 /**
  * A shorthand function for `new DataAPIInet(addr, version?)`

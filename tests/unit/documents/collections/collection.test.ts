@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Collection } from '@/src/documents/collections';
-import { DEFAULT_KEYSPACE } from '@/src/lib/api';
-import { describe, it } from '@/tests/testlib';
+import { Collection } from '@/src/documents/collections/index.js';
+import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
+import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { $CustomInspect } from '@/src/lib/constants';
+import { $CustomInspect } from '@/src/lib/constants.js';
 
 describe('unit.documents.collections.collection', ({ db }) => {
   describe('initialization', () => {

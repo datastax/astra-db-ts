@@ -13,32 +13,16 @@
 // limitations under the License.
 // noinspection JSDeprecatedSymbols
 
-import type TypedEmitter from 'typed-emitter';
-import type { AdminOptions, DataAPIClientOptions, DbOptions } from '@/src/client/types';
-import { LIB_NAME } from '@/src/version';
-import { type DataAPIClientEventMap, TokenProvider } from '@/src/lib';
-import { Db, InvalidEnvironmentError } from '@/src/db';
-import { AstraAdmin } from '@/src/administration';
-import { $CustomInspect } from '@/src/lib/constants';
-import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
-import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
-import { ParsedRootClientOpts, RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler';
-
-/**
- * The base class for the {@link DataAPIClient} event emitter to make it properly typed.
- *
- * Should never need to be used directly.
- *
- * @public
- */
-export const DataAPIClientEventEmitterBase = (() => {
-  /* istanbul ignore next: exceptional case that can't be manually reproduced */
-  try {
-    return (require('events') as { EventEmitter: (new () => TypedEmitter<DataAPIClientEventMap>) }).EventEmitter;
-  } catch (_) {
-    throw new Error(`\`${LIB_NAME}\` requires the \`events\` module to be available for usage. Please provide a polyfill (e.g. the \`events\` package) or use a compatible environment.`);
-  }
-})();
+import type { AdminOptions, DataAPIClientOptions, DbOptions } from '@/src/client/types/index.js';
+import { type DataAPIClientEventMap, TokenProvider } from '@/src/lib/index.js';
+import { Db, InvalidEnvironmentError } from '@/src/db/index.js';
+import { AstraAdmin } from '@/src/administration/index.js';
+import { $CustomInspect } from '@/src/lib/constants.js';
+import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler.js';
+import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler.js';
+import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
+import { RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler.js';
+import { MicroEmitter } from '@/src/lib/micro-emitter.js';
 
 /**
  * ##### Overview
@@ -83,7 +67,7 @@ export const DataAPIClientEventEmitterBase = (() => {
  *
  * @see DataAPIEnvironment
  */
-export class DataAPIClient extends DataAPIClientEventEmitterBase {
+export class DataAPIClient extends MicroEmitter<DataAPIClientEventMap> {
   readonly #options: ParsedRootClientOpts;
 
   /**

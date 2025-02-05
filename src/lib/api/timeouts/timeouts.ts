@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { nullish, OneOrMany } from '@/src/lib';
-import { HTTPRequestInfo } from '@/src/lib/api/clients';
-import { toArray } from '@/src/lib/utils';
-import { ParsedTimeoutDescriptor, TimeoutCfgHandler } from '@/src/lib/api/timeouts/cfg-handler';
+import type { nullish, OneOrMany } from '@/src/lib/index.js';
+import type { HTTPRequestInfo } from '@/src/lib/api/clients/index.js';
+import { toArray } from '@/src/lib/utils.js';
+import type { ParsedTimeoutDescriptor} from '@/src/lib/api/timeouts/cfg-handler.js';
+import { TimeoutCfgHandler } from '@/src/lib/api/timeouts/cfg-handler.js';
 
 /**
  * The timeout categories that caused the timeout.
@@ -392,7 +393,7 @@ export class Timeouts {
 
   public static fmtTimeoutMsg = (tm: TimeoutManager, timeoutTypes: TimedOutCategories) => {
     const timeout = (timeoutTypes === 'provided')
-      ? Object.values(tm.initial())[0]!
+      ? Object.values(tm.initial())[0]
       : tm.initial()[toArray(timeoutTypes)[0]];
 
     const types =

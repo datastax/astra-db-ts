@@ -13,20 +13,21 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEFAULT_COLLECTION_NAME, initTestObjects, it, parallel } from '@/tests/testlib';
+import { DEFAULT_COLLECTION_NAME, initTestObjects, it, parallel } from '@/tests/testlib/index.js';
+import type {
+  CollCodec,
+  CollDesCtx,
+  CollSerCtx,
+  CommandSucceededEvent} from '@/src/index.js';
 import {
   $DeserializeForCollection,
   $SerializeForCollection,
   Camel2SnakeCase,
-  CollCodec,
   CollCodecs,
-  CollDesCtx,
-  CollSerCtx,
-  CommandSucceededEvent,
-} from '@/src/index';
-import BigNumber from 'bignumber.js';
+} from '@/src/index.js';
+import { BigNumber } from 'bignumber.js';
 import assert from 'assert';
-import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
+import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 
 parallel('integration.documents.collections.ser-des.usecases.object-mapping', () => {
   it('should work with explicit serdes', async (key) => {
@@ -41,7 +42,7 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
       ) {}
 
       public get numPages() {
-        return 'how would I know??';
+        return 'how would I know??'.length;
       }
 
       public prettyPrint() {
@@ -204,7 +205,7 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
       }
 
       public get numPages() {
-        return 'how would I know??';
+        return 'how would I know??'.length;
       }
 
       public prettyPrint() {

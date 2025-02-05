@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { EmbeddingHeadersProvider } from '@/src/documents/embedding-providers/embedding-headers-provider';
+import { EmbeddingHeadersProvider } from '@/src/documents/embedding-providers/embedding-headers-provider.js';
 
 /**
  * An embedding headers provider which translates AWS access keys into the appropriate authentication headers for

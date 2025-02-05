@@ -12,12 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { oneOrMany } from '@/src/lib/utils';
+import { oneOrMany } from '@/src/lib/utils.js';
 import { either, nullish, string, tuple } from 'decoders';
-import { OptionsHandler, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler';
-import { Caller } from '@/src/client';
-import { OneOrMany } from '@/src/lib';
-import { CLIENT_USER_AGENT } from '@/src/lib/api/constants';
+import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
+import { OptionsHandler } from '@/src/lib/opts-handler.js';
+import type { Caller } from '@/src/client/index.js';
+import type { OneOrMany } from '@/src/lib/index.js';
+import { CLIENT_USER_AGENT } from '@/src/lib/api/constants.js';
 
 /**
  * @internal
@@ -47,7 +48,7 @@ const transformer = decoder.transform((config) => {
     (Array.isArray(config[0]))
       ?  config
       : [config]
-  );
+  ) as string[];
 
   const callerString = callers.map((c) => {
     return (c[1]) ? `${c[0]}/${c[1]}` : c[0];

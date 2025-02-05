@@ -12,15 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { BaseSerDesConfig, SerDes, SerDesFn } from '@/src/lib/api/ser-des/ser-des';
-import { BaseDesCtx, BaseSerCtx, NEVERMIND } from '@/src/lib/api/ser-des/ctx';
-import { CollCodecs, RawCollCodecs } from '@/src/documents/collections/ser-des/codecs';
-import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
-import { isBigNumber, pathMatches } from '@/src/lib/utils';
-import { CollNumRepCfg, GetCollNumRepFn } from '@/src/documents';
-import { coerceBigNumber, coerceNumber, collNumRepFnFromCfg } from '@/src/documents/collections/ser-des/big-nums';
-import { CollSerDesCfgHandler } from '@/src/documents/collections/ser-des/cfg-handler';
-import { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
+import type { BaseSerDesConfig, SerDesFn } from '@/src/lib/api/ser-des/ser-des.js';
+import { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
+import type { BaseDesCtx, BaseSerCtx} from '@/src/lib/api/ser-des/ctx.js';
+import { NEVERMIND } from '@/src/lib/api/ser-des/ctx.js';
+import type { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs.js';
+import { CollCodecs } from '@/src/documents/collections/ser-des/codecs.js';
+import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
+import { isBigNumber, pathMatches } from '@/src/lib/utils.js';
+import type { CollNumRepCfg, GetCollNumRepFn } from '@/src/documents/index.js';
+import { coerceBigNumber, coerceNumber, collNumRepFnFromCfg } from '@/src/documents/collections/ser-des/big-nums.js';
+import { CollSerDesCfgHandler } from '@/src/documents/collections/ser-des/cfg-handler.js';
+import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
 
 /**
  * @public
@@ -90,7 +93,7 @@ const serialize: SerDesFn<CollSerCtx> = (value, ctx) => {
   const key = ctx.path[ctx.path.length - 1] ?? '';
   const nameSer = ctx.serializers.forName[key];
 
-  if (nameSer && nameSer.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
+  if (nameSer?.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
     return resp;
   }
 
@@ -110,7 +113,7 @@ const serialize: SerDesFn<CollSerCtx> = (value, ctx) => {
     // Class-based serializers
     const classSer = ctx.serializers.forClass.find((c) => value instanceof c.class);
 
-    if (classSer && classSer.fns.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
+    if (classSer?.fns.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
       return resp;
     }
 
@@ -156,7 +159,7 @@ const deserialize: SerDesFn<CollDesCtx> = (value, ctx) => {
   const key = ctx.path[ctx.path.length - 1] ?? '';
   const nameDes = ctx.deserializers.forName[key];
 
-  if (nameDes && nameDes.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
+  if (nameDes?.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
     return resp;
   }
 
@@ -174,7 +177,7 @@ const deserialize: SerDesFn<CollDesCtx> = (value, ctx) => {
     if (keys.length === 1) {
       const typeDes = ctx.deserializers.forType[keys[0]];
 
-      if (typeDes && typeDes.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
+      if (typeDes?.find((fns) => (resp = fns(value, ctx))[0] !== NEVERMIND)) {
         return resp;
       }
     }

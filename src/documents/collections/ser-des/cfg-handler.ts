@@ -13,15 +13,17 @@
 // limitations under the License.
 
 import { either, exact, nullish, oneOf, optional, record } from 'decoders';
+import type {
+  ParsedSerDesConfig} from '@/src/lib/api/ser-des/cfg-handler.js';
 import {
-  ParsedSerDesConfig,
   serDesDecoders,
   serdesMonoidSchema,
   serDesTransform,
-} from '@/src/lib/api/ser-des/cfg-handler';
-import { MonoidalOptionsHandler, monoids, OptionsHandlerTypes } from '@/src/lib/opts-handler';
-import { CollNumRepCfg, CollSerDesConfig, GetCollNumRepFn } from '@/src/documents';
-import { function_ } from '@/src/lib/utils';
+} from '@/src/lib/api/ser-des/cfg-handler.js';
+import type { OptionsHandlerTypes } from '@/src/lib/opts-handler.js';
+import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler.js';
+import type { CollNumRepCfg, CollSerDesConfig, GetCollNumRepFn } from '@/src/documents/index.js';
+import { function_ } from '@/src/lib/utils.js';
 
 const CollNumReps = ['number', 'bigint', 'bignumber', 'string', 'number_or_string'] as const;
 

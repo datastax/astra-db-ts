@@ -13,9 +13,9 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIClient } from '@/src/client';
+import { DataAPIClient } from '@/src/client/index.js';
 import assert from 'assert';
-import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/documents/events';
+import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent } from '@/src/documents/events.js';
 import {
   DEFAULT_COLLECTION_NAME,
   describe,
@@ -25,12 +25,12 @@ import {
   parallel,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
-} from '@/tests/testlib';
-import { DataAPIResponseError, DataAPITimeoutError, UUID } from '@/src/documents';
-import { DEFAULT_KEYSPACE } from '@/src/lib/api';
-import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
+} from '@/tests/testlib/index.js';
+import { DataAPIResponseError, DataAPITimeoutError, UUID } from '@/src/documents/index.js';
+import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
+import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants.js';
 import { before } from 'mocha';
-import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 
 describe('integration.client.data-api-client', () => {
   parallel('db', () => {

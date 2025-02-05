@@ -13,22 +13,23 @@
 // limitations under the License.
 
 // Important to import from specific paths here to avoid circular dependencies
-import { DataAPIBlob } from '@/src/documents/datatypes/blob';
-import { DataAPIDate } from '@/src/documents/datatypes/date';
-import { DataAPIDuration } from '@/src/documents/datatypes/duration';
-import { DataAPITime } from '@/src/documents/datatypes/time';
-import { UUID } from '@/src/documents/datatypes/uuid';
-import { DataAPIVector } from '@/src/documents/datatypes/vector';
-import { TableDesCtx, TableSerCtx } from '@/src/documents';
-import { CustomCodecOpts, NominalCodecOpts, RawCodec, SerDesFn, TypeCodecOpts } from '@/src/lib';
-import BigNumber from 'bignumber.js';
-import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
-import { DataAPIInet } from '@/src/documents/datatypes/inet';
+import { DataAPIBlob } from '@/src/documents/datatypes/blob.js';
+import { DataAPIDate } from '@/src/documents/datatypes/date.js';
+import { DataAPIDuration } from '@/src/documents/datatypes/duration.js';
+import { DataAPITime } from '@/src/documents/datatypes/time.js';
+import { UUID } from '@/src/documents/datatypes/uuid.js';
+import { DataAPIVector } from '@/src/documents/datatypes/vector.js';
+import type { TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
+import type { CustomCodecOpts, NominalCodecOpts, RawCodec, SerDesFn, TypeCodecOpts } from '@/src/lib/index.js';
+import { BigNumber } from 'bignumber.js';
+import type { $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
+import { $DeserializeForTable } from '@/src/documents/tables/ser-des/constants.js';
+import { DataAPIInet } from '@/src/documents/datatypes/inet.js';
 
 /**
  * @public
  */
-export type TableCodecClass = {
+export interface TableCodecClass {
   new (...args: any[]): { [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>> };
   [$DeserializeForTable]: SerDesFn<TableDesCtx>;
 }

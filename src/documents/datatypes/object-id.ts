@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { isNullish } from '@/src/lib/utils';
-import { $CustomInspect } from '@/src/lib/constants';
-import { CollCodec, CollDesCtx, CollSerCtx } from '@/src/documents';
-import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
+import { isNullish } from '@/src/lib/utils.js';
+import { $CustomInspect } from '@/src/lib/constants.js';
+import type { CollCodec, CollDesCtx, CollSerCtx } from '@/src/documents/index.js';
+import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 
 const objectIdRegex = new RegExp('^[0-9a-fA-F]{24}$');
 

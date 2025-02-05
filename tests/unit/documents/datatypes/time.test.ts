@@ -14,9 +14,9 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DataAPITime, date, time } from '@/src/documents';
-import { describe, it } from '@/tests/testlib';
-import { $CustomInspect } from '@/src/lib/constants';
+import { DataAPITime, date, time } from '@/src/documents/index.js';
+import { describe, it } from '@/tests/testlib/index.js';
+import { $CustomInspect } from '@/src/lib/constants.js';
 
 describe('unit.documents.datatypes.time', () => {
   describe('construction', () => {
@@ -176,7 +176,7 @@ describe('unit.documents.datatypes.time', () => {
 
   describe('toDateUTC', () => {
     it('should work without a base', () => {
-      const date = new Date(`${new Date(Date.now()).toLocaleDateString('sv')}T12:34:56Z`);
+      const date = new Date(`${new Date().toLocaleDateString('sv', { timeZone: 'utc' })}T12:34:56Z`);
       assert.ok(Math.abs(time('12:34:56').toDateUTC().getTime() - date.getTime()) < 10);
     });
 

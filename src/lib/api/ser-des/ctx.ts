@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Deserializers, KeyTransformer, RawDataAPIResponse, Serializers } from '@/src/lib';
+import type { Deserializers, KeyTransformer, RawDataAPIResponse, Serializers } from '@/src/lib/index.js';
 
 /**
  * @public
@@ -63,10 +63,10 @@ export interface BaseSerDesCtx {
   target: SerDesTarget,
 }
 
-export const DONE = 0 as const;
-export const RECURSE = 1 as const;
-export const REPLACE = 2 as const;
-export const NEVERMIND = 3 as const;
+export const DONE = 0;
+export const RECURSE = 1;
+export const REPLACE = 2;
+export const NEVERMIND = 3;
 
 const DONE_ARR = [DONE] as const;
 const RECURSE_ARR = [RECURSE] as const;

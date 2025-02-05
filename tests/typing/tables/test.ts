@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeRow } from '@/src/documents/tables/types/row';
-import { InferTablePrimaryKey, InferTableSchema } from '@/src/db/types/tables/table-schema';
-import { Table } from '@/src/documents/tables/table';
-import { Db } from '@/src/db';
-import { TypeErr } from '@/src/documents/utils';
+import type { SomeRow } from '@/src/documents/tables/types/row.js';
+import type { InferTablePrimaryKey, InferTableSchema } from '@/src/db/types/tables/table-schema.js';
+import type { Table } from '@/src/documents/tables/table.js';
+import type { Db } from '@/src/db/index.js';
+import type { TypeErr } from '@/src/documents/utils.js';
 
 const db = null! as Db;
 
@@ -115,7 +115,7 @@ type _Proof2 = Expect<Equal<MyPK, {
   age: number,
 }>>;
 
-(async () => {
+await (async () => {
   const myTable: Table<MySchema, MyPK> = await mkTable();
 
   const insertManyResult = await myTable.insertMany([

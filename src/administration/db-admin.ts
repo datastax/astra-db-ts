@@ -13,9 +13,9 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
-import { WithTimeout } from '@/src/lib';
-import { Db } from '@/src/db';
+import type { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers.js';
+import type { WithTimeout } from '@/src/lib/index.js';
+import type { Db } from '@/src/db/index.js';
 
 /**
  * Represents some DatabaseAdmin class used for managing some specific database.

@@ -12,19 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { BaseSerDesConfig, SerDes, SerDesFn } from '@/src/lib/api/ser-des/ser-des';
-import {
+import type { BaseSerDesConfig, SerDesFn } from '@/src/lib/api/ser-des/ser-des.js';
+import { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
+import type {
   ListTableColumnDefinitions,
   ListTableKnownColumnDefinition,
   ListTableUnsupportedColumnDefinition,
-} from '@/src/db';
-import { RawTableCodecs, TableCodecs } from '@/src/documents/tables/ser-des/codecs';
-import { BaseDesCtx, BaseSerCtx, NEVERMIND, SerDesTarget } from '@/src/lib/api/ser-des/ctx';
-import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
-import { isBigNumber, pathMatches } from '@/src/lib/utils';
-import { UnexpectedDataAPIResponseError } from '@/src/client';
-import { TableSerDesCfgHandler } from '@/src/documents/tables/ser-des/cfg-handler';
-import { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
+} from '@/src/db/index.js';
+import type { RawTableCodecs} from '@/src/documents/tables/ser-des/codecs.js';
+import { TableCodecs } from '@/src/documents/tables/ser-des/codecs.js';
+import type { BaseDesCtx, BaseSerCtx} from '@/src/lib/api/ser-des/ctx.js';
+import { NEVERMIND, SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
+import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
+import { isBigNumber, pathMatches } from '@/src/lib/utils.js';
+import { UnexpectedDataAPIResponseError } from '@/src/client/index.js';
+import { TableSerDesCfgHandler } from '@/src/documents/tables/ser-des/cfg-handler.js';
+import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
 
 /**
  * @public
@@ -111,7 +114,7 @@ const serialize: SerDesFn<TableSerCtx> = (value, ctx) => {
   const key = ctx.path[ctx.path.length - 1] ?? '';
   const nameSer = ctx.serializers.forName[key];
 
-  if (nameSer && nameSer.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+  if (nameSer?.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
     return resp;
   }
 
@@ -148,7 +151,7 @@ const serialize: SerDesFn<TableSerCtx> = (value, ctx) => {
     // Class-based serializers
     const classSer = ctx.serializers.forClass.find((c) => value instanceof c.class);
 
-    if (classSer && classSer.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+    if (classSer?.fns.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
       return resp;
     }
 
@@ -178,7 +181,7 @@ const deserialize: SerDesFn<TableDesCtx> = (value, ctx) => {
   const key = ctx.path[ctx.path.length - 1] ?? '';
   const nameDes = ctx.deserializers.forName[key];
 
-  if (nameDes && nameDes.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
+  if (nameDes?.find((fns) => { resp = fns(value, ctx); if (resp.length === 2) value = resp[1]; return resp[0] !== NEVERMIND; })) {
     return resp;
   }
 

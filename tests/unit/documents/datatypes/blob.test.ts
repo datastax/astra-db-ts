@@ -14,8 +14,8 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { blob, DataAPIBlob } from '@/src/documents';
-import { describe, it } from '@/tests/testlib';
+import { blob, DataAPIBlob } from '@/src/documents/index.js';
+import { describe, it } from '@/tests/testlib/index.js';
 
 const BUFF = Buffer.from([0x0, 0x1, 0x2]);
 const ARR_BUFF = new Uint8Array(BUFF).buffer;

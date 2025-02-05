@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/index';
-import { isBigNumber } from '@/src/lib/utils';
+import type { SomeDoc } from '@/src/index.js';
+import { isBigNumber } from '@/src/lib/utils.js';
 
 /**
  * ##### Overview (Beta)

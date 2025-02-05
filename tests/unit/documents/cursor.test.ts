@@ -14,9 +14,9 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { describe, it } from '@/tests/testlib';
-import { FindCursor } from '@/src/documents';
-import { $CustomInspect } from '@/src/lib/constants';
+import { describe, it } from '@/tests/testlib/index.js';
+import { FindCursor } from '@/src/documents/index.js';
+import { $CustomInspect } from '@/src/lib/constants.js';
 
 describe('unit.documents.cursors', ({ collection }) => {
   class TestCursor extends FindCursor<any> {}

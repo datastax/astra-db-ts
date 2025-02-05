@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Table } from '@/src/documents/tables/table';
-import {
+import type { Table } from '@/src/documents/tables/table.js';
+import type {
   CreateTableColumnDefinitions,
   CreateTableDefinition,
   CreateTablePrimaryKeyDefinition,
   FullCreateTablePrimaryKeyDefinition,
-} from '@/src/db/types/tables/create-table';
-import { EmptyObj } from '@/src/lib/types';
-import {
+} from '@/src/db/types/tables/create-table.js';
+import type { EmptyObj } from '@/src/lib/types.js';
+import type {
   DataAPIBlob,
   DataAPIDate,
   DataAPIDuration, DataAPIInet,
@@ -28,10 +28,10 @@ import {
   FoundRow,
   SomeRow,
   UUID,
-} from '@/src/documents';
-import { TypeErr } from '@/src/documents/utils';
-import { DataAPIVector } from '@/src/documents/datatypes/vector';
-import BigNumber from 'bignumber.js';
+} from '@/src/documents/index.js';
+import type { TypeErr } from '@/src/documents/utils.js';
+import type { DataAPIVector } from '@/src/documents/datatypes/vector.js';
+import type { BigNumber } from 'bignumber.js';
 
 /**
  * The different possible types that a Table's schema may be inferred from using the {@link InferTableSchema}-like types,
@@ -289,7 +289,7 @@ type CqlMapType2TsType<Def> =
 
 type CqlListType2TsType<Def> =
   Def extends { valueType: infer ValueType extends string }
-    ? Array<CqlType2TSType<ValueType, never> & {}>
+    ? (CqlType2TSType<ValueType, never> & {})[]
     : TypeErr<'Invalid generics definition for \'list\'; should have valueType set as scalar CQL types (e.g. \'text\')'>;
 
 type CqlSetType2TsType<Def> =

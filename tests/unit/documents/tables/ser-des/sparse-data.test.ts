@@ -13,9 +13,9 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { describe, it } from '@/tests/testlib';
+import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des';
+import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 
 describe('unit.documents.tables.ser-des.sparse-data', () => {
   const schema = {

@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AstraDbAdminInfo, AstraDbRegionInfo } from '@/src/administration/types/admin/database-info';
-import { buildAstraEndpoint } from '@/src/lib/utils';
-import { SomeDoc } from '@/src/documents';
+import type { AstraDbAdminInfo, AstraDbRegionInfo } from '@/src/administration/types/admin/database-info.js';
+import { buildAstraEndpoint } from '@/src/lib/utils.js';
+import type { SomeDoc } from '@/src/documents/index.js';
 
 /**
  * @internal
@@ -50,8 +50,8 @@ export const buildAstraDatabaseAdminInfo = (raw: SomeDoc, environment: 'dev' | '
     keyspaces: raw.info.keyspaces ?? [],
     environment: environment,
     cloudProvider: raw.info.cloudProvider!,
-    createdAt: new Date(raw.creationTime!),
-    lastUsed: new Date(raw.lastUsageTime!),
+    createdAt: new Date(raw.creationTime),
+    lastUsed: new Date(raw.lastUsageTime),
     status: raw.status,
     regions: regions,
     raw: raw,

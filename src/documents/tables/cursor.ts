@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FindCursor, SomeDoc, SomeRow, Table, TableFilter } from '@/src/documents';
+import type { SomeDoc, SomeRow, Table, TableFilter } from '@/src/documents/index.js';
+import { FindCursor } from '@/src/documents/index.js';
 
 /**
  * A subclass of `FindCursor` which is identical to its parent; it just adds some more specific typing for

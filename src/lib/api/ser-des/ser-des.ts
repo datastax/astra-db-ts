@@ -12,20 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc } from '@/src/documents';
-import {
-  Deserializers,
-  KeyTransformer,
-  nullish,
-  processCodecs,
-  RawCodec,
-  RawDataAPIResponse,
-  Serializers,
-} from '@/src/lib';
-import {
+import type { SomeDoc } from '@/src/documents/index.js';
+import type { Deserializers, KeyTransformer, RawCodec, RawDataAPIResponse, Serializers } from '@/src/lib/index.js';
+import { processCodecs } from '@/src/lib/index.js';
+import type {
   BaseDesCtx,
   BaseSerCtx,
-  BaseSerDesCtx,
+  BaseSerDesCtx} from '@/src/lib/api/ser-des/ctx.js';
+import {
   ctxDone,
   ctxNevermind,
   ctxRecurse,
@@ -34,8 +28,8 @@ import {
   NEVERMIND,
   REPLACE,
   SerDesTarget,
-} from '@/src/lib/api/ser-des/ctx';
-import { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler';
+} from '@/src/lib/api/ser-des/ctx.js';
+import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
 
 /**
  * @public
@@ -237,7 +231,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
     ];
   }
 
-  public deserialize<S extends unknown | nullish>(obj: unknown | nullish, raw: RawDataAPIResponse, target: SerDesTarget = SerDesTarget.Record): S {
+  public deserialize<S>(obj: unknown, raw: RawDataAPIResponse, target: SerDesTarget = SerDesTarget.Record): S {
     if (obj === null || obj === undefined) {
       return obj as S;
     }

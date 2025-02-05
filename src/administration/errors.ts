@@ -12,10 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { FetcherResponseInfo, type TimeoutDescriptor } from '@/src/lib/api';
-import { SomeDoc } from '@/src/documents';
-import { HTTPRequestInfo } from '@/src/lib/api/clients';
-import { TimedOutCategories, Timeouts } from '@/src/lib/api/timeouts/timeouts';
+import type { FetcherResponseInfo} from '@/src/lib/api/index.js';
+import { type TimeoutDescriptor } from '@/src/lib/api/index.js';
+import type { SomeDoc } from '@/src/documents/index.js';
+import type { HTTPRequestInfo } from '@/src/lib/api/clients/index.js';
+import type { TimedOutCategories} from '@/src/lib/api/timeouts/timeouts.js';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 
 /**
  * A representation of what went wrong when interacting with the DevOps API.
@@ -86,7 +88,7 @@ export class DevOpsAPITimeoutError extends DevOpsAPIError {
   /**
    * @internal
    */
-  public static mk(info: HTTPRequestInfo, types: TimedOutCategories): DevOpsAPITimeoutError {
+  public static mk(this: void, info: HTTPRequestInfo, types: TimedOutCategories): DevOpsAPITimeoutError {
     return new DevOpsAPITimeoutError(info, types);
   }
 }

@@ -13,12 +13,12 @@
 // limitations under the License.
 /* eslint-disable prefer-const */
 
-import { checkTestsEnabled } from '@/tests/testlib/utils';
-import { parallelTestState } from '@/tests/testlib/test-fns/parallel';
-import { CURRENT_DESCRIBE_NAMES, RUNNING_INT_TESTS } from '@/tests/testlib/global';
-import { DEFAULT_TEST_TIMEOUT } from '@/tests/testlib/config';
-import { UUID } from '@/src/documents';
-import { backgroundTestState, TEST_FILTER } from '@/tests/testlib';
+import { checkTestsEnabled } from '@/tests/testlib/utils.js';
+import { parallelTestState } from '@/tests/testlib/test-fns/parallel.js';
+import { CURRENT_DESCRIBE_NAMES, RUNNING_INT_TESTS } from '@/tests/testlib/global.js';
+import { DEFAULT_TEST_TIMEOUT } from '@/tests/testlib/config.js';
+import { UUID } from '@/src/documents/index.js';
+import { backgroundTestState, TEST_FILTER } from '@/tests/testlib/index.js';
 
 export type TestFn = SyncTestFn | AsyncTestFn;
 
@@ -93,10 +93,10 @@ function pretendingEnv(env: 'server' | 'browser' | 'unknown', fn: TestFn): TestF
     anyGlobalThis.window = env === 'browser' ? globalThis : undefined;
     anyGlobalThis.Buffer = env === 'unknown' ? undefined : buffer;
 
-    const res = fn(...args);
+    let res = fn(...args);
 
     if (res instanceof Promise) {
-      res.finally(() => {
+      res = res.finally(() => {
         [anyGlobalThis.window, anyGlobalThis.Buffer] = [window, buffer];
       });
     } else {

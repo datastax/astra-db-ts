@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { EmbeddingHeadersProvider } from '@/src/documents/embedding-providers/embedding-headers-provider';
-import { nullish } from '@/src/lib';
+import { EmbeddingHeadersProvider } from '@/src/documents/embedding-providers/embedding-headers-provider.js';
+import type { nullish } from '@/src/lib/index.js';
 
 /**
  * The most basic embedding header provider, used for the vast majority of providers.

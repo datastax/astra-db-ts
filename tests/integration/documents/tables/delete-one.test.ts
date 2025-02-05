@@ -13,8 +13,8 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIResponseError } from '@/src/documents';
-import { it, parallel } from '@/tests/testlib';
+import { DataAPIResponseError } from '@/src/documents/index.js';
+import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 parallel('integration.documents.tables.delete-one', { truncate: 'colls:before' }, ({ table }) => {

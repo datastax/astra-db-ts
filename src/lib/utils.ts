@@ -12,10 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import JBI from 'json-bigint';
-import { SomeDoc } from '@/src/documents';
-import BigNumber from 'bignumber.js';
-import { array, Decoder, define, either, instanceOf } from 'decoders';
+import type JBI from 'json-bigint';
+import type { SomeDoc } from '@/src/documents/index.js';
+import { BigNumber } from 'bignumber.js';
+import type { Decoder} from 'decoders';
+import { array, define, either, instanceOf } from 'decoders';
 
 /**
  * @internal
@@ -60,21 +61,23 @@ export function withJbiNullProtoFix(jbi: { parse: typeof JBI['parse']; stringify
 }
 
 function nullProtoFix(doc: SomeDoc): SomeDoc {
+  if (!doc || typeof doc !== 'object') {
+    return doc;
+  }
+
+  if (isBigNumber(doc)) {
+    return BigNumber(doc);
+  }
+
   if (Array.isArray(doc)) {
     for (let i = 0; i < doc.length; i++) {
-      if (typeof doc[i] === 'object' && doc[i] !== null) {
-        doc[i] = nullProtoFix(doc[i]);
-      }
+      doc[i] = nullProtoFix(doc[i]);
     }
   } else {
-    if (Object.getPrototypeOf(doc) === null) {
-      doc = { ...doc };
-    }
+    Object.setPrototypeOf(doc, Object.prototype);
 
     for (const key of Object.keys(doc)) {
-      if (typeof doc[key] === 'object' && doc[key] !== null) {
-        doc[key] = nullProtoFix(doc[key]);
-      }
+      doc[key] = nullProtoFix(doc[key]);
     }
   }
 

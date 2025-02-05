@@ -13,25 +13,25 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIClientEventMap, DataAPILoggingOutput } from '@/src/lib/logging/types';
+import type { DataAPIClientEventMap, DataAPILoggingOutput } from '@/src/lib/logging/types.js';
 import type {
   CommandFailedEvent,
   CommandStartedEvent,
   CommandSucceededEvent,
   CommandWarningsEvent,
-} from '@/src/documents';
+} from '@/src/documents/index.js';
 import type {
   AdminCommandFailedEvent,
   AdminCommandPollingEvent,
   AdminCommandStartedEvent,
   AdminCommandSucceededEvent,
   AdminCommandWarningsEvent,
-} from '@/src/administration';
-import { EmptyInternalLoggingConfig, EventConstructors } from '@/src/lib/logging/constants';
-import { buildOutputsMap } from '@/src/lib/logging/util';
-import type TypedEmitter from 'typed-emitter';
-import type { BaseDataAPIClientEvent } from '@/src/lib';
-import { LoggingCfgHandler, ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler';
+} from '@/src/administration/index.js';
+import { EmptyInternalLoggingConfig, EventConstructors } from '@/src/lib/logging/constants.js';
+import { buildOutputsMap } from '@/src/lib/logging/util.js';
+import type { BaseDataAPIClientEvent, MicroEmitter } from '@/src/lib/index.js';
+import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler.js';
+import { LoggingCfgHandler } from '@/src/lib/logging/cfg-handler.js';
 
 /**
  * @internal
@@ -62,7 +62,7 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
 
   public static cfg: typeof LoggingCfgHandler = LoggingCfgHandler;
 
-  constructor(_config: ParsedLoggingConfig, private emitter: TypedEmitter<DataAPIClientEventMap>, private console: ConsoleLike) {
+  constructor(_config: ParsedLoggingConfig, private emitter: MicroEmitter<DataAPIClientEventMap>, private console: ConsoleLike) {
     const config = Logger.buildInternalConfig(_config);
 
     for (const [_event, outputs] of Object.entries(config)) if (outputs) {

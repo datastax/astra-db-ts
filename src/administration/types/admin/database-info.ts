@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AstraDbCloudProvider, AstraDbStatus } from '@/src/administration/types';
+import type { AstraDbCloudProvider, AstraDbStatus } from '@/src/administration/types/index.js';
 
 /**
  * Information about a region where an Astra database is hosted.

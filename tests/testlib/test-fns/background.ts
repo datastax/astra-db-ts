@@ -13,11 +13,12 @@
 // limitations under the License.
 /* eslint-disable prefer-const */
 
-import { initTestObjects } from '@/tests/testlib/fixtures';
-import { checkTestsEnabled, tryCatchErr } from '@/tests/testlib/utils';
-import { SuiteBlock, TEST_FILTER } from '@/tests/testlib';
-import { AsyncSuiteResult, AsyncSuiteSpec, GlobalAsyncSuitesSpec } from '@/tests/testlib/test-fns/types';
-import { UUID } from '@/src/documents';
+import { initTestObjects } from '@/tests/testlib/fixtures.js';
+import { checkTestsEnabled, tryCatchErr } from '@/tests/testlib/utils.js';
+import type { SuiteBlock} from '@/tests/testlib/index.js';
+import { TEST_FILTER } from '@/tests/testlib/index.js';
+import type { AsyncSuiteResult, AsyncSuiteSpec, GlobalAsyncSuitesSpec } from '@/tests/testlib/test-fns/types.js';
+import { UUID } from '@/src/documents/index.js';
 
 export const backgroundTestState: GlobalAsyncSuitesSpec = {
   inBlock: false,

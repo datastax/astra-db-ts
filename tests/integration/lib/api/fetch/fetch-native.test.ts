@@ -20,10 +20,10 @@ import {
   parallel,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
-} from '@/tests/testlib';
-import { DEFAULT_KEYSPACE, FetchNative } from '@/src/lib/api';
+} from '@/tests/testlib/index.js';
+import { DEFAULT_KEYSPACE, FetchNative } from '@/src/lib/api/index.js';
 import assert from 'assert';
-import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
+import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants.js';
 
 parallel('integration.lib.api.fetch.fetch-native', () => {
   const genericOptions = <const>{

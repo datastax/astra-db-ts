@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPILoggingConfig, TimeoutDescriptor, TokenProvider } from '@/src/lib';
+import type { DataAPILoggingConfig, TimeoutDescriptor, TokenProvider } from '@/src/lib/index.js';
 
 /**
  * The default admin options as can be specified in the {@link DataAPIClientOptions}.

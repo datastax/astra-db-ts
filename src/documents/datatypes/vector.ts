@@ -12,17 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $CustomInspect } from '@/src/lib/constants';
-import {
+import { $CustomInspect } from '@/src/lib/constants.js';
+import type {
   CollCodec,
+  TableCodec, TableDesCtx,
+  TableSerCtx} from '@/src/documents/index.js';
+import {
   type CollDesCtx,
   type CollSerCtx,
-  TableCodec, TableDesCtx,
-  TableSerCtx,
-} from '@/src/documents';
-import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants';
-import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
-import { forJSEnv } from '@/src/lib/utils';
+} from '@/src/documents/index.js';
+import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
+import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
+import { forJSEnv } from '@/src/lib/utils.js';
 
 /**
  * Represents any type that can be converted into a {@link DataAPIVector}
@@ -102,7 +103,7 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
     });
 
     Object.defineProperty(this, $CustomInspect, {
-      value: this.toString,
+      value: this.toString.bind(this),
     });
   }
 
@@ -248,8 +249,8 @@ const serializeFromArray = forJSEnv<[number[] | Float32Array], number[] | { $bin
     }
 
     let binary = '';
-    for (let i = 0; i < buffer.length; i++) {
-      binary += String.fromCharCode(buffer[i]);
+    for (const byte of buffer) {
+      binary += String.fromCharCode(byte);
     }
 
     return { $binary: window.btoa(binary) };

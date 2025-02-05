@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIVector } from '@/src/documents';
+import type { DataAPIVector } from '@/src/documents/index.js';
 
 /**
  * Represents *some document*. It's not a base type, but rather more of a

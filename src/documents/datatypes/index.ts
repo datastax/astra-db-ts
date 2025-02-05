@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './blob';
-export * from './date';
-export * from './duration';
-export * from './inet';
-export * from './object-id';
-export * from './time';
-export * from './uuid';
-export * from './vector';
+export * from './blob.js';
+export * from './date.js';
+export * from './duration.js';
+export * from './inet.js';
+export * from './object-id.js';
+export * from './time.js';
+export * from './uuid.js';
+export * from './vector.js';

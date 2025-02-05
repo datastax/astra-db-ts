@@ -20,10 +20,10 @@ import {
   DataAPITime,
   DataAPIVector,
   UUID,
-} from '@/src/documents';
-import { EverythingTableSchema, it, parallel } from '@/tests/testlib';
+} from '@/src/documents/index.js';
+import { EverythingTableSchema, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import BigNumber from 'bignumber.js';
+import { BigNumber } from 'bignumber.js';
 
 parallel('integration.documents.tables.find-one', { truncate: 'colls:before', drop: 'tables:after' }, ({ table }) => {
   it('should find one partial row', async (key) => {

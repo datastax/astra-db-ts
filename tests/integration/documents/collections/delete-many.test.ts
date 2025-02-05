@@ -13,9 +13,9 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib';
+import { initCollectionWithFailingClient, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { DataAPIError, CollectionDeleteManyError } from '@/src/documents';
+import { DataAPIError, CollectionDeleteManyError } from '@/src/documents/index.js';
 
 parallel('integration.documents.collections.delete-many', { truncate: 'colls:before' }, ({ collection, collection_ }) => {
   before(async () => {

@@ -12,20 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './cursor';
-export type * from './types';
-export * from './table';
+export * from './cursor.js';
+export type * from './types/index.js';
+export * from './table.js';
 
-export {
+export type {
   TableSerDesConfig,
   TableDesCtx,
   TableSerCtx,
-} from './ser-des/ser-des';
+} from './ser-des/ser-des.js';
 
-export {
-  TableCodecClass,
-  TableCodecs,
-  TableCodec,
-} from './ser-des/codecs';
-export { $DeserializeForTable } from '@/src/documents/tables/ser-des/constants';
-export { $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
+export type { TableCodecClass, TableCodec } from './ser-des/codecs.js';
+export { TableCodecs } from './ser-des/codecs.js';
+export { $DeserializeForTable } from '@/src/documents/tables/ser-des/constants.js';
+export { $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';

@@ -13,8 +13,8 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { describe, it } from '@/tests/testlib';
-import { DataAPIClient, DevOpsAPIResponseError } from '@/src//index';
+import { describe, it } from '@/tests/testlib/index.js';
+import { DataAPIClient, DevOpsAPIResponseError } from '@/src/index.js';
 import assert from 'assert';
 
 describe('integration.administration.astra-admin', () => {

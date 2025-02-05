@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './test-fns/background';
-export * from './config';
-export * from './test-fns/describe';
-export * from './fixtures';
-export * from './filter';
-export * from './global';
-export * from './test-fns/it';
-export * from './test-fns/parallel';
-export { useSuiteResources } from './utils';
+export * from './test-fns/background.js';
+export * from './config.js';
+export * from './test-fns/describe.js';
+export * from './fixtures.js';
+export * from './filter.js';
+export * from './global.js';
+export * from './test-fns/it.js';
+export * from './test-fns/parallel.js';
+export { useSuiteResources } from './utils.js';

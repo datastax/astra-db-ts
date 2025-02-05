@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { backgroundTestResults, backgroundTestState, describe } from '@/tests/testlib';
-import { AsyncSuiteResult } from '@/tests/testlib/test-fns/types';
+import { backgroundTestResults, backgroundTestState, describe } from '@/tests/testlib/index.js';
+import type { AsyncSuiteResult } from '@/tests/testlib/test-fns/types.js';
 
 describe('{dummy}', () => {
   before(async () => {

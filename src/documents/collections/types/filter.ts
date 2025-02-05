@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeDoc } from '@/src/documents/collections';
-import { IdOf, NoId, ToDotNotation } from '@/src/documents';
-import { EmptyObj } from '@/src/lib/types';
+import type { SomeDoc } from '@/src/documents/collections/index.js';
+import type { IdOf, NoId, ToDotNotation } from '@/src/documents/index.js';
+import type { EmptyObj } from '@/src/lib/types.js';
 
 /**
  * Represents some filter operation for a given document schema.
@@ -55,7 +55,7 @@ export type CollectionFilter<Schema extends SomeDoc> = {
  *
  * @public
  */
-export type CollectionFilterExpr<Elem> = Elem | (CollectionFilterOps<Elem> & { [key: string]: any });
+export type CollectionFilterExpr<Elem> = Elem | (CollectionFilterOps<Elem> & Record<string, any>);
 
 /**
  * Represents filter operators such as `$eq` and `$in` (but not statements like `$and`)
