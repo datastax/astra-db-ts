@@ -13,20 +13,21 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEFAULT_COLLECTION_NAME, it, parallel } from '@/tests/testlib';
+import { DEFAULT_COLLECTION_NAME, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import BigNumber from 'bignumber.js';
-import {
-  $DeserializeForCollection,
-  $SerializeForCollection,
+import { BigNumber } from 'bignumber.js';
+import type {
   CollCodec,
-  CollCodecs,
   CollDesCtx,
   CollNumRepCfg,
   CollSerCtx,
-  GetCollNumRepFn,
+  GetCollNumRepFn} from '@/src/documents/index.js';
+import {
+  $DeserializeForCollection,
+  $SerializeForCollection,
+  CollCodecs,
   uuid,
-} from '@/src/documents';
+} from '@/src/documents/index.js';
 
 parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }) => {
   const TestObjAct1 = (key: string) => ({

@@ -12,19 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DataAPIHttpClient } from '@/src/lib/api/clients';
-import { SerDes } from '@/src/lib/api/ser-des/ser-des';
+import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
+import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
+import type {
+  DataAPIDetailedErrorDescriptor} from '@/src/documents/errors.js';
 import {
-  DataAPIDetailedErrorDescriptor,
   DataAPIResponseError,
   mkRespErrorFromResponse,
   mkRespErrorFromResponses,
-} from '@/src/documents/errors';
-import { SomeDoc, SomeId } from '@/src/documents';
-import { TimeoutManager } from '@/src/lib/api/timeouts/timeouts';
-import { RawDataAPIResponse } from '@/src/lib';
-import { GenericInsertManyDocumentResponse } from '@/src/documents/commands/types/insert/insert-many';
-import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
+} from '@/src/documents/errors.js';
+import type { SomeDoc, SomeId } from '@/src/documents/index.js';
+import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
+import type { RawDataAPIResponse } from '@/src/lib/index.js';
+import type { GenericInsertManyDocumentResponse } from '@/src/documents/commands/types/insert/insert-many.js';
+import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 
 /**
  * @internal
@@ -161,7 +162,7 @@ const insertMany = async <ID>(
   for (let i = 0, n = documentResponses.length; i < n; i++) {
     const docResp = documentResponses[i];
     if (docResp.status === "OK") {
-      insertedIds.push(serdes.deserialize(docResp._id, raw, SerDesTarget.InsertedId) as ID);
+      insertedIds.push(serdes.deserialize(docResp._id, raw, SerDesTarget.InsertedId));
     } else if (docResp.errorIdx) {
       docResp.error = errors![docResp.errorIdx];
       delete docResp.errorIdx;

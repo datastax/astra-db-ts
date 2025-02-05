@@ -13,20 +13,21 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { initTestObjects, it, parallel } from '@/tests/testlib';
+import { initTestObjects, it, parallel } from '@/tests/testlib/index.js';
+import type {
+  CommandSucceededEvent,
+  TableCodec,
+  TableDesCtx,
+  TableSerCtx} from '@/src/index.js';
 import {
   $DeserializeForTable,
   $SerializeForTable,
   Camel2SnakeCase,
-  CommandSucceededEvent,
-  TableCodec,
   TableCodecs,
-  TableDesCtx,
-  TableSerCtx,
-} from '@/src/index';
-import BigNumber from 'bignumber.js';
+} from '@/src/index.js';
+import { BigNumber } from 'bignumber.js';
 import assert from 'assert';
-import { SerDesTarget } from '@/src/lib/api/ser-des/ctx';
+import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 
 parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop: 'tables:after' }, ({ db }) => {
   before(async () => {
@@ -60,7 +61,7 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
       ) {}
 
       public get numPages() {
-        return 'how would I know??';
+        return 'how would I know??'.length;
       }
 
       public prettyPrint() {
@@ -208,7 +209,7 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
       }
 
       public get numPages() {
-        return 'how would I know??';
+        return 'how would I know??'.length;
       }
 
       public prettyPrint() {

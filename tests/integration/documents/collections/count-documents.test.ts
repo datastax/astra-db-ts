@@ -13,8 +13,8 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { TooManyDocumentsToCountError } from '@/src/documents';
-import { it, parallel } from '@/tests/testlib';
+import { TooManyDocumentsToCountError } from '@/src/documents/index.js';
+import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 parallel('integration.documents.collections.count-documents', { truncate: 'colls:before' }, ({ collection, collection_ }) => {

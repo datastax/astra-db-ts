@@ -12,8 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './api';
-export * from './token-providers';
-export * from './logging';
-export { DataAPIEnvironments } from './constants';
-export type { nullish, DataAPIEnvironment, OneOrMany, EmptyObj } from './types';
+export * from './api/index.js';
+export * from './token-providers/index.js';
+export * from './logging/index.js';
+export * from './micro-emitter.js';
+export { DataAPIEnvironments } from './constants.js';
+export type { nullish, DataAPIEnvironment, OneOrMany, EmptyObj } from './types.js';

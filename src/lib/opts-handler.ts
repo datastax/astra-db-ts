@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { Decoder } from 'decoders';
-import { nullish } from '@/src/lib/index';
-import { findLast } from '@/src/lib/utils';
+import type { Decoder } from 'decoders';
+import type { nullish } from '@/src/lib/index.js';
+import { findLast } from '@/src/lib/utils.js';
 
 /**
  * @public
@@ -33,7 +33,7 @@ declare const __parsed: unique symbol;
 /**
  * @internal
  */
-export type Parsed<Brand> = { [__parsed]: Brand };
+export interface Parsed<Brand> { [__parsed]: Brand }
 
 /**
  * @internal
@@ -44,7 +44,7 @@ export type Unparse<T> = Omit<T, typeof __parsed>;
  * @internal
  */
 export interface OptionsHandlerTypes {
-  Parsed: Parsed<string> & unknown,
+  Parsed: Parsed<string>,
   Parseable: unknown,
 }
 
@@ -154,7 +154,7 @@ export const monoids = <const>{
     const empty = Object.fromEntries(schemaEntries.map(([k, v]) => [k, v.empty])) as T;
 
     const concat = (configs: T[]): T => {
-      const result = { ...empty } as T;
+      const result = { ...empty };
 
       for (const config of configs) {
         for (const [key, monoid] of schemaEntries) {

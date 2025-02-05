@@ -26,7 +26,7 @@ const RAW_FILTERS = (process.env.CLIENT_TESTS_FILTER ?? '')
   .split('" ')
   .filter(Boolean)
   .map((rawFilter) => (<const>{
-    type: rawFilter[0] === 'f' ? 'match' : 'regex',
+    type: rawFilter.startsWith('f') ? 'match' : 'regex',
     inverted: rawFilter[1] === 'i',
     filter: rawFilter.split('"')[1],
   }));

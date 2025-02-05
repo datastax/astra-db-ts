@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { GenericFindOneAndDeleteOptions } from '@/src/documents';
+import type { GenericFindOneAndDeleteOptions } from '@/src/documents/index.js';
 
 /**
  * Represents the options for the `findOneAndDelete` command.

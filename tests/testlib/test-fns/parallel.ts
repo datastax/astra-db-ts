@@ -13,18 +13,19 @@
 // limitations under the License.
 /* eslint-disable prefer-const */
 
-import { initTestObjects } from '@/tests/testlib/fixtures';
+import type { initTestObjects } from '@/tests/testlib/fixtures.js';
 import { afterEach } from 'mocha';
-import { tryCatchErr } from '@/tests/testlib/utils';
+import { tryCatchErr } from '@/tests/testlib/utils.js';
+import type {
+  SuiteBlock,
+  SuiteOptions} from '@/tests/testlib/index.js';
 import {
   CURRENT_DESCRIBE_NAMES,
   describe,
-  SuiteBlock,
-  SuiteOptions,
   TEST_FILTER,
-} from '@/tests/testlib';
-import { UUID } from '@/src/documents';
-import { AsyncSuiteResult, GlobalAsyncSuitesSpec } from '@/tests/testlib/test-fns/types';
+} from '@/tests/testlib/index.js';
+import { UUID } from '@/src/documents/index.js';
+import type { AsyncSuiteResult, GlobalAsyncSuitesSpec } from '@/tests/testlib/test-fns/types.js';
 
 const mkDefaultSuite = () => ({ name: undefined, skipped: false, tests: [] });
 
@@ -134,7 +135,7 @@ parallel = function (name: string, optsOrFn: SuiteOptions | SuiteBlock, maybeFn?
 
             const result = results[suiteIdx][testIdx]!;
 
-            this.test!.title += ` (${~~result.ms!}ms)`;
+            this.test!.title += ` (${~~result.ms}ms)`;
 
             if (result.error) {
               throw result.error;

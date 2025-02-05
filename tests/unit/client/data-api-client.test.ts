@@ -13,15 +13,16 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIClient } from '@/src/client';
-import { FetcherResponseInfo } from '@/src/lib/api';
-import { FetchH2 } from '@/src/lib/api/fetch/fetch-h2';
-import { FetcherRequestInfo } from '@/src/lib/api/fetch/types';
-import { UsernamePasswordTokenProvider } from '@/src/lib';
-import { describe, it, TEST_APPLICATION_URI } from '@/tests/testlib';
+import { DataAPIClient } from '@/src/client/index.js';
+import { type FetcherResponseInfo } from '@/src/lib/api/index.js';
+import { FetchH2 } from '@/src/lib/api/fetch/fetch-h2.js';
+import type { FetcherRequestInfo } from '@/src/lib/api/fetch/types.js';
+import { UsernamePasswordTokenProvider } from '@/src/lib/index.js';
+import { describe, it, TEST_APPLICATION_URI } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { $CustomInspect, DataAPIEnvironments } from '@/src/lib/constants';
-import { InvalidEnvironmentError } from '@/src/db';
+import { $CustomInspect, DataAPIEnvironments } from '@/src/lib/constants.js';
+import { InvalidEnvironmentError } from '@/src/db/index.js';
+import * as fetchH2 from 'fetch-h2';
 
 describe('unit.client.data-api-client', () => {
   it('should accept valid tokens', () => {
@@ -92,7 +93,7 @@ describe('unit.client.data-api-client', () => {
   });
 
   it('should only accept valid http client types', () => {
-    assert.doesNotThrow(() => new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch-h2' } }));
+    assert.doesNotThrow(() => new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch-h2', fetchH2 } }));
     assert.doesNotThrow(() => new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch' } }));
     // @ts-expect-error - testing invalid input
     assert.throws(() => new DataAPIClient('dummy-token', { httpOptions: {} }));
@@ -139,24 +140,24 @@ describe('unit.client.data-api-client', () => {
 
   describe('using fetch-h2', () => {
     it('uses http2 by default', function () {
-      const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch-h2' } });
+      const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch-h2', fetchH2 } });
       const httpClient = client.db(TEST_APPLICATION_URI)._httpClient;
       assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
-      assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
+      assert.ok(httpClient.fetchCtx.ctx._http1 !== httpClient.fetchCtx.ctx._preferred);
     });
 
     it('uses http2 when forced', function () {
-      const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch-h2', preferHttp2: true } });
+      const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch-h2', fetchH2, preferHttp2: true } });
       const httpClient = client.db(TEST_APPLICATION_URI)._httpClient;
       assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
-      assert.ok(httpClient.fetchCtx.ctx['_http1'] !== httpClient.fetchCtx.ctx['_preferred']);
+      assert.ok(httpClient.fetchCtx.ctx._http1 !== httpClient.fetchCtx.ctx._preferred);
     });
 
     it('uses http1.1 when forced', () => {
-      const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch-h2', preferHttp2: false } });
+      const client = new DataAPIClient('dummy-token', { httpOptions: { client: 'fetch-h2', fetchH2, preferHttp2: false } });
       const httpClient = client.db(TEST_APPLICATION_URI)._httpClient;
       assert.ok(httpClient.fetchCtx.ctx instanceof FetchH2);
-      assert.ok(httpClient.fetchCtx.ctx['_http1'] === httpClient.fetchCtx.ctx['_preferred']);
+      assert.ok(httpClient.fetchCtx.ctx._http1 === httpClient.fetchCtx.ctx._preferred);
     });
   });
 

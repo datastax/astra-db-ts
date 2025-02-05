@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { ObjectId, SomeDoc, UUID } from '@/src/documents';
+import type { ObjectId, SomeDoc, UUID } from '@/src/documents/index.js';
 
 /**
  * Converts some `Schema` into a type representing its dot notation (object paths).
@@ -53,29 +53,29 @@ type _ToDotNotation<_Elem extends SomeDoc, Prefix extends string, Elem = Require
   [Key in keyof Elem]:
     SomeDoc extends Elem
       ? (
-        | (Prefix extends '' ? never : { [Path in CropTrailingDot<Prefix>]: Elem })
-        | { [Path in `${Prefix}${string}`]: any }
+        | (Prefix extends '' ? never : Record<CropTrailingDot<Prefix>, Elem>)
+        | Record<`${Prefix}${string}`, any>
         ) :
     true extends false & Elem[Key]
       ? (
-        | { [Path in `${Prefix}${Key & string}`]: Elem[Key] }
-        | { [Path in `${Prefix}${Key & string}.${string}`]: Elem[Key] }
+        | Record<`${Prefix}${Key & string}`, Elem[Key]>
+        | Record<`${Prefix}${Key & string}.${string}`, Elem[Key]>
         ) :
     Elem[Key] extends any[]
       ? (
-        | { [Path in `${Prefix}${Key & string}`]: Elem[Key] }
-        | { [Path in `${Prefix}${Key & string}.${number}`]: Elem[Key][number] }
+        | Record<`${Prefix}${Key & string}`, Elem[Key]>
+        | Record<`${Prefix}${Key & string}.${number}`, Elem[Key][number]>
         ) :
     Elem[Key] extends UUID | ObjectId
-      ? { [Path in `${Prefix}${Key & string}`]: Elem[Key] } :
+      ? Record<`${Prefix}${Key & string}`, Elem[Key]> :
     Elem[Key] extends Date
-      ? { [Path in `${Prefix}${Key & string}`]: Date | { $date: number } } :
+      ? Record<`${Prefix}${Key & string}`, Date | { $date: number }> :
     Elem[Key] extends SomeDoc
       ? (
-        | { [Path in `${Prefix}${Key & string}`]: Elem[Key] }
+        | Record<`${Prefix}${Key & string}`, Elem[Key]>
         | _ToDotNotation<Elem[Key], `${Prefix}${Key & string}.`>
         )
-      : { [Path in `${Prefix}${Key & string}`]: Elem[Key] }
+      : Record<`${Prefix}${Key & string}`, Elem[Key]>
 }[keyof Elem] extends infer Value
   ? Value
   : never;

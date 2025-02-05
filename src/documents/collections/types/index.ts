@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type * from './delete/delete-many';
-export type * from './delete/delete-one';
-export type * from './find/find';
-export type * from './find/find-one';
-export type * from './find/find-one-delete';
-export type * from './find/find-one-replace';
-export type * from './find/find-one-update';
-export type * from './insert/insert-many';
-export type * from './insert/insert-one';
-export type * from './update/update-many';
-export type * from './update/update-one';
-export type * from './update/replace-one';
-export type * from '../../types/dot-notation';
-export type * from './filter';
-export type * from './update-filter';
-export type * from './document';
-export type * from './utils';
+export type * from './delete/delete-many.js';
+export type * from './delete/delete-one.js';
+export type * from './find/find.js';
+export type * from './find/find-one.js';
+export type * from './find/find-one-delete.js';
+export type * from './find/find-one-replace.js';
+export type * from './find/find-one-update.js';
+export type * from './insert/insert-many.js';
+export type * from './insert/insert-one.js';
+export type * from './update/update-many.js';
+export type * from './update/update-one.js';
+export type * from './update/replace-one.js';
+export type * from '../../types/dot-notation.js';
+export type * from './filter.js';
+export type * from './update-filter.js';
+export type * from './document.js';
+export type * from './utils.js';

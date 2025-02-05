@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { IdOf } from '@/src/documents';
+import type { IdOf } from '@/src/documents/index.js';
 
 /**
  * Represents the result of an `insertOne` command on collection.

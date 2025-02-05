@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { initTestObjects, SuiteBlock, SuiteOptions, TestFn } from '@/tests/testlib';
+import type { initTestObjects, SuiteBlock, SuiteOptions, TestFn } from '@/tests/testlib/index.js';
 
 type DescribeImpl = (name: string, suite: SuiteBlock, opts: SuiteOptions | undefined, skipped: boolean, fixtures: ReturnType<typeof initTestObjects>) => void;
 

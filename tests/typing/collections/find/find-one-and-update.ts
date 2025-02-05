@@ -13,7 +13,8 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { dummyCollection, TestSchema } from '@/tests/typing/collections/prelude';
+import type { TestSchema } from '@/tests/typing/collections/prelude.js';
+import { dummyCollection } from '@/tests/typing/collections/prelude.js';
 
 void dummyCollection<TestSchema>().findOneAndUpdate({
   $vector: [0.25, 0.045, 0.38, 0.31, 0.67],

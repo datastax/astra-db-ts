@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 // Copyright DataStax, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
@@ -13,16 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { CommandEventMap } from '@/src/documents';
-import { AdminCommandEventMap } from '@/src/administration';
-import { OneOrMany } from '@/src/lib/types';
-// noinspection ES6UnusedImports
-import TypedEmitter from 'typed-emitter';
+import type { CommandEventMap } from '@/src/documents/index.js';
+import type { AdminCommandEventMap } from '@/src/administration/index.js';
+import type { OneOrMany } from '@/src/lib/types.js';
 
 /**
  * #### Overview
  *
- * The `EventMap` of events the {@link DataAPIClient} emits, which is an instance of {@link TypedEmitter}, when
+ * The `EventMap` of events the {@link DataAPIClient} emits, which is an instance of {@link MicroEmitter}, when
  * events logging is enabled (via `logging` options throughout the major class hierarchy).
  *
  * See {@link DataAPILoggingConfig} for more information on how to configure logging, and enable/disable specific events.
@@ -36,7 +33,7 @@ import TypedEmitter from 'typed-emitter';
  * - You can't programmatically interact with the logs/data
  * - You can't easily filter or format the logs
  *
- * {@link DataAPIClientEvent}s are a more flexible way to interact with the logs, allowing you to basically plug in, or
+ * {@link BaseDataAPIClientEvent}s are a more flexible way to interact with the logs, allowing you to basically plug in, or
  * even build, your own logging system around them.
  *
  * And of course, you're free to use both events and console logging in tandem, if you so choose.

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { GenericInsertManyOptions, SomeRow } from '@/src/documents';
+import type { GenericInsertManyOptions, SomeRow } from '@/src/documents/index.js';
 
 /**
  * Options for an `insertMany` command on a table.

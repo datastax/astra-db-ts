@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { TableIndexOptions, TableVectorIndexOptions } from '@/src/documents';
-import { WithTimeout } from '@/src/lib';
+import type { TableIndexOptions, TableVectorIndexOptions } from '@/src/documents/index.js';
+import type { WithTimeout } from '@/src/lib/index.js';
 
 /**
  * Options for listing indexes on a table.

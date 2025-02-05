@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { $CustomInspect } from '@/src/lib/constants';
-import { DataAPIDate, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents';
-import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants';
-import { mkInvArgsErr } from '@/src/documents/utils';
+import { $CustomInspect } from '@/src/lib/constants.js';
+import type { DataAPIDate, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
+import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
+import { mkInvArgsErr } from '@/src/documents/utils.js';
 
 /**
  * ##### Overview
@@ -146,7 +146,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
    *
    * @returns The current time in the local timezone
    */
-  public static now(): DataAPITime {
+  public static now(this: void): DataAPITime {
     return new DataAPITime(new Date());
   }
 
@@ -166,7 +166,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
    *
    * @returns The current time in UTC
    */
-  public static utcnow(): DataAPITime {
+  public static utcnow(this: void): DataAPITime {
     return new DataAPITime(...ofNanoOfDay((Date.now() % 86_400_000) * 1_000_000));
   }
 
@@ -188,7 +188,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
    *
    * @returns The `DataAPITime` representing the given number of nanoseconds
    */
-  public static ofNanoOfDay(nanoOfDay: number): DataAPITime {
+  public static ofNanoOfDay(this: void, nanoOfDay: number): DataAPITime {
     return new DataAPITime(...ofNanoOfDay(nanoOfDay));
   }
 
@@ -210,7 +210,7 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
    *
    * @returns The `DataAPITime` representing the given number of seconds
    */
-  public static ofSecondOfDay(secondOfDay: number): DataAPITime {
+  public static ofSecondOfDay(this: void, secondOfDay: number): DataAPITime {
     return new DataAPITime(...ofSecondOfDay(secondOfDay));
   }
 
@@ -558,7 +558,7 @@ const parseTimeQuick = (str: string): [number, number, number, number] => {
 const TimeRegex = /^(\d\d):(\d\d)(?::(\d\d(?:\.(\d{0,9}))?))?$/;
 
 const parseTimeStrict = (str: string): [number, number, number, number] => {
-  const match = str.match(TimeRegex);
+  const match = TimeRegex.exec(str);
 
   if (!match) {
     throw Error(`Invalid time: '${str}'; must match HH:MM[:SS[.NNNNNNNNN]]`);

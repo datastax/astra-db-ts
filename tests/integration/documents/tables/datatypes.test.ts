@@ -13,22 +13,23 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
+import type {
+  DataAPIBlob, DataAPIInet,
+  DataAPIVector,
+  SomeRow,
+  Table} from '@/src/documents/index.js';
 import {
   blob,
-  DataAPIBlob, DataAPIInet,
   DataAPIResponseError,
-  DataAPIVector,
   date,
   duration, inet,
-  SomeRow,
-  Table,
   time,
   uuid,
   vector,
-} from '@/src/documents';
-import { it, parallel } from '@/tests/testlib';
+} from '@/src/documents/index.js';
+import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import BigNumber from 'bignumber.js';
+import { BigNumber } from 'bignumber.js';
 
 parallel('integration.documents.tables.datatypes', ({ table, table_ }) => {
   interface ColumnAsserterOpts<T> {

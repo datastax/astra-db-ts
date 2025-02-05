@@ -13,10 +13,10 @@
 // limitations under the License.
 // import { DataAPIClientEvent } from '@/src/lib/logging/events'; needs to be like this or it errors
 
-import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client';
-import type { DataAPIErrorDescriptor } from '@/src/documents';
-import { BaseDataAPIClientEvent } from '@/src/lib/logging/events';
-import { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts';
+import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client.js';
+import type { DataAPIErrorDescriptor } from '@/src/documents/index.js';
+import { BaseDataAPIClientEvent } from '@/src/lib/logging/events.js';
+import type { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts.js';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -24,6 +24,7 @@ import { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts';
  *
  * @public
  */
+// eslint-disable-next-line -- is type instead of an interface to prevent issues w/ it not extending EventMap
 export type AdminCommandEventMap = {
   /**
    * Emitted when an admin command is started, before the initial HTTP request is made.

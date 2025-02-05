@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { WithTimeout } from '@/src/lib';
+import type { WithTimeout } from '@/src/lib/index.js';
 
 /**
  * Options for creating a new index via {@link Table.createVectorIndex}
@@ -46,5 +46,5 @@ export interface TableVectorIndexOptions {
   /**
    * Enable certain vector optimizations on the index by specifying the source model for your vectors, such as (not exhaustive) `'openai_v3_large'`, `'openai_v3_small'`, `'ada002'`, `'gecko'`, `'bert'`, or `'other'` (default).
    */
-  sourceModel?: string | 'other',
+  sourceModel?: (string & Record<never, never>) | 'other',
 }

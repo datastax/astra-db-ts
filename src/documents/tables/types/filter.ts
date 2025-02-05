@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeRow } from '@/src/documents';
+import type { SomeRow } from '@/src/documents/index.js';
 
 /**
  * Represents some filter operation for a given document schema.
@@ -55,7 +55,7 @@ export type TableFilterExpr<Elem> = Elem | TableFilterOps<Elem>;
  *
  * @public
  */
-export type TableFilterOps<Elem> = {
+export interface TableFilterOps<Elem> {
   $eq?: Elem,
   $ne?: Elem,
   $in?: Elem[],

@@ -17,8 +17,8 @@
 // + import { Client } from '@/src/client';
 // And now it's not even needed anymore :(
 
-import { DataAPIClient } from '@/src/client';
-import { DEFAULT_KEYSPACE } from '@/src/lib/api';
+import { DataAPIClient } from '@/src/client/index.js';
+import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
 import {
   DEFAULT_COLLECTION_NAME,
   DEFAULT_TABLE_NAME,
@@ -28,9 +28,9 @@ import {
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
   TEST_HTTP_CLIENT,
-} from '@/tests/testlib/config';
-import { BaseDataAPIClientEvent, DataAPIClientEventMap, DataAPILoggingConfig } from '@/src/lib';
-import { CreateTableDefinition, InferTableSchema } from '@/src/db';
+} from '@/tests/testlib/config.js';
+import type { BaseDataAPIClientEvent, DataAPIClientEventMap, DataAPILoggingConfig } from '@/src/lib/index.js';
+import type { CreateTableDefinition, InferTableSchema } from '@/src/db/index.js';
 import * as util from 'node:util';
 
 export interface TestObjectsOptions {
@@ -150,7 +150,7 @@ export const initCollectionWithFailingClient = () => {
   return collection;
 };
 
-export type Employee = {
+export interface Employee {
   _id?: string;
   username?: string;
   human?: boolean;
@@ -164,7 +164,7 @@ export type Employee = {
     is_office?: boolean;
     country?: string | null;
   };
-};
+}
 
 export const createSampleDocWithMultiLevel = (key: string) =>
   ({

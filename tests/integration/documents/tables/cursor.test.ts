@@ -13,16 +13,18 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIVector, SomeDoc } from '@/src/documents';
+import type { SomeDoc } from '@/src/documents/index.js';
+import { DataAPIVector } from '@/src/documents/index.js';
+import type {
+  EverythingTableSchema} from '@/tests/testlib/index.js';
 import {
   DEFAULT_TABLE_NAME,
   describe,
-  EverythingTableSchema,
   initCollectionWithFailingClient,
   it,
   OTHER_KEYSPACE,
   parallel,
-} from '@/tests/testlib';
+} from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 describe('integration.documents.tables.cursor', { truncate: 'tables:before' }, ({ db }) => {
@@ -106,7 +108,7 @@ describe('integration.documents.tables.cursor', { truncate: 'tables:before' }, (
       const cursor = table.find({}).map(intToString);
       const doc = await cursor.next();
       assert.ok(doc, 'Doc is null');
-      assert.ok(typeof doc['int'] === 'string');
+      assert.ok(typeof doc.int === 'string');
       assert.equal(cursor.state, 'started');
       assert.strictEqual(cursor.buffered(), 2);
     });

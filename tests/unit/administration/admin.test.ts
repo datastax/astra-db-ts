@@ -13,14 +13,15 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { AstraAdmin } from '@/src/administration';
-import { StaticTokenProvider, TokenProvider } from '@/src/lib';
-import { AdminOptions, DataAPIClient, DbOptions } from '@/src/client';
-import { describe, it } from '@/tests/testlib';
-import { DEFAULT_DEVOPS_API_ENDPOINTS } from '@/src/lib/api/constants';
-import { $CustomInspect } from '@/src/lib/constants';
-import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler';
-import { RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler';
+import { AstraAdmin } from '@/src/administration/index.js';
+import { StaticTokenProvider, TokenProvider } from '@/src/lib/index.js';
+import type { AdminOptions, DbOptions } from '@/src/client/index.js';
+import { DataAPIClient } from '@/src/client/index.js';
+import { describe, it } from '@/tests/testlib/index.js';
+import { DEFAULT_DEVOPS_API_ENDPOINTS } from '@/src/lib/api/constants.js';
+import { $CustomInspect } from '@/src/lib/constants.js';
+import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler.js';
+import { RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler.js';
 
 describe('unit.administration.admin', () => {
   const internalOps = (db?: Partial<DbOptions>, devops?: Partial<AdminOptions>) => RootOptsHandler(TokenProvider.opts.empty, null!).parse({

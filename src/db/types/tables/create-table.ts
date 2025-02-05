@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { VectorizeServiceOptions } from '@/src/db';
-import { WithTimeout } from '@/src/lib';
-import { TableOptions } from '@/src/db/types/tables/spawn-table';
+import type { VectorizeServiceOptions } from '@/src/db/index.js';
+import type { WithTimeout } from '@/src/lib/index.js';
+import type { TableOptions } from '@/src/db/types/tables/spawn-table.js';
 
 /**
  * Options for creating a new table (via {@link Db.createTable}).
@@ -177,7 +177,7 @@ export type TableScalarType =
  */
 export type LooseCreateTableColumnDefinition =
   | TableScalarType
-  | string;
+  | (string & Record<never, never>);
 
 /**
  * ##### Overview

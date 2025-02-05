@@ -14,16 +14,17 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { Db } from '@/src/db/db';
-import { DataAPIEnvironments, StaticTokenProvider, TokenProvider } from '@/src/lib';
-import { AdminOptions, DataAPIClient, DbOptions } from '@/src/client';
-import { DEMO_APPLICATION_URI, describe, it, TEST_APPLICATION_URI } from '@/tests/testlib';
-import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants';
-import { buildAstraEndpoint } from '@/src/lib/utils';
-import { $CustomInspect } from '@/src/lib/constants';
-import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
-import { ParsedEnvironment } from '@/src/client/opts-handlers/environment-cfg-handler';
-import { RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler';
+import { Db } from '@/src/db/db.js';
+import { DataAPIEnvironments, StaticTokenProvider, TokenProvider } from '@/src/lib/index.js';
+import type { AdminOptions, DbOptions } from '@/src/client/index.js';
+import { DataAPIClient } from '@/src/client/index.js';
+import { DEMO_APPLICATION_URI, describe, it, TEST_APPLICATION_URI } from '@/tests/testlib/index.js';
+import { DEFAULT_DATA_API_PATHS, DEFAULT_KEYSPACE } from '@/src/lib/api/constants.js';
+import { buildAstraEndpoint } from '@/src/lib/utils.js';
+import { $CustomInspect } from '@/src/lib/constants.js';
+import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler.js';
+import type { ParsedEnvironment } from '@/src/client/opts-handlers/environment-cfg-handler.js';
+import { RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler.js';
 
 describe('unit.db.db', () => {
   const internalOps = (db?: Partial<DbOptions>, devops?: Partial<AdminOptions>) => RootOptsHandler(TokenProvider.opts.empty, null!).parse({
@@ -35,7 +36,7 @@ describe('unit.db.db', () => {
     it('should allow db construction from endpoint', () => {
       const db = new Db(internalOps(), 'https://id-region.apps.astra.datastax.com', DbOptsHandler.empty);
       assert.ok(db);
-      assert.strictEqual(db._httpClient.baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
+      assert.strictEqual(db._httpClient.baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS.astra}`);
     });
 
     it('should not throw on missing token', () => {
@@ -48,7 +49,7 @@ describe('unit.db.db', () => {
     it('should allow db construction from endpoint, using default options', () => {
       const db = new Db(internalOps(), 'https://id-region.apps.astra.datastax.com', DbOptsHandler.empty);
       assert.ok(db);
-      assert.strictEqual(db._httpClient.baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS['astra']}`);
+      assert.strictEqual(db._httpClient.baseUrl, `https://id-region.apps.astra.datastax.com/${DEFAULT_DATA_API_PATHS.astra}`);
     });
 
     it('should allow db construction from endpoint, overwriting options', () => {
@@ -235,10 +236,10 @@ describe('unit.db.db', () => {
   });
 
   describe('info tests', () => {
-    it('should error on invalid environment', () => {
+    it('should error on invalid environment', async () => {
       for (const env of DataAPIEnvironments.filter(e => e !== 'astra')) {
         const db = new Db({ ...internalOps(), environment: env as ParsedEnvironment }, TEST_APPLICATION_URI, DbOptsHandler.empty);
-        assert.rejects(() => db.info(), { message: `Invalid environment '${env}' for operation 'db.info()'; expected environment(s): 'astra'` });
+        await assert.rejects(() => db.info(), { message: `Invalid environment '${env}' for operation 'db.info()' (info() is only available for Astra databases); expected environment(s): 'astra'` });
       }
     });
   });

@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DEFAULT_KEYSPACE } from '@/src/lib/api';
-import { describe, it } from '@/tests/testlib';
+import { DEFAULT_KEYSPACE } from '@/src/lib/api/index.js';
+import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { Table } from '@/src/documents';
-import { $CustomInspect } from '@/src/lib/constants';
+import { Table } from '@/src/documents/index.js';
+import { $CustomInspect } from '@/src/lib/constants.js';
 
 describe('unit.documents.tables.table', ({ db }) => {
   describe('initialization', () => {

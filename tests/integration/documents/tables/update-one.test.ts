@@ -35,10 +35,10 @@ import {
   DataAPITime,
   DataAPIVector,
   UUID,
-} from '@/src/documents';
-import { EverythingTableSchema, it, parallel } from '@/tests/testlib';
+} from '@/src/documents/index.js';
+import { EverythingTableSchema, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import BigNumber from 'bignumber.js';
+import { BigNumber } from 'bignumber.js';
 
 parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }, ({ table, table_ }) => {
   it('should error on empty $set/$unset', async () => {
@@ -181,7 +181,7 @@ parallel('integration.documents.tables.update-one', { truncate: 'colls:before' }
 
     const found = await table_.findOne({ text: key, int: 0 });
     assert.ok(found?.vector1 instanceof DataAPIVector);
-    assert.deepStrictEqual((found?.vector2 as DataAPIVector).asArray(), vector);
+    assert.deepStrictEqual(found.vector2?.asArray(), vector);
     assert.strictEqual(found?.text, key);
   });
 

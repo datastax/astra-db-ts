@@ -14,9 +14,9 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DataAPIDate, date, duration, time } from '@/src/documents';
-import { describe, it } from '@/tests/testlib';
-import { $CustomInspect } from '@/src/lib/constants';
+import { DataAPIDate, date, duration, time } from '@/src/documents/index.js';
+import { describe, it } from '@/tests/testlib/index.js';
+import { $CustomInspect } from '@/src/lib/constants.js';
 
 describe('unit.documents.datatypes.date', () => {
   const assertDateOk = (params: DataAPIDate | any[], ymd: unknown = params) => {

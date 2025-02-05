@@ -13,12 +13,15 @@
 // limitations under the License.
 // noinspection DuplicatedCode,CommaExpressionJS
 
-import { describe, it } from '@/tests/testlib';
+import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { CollDesCtx, CollSerDes, CollSerCtx } from '@/src/documents/collections/ser-des/ser-des';
-import { $DeserializeForCollection, $SerializeForCollection, CollCodec, CollCodecs } from '@/src/documents/collections';
-import { uuid, UUID } from '@/src/documents';
-import { ctxNevermind, ctxDone, ctxRecurse } from '@/src/lib/api/ser-des/ctx';
+import type { CollDesCtx, CollSerCtx } from '@/src/documents/collections/ser-des/ser-des.js';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
+import type { CollCodec} from '@/src/documents/collections/index.js';
+import { $DeserializeForCollection, $SerializeForCollection, CollCodecs } from '@/src/documents/collections/index.js';
+import type { UUID } from '@/src/documents/index.js';
+import { uuid } from '@/src/documents/index.js';
+import { ctxNevermind, ctxDone, ctxRecurse } from '@/src/lib/api/ser-des/ctx.js';
 
 describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
   describe('forPath', () => {

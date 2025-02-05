@@ -4,10 +4,16 @@
 
 ```ts
 
-import BigNumber from 'bignumber.js';
+import { BigNumber } from 'bignumber.js';
+import { CollSerDesConfig as CollSerDesConfig_2 } from '../../documents/collections/ser-des/ser-des.js';
 import { Decoder } from 'decoders';
-import { DecoderType } from 'decoders';
-import type TypedEmitter from 'typed-emitter';
+import type { DecoderType } from 'decoders';
+import { Monoid as Monoid_2 } from '../../lib/opts-handler.js';
+import { ParsedLoggingConfig } from '../../lib/logging/cfg-handler.js';
+import { ParsedSerDesConfig } from '../../lib/api/ser-des/cfg-handler.js';
+import { ParsedTimeoutDescriptor } from '../../lib/api/timeouts/cfg-handler.js';
+import { ParsedTokenProvider as ParsedTokenProvider_2 } from '../../lib/token-providers/token-provider.js';
+import { TableSerDesConfig as TableSerDesConfig_2 } from '../../documents/tables/ser-des/ser-des.js';
 
 // @public (undocumented)
 export const $DeserializeForCollection: unique symbol;
@@ -265,8 +271,6 @@ export interface BaseDesCtx<DesCtx> extends BaseSerDesCtx {
     // (undocumented)
     deserializers: Deserializers<DesCtx>;
     // (undocumented)
-    parsingInsertedId: boolean;
-    // (undocumented)
     rawDataApiResp: RawDataAPIResponse;
 }
 
@@ -278,36 +282,41 @@ export interface BaseSerCtx<SerCex> extends BaseSerDesCtx {
 
 // @public (undocumented)
 export interface BaseSerDesConfig<SerCtx extends BaseSerCtx<any>, DesCtx extends BaseDesCtx<any>> {
-    // (undocumented)
+    // @alpha
     codecs?: (readonly RawCodec<SerCtx, DesCtx>[])[];
-    // (undocumented)
-    deserialize?: OneOrMany<SerDesFn<DesCtx>>;
-    // (undocumented)
+    // @beta
     keyTransformer?: KeyTransformer;
-    // (undocumented)
     mutateInPlace?: boolean;
-    // (undocumented)
-    serialize?: OneOrMany<SerDesFn<SerCtx>>;
 }
 
 // @public (undocumented)
 export interface BaseSerDesCtx {
     // (undocumented)
-    continue<T>(obj?: T): readonly [2, T?];
-    // (undocumented)
     done<T>(obj?: T): readonly [0, T?];
+    // Warning: (ae-incompatible-release-tags) The symbol "keyTransformer" is marked as @public, but its signature references "KeyTransformer" which is marked as @beta
+    //
     // (undocumented)
     keyTransformer?: KeyTransformer;
     // (undocumented)
-    mapAfter(map: (v: any) => unknown): readonly [2];
+    locals: Record<string, any>;
+    // (undocumented)
+    mapAfter(map: (v: any) => unknown): readonly [3];
     // (undocumented)
     mutatingInPlace: boolean;
+    // (undocumented)
+    nevermind(): readonly [3];
     // (undocumented)
     path: (string | number)[];
     // (undocumented)
     recurse<T>(obj?: T): readonly [1, T?];
     // (undocumented)
+    replace<T>(obj: T): readonly [2, T];
+    // (undocumented)
     rootObj: any;
+    // Warning: (ae-forgotten-export) The symbol "SerDesTarget" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    target: SerDesTarget;
 }
 
 // @public
@@ -316,9 +325,11 @@ export const blob: (blob: DataAPIBlobLike) => DataAPIBlob;
 // @public
 export type Caller = readonly [name: string, version?: string];
 
+// Warning: (ae-incompatible-release-tags) The symbol "Camel2SnakeCase" is marked as @public, but its signature references "KeyTransformer" which is marked as @beta
+//
 // @public (undocumented)
 export class Camel2SnakeCase extends KeyTransformer {
-    constructor({ exceptId, transformNested }?: Camel2SnakeCaseOptions);
+    constructor({ exceptId, exceptDollar, transformNested }?: Camel2SnakeCaseOptions);
     // (undocumented)
     deserializeKey(snake: string): string;
     // (undocumented)
@@ -331,6 +342,8 @@ export class Camel2SnakeCase extends KeyTransformer {
 
 // @public (undocumented)
 export interface Camel2SnakeCaseOptions {
+    // (undocumented)
+    exceptDollar?: boolean;
     // (undocumented)
     exceptId?: boolean;
     // (undocumented)
@@ -495,9 +508,7 @@ export type CollectionFilter<Schema extends SomeDoc> = {
 };
 
 // @public
-export type CollectionFilterExpr<Elem> = Elem | (CollectionFilterOps<Elem> & {
-    [key: string]: any;
-});
+export type CollectionFilterExpr<Elem> = Elem | (CollectionFilterOps<Elem> & Record<string, any>);
 
 // @public
 export type CollectionFilterOps<Elem> = {
@@ -820,7 +831,7 @@ export class DataAPIBlob implements TableCodec<typeof DataAPIBlob> {
     asBase64(): string;
     asBuffer(): MaybeBuffer;
     get byteLength(): number;
-    static isBlobLike(value: unknown): value is DataAPIBlobLike;
+    static isBlobLike(this: void, value: unknown): value is DataAPIBlobLike;
     raw(): Exclude<DataAPIBlobLike, DataAPIBlob>;
     toString(): string;
 }
@@ -831,16 +842,13 @@ export type DataAPIBlobLike = DataAPIBlob | ArrayBuffer | MaybeBuffer | {
 };
 
 // @public
-export class DataAPIClient extends DataAPIClientEventEmitterBase {
+export class DataAPIClient extends MicroEmitter<DataAPIClientEventMap> {
     constructor(options?: DataAPIClientOptions);
     constructor(token: string | TokenProvider | undefined, options?: DataAPIClientOptions);
     admin(options?: AdminOptions): AstraAdmin;
     close(): Promise<void>;
     db(endpoint: string, options?: DbOptions): Db;
 }
-
-// @public
-export const DataAPIClientEventEmitterBase: new () => TypedEmitter<DataAPIClientEventMap>;
 
 // @public
 export type DataAPIClientEventMap = AdminCommandEventMap & CommandEventMap;
@@ -877,14 +885,14 @@ export class DataAPIDate implements TableCodec<typeof DataAPIDate> {
     readonly date: number;
     equals(other: DataAPIDate): boolean;
     readonly month: number;
-    static now(): DataAPIDate;
-    static ofEpochDay(epochDays: number): DataAPIDate;
-    static ofYearDay(year: number, dayOfYear: number): DataAPIDate;
+    static now(this: void): DataAPIDate;
+    static ofEpochDay(this: void, epochDays: number): DataAPIDate;
+    static ofYearDay(this: void, year: number, dayOfYear: number): DataAPIDate;
     plus(duration: DataAPIDuration | string): DataAPIDate;
     toDate(base?: Date | DataAPITime): Date;
     toDateUTC(base?: Date | DataAPITime): Date;
     toString(): string;
-    static utcnow(): DataAPIDate;
+    static utcnow(this: void): DataAPIDate;
     readonly year: number;
 }
 
@@ -917,7 +925,7 @@ export class DataAPIDuration implements TableCodec<typeof DataAPIDuration> {
     constructor(duration: string, fromDataAPI: boolean);
     constructor(months: number, days: number, nanoseconds: number | bigint);
     abs(): DataAPIDuration;
-    static builder(base?: DataAPIDuration): DataAPIDurationBuilder;
+    static builder(this: void, base?: DataAPIDuration): DataAPIDurationBuilder;
     readonly days: number;
     equals(other: DataAPIDuration): boolean;
     hasDayPrecision(): boolean;
@@ -1000,7 +1008,7 @@ export class DataAPIHttpError extends DataAPIError {
 }
 
 // @public
-export type DataAPIHttpOptions = DefaultHttpClientOptions | FetchHttpClientOptions | CustomHttpClientOptions;
+export type DataAPIHttpOptions = FetchH2HttpClientOptions | FetchHttpClientOptions | CustomHttpClientOptions;
 
 // @public
 export class DataAPIInet implements TableCodec<typeof DataAPIInet> {
@@ -1047,14 +1055,14 @@ export class DataAPITime implements TableCodec<typeof DataAPITime> {
     readonly hours: number;
     readonly minutes: number;
     readonly nanoseconds: number;
-    static now(): DataAPITime;
-    static ofNanoOfDay(nanoOfDay: number): DataAPITime;
-    static ofSecondOfDay(secondOfDay: number): DataAPITime;
+    static now(this: void): DataAPITime;
+    static ofNanoOfDay(this: void, nanoOfDay: number): DataAPITime;
+    static ofSecondOfDay(this: void, secondOfDay: number): DataAPITime;
     readonly seconds: number;
     toDate(base?: Date | DataAPIDate): Date;
     toDateUTC(base?: Date | DataAPIDate): Date;
     toString(): string;
-    static utcnow(): DataAPITime;
+    static utcnow(this: void): DataAPITime;
 }
 
 // @public
@@ -1064,7 +1072,7 @@ export class DataAPITimeoutError extends DataAPIError {
     // @internal
     constructor(info: HTTPRequestInfo, types: TimedOutCategories);
     // @internal (undocumented)
-    static mk(info: HTTPRequestInfo, types: TimedOutCategories): DataAPITimeoutError;
+    static mk(this: void, info: HTTPRequestInfo, types: TimedOutCategories): DataAPITimeoutError;
     // (undocumented)
     readonly timedOutTypes: TimedOutCategories;
     readonly timeout: Partial<TimeoutDescriptor>;
@@ -1169,7 +1177,7 @@ export interface DbOptions {
     token?: string | TokenProvider | null;
 }
 
-// @beta
+// @public
 export interface DbSerDesConfig {
     collection?: Omit<CollSerDesConfig, 'mutateInPlace'>;
     mutateInPlace?: boolean;
@@ -1178,14 +1186,6 @@ export interface DbSerDesConfig {
 
 // @public
 export const DEFAULT_KEYSPACE = "default_keyspace";
-
-// @public
-export interface DefaultHttpClientOptions {
-    client: 'fetch-h2';
-    fetchH2?: unknown;
-    http1?: Http1Options;
-    preferHttp2?: boolean;
-}
 
 // @public (undocumented)
 export interface Deserializers<DesCtx> {
@@ -1229,7 +1229,7 @@ export class DevOpsAPITimeoutError extends DevOpsAPIError {
     // @internal
     constructor(info: HTTPRequestInfo, types: TimedOutCategories);
     // @internal (undocumented)
-    static mk(info: HTTPRequestInfo, types: TimedOutCategories): DevOpsAPITimeoutError;
+    static mk(this: void, info: HTTPRequestInfo, types: TimedOutCategories): DevOpsAPITimeoutError;
     // (undocumented)
     readonly timedOutTypes: TimedOutCategories;
     readonly timeout: Partial<TimeoutDescriptor>;
@@ -1329,13 +1329,6 @@ export interface EmbeddingProviderTokenInfo {
 export type EmptyObj = {};
 
 // @public
-export class FailedToLoadDefaultClientError extends Error {
-    // @internal
-    constructor(rootCause: Error);
-    readonly rootCause: Error;
-}
-
-// @public
 export interface Fetcher {
     close?(): Promise<void>;
     fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo>;
@@ -1365,9 +1358,33 @@ export interface FetcherResponseInfo {
 
 // @public
 export class FetchH2 implements Fetcher {
-    constructor(options: DefaultHttpClientOptions | undefined, preferHttp2: boolean);
+    constructor(options: FetchH2HttpClientOptions);
     close(): Promise<void>;
     fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo>;
+}
+
+// @public
+export interface FetchH2Http1Options {
+    keepAlive?: boolean;
+    keepAliveMS?: number;
+    maxFreeSockets?: number;
+    maxSockets?: number;
+}
+
+// @public
+export interface FetchH2HttpClientOptions {
+    client: 'fetch-h2';
+    fetchH2: FetchH2Like;
+    http1?: FetchH2Http1Options;
+    preferHttp2?: boolean;
+}
+
+// @public (undocumented)
+export interface FetchH2Like {
+    // (undocumented)
+    context: (...args: any[]) => any;
+    // (undocumented)
+    TimeoutError: SomeConstructor;
 }
 
 // @public
@@ -1547,14 +1564,6 @@ export interface GuaranteedUpdateResult<N extends number> {
 }
 
 // @public
-export interface Http1Options {
-    keepAlive?: boolean;
-    keepAliveMS?: number;
-    maxFreeSockets?: number;
-    maxSockets?: number;
-}
-
-// @public
 export type IdOf<Doc> = Doc extends {
     _id?: infer Id extends SomeId;
 } ? Id : SomeId;
@@ -1595,17 +1604,14 @@ export type KeyspaceReplicationOptions = {
     [datacenter: string]: number | 'NetworkTopologyStrategy';
 };
 
-// @public (undocumented)
+// @beta
 export abstract class KeyTransformer {
-    // (undocumented)
+    // @internal (undocumented)
     deserialize(obj: unknown, ctx: KeyTransformerCtx): unknown;
-    // (undocumented)
     abstract deserializeKey(key: string, ctx: KeyTransformerCtx): string;
-    // (undocumented)
+    // @internal (undocumented)
     serialize(obj: unknown, ctx: KeyTransformerCtx): unknown;
-    // (undocumented)
     abstract serializeKey(key: string, ctx: KeyTransformerCtx): string;
-    // (undocumented)
     abstract transformNested(ctx: KeyTransformerCtx): boolean;
 }
 
@@ -1689,7 +1695,7 @@ export interface ListTableUnsupportedColumnDefinition {
 }
 
 // @public
-export type LooseCreateTableColumnDefinition = TableScalarType | string;
+export type LooseCreateTableColumnDefinition = TableScalarType | (string & Record<never, never>);
 
 // @public
 export interface MapCreateTableColumnDefinition {
@@ -1703,13 +1709,21 @@ export interface MapCreateTableColumnDefinition {
 
 // @public
 export type MaybeBuffer = typeof globalThis extends {
-    Buffer: infer B extends abstract new (...args: any) => any;
+    Buffer: infer B extends SomeConstructor;
 } ? InstanceType<B> : never;
 
 // @public
 export type MaybeId<T> = NoId<T> & {
     _id?: IdOf<T>;
 };
+
+// @public
+export class MicroEmitter<Events extends Record<string, (...args: any[]) => void>> {
+    emit<E extends keyof Events>(event: E, ...args: Parameters<Events[E]>): boolean;
+    off<E extends keyof Events>(event: E, listener: Events[E]): void;
+    on<E extends keyof Events>(event: E, listener: Events[E]): () => void;
+    once<E extends keyof Events>(event: E, listener: Events[E]): () => void;
+}
 
 // @public
 export type NoId<Doc> = Omit<Doc, '_id'>;
@@ -1934,12 +1948,14 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
 export type TableCodec<Class extends TableCodecClass> = InstanceType<Class>;
 
 // @public (undocumented)
-export type TableCodecClass = {
+export interface TableCodecClass {
+    // (undocumented)
+    [$DeserializeForTable]: SerDesFn<TableDesCtx>;
+    // (undocumented)
     new (...args: any[]): {
         [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>>;
     };
-    [$DeserializeForTable]: SerDesFn<TableDesCtx>;
-};
+}
 
 // @public (undocumented)
 export class TableCodecs {
@@ -2014,17 +2030,26 @@ export type TableFilter<Schema extends SomeRow> = {
 export type TableFilterExpr<Elem> = Elem | TableFilterOps<Elem>;
 
 // @public
-export type TableFilterOps<Elem> = {
+export interface TableFilterOps<Elem> {
+    // (undocumented)
     $eq?: Elem;
-    $ne?: Elem;
-    $in?: Elem[];
-    $nin?: Elem[];
+    // (undocumented)
     $exists?: boolean;
-    $lt?: Elem;
-    $lte?: Elem;
+    // (undocumented)
     $gt?: Elem;
+    // (undocumented)
     $gte?: Elem;
-};
+    // (undocumented)
+    $in?: Elem[];
+    // (undocumented)
+    $lt?: Elem;
+    // (undocumented)
+    $lte?: Elem;
+    // (undocumented)
+    $ne?: Elem;
+    // (undocumented)
+    $nin?: Elem[];
+}
 
 // @public
 export class TableFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {
@@ -2142,7 +2167,7 @@ export interface TableVectorIndexDescriptor {
 // @public
 export interface TableVectorIndexOptions {
     metric?: 'cosine' | 'euclidean' | 'dot_product';
-    sourceModel?: string | 'other';
+    sourceModel?: (string & Record<never, never>) | 'other';
 }
 
 // @public
@@ -2296,8 +2321,8 @@ export * from "bignumber.js";
 
 // Warnings were encountered during analysis:
 //
-// dist/documents/collections/ser-des/codecs.d.ts:40:9 - (ae-forgotten-export) The symbol "RawCollCodecs" needs to be exported by the entry point index.d.ts
-// dist/documents/tables/ser-des/codecs.d.ts:40:9 - (ae-forgotten-export) The symbol "RawTableCodecs" needs to be exported by the entry point index.d.ts
+// dist/esm/documents/collections/ser-des/codecs.d.ts:41:9 - (ae-forgotten-export) The symbol "RawCollCodecs" needs to be exported by the entry point index.d.ts
+// dist/esm/documents/tables/ser-des/codecs.d.ts:41:9 - (ae-forgotten-export) The symbol "RawTableCodecs" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

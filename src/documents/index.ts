@@ -12,27 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './cursor';
-export * from './events';
-export * from './datatypes/object-id';
-export * from './collections';
-export * from './tables';
-export * from './embedding-providers';
-export * from './datatypes';
-export type * from './commands';
-export type * from './types';
+export * from './cursor.js';
+export * from './events.js';
+export * from './datatypes/object-id.js';
+export * from './collections/index.js';
+export * from './tables/index.js';
+export * from './embedding-providers/index.js';
+export * from './datatypes/index.js';
+export type * from './commands/index.js';
+export type * from './types/index.js';
 
-export {
-  DataAPIResponseError,
-  DataAPIHttpError,
-  DataAPITimeoutError,
-  CumulativeOperationError,
-  DataAPIDetailedErrorDescriptor,
-  DataAPIError,
-  DataAPIErrorDescriptor,
-  CollectionDeleteManyError,
-  CollectionInsertManyError,
-  TableInsertManyError,
-  TooManyDocumentsToCountError,
-  CollectionUpdateManyError,
-} from './errors';
+export type { DataAPIDetailedErrorDescriptor, DataAPIErrorDescriptor } from './errors.js';
+export { DataAPIResponseError, DataAPIHttpError, DataAPITimeoutError, CumulativeOperationError, DataAPIError, CollectionDeleteManyError, CollectionInsertManyError, TableInsertManyError, TooManyDocumentsToCountError, CollectionUpdateManyError } from './errors.js';

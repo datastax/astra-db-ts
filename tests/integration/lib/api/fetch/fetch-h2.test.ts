@@ -20,10 +20,11 @@ import {
   parallel,
   TEST_APPLICATION_TOKEN,
   TEST_APPLICATION_URI,
-} from '@/tests/testlib';
-import { DEFAULT_KEYSPACE, FetchH2 } from '@/src/lib/api';
+} from '@/tests/testlib/index.js';
+import { DEFAULT_KEYSPACE, FetchH2 } from '@/src/lib/api/index.js';
 import assert from 'assert';
-import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants';
+import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants.js';
+import * as fetchH2 from 'fetch-h2';
 
 parallel('integration.lib.api.fetch.fetch-h2', () => {
   const genericOptions = <const>{
@@ -37,7 +38,7 @@ parallel('integration.lib.api.fetch.fetch-h2', () => {
   };
 
   it('should work with http1', async () => {
-    const fetcher = new FetchH2({ client: 'fetch-h2' }, false);
+    const fetcher = new FetchH2({ client: 'fetch-h2', fetchH2, preferHttp2: false });
     try {
       const resp = await fetcher.fetch(genericOptions);
       assert.strictEqual(resp.url, genericOptions.url);
@@ -53,7 +54,7 @@ parallel('integration.lib.api.fetch.fetch-h2', () => {
   });
 
   it('should work with http2', async () => {
-    const fetcher = new FetchH2({ client: 'fetch-h2' }, true);
+    const fetcher = new FetchH2({ client: 'fetch-h2', fetchH2, preferHttp2: true });
     try {
       const resp = await fetcher.fetch(genericOptions);
       assert.strictEqual(resp.url, genericOptions.url);
@@ -69,7 +70,7 @@ parallel('integration.lib.api.fetch.fetch-h2', () => {
   });
 
   it('should throw custom timeout error on timeout', async () => {
-    const fetcher = new FetchH2({ client: 'fetch-h2' }, true);
+    const fetcher = new FetchH2({ client: 'fetch-h2', fetchH2, preferHttp2: true });
     try {
       await fetcher.fetch({ ...genericOptions, timeout: 0 });
       assert.fail('Expected an error');
@@ -82,7 +83,7 @@ parallel('integration.lib.api.fetch.fetch-h2', () => {
   });
 
   it('should rethrow underlying error if not a timeout', async () => {
-    const fetcher = new FetchH2({ client: 'fetch-h2' }, true);
+    const fetcher = new FetchH2({ client: 'fetch-h2', fetchH2, preferHttp2: true });
     try {
       await fetcher.fetch({ ...genericOptions, url: DEMO_APPLICATION_URI });
       assert.fail('Expected an error');

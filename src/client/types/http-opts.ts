@@ -12,54 +12,86 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Fetcher } from '@/src/lib';
+import type { Fetcher, FetchH2Like } from '@/src/lib/index.js';
 
 /**
+ * ##### Overview
+ *
  * The options available for the {@link DataAPIClient} related to making HTTP requests.
  *
- * There are four different behaviours for setting the client:
- * - Not setting the `httpOptions` at all
- * -- This will attempt to use `fetch-h2` if available, and fall back to `fetch` if not available
+ * There are three different behaviours for setting the client:
+ * - `client: 'fetch'` or not setting the `httpOptions` at all
+ *   - This will use the native `fetch` API
  * - `client: 'fetch-h2'`
- * -- This will attempt to use `fetch-h2` if available, and throw an error if not available
- * - `client: 'fetch'`
- * -- This will always use the native `fetch` API
+ *   - This will use the provided `fetch-h2` module for HTTP/2 requests
  * - `client: 'custom'`
- * -- This will allow you to pass a custom `Fetcher` implementation to the client
+ *   - This will allow you to pass a custom `Fetcher` implementation to the client
  *
- * `fetch-h2` is a fetch implementation that supports HTTP/2, and is the recommended client for the best performance.
+ * `fetch-h2` is a fetch implementation that supports HTTP/2, and is recommended for the best performance. **However, it is not included in the SDK by default (for compatability reasons), so you will need to provide it yourself.** See {@link FetchH2HttpClientOptions} for more information.
  *
- * However, it's generally only available by default on node runtimes; on other runtimes, you may need to use the
- * native `fetch` API instead, or pass in the fetch-h2 module manually.
+ * @see {@link FetchH2HttpClientOptions}
  *
  * @public
  */
 export type DataAPIHttpOptions =
-  | DefaultHttpClientOptions
+  | FetchH2HttpClientOptions
   | FetchHttpClientOptions
   | CustomHttpClientOptions;
 
 /**
- * The options available for the {@link DataAPIClient} related to making HTTP requests using the fetch-h2 http client.
+ * ##### Overview
  *
- * If loading the client fails it'll throw an {@link FailedToLoadDefaultClientError}.
+ * The options available for the {@link DataAPIClient} related to making HTTP requests using the `fetch-h2` http client.
  *
- * If you're minifying your code, you'll need to provide the fetch-h2 module manually (see
- * {@link DefaultHttpClientOptions.fetchH2}).
+ * This, however, requires the `fetch-h2` module to be installed & provided by the user, for compatibility reasons, as it is not available in all environments.
+ *
+ * ##### Setup
+ *
+ * Luckily, it is only a couple of easy steps to get it working:
+ *
+ * First, install the `fetch-h2` module:
+ *
+ * ```bash
+ * npm i fetch-h2 # or your favorite package manager's equiv.
+ * ```
+ *
+ * Then, you can provide it to the client like so:
+ *
+ * ```typescript
+ * import * as fetchH2 from 'fetch-h2';
+ * // or `const fetchH2 = require('fetch-h2');`
+ *
+ * const client = new DataAPIClient({
+ *   httpOptions: {
+ *     client: 'fetch-h2',
+ *     fetchH2: fetchH2,
+ *   },
+ * });
+ * ```
+ *
+ * See the astra-db-ts v2.0+ README for more information on how to use `fetch-h2`, and the compatibility reasons for not including it by default.
+ *
+ * @see DataAPIHttpOptions
  *
  * @public
  */
-export interface DefaultHttpClientOptions {
+export interface FetchH2HttpClientOptions {
   /**
-   * Use the default http client for making HTTP requests (currently fetch-h2).
+   * Tells the Data API client to use the `fetch-h2` module for making HTTP requests.
    *
-   * Leave undefined to use the default client (you don't need to specify `'default'`).
+   * See {@link DataAPIHttpOptions} for the other options available.
    */
   client: 'fetch-h2',
   /**
+   * The fetch-h2 module to use for making HTTP requests.
+   *
+   * Must be provided, or an error will be thrown.
+   */
+  fetchH2: FetchH2Like,
+  /**
    * Whether to prefer HTTP/2 for requests to the Data API; if set to `false`, HTTP/1.1 will be used instead.
    *
-   * **Note that this is only available when using the Data API; the DevOps API does not support HTTP/2**
+   * Note that this is only available for using the Data API; the DevOps API does not support HTTP/2.
    *
    * Both versions are generally interchangeable, but HTTP2 is generally recommended for better performance.
    *
@@ -71,39 +103,47 @@ export interface DefaultHttpClientOptions {
   /**
    * Options specific to HTTP/1.1 requests.
    */
-  http1?: Http1Options,
-  /**
-   * The fetch-h2 module to use for making HTTP requests.
-   *
-   * Leave undefined to use the default module.
-   */
-  fetchH2?: unknown,
+  http1?: FetchH2Http1Options,
 }
 
 /**
- * The options available for the {@link DataAPIClient} related to making HTTP requests using the native fetch API.
+ * ##### Overview
  *
- * This will be the fallback client if the default client fails to load/if the default client is not available.
+ * The default http client used by the Data API client, which is the native `fetch` API.
+ *
+ * Passing in `httpOptions: { client: 'fetch' }` is equivalent to not setting the `httpOptions` at all.
+ *
+ * @see DataAPIHttpOptions
  *
  * @public
  */
 export interface FetchHttpClientOptions {
   /**
-   * Use the native fetch API for making HTTP requests.
+   * Tells the Data API client to use the native `fetch` API for making HTTP requests.
+   *
+   * See {@link DataAPIHttpOptions} for the other options available.
    */
   client: 'fetch',
 }
 
 /**
+ * ##### Overview
+ *
  * Allows you to use a custom http client for making HTTP requests, rather than the default or fetch API.
  *
  * Just requires the implementation of a simple adapter interface.
+ *
+ * See {@link Fetcher} for more information.
+ *
+ * @see DataAPIHttpOptions
  *
  * @public
  */
 export interface CustomHttpClientOptions {
   /**
-   * Use a custom http client for making HTTP requests.
+   * Tells the Data API client to use your custom "fetcher" for making HTTP requests.
+   *
+   * See {@link DataAPIHttpOptions} for the other options available.
    */
   client: 'custom',
   /**
@@ -113,11 +153,15 @@ export interface CustomHttpClientOptions {
 }
 
 /**
- * The options available for the {@link DataAPIClient} related to making HTTP/1.1 requests.
+ * ##### Overview
+ *
+ * The options available for the {@link DataAPIClient} related to making HTTP/1.1 requests with `fetch-h2`.
+ *
+ * @see FetchH2HttpClientOptions
  *
  * @public
  */
-export interface Http1Options {
+export interface FetchH2Http1Options {
   /**
    * Whether to keep the connection alive for future requests. This is generally recommended for better performance.
    *

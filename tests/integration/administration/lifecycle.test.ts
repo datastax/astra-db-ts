@@ -14,12 +14,13 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DevOpsAPIResponseError } from '@/src/administration';
-import { background, it, TEMP_DB_NAME } from '@/tests/testlib';
-import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
-import { buildAstraEndpoint } from '@/src/lib/utils';
+import { DevOpsAPIResponseError } from '@/src/administration/index.js';
+import { background, initTestObjects, it, TEMP_DB_NAME } from '@/tests/testlib/index.js';
+import { DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants.js';
+import { buildAstraEndpoint } from '@/src/lib/utils.js';
 
-background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycle', ({ client }) => {
+background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycle', () => {
+  const { client } = initTestObjects();
   const admin = client.admin();
 
   async function dropTestDbs() {
@@ -33,8 +34,8 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
   it('works', async () => {
     void dropTestDbs();
 
-    process.on('exit', async () => {
-      await dropTestDbs();
+    process.on('exit', () => {
+      void dropTestDbs();
     });
 
     const asyncDbAdmin = await admin.createDatabase({
@@ -76,7 +77,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     let commandSucceededEvent = false;
 
     {
-      client.on('adminCommandStarted', (event) => {
+      client.once('adminCommandStarted', (event) => {
         commandStartedEvent = true;
         assert.strictEqual(event.path, '/databases');
         assert.strictEqual(event.method, HttpMethods.Post);
@@ -85,7 +86,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
         assert.deepStrictEqual(event.timeout, { databaseAdminTimeoutMs: 720000, requestTimeoutMs: 60000 });
       });
 
-      client.on('adminCommandPolling', (event) => {
+      client.once('adminCommandPolling', (event) => {
         commandPollingEvent = true;
         assert.strictEqual(event.path, '/databases');
         assert.strictEqual(event.method, HttpMethods.Post);
@@ -95,7 +96,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
         assert.ok(event.elapsed > 0);
       });
 
-      client.on('adminCommandSucceeded', (event) => {
+      client.once('adminCommandSucceeded', (event) => {
         commandSucceededEvent = true;
         assert.strictEqual(event.path, '/databases');
         assert.strictEqual(event.method, HttpMethods.Post);
@@ -113,7 +114,6 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     const syncDb = syncDbAdmin.db();
 
     {
-      client.removeAllListeners();
       assert.ok(commandStartedEvent);
       assert.ok(commandPollingEvent);
       assert.ok(commandSucceededEvent);
@@ -134,7 +134,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     }
 
     {
-      await asyncDbAdmin._httpClient['_awaitStatus'](asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient._awaitStatus(asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['PENDING', 'INITIALIZING'],
         defaultPollInterval: 10000,
@@ -185,7 +185,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
     {
       await syncDbAdmin.createKeyspace('other_keyspace');
-      await asyncDbAdmin._httpClient['_awaitStatus'](asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient._awaitStatus(asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
         defaultPollInterval: 1000,
@@ -210,7 +210,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
     {
       await syncDbAdmin.dropKeyspace('other_keyspace', { blocking: true });
-      await asyncDbAdmin._httpClient['_awaitStatus'](asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient._awaitStatus(asyncDb.id, {} as any, {
         target: 'ACTIVE',
         legalStates: ['MAINTENANCE'],
         defaultPollInterval: 1000,
@@ -237,7 +237,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
 
     {
       await admin.dropDatabase(syncDb, { timeout: 720000 });
-      await asyncDbAdmin._httpClient['_awaitStatus'](asyncDb.id, {} as any, {
+      await asyncDbAdmin._httpClient._awaitStatus(asyncDb.id, {} as any, {
         target: 'TERMINATED',
         legalStates: ['TERMINATING'],
         defaultPollInterval: 10000,

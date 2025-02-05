@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { WithTimeout } from '@/src/lib';
+import type { WithTimeout } from '@/src/lib/index.js';
 
 /**
  * Represents the options for creating a keyspace on a non-Astra database (i.e. blocking options + keyspace creation options).

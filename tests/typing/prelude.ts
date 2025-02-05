@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { SomeDoc, UUID, ObjectId } from '@/src/documents';
+import type { SomeDoc, UUID, ObjectId } from '@/src/documents/index.js';
 
 export type Equal<X, Y> = (<T>() => T extends X ? 1 : 2) extends (<T>() => T extends Y ? 1 : 2) ? true : false;
 export type Expect<T extends true> = T;

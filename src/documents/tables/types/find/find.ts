@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { GenericFindOptions } from '@/src/documents';
+import type { GenericFindOptions } from '@/src/documents/index.js';
 
 /**
  * Options for the table `find` method.

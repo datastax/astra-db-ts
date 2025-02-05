@@ -14,8 +14,8 @@
 
 import * as process from 'node:process';
 import dotenv from 'dotenv';
-import { DataAPIEnvironments } from '@/src/lib/constants';
-import { BaseDataAPIClientEvent, DataAPIEnvironment } from '@/src/lib';
+import { DataAPIEnvironments } from '@/src/lib/constants.js';
+import type { BaseDataAPIClientEvent, DataAPIEnvironment } from '@/src/lib/index.js';
 
 dotenv.config();
 

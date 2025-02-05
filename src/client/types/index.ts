@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export type * from './caller';
-export type * from './client-opts';
-export type * from './http-opts';
-export type * from './spawn-admin';
-export type * from './spawn-db';
+export type * from './caller.js';
+export type * from './client-opts.js';
+export type * from './http-opts.js';
+export type * from './spawn-admin.js';
+export type * from './spawn-db.js';

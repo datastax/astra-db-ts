@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { EmbeddingAPIKeyHeaderProvider } from '@/src/documents';
-import { isNullish } from '@/src/lib/utils';
+import { EmbeddingAPIKeyHeaderProvider } from '@/src/documents/index.js';
+import { isNullish } from '@/src/lib/utils.js';
 
 /**
  * The base class for an "embedding headers provider", a general concept for anything that provides headers used for

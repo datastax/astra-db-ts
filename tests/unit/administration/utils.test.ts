@@ -13,9 +13,9 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DEMO_APPLICATION_URI, describe, it } from '@/tests/testlib';
+import { DEMO_APPLICATION_URI, describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { extractAstraEnvironment } from '@/src/administration/utils';
+import { extractAstraEnvironment } from '@/src/administration/utils.js';
 
 describe('unit.administration.utils', () => {
   describe('extractAstraEnvironment', () => {

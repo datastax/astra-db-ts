@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { AstraAdminBlockingOptions } from '@/src/administration/types';
-import { WithTimeout } from '@/src/lib';
+import type { AstraAdminBlockingOptions } from '@/src/administration/types/index.js';
+import type { WithTimeout } from '@/src/lib/index.js';
 
 /**
  * Represents the options for dropping a database (i.e. blocking options + timeout options).

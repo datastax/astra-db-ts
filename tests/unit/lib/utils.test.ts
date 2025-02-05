@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { describe, it } from '@/tests/testlib';
-import * as bn from 'bignumber.js';
+import { describe, it } from '@/tests/testlib/index.js';
+import { BigNumber } from 'bignumber.js';
 import {
   buildAstraEndpoint,
   forJSEnv,
@@ -25,7 +25,7 @@ import {
   pathMatches,
   toArray,
   withJbiNullProtoFix,
-} from '@/src/lib/utils';
+} from '@/src/lib/utils.js';
 import JBI from 'json-bigint';
 
 describe('unit.lib.utils', () => {
@@ -89,11 +89,13 @@ describe('unit.lib.utils', () => {
         { a: 1, b: { c: 2, d: { e: 3 } } },
         [{ a: 1, b: { c: 2, d: { e: 3 } } }],
         "hello world",
-        bn.BigNumber('12345678901234567890'),
+        BigNumber('12345678901234567890'),
       ];
 
       for (const value of values) {
-        assert.deepStrictEqual(jbi.parse(jbi.stringify(value)), value);
+        const parsed = jbi.parse(jbi.stringify(value));
+        assert.deepStrictEqual(Object.getPrototypeOf(parsed), Object.getPrototypeOf(value));
+        assert.deepStrictEqual(parsed, value);
       }
     });
   });
@@ -156,8 +158,8 @@ describe('unit.lib.utils', () => {
   describe('isBigNumber', () => {
     it('works', () => {
       const ok = [
-        bn.BigNumber(123),
-        new bn.BigNumber(123),
+        BigNumber(123),
+        new BigNumber(123),
         new (class BigNumber { _isBigNumber = true; })(),
       ];
       ok.forEach(t => assert.ok(isBigNumber(t)));

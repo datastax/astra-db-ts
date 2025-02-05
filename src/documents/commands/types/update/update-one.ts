@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { WithTimeout } from '@/src/lib';
-import type { Sort } from '@/src/documents';
+import type { WithTimeout } from '@/src/lib/index.js';
+import type { Sort } from '@/src/documents/index.js';
 
 /**
  * Options for a generic `updateOne` command using the Data API.

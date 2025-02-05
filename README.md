@@ -14,10 +14,10 @@
 - [High-level architecture](#high-level-architecture)
   - [Options hierarchy](#options-hierarchy)
 - [Datatypes](#datatypes)
-[Non-astra support](#non-astra-support)
-- [Non-standard environment support](#non-standard-environment-support)
-  - [HTTP/2 with minification](#http2-with-minification)
-  - [Browser support](#browser-support)
+- [Non-astra support](#non-astra-support)
+- [Browser support](#browser-support)
+- [Using HTTP/2](#using-http2)
+- [Examples](#examples)
 
 ## Quickstart
 
@@ -315,78 +315,43 @@ as necessary, depending on the Data API backend. Tokens may even be omitted if n
 
 (See `examples/non-astra-backends` for a full example of this in action.)
 
-## Non-standard environment support
-
-`astra-db-ts` is designed first and foremost to work in Node.js environments. 
-
-However, it will work in edge runtimes and other non-node environments as well, though it may use the native `fetch` API for HTTP
-requests, as opposed to `fetch-h2` which provides extended HTTP/2 and HTTP/1.1 support for performance.
-
-By default, it'll attempt to use `fetch-h2` if available, and fall back to `fetch` if not available in that environment.
-You can explicitly force the fetch implementation when instantiating the client:
-
-```typescript
-import { DataAPIClient } from '@datastax/astra-db-ts';
-
-const client = new DataAPIClient('*TOKEN*', {
-  httpOptions: { client: 'fetch' },
-});
-```
-
-There are four different behaviours for setting the client:
-- Not setting the `httpOptions` at all
-  - This will attempt to use `fetch-h2` if available, and fall back to `fetch` if not available
-- `client: 'default'` or `client: undefined` (or unset)
-  - This will attempt to use `fetch-h2` if available, and throw an error if not available
-- `client: 'fetch'`
-  - This will always use the native `fetch` API
-- `client: 'custom'`
-  - This will allow you to pass a custom `Fetcher` implementation to the client
-
-On some environments, such as Cloudflare Workers, you may additionally need to use the events
-polyfill for the client to work properly (i.e. `npm i events`). Cloudflare's node-compat won't
-work here.
-
-Check out the `examples/` subdirectory for some non-standard runtime examples with more info.
-
-### HTTP/2 with minification
-
-Due to the variety of different runtimes JS can run in, `astra-db-ts` does its best to be as flexible as possible.
-Unfortunately however, because we need to dynamically require the `fetch-h2` module to test whether it works, the
-dynamic import often breaks in minified environments, even if the runtime properly supports HTTP/2.
-
-There is a simple workaround however, consisting of the following steps, if you really want to use HTTP/2:
-1. Install `fetch-h2` as a dependency (`npm i fetch-h2`)
-2. Import the `fetch-h2` module in your code as `fetchH2` (i.e. `import * as fetchH2 from 'fetch-h2'`)
-3. Set the `httpOptions.fetchH2` option to the imported module when instantiating the client
-
-```typescript
-import { DataAPIClient } from '@datastax/astra-db-ts';
-import * as fetchH2 from 'fetch-h2';
-
-const client = new DataAPIClient('*TOKEN*', {
-  httpOptions: { fetchH2 },
-});
-```
-
-This way, the dynamic import is avoided, and the client will work in minified environments.
-
-Note this is not required if you don't explicitly need HTTP/2 support, as the client will default 
-to the native fetch implementation instead if importing fails. 
-
-(But keep in mind this defaulting will only happen if `httpOptions` is not set at all).
-
-(See `examples/http2-when-minified` for a full example of this workaround in action.)
-
-### Browser support
+## Browser support
 
 `astra-db-ts` is designed to work in server-side environments, but it can technically work in the browser as well.
 
 However, if, for some reason, you really want to use this in a browser, you may need to install the `events` polyfill,
-and possibly set up a CORS proxy (such as [CORS Anywhere](https://github.com/Rob--W/cors-anywhere)) to forward requests 
-to the Data API.
+and possibly set up a CORS proxy (such as [CORS Anywhere](https://github.com/Rob--W/cors-anywhere)) to forward requests to the Data API.
 
 But keep in mind that this may be very insecure, especially if you're hardcoding sensitive data into your client-side
 code, as it's trivial for anyone to inspect the code and extract the token (through XSS attacks or otherwise).
 
-(See `examples/browser` for a full example of browser usage in action.)
+See [`examples/browser`](./examples/browser) for a full example of browser usage in action, and steps on how to use `astra-db-ts` in your own browser application.
+
+## Using HTTP/2
+
+`astra-db-ts` uses the native `fetch` API by default, but it can also work with `HTTP/2` using the `fetch-h2` module.
+
+However, due to compatability reasons, `fetch-h2` is no longer dynamically imported by default, and must be provided to the client manually.
+
+Luckily, it is only a couple of easy steps to get `HTTP/2` working in your project:
+
+1. Install `fetch-h2` by running `npm i fetch-h2`.
+2. Provide `fetch-h2` to the client.
+
+```ts
+import * as fetchH2 from 'fetch-h2';
+// or `const fetchH2 = require('fetch-h2');`
+
+const client = new DataAPIClient({
+  httpOptions: {
+    client: 'fetch-h2',
+    fetchH2: fetchH2,
+  },
+});
+```
+
+See the [using HTTP/2 example](./examples/using-http2) for a full example of this in action, and more information on how to use `astra-db-ts` with `HTTP/2`.
+
+## Examples
+
+Check out the [examples](./examples) directory for more examples on how to use `astra-db-ts` in your own projects.

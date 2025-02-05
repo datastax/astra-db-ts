@@ -13,8 +13,8 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { DataAPIResponseError, DataAPIVector, ObjectId, UUID } from '@/src/documents';
-import { it, parallel } from '@/tests/testlib';
+import { DataAPIResponseError, DataAPIVector, ObjectId, UUID } from '@/src/documents/index.js';
+import { it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 
 parallel('integration.documents.collections.insert-one', { truncate: 'colls:before' }, ({ collection }) => {
@@ -75,8 +75,8 @@ parallel('integration.documents.collections.insert-one', { truncate: 'colls:befo
     const res = await collection.insertOne({ name: key, $vector: [1, 1, 1, 1, 1] });
     assert.ok(res);
     const found = await collection.findOne({ name: key }, { projection: { '*': 1 } });
-    assert.ok((<any>found?.$vector) instanceof DataAPIVector);
-    assert.deepStrictEqual((<any>found?.$vector).asArray(), [1, 1, 1, 1, 1]);
+    assert.ok(found?.$vector instanceof DataAPIVector);
+    assert.deepStrictEqual(found.$vector.asArray(), [1, 1, 1, 1, 1]);
   });
 
   it('should insertOne with a date', async (key) => {

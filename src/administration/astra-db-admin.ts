@@ -13,22 +13,24 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import { AstraCreateKeyspaceOptions, AstraDropKeyspaceOptions } from '@/src/administration/types';
-import { DbAdmin } from '@/src/administration/db-admin';
-import { OpaqueHttpClient, TokenProvider, WithTimeout } from '@/src/lib';
-import { buildAstraDatabaseAdminInfo, extractAstraEnvironment } from '@/src/administration/utils';
-import { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers';
-import { DEFAULT_DEVOPS_API_ENDPOINTS, HttpMethods } from '@/src/lib/api/constants';
-import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
-import { Db } from '@/src/db';
-import { $CustomInspect } from '@/src/lib/constants';
-import { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info';
-import { Logger } from '@/src/lib/logging/logger';
-import { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts';
-import { DataAPIHttpClient } from '@/src/lib/api/clients';
-import { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
-import { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider';
-import { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler';
+import type { AstraCreateKeyspaceOptions, AstraDropKeyspaceOptions } from '@/src/administration/types/index.js';
+import { DbAdmin } from '@/src/administration/db-admin.js';
+import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
+import { TokenProvider } from '@/src/lib/index.js';
+import { buildAstraDatabaseAdminInfo, extractAstraEnvironment } from '@/src/administration/utils.js';
+import type { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers.js';
+import { DEFAULT_DEVOPS_API_ENDPOINTS, HttpMethods } from '@/src/lib/api/constants.js';
+import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client.js';
+import type { Db } from '@/src/db/index.js';
+import { $CustomInspect } from '@/src/lib/constants.js';
+import type { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info.js';
+import { Logger } from '@/src/lib/logging/logger.js';
+import type { TimeoutManager} from '@/src/lib/api/timeouts/timeouts.js';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
+import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
+import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler.js';
+import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
+import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting keyspaces.

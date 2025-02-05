@@ -13,27 +13,29 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import {
+import type {
   AstraDatabaseConfig,
   CreateAstraDatabaseOptions,
   ListAstraDatabasesOptions,
-} from '@/src/administration/types';
-import { AstraDbAdmin } from '@/src/administration/astra-db-admin';
-import { Db } from '@/src/db/db';
-import { buildAstraDatabaseAdminInfo } from '@/src/administration/utils';
-import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants';
-import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client';
-import { OpaqueHttpClient, TokenProvider, WithTimeout } from '@/src/lib';
-import { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info';
-import { buildAstraEndpoint } from '@/src/lib/utils';
-import { DbOptions } from '@/src/client';
-import { $CustomInspect } from '@/src/lib/constants';
-import { SomeDoc } from '@/src/documents';
-import { Timeouts } from '@/src/lib/api/timeouts/timeouts';
-import { AstraDropDatabaseOptions } from '@/src/administration/types/admin/drop-database';
-import { AdminOptsHandler, ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler';
-import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler';
-import { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler';
+} from '@/src/administration/types/index.js';
+import { AstraDbAdmin } from '@/src/administration/astra-db-admin.js';
+import { Db } from '@/src/db/db.js';
+import { buildAstraDatabaseAdminInfo } from '@/src/administration/utils.js';
+import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants.js';
+import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client.js';
+import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
+import { TokenProvider } from '@/src/lib/index.js';
+import type { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info.js';
+import { buildAstraEndpoint } from '@/src/lib/utils.js';
+import type { DbOptions } from '@/src/client/index.js';
+import { $CustomInspect } from '@/src/lib/constants.js';
+import type { SomeDoc } from '@/src/documents/index.js';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
+import type { AstraDropDatabaseOptions } from '@/src/administration/types/admin/drop-database.js';
+import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler.js';
+import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler.js';
+import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler.js';
+import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -312,19 +314,19 @@ export class AstraAdmin {
     const params = {} as Record<string, string>;
 
     if (typeof options?.include === 'string') {
-      params['include'] = options.include;
+      params.include = options.include;
     }
 
     if (typeof options?.provider === 'string') {
-      params['provider'] = options.provider;
+      params.provider = options.provider;
     }
 
     if (typeof options?.limit === 'number') {
-      params['limit'] = String(options.skip);
+      params.limit = String(options.skip);
     }
 
     if (typeof options?.skip === 'number') {
-      params['starting_after'] = String(options.skip);
+      params.starting_after = String(options.skip);
     }
 
     const tm = this.#httpClient.tm.single('databaseAdminTimeoutMs', options);

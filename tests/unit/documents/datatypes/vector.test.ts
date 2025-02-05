@@ -14,9 +14,9 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { DataAPIVector, vector } from '@/src/documents';
-import { describe, it } from '@/tests/testlib';
-import { $CustomInspect } from '@/src/lib/constants';
+import { DataAPIVector, vector } from '@/src/documents/index.js';
+import { describe, it } from '@/tests/testlib/index.js';
+import { $CustomInspect } from '@/src/lib/constants.js';
 
 const ARR = [.5, .5, .5];
 const F32ARR = new Float32Array(ARR);

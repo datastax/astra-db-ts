@@ -18,42 +18,42 @@ export type {
   AstraDbStatus,
   AstraPollBlockingOptions,
   AstraNoBlockingOptions,
-} from './admin/admin-common';
+} from './admin/admin-common.js';
 
 export type {
   CreateAstraDatabaseOptions,
   AstraDatabaseConfig,
-} from './admin/create-database';
+} from './admin/create-database.js';
 
 export type {
   AstraDropDatabaseOptions,
-} from './admin/drop-database';
+} from './admin/drop-database.js';
 
 export type {
   AstraDbRegionInfo,
   AstraDbInfo,
   AstraDbAdminInfo,
   BaseAstraDbInfo,
-} from './admin/database-info';
+} from './admin/database-info.js';
 
 export type {
   AstraDbCloudProviderFilter,
   AstraDbStatusFilter,
   ListAstraDatabasesOptions,
-} from './admin/list-databases';
+} from './admin/list-databases.js';
 
 export type {
   AstraCreateKeyspaceOptions,
-} from './db-admin/astra-create-keyspace';
+} from './db-admin/astra-create-keyspace.js';
 
 export type {
   AstraDropKeyspaceOptions,
-} from './db-admin/astra-drop-keyspace';
+} from './db-admin/astra-drop-keyspace.js';
 
 export type {
   KeyspaceReplicationOptions,
   DataAPICreateKeyspaceOptions,
-} from './db-admin/local-create-keyspace';
+} from './db-admin/local-create-keyspace.js';
 
 export type {
   EmbeddingProviderAuthInfo,
@@ -63,4 +63,4 @@ export type {
   EmbeddingProviderTokenInfo,
   EmbeddingProviderProviderParameterInfo,
   FindEmbeddingProvidersResult,
-} from './db-admin/find-embedding-providers';
+} from './db-admin/find-embedding-providers.js';

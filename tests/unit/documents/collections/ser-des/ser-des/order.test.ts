@@ -13,12 +13,12 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import { describe, it } from '@/tests/testlib';
+import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { $DeserializeForCollection, $SerializeForCollection, CollCodecs } from '@/src/documents/collections';
-import { CollCodec } from '@/src/index';
-import { ctxNevermind } from '@/src/lib/api/ser-des/ctx';
-import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des';
+import { $DeserializeForCollection, $SerializeForCollection, CollCodecs } from '@/src/documents/collections/index.js';
+import type { CollCodec } from '@/src/index.js';
+import { ctxNevermind } from '@/src/lib/api/ser-des/ctx.js';
+import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 
 describe('unit.documents.collections.ser-des.ser-des.order', () => {
   const counters = {

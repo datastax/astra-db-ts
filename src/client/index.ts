@@ -13,6 +13,6 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-export * from './data-api-client';
-export * from './errors';
-export type * from './types';
+export * from './data-api-client.js';
+export * from './errors.js';
+export type * from './types/index.js';

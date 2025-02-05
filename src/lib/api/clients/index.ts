@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './devops-api-http-client';
-export * from './data-api-http-client';
-export * from './http-client';
-export type * from './types';
+export * from './devops-api-http-client.js';
+export * from './data-api-http-client.js';
+export * from './http-client.js';
+export type * from './types.js';

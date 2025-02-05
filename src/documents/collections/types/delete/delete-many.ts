@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { GenericDeleteManyResult } from '@/src/documents';
+import type { GenericDeleteManyResult } from '@/src/documents/index.js';
 
 /**
  * Represents the result of a delete command.

@@ -13,17 +13,17 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { describe, it } from '@/tests/testlib';
-import { Logger } from '@/src/lib/logging/logger';
-import { DataAPILoggingConfig } from '@/src/lib';
+import { describe, it } from '@/tests/testlib/index.js';
+import { Logger } from '@/src/lib/logging/logger.js';
+import type { DataAPILoggingConfig } from '@/src/lib/index.js';
 import {
   LoggingDefaultOutputs,
   LoggingDefaults,
   LoggingEventsWithoutAll,
   LoggingOutputs,
-} from '@/src/lib/logging/constants';
-import { OptionParseError } from '@/src/lib/opts-handler';
-import { ensureMonoidalHandlerIsActuallyAMonoid } from '@/tests/testlib/opts-handler/validate-monoid';
+} from '@/src/lib/logging/constants.js';
+import { OptionParseError } from '@/src/lib/opts-handler.js';
+import { ensureMonoidalHandlerIsActuallyAMonoid } from '@/tests/testlib/opts-handler/validate-monoid.js';
 
 describe('unit.lib.logging.cfg-handler', () => {
   describe('parse', () => {

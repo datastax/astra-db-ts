@@ -14,9 +14,10 @@
 // noinspection DuplicatedCode
 
 import assert from 'assert';
-import { describe, it, parallel } from '@/tests/testlib';
-import { TimedOutCategories, TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts';
-import { HttpClient, HTTPRequestInfo } from '@/src/lib/api/clients';
+import { describe, it, parallel } from '@/tests/testlib/index.js';
+import type { TimedOutCategories, TimeoutManager} from '@/src/lib/api/timeouts/timeouts.js';
+import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
+import type { HttpClient, HTTPRequestInfo } from '@/src/lib/api/clients/index.js';
 
 describe('unit.lib.api.timeouts', () => {
   class TimeoutError extends Error {
@@ -293,7 +294,9 @@ describe('unit.lib.api.timeouts', () => {
       const tm2 = <const>[-1, timeouts.custom({ requestTimeoutMs: -1 }, () => [-1, 'requestTimeoutMs'])];
 
       for (const [ms, tm] of [tm1, tm2]) {
+        // eslint-disable-next-line -- Gets around error using protected method
         await assert.rejects(() => httpClient1['_request'](info(tm)), { message: `Command timed out after ${ms}ms (requestTimeoutMs timed out)` });
+        // eslint-disable-next-line -- Gets around error using protected method
         await assert.rejects(() => httpClient2['_request'](info(tm)), { message: `Command timed out after ${ms}ms (requestTimeoutMs timed out)` });
       }
     });

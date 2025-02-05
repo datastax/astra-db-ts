@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { EmbeddingProviderInfo, EmbeddingProviderModelInfo } from '@/src/administration';
-import { EmbeddingHeadersProvider } from '@/src/documents';
-import { ENVIRONMENT } from '@/tests/testlib';
-import { VectorizeTestSpec } from '@/tests/integration/documents/vectorize.test';
+import type { EmbeddingProviderInfo, EmbeddingProviderModelInfo } from '@/src/administration/index.js';
+import { EmbeddingHeadersProvider } from '@/src/documents/index.js';
+import { ENVIRONMENT } from '@/tests/testlib/index.js';
+import type { VectorizeTestSpec } from '@/tests/integration/documents/vectorize.test.js';
 
 interface ModelBranch {
   providerName: string,
@@ -69,22 +69,22 @@ interface AuthBranch extends WithParams {
 }
 
 const branchOnAuth = (spec: VectorizeTestSpec[string], providerInfo: EmbeddingProviderInfo) => (branch: WithParams): FinalVectorizeTestBranch[] => {
-  const auth = providerInfo['supportedAuthentication'];
+  const auth = providerInfo.supportedAuthentication;
   const branches: AuthBranch[] = [];
 
   const ehp = (Object.entries(spec?.headers ?? []).length)
     ? new class extends EmbeddingHeadersProvider { getHeaders = () => spec?.headers ?? {}; }
     : null;
 
-  if (auth['HEADER']?.enabled && ehp) {
+  if (auth.HEADER?.enabled && ehp) {
     branches.push({ ...branch, authType: 'header', header: ehp, branchName: `${branch.branchName}@header` });
   }
 
-  if (auth['SHARED_SECRET']?.enabled && spec.sharedSecret?.providerKey && ENVIRONMENT === 'astra') {
+  if (auth.SHARED_SECRET?.enabled && spec.sharedSecret?.providerKey && ENVIRONMENT === 'astra') {
     branches.push({ ...branch, authType: 'providerKey', providerKey: spec.sharedSecret?.providerKey, branchName: `${branch.branchName}@providerKey` });
   }
 
-  if (auth['NONE']?.enabled && ENVIRONMENT === 'astra') {
+  if (auth.NONE?.enabled && ENVIRONMENT === 'astra') {
     branches.push({ ...branch, authType: 'none', branchName: `${branch.branchName}@none` });
   }
 

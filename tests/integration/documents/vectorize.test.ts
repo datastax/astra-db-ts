@@ -13,33 +13,28 @@
 // limitations under the License.
 
 import assert from 'assert';
-import { Collection, UUID } from '@/src/documents';
+import type { Collection} from '@/src/documents/index.js';
+import { UUID } from '@/src/documents/index.js';
 import * as fs from 'fs';
-import { EmbeddingProviderInfo } from '@/src/administration/types/db-admin/find-embedding-providers';
-import { describe, it, parallel } from '@/tests/testlib';
-import { negate } from '@/tests/testlib/utils';
-import { whitelistImplFor } from '@/tests/testlib/vectorize/vec-whitelist-imp';
-import { branchOnModel, FinalVectorizeTestBranch } from '@/tests/testlib/vectorize/vec-test-branches';
-import { createTestGroups, VectorizeTestGroup } from '@/tests/testlib/vectorize/vec-test-groups';
-import { Db } from '@/src/db';
+import type { EmbeddingProviderInfo } from '@/src/administration/types/db-admin/find-embedding-providers.js';
+import { describe, it, parallel } from '@/tests/testlib/index.js';
+import { negate } from '@/tests/testlib/utils.js';
+import { whitelistImplFor } from '@/tests/testlib/vectorize/vec-whitelist-imp.js';
+import type { FinalVectorizeTestBranch } from '@/tests/testlib/vectorize/vec-test-branches.js';
+import { branchOnModel } from '@/tests/testlib/vectorize/vec-test-branches.js';
+import type { VectorizeTestGroup } from '@/tests/testlib/vectorize/vec-test-groups.js';
+import { createTestGroups } from '@/tests/testlib/vectorize/vec-test-groups.js';
+import type { Db } from '@/src/db/index.js';
 
-export interface VectorizeTestSpec {
-  [providerName: string]: {
-    headers?: {
-      [header: `x-${string}`]: string,
-    }
+export type VectorizeTestSpec = Record<string, {
+    headers?: Record<`x-${string}`, string>
     sharedSecret?: {
       providerKey?: string,
     }
-    dimension?: {
-      [modelNameRegex: string]: number,
-    },
-    parameters?: {
-      [modelNameRegex: string]: Record<string, string>
-    },
+    dimension?: Record<string, number>,
+    parameters?: Record<string, Record<string, string>>,
     warmupErr?: string,
-  },
-}
+  }>;
 
 const createTestBranches = (): FinalVectorizeTestBranch[] => {
   if (!process.env.CLIENT_VECTORIZE_PROVIDERS || process.env.CLIENT_VECTORIZE_PROVIDERS === 'null') {

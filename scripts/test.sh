@@ -8,7 +8,7 @@ if [ -f .env ]; then
 fi
 
 # Define necessary commands
-test_cmd="ts-mocha --paths --recursive tests/prelude.test.ts tests/unit tests/integration tests/postlude.test.ts --extension .test.ts -t 0 --reporter tests/errors-reporter.cjs --exit "
+test_cmd="mocha --import=tsx/esm -r tsconfig-paths --recursive tests/prelude.test.ts tests/unit tests/integration tests/postlude.test.ts --extension .test.ts -t 0 --reporter tests/errors-reporter.cjs --exit "
 
 # Counter to make sure test type isn't set multiple times
 test_type_set=0
