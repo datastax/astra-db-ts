@@ -14,7 +14,7 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import type { context, FetchInit } from 'fetch-h2';
-import type { DefaultHttpClientOptions } from '@/src/client/index.js';
+import type { FetchH2HttpClientOptions } from '@/src/client/index.js';
 import type { Fetcher, FetcherRequestInfo, FetcherResponseInfo, SomeConstructor } from '@/src/lib/index.js';
 
 /**
@@ -36,7 +36,7 @@ export class FetchH2 implements Fetcher {
   private readonly _preferred: ReturnType<typeof context>;
   private readonly _timeoutErrorCls: SomeConstructor;
 
-  constructor(options: DefaultHttpClientOptions) {
+  constructor(options: FetchH2HttpClientOptions) {
     const fetchH2 = options.fetchH2;
 
     this._http1 = fetchH2.context({
