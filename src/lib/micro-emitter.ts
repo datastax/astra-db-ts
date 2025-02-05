@@ -13,7 +13,22 @@
 // limitations under the License.
 
 /**
- * A minimal event emitter, to avoid a dependency on `events` for maximum compatibility.
+ * ##### Overview
+ *
+ * A minimal event emitter implementation that allows for subscribing to and emitting events.
+ *
+ * Avoids a dependency on `events` for maximum compatibility across environments & module systems.
+ *
+ * Will not be used directly, but rather through the {@link DataAPIClient} to emit events from the {@link DataAPIClientEventMap} for logging/monitoring purposes.
+ *
+ * @example
+ * ```ts
+ * const client = new DataAPIClient({ logging: 'all' });
+ *
+ * client.on('commandFailed', (evt) => {
+ *   console.error('Command failed:', evt.commandName, evt.error);
+ * });
+ * ```
  *
  * @public
  */
@@ -23,6 +38,14 @@ export class MicroEmitter<Events extends Record<string, (...args: any[]) => void
    */
   readonly #listeners: Partial<Record<keyof Events, ((...args: any[]) => void)[]>> = {};
 
+  /**
+   * Subscribe to an event.
+   *
+   * @param event - The event to listen for.
+   * @param listener - The callback to invoke when the event is emitted.
+   *
+   * @returns A function to unsubscribe the listener.
+   */
   public on<E extends keyof Events>(event: E, listener: Events[E]): () => void {
     if (!this.#listeners[event]) {
       this.#listeners[event] = [];
@@ -35,6 +58,12 @@ export class MicroEmitter<Events extends Record<string, (...args: any[]) => void
     };
   }
 
+  /**
+   * Unsubscribe from an event.
+   *
+   * @param event - The event to unsubscribe from.
+   * @param listener - The listener to remove.
+   */
   public off<E extends keyof Events>(event: E, listener: Events[E]): void {
     if (!this.#listeners[event]) {
       return;
@@ -47,6 +76,18 @@ export class MicroEmitter<Events extends Record<string, (...args: any[]) => void
     }
   }
 
+  /**
+   * Subscribe to an event once.
+   *
+   * The listener will be automatically unsubscribed after the first time it is called.
+   *
+   * Note that the listener will be unsubscribed BEFORE the actual listener callback is invoked.
+   *
+   * @param event - The event to listen for.
+   * @param listener - The callback to invoke when the event is emitted.
+   *
+   * @returns A function to prematurely unsubscribe the listener.
+   */
   public once<E extends keyof Events>(event: E, listener: Events[E]): () => void {
     const onceListener = (...args: any[]) => {
       this.off(event, onceListener as Events[E]);
@@ -55,6 +96,16 @@ export class MicroEmitter<Events extends Record<string, (...args: any[]) => void
     return this.on(event, onceListener as Events[E]);
   }
 
+  /**
+   * Emit an event.
+   *
+   * Should probably never be used by the user directly.
+   *
+   * @param event - The event to emit.
+   * @param args - Any arguments to pass to the listeners.
+   *
+   * @returns `true` if the event had listeners, `false` otherwise.
+   */
   public emit<E extends keyof Events>(event: E, ...args: Parameters<Events[E]>): boolean {
     if (!this.#listeners[event]) {
       return false;

@@ -1,12 +1,11 @@
 import { DataAPIClient } from '@datastax/astra-db-ts';
-import * as fetchH2 from 'fetch-h2';
 
-// Creates the client with the `httpOptions` set to use the `fetch` client as next.js's minification
-// conflicts with the importing of our default http client (see http2-when-minified for more info)
+// Creates the client with the `httpOptions` set to use the `fetch-h2` client for better performance
+// However, it's necessary to manually install the `fetch-h2` package & pass it to the client
 const client = new DataAPIClient(process.env.ASTRA_DB_TOKEN!, {
   httpOptions: {
     client: 'fetch-h2',
-    fetchH2: fetchH2,
+    fetchH2: require('fetch-h2'),
   },
 });
 const db = client.db(process.env.ASTRA_DB_ENDPOINT!);

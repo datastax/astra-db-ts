@@ -2,15 +2,17 @@
 
 ## Overview
 
-`astra-db-ts` works nearly natively with the Cloudflare Workers runtime. The only detour required
-to make this work is to install the `events` polyfill, which is not included natively in the
-Workers runtime. Luckily, this is as simple as doing `npm i events` in your project.
+> [!WARNING]  
+> This example pertains to `astra-db-ts` version 2.0.0 and later.
+>
+> Previous versions of `astra-db-ts` need the `events` polyfill to work in Cloudflare Workers.
+>
+> See the [v1.x cloudflare workers example](https://github.com/datastax/astra-db-ts/blob/v1.x/examples/cloudflare-workers/README.md) for more information.
+
+`astra-db-ts` works without issue with the Cloudflare Workers runtime.
 
 This is a simple example of how it can be used to interact with an Astra database; it'll simply
 list out all the collections in a given database.
-
-Check out the [Non-standard environment support](../../README.md#non-standard-environment-support) section
-in the main `README.md` for more information common between non-standard environments.
 
 ## Getting started
 
@@ -35,9 +37,7 @@ in the main `README.md` for more information common between non-standard environ
 
 1. Use the typical `npm create cloudflare@latest` to create a new Cloudflare Workers project.
 
-2. Install `@datastax/astra-db-ts` and `events` by running `npm i @datastax/astra-db-ts events`.
-
-3. You should be able to use `@datastax/astra-db-ts` in your project as normal now.
+2. You should be able to use `@datastax/astra-db-ts` in your project as normal.
 
 ## Full code sample
 

@@ -12,7 +12,6 @@
     "wrangler": "^3.55.0"
   },
   "dependencies": {
-    "@datastax/astra-db-ts": "file:../astra-db-ts.tgz",
-    "events": "^3.3.0"
+    "@datastax/astra-db-ts": "file:../astra-db-ts.tgz"
   }
 }

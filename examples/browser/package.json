@@ -10,10 +10,9 @@
   },
   "devDependencies": {
     "typescript": "^5.2.2",
-    "vite": "^5.2.0"
+    "vite": "^5.4.14"
   },
   "dependencies": {
-    "@datastax/astra-db-ts": "file:../astra-db-ts.tgz",
-    "events": "^3.3.0"
+    "@datastax/astra-db-ts": "file:../astra-db-ts.tgz"
   }
 }
