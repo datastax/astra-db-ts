@@ -14,8 +14,8 @@
 
 import * as _uuid from 'uuid';
 import { $CustomInspect } from '@/src/lib/constants.js';
-import type { CollCodec, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
-import { type CollDesCtx, type CollSerCtx } from '@/src/documents/index.js';
+import type { CollectionCodec, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
+import { type CollectionDesCtx, type CollectionSerCtx } from '@/src/documents/index.js';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
 
@@ -82,7 +82,7 @@ export const uuid = (uuid: string | 1 | 4 | 6 | 7) => {
  *
  * @public
  */
-export class UUID implements CollCodec<typeof UUID>, TableCodec<typeof UUID> {
+export class UUID implements CollectionCodec<typeof UUID>, TableCodec<typeof UUID> {
   /**
    * The version of the UUID.
    */
@@ -100,7 +100,7 @@ export class UUID implements CollCodec<typeof UUID>, TableCodec<typeof UUID> {
   /**
    * Implementation of `$SerializeForCollection` for {@link TableCodec}
    */
-  public [$SerializeForCollection](ctx: CollSerCtx) {
+  public [$SerializeForCollection](ctx: CollectionSerCtx) {
     return ctx.done({ $uuid: this._raw });
   };
 
@@ -114,7 +114,7 @@ export class UUID implements CollCodec<typeof UUID>, TableCodec<typeof UUID> {
   /**
    * Implementation of `$DeserializeForCollection` for {@link TableCodec}
    */
-  public static [$DeserializeForCollection](value: any, ctx: CollDesCtx) {
+  public static [$DeserializeForCollection](value: any, ctx: CollectionDesCtx) {
     return ctx.done(new UUID(value.$uuid, false));
   }
 

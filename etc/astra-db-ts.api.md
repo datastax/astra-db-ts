@@ -5,7 +5,7 @@
 ```ts
 
 import { BigNumber } from 'bignumber.js';
-import { CollSerDesConfig as CollSerDesConfig_2 } from '../../documents/collections/ser-des/ser-des.js';
+import { CollectionSerDesConfig as CollectionSerDesConfig_2 } from '../../documents/collections/ser-des/ser-des.js';
 import { Decoder } from 'decoders';
 import type { DecoderType } from 'decoders';
 import { Monoid as Monoid_2 } from '../../lib/opts-handler.js';
@@ -319,6 +319,8 @@ export interface BaseSerDesCtx {
     target: SerDesTarget;
 }
 
+export { BigNumber }
+
 // @public
 export const blob: (blob: DataAPIBlobLike) => DataAPIBlob;
 
@@ -348,54 +350,6 @@ export interface Camel2SnakeCaseOptions {
     exceptId?: boolean;
     // (undocumented)
     transformNested?: boolean | ((path: KeyTransformerCtx) => boolean);
-}
-
-// @public (undocumented)
-export type CollCodec<Class extends CollCodecClass> = InstanceType<Class>;
-
-// @public (undocumented)
-export interface CollCodecClass {
-    // (undocumented)
-    [$DeserializeForCollection]: SerDesFn<CollDesCtx>;
-    // (undocumented)
-    new (...args: any[]): {
-        [$SerializeForCollection]: (ctx: CollSerCtx) => ReturnType<SerDesFn<any>>;
-    };
-}
-
-// @public (undocumented)
-export class CollCodecs {
-    // Warning: (ae-forgotten-export) The symbol "CollCustomCodecOpts" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    static custom(opts: CollCustomCodecOpts): RawCollCodecs;
-    // (undocumented)
-    static Defaults: {
-        $date: RawCollCodecs;
-        $vector: RawCollCodecs;
-        $uuid: RawCollCodecs;
-        $objectId: RawCollCodecs;
-    };
-    // Warning: (ae-forgotten-export) The symbol "CollNominalCodecOpts" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    static forId(optsOrClass: CollNominalCodecOpts & {
-        class?: SomeConstructor;
-    } | CollCodecClass): RawCollCodecs;
-    // (undocumented)
-    static forName(name: string, optsOrClass: CollNominalCodecOpts | CollCodecClass): RawCollCodecs;
-    // (undocumented)
-    static forPath(path: (string | number)[], optsOrClass: CollNominalCodecOpts | CollCodecClass): RawCollCodecs;
-    // Warning: (ae-forgotten-export) The symbol "CollTypeCodecOpts" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    static forType(type: string, optsOrClass: CollTypeCodecOpts | CollCodecClass): RawCollCodecs;
-}
-
-// @public (undocumented)
-export interface CollDesCtx extends BaseDesCtx<CollDesCtx> {
-    // (undocumented)
-    getNumRepForPath?: GetCollNumRepFn;
 }
 
 // @public
@@ -444,6 +398,48 @@ export interface CollectionArrayFilterOps<Elem> {
 export type CollectionArrayUpdate<Schema> = {
     [K in keyof Schema as any[] extends Schema[K] ? K : never]?: PickArrayTypes<Schema[K]>;
 };
+
+// @public (undocumented)
+export type CollectionCodec<Class extends CollectionCodecClass> = InstanceType<Class>;
+
+// @public (undocumented)
+export interface CollectionCodecClass {
+    // (undocumented)
+    [$DeserializeForCollection]: SerDesFn<CollectionDesCtx>;
+    // (undocumented)
+    new (...args: any[]): {
+        [$SerializeForCollection]: (ctx: CollectionSerCtx) => ReturnType<SerDesFn<any>>;
+    };
+}
+
+// @public (undocumented)
+export class CollectionCodecs {
+    // Warning: (ae-forgotten-export) The symbol "CollCustomCodecOpts" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    static custom(opts: CollCustomCodecOpts): RawCollCodecs;
+    // (undocumented)
+    static Defaults: {
+        $date: RawCollCodecs;
+        $vector: RawCollCodecs;
+        $uuid: RawCollCodecs;
+        $objectId: RawCollCodecs;
+    };
+    // Warning: (ae-forgotten-export) The symbol "CollNominalCodecOpts" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    static forId(optsOrClass: CollNominalCodecOpts & {
+        class?: SomeConstructor;
+    } | CollectionCodecClass): RawCollCodecs;
+    // (undocumented)
+    static forName(name: string, optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs;
+    // (undocumented)
+    static forPath(path: (string | number)[], optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs;
+    // Warning: (ae-forgotten-export) The symbol "CollTypeCodecOpts" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    static forType(type: string, optsOrClass: CollTypeCodecOpts | CollectionCodecClass): RawCollCodecs;
+}
 
 // @public
 export type CollectionCurrentDate<Schema> = {
@@ -494,6 +490,12 @@ export interface CollectionDeleteOneResult {
 export interface CollectionDescriptor {
     definition: CollectionDefinition<SomeDoc>;
     name: string;
+}
+
+// @public (undocumented)
+export interface CollectionDesCtx extends BaseDesCtx<CollectionDesCtx> {
+    // (undocumented)
+    getNumRepForPath?: GetCollNumRepFn;
 }
 
 // @public
@@ -585,7 +587,7 @@ export interface CollectionOptions extends WithKeyspace {
     embeddingApiKey?: string | EmbeddingHeadersProvider | null;
     logging?: DataAPILoggingConfig;
     // @beta
-    serdes?: CollSerDesConfig;
+    serdes?: CollectionSerDesConfig;
     timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
 
@@ -607,6 +609,20 @@ export type CollectionReplaceOneOptions = GenericReplaceOneOptions;
 
 // @public
 export type CollectionReplaceOneResult<RSchema> = GenericUpdateResult<IdOf<RSchema>, 0 | 1>;
+
+// @public (undocumented)
+export interface CollectionSerCtx extends BaseSerCtx<CollectionSerCtx> {
+    // (undocumented)
+    bigNumsEnabled: boolean;
+}
+
+// @public (undocumented)
+export interface CollectionSerDesConfig extends BaseSerDesConfig<CollectionSerCtx, CollectionDesCtx> {
+    // (undocumented)
+    codecs?: RawCollCodecs[];
+    // (undocumented)
+    enableBigNumbers?: GetCollNumRepFn | CollNumRepCfg;
+}
 
 // @public
 export interface CollectionUpdateFilter<Schema extends SomeDoc> {
@@ -659,20 +675,6 @@ export type CollNumRep = 'number' | 'bigint' | 'bignumber' | 'string' | 'number_
 
 // @public (undocumented)
 export type CollNumRepCfg = Record<string, CollNumRep>;
-
-// @public (undocumented)
-export interface CollSerCtx extends BaseSerCtx<CollSerCtx> {
-    // (undocumented)
-    bigNumsEnabled: boolean;
-}
-
-// @public (undocumented)
-export interface CollSerDesConfig extends BaseSerDesConfig<CollSerCtx, CollDesCtx> {
-    // (undocumented)
-    codecs?: RawCollCodecs[];
-    // (undocumented)
-    enableBigNumbers?: GetCollNumRepFn | CollNumRepCfg;
-}
 
 // @public
 export abstract class CommandEvent extends BaseDataAPIClientEvent {
@@ -1079,10 +1081,10 @@ export class DataAPITimeoutError extends DataAPIError {
 }
 
 // @public
-export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCodec<typeof DataAPIVector> {
-    static [$DeserializeForCollection](value: any, ctx: CollDesCtx): readonly [0, (DataAPIVector | undefined)?];
+export class DataAPIVector implements CollectionCodec<typeof DataAPIVector>, TableCodec<typeof DataAPIVector> {
+    static [$DeserializeForCollection](value: any, ctx: CollectionDesCtx): readonly [0, (DataAPIVector | undefined)?];
     static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (DataAPIVector | undefined)?];
-    [$SerializeForCollection](ctx: CollSerCtx): readonly [0, (number[] | {
+    [$SerializeForCollection](ctx: CollectionSerCtx): readonly [0, (number[] | {
         $binary: string;
     } | undefined)?];
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (number[] | {
@@ -1179,7 +1181,7 @@ export interface DbOptions {
 
 // @public
 export interface DbSerDesConfig {
-    collection?: Omit<CollSerDesConfig, 'mutateInPlace'>;
+    collection?: Omit<CollectionSerDesConfig, 'mutateInPlace'>;
     mutateInPlace?: boolean;
     table?: Omit<TableSerDesConfig, 'mutateInPlace'>;
 }
@@ -1619,7 +1621,7 @@ export abstract class KeyTransformer {
 export const LIB_NAME = "astra-db-ts";
 
 // @public
-export const LIB_VERSION = "2.0.0-preview.3";
+export const LIB_VERSION = "2.0.0-preview.4";
 
 // @public
 export interface ListAstraDatabasesOptions extends WithTimeout<'databaseAdminTimeoutMs'> {
@@ -1765,9 +1767,9 @@ export class NumCoercionError extends Error {
 }
 
 // @public
-export class ObjectId implements CollCodec<typeof ObjectId> {
-    static [$DeserializeForCollection](value: any, ctx: CollDesCtx): readonly [0, (ObjectId | undefined)?];
-    [$SerializeForCollection](ctx: CollSerCtx): readonly [0, ({
+export class ObjectId implements CollectionCodec<typeof ObjectId> {
+    static [$DeserializeForCollection](value: any, ctx: CollectionDesCtx): readonly [0, (ObjectId | undefined)?];
+    [$SerializeForCollection](ctx: CollectionSerCtx): readonly [0, ({
         $objectId: string;
     } | undefined)?];
     constructor(id?: string | number | null, validate?: boolean);
@@ -2244,10 +2246,10 @@ export class UsernamePasswordTokenProvider extends TokenProvider {
 }
 
 // @public
-export class UUID implements CollCodec<typeof UUID>, TableCodec<typeof UUID> {
-    static [$DeserializeForCollection](value: any, ctx: CollDesCtx): readonly [0, (UUID | undefined)?];
+export class UUID implements CollectionCodec<typeof UUID>, TableCodec<typeof UUID> {
+    static [$DeserializeForCollection](value: any, ctx: CollectionDesCtx): readonly [0, (UUID | undefined)?];
     static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (UUID | undefined)?];
-    [$SerializeForCollection](ctx: CollSerCtx): readonly [0, ({
+    [$SerializeForCollection](ctx: CollectionSerCtx): readonly [0, ({
         $uuid: string;
     } | undefined)?];
     [$SerializeForTable](ctx: TableSerCtx): readonly [0, (string | undefined)?];
@@ -2315,9 +2317,6 @@ export type WithSim<Schema extends SomeDoc> = Schema & {
 export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor> {
     timeout?: number | Pick<Partial<TimeoutDescriptor>, 'requestTimeoutMs' | Timeouts>;
 }
-
-
-export * from "bignumber.js";
 
 // Warnings were encountered during analysis:
 //

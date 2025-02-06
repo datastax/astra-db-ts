@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode,CommaExpressionJS
 
 import { describe, it } from '@/tests/testlib/index.js';
-import { Camel2SnakeCase, CollCodecs, uuid } from '@/src/index.js';
+import { Camel2SnakeCase, CollectionCodecs, uuid } from '@/src/index.js';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 import type { CollNominalCodecOpts } from '@/src/documents/collections/ser-des/codecs.js';
 import assert from 'assert';
@@ -34,18 +34,18 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
         ...CollSerDes.cfg.empty,
         enableBigNumbers: { '*': 'bigint' },
         codecs: [
-          repeat(() => CollCodecs.forName('root1',                  serFn('root1'))),
-          repeat(() => CollCodecs.forName('nested1_obj',            serFn('obj'))),
-          repeat(() => CollCodecs.forName('nested1_arr',            serFn('arr'))),
-          repeat(() => CollCodecs.forName('0',                      serFn('0'))),
-          repeat(() => CollCodecs.forName('a',                      serFn('a'))),
-          repeat(() => CollCodecs.forName('root2',                  serFn('root2'))),
-          repeat(() => CollCodecs.forName('$uuid',                  serFn('$uuid'))), // should never run
+          repeat(() => CollectionCodecs.forName('root1',                  serFn('root1'))),
+          repeat(() => CollectionCodecs.forName('nested1_obj',            serFn('obj'))),
+          repeat(() => CollectionCodecs.forName('nested1_arr',            serFn('arr'))),
+          repeat(() => CollectionCodecs.forName('0',                      serFn('0'))),
+          repeat(() => CollectionCodecs.forName('a',                      serFn('a'))),
+          repeat(() => CollectionCodecs.forName('root2',                  serFn('root2'))),
+          repeat(() => CollectionCodecs.forName('$uuid',                  serFn('$uuid'))), // should never run
 
-          repeat(() => CollCodecs.forPath(['root1', 'nested1_obj'], serFn('[root1.obj]'))),
-          repeat(() => CollCodecs.forPath([],                       serFn('[]'))),
+          repeat(() => CollectionCodecs.forPath(['root1', 'nested1_obj'], serFn('[root1.obj]'))),
+          repeat(() => CollectionCodecs.forPath([],                       serFn('[]'))),
 
-          [CollCodecs.custom({
+          [CollectionCodecs.custom({
             serializeClass: Map,
             serialize: (map, ctx) => ctx.recurse(Object.fromEntries(map)),
           })],
@@ -93,7 +93,7 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
         ...CollSerDes.cfg.empty,
         keyTransformer: new Camel2SnakeCase(),
         codecs: [
-          CollCodecs.forPath([], { serialize: (_, ctx) => (ctx.mapAfter((v) => val = v), ctx.nevermind()) }),
+          CollectionCodecs.forPath([], { serialize: (_, ctx) => (ctx.mapAfter((v) => val = v), ctx.nevermind()) }),
         ],
       });
 
@@ -114,18 +114,18 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
         ...CollSerDes.cfg.empty,
         enableBigNumbers: { '*': 'bigint' },
         codecs: [
-          repeat(() => CollCodecs.forName('root1',                  serFn('root1'))),
-          repeat(() => CollCodecs.forName('nested1_obj',            serFn('obj'))),
-          repeat(() => CollCodecs.forName('nested1_arr',            serFn('arr'))),
-          repeat(() => CollCodecs.forName('0',                      serFn('0'))),
-          repeat(() => CollCodecs.forName('a',                      serFn('a'))),
-          repeat(() => CollCodecs.forName('root2',                  serFn('root2'))),
-          repeat(() => CollCodecs.forName('$uuid',                  serFn('$uuid'))), // should never run
+          repeat(() => CollectionCodecs.forName('root1',                  serFn('root1'))),
+          repeat(() => CollectionCodecs.forName('nested1_obj',            serFn('obj'))),
+          repeat(() => CollectionCodecs.forName('nested1_arr',            serFn('arr'))),
+          repeat(() => CollectionCodecs.forName('0',                      serFn('0'))),
+          repeat(() => CollectionCodecs.forName('a',                      serFn('a'))),
+          repeat(() => CollectionCodecs.forName('root2',                  serFn('root2'))),
+          repeat(() => CollectionCodecs.forName('$uuid',                  serFn('$uuid'))), // should never run
 
-          repeat(() => CollCodecs.forPath(['root1', 'nested1_obj'], serFn('[root1.obj]'))),
-          repeat(() => CollCodecs.forPath([],                       serFn('[]'))),
+          repeat(() => CollectionCodecs.forPath(['root1', 'nested1_obj'], serFn('[root1.obj]'))),
+          repeat(() => CollectionCodecs.forPath([],                       serFn('[]'))),
 
-          [CollCodecs.forName('nested1_map', {
+          [CollectionCodecs.forName('nested1_map', {
             deserialize: (_, ctx) => (ctx.mapAfter((obj) => new Map(Object.entries(obj))), ctx.nevermind()),
           })],
         ].sort(() => .5 - Math.random()).flat(),

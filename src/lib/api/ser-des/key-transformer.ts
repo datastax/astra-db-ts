@@ -41,7 +41,7 @@ export interface KeyTransformerCtx {
  *
  * - The key transformer is run immediately before the document is sent to the server, and immediately after the document is received from the server.
  *   - This means that any custom codecs should treat the document as if the keys are in the format that the client expects (e.g., camelCase).
- *   - For example, `CollCodecs.forName('myField', ...)` instead of `'my_field'`
+ *   - For example, `CollectionCodecs.forName('myField', ...)` instead of `'my_field'`
  * - The key transformer only affects inserted/read rows/documents, filters, and table primary keys.
  *   - **Things like table/index definitions are not affected**.
  *
