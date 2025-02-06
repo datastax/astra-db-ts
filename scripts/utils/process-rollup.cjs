@@ -20,8 +20,14 @@ if (!filePath) {
   throw new Error('no file path provided');
 }
 
-const regex = /^import.*from\s+(['"](?:decoders|\.{1,2}[^'"]*)['"]);\s*\n?/gm;
-
 const fileContent = fs.readFileSync(filePath, 'utf8');
-const updatedContent = fileContent.replace(regex, '');
-fs.writeFileSync(filePath, bumf + '\n\n' + updatedContent, 'utf8');
+
+const importRegex = /^import.*from\s+(['"](?:decoders|\.{1,2}[^'"]*)['"]);\s*\n/gm;
+const withoutImports = fileContent.replace(importRegex, '');
+
+const privateRegex = /^\s+#private;\s*\n/gm;
+const withoutPrivate = withoutImports.replace(privateRegex, '');
+
+const withLicense = bumf + '\n\n' + withoutPrivate;
+
+fs.writeFileSync(filePath, withLicense, 'utf8');
