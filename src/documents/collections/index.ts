@@ -13,8 +13,8 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-export * from './cursor.js';
-export * from './collection.js';
+export { CollectionFindCursor } from './cursor.js';
+export { Collection } from './collection.js';
 export type * from './types/index.js';
 
 export type {

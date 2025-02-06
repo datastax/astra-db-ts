@@ -59,7 +59,9 @@ if [ "$light" != true ]; then
   node scripts/utils/add-license-bumf.cjs dist/astra-db-ts.d.ts
 
   # Protects against Symbol.asyncIterator not found
-  sed -i -E '/^(\s+)\[Symbol\.asyncIterator\]/i\// @ts-ignore-error - May or may not be found depending on TS version & esnext.disposable in lib' dist/astra-db-ts.d.ts
+  sed -i.bak -E '/^(\s+)\[Symbol\.asyncIterator\]/i\
+    // @ts-ignore-error - May or may not be found depending on TS version & esnext.disposable in lib' dist/astra-db-ts.d.ts
+  rm dist/astra-db-ts.d.ts.bak
 
   # Delete the "empty" files where only types were declared
   node scripts/utils/del-empty-dist-files.cjs
@@ -72,6 +74,7 @@ if [ "$light" != true ]; then
 
   # Create the index.d.ts files
   # https://github.com/arethetypeswrong/arethetypeswrong.github.io/blob/main/docs/problems/FalseESM.md
-  echo "export type * from '../astra-db-ts.d.ts';" > dist/esm/index.d.ts
-  echo "export type * from '../astra-db-ts.d.ts';" > dist/cjs/index.d.ts
+  echo "" > dist/astra-db-ts.js
+  echo "export * from '../astra-db-ts.js';" > dist/esm/index.d.ts
+  echo "export * from '../astra-db-ts.js';" > dist/cjs/index.d.ts
 fi
