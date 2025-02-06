@@ -18,4 +18,4 @@ export * from './documents/index.js';
 export * from './administration/index.js';
 export * from './lib/index.js';
 export * from './version.js';
-export * from 'bignumber.js';
+export { BigNumber } from 'bignumber.js';

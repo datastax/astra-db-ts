@@ -15,8 +15,8 @@
 
 import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import type { CollCodec} from '@/src/documents/index.js';
-import { $DeserializeForCollection, $SerializeForCollection, CollCodecs } from '@/src/documents/index.js';
+import type { CollectionCodec} from '@/src/documents/index.js';
+import { $DeserializeForCollection, $SerializeForCollection, CollectionCodecs } from '@/src/documents/index.js';
 import { processCodecs } from '@/src/lib/index.js';
 import type { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs.js';
 
@@ -27,37 +27,37 @@ describe('unit.documents.collections.ser-des.codecs', () => {
 
       const repeat = <T>(fn: (i: number) => T) => Array.from({ length: 3 }, (_, i) => fn(i));
 
-      class Delegate implements CollCodec<typeof Delegate> {
+      class Delegate implements CollectionCodec<typeof Delegate> {
         static [$DeserializeForCollection] = fake('$DeserializeForCollection');
         [$SerializeForCollection] = fake('$SerializeForCollection');
       }
 
       const codecs: RawCollCodecs[] = [
         repeat((i) => [
-          CollCodecs.forName(`name${i}`, Delegate),
-          CollCodecs.forName(`name${i}`, { serialize: fake(`name${i}:ser_fn`) }),
-          CollCodecs.forName(`name${i}`, { deserialize: fake(`name${i}:des_fn`) }),
-          CollCodecs.forName(`name${i}`, { serialize: fake(`name${i}:serdes_fn`), deserialize: fake(`name${i}:serdes_fn`) }),
+          CollectionCodecs.forName(`name${i}`, Delegate),
+          CollectionCodecs.forName(`name${i}`, { serialize: fake(`name${i}:ser_fn`) }),
+          CollectionCodecs.forName(`name${i}`, { deserialize: fake(`name${i}:des_fn`) }),
+          CollectionCodecs.forName(`name${i}`, { serialize: fake(`name${i}:serdes_fn`), deserialize: fake(`name${i}:serdes_fn`) }),
         ]).flat(),
 
         repeat((i) => [
-          CollCodecs.forPath(['pa', 'th', `${i}`], Delegate),
-          CollCodecs.forPath(['pa', 'th', `${i}`], { serialize: fake(`path${i}:ser_fn`) }),
-          CollCodecs.forPath(['pa', 'th', `${i}`], { deserialize: fake(`path${i}:des_fn`) }),
-          CollCodecs.forPath(['pa', 'th', `${i}`], { serialize: fake(`path${i}:serdes_fn`), deserialize: fake(`path${i}:serdes_fn`) }),
+          CollectionCodecs.forPath(['pa', 'th', `${i}`], Delegate),
+          CollectionCodecs.forPath(['pa', 'th', `${i}`], { serialize: fake(`path${i}:ser_fn`) }),
+          CollectionCodecs.forPath(['pa', 'th', `${i}`], { deserialize: fake(`path${i}:des_fn`) }),
+          CollectionCodecs.forPath(['pa', 'th', `${i}`], { serialize: fake(`path${i}:serdes_fn`), deserialize: fake(`path${i}:serdes_fn`) }),
         ]).flat(),
 
         repeat((i) => [
-          CollCodecs.forType(`type${i}`, Delegate),
-          CollCodecs.forType(`type${i}`, { serialize: fake(`type${i}:ser_fn/class`), serializeClass: Delegate }),
-          CollCodecs.forType(`type${i}`, { serialize: fake(`type${i}:ser_fn/guard`), serializeGuard: fake(`type${i}:ser_guard`) }),
-          CollCodecs.forType(`type${i}`, { deserialize: fake(`type${i}:des_fn`) }),
+          CollectionCodecs.forType(`type${i}`, Delegate),
+          CollectionCodecs.forType(`type${i}`, { serialize: fake(`type${i}:ser_fn/class`), serializeClass: Delegate }),
+          CollectionCodecs.forType(`type${i}`, { serialize: fake(`type${i}:ser_fn/guard`), serializeGuard: fake(`type${i}:ser_guard`) }),
+          CollectionCodecs.forType(`type${i}`, { deserialize: fake(`type${i}:des_fn`) }),
         ]).flat(),
 
         repeat((i) => [
-          CollCodecs.custom({ serialize: fake(`custom${i}:ser_fn/class`), serializeClass: Delegate }),
-          CollCodecs.custom({ serialize: fake(`custom${i}:ser_fn/guard`), serializeGuard: fake(`custom${i}:ser_guard`) }),
-          CollCodecs.custom({ deserialize: fake(`custom${i}:des_fn`), deserializeGuard: fake(`custom${i}:des_guard`) }),
+          CollectionCodecs.custom({ serialize: fake(`custom${i}:ser_fn/class`), serializeClass: Delegate }),
+          CollectionCodecs.custom({ serialize: fake(`custom${i}:ser_fn/guard`), serializeGuard: fake(`custom${i}:ser_guard`) }),
+          CollectionCodecs.custom({ deserialize: fake(`custom${i}:des_fn`), deserializeGuard: fake(`custom${i}:des_guard`) }),
         ]).flat(),
       ].flat();
 

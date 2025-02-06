@@ -22,6 +22,9 @@ while [ $# -gt 0 ]; do
     "lib-check")
       check_types="$check_types lib-check"
       ;;
+    "module-exports-diff")
+      check_types="$check_types module-exports-diff"
+      ;;
      *)
       sh scripts/utils/help.sh "$1" check.sh
       exit $?
@@ -31,7 +34,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "$check_types" ]; then
-  check_types="tc lint licensing lib-check test-exts test-names"
+  check_types="tc lint licensing lib-check test-exts test-names module-exports-diff"
 fi
 
 failed=false
@@ -48,8 +51,16 @@ print_green_with_status() {
   fi
 }
 
-print_error() {
+print_failed() {
   echo "$(tput setaf 1)$1$(tput sgr0)"
+  failed=true
+}
+
+build_if_not_built() {
+  if [ -z "$built" ]; then
+    scripts/build.sh > /dev/null
+    built=true
+  fi
 }
 
 for check_type in $check_types; do
@@ -75,9 +86,8 @@ for check_type in $check_types; do
       offenders=$(find tests/ src/ -type f -exec grep -L "^// Copyright DataStax, Inc." {} +)
 
       if [ -n "$offenders" ]; then
-        print_error "The following files are missing licensing headers:"
-        print_error "$offenders"
-        failed=true
+        print_failed "The following files are missing licensing headers:"
+        print_failed "$offenders"
       fi
       ;;
     "lib-check")
@@ -86,11 +96,10 @@ for check_type in $check_types; do
       tmp_dir="tmp-lib-check"
       rm -rf "$tmp_dir" "$main_dir/dist"
 
-      scripts/build.sh > /dev/null
+      build_if_not_built
 
-      if [ ! $? ]; then
-        print_error "Could not build library for lib-check phase"
-        failed=true
+      if [ "$built" != true ]; then
+        print_failed "Could not build library for lib-check phase"
       else
         mkdir "$tmp_dir" \
           && cd "$tmp_dir" \
@@ -102,8 +111,7 @@ for check_type in $check_types; do
         if [ -f tsconfig.json ]; then
           npx tsc || failed=true
         else
-          print_error "Could not set up library for lib-check phase"
-          failed=true
+          print_failed "Could not set up library for lib-check phase"
         fi
       fi
 
@@ -114,9 +122,8 @@ for check_type in $check_types; do
       offenders=$(find tests/unit tests/integration -type f -not -name "*.test.ts" -exec echo "- {}" \;)
 
       if [ -n "$offenders" ]; then
-        print_error "The following test files do not end in '.test.ts':"
-        print_error "$offenders"
-        failed=true
+        print_failed "The following test files do not end in '.test.ts':"
+        print_failed "$offenders"
       fi
       ;;
     "test-names")
@@ -130,20 +137,49 @@ for check_type in $check_types; do
       )
 
       if [ -n "$offenders" ]; then
-        print_error "The following test suites do not match the test dir + file name:"
-        print_error "$offenders"
-        failed=true
+        print_failed "The following test suites do not match the test dir + file name:"
+        print_failed "$offenders"
+      fi
+      ;;
+    "module-exports-diff")
+      print_green_with_status "Ensuring ESM & CJS modules have the same exports..." # yes this has been a problem before
+
+      build_if_not_built
+
+      if [ "$built" != true ]; then
+        print_failed "Could not build library for lib-check phase"
+        continue
+      fi
+
+      res=$(node -e '
+        import("./dist/esm/index.js").then(Object.keys).then(esm => {
+          const cjs = Object.keys(require("./dist/cjs/index.js"));
+
+          const inCjsNotInEsm = cjs.filter(key => !esm.includes(key));
+          const inEsmNotInCjs = esm.filter(key => !cjs.includes(key));
+
+          if (inCjsNotInEsm.length > 0 || inEsmNotInCjs.length > 0) {
+            console.log("The following exports are missing from either ESM or CJS:");
+            console.log("In CJS but not ESM:", inCjsNotInEsm);
+            console.log("In ESM but not CJS:", inEsmNotInCjs);
+            process.exit(1);
+          }
+        }).catch(() => process.exit(1));
+      ')
+
+      if [ -n "$res" ]; then
+        print_failed "$res"
       fi
       ;;
     "*")
-      print_error "Invalid check type '$check_type'"
+      print_failed "Invalid check type '$check_type'"
       exit 1
       ;;
   esac
 done
 
 if [ "$failed" = true ]; then
-  print_error "$(tput bold)Checks failed :("
+  print_failed "$(tput bold)Checks failed :("
   exit 1
 else
   print_green "Checks passed :)"

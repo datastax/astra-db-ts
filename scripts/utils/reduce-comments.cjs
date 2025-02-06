@@ -24,17 +24,7 @@ if (!filePath) {
   throw new Error('no file path provided');
 }
 
-fs.readFile(filePath, 'utf8', (err, data) => {
-  if (err) {
-    throw new Error('Error reading file ${filePath}: ${err}');
-  }
-
-  const withShortenedLicense = data.replace(longBumf, shortBumf);
-  const withStrippedBlockComments = strip.block(withShortenedLicense);
-
-  fs.writeFile(filePath, withStrippedBlockComments, 'utf8', (err) => {
-    if (err) {
-      throw new Error('Error writing file ${filePath}: ${err}');
-    }
-  });
-});
+const fileContent = fs.readFileSync(filePath, 'utf8');
+const withShortenedLicense = fileContent.replace(longBumf, shortBumf);
+const withStrippedBlockComments = strip.block(withShortenedLicense);
+fs.writeFileSync(filePath, withStrippedBlockComments, 'utf8');

@@ -15,8 +15,8 @@
 
 import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import { $DeserializeForCollection, $SerializeForCollection, CollCodecs } from '@/src/documents/collections/index.js';
-import type { CollCodec } from '@/src/index.js';
+import { $DeserializeForCollection, $SerializeForCollection, CollectionCodecs } from '@/src/documents/collections/index.js';
+import type { CollectionCodec } from '@/src/index.js';
 import { ctxNevermind } from '@/src/lib/api/ser-des/ctx.js';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 
@@ -36,7 +36,7 @@ describe('unit.documents.collections.ser-des.ser-des.order', () => {
     return ctxNevermind();
   };
 
-  class Test implements CollCodec<typeof Test> {
+  class Test implements CollectionCodec<typeof Test> {
     [$SerializeForCollection] = ser('$SerializeForColl');
     static [$DeserializeForCollection] = des('$DeserializeForColl');
   }
@@ -48,60 +48,60 @@ describe('unit.documents.collections.ser-des.ser-des.order', () => {
       ...CollSerDes.cfg.empty,
       codecs: [
         [
-          repeat((i) => CollCodecs.forPath([], {
+          repeat((i) => CollectionCodecs.forPath([], {
             serialize: ser('forPath:root', i),
           })),
         ],
         [
-          repeat((i) => CollCodecs.forName('', {
+          repeat((i) => CollectionCodecs.forName('', {
             serialize: ser('forName:root', i),
           })),
         ],
         [
-          repeat((i) => CollCodecs.forPath(['test'], {
+          repeat((i) => CollectionCodecs.forPath(['test'], {
             serialize: ser('forPath:test', i),
           })),
         ],
         [
-          repeat((i) => CollCodecs.forName('test', {
+          repeat((i) => CollectionCodecs.forName('test', {
             serialize: ser('forName:test', i),
           })),
         ],
         [
-          repeat((i) => CollCodecs.custom({
+          repeat((i) => CollectionCodecs.custom({
             serializeGuard: () => true,
             serialize: ser('custom:guard_any', i),
           })),
-          repeat((i) => CollCodecs.forType('int', {
+          repeat((i) => CollectionCodecs.forType('int', {
             serializeGuard: () => true,
             serialize: ser('forType:guard_any', i),
           })),
-          repeat((i) => CollCodecs.custom({
+          repeat((i) => CollectionCodecs.custom({
             serializeGuard: (v) => v instanceof Test,
             serialize: ser('custom:guard', i),
           })),
-          repeat((i) => CollCodecs.forType('int', {
+          repeat((i) => CollectionCodecs.forType('int', {
             serializeGuard: (v) => v instanceof Test,
             serialize: ser('forType:guard', i),
           })),
-          repeat((i) => CollCodecs.custom({
+          repeat((i) => CollectionCodecs.custom({
             serializeGuard: (v) => v instanceof Test,
             serialize: ser('custom:guard', i),
           })),
         ],
         [
-          repeat(() => CollCodecs.forType('int', Test)),
+          repeat(() => CollectionCodecs.forType('int', Test)),
         ],
         [
-          repeat((i) => CollCodecs.forType('int', {
+          repeat((i) => CollectionCodecs.forType('int', {
             serializeClass: Test,
             serialize: ser('forType:class', i),
           })),
-          repeat((i) => CollCodecs.custom({
+          repeat((i) => CollectionCodecs.custom({
             serializeClass: Test,
             serialize: ser('custom:class', i),
           })),
-          repeat((i) => CollCodecs.forType('int', {
+          repeat((i) => CollectionCodecs.forType('int', {
             serializeClass: Test,
             serialize: ser('forType:class', i),
           })),
@@ -147,49 +147,49 @@ describe('unit.documents.collections.ser-des.ser-des.order', () => {
       ...CollSerDes.cfg.empty,
       codecs: [
         [
-          repeat((_) => CollCodecs.forPath([], Test)),
-          repeat((i) => CollCodecs.forPath([], {
+          repeat((_) => CollectionCodecs.forPath([], Test)),
+          repeat((i) => CollectionCodecs.forPath([], {
             deserialize: des('forPath:root', i),
           })),
-          repeat((_) => CollCodecs.forPath([], Test)),
+          repeat((_) => CollectionCodecs.forPath([], Test)),
         ],
         [
-          repeat((i) => CollCodecs.forName('', {
+          repeat((i) => CollectionCodecs.forName('', {
             deserialize: des('forName:root', i),
           })),
-          repeat((_) => CollCodecs.forName('', Test)),
-          repeat((i) => CollCodecs.forName('', {
+          repeat((_) => CollectionCodecs.forName('', Test)),
+          repeat((i) => CollectionCodecs.forName('', {
             deserialize: des('forName:root', i),
           })),
         ],
         [
-          repeat((_) => CollCodecs.forPath(['test'], Test)),
-          repeat((i) => CollCodecs.forPath(['test'], {
+          repeat((_) => CollectionCodecs.forPath(['test'], Test)),
+          repeat((i) => CollectionCodecs.forPath(['test'], {
             deserialize: des('forPath:test', i),
           })),
-          repeat((_) => CollCodecs.forPath(['test'], Test)),
+          repeat((_) => CollectionCodecs.forPath(['test'], Test)),
         ],
         [
-          repeat((i) => CollCodecs.forName('test', {
+          repeat((i) => CollectionCodecs.forName('test', {
             deserialize: des('forName:test', i),
           })),
-          repeat((_) => CollCodecs.forName('test', Test)),
-          repeat((i) => CollCodecs.forName('test', {
+          repeat((_) => CollectionCodecs.forName('test', Test)),
+          repeat((i) => CollectionCodecs.forName('test', {
             deserialize: des('forName:test', i),
           })),
         ],
         [
-          repeat((i) => CollCodecs.custom({
+          repeat((i) => CollectionCodecs.custom({
             deserializeGuard: () => true,
             deserialize: des('custom:guard_any', i),
           })),
-          repeat((i) => CollCodecs.custom({
+          repeat((i) => CollectionCodecs.custom({
             deserializeGuard: (v) => !!v && typeof v === 'object' && 'test' in v,
             deserialize: des('custom:guard', i),
           })),
         ],
         [
-          repeat((i) => CollCodecs.forType('test', {
+          repeat((i) => CollectionCodecs.forType('test', {
             deserialize: des('forType', i),
           })),
         ],

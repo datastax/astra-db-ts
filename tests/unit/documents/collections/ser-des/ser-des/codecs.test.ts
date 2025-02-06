@@ -15,10 +15,10 @@
 
 import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
-import type { CollDesCtx, CollSerCtx } from '@/src/documents/collections/ser-des/ser-des.js';
+import type { CollectionDesCtx, CollectionSerCtx } from '@/src/documents/collections/ser-des/ser-des.js';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
-import type { CollCodec} from '@/src/documents/collections/index.js';
-import { $DeserializeForCollection, $SerializeForCollection, CollCodecs } from '@/src/documents/collections/index.js';
+import type { CollectionCodec} from '@/src/documents/collections/index.js';
+import { $DeserializeForCollection, $SerializeForCollection, CollectionCodecs } from '@/src/documents/collections/index.js';
 import type { UUID } from '@/src/documents/index.js';
 import { uuid } from '@/src/documents/index.js';
 import { ctxNevermind, ctxDone, ctxRecurse } from '@/src/lib/api/ser-des/ctx.js';
@@ -35,38 +35,38 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
       const serdes = new CollSerDes({
         ...CollSerDes.cfg.empty,
         codecs: [
-          CollCodecs.forPath(['*'], serdesFns('[*]')),
-          CollCodecs.forPath(['cars', '*', 'name'], serdesFns('cars[*][name]')),
-          CollCodecs.forPath(['*', 0, '*', '*'], serdesFns('[*][0][*][*]')),
+          CollectionCodecs.forPath(['*'], serdesFns('[*]')),
+          CollectionCodecs.forPath(['cars', '*', 'name'], serdesFns('cars[*][name]')),
+          CollectionCodecs.forPath(['*', 0, '*', '*'], serdesFns('[*][0][*][*]')),
 
-          CollCodecs.forPath([], serdesFns()),
-          CollCodecs.forPath(['name'], serdesFns()),
-          CollCodecs.forPath(['cars'], serdesFns()),
-          CollCodecs.forPath(['cars', 0], serdesFns()),
-          CollCodecs.forPath(['cars', 0, 'name'], serdesFns()),
-          CollCodecs.forPath(['cars', 0, 'pastOwners'], serdesFns()),
-          CollCodecs.forPath(['cars', 0, 'pastOwners', '0'], serdesFns()),
-          CollCodecs.forPath(['cars', 0, 'pastOwners', 'one'], serdesFns()),
+          CollectionCodecs.forPath([], serdesFns()),
+          CollectionCodecs.forPath(['name'], serdesFns()),
+          CollectionCodecs.forPath(['cars'], serdesFns()),
+          CollectionCodecs.forPath(['cars', 0], serdesFns()),
+          CollectionCodecs.forPath(['cars', 0, 'name'], serdesFns()),
+          CollectionCodecs.forPath(['cars', 0, 'pastOwners'], serdesFns()),
+          CollectionCodecs.forPath(['cars', 0, 'pastOwners', '0'], serdesFns()),
+          CollectionCodecs.forPath(['cars', 0, 'pastOwners', 'one'], serdesFns()),
 
-          CollCodecs.forPath(['name'], serdesFns('name:1')),
-          CollCodecs.forPath(['name'], serdesFns('name:2')),
-          CollCodecs.forPath([], serdesFns('root:0')),
+          CollectionCodecs.forPath(['name'], serdesFns('name:1')),
+          CollectionCodecs.forPath(['name'], serdesFns('name:2')),
+          CollectionCodecs.forPath([], serdesFns('root:0')),
 
-          CollCodecs.forPath(['Name'], serdesFns()),
-          CollCodecs.forPath(['name', ''], serdesFns()),
-          CollCodecs.forPath(['name', '0'], serdesFns()),
-          CollCodecs.forPath([0], serdesFns()),
-          CollCodecs.forPath([''], serdesFns()),
-          CollCodecs.forPath(['cars', '1'], serdesFns()),
-          CollCodecs.forPath(['cars', 'name'], serdesFns()),
-          CollCodecs.forPath(['cars', '0', 'name'], serdesFns()),
-          CollCodecs.forPath(['cars', 0, 'pastOwners', 0], serdesFns()),
-          CollCodecs.forPath(['pastOwners'], serdesFns()),
+          CollectionCodecs.forPath(['Name'], serdesFns()),
+          CollectionCodecs.forPath(['name', ''], serdesFns()),
+          CollectionCodecs.forPath(['name', '0'], serdesFns()),
+          CollectionCodecs.forPath([0], serdesFns()),
+          CollectionCodecs.forPath([''], serdesFns()),
+          CollectionCodecs.forPath(['cars', '1'], serdesFns()),
+          CollectionCodecs.forPath(['cars', 'name'], serdesFns()),
+          CollectionCodecs.forPath(['cars', '0', 'name'], serdesFns()),
+          CollectionCodecs.forPath(['cars', 0, 'pastOwners', 0], serdesFns()),
+          CollectionCodecs.forPath(['pastOwners'], serdesFns()),
 
-          CollCodecs.forPath(['*', '*', '*', '*', '*'], serdesFns()),
-          CollCodecs.forPath(['*', 'name'], serdesFns()),
-          CollCodecs.forPath(['cars', '1', '*'], serdesFns()),
-          CollCodecs.forPath(['*', '0', '*', '*'], serdesFns()),
+          CollectionCodecs.forPath(['*', '*', '*', '*', '*'], serdesFns()),
+          CollectionCodecs.forPath(['*', 'name'], serdesFns()),
+          CollectionCodecs.forPath(['cars', '1', '*'], serdesFns()),
+          CollectionCodecs.forPath(['*', '0', '*', '*'], serdesFns()),
         ],
       });
 
@@ -111,11 +111,11 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
         const serdes = new CollSerDes({
           ...CollSerDes.cfg.empty,
           codecs: [
-            ...repeat(() => CollCodecs.forPath([], {
+            ...repeat(() => CollectionCodecs.forPath([], {
               serialize: () => --ser ? ctxNevermind() : signal,
               deserialize: () => --des ? ctxNevermind() : signal,
             })),
-            CollCodecs.forPath(['field'], {
+            CollectionCodecs.forPath(['field'], {
               serialize: () => (--ser, ctxNevermind()),
               deserialize: () => (--des, ctxNevermind()),
             }),
@@ -139,7 +139,7 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
         constructor(public readonly unwrap: UUID) {}
       }
 
-      const IdCodec = CollCodecs.forId({
+      const IdCodec = CollectionCodecs.forId({
         serialize: (val, ctx) => ctx.replace(val.unwrap),
         deserialize: (val, ctx) => ctx.recurse(new Id(val)),
       });
@@ -156,20 +156,20 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
     });
 
     it('should work with delegate serdes', () => {
-      class Id implements CollCodec<typeof Id> {
+      class Id implements CollectionCodec<typeof Id> {
         public readonly brand = 'Id';
         constructor(public readonly unwrap: UUID) {}
 
-        static [$DeserializeForCollection](val: any, ctx: CollDesCtx) {
+        static [$DeserializeForCollection](val: any, ctx: CollectionDesCtx) {
           return ctx.recurse(new Id(val));
         }
 
-        [$SerializeForCollection](ctx: CollSerCtx) {
+        [$SerializeForCollection](ctx: CollectionSerCtx) {
           return ctx.replace(this.unwrap);
         }
       }
 
-      const IdCodec = CollCodecs.forId(Id);
+      const IdCodec = CollectionCodecs.forId(Id);
       const serdes = new CollSerDes({ ...CollSerDes.cfg.empty, codecs: [IdCodec], enableBigNumbers: () => 'bigint' });
 
       const id = new Id(uuid(4));

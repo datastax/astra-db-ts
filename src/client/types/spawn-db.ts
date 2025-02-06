@@ -14,7 +14,7 @@
 
 import type { DataAPILoggingConfig, TokenProvider } from '@/src/lib/index.js';
 import { type TimeoutDescriptor } from '@/src/lib/index.js';
-import type { CollSerDesConfig, TableSerDesConfig } from '@/src/documents/index.js';
+import type { CollectionSerDesConfig, TableSerDesConfig } from '@/src/documents/index.js';
 
 /**
  * The default db options as can be specified in the {@link DataAPIClientOptions}.
@@ -172,7 +172,7 @@ export interface DbOptions {
  *
  * The config for table/collection serialization/deserialization options.
  *
- * See {@link TableSerDesConfig} and {@link CollSerDesConfig} for more much information on the available options.
+ * See {@link TableSerDesConfig} and {@link CollectionSerDesConfig} for more much information on the available options.
  *
  * Such options include:
  *  - Enabling the `mutateInPlace` optimization for serializing rows/documents
@@ -189,7 +189,7 @@ export interface DbOptions {
  *
  * Unstable features are marked in the documentation as `@alpha` or `@beta`, and may change in the future.
  *
- * @see CollSerDesConfig
+ * @see CollectionSerDesConfig
  * @see TableSerDesConfig
  *
  * @public
@@ -206,7 +206,7 @@ export interface DbSerDesConfig {
    *
    * Use with caution. See official DataStax documentation for more info.
    */
-  collection?: Omit<CollSerDesConfig, 'mutateInPlace'>,
+  collection?: Omit<CollectionSerDesConfig, 'mutateInPlace'>,
   /**
    * ##### Overview
    *

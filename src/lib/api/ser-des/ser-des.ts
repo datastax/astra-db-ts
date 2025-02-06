@@ -50,9 +50,9 @@ export interface BaseSerDesConfig<SerCtx extends BaseSerCtx<any>, DesCtx extends
    *
    * Provides a structured interface for integrating custom serialization/deserialization logic for documents/rows, filters, ids, etc.
    *
-   * You may create implementations of these codecs through the {@link TableCodecs} and {@link CollCodecs} classes.
+   * You may create implementations of these codecs through the {@link TableCodecs} and {@link CollectionCodecs} classes.
    *
-   * See {@link TableSerDesConfig.codecs} & {@link CollSerDesConfig.codecs} for much more information.
+   * See {@link TableSerDesConfig.codecs} & {@link CollectionSerDesConfig.codecs} for much more information.
    *
    * ##### Disclaimer
    *
