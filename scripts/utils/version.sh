@@ -1,5 +1,6 @@
 #!/usr/bin/sh
 
+set -e
+
 npm run build
-sh scripts/update-example-client-dep.sh npm
 git add .
