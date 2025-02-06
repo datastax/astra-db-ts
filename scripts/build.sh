@@ -50,12 +50,6 @@ else
   # Uses a more succinct licence notice + removes block comments (the rollup .d.ts file already contains the ts-doc)
   find ./dist -type f -name "*.js" -print0 | xargs -P 10 -0 -I {} node scripts/utils/reduce-comments.cjs {}
 
-  # Protects against Symbol.asyncIterator not found
-  sed -i.bak '/^[[:space:]]*\[Symbol\.asyncIterator\]/i\
-    // @ts-ignore-error - May or may not be found depending on TS lib version
-  ' dist/astra-db-ts.d.ts
-  rm dist/astra-db-ts.d.ts.bak
-
   # Delete the "empty" files where only types were declared
   node scripts/utils/del-empty-dist-files.cjs
 
