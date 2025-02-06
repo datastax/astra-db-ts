@@ -18,13 +18,13 @@ export { Collection } from './collection.js';
 export type * from './types/index.js';
 
 export type {
-  CollSerDesConfig,
-  CollDesCtx,
-  CollSerCtx,
+  CollectionSerDesConfig,
+  CollectionDesCtx,
+  CollectionSerCtx,
 } from './ser-des/ser-des.js';
 
-export type { CollCodecClass, CollCodec } from './ser-des/codecs.js';
-export { CollCodecs } from './ser-des/codecs.js';
+export type { CollectionCodecClass, CollectionCodec } from './ser-des/codecs.js';
+export { CollectionCodecs } from './ser-des/codecs.js';
 
 export type { CollNumRep, GetCollNumRepFn, CollNumRepCfg } from './ser-des/big-nums.js';
 export { NumCoercionError } from './ser-des/big-nums.js';

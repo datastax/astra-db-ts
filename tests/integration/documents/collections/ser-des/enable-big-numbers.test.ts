@@ -17,15 +17,15 @@ import { DEFAULT_COLLECTION_NAME, it, parallel } from '@/tests/testlib/index.js'
 import assert from 'assert';
 import { BigNumber } from 'bignumber.js';
 import type {
-  CollCodec,
-  CollDesCtx,
+  CollectionCodec,
+  CollectionDesCtx,
   CollNumRepCfg,
-  CollSerCtx,
+  CollectionSerCtx,
   GetCollNumRepFn} from '@/src/documents/index.js';
 import {
   $DeserializeForCollection,
   $SerializeForCollection,
-  CollCodecs,
+  CollectionCodecs,
   uuid,
 } from '@/src/documents/index.js';
 
@@ -126,14 +126,14 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
     _id: key,
   });
 
-  class Newtype implements CollCodec<typeof Newtype> {
+  class Newtype implements CollectionCodec<typeof Newtype> {
     constructor(public unwrap: unknown) {}
 
-    [$SerializeForCollection](ctx: CollSerCtx) {
+    [$SerializeForCollection](ctx: CollectionSerCtx) {
       return ctx.done(this.unwrap);
     }
 
-    static [$DeserializeForCollection](value: string, ctx: CollDesCtx) {
+    static [$DeserializeForCollection](value: string, ctx: CollectionDesCtx) {
       return ctx.done(new Newtype(value));
     }
   }
@@ -168,7 +168,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
   const mkAsserter = (opts: GetCollNumRepFn | CollNumRepCfg) => ({
     coll: db.collection(DEFAULT_COLLECTION_NAME, {
       serdes: {
-        codecs: [CollCodecs.forName('camelCaseName2', Newtype)],
+        codecs: [CollectionCodecs.forName('camelCaseName2', Newtype)],
         enableBigNumbers: opts,
       },
     }),

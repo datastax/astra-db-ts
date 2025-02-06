@@ -16,7 +16,7 @@
 import { UUID } from '@/src/documents/datatypes/uuid.js';
 import { ObjectId } from '@/src/documents/datatypes/object-id.js';
 import { DataAPIVector } from '@/src/documents/datatypes/vector.js';
-import type { CollDesCtx, CollSerCtx } from '@/src/documents/index.js';
+import type { CollectionDesCtx, CollectionSerCtx } from '@/src/documents/index.js';
 import type { CustomCodecOpts, NominalCodecOpts, RawCodec, SerDesFn, SomeConstructor, TypeCodecOpts } from '@/src/lib/index.js';
 import type { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { $DeserializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
@@ -25,43 +25,43 @@ import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 /**
  * @public
  */
-export interface CollCodecClass {
-  new (...args: any[]): { [$SerializeForCollection]: (ctx: CollSerCtx) => ReturnType<SerDesFn<any>> };
-  [$DeserializeForCollection]: SerDesFn<CollDesCtx>;
+export interface CollectionCodecClass {
+  new (...args: any[]): { [$SerializeForCollection]: (ctx: CollectionSerCtx) => ReturnType<SerDesFn<any>> };
+  [$DeserializeForCollection]: SerDesFn<CollectionDesCtx>;
 }
 
 /**
  * @public
  */
-export type CollCodec<Class extends CollCodecClass> = InstanceType<Class>;
+export type CollectionCodec<Class extends CollectionCodecClass> = InstanceType<Class>;
 
 /**
  * @public
  */
-export type RawCollCodecs = readonly RawCodec<CollSerCtx, CollDesCtx>[] & { phantom?: 'This codec is only valid for collections' };
+export type RawCollCodecs = readonly RawCodec<CollectionSerCtx, CollectionDesCtx>[] & { phantom?: 'This codec is only valid for collections' };
 
 /**
  * @public
  */
-export type CollNominalCodecOpts = NominalCodecOpts<CollSerCtx, CollDesCtx>;
+export type CollNominalCodecOpts = NominalCodecOpts<CollectionSerCtx, CollectionDesCtx>;
 
 /**
  * @public
  */
-export type CollTypeCodecOpts = TypeCodecOpts<CollSerCtx, CollDesCtx>;
+export type CollTypeCodecOpts = TypeCodecOpts<CollectionSerCtx, CollectionDesCtx>;
 
 /**
  * @public
  */
-export type CollCustomCodecOpts = CustomCodecOpts<CollSerCtx, CollDesCtx>;
+export type CollCustomCodecOpts = CustomCodecOpts<CollectionSerCtx, CollectionDesCtx>;
 
 
 /**
  * @public
  */
-export class CollCodecs {
+export class CollectionCodecs {
   public static Defaults = {
-    $date: CollCodecs.forType('$date', {
+    $date: CollectionCodecs.forType('$date', {
       serializeClass: Date,
       serialize(value, ctx) {
         return ctx.done({ $date: value.valueOf() });
@@ -70,17 +70,17 @@ export class CollCodecs {
         return ctx.done(new Date(value.$date));
       },
     }),
-    $vector: CollCodecs.forName('$vector', DataAPIVector),
-    $uuid: CollCodecs.forType('$uuid', UUID),
-    $objectId: CollCodecs.forType('$objectId', ObjectId),
+    $vector: CollectionCodecs.forName('$vector', DataAPIVector),
+    $uuid: CollectionCodecs.forType('$uuid', UUID),
+    $objectId: CollectionCodecs.forType('$objectId', ObjectId),
   };
 
-  public static forId(optsOrClass: CollNominalCodecOpts & { class?: SomeConstructor } | CollCodecClass): RawCollCodecs {
-    const mkIdDesCodec = (fn: SerDesFn<CollDesCtx>): RawCollCodecs => [
-      CollCodecs.forName('', {
+  public static forId(optsOrClass: CollNominalCodecOpts & { class?: SomeConstructor } | CollectionCodecClass): RawCollCodecs {
+    const mkIdDesCodec = (fn: SerDesFn<CollectionDesCtx>): RawCollCodecs => [
+      CollectionCodecs.forName('', {
         deserialize: (val, ctx) => ctx.target === SerDesTarget.InsertedId ? fn(val, ctx) : ctx.nevermind(),
       }),
-      CollCodecs.forPath(['_id'], {
+      CollectionCodecs.forPath(['_id'], {
         deserialize: fn,
       }),
     ].flat();
@@ -93,7 +93,7 @@ export class CollCodecs {
 
     return [
       (serFn)
-        ? CollCodecs.forPath(['_id'], {
+        ? CollectionCodecs.forPath(['_id'], {
           serialize(val, ctx) {
             if (ctx.locals.__parsedId) {
               return ctx.nevermind();
@@ -109,7 +109,7 @@ export class CollCodecs {
     ].flat();
   }
 
-  public static forName(name: string, optsOrClass: CollNominalCodecOpts | CollCodecClass): RawCollCodecs {
+  public static forName(name: string, optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs {
     return [{
       tag: 'forName',
       name: name,
@@ -117,7 +117,7 @@ export class CollCodecs {
     }];
   }
 
-  public static forPath(path: (string | number)[], optsOrClass: CollNominalCodecOpts | CollCodecClass): RawCollCodecs {
+  public static forPath(path: (string | number)[], optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs {
     return [{
       tag: 'forPath',
       path: path,
@@ -125,7 +125,7 @@ export class CollCodecs {
     }];
   }
 
-  public static forType(type: string, optsOrClass: CollTypeCodecOpts | CollCodecClass): RawCollCodecs {
+  public static forType(type: string, optsOrClass: CollTypeCodecOpts | CollectionCodecClass): RawCollCodecs {
     return [{
       tag: 'forType',
       type: type,

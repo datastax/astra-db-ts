@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { BigNumber } from 'bignumber.js';
-import type { CollDesCtx } from '@/src/documents/index.js';
+import type { CollectionDesCtx } from '@/src/documents/index.js';
 
 /**
  * @public
@@ -121,7 +121,7 @@ export class NumCoercionError extends Error {
   }
 }
 
-export const coerceBigNumber = (value: BigNumber, ctx: CollDesCtx): unknown => {
+export const coerceBigNumber = (value: BigNumber, ctx: CollectionDesCtx): unknown => {
   switch (ctx.getNumRepForPath!(ctx.path)) {
     case 'number': {
       const asNum = value.toNumber();
@@ -146,7 +146,7 @@ export const coerceBigNumber = (value: BigNumber, ctx: CollDesCtx): unknown => {
   }
 };
 
-export const coerceNumber = (value: number, ctx: CollDesCtx): unknown => {
+export const coerceNumber = (value: number, ctx: CollectionDesCtx): unknown => {
   switch (ctx.getNumRepForPath!(ctx.path)) {
     case 'bigint': {
       if (!Number.isInteger(value)) {

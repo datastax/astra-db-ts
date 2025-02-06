@@ -17,27 +17,27 @@ import { DEFAULT_COLLECTION_NAME, describe, it, parallel } from '@/tests/testlib
 import { Camel2SnakeCase } from '@/src/lib/index.js';
 import assert from 'assert';
 import type {
-  CollCodec,
-  CollDesCtx,
-  CollSerCtx,
+  CollectionCodec,
+  CollectionDesCtx,
+  CollectionSerCtx,
   UUID} from '@/src/index.js';
 import {
   $DeserializeForCollection,
   $SerializeForCollection,
-  CollCodecs,
+  CollectionCodecs,
   uuid,
 } from '@/src/index.js';
 import { BigNumber } from 'bignumber.js';
 
 describe('integration.documents.collections.ser-des.key-transformer', ({ db }) => {
-  class Newtype implements CollCodec<typeof Newtype> {
+  class Newtype implements CollectionCodec<typeof Newtype> {
     constructor(public dontChange_me: string) {}
 
-    [$SerializeForCollection](ctx: CollSerCtx) {
+    [$SerializeForCollection](ctx: CollectionSerCtx) {
       return ctx.done(this.dontChange_me);
     }
 
-    static [$DeserializeForCollection](value: string, ctx: CollDesCtx) {
+    static [$DeserializeForCollection](value: string, ctx: CollectionDesCtx) {
       return ctx.done(new Newtype(value));
     }
   }
@@ -56,7 +56,7 @@ describe('integration.documents.collections.ser-des.key-transformer', ({ db }) =
     const coll = db.collection<SnakeCaseTest>(DEFAULT_COLLECTION_NAME, {
       serdes: {
         keyTransformer: new Camel2SnakeCase(),
-        codecs: [CollCodecs.forName('camelCaseName2', Newtype)],
+        codecs: [CollectionCodecs.forName('camelCaseName2', Newtype)],
         enableBigNumbers: () => 'bignumber',
       },
     });

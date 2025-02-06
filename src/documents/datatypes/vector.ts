@@ -14,12 +14,12 @@
 
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type {
-  CollCodec,
+  CollectionCodec,
   TableCodec, TableDesCtx,
   TableSerCtx} from '@/src/documents/index.js';
 import {
-  type CollDesCtx,
-  type CollSerCtx,
+  type CollectionDesCtx,
+  type CollectionSerCtx,
 } from '@/src/documents/index.js';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
@@ -50,7 +50,7 @@ export const vector = (v: DataAPIVectorLike) => (v instanceof DataAPIVector) ? v
  *
  * @public
  */
-export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCodec<typeof DataAPIVector> {
+export class DataAPIVector implements CollectionCodec<typeof DataAPIVector>, TableCodec<typeof DataAPIVector> {
   private readonly _vector!: Exclude<DataAPIVectorLike, DataAPIVector>;
 
   /**
@@ -63,7 +63,7 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
   /**
    * Implementation of `$SerializeForCollection` for {@link TableCodec}
    */
-  public [$SerializeForCollection](ctx: CollSerCtx) {
+  public [$SerializeForCollection](ctx: CollectionSerCtx) {
     return ctx.done(this.serialize());
   };
 
@@ -77,7 +77,7 @@ export class DataAPIVector implements CollCodec<typeof DataAPIVector>, TableCode
   /**
    * Implementation of `$DeserializeForCollection` for {@link TableCodec}
    */
-  public static [$DeserializeForCollection](value: any, ctx: CollDesCtx) {
+  public static [$DeserializeForCollection](value: any, ctx: CollectionDesCtx) {
     return ctx.done(new DataAPIVector(value, false));
   }
 

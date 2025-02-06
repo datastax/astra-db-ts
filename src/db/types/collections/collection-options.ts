@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import type { WithKeyspace } from '@/src/db/index.js';
-import type { CollSerDesConfig, EmbeddingHeadersProvider } from '@/src/documents/index.js';
+import type { CollectionSerDesConfig, EmbeddingHeadersProvider } from '@/src/documents/index.js';
 import type { DataAPILoggingConfig} from '@/src/lib/index.js';
 import { type TimeoutDescriptor } from '@/src/lib/index.js';
 
@@ -50,7 +50,7 @@ export interface CollectionOptions extends WithKeyspace {
    *
    * @beta
    */
-  serdes?: CollSerDesConfig,
+  serdes?: CollectionSerDesConfig,
   /**
    * ##### Overview
    *

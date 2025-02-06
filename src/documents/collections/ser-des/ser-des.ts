@@ -17,7 +17,7 @@ import { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
 import type { BaseDesCtx, BaseSerCtx} from '@/src/lib/api/ser-des/ctx.js';
 import { NEVERMIND } from '@/src/lib/api/ser-des/ctx.js';
 import type { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs.js';
-import { CollCodecs } from '@/src/documents/collections/ser-des/codecs.js';
+import { CollectionCodecs } from '@/src/documents/collections/ser-des/codecs.js';
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { isBigNumber, pathMatches } from '@/src/lib/utils.js';
 import type { CollNumRepCfg, GetCollNumRepFn } from '@/src/documents/index.js';
@@ -28,21 +28,21 @@ import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
 /**
  * @public
  */
-export interface CollSerCtx extends BaseSerCtx<CollSerCtx> {
+export interface CollectionSerCtx extends BaseSerCtx<CollectionSerCtx> {
   bigNumsEnabled: boolean,
 }
 
 /**
  * @public
  */
-export interface CollDesCtx extends BaseDesCtx<CollDesCtx> {
+export interface CollectionDesCtx extends BaseDesCtx<CollectionDesCtx> {
   getNumRepForPath?: GetCollNumRepFn,
 }
 
 /**
  * @public
  */
-export interface CollSerDesConfig extends BaseSerDesConfig<CollSerCtx, CollDesCtx> {
+export interface CollectionSerDesConfig extends BaseSerDesConfig<CollectionSerCtx, CollectionDesCtx> {
   enableBigNumbers?: GetCollNumRepFn | CollNumRepCfg,
   codecs?: RawCollCodecs[],
 }
@@ -50,13 +50,13 @@ export interface CollSerDesConfig extends BaseSerDesConfig<CollSerCtx, CollDesCt
 /**
  * @internal
  */
-export class CollSerDes extends SerDes<CollSerCtx, CollDesCtx> {
-  declare protected readonly _cfg: ParsedSerDesConfig<CollSerDesConfig> & { enableBigNumbers?: GetCollNumRepFn };
+export class CollSerDes extends SerDes<CollectionSerCtx, CollectionDesCtx> {
+  declare protected readonly _cfg: ParsedSerDesConfig<CollectionSerDesConfig> & { enableBigNumbers?: GetCollNumRepFn };
   private readonly _getNumRepForPath: GetCollNumRepFn | undefined;
 
   public static cfg: typeof CollSerDesCfgHandler = CollSerDesCfgHandler;
 
-  public constructor(cfg: ParsedSerDesConfig<CollSerDesConfig>) {
+  public constructor(cfg: ParsedSerDesConfig<CollectionSerDesConfig>) {
     super(CollSerDes.cfg.concat([codecs, cfg]), serialize, deserialize);
 
     this._getNumRepForPath = (typeof cfg?.enableBigNumbers === 'object')
@@ -64,12 +64,12 @@ export class CollSerDes extends SerDes<CollSerCtx, CollDesCtx> {
       : cfg?.enableBigNumbers;
   }
 
-  public override adaptSerCtx(ctx: CollSerCtx): CollSerCtx {
+  public override adaptSerCtx(ctx: CollectionSerCtx): CollectionSerCtx {
     ctx.bigNumsEnabled = !!this._getNumRepForPath;
     return ctx;
   }
 
-  public override adaptDesCtx(ctx: CollDesCtx): CollDesCtx {
+  public override adaptDesCtx(ctx: CollectionDesCtx): CollectionDesCtx {
     ctx.getNumRepForPath = this._getNumRepForPath;
     return ctx;
   }
@@ -79,7 +79,7 @@ export class CollSerDes extends SerDes<CollSerCtx, CollDesCtx> {
   }
 }
 
-const serialize: SerDesFn<CollSerCtx> = (value, ctx) => {
+const serialize: SerDesFn<CollectionSerCtx> = (value, ctx) => {
   let resp: ReturnType<SerDesFn<unknown>> = null!;
 
   // Path-based serializers
@@ -135,7 +135,7 @@ const serialize: SerDesFn<CollSerCtx> = (value, ctx) => {
   return ctx.recurse();
 };
 
-const deserialize: SerDesFn<CollDesCtx> = (value, ctx) => {
+const deserialize: SerDesFn<CollectionDesCtx> = (value, ctx) => {
   let resp: ReturnType<SerDesFn<unknown>> = null!;
 
   if (ctx.getNumRepForPath) {
@@ -191,4 +191,4 @@ const deserialize: SerDesFn<CollDesCtx> = (value, ctx) => {
   return ctx.recurse(value);
 };
 
-const codecs = CollSerDes.cfg.parse({ codecs: Object.values(CollCodecs.Defaults) });
+const codecs = CollSerDes.cfg.parse({ codecs: Object.values(CollectionCodecs.Defaults) });
