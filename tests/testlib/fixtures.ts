@@ -30,8 +30,9 @@ import {
   TEST_HTTP_CLIENT,
 } from '@/tests/testlib/config.js';
 import type { BaseClientEvent, DataAPIClientEventMap, LoggingConfig } from '@/src/lib/index.js';
-import type { CreateTableDefinition, InferTableSchema } from '@/src/db/index.js';
+import type { InferTableSchema } from '@/src/db/index.js';
 import * as util from 'node:util';
+import { Table } from '@/src/documents/index.js';
 
 export interface TestObjectsOptions {
   httpClient?: typeof TEST_HTTP_CLIENT,
@@ -43,7 +44,7 @@ export interface TestObjectsOptions {
 export type EverythingTableSchema = InferTableSchema<typeof EverythingTableSchema>;
 export type EverythingTableSchemaWithVectorize = InferTableSchema<typeof EverythingTableSchemaWithVectorize>;
 
-export const EverythingTableSchema = <const>{
+export const EverythingTableSchema = Table.schema({
   columns: {
     ascii: 'ascii',
     bigint: 'bigint',
@@ -72,9 +73,9 @@ export const EverythingTableSchema = <const>{
     partitionBy: ['text'],
     partitionSort: { int: 1 },
   },
-} satisfies CreateTableDefinition;
+});
 
-export const EverythingTableSchemaWithVectorize = <const>{
+export const EverythingTableSchemaWithVectorize = Table.schema({
   columns: {
     ascii: 'ascii',
     bigint: 'bigint',
@@ -104,7 +105,7 @@ export const EverythingTableSchemaWithVectorize = <const>{
     partitionBy: ['text'],
     partitionSort: { int: 1 },
   },
-} satisfies CreateTableDefinition;
+});
 
 export const initTestObjects = (opts?: TestObjectsOptions) => {
   const {

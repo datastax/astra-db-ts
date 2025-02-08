@@ -213,7 +213,7 @@ type Dream = InferTableSchema<typeof DreamsTableSchema>;
       vector: { type: 'vector', dimension: 3 },
     },
     primaryKey: 'id',
-  } satisfies CreateTableDefinition;
+  } satisfies CreateTableDefinition<any>;
 
   type Dream = InferTableSchema<typeof DreamsTableSchema>;
   ```

@@ -67,8 +67,8 @@ import { HierarchicalEmitter, TokenProvider } from '@/src/lib/index.js';
  *
  * // Overrides default options from the DataAPIClient
  * const db = client.db('*ENDPOINT*', {
- *   keyspace: 'my_keyspace',
- *   useHttp2: false,
+ *   keyspace: '*KEYSPACE*',
+ *   token: '*TOKEN*',
  * });
  * ```
  *
@@ -568,14 +568,6 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
    *
    * ##### Typing & Types
    *
-   * A `Table` is typed as `Table<Schema extends SomeRow = SomeRow>`, where:
-   *  - `Schema` is the type of the rows in the table (the table schema).
-   *  - `SomeRow` is set to `Record<string, any>`, representing any valid JSON object.
-   *
-   * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
-   *
-   * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
-   *
    * ***Please see {@link Table} for *much* more info on typing them, and more.***
    *
    * @example
@@ -672,7 +664,7 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
    *
    * // Now, `users` supports vector search
    * await users.insertOne({ $vectorize: 'I like cars!!!' });
-   * await users.fineOne({}, { sort: { $vectorize: 'I like cars!!!' } });
+   * await users.findOne({}, { sort: { $vectorize: 'I like cars!!!' } });
    * ```
    *
    * ##### Typing & Types
@@ -756,7 +748,7 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
   }
 
   /**
-   * ##### Overview
+   * ##### Overview (auto-infer-schema version)
    *
    * Creates a new table in the database, and establishes a reference to it.
    *
@@ -769,34 +761,36 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
    *
    * *Provide an explicit `Schema` type to disable this (e.g. `db.createTable<SomeRow>(...)`).*
    *
+   * ##### Inference
+   *
+   * The recommended way to use this method is to provide a `CreateTableDefinition` object, and let TypeScript infer the schema from it.
+   *
    * @example
    * ```ts
-   * // Function to create the actual table
-   * const mkUserTable = () => db.createTable('users', {
-   *   definition: {
-   *     columns: {
-   *       name: 'text',
-   *       dob: {
-   *         type: 'timestamp',
-   *       },
-   *       friends: {
-   *         type: 'set',
-   *         valueType: 'text',
-   *       },
-   *     },
-   *     primaryKey: {
-   *       partitionBy: ['name', 'height'],
-   *       partitionSort: { dob: 1 },
-   *     },
-   *   },
+   * // Define the table schema
+   * const UserSchema = Table.schema({
+   *   columns: {
+   *     name: 'text',
+   *     dob: {
+   *       type: 'timestamp',
+   *     },
+   *     friends: {
+   *       type: 'set',
+   *       valueType: 'text',
+   *     },
+   *   },
+   *   primaryKey: {
+   *     partitionBy: ['name'],
+   *     partitionSort: { dob: 1 },
+   *   },
    * });
    *
    * // Type inference is as simple as that
-   * type User = InferTableSchema<typeof mkUserTable>;
+   * type User = InferTableSchema<typeof UserSchema>;
    *
    * // And now `User` can be used wherever.
    * const main = async () => {
-   *   const table = await mkUserTable();
+   *   const table = await db.createTable('users', { definition: UserSchema });
    *   const found: User | null = await table.findOne({});
    * };
    * ```
@@ -808,14 +802,6 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
    * If a table is "recreated" with the same name & `ifNotExists` is set to `true`, but the columns definition differ, the operation will silently succeed, **but the original table schema will be retained**.
    *
    * ##### Typing & Types
-   *
-   * A `Table` is typed as `Table<Schema extends SomeRow = SomeRow>`, where:
-   *  - `Schema` is the type of the rows in the table (the table schema).
-   *  - `SomeRow` is set to `Record<string, any>`, representing any valid JSON object.
-   *
-   * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
-   *
-   * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
    *
    * ***Please see {@link Table} for *much* more info on typing them, and more.***
    *
@@ -836,10 +822,10 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
    * @see InferTablePrimaryKey
    * @see CreateTableDefinition
    */
-  public async createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>
+  public async createTable<const Def extends CreateTableDefinition<any>>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>
 
   /**
-   * ##### Overview
+   * ##### Overview (explicit-schema version)
    *
    * Creates a new table in the database, and establishes a reference to it.
    *
@@ -891,14 +877,6 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
    * If a table is "recreated" with the same name & `ifNotExists` is set to `true`, but the columns definition differ, the operation will silently succeed, **but the original table schema will be retained**.
    *
    * ##### Typing & Types
-   *
-   * A `Table` is typed as `Table<Schema extends SomeRow = SomeRow>`, where:
-   *  - `Schema` is the type of the rows in the table (the table schema).
-   *  - `SomeRow` is set to `Record<string, any>`, representing any valid JSON object.
-   *
-   * Certain datatypes may be represented as TypeScript classes (some native, some provided by `astra-db-ts`), however.
-   *
-   * You may also provide your own datatypes by providing some custom serialization logic as well (see later section).
    *
    * ***Please see {@link Table} for *much* more info on typing them, and more.***
    *
