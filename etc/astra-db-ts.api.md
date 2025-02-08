@@ -798,9 +798,9 @@ export interface CreateCollectionOptions<Schema extends SomeDoc> extends Collect
 export type CreateTableColumnDefinitions = Record<string, LooseCreateTableColumnDefinition | StrictCreateTableColumnDefinition>;
 
 // @public
-export interface CreateTableDefinition {
+export interface CreateTableDefinition<Def extends CreateTableDefinition<Def>> {
     readonly columns: CreateTableColumnDefinitions;
-    readonly primaryKey: CreateTablePrimaryKeyDefinition;
+    readonly primaryKey: CreateTablePrimaryKeyDefinition<keyof Def['columns'] & string>;
 }
 
 // @public
@@ -810,7 +810,7 @@ export interface CreateTableIndexOptions extends WithTimeout<'tableAdminTimeoutM
 }
 
 // @public
-export interface CreateTableOptions<Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions {
+export interface CreateTableOptions<Def extends CreateTableDefinition<Def> = CreateTableDefinition<any>> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions {
     // (undocumented)
     definition: Def;
     // (undocumented)
@@ -818,7 +818,7 @@ export interface CreateTableOptions<Def extends CreateTableDefinition = CreateTa
 }
 
 // @public
-export type CreateTablePrimaryKeyDefinition = string | FullCreateTablePrimaryKeyDefinition;
+export type CreateTablePrimaryKeyDefinition<PKCols extends string> = PKCols | FullCreateTablePrimaryKeyDefinition<PKCols>;
 
 // @public
 export interface CreateTableVectorIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
@@ -1159,7 +1159,7 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
     collection<WSchema extends SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>>(name: string, options?: CollectionOptions): Collection<WSchema, RSchema>;
     command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse>;
     createCollection<WSchema extends SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>>(name: string, options?: CreateCollectionOptions<WSchema>): Promise<Collection<WSchema, RSchema>>;
-    createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>;
+    createTable<const Def extends CreateTableDefinition<any>>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>;
     createTable<WSchema extends SomeRow, PKeys extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options: CreateTableOptions): Promise<Table<WSchema, PKeys, RSchema>>;
     dropCollection(name: string, options?: DropCollectionOptions): Promise<void>;
     dropTable(name: string, options?: DropTableOptions): Promise<void>;
@@ -1492,11 +1492,11 @@ export type FoundRow<Doc> = {
 };
 
 // @public
-export interface FullCreateTablePrimaryKeyDefinition {
+export interface FullCreateTablePrimaryKeyDefinition<PKCols extends string> {
     // (undocumented)
-    readonly partitionBy: readonly string[];
+    readonly partitionBy: readonly PKCols[];
     // (undocumented)
-    readonly partitionSort?: Record<string, 1 | -1>;
+    readonly partitionSort?: Partial<Record<PKCols, 1 | -1>>;
 }
 
 // @public
@@ -1626,20 +1626,20 @@ export type IdOf<Doc> = Doc extends {
 export const inet: (address: string, version?: 4 | 6) => DataAPIInet;
 
 // @public
-export type InferrableTable = CreateTableDefinition | ((..._: any[]) => Promise<Table<SomeRow>>) | ((..._: any[]) => Table<SomeRow>) | Promise<Table<SomeRow>> | Table<SomeRow>;
+export type InferrableTable = CreateTableDefinition<any> | ((..._: any[]) => Promise<Table<SomeRow>>) | ((..._: any[]) => Table<SomeRow>) | Promise<Table<SomeRow>> | Table<SomeRow>;
 
 // Warning: (ae-forgotten-export) The symbol "InferTablePKFromDefinition" needs to be exported by the entry point index.d.ts
 //
 // @public
-export type InferTablePrimaryKey<T extends InferrableTable> = T extends CreateTableDefinition ? InferTablePKFromDefinition<T> : T extends (..._: any[]) => Promise<Table<any, infer PKey, any>> ? PKey : T extends (..._: any[]) => Table<any, infer PKey, any> ? PKey : T extends Promise<Table<any, infer PKey, any>> ? PKey : T extends Table<any, infer PKey, any> ? PKey : never;
+export type InferTablePrimaryKey<T extends InferrableTable> = T extends CreateTableDefinition<any> ? InferTablePKFromDefinition<T> : T extends (..._: any[]) => Promise<Table<any, infer PKey, any>> ? PKey : T extends (..._: any[]) => Table<any, infer PKey, any> ? PKey : T extends Promise<Table<any, infer PKey, any>> ? PKey : T extends Table<any, infer PKey, any> ? PKey : never;
 
 // Warning: (ae-forgotten-export) The symbol "InferTableSchemaFromDefinition" needs to be exported by the entry point index.d.ts
 //
 // @public
-export type InferTableReadSchema<T extends InferrableTable> = T extends CreateTableDefinition ? FoundRow<InferTableSchemaFromDefinition<T>> : T extends (..._: any[]) => Promise<Table<any, any, infer Schema>> ? Schema : T extends (..._: any[]) => Table<any, any, infer Schema> ? Schema : T extends Promise<Table<any, any, infer Schema>> ? Schema : T extends Table<any, any, infer Schema> ? Schema : never;
+export type InferTableReadSchema<T extends InferrableTable> = T extends CreateTableDefinition<any> ? FoundRow<InferTableSchemaFromDefinition<T>> : T extends (..._: any[]) => Promise<Table<any, any, infer Schema>> ? Schema : T extends (..._: any[]) => Table<any, any, infer Schema> ? Schema : T extends Promise<Table<any, any, infer Schema>> ? Schema : T extends Table<any, any, infer Schema> ? Schema : never;
 
 // @public
-export type InferTableSchema<T extends InferrableTable> = T extends CreateTableDefinition ? InferTableSchemaFromDefinition<T> : T extends (..._: any[]) => Promise<Table<infer Schema, any, any>> ? Schema : T extends (..._: any[]) => Table<infer Schema, any, any> ? Schema : T extends Promise<Table<infer Schema, any, any>> ? Schema : T extends Table<infer Schema, any, any> ? Schema : never;
+export type InferTableSchema<T extends InferrableTable> = T extends CreateTableDefinition<any> ? InferTableSchemaFromDefinition<T> : T extends (..._: any[]) => Promise<Table<infer Schema, any, any>> ? Schema : T extends (..._: any[]) => Table<infer Schema, any, any> ? Schema : T extends Promise<Table<infer Schema, any, any>> ? Schema : T extends Table<infer Schema, any, any> ? Schema : never;
 
 // @public
 export class InvalidEnvironmentError extends Error {
@@ -1719,7 +1719,7 @@ export type ListTableKnownColumnDefinition = StrictCreateTableColumnDefinition &
 };
 
 // @public
-export type ListTablePrimaryKeyDefinition = Required<FullCreateTablePrimaryKeyDefinition>;
+export type ListTablePrimaryKeyDefinition = Required<FullCreateTablePrimaryKeyDefinition<any>>;
 
 // @public
 export interface ListTablesOptions extends WithTimeout<'tableAdminTimeoutMs'>, WithKeyspace {
@@ -1796,11 +1796,6 @@ export interface NominalCodecOpts<SerCtx, DesCtx> {
     // (undocumented)
     serialize?: SerDesFn<SerCtx>;
 }
-
-// @public
-export type Normalize<T> = {
-    [K in keyof T]: T[K];
-} & EmptyObj;
 
 // @public
 export interface NoUpsertUpdateResult {
@@ -2012,8 +2007,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
         nameOnly?: false;
     }): Promise<TableIndexDescriptor[]>;
     readonly name: string;
-    // (undocumented)
-    static schema<const Def extends CreateTableDefinition>(schema: Def): Def;
+    static schema<const Def extends CreateTableDefinition<Def>>(schema: Def): Def;
     updateOne(filter: TableFilter<WSchema>, update: TableUpdateFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
 }
 
