@@ -263,9 +263,9 @@ const admin = client.admin();
   const dbInfo = databases[0];
   console.log(dbInfo.info.name, dbInfo.id, dbInfo.info.region);
 
-  // list namespaces for the first database
+  // list keyspaces for the first database
   const dbAdmin = admin.dbAdmin(dbInfo.id, dbInfo.info.region);
-  console.log(await dbAdmin.listNamespaces());
+  console.log(await dbAdmin.listKeyspaces());
 })();
 ```
 
