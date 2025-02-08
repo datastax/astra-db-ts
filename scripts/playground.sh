@@ -23,7 +23,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "$action" ]; then
-  echo "Action (-c|-r|-d <playground>) is required. Use -help for more information."
+  echo "Action ((create|destroy|show|run <playground>) | (list)) is required. Use -help for more information."
   exit 1
 fi
 
@@ -105,6 +105,6 @@ destroy)
   rm -rf "$dir"
   ;;
 run)
-  cd etc/playgrounds/"$1" || exit 1
+  cd "$dir" || exit 1
   npx tsx index.ts
 esac
