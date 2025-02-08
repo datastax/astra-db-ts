@@ -77,6 +77,12 @@ fi
 if [ ! -d "$dir" ]; then
   set -- etc/playgrounds/"$name"*
 
+  if [ "$1" = "etc/playgrounds/$name*" ]; then
+    echo "No playground found for '$name'. Choose one of the following:"
+    sh "$0" list
+    exit 1
+  fi
+
   if [ "$#" -gt 1 ]; then
     echo "Multiple playgrounds found for '$name'. Please specify one of the following:"
 
@@ -84,9 +90,6 @@ if [ ! -d "$dir" ]; then
       echo "- $(basename "$d")"
     done
 
-    exit 1
-  elif [ "$#" -eq 0 ]; then
-    echo "No playground found for '$name'."
     exit 1
   fi
 
