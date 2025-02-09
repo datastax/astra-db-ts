@@ -72,6 +72,9 @@ const table = db.table('test_table');
 (async () => {
 
 })();" > index.ts
+
+  echo "Playground '$name' created."
+  exit 0
 fi
 
 if [ ! -d "$dir" ]; then
