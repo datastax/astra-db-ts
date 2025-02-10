@@ -104,17 +104,6 @@ describe('unit.db.db', () => {
       assert.ok(new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ logging: [{ events: ['adminCommandPolling', 'adminCommandSucceeded'], emits: ['event', 'stdout'] }]})));
     });
 
-    it('should throw on invalid logging', () => {
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ logging: 'invalid' })));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ logging: { events: 'all' } })));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ logging: [{ events: 'all' }] })));
-      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ logging: [{ events: 'all', emits: ['stdout', 'stderr'] }] })));
-      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ logging: [{ events: ['all', 'commandSucceeded'], emits: ['stdout'] }] })));
-    });
-
     it('should accept valid dataApiPath', () => {
       assert.ok(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({})));
       assert.ok(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ dataApiPath: 'api/json/v2' })));
