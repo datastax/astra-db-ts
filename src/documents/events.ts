@@ -109,8 +109,8 @@ export abstract class CommandEvent extends BaseClientEvent {
    *
    * @internal
    */
-  protected constructor(name: string, info: DataAPIRequestInfo) {
-    super(name);
+  protected constructor(name: string, requestId: string, info: DataAPIRequestInfo) {
+    super(name, requestId);
     this.command = info.command;
     this.keyspace = info.keyspace;
     this.source = info.collection;
@@ -148,8 +148,8 @@ export class CommandStartedEvent extends CommandEvent {
    *
    * @internal
    */
-  constructor(info: DataAPIRequestInfo) {
-    super('CommandStarted', info);
+  constructor(requestId: string, info: DataAPIRequestInfo) {
+    super('CommandStarted', requestId, info);
     this.timeout = info.timeoutManager.initial();
   }
 
@@ -157,7 +157,7 @@ export class CommandStartedEvent extends CommandEvent {
    * Formats the warnings into a human-readable string.
    */
   public format(options?: EventFormatOptions): string {
-    return `${super.format(options)}: ${this._desc()}`;
+    return `${super.format(options)}${this._desc()}`;
   }
 }
 
@@ -187,8 +187,8 @@ export class CommandSucceededEvent extends CommandEvent {
    *
    * @internal
    */
-  constructor(info: DataAPIRequestInfo, reply: RawDataAPIResponse, started: number) {
-    super('CommandSucceeded', info);
+  constructor(requestId: string, info: DataAPIRequestInfo, reply: RawDataAPIResponse, started: number) {
+    super('CommandSucceeded', requestId, info);
     this.duration = performance.now() - started;
     this.resp = reply;
   }
@@ -197,7 +197,7 @@ export class CommandSucceededEvent extends CommandEvent {
    * Formats the warnings into a human-readable string.
    */
   public format(options?: EventFormatOptions): string {
-    return `${super.format(options)}: ${this._desc()} (took ${~~this.duration}ms)`;
+    return `${super.format(options)}${this._desc()} (took ${~~this.duration}ms)`;
   }
 }
 
@@ -229,8 +229,8 @@ export class CommandFailedEvent extends CommandEvent {
    *
    * @internal
    */
-  constructor(info: DataAPIRequestInfo, error: Error, started: number) {
-    super('CommandFailed', info);
+  constructor(requestId: string, info: DataAPIRequestInfo, error: Error, started: number) {
+    super('CommandFailed', requestId, info);
     this.duration = performance.now() - started;
     this.error = error;
   }
@@ -239,7 +239,7 @@ export class CommandFailedEvent extends CommandEvent {
    * Formats the warnings into a human-readable string.
    */
   public format(options?: EventFormatOptions): string {
-    return `${super.format(options)}: ${this._desc()} (took ${~~this.duration}ms) - '${this.error.message}'`;
+    return `${super.format(options)}${this._desc()} (took ${~~this.duration}ms) - '${this.error.message}'`;
   }
 }
 
@@ -261,8 +261,8 @@ export class CommandWarningsEvent extends CommandEvent {
    *
    * @internal
    */
-  constructor(info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[]) {
-    super('CommandWarnings', info);
+  constructor(requestId: string, info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[]) {
+    super('CommandWarnings', requestId, info);
     this.warnings = warnings;
   }
 
@@ -270,6 +270,6 @@ export class CommandWarningsEvent extends CommandEvent {
    * Formats the warnings into a human-readable string.
    */
   public format(options?: EventFormatOptions): string {
-    return `${super.format(options)}: ${this._desc()} '${this.warnings.map(w => w.message).join(', ')}'`;
+    return `${super.format(options)}${this._desc()} '${this.warnings.map(w => w.message).join(', ')}'`;
   }
 }

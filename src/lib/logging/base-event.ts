@@ -44,6 +44,17 @@ export abstract class BaseClientEvent {
   public readonly name: string;
 
   /**
+   * The unique identifier of the request that caused this event.
+   *
+   * This is generated for each request and is used to correlate events across the lifecycle of a request.
+   *
+   * Represented by a UUID v4 string.
+   *
+   * **Note that this represents _real_ requests to the Data/DevOps API**. Methods such as `collection.insertMany(...)` may generate multiple requests under the hood, each with their own unique `requestId`.
+   */
+  public readonly requestId: string;
+
+  /**
    * @internal
    */
   public declare _propagationState: PropagationState;
@@ -53,8 +64,9 @@ export abstract class BaseClientEvent {
    *
    * @internal
    */
-  protected constructor(name: string) {
+  protected constructor(name: string, requestId: string) {
     this.name = name;
+    this.requestId = requestId;
 
     Object.defineProperty(this, '_propagationState', {
       value: PropagationState.Continue,
@@ -75,7 +87,7 @@ export abstract class BaseClientEvent {
     }
 
     if (options?.name !== false) {
-      formatted += `[${this.name}] `;
+      formatted += `[${this.name}]: `;
     }
 
     return formatted;

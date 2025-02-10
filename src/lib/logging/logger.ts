@@ -32,6 +32,7 @@ import { buildOutputsMap } from '@/src/lib/logging/util.js';
 import type { BaseClientEvent, HierarchicalEmitter } from '@/src/lib/index.js';
 import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler.js';
 import { LoggingCfgHandler } from '@/src/lib/logging/cfg-handler.js';
+import * as uuid from 'uuid';
 
 /**
  * @internal
@@ -62,6 +63,9 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
 
   public static cfg: typeof LoggingCfgHandler = LoggingCfgHandler;
 
+  private _someCommandEventEnabled = false;
+  private _someAdminCommandEventEnabled = false;
+
   constructor(_config: ParsedLoggingConfig, private emitter: HierarchicalEmitter<DataAPIClientEventMap>, private console: ConsoleLike) {
     const config = this._buildInternalConfig(_config);
 
@@ -69,12 +73,26 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
       const eventName = _eventName as keyof DataAPIClientEventMap;
       const log = this._mkLog(outputs);
 
+      if (eventName.startsWith('admin')) {
+        this._someAdminCommandEventEnabled = true;
+      } else {
+        this._someCommandEventEnabled = true;
+      }
+
       this[eventName] = (...args: any[]) => {
         const event = new (<any>EventConstructors[eventName])(...args);
         outputs.event && this.emitter.emit(eventName, event);
         log?.(event);
       };
     }
+  }
+
+  public generateCommandRequestId() {
+    return this._someCommandEventEnabled ? uuid.v4() : '';
+  }
+
+  public generateAdminCommandRequestId() {
+    return this._someAdminCommandEventEnabled ? uuid.v4() : '';
   }
 
   private _buildInternalConfig(config: ParsedLoggingConfig): InternalLoggingOutputsMap {

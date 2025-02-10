@@ -14,7 +14,11 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import { HttpClient } from '@/src/lib/api/clients/index.js';
-import { DevOpsAPIResponseError, DevOpsAPITimeoutError, DevOpsUnexpectedStateError } from '@/src/administration/errors.js';
+import {
+  DevOpsAPIResponseError,
+  DevOpsAPITimeoutError,
+  DevOpsUnexpectedStateError,
+} from '@/src/administration/errors.js';
 import type { AstraAdminBlockingOptions } from '@/src/administration/types/index.js';
 import { DEFAULT_DEVOPS_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants.js';
 import type { HeaderProvider, HTTPClientOptions, HttpMethodStrings } from '@/src/lib/api/clients/types.js';
@@ -64,13 +68,39 @@ export class DevOpsAPIHttpClient extends HttpClient {
   }
 
   public async request(req: DevOpsAPIRequestInfo, timeoutManager: TimeoutManager, started = 0): Promise<DevopsAPIResponse> {
+    return this._executeRequest(req, timeoutManager, started, this.logger.generateAdminCommandRequestId());
+  }
+
+  public async requestLongRunning(req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo): Promise<DevopsAPIResponse> {
+    const isLongRunning = info.options?.blocking !== false;
+    const timeoutManager = info.timeoutManager;
+
+    const requestId = this.logger.generateCommandRequestId();
+
+    this.logger.adminCommandStarted?.(requestId, req, isLongRunning, timeoutManager.initial());
+
+    const started = performance.now();
+    const resp = await this._executeRequest(req, timeoutManager, started, requestId);
+
+    const id = (typeof info.id === 'function')
+      ? info.id(resp)
+      : info.id;
+
+    await this._awaitStatus(id, req, info, started, requestId);
+
+    this.logger.adminCommandSucceeded?.(requestId, req, isLongRunning, resp, started);
+
+    return resp;
+  }
+
+  private async _executeRequest(req: DevOpsAPIRequestInfo, timeoutManager: TimeoutManager, started: number, requestId: string): Promise<DevopsAPIResponse> {
     const isLongRunning = started !== 0;
 
     try {
       const url = this.baseUrl + req.path;
 
       if (!isLongRunning) {
-        this.logger.adminCommandStarted?.(req, isLongRunning, timeoutManager.initial());
+        this.logger.adminCommandStarted?.(requestId, req, isLongRunning, timeoutManager.initial());
       }
 
       started ||= performance.now();
@@ -91,7 +121,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
       }
 
       if (!isLongRunning) {
-        this.logger.adminCommandSucceeded?.(req, false, data, started);
+        this.logger.adminCommandSucceeded?.(requestId, req, false, data, started);
       }
 
       return {
@@ -100,32 +130,12 @@ export class DevOpsAPIHttpClient extends HttpClient {
         headers: resp.headers,
       };
     } catch (e: any) {
-      this.logger.adminCommandFailed?.(req, isLongRunning, e, started);
+      this.logger.adminCommandFailed?.(requestId, req, isLongRunning, e, started);
       throw e;
     }
   }
 
-  public async requestLongRunning(req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo): Promise<DevopsAPIResponse> {
-    const isLongRunning = info.options?.blocking !== false;
-    const timeoutManager = info.timeoutManager;
-
-    this.logger.adminCommandStarted?.(req, isLongRunning, timeoutManager.initial());
-
-    const started = performance.now();
-    const resp = await this.request(req, timeoutManager, started);
-
-    const id = (typeof info.id === 'function')
-      ? info.id(resp)
-      : info.id;
-
-    await this._awaitStatus(id, req, info, started);
-
-    this.logger.adminCommandSucceeded?.(req, isLongRunning, resp, started);
-
-    return resp;
-  }
-
-  private async _awaitStatus(id: string, req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo, started: number): Promise<void> {
+  private async _awaitStatus(id: string, req: DevOpsAPIRequestInfo, info: LongRunningRequestInfo, started: number, requestId: string): Promise<void> {
     if (info.options?.blocking === false) {
       return;
     }
@@ -140,7 +150,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
       }
       waiting = true;
 
-      this.logger.adminCommandPolling?.(req, started, pollInterval, i);
+      this.logger.adminCommandPolling?.(requestId, req, started, pollInterval, i);
 
       const resp = await this.request({
         method: HttpMethods.Get,
@@ -157,7 +167,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
         const okStates = [info.target, ...info.legalStates];
         const error = new DevOpsUnexpectedStateError(`Created database is not in any legal state [${okStates.join(',')}]`, okStates, resp.data);
 
-        this.logger.adminCommandFailed?.(req, true, error, started);
+        this.logger.adminCommandFailed?.(requestId, req, true, error, started);
         throw error;
       }
 

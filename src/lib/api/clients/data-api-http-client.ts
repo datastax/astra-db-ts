@@ -66,10 +66,10 @@ export interface DataAPIRequestInfo {
  * @internal
  */
 type EmissionStrategy<Kind extends ClientKind> = (logger: Logger) => {
-  emitCommandStarted?(info: DataAPIRequestInfo, opts: ExecCmdOpts<Kind>): void,
-  emitCommandFailed?(info: DataAPIRequestInfo, error: Error, started: number, opts: ExecCmdOpts<Kind>): void,
-  emitCommandSucceeded?(info: DataAPIRequestInfo, resp: RawDataAPIResponse, started: number, opts: ExecCmdOpts<Kind>): void,
-  emitCommandWarnings?(info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[], opts: ExecCmdOpts<Kind>): void,
+  emitCommandStarted?(requestId: string, info: DataAPIRequestInfo, opts: ExecCmdOpts<Kind>): void,
+  emitCommandFailed?(requestId: string, info: DataAPIRequestInfo, error: Error, started: number, opts: ExecCmdOpts<Kind>): void,
+  emitCommandSucceeded?(requestId: string, info: DataAPIRequestInfo, resp: RawDataAPIResponse, started: number, opts: ExecCmdOpts<Kind>): void,
+  emitCommandWarnings?(requestId: string, info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[], opts: ExecCmdOpts<Kind>): void,
 }
 
 /**
@@ -91,17 +91,17 @@ export const EmissionStrategy: EmissionStrategies = {
     emitCommandWarnings: logger.commandWarnings,
   }),
   Admin: (logger) => ({
-    emitCommandStarted(info, opts) {
-      logger.adminCommandStarted?.(adaptInfo4Devops(info, opts.methodName), true, null!); // TODO
+    emitCommandStarted(reqId, info, opts) {
+      logger.adminCommandStarted?.(reqId, adaptInfo4Devops(info, opts.methodName), true, null!); // TODO
     },
-    emitCommandFailed(info, error, started, opts) {
-      logger.adminCommandFailed?.(adaptInfo4Devops(info, opts.methodName), true, error, started);
+    emitCommandFailed(reqId, info, error, started, opts) {
+      logger.adminCommandFailed?.(reqId, adaptInfo4Devops(info, opts.methodName), true, error, started);
     },
-    emitCommandSucceeded(info, resp, started, opts) {
-      logger.adminCommandSucceeded?.(adaptInfo4Devops(info, opts.methodName), true, resp, started);
+    emitCommandSucceeded(reqId, info, resp, started, opts) {
+      logger.adminCommandSucceeded?.(reqId, adaptInfo4Devops(info, opts.methodName), true, resp, started);
     },
-    emitCommandWarnings(info, warnings, opts) {
-      logger.adminCommandWarnings?.(adaptInfo4Devops(info, opts.methodName), true, warnings);
+    emitCommandWarnings(reqId, info, warnings, opts) {
+      logger.adminCommandWarnings?.(reqId, adaptInfo4Devops(info, opts.methodName), true, warnings);
     },
   }),
 };
@@ -194,8 +194,6 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
   }
 
   public async executeCommand(command: Record<string, any>, options: ExecCmdOpts<Kind>): Promise<RawDataAPIResponse> {
-    let started = 0;
-
     if (options?.collection && options.table) {
       throw new Error('Can\'t provide both `table` and `collection` as options to DataAPIHttpClient.executeCommand()');
     }
@@ -230,14 +228,16 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
       target: target,
     };
 
+    const keyspacePath = info.keyspace ? `/${info.keyspace}` : '';
+    const collectionPath = info.collection ? `/${info.collection}` : '';
+    info.url += keyspacePath + collectionPath;
+
+    const requestId = this.logger.generateAdminCommandRequestId();
+
+    this.emissionStrategy.emitCommandStarted?.(requestId, info, options);
+    const started = performance.now();
+
     try {
-      const keyspacePath = info.keyspace ? `/${info.keyspace}` : '';
-      const collectionPath = info.collection ? `/${info.collection}` : '';
-      info.url += keyspacePath + collectionPath;
-
-      started = performance.now();
-      this.emissionStrategy.emitCommandStarted?.(info, options);
-
       const serialized = (info.bigNumsPresent)
         ? this.bigNumHack?.parser.stringify(info.command)
         : JSON.stringify(info.command);
@@ -262,7 +262,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
 
       const warnings = data?.status?.warnings ?? [];
       if (warnings.length) {
-        this.emissionStrategy.emitCommandWarnings?.(info, warnings, options);
+        this.emissionStrategy.emitCommandWarnings?.(requestId, info, warnings, options);
       }
       delete data?.status?.warnings;
 
@@ -276,10 +276,10 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
         errors: data.errors,
       };
 
-      this.emissionStrategy.emitCommandSucceeded?.(info, respData, started, options);
+      this.emissionStrategy.emitCommandSucceeded?.(requestId, info, respData, started, options);
       return respData;
     } catch (e: any) {
-      this.emissionStrategy.emitCommandFailed?.(info, e, started, options);
+      this.emissionStrategy.emitCommandFailed?.(requestId, info, e, started, options);
       throw e;
     }
   }

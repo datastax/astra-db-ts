@@ -90,8 +90,8 @@ export abstract class AdminCommandEvent extends BaseClientEvent {
    *
    * @internal
    */
-  protected constructor(name: string, info: DevOpsAPIRequestInfo, longRunning: boolean) {
-    super(name);
+  protected constructor(name: string, requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean) {
+    super(name, requestId);
     this.path = info.path;
     this.method = info.method;
     this.reqBody = info.data;
@@ -126,8 +126,8 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: Partial<TimeoutDescriptor>) {
-    super('AdminCommandStarted', info, longRunning);
+  constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: Partial<TimeoutDescriptor>) {
+    super('AdminCommandStarted', requestId, info, longRunning);
     this.timeout = timeout;
   }
 
@@ -135,7 +135,7 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
    * Formats the warnings into a human-readable string.
    */
   public format(options?: EventFormatOptions): string {
-    return `${super.format(options)}: ${this._desc()} ${this.longRunning ? '(blocking) ' : ' '}${this.reqBody ? JSON.stringify(this.reqBody) : ''}`;
+    return `${super.format(options)}${this._desc()} ${this.longRunning ? '(blocking) ' : ' '}${this.reqBody ? JSON.stringify(this.reqBody) : ''}`;
   }
 }
 
@@ -169,8 +169,8 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(info: DevOpsAPIRequestInfo, started: number, interval: number, pollCount: number) {
-    super('AdminCommandPolling', info, true);
+  constructor(requestId: string, info: DevOpsAPIRequestInfo, started: number, interval: number, pollCount: number) {
+    super('AdminCommandPolling', requestId, info, true);
     this.elapsed = performance.now() - started;
     this.interval = interval;
     this.pollCount = pollCount;
@@ -180,7 +180,7 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
    * Formats the warnings into a human-readable string.
    */
   public format(options?: EventFormatOptions): string {
-    return `${super.format(options)}: ${this._desc()} (poll #${this.pollCount}; ${~~this.elapsed}ms elapsed)`;
+    return `${super.format(options)}${this._desc()} (poll #${this.pollCount}; ${~~this.elapsed}ms elapsed)`;
   }
 }
 
@@ -207,8 +207,8 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number) {
-    super('AdminCommandSucceeded', info, longRunning);
+  constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number) {
+    super('AdminCommandSucceeded', requestId, info, longRunning);
     this.duration = performance.now() - started;
     this.resBody = data || undefined;
   }
@@ -217,7 +217,7 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
    * Formats the warnings into a human-readable string.
    */
   public format(options?: EventFormatOptions): string {
-    return `${super.format(options)}: ${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms)`;
+    return `${super.format(options)}${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms)`;
   }
 }
 
@@ -247,8 +247,8 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number) {
-    super('AdminCommandFailed', info, longRunning);
+  constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number) {
+    super('AdminCommandFailed', requestId, info, longRunning);
     this.duration = performance.now() - started;
     this.error = error;
   }
@@ -257,7 +257,7 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
    * Formats the warnings into a human-readable string.
    */
   public format(options?: EventFormatOptions): string {
-    return `${super.format(options)}: ${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms) - '${this.error.message}'`;
+    return `${super.format(options)}${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms) - '${this.error.message}'`;
   }
 }
 
@@ -279,8 +279,8 @@ export class AdminCommandWarningsEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: DataAPIErrorDescriptor[]) {
-    super('AdminCommandWarnings', info, longRunning);
+  constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: DataAPIErrorDescriptor[]) {
+    super('AdminCommandWarnings', requestId, info, longRunning);
     this.warnings = warnings;
   }
 
@@ -288,6 +288,6 @@ export class AdminCommandWarningsEvent extends AdminCommandEvent {
    * Formats the warnings into a human-readable string.
    */
   public format(options?: EventFormatOptions): string {
-    return `${super.format(options)}: ${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}- '${this.warnings.map(w => w.message).join(', ')}'`;
+    return `${super.format(options)}${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}- '${this.warnings.map(w => w.message).join(', ')}'`;
   }
 }
