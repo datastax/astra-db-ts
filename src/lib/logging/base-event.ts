@@ -38,7 +38,7 @@ export abstract class BaseClientEvent {
   /**
    * @internal
    */
-  public _propagationState = PropagationState.Continue;
+  public declare _propagationState: PropagationState;
 
   /**
    * Should not be instantiated directly.
@@ -47,13 +47,19 @@ export abstract class BaseClientEvent {
    */
   protected constructor(name: string) {
     this.name = name;
+
+    Object.defineProperty(this, '_propagationState', {
+      value: PropagationState.Continue,
+      enumerable: false,
+      writable: true,
+    });
   }
 
   /**
    * Returns the event in a formatted string, as it would be logged to stdout/stderr (if enabled).
    */
   public format(): string {
-    return `${this.formatPrefix()}[${this.name}]`;
+    return `[${this.name}]`;
   }
 
   /**
@@ -66,7 +72,7 @@ export abstract class BaseClientEvent {
   /**
    * Formats the current date in a way that is suitable for logging.
    */
-  private formatPrefix(): string {
+  public formatPrefix(): string {
     const date = new Date();
     return `${date.getUTCFullYear()}-${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-${date.getUTCDate().toString().padStart(2, '0')} ${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')}:${date.getUTCSeconds().toString().padStart(2, '0')}Z `;
   }

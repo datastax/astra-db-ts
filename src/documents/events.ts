@@ -12,12 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { DEFAULT_KEYSPACE, type RawDataAPIResponse } from '@/src/lib/index.js';
-// import { DataAPIClientEvent } from '@/src/lib/logging/events'; needs to be like this or it errors
+import { type RawDataAPIResponse } from '@/src/lib/index.js';
 import { BaseClientEvent } from '@/src/lib/logging/base-event.js';
 import type { DataAPIRequestInfo } from '@/src/lib/api/clients/data-api-http-client.js';
 import type { DataAPIErrorDescriptor } from '@/src/documents/errors.js';
 import type { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts.js';
+
+/**
+ * @public
+ */
+export type CommandEventTarget = 'database' | 'keyspace' | 'table' | 'collection';
 
 /**
  * The events emitted by the {@link DataAPIClient}. These events are emitted at various stages of the
@@ -74,12 +78,17 @@ export abstract class CommandEvent extends BaseClientEvent {
   /**
    * The keyspace the command is being run in.
    */
-  public readonly keyspace: string;
+  public readonly keyspace: string | null;
 
   /**
    * The table/collection the command is being run on, if applicable.
    */
   public readonly source?: string;
+
+  /**
+   * The target of the command.
+   */
+  public readonly target: CommandEventTarget;
 
   /**
    * The command name.
@@ -102,8 +111,9 @@ export abstract class CommandEvent extends BaseClientEvent {
   protected constructor(name: string, info: DataAPIRequestInfo) {
     super(name);
     this.command = info.command;
-    this.keyspace = info.keyspace || DEFAULT_KEYSPACE;
+    this.keyspace = info.keyspace;
     this.source = info.collection;
+    this.target = info.target;
     this.commandName = Object.keys(info.command)[0];
     this.url = info.url;
   }
@@ -112,7 +122,7 @@ export abstract class CommandEvent extends BaseClientEvent {
    * @internal
    */
   protected _desc() {
-    return `(${this.keyspace}${this.source ? `.${this.source}` : ''}) ${this.commandName}`;
+    return `(${this.keyspace ?? '<no_keyspace>'}${this.source ? `.${this.source}` : ''}) ${this.commandName}`;
   }
 }
 

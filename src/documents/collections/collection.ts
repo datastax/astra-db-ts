@@ -43,7 +43,8 @@ import type {
 } from '@/src/documents/collections/types/index.js';
 import type { CollectionDefinition, CollectionOptions, Db } from '@/src/db/index.js';
 import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
-import { HierarchicalEmitter, type OpaqueHttpClient, type WithTimeout } from '@/src/lib/index.js';
+import { HierarchicalEmitter } from '@/src/lib/logging/hierarchical-emitter.js';
+import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { CommandImpls } from '@/src/documents/commands/command-impls.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { CommandEventMap, WithSim } from '@/src/documents/index.js';

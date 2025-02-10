@@ -76,9 +76,9 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
         }
 
         if (outputs.stdout) {
-          this.console.log(eventClass.format());
+          this.console.log(`${eventClass.formatPrefix()}${eventClass.format()}`);
         } else if (outputs.stderr) {
-          this.console.error(eventClass.format());
+          this.console.error(`${eventClass.formatPrefix()}${eventClass.format()}`);
         } else if (outputs['stdout:verbose']) {
           this.console.log(eventClass.formatVerbose());
         } else if (outputs['stderr:verbose']) {

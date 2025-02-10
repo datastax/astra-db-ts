@@ -16,7 +16,7 @@
 import { initTestObjects, it, parallel } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import type { BaseClientEvent, DataAPIClientEventMap } from '@/src/lib/index.js';
-import { LoggingEventsWithoutAll } from '@/src/lib/logging/constants.js';
+import { LoggingEvents } from '@/src/lib/logging/constants.js';
 import {
   CommandFailedEvent,
   CommandStartedEvent,
@@ -44,7 +44,7 @@ parallel('integration.lib.logging.bubbling', () => {
       const emitted: Partial<Record<keyof DataAPIClientEventMap, BaseClientEvent>> = {};
 
       for (const objName of Object.keys(objs) as (keyof typeof objs)[]) {
-        for (const eventName of LoggingEventsWithoutAll) {
+        for (const eventName of LoggingEvents) {
           for (let i = 0; i < 3; i++) {
             (objs[objName].on as any)(eventName, (e: BaseClientEvent) => {
               eventName in emitted && assert.strictEqual(emitted[eventName], e);

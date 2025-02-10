@@ -1,5 +1,7 @@
 #!/usr/bin/env sh
 
+set -e
+
 while [ $# -gt 0 ]; do
   case "$1" in
     "-update-report" | "-r")

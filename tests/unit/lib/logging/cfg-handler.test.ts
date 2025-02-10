@@ -19,7 +19,7 @@ import type { LoggingConfig } from '@/src/lib/index.js';
 import {
   LoggingDefaultOutputs,
   LoggingDefaults,
-  LoggingEventsWithoutAll,
+  LoggingEvents,
   LoggingOutputs,
 } from '@/src/lib/logging/constants.js';
 import { OptionParseError } from '@/src/lib/opts-handler.js';
@@ -42,11 +42,11 @@ describe('unit.lib.logging.cfg-handler', () => {
 
     it('should substitute "all" with all events', () => {
       parseEq('all', LoggingDefaults);
-      parseEq([{ events: 'all', emits: ['event'] }], [{ events: LoggingEventsWithoutAll, emits: ['event'] }]);
+      parseEq([{ events: 'all', emits: ['event'] }], [{ events: LoggingEvents, emits: ['event'] }]);
     });
 
     it('should parse a single event', () => {
-      for (const event of LoggingEventsWithoutAll) {
+      for (const event of LoggingEvents) {
         const exp = { events: [event], emits: LoggingDefaultOutputs[event] };
         parseEq(event, [exp]);
         parseEq([event], [exp]);
@@ -55,7 +55,7 @@ describe('unit.lib.logging.cfg-handler', () => {
     });
 
     it('should allow regex for event names', () => {
-      const events1 = LoggingEventsWithoutAll.filter(e => e.startsWith('command'));
+      const events1 = LoggingEvents.filter(e => e.startsWith('command'));
       parseEq(/command.*/, events1.map(e => ({ events: [e], emits: LoggingDefaultOutputs[e] })));
 
       const events2 = ['adminCommandStarted', 'commandStarted', 'adminCommandPolling', 'adminCommandFailed', 'commandFailed'] as const;
@@ -107,20 +107,20 @@ describe('unit.lib.logging.cfg-handler', () => {
 
     it('should parse valid multi-layer configs', () => {
       parseEq([{ events: 'all', emits: ['stderr'] }, { events: 'commandFailed', emits: [] }], [
-        { events: LoggingEventsWithoutAll, emits: ['stderr'] },
+        { events: LoggingEvents, emits: ['stderr'] },
         { events: ['commandFailed'], emits: [] },
       ]);
 
       parseEq(['all', { events: 'all', emits: ['stderr'] }, { events: ['adminCommandFailed', 'commandFailed'], emits: [] }, 'commandFailed'], [
         ...LoggingDefaults,
-        { events: LoggingEventsWithoutAll, emits: ['stderr'] },
+        { events: LoggingEvents, emits: ['stderr'] },
         { events: ['adminCommandFailed', 'commandFailed'], emits: [] },
         { events: ['commandFailed'], emits: LoggingDefaultOutputs.commandFailed },
       ]);
 
       parseEq(['all', { events: /.*/, emits: ['stderr'] }, { events: [/.*Failed/], emits: [] }, /commandFailed/], [
         ...LoggingDefaults,
-        { events: LoggingEventsWithoutAll, emits: ['stderr'] },
+        { events: LoggingEvents, emits: ['stderr'] },
         { events: ['adminCommandFailed', 'commandFailed'], emits: [] },
         { events: ['commandFailed'], emits: LoggingDefaultOutputs.commandFailed },
       ]);

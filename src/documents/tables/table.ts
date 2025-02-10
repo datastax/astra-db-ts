@@ -41,9 +41,8 @@ import type {
   ListTableDefinition,
   TableOptions,
 } from '@/src/db/index.js';
-import type { WithTimeout } from '@/src/lib/index.js';
-import { HierarchicalEmitter } from '@/src/lib/index.js';
-import { type OpaqueHttpClient } from '@/src/lib/index.js';
+import { HierarchicalEmitter } from '@/src/lib/logging/hierarchical-emitter.js';
+import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import JBI from 'json-bigint';
 import { TableFindCursor } from '@/src/documents/tables/cursor.js';
@@ -291,14 +290,14 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    *
    * @example
    * ```ts
-   * await table.insertOne({ id: '123', col1: 'i exist' });
-   * await table.findOne({ id: '123' }); // { id: '123', col1: 'i exist' }
+   * await table.insertOne({ id: '123', col1: 'I exist' });
+   * await table.findOne({ id: '123' }); // { id: '123', col1: 'I exist' }
    *
-   * await table.insertOne({ id: '123', col1: 'i am new' });
-   * await table.findOne({ id: '123' }); // { id: '123', col1: 'i am new' }
+   * await table.insertOne({ id: '123', col1: 'I am new' });
+   * await table.findOne({ id: '123' }); // { id: '123', col1: 'I am new' }
    *
    * await table.insertOne({ id: '123', col2: 'me2' });
-   * await table.findOne({ id: '123' }); // { id: '123', col1: 'i am new', col2: 'me2' }
+   * await table.findOne({ id: '123' }); // { id: '123', col1: 'I am new', col2: 'me2' }
    *
    * await table.insertOne({ id: '123', col1: null });
    * await table.findOne({ id: '123' }); // { id: '123', col2: 'me2' }
@@ -385,12 +384,12 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * // Since insertion is ordered, the last unique value for each
    * // primary key will be the one that remains in the table.
    * await table.insertMany([
-   *   { id: '123', col1: 'i exist' },
-   *   { id: '123', col1: 'i am new' },
+   *   { id: '123', col1: 'I exist' },
+   *   { id: '123', col1: 'I am new' },
    *   { id: '123', col2: 'me2' },
    * ], { ordered: true });
    *
-   * await table.findOne({ id: '123' }); // { id: '123', col1: 'i am new', col2: 'me2' }
+   * await table.findOne({ id: '123' }); // { id: '123', col1: 'I am new', col2: 'me2' }
    *
    * // Since insertion is unordered, it can not be 100% guaranteed
    * // which value will remain in the table for each primary key,

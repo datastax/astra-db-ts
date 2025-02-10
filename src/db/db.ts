@@ -1193,14 +1193,11 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
    * @returns A promise that resolves to the raw response from the Data API.
    */
   public async command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse> {
-    if (options?.collection && options.table) {
-      throw new Error('Can\'t provide both `table` and `collection` as options to db.command()');
-    }
-
     return await this.#httpClient.executeCommand(command, {
       timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
-      collection: options?.collection ?? options?.table,
       keyspace: options?.keyspace,
+      collection: options?.collection,
+      table: options?.table,
     });
   }
 

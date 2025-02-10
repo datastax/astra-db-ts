@@ -19,8 +19,8 @@ import { array, either, exact, instanceOf, nonEmptyArray, nullish, oneOf } from 
 import {
   LoggingDefaultOutputs,
   LoggingDefaults,
+  LoggingEventsWithAll,
   LoggingEvents,
-  LoggingEventsWithoutAll,
   LoggingOutputs,
 } from '@/src/lib/logging/constants.js';
 import { oneOrMany, toArray } from '@/src/lib/utils.js';
@@ -51,12 +51,12 @@ export type ParsedLoggingConfig = MonoidType<typeof monoid> & Parsed<'LoggingCon
 /**
  * @internal
  */
-const oneOfLoggingEvents = either(oneOf(LoggingEvents), instanceOf(RegExp)).describe('one of LoggingEvent (including "all"), or a regex which matches such');
+const oneOfLoggingEvents = either(oneOf(LoggingEventsWithAll), instanceOf(RegExp)).describe('one of LoggingEvent (including "all"), or a regex which matches such');
 
 /**
  * @internal
  */
-const oneOfLoggingEventsWithoutAll = either(oneOf(LoggingEventsWithoutAll), instanceOf(RegExp)).describe('one of LoggingEvent (excluding "all"), or a regex which matches such');
+const oneOfLoggingEventsWithoutAll = either(oneOf(LoggingEvents), instanceOf(RegExp)).describe('one of LoggingEvent (excluding "all"), or a regex which matches such');
 
 /**
  * @internal
@@ -119,18 +119,18 @@ const transformer = decoder.transform((config) => {
  */
 export const LoggingCfgHandler = new MonoidalOptionsHandler<Types>(transformer, monoid);
 
-function regex2events(regex: RegExp): typeof LoggingEventsWithoutAll {
-  return LoggingEventsWithoutAll.filter((e) => regex.test(e));
+function regex2events(regex: RegExp): typeof LoggingEvents[number][] {
+  return LoggingEvents.filter((e) => regex.test(e));
 }
 
 function buildEvents(events: OneOrMany<LoggingEvent>): readonly Exclude<LoggingEvent, 'all' | RegExp>[] {
   return toArray(events).flatMap((e) => {
     if (e === 'all') {
-      return LoggingEventsWithoutAll;
+      return LoggingEvents;
     }
 
     if (e instanceof RegExp) {
-      return LoggingEventsWithoutAll.filter((ee) => e.test(ee));
+      return LoggingEvents.filter((ee) => e.test(ee));
     }
 
     return e;

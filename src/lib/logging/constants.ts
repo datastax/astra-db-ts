@@ -32,19 +32,23 @@ import type { InternalLoggingOutputsMap } from '@/src/lib/logging/logger.js';
 import { EqualityProof } from '@/src/lib/utils.js';
 
 /**
- * @internal
+ * A list of all possible logging events.
+ *
+ * @public
  */
-export const LoggingEvents = <const>['all', 'adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded', 'adminCommandFailed', 'adminCommandWarnings', 'commandStarted', 'commandFailed', 'commandSucceeded', 'commandWarnings'];
-void EqualityProof<typeof LoggingEvents[number], Exclude<LoggingEvent, RegExp>, true>;
+export const LoggingEvents = <const>['adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded', 'adminCommandFailed', 'adminCommandWarnings', 'commandStarted', 'commandFailed', 'commandSucceeded', 'commandWarnings'];
+void EqualityProof<typeof LoggingEvents[number], Exclude<LoggingEvent, 'all' | RegExp>, true>;
 
 /**
  * @internal
  */
-export const LoggingEventsWithoutAll = LoggingEvents.filter((e) => e !== 'all');
-void EqualityProof<typeof LoggingEventsWithoutAll[number], Exclude<LoggingEvent, 'all' | RegExp>, true>;
+export const LoggingEventsWithAll = <const>['all', ...LoggingEvents];
+void EqualityProof<typeof LoggingEventsWithAll[number], Exclude<LoggingEvent, RegExp>, true>;
 
 /**
- * @internal
+ * A list of all possible logging outputs.
+ *
+ * @public
  */
 export const LoggingOutputs = <const>['event', 'stdout', 'stderr', 'stdout:verbose', 'stderr:verbose'];
 void EqualityProof<typeof LoggingOutputs[number], LoggingOutput, true>;
@@ -73,13 +77,13 @@ export const EventConstructors = <const>{
 /**
  * @internal
  */
-export const EmptyInternalLoggingConfig = Object.fromEntries(LoggingEventsWithoutAll.map((e) => [e, buildOutputsMap([])])) as InternalLoggingOutputsMap;
+export const EmptyInternalLoggingConfig = Object.fromEntries(LoggingEvents.map((e) => [e, buildOutputsMap([])])) as InternalLoggingOutputsMap;
 
 /**
  * @internal
  */
 export const LoggingDefaults: ParsedLoggingConfig['layers'] = [{
-  events: LoggingEventsWithoutAll.filter((e) => e !== 'commandStarted' && e !== 'commandSucceeded'),
+  events: LoggingEvents.filter((e) => e !== 'commandStarted' && e !== 'commandSucceeded'),
   emits: ['event', 'stderr'],
 }, {
   events: ['commandStarted', 'commandSucceeded'],

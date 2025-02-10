@@ -1,0 +1,5 @@
+2025-02-10 22:41:10 info: [astra-db-ts] [CommandStarted]: (default_keyspace) createTable
+2025-02-10 22:41:12 info: [astra-db-ts] [CommandSucceeded]: (default_keyspace) createTable (took 2383ms)
+2025-02-10 22:41:15 error: [astra-db-ts] [CommandFailed]: (default_keyspace.logging_example_table) findOne (took 252ms) - 'Invalid filter expression: filter clause path ('$invalid') contains character(s) not allowed'
+2025-02-10 22:41:15 info: [astra-db-ts] [CommandStarted]: (default_keyspace) dropTable
+2025-02-10 22:41:17 info: [astra-db-ts] [CommandSucceeded]: (default_keyspace) dropTable (took 2100ms)
