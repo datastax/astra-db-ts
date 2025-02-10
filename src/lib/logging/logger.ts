@@ -63,32 +63,21 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
   public static cfg: typeof LoggingCfgHandler = LoggingCfgHandler;
 
   constructor(_config: ParsedLoggingConfig, private emitter: HierarchicalEmitter<DataAPIClientEventMap>, private console: ConsoleLike) {
-    const config = Logger.buildInternalConfig(_config);
+    const config = this._buildInternalConfig(_config);
 
-    for (const [_event, outputs] of Object.entries(config)) if (outputs) {
-      const event = _event as keyof DataAPIClientEventMap;
+    for (const [_eventName, outputs] of Object.entries(config)) if (outputs) {
+      const eventName = _eventName as keyof DataAPIClientEventMap;
+      const log = this._mkLog(outputs);
 
-      this[event] = (...args: any[]) => {
-        const eventClass = new (<any>EventConstructors[event])(...args) as BaseClientEvent;
-
-        if (outputs.event) {
-          this.emitter.emit(event, <any>eventClass);
-        }
-
-        if (outputs.stdout) {
-          this.console.log(`${eventClass.formatPrefix()}${eventClass.format()}`);
-        } else if (outputs.stderr) {
-          this.console.error(`${eventClass.formatPrefix()}${eventClass.format()}`);
-        } else if (outputs['stdout:verbose']) {
-          this.console.log(eventClass.formatVerbose());
-        } else if (outputs['stderr:verbose']) {
-          this.console.error(eventClass.formatVerbose());
-        }
+      this[eventName] = (...args: any[]) => {
+        const event = new (<any>EventConstructors[eventName])(...args);
+        outputs.event && this.emitter.emit(eventName, event);
+        log?.(event);
       };
     }
   }
 
-  private static buildInternalConfig(config: ParsedLoggingConfig): InternalLoggingOutputsMap {
+  private _buildInternalConfig(config: ParsedLoggingConfig): InternalLoggingOutputsMap {
     const newConfig = { ...EmptyInternalLoggingConfig };
 
     for (const layer of config.layers) {
@@ -104,5 +93,17 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
     }
 
     return newConfig;
+  }
+
+  private _mkLog(outputs: Readonly<Record<LoggingOutput, boolean>>) {
+    if (outputs.stdout) {
+      return (event: BaseClientEvent) => this.console.log(event.format());
+    } else if (outputs.stderr) {
+      return (event: BaseClientEvent) => this.console.error(event.format());
+    } else if (outputs['stdout:verbose']) {
+      return (event: BaseClientEvent) => this.console.log(event.formatVerbose());
+    } else if (outputs['stderr:verbose']) {
+      return (event: BaseClientEvent) => this.console.error(event.formatVerbose());
+    }
   }
 }

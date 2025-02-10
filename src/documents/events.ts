@@ -12,6 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { EventFormatOptions} from '@/src/lib/index.js';
 import { type RawDataAPIResponse } from '@/src/lib/index.js';
 import { BaseClientEvent } from '@/src/lib/logging/base-event.js';
 import type { DataAPIRequestInfo } from '@/src/lib/api/clients/data-api-http-client.js';
@@ -155,9 +156,8 @@ export class CommandStartedEvent extends CommandEvent {
   /**
    * Formats the warnings into a human-readable string.
    */
-  public format(): string {
-    // return `${super.formatted()}: ${this.commandName} in ${this.keyspace}${this.source ? `.${this.source}` : ''}`;
-    return `${super.format()}: ${this._desc()}`;
+  public format(options?: EventFormatOptions): string {
+    return `${super.format(options)}: ${this._desc()}`;
   }
 }
 
@@ -196,8 +196,8 @@ export class CommandSucceededEvent extends CommandEvent {
   /**
    * Formats the warnings into a human-readable string.
    */
-  public format(): string {
-    return `${super.format()}: ${this._desc()} (took ${~~this.duration}ms)`;
+  public format(options?: EventFormatOptions): string {
+    return `${super.format(options)}: ${this._desc()} (took ${~~this.duration}ms)`;
   }
 }
 
@@ -238,8 +238,8 @@ export class CommandFailedEvent extends CommandEvent {
   /**
    * Formats the warnings into a human-readable string.
    */
-  public format(): string {
-    return `${super.format()}: ${this._desc()} (took ${~~this.duration}ms) - '${this.error.message}'`;
+  public format(options?: EventFormatOptions): string {
+    return `${super.format(options)}: ${this._desc()} (took ${~~this.duration}ms) - '${this.error.message}'`;
   }
 }
 
@@ -269,7 +269,7 @@ export class CommandWarningsEvent extends CommandEvent {
   /**
    * Formats the warnings into a human-readable string.
    */
-  public format(): string {
-    return `${super.format()}: ${this._desc()} '${this.warnings.map(w => w.message).join(', ')}'`;
+  public format(options?: EventFormatOptions): string {
+    return `${super.format(options)}: ${this._desc()} '${this.warnings.map(w => w.message).join(', ')}'`;
   }
 }

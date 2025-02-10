@@ -1,6 +1,5 @@
 import { CommandEvent, DataAPIClient, LoggingEvents } from '@datastax/astra-db-ts';
 import winston from 'winston';
-import globals from 'globals';
 
 // -----===-----
 // INFO: This one's a bit more advanced example, demonstrating how to integrate the client with your own logging framework.
@@ -54,16 +53,16 @@ for (const event of LoggingEvents.filter((e) => /.*(Started|Succeeded|Polling)/.
     // The admin events, and events that are not acted upon collections/tables (e.g. create, drop, list, etc.) are logged as 'info' events.
     // This is just a simple example of applying custom logic to enhance the logging output.
     if (e instanceof CommandEvent && (e.target === 'collection' || e.target === 'table')) {
-      logger.http(`[astra-db-ts] ${e.format()}`, e)
+      logger.http(`[astra-db-ts] ${e.format({ timestamp: false })}`, e)
     } else {
-      logger.info(`[astra-db-ts] ${e.format()}`, e)
+      logger.info(`[astra-db-ts] ${e.format({ timestamp: false })}`, e)
     }
   });
 }
 
 // And all failed and warning events are logged as 'error' events
 for (const event of LoggingEvents.filter((e) => /.*(Failed|Warning)/.test(e))) {
-  client.on(event, (e) => logger.error(`[astra-db-ts] ${e.format()}`, e));
+  client.on(event, (e) => logger.error(`[astra-db-ts] ${e.format({ timestamp: false })}`, e));
 }
 
 // -----===<{ STEP 4: Use the client }>===-----

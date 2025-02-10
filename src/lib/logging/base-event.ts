@@ -23,6 +23,14 @@ export const enum PropagationState {
 }
 
 /**
+ * @public
+ */
+export interface EventFormatOptions {
+  timestamp?: boolean;
+  name?: boolean;
+}
+
+/**
  * The base class of all events that may be emitted/logged by the {@link DataAPIClient}.
  *
  * See {@link DataAPIClientEventMap} & {@link LoggingConfig} for much more info.
@@ -58,8 +66,19 @@ export abstract class BaseClientEvent {
   /**
    * Returns the event in a formatted string, as it would be logged to stdout/stderr (if enabled).
    */
-  public format(): string {
-    return `[${this.name}]`;
+  public format(options?: EventFormatOptions): string {
+    let formatted = '';
+
+    if (options?.timestamp !== false) {
+      const date = new Date();
+      return `${date.getUTCFullYear()}-${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-${date.getUTCDate().toString().padStart(2, '0')} ${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')}:${date.getUTCSeconds().toString().padStart(2, '0')}Z `;
+    }
+
+    if (options?.name !== false) {
+      formatted += `[${this.name}] `;
+    }
+
+    return formatted;
   }
 
   /**
@@ -67,14 +86,6 @@ export abstract class BaseClientEvent {
    */
   public formatVerbose(): string {
     return JSON.stringify(this, null, 2);
-  }
-
-  /**
-   * Formats the current date in a way that is suitable for logging.
-   */
-  public formatPrefix(): string {
-    const date = new Date();
-    return `${date.getUTCFullYear()}-${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-${date.getUTCDate().toString().padStart(2, '0')} ${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')}:${date.getUTCSeconds().toString().padStart(2, '0')}Z `;
   }
 
   /**

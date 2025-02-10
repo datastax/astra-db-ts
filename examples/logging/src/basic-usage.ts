@@ -38,7 +38,7 @@ try {
 
   // We can manually listen for the events and log them ourselves
   table.on('commandStarted', (e) => {
-    console.log(`Table ${table.name} command started: ${e.format()}`);
+    console.log(`Table ${table.name} command started: ${e.format({ timestamp: false })}`);
   });
 
   // This will print the following to the console:
