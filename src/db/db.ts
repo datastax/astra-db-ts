@@ -22,10 +22,9 @@ import { extractDbIdFromUrl, extractRegionFromUrl } from '@/src/documents/utils.
 import type { DbAdmin } from '@/src/administration/index.js';
 import { DataAPIDbAdmin } from '@/src/administration/data-api-db-admin.js';
 import type { CreateCollectionOptions } from '@/src/db/types/collections/create-collection.js';
-import { TokenProvider } from '@/src/lib/index.js';
 import { DataAPIHttpClient, EmissionStrategy } from '@/src/lib/api/clients/data-api-http-client.js';
 import type { KeyspaceRef } from '@/src/lib/api/clients/types.js';
-import type { FoundRow, SomeRow, TableDropIndexOptions } from '@/src/documents/index.js';
+import type { CommandEventMap, FoundRow, SomeRow, TableDropIndexOptions } from '@/src/documents/index.js';
 import { EmbeddingHeadersProvider, Table } from '@/src/documents/index.js';
 import { DEFAULT_DATA_API_PATHS } from '@/src/lib/api/constants.js';
 import type { CollectionOptions } from '@/src/db/types/collections/collection-options.js';
@@ -48,6 +47,7 @@ import type { ParsedDbOptions } from '@/src/client/opts-handlers/db-opts-handler
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler.js';
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler.js';
+import { MicroEmitter, TokenProvider } from '@/src/lib/index.js';
 
 /**
  * #### Overview
@@ -119,7 +119,7 @@ import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cf
  *
  * @public
  */
-export class Db {
+export class Db extends MicroEmitter<CommandEventMap> {
   readonly #defaultOpts: ParsedRootClientOpts;
   readonly #httpClient: DataAPIHttpClient;
 
@@ -134,6 +134,8 @@ export class Db {
    * @internal
    */
   constructor(rootOpts: ParsedRootClientOpts, endpoint: string, dbOpts: ParsedDbOptions) {
+    super(rootOpts.client);
+
     this.#defaultOpts = {
       ...rootOpts,
       dbOptions: DbOptsHandler.concat([rootOpts.dbOptions, dbOpts]),
@@ -153,7 +155,7 @@ export class Db {
       tokenProvider: this.#defaultOpts.dbOptions.token,
       embeddingHeaders: EmbeddingHeadersProvider.parse(null),
       baseApiPath: this.#defaultOpts.dbOptions.dataApiPath || DEFAULT_DATA_API_PATHS[rootOpts.environment],
-      emitter: rootOpts.emitter,
+      emitter: this,
       logging: this.#defaultOpts.dbOptions.logging,
       fetchCtx: rootOpts.fetchCtx,
       keyspace: this.#keyspace,
@@ -384,7 +386,7 @@ export class Db {
       return new AstraDbAdmin(this, this.#defaultOpts, parsedOpts, this.#defaultOpts.dbOptions.token, this.#endpoint);
     }
 
-    return new DataAPIDbAdmin(this, this.#httpClient, parsedOpts);
+    return new DataAPIDbAdmin(this, this.#defaultOpts.client, this.#httpClient, parsedOpts);
   }
 
   /**

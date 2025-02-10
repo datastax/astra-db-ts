@@ -24,7 +24,7 @@ import { buildAstraDatabaseAdminInfo } from '@/src/administration/utils.js';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants.js';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
-import { TokenProvider } from '@/src/lib/index.js';
+import { MicroEmitter, TokenProvider } from '@/src/lib/index.js';
 import type { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info.js';
 import { buildAstraEndpoint } from '@/src/lib/utils.js';
 import type { DbOptions } from '@/src/client/index.js';
@@ -36,6 +36,7 @@ import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-h
 import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler.js';
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler.js';
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
+import type { AdminCommandEventMap } from '@/src/administration/events.js';
 
 /**
  * An administrative class for managing Astra databases, including creating, listing, and deleting databases.
@@ -63,7 +64,7 @@ import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-
  *
  * @public
  */
-export class AstraAdmin {
+export class AstraAdmin extends MicroEmitter<AdminCommandEventMap> {
   readonly #defaultOpts: ParsedRootClientOpts;
   readonly #httpClient: DevOpsAPIHttpClient;
   readonly #environment: 'dev' | 'test' | 'prod';
@@ -74,6 +75,8 @@ export class AstraAdmin {
    * @internal
    */
   constructor(rootOpts: ParsedRootClientOpts, adminOpts: ParsedAdminOptions) {
+    super(rootOpts.client);
+    
     this.#defaultOpts = {
       ...rootOpts,
       adminOptions: AdminOptsHandler.concat([rootOpts.adminOptions, adminOpts]),
@@ -88,7 +91,7 @@ export class AstraAdmin {
     this.#httpClient = new DevOpsAPIHttpClient({
       logging: this.#defaultOpts.adminOptions.logging,
       baseUrl: this.#defaultOpts.adminOptions.endpointUrl ?? DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
-      emitter: rootOpts.emitter,
+      emitter: this,
       fetchCtx: rootOpts.fetchCtx,
       caller: rootOpts.caller,
       tokenProvider: this.#defaultOpts.adminOptions.adminToken,

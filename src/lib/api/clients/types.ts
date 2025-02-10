@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { CommandEventMap } from '@/src/documents/index.js';
 import type { FetchCtx } from '@/src/lib/api/fetch/types.js';
 import type { HttpMethods } from '@/src/lib/api/constants.js';
 import type { Ref } from '@/src/lib/types.js';
@@ -21,7 +20,7 @@ import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler.js';
 import type { ParsedTimeoutDescriptor } from '@/src/lib/api/timeouts/cfg-handler.js';
 import type { ParsedCaller } from '@/src/client/opts-handlers/caller-cfg-handler.js';
 import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
-import type { MicroEmitter } from '@/src/lib/index.js';
+import type { DataAPIClientEventMap, MicroEmitter } from '@/src/lib/index.js';
 
 /**
  * @internal
@@ -29,7 +28,7 @@ import type { MicroEmitter } from '@/src/lib/index.js';
 export interface HTTPClientOptions {
   baseUrl: string,
   baseApiPath?: string | null,
-  emitter: MicroEmitter<CommandEventMap>,
+  emitter: MicroEmitter<DataAPIClientEventMap>,
   logging: ParsedLoggingConfig,
   fetchCtx: FetchCtx,
   caller: ParsedCaller,

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import type {
+  CommandEventMap,
   CreateTableIndexOptions,
   CreateTableVectorIndexOptions,
   FoundRow,
@@ -25,7 +26,8 @@ import type {
   TableInsertManyResult,
   TableInsertOneResult,
   TableUpdateFilter,
-  WithSim} from '@/src/documents/index.js';
+  WithSim,
+} from '@/src/documents/index.js';
 import {
   TableInsertManyError,
 } from '@/src/documents/index.js';
@@ -40,6 +42,7 @@ import type {
   TableOptions,
 } from '@/src/db/index.js';
 import type { WithTimeout } from '@/src/lib/index.js';
+import { MicroEmitter } from '@/src/lib/index.js';
 import { type OpaqueHttpClient } from '@/src/lib/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import JBI from 'json-bigint';
@@ -207,7 +210,7 @@ const jbi = JBI({ storeAsString: true });
  *
  * @public
  */
-export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>> {
+export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>> extends MicroEmitter<CommandEventMap> {
   readonly #httpClient: DataAPIHttpClient;
   readonly #commands: CommandImpls<PKey>;
   readonly #db: Db;
@@ -232,6 +235,8 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    * @internal
    */
   constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: TableOptions | undefined) {
+    super(db);
+
     Object.defineProperty(this, 'name', {
       value: name,
     });
@@ -247,7 +252,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
       parser: withJbiNullProtoFix(jbi),
     };
 
-    this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
+    this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this, opts, hack);
     this.#commands = new CommandImpls(this, this.#httpClient, new TableSerDes(TableSerDes.cfg.parse(opts?.serdes)));
     this.#db = db;
 

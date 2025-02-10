@@ -43,11 +43,10 @@ import type {
 } from '@/src/documents/collections/types/index.js';
 import type { CollectionDefinition, CollectionOptions, Db } from '@/src/db/index.js';
 import type { BigNumberHack, DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-client.js';
-import type { WithTimeout } from '@/src/lib/index.js';
-import { type OpaqueHttpClient } from '@/src/lib/index.js';
+import { MicroEmitter, type OpaqueHttpClient, type WithTimeout } from '@/src/lib/index.js';
 import { CommandImpls } from '@/src/documents/commands/command-impls.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
-import type { WithSim } from '@/src/documents/index.js';
+import type { CommandEventMap, WithSim } from '@/src/documents/index.js';
 import { CollectionInsertManyError, TooManyDocumentsToCountError } from '@/src/documents/index.js';
 import JBI from 'json-bigint';
 import { CollectionFindCursor } from '@/src/documents/collections/cursor.js';
@@ -149,7 +148,7 @@ const jbi = JBI;
  *
  * @public
  */
-export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>> {
+export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>> extends MicroEmitter<CommandEventMap> {
   readonly #httpClient: DataAPIHttpClient;
   readonly #commands: CommandImpls<IdOf<RSchema>>;
   readonly #db: Db;
@@ -170,6 +169,8 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
    * @internal
    */
   constructor(db: Db, httpClient: DataAPIHttpClient, name: string, opts: CollectionOptions | undefined) {
+    super(db);
+
     Object.defineProperty(this, 'name', {
       value: name,
       writable: false,
@@ -185,7 +186,7 @@ export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithI
       parser: withJbiNullProtoFix(jbi),
     };
 
-    this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this.keyspace, this.name, opts, hack);
+    this.#httpClient = httpClient.forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(this, opts, hack);
     this.#commands = new CommandImpls(this, this.#httpClient, new CollSerDes(CollSerDes.cfg.parse(opts?.serdes)));
     this.#db = db;
 

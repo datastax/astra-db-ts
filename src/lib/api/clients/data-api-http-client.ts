@@ -14,11 +14,9 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import { Logger } from '@/src/lib/logging/logger.js';
-import type { nullish, RawDataAPIResponse} from '@/src/lib/index.js';
+import type { MicroEmitter, nullish, RawDataAPIResponse} from '@/src/lib/index.js';
 import { TokenProvider } from '@/src/lib/index.js';
-import type {
-  DataAPIErrorDescriptor,
-  SomeDoc} from '@/src/documents/index.js';
+import type { Collection, DataAPIErrorDescriptor, SomeDoc, SomeRow, Table } from '@/src/documents/index.js';
 import {
   DataAPIHttpError,
   DataAPIResponseError,
@@ -31,11 +29,12 @@ import { DEFAULT_DATA_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constan
 import type { CollectionOptions, TableOptions } from '@/src/db/index.js';
 import { isNullish } from '@/src/lib/utils.js';
 import { mkRespErrorFromResponse } from '@/src/documents/errors.js';
-import type { TimeoutManager} from '@/src/lib/api/timeouts/timeouts.js';
+import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { EmptyObj } from '@/src/lib/types.js';
 import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler.js';
 import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
+import type { AdminCommandEventMap } from '@/src/administration/index.js';
 
 type ClientKind = 'admin' | 'normal';
 
@@ -136,7 +135,7 @@ export interface BigNumberHack {
  * @internal
  */
 export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpClient {
-  public collection?: string;
+  public collOrTableName?: string;
   public keyspace: KeyspaceRef;
   public emissionStrategy: ReturnType<EmissionStrategy<Kind>>;
   public bigNumHack?: BigNumberHack;
@@ -149,23 +148,24 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     this.emissionStrategy = opts.emissionStrategy(this.logger);
   }
 
-  public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(keyspace: string, collection: string, opts: CollectionOptions | TableOptions | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
+  public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(thing: Collection | Table<SomeRow>, opts: CollectionOptions | TableOptions | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       embeddingHeaders: EmbeddingHeadersProvider.parse(opts?.embeddingApiKey),
       logging: Logger.cfg.concatParseWithin([this.#props.logging], opts, 'logging'),
       emissionStrategy: EmissionStrategy.Normal,
-      keyspace: { ref: keyspace },
+      keyspace: { ref: thing.keyspace },
+      emitter: thing,
     });
 
-    clone.collection = collection;
+    clone.collOrTableName = thing.name;
     clone.bigNumHack = bigNumHack;
     clone.tm = new Timeouts(DataAPITimeoutError.mk, Timeouts.cfg.parse({ ...this.tm.baseTimeouts, ...opts?.timeoutDefaults }));
 
     return clone;
   }
 
-  public forDbAdmin(opts: ParsedAdminOptions): DataAPIHttpClient<'admin'> {
+  public forDbAdmin(emitter: MicroEmitter<AdminCommandEventMap>, opts: ParsedAdminOptions): DataAPIHttpClient<'admin'> {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       tokenProvider: TokenProvider.opts.concat([opts.adminToken, this.#props.tokenProvider]),
@@ -174,9 +174,10 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
       additionalHeaders: { ...this.#props.additionalHeaders, ...opts?.additionalHeaders },
       emissionStrategy: EmissionStrategy.Admin,
+      emitter: emitter,
     });
 
-    clone.collection = undefined;
+    clone.collOrTableName = undefined;
     clone.tm = new Timeouts(DataAPITimeoutError.mk, { ...this.tm.baseTimeouts, ...opts?.timeoutDefaults });
 
     return clone;
@@ -195,7 +196,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     };
 
     try {
-      info.collection ||= this.collection;
+      info.collection ||= this.collOrTableName;
 
       if (info.keyspace !== null) {
         info.keyspace ||= this.keyspace?.ref;

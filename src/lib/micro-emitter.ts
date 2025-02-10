@@ -39,6 +39,20 @@ export class MicroEmitter<Events extends Record<string, (...args: any[]) => void
   readonly #listeners: Partial<Record<keyof Events, ((...args: any[]) => void)[]>> = {};
 
   /**
+   * @internal
+   */
+  readonly #parent: Pick<MicroEmitter<Events>, 'emit'> | null;
+
+  /**
+   * Should not be instantiated be the user directly.
+   *
+   * @internal
+   */
+  protected constructor(parent: Pick<MicroEmitter<Events>, 'emit'> | null) {
+    this.#parent = parent;
+  }
+
+  /**
    * Subscribe to an event.
    *
    * @param event - The event to listen for.
@@ -106,13 +120,15 @@ export class MicroEmitter<Events extends Record<string, (...args: any[]) => void
    *
    * @returns `true` if the event had listeners, `false` otherwise.
    */
-  public emit<E extends keyof Events>(event: E, ...args: Parameters<Events[E]>): boolean {
-    if (!this.#listeners[event]) {
-      return false;
+  public emit<E extends keyof Events>(event: E, ...args: Parameters<Events[E]>): void {
+    if (this.#listeners[event]) {
+      for (const listener of this.#listeners[event]) {
+        listener(...args);
+      }
     }
-    for (const listener of this.#listeners[event]) {
-      listener(...args);
+
+    if (this.#parent) {
+      this.#parent.emit(event, ...args);
     }
-    return true;
   }
 }

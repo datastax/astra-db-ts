@@ -114,7 +114,7 @@ export class DataAPIClient extends MicroEmitter<DataAPIClientEventMap> {
   constructor(token: string | TokenProvider | undefined, options?: DataAPIClientOptions)
 
   constructor(tokenOrOptions?: string | TokenProvider | DataAPIClientOptions, maybeOptions?: DataAPIClientOptions) {
-    super();
+    super(null);
 
     const tokenPassed = (typeof tokenOrOptions === 'string' || tokenOrOptions instanceof TokenProvider || arguments.length > 1);
 
