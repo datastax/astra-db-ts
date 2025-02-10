@@ -195,7 +195,7 @@ export type DataAPILoggingConfig = DataAPILoggingEvent | readonly (DataAPILoggin
  *
  * @public
  */
-export type DataAPILoggingEvent = 'all' | keyof DataAPIClientEventMap;
+export type DataAPILoggingEvent = 'all' | keyof DataAPIClientEventMap | RegExp;
 
 /**
  * Represents the different outputs that can be emitted/logged to by the {@link DataAPIClient}.

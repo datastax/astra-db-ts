@@ -35,13 +35,13 @@ import { EqualityProof } from '@/src/lib/utils.js';
  * @internal
  */
 export const LoggingEvents = <const>['all', 'adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded', 'adminCommandFailed', 'adminCommandWarnings', 'commandStarted', 'commandFailed', 'commandSucceeded', 'commandWarnings'];
-void EqualityProof<typeof LoggingEvents[number], DataAPILoggingEvent, true>;
+void EqualityProof<typeof LoggingEvents[number], Exclude<DataAPILoggingEvent, RegExp>, true>;
 
 /**
  * @internal
  */
 export const LoggingEventsWithoutAll = LoggingEvents.filter((e) => e !== 'all');
-void EqualityProof<typeof LoggingEventsWithoutAll[number], Exclude<DataAPILoggingEvent, 'all'>, true>;
+void EqualityProof<typeof LoggingEventsWithoutAll[number], Exclude<DataAPILoggingEvent, 'all' | RegExp>, true>;
 
 /**
  * @internal
