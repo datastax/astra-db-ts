@@ -15,7 +15,7 @@
 
 import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client.js';
 import type { DataAPIErrorDescriptor } from '@/src/documents/index.js';
-import { BaseDataAPIClientEvent } from '@/src/lib/logging/events.js';
+import { BaseClientEvent } from '@/src/lib/logging/base-event.js';
 import type { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts.js';
 
 /**
@@ -29,23 +29,23 @@ export type AdminCommandEventMap = {
   /**
    * Emitted when an admin command is started, before the initial HTTP request is made.
    */
-  adminCommandStarted: (event: AdminCommandStartedEvent) => void,
+  adminCommandStarted: AdminCommandStartedEvent,
   /**
    * Emitted when a command is polling in a long-running operation (i.e. create database).
    */
-  adminCommandPolling: (event: AdminCommandPollingEvent) => void,
+  adminCommandPolling: AdminCommandPollingEvent,
   /**
    * Emitted when an admin command has succeeded, after any necessary polling.
    */
-  adminCommandSucceeded: (event: AdminCommandSucceededEvent) => void,
+  adminCommandSucceeded: AdminCommandSucceededEvent,
   /**
    * Emitted when an admin command has errored.
    */
-  adminCommandFailed: (event: AdminCommandFailedEvent) => void,
+  adminCommandFailed: AdminCommandFailedEvent,
   /**
    * Emitted when an admin command has warnings.
    */
-  adminCommandWarnings: (event: AdminCommandWarningsEvent) => void,
+  adminCommandWarnings: AdminCommandWarningsEvent,
 }
 
 /**
@@ -53,7 +53,7 @@ export type AdminCommandEventMap = {
  *
  * @public
  */
-export abstract class AdminCommandEvent extends BaseDataAPIClientEvent {
+export abstract class AdminCommandEvent extends BaseClientEvent {
   /**
    * The path for the request, not including the Base URL.
    */
@@ -133,8 +133,8 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
   /**
    * Formats the warnings into a human-readable string.
    */
-  public formatted(): string {
-    return `${super.formatted()}: ${this._desc()} ${this.longRunning ? '(blocking) ' : ' '}${this.reqBody ? JSON.stringify(this.reqBody) : ''}`;
+  public format(): string {
+    return `${super.format()}: ${this._desc()} ${this.longRunning ? '(blocking) ' : ' '}${this.reqBody ? JSON.stringify(this.reqBody) : ''}`;
   }
 }
 
@@ -178,8 +178,8 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
   /**
    * Formats the warnings into a human-readable string.
    */
-  public formatted(): string {
-    return `${super.formatted()}: ${this._desc()} (poll #${this.pollCount}; ${~~this.elapsed}ms elapsed)`;
+  public format(): string {
+    return `${super.format()}: ${this._desc()} (poll #${this.pollCount}; ${~~this.elapsed}ms elapsed)`;
   }
 }
 
@@ -215,8 +215,8 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
   /**
    * Formats the warnings into a human-readable string.
    */
-  public formatted(): string {
-    return `${super.formatted()}: ${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms)`;
+  public format(): string {
+    return `${super.format()}: ${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms)`;
   }
 }
 
@@ -255,8 +255,8 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
   /**
    * Formats the warnings into a human-readable string.
    */
-  public formatted(): string {
-    return `${super.formatted()}: ${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms) - '${this.error.message}'`;
+  public format(): string {
+    return `${super.format()}: ${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms) - '${this.error.message}'`;
   }
 }
 
@@ -286,7 +286,7 @@ export class AdminCommandWarningsEvent extends AdminCommandEvent {
   /**
    * Formats the warnings into a human-readable string.
    */
-  public formatted(): string {
-    return `${super.formatted()}: ${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}- '${this.warnings.map(w => w.message).join(', ')}'`;
+  public format(): string {
+    return `${super.format()}: ${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}- '${this.warnings.map(w => w.message).join(', ')}'`;
   }
 }

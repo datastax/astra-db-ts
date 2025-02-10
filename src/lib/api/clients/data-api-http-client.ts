@@ -14,7 +14,7 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import { Logger } from '@/src/lib/logging/logger.js';
-import type { MicroEmitter, nullish, RawDataAPIResponse} from '@/src/lib/index.js';
+import type { ClientEmitter, nullish, RawDataAPIResponse} from '@/src/lib/index.js';
 import { TokenProvider } from '@/src/lib/index.js';
 import type { Collection, DataAPIErrorDescriptor, SomeDoc, SomeRow, Table } from '@/src/documents/index.js';
 import {
@@ -165,7 +165,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     return clone;
   }
 
-  public forDbAdmin(emitter: MicroEmitter<AdminCommandEventMap>, opts: ParsedAdminOptions): DataAPIHttpClient<'admin'> {
+  public forDbAdmin(emitter: ClientEmitter<AdminCommandEventMap>, opts: ParsedAdminOptions): DataAPIHttpClient<'admin'> {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       tokenProvider: TokenProvider.opts.concat([opts.adminToken, this.#props.tokenProvider]),

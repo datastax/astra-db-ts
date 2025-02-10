@@ -14,7 +14,7 @@
 
 import { DEFAULT_KEYSPACE, type RawDataAPIResponse } from '@/src/lib/index.js';
 // import { DataAPIClientEvent } from '@/src/lib/logging/events'; needs to be like this or it errors
-import { BaseDataAPIClientEvent } from '@/src/lib/logging/events.js';
+import { BaseClientEvent } from '@/src/lib/logging/base-event.js';
 import type { DataAPIRequestInfo } from '@/src/lib/api/clients/data-api-http-client.js';
 import type { DataAPIErrorDescriptor } from '@/src/documents/errors.js';
 import type { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts.js';
@@ -33,19 +33,19 @@ export type CommandEventMap = {
   /**
    * Emitted when a command is started, before the initial HTTP request is made.
    */
-  commandStarted: (event: CommandStartedEvent) => void,
+  commandStarted: CommandStartedEvent,
   /**
    * Emitted when a command has succeeded.
    */
-  commandSucceeded: (event: CommandSucceededEvent) => void,
+  commandSucceeded: CommandSucceededEvent,
   /**
    * Emitted when a command has errored.
    */
-  commandFailed: (event: CommandFailedEvent) => void,
+  commandFailed: CommandFailedEvent,
   /**
    * Emitted when a command has warnings.
    */
-  commandWarnings: (event: CommandWarningsEvent) => void,
+  commandWarnings: CommandWarningsEvent,
 }
 
 /**
@@ -56,7 +56,7 @@ export type CommandEventMap = {
  *
  * @public
  */
-export abstract class CommandEvent extends BaseDataAPIClientEvent {
+export abstract class CommandEvent extends BaseClientEvent {
   /**
    * The command object. Equal to the response body of the HTTP request.
    *
@@ -145,9 +145,9 @@ export class CommandStartedEvent extends CommandEvent {
   /**
    * Formats the warnings into a human-readable string.
    */
-  public formatted(): string {
+  public format(): string {
     // return `${super.formatted()}: ${this.commandName} in ${this.keyspace}${this.source ? `.${this.source}` : ''}`;
-    return `${super.formatted()}: ${this._desc()}`;
+    return `${super.format()}: ${this._desc()}`;
   }
 }
 
@@ -186,8 +186,8 @@ export class CommandSucceededEvent extends CommandEvent {
   /**
    * Formats the warnings into a human-readable string.
    */
-  public formatted(): string {
-    return `${super.formatted()}: ${this._desc()} (took ${~~this.duration}ms)`;
+  public format(): string {
+    return `${super.format()}: ${this._desc()} (took ${~~this.duration}ms)`;
   }
 }
 
@@ -228,8 +228,8 @@ export class CommandFailedEvent extends CommandEvent {
   /**
    * Formats the warnings into a human-readable string.
    */
-  public formatted(): string {
-    return `${super.formatted()}: ${this._desc()} (took ${~~this.duration}ms) - '${this.error.message}'`;
+  public format(): string {
+    return `${super.format()}: ${this._desc()} (took ${~~this.duration}ms) - '${this.error.message}'`;
   }
 }
 
@@ -259,7 +259,7 @@ export class CommandWarningsEvent extends CommandEvent {
   /**
    * Formats the warnings into a human-readable string.
    */
-  public formatted(): string {
-    return `${super.formatted()}: ${this._desc()} '${this.warnings.map(w => w.message).join(', ')}'`;
+  public format(): string {
+    return `${super.format()}: ${this._desc()} '${this.warnings.map(w => w.message).join(', ')}'`;
   }
 }

@@ -19,21 +19,21 @@ import type { OneOrMany } from '@/src/lib/types.js';
 /**
  * #### Overview
  *
- * The `EventMap` of events the {@link DataAPIClient} emits, which is an instance of {@link MicroEmitter}, when
+ * The `EventMap` of events the {@link DataAPIClient} emits, which is an instance of {@link ClientEmitter}, when
  * events logging is enabled (via `logging` options throughout the major class hierarchy).
  *
- * See {@link DataAPILoggingConfig} for more information on how to configure logging, and enable/disable specific events.
+ * See {@link LoggingConfig} for more information on how to configure logging, and enable/disable specific events.
  *
  * ###### When to prefer events
  *
  * Events can be thought of as a "generic logging interface" for Data API & DevOps operations.
  *
- * Though the {@link DataAPILoggingConfig}, you can also enable logging to the console, but:
+ * Though the {@link LoggingConfig}, you can also enable logging to the console, but:
  * - You're forced to use stdout/stderr as outputs
  * - You can't programmatically interact with the logs/data
  * - You can't easily filter or format the logs
  *
- * {@link BaseDataAPIClientEvent}s are a more flexible way to interact with the logs, allowing you to basically plug in, or
+ * {@link BaseClientEvent}s are a more flexible way to interact with the logs, allowing you to basically plug in, or
  * even build, your own logging system around them.
  *
  * And of course, you're free to use both events and console logging in tandem, if you so choose.
@@ -99,7 +99,7 @@ import type { OneOrMany } from '@/src/lib/types.js';
  * await db.createCollection('my_collection');
  * ```
  *
- * @see DataAPILoggingConfig
+ * @see LoggingConfig
  * @see CommandEventMap
  * @see AdminCommandEventMap
  *
@@ -180,22 +180,22 @@ export type DataAPIClientEventMap =
  * ```
  *
  * @see DataAPIClientEventMap
- * @see DataAPILoggingEvent
- * @see DataAPILoggingOutput
+ * @see LoggingEvent
+ * @see LoggingOutput
  *
  * @public
  */
-export type DataAPILoggingConfig = DataAPILoggingEvent | readonly (DataAPILoggingEvent | DataAPIExplicitLoggingConfig)[]
+export type LoggingConfig = LoggingEvent | readonly (LoggingEvent | ExplicitLoggingConfig)[]
 
 /**
  * Represents the different events that can be emitted/logged by the {@link DataAPIClient}, as well as the convenient
  * shorthand 'all' to configure all events at once.
  *
- * See {@link DataAPIClientEventMap} & {@link DataAPILoggingConfig} for much more info.
+ * See {@link DataAPIClientEventMap} & {@link LoggingConfig} for much more info.
  *
  * @public
  */
-export type DataAPILoggingEvent = 'all' | keyof DataAPIClientEventMap | RegExp;
+export type LoggingEvent = 'all' | keyof DataAPIClientEventMap | RegExp;
 
 /**
  * Represents the different outputs that can be emitted/logged to by the {@link DataAPIClient}.
@@ -203,22 +203,22 @@ export type DataAPILoggingEvent = 'all' | keyof DataAPIClientEventMap | RegExp;
  * This can be set to either 'event', 'stdout', or 'stderr'. However, attempting to set both 'stdout' and 'stderr'
  * as an output for a single event will result in an error.
  *
- * See {@link DataAPIClientEventMap} & {@link DataAPILoggingConfig} for much more info.
+ * See {@link DataAPIClientEventMap} & {@link LoggingConfig} for much more info.
  *
  * @public
  */
-export type DataAPILoggingOutput = 'event' | 'stdout' | 'stderr' | 'stdout:verbose' | 'stderr:verbose';
+export type LoggingOutput = 'event' | 'stdout' | 'stderr' | 'stdout:verbose' | 'stderr:verbose';
 
 /**
  * The most explicit way to configure logging, with the ability to set both events and specific outputs.
  *
  * Settings the `emits` field to `[]` will disable logging for the specified events.
  *
- * See {@link DataAPIClientEventMap} & {@link DataAPILoggingConfig} for much more info.
+ * See {@link DataAPIClientEventMap} & {@link LoggingConfig} for much more info.
  *
  * @public
  */
-export interface DataAPIExplicitLoggingConfig {
-  readonly events: DataAPILoggingEvent | (Exclude<DataAPILoggingEvent, 'all'>)[],
-  readonly emits: OneOrMany<DataAPILoggingOutput>,
+export interface ExplicitLoggingConfig {
+  readonly events: LoggingEvent | (Exclude<LoggingEvent, 'all'>)[],
+  readonly emits: OneOrMany<LoggingOutput>,
 }

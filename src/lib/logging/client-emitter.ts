@@ -12,6 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import type { BaseClientEvent} from '@/src/lib/index.js';
+import { PropagationState } from '@/src/lib/index.js';
+
 /**
  * ##### Overview
  *
@@ -25,68 +28,68 @@
  * ```ts
  * const client = new DataAPIClient({ logging: 'all' });
  *
- * client.on('commandFailed', (evt) => {
- *   console.error('Command failed:', evt.commandName, evt.error);
+ * client.on('commandFailed', (event) => {
+ *   console.error('Command failed:', event.commandName, event.error);
  * });
  * ```
  *
  * @public
  */
-export class MicroEmitter<Events extends Record<string, (...args: any[]) => void>> {
+export class ClientEmitter<Events extends Record<string, BaseClientEvent>> {
   /**
    * @internal
    */
-  readonly #listeners: Partial<Record<keyof Events, ((...args: any[]) => void)[]>> = {};
+  readonly #listeners: Partial<Record<keyof Events, ((event: any) => void)[]>> = {};
 
   /**
    * @internal
    */
-  readonly #parent: Pick<MicroEmitter<Events>, 'emit'> | null;
+  readonly #parent: Pick<ClientEmitter<Events>, 'emit'> | null;
 
   /**
    * Should not be instantiated be the user directly.
    *
    * @internal
    */
-  protected constructor(parent: Pick<MicroEmitter<Events>, 'emit'> | null) {
+  protected constructor(parent: Pick<ClientEmitter<Events>, 'emit'> | null) {
     this.#parent = parent;
   }
 
   /**
    * Subscribe to an event.
    *
-   * @param event - The event to listen for.
+   * @param eventName - The event to listen for.
    * @param listener - The callback to invoke when the event is emitted.
    *
    * @returns A function to unsubscribe the listener.
    */
-  public on<E extends keyof Events>(event: E, listener: Events[E]): () => void {
-    if (!this.#listeners[event]) {
-      this.#listeners[event] = [];
+  public on<E extends keyof Events>(eventName: E, listener: (e: Events[E]) => void): () => void {
+    if (!this.#listeners[eventName]) {
+      this.#listeners[eventName] = [];
     }
 
-    this.#listeners[event].push(listener);
+    this.#listeners[eventName].push(listener);
 
     return () => {
-      this.off(event, listener);
+      this.off(eventName, listener);
     };
   }
 
   /**
    * Unsubscribe from an event.
    *
-   * @param event - The event to unsubscribe from.
+   * @param eventName - The event to unsubscribe from.
    * @param listener - The listener to remove.
    */
-  public off<E extends keyof Events>(event: E, listener: Events[E]): void {
-    if (!this.#listeners[event]) {
+  public off<E extends keyof Events>(eventName: E, listener: (e: Events[E]) => void): void {
+    if (!this.#listeners[eventName]) {
       return;
     }
 
-    const index = this.#listeners[event].indexOf(listener);
+    const index = this.#listeners[eventName].indexOf(listener);
 
     if (index !== -1) {
-      this.#listeners[event].splice(index, 1);
+      this.#listeners[eventName].splice(index, 1);
     }
   }
 
@@ -97,17 +100,17 @@ export class MicroEmitter<Events extends Record<string, (...args: any[]) => void
    *
    * Note that the listener will be unsubscribed BEFORE the actual listener callback is invoked.
    *
-   * @param event - The event to listen for.
+   * @param eventName - The event to listen for.
    * @param listener - The callback to invoke when the event is emitted.
    *
    * @returns A function to prematurely unsubscribe the listener.
    */
-  public once<E extends keyof Events>(event: E, listener: Events[E]): () => void {
-    const onceListener = (...args: any[]) => {
-      this.off(event, onceListener as Events[E]);
-      listener(...args);
+  public once<E extends keyof Events>(eventName: E, listener: (e: Events[E]) => void): () => void {
+    const onceListener = (event: Events[E]) => {
+      this.off(eventName, onceListener);
+      listener(event);
     };
-    return this.on(event, onceListener as Events[E]);
+    return this.on(eventName, onceListener);
   }
 
   /**
@@ -115,20 +118,24 @@ export class MicroEmitter<Events extends Record<string, (...args: any[]) => void
    *
    * Should probably never be used by the user directly.
    *
-   * @param event - The event to emit.
-   * @param args - Any arguments to pass to the listeners.
+   * @param eventName - The event to emit.
+   * @param event - Any arguments to pass to the listeners.
    *
    * @returns `true` if the event had listeners, `false` otherwise.
    */
-  public emit<E extends keyof Events>(event: E, ...args: Parameters<Events[E]>): void {
-    if (this.#listeners[event]) {
-      for (const listener of this.#listeners[event]) {
-        listener(...args);
+  public emit<E extends keyof Events>(eventName: E, event: Events[E]): void {
+    if (this.#listeners[eventName]) {
+      for (const listener of this.#listeners[eventName]) {
+        listener(event);
+
+        if (event._propagationState === PropagationState.StopImmediate) {
+          return;
+        }
       }
     }
 
-    if (this.#parent) {
-      this.#parent.emit(event, ...args);
+    if (this.#parent && event._propagationState !== PropagationState.Stop) {
+      this.#parent.emit(eventName, event);
     }
   }
 }

@@ -47,7 +47,7 @@ import type { ParsedDbOptions } from '@/src/client/opts-handlers/db-opts-handler
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler.js';
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 import { EnvironmentCfgHandler } from '@/src/client/opts-handlers/environment-cfg-handler.js';
-import { MicroEmitter, TokenProvider } from '@/src/lib/index.js';
+import { ClientEmitter, TokenProvider } from '@/src/lib/index.js';
 
 /**
  * #### Overview
@@ -119,7 +119,7 @@ import { MicroEmitter, TokenProvider } from '@/src/lib/index.js';
  *
  * @public
  */
-export class Db extends MicroEmitter<CommandEventMap> {
+export class Db extends ClientEmitter<CommandEventMap> {
   readonly #defaultOpts: ParsedRootClientOpts;
   readonly #httpClient: DataAPIHttpClient;
 

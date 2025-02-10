@@ -14,7 +14,7 @@
 
 import type { MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
 import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler.js';
-import type { DataAPILoggingConfig, DataAPILoggingEvent, DataAPILoggingOutput, OneOrMany } from '@/src/lib/index.js';
+import type { LoggingConfig, LoggingEvent, LoggingOutput, OneOrMany } from '@/src/lib/index.js';
 import { array, either, exact, instanceOf, nonEmptyArray, nullish, oneOf } from 'decoders';
 import {
   LoggingDefaultOutputs,
@@ -30,7 +30,7 @@ import { oneOrMany, toArray } from '@/src/lib/utils.js';
  */
 interface Types extends OptionsHandlerTypes {
   Parsed: ParsedLoggingConfig,
-  Parseable: DataAPILoggingConfig | undefined | null,
+  Parseable: LoggingConfig | undefined | null,
 }
 
 /**
@@ -38,25 +38,25 @@ interface Types extends OptionsHandlerTypes {
  */
 const monoid = monoids.object({
   layers: monoids.array<{
-    events: readonly Exclude<DataAPILoggingEvent, 'all' | RegExp>[],
-    emits: readonly DataAPILoggingOutput[],
+    events: readonly Exclude<LoggingEvent, 'all' | RegExp>[],
+    emits: readonly LoggingOutput[],
   }>(),
 });
 
 /**
  * @internal
  */
-export type ParsedLoggingConfig = MonoidType<typeof monoid> & Parsed<'DataAPILoggingConfig'>;
+export type ParsedLoggingConfig = MonoidType<typeof monoid> & Parsed<'LoggingConfig'>;
 
 /**
  * @internal
  */
-const oneOfLoggingEvents = either(oneOf(LoggingEvents), instanceOf(RegExp)).describe('one of DataAPILoggingEvent (including "all"), or matching regex');
+const oneOfLoggingEvents = either(oneOf(LoggingEvents), instanceOf(RegExp)).describe('one of LoggingEvent (including "all"), or a regex which matches such');
 
 /**
  * @internal
  */
-const oneOfLoggingEventsWithoutAll = either(oneOf(LoggingEventsWithoutAll), instanceOf(RegExp)).describe('one of DataAPILoggingEvent (excluding "all"), or matching regex');
+const oneOfLoggingEventsWithoutAll = either(oneOf(LoggingEventsWithoutAll), instanceOf(RegExp)).describe('one of LoggingEvent (excluding "all"), or a regex which matches such');
 
 /**
  * @internal
@@ -123,7 +123,7 @@ function regex2events(regex: RegExp): typeof LoggingEventsWithoutAll {
   return LoggingEventsWithoutAll.filter((e) => regex.test(e));
 }
 
-function buildEvents(events: OneOrMany<DataAPILoggingEvent>): readonly Exclude<DataAPILoggingEvent, 'all' | RegExp>[] {
+function buildEvents(events: OneOrMany<LoggingEvent>): readonly Exclude<LoggingEvent, 'all' | RegExp>[] {
   return toArray(events).flatMap((e) => {
     if (e === 'all') {
       return LoggingEventsWithoutAll;

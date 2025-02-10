@@ -15,7 +15,7 @@
 import assert from 'assert';
 import { describe, it } from '@/tests/testlib/index.js';
 import { Logger } from '@/src/lib/logging/logger.js';
-import type { DataAPILoggingConfig } from '@/src/lib/index.js';
+import type { LoggingConfig } from '@/src/lib/index.js';
 import {
   LoggingDefaultOutputs,
   LoggingDefaults,
@@ -27,7 +27,7 @@ import { ensureMonoidalHandlerIsActuallyAMonoid } from '@/tests/testlib/opts-han
 
 describe('unit.lib.logging.cfg-handler', () => {
   describe('parse', () => {
-    const parseEq = (cfg: DataAPILoggingConfig | undefined, layers: unknown) => {
+    const parseEq = (cfg: LoggingConfig | undefined, layers: unknown) => {
       assert.deepStrictEqual(Logger.cfg.parse(cfg), { layers });
     };
 

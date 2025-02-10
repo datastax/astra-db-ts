@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import type { DataAPIClientEventMap, DataAPILoggingOutput } from '@/src/lib/logging/types.js';
+import type { DataAPIClientEventMap, LoggingOutput } from '@/src/lib/logging/types.js';
 import type {
   CommandFailedEvent,
   CommandStartedEvent,
@@ -29,7 +29,7 @@ import type {
 } from '@/src/administration/index.js';
 import { EmptyInternalLoggingConfig, EventConstructors, PrintLoggingOutputs } from '@/src/lib/logging/constants.js';
 import { buildOutputsMap } from '@/src/lib/logging/util.js';
-import type { BaseDataAPIClientEvent, MicroEmitter } from '@/src/lib/index.js';
+import type { BaseClientEvent, ClientEmitter } from '@/src/lib/index.js';
 import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler.js';
 import { LoggingCfgHandler } from '@/src/lib/logging/cfg-handler.js';
 
@@ -44,7 +44,7 @@ interface ConsoleLike {
 /**
  * @internal
  */
-export type InternalLoggingOutputsMap = Readonly<Record<keyof DataAPIClientEventMap, Readonly<Record<DataAPILoggingOutput, boolean>> | undefined>>
+export type InternalLoggingOutputsMap = Readonly<Record<keyof DataAPIClientEventMap, Readonly<Record<LoggingOutput, boolean>> | undefined>>
 
 /**
  * @internal
@@ -62,27 +62,27 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
 
   public static cfg: typeof LoggingCfgHandler = LoggingCfgHandler;
 
-  constructor(_config: ParsedLoggingConfig, private emitter: MicroEmitter<DataAPIClientEventMap>, private console: ConsoleLike) {
+  constructor(_config: ParsedLoggingConfig, private emitter: ClientEmitter<DataAPIClientEventMap>, private console: ConsoleLike) {
     const config = Logger.buildInternalConfig(_config);
 
     for (const [_event, outputs] of Object.entries(config)) if (outputs) {
       const event = _event as keyof DataAPIClientEventMap;
 
       this[event] = (...args: any[]) => {
-        const eventClass = new (<any>EventConstructors[event])(...args) as BaseDataAPIClientEvent;
+        const eventClass = new (<any>EventConstructors[event])(...args) as BaseClientEvent;
 
         if (outputs.event) {
           this.emitter.emit(event, <any>eventClass);
         }
 
         if (outputs.stdout) {
-          this.console.log(eventClass.formatted());
+          this.console.log(eventClass.format());
         } else if (outputs.stderr) {
-          this.console.error(eventClass.formatted());
+          this.console.error(eventClass.format());
         } else if (outputs['stdout:verbose']) {
-          this.console.log(JSON.stringify(eventClass, null, 2));
+          this.console.log(eventClass.formatVerbose());
         } else if (outputs['stderr:verbose']) {
-          this.console.error(JSON.stringify(eventClass, null, 2));
+          this.console.error(eventClass.formatVerbose());
         }
       };
     }

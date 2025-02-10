@@ -14,17 +14,31 @@
 // noinspection DuplicatedCode
 
 /**
+ * @internal
+ */
+export const enum PropagationState {
+  Continue = 0,
+  Stop = 1,
+  StopImmediate = 2
+}
+
+/**
  * The base class of all events that may be emitted/logged by the {@link DataAPIClient}.
  *
- * See {@link DataAPIClientEventMap} & {@link DataAPILoggingConfig} for much more info.
+ * See {@link DataAPIClientEventMap} & {@link LoggingConfig} for much more info.
  *
  * @public
  */
-export abstract class BaseDataAPIClientEvent {
+export abstract class BaseClientEvent {
   /**
    * The name of the event.
    */
   public readonly name: string;
+
+  /**
+   * @internal
+   */
+  public _propagationState = PropagationState.Continue;
 
   /**
    * Should not be instantiated directly.
@@ -38,17 +52,36 @@ export abstract class BaseDataAPIClientEvent {
   /**
    * Returns the event in a formatted string, as it would be logged to stdout/stderr (if enabled).
    */
-  public formatted(): string {
-    return `${BaseDataAPIClientEvent.formattedPrefix()}[${this.name}]`;
+  public format(): string {
+    return `${this.formatPrefix()}[${this.name}]`;
+  }
+
+  /**
+   * Returns the event in a verbose string format, including all properties, as it would be logged to stdout/stderr (if enabled).
+   */
+  public formatVerbose(): string {
+    return JSON.stringify(this, null, 2);
   }
 
   /**
    * Formats the current date in a way that is suitable for logging.
-   *
-   * @internal
    */
-  public static formattedPrefix(): string {
+  private formatPrefix(): string {
     const date = new Date();
     return `${date.getUTCFullYear()}-${(date.getUTCMonth() + 1).toString().padStart(2, '0')}-${date.getUTCDate().toString().padStart(2, '0')} ${date.getUTCHours().toString().padStart(2, '0')}:${date.getUTCMinutes().toString().padStart(2, '0')}:${date.getUTCSeconds().toString().padStart(2, '0')}Z `;
+  }
+
+  /**
+   * Stops the event from bubbling up to the parent listener (e.g. `Collection` → `Db` → `DataAPIClient`).
+   */
+  public stopPropagation(): void {
+    this._propagationState = PropagationState.Stop;
+  }
+
+  /**
+   * Stops the event from bubbling up to the parent listener (e.g. `Collection` → `Db` → `DataAPIClient`) and prevents any further listeners from being called.
+   */
+  public stopImmediatePropagation(): void {
+    this._propagationState = PropagationState.StopImmediate;
   }
 }

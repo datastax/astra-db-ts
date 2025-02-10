@@ -13,12 +13,12 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import type { DataAPILoggingOutput } from '@/src/lib/logging/types.js';
+import type { LoggingOutput } from '@/src/lib/logging/types.js';
 
 /**
  * @internal
  */
-export const buildOutputsMap = (emits: readonly DataAPILoggingOutput[]) => (emits.length === 0)
+export const buildOutputsMap = (emits: readonly LoggingOutput[]) => (emits.length === 0)
   ? undefined
   : ({
     event: emits.includes('event'),

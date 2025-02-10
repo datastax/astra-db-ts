@@ -15,8 +15,8 @@
 
 import type {
   DataAPIClientEventMap,
-  DataAPILoggingEvent,
-  DataAPILoggingOutput,
+  LoggingEvent,
+  LoggingOutput,
 } from '@/src/lib/index.js';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents/index.js';
 import {
@@ -35,25 +35,25 @@ import { EqualityProof } from '@/src/lib/utils.js';
  * @internal
  */
 export const LoggingEvents = <const>['all', 'adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded', 'adminCommandFailed', 'adminCommandWarnings', 'commandStarted', 'commandFailed', 'commandSucceeded', 'commandWarnings'];
-void EqualityProof<typeof LoggingEvents[number], Exclude<DataAPILoggingEvent, RegExp>, true>;
+void EqualityProof<typeof LoggingEvents[number], Exclude<LoggingEvent, RegExp>, true>;
 
 /**
  * @internal
  */
 export const LoggingEventsWithoutAll = LoggingEvents.filter((e) => e !== 'all');
-void EqualityProof<typeof LoggingEventsWithoutAll[number], Exclude<DataAPILoggingEvent, 'all' | RegExp>, true>;
+void EqualityProof<typeof LoggingEventsWithoutAll[number], Exclude<LoggingEvent, 'all' | RegExp>, true>;
 
 /**
  * @internal
  */
 export const LoggingOutputs = <const>['event', 'stdout', 'stderr', 'stdout:verbose', 'stderr:verbose'];
-void EqualityProof<typeof LoggingOutputs[number], DataAPILoggingOutput, true>;
+void EqualityProof<typeof LoggingOutputs[number], LoggingOutput, true>;
 
 /**
  * @internal
  */
 export const PrintLoggingOutputs = LoggingOutputs.filter((o) => o !== 'event');
-void EqualityProof<typeof PrintLoggingOutputs[number], Exclude<DataAPILoggingOutput, 'event'>, true>;
+void EqualityProof<typeof PrintLoggingOutputs[number], Exclude<LoggingOutput, 'event'>, true>;
 
 /**
  * @internal

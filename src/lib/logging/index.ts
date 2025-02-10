@@ -14,4 +14,5 @@
 // noinspection DuplicatedCode
 
 export type * from './types.js';
-export * from './events.js';
+export * from './base-event.js';
+export * from './client-emitter.js';

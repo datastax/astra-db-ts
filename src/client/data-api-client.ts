@@ -22,7 +22,7 @@ import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler.
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler.js';
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 import { RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler.js';
-import { MicroEmitter } from '@/src/lib/micro-emitter.js';
+import { ClientEmitter } from '@/src/lib/logging/client-emitter.js';
 
 /**
  * ##### Overview
@@ -67,7 +67,7 @@ import { MicroEmitter } from '@/src/lib/micro-emitter.js';
  *
  * @see DataAPIEnvironment
  */
-export class DataAPIClient extends MicroEmitter<DataAPIClientEventMap> {
+export class DataAPIClient extends ClientEmitter<DataAPIClientEventMap> {
   readonly #options: ParsedRootClientOpts;
 
   /**

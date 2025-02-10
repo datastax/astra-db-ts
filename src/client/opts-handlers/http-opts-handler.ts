@@ -28,7 +28,7 @@ import {
 import { function_ } from '@/src/lib/utils.js';
 import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
 import { OptionsHandler } from '@/src/lib/opts-handler.js';
-import type { DataAPIHttpOptions } from '@/src/client/index.js';
+import type { HttpOptions } from '@/src/client/index.js';
 import type { FetchCtx } from '@/src/lib/api/fetch/types.js';
 import { FetchH2, type FetchH2Like, FetchNative, type SomeConstructor } from '@/src/lib/index.js';
 import type { SomeDoc } from '@/src/documents/index.js';
@@ -37,8 +37,8 @@ import type { SomeDoc } from '@/src/documents/index.js';
  * @internal
  */
 interface Types extends OptionsHandlerTypes {
-  Parsed: FetchCtx & Parsed<'DataAPIHttpOptions'>,
-  Parseable: DataAPIHttpOptions | undefined | null,
+  Parsed: FetchCtx & Parsed<'HttpOptions'>,
+  Parseable: HttpOptions | undefined | null,
 }
 
 const fetchH2 = define<FetchH2Like>((obj, ok, err) => {
