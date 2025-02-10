@@ -24,4 +24,6 @@ export const buildOutputsMap = (emits: readonly DataAPILoggingOutput[]) => (emit
     event: emits.includes('event'),
     stdout: emits.includes('stdout'),
     stderr: emits.includes('stderr'),
+    'stdout:verbose': emits.includes('stdout:verbose'),
+    'stderr:verbose': emits.includes('stderr:verbose'),
   });

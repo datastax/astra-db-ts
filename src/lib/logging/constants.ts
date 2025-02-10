@@ -35,18 +35,25 @@ import { EqualityProof } from '@/src/lib/utils.js';
  * @internal
  */
 export const LoggingEvents = <const>['all', 'adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded', 'adminCommandFailed', 'adminCommandWarnings', 'commandStarted', 'commandFailed', 'commandSucceeded', 'commandWarnings'];
-
-/**
- * @internal
- */
-export const LoggingEventsWithoutAll = LoggingEvents.filter((e) => e !== 'all');
 void EqualityProof<typeof LoggingEvents[number], DataAPILoggingEvent, true>;
 
 /**
  * @internal
  */
-export const LoggingOutputs = <const>['event', 'stdout', 'stderr'];
+export const LoggingEventsWithoutAll = LoggingEvents.filter((e) => e !== 'all');
+void EqualityProof<typeof LoggingEventsWithoutAll[number], Exclude<DataAPILoggingEvent, 'all'>, true>;
+
+/**
+ * @internal
+ */
+export const LoggingOutputs = <const>['event', 'stdout', 'stderr', 'stdout:verbose', 'stderr:verbose'];
 void EqualityProof<typeof LoggingOutputs[number], DataAPILoggingOutput, true>;
+
+/**
+ * @internal
+ */
+export const PrintLoggingOutputs = LoggingOutputs.filter((o) => o !== 'event');
+void EqualityProof<typeof PrintLoggingOutputs[number], Exclude<DataAPILoggingOutput, 'event'>, true>;
 
 /**
  * @internal
@@ -71,6 +78,17 @@ export const EmptyInternalLoggingConfig = Object.fromEntries(LoggingEventsWithou
 /**
  * @internal
  */
+export const LoggingDefaults: ParsedLoggingConfig['layers'] = [{
+  events: LoggingEventsWithoutAll.filter((e) => e !== 'commandStarted' && e !== 'commandSucceeded'),
+  emits: ['event', 'stderr'],
+}, {
+  events: ['commandStarted', 'commandSucceeded'],
+  emits: ['event'],
+}];
+
+/**
+ * @internal
+ */
 export const LoggingDefaultOutputs = <const>{
   adminCommandStarted:   ['event', 'stdout'],
   adminCommandPolling:   ['event', 'stdout'],
@@ -82,14 +100,3 @@ export const LoggingDefaultOutputs = <const>{
   commandSucceeded:      ['event'          ],
   commandWarnings:       ['event', 'stderr'],
 };
-
-/**
- * @internal
- */
-export const LoggingDefaults: ParsedLoggingConfig['layers'] = [{
-  events: LoggingEventsWithoutAll.filter((e) => e !== 'commandStarted' && e !== 'commandSucceeded'),
-  emits: ['event', 'stderr'],
-}, {
-  events: ['commandStarted', 'commandSucceeded'],
-  emits: ['event'],
-}];

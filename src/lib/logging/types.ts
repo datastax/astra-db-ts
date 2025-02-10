@@ -207,7 +207,7 @@ export type DataAPILoggingEvent = 'all' | keyof DataAPIClientEventMap;
  *
  * @public
  */
-export type DataAPILoggingOutput = 'event' | 'stdout' | 'stderr';
+export type DataAPILoggingOutput = 'event' | 'stdout' | 'stderr' | 'stdout:verbose' | 'stderr:verbose';
 
 /**
  * The most explicit way to configure logging, with the ability to set both events and specific outputs.
@@ -219,6 +219,6 @@ export type DataAPILoggingOutput = 'event' | 'stdout' | 'stderr';
  * @public
  */
 export interface DataAPIExplicitLoggingConfig {
-  readonly events: OneOrMany<DataAPILoggingEvent>,
+  readonly events: DataAPILoggingEvent | (Exclude<DataAPILoggingEvent, 'all'>)[],
   readonly emits: OneOrMany<DataAPILoggingOutput>,
 }

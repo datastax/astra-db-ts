@@ -27,7 +27,7 @@ import type {
   AdminCommandSucceededEvent,
   AdminCommandWarningsEvent,
 } from '@/src/administration/index.js';
-import { EmptyInternalLoggingConfig, EventConstructors } from '@/src/lib/logging/constants.js';
+import { EmptyInternalLoggingConfig, EventConstructors, PrintLoggingOutputs } from '@/src/lib/logging/constants.js';
 import { buildOutputsMap } from '@/src/lib/logging/util.js';
 import type { BaseDataAPIClientEvent, MicroEmitter } from '@/src/lib/index.js';
 import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler.js';
@@ -79,6 +79,10 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
           this.console.log(eventClass.formatted());
         } else if (outputs.stderr) {
           this.console.error(eventClass.formatted());
+        } else if (outputs['stdout:verbose']) {
+          this.console.log(JSON.stringify(eventClass, null, 2));
+        } else if (outputs['stderr:verbose']) {
+          this.console.error(JSON.stringify(eventClass, null, 2));
         }
       };
     }
@@ -91,8 +95,10 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
       for (const event of layer.events) {
         newConfig[event] = buildOutputsMap(layer.emits);
 
-        if (newConfig[event]?.stdout && newConfig[event].stderr) {
-          throw new Error(`Nonsensical logging configuration; attempted to set both stdout and stderr outputs for '${event}'`);
+        const activeOutputs = PrintLoggingOutputs.filter(key => newConfig[event]?.[key]);
+
+        if (activeOutputs.length > 1) {
+          throw new Error(`Nonsensical logging configuration; conflicting outputs '${activeOutputs}' set for '${event}'`);
         }
       }
     }
