@@ -22,7 +22,7 @@ import { AdminOptsHandler } from '@/src/client/opts-handlers/admin-opts-handler.
 import { DbOptsHandler } from '@/src/client/opts-handlers/db-opts-handler.js';
 import type { ParsedRootClientOpts } from '@/src/client/opts-handlers/root-opts-handler.js';
 import { RootOptsHandler } from '@/src/client/opts-handlers/root-opts-handler.js';
-import { ClientEmitter } from '@/src/lib/logging/client-emitter.js';
+import { HierarchicalEmitter } from '@/src/lib/logging/hierarchical-emitter.js';
 
 /**
  * ##### Overview
@@ -67,7 +67,7 @@ import { ClientEmitter } from '@/src/lib/logging/client-emitter.js';
  *
  * @see DataAPIEnvironment
  */
-export class DataAPIClient extends ClientEmitter<DataAPIClientEventMap> {
+export class DataAPIClient extends HierarchicalEmitter<DataAPIClientEventMap> {
   readonly #options: ParsedRootClientOpts;
 
   /**

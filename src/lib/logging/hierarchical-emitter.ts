@@ -18,24 +18,49 @@ import { PropagationState } from '@/src/lib/index.js';
 /**
  * ##### Overview
  *
- * A minimal event emitter implementation that allows for subscribing to and emitting events.
+ * A lightweight event system that allows hierarchical event propagation (similar to DOM event bubbling).
  *
- * Avoids a dependency on `events` for maximum compatibility across environments & module systems.
+ * Events triggered on a child (e.g., a `Collection`) will propagate up to its parent (e.g., the parent `Db` and its parent `DataAPIClient`),
+ * unless explicitly stopped.
  *
- * Will not be used directly, but rather through the {@link DataAPIClient} to emit events from the {@link DataAPIClientEventMap} for logging/monitoring purposes.
+ * _This allows to quickly (and granular-ly) enable listen for events at any level of the hierarchy_, and stop propagation at any level if needed.
+ *
+ * ##### Event Hierarchy
+ *
+ * Events follow a structured hierarchy:
+ *
+ * - `Collection | Table` → `Db` → `Client`
+ * - `AstraAdmin | DbAdmin` → `Client`
+ *
+ * If, for instance, you have two different `Collection` objects which both point to the same collection, _only the one that triggered the event will be notified._
  *
  * @example
  * ```ts
  * const client = new DataAPIClient({ logging: 'all' });
  *
  * client.on('commandFailed', (event) => {
- *   console.error('Command failed:', event.commandName, event.error);
+ *   console.error('Some command failed:', event.commandName, event.error);
  * });
+ *
+ * const db = client.db('*ENDPOINT*', { token: '*TOKEN*' });
+ * const collection = db.collection('test_coll');
+ *
+ * collection.on('commandFailed', (event) => {
+ *   event.stopPropagation(); // Prevents bubbling up to the client
+ *   console.error('test_coll command failed:', event.commandName, event.error);
+ * });
+ *
+ * collection.insertOne({ '$invalid-key': 'value' });
  * ```
+ *
+ * @remarks
+ * Having such an implementation avoids a dependency on `events` for maximum compatibility across environments & module systems.
+ *
+ * @see DataAPIClientEventMap
  *
  * @public
  */
-export class ClientEmitter<Events extends Record<string, BaseClientEvent>> {
+export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>> {
   /**
    * @internal
    */
@@ -44,14 +69,14 @@ export class ClientEmitter<Events extends Record<string, BaseClientEvent>> {
   /**
    * @internal
    */
-  readonly #parent: Pick<ClientEmitter<Events>, 'emit'> | null;
+  readonly #parent: Pick<HierarchicalEmitter<Events>, 'emit'> | null;
 
   /**
    * Should not be instantiated be the user directly.
    *
    * @internal
    */
-  protected constructor(parent: Pick<ClientEmitter<Events>, 'emit'> | null) {
+  protected constructor(parent: Pick<HierarchicalEmitter<Events>, 'emit'> | null) {
     this.#parent = parent;
   }
 

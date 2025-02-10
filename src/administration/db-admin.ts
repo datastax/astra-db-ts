@@ -15,7 +15,7 @@
 
 import type { FindEmbeddingProvidersResult } from '@/src/administration/types/db-admin/find-embedding-providers.js';
 import type { WithTimeout } from '@/src/lib/index.js';
-import { ClientEmitter } from '@/src/lib/index.js';
+import { HierarchicalEmitter } from '@/src/lib/index.js';
 import type { Db } from '@/src/db/index.js';
 import type { AdminCommandEventMap } from '@/src/administration/events.js';
 
@@ -29,7 +29,7 @@ import type { AdminCommandEventMap } from '@/src/administration/events.js';
  *
  * @public
  */
-export abstract class DbAdmin extends ClientEmitter<AdminCommandEventMap> {
+export abstract class DbAdmin extends HierarchicalEmitter<AdminCommandEventMap> {
   /**
    * Gets the underlying `Db` object. The options for the db were set when the DbAdmin instance, or whatever spawned
    * it, was created.

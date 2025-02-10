@@ -42,7 +42,7 @@ import type {
   TableOptions,
 } from '@/src/db/index.js';
 import type { WithTimeout } from '@/src/lib/index.js';
-import { ClientEmitter } from '@/src/lib/index.js';
+import { HierarchicalEmitter } from '@/src/lib/index.js';
 import { type OpaqueHttpClient } from '@/src/lib/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import JBI from 'json-bigint';
@@ -210,7 +210,7 @@ const jbi = JBI({ storeAsString: true });
  *
  * @public
  */
-export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>> extends ClientEmitter<CommandEventMap> {
+export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>> extends HierarchicalEmitter<CommandEventMap> {
   readonly #httpClient: DataAPIHttpClient;
   readonly #commands: CommandImpls<PKey>;
   readonly #db: Db;

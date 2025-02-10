@@ -24,7 +24,7 @@ import { buildAstraDatabaseAdminInfo } from '@/src/administration/utils.js';
 import { DEFAULT_DEVOPS_API_ENDPOINTS, DEFAULT_KEYSPACE, HttpMethods } from '@/src/lib/api/constants.js';
 import { DevOpsAPIHttpClient } from '@/src/lib/api/clients/devops-api-http-client.js';
 import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
-import { ClientEmitter, TokenProvider } from '@/src/lib/index.js';
+import { HierarchicalEmitter, TokenProvider } from '@/src/lib/index.js';
 import type { AstraDbAdminInfo } from '@/src/administration/types/admin/database-info.js';
 import { buildAstraEndpoint } from '@/src/lib/utils.js';
 import type { DbOptions } from '@/src/client/index.js';
@@ -64,7 +64,7 @@ import type { AdminCommandEventMap } from '@/src/administration/events.js';
  *
  * @public
  */
-export class AstraAdmin extends ClientEmitter<AdminCommandEventMap> {
+export class AstraAdmin extends HierarchicalEmitter<AdminCommandEventMap> {
   readonly #defaultOpts: ParsedRootClientOpts;
   readonly #httpClient: DevOpsAPIHttpClient;
   readonly #environment: 'dev' | 'test' | 'prod';

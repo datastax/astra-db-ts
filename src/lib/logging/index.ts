@@ -15,4 +15,4 @@
 
 export type * from './types.js';
 export * from './base-event.js';
-export * from './client-emitter.js';
+export * from './hierarchical-emitter.js';

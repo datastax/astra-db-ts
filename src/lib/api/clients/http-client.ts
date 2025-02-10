@@ -18,14 +18,14 @@ import type { DataAPIClientEventMap } from '@/src/lib/logging/index.js';
 import { Logger } from '@/src/lib/logging/logger.js';
 import type { MkTimeoutError } from '@/src/lib/api/timeouts/timeouts.js';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
-import type { ClientEmitter } from '@/src/lib/index.js';
+import type { HierarchicalEmitter } from '@/src/lib/index.js';
 
 /**
  * @internal
  */
 export abstract class HttpClient {
   readonly baseUrl: string;
-  readonly emitter: ClientEmitter<DataAPIClientEventMap>;
+  readonly emitter: HierarchicalEmitter<DataAPIClientEventMap>;
   readonly logger: Logger;
   readonly fetchCtx: FetchCtx;
   readonly baseHeaders: Record<string, any>;
