@@ -138,4 +138,21 @@ export class ClientEmitter<Events extends Record<string, BaseClientEvent>> {
       this.#parent.emit(eventName, event);
     }
   }
+
+  /**
+   * Remove all listeners for an event.
+   *
+   * If no event is provided, all listeners for all events will be removed.
+   *
+   * @param eventName - The event to remove listeners for.
+   */
+  public removeAllListeners<E extends keyof Events>(eventName?: E): void {
+    if (eventName) {
+      delete this.#listeners[eventName];
+    } else {
+      for (const key in this.#listeners) {
+        delete this.#listeners[key];
+      }
+    }
+  }
 }

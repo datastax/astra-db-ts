@@ -141,7 +141,11 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
     ? db.admin({ environment: ENVIRONMENT })
     : db.admin({ environment: ENVIRONMENT });
 
-  return { client, db, collection, collection_, dbAdmin, table, table_ };
+  const admin = (ENVIRONMENT === 'astra')
+    ? client.admin()
+    : null!;
+
+  return { client, db, collection, collection_, dbAdmin, table, table_, admin };
 };
 
 export const initCollectionWithFailingClient = () => {
