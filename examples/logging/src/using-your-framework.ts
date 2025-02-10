@@ -1,8 +1,9 @@
 import { CommandEvent, DataAPIClient, LoggingEvents } from '@datastax/astra-db-ts';
 import winston from 'winston';
-import 'dotenv/config';
+import globals from 'globals';
 
 // -----===-----
+// INFO: This one's a bit more advanced example, demonstrating how to integrate the client with your own logging framework.
 // INFO: See ./example_winston_output for the expected outputs of this example
 // -----===-----
 
@@ -67,38 +68,37 @@ for (const event of LoggingEvents.filter((e) => /.*(Failed|Warning)/.test(e))) {
 
 // -----===<{ STEP 4: Use the client }>===-----
 
-(async () => {
-  try {
-    // Since this is a "keyspace" command, i.e. it doesn't act upon a collection/table, it will be logged as an 'info' event
-    const coll = await db.createTable('logging_example_table', {
-      definition: {
-        columns: {
-          name: 'text',
-          position: 'int',
-        },
-        primaryKey: 'name',
+try {
+  // Since this is a "keyspace" command, i.e. it doesn't act upon a collection/table, it will be logged as an 'info' event
+  const table = await db.createTable('fw_logging_example_table', {
+    definition: {
+      columns: {
+        name: 'text',
+        position: 'int',
       },
-    });
+      primaryKey: 'name',
+    },
+    ifNotExists: true,
+  });
 
-    // Just a normal, mundane, non-failing query, so both its CommandStarted and CommandSucceeded events will be logged as 'http' events
-    await coll.insertMany([
-      { name: 'Alice', position: 0 },
-      { name: 'Brian', position: 1 },
-      { name: 'Cathy', position: 2 },
-    ], { ordered: true });
+  // Just a normal, mundane, non-failing query, so both its CommandStarted and CommandSucceeded events will be logged as 'http' events
+  await table.insertMany([
+    { name: 'Alice', position: 0 },
+    { name: 'Brian', position: 1 },
+    { name: 'Cathy', position: 2 },
+  ], { ordered: true });
 
-    // Ditto.
-    await coll.findOne({
-      name: 'Alice',
-    });
+  // Ditto.
+  await table.findOne({
+    name: 'Alice',
+  });
 
-    // Now this command will log its CommandStarted event as a 'http' event, but it'll fail & throw an error,
-    // resulting in no CommandSucceeded event, and instead a CommandFailed event, which will be logged as an 'error' event
-    await coll.findOne({
-      $invalid: 'Alice',
-    }).catch(() => {});
-  } finally {
-    // Also a "keyspace" command, so it will be logged as an 'info' event
-    await db.dropTable('logging_example_table');
-  }
-})();
+  // Now this command will log its CommandStarted event as a 'http' event, but it'll fail & throw an error,
+  // resulting in no CommandSucceeded event, and instead a CommandFailed event, which will be logged as an 'error' event
+  await table.findOne({
+    $invalid: 'Alice',
+  }).catch(() => {});
+} finally {
+  // Also a "keyspace" command, so it will be logged as an 'info' event
+  await db.dropTable('fw_logging_example_table');
+}
