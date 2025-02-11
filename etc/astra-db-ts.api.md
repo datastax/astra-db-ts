@@ -706,9 +706,11 @@ export abstract class CommandEvent extends BaseClientEvent {
     // Warning: (ae-forgotten-export) The symbol "DataAPIRequestInfo" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    protected constructor(name: string, requestId: string, info: DataAPIRequestInfo);
+    protected constructor(name: string, requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined);
     readonly command: Record<string, any>;
     readonly commandName: string;
+    // @internal (undocumented)
+    protected extraLogInfo: string;
     readonly keyspace: string | null;
     // @internal (undocumented)
     protected _prefix(): string;
@@ -731,7 +733,7 @@ export type CommandEventTarget = 'database' | 'keyspace' | 'table' | 'collection
 // @public
 export class CommandFailedEvent extends CommandEvent {
     // @internal
-    constructor(requestId: string, info: DataAPIRequestInfo, error: Error, started: number);
+    constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, error: Error, started: number);
     readonly duration: number;
     readonly error: Error;
     // @internal (undocumented)
@@ -743,7 +745,7 @@ export class CommandFailedEvent extends CommandEvent {
 // @public
 export class CommandStartedEvent extends CommandEvent {
     // @internal
-    constructor(requestId: string, info: DataAPIRequestInfo);
+    constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined);
     // @internal (undocumented)
     protected _message(): string;
     // @internal
@@ -754,7 +756,7 @@ export class CommandStartedEvent extends CommandEvent {
 // @public
 export class CommandSucceededEvent extends CommandEvent {
     // @internal
-    constructor(requestId: string, info: DataAPIRequestInfo, reply: RawDataAPIResponse, started: number);
+    constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, reply: RawDataAPIResponse, started: number);
     readonly duration: number;
     // @internal (undocumented)
     protected _message(): string;
@@ -766,7 +768,7 @@ export class CommandSucceededEvent extends CommandEvent {
 // @public
 export class CommandWarningsEvent extends CommandEvent {
     // @internal
-    constructor(requestId: string, info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[]);
+    constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, warnings: DataAPIErrorDescriptor[]);
     // @internal (undocumented)
     protected _message(): string;
     // @internal
@@ -1902,8 +1904,8 @@ export type RootDbOptions = Omit<DbOptions, 'logging' | 'timeoutDefaults'>;
 // @public
 export interface RunCommandOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     collection?: string;
+    extraLogInfo?: string;
     keyspace?: string | null;
-    // (undocumented)
     table?: string;
 }
 
