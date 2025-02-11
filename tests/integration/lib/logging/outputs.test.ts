@@ -46,34 +46,50 @@ describe('integration.lib.logging.outputs', () => {
   parallel('parallelize', () => {
     it('should log to stdout', async () => {
       const { objs, stdout, stderr, events } = initTestObjsWithCapturedOutput([{ events: 'all', emits: ['stdout', 'event'] }]);
+
       await objs.db.listTables();
-      assert.deepStrictEqual(stdout.length, 2);
+      await objs.db.collection('iDontExistTTT').options().catch(() => {});
+      
+      assert.deepStrictEqual(stdout.length, 4);
       assert.deepStrictEqual(stdout, events.map((e) => e.format()));
       assert.deepStrictEqual(stderr, []);
+      assert.strictEqual(new Set(events.map((e) => e.requestId)).size, 2);
     });
 
     it('should log to stderr', async () => {
-      const { objs, stdout, stderr, events } = initTestObjsWithCapturedOutput([{ events: 'all', emits: ['stderr', 'event'] }]);
+      const { objs, stdout, stderr, events } = initTestObjsWithCapturedOutput([{ events: /.*/, emits: ['stderr', 'event'] }]);
+
       await objs.db.listTables();
-      assert.deepStrictEqual(stderr.length, 2);
+      await objs.db.collection('iDontExistTTT').options().catch(() => {});
+
+      assert.deepStrictEqual(stderr.length, 4);
       assert.deepStrictEqual(stderr, events.map((e) => e.format()));
       assert.deepStrictEqual(stdout, []);
+      assert.strictEqual(new Set(events.map((e) => e.requestId)).size, 2);
     });
 
     it('should log to stdout:verbose', async () => {
-      const { objs, stdout, stderr, events } = initTestObjsWithCapturedOutput([{ events: 'all', emits: ['stdout:verbose', 'event'] }]);
+      const { objs, stdout, stderr, events } = initTestObjsWithCapturedOutput([{ events: /.*/, emits: ['stdout:verbose', 'event'] }]);
+
       await objs.db.listTables();
-      assert.deepStrictEqual(stdout.length, 2);
+      await objs.db.collection('iDontExistTTT').options().catch(() => {});
+
+      assert.deepStrictEqual(stdout.length, 4);
       assert.deepStrictEqual(stdout, events.map((e) => e.formatVerbose()));
       assert.deepStrictEqual(stderr, []);
+      assert.strictEqual(new Set(events.map((e) => e.requestId)).size, 2);
     });
 
     it('should log to stderr:verbose', async () => {
       const { objs, stdout, stderr, events } = initTestObjsWithCapturedOutput([{ events: 'all', emits: ['stderr:verbose', 'event'] }]);
+
       await objs.db.listTables();
-      assert.deepStrictEqual(stderr.length, 2);
+      await objs.db.collection('iDontExistTTT').options().catch(() => {});
+
+      assert.deepStrictEqual(stderr.length, 4);
       assert.deepStrictEqual(stderr, events.map((e) => e.formatVerbose()));
       assert.deepStrictEqual(stdout, []);
+      assert.strictEqual(new Set(events.map((e) => e.requestId)).size, 2);
     });
   });
 
@@ -84,21 +100,27 @@ describe('integration.lib.logging.outputs', () => {
     after(() => BaseClientEvent.setDefaultFormatter(defaultFormatter));
 
     it('should log to stdout with a custom formatter', async () => {
-      const { objs, stdout, stderr, events } = initTestObjsWithCapturedOutput([{ events: 'all', emits: ['stdout', 'event'] }]);
-      await objs.db.listTables();
+      const { objs, stdout, stderr, events } = initTestObjsWithCapturedOutput([{ events: /.*/, emits: ['stdout', 'event'] }]);
 
-      assert.deepStrictEqual(stdout.length, 2);
+      await objs.db.listTables();
+      await objs.db.collection('iDontExistTTT').options().catch(() => {});
+
+      assert.deepStrictEqual(stdout.length, 4);
       assert.deepStrictEqual(stdout, events.map((e) => `${JSON.stringify(e)},${e['_message']()}`));
       assert.deepStrictEqual(stderr, []);
+      assert.strictEqual(new Set(events.map((e) => e.requestId)).size, 2);
     });
 
     it('should log to stderr with a custom formatter', async () => {
       const { objs, stdout, stderr, events } = initTestObjsWithCapturedOutput([{ events: 'all', emits: ['stderr', 'event'] }]);
-      await objs.db.listTables();
 
-      assert.deepStrictEqual(stderr.length, 2);
+      await objs.db.listTables();
+      await objs.db.collection('iDontExistTTT').options().catch(() => {});
+
+      assert.deepStrictEqual(stderr.length, 4);
       assert.deepStrictEqual(stderr, events.map((e) => `${JSON.stringify(e)},${e['_message']()}`));
       assert.deepStrictEqual(stdout, []);
+      assert.strictEqual(new Set(events.map((e) => e.requestId)).size, 2);
     });
   });
 });

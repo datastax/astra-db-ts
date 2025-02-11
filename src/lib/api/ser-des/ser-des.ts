@@ -259,7 +259,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
       nevermind: ctxNevermind,
       replace: ctxReplace,
       keyTransformer: this._cfg.keyTransformer,
-      mutatingInPlace: true,
+      mutatingInPlace: false,
       mapAfter: null!,
       target: target,
       rootObj: obj,

@@ -68,7 +68,7 @@ export interface DataAPIRequestInfo {
  */
 type EmissionStrategy<Kind extends ClientKind> = (logger: Logger) => {
   emitCommandStarted?(requestId: string, info: DataAPIRequestInfo, opts: ExecCmdOpts<Kind>): void,
-  emitCommandFailed?(requestId: string, info: DataAPIRequestInfo, error: Error, started: number, opts: ExecCmdOpts<Kind>): void,
+  emitCommandFailed?(requestId: string, info: DataAPIRequestInfo, resp: RawDataAPIResponse | undefined, error: Error, started: number, opts: ExecCmdOpts<Kind>): void,
   emitCommandSucceeded?(requestId: string, info: DataAPIRequestInfo, resp: RawDataAPIResponse, started: number, opts: ExecCmdOpts<Kind>): void,
   emitCommandWarnings?(requestId: string, info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[], opts: ExecCmdOpts<Kind>): void,
 }
@@ -89,8 +89,8 @@ export const EmissionStrategy: EmissionStrategies = {
     emitCommandStarted(reqId, info, opts) {
       logger.commandStarted?.(reqId, info, opts.extraLogInfo);
     },
-    emitCommandFailed(reqId, info, error, started, opts) {
-      logger.commandFailed?.(reqId, info, opts.extraLogInfo, error, started);
+    emitCommandFailed(reqId, info, resp, error, started, opts) {
+      logger.commandFailed?.(reqId, info, opts.extraLogInfo, resp, error, started);
     },
     emitCommandSucceeded(reqId, info, resp, started, opts) {
       logger.commandSucceeded?.(reqId, info, opts.extraLogInfo, resp, started);
@@ -103,7 +103,7 @@ export const EmissionStrategy: EmissionStrategies = {
     emitCommandStarted(reqId, info, opts) {
       logger.adminCommandStarted?.(reqId, adaptInfo4Devops(info, opts.methodName), true, null!); // TODO
     },
-    emitCommandFailed(reqId, info, error, started, opts) {
+    emitCommandFailed(reqId, info, _, error, started, opts) {
       logger.adminCommandFailed?.(reqId, adaptInfo4Devops(info, opts.methodName), true, error, started);
     },
     emitCommandSucceeded(reqId, info, resp, started, opts) {
@@ -246,6 +246,8 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     this.emissionStrategy.emitCommandStarted?.(requestId, info, options);
     const started = performance.now();
 
+    let clonedData: RawDataAPIResponse | undefined;
+
     try {
       const serialized = (info.bigNumsPresent)
         ? this.bigNumHack?.parser.stringify(info.command)
@@ -262,12 +264,15 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
         throw new DataAPIHttpError(resp);
       }
 
-      const data: RawDataAPIResponse =
-        (resp.body)
-          ? (this.bigNumHack?.parseWithBigNumbers(resp.body))
-            ? this.bigNumHack?.parser.parse(resp.body)
-            : JSON.parse(resp.body)
-          : {};
+      const data = (resp.body)
+        ? (this.bigNumHack?.parseWithBigNumbers(resp.body))
+          ? this.bigNumHack?.parser.parse(resp.body)
+          : JSON.parse(resp.body)
+        : {};
+
+      clonedData = requestId
+        ? structuredClone(data)
+        : undefined;
 
       const warnings = data?.status?.warnings ?? [];
       if (warnings.length) {
@@ -285,10 +290,10 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
         errors: data.errors,
       };
 
-      this.emissionStrategy.emitCommandSucceeded?.(requestId, info, respData, started, options);
+      this.emissionStrategy.emitCommandSucceeded?.(requestId, info, clonedData!, started, options);
       return respData;
     } catch (e: any) {
-      this.emissionStrategy.emitCommandFailed?.(requestId, info, e, started, options);
+      this.emissionStrategy.emitCommandFailed?.(requestId, info, clonedData, e, started, options);
       throw e;
     }
   }

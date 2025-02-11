@@ -255,13 +255,19 @@ export class CommandFailedEvent extends CommandEvent {
   public readonly error: Error;
 
   /**
+   * The response object from the Data API, if available.
+   */
+  public readonly resp?: RawDataAPIResponse;
+
+  /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, error: Error, started: number) {
+  constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, reply: RawDataAPIResponse | undefined, error: Error, started: number) {
     super('CommandFailed', requestId, info, extraLogInfo);
     this.duration = performance.now() - started;
+    this.resp = reply;
     this.error = error;
   }
 
