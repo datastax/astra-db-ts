@@ -68,6 +68,7 @@ export default ts.config(
       '@typescript-eslint/no-magic-numbers': 'off',
       '@typescript-eslint/require-await': 'off',
       '@typescript-eslint/no-implied-eval': 'off',
+      '@typescript-eslint/dot-notation': 'off',
     },
   },
   {
