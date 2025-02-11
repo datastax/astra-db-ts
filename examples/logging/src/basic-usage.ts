@@ -38,19 +38,19 @@ try {
 
   // We can manually listen for the events and log them ourselves
   table.on('commandStarted', (e) => {
-    console.log(`Table ${table.name} command started: ${e.format({ timestamp: false })}`);
+    console.log(`Table ${table.name} command started: ${e.format((_, msg) => msg)}`);
   });
 
   // This will print the following to the console:
-  // - Table basic_logging_example_table command started: [CommandStarted]: (default_keyspace.basic_logging_example_table) findOne
+  // - Table basic_logging_example_table command started: (default_keyspace.basic_logging_example_table) findOne
   await table.findOne({
     name: 'Alice',
   });
 
   // This will print the following to the console:
-  // - Table basic_logging_example_table command started: [CommandStarted]: (default_keyspace.basic_logging_example_table) findOne
+  // - Table basic_logging_example_table command started: (default_keyspace.basic_logging_example_table) findOne
   // However, command will intentionally fail, and thus the error will be logged to stderr after the command is done:
-  // - 2025-02-10 17:46:43Z [CommandFailed]: (default_keyspace.basic_logging_example_table) findOne (took 247ms) - 'Invalid filter expression: filter clause path ('$invalid') contains character(s) not allowed'
+  // - 2025-02-11 13:15:20 IST [917f7497] [CommandFailed]: (default_keyspace.basic_logging_example_table) findOne (took 309ms) - 'Invalid filter expression: filter clause path ('$invalid') contains character(s) not allowed'
   await table.findOne({
     $invalid: 'Alice',
   }).catch(() => {});

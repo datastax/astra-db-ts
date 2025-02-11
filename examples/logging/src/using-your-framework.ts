@@ -1,4 +1,4 @@
-import { CommandEvent, DataAPIClient, LoggingEvents } from '@datastax/astra-db-ts';
+import { CommandEvent, DataAPIClient, EventFormatter, LoggingEvents } from '@datastax/astra-db-ts';
 import winston from 'winston';
 
 // -----===-----
@@ -43,6 +43,10 @@ const db = client.db(process.env.CLIENT_DB_URL!, { token: process.env.CLIENT_DB_
 
 // -----===<{ STEP 3: Plug in the framework }>===-----
 
+const eventFormatter: EventFormatter = (event, message) => {
+  return `[${event.requestId.slice(0, 8)}] [${event.name}]: ${message}`;
+}
+
 // We'll use regex to partition the events into two major categories: 'http/info' and 'error'
 // Then, we'll simply use the event emitting capabilities of the client to log the events via the logger
 for (const event of LoggingEvents.filter((e) => /.*(Started|Succeeded|Polling)/.test(e))) {
@@ -53,16 +57,16 @@ for (const event of LoggingEvents.filter((e) => /.*(Started|Succeeded|Polling)/.
     // The admin events, and events that are not acted upon collections/tables (e.g. create, drop, list, etc.) are logged as 'info' events.
     // This is just a simple example of applying custom logic to enhance the logging output.
     if (e instanceof CommandEvent && (e.target === 'collection' || e.target === 'table')) {
-      logger.http(`[astra-db-ts] ${e.format({ timestamp: false })}`, e)
+      logger.http(`[astra-db-ts] ${e.format(eventFormatter)}`, e)
     } else {
-      logger.info(`[astra-db-ts] ${e.format({ timestamp: false })}`, e)
+      logger.info(`[astra-db-ts] ${e.format(eventFormatter)}`, e)
     }
   });
 }
 
 // And all failed and warning events are logged as 'error' events
 for (const event of LoggingEvents.filter((e) => /.*(Failed|Warning)/.test(e))) {
-  client.on(event, (e) => logger.error(`[astra-db-ts] ${e.format({ timestamp: false })}`, e));
+  client.on(event, (e) => logger.error(`[astra-db-ts] ${e.format(eventFormatter)}`, e));
 }
 
 // -----===<{ STEP 4: Use the client }>===-----

@@ -30,7 +30,7 @@ import type { OneOrMany } from '@/src/lib/types.js';
  * Though the {@link LoggingConfig}, you can also enable logging to the console, but:
  * - You're forced to use stdout/stderr as outputs
  * - You can't programmatically interact with the log data
- * - You can't filter or format the logs
+ * - You can't filter the logs
  *
  * {@link BaseClientEvent}s are a more flexible way to interact with the logs, allowing you to basically plug in, or
  * even build, your own logging system around them.
@@ -84,9 +84,22 @@ export type DataAPIClientEventMap =
   & CommandEventMap;
 
 /**
+ * Represents the different events that can be emitted/logged by the {@link DataAPIClient}.
+ *
+ * Equivalent to `DataAPIClientEventMap[keyof DataAPIClientEventMap]`.
+ *
+ * Please see {@link DataAPIClientEventMap} instead for more information on the different types of events.
+ *
+ * @see DataAPIClientEventMap
+ *
+ * @public
+ */
+export type DataAPIClientEvent = DataAPIClientEventMap[keyof DataAPIClientEventMap];
+
+/**
  * ##### Overview
  *
- * The configuration for logging events emitted by the {@link DataAPIClient}.
+ * The configuration for logging events that may be logged or emitted by the {@link DataAPIClient} or any of its children classes.
  *
  * This can be set at any level of the major class hierarchy, and will be inherited by all child classes.
  *
@@ -135,6 +148,8 @@ export type DataAPIClientEventMap =
  * - `'stdout'` & `'stderr'` will log the event to stdout or stderr, respectively
  *   - The `'stdout:verbose'` & `'stderr:verbose'` variants will use a verbose format containing all the events properties
  *   - These are useful for debugging, but may be overwhelming for normal use
+ *
+ * You may use {@link BaseClientEvent.setDefaultFormatter} to change the format of the events as they're logged to `stdout`/`stderr`. See {@link EventFormatter} for more information.
  *
  * ##### Examples
  *
@@ -214,8 +229,8 @@ export type LoggingConfig = LoggingEvent | readonly (LoggingEvent | ExplicitLogg
 /**
  * ##### Overview
  *
- * Represents the different events that can be emitted/logged by the {@link DataAPIClient}, as well as the convenient
- * shorthand 'all' to configure all events at once.
+ * Represents the different events that can be emitted/logged by the {@link DataAPIClient},
+ * or any of its children classes, as well as the convenient shorthand `'all'` to configure all events at once.
  *
  * Additionally, you can use a regular expression to match multiple events at once.
  *
@@ -255,11 +270,13 @@ export type LoggingEvent = 'all' | keyof DataAPIClientEventMap | RegExp;
 /**
  * ##### Overview
  *
- * Represents the different outputs that can be emitted/logged to by the {@link DataAPIClient}.
+ * Represents the different outputs that can be logged/emitted by the {@link DataAPIClient}, or any of its children classes.
  *
  * This can be set to either `'event'`, `'stdout'`, `'stderr'`, `'stdout:verbose'`, or `'stderr:verbose'`.
  *
  * See {@link DataAPIClientEventMap} & {@link LoggingConfig} for much more info.
+ *
+ * See {@link BaseClientEvent.setDefaultFormatter} for information on how to change the format of the events as they're logged to `stdout`/`stderr`.
  *
  * @see LoggingConfig
  * @see LoggingEvent

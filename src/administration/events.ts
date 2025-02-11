@@ -15,7 +15,6 @@
 
 import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client.js';
 import type { DataAPIErrorDescriptor } from '@/src/documents/index.js';
-import type { EventFormatOptions } from '@/src/lib/logging/base-event.js';
 import { BaseClientEvent } from '@/src/lib/logging/base-event.js';
 import type { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts.js';
 
@@ -103,7 +102,7 @@ export abstract class AdminCommandEvent extends BaseClientEvent {
   /**
    * @internal
    */
-  protected _desc() {
+  protected _prefix() {
     return `(${this.methodName}) ${this.method} ${this.path}${this.params ? '?' : ''}${new URLSearchParams(this.params).toString()}`;
   }
 }
@@ -116,6 +115,13 @@ export abstract class AdminCommandEvent extends BaseClientEvent {
  * @public
  */
 export class AdminCommandStartedEvent extends AdminCommandEvent {
+  /**
+   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * 
+   * @internal
+   */
+  protected declare permit: this;
+
   /**
    * The timeout for the request, in milliseconds.
    */
@@ -132,10 +138,10 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
   }
 
   /**
-   * Formats the warnings into a human-readable string.
+   * @internal
    */
-  public format(options?: EventFormatOptions): string {
-    return `${super.format(options)}${this._desc()} ${this.longRunning ? '(blocking) ' : ' '}${this.reqBody ? JSON.stringify(this.reqBody) : ''}`;
+  protected override _message(): string {
+    return `${this._prefix()} ${this.longRunning ? '(blocking) ' : ' '}${this.reqBody ? JSON.stringify(this.reqBody) : ''}`;
   }
 }
 
@@ -149,6 +155,13 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
  * @public
  */
 export class AdminCommandPollingEvent extends AdminCommandEvent {
+  /**
+   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * 
+   * @internal
+   */
+  protected declare permit: this;
+
   /**
    * The elapsed time since the command was started, in milliseconds.
    */
@@ -177,10 +190,10 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
   }
 
   /**
-   * Formats the warnings into a human-readable string.
+   * @internal
    */
-  public format(options?: EventFormatOptions): string {
-    return `${super.format(options)}${this._desc()} (poll #${this.pollCount}; ${~~this.elapsed}ms elapsed)`;
+  protected override _message(): string {
+    return `${this._prefix()} (poll #${this.pollCount}; ${~~this.elapsed}ms elapsed)`;
   }
 }
 
@@ -192,6 +205,13 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
  * @public
  */
 export class AdminCommandSucceededEvent extends AdminCommandEvent {
+  /**
+   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * 
+   * @internal
+   */
+  protected declare permit: this;
+
   /**
    * The duration of the command, in milliseconds.
    */
@@ -214,10 +234,10 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
   }
 
   /**
-   * Formats the warnings into a human-readable string.
+   * @internal
    */
-  public format(options?: EventFormatOptions): string {
-    return `${super.format(options)}${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms)`;
+  protected override _message(): string {
+    return `${this._prefix()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms)`;
   }
 }
 
@@ -229,6 +249,13 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
  * @public
  */
 export class AdminCommandFailedEvent extends AdminCommandEvent {
+  /**
+   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * 
+   * @internal
+   */
+  protected declare permit: this;
+
   /**
    * The duration of the command, in milliseconds.
    */
@@ -254,10 +281,10 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
   }
 
   /**
-   * Formats the warnings into a human-readable string.
+   * @internal
    */
-  public format(options?: EventFormatOptions): string {
-    return `${super.format(options)}${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms) - '${this.error.message}'`;
+  protected override _message(): string {
+    return `${this._prefix()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms) - '${this.error.message}'`;
   }
 }
 
@@ -269,6 +296,13 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
  * @public
  */
 export class AdminCommandWarningsEvent extends AdminCommandEvent {
+  /**
+   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * 
+   * @internal
+   */
+  protected declare permit: this;
+
   /**
    * The warnings that occurred.
    */
@@ -285,9 +319,9 @@ export class AdminCommandWarningsEvent extends AdminCommandEvent {
   }
 
   /**
-   * Formats the warnings into a human-readable string.
+   * @internal
    */
-  public format(options?: EventFormatOptions): string {
-    return `${super.format(options)}${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}- '${this.warnings.map(w => w.message).join(', ')}'`;
+  protected override _message(): string {
+    return `${this._prefix()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}- '${this.warnings.map(w => w.message).join(', ')}'`;
   }
 }

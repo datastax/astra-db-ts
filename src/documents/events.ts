@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { EventFormatOptions} from '@/src/lib/index.js';
 import { type RawDataAPIResponse } from '@/src/lib/index.js';
 import { BaseClientEvent } from '@/src/lib/logging/base-event.js';
 import type { DataAPIRequestInfo } from '@/src/lib/api/clients/data-api-http-client.js';
@@ -122,7 +121,7 @@ export abstract class CommandEvent extends BaseClientEvent {
   /**
    * @internal
    */
-  protected _desc() {
+  protected _prefix() {
     return `(${this.keyspace ?? '<no_keyspace>'}${this.source ? `.${this.source}` : ''}) ${this.commandName}`;
   }
 }
@@ -139,6 +138,13 @@ export abstract class CommandEvent extends BaseClientEvent {
  */
 export class CommandStartedEvent extends CommandEvent {
   /**
+   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * 
+   * @internal
+   */
+  protected declare permit: this;
+
+  /**
    * The timeout for the command, in milliseconds.
    */
   public readonly timeout: Partial<TimeoutDescriptor>;
@@ -154,10 +160,10 @@ export class CommandStartedEvent extends CommandEvent {
   }
 
   /**
-   * Formats the warnings into a human-readable string.
+   * @internal
    */
-  public format(options?: EventFormatOptions): string {
-    return `${super.format(options)}${this._desc()}`;
+  protected override _message(): string {
+    return this._prefix();
   }
 }
 
@@ -172,6 +178,13 @@ export class CommandStartedEvent extends CommandEvent {
  * @public
  */
 export class CommandSucceededEvent extends CommandEvent {
+  /**
+   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * 
+   * @internal
+   */
+  protected declare permit: this;
+
   /**
    * The duration of the command, in milliseconds. Starts counting from the moment of the initial HTTP request.
    */
@@ -194,10 +207,10 @@ export class CommandSucceededEvent extends CommandEvent {
   }
 
   /**
-   * Formats the warnings into a human-readable string.
+   * @internal
    */
-  public format(options?: EventFormatOptions): string {
-    return `${super.format(options)}${this._desc()} (took ${~~this.duration}ms)`;
+  protected override _message(): string {
+    return `${this._prefix()} (took ${~~this.duration}ms)`;
   }
 }
 
@@ -212,6 +225,13 @@ export class CommandSucceededEvent extends CommandEvent {
  * @public
  */
 export class CommandFailedEvent extends CommandEvent {
+  /**
+   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * 
+   * @internal
+   */
+  protected declare permit: this;
+
   /**
    * The duration of the command, in milliseconds.
    */
@@ -236,10 +256,10 @@ export class CommandFailedEvent extends CommandEvent {
   }
 
   /**
-   * Formats the warnings into a human-readable string.
+   * @internal
    */
-  public format(options?: EventFormatOptions): string {
-    return `${super.format(options)}${this._desc()} (took ${~~this.duration}ms) - '${this.error.message}'`;
+  protected override _message(): string {
+    return `${this._prefix()} (took ${~~this.duration}ms) - '${this.error.message}'`;
   }
 }
 
@@ -251,6 +271,13 @@ export class CommandFailedEvent extends CommandEvent {
  * @public
  */
 export class CommandWarningsEvent extends CommandEvent {
+  /**
+   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * 
+   * @internal
+   */
+  protected declare permit: this;
+
   /**
    * The warnings that occurred.
    */
@@ -267,9 +294,9 @@ export class CommandWarningsEvent extends CommandEvent {
   }
 
   /**
-   * Formats the warnings into a human-readable string.
+   * @internal
    */
-  public format(options?: EventFormatOptions): string {
-    return `${super.format(options)}${this._desc()} '${this.warnings.map(w => w.message).join(', ')}'`;
+  protected override _message(): string {
+    return `${this._prefix()} '${this.warnings.map(w => w.message).join(', ')}'`;
   }
 }
