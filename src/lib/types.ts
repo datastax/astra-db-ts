@@ -51,3 +51,12 @@ export type EmptyObj = {};
  * @public
  */
 export type OneOrMany<T> = T | readonly T[];
+
+/**
+ * Vendored from [type-fest](https://github.com/sindresorhus/type-fest/blob/main/source/literal-union.d.ts)
+ *
+ * Utility type to represent a union of literal types or a base type without sacrificing intellisense.
+ *
+ * @public
+ */
+export type LitUnion<LiteralType, BaseType = string> = LiteralType | (BaseType & Record<never, never>);
