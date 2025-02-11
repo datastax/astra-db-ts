@@ -42,14 +42,14 @@ export abstract class AdminCommandEvent extends BaseClientEvent {
     // Warning: (ae-forgotten-export) The symbol "DevOpsAPIRequestInfo" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    protected constructor(name: string, info: DevOpsAPIRequestInfo, longRunning: boolean);
-    // @internal (undocumented)
-    protected _desc(): string;
+    protected constructor(name: string, requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean);
     readonly longRunning: boolean;
     readonly method: 'GET' | 'POST' | 'DELETE';
     readonly methodName: string;
     readonly params?: Record<string, any>;
     readonly path: string;
+    // @internal (undocumented)
+    protected _prefix(): string;
     readonly reqBody?: Record<string, any>;
 }
 
@@ -65,44 +65,59 @@ export type AdminCommandEventMap = {
 // @public
 export class AdminCommandFailedEvent extends AdminCommandEvent {
     // @internal
-    constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number);
+    constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number);
     readonly duration: number;
     readonly error: Error;
-    format(): string;
+    // @internal (undocumented)
+    protected _message(): string;
+    // @internal
+    protected permit: this;
 }
 
 // @public
 export class AdminCommandPollingEvent extends AdminCommandEvent {
     // @internal
-    constructor(info: DevOpsAPIRequestInfo, started: number, interval: number, pollCount: number);
+    constructor(requestId: string, info: DevOpsAPIRequestInfo, started: number, interval: number, pollCount: number);
     readonly elapsed: number;
-    format(): string;
     readonly interval: number;
+    // @internal (undocumented)
+    protected _message(): string;
+    // @internal
+    protected permit: this;
     readonly pollCount: number;
 }
 
 // @public
 export class AdminCommandStartedEvent extends AdminCommandEvent {
     // @internal
-    constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: Partial<TimeoutDescriptor>);
-    format(): string;
+    constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: Partial<TimeoutDescriptor>);
+    // @internal (undocumented)
+    protected _message(): string;
+    // @internal
+    protected permit: this;
     readonly timeout: Partial<TimeoutDescriptor>;
 }
 
 // @public
 export class AdminCommandSucceededEvent extends AdminCommandEvent {
     // @internal
-    constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number);
+    constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number);
     readonly duration: number;
-    format(): string;
+    // @internal (undocumented)
+    protected _message(): string;
+    // @internal
+    protected permit: this;
     readonly resBody?: Record<string, any>;
 }
 
 // @public
 export class AdminCommandWarningsEvent extends AdminCommandEvent {
     // @internal
-    constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: DataAPIErrorDescriptor[]);
-    format(): string;
+    constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: DataAPIErrorDescriptor[]);
+    // @internal (undocumented)
+    protected _message(): string;
+    // @internal
+    protected permit: this;
     readonly warnings: DataAPIErrorDescriptor[];
 }
 
@@ -259,14 +274,21 @@ export interface BaseAstraDbInfo {
 // @public
 export abstract class BaseClientEvent {
     // @internal
-    protected constructor(name: string);
-    format(): string;
+    protected constructor(name: string, requestId: string);
+    format(formatter?: EventFormatter): string;
     formatVerbose(): string;
+    // @internal (undocumented)
+    protected abstract _message(): string;
     readonly name: string;
+    // @internal
+    protected abstract permit: DataAPIClientEvent;
     // @internal (undocumented)
     _propagationState: PropagationState;
+    readonly requestId: string;
+    static setDefaultFormatter(formatter: EventFormatter): void;
     stopImmediatePropagation(): void;
     stopPropagation(): void;
+    readonly timestamp: Date;
 }
 
 // @public (undocumented)
@@ -684,13 +706,14 @@ export abstract class CommandEvent extends BaseClientEvent {
     // Warning: (ae-forgotten-export) The symbol "DataAPIRequestInfo" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    protected constructor(name: string, info: DataAPIRequestInfo);
+    protected constructor(name: string, requestId: string, info: DataAPIRequestInfo);
     readonly command: Record<string, any>;
     readonly commandName: string;
+    readonly keyspace: string | null;
     // @internal (undocumented)
-    protected _desc(): string;
-    readonly keyspace: string;
+    protected _prefix(): string;
     readonly source?: string;
+    readonly target: CommandEventTarget;
     readonly url: string;
 }
 
@@ -702,37 +725,52 @@ export type CommandEventMap = {
     commandWarnings: CommandWarningsEvent;
 };
 
+// @public (undocumented)
+export type CommandEventTarget = 'database' | 'keyspace' | 'table' | 'collection';
+
 // @public
 export class CommandFailedEvent extends CommandEvent {
     // @internal
-    constructor(info: DataAPIRequestInfo, error: Error, started: number);
+    constructor(requestId: string, info: DataAPIRequestInfo, error: Error, started: number);
     readonly duration: number;
     readonly error: Error;
-    format(): string;
+    // @internal (undocumented)
+    protected _message(): string;
+    // @internal
+    protected permit: this;
 }
 
 // @public
 export class CommandStartedEvent extends CommandEvent {
     // @internal
-    constructor(info: DataAPIRequestInfo);
-    format(): string;
+    constructor(requestId: string, info: DataAPIRequestInfo);
+    // @internal (undocumented)
+    protected _message(): string;
+    // @internal
+    protected permit: this;
     readonly timeout: Partial<TimeoutDescriptor>;
 }
 
 // @public
 export class CommandSucceededEvent extends CommandEvent {
     // @internal
-    constructor(info: DataAPIRequestInfo, reply: RawDataAPIResponse, started: number);
+    constructor(requestId: string, info: DataAPIRequestInfo, reply: RawDataAPIResponse, started: number);
     readonly duration: number;
-    format(): string;
+    // @internal (undocumented)
+    protected _message(): string;
+    // @internal
+    protected permit: this;
     readonly resp: RawDataAPIResponse;
 }
 
 // @public
 export class CommandWarningsEvent extends CommandEvent {
     // @internal
-    constructor(info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[]);
-    format(): string;
+    constructor(requestId: string, info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[]);
+    // @internal (undocumented)
+    protected _message(): string;
+    // @internal
+    protected permit: this;
     readonly warnings: DataAPIErrorDescriptor[];
 }
 
@@ -854,6 +892,9 @@ export class DataAPIClient extends HierarchicalEmitter<DataAPIClientEventMap> {
     close(): Promise<void>;
     db(endpoint: string, options?: DbOptions): Db;
 }
+
+// @public
+export type DataAPIClientEvent = DataAPIClientEventMap[keyof DataAPIClientEventMap];
 
 // @public
 export type DataAPIClientEventMap = AdminCommandEventMap & CommandEventMap;
@@ -1314,6 +1355,9 @@ export interface EmbeddingProviderTokenInfo {
 export type EmptyObj = {};
 
 // @public
+export type EventFormatter = (event: DataAPIClientEvent, message: string) => string;
+
+// @public
 export interface ExplicitLoggingConfig {
     // (undocumented)
     readonly emits: OneOrMany<LoggingOutput>;
@@ -1708,7 +1752,13 @@ export type LoggingConfig = LoggingEvent | readonly (LoggingEvent | ExplicitLogg
 export type LoggingEvent = 'all' | keyof DataAPIClientEventMap | RegExp;
 
 // @public
+export const LoggingEvents: readonly ["adminCommandStarted", "adminCommandPolling", "adminCommandSucceeded", "adminCommandFailed", "adminCommandWarnings", "commandStarted", "commandFailed", "commandSucceeded", "commandWarnings"];
+
+// @public
 export type LoggingOutput = 'event' | 'stdout' | 'stderr' | 'stdout:verbose' | 'stderr:verbose';
+
+// @public
+export const LoggingOutputs: readonly ["event", "stdout", "stderr", "stdout:verbose", "stderr:verbose"];
 
 // @public
 export type LooseCreateTableColumnDefinition = TableScalarType | (string & Record<never, never>);
