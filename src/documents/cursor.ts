@@ -542,10 +542,16 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @param consumer - The consumer to call for each record.
    *
    * @returns A promise that resolves when iteration is complete.
+   *
+   * @remarks
+   * If you get an IDE error "Promise returned from forEach argument is ignored", it is a known [WebStorm bug](https://youtrack.jetbrains.com/issue/WEB-55512/False-positive-for-Promise-returned-from-forEach-argument-is-ignored-with-custom-forEach-function).
    */
-  public async forEach(consumer: ((doc: T) => boolean) | ((doc: T) => void)): Promise<void> {
+  public async forEach(consumer: ((doc: T) => boolean | Promise<boolean>) | ((doc: T) => void | Promise<void>)): Promise<void> {
     for await (const doc of this.#iterator('(cursor.forEach())')) {
-      if (consumer(doc) === false) {
+      const resp = consumer(doc);
+      const stop = resp instanceof Promise ? await resp : resp;
+
+      if (stop === false) {
         break;
       }
     }

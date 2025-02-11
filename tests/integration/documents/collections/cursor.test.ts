@@ -279,7 +279,7 @@ describe('integration.documents.collections.cursor', { truncate: 'colls:before' 
       const cursor = collection.find({}).map(ageToString);
       const doc = await cursor.next();
       assert.ok(doc, 'Doc is null');
-      assert.ok(typeof doc.age === 'string');
+      assert.ok(typeof doc.age as unknown === 'string');
       assert.equal(cursor.state, 'started');
       assert.strictEqual(cursor.buffered(), 2);
     });
@@ -442,6 +442,22 @@ describe('integration.documents.collections.cursor', { truncate: 'colls:before' 
       const cursor = collection.find({});
       const res: any[] = [];
       await cursor.forEach(doc => {
+        res.push(doc);
+        return false;
+      });
+      assert.deepStrictEqual(res, docs.slice(0, 1));
+      assert.equal(cursor.state, 'closed');
+      assert.strictEqual(cursor.buffered(), 0);
+      assert.equal(cursor.state, 'closed');
+    });
+
+    it('should close cursor after returning promise<false>', async () => {
+      const cursor = collection.find({});
+      const res: any[] = [];
+      // "Promise returned from forEach argument is ignored" is a webstorm bug:
+      // https://youtrack.jetbrains.com/issue/WEB-55512/False-positive-for-Promise-returned-from-forEach-argument-is-ignored-with-custom-forEach-function
+      // noinspection ES6MissingAwait
+      await cursor.forEach(async (doc) => {
         res.push(doc);
         return false;
       });
