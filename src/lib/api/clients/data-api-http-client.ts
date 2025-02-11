@@ -47,6 +47,7 @@ type ExecCmdOpts<Kind extends ClientKind> = (Kind extends 'admin' ? { methodName
   bigNumsPresent?: boolean,
   collection?: string,
   table?: string,
+  extraLogInfo?: string,
 }
 
 /**
@@ -85,10 +86,18 @@ interface EmissionStrategies {
  */
 export const EmissionStrategy: EmissionStrategies = {
   Normal: (logger) => ({
-    emitCommandStarted: logger.commandStarted,
-    emitCommandFailed: logger.commandFailed,
-    emitCommandSucceeded: logger.commandSucceeded,
-    emitCommandWarnings: logger.commandWarnings,
+    emitCommandStarted(reqId, info, opts) {
+      logger.commandStarted?.(reqId, info, opts.extraLogInfo);
+    },
+    emitCommandFailed(reqId, info, error, started, opts) {
+      logger.commandFailed?.(reqId, info, opts.extraLogInfo, error, started);
+    },
+    emitCommandSucceeded(reqId, info, resp, started, opts) {
+      logger.commandSucceeded?.(reqId, info, opts.extraLogInfo, resp, started);
+    },
+    emitCommandWarnings(reqId, info, warnings, opts) {
+      logger.commandWarnings?.(reqId, info, opts.extraLogInfo, warnings);
+    },
   }),
   Admin: (logger) => ({
     emitCommandStarted(reqId, info, opts) {

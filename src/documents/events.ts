@@ -104,11 +104,16 @@ export abstract class CommandEvent extends BaseClientEvent {
   public readonly url: string;
 
   /**
+   * @internal
+   */
+  protected declare extraLogInfo: string;
+
+  /**
    * Should not be instantiated directly.
    *
    * @internal
    */
-  protected constructor(name: string, requestId: string, info: DataAPIRequestInfo) {
+  protected constructor(name: string, requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined) {
     super(name, requestId);
     this.command = info.command;
     this.keyspace = info.keyspace;
@@ -116,6 +121,11 @@ export abstract class CommandEvent extends BaseClientEvent {
     this.target = info.target;
     this.commandName = Object.keys(info.command)[0];
     this.url = info.url;
+
+    Object.defineProperty(this, 'extraLogInfo', {
+      value: extraLogInfo ? ' ' + extraLogInfo : '',
+      enumerable: false,
+    });
   }
 
   /**
@@ -154,8 +164,8 @@ export class CommandStartedEvent extends CommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, info: DataAPIRequestInfo) {
-    super('CommandStarted', requestId, info);
+  constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined) {
+    super('CommandStarted', requestId, info, extraLogInfo);
     this.timeout = info.timeoutManager.initial();
   }
 
@@ -163,7 +173,7 @@ export class CommandStartedEvent extends CommandEvent {
    * @internal
    */
   protected override _message(): string {
-    return this._prefix();
+    return `${this._prefix()}${this.extraLogInfo}`;
   }
 }
 
@@ -200,8 +210,8 @@ export class CommandSucceededEvent extends CommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, info: DataAPIRequestInfo, reply: RawDataAPIResponse, started: number) {
-    super('CommandSucceeded', requestId, info);
+  constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, reply: RawDataAPIResponse, started: number) {
+    super('CommandSucceeded', requestId, info, extraLogInfo);
     this.duration = performance.now() - started;
     this.resp = reply;
   }
@@ -210,7 +220,7 @@ export class CommandSucceededEvent extends CommandEvent {
    * @internal
    */
   protected override _message(): string {
-    return `${this._prefix()} (took ${~~this.duration}ms)`;
+    return `${this._prefix()}${this.extraLogInfo} (took ${~~this.duration}ms)`;
   }
 }
 
@@ -249,8 +259,8 @@ export class CommandFailedEvent extends CommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, info: DataAPIRequestInfo, error: Error, started: number) {
-    super('CommandFailed', requestId, info);
+  constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, error: Error, started: number) {
+    super('CommandFailed', requestId, info, extraLogInfo);
     this.duration = performance.now() - started;
     this.error = error;
   }
@@ -259,7 +269,7 @@ export class CommandFailedEvent extends CommandEvent {
    * @internal
    */
   protected override _message(): string {
-    return `${this._prefix()} (took ${~~this.duration}ms) - '${this.error.message}'`;
+    return `${this._prefix()}${this.extraLogInfo} (took ${~~this.duration}ms) - '${this.error.message}'`;
   }
 }
 
@@ -288,8 +298,8 @@ export class CommandWarningsEvent extends CommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[]) {
-    super('CommandWarnings', requestId, info);
+  constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, warnings: DataAPIErrorDescriptor[]) {
+    super('CommandWarnings', requestId, info, extraLogInfo);
     this.warnings = warnings;
   }
 
@@ -297,6 +307,6 @@ export class CommandWarningsEvent extends CommandEvent {
    * @internal
    */
   protected override _message(): string {
-    return `${this._prefix()} '${this.warnings.map(w => w.message).join(', ')}'`;
+    return `${this._prefix()}${this.extraLogInfo} '${this.warnings.map(w => w.message).join(', ')}'`;
   }
 }

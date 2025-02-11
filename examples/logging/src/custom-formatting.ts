@@ -42,8 +42,8 @@ try {
   });
 
   // Logs:
-  // - [2025-02-11T07:45:25.212Z] [4f729318] (CommandStarted) (on table) - (default_keyspace.custom_fmt_logging_example_table) insertMany
-  // - [2025-02-11T07:45:26.055Z] [4f729318] (CommandSucceeded) (on table) - (default_keyspace.custom_fmt_logging_example_table) insertMany (took 842ms)
+  // - [2025-02-11T07:45:25.212Z] [4f729318] (CommandStarted) (on table) - (default_keyspace.custom_fmt_logging_example_table) insertMany 3 records (ordered)
+  // - [2025-02-11T07:45:26.055Z] [4f729318] (CommandSucceeded) (on table) - (default_keyspace.custom_fmt_logging_example_table) insertMany 3 records (ordered) (took 842ms)
   await table.insertMany([
     { name: 'Alice', position: 0 },
     { name: 'Brian', position: 1 },
@@ -58,7 +58,7 @@ try {
   }).catch(() => {});
 } finally {
   // Logs:
-  // - [2025-02-11T07:45:26.304Z] [f60b6441] (CommandStarted) (on keyspace) - (default_keyspace) dropTable
-  // - [2025-02-11T07:45:28.037Z] [f60b6441] (CommandSucceeded) (on keyspace) - (default_keyspace) dropTable (took 1733ms)
+  // - [2025-02-11T07:45:26.304Z] [f60b6441] (CommandStarted) (on keyspace) - (default_keyspace) dropTable custom_fmt_logging_example_table
+  // - [2025-02-11T07:45:28.037Z] [f60b6441] (CommandSucceeded) (on keyspace) - (default_keyspace) dropTable custom_fmt_logging_example_table (took 1733ms)
   await db.dropTable('custom_fmt_logging_example_table');
 }

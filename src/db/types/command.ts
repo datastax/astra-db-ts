@@ -17,21 +17,37 @@ import type { WithTimeout } from '@/src/lib/index.js';
 /**
  * Options for executing some arbitrary command.
  *
- * @field collections - The collections to run the command on. If not provided, the command is run on the database.
- * @field keyspace - Overrides the keyspace to run the command in. If not provided, the default keyspace is used.
- *
  * @see Db.command
  *
  * @public
  */
 export interface RunCommandOptions extends WithTimeout<'generalMethodTimeoutMs'> {
   /**
-   * The collections to run the command on. If not provided, the command is run on the database.
+   * The collection to run the command on.
+   *
+   * If not provided, the command will run on the keyspace, or directly on the database if `keyspace` is `null`.
+   *
+   * Only one of this or {@link RunCommandOptions.table} should be provided.
    */
   collection?: string,
+  /**
+   * The collection to run the command on.
+   *
+   * If not provided, the command will run on the keyspace, or directly on the database if `keyspace` is `null`.
+   *
+   * Only one of this or {@link RunCommandOptions.table} should be provided.
+   */
   table?: string,
   /**
-   * The keyspace to use for the db operation.
+   * Overrides the keyspace to run the command on.
+   *
+   * If undefined/not provided, the command will run on the db's default working keyspace.
+   *
+   * **This may be set to `null` to run the command directly on the database.**
    */
   keyspace?: string | null,
+  /**
+   * A small string to add to the log message for this command (only if you're printing to `stdout`/`stderr` using {@link LoggingConfig}).
+   */
+  extraLogInfo?: string,
 }

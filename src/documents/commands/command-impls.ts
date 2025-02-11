@@ -35,12 +35,9 @@ import type {
   SomeDoc,
   SomeRow,
   Table,
-  UpdateFilter} from '@/src/documents/index.js';
-import {
-  CollectionDeleteManyError,
-  CollectionUpdateManyError,
-  DataAPIResponseError,
+  UpdateFilter,
 } from '@/src/documents/index.js';
+import { CollectionDeleteManyError, CollectionUpdateManyError, DataAPIResponseError } from '@/src/documents/index.js';
 import type { nullish, WithTimeout } from '@/src/lib/index.js';
 import { insertManyOrdered, insertManyUnordered } from '@/src/documents/commands/helpers/insertion.js';
 import { coalesceUpsertIntoUpdateResult, mkUpdateResult } from '@/src/documents/commands/helpers/updates.js';
@@ -208,12 +205,18 @@ export class CommandImpls<ID> {
       filter: filter[0],
     });
 
+    const isDeleteAll = Object.keys(command.filter ?? {}).length === 0;
+
     const timeoutManager = this._httpClient.tm.multipart('generalMethodTimeoutMs', options);
     let resp, numDeleted = 0;
 
     try {
       while (!resp || resp.status?.moreData) {
-        resp = await this._httpClient.executeCommand(command, { timeoutManager, bigNumsPresent: filter[1] });
+        resp = await this._httpClient.executeCommand(command, {
+          timeoutManager,
+          bigNumsPresent: filter[1],
+          extraLogInfo: isDeleteAll ? '(deleting all)' : undefined,
+        });
         numDeleted += resp.status?.deletedCount ?? 0;
       }
     } catch (e) {
@@ -364,6 +367,7 @@ export class CommandImpls<ID> {
     const resp = await this._httpClient.executeCommand(command, {
       timeoutManager: this._httpClient.tm.single('generalMethodTimeoutMs', options),
       bigNumsPresent,
+      extraLogInfo: `(upperBound: ${upperBound})`,
     });
 
     if (resp.status?.moreData) {
