@@ -8,7 +8,7 @@ import { DataAPIClient } from '@datastax/astra-db-ts';
 
 // Instantiate the client & db with all event logging enabled
 const client = new DataAPIClient({ logging: [{ events: 'all', emits: 'event' }] });
-const db = client.db(process.env.CLIENT_DB_URL!, { token: process.env.CLIENT_DB_TOKEN });
+const db = client.db(process.env.ASTRA_DB_ENDPOINT!, { token: process.env.ASTRA_DB_TOKEN });
 
 // We'll create command failure listeners at the client, db, and table levels
 // When an event is emitted from the table, it'll first invoke all the listeners on the table, then the db, and finally the client.

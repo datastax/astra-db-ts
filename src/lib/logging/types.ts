@@ -105,7 +105,7 @@ export type DataAPIClientEvent = DataAPIClientEventMap[keyof DataAPIClientEventM
  *
  * ##### Configuration inheritance
  *
- * Logging is configured through a list of hierarchical rules, determining which events to emit where. Each rule layer overrides previous rules for the same events.
+ * Logging is configured through a list of hierarchical _rules_, determining which events to emit where. Each rule layer overrides previous rules for the same events.
  *
  * Logging configuration is inherited by child classes, but may be overridden at any level (e.g. pass a base config to the `DataAPIClient` constructor, and then override it for a specific `Collection`).
  *
@@ -152,6 +152,8 @@ export type DataAPIClientEvent = DataAPIClientEventMap[keyof DataAPIClientEventM
  * You may use {@link BaseClientEvent.setDefaultFormatter} to change the format of the events as they're logged to `stdout`/`stderr`. See {@link EventFormatter} for more information.
  *
  * ##### Examples
+ *
+ * *For more advanced examples, see the `examples/logging` directory in the [astra-db-ts repository](https://github.com/datastax/astra-db-ts)*
  *
  * Hierarchical usage example:
  *
@@ -224,7 +226,7 @@ export type DataAPIClientEvent = DataAPIClientEventMap[keyof DataAPIClientEventM
  *
  * @public
  */
-export type LoggingConfig = LoggingEvent | readonly (LoggingEvent | ExplicitLoggingConfig)[]
+export type LoggingConfig = LoggingEvent | readonly (LoggingEvent | ExplicitLoggingConfig)[];
 
 /**
  * ##### Overview

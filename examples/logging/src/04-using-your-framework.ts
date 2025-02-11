@@ -39,7 +39,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 // Instantiate the client & db with all event logging enabled
 const client = new DataAPIClient({ logging: [{ events: 'all', emits: 'event' }] });
-const db = client.db(process.env.CLIENT_DB_URL!, { token: process.env.CLIENT_DB_TOKEN });
+const db = client.db(process.env.ASTRA_DB_ENDPOINT!, { token: process.env.ASTRA_DB_TOKEN });
 
 // -----===<{ STEP 3: Plug in the framework }>===-----
 

@@ -8,7 +8,7 @@ import { BaseClientEvent, CommandEvent, DataAPIClient, EventFormatter } from '@d
 
 // Instantiate the client & db with stdout/stderr logging enabled
 const client = new DataAPIClient({ logging: [{ events: 'all', emits: 'stdout' }] });
-const db = client.db(process.env.CLIENT_DB_URL!, { token: process.env.CLIENT_DB_TOKEN });
+const db = client.db(process.env.ASTRA_DB_ENDPOINT!, { token: process.env.ASTRA_DB_TOKEN });
 
 // -----===<{ STEP 2: Create & set your custom formatter }>===-----
 

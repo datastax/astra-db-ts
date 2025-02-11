@@ -8,7 +8,7 @@ import { DataAPIClient } from '@datastax/astra-db-ts';
 
 // Instantiate the client & db with logging defaults enabled
 const client = new DataAPIClient({ logging: 'all' });
-const db = client.db(process.env.CLIENT_DB_URL!, { token: process.env.CLIENT_DB_TOKEN });
+const db = client.db(process.env.ASTRA_DB_ENDPOINT!, { token: process.env.ASTRA_DB_TOKEN });
 
 // -----===<{ STEP 2: Profit }>===-----
 
