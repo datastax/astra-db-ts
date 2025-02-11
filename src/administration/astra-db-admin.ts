@@ -77,7 +77,7 @@ export class AstraDbAdmin extends DbAdmin {
    * @internal
    */
   constructor(db: Db, rootOpts: ParsedRootClientOpts, adminOpts: ParsedAdminOptions, dbToken: ParsedTokenProvider, endpoint: string) {
-    super();
+    super(rootOpts.client);
 
     this.#environment = adminOpts?.astraEnv ?? rootOpts.adminOptions.astraEnv ?? extractAstraEnvironment(endpoint);
 
@@ -85,14 +85,14 @@ export class AstraDbAdmin extends DbAdmin {
       baseUrl: DEFAULT_DEVOPS_API_ENDPOINTS[this.#environment],
       logging: Logger.cfg.concat([rootOpts.adminOptions.logging, adminOpts.logging]),
       fetchCtx: rootOpts.fetchCtx,
-      emitter: rootOpts.emitter,
+      emitter: this,
       caller: rootOpts.caller,
       tokenProvider: TokenProvider.opts.concat([dbToken, rootOpts.adminOptions.adminToken, adminOpts.adminToken]),
       additionalHeaders: { ...rootOpts.adminOptions.additionalHeaders, ...adminOpts?.additionalHeaders },
       timeoutDefaults: Timeouts.cfg.concat([rootOpts.adminOptions.timeoutDefaults, adminOpts.timeoutDefaults]),
     });
 
-    this.#dataApiHttpClient = (db._httpClient as DataAPIHttpClient).forDbAdmin(adminOpts);
+    this.#dataApiHttpClient = (db._httpClient as DataAPIHttpClient).forDbAdmin(this, adminOpts);
     this.#db = db;
 
     Object.defineProperty(this, $CustomInspect, {

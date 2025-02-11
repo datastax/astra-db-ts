@@ -14,12 +14,11 @@
 // noinspection ExceptionCaughtLocallyJS
 
 import { Logger } from '@/src/lib/logging/logger.js';
-import type { nullish, RawDataAPIResponse} from '@/src/lib/index.js';
+import type { HierarchicalEmitter, nullish, RawDataAPIResponse } from '@/src/lib/index.js';
 import { TokenProvider } from '@/src/lib/index.js';
-import type {
-  DataAPIErrorDescriptor,
-  SomeDoc} from '@/src/documents/index.js';
+import type { CommandEventTarget, DataAPIErrorDescriptor, SomeDoc, SomeRow, Table } from '@/src/documents/index.js';
 import {
+  Collection,
   DataAPIHttpError,
   DataAPIResponseError,
   DataAPITimeoutError,
@@ -29,13 +28,13 @@ import type { HeaderProvider, HTTPClientOptions, KeyspaceRef } from '@/src/lib/a
 import { HttpClient } from '@/src/lib/api/clients/http-client.js';
 import { DEFAULT_DATA_API_AUTH_HEADER, HttpMethods } from '@/src/lib/api/constants.js';
 import type { CollectionOptions, TableOptions } from '@/src/db/index.js';
-import { isNullish } from '@/src/lib/utils.js';
 import { mkRespErrorFromResponse } from '@/src/documents/errors.js';
-import type { TimeoutManager} from '@/src/lib/api/timeouts/timeouts.js';
+import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { EmptyObj } from '@/src/lib/types.js';
 import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler.js';
 import type { ParsedTokenProvider } from '@/src/lib/token-providers/token-provider.js';
+import type { AdminCommandEventMap } from '@/src/administration/index.js';
 
 type ClientKind = 'admin' | 'normal';
 
@@ -47,6 +46,8 @@ type ExecCmdOpts<Kind extends ClientKind> = (Kind extends 'admin' ? { methodName
   timeoutManager: TimeoutManager,
   bigNumsPresent?: boolean,
   collection?: string,
+  table?: string,
+  extraLogInfo?: string,
 }
 
 /**
@@ -54,21 +55,22 @@ type ExecCmdOpts<Kind extends ClientKind> = (Kind extends 'admin' ? { methodName
  */
 export interface DataAPIRequestInfo {
   url: string,
-  collection?: string,
-  keyspace?: string | null,
+  collection: string | undefined,
+  keyspace: string | null,
   command: Record<string, any>,
   timeoutManager: TimeoutManager,
   bigNumsPresent: boolean | undefined,
+  target: CommandEventTarget,
 }
 
 /**
  * @internal
  */
 type EmissionStrategy<Kind extends ClientKind> = (logger: Logger) => {
-  emitCommandStarted?(info: DataAPIRequestInfo, opts: ExecCmdOpts<Kind>): void,
-  emitCommandFailed?(info: DataAPIRequestInfo, error: Error, started: number, opts: ExecCmdOpts<Kind>): void,
-  emitCommandSucceeded?(info: DataAPIRequestInfo, resp: RawDataAPIResponse, started: number, opts: ExecCmdOpts<Kind>): void,
-  emitCommandWarnings?(info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[], opts: ExecCmdOpts<Kind>): void,
+  emitCommandStarted?(requestId: string, info: DataAPIRequestInfo, opts: ExecCmdOpts<Kind>): void,
+  emitCommandFailed?(requestId: string, info: DataAPIRequestInfo, resp: RawDataAPIResponse | undefined, error: Error, started: number, opts: ExecCmdOpts<Kind>): void,
+  emitCommandSucceeded?(requestId: string, info: DataAPIRequestInfo, resp: RawDataAPIResponse, started: number, opts: ExecCmdOpts<Kind>): void,
+  emitCommandWarnings?(requestId: string, info: DataAPIRequestInfo, warnings: DataAPIErrorDescriptor[], opts: ExecCmdOpts<Kind>): void,
 }
 
 /**
@@ -84,23 +86,31 @@ interface EmissionStrategies {
  */
 export const EmissionStrategy: EmissionStrategies = {
   Normal: (logger) => ({
-    emitCommandStarted: logger.commandStarted,
-    emitCommandFailed: logger.commandFailed,
-    emitCommandSucceeded: logger.commandSucceeded,
-    emitCommandWarnings: logger.commandWarnings,
+    emitCommandStarted(reqId, info, opts) {
+      logger.commandStarted?.(reqId, info, opts.extraLogInfo);
+    },
+    emitCommandFailed(reqId, info, resp, error, started, opts) {
+      logger.commandFailed?.(reqId, info, opts.extraLogInfo, resp, error, started);
+    },
+    emitCommandSucceeded(reqId, info, resp, started, opts) {
+      logger.commandSucceeded?.(reqId, info, opts.extraLogInfo, resp, started);
+    },
+    emitCommandWarnings(reqId, info, warnings, opts) {
+      logger.commandWarnings?.(reqId, info, opts.extraLogInfo, warnings);
+    },
   }),
   Admin: (logger) => ({
-    emitCommandStarted(info, opts) {
-      logger.adminCommandStarted?.(adaptInfo4Devops(info, opts.methodName), true, null!); // TODO
+    emitCommandStarted(reqId, info, opts) {
+      logger.adminCommandStarted?.(reqId, adaptInfo4Devops(info, opts.methodName), true, null!); // TODO
     },
-    emitCommandFailed(info, error, started, opts) {
-      logger.adminCommandFailed?.(adaptInfo4Devops(info, opts.methodName), true, error, started);
+    emitCommandFailed(reqId, info, _, error, started, opts) {
+      logger.adminCommandFailed?.(reqId, adaptInfo4Devops(info, opts.methodName), true, error, started);
     },
-    emitCommandSucceeded(info, resp, started, opts) {
-      logger.adminCommandSucceeded?.(adaptInfo4Devops(info, opts.methodName), true, resp, started);
+    emitCommandSucceeded(reqId, info, resp, started, opts) {
+      logger.adminCommandSucceeded?.(reqId, adaptInfo4Devops(info, opts.methodName), true, resp, started);
     },
-    emitCommandWarnings(info, warnings, opts) {
-      logger.adminCommandWarnings?.(adaptInfo4Devops(info, opts.methodName), true, warnings);
+    emitCommandWarnings(reqId, info, warnings, opts) {
+      logger.adminCommandWarnings?.(reqId, adaptInfo4Devops(info, opts.methodName), true, warnings);
     },
   }),
 };
@@ -136,10 +146,12 @@ export interface BigNumberHack {
  * @internal
  */
 export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpClient {
-  public collection?: string;
+  public collectionName?: string;
+  public tableName?: string;
   public keyspace: KeyspaceRef;
   public emissionStrategy: ReturnType<EmissionStrategy<Kind>>;
   public bigNumHack?: BigNumberHack;
+
   readonly #props: DataAPIHttpClientOpts<Kind>;
 
   constructor(opts: DataAPIHttpClientOpts<Kind>) {
@@ -149,23 +161,29 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     this.emissionStrategy = opts.emissionStrategy(this.logger);
   }
 
-  public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(keyspace: string, collection: string, opts: CollectionOptions | TableOptions | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
+  public forTableSlashCollectionOrWhateverWeWouldCallTheUnionOfTheseTypes(thing: Collection | Table<SomeRow>, opts: CollectionOptions | TableOptions | undefined, bigNumHack: BigNumberHack): DataAPIHttpClient {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       embeddingHeaders: EmbeddingHeadersProvider.parse(opts?.embeddingApiKey),
       logging: Logger.cfg.concatParseWithin([this.#props.logging], opts, 'logging'),
       emissionStrategy: EmissionStrategy.Normal,
-      keyspace: { ref: keyspace },
+      keyspace: { ref: thing.keyspace },
+      emitter: thing,
     });
 
-    clone.collection = collection;
+    if (thing instanceof Collection) {
+      clone.collectionName = thing.name;
+    } else {
+      clone.tableName = thing.name;
+    }
+    
     clone.bigNumHack = bigNumHack;
     clone.tm = new Timeouts(DataAPITimeoutError.mk, Timeouts.cfg.parse({ ...this.tm.baseTimeouts, ...opts?.timeoutDefaults }));
 
     return clone;
   }
 
-  public forDbAdmin(opts: ParsedAdminOptions): DataAPIHttpClient<'admin'> {
+  public forDbAdmin(emitter: HierarchicalEmitter<AdminCommandEventMap>, opts: ParsedAdminOptions): DataAPIHttpClient<'admin'> {
     const clone = new DataAPIHttpClient({
       ...this.#props,
       tokenProvider: TokenProvider.opts.concat([opts.adminToken, this.#props.tokenProvider]),
@@ -174,44 +192,63 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
       baseApiPath: opts?.endpointUrl ? '' : this.#props.baseApiPath,
       additionalHeaders: { ...this.#props.additionalHeaders, ...opts?.additionalHeaders },
       emissionStrategy: EmissionStrategy.Admin,
+      emitter: emitter,
     });
 
-    clone.collection = undefined;
+    clone.collectionName = undefined;
+    clone.tableName = undefined;
     clone.tm = new Timeouts(DataAPITimeoutError.mk, { ...this.tm.baseTimeouts, ...opts?.timeoutDefaults });
 
     return clone;
   }
 
   public async executeCommand(command: Record<string, any>, options: ExecCmdOpts<Kind>): Promise<RawDataAPIResponse> {
-    let started = 0;
+    if (options?.collection && options.table) {
+      throw new Error('Can\'t provide both `table` and `collection` as options to DataAPIHttpClient.executeCommand()');
+    }
+
+    const collection = options.collection || options.table || this.collectionName || this.tableName;
+    const keyspace = options.keyspace === undefined ? this.keyspace?.ref : options.keyspace;
+
+    if (keyspace === undefined) {
+      throw new Error('Db is missing a required keyspace; be sure to set one with client.db(..., { keyspace }), or db.useKeyspace()');
+    }
+
+    if (keyspace === null && collection) {
+      throw new Error('Keyspace may not be `null` when a table or collection is provided to DataAPIHttpClient.executeCommand()');
+    }
+
+    const target =
+      (options.collection || this.collectionName)
+        ? 'collection' :
+      (options.table || this.tableName)
+        ? 'table' :
+      (keyspace)
+        ? 'keyspace'
+        : 'database';
 
     const info: DataAPIRequestInfo = {
       url: this.baseUrl,
-      collection: options.collection,
-      keyspace: options.keyspace,
+      collection: collection,
+      keyspace: keyspace,
       command: command,
       timeoutManager: options.timeoutManager,
       bigNumsPresent: options.bigNumsPresent,
+      target: target,
     };
 
+    const keyspacePath = info.keyspace ? `/${info.keyspace}` : '';
+    const collectionPath = info.collection ? `/${info.collection}` : '';
+    info.url += keyspacePath + collectionPath;
+
+    const requestId = this.logger.generateAdminCommandRequestId();
+
+    this.emissionStrategy.emitCommandStarted?.(requestId, info, options);
+    const started = performance.now();
+
+    let clonedData: RawDataAPIResponse | undefined;
+
     try {
-      info.collection ||= this.collection;
-
-      if (info.keyspace !== null) {
-        info.keyspace ||= this.keyspace?.ref;
-
-        if (isNullish(info.keyspace)) {
-          throw new Error('Db is missing a required keyspace; be sure to set one w/ client.db(..., { keyspace }), or db.useKeyspace()');
-        }
-      }
-
-      const keyspacePath = info.keyspace ? `/${info.keyspace}` : '';
-      const collectionPath = info.collection ? `/${info.collection}` : '';
-      info.url += keyspacePath + collectionPath;
-
-      started = performance.now();
-      this.emissionStrategy.emitCommandStarted?.(info, options);
-
       const serialized = (info.bigNumsPresent)
         ? this.bigNumHack?.parser.stringify(info.command)
         : JSON.stringify(info.command);
@@ -227,16 +264,19 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
         throw new DataAPIHttpError(resp);
       }
 
-      const data: RawDataAPIResponse =
-        (resp.body)
-          ? (this.bigNumHack?.parseWithBigNumbers(resp.body))
-            ? this.bigNumHack?.parser.parse(resp.body)
-            : JSON.parse(resp.body)
-          : {};
+      const data = (resp.body)
+        ? (this.bigNumHack?.parseWithBigNumbers(resp.body))
+          ? this.bigNumHack?.parser.parse(resp.body)
+          : JSON.parse(resp.body)
+        : {};
+
+      clonedData = requestId
+        ? structuredClone(data)
+        : undefined;
 
       const warnings = data?.status?.warnings ?? [];
       if (warnings.length) {
-        this.emissionStrategy.emitCommandWarnings?.(info, warnings, options);
+        this.emissionStrategy.emitCommandWarnings?.(requestId, info, warnings, options);
       }
       delete data?.status?.warnings;
 
@@ -250,10 +290,10 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
         errors: data.errors,
       };
 
-      this.emissionStrategy.emitCommandSucceeded?.(info, respData, started, options);
+      this.emissionStrategy.emitCommandSucceeded?.(requestId, info, clonedData!, started, options);
       return respData;
     } catch (e: any) {
-      this.emissionStrategy.emitCommandFailed?.(info, e, started, options);
+      this.emissionStrategy.emitCommandFailed?.(requestId, info, clonedData, e, started, options);
       throw e;
     }
   }

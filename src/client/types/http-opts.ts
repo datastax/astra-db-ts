@@ -33,7 +33,7 @@ import type { Fetcher, FetchH2Like } from '@/src/lib/index.js';
  *
  * @public
  */
-export type DataAPIHttpOptions =
+export type HttpOptions =
   | FetchH2HttpClientOptions
   | FetchHttpClientOptions
   | CustomHttpClientOptions;
@@ -71,7 +71,7 @@ export type DataAPIHttpOptions =
  *
  * See the astra-db-ts v2.0+ README for more information on how to use `fetch-h2`, and the compatibility reasons for not including it by default.
  *
- * @see DataAPIHttpOptions
+ * @see HttpOptions
  *
  * @public
  */
@@ -79,7 +79,7 @@ export interface FetchH2HttpClientOptions {
   /**
    * Tells the Data API client to use the `fetch-h2` module for making HTTP requests.
    *
-   * See {@link DataAPIHttpOptions} for the other options available.
+   * See {@link HttpOptions} for the other options available.
    */
   client: 'fetch-h2',
   /**
@@ -113,7 +113,7 @@ export interface FetchH2HttpClientOptions {
  *
  * Passing in `httpOptions: { client: 'fetch' }` is equivalent to not setting the `httpOptions` at all.
  *
- * @see DataAPIHttpOptions
+ * @see HttpOptions
  *
  * @public
  */
@@ -121,7 +121,7 @@ export interface FetchHttpClientOptions {
   /**
    * Tells the Data API client to use the native `fetch` API for making HTTP requests.
    *
-   * See {@link DataAPIHttpOptions} for the other options available.
+   * See {@link HttpOptions} for the other options available.
    */
   client: 'fetch',
 }
@@ -135,7 +135,7 @@ export interface FetchHttpClientOptions {
  *
  * See {@link Fetcher} for more information.
  *
- * @see DataAPIHttpOptions
+ * @see HttpOptions
  *
  * @public
  */
@@ -143,7 +143,7 @@ export interface CustomHttpClientOptions {
   /**
    * Tells the Data API client to use your custom "fetcher" for making HTTP requests.
    *
-   * See {@link DataAPIHttpOptions} for the other options available.
+   * See {@link HttpOptions} for the other options available.
    */
   client: 'custom',
   /**

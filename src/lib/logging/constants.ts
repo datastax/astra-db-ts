@@ -15,8 +15,8 @@
 
 import type {
   DataAPIClientEventMap,
-  DataAPILoggingEvent,
-  DataAPILoggingOutput,
+  LoggingEvent,
+  LoggingOutput,
 } from '@/src/lib/index.js';
 import { CommandFailedEvent, CommandStartedEvent, CommandSucceededEvent, CommandWarningsEvent } from '@/src/documents/index.js';
 import {
@@ -32,21 +32,32 @@ import type { InternalLoggingOutputsMap } from '@/src/lib/logging/logger.js';
 import { EqualityProof } from '@/src/lib/utils.js';
 
 /**
- * @internal
+ * A list of all possible logging events.
+ *
+ * @public
  */
-export const LoggingEvents = <const>['all', 'adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded', 'adminCommandFailed', 'adminCommandWarnings', 'commandStarted', 'commandFailed', 'commandSucceeded', 'commandWarnings'];
+export const LoggingEvents = <const>['adminCommandStarted', 'adminCommandPolling', 'adminCommandSucceeded', 'adminCommandFailed', 'adminCommandWarnings', 'commandStarted', 'commandFailed', 'commandSucceeded', 'commandWarnings'];
+void EqualityProof<typeof LoggingEvents[number], Exclude<LoggingEvent, 'all' | RegExp>, true>;
 
 /**
  * @internal
  */
-export const LoggingEventsWithoutAll = LoggingEvents.filter((e) => e !== 'all');
-void EqualityProof<typeof LoggingEvents[number], DataAPILoggingEvent, true>;
+export const LoggingEventsWithAll = <const>['all', ...LoggingEvents];
+void EqualityProof<typeof LoggingEventsWithAll[number], Exclude<LoggingEvent, RegExp>, true>;
+
+/**
+ * A list of all possible logging outputs.
+ *
+ * @public
+ */
+export const LoggingOutputs = <const>['event', 'stdout', 'stderr', 'stdout:verbose', 'stderr:verbose'];
+void EqualityProof<typeof LoggingOutputs[number], LoggingOutput, true>;
 
 /**
  * @internal
  */
-export const LoggingOutputs = <const>['event', 'stdout', 'stderr'];
-void EqualityProof<typeof LoggingOutputs[number], DataAPILoggingOutput, true>;
+export const PrintLoggingOutputs = LoggingOutputs.filter((o) => o !== 'event');
+void EqualityProof<typeof PrintLoggingOutputs[number], Exclude<LoggingOutput, 'event'>, true>;
 
 /**
  * @internal
@@ -66,7 +77,18 @@ export const EventConstructors = <const>{
 /**
  * @internal
  */
-export const EmptyInternalLoggingConfig = Object.fromEntries(LoggingEventsWithoutAll.map((e) => [e, buildOutputsMap([])])) as InternalLoggingOutputsMap;
+export const EmptyInternalLoggingConfig = Object.fromEntries(LoggingEvents.map((e) => [e, buildOutputsMap([])])) as InternalLoggingOutputsMap;
+
+/**
+ * @internal
+ */
+export const LoggingDefaults: ParsedLoggingConfig['layers'] = [{
+  events: LoggingEvents.filter((e) => e !== 'commandStarted' && e !== 'commandSucceeded'),
+  emits: ['event', 'stderr'],
+}, {
+  events: ['commandStarted', 'commandSucceeded'],
+  emits: ['event'],
+}];
 
 /**
  * @internal
@@ -82,14 +104,3 @@ export const LoggingDefaultOutputs = <const>{
   commandSucceeded:      ['event'          ],
   commandWarnings:       ['event', 'stderr'],
 };
-
-/**
- * @internal
- */
-export const LoggingDefaults: ParsedLoggingConfig['layers'] = [{
-  events: LoggingEventsWithoutAll.filter((e) => e !== 'commandStarted' && e !== 'commandSucceeded'),
-  emits: ['event', 'stderr'],
-}, {
-  events: ['commandStarted', 'commandSucceeded'],
-  emits: ['event'],
-}];

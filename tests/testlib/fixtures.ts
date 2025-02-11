@@ -29,14 +29,14 @@ import {
   TEST_APPLICATION_URI,
   TEST_HTTP_CLIENT,
 } from '@/tests/testlib/config.js';
-import type { BaseDataAPIClientEvent, DataAPIClientEventMap, DataAPILoggingConfig } from '@/src/lib/index.js';
+import type { BaseClientEvent, DataAPIClientEventMap, LoggingConfig } from '@/src/lib/index.js';
 import type { CreateTableDefinition, InferTableSchema } from '@/src/db/index.js';
 import * as util from 'node:util';
 
 export interface TestObjectsOptions {
   httpClient?: typeof TEST_HTTP_CLIENT,
   env?: typeof ENVIRONMENT,
-  logging?: DataAPILoggingConfig,
+  logging?: LoggingConfig,
   isGlobal?: boolean,
 }
 
@@ -126,7 +126,7 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
   });
 
   for (const event of ['commandSucceeded', 'adminCommandSucceeded', 'commandFailed', 'adminCommandFailed'] as (keyof DataAPIClientEventMap)[]) {
-    client.on(event, (e: BaseDataAPIClientEvent) => LOGGING_PRED(e, isGlobal) && console.log((isGlobal ? '[Global] ' : '') + util.inspect(e, { depth: null, colors: true })));
+    client.on(event, (e: BaseClientEvent) => LOGGING_PRED(e, isGlobal) && console.log((isGlobal ? '[Global] ' : '') + util.inspect(e, { depth: null, colors: true })));
   }
 
   const db = client.db(TEST_APPLICATION_URI);
@@ -141,7 +141,11 @@ export const initTestObjects = (opts?: TestObjectsOptions) => {
     ? db.admin({ environment: ENVIRONMENT })
     : db.admin({ environment: ENVIRONMENT });
 
-  return { client, db, collection, collection_, dbAdmin, table, table_ };
+  const admin = (ENVIRONMENT === 'astra')
+    ? client.admin()
+    : null!;
+
+  return { client, db, collection, collection_, dbAdmin, table, table_, admin };
 };
 
 export const initCollectionWithFailingClient = () => {

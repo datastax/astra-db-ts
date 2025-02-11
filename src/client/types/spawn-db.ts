@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPILoggingConfig, TokenProvider } from '@/src/lib/index.js';
+import type { LoggingConfig, TokenProvider } from '@/src/lib/index.js';
 import { type TimeoutDescriptor } from '@/src/lib/index.js';
 import type { CollectionSerDesConfig, TableSerDesConfig } from '@/src/documents/index.js';
 
@@ -38,9 +38,9 @@ export interface DbOptions {
    *
    * This can be set at any level of the major class hierarchy, and will be inherited by all child classes.
    *
-   * See {@link DataAPILoggingConfig} for *much* more information on configuration, outputs, and inheritance.
+   * See {@link LoggingConfig} for *much* more information on configuration, outputs, and inheritance.
    */
-  logging?: DataAPILoggingConfig,
+  logging?: LoggingConfig,
   /**
    * The keyspace to use for the database.
    *

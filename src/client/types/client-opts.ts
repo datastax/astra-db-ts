@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPIEnvironment, DataAPILoggingConfig, TimeoutDescriptor } from '@/src/lib/index.js';
-import type { Caller, DataAPIHttpOptions, RootAdminOptions, RootDbOptions } from '@/src/client/index.js';
+import type { DataAPIEnvironment, LoggingConfig, TimeoutDescriptor } from '@/src/lib/index.js';
+import type { Caller, HttpOptions, RootAdminOptions, RootDbOptions } from '@/src/client/index.js';
 import type { OneOrMany } from '@/src/lib/types.js';
 
 /**
@@ -28,11 +28,11 @@ export interface DataAPIClientOptions {
    *
    * This can be set at any level of the major class hierarchy, and will be inherited by all child classes.
    *
-   * See {@link DataAPILoggingConfig} for *much* more information on configuration, outputs, and inheritance.
+   * See {@link LoggingConfig} for *much* more information on configuration, outputs, and inheritance.
    *
    * **TL;DR: Set `logging: 'all'` for a sane default.**
    */
-  logging?: DataAPILoggingConfig,
+  logging?: LoggingConfig,
   /**
    * Sets the Data API "backend" that is being used (e.g. 'dse', 'hcd', 'cassandra', or 'other'). Defaults to 'astra'.
    *
@@ -58,9 +58,9 @@ export interface DataAPIClientOptions {
   /**
    * The client-wide options related to http operations.
    *
-   * Click on {@link DataAPIHttpOptions} for more information.
+   * Click on {@link HttpOptions} for more information.
    */
-  httpOptions?: DataAPIHttpOptions,
+  httpOptions?: HttpOptions,
   /**
    * The default options when spawning a {@link Db} instance.
    */

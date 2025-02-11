@@ -15,7 +15,7 @@
 import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
 import { OptionsHandler } from '@/src/lib/opts-handler.js';
 import type { DataAPIClient, DataAPIClientOptions } from '@/src/client/index.js';
-import { type DataAPIClientEventMap, type MicroEmitter, TokenProvider } from '@/src/lib/index.js';
+import { TokenProvider } from '@/src/lib/index.js';
 import { exact } from 'decoders';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import { Logger } from '@/src/lib/logging/logger.js';
@@ -38,7 +38,7 @@ interface Types extends OptionsHandlerTypes {
  */
 export interface ParsedRootClientOpts extends Parsed<'DataAPIClientOptions'> {
   environment: typeof EnvironmentCfgHandler.parsed,
-  emitter: MicroEmitter<DataAPIClientEventMap>,
+  client: DataAPIClient,
   fetchCtx: typeof HttpOptsHandler.parsed,
   caller: typeof CallerCfgHandler.parsed,
   dbOptions: typeof DbOptsHandler.parsed,
@@ -72,7 +72,7 @@ export const RootOptsHandler = (defaultToken: typeof TokenProvider.opts.parsed, 
       environment: input.environment,
       fetchCtx: input.httpOptions,
       caller: input.caller,
-      emitter: client,
+      client: client,
       dbOptions: DbOptsHandler.concat([input.dbOptions, {
         ...DbOptsHandler.empty,
         token: TokenProvider.opts.concat([defaultToken, input.dbOptions.token]),

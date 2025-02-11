@@ -104,17 +104,6 @@ describe('unit.db.db', () => {
       assert.ok(new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ logging: [{ events: ['adminCommandPolling', 'adminCommandSucceeded'], emits: ['event', 'stdout'] }]})));
     });
 
-    it('should throw on invalid logging', () => {
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ logging: 'invalid' })));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ logging: { events: 'all' } })));
-      // @ts-expect-error - testing invalid input
-      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ logging: [{ events: 'all' }] })));
-      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ logging: [{ events: 'all', emits: ['stdout', 'stderr'] }] })));
-      assert.throws(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ logging: [{ events: ['all', 'commandSucceeded'], emits: ['stdout'] }] })));
-    });
-
     it('should accept valid dataApiPath', () => {
       assert.ok(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({})));
       assert.ok(() => new Db(internalOps(), TEST_APPLICATION_URI, DbOptsHandler.parse({ dataApiPath: 'api/json/v2' })));
@@ -246,7 +235,12 @@ describe('unit.db.db', () => {
 
   describe('command tests', ({ db }) => {
     it('should throw if both table & collection passed', async () => {
-      await assert.rejects(() => db.command({}, { collection: 'coll', table: 'table' }), { message: 'Can\'t provide both `table` and `collection` as options to db.command()' });
+      await assert.rejects(() => db.command({}, { collection: 'coll', table: 'table' }), { message: 'Can\'t provide both `table` and `collection` as options to DataAPIHttpClient.executeCommand()' });
+    });
+
+    it('should throw if null space & table/collection passed', async () => {
+      await assert.rejects(() => db.command({}, { keyspace: null, table: 'table' }), { message: 'Keyspace may not be `null` when a table or collection is provided to DataAPIHttpClient.executeCommand()' });
+      await assert.rejects(() => db.command({}, { keyspace: null, collection: 'coll' }), { message: 'Keyspace may not be `null` when a table or collection is provided to DataAPIHttpClient.executeCommand()' });
     });
   });
 

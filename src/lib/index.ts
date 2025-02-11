@@ -15,6 +15,5 @@
 export * from './api/index.js';
 export * from './token-providers/index.js';
 export * from './logging/index.js';
-export * from './micro-emitter.js';
 export { DataAPIEnvironments } from './constants.js';
 export type { nullish, DataAPIEnvironment, OneOrMany, EmptyObj } from './types.js';
