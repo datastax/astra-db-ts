@@ -31,13 +31,13 @@ describe('unit.documents.errors', () => {
   ];
 
   const raws = [
-    { errors: [{ errorCode: 'C', message: 'Aaa', field: 'value' }] },
-    { errors: [{ errorCode: 'D', message: 'Bbb', field: 'eulav' }] },
+    { errors: [{ errorCode: 'C', message: 'Aaa', title: 'a', family: 'b', scope: 'c', id: 'd' }] },
+    { errors: [{ errorCode: 'D', message: 'Bbb', title: 'a', family: 'b', scope: 'c', id: 'd' }] },
   ];
 
   const descriptions = [
-    { errorCode: 'C', message: 'Aaa', attributes: { field: 'value' } },
-    { errorCode: 'D', message: 'Bbb', attributes: { field: 'eulav' } },
+    { errorCode: 'C', message: 'Aaa', title: 'a', family: 'b', scope: 'c', id: 'd' },
+    { errorCode: 'D', message: 'Bbb', title: 'a', family: 'b', scope: 'c', id: 'd' },
   ];
 
   describe('DataAPIResponseError construction', () => {
