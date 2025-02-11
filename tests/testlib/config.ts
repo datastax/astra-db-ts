@@ -15,7 +15,7 @@
 import * as process from 'node:process';
 import dotenv from 'dotenv';
 import { DataAPIEnvironments } from '@/src/lib/constants.js';
-import type { BaseDataAPIClientEvent, DataAPIEnvironment } from '@/src/lib/index.js';
+import type { BaseClientEvent, DataAPIEnvironment } from '@/src/lib/index.js';
 
 dotenv.config();
 
@@ -57,7 +57,7 @@ export const DEMO_APPLICATION_URI = 'https://12341234-1234-1234-1234-12341234123
 
 export const DEFAULT_TEST_TIMEOUT = +process.env.CLIENT_TESTS_TIMEOUT! || 90000;
 
-export const LOGGING_PRED: (e: BaseDataAPIClientEvent, isGlobal: boolean) => boolean = process.env.LOGGING_PRED
+export const LOGGING_PRED: (e: BaseClientEvent, isGlobal: boolean) => boolean = process.env.LOGGING_PRED
   ? new Function("e", "isGlobal", "return " + process.env.LOGGING_PRED) as any
   : () => false;
 

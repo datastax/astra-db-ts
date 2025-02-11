@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPILoggingConfig, TimeoutDescriptor, TokenProvider } from '@/src/lib/index.js';
+import type { LoggingConfig, TimeoutDescriptor, TokenProvider } from '@/src/lib/index.js';
 
 /**
  * The default admin options as can be specified in the {@link DataAPIClientOptions}.
@@ -38,9 +38,9 @@ export interface AdminOptions {
    *
    * This can be set at any level of the major class hierarchy, and will be inherited by all child classes.
    *
-   * See {@link DataAPILoggingConfig} for *much* more information on configuration, outputs, and inheritance.
+   * See {@link LoggingConfig} for *much* more information on configuration, outputs, and inheritance.
    */
-  logging?: DataAPILoggingConfig | undefined,
+  logging?: LoggingConfig | undefined,
   /**
    * The access token for the DevOps API, typically of the format `'AstraCS:...'`.
    *

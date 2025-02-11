@@ -14,7 +14,7 @@
 
 import type { WithKeyspace } from '@/src/db/index.js';
 import type { EmbeddingHeadersProvider, TableSerDesConfig } from '@/src/documents/index.js';
-import type { DataAPILoggingConfig} from '@/src/lib/index.js';
+import type { LoggingConfig} from '@/src/lib/index.js';
 import { type TimeoutDescriptor } from '@/src/lib/index.js';
 
 /**
@@ -41,9 +41,9 @@ export interface TableOptions extends WithKeyspace {
    *
    * This can be set at any level of the major class hierarchy, and will be inherited by all child classes.
    *
-   * See {@link DataAPILoggingConfig} for *much* more information on configuration, outputs, and inheritance.
+   * See {@link LoggingConfig} for *much* more information on configuration, outputs, and inheritance.
    */
-  logging?: DataAPILoggingConfig,
+  logging?: LoggingConfig,
   /**
    * Advanced & currently somewhat unstable features related to customizing the table's ser/des behavior at a lower level.
    *

@@ -14,4 +14,6 @@
 // noinspection DuplicatedCode
 
 export type * from './types.js';
-export * from './events.js';
+export * from './base-event.js';
+export { HierarchicalEmitter } from './hierarchical-emitter.js';
+export { LoggingEvents, LoggingOutputs } from './constants.js';

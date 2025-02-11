@@ -19,24 +19,23 @@ import type { OneOrMany } from '@/src/lib/types.js';
 /**
  * #### Overview
  *
- * The `EventMap` of events the {@link DataAPIClient} emits, which is an instance of {@link MicroEmitter}, when
- * events logging is enabled (via `logging` options throughout the major class hierarchy).
+ * An enumeration of the events that may be emitted by the {@link DataAPIClient}, or any of its children classes, when logging is enabled.
  *
- * See {@link DataAPILoggingConfig} for more information on how to configure logging, and enable/disable specific events.
+ * See {@link LoggingConfig} for more information on how to configure logging, and enable/disable specific events.
  *
  * ###### When to prefer events
  *
  * Events can be thought of as a "generic logging interface" for Data API & DevOps operations.
  *
- * Though the {@link DataAPILoggingConfig}, you can also enable logging to the console, but:
+ * Though the {@link LoggingConfig}, you can also enable logging to the console, but:
  * - You're forced to use stdout/stderr as outputs
- * - You can't programmatically interact with the logs/data
- * - You can't easily filter or format the logs
+ * - You can't programmatically interact with the log data
+ * - You can't filter the logs
  *
- * {@link BaseDataAPIClientEvent}s are a more flexible way to interact with the logs, allowing you to basically plug in, or
+ * {@link BaseClientEvent}s are a more flexible way to interact with the logs, allowing you to basically plug in, or
  * even build, your own logging system around them.
  *
- * And of course, you're free to use both events and console logging in tandem, if you so choose.
+ * And, of course, you're free to use both events and console logging in tandem, if you so choose.
  *
  * ###### Disclaimer
  *
@@ -74,32 +73,7 @@ import type { OneOrMany } from '@/src/lib/types.js';
  * | `adminCommandFailed`                                              | Emitted when an admin command has failed (i.e. when an HTTP 4xx/5xx is returned, even if while polling).      | Emits the event; logs to stderr |
  * | `adminCommandWarnings`                                            | Emitted when an admin command has warnings (i.e. when the `status.warnings` field is present).                | Emits the event; logs to stderr |
  *
- * @example
- * ```ts
- * const client = new DataAPIClient('*TOKEN*', {
- *   logging: [{ events: 'all', emits: 'event' }],
- * });
- * const db = client.db('*ENDPOINT*');
- *
- * client.on('commandStarted', (event) => {
- *   console.log('Command started:', event);
- * });
- *
- * client.on('commandFailed', (event) => {
- *   console.error('Command failed:', event);
- * });
- *
- * client.on('commandSucceeded', (event) => {
- *   console.log('Command succeeded:', event);
- * });
- *
- * // Output:
- * // 'Command started: <...>'
- * // 'Command succeeded: <...>'
- * await db.createCollection('my_collection');
- * ```
- *
- * @see DataAPILoggingConfig
+ * @see LoggingConfig
  * @see CommandEventMap
  * @see AdminCommandEventMap
  *
@@ -110,115 +84,225 @@ export type DataAPIClientEventMap =
   & CommandEventMap;
 
 /**
- * #### Overview
+ * Represents the different events that can be emitted/logged by the {@link DataAPIClient}.
  *
- * The configuration for logging events emitted by the {@link DataAPIClient}.
+ * Equivalent to `DataAPIClientEventMap[keyof DataAPIClientEventMap]`.
+ *
+ * Please see {@link DataAPIClientEventMap} instead for more information on the different types of events.
+ *
+ * @see DataAPIClientEventMap
+ *
+ * @public
+ */
+export type DataAPIClientEvent = DataAPIClientEventMap[keyof DataAPIClientEventMap];
+
+/**
+ * ##### Overview
+ *
+ * The configuration for logging events that may be logged or emitted by the {@link DataAPIClient} or any of its children classes.
  *
  * This can be set at any level of the major class hierarchy, and will be inherited by all child classes.
  *
- * #### Configuration inheritance
+ * ##### Configuration inheritance
  *
- * The logging config, at its core, is just a list of events to enable/disable, and where to emit/log them.
+ * Logging is configured through a list of hierarchical _rules_, determining which events to emit where. Each rule layer overrides previous rules for the same events.
  *
- * When they're inherited by child classes, it's done as a simple list merge, with the child's config taking precedence.
- * (i.e. `[...parentConfig, ...childConfig]`). Each new layer of config is applied on top of the previous one, overwriting
- * any previous settings for the same events.
+ * Logging configuration is inherited by child classes, but may be overridden at any level (e.g. pass a base config to the `DataAPIClient` constructor, and then override it for a specific `Collection`).
  *
- * #### Configuration & shorthands
+ * ##### Configuration & shorthands
  *
- * There's multiple ways to configure logging, depending on how much control you want:
+ * There are multiple ways to configure logging, and the rules may be combined in various ways:
  *
  * `logging: 'all'`
- * - Enables all event with their default outputs (see below)
- * - Shorthand for specifying all events individually
- *
- * `logging: '<command>' | ['<commands>']`
- * - Enables each individual event with their default outputs (see below)
+ * - This will enable all events with default behaviors (see below)
  *
  * `logging: [{ events: 'all', emits: 'event' }]`
- * - This will emit all events, but only emit them as events, not log them to the console
+ * - This will enable all events, but only emit them as events
  *
- * `logging: ['all', [{ events: ['<commands>'], emits: [] }]]`
- * - Enables all events, then subsequently disables the given event(s)
+ * `logging: '<event>' | ['<events>']`
+ * - This will enable only the specified event(s) with default behaviors
  *
- * As you may see, it's really just a list of configuration "layers".
+ * `logging: /regex/ | [/regex/]`
+ * - This will enable only the matching event(s) with default behaviors
  *
- * #### Event types
+ * `logging: [{ events: ['<events>'], emits: ['<outputs>'] }]`
+ * - This will allow you to define the specific outputs for specific events
  *
- * See {@link DataAPIClientEventMap} for more information on the types of events emitted.
+ * `logging: ['all', { events: ['<events>'], emits: [] }]`
+ * - Example of how `'all'` may be used as a base configuration, to be overridden by specific rules
+ * - The empty `emits` array effectively disables outputs for the specified events
  *
- * #### Output types
+ * ##### Event types & defaults
  *
- * The `emits` field can be set to either 'event', 'stdout', or 'stderr'.
+ * See {@link DataAPIClientEventMap} for more information on the types of events emitted & their defaults.
  *
- * - 'event' will emit the event to the {@link DataAPIClient} instance
- * - 'stdout' will log the event to stdout
- * - 'stderr' will log the event to stderr
+ * As a TL;DR, when enabled, all events are emitted as events by default, and `commandStarted` and `commandSucceeded` are the only events not logged to `stderr` as well by default; all other events are logged to `stderr`.
  *
- * ##### Defaults
+ * ##### Output types
  *
- * These are used for events that are enabled without specified outputs being provided, e.g:
- * - `logging: ['commandStarted', 'commandSucceeded', 'commandFailed']`
- * - `logging: 'all'`
+ * The `emits` field can be set to either `'event'`, `'stdout'`, `'stderr'`, or their verbose variants.
  *
- * All events are emitted as events by default, through the {@link DataAPIClient}, which is an instance of an {@link EventEmitter}.
+ * - `'event'` will emit the event to each {@link HierarchicalEmitter} in the hierarchy
+ *   - e.g. first to the `Collection`, then the `Db`, then the `DataAPIClient`
+ *   - See {@link HierarchicalEmitter} for more information on how events are emitted
+ * - `'stdout'` & `'stderr'` will log the event to stdout or stderr, respectively
+ *   - The `'stdout:verbose'` & `'stderr:verbose'` variants will use a verbose format containing all the events properties
+ *   - These are useful for debugging, but may be overwhelming for normal use
  *
- * `commandStarted` and `commandSucceeded` are the only events not logged to `stderr` as well by default; all other events are logged to `stderr`.
+ * You may use {@link BaseClientEvent.setDefaultFormatter} to change the format of the events as they're logged to `stdout`/`stderr`. See {@link EventFormatter} for more information.
  *
- * #### Examples
+ * ##### Examples
  *
+ * *For more advanced examples, see the `examples/logging` directory in the [astra-db-ts repository](https://github.com/datastax/astra-db-ts)*
+ *
+ * Hierarchical usage example:
+ *
+ * @example
  * ```ts
+ * // Create a `DataAPIClient` with emission enabled for all failed/warning commands
  * const client = new DataAPIClient('*TOKEN*', {
- *  logging: [{ events: 'all', emits: 'stdout' }],
+ *   logging: [{ events: /.*(Failed|Warning)/, emits: ['stderr:verbose', 'event']}],
  * });
- * const db = client.db('*ENDPOINT*');
  *
- * // Output:
- * // '[CommandStartedEvent]: createCollection in default_keyspace'
- * // '[CommandSucceededEvent]: createCollection in default_keyspace (took ...ms)'
- * await db.createCollection('my_collection');
+ * client.on('commandFailed', (event) => {
+ *   console.error('Some command failed:', event.commandName);
+ * });
+ *
+ * // Override the logging config for this `Db` to emit *all* events as events
+ * const db = client.db('*ENDPOINT*', {
+ *   logging: [{ events: 'all', emits: 'event' }],
+ * });
+ *
+ * db.on('commandStarted', (event) => {
+ *   console.log('Command started:', event.commandName);
+ * });
+ *
+ * db.on('commandSucceeded', (event) => {
+ *   console.log('Command succeeded:', event.commandName);
+ * });
+ *
+ * // Resulting output:
+ * // 'Command started: "createCollection"'
+ * // 'Some command failed: "createCollection"'
+ * await db.createCollection('$invalid-name$');
+ * ```
+ *
+ * Various configuration examples:
+ *
+ * @example
+ * ```ts
+ * // Sets sane defaults for logging
+ * const client = new DataAPIClient({
+ *   logging: 'all',
+ * });
+ *
+ * // Just emit all events as events
+ * const client = new DataAPIClient({
+ *   logging: [{ events: 'all', emits: 'event' }],
+ * });
+ *
+ * // Define specific outputs for specific events
+ * const client = new DataAPIClient({
+ *   logging: [
+ *     { events: ['commandStarted', 'commandSucceeded'], emits: ['stdout', 'event'] },
+ *     { events: ['commandFailed'], emits: ['stderr', 'event'] },
+ *   ],
+ * });
+ *
+ * // Use 'all' as a base configuration, and override specific events
+ * const client = new DataAPIClient({
+ *   logging: ['all', { events: /.*(Started|Succeeded)/, emits: [] }],
+ * });
+ *
+ * // Enable specific events with default behaviors
+ * const client = new DataAPIClient({
+ *   logging: ['commandSucceeded', 'adminCommandStarted'],
+ * });
  * ```
  *
  * @see DataAPIClientEventMap
- * @see DataAPILoggingEvent
- * @see DataAPILoggingOutput
+ * @see LoggingEvent
+ * @see LoggingOutput
  *
  * @public
  */
-export type DataAPILoggingConfig = DataAPILoggingEvent | readonly (DataAPILoggingEvent | DataAPIExplicitLoggingConfig)[]
+export type LoggingConfig = LoggingEvent | readonly (LoggingEvent | ExplicitLoggingConfig)[];
 
 /**
- * Represents the different events that can be emitted/logged by the {@link DataAPIClient}, as well as the convenient
- * shorthand 'all' to configure all events at once.
+ * ##### Overview
  *
- * See {@link DataAPIClientEventMap} & {@link DataAPILoggingConfig} for much more info.
+ * Represents the different events that can be emitted/logged by the {@link DataAPIClient},
+ * or any of its children classes, as well as the convenient shorthand `'all'` to configure all events at once.
+ *
+ * Additionally, you can use a regular expression to match multiple events at once.
+ *
+ * See {@link DataAPIClientEventMap} & {@link LoggingConfig} for much more info.
+ *
+ * ##### Regular expressions
+ *
+ * Regular expressions are a powerful way to match multiple events at once. For example:
+ *
+ * ```ts
+ * const client = new DataAPIClient({
+ *   logging: [{ events: `/.*(Started|Succeeded)/`, emits: 'stderr:verbose' }],
+ * });
+ * ```
+ *
+ * is equivalent to:
+ *
+ * ```ts
+ * const client = new DataAPIClient({
+ *   logging: [{
+ *     events:
+ *       [ 'commandStarted', 'commandSucceeded'
+ *       , 'adminCommandStarted', 'adminCommandSucceeded'
+ *       ],
+ *     emits: 'stderr:verbose',
+ *   }],
+ * });
+ * ```
+ *
+ * @see LoggingConfig
+ * @see LoggingOutput
  *
  * @public
  */
-export type DataAPILoggingEvent = 'all' | keyof DataAPIClientEventMap;
+export type LoggingEvent = 'all' | keyof DataAPIClientEventMap | RegExp;
 
 /**
- * Represents the different outputs that can be emitted/logged to by the {@link DataAPIClient}.
+ * ##### Overview
  *
- * This can be set to either 'event', 'stdout', or 'stderr'. However, attempting to set both 'stdout' and 'stderr'
- * as an output for a single event will result in an error.
+ * Represents the different outputs that can be logged/emitted by the {@link DataAPIClient}, or any of its children classes.
  *
- * See {@link DataAPIClientEventMap} & {@link DataAPILoggingConfig} for much more info.
+ * This can be set to either `'event'`, `'stdout'`, `'stderr'`, `'stdout:verbose'`, or `'stderr:verbose'`.
+ *
+ * See {@link DataAPIClientEventMap} & {@link LoggingConfig} for much more info.
+ *
+ * See {@link BaseClientEvent.setDefaultFormatter} for information on how to change the format of the events as they're logged to `stdout`/`stderr`.
+ *
+ * @see LoggingConfig
+ * @see LoggingEvent
  *
  * @public
  */
-export type DataAPILoggingOutput = 'event' | 'stdout' | 'stderr';
+export type LoggingOutput = 'event' | 'stdout' | 'stderr' | 'stdout:verbose' | 'stderr:verbose';
 
 /**
+ * ##### Overview
+ *
  * The most explicit way to configure logging, with the ability to set both events and specific outputs.
  *
- * Settings the `emits` field to `[]` will disable logging for the specified events.
+ * Setting the `emits` field to `[]` will disable logging for the specified events.
  *
- * See {@link DataAPIClientEventMap} & {@link DataAPILoggingConfig} for much more info.
+ * See {@link DataAPIClientEventMap} & {@link LoggingConfig} for much more info.
+ *
+ * @see LoggingConfig
+ * @see LoggingEvent
+ * @see LoggingOutput
  *
  * @public
  */
-export interface DataAPIExplicitLoggingConfig {
-  readonly events: OneOrMany<DataAPILoggingEvent>,
-  readonly emits: OneOrMany<DataAPILoggingOutput>,
+export interface ExplicitLoggingConfig {
+  readonly events: LoggingEvent | (Exclude<LoggingEvent, 'all'>)[],
+  readonly emits: OneOrMany<LoggingOutput>,
 }

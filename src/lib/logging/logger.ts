@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection DuplicatedCode
 
-import type { DataAPIClientEventMap, DataAPILoggingOutput } from '@/src/lib/logging/types.js';
+import type { DataAPIClientEventMap, LoggingOutput } from '@/src/lib/logging/types.js';
 import type {
   CommandFailedEvent,
   CommandStartedEvent,
@@ -27,11 +27,12 @@ import type {
   AdminCommandSucceededEvent,
   AdminCommandWarningsEvent,
 } from '@/src/administration/index.js';
-import { EmptyInternalLoggingConfig, EventConstructors } from '@/src/lib/logging/constants.js';
+import { EmptyInternalLoggingConfig, EventConstructors, PrintLoggingOutputs } from '@/src/lib/logging/constants.js';
 import { buildOutputsMap } from '@/src/lib/logging/util.js';
-import type { BaseDataAPIClientEvent, MicroEmitter } from '@/src/lib/index.js';
+import type { BaseClientEvent, HierarchicalEmitter } from '@/src/lib/index.js';
 import type { ParsedLoggingConfig } from '@/src/lib/logging/cfg-handler.js';
 import { LoggingCfgHandler } from '@/src/lib/logging/cfg-handler.js';
+import * as uuid from 'uuid';
 
 /**
  * @internal
@@ -44,7 +45,7 @@ interface ConsoleLike {
 /**
  * @internal
  */
-export type InternalLoggingOutputsMap = Readonly<Record<keyof DataAPIClientEventMap, Readonly<Record<DataAPILoggingOutput, boolean>> | undefined>>
+export type InternalLoggingOutputsMap = Readonly<Record<keyof DataAPIClientEventMap, Readonly<Record<LoggingOutput, boolean>> | undefined>>
 
 /**
  * @internal
@@ -62,41 +63,65 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
 
   public static cfg: typeof LoggingCfgHandler = LoggingCfgHandler;
 
-  constructor(_config: ParsedLoggingConfig, private emitter: MicroEmitter<DataAPIClientEventMap>, private console: ConsoleLike) {
-    const config = Logger.buildInternalConfig(_config);
+  private _someCommandEventEnabled = false;
+  private _someAdminCommandEventEnabled = false;
 
-    for (const [_event, outputs] of Object.entries(config)) if (outputs) {
-      const event = _event as keyof DataAPIClientEventMap;
+  constructor(_config: ParsedLoggingConfig, private emitter: HierarchicalEmitter<DataAPIClientEventMap>, private console: ConsoleLike) {
+    const config = this._buildInternalConfig(_config);
 
-      this[event] = (...args: any[]) => {
-        const eventClass = new (<any>EventConstructors[event])(...args) as BaseDataAPIClientEvent;
+    for (const [_eventName, outputs] of Object.entries(config)) if (outputs) {
+      const eventName = _eventName as keyof DataAPIClientEventMap;
+      const log = this._mkLog(outputs);
 
-        if (outputs.event) {
-          this.emitter.emit(event, <any>eventClass);
-        }
+      if (eventName.startsWith('admin')) {
+        this._someAdminCommandEventEnabled = true;
+      } else {
+        this._someCommandEventEnabled = true;
+      }
 
-        if (outputs.stdout) {
-          this.console.log(eventClass.formatted());
-        } else if (outputs.stderr) {
-          this.console.error(eventClass.formatted());
-        }
+      this[eventName] = (...args: any[]) => {
+        const event = new (<any>EventConstructors[eventName])(...args);
+        outputs.event && this.emitter.emit(eventName, event);
+        log?.(event);
       };
     }
   }
 
-  private static buildInternalConfig(config: ParsedLoggingConfig): InternalLoggingOutputsMap {
+  public generateCommandRequestId() {
+    return this._someCommandEventEnabled ? uuid.v4() : '';
+  }
+
+  public generateAdminCommandRequestId() {
+    return this._someAdminCommandEventEnabled ? uuid.v4() : '';
+  }
+
+  private _buildInternalConfig(config: ParsedLoggingConfig): InternalLoggingOutputsMap {
     const newConfig = { ...EmptyInternalLoggingConfig };
 
     for (const layer of config.layers) {
       for (const event of layer.events) {
         newConfig[event] = buildOutputsMap(layer.emits);
 
-        if (newConfig[event]?.stdout && newConfig[event].stderr) {
-          throw new Error(`Nonsensical logging configuration; attempted to set both stdout and stderr outputs for '${event}'`);
+        const activeOutputs = PrintLoggingOutputs.filter(key => newConfig[event]?.[key]);
+
+        if (activeOutputs.length > 1) {
+          throw new Error(`Nonsensical logging configuration; conflicting outputs '${activeOutputs}' set for '${event}'`);
         }
       }
     }
 
     return newConfig;
+  }
+
+  private _mkLog(outputs: Readonly<Record<LoggingOutput, boolean>>) {
+    if (outputs.stdout) {
+      return (event: BaseClientEvent) => this.console.log(event.format());
+    } else if (outputs.stderr) {
+      return (event: BaseClientEvent) => this.console.error(event.format());
+    } else if (outputs['stdout:verbose']) {
+      return (event: BaseClientEvent) => this.console.log(event.formatVerbose());
+    } else if (outputs['stderr:verbose']) {
+      return (event: BaseClientEvent) => this.console.error(event.formatVerbose());
+    }
   }
 }

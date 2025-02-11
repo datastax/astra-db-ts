@@ -15,7 +15,7 @@
 
 import type { DevOpsAPIRequestInfo } from '@/src/lib/api/clients/devops-api-http-client.js';
 import type { DataAPIErrorDescriptor } from '@/src/documents/index.js';
-import { BaseDataAPIClientEvent } from '@/src/lib/logging/events.js';
+import { BaseClientEvent } from '@/src/lib/logging/base-event.js';
 import type { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts.js';
 
 /**
@@ -29,23 +29,23 @@ export type AdminCommandEventMap = {
   /**
    * Emitted when an admin command is started, before the initial HTTP request is made.
    */
-  adminCommandStarted: (event: AdminCommandStartedEvent) => void,
+  adminCommandStarted: AdminCommandStartedEvent,
   /**
    * Emitted when a command is polling in a long-running operation (i.e. create database).
    */
-  adminCommandPolling: (event: AdminCommandPollingEvent) => void,
+  adminCommandPolling: AdminCommandPollingEvent,
   /**
    * Emitted when an admin command has succeeded, after any necessary polling.
    */
-  adminCommandSucceeded: (event: AdminCommandSucceededEvent) => void,
+  adminCommandSucceeded: AdminCommandSucceededEvent,
   /**
    * Emitted when an admin command has errored.
    */
-  adminCommandFailed: (event: AdminCommandFailedEvent) => void,
+  adminCommandFailed: AdminCommandFailedEvent,
   /**
    * Emitted when an admin command has warnings.
    */
-  adminCommandWarnings: (event: AdminCommandWarningsEvent) => void,
+  adminCommandWarnings: AdminCommandWarningsEvent,
 }
 
 /**
@@ -53,7 +53,7 @@ export type AdminCommandEventMap = {
  *
  * @public
  */
-export abstract class AdminCommandEvent extends BaseDataAPIClientEvent {
+export abstract class AdminCommandEvent extends BaseClientEvent {
   /**
    * The path for the request, not including the Base URL.
    */
@@ -89,8 +89,8 @@ export abstract class AdminCommandEvent extends BaseDataAPIClientEvent {
    *
    * @internal
    */
-  protected constructor(name: string, info: DevOpsAPIRequestInfo, longRunning: boolean) {
-    super(name);
+  protected constructor(name: string, requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean) {
+    super(name, requestId);
     this.path = info.path;
     this.method = info.method;
     this.reqBody = info.data;
@@ -102,7 +102,7 @@ export abstract class AdminCommandEvent extends BaseDataAPIClientEvent {
   /**
    * @internal
    */
-  protected _desc() {
+  protected _prefix() {
     return `(${this.methodName}) ${this.method} ${this.path}${this.params ? '?' : ''}${new URLSearchParams(this.params).toString()}`;
   }
 }
@@ -116,6 +116,13 @@ export abstract class AdminCommandEvent extends BaseDataAPIClientEvent {
  */
 export class AdminCommandStartedEvent extends AdminCommandEvent {
   /**
+   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * 
+   * @internal
+   */
+  protected declare permit: this;
+
+  /**
    * The timeout for the request, in milliseconds.
    */
   public readonly timeout: Partial<TimeoutDescriptor>;
@@ -125,16 +132,16 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: Partial<TimeoutDescriptor>) {
-    super('AdminCommandStarted', info, longRunning);
+  constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: Partial<TimeoutDescriptor>) {
+    super('AdminCommandStarted', requestId, info, longRunning);
     this.timeout = timeout;
   }
 
   /**
-   * Formats the warnings into a human-readable string.
+   * @internal
    */
-  public formatted(): string {
-    return `${super.formatted()}: ${this._desc()} ${this.longRunning ? '(blocking) ' : ' '}${this.reqBody ? JSON.stringify(this.reqBody) : ''}`;
+  protected override _message(): string {
+    return `${this._prefix()} ${this.longRunning ? '(blocking) ' : ' '}${this.reqBody ? JSON.stringify(this.reqBody) : ''}`;
   }
 }
 
@@ -148,6 +155,13 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
  * @public
  */
 export class AdminCommandPollingEvent extends AdminCommandEvent {
+  /**
+   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * 
+   * @internal
+   */
+  protected declare permit: this;
+
   /**
    * The elapsed time since the command was started, in milliseconds.
    */
@@ -168,18 +182,18 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(info: DevOpsAPIRequestInfo, started: number, interval: number, pollCount: number) {
-    super('AdminCommandPolling', info, true);
+  constructor(requestId: string, info: DevOpsAPIRequestInfo, started: number, interval: number, pollCount: number) {
+    super('AdminCommandPolling', requestId, info, true);
     this.elapsed = performance.now() - started;
     this.interval = interval;
     this.pollCount = pollCount;
   }
 
   /**
-   * Formats the warnings into a human-readable string.
+   * @internal
    */
-  public formatted(): string {
-    return `${super.formatted()}: ${this._desc()} (poll #${this.pollCount}; ${~~this.elapsed}ms elapsed)`;
+  protected override _message(): string {
+    return `${this._prefix()} (poll #${this.pollCount}; ${~~this.elapsed}ms elapsed)`;
   }
 }
 
@@ -191,6 +205,13 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
  * @public
  */
 export class AdminCommandSucceededEvent extends AdminCommandEvent {
+  /**
+   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * 
+   * @internal
+   */
+  protected declare permit: this;
+
   /**
    * The duration of the command, in milliseconds.
    */
@@ -206,17 +227,17 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number) {
-    super('AdminCommandSucceeded', info, longRunning);
+  constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number) {
+    super('AdminCommandSucceeded', requestId, info, longRunning);
     this.duration = performance.now() - started;
     this.resBody = data || undefined;
   }
 
   /**
-   * Formats the warnings into a human-readable string.
+   * @internal
    */
-  public formatted(): string {
-    return `${super.formatted()}: ${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms)`;
+  protected override _message(): string {
+    return `${this._prefix()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms)`;
   }
 }
 
@@ -228,6 +249,13 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
  * @public
  */
 export class AdminCommandFailedEvent extends AdminCommandEvent {
+  /**
+   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * 
+   * @internal
+   */
+  protected declare permit: this;
+
   /**
    * The duration of the command, in milliseconds.
    */
@@ -246,17 +274,17 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number) {
-    super('AdminCommandFailed', info, longRunning);
+  constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number) {
+    super('AdminCommandFailed', requestId, info, longRunning);
     this.duration = performance.now() - started;
     this.error = error;
   }
 
   /**
-   * Formats the warnings into a human-readable string.
+   * @internal
    */
-  public formatted(): string {
-    return `${super.formatted()}: ${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms) - '${this.error.message}'`;
+  protected override _message(): string {
+    return `${this._prefix()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms) - '${this.error.message}'`;
   }
 }
 
@@ -269,6 +297,13 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
  */
 export class AdminCommandWarningsEvent extends AdminCommandEvent {
   /**
+   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * 
+   * @internal
+   */
+  protected declare permit: this;
+
+  /**
    * The warnings that occurred.
    */
   public readonly warnings: DataAPIErrorDescriptor[];
@@ -278,15 +313,15 @@ export class AdminCommandWarningsEvent extends AdminCommandEvent {
    *
    * @internal
    */
-  constructor(info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: DataAPIErrorDescriptor[]) {
-    super('AdminCommandWarnings', info, longRunning);
+  constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: DataAPIErrorDescriptor[]) {
+    super('AdminCommandWarnings', requestId, info, longRunning);
     this.warnings = warnings;
   }
 
   /**
-   * Formats the warnings into a human-readable string.
+   * @internal
    */
-  public formatted(): string {
-    return `${super.formatted()}: ${this._desc()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}- '${this.warnings.map(w => w.message).join(', ')}'`;
+  protected override _message(): string {
+    return `${this._prefix()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}- '${this.warnings.map(w => w.message).join(', ')}'`;
   }
 }

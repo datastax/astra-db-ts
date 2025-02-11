@@ -21,6 +21,7 @@ import type { DataAPIHttpClient } from '@/src/lib/api/clients/data-api-http-clie
 import type { Db } from '@/src/db/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import type { ParsedAdminOptions } from '@/src/client/opts-handlers/admin-opts-handler.js';
+import type { DataAPIClient } from '@/src/client/data-api-client.js';
 
 /**
  * An administrative class for managing non-Astra databases, including creating, listing, and deleting keyspaces.
@@ -64,9 +65,10 @@ export class DataAPIDbAdmin extends DbAdmin {
    *
    * @internal
    */
-  constructor(db: Db, httpClient: DataAPIHttpClient, adminOpts: ParsedAdminOptions) {
-    super();
-    this.#httpClient = httpClient.forDbAdmin(adminOpts);
+  constructor(db: Db, client: DataAPIClient, httpClient: DataAPIHttpClient, adminOpts: ParsedAdminOptions) {
+    super(client);
+
+    this.#httpClient = httpClient.forDbAdmin(this, adminOpts);
     this.#db = db;
 
     Object.defineProperty(this, $CustomInspect, {

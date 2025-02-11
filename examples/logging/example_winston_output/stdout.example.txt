@@ -1,0 +1,5 @@
+2025-02-11 13:59:21 info: [astra-db-ts] [98b1c46e] [CommandStarted]: (default_keyspace) createTable fw_logging_example_table (ifNotExists)
+2025-02-11 13:59:22 info: [astra-db-ts] [98b1c46e] [CommandSucceeded]: (default_keyspace) createTable fw_logging_example_table (ifNotExists) (took 1604ms)
+2025-02-11 13:59:23 error: [astra-db-ts] [03a2540b] [CommandFailed]: (default_keyspace.fw_logging_example_table) findOne (took 270ms) - 'Invalid filter expression: filter clause path ('$invalid') contains character(s) not allowed'
+2025-02-11 13:59:23 info: [astra-db-ts] [3bfe7b2b] [CommandStarted]: (default_keyspace) dropTable fw_logging_example_table
+2025-02-11 13:59:25 info: [astra-db-ts] [3bfe7b2b] [CommandSucceeded]: (default_keyspace) dropTable fw_logging_example_table (took 1927ms)

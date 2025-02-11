@@ -14,23 +14,23 @@
 
 import type { MonoidType, OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
 import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler.js';
-import type { DataAPILoggingConfig, DataAPILoggingEvent, DataAPILoggingOutput } from '@/src/lib/index.js';
-import { array, either, exact, nonEmptyArray, nullish, oneOf } from 'decoders';
+import type { LoggingConfig, LoggingEvent, LoggingOutput, OneOrMany } from '@/src/lib/index.js';
+import { array, either, exact, instanceOf, nonEmptyArray, nullish, oneOf } from 'decoders';
 import {
   LoggingDefaultOutputs,
   LoggingDefaults,
+  LoggingEventsWithAll,
   LoggingEvents,
-  LoggingEventsWithoutAll,
   LoggingOutputs,
 } from '@/src/lib/logging/constants.js';
-import { oneOrMany } from '@/src/lib/utils.js';
+import { oneOrMany, toArray } from '@/src/lib/utils.js';
 
 /**
  * @internal
  */
 interface Types extends OptionsHandlerTypes {
   Parsed: ParsedLoggingConfig,
-  Parseable: DataAPILoggingConfig | undefined | null,
+  Parseable: LoggingConfig | undefined | null,
 }
 
 /**
@@ -38,25 +38,25 @@ interface Types extends OptionsHandlerTypes {
  */
 const monoid = monoids.object({
   layers: monoids.array<{
-    events: readonly Exclude<DataAPILoggingEvent, 'all'>[],
-    emits: readonly DataAPILoggingOutput[],
+    events: readonly Exclude<LoggingEvent, 'all' | RegExp>[],
+    emits: readonly LoggingOutput[],
   }>(),
 });
 
 /**
  * @internal
  */
-export type ParsedLoggingConfig = MonoidType<typeof monoid> & Parsed<'DataAPILoggingConfig'>;
+export type ParsedLoggingConfig = MonoidType<typeof monoid> & Parsed<'LoggingConfig'>;
 
 /**
  * @internal
  */
-const oneOfLoggingEvents = oneOf(LoggingEvents).describe('one of DataAPILoggingEvent (including "all")');
+const oneOfLoggingEvents = either(oneOf(LoggingEventsWithAll), instanceOf(RegExp)).describe('one of LoggingEvent (including "all"), or a regex which matches such');
 
 /**
  * @internal
  */
-const oneOfLoggingEventsWithoutAll = oneOf(LoggingEventsWithoutAll).describe('one of DataAPILoggingEvent (excluding "all")');
+const oneOfLoggingEventsWithoutAll = either(oneOf(LoggingEvents), instanceOf(RegExp)).describe('one of LoggingEvent (excluding "all"), or a regex which matches such');
 
 /**
  * @internal
@@ -88,6 +88,10 @@ const transformer = decoder.transform((config) => {
     return { layers: [{ events: [config], emits: LoggingDefaultOutputs[config] }] };
   }
 
+  if (config instanceof RegExp) {
+    config = regex2events(config);
+  }
+
   const layers = config.flatMap((c) => {
     if (c === 'all') {
       return LoggingDefaults;
@@ -97,12 +101,12 @@ const transformer = decoder.transform((config) => {
       return [{ events: [c], emits: LoggingDefaultOutputs[c] }];
     }
 
-    if (c.events === 'all') {
-      return [{ events: LoggingEventsWithoutAll, emits: Array.isArray(c.emits) ? c.emits : [c.emits] }];
+    if (c instanceof RegExp) {
+      return regex2events(c).map((e) => ({ events: [e], emits: LoggingDefaultOutputs[e] }));
     }
 
     return [{
-      events: Array.isArray(c.events) ? c.events : [c.events],
+      events: buildEvents(c.events),
       emits: Array.isArray(c.emits) ? c.emits : [c.emits],
     }];
   });
@@ -114,3 +118,21 @@ const transformer = decoder.transform((config) => {
  * @internal
  */
 export const LoggingCfgHandler = new MonoidalOptionsHandler<Types>(transformer, monoid);
+
+function regex2events(regex: RegExp): typeof LoggingEvents[number][] {
+  return LoggingEvents.filter((e) => regex.test(e));
+}
+
+function buildEvents(events: OneOrMany<LoggingEvent>): readonly Exclude<LoggingEvent, 'all' | RegExp>[] {
+  return toArray(events).flatMap((e) => {
+    if (e === 'all') {
+      return LoggingEvents;
+    }
+
+    if (e instanceof RegExp) {
+      return LoggingEvents.filter((ee) => e.test(ee));
+    }
+
+    return e;
+  });
+}
