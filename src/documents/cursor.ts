@@ -444,7 +444,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns The next record, or `null` if there are no more records.
    */
   public async next(): Promise<T | null> {
-    return this.#next(false);
+    return this.#next(false, '(cursor.next())');
   }
 
   /**
@@ -456,7 +456,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    */
   public async hasNext(): Promise<boolean> {
     const reset2idle = this.#state === 'idle';
-    const res = await this.#next(true) !== null;
+    const res = await this.#next(true, '(cursor.hasNext())') !== null;
 
     if (reset2idle) {
       this.#state = 'idle';
@@ -496,7 +496,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     const reset2idle = this.#state === 'idle';
 
     if (this.#sortVector === undefined) {
-      await this.hasNext();
+      await this.#next(true, '(cursor.getSortVector())');
     }
 
     if (reset2idle) {
@@ -524,18 +524,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * ```
    */
   public async *[Symbol.asyncIterator](): AsyncGenerator<T, void, void> {
-    if (this.state === 'closed') {
-      throw new CursorError('Cannot iterate over a closed cursor', this);
-    }
-
-    try {
-      let doc: T | null;
-      while ((doc = await this.#next(false))) {
-        yield doc;
-      }
-    } finally {
-      this.close();
-    }
+    yield* this.#iterator('(cursor[Symbol.asyncIterator]())');
   }
 
   /**
@@ -555,11 +544,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns A promise that resolves when iteration is complete.
    */
   public async forEach(consumer: ((doc: T) => boolean) | ((doc: T) => void)): Promise<void> {
-    if (this.state === 'closed') {
-      throw new CursorError('Cannot iterate over a closed cursor', this);
-    }
-
-    for await (const doc of this) {
+    for await (const doc of this.#iterator('(cursor.forEach())')) {
       if (consumer(doc) === false) {
         break;
       }
@@ -578,20 +563,11 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns An array of all records in the cursor.
    */
   public async toArray(): Promise<T[]> {
-    if (this.state === 'closed') {
-      throw new CursorError('Cannot convert a closed cursor to an array', this);
-    }
-
     const docs: T[] = [];
     const tm = this.#httpClient.tm.multipart('generalMethodTimeoutMs', this.#options);
 
-    try {
-      let doc: T | null;
-      while ((doc = await this.#next(false, tm))) {
-        docs.push(doc);
-      }
-    } finally {
-      this.close();
+    for await (const doc of this.#iterator('(cursor.toArray())', tm)) {
+      docs.push(doc);
     }
 
     return docs;
@@ -605,13 +581,28 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     this.#buffer.length = 0;
   }
 
+  async* #iterator(method: string, tm?: TimeoutManager): AsyncGenerator<T, void, void> {
+    if (this.state === 'closed') {
+      throw new CursorError('Cannot iterate over a closed cursor', this);
+    }
+
+    try {
+      let doc: T | null;
+      while ((doc = await this.#next(false, `(${method})`, tm))) {
+        yield doc;
+      }
+    } finally {
+      this.close();
+    }
+  }
+
   #clone<R, RRaw extends SomeDoc>(filter: [SerializedFilter, boolean], options: GenericFindOptions, mapping?: (doc: RRaw) => R): FindCursor<R,  RRaw> {
     return new (<any>this.constructor)(this.#parent, this.#serdes, filter, options, mapping);
   }
 
-  async #next(peek: true, tm?: TimeoutManager): Promise<TRaw | nullish>
-  async #next(peek: false, tm?: TimeoutManager): Promise<T>
-  async #next(peek: boolean, tm?: TimeoutManager): Promise<T | TRaw | nullish> {
+  async #next(peek: true, extraLogInfo: string, tm?: TimeoutManager): Promise<TRaw | nullish>
+  async #next(peek: false, extraLogInfo: string, tm?: TimeoutManager): Promise<T>
+  async #next(peek: boolean, extraLogInfo: string, tm?: TimeoutManager): Promise<T | TRaw | nullish> {
     if (this.#state === 'closed') {
       return null;
     }
@@ -623,7 +614,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
           this.close();
           return null;
         }
-        await this.#getMore(tm);
+        await this.#getMore(extraLogInfo, tm);
       }
 
       if (peek) {
@@ -642,7 +633,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     }
   }
 
-  async #getMore(tm?: TimeoutManager): Promise<void> {
+  async #getMore(extraLogInfo: string, tm: TimeoutManager | undefined): Promise<void> {
     const command: InternalGetMoreCommand = {
       find: {
         filter: this.#filter[0],
@@ -661,6 +652,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     const raw = await this.#httpClient.executeCommand(command, {
       timeoutManager: tm ?? this.#httpClient.tm.single('generalMethodTimeoutMs', this.#options),
       bigNumsPresent: this.#filter[1],
+      extraLogInfo: extraLogInfo,
     });
 
     this.#nextPageState = raw.data?.nextPageState || null;

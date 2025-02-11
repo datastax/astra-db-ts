@@ -733,13 +733,14 @@ export type CommandEventTarget = 'database' | 'keyspace' | 'table' | 'collection
 // @public
 export class CommandFailedEvent extends CommandEvent {
     // @internal
-    constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, error: Error, started: number);
+    constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, reply: RawDataAPIResponse | undefined, error: Error, started: number);
     readonly duration: number;
     readonly error: Error;
     // @internal (undocumented)
     protected _message(): string;
     // @internal
     protected permit: this;
+    readonly resp?: RawDataAPIResponse;
 }
 
 // @public
