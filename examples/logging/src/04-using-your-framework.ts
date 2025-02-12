@@ -58,16 +58,16 @@ for (const event of LoggingEvents.filter((e) => /.*(Started|Succeeded|Polling)/.
     // The admin events, and events that are not acted upon collections/tables (e.g. create, drop, list, etc.) are logged as 'info' events.
     // This is just a simple example of applying custom logic to enhance the logging output.
     if (e instanceof CommandEvent && (e.target === 'collection' || e.target === 'table')) {
-      logger.http(`[astra-db-ts] ${e.format(eventFormatter)}`, e)
+      logger.http(`[astra-db-ts] ${e.format(eventFormatter)}`, e.hideDupeFields())
     } else {
-      logger.info(`[astra-db-ts] ${e.format(eventFormatter)}`, e)
+      logger.info(`[astra-db-ts] ${e.format(eventFormatter)}`, e.hideDupeFields())
     }
   });
 }
 
 // And all failed and warning events are logged as 'error' events
 for (const event of LoggingEvents.filter((e) => /.*(Failed|Warning)/.test(e))) {
-  client.on(event, (e) => logger.error(`[astra-db-ts] ${e.format(eventFormatter)}`, e));
+  client.on(event, (e) => logger.error(`[astra-db-ts] ${e.format(eventFormatter)}`, e.hideDupeFields()));
 }
 
 // -----===<{ STEP 4: Use the client }>===-----

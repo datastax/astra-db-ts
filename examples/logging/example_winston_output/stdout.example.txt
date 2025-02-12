@@ -1,5 +1,5 @@
-2025-02-12 13:14:08 [astra-db-ts] [bd9a08d7] [CommandStarted]: default_keyspace::createTable {name=fw_logging_example_table,ifNotExists=true}
-2025-02-12 13:14:10 [astra-db-ts] [bd9a08d7] [CommandSucceeded]: default_keyspace::createTable {name=fw_logging_example_table,ifNotExists=true} (1594ms)
-2025-02-12 13:14:11 [astra-db-ts] [e177c9bf] [CommandFailed]: fw_logging_example_table::findOne (255ms) ERROR: 'Invalid filter expression: filter clause path ('$invalid') contains character(s) not allowed'
-2025-02-12 13:14:11 [astra-db-ts] [b61efe76] [CommandStarted]: default_keyspace::dropTable {name=fw_logging_example_table,ifExists=false}
-2025-02-12 13:14:13 [astra-db-ts] [b61efe76] [CommandSucceeded]: default_keyspace::dropTable {name=fw_logging_example_table,ifExists=false} (1845ms)
+2025-02-12 16:23:32 [astra-db-ts] [bb9f06ea] [CommandStarted]: default_keyspace::createTable {name=fw_logging_example_table,ifNotExists=true}
+2025-02-12 16:23:33 [astra-db-ts] [bb9f06ea] [CommandSucceeded]: default_keyspace::createTable {name=fw_logging_example_table,ifNotExists=true} (1766ms)
+2025-02-12 16:23:34 [astra-db-ts] [d71bb50f] [CommandFailed]: fw_logging_example_table::findOne (305ms) ERROR: 'Invalid filter expression: filter clause path ('$invalid') contains character(s) not allowed'
+2025-02-12 16:23:34 [astra-db-ts] [918ca127] [CommandStarted]: default_keyspace::dropTable {name=fw_logging_example_table,ifExists=false}
+2025-02-12 16:23:36 [astra-db-ts] [918ca127] [CommandSucceeded]: default_keyspace::dropTable {name=fw_logging_example_table,ifExists=false} (1740ms)

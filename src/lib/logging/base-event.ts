@@ -237,6 +237,8 @@ export abstract class BaseClientEvent {
     return formatter(this as any, this.getMessagePrefix() + this.getMessage());
   }
 
+  protected static formatVerboseTransientKeys: string[];
+
   /**
    * ##### Overview
    *
@@ -247,7 +249,15 @@ export abstract class BaseClientEvent {
    * @returns A JSON string with full event details.
    */
   public formatVerbose(): string {
-    return JSON.stringify(this, null, 2);
+    const entries = Object.entries(this.hideDupeFields())
+      .filter(([k]) => {
+        return !(this.constructor as any).formatVerboseTransientKeys.includes(k);
+      });
+
+    const obj = Object.fromEntries(entries);
+    obj.timestamp = mkSimpleTimestamp(this.timestamp);
+
+    return JSON.stringify(obj, null, 2);
   }
 
   /**
@@ -311,6 +321,10 @@ export abstract class BaseClientEvent {
    */
   public stopImmediatePropagation(): void {
     this._propagationState = PropagationState.StopImmediate;
+  }
+
+  public hideDupeFields(): this {
+    return this;
   }
 }
 

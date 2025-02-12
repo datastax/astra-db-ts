@@ -218,7 +218,14 @@ export interface DataAPIDetailedErrorDescriptor {
  *
  * @public
  */
-export abstract class DataAPIError extends Error {}
+export abstract class DataAPIError extends Error {
+  /**
+   * @internal
+   */
+  public withTransientDupesForEvents(): object {
+    return this;
+  }
+}
 
 /**
  * An error thrown on non-2XX status codes from the Data API, such as 4XX or 5XX errors.
@@ -405,6 +412,16 @@ export class DataAPIResponseError extends DataAPIError {
       value: errorDescriptors,
       enumerable: false,
     });
+  }
+
+  /**
+   * @internal
+   */
+  public withTransientDupesForEvents() {
+    return {
+      name: this.name,
+      message: `${this.name} fields not separately serialized; all context already in the CommandFailed event`,
+    };
   }
 }
 

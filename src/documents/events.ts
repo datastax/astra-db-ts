@@ -16,6 +16,7 @@ import { type RawDataAPIResponse } from '@/src/lib/index.js';
 import { BaseClientEvent } from '@/src/lib/logging/base-event.js';
 import type { DataAPIRequestInfo } from '@/src/lib/api/clients/data-api-http-client.js';
 import type { DataAPIErrorDescriptor } from '@/src/documents/errors.js';
+import { DataAPIError } from '@/src/documents/errors.js';
 import type { TimeoutDescriptor } from '@/src/lib/api/timeouts/timeouts.js';
 
 /**
@@ -107,7 +108,12 @@ export abstract class CommandEvent extends BaseClientEvent {
    * @internal
    */
   protected declare extraLogInfo: string;
-  
+
+  /**
+   * @internal
+   */
+  protected static override formatVerboseTransientKeys: (keyof CommandEvent)[] = ['keyspace', 'source', 'commandName', 'target'];
+
   /**
    * Should not be instantiated directly.
    *
@@ -267,6 +273,13 @@ export class CommandFailedEvent extends CommandEvent {
 
   public override getMessage(): string {
     return `${this.extraLogInfo} (${~~this.duration}ms) ERROR: '${this.error.message}'`;
+  }
+
+  public override hideDupeFields(): this {
+    if (this.error instanceof DataAPIError) {
+      return { ...this, error: this.error.withTransientDupesForEvents() };
+    }
+    return this;
   }
 }
 
