@@ -75,7 +75,7 @@ export class DevOpsAPIHttpClient extends HttpClient {
     const isLongRunning = info.options?.blocking !== false;
     const timeoutManager = info.timeoutManager;
 
-    const requestId = this.logger.generateCommandRequestId();
+    const requestId = this.logger.generateAdminCommandRequestId();
 
     this.logger.adminCommandStarted?.(requestId, req, isLongRunning, timeoutManager.initial());
 

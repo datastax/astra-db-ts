@@ -29,7 +29,7 @@ if (process.env.NODE_ENV !== 'production') {
   logger.add(new winston.transports.Console({
     level: 'info',
     format: winston.format.combine(
-      winston.format.printf((info) => `${info.timestamp} ${info.level}: ${info.message}`),
+      winston.format.printf((info) => `${info.timestamp} ${info.message}`),
       winston.format.colorize(),
     ),
   }));
@@ -43,6 +43,7 @@ const db = client.db(process.env.ASTRA_DB_ENDPOINT!, { token: process.env.ASTRA_
 
 // -----===<{ STEP 3: Plug in the framework }>===-----
 
+// message is equivalent to `event.getMessagePrefix() + event.getMessage()`
 const eventFormatter: EventFormatter = (event, message) => {
   return `[${event.requestId.slice(0, 8)}] [${event.name}]: ${message}`;
 }

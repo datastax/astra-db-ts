@@ -107,14 +107,14 @@ export abstract class CommandEvent extends BaseClientEvent {
    * @internal
    */
   protected declare extraLogInfo: string;
-
+  
   /**
    * Should not be instantiated directly.
    *
    * @internal
    */
-  protected constructor(name: string, requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined) {
-    super(name, requestId);
+  protected constructor(name: string, requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined) {
+    super(name, requestId, extra);
     this.command = info.command;
     this.keyspace = info.keyspace;
     this.source = info.collection;
@@ -123,16 +123,16 @@ export abstract class CommandEvent extends BaseClientEvent {
     this.url = info.url;
 
     Object.defineProperty(this, 'extraLogInfo', {
-      value: extraLogInfo ? ' ' + extraLogInfo : '',
+      value: extra ? ` {${Object.entries(extra).map(([k, v]) => `${k}=${v}`).join(',')}}` : '',
       enumerable: false,
     });
   }
 
-  /**
-   * @internal
-   */
-  protected _prefix() {
-    return `(${this.keyspace ?? '<no_keyspace>'}${this.source ? `.${this.source}` : ''}) ${this.commandName}`;
+  public override getMessagePrefix() {
+    if (!this.source) {
+      return `${this.keyspace ?? '<no_keyspace>'}::${this.commandName}`;
+    }
+    return `${this.source}::${this.commandName}`;
   }
 }
 
@@ -149,7 +149,7 @@ export abstract class CommandEvent extends BaseClientEvent {
 export class CommandStartedEvent extends CommandEvent {
   /**
    * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
-   * 
+   *
    * @internal
    */
   protected declare permit: this;
@@ -164,16 +164,13 @@ export class CommandStartedEvent extends CommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined) {
-    super('CommandStarted', requestId, info, extraLogInfo);
+  constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined) {
+    super('CommandStarted', requestId, info, extra);
     this.timeout = info.timeoutManager.initial();
   }
 
-  /**
-   * @internal
-   */
-  protected override _message(): string {
-    return `${this._prefix()}${this.extraLogInfo}`;
+  public override getMessage(): string {
+    return this.extraLogInfo;
   }
 }
 
@@ -190,7 +187,7 @@ export class CommandStartedEvent extends CommandEvent {
 export class CommandSucceededEvent extends CommandEvent {
   /**
    * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
-   * 
+   *
    * @internal
    */
   protected declare permit: this;
@@ -210,17 +207,14 @@ export class CommandSucceededEvent extends CommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, reply: RawDataAPIResponse, started: number) {
-    super('CommandSucceeded', requestId, info, extraLogInfo);
+  constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, reply: RawDataAPIResponse, started: number) {
+    super('CommandSucceeded', requestId, info, extra);
     this.duration = performance.now() - started;
     this.resp = reply;
   }
 
-  /**
-   * @internal
-   */
-  protected override _message(): string {
-    return `${this._prefix()}${this.extraLogInfo} (took ${~~this.duration}ms)`;
+  public override getMessage(): string {
+    return `${this.extraLogInfo} (${~~this.duration}ms)`;
   }
 }
 
@@ -237,7 +231,7 @@ export class CommandSucceededEvent extends CommandEvent {
 export class CommandFailedEvent extends CommandEvent {
   /**
    * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
-   * 
+   *
    * @internal
    */
   protected declare permit: this;
@@ -264,18 +258,15 @@ export class CommandFailedEvent extends CommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, reply: RawDataAPIResponse | undefined, error: Error, started: number) {
-    super('CommandFailed', requestId, info, extraLogInfo);
+  constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, reply: RawDataAPIResponse | undefined, error: Error, started: number) {
+    super('CommandFailed', requestId, info, extra);
     this.duration = performance.now() - started;
     this.resp = reply;
     this.error = error;
   }
 
-  /**
-   * @internal
-   */
-  protected override _message(): string {
-    return `${this._prefix()}${this.extraLogInfo} (took ${~~this.duration}ms) - '${this.error.message}'`;
+  public override getMessage(): string {
+    return `${this.extraLogInfo} (${~~this.duration}ms) ERROR: '${this.error.message}'`;
   }
 }
 
@@ -289,7 +280,7 @@ export class CommandFailedEvent extends CommandEvent {
 export class CommandWarningsEvent extends CommandEvent {
   /**
    * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
-   * 
+   *
    * @internal
    */
   protected declare permit: this;
@@ -304,15 +295,12 @@ export class CommandWarningsEvent extends CommandEvent {
    *
    * @internal
    */
-  constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, warnings: DataAPIErrorDescriptor[]) {
-    super('CommandWarnings', requestId, info, extraLogInfo);
+  constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, warnings: DataAPIErrorDescriptor[]) {
+    super('CommandWarnings', requestId, info, extra);
     this.warnings = warnings;
   }
 
-  /**
-   * @internal
-   */
-  protected override _message(): string {
-    return `${this._prefix()}${this.extraLogInfo} '${this.warnings.map(w => w.message).join(', ')}'`;
+  public override getMessage(): string {
+    return `${this.extraLogInfo} WARNINGS: ${this.warnings.map(w => `'${w.message}'`).join(', ')}`;
   }
 }

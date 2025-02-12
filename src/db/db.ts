@@ -741,7 +741,7 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
         },
       }),
       keyspace: options?.keyspace,
-      extraLogInfo: name,
+      extraLogInfo: { name },
     });
 
     return this.collection(name, options);
@@ -905,15 +905,15 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
         name: name,
         definition: options.definition,
         options: {
-          ifNotExists: options.ifNotExists ?? false,
+          ifNotExists: options.ifNotExists,
         },
       },
     };
 
     await this.#httpClient.executeCommand(command, {
       timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
+      extraLogInfo: { name, ifNotExists: options.ifNotExists ?? false },
       keyspace: options?.keyspace,
-      extraLogInfo: options.ifNotExists ? `${name} (ifNotExists)` : name,
     });
 
     return this.table(name, options);
@@ -951,7 +951,7 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
     await this.#httpClient.executeCommand({ deleteCollection: { name } }, {
       timeoutManager: this.#httpClient.tm.single('collectionAdminTimeoutMs', options),
       keyspace: options?.keyspace,
-      extraLogInfo: name,
+      extraLogInfo: { name },
     });
   }
 
@@ -986,8 +986,8 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
   public async dropTable(name: string, options?: DropTableOptions): Promise<void> {
     await this.#httpClient.executeCommand({ dropTable: { name, options: { ifExists: options?.ifExists } } }, {
       timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
+      extraLogInfo: { name, ifExists: options?.ifExists ?? false },
       keyspace: options?.keyspace,
-      extraLogInfo: options?.ifExists ? `${name} (ifExists)` : name,
     });
   }
 
@@ -1016,8 +1016,8 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
 
     await this.#httpClient.executeCommand({ dropIndex: { name, options: dropOpts } }, {
       timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
+      extraLogInfo: { name, ifExists: options?.ifExists ?? false },
       keyspace: options?.keyspace,
-      extraLogInfo: options?.ifExists ? `${name} (ifExists)` : name,
     });
   }
 
@@ -1073,8 +1073,8 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
 
     const resp = await this.#httpClient.executeCommand(command, {
       timeoutManager: this.#httpClient.tm.single('collectionAdminTimeoutMs', options),
+      extraLogInfo: { nameOnly: !explain },
       keyspace: options?.keyspace,
-      extraLogInfo: explain ? 'with options' : 'name only',
     });
 
     const colls = resp.status!.collections;
@@ -1131,18 +1131,18 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
   public async listTables(options?: ListTablesOptions & { nameOnly?: false }): Promise<TableDescriptor[]>
 
   public async listTables(options?: ListTablesOptions): Promise<string[] | TableDescriptor[]> {
+    const explain = options?.nameOnly !== true;
+
     const command = {
       listTables: {
-        options: {
-          explain: options?.nameOnly !== true,
-        },
+        options: { explain },
       },
     };
 
     const resp = await this.#httpClient.executeCommand(command, {
       timeoutManager: this.#httpClient.tm.single('tableAdminTimeoutMs', options),
+      extraLogInfo: { nameOnly: !explain },
       keyspace: options?.keyspace,
-      extraLogInfo: options?.nameOnly ? 'name only' : 'with options',
     });
     return resp.status!.tables;
   }
@@ -1182,7 +1182,7 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
       timeoutManager: this.#httpClient.tm.single('generalMethodTimeoutMs', options),
       keyspace: options?.keyspace,
       collection: options?.collection,
-      extraLogInfo: options?.extraLogInfo ?? '(db.command())',
+      extraLogInfo: options?.extraLogInfo ?? { source: 'db.command' },
       table: options?.table,
     });
   }

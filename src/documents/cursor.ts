@@ -444,7 +444,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns The next record, or `null` if there are no more records.
    */
   public async next(): Promise<T | null> {
-    return this.#next(false, '(cursor.next())');
+    return this.#next(false, '.next');
   }
 
   /**
@@ -456,7 +456,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    */
   public async hasNext(): Promise<boolean> {
     const reset2idle = this.#state === 'idle';
-    const res = await this.#next(true, '(cursor.hasNext())') !== null;
+    const res = await this.#next(true, '.hasNext') !== null;
 
     if (reset2idle) {
       this.#state = 'idle';
@@ -496,7 +496,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     const reset2idle = this.#state === 'idle';
 
     if (this.#sortVector === undefined) {
-      await this.#next(true, '(cursor.getSortVector())');
+      await this.#next(true, '.getSortVector');
     }
 
     if (reset2idle) {
@@ -524,7 +524,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * ```
    */
   public async *[Symbol.asyncIterator](): AsyncGenerator<T, void, void> {
-    yield* this.#iterator('(cursor[Symbol.asyncIterator]())');
+    yield* this.#iterator('[asyncIterator]');
   }
 
   /**
@@ -547,7 +547,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * If you get an IDE error "Promise returned from forEach argument is ignored", it is a known [WebStorm bug](https://youtrack.jetbrains.com/issue/WEB-55512/False-positive-for-Promise-returned-from-forEach-argument-is-ignored-with-custom-forEach-function).
    */
   public async forEach(consumer: ((doc: T) => boolean | Promise<boolean>) | ((doc: T) => void | Promise<void>)): Promise<void> {
-    for await (const doc of this.#iterator('(cursor.forEach())')) {
+    for await (const doc of this.#iterator('.forEach')) {
       const resp = consumer(doc);
       const stop = resp instanceof Promise ? await resp : resp;
 
@@ -572,7 +572,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     const docs: T[] = [];
     const tm = this.#httpClient.tm.multipart('generalMethodTimeoutMs', this.#options);
 
-    for await (const doc of this.#iterator('(cursor.toArray())', tm)) {
+    for await (const doc of this.#iterator('.toArray', tm)) {
       docs.push(doc);
     }
 
@@ -594,7 +594,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
 
     try {
       let doc: T | null;
-      while ((doc = await this.#next(false, `(${method})`, tm))) {
+      while ((doc = await this.#next(false, method, tm))) {
         yield doc;
       }
     } finally {
@@ -606,9 +606,9 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     return new (<any>this.constructor)(this.#parent, this.#serdes, filter, options, mapping);
   }
 
-  async #next(peek: true, extraLogInfo: string, tm?: TimeoutManager): Promise<TRaw | nullish>
-  async #next(peek: false, extraLogInfo: string, tm?: TimeoutManager): Promise<T>
-  async #next(peek: boolean, extraLogInfo: string, tm?: TimeoutManager): Promise<T | TRaw | nullish> {
+  async #next(peek: true, method: string, tm?: TimeoutManager): Promise<TRaw | nullish>
+  async #next(peek: false, method: string, tm?: TimeoutManager): Promise<T>
+  async #next(peek: boolean, method: string, tm?: TimeoutManager): Promise<T | TRaw | nullish> {
     if (this.#state === 'closed') {
       return null;
     }
@@ -620,7 +620,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
           this.close();
           return null;
         }
-        await this.#getMore(extraLogInfo, tm);
+        await this.#getMore({ method }, tm);
       }
 
       if (peek) {
@@ -639,7 +639,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     }
   }
 
-  async #getMore(extraLogInfo: string, tm: TimeoutManager | undefined): Promise<void> {
+  async #getMore(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<void> {
     const command: InternalGetMoreCommand = {
       find: {
         filter: this.#filter[0],
@@ -658,7 +658,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     const raw = await this.#httpClient.executeCommand(command, {
       timeoutManager: tm ?? this.#httpClient.tm.single('generalMethodTimeoutMs', this.#options),
       bigNumsPresent: this.#filter[1],
-      extraLogInfo: extraLogInfo,
+      extraLogInfo: extra,
     });
 
     this.#nextPageState = raw.data?.nextPageState || null;

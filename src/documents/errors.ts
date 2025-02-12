@@ -371,8 +371,10 @@ export class DataAPIResponseError extends DataAPIError {
    *
    * This is *always* equal to `detailedErrorDescriptors.flatMap(d => d.errorDescriptors)`, for the user's
    * convenience.
+   *
+   * Note that this is transient and not enumerable, as it is no more than a utility field that's functionally a duplicate of {@link DataAPIResponseError.detailedErrorDescriptors}.
    */
-  public readonly errorDescriptors: DataAPIErrorDescriptor[];
+  public readonly errorDescriptors!: DataAPIErrorDescriptor[];
 
   /**
    * A list of errors 1:1 with the number of errorful API requests made to the server. Each element contains the
@@ -396,9 +398,13 @@ export class DataAPIResponseError extends DataAPIError {
 
     super(message);
     this.message = message;
-    this.errorDescriptors = errorDescriptors;
     this.detailedErrorDescriptors = detailedErrDescriptors;
     this.name = 'DataAPIResponseError';
+
+    Object.defineProperty(this, 'errorDescriptors', {
+      value: errorDescriptors,
+      enumerable: false,
+    });
   }
 }
 

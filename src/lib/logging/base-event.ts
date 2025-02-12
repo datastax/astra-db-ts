@@ -76,7 +76,7 @@ export const enum PropagationState {
  *
  * @public
  */
-export type EventFormatter = (event: DataAPIClientEvent, message: string) => string;
+export type EventFormatter = (event: DataAPIClientEvent, fullMessage: string) => string;
 
 /**
  * ##### Overview
@@ -193,6 +193,11 @@ export abstract class BaseClientEvent {
   public readonly requestId: string;
 
   /**
+   * Any extra information that may be useful for debugging.
+   */
+  public readonly extra: Record<string, any> | undefined;
+
+  /**
    * @internal
    */
   public declare _propagationState: PropagationState;
@@ -202,9 +207,10 @@ export abstract class BaseClientEvent {
    *
    * @internal
    */
-  protected constructor(name: string, requestId: string) {
+  protected constructor(name: string, requestId: string, extra: Record<string, unknown> | undefined) {
     this.name = name;
     this.requestId = requestId;
+    this.extra = extra;
     this.timestamp = new Date();
 
     Object.defineProperty(this, '_propagationState', {
@@ -214,10 +220,8 @@ export abstract class BaseClientEvent {
     });
   }
 
-  /**
-   * @internal
-   */
-  protected abstract _message(): string;
+  public abstract getMessagePrefix(): string;
+  public abstract getMessage(): string;
 
   /**
    * ##### Overview
@@ -230,7 +234,7 @@ export abstract class BaseClientEvent {
    * @returns The formatted event string.
    */
   public format(formatter: EventFormatter = BaseClientEvent._defaultFormatter): string {
-    return formatter(this as any, this._message());
+    return formatter(this as any, this.getMessagePrefix() + this.getMessage());
   }
 
   /**
@@ -310,8 +314,8 @@ export abstract class BaseClientEvent {
   }
 }
 
-function defaultFormatFn(event: DataAPIClientEvent, message: string) {
-  return `${mkSimpleTimestamp(event.timestamp)} [${event.requestId.slice(0, 8)}] [${event.name}]: ${message}`;
+function defaultFormatFn(event: DataAPIClientEvent, fullMessage: string) {
+  return `${mkSimpleTimestamp(event.timestamp)} [${event.requestId.slice(0, 8)}] [${event.name}]: ${fullMessage}`;
 }
 
 function mkSimpleTimestamp(date: Date) {

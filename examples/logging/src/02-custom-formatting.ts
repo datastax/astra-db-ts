@@ -42,8 +42,8 @@ try {
   });
 
   // Logs:
-  // - [2025-02-11T07:45:25.212Z] [4f729318] (CommandStarted) (on table) - (default_keyspace.custom_fmt_logging_example_table) insertMany 3 records (ordered)
-  // - [2025-02-11T07:45:26.055Z] [4f729318] (CommandSucceeded) (on table) - (default_keyspace.custom_fmt_logging_example_table) insertMany 3 records (ordered) (took 842ms)
+  // - [2025-02-12T07:44:00.817Z] [66b73e60] (CommandStarted) (on table) - custom_fmt_logging_example_table::insertMany {records=3,ordered=true}
+  // - [2025-02-12T07:44:01.122Z] [66b73e60] (CommandSucceeded) (on table) - custom_fmt_logging_example_table::insertMany {records=3,ordered=true} (304ms)
   await table.insertMany([
     { name: 'Alice', position: 0 },
     { name: 'Brian', position: 1 },
@@ -51,14 +51,14 @@ try {
   ], { ordered: true });
 
   // Logs:
-  // - [2025-02-11T07:45:26.056Z] [0007b713] (CommandStarted) (on table) - (default_keyspace.custom_fmt_logging_example_table) findOne
-  // - [2025-02-11T07:45:26.303Z] [0007b713] (CommandFailed) (on table) - (default_keyspace.custom_fmt_logging_example_table) findOne (took 246ms) - 'Invalid filter expression: filter clause path ('$invalid') contains character(s) not allowed'
+  // - [2025-02-12T07:44:01.123Z] [0cd1e298] (CommandStarted) (on table) - custom_fmt_logging_example_table::findOne
+  // - [2025-02-12T07:44:01.430Z] [0cd1e298] (CommandFailed) (on table) - custom_fmt_logging_example_table::findOne (306ms) ERROR: 'Invalid filter expression: filter clause path ('$invalid') contains character(s) not allowed'
   await table.findOne({
     $invalid: 'Alice',
   }).catch(() => {});
 } finally {
   // Logs:
-  // - [2025-02-11T07:45:26.304Z] [f60b6441] (CommandStarted) (on keyspace) - (default_keyspace) dropTable custom_fmt_logging_example_table
-  // - [2025-02-11T07:45:28.037Z] [f60b6441] (CommandSucceeded) (on keyspace) - (default_keyspace) dropTable custom_fmt_logging_example_table (took 1733ms)
+  // - [2025-02-12T07:44:01.431Z] [3d3360fc] (CommandStarted) (on keyspace) - default_keyspace::dropTable {name=custom_fmt_logging_example_table,ifExists=false}
+  // - [2025-02-12T07:44:03.171Z] [3d3360fc] (CommandSucceeded) (on keyspace) - default_keyspace::dropTable {name=custom_fmt_logging_example_table,ifExists=false} (1739ms)
   await db.dropTable('custom_fmt_logging_example_table');
 }

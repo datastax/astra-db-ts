@@ -215,7 +215,7 @@ export class CommandImpls<ID> {
         resp = await this._httpClient.executeCommand(command, {
           timeoutManager,
           bigNumsPresent: filter[1],
-          extraLogInfo: isDeleteAll ? '(deleting all)' : undefined,
+          extraLogInfo: isDeleteAll ? { deleteAll: true } : undefined,
         });
         numDeleted += resp.status?.deletedCount ?? 0;
       }
@@ -366,8 +366,8 @@ export class CommandImpls<ID> {
 
     const resp = await this._httpClient.executeCommand(command, {
       timeoutManager: this._httpClient.tm.single('generalMethodTimeoutMs', options),
+      extraLogInfo: { upperBound },
       bigNumsPresent,
-      extraLogInfo: `(upperBound: ${upperBound})`,
     });
 
     if (resp.status?.moreData) {
