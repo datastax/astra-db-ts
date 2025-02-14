@@ -191,7 +191,7 @@ export type DataAPIClientEvent = DataAPIClientEventMap[keyof DataAPIClientEventM
  *
  * @example
  * ```ts
- * // Sets sane defaults for logging
+ * // Set sane defaults for logging
  * const client = new DataAPIClient({
  *   logging: 'all',
  * });

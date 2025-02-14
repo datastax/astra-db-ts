@@ -88,7 +88,7 @@ export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>>
    *
    * @returns A function to unsubscribe the listener.
    */
-  public on<E extends keyof Events>(eventName: E, listener: (e: Events[E]) => void): () => void {
+  public on<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void): () => void {
     if (!this.#listeners[eventName]) {
       this.#listeners[eventName] = [];
     }
@@ -106,7 +106,7 @@ export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>>
    * @param eventName - The event to unsubscribe from.
    * @param listener - The listener to remove.
    */
-  public off<E extends keyof Events>(eventName: E, listener: (e: Events[E]) => void): void {
+  public off<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void): void {
     if (!this.#listeners[eventName]) {
       return;
     }
@@ -130,12 +130,12 @@ export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>>
    *
    * @returns A function to prematurely unsubscribe the listener.
    */
-  public once<E extends keyof Events>(eventName: E, listener: (e: Events[E]) => void): () => void {
-    const onceListener = (event: Events[E]) => {
-      this.off(eventName, onceListener);
+  public once<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void): () => void {
+    const off = this.on(eventName, (event) => {
+      off();
       listener(event);
-    };
-    return this.on(eventName, onceListener);
+    });
+    return off;
   }
 
   /**
