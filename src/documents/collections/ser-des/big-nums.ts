@@ -13,7 +13,7 @@
 // limitations under the License.
 
 import { BigNumber } from 'bignumber.js';
-import type { CollectionDesCtx } from '@/src/documents/index.js';
+import { isBigNumber, pathMatches } from '@/src/lib/utils.js';
 
 /**
  * @public
@@ -28,7 +28,7 @@ export type CollNumRep =
 /**
  * @public
  */
-export type GetCollNumRepFn = (path: readonly (string | number)[]) => CollNumRep;
+export type GetCollNumRepFn = (path: readonly (string | number)[], matches: (exp: readonly (string | number)[], acc: readonly (string | number)[]) => boolean) => CollNumRep;
 
 /**
  * @public
@@ -121,20 +121,20 @@ export class NumCoercionError extends Error {
   }
 }
 
-export const coerceBigNumber = (value: BigNumber, ctx: CollectionDesCtx): unknown => {
-  switch (ctx.getNumRepForPath!(ctx.path)) {
+export const coerceBigNumber = (value: BigNumber, path: (string | number)[], getNumRepForPath: GetCollNumRepFn): unknown => {
+  switch (getNumRepForPath(path, pathMatches)) {
     case 'number': {
       const asNum = value.toNumber();
 
       if (!value.isEqualTo(asNum)) {
-        throw new NumCoercionError(ctx.path, value, 'bignumber', 'number');
+        throw new NumCoercionError(path, value, 'bignumber', 'number');
       }
 
       return asNum;
     }
     case 'bigint': {
       if (!value.isInteger()) {
-        throw new NumCoercionError(ctx.path, value, 'bignumber', 'bigint');
+        throw new NumCoercionError(path, value, 'bignumber', 'bigint');
       }
       return BigInt(value.toFixed(0));
     }
@@ -146,11 +146,11 @@ export const coerceBigNumber = (value: BigNumber, ctx: CollectionDesCtx): unknow
   }
 };
 
-export const coerceNumber = (value: number, ctx: CollectionDesCtx): unknown => {
-  switch (ctx.getNumRepForPath!(ctx.path)) {
+export const coerceNumber = (value: number, path: (string | number)[], getNumRepForPath: GetCollNumRepFn): unknown => {
+  switch (getNumRepForPath(path, pathMatches)) {
     case 'bigint': {
       if (!Number.isInteger(value)) {
-        throw new NumCoercionError(ctx.path, value, 'number', 'bigint');
+        throw new NumCoercionError(path, value, 'number', 'bigint');
       }
       return BigInt(value);
     }
@@ -162,4 +162,34 @@ export const coerceNumber = (value: number, ctx: CollectionDesCtx): unknown => {
     case 'number_or_string':
       return value;
   }
+};
+
+export const coerceNums = (doc: unknown, path: (string | number)[], getNumRepForPath: GetCollNumRepFn): unknown => {
+  if (!doc || typeof doc !== 'object') {
+    return doc;
+  }
+
+  if (Array.isArray(doc)) {
+    for (let i = 0; i < doc.length; i++) {
+      if (typeof doc[i] === 'number') {
+        doc[i] = coerceNumber(doc[i], path, getNumRepForPath);
+      }
+
+      if (isBigNumber(doc[i])) {
+        doc[i] = coerceBigNumber(doc[i], path, getNumRepForPath);
+      }
+    }
+  } else {
+    for (const key of Object.keys(doc)) {
+      if (typeof (doc as any)[key] === 'number') {
+        (doc as any)[key] = coerceNumber((doc as any)[key], path, getNumRepForPath);
+      }
+
+      if (isBigNumber((doc as any)[key])) {
+        (doc as any)[key] = coerceBigNumber((doc as any)[key], path, getNumRepForPath);
+      }
+    }
+  }
+
+  return doc;
 };

@@ -14,14 +14,14 @@
 
 import type { BaseSerDesConfig, SerDesFn } from '@/src/lib/api/ser-des/ser-des.js';
 import { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
-import type { BaseDesCtx, BaseSerCtx} from '@/src/lib/api/ser-des/ctx.js';
+import type { BaseDesCtx, BaseSerCtx } from '@/src/lib/api/ser-des/ctx.js';
 import { NEVERMIND } from '@/src/lib/api/ser-des/ctx.js';
 import type { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs.js';
 import { CollectionCodecs } from '@/src/documents/collections/ser-des/codecs.js';
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { isBigNumber, pathMatches } from '@/src/lib/utils.js';
 import type { CollNumRepCfg, GetCollNumRepFn } from '@/src/documents/index.js';
-import { coerceBigNumber, coerceNumber, collNumRepFnFromCfg } from '@/src/documents/collections/ser-des/big-nums.js';
+import { coerceNums, collNumRepFnFromCfg } from '@/src/documents/collections/ser-des/big-nums.js';
 import { CollSerDesCfgHandler } from '@/src/documents/collections/ser-des/cfg-handler.js';
 import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
 
@@ -71,6 +71,11 @@ export class CollSerDes extends SerDes<CollectionSerCtx, CollectionDesCtx> {
 
   public override adaptDesCtx(ctx: CollectionDesCtx): CollectionDesCtx {
     ctx.getNumRepForPath = this._getNumRepForPath;
+
+    if (ctx.getNumRepForPath) {
+      coerceNums(ctx.rootObj, [], ctx.getNumRepForPath);
+    }
+
     return ctx;
   }
 
@@ -137,16 +142,6 @@ const serialize: SerDesFn<CollectionSerCtx> = (value, ctx) => {
 
 const deserialize: SerDesFn<CollectionDesCtx> = (value, ctx) => {
   let resp: ReturnType<SerDesFn<unknown>> = null!;
-
-  if (ctx.getNumRepForPath) {
-    if (typeof value === 'number') {
-      value = coerceNumber(value, ctx);
-    }
-
-    if (isBigNumber(value)) {
-      value = coerceBigNumber(value, ctx);
-    }
-  }
 
   // Path-based deserializers
   for (const pathDes of ctx.deserializers.forPath[ctx.path.length] ?? []) {

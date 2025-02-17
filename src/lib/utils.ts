@@ -53,7 +53,7 @@ export function toArray<T>(t: T | readonly T[]): readonly T[] {
 /**
  * @internal
  */
-export function withJbiNullProtoFix(jbi: { parse: typeof JBI['parse']; stringify: typeof JBI['stringify'] }) {
+export function withJbiNullProtoFix(jbi: ReturnType<typeof JBI>) {
   return {
     parse: (str: string) => nullProtoFix(jbi.parse(str)),
     stringify: jbi.stringify,

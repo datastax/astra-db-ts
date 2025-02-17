@@ -122,7 +122,7 @@ export type DataAPIClientEvent = DataAPIClientEventMap[keyof DataAPIClientEventM
  * `logging: '<event>' | ['<events>']`
  * - This will enable only the specified event(s) with default behaviors
  *
- * `logging: /regex/ | [/regex/]`
+ * `logging: /<regex>/ | [/<regex>/]`
  * - This will enable only the matching event(s) with default behaviors
  *
  * `logging: [{ events: ['<events>'], emits: ['<outputs>'] }]`
@@ -232,15 +232,15 @@ export type LoggingConfig = LoggingEvent | readonly (LoggingEvent | ExplicitLogg
  * ##### Overview
  *
  * Represents the different events that can be emitted/logged by the {@link DataAPIClient},
- * or any of its children classes, as well as the convenient shorthand `'all'` to configure all events at once.
+ * or any of its children classes.
  *
- * Additionally, you can use a regular expression to match multiple events at once.
+ * Additionally, you may use regular expressions or `'all'` to match multiple events at once.
  *
  * See {@link DataAPIClientEventMap} & {@link LoggingConfig} for much more info.
  *
- * ##### Regular expressions
+ * ##### Regex matching
  *
- * Regular expressions are a powerful way to match multiple events at once. For example:
+ * Regular expressions are a way to match multiple events at once. For example:
  *
  * ```ts
  * const client = new DataAPIClient({
@@ -260,6 +260,28 @@ export type LoggingConfig = LoggingEvent | readonly (LoggingEvent | ExplicitLogg
  *     emits: 'stderr:verbose',
  *   }],
  * });
+ * ```
+ *
+ * ##### Using `'all'`
+ *
+ * `'all'` is simply a more semantic alternative to using the regex `/.*／` to match all events. There is no functional difference between the two.
+ *
+ * You may use it to enable all events at once with sane defaults:
+ *
+ * ```ts
+ * logging: 'all'
+ * ```
+ *
+ * Or to specify the output for all events at once:
+ *
+ * ```ts
+ * logging: [{ events: 'all', emits: 'stderr:verbose' }]
+ * ```
+ *
+ * Or even as a base config to override with specific rules later:
+ *
+ * ```ts
+ * logging: ['all', { events: ['commandStarted', 'commandSucceeded'], emits: [] }]
  * ```
  *
  * @see LoggingConfig
