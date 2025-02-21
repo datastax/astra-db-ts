@@ -226,7 +226,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
     const serialized = serdesRecord('', { ['']: ctx.rootObj }, ctx, this._serialize)[''];
 
     return [
-      ctx.keyTransformer?.serialize(serialized, ctx) ?? serialized,
+      ctx.keyTransformer?.serialize(serialized, { path: [] }) ?? serialized,
       this.bigNumsPresent(ctx),
     ];
   }
@@ -236,16 +236,14 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
       return obj as S;
     }
 
+    obj = this._cfg.keyTransformer?.deserialize(obj, { path: [] }) ?? obj;
+
     const ctx = this.adaptDesCtx(this._mkCtx(obj, target, {
       deserializers: this._deserializers,
       rawDataApiResp: raw,
     }));
 
-    const rootObj = {
-      ['']: ctx.keyTransformer?.deserialize(ctx.rootObj, ctx) ?? ctx.rootObj,
-    };
-
-    return serdesRecord('', rootObj, ctx, this._deserialize)[''] as S;
+    return serdesRecord('',  { ['']: ctx.rootObj }, ctx, this._deserialize)[''] as S;
   }
 
   protected abstract adaptSerCtx(ctx: BaseSerCtx<SerCtx>): SerCtx;

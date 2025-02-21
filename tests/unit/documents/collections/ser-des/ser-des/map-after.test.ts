@@ -18,6 +18,7 @@ import { Camel2SnakeCase, CollectionCodecs, uuid } from '@/src/index.js';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 import type { CollNominalCodecOpts } from '@/src/documents/collections/ser-des/codecs.js';
 import assert from 'assert';
+import { BigNumber } from 'bignumber.js';
 
 describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
   const repeat = <T>(mk: (n: number) => T) => Array.from({ length: 3 }, (_, i) => mk(i));
@@ -144,7 +145,7 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
 
       assert.deepStrictEqual(serdes.deserialize({
         root1: {
-          nested1_arr: [1n],
+          nested1_arr: [BigNumber(1)],
           nested1_obj: { id: { $uuid: '00000000-0000-0000-0000-000000000000' } },
           nested1_map: { a: 'car', b: 'bus' },
         },

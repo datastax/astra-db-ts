@@ -86,7 +86,7 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
           reviews: book.reviews,
         });
       },
-      deserialize: (value, ctx) => {
+      deserialize: (_, ctx) => {
         if (ctx.target !== SerDesTarget.Record) {
           return ctx.nevermind();
         }

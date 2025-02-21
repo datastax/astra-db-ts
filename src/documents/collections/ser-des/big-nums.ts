@@ -14,6 +14,7 @@
 
 import { BigNumber } from 'bignumber.js';
 import { isBigNumber, pathMatches } from '@/src/lib/utils.js';
+import { AstraDbCloudProvider } from '@/src/administration/index.js';
 
 /**
  * @public
@@ -164,32 +165,33 @@ export const coerceNumber = (value: number, path: (string | number)[], getNumRep
   }
 };
 
-export const coerceNums = (doc: unknown, path: (string | number)[], getNumRepForPath: GetCollNumRepFn): unknown => {
-  if (!doc || typeof doc !== 'object') {
-    return doc;
+export const coerceNums = (val: unknown, path: (string | number)[], getNumRepForPath: GetCollNumRepFn): unknown => {
+  if (typeof val === 'number') {
+    return coerceNumber(val, path, getNumRepForPath);
   }
 
-  if (Array.isArray(doc)) {
-    for (let i = 0; i < doc.length; i++) {
-      if (typeof doc[i] === 'number') {
-        doc[i] = coerceNumber(doc[i], path, getNumRepForPath);
-      }
+  if (!val || typeof val !== 'object') {
+    return val;
+  }
 
-      if (isBigNumber(doc[i])) {
-        doc[i] = coerceBigNumber(doc[i], path, getNumRepForPath);
-      }
+  if (isBigNumber(val)) {
+    return coerceBigNumber(val, path, getNumRepForPath);
+  }
+
+  path.push('<temp>');
+
+  if (Array.isArray(val)) {
+    for (let i = 0; i < val.length; i++) {
+      path[path.length - 1] = i;
+      val[i] = coerceNums(val[i], path, getNumRepForPath);
     }
   } else {
-    for (const key of Object.keys(doc)) {
-      if (typeof (doc as any)[key] === 'number') {
-        (doc as any)[key] = coerceNumber((doc as any)[key], path, getNumRepForPath);
-      }
-
-      if (isBigNumber((doc as any)[key])) {
-        (doc as any)[key] = coerceBigNumber((doc as any)[key], path, getNumRepForPath);
-      }
+    for (const key of Object.keys(val)) {
+      path[path.length - 1] = key;
+      (val as any)[key] = coerceNums((val as any)[key], path, getNumRepForPath);
     }
   }
 
-  return doc;
+  path.pop();
+  return val;
 };
