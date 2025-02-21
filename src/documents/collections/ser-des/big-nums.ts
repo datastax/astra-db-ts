@@ -14,7 +14,6 @@
 
 import { BigNumber } from 'bignumber.js';
 import { isBigNumber, pathMatches } from '@/src/lib/utils.js';
-import { AstraDbCloudProvider } from '@/src/administration/index.js';
 
 /**
  * @public

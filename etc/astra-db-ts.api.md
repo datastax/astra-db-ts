@@ -43,13 +43,13 @@ export abstract class AdminCommandEvent extends BaseClientEvent {
     //
     // @internal
     protected constructor(name: string, requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean);
+    // (undocumented)
+    getMessagePrefix(): string;
     readonly longRunning: boolean;
     readonly method: 'GET' | 'POST' | 'DELETE';
     readonly methodName: string;
     readonly params?: Record<string, any>;
     readonly path: string;
-    // @internal (undocumented)
-    protected _prefix(): string;
     readonly reqBody?: Record<string, any>;
 }
 
@@ -68,8 +68,8 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
     constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number);
     readonly duration: number;
     readonly error: Error;
-    // @internal (undocumented)
-    protected _message(): string;
+    // (undocumented)
+    getMessage(): string;
     // @internal
     protected permit: this;
 }
@@ -79,9 +79,9 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
     // @internal
     constructor(requestId: string, info: DevOpsAPIRequestInfo, started: number, interval: number, pollCount: number);
     readonly elapsed: number;
+    // (undocumented)
+    getMessage(): string;
     readonly interval: number;
-    // @internal (undocumented)
-    protected _message(): string;
     // @internal
     protected permit: this;
     readonly pollCount: number;
@@ -91,8 +91,8 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
 export class AdminCommandStartedEvent extends AdminCommandEvent {
     // @internal
     constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: Partial<TimeoutDescriptor>);
-    // @internal (undocumented)
-    protected _message(): string;
+    // (undocumented)
+    getMessage(): string;
     // @internal
     protected permit: this;
     readonly timeout: Partial<TimeoutDescriptor>;
@@ -103,8 +103,8 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
     // @internal
     constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number);
     readonly duration: number;
-    // @internal (undocumented)
-    protected _message(): string;
+    // (undocumented)
+    getMessage(): string;
     // @internal
     protected permit: this;
     readonly resBody?: Record<string, any>;
@@ -114,8 +114,8 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
 export class AdminCommandWarningsEvent extends AdminCommandEvent {
     // @internal
     constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: DataAPIErrorDescriptor[]);
-    // @internal (undocumented)
-    protected _message(): string;
+    // (undocumented)
+    getMessage(): string;
     // @internal
     protected permit: this;
     readonly warnings: DataAPIErrorDescriptor[];
@@ -127,7 +127,7 @@ export interface AdminOptions {
     adminToken?: string | TokenProvider | null;
     astraEnv?: 'dev' | 'prod' | 'test';
     endpointUrl?: string;
-    logging?: LoggingConfig | undefined;
+    logging?: LoggingConfig;
     timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
 
@@ -274,11 +274,18 @@ export interface BaseAstraDbInfo {
 // @public
 export abstract class BaseClientEvent {
     // @internal
-    protected constructor(name: string, requestId: string);
+    protected constructor(name: string, requestId: string, extra: Record<string, unknown> | undefined);
+    readonly extra: Record<string, any> | undefined;
     format(formatter?: EventFormatter): string;
     formatVerbose(): string;
-    // @internal (undocumented)
-    protected abstract _message(): string;
+    // (undocumented)
+    protected static formatVerboseTransientKeys: string[];
+    // (undocumented)
+    abstract getMessage(): string;
+    // (undocumented)
+    abstract getMessagePrefix(): string;
+    // (undocumented)
+    hideDupeFields(): this;
     readonly name: string;
     // @internal
     protected abstract permit: DataAPIClientEvent;
@@ -309,8 +316,6 @@ export interface BaseSerCtx<SerCex> extends BaseSerDesCtx {
 export interface BaseSerDesConfig<SerCtx extends BaseSerCtx<any>, DesCtx extends BaseDesCtx<any>> {
     // @alpha
     codecs?: (readonly RawCodec<SerCtx, DesCtx>[])[];
-    // @beta
-    keyTransformer?: KeyTransformer;
     mutateInPlace?: boolean;
 }
 
@@ -318,10 +323,6 @@ export interface BaseSerDesConfig<SerCtx extends BaseSerCtx<any>, DesCtx extends
 export interface BaseSerDesCtx {
     // (undocumented)
     done<T>(obj?: T): readonly [0, T?];
-    // Warning: (ae-incompatible-release-tags) The symbol "keyTransformer" is marked as @public, but its signature references "KeyTransformer" which is marked as @beta
-    //
-    // (undocumented)
-    keyTransformer?: KeyTransformer;
     // (undocumented)
     locals: Record<string, any>;
     // (undocumented)
@@ -351,31 +352,6 @@ export const blob: (blob: DataAPIBlobLike) => DataAPIBlob;
 
 // @public
 export type Caller = readonly [name: string, version?: string];
-
-// Warning: (ae-incompatible-release-tags) The symbol "Camel2SnakeCase" is marked as @public, but its signature references "KeyTransformer" which is marked as @beta
-//
-// @public (undocumented)
-export class Camel2SnakeCase extends KeyTransformer {
-    constructor({ exceptId, exceptDollar, transformNested }?: Camel2SnakeCaseOptions);
-    // (undocumented)
-    deserializeKey(snake: string): string;
-    // (undocumented)
-    serializeKey(camel: string): string;
-    // Warning: (ae-forgotten-export) The symbol "KeyTransformerCtx" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    transformNested(ctx: KeyTransformerCtx): boolean;
-}
-
-// @public (undocumented)
-export interface Camel2SnakeCaseOptions {
-    // (undocumented)
-    exceptDollar?: boolean;
-    // (undocumented)
-    exceptId?: boolean;
-    // (undocumented)
-    transformNested?: boolean | ((path: KeyTransformerCtx) => boolean);
-}
 
 // @public
 export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>> extends HierarchicalEmitter<CommandEventMap> {
@@ -706,14 +682,16 @@ export abstract class CommandEvent extends BaseClientEvent {
     // Warning: (ae-forgotten-export) The symbol "DataAPIRequestInfo" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    protected constructor(name: string, requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined);
+    protected constructor(name: string, requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined);
     readonly command: Record<string, any>;
     readonly commandName: string;
     // @internal (undocumented)
     protected extraLogInfo: string;
-    readonly keyspace: string | null;
     // @internal (undocumented)
-    protected _prefix(): string;
+    protected static formatVerboseTransientKeys: (keyof CommandEvent)[];
+    // (undocumented)
+    getMessagePrefix(): string;
+    readonly keyspace: string | null;
     readonly source?: string;
     readonly target: CommandEventTarget;
     readonly url: string;
@@ -733,11 +711,13 @@ export type CommandEventTarget = 'database' | 'keyspace' | 'table' | 'collection
 // @public
 export class CommandFailedEvent extends CommandEvent {
     // @internal
-    constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, reply: RawDataAPIResponse | undefined, error: Error, started: number);
+    constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, reply: RawDataAPIResponse | undefined, error: Error, started: number);
     readonly duration: number;
     readonly error: Error;
-    // @internal (undocumented)
-    protected _message(): string;
+    // (undocumented)
+    getMessage(): string;
+    // (undocumented)
+    hideDupeFields(): this;
     // @internal
     protected permit: this;
     readonly resp?: RawDataAPIResponse;
@@ -746,9 +726,9 @@ export class CommandFailedEvent extends CommandEvent {
 // @public
 export class CommandStartedEvent extends CommandEvent {
     // @internal
-    constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined);
-    // @internal (undocumented)
-    protected _message(): string;
+    constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined);
+    // (undocumented)
+    getMessage(): string;
     // @internal
     protected permit: this;
     readonly timeout: Partial<TimeoutDescriptor>;
@@ -757,10 +737,10 @@ export class CommandStartedEvent extends CommandEvent {
 // @public
 export class CommandSucceededEvent extends CommandEvent {
     // @internal
-    constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, reply: RawDataAPIResponse, started: number);
+    constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, reply: RawDataAPIResponse, started: number);
     readonly duration: number;
-    // @internal (undocumented)
-    protected _message(): string;
+    // (undocumented)
+    getMessage(): string;
     // @internal
     protected permit: this;
     readonly resp: RawDataAPIResponse;
@@ -769,9 +749,9 @@ export class CommandSucceededEvent extends CommandEvent {
 // @public
 export class CommandWarningsEvent extends CommandEvent {
     // @internal
-    constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, warnings: DataAPIErrorDescriptor[]);
-    // @internal (undocumented)
-    protected _message(): string;
+    constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, warnings: DataAPIErrorDescriptor[]);
+    // (undocumented)
+    getMessage(): string;
     // @internal
     protected permit: this;
     readonly warnings: DataAPIErrorDescriptor[];
@@ -961,7 +941,7 @@ export class DataAPIDbAdmin extends DbAdmin {
 // @public
 export interface DataAPIDetailedErrorDescriptor {
     readonly command: Record<string, any>;
-    readonly errorDescriptors: DataAPIErrorDescriptor[];
+    readonly errorDescriptors: readonly DataAPIErrorDescriptor[];
     readonly rawResponse: RawDataAPIResponse;
 }
 
@@ -1030,13 +1010,19 @@ export const DataAPIEnvironments: readonly ["astra", "dse", "hcd", "cassandra", 
 
 // @public
 export abstract class DataAPIError extends Error {
+    // @internal (undocumented)
+    withTransientDupesForEvents(): object;
 }
 
 // @public
 export interface DataAPIErrorDescriptor {
-    readonly attributes?: Record<string, any>;
-    readonly errorCode?: string;
-    readonly message?: string;
+    readonly errorCode: string;
+    // Warning: (ae-forgotten-export) The symbol "LitUnion" needs to be exported by the entry point index.d.ts
+    readonly family: LitUnion<'REQUEST' | 'SERVER'>;
+    readonly id: string;
+    readonly message: string;
+    readonly scope?: string;
+    readonly title: string;
 }
 
 // @public
@@ -1068,6 +1054,11 @@ export class DataAPIResponseError extends DataAPIError {
     readonly detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[];
     readonly errorDescriptors: DataAPIErrorDescriptor[];
     readonly message: string;
+    // @internal (undocumented)
+    withTransientDupesForEvents(): {
+        name: string;
+        message: string;
+    };
 }
 
 // @public
@@ -1358,7 +1349,7 @@ export interface EmbeddingProviderTokenInfo {
 export type EmptyObj = {};
 
 // @public
-export type EventFormatter = (event: DataAPIClientEvent, message: string) => string;
+export type EventFormatter = (event: DataAPIClientEvent, fullMessage: string) => string;
 
 // @public
 export interface ExplicitLoggingConfig {
@@ -1456,7 +1447,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     consumed(): number;
     get dataSource(): Table<SomeRow> | Collection;
     filter(filter: Filter): FindCursor<T, TRaw>;
-    forEach(consumer: ((doc: T) => boolean) | ((doc: T) => void)): Promise<void>;
+    forEach(consumer: ((doc: T) => boolean | Promise<boolean>) | ((doc: T) => void | Promise<void>)): Promise<void>;
     getSortVector(): Promise<DataAPIVector | null>;
     hasNext(): Promise<boolean>;
     includeSimilarity(includeSimilarity?: boolean): FindCursor<WithSim<TRaw>, WithSim<TRaw>>;
@@ -1595,7 +1586,7 @@ export interface GenericUpdateOneOptions extends WithTimeout<'generalMethodTimeo
 export type GenericUpdateResult<ID, N extends number> = (GuaranteedUpdateResult<N> & UpsertedUpdateResult<ID>) | (GuaranteedUpdateResult<N> & NoUpsertUpdateResult);
 
 // @public (undocumented)
-export type GetCollNumRepFn = (path: readonly (string | number)[]) => CollNumRep;
+export type GetCollNumRepFn = (path: readonly (string | number)[], matches: (exp: readonly (string | number)[], acc: readonly (string | number)[]) => boolean) => CollNumRep;
 
 // @public
 export interface GuaranteedUpdateResult<N extends number> {
@@ -1608,9 +1599,9 @@ export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>>
     // @internal
     protected constructor(parent: Pick<HierarchicalEmitter<Events>, 'emit'> | null);
     emit<E extends keyof Events>(eventName: E, event: Events[E]): void;
-    off<E extends keyof Events>(eventName: E, listener: (e: Events[E]) => void): void;
-    on<E extends keyof Events>(eventName: E, listener: (e: Events[E]) => void): () => void;
-    once<E extends keyof Events>(eventName: E, listener: (e: Events[E]) => void): () => void;
+    off<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void): void;
+    on<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void): () => void;
+    once<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void): () => void;
     removeAllListeners<E extends keyof Events>(eventName?: E): void;
 }
 
@@ -1657,17 +1648,6 @@ export type KeyspaceReplicationOptions = {
     class: 'NetworkTopologyStrategy';
     [datacenter: string]: number | 'NetworkTopologyStrategy';
 };
-
-// @beta
-export abstract class KeyTransformer {
-    // @internal (undocumented)
-    deserialize(obj: unknown, ctx: KeyTransformerCtx): unknown;
-    abstract deserializeKey(key: string, ctx: KeyTransformerCtx): string;
-    // @internal (undocumented)
-    serialize(obj: unknown, ctx: KeyTransformerCtx): unknown;
-    abstract serializeKey(key: string, ctx: KeyTransformerCtx): string;
-    abstract transformNested(ctx: KeyTransformerCtx): boolean;
-}
 
 // @public
 export const LIB_NAME = "astra-db-ts";
@@ -1900,7 +1880,7 @@ export type RootDbOptions = Omit<DbOptions, 'logging' | 'timeoutDefaults'>;
 // @public
 export interface RunCommandOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     collection?: string;
-    extraLogInfo?: string;
+    extraLogInfo?: Record<string, unknown>;
     keyspace?: string | null;
     table?: string;
 }
@@ -2119,7 +2099,7 @@ export interface TableFilterOps<Elem> {
 }
 
 // @public
-export class TableFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {
+export class TableFindCursor<T, TRaw extends SomeRow = SomeRow> extends FindCursor<T, TRaw> {
     get dataSource(): Table<SomeRow>;
     filter(filter: TableFilter<TRaw>): FindCursor<T, TRaw>;
 }

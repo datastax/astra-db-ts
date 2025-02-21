@@ -78,12 +78,6 @@ export class TableSerDes extends SerDes<TableSerCtx, TableDesCtx> {
       ctx.tableSchema = UnexpectedDataAPIResponseError.require(status.projectionSchema, 'No `status.projectionSchema` found in response.\n\n**Did you accidentally use a `Table` object on a Collection?** If so, documents may\'ve been found, but the client cannot properly deserialize the response. Please use a `Collection` object instead.', rawDataApiResp);
     }
 
-    if (ctx.keyTransformer) {
-      ctx.tableSchema = Object.fromEntries(Object.entries(ctx.tableSchema).map(([key, value]) => {
-        return [ctx.keyTransformer!.deserializeKey(key, ctx), value];
-      }));
-    }
-
     if (ctx.target === SerDesTarget.InsertedId) {
       ctx.rootObj = Object.fromEntries(Object.keys(ctx.tableSchema).map((key, i) => {
         return [key, ctx.rootObj[i]];

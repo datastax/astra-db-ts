@@ -67,7 +67,7 @@ export class CollectionCodecs {
         return ctx.done({ $date: value.valueOf() });
       },
       deserialize(value, ctx) {
-        return ctx.done(new Date(+value.$date));
+        return ctx.done(new Date(Number(value.$date)));
       },
     }),
     $vector: CollectionCodecs.forName('$vector', DataAPIVector),

@@ -46,6 +46,3 @@ export type {
   WithTimeout,
   TimedOutCategories,
 } from './timeouts/timeouts.js';
-
-export type { Camel2SnakeCaseOptions } from './ser-des/key-transformer.js';
-export { Camel2SnakeCase, KeyTransformer } from './ser-des/key-transformer.js';

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Deserializers, KeyTransformer, RawDataAPIResponse, Serializers } from '@/src/lib/index.js';
+import type { Deserializers, RawDataAPIResponse, Serializers } from '@/src/lib/index.js';
 
 /**
  * @public
@@ -57,7 +57,6 @@ export interface BaseSerDesCtx {
   replace<T>(obj: T): readonly [2, T],
   nevermind(): readonly [3],
   mapAfter(map: (v: any) => unknown): readonly [3],
-  keyTransformer?: KeyTransformer,
   mutatingInPlace: boolean,
   locals: Record<string, any>,
   target: SerDesTarget,

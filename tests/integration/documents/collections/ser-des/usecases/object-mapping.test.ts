@@ -22,7 +22,6 @@ import type {
 import {
   $DeserializeForCollection,
   $SerializeForCollection,
-  Camel2SnakeCase,
   CollectionCodecs,
 } from '@/src/index.js';
 import { BigNumber } from 'bignumber.js';
@@ -126,7 +125,6 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
     const coll = db.collection(DEFAULT_COLLECTION_NAME, {
       serdes: {
         enableBigNumbers: () => 'bignumber',
-        keyTransformer: new Camel2SnakeCase({ transformNested: true }),
         codecs: [ISBNCodec, BookCodec, SetCodec, ReviewCodec],
       },
     });
@@ -147,9 +145,9 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
       title: 'Lord of the Fries',
       author: 'Gilliam Wolding',
       price: BigNumber(-12.50),
-      published_at: { '$date': 0 },
-      inserted_at: { '$date': 32503680000000 },
-      reviews: [{ critic_name: 'Tow Mater', review: 'dad gum!' }],
+      publishedAt: { '$date': 0 },
+      insertedAt: { '$date': 32503680000000 },
+      reviews: [{ criticName: 'Tow Mater', review: 'dad gum!' }],
     };
 
     let cse!: CommandSucceededEvent;
@@ -258,7 +256,6 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
     const coll = db.collection(DEFAULT_COLLECTION_NAME, {
       serdes: {
         enableBigNumbers: () => 'bignumber',
-        keyTransformer: new Camel2SnakeCase({ transformNested: true }),
         codecs: [
           CollectionCodecs.forId(ISBN),
           CollectionCodecs.forPath([], Book),
@@ -284,9 +281,9 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
       title: 'Lord of the Fries',
       author: 'Gilliam Wolding',
       price: BigNumber(-12.50),
-      published_at: { '$date': 0 },
-      inserted_at: { '$date': 32503680000000 },
-      reviews: [{ critic_name: 'Tow Mater', review: 'dad gum!' }],
+      publishedAt: { '$date': 0 },
+      insertedAt: { '$date': 32503680000000 },
+      reviews: [{ criticName: 'Tow Mater', review: 'dad gum!' }],
     };
 
     let cse!: CommandSucceededEvent;

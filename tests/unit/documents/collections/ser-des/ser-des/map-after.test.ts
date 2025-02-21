@@ -14,7 +14,7 @@
 // noinspection DuplicatedCode,CommaExpressionJS
 
 import { describe, it } from '@/tests/testlib/index.js';
-import { Camel2SnakeCase, CollectionCodecs, uuid } from '@/src/index.js';
+import { CollectionCodecs, uuid } from '@/src/index.js';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 import type { CollNominalCodecOpts } from '@/src/documents/collections/ser-des/codecs.js';
 import assert from 'assert';
@@ -85,21 +85,6 @@ describe('unit.documents.collections.ser-des.ser-des.map-after', () => {
         repeat(() => ['root2', serialized.root2]),
         repeat(() => ['[]', serialized]),
       ].flat());
-    });
-
-    it('should not capture key transformations', () => {
-      let val!: unknown;
-
-      const serdes = new CollSerDes({
-        ...CollSerDes.cfg.empty,
-        keyTransformer: new Camel2SnakeCase(),
-        codecs: [
-          CollectionCodecs.forPath([], { serialize: (_, ctx) => (ctx.mapAfter((v) => val = v), ctx.nevermind()) }),
-        ],
-      });
-
-      assert.deepStrictEqual(serdes.serialize({ camelCase: new Date(0) }), [{ camel_case: { $date: 0 } }, false]);
-      assert.deepStrictEqual(val, { camelCase: { $date: 0 } });
     });
   });
 

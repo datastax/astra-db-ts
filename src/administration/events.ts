@@ -303,9 +303,6 @@ export class AdminCommandWarningsEvent extends AdminCommandEvent {
     this.warnings = warnings;
   }
 
-  /**
-   * @internal
-   */
   public override getMessage(): string {
     return `${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''} WARNINGS: ${this.warnings.map(w => `'${w.message}'`).join(', ')}`;
   }
