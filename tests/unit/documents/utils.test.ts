@@ -18,7 +18,6 @@ import {
   extractDbIdFromUrl,
   extractRegionFromUrl,
   mkInvArgsErr,
-  normalizedSort,
 } from '@/src/documents/utils.js';
 import { describe, it } from '@/tests/testlib/index.js';
 import { vector } from '@/src/documents/index.js';
@@ -66,28 +65,6 @@ describe('unit.documents.utils', () => {
       const endpoint2 = 'https://a5cf1913-b80b-4f44-ab9f-ap-south-1.apps.astra.datastax.com';
       const id2 = extractRegionFromUrl(endpoint2);
       assert.strictEqual(id2, 'south-1');
-    });
-  });
-
-  describe('normalizedSort', () => {
-    it('should work', () => {
-      assert.deepStrictEqual(normalizedSort({}), {});
-
-      assert.deepStrictEqual(normalizedSort({
-        field1: 1,
-        field2: -1,
-        field3: [1, 2, 3],
-        field4: vector([1, 2, 3]),
-        field5: { $binary: 'aGVsbG8=' },
-        field6: 'hello world',
-      }), {
-        field1: 1,
-        field2: -1,
-        field3: vector([1, 2, 3]).serialize(),
-        field4: vector([1, 2, 3]).serialize(),
-        field5: { $binary: 'aGVsbG8=' },
-        field6: 'hello world',
-      });
     });
   });
 

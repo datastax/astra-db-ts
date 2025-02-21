@@ -55,25 +55,6 @@ export function extractRegionFromUrl(uri: string): string | undefined {
 /**
  * @internal
  */
-export const normalizedSort = (sort: SomeDoc): Sort => {
-  const ret: Sort = {};
-
-  for (const key in sort) {
-    const val = sort[key];
-
-    if (val instanceof DataAPIVector || Array.isArray(val)) {
-      ret[key] = vector(val).serialize();
-    } else {
-      ret[key] = val;
-    }
-  }
-
-  return ret;
-};
-
-/**
- * @internal
- */
 export const betterTypeOf = (value: unknown): string => {
   if (value === null) {
     return 'null';

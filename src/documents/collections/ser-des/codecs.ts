@@ -15,11 +15,17 @@
 // Important to import from specific paths here to avoid circular dependencies
 import { UUID } from '@/src/documents/datatypes/uuid.js';
 import { ObjectId } from '@/src/documents/datatypes/object-id.js';
-import { DataAPIVector } from '@/src/documents/datatypes/vector.js';
+import { DataAPIVector, vector } from '@/src/documents/datatypes/vector.js';
 import type { CollectionDesCtx, CollectionSerCtx } from '@/src/documents/index.js';
-import type { CustomCodecOpts, NominalCodecOpts, RawCodec, SerDesFn, SomeConstructor, TypeCodecOpts } from '@/src/lib/index.js';
-import type { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
-import { $DeserializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
+import type {
+  CustomCodecOpts,
+  NominalCodecOpts,
+  RawCodec,
+  SerDesFn,
+  SomeConstructor,
+  TypeCodecOpts,
+} from '@/src/lib/index.js';
+import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 
 /**
@@ -70,7 +76,10 @@ export class CollectionCodecs {
         return ctx.done(new Date(Number(value.$date)));
       },
     }),
-    $vector: CollectionCodecs.forName('$vector', DataAPIVector),
+    $vector: CollectionCodecs.forName('$vector', {
+      serialize: (val, ctx) => DataAPIVector.isVectorLike(val) ? vector(val)[$SerializeForCollection](ctx) : ctx.nevermind(),
+      deserialize: DataAPIVector[$DeserializeForCollection],
+    }),
     $uuid: CollectionCodecs.forType('$uuid', UUID),
     $objectId: CollectionCodecs.forType('$objectId', ObjectId),
   };

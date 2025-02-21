@@ -42,7 +42,6 @@ import type { nullish, WithTimeout } from '@/src/lib/index.js';
 import { insertManyOrdered, insertManyUnordered } from '@/src/documents/commands/helpers/insertion.js';
 import { coalesceUpsertIntoUpdateResult, mkUpdateResult } from '@/src/documents/commands/helpers/updates.js';
 import { mkRespErrorFromResponse } from '@/src/documents/errors.js';
-import { normalizedSort } from '@/src/documents/utils.js';
 import { mkDistinctPathExtractor, pullSafeProjection4Distinct } from '@/src/documents/commands/helpers/distinct.js';
 import stableStringify from 'safe-stable-stringify';
 import type { GenericInsertOneResult } from '@/src/documents/commands/types/insert/insert-one.js';
@@ -239,9 +238,6 @@ export class CommandImpls<ID> {
   }
 
   public find<Cursor extends FindCursor<SomeDoc>>(filter: Filter, options: GenericFindOptions | undefined, cursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => Cursor): Cursor {
-    if (options?.sort) {
-      options.sort = normalizedSort(options.sort);
-    }
     return new cursor(this._tOrC, this._serdes, this._serdes.serialize(structuredClone(filter), SerDesTarget.Filter), structuredClone(options));
   }
 
@@ -398,8 +394,8 @@ const mkCmdWithSortProj = (name: string, options: { sort?: SomeDoc, projection?:
   const command = mkBasicCmd(name, body);
 
   if (options) {
-    if (options.sort) {
-      body.sort = normalizedSort(options.sort);
+    if (options.sort && Object.keys(options.sort).length > 0) {
+      body.sort = options.sort;
     }
 
     if (options.projection && Object.keys(options.projection).length > 0) {

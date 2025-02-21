@@ -24,6 +24,7 @@ import {
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
 import { forJSEnv } from '@/src/lib/utils.js';
+import { betterTypeOf } from '@/src/documents/utils.js';
 
 /**
  * Represents any type that can be converted into a {@link DataAPIVector}
@@ -93,7 +94,7 @@ export class DataAPIVector implements CollectionCodec<typeof DataAPIVector>, Tab
    */
   public constructor(vector: DataAPIVectorLike, validate = true) {
     if (validate && !DataAPIVector.isVectorLike(vector)) {
-      throw new Error(`Invalid vector type; expected number[], base64 string, Float32Array, or DataAPIVector; got '${vector}'`);
+      throw new Error(`Invalid vector type; expected number[], { $binary: string }, Float32Array, or DataAPIVector; got '${betterTypeOf(vector)}'`);
     }
 
     Object.defineProperty(this, '_vector', {
