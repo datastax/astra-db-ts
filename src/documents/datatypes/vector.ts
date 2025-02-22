@@ -13,18 +13,13 @@
 // limitations under the License.
 
 import { $CustomInspect } from '@/src/lib/constants.js';
-import type {
-  CollectionCodec,
-  TableCodec, TableDesCtx,
-  TableSerCtx} from '@/src/documents/index.js';
-import {
-  type CollectionDesCtx,
-  type CollectionSerCtx,
-} from '@/src/documents/index.js';
+import type { TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
+import type { CollectionDesCtx, CollectionSerCtx } from '@/src/documents/index.js';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
 import { forJSEnv } from '@/src/lib/utils.js';
 import { betterTypeOf } from '@/src/documents/utils.js';
+import type { DataAPICodec } from '@/src/lib/index.js';
 
 /**
  * Represents any type that can be converted into a {@link DataAPIVector}
@@ -51,7 +46,7 @@ export const vector = (v: DataAPIVectorLike) => (v instanceof DataAPIVector) ? v
  *
  * @public
  */
-export class DataAPIVector implements CollectionCodec<typeof DataAPIVector>, TableCodec<typeof DataAPIVector> {
+export class DataAPIVector implements DataAPICodec<typeof DataAPIVector> {
   private readonly _vector!: Exclude<DataAPIVectorLike, DataAPIVector>;
 
   /**

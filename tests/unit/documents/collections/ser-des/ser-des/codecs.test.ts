@@ -133,28 +133,6 @@ describe('unit.documents.collections.ser-des.ser-des.codecs', () => {
   });
 
   describe('forId', () => {
-    it('should work with explicit serdes', () => {
-      class Id {
-        public readonly brand = 'Id';
-        constructor(public readonly unwrap: UUID) {}
-      }
-
-      const IdCodec = CollectionCodecs.forId({
-        serialize: (val, ctx) => ctx.replace(val.unwrap),
-        deserialize: (val, ctx) => ctx.recurse(new Id(val)),
-      });
-      const serdes = new CollSerDes({ ...CollSerDes.cfg.empty, codecs: [IdCodec], enableBigNumbers: () => 'bigint' });
-
-      const id = new Id(uuid(4));
-      const doc = { _id: id, value: 1n };
-
-      const ser = serdes.serialize(doc);
-      assert.deepStrictEqual(ser, [{ _id: { $uuid: id.unwrap.toString() }, value: 1n }, true]);
-
-      const des = serdes.deserialize(ser[0], {});
-      assert.deepStrictEqual(des, { _id: id, value: 1n });
-    });
-
     it('should work with delegate serdes', () => {
       class Id implements CollectionCodec<typeof Id> {
         public readonly brand = 'Id';

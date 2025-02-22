@@ -33,12 +33,12 @@ export interface BaseDesCtx<DesCtx> extends BaseSerDesCtx {
  * @public
  */
 export const SerDesTarget = <const>{
-  Record: 0,
-  Filter: 1,
-  Update: 2,
-  Projection: 3,
-  Sort: 4,
-  InsertedId: 5,
+  Sort: 1 << 0,
+  Record: 1 << 1,
+  Filter: 1 << 2,
+  Update: 1 << 3,
+  Projection: 1 << 4,
+  InsertedId: 1 << 5,
 };
 
 /**

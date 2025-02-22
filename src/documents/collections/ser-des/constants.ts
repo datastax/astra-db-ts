@@ -15,9 +15,9 @@
 /**
  * @public
  */
-export const $SerializeForCollection = Symbol.for('astra-db-ts.serialize.collection');
+export const $SerializeForCollection = Symbol.for('astra-db-ts.collection.serialize');
 
 /**
  * @public
  */
-export const $DeserializeForCollection = Symbol.for('astra-db-ts.deserialize.collection');
+export const $DeserializeForCollection = Symbol.for('astra-db-ts.collection.deserialize');

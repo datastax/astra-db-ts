@@ -15,9 +15,9 @@
 /**
  * @public
  */
-export const $SerializeForTable = Symbol.for('astra-db-ts.serialize.table');
+export const $SerializeForTable = Symbol.for('astra-db-ts.table.serialize');
 
 /**
  * @public
  */
-export const $DeserializeForTable = Symbol.for('astra-db-ts.deserialize.table');
+export const $DeserializeForTable = Symbol.for('astra-db-ts.table.deserialize');
