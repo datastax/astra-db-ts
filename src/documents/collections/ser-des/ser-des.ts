@@ -19,11 +19,12 @@ import { NEVERMIND } from '@/src/lib/api/ser-des/ctx.js';
 import type { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs.js';
 import { CollectionCodecs } from '@/src/documents/collections/ser-des/codecs.js';
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
-import { isBigNumber, pathMatches } from '@/src/lib/utils.js';
+import { isBigNumber } from '@/src/lib/utils.js';
 import type { CollNumRepCfg, GetCollNumRepFn } from '@/src/documents/index.js';
-import { coerceNums, collNumRepFnFromCfg } from '@/src/documents/collections/ser-des/big-nums.js';
+import { buildGetNumRepForPathFn, coerceNums } from '@/src/documents/collections/ser-des/big-nums.js';
 import { CollSerDesCfgHandler } from '@/src/documents/collections/ser-des/cfg-handler.js';
 import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
+import { pathMatches } from '@/src/lib/api/ser-des/utils.js';
 
 /**
  * @public
@@ -58,10 +59,7 @@ export class CollSerDes extends SerDes<CollectionSerCtx, CollectionDesCtx> {
 
   public constructor(cfg: ParsedSerDesConfig<CollectionSerDesConfig>) {
     super(CollSerDes.cfg.concat([codecs, cfg]), serialize, deserialize);
-
-    this._getNumRepForPath = (typeof cfg?.enableBigNumbers === 'object')
-      ? collNumRepFnFromCfg(cfg.enableBigNumbers)
-      : cfg?.enableBigNumbers;
+    this._getNumRepForPath = buildGetNumRepForPathFn(cfg);
   }
 
   public override adaptSerCtx(ctx: CollectionSerCtx): CollectionSerCtx {

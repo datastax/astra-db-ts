@@ -46,3 +46,5 @@ export type {
   WithTimeout,
   TimedOutCategories,
 } from './timeouts/timeouts.js';
+export { assertHasSerializeFor } from '@/src/lib/api/ser-des/utils.js';
+export { assertHasDeserializeFor } from '@/src/lib/api/ser-des/utils.js';

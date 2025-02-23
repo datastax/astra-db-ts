@@ -46,9 +46,9 @@ import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import JBI from 'json-bigint';
 import { TableFindCursor } from '@/src/documents/tables/cursor.js';
-import { withJbiNullProtoFix } from '@/src/lib/utils.js';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 import type { ListIndexOptions, TableIndexDescriptor } from '@/src/db/types/tables/list-indexes.js';
+import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
 
 const jbi = JBI({ storeAsString: true });
 

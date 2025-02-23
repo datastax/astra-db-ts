@@ -46,9 +46,18 @@ const monoid = monoids.object({
 /**
  * @internal
  */
+const collNumRepCfg = record(either(oneOf(CollNumReps), function_))
+  .refine(
+    (cfg): cfg is CollNumRepCfg => '*' in cfg,
+    'The configuration must contain a "*" key to represent the default numerical type for an unspecified path',
+  );
+
+/**
+ * @internal
+ */
 const decoder = nullish(exact({
   ...serDesDecoders,
-  enableBigNumbers: optional(either(function_, record(oneOf(CollNumReps)))),
+  enableBigNumbers: optional(either(function_, collNumRepCfg)),
 }));
 
 /**

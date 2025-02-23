@@ -21,12 +21,11 @@ import {
   isBigNumber,
   isNullish,
   jsonTryParse,
-  pathArraysEqual,
-  pathMatches,
   toArray,
-  withJbiNullProtoFix,
+
 } from '@/src/lib/utils.js';
 import JBI from 'json-bigint';
+import { pathArraysEqual, pathMatches, withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
 
 describe('unit.lib.utils', () => {
   describe('isNullish', () => {

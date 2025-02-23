@@ -24,10 +24,11 @@ import { TableCodecs } from '@/src/documents/tables/ser-des/codecs.js';
 import type { BaseDesCtx, BaseSerCtx} from '@/src/lib/api/ser-des/ctx.js';
 import { NEVERMIND, SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 import { $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
-import { isBigNumber, pathMatches } from '@/src/lib/utils.js';
+import { isBigNumber } from '@/src/lib/utils.js';
 import { UnexpectedDataAPIResponseError } from '@/src/client/index.js';
 import { TableSerDesCfgHandler } from '@/src/documents/tables/ser-des/cfg-handler.js';
 import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
+import { pathMatches } from '@/src/lib/api/ser-des/utils.js';
 
 /**
  * @public

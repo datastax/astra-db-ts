@@ -13,7 +13,10 @@
 // limitations under the License.
 
 import { BigNumber } from 'bignumber.js';
-import { isBigNumber, pathMatches } from '@/src/lib/utils.js';
+import { isBigNumber } from '@/src/lib/utils.js';
+import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
+import type { CollectionSerDesConfig } from '@/src/documents/index.js';
+import { pathMatches } from '@/src/lib/api/ser-des/utils.js';
 
 /**
  * @public
@@ -23,7 +26,8 @@ export type CollNumRep =
   | 'bigint'
   | 'bignumber'
   | 'string'
-  | 'number_or_string';
+  | 'number_or_string'
+  | ((val: number | BigNumber) => unknown);
 
 /**
  * @public
@@ -33,7 +37,10 @@ export type GetCollNumRepFn = (path: readonly (string | number)[], matches: (exp
 /**
  * @public
  */
-export type CollNumRepCfg = Record<string, CollNumRep>;
+export interface CollNumRepCfg {
+  '*': CollNumRep,
+  [path: string]: CollNumRep,
+}
 
 const $NumRep = Symbol('NumRep');
 
@@ -42,17 +49,28 @@ interface NumRepTree {
   [key: string]: NumRepTree;
 }
 
-export const collNumRepFnFromCfg = (cfg: CollNumRepCfg): GetCollNumRepFn => {
+export const buildGetNumRepForPathFn = (cfg: ParsedSerDesConfig<CollectionSerDesConfig>): GetCollNumRepFn | undefined => {
+  return (typeof cfg?.enableBigNumbers === 'object')
+    ? collNumRepFnFromCfg(cfg.enableBigNumbers)
+    : cfg?.enableBigNumbers;
+};
+
+const collNumRepFnFromCfg = (cfg: CollNumRepCfg): GetCollNumRepFn => {
+  const defaultRep = cfg['*'];
+
+  if (!defaultRep) {
+    throw new Error('The configuration must contain a "*" key');
+  }
+
   // Minor optimization to make `{ '*': 'xyz' }` equal in performance to `() => 'xyz'`
-  if (Object.keys(cfg).length === 1 && cfg['*']) {
-    const rep = cfg['*'];
-    return () => rep;
+  if (Object.keys(cfg).length === 1) {
+    return () => defaultRep;
   }
 
   const tree = buildNumRepTree(cfg);
 
   return (path) => {
-    return findMatchingPath(path, tree) ?? 'number';
+    return findMatchingPath(path, tree) ?? defaultRep;
   };
 };
 

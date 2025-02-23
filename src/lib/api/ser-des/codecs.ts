@@ -13,8 +13,8 @@
 // limitations under the License.
 
 import type { SerDesFn, SomeConstructor } from '@/src/lib/index.js';
-import { pathArraysEqual } from '@/src/lib/utils.js';
-import type { CollectionCodecClass, SomeDoc, TableCodecClass } from '@/src/documents/index.js';
+import type { CollectionCodecClass, TableCodecClass } from '@/src/documents/index.js';
+import { pathArraysEqual } from '@/src/lib/api/ser-des/utils.js';
 
 /**
  * @public
@@ -172,38 +172,4 @@ const findOrInsertClass = <Fn>(arr: { class: SomeConstructor, fns: Fn[] }[], new
     }
   }
   arr.push({ class: newClass, fns: [fn] });
-};
-
-export const assertHasSerializeFor = (clazz: SomeDoc, sym: symbol, synName: string) => {
-  if (!(sym in clazz.prototype)) {
-    throw new Error(`Invalid codec class: '${clazz.name}' - missing ${clazz.name}.prototype.[${synName}]
-
-Did you define [${synName}] as a class property instead of a prototype method?
-
-Don't do this:
-> class Bad { [${synName}] = () => ...; }
- 
-Do this:
-> class Good { [${synName}]() { ... } }
-
-Or this:
-> Good.prototype[${synName}] = () => ...;`);
-  }
-};
-
-export const assertHasDeserializeFor = (clazz: SomeDoc, sym: symbol, synName: string) => {
-  if (!(sym in clazz)) {
-    throw new Error(`Invalid codec class: '${clazz.name}' - missing ${clazz.name}.[${synName}]
-
-Did you forget to define [${synName}] on the class?
-
-Don't do this:
-> class Bad { [${synName}] = () => ...; }
-
-Do this:
-> class Good { [${synName}]() { ... } }
-
-Or this:
-> Good[${synName}] = () => ...;`);
-  }
 };

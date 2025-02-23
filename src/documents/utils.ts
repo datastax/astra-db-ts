@@ -12,10 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeDoc } from '@/src/documents/collections/index.js';
-import type { Sort } from '@/src/documents/types/index.js';
-import { DataAPIVector, vector } from '@/src/documents/datatypes/index.js';
-
 declare const $ERROR: unique symbol;
 
 /**

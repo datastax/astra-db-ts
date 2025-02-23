@@ -218,7 +218,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
 
   it('should work with a CollNumRepCfg', async () => {
     const asserter = mkAsserter({
-      '*': 'number_or_string',
+      '*':   'number_or_string',
       'stats': 'string',
       'stats.*': 'bigint',
       'stats.cars.0.a': 'number',
