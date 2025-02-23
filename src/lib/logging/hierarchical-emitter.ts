@@ -53,8 +53,14 @@ import { PropagationState } from '@/src/lib/index.js';
  * collection.insertOne({ '$invalid-key': 'value' });
  * ```
  *
+ * ##### On errors in listeners
+ *
+ * If an error is thrown in a listener, it will be silently ignored and will not stop the propagation of the event.
+ *
+ * If you need to handle errors in listeners, you must wrap the listener in a try/catch block yourself.
+ *
  * @remarks
- * Having such an implementation avoids a dependency on `events` for maximum compatibility across environments & module systems.
+ * Having a custom implementation avoids a dependency on `events` for maximum compatibility across environments & module systems.
  *
  * @see DataAPIClientEventMap
  *
@@ -143,6 +149,8 @@ export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>>
    *
    * Should probably never be used by the user directly.
    *
+   * **Note: Errors thrown by any listeners will be silently ignored. It will not stop the propagation of the event.**
+   *
    * @param eventName - The event to emit.
    * @param event - Any arguments to pass to the listeners.
    *
@@ -151,7 +159,11 @@ export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>>
   public emit<E extends keyof Events>(eventName: E, event: Events[E]): void {
     if (this.#listeners[eventName]) {
       for (const listener of this.#listeners[eventName]) {
-        listener(event);
+        try {
+          listener(event);
+        } catch (_e) {
+          // Silently ignore errors
+        }
 
         if (event._propagationState === PropagationState.StopImmediate) {
           return;
