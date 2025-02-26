@@ -32,11 +32,22 @@ export interface FetchH2Like {
  * @public
  */
 export class FetchH2 implements Fetcher {
+  /**
+   * @internal
+   */
   private readonly _http1: ReturnType<typeof context>;
+
+  /**
+   * @internal
+   */
   private readonly _preferred: ReturnType<typeof context>;
+
+  /**
+   * @internal
+   */
   private readonly _timeoutErrorCls: SomeConstructor;
 
-  constructor(options: FetchH2HttpClientOptions) {
+  public constructor(options: FetchH2HttpClientOptions) {
     const fetchH2 = options.fetchH2;
 
     this._http1 = fetchH2.context({
@@ -59,13 +70,11 @@ export class FetchH2 implements Fetcher {
   /**
    * Performances the necessary HTTP request using the desired HTTP version.
    */
-  async fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo> {
-    const init = info as Partial<FetchInit>;
-
+  public async fetch(init: FetcherRequestInfo & Partial<FetchInit>): Promise<FetcherResponseInfo> {
     try {
-      const resp = (info.forceHttp1)
-        ? await this._http1.fetch(info.url, init)
-        : await this._preferred.fetch(info.url, init);
+      const resp = (init.forceHttp1)
+        ? await this._http1.fetch(init.url, init)
+        : await this._preferred.fetch(init.url, init);
 
       return {
         headers: Object.fromEntries(resp.headers.entries()),
@@ -77,7 +86,7 @@ export class FetchH2 implements Fetcher {
       };
     } catch (e) {
       if (e instanceof this._timeoutErrorCls) {
-        throw info.mkTimeoutError();
+        throw init.mkTimeoutError();
       }
       throw e;
     }
@@ -86,7 +95,7 @@ export class FetchH2 implements Fetcher {
   /**
    * Explicitly releases any underlying network resources held by the `fetch-h2` context.
    */
-  async close(): Promise<void> {
+  public async close(): Promise<void> {
     await this._preferred.disconnectAll();
     await this._http1.disconnectAll();
   }

@@ -1,4 +1,4 @@
-# astra-db-ts with HTTP/2 in a Minified Project
+# astra-db-ts in the browser
 
 ## Overview
 
@@ -11,9 +11,10 @@
 
 `astra-db-ts` is designed foremost as a server-side library, but it may also work in the browser if so desired.
 
+**However, keep in mind, that doing so is insecure, and is better implemented with an actual server-side application.**
+
 However, you may need to set up a CORS proxy (like [cors-anywhere](https://github.com/Rob--W/cors-anywhere)) to forward
-requests to the Data API, and you should be very careful about not hard-coding credentials or sensitive data in
-your client-side code.
+requests to the Data API.
 
 This is a simple example of how we can interact with an Astra database in a browser environment. It will list out
 all the collections in a given database.

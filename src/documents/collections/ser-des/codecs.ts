@@ -18,7 +18,7 @@ import { ObjectId } from '@/src/documents/datatypes/object-id.js';
 import { DataAPIVector, vector } from '@/src/documents/datatypes/vector.js';
 import type { CollectionDesCtx, CollectionSerCtx } from '@/src/documents/index.js';
 import type { CustomCodecOpts, NominalCodecOpts, RawCodec, SerDesFn, TypeCodecOpts } from '@/src/lib/index.js';
-import { assertHasDeserializeFor, assertHasSerializeFor } from '@/src/lib/index.js';
+import { assertHasDeserializeFor, assertHasSerializeFor } from '@/src/lib/api/ser-des/utils.js';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 import { betterTypeOf } from '@/src/documents/utils.js';

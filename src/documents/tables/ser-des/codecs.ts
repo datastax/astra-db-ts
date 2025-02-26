@@ -21,11 +21,11 @@ import { UUID } from '@/src/documents/datatypes/uuid.js';
 import { DataAPIVector } from '@/src/documents/datatypes/vector.js';
 import type { TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
 import type { CustomCodecOpts, NominalCodecOpts, RawCodec, SerDesFn, TypeCodecOpts } from '@/src/lib/index.js';
-import { assertHasDeserializeFor, assertHasSerializeFor } from '@/src/lib/index.js';
 import { BigNumber } from 'bignumber.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
 import { DataAPIInet } from '@/src/documents/datatypes/inet.js';
 import { betterTypeOf } from '@/src/documents/utils.js';
+import { assertHasDeserializeFor, assertHasSerializeFor } from '@/src/lib/api/ser-des/utils.js';
 
 /**
  * @public

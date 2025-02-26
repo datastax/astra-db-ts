@@ -107,11 +107,6 @@ export abstract class CommandEvent extends BaseClientEvent {
   /**
    * @internal
    */
-  protected declare extraLogInfo: string;
-
-  /**
-   * @internal
-   */
   protected static override formatVerboseTransientKeys: (keyof CommandEvent)[] = ['keyspace', 'source', 'commandName', 'target'];
 
   /**
@@ -127,11 +122,6 @@ export abstract class CommandEvent extends BaseClientEvent {
     this.target = info.target;
     this.commandName = Object.keys(info.command)[0];
     this.url = info.url;
-
-    Object.defineProperty(this, 'extraLogInfo', {
-      value: extra ? ` {${Object.entries(extra).map(([k, v]) => `${k}=${v}`).join(',')}}` : '',
-      enumerable: false,
-    });
   }
 
   public override getMessagePrefix() {
@@ -139,6 +129,10 @@ export abstract class CommandEvent extends BaseClientEvent {
       return `${this.keyspace ?? '<no_keyspace>'}::${this.commandName}`;
     }
     return `${this.source}::${this.commandName}`;
+  }
+
+  protected _extraLogInfoAsString() {
+    return this.extraLogInfo ? ` {${Object.entries(this.extraLogInfo).map(([k, v]) => `${k}=${v}`).join(',')}}` : '';
   }
 }
 
@@ -154,11 +148,11 @@ export abstract class CommandEvent extends BaseClientEvent {
  */
 export class CommandStartedEvent extends CommandEvent {
   /**
-   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * Poor man's sealed class. See {@link BaseClientEvent.permits} for more info.
    *
    * @internal
    */
-  protected declare permit: this;
+  protected declare permits: this;
 
   /**
    * The timeout for the command, in milliseconds.
@@ -176,7 +170,7 @@ export class CommandStartedEvent extends CommandEvent {
   }
 
   public override getMessage(): string {
-    return this.extraLogInfo;
+    return this._extraLogInfoAsString();
   }
 }
 
@@ -192,11 +186,11 @@ export class CommandStartedEvent extends CommandEvent {
  */
 export class CommandSucceededEvent extends CommandEvent {
   /**
-   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * Poor man's sealed class. See {@link BaseClientEvent.permits} for more info.
    *
    * @internal
    */
-  protected declare permit: this;
+  protected declare permits: this;
 
   /**
    * The duration of the command, in milliseconds. Starts counting from the moment of the initial HTTP request.
@@ -220,7 +214,7 @@ export class CommandSucceededEvent extends CommandEvent {
   }
 
   public override getMessage(): string {
-    return `${this.extraLogInfo} (${~~this.duration}ms)`;
+    return `${this._extraLogInfoAsString()} (${~~this.duration}ms)`;
   }
 }
 
@@ -236,11 +230,11 @@ export class CommandSucceededEvent extends CommandEvent {
  */
 export class CommandFailedEvent extends CommandEvent {
   /**
-   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * Poor man's sealed class. See {@link BaseClientEvent.permits} for more info.
    *
    * @internal
    */
-  protected declare permit: this;
+  protected declare permits: this;
 
   /**
    * The duration of the command, in milliseconds.
@@ -272,7 +266,7 @@ export class CommandFailedEvent extends CommandEvent {
   }
 
   public override getMessage(): string {
-    return `${this.extraLogInfo} (${~~this.duration}ms) ERROR: '${this.error.message}'`;
+    return `${this._extraLogInfoAsString()} (${~~this.duration}ms) ERROR: '${this.error.message}'`;
   }
 
   public override hideDupeFields(): this {
@@ -292,11 +286,11 @@ export class CommandFailedEvent extends CommandEvent {
  */
 export class CommandWarningsEvent extends CommandEvent {
   /**
-   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * Poor man's sealed class. See {@link BaseClientEvent.permits} for more info.
    *
    * @internal
    */
-  protected declare permit: this;
+  protected declare permits: this;
 
   /**
    * The warnings that occurred.
@@ -314,6 +308,6 @@ export class CommandWarningsEvent extends CommandEvent {
   }
 
   public override getMessage(): string {
-    return `${this.extraLogInfo} WARNINGS: ${this.warnings.map(w => `'${w.message}'`).join(', ')}`;
+    return `${this._extraLogInfoAsString()} WARNINGS: ${this.warnings.map(w => `'${w.message}'`).join(', ')}`;
   }
 }

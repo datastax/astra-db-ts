@@ -21,7 +21,7 @@ const formatter: EventFormatter = (event, message) => {
   }
 };
 
-// Set
+// Set the global default formatter
 BaseClientEvent.setDefaultFormatter(formatter);
 
 // -----===<{ STEP 3: Profit }>===-----

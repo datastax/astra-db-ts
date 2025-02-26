@@ -116,7 +116,7 @@ export abstract class BaseClientEvent {
    *
    * @internal
    */
-  protected declare abstract permit: DataAPIClientEvent;
+  protected declare abstract permits: DataAPIClientEvent;
 
   /**
    * ##### Overview
@@ -195,7 +195,7 @@ export abstract class BaseClientEvent {
   /**
    * Any extra information that may be useful for debugging.
    */
-  public readonly extra: Record<string, any> | undefined;
+  public readonly extraLogInfo: Record<string, any> | undefined;
 
   /**
    * @internal
@@ -210,7 +210,7 @@ export abstract class BaseClientEvent {
   protected constructor(name: string, requestId: string, extra: Record<string, unknown> | undefined) {
     this.name = name;
     this.requestId = requestId;
-    this.extra = extra;
+    this.extraLogInfo = extra;
     this.timestamp = new Date();
 
     Object.defineProperty(this, '_propagationState', {

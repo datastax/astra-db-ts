@@ -113,11 +113,11 @@ export abstract class AdminCommandEvent extends BaseClientEvent {
  */
 export class AdminCommandStartedEvent extends AdminCommandEvent {
   /**
-   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * Poor man's sealed class. See {@link BaseClientEvent.permits} for more info.
    * 
    * @internal
    */
-  protected declare permit: this;
+  protected declare permits: this;
 
   /**
    * The timeout for the request, in milliseconds.
@@ -150,11 +150,11 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
  */
 export class AdminCommandPollingEvent extends AdminCommandEvent {
   /**
-   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * Poor man's sealed class. See {@link BaseClientEvent.permits} for more info.
    * 
    * @internal
    */
-  protected declare permit: this;
+  protected declare permits: this;
 
   /**
    * The elapsed time since the command was started, in milliseconds.
@@ -197,11 +197,11 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
  */
 export class AdminCommandSucceededEvent extends AdminCommandEvent {
   /**
-   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * Poor man's sealed class. See {@link BaseClientEvent.permits} for more info.
    * 
    * @internal
    */
-  protected declare permit: this;
+  protected declare permits: this;
 
   /**
    * The duration of the command, in milliseconds.
@@ -238,11 +238,11 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
  */
 export class AdminCommandFailedEvent extends AdminCommandEvent {
   /**
-   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * Poor man's sealed class. See {@link BaseClientEvent.permits} for more info.
    * 
    * @internal
    */
-  protected declare permit: this;
+  protected declare permits: this;
 
   /**
    * The duration of the command, in milliseconds.
@@ -282,11 +282,11 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
  */
 export class AdminCommandWarningsEvent extends AdminCommandEvent {
   /**
-   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * Poor man's sealed class. See {@link BaseClientEvent.permits} for more info.
    * 
    * @internal
    */
-  protected declare permit: this;
+  protected declare permits: this;
 
   /**
    * The warnings that occurred.
