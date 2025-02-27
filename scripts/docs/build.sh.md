@@ -48,15 +48,15 @@ dist/
 │  ├── *transpiled files* -- with the .js extension
 │  ├── index.d.ts         -- containing `export * from "../astra-db-ts.js"; export declare const LIB_BUILD = "esm";`
 │  ├── package.json       -- containing `{"type": "module"}`
-├── astra-db-ts.d.ts
-└── astra-db-ts.js
+├── astra-db-ts.d.ts      -- the rollup .d.ts file
+└── astra-db-ts.js        -- a faux .js file for the index.d.ts files to reference
 ```
 
 ### 1. Clean
 
 The first step is to clean the `dist` directory, removing all files and directories within it.
 
-This will also update the `version.ts` file to ensure it's in sync with the `package.json` file.
+This will also update the `version.ts` file to ensure it is in sync with the `package.json` file.
 
 ### 2. Transpile
 
@@ -81,9 +81,16 @@ The rollup `.d.ts` file, `astra-db-ts.d.ts` will live in the root of the `dist` 
 There are two things that need to be done to the rollup `.d.ts` file:
 
 1. An Apache license header needs to be added to the top of the file.
-2. Invalid exports need to be removed.
+2. A faux "typescript version validator" function needs to be added before all the other exports.
+3. Invalid exports need to be removed.
 
-For reasons unknown to me, API Extractor will output invalid exports in the rollup `.d.ts` file. 
+This function declaration is added to the top of the file to ensure that a readable parser error is thrown if the user tries to use the library with a version of TypeScript that is less than 5.0.0.
+
+```ts
+declare function astraDbTsRequiresTypeScriptV5OrGreater<const AstraDbTsRequiresTypeScriptV5OrGreater>(_: AstraDbTsRequiresTypeScriptV5OrGreater): void;
+```
+
+Also, for reasons unknown to me, API Extractor will output invalid exports in the rollup `.d.ts` file. 
 
 Such imports may include those as the following, which are never even used in the public API (hence my confusion):
 

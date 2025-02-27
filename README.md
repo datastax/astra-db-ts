@@ -21,7 +21,17 @@
 
 ## Quickstart
 
-Use your preferred package manager to install `@datastax/astra-db-ts`. Note that this is not supported in browsers.
+Use your preferred package manager to install `@datastax/astra-db-ts`.
+
+```bash
+npm i @datastax/astra-db-ts # or your favorite package manager's equivalent
+````
+
+If you're using TypeScript, you must use at least version 5.0.0 to use `astra-db-ts 2.0`, as it uses modern TypeScript features such as `const` type parameters.
+
+```bash
+npm i typescript@^5.0.0
+```
 
 Get the *API endpoint* and your *application token* for your Astra DB instance @ [astra.datastax.com](https://astra.datastax.com).
 
