@@ -17,6 +17,9 @@
   },
   "dependencies": {
     "@datastax/astra-db-ts": "file:../astra-db-ts.tgz",
+    "axios": "^1.8.1",
+    "node-fetch": "^3.3.2",
+    "undici": "^7.3.0",
     "winston": "^3.17.0"
   }
 }
