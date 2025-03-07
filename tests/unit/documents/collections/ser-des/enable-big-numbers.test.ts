@@ -49,6 +49,18 @@ describe('unit.documents.collections.ser-des.enable-big-numbers', () => {
       desAsserter.ok(-123.123);
       desAsserter.ok(BigNumber(123));
       desAsserter.ok(BigNumber(-123.123));
+      desAsserter.ok(BigNumber('120213123123123123213213'));
+      desAsserter.ok(BigNumber('12.213123123123123213213'));
+    });
+
+    it('should handle to-number coercion properly', () => {
+      const desAsserter = mkDesAsserter('strict_number', Number);
+
+      desAsserter.ok(0);
+      desAsserter.ok(123);
+      desAsserter.ok(-123.123);
+      desAsserter.ok(BigNumber(123));
+      desAsserter.ok(BigNumber(-123.123));
 
       desAsserter.notOk(BigNumber('120213123123123123213213'));
       desAsserter.notOk(BigNumber('12.213123123123123213213'));

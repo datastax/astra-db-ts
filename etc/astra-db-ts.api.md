@@ -331,8 +331,10 @@ export interface BaseSerDesCtx {
     mutatingInPlace: boolean;
     // (undocumented)
     nevermind(): readonly [3];
+    // Warning: (ae-forgotten-export) The symbol "PathSegment" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    path: (string | number)[];
+    path: PathSegment[];
     // (undocumented)
     recurse<T>(obj?: T): readonly [1, T?];
     // (undocumented)
@@ -436,7 +438,7 @@ export class CollectionCodecs {
     // (undocumented)
     static forName(name: string, optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs;
     // (undocumented)
-    static forPath(path: (string | number)[], optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs;
+    static forPath(path: readonly PathSegment[], optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs;
     // Warning: (ae-forgotten-export) The symbol "CollTypeCodecOpts" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
@@ -497,7 +499,7 @@ export interface CollectionDescriptor {
 // @public (undocumented)
 export interface CollectionDesCtx extends BaseDesCtx<CollectionDesCtx> {
     // (undocumented)
-    getNumRepForPath?: GetCollNumRepFn;
+    getNumCoercionForPath?: GetCollNumCoercionFn;
 }
 
 // @public
@@ -623,7 +625,7 @@ export interface CollectionSerDesConfig extends BaseSerDesConfig<CollectionSerCt
     // (undocumented)
     codecs?: RawCollCodecs[];
     // (undocumented)
-    enableBigNumbers?: GetCollNumRepFn | CollNumRepCfg;
+    enableBigNumbers?: GetCollNumCoercionFn | CollNumCoercionCfg;
 }
 
 // @public
@@ -673,14 +675,14 @@ export interface CollectionVectorOptions {
 }
 
 // @public (undocumented)
-export type CollNumRep = 'number' | 'bigint' | 'bignumber' | 'string' | 'number_or_string' | ((val: number | BigNumber) => unknown);
+export type CollNumCoercion = 'number' | 'strict_number' | 'bigint' | 'bignumber' | 'string' | 'number_or_string' | ((val: number | BigNumber, path: readonly PathSegment[]) => unknown);
 
 // @public (undocumented)
-export interface CollNumRepCfg {
+export interface CollNumCoercionCfg {
     // (undocumented)
-    '*': CollNumRep;
+    '*': CollNumCoercion;
     // (undocumented)
-    [path: string]: CollNumRep;
+    [path: string]: CollNumCoercion;
 }
 
 // @public
@@ -1227,7 +1229,7 @@ export interface Deserializers<DesCtx> {
     forName: Record<string, SerDesFn<DesCtx>[]>;
     // (undocumented)
     forPath: Record<number, {
-        path: (string | number)[];
+        path: readonly PathSegment[];
         fns: SerDesFn<DesCtx>[];
     }[]>;
     // (undocumented)
@@ -1366,18 +1368,6 @@ export interface ExplicitLoggingConfig {
     readonly emits: OneOrMany<LoggingOutput>;
     // (undocumented)
     readonly events: LoggingEvent | (Exclude<LoggingEvent, 'all'>)[];
-}
-
-// Warning: (ae-internal-missing-underscore) The name "FetchCtx" should be prefixed with an underscore because the declaration is marked as @internal
-//
-// @internal (undocumented)
-export interface FetchCtx {
-    // Warning: (ae-forgotten-export) The symbol "Ref" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    closed: Ref<boolean>;
-    // (undocumented)
-    ctx: Fetcher;
 }
 
 // @public
@@ -1607,7 +1597,7 @@ export interface GenericUpdateOneOptions extends WithTimeout<'generalMethodTimeo
 export type GenericUpdateResult<ID, N extends number> = (GuaranteedUpdateResult<N> & UpsertedUpdateResult<ID>) | (GuaranteedUpdateResult<N> & NoUpsertUpdateResult);
 
 // @public (undocumented)
-export type GetCollNumRepFn = (path: readonly (string | number)[], matches: (exp: readonly (string | number)[], acc: readonly (string | number)[]) => boolean) => CollNumRep;
+export type GetCollNumCoercionFn = (path: readonly PathSegment[], matches: (path: readonly PathSegment[]) => boolean) => CollNumCoercion;
 
 // @public
 export interface GuaranteedUpdateResult<N extends number> {
@@ -1810,13 +1800,13 @@ export type nullish = null | undefined;
 // @public (undocumented)
 export class NumCoercionError extends Error {
     // @internal
-    constructor(path: (string | number)[], value: number | BigNumber, from: 'number' | 'bignumber', to: CollNumRep);
+    constructor(path: readonly PathSegment[], value: number | BigNumber, from: 'number' | 'bignumber', to: CollNumCoercion);
     // (undocumented)
     readonly from: 'number' | 'bignumber';
     // (undocumented)
-    readonly path: (string | number)[];
+    readonly path: readonly PathSegment[];
     // (undocumented)
-    readonly to: CollNumRep;
+    readonly to: CollNumCoercion;
     // (undocumented)
     readonly value: number | BigNumber;
 }
@@ -1874,7 +1864,7 @@ export type RawCodec<SerCtx = any, DesCtx = any> = {
     opts: NominalCodecOpts<SerCtx, DesCtx>;
 } | {
     tag: 'forPath';
-    path: (string | number)[];
+    path: readonly PathSegment[];
     opts: NominalCodecOpts<SerCtx, DesCtx>;
 } | {
     tag: 'forType';
@@ -1936,7 +1926,7 @@ export interface Serializers<SerCtx> {
     forName: Record<string, SerDesFn<SerCtx>[]>;
     // (undocumented)
     forPath: Record<number, {
-        path: (string | number)[];
+        path: readonly PathSegment[];
         fns: SerDesFn<SerCtx>[];
     }[]>;
 }
@@ -2063,7 +2053,7 @@ export class TableCodecs {
     // (undocumented)
     static forName(name: string, optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs;
     // (undocumented)
-    static forPath(path: (string | number)[], optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs;
+    static forPath(path: readonly PathSegment[], optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs;
     // Warning: (ae-forgotten-export) The symbol "TableTypeCodecOpts" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
@@ -2389,8 +2379,8 @@ export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor> {
 
 // Warnings were encountered during analysis:
 //
-// dist/esm/documents/collections/ser-des/codecs.d.ts:39:9 - (ae-forgotten-export) The symbol "RawCollCodecs" needs to be exported by the entry point index.d.ts
-// dist/esm/documents/tables/ser-des/codecs.d.ts:39:9 - (ae-forgotten-export) The symbol "RawTableCodecs" needs to be exported by the entry point index.d.ts
+// dist/esm/documents/collections/ser-des/codecs.d.ts:40:9 - (ae-forgotten-export) The symbol "RawCollCodecs" needs to be exported by the entry point index.d.ts
+// dist/esm/documents/tables/ser-des/codecs.d.ts:40:9 - (ae-forgotten-export) The symbol "RawTableCodecs" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 
