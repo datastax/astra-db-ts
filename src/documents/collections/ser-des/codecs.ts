@@ -22,6 +22,7 @@ import { assertHasDeserializeFor, assertHasSerializeFor } from '@/src/lib/api/se
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
 import { betterTypeOf } from '@/src/documents/utils.js';
+import type { PathSegment } from '@/src/lib/types.js';
 
 /**
  * @public
@@ -102,7 +103,7 @@ export class CollectionCodecs {
     }];
   }
 
-  public static forPath(path: (string | number)[], optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs {
+  public static forPath(path: readonly PathSegment[], optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs {
     validateIfCodecClass(optsOrClass);
 
     return [{

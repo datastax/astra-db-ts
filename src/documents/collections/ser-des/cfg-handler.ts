@@ -22,10 +22,10 @@ import {
 } from '@/src/lib/api/ser-des/cfg-handler.js';
 import type { OptionsHandlerTypes } from '@/src/lib/opts-handler.js';
 import { MonoidalOptionsHandler, monoids } from '@/src/lib/opts-handler.js';
-import type { CollNumRepCfg, CollectionSerDesConfig, GetCollNumRepFn } from '@/src/documents/index.js';
+import type { CollNumCoercionCfg, CollectionSerDesConfig, GetCollNumCoercionFn } from '@/src/documents/index.js';
 import { function_ } from '@/src/lib/utils.js';
 
-const CollNumReps = ['number', 'bigint', 'bignumber', 'string', 'number_or_string'] as const;
+const CollNumCoercions = ['number', 'strict_number', 'bigint', 'bignumber', 'string', 'number_or_string'] as const;
 
 /**
  * @internal
@@ -40,15 +40,15 @@ interface Types extends OptionsHandlerTypes {
  */
 const monoid = monoids.object({
   ...serdesMonoidSchema,
-  enableBigNumbers: monoids.optional<CollNumRepCfg | GetCollNumRepFn>(),
+  enableBigNumbers: monoids.optional<CollNumCoercionCfg | GetCollNumCoercionFn>(),
 });
 
 /**
  * @internal
  */
-const collNumRepCfg = record(either(oneOf(CollNumReps), function_))
+const collNumCoercionCfg = record(either(oneOf(CollNumCoercions), function_))
   .refine(
-    (cfg): cfg is CollNumRepCfg => '*' in cfg,
+    (cfg): cfg is CollNumCoercionCfg => '*' in cfg,
     'The configuration must contain a "*" key to represent the default numerical type for an unspecified path',
   );
 
@@ -57,7 +57,7 @@ const collNumRepCfg = record(either(oneOf(CollNumReps), function_))
  */
 const decoder = nullish(exact({
   ...serDesDecoders,
-  enableBigNumbers: optional(either(function_, collNumRepCfg)),
+  enableBigNumbers: optional(either(function_, collNumCoercionCfg)),
 }));
 
 /**

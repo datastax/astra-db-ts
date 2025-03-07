@@ -71,7 +71,7 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
     // (undocumented)
     getMessage(): string;
     // @internal
-    protected permit: this;
+    protected permits: this;
 }
 
 // @public
@@ -83,7 +83,7 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
     getMessage(): string;
     readonly interval: number;
     // @internal
-    protected permit: this;
+    protected permits: this;
     readonly pollCount: number;
 }
 
@@ -94,7 +94,7 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
     // (undocumented)
     getMessage(): string;
     // @internal
-    protected permit: this;
+    protected permits: this;
     readonly timeout: Partial<TimeoutDescriptor>;
 }
 
@@ -106,7 +106,7 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
     // (undocumented)
     getMessage(): string;
     // @internal
-    protected permit: this;
+    protected permits: this;
     readonly resBody?: Record<string, any>;
 }
 
@@ -117,7 +117,7 @@ export class AdminCommandWarningsEvent extends AdminCommandEvent {
     // (undocumented)
     getMessage(): string;
     // @internal
-    protected permit: this;
+    protected permits: this;
     readonly warnings: DataAPIErrorDescriptor[];
 }
 
@@ -275,7 +275,7 @@ export interface BaseAstraDbInfo {
 export abstract class BaseClientEvent {
     // @internal
     protected constructor(name: string, requestId: string, extra: Record<string, unknown> | undefined);
-    readonly extra: Record<string, any> | undefined;
+    readonly extraLogInfo: Record<string, any> | undefined;
     format(formatter?: EventFormatter): string;
     formatVerbose(): string;
     // (undocumented)
@@ -288,7 +288,7 @@ export abstract class BaseClientEvent {
     hideDupeFields(): this;
     readonly name: string;
     // @internal
-    protected abstract permit: DataAPIClientEvent;
+    protected abstract permits: DataAPIClientEvent;
     // @internal (undocumented)
     _propagationState: PropagationState;
     readonly requestId: string;
@@ -404,17 +404,20 @@ export type CollectionArrayUpdate<Schema> = {
 export type CollectionCodec<Class extends CollectionCodecClass> = InstanceType<Class>;
 
 // @public (undocumented)
-export interface CollectionCodecClass {
-    // (undocumented)
+export type CollectionCodecClass = (abstract new (...args: any[]) => {
+    [$SerializeForCollection]: (ctx: CollectionSerCtx) => ReturnType<SerDesFn<any>>;
+}) & {
     [$DeserializeForCollection]: SerDesFn<CollectionDesCtx>;
-    // (undocumented)
-    new (...args: any[]): {
-        [$SerializeForCollection]: (ctx: CollectionSerCtx) => ReturnType<SerDesFn<any>>;
-    };
-}
+};
 
 // @public (undocumented)
 export class CollectionCodecs {
+    // (undocumented)
+    static asCodecClass<T>(val: T, builder?: ((val: T & CollectionCodecClass & {
+        prototype: {
+            [$SerializeForCollection]: (ctx: CollectionSerCtx) => ReturnType<SerDesFn<any>>;
+        };
+    }) => void)): CollectionCodecClass;
     // Warning: (ae-forgotten-export) The symbol "CollCustomCodecOpts" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
@@ -426,12 +429,10 @@ export class CollectionCodecs {
         $uuid: RawCollCodecs;
         $objectId: RawCollCodecs;
     };
+    // (undocumented)
+    static forId(clazz: CollectionCodecClass): RawCollCodecs;
     // Warning: (ae-forgotten-export) The symbol "CollNominalCodecOpts" needs to be exported by the entry point index.d.ts
     //
-    // (undocumented)
-    static forId(optsOrClass: CollNominalCodecOpts & {
-        class?: SomeConstructor;
-    } | CollectionCodecClass): RawCollCodecs;
     // (undocumented)
     static forName(name: string, optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs;
     // (undocumented)
@@ -672,10 +673,15 @@ export interface CollectionVectorOptions {
 }
 
 // @public (undocumented)
-export type CollNumRep = 'number' | 'bigint' | 'bignumber' | 'string' | 'number_or_string';
+export type CollNumRep = 'number' | 'bigint' | 'bignumber' | 'string' | 'number_or_string' | ((val: number | BigNumber) => unknown);
 
 // @public (undocumented)
-export type CollNumRepCfg = Record<string, CollNumRep>;
+export interface CollNumRepCfg {
+    // (undocumented)
+    '*': CollNumRep;
+    // (undocumented)
+    [path: string]: CollNumRep;
+}
 
 // @public
 export abstract class CommandEvent extends BaseClientEvent {
@@ -685,8 +691,8 @@ export abstract class CommandEvent extends BaseClientEvent {
     protected constructor(name: string, requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined);
     readonly command: Record<string, any>;
     readonly commandName: string;
-    // @internal (undocumented)
-    protected extraLogInfo: string;
+    // (undocumented)
+    protected _extraLogInfoAsString(): string;
     // @internal (undocumented)
     protected static formatVerboseTransientKeys: (keyof CommandEvent)[];
     // (undocumented)
@@ -719,7 +725,7 @@ export class CommandFailedEvent extends CommandEvent {
     // (undocumented)
     hideDupeFields(): this;
     // @internal
-    protected permit: this;
+    protected permits: this;
     readonly resp?: RawDataAPIResponse;
 }
 
@@ -730,7 +736,7 @@ export class CommandStartedEvent extends CommandEvent {
     // (undocumented)
     getMessage(): string;
     // @internal
-    protected permit: this;
+    protected permits: this;
     readonly timeout: Partial<TimeoutDescriptor>;
 }
 
@@ -742,7 +748,7 @@ export class CommandSucceededEvent extends CommandEvent {
     // (undocumented)
     getMessage(): string;
     // @internal
-    protected permit: this;
+    protected permits: this;
     readonly resp: RawDataAPIResponse;
 }
 
@@ -753,7 +759,7 @@ export class CommandWarningsEvent extends CommandEvent {
     // (undocumented)
     getMessage(): string;
     // @internal
-    protected permit: this;
+    protected permits: this;
     readonly warnings: DataAPIErrorDescriptor[];
 }
 
@@ -892,6 +898,9 @@ export interface DataAPIClientOptions {
     logging?: LoggingConfig;
     timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
+
+// @public (undocumented)
+export type DataAPICodec<Class extends CollectionCodecClass & TableCodecClass> = InstanceType<Class>;
 
 // @public
 export interface DataAPICreateKeyspaceOptions extends WithTimeout<'keyspaceAdminTimeoutMs'> {
@@ -1099,7 +1108,7 @@ export class DataAPITimeoutError extends DataAPIError {
 }
 
 // @public
-export class DataAPIVector implements CollectionCodec<typeof DataAPIVector>, TableCodec<typeof DataAPIVector> {
+export class DataAPIVector implements DataAPICodec<typeof DataAPIVector> {
     static [$DeserializeForCollection](value: any, ctx: CollectionDesCtx): readonly [0, (DataAPIVector | undefined)?];
     static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (DataAPIVector | undefined)?];
     [$SerializeForCollection](ctx: CollectionSerCtx): readonly [0, (number[] | {
@@ -1359,6 +1368,18 @@ export interface ExplicitLoggingConfig {
     readonly events: LoggingEvent | (Exclude<LoggingEvent, 'all'>)[];
 }
 
+// Warning: (ae-internal-missing-underscore) The name "FetchCtx" should be prefixed with an underscore because the declaration is marked as @internal
+//
+// @internal (undocumented)
+export interface FetchCtx {
+    // Warning: (ae-forgotten-export) The symbol "Ref" needs to be exported by the entry point index.d.ts
+    //
+    // (undocumented)
+    closed: Ref<boolean>;
+    // (undocumented)
+    ctx: Fetcher;
+}
+
 // @public
 export interface Fetcher {
     close?(): Promise<void>;
@@ -1368,7 +1389,7 @@ export interface Fetcher {
 // @public
 export interface FetcherRequestInfo {
     body: string | undefined;
-    forceHttp1: boolean | undefined;
+    forceHttp1: boolean;
     headers: Record<string, string>;
     method: 'DELETE' | 'GET' | 'POST';
     mkTimeoutError: () => Error;
@@ -1378,8 +1399,8 @@ export interface FetcherRequestInfo {
 
 // @public
 export interface FetcherResponseInfo {
-    additionalAttributes?: Record<string, any>;
     body?: string;
+    extraLogInfo?: Record<string, unknown>;
     headers: Record<string, string>;
     httpVersion: 1 | 2;
     status: number;
@@ -1391,7 +1412,7 @@ export interface FetcherResponseInfo {
 export class FetchH2 implements Fetcher {
     constructor(options: FetchH2HttpClientOptions);
     close(): Promise<void>;
-    fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo>;
+    fetch(init: FetcherRequestInfo): Promise<FetcherResponseInfo>;
 }
 
 // @public
@@ -1426,7 +1447,7 @@ export interface FetchHttpClientOptions {
 // @public
 export class FetchNative implements Fetcher {
     close(): Promise<void>;
-    fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo>;
+    fetch(init: FetcherRequestInfo & RequestInit): Promise<FetcherResponseInfo>;
 }
 
 // @public
@@ -1995,17 +2016,20 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
 export type TableCodec<Class extends TableCodecClass> = InstanceType<Class>;
 
 // @public (undocumented)
-export interface TableCodecClass {
-    // (undocumented)
+export type TableCodecClass = (abstract new (...args: any[]) => {
+    [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>>;
+}) & {
     [$DeserializeForTable]: SerDesFn<TableDesCtx>;
-    // (undocumented)
-    new (...args: any[]): {
-        [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>>;
-    };
-}
+};
 
 // @public (undocumented)
 export class TableCodecs {
+    // (undocumented)
+    static asCodecClass<T>(val: T, builder?: ((val: T & TableCodecClass & {
+        prototype: {
+            [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>>;
+        };
+    }) => void)): TableCodecClass;
     // Warning: (ae-forgotten-export) The symbol "TableCustomCodecOpts" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
@@ -2291,7 +2315,7 @@ export class UsernamePasswordTokenProvider extends TokenProvider {
 }
 
 // @public
-export class UUID implements CollectionCodec<typeof UUID>, TableCodec<typeof UUID> {
+export class UUID implements DataAPICodec<typeof UUID> {
     static [$DeserializeForCollection](value: any, ctx: CollectionDesCtx): readonly [0, (UUID | undefined)?];
     static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (UUID | undefined)?];
     [$SerializeForCollection](ctx: CollectionSerCtx): readonly [0, ({
@@ -2365,8 +2389,8 @@ export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor> {
 
 // Warnings were encountered during analysis:
 //
-// dist/esm/documents/collections/ser-des/codecs.d.ts:41:9 - (ae-forgotten-export) The symbol "RawCollCodecs" needs to be exported by the entry point index.d.ts
-// dist/esm/documents/tables/ser-des/codecs.d.ts:41:9 - (ae-forgotten-export) The symbol "RawTableCodecs" needs to be exported by the entry point index.d.ts
+// dist/esm/documents/collections/ser-des/codecs.d.ts:39:9 - (ae-forgotten-export) The symbol "RawCollCodecs" needs to be exported by the entry point index.d.ts
+// dist/esm/documents/tables/ser-des/codecs.d.ts:39:9 - (ae-forgotten-export) The symbol "RawTableCodecs" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

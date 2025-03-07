@@ -13,6 +13,7 @@
 // limitations under the License.
 
 import type { Deserializers, RawDataAPIResponse, Serializers } from '@/src/lib/index.js';
+import type { PathSegment } from '@/src/lib/types.js';
 
 /**
  * @public
@@ -51,7 +52,7 @@ export type SerDesTarget = typeof SerDesTarget[keyof typeof SerDesTarget];
  */
 export interface BaseSerDesCtx {
   rootObj: any,
-  path: (string | number)[],
+  path: PathSegment[],
   done<T>(obj?: T): readonly [0, T?],
   recurse<T>(obj?: T): readonly [1, T?],
   replace<T>(obj: T): readonly [2, T],

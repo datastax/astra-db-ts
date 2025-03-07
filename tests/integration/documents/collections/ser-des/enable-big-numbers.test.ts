@@ -19,9 +19,9 @@ import { BigNumber } from 'bignumber.js';
 import type {
   CollectionCodec,
   CollectionDesCtx,
-  CollNumRepCfg,
+  CollNumCoercionCfg,
   CollectionSerCtx,
-  GetCollNumRepFn} from '@/src/documents/index.js';
+  GetCollNumCoercionFn} from '@/src/documents/index.js';
 import {
   $DeserializeForCollection,
   $SerializeForCollection,
@@ -165,7 +165,7 @@ parallel('integration.documents.collections.ser-des.enable-big-numbers', ({ db }
     },
   });
 
-  const mkAsserter = (opts: GetCollNumRepFn | CollNumRepCfg) => ({
+  const mkAsserter = (opts: GetCollNumCoercionFn | CollNumCoercionCfg) => ({
     coll: db.collection(DEFAULT_COLLECTION_NAME, {
       serdes: {
         codecs: [CollectionCodecs.forName('camelCaseName2', Newtype)],

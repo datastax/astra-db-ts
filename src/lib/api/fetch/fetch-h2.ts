@@ -13,7 +13,7 @@
 // limitations under the License.
 // noinspection ExceptionCaughtLocallyJS
 
-import type { context, FetchInit } from 'fetch-h2';
+import type { context } from 'fetch-h2';
 import type { FetchH2HttpClientOptions } from '@/src/client/index.js';
 import type { Fetcher, FetcherRequestInfo, FetcherResponseInfo, SomeConstructor } from '@/src/lib/index.js';
 
@@ -70,7 +70,7 @@ export class FetchH2 implements Fetcher {
   /**
    * Performances the necessary HTTP request using the desired HTTP version.
    */
-  public async fetch(init: FetcherRequestInfo & Partial<FetchInit>): Promise<FetcherResponseInfo> {
+  public async fetch(init: FetcherRequestInfo): Promise<FetcherResponseInfo> {
     try {
       const resp = (init.forceHttp1)
         ? await this._http1.fetch(init.url, init)

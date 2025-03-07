@@ -26,7 +26,7 @@ export type {
 export type { CollectionCodecClass, CollectionCodec } from './ser-des/codecs.js';
 export { CollectionCodecs } from './ser-des/codecs.js';
 
-export type { CollNumRep, GetCollNumRepFn, CollNumRepCfg } from './ser-des/big-nums.js';
+export type { CollNumCoercion, GetCollNumCoercionFn, CollNumCoercionCfg } from './ser-des/big-nums.js';
 export { NumCoercionError } from './ser-des/big-nums.js';
 
 export { $DeserializeForCollection } from '@/src/documents/collections/ser-des/constants.js';

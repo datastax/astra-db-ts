@@ -16,6 +16,7 @@ import type { SomeDoc } from '@/src/documents/index.js';
 import { BigNumber } from 'bignumber.js';
 import type JBI from 'json-bigint';
 import { isBigNumber } from '@/src/lib/utils.js';
+import type { PathSegment } from '@/src/lib/types.js';
 
 /**
  * @internal
@@ -94,7 +95,7 @@ function nullProtoFix(doc: SomeDoc): SomeDoc {
 /**
  * @internal
  */
-export function pathArraysEqual(a: readonly (string | number)[], b: readonly (string | number)[]): boolean {
+export function pathArraysEqual(a: readonly PathSegment[], b: readonly PathSegment[]): boolean {
   if (a.length !== b.length) {
     return false;
   }
@@ -111,7 +112,7 @@ export function pathArraysEqual(a: readonly (string | number)[], b: readonly (st
 /**
  * @internal
  */
-export function pathMatches(exp: readonly (string | number)[], acc: readonly (string | number)[]): boolean {
+export function pathMatches(exp: readonly PathSegment[], acc: readonly PathSegment[]): boolean {
   if (exp.length !== acc.length) {
     return false;
   }

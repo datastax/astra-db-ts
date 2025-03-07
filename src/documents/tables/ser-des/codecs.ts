@@ -26,6 +26,7 @@ import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables
 import { DataAPIInet } from '@/src/documents/datatypes/inet.js';
 import { betterTypeOf } from '@/src/documents/utils.js';
 import { assertHasDeserializeFor, assertHasSerializeFor } from '@/src/lib/api/ser-des/utils.js';
+import type { PathSegment } from '@/src/lib/types.js';
 
 /**
  * @public
@@ -145,7 +146,7 @@ export class TableCodecs {
     }];
   }
 
-  public static forPath(path: (string | number)[], optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs {
+  public static forPath(path: readonly PathSegment[], optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs {
     validateIfCodecClass(optsOrClass);
 
     return [{

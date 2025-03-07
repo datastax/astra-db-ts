@@ -17,7 +17,7 @@ import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 import { BigNumber } from 'bignumber.js';
-import type { CollNumRep} from '@/src/documents/index.js';
+import type { CollNumCoercion} from '@/src/documents/index.js';
 import { NumCoercionError } from '@/src/documents/index.js';
 
 describe('unit.documents.collections.ser-des.enable-big-numbers', () => {
@@ -28,7 +28,7 @@ describe('unit.documents.collections.ser-des.enable-big-numbers', () => {
   });
 
   describe('coercions', () => {
-    const mkDesAsserter = (type: CollNumRep, coerce: (n: BigNumber | number) => unknown) => ({
+    const mkDesAsserter = (type: CollNumCoercion, coerce: (n: BigNumber | number) => unknown) => ({
       _serdesFn: new CollSerDes({ ...CollSerDes.cfg.empty, enableBigNumbers: () => type }),
       _serdesCfg: new CollSerDes({ ...CollSerDes.cfg.empty, enableBigNumbers: { '*': type } }),
       ok(n: BigNumber | number) {

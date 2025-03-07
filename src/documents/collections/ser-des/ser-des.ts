@@ -20,8 +20,8 @@ import type { RawCollCodecs } from '@/src/documents/collections/ser-des/codecs.j
 import { CollectionCodecs } from '@/src/documents/collections/ser-des/codecs.js';
 import { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { isBigNumber } from '@/src/lib/utils.js';
-import type { CollNumRepCfg, GetCollNumRepFn } from '@/src/documents/index.js';
-import { buildGetNumRepForPathFn, coerceNums } from '@/src/documents/collections/ser-des/big-nums.js';
+import type { CollNumCoercionCfg, GetCollNumCoercionFn } from '@/src/documents/index.js';
+import { buildGetNumCoercionForPathFn, coerceNums } from '@/src/documents/collections/ser-des/big-nums.js';
 import { CollSerDesCfgHandler } from '@/src/documents/collections/ser-des/cfg-handler.js';
 import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
 import { pathMatches } from '@/src/lib/api/ser-des/utils.js';
@@ -37,14 +37,14 @@ export interface CollectionSerCtx extends BaseSerCtx<CollectionSerCtx> {
  * @public
  */
 export interface CollectionDesCtx extends BaseDesCtx<CollectionDesCtx> {
-  getNumRepForPath?: GetCollNumRepFn,
+  getNumCoercionForPath?: GetCollNumCoercionFn,
 }
 
 /**
  * @public
  */
 export interface CollectionSerDesConfig extends BaseSerDesConfig<CollectionSerCtx, CollectionDesCtx> {
-  enableBigNumbers?: GetCollNumRepFn | CollNumRepCfg,
+  enableBigNumbers?: GetCollNumCoercionFn | CollNumCoercionCfg,
   codecs?: RawCollCodecs[],
 }
 
@@ -52,26 +52,26 @@ export interface CollectionSerDesConfig extends BaseSerDesConfig<CollectionSerCt
  * @internal
  */
 export class CollSerDes extends SerDes<CollectionSerCtx, CollectionDesCtx> {
-  declare protected readonly _cfg: ParsedSerDesConfig<CollectionSerDesConfig> & { enableBigNumbers?: GetCollNumRepFn };
-  private readonly _getNumRepForPath: GetCollNumRepFn | undefined;
+  declare protected readonly _cfg: ParsedSerDesConfig<CollectionSerDesConfig> & { enableBigNumbers?: GetCollNumCoercionFn };
+  private readonly _getNumCoercionForPath: GetCollNumCoercionFn | undefined;
 
   public static cfg: typeof CollSerDesCfgHandler = CollSerDesCfgHandler;
 
   public constructor(cfg: ParsedSerDesConfig<CollectionSerDesConfig>) {
     super(CollSerDes.cfg.concat([codecs, cfg]), serialize, deserialize);
-    this._getNumRepForPath = buildGetNumRepForPathFn(cfg);
+    this._getNumCoercionForPath = buildGetNumCoercionForPathFn(cfg);
   }
 
   public override adaptSerCtx(ctx: CollectionSerCtx): CollectionSerCtx {
-    ctx.bigNumsEnabled = !!this._getNumRepForPath;
+    ctx.bigNumsEnabled = !!this._getNumCoercionForPath;
     return ctx;
   }
 
   public override adaptDesCtx(ctx: CollectionDesCtx): CollectionDesCtx {
-    ctx.getNumRepForPath = this._getNumRepForPath;
+    ctx.getNumCoercionForPath = this._getNumCoercionForPath;
 
-    if (ctx.getNumRepForPath) {
-      coerceNums(ctx.rootObj, [], ctx.getNumRepForPath);
+    if (ctx.getNumCoercionForPath) {
+      coerceNums(ctx.rootObj, ctx.getNumCoercionForPath);
     }
 
     return ctx;

@@ -14,7 +14,7 @@
 
 export * from './fetch/fetch-h2.js';
 export * from './fetch/fetch-native.js';
-export type * from './fetch/fetcher.js';
+export type { Fetcher, FetcherRequestInfo, FetcherResponseInfo } from './fetch/fetcher.js';
 export { DEFAULT_KEYSPACE } from './constants.js';
 
 export type {

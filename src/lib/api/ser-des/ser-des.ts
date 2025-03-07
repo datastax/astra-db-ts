@@ -27,6 +27,7 @@ import {
   SerDesTarget,
 } from '@/src/lib/api/ser-des/ctx.js';
 import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
+import type { PathSegment } from '@/src/lib/types.js';
 
 /**
  * @public
@@ -184,7 +185,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
   }
 }
 
-function serdesRecord<Ctx extends BaseSerDesCtx>(key: string | number, obj: SomeDoc, ctx: Ctx, fn: SerDesFn<Ctx>) {
+function serdesRecord<Ctx extends BaseSerDesCtx>(key: PathSegment, obj: SomeDoc, ctx: Ctx, fn: SerDesFn<Ctx>) {
   const postMaps: ((v: any) => unknown)[] = [];
   ctx.mapAfter = (fn) => { postMaps.push(fn); return [NEVERMIND]; };
 
@@ -228,7 +229,7 @@ function serdesRecordHelper<Ctx extends BaseSerDesCtx>(obj: SomeDoc, ctx: Ctx, f
   return obj;
 }
 
-function applySerdesFn<Ctx>(fn: SerDesFn<Ctx>, key: string | number, obj: SomeDoc, ctx: Ctx): boolean {
+function applySerdesFn<Ctx>(fn: SerDesFn<Ctx>, key: PathSegment, obj: SomeDoc, ctx: Ctx): boolean {
   let res: ReturnType<SerDesFn<unknown>> = null!;
   let loops = 0;
 
