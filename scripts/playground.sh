@@ -23,7 +23,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ -z "$action" ]; then
-  echo "Action (-c|-r|-d <playground>) is required. Use -help for more information."
+  echo "Action ((create|destroy|show|run <playground>) | (list)) is required. Use -help for more information."
   exit 1
 fi
 
@@ -72,10 +72,19 @@ const table = db.table('test_table');
 (async () => {
 
 })();" > index.ts
+
+  echo "Playground '$name' created."
+  exit 0
 fi
 
 if [ ! -d "$dir" ]; then
   set -- etc/playgrounds/"$name"*
+
+  if [ "$1" = "etc/playgrounds/$name*" ]; then
+    echo "No playground found for '$name'. Choose one of the following:"
+    sh "$0" list
+    exit 1
+  fi
 
   if [ "$#" -gt 1 ]; then
     echo "Multiple playgrounds found for '$name'. Please specify one of the following:"
@@ -84,9 +93,6 @@ if [ ! -d "$dir" ]; then
       echo "- $(basename "$d")"
     done
 
-    exit 1
-  elif [ "$#" -eq 0 ]; then
-    echo "No playground found for '$name'."
     exit 1
   fi
 
@@ -105,6 +111,6 @@ destroy)
   rm -rf "$dir"
   ;;
 run)
-  cd etc/playgrounds/"$1" || exit 1
+  cd "$dir" || exit 1
   npx tsx index.ts
 esac

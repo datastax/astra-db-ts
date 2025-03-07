@@ -22,7 +22,6 @@ import type {
 import {
   $DeserializeForTable,
   $SerializeForTable,
-  Camel2SnakeCase,
   TableCodecs,
 } from '@/src/index.js';
 import { BigNumber } from 'bignumber.js';
@@ -38,10 +37,10 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
           title: { type: 'text' },
           author: { type: 'text' },
           price: { type: 'decimal' },
-          published_at: { type: 'timestamp' },
-          inserted_at: { type: 'timestamp' },
-          review_names: { type: 'list', valueType: 'text' },
-          review_reviews: { type: 'list', valueType: 'text' },
+          publishedAt: { type: 'timestamp' },
+          insertedAt: { type: 'timestamp' },
+          reviewNames: { type: 'list', valueType: 'text' },
+          reviewReviews: { type: 'list', valueType: 'text' },
         },
         primaryKey: 'isbn',
       },
@@ -128,7 +127,6 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
 
     const table = db.table('obj_mapping_table', {
       serdes: {
-        keyTransformer: new Camel2SnakeCase(),
         codecs: [ISBNCodec, BookCodec],
       },
     });
@@ -149,10 +147,10 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
       title: 'Lord of the Fries',
       author: 'Gilliam Wolding',
       price: BigNumber(-12.50),
-      published_at: '1970-01-01T00:00:00.000Z',
-      inserted_at: '3000-01-01T00:00:00.000Z',
-      review_names: ['Tow Mater'],
-      review_reviews: ['dad gum!'],
+      publishedAt: '1970-01-01T00:00:00.000Z',
+      insertedAt: '3000-01-01T00:00:00.000Z',
+      reviewNames: ['Tow Mater'],
+      reviewReviews: ['dad gum!'],
     };
 
     let cse!: CommandSucceededEvent;
@@ -242,7 +240,6 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
 
     const table = db.table('obj_mapping_table', {
       serdes: {
-        keyTransformer: new Camel2SnakeCase({ transformNested: true }),
         codecs: [
           TableCodecs.forName('', Book),
           TableCodecs.forName('isbn', ISBN),
@@ -266,10 +263,10 @@ parallel('integration.documents.tables.ser-des.usecases.object-mapping', { drop:
       title: 'Lord of the Fries',
       author: 'Gilliam Wolding',
       price: BigNumber(-12.50),
-      published_at: '1970-01-01T00:00:00.000Z',
-      inserted_at: '3000-01-01T00:00:00.000Z',
-      review_names: ['Tow Mater'],
-      review_reviews: ['dad gum!'],
+      publishedAt: '1970-01-01T00:00:00.000Z',
+      insertedAt: '3000-01-01T00:00:00.000Z',
+      reviewNames: ['Tow Mater'],
+      reviewReviews: ['dad gum!'],
     };
 
     let cse!: CommandSucceededEvent;

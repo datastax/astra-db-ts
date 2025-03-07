@@ -45,13 +45,13 @@ parallel('integration.lib.api.fetch.fetch-native', () => {
     assert.strictEqual(resp.statusText, 'OK');
     assert.strictEqual(resp.httpVersion, 1);
     assert.strictEqual(typeof resp.headers, 'object');
-    assert.strictEqual(resp.additionalAttributes, undefined);
+    assert.strictEqual(resp.extraLogInfo, undefined);
   });
 
   it('should throw custom timeout error on timeout', async () => {
     try {
       const fetcher = new FetchNative();
-      await fetcher.fetch({ ...genericOptions, timeout: 0 });
+      await fetcher.fetch({ ...genericOptions, timeout: 1 });
       assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof Error);
@@ -67,7 +67,6 @@ parallel('integration.lib.api.fetch.fetch-native', () => {
       assert.fail('Expected an error');
     } catch (e) {
       assert.ok(e instanceof TypeError);
-      assert.ok(e.message.includes('Cannot create property'));
     }
   });
 

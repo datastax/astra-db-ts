@@ -13,12 +13,9 @@
 // limitations under the License.
 
 import type { SomeDoc } from '@/src/documents/index.js';
-import type { Deserializers, KeyTransformer, RawCodec, RawDataAPIResponse, Serializers } from '@/src/lib/index.js';
+import type { Deserializers, RawCodec, RawDataAPIResponse, Serializers } from '@/src/lib/index.js';
 import { processCodecs } from '@/src/lib/index.js';
-import type {
-  BaseDesCtx,
-  BaseSerCtx,
-  BaseSerDesCtx} from '@/src/lib/api/ser-des/ctx.js';
+import type { BaseDesCtx, BaseSerCtx, BaseSerDesCtx } from '@/src/lib/api/ser-des/ctx.js';
 import {
   ctxDone,
   ctxNevermind,
@@ -30,6 +27,7 @@ import {
   SerDesTarget,
 } from '@/src/lib/api/ser-des/ctx.js';
 import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
+import type { PathSegment } from '@/src/lib/types.js';
 
 /**
  * @public
@@ -121,81 +119,6 @@ export interface BaseSerDesConfig<SerCtx extends BaseSerCtx<any>, DesCtx extends
    * @defaultValue false
    */
   mutateInPlace?: boolean,
-  /**
-   * ##### Overview (Beta)
-   *
-   * A key transformer to customize how keys are serialized/deserialized.
-   *
-   * May be most commonly used to convert between camelCase and snake_case, via the {@link Camel2SnakeCase} transformer.
-   *
-   * ##### General usage
-   *
-   * - The key transformer is run immediately before the document is sent to the server, and immediately after the document is received from the server.
-   *   - This means that any custom codecs should treat the document as if the keys are in the format that the client expects (e.g., camelCase).
-   * - The key transformer only affects inserted/read rows/documents, filters, and table primary keys.
-   *   - **Things like table/index definitions are not affected**.
-   *
-   * ##### Camel2SnakeCase-specific usage
-   *
-   * - Nested objects are not affected by the key transformer unless explicitly enabled (see {@link Camel2SnakeCaseOptions.transformNested} for more info).
-   * - `_id` and fields starting with a `$` are excluded by default, but may be un-excluded by setting the appropriate options to `false`.
-   *
-   * See `examples/serdes/.../key-transformer.ts` for complete examples for tables/collections.
-   *
-   * @example
-   * ```ts
-   * // As far as the client is concerned, the keys in the document are in camelCase
-   * interface TableSchema {
-   *   userId: string,
-   *   fullName: string,
-   *   birthday: Date,
-   * }
-   *
-   * // Note that the columns still need to be defined in snake_case
-   * const table = await db.createTable<TableSchema>('users', {
-   *   definition: {
-   *     columns: {
-   *       user_id: 'text',
-   *       full_name: 'text',
-   *       birthday: 'timestamp',
-   *     },
-   *     primaryKey: 'user_id',
-   *   },
-   *   serdes: {
-   *     keyTransformer: new Camel2SnakeCase(),
-   *   },
-   * });
-   *
-   * // Outside of ser/des-ing a document, row, [update] filter, etc.,
-   * // the key transformer will not be used.
-   * await table.createIndex('name_idx', 'full_name');
-   *
-   * // Insert & find the document using camelCase keys
-   * const inserted = await table.insertOne({
-   *   userId: 'alice123',
-   *   fullName: 'Alice W. Land',
-   *   birthday: new Date('1990-01-01'),
-   * });
-   *
-   * // { userId: 'alice123' }
-   * console.log(inserted.insertedId);
-   *
-   * // { userId: 'alice123', fullName: 'Alice W. Land', birthday: Date('1990-01-01') }
-   * const found = await table.findOne({ fullName: 'Alice W. Land' });
-   * console.log(found);
-   * ```
-   *
-   * ##### Disclaimer
-   *
-   * Key transformers are a powerful feature, but should be used with caution. It's possible to break the client's behavior by using the features incorrectly.
-   *
-   * Always test your key transformer with a variety of documents to ensure that it behaves as expected, before using it on real data.
-   *
-   * @see Camel2SnakeCase
-   *
-   * @beta
-   */
-  keyTransformer?: KeyTransformer,
 }
 
 /**
@@ -225,10 +148,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
 
     const serialized = serdesRecord('', { ['']: ctx.rootObj }, ctx, this._serialize)[''];
 
-    return [
-      ctx.keyTransformer?.serialize(serialized, ctx) ?? serialized,
-      this.bigNumsPresent(ctx),
-    ];
+    return [serialized, this.bigNumsPresent(ctx)];
   }
 
   public deserialize<S>(obj: unknown, raw: RawDataAPIResponse, target: SerDesTarget = SerDesTarget.Record): S {
@@ -241,11 +161,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
       rawDataApiResp: raw,
     }));
 
-    const rootObj = {
-      ['']: ctx.keyTransformer?.deserialize(ctx.rootObj, ctx) ?? ctx.rootObj,
-    };
-
-    return serdesRecord('', rootObj, ctx, this._deserialize)[''] as S;
+    return serdesRecord('',  { ['']: ctx.rootObj }, ctx, this._deserialize)[''] as S;
   }
 
   protected abstract adaptSerCtx(ctx: BaseSerCtx<SerCtx>): SerCtx;
@@ -258,7 +174,6 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
       recurse: ctxRecurse,
       nevermind: ctxNevermind,
       replace: ctxReplace,
-      keyTransformer: this._cfg.keyTransformer,
       mutatingInPlace: true,
       mapAfter: null!,
       target: target,
@@ -270,7 +185,7 @@ export abstract class SerDes<SerCtx extends BaseSerCtx<any> = any, DesCtx extend
   }
 }
 
-function serdesRecord<Ctx extends BaseSerDesCtx>(key: string | number, obj: SomeDoc, ctx: Ctx, fn: SerDesFn<Ctx>) {
+function serdesRecord<Ctx extends BaseSerDesCtx>(key: PathSegment, obj: SomeDoc, ctx: Ctx, fn: SerDesFn<Ctx>) {
   const postMaps: ((v: any) => unknown)[] = [];
   ctx.mapAfter = (fn) => { postMaps.push(fn); return [NEVERMIND]; };
 
@@ -314,7 +229,7 @@ function serdesRecordHelper<Ctx extends BaseSerDesCtx>(obj: SomeDoc, ctx: Ctx, f
   return obj;
 }
 
-function applySerdesFn<Ctx>(fn: SerDesFn<Ctx>, key: string | number, obj: SomeDoc, ctx: Ctx): boolean {
+function applySerdesFn<Ctx>(fn: SerDesFn<Ctx>, key: PathSegment, obj: SomeDoc, ctx: Ctx): boolean {
   let res: ReturnType<SerDesFn<unknown>> = null!;
   let loops = 0;
 

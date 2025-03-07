@@ -178,8 +178,6 @@ export interface DbOptions {
  *  - Enabling the `mutateInPlace` optimization for serializing rows/documents
  *  - Enabling big number support for collections
  *  - Enabling "sparse data" for tables
- *  - Plugging in a key transformer to customize how keys are serialized
- *    - (e.g. camel to snake case)
  *  - Implementing custom serialization/deserialization logic through codecs
  *    - (e.g. custom data types, validation, etc.)
  *

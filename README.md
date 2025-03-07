@@ -21,7 +21,17 @@
 
 ## Quickstart
 
-Use your preferred package manager to install `@datastax/astra-db-ts`. Note that this is not supported in browsers.
+Use your preferred package manager to install `@datastax/astra-db-ts`.
+
+```bash
+npm i @datastax/astra-db-ts # or your favorite package manager's equivalent
+````
+
+If you're using TypeScript, you must use at least version 5.0.0 to use `astra-db-ts 2.0`, as it uses modern TypeScript features such as `const` type parameters.
+
+```bash
+npm i typescript@^5.0.0
+```
 
 Get the *API endpoint* and your *application token* for your Astra DB instance @ [astra.datastax.com](https://astra.datastax.com).
 
@@ -169,56 +179,6 @@ type Dream = InferTableSchema<typeof DreamsTableSchema>;
 })();
 ```
 
-<details>
-  <summary><i>Inferring the table schema pre-TS v5.0</i></summary>
-
-  Before TypeScript 5.0, there was no support for "const type parameters" (e.g. `f<const T>(t: T): T`) which `Table.schema` relies on.
-
-  No worries though—if you're using TypeScript 4.x or below, you can still infer the schema automatically, albeit with less language server support.
-
-  Schema object type errors may be non-local and harder to debug, but the code will still work as expected.
-
-  ```ts
-  const DreamsTableSchema = <const>{
-    columns: {
-      id: 'int',
-      summary: 'text',
-      tags: { type: 'set', valueType: 'text' },
-      vector: { type: 'vector', dimension: 3 },
-    },
-    primaryKey: 'id',
-  };
-
-  // Still works, but you need to ensure DreamsTableSchema is a properly typed const object
-  type Dream = InferTableSchema<typeof DreamsTableSchema>;
-  type DreamPK = InferTablePrimaryKey<typeof DreamsTableSchema>;
-
-  (async () => {
-    // Necessary to explicitly set the type of the table schema and primary key here
-    const table = await db.createTable<Dream, DreamPK>('dreams', {
-      definition: DreamsTableSchema,
-      ifNotExists: true,
-    });
-  })();
-  ```
-
-  If you're using TypeScript 4.9, you can at least use the `satisfies` operator to localize any definition type errors.
-
-  ```ts
-  const DreamsTableSchema = <const>{
-    columns: {
-      id: 'int',
-      summary: 'text',
-      tags: { type: 'set', valueType: 'text' },
-      vector: { type: 'vector', dimension: 3 },
-    },
-    primaryKey: 'id',
-  } satisfies CreateTableDefinition;
-
-  type Dream = InferTableSchema<typeof DreamsTableSchema>;
-  ```
-</details>
-
 ### Next steps
 
 - More info and usage patterns are given in the ts-doc of classes and methods
@@ -263,9 +223,9 @@ const admin = client.admin();
   const dbInfo = databases[0];
   console.log(dbInfo.info.name, dbInfo.id, dbInfo.info.region);
 
-  // list namespaces for the first database
+  // list keyspaces for the first database
   const dbAdmin = admin.dbAdmin(dbInfo.id, dbInfo.info.region);
-  console.log(await dbAdmin.listNamespaces());
+  console.log(await dbAdmin.listKeyspaces());
 })();
 ```
 

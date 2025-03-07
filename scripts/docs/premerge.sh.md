@@ -16,7 +16,7 @@ It'll take maybe 12-15 minutes to run, assuming no steps fail along the way.
 ## Overriding script arguments
 
 You can override the arguments passed to any of the four scripts by providing any of the following four flags:
-- `-build-args` (empty by default)
+- `-build-args` (`-r` by default)
 - `-check-args` (empty by default)
 - `-test-args` (`-b` by default)
 - `-example-deps-args` (`tar` by default)
@@ -24,7 +24,7 @@ You can override the arguments passed to any of the four scripts by providing an
 For example:
 
 ```sh
-sh scripts/premerge.sh -test-args '-b -local'
+sh scripts/premerge.sh -test-args '-b -local -u'
 ```
 
 Not sure why you'd really want to do this except for setting the `-local` flag for the tests, but it's there if you need it.

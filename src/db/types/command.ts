@@ -49,5 +49,5 @@ export interface RunCommandOptions extends WithTimeout<'generalMethodTimeoutMs'>
   /**
    * A small string to add to the log message for this command (only if you're printing to `stdout`/`stderr` using {@link LoggingConfig}).
    */
-  extraLogInfo?: string,
+  extraLogInfo?: Record<string, unknown>,
 }

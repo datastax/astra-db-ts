@@ -5,15 +5,6 @@ if [ -f .env ]; then
   eval "$(tr -d '\r' < .env)"
 fi
 
-# Make sure env vars present and such
-if [ -z "$CLIENT_DB_TOKEN" ] || [ -z "$CLIENT_DB_TOKEN" ]; then
-  echo "Missing CLIENT_DB_TOKEN and/or CLIENT_DB_TOKEN"
-  exit 1
-fi
-
-# Rebuild the client (without types or any extra processing for speed)
-sh scripts/build.sh -light || exit 2
-
 default_coll_name='test_coll'
 default_table_name='test_table'
 default_keyspace_name='default_keyspace'
@@ -47,6 +38,15 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
+
+# Make sure env vars present and such
+if [ -z "$CLIENT_DB_TOKEN" ] || [ -z "$CLIENT_DB_TOKEN" ]; then
+  echo "Missing CLIENT_DB_TOKEN and/or CLIENT_DB_TOKEN"
+  exit 1
+fi
+
+# Rebuild the client (without types or any extra processing for speed)
+sh scripts/build.sh -for-repl || exit 2
 
 # Start the REPL w/ some utility stuff and stuff
 node -i -e "

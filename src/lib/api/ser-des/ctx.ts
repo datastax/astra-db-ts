@@ -12,7 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Deserializers, KeyTransformer, RawDataAPIResponse, Serializers } from '@/src/lib/index.js';
+import type { Deserializers, RawDataAPIResponse, Serializers } from '@/src/lib/index.js';
+import type { PathSegment } from '@/src/lib/types.js';
 
 /**
  * @public
@@ -33,12 +34,12 @@ export interface BaseDesCtx<DesCtx> extends BaseSerDesCtx {
  * @public
  */
 export const SerDesTarget = <const>{
-  Record: 0,
-  Filter: 1,
-  Update: 2,
-  Projection: 3,
-  Sort: 4,
-  InsertedId: 5,
+  Sort: 1 << 0,
+  Record: 1 << 1,
+  Filter: 1 << 2,
+  Update: 1 << 3,
+  Projection: 1 << 4,
+  InsertedId: 1 << 5,
 };
 
 /**
@@ -51,13 +52,12 @@ export type SerDesTarget = typeof SerDesTarget[keyof typeof SerDesTarget];
  */
 export interface BaseSerDesCtx {
   rootObj: any,
-  path: (string | number)[],
+  path: PathSegment[],
   done<T>(obj?: T): readonly [0, T?],
   recurse<T>(obj?: T): readonly [1, T?],
   replace<T>(obj: T): readonly [2, T],
   nevermind(): readonly [3],
   mapAfter(map: (v: any) => unknown): readonly [3],
-  keyTransformer?: KeyTransformer,
   mutatingInPlace: boolean,
   locals: Record<string, any>,
   target: SerDesTarget,

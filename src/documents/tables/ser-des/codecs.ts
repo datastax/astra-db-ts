@@ -22,17 +22,18 @@ import { DataAPIVector } from '@/src/documents/datatypes/vector.js';
 import type { TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
 import type { CustomCodecOpts, NominalCodecOpts, RawCodec, SerDesFn, TypeCodecOpts } from '@/src/lib/index.js';
 import { BigNumber } from 'bignumber.js';
-import type { $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
-import { $DeserializeForTable } from '@/src/documents/tables/ser-des/constants.js';
+import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
 import { DataAPIInet } from '@/src/documents/datatypes/inet.js';
+import { betterTypeOf } from '@/src/documents/utils.js';
+import { assertHasDeserializeFor, assertHasSerializeFor } from '@/src/lib/api/ser-des/utils.js';
+import type { PathSegment } from '@/src/lib/types.js';
 
 /**
  * @public
  */
-export interface TableCodecClass {
-  new (...args: any[]): { [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>> };
-  [$DeserializeForTable]: SerDesFn<TableDesCtx>;
-}
+export type TableCodecClass =
+  & (abstract new (...args: any[]) => { [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>> })
+  & { [$DeserializeForTable]: SerDesFn<TableDesCtx> }
 
 /**
  * @public
@@ -136,6 +137,8 @@ export class TableCodecs {
   };
 
   public static forName(name: string, optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs {
+    validateIfCodecClass(optsOrClass);
+
     return [{
       tag: 'forName',
       name: name,
@@ -143,7 +146,9 @@ export class TableCodecs {
     }];
   }
 
-  public static forPath(path: (string | number)[], optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs {
+  public static forPath(path: readonly PathSegment[], optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs {
+    validateIfCodecClass(optsOrClass);
+
     return [{
       tag: 'forPath',
       path: path,
@@ -152,6 +157,8 @@ export class TableCodecs {
   }
 
   public static forType<const Type extends string>(type: Type, optsOrClass: TableTypeCodecOpts | TableCodecClass): RawTableCodecs {
+    validateIfCodecClass(optsOrClass);
+
     return [{
       tag: 'forType',
       type: type,
@@ -161,5 +168,27 @@ export class TableCodecs {
 
   public static custom(opts: TableCustomCodecOpts): RawTableCodecs {
     return [{ tag: 'custom', opts: opts }];
+  }
+
+  public static asCodecClass<T>(val: T, builder?: ((val: T & TableCodecClass & { prototype: { [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>> } }) => void)): TableCodecClass {
+    builder?.(val as T & TableCodecClass);
+    assertIsCodecClass(val);
+    return val;
+  }
+}
+
+function assertIsCodecClass(val: unknown): asserts val is TableCodecClass {
+  if (typeof val !== 'function') {
+    throw new Error(`Invalid codec class: expected a constructor; got ${betterTypeOf(val)}`);
+  }
+  assertHasSerializeFor(val, $SerializeForTable, '$SerializeForTable');
+  assertHasDeserializeFor(val, $DeserializeForTable, '$DeserializeForTable');
+}
+
+function validateIfCodecClass<T>(val: TableCodecClass | T) {
+  if (typeof val === 'function') {
+    // We can't check for $SerializeForTable here because it may not be on the prototype, depending on how it's
+    // implemented in the class. This at least helps catch cases when a completely wrong class is passed.
+    assertHasDeserializeFor(val, $DeserializeForTable, '$DeserializeForTable');
   }
 }

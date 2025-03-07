@@ -14,13 +14,8 @@
 
 export * from './fetch/fetch-h2.js';
 export * from './fetch/fetch-native.js';
+export type { Fetcher, FetcherRequestInfo, FetcherResponseInfo } from './fetch/fetcher.js';
 export { DEFAULT_KEYSPACE } from './constants.js';
-
-export type {
-  Fetcher,
-  FetcherRequestInfo,
-  FetcherResponseInfo,
-} from './fetch/types.js';
 
 export type {
   RawDataAPIResponse,
@@ -46,6 +41,3 @@ export type {
   WithTimeout,
   TimedOutCategories,
 } from './timeouts/timeouts.js';
-
-export type { Camel2SnakeCaseOptions } from './ser-des/key-transformer.js';
-export { Camel2SnakeCase, KeyTransformer } from './ser-des/key-transformer.js';

@@ -12,10 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type JBI from 'json-bigint';
-import type { SomeDoc } from '@/src/documents/index.js';
 import { BigNumber } from 'bignumber.js';
-import type { Decoder} from 'decoders';
+import type { Decoder } from 'decoders';
 import { array, define, either, instanceOf } from 'decoders';
 
 /**
@@ -48,74 +46,6 @@ export function buildAstraEndpoint(id: string, region: string, env: 'dev' | 'tes
  */
 export function toArray<T>(t: T | readonly T[]): readonly T[] {
   return Array.isArray(t) ? t : [t] as readonly [T];
-}
-
-/**
- * @internal
- */
-export function withJbiNullProtoFix(jbi: { parse: typeof JBI['parse']; stringify: typeof JBI['stringify'] }) {
-  return {
-    parse: (str: string) => nullProtoFix(jbi.parse(str)),
-    stringify: jbi.stringify,
-  };
-}
-
-function nullProtoFix(doc: SomeDoc): SomeDoc {
-  if (!doc || typeof doc !== 'object') {
-    return doc;
-  }
-
-  if (isBigNumber(doc)) {
-    return BigNumber(doc);
-  }
-
-  if (Array.isArray(doc)) {
-    for (let i = 0; i < doc.length; i++) {
-      doc[i] = nullProtoFix(doc[i]);
-    }
-  } else {
-    Object.setPrototypeOf(doc, Object.prototype);
-
-    for (const key of Object.keys(doc)) {
-      doc[key] = nullProtoFix(doc[key]);
-    }
-  }
-
-  return doc;
-}
-
-/**
- * @internal
- */
-export function pathArraysEqual(a: readonly (string | number)[], b: readonly (string | number)[]): boolean {
-  if (a.length !== b.length) {
-    return false;
-  }
-
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-/**
- * @internal
- */
-export function pathMatches(exp: readonly (string | number)[], acc: readonly (string | number)[]): boolean {
-  if (exp.length !== acc.length) {
-    return false;
-  }
-
-  for (let i = 0; i < acc.length; i++) {
-    if (exp[i] !== '*' && exp[i] !== acc[i]) {
-      return false;
-    }
-  }
-
-  return true;
 }
 
 /**

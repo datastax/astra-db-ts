@@ -43,13 +43,13 @@ export abstract class AdminCommandEvent extends BaseClientEvent {
     //
     // @internal
     protected constructor(name: string, requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean);
+    // (undocumented)
+    getMessagePrefix(): string;
     readonly longRunning: boolean;
     readonly method: 'GET' | 'POST' | 'DELETE';
     readonly methodName: string;
     readonly params?: Record<string, any>;
     readonly path: string;
-    // @internal (undocumented)
-    protected _prefix(): string;
     readonly reqBody?: Record<string, any>;
 }
 
@@ -68,10 +68,10 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
     constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, error: Error, started: number);
     readonly duration: number;
     readonly error: Error;
-    // @internal (undocumented)
-    protected _message(): string;
+    // (undocumented)
+    getMessage(): string;
     // @internal
-    protected permit: this;
+    protected permits: this;
 }
 
 // @public
@@ -79,11 +79,11 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
     // @internal
     constructor(requestId: string, info: DevOpsAPIRequestInfo, started: number, interval: number, pollCount: number);
     readonly elapsed: number;
+    // (undocumented)
+    getMessage(): string;
     readonly interval: number;
-    // @internal (undocumented)
-    protected _message(): string;
     // @internal
-    protected permit: this;
+    protected permits: this;
     readonly pollCount: number;
 }
 
@@ -91,10 +91,10 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
 export class AdminCommandStartedEvent extends AdminCommandEvent {
     // @internal
     constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, timeout: Partial<TimeoutDescriptor>);
-    // @internal (undocumented)
-    protected _message(): string;
+    // (undocumented)
+    getMessage(): string;
     // @internal
-    protected permit: this;
+    protected permits: this;
     readonly timeout: Partial<TimeoutDescriptor>;
 }
 
@@ -103,10 +103,10 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
     // @internal
     constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, data: Record<string, any> | undefined, started: number);
     readonly duration: number;
-    // @internal (undocumented)
-    protected _message(): string;
+    // (undocumented)
+    getMessage(): string;
     // @internal
-    protected permit: this;
+    protected permits: this;
     readonly resBody?: Record<string, any>;
 }
 
@@ -114,10 +114,10 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
 export class AdminCommandWarningsEvent extends AdminCommandEvent {
     // @internal
     constructor(requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean, warnings: DataAPIErrorDescriptor[]);
-    // @internal (undocumented)
-    protected _message(): string;
+    // (undocumented)
+    getMessage(): string;
     // @internal
-    protected permit: this;
+    protected permits: this;
     readonly warnings: DataAPIErrorDescriptor[];
 }
 
@@ -127,7 +127,7 @@ export interface AdminOptions {
     adminToken?: string | TokenProvider | null;
     astraEnv?: 'dev' | 'prod' | 'test';
     endpointUrl?: string;
-    logging?: LoggingConfig | undefined;
+    logging?: LoggingConfig;
     timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
 
@@ -274,14 +274,21 @@ export interface BaseAstraDbInfo {
 // @public
 export abstract class BaseClientEvent {
     // @internal
-    protected constructor(name: string, requestId: string);
+    protected constructor(name: string, requestId: string, extra: Record<string, unknown> | undefined);
+    readonly extraLogInfo: Record<string, any> | undefined;
     format(formatter?: EventFormatter): string;
     formatVerbose(): string;
-    // @internal (undocumented)
-    protected abstract _message(): string;
+    // (undocumented)
+    protected static formatVerboseTransientKeys: string[];
+    // (undocumented)
+    abstract getMessage(): string;
+    // (undocumented)
+    abstract getMessagePrefix(): string;
+    // (undocumented)
+    hideDupeFields(): this;
     readonly name: string;
     // @internal
-    protected abstract permit: DataAPIClientEvent;
+    protected abstract permits: DataAPIClientEvent;
     // @internal (undocumented)
     _propagationState: PropagationState;
     readonly requestId: string;
@@ -309,8 +316,6 @@ export interface BaseSerCtx<SerCex> extends BaseSerDesCtx {
 export interface BaseSerDesConfig<SerCtx extends BaseSerCtx<any>, DesCtx extends BaseDesCtx<any>> {
     // @alpha
     codecs?: (readonly RawCodec<SerCtx, DesCtx>[])[];
-    // @beta
-    keyTransformer?: KeyTransformer;
     mutateInPlace?: boolean;
 }
 
@@ -318,10 +323,6 @@ export interface BaseSerDesConfig<SerCtx extends BaseSerCtx<any>, DesCtx extends
 export interface BaseSerDesCtx {
     // (undocumented)
     done<T>(obj?: T): readonly [0, T?];
-    // Warning: (ae-incompatible-release-tags) The symbol "keyTransformer" is marked as @public, but its signature references "KeyTransformer" which is marked as @beta
-    //
-    // (undocumented)
-    keyTransformer?: KeyTransformer;
     // (undocumented)
     locals: Record<string, any>;
     // (undocumented)
@@ -330,8 +331,10 @@ export interface BaseSerDesCtx {
     mutatingInPlace: boolean;
     // (undocumented)
     nevermind(): readonly [3];
+    // Warning: (ae-forgotten-export) The symbol "PathSegment" needs to be exported by the entry point index.d.ts
+    //
     // (undocumented)
-    path: (string | number)[];
+    path: PathSegment[];
     // (undocumented)
     recurse<T>(obj?: T): readonly [1, T?];
     // (undocumented)
@@ -351,31 +354,6 @@ export const blob: (blob: DataAPIBlobLike) => DataAPIBlob;
 
 // @public
 export type Caller = readonly [name: string, version?: string];
-
-// Warning: (ae-incompatible-release-tags) The symbol "Camel2SnakeCase" is marked as @public, but its signature references "KeyTransformer" which is marked as @beta
-//
-// @public (undocumented)
-export class Camel2SnakeCase extends KeyTransformer {
-    constructor({ exceptId, exceptDollar, transformNested }?: Camel2SnakeCaseOptions);
-    // (undocumented)
-    deserializeKey(snake: string): string;
-    // (undocumented)
-    serializeKey(camel: string): string;
-    // Warning: (ae-forgotten-export) The symbol "KeyTransformerCtx" needs to be exported by the entry point index.d.ts
-    //
-    // (undocumented)
-    transformNested(ctx: KeyTransformerCtx): boolean;
-}
-
-// @public (undocumented)
-export interface Camel2SnakeCaseOptions {
-    // (undocumented)
-    exceptDollar?: boolean;
-    // (undocumented)
-    exceptId?: boolean;
-    // (undocumented)
-    transformNested?: boolean | ((path: KeyTransformerCtx) => boolean);
-}
 
 // @public
 export class Collection<WSchema extends SomeDoc = SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>> extends HierarchicalEmitter<CommandEventMap> {
@@ -428,17 +406,20 @@ export type CollectionArrayUpdate<Schema> = {
 export type CollectionCodec<Class extends CollectionCodecClass> = InstanceType<Class>;
 
 // @public (undocumented)
-export interface CollectionCodecClass {
-    // (undocumented)
+export type CollectionCodecClass = (abstract new (...args: any[]) => {
+    [$SerializeForCollection]: (ctx: CollectionSerCtx) => ReturnType<SerDesFn<any>>;
+}) & {
     [$DeserializeForCollection]: SerDesFn<CollectionDesCtx>;
-    // (undocumented)
-    new (...args: any[]): {
-        [$SerializeForCollection]: (ctx: CollectionSerCtx) => ReturnType<SerDesFn<any>>;
-    };
-}
+};
 
 // @public (undocumented)
 export class CollectionCodecs {
+    // (undocumented)
+    static asCodecClass<T>(val: T, builder?: ((val: T & CollectionCodecClass & {
+        prototype: {
+            [$SerializeForCollection]: (ctx: CollectionSerCtx) => ReturnType<SerDesFn<any>>;
+        };
+    }) => void)): CollectionCodecClass;
     // Warning: (ae-forgotten-export) The symbol "CollCustomCodecOpts" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
@@ -450,16 +431,14 @@ export class CollectionCodecs {
         $uuid: RawCollCodecs;
         $objectId: RawCollCodecs;
     };
+    // (undocumented)
+    static forId(clazz: CollectionCodecClass): RawCollCodecs;
     // Warning: (ae-forgotten-export) The symbol "CollNominalCodecOpts" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
-    static forId(optsOrClass: CollNominalCodecOpts & {
-        class?: SomeConstructor;
-    } | CollectionCodecClass): RawCollCodecs;
-    // (undocumented)
     static forName(name: string, optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs;
     // (undocumented)
-    static forPath(path: (string | number)[], optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs;
+    static forPath(path: readonly PathSegment[], optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs;
     // Warning: (ae-forgotten-export) The symbol "CollTypeCodecOpts" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
@@ -520,7 +499,7 @@ export interface CollectionDescriptor {
 // @public (undocumented)
 export interface CollectionDesCtx extends BaseDesCtx<CollectionDesCtx> {
     // (undocumented)
-    getNumRepForPath?: GetCollNumRepFn;
+    getNumCoercionForPath?: GetCollNumCoercionFn;
 }
 
 // @public
@@ -646,7 +625,7 @@ export interface CollectionSerDesConfig extends BaseSerDesConfig<CollectionSerCt
     // (undocumented)
     codecs?: RawCollCodecs[];
     // (undocumented)
-    enableBigNumbers?: GetCollNumRepFn | CollNumRepCfg;
+    enableBigNumbers?: GetCollNumCoercionFn | CollNumCoercionCfg;
 }
 
 // @public
@@ -696,24 +675,31 @@ export interface CollectionVectorOptions {
 }
 
 // @public (undocumented)
-export type CollNumRep = 'number' | 'bigint' | 'bignumber' | 'string' | 'number_or_string';
+export type CollNumCoercion = 'number' | 'strict_number' | 'bigint' | 'bignumber' | 'string' | 'number_or_string' | ((val: number | BigNumber, path: readonly PathSegment[]) => unknown);
 
 // @public (undocumented)
-export type CollNumRepCfg = Record<string, CollNumRep>;
+export interface CollNumCoercionCfg {
+    // (undocumented)
+    '*': CollNumCoercion;
+    // (undocumented)
+    [path: string]: CollNumCoercion;
+}
 
 // @public
 export abstract class CommandEvent extends BaseClientEvent {
     // Warning: (ae-forgotten-export) The symbol "DataAPIRequestInfo" needs to be exported by the entry point index.d.ts
     //
     // @internal
-    protected constructor(name: string, requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined);
+    protected constructor(name: string, requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined);
     readonly command: Record<string, any>;
     readonly commandName: string;
+    // (undocumented)
+    protected _extraLogInfoAsString(): string;
     // @internal (undocumented)
-    protected extraLogInfo: string;
+    protected static formatVerboseTransientKeys: (keyof CommandEvent)[];
+    // (undocumented)
+    getMessagePrefix(): string;
     readonly keyspace: string | null;
-    // @internal (undocumented)
-    protected _prefix(): string;
     readonly source?: string;
     readonly target: CommandEventTarget;
     readonly url: string;
@@ -733,47 +719,49 @@ export type CommandEventTarget = 'database' | 'keyspace' | 'table' | 'collection
 // @public
 export class CommandFailedEvent extends CommandEvent {
     // @internal
-    constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, reply: RawDataAPIResponse | undefined, error: Error, started: number);
+    constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, reply: RawDataAPIResponse | undefined, error: Error, started: number);
     readonly duration: number;
     readonly error: Error;
-    // @internal (undocumented)
-    protected _message(): string;
+    // (undocumented)
+    getMessage(): string;
+    // (undocumented)
+    hideDupeFields(): this;
     // @internal
-    protected permit: this;
+    protected permits: this;
     readonly resp?: RawDataAPIResponse;
 }
 
 // @public
 export class CommandStartedEvent extends CommandEvent {
     // @internal
-    constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined);
-    // @internal (undocumented)
-    protected _message(): string;
+    constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined);
+    // (undocumented)
+    getMessage(): string;
     // @internal
-    protected permit: this;
+    protected permits: this;
     readonly timeout: Partial<TimeoutDescriptor>;
 }
 
 // @public
 export class CommandSucceededEvent extends CommandEvent {
     // @internal
-    constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, reply: RawDataAPIResponse, started: number);
+    constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, reply: RawDataAPIResponse, started: number);
     readonly duration: number;
-    // @internal (undocumented)
-    protected _message(): string;
+    // (undocumented)
+    getMessage(): string;
     // @internal
-    protected permit: this;
+    protected permits: this;
     readonly resp: RawDataAPIResponse;
 }
 
 // @public
 export class CommandWarningsEvent extends CommandEvent {
     // @internal
-    constructor(requestId: string, info: DataAPIRequestInfo, extraLogInfo: string | undefined, warnings: DataAPIErrorDescriptor[]);
-    // @internal (undocumented)
-    protected _message(): string;
+    constructor(requestId: string, info: DataAPIRequestInfo, extra: Record<string, unknown> | undefined, warnings: DataAPIErrorDescriptor[]);
+    // (undocumented)
+    getMessage(): string;
     // @internal
-    protected permit: this;
+    protected permits: this;
     readonly warnings: DataAPIErrorDescriptor[];
 }
 
@@ -798,9 +786,9 @@ export interface CreateCollectionOptions<Schema extends SomeDoc> extends Collect
 export type CreateTableColumnDefinitions = Record<string, LooseCreateTableColumnDefinition | StrictCreateTableColumnDefinition>;
 
 // @public
-export interface CreateTableDefinition {
+export interface CreateTableDefinition<Def extends CreateTableDefinition<Def>> {
     readonly columns: CreateTableColumnDefinitions;
-    readonly primaryKey: CreateTablePrimaryKeyDefinition;
+    readonly primaryKey: CreateTablePrimaryKeyDefinition<keyof Def['columns'] & string>;
 }
 
 // @public
@@ -810,7 +798,7 @@ export interface CreateTableIndexOptions extends WithTimeout<'tableAdminTimeoutM
 }
 
 // @public
-export interface CreateTableOptions<Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions {
+export interface CreateTableOptions<Def extends CreateTableDefinition<Def> = CreateTableDefinition<any>> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions {
     // (undocumented)
     definition: Def;
     // (undocumented)
@@ -818,7 +806,7 @@ export interface CreateTableOptions<Def extends CreateTableDefinition = CreateTa
 }
 
 // @public
-export type CreateTablePrimaryKeyDefinition = string | FullCreateTablePrimaryKeyDefinition;
+export type CreateTablePrimaryKeyDefinition<PKCols extends string> = PKCols | FullCreateTablePrimaryKeyDefinition<PKCols>;
 
 // @public
 export interface CreateTableVectorIndexOptions extends WithTimeout<'tableAdminTimeoutMs'> {
@@ -913,6 +901,9 @@ export interface DataAPIClientOptions {
     timeoutDefaults?: Partial<TimeoutDescriptor>;
 }
 
+// @public (undocumented)
+export type DataAPICodec<Class extends CollectionCodecClass & TableCodecClass> = InstanceType<Class>;
+
 // @public
 export interface DataAPICreateKeyspaceOptions extends WithTimeout<'keyspaceAdminTimeoutMs'> {
     // (undocumented)
@@ -961,7 +952,7 @@ export class DataAPIDbAdmin extends DbAdmin {
 // @public
 export interface DataAPIDetailedErrorDescriptor {
     readonly command: Record<string, any>;
-    readonly errorDescriptors: DataAPIErrorDescriptor[];
+    readonly errorDescriptors: readonly DataAPIErrorDescriptor[];
     readonly rawResponse: RawDataAPIResponse;
 }
 
@@ -1030,13 +1021,19 @@ export const DataAPIEnvironments: readonly ["astra", "dse", "hcd", "cassandra", 
 
 // @public
 export abstract class DataAPIError extends Error {
+    // @internal (undocumented)
+    withTransientDupesForEvents(): object;
 }
 
 // @public
 export interface DataAPIErrorDescriptor {
-    readonly attributes?: Record<string, any>;
-    readonly errorCode?: string;
-    readonly message?: string;
+    readonly errorCode: string;
+    // Warning: (ae-forgotten-export) The symbol "LitUnion" needs to be exported by the entry point index.d.ts
+    readonly family: LitUnion<'REQUEST' | 'SERVER'>;
+    readonly id: string;
+    readonly message: string;
+    readonly scope?: string;
+    readonly title: string;
 }
 
 // @public
@@ -1068,6 +1065,11 @@ export class DataAPIResponseError extends DataAPIError {
     readonly detailedErrorDescriptors: DataAPIDetailedErrorDescriptor[];
     readonly errorDescriptors: DataAPIErrorDescriptor[];
     readonly message: string;
+    // @internal (undocumented)
+    withTransientDupesForEvents(): {
+        name: string;
+        message: string;
+    };
 }
 
 // @public
@@ -1108,7 +1110,7 @@ export class DataAPITimeoutError extends DataAPIError {
 }
 
 // @public
-export class DataAPIVector implements CollectionCodec<typeof DataAPIVector>, TableCodec<typeof DataAPIVector> {
+export class DataAPIVector implements DataAPICodec<typeof DataAPIVector> {
     static [$DeserializeForCollection](value: any, ctx: CollectionDesCtx): readonly [0, (DataAPIVector | undefined)?];
     static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (DataAPIVector | undefined)?];
     [$SerializeForCollection](ctx: CollectionSerCtx): readonly [0, (number[] | {
@@ -1159,7 +1161,7 @@ export class Db extends HierarchicalEmitter<CommandEventMap> {
     collection<WSchema extends SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>>(name: string, options?: CollectionOptions): Collection<WSchema, RSchema>;
     command(command: Record<string, any>, options?: RunCommandOptions): Promise<RawDataAPIResponse>;
     createCollection<WSchema extends SomeDoc, RSchema extends WithId<SomeDoc> = FoundDoc<WSchema>>(name: string, options?: CreateCollectionOptions<WSchema>): Promise<Collection<WSchema, RSchema>>;
-    createTable<const Def extends CreateTableDefinition>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>;
+    createTable<const Def extends CreateTableDefinition<any>>(name: string, options: CreateTableOptions<Def>): Promise<Table<InferTableSchema<Def>, InferTablePrimaryKey<Def>>>;
     createTable<WSchema extends SomeRow, PKeys extends SomeRow = Partial<FoundRow<WSchema>>, RSchema extends SomeRow = FoundRow<WSchema>>(name: string, options: CreateTableOptions): Promise<Table<WSchema, PKeys, RSchema>>;
     dropCollection(name: string, options?: DropCollectionOptions): Promise<void>;
     dropTable(name: string, options?: DropTableOptions): Promise<void>;
@@ -1227,7 +1229,7 @@ export interface Deserializers<DesCtx> {
     forName: Record<string, SerDesFn<DesCtx>[]>;
     // (undocumented)
     forPath: Record<number, {
-        path: (string | number)[];
+        path: readonly PathSegment[];
         fns: SerDesFn<DesCtx>[];
     }[]>;
     // (undocumented)
@@ -1358,7 +1360,7 @@ export interface EmbeddingProviderTokenInfo {
 export type EmptyObj = {};
 
 // @public
-export type EventFormatter = (event: DataAPIClientEvent, message: string) => string;
+export type EventFormatter = (event: DataAPIClientEvent, fullMessage: string) => string;
 
 // @public
 export interface ExplicitLoggingConfig {
@@ -1377,7 +1379,7 @@ export interface Fetcher {
 // @public
 export interface FetcherRequestInfo {
     body: string | undefined;
-    forceHttp1: boolean | undefined;
+    forceHttp1: boolean;
     headers: Record<string, string>;
     method: 'DELETE' | 'GET' | 'POST';
     mkTimeoutError: () => Error;
@@ -1387,8 +1389,8 @@ export interface FetcherRequestInfo {
 
 // @public
 export interface FetcherResponseInfo {
-    additionalAttributes?: Record<string, any>;
     body?: string;
+    extraLogInfo?: Record<string, unknown>;
     headers: Record<string, string>;
     httpVersion: 1 | 2;
     status: number;
@@ -1400,7 +1402,7 @@ export interface FetcherResponseInfo {
 export class FetchH2 implements Fetcher {
     constructor(options: FetchH2HttpClientOptions);
     close(): Promise<void>;
-    fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo>;
+    fetch(init: FetcherRequestInfo): Promise<FetcherResponseInfo>;
 }
 
 // @public
@@ -1435,7 +1437,7 @@ export interface FetchHttpClientOptions {
 // @public
 export class FetchNative implements Fetcher {
     close(): Promise<void>;
-    fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo>;
+    fetch(init: FetcherRequestInfo & RequestInit): Promise<FetcherResponseInfo>;
 }
 
 // @public
@@ -1456,7 +1458,7 @@ export abstract class FindCursor<T, TRaw extends SomeDoc = SomeDoc> {
     consumed(): number;
     get dataSource(): Table<SomeRow> | Collection;
     filter(filter: Filter): FindCursor<T, TRaw>;
-    forEach(consumer: ((doc: T) => boolean) | ((doc: T) => void)): Promise<void>;
+    forEach(consumer: ((doc: T) => boolean | Promise<boolean>) | ((doc: T) => void | Promise<void>)): Promise<void>;
     getSortVector(): Promise<DataAPIVector | null>;
     hasNext(): Promise<boolean>;
     includeSimilarity(includeSimilarity?: boolean): FindCursor<WithSim<TRaw>, WithSim<TRaw>>;
@@ -1492,11 +1494,11 @@ export type FoundRow<Doc> = {
 };
 
 // @public
-export interface FullCreateTablePrimaryKeyDefinition {
+export interface FullCreateTablePrimaryKeyDefinition<PKCols extends string> {
     // (undocumented)
-    readonly partitionBy: readonly string[];
+    readonly partitionBy: readonly PKCols[];
     // (undocumented)
-    readonly partitionSort?: Record<string, 1 | -1>;
+    readonly partitionSort?: Partial<Record<PKCols, 1 | -1>>;
 }
 
 // @public
@@ -1595,7 +1597,7 @@ export interface GenericUpdateOneOptions extends WithTimeout<'generalMethodTimeo
 export type GenericUpdateResult<ID, N extends number> = (GuaranteedUpdateResult<N> & UpsertedUpdateResult<ID>) | (GuaranteedUpdateResult<N> & NoUpsertUpdateResult);
 
 // @public (undocumented)
-export type GetCollNumRepFn = (path: readonly (string | number)[]) => CollNumRep;
+export type GetCollNumCoercionFn = (path: readonly PathSegment[], matches: (path: readonly PathSegment[]) => boolean) => CollNumCoercion;
 
 // @public
 export interface GuaranteedUpdateResult<N extends number> {
@@ -1608,9 +1610,9 @@ export class HierarchicalEmitter<Events extends Record<string, BaseClientEvent>>
     // @internal
     protected constructor(parent: Pick<HierarchicalEmitter<Events>, 'emit'> | null);
     emit<E extends keyof Events>(eventName: E, event: Events[E]): void;
-    off<E extends keyof Events>(eventName: E, listener: (e: Events[E]) => void): void;
-    on<E extends keyof Events>(eventName: E, listener: (e: Events[E]) => void): () => void;
-    once<E extends keyof Events>(eventName: E, listener: (e: Events[E]) => void): () => void;
+    off<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void): void;
+    on<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void): () => void;
+    once<E extends keyof Events>(eventName: E, listener: (event: Events[E]) => void): () => void;
     removeAllListeners<E extends keyof Events>(eventName?: E): void;
 }
 
@@ -1626,20 +1628,20 @@ export type IdOf<Doc> = Doc extends {
 export const inet: (address: string, version?: 4 | 6) => DataAPIInet;
 
 // @public
-export type InferrableTable = CreateTableDefinition | ((..._: any[]) => Promise<Table<SomeRow>>) | ((..._: any[]) => Table<SomeRow>) | Promise<Table<SomeRow>> | Table<SomeRow>;
+export type InferrableTable = CreateTableDefinition<any> | ((..._: any[]) => Promise<Table<SomeRow>>) | ((..._: any[]) => Table<SomeRow>) | Promise<Table<SomeRow>> | Table<SomeRow>;
 
 // Warning: (ae-forgotten-export) The symbol "InferTablePKFromDefinition" needs to be exported by the entry point index.d.ts
 //
 // @public
-export type InferTablePrimaryKey<T extends InferrableTable> = T extends CreateTableDefinition ? InferTablePKFromDefinition<T> : T extends (..._: any[]) => Promise<Table<any, infer PKey, any>> ? PKey : T extends (..._: any[]) => Table<any, infer PKey, any> ? PKey : T extends Promise<Table<any, infer PKey, any>> ? PKey : T extends Table<any, infer PKey, any> ? PKey : never;
+export type InferTablePrimaryKey<T extends InferrableTable> = T extends CreateTableDefinition<any> ? InferTablePKFromDefinition<T> : T extends (..._: any[]) => Promise<Table<any, infer PKey, any>> ? PKey : T extends (..._: any[]) => Table<any, infer PKey, any> ? PKey : T extends Promise<Table<any, infer PKey, any>> ? PKey : T extends Table<any, infer PKey, any> ? PKey : never;
 
 // Warning: (ae-forgotten-export) The symbol "InferTableSchemaFromDefinition" needs to be exported by the entry point index.d.ts
 //
 // @public
-export type InferTableReadSchema<T extends InferrableTable> = T extends CreateTableDefinition ? FoundRow<InferTableSchemaFromDefinition<T>> : T extends (..._: any[]) => Promise<Table<any, any, infer Schema>> ? Schema : T extends (..._: any[]) => Table<any, any, infer Schema> ? Schema : T extends Promise<Table<any, any, infer Schema>> ? Schema : T extends Table<any, any, infer Schema> ? Schema : never;
+export type InferTableReadSchema<T extends InferrableTable> = T extends CreateTableDefinition<any> ? FoundRow<InferTableSchemaFromDefinition<T>> : T extends (..._: any[]) => Promise<Table<any, any, infer Schema>> ? Schema : T extends (..._: any[]) => Table<any, any, infer Schema> ? Schema : T extends Promise<Table<any, any, infer Schema>> ? Schema : T extends Table<any, any, infer Schema> ? Schema : never;
 
 // @public
-export type InferTableSchema<T extends InferrableTable> = T extends CreateTableDefinition ? InferTableSchemaFromDefinition<T> : T extends (..._: any[]) => Promise<Table<infer Schema, any, any>> ? Schema : T extends (..._: any[]) => Table<infer Schema, any, any> ? Schema : T extends Promise<Table<infer Schema, any, any>> ? Schema : T extends Table<infer Schema, any, any> ? Schema : never;
+export type InferTableSchema<T extends InferrableTable> = T extends CreateTableDefinition<any> ? InferTableSchemaFromDefinition<T> : T extends (..._: any[]) => Promise<Table<infer Schema, any, any>> ? Schema : T extends (..._: any[]) => Table<infer Schema, any, any> ? Schema : T extends Promise<Table<infer Schema, any, any>> ? Schema : T extends Table<infer Schema, any, any> ? Schema : never;
 
 // @public
 export class InvalidEnvironmentError extends Error {
@@ -1657,17 +1659,6 @@ export type KeyspaceReplicationOptions = {
     class: 'NetworkTopologyStrategy';
     [datacenter: string]: number | 'NetworkTopologyStrategy';
 };
-
-// @beta
-export abstract class KeyTransformer {
-    // @internal (undocumented)
-    deserialize(obj: unknown, ctx: KeyTransformerCtx): unknown;
-    abstract deserializeKey(key: string, ctx: KeyTransformerCtx): string;
-    // @internal (undocumented)
-    serialize(obj: unknown, ctx: KeyTransformerCtx): unknown;
-    abstract serializeKey(key: string, ctx: KeyTransformerCtx): string;
-    abstract transformNested(ctx: KeyTransformerCtx): boolean;
-}
 
 // @public
 export const LIB_NAME = "astra-db-ts";
@@ -1719,7 +1710,7 @@ export type ListTableKnownColumnDefinition = StrictCreateTableColumnDefinition &
 };
 
 // @public
-export type ListTablePrimaryKeyDefinition = Required<FullCreateTablePrimaryKeyDefinition>;
+export type ListTablePrimaryKeyDefinition = Required<FullCreateTablePrimaryKeyDefinition<any>>;
 
 // @public
 export interface ListTablesOptions extends WithTimeout<'tableAdminTimeoutMs'>, WithKeyspace {
@@ -1798,11 +1789,6 @@ export interface NominalCodecOpts<SerCtx, DesCtx> {
 }
 
 // @public
-export type Normalize<T> = {
-    [K in keyof T]: T[K];
-} & EmptyObj;
-
-// @public
 export interface NoUpsertUpdateResult {
     upsertedCount: 0;
     upsertedId?: never;
@@ -1814,13 +1800,13 @@ export type nullish = null | undefined;
 // @public (undocumented)
 export class NumCoercionError extends Error {
     // @internal
-    constructor(path: (string | number)[], value: number | BigNumber, from: 'number' | 'bignumber', to: CollNumRep);
+    constructor(path: readonly PathSegment[], value: number | BigNumber, from: 'number' | 'bignumber', to: CollNumCoercion);
     // (undocumented)
     readonly from: 'number' | 'bignumber';
     // (undocumented)
-    readonly path: (string | number)[];
+    readonly path: readonly PathSegment[];
     // (undocumented)
-    readonly to: CollNumRep;
+    readonly to: CollNumCoercion;
     // (undocumented)
     readonly value: number | BigNumber;
 }
@@ -1878,7 +1864,7 @@ export type RawCodec<SerCtx = any, DesCtx = any> = {
     opts: NominalCodecOpts<SerCtx, DesCtx>;
 } | {
     tag: 'forPath';
-    path: (string | number)[];
+    path: readonly PathSegment[];
     opts: NominalCodecOpts<SerCtx, DesCtx>;
 } | {
     tag: 'forType';
@@ -1905,7 +1891,7 @@ export type RootDbOptions = Omit<DbOptions, 'logging' | 'timeoutDefaults'>;
 // @public
 export interface RunCommandOptions extends WithTimeout<'generalMethodTimeoutMs'> {
     collection?: string;
-    extraLogInfo?: string;
+    extraLogInfo?: Record<string, unknown>;
     keyspace?: string | null;
     table?: string;
 }
@@ -1940,7 +1926,7 @@ export interface Serializers<SerCtx> {
     forName: Record<string, SerDesFn<SerCtx>[]>;
     // (undocumented)
     forPath: Record<number, {
-        path: (string | number)[];
+        path: readonly PathSegment[];
         fns: SerDesFn<SerCtx>[];
     }[]>;
 }
@@ -2012,8 +1998,7 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
         nameOnly?: false;
     }): Promise<TableIndexDescriptor[]>;
     readonly name: string;
-    // (undocumented)
-    static schema<const Def extends CreateTableDefinition>(schema: Def): Def;
+    static schema<const Def extends CreateTableDefinition<Def>>(schema: Def): Def;
     updateOne(filter: TableFilter<WSchema>, update: TableUpdateFilter<WSchema>, timeout?: WithTimeout<'generalMethodTimeoutMs'>): Promise<void>;
 }
 
@@ -2021,17 +2006,20 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
 export type TableCodec<Class extends TableCodecClass> = InstanceType<Class>;
 
 // @public (undocumented)
-export interface TableCodecClass {
-    // (undocumented)
+export type TableCodecClass = (abstract new (...args: any[]) => {
+    [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>>;
+}) & {
     [$DeserializeForTable]: SerDesFn<TableDesCtx>;
-    // (undocumented)
-    new (...args: any[]): {
-        [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>>;
-    };
-}
+};
 
 // @public (undocumented)
 export class TableCodecs {
+    // (undocumented)
+    static asCodecClass<T>(val: T, builder?: ((val: T & TableCodecClass & {
+        prototype: {
+            [$SerializeForTable]: (ctx: TableSerCtx) => ReturnType<SerDesFn<any>>;
+        };
+    }) => void)): TableCodecClass;
     // Warning: (ae-forgotten-export) The symbol "TableCustomCodecOpts" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
@@ -2065,7 +2053,7 @@ export class TableCodecs {
     // (undocumented)
     static forName(name: string, optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs;
     // (undocumented)
-    static forPath(path: (string | number)[], optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs;
+    static forPath(path: readonly PathSegment[], optsOrClass: TableNominalCodecOpts | TableCodecClass): RawTableCodecs;
     // Warning: (ae-forgotten-export) The symbol "TableTypeCodecOpts" needs to be exported by the entry point index.d.ts
     //
     // (undocumented)
@@ -2125,7 +2113,7 @@ export interface TableFilterOps<Elem> {
 }
 
 // @public
-export class TableFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {
+export class TableFindCursor<T, TRaw extends SomeRow = SomeRow> extends FindCursor<T, TRaw> {
     get dataSource(): Table<SomeRow>;
     filter(filter: TableFilter<TRaw>): FindCursor<T, TRaw>;
 }
@@ -2317,7 +2305,7 @@ export class UsernamePasswordTokenProvider extends TokenProvider {
 }
 
 // @public
-export class UUID implements CollectionCodec<typeof UUID>, TableCodec<typeof UUID> {
+export class UUID implements DataAPICodec<typeof UUID> {
     static [$DeserializeForCollection](value: any, ctx: CollectionDesCtx): readonly [0, (UUID | undefined)?];
     static [$DeserializeForTable](value: any, ctx: TableDesCtx): readonly [0, (UUID | undefined)?];
     [$SerializeForCollection](ctx: CollectionSerCtx): readonly [0, ({
@@ -2391,8 +2379,8 @@ export interface WithTimeout<Timeouts extends keyof TimeoutDescriptor> {
 
 // Warnings were encountered during analysis:
 //
-// dist/esm/documents/collections/ser-des/codecs.d.ts:41:9 - (ae-forgotten-export) The symbol "RawCollCodecs" needs to be exported by the entry point index.d.ts
-// dist/esm/documents/tables/ser-des/codecs.d.ts:41:9 - (ae-forgotten-export) The symbol "RawTableCodecs" needs to be exported by the entry point index.d.ts
+// dist/esm/documents/collections/ser-des/codecs.d.ts:40:9 - (ae-forgotten-export) The symbol "RawCollCodecs" needs to be exported by the entry point index.d.ts
+// dist/esm/documents/tables/ser-des/codecs.d.ts:40:9 - (ae-forgotten-export) The symbol "RawTableCodecs" needs to be exported by the entry point index.d.ts
 
 // (No @packageDocumentation comment for this package)
 

@@ -1,4 +1,4 @@
-# astra-db-ts with HTTP/2 in a Minified Project
+# astra-db-ts with HTTP/2
 
 ## Overview
 
@@ -66,7 +66,7 @@ const db = client.db(process.env.ASTRA_DB_ENDPOINT!);
 
 ## Different ways of passing in `fetch-h2`
 
-Depending on if your environment, module system, and your preferences, you may pass in `fetch-h2` in a few different ways:
+Depending on your environment, module system, and your preferences, you may pass in `fetch-h2` in a few different ways:
 
 #### With `import`
 

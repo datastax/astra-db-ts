@@ -69,7 +69,11 @@ export class Logger implements Partial<Record<keyof DataAPIClientEventMap, unkno
   constructor(_config: ParsedLoggingConfig, private emitter: HierarchicalEmitter<DataAPIClientEventMap>, private console: ConsoleLike) {
     const config = this._buildInternalConfig(_config);
 
-    for (const [_eventName, outputs] of Object.entries(config)) if (outputs) {
+    for (const [_eventName, outputs] of Object.entries(config)) {
+      if (!outputs) {
+        continue;
+      }
+
       const eventName = _eventName as keyof DataAPIClientEventMap;
       const log = this._mkLog(outputs);
 

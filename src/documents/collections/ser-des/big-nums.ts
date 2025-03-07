@@ -13,53 +13,73 @@
 // limitations under the License.
 
 import { BigNumber } from 'bignumber.js';
-import type { CollectionDesCtx } from '@/src/documents/index.js';
+import { isBigNumber } from '@/src/lib/utils.js';
+import type { ParsedSerDesConfig } from '@/src/lib/api/ser-des/cfg-handler.js';
+import type { CollectionSerDesConfig } from '@/src/documents/index.js';
+import { pathMatches } from '@/src/lib/api/ser-des/utils.js';
+import type { PathSegment } from '@/src/lib/types.js';
 
 /**
  * @public
  */
-export type CollNumRep =
+export type CollNumCoercion =
   | 'number'
+  | 'strict_number'
   | 'bigint'
   | 'bignumber'
   | 'string'
-  | 'number_or_string';
+  | 'number_or_string'
+  | ((val: number | BigNumber, path: readonly PathSegment[]) => unknown);
 
 /**
  * @public
  */
-export type GetCollNumRepFn = (path: readonly (string | number)[]) => CollNumRep;
+export type GetCollNumCoercionFn = (path: readonly PathSegment[], matches: (path: readonly PathSegment[]) => boolean) => CollNumCoercion;
 
 /**
  * @public
  */
-export type CollNumRepCfg = Record<string, CollNumRep>;
-
-const $NumRep = Symbol('NumRep');
-
-interface NumRepTree {
-  [$NumRep]?: CollNumRep;
-  [key: string]: NumRepTree;
+export interface CollNumCoercionCfg {
+  '*': CollNumCoercion,
+  [path: string]: CollNumCoercion,
 }
 
-export const collNumRepFnFromCfg = (cfg: CollNumRepCfg): GetCollNumRepFn => {
-  // Minor optimization to make `{ '*': 'xyz' }` equal in performance to `() => 'xyz'`
-  if (Object.keys(cfg).length === 1 && cfg['*']) {
-    const rep = cfg['*'];
-    return () => rep;
+const $NumCoercion = Symbol('NumCoercion');
+
+interface NumCoercionTree {
+  [$NumCoercion]?: CollNumCoercion;
+  [key: string]: NumCoercionTree;
+}
+
+export const buildGetNumCoercionForPathFn = (cfg: ParsedSerDesConfig<CollectionSerDesConfig>): GetCollNumCoercionFn | undefined => {
+  return (typeof cfg?.enableBigNumbers === 'object')
+    ? collNumCoercionFnFromCfg(cfg.enableBigNumbers)
+    : cfg?.enableBigNumbers;
+};
+
+const collNumCoercionFnFromCfg = (cfg: CollNumCoercionCfg): GetCollNumCoercionFn => {
+  const defaultCoercion = cfg['*'];
+
+  if (!defaultCoercion) {
+    throw new Error('The configuration must contain a "*" key');
   }
 
-  const tree = buildNumRepTree(cfg);
+  // Minor optimization to make `{ '*': 'xyz' }` equal in performance to `() => 'xyz'`
+  if (Object.keys(cfg).length === 1) {
+    return () => defaultCoercion;
+  }
+
+  const tree = buildNumCoercionTree(cfg);
 
   return (path) => {
-    return findMatchingPath(path, tree) ?? 'number';
+    return findMatchingPath(path, tree) ?? defaultCoercion;
   };
 };
 
-const buildNumRepTree = (cfg: CollNumRepCfg): NumRepTree => {
-  const result: NumRepTree = {};
+const buildNumCoercionTree = (cfg: CollNumCoercionCfg): NumCoercionTree => {
+  const result: NumCoercionTree = {};
 
-  Object.entries(cfg).forEach(([path, rep]) => {
+  Object.entries(cfg).forEach(([path, coercion]) => {
     const keys = path.split('.');
     let current = result;
 
@@ -67,7 +87,7 @@ const buildNumRepTree = (cfg: CollNumRepCfg): NumRepTree => {
       current[key] ??= {};
 
       if (index === keys.length - 1) {
-        current[key][$NumRep] = rep;
+        current[key][$NumCoercion] = coercion;
       }
 
       current = current[key];
@@ -77,12 +97,12 @@ const buildNumRepTree = (cfg: CollNumRepCfg): NumRepTree => {
   return result;
 };
 
-const findMatchingPath = (path: readonly (string | number)[], tree: NumRepTree | undefined): CollNumRep | undefined => {
-  let rep: CollNumRep | undefined = undefined;
+const findMatchingPath = (path: readonly PathSegment[], tree: NumCoercionTree | undefined): CollNumCoercion | undefined => {
+  let coercion: CollNumCoercion | undefined = undefined;
 
   for (let i = 0; tree && i <= path.length; i++) {
     if (i === path.length) {
-      return tree[$NumRep];
+      return tree[$NumCoercion];
     }
 
     const exactMatch = tree[path[i]];
@@ -91,28 +111,28 @@ const findMatchingPath = (path: readonly (string | number)[], tree: NumRepTree |
       tree = exactMatch;
     } else {
       tree = tree['*'];
-      rep = tree?.[$NumRep] ?? rep;
+      coercion = tree?.[$NumCoercion] ?? coercion;
     }
   }
 
-  return rep;
+  return coercion;
 };
 
 /**
  * @public
  */
 export class NumCoercionError extends Error {
-  public readonly path: (string | number)[];
+  public readonly path: readonly PathSegment[];
   public readonly value: number | BigNumber;
   public readonly from: 'number' | 'bignumber';
-  public readonly to: CollNumRep;
+  public readonly to: CollNumCoercion;
 
   /**
    * Should not be instantiated by the user.
    *
    * @internal
    */
-  public constructor(path: (string | number)[], value: number | BigNumber, from: 'number' | 'bignumber', to: CollNumRep) {
+  public constructor(path: readonly PathSegment[], value: number | BigNumber, from: 'number' | 'bignumber', to: CollNumCoercion) {
     super(`Failed to coerce value from ${from} to ${to} at path: ${path.join('.')}`);
     this.path = path;
     this.value = value;
@@ -121,20 +141,29 @@ export class NumCoercionError extends Error {
   }
 }
 
-export const coerceBigNumber = (value: BigNumber, ctx: CollectionDesCtx): unknown => {
-  switch (ctx.getNumRepForPath!(ctx.path)) {
+export const coerceBigNumber = (value: BigNumber, path: readonly PathSegment[], getNumCoercionForPath: GetCollNumCoercionFn, pathMatches: (path: readonly PathSegment[]) => boolean): unknown => {
+  const coercer = getNumCoercionForPath(path, pathMatches);
+
+  if (typeof coercer === 'function') {
+    return coercer(value, path);
+  }
+
+  switch (coercer) {
     case 'number': {
+      return value.toNumber();
+    }
+    case 'strict_number': {
       const asNum = value.toNumber();
 
       if (!value.isEqualTo(asNum)) {
-        throw new NumCoercionError(ctx.path, value, 'bignumber', 'number');
+        throw new NumCoercionError(path, value, 'bignumber', 'number');
       }
 
       return asNum;
     }
     case 'bigint': {
       if (!value.isInteger()) {
-        throw new NumCoercionError(ctx.path, value, 'bignumber', 'bigint');
+        throw new NumCoercionError(path, value, 'bignumber', 'bigint');
       }
       return BigInt(value.toFixed(0));
     }
@@ -146,11 +175,17 @@ export const coerceBigNumber = (value: BigNumber, ctx: CollectionDesCtx): unknow
   }
 };
 
-export const coerceNumber = (value: number, ctx: CollectionDesCtx): unknown => {
-  switch (ctx.getNumRepForPath!(ctx.path)) {
+export const coerceNumber = (value: number, path: readonly PathSegment[], getNumCoercionForPath: GetCollNumCoercionFn, pathMatches: (path: readonly PathSegment[]) => boolean): unknown => {
+  const coercer = getNumCoercionForPath(path, pathMatches);
+
+  if (typeof coercer === 'function') {
+    return coercer(value, path);
+  }
+
+  switch (coercer) {
     case 'bigint': {
       if (!Number.isInteger(value)) {
-        throw new NumCoercionError(ctx.path, value, 'number', 'bigint');
+        throw new NumCoercionError(path, value, 'number', 'bigint');
       }
       return BigInt(value);
     }
@@ -159,7 +194,43 @@ export const coerceNumber = (value: number, ctx: CollectionDesCtx): unknown => {
     case 'string':
       return value.toString();
     case 'number':
+    case 'strict_number':
     case 'number_or_string':
       return value;
   }
+};
+
+export const coerceNums = (val: unknown, getNumCoercionForPath: GetCollNumCoercionFn) => {
+  return coerceNumsImpl(val, [], getNumCoercionForPath, (p) => pathMatches([], p));
+};
+
+const coerceNumsImpl = (val: unknown, path: PathSegment[], getNumCoercionForPath: GetCollNumCoercionFn, pathMatchesFn: (path: readonly PathSegment[]) => boolean): unknown => {
+  if (typeof val === 'number') {
+    return coerceNumber(val, path, getNumCoercionForPath, pathMatchesFn);
+  }
+
+  if (!val || typeof val !== 'object') {
+    return val;
+  }
+
+  if (isBigNumber(val)) {
+    return coerceBigNumber(val, path, getNumCoercionForPath, pathMatchesFn);
+  }
+
+  path.push('<temp>');
+
+  if (Array.isArray(val)) {
+    for (let i = 0; i < val.length; i++) {
+      path[path.length - 1] = i;
+      val[i] = coerceNumsImpl(val[i], path, getNumCoercionForPath, (p) => pathMatches(path, p));
+    }
+  } else {
+    for (const key of Object.keys(val)) {
+      path[path.length - 1] = key;
+      (val as any)[key] = coerceNumsImpl((val as any)[key], path, getNumCoercionForPath, (p) => pathMatches(path, p));
+    }
+  }
+
+  path.pop();
+  return val;
 };

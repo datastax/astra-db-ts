@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeDoc, SomeRow, Table, TableFilter } from '@/src/documents/index.js';
+import type { SomeRow, Table, TableFilter } from '@/src/documents/index.js';
 import { FindCursor } from '@/src/documents/index.js';
 
 /**
@@ -23,7 +23,7 @@ import { FindCursor } from '@/src/documents/index.js';
  *
  * @public
  */
-export class TableFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {
+export class TableFindCursor<T, TRaw extends SomeRow = SomeRow> extends FindCursor<T, TRaw> {
   /**
    * The table which spawned this cursor.
    *

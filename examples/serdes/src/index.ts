@@ -1,7 +1,5 @@
-import { DataAPIClient } from '@datastax/astra-db-ts';
+import { DataAPIClient, Db } from '@datastax/astra-db-ts';
 import 'dotenv/config';
-import { TableKeyTransformerExample } from '@/src/tables/key-transfomer';
-import { CollKeyTransformerExample } from '@/src/collections/key-transfomer';
 
 const client = new DataAPIClient(process.env.CLIENT_DB_TOKEN);
 const db = client.db(process.env.CLIENT_DB_URL!);
@@ -13,9 +11,7 @@ const cleanup = () => Promise.all([db.dropCollection(NAME), db.dropTable(NAME, {
 (async () => {
   await cleanup();
 
-  const functions = [
-    CollKeyTransformerExample,
-    TableKeyTransformerExample,
+  const functions: ((name: string, db: Db) => Promise<void>)[] = [
   ];
 
   for (const func of functions) {

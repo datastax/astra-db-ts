@@ -47,7 +47,7 @@ type ExecCmdOpts<Kind extends ClientKind> = (Kind extends 'admin' ? { methodName
   bigNumsPresent?: boolean,
   collection?: string,
   table?: string,
-  extraLogInfo?: string,
+  extraLogInfo?: Record<string, unknown>,
 }
 
 /**
@@ -241,7 +241,7 @@ export class DataAPIHttpClient<Kind extends ClientKind = 'normal'> extends HttpC
     const collectionPath = info.collection ? `/${info.collection}` : '';
     info.url += keyspacePath + collectionPath;
 
-    const requestId = this.logger.generateAdminCommandRequestId();
+    const requestId = this.logger.generateCommandRequestId();
 
     this.emissionStrategy.emitCommandStarted?.(requestId, info, options);
     const started = performance.now();

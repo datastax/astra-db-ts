@@ -44,8 +44,8 @@ export const insertManyOrdered = async <ID>(
     const slice = documents.slice(i, i + chunkSize);
 
     const extraLogInfo = (documents.length === slice.length)
-      ? `${slice.length} records (ordered)`
-      : `${slice.length} records (index ${i} of ${documents.length}) (ordered)`;
+      ? { records: documents.length, ordered: true }
+      : { records: documents.length, slice: `${i}..${i + slice.length}`, ordered: true };
 
     const [_docResp, inserted, errDesc] = await insertMany<ID>(httpClient, serdes, slice, true, timeoutManager, extraLogInfo);
     insertedIds.push(...inserted);
@@ -97,8 +97,8 @@ export const insertManyUnordered = async <ID>(
       const slice = documents.slice(localI, endIdx);
 
       const extraLogInfo = (documents.length === slice.length)
-        ? `${slice.length} records (unordered)`
-        : `${slice.length} records (index ${localI} of ${documents.length}) (unordered)`;
+        ? { records: documents.length, ordered: false }
+        : { records: documents.length, slice: `${localI}..${endIdx}`, ordered: false };
 
       const [docResp, inserted, errDesc] = await insertMany<ID>(httpClient, serdes, slice, false, timeoutManager, extraLogInfo);
       insertedIds.push(...inserted);
@@ -132,7 +132,7 @@ const insertMany = async <ID>(
   documents: readonly SomeDoc[],
   ordered: boolean,
   timeoutManager: TimeoutManager,
-  extraLogInfo: string,
+  extraLogInfo: Record<string, unknown>,
 ): Promise<[GenericInsertManyDocumentResponse<ID>[], ID[], DataAPIDetailedErrorDescriptor | undefined]> => {
   let raw, err: DataAPIResponseError | undefined;
 
@@ -154,7 +154,7 @@ const insertMany = async <ID>(
           ordered,
         },
       },
-    }, { timeoutManager, bigNumsPresent, extraLogInfo });
+    }, { timeoutManager, bigNumsPresent, extraLogInfo: extraLogInfo });
   } catch (e) {
     if (!(e instanceof DataAPIResponseError)) {
       throw e;

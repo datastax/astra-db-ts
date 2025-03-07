@@ -47,7 +47,7 @@ parallel('integration.lib.api.fetch.fetch-h2', () => {
       assert.strictEqual(resp.statusText, 'OK');
       assert.strictEqual(resp.httpVersion, 1);
       assert.strictEqual(typeof resp.headers, 'object');
-      assert.strictEqual(resp.additionalAttributes, undefined);
+      assert.strictEqual(resp.extraLogInfo, undefined);
     } finally {
       await fetcher.close();
     }
@@ -63,7 +63,7 @@ parallel('integration.lib.api.fetch.fetch-h2', () => {
       assert.strictEqual(resp.statusText, '');
       assert.strictEqual(resp.httpVersion, 2);
       assert.strictEqual(typeof resp.headers, 'object');
-      assert.strictEqual(resp.additionalAttributes, undefined);
+      assert.strictEqual(resp.extraLogInfo, undefined);
     } finally {
       await fetcher.close();
     }

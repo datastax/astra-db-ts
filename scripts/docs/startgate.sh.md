@@ -15,3 +15,4 @@ scripts/test.sh -local
 ## See also
 
 - [The custom test script](./test.sh.md)
+- [The development REPL](./repl.sh.md)

@@ -14,10 +14,11 @@
 
 import * as _uuid from 'uuid';
 import { $CustomInspect } from '@/src/lib/constants.js';
-import type { CollectionCodec, TableCodec, TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
+import type { TableDesCtx, TableSerCtx } from '@/src/documents/index.js';
 import { type CollectionDesCtx, type CollectionSerCtx } from '@/src/documents/index.js';
 import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { $DeserializeForTable, $SerializeForTable } from '@/src/documents/tables/ser-des/constants.js';
+import type { DataAPICodec } from '@/src/lib/index.js';
 
 /**
  * A shorthand function for `new UUID(uuid)`
@@ -82,7 +83,7 @@ export const uuid = (uuid: string | 1 | 4 | 6 | 7) => {
  *
  * @public
  */
-export class UUID implements CollectionCodec<typeof UUID>, TableCodec<typeof UUID> {
+export class UUID implements DataAPICodec<typeof UUID> {
   /**
    * The version of the UUID.
    */

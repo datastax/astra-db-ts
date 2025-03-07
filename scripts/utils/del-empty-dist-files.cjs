@@ -1,13 +1,18 @@
 const fs = require('fs');
 const path = require('path');
 
-const targetContent = `"use strict";
+const targetContentCJS = `"use strict";
 // Copyright Datastax, Inc
 // SPDX-License-Identifier: Apache-2.0
 Object.defineProperty(exports, "__esModule", { value: true });
 `;
 
-function deleteEmptyFiles(dirPath) {
+const targetContentESM = `// Copyright Datastax, Inc
+// SPDX-License-Identifier: Apache-2.0
+export {};
+`;
+
+function deleteEmptyFiles(dirPath, targetContent) {
   fs.readdir(dirPath, (err, files) => {
     if (err) {
       return console.error('Unable to scan directory: ' + err);
@@ -22,7 +27,7 @@ function deleteEmptyFiles(dirPath) {
         }
 
         if (stat.isDirectory()) {
-          deleteEmptyFiles(filePath);
+          deleteEmptyFiles(filePath, targetContent);
           return;
         }
 
@@ -40,4 +45,5 @@ function deleteEmptyFiles(dirPath) {
   });
 }
 
-deleteEmptyFiles('./dist');
+deleteEmptyFiles('./dist/cjs', targetContentCJS);
+deleteEmptyFiles('./dist/esm', targetContentESM);
