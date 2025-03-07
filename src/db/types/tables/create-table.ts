@@ -32,7 +32,7 @@ import type { TableOptions } from '@/src/db/types/tables/spawn-table.js';
  *
  * @public
  */
-export interface CreateTableOptions<Def extends CreateTableDefinition = CreateTableDefinition> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions {
+export interface CreateTableOptions<Def extends CreateTableDefinition<Def> = CreateTableDefinition<any>> extends WithTimeout<'tableAdminTimeoutMs'>, TableOptions {
   definition: Def,
   ifNotExists?: boolean,
 }
@@ -44,7 +44,7 @@ export interface CreateTableOptions<Def extends CreateTableDefinition = CreateTa
  *
  * @public
  */
-export interface CreateTableDefinition {
+export interface CreateTableDefinition<Def extends CreateTableDefinition<Def>> {
   /**
    * The columns to create in the table.
    */
@@ -52,7 +52,7 @@ export interface CreateTableDefinition {
   /**
    * The primary key definition for the table.
    */
-  readonly primaryKey: CreateTablePrimaryKeyDefinition,
+  readonly primaryKey: CreateTablePrimaryKeyDefinition<keyof Def['columns'] & string>,
 }
 
 /**
@@ -513,9 +513,9 @@ export interface VectorCreateTableColumnDefinition {
  *
  * @public
  */
-export type CreateTablePrimaryKeyDefinition =
-  | string
-  | FullCreateTablePrimaryKeyDefinition;
+export type CreateTablePrimaryKeyDefinition<PKCols extends string> =
+  | PKCols
+  | FullCreateTablePrimaryKeyDefinition<PKCols>;
 
 /**
  * ##### Overview
@@ -549,7 +549,7 @@ export type CreateTablePrimaryKeyDefinition =
  *
  * @public
  */
-export interface FullCreateTablePrimaryKeyDefinition {
-  readonly partitionBy: readonly string[],
-  readonly partitionSort?: Record<string, 1 | -1>,
+export interface FullCreateTablePrimaryKeyDefinition<PKCols extends string> {
+  readonly partitionBy: readonly PKCols[],
+  readonly partitionSort?: Partial<Record<PKCols, 1 | -1>>,
 }

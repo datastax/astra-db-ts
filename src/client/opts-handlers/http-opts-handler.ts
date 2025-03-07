@@ -29,9 +29,10 @@ import { function_ } from '@/src/lib/utils.js';
 import type { OptionsHandlerTypes, Parsed } from '@/src/lib/opts-handler.js';
 import { OptionsHandler } from '@/src/lib/opts-handler.js';
 import type { HttpOptions } from '@/src/client/index.js';
-import type { FetchCtx } from '@/src/lib/api/fetch/types.js';
+import type { FetchCtx } from '@/src/lib/api/fetch/fetcher.js';
 import { FetchH2, type FetchH2Like, FetchNative, type SomeConstructor } from '@/src/lib/index.js';
 import type { SomeDoc } from '@/src/documents/index.js';
+import { betterTypeOf } from '@/src/documents/utils.js';
 
 /**
  * @internal
@@ -41,19 +42,19 @@ interface Types extends OptionsHandlerTypes {
   Parseable: HttpOptions | undefined | null,
 }
 
-const fetchH2 = define<FetchH2Like>((obj, ok, err) => {
-  if (typeof obj === 'object') {
-    inexact({
+const fetchH2 = define<FetchH2Like>((module, ok, err) => {
+  if (module && typeof module === 'object') {
+    const verified = inexact({
       TimeoutError: function_ as unknown as Decoder<SomeConstructor>,
       context: function_,
     }).verify({
-      TimeoutError: (obj as SomeDoc)?.TimeoutError,
-      context: (obj as SomeDoc)?.context,
+      TimeoutError: (module as SomeDoc).TimeoutError,
+      context: (module as SomeDoc).context,
     });
 
-    return ok(obj as FetchH2Like);
+    return ok(verified);
   } else {
-    return err('fetchH2 should be set to `import * as fetchH2 from \'fetch-h2\'` or `const fetchH2 = require(\'fetch-h2\')`');
+    return err(`fetchH2 should be set to \`import * as fetchH2 from 'fetch-h2'\` or \`const fetchH2 = require('fetch-h2')\`; got ${betterTypeOf(module)}`);
   }
 });
 
@@ -77,7 +78,7 @@ const decoder = nullish(taggedUnion('client', {
   }),
   'custom': object({
     client: constant('custom'),
-    fetcher: object({
+    fetcher: inexact({
       fetch: function_,
       close: optional(function_),
     }),

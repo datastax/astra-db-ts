@@ -22,7 +22,6 @@ import type {
 import {
   $DeserializeForCollection,
   $SerializeForCollection,
-  Camel2SnakeCase,
   CollectionCodecs,
 } from '@/src/index.js';
 import { BigNumber } from 'bignumber.js';
@@ -65,10 +64,14 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
 
     const { client, db } = initTestObjects();
 
-    const ISBNCodec = CollectionCodecs.forId({
-      serialize: (isbn, ctx) => ctx.done(isbn.unwrap),
-      deserialize: (raw, ctx) => ctx.done(new ISBN(raw)),
-    });
+    const ISBNCodec = CollectionCodecs.forId(CollectionCodecs.asCodecClass(ISBN, (clazz) => {
+      clazz.prototype[$SerializeForCollection] = function (ctx: CollectionSerCtx) {
+        return ctx.done(this.unwrap);
+      };
+      clazz[$DeserializeForCollection] = function (raw: string, ctx: CollectionDesCtx) {
+        return ctx.done(new ISBN(raw));
+      };
+    }));
 
     const BookCodec = CollectionCodecs.forPath([], {
       serialize: (book, ctx) => {
@@ -86,7 +89,7 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
           reviews: book.reviews,
         });
       },
-      deserialize: (value, ctx) => {
+      deserialize: (_, ctx) => {
         if (ctx.target !== SerDesTarget.Record) {
           return ctx.nevermind();
         }
@@ -126,7 +129,6 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
     const coll = db.collection(DEFAULT_COLLECTION_NAME, {
       serdes: {
         enableBigNumbers: () => 'bignumber',
-        keyTransformer: new Camel2SnakeCase({ transformNested: true }),
         codecs: [ISBNCodec, BookCodec, SetCodec, ReviewCodec],
       },
     });
@@ -147,9 +149,9 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
       title: 'Lord of the Fries',
       author: 'Gilliam Wolding',
       price: BigNumber(-12.50),
-      published_at: { '$date': 0 },
-      inserted_at: { '$date': 32503680000000 },
-      reviews: [{ critic_name: 'Tow Mater', review: 'dad gum!' }],
+      publishedAt: { '$date': 0 },
+      insertedAt: { '$date': 32503680000000 },
+      reviews: [{ criticName: 'Tow Mater', review: 'dad gum!' }],
     };
 
     let cse!: CommandSucceededEvent;
@@ -258,7 +260,6 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
     const coll = db.collection(DEFAULT_COLLECTION_NAME, {
       serdes: {
         enableBigNumbers: () => 'bignumber',
-        keyTransformer: new Camel2SnakeCase({ transformNested: true }),
         codecs: [
           CollectionCodecs.forId(ISBN),
           CollectionCodecs.forPath([], Book),
@@ -284,9 +285,9 @@ parallel('integration.documents.collections.ser-des.usecases.object-mapping', ()
       title: 'Lord of the Fries',
       author: 'Gilliam Wolding',
       price: BigNumber(-12.50),
-      published_at: { '$date': 0 },
-      inserted_at: { '$date': 32503680000000 },
-      reviews: [{ critic_name: 'Tow Mater', review: 'dad gum!' }],
+      publishedAt: { '$date': 0 },
+      insertedAt: { '$date': 32503680000000 },
+      reviews: [{ criticName: 'Tow Mater', review: 'dad gum!' }],
     };
 
     let cse!: CommandSucceededEvent;

@@ -15,20 +15,21 @@
 // Important to import from specific paths here to avoid circular dependencies
 import { UUID } from '@/src/documents/datatypes/uuid.js';
 import { ObjectId } from '@/src/documents/datatypes/object-id.js';
-import { DataAPIVector } from '@/src/documents/datatypes/vector.js';
+import { DataAPIVector, vector } from '@/src/documents/datatypes/vector.js';
 import type { CollectionDesCtx, CollectionSerCtx } from '@/src/documents/index.js';
-import type { CustomCodecOpts, NominalCodecOpts, RawCodec, SerDesFn, SomeConstructor, TypeCodecOpts } from '@/src/lib/index.js';
-import type { $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
-import { $DeserializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
+import type { CustomCodecOpts, NominalCodecOpts, RawCodec, SerDesFn, TypeCodecOpts } from '@/src/lib/index.js';
+import { assertHasDeserializeFor, assertHasSerializeFor } from '@/src/lib/api/ser-des/utils.js';
+import { $DeserializeForCollection, $SerializeForCollection } from '@/src/documents/collections/ser-des/constants.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
+import { betterTypeOf } from '@/src/documents/utils.js';
+import type { PathSegment } from '@/src/lib/types.js';
 
 /**
  * @public
  */
-export interface CollectionCodecClass {
-  new (...args: any[]): { [$SerializeForCollection]: (ctx: CollectionSerCtx) => ReturnType<SerDesFn<any>> };
-  [$DeserializeForCollection]: SerDesFn<CollectionDesCtx>;
-}
+export type CollectionCodecClass =
+  & (abstract new (...args: any[]) => { [$SerializeForCollection]: (ctx: CollectionSerCtx) => ReturnType<SerDesFn<any>> })
+  & { [$DeserializeForCollection]: SerDesFn<CollectionDesCtx> }
 
 /**
  * @public
@@ -55,7 +56,6 @@ export type CollTypeCodecOpts = TypeCodecOpts<CollectionSerCtx, CollectionDesCtx
  */
 export type CollCustomCodecOpts = CustomCodecOpts<CollectionSerCtx, CollectionDesCtx>;
 
-
 /**
  * @public
  */
@@ -67,49 +67,35 @@ export class CollectionCodecs {
         return ctx.done({ $date: value.valueOf() });
       },
       deserialize(value, ctx) {
-        return ctx.done(new Date(value.$date));
+        return ctx.done(new Date(Number(value.$date)));
       },
     }),
-    $vector: CollectionCodecs.forName('$vector', DataAPIVector),
+    $vector: CollectionCodecs.forName('$vector', {
+      serialize: (val, ctx) => DataAPIVector.isVectorLike(val) ? vector(val)[$SerializeForCollection](ctx) : ctx.nevermind(),
+      deserialize: DataAPIVector[$DeserializeForCollection],
+    }),
     $uuid: CollectionCodecs.forType('$uuid', UUID),
     $objectId: CollectionCodecs.forType('$objectId', ObjectId),
   };
 
-  public static forId(optsOrClass: CollNominalCodecOpts & { class?: SomeConstructor } | CollectionCodecClass): RawCollCodecs {
-    const mkIdDesCodec = (fn: SerDesFn<CollectionDesCtx>): RawCollCodecs => [
-      CollectionCodecs.forName('', {
-        deserialize: (val, ctx) => ctx.target === SerDesTarget.InsertedId ? fn(val, ctx) : ctx.nevermind(),
-      }),
-      CollectionCodecs.forPath(['_id'], {
-        deserialize: fn,
-      }),
-    ].flat();
+  public static forId(clazz: CollectionCodecClass): RawCollCodecs {
+    CollectionCodecs.asCodecClass(clazz);
 
-    if ($DeserializeForCollection in optsOrClass) {
-      return mkIdDesCodec(optsOrClass[$DeserializeForCollection]);
-    }
-
-    const serFn = optsOrClass.serialize;
+    const { [$DeserializeForCollection]: deserialize } = clazz;
 
     return [
-      (serFn)
-        ? CollectionCodecs.forPath(['_id'], {
-          serialize(val, ctx) {
-            if (ctx.locals.__parsedId) {
-              return ctx.nevermind();
-            }
-            ctx.locals.__parsedId = true;
-            return serFn(val, ctx);
-          },
-        })
-        : [],
-      (optsOrClass.deserialize)
-        ? mkIdDesCodec(optsOrClass.deserialize)
-        : [],
+      CollectionCodecs.forName('', {
+        deserialize: (val, ctx) => ctx.target === SerDesTarget.InsertedId ? deserialize(val, ctx) : ctx.nevermind(),
+      }),
+      CollectionCodecs.forPath(['_id'], {
+        deserialize: (val, ctx) => ctx.target === SerDesTarget.Record ? deserialize(val, ctx) : ctx.nevermind(),
+      }),
     ].flat();
   }
 
   public static forName(name: string, optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs {
+    validateIfCodecClass(optsOrClass);
+
     return [{
       tag: 'forName',
       name: name,
@@ -117,7 +103,9 @@ export class CollectionCodecs {
     }];
   }
 
-  public static forPath(path: (string | number)[], optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs {
+  public static forPath(path: readonly PathSegment[], optsOrClass: CollNominalCodecOpts | CollectionCodecClass): RawCollCodecs {
+    validateIfCodecClass(optsOrClass);
+
     return [{
       tag: 'forPath',
       path: path,
@@ -126,6 +114,8 @@ export class CollectionCodecs {
   }
 
   public static forType(type: string, optsOrClass: CollTypeCodecOpts | CollectionCodecClass): RawCollCodecs {
+    validateIfCodecClass(optsOrClass);
+
     return [{
       tag: 'forType',
       type: type,
@@ -135,5 +125,27 @@ export class CollectionCodecs {
 
   public static custom(opts: CollCustomCodecOpts): RawCollCodecs {
     return [{ tag: 'custom', opts: opts }];
+  }
+
+  public static asCodecClass<T>(val: T, builder?: ((val: T & CollectionCodecClass & { prototype: { [$SerializeForCollection]: (ctx: CollectionSerCtx) => ReturnType<SerDesFn<any>> } }) => void)): CollectionCodecClass {
+    builder?.(val as T & CollectionCodecClass);
+    assertIsCodecClass(val);
+    return val;
+  }
+}
+
+function assertIsCodecClass(val: unknown): asserts val is CollectionCodecClass {
+  if (typeof val !== 'function') {
+    throw new Error(`Invalid codec class: expected a constructor; got ${betterTypeOf(val)}`);
+  }
+  assertHasSerializeFor(val, $SerializeForCollection, '$SerializeForCollection');
+  assertHasDeserializeFor(val, $DeserializeForCollection, '$DeserializeForCollection');
+}
+
+function validateIfCodecClass<T>(val: CollectionCodecClass | T) {
+  if (typeof val === 'function') {
+    // We can't check for $SerializeForCollection here because it may not be on the prototype, depending on how it's
+    // implemented in the class. This at least helps catch cases when a completely wrong class is passed.
+    assertHasDeserializeFor(val, $DeserializeForCollection, '$DeserializeForCollection');
   }
 }

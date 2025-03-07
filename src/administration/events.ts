@@ -90,7 +90,7 @@ export abstract class AdminCommandEvent extends BaseClientEvent {
    * @internal
    */
   protected constructor(name: string, requestId: string, info: DevOpsAPIRequestInfo, longRunning: boolean) {
-    super(name, requestId);
+    super(name, requestId, {});
     this.path = info.path;
     this.method = info.method;
     this.reqBody = info.data;
@@ -99,11 +99,8 @@ export abstract class AdminCommandEvent extends BaseClientEvent {
     this.methodName = info.methodName;
   }
 
-  /**
-   * @internal
-   */
-  protected _prefix() {
-    return `(${this.methodName}) ${this.method} ${this.path}${this.params ? '?' : ''}${new URLSearchParams(this.params).toString()}`;
+  public override getMessagePrefix() {
+    return `(${this.methodName}) ${this.method} ${this.path}${this.params ? '?' : ''}${new URLSearchParams(this.params).toString()} `;
   }
 }
 
@@ -116,11 +113,11 @@ export abstract class AdminCommandEvent extends BaseClientEvent {
  */
 export class AdminCommandStartedEvent extends AdminCommandEvent {
   /**
-   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * Poor man's sealed class. See {@link BaseClientEvent.permits} for more info.
    * 
    * @internal
    */
-  protected declare permit: this;
+  protected declare permits: this;
 
   /**
    * The timeout for the request, in milliseconds.
@@ -137,11 +134,8 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
     this.timeout = timeout;
   }
 
-  /**
-   * @internal
-   */
-  protected override _message(): string {
-    return `${this._prefix()} ${this.longRunning ? '(blocking) ' : ' '}${this.reqBody ? JSON.stringify(this.reqBody) : ''}`;
+  public override getMessage(): string {
+    return `${this.longRunning ? '(blocking) ' : ' '}${this.reqBody ? JSON.stringify(this.reqBody) : ''}`;
   }
 }
 
@@ -156,11 +150,11 @@ export class AdminCommandStartedEvent extends AdminCommandEvent {
  */
 export class AdminCommandPollingEvent extends AdminCommandEvent {
   /**
-   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * Poor man's sealed class. See {@link BaseClientEvent.permits} for more info.
    * 
    * @internal
    */
-  protected declare permit: this;
+  protected declare permits: this;
 
   /**
    * The elapsed time since the command was started, in milliseconds.
@@ -189,11 +183,8 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
     this.pollCount = pollCount;
   }
 
-  /**
-   * @internal
-   */
-  protected override _message(): string {
-    return `${this._prefix()} (poll #${this.pollCount}; ${~~this.elapsed}ms elapsed)`;
+  public override getMessage(): string {
+    return `(poll #${this.pollCount}; ${~~this.elapsed}ms elapsed)`;
   }
 }
 
@@ -206,11 +197,11 @@ export class AdminCommandPollingEvent extends AdminCommandEvent {
  */
 export class AdminCommandSucceededEvent extends AdminCommandEvent {
   /**
-   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * Poor man's sealed class. See {@link BaseClientEvent.permits} for more info.
    * 
    * @internal
    */
-  protected declare permit: this;
+  protected declare permits: this;
 
   /**
    * The duration of the command, in milliseconds.
@@ -233,11 +224,8 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
     this.resBody = data || undefined;
   }
 
-  /**
-   * @internal
-   */
-  protected override _message(): string {
-    return `${this._prefix()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms)`;
+  public override getMessage(): string {
+    return `${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(${~~this.duration}ms)`;
   }
 }
 
@@ -250,11 +238,11 @@ export class AdminCommandSucceededEvent extends AdminCommandEvent {
  */
 export class AdminCommandFailedEvent extends AdminCommandEvent {
   /**
-   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * Poor man's sealed class. See {@link BaseClientEvent.permits} for more info.
    * 
    * @internal
    */
-  protected declare permit: this;
+  protected declare permits: this;
 
   /**
    * The duration of the command, in milliseconds.
@@ -280,11 +268,8 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
     this.error = error;
   }
 
-  /**
-   * @internal
-   */
-  protected override _message(): string {
-    return `${this._prefix()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(took ${~~this.duration}ms) - '${this.error.message}'`;
+  public override getMessage(): string {
+    return `$${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}(${~~this.duration}ms) ERROR: '${this.error.message}'`;
   }
 }
 
@@ -297,11 +282,11 @@ export class AdminCommandFailedEvent extends AdminCommandEvent {
  */
 export class AdminCommandWarningsEvent extends AdminCommandEvent {
   /**
-   * Poor man's sealed class. See {@link BaseClientEvent.permit} for more info.
+   * Poor man's sealed class. See {@link BaseClientEvent.permits} for more info.
    * 
    * @internal
    */
-  protected declare permit: this;
+  protected declare permits: this;
 
   /**
    * The warnings that occurred.
@@ -318,10 +303,7 @@ export class AdminCommandWarningsEvent extends AdminCommandEvent {
     this.warnings = warnings;
   }
 
-  /**
-   * @internal
-   */
-  protected override _message(): string {
-    return `${this._prefix()} ${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''}- '${this.warnings.map(w => w.message).join(', ')}'`;
+  public override getMessage(): string {
+    return `${this.reqBody ? JSON.stringify(this.reqBody) + ' ' : ''} WARNINGS: ${this.warnings.map(w => `'${w.message}'`).join(', ')}`;
   }
 }

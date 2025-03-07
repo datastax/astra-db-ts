@@ -14,6 +14,8 @@ const bumf = `// Copyright DataStax, Inc.
 // See the License for the specific language governing permissions and
 // limitations under the License.`;
 
+const tsVersionFunction = 'declare function astraDbTsRequiresTypeScriptV5OrGreater<const AstraDbTsRequiresTypeScriptV5OrGreater>(_: AstraDbTsRequiresTypeScriptV5OrGreater): void;'
+
 const filePath = process.argv[2];
 
 if (!filePath) {
@@ -28,6 +30,8 @@ const withoutImports = fileContent.replace(importRegex, '');
 const privateRegex = /^\s+#private;\s*\n/gm;
 const withoutPrivate = withoutImports.replace(privateRegex, '');
 
-const withLicense = bumf + '\n\n' + withoutPrivate;
+const withTSVersionFunction = tsVersionFunction + '\n\n' + withoutPrivate;
+
+const withLicense = bumf + '\n\n' + withTSVersionFunction;
 
 fs.writeFileSync(filePath, withLicense, 'utf8');

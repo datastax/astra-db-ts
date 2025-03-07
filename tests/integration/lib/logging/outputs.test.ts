@@ -106,7 +106,7 @@ describe('integration.lib.logging.outputs', () => {
       await objs.db.collection('iDontExistTTT').options().catch(() => {});
 
       assert.deepStrictEqual(stdout.length, 4);
-      assert.deepStrictEqual(stdout, events.map((e) => `${JSON.stringify(e)},${e['_message']()}`));
+      assert.deepStrictEqual(stdout, events.map((e) => `${JSON.stringify(e)},${e.getMessagePrefix() + e.getMessage()}`));
       assert.deepStrictEqual(stderr, []);
       assert.strictEqual(new Set(events.map((e) => e.requestId)).size, 2);
     });
@@ -118,7 +118,7 @@ describe('integration.lib.logging.outputs', () => {
       await objs.db.collection('iDontExistTTT').options().catch(() => {});
 
       assert.deepStrictEqual(stderr.length, 4);
-      assert.deepStrictEqual(stderr, events.map((e) => `${JSON.stringify(e)},${e['_message']()}`));
+      assert.deepStrictEqual(stderr, events.map((e) => `${JSON.stringify(e)},${e.getMessagePrefix() + e.getMessage()}`));
       assert.deepStrictEqual(stdout, []);
       assert.strictEqual(new Set(events.map((e) => e.requestId)).size, 2);
     });

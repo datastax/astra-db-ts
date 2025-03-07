@@ -12,11 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Decoder} from 'decoders';
+import type { Decoder } from 'decoders';
 import { array, boolean, inexact, oneOf, optional } from 'decoders';
 import type { BaseSerDesConfig, RawCodec } from '@/src/lib/index.js';
-import { KeyTransformer } from '@/src/lib/index.js';
-import { anyInstanceOf } from '@/src/lib/utils.js';
 import type { Parsed, Unparse } from '@/src/lib/opts-handler.js';
 import { monoids } from '@/src/lib/opts-handler.js';
 
@@ -31,7 +29,6 @@ type SomeInternalSerDesConfig = Unparse<ParsedSerDesConfig<BaseSerDesConfig<any,
 export const serDesDecoders = <const>{
   codecs: optional(array(array(inexact({ tag: oneOf(['forName', 'forPath', 'forType', 'custom']) }) as Decoder<RawCodec>))),
   mutateInPlace: optional(boolean),
-  keyTransformer: optional(anyInstanceOf(KeyTransformer)),
 };
 
 /**
@@ -40,7 +37,6 @@ export const serDesDecoders = <const>{
 export const serdesMonoidSchema = <const>{
   codecs: monoids.prependingArray<readonly RawCodec[]>(),
   mutateInPlace: monoids.optional<boolean>(),
-  keyTransformer: monoids.optional<KeyTransformer>(),
 };
 
 /**
@@ -49,7 +45,6 @@ export const serdesMonoidSchema = <const>{
 export const serDesTransform = (input: BaseSerDesConfig<any, any>): SomeInternalSerDesConfig => ({
   codecs: input.codecs ?? [],
   mutateInPlace: input.mutateInPlace,
-  keyTransformer: input.keyTransformer,
 });
 
 /**

@@ -236,7 +236,7 @@ background('(ADMIN) (LONG) (NOT-DEV) (ASTRA) integration.administration.lifecycl
     }
 
     {
-      await admin.dropDatabase(syncDb, { timeout: 720000 });
+      await admin.dropDatabase(syncDb, { timeout: 1440000 });
       await asyncDbAdmin._httpClient._awaitStatus(asyncDb.id, {} as any, {
         target: 'TERMINATED',
         legalStates: ['TERMINATING'],

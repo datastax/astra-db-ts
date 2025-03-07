@@ -76,7 +76,7 @@ export const enum PropagationState {
  *
  * @public
  */
-export type EventFormatter = (event: DataAPIClientEvent, message: string) => string;
+export type EventFormatter = (event: DataAPIClientEvent, fullMessage: string) => string;
 
 /**
  * ##### Overview
@@ -116,7 +116,7 @@ export abstract class BaseClientEvent {
    *
    * @internal
    */
-  protected declare abstract permit: DataAPIClientEvent;
+  protected declare abstract permits: DataAPIClientEvent;
 
   /**
    * ##### Overview
@@ -193,6 +193,11 @@ export abstract class BaseClientEvent {
   public readonly requestId: string;
 
   /**
+   * Any extra information that may be useful for debugging.
+   */
+  public readonly extraLogInfo: Record<string, any> | undefined;
+
+  /**
    * @internal
    */
   public declare _propagationState: PropagationState;
@@ -202,9 +207,10 @@ export abstract class BaseClientEvent {
    *
    * @internal
    */
-  protected constructor(name: string, requestId: string) {
+  protected constructor(name: string, requestId: string, extra: Record<string, unknown> | undefined) {
     this.name = name;
     this.requestId = requestId;
+    this.extraLogInfo = extra;
     this.timestamp = new Date();
 
     Object.defineProperty(this, '_propagationState', {
@@ -214,10 +220,8 @@ export abstract class BaseClientEvent {
     });
   }
 
-  /**
-   * @internal
-   */
-  protected abstract _message(): string;
+  public abstract getMessagePrefix(): string;
+  public abstract getMessage(): string;
 
   /**
    * ##### Overview
@@ -230,8 +234,10 @@ export abstract class BaseClientEvent {
    * @returns The formatted event string.
    */
   public format(formatter: EventFormatter = BaseClientEvent._defaultFormatter): string {
-    return formatter(this as any, this._message());
+    return formatter(this as any, this.getMessagePrefix() + this.getMessage());
   }
+
+  protected static formatVerboseTransientKeys: string[];
 
   /**
    * ##### Overview
@@ -243,7 +249,15 @@ export abstract class BaseClientEvent {
    * @returns A JSON string with full event details.
    */
   public formatVerbose(): string {
-    return JSON.stringify(this, null, 2);
+    const entries = Object.entries(this.hideDupeFields())
+      .filter(([k]) => {
+        return !(this.constructor as any).formatVerboseTransientKeys.includes(k);
+      });
+
+    const obj = Object.fromEntries(entries);
+    obj.timestamp = mkSimpleTimestamp(this.timestamp);
+
+    return JSON.stringify(obj, null, 2);
   }
 
   /**
@@ -308,10 +322,14 @@ export abstract class BaseClientEvent {
   public stopImmediatePropagation(): void {
     this._propagationState = PropagationState.StopImmediate;
   }
+
+  public hideDupeFields(): this {
+    return this;
+  }
 }
 
-function defaultFormatFn(event: DataAPIClientEvent, message: string) {
-  return `${mkSimpleTimestamp(event.timestamp)} [${event.requestId.slice(0, 8)}] [${event.name}]: ${message}`;
+function defaultFormatFn(event: DataAPIClientEvent, fullMessage: string) {
+  return `${mkSimpleTimestamp(event.timestamp)} [${event.requestId.slice(0, 8)}] [${event.name}]: ${fullMessage}`;
 }
 
 function mkSimpleTimestamp(date: Date) {

@@ -43,7 +43,7 @@ import type { BigNumber } from 'bignumber.js';
  * @public
  */
 export type InferrableTable =
-  | CreateTableDefinition
+  | CreateTableDefinition<any>
   | ((..._: any[]) => Promise<Table<SomeRow>>)
   | ((..._: any[]) => Table<SomeRow>)
   | Promise<Table<SomeRow>>
@@ -121,7 +121,7 @@ export type InferrableTable =
  * @public
  */
 export type InferTableSchema<T extends InferrableTable> =
-  T extends CreateTableDefinition
+  T extends CreateTableDefinition<any>
     ? InferTableSchemaFromDefinition<T> :
   T extends (..._: any[]) => Promise<Table<infer Schema, any, any>>
     ? Schema :
@@ -142,7 +142,7 @@ export type InferTableSchema<T extends InferrableTable> =
  * @public
  */
 export type InferTablePrimaryKey<T extends InferrableTable> =
-  T extends CreateTableDefinition
+  T extends CreateTableDefinition<any>
     ? InferTablePKFromDefinition<T> :
   T extends (..._: any[]) => Promise<Table<any, infer PKey, any>>
     ? PKey :
@@ -163,7 +163,7 @@ export type InferTablePrimaryKey<T extends InferrableTable> =
  * @public
  */
 export type InferTableReadSchema<T extends InferrableTable> =
-  T extends CreateTableDefinition
+  T extends CreateTableDefinition<any>
     ? FoundRow<InferTableSchemaFromDefinition<T>> :
   T extends (..._: any[]) => Promise<Table<any, any, infer Schema>>
     ? Schema :
@@ -175,16 +175,11 @@ export type InferTableReadSchema<T extends InferrableTable> =
     ? Schema
     : never;
 
-/**
- * A utility type to expand a type.
- *
- * @public
- */
-export type Normalize<T> = { [K in keyof T]: T[K] } & EmptyObj;
+type Normalize<T> = { [K in keyof T]: T[K] } & EmptyObj;
 
-type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition> = Normalize<MkColumnTypes<FullDef['columns'], MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>>>;
+type InferTableSchemaFromDefinition<FullDef extends CreateTableDefinition<FullDef>> = Normalize<MkColumnTypes<FullDef['columns'], MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>>>;
 
-type InferTablePKFromDefinition<FullDef extends CreateTableDefinition> = Normalize<MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>>;
+type InferTablePKFromDefinition<FullDef extends CreateTableDefinition<FullDef>> = Normalize<MkPrimaryKeyType<FullDef, Cols2CqlTypes<FullDef['columns']>>>;
 
 type MkColumnTypes<Cols extends CreateTableColumnDefinitions, PK extends Record<string, any>> = {
   -readonly [P in keyof Cols as P extends keyof PK ? P : never]-?: CqlType2TSType<PickCqlType<Cols[P]>, Cols[P]> & {};
@@ -192,9 +187,9 @@ type MkColumnTypes<Cols extends CreateTableColumnDefinitions, PK extends Record<
   -readonly [P in keyof Cols as P extends keyof PK ? never : P]+?: CqlType2TSType<PickCqlType<Cols[P]>, Cols[P]>;
 }
 
-type MkPrimaryKeyType<FullDef extends CreateTableDefinition, Schema, PK extends FullCreateTablePrimaryKeyDefinition = NormalizePK<FullDef['primaryKey']>> = Normalize<
+type MkPrimaryKeyType<FullDef extends CreateTableDefinition<any>, Schema, PK extends FullCreateTablePrimaryKeyDefinition<any> = NormalizePK<FullDef['primaryKey']>> = Normalize<
   {
-    -readonly [P in PK['partitionBy'][number]]: P extends keyof Schema ? Schema[P] & {} : TypeErr<`Field \`${P}\` not found as property in table definition`>;
+    -readonly [P in PK['partitionBy'][number]]: P extends keyof Schema ? Schema[P] & {} : TypeErr<`Field \`${P & string}\` not found as property in table definition`>;
   }
   & (PK['partitionSort'] extends object
     ? {
@@ -203,10 +198,12 @@ type MkPrimaryKeyType<FullDef extends CreateTableDefinition, Schema, PK extends 
     : EmptyObj)
 >
 
-type NormalizePK<PK extends CreateTablePrimaryKeyDefinition> =
+type NormalizePK<PK extends CreateTablePrimaryKeyDefinition<any>> =
   PK extends string
-    ? { partitionBy: [PK] }
-    : PK;
+    ? { partitionBy: [PK] } :
+  PK extends object
+    ? PK
+    : never;
 
 type Cols2CqlTypes<Columns extends CreateTableColumnDefinitions> = {
   -readonly [P in keyof Columns]: CqlType2TSType<PickCqlType<Columns[P]>, Columns[P]>;

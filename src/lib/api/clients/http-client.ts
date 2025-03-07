@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { FetchCtx, FetcherResponseInfo } from '@/src/lib/api/fetch/types.js';
+import type { FetchCtx, FetcherResponseInfo } from '@/src/lib/api/fetch/fetcher.js';
 import type { HeaderProvider, HTTPClientOptions, HTTPRequestInfo } from '@/src/lib/api/clients/index.js';
 import type { DataAPIClientEventMap } from '@/src/lib/logging/index.js';
 import { Logger } from '@/src/lib/logging/logger.js';
@@ -84,7 +84,7 @@ export abstract class HttpClient {
       body: info.data,
       method: info.method,
       headers: reqHeaders,
-      forceHttp1: info.forceHttp1,
+      forceHttp1: !!info.forceHttp1,
       timeout: msRemaining,
       mkTimeoutError,
     });

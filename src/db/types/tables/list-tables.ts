@@ -254,4 +254,4 @@ export interface ListTableUnsupportedColumnApiSupport {
  *
  * @public
  */
-export type ListTablePrimaryKeyDefinition = Required<FullCreateTablePrimaryKeyDefinition>;
+export type ListTablePrimaryKeyDefinition = Required<FullCreateTablePrimaryKeyDefinition<any>>;

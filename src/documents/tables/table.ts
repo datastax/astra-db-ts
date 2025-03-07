@@ -46,9 +46,9 @@ import type { OpaqueHttpClient, WithTimeout } from '@/src/lib/index.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import JBI from 'json-bigint';
 import { TableFindCursor } from '@/src/documents/tables/cursor.js';
-import { withJbiNullProtoFix } from '@/src/lib/utils.js';
 import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 import type { ListIndexOptions, TableIndexDescriptor } from '@/src/db/types/tables/list-indexes.js';
+import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
 
 const jbi = JBI({ storeAsString: true });
 
@@ -65,13 +65,13 @@ const jbi = JBI({ storeAsString: true });
  * // (If you don't provide `SomeRow` explicitly, it will
  * // attempt to infer the Table's type from the definition)
  * const table = await db.createTable<SomeRow>('users', {
- *   definition: {
- *      columns: {
- *        id: 'text',
- *        name: 'text',
- *      },
- *      primaryKey: 'id',
- *   },
+ *   definition: {
+ *     columns: {
+ *       id: 'text',
+ *       name: 'text',
+ *     },
+ *     primaryKey: 'id',
+ *   },
  * });
  *
  * // or (also dynamically typed)
@@ -151,6 +151,8 @@ const jbi = JBI({ storeAsString: true });
  *
  * When creating a table through {@link Db.createTable}, and not using any custom datatypes (see next session), you can actually use the {@link InferTableSchema} & {@link InferTablePrimaryKey} utility types to infer the schema of the table from the table creation.
  *
+ * **You may also see {@link Table.schema} for an alternative method of having an inferred table schema.**
+ *
  * @example
  * ```ts
  * // equivalent to:
@@ -165,22 +167,22 @@ const jbi = JBI({ storeAsString: true });
  * // type UserPK = Pick<User, 'id' | 'dob'>;
  * type UserPK = InferTablePrimaryKey<typeof mkTable>;
  *
- * const mkTable = () => db.createTable('users', {
+ * const mkUsersTable = () => db.createTable('users', {
  *   definition: {
- *      columns: {
- *        id: 'text',
- *        dob: 'date',
- *        friends: { type: 'map', keyType: 'text', valueType: 'uuid' },
- *      },
- *      primaryKey: {
- *        partitionBy: ['id'],
- *        partitionSort: { dob: -1 }
- *      },
+ *     columns: {
+ *       id: 'text',
+ *       dob: 'date',
+ *       friends: { type: 'map', keyType: 'text', valueType: 'uuid' },
+ *     },
+ *     primaryKey: {
+ *       partitionBy: ['id'],
+ *       partitionSort: { dob: -1 }
+ *     },
  *   },
  * });
  *
  * async function main() {
- *   const table: Table<User, UserPK> = await mkTable();
+ *   const table: Table<User, UserPK> = await mkUsersTable();
  *   // ... use table
  * }
  * ```
@@ -224,7 +226,72 @@ export class Table<WSchema extends SomeRow, PKey extends SomeRow = Partial<Found
    */
   public readonly keyspace!: string;
 
-  public static schema<const Def extends CreateTableDefinition>(schema: Def): Def {
+  /**
+   * ##### Overview (TS 5.0+)
+   *
+   * Strongly types the creation of a `const` new {@link CreateTableDefinition} schema.
+   *
+   * Unlike writing the table definition inline in `createTable` and using `InferTableSchema` on the `Table` itself, this method:
+   *   - Allows you to define your schemas separately, outside an async context
+   *   - Provides type errors if any primary keys don't use a valid column
+   *
+   * Similar to using `const Schema = { ... } as const [satisfies CreateTableDefinition<any>]`.
+   *
+   * @example
+   * ```ts
+   * // Define the table schema
+   * const UserSchema = Table.schema({
+   *   columns: {
+   *     name: 'text',
+   *     dob: {
+   *       type: 'timestamp',
+   *     },
+   *     friends: {
+   *       type: 'set',
+   *       valueType: 'text',
+   *     },
+   *   },
+   *   primaryKey: {
+   *     partitionBy: ['name', 'height'], // type error: 'height' is not a valid column
+   *     partitionSort: { dob: 1 },
+   *   },
+   * });
+   *
+   * // Type inference is as simple as that
+   * type User = InferTableSchema<typeof UserSchema>;
+   *
+   * // And now `User` can be used wherever.
+   * const main = async () => {
+   *   const table = await db.createTable('users', { definition: UserSchema });
+   *   const found: User | null = await table.findOne({});
+   * };
+   * ```
+   *
+   * ##### Pre-TS 5.0
+   *
+   * If you're not using TS 5.0+, you'll need to manually do the following.
+   *
+   * However, this is not recommended whenever possible, as type errors due to invalid schemas will not be properly localized.
+   *
+   * ```ts
+   * const UserSchema = <const>{
+   *   columns: { ... },
+   *   primaryKey: ...,
+   * };
+   *
+   * type User = InferTableSchema<typeof UserSchema>;
+   *
+   * const main = async () => {
+   *   const table = await db.createTable('users', { definition: UserSchema });
+   *   const found: User | null = await table.findOne({});
+   * };
+   * ```
+   *
+   * @param schema - The schema to strongly type.
+   *
+   * @returns The exact same object passed in. This method simply exists for the strong typing.
+   */
+  public static schema<const Def extends CreateTableDefinition<Def>>(schema: Def): Def {
     return schema;
   }
 

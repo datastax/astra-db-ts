@@ -16,7 +16,7 @@
 import { DataAPIClient } from '@/src/client/index.js';
 import { type FetcherResponseInfo } from '@/src/lib/api/index.js';
 import { FetchH2 } from '@/src/lib/api/fetch/fetch-h2.js';
-import type { FetcherRequestInfo } from '@/src/lib/api/fetch/types.js';
+import type { FetcherRequestInfo } from '@/src/lib/api/fetch/fetcher.js';
 import { UsernamePasswordTokenProvider } from '@/src/lib/index.js';
 import { describe, it, TEST_APPLICATION_URI } from '@/tests/testlib/index.js';
 import assert from 'assert';

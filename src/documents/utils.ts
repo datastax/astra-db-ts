@@ -12,10 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { SomeDoc } from '@/src/documents/collections/index.js';
-import type { Sort } from '@/src/documents/types/index.js';
-import { DataAPIVector, vector } from '@/src/documents/datatypes/index.js';
-
 declare const $ERROR: unique symbol;
 
 /**
@@ -51,25 +47,6 @@ export function extractDbIdFromUrl(uri: string): string | undefined {
 export function extractRegionFromUrl(uri: string): string | undefined {
   return new URL(uri).hostname.split('-').slice(5).join('-').split('.')[0] || undefined;
 }
-
-/**
- * @internal
- */
-export const normalizedSort = (sort: SomeDoc): Sort => {
-  const ret: Sort = {};
-
-  for (const key in sort) {
-    const val = sort[key];
-
-    if (val instanceof DataAPIVector || Array.isArray(val)) {
-      ret[key] = vector(val).serialize();
-    } else {
-      ret[key] = val;
-    }
-  }
-
-  return ret;
-};
 
 /**
  * @internal

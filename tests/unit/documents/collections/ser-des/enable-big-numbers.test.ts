@@ -17,7 +17,7 @@ import { describe, it } from '@/tests/testlib/index.js';
 import assert from 'assert';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
 import { BigNumber } from 'bignumber.js';
-import type { CollNumRep} from '@/src/documents/index.js';
+import type { CollNumCoercion} from '@/src/documents/index.js';
 import { NumCoercionError } from '@/src/documents/index.js';
 
 describe('unit.documents.collections.ser-des.enable-big-numbers', () => {
@@ -28,7 +28,7 @@ describe('unit.documents.collections.ser-des.enable-big-numbers', () => {
   });
 
   describe('coercions', () => {
-    const mkDesAsserter = (type: CollNumRep, coerce: (n: BigNumber | number) => unknown) => ({
+    const mkDesAsserter = (type: CollNumCoercion, coerce: (n: BigNumber | number) => unknown) => ({
       _serdesFn: new CollSerDes({ ...CollSerDes.cfg.empty, enableBigNumbers: () => type }),
       _serdesCfg: new CollSerDes({ ...CollSerDes.cfg.empty, enableBigNumbers: { '*': type } }),
       ok(n: BigNumber | number) {
@@ -43,6 +43,18 @@ describe('unit.documents.collections.ser-des.enable-big-numbers', () => {
 
     it('should handle to-number coercion properly', () => {
       const desAsserter = mkDesAsserter('number', Number);
+
+      desAsserter.ok(0);
+      desAsserter.ok(123);
+      desAsserter.ok(-123.123);
+      desAsserter.ok(BigNumber(123));
+      desAsserter.ok(BigNumber(-123.123));
+      desAsserter.ok(BigNumber('120213123123123123213213'));
+      desAsserter.ok(BigNumber('12.213123123123123213213'));
+    });
+
+    it('should handle to-number coercion properly', () => {
+      const desAsserter = mkDesAsserter('strict_number', Number);
 
       desAsserter.ok(0);
       desAsserter.ok(123);

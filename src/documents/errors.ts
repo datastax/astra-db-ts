@@ -21,54 +21,137 @@ import type {
 } from '@/src/documents/collections/index.js';
 import type { TableInsertManyResult } from '@/src/documents/tables/index.js';
 import type { HTTPRequestInfo } from '@/src/lib/api/clients/index.js';
-import type { TimedOutCategories} from '@/src/lib/api/timeouts/timeouts.js';
+import type { TimedOutCategories } from '@/src/lib/api/timeouts/timeouts.js';
 import { Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
+import type { LitUnion } from '@/src/lib/types.js';
 
 /**
+ * ##### Overview
+ *
  * An object representing a single "soft" (2XX) error returned from the Data API, typically with an error code and a
  * human-readable message. An API request may return with an HTTP 200 success error code, but contain a nonzero
  * amount of these, such as for duplicate inserts, or invalid IDs.
  *
- * This is *not* used for "hard" (4XX, 5XX) errors, which are rarer and would be thrown directly by the underlying
+ * ##### Disclaimer
+ *
+ * This is *not* used for "hard" (4XX, 5XX, timeout) errors, which are rarer and would be thrown directly by the underlying
  * code.
  *
  * @example
  * ```typescript
  * {
- *   errorCode: 'DOCUMENT_ALREADY_EXISTS',
- *   message: "Failed to insert document with _id 'id3': Document already exists with the given _id",
- *   attributes: {},
+ *   family: 'REQUEST',
+ *   scope: 'DOCUMENT',
+ *   errorCode: 'MISSING_PRIMARY_KEY_COLUMNS',
+ *   title: 'Primary key columns missing'
+ *   id: 'f785ebb9-a375-4d96-842f-31e23a10a1a5',
+ *   message: `
+ *     All primary key columns must be provided when inserting a document into a table.
+ *
+ *     The table default_keyspace.test_table defines the primary key columns:
+ *       text(text), int(int).
+ *
+ *     The command included values for primary key columns: [None].
+ *     The command did not include values for primary key columns: int(int), text(text).
+ *
+ *     Resend the command including the missing primary key columns.
+ *   `,
  * }
  * ```
  *
- * @field errorCode - A string code representing the exact error
- * @field message - A human-readable message describing the error
- * @field attributes - A map of additional attributes returned by the API. Often empty
+ * @field id - A unique identifier for this instance of the error.
+ * @field family - Informs if the error was due to their request or server side processing.
+ * @field scope - Informs what area of the request failed.
+ * @field errorCode - Informs the exact error that occurred.
+ * @field title - A short, human-readable summary of the error.
+ * @field message - A longer human-readable description of the error.
  *
  * @public
  */
 export interface DataAPIErrorDescriptor {
   /**
-   * A string code representing the exact error
+   * A unique UUID V4 identifier for this instance of the error.
    */
-  readonly errorCode?: string,
+  readonly id: string,
   /**
-   * A human-readable message describing the error
+   * Top level of the hierarchy of errors.
+   *
+   * Informs if the error was due to their request or server side processing.
+   *
+   * Expected to only ever be `'REQUEST' | 'SERVER'`, but left open for unlikely future expansion.
    */
-  readonly message?: string,
+  readonly family: LitUnion<'REQUEST' | 'SERVER'>,
   /**
-   * A map of additional attributes that may be useful for debugging or logging returned by the API. Not guaranteed to
-   * be non-empty. Probably more often empty than not.
+   * Optional, second level of the hierarchy of errors.
+   *
+   * Informs what area of the request failed.
+   *
+   * Will be something like `'DATABASE'`, `'EMBEDDING'`, `'FILTER'`, `'DOCUMENT'`, `'AUTHORIZATION'`, etc.
    */
-  readonly attributes?: Record<string, any>,
+  readonly scope?: string,
+  /**
+   * Leaf level of the hierarchy of errors.
+   *
+   * Informs the exact error that occurred.
+   *
+   * Error codes will be unique within the combination of family and scope, at the very least.
+   * - (They will most likely be unique across the entire API).
+   *
+   * Will be something like `'DOCUMENT_ALREADY_EXISTS'`, `'MISSING_PRIMARY_KEY_COLUMNS'`, etc.
+   */
+  readonly errorCode: string,
+  /**
+   * A short, human-readable summary of the error.
+   *
+   * The title will NOT change for between instances of the same error code.
+   *
+   * _(that is, every instance of the MULTIPLE_ID_FILTER error returned by the API will have the same title)_.
+   *
+   * Will be something like
+   * - `'Primary key columns missing'`
+   * - `'Document already exists with the given _id'`
+   * - etc.
+   */
+  readonly title: string,
+  /**
+   * A longer human-readable description of the error that contains information specific to the error.
+   *
+   * **This may contain newlines and other formatting characters.**
+   */
+  readonly message: string,
 }
 
 /**
+ * ##### Overview
+ *
  * An object representing a *complete* error response from the Data API, including the original command that was sent,
  * and the raw API response from the server.
  *
- * This is *not* used for "hard" (4XX, 5XX) errors, which are rarer and would be thrown directly by the underlying
+ * ##### Disclaimer
+ *
+ * This is *not* used for "hard" (4XX, 5XX, timeout) errors, which are rarer and would be thrown directly by the underlying
  * code.
+ *
+ * @example
+ * ```ts
+ * [{
+ *   errorDescriptors: [
+ *     {
+ *       family: 'REQUEST',
+ *       scope: 'DOCUMENT',
+ *       errorCode: 'DOCUMENT_ALREADY_EXISTS',
+ *       id: 'e4be94b6-e8b5-4652-961b-5c9fe12d2f1a',
+ *       title: 'Document already exists with the given _id',
+ *       message: 'Document already exists with the given _id',
+ *     },
+ *   ],
+ *   command: { insertOne: { document: { _id: '123213123kj21lj' } } },
+ *   rawResponse: {
+ *     status: { insertedIds: [] },
+ *     errors: [...],
+ *   },
+ * }]
+ * ```
  *
  * @field errorDescriptors - A list of error descriptors representing the individual errors returned by the API
  * @field command - The raw command send to the API
@@ -83,7 +166,7 @@ export interface DataAPIDetailedErrorDescriptor {
    * This will likely be a singleton list in many cases, such as for `insertOne` or `deleteOne` commands, but may be
    * longer for bulk operations like `insertMany` which may have multiple insertion errors.
    */
-  readonly errorDescriptors: DataAPIErrorDescriptor[],
+  readonly errorDescriptors: readonly DataAPIErrorDescriptor[],
   /**
    * The original command that was sent to the API, as a plain object. This is the *raw* command, not necessarily in
    * the exact format the client may use, in some rare cases.
@@ -92,8 +175,8 @@ export interface DataAPIDetailedErrorDescriptor {
    * ```typescript
    * {
    *   insertOne: {
-   *     document: { _id: 'docml10', name: 'Document 10' },
-   *   }
+   *     document: { _id: 'doc10', name: 'Document 10' },
+   *   },
    * }
    * ```
    */
@@ -107,12 +190,15 @@ export interface DataAPIDetailedErrorDescriptor {
    *   status: {
    *     insertedIds: [ 'id1', 'id2', 'id3']
    *   },
-   *   data: undefined,
    *   errors: [
    *     {
-   *       message: "Failed to insert document with _id 'id3': Document already exists with the given _id",
-   *       errorCode: 'DOCUMENT_ALREADY_EXISTS'
-   *     }
+   *       family: 'REQUEST',
+   *       scope: 'DOCUMENT',
+   *       errorCode: 'DOCUMENT_ALREADY_EXISTS',
+   *       id: 'e4be94b6-e8b5-4652-961b-5c9fe12d2f1a',
+   *       title: 'Document already exists with the given _id',
+   *       message: 'Document already exists with the given _id',
+   *     },
    *   ]
    * }
    * ```
@@ -132,7 +218,14 @@ export interface DataAPIDetailedErrorDescriptor {
  *
  * @public
  */
-export abstract class DataAPIError extends Error {}
+export abstract class DataAPIError extends Error {
+  /**
+   * @internal
+   */
+  public withTransientDupesForEvents(): object {
+    return this;
+  }
+}
 
 /**
  * An error thrown on non-2XX status codes from the Data API, such as 4XX or 5XX errors.
@@ -285,8 +378,10 @@ export class DataAPIResponseError extends DataAPIError {
    *
    * This is *always* equal to `detailedErrorDescriptors.flatMap(d => d.errorDescriptors)`, for the user's
    * convenience.
+   *
+   * Note that this is transient and not enumerable, as it is no more than a utility field that's functionally a duplicate of {@link DataAPIResponseError.detailedErrorDescriptors}.
    */
-  public readonly errorDescriptors: DataAPIErrorDescriptor[];
+  public readonly errorDescriptors!: DataAPIErrorDescriptor[];
 
   /**
    * A list of errors 1:1 with the number of errorful API requests made to the server. Each element contains the
@@ -310,9 +405,23 @@ export class DataAPIResponseError extends DataAPIError {
 
     super(message);
     this.message = message;
-    this.errorDescriptors = errorDescriptors;
     this.detailedErrorDescriptors = detailedErrDescriptors;
     this.name = 'DataAPIResponseError';
+
+    Object.defineProperty(this, 'errorDescriptors', {
+      value: errorDescriptors,
+      enumerable: false,
+    });
+  }
+
+  /**
+   * @internal
+   */
+  public withTransientDupesForEvents() {
+    return {
+      name: this.name,
+      message: `${this.name} fields not separately serialized; all context already in the CommandFailed event`,
+    };
   }
 }
 
@@ -508,14 +617,7 @@ export const mkRespErrorFromResponses = <E extends DataAPIResponseError>(err: ne
     const command = commands[i], response = raw[i];
 
     if (response.errors) {
-      const descriptors = response.errors.map((error: any) => {
-        const attributes = { ...error };
-        delete attributes.message;
-        delete attributes.errorCode;
-        return { errorCode: error.errorCode, message: error.message, attributes };
-      }) as DataAPIErrorDescriptor[];
-
-      const detailedErrDescriptor = { errorDescriptors: descriptors, command, rawResponse: response };
+      const detailedErrDescriptor = { errorDescriptors: response.errors, command, rawResponse: response };
       detailedErrDescriptors.push(detailedErrDescriptor);
     }
   }

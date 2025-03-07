@@ -51,3 +51,21 @@ export type EmptyObj = {};
  * @public
  */
 export type OneOrMany<T> = T | readonly T[];
+
+/**
+ * Vendored from [type-fest](https://github.com/sindresorhus/type-fest/blob/main/source/literal-union.d.ts)
+ *
+ * Utility type to represent a union of literal types or a base type without sacrificing intellisense.
+ *
+ * @public
+ */
+export type LitUnion<LiteralType, BaseType = string> = LiteralType | (BaseType & Record<never, never>);
+
+/**
+ * Represents a path segment, when representing paths as arrays.
+ *
+ * For example, `['products', 0, 'price.usd']`, which equals the string path `products.0.price&.usd`.
+ *
+ * @public
+ */
+export type PathSegment = string | number;

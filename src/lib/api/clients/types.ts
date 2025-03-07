@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { FetchCtx } from '@/src/lib/api/fetch/types.js';
+import type { FetchCtx } from '@/src/lib/api/fetch/fetcher.js';
 import type { HttpMethods } from '@/src/lib/api/constants.js';
 import type { Ref } from '@/src/lib/types.js';
 import type { TimeoutManager } from '@/src/lib/api/timeouts/timeouts.js';

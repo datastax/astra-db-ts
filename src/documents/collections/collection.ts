@@ -51,8 +51,8 @@ import type { CommandEventMap, WithSim } from '@/src/documents/index.js';
 import { CollectionInsertManyError, TooManyDocumentsToCountError } from '@/src/documents/index.js';
 import JBI from 'json-bigint';
 import { CollectionFindCursor } from '@/src/documents/collections/cursor.js';
-import { withJbiNullProtoFix } from '@/src/lib/utils.js';
 import { CollSerDes } from '@/src/documents/collections/ser-des/ser-des.js';
+import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
 
 const jbi = JBI;
 

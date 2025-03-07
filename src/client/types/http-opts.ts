@@ -27,7 +27,27 @@ import type { Fetcher, FetchH2Like } from '@/src/lib/index.js';
  * - `client: 'custom'`
  *   - This will allow you to pass a custom `Fetcher` implementation to the client
  *
- * `fetch-h2` is a fetch implementation that supports HTTP/2, and is recommended for the best performance. **However, it is not included in the SDK by default (for compatability reasons), so you will need to provide it yourself.** See {@link FetchH2HttpClientOptions} for more information.
+ * ##### HTTP/2 support
+ *
+ * [`fetch-h2`](https://www.npmjs.com/package/fetch-h2) is a fetch implementation that supports HTTP/2, and may offer notable performance gains.
+ *
+ * However, **it is not included in the SDK by default (for compatability reasons)**; the module will need to be manually provided by the user.
+ *
+ * Luckily, it takes only a couple of easy steps. See {@link FetchH2HttpClientOptions} for more information.
+ *
+ * Alternatively, if using Node.js, you may use a custom Undici `Dispatcher` configured to use HTTP/2 with `fetch` instead. See below for more information.
+ *
+ * ##### Using your own {@link Fetcher} implementation
+ *
+ * `custom` may be used for advanced users who want to use their own fetch implementation, or modify an existing one to suit their needs.
+ *
+ * For example, if you want to use a custom HTTP `Agent`/`Dispatcher`, or modify `fetch`'s `RequestInit` in any way, you can easily do so by extending the {@link FetchNative} class.
+ *
+ * See {@link CustomHttpClientOptions} for more information.
+ *
+ * ##### Examples & more info
+ *
+ * *For advanced examples & more information, see the `examples/customize-http` & `examples/using-http2` directories in the [astra-db-ts repository](https://github.com/datastax/astra-db-ts)*
  *
  * @see {@link FetchH2HttpClientOptions}
  *
@@ -71,6 +91,10 @@ export type HttpOptions =
  *
  * See the astra-db-ts v2.0+ README for more information on how to use `fetch-h2`, and the compatibility reasons for not including it by default.
  *
+ * ##### Examples
+ *
+ * *For a complete example & more information, see the `examples/using-http2` directory in the [astra-db-ts repository](https://github.com/datastax/astra-db-ts)*
+ *
  * @see HttpOptions
  *
  * @public
@@ -93,7 +117,7 @@ export interface FetchH2HttpClientOptions {
    *
    * Note that this is only available for using the Data API; the DevOps API does not support HTTP/2.
    *
-   * Both versions are generally interchangeable, but HTTP2 is generally recommended for better performance.
+   * Both versions are generally interchangeable, but HTTP/2 is recommended for better performance.
    *
    * Defaults to `true` if never provided.
    *
@@ -113,6 +137,20 @@ export interface FetchH2HttpClientOptions {
  *
  * Passing in `httpOptions: { client: 'fetch' }` is equivalent to not setting the `httpOptions` at all.
  *
+ * ##### Polyfilling `fetch`
+ *
+ * See https://github.com/BuilderIO/this-package-uses-fetch for info about polyfilling fetch for your environment.
+ *
+ * ##### Customizing `fetch`
+ *
+ * You may extend the `FetchNative` class to customize the `fetch`'s `RequestInit`, for example to use a custom Undici `Dispatcher` to further customize the HTTP options.
+ *
+ * See the below-mentioned `examples/customize-http` directory for examples & more information about extending `FetchNative`.
+ *
+ * ##### Examples
+ *
+ * *For advanced examples & more information, see the `examples/customize-http` directory in the [astra-db-ts repository](https://github.com/datastax/astra-db-ts)*
+ *
  * @see HttpOptions
  *
  * @public
@@ -129,12 +167,34 @@ export interface FetchHttpClientOptions {
 /**
  * ##### Overview
  *
- * Allows you to use a custom http client for making HTTP requests, rather than the default or fetch API.
+ * Allows you to use your own custom HTTP request strategy, rather than the default `fetch` or `fetch-h2` implementations.
  *
- * Just requires the implementation of a simple adapter interface.
+ * It may also be used to wrap an existing {@link Fetcher} implementation (i.e. {@link FetchNative} or {@link FetchH2}) with your own custom logic or to add extra logging/debug information.
  *
- * See {@link Fetcher} for more information.
+ * ##### Implementation Details
  *
+ * See the {@link Fetcher} classes for details on implementing your own custom fetcher, along with a checklist of things to consider.
+ *
+ * Be wary of the potential for errors or unexpected behavior if you do not take all request information into account when making the request, or make some other mistake with the fetcher.
+ *
+ * @example
+ * ```ts
+ * class CustomFetcher implements Fetcher {
+ *   async fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo> {
+ *     // Custom fetch implementation
+ *   }
+ * }
+ *
+ * const client = new DataAPIClient({
+ *   httpOptions: { client: 'custom', fetcher: new CustomFetcher() },
+ * });
+ * ```
+ *
+ * ##### Examples
+ *
+ * *For advanced examples & more information, see the `examples/customize-http` directory in the [astra-db-ts repository](https://github.com/datastax/astra-db-ts)*
+ *
+ * @see Fetcher
  * @see HttpOptions
  *
  * @public
@@ -156,6 +216,8 @@ export interface CustomHttpClientOptions {
  * ##### Overview
  *
  * The options available for the {@link DataAPIClient} related to making HTTP/1.1 requests with `fetch-h2`.
+ *
+ * To set related options for `fetch`, you may use in a custom Undici `Dispatcher` (or your environment's equivalent) by extending `FetchNative` and setting `init.dispatcher`. See {@link FetchHttpClientOptions} for more information.
  *
  * @see FetchH2HttpClientOptions
  *

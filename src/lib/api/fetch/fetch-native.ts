@@ -11,7 +11,6 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-// noinspection ExceptionCaughtLocallyJS
 
 import type { Fetcher, FetcherRequestInfo, FetcherResponseInfo } from '@/src/lib/index.js';
 
@@ -25,14 +24,15 @@ export class FetchNative implements Fetcher {
   /**
    Performances the necessary HTTP request.
    */
-  async fetch(info: FetcherRequestInfo): Promise<FetcherResponseInfo> {
+  public async fetch(init: FetcherRequestInfo & RequestInit): Promise<FetcherResponseInfo> {
     try {
-      const init = info as RequestInit;
+      const timeoutSignal = AbortSignal.timeout(init.timeout);
 
-      init.keepalive = true;
-      init.signal = AbortSignal.timeout(info.timeout);
+      init.signal = (init.signal)
+        ? AbortSignal.any([init.signal, timeoutSignal])
+        : timeoutSignal;
 
-      const resp = await fetch(info.url, init);
+      const resp = await fetch(init.url, init);
 
       const headers = {} as Record<string, string>;
       resp.headers.forEach((value, key) => {
@@ -48,8 +48,8 @@ export class FetchNative implements Fetcher {
         status: resp.status,
       };
     } catch (e) {
-      if (e instanceof Error && e.name === 'TimeoutError') {
-        throw info.mkTimeoutError();
+      if (e instanceof Error && e.name.includes('TimeoutError')) {
+        throw init.mkTimeoutError();
       }
       if (e instanceof TypeError && e.message === 'fetch failed' && 'cause' in e) {
         throw e.cause;
@@ -61,5 +61,5 @@ export class FetchNative implements Fetcher {
   /**
    * No-op since the native fetch API has no resources to clean up
    */
-  async close(): Promise<void> {}
+  public async close(): Promise<void> {}
 }
