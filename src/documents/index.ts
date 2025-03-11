@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-export * from './cursor.js';
 export * from './events.js';
-export * from './datatypes/object-id.js';
+export * from './cursors/index.js';
 export * from './collections/index.js';
 export * from './tables/index.js';
 export * from './embedding-providers/index.js';

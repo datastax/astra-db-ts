@@ -70,6 +70,6 @@ describe('unit.documents.cursors', ({ collection }) => {
 
   it('should inspect properly', () => {
     const cursor = new TestCursor(collection, null!, [{}, false]);
-    assert.strictEqual((cursor as any)[$CustomInspect](), 'FindCursor(source="default_keyspace.test_coll",state="idle",consumed=0,buffered=0)');
+    assert.strictEqual((cursor as any)[$CustomInspect](), 'TestCursor(source="default_keyspace.test_coll",state="idle",consumed=0,buffered=0)');
   });
 });

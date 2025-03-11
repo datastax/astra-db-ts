@@ -41,11 +41,11 @@ describe('integration.documents.collections.cursor', { truncate: 'colls:before' 
       assert.strictEqual(await cursor.hasNext(), false);
     });
 
-    it('should not copy the mapping function', async () => {
+    it('should copy the mapping function', async () => {
       const cursor = collection.find({}).map(() => 3);
       assert.strictEqual(await cursor.next(), 3);
       const clone = cursor.clone();
-      assert.notStrictEqual(await clone.next(), 3);
+      assert.strictEqual(await clone.next(), 3);
     });
 
     it('should rewind cursor', async () => {
@@ -61,17 +61,6 @@ describe('integration.documents.collections.cursor', { truncate: 'colls:before' 
 
     it('should allow cloned cursor to re-fetch all data', async () => {
       const cursor = collection.find({});
-      cursor.close();
-      await assert.rejects(() => cursor.toArray());
-      assert.deepStrictEqual(cursor.buffered(), 0);
-
-      const clone = cursor.clone();
-      const res2 = await clone.toArray();
-      assert.deepStrictEqual(res2.sort(sortById), docs);
-    });
-
-    it('should allow cloned cursor with mapping function to re-fetch all data without mapping', async () => {
-      const cursor = collection.find({}).map(ageToString);
       cursor.close();
       await assert.rejects(() => cursor.toArray());
       assert.deepStrictEqual(cursor.buffered(), 0);
