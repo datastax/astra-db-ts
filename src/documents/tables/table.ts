@@ -46,7 +46,7 @@ import { TableSerDes } from '@/src/documents/tables/ser-des/ser-des.js';
 import type { ListIndexOptions, TableIndexDescriptor } from '@/src/db/types/tables/list-indexes.js';
 import { withJbiNullProtoFix } from '@/src/lib/api/ser-des/utils.js';
 import { TableFindAndRerankCursor } from '@/src/documents/tables/cursors/rerank-cursor.js';
-import { TableFindAndRerankOptions } from '@/src/documents/tables/types/find/find-and-rerank.js';
+import type { TableFindAndRerankOptions } from '@/src/documents/tables/types/find/find-and-rerank.js';
 
 const jbi = JBI({ storeAsString: true });
 
