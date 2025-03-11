@@ -17,35 +17,24 @@ import type {
   Filter,
   GenericFindAndRerankOptions,
   GenericFindOptions,
+  HybridProjection,
   HybridSort,
   Projection,
   SomeDoc,
   SomeRow,
   Table,
 } from '@/src/documents/index.js';
+import { CursorError } from '@/src/documents/index.js';
 import { AbstractCursor } from '@/src/documents/cursors/abstract-cursor.js';
 import type { TimeoutManager, Timeouts } from '@/src/lib/api/timeouts/timeouts.js';
 import type { DataAPIHttpClient } from '@/src/lib/api/clients/index.js';
 import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
 import { $CustomInspect } from '@/src/lib/constants.js';
 import { SerDesTarget } from '@/src/lib/api/ser-des/ctx.js';
-import type { SerializedFilter } from '@/src/documents/cursors/common.js';
-import {
-  buildFLCFilter,
-  buildFLCMap,
-  buildFLCOption,
-  buildFLCPreMapOption,
-  cloneFLC,
-} from '@/src/documents/cursors/common.js';
 
-export class RerankResult<TRaw> {
-  constructor(
-    public readonly document: TRaw,
-    public readonly scores: Record<string, number>,
-  ) {}
-}
+type SerializedFilter = [unknown, boolean];
 
-export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, RerankResult<TRaw>> {
+export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends AbstractCursor<T, TRaw> {
   /**
    * @internal
    */
@@ -54,22 +43,22 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
   /**
    * @internal
    */
-  readonly _serdes: SerDes;
+  private readonly _serdes: SerDes;
 
   /**
    * @internal
    */
-  readonly _parent: Table<SomeRow> | Collection;
+  private readonly _parent: Table<SomeRow> | Collection;
 
   /**
    * @internal
    */
-  declare readonly _options: GenericFindAndRerankOptions;
+  declare protected readonly _options: GenericFindAndRerankOptions;
 
   /**
    * @internal
    */
-  readonly _filter: SerializedFilter;
+  private readonly _filter: SerializedFilter;
 
   /**
    * Should not be instantiated directly.
@@ -113,7 +102,10 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new filter set.
    */
   public filter(filter: Filter): this {
-    return buildFLCFilter(this, filter);
+    if (this._state !== 'idle') {
+      throw new CursorError('Cannot set a new filter on a running/closed cursor', this);
+    }
+    return this._clone(this._serdes.serialize(structuredClone(filter), SerDesTarget.Filter), this._options, this._mapping);
   }
 
   /**
@@ -127,7 +119,10 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new sort set.
    */
   public sort(sort: HybridSort): this {
-    return buildFLCOption(this, 'sort', sort);
+    if (this._state !== 'idle') {
+      throw new CursorError('Cannot set a new sort on a running/closed cursor', this);
+    }
+    return this._clone(this._filter, { ...this._options, sort }, this._mapping);
   }
 
   /**
@@ -143,23 +138,31 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new limit set.
    */
   public limit(limit: number): this {
-    return buildFLCOption(this, 'limit', limit || Infinity);
+    if (this._state !== 'idle') {
+      throw new CursorError('Cannot set a new limit on a running/closed cursor', this);
+    }
+    return this._clone(this._filter, { ...this._options, limit: limit || Infinity }, this._mapping);
   }
 
   public hybridLimits(hybridLimits: number | Record<string, number>): this {
-    return buildFLCOption(this, 'hybridLimits', hybridLimits);
+    if (this._state !== 'idle') {
+      throw new CursorError('Cannot set a new limit on a running/closed cursor', this);
+    }
+    return this._clone(this._filter, { ...this._options, hybridLimits }, this._mapping);
   }
 
-  public rerankOn(rerankOn: string): this {
-    return buildFLCOption(this, 'rerankOn', rerankOn);
+  public hybridProjection(hybridProjection: HybridProjection): this {
+    if (this._state !== 'idle') {
+      throw new CursorError('Cannot set a new limit on a running/closed cursor', this);
+    }
+    return this._clone(this._filter, { ...this._options, hybridProjection }, this._mapping);
   }
 
-  public rerankQuery(rerankQuery: string): this {
-    return buildFLCOption(this, 'rerankQuery', rerankQuery);
-  }
-
-  public includeScores(includeScores: boolean): this {
-    return buildFLCOption(this, 'includeScores', includeScores);
+  public rerankField(rerankField: string): this {
+    if (this._state !== 'idle') {
+      throw new CursorError('Cannot set a new limit on a running/closed cursor', this);
+    }
+    return this._clone(this._filter, { ...this._options, rerankField }, this._mapping);
   }
 
   /**
@@ -202,32 +205,51 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    * @returns A new cursor with the new projection set.
    */
   public project<RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection): FindAndRerankCursor<RRaw, RRaw> {
-    return buildFLCPreMapOption(this, 'projection', projection);
+    if (this._mapping) {
+      throw new CursorError('Cannot set a projection after already using cursor.map(...)', this);
+    }
+    if (this._state !== 'idle') {
+      throw new CursorError('Cannot set a new projection on a running/closed cursor', this);
+    }
+    return this._clone(this._filter, { ...this._options, projection: structuredClone(projection) }, this._mapping);
   }
 
   public map<R>(map: (doc: T) => R): FindAndRerankCursor<R, TRaw> {
-    return buildFLCMap(this, map);
+    if (this._state !== 'idle') {
+      throw new CursorError('Cannot set a new mapping on a running/closed cursor', this);
+    }
+    if (this._mapping) {
+      return this._clone(this._filter, this._options, (doc: TRaw) => map(this._mapping!(doc)));
+    } else {
+      return this._clone(this._filter, this._options, map as any);
+    }
   }
 
   public override clone(): this {
-    return cloneFLC(this, this._filter, this._options, this._mapping);
+    return this._clone(this._filter, this._options, this._mapping);
   }
 
   /**
    * @internal
    */
-  protected async _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<RerankResult<TRaw>[]> {
+  private _clone<R, C = this>(filter: SerializedFilter, options: GenericFindAndRerankOptions, mapping?: (doc: TRaw) => R): C {
+    return new (<any>this.constructor)(this._parent, this._serdes, filter, options, mapping);
+  }
+
+  /**
+   * @internal
+   */
+  protected async _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<TRaw[]> {
     const command = {
-      findAndRerank: {
+      find: {
         filter: this._filter[0],
         projection: this._options.projection,
         sort: this._options.sort,
         options: {
           limit: this._options.limit,
           hybridLimits: this._options.hybridLimits,
-          rerankOn: this._options.rerankOn,
-          rerankQuery: this._options.rerankQuery,
-          includeScores: this._options.includeScores,
+          hybridProjection: this._options.hybridProjection,
+          rerankField: this._options.rerankField,
         },
       },
     };
@@ -237,12 +259,10 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
       bigNumsPresent: this._filter[1],
       extraLogInfo: extra,
     });
-
     const buffer = raw.data?.documents ?? [];
 
     for (let i = 0, n = buffer.length; i < n; i++) {
-      const deserialized = this._serdes.deserialize(buffer[i], raw, SerDesTarget.Record);
-      buffer[i] = new RerankResult(deserialized, raw.data?.documentResponses[i] ?? {});
+      buffer[i] = this._serdes.deserialize(buffer[i], raw, SerDesTarget.Record);
     }
 
     return buffer;

@@ -17,7 +17,7 @@ import { FindAndRerankCursor } from '@/src/documents/index.js';
 
 export class CollectionFindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindAndRerankCursor<T, TRaw> {
   public get dataSource(): Collection {
-    return super.dataSource as Collection;
+      return super.dataSource as Collection;
   }
 
   public override filter(filter: CollectionFilter<TRaw>): this {

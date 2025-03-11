@@ -12,23 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { DataAPIVector, Projection, Sort } from '@/src/documents/index.js';
+import type { Projection, Sort } from '@/src/documents/index.js';
 import type { WithTimeout } from '@/src/lib/index.js';
 
-/**
- * @public
- */
-export type HybridSort = Sort & { $hybrid: string | HybridSortObject }
+export type HybridSort = Sort & { $hybrid: string | Record<string, unknown> }
 
-export interface HybridSortObject {
-  $vectorize?: string,
-  $lexical?: string,
-  $vector?: number[] | DataAPIVector,
-  [col: string]: string | number[] | DataAPIVector | undefined,
-}
+export type HybridProjection = 'none' | 'passage' | 'scores';
 
 /**
- * Options for some generic `findAndRerank` command.
+ * Options for some generic `find` command.
+ *
+ * @field sort - The sort order to pick which document to return if the filter selects multiple documents.
+ * @field projection - Specifies which fields should be included/excluded in the returned documents.
+ * @field limit - Max number of documents to return in the lifetime of the cursor.
+ * @field skip - Number of documents to skip if using a sort.
+ * @field includeSimilarity - If true, include the similarity score in the result via the `$similarity` field.
  *
  * @public
  */
@@ -42,7 +40,7 @@ export interface GenericFindAndRerankOptions extends WithTimeout<'generalMethodT
   /**
    * The projection to apply to the returned records, to specify only a select set of fields to return.
    *
-   * If using a projection, it is heavily recommended to provide a custom type for the returned records as a generic type-param to the `find` method.
+   * If using a projection, it is heavily recommended to provide a custom type for the returned records as a generic typeparam to the `find` method.
    */
   projection?: Projection,
   /**
@@ -52,7 +50,6 @@ export interface GenericFindAndRerankOptions extends WithTimeout<'generalMethodT
    */
   limit?: number,
   hybridLimits?: number | Record<string, number>,
-  rerankOn?: string,
-  rerankQuery?: string,
-  includeScores?: boolean,
+  hybridProjection: HybridProjection,
+  rerankField?: string,
 }

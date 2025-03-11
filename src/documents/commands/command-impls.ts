@@ -17,13 +17,12 @@ import type { SerDes } from '@/src/lib/api/ser-des/ser-des.js';
 import type {
   Collection,
   CollectionInsertManyOptions,
-  Filter,
-  FindAndRerankCursor,
+  DataAPIDetailedErrorDescriptor,
+  Filter, FindAndRerankCursor,
   FindCursor,
   GenericDeleteManyResult,
   GenericDeleteOneOptions,
   GenericDeleteOneResult,
-  GenericFindAndRerankOptions,
   GenericFindOneAndDeleteOptions,
   GenericFindOneAndReplaceOptions,
   GenericFindOneAndUpdateOptions,
@@ -40,9 +39,9 @@ import type {
 } from '@/src/documents/index.js';
 import { CollectionDeleteManyError, CollectionUpdateManyError, DataAPIResponseError } from '@/src/documents/index.js';
 import type { nullish, WithTimeout } from '@/src/lib/index.js';
-import type { InsertManyErrorConstructor } from '@/src/documents/commands/helpers/insertion.js';
 import { insertManyOrdered, insertManyUnordered } from '@/src/documents/commands/helpers/insertion.js';
 import { coalesceUpsertIntoUpdateResult, mkUpdateResult } from '@/src/documents/commands/helpers/updates.js';
+import { mkRespErrorFromResponse } from '@/src/documents/errors.js';
 import { mkDistinctPathExtractor, pullSafeProjection4Distinct } from '@/src/documents/commands/helpers/distinct.js';
 import stableStringify from 'safe-stable-stringify';
 import type { GenericInsertOneResult } from '@/src/documents/commands/types/insert/insert-one.js';
@@ -80,7 +79,7 @@ export class CommandImpls<ID> {
     };
   }
 
-  public async insertMany(docs: readonly SomeDoc[], options: CollectionInsertManyOptions | nullish, err: InsertManyErrorConstructor): Promise<GenericInsertManyResult<ID>> {
+  public async insertMany(docs: readonly SomeDoc[], options: CollectionInsertManyOptions | nullish, err: new (descs: DataAPIDetailedErrorDescriptor[]) => DataAPIResponseError): Promise<GenericInsertManyResult<ID>> {
     const chunkSize = options?.chunkSize ?? 50;
     const timeoutManager = this._httpClient.tm.multipart('generalMethodTimeoutMs', options);
 
@@ -143,15 +142,17 @@ export class CommandImpls<ID> {
         commonResult.matchedCount += resp.status?.matchedCount ?? 0;
       }
     } catch (e) {
-      if (e instanceof DataAPIResponseError) {
-        const combinedResult = {
-          matchedCount: commonResult.matchedCount + (e.rawResponse.status?.matchedCount ?? 0),
-          modifiedCount: commonResult.modifiedCount + (e.rawResponse.status?.modifiedCount ?? 0),
-        };
-        throw new CollectionUpdateManyError(e, coalesceUpsertIntoUpdateResult(combinedResult, e.rawResponse));
-      } else {
-        throw new CollectionUpdateManyError(e, coalesceUpsertIntoUpdateResult(commonResult, {}));
+      if (!(e instanceof DataAPIResponseError)) {
+        throw e;
       }
+      const { rawResponse: raw } = e.detailedErrorDescriptors[0];
+
+      commonResult.modifiedCount += raw.status?.modifiedCount ?? 0;
+      commonResult.matchedCount += raw.status?.matchedCount ?? 0;
+
+      throw mkRespErrorFromResponse(CollectionUpdateManyError, command, raw, {
+        partialResult: { ...commonResult, upsertedCount: raw.status?.upsertedCount ?? 0 },
+      });
     }
 
     return coalesceUpsertIntoUpdateResult(commonResult, resp);
@@ -218,12 +219,16 @@ export class CommandImpls<ID> {
         numDeleted += resp.status?.deletedCount ?? 0;
       }
     } catch (e) {
-      const extraDeletedCount = (e instanceof DataAPIResponseError)
-        ? e.rawResponse.status?.deletedCount ?? 0
-        : 0;
+      if (!(e instanceof DataAPIResponseError)) {
+        throw e;
+      }
 
-      throw new CollectionDeleteManyError(e, {
-        deletedCount: numDeleted + extraDeletedCount,
+      const desc = e.detailedErrorDescriptors[0];
+
+      throw mkRespErrorFromResponse(CollectionDeleteManyError, command, desc.rawResponse, {
+        partialResult: {
+          deletedCount: numDeleted + (desc.rawResponse.status?.deletedCount ?? 0),
+        },
       });
     }
 
@@ -232,11 +237,11 @@ export class CommandImpls<ID> {
     };
   }
 
-  public find<Cursor extends FindCursor<SomeDoc>>(filter: Filter, options: GenericFindOptions | undefined, cursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => Cursor): Cursor {
+  public find<Cursor extends FindCursor<SomeDoc>>(filter: Filter | undefined, options: GenericFindOptions | undefined, cursor: new (...args: ConstructorParameters<typeof FindCursor<SomeDoc>>) => Cursor): Cursor {
     return new cursor(this._tOrC, this._serdes, this._serdes.serialize(structuredClone(filter), SerDesTarget.Filter), structuredClone(options));
   }
 
-  public findAndRerank<Cursor extends FindAndRerankCursor<SomeDoc>>(filter: Filter, options: GenericFindAndRerankOptions | undefined, cursor: new (...args: ConstructorParameters<typeof FindAndRerankCursor<SomeDoc>>) => Cursor): Cursor {
+  public findAndRerank<Cursor extends FindAndRerankCursor<SomeDoc>>(filter: Filter | undefined, options: GenericFindOptions | undefined, cursor: new (...args: ConstructorParameters<typeof FindAndRerankCursor<SomeDoc>>) => Cursor): Cursor {
     return new cursor(this._tOrC, this._serdes, this._serdes.serialize(structuredClone(filter), SerDesTarget.Filter), structuredClone(options));
   }
 

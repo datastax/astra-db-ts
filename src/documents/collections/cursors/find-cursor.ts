@@ -17,7 +17,7 @@ import { FindCursor } from '@/src/documents/cursors/find-cursor.js';
 
 export class CollectionFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {
   public get dataSource(): Collection {
-    return super.dataSource as Collection;
+      return super.dataSource as Collection;
   }
 
   public override filter(filter: CollectionFilter<TRaw>): this {

@@ -31,7 +31,7 @@ export class CursorError extends DataAPIError {
   /**
    * The status of the cursor when the error occurred.
    */
-  public readonly state: CursorState;
+  public readonly status: CursorStatus;
 
   /**
    * Should not be instantiated directly.
@@ -42,7 +42,7 @@ export class CursorError extends DataAPIError {
     super(message);
     this.name = 'CursorError';
     this.cursor = cursor;
-    this.state = cursor.state;
+    this.status = cursor.state;
   }
 }
 
@@ -59,7 +59,7 @@ export class CursorError extends DataAPIError {
  *
  * @see FindCursor.state
  */
-export type CursorState = 'idle' | 'started' | 'closed';
+export type CursorStatus = 'idle' | 'started' | 'closed';
 
 export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
@@ -75,7 +75,7 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * @internal
    */
-  protected _state: CursorState = 'idle';
+  protected _state: CursorStatus = 'idle';
 
   /**
    * @internal
@@ -85,12 +85,12 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * @internal
    */
-  readonly _mapping?: (doc: any) => T;
+  protected readonly _mapping?: (doc: any) => T;
 
   /**
    * @internal
    */
-  readonly _options: WithTimeout<'generalMethodTimeoutMs'>;
+  protected readonly _options: WithTimeout<'generalMethodTimeoutMs'>;
 
   /**
    * Should not be instantiated directly.
@@ -105,7 +105,7 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
   /**
    * The current status of the cursor.
    */
-  public get state(): CursorState {
+  public get state(): CursorStatus {
     return this._state;
   }
 
@@ -139,9 +139,7 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
    * @returns The records read from the buffer.
    */
   public consumeBuffer(max?: number): TRaw[] {
-    const ret = this._buffer.splice(0, max ?? this._buffer.length);
-    this._consumed += ret.length;
-    return ret;
+    return this._buffer.splice(0, max ?? this._buffer.length);
   }
 
   /**
@@ -233,7 +231,7 @@ export abstract class AbstractCursor<T, TRaw extends SomeDoc = SomeDoc> {
   public async forEach(consumer: ((doc: T) => boolean | Promise<boolean>) | ((doc: T) => void | Promise<void>)): Promise<void> {
     for await (const doc of this._iterator('.forEach')) {
       const resp = consumer(doc);
-      const stop = (resp === undefined) ? resp : await resp;
+      const stop = resp instanceof Promise ? await resp : resp;
 
       if (stop === false) {
         break;

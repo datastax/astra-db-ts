@@ -12,21 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import type { Projection, SomeRow, Table, TableFilter, WithSim } from '@/src/documents/index.js';
+import type { Projection, SomeDoc, SomeRow, Table, TableFilter, WithSim } from '@/src/documents/index.js';
 import { FindCursor } from '@/src/documents/cursors/find-cursor.js';
 
-export class TableFindCursor<T, TRaw extends SomeRow = SomeRow> extends FindCursor<T, TRaw> {
-  public get dataSource(): Table<SomeRow> {
-    return super.dataSource as Table<SomeRow>;
-  }
+export class TableFindCursor<T, TRaw extends SomeDoc = SomeDoc> extends FindCursor<T, TRaw> {
+    public get dataSource(): Table<SomeRow> {
+        return super.dataSource as Table<SomeRow>;
+    }
 
-  public override filter(filter: TableFilter<TRaw>): this {
-    return super.filter(filter);
-  }
+    public override filter(filter: TableFilter<TRaw>): this {
+        return super.filter(filter);
+    }
 
-  declare public project: <RRaw extends SomeRow = Partial<TRaw>>(projection: Projection) => TableFindCursor<RRaw, RRaw>;
+    declare public project: <RRaw extends SomeDoc = Partial<TRaw>>(projection: Projection) => TableFindCursor<RRaw, RRaw>;
 
-  declare public includeSimilarity: (includeSimilarity?: boolean) => TableFindCursor<WithSim<TRaw>, WithSim<TRaw>>;
+    declare public includeSimilarity: (includeSimilarity?: boolean) => TableFindCursor<WithSim<TRaw>, WithSim<TRaw>>;
 
-  declare public map: <R>(map: (doc: T) => R) => TableFindCursor<R, TRaw>;
+    declare public map: <R>(map: (doc: T) => R) => TableFindCursor<R, TRaw>;
 }
