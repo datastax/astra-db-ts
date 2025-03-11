@@ -241,7 +241,7 @@ export abstract class FindAndRerankCursor<T, TRaw extends SomeDoc = SomeDoc> ext
    */
   protected async _nextPage(extra: Record<string, unknown>, tm: TimeoutManager | undefined): Promise<TRaw[]> {
     const command = {
-      find: {
+      findAndRerank: {
         filter: this._filter[0],
         projection: this._options.projection,
         sort: this._options.sort,
